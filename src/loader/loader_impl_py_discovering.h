@@ -1,0 +1,8 @@
+#ifndef LOADER_IMPL_PY_DISCOVERING_H
+#define LOADER_IMPL_PY_DISCOVERING_H
+
+#include <Python.h>
+
+
+
+#endif // LOADER_IMPL_PY_DISCOVERING_H
