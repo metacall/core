@@ -11,6 +11,7 @@ loader_impl loader_impl_rb()
 		NULL, //&loader_impl_rb_execution_path,
 		NULL, //&loader_impl_rb_load,
 		NULL, //&loader_impl_rb_clear,
+		NULL, //&loader_impl_rb_discover,
 		NULL //&loader_impl_rb_destroy
 	};
 

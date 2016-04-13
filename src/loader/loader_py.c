@@ -9,6 +9,7 @@ loader_impl loader_impl_py()
 		&loader_impl_py_execution_path,
 		&loader_impl_py_load,
 		&loader_impl_py_clear,
+		&loader_impl_py_discover,
 		&loader_impl_py_destroy
 	};
 

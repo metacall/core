@@ -11,6 +11,8 @@ typedef loader_handle (*loader_impl_load)(char *);
 
 typedef int (*loader_impl_clear)(loader_handle);
 
+typedef int (*loader_impl_discover)(loader_handle);
+
 typedef int (*loader_impl_destroy)(void);
 
 typedef struct loader_impl_type
@@ -19,6 +21,7 @@ typedef struct loader_impl_type
 	loader_impl_execution_path execution_path;
 	loader_impl_load load;
 	loader_impl_clear clear;
+	loader_impl_discover discover;
 	loader_impl_destroy destroy;
 
 } * loader_impl;

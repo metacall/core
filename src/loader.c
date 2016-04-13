@@ -5,14 +5,14 @@
 
 int load(char * name)
 {
-	enum loader_manager_id id = loader_manager_deduce_id(name);
+	enum loader_id id = loader_id_from_name(name);
 
 	loader_impl loader = loader_manager_get(id);
 
 	if (loader != NULL)
 	{
 
-		printf("We have a loader!\n");
+		printf("debug: loader %s is currently loaded\n", name);
 
 		return 0;
 	}

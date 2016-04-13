@@ -11,6 +11,7 @@ loader_impl loader_impl_js()
 		NULL, //&loader_impl_js_execution_path,
 		NULL, //&loader_impl_js_load,
 		NULL, //&loader_impl_js_clear,
+		NULL, //&loader_impl_js_discover,
 		NULL //&loader_impl_js_destroy
 	};
 

@@ -1,5 +1,110 @@
 #include <loader/loader_impl_py_discovering.h>
 
+PyObject ** loader_impl_py_inspect()
+{
+	static PyObject * inspect_module = NULL;
+
+	return &inspect_module;
+}
+
+PyObject ** loader_impl_py_inspect_signature()
+{
+	static PyObject * func_signature = NULL;
+
+	return &func_signature;
+}
+
+int loader_impl_py_discovering_initialize()
+{
+	PyObject ** inspect = loader_impl_py_inspect();
+	PyObject ** signature = loader_impl_py_inspect_signature();
+
+	if (*inspect == NULL)
+	{
+		PyObject * module_name = PyUnicode_DecodeFSDefault("inspect");
+		PyObject * inspect_module = PyImport_Import(module_name);
+
+		Py_DECREF(module_name);
+
+		if (inspect_module)
+		{
+			*inspect = inspect_module;
+		}
+		else
+		{
+			printf("error: inspect module not loaded\n");
+
+			return 1;
+		}
+	}
+
+	if (*inspect && *signature == NULL)
+	{
+		PyObject * func_signature = PyObject_GetAttrString(*inspect, "signature");
+
+		if (func_signature && PyCallable_Check(func_signature))
+		{
+			*signature = func_signature;
+		}
+		else
+		{
+			printf("error: function signature not loaded\n");
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+int loader_impl_py_discovering_destroy()
+{
+	int result = 0;
+
+	PyObject ** inspect = loader_impl_py_inspect();
+	PyObject ** signature = loader_impl_py_inspect_signature();
+
+	if (*signature != NULL)
+	{
+		PyObject * func_signature = *signature;
+
+		printf("debug: signature pointer %p\n", *signature);
+
+		if (func_signature && PyCallable_Check(func_signature))
+		{
+			Py_DECREF(func_signature);
+		}
+		else
+		{
+			Py_XDECREF(func_signature);
+
+			printf("error: function signature not destroyed properly\n");
+
+			result = 1;
+		}
+	}
+
+	if (*inspect != NULL)
+	{
+		PyObject * inspect_module = *inspect;
+
+		printf("debug: inspect pointer %p\n", *inspect);
+
+		Py_DECREF(inspect_module);
+
+		if (inspect_module)
+		{
+			printf("error: inspect module not destroyed\n");
+
+			result = 1;
+		}
+
+		*inspect = NULL;
+	}
+
+	return result;
+}
+
 int loader_impl_py_function_args_count(PyObject * func)
 {
 	int args_count = -1;
@@ -87,171 +192,91 @@ int loader_impl_py_function_inspect(PyObject * func, int args_count)
 {
 	if (func && args_count >= 0)
 	{
-		PyObject *module_name = PyUnicode_DecodeFSDefault("inspect");
-		PyObject *inspect_module = PyImport_Import(module_name);
+		PyObject ** signature = loader_impl_py_inspect_signature();
 
-		Py_DECREF(module_name);
-
-		if (inspect_module)
+		if (*signature != NULL)
 		{
-			PyObject *func_signature = PyObject_GetAttrString(inspect_module, "signature");
+			PyObject * args = PyTuple_New(1);
+			PyObject * result = NULL;
 
-			if (func_signature && PyCallable_Check(func_signature))
+			if (args)
 			{
-				PyObject *args = PyTuple_New(1);
-				PyObject *result = NULL;
+				PyTuple_SetItem(args, 0, func);
 
-				printf("Function loaded correctly\n");
+				result = PyObject_CallObject(*signature, args);
 
-				if (args)
+				Py_DECREF(args);
+			}
+
+			if (result)
+			{
+				PyObject * str_result = PyObject_Str(result);
+
+				PyObject * parameters = PyObject_GetAttrString(result, "parameters");
+
+				printf("debug: function signature result ");
+
+				PyObject_Print(result, stdout, 0);
+
+				printf("\ndebug: ");
+
+				PyObject_Print(str_result, stdout, 0);
+
+				printf("\n");
+
+				if (parameters && PyMapping_Check(parameters))
 				{
-					PyTuple_SetItem(args, 0, func);
+					PyObject * parameter_list = PyMapping_Values(parameters);
 
-					printf("Calling function signature\n");
+					Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
 
-					result = PyObject_CallObject(func_signature, args);
+					printf("debug: function signature parameters ");
 
-					Py_DECREF(args);
-				}
+					PyObject_Print(parameters, stdout, 0);
 
-				if (result)
-				{
-					PyObject *str_result = PyObject_Str(result);
+					printf("\ndebug: ");
 
-					// Get parameters
-					PyObject *parameters = PyObject_GetAttrString(result, "parameters");
+					PyObject_Print(parameter_list, stdout, 0);
 
-					printf("There is a result man!\n");
+					printf("\n");
 
-					PyObject_Print(result, stdout, 0);
-
-					PyObject_Print(str_result, stdout, 0);
-
-					printf("\n\n");
-
-					if (parameters && PyMapping_Check(parameters))
+					if (parameter_list && PyList_Check(parameter_list))
 					{
-						PyObject *parameter_list = PyMapping_Values(parameters);
+						Py_ssize_t iterator;
 
-						Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
-
-						printf("++ parameters implementation object:\n");
-
-						PyObject_Print(parameters, stdout, 0);
-
-						printf("\n++ parameter_list implementation object:\n");
-
-						PyObject_Print(parameter_list, stdout, 0);
-
-						printf("\n");
-
-						if (parameter_list && PyList_Check(parameter_list))
+						for (iterator = 0; iterator < parameter_list_size; ++iterator)
 						{
-							Py_ssize_t iterator;
+							PyObject * parameter = PyList_GetItem(parameter_list, iterator);
 
-							for (iterator = 0; iterator < parameter_list_size; ++iterator)
+							if (parameter)
 							{
-								PyObject *parameter = PyList_GetItem(parameter_list, iterator);
+								PyObject * name = PyObject_GetAttrString(parameter, "name");
+								PyObject * annotation = PyObject_GetAttrString(parameter, "annotation");
 
-								if (parameter)
-								{
-									PyObject *name = PyObject_GetAttrString(parameter, "name");
-									PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
+								printf("debug: parameter %zu ", iterator);
 
-									printf("Parameter %ld:\n", iterator);
+								PyObject_Print(parameter, stdout, 0);
 
-									PyObject_Print(parameter, stdout, 0);
+								printf("\ndebug: parameter name ");
 
-									printf("\n -> Name: ");
+								PyObject_Print(name, stdout, 0);
 
-									PyObject_Print(name, stdout, 0);
+								printf("\ndebug: parameter annotation ");
 
-									printf("\n -> Annotation: ");
+								PyObject_Print(annotation, stdout, 0);
 
-									PyObject_Print(annotation, stdout, 0);
-
-									printf("\n\n");
-								}
+								printf("\n");
 							}
-
 						}
-
-						Py_DECREF(parameters);
 					}
 
-					printf("\n\n");
-
-					Py_DECREF(result);
+					Py_DECREF(parameters);
 				}
 
-				Py_DECREF(func_signature);
+				Py_DECREF(result);
 			}
-			else
-			{
-				printf("Function not found\n");
-
-				Py_XDECREF(func_signature);
-			}
-
-			Py_DECREF(inspect_module);
 		}
-		else
-		{
-			printf("Module not loaded\n");
-		}
-
 	}
-}
 
-void discovering(void)
-{
-	PyObject *module_name = PyUnicode_DecodeFSDefault("example");
-	PyObject *example_module = PyImport_Import(module_name);
-
-	Py_DECREF(module_name);
-
-	if (example_module && PyModule_Check(example_module))
-	{
-		PyObject *dict = PyModule_GetDict(example_module);
-
-		printf("Module loaded correctly\n");
-
-		if (dict)
-		{
-			PyObject *key, *value;
-			Py_ssize_t position = 0;
-
-			printf("Discovering script API:\n");
-
-			while (PyDict_Next(dict, &position, &key, &value))
-			{
-				const char *key_str = PyUnicode_AsUTF8(key);
-
-				// check if is a function
-				if (PyCallable_Check(value))
-				{
-					int args_count = discovering_func_args_count(value);
-
-					// Print
-					printf("Name [%s] - Func [", key_str);
-
-					PyObject_Print(value, stdout, 0);
-
-					// Get argument size
-					printf("] - ArgsC [%d]\n\n", args_count);
-
-					// Apply introspection
-					discovering_inspection(value, args_count);
-				}
-			}
-
-			Py_DECREF(dict);
-		}
-
-		Py_DECREF(example_module);
-	}
-	else
-	{
-		printf("Module not loaded\n");
-	}
+	return 0;
 }
