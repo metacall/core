@@ -1,7 +1,11 @@
 #ifndef LOADER_IMPL_H
-#define LOADER_IMPL_H
+#define LOADER_IMPL_H 1
 
 #include <loader/loader_handle.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef int (*loader_impl_initialize)(void);
 
@@ -27,5 +31,9 @@ typedef struct loader_impl_type
 } * loader_impl;
 
 typedef loader_impl (*loader_impl_singleton)(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LOADER_IMPL_H

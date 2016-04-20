@@ -11,9 +11,9 @@ int main(int argc, char * argv[])
 		printf("error: initializing python loader\n");
 	}
 
-	if (loader_py->execution_path(NULL))
+	if (loader_py->execution_path("new_execution_path"))
 	{
-		printf("error: defining default execution path\n");
+		printf("error: defining a new execution path\n");
 	}
 
 	handle = loader_py->load("example.py");

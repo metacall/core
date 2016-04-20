@@ -1,7 +1,11 @@
 #ifndef LOADER_ID_H
-#define LOADER_ID_H
+#define LOADER_ID_H 1
 
 #include <loader/loader_naming.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 enum loader_id
 {
@@ -15,5 +19,9 @@ enum loader_id
 enum loader_id loader_id_from_name(loader_naming_name name);
 
 enum loader_id loader_id_from_extension(loader_naming_extension extension);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // LOADER_ID_H

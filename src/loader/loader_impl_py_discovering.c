@@ -92,12 +92,12 @@ int loader_impl_py_discovering_destroy()
 
 		Py_DECREF(inspect_module);
 
-		if (inspect_module)
-		{
-			printf("error: inspect module not destroyed\n");
-
-			result = 1;
-		}
+		//if (inspect_module)
+		//{
+		//	printf("error: inspect module not destroyed\n");
+		//
+		//	result = 1;
+		//}
 
 		*inspect = NULL;
 	}
