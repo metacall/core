@@ -25,7 +25,7 @@ argument_list function_get_signature(function func);
 
 function_impl function_get_impl(function func);
 
-void function_call(function func, ...);
+void function_call(function func, va_list va);
 
 void function_destroy(function func);
 

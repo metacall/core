@@ -9,11 +9,11 @@ typedef struct function_type
 
 function function_create(char * name, argument_list signature)
 {
-	if (name && signature && impl)
+	if (name != NULL && signature != NULL)
 	{
 		function func = malloc(sizeof(struct function_type));
 
-		if (func)
+		if (func != NULL)
 		{
 			func->name = name;
 			func->signature = signature;
@@ -28,23 +28,37 @@ function function_create(char * name, argument_list signature)
 
 char * function_get_name(function func)
 {
-	return func->name;
+	if (func != NULL)
+	{
+		return func->name;
+	}
+
+	return NULL;
 }
 
 argument_list function_get_signature(function func)
 {
-	return func->signature;
+	if (func != NULL)
+	{
+		return func->signature;
+	}
+
+	return NULL;
 }
 
 function_impl function_get_impl(function func)
 {
-	return func->impl;
-}
+	if (func != NULL)
+	{
+		return func->impl;
+	}
 
+	return NULL;
+}
 
 void function_push(function func, int index, void * data)
 {
-	if (func && index >= 0 && index < argument_list_count(func->signature) && data)
+	if (func != NULL && index >= 0 && index < argument_list_count(func->signature) && data != NULL)
 	{
 		
 	}
@@ -55,21 +69,9 @@ int function_push_va(function func, va_list va)
 	// push a list of arguments
 }
 
-void function_call_impl(function func)
+void function_call(function func, va_list va)
 {
-	// execute the call
-}
-
-void function_call_va(function func, va_list va)
-{
-	if (function_push_va(func, va) == 0)
-	{
-		function_call_impl(func);
-	}
-}
-
-void function_call(function func, ...)
-{
+	/*
 	va_list va;
 
 	va_start(va, func);
@@ -77,11 +79,17 @@ void function_call(function func, ...)
 	function_call_va(func, va);
 
 	va_end(va);
+	*/
+
+	if (function_push_va(func, va) == 0)
+	{
+		// function_call_impl(func);
+	}
 }
 
 void function_destroy(function func)
 {
-	if (func)
+	if (func != NULL)
 	{
 		// context_detach(func->context, func);
 

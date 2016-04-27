@@ -26,7 +26,7 @@ int loader_impl_py_discovering_initialize()
 
 		Py_DECREF(module_name);
 
-		if (inspect_module)
+		if (inspect_module != NULL)
 		{
 			*inspect = inspect_module;
 		}
@@ -38,11 +38,11 @@ int loader_impl_py_discovering_initialize()
 		}
 	}
 
-	if (*inspect && *signature == NULL)
+	if (*inspect != NULL && *signature == NULL)
 	{
 		PyObject * func_signature = PyObject_GetAttrString(*inspect, "signature");
 
-		if (func_signature && PyCallable_Check(func_signature))
+		if (func_signature != NULL && PyCallable_Check(func_signature))
 		{
 			*signature = func_signature;
 		}
@@ -70,7 +70,7 @@ int loader_impl_py_discovering_destroy()
 
 		printf("debug: signature pointer %p\n", *signature);
 
-		if (func_signature && PyCallable_Check(func_signature))
+		if (func_signature != NULL && PyCallable_Check(func_signature))
 		{
 			Py_DECREF(func_signature);
 		}
@@ -133,7 +133,7 @@ int loader_impl_py_function_args_count(PyObject * func)
 			// it is a function object
 			PyObject * call_section = PyObject_GetAttrString(func, "__call__");
 
-			if (call_section)
+			if (call_section != NULL)
 			{
 				// get func code
 				func_code = PyObject_GetAttrString(call_section, "__code__");
@@ -145,11 +145,11 @@ int loader_impl_py_function_args_count(PyObject * func)
 			}
 		}
 
-		if (func_code)
+		if (func_code != NULL)
 		{
 			PyObject * co_argcount = PyObject_GetAttrString(func_code, "co_argcount");
 
-			if (co_argcount)
+			if (co_argcount != NULL)
 			{
 				args_count = PyLong_AsLong(co_argcount);
 
@@ -190,7 +190,7 @@ int loader_impl_py_function_args_count(PyObject * func)
 
 int loader_impl_py_function_inspect(PyObject * func, int args_count)
 {
-	if (func && args_count >= 0)
+	if (func != NULL && args_count >= 0)
 	{
 		PyObject ** signature = loader_impl_py_inspect_signature();
 
@@ -199,7 +199,7 @@ int loader_impl_py_function_inspect(PyObject * func, int args_count)
 			PyObject * args = PyTuple_New(1);
 			PyObject * result = NULL;
 
-			if (args)
+			if (args != NULL)
 			{
 				PyTuple_SetItem(args, 0, func);
 
@@ -208,7 +208,7 @@ int loader_impl_py_function_inspect(PyObject * func, int args_count)
 				Py_DECREF(args);
 			}
 
-			if (result)
+			if (result != NULL)
 			{
 				PyObject * str_result = PyObject_Str(result);
 
@@ -224,7 +224,7 @@ int loader_impl_py_function_inspect(PyObject * func, int args_count)
 
 				printf("\n");
 
-				if (parameters && PyMapping_Check(parameters))
+				if (parameters != NULL && PyMapping_Check(parameters))
 				{
 					PyObject * parameter_list = PyMapping_Values(parameters);
 
@@ -240,7 +240,7 @@ int loader_impl_py_function_inspect(PyObject * func, int args_count)
 
 					printf("\n");
 
-					if (parameter_list && PyList_Check(parameter_list))
+					if (parameter_list != NULL && PyList_Check(parameter_list))
 					{
 						Py_ssize_t iterator;
 
@@ -248,7 +248,7 @@ int loader_impl_py_function_inspect(PyObject * func, int args_count)
 						{
 							PyObject * parameter = PyList_GetItem(parameter_list, iterator);
 
-							if (parameter)
+							if (parameter != NULL)
 							{
 								PyObject * name = PyObject_GetAttrString(parameter, "name");
 								PyObject * annotation = PyObject_GetAttrString(parameter, "annotation");

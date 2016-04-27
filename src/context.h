@@ -9,7 +9,7 @@ extern "C" {
 
 enum context_language_id
 {
-	LANGUAGE_JAVA_SCRIPT,
+	LANGUAGE_JAVASCRIPT,
 	LANGUAGE_PYTHON,
 	LANGUAGE_RUBY,
 

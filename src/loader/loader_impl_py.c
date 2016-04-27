@@ -26,7 +26,7 @@ int loader_impl_py_execution_path(char * execution_path)
 {
 	PyObject * system_path = PySys_GetObject("path");
 
-	if (system_path)
+	if (system_path != NULL)
 	{
 		PyObject * execution_path_obj;
 
@@ -37,7 +37,7 @@ int loader_impl_py_execution_path(char * execution_path)
 
 		execution_path_obj = PyUnicode_DecodeFSDefault(execution_path);
 
-		if (execution_path_obj)
+		if (execution_path_obj != NULL)
 		{
 			PyList_Append(system_path, execution_path_obj);
 
@@ -60,7 +60,7 @@ int loader_impl_py_execution_path(char * execution_path)
 
 loader_handle loader_impl_py_load(char * path)
 {
-	if (path)
+	if (path != NULL)
 	{
 		loader_naming_name name;
 
@@ -72,13 +72,13 @@ loader_handle loader_impl_py_load(char * path)
 
 		module_name = PyUnicode_DecodeFSDefault(name);
 
-		if (module_name)
+		if (module_name != NULL)
 		{
 			PyObject * module_import = PyImport_Import(module_name);
 
 			Py_DECREF(module_name);
 
-			if (module_import)
+			if (module_import != NULL)
 			{
 				printf("debug: module %s imported\n", name);
 
@@ -94,7 +94,7 @@ loader_handle loader_impl_py_load(char * path)
 
 int loader_impl_py_clear(loader_handle handle)
 {
-	if (handle)
+	if (handle != NULL)
 	{
 		PyObject * module_import = (PyObject *)handle;
 
@@ -106,11 +106,11 @@ int loader_impl_py_clear(loader_handle handle)
 
 int loader_impl_py_discover(loader_handle handle)
 {
-	if (handle && PyModule_Check(handle))
+	if (handle != NULL && PyModule_Check(handle))
 	{
 		PyObject * dict = PyModule_GetDict(handle);
 
-		if (dict)
+		if (dict != NULL)
 		{
 			PyObject * key, * value;
 			Py_ssize_t position = 0;

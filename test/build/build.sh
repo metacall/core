@@ -8,6 +8,8 @@ INCLUDE_PATH=../../src/.
 
 RUBY_INCLUDE_PATH=/usr/include/ruby-2.1.0/
 
+# build abstract data types
+gcc -I$INCLUDE_PATH ../../src/adt/hash_map.c -c -Wall
 
 # build loader implementations
 
@@ -36,7 +38,10 @@ gcc -I$INCLUDE_PATH ../../src/call/argument.c ../../src/call/function.c ../../sr
 #gcc -I$INCLUDE_PATH loader_naming.o loader_id.o loader_js.o loader_impl_py_discovering.o loader_impl_py.o loader_py.o loader_rb.o loader_manager.o loader.o argument.o call.o ../src/argument_test.c -std=gnu99 -lffi -lruby-2.1 `python3.4-config --ldflags`
 
 # build function test
-gcc -I$INCLUDE_PATH loader_naming.o loader_id.o loader_js.o loader_impl_py_discovering.o loader_impl_py.o loader_py.o loader_rb.o loader_manager.o loader.o argument.o function.o call.o ../src/function_test.c -std=gnu99 -lffi -lruby-2.1 `python3.4-config --ldflags`
+#gcc -I$INCLUDE_PATH loader_naming.o loader_id.o loader_js.o loader_impl_py_discovering.o loader_impl_py.o loader_py.o loader_rb.o loader_manager.o loader.o argument.o function.o call.o ../src/function_test.c -std=gnu99 -lffi -lruby-2.1 `python3.4-config --ldflags`
+
+# build hash map test
+gcc -I$INCLUDE_PATH hash_map.o ../src/hash_map_test.c -Wall
 
 # clear
 #rm *.o

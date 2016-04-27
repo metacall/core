@@ -17,14 +17,19 @@ typedef struct argument_type
 
 argument argument_list_head(argument_list arg_list)
 {
-	return (argument)(arg_list + 1);
+	if (arg_list != NULL)
+	{
+		return (argument)(arg_list + 1);
+	}
+
+	return NULL;
 }
 
 argument argument_list_at(argument_list arg_list, int index)
 {
 	argument arg = argument_list_head(arg_list);
 
-	if (index >= 0 && index < arg_list->count)
+	if (arg != NULL && index >= 0 && index < arg_list->count)
 	{
 		return &arg[index];
 	}
@@ -54,7 +59,7 @@ size_t argument_primitive_size(enum argument_type_id id)
 
 int argument_list_count(argument_list arg_list)
 {
-	if (arg_list)
+	if (arg_list != NULL)
 	{
 		return arg_list->count;
 	}
@@ -66,41 +71,67 @@ void argument_list_set(argument_list arg_list, int index, enum argument_type_id 
 {
 	argument arg = argument_list_at(arg_list, index);
 
-	arg->id = id;
-	arg->data = data;
-	arg->size = size;
-	arg->impl = arg_list->table_id(id);
+	if (arg != NULL)
+	{
+		arg->id = id;
+		arg->data = data;
+		arg->size = size;
+		arg->impl = arg_list->table_id(id);
+	}
 }
 
 enum argument_type_id argument_list_get_id(argument_list arg_list, int index)
 {
 	argument arg = argument_list_at(arg_list, index);
 
-	return arg->id;
+	if (arg != NULL)
+	{
+		return arg->id;
+	}
+
+	return TYPE_COUNT;
 }
 
 void * argument_list_get_data(argument_list arg_list, int index)
 {
 	argument arg = argument_list_at(arg_list, index);
 
-	return arg->data;
+	if (arg != NULL)
+	{
+		return arg->data;
+	}
+
+	return NULL;
 }
 
 size_t argument_list_get_size(argument_list arg_list, int index)
 {
 	argument arg = argument_list_at(arg_list, index);
 
-	return arg->size;
+	if (arg != NULL)
+	{
+		return arg->size;
+	}
+
+	return 0;
 }
 
 argument_type_impl argument_list_get_impl(argument_list arg_list, int index)
 {
 	argument arg = argument_list_at(arg_list, index);
 
-	return arg->impl;
+	if (arg != NULL)
+	{
+		return arg->impl;
+	}
+
+	return NULL;
 }
 
 void argument_list_destroy(argument_list arg_list)
 {
-	free(arg_list);
+	if (arg_list != NULL)
+	{
+		free(arg_list);
+	}
 }

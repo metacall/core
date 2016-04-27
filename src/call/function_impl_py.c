@@ -17,15 +17,15 @@ void example_script(void (*callback)(PyObject *))
 
 	Py_DECREF(module_name);
 
-	if (example_module)
+	if (example_module != NULL)
 	{
 		PyObject *func_multiply = PyObject_GetAttrString(example_module, "multiply");
 
-		if (func_multiply && PyCallable_Check(func_multiply))
+		if (func_multiply != NULL && PyCallable_Check(func_multiply))
 		{
 			printf("Function loaded correctly\n");
 
-			if (callback)
+			if (callback != NULL)
 			{
 				callback(func_multiply);
 			}

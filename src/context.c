@@ -1,4 +1,5 @@
 #include <call/context.h>
+#include <loader/
 
 #include <string.h>
 
@@ -8,12 +9,15 @@ typedef struct context_type
 {
 	char name[CONTEXT_NAME_SIZE];
 	enum context language_id lang;
-	//hashmap function_map;
+	hashmap function_map;
+
+
+
 } * contoext;
 
 context context_create(char * name, enum context_language_id lang)
 {
-	if (name && lang < LANGUAGE_COUNT)
+	if (name != NULL && lang < LANGUAGE_COUNT)
 	{
 		context ctx = malloc(sizeof(struct context_type));
 
@@ -38,5 +42,3 @@ function context_get_function(char * name);
 //... context_get_*(char * name);
 
 void context_destroy(context ctx);
-
-#endif // CONTEXT_H
