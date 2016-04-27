@@ -1,0 +1,65 @@
+
+[X] -> Done
+[-] -> Review
+[ ] -> To do
+
+To adapt this template to your own project, follow these steps:
+
+--------------------------------------------------------------------
+In the root directory adapt/change/do the following:
+
+[X] Edit AUTHORS
+[-] Edit LICENSE
+[ ] Edit README.md
+[X] Rename ./template-config.cmake -> <project>-config.cmake
+
+CMakeLists.txt:
+[X]  Set META_PROJECT_*
+[X]  Set META_VERSION_*
+[X]  Set META_AUTHOR_*
+[-]  Adjust INSTALL_* to the desired install locations for all systems (defaults should be fine for a start)
+--------------------------------------------------------------------
+
+
+--------------------------------------------------------------------
+In subdirectory "./deploy/" do:
+deploy/CMakeLists.txt:
+[X] Substitute pack-template.cmake -> pack-<project>.cmake
+[ ] Exchange deploy/images/logo.ico
+[ ] Exchange deploy/images/logo.bmp
+[ ] Exchange deploy/images/logo.png
+[X] Rename deploy/packages/pack-template.cmake -> pack-<project>.cmake
+deploy/packages/pack-<project>.cmake:
+[ ] Adjust OPTION_PACK_GENERATOR to your liking for all systems
+[ ] Adjust package options, e.g., CPACK_DEBIAN_PACKAGE_DEPENDS, CPACK_DEBIAN_PACKAGE_SECTION, CPACK_DEBIAN_PACKAGE_PRIORITY, CPACK_RPM_PACKAGE_LICENSE, CPACK_RPM_PACKAGE_GROUP, ...
+--------------------------------------------------------------------
+
+
+--------------------------------------------------------------------
+In subdirectory "./source/fibcmd" do:
+
+source/fibcmd/main.cpp:
+[ ] Substitute template-version.h -> <project>-version.h
+[ ] Substitute TEMPLATE_VERSION -> <PROJECT>_VERSION
+--------------------------------------------------------------------
+
+
+--------------------------------------------------------------------
+In subdirectory "./docs/api-docs/" do:
+
+docs/api-docs/doxyfile.in:
+[ ] Adjust INPUT tag (list of doxygen annotated sources)
+--------------------------------------------------------------------
+
+
+--------------------------------------------------------------------
+General stuff left to do:
+
+[ ] Rename and adjust projects in source/
+[ ] Add new projects to source/CMakeLists.txt
+[ ] Add new projects to ./{project}-config.cmake
+[ ] Add new projects to docs/api-docs/doxyfile.in
+[ ] Remove data/DATA_FOLDER.txt
+[ ] Populate data/
+[ ] Remove ADAPT
+--------------------------------------------------------------------
