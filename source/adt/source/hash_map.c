@@ -1,3 +1,11 @@
+/************************************************************************/
+/*	Abstract Data Type Library by Parra Studios							*/
+/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
+/*																		*/
+/*	A abstract data type library providing generic containers.			*/
+/*																		*/
+/************************************************************************/
+
 #include <adt/hash_map.h>
 
 #include <stdio.h>
@@ -30,6 +38,7 @@ typedef struct hash_map_type
 	hash_map_bucket buckets;
 	hash_map_cb_hash hash_cb;
 	hash_map_cb_compare compare_cb;
+	int reallocating;
 
 } * hash_map;
 
@@ -37,9 +46,9 @@ int hash_map_bucket_capacity(size_t prime)
 {
 	static int capacity_primes[] =
 	{
-		13, 31, // TODO: remove
+		/* todo: make a better (or configurable) policy */
 
-		61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521
+		13, 31, 61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521
 	};
 
 	if (prime < sizeof(capacity_primes) / sizeof(capacity_primes[0]))
@@ -92,6 +101,7 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 		{
 			map->hash_cb = hash_cb;
 			map->compare_cb = compare_cb;
+			map->reallocating = 0;
 
 			if (hash_map_bucket_create(map, 0) == 0)
 			{
@@ -109,24 +119,29 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 
 int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 {
-	if (bucket->pairs == NULL && bucket->capacity == 0)
+	if (bucket)
 	{
-		bucket->pairs = malloc(sizeof(struct hash_map_pair_type) * HASH_MAP_BUCKET_PAIRS_DEFAULT);
-
-		if (bucket->pairs)
+		if (bucket->pairs == NULL && bucket->capacity == 0)
 		{
-			bucket->count = 0;
-			bucket->capacity = HASH_MAP_BUCKET_PAIRS_DEFAULT;
+			bucket->pairs = malloc(sizeof(struct hash_map_pair_type) * HASH_MAP_BUCKET_PAIRS_DEFAULT);
 
-			return 0;
+			if (bucket->pairs)
+			{
+				bucket->count = 0;
+				bucket->capacity = HASH_MAP_BUCKET_PAIRS_DEFAULT;
+
+				return 0;
+			}
+
+			printf("error: hash map alloc pairs\n");
+
+			return 1;
 		}
 
-		printf("error: hash map alloc pairs\n");
-
-		return 1;
+		return 0;
 	}
 
-	return 0;
+	return 1;
 }
 
 int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
@@ -165,7 +180,7 @@ int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_va
 {
 	hash_map new_map = (hash_map)args;
 
-	if (new_map != map)
+	if (new_map != map && key != NULL && value != NULL)
 	{
 		return hash_map_insert(new_map, key, value);
 	}
@@ -175,13 +190,13 @@ int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_va
 
 int hash_map_bucket_realloc(hash_map map)
 {
-	struct hash_map_type temp_map;
+	struct hash_map_type new_map;
 
 	size_t prime = map->prime;
 
 	float ratio = (float)((float)map->count / (float)map->capacity);
 
-	if (prime > 0 && ratio <= HASH_MAP_BUCKET_RATIO_MIN)
+	if (map->reallocating == 0 && (prime > 0 && ratio <= HASH_MAP_BUCKET_RATIO_MIN))
 	{
 		--prime;
 	}
@@ -194,17 +209,23 @@ int hash_map_bucket_realloc(hash_map map)
 		return 0;
 	}
 
-	if (hash_map_bucket_create(&temp_map, prime) == 0)
-	{
-		hash_map_iterate(map, &hash_map_bucket_realloc_iterator, &temp_map);
+	new_map.hash_cb = map->hash_cb;
+	new_map.compare_cb = map->compare_cb;
+	new_map.reallocating = 1;
 
-		map->count = temp_map.count;
-		map->capacity = temp_map.capacity;
-		map->prime = temp_map.prime;
+	if (hash_map_bucket_create(&new_map, prime) == 0)
+	{
+		hash_map_iterate(map, &hash_map_bucket_realloc_iterator, &new_map);
+
+		map->count = new_map.count;
+		map->capacity = new_map.capacity;
+		map->prime = new_map.prime;
+
+		map->reallocating = 0;
 
 		free(map->buckets);
 
-		map->buckets = temp_map.buckets;
+		map->buckets = new_map.buckets;
 
 		return 0;
 	}
@@ -296,6 +317,10 @@ int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
 
 		if (hash_map_bucket_realloc(map) == 0)
 		{
+			index = hash % map->capacity;
+
+			bucket = &map->buckets[index];
+
 			if (hash_map_bucket_alloc_pairs(bucket) == 0)
 			{
 				if (hash_map_bucket_insert(map, bucket, key, value) == 0)
@@ -419,6 +444,36 @@ void hash_map_iterate(hash_map map, hash_map_cb_iterate iterate_cb, hash_map_cb_
 			}
 		}
 	}
+}
+
+int hash_map_clear(hash_map map)
+{
+	if (map != NULL)
+	{
+		if (map->buckets != NULL)
+		{
+			int i;
+
+			for (i = 0; i < map->capacity; ++i)
+			{
+				hash_map_bucket bucket = &map->buckets[i];
+
+				if (bucket->pairs != NULL)
+				{
+					free(bucket->pairs);
+				}
+			}
+
+			free(map->buckets);
+		}
+
+		if (hash_map_bucket_create(map, 0) == 0)
+		{
+			return 0;
+		}
+	}
+
+	return 1;
 }
 
 void hash_map_destroy(hash_map map)

@@ -1,37 +1,31 @@
 
-#include "MainWindow.h"
+#include "main_window.h"
 
 #include <QMessageBox>
 
-#include <template/template-version.h>
+#include <metacall/metacall-version.h>
 
-#include <fiblib/Fibonacci.h>
-
-#include "ui_MainWindow.h"
+#include "ui_main_window.h"
 
 
-MainWindow::MainWindow()
-: m_ui(new Ui::MainWindow)
+main_window::main_window() : impl(new Ui::main_window)
 {
-    // Setup UI
-    m_ui->setupUi(this);
+	impl->setupUi(this);
+}
+
+main_window::~main_window()
+{
 
 }
 
-MainWindow::~MainWindow()
+void main_window::on_editNumber_valueChanged(int value)
 {
+	impl->result->setText(QString::number(value));
 }
 
-void MainWindow::on_editNumber_valueChanged(int value)
+void main_window::on_about()
 {
-    fiblib::Fibonacci fib;
-    m_ui->result->setText("Fib(" + QString::number(value) + ") = " + QString::number(fib(value)));
-}
+	QString about = QString() + "Version: " + METACALL_VERSION + "\n";
 
-void MainWindow::on_about()
-{
-    QString about = QString() +
-        "Version:   " + TEMPLATE_VERSION + "\n";
-
-    QMessageBox::about(this, "template project", about);
+	QMessageBox::about(this, "template project", about);
 }

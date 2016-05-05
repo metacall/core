@@ -1,3 +1,11 @@
+/************************************************************************/
+/*	MetaCall Library by Parra Studios									*/
+/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
+/*																		*/
+/*	A library for providing a foreign function interface calls.			*/
+/*																		*/
+/************************************************************************/
+
 #ifndef METACALL_H
 #define METACALL_H 1
 
@@ -13,4 +21,4 @@ METACALL_API void metacall_print_info(void);
 }
 #endif
 
-#endif // METACALL_H
+#endif /* METACALL_H */

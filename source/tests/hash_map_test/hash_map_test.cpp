@@ -1,3 +1,10 @@
+/************************************************************************/
+/*	Abstract Data Type Library by Parra Studios							*/
+/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
+/*																		*/
+/*	A abstract data type library providing generic containers.			*/
+/*																		*/
+/************************************************************************/
 
 #include <gmock/gmock.h>
 
@@ -5,29 +12,11 @@
 #include <cstring>
 
 #include <adt/hash_map.h>
+#include <adt/hash_map_str.h>
 
 typedef char key_str[7];
 
 static size_t iterator_counter = 0;
-
-hash_map_hash hash_map_cb_hash_str(hash_map_key key)
-{
-	char * str = (char *)key;
-
-	hash_map_hash hash = 0x1505;
-
-	while (*str++ != '\0')
-	{
-		hash = (hash_map_hash)(((hash << 5) + hash) + *str);
-	}
-
-	return hash;
-}
-
-int hash_map_cb_compare_str(hash_map_key key_a, hash_map_key key_b)
-{
-	return strcmp((char *)key_a, (char *)key_b);
-}
 
 int hash_map_cb_iterate_str_to_int(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
 {
@@ -97,6 +86,8 @@ TEST_F(hash_map_test, CheckSomeResults)
 	for (size_t i = 0; i < sizeof(key_array) / sizeof(key_array[0]); ++i)
 	{
 		int * value = (int *)hash_map_get(map, key_array[i]);
+
+		EXPECT_NE((int *) value, (int *) NULL);
 
 		EXPECT_EQ((int) *value, (int) value_array[i]);
 	}

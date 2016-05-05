@@ -37,7 +37,7 @@ string(SUBSTRING "${GIT_SHA1}" 0 12 GIT_REV)
 
 # Meta information about the project
 set(META_PROJECT_NAME        "metacall")
-set(META_PROJECT_DESCRIPTION "MetaCall Library")
+set(META_PROJECT_DESCRIPTION "MetaCall Framework")
 set(META_AUTHOR_ORGANIZATION "Parra Studios")
 set(META_AUTHOR_DOMAIN       "https://parrastudios.com/")
 set(META_AUTHOR_MAINTAINER   "vic798@gmail.com")

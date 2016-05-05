@@ -1,6 +1,6 @@
 #include <metacall/metacall.h>
 
-int main(int argc, char * argv[])
+int main(int /*argc*/, char * /*argv*/[])
 {
 	metacall_print_info();
 

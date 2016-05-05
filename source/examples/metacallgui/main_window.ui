@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>main_window</class>
+ <widget class="QMainWindow" name="main_window">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -101,13 +101,13 @@
   <connection>
    <sender>quitAction</sender>
    <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
+   <receiver>main_window</receiver>
    <slot>close()</slot>
   </connection>
   <connection>
    <sender>aboutAction</sender>
    <signal>triggered()</signal>
-   <receiver>MainWindow</receiver>
+   <receiver>main_window</receiver>
    <slot>on_about()</slot>
   </connection>
  </connections>

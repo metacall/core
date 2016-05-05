@@ -33,11 +33,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/adt.h
     ${include_path}/hash_map.h
+    ${include_path}/hash_map_str.h
 )
 
 set(sources
     ${source_path}/adt.c
     ${source_path}/hash_map.c
+    ${source_path}/hash_map_str.c
 )
 
 # Group source files

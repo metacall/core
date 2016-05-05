@@ -7,8 +7,10 @@
 
 # List of modules
 set(MODULE_NAMES
-    baselib
-    fiblib
+    adt
+    reflect
+    loader
+    metacall
 )
 
 

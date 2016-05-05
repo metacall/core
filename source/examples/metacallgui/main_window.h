@@ -1,13 +1,12 @@
-
-#pragma once
-
+#ifndef METACALL_GUI_MAIN_WINDOW_H
+#define METACALL_GUI_MAIN_WINDOW_H 1
 
 #include <QMainWindow>
 #include <QScopedPointer>
 
 
 namespace Ui {
-    class MainWindow;
+    class main_window;
 }
 
 
@@ -15,23 +14,22 @@ namespace Ui {
 *  @brief
 *    Main window of the metacallgui example
 */
-class MainWindow : public QMainWindow
+class main_window : public QMainWindow
 {
     Q_OBJECT
-
 
 public:
     /**
     *  @brief
     *    Constructor
     */
-    MainWindow();
+    main_window();
 
     /**
     *  @brief
     *    Destructor
     */
-    virtual ~MainWindow();
+    virtual ~main_window();
 
 
 protected slots:
@@ -40,5 +38,7 @@ protected slots:
 
 
 protected:
-    const QScopedPointer<Ui::MainWindow> m_ui;
+    const QScopedPointer<Ui::main_window> impl;
 };
+
+#endif // METACALL_GUI_MAIN_WINDOW_H
