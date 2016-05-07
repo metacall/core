@@ -8,6 +8,7 @@
 # List of modules
 set(MODULE_NAMES
     adt
+	dynlink
     reflect
     loader
     metacall

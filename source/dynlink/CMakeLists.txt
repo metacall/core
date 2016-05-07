@@ -11,7 +11,7 @@
 # 
 
 # Target name
-set(target loader)
+set(target dynlink)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -22,8 +22,6 @@ set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
-# Define project options
-option(${target_upper}_LAZY "Defines a lazy initialization and destruction of the loader library" ON)
 
 # 
 # Sources
@@ -33,19 +31,37 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-    ${include_path}/loader.h
-    ${include_path}/loader_handle.h
-    ${include_path}/loader_impl_interface.h
-    ${include_path}/loader_impl.h
-    ${include_path}/loader_naming_type.h
-    ${include_path}/loader_naming.h
+    ${include_path}/dynlink.h
+    ${include_path}/dynlink_flags.h
+    ${include_path}/dynlink_type.h
+    ${include_path}/dynlink_impl.h
+    ${include_path}/dynlink_impl_interface.h
+    ${include_path}/dynlink_impl_macos.h
+    ${include_path}/dynlink_impl_unix.h
+    ${include_path}/dynlink_impl_win32.h
 )
 
 set(sources
-    ${source_path}/loader.c
-    ${source_path}/loader_impl.c
-    ${source_path}/loader_naming.c
+    ${source_path}/dynlink.c
+    ${source_path}/dynlink_impl.c
 )
+
+if(APPLE)
+	set(sources
+		${sources}
+		${source_path}/dynlink_impl_macos.c
+	)
+elseif(UNIX)
+	set(sources
+		${sources}
+		${source_path}/dynlink_impl_unix.c
+	)
+elseif(WIN32)
+	set(sources
+		${sources}
+		${source_path}/dynlink_impl_win32.c
+	)
+endif()
 
 # Group source files
 set(header_group "Header Files (API)")
@@ -137,9 +153,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::dynlink
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -154,7 +167,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
     PRIVATE
-    $<$<BOOL:${target_upper}_LAZY>:${target_upper}_LAZY>
 
     PUBLIC
     $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

@@ -22,7 +22,7 @@ typedef struct loader_type
 
 } * loader;
 
-loader loader_singleton()
+loader loader_singleton(void)
 {
 	static struct loader_type loader_instance =
 	{
@@ -32,7 +32,7 @@ loader loader_singleton()
 	return &loader_instance;
 }
 
-void loader_initialize()
+void loader_initialize(void)
 {
 	loader l = loader_singleton();
 

@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-void adt_print_info()
+void adt_print_info(void)
 {
 	printf("Abstract Data Type Library " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");

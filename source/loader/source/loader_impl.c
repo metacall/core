@@ -11,6 +11,8 @@
 #include <adt/hash_map.h>
 #include <adt/hash_map_str.h>
 
+#include <dynlink/dynlink.h>
+
 #include <stdlib.h>
 #include <string.h>
 

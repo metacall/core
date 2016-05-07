@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-void metacall_print_info()
+void metacall_print_info(void)
 {
 	printf("MetaCall Library " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");

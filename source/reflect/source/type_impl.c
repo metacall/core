@@ -40,7 +40,7 @@ void type_destroy_impl_null(type t, type_impl impl)
 	(void)t; (void)impl;
 }
 
-type_interface type_interface_impl_null()
+type_interface type_interface_impl_null(void)
 {
 	static struct type_interface_type interface =
 	{

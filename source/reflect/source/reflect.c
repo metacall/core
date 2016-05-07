@@ -12,7 +12,7 @@
 
 #include <stdio.h>
 
-void reflect_print_info()
+void reflect_print_info(void)
 {
 	printf("Reflect Library " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
