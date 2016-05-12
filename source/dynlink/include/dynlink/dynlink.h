@@ -61,6 +61,18 @@ DYNLINK_API dynlink_name dynlink_get_name(dynlink handle);
 
 /**
 *  @brief
+*    Retreive the file name of the dynamically linked shared object handle
+*
+*  @param[in] handle
+*    Handle of dynamically linked shared object
+*
+*  @return
+*    Reference to the file name of the dynamically linked shared object
+*/
+DYNLINK_API dynlink_name dynlink_get_name_impl(dynlink handle);
+
+/**
+*  @brief
 *    Retreive the linking flags of the dynamically linked shared object
 *
 *  @param[in] handle

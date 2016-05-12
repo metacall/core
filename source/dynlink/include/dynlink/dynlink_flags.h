@@ -19,9 +19,10 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define DYNLINK_FLAGS_BIND_LAZY		(0x01 << 0x00)			/**< Lazy bind flag */
-#define DYNLINK_FLAGS_BIND_LOCAL	(0x01 << 0x01)			/**< Private visibility bind flag */
-#define DYNLINK_FLAGS_BIND_GLOBAL	(0x01 << 0x02)			/**< Public visibility bind flag */
+#define DYNLINK_FLAGS_BIND_NOW		(0x01 << 0x00)			/**< Inmediate loading bind flag */
+#define DYNLINK_FLAGS_BIND_LAZY		(0x01 << 0x01)			/**< Lazy loading bind flag */
+#define DYNLINK_FLAGS_BIND_LOCAL	(0x01 << 0x02)			/**< Private visibility bind flag */
+#define DYNLINK_FLAGS_BIND_GLOBAL	(0x01 << 0x03)			/**< Public visibility bind flag */
 
 /* -- Macros -- */
 

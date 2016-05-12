@@ -18,26 +18,35 @@
 #include <dynlink/dynlink_impl_@DYNLINK_IMPL_INTERFACE_NAME@.h>
 #include <dynlink/dynlink_impl.h>
 
+#include <stdlib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* -- Macros -- */
 
-#define CONCAT(a, b) a ## b
-#define STRINGIFY(token) # token
+#define CONCAT_IMPL(a, b) a ## b
+#define CONCAT(a, b) CONCAT_IMPL(a, b)
+
+#define STRINGIFY_IMPL(...) # __VA_ARGS__
+#define STRINGIFY(token) STRINGIFY_IMPL(token)
 
 #define DYNLINK_SYMBOL_NAME(name) \
-	CONCAT(dynlink_symbol_, name)
+	CONCAT(DYNLINK_SYMBOL_PREFIX, name)
 
 #define DYNLINK_SYMBOL_NAME_STR(name) \
 	STRINGIFY(DYNLINK_SYMBOL_NAME(name))
+
+#define DYNLINK_SYMBOL_STR(name) \
+	STRINGIFY(DYNLINK_SYMBOL_PREFIX) name
 
 /* -- Type definitions -- */
 
 typedef dynlink_symbol_addr * dynlink_symbol_addr_ptr;
 
 typedef const char * (*dynlink_impl_interface_extension)(void);
+typedef void (*dynlink_impl_interface_get_name)(dynlink, dynlink_name_impl, size_t);
 typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
 typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr_ptr);
 typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);
@@ -45,6 +54,7 @@ typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);
 typedef struct dynlink_impl_interface_type
 {
 	dynlink_impl_interface_extension extension;
+	dynlink_impl_interface_get_name get_name;
 	dynlink_impl_interface_load load;
 	dynlink_impl_interface_symbol symbol;
 	dynlink_impl_interface_unload unload;

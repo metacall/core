@@ -11,11 +11,21 @@
 
 #include <py_loader/py_loader_api.h>
 
+#include <loader/loader_impl_interface.h>
+
+#include <dynlink/dynlink.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+PY_LOADER_API loader_impl_interface loader_impl_interface_singleton_py(void);
+
+DYNLINK_SYMBOL_EXPORT(loader_impl_interface_singleton_py);
+
 PY_LOADER_API void py_loader_print_info(void);
+
+DYNLINK_SYMBOL_EXPORT(py_loader_print_info);
 
 #ifdef __cplusplus
 }

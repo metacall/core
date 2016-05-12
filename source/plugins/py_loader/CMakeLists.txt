@@ -2,11 +2,10 @@
 # External dependencies
 #
 
-#find_package(PythonInterp)
-#find_package(PythonLibs)
-#
-#if(NOT PYHTONINTERP_FOUND OR NOT PYTHONLIBS_FOUND)
-#    message(STATUS "Python dependencies not found")
+find_package(PythonLibs)
+
+#if(NOT PYTHONLIBS_FOUND)
+#    message(STATUS "Python libs not found")
 #    return()
 #endif()
 
@@ -35,10 +34,12 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
     ${include_path}/py_loader.h
+    ${include_path}/py_loader_impl.h
 )
 
 set(sources
     ${source_path}/py_loader.c
+    ${source_path}/py_loader_impl.c
 )
 
 # Group source files
@@ -128,6 +129,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${META_PROJECT_NAME}::adt
+    ${META_PROJECT_NAME}::dynlink
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
 

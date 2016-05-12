@@ -14,8 +14,11 @@
 #include <dynlink/dynlink_api.h>
 
 #include <dynlink/dynlink_type.h>
+#include <dynlink/dynlink_impl_name.h>
 #include <dynlink/dynlink_impl_type.h>
 #include <dynlink/dynlink_interface.h>
+
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,6 +34,18 @@ extern "C" {
 *    A const string reference to the extension depending on the OS implementation
 */
 DYNLINK_API const char * dynlink_impl_extension(void);
+
+/**
+*  @brief
+*    Consturct the file name of dynamically linked shared object implementation
+*
+*  @param[in] handle
+*    Handle of dynamically linked shared object
+*
+*  @param[out] name_impl
+*    Pointer to the dynamically linked shared object handle
+*/
+DYNLINK_API void dynlink_impl_get_name(dynlink handle, dynlink_name_impl name_impl, size_t length);
 
 /**
 *  @brief

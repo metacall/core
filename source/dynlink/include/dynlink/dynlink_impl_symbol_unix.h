@@ -17,10 +17,15 @@
 extern "C" {
 #endif
 
+/* -- Definitions -- */
+
+#define DYNLINK_SYMBOL_PREFIX \
+	dynlink_symbol_
+
 /* -- Macros -- */
 
 #define DYNLINK_SYMBOL_EXPORT(name) \
-	DYNLINK_API static struct dynlink_symbol_addr_unix_type = DYNLINK_SYMBOL_NAME(name) = \
+	DYNLINK_API struct dynlink_symbol_addr_unix_type DYNLINK_SYMBOL_NAME(name) = \
 	{ \
 		(dynlink_symbol_addr_unix_impl)&name \
 	}

@@ -26,19 +26,30 @@ TEST_F(dynlink_test, DefaultConstructor)
 	printf("Dynamic linked shared object extension: %s\n", dynlink_extension());
 
 	{
-		dynlink handle = dynlink_load("py_loader", DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+		dynlink handle = dynlink_load("py_loader", DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		EXPECT_NE(handle, (dynlink) NULL);
 
+		printf("Dynamic linked shared object file: %s\n", dynlink_get_name_impl(handle));
+
 		if (handle != NULL)
 		{
-			dynlink_symbol_addr py_loader_print_info_addr;
+			static dynlink_symbol_addr py_loader_print_info_addr;
 
-			EXPECT_EQ((int) 0, dynlink_symbol(handle, "py_loader_print_info", &py_loader_print_info_addr));
+			EXPECT_EQ((int) 0, dynlink_symbol(handle, DYNLINK_SYMBOL_STR("py_loader_print_info"), &py_loader_print_info_addr));
 
 			if (py_loader_print_info_addr != NULL)
 			{
 				py_loader_print_func print = DYNLINK_SYMBOL_GET(py_loader_print_info_addr);
+
+				printf("Print function: %p\n", (void *)print);
+
+				printf("Symbol pointer: %p\n", (void *)py_loader_print_info_addr);
+
+				if (DYNLINK_SYMBOL_GET(py_loader_print_info_addr) != NULL)
+				{
+					printf("Pointer is valid\n");
+				}
 
 				print();
 			}

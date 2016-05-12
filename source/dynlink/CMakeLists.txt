@@ -45,6 +45,7 @@ set(headers
     ${include_path}/dynlink.h
     ${include_path}/dynlink_flags.h
     ${include_path}/dynlink_type.h
+    ${include_path}/dynlink_impl_name.h
     ${include_path}/dynlink_impl_type.h
     ${include_path}/dynlink_impl.h
     ${include_path}/dynlink_impl_symbol_${DYNLINK_IMPL_INTERFACE_NAME}.h

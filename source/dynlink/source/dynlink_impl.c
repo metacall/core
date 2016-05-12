@@ -21,6 +21,16 @@ const char * dynlink_impl_extension(void)
 	return singleton()->extension();
 }
 
+void dynlink_impl_get_name(dynlink handle, dynlink_name_impl name_impl, size_t length)
+{
+	if (name_impl != NULL && length > 0)
+	{
+		dynlink_impl_interface_singleton singleton = dynlink_interface();
+
+		singleton()->get_name(handle, name_impl, length);
+	}
+}
+
 dynlink_impl dynlink_impl_load(dynlink handle)
 {
 	dynlink_impl_interface_singleton singleton = dynlink_interface();

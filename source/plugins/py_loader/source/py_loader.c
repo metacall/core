@@ -10,7 +10,24 @@
 
 #include <py_loader/py_loader.h>
 
+#include <py_loader/py_loader_impl.h>
+
 #include <stdio.h>
+
+loader_impl_interface py_loader_impl_interface_singleton(void)
+{
+	static struct loader_impl_interface_type loader_impl_interface_py =
+	{
+		&py_loader_impl_initialize,
+		&py_loader_impl_execution_path,
+		&py_loader_impl_load,
+		&py_loader_impl_clear,
+		&py_loader_impl_discover,
+		&py_loader_impl_destroy
+	};
+
+	return &loader_impl_interface_py;
+}
 
 void py_loader_print_info()
 {

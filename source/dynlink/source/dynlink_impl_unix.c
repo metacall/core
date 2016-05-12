@@ -12,16 +12,28 @@
 
 #include <dynlink/dynlink_impl.h>
 
-#include <stdlib.h>
+#include <string.h>
+
 #include <dlfcn.h>
 
 /* -- Methods -- */
 
 const char * dynlink_impl_interface_extension_unix(void)
 {
-	static const char extension_unix[0x04] = ".so";
+	static const char extension_unix[0x03] = "so";
 
 	return extension_unix;
+}
+
+void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t length)
+{
+	strncpy(name_impl, "lib", length);
+
+	strncat(name_impl, dynlink_get_name(handle), length);
+
+	strncat(name_impl, ".", length);
+
+	strncat(name_impl, dynlink_impl_extension(), length);
 }
 
 dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
@@ -33,6 +45,11 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 	void * impl;
 
 	DYNLINK_FLAGS_SET(flags_impl, 0);
+
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NOW))
+	{
+		DYNLINK_FLAGS_ADD(flags_impl, RTLD_NOW);
+	}
 
 	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
 	{
@@ -49,7 +66,7 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 		DYNLINK_FLAGS_ADD(flags_impl, RTLD_GLOBAL);
 	}
 
-	impl = dlopen(dynlink_get_name(handle), flags_impl);
+	impl = dlopen(dynlink_get_name_impl(handle), flags_impl);
 
 	if (impl != NULL)
 	{
@@ -82,6 +99,7 @@ dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
 	static struct dynlink_impl_interface_type impl_interface_unix =
 	{
 		&dynlink_impl_interface_extension_unix,
+		&dynlink_impl_interface_get_name_unix,
 		&dynlink_impl_interface_load_unix,
 		&dynlink_impl_interface_symbol_unix,
 		&dynlink_impl_interface_unload_unix

@@ -54,15 +54,15 @@ dynlink loader_impl_dynlink_load(loader_naming_extension extension)
 
 int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr)
 {
-	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_NAME_STR(loader_impl_interface_singleton_);
+	const char loader_dynlink_symbol_suffix[] = DYNLINK_SYMBOL_NAME_STR(loader_impl_interface_singleton);
 
-	#define LOADER_DYNLINK_SYMBOL_SIZE (sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_EXTENSION_SIZE)
+	#define LOADER_DYNLINK_SYMBOL_SIZE (LOADER_NAMING_EXTENSION_SIZE + sizeof(loader_dynlink_symbol_suffix))
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
 
-	strncpy(loader_dynlink_symbol, loader_dynlink_symbol_prefix, sizeof(loader_dynlink_symbol_prefix));
+	strncpy(loader_dynlink_symbol, extension, LOADER_DYNLINK_SYMBOL_SIZE);
 
-	strncat(loader_dynlink_symbol, extension, LOADER_DYNLINK_SYMBOL_SIZE);
+	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix, sizeof(loader_dynlink_symbol_suffix));
 
 	#undef LOADER_DYNLINK_SYMBOL_SIZE
 

@@ -12,6 +12,8 @@
 
 #include <dynlink/dynlink_impl.h>
 
+#include <string.h>
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
@@ -19,14 +21,32 @@
 
 const char * dynlink_impl_interface_extension_win32(void)
 {
-	static const char extension_win32[0x05] = ".dll";
+	static const char extension_win32[0x04] = "dll";
 
 	return extension_win32;
 }
 
+void dynlink_impl_interface_get_name_win32(dynlink handle, dynlink_name_impl name_impl, size_t length)
+{
+	strncpy(name_impl, dynlink_get_name(handle), length);
+
+
+	#if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	{
+		strncat(name_impl, "d.", length);
+	}
+	#else
+	{
+		strncat(name_impl, ".", length);
+	}
+	#endif
+
+	strncat(name_impl, dynlink_impl_extension(), length);
+}
+
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 {
-	HANDLE impl = LoadLibrary(dynlink_get_name(handle));
+	HANDLE impl = LoadLibrary(dynlink_get_name_impl(handle));
 
 	if (impl != NULL)
 	{
@@ -59,6 +79,7 @@ dynlink_impl_interface dynlink_impl_interface_singleton_win32(void)
 	static struct dynlink_impl_interface_type impl_interface_win32 =
 	{
 		&dynlink_impl_interface_extension_win32,
+		&dynlink_impl_interface_get_name_win32,
 		&dynlink_impl_interface_load_win32,
 		&dynlink_impl_interface_symbol_win32,
 		&dynlink_impl_interface_unload_win32

@@ -17,19 +17,12 @@
 #include <stdio.h>
 #include <string.h>
 
-/* -- Definitions -- */
-
-#define DYNLINK_NAME_SIZE			0xFF					/**< Dynamically linked shared object name size */
-
-/* -- Type definitions -- */
-
-typedef char dynlink_name_impl[DYNLINK_NAME_SIZE];			/**< Allocated copy of dynamically linked shared object name */
-
 /* -- Member data -- */
 
 typedef struct dynlink_type
 {
 	dynlink_name_impl				name;					/**< Dynamically linked shared object name */
+	dynlink_name_impl				name_impl;				/**< Dynamically linked shared object file name */
 	dynlink_flags					flags;					/**< Dynamically linked shared object flags */
 	dynlink_impl					impl;					/**< Dynamically linked shared object loader implementation */
 
@@ -50,10 +43,10 @@ dynlink dynlink_load(dynlink_name name, dynlink_flags flags)
 
 		if (handle != NULL)
 		{
-			strncpy(handle->name, name, DYNLINK_NAME_SIZE);
+			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE);
 
-			strncat(handle->name, dynlink_impl_extension(), DYNLINK_NAME_SIZE);
-
+			dynlink_impl_get_name(handle, handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
+			
 			handle->flags = flags;
 
 			handle->impl = dynlink_impl_load(handle);
@@ -75,6 +68,16 @@ dynlink_name dynlink_get_name(dynlink handle)
 	if (handle != NULL)
 	{
 		return handle->name;
+	}
+
+	return NULL;
+}
+
+dynlink_name dynlink_get_name_impl(dynlink handle)
+{
+	if (handle != NULL)
+	{
+		return handle->name_impl;
 	}
 
 	return NULL;
