@@ -1,19 +1,18 @@
 
 # This config script tries to locate the project either in its source tree
 # of from an install location.
-# 
+#
 # Please adjust the list of submodules to search for.
 
 
 # List of modules
 set(MODULE_NAMES
     adt
-	dynlink
+    dynlink
     reflect
     loader
     metacall
 )
-
 
 # Macro to search for a specific module
 macro(find_module FILENAME)

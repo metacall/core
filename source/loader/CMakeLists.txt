@@ -1,14 +1,12 @@
-
-# 
+#
 # External dependencies
-# 
+#
 
 # find_package(THIRDPARTY REQUIRED)
 
-
-# 
+#
 # Library name and options
-# 
+#
 
 # Target name
 set(target loader)
@@ -25,9 +23,9 @@ set(export_macro "${target_upper}_API")
 # Define project options
 option(${target_upper}_LAZY "Defines a lazy initialization and destruction of the loader library" ON)
 
-# 
+#
 # Sources
-# 
+#
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
@@ -55,10 +53,9 @@ source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$" 
     ${source_group} ${sources})
 
-
-# 
+#
 # Create library
-# 
+#
 
 # Build library
 add_library(${target}
@@ -99,21 +96,19 @@ generate_export_header(${target}
     EXPORT_MACRO_NAME ${export_macro}
 )
 
-
-# 
+#
 # Project options
-# 
+#
 
 set_target_properties(${target}
     PROPERTIES
     ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
-)
+    FOLDER "${IDE_FOLDER}")
 
 
-# 
+#
 # Include directories
-# 
+#
 
 target_include_directories(${target}
     PRIVATE
@@ -130,10 +125,9 @@ target_include_directories(${target}
     $<INSTALL_INTERFACE:include>
 )
 
-
-# 
+#
 # Libraries
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
@@ -147,10 +141,9 @@ target_link_libraries(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Compile definitions
-# 
+#
 
 target_compile_definitions(${target}
     PRIVATE
@@ -163,10 +156,9 @@ target_compile_definitions(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Compile options
-# 
+#
 
 target_compile_options(${target}
     PRIVATE
@@ -177,10 +169,9 @@ target_compile_options(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Linker options
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
@@ -191,10 +182,9 @@ target_link_libraries(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Deployment
-# 
+#
 
 # Library
 install(TARGETS ${target}

@@ -1,17 +1,15 @@
-/************************************************************************/
-/*	Reflect Library by Parra Studios									*/
-/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																		*/
-/*	A library for provide reflection and metadata representation.		*/
-/*																		*/
-/************************************************************************/
+/*
+ *	Reflect Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for provide reflection and metadata representation.
+ *
+ */
 
 #ifndef REFLECT_TYPE_H
 #define REFLECT_TYPE_H 1
 
 #include <reflect/reflect_api.h>
-
-#include <reflect/type_primitives.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,16 +1,14 @@
-
-# 
+#
 # Check if cpack is available
-# 
+#
 
 if(NOT EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
     return()
 endif()
 
-
-# 
+#
 # Output packages
-# 
+#
 
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows")
     # Windows installer
@@ -42,10 +40,9 @@ else()
     set(PACK_INCLUDE_TOPDIR ON)
 endif()
 
-
-# 
+#
 # Package components
-# 
+#
 
 set(CPACK_COMPONENT_RUNTIME_DISPLAY_NAME "${META_PROJECT_NAME} library")
 set(CPACK_COMPONENT_RUNTIME_DESCRIPTION "Runtime components for ${META_PROJECT_NAME} library")
@@ -71,10 +68,9 @@ if (OPTION_BUILD_DOCS)
     set(CPACK_COMPONENTS_ALL ${CPACK_COMPONENTS_ALL} docs)
 endif()
 
-
-# 
+#
 # Initialize CPack
-# 
+#
 
 # Reset CPack configuration
 if(EXISTS "${CMAKE_ROOT}/Modules/CPack.cmake")
@@ -109,15 +105,14 @@ set(project_root ${META_PROJECT_NAME})   # Name of root project that is to be in
 string(TOLOWER ${META_PROJECT_NAME} package_name)
 set(package_description ${META_PROJECT_DESCRIPTION})
 set(package_vendor      ${META_AUTHOR_ORGANIZATION})
-set(package_maintainer  ${META_AUTHOR_MAINTAINER}) 
+set(package_maintainer  ${META_AUTHOR_MAINTAINER})
 
 # Package specific options
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/deploy/packages/${project_name})
 
-
-# 
+#
 # Package information
-# 
+#
 
 set(CPACK_PACKAGE_NAME                         "${package_name}")
 set(CPACK_PACKAGE_VENDOR                       "${package_vendor}")
@@ -127,18 +122,17 @@ set(CPACK_PACKAGE_VERSION_MAJOR                "${META_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR                "${META_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH                "${META_VERSION_PATCH}")
 set(CPACK_RESOURCE_FILE_LICENSE                "${PROJECT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README                 "${PROJECT_SOURCE_DIR}/README.md")
-set(CPACK_RESOURCE_FILE_WELCOME                "${PROJECT_SOURCE_DIR}/README.md")
-set(CPACK_PACKAGE_DESCRIPTION_FILE             "${PROJECT_SOURCE_DIR}/README.md")
+set(CPACK_RESOURCE_FILE_README                 "${PROJECT_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_WELCOME                "${PROJECT_SOURCE_DIR}/WELCOME")
+set(CPACK_PACKAGE_DESCRIPTION_FILE             "${PROJECT_SOURCE_DIR}/DESCRIPTION")
 set(CPACK_PACKAGE_ICON                         "${PROJECT_SOURCE_DIR}/deploy/images/logo.bmp")
 set(CPACK_PACKAGE_FILE_NAME                    "${package_name}-${CPACK_PACKAGE_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY            "${package_name}")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY         "${package_name}")
 
-
-# 
+#
 # NSIS package
-# 
+#
 
 # Fix icon path
 if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows" AND CPACK_PACKAGE_ICON)
@@ -148,10 +142,10 @@ if("${CMAKE_SYSTEM_NAME}" MATCHES "Windows" AND CPACK_PACKAGE_ICON)
 
     # SO the following only works for the installer icon, not for the welcome image.
 
-    # NSIS requires "\\" - escaped backslash to work properly. We probably won't rely on this feature, 
+    # NSIS requires "\\" - escaped backslash to work properly. We probably won't rely on this feature,
     # so just replacing / with \\ manually.
 
-    #file(TO_NATIVE_PATH "${CPACK_PACKAGE_ICON}" CPACK_PACKAGE_ICON) 
+    #file(TO_NATIVE_PATH "${CPACK_PACKAGE_ICON}" CPACK_PACKAGE_ICON)
     string(REGEX REPLACE "/" "\\\\\\\\" CPACK_PACKAGE_ICON "${CPACK_PACKAGE_ICON}")
 endif()
 
@@ -182,10 +176,9 @@ if(EXISTS ${INSTALL_MSVC_REDIST_FILEPATH})
         ")
 endif()
 
-
-# 
+#
 # Debian package
-# 
+#
 
 set(CPACK_DEBIAN_PACKAGE_NAME           "${package_name}")
 set(CPACK_DEBIAN_PACKAGE_VERSION        "${CPACK_PACKAGE_VERSION}")
@@ -200,10 +193,9 @@ set(CPACK_DEBIAN_PACKAGE_PRIORITY       "optional")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA  "")
 set(CPACK_DEB_COMPONENT_INSTALL         ${PACK_COMPONENT_INSTALL})
 
-
-# 
+#
 # RPM package
-# 
+#
 
 set(CPACK_RPM_PACKAGE_NAME                            "${package_name}")
 set(CPACK_RPM_PACKAGE_VERSION                         "${CPACK_PACKAGE_VERSION}")
@@ -225,27 +217,26 @@ set(CPACK_RPM_PACKAGE_GROUP                           "unknown")
 set(CPACK_RPM_PACKAGE_RELOCATABLE                     OFF)
 set(CPACK_RPM_COMPONENT_INSTALL                       ${PACK_COMPONENT_INSTALL})
 
-
-# 
+#
 # Archives (zip, tgz, ...)
-# 
+#
 
 set(CPACK_ARCHIVE_COMPONENT_INSTALL ${PACK_COMPONENT_INSTALL})
 
 
-# 
+#
 # Execute CPack
-# 
+#
 
 set(CPACK_OUTPUT_CONFIG_FILE "${PROJECT_BINARY_DIR}/CPackConfig-${project_name}.cmake")
 set(CPACK_GENERATOR          "${OPTION_PACK_GENERATOR}")
 set(CPack_CMake_INCLUDED     FALSE)
+
 include(CPack)
 
-
-# 
+#
 # Package target
-# 
+#
 
 # Create target
 add_custom_target(

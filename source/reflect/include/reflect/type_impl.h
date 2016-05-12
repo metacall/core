@@ -1,10 +1,10 @@
-/************************************************************************/
-/*	Reflect Library by Parra Studios									*/
-/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																		*/
-/*	A library for provide reflection and metadata representation.		*/
-/*																		*/
-/************************************************************************/
+/*
+ *	Reflect Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for provide reflection and metadata representation.
+ *
+ */
 
 #ifndef REFLECT_TYPE_IMPL_H
 #define REFLECT_TYPE_IMPL_H 1

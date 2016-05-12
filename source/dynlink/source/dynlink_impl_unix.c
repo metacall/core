@@ -1,144 +1,91 @@
-/////////////////////////////////////////////////////////////////////////////
-//  Argentum Online C by Parra Studios
-//
-//  A cross-platform mmorpg which keeps the original essence of
-//  Argentum Online created by Pablo Ignacio Marquez (Gulfas Morgolock),
-//  as combats, magics, guilds, although it has new implementations such as
-//  3D graphics engine, new gameplay, and a better performance, among others.
-//
-//  Copyright (C) 2009-2015 Vicente Ferrer Garcia (Parra) - vic798@gmail.com
-//
-//  This program is free software: you can redistribute it and/or modify
-//  it under the terms of the GNU Affero General Public License as
-//  published by the Free Software Foundation, either version 3 of the
-//  License, or (at your option) any later version.
-//
-//  This program is distributed in the hope that it will be useful,
-//  but WITHOUT ANY WARRANTY; without even the implied warranty of
-//  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-//  GNU Affero General Public License for more details.
-//
-//  You should have received a copy of the GNU Affero General Public License
-//  along with this program.  If not, see <http://www.gnu.org/licenses/> or
-//  <http://www.affero.org/oagpl.html>.
-/////////////////////////////////////////////////////////////////////////////
+/*
+ *	Dynamic Link Library by Parra Studios
+ *	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for dynamic loading and linking shared objects at run-time.
+ *
+ */
 
-////////////////////////////////////////////////////////////
-// Headers
-////////////////////////////////////////////////////////////
-#include <System/Unix/LibraryImpl.h>
-#include <Memory/General.h>
+/* -- Headers -- */
+
+#include <dynlink/dynlink.h>
+
+#include <dynlink/dynlink_impl.h>
+
+#include <stdlib.h>
 #include <dlfcn.h>
 
-////////////////////////////////////////////////////////////
-// Definitions
-////////////////////////////////////////////////////////////
+/* -- Methods -- */
 
-
-////////////////////////////////////////////////////////////
-// Member data
-////////////////////////////////////////////////////////////
-struct LibraryImplHandleType
+const char * dynlink_impl_interface_extension_unix(void)
 {
-	void * Handle;
-};
+	static const char extension_unix[0x04] = ".so";
 
-////////////////////////////////////////////////////////////
-// Methods
-////////////////////////////////////////////////////////////
-
-////////////////////////////////////////////////////////////
-/// Get the library extension for Unix
-////////////////////////////////////////////////////////////
-const char * LibraryExtensionImpl()
-{
-    static const char LibraryExtensionImplUnix[0x04] = ".so";
-
-	return LibraryExtensionImplUnix;
+	return extension_unix;
 }
-////////////////////////////////////////////////////////////
 
-////////////////////////////////////////////////////////////
-/// Loads a library returning the handle to it in Unix platform
-////////////////////////////////////////////////////////////
-LibraryImplType LibraryLoadImpl(LibraryNameType Name, LibraryFlagsType Flags)
+dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 {
-    struct LibraryImplHandleType * Impl = (struct LibraryImplHandleType *)MemoryAllocate(sizeof(struct LibraryImplHandleType));
+	dynlink_flags flags = dynlink_get_flags(handle);
 
-    if (Impl)
-    {
-        integer Mode = 0;
+	int flags_impl;
 
-        // Bind flags
-        if (Flags & LIBRARY_FLAGS_BIND_LAZY)
-        {
-            Mode |= RTLD_LAZY;
-        }
+	void * impl;
 
-        if (Flags & LIBRARY_FLAGS_BIND_LOCAL)
-        {
-            Mode |= RTLD_LOCAL;
-        }
+	DYNLINK_FLAGS_SET(flags_impl, 0);
 
-        if (Flags & LIBRARY_FLAGS_BIND_GLOBAL)
-        {
-            Mode |= RTLD_GLOBAL;
-        }
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
+	{
+		DYNLINK_FLAGS_ADD(flags_impl, RTLD_LAZY);
+	}
 
-        // Create and open handle
-        Impl->Handle = dlopen(Name, Mode);
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LOCAL))
+	{
+		DYNLINK_FLAGS_ADD(flags_impl, RTLD_LOCAL);
+	}
 
-        // Return implementation on success
-        if (Impl->Handle)
-        {
-            return (LibraryImplType)Impl;
-        }
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_GLOBAL))
+	{
+		DYNLINK_FLAGS_ADD(flags_impl, RTLD_GLOBAL);
+	}
 
-        // Destroy implementation on error
-        MemoryDeallocate(Impl);
-    }
+	impl = dlopen(dynlink_get_name(handle), flags_impl);
+
+	if (impl != NULL)
+	{
+		return (dynlink_impl)impl;
+	}
 
 	return NULL;
 }
 
-////////////////////////////////////////////////////////////
-/// Unloads a library by its handle in Unix platform
-////////////////////////////////////////////////////////////
-bool LibraryUnloadImpl(LibraryImplType Impl)
+int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
 {
-    bool Result = false;
+	void * symbol = dlsym(impl, name);
 
-    if (Impl)
-    {
-        struct LibraryImplHandleType * ImplHandle = Impl;
+	(void)handle;
 
-        // Close handle
-        if (dlclose(ImplHandle->Handle))
-        {
-            Result = true;
-        }
+	*addr = (dynlink_symbol_addr)symbol;
 
-        // Destroy implementation
-        MemoryDeallocate(ImplHandle);
-    }
-
-	return Result;
+	return (*addr == NULL);
 }
 
-////////////////////////////////////////////////////////////
-/// Get a symbol from library in Unix platform
-////////////////////////////////////////////////////////////
-bool LibrarySymbolImpl(LibraryImplType Impl, LibrarySymbolNameType Name, LibrarySymbolType * Address)
+int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 {
-    if (Impl)
-    {
-        struct LibraryImplHandleType * ImplHandle = Impl;
+	(void)handle;
 
-        // Retreive address from symbol and handle
-        *Address = dlsym(ImplHandle->Handle, Name);
+	return dlclose(impl);
+}
 
-        return (*Address != NULL);
-    }
+dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
+{
+	static struct dynlink_impl_interface_type impl_interface_unix =
+	{
+		&dynlink_impl_interface_extension_unix,
+		&dynlink_impl_interface_load_unix,
+		&dynlink_impl_interface_symbol_unix,
+		&dynlink_impl_interface_unload_unix
+	};
 
-    return false;
+	return &impl_interface_unix;
 }

@@ -10,7 +10,7 @@ In the root directory adapt/change/do the following:
 
 [X] Edit AUTHORS
 [-] Edit LICENSE
-[ ] Edit README.md
+[ ] Edit README
 [X] Rename ./template-config.cmake -> <project>-config.cmake
 
 CMakeLists.txt:

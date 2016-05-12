@@ -1,10 +1,10 @@
-/********************************************************************************/
-/*	Dynamic Link by Parra Studios												*/
-/*	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																				*/
-/*	A library for dynamic loading and linking shared objects at run-time.		*/
-/*																				*/
-/********************************************************************************/
+/*
+ *	Dynamic Link Library by Parra Studios
+ *	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for dynamic loading and linking shared objects at run-time.
+ *
+ */
 
 /* -- Headers -- */
 
@@ -51,6 +51,8 @@ dynlink dynlink_load(dynlink_name name, dynlink_flags flags)
 		if (handle != NULL)
 		{
 			strncpy(handle->name, name, DYNLINK_NAME_SIZE);
+
+			strncat(handle->name, dynlink_impl_extension(), DYNLINK_NAME_SIZE);
 
 			handle->flags = flags;
 

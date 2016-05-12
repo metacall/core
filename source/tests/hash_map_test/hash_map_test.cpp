@@ -1,10 +1,10 @@
-/************************************************************************/
-/*	Abstract Data Type Library by Parra Studios							*/
-/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																		*/
-/*	A abstract data type library providing generic containers.			*/
-/*																		*/
-/************************************************************************/
+/*
+ *	Abstract Data Type Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A abstract data type library providing generic containers.
+ *
+ */
 
 #include <gmock/gmock.h>
 
@@ -37,7 +37,7 @@ class hash_map_test : public testing::Test
   public:
 };
 
-TEST_F(hash_map_test, CheckSomeResults)
+TEST_F(hash_map_test, DefaultConstructor)
 {
 	hash_map map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
 

@@ -1,7 +1,6 @@
-
-# 
+#
 # CMake options
-# 
+#
 
 # CMake version
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
@@ -17,8 +16,8 @@ include(ExternalProject)
 # This module is only available with CMake >=3.1, so check whether it could be found
 include(WriteCompilerDetectionHeader OPTIONAL RESULT_VARIABLE WriterCompilerDetectionHeaderFound)
 
-include(cmake/GetGitRevisionDescription.cmake)
-include(cmake/Custom.cmake)
+include(GetGitRevisionDescription)
+include(Custom)
 
 # Set policies
 set_policy(CMP0028 NEW) # ENABLE CMP0028: Double colon in target name means ALIAS or IMPORTED target.
@@ -26,10 +25,9 @@ set_policy(CMP0054 NEW) # ENABLE CMP0054: Only interpret if() arguments as varia
 set_policy(CMP0042 NEW) # ENABLE CMP0042: MACOSX_RPATH is enabled by default.
 set_policy(CMP0063 NEW) # ENABLE CMP0063: Honor visibility properties for all target types.
 
-
-# 
+#
 # Project description and (meta) information
-# 
+#
 
 # Get git revision
 get_git_head_revision(GIT_REFSPEC GIT_SHA1)
@@ -48,10 +46,9 @@ set(META_VERSION_REVISION    "${GIT_REV}")
 set(META_VERSION             "${META_VERSION_MAJOR}.${META_VERSION_MINOR}.${META_VERSION_PATCH}")
 set(META_NAME_VERSION        "${META_PROJECT_NAME} v${META_VERSION} (${META_VERSION_REVISION})")
 
-
-# 
+#
 # Project configuration options
-# 
+#
 
 # Project options
 option(BUILD_SHARED_LIBS     "Build shared instead of static libraries."              ON)
@@ -59,15 +56,15 @@ option(OPTION_SELF_CONTAINED "Create a self-contained install with all dependenc
 option(OPTION_BUILD_TESTS    "Build tests."                                           ON)
 option(OPTION_BUILD_DOCS     "Build documentation."                                   OFF)
 option(OPTION_BUILD_EXAMPLES "Build examples."                                        OFF)
+option(OPTION_BUILD_PLUGINS  "Build plugins."                                         ON)
 
-
-# 
+#
 # Declare project
-# 
+#
 
 # Generate folders for IDE targets (e.g., VisualStudio solutions)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set(IDE_FOLDER "")  
+set(IDE_FOLDER "")
 
 # Declare project
 project(${META_PROJECT_NAME} C CXX)
@@ -80,17 +77,15 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 # Create version file
 file(WRITE "${PROJECT_BINARY_DIR}/VERSION" "${META_NAME_VERSION}")
 
-
-# 
+#
 # Compiler settings and options
-# 
+#
 
 include(cmake/CompileOptions.cmake)
 
-
-# 
+#
 # Deployment/installation setup
-# 
+#
 
 # Get project name
 set(project ${META_PROJECT_NAME})
@@ -142,23 +137,21 @@ if(NOT SYSTEM_DIR_INSTALL)
     if(APPLE)
         set(CMAKE_INSTALL_RPATH "@loader_path/../../../${INSTALL_LIB}")
     else()
-        set(CMAKE_INSTALL_RPATH "$ORIGIN/${INSTALL_LIB}")       
+        set(CMAKE_INSTALL_RPATH "$ORIGIN/${INSTALL_LIB}")
     endif()
 endif()
 
-
-# 
+#
 # Project modules
-# 
+#
 
 add_subdirectory(source)
 add_subdirectory(docs)
 add_subdirectory(deploy)
 
-
-# 
+#
 # Deployment (global project files)
-# 
+#
 
 # Install version file
 install(FILES "${PROJECT_BINARY_DIR}/VERSION" DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
@@ -169,7 +162,7 @@ install(FILES ${META_PROJECT_NAME}-config.cmake DESTINATION ${INSTALL_ROOT} COMP
 # Install the project meta files
 install(FILES AUTHORS   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 install(FILES LICENSE   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
-install(FILES README.md DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+install(FILES README    DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 
 # Install runtime data
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data DESTINATION ${INSTALL_DATA} COMPONENT runtime)

@@ -1,10 +1,10 @@
-/************************************************************************/
-/*	Reflect Library by Parra Studios									*/
-/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																		*/
-/*	A library for provide reflection and metadata representation.		*/
-/*																		*/
-/************************************************************************/
+/*
+ *	Reflect Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for provide reflection and metadata representation.
+ *
+ */
 
 #include <gmock/gmock.h>
 
@@ -41,7 +41,7 @@ class function_test : public testing::Test
   public:
 };
 
-TEST_F(function_test, CheckSomeResults)
+TEST_F(function_test, DefaultConstructor)
 {
 	/* todo: reimplement this without a variable arg interface */
 	/*

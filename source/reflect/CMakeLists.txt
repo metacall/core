@@ -35,7 +35,6 @@ set(headers
     ${include_path}/type.h
     ${include_path}/type_impl.h
     ${include_path}/type_impl_id.h
-    ${include_path}/type_primitives.h
     ${include_path}/signature.h
     ${include_path}/function.h
     ${include_path}/scope.h
@@ -47,7 +46,6 @@ set(sources
     ${source_path}/type.c
     ${source_path}/type_impl.c
     ${source_path}/type_impl_id.c
-    ${source_path}/type_primitives.c
     ${source_path}/signature.c
     ${source_path}/function.c
     ${source_path}/scope.c

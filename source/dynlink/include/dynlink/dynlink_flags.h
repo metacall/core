@@ -1,10 +1,10 @@
-/********************************************************************************/
-/*	Dynamic Link Library by Parra Studios										*/
-/*	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																				*/
-/*	A library for dynamic loading and linking shared objects at run-time.		*/
-/*																				*/
-/********************************************************************************/
+/*
+ *	Dynamic Link Library by Parra Studios
+ *	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for dynamic loading and linking shared objects at run-time.
+ *
+ */
 
 #ifndef DYNLINK_FLAGS_H
 #define DYNLINK_FLAGS_H 1
@@ -104,8 +104,8 @@ extern "C" {
 *
 */
 #define DYNLINK_FLAGS_CHECK(flags, flag) \
-		((flags) & (flag) != 0)
-		
+		(((flags) & (flag)) != 0)
+
 /* -- Type definitions -- */
 
 typedef int							dynlink_flags;			/**< Dynamically linked shared object flags */

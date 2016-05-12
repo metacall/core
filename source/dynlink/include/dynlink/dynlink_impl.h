@@ -1,10 +1,10 @@
-/********************************************************************************/
-/*	Dynamic Link Library by Parra Studios										*/
-/*	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																				*/
-/*	A library for dynamic loading and linking shared objects at run-time.		*/
-/*																				*/
-/********************************************************************************/
+/*
+ *	Dynamic Link Library by Parra Studios
+ *	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for dynamic loading and linking shared objects at run-time.
+ *
+ */
 
 #ifndef DYNLINK_IMPL_H
 #define DYNLINK_IMPL_H 1
@@ -14,14 +14,12 @@
 #include <dynlink/dynlink_api.h>
 
 #include <dynlink/dynlink_type.h>
+#include <dynlink/dynlink_impl_type.h>
+#include <dynlink/dynlink_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* -- Type definitions -- */
-
-typedef void *						dynlink_impl;			/**< Dynamically linked shared object implementation */
 
 /* -- Methods -- */
 

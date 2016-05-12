@@ -17,7 +17,7 @@ endfunction(set_policy)
 function(source_group_by_path PARENT_PATH REGEX GROUP)
 
     foreach (FILENAME ${ARGN})
-        
+
         get_filename_component(FILEPATH "${FILENAME}" REALPATH)
         file(RELATIVE_PATH FILEPATH ${PARENT_PATH} ${FILEPATH})
         get_filename_component(FILEPATH "${FILEPATH}" DIRECTORY)

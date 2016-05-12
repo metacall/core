@@ -1,14 +1,12 @@
-
-# 
+#
 # External dependencies
-# 
+#
 
 # find_package(THIRDPARTY REQUIRED)
 
-
-# 
+#
 # Library name and options
-# 
+#
 
 # Target name
 set(target dynlink)
@@ -16,65 +14,63 @@ set(target dynlink)
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
 
+# Include dynamic loading libraries
+include(DynamicLoading)
+
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
 set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
-
-# 
+#
 # Sources
-# 
+#
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+
+set(generated_include_path "${CMAKE_CURRENT_BINARY_DIR}/include/${target}")
+set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
+
+# Configure cross-platform support implementation
+include(Portability)
+
+set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
+
+configure_file(${include_path}/dynlink_interface.h.in ${generated_include_path}/dynlink_interface.h)
+configure_file(${source_path}/dynlink_interface.c.in ${generated_source_path}/dynlink_interface.c)
 
 set(headers
     ${include_path}/dynlink.h
     ${include_path}/dynlink_flags.h
     ${include_path}/dynlink_type.h
+    ${include_path}/dynlink_impl_type.h
     ${include_path}/dynlink_impl.h
-    ${include_path}/dynlink_impl_interface.h
-    ${include_path}/dynlink_impl_macos.h
-    ${include_path}/dynlink_impl_unix.h
-    ${include_path}/dynlink_impl_win32.h
+    ${include_path}/dynlink_impl_symbol_${DYNLINK_IMPL_INTERFACE_NAME}.h
+    ${include_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.h
+    ${generated_include_path}/dynlink_interface.h
 )
 
 set(sources
     ${source_path}/dynlink.c
+    ${source_path}/dynlink_interface.c
     ${source_path}/dynlink_impl.c
+    ${source_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.c
+    ${generated_source_path}/dynlink_interface.c
 )
-
-if(APPLE)
-	set(sources
-		${sources}
-		${source_path}/dynlink_impl_macos.c
-	)
-elseif(UNIX)
-	set(sources
-		${sources}
-		${source_path}/dynlink_impl_unix.c
-	)
-elseif(WIN32)
-	set(sources
-		${sources}
-		${source_path}/dynlink_impl_win32.c
-	)
-endif()
 
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$" 
+source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
     ${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$" 
+source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
-
-# 
+#
 # Create library
-# 
+#
 
 # Build library
 add_library(${target}
@@ -115,10 +111,9 @@ generate_export_header(${target}
     EXPORT_MACRO_NAME ${export_macro}
 )
 
-
-# 
+#
 # Project options
-# 
+#
 
 set_target_properties(${target}
     PROPERTIES
@@ -126,16 +121,17 @@ set_target_properties(${target}
     FOLDER "${IDE_FOLDER}"
 )
 
-
-# 
+#
 # Include directories
-# 
+#
 
 target_include_directories(${target}
     PRIVATE
     ${PROJECT_BINARY_DIR}/source/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
+
+    ${DYNAMIC_LOADING_INCLUDE_DIR} # Native dynamic load library
 
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
@@ -146,13 +142,13 @@ target_include_directories(${target}
     $<INSTALL_INTERFACE:include>
 )
 
-
-# 
+#
 # Libraries
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
+    ${DYNAMIC_LOADING_LIBRARY} # Native dynamic load library
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -160,10 +156,9 @@ target_link_libraries(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Compile definitions
-# 
+#
 
 target_compile_definitions(${target}
     PRIVATE
@@ -175,10 +170,9 @@ target_compile_definitions(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Compile options
-# 
+#
 
 target_compile_options(${target}
     PRIVATE
@@ -189,10 +183,9 @@ target_compile_options(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Linker options
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
@@ -203,10 +196,9 @@ target_link_libraries(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Deployment
-# 
+#
 
 # Library
 install(TARGETS ${target}
@@ -234,3 +226,4 @@ install(EXPORT ${target}-export
     DESTINATION ${INSTALL_CMAKE}/${target}
     COMPONENT   dev
 )
+

@@ -1,10 +1,10 @@
-/********************************************************************************/
-/*	Dynamic Link Library by Parra Studios										*/
-/*	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																				*/
-/*	A library for dynamic loading and linking shared objects at run-time.		*/
-/*																				*/
-/********************************************************************************/
+/*
+ *	Dynamic Link Library by Parra Studios
+ *	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for dynamic loading and linking shared objects at run-time.
+ *
+ */
 
 #ifndef DYNLINK_TYPE_H
 #define DYNLINK_TYPE_H 1
@@ -26,7 +26,6 @@ struct dynlink_type;
 typedef struct dynlink_type *		dynlink;						/**< Dynamically linked shared object handle */
 typedef const char *				dynlink_name;					/**< Dynamically linked shared object name */
 typedef const char *				dynlink_symbol_name;			/**< Dynamically linked shared object symbol name */
-typedef void						(*dynlink_symbol_addr)(void);	/**< Dynamically linked shared object symbol address pointer */
 
 #ifdef __cplusplus
 }

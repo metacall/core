@@ -1,10 +1,10 @@
-/************************************************************************/
-/*	Loader Library by Parra Studios										*/
-/*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>	*/
-/*																		*/
-/*	A library for loading executable code at run-time into a process.	*/
-/*																		*/
-/************************************************************************/
+/*
+ *	Loader Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for loading executable code at run-time into a process.
+ *
+ */
 
 #ifndef LOADER_IMPL_INTERFACE_H
 #define LOADER_IMPL_INTERFACE_H 1
@@ -36,7 +36,7 @@ typedef int (*loader_impl_interface_clear)(loader_impl, loader_handle);
 
 typedef int (*loader_impl_interface_discover)(loader_impl, loader_handle, context);
 
-typedef int(*loader_impl_interface_destroy)(loader_impl);
+typedef int (*loader_impl_interface_destroy)(loader_impl);
 
 typedef struct loader_impl_interface_type
 {
