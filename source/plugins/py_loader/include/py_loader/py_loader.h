@@ -19,9 +19,9 @@
 extern "C" {
 #endif
 
-PY_LOADER_API loader_impl_interface loader_impl_interface_singleton_py(void);
+PY_LOADER_API loader_impl_interface py_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(loader_impl_interface_singleton_py);
+DYNLINK_SYMBOL_EXPORT(py_loader_impl_interface_singleton);
 
 PY_LOADER_API void py_loader_print_info(void);
 

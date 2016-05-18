@@ -1,4 +1,9 @@
-# Find libdl
+#
+# Unix dynamic loader library finder by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Defines unix dynamic load library and include paths
+#
 
 if(LIBDL_INCLUDE_DIR)
     set(LIBDL_FIND_QUIETLY TRUE)

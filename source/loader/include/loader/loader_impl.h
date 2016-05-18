@@ -26,11 +26,13 @@ typedef struct loader_impl_type * loader_impl;
 
 LOADER_API loader_impl loader_impl_create(loader_naming_extension extension);
 
+LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
+
 LOADER_API loader_impl_interface loader_impl_symbol(loader_impl impl);
 
 LOADER_API loader_naming_extension * loader_impl_extension(loader_impl impl);
 
-LOADER_API int loader_impl_load(loader_impl impl, loader_naming_name name);
+LOADER_API int loader_impl_load(loader_impl impl, loader_naming_path name);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 

@@ -4,10 +4,10 @@
 
 find_package(PythonLibs)
 
-#if(NOT PYTHONLIBS_FOUND)
-#    message(STATUS "Python libs not found")
-#    return()
-#endif()
+if(NOT PYTHONLIBS_FOUND)
+    message(STATUS "Python libraries not found")
+    return()
+endif()
 
 #
 # Library name and options
@@ -45,9 +45,9 @@ set(sources
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$" 
+source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
     ${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$" 
+source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
 #
@@ -113,6 +113,8 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
+    ${PYTHON_INCLUDE_DIRS} # Python includes
+
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -132,6 +134,8 @@ target_link_libraries(${target}
     ${META_PROJECT_NAME}::dynlink
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
+
+    ${PYTHON_LIBRARIES} # Python libraries
 
     PUBLIC
     ${DEFAULT_LIBRARIES}

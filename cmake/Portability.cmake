@@ -1,4 +1,19 @@
+#
+# Portability CMake support by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Cross-platform and architecture detection utility
+#
+
+if(PORTABILITY_FOUND)
+    return()
+endif()
+
+set(PORTABILITY_FOUND YES)
+
+#
 # Check the OS type
+#
 
 # Check Linux
 string(REGEX MATCH "Linux" PROJECT_OS_LINUX ${CMAKE_SYSTEM_NAME})

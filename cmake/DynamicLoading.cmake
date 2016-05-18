@@ -1,4 +1,15 @@
-# Include cross-platform dynamic load library support
+#
+# Cross-platform dynamic load library support by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Cross-platform dynamic loading library utility
+#
+
+if(DYNAMICLOADING_FOUND)
+    return()
+endif()
+
+set(DYNAMICLOADING_FOUND YES)
 
 # Include portability module
 include(Portability)

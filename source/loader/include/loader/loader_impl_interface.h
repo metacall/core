@@ -13,6 +13,7 @@
 
 #include <loader/loader_handle.h>
 #include <loader/loader_naming_type.h>
+#include <loader/loader_impl_data.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -26,7 +27,7 @@ struct context_type;
 
 typedef struct context_type * context;
 
-typedef int (*loader_impl_interface_initialize)(loader_impl);
+typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl);
 
 typedef int (*loader_impl_interface_execution_path)(loader_impl, loader_naming_path);
 

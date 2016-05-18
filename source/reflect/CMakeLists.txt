@@ -1,14 +1,12 @@
-
-# 
+#
 # External dependencies
-# 
+#
 
 # find_package(THIRDPARTY REQUIRED)
 
-
-# 
+#
 # Library name and options
-# 
+#
 
 # Target name
 set(target reflect)
@@ -22,10 +20,9 @@ set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
-
-# 
+#
 # Sources
-# 
+#
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
@@ -55,15 +52,14 @@ set(sources
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$" 
+source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
     ${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$" 
+source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
-
-# 
+#
 # Create library
-# 
+#
 
 # Build library
 add_library(${target}
@@ -105,9 +101,9 @@ generate_export_header(${target}
 )
 
 
-# 
+#
 # Project options
-# 
+#
 
 set_target_properties(${target}
     PROPERTIES
@@ -115,10 +111,9 @@ set_target_properties(${target}
     FOLDER "${IDE_FOLDER}"
 )
 
-
-# 
+#
 # Include directories
-# 
+#
 
 target_include_directories(${target}
     PRIVATE
@@ -135,10 +130,9 @@ target_include_directories(${target}
     $<INSTALL_INTERFACE:include>
 )
 
-
-# 
+#
 # Libraries
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
@@ -150,10 +144,9 @@ target_link_libraries(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Compile definitions
-# 
+#
 
 target_compile_definitions(${target}
     PRIVATE
@@ -165,10 +158,9 @@ target_compile_definitions(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Compile options
-# 
+#
 
 target_compile_options(${target}
     PRIVATE
@@ -179,10 +171,9 @@ target_compile_options(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Linker options
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
@@ -193,10 +184,9 @@ target_link_libraries(${target}
     INTERFACE
 )
 
-
-# 
+#
 # Deployment
-# 
+#
 
 # Library
 install(TARGETS ${target}

@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target function-test)
+set(target py-loader-test)
 message(STATUS "Test ${target}")
 
 #
@@ -15,7 +15,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
     ${source_path}/main.cpp
-    ${source_path}/function_test.cpp
+    ${source_path}/py_loader_test.cpp
 )
 
 # Group source files
@@ -65,7 +65,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
-    ${META_PROJECT_NAME}::reflect
+    ${META_PROJECT_NAME}::loader
     gmock-dev
 )
 

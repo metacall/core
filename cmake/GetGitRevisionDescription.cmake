@@ -41,14 +41,14 @@ get_filename_component(_gitdescmoddir ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(get_git_head_revision _refspecvar _hashvar)
     set(GIT_PARENT_DIR "${CMAKE_SOURCE_DIR}")
-    
+
     if(NOT EXISTS "${GIT_PARENT_DIR}/.git")
         # .git dir not found
         set(${_refspecvar} "000000000000" PARENT_SCOPE)
         set(${_hashvar} "000000000000" PARENT_SCOPE)
         return()
     endif()
-    
+
     if (IS_DIRECTORY "${GIT_PARENT_DIR}/.git")
 	# common case
 	set(GIT_DIR "${GIT_PARENT_DIR}/.git")
@@ -61,12 +61,12 @@ function(get_git_head_revision _refspecvar _hashvar)
 	set(GIT_DIR "${GIT_PARENT_DIR}/${SUBMODULE_GIT_DIR}")
 	message(STATUS "${GIT_DIR}")
     endif()
-    
+
     set(GIT_DATA "${CMAKE_CURRENT_BINARY_DIR}/CMakeFiles/git-data")
     if(NOT EXISTS "${GIT_DATA}")
         file(MAKE_DIRECTORY "${GIT_DATA}")
     endif()
-    
+
     if(NOT EXISTS "${GIT_DIR}/HEAD")
         return()
     endif()

@@ -22,6 +22,10 @@ add_subdirectory(metacall)
 set(IDE_FOLDER "Plugins")
 add_subdirectory(plugins)
 
+# Scripts
+set(IDE_FOLDER "Scripts")
+add_subdirectory(scripts)
+
 # Tests
 set(IDE_FOLDER "Tests")
 add_subdirectory(tests)

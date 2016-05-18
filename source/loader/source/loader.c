@@ -71,13 +71,15 @@ loader_impl loader_get_impl(loader_naming_extension extension)
 
 	if (impl == NULL)
 	{
+		printf("Create loader implementation: %s\n", extension);
+
 		impl = loader_create_impl(extension);
 	}
 
 	return impl;
 }
 
-int loader_load(loader_naming_name name)
+int loader_load(loader_naming_path name)
 {
 	loader l = loader_singleton();
 
@@ -89,9 +91,11 @@ int loader_load(loader_naming_name name)
 	{
 		loader_naming_extension extension;
 
-		if (loader_naming_get_extension(name, extension) == 0)
+		if (loader_naming_get_extension(name, extension) > 1)
 		{
 			loader_impl impl = loader_get_impl(extension);
+
+			printf("Loader implementation: %p\n", (void *)impl);
 
 			if (impl != NULL)
 			{
@@ -135,10 +139,10 @@ int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_v
 	return 1;
 }
 
-int loader_unload()
+int loader_unload(void)
 {
 	loader l = loader_singleton();
-	
+
 	if (l->impl_map != NULL)
 	{
 		hash_map_iterate(l->impl_map, &loader_unload_impl_map_cb_iterate, NULL);
@@ -160,7 +164,7 @@ int loader_unload()
 	return 0;
 }
 
-void loader_destroy()
+void loader_destroy(void)
 {
 	loader l = loader_singleton();
 
@@ -172,7 +176,7 @@ void loader_destroy()
 	}
 }
 
-void loader_print_info()
+void loader_print_info(void)
 {
 	printf("Loader Library " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
