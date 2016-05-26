@@ -8,6 +8,8 @@
 
 #include <reflect/function.h>
 
+#include <string.h>
+
 typedef struct function_type
 {
 	char * name;
@@ -16,35 +18,50 @@ typedef struct function_type
 	function_interface interface;
 } * function;
 
-function function_create(char * name, signature s, function_interface interface)
+function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
 {
-	if (name != NULL && s != NULL && interface != NULL)
+	if (name != NULL)
 	{
 		function func = malloc(sizeof(struct function_type));
 
 		if (func != NULL)
 		{
-			func->name = name;
-			func->s = s;
-			func->interface = interface;
+			func->name = strdup(name);
 
-			if (func->interface != NULL && func->interface->create != NULL)
+			func->impl = impl;
+
+			func->s = signature_create(args_count);
+
+			if (func->s != NULL)
 			{
-				func->impl = func->interface->create(func);
-			}
-			else
-			{
-				func->impl = NULL;
+				if (singleton)
+				{
+					func->interface = singleton();
+				}
+				else
+				{
+					func->interface = NULL;
+				}
+
+				if (func->interface != NULL && func->interface->create != NULL)
+				{
+					if (func->interface->create(func, impl) != 0)
+					{
+						/* error */
+					}
+				}
+
+				return func;
 			}
 
-			return func;
+			free(func);
 		}
 	}
 
 	return NULL;
 }
 
-char * function_name(function func)
+const char * function_name(function func)
 {
 	if (func != NULL)
 	{
@@ -85,6 +102,8 @@ void function_destroy(function func)
 		}
 
 		signature_destroy(func->s);
+
+		free(func->name);
 
 		free(func);
 	}

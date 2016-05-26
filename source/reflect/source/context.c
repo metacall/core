@@ -12,7 +12,7 @@
 typedef struct context_type
 {
 	char * name;
-	scope s;
+	scope sp;
 
 } * context;
 
@@ -25,7 +25,7 @@ context context_create(char * name)
 		if (ctx != NULL)
 		{
 			ctx->name = name;
-			ctx->s = scope_create("global_namespace");
+			ctx->sp = scope_create("global_namespace");
 
 			return ctx;
 		}
@@ -38,17 +38,22 @@ scope context_scope(context ctx)
 {
 	if (ctx != NULL)
 	{
-		return ctx->s;
+		return ctx->sp;
 	}
 
 	return NULL;
+}
+
+int context_append(context dest, context src)
+{
+	return scope_append(dest->sp, src->sp);
 }
 
 void context_destroy(context ctx)
 {
 	if (ctx != NULL)
 	{
-		scope_destroy(ctx->s);
+		scope_destroy(ctx->sp);
 
 		free(ctx);
 	}

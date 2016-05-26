@@ -32,6 +32,8 @@ LOADER_API loader_impl_interface loader_impl_symbol(loader_impl impl);
 
 LOADER_API loader_naming_extension * loader_impl_extension(loader_impl impl);
 
+LOADER_API context loader_impl_context(loader_impl impl);
+
 LOADER_API int loader_impl_load(loader_impl impl, loader_naming_path name);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);

@@ -17,11 +17,15 @@
 extern "C" {
 #endif
 
+typedef void * loader_data;
+
 LOADER_API void loader_initialize(void);
 
 LOADER_API int loader_load(loader_naming_path name);
 
 LOADER_API int loader_load_path(loader_naming_path path);
+
+LOADER_API loader_data loader_get(const char * name);
 
 LOADER_API int loader_unload(void);
 

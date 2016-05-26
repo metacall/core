@@ -21,25 +21,27 @@ typedef void * function_impl;
 
 typedef struct function_type * function;
 
-typedef void ** function_args;
+typedef void * function_args[];
 
-typedef function_impl (*function_create_impl)(function);
+typedef int (*function_impl_interface_create)(function, function_impl);
 
-typedef void (*function_call_impl)(function, function_impl, function_args);
+typedef void (*function_impl_interface_invoke)(function, function_impl, function_args);
 
-typedef void (*function_destroy_impl)(function, function_impl);
+typedef void (*function_impl_interface_destroy)(function, function_impl);
 
 typedef struct function_interface_type
 {
-	function_create_impl create;
-	function_call_impl invoke;
-	function_destroy_impl destroy;
+	function_impl_interface_create create;
+	function_impl_interface_invoke invoke;
+	function_impl_interface_destroy destroy;
 
 } * function_interface;
 
-REFLECT_API function function_create(char * name, signature s, function_interface interface);
+typedef function_interface (*function_impl_interface_singleton)(void);
 
-REFLECT_API char * function_name(function func);
+REFLECT_API function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
+
+REFLECT_API const char * function_name(function func);
 
 REFLECT_API signature function_signature(function func);
 

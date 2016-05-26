@@ -8,6 +8,8 @@
 
 #include <reflect/signature.h>
 
+#include <string.h>
+
 typedef struct signature_node_type
 {
 	char * name;
@@ -16,7 +18,7 @@ typedef struct signature_node_type
 
 typedef struct signature_type
 {
-	int count;
+	size_t count;
 } * signature;
 
 signature_node signature_head(signature s)
@@ -29,11 +31,11 @@ signature_node signature_head(signature s)
 	return NULL;
 }
 
-signature_node signature_at(signature s, int index)
+signature_node signature_at(signature s, size_t index)
 {
 	signature_node node_list = signature_head(s);
 
-	if (node_list != NULL && index >= 0 && index < s->count)
+	if (node_list != NULL && index < s->count)
 	{
 		return &node_list[index];
 	}
@@ -41,23 +43,26 @@ signature_node signature_at(signature s, int index)
 	return NULL;
 }
 
-signature signature_create(int count)
+signature signature_create(size_t count)
 {
 	signature s = malloc(sizeof(struct signature_type) + sizeof(struct signature_node_type) * count);
 
 	if (s != NULL)
 	{
-		int index;
+		size_t index;
+
+		s->count = count;
 
 		for (index = 0; index < count; ++index)
 		{
 			signature_node node = signature_at(s, index);
 
-			node->name = NULL;
-			node->t = NULL;
+			if (node != NULL)
+			{
+				node->name = NULL;
+				node->t = NULL;
+			}
 		}
-
-		s->count = count;
 
 		return s;
 	}
@@ -65,7 +70,7 @@ signature signature_create(int count)
 	return NULL;
 }
 
-int signature_count(signature s)
+size_t signature_count(signature s)
 {
 	if (s != NULL)
 	{
@@ -75,9 +80,9 @@ int signature_count(signature s)
 	return -1;
 }
 
-char * signature_get_name(signature s, int index)
+const char * signature_get_name(signature s, size_t index)
 {
-	if (s != NULL && index >= 0 && index < s->count)
+	if (s != NULL && index < s->count)
 	{
 		signature_node node = signature_at(s, index);
 
@@ -87,9 +92,9 @@ char * signature_get_name(signature s, int index)
 	return NULL;
 }
 
-type signature_get_type(signature s, int index)
+type signature_get_type(signature s, size_t index)
 {
-	if (s != NULL && index >= 0 && index < s->count)
+	if (s != NULL && index < s->count)
 	{
 		signature_node node = signature_at(s, index);
 
@@ -99,13 +104,19 @@ type signature_get_type(signature s, int index)
 	return NULL;
 }
 
-void signature_set(signature s, int index, char * name, type t)
+void signature_set(signature s, size_t index, const char * name, type t)
 {
-	if (s != NULL && index >= 0 && index < s->count)
+	if (s != NULL && index < s->count)
 	{
 		signature_node node = signature_at(s, index);
 
-		node->name = name;
+		if (node->name != NULL)
+		{
+			free(node->name);
+		}
+
+		node->name = strdup(name);
+
 		node->t = t;
 	}
 }
@@ -114,6 +125,18 @@ void signature_destroy(signature s)
 {
 	if (s != NULL)
 	{
+		size_t index;
+
+		for (index = 0; index < s->count; ++index)
+		{
+			signature_node node = signature_at(s, index);
+
+			if (node != NULL && node->name != NULL)
+			{
+				free(node->name);
+			}
+		}
+
 		free(s);
 	}
 }

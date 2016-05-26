@@ -22,15 +22,17 @@ typedef void * scope_object;
 
 typedef struct scope_type * scope;
 
-REFLECT_API scope scope_create(char * name);
+REFLECT_API scope scope_create(const char * name);
 
-REFLECT_API int scope_define(scope s, char * key, scope_object obj);
+REFLECT_API int scope_define(scope sp, const char * key, scope_object obj);
 
-REFLECT_API scope_object scope_get(scope s, char * key);
+REFLECT_API scope_object scope_get(scope sp, const char * key);
 
-REFLECT_API scope_object scope_undef(scope s, char * key);
+REFLECT_API scope_object scope_undef(scope sp, const char * key);
 
-REFLECT_API void scope_destroy(scope s);
+REFLECT_API int scope_append(scope dest, scope src);
+
+REFLECT_API void scope_destroy(scope sp);
 
 #ifdef __cplusplus
 }

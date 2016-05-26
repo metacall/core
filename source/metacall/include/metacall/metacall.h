@@ -11,9 +11,17 @@
 
 #include <metacall/metacall_api.h>
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+METACALL_API int metacall_initialize(void);
+
+METACALL_API void * metacall(const char * name, ...);
+
+METACALL_API int metacall_destroy(void);
 
 METACALL_API void metacall_print_info(void);
 

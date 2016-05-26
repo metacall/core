@@ -21,15 +21,15 @@ struct signature_type;
 
 typedef struct signature_type * signature;
 
-REFLECT_API signature signature_create(int count);
+REFLECT_API signature signature_create(size_t count);
 
-REFLECT_API int signature_count(signature s);
+REFLECT_API size_t signature_count(signature s);
 
-REFLECT_API char * signature_get_name(signature s, int index);
+REFLECT_API const char * signature_get_name(signature s, size_t index);
 
-REFLECT_API type signature_get_type(signature s, int index);
+REFLECT_API type signature_get_type(signature s, size_t index);
 
-REFLECT_API void signature_set(signature s, int index, char * name, type t);
+REFLECT_API void signature_set(signature s, size_t index, const char * name, type t);
 
 REFLECT_API void signature_destroy(signature s);
 

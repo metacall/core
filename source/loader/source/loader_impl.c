@@ -34,6 +34,7 @@ typedef struct loader_impl_type
 	loader_impl_interface_singleton singleton;
 	hash_map handle_impl_map;
 	loader_impl_data data;
+	context ctx;
 
 } * loader_impl;
 
@@ -107,16 +108,26 @@ loader_impl loader_impl_create(loader_naming_extension extension)
 					{
 						impl->handle_impl_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
 
-						strncpy(impl->extension, extension, LOADER_NAMING_EXTENSION_SIZE);
-
-						impl->data = impl->singleton()->initialize(impl);
-
-						if (impl->data != NULL)
+						if (impl->handle_impl_map != NULL)
 						{
-							return impl;
-						}
+							impl->ctx = context_create(extension);
 
-						hash_map_destroy(impl->handle_impl_map);
+							if (impl->ctx != NULL)
+							{
+								impl->data = impl->singleton()->initialize(impl);
+
+								if (impl->data != NULL)
+								{
+									strncpy(impl->extension, extension, LOADER_NAMING_EXTENSION_SIZE);
+
+									return impl;
+								}
+
+								context_destroy(impl->ctx);
+							}
+
+							hash_map_destroy(impl->handle_impl_map);
+						}
 					}
 				}
 			}
@@ -153,6 +164,16 @@ loader_naming_extension * loader_impl_extension(loader_impl impl)
 	if (impl != NULL)
 	{
 		return &impl->extension;
+	}
+
+	return NULL;
+}
+
+context loader_impl_context(loader_impl impl)
+{
+	if (impl != NULL)
+	{
+		return impl->ctx;
 	}
 
 	return NULL;
@@ -213,7 +234,13 @@ int loader_impl_load(loader_impl impl, loader_naming_path name)
 				{
 					if (hash_map_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
 					{
-						return interface_impl->discover(impl, handle_impl->module, handle_impl->ctx);
+						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
+						{
+							if (context_append(impl->ctx, handle_impl->ctx) == 0)
+							{
+								return 0;
+							}
+						}
 					}
 
 					loader_impl_destroy_handle(handle_impl);
@@ -256,6 +283,8 @@ void loader_impl_destroy(loader_impl impl)
 		}
 
 		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_map_cb_iterate, NULL);
+
+		context_destroy(impl->ctx);
 
 		loader_impl_dynlink_destroy(impl);
 

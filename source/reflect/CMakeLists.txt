@@ -30,8 +30,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/reflect.h
     ${include_path}/type.h
-    ${include_path}/type_impl.h
-    ${include_path}/type_impl_id.h
+    ${include_path}/type_id.h
     ${include_path}/signature.h
     ${include_path}/function.h
     ${include_path}/scope.h
@@ -41,8 +40,7 @@ set(headers
 set(sources
     ${source_path}/reflect.c
     ${source_path}/type.c
-    ${source_path}/type_impl.c
-    ${source_path}/type_impl_id.c
+    ${source_path}/type_id.c
     ${source_path}/signature.c
     ${source_path}/function.c
     ${source_path}/scope.c

@@ -11,6 +11,8 @@
 
 #include <reflect/scope.h>
 
+#include <string.h>
+
 typedef struct scope_type
 {
 	char * name;
@@ -18,60 +20,67 @@ typedef struct scope_type
 
 } * scope;
 
-scope scope_create(char * name)
+scope scope_create(const char * name)
 {
 	if (name != NULL)
 	{
-		scope s = malloc(sizeof(struct scope_type));
+		scope sp = malloc(sizeof(struct scope_type));
 
-		if (s != NULL)
+		if (sp != NULL)
 		{
-			s->name = name;
-			s->map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+			sp->name = strdup(name);
+			sp->map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
 
-			return s;
+			return sp;
 		}
 	}
 
 	return NULL;
 }
 
-int scope_define(scope s, char * key, scope_object obj)
+int scope_define(scope sp, const char * key, scope_object obj)
 {
-	if (s != NULL && key != NULL && obj != NULL)
+	if (sp != NULL && key != NULL && obj != NULL)
 	{
-		return hash_map_insert(s->map, key, obj);
+		return hash_map_insert(sp->map, (hash_map_key)key, (hash_map_value)obj);
 	}
 
 	return 1;
 }
 
-scope_object scope_get(scope s, char * key)
+scope_object scope_get(scope sp, const char * key)
 {
-	if (s != NULL && key != NULL)
+	if (sp != NULL && key != NULL)
 	{
-		return (scope_object)hash_map_get(s->map, key);
+		return (scope_object)hash_map_get(sp->map, (hash_map_key)key);
 	}
 
 	return NULL;
 }
 
-scope_object scope_undef(scope s, char * key)
+scope_object scope_undef(scope sp, const char * key)
 {
-	if (s != NULL && key != NULL)
+	if (sp != NULL && key != NULL)
 	{
-		return (scope_object)hash_map_remove(s->map, key);
+		return (scope_object)hash_map_remove(sp->map, (hash_map_key)key);
 	}
 
 	return NULL;
 }
 
-void scope_destroy(scope s)
+int scope_append(scope dest, scope src)
 {
-	if (s)
-	{
-		hash_map_destroy(s->map);
+	return hash_map_append(dest->map, src->map);
+}
 
-		free(s);
+void scope_destroy(scope sp)
+{
+	if (sp)
+	{
+		hash_map_destroy(sp->map);
+
+		free(sp->name);
+
+		free(sp);
 	}
 }

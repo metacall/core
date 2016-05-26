@@ -446,6 +446,24 @@ void hash_map_iterate(hash_map map, hash_map_cb_iterate iterate_cb, hash_map_cb_
 	}
 }
 
+int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+{
+	hash_map dest = (hash_map)args;
+
+	(void)map;
+
+	return hash_map_insert(dest, key, value);
+}
+
+int hash_map_append(hash_map dest, hash_map src)
+{
+	hash_map_cb_iterate_args args = (hash_map_cb_iterate_args)dest;
+
+	hash_map_iterate(src, &hash_map_append_cb_iterate, args);
+
+	return 0;
+}
+
 int hash_map_clear(hash_map map)
 {
 	if (map != NULL)

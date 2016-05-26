@@ -43,6 +43,8 @@ ADT_API hash_map_value hash_map_remove(hash_map map, hash_map_key key);
 
 ADT_API void hash_map_iterate(hash_map map, hash_map_cb_iterate iterate_cb, hash_map_cb_iterate_args args);
 
+ADT_API int hash_map_append(hash_map dest, hash_map src);
+
 ADT_API int hash_map_clear(hash_map map);
 
 ADT_API void hash_map_destroy(hash_map map);

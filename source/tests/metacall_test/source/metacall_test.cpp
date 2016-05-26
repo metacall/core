@@ -10,6 +10,8 @@
 
 #include <metacall/metacall.h>
 
+#define METACALL_TEST_SEVEN_MULTIPLES_LIMIT 0x0A
+
 class metacall_test : public testing::Test
 {
   public:
@@ -17,10 +19,26 @@ class metacall_test : public testing::Test
 
 TEST_F(metacall_test, DefaultConstructor)
 {
+	int iterator;
+
 	metacall_print_info();
 
-	EXPECT_EQ((unsigned int) 0, (unsigned int) 0);
-	EXPECT_EQ((unsigned int) 3, (unsigned int) 3);
+	EXPECT_EQ((int) 0, (int) metacall_initialize());
 
-	/* ... */
+	EXPECT_EQ((void *) NULL, (void *) metacall("multiply", 5, 15));
+
+	printf("7's multiples dude!\n");
+
+	for (iterator = 0; iterator <= METACALL_TEST_SEVEN_MULTIPLES_LIMIT; ++iterator)
+	{
+		EXPECT_EQ((void *) NULL, (void *) metacall("multiply", 7, iterator));
+	}
+
+	printf("Let's divide real numbers\n");
+
+	EXPECT_EQ((void *) NULL, (void *) metacall("divide", 324.0, 13.4358));
+
+	EXPECT_EQ((void *) NULL, (void *) metacall("sum", 1000, 3500));
+
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }
