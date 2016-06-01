@@ -17,3 +17,7 @@ def sum(left: int, right: int):
 	result = left + right;
 	print(left, ' + ', right, ' = ', result);
 	return result;
+
+def hello():
+	print('Hello World from Python!!');
+	return;

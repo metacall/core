@@ -51,7 +51,7 @@ void function_py_interface_invoke(function func, function_impl impl, function_ar
 
 	printf("Inner call: args_size(%ld)\n", args_size);
 
-	if (args_size > 0)
+	//if (args_size > 0)
 	{
 		PyObject * tuple_args = PyTuple_New(args_size);
 
@@ -246,8 +246,31 @@ int py_loader_impl_initialize_inspect(loader_impl_py py_impl)
 	return 1;
 }
 
-int py_loader_impl_execution_path_impl(loader_impl_py py_impl, loader_naming_path path)
+loader_impl_data py_loader_impl_initialize(loader_impl impl)
 {
+	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
+
+	(void)impl;
+
+	if (py_impl != NULL)
+	{
+		Py_Initialize();
+
+		if (py_loader_impl_initialize_inspect(py_impl) == 0)
+		{
+			return py_impl;
+		}
+
+		free(py_impl);
+	}
+
+	return NULL;
+}
+
+int py_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+{
+	loader_impl_py py_impl = loader_impl_get(impl);
+
 	if (py_impl != NULL)
 	{
 		PyObject * system_path = PySys_GetObject("path");
@@ -263,38 +286,7 @@ int py_loader_impl_execution_path_impl(loader_impl_py py_impl, loader_naming_pat
 	return 1;
 }
 
-loader_impl_data py_loader_impl_initialize(loader_impl impl)
-{
-	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
-
-	(void)impl;
-
-	if (py_impl != NULL)
-	{
-		Py_Initialize();
-
-		if (py_loader_impl_initialize_inspect(py_impl) == 0)
-		{
-			if (py_loader_impl_execution_path_impl(py_impl, ".") == 0)
-			{
-				return py_impl;
-			}
-		}
-
-		free(py_impl);
-	}
-
-	return NULL;
-}
-
-int py_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
-{
-	loader_impl_py py_impl = loader_impl_get(impl);
-
-	return py_loader_impl_execution_path_impl(py_impl, path);
-}
-
-loader_handle py_loader_impl_load(loader_impl impl, loader_naming_name name)
+loader_handle py_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
 
@@ -302,7 +294,7 @@ loader_handle py_loader_impl_load(loader_impl impl, loader_naming_name name)
 
 	Py_DECREF(module_name);
 
-	printf("Python loader (%p) importing %s module (%p)\n", (void *)impl, name, (void *)module);
+	printf("Python loader (%p) importing %s from (%s) module at (%p)\n", (void *)impl, path, name, (void *)module);
 
 	return (loader_handle)module;
 }

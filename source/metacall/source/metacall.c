@@ -32,68 +32,77 @@ int metacall_initialize(void)
 {
 	/* TODO: load a full path */
 
-	loader_naming_name name = "example.py";
+	loader_naming_name py_name = "example.py";
+	loader_naming_name rb_name = "hello.rb";
 
-	return loader_load(name);
+	if (loader_load(py_name) == 0 && loader_load(rb_name) == 0)
+	{
+		return 0;
+	}
+
+	return 1;
 }
 
 void * metacall(const char * name, ...)
 {
-	va_list va;
-
 	function f = (function)loader_get(name);
 
-	signature s = function_signature(f);
-
-	union metacall_args_type m_args[METACALL_ARGS_SIZE];
-
-	void * f_args[METACALL_ARGS_SIZE];
-
-	size_t iterator;
-
-	va_start(va, name);
-
-	for (iterator = 0; iterator < signature_count(s); ++iterator)
+	if (f != NULL)
 	{
-		type t = signature_get_type(s, iterator);
+		va_list va;
 
-		type_id id = type_index(t);
+		signature s = function_signature(f);
 
-		if (id == TYPE_CHAR)
+		union metacall_args_type m_args[METACALL_ARGS_SIZE];
+
+		void * f_args[METACALL_ARGS_SIZE];
+
+		size_t iterator;
+
+		va_start(va, name);
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
-			m_args[iterator].c = (char)va_arg(va, int);
-			f_args[iterator] = (void *)&m_args[iterator].c;
+			type t = signature_get_type(s, iterator);
+
+			type_id id = type_index(t);
+
+			if (id == TYPE_CHAR)
+			{
+				m_args[iterator].c = (char)va_arg(va, int);
+				f_args[iterator] = (void *)&m_args[iterator].c;
+			}
+			else if (id == TYPE_INT)
+			{
+				m_args[iterator].i = va_arg(va, int);
+				f_args[iterator] = (void *)&m_args[iterator].i;
+			}
+			else if (id == TYPE_LONG)
+			{
+				m_args[iterator].l = va_arg(va, long);
+				f_args[iterator] = (void *)&m_args[iterator].l;
+			}
+			else if (id == TYPE_DOUBLE)
+			{
+				m_args[iterator].d = va_arg(va, double);
+				f_args[iterator] = (void *)&m_args[iterator].d;
+			}
+				else if (id == TYPE_PTR)
+			{
+				m_args[iterator].ptr = va_arg(va, void *);
+				f_args[iterator] = (void *)&m_args[iterator].ptr;
+			}
+			else
+			{
+				m_args[iterator].ptr = NULL;
+				f_args[iterator] = (void *)&m_args[iterator].ptr;
+			}
 		}
-		else if (id == TYPE_INT)
-		{
-			m_args[iterator].i = va_arg(va, int);
-			f_args[iterator] = (void *)&m_args[iterator].i;
-		}
-		else if (id == TYPE_LONG)
-		{
-			m_args[iterator].l = va_arg(va, long);
-			f_args[iterator] = (void *)&m_args[iterator].l;
-		}
-		else if (id == TYPE_DOUBLE)
-		{
-			m_args[iterator].d = va_arg(va, double);
-			f_args[iterator] = (void *)&m_args[iterator].d;
-		}
-		else if (id == TYPE_PTR)
-		{
-			m_args[iterator].ptr = va_arg(va, void *);
-			f_args[iterator] = (void *)&m_args[iterator].ptr;
-		}
-		else
-		{
-			m_args[iterator].ptr = NULL;
-			f_args[iterator] = (void *)&m_args[iterator].ptr;
-		}
+
+		va_end(va);
+
+		function_call(f, f_args);
 	}
-
-	va_end(va);
-
-	function_call(f, f_args);
 
 	return NULL;
 }

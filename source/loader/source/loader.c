@@ -64,7 +64,12 @@ loader_impl loader_create_impl(loader_naming_extension extension)
 
 		if (hash_map_insert(l->impl_map, *extension_ptr, impl) == 0)
 		{
-			return impl;
+			if (loader_impl_execution_path(impl, ".") == 0)
+			{
+				return impl;
+			}
+
+			hash_map_remove(l->impl_map, *extension_ptr);
 		}
 
 		loader_impl_destroy(impl);
@@ -89,7 +94,7 @@ loader_impl loader_get_impl(loader_naming_extension extension)
 	return impl;
 }
 
-int loader_load(loader_naming_path name)
+int loader_load(loader_naming_path path)
 {
 	loader l = loader_singleton();
 
@@ -103,7 +108,7 @@ int loader_load(loader_naming_path name)
 	{
 		loader_naming_extension extension;
 
-		if (loader_naming_get_extension(name, extension) > 1)
+		if (loader_naming_get_extension(path, extension) > 1)
 		{
 			loader_impl impl = loader_get_impl(extension);
 
@@ -111,7 +116,7 @@ int loader_load(loader_naming_path name)
 
 			if (impl != NULL)
 			{
-				return loader_impl_load(impl, name);
+				return loader_impl_load(impl, path);
 			}
 		}
 	}

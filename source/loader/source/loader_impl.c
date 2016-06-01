@@ -212,7 +212,22 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 	}
 }
 
-int loader_impl_load(loader_impl impl, loader_naming_path name)
+int loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+{
+	if (impl != NULL)
+	{
+		loader_impl_interface interface_impl = loader_impl_symbol(impl);
+
+		if (interface_impl != NULL)
+		{
+			return interface_impl->execution_path(impl, path);
+		}
+	}
+
+	return 1;
+}
+
+int loader_impl_load(loader_impl impl, loader_naming_path path)
 {
 	if (impl != NULL)
 	{
@@ -220,15 +235,17 @@ int loader_impl_load(loader_impl impl, loader_naming_path name)
 
 		loader_naming_name module_name;
 
-		if (loader_naming_get_name(name, module_name) > 1)
+		printf("Loading %s\n", path);
+
+		if (interface_impl != NULL && loader_naming_get_name(path, module_name) > 1)
 		{
-			loader_handle handle = interface_impl->load(impl, module_name);
+			loader_handle handle = interface_impl->load(impl, path, module_name);
 
 			printf("Loader interface: %p\nLoader handle: %p\n", (void *)interface_impl, (void *)handle);
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(handle, name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(handle, module_name);
 
 				if (handle_impl != NULL)
 				{

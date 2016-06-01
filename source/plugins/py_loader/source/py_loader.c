@@ -9,7 +9,6 @@
 #include <metacall/metacall-version.h>
 
 #include <py_loader/py_loader.h>
-
 #include <py_loader/py_loader_impl.h>
 
 #include <stdio.h>
