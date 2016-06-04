@@ -22,6 +22,10 @@ struct context_type;
 
 typedef struct context_type * context;
 
+struct type_type;
+
+typedef struct type_type * type;
+
 typedef struct loader_impl_type * loader_impl;
 
 LOADER_API loader_impl loader_impl_create(loader_naming_extension extension);
@@ -33,6 +37,10 @@ LOADER_API loader_impl_interface loader_impl_symbol(loader_impl impl);
 LOADER_API loader_naming_extension * loader_impl_extension(loader_impl impl);
 
 LOADER_API context loader_impl_context(loader_impl impl);
+
+LOADER_API type loader_impl_type(loader_impl impl, const char * name);
+
+LOADER_API int loader_impl_type_define(loader_impl impl, const char * name, type t);
 
 LOADER_API int loader_impl_execution_path(loader_impl impl, loader_naming_path path);
 

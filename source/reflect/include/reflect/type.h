@@ -25,7 +25,20 @@ typedef struct type_type * type;
 
 typedef void * type_impl;
 
-REFLECT_API type type_create(type_id id, const char * name, type_impl impl);
+typedef int (*type_impl_interface_create)(type, type_impl);
+
+typedef void (*type_impl_interface_destroy)(type, type_impl);
+
+typedef struct type_interface_type
+{
+	type_impl_interface_create create;
+	type_impl_interface_destroy destroy;
+
+} * type_interface;
+
+typedef type_interface (*type_impl_interface_singleton)(void);
+
+REFLECT_API type type_create(type_id id, const char * name, type_impl impl, type_impl_interface_singleton singleton);
 
 REFLECT_API type_id type_index(type t);
 

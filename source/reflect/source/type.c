@@ -15,9 +15,11 @@ typedef struct type_type
 	type_id id;
 	char * name;
 	type_impl impl;
+	type_interface interface;
+
 } * type;
 
-type type_create(type_id id, const char * name, type_impl impl)
+type type_create(type_id id, const char * name, type_impl impl, type_impl_interface_singleton singleton)
 {
 	if (type_id_invalid(id) != 0 && name != NULL)
 	{
@@ -29,7 +31,28 @@ type type_create(type_id id, const char * name, type_impl impl)
 			t->name = strdup(name);
 			t->impl = impl;
 
-			return t;
+			if (singleton != NULL)
+			{
+				t->interface = singleton();
+			}
+			else
+			{
+				t->interface = NULL;
+			}
+
+			if (t->interface != NULL && t->interface->create != NULL)
+			{
+				if (t->interface->create(t, impl) == 0)
+				{
+					return t;
+				}
+			}
+			else
+			{
+				return t;
+			}
+
+			free(t);
 		}
 	}
 
@@ -70,6 +93,11 @@ void type_destroy(type t)
 {
 	if (t != NULL)
 	{
+		if (t->interface != NULL && t->interface->destroy != NULL)
+		{
+			t->interface->destroy(t, t->impl);
+		}
+
 		free(t->name);
 
 		free(t);

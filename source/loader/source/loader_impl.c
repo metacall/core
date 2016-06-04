@@ -8,6 +8,7 @@
 
 #include <loader/loader_impl.h>
 
+#include <reflect/type.h>
 #include <reflect/context.h>
 
 #include <adt/hash_map.h>
@@ -35,6 +36,7 @@ typedef struct loader_impl_type
 	hash_map handle_impl_map;
 	loader_impl_data data;
 	context ctx;
+	hash_map type_info_map;
 
 } * loader_impl;
 
@@ -86,6 +88,30 @@ void loader_impl_dynlink_destroy(loader_impl impl)
 	dynlink_unload(impl->handle);
 }
 
+int loader_impl_create_singleton(loader_impl impl, loader_naming_extension extension)
+{
+	impl->handle = loader_impl_dynlink_load(extension);
+
+	if (impl->handle != NULL)
+	{
+		dynlink_symbol_addr singleton_addr;
+
+		if (loader_impl_dynlink_symbol(impl, extension, &singleton_addr) == 0)
+		{
+			impl->singleton = (loader_impl_interface_singleton)DYNLINK_SYMBOL_GET(singleton_addr);
+
+			if (impl->singleton != NULL)
+			{
+				return 0;
+			}
+		}
+
+		loader_impl_dynlink_destroy(impl);
+	}
+
+	return 1;
+}
+
 loader_impl loader_impl_create(loader_naming_extension extension)
 {
 	if (extension != NULL)
@@ -94,45 +120,38 @@ loader_impl loader_impl_create(loader_naming_extension extension)
 
 		if (impl != NULL)
 		{
-			impl->handle = loader_impl_dynlink_load(extension);
-
-			if (impl->handle != NULL)
+			if (loader_impl_create_singleton(impl, extension) == 0)
 			{
-				dynlink_symbol_addr singleton_addr;
+				impl->handle_impl_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
 
-				if (loader_impl_dynlink_symbol(impl, extension, &singleton_addr) == 0)
+				if (impl->handle_impl_map != NULL)
 				{
-					impl->singleton = (loader_impl_interface_singleton)DYNLINK_SYMBOL_GET(singleton_addr);
+					impl->type_info_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
 
-					if (impl->singleton != NULL)
+					if (impl->type_info_map != NULL)
 					{
-						impl->handle_impl_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+						impl->ctx = context_create(extension);
 
-						if (impl->handle_impl_map != NULL)
+						if (impl->ctx != NULL)
 						{
-							impl->ctx = context_create(extension);
+							impl->data = impl->singleton()->initialize(impl);
 
-							if (impl->ctx != NULL)
+							if (impl->data != NULL)
 							{
-								impl->data = impl->singleton()->initialize(impl);
+								strncpy(impl->extension, extension, LOADER_NAMING_EXTENSION_SIZE);
 
-								if (impl->data != NULL)
-								{
-									strncpy(impl->extension, extension, LOADER_NAMING_EXTENSION_SIZE);
-
-									return impl;
-								}
-
-								context_destroy(impl->ctx);
+								return impl;
 							}
 
-							hash_map_destroy(impl->handle_impl_map);
+							context_destroy(impl->ctx);
 						}
+
+						hash_map_destroy(impl->type_info_map);
 					}
+
+					hash_map_destroy(impl->handle_impl_map);
 				}
 			}
-
-			loader_impl_dynlink_destroy(impl);
 		}
 	}
 
@@ -177,6 +196,26 @@ context loader_impl_context(loader_impl impl)
 	}
 
 	return NULL;
+}
+
+type loader_impl_type(loader_impl impl, const char * name)
+{
+	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
+	{
+		return (type)hash_map_get(impl->type_info_map, (hash_map_key)name);
+	}
+
+	return NULL;
+}
+
+int loader_impl_type_define(loader_impl impl, const char * name, type t)
+{
+	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
+	{
+		return hash_map_insert(impl->type_info_map, (hash_map_key)name, (hash_map_value)t);
+	}
+
+	return 1;
 }
 
 loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_name name)
@@ -274,7 +313,21 @@ int loader_impl_load(loader_impl impl, loader_naming_path path)
 	return 1;
 }
 
-int loader_impl_destroy_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+{
+	if (map != NULL && key != NULL && value != NULL && args == NULL)
+	{
+		type t = value;
+
+		type_destroy(t);
+
+		return 0;
+	}
+
+	return 1;
+}
+
+int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && value != NULL && args == NULL)
 	{
@@ -294,12 +347,18 @@ void loader_impl_destroy(loader_impl impl)
 	{
 		loader_impl_interface interface_impl = loader_impl_symbol(impl);
 
+		hash_map_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
+
+		hash_map_destroy(impl->type_info_map);
+
 		if (interface_impl->destroy(impl) != 0)
 		{
 			/* error */
 		}
 
-		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_map_cb_iterate, NULL);
+		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
+
+		hash_map_destroy(impl->handle_impl_map);
 
 		context_destroy(impl->ctx);
 

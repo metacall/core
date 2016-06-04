@@ -88,9 +88,9 @@ class function_test : public testing::Test
 
 TEST_F(function_test, DefaultConstructor)
 {
-	type char_type = type_create(TYPE_CHAR, "char", NULL);
-	type int_type = type_create(TYPE_INT, "int", NULL);
-	type ptr_type = type_create(TYPE_PTR, "ptr", NULL);
+	type char_type = type_create(TYPE_CHAR, "char", NULL, NULL);
+	type int_type = type_create(TYPE_INT, "int", NULL, NULL);
+	type ptr_type = type_create(TYPE_PTR, "ptr", NULL, NULL);
 
 	EXPECT_NE((type) char_type, (type) NULL);
 	EXPECT_NE((type) int_type, (type) NULL);

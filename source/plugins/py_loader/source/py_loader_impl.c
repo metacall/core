@@ -29,9 +29,35 @@ typedef struct loader_impl_py_type
 	PyObject * inspect_signature;
 	PyObject * builtins_module;
 
-	hash_map type_info_map;
-
 } * loader_impl_py;
+
+int type_py_interface_create(type t, type_impl impl)
+{
+	(void)t;
+	(void)impl;
+
+	return 0;
+}
+
+void type_py_interface_destroy(type t, type_impl impl)
+{
+	PyObject * builtin = (PyObject *)impl;
+
+	(void)t;
+
+	Py_DECREF(builtin);
+}
+
+type_interface type_py_singleton()
+{
+	static struct type_interface_type py_type_interface =
+	{
+		&type_py_interface_create,
+		&type_py_interface_destroy
+	};
+
+	return &py_type_interface;
+}
 
 int function_py_interface_create(function func, function_impl impl)
 {
@@ -51,7 +77,7 @@ void function_py_interface_invoke(function func, function_impl impl, function_ar
 
 	printf("Inner call: args_size(%ld)\n", args_size);
 
-	//if (args_size > 0)
+	/* if (args_size > 0) */
 	{
 		PyObject * tuple_args = PyTuple_New(args_size);
 
@@ -132,14 +158,14 @@ void function_py_interface_destroy(function func, function_impl impl)
 
 function_interface function_py_singleton()
 {
-	static struct function_interface_type py_interface =
+	static struct function_interface_type py_function_interface =
 	{
 		&function_py_interface_create,
 		&function_py_interface_invoke,
 		&function_py_interface_destroy
 	};
 
-	return &py_interface;
+	return &py_function_interface;
 }
 
 PyObject * py_loader_impl_get_builtin(loader_impl_py py_impl, const char * builtin_name)
@@ -156,13 +182,13 @@ PyObject * py_loader_impl_get_builtin(loader_impl_py py_impl, const char * built
 	return NULL;
 }
 
-int py_loader_impl_get_builtin_type(loader_impl_py py_impl, type_id id, const char * name)
+int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, type_id id, const char * name)
 {
 	PyObject * builtin = py_loader_impl_get_builtin(py_impl, name);
 
 	if (builtin != NULL)
 	{
-		type builtin_type = type_create(id, name, builtin);
+		type builtin_type = type_create(id, name, builtin, &type_py_singleton);
 
 		if (builtin_type != NULL)
 		{
@@ -172,7 +198,7 @@ int py_loader_impl_get_builtin_type(loader_impl_py py_impl, type_id id, const ch
 
 			printf("\n");
 
-			if (hash_map_insert(py_impl->type_info_map, (hash_map_key)type_name(builtin_type), (hash_map_value)builtin_type) == 0)
+			if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) == 0)
 			{
 				return 0;
 			}
@@ -186,7 +212,7 @@ int py_loader_impl_get_builtin_type(loader_impl_py py_impl, type_id id, const ch
 	return 1;
 }
 
-int py_loader_impl_initialize_inspect_types(loader_impl_py py_impl)
+int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_impl)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault("builtins");
 
@@ -196,29 +222,47 @@ int py_loader_impl_initialize_inspect_types(loader_impl_py py_impl)
 
 	if (py_impl->builtins_module != NULL)
 	{
-		py_impl->type_info_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+		/* TODO: move this to loader_impl */
 
-		if (py_impl->type_info_map != NULL)
+		static struct
 		{
-			if (py_loader_impl_get_builtin_type(py_impl, TYPE_INT, "int") == 0 &&
+			type_id id;
+			const char * name;
+		}
+		type_id_name_pair[] =
+		{
+			{ TYPE_INT, "int" },
 
-				#if PY_MAJOR_VERSION == 2
-				py_loader_impl_get_builtin_type(py_impl, TYPE_LONG, "long") == 0 &&
-				#endif
+			#if PY_MAJOR_VERSION == 2
+				{ TYPE_LONG, "long" },
+			#endif
 
-				py_loader_impl_get_builtin_type(py_impl, TYPE_DOUBLE, "float") == 0)
+			{ TYPE_DOUBLE, "float" }
+		};
+
+		size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+		for (index = 0; index < size; ++index)
+		{
+			if (py_loader_impl_get_builtin_type(impl, py_impl,
+				type_id_name_pair[index].id,
+				type_id_name_pair[index].name) != 0)
 			{
-				return 0;
+				/* error */
+
+				Py_DECREF(py_impl->builtins_module);
+
+				return 1;
 			}
 		}
 
-		Py_DECREF(py_impl->builtins_module);
+		return 0;
 	}
 
 	return 1;
 }
 
-int py_loader_impl_initialize_inspect(loader_impl_py py_impl)
+int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault("inspect");
 
@@ -232,7 +276,7 @@ int py_loader_impl_initialize_inspect(loader_impl_py py_impl)
 
 		if (py_impl->inspect_signature != NULL && PyCallable_Check(py_impl->inspect_signature))
 		{
-			if (py_loader_impl_initialize_inspect_types(py_impl) == 0)
+			if (py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
 			{
 				return 0;
 			}
@@ -256,7 +300,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl)
 	{
 		Py_Initialize();
 
-		if (py_loader_impl_initialize_inspect(py_impl) == 0)
+		if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
 		{
 			return py_impl;
 		}
@@ -315,13 +359,17 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-type py_loader_impl_discover_type(loader_impl_py py_impl, PyObject * annotation)
+type py_loader_impl_discover_type(loader_impl impl, PyObject * annotation)
 {
 	PyObject * annotation_qualname = PyObject_GetAttrString(annotation, "__qualname__");
 
 	const char * annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
+	/*
 	type t = hash_map_get(py_impl->type_info_map, (hash_map_key)annotation_name);
+	*/
+
+	type t = loader_impl_type(impl, annotation_name);
 
 	printf("Discover type (%p) (%p): %s\n", (void *)annotation, (void *)type_derived(t), annotation_name);
 
@@ -429,7 +477,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 						printf(")\n");
 
-						signature_set(s, iterator, parameter_name, py_loader_impl_discover_type(py_impl, annotation));
+						signature_set(s, iterator, parameter_name, py_loader_impl_discover_type(impl, annotation));
 					}
 				}
 			}
@@ -500,53 +548,17 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 	return 1;
 }
 
-int py_loader_destroy_type_info_map_cb(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
-{
-	type t = (type)value;
-
-	PyObject * builtin = (PyObject *)type_derived(t);
-
-	(void)map;
-	(void)key;
-	(void)args;
-
-	Py_DECREF(builtin);
-
-	type_destroy(t);
-
-	return 0;
-}
-
-int py_loader_impl_destroy_inspect_types(loader_impl_py py_impl)
-{
-	hash_map_iterate(py_impl->type_info_map, &py_loader_destroy_type_info_map_cb, NULL);
-
-	hash_map_destroy(py_impl->type_info_map);
-
-	Py_DECREF(py_impl->builtins_module);
-
-	return 0;
-}
-
-int py_loader_impl_destroy_inspect(loader_impl_py py_impl)
-{
-	Py_DECREF(py_impl->inspect_signature);
-
-	Py_DECREF(py_impl->inspect_module);
-
-	return py_loader_impl_destroy_inspect_types(py_impl);
-}
-
 int py_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
 	if (py_impl != NULL)
 	{
-		if (py_loader_impl_destroy_inspect(py_impl) != 0)
-		{
-			/* error */
-		}
+		Py_DECREF(py_impl->inspect_signature);
+
+		Py_DECREF(py_impl->inspect_module);
+
+		Py_DECREF(py_impl->builtins_module);
 
 		Py_Finalize();
 
