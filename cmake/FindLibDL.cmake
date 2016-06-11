@@ -2,8 +2,12 @@
 # Unix dynamic loader library finder by Parra Studios
 # Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
+
 # Defines unix dynamic load library and include paths
 #
+# LIBDL_FOUND - True if library was found
+# LIBDL_INCLUDE_DIR - Dynamic load library headers path
+# LIBDL_LIBRARIES - Path to the dynamic load library
 
 if(LIBDL_INCLUDE_DIR)
     set(LIBDL_FIND_QUIETLY TRUE)

@@ -53,5 +53,9 @@ TEST_F(metacall_test, DefaultConstructor)
 	EXPECT_EQ((void *) NULL, (void *) metacall("say_hello", "meta-programmer"));
 */
 
+	/* JavaScript */
+
+	EXPECT_EQ((void *) NULL, (void *) metacall("say_divide", 32, 4));
+
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

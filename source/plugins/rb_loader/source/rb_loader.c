@@ -33,7 +33,7 @@ void rb_loader_print_info()
 	printf("Ruby Loader Plugin " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
 
-	#ifdef PY_LOADER_STATIC_DEFINE
+	#ifdef RB_LOADER_STATIC_DEFINE
 		printf("Compiled as static library type\n");
 	#else
 		printf("Compiled as shared library type\n");
