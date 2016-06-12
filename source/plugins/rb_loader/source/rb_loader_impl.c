@@ -24,6 +24,19 @@
 #include <ruby.h>
 #include <ruby/intern.h>
 
+#define LOADER_IMPL_RB_INSPECT_OPTIONAL 0
+#define LOADER_IMPL_RB_INSPECT_OPTIONAL_NAME ":opt"
+#define LOADER_IMPL_RB_INSPECT_KEYWORD 1
+#define LOADER_IMPL_RB_INSPECT_KEYWORD_NAME ":key"
+
+#define LOADER_IMPL_RB_INSPECT_TYPE LOADER_IMPL_RB_INSPECT_KEYWORD
+
+#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_OPTIONAL
+#	define LOADER_IMPL_RB_INSPECT_NAME LOADER_IMPL_RB_INSPECT_OPTIONAL_NAME
+#elif LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
+#	define LOADER_IMPL_RB_INSPECT_NAME LOADER_IMPL_RB_INSPECT_KEYWORD_NAME
+#endif
+
 typedef struct loader_impl_rb_type
 {
 	VALUE inspect_module;
@@ -38,6 +51,14 @@ typedef struct loader_impl_rb_handle_type
 
 } * loader_impl_rb_handle;
 
+typedef struct loader_impl_rb_function_type
+{
+	loader_impl_rb_handle rb_handle;
+	ID method_id;
+	VALUE args_hash;
+
+} * loader_impl_rb_function;
+
 int function_rb_interface_create(function func, function_impl impl)
 {
 	(void)func;
@@ -48,21 +69,19 @@ int function_rb_interface_create(function func, function_impl impl)
 
 void function_rb_interface_invoke(function func, function_impl impl, function_args args)
 {
-	loader_impl_rb_handle rb_handle = (loader_impl_rb_handle)impl;
+	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
 
 	signature s = function_signature(func);
 
 	const size_t args_size = signature_count(s);
 
-	const char * func_name = function_name(func);
-
-	VALUE result_value;
+	VALUE result_value = Qnil;
 
 	if (args_size > 0)
 	{
-		VALUE args_value[args_size];
-
 		size_t args_count;
+
+		VALUE args_value[args_size];
 
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
@@ -88,14 +107,28 @@ void function_rb_interface_invoke(function func, function_impl impl, function_ar
 			{
 				args_value[args_count] = Qnil;
 			}
+
+			#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
+
+				rb_hash_aset(rb_function->args_hash, ID2SYM(rb_intern(signature_get_name(s, args_count))), args_value[args_count]);
+
+			#endif
 		}
 
-		result_value = rb_funcallv(rb_handle->instance, rb_intern(func_name), args_size, args_value);
+		#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_OPTIONAL
 
+			result_value = rb_funcallv(rb_function->rb_handle->instance, rb_function->method_id, args_size, args_value);
+
+		#elif LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
+
+			result_value = rb_funcall(rb_function->rb_handle->instance, rb_intern("send"), 2,
+				ID2SYM(rb_function->method_id), rb_function->args_hash);
+
+		#endif
 	}
 	else
 	{
-		result_value = rb_funcall(rb_handle->instance, rb_intern(function_name(func)), 0);
+		result_value = rb_funcall(rb_function->rb_handle->instance, rb_function->method_id, 0);
 	}
 
 	printf("Function call result value:\n");
@@ -105,8 +138,14 @@ void function_rb_interface_invoke(function func, function_impl impl, function_ar
 
 void function_rb_interface_destroy(function func, function_impl impl)
 {
+	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
+
 	(void)func;
-	(void)impl;
+
+	if (rb_function != NULL)
+	{
+		free(rb_function);
+	}
 }
 
 function_interface function_rb_singleton()
@@ -145,13 +184,13 @@ const char * rb_inspect_module_data()
 			"if meth_obj\n"
 				"params = meth_obj.parameters\n"
 
-				"opt_params = params.collect { |i| i.last if i.first == :opt }.compact\n"
+				"method_params = params.collect { |i| i.last if i.first == " LOADER_IMPL_RB_INSPECT_NAME " }.compact\n"
 
-				"required_params = [\"\"] * (params.size - opt_params.size)\n"
+				"required_params = [\"\"] * (params.size - method_params.size)\n"
 
 				"meth_obj.call(*required_params) rescue nil\n"
 
-				"opt_params.each_with_object({}) do |i, hash|\n"
+				"method_params.each_with_object({}) do |i, hash|\n"
 					"hash[i] = captured_binding.local_variable_get(i)\n"
 				"end\n"
 			"end\n"
@@ -178,13 +217,13 @@ const char * rb_inspect_module_data()
 			"if meth_obj\n"
 				"params = meth_obj.parameters\n"
 
-				"opt_params = params.collect { |i| i.last if i.first == :opt }.compact\n"
+				"method_params = params.collect { |i| i.last if i.first == " LOADER_IMPL_RB_INSPECT_NAME " }.compact\n"
 
-				"required_params = [\"\"] * (params.size - opt_params.size)\n"
+				"required_params = [\"\"] * (params.size - method_params.size)\n"
 
 				"meth_obj.call(*required_params) rescue nil\n"
 
-				"opt_params.each_with_object({}) do |i, hash|\n"
+				"method_params.each_with_object({}) do |i, hash|\n"
 					"hash[i] = captured_binding.local_variable_get(i)\n"
 				"end\n"
 			"end\n"
@@ -269,7 +308,6 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl)
 			{
 				if (rb_gv_set("$VERBOSE", Qtrue) == Qtrue)
 				{
-
 					printf("Ruby loader initialized correctly\n");
 
 					return rb_impl;
@@ -364,6 +402,8 @@ loader_handle rb_loader_impl_load(loader_impl impl, loader_naming_path path, loa
 
 					rb_extend_object(handle->instance, handle->module);
 
+					rb_include_module(handle->instance, handle->module);
+
 					printf("Ruby module %s loaded\n", path);
 
 					return (loader_handle)handle;
@@ -397,7 +437,8 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl, VALUE parameter_array, function f)
+int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
+	VALUE parameter_array, function f, loader_impl_rb_function rb_f)
 {
 	if (rb_impl != NULL && parameter_array != Qnil)
 	{
@@ -419,7 +460,11 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl, VALUE
 
 				VALUE parameter_value = rb_ary_entry(parameter_pair, 1);
 
-				VALUE parameter_value_type = rb_funcall(parameter_value, rb_intern("class"), 0);
+				#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_OPTIONAL
+					VALUE parameter_value_type = rb_funcall(parameter_value, rb_intern("class"), 0);
+				#elif LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
+					VALUE parameter_value_type = parameter_value;
+				#endif
 
 				VALUE parameter_value_type_name = rb_funcall(parameter_value_type, rb_intern("to_s"), 0);
 
@@ -429,6 +474,8 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl, VALUE
 					parameter_name_str, parameter_value_type_name_str, parameter_value_type);
 
 				signature_set(s, index, parameter_name_str, loader_impl_type(impl, parameter_value_type_name_str));
+
+				rb_hash_aset(rb_f->args_hash, parameter_symbol, parameter_value);
 			}
 
 			return 0;
@@ -436,6 +483,22 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl, VALUE
 	}
 
 	return 1;
+}
+
+loader_impl_rb_function rb_function_create(loader_impl_rb_handle rb_handle, ID id)
+{
+	loader_impl_rb_function rb_function = malloc(sizeof(struct loader_impl_rb_function_type));
+
+	if (rb_function != NULL)
+	{
+		rb_function->rb_handle = rb_handle;
+		rb_function->method_id = id;
+		rb_function->args_hash = rb_hash_new();
+
+		return rb_function;
+	}
+
+	return NULL;
 }
 
 int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
@@ -470,15 +533,20 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			int parameters_size_integer = FIX2INT(parameters_size);
 
-			function f = function_create(method_name_str, parameters_size_integer, rb_handle, &function_rb_singleton);
+			loader_impl_rb_function rb_function = rb_function_create(rb_handle, rb_intern(method_name_str));
 
-			if (f != NULL && rb_loader_impl_discover_func(impl, rb_impl, parameter_array, f) == 0)
+			if (rb_function)
 			{
-				scope sp = context_scope(ctx);
+				function f = function_create(method_name_str, parameters_size_integer, rb_function, &function_rb_singleton);
 
-				scope_define(sp, method_name_str, f);
+				if (f != NULL && rb_loader_impl_discover_func(impl, rb_impl, parameter_array, f, rb_function) == 0)
+				{
+					scope sp = context_scope(ctx);
 
-				printf("Function %s <%p> (%d)\n", method_name_str, (void *)f, parameters_size_integer);
+					scope_define(sp, method_name_str, f);
+
+					printf("Function %s <%p> (%d)\n", method_name_str, (void *)f, parameters_size_integer);
+				}
 			}
 		}
 	}

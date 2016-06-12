@@ -32,11 +32,11 @@ int metacall_initialize(void)
 {
 	/* TODO: load a full path */
 
-	loader_naming_name py_name = "example.py";
+	/* loader_naming_name py_name = "example.py"; */
 	loader_naming_name rb_name = "hello.rb";
-	loader_naming_name js_name = "divide.js";
+	/* loader_naming_name js_name = "divide.js"; */
 
-	if (loader_load(py_name) == 0 && loader_load(rb_name) == 0 && loader_load(js_name) == 0)
+	if (/*loader_load(py_name) == 0 &&*/ loader_load(rb_name) == 0 /*&& loader_load(js_name) == 0*/)
 	{
 		return 0;
 	}
