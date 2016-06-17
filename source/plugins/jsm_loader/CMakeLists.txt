@@ -1,12 +1,11 @@
-
 #
 # External dependencies
 #
 
-find_package(V8)
+find_package(SpiderMonkey)
 
-if(NOT V8_FOUND)
-    message(STATUS "V8 libraries not found")
+if(NOT SPIDERMONKEY_FOUND)
+    message(STATUS "SpiderMonkey libraries not found")
     return()
 endif()
 
@@ -15,7 +14,7 @@ endif()
 #
 
 # Target name
-set(target js_loader)
+set(target jsm_loader)
 
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
@@ -34,13 +33,13 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-    ${include_path}/js_loader.h
-    ${include_path}/js_loader_impl.h
+    ${include_path}/jsm_loader.h
+    ${include_path}/jsm_loader_impl.h
 )
 
 set(sources
-    ${source_path}/js_loader.c
-    ${source_path}/js_loader_impl.cpp
+    ${source_path}/jsm_loader.c
+    ${source_path}/jsm_loader_impl.cpp
 )
 
 # Group source files
@@ -114,7 +113,7 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${V8_INCLUDE_DIR} # V8 includes
+    ${SPIDERMONKEY_INCLUDE_DIR} # SpiderMonkey includes
 
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
@@ -136,7 +135,7 @@ target_link_libraries(${target}
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
 
-    ${V8_LIBRARIES} # V8 library
+    ${SPIDERMONKEY_LIBRARY} # SpiderMonkey library
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -154,6 +153,8 @@ target_compile_definitions(${target}
     PUBLIC
     $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
     ${DEFAULT_COMPILE_DEFINITIONS}
+
+    ${SPIDERMONKEY_DEFINITIONS} # SpiderMonkey definitions
 
     INTERFACE
 )

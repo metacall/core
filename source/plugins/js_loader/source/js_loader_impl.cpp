@@ -18,28 +18,51 @@
 #include <adt/hash_map.h>
 #include <adt/hash_map_str.h>
 
+#include <cstdlib>
+#include <cstring>
+
 #include <new>
 #include <iostream>
 
-/*
-#include <v8.h>
-*/
+#include <libplatform/libplatform.h>
+#include <v8.h> /* version: 5.3.0 */
 
-using namespace std;
+#ifdef ENABLE_DEBUGGER_SUPPORT
+#	include <v8-debug.h>
+#endif /* ENALBLE_DEBUGGER_SUPPORT */
 
-/*
 using namespace v8;
-*/
+
+class ArrayBufferAllocator : public ArrayBuffer::Allocator
+{
+	public:
+		virtual void * Allocate(size_t length)
+		{
+			void * data = AllocateUninitialized(length);
+
+			return (data == NULL) ? data : memset(data, 0, length);
+		}
+
+		virtual void * AllocateUninitialized(size_t length)
+		{
+			return malloc(length);
+		}
+
+		virtual void Free(void * data, size_t)
+		{
+			free(data);
+		}
+};
 
 typedef struct loader_impl_js_type
 {
-	void * todo;
+	Platform * platform;
 
 } * loader_impl_js;
 
 typedef struct loader_impl_js_handle_type
 {
-	void * todo;
+	Isolate * isolate;
 
 } * loader_impl_js_handle;
 
@@ -84,6 +107,20 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl)
 
 	if (js_impl != nullptr)
 	{
+		/* const char * icu_path = "."; */
+
+		const char * external_startup_data = "c_loader";
+
+		/* V8::InitializeICUDefaultLocation(icu_path); */
+
+		V8::InitializeExternalStartupData(external_startup_data);
+
+		js_impl->platform = platform::CreateDefaultPlatform();
+
+		V8::InitializePlatform(js_impl->platform);
+
+		V8::Initialize();
+
 		return static_cast<loader_impl_data>(js_impl);
 	}
 
@@ -108,8 +145,76 @@ loader_handle js_loader_impl_load(loader_impl impl, loader_naming_path path, loa
 
 	if (js_handle != nullptr)
 	{
-		return static_cast<loader_handle>(js_handle);
-	}
+		ArrayBufferAllocator allocator;
+
+		Isolate::CreateParams create_params;
+
+		create_params.array_buffer_allocator = &allocator;
+
+		js_handle->isolate = Isolate::New(create_params);
+
+		if (js_handle->isolate != nullptr)
+		{
+			HandleScope handle_scope(js_handle->isolate);
+
+			Local<Context> ctx = Context::New(js_handle->isolate);
+
+			Context::Scope ctx_scope(ctx);
+
+			Local<String> source = String::NewFromUtf8(js_handle->isolate,
+				"'Hello' + ', World!'", NewStringType::kNormal).ToLocalChecked();
+
+			Local<Script> script = Script::Compile(ctx, source).ToLocalChecked();
+
+			Local<Value> result = script->Run(ctx).ToLocalChecked();
+
+			String::Utf8Value utf8(result);
+
+			std::cout << "Script result: " << *utf8 << std::endl;
+
+			return js_handle;
+		}
+
+/*		HandleScope handle_scope;
+
+		Handle<String> script_source(String::New("print('hello world');"));
+		Handle<String> script_name(String::New("test"));
+
+		Handle<ObjectTemplate> global = ObjectTemplate::New();
+		Handle<Context> ctx = Context::New(NULL, global);
+		Context::Scope ctx_scope(ctx);
+
+		Handle<Script> script;
+
+		{
+			TryCatch try_catch_compile;
+
+			script = Script::Compile(script_source, script_name);
+
+			if (!script.IsEmpty() && !try_catch_compile.HasCaught())
+			{
+				TryCatch try_catch_run;
+
+				script->Run();
+
+				if (try_catch_run.HasCaught())
+				{
+					return static_cast<loader_handle>(js_handle);
+				}
+*/
+				/* js_throw_exception(try_catch_run); */
+/*			}
+
+			if (try_catch_compile.HasCaught())
+			{
+
+*/				/* js_throw_exception(try_catch_compile); */
+/*			}
+		}
+
+
+		delete js_handle;
+*/	}
 
 	return NULL;
 }
@@ -122,6 +227,11 @@ int js_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (js_handle != nullptr)
 	{
+		if (js_handle->isolate != nullptr)
+		{
+			js_handle->isolate->Dispose();
+		}
+
 		delete js_handle;
 
 		return 0;
@@ -147,6 +257,17 @@ int js_loader_impl_destroy(loader_impl impl)
 
 	if (js_impl != nullptr)
 	{
+		V8::Dispose();
+
+		V8::ShutdownPlatform();
+
+		if (js_impl->platform != nullptr)
+		{
+			delete js_impl->platform;
+
+			js_impl->platform = nullptr;
+		}
+
 		delete js_impl;
 
 		return 0;
@@ -154,3 +275,4 @@ int js_loader_impl_destroy(loader_impl impl)
 
 	return 1;
 }
+

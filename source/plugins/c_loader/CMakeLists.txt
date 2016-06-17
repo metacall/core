@@ -1,12 +1,25 @@
-
 #
 # External dependencies
 #
 
-find_package(V8)
+find_package(LibFFI)
 
-if(NOT V8_FOUND)
-    message(STATUS "V8 libraries not found")
+if(NOT LIBFFI_FOUND)
+    message(STATUS "Foreing Function Interface libraries not found")
+    return()
+endif()
+
+find_package(LLVM)
+
+if(NOT LLVM_FOUND)
+    message(STATUS "LLVM libraries not found")
+    return()
+endif()
+
+find_package(Clang)
+
+if(NOT CLANG_FOUND)
+    message(STATUS "Clang libraries not found")
     return()
 endif()
 
@@ -15,7 +28,7 @@ endif()
 #
 
 # Target name
-set(target js_loader)
+set(target c_loader)
 
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
@@ -34,13 +47,13 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-    ${include_path}/js_loader.h
-    ${include_path}/js_loader_impl.h
+    ${include_path}/c_loader.h
+    ${include_path}/c_loader_impl.h
 )
 
 set(sources
-    ${source_path}/js_loader.c
-    ${source_path}/js_loader_impl.cpp
+    ${source_path}/c_loader.c
+    ${source_path}/c_loader_impl.cpp
 )
 
 # Group source files
@@ -114,7 +127,9 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${V8_INCLUDE_DIR} # V8 includes
+    ${LIBFFI_INCLUDE_DIRS} # FFI includes
+    ${LLVM_INCLUDE_DIRS} # LLVM includes
+    ${CLANG_INCLUDE_DIRS} # Clang includes
 
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
@@ -136,7 +151,9 @@ target_link_libraries(${target}
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
 
-    ${V8_LIBRARIES} # V8 library
+    ${LIBFFI_LIBRARIES} # FFI libraries
+    ${LLVM_LIBRARIES} # LLVM libraries
+    ${CLANG_LIBS} # Clang libraries
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -155,6 +172,9 @@ target_compile_definitions(${target}
     $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
     ${DEFAULT_COMPILE_DEFINITIONS}
 
+    ${LIBFFI_DEFINITIONS} # FFI definitions
+    ${LLVM_CPP_FLAGS} # LLVM definitions
+
     INTERFACE
 )
 
@@ -168,6 +188,8 @@ target_compile_options(${target}
     PUBLIC
     ${DEFAULT_COMPILE_OPTIONS}
 
+    ${LLVM_CXX_FLAGS} # LLVM C++ compiler options
+
     INTERFACE
 )
 
@@ -180,6 +202,8 @@ target_link_libraries(${target}
 
     PUBLIC
     ${DEFAULT_LINKER_OPTIONS}
+
+    ${LLVM_LD_FLAGS} # LLVM linker options
 
     INTERFACE
 )

@@ -1,5 +1,5 @@
 #
-# V8 Google JavaScript Engine by Parra Studios
+# CMake Find V8 Google JavaScript Engine by Parra Studios
 # Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
@@ -13,6 +13,9 @@
 if(V8_INCLUDE_DIR)
     set(V8_FIND_QUIETLY TRUE)
 endif()
+
+# Include package manager
+include(FindPackageHandleStandardArgs)
 
 # V8 search paths
 set(V8_PATHS
@@ -45,11 +48,13 @@ else()
 	set(V8_PATHS_DEBUG
 		${V8_DIR}/out/ia32.debug
 		${V8_DIR}/out/x64.debug
+		${V8_DIR}/out/native
 	)
 
 	set(V8_PATHS_RELEASE
 		${V8_DIR}/out/ia32.release
 		${V8_DIR}/out/x64.release
+		${V8_DIR}/out/native
 	)
 endif()
 
@@ -73,12 +78,16 @@ find_path(V8_INCLUDE_DIR ${V8_HEADERS}
 # Define library names
 set(V8_NAMES_DEBUG v8D v8_baseD v8_base.ia32D v8_base.x64D libv8_baseD v8_baseD.lib)
 set(V8_NAMES_RELEASE v8 v8_base v8_base.ia32 v8_base.x64 libv8_base v8_base.lib)
+set(V8_PLATFORM_NAMES_DEBUG v8_libplatformD v8_libplatformD.a v8_libplatformD.lib)
+set(V8_PLATFORM_NAMES_RELEASE v8_libplatform v8_libplatform.a v8_libplatform.lib)
 set(V8_SNAPSHOT_NAMES_DEBUG v8_snapshotD libv8_snapshotD v8_snapshotD.lib)
 set(V8_SNAPSHOT_NAMES_RELEASE v8_snapshot libv8_snapshot v8_snapshot.lib)
-set(V8_ICUUC_NAMES_DEBUG icuucD libicuucD)
-set(V8_ICUUC_NAMES_RELEASE icuuc libicuuc)
-set(V8_ICUI18N_NAMES_DEBUG icui18nD libicui18nD)
-set(V8_ICUI18N_NAMES_RELEASE icui18n libicui18n)
+set(V8_ICU_NAMES_DEBUG icudataD icudataD.a icudataD.lib)
+set(V8_ICU_NAMES_RELEASE icudata icudata.a icudata.lib)
+#set(V8_ICUUC_NAMES_DEBUG icuucD libicuucD)
+#set(V8_ICUUC_NAMES_RELEASE icuuc libicuuc)
+#set(V8_ICUI18N_NAMES_DEBUG icui18nD libicui18nD)
+#set(V8_ICUI18N_NAMES_RELEASE icui18n libicui18n)
 
 # Find V8 base library debug
 find_library(V8_LIBRARY_DEBUG
@@ -94,6 +103,22 @@ find_library(V8_LIBRARY_RELEASE
 	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
 	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
 	DOC "Google V8 JavaScript Engine Library (Release)"
+)
+
+# Find V8 platform library debug
+find_library(V8_PLATFORM_LIBRARY_DEBUG
+	NAMES ${V8_PLATFORM_NAMES_DEBUG}
+	PATHS ${V8_PATHS} ${V8_PATHS_DEBUG}
+	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+	DOC "Google V8 JavaScript Engine Library Platform (Debug)"
+)
+
+# Find V8 platform library release
+find_library(V8_PLATFORM_LIBRARY_RELEASE
+	NAMES ${V8_PLATFORM_NAMES_RELEASE}
+	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
+	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+	DOC "Google V8 JavaScript Engine Library Platform (Release)"
 )
 
 # Find V8 snapshot library debug
@@ -112,68 +137,148 @@ find_library(V8_SNAPSHOT_LIBRARY_RELEASE
 	DOC "Google V8 JavaScript Engine Library Snapshot (Release)"
 )
 
-# Find V8 icuuc library debug
-find_library(V8_ICUUC_LIBRARY_DEBUG
-	NAMES ${V8_ICUUC_NAMES_DEBUG}
+# Find V8 icu library debug
+find_library(V8_ICU_LIBRARY_DEBUG
+	NAMES ${V8_ICU_NAMES_DEBUG}
 	PATHS ${V8_PATHS} ${V8_PATHS_DEBUG}
 	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
-	DOC "Google V8 JavaScript Engine Library ICUUC (Debug)"
+	DOC "Google V8 JavaScript Engine Library ICU (Debug)"
 )
+
+# Find V8 icu library release
+find_library(V8_ICU_LIBRARY_RELEASE
+	NAMES ${V8_ICU_NAMES_RELEASE}
+	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
+	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+	DOC "Google V8 JavaScript Engine Library ICU (Release)"
+)
+
+# Find V8 icuuc library debug
+#find_library(V8_ICUUC_LIBRARY_DEBUG
+#	NAMES ${V8_ICUUC_NAMES_DEBUG}
+#	PATHS ${V8_PATHS} ${V8_PATHS_DEBUG}
+#	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+#	DOC "Google V8 JavaScript Engine Library ICUUC (Debug)"
+#)
 
 # Find V8 icuuc library release
-find_library(V8_ICUUC_LIBRARY_RELEASE
-	NAMES ${V8_ICUUC_NAMES_RELEASE}
-	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
-	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
-	DOC "Google V8 JavaScript Engine Library ICUUC (Release)"
-)
+#find_library(V8_ICUUC_LIBRARY_RELEASE
+#	NAMES ${V8_ICUUC_NAMES_RELEASE}
+#	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
+#	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+#	DOC "Google V8 JavaScript Engine Library ICUUC (Release)"
+#)
 
 # Find V8 icui18n library debug
-find_library(V8_ICUI18N_LIBRARY_DEBUG
-	NAMES ${V8_ICUI18N_NAMES_DEBUG}
-	PATHS ${V8_PATHS} ${V8_PATHS_DEBUG}
-	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
-	DOC "Google V8 JavaScript Engine Library ICUI18N (Debug)"
-)
+#find_library(V8_ICUI18N_LIBRARY_DEBUG
+#	NAMES ${V8_ICUI18N_NAMES_DEBUG}
+#	PATHS ${V8_PATHS} ${V8_PATHS_DEBUG}
+#	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+#	DOC "Google V8 JavaScript Engine Library ICUI18N (Debug)"
+#)
 
 # Find V8 icui18n library release
-find_library(V8_ICUI18N_LIBRARY_RELEASE
-	NAMES ${V8_ICUI18N_NAMES_RELEASE}
-	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
-	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
-	DOC "Google V8 JavaScript Engine Library ICUI18N (Release)"
-)
+#find_library(V8_ICUI18N_LIBRARY_RELEASE
+#	NAMES ${V8_ICUI18N_NAMES_RELEASE}
+#	PATHS ${V8_PATHS} ${V8_PATHS_RELEASE}
+#	PATH_SUFFIXES ${V8_LIBRARY_PATH_SUFFIXES}
+#	DOC "Google V8 JavaScript Engine Library ICUI18N (Release)"
+#)
 
-# Include package manager
-include(FindPackageHandleStandardArgs)
-
-if(V8_LIBRARY_DEBUG AND V8_LIBRARY_RELEASE AND V8_SNAPSHOT_LIBRARY_DEBUG AND V8_SNAPSHOT_LIBRARY_RELEASE)
-	if(MSVC)
+# Base build with snapshot
+if(MSVC)
+	if(V8_LIBRARY_DEBUG AND V8_LIBRARY_RELEASE AND V8_SNAPSHOT_LIBRARY_DEBUG AND V8_SNAPSHOT_LIBRARY_RELEASE)
 		set(V8_LIBRARY
-			${V8_LIBRARY_DEBUG} ${V8_SNAPSHOT_LIBRARY_DEBUG}
-			${V8_LIBRARY_RELEASE} ${V8_SNAPSHOT_LIBRARY_RELEASE}
+			${V8_LIBRARY_DEBUG} ${V8_PLATFORM_LIBRARY_DEBUG} ${V8_ICU_LIBRARY_DEBUG} ${V8_SNAPSHOT_LIBRARY_DEBUG}
+			${V8_LIBRARY_RELEASE} ${V8_PLATFORM_LIBRARY_RELEASE} ${V8_ICUY_LIBRARY_RELEASE} ${V8_SNAPSHOT_LIBRARY_RELEASE}
 		)
 
 		set(V8_LIBRARIES
 			optimized ${V8_LIBRARY_RELEASE} debug ${V8_LIBRARY_DEBUG}
+			optimized ${V8_PLATFORM_LIBRARY_RELEASE} debug ${V8_PLATFORM_LIBRARY_DEBUG}
+			optimized ${V8_ICU_LIBRARY_RELEASE} debug ${V8_ICU_LIBRARY_DEBUG}
 			optimized ${V8_SNAPSHOT_LIBRARY_RELEASE} debug ${V8_SNAPSHOT_LIBRARY_DEBUG}
 			optimized Winmm.lib debug Winmm.lib
 		)
+	endif()
+else()
+	if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
+		if(V8_LIBRARY_DEBUG AND V8_SNAPSHOT_LIBRARY_DEBUG)
+			set(V8_LIBRARY ${V8_LIBRARY_DEBUG} ${V8_PLATFORM_LIBRARY_DEBUG} ${V8_ICU_LIBRARY_DEBUG} ${V8_SNAPSHOT_LIBRARY_DEBUG})
+		endif()
+	else()
+		if(V8_LIBRARY_RELEASE AND V8_SNAPSHOT_LIBRARY_RELEASE)
+			set(V8_LIBRARY ${V8_LIBRARY_RELEASE} ${V8_PLATFORM_LIBRARY_RELEASE} ${V8_ICU_LIBRARY_RELEASE} ${V8_SNAPSHOT_LIBRARY_RELEASE})
+		endif()
+	endif()
+
+	set(V8_LIBRARIES ${V8_LIBRARY})
+endif()
+
+find_package_handle_standard_args(V8 DEFAULT_MSG V8_LIBRARY V8_INCLUDE_DIR)
+
+# Base build
+if(NOT V8_FOUND)
+	if(MSVC)
+		if(V8_LIBRARY_DEBUG AND V8_LIBRARY_RELEASE)
+			set(V8_LIBRARY
+				${V8_LIBRARY_DEBUG} ${V8_LIBRARY_RELEASE}
+				${V8_PLATFORM_LIBRARY_DEBUG} ${V8_PLATFORM_LIBRARY_RELEASE}
+				${V8_ICU_LIBRARY_DEBUG} ${V8_ICU_LIBRARY_RELEASE}
+			)
+
+			set(V8_LIBRARIES
+				optimized ${V8_LIBRARY_RELEASE} debug ${V8_LIBRARY_DEBUG}
+				optimized ${V8_PLATFORM_LIBRARY_RELEASE} debug ${V8_PLATFORM_LIBRARY_DEBUG}
+				optimized ${V8_ICU_LIBRARY_RELEASE} debug ${V8_ICU_LIBRARY_DEBUG}
+				optimized Winmm.lib debug Winmm.lib
+			)
+		endif()
 	else()
 		if(CMAKE_BUILD_TYPE EQUAL "DEBUG")
-			set(V8_LIBRARY ${V8_LIBRARY_DEBUG} ${V8_SNAPSHOT_LIBRARY_DEBUG})
+			if(V8_LIBRARY_DEBUG)
+				set(V8_LIBRARY ${V8_LIBRARY_DEBUG} ${V8_PLATFORM_LIBRARY_DEBUG} ${V8_ICU_LIBRARY_DEBUG})
+			endif()
 		else()
-			set(V8_LIBRARY ${V8_LIBRARY_RELEASE} ${V8_SNAPSHOT_LIBRARY_RELEASE})
+			if(V8_LIBRARY_RELEASE)
+				set(V8_LIBRARY ${V8_LIBRARY_RELEASE} ${V8_PLATFORM_LIBRARY_RELEASE} ${V8_ICU_LIBRARY_RELEASE})
+			endif()
 		endif()
 
 		set(V8_LIBRARIES ${V8_LIBRARY})
 	endif()
+
+	find_package_handle_standard_args(V8 DEFAULT_MSG V8_LIBRARY V8_INCLUDE_DIR)
 endif()
 
-find_package_handle_standard_args(V8 DEFAULT_MSG V8_LIBRARY V8_INCLUDE_DIR)
+# Minimal build
+if(NOT V8_FOUND)
+	if(MSVC)
+		if(V8_LIBRARY_RELEASE)
+			set(V8_LIBRARY ${V8_LIBRARY_RELEASE} ${V8_PLATFORM_LIBRARY_RELEASE} ${V8_ICU_LIBRARY_RELEASE})
+
+			set(V8_LIBRARIES
+				optimized ${V8_LIBRARY_RELEASE} debug ${V8_LIBRARY_RELEASE}
+				optimized ${V8_PLATFORM_LIBRARY_RELEASE} debug ${V8_PLATFORM_LIBRARY_RELEASE}
+				optimized ${V8_ICU_LIBRARY_RELEASE} debug ${V8_ICU_LIBRARY_RELEASE}
+				optimized Winmm.lib debug Winmm.lib
+			)
+		endif()
+	else()
+		if(V8_LIBRARY_RELEASE)
+			set(V8_LIBRARY ${V8_LIBRARY_RELEASE} ${V8_PLATFORM_LIBRARY_RELEASE} ${V8_ICU_LIBRARY_RELEASE})
+		endif()
+
+		set(V8_LIBRARIES ${V8_LIBRARY})
+	endif()
+
+	find_package_handle_standard_args(V8 DEFAULT_MSG V8_LIBRARY V8_INCLUDE_DIR)
+endif()
 
 mark_as_advanced(V8_LIBRARY V8_INCLUDE_DIR)
 
 if(V8_FOUND)
 	set(V8_INCLUDE_DIRS ${V8_INCLUDE_DIR})
 endif()
+
+message(STATUS "V8 Libraries: ${V8_LIBRARIES}")

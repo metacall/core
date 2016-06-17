@@ -30,18 +30,23 @@ typedef union metacall_args_type
 
 int metacall_initialize(void)
 {
+	size_t iterator;
+
 	/* TODO: load a full path */
-
-	/* loader_naming_name py_name = "example.py"; */
-	loader_naming_name rb_name = "hello.rb";
-	/* loader_naming_name js_name = "divide.js"; */
-
-	if (/*loader_load(py_name) == 0 &&*/ loader_load(rb_name) == 0 /*&& loader_load(js_name) == 0*/)
+	loader_naming_name module_names[] =
 	{
-		return 0;
+		"compiled.c" /*, "spider.jsm", "divide.js", "example.py", "hello.rb"*/
+	};
+
+	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)
+	{
+		if (loader_load(module_names[iterator]) != 0)
+		{
+			return 1;
+		}
 	}
 
-	return 1;
+	return 0;
 }
 
 void * metacall(const char * name, ...)

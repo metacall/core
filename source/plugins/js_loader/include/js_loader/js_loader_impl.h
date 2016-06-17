@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef RB_LOADER_IMPL_H
-#define RB_LOADER_IMPL_H 1
+#ifndef JS_LOADER_IMPL_H
+#define JS_LOADER_IMPL_H 1
 
 #include <js_loader/js_loader_api.h>
 
