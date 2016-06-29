@@ -23,9 +23,12 @@
 
 #include <new>
 #include <iostream>
+#include <string>
+#include <fstream>
+#include <streambuf>
 
 #include <libplatform/libplatform.h>
-#include <v8.h> /* version: 5.3.0 */
+#include <v8.h> /* version: 5.1.117 */
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
 #	include <v8-debug.h>
@@ -33,14 +36,21 @@
 
 using namespace v8;
 
-class ArrayBufferAllocator : public ArrayBuffer::Allocator
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path);
+
+class ArrayBufferAllocator : public v8::ArrayBuffer::Allocator
 {
 	public:
 		virtual void * Allocate(size_t length)
 		{
 			void * data = AllocateUninitialized(length);
 
-			return (data == NULL) ? data : memset(data, 0, length);
+			if (data != NULL)
+			{
+				return memset(data, 0, length);
+			}
+
+			return NULL;
 		}
 
 		virtual void * AllocateUninitialized(size_t length)
@@ -57,12 +67,51 @@ class ArrayBufferAllocator : public ArrayBuffer::Allocator
 typedef struct loader_impl_js_type
 {
 	Platform * platform;
+	Isolate * isolate;
+	Isolate::CreateParams isolate_create_params;
+	Isolate::Scope * isolate_scope;
+	ArrayBufferAllocator allocator;
 
 } * loader_impl_js;
 
-typedef struct loader_impl_js_handle_type
+typedef class loader_impl_js_handle_type
 {
-	Isolate * isolate;
+	public:
+		loader_impl_js_handle_type(loader_impl_js js_impl,
+			loader_naming_path path/*, loader_naming_name name*/) :
+				handle_scope(js_impl->isolate),
+				ctx_impl(Context::New(js_impl->isolate)), ctx_scope(ctx_impl)
+		{
+
+			Local<String> source = js_loader_impl_read_script(js_impl->isolate, path).ToLocalChecked();
+
+			script = Script::Compile(ctx_impl, source).ToLocalChecked();
+
+			Local<Value> result = script->Run(ctx_impl).ToLocalChecked();
+
+			String::Utf8Value utf8(result);
+
+			std::cout << "Result: " << *utf8 << std::endl;
+		}
+
+		int discover(loader_impl_js js_impl, context ctx)
+		{
+			(void)js_impl;
+			(void)ctx;
+
+			return 0;
+		}
+
+		~loader_impl_js_handle_type()
+		{
+
+		}
+
+	private:
+		HandleScope handle_scope;
+		Local<Context> ctx_impl;
+		Context::Scope ctx_scope;
+		Local<Script> script;
 
 } * loader_impl_js_handle;
 
@@ -99,6 +148,43 @@ function_interface function_js_singleton()
 	return &js_interface;
 }
 
+void js_loader_impl_read_file(loader_naming_path path, std::string & source)
+{
+	std::ifstream file(path);
+
+	file.seekg(0, std::ios::end);
+
+	source.reserve(file.tellg());
+
+	file.seekg(0, std::ios::beg);
+
+	source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+}
+
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path)
+{
+	MaybeLocal<String> result;
+
+	std::string source;
+
+	js_loader_impl_read_file(path, source);
+
+	if (!source.empty())
+	{
+		// shebang
+		if (source[0] == '#' && source[1] == '!')
+		{
+			source[0] = '/';
+			source[1] = '/';
+		}
+
+		result = String::NewFromUtf8(isolate, source.c_str(),
+			NewStringType::kNormal, source.length());
+	}
+
+	return result;
+}
+
 loader_impl_data js_loader_impl_initialize(loader_impl impl)
 {
 	loader_impl_js js_impl = new loader_impl_js_type();
@@ -107,21 +193,34 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl)
 
 	if (js_impl != nullptr)
 	{
-		/* const char * icu_path = "."; */
+		if (V8::InitializeICU() == true)
+		{
+			/* V8::InitializeExternalStartupData(argv[0]); */
 
-		const char * external_startup_data = "c_loader";
+			js_impl->platform = platform::CreateDefaultPlatform();
 
-		/* V8::InitializeICUDefaultLocation(icu_path); */
+			if (js_impl->platform != nullptr)
+			{
+				V8::InitializePlatform(js_impl->platform);
 
-		V8::InitializeExternalStartupData(external_startup_data);
+				if (V8::Initialize())
+				{
+					js_impl->isolate_create_params.array_buffer_allocator = &js_impl->allocator;
 
-		js_impl->platform = platform::CreateDefaultPlatform();
+					js_impl->isolate = Isolate::New(js_impl->isolate_create_params);
 
-		V8::InitializePlatform(js_impl->platform);
+					js_impl->isolate_scope = new Isolate::Scope(js_impl->isolate);
 
-		V8::Initialize();
+					if (js_impl->isolate != nullptr &&
+						js_impl->isolate_scope != nullptr)
+					{
+						return static_cast<loader_impl_data>(js_impl);
+					}
+				}
+			}
+		}
 
-		return static_cast<loader_impl_data>(js_impl);
+		delete js_impl;
 	}
 
 	return NULL;
@@ -137,84 +236,19 @@ int js_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
 
 loader_handle js_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name)
 {
-	loader_impl_js_handle js_handle = new loader_impl_js_handle_type();
+	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
-	(void)impl;
-	(void)path;
 	(void)name;
 
-	if (js_handle != nullptr)
+	if (js_impl != nullptr)
 	{
-		ArrayBufferAllocator allocator;
+		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(js_impl, path/*, name*/);
 
-		Isolate::CreateParams create_params;
-
-		create_params.array_buffer_allocator = &allocator;
-
-		js_handle->isolate = Isolate::New(create_params);
-
-		if (js_handle->isolate != nullptr)
+		if (js_handle != nullptr)
 		{
-			HandleScope handle_scope(js_handle->isolate);
-
-			Local<Context> ctx = Context::New(js_handle->isolate);
-
-			Context::Scope ctx_scope(ctx);
-
-			Local<String> source = String::NewFromUtf8(js_handle->isolate,
-				"'Hello' + ', World!'", NewStringType::kNormal).ToLocalChecked();
-
-			Local<Script> script = Script::Compile(ctx, source).ToLocalChecked();
-
-			Local<Value> result = script->Run(ctx).ToLocalChecked();
-
-			String::Utf8Value utf8(result);
-
-			std::cout << "Script result: " << *utf8 << std::endl;
-
 			return js_handle;
 		}
-
-/*		HandleScope handle_scope;
-
-		Handle<String> script_source(String::New("print('hello world');"));
-		Handle<String> script_name(String::New("test"));
-
-		Handle<ObjectTemplate> global = ObjectTemplate::New();
-		Handle<Context> ctx = Context::New(NULL, global);
-		Context::Scope ctx_scope(ctx);
-
-		Handle<Script> script;
-
-		{
-			TryCatch try_catch_compile;
-
-			script = Script::Compile(script_source, script_name);
-
-			if (!script.IsEmpty() && !try_catch_compile.HasCaught())
-			{
-				TryCatch try_catch_run;
-
-				script->Run();
-
-				if (try_catch_run.HasCaught())
-				{
-					return static_cast<loader_handle>(js_handle);
-				}
-*/
-				/* js_throw_exception(try_catch_run); */
-/*			}
-
-			if (try_catch_compile.HasCaught())
-			{
-
-*/				/* js_throw_exception(try_catch_compile); */
-/*			}
-		}
-
-
-		delete js_handle;
-*/	}
+	}
 
 	return NULL;
 }
@@ -227,11 +261,6 @@ int js_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (js_handle != nullptr)
 	{
-		if (js_handle->isolate != nullptr)
-		{
-			js_handle->isolate->Dispose();
-		}
-
 		delete js_handle;
 
 		return 0;
@@ -242,13 +271,19 @@ int js_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 int js_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	/* loader_impl_js_handle js_handle = (loader_impl_js_handle)handle; */
+	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
-	(void)impl;
-	(void)handle;
-	(void)ctx;
+	if (js_impl != nullptr)
+	{
+		loader_impl_js_handle js_handle = (loader_impl_js_handle)handle;
 
-	return 0;
+		if (js_handle != nullptr)
+		{
+			return js_handle->discover(js_impl, ctx);
+		}
+	}
+
+	return 1;
 }
 
 int js_loader_impl_destroy(loader_impl impl)
@@ -257,6 +292,20 @@ int js_loader_impl_destroy(loader_impl impl)
 
 	if (js_impl != nullptr)
 	{
+		if (js_impl->isolate_scope != nullptr)
+		{
+			delete js_impl->isolate_scope;
+
+			js_impl->isolate_scope = nullptr;
+		}
+
+		if (js_impl->isolate != nullptr)
+		{
+			js_impl->isolate->Dispose();
+
+			js_impl->isolate = nullptr;
+		}
+
 		V8::Dispose();
 
 		V8::ShutdownPlatform();
@@ -275,4 +324,3 @@ int js_loader_impl_destroy(loader_impl impl)
 
 	return 1;
 }
-

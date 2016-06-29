@@ -54,12 +54,12 @@ TEST_F(metacall_test, DefaultConstructor)
 	*/
 
 	/* JavaScript SpiderMonkey */
-
-	EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
-
-	/* JavaScript V8 */
 /*
-	EXPECT_EQ((void *) NULL, (void *) metacall("say_divide", 32, 4));
+	EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 */
+	/* JavaScript V8 */
+
+	EXPECT_EQ((void *) NULL, (void *) metacall("say_divide", 32, 4));
+
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

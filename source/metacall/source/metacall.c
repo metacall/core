@@ -35,7 +35,7 @@ int metacall_initialize(void)
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =
 	{
-		"compiled.c" /*, "spider.jsm", "divide.js", "example.py", "hello.rb"*/
+		/*"compiled.c", spider.jsm", */ "divide.js" /*, "example.py", "hello.rb" */
 	};
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)
@@ -93,7 +93,7 @@ void * metacall(const char * name, ...)
 				m_args[iterator].d = va_arg(va, double);
 				f_args[iterator] = (void *)&m_args[iterator].d;
 			}
-				else if (id == TYPE_PTR)
+			else if (id == TYPE_PTR)
 			{
 				m_args[iterator].ptr = va_arg(va, void *);
 				f_args[iterator] = (void *)&m_args[iterator].ptr;
