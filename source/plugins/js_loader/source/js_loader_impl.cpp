@@ -7,6 +7,7 @@
  */
 
 #include <js_loader/js_loader_impl.h>
+#include <js_loader/js_loader_impl_guard.h>
 
 #include <loader/loader_impl.h>
 
@@ -36,7 +37,11 @@
 
 using namespace v8;
 
-MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path);
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path, std::map<std::string, js_function *> & functions);
+
+void js_loader_impl_obj_to_string(Handle<Value> object, std::string & str);
+
+function_interface function_js_singleton();
 
 class ArrayBufferAllocator : public v8::ArrayBuffer::Allocator
 {
@@ -74,16 +79,60 @@ typedef struct loader_impl_js_type
 
 } * loader_impl_js;
 
+typedef class loader_impl_js_function_type
+{
+	public:
+		loader_impl_js_function_type(loader_impl_js js_impl, Local<Context> & ctx_impl,
+			Isolate * isolate, Local<Function> func) :
+			js_impl(js_impl), ctx_impl(ctx_impl),
+			isolate_ref(isolate), p_func(isolate, func)
+		{
+
+		}
+
+		loader_impl_js get_js_impl()
+		{
+			return js_impl;
+		}
+
+		Local<Context> & get_ctx_impl()
+		{
+			return ctx_impl;
+		}
+
+		Isolate * get_isolate()
+		{
+			return isolate_ref;
+		}
+
+		Local<Function> materialize_handle()
+		{
+			return Local<Function>::New(isolate_ref, p_func);
+		}
+
+		~loader_impl_js_function_type()
+		{
+			p_func.Reset();
+		}
+
+	private:
+		loader_impl_js js_impl;
+		Local<Context> & ctx_impl;
+		Isolate * isolate_ref;
+		Persistent<Function> p_func;
+
+} * loader_impl_js_function;
+
 typedef class loader_impl_js_handle_type
 {
 	public:
-		loader_impl_js_handle_type(loader_impl_js js_impl,
+		loader_impl_js_handle_type(loader_impl impl, loader_impl_js js_impl,
 			loader_naming_path path/*, loader_naming_name name*/) :
+				impl(impl),
 				handle_scope(js_impl->isolate),
 				ctx_impl(Context::New(js_impl->isolate)), ctx_scope(ctx_impl)
 		{
-
-			Local<String> source = js_loader_impl_read_script(js_impl->isolate, path).ToLocalChecked();
+			Local<String> source = js_loader_impl_read_script(js_impl->isolate, path, functions).ToLocalChecked();
 
 			script = Script::Compile(ctx_impl, source).ToLocalChecked();
 
@@ -96,18 +145,131 @@ typedef class loader_impl_js_handle_type
 
 		int discover(loader_impl_js js_impl, context ctx)
 		{
-			(void)js_impl;
-			(void)ctx;
+			Local<Object> global = ctx_impl->Global();
+
+			Local<Array> prop_array = global->GetOwnPropertyNames(ctx_impl).ToLocalChecked();
+
+			return discover_functions(js_impl, ctx, prop_array);
+		}
+
+		int discover_functions(loader_impl_js js_impl, context ctx, Local<Array> func_array)
+		{
+			int length = func_array->Length();
+
+			for (int i = 0; i < length; ++i)
+			{
+				Local<Value> element = func_array->Get(i);
+
+				Local<Value> func_val;
+
+				if (ctx_impl->Global()->Get(ctx_impl, element).ToLocal(&func_val) &&
+					func_val->IsFunction())
+				{
+					Local<Function> func = Local<Function>::Cast(func_val);
+
+					loader_impl_js_function js_func = new loader_impl_js_function_type(js_impl, ctx_impl, js_impl->isolate, func);
+
+					int arg_count = discover_function_args_count(js_impl, func);
+
+					if (arg_count >= 0)
+					{
+						std::string func_name/*, func_obj_name*/;
+
+						js_loader_impl_obj_to_string(element, func_name);
+
+						/*
+						js_loader_impl_obj_to_string(func, func_obj_name);
+
+						std::cout << "Function (" << i << ") - { "
+							<< func_name << ", " << arg_count
+							<< " }" <<  std::endl
+							<< "=>" << std::endl
+							<< func_obj_name << std::endl;
+						*/
+
+						function f = function_create(func_name.c_str(),
+							arg_count,
+							static_cast<void *>(js_func),
+							&function_js_singleton);
+
+						if (f != NULL)
+						{
+							if (discover_function_signature(f) == 0)
+							{
+								scope sp = context_scope(ctx);
+
+								if (scope_define(sp, function_name(f), f) != 0)
+								{
+									return 1;
+								}
+							}
+						}
+					}
+				}
+			}
 
 			return 0;
 		}
 
+		int discover_function_signature(function f)
+		{
+			signature s = function_signature(f);
+
+			std::map<std::string, js_function *>::iterator func_it;
+
+			func_it = functions.find(function_name(f));
+
+			if (func_it != functions.end())
+			{
+				js_function * js_f = func_it->second;
+
+				parameter_list::iterator param_it;
+
+				for (param_it = js_f->parameters.begin();
+					param_it != js_f->parameters.end(); ++param_it)
+				{
+					type t = loader_impl_type(impl, param_it->type.c_str());
+
+					signature_set(s, param_it->index, param_it->name.c_str(), t);
+				}
+
+				return 0;
+			}
+
+			return 1;
+		}
+
+		int discover_function_args_count(loader_impl_js js_impl, Local<Function> func)
+		{
+			Local<String> length_name = String::NewFromUtf8(js_impl->isolate,
+				"length", NewStringType::kNormal).ToLocalChecked();
+
+			Local<Value> length_val;
+
+			if (func->Get(ctx_impl, length_name).ToLocal(&length_val)
+				&& length_val->IsNumber())
+			{
+				return length_val->Int32Value();
+			}
+
+			return -1;
+		}
+
 		~loader_impl_js_handle_type()
 		{
+			std::map<std::string, js_function *>::iterator it;
 
+			for (it = functions.begin(); it != functions.end(); ++it)
+			{
+				js_function * js_f = it->second;
+
+				delete js_f;
+			}
 		}
 
 	private:
+		loader_impl impl;
+		std::map<std::string, js_function *> functions;
 		HandleScope handle_scope;
 		Local<Context> ctx_impl;
 		Context::Scope ctx_scope;
@@ -125,15 +287,65 @@ int function_js_interface_create(function func, function_impl impl)
 
 void function_js_interface_invoke(function func, function_impl impl, function_args args)
 {
-	(void)func;
-	(void)impl;
-	(void)args;
+	loader_impl_js_function js_func = static_cast<loader_impl_js_function>(impl);
+
+	Local<Function> func_impl_local = js_func->materialize_handle();
+
+	signature s = function_signature(func);
+
+	const size_t args_size = signature_count(s);
+
+	Local<Value> result;
+
+	if (args_size > 0)
+	{
+		Local<Value> value_args[args_size];
+
+		size_t args_count;
+
+		for (args_count = 0; args_count < args_size; ++args_count)
+		{
+			type t = signature_get_type(s, args_count);
+
+			type_id id = type_index(t);
+
+			if (id == TYPE_INT)
+			{
+				int * value_ptr = (int *)(args[args_count]);
+
+				value_args[args_count] = Integer::New(js_func->get_isolate(), *value_ptr);
+			}
+			else if (id == TYPE_DOUBLE)
+			{
+				double * value_ptr = (double *)(args[args_count]);
+
+				value_args[args_count] = Number::New(js_func->get_isolate(), *value_ptr);
+			}
+			else
+			{
+				/* handle undefined */
+			}
+		}
+
+		result = func_impl_local->Call(js_func->get_ctx_impl()->Global(), args_count, value_args);
+	}
+	else
+	{
+		result = func_impl_local->Call(js_func->get_ctx_impl()->Global(), 0, nullptr);
+	}
+
+	/*
+	std::cout << "RETURN VALUE: " << result->NumberValue() << std::endl;
+	*/
 }
 
 void function_js_interface_destroy(function func, function_impl impl)
 {
+	loader_impl_js_function js_func = static_cast<loader_impl_js_function>(impl);
+
 	(void)func;
-	(void)impl;
+
+	delete js_func;
 }
 
 function_interface function_js_singleton()
@@ -161,7 +373,7 @@ void js_loader_impl_read_file(loader_naming_path path, std::string & source)
 	source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 
-MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path)
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path, std::map<std::string, js_function *> & functions)
 {
 	MaybeLocal<String> result;
 
@@ -171,6 +383,8 @@ MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_p
 
 	if (!source.empty())
 	{
+		std::string output;
+
 		// shebang
 		if (source[0] == '#' && source[1] == '!')
 		{
@@ -178,11 +392,73 @@ MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_p
 			source[1] = '/';
 		}
 
-		result = String::NewFromUtf8(isolate, source.c_str(),
-			NewStringType::kNormal, source.length());
+		if (js_loader_impl_guard_parse(source, functions, output) == true)
+		{
+			result = String::NewFromUtf8(isolate, output.c_str(),
+				NewStringType::kNormal, output.length());
+		}
 	}
 
 	return result;
+}
+
+void js_loader_impl_obj_to_string(Handle<Value> object, std::string & str)
+{
+	String::Utf8Value utf8_value(object);
+
+	str = *utf8_value;
+}
+
+int js_loader_impl_get_builtin_type(loader_impl impl, loader_impl_js js_impl, type_id id, const char * name)
+{
+	/* TODO: add type table implementation? */
+
+	type builtin_type = type_create(id, name, NULL, NULL);
+
+	(void)js_impl;
+
+	if (builtin_type != NULL)
+	{
+		if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) == 0)
+		{
+			return 0;
+		}
+
+		type_destroy(builtin_type);
+
+	}
+
+	return 1;
+}
+
+int js_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_js js_impl)
+{
+	/* TODO: move this to loader_impl */
+
+	static struct
+	{
+		type_id id;
+		const char * name;
+	}
+	type_id_name_pair[] =
+	{
+		{ TYPE_INT, "Integer" },
+		{ TYPE_DOUBLE, "Number" }
+	};
+
+	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (index = 0; index < size; ++index)
+	{
+		if (js_loader_impl_get_builtin_type(impl, js_impl,
+			type_id_name_pair[index].id,
+			type_id_name_pair[index].name) != 0)
+		{
+				return 1;
+		}
+	}
+
+	return 0;
 }
 
 loader_impl_data js_loader_impl_initialize(loader_impl impl)
@@ -214,7 +490,10 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl)
 					if (js_impl->isolate != nullptr &&
 						js_impl->isolate_scope != nullptr)
 					{
-						return static_cast<loader_impl_data>(js_impl);
+						if (js_loader_impl_initialize_inspect_types(impl, js_impl) == 0)
+						{
+							return static_cast<loader_impl_data>(js_impl);
+						}
 					}
 				}
 			}
@@ -242,7 +521,7 @@ loader_handle js_loader_impl_load(loader_impl impl, loader_naming_path path, loa
 
 	if (js_impl != nullptr)
 	{
-		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(js_impl, path/*, name*/);
+		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, path/*, name*/);
 
 		if (js_handle != nullptr)
 		{

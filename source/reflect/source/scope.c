@@ -13,6 +13,8 @@
 
 #include <string.h>
 
+#include <stdio.h>
+
 typedef struct scope_type
 {
 	char * name;
@@ -38,6 +40,16 @@ scope scope_create(const char * name)
 	return NULL;
 }
 
+int scope_object_size(scope sp)
+{
+	if (sp != NULL)
+	{
+		return hash_map_element_size(sp->map);
+	}
+
+	return -1;
+}
+
 int scope_define(scope sp, const char * key, scope_object obj)
 {
 	if (sp != NULL && key != NULL && obj != NULL)
@@ -46,6 +58,25 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	}
 
 	return 1;
+}
+
+int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+{
+	if (map != NULL && key != NULL && value != NULL && args == NULL)
+	{
+		printf("Key [%s] -> Value [%p]\n", (char *)key, value);
+
+		return 0;
+	}
+
+	return 1;
+}
+
+void scope_print(scope sp)
+{
+	printf("Scope [%s]:\n", sp->name);
+
+	hash_map_iterate(sp->map, &scope_print_cb_iterate, NULL);
 }
 
 scope_object scope_get(scope sp, const char * key)

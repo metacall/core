@@ -10,6 +10,8 @@
 
 #include <string.h>
 
+#include <stdio.h>
+
 typedef struct signature_node_type
 {
 	char * name;
@@ -118,6 +120,27 @@ void signature_set(signature s, size_t index, const char * name, type t)
 		node->name = strdup(name);
 
 		node->t = t;
+	}
+}
+
+void signature_print(signature s)
+{
+	if (s != NULL)
+	{
+		size_t index;
+
+		printf("Signature { %lu }:\n", s->count);
+
+		for (index = 0; index < s->count; ++index)
+		{
+			signature_node node = signature_at(s, index);
+
+			if (node != NULL)
+			{
+				printf("Param < %lu > Name %s : Type %p\n",
+					index, node->name, (void *)node->t);
+			}
+		}
 	}
 }
 

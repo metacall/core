@@ -10,6 +10,8 @@
 
 #include <string.h>
 
+#include <stdio.h>
+
 typedef struct function_type
 {
 	char * name;
@@ -79,6 +81,17 @@ signature function_signature(function func)
 	}
 
 	return NULL;
+}
+
+void function_print(function func)
+{
+	if (func != NULL)
+	{
+		printf("Function <%s> Impl (%p) Interface (%p):\n",
+			func->name, (void *)func->impl, (void *)func->interface);
+
+		signature_print(func->s);
+	}
 }
 
 void function_call(function func, function_args args)

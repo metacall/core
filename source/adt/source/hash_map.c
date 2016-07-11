@@ -39,6 +39,7 @@ typedef struct hash_map_type
 	hash_map_cb_hash hash_cb;
 	hash_map_cb_compare compare_cb;
 	int reallocating;
+	int amount;
 
 } * hash_map;
 
@@ -102,6 +103,7 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 			map->hash_cb = hash_cb;
 			map->compare_cb = compare_cb;
 			map->reallocating = 0;
+			map->amount = 0;
 
 			if (hash_map_bucket_create(map, 0) == 0)
 			{
@@ -115,6 +117,16 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 	printf("error: hash map creation\n");
 
 	return NULL;
+}
+
+int hash_map_element_size(hash_map map)
+{
+	if (map != NULL)
+	{
+		return map->amount;
+	}
+
+	return -1;
 }
 
 int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
@@ -325,6 +337,8 @@ int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
 			{
 				if (hash_map_bucket_insert(map, bucket, key, value) == 0)
 				{
+					++map->amount;
+
 					return 0;
 				}
 
@@ -411,6 +425,11 @@ hash_map_value hash_map_remove(hash_map map, hash_map_key key)
 				}
 			}
 
+			if (value != NULL)
+			{
+				--map->amount;
+			}
+
 			return value;
 		}
 	}
@@ -484,6 +503,9 @@ int hash_map_clear(hash_map map)
 
 			free(map->buckets);
 		}
+
+		map->reallocating = 0;
+		map->amount = 0;
 
 		if (hash_map_bucket_create(map, 0) == 0)
 		{

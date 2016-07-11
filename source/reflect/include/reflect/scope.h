@@ -24,7 +24,11 @@ typedef struct scope_type * scope;
 
 REFLECT_API scope scope_create(const char * name);
 
+REFLECT_API int scope_object_size(scope sp);
+
 REFLECT_API int scope_define(scope sp, const char * key, scope_object obj);
+
+REFLECT_API void scope_print(scope sp);
 
 REFLECT_API scope_object scope_get(scope sp, const char * key);
 

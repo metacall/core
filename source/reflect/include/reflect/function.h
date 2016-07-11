@@ -45,6 +45,8 @@ REFLECT_API const char * function_name(function func);
 
 REFLECT_API signature function_signature(function func);
 
+REFLECT_API void function_print(function func);
+
 REFLECT_API void function_call(function func, function_args args);
 
 REFLECT_API void function_destroy(function func);

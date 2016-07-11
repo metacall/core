@@ -31,6 +31,8 @@ REFLECT_API type signature_get_type(signature s, size_t index);
 
 REFLECT_API void signature_set(signature s, size_t index, const char * name, type t);
 
+REFLECT_API void signature_print(signature s);
+
 REFLECT_API void signature_destroy(signature s);
 
 #ifdef __cplusplus

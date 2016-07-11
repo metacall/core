@@ -36,11 +36,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/js_loader.h
     ${include_path}/js_loader_impl.h
+    ${include_path}/js_loader_impl_guard.h
 )
 
 set(sources
     ${source_path}/js_loader.c
     ${source_path}/js_loader_impl.cpp
+    ${source_path}/js_loader_impl_guard.cpp
 )
 
 # Group source files
