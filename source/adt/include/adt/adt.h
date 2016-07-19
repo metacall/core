@@ -11,8 +11,11 @@
 
 #include <adt/adt_api.h>
 
+#include <adt/comparable.h>
+#include <adt/hash.h>
 #include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
+#include <adt/vector.h>
+#include <adt/trie.h>
 
 #ifdef __cplusplus
 extern "C" {

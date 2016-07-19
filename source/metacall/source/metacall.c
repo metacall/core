@@ -35,7 +35,7 @@ int metacall_initialize(void)
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =
 	{
-		/*"compiled.c", spider.jsm", */ "divide.js" /*, "example.py", "hello.rb" */
+		/*"compiled.c", spider.jsm", */ "divide.js" /*, "example.py", "hello.rb"*/
 	};
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)

@@ -6,23 +6,25 @@
  *
  */
 
-#ifndef ADT_HASH_MAP_STR_H
-#define ADT_HASH_MAP_STR_H 1
+#ifndef ADT_HASH_H
+#define ADT_HASH_H 1
 
 #include <adt/adt_api.h>
-
-#include <adt/hash_map.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-ADT_API hash_map_hash hash_map_cb_hash_str(hash_map_key key);
+typedef unsigned int hash;
 
-ADT_API int hash_map_cb_compare_str(hash_map_key key_a, hash_map_key key_b);
+typedef void * hash_key;
+
+typedef hash (*hash_callback)(const hash_key);
+
+ADT_API hash hash_callback_str(const hash_key key);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* ADT_HASH_MAP_STR_H */
+#endif /* ADT_HASH_H */

@@ -12,7 +12,6 @@
 #include <cstring>
 
 #include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
 
 typedef char key_str[7];
 
@@ -39,7 +38,7 @@ class hash_map_test : public testing::Test
 
 TEST_F(hash_map_test, DefaultConstructor)
 {
-	hash_map map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+	hash_map map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
 	static key_str key_array[] =
 	{

@@ -15,7 +15,6 @@
 #include <reflect/context.h>
 
 #include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
 
 #include <stdio.h>
 
@@ -48,7 +47,7 @@ void loader_initialize(void)
 
 	if (l->impl_map == NULL)
 	{
-		l->impl_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+		l->impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 	}
 }
 

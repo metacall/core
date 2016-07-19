@@ -11,6 +11,9 @@
 
 #include <adt/adt_api.h>
 
+#include <adt/hash.h>
+#include <adt/comparable.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -19,17 +22,17 @@ extern "C" {
 
 typedef struct hash_map_type * hash_map;
 
-typedef unsigned int hash_map_hash;
+typedef hash hash_map_hash;
 
-typedef void * hash_map_key;
+typedef comparable hash_map_key;
 
 typedef void * hash_map_value;
 
 typedef void * hash_map_cb_iterate_args;
 
-typedef hash_map_hash (*hash_map_cb_hash)(hash_map_key);
+typedef hash_callback hash_map_cb_hash;
 
-typedef int (*hash_map_cb_compare)(hash_map_key, hash_map_key);
+typedef comparable_callback hash_map_cb_compare;
 
 typedef int (*hash_map_cb_iterate)(hash_map, hash_map_key, hash_map_value, hash_map_cb_iterate_args);
 

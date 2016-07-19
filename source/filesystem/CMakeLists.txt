@@ -9,7 +9,7 @@
 #
 
 # Target name
-set(target adt)
+set(target filesystem)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -27,24 +27,39 @@ set(export_macro "${target_upper}_API")
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
+set(generated_include_path "${CMAKE_CURRENT_BINARY_DIR}/include/${target}")
+set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
+
+# Configure cross-platform support implementation
+include(Portability)
+
+set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
+
+#configure_file(${include_path}/dynlink_interface.h.in ${generated_include_path}/dynlink_interface.h)
+#configure_file(${source_path}/dynlink_interface.c.in ${generated_source_path}/dynlink_interface.c)
+
 set(headers
-    ${include_path}/adt.h
-    ${include_path}/comparable.h
-    ${include_path}/hash.h
-    ${include_path}/hash_map.h
-    ${include_path}/set.h
-    ${include_path}/trie.h
-    ${include_path}/vector.h
+    ${include_path}/filesystem.h
+#    ${include_path}/file_descriptor.h
+
+
+#    ${include_path}/dynlink_type.h
+#    ${include_path}/dynlink_impl_name.h
+#    ${include_path}/dynlink_impl_type.h
+#    ${include_path}/dynlink_impl.h
+#    ${include_path}/dynlink_impl_symbol_${DYNLINK_IMPL_INTERFACE_NAME}.h
+#    ${include_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.h
+#    ${generated_include_path}/dynlink_interface.h
 )
 
 set(sources
-    ${source_path}/adt.c
-    ${source_path}/comparable.c
-    ${source_path}/hash.c
-    ${source_path}/hash_map.c
-    ${source_path}/set.c
-    ${source_path}/trie.c
-    ${source_path}/vector.c
+    ${source_path}/filesystem.c
+#    ${source_path}/file_descriptor.c
+
+
+#    ${source_path}/dynlink_impl.c
+#    ${source_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.c
+#    ${generated_source_path}/dynlink_interface.c
 )
 
 # Group source files
@@ -210,3 +225,4 @@ install(EXPORT ${target}-export
     DESTINATION ${INSTALL_CMAKE}/${target}
     COMPONENT   dev
 )
+

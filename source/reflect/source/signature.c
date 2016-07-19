@@ -79,7 +79,7 @@ size_t signature_count(signature s)
 		return s->count;
 	}
 
-	return -1;
+	return 0;
 }
 
 const char * signature_get_name(signature s, size_t index)

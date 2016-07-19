@@ -98,7 +98,7 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 	{
 		hash_map map = malloc(sizeof(struct hash_map_type));
 
-		if (map)
+		if (map != NULL)
 		{
 			map->hash_cb = hash_cb;
 			map->compare_cb = compare_cb;
@@ -269,42 +269,33 @@ int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map_key ke
 {
 	if (bucket->pairs != NULL)
 	{
-		hash_map_pair pair = hash_map_bucket_get_pair(map, bucket, key);
+		hash_map_pair pair;
 
-		if (pair != NULL)
+		int pair_count = bucket->count + 1;
+
+		if (hash_map_bucket_realloc_pairs(bucket, pair_count) != 0)
 		{
-			pair->value = value;
+			int map_count = map->count;
 
-			return 0;
-		}
-		else
-		{
-			int pair_count = bucket->count + 1;
-
-			if (hash_map_bucket_realloc_pairs(bucket, pair_count) != 0)
+			if (hash_map_bucket_realloc(map) == 0)
 			{
-				int map_count = map->count;
-
-				if (hash_map_bucket_realloc(map) == 0)
+				if (map_count != map->count)
 				{
-					if (map_count != map->count)
-					{
-						return hash_map_insert(map, key, value);
-					}
+					return hash_map_insert(map, key, value);
 				}
-
-				return 1;
 			}
 
-			pair = &bucket->pairs[bucket->count];
-
-			pair->key = key;
-			pair->value = value;
-
-			bucket->count = pair_count;
-
-			return 0;
+			return 1;
 		}
+
+		pair = &bucket->pairs[bucket->count];
+
+		pair->key = key;
+		pair->value = value;
+
+		bucket->count = pair_count;
+
+		return 0;
 	}
 
 	bucket->capacity = 0;

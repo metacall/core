@@ -7,7 +7,6 @@
  */
 
 #include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
 
 #include <reflect/scope.h>
 
@@ -31,7 +30,7 @@ scope scope_create(const char * name)
 		if (sp != NULL)
 		{
 			sp->name = strdup(name);
-			sp->map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+			sp->map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
 			return sp;
 		}

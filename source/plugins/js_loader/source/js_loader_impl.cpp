@@ -16,9 +16,6 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
-#include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
-
 #include <cstdlib>
 #include <cstring>
 

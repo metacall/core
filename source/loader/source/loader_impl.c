@@ -12,7 +12,6 @@
 #include <reflect/context.h>
 
 #include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
 
 #include <dynlink/dynlink.h>
 
@@ -122,11 +121,11 @@ loader_impl loader_impl_create(loader_naming_extension extension)
 		{
 			if (loader_impl_create_singleton(impl, extension) == 0)
 			{
-				impl->handle_impl_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+				impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
 				if (impl->handle_impl_map != NULL)
 				{
-					impl->type_info_map = hash_map_create(&hash_map_cb_hash_str, &hash_map_cb_compare_str);
+					impl->type_info_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
 					if (impl->type_info_map != NULL)
 					{
