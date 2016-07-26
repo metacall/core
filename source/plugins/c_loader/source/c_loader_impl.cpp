@@ -123,7 +123,7 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl)
 	return NULL;
 }
 
-int c_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	(void)impl;
 	(void)path;
@@ -131,7 +131,7 @@ int c_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
 	return 0;
 }
 
-loader_handle c_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name)
+loader_handle c_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	loader_impl_c_handle c_handle = new loader_impl_c_handle_type();
 

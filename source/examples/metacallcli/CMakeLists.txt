@@ -1,34 +1,33 @@
-
-# 
+#
 # External dependencies
-# 
+#
 
 # find_package(THIRDPARTY REQUIRED)
 
-
-# 
+#
 # Executable name and options
-# 
+#
 
 # Target name
-set(target metacallcmd)
+set(target metacallcli)
 
 # Exit here if required dependencies are not met
 message(STATUS "Example ${target}")
 
-
-# 
+#
 # Sources
-# 
+#
 
 set(sources
+    tokenizer.cpp
+    parser.cpp
+    application.cpp
     main.cpp
 )
 
-
-# 
+#
 # Create executable
-# 
+#
 
 # Build executable
 add_executable(${target}
@@ -39,10 +38,9 @@ add_executable(${target}
 # Create namespaced alias
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
-
-# 
+#
 # Project options
-# 
+#
 
 set_target_properties(${target}
     PROPERTIES
@@ -50,10 +48,9 @@ set_target_properties(${target}
     FOLDER "${IDE_FOLDER}"
 )
 
-
-# 
+#
 # Include directories
-# 
+#
 
 target_include_directories(${target}
     PRIVATE
@@ -61,51 +58,47 @@ target_include_directories(${target}
     ${PROJECT_BINARY_DIR}/source/include
 )
 
-
-# 
+#
 # Libraries
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
+    ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::metacall
 )
 
-
-# 
+#
 # Compile definitions
-# 
+#
 
 target_compile_definitions(${target}
     PRIVATE
     ${DEFAULT_COMPILE_DEFINITIONS}
 )
 
-
-# 
+#
 # Compile options
-# 
+#
 
 target_compile_options(${target}
     PRIVATE
     ${DEFAULT_COMPILE_OPTIONS}
 )
 
-
-# 
+#
 # Linker options
-# 
+#
 
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
 )
 
-
-# 
+#
 # Deployment
-# 
+#
 
 # Executable
 install(TARGETS ${target}

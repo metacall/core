@@ -119,14 +119,14 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 	return NULL;
 }
 
-int hash_map_element_size(hash_map map)
+size_t hash_map_size(hash_map map)
 {
 	if (map != NULL)
 	{
 		return map->amount;
 	}
 
-	return -1;
+	return 0;
 }
 
 int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)

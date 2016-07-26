@@ -42,9 +42,9 @@ LOADER_API type loader_impl_type(loader_impl impl, const char * name);
 
 LOADER_API int loader_impl_type_define(loader_impl impl, const char * name, type t);
 
-LOADER_API int loader_impl_execution_path(loader_impl impl, loader_naming_path path);
+LOADER_API int loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-LOADER_API int loader_impl_load(loader_impl impl, loader_naming_path path);
+LOADER_API int loader_impl_load(loader_impl impl, const loader_naming_path path);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 

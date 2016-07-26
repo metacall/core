@@ -19,9 +19,9 @@ extern "C" {
 
 C_LOADER_API loader_impl_data c_loader_impl_initialize(loader_impl impl);
 
-C_LOADER_API int c_loader_impl_execution_path(loader_impl impl, loader_naming_path path);
+C_LOADER_API int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-C_LOADER_API loader_handle c_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name);
+C_LOADER_API loader_handle c_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name);
 
 C_LOADER_API int c_loader_impl_clear(loader_impl impl, loader_handle handle);
 

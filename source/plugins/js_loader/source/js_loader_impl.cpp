@@ -34,7 +34,7 @@
 
 using namespace v8;
 
-MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path, std::map<std::string, js_function *> & functions);
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, const loader_naming_path path, std::map<std::string, js_function *> & functions);
 
 void js_loader_impl_obj_to_string(Handle<Value> object, std::string & str);
 
@@ -124,7 +124,7 @@ typedef class loader_impl_js_handle_type
 {
 	public:
 		loader_impl_js_handle_type(loader_impl impl, loader_impl_js js_impl,
-			loader_naming_path path/*, loader_naming_name name*/) :
+			const loader_naming_path path/*, loader_naming_name name*/) :
 				impl(impl),
 				handle_scope(js_impl->isolate),
 				ctx_impl(Context::New(js_impl->isolate)), ctx_scope(ctx_impl)
@@ -222,6 +222,10 @@ typedef class loader_impl_js_handle_type
 
 				parameter_list::iterator param_it;
 
+				type ret_type = loader_impl_type(impl, js_f->return_type.c_str());
+
+				signature_set_return(s, ret_type);
+
 				for (param_it = js_f->parameters.begin();
 					param_it != js_f->parameters.end(); ++param_it)
 				{
@@ -282,7 +286,7 @@ int function_js_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-void function_js_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_js_interface_invoke(function func, function_impl impl, function_args args)
 {
 	loader_impl_js_function js_func = static_cast<loader_impl_js_function>(impl);
 
@@ -293,6 +297,8 @@ void function_js_interface_invoke(function func, function_impl impl, function_ar
 	const size_t args_size = signature_count(s);
 
 	Local<Value> result;
+
+	type ret_type = signature_get_return(s);
 
 	if (args_size > 0)
 	{
@@ -306,9 +312,23 @@ void function_js_interface_invoke(function func, function_impl impl, function_ar
 
 			type_id id = type_index(t);
 
-			if (id == TYPE_INT)
+			if (id == TYPE_CHAR)
+			{
+				char * value_ptr = (char *)(args[args_count]);
+
+				bool b = (*value_ptr == 1) ? true : false;
+
+				value_args[args_count] = Boolean::New(js_func->get_isolate(), b);
+			}
+			else if (id == TYPE_INT)
 			{
 				int * value_ptr = (int *)(args[args_count]);
+
+				value_args[args_count] = Int32::New(js_func->get_isolate(), *value_ptr);
+			}
+			else if (id == TYPE_LONG)
+			{
+				long * value_ptr = (long *)(args[args_count]);
 
 				value_args[args_count] = Integer::New(js_func->get_isolate(), *value_ptr);
 			}
@@ -317,6 +337,18 @@ void function_js_interface_invoke(function func, function_impl impl, function_ar
 				double * value_ptr = (double *)(args[args_count]);
 
 				value_args[args_count] = Number::New(js_func->get_isolate(), *value_ptr);
+			}
+			else if (id == TYPE_PTR)
+			{
+				/*
+				void * value_ptr = (void *)(args[args_count]);
+				*/
+
+				/* TODO */
+
+				/*
+				value_args[args_count] = Number::New(js_func->get_isolate(), *value_ptr);
+				*/
 			}
 			else
 			{
@@ -331,9 +363,60 @@ void function_js_interface_invoke(function func, function_impl impl, function_ar
 		result = func_impl_local->Call(js_func->get_ctx_impl()->Global(), 0, nullptr);
 	}
 
-	/*
-	std::cout << "RETURN VALUE: " << result->NumberValue() << std::endl;
-	*/
+	if (ret_type != NULL)
+	{
+		type_id id = type_index(ret_type);
+
+		if (id == TYPE_CHAR)
+		{
+			/* Boolean is represented as a char */
+			bool b = result->BooleanValue();
+
+			char c = (b == true) ? 1 : 0;
+
+			return value_create_char(c);
+		}
+		else if (id == TYPE_INT)
+		{
+			int i = result->Int32Value();
+
+			return value_create_int(i);
+		}
+		else if (id == TYPE_LONG)
+		{
+			long l = result->IntegerValue();
+
+			return value_create_long(l);
+		}
+		else if (id == TYPE_DOUBLE)
+		{
+			double d = result->NumberValue();
+
+			return value_create_double(d);
+		}
+		else if (id == TYPE_PTR)
+		{
+			void * ptr = NULL;
+
+			/* TODO: review this */
+			/*
+			if (value->IsString())
+			{
+				String::AsciiValue str = result->ToString();
+
+				ptr = *str;
+			}
+			*/
+
+			return value_create_ptr(ptr);
+		}
+		else
+		{
+			printf("Unrecognized return type\n");
+		}
+	}
+
+	return NULL;
 }
 
 void function_js_interface_destroy(function func, function_impl impl)
@@ -345,7 +428,7 @@ void function_js_interface_destroy(function func, function_impl impl)
 	delete js_func;
 }
 
-function_interface function_js_singleton()
+function_interface function_js_singleton(void)
 {
 	static struct function_interface_type js_interface =
 	{
@@ -357,7 +440,7 @@ function_interface function_js_singleton()
 	return &js_interface;
 }
 
-void js_loader_impl_read_file(loader_naming_path path, std::string & source)
+void js_loader_impl_read_file(const loader_naming_path path, std::string & source)
 {
 	std::ifstream file(path);
 
@@ -370,7 +453,7 @@ void js_loader_impl_read_file(loader_naming_path path, std::string & source)
 	source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 
-MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, loader_naming_path path, std::map<std::string, js_function *> & functions)
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, const loader_naming_path path, std::map<std::string, js_function *> & functions)
 {
 	MaybeLocal<String> result;
 
@@ -439,8 +522,14 @@ int js_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_js js_
 	}
 	type_id_name_pair[] =
 	{
-		{ TYPE_INT, "Integer" },
-		{ TYPE_DOUBLE, "Number" }
+		{ TYPE_CHAR, "Boolean" },
+		{ TYPE_INT, "Int32" },
+		{ TYPE_LONG, "Integer" },
+		{ TYPE_DOUBLE, "Number" },
+		{ TYPE_PTR, "String" },
+		{ TYPE_PTR, "Object" },
+		{ TYPE_PTR, "Array" },
+		{ TYPE_PTR, "Function" }
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -502,7 +591,7 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl)
 	return NULL;
 }
 
-int js_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	(void)impl;
 	(void)path;
@@ -510,7 +599,7 @@ int js_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
 	return 0;
 }
 
-loader_handle js_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name)
+loader_handle js_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 

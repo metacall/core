@@ -17,9 +17,9 @@
 extern "C" {
 #endif
 
-LOADER_API int loader_naming_get_name(loader_naming_path path, loader_naming_name name);
+LOADER_API int loader_naming_get_name(const loader_naming_path path, loader_naming_name name);
 
-LOADER_API int loader_naming_get_extension(loader_naming_path path, loader_naming_extension extension);
+LOADER_API int loader_naming_get_extension(const loader_naming_path path, loader_naming_extension extension);
 
 #ifdef __cplusplus
 }

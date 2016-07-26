@@ -53,13 +53,15 @@ int function_example_interface_create(function func, function_impl impl)
 	return 1;
 }
 
-void function_example_interface_invoke(function func, function_impl func_impl, function_args args)
+function_return function_example_interface_invoke(function func, function_impl func_impl, function_args args)
 {
 	function_impl_example example_impl = (function_impl_example)func_impl;
 
 	(void)func;
 
 	example_impl->ptr(*((char *)(args[0])), *((int *)(args[1])), (void *)(args[2]));
+
+	return NULL;
 }
 
 void function_example_interface_destroy(function func, function_impl func_impl)

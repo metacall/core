@@ -250,7 +250,7 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 	}
 }
 
-int loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+int loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	if (impl != NULL)
 	{
@@ -265,7 +265,7 @@ int loader_impl_execution_path(loader_impl impl, loader_naming_path path)
 	return 1;
 }
 
-int loader_impl_load(loader_impl impl, loader_naming_path path)
+int loader_impl_load(loader_impl impl, const loader_naming_path path)
 {
 	if (impl != NULL)
 	{

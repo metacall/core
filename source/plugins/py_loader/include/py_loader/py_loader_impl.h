@@ -19,9 +19,9 @@ extern "C" {
 
 PY_LOADER_API loader_impl_data py_loader_impl_initialize(loader_impl impl);
 
-PY_LOADER_API int py_loader_impl_execution_path(loader_impl impl, loader_naming_path path);
+PY_LOADER_API int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-PY_LOADER_API loader_handle py_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name);
+PY_LOADER_API loader_handle py_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name);
 
 PY_LOADER_API int py_loader_impl_clear(loader_impl impl, loader_handle handle);
 

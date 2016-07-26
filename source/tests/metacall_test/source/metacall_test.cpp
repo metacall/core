@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 
-#define METACALL_TEST_SEVEN_MULTIPLES_LIMIT 0x0A
+#include <reflect/value.h>
 
 class metacall_test : public testing::Test
 {
@@ -19,47 +19,127 @@ class metacall_test : public testing::Test
 
 TEST_F(metacall_test, DefaultConstructor)
 {
-/*	int iterator;
-*/
 	metacall_print_info();
 
 	EXPECT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-/*
-	EXPECT_EQ((void *) NULL, (void *) metacall("multiply", 5, 15));
-
-	printf("7's multiples dude!\n");
-
-	for (iterator = 0; iterator <= METACALL_TEST_SEVEN_MULTIPLES_LIMIT; ++iterator)
 	{
-		EXPECT_EQ((void *) NULL, (void *) metacall("multiply", 7, iterator));
+		const long seven_multiples_limit = 10;
+
+		long iterator;
+
+		value ret = NULL;
+
+		ret = metacall("multiply", 5, 15);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((long) value_to_long(ret), (long) 75);
+
+		value_destroy(ret);
+
+		printf("7's multiples dude!\n");
+
+		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
+		{
+			ret = metacall("multiply", 7, iterator);
+
+			EXPECT_NE((value) NULL, (value) ret);
+
+			EXPECT_EQ((long) value_to_long(ret), (long) (7 * iterator));
+
+			value_destroy(ret);
+		}
+
+		ret = metacall("divide", 64.0, 2.0);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((double) value_to_double(ret), (double) 32.0);
+
+		value_destroy(ret);
+
+		ret = metacall("sum", 1000, 3500);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((long) value_to_long(ret), (long) 4500);
+
+		value_destroy(ret);
+
+		EXPECT_EQ((value) NULL, (value) metacall("hello"));
 	}
-	printf("Let's divide real numbers\n");
 
-	EXPECT_EQ((void *) NULL, (void *) metacall("divide", 324.0, 13.4358));
-
-	EXPECT_EQ((void *) NULL, (void *) metacall("sum", 1000, 3500));
-
-	EXPECT_EQ((void *) NULL, (void *) metacall("hello"));
-*/
 	/* Ruby */
+	{
+		value ret = NULL;
 
-/*	EXPECT_EQ((void *) NULL, (void *) metacall("say_multiply", 5, 7));
+		ret = metacall("say_multiply", 5, 7);
 
-	EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
-*/
-	/*
-	EXPECT_EQ((void *) NULL, (void *) metacall("say_hello", "meta-programmer"));
-	*/
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) value_to_int(ret), (int) 35);
+
+		value_destroy(ret);
+
+		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
+
+		/*
+		EXPECT_EQ((void *) NULL, (void *) metacall("say_hello", "meta-programmer"));
+		*/
+	}
 
 	/* JavaScript SpiderMonkey */
-/*
-	EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
-*/
-	/* JavaScript V8 */
+	{
+		/*
+		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
+		*/
+	}
 
-	EXPECT_EQ((void *) NULL, (void *) metacall("say_divide", 32.0, 4.0));
+	/* JavaScript V8 */
+	{
+		/*
+		value ret = NULL;
+
+		ret = metacall("say_divide", 32.0, 4.0);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((double) value_to_double(ret), (double) 8.0);
+
+		value_destroy(ret);
+		*/
+	}
+
+	/* Mock */
+	{
+		value ret = NULL;
+
+		ret = metacall("my_empty_func");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) value_to_int(ret), (int) 1234);
+
+		value_destroy(ret);
+
+		ret = metacall("two_doubles", 3.14, 68.3);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((double) value_to_double(ret), (double) 3.1416);
+
+		value_destroy(ret);
+
+		ret = metacall("mixed_args", 'E', 16, 34L, 4.6, "hello");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((char) value_to_char(ret), (char) 'A');
+
+		value_destroy(ret);
+	}
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

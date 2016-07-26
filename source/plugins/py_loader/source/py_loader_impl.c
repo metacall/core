@@ -15,13 +15,17 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
-#include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 
 #include <Python.h>
+
+typedef struct loader_impl_py_function_type
+{
+	PyObject * func;
+	PyObject ** values;
+
+} * loader_impl_py_function;
 
 typedef struct loader_impl_py_type
 {
@@ -61,99 +65,192 @@ type_interface type_py_singleton()
 
 int function_py_interface_create(function func, function_impl impl)
 {
-	(void)func;
-	(void)impl;
-
-	return 0;
-}
-
-void function_py_interface_invoke(function func, function_impl impl, function_args args)
-{
-	PyObject * py_func = (PyObject *)impl;
+	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
 	signature s = function_signature(func);
 
 	const size_t args_size = signature_count(s);
 
-	printf("Inner call: args_size(%ld)\n", args_size);
-
-	/* if (args_size > 0) */
+	if (args_size > 0)
 	{
-		PyObject * tuple_args = PyTuple_New(args_size);
+		py_func->values = malloc(sizeof(PyObject *) * args_size);
 
-		PyObject * result = NULL;
-
-		size_t args_count;
-
-		for (args_count = 0; args_count < args_size; ++args_count)
+		if (py_func->values != NULL)
 		{
-			type t = signature_get_type(s, args_count);
+			size_t iterator;
 
-			type_id id = type_index(t);
-
-			PyObject * value = NULL;
-
-			printf("Type (%p): %d\n", (void *)t, id);
-
-			/* TODO: value must be an array, each value *_FromType must be dereferenced */
-
-			if (id == TYPE_INT)
+			for (iterator = 0; iterator < args_size; ++iterator)
 			{
-				int * value_ptr = (int *)(args[args_count]);
-
-				printf("Type INT: %d\n", *value_ptr);
-
-				value = PyLong_FromLong(*value_ptr);
-			}
-			else if (id == TYPE_DOUBLE)
-			{
-				double * value_ptr = (double *)(args[args_count]);
-
-				printf("Type DOUBLE: %f\n", *value_ptr);
-
-				value = PyFloat_FromDouble(*value_ptr);
+				py_func->values[iterator] = NULL;
 			}
 
-			if (value != NULL)
-			{
-				PyTuple_SetItem(tuple_args, args_count, value);
-			}
+			return 0;
 		}
 
-		printf("Calling function! py_func(%p): ", (void *)py_func);
+		return 1;
+	}
 
-		PyObject_Print(py_func, stdout, 0);
+	py_func->values = NULL;
 
-		printf("\nTuple args (%p): ", (void *)tuple_args);
+	return 0;
+}
 
-		PyObject_Print(tuple_args, stdout, 0);
+function_return function_py_interface_invoke(function func, function_impl impl, function_args args)
+{
+	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
-		result = PyObject_CallObject(py_func, tuple_args);
+	signature s = function_signature(func);
 
-		printf("\nFunction called!\n");
+	const size_t args_size = signature_count(s);
 
-		Py_DECREF(tuple_args);
+	type ret_type = signature_get_return(s);
 
-		if (result != NULL)
+	PyObject * tuple_args = PyTuple_New(args_size);
+
+	PyObject * result = NULL;
+
+	size_t args_count;
+
+	for (args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = signature_get_type(s, args_count);
+
+		type_id id = type_index(t);
+
+		printf("Type (%p): %d\n", (void *)t, id);
+
+		if (id == TYPE_CHAR)
 		{
-			printf("Function call result [%p]: ", (void *)result);
+			char * value_ptr = (char *)(args[args_count]);
 
-			PyObject_Print(result, stdout, 0);
+			long l = (*value_ptr == 0) ? 0L : 1L;
 
-			printf("\n");
+			py_func->values[args_count] = PyBool_FromLong(l);
+		}
+		else if (id == TYPE_INT)
+		{
+			int * value_ptr = (int *)(args[args_count]);
 
-			Py_DECREF(result);
+			#if PY_MAJOR_VERSION == 2
+				py_func->values[args_count] = PyInt_FromLong(*value_ptr);
+			#else
+				long l = (long)(*value_ptr);
+
+				py_func->values[args_count] = PyLong_FromLong(l);
+			#endif
+		}
+		else if (id == TYPE_LONG)
+		{
+			long * value_ptr = (long *)(args[args_count]);
+
+			py_func->values[args_count] = PyLong_FromLong(*value_ptr);
+		}
+		else if (id == TYPE_DOUBLE)
+		{
+			double * value_ptr = (double *)(args[args_count]);
+
+			py_func->values[args_count] = PyFloat_FromDouble(*value_ptr);
+		}
+		else if (id == TYPE_PTR)
+		{
+			/* TODO */
+		}
+
+		if (py_func->values[args_count] != NULL)
+		{
+			PyTuple_SetItem(tuple_args, args_count, py_func->values[args_count]);
 		}
 	}
+
+	result = PyObject_CallObject(py_func->func, tuple_args);
+
+	Py_DECREF(tuple_args);
+
+	if (result != NULL && ret_type != NULL)
+	{
+		value v = NULL;
+
+		type_id id = type_index(ret_type);
+
+		printf("Return type %p, %d\n", (void *)ret_type, id);
+
+		if (id == TYPE_CHAR)
+		{
+			char c = (PyObject_IsTrue(result) == 1) ? 1 : 0;
+
+			v = value_create_char(c);
+		}
+		else if (id == TYPE_INT)
+		{
+			#if PY_MAJOR_VERSION == 2
+				long l = PyInt_AsLong(result);
+			#else
+				long l = PyLong_AsLong(result);
+			#endif
+
+			int i = (int)l;
+
+			v = value_create_int(i);
+		}
+		else if (id == TYPE_LONG)
+		{
+			long l = PyLong_AsLong(result);
+
+			v = value_create_long(l);
+		}
+		else if (id == TYPE_DOUBLE)
+		{
+			double d = PyFloat_AsDouble(result);
+
+			v = value_create_double(d);
+		}
+		else if (id == TYPE_PTR)
+		{
+			/* TODO */
+		}
+		else
+		{
+			printf("Unrecognized return type\n");
+		}
+
+		Py_DECREF(result);
+
+		return v;
+	}
+
+	return NULL;
 }
 
 void function_py_interface_destroy(function func, function_impl impl)
 {
-	PyObject * py_func = (PyObject *)impl;
+	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
-	(void)func;
+	if (py_func != NULL)
+	{
+		if (py_func->values != NULL)
+		{
+			signature s = function_signature(func);
 
-	Py_DECREF(py_func);
+			const size_t args_size = signature_count(s);
+
+			size_t iterator;
+
+			for (iterator = 0; iterator < args_size; ++iterator)
+			{
+				if (py_func->values[iterator] != NULL)
+				{
+					/* Py_DECREF(py_func->values[iterator]); */
+				}
+			}
+
+
+			free(py_func->values);
+		}
+
+		Py_DECREF(py_func->func);
+
+		free(py_func);
+	}
 }
 
 function_interface function_py_singleton()
@@ -231,13 +328,18 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 		}
 		type_id_name_pair[] =
 		{
-			{ TYPE_INT, "int" },
+			{ TYPE_CHAR, "bool" },
+
+			{ TYPE_LONG, "int" },
 
 			#if PY_MAJOR_VERSION == 2
 				{ TYPE_LONG, "long" },
 			#endif
 
-			{ TYPE_DOUBLE, "float" }
+			{ TYPE_DOUBLE, "float" },
+
+			{ TYPE_PTR, "str" },
+			{ TYPE_PTR, "bytearray" }
 		};
 
 		size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -311,7 +413,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl)
 	return NULL;
 }
 
-int py_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
@@ -330,7 +432,7 @@ int py_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
 	return 1;
 }
 
-loader_handle py_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name)
+loader_handle py_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
 
@@ -364,10 +466,6 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject * annotation)
 	PyObject * annotation_qualname = PyObject_GetAttrString(annotation, "__qualname__");
 
 	const char * annotation_name = PyUnicode_AsUTF8(annotation_qualname);
-
-	/*
-	type t = hash_map_get(py_impl->type_info_map, (hash_map_key)annotation_name);
-	*/
 
 	type t = loader_impl_type(impl, annotation_name);
 
@@ -436,7 +534,11 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 	if (result != NULL)
 	{
+		signature s = function_signature(f);
+
 		PyObject * parameters = PyObject_GetAttrString(result, "parameters");
+
+		PyObject * return_annotation = PyObject_GetAttrString(result, "return_annotation");
 
 		if (parameters != NULL && PyMapping_Check(parameters))
 		{
@@ -448,11 +550,11 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 				Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
 
-				signature s = function_signature(f);
-
 				if ((size_t)parameter_list_size != signature_count(s))
 				{
 					/* error */
+
+					return 1;
 				}
 
 				for (iterator = 0; iterator < parameter_list_size; ++iterator)
@@ -478,10 +580,13 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 						printf(")\n");
 
 						signature_set(s, iterator, parameter_name, py_loader_impl_discover_type(impl, annotation));
+
 					}
 				}
 			}
 		}
+
+		signature_set_return(s,	py_loader_impl_discover_type(impl, return_annotation));
 
 		return 0;
 	}
@@ -515,7 +620,18 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 					{
 						size_t args_count = (size_t)discover_args_count;
 
-						function f = function_create(func_name, args_count, value, &function_py_singleton);
+						loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+
+						function f = NULL;
+
+						if (py_func == NULL)
+						{
+							return 1;
+						}
+
+						py_func->func = value;
+
+						f = function_create(func_name, args_count, py_func, &function_py_singleton);
 
 						printf("Introspection: function %s, args count %ld\n", func_name, args_count);
 
@@ -524,18 +640,6 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 							scope sp = context_scope(ctx);
 
 							scope_define(sp, func_name, f);
-
-							/*
-							{
-								int a = 15, b = 10;
-
-								function_args args = { &a, &b };
-
-								printf("CALL: \n");
-
-								function_call(f, args);
-							}
-							*/
 						}
 					}
 				}

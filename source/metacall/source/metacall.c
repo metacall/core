@@ -6,36 +6,37 @@
  *
  */
 
-#include <metacall/metacall-version.h>
+/* -- Headers -- */
 
+#include <metacall/metacall-version.h>
 #include <metacall/metacall.h>
 
 #include <loader/loader.h>
 
+#include <reflect/value.h>
 #include <reflect/function.h>
 
+#include <string.h>
 #include <stdio.h>
 
-#define METACALL_ARGS_SIZE 0x20
+/* -- Definitions -- */
 
-typedef union metacall_args_type
-{
-	char c;
-	int i;
-	long l;
-	double d;
-	void * ptr;
+#define METACALL_ARGS_SIZE 0x10
 
-} * metacall_args;
+/* -- Methods -- */
 
-int metacall_initialize(void)
+int metacall_initialize()
 {
 	size_t iterator;
 
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =
 	{
-		/*"compiled.c", spider.jsm", */ "divide.js" /*, "example.py", "hello.rb"*/
+		/*"compiled.c", "spider.jsm",*/
+		/*"divide.js",*/
+		"example.py",
+		"hello.rb",
+		"empty.mock"
 	};
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)
@@ -49,21 +50,45 @@ int metacall_initialize(void)
 	return 0;
 }
 
-void * metacall(const char * name, ...)
+size_t metacall_args_size()
+{
+	const size_t args_size = METACALL_ARGS_SIZE;
+
+	return args_size;
+}
+
+int metacall_load(const char * path)
+{
+	return loader_load(path);
+}
+
+value metacallv(const char * name, void * args[])
 {
 	function f = (function)loader_get(name);
 
 	if (f != NULL)
 	{
-		va_list va;
+		return function_call(f, args);
+	}
+
+	return NULL;
+}
+
+value metacall(const char * name, ...)
+{
+	function f = loader_get(name);
+
+	if (f != NULL)
+	{
+		void * args[METACALL_ARGS_SIZE];
+
+		value ret = NULL;
 
 		signature s = function_signature(f);
 
-		union metacall_args_type m_args[METACALL_ARGS_SIZE];
-
-		void * f_args[METACALL_ARGS_SIZE];
-
 		size_t iterator;
+
+		va_list va;
 
 		va_start(va, name);
 
@@ -75,50 +100,51 @@ void * metacall(const char * name, ...)
 
 			if (id == TYPE_CHAR)
 			{
-				m_args[iterator].c = (char)va_arg(va, int);
-				f_args[iterator] = (void *)&m_args[iterator].c;
+				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
 			else if (id == TYPE_INT)
 			{
-				m_args[iterator].i = va_arg(va, int);
-				f_args[iterator] = (void *)&m_args[iterator].i;
+				args[iterator] = value_create_int(va_arg(va, int));
 			}
 			else if (id == TYPE_LONG)
 			{
-				m_args[iterator].l = va_arg(va, long);
-				f_args[iterator] = (void *)&m_args[iterator].l;
+				args[iterator] = value_create_long(va_arg(va, long));
 			}
 			else if (id == TYPE_DOUBLE)
 			{
-				m_args[iterator].d = va_arg(va, double);
-				f_args[iterator] = (void *)&m_args[iterator].d;
+				args[iterator] = value_create_double(va_arg(va, double));
 			}
 			else if (id == TYPE_PTR)
 			{
-				m_args[iterator].ptr = va_arg(va, void *);
-				f_args[iterator] = (void *)&m_args[iterator].ptr;
+				args[iterator] = value_create_ptr(va_arg(va, void *));
 			}
 			else
 			{
-				m_args[iterator].ptr = NULL;
-				f_args[iterator] = (void *)&m_args[iterator].ptr;
+				args[iterator] = NULL;
 			}
 		}
 
 		va_end(va);
 
-		function_call(f, f_args);
+		ret = function_call(f, args);
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		{
+			value_destroy(args[iterator]);
+		}
+
+		return ret;
 	}
 
 	return NULL;
 }
 
-int metacall_destroy(void)
+int metacall_destroy()
 {
 	return loader_unload();
 }
 
-void metacall_print_info(void)
+void metacall_print_info()
 {
 	printf("MetaCall Library " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");

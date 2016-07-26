@@ -96,13 +96,13 @@ struct trie_node_set_iterator_args_type
 struct trie_node_append_iterator_args_type
 {
 	trie dest;			/**< Pointer to destination trie */
-	vector prefixes;			/**< Vector containing prefixes for each iteration */
+	vector prefixes;		/**< Vector containing prefixes for each iteration */
 };
 
 struct trie_node_suffixes_iterator_args_type
 {
-	trie suffix_trie;			/**< Pointer to new suffix trie */
-	vector prefixes;			/**< Vector containing prefixes for each iteration */
+	trie suffix_trie;		/**< Pointer to new suffix trie */
+	vector prefixes;		/**< Vector containing prefixes for each iteration */
 };
 
 /* -- Private Methods -- */
@@ -618,7 +618,7 @@ int trie_node_clear(trie t, trie_node n)
 				}
 
 				free_node->next = t->free_node_list;
-				
+
 				free_node->index = back->self_index;
 
 				t->free_node_list = free_node;
@@ -807,4 +807,3 @@ void trie_destroy(trie t)
 		free(t);
 	}
 }
-

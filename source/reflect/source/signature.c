@@ -8,19 +8,20 @@
 
 #include <reflect/signature.h>
 
+#include <stdlib.h>
 #include <string.h>
-
 #include <stdio.h>
 
 typedef struct signature_node_type
 {
-	char * name;
-	type t;
+	char *			name;
+	type			t;
 } * signature_node;
 
 typedef struct signature_type
 {
-	size_t count;
+	type			ret;
+	size_t			count;
 } * signature;
 
 signature_node signature_head(signature s)
@@ -52,6 +53,8 @@ signature signature_create(size_t count)
 	if (s != NULL)
 	{
 		size_t index;
+
+		s->ret = NULL;
 
 		s->count = count;
 
@@ -106,20 +109,51 @@ type signature_get_type(signature s, size_t index)
 	return NULL;
 }
 
+type signature_get_return(signature s)
+{
+	if (s != NULL)
+	{
+		return s->ret;
+	}
+
+	return NULL;
+}
+
 void signature_set(signature s, size_t index, const char * name, type t)
 {
-	if (s != NULL && index < s->count)
+	if (s != NULL && index < s->count && name != NULL && t != NULL)
 	{
 		signature_node node = signature_at(s, index);
+
+		size_t name_size = strlen(name) + 1;
+
+		char * name_node = malloc(sizeof(char) * name_size);
+
+		if (name_node == NULL)
+		{
+			/* error */
+
+			return;
+		}
 
 		if (node->name != NULL)
 		{
 			free(node->name);
 		}
 
-		node->name = strdup(name);
+		node->name = name_node;
+
+		memcpy(node->name, name, name_size);
 
 		node->t = t;
+	}
+}
+
+void signature_set_return(signature s, type t)
+{
+	if (s != NULL && t != NULL)
+	{
+		s->ret = t;
 	}
 }
 

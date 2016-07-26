@@ -35,6 +35,7 @@ set(headers
     ${include_path}/function.h
     ${include_path}/scope.h
     ${include_path}/context.h
+    ${include_path}/value.h
 )
 
 set(sources
@@ -45,6 +46,7 @@ set(sources
     ${source_path}/function.c
     ${source_path}/scope.c
     ${source_path}/context.c
+    ${source_path}/value.c
 )
 
 # Group source files

@@ -30,13 +30,11 @@ int comparable_callback_int(const comparable a, const comparable b)
 	{
 		return -1;
 	}
-
-	if (int_var_a > int_var_b)
+	else if (int_var_a > int_var_b)
 	{
 		return 1;
 	}
-
-	if (int_var_a == int_var_b)
+	else
 	{
 		return 0;
 	}

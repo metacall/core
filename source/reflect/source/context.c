@@ -9,6 +9,9 @@
 #include <reflect/context.h>
 #include <reflect/scope.h>
 
+#include <stdlib.h>
+#include <string.h>
+
 typedef struct context_type
 {
 	char * name;
@@ -16,7 +19,7 @@ typedef struct context_type
 
 } * context;
 
-context context_create(char * name)
+context context_create(const char * name)
 {
 	if (name != NULL)
 	{
@@ -24,11 +27,35 @@ context context_create(char * name)
 
 		if (ctx != NULL)
 		{
-			ctx->name = name;
+			size_t name_size = strlen(name) + 1;
+
+			ctx->name = malloc(sizeof(char) * name_size);
+
+			if (ctx->name == NULL)
+			{
+				/* error */
+
+				free(ctx);
+
+				return NULL;
+			}
+
+			memcpy(ctx->name, name, name_size);
+
 			ctx->sp = scope_create("global_namespace");
 
 			return ctx;
 		}
+	}
+
+	return NULL;
+}
+
+const char * context_name(context ctx)
+{
+	if (ctx != NULL)
+	{
+		return ctx->name;
 	}
 
 	return NULL;
@@ -54,6 +81,11 @@ void context_destroy(context ctx)
 	if (ctx != NULL)
 	{
 		scope_destroy(ctx->sp);
+
+		if (ctx->name != NULL)
+		{
+			free(ctx->name);
+		}
 
 		free(ctx);
 	}

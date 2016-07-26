@@ -21,7 +21,9 @@ struct context_type;
 
 typedef struct context_type * context;
 
-REFLECT_API context context_create(char * name);
+REFLECT_API context context_create(const char * name);
+
+REFLECT_API const char * context_name(context ctx);
 
 REFLECT_API scope context_scope(context ctx);
 

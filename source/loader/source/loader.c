@@ -41,7 +41,7 @@ loader loader_singleton(void)
 	return &loader_instance;
 }
 
-void loader_initialize(void)
+void loader_initialize()
 {
 	loader l = loader_singleton();
 
@@ -93,7 +93,7 @@ loader_impl loader_get_impl(loader_naming_extension extension)
 	return impl;
 }
 
-int loader_load(loader_naming_path path)
+int loader_load(const loader_naming_path path)
 {
 	loader l = loader_singleton();
 
@@ -123,7 +123,7 @@ int loader_load(loader_naming_path path)
 	return 1;
 }
 
-int loader_load_path(loader_naming_path path)
+int loader_load_path(const loader_naming_path path)
 {
 	loader l = loader_singleton();
 
@@ -208,7 +208,7 @@ int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_v
 	return 1;
 }
 
-int loader_unload(void)
+int loader_unload()
 {
 	loader l = loader_singleton();
 
@@ -237,7 +237,7 @@ int loader_unload(void)
 	return 0;
 }
 
-void loader_destroy(void)
+void loader_destroy()
 {
 	loader l = loader_singleton();
 
@@ -249,7 +249,7 @@ void loader_destroy(void)
 	}
 }
 
-void loader_print_info(void)
+void loader_print_info()
 {
 	printf("Loader Library " METACALL_VERSION "\n");
 	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");

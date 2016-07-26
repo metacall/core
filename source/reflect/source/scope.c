@@ -6,20 +6,27 @@
  *
  */
 
-#include <adt/hash_map.h>
-
 #include <reflect/scope.h>
 
-#include <string.h>
+#include <adt/hash_map.h>
+#include <adt/vector.h>
 
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 
 typedef struct scope_type
 {
-	char * name;
-	hash_map map;
+	char * name;			/**< Scope name */
+	hash_map map;			/**< Map of scope objects indexed by name string */
+	vector call_stack;		/**< Scope call stack */
 
 } * scope;
+
+void scope_error(const char * error)
+{
+	printf("%s\n", error);
+}
 
 scope scope_create(const char * name)
 {
@@ -29,24 +36,100 @@ scope scope_create(const char * name)
 
 		if (sp != NULL)
 		{
-			sp->name = strdup(name);
+			size_t sp_name_size = strlen(name) + 1;
+
+			size_t * call_stack_head = NULL;
+
+			sp->name = malloc(sizeof(char) * sp_name_size);
+
+			if (sp->name == NULL)
+			{
+				scope_error("Scope create name bad allocation");
+
+				free(sp);
+
+				return NULL;
+			}
+
+			memcpy(sp->name, name, sp_name_size);
+
 			sp->map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
-			return sp;
+			if (sp->map == NULL)
+			{
+				scope_error("Scope create map bad allocation");
+
+				free(sp->name);
+
+				free(sp);
+
+				return NULL;
+			}
+
+			sp->call_stack = vector_create(sizeof(char));
+
+			if (sp->call_stack == NULL)
+			{
+				scope_error("Scope create call stack bad allocation");
+
+				hash_map_destroy(sp->map);
+
+				free(sp->name);
+
+				free(sp);
+
+				return NULL;
+			}
+
+			if (vector_resize(sp->call_stack, sizeof(size_t)) != 0)
+			{
+				scope_error("Scope create call stack bad allocation");
+
+				vector_destroy(sp->call_stack);
+
+				hash_map_destroy(sp->map);
+
+				free(sp->name);
+
+				free(sp);
+
+				return NULL;
+			}
+
+			call_stack_head = vector_front(sp->call_stack);
+
+			if (call_stack_head != NULL)
+			{
+				const size_t head_index = 0;
+
+				memcpy(call_stack_head, &head_index, sizeof(size_t));
+
+				return sp;
+			}
+
+			scope_error("Scope create bad call stack head reference");
+
+			return NULL;
 		}
+
+		scope_error("Scope create bad allocation");
+
+		return NULL;
 	}
+
+	scope_error("Scope create invalid parameters");
 
 	return NULL;
 }
 
-int scope_object_size(scope sp)
+size_t scope_size(scope sp)
 {
 	if (sp != NULL)
 	{
-		return hash_map_element_size(sp->map);
+		return hash_map_size(sp->map);
 	}
 
-	return -1;
+	return 0;
 }
 
 int scope_define(scope sp, const char * key, scope_object obj)
@@ -103,10 +186,130 @@ int scope_append(scope dest, scope src)
 	return hash_map_append(dest->map, src->map);
 }
 
+size_t * scope_stack_return(scope sp)
+{
+	if (sp != NULL && sp->call_stack != NULL)
+	{
+		size_t call_stack_size = vector_size(sp->call_stack);
+
+		if (call_stack_size >= sizeof(size_t))
+		{
+			size_t return_position = call_stack_size - 1 - sizeof(size_t);
+
+			void ** return_ptr = vector_at(sp->call_stack, return_position);
+
+			if (return_ptr != NULL && *return_ptr != NULL)
+			{
+				size_t * size_return_ptr = *return_ptr;
+
+				return size_return_ptr;
+			}
+
+			scope_error("Scope stack return invalid reference");
+
+			return NULL;
+		}
+
+		scope_error("Scope stack return empty");
+
+		return NULL;
+	}
+
+	scope_error("Scope stack return invalid parameters");
+
+	return NULL;
+}
+
+scope_stack_ptr scope_stack_push(scope sp, size_t bytes)
+{
+	if (sp != NULL && sp->call_stack != NULL && bytes > 0)
+	{
+		scope_stack_ptr * return_ptr = NULL;
+
+		scope_stack_ptr prev_size = vector_size(sp->call_stack);
+
+		scope_stack_ptr next_size = prev_size + bytes + sizeof(size_t);
+
+		if (vector_resize(sp->call_stack, next_size) != 0)
+		{
+			scope_error("Scope stack push bad call stack size increase");
+
+			return 0;
+		}
+
+		return_ptr = scope_stack_return(sp);
+
+		if (return_ptr != NULL)
+		{
+			void ** prev_ptr = vector_at(sp->call_stack, prev_size);
+
+			if (prev_ptr != NULL && *prev_ptr != NULL)
+			{
+				*return_ptr = prev_size;
+
+				return prev_size;
+			}
+
+			scope_error("Scope stack push bad stack pointer reference");
+		}
+
+		scope_error("Scope stack push bad stack return reference");
+
+		if (vector_resize(sp->call_stack, prev_size) != 0)
+		{
+			scope_error("Scope stack push bad call stack size decrease");
+		}
+
+		return 0;
+	}
+
+	scope_error("Scope stack push invalid parameters");
+
+	return 0;
+}
+
+void * scope_stack_get(scope sp, scope_stack_ptr stack_ptr)
+{
+	if (sp != NULL)
+	{
+		void ** ref_ptr = vector_at(sp->call_stack, stack_ptr);
+
+		if (ref_ptr != NULL && *ref_ptr != NULL)
+		{
+			return *ref_ptr;
+		}
+	}
+
+	return NULL;
+}
+
+int scope_stack_pop(scope sp)
+{
+	if (sp != NULL)
+	{
+		scope_stack_ptr * return_ptr = scope_stack_return(sp);
+
+		if (vector_resize(sp->call_stack, *return_ptr) != 0)
+		{
+			scope_error("Scope bad call stack size decrease");
+
+			return 1;
+		}
+
+		return 0;
+	}
+
+	scope_error("Scope stack pop invalid parameters");
+
+	return 1;
+}
+
 void scope_destroy(scope sp)
 {
 	if (sp)
 	{
+		vector_destroy(sp->call_stack);
+
 		hash_map_destroy(sp->map);
 
 		free(sp->name);

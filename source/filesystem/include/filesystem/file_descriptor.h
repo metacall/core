@@ -20,41 +20,48 @@ extern "C" {
 /* -- Definitions -- */
 
 #define FILE_DESCRIPTOR_NAME_SIZE		0x0100
-#define FILE_DESCRIPTOR_EXTENSION_SIZE		0x0010
+#define FILE_DESCRIPTOR_EXTENSION_SIZE		0x0012
 
 /* -- Forward Declarations -- */
 
 struct file_descriptor_type;
 
+struct directory_descriptor_type;
+
 /* -- Type Definitions -- */
 
 typedef struct file_descriptor_type * file_descriptor;
+
+typedef struct directory_descriptor_type * directory_descriptor;
 
 /* -- Methods -- */
 
 /**
 *  @brief
-*    Create a file descriptor from specified path
+*    Create a file descriptor from specified directory and name
 *
-*  @param[in] path
-*    The path of the file
+*  @param[in] owner
+*    Directory which file belongs to
+*
+*  @param[in] name
+*    The name of the file
 *
 *  @return
 *    A pointer to the file descriptor if success, null pointer otherwhise
 */
-FILESYSTEM_API file_descriptor file_descriptor_create(const char * path);
+FILESYSTEM_API file_descriptor file_descriptor_create(directory_descriptor owner, const char * name);
 
 /**
 *  @brief
-*    Get the file extension
+*    Get the owner directory where is the file
 *
 *  @param[in] f
 *    File descriptor pointer
 *
 *  @return
-*    A constant string pointer to the extension of @f
+*    A pointer to directory descriptor which owns the file
 */
-FILESYSTEM_API const char * file_descriptor_extension(file_descriptor f);
+FILESYSTEM_API directory_descriptor file_descriptor_owner(file_descriptor f);
 
 /**
 *  @brief
@@ -70,27 +77,15 @@ FILESYSTEM_API const char * file_descriptor_name(file_descriptor f);
 
 /**
 *  @brief
-*    Get the path where is the file
+*    Get the file extension
 *
 *  @param[in] f
 *    File descriptor pointer
 *
 *  @return
-*    A constant string pointer to the path of @f
+*    A constant string pointer to the extension of @f
 */
-FILESYSTEM_API const char * file_descriptor_path(file_descriptor f);
-
-/**
-*  @brief
-*    Get the full path with file name and extension
-*
-*  @param[in] f
-*    File descriptor pointer
-*
-*  @return
-*    A constant string pointer to the full path of @f
-*/
-FILESYSTEM_API const char * file_descriptor_path_absolute(file_descriptor f);
+FILESYSTEM_API const char * file_descriptor_extension(file_descriptor f);
 
 /**
 *  @brief

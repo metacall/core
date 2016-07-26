@@ -22,33 +22,25 @@ typedef char file_descriptor_extension_str[FILE_DESCRIPTOR_EXTENSION_SIZE];
 
 typedef struct file_descriptor_type
 {
-	directory			d;
-	file_descriptor_name_str	name;
-	file_descriptor_extension_str	extension;
+	directory_descriptor		owner;				/**< Directory descriptor which file belongs to */
+	file_descriptor_name_str	name;				/**< File name string */
+	file_descriptor_extension_str	extension;		/**< File extension string */
 
 } * file_descriptor;
 
 /* -- Methods -- */
 
-file_descriptor file_descriptor_invalid()
-{
-	static struct file_descriptor_type f =
-	{
-		NULL,
-		"invalid_name",
-		"invalid_ext"
-	};
-
-	return &f;
-}
-
-file_descriptor file_descriptor_create(const char * path)
+file_descriptor file_descriptor_create(directory_descriptor owner, const char * name)
 {
 	file_descriptor f = malloc(sizeof(struct file_descriptor_type));
 
 	if (f != NULL)
 	{
-		(void)path;
+		f->owner = owner;
+
+		/* TODO: extract name & extension */
+
+		(void)name;
 
 		return f;
 	}
@@ -56,14 +48,14 @@ file_descriptor file_descriptor_create(const char * path)
 	return NULL;
 }
 
-const char * file_descriptor_extension(file_descriptor f)
+directory_descriptor file_descriptor_owner(file_descriptor f)
 {
 	if (f != NULL)
 	{
-		return f->extension;
+		return f->owner;
 	}
 
-	return file_descriptor_invalid()->extension;
+	return NULL;
 }
 
 const char * file_descriptor_name(file_descriptor f)
@@ -73,27 +65,17 @@ const char * file_descriptor_name(file_descriptor f)
 		return f->name;
 	}
 
-	return file_descriptor_invalid()->name;
+	return "invalid_name";
 }
 
-const char * file_descriptor_path(file_descriptor f)
+const char * file_descriptor_extension(file_descriptor f)
 {
 	if (f != NULL)
 	{
-		return directory_descriptor_path(f->d);
+		return f->extension;
 	}
 
-	return directory_descriptor_path(file_descriptor_invalid()->d);
-}
-
-const char * file_descriptor_path_absolute(file_descriptor f)
-{
-	if (f != NULL)
-	{
-		return directory_descriptor_path_absolute(f->d);
-	}
-
-	return directory_descriptor_path_absolute(file_descriptor_invalid()->d);
+	return "invalid_extension";
 }
 
 void file_descriptor_destroy(file_descriptor f)

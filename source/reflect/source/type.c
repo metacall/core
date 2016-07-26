@@ -8,6 +8,7 @@
 
 #include <reflect/type.h>
 
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct type_type
@@ -27,8 +28,23 @@ type type_create(type_id id, const char * name, type_impl impl, type_impl_interf
 
 		if (t)
 		{
+			size_t name_size = strlen(name) + 1;
+
+			t->name = malloc(sizeof(char) * name_size);
+
+			if (t->name == NULL)
+			{
+				/* error */
+
+				free(t);
+
+				return NULL;
+			}
+
+			memcpy(t->name, name, name_size);
+
 			t->id = id;
-			t->name = strdup(name);
+			
 			t->impl = impl;
 
 			if (singleton != NULL)

@@ -8,8 +8,8 @@
 
 #include <reflect/function.h>
 
+#include <stdlib.h>
 #include <string.h>
-
 #include <stdio.h>
 
 typedef struct function_type
@@ -28,7 +28,20 @@ function function_create(const char * name, size_t args_count, function_impl imp
 
 		if (func != NULL)
 		{
-			func->name = strdup(name);
+			size_t func_name_size = strlen(name) + 1;
+
+			func->name = malloc(sizeof(char) * func_name_size);
+
+			if (func->name == NULL)
+			{
+				/* error */
+
+				free(func);
+
+				return NULL;
+			}
+
+			memcpy(func->name, name, func_name_size);
 
 			func->impl = impl;
 
@@ -94,15 +107,17 @@ void function_print(function func)
 	}
 }
 
-void function_call(function func, function_args args)
+function_return function_call(function func, function_args args)
 {
 	if (func != NULL && args != NULL)
 	{
 		if (func->interface != NULL && func->interface->invoke != NULL)
 		{
-			func->interface->invoke(func, func->impl, args);
+			return func->interface->invoke(func, func->impl, args);
 		}
 	}
+
+	return NULL;
 }
 
 void function_destroy(function func)

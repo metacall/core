@@ -38,7 +38,7 @@ typedef int (*hash_map_cb_iterate)(hash_map, hash_map_key, hash_map_value, hash_
 
 ADT_API hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_cb);
 
-ADT_API int hash_map_element_size(hash_map map);
+ADT_API size_t hash_map_size(hash_map map);
 
 ADT_API int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value);
 

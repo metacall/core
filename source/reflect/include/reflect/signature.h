@@ -29,7 +29,11 @@ REFLECT_API const char * signature_get_name(signature s, size_t index);
 
 REFLECT_API type signature_get_type(signature s, size_t index);
 
+REFLECT_API type signature_get_return(signature s);
+
 REFLECT_API void signature_set(signature s, size_t index, const char * name, type t);
+
+REFLECT_API void signature_set_return(signature s, type t);
 
 REFLECT_API void signature_print(signature s);
 

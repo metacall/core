@@ -10,6 +10,7 @@
 
 #include <adt/vector.h>
 
+#include <stdio.h>
 #include <string.h>
 
 /* -- Definitions -- */
@@ -28,7 +29,7 @@ typedef struct vector_type
 	void *	data;		/**< Pointer to memory block */
 } * vector;
 
-/* -- Macros -- */
+/* -- Private Methods -- */
 
 /**
 *  @brief
@@ -37,16 +38,11 @@ typedef struct vector_type
 *  @param[in] error
 *    Error message
 */
-#define vector_error(error) \
-	do \
-	{ \
-		/* not implemented */ \
-		\
-	} while (0)
+void vector_error(const char * error);
 
 /**
 *  @brief
-*    Report vector error
+*    Vector access by offset bytes
 *
 *  @param[in] v
 *    Vector pointer
@@ -57,11 +53,24 @@ typedef struct vector_type
 *  @return
 *    A pointer to data vector memory block with offset @bytes
 */
-#define vector_data_offset_bytes(v, bytes) \
-	((void*)(((char*)v->data) + (bytes)))
-
+void * vector_data_offset_bytes(vector v, size_t bytes);
 
 /* -- Methods -- */
+
+void vector_error(const char * error)
+{
+	printf("%s\n", error);
+}
+
+void * vector_data_offset_bytes(vector v, size_t bytes)
+{
+	if (v != NULL && v->data != NULL && bytes < v->capacity * v->type_size)
+	{
+		return ((void*)(((char*)v->data) + (bytes)));
+	}
+
+	return NULL;
+}
 
 vector vector_create(size_t type_size)
 {

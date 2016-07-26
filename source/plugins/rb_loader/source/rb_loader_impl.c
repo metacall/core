@@ -15,9 +15,6 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
-#include <adt/hash_map.h>
-#include <adt/hash_map_str.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -61,13 +58,17 @@ typedef struct loader_impl_rb_function_type
 
 int function_rb_interface_create(function func, function_impl impl)
 {
-	(void)func;
+	signature s = function_signature(func);
+
+	/* Set to null, deduced dynamically */
+	signature_set_return(s, NULL);
+
 	(void)impl;
 
 	return 0;
 }
 
-void function_rb_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_rb_interface_invoke(function func, function_impl impl, function_args args)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
 
@@ -131,9 +132,29 @@ void function_rb_interface_invoke(function func, function_impl impl, function_ar
 		result_value = rb_funcall(rb_function->rb_handle->instance, rb_function->method_id, 0);
 	}
 
-	printf("Function call result value:\n");
+	if (result_value != Qnil)
+	{
+		int result_type = TYPE(result_value);
 
-	rb_funcall(rb_mKernel, rb_intern("puts"), 1, result_value);
+		value v = NULL;
+
+		if (result_type == T_FIXNUM)
+		{
+			int i = NUM2INT(result_value);
+
+			v = value_create_int(i);
+		}
+		else if (result_type == T_FLOAT)
+		{
+			double d = NUM2DBL(result_value);
+
+			v = value_create_double(d);
+		}
+
+		return v;
+	}
+
+	return NULL;
 }
 
 void function_rb_interface_destroy(function func, function_impl impl)
@@ -148,7 +169,7 @@ void function_rb_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_rb_singleton()
+function_interface function_rb_singleton(void)
 {
 	static struct function_interface_type rb_interface =
 	{
@@ -174,6 +195,7 @@ const char * rb_inspect_module_data()
 		"end.enable {\n"
 			"obj = Class.new(klass) do\n"
 				"def initialize\n"
+
 				"end\n"
 			"end.new\n"
 
@@ -193,6 +215,31 @@ const char * rb_inspect_module_data()
 				"method_params.each_with_object({}) do |i, hash|\n"
 					"hash[i] = captured_binding.local_variable_get(i)\n"
 				"end\n"
+			"end\n"
+		"}\n"
+	"end\n"
+
+	"def self.class_method_ret_value(klass, meth)\n"
+
+		"TracePoint.new(:return) do |tp|\n"
+			"puts \"returning #{tp.return_value} from #{tp.defined_class}.#{tp.method_id}\"\n"
+		"end.enable {\n"
+			"obj = Class.new(klass)\n"
+
+			"meth_obj = klass.method(meth) rescue nil\n"
+
+			"meth_obj = obj.method(meth) rescue nil if not meth_obj\n"
+
+			"if meth_obj\n"
+				"params = meth_obj.parameters\n"
+
+				"puts \"params #{params}\"\n"
+
+				"method_params = params.collect { |i| i.last if i.first == " LOADER_IMPL_RB_INSPECT_NAME " }.compact\n"
+
+				"required_params = [\"\"] * (params.size - method_params.size)\n"
+
+				"meth_obj.call(*required_params) rescue nil\n"
 			"end\n"
 		"}\n"
 	"end\n"
@@ -323,7 +370,7 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl)
 	return NULL;
 }
 
-int rb_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
+int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
 
@@ -336,7 +383,7 @@ int rb_loader_impl_execution_path(loader_impl impl, loader_naming_path path)
 	return 0;
 }
 
-VALUE rb_loader_impl_load_data(loader_impl impl, loader_naming_path path)
+VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
 
@@ -374,7 +421,7 @@ VALUE rb_loader_impl_load_data(loader_impl impl, loader_naming_path path)
 	return Qnil;
 }
 
-loader_handle rb_loader_impl_load(loader_impl impl, loader_naming_path path, loader_naming_name name)
+loader_handle rb_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -446,7 +493,9 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
 
 		if (s != NULL)
 		{
-			size_t index, size = signature_count(s);
+			const size_t size = signature_count(s);
+
+			size_t index;
 
 			for (index = 0; index < size; ++index)
 			{
@@ -527,6 +576,8 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			VALUE parameter_map = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_params"), 2, rb_handle->instance, method);
 
+			/*VALUE ret_value = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_ret_value"), 2, rb_handle->instance, method);*/
+
 			VALUE parameter_array = rb_funcall(parameter_map, rb_intern("to_a"), 0);
 
 			VALUE parameters_size = rb_funcall(parameter_array, rb_intern("size"), 0);
@@ -543,7 +594,7 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 				{
 					scope sp = context_scope(ctx);
 
-					scope_define(sp, method_name_str, f);
+					scope_define(sp, function_name(f), f);
 
 					printf("Function %s <%p> (%d)\n", method_name_str, (void *)f, parameters_size_integer);
 				}

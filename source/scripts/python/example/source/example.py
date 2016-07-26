@@ -1,11 +1,11 @@
 #!/usr/bin/python3.4
 
-def multiply(left: int, right: int):
+def multiply(left: int, right: int) -> int:
 	result = left * right;
 	print(left, ' * ', right, ' = ', result);
 	return result;
 
-def divide(left: float, right: float):
+def divide(left: float, right: float) -> float:
 	if right != 0.0:
 		result = left / right;
 		print(left, ' / ', right, ' = ', result);
@@ -13,7 +13,7 @@ def divide(left: float, right: float):
 		print('Invalid right operand: ', right);
 	return result;
 
-def sum(left: int, right: int):
+def sum(left: int, right: int) -> int:
 	result = left + right;
 	print(left, ' + ', right, ' = ', result);
 	return result;

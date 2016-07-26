@@ -33,33 +33,33 @@ set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
 # Configure cross-platform support implementation
 include(Portability)
 
-set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
+set(FILESYSTEM_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
 
-#configure_file(${include_path}/dynlink_interface.h.in ${generated_include_path}/dynlink_interface.h)
-#configure_file(${source_path}/dynlink_interface.c.in ${generated_source_path}/dynlink_interface.c)
+#configure_file(${include_path}/filesystem_interface.h.in ${generated_include_path}/filesystem_interface.h)
+#configure_file(${source_path}/filesystem_interface.c.in ${generated_source_path}/filesystem_interface.c)
 
 set(headers
     ${include_path}/filesystem.h
-#    ${include_path}/file_descriptor.h
+    ${include_path}/file_descriptor.h
+    ${include_path}/directory_descriptor.h
 
-
-#    ${include_path}/dynlink_type.h
-#    ${include_path}/dynlink_impl_name.h
-#    ${include_path}/dynlink_impl_type.h
-#    ${include_path}/dynlink_impl.h
-#    ${include_path}/dynlink_impl_symbol_${DYNLINK_IMPL_INTERFACE_NAME}.h
-#    ${include_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.h
-#    ${generated_include_path}/dynlink_interface.h
+#    ${include_path}/filesystem_impl.h
+#    ${include_path}/filesystem_impl_file_${FILESYSTEM_IMPL_INTERFACE_NAME}.h
+#    ${include_path}/filesystem_impl_directory_${FILESYSTEM_IMPL_INTERFACE_NAME}.h
+#    ${include_path}/filesystem_impl_${FILESYSTEM_IMPL_INTERFACE_NAME}.h
+#    ${generated_include_path}/filesystem_interface.h
 )
 
 set(sources
     ${source_path}/filesystem.c
-#    ${source_path}/file_descriptor.c
+    ${source_path}/file_descriptor.c
+    ${source_path}/directory_descriptor.c
 
-
-#    ${source_path}/dynlink_impl.c
-#    ${source_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.c
-#    ${generated_source_path}/dynlink_interface.c
+#    ${source_path}/filesystem_impl.c
+#    ${source_path}/filesystem_impl_file_${FILESYSTEM_IMPL_INTERFACE_NAME}.c
+#    ${source_path}/filesystem_impl_directory_${FILESYSTEM_IMPL_INTERFACE_NAME}.c
+#    ${source_path}/filesystem_impl_${DYNLINK_IMPL_INTERFACE_NAME}.c
+#    ${generated_source_path}/filesystem_interface.c
 )
 
 # Group source files
@@ -148,6 +148,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
+    ${META_PROJECT_NAME}::adt
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
