@@ -162,6 +162,15 @@ class tokenizer
 		*/
 		size_t position(void) const;
 
+		/**
+		*  @brief
+		*    Assignement operator for tokenizer iterator
+		*
+		*  @return
+		*    Returns a reference to itself
+		*/
+		iterator & operator=(const iterator &) = delete;
+
 	  private:
 
 		/* -- Private Member Data -- */
@@ -190,6 +199,15 @@ class tokenizer
 	*    Returns a iterator pointing to the end of @str
 	*/
 	iterator end(void) const;
+
+	/**
+	*  @brief
+	*    Assignement operator for tokenizer
+	*
+	*  @return
+	*    Returns a reference to itself
+	*/
+	tokenizer & operator=(const tokenizer &) = delete;
 
   protected:
 

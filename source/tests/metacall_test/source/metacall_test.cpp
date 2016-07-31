@@ -25,6 +25,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	/* Python */
 	{
+		/*
 		const long seven_multiples_limit = 10;
 
 		long iterator;
@@ -69,10 +70,20 @@ TEST_F(metacall_test, DefaultConstructor)
 		value_destroy(ret);
 
 		EXPECT_EQ((value) NULL, (value) metacall("hello"));
+
+		ret = metacall("strcat", "Hello ", "Universe");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello Universe"));
+
+		value_destroy(ret);
+		*/
 	}
 
 	/* Ruby */
 	{
+		/*
 		value ret = NULL;
 
 		ret = metacall("say_multiply", 5, 7);
@@ -85,8 +96,15 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
 
-		/*
-		EXPECT_EQ((void *) NULL, (void *) metacall("say_hello", "meta-programmer"));
+
+
+		ret = metacall("say_hello", "meta-programmer");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello meta-programmer!"));
+
+		value_destroy(ret);
 		*/
 	}
 
@@ -99,7 +117,6 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	/* JavaScript V8 */
 	{
-		/*
 		value ret = NULL;
 
 		ret = metacall("say_divide", 32.0, 4.0);
@@ -109,11 +126,19 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((double) value_to_double(ret), (double) 8.0);
 
 		value_destroy(ret);
-		*/
+
+		ret = metacall("some_text", "abc", "def");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "abcdef"));
+
+		value_destroy(ret);
 	}
 
 	/* Mock */
 	{
+		/*
 		value ret = NULL;
 
 		ret = metacall("my_empty_func");
@@ -139,6 +164,15 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((char) value_to_char(ret), (char) 'A');
 
 		value_destroy(ret);
+
+		ret = metacall("new_args", "goodbye");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
+
+		value_destroy(ret);
+		*/
 	}
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());

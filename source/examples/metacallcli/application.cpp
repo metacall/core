@@ -320,13 +320,11 @@ value application::argument_parse(parser & p)
 {
 	if (p.is<bool>())
 	{
-		/* TODO: bool */
-
 		bool b = p.to<bool>();
 
-		/* return value_create_bool(b); */
-
-		return value_create_ptr(&b);
+		boolean bo = static_cast<boolean>(b);
+		
+		return value_create_bool(bo);
 	}
 	else if (p.is<char>())
 	{
@@ -380,13 +378,9 @@ value application::argument_parse(parser & p)
 		{
 			if (first == '"')
 			{
-				/* TODO: string */
+				std::string unquoted_str = str.substr(1, len - 1);
 
-				static int fake = 5;
-
-				/* return value_create_str(str.c_str()); */
-
-				return value_create_ptr(&fake);
+				return value_create_string(unquoted_str.c_str(), unquoted_str.length());
 			}
 
 			if (first == '\'')

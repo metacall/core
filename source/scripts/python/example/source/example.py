@@ -21,3 +21,8 @@ def sum(left: int, right: int) -> int:
 def hello():
 	print('Hello World from Python!!');
 	return;
+
+def strcat(left: str, right: str) -> str:
+	result = left + right;
+	print(left, ' + ', right, ' = ', result);
+	return result;

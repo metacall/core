@@ -18,6 +18,7 @@ add_subdirectory(dynlink)
 add_subdirectory(reflect)
 add_subdirectory(loader)
 add_subdirectory(metacall)
+add_subdirectory(metacallpp)
 
 # Plugins
 set(IDE_FOLDER "Plugins")

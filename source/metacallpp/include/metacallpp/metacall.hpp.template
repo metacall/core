@@ -1,0 +1,28 @@
+/*
+ *	MetaCall++ Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 Federico Agustin Alvarez Bayon <loopzer@gmail.com>
+ *
+ *	High performance, type safe and exception safe object oriented
+ *	front-end for MetaCall library.
+ *
+ */
+
+#ifndef METACALL_HPP
+#define METACALL_HPP 1
+
+/* -- Headers -- */
+
+#include <metacallpp/metacallpp_api.h>
+
+/* -- Namespaces -- */
+
+namespace metacall {
+
+/* -- Type Definitions -- */
+
+/* -- Methods -- */
+
+} /* namespace metacall */
+
+#endif /* METACALL_HPP */

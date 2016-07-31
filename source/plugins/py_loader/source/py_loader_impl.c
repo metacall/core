@@ -119,9 +119,9 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		printf("Type (%p): %d\n", (void *)t, id);
 
-		if (id == TYPE_CHAR)
+		if (id == TYPE_BOOL)
 		{
-			char * value_ptr = (char *)(args[args_count]);
+			boolean * value_ptr = (boolean *)(args[args_count]);
 
 			long l = (*value_ptr == 0) ? 0L : 1L;
 
@@ -133,7 +133,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 			#if PY_MAJOR_VERSION == 2
 				py_func->values[args_count] = PyInt_FromLong(*value_ptr);
-			#else
+			#elif PY_MAJOR_VERSION == 3
 				long l = (long)(*value_ptr);
 
 				py_func->values[args_count] = PyLong_FromLong(l);
@@ -150,6 +150,17 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			double * value_ptr = (double *)(args[args_count]);
 
 			py_func->values[args_count] = PyFloat_FromDouble(*value_ptr);
+		}
+		else if (id == TYPE_STRING)
+		{
+			const char * value_ptr = (const char *)(args[args_count]);
+
+			#if PY_MAJOR_VERSION == 2
+				py_func->values[args_count] = PyString_FromString(value_ptr);
+			#elif PY_MAJOR_VERSION == 3
+				py_func->values[args_count] = PyUnicode_FromString(value_ptr);
+			#endif
+
 		}
 		else if (id == TYPE_PTR)
 		{
@@ -174,17 +185,17 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		printf("Return type %p, %d\n", (void *)ret_type, id);
 
-		if (id == TYPE_CHAR)
+		if (id == TYPE_BOOL)
 		{
-			char c = (PyObject_IsTrue(result) == 1) ? 1 : 0;
+			boolean b = (PyObject_IsTrue(result) == 1) ? 1 : 0;
 
-			v = value_create_char(c);
+			v = value_create_bool(b);
 		}
 		else if (id == TYPE_INT)
 		{
 			#if PY_MAJOR_VERSION == 2
 				long l = PyInt_AsLong(result);
-			#else
+			#elif PY_MAJOR_VERSION == 3
 				long l = PyLong_AsLong(result);
 			#endif
 
@@ -203,6 +214,22 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			double d = PyFloat_AsDouble(result);
 
 			v = value_create_double(d);
+		}
+		else if (id == TYPE_STRING)
+		{
+			char * str = NULL;
+			Py_ssize_t length = 0;
+
+			#if PY_MAJOR_VERSION == 2
+				if (PyString_AsStringAndSize(result, &str, &length) == -1)
+				{
+					/* error */
+				}
+			#elif PY_MAJOR_VERSION == 3
+				str = PyUnicode_AsUTF8AndSize(result, &length);
+			#endif
+
+			v = value_create_string(str, (size_t)length);
 		}
 		else if (id == TYPE_PTR)
 		{
@@ -328,7 +355,7 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 		}
 		type_id_name_pair[] =
 		{
-			{ TYPE_CHAR, "bool" },
+			{ TYPE_BOOL, "bool" },
 
 			{ TYPE_LONG, "int" },
 
@@ -338,7 +365,7 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 
 			{ TYPE_DOUBLE, "float" },
 
-			{ TYPE_PTR, "str" },
+			{ TYPE_STRING, "str" },
 			{ TYPE_PTR, "bytearray" }
 		};
 

@@ -23,6 +23,8 @@ extern "C" {
 
 /* -- Type Definitions -- */
 
+typedef int boolean;
+
 typedef void * value;
 
 /* -- Methods -- */
@@ -41,6 +43,18 @@ typedef void * value;
 *    Pointer to value if success, null otherwhise
 */
 REFLECT_API value value_create(const void * data, size_t bytes);
+
+/**
+*  @brief
+*    Create a value from boolean @b
+*
+*  @param[in] b
+*    Boolean will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_bool(boolean b);
 
 /**
 *  @brief
@@ -92,15 +106,42 @@ REFLECT_API value value_create_double(double d);
 
 /**
 *  @brief
-*    Create a value from pointer @p
+*    Create a value from string @str
 *
-*  @param[in] p
-*    Pointer will be copied into value
+*  @param[in] str
+*    Constant string will be copied into value
+*
+*  @param[in] length
+*    Length of the constant string
 *
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_ptr(void * p);
+REFLECT_API value value_create_string(const char * str, size_t length);
+
+/**
+*  @brief
+*    Create a value from pointer @p
+*
+*  @param[in] ptr
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_ptr(const void * ptr);
+
+/**
+*  @brief
+*    Returns the size of the value
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Size in bytes of the value
+*/
+REFLECT_API size_t value_size(value v);
 
 /**
 *  @brief
@@ -146,6 +187,18 @@ REFLECT_API void * value_data(value v);
 *    Size in bytes of the memory block @data
 */
 REFLECT_API void value_to(value v, void * data, size_t bytes);
+
+/**
+*  @brief
+*    Convert value @v to boolean
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to boolean
+*/
+REFLECT_API boolean value_to_bool(value v);
 
 /**
 *  @brief
@@ -197,6 +250,18 @@ REFLECT_API double value_to_double(value v);
 
 /**
 *  @brief
+*    Convert value @v to string
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to C string
+*/
+REFLECT_API char * value_to_string(value v);
+
+/**
+*  @brief
 *    Convert value @v to pointer
 *
 *  @param[in] v
@@ -219,8 +284,26 @@ REFLECT_API void * value_to_ptr(value v);
 *
 *  @param[in] bytes
 *    Size in bytes of the memory block @data
+*
+*  @return
+*    Value with @data of size @bytes assigned to it
 */
-REFLECT_API void value_from(value v, const void * data, size_t bytes);
+REFLECT_API value value_from(value v, const void * data, size_t bytes);
+
+/**
+*  @brief
+*    Assign boolean @b to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] b
+*    Boolean to be assigned to value @v
+*
+*  @return
+*    Value with boolean @b assigned to it
+*/
+REFLECT_API value value_from_bool(value v, boolean b);
 
 /**
 *  @brief
@@ -231,8 +314,11 @@ REFLECT_API void value_from(value v, const void * data, size_t bytes);
 *
 *  @param[in] c
 *    Character to be assigned to value @v
+*
+*  @return
+*    Value with char @c assigned to it
 */
-REFLECT_API void value_from_char(value v, char c);
+REFLECT_API value value_from_char(value v, char c);
 
 /**
 *  @brief
@@ -243,8 +329,11 @@ REFLECT_API void value_from_char(value v, char c);
 *
 *  @param[in] i
 *    Integer to be assigned to value @v
+*
+*  @return
+*    Value with integer @i assigned to it
 */
-REFLECT_API void value_from_int(value v, int i);
+REFLECT_API value value_from_int(value v, int i);
 
 /**
 *  @brief
@@ -255,8 +344,11 @@ REFLECT_API void value_from_int(value v, int i);
 *
 *  @param[in] l
 *    Long integer to be assigned to value @v
+*
+*  @return
+*    Value with long @l assigned to it
 */
-REFLECT_API void value_from_long(value v, long l);
+REFLECT_API value value_from_long(value v, long l);
 
 /**
 *  @brief
@@ -267,20 +359,44 @@ REFLECT_API void value_from_long(value v, long l);
 *
 *  @param[in] d
 *    Double to be assigned to value @v
+*
+*  @return
+*    Value with double @d assigned to it
 */
-REFLECT_API void value_from_double(value v, double d);
+REFLECT_API value value_from_double(value v, double d);
 
 /**
 *  @brief
-*    Assign pointer reference @p to value @v
+*    Assign string @str to value @v
 *
 *  @param[in] v
 *    Reference to the value
 *
-*  @param[in] p
-*    Pointer to be assigned to value @v
+*  @param[in] str
+*    Constant string to be assigned to value @v
+*
+*  @param[in] length
+*    Length of the constant string @str
+*
+*  @return
+*    Value with string @str assigned to it
 */
-REFLECT_API void value_from_ptr(value v, void * p);
+REFLECT_API value value_from_string(value v, const char * str, size_t length);
+
+/**
+*  @brief
+*    Assign pointer reference @ptr to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] ptr
+*    Pointer to be assigned to value @v
+*
+*  @return
+*    Value with pointer @ptr assigned to it
+*/
+REFLECT_API value value_from_ptr(value v, const void * ptr);
 
 /**
 *  @brief

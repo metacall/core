@@ -9,7 +9,7 @@
 #
 
 # Target name
-set(target loader)
+set(target metacallpp)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -20,9 +20,6 @@ set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
-# Define project options
-option(${target_upper}_LAZY "Defines a lazy initialization and destruction of the loader library" ON)
-
 #
 # Sources
 #
@@ -30,29 +27,59 @@ option(${target_upper}_LAZY "Defines a lazy initialization and destruction of th
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
+
 set(headers
-    ${include_path}/loader.h
-    ${include_path}/loader_handle.h
-    ${include_path}/loader_impl_data.h
-    ${include_path}/loader_impl_descriptor.h
-    ${include_path}/loader_impl_interface.h
-    ${include_path}/loader_impl_export.h
-    ${include_path}/loader_impl.h
-    ${include_path}/loader_naming_type.h
-    ${include_path}/loader_naming.h
+#    ${include_path}/metacall.hpp
+
+    ${include_path}/Call.h
+    ${include_path}/CallHadInvokedException.h
+    ${include_path}/common.h
+    ${include_path}/Context.h
+    ${include_path}/ICall.h
+    ${include_path}/IContext.h
+    ${include_path}/IMetacall.h
+    ${include_path}/IMetacallConfig.h
+    ${include_path}/IMetacallConfigBuilder.h
+    ${include_path}/IParameterBuilder.h
+    ${include_path}/IReturn.h
+    ${include_path}/IScopeBase.h
+    ${include_path}/IScopeConfig.h
+    ${include_path}/Metacall.h
+    ${include_path}/MetacallConfig.h
+    ${include_path}/MetacallNotReadyException.h
+    ${include_path}/MetaFunction.h
+    ${include_path}/ParameterBuilder.h
+    ${include_path}/Return.h
+    ${include_path}/ScopeBase.h
+    ${include_path}/ScopeConfig.h
+)
+
+set(inlines
+
 )
 
 set(sources
-    ${source_path}/loader.c
-    ${source_path}/loader_impl.c
-    ${source_path}/loader_naming.c
+#    ${source_path}/metacall.cpp
+
+    ${source_path}/Call.cpp
+    ${source_path}/Context.cpp
+    ${source_path}/Metacall.cpp
+    ${source_path}/MetacallConfig.cpp
+    ${source_path}/MetaFunction.cpp
+    ${source_path}/ParameterBuilder.cpp
+    ${source_path}/Return.cpp
+    ${source_path}/ScopeBase.cpp
+    ${source_path}/ScopeConfig.cpp
 )
 
 # Group source files
 set(header_group "Header Files (API)")
+#set(inline_group "Inline Files")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
     ${header_group} ${headers})
+#source_group_by_path(${include_path} "\\\\.inl$"
+#    ${inline_group} ${inlines})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
@@ -63,6 +90,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Build library
 add_library(${target}
     ${sources}
+    ${inlines}
     ${headers}
 )
 
@@ -106,8 +134,8 @@ generate_export_header(${target}
 set_target_properties(${target}
     PROPERTIES
     ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}")
-
+    FOLDER "${IDE_FOLDER}"
+)
 
 #
 # Include directories
@@ -136,7 +164,8 @@ target_link_libraries(${target}
     PRIVATE
     ${META_PROJECT_NAME}::adt
     ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::dynlink
+    ${META_PROJECT_NAME}::loader
+    ${META_PROJECT_NAME}::metacall
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -150,7 +179,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
     PRIVATE
-    $<$<BOOL:${target_upper}_LAZY>:${target_upper}_LAZY>
 
     PUBLIC
     $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
@@ -215,3 +243,4 @@ install(EXPORT ${target}-export
     DESTINATION ${INSTALL_CMAKE}/${target}
     COMPONENT   dev
 )
+

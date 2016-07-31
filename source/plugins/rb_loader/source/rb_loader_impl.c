@@ -92,17 +92,35 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			printf("Type %p, %d\n", (void *)t, id);
 
-			if (id == TYPE_INT)
+			if (id == TYPE_BOOL)
+			{
+				boolean * value_ptr = (boolean *)(args[args_count]);
+
+				args_value[args_count] = (*value_ptr == 0) ? Qfalse : Qtrue;
+			}
+			else if (id == TYPE_INT)
 			{
 				int * value_ptr = (int *)(args[args_count]);
 
 				args_value[args_count] = INT2NUM(*value_ptr);
+			}
+			else if (id == TYPE_LONG)
+			{
+				long * value_ptr = (long *)(args[args_count]);
+
+				args_value[args_count] = LONG2NUM(*value_ptr);
 			}
 			else if (id == TYPE_DOUBLE)
 			{
 				double * value_ptr = (double *)(args[args_count]);
 
 				args_value[args_count] = DBL2NUM(*value_ptr);
+			}
+			else if (id == TYPE_STRING)
+			{
+				const char * value_ptr = (const char *)(args[args_count]);
+
+				args_value[args_count] = rb_str_new_cstr(value_ptr);
 			}
 			else
 			{
@@ -138,17 +156,46 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 		value v = NULL;
 
-		if (result_type == T_FIXNUM)
+		if (result_type == T_TRUE)
+		{
+			boolean b = 1;
+
+			v = value_create_bool(b);
+		}
+		else if (result_type == T_FALSE)
+		{
+			boolean b = 0;
+
+			v = value_create_bool(b);
+		}
+		else if (result_type == T_FIXNUM)
 		{
 			int i = NUM2INT(result_value);
 
 			v = value_create_int(i);
+		}
+		else if (result_type == T_BIGNUM)
+		{
+			long l = NUM2LONG(result_value);
+
+			v = value_create_long(l);
 		}
 		else if (result_type == T_FLOAT)
 		{
 			double d = NUM2DBL(result_value);
 
 			v = value_create_double(d);
+		}
+		else if (result_type == T_STRING)
+		{
+			long length = RSTRING_LEN(result_value);
+
+			char * str = StringValuePtr(result_value);
+
+			if (length > 0 && str != NULL)
+			{
+				v = value_create_string(str, (size_t)length);
+			}
 		}
 
 		return v;
@@ -313,8 +360,13 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 	}
 	type_id_name_pair[] =
 	{
+		/*
+		{ TYPE_BOOL, "Boolean" },
+		*/
 		{ TYPE_INT, "Fixnum" },
-		{ TYPE_DOUBLE, "Float" }
+		{ TYPE_LONG, "Bignum" },
+		{ TYPE_DOUBLE, "Float" },
+		{ TYPE_STRING, "String" }
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);

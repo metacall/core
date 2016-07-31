@@ -19,11 +19,13 @@ extern "C" {
 
 enum type_primitive_id
 {
-	TYPE_CHAR	= -1,
-	TYPE_INT	= -2,
-	TYPE_LONG	= -3,
-	TYPE_DOUBLE	= -4,
-	TYPE_PTR	= -5
+	TYPE_BOOL	= -1,
+	TYPE_CHAR	= -2,
+	TYPE_INT	= -3,
+	TYPE_LONG	= -4,
+	TYPE_DOUBLE = -5,
+	TYPE_STRING = -6,
+	TYPE_PTR	= -7
 };
 
 typedef int type_id;

@@ -76,6 +76,15 @@ class parser
 	*/
 	template <typename T> T to(void);
 
+	/**
+	*  @brief
+	*    Assignement operator for parser
+	*
+	*  @return
+	*    Returns a reference to itself
+	*/
+	parser & operator=(const parser &) = delete;
+
   private:
 
 	/* -- Private Member Data -- */

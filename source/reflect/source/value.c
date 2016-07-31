@@ -28,6 +28,20 @@ struct value_impl_type
 	size_t ref_count;
 };
 
+/* -- Private Methods -- */
+
+/**
+*  @brief
+*    Access to the descriptor of a value
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Pointer to the header of a value
+*/
+value_impl value_get_impl(value v);
+
 /* -- Methods -- */
 
 value_impl value_get_impl(value v)
@@ -60,6 +74,11 @@ value value_create(const void * data, size_t bytes)
 	return NULL;
 }
 
+value value_create_bool(boolean b)
+{
+	return value_create(&b, sizeof(boolean));
+}
+
 value value_create_char(char c)
 {
 	return value_create(&c, sizeof(char));
@@ -80,9 +99,40 @@ value value_create_double(double d)
 	return value_create(&d, sizeof(double));
 }
 
-value value_create_ptr(void * p)
+value value_create_string(const char * str, size_t length)
 {
-	return value_create(&p, sizeof(void *));
+	if (str != NULL && length > 0)
+	{
+		size_t bytes = length + 1;
+
+		value v = value_create(str, bytes);
+
+		if (v != NULL)
+		{
+			memcpy(v, str, bytes);
+		}
+
+		return v;
+	}
+
+	return NULL;
+}
+
+value value_create_ptr(const void * ptr)
+{
+	return value_create((const void *)&ptr, sizeof(const void *));
+}
+
+size_t value_size(value v)
+{
+	if (v != NULL)
+	{
+		value_impl impl = value_get_impl(v);
+
+		return impl->bytes;
+	}
+
+	return 0;
 }
 
 void value_ref_inc(value v)
@@ -130,6 +180,15 @@ void value_to(value v, void * data, size_t bytes)
 	}
 }
 
+boolean value_to_bool(value v)
+{
+	boolean b = 0;
+
+	value_to(v, &b, sizeof(boolean));
+
+	return b;
+}
+
 char value_to_char(value v)
 {
 	char c = '\0';
@@ -166,16 +225,17 @@ double value_to_double(value v)
 	return d;
 }
 
-void * value_to_ptr(value v)
+char * value_to_string(value v)
 {
-	void * p = NULL;
-
-	value_to(v, &p, sizeof(void *));
-
-	return p;
+	return value_data(v);
 }
 
-void value_from(value v, const void * data, size_t bytes)
+void * value_to_ptr(value v)
+{
+	return value_data(v);
+}
+
+value value_from(value v, const void * data, size_t bytes)
 {
 	if (v != NULL && data != NULL && bytes > 0)
 	{
@@ -183,31 +243,54 @@ void value_from(value v, const void * data, size_t bytes)
 
 		memcpy(dest, data, bytes);
 	}
+
+	return v;
 }
 
-void value_from_char(value v, char c)
+value value_from_bool(value v, boolean b)
 {
-	value_from(v, &c, sizeof(char));
+	return value_from(v, &b, sizeof(boolean));
 }
 
-void value_from_int(value v, int i)
+value value_from_char(value v, char c)
 {
-	value_from(v, &i, sizeof(int));
+	return value_from(v, &c, sizeof(char));
 }
 
-void value_from_long(value v, long l)
+value value_from_int(value v, int i)
 {
-	value_from(v, &l, sizeof(long));
+	return value_from(v, &i, sizeof(int));
 }
 
-void value_from_double(value v, double d)
+value value_from_long(value v, long l)
 {
-	value_from(v, &d, sizeof(double));
+	return value_from(v, &l, sizeof(long));
 }
 
-void value_from_ptr(value v, void * p)
+value value_from_double(value v, double d)
 {
-	value_from(v, &p, sizeof(void *));
+	return value_from(v, &d, sizeof(double));
+}
+
+value value_from_string(value v, const char * str, size_t length)
+{
+	if (v != NULL && str != NULL && length > 0)
+	{
+		value_impl impl = value_get_impl(v);
+
+		size_t bytes = length + 1;
+
+		size_t size = (bytes <= impl->bytes) ? bytes : impl->bytes;
+
+		return value_from(v, str, size);
+	}
+
+	return v;
+}
+
+value value_from_ptr(value v, const void * ptr)
+{
+	return value_from(v, &ptr, sizeof(const void *));
 }
 
 void value_destroy(value v)
@@ -216,6 +299,9 @@ void value_destroy(value v)
 	{
 		value_impl impl = value_get_impl(v);
 
-		free(impl);
+		if (impl->ref_count <= 1)
+		{
+			free(impl);
+		}
 	}
 }

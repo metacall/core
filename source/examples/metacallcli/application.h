@@ -206,6 +206,15 @@ class application
 		*/
 		void operator()(const char * parameter);
 
+		/**
+		*  @brief
+		*    Assignement operator for parameter iterator
+		*
+		*  @return
+		*    Returns a reference to itself
+		*/
+		parameter_iterator & operator=(const parameter_iterator &) = delete;
+
 	  private:
 
 		/* -- Private Member Data -- */

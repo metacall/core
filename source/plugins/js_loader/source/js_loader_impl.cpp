@@ -302,7 +302,7 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 	if (args_size > 0)
 	{
-		Local<Value> value_args[args_size];
+		std::vector<Local<Value>> value_args(args_size);
 
 		size_t args_count;
 
@@ -312,9 +312,9 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 			type_id id = type_index(t);
 
-			if (id == TYPE_CHAR)
+			if (id == TYPE_BOOL)
 			{
-				char * value_ptr = (char *)(args[args_count]);
+				boolean * value_ptr = (boolean *)(args[args_count]);
 
 				bool b = (*value_ptr == 1) ? true : false;
 
@@ -338,6 +338,15 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 				value_args[args_count] = Number::New(js_func->get_isolate(), *value_ptr);
 			}
+			else if (id == TYPE_STRING)
+			{
+				const char * value_ptr = (const char *)(args[args_count]);
+
+				Local<String> local_str = String::NewFromUtf8(js_func->get_isolate(),
+					value_ptr, NewStringType::kNormal).ToLocalChecked();
+
+				value_args[args_count] = local_str;
+			}
 			else if (id == TYPE_PTR)
 			{
 				/*
@@ -356,7 +365,7 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 			}
 		}
 
-		result = func_impl_local->Call(js_func->get_ctx_impl()->Global(), args_count, value_args);
+		result = func_impl_local->Call(js_func->get_ctx_impl()->Global(), args_count, &value_args[0]);
 	}
 	else
 	{
@@ -367,14 +376,13 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 	{
 		type_id id = type_index(ret_type);
 
-		if (id == TYPE_CHAR)
+		if (id == TYPE_BOOL)
 		{
-			/* Boolean is represented as a char */
 			bool b = result->BooleanValue();
 
-			char c = (b == true) ? 1 : 0;
+			boolean bo = (b == true) ? 1 : 0;
 
-			return value_create_char(c);
+			return value_create_bool(bo);
 		}
 		else if (id == TYPE_INT)
 		{
@@ -394,21 +402,26 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 			return value_create_double(d);
 		}
+		else if (id == TYPE_STRING)
+		{
+			Local<String> str_value = result->ToString();
+
+			String::Utf8Value utf8_value(str_value);
+
+			int utf8_length = str_value->Utf8Length();
+
+			if (utf8_length > 0)
+			{
+				const char * str = *utf8_value;
+
+				size_t length = (size_t)utf8_length;
+
+				return value_create_string(str, length);
+			}
+		}
 		else if (id == TYPE_PTR)
 		{
-			void * ptr = NULL;
-
-			/* TODO: review this */
-			/*
-			if (value->IsString())
-			{
-				String::AsciiValue str = result->ToString();
-
-				ptr = *str;
-			}
-			*/
-
-			return value_create_ptr(ptr);
+			/* TODO */
 		}
 		else
 		{
@@ -522,11 +535,11 @@ int js_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_js js_
 	}
 	type_id_name_pair[] =
 	{
-		{ TYPE_CHAR, "Boolean" },
+		{ TYPE_BOOL, "Boolean" },
 		{ TYPE_INT, "Int32" },
 		{ TYPE_LONG, "Integer" },
 		{ TYPE_DOUBLE, "Number" },
-		{ TYPE_PTR, "String" },
+		{ TYPE_STRING, "String" },
 		{ TYPE_PTR, "Object" },
 		{ TYPE_PTR, "Array" },
 		{ TYPE_PTR, "Function" }

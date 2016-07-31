@@ -1,11 +1,18 @@
 #!/usr/bin/ruby
 
-#def say_hello(value: String)
-#	puts('Hello ' + value + '!')
-#end
 
+#def say_hello(value = '')
+def say_hello(value: String)
+	result = 'Hello ' + value + '!'
+	puts(result)
+	return result
+end
+
+#def say_multiply(left = 0, right = 0)
 def say_multiply(left: Fixnum, right: Fixnum)
-	puts('Multiply', left * right, '!')
+	result = left * right
+	puts('Multiply', result, '!')
+	return result
 end
 
 def say_null()

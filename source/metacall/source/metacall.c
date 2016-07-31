@@ -33,10 +33,10 @@ int metacall_initialize()
 	loader_naming_name module_names[] =
 	{
 		/*"compiled.c", "spider.jsm",*/
-		/*"divide.js",*/
-		"example.py",
-		"hello.rb",
-		"empty.mock"
+		"divide.js"/*,*/
+		/*"example.py",
+		"hello.rb",*/
+		/*"empty.mock"*/
 	};
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)
@@ -98,6 +98,10 @@ value metacall(const char * name, ...)
 
 			type_id id = type_index(t);
 
+			if (id == TYPE_BOOL)
+			{
+				args[iterator] = value_create_bool(va_arg(va, boolean));
+			}
 			if (id == TYPE_CHAR)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
@@ -114,9 +118,15 @@ value metacall(const char * name, ...)
 			{
 				args[iterator] = value_create_double(va_arg(va, double));
 			}
+			else if (id == TYPE_STRING)
+			{
+				const char * str = va_arg(va, const char *);
+
+				args[iterator] = value_create_string(str, strlen(str));
+			}
 			else if (id == TYPE_PTR)
 			{
-				args[iterator] = value_create_ptr(va_arg(va, void *));
+				args[iterator] = value_create_ptr(va_arg(va, const void *));
 			}
 			else
 			{
