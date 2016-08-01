@@ -1,4 +1,19 @@
-#pragma once
+/*
+*	MetaCall++ Library by Parra Studios
+*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*	Copyright (C) 2016 Federico Agustin Alvarez Bayon <loopzer@gmail.com>
+*
+*	High performance, type safe and exception safe object oriented
+*	front-end for MetaCall library.
+*
+*/
+
+#ifndef METACALLPP_SCOPE_BASE_HPP
+#define METACALLPP_SCOPE_BASE_HPP 1
+
+/* -- Headers -- */
+
+#include <metacallpp/metacallpp_api.h>
 
 #include <metacallpp/IMetacall.h>
 #include <metacallpp/IScopeConfig.h>
@@ -10,7 +25,7 @@
 #include <map>
 
 namespace Beast {
-	class ScopeBase :
+	class METACALLPP_API ScopeBase :
 		public IScopeBase
 	{
 	public:
@@ -36,3 +51,5 @@ namespace Beast {
 		std::map<std::string, IMetacall*> metecalls;
 	};
 }
+
+#endif /* METACALLPP_SCOPE_BASE_HPP */

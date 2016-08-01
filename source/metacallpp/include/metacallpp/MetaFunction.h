@@ -1,4 +1,19 @@
-#pragma once
+/*
+*	MetaCall++ Library by Parra Studios
+*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*	Copyright (C) 2016 Federico Agustin Alvarez Bayon <loopzer@gmail.com>
+*
+*	High performance, type safe and exception safe object oriented
+*	front-end for MetaCall library.
+*
+*/
+
+#ifndef METACALLPP_METAFUNCTION_HPP
+#define METACALLPP_METAFUNCTION_HPP 1
+
+/* -- Headers -- */
+
+#include <metacallpp/metacallpp_api.h>
 
 #include <metacallpp/Metacall.h>
 #include <metacallpp/common.h>
@@ -10,7 +25,7 @@
 
 namespace Beast {
 	template <typename T>
-	class MetaFunction :
+	class METACALLPP_API MetaFunction :
 		public Metacall
 	{
 	public:
@@ -39,3 +54,5 @@ namespace Beast {
 		}
 	};
 }
+
+#endif /* METACALLPP_METAFUNCTION_HPP */

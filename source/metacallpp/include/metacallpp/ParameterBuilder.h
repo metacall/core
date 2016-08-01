@@ -1,4 +1,19 @@
-#pragma once
+/*
+*	MetaCall++ Library by Parra Studios
+*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*	Copyright (C) 2016 Federico Agustin Alvarez Bayon <loopzer@gmail.com>
+*
+*	High performance, type safe and exception safe object oriented
+*	front-end for MetaCall library.
+*
+*/
+
+#ifndef METACALLPP_PARAMETER_BUILDER_HPP
+#define METACALLPP_PARAMETER_BUILDER_HPP 1
+
+/* -- Headers -- */
+
+#include <metacallpp/metacallpp_api.h>
 
 #include <metacallpp/common.h>
 #include <metacallpp/IParameterBuilder.h>
@@ -9,7 +24,7 @@
 
 namespace Beast {
 	using namespace std;
-class ParameterBuilder :
+class METACALLPP_API ParameterBuilder :
 	public IParameterBuilder
 {
 public:
@@ -25,5 +40,7 @@ public:
 protected:
 	queue<void *> * parameters;
 };
+
 }
 
+#endif /* METACALLPP_PARAMETER_BUILDER_HPP */

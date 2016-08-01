@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef METACALL_HPP
-#define METACALL_HPP 1
+#ifndef METACALLPP_METACALL_HPP
+#define METACALLPP_METACALL_HPP 1
 
 /* -- Headers -- */
 
@@ -25,4 +25,4 @@ namespace metacall {
 
 } /* namespace metacall */
 
-#endif /* METACALL_HPP */
+#endif /* METACALLPP_METACALL_HPP */

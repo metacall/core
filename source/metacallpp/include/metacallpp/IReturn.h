@@ -1,9 +1,24 @@
-#pragma once
+/*
+*	MetaCall++ Library by Parra Studios
+*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*	Copyright (C) 2016 Federico Agustin Alvarez Bayon <loopzer@gmail.com>
+*
+*	High performance, type safe and exception safe object oriented
+*	front-end for MetaCall library.
+*
+*/
+
+#ifndef METACALLPP_IRETURN_HPP
+#define METACALLPP_IRETURN_HPP 1
+
+/* -- Headers -- */
+
+#include <metacallpp/metacallpp_api.h>
 
 #include <string>
 
 namespace Beast {
-	class IReturn
+	class METACALLPP_API IReturn
 	{
 	public:
 		virtual int GetInt() = 0;
@@ -18,3 +33,5 @@ namespace Beast {
 		}
 	};
 }
+
+#endif /* METACALLPP_IRETURN_HPP */
