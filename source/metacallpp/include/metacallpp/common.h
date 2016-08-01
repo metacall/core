@@ -16,14 +16,14 @@
 #include <metacallpp/metacallpp_api.h>
 
 namespace Beast {
-	METACALLPP_API enum MetacallStates
+	enum MetacallStates
 	{
 		UnInitialize,
 		Ready,
 		Error
 	};
 
-	METACALLPP_API enum MetacallInvokeTypes
+	enum MetacallInvokeTypes
 	{
 		Fixed,
 		Dynamic

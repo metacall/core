@@ -25,7 +25,7 @@
 
 namespace Beast {
 	template <typename T>
-	class METACALLPP_API MetaFunction :
+	class  MetaFunction :
 		public Metacall
 	{
 	public:
@@ -43,7 +43,7 @@ namespace Beast {
 			return v;
 		}
 
-		static MetaFunction<T> * MakeFunction(IScopeBase *scope, std::string functionName) {
+		 static MetaFunction<T> * MakeFunction(IScopeBase *scope, std::string functionName) {
 			MetaFunction<T> * m = new MetaFunction<T>(scope, functionName);
 			m->state = MetacallStates::Ready;
 			return m;
