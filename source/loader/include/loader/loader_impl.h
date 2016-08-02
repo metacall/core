@@ -11,7 +11,7 @@
 
 #include <loader/loader_api.h>
 
-#include <loader/loader_naming.h>
+#include <loader/loader_path.h>
 #include <loader/loader_impl_interface.h>
 
 #ifdef __cplusplus

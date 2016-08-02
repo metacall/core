@@ -275,7 +275,7 @@ int loader_impl_load(loader_impl impl, const loader_naming_path path)
 
 		printf("Loading %s\n", path);
 
-		if (interface_impl != NULL && loader_naming_get_name(path, module_name) > 1)
+		if (interface_impl != NULL && loader_path_get_name(path, module_name) > 1)
 		{
 			loader_handle handle = interface_impl->load(impl, path, module_name);
 

@@ -54,13 +54,15 @@ TEST(metacallpp_test, MetaFunction)
 
 	MetaFunction<int> * getDeviceName = scope->GetFunc<int>("GetDeviceName");
 
-	int *result = getDeviceName->Invoke();
+	int * result = getDeviceName->Invoke();
 
 	cout << *result << endl;
 
 	EXPECT_EQ((int) 0, (int) *result);
 
 	delete result;
+
 	delete scope;
+
 	delete context;
 }

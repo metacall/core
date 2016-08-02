@@ -34,18 +34,16 @@ set(headers
     ${include_path}/loader.h
     ${include_path}/loader_handle.h
     ${include_path}/loader_impl_data.h
-    ${include_path}/loader_impl_descriptor.h
     ${include_path}/loader_impl_interface.h
-    ${include_path}/loader_impl_export.h
     ${include_path}/loader_impl.h
-    ${include_path}/loader_naming_type.h
     ${include_path}/loader_naming.h
+    ${include_path}/loader_path.h
 )
 
 set(sources
     ${source_path}/loader.c
     ${source_path}/loader_impl.c
-    ${source_path}/loader_naming.c
+    ${source_path}/loader_path.c
 )
 
 # Group source files

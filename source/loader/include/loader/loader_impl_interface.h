@@ -12,7 +12,7 @@
 #include <loader/loader_api.h>
 
 #include <loader/loader_handle.h>
-#include <loader/loader_naming_type.h>
+#include <loader/loader_naming.h>
 #include <loader/loader_impl_data.h>
 
 #ifdef __cplusplus

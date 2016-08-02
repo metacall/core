@@ -28,8 +28,9 @@ namespace Beast {
 
 		virtual ScopeBase * CreateScope(IScopeConfig * config) = 0;
 
-		~IContext()
+		virtual ~IContext()
 		{
+
 		}
 	};
 }

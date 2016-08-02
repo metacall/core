@@ -6,9 +6,9 @@
  *
  */
 
-#include <loader/loader_naming.h>
+#include <loader/loader_path.h>
 
-int loader_naming_get_name(const loader_naming_path path, loader_naming_name name)
+int loader_path_get_name(const loader_naming_path path, loader_naming_name name)
 {
 	int i, count, last;
 
@@ -31,7 +31,7 @@ int loader_naming_get_name(const loader_naming_path path, loader_naming_name nam
 	return last + 1;
 }
 
-int loader_naming_get_extension(const loader_naming_path path, loader_naming_extension extension)
+int loader_path_get_extension(const loader_naming_path path, loader_naming_extension extension)
 {
 	int i, count;
 

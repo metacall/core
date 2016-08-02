@@ -117,6 +117,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	/* JavaScript V8 */
 	{
+		/*
 		value ret = NULL;
 
 		ret = metacall("say_divide", 32.0, 4.0);
@@ -134,11 +135,11 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "abcdef"));
 
 		value_destroy(ret);
+		*/
 	}
 
 	/* Mock */
 	{
-		/*
 		value ret = NULL;
 
 		ret = metacall("my_empty_func");
@@ -172,7 +173,6 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
 
 		value_destroy(ret);
-		*/
 	}
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());

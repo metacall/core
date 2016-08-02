@@ -33,10 +33,10 @@ int metacall_initialize()
 	loader_naming_name module_names[] =
 	{
 		/*"compiled.c", "spider.jsm",*/
-		"divide.js"/*,*/
+		/*"divide.js",*/
 		/*"example.py",
 		"hello.rb",*/
-		/*"empty.mock"*/
+		"empty.mock"
 	};
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)

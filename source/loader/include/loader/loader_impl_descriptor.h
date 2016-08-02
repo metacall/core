@@ -9,74 +9,21 @@
 #ifndef LOADER_IMPL_DESCRIPTOR_H
 #define LOADER_IMPL_DESCRIPTOR_H 1
 
+#include <loader/loader_descriptor.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <stdint.h>
-
-typedef struct loader_impl_descriptor_version_type
-{
-	uint32_t number;									/**< Version number on unsigned integer (hexadecimal) */
-	const char * str;									/**< Version string (human readable) */
-
-} * loader_impl_descriptor_version;
-
-typedef struct loader_impl_descriptor_date_type
-{
-	unsigned int day;
-	const char * month;
-	unsigned int year;
-} * loader_impl_descriptor_date;
-
-typedef struct loader_impl_descriptor_copyright_type
-{
-	const char * authors;								/**< Authors of the loader */
-	const char * webpage;								/**< Web of the loader developers */
-	struct loader_impl_descriptor_date_type date;		/**< Date in which the loader was created */
-	const char * organization;							/**< Organization name under loader is developed */
-	const char * maintainers;							/**< Current maintainers of the loader */
-	struct loader_impl_descriptor_version_type version;	/**< Current version of the loader */
-	
-} * loader_impl_descriptor_copyright;
-
-typedef struct loader_impl_descriptor_language_type
-{
-	const char * name;									/**< Name of the language of the loader */
-	struct loader_impl_descriptor_version_type version;	/**< Version of the current standard of the lenguage */
-
-} * loader_impl_descriptor_language;
-
-typedef struct loader_impl_descriptor_technology_type
-{
-	const char * name;									/**< Name of technology used in the loader */
-	const char * vendor;								/**< Vendor which develops the technology used in the loader */
-	const char * webpage;								/**< Web of the technology */
-	struct loader_impl_descriptor_version_type version;	/**< Version of the technology */
-	const char * default_extensions[];					/**< Default extensions supported by the technology */
-
-} * loader_impl_descriptor_technology;
-
-typedef struct loader_impl_descriptor_platform_type
-{
-	const char * architecture;							/**< Architecture where loader was compiled */
-	const char * compiler;								/**< Compiler used to build the loader */
-	const char * operative_system;						/**< Operative system under loader was compiled */
-	const char * family;								/**< Platform family which operative system belongs to */
-
-} * loader_impl_descriptor_platform;
+typedef loader_descriptor (*loader_impl_descriptor_instance)(void);
 
 typedef struct loader_impl_descriptor_type
 {
-	const char * name;									/**< Loader name */
-	const char * keyword;								/**< Loader identifier */
-	const char * description;							/**< Loader description */
-	loader_impl_descriptor_copyright copyright;			/**< Copyright information */
-	loader_impl_descriptor_language language;			/**< Loader language information */
-	loader_impl_descriptor_technology technology;		/**< Loader technology information */
-	loader_impl_descriptor_platform platform;			/**< Platform information */
+	loader_impl_descriptor_instance descriptor;
 
 } * loader_impl_descriptor;
+
+typedef loader_impl_descriptor (*loader_impl_descriptor_singleton)(void);
 
 #ifdef __cplusplus
 }

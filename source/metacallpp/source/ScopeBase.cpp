@@ -19,6 +19,7 @@ namespace Beast {
 	{
 		this->config = config;
 
+		/* TODO: solve segmentation fault here */
 		for (IMetacallConfig* metaConfig : *this->config->GetMetacallConfigs())
 		{
 			cout << "Config for " << metaConfig->GetFunctionName() << endl;

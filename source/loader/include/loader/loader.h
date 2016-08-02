@@ -11,7 +11,7 @@
 
 #include <loader/loader_api.h>
 
-#include <loader/loader_naming_type.h>
+#include <loader/loader_naming.h>
 
 #ifdef __cplusplus
 extern "C" {

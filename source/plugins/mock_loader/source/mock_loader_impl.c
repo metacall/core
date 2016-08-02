@@ -70,7 +70,13 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 			printf("Type %p, %d\n", (void *)t, id);
 
-			if (id == TYPE_CHAR)
+			if (id == TYPE_BOOL)
+			{
+				boolean * value_ptr = (boolean *)(args[args_count]);
+
+				printf("Boolean value: %d\n", *value_ptr);
+			}
+			else if (id == TYPE_CHAR)
 			{
 				char * value_ptr = (char *)(args[args_count]);
 
@@ -93,6 +99,12 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 				double * value_ptr = (double *)(args[args_count]);
 
 				printf("Double value: %f\n", *value_ptr);
+			}
+			else if (id == TYPE_STRING)
+			{
+				const char * value_ptr = (const char *)(args[args_count]);
+
+				printf("String value: %p\n", value_ptr);
 			}
 			else if (id == TYPE_PTR)
 			{
@@ -119,7 +131,13 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 		printf("Return type %p, %d\n", (void *)ret_type, id);
 
-		if (id == TYPE_CHAR)
+		if (id == TYPE_BOOL)
+		{
+			boolean b = 1;
+
+			return value_create_bool(b);
+		}
+		else if (id == TYPE_CHAR)
 		{
 			return value_create_char('A');
 		}
@@ -134,6 +152,12 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 		else if (id == TYPE_DOUBLE)
 		{
 			return value_create_double(3.1416);
+		}
+		else if (id == TYPE_STRING)
+		{
+			static const char str[] = "Hello World";
+
+			return value_create_string(str, sizeof(str) / sizeof(str[0]));
 		}
 		else if (id == TYPE_PTR)
 		{
@@ -185,10 +209,12 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 	}
 	type_id_name_pair[] =
 	{
+		{ TYPE_BOOL,	"Boolean"	},
 		{ TYPE_CHAR,	"Char"		},
 		{ TYPE_INT,		"Integer"	},
 		{ TYPE_LONG,	"Long"		},
 		{ TYPE_DOUBLE,	"Double"	},
+		{ TYPE_STRING,	"String"	},
 		{ TYPE_PTR,		"Ptr"		}
 	};
 
@@ -350,6 +376,21 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		signature_set(s, 3, "d_double", loader_impl_type(impl, "Double"));
 
 		signature_set(s, 4, "e_ptr", loader_impl_type(impl, "Ptr"));
+
+		scope_define(sp, function_name(f), f);
+	}
+
+	mock_function = mock_function_create(mock_handle);
+
+	if (mock_function != NULL)
+	{
+		function f = function_create("new_args", 1, mock_function, &function_mock_singleton);
+
+		signature s = function_signature(f);
+
+		signature_set_return(s, loader_impl_type(impl, "String"));
+
+		signature_set(s, 0, "a_char", loader_impl_type(impl, "String"));
 
 		scope_define(sp, function_name(f), f);
 	}

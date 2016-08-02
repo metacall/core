@@ -11,15 +11,17 @@
 
 #include <loader/loader_api.h>
 
-#include <loader/loader_naming_type.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-LOADER_API int loader_naming_get_name(const loader_naming_path path, loader_naming_name name);
+#define LOADER_NAMING_PATH_SIZE			0x01FF
+#define LOADER_NAMING_NAME_SIZE			0xFF
+#define LOADER_NAMING_EXTENSION_SIZE	0x10
 
-LOADER_API int loader_naming_get_extension(const loader_naming_path path, loader_naming_extension extension);
+typedef char loader_naming_path[LOADER_NAMING_PATH_SIZE];
+typedef char loader_naming_name[LOADER_NAMING_NAME_SIZE];
+typedef char loader_naming_extension[LOADER_NAMING_EXTENSION_SIZE];
 
 #ifdef __cplusplus
 }

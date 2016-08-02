@@ -107,7 +107,7 @@ int loader_load(const loader_naming_path path)
 	{
 		loader_naming_extension extension;
 
-		if (loader_naming_get_extension(path, extension) > 1)
+		if (loader_path_get_extension(path, extension) > 1)
 		{
 			loader_impl impl = loader_get_impl(extension);
 
