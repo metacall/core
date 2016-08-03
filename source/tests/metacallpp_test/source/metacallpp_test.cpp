@@ -17,6 +17,7 @@
 #include <metacallpp/ScopeBase.h>
 
 #include <metacallpp/Call.h>
+#include <metacallpp/ScopeConfig.h>
 #include <metacallpp/Metacall.h>
 #include <metacallpp/MetaFunction.h>
 #include <metacallpp/Context.h>
@@ -25,6 +26,19 @@
 
 using namespace std;
 using namespace Beast;
+
+void ConfigScope(IScopeConfig * scopeConfig) {
+
+	IMetacallConfigBuilder * metacallConfig = scopeConfig->CreateMetacallConfig();
+
+	metacallConfig->
+		SetFunctionName("divide")->
+		SetParameterType("String")->
+		SetParameterType("Int")->
+		SetParameterType("Long")->
+		SetReturnType("int");
+
+}
 
 class metacallpp_test : public testing::Test
 {
@@ -35,7 +49,11 @@ TEST(metacallpp_test, Simple)
 {
 	IContext * context = new Context();
 
-	ScopeBase * scope = context->CreateScope(NULL);
+	IScopeConfig * scopeConfig = new ScopeConfig(MetacallInvokeTypes::Fixed);
+
+	ConfigScope(scopeConfig);
+
+	ScopeBase * scope = context->CreateScope(scopeConfig);
 
 	IMetacall * meta = scope->GetMetacall("divide");
 
@@ -50,7 +68,11 @@ TEST(metacallpp_test, MetaFunction)
 {
 	IContext * context = new Context();
 
-	ScopeBase * scope = context->CreateScope(NULL);
+	IScopeConfig * scopeConfig = new ScopeConfig(MetacallInvokeTypes::Fixed);
+
+	ConfigScope(scopeConfig);
+
+	ScopeBase * scope = context->CreateScope(scopeConfig);
 
 	MetaFunction<int> * getDeviceName = scope->GetFunc<int>("GetDeviceName");
 
