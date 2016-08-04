@@ -70,11 +70,11 @@ bool command_cb_debug(application & app, tokenizer & t)
 
 bool command_cb_call(application & app, tokenizer & t)
 {
-	const std::string func_delimiters(" \n\t\r(,)");
+	const std::string func_delimiters(" \n\t\r\v\f(,)");
 
 	tokenizer::iterator it = t.begin();
 
-	parser p(it);
+	parser_parameter p(it);
 
 	std::vector<value> args;
 
@@ -89,13 +89,23 @@ bool command_cb_call(application & app, tokenizer & t)
 	{
 		std::string func_name(*it);
 
+		const std::string param_delimiters("(,)");
+
+		t.delimit(param_delimiters);
+
 		++it;
 
 		if (it != t.end())
 		{
+			const std::string param_escape(" \n\t\r\v\f");
+
+			value v = NULL;
+
 			do
 			{
-				value v = app.argument_parse(p);
+				it.escape(param_escape);
+
+				v = app.argument_parse(p);
 
 				if (v != NULL)
 				{
@@ -103,7 +113,7 @@ bool command_cb_call(application & app, tokenizer & t)
 				}
 				else
 				{
-					std::cout << "\tinvalid argument : " << *it << std::endl;
+					std::cout << "\tinvalid argument : {" << *it << "}" << std::endl;
 				}
 
 				++it;
@@ -316,14 +326,14 @@ void application::define(const char * key, application::command_callback command
 	commands[cmd] = command_cb;
 }
 
-value application::argument_parse(parser & p)
+value application::argument_parse(parser_parameter & p)
 {
 	if (p.is<bool>())
 	{
 		bool b = p.to<bool>();
 
 		boolean bo = static_cast<boolean>(b);
-		
+
 		return value_create_bool(bo);
 	}
 	else if (p.is<char>())
@@ -368,83 +378,7 @@ value application::argument_parse(parser & p)
 	{
 		std::string str = p.to<std::string>();
 
-		size_t len = str.length();
-
-		char first = str[0];
-
-		char last = str[len - 1];
-
-		if (first == last)
-		{
-			if (first == '"')
-			{
-				std::string unquoted_str = str.substr(1, len - 1);
-
-				return value_create_string(unquoted_str.c_str(), unquoted_str.length());
-			}
-
-			if (first == '\'')
-			{
-				char c = str[1];
-
-				if ( len < 4)
-				{
-					return value_create_char(c);
-				}
-
-				if (len < 5 && c == '\\')
-				{
-					char special = str[2];
-
-					switch (special)
-					{
-						case 't' :
-							return value_create_char('\t');
-
-						case 'n' :
-							return value_create_char('\n');
-
-						case 'r' :
-							return value_create_char('\r');
-
-						case '0' :
-							return value_create_char('\0');
-
-						case '\\' :
-							return value_create_char('\\');
-
-						case '\'' :
-							return value_create_char('\'');
-
-						default :
-						{
-							std::cout << "Invalid character (" << special << ")" << std::endl;
-
-							return NULL;
-						}
-					}
-				}
-			}
-		}
-
-		if (isdigit(first) && last == 'L')
-		{
-			std::string str_long = str.substr(0, len - 1);
-
-			tokenizer t(str_long);
-
-			tokenizer::iterator it = t.begin();
-
-			parser p(it);
-
-			if (p.is<long>())
-			{
-				long l = p.to<long>();
-
-				return value_create_long(l);
-			}
-		}
-
+		return value_create_string(str.c_str(), str.length());
 	}
 
 	return NULL;

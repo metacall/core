@@ -25,7 +25,6 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	/* Python */
 	{
-		/*
 		const long seven_multiples_limit = 10;
 
 		long iterator;
@@ -69,6 +68,14 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value_destroy(ret);
 
+		ret = metacall("sum", 3, 4);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((long) value_to_long(ret), (long) 7);
+
+		value_destroy(ret);
+
 		EXPECT_EQ((value) NULL, (value) metacall("hello"));
 
 		ret = metacall("strcat", "Hello ", "Universe");
@@ -78,7 +85,7 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello Universe"));
 
 		value_destroy(ret);
-		*/
+
 	}
 
 	/* Ruby */

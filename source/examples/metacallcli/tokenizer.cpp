@@ -16,7 +16,7 @@ using namespace metacallcli;
 
 /* -- Protected Definitions -- */
 
-const std::string tokenizer::default_delimiters(" \n\t\r");
+const std::string tokenizer::default_delimiters(" \n\t\r\v\f");
 
 /* -- Methods -- */
 
@@ -105,6 +105,15 @@ tokenizer::iterator::reference tokenizer::iterator::operator*() const
 size_t tokenizer::iterator::position() const
 {
 	return offset;
+}
+
+tokenizer::iterator::reference tokenizer::iterator::escape(const std::string & characters)
+{
+	token.erase(0, token.find_first_not_of(characters));
+
+	token.erase(token.find_last_not_of(characters) + 1);
+
+	return token;
 }
 
 tokenizer::iterator tokenizer::begin() const

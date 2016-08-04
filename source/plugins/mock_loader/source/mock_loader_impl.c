@@ -104,7 +104,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 			{
 				const char * value_ptr = (const char *)(args[args_count]);
 
-				printf("String value: %p\n", value_ptr);
+				printf("String value: %s\n", value_ptr);
 			}
 			else if (id == TYPE_PTR)
 			{
@@ -211,11 +211,11 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 	{
 		{ TYPE_BOOL,	"Boolean"	},
 		{ TYPE_CHAR,	"Char"		},
-		{ TYPE_INT,		"Integer"	},
+		{ TYPE_INT,	"Integer"	},
 		{ TYPE_LONG,	"Long"		},
 		{ TYPE_DOUBLE,	"Double"	},
 		{ TYPE_STRING,	"String"	},
-		{ TYPE_PTR,		"Ptr"		}
+		{ TYPE_PTR,	"Ptr"		}
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -390,7 +390,43 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "String"));
 
-		signature_set(s, 0, "a_char", loader_impl_type(impl, "String"));
+		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
+
+		scope_define(sp, function_name(f), f);
+	}
+
+	mock_function = mock_function_create(mock_handle);
+
+	if (mock_function != NULL)
+	{
+		function f = function_create("two_str", 2, mock_function, &function_mock_singleton);
+
+		signature s = function_signature(f);
+
+		signature_set_return(s, loader_impl_type(impl, "String"));
+
+		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
+
+		signature_set(s, 1, "b_str", loader_impl_type(impl, "String"));
+
+		scope_define(sp, function_name(f), f);
+	}
+
+	mock_function = mock_function_create(mock_handle);
+
+	if (mock_function != NULL)
+	{
+		function f = function_create("three_str", 3, mock_function, &function_mock_singleton);
+
+		signature s = function_signature(f);
+
+		signature_set_return(s, loader_impl_type(impl, "String"));
+
+		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
+
+		signature_set(s, 1, "b_str", loader_impl_type(impl, "String"));
+
+		signature_set(s, 2, "c_str", loader_impl_type(impl, "String"));
 
 		scope_define(sp, function_name(f), f);
 	}

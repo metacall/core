@@ -8,11 +8,12 @@
 
 /* -- Headers -- */
 
+#include <string>
 #include <sstream>
 
-/* -- Namespace Declarations -- */
+/* -- Namespace -- */
 
-using namespace metacallcli;
+namespace metacallcli {
 
 /* -- Methods -- */
 
@@ -20,18 +21,40 @@ template <typename T> bool parser::is()
 {
 	std::stringstream str_stream(*it);
 
-	T value;
+	T t;
 
-	return str_stream >> value && !str_stream.ignore();
+	return (str_stream >> t && !str_stream.ignore());
 }
 
 template <typename T> T parser::to()
 {
 	std::stringstream str_stream(*it);
 
-	T value;
+	T t;
 
-	str_stream >> value;
+	str_stream >> t;
 
-	return value;
+	return t;
 }
+
+template <typename T> bool parser_parameter::is()
+{
+	std::stringstream str_stream(*it);
+
+	T t;
+
+	return (str_stream >> std::noskipws >> t && !str_stream.ignore());
+}
+
+template <typename T> T parser_parameter::to()
+{
+	std::stringstream str_stream(*it);
+
+	T t;
+
+	str_stream >> std::noskipws >> t;
+
+	return t;
+}
+
+} /* namespace metacallcli */

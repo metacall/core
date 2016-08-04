@@ -164,6 +164,18 @@ class tokenizer
 
 		/**
 		*  @brief
+		*    Tokenizer iterator escape trailing characters
+		*
+		*  @param[in] characters
+		*    Reference to list of characters to be escaped
+		*
+		*  @return
+		*    Return a constant string reference to the current token
+		*/
+		reference escape(const std::string & characters);
+
+		/**
+		*  @brief
 		*    Assignement operator for tokenizer iterator
 		*
 		*  @return

@@ -28,6 +28,7 @@ namespace metacallcli {
 class tokenizer;
 
 class parser;
+class parser_parameter;
 
 class application;
 
@@ -117,7 +118,7 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct
 	*/
-	value argument_parse(parser & p);
+	value argument_parse(parser_parameter & p);
 
 	/**
 	*  @brief
