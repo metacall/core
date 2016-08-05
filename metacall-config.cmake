@@ -9,9 +9,11 @@
 set(MODULE_NAMES
     adt
     dynlink
+    filesystem
     reflect
     loader
     metacall
+    metacallpp
 )
 
 # Macro to search for a specific module
