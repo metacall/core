@@ -24,7 +24,7 @@ if(NOT CLANG_FOUND)
 endif()
 
 #
-# Library name and options
+# Plugin name and options
 #
 
 # Target name

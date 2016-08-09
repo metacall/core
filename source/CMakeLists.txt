@@ -20,6 +20,14 @@ add_subdirectory(loader)
 add_subdirectory(metacall)
 add_subdirectory(metacallpp)
 
+# Tests
+set(IDE_FOLDER "Tests")
+add_subdirectory(tests)
+
+# Examples
+set(IDE_FOLDER "Examples")
+add_subdirectory(examples)
+
 # Plugins
 set(IDE_FOLDER "Plugins")
 add_subdirectory(plugins)
@@ -28,13 +36,9 @@ add_subdirectory(plugins)
 set(IDE_FOLDER "Scripts")
 add_subdirectory(scripts)
 
-# Tests
-set(IDE_FOLDER "Tests")
-add_subdirectory(tests)
-
-# Examples
-set(IDE_FOLDER "Examples")
-add_subdirectory(examples)
+# Scripts
+set(IDE_FOLDER "Ports")
+add_subdirectory(ports)
 
 #
 # Deployment
