@@ -11,7 +11,7 @@ if(NOT V8_FOUND)
 endif()
 
 #
-# Library name and options
+# Plugin name and options
 #
 
 # Target name

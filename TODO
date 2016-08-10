@@ -53,7 +53,7 @@ TODO List
 	* Integrate automated generation of documentation with CMake build:
 		- [Doxygen](https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) for extracting code documentation.
 		- [Markdown](https://www.stack.nl/~dimitri/doxygen/manual/markdown.html) for general purpose repoistory based documentation.
-		- [Latex](https://cmake.org/Wiki/CMakeUserUseLATEX) for custom examples and manuals.
+		- --[Latex](https://cmake.org/Wiki/CMakeUserUseLATEX) for custom examples and manuals. -- [Already integrated](docs/manual/cmake-init.tex).
 		- [Quickbook](http://www.boost.org/doc/libs/1_61_0/html/quickbook.html) for integrating a complete set of automating tools.
 
 	* Write a complete paper over the software, providing a general analysis and proving the tool.

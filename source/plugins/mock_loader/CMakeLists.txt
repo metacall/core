@@ -5,7 +5,7 @@
 # find_package(THIRDPARTY REQUIRED)
 
 #
-# Library name and options
+# Plugin name and options
 #
 
 # Target name

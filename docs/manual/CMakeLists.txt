@@ -1,7 +1,7 @@
 
-# 
+#
 # Find LaTeX
-# 
+#
 
 find_package(LATEX)
 if(NOT LATEX_FOUND)
@@ -9,26 +9,23 @@ if(NOT LATEX_FOUND)
     return()
 endif()
 
-
-# 
+#
 # Target name
-# 
+#
 
 set(target docs-manual)
 message(STATUS "Doc ${target}")
 
-
-# 
+#
 # Input and output files
-# 
+#
 
 set(source "${CMAKE_CURRENT_SOURCE_DIR}/cmake-init.tex")
 set(pdf    "${CMAKE_CURRENT_BINARY_DIR}/cmake-init.pdf")
 
-
-# 
+#
 # Create documentation
-# 
+#
 
 # Invoke LaTeX
 add_custom_command(
@@ -45,10 +42,9 @@ add_custom_command(
 add_custom_target(${target} ALL DEPENDS ${pdf})
 add_dependencies(docs ${target})
 
-
-# 
+#
 # Deployment
-# 
+#
 
 # PDF file
 install(FILES ${pdf}

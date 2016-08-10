@@ -4,7 +4,7 @@ if(NOT OPTION_BUILD_SCRIPTS)
     return()
 endif()
 
-# Plugin packages
+# Script directory packages
 add_subdirectory(c)
 add_subdirectory(javascript)
 add_subdirectory(python)

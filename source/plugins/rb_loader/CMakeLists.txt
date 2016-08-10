@@ -10,7 +10,7 @@ if(NOT RUBY_FOUND)
 endif()
 
 #
-# Library name and options
+# Plugin name and options
 #
 
 # Target name

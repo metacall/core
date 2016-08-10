@@ -82,21 +82,67 @@ endif()
 message(STATUS "Target Operative System: ${PROJECT_OS_NAME}")
 message(STATUS "Target OS Family: ${PROJECT_OS_FAMILY}")
 
-# 32 or 64 bit Linux
-#if(PROJECT_OS_LINUX)
-#    # Set the library directory suffix accordingly
-#    if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86_64")
-#        set(PROJECT_PROC_64BIT TRUE BOOL INTERNAL)
-#        message(STATUS "Linux x86_64 Detected")
-#    elseif(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "ppc64")
-#        message(STATUS "Linux ppc64 Detected")
-#        set(PROJECT_PROC_64BIT TRUE BOOL INTERNAL)
-#    elseif($CMAKE_SYSTEM_PROCESSOR} STREQUAL "s390x")
-#	message(STATEUS "Linux s390x Detected")
-#	set(PROJECT_PROC_64BIT TRUE BOOL INTERNAL)
-#    endif()
-#endif()
 #
+# Check the Architecture type
+#
+
+set(PROJECT_ARCH_NAME ${CMAKE_SYSTEM_PROCESSOR})
+
+# 32 or 64 bit Linux
+if(PROJECT_OS_LINUX)
+    if(${PROJECT_ARCH_NAME} STREQUAL "x86")
+        set(PROJECT_ARCH_32BIT TRUE BOOL INTERNAL)
+    endif()
+
+    if(${PROJECT_ARCH_NAME} STREQUAL "x86_64")
+        set(PROJECT_ARCH_64BIT TRUE BOOL INTERNAL)
+    elseif(${PROJECT_ARCH_NAME} STREQUAL "ppc64")
+        set(PROJECT_ARCH_64BIT TRUE BOOL INTERNAL)
+    elseif(${PROJECT_ARCH_NAME} STREQUAL "s390x")
+	set(PROJECT_ARCH_64BIT TRUE BOOL INTERNAL)
+    endif()
+
+    if(PROJECT_ARCH_32BIT)
+        if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+            message(STATUS "Linux ${PROJECT_ARCH_NAME} 32bit detected")
+        else()
+            message(WARNING "Linux ${PROJECT_ARCH_NAME} 32bit does not mach size of a pointer: ${CMAKE_SIZEOF_VOID_P}")
+        endif()
+    elseif(PROJECT_ARCH_64BIT)
+        if("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+            message(STATUS "Linux ${PROJECT_ARCH_NAME} 64bit detected")
+        else()
+            message(WARNING "Linux ${PROJECT_ARCH_NAME} 64bit does not mach size of a pointer: ${CMAKE_SIZEOF_VOID_P}")
+        endif()
+    else()
+        message(STATUS "Linux ${PROJECT_ARCH_NAME} detected")
+    endif()
+endif()
+
+# Detect architecture based on pointer size
+if(NOT PROJECT_ARCH_32BIT AND NOT PROJECT_ARCH_64BIT)
+    if("${CMAKE_SIZEOF_VOID_P}" EQUAL "4")
+        message(STATUS "32bit architecture ${PROJECT_ARCH_NAME} detected")
+	set(PROJECT_ARCH_32BIT TRUE BOOL INTERNAL)
+
+        if(PROJECT_OS_WIN)
+            set(WINXBITS Win32)
+        endif()
+
+    elseif("${CMAKE_SIZEOF_VOID_P}" EQUAL "8")
+        message(STATUS "64bit architecture ${PROJECT_ARCH_NAME} detected")
+	set(PROJECT_ARCH_64BIT TRUE BOOL INTERNAL)
+
+        if(PROJECT_OS_WIN)
+            set(WINXBITS Win64)
+        endif()
+
+    else()
+         message(WARNING "Architecture detection error, invalid size of void pointer: ${CMAKE_SIZEOF_VOID_P}")
+    endif()
+endif()
+
+# Set the library directory suffix accordingly
 #if(PROJECT_PROC_64BIT)
 #    # Set the install path to lib64
 #    set(PROJECT_LIB_DIR "lib64")
@@ -105,6 +151,6 @@ message(STATUS "Target OS Family: ${PROJECT_OS_FAMILY}")
 #    set(PROJECT_LIB_DIR "lib")
 #    set(PROJECT_PLUGIN_DIR "lib/${PROJECT_NAME}-${META_VERSION}")
 #endif()
-#
+
 #message(STATUS "Installing Libraries to ${CMAKE_INSTALL_PREFIX}/${PROJECT_LIB_DIR}")
 #message(STATUS "Installing Plugins to ${CMAKE_INSTALL_PREFIX}/${PROJECT_PLUGIN_DIR}")
