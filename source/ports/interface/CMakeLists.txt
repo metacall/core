@@ -9,5 +9,4 @@ if(NOT SWIG_FOUND)
     return()
 endif()
 
-# TODO
-
+include(${SWIG_USE_FILE})

@@ -1,0 +1,14 @@
+ngx_addon_name=ngx_http_rest_metacall_module
+
+ngx_feature="MetaCall HTTP (REST API) Wrapper"
+ngx_feature_name=
+ngx_feature_run=no
+ngx_feature_incs="#include <metacall/metacall.h>"
+ngx_feature_libs="-lmetacall"
+
+
+HTTP_MODULES="$HTTP_MODULES ngx_http_rest_metacall_module"
+
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_rest_metacall_module.c"
+
+# NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/ngx_http_rest_metacall_module.h"

@@ -1,4 +1,3 @@
-
 # Check if ports are enabled
 if(NOT OPTION_BUILD_PORTS)
     return()
@@ -12,7 +11,8 @@ add_subdirectory(csharp)
 add_subdirectory(d)
 add_subdirectory(go)
 add_subdirectory(java)
-add_subdirectory(javascript)
+#add_subdirectory(javascript)
+#add_subdirectory(node)
 add_subdirectory(lua)
 add_subdirectory(perl)
 add_subdirectory(php)

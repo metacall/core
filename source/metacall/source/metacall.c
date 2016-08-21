@@ -35,7 +35,7 @@ int metacall_initialize()
 		/*"compiled.c", "spider.jsm",*/
 		/*"divide.js",*/
 		"example.py",
-		/*"hello.rb",*/
+		"hello.rb",
 		"empty.mock"
 	};
 
