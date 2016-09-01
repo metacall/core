@@ -21,20 +21,20 @@
 #define METACALL_NGINX_URI_ARGS_SIZE 0x10
 #define METACALL_NGINX_URI_FUNC_SIZE 0xFF
 
-/* -- Forward Declarations -- */
+/* -- Private Method Declarations -- */
 
 /*
 int ngx_http_rest_metacall_uri_delimiters(ngx_http_request_t * req, size_t * start, size_t * length);
 
-u_char ** ngx_http_rest_metacall_uri_tokenize_initialize(size_t size);
+ngx_str_t * ngx_http_rest_metacall_uri_tokenize_initialize(size_t size);
 
-void ngx_http_rest_metacall_uri_tokenize_clear(u_char ** tokens[], size_t size);
+void ngx_http_rest_metacall_uri_tokenize_clear(ngx_str_t * tokens[], size_t size);
 
 size_t ngx_http_rest_metacall_uri_tokenize_count(ngx_http_request_t * req, size_t start);
 
-int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t start, u_char ** tokens[], size_t size);
+int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t start, ngx_str_t * tokens[], size_t size);
 
-int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, u_char ** tokens[], size_t * size);
+int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, ngx_str_t * tokens[], size_t * size);
 
 int ngx_http_rest_metacall_uri_parse(ngx_http_request_t * req, char * func_name[], void ** args[]);
 */
@@ -74,12 +74,12 @@ int ngx_http_rest_metacall_uri_delimiters(ngx_http_request_t * req, size_t * sta
 	return 0;
 }
 
-u_char ** ngx_http_rest_metacall_uri_tokenize_initialize(size_t size)
+ngx_str_t * ngx_http_rest_metacall_uri_tokenize_initialize(size_t size)
 {
 	size_t iterator;
 
 	/* Allocate tokens array */
-	u_char ** tokens = malloc(sizeof(u_char *) * size);
+	ngx_str_t * tokens = malloc(sizeof(ngx_str_t) * size);
 
 	if (tokens == NULL)
 	{
@@ -88,31 +88,31 @@ u_char ** ngx_http_rest_metacall_uri_tokenize_initialize(size_t size)
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		tokens[iterator] = NULL;
+		tokens[iterator].data = NULL;
+		tokens[iterator].len = 0;
 	}
 
 	return tokens;
 }
 
-void ngx_http_rest_metacall_uri_tokenize_clear(u_char ** tokens[], size_t size)
+void ngx_http_rest_metacall_uri_tokenize_clear(ngx_str_t * tokens[], size_t size)
 {
 	if (tokens == NULL)
 	{
 		return;
 	}
 
-	if (*tokens != NULL)
-	{
-		size_t iterator;
+	size_t iterator;
 
-		/* Clear tokens array */
-		for (iterator = 0; iterator < size; ++iterator)
+	/* Clear tokens array */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		if ((*tokens)[iterator].data != NULL)
 		{
-			if ((*tokens)[iterator] != NULL)
-			{
-				free((*tokens)[iterator]);
-			}
+			free((*tokens)[iterator].data);
 		}
+
+		(*tokens)[iterator].len = 0;
 	}
 
 	free(*tokens);
@@ -124,40 +124,39 @@ size_t ngx_http_rest_metacall_uri_tokenize_count(ngx_http_request_t * req, size_
 {
 	size_t iterator, size = 0;
 
-	for (iterator = start; iterator < req->unparsed_uri.len; ++iterator)
+	for (iterator = start; iterator <= req->unparsed_uri.len; ++iterator)
 	{
-		if (req->unparsed_uri.data[iterator] == '/')
+		if (req->unparsed_uri.data[iterator] == '/' || iterator == req->unparsed_uri.len)
 		{
-			if ((iterator + 1) < req->unparsed_uri.len)
-			{
-				++size;
-			}
+			++size;
 		}
 	}
 
 	return size;
 }
 
-int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t start, u_char ** tokens[], size_t size)
+int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t start, ngx_str_t * tokens[], size_t size)
 {
 	size_t iterator, token_count = 0, prev = start;
 
-	for (iterator = start; iterator < req->unparsed_uri.len; ++iterator)
+	for (iterator = start; iterator <= req->unparsed_uri.len; ++iterator)
 	{
-		if (req->unparsed_uri.data[iterator] == '/')
+		if (req->unparsed_uri.data[iterator] == '/' || iterator == req->unparsed_uri.len)
 		{
 			size_t length = iterator - prev;
 
-			(*tokens)[token_count] = malloc(sizeof(u_char *) * length);
+			(*tokens)[token_count].data = malloc(sizeof(u_char) * length);
 
-			if ((*tokens)[token_count] == NULL)
+			if ((*tokens)[token_count].data == NULL)
 			{
 				return 1;
 			}
 
-			memcpy((*tokens)[token_count], &req->unparsed_uri.data[prev], length);
+			(*tokens)[token_count].len = length;
 
-			(*tokens)[token_count][length] = '\0';
+			memcpy((*tokens)[token_count].data, &req->unparsed_uri.data[prev], length);
+
+			(*tokens)[token_count].data[length] = '\0';
 
 			prev = iterator + 1;
 
@@ -168,7 +167,7 @@ int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t st
 	return 0;
 }
 
-int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, u_char ** tokens[], size_t * size)
+int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, ngx_str_t * tokens[], size_t * size)
 {
 	size_t start, length;
 
@@ -220,32 +219,31 @@ int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, u_char ** toke
 
 int ngx_http_rest_metacall_uri_parse(ngx_http_request_t * req, char * func_name[], void ** args[])
 {
-	u_char ** tokens = NULL;
+	ngx_str_t * tokens = NULL;
 
 	size_t size = 0;
 
 	/* Tokenize URI */
-	if (ngx_http_rest_metacall_uri_tokenize(req, &tokens, &size) == 0)
+	if (ngx_http_rest_metacall_uri_tokenize(req, (ngx_str_t **)&tokens, &size) == 0)
 	{
-		/*
-		size_t func_size = 0;
-		*/
-
+		/* Copy function name */
 		
 
+		/* size_t func_size = 0; */
+
 		/* Parse tokens into arguments */
-		/*if (ngx_http_rest_metacall_uri_parse_impl(req, &tokens, size, func_name, &func_size, args) == 0)
+		/*if (ngx_http_rest_metacall_uri_parse_impl(req, (ngx_str_t **)&tokens, size, func_name, &func_size, args) == 0)
 		{
 			if (
 
-			*/return 0;/*
+			return 0;
 		}*/
 
-		/* TODO: Clear tokens? */
-	}
+		/* Clear tokens */
+		ngx_http_rest_metacall_uri_tokenize_clear((ngx_str_t **)&tokens, size);
 
-	/* Error */
-	ngx_http_rest_metacall_uri_tokenize_clear(&tokens, size);
+		return 0;
+	}
 
 	return 1;
 }

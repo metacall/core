@@ -19,15 +19,15 @@
 
 int ngx_http_rest_metacall_uri_delimiters(ngx_http_request_t * req, size_t * start, size_t * length);
 
-u_char ** ngx_http_rest_metacall_uri_tokenize_initialize(size_t size);
+ngx_str_t * ngx_http_rest_metacall_uri_tokenize_initialize(size_t size);
 
-void ngx_http_rest_metacall_uri_tokenize_clear(u_char ** tokens[], size_t size);
+void ngx_http_rest_metacall_uri_tokenize_clear(ngx_str_t * tokens[], size_t size);
 
 size_t ngx_http_rest_metacall_uri_tokenize_count(ngx_http_request_t * req, size_t start);
 
-int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t start, u_char ** tokens[], size_t size);
+int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t start, ngx_str_t * tokens[], size_t size);
 
-int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, u_char ** tokens[], size_t * size);
+int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, ngx_str_t * tokens[], size_t * size);
 
 int ngx_http_rest_metacall_uri_parse(ngx_http_request_t * req, char * func_name[], void ** args[]);
 

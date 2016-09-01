@@ -250,7 +250,7 @@ static ngx_int_t ngx_http_rest_metacall_call_handler(ngx_http_request_t * req)
 
 	void * result = NULL;
 
-	u_char ** tokens = NULL;
+	ngx_str_t * tokens = NULL;
 
 	size_t size = 0;
 
@@ -287,7 +287,7 @@ static ngx_int_t ngx_http_rest_metacall_call_handler(ngx_http_request_t * req)
 
 			for (iterator = 0; iterator < size; ++iterator)
 			{
-				strncat(data, (const char *)tokens[iterator], strlen((const char *)tokens[iterator]));
+				strncat(data, (const char *)tokens[iterator].data, tokens[iterator].len);
 
 				strncat(data, "\n", 1);
 			}
