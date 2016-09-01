@@ -1,14 +1,25 @@
-ngx_addon_name=ngx_http_rest_metacall_module
+#
+#	MetaCall NginX Module Wrapper by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	A NginX module example as metacall HTTP (REST API) wrapper.
+#
 
+ngx_addon_name=ngx_http_rest_metacall_module
 ngx_feature="MetaCall HTTP (REST API) Wrapper"
 ngx_feature_name=
 ngx_feature_run=no
 ngx_feature_incs="#include <metacall/metacall.h>"
 ngx_feature_libs="-lmetacall"
+ngx_feature_test="metacall_print_info();"
+
+CORE_LIBS="$CORE_LIBS $ngx_feature_libs"
+
+HTTP_MODULES="$HTTP_MODULES $ngx_addon_name"
+
+NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_rest_metacall_uri.c \
+				$ngx_addon_dir/ngx_http_rest_metacall_module.c"
 
 
-HTTP_MODULES="$HTTP_MODULES ngx_http_rest_metacall_module"
-
-NGX_ADDON_SRCS="$NGX_ADDON_SRCS $ngx_addon_dir/ngx_http_rest_metacall_module.c"
-
-# NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/ngx_http_rest_metacall_module.h"
+NGX_ADDON_DEPS="$NGX_ADDON_DEPS $ngx_addon_dir/ngx_http_rest_metacall_uri.h \
+				$ngx_addon_dir/ngx_http_rest_metacall_module.h"

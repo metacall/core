@@ -24,6 +24,7 @@ message(STATUS "Example ${target}")
 #
 
 set(sources
+    ngx_http_rest_metacall_uri.c
     ngx_http_rest_metacall_module.c
 )
 

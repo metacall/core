@@ -1,20 +1,33 @@
+
 #
 # External dependencies
 #
 
-find_package(PythonLibs)
+find_package(V8)
 
-if(NOT PYTHONLIBS_FOUND)
-    message(STATUS "Python libraries not found")
+if(NOT V8_FOUND)
+    message(STATUS "V8 libraries not found")
     return()
 endif()
+
+# Generate a valid version of V8 for SWIG
+#set(V8_VERSION_HEX 0x0${V8_VERSION_MAJOR}${V8_VERSION_MINOR}${V8_VERSION_PATCH})
+#string(LENGTH "${V8_VERSION_HEX}" V8_VERSION_HEX_LENGTH)
+#
+#while(V8_VERSION_HEX_LENGTH LESS 8)
+#
+#	set(V8_VERSION_HEX "${V8_VERSION_HEX}0")
+#
+#	string(LENGTH "${V8_VERSION_HEX_LENGTH}" V8_VERSION_HEX_LENGTH)
+#
+#endwhile()
 
 #
 # Port name and options
 #
 
 # Target name
-set(target py_port)
+set(target js_port)
 
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
@@ -30,99 +43,43 @@ set(export_macro "${target_upper}_API")
 #
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(interface_path "${CMAKE_SOURCE_DIR}/source/ports/interface")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-#    ${include_path}/py_loader.h
-#    ${include_path}/py_loader_impl.h
-)
-
-set(interfaces
-    ${interface_path}/metacall.i
+#    ${include_path}/js_loader.h
+#    ${include_path}/js_loader_impl.h
+#    ${include_path}/js_loader_impl_guard.h
 )
 
 set(sources
-#    ${source_path}/py_loader.c
-#    ${source_path}/py_loader_impl.c
+#    ${source_path}/js_loader.c
+#    ${source_path}/js_loader_impl.cpp
+#    ${source_path}/js_loader_impl_guard.cpp
 )
 
 # Group source files
-set(interface_group "Interface Files (SWIG)")
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
-source_group_by_path(${interface_path} "\\\\.i$"
-    ${interface_group} ${interfaces})
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
     ${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
 #
-# SWIG Configuration
-#
-
-# Set SWIG flags
-set(CMAKE_SWIG_FLAGS "")
-
-#
 # Create library
 #
 
-foreach(files ${interfaces} ${headers} ${sources})
-    set_source_files_properties(
-        ${interfaces}
-        PROPERTY SWIG_FLAGS "-python" "-includeall"
-    )
-
-    set_source_files_properties(
-        ${interfaces}
-        PROPERTIES CPLUSPLUS OFF
-    )
-endforeach()
-
 # Build library
-macro(swig_add_depends target)
-    foreach(dependency ${ARGN})
-        get_property(include_list
-            TARGET ${dependency}
-            PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        )
-
-        foreach(path ${include_list})
-            include_directories(${path})
-
-            file(GLOB_RECURSE header_files "${path}/*.[h|hpp]")
-
-            list(APPEND SWIG_MODULE_${target}_EXTRA_DEPS ${header_files})
-
-            set(SWIG_MODULE_${target}_EXTRA_DEPS SWIG_MODULE_${target}_EXTRA_DEPS PARENT_SCOPE)
-
-        endforeach()
-    endforeach()
-endmacro()
-
-#set(${SWIG_MODULE_${target}_EXTRA_DEPS}
-swig_add_depends(${target}
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::dynlink
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::loader
-    ${META_PROJECT_NAME}::metacall
-)
-
-swig_add_module(${target}
-    python
-    ${interfaces}
-    ${headers}
+add_library(${target}
     ${sources}
+    ${headers}
 )
 
 # Create namespaced alias
-add_library(${META_PROJECT_NAME}::${target} ALIAS ${SWIG_MODULE_${target}_REAL_NAME})
+add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 # Export library for downstream projects
-export(TARGETS ${SWIG_MODULE_${target}_REAL_NAME} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
+export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
 
 # Create feature detection header
 # Compilers: https://cmake.org/cmake/help/v3.1/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID
@@ -146,7 +103,7 @@ else()
 endif()
 
 # Create API export header
-generate_export_header(${SWIG_MODULE_${target}_REAL_NAME}
+generate_export_header(${target}
     EXPORT_FILE_NAME  ${export_file}
     EXPORT_MACRO_NAME ${export_macro}
 )
@@ -155,7 +112,7 @@ generate_export_header(${SWIG_MODULE_${target}_REAL_NAME}
 # Project options
 #
 
-set_target_properties(${SWIG_MODULE_${target}_REAL_NAME}
+set_target_properties(${target}
     PROPERTIES
     ${DEFAULT_PROJECT_OPTIONS}
     FOLDER "${IDE_FOLDER}"
@@ -164,13 +121,14 @@ set_target_properties(${SWIG_MODULE_${target}_REAL_NAME}
 #
 # Include directories
 #
-target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
+
+target_include_directories(${target}
     PRIVATE
     ${PROJECT_BINARY_DIR}/source/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${PYTHON_INCLUDE_DIRS} # Python includes
+    ${V8_INCLUDE_DIR} # V8 includes
 
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
@@ -185,15 +143,14 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 # Libraries
 #
 
-swig_link_libraries(${target}
+target_link_libraries(${target}
     PRIVATE
     ${META_PROJECT_NAME}::adt
     ${META_PROJECT_NAME}::dynlink
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
-    ${META_PROJECT_NAME}::metacall
 
-    ${PYTHON_LIBRARIES} # Python libraries
+    ${V8_LIBRARIES} # V8 library
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -205,7 +162,7 @@ swig_link_libraries(${target}
 # Compile definitions
 #
 
-target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
+target_compile_definitions(${target}
     PRIVATE
 
     PUBLIC
@@ -219,7 +176,7 @@ target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
 # Compile options
 #
 
-target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
+target_compile_options(${target}
     PRIVATE
 
     PUBLIC
@@ -232,7 +189,7 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 # Linker options
 #
 
-target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
+target_link_libraries(${target}
     PRIVATE
 
     PUBLIC
@@ -246,7 +203,7 @@ target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 #
 
 # Library
-install(TARGETS ${SWIG_MODULE_${target}_REAL_NAME}
+install(TARGETS ${target}
     EXPORT  "${target}-export"            COMPONENT dev
     RUNTIME DESTINATION ${INSTALL_BIN}    COMPONENT runtime
     LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
@@ -271,3 +228,11 @@ install(EXPORT ${target}-export
     DESTINATION ${INSTALL_CMAKE}/${target}
     COMPONENT   dev
 )
+
+#
+# SWIG Configuration
+#
+
+set_property(
+    SOURCE ${CMAKE_SOURCE_DIR}/ports/interface/metacall.i
+    PROPERTY SWIG_FLAGS "-node" "-
