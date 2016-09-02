@@ -65,7 +65,7 @@ value value_create(const void * data, size_t bytes)
 		impl->bytes = bytes;
 
 		impl->ref_count = 1;
-		
+
 		memcpy(dest, data, bytes);
 
 		return dest;

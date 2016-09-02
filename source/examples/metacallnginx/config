@@ -9,8 +9,9 @@ ngx_addon_name=ngx_http_rest_metacall_module
 ngx_feature="MetaCall HTTP (REST API) Wrapper"
 ngx_feature_name=
 ngx_feature_run=no
-ngx_feature_incs="#include <metacall/metacall.h>"
-ngx_feature_libs="-lmetacall"
+ngx_feature_incs="#include <reflect/value.h> \
+			#include <metacall/metacall.h>"
+ngx_feature_libs="-lreflect -lmetacall"
 ngx_feature_test="metacall_print_info();"
 
 CORE_LIBS="$CORE_LIBS $ngx_feature_libs"

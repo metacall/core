@@ -16,6 +16,8 @@
 
 #include <metacall/metacall.h>
 
+#include <reflect/value.h>
+
 /* -- Definitions -- */
 
 #define METACALL_NGINX_MSG "MetaCall NginX Module Wrapper\n"
@@ -250,16 +252,11 @@ static ngx_int_t ngx_http_rest_metacall_call_handler(ngx_http_request_t * req)
 
 	void * result = NULL;
 
-	ngx_str_t * tokens = NULL;
-
-	size_t size = 0;
-
 	/* Set message data */
 	strncat(data, message, sizeof(message));
 
 	/* Execute call from URI request */
-	/*if (ngx_http_rest_metacall_uri(req, &result) != 0)*/
-	if (ngx_http_rest_metacall_uri_tokenize(req, &tokens, &size) != 0)
+	if (ngx_http_rest_metacall_uri(req, &result) != 0)
 	{
 		const char invalid_uri_message[] = "|>> Invalid URI\n";
 
@@ -269,31 +266,11 @@ static ngx_int_t ngx_http_rest_metacall_call_handler(ngx_http_request_t * req)
 	}
 	else
 	{
-		char text[0xFF];
-
 		const char valid_uri_message[] = "|>> Valid URI\n";
 
 		status = NGX_HTTP_OK;
 
 		strncat(data, valid_uri_message, sizeof(valid_uri_message));
-
-		sprintf(text, "TOKENS: %lu\n", size);
-
-		strncat(data, text, strlen((const char *)text));
-
-		if (tokens != NULL)
-		{
-			size_t iterator;
-
-			for (iterator = 0; iterator < size; ++iterator)
-			{
-				strncat(data, (const char *)tokens[iterator].data, tokens[iterator].len);
-
-				strncat(data, "\n", 1);
-			}
-
-			ngx_http_rest_metacall_uri_tokenize_clear(&tokens, size);
-		}
 	}
 
 	/* Put result into the message */
@@ -301,21 +278,26 @@ static ngx_int_t ngx_http_rest_metacall_call_handler(ngx_http_request_t * req)
 	{
 		const char result_message[] = "|>> Result : ";
 
-		/* value v = result; */
+		value v = result;
+
+		size_t v_size = value_size(v);
+
+		size_t cur_length = 0;
 
 		strncat(data, result_message, sizeof(result_message));
 
-		/* Convert value to string */
-		/* ... */
+		/* Copy result memory to data buffer */
+		cur_length = strnlen(data, METACALL_NGINX_CALL_RESULT_SIZE);
 
-		/* Append value string to message */
-		/* strncat(data, v_str, v_str_length); */
+		memcpy((void *)&data[cur_length], result, v_size);
+
+		data[cur_length + v_size] = '\0';
 
 		strncat(data, "\n", 1);
 	}
 
 	/* Retreive data length */
-	length = strlen(data);
+	length = strnlen(data, METACALL_NGINX_CALL_RESULT_SIZE);
 
 	/* Set the Content-Type header */
 	req->headers_out.content_type.len = sizeof(text_plain) - 1;

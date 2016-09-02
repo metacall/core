@@ -17,6 +17,7 @@
 
 /* -- Methods -- */
 
+/*
 int ngx_http_rest_metacall_uri_delimiters(ngx_http_request_t * req, size_t * start, size_t * length);
 
 ngx_str_t * ngx_http_rest_metacall_uri_tokenize_initialize(size_t size);
@@ -29,7 +30,8 @@ int ngx_http_rest_metacall_uri_tokenize_impl(ngx_http_request_t * req, size_t st
 
 int ngx_http_rest_metacall_uri_tokenize(ngx_http_request_t * req, ngx_str_t * tokens[], size_t * size);
 
-int ngx_http_rest_metacall_uri_parse(ngx_http_request_t * req, char * func_name[], void ** args[]);
+int ngx_http_rest_metacall_uri_parse(ngx_http_request_t * req, ngx_str_t * func_name, void ** args[]);
+*/
 
 /**
 *  @brief
