@@ -26,7 +26,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 	printf("Dynamic linked shared object extension: %s\n", dynlink_extension());
 
 	{
-		dynlink handle = dynlink_load("py_loader", DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+		dynlink handle = dynlink_load(NULL, "py_loader", DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		EXPECT_NE(handle, (dynlink) NULL);
 

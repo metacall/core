@@ -6,6 +6,8 @@
  *
  */
 
+/* -- Headers -- */
+
 #include <loader/loader_impl.h>
 
 #include <reflect/type.h>
@@ -19,15 +21,28 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct loader_handle_impl_type
+/* -- Forward Declarations -- */
+
+struct loader_handle_impl_type;
+
+struct loader_impl_type;
+
+/* -- Type Definitions -- */
+
+typedef struct loader_handle_impl_type * loader_handle_impl;
+
+typedef struct loader_impl_type * loader_impl;
+
+/* -- Member Data -- */
+
+struct loader_handle_impl_type
 {
 	loader_naming_name name;
 	loader_handle module;
 	context ctx;
+};
 
-} * loader_handle_impl;
-
-typedef struct loader_impl_type
+struct loader_impl_type
 {
 	loader_naming_extension extension;
 	dynlink handle;
@@ -36,10 +51,11 @@ typedef struct loader_impl_type
 	loader_impl_data data;
 	context ctx;
 	hash_map type_info_map;
+};
 
-} * loader_impl;
+/* -- Methods -- */
 
-dynlink loader_impl_dynlink_load(loader_naming_extension extension)
+dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension)
 {
 	const char loader_dynlink_suffix[] = "_loader";
 
@@ -56,7 +72,7 @@ dynlink loader_impl_dynlink_load(loader_naming_extension extension)
 
 	printf("Loader: %s\n", loader_dynlink_name);
 
-	return dynlink_load(loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
 int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr)
@@ -87,9 +103,9 @@ void loader_impl_dynlink_destroy(loader_impl impl)
 	dynlink_unload(impl->handle);
 }
 
-int loader_impl_create_singleton(loader_impl impl, loader_naming_extension extension)
+int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension)
 {
-	impl->handle = loader_impl_dynlink_load(extension);
+	impl->handle = loader_impl_dynlink_load(path, extension);
 
 	if (impl->handle != NULL)
 	{
@@ -111,7 +127,7 @@ int loader_impl_create_singleton(loader_impl impl, loader_naming_extension exten
 	return 1;
 }
 
-loader_impl loader_impl_create(loader_naming_extension extension)
+loader_impl loader_impl_create(const char * path, loader_naming_extension extension)
 {
 	if (extension != NULL)
 	{
@@ -119,7 +135,7 @@ loader_impl loader_impl_create(loader_naming_extension extension)
 
 		if (impl != NULL)
 		{
-			if (loader_impl_create_singleton(impl, extension) == 0)
+			if (loader_impl_create_singleton(impl, path, extension) == 0)
 			{
 				impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 

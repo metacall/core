@@ -122,11 +122,10 @@ ngx_module_t ngx_http_rest_metacall_module =
 static ngx_int_t ngx_http_rest_metacall_initialize_handler(ngx_http_request_t * req)
 {
 	static const char text_plain[] = "text/plain";
-	static const char message_ok[] = METACALL_NGINX_MSG "|>> Correctly initialized\n";
-	static const char message_error[] = METACALL_NGINX_MSG "|>> Error in initialization\n";
 
 	ngx_buf_t * buffer;
 	ngx_chain_t out;
+
 	u_char * message;
 	size_t length;
 	ngx_uint_t status;
@@ -145,12 +144,16 @@ static ngx_int_t ngx_http_rest_metacall_initialize_handler(ngx_http_request_t * 
 	/* Initialize MetaCall */
 	if (metacall_initialize() == 0)
 	{
+		static const char message_ok[] = METACALL_NGINX_MSG "|>> Correctly initialized\n";
+
 		message = (u_char *)message_ok;
 		length = sizeof(message_ok);
 		status = NGX_HTTP_OK;
 	}
 	else
 	{
+		static const char message_error[] = METACALL_NGINX_MSG "|>> Error in initialization\n";
+
 		message = (u_char *)message_error;
 		length = sizeof(message_error);
 		status = NGX_HTTP_INTERNAL_SERVER_ERROR;
@@ -294,6 +297,12 @@ static ngx_int_t ngx_http_rest_metacall_call_handler(ngx_http_request_t * req)
 		data[cur_length + v_size] = '\0';
 
 		strncat(data, "\n", 1);
+	}
+	else
+	{
+		const char empty_message[] = "|>> Empty result\n";
+
+		strncat(data, empty_message, sizeof(empty_message));
 	}
 
 	/* Retreive data length */

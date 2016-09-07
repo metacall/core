@@ -6,6 +6,8 @@
  *
  */
 
+/* -- Headers -- */
+
 #include <metacall/metacall-version.h>
 
 #include <loader/loader.h>
@@ -16,26 +18,51 @@
 
 #include <adt/hash_map.h>
 
+#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
-typedef struct loader_type
+/* -- Definitions -- */
+
+#define LOADER_LIBRARY_PATH "LOADER_LIBRARY_PATH"
+
+#define LOADER_SCRIPT_PATH "LOADER_SCRIPT_PATH"
+
+/* -- Forward Declarations -- */
+
+struct loader_type;
+
+struct loader_get_iterator_args_type;
+
+/* -- Type Definitions -- */
+
+typedef struct loader_type * loader;
+
+typedef struct loader_get_iterator_args_type * loader_get_iterator_args;
+
+/* -- Member Data -- */
+
+struct loader_type
 {
 	hash_map impl_map;
+	char * library_path;
+	char * script_path;
+};
 
-} * loader;
-
-typedef struct loader_get_iterator_args_type
+struct loader_get_iterator_args_type
 {
 	const char * name;
 	scope_object obj;
 
-} * loader_get_iterator_args;
+};
+
+/* -- Methods -- */
 
 loader loader_singleton(void)
 {
 	static struct loader_type loader_instance =
 	{
-		NULL
+		NULL, NULL, NULL
 	};
 
 	return &loader_instance;
@@ -49,13 +76,27 @@ void loader_initialize()
 	{
 		l->impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 	}
+
+	if (l->library_path == NULL)
+	{
+		const char loader_library_path[] = LOADER_LIBRARY_PATH;
+
+		l->library_path = getenv(loader_library_path);
+	}
+
+	if (l->script_path == NULL)
+	{
+		const char loader_script_path[] = LOADER_SCRIPT_PATH;
+
+		l->script_path = getenv(loader_script_path);
+	}
 }
 
 loader_impl loader_create_impl(loader_naming_extension extension)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = loader_impl_create(extension);
+	loader_impl impl = loader_impl_create(l->library_path, extension);
 
 	if (impl != NULL)
 	{
@@ -65,7 +106,17 @@ loader_impl loader_create_impl(loader_naming_extension extension)
 		{
 			if (loader_impl_execution_path(impl, ".") == 0)
 			{
-				return impl;
+				if (l->library_path != NULL)
+				{
+					if (loader_impl_execution_path(impl, l->library_path) == 0)
+					{
+						return impl;
+					}
+				}
+				else
+				{
+					return impl;
+				}
 			}
 
 			hash_map_remove(l->impl_map, *extension_ptr);
@@ -115,7 +166,22 @@ int loader_load(const loader_naming_path path)
 
 			if (impl != NULL)
 			{
-				return loader_impl_load(impl, path);
+				/*
+				if (l->script_path != NULL)
+				{
+					loader_naming_path absolute_path;
+
+					memcpy(absolute_path, l->script_path, strlen(l->script_path) + 1);
+
+					strncat(absolute_path, path, LOADER_NAMING_PATH_SIZE);
+
+					return loader_impl_load(impl, absolute_path);
+				}
+				else
+				{
+				*/
+					return loader_impl_load(impl, path);
+				//}
 			}
 		}
 	}
@@ -246,6 +312,16 @@ void loader_destroy()
 		hash_map_destroy(l->impl_map);
 
 		l->impl_map = NULL;
+	}
+
+	if (l->library_path != NULL)
+	{
+		l->library_path = NULL;
+	}
+
+	if (l->script_path != NULL)
+	{
+		l->script_path = NULL;
 	}
 }
 

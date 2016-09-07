@@ -85,12 +85,10 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello Universe"));
 
 		value_destroy(ret);
-
 	}
 
 	/* Ruby */
 	{
-		/*
 		value ret = NULL;
 
 		ret = metacall("say_multiply", 5, 7);
@@ -112,7 +110,6 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello meta-programmer!"));
 
 		value_destroy(ret);
-		*/
 	}
 
 	/* JavaScript SpiderMonkey */

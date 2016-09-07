@@ -7,6 +7,19 @@
 
 worker_processes  1;
 
+#
+# MetaCall HTTP REST API Wrapper Environment Variables
+#
+
+env LOADER_LIBRARY_PATH=@METACALL_LOADER_LIBRARY_PATH@;
+env LOADER_SCRIPT_PATH=@METACALL_LOADER_SCRIPT_PATH@;
+
+#
+# MetaCall HTTP REST API Wrapper User
+#
+
+user @METACALL_LOADER_USER@;
+
 events {
     worker_connections  1024;
 }
@@ -22,7 +35,7 @@ http {
 		server_name	localhost;
 
 		#
-		# MetaCall HTTP REST API Wrapper
+		# MetaCall HTTP REST API Wrapper Routes
 		#
 
 		location = /metacall/init {

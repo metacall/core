@@ -35,7 +35,7 @@ const char * dynlink_extension(void)
 	return dynlink_impl_extension();
 }
 
-dynlink dynlink_load(dynlink_name name, dynlink_flags flags)
+dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 {
 	if (name != NULL)
 	{
@@ -46,7 +46,16 @@ dynlink dynlink_load(dynlink_name name, dynlink_flags flags)
 			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE);
 
 			dynlink_impl_get_name(handle, handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
-			
+
+			if (path != NULL)
+			{
+				size_t path_length = strlen(path);
+
+				memmove(handle->name_impl + path_length, handle->name_impl, strlen(handle->name_impl) + 1);
+
+				memcpy(handle->name_impl, path, path_length);
+			}
+
 			handle->flags = flags;
 
 			handle->impl = dynlink_impl_load(handle);

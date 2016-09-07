@@ -36,6 +36,9 @@ DYNLINK_API const char * dynlink_extension(void);
 *  @brief
 *    Load a dynamically linked shared object
 *
+*  @param[in] path
+*    Path where is located the shared object
+*
 *  @param[in] name
 *    Name identifier of the shared object
 *
@@ -45,7 +48,7 @@ DYNLINK_API const char * dynlink_extension(void);
 *  @return
 *    A handle to the dynamically linked shared object
 */
-DYNLINK_API dynlink dynlink_load(dynlink_name name, dynlink_flags flags);
+DYNLINK_API dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags);
 
 /**
 *  @brief
