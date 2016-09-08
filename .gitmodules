@@ -5,3 +5,6 @@
 [submodule "web"]
 	path = web
 	url = git@bitbucket.org:parrastudios/metacall-landing-page.git
+[submodule "source/examples/metacallnginx"]
+	path = source/examples/metacallnginx
+	url = git@bitbucket.org:parrastudios/metacall-http-rest-nginx-module.git
