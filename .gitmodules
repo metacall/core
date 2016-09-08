@@ -2,3 +2,6 @@
 	path = source/tests/googletest
 	url = https://github.com/google/googletest.git
 
+[submodule "web"]
+	path = web
+	url = git@bitbucket.org:parrastudios/metacall-landing-page.git
