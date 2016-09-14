@@ -19,12 +19,18 @@ extern "C" {
 
 enum log_level_id
 {
-	LOG_LEVEL_DEBUG		= 0x01 << 0x00,
-	LOG_LEVEL_INFO		= 0x01 << 0x01,
-	LOG_LEVEL_WARNING	= 0x01 << 0x02,
-	LOG_LEVEL_ERROR		= 0x01 << 0x03,
-	LOG_LEVEL_CRITICAL	= 0x01 << 0x04
+	LOG_LEVEL_DEBUG		= 0x00,
+	LOG_LEVEL_INFO		= 0x01,
+	LOG_LEVEL_WARNING	= 0x02,
+	LOG_LEVEL_ERROR		= 0x03,
+	LOG_LEVEL_CRITICAL	= 0x04,
+
+	LOG_LEVEL_SIZE
 };
+
+/* -- Methods -- */
+
+LOG_API const char * log_level_name(enum log_level_id level);
 
 #ifdef __cplusplus
 }

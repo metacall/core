@@ -1,0 +1,107 @@
+/*
+*	Logger Library by Parra Studios
+*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A generic logger library providing application execution reports.
+*
+*/
+
+/* -- Headers -- */
+
+#include <log/log_policy_schedule_async.h>
+#include <log/log_policy_schedule.h>
+
+/* -- Forward Declarations -- */
+
+struct log_policy_schedule_async_data_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_policy_schedule_async_data_type * log_policy_schedule_async_data;
+
+/* -- Member Data -- */
+
+struct log_policy_schedule_async_data_type
+{
+	/* TODO: this must be implemented with free-lock */
+	void * mutex;
+};
+
+/* -- Private Methods -- */
+
+LOG_NO_EXPORT static int log_policy_schedule_async_create(log_policy policy, const log_policy_ctor ctor);
+
+LOG_NO_EXPORT static int log_policy_schedule_async_lock(log_policy policy);
+
+LOG_NO_EXPORT static int log_policy_schedule_async_unlock(log_policy policy);
+
+LOG_NO_EXPORT static int log_policy_schedule_async_destroy(log_policy policy);
+
+/* -- Methods -- */
+
+log_policy_interface log_policy_schedule_async()
+{
+	static struct log_policy_schedule_impl_type log_policy_schedule_async_impl =
+	{
+		&log_policy_schedule_async_lock,
+		&log_policy_schedule_async_unlock
+	};
+
+	static struct log_policy_interface_type policy_interface_schedule =
+	{
+		&log_policy_schedule_async_create,
+		&log_policy_schedule_async_impl,
+		&log_policy_schedule_async_destroy
+	};
+
+	return &policy_interface_schedule;
+}
+
+static int log_policy_schedule_async_create(log_policy policy, const log_policy_ctor ctor)
+{
+	log_policy_schedule_async_data async_data = malloc(sizeof(struct log_policy_schedule_async_data_type));
+
+	(void)ctor;
+
+	if (async_data == NULL)
+	{
+
+		return 1;
+	}
+
+	async_data->mutex = NULL;
+
+	log_policy_instantiate(policy, async_data);
+
+	return 0;
+}
+
+static int log_policy_schedule_async_lock(log_policy policy)
+{
+	(void)policy;
+
+	/* mutex_lock(mutex); */
+
+	return 0;
+}
+
+static int log_policy_schedule_async_unlock(log_policy policy)
+{
+	(void)policy;
+
+	/* mutex_unlock(mutex); */
+
+	return 0;
+}
+
+static int log_policy_schedule_async_destroy(log_policy policy)
+{
+	log_policy_schedule_async_data async_data = log_policy_instance(policy);
+
+	if (async_data != NULL)
+	{
+		free(async_data);
+	}
+
+	return 0;
+}

@@ -18,11 +18,13 @@
 #include <dynlink/dynlink_impl_type.h>
 #include <dynlink/dynlink_interface.h>
 
-#include <stdlib.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* -- Headers -- */
+
+#include <stdlib.h>
 
 /* -- Methods -- */
 

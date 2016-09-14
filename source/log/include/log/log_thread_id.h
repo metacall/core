@@ -6,8 +6,10 @@
  *
  */
 
-#ifndef LOG_IMPL_STDIO_H
-#define LOG_IMPL_STDIO_H 1
+#ifndef LOG_THREAD_ID_H
+#define LOG_THREAD_ID_H 1
+
+/* -- Headers -- */
 
 #include <log/log_api.h>
 
@@ -15,10 +17,16 @@
 extern "C" {
 #endif
 
-/* LOG_API void log_print_info(void); */
+/* -- Headers -- */
+
+#include <stdlib.h>
+
+/* -- Methods -- */
+
+LOG_NO_EXPORT const size_t log_thread_id(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LOG_IMPL_STDIO_H */
+#endif /* LOG_THREAD_ID_H */

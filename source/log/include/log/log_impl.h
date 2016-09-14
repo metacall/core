@@ -9,13 +9,35 @@
 #ifndef LOG_IMPL_H
 #define LOG_IMPL_H 1
 
+/* -- Headers -- */
+
 #include <log/log_api.h>
+
+#include <log/log_record.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* LOG_API void log_print_info(void); */
+/* -- Forward Declarations -- */
+
+struct log_impl_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_impl_type * log_impl;
+
+/* -- Methods -- */
+
+LOG_API log_impl log_impl_create(const char * name);
+
+LOG_API const char * log_impl_name(log_impl impl);
+
+LOG_API int log_impl_write(log_impl impl, const char * tag, const log_record_ctor record_ctor);
+
+LOG_API int log_impl_clear(log_impl impl);
+
+LOG_API int log_impl_destroy(log_impl impl);
 
 #ifdef __cplusplus
 }

@@ -9,13 +9,44 @@
 #ifndef LOG_INTERFACE_H
 #define LOG_INTERFACE_H 1
 
+/* -- Headers -- */
+
 #include <log/log_api.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* LOG_API void log_print_info(void); */
+/* -- Forward Declarations -- */
+
+struct log_policy_type;
+
+struct log_interface_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_policy_type * log_policy;
+
+typedef int (*log_interface_create)(void);
+
+typedef int (*log_interface_destroy)(void);
+
+typedef struct log_interface_type * log_interface;
+
+/* -- Member Data -- */
+
+struct log_interface_type
+{
+	log_interface_create create;
+
+
+
+	log_interface_destroy destroy;
+};
+
+/* -- Methods -- */
+
+LOG_API void log_(void);
 
 #ifdef __cplusplus
 }

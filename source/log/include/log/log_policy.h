@@ -9,13 +9,72 @@
 #ifndef LOG_POLICY_H
 #define LOG_POLICY_H 1
 
+/* -- Headers -- */
+
 #include <log/log_api.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* LOG_API void log_print_info(void); */
+/* -- Headers -- */
+
+#include <stdlib.h>
+
+/* -- Forward Declarations -- */
+
+struct log_interface_type;
+
+struct log_policy_type;
+
+struct log_policy_ctor_type;
+
+struct log_policy_interface_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_interface_type * log_interface;
+
+typedef struct log_policy_type * log_policy;
+
+typedef void * log_policy_impl;
+
+typedef void * log_policy_data;
+
+typedef void * log_policy_ctor;
+
+typedef int (*log_policy_interface_create)(log_policy, const log_policy_ctor);
+
+typedef int (*log_policy_interface_destroy)(log_policy);
+
+typedef struct log_policy_interface_type * log_policy_interface;
+
+typedef const log_policy_interface (*log_policy_singleton)(void);
+
+/* -- Member Data -- */
+
+struct log_policy_interface_type
+{
+	log_policy_interface_create create;
+
+	log_policy_impl impl;
+
+	log_policy_interface_destroy destroy;
+};
+
+/* -- Methods -- */
+
+LOG_API log_policy log_policy_create(const log_policy_interface iface, const log_policy_ctor ctor);
+
+LOG_API void log_policy_instantiate(log_policy policy, log_policy_data instance);
+
+LOG_API log_interface log_policy_aspect(log_policy policy);
+
+LOG_API log_policy_data log_policy_instance(log_policy policy);
+
+LOG_API log_policy_impl log_policy_behavior(log_policy policy);
+
+LOG_API int log_policy_destroy(log_policy policy);
 
 #ifdef __cplusplus
 }

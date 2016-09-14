@@ -30,23 +30,50 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/log.h
     ${include_path}/log_level.h
-    ${include_path}/log_handler.h
+    ${include_path}/log_thread_id.h
+    ${include_path}/log_record.h
+    ${include_path}/log_handle.h
     ${include_path}/log_policy.h
-    ${include_path}/log_policy_sync.h
-    ${include_path}/log_policy_async.h
     ${include_path}/log_interface.h
     ${include_path}/log_impl.h
-    ${include_path}/log_impl_stdio.h
-    ${include_path}/log_impl_file.h
+
+    ${include_path}/log_policy_schedule.h
+    ${include_path}/log_policy_schedule_sync.h
+    ${include_path}/log_policy_schedule_async.h
+
+    #${include_path}/log_policy_serial.h
+    #${include_path}/log_policy_serial_stdio.h
+    #${include_path}/log_policy_serial_file.h
+    #${include_path}/log_policy_serial_syslog.h
+    #${include_path}/log_policy_serial_socket.h
+
+    ${include_path}/log_policy_storage.h
+    ${include_path}/log_policy_storage_sequential.h
+    ${include_path}/log_policy_storage_batch.h
 )
 
 set(sources
     ${source_path}/log.c
-    ${source_path}/log_policy_sync.c
-    ${source_path}/log_policy_async.c
+    ${source_path}/log_level.c
+    ${source_path}/log_thread_id.c
+    ${source_path}/log_record.c
+    ${source_path}/log_handle.c
+    ${source_path}/log_policy.c
     ${source_path}/log_impl.c
-    ${source_path}/log_impl_stdio.c
-    ${source_path}/log_impl_file.c
+
+    ${source_path}/log_policy_schedule.c
+    ${source_path}/log_policy_schedule_sync.c
+    ${source_path}/log_policy_schedule_async.c
+
+    #${source_path}/log_policy_serial.c
+    #${source_path}/log_policy_serial_stdio.c
+    #${source_path}/log_policy_serial_file.c
+    #${source_path}/log_policy_serial_syslog.c
+    #${source_path}/log_policy_serial_socket.c
+
+    ${source_path}/log_policy_storage.c
+    ${source_path}/log_policy_storage_sequential.c
+    ${source_path}/log_policy_storage_batch.c
 )
 
 # Group source files
