@@ -9,15 +9,16 @@
 /* -- Headers -- */
 
 #include <log/log_policy.h>
-#include <log/log_interface.h>
+#include <log/log_aspect.h>
 
 /* -- Member Data -- */
 
 struct log_policy_type
 {
-	log_interface iface;
+	log_aspect aspect;
 	log_policy_data data;
-	log_policy_interface impl;
+	log_policy_interface iface;
+	log_policy_id id;
 };
 
 /* -- Methods -- */
@@ -33,11 +34,12 @@ log_policy log_policy_create(const log_policy_interface iface, const log_policy_
 			return NULL;
 		}
 
-		policy->iface = NULL;
+		policy->aspect = NULL;
 		policy->data = NULL;
-		policy->impl = iface;
+		policy->iface = iface;
+		policy->id = 0;
 
-		if (policy->impl->create(policy, ctor) != 0)
+		if (policy->iface->create(policy, ctor) != 0)
 		{
 			free(policy);
 
@@ -50,14 +52,15 @@ log_policy log_policy_create(const log_policy_interface iface, const log_policy_
 	return NULL;
 }
 
-void log_policy_instantiate(log_policy policy, log_policy_data instance)
+void log_policy_instantiate(log_policy policy, log_policy_data instance, const log_policy_id id)
 {
 	policy->data = instance;
+	policy->id = id;
 }
 
-log_interface log_policy_aspect(log_policy policy)
+log_aspect log_policy_aspect(log_policy policy)
 {
-	return policy->iface;
+	return policy->aspect;
 }
 
 log_policy_data log_policy_instance(log_policy policy)
@@ -67,21 +70,18 @@ log_policy_data log_policy_instance(log_policy policy)
 
 log_policy_impl log_policy_behavior(log_policy policy)
 {
-	return policy->impl;
+	return policy->iface;
 }
 
 int log_policy_destroy(log_policy policy)
 {
 	if (policy != NULL)
 	{
-		if (policy->impl->destroy(policy) != 0)
-		{
-			free(policy);
-
-			return 1;
-		}
-
+		int result = policy->iface->destroy(policy);
+		
 		free(policy);
+
+		return result;
 	}
 
 	return 0;

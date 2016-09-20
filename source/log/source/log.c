@@ -11,88 +11,53 @@
 #include <metacall/metacall-version.h>
 
 #include <log/log.h>
+#include <log/log_impl.h>
+#include <log/log_singleton.h>
 
 #include <stdio.h>
 
-/* -- Forward Declarations -- */
-
-struct log_type;
-
-struct log_singleton_type;
-
-/* -- Type Definitions -- */
-
-typedef struct log_type * log;
-
-typedef struct log_singleton_type * log_singleton;
-
-/* -- Member Data -- */
-
-struct log_singleton_type
-{
-	log *	map;
-	size_t	size;
-};
-
-/* -- Private Methods -- */
-
-log_singleton log_instance(void);
-
-int log_initialize(void);
-
-int log_destroy(void);
-
 /* -- Methods -- */
 
-log_singleton log_instance()
-{
-	static struct log_singleton_type singleton =
-	{
-		NULL, 0
-	};
-
-	return &singleton;
-}
-
-int log_initialize()
+int log_create(const char * name)
 {
 	log_singleton s = log_instance();
 
-	if (/*s->log_map == */NULL)
-	{
-		//s->log_map = hash_map_create(&hash_callback_str, &comparable_callback_str)
-	}
+	return 0;
+}
+
+int log_define(const char * name, enum log_aspect_id aspect_id, log_policy policy)
+{
+	log_singleton s = log_instance();
 
 	return 0;
 }
 
-int log_create(const char * name, log_policy policy, log_impl impl)
+
+int log_write_impl(const char * name, const char * tag, size_t line, const char * func, const char * file, enum log_level_id level, const char * message)
 {
+	log_singleton s = log_instance();
+
 	return 0;
 }
 
-int log_write(const char * name, const char * tag, enum log_level_id level, const char * message)
+int log_write_impl_v(const char * name, const char * tag, size_t line, const char * func, const char * file, enum log_level_id level, const char * message, void * args[])
 {
+	log_singleton s = log_instance();
+
 	return 0;
 }
 
-int log_write_v(const char * name, const char * tag, enum log_level_id level, const char * message, void * args[])
+int log_write_impl_va(const char * name, const char * tag, size_t line, const char * func, const char * file, enum log_level_id level, const char * message, ...)
 {
-	return 0;
-}
+	log_singleton s = log_instance();
 
-int log_write_va(const char * name, const char * tag, enum log_level_id level, const char * message, ...)
-{
 	return 0;
 }
 
 int log_clear(const char * name)
 {
-	return 0;
-}
+	log_singleton s = log_instance();
 
-int log_destroy()
-{
 	return 0;
 }
 

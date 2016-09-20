@@ -14,9 +14,9 @@
 
 /* -- Methods -- */
 
-const log_policy_interface log_policy_schedule(enum log_policy_schedule_id policy_schedule_id)
+const log_policy_interface log_policy_schedule(const log_policy_id policy_schedule_id)
 {
-	static log_policy_singleton policy_schedule_singleton[LOG_POLICY_SCHEDULE_SIZE] =
+	static const log_policy_singleton policy_schedule_singleton[LOG_POLICY_SCHEDULE_SIZE] =
 	{
 		&log_policy_schedule_sync,
 		&log_policy_schedule_async

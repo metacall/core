@@ -16,7 +16,7 @@
 
 const log_policy_interface log_policy_storage(enum log_policy_storage_id policy_storage_id)
 {
-	static log_policy_singleton policy_storage_singleton[LOG_POLICY_STORAGE_SIZE] =
+	static const log_policy_singleton policy_storage_singleton[LOG_POLICY_STORAGE_SIZE] =
 	{
 		&log_policy_storage_sequential,
 		&log_policy_storage_batch

@@ -39,7 +39,7 @@ LOG_NO_EXPORT static int log_policy_schedule_async_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-log_policy_interface log_policy_schedule_async()
+const log_policy_interface log_policy_schedule_async()
 {
 	static struct log_policy_schedule_impl_type log_policy_schedule_async_impl =
 	{
@@ -71,7 +71,7 @@ static int log_policy_schedule_async_create(log_policy policy, const log_policy_
 
 	async_data->mutex = NULL;
 
-	log_policy_instantiate(policy, async_data);
+	log_policy_instantiate(policy, async_data, LOG_POLICY_SCHEDULE_ASYNC);
 
 	return 0;
 }

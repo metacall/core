@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef LOG_POLICY_STORAGE_BATCH_H
-#define LOG_POLICY_STORAGE_BATCH_H 1
+#ifndef LOG_POLICY_STREAM_SOCKET_H
+#define LOG_POLICY_STREAM_SOCKET_H 1
 
 /* -- Headers -- */
 
@@ -19,27 +19,32 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
+#include <stdint.h>
+
 /* -- Forward Declarations -- */
 
-struct log_policy_storage_batch_ctor_type;
+struct log_policy_stream_socket_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_storage_batch_ctor_type * log_policy_storage_batch_ctor;
+typedef struct log_policy_stream_socket_ctor_type * log_policy_stream_socket_ctor;
 
 /* -- Member Data -- */
 
-struct log_policy_storage_batch_ctor_type
+struct log_policy_stream_socket_ctor_type
 {
-	size_t size;
+	const char * ip;
+	uint16_t port;
 };
 
 /* -- Methods -- */
 
-LOG_API const log_policy_interface log_policy_storage_batch(void);
+LOG_API const log_policy_interface log_policy_stream_socket(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LOG_POLICY_STORAGE_BATCH_H */
+#endif /* LOG_POLICY_STREAM_SOCKET_H */

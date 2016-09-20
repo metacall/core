@@ -21,31 +21,8 @@ extern "C" {
 
 #include <stdlib.h>
 
-/* -- Forward Declarations -- */
-
-struct log_record_ctor_type;
-
-struct log_record_type;
-
-/* -- Type Definitions -- */
-
-typedef struct log_record_ctor_type * log_record_ctor;
-
-typedef struct log_record_type * log_record;
-
-/* -- Member Data -- */
-
-struct log_record_ctor_type
-{
-	size_t line;
-	const char * func;
-	const char * file;
-	enum log_level_id level;
-	const char * message;
-};
-
 /* -- Macros -- */
-/*
+
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 #	define log_record_function() __FUNCTION__
 #elif defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__CYGWIN__)
@@ -60,6 +37,7 @@ struct log_record_ctor_type
 #	define log_record_function() __unknown_func__
 #endif
 
+/*
 #define log_record_create(record, level, message) \
 	do \
 	{ \
@@ -83,6 +61,29 @@ struct log_record_ctor_type
 		record = log_record_initialize_impl(record, &record_ctor); \
 	} while (0)
 */
+
+/* -- Forward Declarations -- */
+
+struct log_record_ctor_type;
+
+struct log_record_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_record_ctor_type * log_record_ctor;
+
+typedef struct log_record_type * log_record;
+
+/* -- Member Data -- */
+
+struct log_record_ctor_type
+{
+	size_t line;
+	const char * func;
+	const char * file;
+	enum log_level_id level;
+	const char * message;
+};
 
 /* -- Protected Methods -- */
 

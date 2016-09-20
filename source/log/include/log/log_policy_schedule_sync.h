@@ -21,7 +21,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-LOG_API log_policy_interface log_policy_schedule_sync(void);
+LOG_API const log_policy_interface log_policy_schedule_sync(void);
 
 #ifdef __cplusplus
 }

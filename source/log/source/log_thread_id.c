@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <log/log_level.h>
+#include <log/log_thread_id.h>
 
 #if defined(_WIN32)
 #	ifndef NOMINMAX
@@ -24,9 +24,9 @@
 #	if defined(__MINGW32__) || defined(__MINGW64__)
 #		include <share.h>
 #	endif
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__APPLE__)
 #	include <sys/syscall.h>
-#elif __FreeBSD__
+#elif defined(__FreeBSD__)
 #	include <sys/thr.h>
 #endif
 

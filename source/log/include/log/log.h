@@ -15,7 +15,7 @@
 
 #include <log/log_level.h>
 #include <log/log_policy.h>
-#include <log/log_impl.h>
+#include <log/log_aspect.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,15 +25,28 @@ extern "C" {
 
 #include <stdarg.h>
 
+/* -- Macros -- */
+
+#define log_write(name, tag, level, message) \
+	log_write_impl(name, tag, __LINE__, log_record_function(), __FILE__, level, message)
+
+#define log_write_v(name, tag, level, message, args) \
+	log_write_impl_v(name, tag, __LINE__, log_record_function(), __FILE__, level, message, args)
+
+#define log_write_va(name, tag, level, message, ...) \
+	log_write_impl(name, tag, __LINE__, log_record_function(), __FILE__, level, message, __VA_ARGS__)
+
 /* -- Methods -- */
 
-LOG_API int log_create(const char * name, log_policy policy, log_impl impl);
+LOG_API int log_create(const char * name);
 
-LOG_API int log_write(const char * name, const char * tag, enum log_level_id level, const char * message);
+LOG_API int log_define(const char * name, enum log_aspect_id aspect_id, log_policy policy);
 
-LOG_API int log_write_v(const char * name, const char * tag, enum log_level_id level, const char * message, void * args[]);
+LOG_API int log_write_impl(const char * name, const char * tag, size_t line, const char * func, const char * file, enum log_level_id level, const char * message);
 
-LOG_API int log_write_va(const char * name, const char * tag, enum log_level_id level, const char * message, ...);
+LOG_API int log_write_impl_v(const char * name, const char * tag, size_t line, const char * func, const char * file, enum log_level_id level, const char * message, void * args[]);
+
+LOG_API int log_write_impl_va(const char * name, const char * tag, size_t line, const char * func, const char * file, enum log_level_id level, const char * message, ...);
 
 LOG_API int log_clear(const char * name);
 

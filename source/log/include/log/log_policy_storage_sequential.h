@@ -21,7 +21,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-LOG_API log_policy_interface log_policy_storage_sequential(void);
+LOG_API const log_policy_interface log_policy_storage_sequential(void);
 
 #ifdef __cplusplus
 }

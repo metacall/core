@@ -45,7 +45,7 @@ LOG_NO_EXPORT static int log_policy_storage_batch_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-log_policy_interface log_policy_storage_batch()
+const log_policy_interface log_policy_storage_batch()
 {
 	static struct log_policy_storage_impl_type log_policy_storage_batch_impl =
 	{
@@ -94,7 +94,7 @@ static int log_policy_storage_batch_create(log_policy policy, const log_policy_c
 		return 1;
 	}
 
-	log_policy_instantiate(policy, batch_data);
+	log_policy_instantiate(policy, batch_data, LOG_POLICY_STORAGE_BATCH);
 
 	return 0;
 }

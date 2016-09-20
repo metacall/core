@@ -23,7 +23,7 @@ LOG_NO_EXPORT static int log_policy_storage_sequential_destroy(log_policy policy
 
 /* -- Methods -- */
 
-log_policy_interface log_policy_storage_sequential()
+const log_policy_interface log_policy_storage_sequential()
 {
 	static struct log_policy_storage_impl_type log_policy_storage_sequential_impl =
 	{
@@ -43,8 +43,9 @@ log_policy_interface log_policy_storage_sequential()
 
 static int log_policy_storage_sequential_create(log_policy policy, const log_policy_ctor ctor)
 {
-	(void)policy;
 	(void)ctor;
+
+	log_policy_instantiate(policy, NULL, LOG_POLICY_STORAGE_SEQUENTIAL);
 
 	return 0;
 }
@@ -70,7 +71,7 @@ static int log_policy_storage_sequential_flush(log_policy policy)
 
 static int log_policy_storage_sequential_destroy(log_policy policy)
 {
-
+	(void)policy;
 
 	return 0;
 }
