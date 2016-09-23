@@ -22,6 +22,7 @@ extern "C" {
 #include <stdlib.h>
 
 /* -- Definitions -- */
+
 enum log_aspect_id
 {
 	LOG_ASPECT_SCHEDULE	= 0x00,
@@ -65,7 +66,7 @@ typedef log_aspect_data (*log_aspect_impl_create)(log_aspect, const log_aspect_c
 
 typedef int (*log_aspect_impl_destroy)(log_aspect);
 
-typedef const log_aspect_interface (*log_aspect_singleton)(void);
+typedef log_aspect_interface (*log_aspect_singleton)(void);
 
 /* -- Member Data -- */
 
@@ -85,6 +86,10 @@ LOG_API int log_aspect_reserve(log_aspect aspect, size_t size);
 LOG_API void log_aspect_restrict(log_aspect aspect, log_aspect_restrict_cb restrict_cb);
 
 LOG_API log_aspect_data log_aspect_instance(log_aspect aspect);
+
+LOG_API log_aspect_interface log_aspect_behavior(log_aspect aspect);
+
+LOG_API log_aspect_impl log_aspect_derived(log_aspect aspect);
 
 LOG_API int log_aspect_attach(log_aspect aspect, log_policy policy);
 

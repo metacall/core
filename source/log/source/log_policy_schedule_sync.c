@@ -23,7 +23,7 @@ LOG_NO_EXPORT static int log_policy_schedule_sync_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-const log_policy_interface log_policy_schedule_sync()
+log_policy_interface log_policy_schedule_sync_interface()
 {
 	static struct log_policy_schedule_impl_type log_policy_schedule_sync_impl =
 	{

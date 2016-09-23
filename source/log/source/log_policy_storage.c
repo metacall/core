@@ -14,13 +14,36 @@
 
 /* -- Methods -- */
 
-const log_policy_interface log_policy_storage(enum log_policy_storage_id policy_storage_id)
+log_policy_interface log_policy_storage(const log_policy_id policy_storage_id)
 {
 	static const log_policy_singleton policy_storage_singleton[LOG_POLICY_STORAGE_SIZE] =
 	{
-		&log_policy_storage_sequential,
-		&log_policy_storage_batch
+		&log_policy_storage_batch_interface,
+		&log_policy_storage_sequential_interface
 	};
 
 	return policy_storage_singleton[policy_storage_id]();
+}
+
+log_policy log_policy_storage_batch(size_t size)
+{
+	log_policy policy;
+
+	struct log_policy_storage_batch_ctor_type batch_ctor;
+
+	batch_ctor.size = size;
+
+	policy = log_policy_create(LOG_ASPECT_STORAGE, log_policy_stream(LOG_POLICY_STORAGE_BATCH), &batch_ctor);
+
+	if (policy == NULL)
+	{
+		return NULL;
+	}
+
+	return policy;
+}
+
+log_policy log_policy_storage_sequential(void)
+{
+	return log_policy_create(LOG_ASPECT_STORAGE, log_policy_stream(LOG_POLICY_STORAGE_SEQUENTIAL), NULL);
 }

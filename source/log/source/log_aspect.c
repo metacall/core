@@ -10,14 +10,15 @@
 
 #include <log/log_aspect.h>
 #include <log/log_policy.h>
+#include <log/log_valid_size.h>
 
 #include <string.h>
 
 /* -- Definitions -- */
 
-#define LOG_ASPECT_POLICIES_MIN_SIZE		0x01
-#define LOG_ASPECT_POLICIES_MAX_SIZE		0xFF
-#define LOG_ASPECT_POLICIES_DEFAULT_SIZE	0x10
+#define LOG_ASPECT_POLICIES_MIN_SIZE		((size_t)0x00000001)
+#define LOG_ASPECT_POLICIES_DEFAULT_SIZE	((size_t)0x00000010)
+#define LOG_ASPECT_POLICIES_MAX_SIZE		((size_t)0x00000100)
 
 /* -- Member Data -- */
 
@@ -30,27 +31,6 @@ struct log_aspect_type
 	log_aspect_data data;
 	log_aspect_interface iface;
 };
-
-/* -- Private Methods -- */
-
-static size_t log_aspect_valid_size(size_t size)
-{
-	/* Calculate next power of two */
-	if (size > 0)
-	{
-		--size;
-
-		size |= size >> 0x01;
-		size |= size >> 0x02;
-		size |= size >> 0x04;
-		size |= size >> 0x08;
-		size |= size >> 0x10;
-
-		++size;
-	}
-
-	return size;
-}
 
 /* -- Methods -- */
 
@@ -97,8 +77,8 @@ log_aspect log_aspect_create(const log_aspect_interface iface, const log_aspect_
 
 int log_aspect_reserve(log_aspect aspect, size_t size)
 {
-	size = log_aspect_valid_size(size);
-	
+	size = log_valid_size(size);
+
 	if (size < LOG_ASPECT_POLICIES_MIN_SIZE || size > LOG_ASPECT_POLICIES_MAX_SIZE)
 	{
 		return 1;
@@ -130,6 +110,16 @@ void log_aspect_restrict(log_aspect aspect, log_aspect_restrict_cb restrict_cb)
 log_aspect_data log_aspect_instance(log_aspect aspect)
 {
 	return aspect->data;
+}
+
+log_aspect_interface log_aspect_behavior(log_aspect aspect)
+{
+	return aspect->iface;
+}
+
+log_aspect_impl log_aspect_derived(log_aspect aspect)
+{
+	return aspect->iface->impl;
 }
 
 int log_aspect_attach(log_aspect aspect, log_policy policy)
@@ -169,7 +159,11 @@ int log_aspect_attach(log_aspect aspect, log_policy policy)
 		aspect->size = size;
 	}
 
-	aspect->policies[aspect->count++] = policy;
+	log_policy_classify(policy, aspect);
+
+	aspect->policies[aspect->count] = policy;
+
+	++aspect->count;
 
 	return 0;
 }
@@ -217,7 +211,7 @@ int log_aspect_destroy(log_aspect aspect)
 	if (aspect != NULL)
 	{
 		int result = aspect->iface->destroy(aspect);
-		
+
 		if (aspect->policies)
 		{
 			size_t iterator;
@@ -234,7 +228,6 @@ int log_aspect_destroy(log_aspect aspect)
 
 		return result;
 	}
-
 
 	return 0;
 }

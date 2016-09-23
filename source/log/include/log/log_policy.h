@@ -13,6 +13,8 @@
 
 #include <log/log_api.h>
 
+#include <log/log_aspect.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,7 +53,7 @@ typedef int (*log_policy_interface_destroy)(log_policy);
 
 typedef struct log_policy_interface_type * log_policy_interface;
 
-typedef const log_policy_interface (*log_policy_singleton)(void);
+typedef log_policy_interface (*log_policy_singleton)(void);
 
 /* -- Member Data -- */
 
@@ -64,15 +66,21 @@ struct log_policy_interface_type
 
 /* -- Methods -- */
 
-LOG_API log_policy log_policy_create(const log_policy_interface iface, const log_policy_ctor ctor);
+LOG_API log_policy log_policy_create(enum log_aspect_id aspect_id, const log_policy_interface iface, const log_policy_ctor ctor);
 
 LOG_API void log_policy_instantiate(log_policy policy, log_policy_data instance, const log_policy_id id);
 
+LOG_API void log_policy_classify(log_policy policy, log_aspect aspect);
+
 LOG_API log_aspect log_policy_aspect(log_policy policy);
+
+LOG_API enum log_aspect_id log_policy_aspect_id(log_policy policy);
 
 LOG_API log_policy_data log_policy_instance(log_policy policy);
 
-LOG_API log_policy_impl log_policy_behavior(log_policy policy);
+LOG_API log_policy_interface log_policy_behavior(log_policy policy);
+
+LOG_API log_policy_impl log_policy_derived(log_policy policy);
 
 LOG_API int log_policy_destroy(log_policy policy);
 

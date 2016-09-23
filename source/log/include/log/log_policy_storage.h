@@ -24,8 +24,8 @@ extern "C" {
 
 enum log_policy_storage_id
 {
-	LOG_POLICY_STORAGE_SEQUENTIAL	= 0x00,
-	LOG_POLICY_STORAGE_BATCH		= 0x01,
+	LOG_POLICY_STORAGE_BATCH		= 0x00,
+	LOG_POLICY_STORAGE_SEQUENTIAL	= 0x01,
 
 	LOG_POLICY_STORAGE_SIZE
 };
@@ -45,7 +45,11 @@ struct log_policy_storage_impl_type
 
 /* -- Methods -- */
 
-LOG_API const log_policy_interface log_policy_storage(enum log_policy_storage_id policy_storage_id);
+LOG_API log_policy_interface log_policy_storage(const log_policy_id policy_storage_id);
+
+LOG_API log_policy log_policy_storage_batch(size_t size);
+
+LOG_API log_policy log_policy_storage_sequential(void);
 
 #ifdef __cplusplus
 }

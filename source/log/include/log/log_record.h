@@ -13,6 +13,8 @@
 
 #include <log/log_api.h>
 
+#include <log/log_level.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -36,31 +38,6 @@ extern "C" {
 
 #	define log_record_function() __unknown_func__
 #endif
-
-/*
-#define log_record_create(record, level, message) \
-	do \
-	{ \
-		const struct log_record_ctor_type record_ctor = \
-		{ \
-			__LINE__, log_record_function(), __FILE__, level, message \
-		}; \
-		\
-		record = log_record_create_impl(&record_ctor); \
-	} while (0)
-
-
-#define log_record_initialize(record, level, message) \
-	do \
-	{ \
-		const struct log_record_ctor_type record_ctor = \
-		{ \
-			__LINE__, log_record_function(), __FILE__, level, message \
-		}; \
-		\
-		record = log_record_initialize_impl(record, &record_ctor); \
-	} while (0)
-*/
 
 /* -- Forward Declarations -- */
 
@@ -87,7 +64,7 @@ struct log_record_ctor_type
 
 /* -- Protected Methods -- */
 
-LOG_NO_EXPORT const size_t log_record_size(void);
+LOG_NO_EXPORT size_t log_record_size(void);
 
 /* -- Methods -- */
 
@@ -95,17 +72,17 @@ LOG_API log_record log_record_create(const log_record_ctor record_ctor);
 
 LOG_API log_record log_record_initialize(log_record record, const log_record_ctor record_ctor);
 
-LOG_API const time_t * const log_record_time(log_record record);
+LOG_API const time_t * log_record_time(log_record record);
 
-LOG_API const size_t log_record_thread_id(log_record record);
+LOG_API size_t log_record_thread_id(log_record record);
 
-LOG_API const size_t log_record_line(log_record record);
+LOG_API size_t log_record_line(log_record record);
 
-LOG_API const char * const log_record_func(log_record record);
+LOG_API const char * log_record_func(log_record record);
 
-LOG_API const char * const log_record_file(log_record record);
+LOG_API const char * log_record_file(log_record record);
 
-LOG_API const enum log_level_id log_record_level(log_record record);
+LOG_API enum log_level_id log_record_level(log_record record);
 
 LOG_API const char * log_record_message(log_record record);
 

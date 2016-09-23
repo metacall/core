@@ -38,7 +38,7 @@ LOG_NO_EXPORT static int log_policy_stream_file_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-const log_policy_interface log_policy_stream_file()
+log_policy_interface log_policy_stream_file_interface()
 {
 	static struct log_policy_stream_impl_type log_policy_stream_file_impl =
 	{

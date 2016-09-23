@@ -32,7 +32,7 @@
 
 /* -- Methods -- */
 
-const size_t log_thread_id()
+size_t log_thread_id()
 {
 	#if defined(_WIN32)
 		return GetCurrentThreadId();

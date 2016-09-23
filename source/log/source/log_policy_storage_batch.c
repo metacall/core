@@ -13,8 +13,8 @@
 
 /* -- Definitions -- */
 
-#define LOG_POLICY_STORAGE_BATCH_MIN_SIZE	0x0200
-#define LOG_POLICY_STORAGE_BATCH_MAX_SIZE	0xFFFF
+#define LOG_POLICY_STORAGE_BATCH_MIN_SIZE	((size_t)0x00000200)
+#define LOG_POLICY_STORAGE_BATCH_MAX_SIZE	((size_t)0x00010000)
 
 /* -- Forward Declarations -- */
 
@@ -45,7 +45,7 @@ LOG_NO_EXPORT static int log_policy_storage_batch_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-const log_policy_interface log_policy_storage_batch()
+log_policy_interface log_policy_storage_batch_interface()
 {
 	static struct log_policy_storage_impl_type log_policy_storage_batch_impl =
 	{

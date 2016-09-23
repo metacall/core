@@ -64,7 +64,7 @@ log_handle log_handle_initialize(log_handle handle)
 	return handle;
 }
 
-const log_record log_handle_get(log_handle handle, const size_t record_id)
+log_record log_handle_get(log_handle handle, const size_t record_id)
 {
 	if (record_id < handle->count)
 	{
@@ -76,7 +76,7 @@ const log_record log_handle_get(log_handle handle, const size_t record_id)
 	return NULL;
 }
 
-const log_record log_handle_set(log_handle handle, const size_t record_id, const log_record_ctor record_ctor)
+log_record log_handle_set(log_handle handle, const size_t record_id, const log_record_ctor record_ctor)
 {
 	if (record_id < handle->count)
 	{
@@ -88,7 +88,7 @@ const log_record log_handle_set(log_handle handle, const size_t record_id, const
 	return NULL;
 }
 
-const log_record log_handle_push(log_handle handle, const log_record_ctor record_ctor)
+log_record log_handle_push(log_handle handle, const log_record_ctor record_ctor)
 {
 	if ((handle->count + 1) == handle->size)
 	{
@@ -118,7 +118,7 @@ const log_record log_handle_push(log_handle handle, const log_record_ctor record
 	return log_handle_set(handle, 0, record_ctor);
 }
 
-const log_record log_handle_pop(log_handle handle)
+log_record log_handle_pop(log_handle handle)
 {
 	if (handle->count > 0)
 	{
@@ -146,12 +146,12 @@ const log_record log_handle_pop(log_handle handle)
 	return NULL;
 }
 
-const size_t log_handle_count(log_handle handle)
+size_t log_handle_count(log_handle handle)
 {
 	return handle->count;
 }
 
-const size_t log_handle_size(log_handle handle)
+size_t log_handle_size(log_handle handle)
 {
 	return handle->size;
 }

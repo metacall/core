@@ -23,7 +23,7 @@ LOG_NO_EXPORT static int log_policy_storage_sequential_destroy(log_policy policy
 
 /* -- Methods -- */
 
-const log_policy_interface log_policy_storage_sequential()
+log_policy_interface log_policy_storage_sequential_interface()
 {
 	static struct log_policy_storage_impl_type log_policy_storage_sequential_impl =
 	{

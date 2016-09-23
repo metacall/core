@@ -29,7 +29,8 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
     ${include_path}/log.h
-    ${include_path}/log_singleton.h
+    ${include_path}/log_valid_size.h
+    ${include_path}/log_map.h
     ${include_path}/log_level.h
     ${include_path}/log_thread_id.h
     ${include_path}/log_record.h
@@ -37,25 +38,31 @@ set(headers
     ${include_path}/log_policy.h
     ${include_path}/log_aspect.h
     ${include_path}/log_impl.h
+    ${include_path}/log_singleton.h
 
     ${include_path}/log_policy_schedule.h
-    ${include_path}/log_policy_schedule_sync.h
     ${include_path}/log_policy_schedule_async.h
-
-    ${include_path}/log_policy_stream.h
-    ${include_path}/log_policy_stream_stdio.h
-    ${include_path}/log_policy_stream_file.h
-    ${include_path}/log_policy_stream_syslog.h
-    ${include_path}/log_policy_stream_socket.h
+    ${include_path}/log_policy_schedule_sync.h
 
     ${include_path}/log_policy_storage.h
-    ${include_path}/log_policy_storage_sequential.h
     ${include_path}/log_policy_storage_batch.h
+    ${include_path}/log_policy_storage_sequential.h
+
+    ${include_path}/log_policy_stream.h
+    ${include_path}/log_policy_stream_file.h
+    ${include_path}/log_policy_stream_socket.h
+    ${include_path}/log_policy_stream_stdio.h
+    ${include_path}/log_policy_stream_syslog.h
+
+    ${include_path}/log_aspect_schedule.h
+    ${include_path}/log_aspect_stream.h
+    #${include_path}/log_aspect_storage.h
 )
 
 set(sources
     ${source_path}/log.c
-    ${source_path}/log_singleton.c
+    ${source_path}/log_valid_size.c
+    ${source_path}/log_map.c
     ${source_path}/log_level.c
     ${source_path}/log_thread_id.c
     ${source_path}/log_record.c
@@ -63,20 +70,25 @@ set(sources
     ${source_path}/log_policy.c
     ${source_path}/log_aspect.c
     ${source_path}/log_impl.c
+    ${source_path}/log_singleton.c
 
     ${source_path}/log_policy_schedule.c
-    ${source_path}/log_policy_schedule_sync.c
     ${source_path}/log_policy_schedule_async.c
-
-    ${source_path}/log_policy_stream.c
-    ${source_path}/log_policy_stream_stdio.c
-    ${source_path}/log_policy_stream_file.c
-    ${source_path}/log_policy_stream_syslog.c
-    ${source_path}/log_policy_stream_socket.c
+    ${source_path}/log_policy_schedule_sync.c
 
     ${source_path}/log_policy_storage.c
-    ${source_path}/log_policy_storage_sequential.c
     ${source_path}/log_policy_storage_batch.c
+    ${source_path}/log_policy_storage_sequential.c
+
+    ${source_path}/log_policy_stream.c
+    ${source_path}/log_policy_stream_file.c
+    ${source_path}/log_policy_stream_socket.c
+    ${source_path}/log_policy_stream_stdio.c
+    ${source_path}/log_policy_stream_syslog.c
+
+    ${source_path}/log_aspect_schedule.c
+    ${source_path}/log_aspect_stream.c
+    #${source_path}/log_aspect_storage.c
 )
 
 # Group source files

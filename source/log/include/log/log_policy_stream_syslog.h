@@ -40,7 +40,7 @@ struct log_policy_stream_syslog_ctor_type
 
 /* -- Methods -- */
 
-LOG_API const log_policy_interface log_policy_stream_syslog(void);
+LOG_API log_policy_interface log_policy_stream_syslog_interface(void);
 
 #ifdef __cplusplus
 }

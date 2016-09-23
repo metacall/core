@@ -27,7 +27,7 @@ struct log_record_type
 
 /* -- Protected Methods -- */
 
-const size_t log_record_size()
+size_t log_record_size()
 {
 	return sizeof(struct log_record_type);
 }
@@ -67,32 +67,32 @@ log_record log_record_initialize(log_record record, const log_record_ctor record
 	return NULL;
 }
 
-const time_t * const log_record_time(log_record record)
+const time_t * log_record_time(log_record record)
 {
 	return &record->time;
 }
 
-const size_t log_record_thread_id(log_record record)
+size_t log_record_thread_id(log_record record)
 {
 	return record->thread_id;
 }
 
-const size_t log_record_line(log_record record)
+size_t log_record_line(log_record record)
 {
 	return record->line;
 }
 
-const char * const log_record_func(log_record record)
+const char * log_record_func(log_record record)
 {
 	return record->func;
 }
 
-const char * const log_record_file(log_record record)
+const char * log_record_file(log_record record)
 {
 	return record->file;
 }
 
-const enum log_level_id log_record_level(log_record record)
+enum log_level_id log_record_level(log_record record)
 {
 	return record->level;
 }

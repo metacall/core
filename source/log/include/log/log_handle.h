@@ -37,17 +37,17 @@ LOG_API log_handle log_handle_create(void);
 
 LOG_API log_handle log_handle_initialize(log_handle handle);
 
-LOG_API const log_record log_handle_get(log_handle handle, const size_t record_id);
+LOG_API log_record log_handle_get(log_handle handle, const size_t record_id);
 
-LOG_API const log_record log_handle_set(log_handle handle, const size_t record_id, const log_record_ctor record_ctor);
+LOG_API log_record log_handle_set(log_handle handle, const size_t record_id, const log_record_ctor record_ctor);
 
-LOG_API const log_record log_handle_push(log_handle handle, const log_record_ctor record_ctor);
+LOG_API log_record log_handle_push(log_handle handle, const log_record_ctor record_ctor);
 
-LOG_API const log_record log_handle_pop(log_handle handle);
+LOG_API log_record log_handle_pop(log_handle handle);
 
-LOG_API const size_t log_handle_count(log_handle handle);
+LOG_API size_t log_handle_count(log_handle handle);
 
-LOG_API const size_t log_handle_size(log_handle handle);
+LOG_API size_t log_handle_size(log_handle handle);
 
 LOG_API int log_handle_clear(log_handle handle);
 

@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef LOG_THREAD_ID_H
-#define LOG_THREAD_ID_H 1
+#ifndef LOG_VALID_SIZE_H
+#define LOG_VALID_SIZE_H 1
 
 /* -- Headers -- */
 
@@ -23,10 +23,10 @@ extern "C" {
 
 /* -- Methods -- */
 
-LOG_NO_EXPORT size_t log_thread_id(void);
+LOG_API size_t log_valid_size(size_t size);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LOG_THREAD_ID_H */
+#endif /* LOG_VALID_SIZE_H */

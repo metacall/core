@@ -14,6 +14,7 @@
 #include <log/log_api.h>
 
 #include <log/log_record.h>
+#include <log/log_aspect.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -29,9 +30,15 @@ typedef struct log_impl_type * log_impl;
 
 /* -- Methods -- */
 
+LOG_API log_aspect_interface log_impl_aspect_interface(enum log_aspect_id aspect_id);
+
 LOG_API log_impl log_impl_create(const char * name);
 
+LOG_API void log_impl_define(log_impl impl, log_aspect aspect, enum log_aspect_id aspect_id);
+
 LOG_API const char * log_impl_name(log_impl impl);
+
+LOG_API log_aspect log_impl_aspect(log_impl impl, enum log_aspect_id aspect_id);
 
 LOG_API int log_impl_write(log_impl impl, const char * tag, const log_record_ctor record_ctor);
 

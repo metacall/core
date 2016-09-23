@@ -16,6 +16,7 @@
 struct log_policy_type
 {
 	log_aspect aspect;
+	enum log_aspect_id aspect_id;
 	log_policy_data data;
 	log_policy_interface iface;
 	log_policy_id id;
@@ -23,7 +24,7 @@ struct log_policy_type
 
 /* -- Methods -- */
 
-log_policy log_policy_create(const log_policy_interface iface, const log_policy_ctor ctor)
+log_policy log_policy_create(enum log_aspect_id aspect_id, const log_policy_interface iface, const log_policy_ctor ctor)
 {
 	if (iface != NULL)
 	{
@@ -35,6 +36,7 @@ log_policy log_policy_create(const log_policy_interface iface, const log_policy_
 		}
 
 		policy->aspect = NULL;
+		policy->aspect_id = aspect_id;
 		policy->data = NULL;
 		policy->iface = iface;
 		policy->id = 0;
@@ -58,9 +60,19 @@ void log_policy_instantiate(log_policy policy, log_policy_data instance, const l
 	policy->id = id;
 }
 
+void log_policy_classify(log_policy policy, log_aspect aspect)
+{
+	policy->aspect = aspect;
+}
+
 log_aspect log_policy_aspect(log_policy policy)
 {
 	return policy->aspect;
+}
+
+enum log_aspect_id log_policy_aspect_id(log_policy policy)
+{
+	return policy->aspect_id;
 }
 
 log_policy_data log_policy_instance(log_policy policy)
@@ -68,9 +80,14 @@ log_policy_data log_policy_instance(log_policy policy)
 	return policy->data;
 }
 
-log_policy_impl log_policy_behavior(log_policy policy)
+log_policy_interface log_policy_behavior(log_policy policy)
 {
 	return policy->iface;
+}
+
+log_policy_impl log_policy_derived(log_policy policy)
+{
+	return policy->iface->impl;
 }
 
 int log_policy_destroy(log_policy policy)

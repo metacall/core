@@ -36,7 +36,7 @@ struct log_policy_storage_batch_ctor_type
 
 /* -- Methods -- */
 
-LOG_API const log_policy_interface log_policy_storage_batch(void);
+LOG_API log_policy_interface log_policy_storage_batch_interface(void);
 
 #ifdef __cplusplus
 }
