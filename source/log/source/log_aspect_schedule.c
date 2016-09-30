@@ -11,17 +11,29 @@
 #include <log/log_aspect_schedule.h>
 #include <log/log_policy_schedule.h>
 
+/* -- Forward Declarations -- */
+
+struct log_aspect_schedule_notify_data_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_aspect_schedule_notify_data_type * log_aspect_schedule_notify_data;
+
+/* -- Member Data -- */
+
+struct log_aspect_schedule_notify_data_type
+{
+	log_aspect_schedule_execute_cb callback;
+	log_aspect_schedule_data data;
+};
+
 /* -- Private Methods -- */
 
 LOG_NO_EXPORT static log_aspect_data log_aspect_schedule_create(log_aspect aspect, const log_aspect_ctor ctor);
 
-LOG_NO_EXPORT static int log_aspect_schedule_impl_lock_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+LOG_NO_EXPORT static int log_aspect_schedule_impl_execute_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_schedule_impl_lock(log_aspect aspect);
-
-LOG_NO_EXPORT static int log_aspect_schedule_impl_unlock_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
-
-LOG_NO_EXPORT static int log_aspect_schedule_impl_unlock(log_aspect aspect);
+LOG_NO_EXPORT static int log_aspect_schedule_impl_execute(log_aspect aspect, log_aspect_schedule_execute_cb callback, log_aspect_schedule_data data);
 
 LOG_NO_EXPORT static int log_aspect_schedule_destroy(log_aspect aspect);
 
@@ -31,8 +43,7 @@ log_aspect_interface log_aspect_schedule_interface()
 {
 	static struct log_aspect_schedule_impl_type log_aspect_schedule_impl =
 	{
-		&log_aspect_schedule_impl_lock,
-		&log_aspect_schedule_impl_unlock
+		&log_aspect_schedule_impl_execute
 	};
 
 	static struct log_aspect_interface_type aspect_interface_schedule =
@@ -54,34 +65,25 @@ static log_aspect_data log_aspect_schedule_create(log_aspect aspect, const log_a
 	return NULL;
 }
 
-static int log_aspect_schedule_impl_lock_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
+static int log_aspect_schedule_impl_execute_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
 {
+	log_aspect_schedule_notify_data args = notify_data;
+
 	log_policy_schedule_impl schedule_impl = log_policy_derived(policy);
 
 	(void)aspect;
-	(void)notify_data;
 
-	return schedule_impl->lock(policy);
+	return schedule_impl->execute(policy, args->callback, args->data);
 }
 
-static int log_aspect_schedule_impl_lock(log_aspect aspect)
+static int log_aspect_schedule_impl_execute(log_aspect aspect, log_aspect_schedule_execute_cb callback, log_aspect_schedule_data data)
 {
-	return log_aspect_notify_all(aspect, &log_aspect_schedule_impl_lock_cb, NULL);
-}
+	struct log_aspect_schedule_notify_data_type notify_data;
 
-static int log_aspect_schedule_impl_unlock_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
-{
-	log_policy_schedule_impl schedule_impl = log_policy_derived(policy);
+	notify_data.callback = callback;
+	notify_data.data = data;
 
-	(void)aspect;
-	(void)notify_data;
-
-	return schedule_impl->unlock(policy);
-}
-
-static int log_aspect_schedule_impl_unlock(log_aspect aspect)
-{
-	return log_aspect_notify_all(aspect, &log_aspect_schedule_impl_unlock_cb, NULL);
+	return log_aspect_notify_first(aspect, &log_aspect_schedule_impl_execute_cb, &notify_data);
 }
 
 static int log_aspect_schedule_destroy(log_aspect aspect)

@@ -252,7 +252,7 @@ const void * log_map_get(log_map map, const char * key)
 
 const void * log_map_remove(log_map map, const char * key)
 {
-	/* TODO: Remove log impl from map and clear bucket */
+	/* TODO: remove log impl from map and clear bucket */
 	(void)map;
 	(void)key;
 
@@ -261,7 +261,7 @@ const void * log_map_remove(log_map map, const char * key)
 
 int log_map_clear(log_map map)
 {
-	/* TODO: Clear all buckets and blocks */
+	/* TODO: clear all buckets and blocks */
 	(void)map;
 
 	return 0;

@@ -14,6 +14,7 @@
 #include <log/log_api.h>
 
 #include <log/log_aspect.h>
+#include <log/log_record.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,7 +28,7 @@ struct log_aspect_stream_impl_type;
 
 typedef struct log_aspect_stream_impl_type * log_aspect_stream_impl;
 
-typedef int (*log_aspect_stream_write)(log_aspect, const void *, const size_t);
+typedef int (*log_aspect_stream_write)(log_aspect, const log_record_ctor);
 typedef int (*log_aspect_stream_flush)(log_aspect);
 
 /* -- Member Data -- */

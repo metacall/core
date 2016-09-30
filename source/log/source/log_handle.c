@@ -173,7 +173,7 @@ int log_handle_clear(log_handle handle)
 
 		handle->buffer = buffer;
 
-		handle->size = LOG_HANDLE_RECORD_SIZE_DEFAULT;
+		handle->size = default_size;
 	}
 
 	return 0;

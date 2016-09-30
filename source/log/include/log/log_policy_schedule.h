@@ -35,10 +35,14 @@ struct log_policy_schedule_impl_type;
 
 /* -- Type Definitions -- */
 
+typedef void * log_policy_schedule_data;
+
 typedef struct log_policy_schedule_impl_type * log_policy_schedule_impl;
 
+typedef int (*log_policy_schedule_execute_cb)(log_policy_schedule_data);
 
 typedef int (*log_policy_schedule_lock)(log_policy);
+typedef int (*log_policy_schedule_execute)(log_policy, log_policy_schedule_execute_cb, log_policy_schedule_data);
 typedef int (*log_policy_schedule_unlock)(log_policy);
 
 /* -- Member Data -- */
@@ -46,6 +50,7 @@ typedef int (*log_policy_schedule_unlock)(log_policy);
 struct log_policy_schedule_impl_type
 {
 	log_policy_schedule_lock lock;
+	log_policy_schedule_execute execute;
 	log_policy_schedule_unlock unlock;
 };
 

@@ -11,6 +11,7 @@
 #include <log/log_aspect.h>
 #include <log/log_policy.h>
 #include <log/log_valid_size.h>
+#include <log/log_impl.h>
 
 #include <string.h>
 
@@ -24,6 +25,7 @@
 
 struct log_aspect_type
 {
+	log_impl impl;
 	log_aspect_restrict_cb restrict_cb;
 	log_policy * policies;
 	size_t count;
@@ -34,7 +36,7 @@ struct log_aspect_type
 
 /* -- Methods -- */
 
-log_aspect log_aspect_create(const log_aspect_interface iface, const log_aspect_ctor ctor)
+log_aspect log_aspect_create(log_impl impl, const log_aspect_interface iface, const log_aspect_ctor ctor)
 {
 	if (iface != NULL)
 	{
@@ -45,6 +47,7 @@ log_aspect log_aspect_create(const log_aspect_interface iface, const log_aspect_
 			return NULL;
 		}
 
+		aspect->impl = impl;
 		aspect->restrict_cb = NULL;
 		aspect->policies = NULL;
 		aspect->count = 0;
@@ -117,6 +120,11 @@ log_aspect_interface log_aspect_behavior(log_aspect aspect)
 	return aspect->iface;
 }
 
+log_impl log_aspect_parent(log_aspect aspect)
+{
+	return aspect->impl;
+}
+
 log_aspect_impl log_aspect_derived(log_aspect aspect)
 {
 	return aspect->iface->impl;
@@ -166,6 +174,24 @@ int log_aspect_attach(log_aspect aspect, log_policy policy)
 	++aspect->count;
 
 	return 0;
+}
+
+int log_aspect_notify_first(log_aspect aspect, log_aspect_notify_cb notify_cb, log_aspect_notify_data notify_data)
+{
+	size_t iterator;
+
+	for (iterator = 0; iterator < aspect->count; ++iterator)
+	{
+		if (aspect->policies[iterator] != NULL)
+		{
+			if (notify_cb(aspect, aspect->policies[iterator], notify_data) == 0)
+			{
+				return 0;
+			}
+		}
+	}
+
+	return 1;
 }
 
 int log_aspect_notify_all(log_aspect aspect, log_aspect_notify_cb notify_cb, log_aspect_notify_data notify_data)

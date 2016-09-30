@@ -30,7 +30,13 @@ enum log_policy_storage_id
 	LOG_POLICY_STORAGE_SIZE
 };
 
+/* -- Forward Declarations -- */
+
+struct log_policy_storage_impl_type;
+
 /* -- Type Definitions -- */
+
+typedef struct log_policy_storage_impl_type * log_policy_storage_impl;
 
 typedef int (*log_policy_storage_append)(log_policy, const log_record);
 typedef int (*log_policy_storage_flush)(log_policy);

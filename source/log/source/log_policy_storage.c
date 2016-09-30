@@ -33,7 +33,7 @@ log_policy log_policy_storage_batch(size_t size)
 
 	batch_ctor.size = size;
 
-	policy = log_policy_create(LOG_ASPECT_STORAGE, log_policy_stream(LOG_POLICY_STORAGE_BATCH), &batch_ctor);
+	policy = log_policy_create(LOG_ASPECT_STORAGE, log_policy_storage(LOG_POLICY_STORAGE_BATCH), &batch_ctor);
 
 	if (policy == NULL)
 	{
@@ -45,5 +45,5 @@ log_policy log_policy_storage_batch(size_t size)
 
 log_policy log_policy_storage_sequential(void)
 {
-	return log_policy_create(LOG_ASPECT_STORAGE, log_policy_stream(LOG_POLICY_STORAGE_SEQUENTIAL), NULL);
+	return log_policy_create(LOG_ASPECT_STORAGE, log_policy_storage(LOG_POLICY_STORAGE_SEQUENTIAL), NULL);
 }

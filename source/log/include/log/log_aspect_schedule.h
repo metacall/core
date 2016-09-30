@@ -25,17 +25,19 @@ struct log_aspect_schedule_impl_type;
 
 /* -- Type Definitions -- */
 
+typedef void * log_aspect_schedule_data;
+
 typedef struct log_aspect_schedule_impl_type * log_aspect_schedule_impl;
 
-typedef int (*log_aspect_schedule_lock)(log_aspect);
-typedef int (*log_aspect_schedule_unlock)(log_aspect);
+typedef int (*log_aspect_schedule_execute_cb)(log_aspect_schedule_data);
+
+typedef int (*log_aspect_schedule_execute)(log_aspect, log_aspect_schedule_execute_cb, log_aspect_schedule_data);
 
 /* -- Member Data -- */
 
 struct log_aspect_schedule_impl_type
 {
-	log_aspect_schedule_lock lock;
-	log_aspect_schedule_unlock unlock;
+	log_aspect_schedule_execute execute;
 };
 
 /* -- Methods -- */

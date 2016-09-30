@@ -15,7 +15,7 @@
 
 struct log_aspect_storage_append_type
 {
-	const log_record record;
+	log_record record;
 };
 
 /* -- Private Methods -- */
@@ -69,7 +69,7 @@ static int log_aspect_storage_impl_append_cb(log_aspect aspect, log_policy polic
 
 	(void)aspect;
 
-	return storage_impl->write(policy, append_args->record);
+	return storage_impl->append(policy, append_args->record);
 }
 
 static int log_aspect_storage_impl_append(log_aspect aspect, const log_record record)

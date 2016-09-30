@@ -23,7 +23,19 @@ struct log_record_type
 	const char * file;
 	enum log_level_id level;
 	const char * message;
+	void * data;
 };
+
+/* -- Private Methods -- */
+
+#if defined(LOG_RECORD_FUNCTION_UNKNOWN_IMPL)
+	const char * __log_record_unknown_function__()
+	{
+		static const char __log_record_unknown_function_impl__[] = "unknown_function";
+
+		return __log_record_unknown_function_impl__;
+	}
+#endif
 
 /* -- Protected Methods -- */
 
@@ -60,6 +72,7 @@ log_record log_record_initialize(log_record record, const log_record_ctor record
 		record->file = record_ctor->file;
 		record->level = record_ctor->level;
 		record->message = record_ctor->message;
+		record->data = record_ctor->data;
 
 		return record;
 	}
@@ -100,6 +113,11 @@ enum log_level_id log_record_level(log_record record)
 const char * log_record_message(log_record record)
 {
 	return record->message;
+}
+
+void * log_record_data(log_record record)
+{
+	return record->data;
 }
 
 int log_record_destroy(log_record record)

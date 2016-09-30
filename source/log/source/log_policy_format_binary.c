@@ -1,0 +1,120 @@
+/*
+*	Logger Library by Parra Studios
+*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A generic logger library providing application execution reports.
+*
+*/
+
+/* -- Headers -- */
+
+#include <log/log_policy_format_binary.h>
+#include <log/log_policy_format.h>
+
+/* -- Forward Declarations -- */
+
+struct log_policy_format_binary_data_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_policy_format_binary_data_type * log_policy_format_binary_data;
+
+/* -- Member Data -- */
+
+struct log_policy_format_binary_data_type
+{
+	void * todo;
+};
+
+/* -- Private Methods -- */
+
+LOG_NO_EXPORT static int log_policy_format_binary_create(log_policy policy, const log_policy_ctor ctor);
+
+LOG_NO_EXPORT static size_t log_policy_format_binary_size(log_policy policy, const log_record record);
+
+LOG_NO_EXPORT static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
+
+LOG_NO_EXPORT static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+
+LOG_NO_EXPORT static int log_policy_format_binary_destroy(log_policy policy);
+
+/* -- Methods -- */
+
+log_policy_interface log_policy_format_binary_interface()
+{
+	static struct log_policy_format_impl_type log_policy_format_binary_impl =
+	{
+		&log_policy_format_binary_size,
+		&log_policy_format_binary_serialize,
+		&log_policy_format_binary_deserialize
+	};
+
+	static struct log_policy_interface_type policy_interface_stream =
+	{
+		&log_policy_format_binary_create,
+		&log_policy_format_binary_impl,
+		&log_policy_format_binary_destroy
+	};
+
+	return &policy_interface_stream;
+}
+
+static int log_policy_format_binary_create(log_policy policy, const log_policy_ctor ctor)
+{
+	log_policy_format_binary_data binary_data = malloc(sizeof(struct log_policy_format_binary_data_type));
+
+	(void)ctor;
+
+	if (binary_data == NULL)
+	{
+		return 1;
+	}
+
+	log_policy_instantiate(policy, binary_data, LOG_POLICY_FORMAT_BINARY);
+
+	return 0;
+}
+
+static size_t log_policy_format_binary_size(log_policy policy, const log_record record)
+{
+	(void)policy;
+	(void)record;
+
+	return 0;
+}
+
+static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
+{
+	log_policy_format_binary_data binary_data = log_policy_instance(policy);
+
+	(void)binary_data;
+	(void)record;
+	(void)buffer;
+	(void)size;
+
+	return size;
+}
+
+static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size)
+{
+	log_policy_format_binary_data binary_data = log_policy_instance(policy);
+
+	(void)binary_data;
+	(void)record;
+	(void)buffer;
+	(void)size;
+
+	return size;
+}
+
+static int log_policy_format_binary_destroy(log_policy policy)
+{
+	log_policy_format_binary_data binary_data = log_policy_instance(policy);
+
+	if (binary_data != NULL)
+	{
+		free(binary_data);
+	}
+
+	return 0;
+}

@@ -18,9 +18,6 @@
 
 /* -- Methods -- */
 
-
-/* -- Methods -- */
-
 int log_create(const char * name)
 {
 	log_impl impl = log_impl_create(name);
@@ -52,9 +49,9 @@ int log_define(const char * name, log_policy policy)
 	{
 		log_aspect_interface aspect_iface = log_impl_aspect_interface(aspect_id);
 
-		/* TODO: Review aspect constructor */
+		/* TODO: review aspect constructor */
 
-		aspect = log_aspect_create(aspect_iface, NULL);
+		aspect = log_aspect_create(impl, aspect_iface, NULL);
 
 		if (aspect == NULL)
 		{
@@ -72,61 +69,30 @@ int log_define(const char * name, log_policy policy)
 	return 0;
 }
 
-
-int log_write_impl(const char * name, const char * tag, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message)
+int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...)
 {
 	log_impl impl = log_singleton_get(name);
 
 	struct log_record_ctor_type record_ctor;
-	
+
+	int result;
+
+	va_list variable_args;
+
+	va_start(variable_args, message);
+
 	record_ctor.line = line;
 	record_ctor.func = func;
 	record_ctor.file = file;
 	record_ctor.level = level;
 	record_ctor.message = message;
+	record_ctor.data = variable_args;
 
-	return log_impl_write(impl, tag, &record_ctor);
-}
+	result = log_impl_write(impl, &record_ctor);
 
-int log_write_impl_v(const char * name, const char * tag, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, void * args[])
-{
-	static const char unimplemented_str[] = "TODO: log_write_impl_v unimplemented.";
+	va_end(variable_args);
 
-	log_impl impl = log_singleton_get(name);
-
-	struct log_record_ctor_type record_ctor;
-
-	record_ctor.line = line;
-	record_ctor.func = func;
-	record_ctor.file = file;
-	record_ctor.level = level;
-	record_ctor.message = unimplemented_str /* message */;
-
-	/* TODO: Parse mesasge and apply arguments in a new string */
-	(void)message;
-	(void)args;
-
-	return log_impl_write(impl, tag, &record_ctor);
-}
-
-int log_write_impl_va(const char * name, const char * tag, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...)
-{
-	static const char unimplemented_str[] = "TODO: log_write_impl_va unimplemented.";
-
-	log_impl impl = log_singleton_get(name);
-
-	struct log_record_ctor_type record_ctor;
-
-	record_ctor.line = line;
-	record_ctor.func = func;
-	record_ctor.file = file;
-	record_ctor.level = level;
-	record_ctor.message = unimplemented_str /* message */;
-
-	/* TODO: sprintf() */
-	(void)message;
-
-	return log_impl_write(impl, tag, &record_ctor);
+	return result;
 }
 
 int log_clear(const char * name)

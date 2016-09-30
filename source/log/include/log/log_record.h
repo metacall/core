@@ -34,9 +34,8 @@ extern "C" {
 #elif defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERION__ >= 199901L)
 #	define log_record_function() __func__
 #else
-	static const char __unknown_func__[] = "unknown_function";
-
-#	define log_record_function() __unknown_func__
+#	define LOG_RECORD_FUNCTION_UNKNOWN_IMPL 1
+#	log_record_function() __log_record_unknown_function__()
 #endif
 
 /* -- Forward Declarations -- */
@@ -60,7 +59,14 @@ struct log_record_ctor_type
 	const char * file;
 	enum log_level_id level;
 	const char * message;
+	void * data;
 };
+
+/* -- Private Methods -- */
+
+#if defined(LOG_RECORD_FUNCTION_UNKNOWN_IMPL)
+	LOG_API const char * __log_record_unknown_function__(void);
+#endif
 
 /* -- Protected Methods -- */
 
@@ -85,6 +91,8 @@ LOG_API const char * log_record_file(log_record record);
 LOG_API enum log_level_id log_record_level(log_record record);
 
 LOG_API const char * log_record_message(log_record record);
+
+LOG_API void * log_record_data(log_record record);
 
 LOG_API int log_record_destroy(log_record record);
 

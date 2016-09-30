@@ -17,6 +17,8 @@ LOG_NO_EXPORT static int log_policy_schedule_sync_create(log_policy policy, cons
 
 LOG_NO_EXPORT static int log_policy_schedule_sync_lock(log_policy policy);
 
+LOG_NO_EXPORT static int log_policy_schedule_sync_execute(log_policy policy, log_policy_schedule_execute_cb cb, log_policy_schedule_data data);
+
 LOG_NO_EXPORT static int log_policy_schedule_sync_unlock(log_policy policy);
 
 LOG_NO_EXPORT static int log_policy_schedule_sync_destroy(log_policy policy);
@@ -28,6 +30,7 @@ log_policy_interface log_policy_schedule_sync_interface()
 	static struct log_policy_schedule_impl_type log_policy_schedule_sync_impl =
 	{
 		&log_policy_schedule_sync_lock,
+		&log_policy_schedule_sync_execute,
 		&log_policy_schedule_sync_unlock
 	};
 
@@ -55,6 +58,13 @@ static int log_policy_schedule_sync_lock(log_policy policy)
 	(void)policy;
 
 	return 0;
+}
+
+static int log_policy_schedule_sync_execute(log_policy policy, log_policy_schedule_execute_cb callback, log_policy_schedule_data data)
+{
+	(void)policy;
+
+	return callback(data);
 }
 
 static int log_policy_schedule_sync_unlock(log_policy policy)

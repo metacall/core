@@ -13,8 +13,6 @@
 #include <log/log_handle.h>
 #include <log/log_map.h>
 
-#include <stdio.h>
-
 class log_test : public testing::Test
 {
   public:
@@ -94,6 +92,8 @@ TEST_F(log_test, DefaultConstructor)
 
 	/* Set policies */
 	{
+		const size_t storage_batch_size = ((size_t)0x00000010);
+
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_format_text()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_schedule_sync()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_storage_sequential()));
@@ -121,27 +121,27 @@ TEST_F(log_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[5].name, log_policy_format_binary()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[5].name, log_policy_schedule_async()));
-		EXPECT_EQ((int) 0, (int) log_define(log_name_list[5].name, log_policy_storage_batch()));
+		EXPECT_EQ((int) 0, (int) log_define(log_name_list[5].name, log_policy_storage_batch(storage_batch_size)));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[5].name, log_policy_stream_stdio(stdout)));
 
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[6].name, log_policy_format_binary()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[6].name, log_policy_schedule_async()));
-		EXPECT_EQ((int) 0, (int) log_define(log_name_list[6].name, log_policy_storage_batch()));
+		EXPECT_EQ((int) 0, (int) log_define(log_name_list[6].name, log_policy_storage_batch(storage_batch_size)));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[6].name, log_policy_stream_stdio(stderr)));
 
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[7].name, log_policy_format_binary()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[7].name, log_policy_schedule_async()));
-		EXPECT_EQ((int) 0, (int) log_define(log_name_list[7].name, log_policy_storage_batch()));
+		EXPECT_EQ((int) 0, (int) log_define(log_name_list[7].name, log_policy_storage_batch(storage_batch_size)));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[7].name, log_policy_stream_file(log_name_list[2].name, "a+")));
 
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[8].name, log_policy_format_binary()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[8].name, log_policy_schedule_async()));
-		EXPECT_EQ((int) 0, (int) log_define(log_name_list[8].name, log_policy_storage_batch()));
+		EXPECT_EQ((int) 0, (int) log_define(log_name_list[8].name, log_policy_storage_batch(storage_batch_size)));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[8].name, log_policy_stream_syslog(log_name_list[3].name)));
 
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_format_binary()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_schedule_async()));
-		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_storage_batch()));
+		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_storage_batch(storage_batch_size)));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_stream_socket("127.0.0.1", UINT16_C(0x0209))));
 	}
 
