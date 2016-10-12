@@ -86,26 +86,6 @@ log_aspect log_impl_aspect(log_impl impl, enum log_aspect_id aspect_id)
 	return impl->aspects[aspect_id];
 }
 
-/*
-int log_impl_lock(log_impl impl)
-{
-	log_aspect schedule = impl->aspects[LOG_ASPECT_SCHEDULE];
-
-	log_aspect_schedule_impl schedule_impl = log_aspect_derived(schedule);
-
-	return schedule_impl->lock(schedule);
-}
-
-int log_impl_unlock(log_impl impl)
-{
-	log_aspect schedule = impl->aspects[LOG_ASPECT_SCHEDULE];
-
-	log_aspect_schedule_impl schedule_impl = log_aspect_derived(schedule);
-
-	return schedule_impl->unlock(schedule);
-}
-*/
-
 int log_impl_write(log_impl impl, const log_record_ctor record_ctor)
 {
 	log_aspect stream = log_impl_aspect(impl, LOG_ASPECT_STREAM);
@@ -118,67 +98,6 @@ int log_impl_write(log_impl impl, const log_record_ctor record_ctor)
 	}
 
 	return 0;
-
-	/*
-	log_aspect format = impl->aspects[LOG_ASPECT_FORMAT];
-
-	log_aspect_format_impl format_impl = log_aspect_derived(format);
-
-	log_aspect storage = impl->aspects[LOG_ASPECT_STORAGE];
-
-	log_aspect_storage_impl storage_impl = log_aspect_derived(storage);
-
-	log_aspect stream = impl->aspects[LOG_ASPECT_STREAM];
-
-	log_aspect_stream_impl stream_impl = log_aspect_derived(stream);
-	*/
-
-	/*
-	log_record record = log_handle_push(impl->handle, record_ctor);
-
-	log_aspect stream = impl->aspects[LOG_ASPECT_STREAM];
-
-	log_aspect_stream_impl stream_impl = log_aspect_derived(stream);
-
-	if (record == NULL)
-	{
-		return 1;
-	}
-
-	if (log_impl_lock(impl) != 0)
-	{
-		return 1;
-	}
-
-
-	
-	if (stream_impl->write(stream, record_ctor->message, strlen(record_ctor->message)) != 0)
-	{
-		if (log_impl_unlock(impl) != 0)
-		{
-			return 1;
-		}
-
-		return 1;
-	}
-
-	if (stream_impl->flush(stream) != 0)
-	{
-		if (log_impl_unlock(impl) != 0)
-		{
-			return 1;
-		}
-
-		return 1;
-	}
-	
-	if (log_impl_unlock(impl) != 0)
-	{
-		return 1;
-	}
-
-	return 0;
-	*/
 }
 
 int log_impl_clear(log_impl impl)

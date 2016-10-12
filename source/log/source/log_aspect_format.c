@@ -13,6 +13,12 @@
 
 /* -- Member Data -- */
 
+struct log_aspect_format_size_type
+{
+	log_record record;
+	size_t size;
+};
+
 struct log_aspect_format_buffer_type
 {
 	void * data;
@@ -35,6 +41,10 @@ struct log_aspect_format_deserialize_type
 
 LOG_NO_EXPORT static log_aspect_data log_aspect_format_create(log_aspect aspect, const log_aspect_ctor ctor);
 
+LOG_NO_EXPORT static int log_aspect_format_impl_size_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+
+LOG_NO_EXPORT static size_t log_aspect_format_impl_size(log_aspect aspect, log_record record);
+
 LOG_NO_EXPORT static int log_aspect_format_impl_serialize_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
 LOG_NO_EXPORT static int log_aspect_format_impl_serialize(log_aspect aspect, log_record record, void * buffer, const size_t size);
@@ -51,6 +61,7 @@ log_aspect_interface log_aspect_format_interface()
 {
 	static struct log_aspect_format_impl_type log_aspect_format_impl =
 	{
+		&log_aspect_format_impl_size,
 		&log_aspect_format_impl_serialize,
 		&log_aspect_format_impl_deserialize
 	};
@@ -72,6 +83,40 @@ static log_aspect_data log_aspect_format_create(log_aspect aspect, const log_asp
 	(void)ctor;
 
 	return NULL;
+}
+
+static int log_aspect_format_impl_size_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
+{
+	struct log_aspect_format_size_type * size_args = notify_data;
+
+	log_policy_format_impl format_impl = log_policy_derived(policy);
+
+	size_args->size = format_impl->size(policy, size_args->record);
+
+	(void)aspect;
+
+	if (size_args->size == 0)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
+static size_t log_aspect_format_impl_size(log_aspect aspect, log_record record)
+{
+	struct log_aspect_format_size_type notify_data;
+
+	notify_data.record = record;
+	notify_data.size = 0;
+
+	/* TODO: design error (critical), repleace this in the future */
+	if (log_aspect_notify_first(aspect, &log_aspect_format_impl_size_cb, (log_aspect_notify_data)&notify_data) != 0)
+	{
+		return 0;
+	}
+
+	return notify_data.size;
 }
 
 static int log_aspect_format_impl_serialize_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)

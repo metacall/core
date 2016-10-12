@@ -15,6 +15,7 @@
 
 #include <log/log_aspect.h>
 #include <log/log_record.h>
+#include <log/log_handle.h>
 
 #ifdef __cplusplus
 extern "C" {

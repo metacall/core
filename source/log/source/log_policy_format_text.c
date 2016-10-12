@@ -74,34 +74,37 @@ static int log_policy_format_text_create(log_policy policy, const log_policy_cto
 		return 1;
 	}
 
-	log_policy_instantiate(policy, text_data, LOG_POLICY_FORMAT_BINARY);
+	log_policy_instantiate(policy, text_data, LOG_POLICY_FORMAT_TEXT);
 
 	return 0;
 }
 
 static size_t log_policy_format_text_size(log_policy policy, const log_record record)
 {
-	return log_policy_format_text_serialize(policy, record, NULL, 0) + 1;
+	return log_policy_format_text_serialize(policy, record, NULL, 0);
 }
 
 static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
 {
-	static const char format[] = "[%s] <%ul> #%ul:%s:%s @%s >> %s\n";
+	static const char format[] = "[%.19s] <%ul> #%ul:%s:%s @%s >> %s\n";
 
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 
 	int result;
 
+	(void)text_data;
+
 	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
 
-		result = sprintf_s(buffer, size, format,
+		result = _snprintf(buffer, size, format,
 			ctime(log_record_time(record)),
 			log_record_thread_id(record),
 			log_record_line(record),
 			log_record_func(record),
 			log_record_file(record),
 			log_level_name(log_record_level(record)),
-			log_record_message(record));
+			log_record_message(record),
+			log_record_data(record));
 
 	#elif defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) \
 		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)

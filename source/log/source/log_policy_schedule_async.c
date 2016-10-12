@@ -92,7 +92,7 @@ static int log_policy_schedule_async_execute(log_policy policy, log_policy_sched
 {
 	(void)policy;
 
-	return callback(data);
+	return callback(policy, data);
 }
 
 static int log_policy_schedule_async_unlock(log_policy policy)

@@ -39,7 +39,7 @@ typedef void * log_policy_schedule_data;
 
 typedef struct log_policy_schedule_impl_type * log_policy_schedule_impl;
 
-typedef int (*log_policy_schedule_execute_cb)(log_policy_schedule_data);
+typedef int (*log_policy_schedule_execute_cb)(log_policy, log_policy_schedule_data);
 
 typedef int (*log_policy_schedule_lock)(log_policy);
 typedef int (*log_policy_schedule_execute)(log_policy, log_policy_schedule_execute_cb, log_policy_schedule_data);

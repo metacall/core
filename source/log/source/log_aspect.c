@@ -18,7 +18,7 @@
 /* -- Definitions -- */
 
 #define LOG_ASPECT_POLICIES_MIN_SIZE		((size_t)0x00000001)
-#define LOG_ASPECT_POLICIES_DEFAULT_SIZE	((size_t)0x00000010)
+#define LOG_ASPECT_POLICIES_DEFAULT_SIZE	((size_t)0x00000004)
 #define LOG_ASPECT_POLICIES_MAX_SIZE		((size_t)0x00000100)
 
 /* -- Member Data -- */

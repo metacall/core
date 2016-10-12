@@ -64,7 +64,7 @@ static int log_policy_schedule_sync_execute(log_policy policy, log_policy_schedu
 {
 	(void)policy;
 
-	return callback(data);
+	return callback(policy, data);
 }
 
 static int log_policy_schedule_sync_unlock(log_policy policy)

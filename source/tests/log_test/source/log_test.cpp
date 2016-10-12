@@ -151,20 +151,18 @@ TEST_F(log_test, DefaultConstructor)
 
 		for (iterator = 0; iterator < log_name_list_size; ++iterator)
 		{
-			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, "test_simple_message_tag", LOG_LEVEL_INFO, "hello world"));
+			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, LOG_LEVEL_INFO, "hello world"));
 		}
 	}
 
 	/* Write varidic logs */
 	{
-		/*
 		size_t iterator;
 
 		for (iterator = 0; iterator < log_name_list_size; ++iterator)
 		{
-			EXPECT_EQ((int) 0, (int) log_write_va(log_name_list[iterator].name, "test_varidic_tag", LOG_LEVEL_INFO, "hello world from log (id : %ul)", iterator));
+			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, LOG_LEVEL_INFO, "hello world from log (id : %ul)", iterator));
 		}
-		*/
 	}
 
 	/* Clear all logs */

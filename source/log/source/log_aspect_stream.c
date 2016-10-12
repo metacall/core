@@ -14,6 +14,9 @@
 #include <log/log_aspect_schedule.h>
 #include <log/log_policy_schedule.h>
 
+#include <log/log_aspect_format.h>
+#include <log/log_policy_format.h>
+
 #include <log/log_record.h>
 #include <log/log_impl.h>
 
@@ -41,7 +44,6 @@ struct log_aspect_stream_execute_cb_data_type
 {
 	log_impl impl;
 	log_aspect aspect;
-	log_handle handle;
 	log_record_ctor record_ctor;
 };
 
@@ -51,7 +53,7 @@ LOG_NO_EXPORT static log_aspect_data log_aspect_stream_create(log_aspect aspect,
 
 LOG_NO_EXPORT static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_stream_impl_write(log_aspect aspect, log_handle handle, const log_record_ctor record_ctor);
+LOG_NO_EXPORT static int log_aspect_stream_impl_write(log_aspect aspect, const log_record_ctor record_ctor);
 
 LOG_NO_EXPORT static int log_aspect_stream_impl_flush_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
@@ -90,30 +92,56 @@ static log_aspect_data log_aspect_stream_create(log_aspect aspect, const log_asp
 
 static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
 {
-	/*
-	struct log_aspect_stream_write_type * write_args = notify_data;
+	log_aspect_stream_write_cb_data write_args = notify_data;
 
 	log_policy_stream_impl stream_impl = log_policy_derived(policy);
 
+	log_aspect format = log_impl_aspect(write_args->impl, LOG_ASPECT_FORMAT);
+
+	log_aspect_format_impl format_impl = log_aspect_derived(format);
+
+	size_t size = format_impl->size(format, write_args->record);
+
 	(void)aspect;
 
-	return stream_impl->write(policy, write_args->buffer, write_args->size);
-	*/
+	if (size == 0)
+	{
+		return 1;
+	}
 
-	// TODO: 
-	//struct log_aspect_stream_write_type notify_data;
+	/* TODO: remove this, use storage policy instead */
+	{
+		void * buffer = malloc(size);
 
-	//notify_data.buffer = buffer;
-	//notify_data.size = size;
+		int result;
 
-	//return log_aspect_notify_all(aspect, &log_aspect_stream_impl_write_cb, (log_aspect_notify_data)&notify_data);
+		if (buffer == NULL)
+		{
+			return 1;
+		}
+
+		if (format_impl->serialize(format, write_args->record, buffer, size) != 0)
+		{
+			free(buffer);
+
+			return 1;
+		}
+
+		result = stream_impl->write(policy, buffer, size);
+
+		free(buffer);
+
+		return result;
+	}
 }
 
 static int log_aspect_stream_impl_write_execute_cb(log_policy policy, log_aspect_schedule_data data)
 {
 	log_aspect_stream_execute_cb_data execute_data = data;
 
-	log_policy_schedule_impl schedule_impl = log_policy_behavior(policy);
+	log_policy_schedule_impl schedule_impl = log_policy_derived(policy);
+
+	log_handle handle = log_impl_handle(execute_data->impl);
 
 	log_record record;
 
@@ -126,7 +154,7 @@ static int log_aspect_stream_impl_write_execute_cb(log_policy policy, log_aspect
 		return 1;
 	}
 
-	record = log_handle_push(execute_data->handle, execute_data->record_ctor);
+	record = log_handle_push(handle, execute_data->record_ctor);
 
 	if (schedule_impl->unlock(policy) != 0)
 	{
@@ -148,7 +176,7 @@ static int log_aspect_stream_impl_write_execute_cb(log_policy policy, log_aspect
 		return 1;
 	}
 
-	log_handle_pop(execute_data->handle);
+	log_handle_pop(handle);
 
 	if (schedule_impl->unlock(policy) != 0)
 	{
@@ -158,7 +186,7 @@ static int log_aspect_stream_impl_write_execute_cb(log_policy policy, log_aspect
 	return result;
 }
 
-static int log_aspect_stream_impl_write(log_aspect aspect, log_handle handle, const log_record_ctor record_ctor)
+static int log_aspect_stream_impl_write(log_aspect aspect, const log_record_ctor record_ctor)
 {
 	log_impl impl = log_aspect_parent(aspect);
 
@@ -170,10 +198,9 @@ static int log_aspect_stream_impl_write(log_aspect aspect, log_handle handle, co
 
 	data.impl = impl;
 	data.aspect = aspect;
-	data.handle = handle;
 	data.record_ctor = record_ctor;
 
-	return schedule_impl->execute(schedule, &log_aspect_stream_impl_write_execute_cb, &data);
+	return schedule_impl->execute(schedule, &log_aspect_stream_impl_write_execute_cb, (log_aspect_schedule_data)&data);
 }
 
 static int log_aspect_stream_impl_flush_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
