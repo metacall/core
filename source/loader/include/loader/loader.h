@@ -31,7 +31,7 @@ LOADER_API int loader_unload(void);
 
 LOADER_API void loader_destroy(void);
 
-LOADER_API void loader_print_info(void);
+LOADER_API const char * loader_print_info(void);
 
 #ifdef __cplusplus
 }

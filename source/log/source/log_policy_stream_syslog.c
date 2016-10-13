@@ -59,13 +59,13 @@ struct log_policy_stream_syslog_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static int log_policy_stream_syslog_create(log_policy policy, const log_policy_ctor ctor);
+static int log_policy_stream_syslog_create(log_policy policy, const log_policy_ctor ctor);
 
-LOG_NO_EXPORT static int log_policy_stream_syslog_write(log_policy policy, const void * buffer, const size_t size);
+static int log_policy_stream_syslog_write(log_policy policy, const void * buffer, const size_t size);
 
-LOG_NO_EXPORT static int log_policy_stream_syslog_flush(log_policy policy);
+static int log_policy_stream_syslog_flush(log_policy policy);
 
-LOG_NO_EXPORT static int log_policy_stream_syslog_destroy(log_policy policy);
+static int log_policy_stream_syslog_destroy(log_policy policy);
 
 /* -- Methods -- */
 
@@ -129,7 +129,9 @@ static int log_policy_stream_syslog_write(log_policy policy, const void * buffer
 			LOG_POLICY_STREAM_SYSLOG_WIN_MSG,
 			NULL, 1, 0, (LPTSTR *)lpt_str, NULL);
 	#elif defined(__linux__) || defined(__FreeBSD__)
-		syslog(LOG_INFO, buffer);
+		(void)syslog_data;
+
+		syslog(LOG_INFO, "%s", (const char *)buffer);
 	#endif
 
 	return 0;

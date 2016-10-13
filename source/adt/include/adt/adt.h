@@ -21,7 +21,7 @@
 extern "C" {
 #endif
 
-ADT_API void adt_print_info(void);
+ADT_API const char * adt_print_info(void);
 
 #ifdef __cplusplus
 }

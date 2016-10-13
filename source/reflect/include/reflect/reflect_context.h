@@ -11,7 +11,7 @@
 
 #include <reflect/reflect_api.h>
 
-#include <reflect/scope.h>
+#include <reflect/reflect_scope.h>
 
 #ifdef __cplusplus
 extern "C" {

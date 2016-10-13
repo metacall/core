@@ -165,14 +165,19 @@ void filesystem_destroy(filesystem fs)
 	}
 }
 
-void filesystem_print_info(void)
+const char * dynlink_print_info()
 {
-	printf("File System Library " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char filesystem_info[] =
+		"File System Library " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef FILESYSTEM_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef FILESYSTEM_STATIC_DEFINE
+			"Compiled as static library type"
+		#else
+			"Compiled as shared library type"
+		#endif
+
+		"\n";
+
+	return filesystem_info;
 }

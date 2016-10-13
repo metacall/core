@@ -10,8 +10,8 @@
 
 #include <loader/loader_impl.h>
 
-#include <reflect/type.h>
-#include <reflect/context.h>
+#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 
 #include <adt/hash_map.h>
 

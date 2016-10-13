@@ -28,13 +28,13 @@ struct log_policy_stream_stdio_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static int log_policy_stream_stdio_create(log_policy policy, const log_policy_ctor ctor);
+static int log_policy_stream_stdio_create(log_policy policy, const log_policy_ctor ctor);
 
-LOG_NO_EXPORT static int log_policy_stream_stdio_write(log_policy policy, const void * buffer, const size_t size);
+static int log_policy_stream_stdio_write(log_policy policy, const void * buffer, const size_t size);
 
-LOG_NO_EXPORT static int log_policy_stream_stdio_flush(log_policy policy);
+static int log_policy_stream_stdio_flush(log_policy policy);
 
-LOG_NO_EXPORT static int log_policy_stream_stdio_destroy(log_policy policy);
+static int log_policy_stream_stdio_destroy(log_policy policy);
 
 /* -- Methods -- */
 

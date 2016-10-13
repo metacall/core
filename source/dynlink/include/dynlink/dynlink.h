@@ -115,10 +115,13 @@ DYNLINK_API void dynlink_unload(dynlink handle);
 
 /**
 *  @brief
-*    Print over standard output the module information
+*    Provide the module information
+*
+*  @return
+*    Static string containing module information
 *
 */
-DYNLINK_API void dynlink_print_info(void);
+DYNLINK_API const char * dynlink_print_info(void);
 
 #ifdef __cplusplus
 }

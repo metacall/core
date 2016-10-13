@@ -11,15 +11,15 @@
 
 #include <reflect/reflect_api.h>
 
-#include <reflect/type.h>
-#include <reflect/signature.h>
-#include <reflect/function.h>
+#include <reflect/reflect_type.h>
+#include <reflect/reflect_signature.h>
+#include <reflect/reflect_function.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-REFLECT_API void reflect_print_info(void);
+REFLECT_API const char * reflect_print_info(void);
 
 #ifdef __cplusplus
 }

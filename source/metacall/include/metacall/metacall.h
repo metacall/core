@@ -99,9 +99,12 @@ METACALL_API int metacall_destroy(void);
 
 /**
 *  @brief
-*    Print MetaCall library information
+*    Provide the module information
+*
+*  @return
+*    Static string containing module information
 */
-METACALL_API void metacall_print_info(void);
+METACALL_API const char * metacall_print_info(void);
 
 #ifdef __cplusplus
 }

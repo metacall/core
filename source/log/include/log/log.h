@@ -30,28 +30,21 @@ extern "C" {
 
 #include <stdarg.h>
 
-/* -- Macros -- */
-
-	/*
-#define log_configure(name, ...) \
-	*/
-
-#define log_write(name, level, message, ...) \
-	log_write_impl(name, __LINE__, log_record_function(), __FILE__, level, message, __VA_ARGS__)
-
 /* -- Methods -- */
 
 LOG_API int log_create(const char * name);
 
 LOG_API int log_define(const char * name, log_policy policy);
 
-LOG_API int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...);
+LOG_API int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message);
+
+LOG_API int log_write_impl_va(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...);
 
 LOG_API int log_clear(const char * name);
 
 LOG_API int log_delete(const char * name);
 
-LOG_API void log_print_info(void);
+LOG_API const char * log_print_info(void);
 
 #ifdef __cplusplus
 }

@@ -6,7 +6,7 @@
  *
  */
 
-#include <reflect/type.h>
+#include <reflect/reflect_type.h>
 
 #include <stdlib.h>
 #include <string.h>

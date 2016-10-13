@@ -6,7 +6,7 @@
  *
  */
 
-#include <reflect/scope.h>
+#include <reflect/reflect_scope.h>
 
 #include <adt/hash_map.h>
 #include <adt/vector.h>

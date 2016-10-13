@@ -28,15 +28,15 @@ struct log_policy_format_binary_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static int log_policy_format_binary_create(log_policy policy, const log_policy_ctor ctor);
+static int log_policy_format_binary_create(log_policy policy, const log_policy_ctor ctor);
 
-LOG_NO_EXPORT static size_t log_policy_format_binary_size(log_policy policy, const log_record record);
+static size_t log_policy_format_binary_size(log_policy policy, const log_record record);
 
-LOG_NO_EXPORT static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
 
-LOG_NO_EXPORT static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
 
-LOG_NO_EXPORT static int log_policy_format_binary_destroy(log_policy policy);
+static int log_policy_format_binary_destroy(log_policy policy);
 
 /* -- Methods -- */
 

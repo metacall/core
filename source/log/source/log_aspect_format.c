@@ -19,41 +19,37 @@ struct log_aspect_format_size_type
 	size_t size;
 };
 
-struct log_aspect_format_buffer_type
-{
-	void * data;
-	size_t size;
-};
-
 struct log_aspect_format_serialize_type
 {
 	log_record record;
-	struct log_aspect_format_buffer_type buffer;
+	void * buffer;
+	size_t size;
 };
 
 struct log_aspect_format_deserialize_type
 {
 	log_record record;
-	struct log_aspect_format_buffer_type buffer;
+	const void * buffer;
+	size_t size;
 };
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static log_aspect_data log_aspect_format_create(log_aspect aspect, const log_aspect_ctor ctor);
+static log_aspect_data log_aspect_format_create(log_aspect aspect, const log_aspect_ctor ctor);
 
-LOG_NO_EXPORT static int log_aspect_format_impl_size_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+static int log_aspect_format_impl_size_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static size_t log_aspect_format_impl_size(log_aspect aspect, log_record record);
+static size_t log_aspect_format_impl_size(log_aspect aspect, log_record record);
 
-LOG_NO_EXPORT static int log_aspect_format_impl_serialize_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+static int log_aspect_format_impl_serialize_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_format_impl_serialize(log_aspect aspect, log_record record, void * buffer, const size_t size);
+static int log_aspect_format_impl_serialize(log_aspect aspect, log_record record, void * buffer, const size_t size);
 
-LOG_NO_EXPORT static int log_aspect_format_impl_deserialize_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+static int log_aspect_format_impl_deserialize_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_format_impl_deserialize(log_aspect aspect, log_record record, void * buffer, const size_t size);
+static int log_aspect_format_impl_deserialize(log_aspect aspect, log_record record, const void * buffer, const size_t size);
 
-LOG_NO_EXPORT static int log_aspect_format_destroy(log_aspect aspect);
+static int log_aspect_format_destroy(log_aspect aspect);
 
 /* -- Methods -- */
 
@@ -125,11 +121,11 @@ static int log_aspect_format_impl_serialize_cb(log_aspect aspect, log_policy pol
 
 	log_policy_format_impl format_impl = log_policy_derived(policy);
 
-	size_t written_size = format_impl->serialize(policy, serialize_args->record, serialize_args->buffer.data, serialize_args->buffer.size);
+	size_t written_size = format_impl->serialize(policy, serialize_args->record, serialize_args->buffer, serialize_args->size);
 
 	(void)aspect;
 
-	return (written_size != serialize_args->buffer.size);
+	return (written_size != serialize_args->size);
 }
 
 static int log_aspect_format_impl_serialize(log_aspect aspect, log_record record, void * buffer, const size_t size)
@@ -137,8 +133,8 @@ static int log_aspect_format_impl_serialize(log_aspect aspect, log_record record
 	struct log_aspect_format_serialize_type notify_data;
 
 	notify_data.record = record;
-	notify_data.buffer.data = buffer;
-	notify_data.buffer.size = size;
+	notify_data.buffer = buffer;
+	notify_data.size = size;
 
 	return log_aspect_notify_all(aspect, &log_aspect_format_impl_serialize_cb, (log_aspect_notify_data)&notify_data);
 }
@@ -149,20 +145,20 @@ static int log_aspect_format_impl_deserialize_cb(log_aspect aspect, log_policy p
 
 	log_policy_format_impl format_impl = log_policy_derived(policy);
 
-	size_t size = format_impl->deserialize(policy, deserialize_args->record, deserialize_args->buffer.data, deserialize_args->buffer.size);
+	size_t size = format_impl->deserialize(policy, deserialize_args->record, deserialize_args->buffer, deserialize_args->size);
 
 	(void)aspect;
 
-	return (deserialize_args->buffer.size != size);
+	return (deserialize_args->size != size);
 }
 
-static int log_aspect_format_impl_deserialize(log_aspect aspect, log_record record, void * buffer, const size_t size)
+static int log_aspect_format_impl_deserialize(log_aspect aspect, log_record record, const void * buffer, const size_t size)
 {
 	struct log_aspect_format_deserialize_type notify_data;
 
 	notify_data.record = record;
-	notify_data.buffer.data = buffer;
-	notify_data.buffer.size = size;
+	notify_data.buffer = buffer;
+	notify_data.size = size;
 
 	return log_aspect_notify_all(aspect, &log_aspect_format_impl_deserialize_cb, (log_aspect_notify_data)&notify_data);
 }

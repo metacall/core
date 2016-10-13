@@ -69,7 +69,23 @@ int log_define(const char * name, log_policy policy)
 	return 0;
 }
 
-int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...)
+int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message)
+{
+	log_impl impl = log_singleton_get(name);
+
+	struct log_record_ctor_type record_ctor;
+
+	record_ctor.line = line;
+	record_ctor.func = func;
+	record_ctor.file = file;
+	record_ctor.level = level;
+	record_ctor.message = message;
+	record_ctor.data = NULL;
+
+	return log_impl_write(impl, &record_ctor);
+}
+
+int log_write_impl_va(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...)
 {
 	log_impl impl = log_singleton_get(name);
 
@@ -119,14 +135,19 @@ int log_delete(const char * name)
 	return log_impl_destroy(impl);
 }
 
-void log_print_info()
+const char * log_print_info()
 {
-	printf("Logger Library " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char log_info[] =
+		"Logger Library " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef LOG_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef LOG_STATIC_DEFINE
+			"Compiled as static library type\n"
+		#else
+			"Compiled as shared library type\n"
+		#endif
+
+		"\n";
+
+	return log_info;
 }

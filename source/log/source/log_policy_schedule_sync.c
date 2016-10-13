@@ -13,15 +13,15 @@
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static int log_policy_schedule_sync_create(log_policy policy, const log_policy_ctor ctor);
+static int log_policy_schedule_sync_create(log_policy policy, const log_policy_ctor ctor);
 
-LOG_NO_EXPORT static int log_policy_schedule_sync_lock(log_policy policy);
+static int log_policy_schedule_sync_lock(log_policy policy);
 
-LOG_NO_EXPORT static int log_policy_schedule_sync_execute(log_policy policy, log_policy_schedule_execute_cb cb, log_policy_schedule_data data);
+static int log_policy_schedule_sync_execute(log_policy policy, log_policy_schedule_execute_cb cb, log_policy_schedule_data data);
 
-LOG_NO_EXPORT static int log_policy_schedule_sync_unlock(log_policy policy);
+static int log_policy_schedule_sync_unlock(log_policy policy);
 
-LOG_NO_EXPORT static int log_policy_schedule_sync_destroy(log_policy policy);
+static int log_policy_schedule_sync_destroy(log_policy policy);
 
 /* -- Methods -- */
 

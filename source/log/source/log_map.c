@@ -61,7 +61,7 @@ struct log_map_iterator_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static size_t log_map_hash_fnv1(const char * key)
+static size_t log_map_hash_fnv1(const char * key)
 {
 	size_t hash = ((size_t)0x811C9DC5);
 

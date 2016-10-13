@@ -10,16 +10,19 @@
 
 #include <adt/adt.h>
 
-#include <stdio.h>
-
-void adt_print_info()
+const char * adt_print_info()
 {
-	printf("Abstract Data Type Library " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char adt_info[] =
+		"Abstract Data Type Library " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef ADT_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef ADT_STATIC_DEFINE
+			"Compiled as static library type"
+		#else
+			"Compiled as shared library type"
+		#endif
+
+		"\n";
+
+	return adt_info;
 }

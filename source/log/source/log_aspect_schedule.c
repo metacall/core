@@ -29,13 +29,13 @@ struct log_aspect_schedule_notify_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static log_aspect_data log_aspect_schedule_create(log_aspect aspect, const log_aspect_ctor ctor);
+static log_aspect_data log_aspect_schedule_create(log_aspect aspect, const log_aspect_ctor ctor);
 
-LOG_NO_EXPORT static int log_aspect_schedule_impl_execute_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+static int log_aspect_schedule_impl_execute_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_schedule_impl_execute(log_aspect aspect, log_aspect_schedule_execute_cb callback, log_aspect_schedule_data data);
+static int log_aspect_schedule_impl_execute(log_aspect aspect, log_aspect_schedule_execute_cb callback, log_aspect_schedule_data data);
 
-LOG_NO_EXPORT static int log_aspect_schedule_destroy(log_aspect aspect);
+static int log_aspect_schedule_destroy(log_aspect aspect);
 
 /* -- Methods -- */
 

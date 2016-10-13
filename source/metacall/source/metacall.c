@@ -13,8 +13,8 @@
 
 #include <loader/loader.h>
 
-#include <reflect/value.h>
-#include <reflect/function.h>
+#include <reflect/reflect_value.h>
+#include <reflect/reflect_function.h>
 
 #include <string.h>
 #include <stdio.h>
@@ -154,14 +154,19 @@ int metacall_destroy()
 	return loader_unload();
 }
 
-void metacall_print_info()
+const char * metacall_print_info()
 {
-	printf("MetaCall Library " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char metacall_info[] =
+		"MetaCall Library " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef METACALL_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef METACALL_STATIC_DEFINE
+			"Compiled as static library type"
+		#else
+			"Compiled as shared library type"
+		#endif
+
+		"\n";
+
+	return metacall_info;
 }

@@ -12,33 +12,25 @@
 /* -- Headers -- */
 
 #include <log/log_api.h>
-
+/*
+#include <preprocessor/preprocessor_if.h>
+#include <preprocessor/preprocessor_va.h>
+#include <preprocessor/preprocessor_foreach.h>
+*/
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* -- Macros -- */
-	/*
-#define log_preprocessor_write(...) \
-	log_write_impl(log_write_required_args(__VA_ARGS__) log_write_variable_args(__VA_ARGS__))
 
-#define log_write_required_args(...) \
-	log_write_required_args_impl(__VA_ARGS__, ~)
+#define log_configure(name, ...) \
+	prerprocessor_foreach(__VA_ARGS__)
 
-#define log_write_required_args_impl(name, line, func, file, level, format, ...) \
-	name, line, func, file, level, format
-
-
-
-
-#define log_write_variable_args(...) \
-	log_write_variable_args_impl()
-
-
-
-	*/
-
-
+#define log_write(name, level, message, ...) \
+	preprocessor_if(prerpocessor_va_count(__VA_ARGS__)) \
+		log_write_impl_va(name, __LINE__, log_record_function(), __FILE__, level, message, __VA_ARGS__) \
+	preprocessor_else() \
+		log_write_impl(name, __LINE__, log_record_function(), __FILE__, level, message)
 
 #ifdef __cplusplus
 }

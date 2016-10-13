@@ -35,13 +35,13 @@ struct log_policy_storage_batch_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static int log_policy_storage_batch_create(log_policy policy, const log_policy_ctor ctor);
+static int log_policy_storage_batch_create(log_policy policy, const log_policy_ctor ctor);
 
-LOG_NO_EXPORT static int log_policy_storage_batch_append(log_policy policy, const log_record record);
+static int log_policy_storage_batch_append(log_policy policy, const log_record record);
 
-LOG_NO_EXPORT static int log_policy_storage_batch_flush(log_policy policy);
+static int log_policy_storage_batch_flush(log_policy policy);
 
-LOG_NO_EXPORT static int log_policy_storage_batch_destroy(log_policy policy);
+static int log_policy_storage_batch_destroy(log_policy policy);
 
 /* -- Methods -- */
 

@@ -231,10 +231,13 @@ FILESYSTEM_API void filesystem_destroy(filesystem fs);
 
 /**
 *  @brief
-*    Print over standard output the module information
+*    Provide the module information
+*
+*  @return
+*    Static string containing module information
 *
 */
-FILESYSTEM_API void filesystem_print_info(void);
+FILESYSTEM_API const char * filesystem_print_info(void);
 
 #ifdef __cplusplus
 }

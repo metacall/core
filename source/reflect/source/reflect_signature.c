@@ -6,7 +6,7 @@
  *
  */
 
-#include <reflect/signature.h>
+#include <reflect/reflect_signature.h>
 
 #include <stdlib.h>
 #include <string.h>

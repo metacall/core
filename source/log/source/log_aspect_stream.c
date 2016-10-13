@@ -49,17 +49,17 @@ struct log_aspect_stream_execute_cb_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static log_aspect_data log_aspect_stream_create(log_aspect aspect, const log_aspect_ctor ctor);
+static log_aspect_data log_aspect_stream_create(log_aspect aspect, const log_aspect_ctor ctor);
 
-LOG_NO_EXPORT static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_stream_impl_write(log_aspect aspect, const log_record_ctor record_ctor);
+static int log_aspect_stream_impl_write(log_aspect aspect, const log_record_ctor record_ctor);
 
-LOG_NO_EXPORT static int log_aspect_stream_impl_flush_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
+static int log_aspect_stream_impl_flush_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data);
 
-LOG_NO_EXPORT static int log_aspect_stream_impl_flush(log_aspect aspect);
+static int log_aspect_stream_impl_flush(log_aspect aspect);
 
-LOG_NO_EXPORT static int log_aspect_stream_destroy(log_aspect aspect);
+static int log_aspect_stream_destroy(log_aspect aspect);
 
 /* -- Methods -- */
 

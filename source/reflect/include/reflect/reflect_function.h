@@ -9,8 +9,8 @@
 #ifndef REFLECT_FUNCTION_H
 #define REFLECT_FUNCTION_H 1
 
-#include <reflect/signature.h>
-#include <reflect/value.h>
+#include <reflect/reflect_signature.h>
+#include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
 extern "C" {

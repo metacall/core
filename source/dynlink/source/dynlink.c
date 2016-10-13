@@ -30,7 +30,7 @@ typedef struct dynlink_type
 
 /* -- Methods -- */
 
-const char * dynlink_extension(void)
+const char * dynlink_extension()
 {
 	return dynlink_impl_extension();
 }
@@ -122,14 +122,19 @@ void dynlink_unload(dynlink handle)
 	}
 }
 
-void dynlink_print_info(void)
+const char * dynlink_print_info()
 {
-	printf("Dynamic Link Library " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char dynlink_info[] =
+		"Dynamic Link Library " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef DYNLINK_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef DYNLINK_STATIC_DEFINE
+			"Compiled as static library type"
+		#else
+			"Compiled as shared library type"
+		#endif
+
+		"\n";
+
+	return dynlink_info;
 }

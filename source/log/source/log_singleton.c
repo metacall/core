@@ -24,7 +24,7 @@ struct log_singleton_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static void log_atexit_callback(void)
+static void log_atexit_callback(void)
 {
 	int result = log_singleton_destroy();
 
@@ -33,7 +33,7 @@ LOG_NO_EXPORT static void log_atexit_callback(void)
 
 /* -- Protected Methods -- */
 
-log_singleton log_singleton_create()
+static log_singleton log_singleton_create()
 {
 	log_singleton s = malloc(sizeof(struct log_singleton_type));
 
@@ -54,7 +54,7 @@ log_singleton log_singleton_create()
 	return s;
 }
 
-int log_singleton_destroy()
+static int log_singleton_destroy()
 {
 	log_singleton s = log_singleton_instance();
 
@@ -75,7 +75,7 @@ int log_singleton_destroy()
 	return 0;
 }
 
-log_singleton log_singleton_instance()
+static log_singleton log_singleton_instance()
 {
 	static log_singleton singleton = NULL;
 

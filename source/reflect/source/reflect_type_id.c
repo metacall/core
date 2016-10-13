@@ -6,7 +6,7 @@
  *
  */
 
-#include <reflect/type_id.h>
+#include <reflect/reflect_type_id.h>
 
 int type_id_primitive(type_id id)
 {

@@ -6,8 +6,8 @@
  *
  */
 
-#include <reflect/context.h>
-#include <reflect/scope.h>
+#include <reflect/reflect_context.h>
+#include <reflect/reflect_scope.h>
 
 #include <stdlib.h>
 #include <string.h>

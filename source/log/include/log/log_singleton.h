@@ -35,11 +35,11 @@ typedef struct log_singleton_type * log_singleton;
 
 /* -- Protected Methods -- */
 
-LOG_NO_EXPORT static log_singleton log_singleton_create(void);
+static log_singleton log_singleton_create(void);
 
-LOG_NO_EXPORT static int log_singleton_destroy(void);
+static int log_singleton_destroy(void);
 
-LOG_NO_EXPORT static log_singleton log_singleton_instance(void);
+static log_singleton log_singleton_instance(void);
 
 /* -- Methods -- */
 

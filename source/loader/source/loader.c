@@ -13,8 +13,8 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/scope.h>
-#include <reflect/context.h>
+#include <reflect/reflect_scope.h>
+#include <reflect/reflect_context.h>
 
 #include <adt/hash_map.h>
 
@@ -325,20 +325,25 @@ void loader_destroy()
 	}
 }
 
-void loader_print_info()
+const char * loader_print_info()
 {
-	printf("Loader Library " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char loader_info[] =
+		"Loader Library " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef LOADER_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef LOADER_STATIC_DEFINE
+			"Compiled as static library type\n"
+		#else
+			"Compiled as shared library type\n"
+		#endif
 
-	#ifdef LOADER_LAZY
-		printf("Compiled with lazy initialization and destruction\n");
-	#else
-		printf("Compiled with explicit initialization and destruction\n");
-	#endif
+		#ifdef LOADER_LAZY
+			"Compiled with lazy initialization and destruction"
+		#else
+			"Compiled with explicit initialization and destruction"
+		#endif
+
+		"\n";
+
+	return loader_info;
 }

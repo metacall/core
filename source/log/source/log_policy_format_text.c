@@ -15,6 +15,23 @@
 #include <stdio.h>
 #include <time.h>
 
+/* -- Definitions -- */
+
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+#	define LOG_POLICY_FORMAT_TEXT_SIZE "Iu"
+#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+#	define LOG_POLICY_FORMAT_TEXT_SIZE "zu"
+#else
+#	define LOG_POLICY_FORMAT_TEXT_SIZE "lu"
+#endif
+
+#define LOG_POLICY_FORMAT_TEXT_STR \
+	"[%.19s] #%" LOG_POLICY_FORMAT_TEXT_SIZE \
+	" [ %" LOG_POLICY_FORMAT_TEXT_SIZE \
+	" | %s | %s ] @%s : "
+
 /* -- Forward Declarations -- */
 
 struct log_policy_format_text_data_type;
@@ -32,15 +49,19 @@ struct log_policy_format_text_data_type
 
 /* -- Private Methods -- */
 
-LOG_NO_EXPORT static int log_policy_format_text_create(log_policy policy, const log_policy_ctor ctor);
+static int log_policy_format_text_create(log_policy policy, const log_policy_ctor ctor);
 
-LOG_NO_EXPORT static size_t log_policy_format_text_size(log_policy policy, const log_record record);
+static size_t log_policy_format_text_size(log_policy policy, const log_record record);
 
-LOG_NO_EXPORT static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
 
-LOG_NO_EXPORT static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size);
 
-LOG_NO_EXPORT static int log_policy_format_text_destroy(log_policy policy);
+static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void * buffer, const size_t size);
+
+static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+
+static int log_policy_format_text_destroy(log_policy policy);
 
 /* -- Methods -- */
 
@@ -84,9 +105,9 @@ static size_t log_policy_format_text_size(log_policy policy, const log_record re
 	return log_policy_format_text_serialize(policy, record, NULL, 0);
 }
 
-static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
+static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size)
 {
-	static const char format[] = "[%.19s] <%ul> #%ul:%s:%s @%s >> %s\n";
+	static const char format[] = LOG_POLICY_FORMAT_TEXT_STR "%s\n";
 
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 
@@ -103,10 +124,10 @@ static size_t log_policy_format_text_serialize(log_policy policy, const log_reco
 			log_record_func(record),
 			log_record_file(record),
 			log_level_name(log_record_level(record)),
-			log_record_message(record),
-			log_record_data(record));
+			log_record_message(record));
 
-	#elif defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) \
+	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
 		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
 
 		result = snprintf(buffer, size, format,
@@ -125,8 +146,8 @@ static size_t log_policy_format_text_serialize(log_policy policy, const log_reco
 
 		result = sprintf(buffer, format,
 			ctime(log_record_time(record)),
-			log_record_thread_id(record),
-			log_record_line(record),
+			(unsigned long)log_record_thread_id(record),
+			(unsigned long)log_record_line(record),
 			log_record_func(record),
 			log_record_file(record),
 			log_level_name(log_record_level(record)),
@@ -139,7 +160,118 @@ static size_t log_policy_format_text_serialize(log_policy policy, const log_reco
 		return 0;
 	}
 
-	return (size_t)result;
+	if (buffer != NULL)
+	{
+		*(((char *)buffer) + result) = '\0';
+	}
+
+	return (size_t)result + 1;
+}
+
+static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void * buffer, const size_t size)
+{
+	static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR;
+
+	log_policy_format_text_data text_data = log_policy_instance(policy);
+
+	int header_size, body_size;
+
+	void * buffer_body = NULL;
+
+	(void)text_data;
+
+	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+
+		header_size = _snprintf(buffer, size, header_format,
+			ctime(log_record_time(record)),
+			log_record_thread_id(record),
+			log_record_line(record),
+			log_record_func(record),
+			log_record_file(record),
+			log_level_name(log_record_level(record)));
+
+	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+
+		header_size = snprintf(buffer, size, header_format,
+			ctime(log_record_time(record)),
+			log_record_thread_id(record),
+			log_record_line(record),
+			log_record_func(record),
+			log_record_file(record),
+			log_level_name(log_record_level(record)));
+
+	#else
+
+		/* TODO: find out how to avoid stack smashing */
+		(void)size;
+
+		header_size = sprintf(buffer, header_format,
+			ctime(log_record_time(record)),
+			(unsigned long)log_record_thread_id(record),
+			(unsigned long)log_record_line(record),
+			log_record_func(record),
+			log_record_file(record),
+			log_level_name(log_record_level(record)));
+
+	#endif
+
+	if (header_size <= 0)
+	{
+		return 0;
+	}
+
+	if (buffer != NULL)
+	{
+		buffer_body = (void *)(((char *)buffer) + header_size);
+	}
+
+	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+
+		body_size = _vsnprintf(buffer_body, size, log_record_message(record), log_record_data(record));
+
+	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+
+		body_size = vsnprintf(buffer_body, size, log_record_message(record), log_record_data(record));
+
+	#else
+
+		/* TODO: find out how to avoid stack smashing */
+		(void)size;
+
+		body_size = vsprintf(buffer_body, log_record_message(record), log_record_data(record));
+
+	#endif
+
+	if (body_size <= 0)
+	{
+		return 0;
+	}
+
+	if (buffer_body != NULL)
+	{
+		char * buffer_end = (((char *)buffer_body) + body_size);
+
+		buffer_end[0] = '\n';
+		buffer_end[1] = '\0';
+	}
+
+	return (size_t)(header_size + body_size) + 2;
+}
+
+static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
+{
+	if (log_record_data(record) == NULL)
+	{
+		return log_policy_format_text_serialize_impl(policy, record, buffer, size);
+	}
+	else
+	{
+		return log_policy_format_text_serialize_impl_va(policy, record, buffer, size);
+	}
 }
 
 static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size)

@@ -9,7 +9,7 @@
 #
 
 # Target name
-set(target reflect)
+set(target preprocessor)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -28,25 +28,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-    ${include_path}/reflect.h
-    ${include_path}/reflect_type.h
-    ${include_path}/reflect_type_id.h
-    ${include_path}/reflect_signature.h
-    ${include_path}/reflect_function.h
-    ${include_path}/reflect_scope.h
-    ${include_path}/reflect_context.h
-    ${include_path}/reflect_value.h
+    ${include_path}/preprocessor.h
 )
 
 set(sources
-    ${source_path}/reflect.c
-    ${source_path}/reflect_type.c
-    ${source_path}/reflect_type_id.c
-    ${source_path}/reflect_signature.c
-    ${source_path}/reflect_function.c
-    ${source_path}/reflect_scope.c
-    ${source_path}/reflect_context.c
-    ${source_path}/reflect_value.c
+    ${source_path}/preprocessor.c
 )
 
 # Group source files
@@ -100,7 +86,6 @@ generate_export_header(${target}
     EXPORT_MACRO_NAME ${export_macro}
 )
 
-
 #
 # Project options
 #
@@ -136,7 +121,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
-    ${META_PROJECT_NAME}::adt
 
     PUBLIC
     ${DEFAULT_LIBRARIES}

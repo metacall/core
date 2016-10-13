@@ -23,7 +23,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-LOG_NO_EXPORT size_t log_thread_id(void);
+size_t log_thread_id(void);
 
 #ifdef __cplusplus
 }

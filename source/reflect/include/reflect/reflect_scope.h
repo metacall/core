@@ -11,8 +11,8 @@
 
 #include <reflect/reflect_api.h>
 
-#include <reflect/type.h>
-#include <reflect/function.h>
+#include <reflect/reflect_type.h>
+#include <reflect/reflect_function.h>
 
 #ifdef __cplusplus
 extern "C" {
