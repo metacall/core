@@ -24,7 +24,7 @@ extern "C" {
 
 /* -- Macros -- */
 
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #	define PREPROCESSOR_COMPL_IMPL_EXPAND(expr) expr
 #	define PREPROCESSOR_COMPL_IMPL(expr) PREPROCESSOR_COMPL_IMPL_EXPAND(PREPROCESSOR_COMPL_IMPL_ ## expr)
 #else

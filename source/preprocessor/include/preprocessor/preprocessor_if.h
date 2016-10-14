@@ -21,7 +21,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #	define PREPROCESSOR_IIF_IMPL_I(expr) expr
 #	define PREPROCESSOR_IIF_IMPL(value, true_block, false_block) PREPROCESSOR_IIF_IMPL_I(PREPROCESSOR_IIF_IMPL_ ## value(true_block, false_block))
 #else
