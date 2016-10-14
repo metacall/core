@@ -6,23 +6,21 @@
  *
  */
 
-#ifndef PREPROCESSOR_H
-#define PREPROCESSOR_H 1
+#ifndef @PREPROCESSOR_TEMPLATE_NAME_HEADER@
+#define @PREPROCESSOR_TEMPLATE_NAME_HEADER@ 1
 
 /* -- Headers -- */
 
 #include <preprocessor/preprocessor_api.h>
-
+@PREPROCESSOR_TEMPLATE_HEADERS@
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Methods -- */
-
-PREPROCESSOR_API const char * preprocessor_print_info(void);
+@PREPROCESSOR_TEMPLATE_BODY@
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PREPROCESSOR_H */
+#endif /* @PREPROCESSOR_TEMPLATE_NAME_HEADER@ */

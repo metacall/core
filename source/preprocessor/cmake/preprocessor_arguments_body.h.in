@@ -1,0 +1,9 @@
+/* -- Definitions -- */
+
+#cmakedefine PREPROCESSOR_ARGUMENTS_SIZE @PREPROCESSOR_ARGUMENTS_SIZE@
+
+/* -- Macros -- */
+
+#define PREPROCESSOR_ARGUMENTS_N_IMPL( \
+	@PREPROCESSOR_ARGUMENTS_N_IMPL_BODY@\
+	N, ...) N

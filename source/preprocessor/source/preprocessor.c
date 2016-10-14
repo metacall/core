@@ -2,7 +2,7 @@
  *	Preprocessor Library by Parra Studios
  *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
- *	A generic header only preprocessor metaprogramming library.
+ *	A generic header-only preprocessor metaprogramming library.
  *
  */
 
