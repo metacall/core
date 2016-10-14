@@ -18,7 +18,6 @@ extern "C" {
 #endif
 
 @PREPROCESSOR_TEMPLATE_BODY@
-
 #ifdef __cplusplus
 }
 #endif

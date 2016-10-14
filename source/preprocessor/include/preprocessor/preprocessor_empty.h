@@ -1,10 +1,10 @@
 /*
-*	Preprocssor Library by Parra Studios
-*	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A generic header-only preprocessor metaprogramming library.
-*
-*/
+ *	Preprocssor Library by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A generic header-only preprocessor metaprogramming library.
+ *
+ */
 
 #ifndef PREPROCESSOR_EMPTY_H
 #define PREPROCESSOR_EMPTY_H 1

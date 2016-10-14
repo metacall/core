@@ -21,23 +21,53 @@ function(preprocessor_arguments_generate _args_size)
 	file(READ ${preprocessor_path}/preprocessor_arguments_body.h.in preprocessor_arguments_body_in)
 
 	# Define arguments template constants
-	math(EXPR preprocessor_arguments_limit "${PREPROCESSOR_ARGUMENTS_SIZE} - 1")
-
 	set(preprocessor_arguments_line_align 10)
 
-	# Macro implementation: preprocessor_arguments_n_impl
-	set(PREPROCESSOR_ARGUMENTS_N_IMPL_BODY "")
+	# Macro implementation: PREPROCESSOR_ARGUMENTS_COUNT_SEQ_IMPL
+	set(PREPROCESSOR_ARGUMENTS_COUNT_SEQ_IMPL_BODY "")
+
+	math(EXPR preprocessor_arguments_limit "${PREPROCESSOR_ARGUMENTS_SIZE} - 1")
+
+	foreach(iterator RANGE ${preprocessor_arguments_limit} 1)
+
+		math(EXPR iterator_modulo "${iterator} % ${preprocessor_arguments_line_align}")
+
+		if(${iterator_modulo} EQUAL 0)
+			set(PREPROCESSOR_ARGUMENTS_COUNT_SEQ_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_COUNT_SEQ_IMPL_BODY}${iterator}, \\\n\t")
+		else()
+			set(PREPROCESSOR_ARGUMENTS_COUNT_SEQ_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_COUNT_SEQ_IMPL_BODY}${iterator}, ")
+		endif()
+
+	endforeach()
+
+	# Macro implementation: PREPROCESSOR_ARGUMENTS_COMMA_SEQ_IMPL
+	set(PREPROCESSOR_ARGUMENTS_COMMA_SEQ_IMPL_BODY "")
+
+	math(EXPR preprocessor_arguments_limit "${PREPROCESSOR_ARGUMENTS_SIZE} - 2")
 
 	foreach(iterator RANGE 1 ${preprocessor_arguments_limit})
 
 		math(EXPR iterator_modulo "${iterator} % ${preprocessor_arguments_line_align}")
 
-		math(EXPR align_limit "${preprocessor_arguments_line_align} - 1")
+		if(${iterator_modulo} EQUAL 0)
+			set(PREPROCESSOR_ARGUMENTS_COMMA_SEQ_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_COMMA_SEQ_IMPL_BODY}1, \\\n\t")
+		else()
+			set(PREPROCESSOR_ARGUMENTS_COMMA_SEQ_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_COMMA_SEQ_IMPL_BODY}1, ")
+		endif()
+
+	endforeach()
+
+	# Macro implementation: PREPROCESSOR_ARGUMENTS_N_IMPL
+	set(PREPROCESSOR_ARGUMENTS_N_IMPL_BODY "")
+
+	math(EXPR preprocessor_arguments_limit "${PREPROCESSOR_ARGUMENTS_SIZE} - 1")
+
+	foreach(iterator RANGE 1 ${preprocessor_arguments_limit})
+
+		math(EXPR iterator_modulo "${iterator} % ${preprocessor_arguments_line_align}")
 
 		if(${iterator_modulo} EQUAL 0)
 			set(PREPROCESSOR_ARGUMENTS_N_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_N_IMPL_BODY}_${iterator}, \\\n\t")
-		elseif(${iterator_modulo} EQUAL ${align_limit})
-			set(PREPROCESSOR_ARGUMENTS_N_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_N_IMPL_BODY}_${iterator}, ")
 		else()
 			set(PREPROCESSOR_ARGUMENTS_N_IMPL_BODY "${PREPROCESSOR_ARGUMENTS_N_IMPL_BODY}_${iterator}, ")
 		endif()

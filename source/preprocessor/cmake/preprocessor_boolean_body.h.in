@@ -1,0 +1,22 @@
+/* -- Definitions -- */
+
+#cmakedefine PREPROCESSOR_BOOL_SIZE @PREPROCESSOR_BOOL_SIZE@
+
+@PREPROCESSOR_BOOL_IMPL_BODY@
+/* -- Macros -- */
+
+#define PREPROCESSOR_BOOL_IMPL(expr) PREPROCESSOR_BOOL_IMPL_ ## expr
+
+#if defined(__MWERKS__)
+#	define PREPROCESSOR_BOOL_TOKEN(expr) PREPROCESSOR_BOOL_IMPL ## expr
+#	define PREPROCESSOR_BOOL(expr) PREPROCESSOR_BOOL_TOKEN((expr))
+#else
+#	define PREPROCESSOR_BOOL(expr) PREPROCESSOR_BOOL_IMPL(expr)
+#endif
+
+#if defined(__EDG__) || defined(__EDG_VERSION__)
+#	define PREPROCESSOR_NOT(expr) PREPROCESSOR_NOT_IMPL(expr)
+#	define PREPROCESSOR_NOT_IMPL(expr) PREPROCESSOR_COMPL(PREPROCESSOR_BOOL(expr))
+#else
+#	define PREPROCESSOR_NOT(expr) PREPROCESSOR_COMPL(PREPROCESSOR_BOOL(expr))
+#endif
