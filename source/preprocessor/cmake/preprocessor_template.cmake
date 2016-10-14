@@ -1,3 +1,9 @@
+#
+#	Preprocssor Library by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	A generic header-only preprocessor metaprogramming library.
+#
 
 # Define current preprocessor path
 get_filename_component(preprocessor_path ${CMAKE_CURRENT_LIST_FILE} PATH)

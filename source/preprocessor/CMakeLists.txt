@@ -21,6 +21,16 @@ set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
 #
+# Metaprogramming preprocessor generation
+#
+
+include(cmake/preprocessor_arguments.cmake)
+include(cmake/preprocessor_boolean.cmake)
+
+preprocessor_arguments_generate(64)
+preprocessor_boolean_generate(256)
+
+#
 # Sources
 #
 
@@ -29,6 +39,14 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
     ${include_path}/preprocessor.h
+    ${include_path}/preprocessor_arguments.h
+    ${include_path}/preprocessor_boolean.h
+    ${include_path}/preprocessor_comma.h
+    ${include_path}/preprocessor_complement.h
+    ${include_path}/preprocessor_concatenation.h
+    ${include_path}/preprocessor_empty.h
+    ${include_path}/preprocessor_if.h
+    ${include_path}/preprocessor_tuple.h
 )
 
 set(sources

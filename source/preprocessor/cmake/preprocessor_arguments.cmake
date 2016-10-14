@@ -1,6 +1,15 @@
+#
+#	Preprocssor Library by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	A generic header-only preprocessor metaprogramming library.
+#
 
 # Define current preprocessor path
 get_filename_component(preprocessor_path ${CMAKE_CURRENT_LIST_FILE} PATH)
+
+# Define output preprocessor path
+set(preprocessor_output_path "${CMAKE_CURRENT_SOURCE_DIR}/include/preprocessor")
 
 # Include preprocessor template generator
 include(${preprocessor_path}/preprocessor_template.cmake)
@@ -92,6 +101,6 @@ function(preprocessor_arguments_generate _args_size)
 	string(CONFIGURE ${preprocessor_arguments_body_in} preprocessor_arguments_body @ONLY)
 
 	# Generate arguments template implementation
-	preprocessor_template_generate("${preprocessor_arguments_headers}" "${preprocessor_arguments_body}" "." "arguments")
+	preprocessor_template_generate("${preprocessor_arguments_headers}" "${preprocessor_arguments_body}" "${preprocessor_output_path}" "arguments")
 
 endfunction()

@@ -13,6 +13,15 @@
 
 #include <preprocessor/preprocessor_api.h>
 
+#include <preprocessor/preprocessor_arguments.h>
+#include <preprocessor/preprocessor_boolean.h>
+#include <preprocessor/preprocessor_comma.h>
+#include <preprocessor/preprocessor_complement.h>
+#include <preprocessor/preprocessor_concatenation.h>
+#include <preprocessor/preprocessor_empty.h>
+#include <preprocessor/preprocessor_if.h>
+#include <preprocessor/preprocessor_tuple.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
