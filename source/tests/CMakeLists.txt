@@ -58,6 +58,7 @@ set_target_properties(test PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 # Tests
 #
 
+add_test_without_ctest(preprocessor_test)
 add_test_without_ctest(log_test)
 add_test_without_ctest(hash_map_test)
 add_test_without_ctest(trie_test)

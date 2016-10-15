@@ -26,9 +26,11 @@ set(export_macro "${target_upper}_API")
 
 include(cmake/preprocessor_arguments.cmake)
 include(cmake/preprocessor_boolean.cmake)
+include(cmake/preprocessor_for.cmake)
 
 preprocessor_arguments_generate(64)
 preprocessor_boolean_generate(256)
+preprocessor_for_generate(64)
 
 #
 # Sources
@@ -40,12 +42,18 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/preprocessor.h
     ${include_path}/preprocessor_arguments.h
+    ${include_path}/preprocessor_bit.h
     ${include_path}/preprocessor_boolean.h
     ${include_path}/preprocessor_comma.h
+    ${include_path}/preprocessor_comparison.h
     ${include_path}/preprocessor_complement.h
     ${include_path}/preprocessor_concatenation.h
+    ${include_path}/preprocessor_detection.h
     ${include_path}/preprocessor_empty.h
+    ${include_path}/preprocessor_for.h
     ${include_path}/preprocessor_if.h
+    ${include_path}/preprocessor_serial.h
+    ${include_path}/preprocessor_stringify.h
     ${include_path}/preprocessor_tuple.h
 )
 

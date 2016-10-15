@@ -19,27 +19,30 @@
 extern "C" {
 #endif
 
-/* -- Methods -- */
+/* -- Macros -- */
+
+#define PREPROCESSOR_IIF_IMPL_0(true_expr, false_expr) false_expr
+#define PREPROCESSOR_IIF_IMPL_1(true_expr, false_expr) true_expr
 
 #if defined(_MSC_VER)
 #	define PREPROCESSOR_IIF_IMPL_I(expr) expr
-#	define PREPROCESSOR_IIF_IMPL(value, true_block, false_block) PREPROCESSOR_IIF_IMPL_I(PREPROCESSOR_IIF_IMPL_ ## value(true_block, false_block))
+#	define PREPROCESSOR_IIF_IMPL(value, true_expr, false_expr) PREPROCESSOR_IIF_IMPL_I(PREPROCESSOR_IIF_IMPL_ ## value(true_expr, false_expr))
 #else
-#	define PREPROCESSOR_IIF_IMPL(value, true_block, false_block) PREPROCESSOR_IIF_IMPL_ ## value(true_block, false_block)
+#	define PREPROCESSOR_IIF_IMPL(value, true_expr, false_expr) PREPROCESSOR_IIF_IMPL_ ## value(true_expr, false_expr)
 #endif
 
 #if defined(__MWERKS__)
 #	define PREPROCESSOR_IIF_EXPAND(expr) PREPROCESSOR_IIF_IMPL ## expr
-#	define PREPROCESSOR_IIF(value, true_block, false_block) PREPROCESSOR_IIF_EXPAND((value, true_block, false_block))
+#	define PREPROCESSOR_IIF(value, true_expr, false_expr) PREPROCESSOR_IIF_EXPAND((value, true_expr, false_expr))
 #else
-#	define PREPROCESSOR_IIF(value, true_block, false_block) PREPROCESSOR_IIF_IMPL(value, true_block, false_block)
+#	define PREPROCESSOR_IIF(value, true_expr, false_expr) PREPROCESSOR_IIF_IMPL(value, true_expr, false_expr)
 #endif
 
 #if defined(__EDG__) || defined(__EDG_VERSION__)
-#	define PREPROCESSOR_IF_IMPL(condition, true_block, false_block) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), true_block, false_block)
-#	define PREPROCESSOR_IF(condition, true_block, false_block) PREPROCESSOR_IF_IMPL(condition, true_block, false_block)
+#	define PREPROCESSOR_IF_IMPL(condition, true_expr, false_expr) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), true_expr, false_expr)
+#	define PREPROCESSOR_IF(condition, true_expr, false_expr) PREPROCESSOR_IF_IMPL(condition, true_expr, false_expr)
 #else
-#	define PREPROCESSOR_IF(condition, true_block, false_block) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), true_block, false_block)
+#	define PREPROCESSOR_IF(condition, true_expr, false_expr) PREPROCESSOR_IIF(PREPROCESSOR_BOOL(condition), true_expr, false_expr)
 #endif
 
 #ifdef __cplusplus

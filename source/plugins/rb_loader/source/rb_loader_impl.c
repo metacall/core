@@ -10,10 +10,10 @@
 
 #include <loader/loader_impl.h>
 
-#include <reflect/type.h>
-#include <reflect/function.h>
-#include <reflect/scope.h>
-#include <reflect/context.h>
+#include <reflect/reflect_type.h>
+#include <reflect/reflect_function.h>
+#include <reflect/reflect_scope.h>
+#include <reflect/reflect_context.h>
 
 #include <stdlib.h>
 #include <stdio.h>

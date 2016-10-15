@@ -19,7 +19,7 @@ extern "C" {
 
 /* -- Macros -- */
 
-#if defined(WIN32) && defined(_MSC_VER)
+#if defined(_MSC_VER)
 #	define PREPROCESSOR_CONCAT_IMPL_II(token, expr) expr
 #	define PREPROCESSOR_CONCAT_IMPL_I(left, right) PREPROCESSOR_CONCAT_IMPL_II(~, left ## right)
 #	define PREPROCESSOR_CONCAT_IMPL(left, right) PREPROCESSOR_CONCAT_IMPL_I(left, right)

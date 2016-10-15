@@ -14,12 +14,18 @@
 #include <preprocessor/preprocessor_api.h>
 
 #include <preprocessor/preprocessor_arguments.h>
+#include <preprocessor/preprocessor_bit.h>
 #include <preprocessor/preprocessor_boolean.h>
 #include <preprocessor/preprocessor_comma.h>
+#include <preprocessor/preprocessor_comparison.h>
 #include <preprocessor/preprocessor_complement.h>
 #include <preprocessor/preprocessor_concatenation.h>
+#include <preprocessor/preprocessor_detection.h>
 #include <preprocessor/preprocessor_empty.h>
+#include <preprocessor/preprocessor_for.h>
 #include <preprocessor/preprocessor_if.h>
+#include <preprocessor/preprocessor_serial.h>
+#include <preprocessor/preprocessor_stringify.h>
 #include <preprocessor/preprocessor_tuple.h>
 
 #ifdef __cplusplus

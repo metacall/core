@@ -13,7 +13,6 @@
 
 #include <log/log_api.h>
 
-#include <log/log_preprocessor.h>
 #include <log/log_level.h>
 #include <log/log_record.h>
 #include <log/log_policy.h>
@@ -21,6 +20,7 @@
 #include <log/log_policy_schedule.h>
 #include <log/log_policy_storage.h>
 #include <log/log_policy_stream.h>
+#include <log/log_preprocessor.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -18,10 +18,10 @@ include(${preprocessor_path}/preprocessor_template.cmake)
 # Preprocessor boolean template generation
 #
 
-function(preprocessor_boolean_generate _args_size)
+function(preprocessor_boolean_generate _bool_size)
 
 	# Configure template variables
-	set(PREPROCESSOR_BOOL_SIZE ${_args_size} CACHE STRING "Number of boolean arguments supported by preprocessor")
+	set(PREPROCESSOR_BOOL_SIZE ${_bool_size} CACHE STRING "Number of boolean arguments supported by preprocessor")
 
 	# Read boolean template headers
 	file(READ ${preprocessor_path}/preprocessor_boolean_headers.h.in preprocessor_boolean_headers_in)

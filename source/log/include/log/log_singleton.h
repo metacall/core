@@ -33,14 +33,6 @@ typedef struct log_impl_type * log_impl;
 
 typedef struct log_singleton_type * log_singleton;
 
-/* -- Protected Methods -- */
-
-static log_singleton log_singleton_create(void);
-
-static int log_singleton_destroy(void);
-
-static log_singleton log_singleton_instance(void);
-
 /* -- Methods -- */
 
 LOG_API int log_singleton_insert(const char * name, log_impl impl);

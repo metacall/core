@@ -24,14 +24,22 @@ struct log_singleton_type
 
 /* -- Private Methods -- */
 
-static void log_atexit_callback(void)
+static log_singleton log_singleton_create(void);
+
+static int log_singleton_destroy(void);
+
+static log_singleton log_singleton_instance(void);
+
+static void log_atexit_callback(void);
+
+/* -- Methods -- */
+
+static void log_atexit_callback()
 {
 	int result = log_singleton_destroy();
 
 	(void)result;
 }
-
-/* -- Protected Methods -- */
 
 static log_singleton log_singleton_create()
 {
@@ -101,8 +109,6 @@ static log_singleton log_singleton_instance()
 
 	return singleton;
 }
-
-/* -- Methods -- */
 
 int log_singleton_insert(const char * name, log_impl impl)
 {

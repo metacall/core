@@ -25,7 +25,10 @@
 #		include <share.h>
 #	endif
 #elif defined(__linux__) || defined(__APPLE__)
+#	define _GNU_SOURCE
+#	include <unistd.h>
 #	include <sys/syscall.h>
+#	include <sys/types.h>
 #elif defined(__FreeBSD__)
 #	include <sys/thr.h>
 #endif
