@@ -32,9 +32,9 @@ function(preprocessor_boolean_generate _bool_size)
 	# Definition implementation: PREPROCESSOR_BOOL_IMPL
 	set(PREPROCESSOR_BOOL_IMPL_BODY "")
 
-	foreach(iterator RANGE 0 ${PREPROCESSOR_BOOL_SIZE})
+	foreach(iterator RANGE 1 ${PREPROCESSOR_BOOL_SIZE})
 
-		set(PREPROCESSOR_BOOL_IMPL_BODY "${PREPROCESSOR_BOOL_IMPL_BODY}#define PREPROCESSOR_BOOL_IMPL_${iterator} ${iterator}\n")
+		set(PREPROCESSOR_BOOL_IMPL_BODY "${PREPROCESSOR_BOOL_IMPL_BODY}#define PREPROCESSOR_BOOL_IMPL_${iterator} 1\n")
 
 	endforeach()
 

@@ -23,7 +23,7 @@ extern "C" {
 
 #define PREPROCESSOR_EMPTY_EXPANSION(expr)
 
-#define PREPROCESSOR_EMPTY_EXPANSION_VARIDIC(...)
+#define PREPROCESSOR_EMPTY_EXPANSION_VARIADIC(...)
 
 #ifdef __cplusplus
 }

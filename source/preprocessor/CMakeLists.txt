@@ -24,10 +24,12 @@ set(export_macro "${target_upper}_API")
 # Metaprogramming preprocessor generation
 #
 
+include(cmake/preprocessor_arithmetic.cmake)
 include(cmake/preprocessor_arguments.cmake)
 include(cmake/preprocessor_boolean.cmake)
 include(cmake/preprocessor_for.cmake)
 
+preprocessor_arithmetic_generate(256)
 preprocessor_arguments_generate(64)
 preprocessor_boolean_generate(256)
 preprocessor_for_generate(64)
@@ -42,6 +44,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/preprocessor.h
     ${include_path}/preprocessor_arguments.h
+    ${include_path}/preprocessor_arithmetic.h
     ${include_path}/preprocessor_bit.h
     ${include_path}/preprocessor_boolean.h
     ${include_path}/preprocessor_comma.h

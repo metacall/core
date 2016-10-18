@@ -30,7 +30,13 @@ extern "C" {
 
 #define PREPROCESSOR_FOR_EACH_IMPL_0(expr, ...)
 #define PREPROCESSOR_FOR_EACH_IMPL_1(expr, element, ...) expr(element)
-#define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__))
+#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#	define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
+	expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__, ~))
+#else
+#	define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
+	expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__))
+#endif
 #define PREPROCESSOR_FOR_EACH_IMPL_3(expr, element, ...) expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_2(expr, __VA_ARGS__))
 #define PREPROCESSOR_FOR_EACH_IMPL_4(expr, element, ...) expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_3(expr, __VA_ARGS__))
 #define PREPROCESSOR_FOR_EACH_IMPL_5(expr, element, ...) expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_4(expr, __VA_ARGS__))

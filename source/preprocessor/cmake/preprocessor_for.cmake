@@ -35,7 +35,7 @@ function(preprocessor_for_generate _for_size)
 	# Definition implementation: PREPROCESSOR_FOR_EACH_IMPL
 	set(PREPROCESSOR_FOR_EACH_IMPL_BODY "")
 
-	foreach(iterator RANGE 2 ${PREPROCESSOR_FOR_SIZE})
+	foreach(iterator RANGE 3 ${PREPROCESSOR_FOR_SIZE})
 
 		math(EXPR prev "${iterator} - 1")
 

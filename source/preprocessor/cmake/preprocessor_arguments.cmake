@@ -83,6 +83,17 @@ function(preprocessor_arguments_generate _args_size)
 
 	endforeach()
 
+	# Macro implementation: PREPROCESSOR_ARGS_COMMA_IMPL
+	set(PREPROCESSOR_ARGS_COMMA_IMPL_BODY "")
+
+	math(EXPR preprocessor_arguments_limit "${PREPROCESSOR_ARGS_SIZE}")
+
+	foreach(iterator RANGE 2 ${preprocessor_arguments_limit})
+
+		set(PREPROCESSOR_ARGS_COMMA_IMPL_BODY "${PREPROCESSOR_ARGS_COMMA_IMPL_BODY}#\t\tdefine PREPROCESSOR_ARGS_COMMA_IMPL_${iterator} 0\n")
+
+	endforeach()
+
 	# Macro implementation: PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY
 	set(PREPROCESSOR_ARGS_COUNT_PREFIX_POSTFIX_BODY "")
 

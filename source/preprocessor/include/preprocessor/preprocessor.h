@@ -13,6 +13,7 @@
 
 #include <preprocessor/preprocessor_api.h>
 
+#include <preprocessor/preprocessor_arithmetic.h>
 #include <preprocessor/preprocessor_arguments.h>
 #include <preprocessor/preprocessor_bit.h>
 #include <preprocessor/preprocessor_boolean.h>

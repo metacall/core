@@ -30,7 +30,7 @@ extern "C" {
 #define PREPROCESSOR_COMMA_IF(expr) \
 	PREPROCESSOR_COMMA_IF_IMPL(expr)
 
-#define PREPROCESSOR_COMMA_VARIDIC(...) ,
+#define PREPROCESSOR_COMMA_VARIADIC(...) ,
 
 #ifdef __cplusplus
 }
