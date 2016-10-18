@@ -95,7 +95,7 @@ int log_policy_destroy(log_policy policy)
 	if (policy != NULL)
 	{
 		int result = policy->iface->destroy(policy);
-		
+
 		free(policy);
 
 		return result;

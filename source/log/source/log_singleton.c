@@ -30,11 +30,9 @@ static int log_singleton_destroy(void);
 
 static log_singleton log_singleton_instance(void);
 
-static void log_atexit_callback(void);
-
 /* -- Methods -- */
 
-static void log_atexit_callback()
+static void log_atexit_callback(void)
 {
 	int result = log_singleton_destroy();
 

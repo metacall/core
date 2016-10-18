@@ -40,6 +40,8 @@ REFLECT_API scope_object scope_undef(scope sp, const char * key);
 
 REFLECT_API int scope_append(scope dest, scope src);
 
+REFLECT_API size_t * scope_stack_return(scope sp);
+
 REFLECT_API scope_stack_ptr scope_stack_push(scope sp, size_t bytes);
 
 REFLECT_API void * scope_stack_get(scope sp, scope_stack_ptr stack_ptr);

@@ -21,6 +21,12 @@ set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
 # Sources
 #
 
@@ -40,8 +46,8 @@ set(FILESYSTEM_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
 
 set(headers
     ${include_path}/filesystem.h
-    ${include_path}/file_descriptor.h
-    ${include_path}/directory_descriptor.h
+    ${include_path}/filesystem_file_descriptor.h
+    ${include_path}/filesystem_directory_descriptor.h
 
 #    ${include_path}/filesystem_impl.h
 #    ${include_path}/filesystem_impl_file_${FILESYSTEM_IMPL_INTERFACE_NAME}.h
@@ -52,8 +58,8 @@ set(headers
 
 set(sources
     ${source_path}/filesystem.c
-    ${source_path}/file_descriptor.c
-    ${source_path}/directory_descriptor.c
+    ${source_path}/filesystem_file_descriptor.c
+    ${source_path}/filesystem_directory_descriptor.c
 
 #    ${source_path}/filesystem_impl.c
 #    ${source_path}/filesystem_impl_file_${FILESYSTEM_IMPL_INTERFACE_NAME}.c

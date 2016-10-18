@@ -43,7 +43,25 @@ typedef struct hash_map_type
 
 } * hash_map;
 
-int hash_map_bucket_capacity(size_t prime)
+static int hash_map_bucket_capacity(size_t prime);
+
+static int hash_map_bucket_create(hash_map map, size_t prime);
+
+static int hash_map_bucket_alloc_pairs(hash_map_bucket bucket);
+
+static int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count);
+
+static int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args);
+
+static int hash_map_bucket_realloc(hash_map map);
+
+static hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, hash_map_key key);
+
+static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map_key key, hash_map_value value);
+
+static int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args);
+
+static int hash_map_bucket_capacity(size_t prime)
 {
 	static int capacity_primes[] =
 	{
@@ -62,7 +80,7 @@ int hash_map_bucket_capacity(size_t prime)
 	return -1;
 }
 
-int hash_map_bucket_create(hash_map map, size_t prime)
+static int hash_map_bucket_create(hash_map map, size_t prime)
 {
 	int capacity = hash_map_bucket_capacity(prime);
 
@@ -129,7 +147,7 @@ size_t hash_map_size(hash_map map)
 	return 0;
 }
 
-int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
+static int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 {
 	if (bucket)
 	{
@@ -156,7 +174,7 @@ int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 	return 1;
 }
 
-int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
+static int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
 {
 	if (hash_map_bucket_alloc_pairs(bucket) != 0)
 	{
@@ -188,7 +206,7 @@ int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
 	return 0;
 }
 
-int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
 {
 	hash_map new_map = (hash_map)args;
 
@@ -200,7 +218,7 @@ int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_va
 	return 1;
 }
 
-int hash_map_bucket_realloc(hash_map map)
+static int hash_map_bucket_realloc(hash_map map)
 {
 	struct hash_map_type new_map;
 
@@ -245,7 +263,7 @@ int hash_map_bucket_realloc(hash_map map)
 	return 1;
 }
 
-hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, hash_map_key key)
+static hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, hash_map_key key)
 {
 	if (bucket->pairs != NULL && bucket->count > 0)
 	{
@@ -265,7 +283,7 @@ hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, has
 	return NULL;
 }
 
-int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map_key key, hash_map_value value)
+static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map_key key, hash_map_value value)
 {
 	if (bucket->pairs != NULL)
 	{
@@ -307,9 +325,9 @@ int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
 {
 	if (map != NULL && key != NULL && value != NULL)
 	{
-		hash_map_hash hash = map->hash_cb(key);
+		hash_map_hash h = map->hash_cb(key);
 
-		int index = hash % map->capacity;
+		int index = h % map->capacity;
 
 		hash_map_bucket bucket = &map->buckets[index];
 
@@ -320,7 +338,7 @@ int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
 
 		if (hash_map_bucket_realloc(map) == 0)
 		{
-			index = hash % map->capacity;
+			index = h % map->capacity;
 
 			bucket = &map->buckets[index];
 
@@ -351,9 +369,9 @@ hash_map_value hash_map_get(hash_map map, hash_map_key key)
 {
 	if (map != NULL && key != NULL)
 	{
-		hash_map_hash hash = map->hash_cb(key);
+		hash_map_hash h = map->hash_cb(key);
 
-		int index = hash % map->capacity;
+		int index = h % map->capacity;
 
 		hash_map_bucket bucket = &map->buckets[index];
 
@@ -372,9 +390,9 @@ hash_map_value hash_map_remove(hash_map map, hash_map_key key)
 {
 	if (map != NULL && key != NULL)
 	{
-		hash_map_hash hash = map->hash_cb(key);
+		hash_map_hash h = map->hash_cb(key);
 
-		int index = hash % map->capacity;
+		int index = h % map->capacity;
 
 		hash_map_bucket bucket = &map->buckets[index];
 
@@ -456,7 +474,7 @@ void hash_map_iterate(hash_map map, hash_map_cb_iterate iterate_cb, hash_map_cb_
 	}
 }
 
-int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
 {
 	hash_map dest = (hash_map)args;
 

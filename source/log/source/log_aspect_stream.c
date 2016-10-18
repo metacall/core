@@ -65,7 +65,7 @@ static int log_aspect_stream_destroy(log_aspect aspect);
 
 log_aspect_interface log_aspect_stream_interface()
 {
-	static struct log_aspect_stream_impl_type log_aspect_stream_impl =
+	static struct log_aspect_stream_impl_type log_aspect_stream_impl_obj =
 	{
 		&log_aspect_stream_impl_write,
 		&log_aspect_stream_impl_flush
@@ -74,7 +74,7 @@ log_aspect_interface log_aspect_stream_interface()
 	static struct log_aspect_interface_type aspect_interface_stream =
 	{
 		&log_aspect_stream_create,
-		&log_aspect_stream_impl,
+		&log_aspect_stream_impl_obj,
 		&log_aspect_stream_destroy
 	};
 
@@ -182,7 +182,7 @@ static int log_aspect_stream_impl_write_execute_cb(log_policy policy, log_aspect
 	{
 		return 1;
 	}
-	
+
 	return result;
 }
 

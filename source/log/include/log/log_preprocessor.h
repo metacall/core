@@ -15,7 +15,7 @@
 
 #include <preprocessor/preprocessor_if.h>
 #include <preprocessor/preprocessor_arguments.h>
-/*#include <preprocessor/preprocessor_for.h>*/
+#include <preprocessor/preprocessor_for.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -27,12 +27,15 @@ extern "C" {
 
 /* -- Macros -- */
 
-/*
-#define log_configure(name, ...) \
-	prerprocessor_foreach(__VA_ARGS__)
-*/
+#define LOG_PREPROCESSOR_CONFIGURE_IMPL(policy) && policy
+
+#define log_configure(name, ...) ( \
+		PREPROCESSOR_ARGS_FIRST(__VA_ARGS__) \
+		PREPROCESSOR_FOR_EACH(LOG_PREPROCESSOR_CONFIGURE_IMPL, PREPROCESSOR_ARGS_FIRST_REMOVE(__VA_ARGS__)) \
+	)
+
 #define log_write(name, level, message, ...) \
-	PREPROCESSOR_IF(PREPROCESSOR_ARGS_COUNT(__VA_ARGS__),
+	PREPROCESSOR_IF(PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), \
 		log_write_impl_va(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, message, __VA_ARGS__), \
 		log_write_impl(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, message) \
 	)

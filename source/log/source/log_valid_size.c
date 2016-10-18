@@ -8,8 +8,7 @@
 
 /* -- Headers -- */
 
-#include <log/log_aspect.h>
-#include <log/log_policy.h>
+#include <log/log_valid_size.h>
 
 /* -- Methods -- */
 

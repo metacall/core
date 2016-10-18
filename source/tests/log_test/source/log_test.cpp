@@ -1,8 +1,8 @@
 /*
- *	Abstract Data Type Library by Parra Studios
+ *	Logger Library by Parra Studios
  *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
- *	A abstract data type library providing generic containers.
+ *	A generic logger library providing application execution reports.
  *
  */
 
@@ -27,7 +27,7 @@ TEST_F(log_test, DefaultConstructor)
 	} log_name_list[] =
 	{
 		{ "test_log_text_sync_seq_stdout",		0 },
-		{ "test_log_text_sync_seq_stderr",		1 },
+		{ "test_log_text_sync_seq_stderr",		1 }/*,
 		{ "test_log_text_sync_seq_file",		2 },
 		{ "test_log_text_sync_seq_syslog",		3 },
 		{ "test_log_text_sync_seq_socket",		4 },
@@ -35,7 +35,7 @@ TEST_F(log_test, DefaultConstructor)
 		{ "test_log_bin_async_batch_stderr",	6 },
 		{ "test_log_bin_async_batch_file",		7 },
 		{ "test_log_bin_async_batch_syslog",	8 },
-		{ "test_log_bin_async_batch_socket",	9 }
+		{ "test_log_bin_async_batch_socket",	9 }*/
 	};
 
 	const size_t log_name_list_size = sizeof(log_name_list) / sizeof(log_name_list[0]);
@@ -92,18 +92,29 @@ TEST_F(log_test, DefaultConstructor)
 
 	/* Set policies */
 	{
+		/*
 		const size_t storage_batch_size = ((size_t)0x00000010);
+		*/
 
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_format_text()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_schedule_sync()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_storage_sequential()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[0].name, log_policy_stream_stdio(stdout)));
 
+		/*
+		EXPECT_EQ((int) 0, (int) log_configure(log_name_list[0].name,
+			log_policy_format_text(),
+			log_policy_schedule_sync(),
+			log_policy_storage_sequential(),
+			log_policy_stream_stdio(stdout)));
+		*/
+
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[1].name, log_policy_format_text()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[1].name, log_policy_schedule_sync()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[1].name, log_policy_storage_sequential()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[1].name, log_policy_stream_stdio(stderr)));
 
+		/*
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[2].name, log_policy_format_text()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[2].name, log_policy_schedule_sync()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[2].name, log_policy_storage_sequential()));
@@ -143,30 +154,27 @@ TEST_F(log_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_schedule_async()));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_storage_batch(storage_batch_size)));
 		EXPECT_EQ((int) 0, (int) log_define(log_name_list[9].name, log_policy_stream_socket("127.0.0.1", UINT16_C(0x0209))));
+		*/
 	}
 
 	/* Write simple logs */
 	{
-		/*
 		size_t iterator;
 
 		for (iterator = 0; iterator < log_name_list_size; ++iterator)
 		{
 			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, LOG_LEVEL_INFO, "hello world"));
 		}
-		*/
 	}
 
 	/* Write varidic logs */
 	{
-		/*
 		size_t iterator;
 
 		for (iterator = 0; iterator < log_name_list_size; ++iterator)
 		{
 			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, LOG_LEVEL_INFO, "hello world from log (id : %u)", iterator));
 		}
-		*/
 	}
 
 	/* Clear all logs */

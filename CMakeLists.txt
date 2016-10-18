@@ -83,7 +83,7 @@ file(WRITE "${PROJECT_BINARY_DIR}/VERSION" "${META_NAME_VERSION}")
 # Compiler settings and options
 #
 
-include(cmake/CompileOptions.cmake)
+include(CompileOptions)
 
 #
 # Deployment/installation setup

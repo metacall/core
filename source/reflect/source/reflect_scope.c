@@ -23,7 +23,11 @@ typedef struct scope_type
 
 } * scope;
 
-void scope_error(const char * error)
+static void scope_error(const char * error);
+
+static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
+static void scope_error(const char * error)
 {
 	printf("%s\n", error);
 }
@@ -142,11 +146,11 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	return 1;
 }
 
-int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && value != NULL && args == NULL)
+	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
-		printf("Key [%s] -> Value [%p]\n", (char *)key, value);
+		printf("Key [%s] -> Value [%p]\n", (char *)key, val);
 
 		return 0;
 	}

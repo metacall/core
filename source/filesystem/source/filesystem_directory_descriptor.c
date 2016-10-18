@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <filesystem/directory_descriptor.h>
-#include <filesystem/file_descriptor.h>
+#include <filesystem/filesystem_directory_descriptor.h>
+#include <filesystem/filesystem_file_descriptor.h>
 
 #include <adt/vector.h>
 
@@ -33,7 +33,9 @@ typedef struct directory_descriptor_type
 
 /* -- Methods -- */
 
-void directory_descriptor_error(const char * error)
+static void directory_descriptor_error(const char * error);
+
+static void directory_descriptor_error(const char * error)
 {
 	printf("%s\n", error);
 }

@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <filesystem/file_descriptor.h>
-#include <filesystem/directory_descriptor.h>
+#include <filesystem/filesystem_file_descriptor.h>
+#include <filesystem/filesystem_directory_descriptor.h>
 
 #include <stdlib.h>
 

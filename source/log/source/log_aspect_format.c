@@ -55,7 +55,7 @@ static int log_aspect_format_destroy(log_aspect aspect);
 
 log_aspect_interface log_aspect_format_interface()
 {
-	static struct log_aspect_format_impl_type log_aspect_format_impl =
+	static struct log_aspect_format_impl_type log_aspect_format_impl_obj =
 	{
 		&log_aspect_format_impl_size,
 		&log_aspect_format_impl_serialize,
@@ -65,7 +65,7 @@ log_aspect_interface log_aspect_format_interface()
 	static struct log_aspect_interface_type aspect_interface_format =
 	{
 		&log_aspect_format_create,
-		&log_aspect_format_impl,
+		&log_aspect_format_impl_obj,
 		&log_aspect_format_destroy
 	};
 

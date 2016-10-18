@@ -165,7 +165,7 @@ void filesystem_destroy(filesystem fs)
 	}
 }
 
-const char * dynlink_print_info()
+const char * filesystem_print_info()
 {
 	static const char filesystem_info[] =
 		"File System Library " METACALL_VERSION "\n"

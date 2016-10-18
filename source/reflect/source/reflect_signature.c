@@ -24,7 +24,11 @@ typedef struct signature_type
 	size_t			count;
 } * signature;
 
-signature_node signature_head(signature s)
+static signature_node signature_head(signature s);
+
+static signature_node signature_at(signature s, size_t index);
+
+static signature_node signature_head(signature s)
 {
 	if (s != NULL)
 	{
@@ -34,7 +38,7 @@ signature_node signature_head(signature s)
 	return NULL;
 }
 
-signature_node signature_at(signature s, size_t index)
+static signature_node signature_at(signature s, size_t index)
 {
 	signature_node node_list = signature_head(s);
 

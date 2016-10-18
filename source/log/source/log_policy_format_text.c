@@ -74,14 +74,14 @@ log_policy_interface log_policy_format_text_interface()
 		&log_policy_format_text_deserialize
 	};
 
-	static struct log_policy_interface_type policy_interface_stream =
+	static struct log_policy_interface_type policy_interface_format =
 	{
 		&log_policy_format_text_create,
 		&log_policy_format_text_impl,
 		&log_policy_format_text_destroy
 	};
 
-	return &policy_interface_stream;
+	return &policy_interface_format;
 }
 
 static int log_policy_format_text_create(log_policy policy, const log_policy_ctor ctor)

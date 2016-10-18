@@ -21,14 +21,25 @@ set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
 # Metaprogramming preprocessor generation
 #
 
-include(cmake/preprocessor_arithmetic.cmake)
-include(cmake/preprocessor_arguments.cmake)
-include(cmake/preprocessor_boolean.cmake)
-include(cmake/preprocessor_for.cmake)
+# Append cmake path
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+# Include preprocessor generators
+include(preprocessor_arithmetic)
+include(preprocessor_arguments)
+include(preprocessor_boolean)
+include(preprocessor_for)
+
+# Generate library from templates
 preprocessor_arithmetic_generate(256)
 preprocessor_arguments_generate(64)
 preprocessor_boolean_generate(256)
