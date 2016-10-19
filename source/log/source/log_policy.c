@@ -28,7 +28,7 @@ log_policy log_policy_create(enum log_aspect_id aspect_id, const log_policy_inte
 {
 	if (iface != NULL)
 	{
-		log_policy policy = malloc(sizeof(log_policy));
+		log_policy policy = malloc(sizeof(struct log_policy_type));
 
 		if (policy == NULL)
 		{

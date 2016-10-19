@@ -24,7 +24,7 @@ set(export_macro "${target_upper}_API")
 # Compiler warnings
 #
 
-include(Warnings)
+#include(Warnings)
 
 #
 # Sources

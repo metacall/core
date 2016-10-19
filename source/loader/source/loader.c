@@ -56,9 +56,21 @@ struct loader_get_iterator_args_type
 
 };
 
+/* -- Private Methods -- */
+
+static loader loader_singleton(void);
+
+static loader_impl loader_create_impl(loader_naming_extension extension);
+
+static loader_impl loader_get_impl(loader_naming_extension extension);
+
+static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
+static int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
 /* -- Methods -- */
 
-loader loader_singleton(void)
+static loader loader_singleton()
 {
 	static struct loader_type loader_instance =
 	{
@@ -92,7 +104,7 @@ void loader_initialize()
 	}
 }
 
-loader_impl loader_create_impl(loader_naming_extension extension)
+static loader_impl loader_create_impl(loader_naming_extension extension)
 {
 	loader l = loader_singleton();
 
@@ -128,7 +140,7 @@ loader_impl loader_create_impl(loader_naming_extension extension)
 	return NULL;
 }
 
-loader_impl loader_get_impl(loader_naming_extension extension)
+static loader_impl loader_get_impl(loader_naming_extension extension)
 {
 	loader l = loader_singleton();
 
@@ -209,11 +221,11 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && value != NULL && args != NULL)
+	if (map != NULL && key != NULL && val != NULL && args != NULL)
 	{
-		loader_impl impl = value;
+		loader_impl impl = val;
 
 		loader_get_iterator_args get_args = args;
 
@@ -260,11 +272,11 @@ loader_data loader_get(const char * name)
 	return NULL;
 }
 
-int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && value != NULL && args == NULL)
+	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
-		loader_impl impl = value;
+		loader_impl impl = val;
 
 		loader_impl_destroy(impl);
 

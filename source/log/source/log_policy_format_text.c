@@ -174,7 +174,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 
-	int header_size, body_size;
+	int header_size = 0, body_size = 0;
 
 	void * buffer_body = NULL;
 

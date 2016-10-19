@@ -38,7 +38,7 @@ add_subdirectory(plugins)
 set(IDE_FOLDER "Scripts")
 add_subdirectory(scripts)
 
-# Scripts
+# Ports
 set(IDE_FOLDER "Ports")
 add_subdirectory(ports)
 

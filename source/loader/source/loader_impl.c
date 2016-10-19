@@ -53,9 +53,27 @@ struct loader_impl_type
 	hash_map type_info_map;
 };
 
+/* -- Private Methods -- */
+
+static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension);
+
+static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr);
+
+static void loader_impl_dynlink_destroy(loader_impl impl);
+
+static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension);
+
+static loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_name name);
+
+static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
+
+static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
+static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
 /* -- Methods -- */
 
-dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension)
+static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension)
 {
 	const char loader_dynlink_suffix[] = "_loader";
 
@@ -75,7 +93,7 @@ dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension exte
 	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr)
+static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr)
 {
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
@@ -98,12 +116,12 @@ int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extensi
 	return dynlink_symbol(impl->handle, loader_dynlink_symbol, singleton_addr_ptr);
 }
 
-void loader_impl_dynlink_destroy(loader_impl impl)
+static void loader_impl_dynlink_destroy(loader_impl impl)
 {
 	dynlink_unload(impl->handle);
 }
 
-int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension)
+static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension)
 {
 	impl->handle = loader_impl_dynlink_load(path, extension);
 
@@ -233,7 +251,7 @@ int loader_impl_type_define(loader_impl impl, const char * name, type t)
 	return 1;
 }
 
-loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_name name)
+static loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_name name)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
@@ -256,7 +274,7 @@ loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_n
 	return NULL;
 }
 
-void loader_impl_destroy_handle(loader_handle_impl handle_impl)
+static void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 {
 	if (handle_impl != NULL)
 	{
@@ -328,11 +346,11 @@ int loader_impl_load(loader_impl impl, const loader_naming_path path)
 	return 1;
 }
 
-int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && value != NULL && args == NULL)
+	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
-		type t = value;
+		type t = val;
 
 		type_destroy(t);
 
@@ -342,11 +360,11 @@ int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash
 	return 1;
 }
 
-int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && value != NULL && args == NULL)
+	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
-		loader_handle_impl handle_impl = value;
+		loader_handle_impl handle_impl = val;
 
 		loader_impl_destroy_handle(handle_impl);
 
