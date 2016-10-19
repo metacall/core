@@ -15,6 +15,11 @@
 #include <stdio.h>
 #include <time.h>
 
+#if defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+#	include <stdarg.h>
+#endif
+
 /* -- Definitions -- */
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
@@ -231,12 +236,22 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 		body_size = _vsnprintf(buffer_body, size, log_record_message(record), log_record_data(record));
 
-	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
-		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
-		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+	#elif defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)
 
 		body_size = vsnprintf(buffer_body, size, log_record_message(record), log_record_data(record));
 
+	#elif defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+
+		{
+			va_list args_copy;
+
+			va_copy(args_copy, log_record_data(record));
+
+			body_size = vsnprintf(buffer_body, size, log_record_message(record), args_copy);
+
+			va_end(args_copy);
+		}
 	#else
 
 		/* TODO: find out how to avoid stack smashing */

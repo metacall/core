@@ -29,7 +29,7 @@ namespace Beast {
 		*v = 0;
 	}
 	void Return::Get(std::string *v) {
-		v = NULL;
+		(void)v;
 	}
 
 	std::string Return::GetString() {
