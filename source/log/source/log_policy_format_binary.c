@@ -77,10 +77,13 @@ static int log_policy_format_binary_create(log_policy policy, const log_policy_c
 
 static size_t log_policy_format_binary_size(log_policy policy, const log_record record)
 {
+	const size_t mock_binary_size = 1;
+
 	(void)policy;
 	(void)record;
 
-	return 0;
+	/* TODO: implement properly this */
+	return mock_binary_size;
 }
 
 static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
@@ -89,8 +92,10 @@ static size_t log_policy_format_binary_serialize(log_policy policy, const log_re
 
 	(void)binary_data;
 	(void)record;
-	(void)buffer;
 	(void)size;
+
+	/* TODO: implement properly this */
+	*((char *)buffer) = '\0';
 
 	return size;
 }

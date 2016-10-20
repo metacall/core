@@ -69,6 +69,31 @@ int log_define(const char * name, log_policy policy)
 	return 0;
 }
 
+int log_configure_impl(const char * name, size_t size, ...)
+{
+	size_t iterator;
+
+	va_list variable_args;
+
+	va_start(variable_args, size);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		log_policy policy = va_arg(variable_args, log_policy);
+
+		if (log_define(name, policy) != 0)
+		{
+			va_end(variable_args);
+
+			return 1;
+		}
+	}
+
+	va_end(variable_args);
+
+	return 0;
+}
+
 int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message)
 {
 	log_impl impl = log_singleton_get(name);

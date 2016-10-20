@@ -19,6 +19,9 @@ extern "C" {
 
 /* -- Macros -- */
 
+#define PREPROCESSOR_TUPLE_EXPAND_MACRO(macro, ...) \
+	macro __VA_ARGS__
+
 #define PREPROCESSOR_TUPLE_EXPAND(...) \
 	PREPROCESSOR_TUPLE_EXPAND_IMPL __VA_ARGS__
 

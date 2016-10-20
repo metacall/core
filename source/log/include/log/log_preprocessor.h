@@ -14,8 +14,6 @@
 #include <log/log_api.h>
 
 #include <preprocessor/preprocessor_arguments.h>
-#include <preprocessor/preprocessor_for.h>
-#include <preprocessor/preprocessor_empty.h>
 #include <preprocessor/preprocessor_if.h>
 
 #ifdef __cplusplus
@@ -28,12 +26,8 @@ extern "C" {
 
 /* -- Macros -- */
 
-#define LOG_PREPROCESSOR_CONFIGURE_IMPL(policy) && policy
-
-#define log_configure(name, ...) ( \
-		PREPROCESSOR_ARGS_FIRST(__VA_ARGS__) \
-		PREPROCESSOR_FOR_EACH(LOG_PREPROCESSOR_CONFIGURE_IMPL, PREPROCESSOR_ARGS_FIRST_REMOVE(__VA_ARGS__)) \
-	)
+#define log_configure(name, ...) \
+	log_configure_impl(name, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), __VA_ARGS__)
 
 #if defined(__cplusplus) && (__cplusplus >= 201103L)
 #	define log_write(name, level, ...) \

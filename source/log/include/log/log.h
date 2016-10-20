@@ -36,6 +36,8 @@ LOG_API int log_create(const char * name);
 
 LOG_API int log_define(const char * name, log_policy policy);
 
+LOG_API int log_configure_impl(const char * name, size_t size, ...);
+
 LOG_API int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message);
 
 LOG_API int log_write_impl_va(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...);
