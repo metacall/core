@@ -15,7 +15,25 @@
 	/* Convert from Python to C */
 	%typemap(in) int
 	{
-		$1 = value_create_long(PyLong_AsLong($input));
+		#if defined(PY_MAJOR_VERSION) && (PY_MAJOR_VERSION == 2)
+			$1 = PyInt_AsLong($input);
+		#elif defined(PY_MAJOR_VERSION) && (PY_MAJOR_VERSION == 3)
+			$1 = PyLong_AsLong($input);
+		#else
+			$1 = -1
+		#endif
+	}
+
+	/* Convert from C to Python */
+	%typemap(out) int
+	{
+		#if defined(PY_MAJOR_VERSION) && (PY_MAJOR_VERSION == 2)
+			$result = PyInt_FromLong($1);
+		#elif defined(PY_MAJOR_VERSION) && (PY_MAJOR_VERSION == 3)
+			$result = PyLong_FromLong($1);
+		#else
+			$result = -1
+		#endif
 	}
 #endif
 

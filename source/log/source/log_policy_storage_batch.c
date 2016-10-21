@@ -47,7 +47,7 @@ static int log_policy_storage_batch_destroy(log_policy policy);
 
 log_policy_interface log_policy_storage_batch_interface()
 {
-	static struct log_policy_storage_impl_type log_policy_storage_batch_impl =
+	static struct log_policy_storage_impl_type log_policy_storage_batch_impl_obj =
 	{
 		&log_policy_storage_batch_append,
 		&log_policy_storage_batch_flush
@@ -56,7 +56,7 @@ log_policy_interface log_policy_storage_batch_interface()
 	static struct log_policy_interface_type policy_interface_storage =
 	{
 		&log_policy_storage_batch_create,
-		&log_policy_storage_batch_impl,
+		&log_policy_storage_batch_impl_obj,
 		&log_policy_storage_batch_destroy
 	};
 

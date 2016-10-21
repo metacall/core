@@ -15,6 +15,7 @@
 
 #include <log/log_policy.h>
 #include <log/log_policy_stream_file.h>
+#include <log/log_policy_stream_nginx.h>
 #include <log/log_policy_stream_socket.h>
 #include <log/log_policy_stream_stdio.h>
 #include <log/log_policy_stream_syslog.h>
@@ -28,9 +29,10 @@ extern "C" {
 enum log_policy_stream_id
 {
 	LOG_POLICY_STREAM_FILE		= 0x00,
-	LOG_POLICY_STREAM_SOCKET	= 0x01,
-	LOG_POLICY_STREAM_STDIO		= 0x02,
-	LOG_POLICY_STREAM_SYSLOG	= 0x03,
+	LOG_POLICY_STREAM_NGINX		= 0x01,
+	LOG_POLICY_STREAM_SOCKET	= 0x02,
+	LOG_POLICY_STREAM_STDIO		= 0x03,
+	LOG_POLICY_STREAM_SYSLOG	= 0x04,
 
 	LOG_POLICY_STREAM_SIZE
 };
@@ -59,6 +61,8 @@ struct log_policy_stream_impl_type
 LOG_API log_policy_interface log_policy_stream(const log_policy_id policy_stream_id);
 
 LOG_API log_policy log_policy_stream_file(const char * file_name, const char * mode);
+
+LOG_API log_policy log_policy_stream_nginx(struct ngx_log_s * ngx_log_ptr, log_policy_stream_nginx_error ngx_error_ptr);
 
 LOG_API log_policy log_policy_stream_socket(const char * ip, uint16_t port);
 

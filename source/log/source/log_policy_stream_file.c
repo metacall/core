@@ -40,7 +40,7 @@ static int log_policy_stream_file_destroy(log_policy policy);
 
 log_policy_interface log_policy_stream_file_interface()
 {
-	static struct log_policy_stream_impl_type log_policy_stream_file_impl =
+	static struct log_policy_stream_impl_type log_policy_stream_file_impl_obj =
 	{
 		&log_policy_stream_file_write,
 		&log_policy_stream_file_flush
@@ -49,7 +49,7 @@ log_policy_interface log_policy_stream_file_interface()
 	static struct log_policy_interface_type policy_interface_stream =
 	{
 		&log_policy_stream_file_create,
-		&log_policy_stream_file_impl,
+		&log_policy_stream_file_impl_obj,
 		&log_policy_stream_file_destroy
 	};
 
@@ -86,7 +86,7 @@ static int log_policy_stream_file_write(log_policy policy, const void * buffer, 
 	return 0;
 }
 
-int log_policy_stream_file_flush(log_policy policy)
+static int log_policy_stream_file_flush(log_policy policy)
 {
 	log_policy_stream_file_data file_data = log_policy_instance(policy);
 

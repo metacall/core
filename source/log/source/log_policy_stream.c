@@ -10,10 +10,11 @@
 
 #include <log/log_policy_stream.h>
 #include <log/log_aspect_stream.h>
-#include <log/log_policy_stream_stdio.h>
 #include <log/log_policy_stream_file.h>
-#include <log/log_policy_stream_syslog.h>
+#include <log/log_policy_stream_nginx.h>
 #include <log/log_policy_stream_socket.h>
+#include <log/log_policy_stream_stdio.h>
+#include <log/log_policy_stream_syslog.h>
 
 
 /* -- Methods -- */
@@ -23,6 +24,7 @@ log_policy_interface log_policy_stream(const log_policy_id policy_stream_id)
 	static const log_policy_singleton policy_stream_singleton[LOG_POLICY_STREAM_SIZE] =
 	{
 		&log_policy_stream_file_interface,
+		&log_policy_stream_nginx_interface,
 		&log_policy_stream_socket_interface,
 		&log_policy_stream_stdio_interface,
 		&log_policy_stream_syslog_interface
@@ -41,6 +43,25 @@ log_policy log_policy_stream_file(const char * file_name, const char * mode)
 	file_ctor.mode = mode;
 
 	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_FILE), &file_ctor);
+
+	if (policy == NULL)
+	{
+		return NULL;
+	}
+
+	return policy;
+}
+
+log_policy log_policy_stream_nginx(struct ngx_log_s * ngx_log_ptr, log_policy_stream_nginx_error ngx_error_ptr)
+{
+	log_policy policy;
+
+	struct log_policy_stream_nginx_ctor_type nginx_ctor;
+
+	nginx_ctor.ngx_log_ptr = ngx_log_ptr;
+	nginx_ctor.ngx_error_ptr = ngx_error_ptr;
+
+	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_NGINX), &nginx_ctor);
 
 	if (policy == NULL)
 	{

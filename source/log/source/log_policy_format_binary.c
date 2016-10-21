@@ -42,7 +42,7 @@ static int log_policy_format_binary_destroy(log_policy policy);
 
 log_policy_interface log_policy_format_binary_interface()
 {
-	static struct log_policy_format_impl_type log_policy_format_binary_impl =
+	static struct log_policy_format_impl_type log_policy_format_binary_impl_obj =
 	{
 		&log_policy_format_binary_size,
 		&log_policy_format_binary_serialize,
@@ -52,7 +52,7 @@ log_policy_interface log_policy_format_binary_interface()
 	static struct log_policy_interface_type policy_interface_format =
 	{
 		&log_policy_format_binary_create,
-		&log_policy_format_binary_impl,
+		&log_policy_format_binary_impl_obj,
 		&log_policy_format_binary_destroy
 	};
 

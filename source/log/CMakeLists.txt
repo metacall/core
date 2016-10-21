@@ -61,6 +61,7 @@ set(headers
 
     ${include_path}/log_policy_stream.h
     ${include_path}/log_policy_stream_file.h
+    ${include_path}/log_policy_stream_nginx.h
     ${include_path}/log_policy_stream_socket.h
     ${include_path}/log_policy_stream_stdio.h
     ${include_path}/log_policy_stream_syslog.h
@@ -98,6 +99,7 @@ set(sources
 
     ${source_path}/log_policy_stream.c
     ${source_path}/log_policy_stream_file.c
+    ${source_path}/log_policy_stream_nginx.c
     ${source_path}/log_policy_stream_socket.c
     ${source_path}/log_policy_stream_stdio.c
     ${source_path}/log_policy_stream_syslog.c

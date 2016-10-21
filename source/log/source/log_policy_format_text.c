@@ -72,7 +72,7 @@ static int log_policy_format_text_destroy(log_policy policy);
 
 log_policy_interface log_policy_format_text_interface()
 {
-	static struct log_policy_format_impl_type log_policy_format_text_impl =
+	static struct log_policy_format_impl_type log_policy_format_text_impl_obj =
 	{
 		&log_policy_format_text_size,
 		&log_policy_format_text_serialize,
@@ -82,7 +82,7 @@ log_policy_interface log_policy_format_text_interface()
 	static struct log_policy_interface_type policy_interface_format =
 	{
 		&log_policy_format_text_create,
-		&log_policy_format_text_impl,
+		&log_policy_format_text_impl_obj,
 		&log_policy_format_text_destroy
 	};
 

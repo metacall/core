@@ -14,8 +14,6 @@
 #include <log/log_impl.h>
 #include <log/log_singleton.h>
 
-#include <stdio.h>
-
 /* -- Methods -- */
 
 int log_create(const char * name)

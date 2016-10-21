@@ -41,7 +41,7 @@ static int log_policy_stream_socket_destroy(log_policy policy);
 
 log_policy_interface log_policy_stream_socket_interface()
 {
-	static struct log_policy_stream_impl_type log_policy_stream_socket_impl =
+	static struct log_policy_stream_impl_type log_policy_stream_socket_impl_obj =
 	{
 		&log_policy_stream_socket_write,
 		&log_policy_stream_socket_flush
@@ -50,7 +50,7 @@ log_policy_interface log_policy_stream_socket_interface()
 	static struct log_policy_interface_type policy_interface_stream =
 	{
 		&log_policy_stream_socket_create,
-		&log_policy_stream_socket_impl,
+		&log_policy_stream_socket_impl_obj,
 		&log_policy_stream_socket_destroy
 	};
 
@@ -90,7 +90,7 @@ static int log_policy_stream_socket_write(log_policy policy, const void * buffer
 	return 0;
 }
 
-int log_policy_stream_socket_flush(log_policy policy)
+static int log_policy_stream_socket_flush(log_policy policy)
 {
 	log_policy_stream_socket_data socket_data = log_policy_instance(policy);
 
