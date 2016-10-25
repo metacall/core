@@ -18,8 +18,9 @@
 
 #include <adt/hash_map.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /* -- Definitions -- */
@@ -150,7 +151,7 @@ static loader_impl loader_get_impl(loader_naming_extension extension)
 	{
 		impl = loader_create_impl(extension);
 
-		printf("Create loader implementation: %s %p\n", extension, (void *)impl);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", extension, (void *)impl);
 	}
 
 	return impl;
@@ -161,7 +162,7 @@ int loader_load(const loader_naming_path path)
 	loader l = loader_singleton();
 
 	#ifdef LOADER_LAZY
-		printf("Loader lazy initialization\n");
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
 		loader_initialize();
 	#endif
@@ -174,7 +175,7 @@ int loader_load(const loader_naming_path path)
 		{
 			loader_impl impl = loader_get_impl(extension);
 
-			printf("Loader implementation (%s): %p\n", extension, (void *)impl);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
 
 			if (impl != NULL)
 			{
@@ -193,7 +194,7 @@ int loader_load(const loader_naming_path path)
 				{
 				*/
 					return loader_impl_load(impl, path);
-				//}
+				/*}*/
 			}
 		}
 	}
@@ -206,7 +207,7 @@ int loader_load_path(const loader_naming_path path)
 	loader l = loader_singleton();
 
 	#ifdef LOADER_LAZY
-		printf("Loader lazy initialization\n");
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
 		loader_initialize();
 	#endif
@@ -237,7 +238,7 @@ static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value 
 
 		if (get_args->obj != NULL)
 		{
-			printf("Loader get callback: impl %p, name %s\n", (void *)get_args->obj, get_args->name);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader get callback: impl %p, name %s", (void *)get_args->obj, get_args->name);
 
 			return 1;
 		}
@@ -297,7 +298,7 @@ int loader_unload()
 		if (hash_map_clear(l->impl_map) != 0)
 		{
 			#ifdef LOADER_LAZY
-				printf("Loader lazy destruction\n");
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
 
 				loader_destroy();
 			#endif
@@ -307,7 +308,7 @@ int loader_unload()
 	}
 
 	#ifdef LOADER_LAZY
-		printf("Loader lazy destruction\n");
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
 
 		loader_destroy();
 	#endif

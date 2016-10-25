@@ -65,6 +65,8 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
+    ${META_PROJECT_NAME}::preprocessor
+    ${META_PROJECT_NAME}::log
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::metacall
 )

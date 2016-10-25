@@ -15,8 +15,9 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
+#include <log/log.h>
+
 #include <new>
-#include <iostream>
 
 #include <ffi.h>
 
@@ -172,7 +173,7 @@ loader_handle c_loader_impl_load(loader_impl impl, const loader_naming_path path
 						c_handle->buffer = buffer;
 						c_handle->buffer_size = size;
 
-						printf("C module <%s> correctly loaded\n", name);
+						log_write("metacall", LOG_LEVEL_DEBUG, "C module <%s> correctly loaded", name);
 
 						return (loader_handle)c_handle;
 					}

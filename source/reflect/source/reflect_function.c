@@ -8,9 +8,10 @@
 
 #include <reflect/reflect_function.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 typedef struct function_type
 {
@@ -34,7 +35,7 @@ function function_create(const char * name, size_t args_count, function_impl imp
 
 			if (func->name == NULL)
 			{
-				/* error */
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid function name allocation <%s>", name);
 
 				free(func);
 
@@ -62,7 +63,7 @@ function function_create(const char * name, size_t args_count, function_impl imp
 				{
 					if (func->interface->create(func, impl) != 0)
 					{
-						/* error */
+						log_write("metacall", LOG_LEVEL_ERROR, "Invalid function (%s) create callback <%p>", func->name, func->interface->create);
 					}
 				}
 
@@ -100,7 +101,7 @@ void function_print(function func)
 {
 	if (func != NULL)
 	{
-		printf("Function <%s> Impl (%p) Interface (%p):\n",
+		log_write("metacall", LOG_LEVEL_DEBUG, "Function <%s> Impl (%p) Interface (%p):",
 			func->name, (void *)func->impl, (void *)func->interface);
 
 		signature_print(func->s);

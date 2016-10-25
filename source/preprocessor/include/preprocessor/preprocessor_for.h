@@ -30,7 +30,8 @@ extern "C" {
 
 #define PREPROCESSOR_FOR_EACH_IMPL_0(expr, ...)
 #define PREPROCESSOR_FOR_EACH_IMPL_1(expr, element, ...) expr(element)
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
+	(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
 #	define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
 	expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__, ~))
 #else

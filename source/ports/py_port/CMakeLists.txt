@@ -108,6 +108,8 @@ macro(swig_add_depends target)
 endmacro()
 
 swig_add_depends(${target}
+    ${META_PROJECT_NAME}::preprocessor
+    ${META_PROJECT_NAME}::log
     ${META_PROJECT_NAME}::adt
     ${META_PROJECT_NAME}::dynlink
     ${META_PROJECT_NAME}::reflect
@@ -191,6 +193,8 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
     PRIVATE
+    ${META_PROJECT_NAME}::preprocessor
+    ${META_PROJECT_NAME}::log
     ${META_PROJECT_NAME}::adt
     ${META_PROJECT_NAME}::dynlink
     ${META_PROJECT_NAME}::reflect

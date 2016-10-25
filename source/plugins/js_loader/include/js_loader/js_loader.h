@@ -23,7 +23,7 @@ JS_LOADER_API loader_impl_interface js_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(js_loader_impl_interface_singleton);
 
-JS_LOADER_API void js_loader_print_info(void);
+JS_LOADER_API const char * js_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(js_loader_print_info);
 

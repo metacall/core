@@ -10,7 +10,7 @@
 
 #include <dynlink/dynlink.h>
 
-#include <cstdio>
+#include <log/log.h>
 
 typedef void (*py_loader_print_func)(void);
 
@@ -21,16 +21,22 @@ class dynlink_test : public testing::Test
 
 TEST_F(dynlink_test, DefaultConstructor)
 {
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout)));
+
 	dynlink_print_info();
 
-	printf("Dynamic linked shared object extension: %s\n", dynlink_extension());
+	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
 	{
 		dynlink handle = dynlink_load(NULL, "py_loader", DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		EXPECT_NE(handle, (dynlink) NULL);
 
-		printf("Dynamic linked shared object file: %s\n", dynlink_get_name_impl(handle));
+		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file: %s", dynlink_get_name_impl(handle));
 
 		if (handle != NULL)
 		{
@@ -42,13 +48,13 @@ TEST_F(dynlink_test, DefaultConstructor)
 			{
 				py_loader_print_func print = DYNLINK_SYMBOL_GET(py_loader_print_info_addr);
 
-				printf("Print function: %p\n", (void *)print);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
 
-				printf("Symbol pointer: %p\n", (void *)py_loader_print_info_addr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)py_loader_print_info_addr);
 
 				if (DYNLINK_SYMBOL_GET(py_loader_print_info_addr) != NULL)
 				{
-					printf("Pointer is valid\n");
+					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
 				}
 
 				print();

@@ -10,8 +10,6 @@
 
 #include <loader/loader.h>
 
-#include <cstdio>
-
 class py_loader_test : public testing::Test
 {
   protected:

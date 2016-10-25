@@ -19,12 +19,10 @@
 #include <adt/hash_map_str.h>
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <js/Initialization.h>
 #include <js/RootingAPI.h>
 
-#include <jsapi.h>
 
 /* Assume we can't use more than 5e5 bytes of C stack by default */
 #if (defined(DEBUG) && defined(__SUNPRO_CC))  || defined(JS_CPU_SPARC)
@@ -99,14 +97,13 @@ const JSClass * jsm_global_class(void)
 	return &global_class;
 }
 
-
 void jsm_report_error(JSContext * cx, const char * msg, JSErrorReport * report)
 {
 	const char * file_name = (report->filename != NULL) ? report->filename : "[no filename]";
 
 	(void)cx;
 
-	fprintf(stderr, "%s:%u:\n%s\n", file_name, (unsigned int) report->lineno, msg);
+	log_write("metacall", LOG_LEVEL_ERROR, "%s:%u:\n%s", file_name, (unsigned int) report->lineno, msg);
 }
 
 loader_impl_data jsm_loader_impl_initialize(loader_impl impl)

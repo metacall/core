@@ -8,11 +8,12 @@
 
 #include <gmock/gmock.h>
 
-#include <cstdio>
-#include <cstring>
-
 #include <adt/vector.h>
 #include <adt/trie.h>
+
+#include <log/log.h>
+
+#include <cstring>
 
 class trie_test : public testing::Test
 {
@@ -28,7 +29,7 @@ int trie_iterator_cb_print(trie t, trie_key key, trie_value value, trie_cb_itera
 		const char * key_str = reinterpret_cast<const char *>(key);
 		const char * value_str = reinterpret_cast<const char *>(value);
 
-		printf("%s : %s\n", key_str, value_str);
+		log_write("metacall", LOG_LEVEL_DEBUG, "%s : %s", key_str, value_str);
 
 		return 0;
 	}
@@ -54,6 +55,12 @@ int trie_iterator_cb_clear(trie t, trie_key key, trie_value value, trie_cb_itera
 
 TEST_F(trie_test, DefaultConstructor)
 {
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout)));
+
 	size_t iterator;
 
 	static const char * keys_str[] =
@@ -104,7 +111,7 @@ TEST_F(trie_test, DefaultConstructor)
 
 		const char * value_str = reinterpret_cast<const char *>(value);
 
-		printf("%lu -> %s\n", iterator, value_str);
+		log_write("metacall", LOG_LEVEL_DEBUG, "%lu -> %s", iterator, value_str);
 
 		EXPECT_EQ((int) 0, (int) strcmp(values_str[keys_size - iterator - 1], value_str));
 
@@ -117,7 +124,7 @@ TEST_F(trie_test, DefaultConstructor)
 
 	EXPECT_EQ((int) 0, (int) trie_prefixes(t, *last_prefix, prefixes));
 
-	printf("cannonical path: ");
+	log_write("metacall", LOG_LEVEL_DEBUG, "cannonical path: ");
 
 	for (iterator = 0; iterator < vector_size(prefixes); ++iterator)
 	{
@@ -125,12 +132,10 @@ TEST_F(trie_test, DefaultConstructor)
 
 		const char * key_str = reinterpret_cast<const char *>(*key);
 
-		printf("%s/", key_str);
+		log_write("metacall", LOG_LEVEL_DEBUG, "%s/", key_str);
 
 		EXPECT_EQ((int) 0, (int) strcmp(keys_str[iterator], key_str));
 	}
-
-	printf("\n");
 
 	vector_pop_back(keys);
 

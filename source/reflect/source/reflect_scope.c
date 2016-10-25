@@ -11,9 +11,10 @@
 #include <adt/hash_map.h>
 #include <adt/vector.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 typedef struct scope_type
 {
@@ -23,14 +24,7 @@ typedef struct scope_type
 
 } * scope;
 
-static void scope_error(const char * error);
-
 static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
-
-static void scope_error(const char * error)
-{
-	printf("%s\n", error);
-}
 
 scope scope_create(const char * name)
 {
@@ -48,7 +42,7 @@ scope scope_create(const char * name)
 
 			if (sp->name == NULL)
 			{
-				scope_error("Scope create name bad allocation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Scope create name bad allocation");
 
 				free(sp);
 
@@ -61,7 +55,7 @@ scope scope_create(const char * name)
 
 			if (sp->map == NULL)
 			{
-				scope_error("Scope create map bad allocation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Scope create map bad allocation");
 
 				free(sp->name);
 
@@ -74,7 +68,7 @@ scope scope_create(const char * name)
 
 			if (sp->call_stack == NULL)
 			{
-				scope_error("Scope create call stack bad allocation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Scope create call stack bad allocation");
 
 				hash_map_destroy(sp->map);
 
@@ -87,7 +81,7 @@ scope scope_create(const char * name)
 
 			if (vector_resize(sp->call_stack, sizeof(size_t)) != 0)
 			{
-				scope_error("Scope create call stack bad allocation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Scope create call stack bad allocation");
 
 				vector_destroy(sp->call_stack);
 
@@ -111,17 +105,17 @@ scope scope_create(const char * name)
 				return sp;
 			}
 
-			scope_error("Scope create bad call stack head reference");
+			log_write("metacall", LOG_LEVEL_ERROR, "Scope create bad call stack head reference");
 
 			return NULL;
 		}
 
-		scope_error("Scope create bad allocation");
+		log_write("metacall", LOG_LEVEL_ERROR, "Scope create bad allocation");
 
 		return NULL;
 	}
 
-	scope_error("Scope create invalid parameters");
+	log_write("metacall", LOG_LEVEL_ERROR, "Scope create invalid parameters");
 
 	return NULL;
 }
@@ -150,7 +144,7 @@ static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value
 {
 	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
-		printf("Key [%s] -> Value [%p]\n", (char *)key, val);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Key (%s) -> Value (%p)", (char *)key, val);
 
 		return 0;
 	}
@@ -160,7 +154,7 @@ static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value
 
 void scope_print(scope sp)
 {
-	printf("Scope [%s]:\n", sp->name);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Scope (%s):", sp->name);
 
 	hash_map_iterate(sp->map, &scope_print_cb_iterate, NULL);
 }
@@ -209,17 +203,17 @@ size_t * scope_stack_return(scope sp)
 				return size_return_ptr;
 			}
 
-			scope_error("Scope stack return invalid reference");
+			log_write("metacall", LOG_LEVEL_ERROR, "Scope stack return invalid reference");
 
 			return NULL;
 		}
 
-		scope_error("Scope stack return empty");
+		log_write("metacall", LOG_LEVEL_ERROR, "Scope stack return empty");
 
 		return NULL;
 	}
 
-	scope_error("Scope stack return invalid parameters");
+	log_write("metacall", LOG_LEVEL_ERROR, "Scope stack return invalid parameters");
 
 	return NULL;
 }
@@ -236,7 +230,7 @@ scope_stack_ptr scope_stack_push(scope sp, size_t bytes)
 
 		if (vector_resize(sp->call_stack, next_size) != 0)
 		{
-			scope_error("Scope stack push bad call stack size increase");
+			log_write("metacall", LOG_LEVEL_ERROR, "Scope stack push bad call stack size increase");
 
 			return 0;
 		}
@@ -254,22 +248,22 @@ scope_stack_ptr scope_stack_push(scope sp, size_t bytes)
 				return prev_size;
 			}
 
-			scope_error("Scope stack push bad stack pointer reference");
+			log_write("metacall", LOG_LEVEL_ERROR, "Scope stack push bad stack pointer reference");
 		}
 
-		scope_error("Scope stack push bad stack return reference");
+		log_write("metacall", LOG_LEVEL_ERROR, "Scope stack push bad stack return reference");
 
 		if (vector_resize(sp->call_stack, prev_size) != 0)
 		{
-			scope_error("Scope stack push bad call stack size decrease");
+			log_write("metacall", LOG_LEVEL_ERROR, "Scope stack push bad call stack size decrease");
 		}
 
 		return 0;
 	}
 
-	scope_error("Scope stack push invalid parameters");
+	log_write("metacall", LOG_LEVEL_ERROR, "Scope stack push invalid parameters");
 
-	return 0;
+	return 1;
 }
 
 void * scope_stack_get(scope sp, scope_stack_ptr stack_ptr)
@@ -295,7 +289,7 @@ int scope_stack_pop(scope sp)
 
 		if (vector_resize(sp->call_stack, *return_ptr) != 0)
 		{
-			scope_error("Scope bad call stack size decrease");
+			log_write("metacall", LOG_LEVEL_ERROR, "Scope bad call stack size decrease");
 
 			return 1;
 		}
@@ -303,7 +297,7 @@ int scope_stack_pop(scope sp)
 		return 0;
 	}
 
-	scope_error("Scope stack pop invalid parameters");
+	log_write("metacall", LOG_LEVEL_ERROR, "Scope stack pop invalid parameters");
 
 	return 1;
 }

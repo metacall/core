@@ -23,7 +23,7 @@ JSM_LOADER_API loader_impl_interface jsm_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(jsm_loader_impl_interface_singleton);
 
-JSM_LOADER_API void jsm_loader_print_info(void);
+JSM_LOADER_API const char * jsm_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(jsm_loader_print_info);
 

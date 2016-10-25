@@ -19,10 +19,6 @@
 extern "C" {
 #endif
 
-/* -- Headers -- */
-
-#include <stdio.h>
-
 /* -- Forward Declarations -- */
 
 struct log_policy_stream_syslog_ctor_type;

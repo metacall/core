@@ -28,7 +28,13 @@ extern "C" {
 #if defined(_MSC_VER) && (_MSC_VER >= 1300)
 #	define log_record_function() __FUNCTION__
 #elif defined(__GNUC__) || defined(__MINGW32__) || defined(__MINGW64__) || defined(__CYGWIN__)
-#	define log_record_function() __PRETTY_FUNCTION__
+#	if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
+		(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
+
+#		define log_record_function() __func__
+#	else
+#		define log_record_function() __PRETTY_FUNCTION__
+#	endif
 #elif defined(__BORLANDC__)
 #	define log_record_function() __FUNC__
 #elif defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERION__ >= 199901L)

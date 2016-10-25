@@ -16,8 +16,9 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 
 struct loader_impl_mock_handle_type;
 
@@ -55,7 +56,7 @@ loader_handle mock_loader_impl_handle_create(loader_impl impl, const loader_nami
 
 	if (handle != NULL)
 	{
-		printf("Mock module %s (%s) loaded\n", path, name);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Mock module %s (%s) loaded", path, name);
 
 		handle->handle_mock_data = NULL;
 

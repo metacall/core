@@ -11,8 +11,6 @@
 #include <py_loader/py_loader.h>
 #include <py_loader/py_loader_impl.h>
 
-#include <stdio.h>
-
 loader_impl_interface py_loader_impl_interface_singleton(void)
 {
 	static struct loader_impl_interface_type loader_impl_interface_py =
@@ -28,14 +26,19 @@ loader_impl_interface py_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_py;
 }
 
-void py_loader_print_info()
+const char * py_loader_print_info()
 {
-	printf("Python Loader Plugin " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char py_loader_info[] =
+		"Python Loader Plugin " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef PY_LOADER_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef PY_LOADER_STATIC_DEFINE
+			"Compiled as static library type\n"
+		#else
+			"Compiled as shared library type\n"
+		#endif
+
+		"\n";
+
+	return py_loader_info;
 }

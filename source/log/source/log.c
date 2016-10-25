@@ -69,9 +69,19 @@ int log_define(const char * name, log_policy policy)
 
 int log_configure_impl(const char * name, size_t size, ...)
 {
+	log_impl impl = log_singleton_get(name);
+
 	size_t iterator;
 
 	va_list variable_args;
+
+	if (impl == NULL)
+	{
+		if (log_create(name) != 0)
+		{
+			return 1;
+		}
+	}
 
 	va_start(variable_args, size);
 

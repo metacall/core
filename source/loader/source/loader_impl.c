@@ -17,8 +17,9 @@
 
 #include <dynlink/dynlink.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /* -- Forward Declarations -- */
@@ -88,7 +89,7 @@ static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extensi
 
 	#undef LOADER_DYNLINK_NAME_SIZE
 
-	printf("Loader: %s\n", loader_dynlink_name);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader: %s", loader_dynlink_name);
 
 	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
@@ -111,7 +112,7 @@ static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension 
 
 	#undef LOADER_DYNLINK_SYMBOL_SIZE
 
-	printf("Loader symbol: %s\n", loader_dynlink_symbol);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader symbol: %s", loader_dynlink_symbol);
 
 	return dynlink_symbol(impl->handle, loader_dynlink_symbol, singleton_addr_ptr);
 }
@@ -307,13 +308,13 @@ int loader_impl_load(loader_impl impl, const loader_naming_path path)
 
 		loader_naming_name module_name;
 
-		printf("Loading %s\n", path);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loading %s", path);
 
 		if (interface_impl != NULL && loader_path_get_name(path, module_name) > 1)
 		{
 			loader_handle handle = interface_impl->load(impl, path, module_name);
 
-			printf("Loader interface: %p\nLoader handle: %p\n", (void *)interface_impl, (void *)handle);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 
 			if (handle != NULL)
 			{
@@ -386,7 +387,7 @@ void loader_impl_destroy(loader_impl impl)
 
 		if (interface_impl->destroy(impl) != 0)
 		{
-			/* error */
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", impl->extension, interface_impl->destroy);
 		}
 
 		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);

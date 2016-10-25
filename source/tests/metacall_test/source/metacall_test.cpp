@@ -12,6 +12,8 @@
 
 #include <reflect/reflect_value.h>
 
+#include <log/log.h>
+
 class metacall_test : public testing::Test
 {
   public:
@@ -19,6 +21,12 @@ class metacall_test : public testing::Test
 
 TEST_F(metacall_test, DefaultConstructor)
 {
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout)));
+
 	metacall_print_info();
 
 	EXPECT_EQ((int) 0, (int) metacall_initialize());
@@ -39,7 +47,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value_destroy(ret);
 
-		printf("7's multiples dude!\n");
+		log_write("metacall", LOG_LEVEL_DEBUG, "7's multiples dude!");
 
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
 		{

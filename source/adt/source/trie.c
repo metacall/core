@@ -9,10 +9,9 @@
 /* -- Headers -- */
 
 #include <adt/trie.h>
-
 #include <adt/set.h>
 
-#include <stdio.h>
+#include <log/log.h>
 
 /* -- Definitions -- */
 
@@ -119,11 +118,6 @@ int trie_node_clear(trie t, trie_node n);
 
 /* -- Methods -- */
 
-void trie_error(const char * error)
-{
-	printf("%s\n", error);
-}
-
 trie trie_create(trie_cb_hash hash_cb, trie_cb_compare compare_cb)
 {
 	return trie_create_reserve(TRIE_CAPACITY_MIN, 0, 0, hash_cb, compare_cb);
@@ -169,19 +163,19 @@ trie trie_create_reserve(size_t capacity, size_t key_limit, size_t depth_limit, 
 			}
 			else
 			{
-				trie_error("Trie bad node list creation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list creation");
 			}
 
 			free(t);
 		}
 		else
 		{
-			trie_error("Trie bad allocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "Trie bad allocation");
 		}
 	}
 	else
 	{
-		trie_error("Trie invalid callback");
+		log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid callback");
 	}
 
 	return NULL;
@@ -217,7 +211,7 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 
 		if (child_ref == NULL)
 		{
-			trie_error("Trie node insert bad reference node allocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "Trie node insert bad reference node allocation");
 
 			return NULL;
 		}
@@ -230,7 +224,7 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 
 			if (parent->childs == NULL)
 			{
-				trie_error("Trie invalid child set allocation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid child set allocation");
 
 				free(child_ref);
 
@@ -266,7 +260,7 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 
 				if (data == NULL)
 				{
-					trie_error("Trie bad node list reallocation");
+					log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list reallocation");
 
 					return NULL;
 				}
@@ -309,17 +303,17 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 				return child;
 			}
 
-			trie_error("Trie invalid child insertion");
+			log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid child insertion");
 
 			return NULL;
 		}
 
-		trie_error("Trie invalid node child reference");
+		log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid node child reference");
 
 		return NULL;
 	}
 
-	trie_error("Trie invalid node insertion parameters");
+	log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid node insertion parameters");
 
 	return NULL;
 }
@@ -361,7 +355,7 @@ int trie_insert(trie t, vector keys, trie_value value)
 
 				if (next_node == NULL)
 				{
-					trie_error("Trie invalid node insertion");
+					log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid node insertion");
 
 					return 1;
 				}
@@ -610,7 +604,7 @@ int trie_node_clear(trie t, trie_node n)
 
 				if (free_node == NULL)
 				{
-					trie_error("Trie invalid free node allocation");
+					log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid free node allocation");
 
 					vector_destroy(node_stack);
 
@@ -752,7 +746,7 @@ trie trie_suffixes(trie t, trie_key key)
 
 			if (suffix_trie == NULL)
 			{
-				trie_error("Trie invalid suffix trie creation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid suffix trie creation");
 
 				return NULL;
 			}
@@ -763,7 +757,7 @@ trie trie_suffixes(trie t, trie_key key)
 
 			if (suffix_args.prefixes == NULL)
 			{
-				trie_error("Trie invalid prefix vector creation");
+				log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid prefix vector creation");
 
 				trie_destroy(suffix_trie);
 
@@ -787,7 +781,7 @@ void trie_destroy(trie t)
 	{
 		if (trie_clear(t) != 0)
 		{
-			trie_error("Trie invalid destruction");
+			log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid destruction");
 		}
 
 		if (t->node_list != NULL)

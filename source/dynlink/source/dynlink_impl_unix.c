@@ -12,8 +12,9 @@
 
 #include <dynlink/dynlink_impl.h>
 
+#include <log/log.h>
+
 #include <string.h>
-#include <stdio.h>
 
 #include <dlfcn.h>
 
@@ -74,7 +75,7 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 		return (dynlink_impl)impl;
 	}
 
-	printf("DynLink error: %s\n", dlerror());
+	log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: %s", dlerror());
 
 	return NULL;
 }

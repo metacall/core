@@ -8,10 +8,11 @@
 
 #include <gmock/gmock.h>
 
-#include <cstdio>
-#include <cstring>
-
 #include <adt/hash_map.h>
+
+#include <log/log.h>
+
+#include <cstring>
 
 typedef char key_str[7];
 
@@ -21,7 +22,7 @@ int hash_map_cb_iterate_str_to_int(hash_map map, hash_map_key key, hash_map_valu
 {
 	if (map && args == NULL)
 	{
-		printf("%s -> %d\n", (char *)key, *((int *)(value)));
+		log_write("metacall", LOG_LEVEL_DEBUG, "%s -> %d", (char *)key, *((int *)(value)));
 
 		++iterator_counter;
 
@@ -38,6 +39,12 @@ class hash_map_test : public testing::Test
 
 TEST_F(hash_map_test, DefaultConstructor)
 {
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout)));
+
 	hash_map map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
 	static key_str key_array[] =

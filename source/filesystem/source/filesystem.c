@@ -14,8 +14,9 @@
 
 #include <adt/trie.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 
 /* -- Member Data -- */
 
@@ -26,23 +27,7 @@ struct filesystem_type
 	trie				storage;		/**< Trie containing whole file system directories and files */
 };
 
-/* -- Private Methods -- */
-
-/**
-*  @brief
-*    Report file system error
-*
-*  @param[in] error
-*    Error message
-*/
-void filesystem_error(const char * error);
-
 /* -- Methods -- */
-
-void filesystem_error(const char * error)
-{
-	printf("%s\n", error);
-}
 
 filesystem filesystem_create(const char * root, filesystem_flags flags)
 {
@@ -52,7 +37,7 @@ filesystem filesystem_create(const char * root, filesystem_flags flags)
 
 		if (fs == NULL)
 		{
-			filesystem_error("File system invalid allocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "File system invalid allocation");
 
 			return NULL;
 		}
@@ -61,7 +46,7 @@ filesystem filesystem_create(const char * root, filesystem_flags flags)
 
 		if (fs->storage == NULL)
 		{
-			filesystem_error("File system invalid storage allocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "File system invalid storage allocation");
 
 			free(fs);
 

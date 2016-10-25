@@ -15,6 +15,8 @@
 		#include <py_port/py_port.h>
 	%}
 
+	/*%include <py_port/py_port_typemap.i>*/
+
 	%include <py_port/py_port.h>
 #endif
 

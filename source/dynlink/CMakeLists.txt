@@ -155,6 +155,9 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
+    ${META_PROJECT_NAME}::preprocessor
+    ${META_PROJECT_NAME}::log
+
     ${DYNAMIC_LOADING_LIBRARY} # Native dynamic load library
 
     PUBLIC

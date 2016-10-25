@@ -13,8 +13,9 @@
 
 #include <adt/vector.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /* -- Type Definitions -- */
@@ -33,13 +34,6 @@ typedef struct directory_descriptor_type
 
 /* -- Methods -- */
 
-static void directory_descriptor_error(const char * error);
-
-static void directory_descriptor_error(const char * error)
-{
-	printf("%s\n", error);
-}
-
 directory_descriptor directory_descriptor_create(directory_descriptor parent, const char * path)
 {
 	directory_descriptor d = malloc(sizeof(struct directory_descriptor_type));
@@ -50,7 +44,7 @@ directory_descriptor directory_descriptor_create(directory_descriptor parent, co
 
 		if (d->files == NULL)
 		{
-			directory_descriptor_error("Directory descriptor invalid file allocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "Directory descriptor invalid file allocation");
 
 			free(d);
 

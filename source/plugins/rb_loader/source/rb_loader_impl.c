@@ -15,8 +15,9 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <ruby.h>
 #include <ruby/intern.h>
@@ -90,7 +91,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			type_id id = type_index(t);
 
-			printf("Type %p, %d\n", (void *)t, id);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Type %p, %d", (void *)t, id);
 
 			if (id == TYPE_BOOL)
 			{
@@ -407,7 +408,7 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl)
 			{
 				if (rb_gv_set("$VERBOSE", Qtrue) == Qtrue)
 				{
-					printf("Ruby loader initialized correctly\n");
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 
 					return rb_impl;
 				}
@@ -503,7 +504,7 @@ loader_handle rb_loader_impl_load(loader_impl impl, const loader_naming_path pat
 
 					rb_include_module(handle->instance, handle->module);
 
-					printf("Ruby module %s loaded\n", path);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path);
 
 					return (loader_handle)handle;
 				}
@@ -512,7 +513,7 @@ loader_handle rb_loader_impl_load(loader_impl impl, const loader_naming_path pat
 			{
 				VALUE exception = rb_errinfo();
 
-				printf("Ruby loader error (%s)\n", RSTRING_PTR(exception));
+				log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader error (%s)", RSTRING_PTR(exception));
 			}
 		}
 	}
@@ -571,7 +572,7 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
 
 				const char * parameter_value_type_name_str = RSTRING_PTR(parameter_value_type_name);
 
-				printf("Parameter (%ld) <%s> Type %s %ld\n", index,
+				log_write("metacall", LOG_LEVEL_DEBUG, "Parameter (%ld) <%s> Type %s %ld", index,
 					parameter_name_str, parameter_value_type_name_str, parameter_value_type);
 
 				signature_set(s, index, parameter_name_str, loader_impl_type(impl, parameter_value_type_name_str));
@@ -612,7 +613,7 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	int index, size = FIX2INT(methods_size);
 
-	printf("Ruby loader discovering:\n");
+	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader discovering:");
 
 	for (index = 0; index < size; ++index)
 	{
@@ -648,7 +649,7 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 					scope_define(sp, function_name(f), f);
 
-					printf("Function %s <%p> (%d)\n", method_name_str, (void *)f, parameters_size_integer);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, parameters_size_integer);
 				}
 			}
 		}

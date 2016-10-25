@@ -8,7 +8,7 @@
 
 #include <adt/hash_map.h>
 
-#include <stdio.h>
+#include <log/log.h>
 
 #define HASH_MAP_BUCKET_PAIRS_DEFAULT	0x04
 #define HASH_MAP_BUCKET_PAIRS_LIMIT	0x40
@@ -75,7 +75,7 @@ static int hash_map_bucket_capacity(size_t prime)
 		return capacity_primes[prime];
 	}
 
-	printf("error: hash map bucket capacity\n");
+	log_write("metacall", LOG_LEVEL_ERROR, "Invalid hash map bucket capacity");
 
 	return -1;
 }
@@ -105,7 +105,7 @@ static int hash_map_bucket_create(hash_map map, size_t prime)
 		return 0;
 	}
 
-	printf("error: hash map bucket create\n");
+	log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for hash map bucket");
 
 	return 1;
 }
@@ -132,7 +132,7 @@ hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_c
 		}
 	}
 
-	printf("error: hash map creation\n");
+	log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for hash map");
 
 	return NULL;
 }
@@ -162,8 +162,8 @@ static int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 
 				return 0;
 			}
-
-			printf("error: hash map alloc pairs\n");
+			
+			log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for hash map pairs");
 
 			return 1;
 		}
@@ -198,7 +198,7 @@ static int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
 			}
 		}
 
-		printf("error: hash map realloc pairs\n");
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad reallocation for hash map pairs");
 
 		return 1;
 	}
@@ -351,13 +351,13 @@ int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
 					return 0;
 				}
 
-				printf("error: hash map bucket insert\n");
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid hash map bucket insertion");
 			}
 
-			printf("error: hash map bucket alloc pairs\n");
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid hash map bucket pairs allocation");
 		}
 
-		printf("error: hash map bucket realloc\n");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid hash map bucket pairs reallocation");
 
 		--map->count;
 	}

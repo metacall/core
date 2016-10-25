@@ -83,9 +83,14 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
+
     Qt5::Core
     Qt5::Gui
     Qt5::Widgets
+
+    ${META_PROJECT_NAME}::preprocessor
+    ${META_PROJECT_NAME}::log
+    ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::metacall
 )
 

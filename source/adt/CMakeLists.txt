@@ -139,6 +139,8 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
+    ${META_PROJECT_NAME}::preprocessor
+    ${META_PROJECT_NAME}::log
 
     PUBLIC
     ${DEFAULT_LIBRARIES}

@@ -29,7 +29,8 @@ extern "C" {
 #define log_configure(name, ...) \
 	log_configure_impl(name, PREPROCESSOR_ARGS_COUNT(__VA_ARGS__), __VA_ARGS__)
 
-#if defined(__cplusplus) && (__cplusplus >= 201103L)
+#if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
+	(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
 #	define log_write(name, level, ...) \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_EMPTY(__VA_ARGS__), \
 			log_write_impl(name, LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, level, __VA_ARGS__), \

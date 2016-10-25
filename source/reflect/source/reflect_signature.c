@@ -8,9 +8,10 @@
 
 #include <reflect/reflect_signature.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 typedef struct signature_node_type
 {
@@ -135,7 +136,7 @@ void signature_set(signature s, size_t index, const char * name, type t)
 
 		if (name_node == NULL)
 		{
-			/* error */
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid name allocation");
 
 			return;
 		}
@@ -163,22 +164,28 @@ void signature_set_return(signature s, type t)
 
 void signature_print(signature s)
 {
-	if (s != NULL)
+	size_t index;
+
+	if (s == NULL)
 	{
-		size_t index;
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid null signature");
 
-		printf("Signature { %lu }:\n", s->count);
+		return;
+	}
 
-		for (index = 0; index < s->count; ++index)
+	log_write("metacall", LOG_LEVEL_DEBUG, "Signature { %lu }:", s->count);
+
+	for (index = 0; index < s->count; ++index)
+	{
+		signature_node node = signature_at(s, index);
+
+		if (node == NULL)
 		{
-			signature_node node = signature_at(s, index);
-
-			if (node != NULL)
-			{
-				printf("Param < %lu > Name %s : Type %p\n",
-					index, node->name, (void *)node->t);
-			}
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid signature element (%lu) <%p>", index, node);
 		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Param < %lu > Name %s : Type %p",
+			index, node->name, (void *)node->t);
 	}
 }
 

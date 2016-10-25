@@ -11,8 +11,6 @@
 #include <js_loader/js_loader.h>
 #include <js_loader/js_loader_impl.h>
 
-#include <stdio.h>
-
 loader_impl_interface js_loader_impl_interface_singleton(void)
 {
 	static struct loader_impl_interface_type loader_impl_interface_js =
@@ -28,14 +26,19 @@ loader_impl_interface js_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_js;
 }
 
-void js_loader_print_info()
+const char * js_loader_print_info()
 {
-	printf("Javascript Loader Plugin " METACALL_VERSION "\n");
-	printf("Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n");
+	static const char js_loader_info[] =
+		"Javascript Loader Plugin " METACALL_VERSION "\n"
+		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-	#ifdef JS_LOADER_STATIC_DEFINE
-		printf("Compiled as static library type\n");
-	#else
-		printf("Compiled as shared library type\n");
-	#endif
+		#ifdef JS_LOADER_STATIC_DEFINE
+			"Compiled as static library type\n"
+		#else
+			"Compiled as shared library type\n"
+		#endif
+
+		"\n";
+
+	return js_loader_info;
 }

@@ -10,7 +10,8 @@
 
 #include <adt/vector.h>
 
-#include <stdio.h>
+#include <log/log.h>
+
 #include <string.h>
 
 /* -- Definitions -- */
@@ -33,15 +34,6 @@ typedef struct vector_type
 
 /**
 *  @brief
-*    Report vector error
-*
-*  @param[in] error
-*    Error message
-*/
-void vector_error(const char * error);
-
-/**
-*  @brief
 *    Vector access by offset bytes
 *
 *  @param[in] v
@@ -56,11 +48,6 @@ void vector_error(const char * error);
 void * vector_data_offset_bytes(vector v, size_t bytes);
 
 /* -- Methods -- */
-
-void vector_error(const char * error)
-{
-	printf("%s\n", error);
-}
 
 void * vector_data_offset_bytes(vector v, size_t bytes)
 {
@@ -85,7 +72,7 @@ vector vector_create_reserve(size_t type_size, size_t capacity)
 
 		if (v == NULL)
 		{
-			vector_error("Vector allocation error");
+			log_write("metacall", LOG_LEVEL_ERROR, "Vector allocation error");
 
 			return NULL;
 		}
@@ -97,7 +84,7 @@ vector vector_create_reserve(size_t type_size, size_t capacity)
 
 		if (v->data == NULL)
 		{
-			vector_error("Vector internal allocation error");
+			log_write("metacall", LOG_LEVEL_ERROR, "Vector internal allocation error");
 
 			free(v);
 
@@ -107,7 +94,7 @@ vector vector_create_reserve(size_t type_size, size_t capacity)
 		return v;
 	}
 
-	vector_error("Vector invalid type size");
+	log_write("metacall", LOG_LEVEL_ERROR, "Vector invalid type size");
 
 	return NULL;
 }
@@ -120,7 +107,7 @@ vector vector_copy(vector v)
 
 		if (dest == NULL)
 		{
-			vector_error("Vector allocation error");
+			log_write("metacall", LOG_LEVEL_ERROR, "Vector allocation error");
 
 			return NULL;
 		}
@@ -129,7 +116,7 @@ vector vector_copy(vector v)
 
 		if (dest->data == NULL)
 		{
-			vector_error("Vector internal allocation error");
+			log_write("metacall", LOG_LEVEL_ERROR, "Vector internal allocation error");
 
 			free(dest);
 
@@ -163,7 +150,7 @@ int vector_reserve(vector v, size_t capacity)
 
 		if (data == NULL)
 		{
-			vector_error("Vector reallocation error");
+			log_write("metacall", LOG_LEVEL_ERROR, "Vector reallocation error");
 
 			return 1;
 		}
@@ -191,7 +178,7 @@ int vector_resize(vector v, size_t size)
 		{
 			if (vector_reserve(v, size) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 
 				return 1;
 			}
@@ -286,7 +273,7 @@ void vector_push_back_empty(vector v)
 		{
 			if (vector_reserve(v, v->capacity * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 
 				return;
 			}
@@ -304,7 +291,7 @@ void vector_push_back(vector v, void * element)
 		{
 			if (vector_reserve(v, v->capacity * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 
 				return;
 			}
@@ -326,7 +313,7 @@ void vector_pop_back(vector v)
 		{
 			if (vector_reserve(v, v->size * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 	}
@@ -340,7 +327,7 @@ void vector_push_front_empty(vector v)
 		{
 			if (vector_reserve(v, v->capacity * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 
@@ -358,7 +345,7 @@ void vector_push_front(vector v, void * element)
 		{
 			if (vector_reserve(v, v->capacity * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 
@@ -382,7 +369,7 @@ void vector_pop_front(vector v)
 		{
 			if (vector_reserve(v, v->size * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 	}
@@ -396,7 +383,7 @@ void vector_insert_empty(vector v, size_t position)
 		{
 			if (vector_reserve(v, v->capacity * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 
@@ -419,7 +406,7 @@ void vector_insert(vector v, size_t position, void * element)
 		{
 			if (vector_reserve(v, v->capacity * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 
@@ -457,7 +444,7 @@ void vector_erase(vector v, size_t position)
 		{
 			if (vector_reserve(v, v->size * VECTOR_CAPACITY_INCREMENT) != 0)
 			{
-				vector_error("Vector reserve error");
+				log_write("metacall", LOG_LEVEL_ERROR, "Vector reserve error");
 			}
 		}
 	}

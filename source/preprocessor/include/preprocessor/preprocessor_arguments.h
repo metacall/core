@@ -100,7 +100,8 @@ extern "C" {
 			0, \
 			PREPROCESSOR_ARGS_COUNT_IMPL(__VA_ARGS__, PREPROCESSOR_ARGS_COUNT_SEQ_IMPL()) \
 		)
-#	if defined(__cplusplus) && (__cplusplus >= 201103L)
+#	if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
+		(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
 #		define PREPROCESSOR_ARGS_COMMA_IMPL_0 1
 #		define PREPROCESSOR_ARGS_COMMA_IMPL_1 1
 #		define PREPROCESSOR_ARGS_COMMA_IMPL_2 0

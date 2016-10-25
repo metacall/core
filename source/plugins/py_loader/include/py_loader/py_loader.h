@@ -23,7 +23,7 @@ PY_LOADER_API loader_impl_interface py_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(py_loader_impl_interface_singleton);
 
-PY_LOADER_API void py_loader_print_info(void);
+PY_LOADER_API const char * py_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(py_loader_print_info);
 

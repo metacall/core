@@ -12,7 +12,7 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
-#include <stdio.h>
+#include <log/log.h>
 
 function_interface function_mock_singleton(void);
 
@@ -69,68 +69,68 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 			type_id id = type_index(t);
 
-			printf("Type %p, %d\n", (void *)t, id);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Type %p, %d", (void *)t, id);
 
 			if (id == TYPE_BOOL)
 			{
 				boolean * b = (boolean *)(args[args_count]);
 
-				printf("Boolean value: %d\n", *b);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Boolean value: %d", *b);
 			}
 			else if (id == TYPE_CHAR)
 			{
 				char * value_ptr = (char *)(args[args_count]);
 
-				printf("Char value: %c\n", *value_ptr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Char value: %c", *value_ptr);
 			}
 			else if (id == TYPE_INT)
 			{
 				int * value_ptr = (int *)(args[args_count]);
 
-				printf("Int value: %d\n", *value_ptr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Int value: %d", *value_ptr);
 			}
 			else if (id == TYPE_LONG)
 			{
 				long * value_ptr = (long *)(args[args_count]);
 
-				printf("Long value: %ld\n", *value_ptr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Long value: %ld", *value_ptr);
 			}
 			else if (id == TYPE_DOUBLE)
 			{
 				double * value_ptr = (double *)(args[args_count]);
 
-				printf("Double value: %f\n", *value_ptr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Double value: %f", *value_ptr);
 			}
 			else if (id == TYPE_STRING)
 			{
 				const char * value_ptr = (const char *)(args[args_count]);
 
-				printf("String value: %s\n", value_ptr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "String value: %s", value_ptr);
 			}
 			else if (id == TYPE_PTR)
 			{
 				void * value_ptr = (void *)(args[args_count]);
 
-				printf("Pointer value: %p\n", value_ptr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Pointer value: %p", value_ptr);
 			}
 			else
 			{
-				printf("Unrecognized value: %p\n", args[args_count]);
+				log_write("metacall", LOG_LEVEL_ERROR "Unrecognized value: %p", args[args_count]);
 			}
 		}
 
-		printf("Calling mock function with arguments (%lu)\n", args_size);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Calling mock function with arguments (%lu)", args_size);
 	}
 	else
 	{
-		printf("Calling mock function without arguments\n");
+		log_write("metacall", LOG_LEVEL_DEBUG, "Calling mock function without arguments");
 	}
 
 	if (ret_type != NULL)
 	{
 		type_id id = type_index(ret_type);
 
-		printf("Return type %p, %d\n", (void *)ret_type, id);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
 
 		if (id == TYPE_BOOL)
 		{
@@ -166,7 +166,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 		}
 		else
 		{
-			printf("Unrecognized return type\n");
+			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
 		}
 	}
 

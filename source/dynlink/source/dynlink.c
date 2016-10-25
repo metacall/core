@@ -14,7 +14,6 @@
 #include <dynlink/dynlink_impl.h>
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /* -- Member data -- */

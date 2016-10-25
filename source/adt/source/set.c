@@ -8,7 +8,7 @@
 
 #include <adt/set.h>
 
-#include <stdio.h>
+#include <log/log.h>
 
 #define SET_BUCKET_PAIRS_DEFAULT	0x04
 #define SET_BUCKET_PAIRS_LIMIT		0x40
@@ -65,7 +65,7 @@ size_t set_bucket_capacity(size_t prime)
 		return capacity_primes[prime];
 	}
 
-	printf("error: set bucket capacity\n");
+	log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket capacity");
 
 	return 0;
 }
@@ -76,55 +76,64 @@ int set_bucket_create(set s, size_t prime)
 
 	set_bucket buckets = malloc(sizeof(struct set_bucket_type) * capacity);
 
-	if (buckets != NULL)
+	size_t iterator;
+
+	if (buckets == NULL)
 	{
-		size_t i;
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for set bucket");
 
-		for (i = 0; i < capacity; ++i)
-		{
-			buckets[i].count = 0;
-			buckets[i].capacity = 0;
-			buckets[i].pairs = NULL;
-		}
-
-		s->buckets = buckets;
-		s->capacity = capacity;
-		s->prime = prime;
-		s->count = 0;
-
-		return 0;
+		return 1;
 	}
 
-	printf("error: set bucket create\n");
 
-	return 1;
+	for (iterator = 0; iterator < capacity; ++iterator)
+	{
+		buckets[iterator].count = 0;
+		buckets[iterator].capacity = 0;
+		buckets[iterator].pairs = NULL;
+	}
+
+	s->buckets = buckets;
+	s->capacity = capacity;
+	s->prime = prime;
+	s->count = 0;
+
+	return 0;
 }
 
 set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb)
 {
-	if (hash_cb != NULL && compare_cb != NULL)
+	set s = NULL;
+
+	if (hash_cb == NULL || compare_cb == NULL)
 	{
-		set s = malloc(sizeof(struct set_type));
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set creation parameters");
 
-		if (s != NULL)
-		{
-			s->hash_cb = hash_cb;
-			s->compare_cb = compare_cb;
-			s->reallocating = 0;
-			s->amount = 0;
-
-			if (set_bucket_create(s, 0) == 0)
-			{
-				return s;
-			}
-
-			free(s);
-		}
+		return NULL;
 	}
 
-	printf("error: set creation\n");
+	s = malloc(sizeof(struct set_type));
 
-	return NULL;
+	if (s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad set allocation");
+	}
+
+	s->hash_cb = hash_cb;
+	s->compare_cb = compare_cb;
+	s->reallocating = 0;
+	s->amount = 0;
+
+	if (set_bucket_create(s, 0) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad set bucket creation");
+
+		free(s);
+
+		return NULL;
+	}
+
+	return s;
 }
 
 size_t set_size(set s)
@@ -139,35 +148,37 @@ size_t set_size(set s)
 
 int set_bucket_alloc_pairs(set_bucket bucket)
 {
-	if (bucket)
+	if (bucket == NULL)
 	{
-		if (bucket->pairs == NULL && bucket->capacity == 0)
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid null bucket");
+
+		return 1;
+	}
+
+	if (bucket->pairs == NULL && bucket->capacity == 0)
+	{
+		bucket->pairs = malloc(sizeof(struct set_pair_type) * SET_BUCKET_PAIRS_DEFAULT);
+
+		if (bucket->pairs == NULL)
 		{
-			bucket->pairs = malloc(sizeof(struct set_pair_type) * SET_BUCKET_PAIRS_DEFAULT);
-
-			if (bucket->pairs)
-			{
-				bucket->count = 0;
-				bucket->capacity = SET_BUCKET_PAIRS_DEFAULT;
-
-				return 0;
-			}
-
-			printf("error: set alloc pairs\n");
+			log_write("metacall", LOG_LEVEL_ERROR, "Bad set pairs allocation");
 
 			return 1;
 		}
 
-		return 0;
+		bucket->count = 0;
+		bucket->capacity = SET_BUCKET_PAIRS_DEFAULT;
 	}
 
-	return 1;
+	return 0;
 }
 
 int set_bucket_realloc_pairs(set_bucket bucket, size_t count)
 {
 	if (set_bucket_alloc_pairs(bucket) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set pairs creation");
+
 		return 1;
 	}
 
@@ -175,22 +186,26 @@ int set_bucket_realloc_pairs(set_bucket bucket, size_t count)
 	{
 		size_t new_capacity = bucket->capacity << 1;
 
-		if (new_capacity <= SET_BUCKET_PAIRS_LIMIT)
+		set_pair pairs = NULL;
+
+		if (new_capacity > SET_BUCKET_PAIRS_LIMIT)
 		{
-			set_pair pairs = realloc(bucket->pairs, sizeof(struct set_pair_type) * new_capacity);
+			log_write("metacall", LOG_LEVEL_ERROR, "Set capacity overflow");
 
-			if (pairs != NULL)
-			{
-				bucket->pairs = pairs;
-				bucket->capacity = new_capacity;
-
-				return 0;
-			}
+			return 1;
 		}
 
-		printf("error: set realloc pairs\n");
+		pairs = realloc(bucket->pairs, sizeof(struct set_pair_type) * new_capacity);
 
-		return 1;
+		if (pairs == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Bad set pairs reallocation");
+
+			return 1;
+		}
+
+		bucket->pairs = pairs;
+		bucket->capacity = new_capacity;
 	}
 
 	return 0;
@@ -324,46 +339,65 @@ int set_bucket_insert(set s, set_bucket bucket, set_key key, set_value value)
 
 int set_insert(set s, set_key key, set_value value)
 {
-	if (s != NULL && key != NULL && value != NULL)
+	set_hash h;
+
+	size_t index;
+
+	set_bucket bucket;
+
+
+	if (s == NULL || key == NULL || value == NULL)
 	{
-		set_hash hash = s->hash_cb(key);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set insertion parameters");
 
-		size_t index = hash % s->capacity;
-
-		set_bucket bucket = &s->buckets[index];
-
-		if (bucket->pairs == NULL)
-		{
-			++s->count;
-		}
-
-		if (set_bucket_realloc(s) == 0)
-		{
-			index = hash % s->capacity;
-
-			bucket = &s->buckets[index];
-
-			if (set_bucket_alloc_pairs(bucket) == 0)
-			{
-				if (set_bucket_insert(s, bucket, key, value) == 0)
-				{
-					++s->amount;
-
-					return 0;
-				}
-
-				printf("error: set bucket insert\n");
-			}
-
-			printf("error: set bucket alloc pairs\n");
-		}
-
-		printf("error: set bucket realloc\n");
-
-		--s->count;
+		return 1;
 	}
 
-	return 1;
+	h = s->hash_cb(key);
+
+	index = h % s->capacity;
+
+	bucket = &s->buckets[index];
+
+	if (bucket->pairs == NULL)
+	{
+		++s->count;
+	}
+
+	if (set_bucket_realloc(s) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket reallocation");
+
+		--s->count;
+
+		return 1;
+	}
+
+	index = h % s->capacity;
+
+	bucket = &s->buckets[index];
+
+	if (set_bucket_alloc_pairs(bucket) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket pairs allocation");
+
+		--s->count;
+
+		return 1;
+	}
+
+	if (set_bucket_insert(s, bucket, key, value) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insertion");
+
+		--s->count;
+
+		return 1;
+	}
+
+	++s->amount;
+
+	return 0;
 }
 
 set_value set_get(set s, set_key key)

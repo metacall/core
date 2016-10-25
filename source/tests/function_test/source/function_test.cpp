@@ -8,10 +8,11 @@
 
 #include <gmock/gmock.h>
 
-#include <cstdio>
-#include <cstdlib>
-
 #include <reflect/reflect_function.h>
+
+#include <log/log.h>
+
+#include <cstdlib>
 
 typedef struct example_arg_type
 {
@@ -32,9 +33,9 @@ void function_example(char c, int i, void * p)
 {
 	struct example_arg_type * e = (struct example_arg_type *)p;
 
-	printf("char: %c; int: %d; ptr: %p\n", c, i, p);
+	log_write("metacall", LOG_LEVEL_DEBUG, "char: %c; int: %d; ptr: %p", c, i, p);
 
-	printf("e->a: %d; e->b: %f; e->c: %s\n", e->a, e->b, e->c);
+	log_write("metacall", LOG_LEVEL_DEBUG, "e->a: %d; e->b: %f; e->c: %s", e->a, e->b, e->c);
 }
 
 int function_example_interface_create(function func, function_impl impl)
@@ -90,6 +91,12 @@ class function_test : public testing::Test
 
 TEST_F(function_test, DefaultConstructor)
 {
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout)));
+
 	type char_type = type_create(TYPE_CHAR, "char", NULL, NULL);
 	type int_type = type_create(TYPE_INT, "int", NULL, NULL);
 	type ptr_type = type_create(TYPE_PTR, "ptr", NULL, NULL);

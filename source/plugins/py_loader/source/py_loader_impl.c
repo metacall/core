@@ -15,8 +15,9 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
+#include <log/log.h>
+
 #include <stdlib.h>
-#include <stdio.h>
 
 #include <Python.h>
 
@@ -117,7 +118,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		type_id id = type_index(t);
 
-		printf("Type (%p): %d\n", (void *)t, id);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Type (%p): %d", (void *)t, id);
 
 		if (id == TYPE_BOOL)
 		{
@@ -183,7 +184,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		type_id id = type_index(ret_type);
 
-		printf("Return type %p, %d\n", (void *)ret_type, id);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
 
 		if (id == TYPE_BOOL)
 		{
@@ -237,7 +238,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 		else
 		{
-			printf("Unrecognized return type\n");
+			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
 		}
 
 		Py_DECREF(result);
@@ -316,11 +317,11 @@ int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, ty
 
 		if (builtin_type != NULL)
 		{
-			printf("Builtin [%p]: ", (void *)builtin);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Builtin [%p]: ", (void *)builtin);
 
 			PyObject_Print(builtin, stdout, 0);
 
-			printf("\n");
+			log_write("metacall", LOG_LEVEL_DEBUG, "");
 
 			if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) == 0)
 			{
@@ -467,7 +468,7 @@ loader_handle py_loader_impl_load(loader_impl impl, const loader_naming_path pat
 
 	Py_DECREF(module_name);
 
-	printf("Python loader (%p) importing %s from (%s) module at (%p)\n", (void *)impl, path, name, (void *)module);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from (%s) module at (%p)", (void *)impl, path, name, (void *)module);
 
 	return (loader_handle)module;
 }
@@ -496,7 +497,7 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject * annotation)
 
 	type t = loader_impl_type(impl, annotation_name);
 
-	printf("Discover type (%p) (%p): %s\n", (void *)annotation, (void *)type_derived(t), annotation_name);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
 
 	Py_DECREF(annotation_qualname);
 
@@ -596,15 +597,15 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 						PyObject * annotation = PyObject_GetAttrString(parameter, "annotation");
 
-						printf("Parameter %ld (name: ", iterator);
+						log_write("metacall", LOG_LEVEL_DEBUG, "Parameter %ld (name: ", iterator);
 
 						PyObject_Print(name, stdout, 0);
 
-						printf(", annotation [%p]: ", (void *)annotation);
+						log_write("metacall", LOG_LEVEL_DEBUG, ", annotation [%p]: ", (void *)annotation);
 
 						PyObject_Print(annotation, stdout, 0);
 
-						printf(")\n");
+						log_write("metacall", LOG_LEVEL_DEBUG, ")");
 
 						signature_set(s, iterator, parameter_name, py_loader_impl_discover_type(impl, annotation));
 
@@ -660,7 +661,7 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 						f = function_create(func_name, args_count, py_func, &function_py_singleton);
 
-						printf("Introspection: function %s, args count %ld\n", func_name, args_count);
+						log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %ld", func_name, args_count);
 
 						if (py_loader_impl_discover_func(impl, value, f) == 0)
 						{

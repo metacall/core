@@ -16,11 +16,12 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
+#include <log/log.h>
+
 #include <cstdlib>
 #include <cstring>
 
 #include <new>
-#include <iostream>
 #include <string>
 #include <fstream>
 #include <streambuf>
@@ -137,7 +138,9 @@ typedef class loader_impl_js_handle_type
 
 			String::Utf8Value utf8(result);
 
+			/*
 			std::cout << "Result: " << *utf8 << std::endl;
+			*/
 		}
 
 		int discover(loader_impl_js js_impl, context ctx)
@@ -425,7 +428,7 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 		}
 		else
 		{
-			printf("Unrecognized return type\n");
+			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
 		}
 	}
 
