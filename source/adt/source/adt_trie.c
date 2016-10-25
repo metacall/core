@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <adt/trie.h>
-#include <adt/set.h>
+#include <adt/adt_trie.h>
+#include <adt/adt_set.h>
 
 #include <log/log.h>
 

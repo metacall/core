@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <adt/vector.h>
+#include <adt/adt_vector.h>
 
 #include <log/log.h>
 

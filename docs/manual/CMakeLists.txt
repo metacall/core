@@ -4,6 +4,7 @@
 #
 
 find_package(LATEX)
+
 if(NOT LATEX_FOUND)
     message(STATUS "Disabled generation of documentation (missing LaTeX).")
     return()

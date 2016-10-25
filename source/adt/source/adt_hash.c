@@ -6,7 +6,7 @@
  *
  */
 
-#include <adt/hash.h>
+#include <adt/adt_hash.h>
 
 #include <string.h>
 

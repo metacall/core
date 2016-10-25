@@ -13,8 +13,8 @@
 
 #include <adt/adt_api.h>
 
-#include <adt/hash.h>
-#include <adt/comparable.h>
+#include <adt/adt_hash.h>
+#include <adt/adt_comparable.h>
 
 #ifdef __cplusplus
 extern "C" {

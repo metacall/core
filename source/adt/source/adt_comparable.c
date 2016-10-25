@@ -6,7 +6,7 @@
  *
  */
 
-#include <adt/comparable.h>
+#include <adt/adt_comparable.h>
 
 #include <string.h>
 

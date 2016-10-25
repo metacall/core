@@ -16,7 +16,7 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
-#include <adt/hash_map.h>
+#include <adt/adt_hash_map.h>
 
 #include <log/log.h>
 

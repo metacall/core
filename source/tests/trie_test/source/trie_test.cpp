@@ -8,8 +8,8 @@
 
 #include <gmock/gmock.h>
 
-#include <adt/vector.h>
-#include <adt/trie.h>
+#include <adt/adt_vector.h>
+#include <adt/adt_trie.h>
 
 #include <log/log.h>
 

@@ -20,8 +20,8 @@
 #include <filesystem/filesystem_interface.h>
 */
 
-#include <adt/vector.h>
-#include <adt/set.h>
+#include <adt/adt_vector.h>
+#include <adt/adt_set.h>
 
 #ifdef __cplusplus
 extern "C" {

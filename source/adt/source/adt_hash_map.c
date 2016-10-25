@@ -6,7 +6,7 @@
  *
  */
 
-#include <adt/hash_map.h>
+#include <adt/adt_hash_map.h>
 
 #include <log/log.h>
 

@@ -4,6 +4,7 @@
 #
 
 find_package(Doxygen)
+
 if(NOT DOXYGEN_FOUND)
     message(STATUS "Disabled generation of doxygen documentation (missing doxygen).")
     return()
@@ -45,7 +46,8 @@ configure_file(${doxyfile_in} ${doxyfile})
 # Invoke doxygen
 add_custom_command(
     OUTPUT              ${doxyfile_html}
-    DEPENDS             ${doxyfile} ${META_PROJECT_NAME}::adt ${META_PROJECT_NAME}::dynlink ${META_PROJECT_NAME}::filesystem
+    DEPENDS             ${doxyfile} ${META_PROJECT_NAME}::preprocessor ${META_PROJECT_NAME}::log
+                                    ${META_PROJECT_NAME}::adt ${META_PROJECT_NAME}::dynlink ${META_PROJECT_NAME}::filesystem
                                     ${META_PROJECT_NAME}::reflect ${META_PROJECT_NAME}::loader ${META_PROJECT_NAME}::metacall
                                     ${META_PROJECT_NAME}::metacallpp # TODO: add plugins, ports and examples
 

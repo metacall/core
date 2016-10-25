@@ -12,7 +12,7 @@
 
 #include <filesystem/filesystem.h>
 
-#include <adt/trie.h>
+#include <adt/adt_trie.h>
 
 #include <log/log.h>
 

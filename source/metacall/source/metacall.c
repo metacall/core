@@ -33,8 +33,8 @@ int metacall_initialize()
 	{
 		/*"compiled.c", "spider.jsm",*/
 		/*"divide.js",*/
-		/*"example.py",
-		"hello.rb",*/
+		"example.py",
+		"hello.rb",
 		"empty.mock"
 	};
 

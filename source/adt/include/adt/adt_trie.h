@@ -13,9 +13,9 @@
 
 #include <adt/adt_api.h>
 
-#include <adt/hash.h>
-#include <adt/comparable.h>
-#include <adt/vector.h>
+#include <adt/adt_hash.h>
+#include <adt/adt_comparable.h>
+#include <adt/adt_vector.h>
 
 #ifdef __cplusplus
 extern "C" {

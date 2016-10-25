@@ -6,7 +6,7 @@
  *
  */
 
-#include <adt/set.h>
+#include <adt/adt_set.h>
 
 #include <log/log.h>
 
