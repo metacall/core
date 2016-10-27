@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef JS_LOADER_IMPL_GUARD_H
-#define JS_LOADER_IMPL_GUARD_H 1
+#ifndef JS_LOADER_IMPL_GUARD_HPP
+#define JS_LOADER_IMPL_GUARD_HPP 1
 
 #include <js_loader/js_loader_api.h>
 
@@ -44,4 +44,4 @@ JS_LOADER_API bool js_loader_impl_guard_parse(std::string & source, std::map<std
 }
 #endif
 
-#endif /* JS_LOADER_IMPL_GUARD_H */
+#endif /* JS_LOADER_IMPL_GUARD_HPP */

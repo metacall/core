@@ -1,12 +1,11 @@
 
-#include "main_window.h"
+#include "main_window.hpp"
 
 #include <QMessageBox>
 
 #include <metacall/metacall-version.h>
 
 #include "ui_main_window.h"
-
 
 main_window::main_window() : impl(new Ui::main_window)
 {

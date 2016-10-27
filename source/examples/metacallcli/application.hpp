@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef METACALL_CLI_APPLICATION_H
-#define METACALL_CLI_APPLICATION_H 1
+#ifndef METACALL_CLI_APPLICATION_HPP
+#define METACALL_CLI_APPLICATION_HPP 1
 
 /* -- Headers -- */
 
@@ -236,4 +236,4 @@ class application
 
 } /* namespace metacallcli */
 
-#endif /* METACALL_CLI_APPLICATION_H */
+#endif /* METACALL_CLI_APPLICATION_HPP */

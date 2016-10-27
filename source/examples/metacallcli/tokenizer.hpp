@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef METACALL_CLI_TOKENIZER_H
-#define METACALL_CLI_TOKENIZER_H 1
+#ifndef METACALL_CLI_TOKENIZER_HPP
+#define METACALL_CLI_TOKENIZER_HPP 1
 
 /* -- Headers -- */
 
@@ -238,4 +238,4 @@ class tokenizer
 
 } /* namespace metacallcli */
 
-#endif /* METACALL_CLI_TOKENIZER_H */
+#endif /* METACALL_CLI_TOKENIZER_HPP */

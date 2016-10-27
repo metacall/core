@@ -1,5 +1,5 @@
-#ifndef METACALL_GUI_MAIN_WINDOW_H
-#define METACALL_GUI_MAIN_WINDOW_H 1
+#ifndef METACALL_GUI_MAIN_WINDOW_HPP
+#define METACALL_GUI_MAIN_WINDOW_HPP 1
 
 #include <QMainWindow>
 #include <QScopedPointer>
@@ -41,4 +41,4 @@ protected:
     const QScopedPointer<Ui::main_window> impl;
 };
 
-#endif // METACALL_GUI_MAIN_WINDOW_H
+#endif // METACALL_GUI_MAIN_WINDOW_HPP

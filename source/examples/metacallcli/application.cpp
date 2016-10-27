@@ -8,9 +8,9 @@
 
 /* -- Headers -- */
 
-#include "application.h"
-#include "tokenizer.h"
-#include "parser.h"
+#include "application.hpp"
+#include "tokenizer.hpp"
+#include "parser.hpp"
 
 #include <metacall/metacall.h>
 

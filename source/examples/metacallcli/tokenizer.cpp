@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include "tokenizer.h"
+#include "tokenizer.hpp"
 
 /* -- Namespace Declarations -- */
 

@@ -19,8 +19,12 @@ message(STATUS "Example ${target}")
 #
 
 set(sources
+    tokenizer.hpp
     tokenizer.cpp
+    parser.inl
+    parser.hpp
     parser.cpp
+    application.hpp
     application.cpp
     main.cpp
 )

@@ -7,7 +7,7 @@
  */
 
 #include <js_loader/js_loader_impl.h>
-#include <js_loader/js_loader_impl_guard.h>
+#include <js_loader/js_loader_impl_guard.hpp>
 
 #include <loader/loader_impl.h>
 

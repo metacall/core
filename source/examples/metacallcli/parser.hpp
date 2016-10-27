@@ -6,14 +6,14 @@
  *
  */
 
-#ifndef METACALL_CLI_PARSER_H
-#define METACALL_CLI_PARSER_H 1
+#ifndef METACALL_CLI_PARSER_HPP
+#define METACALL_CLI_PARSER_HPP 1
 
 /* -- Headers -- */
 
 #include <metacall/metacall_api.h>
 
-#include "tokenizer.h"
+#include "tokenizer.hpp"
 
 #include <iostream>
 
@@ -213,4 +213,4 @@ template <> std::string parser_parameter::to(void);
 
 #include "parser.inl"
 
-#endif /* METACALL_CLI_PARSER_H */
+#endif /* METACALL_CLI_PARSER_HPP */

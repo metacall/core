@@ -36,7 +36,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/js_loader.h
     ${include_path}/js_loader_impl.h
-    ${include_path}/js_loader_impl_guard.h
+    ${include_path}/js_loader_impl_guard.hpp
 )
 
 set(sources

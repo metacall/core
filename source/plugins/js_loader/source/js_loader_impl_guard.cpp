@@ -6,7 +6,7 @@
  *
  */
 
-#include <js_loader/js_loader_impl_guard.h>
+#include <js_loader/js_loader_impl_guard.hpp>
 
 enum js_parser_state
 {

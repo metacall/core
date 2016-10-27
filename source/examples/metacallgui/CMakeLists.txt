@@ -35,10 +35,10 @@ endif()
 #
 
 set(sources
-    main.cpp
-    main_window.cpp
-    main_window.h
     main_window.ui
+    main_window.hpp
+    main_window.cpp
+    main.cpp
 )
 
 #
