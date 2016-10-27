@@ -24,12 +24,6 @@ set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
 #
-# Compiler warnings
-#
-
-#include(Warnings)
-
-#
 # Sources
 #
 

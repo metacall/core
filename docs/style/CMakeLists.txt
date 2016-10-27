@@ -14,15 +14,15 @@ endif()
 # Target name
 #
 
-set(target manual)
+set(target style)
 message(STATUS "Doc ${target}")
 
 #
 # Input and output files
 #
 
-set(source "${CMAKE_CURRENT_SOURCE_DIR}/source/metacall_manual.tex")
-set(pdf    "${CMAKE_CURRENT_BINARY_DIR}/metacall_manual.pdf")
+set(source "${CMAKE_CURRENT_SOURCE_DIR}/source/metacall_style.tex")
+set(pdf    "${CMAKE_CURRENT_BINARY_DIR}/metacall_style.pdf")
 
 #
 # Create documentation

@@ -1,4 +1,11 @@
 #
+#	MetaCall Library by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	A library for providing a foreing function interface calls.
+#
+
+#
 # CMake options
 #
 
@@ -54,7 +61,7 @@ set(META_NAME_VERSION        "${META_PROJECT_NAME} v${META_VERSION} (${META_VERS
 option(BUILD_SHARED_LIBS     "Build shared instead of static libraries."              ON)
 option(OPTION_SELF_CONTAINED "Create a self-contained install with all dependencies." OFF)
 option(OPTION_BUILD_TESTS    "Build tests."                                           ON)
-option(OPTION_BUILD_DOCS     "Build documentation."                                   ON)
+option(OPTION_BUILD_DOCS     "Build documentation."                                   OFF)
 option(OPTION_BUILD_EXAMPLES "Build examples."                                        ON)
 option(OPTION_BUILD_PLUGINS  "Build plugins."                                         ON)
 option(OPTION_BUILD_SCRIPTS  "Build scripts."                                         OFF)

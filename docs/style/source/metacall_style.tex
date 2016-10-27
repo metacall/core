@@ -1,0 +1,235 @@
+
+\documentclass{article}
+
+\usepackage[pdfborder={0 0 0}]{hyperref}
+\usepackage{listings}
+
+
+
+
+\begin{document}
+
+% \input{metacall_style_title.tex}
+
+\title{MetaCall: C/C++ Code Requeriments \& Style Guidelines}
+
+\author{Vicente Eduardo Ferrer Garcia \\ \href{mailto:vic798@gmail.com}{vic798@gmail.com}}
+
+\maketitle
+
+%
+
+\begin{abstract}
+\noindent
+Description of code requeriments and style guidelines for MetaCall.
+\end{abstract}
+
+\setcounter{tocdepth}{2}
+\tableofcontents
+\listoffigures
+\listoftables
+
+\newpage
+
+% \include{metacall_style_introduction.tex}
+
+\section{Introduction}
+
+
+
+
+%
+
+\newpage
+
+% \include{metacall_style_file_naming.tex}
+
+\section{File \& Directory Tree}
+
+
+
+
+%
+
+\newpage
+
+% \include{metacall_style_file_structure.tex}
+
+\section{Header \& Source Files Structure}
+
+
+
+
+%
+
+\newpage
+
+% \include{metacall_style_variable_naming.tex}
+
+\section{Naming Convention}
+
+\subsection{camelCase vs underscore\_case}
+
+There is no effective reason to choose between \textbf{camelCase} or \textbf{underscore\_case} in
+naming convention. But in order to be aligned with STL, Boost and Bjarne Stroustrup in
+"The C++ Programming Langauge", underscore case must be always used. Upper case letters must be
+avoided always except from comments or template typenames.
+
+% \lstinputlisting[language=C]{underscore_case.cpp}
+
+\begin{lstlisting}[language=C++]
+
+/* Use always lower case for variables, classes ... */
+int some_variable = 5;
+
+some_class object;
+
+/* Except from typenames in templates */
+
+template <typename T>
+constexpr T sum(const T & left, const T & right)
+{
+	return (left + right);
+}
+\end{lstlisting}
+
+\subsection{Hungarian Notation}
+
+Hungarian notation is an identifier naming convention in which the name of a variable or function
+indicates its type or intended use. There are two types of Hungarian notation: Systems Hungarian
+notation and Apps Hungarian notation.
+
+In Systems Hungarian notation, the prefix encodes the actual data type. In any programming language
+where you can define your own types like C/C++ this becomes useless. If you need to determine a constrait
+against a variable you must define your own type. The compiler and linter should warn against a missuse of
+a variable type instead of the developer by means of the variable name.
+
+In Apps Hungarian notation, the prefix strives to encode the logical data type rather than the real data
+type. This kind of type restrictions are typical in Ada type system. But there are not clear in C/C++.
+Visibility is not easy to be described in the C/C++ type system. So it can be confusing when using class
+members in a class constructor.
+
+
+% \lstinputlisting[language=C]{hungarian_class.hpp}
+
+\begin{lstlisting}[language=C++]
+
+#ifndef HUNGARIAN_CLASS_H
+#define HUNGARIAN_CLASS_H 1
+
+/* -- Headers -- */
+
+#include <hungarian/hungarian_api.hpp>
+
+/* -- Namespace -- */
+
+namespace metacall_style {
+
+/* -- Class Definitions -- */
+
+/**
+*  @brief
+*    Hungarian notation for visibility
+*/
+HUNGARIAN_API class hungarian_class
+{
+	public:
+		/* -- Public Methods -- */
+
+		/**
+		*  @brief
+		*    Hungarian class constructor
+		*
+		*  @param[in] a
+		*    Brief description of @a parameter
+		*
+		*  @param[in] b
+		*    Brief description of @b parameter
+		*
+		*  @param[in] c
+		*    Brief description of @c parameter
+		*/
+		hungarian_class(int a, int b, int c);
+
+		/**
+		*  @brief
+		*    Hungarian class destructor
+		*/
+		~hungarian_class(void);
+
+	private:
+		/* -- Private Member Data -- */
+
+		int _a;	/**< Brief description of @_a member */
+		int _b;	/**< Brief description of @_b member */
+		int _c;	/**< Brief description of @_c member */
+};
+
+} /* namespace metacall_style */
+
+#endif /* HUNGARIAN_CLASS_H */
+
+\end{lstlisting}
+
+In order to differenciate constructor arguments from class members an underscore is placed before class
+member names refering to its private visibility. By this way it is trivial to understand the constructor
+implementation.
+
+
+% \lstinputlisting[language=C]{hungarian_class.cpp}
+
+\begin{lstlisting}[language=C++]
+
+/* -- Headers -- */
+
+#include <hungarian/hungarian_class.hpp>
+
+/* -- Namespace Declarations -- */
+
+using namespace metacall_style;
+
+/* -- Methods -- */
+
+hungarian_class::hungarian_class(int a, int b, int c) : _a(a), _b(b), _c(c)
+{
+
+}
+
+hungarian_class::~hungarian_class()
+{
+
+}
+
+\end{lstlisting}
+
+So that Hungarian notation must be always \textbf{avoided} for describing variable types. When describing class
+member visibility, \textbf{underscore} must be always used as a prefix of a member.
+
+
+%
+
+
+\newpage
+
+% \include{metacall_style_indentation.tex}
+
+\section{Indentation \& Brackets}
+
+
+
+
+%
+
+
+\newpage
+
+% \include{metacall_style_comments.tex}
+
+\section{Comments}
+
+
+
+
+%
+
+\end{document}

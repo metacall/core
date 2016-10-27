@@ -52,6 +52,18 @@ if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
 endif ()
 
 #
+# Compiler warnings
+#
+
+#include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Compile options
 #
 

@@ -1,0 +1,10 @@
+#
+#	MetaCall Nano Configuration by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	A configuration for nano text editor.
+#
+
+set tabsize 4		# Define tab size to 4
+set autoindent		# Use auto-indentation
+set casesensitive	# Do case sensitive searches by default

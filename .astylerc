@@ -1,0 +1,75 @@
+#
+#	MetaCall Artistic Style Configuration by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	A configuration for Artistic Style linter.
+#
+
+#
+# Bracket Style Options
+#
+
+--style=allman				# Use Allman style with broken brackets
+
+#
+# Tabs Options
+#
+
+--indent=force-tab=4		# Use tab for indentation with size equal to 4
+
+#
+# Bracket Modify Options
+#
+
+--attach-namespaces			# Attach brackets to bracketed namespace statement
+--attach-extern-c			# Attach brackets to bracketed extern "C" statement
+
+#
+# Indentation Options
+#
+
+--indent-classes			# Indent class and struct blocks
+--indent-modifiers			# Indent class and struct access modifiers
+--indent-switches			# Indent switch blocks so that the case statements are indented in the block
+--indent-labels				# Add extra indentation to labels
+--indent-preproc-define		# Indent multi-line preprocessor definitions
+--indent-preproc-cond		# Indent preprocessor conditional statements to the same level as source code
+--indent-col1-comments		# Indent C++ comments beginning in column one
+--min-conditional-indent=0	# Minimal indent when a header is built of multiple lines
+--max-instatement-indent=80	# Maximum number of spaces to indent a continuation line
+
+#
+# Padding options
+#
+
+--break-blocks				# Pad empty lines around header blocks
+--pad-oper					# Insert space padding around operators
+--pad-header				# Insert space padding between a header and the following paren
+--unpad-paren				# Remove extra space padding around parenthesis on the inside and outside
+--align-pointer=middle		# Align pointer to the middle
+--align-reference=middle	# Align reference to the middle
+
+#
+# Formatting options
+#
+
+--add-brackets				# Add brackets to unbracketed one line conditional statements
+--max-code-length=120		# Define max code lenght limit
+--break-after-logical		# Add line break after logical operators in a conditional statement
+
+#
+# Indentation mode
+#
+
+--mode=c					# Use C/C++ indentation mode
+
+#
+# Other options
+#
+
+--dry-run					# Do not create any file nor overwrite
+#--sufix=none				# Overwrite original file
+--recursive					# Process all directories recursively
+--preserve-date				# Preserve original file date
+--verbose					# Display optional information and staticial data
+--lineend=windows			# Use windows line endings

@@ -743,8 +743,7 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = @PROJECT_SOURCE_DIR@/source/baselib/include \
-                         @PROJECT_SOURCE_DIR@/source/fiblib/include
+INPUT                  = @DOXYGEN_INPUT_PATH@
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
