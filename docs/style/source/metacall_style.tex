@@ -96,30 +96,29 @@ constexpr T sum(const T & left, const T & right)
 \subsection{Hungarian Notation}
 
 Hungarian notation is an identifier naming convention in which the name of a variable or function
-indicates its type or intended use. There are two types of Hungarian notation: Systems Hungarian
-notation and Apps Hungarian notation.
+indicates its type or intended use.
 
-In Systems Hungarian notation, the prefix encodes the actual data type. In any programming language
-where you can define your own types like C/C++ this becomes useless. If you need to determine a constrait
-against a variable you must define your own type. The compiler and linter should warn against a missuse of
-a variable type instead of the developer by means of the variable name.
+In any programming language where you can define your own types like C/C++ this becomes useless. If you
+need to determine a constrait against a variable you must define your own type. The compiler and linter
+should warn against a missuse of a variable type instead of the developer by means of the variable name.
 
-In Apps Hungarian notation, the prefix strives to encode the logical data type rather than the real data
-type. This kind of type restrictions are typical in Ada type system. But there are not clear in C/C++.
-Visibility is not easy to be described in the C/C++ type system. So it can be confusing when using class
-members in a class constructor.
+By this reason, hungarian notation must be \textbf{avoided} always.
 
+\subsection{Class Members vs Constructors}
 
-% \lstinputlisting[language=C]{hungarian_class.hpp}
+In order to avoid shadowing class members with constructor parameters when both are equal, an underscore
+suffix must be placed after each shadowed parameter.
+
+% \lstinputlisting[language=C]{shadow_class.hpp}
 
 \begin{lstlisting}[language=C++]
 
-#ifndef HUNGARIAN_CLASS_HPP
-#define HUNGARIAN_CLASS_HPP 1
+#ifndef SHADOW_CLASS_HPP
+#define SHADOW_CLASS_HPP 1
 
 /* -- Headers -- */
 
-#include <hungarian/hungarian_api.hpp>
+#include <shadow/shadow_api.hpp>
 
 /* -- Namespace -- */
 
@@ -129,16 +128,16 @@ namespace metacall_style {
 
 /**
 *  @brief
-*    Hungarian notation for visibility
+*    Example of shadow parameters in class constructor
 */
-HUNGARIAN_API class hungarian_class
+SHADOW_API class shadow_class
 {
 	public:
 		/* -- Public Methods -- */
 
 		/**
 		*  @brief
-		*    Hungarian class constructor
+		*    Shadow class constructor
 		*
 		*  @param[in] a
 		*    Brief description of @a parameter
@@ -149,40 +148,40 @@ HUNGARIAN_API class hungarian_class
 		*  @param[in] c
 		*    Brief description of @c parameter
 		*/
-		hungarian_class(int a, int b, int c);
+		shadow_class(int a, int b, int c);
 
 		/**
 		*  @brief
-		*    Hungarian class destructor
+		*    Shadow class destructor
 		*/
-		~hungarian_class(void);
+		~shadow_class(void);
 
 	private:
 		/* -- Private Member Data -- */
 
-		int _a;	/**< Brief description of @_a member */
-		int _b;	/**< Brief description of @_b member */
-		int _c;	/**< Brief description of @_c member */
+		int a;	/**< Brief description of @a member */
+		int b;	/**< Brief description of @b member */
+		int c;	/**< Brief description of @c member */
 };
 
 } /* namespace metacall_style */
 
-#endif /* HUNGARIAN_CLASS_HPP */
+#endif /* SHADOW_CLASS_HPP */
 
 \end{lstlisting}
 
-In order to differenciate constructor arguments from class members an underscore is placed before class
-member names refering to its private visibility. By this way it is trivial to understand the constructor
-implementation.
+In order to differenciate constructor arguments from class members an underscore is placed after
+parameter constructor names. By this way shadow problems with namings are avoided and the use of
+class members remains easy and less cryptic.
 
 
-% \lstinputlisting[language=C]{hungarian_class.cpp}
+% \lstinputlisting[language=C]{shadow_class.cpp}
 
 \begin{lstlisting}[language=C++]
 
 /* -- Headers -- */
 
-#include <hungarian/hungarian_class.hpp>
+#include <shadow/shadow_class.hpp>
 
 /* -- Namespace Declarations -- */
 
@@ -190,21 +189,17 @@ using namespace metacall_style;
 
 /* -- Methods -- */
 
-hungarian_class::hungarian_class(int a, int b, int c) : _a(a), _b(b), _c(c)
+shadow_class::shadow_class(int a_, int b_, int c_) : a(a_), b(b_), c(c_)
 {
 
 }
 
-hungarian_class::~hungarian_class()
+shadow_class::~shadow_class()
 {
 
 }
 
 \end{lstlisting}
-
-So that Hungarian notation must be always \textbf{avoided} for describing variable types. When describing class
-member visibility, \textbf{underscore} must be always used as a prefix of a member.
-
 
 %
 

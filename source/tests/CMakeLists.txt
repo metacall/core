@@ -10,19 +10,6 @@ endif()
 # DISABLE CMP0037: Target names should not be reserved and should match a validity pattern.
 set_policy(CMP0037 OLD)
 
-# Function: Build test and add command to execute it via target 'test'
-function(add_test_without_ctest target)
-    add_subdirectory(${target})
-
-    if(NOT TARGET ${target})
-        return()
-    endif()
-
-    add_dependencies(test ${target})
-    add_custom_command(TARGET test POST_BUILD
-        COMMAND $<TARGET_FILE:${target}> --gtest_output=xml:gtests-${target}.xml)
-endfunction()
-
 # Build gmock
 set(gmock_build_tests           OFF CACHE BOOL "")
 set(gtest_build_samples         OFF CACHE BOOL "")
@@ -48,22 +35,15 @@ target_link_libraries(gmock-dev
 )
 
 #
-# Target 'test'
-#
-
-add_custom_target(test)
-set_target_properties(test PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-
-#
 # Tests
 #
 
-add_test_without_ctest(preprocessor_test)
-add_test_without_ctest(log_test)
-add_test_without_ctest(hash_map_test)
-add_test_without_ctest(trie_test)
-add_test_without_ctest(function_test)
-add_test_without_ctest(dyncall_test)
-add_test_without_ctest(py_loader_test)
-add_test_without_ctest(metacall_test)
-add_test_without_ctest(metacallpp_test)
+add_subdirectory(preprocessor_test)
+add_subdirectory(log_test)
+add_subdirectory(hash_map_test)
+add_subdirectory(trie_test)
+add_subdirectory(function_test)
+add_subdirectory(dyncall_test)
+add_subdirectory(py_loader_test)
+add_subdirectory(metacall_test)
+add_subdirectory(metacallpp_test)

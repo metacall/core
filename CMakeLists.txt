@@ -151,6 +151,14 @@ if(NOT SYSTEM_DIR_INSTALL)
 endif()
 
 #
+# CTest configuration
+#
+
+if(OPTION_BUILD_TESTS)
+    enable_testing()
+endif()
+
+#
 # Project modules
 #
 

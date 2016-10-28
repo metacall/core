@@ -65,7 +65,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LIBRARIES}
-	
+
     gmock-dev
 
     ${META_PROJECT_NAME}::preprocessor
@@ -98,4 +98,20 @@ target_compile_options(${target}
 target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
+)
+
+#
+# Define test
+#
+
+add_test(NAME ${target}
+    COMMAND $<TARGET_FILE:${target}>
+)
+
+#
+# Define test labels
+#
+
+set_property(TEST ${target}
+    PROPERTY LABELS ${target}
 )

@@ -100,3 +100,19 @@ target_link_libraries(${target}
     PRIVATE
     ${DEFAULT_LINKER_OPTIONS}
 )
+
+#
+# Define test
+#
+
+add_test(NAME ${target}
+    COMMAND $<TARGET_FILE:${target}>
+)
+
+#
+# Define test labels
+#
+
+set_property(TEST ${target}
+    PROPERTY LABELS ${target}
+)
