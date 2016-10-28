@@ -1,8 +1,8 @@
 #
-# Compiler options for stack smashing flags by Parra Studios
+# Compiler and linker options for hardening flags by Parra Studios
 # Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-# Enables stack smashing security flags if available
+# Enables hardening security flags if available
 #
 
 include(CheckCCompilerFlag)
@@ -22,13 +22,19 @@ if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU")
 
     if(STACK_PROTECTOR_C_FLAG)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fstack-protector")
+
+            # use ssp-buffer-size if it is supported
+            if(CMAKE_C_COMPILER_VERSION VERSION_GREATER 4.9)
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --param ssp-buffer-size=4")
+            endif()
+
     endif()
 
     # Detect fortify source
     check_c_compiler_flag("-D_FORTIFY_SOURCE=2" FORTIFY_SOURCE_C_FLAG)
 
     if(FORTIFY_SOURCE_C_FLAG)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_FORTIFY_SOURCE=2")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O1 -D_FORTIFY_SOURCE=2")
     endif()
 
 endif()
@@ -50,6 +56,12 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
     if(STACK_PROTECTOR_CXX_FLAG)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fstack-protector")
+
+            # use ssp-buffer-size if it is supported
+            if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 4.9)
+                set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} --param ssp-buffer-size=4")
+            endif()
+
     endif()
 
     # Detect fortify source

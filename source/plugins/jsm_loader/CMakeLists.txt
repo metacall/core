@@ -1,3 +1,8 @@
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_PLUGINS AND NOT OPTION_BUILD_PLUGINS_JSM)
+    return()
+endif()
+
 #
 # External dependencies
 #
