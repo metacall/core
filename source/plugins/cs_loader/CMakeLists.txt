@@ -1,5 +1,5 @@
 # Check if this plugin is enabled
-if(NOT OPTION_BUILD_PLUGINS AND NOT OPTION_BUILD_PLUGINS_CS)
+if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS)
     return()
 endif()
 
@@ -7,12 +7,12 @@ endif()
 # External dependencies
 #
 
-#find_package(CoreCRT)
+find_package(CoreCLR)
 
-#if(NOT CORECRT_FOUND)
-#    message(STATUS "CoreCRT libraries not found")
-#    return()
-#endif()
+if(NOT CORECLR_FOUND)
+    message(STATUS "CoreCLR libraries not found")
+    return()
+endif()
 
 #
 # Plugin name and options
@@ -118,7 +118,7 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-#    ${CORECRT_INCLUDE_DIRS} # CoreCRT includes
+    ${CORECLR_INCLUDE_DIRS} # CoreCLR includes
 
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
@@ -142,7 +142,7 @@ target_link_libraries(${target}
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
 
-#    ${CORECRT_LIBRARY} # CoreCRT library
+    ${CORECLR_LIBRARY} # CoreCLR library
 
     PUBLIC
     ${DEFAULT_LIBRARIES}

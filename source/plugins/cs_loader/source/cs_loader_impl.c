@@ -19,7 +19,7 @@
 
 #include <stdlib.h>
 
-/* #include <CoreCRT.h> */
+/* #include <CoreCLR.h> */
 
 int function_cs_interface_create(function func, function_impl impl)
 {

@@ -1,5 +1,5 @@
 # Check if this plugin is enabled
-if(NOT OPTION_BUILD_PLUGINS AND NOT OPTION_BUILD_PLUGINS_RB)
+if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_RB)
     return()
 endif()
 
