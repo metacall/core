@@ -12,6 +12,12 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 endif()
 
 #
+# Include portability
+#
+
+include(Portability)
+
+#
 # Project options
 #
 
@@ -44,7 +50,7 @@ set(DEFAULT_COMPILE_DEFINITIONS
 )
 
 # MSVC compiler options
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
+if (WIN32)
     set(DEFAULT_COMPILE_DEFINITIONS ${DEFAULT_COMPILE_DEFINITIONS}
         _SCL_SECURE_NO_WARNINGS  # Calling any one of the potentially unsafe methods in the Standard C++ Library
         _CRT_SECURE_NO_WARNINGS  # Calling any one of the potentially unsafe methods in the CRT Library
@@ -55,7 +61,7 @@ endif ()
 # Compiler warnings
 #
 
-#include(Warnings)
+include(Warnings)
 
 #
 # Compiler security
@@ -67,77 +73,49 @@ include(SecurityFlags)
 # Compile options
 #
 
+
+# They are empty by default
 set(DEFAULT_COMPILE_OPTIONS)
 
-# MSVC compiler options
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "MSVC")
-    set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
-        /MP           # -> build with multiple processes
-        /W4           # -> warning level 4
-        # /WX         # -> treat warnings as errors
+if (WIN32)
+  add_compile_options(/nologo) # Suppress Startup Banner
+  add_compile_options(/W4) # set warning level to 4
+  add_compile_options(/WX) # treat warnings as errors
+  add_compile_options(/Gm-) # disable minimal rebuild
+  add_compile_options(/MP) # Build with Multiple Processes (number of processes equal to the number of processors)
+  #add_compile_options(/wd4251 /wd4592)
+  add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
-        /wd4251       # -> disable warning: 'identifier': class 'type' needs to have dll-interface to be used by clients of class 'type2'
-        /wd4592       # -> disable warning: 'identifier': symbol will be dynamically initialized (implementation limitation)
-        # /wd4201     # -> disable warning: nonstandard extension used: nameless struct/union (caused by GLM)
-        # /wd4127     # -> disable warning: conditional expression is constant (caused by Qt)
+  # Release
+  add_compile_options(/GL) # enable debugging information
+  add_compile_options(/GS) # Buffer Security Check
+  add_compile_options(/GF) # enable read-only string pooling
+  add_compile_options(/GW) # enable read-only string pooling
+endif()
 
-        #$<$<CONFIG:Debug>:
-        #/RTCc         # -> value is assigned to a smaller data type and results in a data loss
-        #>
+if (PROJECT_OS_FAMILY MATCHES "unix")
 
-        $<$<CONFIG:Release>:
-        /Gw           # -> whole program global optimization
-        /GS-          # -> buffer security check: no
-        /GL           # -> whole program optimization: enable link-time code generation (disables Zi)
-        /GF           # -> enable string pooling
-        >
+  if(APPLE)
+    # We cannot enable "stack-protector-strong" on OS X due to a bug in clang compiler (current version 7.0.2)
+    add_compile_options(-fstack-protector)
 
-        # No manual c++11 enable for MSVC as all supported MSVC versions for cmake-init have C++11 implicitly enabled (MSVC >=2013)
-    )
-endif ()
+    # Enable threads in OS X
+    add_compile_options(-pthread)
 
-# GCC and Clang compiler options
-if ("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-    set(DEFAULT_COMPILE_OPTIONS ${DEFAULT_COMPILE_OPTIONS}
-        -Wall
-        -Wextra
-        -Wunused
+    # clang options only
+    add_compile_options(-Wreturn-stack-address)
+  else()
+    add_compile_options(-fstack-protector-strong)
+  endif()
 
-        #-Wreorder
-        -Wignored-qualifiers
-        -Wmissing-braces
-        -Wreturn-type
-        -Wswitch
-        -Wswitch-default
-        -Wuninitialized
-        -Wmissing-field-initializers
+  if(PROJECT_OS_LINUX)
+    # Enable threads in linux
+    add_compile_options(-pthread)
+  endif()
 
-        $<$<CXX_COMPILER_ID:GNU>:
-            -Wmaybe-uninitialized
-
-            $<$<VERSION_GREATER:$<CXX_COMPILER_VERSION>,4.8>:
-                -Wpedantic
-
-                -Wreturn-local-addr
-            >
-        >
-
-        $<$<CXX_COMPILER_ID:Clang>:
-            -Wpedantic
-
-            -Wreturn-stack-address
-        >
-
-        $<$<PLATFORM_ID:Darwin>:
-            -pthread
-        >
-
-        # Required for CMake < 3.1; should be removed if minimum required CMake version is raised.
-        $<$<VERSION_LESS:${CMAKE_VERSION},3.1>:
-            -std=c++11
-        >
-    )
-endif ()
+  # All warnings that are not explicitly disabled are reported as errors
+  #add_compile_options(-Werror)
+endif()
 
 #
 # Linker options
