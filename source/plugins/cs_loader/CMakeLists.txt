@@ -46,6 +46,7 @@ set(headers
 	${include_path}/string_buffer.h
 	${include_path}/netcore_win.h
 	${include_path}/simple_netcore.h
+	${include_path}/host_environment.h
 	
 )
 
@@ -57,6 +58,8 @@ set(sources
 	${source_path}/string_buffer.cpp
 	${source_path}/netcore_win.cpp
 	${source_path}/simple_netcore.cpp
+	${source_path}/host_environment.cpp
+	
 )
 
 # Group source files

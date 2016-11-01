@@ -60,21 +60,21 @@ bool netcore::create_delegates() {
 
 
 bool netcore::load_source(wchar_t * source) {
-	return this->core_load_w(source);
+	return this->core_load_w(source) ? true : false;
 };
 bool netcore::load_source(char * source) {
-	return this->core_load_c(source);
+	return this->core_load_c(source) ? true : false;
 }
 
 bool netcore::execute(char * function) {
-	return this->execute_c(function);
+	return this->execute_c(function) ? true : false;
 }
 bool netcore::execute(wchar_t * function) {
-	return this->execute_w(function);
+	return this->execute_w(function) ? true : false;
 }
 bool netcore::execute_with_params(char * function, parameters * params, size_t size) {
-	return this->execute_with_params_c(function, params, (short)size);
+	return this->execute_with_params_c(function, params, (short)size) ? true : false;
 }
 bool netcore::execute_with_params(wchar_t * function, parameters * params, size_t size) {
-	return this->execute_with_params_w(function, params, (short)size);
+	return this->execute_with_params_w(function, params, (short)size) ? true : false;
 }

@@ -16,8 +16,10 @@
 netcore_win::netcore_win()
 {
 	this->log = new logger();
-	this->log->disable();
+	this->log->enable();
 	this->domain_id = 0;
+
+	*this->log << W("Failed to unload the AppDomain. ERRORCODE: ") << logger::endl;
 }
 
 
@@ -89,36 +91,39 @@ bool netcore_win::start() {
 
 bool netcore_win::config_assembly_name() {
 
-	wchar_t* filePart = NULL;
+	char* filePart = NULL;
+	char loader_dll_char[255];
+	wcstombs(loader_dll_char, this->loader_dll, 255);
 
-	if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
+	if (!::GetFullPathName(loader_dll_char, MAX_LONGPATH, this->appPath, &filePart)) {
 		*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
 		*this->log << W("Error code: ") << GetLastError() << logger::endl;
 		return false;
 	}
 
-	wcscpy_s(managedAssemblyFullName, appPath);
-
-	*(filePart) = W('\0');
+	strcpy(managedAssemblyFullName, this->appPath);
 
 	*this->log << W("Loading: ") << managedAssemblyFullName << logger::endl;
 
-	wcscpy_s(appNiPath, appPath);
-	wcscat_s(appNiPath, MAX_LONGPATH * 2, W(";"));
-	wcscat_s(appNiPath, MAX_LONGPATH * 2, appPath);
+	strcat(appNiPath, this->appPath);
+	strcat(appNiPath, ";");
+	strcat(appNiPath, this->appPath);
 
 	// Construct native search directory paths
 
-	wcscpy_s(nativeDllSearchDirs, appPath);
-	wchar_t coreLibraries[MAX_LONGPATH];
+	strcpy(nativeDllSearchDirs, appPath);
+	/*
+	char coreLibraries[MAX_LONGPATH];
+
 	size_t outSize;
 	if (_wgetenv_s(&outSize, coreLibraries, MAX_LONGPATH, W("CORE_LIBRARIES")) == 0 && outSize > 0)
 	{
-		wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, W(";"));
-		wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, coreLibraries);
+		strcat(nativeDllSearchDirs, ";");
+		strcat(nativeDllSearchDirs, coreLibraries);
 	}
-	wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, W(";"));
-	wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, this->core_environment->core_clr_directory_path);
+	*/
+	strcat(nativeDllSearchDirs, ";");
+	strcat(nativeDllSearchDirs, this->core_environment->core_clr_directory_path);
 
 	return true;
 }
@@ -179,15 +184,25 @@ bool netcore_win::create_host() {
 		W("NATIVE_DLL_SEARCH_DIRECTORIES"),
 		W("AppDomainCompatSwitch")
 	};
+	wchar_t tpa_list_w[0xFFF];
+	wchar_t app_path_w[0xFFF];
+	wchar_t app_path_ni_w[0xFFF];
+	wchar_t nativeDllSearchDirs_w[0xFFF];
+
+	mbtowc(tpa_list_w, this->core_environment->get_tpa_list(), strlen(this->core_environment->get_tpa_list()));
+	mbtowc(app_path_w, this->appPath, strlen(this->appPath));
+	mbtowc(app_path_ni_w, this->appNiPath, strlen(this->appNiPath));
+	mbtowc(nativeDllSearchDirs_w, this->nativeDllSearchDirs, strlen(this->nativeDllSearchDirs));
+
 	const wchar_t *property_values[] = {
 		// TRUSTED_PLATFORM_ASSEMBLIES
-		this->core_environment->get_tpa_list(),
+		tpa_list_w,
 		// APP_PATHS
-		appPath,
+		app_path_w,
 		// APP_NI_PATHS
-		appNiPath,
+		app_path_ni_w,
 		// NATIVE_DLL_SEARCH_DIRECTORIES
-		nativeDllSearchDirs,
+		nativeDllSearchDirs_w,
 		// AppDomainCompatSwitch
 		W("UseLatestBehaviorWhenTFMNotSpecified")
 	};
@@ -199,9 +214,10 @@ bool netcore_win::create_host() {
 	*this->log << W("APP_NI_PATHS=") << property_values[2] << logger::endl;
 	*this->log << W("NATIVE_DLL_SEARCH_DIRECTORIES=") << property_values[3] << logger::endl;
 
-
+	wchar_t host_exe_name_w[0xFF];
+	mbtowc(host_exe_name_w, this->core_environment->get_host_exe_name(), strlen(this->core_environment->get_host_exe_name()));
 	hr = host->CreateAppDomainWithManager(
-		this->core_environment->get_host_exe_name(),   // The friendly name of the AppDomain
+		host_exe_name_w,   // The friendly name of the AppDomain
 											 // Flags:
 											 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
 											 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
@@ -235,7 +251,11 @@ bool netcore_win::create_host() {
 bool netcore_win::load_main() {
 	HRESULT hr;
 	DWORD exitCode = 0;
-	hr = this->host->ExecuteAssembly((DWORD)this->domain_id, managedAssemblyFullName, 0, NULL, &exitCode);
+	wchar_t full_w[0xFFF];
+
+	mbtowc(full_w, this->managedAssemblyFullName, strlen(this->managedAssemblyFullName));
+
+	hr = this->host->ExecuteAssembly((DWORD)this->domain_id, full_w, 0, NULL, &exitCode);
 	if (FAILED(hr)) {
 		*this->log << W("Failed call to ExecuteAssembly. ERRORCODE: ") << hr << logger::endl;
 		return false;

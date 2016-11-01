@@ -19,7 +19,14 @@
 
 #include <stdlib.h>
 
-/* #include <CoreCLR.h> */
+#include <cs_loader/simple_netcore.h>
+
+typedef struct {
+	netcore_handle handle;
+	reflect_function * func;
+} cs_function;
+
+
 
 int function_cs_interface_create(function func, function_impl impl)
 {
@@ -34,6 +41,10 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	(void)func;
 	(void)impl;
 	(void)args;
+
+	cs_function * cs_f = (cs_function*)impl;
+
+	simple_netcore_invoke(cs_f->handle, cs_f->func->name);
 
 	return NULL;
 }
@@ -106,7 +117,7 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 
 	(void)impl;
 
-	return NULL;
+	return (loader_impl_data)simple_netcore_create();
 }
 
 int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
@@ -126,6 +137,10 @@ loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path pat
 	(void)impl;
 	(void)path;
 	(void)name;
+
+	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
+
+	simple_netcore_load_script(nhandle, path, name);
 
 	return NULL;
 }
@@ -148,6 +163,41 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 	(void)handle;
 	(void)ctx;
 
+	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
+
+	scope sp = context_scope(ctx);
+
+	int function_count = 0;
+	reflect_function * functions;
+
+	functions = simple_netcore_get_functions(nhandle, &function_count);
+
+	function f = NULL;
+
+	for (size_t i = 0; i < function_count; ++i)
+	{
+		cs_function * cs_f = (cs_function*)malloc(sizeof(cs_function));
+
+		cs_f->func = &functions[i];
+		cs_f->handle = nhandle;
+
+		f = function_create(functions[i].name, functions[i].param_count, cs_f, &function_cs_singleton);
+
+		if (functions[i].param_count > 0) {
+
+			signature s = function_signature(f);
+
+			for (size_t j = 0; j < functions[i].param_count; ++j)
+			{
+				signature_set(s, j, functions[i].pars[j].name, (type)&functions[i].pars[j].type);
+			}
+
+			signature_set_return(s, (type)&functions[i].return_type);
+		}
+
+		scope_define(sp, functions[i].name, f);
+	}
+
 	return 0;
 }
 
@@ -156,6 +206,10 @@ int cs_loader_impl_destroy(loader_impl impl)
 	/* TODO: Destroy runtime */
 
 	(void)impl;
+
+	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
+
+	simple_netcore_destroy(nhandle);
 
 	return 0;
 }

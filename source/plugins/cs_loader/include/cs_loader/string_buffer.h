@@ -12,10 +12,7 @@
 class string_buffer
 {
 private:
-	static const int default_size = 4096;
-	wchar_t* buffer;
-	size_t capacity;
-	size_t length;
+	std::stringstream buffer;
 
 	string_buffer(const string_buffer&);
 	string_buffer& operator =(const string_buffer&);
@@ -24,9 +21,9 @@ public:
 
 	~string_buffer();
 
-	const wchar_t* c_str() const;
+	const char* c_str() const;
 
-	void append(const wchar_t* str, size_t strLen);
+	void append(const char* str, size_t strLen);
 };
 
 #endif

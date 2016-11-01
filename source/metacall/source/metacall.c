@@ -6,7 +6,7 @@
  *
  */
 
-/* -- Headers -- */
+ /* -- Headers -- */
 
 #include <metacall/metacall-version.h>
 #include <metacall/metacall.h>
@@ -33,6 +33,7 @@ int metacall_initialize()
 	{
 		/*"compiled.c", "spider.jsm",*/
 		/*"divide.js",*/
+		"hello.cs",
 		"example.py",
 		"hello.rb",
 		"empty.mock"
@@ -159,11 +160,11 @@ const char * metacall_print_info()
 		"MetaCall Library " METACALL_VERSION "\n"
 		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef METACALL_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef METACALL_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 
