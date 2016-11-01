@@ -40,11 +40,23 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
     ${include_path}/cs_loader.h
     ${include_path}/cs_loader_impl.h
+	${include_path}/defs.h
+	${include_path}/netcore.h
+	${include_path}/logger.h
+	${include_path}/string_buffer.h
+	${include_path}/netcore_win.h
+	${include_path}/simple_netcore.h
+	
 )
 
 set(sources
     ${source_path}/cs_loader.c
     ${source_path}/cs_loader_impl.c
+	${source_path}/netcore.cpp
+	${source_path}/logger.cpp
+	${source_path}/string_buffer.cpp
+	${source_path}/netcore_win.cpp
+	${source_path}/simple_netcore.cpp
 )
 
 # Group source files
@@ -118,7 +130,7 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${CORECLR_INCLUDE_DIRS} # CoreCLR includes
+    ${CORECLR_INCLUDE_DIR} # CoreCLR includes
 
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
@@ -142,7 +154,6 @@ target_link_libraries(${target}
     ${META_PROJECT_NAME}::reflect
     ${META_PROJECT_NAME}::loader
 
-    ${CORECLR_LIBRARY} # CoreCLR library
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
