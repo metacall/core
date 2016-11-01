@@ -2,10 +2,43 @@
 \documentclass{article}
 
 \usepackage[pdfborder={0 0 0}]{hyperref}
+
+% File tree packages
+
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{dirtree}
+
+\newcommand\treeicon[1]{{\color{#1}\rule{2ex}{2ex}}}
+\newcommand{\treefolder}[2]{\treeicon{#1}\ {#2}}
+
+% Source code highlighting packages
+\usepackage{color}
+\usepackage{xcolor}
 \usepackage{listings}
+\usepackage{caption}
 
+\DeclareCaptionFont{white}{\color{white}}
+\DeclareCaptionFormat{listing}{\colorbox{gray}{\parbox{\textwidth}{#1#2#3}}}
+\captionsetup[lstlisting]{format=listing,labelfont=white,textfont=white}
 
+\lstdefinestyle{cpp_lang}{
+	belowcaptionskip=1\baselineskip,
+	breaklines=true,
+	xleftmargin=\parindent,
+	language=C++,
+	showstringspaces=false,
+	basicstyle=\footnotesize\ttfamily,
+	keywordstyle=\bfseries\color{blue!40!black},
+	commentstyle=\itshape\color{green!40!black},
+	identifierstyle=\color{black},
+	stringstyle=\color{red},
+	tabsize=4,
+	numbers=left,
+	numbersep=5pt
+}
 
+\lstset{style=cpp_lang}
 
 \begin{document}
 
@@ -44,10 +77,81 @@ Description of code requeriments and style guidelines for MetaCall.
 
 % \include{metacall_style_file_naming.tex}
 
-\section{File \& Directory Tree}
+\section{Files \& Directory Tree}
 
+Project files are always organized in the same structure recursively.
 
-
+\dirtree{%
+.1 \treefolder{red}{build}.
+.1 \treefolder{red}{cmake}.
+.1 \treefolder{red}{codegeneration}.
+.1 \treefolder{red}{data}.
+.1 \treefolder{red}{deploy}.
+.2 \treefolder{red}{images}.
+.2 \treefolder{red}{packages}.
+.1 \treefolder{red}{docs}.
+%.2 \treefolder{red}{api-docs}.
+.2 \treefolder{red}{manual}.
+.2 \treefolder{red}{style}.
+.1 \treefolder{red}{source}.
+.2 \treefolder{red}{adt}.
+.2 \treefolder{red}{dynlink}.
+.2 \treefolder{red}{examples}.
+.3 \treefolder{red}{metacallcli}.
+.3 \treefolder{red}{metacallgui}.
+.3 \treefolder{red}{metacallnginx}.
+.3 \treefolder{red}{metacallppcli}.
+.3 \treefolder{red}{metacallpy}.
+.3 \treefolder{red}{metacallweb}.
+.2 \treefolder{red}{filesystem}.
+.2 \treefolder{red}{loader}.
+.2 \treefolder{red}{log}.
+.2 \treefolder{red}{metacall}.
+.2 \treefolder{red}{metacallpp}.
+.2 \treefolder{red}{plugins}.
+%.3 \treefolder{red}{c_loader}.
+%.3 \treefolder{red}{cs_loader}.
+%.3 \treefolder{red}{js_loader}.
+%.3 \treefolder{red}{jsm_loader}.
+%.3 \treefolder{red}{mock_loader}.
+%.3 \treefolder{red}{py_loader}.
+%.3 \treefolder{red}{rb_loader}.
+.2 \treefolder{red}{ports}.
+%.3 \treefolder{red}{cs_port}.
+%.3 \treefolder{red}{d_port}.
+%.3 \treefolder{red}{go_port}.
+.3 \treefolder{red}{interface}.
+%.3 \treefolder{red}{java_port}.
+%.3 \treefolder{red}{js_port}.
+%.3 \treefolder{red}{lua_port}.
+%.3 \treefolder{red}{node_port}.
+%.3 \treefolder{red}{php_port}.
+%.3 \treefolder{red}{pl_port}.
+%.3 \treefolder{red}{py_port}.
+%.3 \treefolder{red}{rb_port}.
+%.3 \treefolder{red}{r_port}.
+.2 \treefolder{red}{preprocessor}.
+.2 \treefolder{red}{reflect}.
+.2 \treefolder{red}{scripts}.
+.3 \treefolder{red}{c}.
+.3 \treefolder{red}{csharp}.
+.3 \treefolder{red}{java}.
+.3 \treefolder{red}{javascript}.
+.3 \treefolder{red}{python}.
+.3 \treefolder{red}{ruby}.
+.2 \treefolder{red}{tests}.
+%.3 \treefolder{red}{dyncall_test}.
+%.3 \treefolder{red}{function_test}.
+.3 \treefolder{red}{googletest}.
+%.3 \treefolder{red}{hash_map_test}.
+%.3 \treefolder{red}{log_test}.
+%.3 \treefolder{red}{metacallpp_test}.
+%.3 \treefolder{red}{metacall_test}.
+%.3 \treefolder{red}{preprocessor_test}.
+%.3 \treefolder{red}{py_loader_test}.
+%.3 \treefolder{red}{trie_test}.
+.1 \treefolder{red}{web}.
+}
 
 %
 
@@ -75,10 +179,9 @@ naming convention. But in order to be aligned with STL, Boost and Bjarne Stroust
 "The C++ Programming Langauge", underscore case must be always used. Upper case letters must be
 avoided always except from comments or template typenames.
 
-% \lstinputlisting[language=C]{underscore_case.cpp}
+% \lstinputlisting[language=C++]{underscore_case.cpp}
 
-\begin{lstlisting}[language=C++]
-
+\begin{lstlisting}[language=C++,label=underscore_case,caption=Underscore Case Notation]
 /* Use always lower case for variables, classes ... */
 int some_variable = 5;
 
@@ -109,10 +212,9 @@ By this reason, hungarian notation must be \textbf{avoided} always.
 In order to avoid shadowing class members with constructor parameters when both are equal, an underscore
 suffix must be placed after each shadowed parameter.
 
-% \lstinputlisting[language=C]{shadow_class.hpp}
+% \lstinputlisting[language=C++]{shadow_class.hpp}
 
-\begin{lstlisting}[language=C++]
-
+\begin{lstlisting}[language=C++,label=shadow_class_header,caption=Member-Constructor Shadow Class Header]
 #ifndef SHADOW_CLASS_HPP
 #define SHADOW_CLASS_HPP 1
 
@@ -139,16 +241,16 @@ SHADOW_API class shadow_class
 		*  @brief
 		*    Shadow class constructor
 		*
-		*  @param[in] a
-		*    Brief description of @a parameter
+		*  @param[in] a_
+		*    Brief description of @a_ parameter
 		*
-		*  @param[in] b
-		*    Brief description of @b parameter
+		*  @param[in] b_
+		*    Brief description of @b_ parameter
 		*
-		*  @param[in] c
-		*    Brief description of @c parameter
+		*  @param[in] c_
+		*    Brief description of @c_ parameter
 		*/
-		shadow_class(int a, int b, int c);
+		shadow_class(int a_, int b_, int c_);
 
 		/**
 		*  @brief
@@ -167,7 +269,6 @@ SHADOW_API class shadow_class
 } /* namespace metacall_style */
 
 #endif /* SHADOW_CLASS_HPP */
-
 \end{lstlisting}
 
 In order to differenciate constructor arguments from class members an underscore is placed after
@@ -175,10 +276,9 @@ parameter constructor names. By this way shadow problems with namings are avoide
 class members remains easy and less cryptic.
 
 
-% \lstinputlisting[language=C]{shadow_class.cpp}
+% \lstinputlisting[language=C++]{shadow_class.cpp}
 
-\begin{lstlisting}[language=C++]
-
+\begin{lstlisting}[language=C++,label=shadow_class_source,caption=Member-Constructor Shadow Class Source]
 /* -- Headers -- */
 
 #include <shadow/shadow_class.hpp>
@@ -198,7 +298,6 @@ shadow_class::~shadow_class()
 {
 
 }
-
 \end{lstlisting}
 
 %
