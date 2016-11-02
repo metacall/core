@@ -24,7 +24,7 @@ host_environment::host_environment(logger *logger) : log(logger), clr_runtime_ho
 
 	// Check for %CORE_ROOT% and try to load CoreCLR.dll from it if it is set
 	char * coreRootTmp;
-	char  coreRoot[MAX_LONGPATH];
+	char  coreRoot[MAX_LONGPATH] = "";
 	this->core_clr_module = NULL; // Initialize this here since we don't call TryLoadCoreCLR if CORE_ROOT is unset.
 	coreRootTmp = getenv("CORE_ROOT");
 	if (coreRootTmp)
@@ -85,7 +85,7 @@ host_environment::~host_environment()
 // On failure returns nullptr.
 HMODULE host_environment::try_load_core_clr(const char* directory_path) {
 
-	char coreCLRPath[MAX_LONGPATH]="";
+	char coreCLRPath[MAX_LONGPATH] = "";
 	strcpy(coreCLRPath, directory_path);
 	strcat(coreCLRPath, core_clr_dll);
 
@@ -105,7 +105,7 @@ HMODULE host_environment::try_load_core_clr(const char* directory_path) {
 		return nullptr;
 	}
 
-	char coreCLRLoadedPath[MAX_LONGPATH];
+	char coreCLRLoadedPath[MAX_LONGPATH] = "";
 	::GetModuleFileName(result, coreCLRLoadedPath, MAX_LONGPATH);
 
 	*this->log << W("Loaded: ") << coreCLRLoadedPath << logger::endl;
@@ -119,7 +119,7 @@ bool host_environment::tpa_list_contains_file(_In_z_ char* fileNameWithoutExtens
 
 	for (int iExtension = 0; iExtension < countExtensions; iExtension++)
 	{
-		char fileName[MAX_LONGPATH];
+		char fileName[MAX_LONGPATH] = "";
 		strcat(fileName, "\\"); // So that we don't match other files that end with the current file name
 		strcat(fileName, fileNameWithoutExtension);
 		strcat(fileName, rgTPAExtensions[iExtension] + 1);
@@ -157,7 +157,7 @@ void host_environment::remove_extension_and_ni(_In_z_ char* fileName)
 void host_environment::add_files_from_directory_to_tpa_list(_In_z_ char* targetPath, _In_reads_(countExtensions) char** rgTPAExtensions, int countExtensions)
 {
 	*this->log << W("Adding assemblies from ") << targetPath << W(" to the TPA list") << logger::endl;
-	char assemblyPath[MAX_LONGPATH];
+	char assemblyPath[MAX_LONGPATH] = "";
 
 	for (int iExtension = 0; iExtension < countExtensions; iExtension++)
 	{
@@ -187,7 +187,7 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ char* targetP
 					}
 
 					// Remove extension
-					char fileNameWithoutExtension[MAX_LONGPATH];
+					char fileNameWithoutExtension[MAX_LONGPATH] = "";
 					strcpy(fileNameWithoutExtension, data.cFileName);
 
 					this->remove_extension_and_ni(fileNameWithoutExtension);

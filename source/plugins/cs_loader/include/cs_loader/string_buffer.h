@@ -12,7 +12,10 @@
 class string_buffer
 {
 private:
-	std::stringstream buffer;
+	static const int default_size = 4096;
+	char* buffer;
+	size_t capacity;
+	size_t length;
 
 	string_buffer(const string_buffer&);
 	string_buffer& operator =(const string_buffer&);

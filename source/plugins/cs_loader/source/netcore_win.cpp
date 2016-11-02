@@ -16,7 +16,7 @@
 netcore_win::netcore_win()
 {
 	this->log = new logger();
-	this->log->enable();
+	this->log->disable();
 	this->domain_id = 0;
 
 	*this->log << W("Failed to unload the AppDomain. ERRORCODE: ") << logger::endl;
@@ -184,15 +184,19 @@ bool netcore_win::create_host() {
 		W("NATIVE_DLL_SEARCH_DIRECTORIES"),
 		W("AppDomainCompatSwitch")
 	};
-	wchar_t tpa_list_w[0xFFF];
-	wchar_t app_path_w[0xFFF];
-	wchar_t app_path_ni_w[0xFFF];
-	wchar_t nativeDllSearchDirs_w[0xFFF];
 
-	mbtowc(tpa_list_w, this->core_environment->get_tpa_list(), strlen(this->core_environment->get_tpa_list()));
-	mbtowc(app_path_w, this->appPath, strlen(this->appPath));
-	mbtowc(app_path_ni_w, this->appNiPath, strlen(this->appNiPath));
-	mbtowc(nativeDllSearchDirs_w, this->nativeDllSearchDirs, strlen(this->nativeDllSearchDirs));
+	wchar_t tpa_list_w[0xFFFF] = W("");
+	wchar_t app_path_w[0xFFF] = W("");
+	wchar_t app_path_ni_w[0xFFF] = W("");
+	wchar_t nativeDllSearchDirs_w[0xFFF] = W("");
+
+
+	const char * tpa_list = this->core_environment->get_tpa_list();
+
+	mbstowcs(tpa_list_w, tpa_list, strlen(tpa_list));
+	mbstowcs(app_path_w, this->appPath, strlen(this->appPath));
+	mbstowcs(app_path_ni_w, this->appNiPath, strlen(this->appNiPath));
+	mbstowcs(nativeDllSearchDirs_w, this->nativeDllSearchDirs, strlen(this->nativeDllSearchDirs));
 
 	const wchar_t *property_values[] = {
 		// TRUSTED_PLATFORM_ASSEMBLIES
@@ -214,8 +218,8 @@ bool netcore_win::create_host() {
 	*this->log << W("APP_NI_PATHS=") << property_values[2] << logger::endl;
 	*this->log << W("NATIVE_DLL_SEARCH_DIRECTORIES=") << property_values[3] << logger::endl;
 
-	wchar_t host_exe_name_w[0xFF];
-	mbtowc(host_exe_name_w, this->core_environment->get_host_exe_name(), strlen(this->core_environment->get_host_exe_name()));
+	wchar_t host_exe_name_w[0xFF] = W("");
+	mbstowcs(host_exe_name_w, this->core_environment->get_host_exe_name(), strlen(this->core_environment->get_host_exe_name()));
 	hr = host->CreateAppDomainWithManager(
 		host_exe_name_w,   // The friendly name of the AppDomain
 											 // Flags:
@@ -251,9 +255,9 @@ bool netcore_win::create_host() {
 bool netcore_win::load_main() {
 	HRESULT hr;
 	DWORD exitCode = 0;
-	wchar_t full_w[0xFFF];
+	wchar_t full_w[0xFFF] = W("");
 
-	mbtowc(full_w, this->managedAssemblyFullName, strlen(this->managedAssemblyFullName));
+	mbstowcs(full_w, this->managedAssemblyFullName, strlen(this->managedAssemblyFullName));
 
 	hr = this->host->ExecuteAssembly((DWORD)this->domain_id, full_w, 0, NULL, &exitCode);
 	if (FAILED(hr)) {

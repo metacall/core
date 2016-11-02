@@ -142,7 +142,7 @@ loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path pat
 
 	simple_netcore_load_script(nhandle, path, name);
 
-	return NULL;
+	return nhandle;
 }
 
 int cs_loader_impl_clear(loader_impl impl, loader_handle handle)
