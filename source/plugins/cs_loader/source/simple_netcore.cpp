@@ -42,9 +42,9 @@ void simple_netcore_destroy(netcore_handle handle) {
 
 void  simple_netcore_load_script(netcore_handle handle, const char *path, const char* file) {
 	netcore * core = (netcore*)handle;
-	
+
 	(void)file;
-	
+
 	std::ifstream inFile;
 	inFile.open(path);
 
@@ -57,8 +57,13 @@ void  simple_netcore_load_script(netcore_handle handle, const char *path, const 
 	}
 }
 
-void  simple_netcore_invoke(netcore_handle handle, const char *func) {
+void  simple_netcore_invoke(netcore_handle handle, const char *func, parameters *params, size_t count) {
 	netcore * core = (netcore*)handle;
-
-	core->execute((char*)func);
+	if (params == NULL) {
+		core->execute((char*)func);
+	}
+	else
+	{
+		core->execute_with_params((char*)func, params, count);
+	}
 }

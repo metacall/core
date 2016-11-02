@@ -38,13 +38,30 @@ int function_cs_interface_create(function func, function_impl impl)
 
 function_return function_cs_interface_invoke(function func, function_impl impl, function_args args)
 {
-	(void)func;
-	(void)impl;
-	(void)args;
+	parameters params[0xF];
 
 	cs_function * cs_f = (cs_function*)impl;
 
-	simple_netcore_invoke(cs_f->handle, cs_f->func->name);
+	signature s = function_signature(func);
+
+	const size_t args_size = signature_count(s);
+
+	//type ret_type = signature_get_return(s);
+
+	size_t args_count;
+
+	for (args_count = 0; args_count < args_size; ++args_count)
+	{
+		params[args_count].type = (short)cs_f->func->pars[args_count].type;
+		params[args_count].ptr = args[args_count];
+	}
+	if (args_size > 0) {
+		simple_netcore_invoke(cs_f->handle, cs_f->func->name, params, args_size);
+	}
+	else
+	{
+		simple_netcore_invoke(cs_f->handle, cs_f->func->name, NULL, 0);
+	}
 
 	return NULL;
 }

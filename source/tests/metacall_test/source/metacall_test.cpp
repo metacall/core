@@ -34,7 +34,7 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* C# Netcore */
 	{
 
-		EXPECT_EQ((void *)NULL, (void *)metacall("SayHello"));
+		EXPECT_EQ((void *)NULL, (void *)metacall("Say", "Hello para with params!"));
 
 	}
 
