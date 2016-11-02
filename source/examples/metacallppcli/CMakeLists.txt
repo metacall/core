@@ -15,6 +15,18 @@ set(target metacallppcli)
 message(STATUS "Example ${target}")
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 

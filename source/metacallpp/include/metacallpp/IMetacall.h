@@ -28,7 +28,7 @@ namespace Beast {
 
 		virtual ICall * Prepare() = 0;
 
-		virtual std::string GetFunctionName() = 0;
+		virtual const char * GetFunctionName() = 0;
 
 		virtual MetacallStates GetState() = 0;
 

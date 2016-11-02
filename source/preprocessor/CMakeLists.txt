@@ -40,6 +40,18 @@ preprocessor_boolean_generate(256)
 preprocessor_for_generate(64)
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 

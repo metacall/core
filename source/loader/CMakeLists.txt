@@ -24,6 +24,18 @@ set(export_macro "${target_upper}_API")
 option(${target_upper}_LAZY "Defines a lazy initialization and destruction of the loader library" ON)
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 

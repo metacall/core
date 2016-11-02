@@ -9,6 +9,7 @@
  /* -- Headers -- */
 
 #include <metacall/metacall-version.h>
+#include <metacall/metacall-plugins.h>
 #include <metacall/metacall.h>
 
 #include <loader/loader.h>
@@ -31,12 +32,33 @@ int metacall_initialize()
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =
 	{
-		/*"compiled.c", "spider.jsm",*/
-		/*"divide.js",*/
-		"hello.cs",
-		"example.py",
-		"hello.rb",
-		"empty.mock"
+		#if defined(OPTION_BUILD_PLUGINS_C)
+			"compiled.c",
+		#endif /* OPTION_BUILD_PLUGINS_C */
+
+		#if defined(OPTION_BUILD_PLUGINS_CS)
+			"hello.cs",
+		#endif /* OPTION_BUILD_PLUGINS_CS */
+
+		#if defined(OPTION_BUILD_PLUGINS_JSM)
+			"spider.jsm",
+		#endif /* OPTION_BUILD_PLUGINS_JSM */
+
+		#if defined(OPTION_BUILD_PLUGINS_JS)
+			"divide.js",
+		#endif /* OPTION_BUILD_PLUGINS_JS */
+
+		#if defined(OPTION_BUILD_PLUGINS_MOCK)
+			"empty.mock",
+		#endif /* OPTION_BUILD_PLUGINS_MOCK */
+
+		#if defined(OPTION_BUILD_PLUGINS_PY)
+			"example.py",
+		#endif /* OPTION_BUILD_PLUGINS_PY */
+
+		#if defined(OPTION_BUILD_PLUGINS_RB)
+			"hello.rb",
+		#endif /* OPTION_BUILD_PLUGINS_RB */
 	};
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)

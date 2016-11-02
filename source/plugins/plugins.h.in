@@ -1,0 +1,12 @@
+#ifndef PLUGINS_H
+#define PLUGINS_H 1
+
+#cmakedefine OPTION_BUILD_PLUGINS_C		1
+#cmakedefine OPTION_BUILD_PLUGINS_JSM	1
+#cmakedefine OPTION_BUILD_PLUGINS_JS	1
+#cmakedefine OPTION_BUILD_PLUGINS_PY	1
+#cmakedefine OPTION_BUILD_PLUGINS_RB	1
+#cmakedefine OPTION_BUILD_PLUGINS_CS	1
+#cmakedefine OPTION_BUILD_PLUGINS_MOCK	1
+
+#endif /* PLUGINS_H */

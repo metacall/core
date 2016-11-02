@@ -31,6 +31,18 @@ else()
 endif()
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 

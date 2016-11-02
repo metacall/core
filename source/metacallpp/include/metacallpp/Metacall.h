@@ -26,24 +26,24 @@
 #include <string>
 
 namespace Beast {
-	class METACALLPP_API Metacall :
+	class Metacall :
 		public IMetacall
 	{
 	public:
-		~Metacall();
+		METACALLPP_API virtual ~Metacall();
 
-		ICall * Prepare();
+		METACALLPP_API virtual ICall * Prepare();
 
-		std::string GetFunctionName();
+		METACALLPP_API virtual const char * GetFunctionName();
 
-		MetacallStates GetState();
+		METACALLPP_API virtual MetacallStates GetState();
 
-		bool IsReady();
+		METACALLPP_API virtual bool IsReady();
 
-		static Metacall * Make(IScopeBase *scope, std::string functionName);
+		METACALLPP_API static Metacall * Make(IScopeBase *scope, const char * functionName);
 
 	protected:
-		Metacall(IScopeBase *scope, std::string functionName);
+		METACALLPP_API Metacall(IScopeBase *scope, const char * functionName);
 
 		std::string functionName;
 		IScopeBase * scope = NULL;

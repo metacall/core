@@ -26,13 +26,13 @@ namespace Beast {
 	{
 	public:
 
-		virtual IMetacallConfigBuilder* SetFunctionName(std::string) = 0;
+		virtual IMetacallConfigBuilder* SetFunctionName(const char *) = 0;
 
 		virtual IMetacallConfigBuilder* SetInvokeType(MetacallInvokeTypes) = 0;
 		
-		virtual IMetacallConfigBuilder* SetParameterType(std::string) = 0;
+		virtual IMetacallConfigBuilder* SetParameterType(const char *) = 0;
 		
-		virtual IMetacallConfigBuilder* SetReturnType(std::string) = 0;
+		virtual IMetacallConfigBuilder* SetReturnType(const char *) = 0;
 
 		virtual ~IMetacallConfigBuilder()
 		{

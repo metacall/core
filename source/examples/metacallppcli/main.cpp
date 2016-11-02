@@ -35,6 +35,8 @@ void ConfigScope(IScopeConfig * scopeConfig) {
 
 int main()
 {
+	#if 0
+
 	IContext * context = new Context();
 
 	IScopeConfig * scopeConfig = new ScopeConfig(MetacallInvokeTypes::Fixed);
@@ -76,6 +78,8 @@ int main()
 	delete scope;
 
 	delete context;
+
+	#endif
 
 	getchar();
 

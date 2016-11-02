@@ -27,8 +27,8 @@ namespace Beast {
 	{
 	}
 
-	std::string MetacallConfig::GetFunctionName() {
-		return this->functionName;
+	const char * MetacallConfig::GetFunctionName() {
+		return this->functionName.c_str();
 	}
 
 	MetacallInvokeTypes MetacallConfig::GetInvokeType() {
@@ -39,16 +39,16 @@ namespace Beast {
 		return this->parametersTypes;
 	}
 
-	std::string MetacallConfig::GetReturnType() {
-		return this->returnType;
+	const char * MetacallConfig::GetReturnType() {
+		return this->returnType.c_str();
 	}
 
 	IMetacallConfigBuilder* MetacallConfig::GetBuilder() {
 		return (IMetacallConfigBuilder *)this;
 	}
 
-	IMetacallConfigBuilder* MetacallConfig::SetFunctionName(std::string name) {
-		this->functionName = name;
+	IMetacallConfigBuilder* MetacallConfig::SetFunctionName(const char * name) {
+		this->functionName = std::string(name);
 		return this->GetBuilder();
 	}
 
@@ -57,13 +57,13 @@ namespace Beast {
 		return this->GetBuilder();
 	}
 
-	IMetacallConfigBuilder* MetacallConfig::SetParameterType(std::string param) {
-		this->parametersTypes.push_back(param);
+	IMetacallConfigBuilder* MetacallConfig::SetParameterType(const char * param) {
+		this->parametersTypes.push_back(std::string(param));
 		return this->GetBuilder();
 	}
 
-	IMetacallConfigBuilder* MetacallConfig::SetReturnType(std::string type) {
-		this->returnType = type;
+	IMetacallConfigBuilder* MetacallConfig::SetReturnType(const char * type) {
+		this->returnType = std::string(type);
 		return this->GetBuilder();
 	}
 }

@@ -25,15 +25,20 @@
 
 namespace Beast {
 	template <typename T>
-	class  MetaFunction :
+	class MetaFunction :
 		public Metacall
 	{
 	public:
-		~MetaFunction() {
+		METACALLPP_API MetaFunction()
+		{
 
 		}
 
-		T * Invoke() {
+		METACALLPP_API ~MetaFunction() {
+
+		}
+
+		METACALLPP_API T * Invoke() {
 			T * v = new T();
 			ICall * call = this->Prepare();
 			IReturn *ret = call->Invoke();
@@ -43,13 +48,13 @@ namespace Beast {
 			return v;
 		}
 
-		 static MetaFunction<T> * MakeFunction(IScopeBase *scope, std::string functionName) {
+		METACALLPP_API static MetaFunction<T> * MakeFunction(IScopeBase *scope, const char * functionName) {
 			MetaFunction<T> * m = new MetaFunction<T>(scope, functionName);
 			m->state = MetacallStates::Ready;
 			return m;
 		}
 	protected:
-		MetaFunction(IScopeBase *scope, std::string functionName) :Metacall(scope, functionName) {
+		METACALLPP_API MetaFunction(IScopeBase *scope, const char * functionName) :Metacall(scope, functionName) {
 
 		}
 	};

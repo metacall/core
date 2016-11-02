@@ -29,15 +29,14 @@
 
 namespace Beast {
 
-	class METACALLPP_API Call :
+	class Call :
 		public ICall
 	{
 	public:
-		Call(IMetacall * meta);
-		IParameterBuilder * Parameters();
-		IReturn * Invoke();
-
-		~Call();
+		METACALLPP_API Call(IMetacall * meta);
+		METACALLPP_API IParameterBuilder * Parameters();
+		METACALLPP_API IReturn * Invoke();
+		METACALLPP_API ~Call();
 	private:
 		IMetacall * meta = NULL;
 		IParameterBuilder * buildParams = NULL;

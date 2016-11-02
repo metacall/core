@@ -15,6 +15,18 @@ set(target metacallweb)
 message(STATUS "Example ${target}")
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 

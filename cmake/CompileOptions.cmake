@@ -58,18 +58,6 @@ if (WIN32)
 endif ()
 
 #
-# Compiler warnings
-#
-
-include(Warnings)
-
-#
-# Compiler security
-#
-
-include(SecurityFlags)
-
-#
 # Compile options
 #
 
@@ -84,13 +72,13 @@ if (WIN32)
   add_compile_options(/Gm-) # disable minimal rebuild
   add_compile_options(/MP) # Build with Multiple Processes (number of processes equal to the number of processors)
   #add_compile_options(/wd4251 /wd4592)
-  add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
+  #add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
   # Release
-  add_compile_options(/GL) # enable debugging information
+  #add_compile_options(/GL) # enable debugging information
   add_compile_options(/GS) # Buffer Security Check
   add_compile_options(/GF) # enable read-only string pooling
-  add_compile_options(/GW) # enable read-only string pooling
+  #add_compile_options(/GW) # enable read-only string pooling
 endif()
 
 if (PROJECT_OS_FAMILY MATCHES "unix")

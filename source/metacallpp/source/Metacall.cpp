@@ -14,9 +14,9 @@
 
 namespace Beast {
 
-	Metacall::Metacall(IScopeBase *scope, std::string functionName)
+	Metacall::Metacall(IScopeBase *scope, const char * functionName)
 	{
-		this->functionName = functionName;
+		this->functionName = std::string(functionName);
 		this->scope = scope;
 	}
 
@@ -35,8 +35,8 @@ namespace Beast {
 		}
 	}
 
-	std::string Metacall::GetFunctionName() {
-		return this->functionName;
+	const char * Metacall::GetFunctionName() {
+		return this->functionName.c_str();
 	}
 
 	MetacallStates Metacall::GetState() {
@@ -47,7 +47,7 @@ namespace Beast {
 		return (this->state == MetacallStates::Ready);
 	}
 
-	Metacall * Metacall::Make(IScopeBase *scope, std::string functionName) {
+	Metacall * Metacall::Make(IScopeBase *scope, const char * functionName) {
 		auto m = new Metacall(scope, functionName);
 		m->state = MetacallStates::Ready;
 		return m;

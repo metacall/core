@@ -25,24 +25,28 @@
 #include <map>
 
 namespace Beast {
-	class METACALLPP_API ScopeBase :
+	class ScopeBase :
 		public IScopeBase
 	{
 	public:
-		ScopeBase(IScopeConfig * config);
-		~ScopeBase();
-		IMetacall * GetMetacall(std::string functionName);
+		METACALLPP_API ScopeBase(IScopeConfig * config);
+		METACALLPP_API ~ScopeBase();
 
+		METACALLPP_API IMetacall * GetMetacall(const char * functionName);
+
+		/* TODO: Move this to a inl file */
 		template <typename T>
-		MetaFunction<T> * GetFunc(std::string functionName) {
+		MetaFunction<T> * GetFunc(const char * functionName) {
 			MetaFunction<T>  * mc = NULL;
 
-			mc = (MetaFunction<T>*)this->metecalls[functionName];
+			std::string name_str = std::string(functionName);
+
+			mc = (MetaFunction<T>*)this->metecalls[name_str];
 
 			if (mc == NULL) {
 				mc = MetaFunction<T>::MakeFunction(this, functionName);
-				this->metecalls[functionName] = mc;
-				cout << "Create " << functionName << endl;
+				this->metecalls[name_str] = mc;
+				cout << "Create " << name_str << endl;
 			}
 			return mc;
 		}

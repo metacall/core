@@ -6,6 +6,9 @@
 string(TOUPPER ${META_PROJECT_NAME} META_PROJECT_NAME_UPPER)
 configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-version.h)
 
+# Generate plugin-header
+configure_file(plugins/plugins.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-plugins.h)
+
 #
 # Sub-projects
 #

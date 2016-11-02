@@ -7,6 +7,18 @@ set(target hash-map-test)
 message(STATUS "Test ${target}")
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 

@@ -44,15 +44,17 @@ namespace Beast {
 		}
 	}
 
-	IMetacall * ScopeBase::GetMetacall(string functionName) {
+	IMetacall * ScopeBase::GetMetacall(const char * functionName) {
 		IMetacall * mc = NULL;
 
-		mc = this->metecalls[functionName];
+		std::string function_str = std::string(functionName);
+
+		mc = this->metecalls[function_str];
 
 		if (mc == NULL) {
 			mc = Metacall::Make(this, functionName);
-			this->metecalls[functionName] = mc;
-			cout << "Create " << functionName << endl;
+			this->metecalls[function_str] = mc;
+			cout << "Create " << function_str << endl;
 		}
 		return mc;
 	}

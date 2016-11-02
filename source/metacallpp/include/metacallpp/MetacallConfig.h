@@ -25,34 +25,36 @@
 
 namespace Beast {
 
-	class METACALLPP_API MetacallConfig
+	class MetacallConfig
 		: public IMetacallConfig,private IMetacallConfigBuilder
 	{
 	public:
 
-		MetacallConfig();
+		METACALLPP_API MetacallConfig();
 
+		/* TODO: Remove STD from class interface in order to be exportable */
 		MetacallConfig(std::string functionName);
 
-		std::string GetFunctionName();
+		METACALLPP_API const char * GetFunctionName();
 
-		MetacallInvokeTypes GetInvokeType();
+		METACALLPP_API MetacallInvokeTypes GetInvokeType();
 
+		/* TODO: Remove STD from class interface in order to be exportable */
 		std::list<std::string> GetParametersTypes();
 
-		std::string GetReturnType();
+		METACALLPP_API const char * GetReturnType();
 
-		IMetacallConfigBuilder* GetBuilder();
+		METACALLPP_API IMetacallConfigBuilder* GetBuilder();
 
-		IMetacallConfigBuilder* SetFunctionName(std::string);
+		METACALLPP_API IMetacallConfigBuilder* SetFunctionName(const char * name);
 
-		IMetacallConfigBuilder* SetInvokeType(MetacallInvokeTypes);
+		METACALLPP_API IMetacallConfigBuilder* SetInvokeType(MetacallInvokeTypes);
 
-		IMetacallConfigBuilder* SetParameterType(std::string);
+		METACALLPP_API IMetacallConfigBuilder* SetParameterType(const char * param);
 
-		IMetacallConfigBuilder* SetReturnType(std::string);
+		METACALLPP_API IMetacallConfigBuilder* SetReturnType(const char * type);
 
-		~MetacallConfig();
+		METACALLPP_API ~MetacallConfig();
 
 	private:
 

@@ -27,13 +27,13 @@ namespace Beast {
 	{
 	public:
 
-		virtual std::string GetFunctionName() = 0;
+		virtual const char * GetFunctionName() = 0;
 
 		virtual MetacallInvokeTypes GetInvokeType() = 0;
 
 		virtual std::list<std::string> GetParametersTypes() = 0;
 
-		virtual std::string GetReturnType() = 0;
+		virtual const char * GetReturnType() = 0;
 
 		virtual IMetacallConfigBuilder* GetBuilder() = 0;
 

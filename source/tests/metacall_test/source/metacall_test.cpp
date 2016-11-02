@@ -9,6 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
+#include <metacall/metacall-plugins.h>
 
 #include <reflect/reflect_value.h>
 
@@ -29,9 +30,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	metacall_print_info();
 
-	EXPECT_EQ((int)0, (int)metacall_initialize());
+	EXPECT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
+	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
 		const long seven_multiples_limit = 10;
 
@@ -41,9 +43,9 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		ret = metacall("multiply", 5, 15);
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((long)value_to_long(ret), (long)75);
+		EXPECT_EQ((long) value_to_long(ret), (long) 75);
 
 		value_destroy(ret);
 
@@ -53,81 +55,84 @@ TEST_F(metacall_test, DefaultConstructor)
 		{
 			ret = metacall("multiply", 7, iterator);
 
-			EXPECT_NE((value)NULL, (value)ret);
+			EXPECT_NE((value) NULL, (value) ret);
 
-			EXPECT_EQ((long)value_to_long(ret), (long)(7 * iterator));
+			EXPECT_EQ((long) value_to_long(ret), (long) (7 * iterator));
 
 			value_destroy(ret);
 		}
 
 		ret = metacall("divide", 64.0, 2.0);
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((double)value_to_double(ret), (double) 32.0);
+		EXPECT_EQ((double) value_to_double(ret), (double) 32.0);
 
 		value_destroy(ret);
 
 		ret = metacall("sum", 1000, 3500);
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((long)value_to_long(ret), (long)4500);
+		EXPECT_EQ((long) value_to_long(ret), (long) 4500);
 
 		value_destroy(ret);
 
 		ret = metacall("sum", 3, 4);
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((long)value_to_long(ret), (long)7);
+		EXPECT_EQ((long) value_to_long(ret), (long) 7);
 
 		value_destroy(ret);
 
-		EXPECT_EQ((value)NULL, (value)metacall("hello"));
+		EXPECT_EQ((value) NULL, (value) metacall("hello"));
 
 		ret = metacall("strcat", "Hello ", "Universe");
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello Universe"));
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello Universe"));
 
 		value_destroy(ret);
 	}
+	#endif /* OPTION_BUILD_PLUGINS_PY */
 
 	/* Ruby */
+	#if defined(OPTION_BUILD_PLUGINS_RB)
 	{
 		value ret = NULL;
 
 		ret = metacall("say_multiply", 5, 7);
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((int)value_to_int(ret), (int)35);
+		EXPECT_EQ((int) value_to_int(ret), (int) 35);
 
 		value_destroy(ret);
 
-		EXPECT_EQ((void *)NULL, (void *)metacall("say_null"));
+		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
 
 		ret = metacall("say_hello", "meta-programmer");
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello meta-programmer!"));
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello meta-programmer!"));
 
 		value_destroy(ret);
 	}
+	#endif /* OPTION_BUILD_PLUGINS_RB */
 
 	/* JavaScript SpiderMonkey */
+	#if defined(OPTION_BUILD_PLUGINS_JSM)
 	{
-		/*
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
-		*/
 	}
+	#endif /* OPTION_BUILD_PLUGINS_JSM */
 
 	/* JavaScript V8 */
+	#if defined(OPTION_BUILD_PLUGINS_JS)
 	{
-		/*
 		value ret = NULL;
 
 		ret = metacall("say_divide", 32.0, 4.0);
@@ -145,52 +150,54 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "abcdef"));
 
 		value_destroy(ret);
-		*/
 	}
+	#endif /* OPTION_BUILD_PLUGINS_JS */
 
 	/* Mock */
+	#if defined(OPTION_BUILD_PLUGINS_MOCK)
 	{
 		value ret = NULL;
 
 		ret = metacall("my_empty_func");
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((int)value_to_int(ret), (int)1234);
+		EXPECT_EQ((int) value_to_int(ret), (int) 1234);
 
 		value_destroy(ret);
 
 		ret = metacall("two_doubles", 3.14, 68.3);
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((double)value_to_double(ret), (double) 3.1416);
+		EXPECT_EQ((double) value_to_double(ret), (double) 3.1416);
 
 		value_destroy(ret);
 
 		ret = metacall("mixed_args", 'E', 16, 34L, 4.6, "hello");
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((char)value_to_char(ret), (char) 'A');
+		EXPECT_EQ((char) value_to_char(ret), (char) 'A');
 
 		value_destroy(ret);
 
 		ret = metacall("new_args", "goodbye");
 
-		EXPECT_NE((value)NULL, (value)ret);
+		EXPECT_NE((value) NULL, (value) ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
 
 		value_destroy(ret);
 	}
+	#endif /* OPTION_BUILD_PLUGINS_MOCK */
 
 	/* C# Netcore */
+	#if defined(OPTION_BUILD_PLUGINS_CS)
 	{
-
-		EXPECT_EQ((void *)NULL, (void *)metacall("Say", "Hello para with params!"));
-
+		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
+	#endif /* OPTION_BUILD_PLUGINS_CS */
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

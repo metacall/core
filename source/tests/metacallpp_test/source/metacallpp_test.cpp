@@ -66,6 +66,8 @@ TEST(metacallpp_test, Simple)
 
 TEST(metacallpp_test, MetaFunction)
 {
+	#if 0
+
 	IContext * context = new Context();
 
 	IScopeConfig * scopeConfig = new ScopeConfig(MetacallInvokeTypes::Fixed);
@@ -87,4 +89,6 @@ TEST(metacallpp_test, MetaFunction)
 	delete scope;
 
 	delete context;
+
+	#endif
 }

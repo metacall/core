@@ -24,21 +24,23 @@
 #include <list>
 
 namespace Beast {
-	class METACALLPP_API ScopeConfig :
+
+	class ScopeConfig :
 		public IScopeConfig
 
 	{
 	public:
 
-		ScopeConfig(MetacallInvokeTypes type);
+		METACALLPP_API ScopeConfig(MetacallInvokeTypes type);
 
-		MetacallInvokeTypes GetMetacallType();
+		METACALLPP_API MetacallInvokeTypes GetMetacallType();
 
-		IMetacallConfigBuilder * CreateMetacallConfig();
+		METACALLPP_API IMetacallConfigBuilder * CreateMetacallConfig();
 
+		/* TODO: Remove STD from class interface in order to be exportable */
 		std::list<IMetacallConfig *>* GetMetacallConfigs();
 
-		~ScopeConfig();
+		METACALLPP_API ~ScopeConfig();
 
 	private:
 		MetacallInvokeTypes metacallInvokeType;
