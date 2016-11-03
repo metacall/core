@@ -11,6 +11,11 @@ string_buffer::~string_buffer()
 
 const char* string_buffer::c_str() const
 {
+	if (this->buffer == nullptr) {
+		return nullptr;
+	}
+
+	*(this->buffer + this->length) = '\0';
 	return this->buffer;
 }
 
