@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <cs_loader/defs.h>
-
+#include <stdlib.h>
 	struct netcore_handle_type;
 	typedef struct netcore_handle_type * netcore_handle;
 

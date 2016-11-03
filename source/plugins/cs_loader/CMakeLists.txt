@@ -49,17 +49,40 @@ include(SecurityFlags)
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
+
+
+if(MSVC)
+set(headers_platform
+	${include_path}/string_buffer.h
+	${include_path}/netcore_win.h
+	${include_path}/host_environment.h
+)
+
+set(sources_platform
+	${source_path}/string_buffer.cpp
+	${source_path}/netcore_win.cpp
+	${source_path}/host_environment.cpp
+)
+else()
+set(headers_platform
+	${include_path}/netcore_linux.h
+	
+)
+set(sources_platform
+	${source_path}/netcore_linux.cpp
+	
+)
+endif()
+
+
 set(headers
     ${include_path}/cs_loader.h
     ${include_path}/cs_loader_impl.h
 	${include_path}/defs.h
 	${include_path}/netcore.h
 	${include_path}/logger.h
-	${include_path}/string_buffer.h
-	${include_path}/netcore_win.h
 	${include_path}/simple_netcore.h
-	${include_path}/host_environment.h
-	
+	${headers_platform}
 )
 
 set(sources
@@ -67,12 +90,10 @@ set(sources
     ${source_path}/cs_loader_impl.c
 	${source_path}/netcore.cpp
 	${source_path}/logger.cpp
-	${source_path}/string_buffer.cpp
-	${source_path}/netcore_win.cpp
 	${source_path}/simple_netcore.cpp
-	${source_path}/host_environment.cpp
-	
+	${sources_platform}
 )
+
 
 # Group source files
 set(header_group "Header Files (API)")

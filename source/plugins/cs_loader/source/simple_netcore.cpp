@@ -11,7 +11,7 @@
 #include <iostream>
 #include <fstream>
 #include <ostream>
-
+#include <stdlib.h>
 netcore_handle simple_netcore_create() {
 #if defined(__linux) | defined( linux)
 

@@ -1,5 +1,5 @@
 #include <cs_loader/string_buffer.h>
-
+#include <string.h>
 
 
 string_buffer::string_buffer() : capacity(0), buffer(nullptr), length(0) {
@@ -23,11 +23,13 @@ void string_buffer::append(const char* str, size_t strLen)
 	if (this->length + strLen + 1 > this->capacity) {
 		size_t newCapacity = this->capacity * 2;
 		char* newBuffer = new char[newCapacity];
-		strncpy_s(newBuffer, newCapacity, this->buffer, this->length);
+		//strncpy_s(newBuffer, newCapacity, this->buffer, this->length);
+		strncpy(newBuffer, this->buffer, this->length);
 		delete[] this->buffer;
 		this->buffer = newBuffer;
 		this->capacity = newCapacity;
 	}
-	strncpy_s(this->buffer + this->length, this->capacity - this->length, str, strLen);
+	//strncpy_s(this->buffer + this->length, this->capacity - this->length, str, strLen);
+	strncpy(this->buffer + this->length, str, strLen);
 	this->length += strLen;
 }

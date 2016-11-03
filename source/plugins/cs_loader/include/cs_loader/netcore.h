@@ -2,6 +2,7 @@
 #ifndef _NETCORE_H_
 #define _NETCORE_H_
 #include <cs_loader/defs.h>
+#include <stdlib.h>
 
 class netcore
 {

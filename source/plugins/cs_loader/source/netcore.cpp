@@ -1,4 +1,5 @@
 #include <cs_loader/netcore.h>
+#include <stdlib.h>
 #include <ostream>
 #include <iostream>
 netcore::netcore()
