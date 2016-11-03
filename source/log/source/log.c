@@ -108,6 +108,11 @@ int log_write_impl(const char * name, const size_t line, const char * func, cons
 
 	struct log_record_ctor_type record_ctor;
 
+	if (impl == NULL)
+	{
+		return 1;
+	}
+
 	record_ctor.line = line;
 	record_ctor.func = func;
 	record_ctor.file = file;
@@ -127,6 +132,11 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 	int result;
 
 	va_list variable_args;
+
+	if (impl == NULL)
+	{
+		return 1;
+	}
 
 	va_start(variable_args, message);
 

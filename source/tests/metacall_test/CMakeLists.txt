@@ -122,9 +122,17 @@ add_test(NAME ${target}
 )
 
 #
-# Define test labels
+# Define test properties
 #
 
 set_property(TEST ${target}
     PROPERTY LABELS ${target}
+)
+
+set_property(TEST ${target}
+    PROPERTY ENVIRONMENT "LOADER_LIBRARY_PATH=${PROJECT_BINARY_DIR}/"
+)
+
+set_property(TEST ${target}
+    APPEND PROPERTY ENVIRONMENT "LOADER_SCRIPT_PATH=${PROJECT_BINARY_DIR}/"
 )

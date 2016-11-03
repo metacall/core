@@ -22,7 +22,7 @@ public:
 
 TEST_F(metacall_test, DefaultConstructor)
 {
-	EXPECT_EQ((int)0, (int)log_configure("metacall",
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
 		log_policy_schedule_sync(),
 		log_policy_storage_sequential(),
@@ -30,27 +30,28 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	metacall_print_info();
 
-	EXPECT_EQ((int)0, (int)metacall_initialize());
+	EXPECT_EQ((int) 0, (int) metacall_initialize());
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }
 
 class metacall_loader_test : public testing::Test
 {
 public:
-	metacall_loader_test() {
-
-		log_configure("metacall",
+	metacall_loader_test()
+	{
+		EXPECT_EQ((int) 0, (int) log_configure("metacall",
 			log_policy_format_text(),
 			log_policy_schedule_sync(),
 			log_policy_storage_sequential(),
-			log_policy_stream_stdio(stdout));
+			log_policy_stream_stdio(stdout)));
 
-		metacall_initialize();
+		EXPECT_EQ((int) 0, (int) metacall_initialize());
 	}
 
-	~metacall_loader_test() {
-		metacall_destroy();
+	~metacall_loader_test()
+	{
+		EXPECT_EQ((int) 0, (int) metacall_destroy());
 	}
 };
 
