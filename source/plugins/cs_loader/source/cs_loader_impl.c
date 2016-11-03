@@ -154,7 +154,7 @@ loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path pat
 	(void)impl;
 	(void)path;
 	(void)name;
-
+	
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
 	simple_netcore_load_script(nhandle, path, name);

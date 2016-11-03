@@ -15,7 +15,7 @@
 #include <cs_loader/logger.h>
 #define MAX_LONGPATH 255
 
-typedef int (coreclrInitializeFunction)(
+typedef int(*coreclrInitializeFunction)(
 	const char* exePath,
 	const char* appDomainFriendlyName,
 	int propertyCount,
@@ -25,12 +25,12 @@ typedef int (coreclrInitializeFunction)(
 	unsigned int* domainId);
 
 // Prototype of the coreclr_shutdown function from the libcoreclr.so
-typedef int (coreclrShutdownFunction)(
+typedef int(*coreclrShutdownFunction)(
 	void* hostHandle,
 	unsigned int domainId);
 
 // Prototype of the coreclr_execute_assembly function from the libcoreclr.so
-typedef int (coreclrCreateDelegateFunction)(
+typedef int(*coreclrCreateDelegateFunction)(
 	void* hostHandle,
 	unsigned int domainId,
 	const char* entryPointAssemblyName,
@@ -53,14 +53,14 @@ private:
 	std::string nativeDllSearchDirs;
 	unsigned int domainId = 0;
 
-	std::string coreClrDll = "libcoreclr";
+	std::string coreClrDll = "coreclr";
 
 	std::string absoluteLibPath;
 	dynlink dl_handle;
 
-	coreclrInitializeFunction  * coreclr_initialize;
-	coreclrShutdownFunction   *coreclr_shutdown;
-	coreclrCreateDelegateFunction * coreclr_create_delegate;
+	coreclrInitializeFunction   coreclr_initialize;
+	coreclrShutdownFunction   coreclr_shutdown;
+	coreclrCreateDelegateFunction  coreclr_create_delegate;
 
 	std::string tpaList;
 

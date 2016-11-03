@@ -9,9 +9,21 @@
 #include <dynlink/dynlink.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <log/log.h>
 netcore_linux::netcore_linux()
 {
-	this->runtimePath.append(getenv("CORE_ROOT"));
+	char * env;
+
+	env = getenv("CORE_ROOT");
+	if (env == nullptr) {
+		log_write("metacall", LOG_LEVEL_DEBUG, "CORE_ROOT not defined");
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "CORE_ROOT is %s", env);
+	}
+
+	this->runtimePath.append(env);
 	getcwd(this->appPath, MAX_LONGPATH);
 	this->domainId = 0;
 }
@@ -25,17 +37,17 @@ bool netcore_linux::ConfigAssemblyName() {
 
 	this->absoluteLibPath += this->runtimePath + this->coreClrDll;
 
-	std::cout << "absoluteRuntime: " << this->runtimePath << std::endl;
+	//std::cout << "absoluteRuntime: " << this->runtimePath << std::endl;
 
-	std::cout << "absoluteLibPath: " << this->absoluteLibPath << std::endl;
+//	std::cout << "absoluteLibPath: " << this->absoluteLibPath << std::endl;
 
-	cout << "absoluteAppPath: " << this->appPath << endl;
+//	cout << "absoluteAppPath: " << this->appPath << endl;
 
 	this->managedAssemblyFullName.append(this->appPath);
 	this->managedAssemblyFullName.append("/");
 	this->managedAssemblyFullName.append(this->loader_dll);
 
-	cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << endl;
+	//	cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << endl;
 
 	this->nativeDllSearchDirs.append(this->appPath);
 	this->nativeDllSearchDirs.append(":");
@@ -47,21 +59,26 @@ bool netcore_linux::ConfigAssemblyName() {
 }
 
 bool netcore_linux::CreateHost() {
-	this->dl_handle = dynlink_load(this->runtimePath.c_str(), this->coreClrDll.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+	this->dl_handle = dynlink_load(this->runtimePath.c_str(), this->coreClrDll.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_LOCAL);
+
+	if (this->dl_handle == nullptr) {
+		log_write("metacall", LOG_LEVEL_DEBUG, "can't load %slib%s.%s", this->runtimePath.c_str(), this->coreClrDll.c_str(), dynlink_extension());
+		return false;
+	}
 
 	dynlink_symbol_addr addr;
 
-	dynlink_symbol(this->dl_handle, DYNLINK_SYMBOL_STR("coreclr_initialize"), &addr);
+	dynlink_symbol(this->dl_handle, "coreclr_initialize", &addr);
 
-	this->coreclr_initialize = (coreclrInitializeFunction*)DYNLINK_SYMBOL_GET(addr);
+	this->coreclr_initialize = (coreclrInitializeFunction)addr;
 
-	dynlink_symbol(this->dl_handle, DYNLINK_SYMBOL_STR("coreclr_shutdown"), &addr);
+	dynlink_symbol(this->dl_handle, "coreclr_shutdown", &addr);
 
-	this->coreclr_shutdown = (coreclrShutdownFunction*)DYNLINK_SYMBOL_GET(addr);
+	this->coreclr_shutdown = (coreclrShutdownFunction)addr;
 
-	dynlink_symbol(this->dl_handle, DYNLINK_SYMBOL_STR("coreclr_create_delegate"), &addr);
+	dynlink_symbol(this->dl_handle, "coreclr_create_delegate", &addr);
 
-	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)DYNLINK_SYMBOL_GET(addr);
+	this->coreclr_create_delegate = (coreclrCreateDelegateFunction)addr;
 
 	const char *propertyKeys[] = {
 		"TRUSTED_PLATFORM_ASSEMBLIES",
@@ -84,12 +101,11 @@ bool netcore_linux::CreateHost() {
 	// initialize coreclr
 	string m;
 	string mm;
-
 	mm.append(getenv("_"));
 	m.append(this->appPath);
 	m.append(mm.substr(1, mm.length() - 1));
 
-	status = this->coreclr_initialize(
+	status = (*this->coreclr_initialize)(
 		m.c_str(),
 		"metacall_cs_loader_container",
 		sizeof(propertyKeys) / sizeof(propertyKeys[0]),
@@ -97,28 +113,13 @@ bool netcore_linux::CreateHost() {
 		propertyValues,
 		&hostHandle,
 		&domainId
-	);
+		);
 
 	if (status < 0) {
-		std::cerr << "ERROR! coreclr_initialize status: 0x" << std::hex << status << std::endl;
+		log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize fail!");
+		//std::cout << "ERROR! coreclr_initialize status: 0x" << std::hex << status << std::endl;
 		return false;
 	}
-	/*
-	try {
-		// create delegate to our entry point
-		status = (*this->coreclr_create_delegate)(
-			hostHandle,
-			domainId,
-			this->assemblyName,
-			this->className,
-			this->delegateLoadC,
-			(void**)&this->coreLoadC);
-	}
-	catch (dynamicLinker::dynamicLinkerException e) {
-		std::cerr << e.what() << std::endl;
-		return false;
-	}
-	*/
 
 	if (!this->create_delegates()) {
 		return false;
@@ -135,7 +136,7 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** func
 	int status = -1;
 
 	// create delegate to our entry point
-	status = this->coreclr_create_delegate(
+	status = (*this->coreclr_create_delegate)(
 		hostHandle,
 		domainId,
 		this->assembly_name,
@@ -155,13 +156,15 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** func
 void netcore_linux::stop() {
 	int status = -1;
 
-	status = this->coreclr_shutdown(
+	status = (*this->coreclr_shutdown)(
 		this->hostHandle,
 		this->domainId);
 
 	if (status < 0) {
-		std::cerr << "ERROR! stop status: 0x" << std::hex << status << std::endl;
+		std::cout << "ERROR! stop status: 0x" << std::hex << status << std::endl;
 	}
+
+	dynlink_unload(this->dl_handle);
 }
 
 void netcore_linux::add_files_from_directory_to_tpa_list(std::string directory, std::string& tpaList) {
@@ -176,22 +179,16 @@ void netcore_linux::add_files_from_directory_to_tpa_list(std::string directory, 
 
 	while ((dirp = readdir(dp)) != NULL) {
 
-		std::string path;
-		path.append(dirp->d_name);
+		if (dirp->d_type == DT_REG) {
+			std::string path;
+			path.append(directory);
+			path.append(dirp->d_name);
 
-		if (!path.compare(path.length() - 4, 4, ".dll")) {
-			tpaList.append(path + ":");
+			if (!path.compare(path.length() - 4, 4, ".dll")) {
+				tpaList.append(path + ":");
+			}
 		}
 	}
 
 	closedir(dp);
-
-	//for (auto& dirent : std::experimental::filesystem::directory_iterator(directory)) {
-	//	std::string path = dirent.path();
-
-	//	if (!path.compare(path.length() - 4, 4, ".dll")) {
-	//		tpaList.append(path + ":");
-	//	}
-	//}
-
 }
