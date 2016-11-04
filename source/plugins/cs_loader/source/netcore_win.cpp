@@ -150,7 +150,7 @@ bool netcore_win::create_host() {
 	}
 
 	*this->log << W("Starting ICLRRuntimeHost2") << logger::endl;
-
+	
 	hr = host->Start();
 	if (FAILED(hr)) {
 		*this->log << W("Failed to start CoreCLR. ERRORCODE: ") << hr << logger::endl;
