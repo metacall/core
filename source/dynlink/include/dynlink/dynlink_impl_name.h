@@ -16,7 +16,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-	
+
 /* -- Definitions -- */
 
 #define DYNLINK_NAME_IMPL_SIZE			0xFF					/**< Dynamically linked shared object name size */

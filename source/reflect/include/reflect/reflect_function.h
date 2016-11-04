@@ -10,7 +10,7 @@
 #define REFLECT_FUNCTION_H 1
 
 #include <reflect/reflect_signature.h>
-#include <reflect/reflect_value.h>
+#include <reflect/reflect_value_type.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#define TYPE_INVALID 0x00
+#define TYPE_INVALID ((type_id)0x00)
 
 enum type_primitive_id
 {

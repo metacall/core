@@ -14,7 +14,7 @@
 
 #include <loader/loader.h>
 
-#include <reflect/reflect_value.h>
+#include <reflect/reflect_value_type.h>
 #include <reflect/reflect_function.h>
 
 #include <string.h>

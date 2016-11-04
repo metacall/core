@@ -48,6 +48,7 @@ set(headers
     ${include_path}/reflect_scope.h
     ${include_path}/reflect_context.h
     ${include_path}/reflect_value.h
+    ${include_path}/reflect_value_type.h
 )
 
 set(sources
@@ -59,6 +60,7 @@ set(sources
     ${source_path}/reflect_scope.c
     ${source_path}/reflect_context.c
     ${source_path}/reflect_value.c
+    ${source_path}/reflect_value_type.c
 )
 
 # Group source files

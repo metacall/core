@@ -44,7 +44,7 @@ type type_create(type_id id, const char * name, type_impl impl, type_impl_interf
 			memcpy(t->name, name, name_size);
 
 			t->id = id;
-			
+
 			t->impl = impl;
 
 			if (singleton != NULL)

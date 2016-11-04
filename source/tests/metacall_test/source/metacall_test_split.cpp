@@ -22,7 +22,7 @@ public:
 
 TEST_F(metacall_test, DefaultConstructor)
 {
-	EXPECT_EQ((int)0, (int)log_configure("metacall",
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
 		log_policy_schedule_sync(),
 		log_policy_storage_sequential(),
@@ -32,8 +32,33 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	EXPECT_EQ((int) 0, (int) metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
+}
+
+class metacall_loader_test : public testing::Test
+{
+public:
+	metacall_loader_test()
+	{
+		EXPECT_EQ((int) 0, (int) log_configure("metacall",
+			log_policy_format_text(),
+			log_policy_schedule_sync(),
+			log_policy_storage_sequential(),
+			log_policy_stream_stdio(stdout)));
+
+		EXPECT_EQ((int) 0, (int) metacall_initialize());
+	}
+
+	~metacall_loader_test()
+	{
+		EXPECT_EQ((int) 0, (int) metacall_destroy());
+	}
+};
+
+/* Python */
+#if defined(OPTION_BUILD_PLUGINS_PY)
+
+	TEST_F(metacall_loader_test, Python)
 	{
 		const long seven_multiples_limit = 10;
 
@@ -96,10 +121,13 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+#endif /* OPTION_BUILD_PLUGINS_PY */
+
+/* Ruby */
+#if defined(OPTION_BUILD_PLUGINS_RB)
+
+	TEST_F(metacall_loader_test, Ruby)
 	{
 		value ret = NULL;
 
@@ -121,17 +149,23 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
 
-	/* JavaScript SpiderMonkey */
-	#if defined(OPTION_BUILD_PLUGINS_JSM)
+#endif /* OPTION_BUILD_PLUGINS_RB */
+
+/* JavaScript SpiderMonkey */
+#if defined(OPTION_BUILD_PLUGINS_JSM)
+
+	TEST_F(metacall_loader_test, JavascriptSpiderMonkey)
 	{
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JSM */
 
-	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_PLUGINS_JS)
+#endif /* OPTION_BUILD_PLUGINS_JSM */
+
+/* JavaScript V8 */
+#if defined(OPTION_BUILD_PLUGINS_JS)
+
+	TEST_F(metacall_loader_test, JavascriptV8)
 	{
 		value ret = NULL;
 
@@ -151,10 +185,13 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JS */
 
-	/* Mock */
-	#if defined(OPTION_BUILD_PLUGINS_MOCK)
+#endif /* OPTION_BUILD_PLUGINS_JS */
+
+/* Mock */
+#if defined(OPTION_BUILD_PLUGINS_MOCK)
+
+	TEST_F(metacall_loader_test, Mock)
 	{
 		value ret = NULL;
 
@@ -189,15 +226,24 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
 
 		value_destroy(ret);
-	}
-	#endif /* OPTION_BUILD_PLUGINS_MOCK */
 
-	/* C# Netcore */
-	#if defined(OPTION_BUILD_PLUGINS_CS)
+		ret = metacall("my_empty_func_str");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
+
+		value_destroy(ret);
+	}
+
+#endif /* OPTION_BUILD_PLUGINS_MOCK */
+
+/* C# Netcore */
+#if defined(OPTION_BUILD_PLUGINS_CS)
+
+	TEST_F(metacall_loader_test, CSharpNetCore)
 	{
 		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_CS */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
-}
+#endif /* OPTION_BUILD_PLUGINS_CS */
