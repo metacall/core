@@ -1,3 +1,8 @@
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_PY)
+    return()
+endif()
+
 #
 # Executable name and options
 #

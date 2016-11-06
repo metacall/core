@@ -78,6 +78,18 @@ REFLECT_API value value_create_char(char c);
 
 /**
 *  @brief
+*    Create a value from short @s
+*
+*  @param[in] s
+*    Short will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_short(short s);
+
+/**
+*  @brief
 *    Create a value from integer @i
 *
 *  @param[in] i

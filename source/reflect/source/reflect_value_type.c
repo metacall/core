@@ -64,6 +64,10 @@ type_id value_type_id(value v)
 void value_stringify(value v, char * dest, size_t size, size_t * length)
 {
 	/* TODO */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)length;
 }
 
 value value_create_bool(boolean b)
@@ -74,6 +78,11 @@ value value_create_bool(boolean b)
 value value_create_char(char c)
 {
 	return value_type_create(&c, sizeof(char), TYPE_CHAR);
+}
+
+value value_create_short(short s)
+{
+	return value_type_create(&s, sizeof(short), TYPE_SHORT);
 }
 
 value value_create_int(int i)

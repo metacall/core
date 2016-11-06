@@ -83,6 +83,12 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Char value: %c", *value_ptr);
 			}
+			else if (id == TYPE_SHORT)
+			{
+				short * value_ptr = (short *)(args[args_count]);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Short value: %d", *value_ptr);
+			}
 			else if (id == TYPE_INT)
 			{
 				int * value_ptr = (int *)(args[args_count]);
@@ -141,6 +147,10 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 		else if (id == TYPE_CHAR)
 		{
 			return value_create_char('A');
+		}
+		else if (id == TYPE_SHORT)
+		{
+			return value_create_short(124);
 		}
 		else if (id == TYPE_INT)
 		{
@@ -212,6 +222,7 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 	{
 		{ TYPE_BOOL,	"Boolean"	},
 		{ TYPE_CHAR,	"Char"		},
+		{ TYPE_SHORT,	"Short"		},
 		{ TYPE_INT,		"Integer"	},
 		{ TYPE_LONG,	"Long"		},
 		{ TYPE_DOUBLE,	"Double"	},

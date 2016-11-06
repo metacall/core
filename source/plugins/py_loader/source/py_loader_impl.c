@@ -200,6 +200,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 				long l = PyLong_AsLong(result);
 			#endif
 
+			/* TODO: Review overflow */
 			int i = (int)l;
 
 			v = value_create_int(i);
@@ -357,7 +358,6 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 		type_id_name_pair[] =
 		{
 			{ TYPE_BOOL, "bool" },
-
 			{ TYPE_LONG, "int" },
 
 			#if PY_MAJOR_VERSION == 2

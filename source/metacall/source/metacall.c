@@ -128,6 +128,10 @@ value metacall(const char * name, ...)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
+			else if (id == TYPE_SHORT)
+			{
+				args[iterator] = value_create_short((short)va_arg(va, int));
+			}
 			else if (id == TYPE_INT)
 			{
 				args[iterator] = value_create_int(va_arg(va, int));
