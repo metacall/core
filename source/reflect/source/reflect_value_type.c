@@ -10,6 +10,8 @@
 
 #include <reflect/reflect_value_type.h>
 
+#include <stdint.h>
+
 /* -- Private Methods -- */
 
 /**
@@ -28,11 +30,11 @@
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-value value_type_create(const void * data, size_t bytes, type_id id);
+static value value_type_create(const void * data, size_t bytes, type_id id);
 
 /* -- Methods -- */
 
-value value_type_create(const void * data, size_t bytes, type_id id)
+static value value_type_create(const void * data, size_t bytes, type_id id)
 {
 	value v = value_alloc(bytes + sizeof(type_id));
 
@@ -43,7 +45,7 @@ value value_type_create(const void * data, size_t bytes, type_id id)
 
 	value_from(v, data, bytes);
 
-	value_from((value)((char *)v + bytes), &id, sizeof(type_id));
+	value_from((value)(((uintptr_t)v) + bytes), &id, sizeof(type_id));
 
 	return v;
 }
@@ -56,18 +58,9 @@ type_id value_type_id(value v)
 
 	type_id id = TYPE_INVALID;
 
-	value_to((value)((char *)v + offset), &id, sizeof(type_id));
+	value_to((value)(((uintptr_t)v) + offset), &id, sizeof(type_id));
 
 	return id;
-}
-
-void value_stringify(value v, char * dest, size_t size, size_t * length)
-{
-	/* TODO */
-	(void)v;
-	(void)dest;
-	(void)size;
-	(void)length;
 }
 
 value value_create_bool(boolean b)
@@ -112,7 +105,7 @@ value value_create_string(const char * str, size_t length)
 
 value value_create_ptr(const void * ptr)
 {
-	return value_type_create((void *)&ptr, sizeof(const void *), TYPE_PTR);
+	return value_type_create(&ptr, sizeof(const void *), TYPE_PTR);
 }
 
 boolean value_to_bool(value v)
@@ -131,6 +124,15 @@ char value_to_char(value v)
 	value_to(v, &c, sizeof(char));
 
 	return c;
+}
+
+short value_to_short(value v)
+{
+	short s = 0;
+
+	value_to(v, &s, sizeof(short));
+
+	return s;
 }
 
 int value_to_int(value v)
@@ -167,7 +169,9 @@ char * value_to_string(value v)
 
 void * value_to_ptr(value v)
 {
-	return value_data(v);
+	uintptr_t * uint_ptr = value_data(v);
+
+	return (void *)(*uint_ptr);
 }
 
 value value_from_bool(value v, boolean b)
@@ -178,6 +182,11 @@ value value_from_bool(value v, boolean b)
 value value_from_char(value v, char c)
 {
 	return value_from(v, &c, sizeof(char));
+}
+
+value value_from_short(value v, short s)
+{
+	return value_from(v, &s, sizeof(short));
 }
 
 value value_from_int(value v, int i)

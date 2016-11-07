@@ -10,6 +10,7 @@
 
 #include <reflect/reflect_value.h>
 
+#include <stdint.h>
 #include <string.h>
 
 /* -- Forward Declarations -- */
@@ -46,67 +47,72 @@ value_impl value_descriptor(value v);
 
 value_impl value_descriptor(value v)
 {
-	if (v != NULL)
+	if (v == NULL)
 	{
-		return (value_impl)((char *)v - sizeof(struct value_impl_type));
+		return NULL;
 	}
 
-	return NULL;
+	return (value_impl)(((uintptr_t)v) - sizeof(struct value_impl_type));
 }
 
 value value_alloc(size_t bytes)
 {
-	return malloc(sizeof(struct value_impl_type) + bytes);
+	value_impl impl = malloc(sizeof(struct value_impl_type) + bytes);
+
+	if (impl == NULL)
+	{
+		return NULL;
+	}
+
+	impl->bytes = bytes;
+
+	impl->ref_count = 1;
+
+	return (value)(((uintptr_t)impl) + sizeof(struct value_impl_type));
 }
 
 value value_create(const void * data, size_t bytes)
 {
-	value_impl impl = value_alloc(bytes);
+	value v = value_alloc(bytes);
 
-	if (impl != NULL)
+	if (v == NULL)
 	{
-		value dest = (value)((char *)impl + sizeof(struct value_impl_type));
-
-		impl->bytes = bytes;
-
-		impl->ref_count = 1;
-
-		memcpy(dest, data, bytes);
-
-		return dest;
+		return NULL;
 	}
 
-	return NULL;
+	memcpy(v, data, bytes);
+
+	return v;
 }
 
 size_t value_size(value v)
 {
-	if (v != NULL)
-	{
-		value_impl impl = value_descriptor(v);
+	value_impl impl = value_descriptor(v);
 
-		return impl->bytes;
+	if (impl == NULL)
+	{
+		return 0;
 	}
 
-	return 0;
+	return impl->bytes;
 }
 
 void value_ref_inc(value v)
 {
-	if (v != NULL)
-	{
-		value_impl impl = value_descriptor(v);
+	value_impl impl = value_descriptor(v);
 
+	if (impl != NULL)
+	{
 		++impl->ref_count;
 	}
 }
 
 void value_ref_dec(value v)
 {
-	if (v != NULL)
-	{
-		value_impl impl = value_descriptor(v);
+	value_impl impl = value_descriptor(v);
 
+	if (impl != NULL)
+	{
 		--impl->ref_count;
 
 		if (impl->ref_count == 0)
@@ -118,30 +124,30 @@ void value_ref_dec(value v)
 
 void * value_data(value v)
 {
-	if (v != NULL)
+	if (v == NULL)
 	{
-		return v;
+		return NULL;
 	}
 
-	return NULL;
+	return v;
 }
 
 void value_to(value v, void * data, size_t bytes)
 {
-	if (v != NULL && data != NULL && bytes > 0)
-	{
-		void * src = value_data(v);
+	void * src = value_data(v);
 
+	if (src != NULL && data != NULL && bytes > 0)
+	{
 		memcpy(data, src, bytes);
 	}
 }
 
 value value_from(value v, const void * data, size_t bytes)
 {
-	if (v != NULL && data != NULL && bytes > 0)
-	{
-		void * dest = value_data(v);
+	void * dest = value_data(v);
 
+	if (dest != NULL && data != NULL && bytes > 0)
+	{
 		memcpy(dest, data, bytes);
 	}
 
@@ -150,13 +156,10 @@ value value_from(value v, const void * data, size_t bytes)
 
 void value_destroy(value v)
 {
-	if (v != NULL)
-	{
-		value_impl impl = value_descriptor(v);
+	value_impl impl = value_descriptor(v);
 
-		if (impl->ref_count <= 1)
-		{
-			free(impl);
-		}
+	if (impl != NULL && impl->ref_count <= 1)
+	{
+		free(impl);
 	}
 }

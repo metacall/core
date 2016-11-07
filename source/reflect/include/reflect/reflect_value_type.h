@@ -177,6 +177,18 @@ REFLECT_API char value_to_char(value v);
 
 /**
 *  @brief
+*    Convert value @v to short
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to short
+*/
+REFLECT_API short value_to_short(value v);
+
+/**
+*  @brief
 *    Convert value @v to integer
 *
 *  @param[in] v
@@ -264,6 +276,21 @@ REFLECT_API value value_from_bool(value v, boolean b);
 *    Value with char @c assigned to it
 */
 REFLECT_API value value_from_char(value v, char c);
+
+/**
+*  @brief
+*    Assign short @s to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] s
+*    Short to be assigned to value @v
+*
+*  @return
+*    Value with short @s assigned to it
+*/
+REFLECT_API value value_from_short(value v, short s);
 
 /**
 *  @brief

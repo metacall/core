@@ -26,6 +26,7 @@ enum type_primitive_id
 	TYPE_STRING = 6,
 	TYPE_PTR	= 7,
 
+	TYPE_SIZE,
 	TYPE_INVALID
 };
 

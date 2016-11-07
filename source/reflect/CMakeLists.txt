@@ -61,6 +61,7 @@ set(sources
     ${source_path}/reflect_context.c
     ${source_path}/reflect_value.c
     ${source_path}/reflect_value_type.c
+    ${source_path}/reflect_value_type_stringify.c
 )
 
 # Group source files
