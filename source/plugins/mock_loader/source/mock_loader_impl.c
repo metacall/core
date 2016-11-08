@@ -456,6 +456,18 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		scope_define(sp, function_name(f), f);
 	}
 
+	mock_function = mock_function_create(mock_handle);
+
+	if (mock_function != NULL)
+	{
+		function f = function_create("my_empty_func_int", 0, mock_function, &function_mock_singleton);
+
+		signature s = function_signature(f);
+
+		signature_set_return(s, loader_impl_type(impl, "Integer"));
+
+		scope_define(sp, function_name(f), f);
+	}
 
 	return 0;
 }

@@ -170,7 +170,7 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 		*(((char *)buffer) + result) = '\0';
 	}
 
-	return (size_t)result + 1;
+	return (size_t)result;
 }
 
 static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void * buffer, const size_t size)
@@ -274,7 +274,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 		buffer_end[1] = '\0';
 	}
 
-	return (size_t)(header_size + body_size) + 2;
+	return (size_t)(header_size + body_size) + 1 /* + 2*/;
 }
 
 static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)

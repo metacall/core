@@ -111,9 +111,9 @@ static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy,
 
 	/* TODO: remove this, use storage policy instead */
 	{
-		void * buffer = malloc(size);
+		void * buffer = malloc(size + 1);
 
-		int result;
+		int result = 1;
 
 		if (buffer == NULL)
 		{
@@ -127,7 +127,10 @@ static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy,
 			return 1;
 		}
 
-		result = stream_impl->write(policy, buffer, size);
+		if (stream_impl->write(policy, buffer, size) == 0)
+		{
+			result = stream_impl->flush(policy);
+		}
 
 		free(buffer);
 
