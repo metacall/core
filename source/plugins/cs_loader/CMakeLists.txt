@@ -21,6 +21,8 @@ endif()
 # Target name
 set(target cs_loader)
 
+add_subdirectory(netcore)
+
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 

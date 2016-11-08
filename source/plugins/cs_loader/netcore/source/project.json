@@ -1,4 +1,5 @@
 {
+  "name": "CSLoader",
   "version": "1.0.0-*",
   "buildOptions": {
     "allowUnsafe": true,
