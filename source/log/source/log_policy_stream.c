@@ -52,7 +52,7 @@ log_policy log_policy_stream_file(const char * file_name, const char * mode)
 	return policy;
 }
 
-log_policy log_policy_stream_nginx(struct ngx_log_s * ngx_log_ptr, log_policy_stream_nginx_error ngx_error_ptr)
+log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr)())
 {
 	log_policy policy;
 

@@ -32,7 +32,7 @@ struct log_policy_stream_nginx_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef void (*log_policy_stream_nginx_error)(uintptr_t, struct ngx_log_s *, int, const char *, ...);
+typedef struct ngx_log_s ngx_log_t;
 
 typedef struct log_policy_stream_nginx_ctor_type * log_policy_stream_nginx_ctor;
 
@@ -40,8 +40,8 @@ typedef struct log_policy_stream_nginx_ctor_type * log_policy_stream_nginx_ctor;
 
 struct log_policy_stream_nginx_ctor_type
 {
-	struct ngx_log_s * ngx_log_ptr;
-	log_policy_stream_nginx_error ngx_error_ptr;
+	ngx_log_t * ngx_log_ptr;
+	void (*ngx_error_ptr)();
 };
 
 /* -- Methods -- */

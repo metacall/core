@@ -11,15 +11,27 @@
 #include <log/log_policy_stream_nginx.h>
 #include <log/log_policy_stream.h>
 
+#if defined(_WIN32)
+#	include <windows.h>
+#endif
+
 /* -- Definitions -- */
 
 #define LOG_POLICY_STREAM_NGINX_ERR_NOTICE ((uintptr_t) 6)
 
 /* -- Forward Declarations -- */
 
+#if defined(_WIN32)
+	typedef DWORD ngx_err_t;
+#else
+	typedef int ngx_err_t;
+#endif
+
 struct log_policy_stream_nginx_data_type;
 
 /* -- Type Definitions -- */
+
+typedef void (*log_policy_stream_nginx_error)(uintptr_t, ngx_log_t *, ngx_err_t, const char *, ...);
 
 typedef struct log_policy_stream_nginx_data_type * log_policy_stream_nginx_data;
 
@@ -27,7 +39,7 @@ typedef struct log_policy_stream_nginx_data_type * log_policy_stream_nginx_data;
 
 struct log_policy_stream_nginx_data_type
 {
-	struct ngx_log_s * ngx_log_ptr;
+	ngx_log_t * ngx_log_ptr;
 	log_policy_stream_nginx_error ngx_error_ptr;
 };
 
@@ -81,7 +93,7 @@ static int log_policy_stream_nginx_create(log_policy policy, const log_policy_ct
 
 	nginx_data->ngx_log_ptr = nginx_ctor->ngx_log_ptr;
 
-	nginx_data->ngx_error_ptr = nginx_ctor->ngx_error_ptr;
+	nginx_data->ngx_error_ptr = (log_policy_stream_nginx_error)nginx_ctor->ngx_error_ptr;
 
 	log_policy_instantiate(policy, nginx_data, LOG_POLICY_STREAM_NGINX);
 
@@ -94,7 +106,7 @@ static int log_policy_stream_nginx_write(log_policy policy, const void * buffer,
 
 	(void)size;
 
-	nginx_data->ngx_error_ptr(LOG_POLICY_STREAM_NGINX_ERR_NOTICE, nginx_data->ngx_log_ptr, 0, "%s", (const char *)buffer);
+	nginx_data->ngx_error_ptr(LOG_POLICY_STREAM_NGINX_ERR_NOTICE, nginx_data->ngx_log_ptr, 0, (const char *)buffer);
 
 	return 0;
 }
