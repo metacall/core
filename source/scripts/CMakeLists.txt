@@ -4,10 +4,10 @@ if(NOT OPTION_BUILD_SCRIPTS)
 endif()
 
 # Export output directory
-set(METACALL_LOADER_SCRIPT_PATH "${CMAKE_BINARY_DIR}/scripts")
+set(LOADER_SCRIPT_PATH "${CMAKE_BINARY_DIR}/scripts/")
 
 # Create output directory
-file(MAKE_DIRECTORY ${METACALL_LOADER_SCRIPT_PATH})
+file(MAKE_DIRECTORY ${LOADER_SCRIPT_PATH})
 
 # Plugins options
 option(OPTION_BUILD_SCRIPTS_C "Build C scripts." ON)
