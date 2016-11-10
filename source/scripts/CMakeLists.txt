@@ -1,12 +1,26 @@
-
 # Check if scripts are enabled
 if(NOT OPTION_BUILD_SCRIPTS)
     return()
 endif()
 
+# Export output directory
+set(METACALL_LOADER_SCRIPT_PATH "${CMAKE_BINARY_DIR}/scripts")
+
+# Create output directory
+file(MAKE_DIRECTORY ${METACALL_LOADER_SCRIPT_PATH})
+
+# Plugins options
+option(OPTION_BUILD_SCRIPTS_C "Build C scripts." ON)
+option(OPTION_BUILD_SCRIPTS_CS "Build C# scripts." ON)
+option(OPTION_BUILD_SCRIPTS_JS "Build Java scripts." ON)
+option(OPTION_BUILD_SCRIPTS_JS "Build JavaScript scripts." ON)
+option(OPTION_BUILD_SCRIPTS_PY "Build Python scripts." ON)
+option(OPTION_BUILD_SCRIPTS_RB "Build Ruby scripts." ON)
+
 # Script directory packages
 add_subdirectory(c)
+add_subdirectory(csharp)
+add_subdirectory(java)
 add_subdirectory(javascript)
 add_subdirectory(python)
 add_subdirectory(ruby)
-add_subdirectory(csharp)

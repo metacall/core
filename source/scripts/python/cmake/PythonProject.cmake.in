@@ -1,0 +1,37 @@
+#
+# Python project generator by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Generates a python project embedded into CMake
+#
+
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY)
+    return()
+endif()
+
+#
+# External dependencies
+#
+
+find_package(PythonInterp)
+
+# Target name
+set(target @PACKAGE_NAME@)
+
+# Exit here if required dependencies are not met
+message(STATUS "Script ${target}")
+
+# Custom python section
+if(PYTHONINTERP_FOUND)
+	# Set custom setup command
+	add_custom_command(OUTPUT  "@PACKAGE_OUTPUT@"
+					   COMMAND "${PYTHON_EXECUTABLE}" "@PACKAGE_SETUP_PY@" build
+					   COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
+					   DEPENDS "@PACKAGE_DEPS@")
+
+	# Deploy generated config file
+	install(CODE   "execute_process(COMMAND ${PYTHON_EXECUTABLE} @PACKAGE_SETUP_PY@ install)"
+		COMPONENT   runtime
+	)
+endif()

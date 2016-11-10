@@ -12,40 +12,32 @@ endif()
 set(PYTHONPROJECT_FOUND YES)
 
 #
-# External dependencies
+# Generic script project generator
 #
 
-find_package(PythonInterp)
-
-if(NOT PYTHONINTERP_FOUND)
-    message(STATUS "Python interpreter not found")
-    return()
-endif()
+include(ScriptProject)
 
 # Define current python project configuration path
-get_filename_component(py_project_config_path ${CMAKE_CURRENT_LIST_FILE} PATH)
+get_filename_component(PY_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 #
 # Python sub-project util function
 #
 
-function(py_project name version)
+function(py_project target version)
 
     # Configuration
-    set(PACKAGE_NAME         ${name})
+    set(PACKAGE_NAME         ${target})
     set(PACKAGE_VERSION      ${version})
-    set(PACKAGE_SETUP_PY_IN "${py_project_config_path}/PythonProject.py.in")
+    set(PACKAGE_SETUP_PY_IN "${PY_PROJECT_CONFIG_PATH}/PythonProject.py.in")
     set(PACKAGE_SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
     set(PACKAGE_DEPS        "${CMAKE_CURRENT_SOURCE_DIR}/depends/__init__.py")
     set(PACKAGE_OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
     # Create python setup file
-    configure_file(${PACKAGE_SETUP_PY_IN} ${PACKAGE_SETUP_PY})
+    configure_file(${PACKAGE_SETUP_PY_IN} ${PACKAGE_SETUP_PY} @ONLY)
 
     # Create project file
-    configure_file(${py_project_config_path}/PythonProject.cmake.in python-${name}-config.cmake)
-
-    # Include generated project file
-    include(${CMAKE_CURRENT_BINARY_DIR}/python-${name}-config.cmake)
+    script_project(${target} python ${PY_PROJECT_CONFIG_PATH}/PythonProject.cmake.in)
 
 endfunction()

@@ -1,3 +1,7 @@
+
+# Append cmake path
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 # Python project utility
 include(PythonProject)
 
@@ -5,5 +9,4 @@ include(PythonProject)
 # Sub-projects
 #
 
-set(IDE_FOLDER "Python")
 add_subdirectory(example)

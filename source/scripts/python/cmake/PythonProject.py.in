@@ -10,8 +10,8 @@
 import distutils.core
 
 distutils.core.setup(
-      name='@PACKAGE_NAME@',
-      version='@PACKAGE_VERSION@',
-      package_dir={ '' : '@CMAKE_CURRENT_SOURCE_DIR@' },
-      packages=['@PACKAGE_NAME@']
+	name='@PACKAGE_NAME@',
+	version='@PACKAGE_VERSION@',
+	package_dir={ '' : '@CMAKE_CURRENT_SOURCE_DIR@' },
+	packages=['@PACKAGE_NAME@']
 )

@@ -32,14 +32,12 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/environment.hpp
-	
 )
 
 set(sources
     ${source_path}/main.cpp
 	${source_path}/environment.cpp
     ${source_path}/cs_loader_test.cpp
-	
 )
 
 # Group source files
@@ -149,5 +147,5 @@ set_property(TEST ${target}
 )
 
 set_property(TEST ${target}
-    APPEND PROPERTY ENVIRONMENT "LOADER_SCRIPT_PATH=${PROJECT_BINARY_DIR}/"
+    APPEND PROPERTY ENVIRONMENT "LOADER_SCRIPT_PATH=${PROJECT_BINARY_DIR}/scripts/"
 )
