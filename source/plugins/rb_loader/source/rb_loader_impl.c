@@ -436,6 +436,25 @@ int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
+VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
+{
+	VALUE file_exists = rb_funcall(rb_cFile, rb_intern("exist?"), 1, module_absolute_path);
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "RBPATH: %s", RSTRING_PTR(module_absolute_path));
+
+	if (file_exists == Qtrue)
+	{
+		VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);
+
+		if (module_data != Qnil)
+		{
+			return module_data;
+		}
+	}
+
+	return Qnil;
+}
+
 VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
@@ -448,7 +467,14 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 
 	int index, size = FIX2INT(load_path_array_size);
 
+	VALUE module = rb_loader_impl_load_data_absolute(module_path);
+
 	(void)impl;
+
+	if (module != Qnil)
+	{
+		return module;
+	}
 
 	for (index = 0; index < size; ++index)
 	{
@@ -458,16 +484,11 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 
 		VALUE module_absolute_path = rb_str_append(load_path, module_path);
 
-		VALUE file_exists = rb_funcall(rb_cFile, rb_intern("exist?"), 1, module_absolute_path);
+		module = rb_loader_impl_load_data_absolute(module_absolute_path);
 
-		if (file_exists == Qtrue)
+		if (module != Qnil)
 		{
-			VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);
-
-			if (module_data != Qnil)
-			{
-				return module_data;
-			}
+			return module;
 		}
 	}
 

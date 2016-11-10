@@ -1,6 +1,5 @@
 #!/usr/bin/ruby
 
-
 #def say_hello(value = '')
 def say_hello(value: String)
 	result = 'Hello ' + value + '!'

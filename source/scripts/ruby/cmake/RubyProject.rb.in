@@ -1,0 +1,17 @@
+#!/usr/bin/ruby
+
+#
+# Ruby project generator by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Generates a ruby project embedded into CMake
+#
+
+# TODO
+
+ruby '@RUBY_VERSION@'
+
+#gem name '@PACKAGE_NAME@'
+#gem version '@PACKAGE_VERSION@'
+#gem package dir '@CMAKE_CURRENT_SOURCE_DIR@' 
+#gem package '@PACKAGE_NAME@'
