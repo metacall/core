@@ -1,0 +1,42 @@
+#
+# CSharp project generator by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Generates a csharp project embedded into CMake
+#
+
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_CS)
+    return()
+endif()
+
+#
+# External dependencies
+#
+
+# TODO
+
+find_package(CoreCLR)
+
+# Target name
+set(target @PACKAGE_NAME@)
+
+# Exit here if required dependencies are not met
+message(STATUS "Script ${target}")
+
+# Custom csharp section
+if(CORECLR_FOUND)
+
+	# TODO
+
+	# Set custom setup command
+	#add_custom_command(OUTPUT  "@PACKAGE_OUTPUT@"
+	#				   COMMAND "${CSHARP_EXECUTABLE}" "@PACKAGE_SETUP_CS@" build
+	#				   COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
+	#				   DEPENDS "@PACKAGE_DEPS@")
+	#
+	# Deploy generated config file
+	#install(CODE   "execute_process(COMMAND ${CSHARP_EXECUTABLE} @PACKAGE_SETUP_CS@ install)"
+	#	COMPONENT   runtime
+	#)
+endif()

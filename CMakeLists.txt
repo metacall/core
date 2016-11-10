@@ -64,7 +64,7 @@ option(OPTION_BUILD_TESTS    "Build tests."                                     
 option(OPTION_BUILD_DOCS     "Build documentation."                                   OFF)
 option(OPTION_BUILD_EXAMPLES "Build examples."                                        ON)
 option(OPTION_BUILD_PLUGINS  "Build plugins."                                         ON)
-option(OPTION_BUILD_SCRIPTS  "Build scripts."                                         OFF)
+option(OPTION_BUILD_SCRIPTS  "Build scripts."                                         ON)
 option(OPTION_BUILD_PORTS    "Build ports."                                           ON)
 
 #

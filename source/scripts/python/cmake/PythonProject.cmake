@@ -38,6 +38,6 @@ function(py_project target version)
     configure_file(${PACKAGE_SETUP_PY_IN} ${PACKAGE_SETUP_PY} @ONLY)
 
     # Create project file
-    script_project(${target} python ${PY_PROJECT_CONFIG_PATH}/PythonProject.cmake.in)
+    script_project(${target} Python ${PY_PROJECT_CONFIG_PATH}/PythonProject.cmake.in)
 
 endfunction()

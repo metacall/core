@@ -1,0 +1,42 @@
+#
+# JavaScript project generator by Parra Studios
+# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Generates a javascript project embedded into CMake
+#
+
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_JS)
+    return()
+endif()
+
+#
+# External dependencies
+#
+
+# TODO
+
+#find_package(JavaScript)
+
+# Target name
+set(target @PACKAGE_NAME@)
+
+# Exit here if required dependencies are not met
+message(STATUS "Script ${target}")
+
+# Custom javascript section
+if(JAVASCRIPT_FOUND)
+
+	# TODO
+
+	# Set custom setup command
+	#add_custom_command(OUTPUT  "@PACKAGE_OUTPUT@"
+	#				   COMMAND "${JAVASCRIPT_EXECUTABLE}" "@PACKAGE_SETUP_JS@" build
+	#				   COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
+	#				   DEPENDS "@PACKAGE_DEPS@")
+	#
+	# Deploy generated config file
+	#install(CODE   "execute_process(COMMAND ${JAVASCRIPT_EXECUTABLE} @PACKAGE_SETUP_JS@ install)"
+	#	COMPONENT   runtime
+	#)
+endif()

@@ -40,6 +40,6 @@ function(rb_project target version)
     #configure_file(${PACKAGE_SETUP_RB_IN} ${PACKAGE_SETUP_RB} @ONLY)
 
     # Create project file
-    script_project(${target} ruby ${RB_PROJECT_CONFIG_PATH}/RubyProject.cmake.in)
+    script_project(${target} Ruby ${RB_PROJECT_CONFIG_PATH}/RubyProject.cmake.in)
 
 endfunction()
