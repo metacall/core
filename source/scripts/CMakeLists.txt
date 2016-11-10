@@ -3,8 +3,9 @@ if(NOT OPTION_BUILD_SCRIPTS)
     return()
 endif()
 
-# Export output directory
-set(LOADER_SCRIPT_PATH "${CMAKE_BINARY_DIR}/scripts/")
+if(NOT LOADER_SCRIPT_PATH)
+    return()
+endif()
 
 # Create output directory
 file(MAKE_DIRECTORY ${LOADER_SCRIPT_PATH})

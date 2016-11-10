@@ -9,6 +9,12 @@ configure_file(version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_N
 # Generate plugin-header
 configure_file(plugins/plugins.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-plugins.h)
 
+# Export output script directory
+set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/")
+
+# Export output plugin directory
+set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/")
+
 #
 # Sub-projects
 #
