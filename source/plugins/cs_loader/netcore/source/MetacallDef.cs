@@ -11,13 +11,14 @@ namespace CSLoader
     {
         public enum type_primitive_id : int
         {
-            TYPE_BOOL = -1,
-            TYPE_CHAR = -2,
-            TYPE_INT = -3,
-            TYPE_LONG = -4,
-            TYPE_DOUBLE = -5,
-            TYPE_STRING = -6,
-            TYPE_PTR = -7
+            TYPE_BOOL = 0,
+            TYPE_CHAR = 1,
+			TYPE_SHORT = 2,
+            TYPE_INT = 3,
+            TYPE_LONG = 4,
+            TYPE_DOUBLE = 5,
+            TYPE_STRING = 6,
+            TYPE_PTR = 7
         };
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, CharSet = CharSet.Ansi)]
@@ -57,6 +58,7 @@ namespace CSLoader
         private static Dictionary<Type, type_primitive_id> typeToPrimitive = new Dictionary<Type, type_primitive_id>()
         {
             [typeof(byte)] = type_primitive_id.TYPE_CHAR,
+			[typeof(short)] = type_primitive_id.TYPE_SHORT,
             [typeof(int)] = type_primitive_id.TYPE_INT,
             [typeof(bool)] = type_primitive_id.TYPE_BOOL,
             [typeof(long)] = type_primitive_id.TYPE_LONG,
