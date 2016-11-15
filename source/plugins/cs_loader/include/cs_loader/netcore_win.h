@@ -31,6 +31,10 @@ private:
 
 	bool load_main();
 
+	bool create_domain();
+
+	bool load_default_domain();
+
 public:
 	netcore_win();
 	~netcore_win();

@@ -19,7 +19,7 @@ netcore_win::netcore_win()
 	this->log->disable();
 	this->domain_id = 0;
 
-	*this->log << W("Failed to unload the AppDomain. ERRORCODE: ") << logger::endl;
+	*this->log << W("ctr netcore") << logger::endl;
 }
 
 
@@ -130,12 +130,15 @@ bool netcore_win::config_assembly_name() {
 
 bool netcore_win::create_host() {
 	this->host = this->core_environment->get_clr_runtime_host();
+
 	if (!host) {
 		*this->log << "fail GetCLRRuntimeHost";
 		return false;
 	}
 
 	HRESULT hr;
+
+	bool set_startup_flags_fail = false;
 
 	*this->log << W("Setting ICLRRuntimeHost2 startup flags") << logger::endl;
 
@@ -144,18 +147,32 @@ bool netcore_win::create_host() {
 		(STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
 			STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
 			STARTUP_FLAGS::STARTUP_CONCURRENT_GC));
+
 	if (FAILED(hr)) {
 		*this->log << W("Failed to set startup flags. ERRORCODE: ") << hr << logger::endl;
-		return false;
+		set_startup_flags_fail = true;
 	}
 
 	*this->log << W("Starting ICLRRuntimeHost2") << logger::endl;
-	
+
 	hr = host->Start();
+
 	if (FAILED(hr)) {
 		*this->log << W("Failed to start CoreCLR. ERRORCODE: ") << hr << logger::endl;
 		return false;
 	}
+
+	if (set_startup_flags_fail == true) {
+		return this->load_default_domain();
+	}
+	else
+	{
+		return this->create_domain();
+	}
+}
+
+bool netcore_win::create_domain() {
+	HRESULT hr;
 
 	//-------------------------------------------------------------
 
@@ -222,20 +239,20 @@ bool netcore_win::create_host() {
 	mbstowcs(host_exe_name_w, this->core_environment->get_host_exe_name(), strlen(this->core_environment->get_host_exe_name()));
 	hr = host->CreateAppDomainWithManager(
 		host_exe_name_w,   // The friendly name of the AppDomain
-											 // Flags:
-											 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
-											 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
-											 //   assemblies marked as platform specific, include this flag
-											 //
-											 // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
-											 // - Allows sandboxed applications to make P/Invoke calls and use COM interop
-											 //
-											 // APPDOMAIN_SECURITY_SANDBOXED
-											 // - Enables sandboxing. If not set, the app is considered full trust
-											 //
-											 // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
-											 // - Prevents the application from being torn down if a managed exception is unhandled
-											 //
+						   // Flags:
+						   // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
+						   // - By default CoreCLR only allows platform neutral assembly to be run. To allow
+						   //   assemblies marked as platform specific, include this flag
+						   //
+						   // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
+						   // - Allows sandboxed applications to make P/Invoke calls and use COM interop
+						   //
+						   // APPDOMAIN_SECURITY_SANDBOXED
+						   // - Enables sandboxing. If not set, the app is considered full trust
+						   //
+						   // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
+						   // - Prevents the application from being torn down if a managed exception is unhandled
+						   //
 		APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
 		APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
 		APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
@@ -250,8 +267,22 @@ bool netcore_win::create_host() {
 		*this->log << W("Failed call to CreateAppDomainWithManager. ERRORCODE: ") << hr << logger::endl;
 		return false;
 	}
+
 	return true;
 }
+
+bool netcore_win::load_default_domain() {
+	HRESULT hr;
+	hr = host->GetCurrentAppDomainId(&this->domain_id);
+
+	if (FAILED(hr)) {
+		*this->log << W("GetCurrentAppDomainId. ERRORCODE: ") << hr << logger::endl;
+		return false;
+	}
+
+	return true;
+}
+
 bool netcore_win::load_main() {
 	HRESULT hr;
 	DWORD exitCode = 0;
