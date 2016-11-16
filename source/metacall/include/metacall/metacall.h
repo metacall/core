@@ -56,7 +56,25 @@ METACALL_API size_t metacall_args_size(void);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load(const char * path);
+METACALL_API int metacall_load_from_file(const char * path);
+
+/**
+*  @brief
+*    Loads a script from memory
+*
+*  @param[in] name
+*    Name of the script with extension
+*
+*  @param[in] buffer
+*    Memory block representing the string of the script
+*
+*  @param[in] size
+*    Memory block representing the string of the script
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_load_from_memory(const char * name, const char * buffer, size_t size);
 
 /**
 *  @brief

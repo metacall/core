@@ -17,7 +17,8 @@ loader_impl_interface py_loader_impl_interface_singleton(void)
 	{
 		&py_loader_impl_initialize,
 		&py_loader_impl_execution_path,
-		&py_loader_impl_load,
+		&py_loader_impl_load_from_file,
+		&py_loader_impl_load_from_memory,
 		&py_loader_impl_clear,
 		&py_loader_impl_discover,
 		&py_loader_impl_destroy

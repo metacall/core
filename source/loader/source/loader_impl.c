@@ -64,7 +64,7 @@ static void loader_impl_dynlink_destroy(loader_impl impl);
 
 static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension);
 
-static loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_name name);
+static loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name);
 
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 
@@ -252,7 +252,7 @@ int loader_impl_type_define(loader_impl impl, const char * name, type t)
 	return 1;
 }
 
-static loader_handle_impl loader_impl_load_handle(loader_handle module, loader_naming_name name)
+static loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
@@ -300,7 +300,7 @@ int loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 	return 1;
 }
 
-int loader_impl_load(loader_impl impl, const loader_naming_path path)
+int loader_impl_load_from_file(loader_impl impl, const loader_naming_path path)
 {
 	if (impl != NULL)
 	{
@@ -312,7 +312,7 @@ int loader_impl_load(loader_impl impl, const loader_naming_path path)
 
 		if (interface_impl != NULL && loader_path_get_name(path, module_name) > 1)
 		{
-			loader_handle handle = interface_impl->load(impl, path, module_name);
+			loader_handle handle = interface_impl->load_from_file(impl, path, module_name);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 
@@ -346,6 +346,52 @@ int loader_impl_load(loader_impl impl, const loader_naming_path path)
 
 	return 1;
 }
+
+int loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+{
+	if (impl != NULL && buffer != NULL && size > 0)
+	{
+		loader_impl_interface interface_impl = loader_impl_symbol(impl);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loading from memory %.10s...", buffer);
+
+		if (interface_impl != NULL)
+		{
+			loader_handle handle = interface_impl->load_from_memory(impl, name, buffer, size);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
+
+			if (handle != NULL)
+			{
+				loader_handle_impl handle_impl = loader_impl_load_handle(handle, name);
+
+				if (handle_impl != NULL)
+				{
+					if (hash_map_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					{
+						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
+						{
+							if (context_append(impl->ctx, handle_impl->ctx) == 0)
+							{
+								return 0;
+							}
+						}
+					}
+
+					loader_impl_destroy_handle(handle_impl);
+				}
+
+				if (interface_impl->clear(impl, handle) != 0)
+				{
+					return 1;
+				}
+			}
+		}
+	}
+
+	return 1;
+}
+
 
 static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {

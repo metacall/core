@@ -161,7 +161,27 @@ static loader_impl loader_get_impl(loader_naming_extension extension)
 	return impl;
 }
 
-int loader_load(const loader_naming_path path)
+int loader_load_path(const loader_naming_path path)
+{
+	loader l = loader_singleton();
+
+#ifdef LOADER_LAZY
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+
+	loader_initialize();
+#endif
+
+	if (l->impl_map != NULL)
+	{
+		(void)path;
+
+		/* ... */
+	}
+
+	return 1;
+}
+
+int loader_load_from_file(const loader_naming_path path)
 {
 	loader l = loader_singleton();
 
@@ -191,11 +211,11 @@ int loader_load(const loader_naming_path path)
 
 					strncat(absolute_path, path, LOADER_NAMING_PATH_SIZE);
 
-					return loader_impl_load(impl, absolute_path);
+					return loader_impl_load_from_file(impl, absolute_path);
 				}
 				else
 				{
-					return loader_impl_load(impl, path);
+					return loader_impl_load_from_file(impl, path);
 				}
 			}
 		}
@@ -204,7 +224,7 @@ int loader_load(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_path(const loader_naming_path path)
+int loader_load_from_memory(const loader_naming_name name, const char * buffer, size_t size)
 {
 	loader l = loader_singleton();
 
@@ -216,9 +236,19 @@ int loader_load_path(const loader_naming_path path)
 
 	if (l->impl_map != NULL)
 	{
-		(void)path;
+		loader_naming_extension extension;
 
-		/* ... */
+		if (loader_path_get_extension(name, extension) > 1)
+		{
+			loader_impl impl = loader_get_impl(extension);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
+
+			if (impl != NULL)
+			{
+				return loader_impl_load_from_memory(impl, name, buffer, size);
+			}
+		}
 	}
 
 	return 1;

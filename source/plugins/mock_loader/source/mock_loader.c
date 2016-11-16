@@ -11,13 +11,14 @@
 #include <mock_loader/mock_loader.h>
 #include <mock_loader/mock_loader_impl.h>
 
-loader_impl_interface mock_loader_impl_interface_singleton(void)
+loader_impl_interface mock_loader_impl_interface_singleton()
 {
 	static struct loader_impl_interface_type loader_impl_interface_mock =
 	{
 		&mock_loader_impl_initialize,
 		&mock_loader_impl_execution_path,
-		&mock_loader_impl_load,
+		&mock_loader_impl_load_from_file,
+		&mock_loader_impl_load_from_memory,
 		&mock_loader_impl_clear,
 		&mock_loader_impl_discover,
 		&mock_loader_impl_destroy

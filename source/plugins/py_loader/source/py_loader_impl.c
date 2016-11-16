@@ -53,7 +53,7 @@ void type_py_interface_destroy(type t, type_impl impl)
 	Py_DECREF(builtin);
 }
 
-type_interface type_py_singleton()
+type_interface type_py_singleton(void)
 {
 	static struct type_interface_type py_type_interface =
 	{
@@ -282,7 +282,7 @@ void function_py_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_py_singleton()
+function_interface function_py_singleton(void)
 {
 	static struct function_interface_type py_function_interface =
 	{
@@ -460,7 +460,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-loader_handle py_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
 
@@ -471,6 +471,28 @@ loader_handle py_loader_impl_load(loader_impl impl, const loader_naming_path pat
 	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from (%s) module at (%p)", (void *)impl, path, name, (void *)module);
 
 	return (loader_handle)module;
+}
+
+loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+{
+	PyObject * compiled = Py_CompileString(buffer, name, Py_file_input);
+
+	if (compiled != NULL)
+	{
+		PyObject * module = PyImport_ExecCodeModule(name, compiled);
+
+		(void)size;
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from memory module at (%p)", (void *)impl, name, (void *)module);
+
+		return (loader_handle)module;
+	}
+	else
+	{
+		PyErr_Print();
+	}
+
+	return NULL;
 }
 
 int py_loader_impl_clear(loader_impl impl, loader_handle handle)
