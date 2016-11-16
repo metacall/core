@@ -365,7 +365,7 @@ int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
 	return 1;
 }
 
-hash_map_value hash_map_get(hash_map map, hash_map_key key)
+hash_map_value hash_map_get(hash_map map, const hash_map_key key)
 {
 	if (map != NULL && key != NULL)
 	{

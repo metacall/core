@@ -27,7 +27,7 @@ LOADER_API int loader_load_path(const loader_naming_path path);
 
 LOADER_API int loader_load_from_file(const loader_naming_path path);
 
-LOADER_API int loader_load_from_memory(const loader_naming_name name, const char * buffer, size_t size);
+LOADER_API int loader_load_from_memory(const loader_naming_extension extension, const char * buffer, size_t size);
 
 LOADER_API loader_data loader_get(const char * name);
 

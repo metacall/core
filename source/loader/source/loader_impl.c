@@ -236,7 +236,7 @@ type loader_impl_type(loader_impl impl, const char * name)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
-		return (type)hash_map_get(impl->type_info_map, (hash_map_key)name);
+		return (type)hash_map_get(impl->type_info_map, (const hash_map_key)name);
 	}
 
 	return NULL;
@@ -246,7 +246,7 @@ int loader_impl_type_define(loader_impl impl, const char * name, type t)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
-		return hash_map_insert(impl->type_info_map, (hash_map_key)name, (hash_map_value)t);
+		return hash_map_insert(impl->type_info_map, (const hash_map_key)name, (hash_map_value)t);
 	}
 
 	return 1;
@@ -347,7 +347,57 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path path)
 	return 1;
 }
 
-int loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name, const char * buffer, size_t size)
+{
+	/* TODO: Improve name with time */
+	static const char format[] = "%p-%p-%u";
+
+	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+
+		size_t length = _snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
+
+	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+
+		size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
+
+	#else
+
+		size_t length = sprintf(NULL, format, (const void *)impl, (const void *)buffer, size);
+
+	#endif
+
+	if (length < LOADER_NAMING_NAME_SIZE)
+	{
+		#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+
+			size_t written = _snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+
+		#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+			defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+			defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+
+			size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+
+		#else
+
+			size_t written = sprintf(name, format, (const void *)impl, (const void *)buffer, size);
+
+		#endif
+
+		if (written == length)
+		{
+			name[length] = '\0';
+
+			return 0;
+		}
+	}
+	
+	return 1;
+}
+
+int loader_impl_load_from_memory(loader_impl impl, const loader_naming_extension extension, const char * buffer, size_t size)
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
@@ -357,7 +407,16 @@ int loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name
 
 		if (interface_impl != NULL)
 		{
-			loader_handle handle = interface_impl->load_from_memory(impl, name, buffer, size);
+			loader_naming_name name;
+
+			loader_handle handle = NULL;
+
+			if (loader_impl_load_from_memory_name(impl, name, buffer, size) != 0)
+			{
+				return 1;
+			}
+
+			handle = interface_impl->load_from_memory(impl, name, extension, buffer, size);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 

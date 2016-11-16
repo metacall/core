@@ -460,7 +460,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
 
@@ -473,17 +473,17 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return (loader_handle)module;
 }
 
-loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
 {
 	PyObject * compiled = Py_CompileString(buffer, name, Py_file_input);
+
+	(void)size;
 
 	if (compiled != NULL)
 	{
 		PyObject * module = PyImport_ExecCodeModule(name, compiled);
 
-		(void)size;
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from memory module at (%p)", (void *)impl, name, (void *)module);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s.%s from memory module at (%p)", (void *)impl, name, extension, (void *)module);
 
 		return (loader_handle)module;
 	}

@@ -61,9 +61,9 @@ struct loader_get_iterator_args_type
 
 static loader loader_singleton(void);
 
-static loader_impl loader_create_impl(loader_naming_extension extension);
+static loader_impl loader_create_impl(const loader_naming_extension extension);
 
-static loader_impl loader_get_impl(loader_naming_extension extension);
+static loader_impl loader_get_impl(const loader_naming_extension extension);
 
 static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
@@ -109,11 +109,11 @@ void loader_initialize()
 	}
 }
 
-static loader_impl loader_create_impl(loader_naming_extension extension)
+static loader_impl loader_create_impl(const loader_naming_extension extension)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = loader_impl_create(l->library_path, extension);
+	loader_impl impl = loader_impl_create(l->library_path, (const hash_map_key)extension);
 
 	if (impl != NULL)
 	{
@@ -145,11 +145,11 @@ static loader_impl loader_create_impl(loader_naming_extension extension)
 	return NULL;
 }
 
-static loader_impl loader_get_impl(loader_naming_extension extension)
+static loader_impl loader_get_impl(const loader_naming_extension extension)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = (loader_impl)hash_map_get(l->impl_map, extension);
+	loader_impl impl = (loader_impl)hash_map_get(l->impl_map, (const hash_map_key)extension);
 
 	if (impl == NULL)
 	{
@@ -224,7 +224,7 @@ int loader_load_from_file(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_from_memory(const loader_naming_name name, const char * buffer, size_t size)
+int loader_load_from_memory(const loader_naming_extension extension, const char * buffer, size_t size)
 {
 	loader l = loader_singleton();
 
@@ -236,18 +236,13 @@ int loader_load_from_memory(const loader_naming_name name, const char * buffer, 
 
 	if (l->impl_map != NULL)
 	{
-		loader_naming_extension extension;
+		loader_impl impl = loader_get_impl(extension);
 
-		if (loader_path_get_extension(name, extension) > 1)
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
+
+		if (impl != NULL)
 		{
-			loader_impl impl = loader_get_impl(extension);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
-
-			if (impl != NULL)
-			{
-				return loader_impl_load_from_memory(impl, name, buffer, size);
-			}
+			return loader_impl_load_from_memory(impl, extension, buffer, size);
 		}
 	}
 

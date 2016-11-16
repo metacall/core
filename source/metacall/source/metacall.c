@@ -84,9 +84,9 @@ int metacall_load_from_file(const char * path)
 	return loader_load_from_file(path);
 }
 
-int metacall_load_from_memory(const char * name, const char * buffer, size_t size)
+int metacall_load_from_memory(const char * extension, const char * buffer, size_t size)
 {
-	return loader_load_from_memory(name, buffer, size);
+	return loader_load_from_memory(extension, buffer, size);
 }
 
 value metacallv(const char * name, void * args[])

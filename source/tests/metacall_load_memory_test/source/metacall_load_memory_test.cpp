@@ -40,13 +40,13 @@ TEST_F(metacall_test, DefaultConstructor)
 			"\tprint(left, ' * ', right, ' = ', result);\n"
 			"\treturn result;";
 
-		static const char name[] = "memory.py";
+		static const char extension[] = "py";
 
 		const long seven_multiples_limit = 10;
 
 		long iterator;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_memory(name, buffer, sizeof(buffer)));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer)));
 
 		value ret = NULL;
 
