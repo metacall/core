@@ -177,7 +177,7 @@ application::parameter_iterator::~parameter_iterator()
 
 bool application::load(const std::string & script)
 {
-	if (metacall_load(script.c_str()) == 0)
+	if (metacall_load_from_file(script.c_str()) == 0)
 	{
 		scripts.push_back(script);
 

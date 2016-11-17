@@ -72,6 +72,60 @@ TEST_F(metacall_test, DefaultConstructor)
 		}
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
-	
+
+	/* Ruby */
+	#if defined(OPTION_BUILD_PLUGINS_RB)
+	{
+		static const char buffer[] =
+			"#!/usr/bin/ruby\n"
+			"#def mem_multiply(left = 0, right = 0)\n"
+			"def mem_multiply(left: Fixnum, right: Fixnum)\n"
+			"	result = left * right\n"
+			"	puts('Multiply', result, '!')\n"
+			"	return result\n"
+			"end";
+
+		static const char extension[] = "rb";
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer)));
+
+		value ret = NULL;
+
+		ret = metacall("mem_multiply", 5, 5);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) value_to_int(ret), (int) 25);
+
+		value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_PLUGINS_RB */
+
+	/* JavaScript V8 */
+	#if defined(OPTION_BUILD_PLUGINS_JS)
+	{
+		static const char buffer[] =
+			"#!/bin/sh\n"
+			/*"':' //; exec \"$(command -v nodejs || command -v node)\" \"$0\" \"$@\"\n"*/
+			"function mem_divide(a :: Number, b :: Number) :: Number {\n"
+			"	return (a / b);\n"
+			"}\n";
+
+		static const char extension[] = "js";
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer)));
+
+		value ret = NULL;
+
+		ret = metacall("mem_divide", 10.0, 5.0);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((double) value_to_double(ret), (double) 2.0);
+
+		value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_PLUGINS_JS */
+
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

@@ -37,6 +37,8 @@ using namespace v8;
 
 MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, const loader_naming_path path, std::map<std::string, js_function *> & functions);
 
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, const char * buffer, size_t size, std::map<std::string, js_function *> & functions);
+
 void js_loader_impl_obj_to_string(Handle<Value> object, std::string & str);
 
 function_interface function_js_singleton();
@@ -131,6 +133,25 @@ typedef class loader_impl_js_handle_type
 				ctx_impl(Context::New(js_impl->isolate)), ctx_scope(ctx_impl)
 		{
 			Local<String> source = js_loader_impl_read_script(js_impl->isolate, path, functions).ToLocalChecked();
+
+			script = Script::Compile(ctx_impl, source).ToLocalChecked();
+
+			Local<Value> result = script->Run(ctx_impl).ToLocalChecked();
+
+			String::Utf8Value utf8(result);
+
+			/*
+			std::cout << "Result: " << *utf8 << std::endl;
+			*/
+		}
+
+		loader_impl_js_handle_type(loader_impl impl, loader_impl_js js_impl,
+			const char * buffer, size_t size) :
+				impl(impl),
+				handle_scope(js_impl->isolate),
+				ctx_impl(Context::New(js_impl->isolate)), ctx_scope(ctx_impl)
+		{
+			Local<String> source = js_loader_impl_read_script(js_impl->isolate, buffer, size, functions).ToLocalChecked();
 
 			script = Script::Compile(ctx_impl, source).ToLocalChecked();
 
@@ -498,6 +519,33 @@ MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, const loader_na
 	return result;
 }
 
+MaybeLocal<String> js_loader_impl_read_script(Isolate * isolate, const char * buffer, size_t size, std::map<std::string, js_function *> & functions)
+{
+	MaybeLocal<String> result;
+
+	std::string source(buffer, size - 1);
+
+	if (!source.empty())
+	{
+		std::string output;
+
+		// shebang
+		if (source[0] == '#' && source[1] == '!')
+		{
+			source[0] = '/';
+			source[1] = '/';
+		}
+
+		if (js_loader_impl_guard_parse(source, functions, output) == true)
+		{
+			result = String::NewFromUtf8(isolate, output.c_str(),
+				NewStringType::kNormal, output.length());
+		}
+	}
+
+	return result;
+}
+
 void js_loader_impl_obj_to_string(Handle<Value> object, std::string & str)
 {
 	String::Utf8Value utf8_value(object);
@@ -615,7 +663,7 @@ int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle js_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
@@ -624,6 +672,26 @@ loader_handle js_loader_impl_load(loader_impl impl, const loader_naming_path pat
 	if (js_impl != nullptr)
 	{
 		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, path/*, name*/);
+
+		if (js_handle != nullptr)
+		{
+			return js_handle;
+		}
+	}
+
+	return NULL;
+}
+
+loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+{
+	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
+
+	(void)name;
+	(void)extension;
+
+	if (js_impl != nullptr)
+	{
+		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, buffer, size);
 
 		if (js_handle != nullptr)
 		{

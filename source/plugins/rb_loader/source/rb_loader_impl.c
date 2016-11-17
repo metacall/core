@@ -495,7 +495,7 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
-loader_handle rb_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -526,6 +526,56 @@ loader_handle rb_loader_impl_load(loader_impl impl, const loader_naming_path pat
 					rb_include_module(handle->instance, handle->module);
 
 					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path);
+
+					return (loader_handle)handle;
+				}
+			}
+			else
+			{
+				VALUE exception = rb_errinfo();
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader error (%s)", RSTRING_PTR(exception));
+			}
+		}
+	}
+
+	return NULL;
+}
+
+loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+{
+	VALUE name_value = rb_str_new_cstr(name);
+
+	VALUE name_capitalized = rb_funcall(name_value, rb_intern("capitalize"), 0);
+
+	VALUE module = rb_define_module(RSTRING_PTR(name_capitalized));
+
+	(void)impl;
+	(void)size;
+
+	if (module != Qnil)
+	{
+		VALUE module_data = rb_str_new_cstr(buffer);
+
+		if (module_data != Qnil)
+		{
+			VALUE result = rb_funcall(module, rb_intern("module_eval"), 1, module_data);
+
+			if (result != Qnil)
+			{
+				loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
+
+				if (handle != NULL)
+				{
+					handle->module = module;
+
+					handle->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
+
+					rb_extend_object(handle->instance, handle->module);
+
+					rb_include_module(handle->instance, handle->module);
+
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s.%s loaded", name, extension);
 
 					return (loader_handle)handle;
 				}
