@@ -23,11 +23,17 @@
 
 #define METACALL_ARGS_SIZE 0x10
 
+/* -- Global Variables -- */
+
+void * metacall_null_args[1];
+
 /* -- Methods -- */
 
 int metacall_initialize()
 {
 	size_t iterator;
+
+	metacall_null_args[0] = NULL;
 
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =

@@ -26,6 +26,10 @@ extern "C" {
 
 typedef void * value;
 
+/* -- Global Variables -- */
+
+extern void * metacall_null_args[1];
+
 /* -- Methods -- */
 
 /**
