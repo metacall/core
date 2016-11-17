@@ -22,6 +22,7 @@ set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/")
 # Libraries
 set(IDE_FOLDER "")
 add_subdirectory(preprocessor)
+add_subdirectory(format)
 add_subdirectory(log)
 add_subdirectory(adt)
 add_subdirectory(filesystem)

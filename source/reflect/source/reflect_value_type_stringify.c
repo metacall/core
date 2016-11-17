@@ -10,34 +10,7 @@
 
 #include <reflect/reflect_value_type.h>
 
-#include <stdio.h>
-
-/* -- Macros -- */
-
-/* TODO: Provide an asbtraction for print */
-
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
-
-#	define value_stringify_snprintf(dest, size, format, length, value) \
-		length = _snprintf(dest, size, format, value)
-
-#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
-	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
-	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-
-#	define value_stringify_snprintf(dest, size, format, length, value) \
-		length = snprintf(dest, size, format, value)
-
-#else
-#	define value_stringify_snprintf(dest, size, format, length, value) \
-		do \
-		{ \ /* TODO: find out how to avoid stack smashing */
-			(void)size; \
-			\
-			length = sprintf(dest, format, value); \
-		} while (0)
-
-#endif
+#include <format/format_print.h>
 
 /* -- Type Definitions -- */
 
@@ -138,42 +111,42 @@ static void value_stringify_bool(value v, char * dest, size_t size, const char *
 		offset = 0;
 	}
 
-	value_stringify_snprintf(dest, size, format, *length, (const char *)(&value_boolean_str[offset]));
+	*length = snprintf(dest, size, format, (const char *)(&value_boolean_str[offset]));
 }
 
 static void value_stringify_char(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_char(v));
+	*length = snprintf(dest, size, format, value_to_char(v));
 }
 
 static void value_stringify_short(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_short(v));
+	*length = snprintf(dest, size, format, value_to_short(v));
 }
 
 static void value_stringify_int(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_int(v));
+	*length = snprintf(dest, size, format, value_to_int(v));
 }
 
 static void value_stringify_long(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_long(v));
+	*length = snprintf(dest, size, format, value_to_long(v));
 }
 
 static void value_stringify_double(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_double(v));
+	*length = snprintf(dest, size, format, value_to_double(v));
 }
 
 static void value_stringify_string(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_string(v));
+	*length = snprintf(dest, size, format, value_to_string(v));
 }
 
 static void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	value_stringify_snprintf(dest, size, format, *length, value_to_ptr(v));
+	*length = snprintf(dest, size, format, value_to_ptr(v));
 }
 
 void value_stringify(value v, char * dest, size_t size, size_t * length)

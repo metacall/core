@@ -22,6 +22,8 @@
 #include <log/log_policy_stream.h>
 #include <log/log_preprocessor.h>
 
+#include <format/format_specifier.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

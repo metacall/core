@@ -9,13 +9,10 @@
 #
 
 # Target name
-set(target dynlink)
+set(target format)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
-
-# Include dynamic loading libraries
-include(DynamicLoading)
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
@@ -42,35 +39,14 @@ include(SecurityFlags)
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
-set(generated_include_path "${CMAKE_CURRENT_BINARY_DIR}/include/${target}")
-set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
-
-# Configure cross-platform support implementation
-include(Portability)
-
-set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
-
-configure_file(${include_path}/dynlink_interface.h.in ${generated_include_path}/dynlink_interface.h)
-configure_file(${source_path}/dynlink_interface.c.in ${generated_source_path}/dynlink_interface.c)
-
 set(headers
-    ${include_path}/dynlink.h
-    ${include_path}/dynlink_flags.h
-    ${include_path}/dynlink_type.h
-    ${include_path}/dynlink_impl_name.h
-    ${include_path}/dynlink_impl_type.h
-    ${include_path}/dynlink_impl.h
-    ${include_path}/dynlink_impl_symbol_${DYNLINK_IMPL_INTERFACE_NAME}.h
-    ${include_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.h
-    ${generated_include_path}/dynlink_interface.h
+    ${include_path}/format.h
+    ${include_path}/format_specifier.h
 )
 
 set(sources
-    ${source_path}/dynlink.c
-    ${source_path}/dynlink_interface.c
-    ${source_path}/dynlink_impl.c
-    ${source_path}/dynlink_impl_${DYNLINK_IMPL_INTERFACE_NAME}.c
-    ${generated_source_path}/dynlink_interface.c
+    ${source_path}/format.c
+    ${source_path}/format_print.c
 )
 
 # Group source files
@@ -144,8 +120,6 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${DYNAMIC_LOADING_INCLUDE_DIR} # Native dynamic load library
-
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -161,11 +135,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::format
-    ${META_PROJECT_NAME}::log
-
-    ${DYNAMIC_LOADING_LIBRARY} # Native dynamic load library
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -243,4 +212,3 @@ install(EXPORT ${target}-export
     DESTINATION ${INSTALL_CMAKE}/${target}
     COMPONENT   dev
 )
-

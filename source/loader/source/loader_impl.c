@@ -350,7 +350,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path path)
 int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name, const char * buffer, size_t size)
 {
 	/* TODO: Improve name with time */
-	static const char format[] = "%p-%p-%u";
+	static const char format[] = "%p-%p-%" PRIuS;
 
 	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
 

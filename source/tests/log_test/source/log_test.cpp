@@ -173,7 +173,7 @@ TEST_F(log_test, DefaultConstructor)
 
 		for (iterator = 0; iterator < log_name_list_size; ++iterator)
 		{
-			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, LOG_LEVEL_INFO, "hello world from log (id : %u)", iterator));
+			EXPECT_EQ((int) 0, (int) log_write(log_name_list[iterator].name, LOG_LEVEL_INFO, "hello world from log (id : %" PRIuS ")", iterator));
 		}
 	}
 
