@@ -17,7 +17,7 @@ reflect_function * netcore::get_functions(int * count) {
 
 	for (size_t i = 0; i < this->functions_count; i++)
 	{
-		std::cout << "function name:" << this->functions[i].name << std::endl;
+		std::cout << "function name2:" << this->functions[i].name << std::endl;
 		std::cout << "function return type:" << this->functions[i].return_type << std::endl;
 		std::cout << "function param count:" << this->functions[i].param_count << std::endl;
 
@@ -68,6 +68,7 @@ bool netcore::load_source(char * source) {
 }
 
 bool netcore::execute(char * function) {
+	std::cout << "invoke name:" << function << std::endl;
 	return this->execute_c(function) ? true : false;
 }
 bool netcore::execute(wchar_t * function) {

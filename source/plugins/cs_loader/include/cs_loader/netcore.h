@@ -20,9 +20,9 @@ public:
 	execute_function_with_params_c * execute_with_params_c;
 	get_loaded_functions * core_get_functions;
 
-	const CHARSTRING *loader_dll = W("CSLoader.dll");
-	const CHARSTRING *class_name = W("CSLoader.Loader");
-	const CHARSTRING *assembly_name = W("CSLoader");
+	const CHARSTRING *loader_dll = W("MetacallNet.dll");
+	const CHARSTRING *class_name = W("MetacallNet.Loader");
+	const CHARSTRING *assembly_name = W("MetacallNet");
 	const CHARSTRING *delegate_load_w = W("LoadW");
 	const CHARSTRING *delegate_load_c = W("LoadC");
 	const CHARSTRING *delegate_execute_w = W("ExecuteW");

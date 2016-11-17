@@ -79,9 +79,11 @@ bool netcore_win::start() {
 	if (!this->create_host()) {
 		return false;
 	}
-	if (!this->load_main()) {
-		return false;
-	}
+	//
+	//if (!this->load_main()) {
+	//	return false;
+	//}
+
 	if (!this->create_delegates()) {
 		return false;
 	}
@@ -90,7 +92,7 @@ bool netcore_win::start() {
 }
 
 bool netcore_win::config_assembly_name() {
-
+	/*
 	char* filePart = NULL;
 	char loader_dll_char[255];
 	wcstombs(loader_dll_char, this->loader_dll, 255);
@@ -112,17 +114,18 @@ bool netcore_win::config_assembly_name() {
 	// Construct native search directory paths
 
 	strcpy(nativeDllSearchDirs, appPath);
-	/*
-	char coreLibraries[MAX_LONGPATH];
-
-	size_t outSize;
-	if (_wgetenv_s(&outSize, coreLibraries, MAX_LONGPATH, W("CORE_LIBRARIES")) == 0 && outSize > 0)
-	{
-		strcat(nativeDllSearchDirs, ";");
-		strcat(nativeDllSearchDirs, coreLibraries);
-	}
 	*/
-	strcat(nativeDllSearchDirs, ";");
+	char * coreLibraries = NULL;
+
+	coreLibraries = getenv("CORE_LIBRARIES");
+	strcpy(nativeDllSearchDirs, "\0");
+	if (coreLibraries) {
+		strcat(nativeDllSearchDirs, coreLibraries);
+		strcat(nativeDllSearchDirs, ";");
+	}
+
+	//strcat(nativeDllSearchDirs, ";");
+
 	strcat(nativeDllSearchDirs, this->core_environment->core_clr_directory_path);
 
 	return true;

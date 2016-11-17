@@ -17,7 +17,8 @@ loader_impl_interface cs_loader_impl_interface_singleton(void)
 	{
 		&cs_loader_impl_initialize,
 		&cs_loader_impl_execution_path,
-		&cs_loader_impl_load,
+		&cs_loader_impl_load_from_file,
+		&cs_loader_impl_load_from_memory,
 		&cs_loader_impl_clear,
 		&cs_loader_impl_discover,
 		&cs_loader_impl_destroy
@@ -32,11 +33,11 @@ const char * cs_loader_print_info()
 		"Net Loader Plugin " METACALL_VERSION "\n"
 		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef RB_LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef RB_LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

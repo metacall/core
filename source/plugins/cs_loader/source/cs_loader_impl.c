@@ -147,14 +147,26 @@ int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+
+loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension ext, const char * code, size_t size) {
+	(void)impl;
+	(void)name;
+	(void)ext;
+	(void)code;
+	(void)size;
+
+	return NULL;
+}
+
+
+loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
 {
 	/* TODO: Load a new script into a loader_handle by path and name (just that, not inspection / reflection need */
 
 	(void)impl;
 	(void)path;
 	(void)name;
-	
+
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
 	simple_netcore_load_script(nhandle, path, name);
