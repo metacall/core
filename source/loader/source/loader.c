@@ -209,7 +209,7 @@ int loader_load_from_file(const loader_naming_path path)
 
 					memcpy(absolute_path, l->script_path, strlen(l->script_path) + 1);
 
-					strncat(absolute_path, path, LOADER_NAMING_PATH_SIZE);
+					strncat(absolute_path, path, LOADER_NAMING_PATH_SIZE - 1);
 
 					return loader_impl_load_from_file(impl, absolute_path);
 				}

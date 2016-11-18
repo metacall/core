@@ -83,9 +83,10 @@ static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extensi
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
 
-	strncpy(loader_dynlink_name, extension, LOADER_NAMING_EXTENSION_SIZE);
+	strncpy(loader_dynlink_name, extension, LOADER_DYNLINK_NAME_SIZE - 1);
 
-	strncat(loader_dynlink_name, loader_dynlink_suffix, LOADER_DYNLINK_NAME_SIZE);
+	strncat(loader_dynlink_name, loader_dynlink_suffix,
+		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
 
 	#undef LOADER_DYNLINK_NAME_SIZE
 
@@ -104,11 +105,13 @@ static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension 
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
 
-	strncpy(loader_dynlink_symbol, loader_dynlink_symbol_prefix, sizeof(loader_dynlink_symbol_prefix));
+	strncpy(loader_dynlink_symbol, loader_dynlink_symbol_prefix, LOADER_DYNLINK_SYMBOL_SIZE - 1);
 
-	strncat(loader_dynlink_symbol, extension, LOADER_DYNLINK_SYMBOL_SIZE);
+	strncat(loader_dynlink_symbol, extension,
+		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix, sizeof(loader_dynlink_symbol_suffix));
+	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix,
+		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
 	#undef LOADER_DYNLINK_SYMBOL_SIZE
 
