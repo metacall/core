@@ -20,6 +20,9 @@ set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
+# Set versioning file
+set(version_file "${CMAKE_CURRENT_BINARY_DIR}/${target}-version.c")
+
 #
 # Compiler warnings
 #
@@ -63,6 +66,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 add_library(${target}
     ${sources}
     ${headers}
+    ${version_file}
 )
 
 # Create namespaced alias

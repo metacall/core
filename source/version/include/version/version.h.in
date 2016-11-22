@@ -1,0 +1,131 @@
+/*
+ *	CMake Versioning Utility by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A template for generating versioning utilities.
+ *
+ */
+
+#ifndef ${META_PROJECT_NAME_UPPER}_VERSION_H
+#define ${META_PROJECT_NAME_UPPER}_VERSION_H 1
+
+/* -- Headers -- */
+
+#include <${META_PROJECT_NAME}/${META_PROJECT_NAME}_api.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* -- Headers -- */
+
+#include <stdint.h>
+
+/* -- Definitions -- */
+
+#define ${META_PROJECT_NAME_UPPER}_PROJECT_NAME            "@META_PROJECT_NAME@"
+#define ${META_PROJECT_NAME_UPPER}_PROJECT_DESCRIPTION     "@META_PROJECT_DESCRIPTION@"
+
+#define ${META_PROJECT_NAME_UPPER}_AUTHOR_ORGANIZATION     "@META_AUTHOR_ORGANIZATION@"
+#define ${META_PROJECT_NAME_UPPER}_AUTHOR_DOMAIN           "@META_AUTHOR_DOMAIN@"
+#define ${META_PROJECT_NAME_UPPER}_AUTHOR_MAINTAINER       "@META_AUTHOR_MAINTAINER@"
+
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MAJOR           "@META_VERSION_MAJOR@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MAJOR_ID         @META_VERSION_MAJOR@
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MINOR           "@META_VERSION_MINOR@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MINOR_ID         @META_VERSION_MINOR@
+#define ${META_PROJECT_NAME_UPPER}_VERSION_PATCH           "@META_VERSION_PATCH@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_PATCH_ID         @META_VERSION_PATCH@
+#define ${META_PROJECT_NAME_UPPER}_VERSION_REVISION        "@META_VERSION_REVISION@"
+
+#define ${META_PROJECT_NAME_UPPER}_VERSION_HEX             ((uint32_t)@META_VERSION_HEX@)
+
+#define ${META_PROJECT_NAME_UPPER}_VERSION                 "@META_VERSION@"
+#define ${META_PROJECT_NAME_UPPER}_NAME_VERSION            "@META_NAME_VERSION@"
+
+/* -- Member Data -- */
+
+struct ${META_PROJECT_NAME}_version_type
+{
+	unsigned int major;
+	unsigned int minor;
+	unsigned int patch;
+	const char * revision;
+	const char * str;
+	const char * name;
+};
+
+/* -- Methods -- */
+
+/**
+*  @brief
+*    Provide the module version struct
+*
+*  @return
+*    Static struct containing unpacked version
+*/
+${META_PROJECT_NAME_UPPER}_API const void * ${META_PROJECT_NAME}_version(void);
+
+/**
+*  @brief
+*    Provide the module version hexadecimal value
+*    with format 0xMMIIPPPP where M is @major,
+*    I is @minor and P is @patch
+*
+*  @param[in] major
+*    Unsigned integer representing major version
+*
+*  @param[in] minor
+*    Unsigned integer representing minor version
+*
+*  @param[in] patch
+*    Unsigned integer representing patch version
+*
+*  @return
+*    Hexadecimal integer containing packed version
+*/
+${META_PROJECT_NAME_UPPER}_API uint32_t ${META_PROJECT_NAME}_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
+
+/**
+*  @brief
+*    Provide the module version hexadecimal value
+*    with format 0xMMIIPPPP where M is major,
+*    I is minor and P is patch
+*
+*  @return
+*    Hexadecimal integer containing packed version
+*/
+${META_PROJECT_NAME_UPPER}_API uint32_t ${META_PROJECT_NAME}_version_hex(void);
+
+/**
+*  @brief
+*    Provide the module version string
+*
+*  @return
+*    Static string containing module version
+*/
+${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_str(void);
+
+/**
+*  @brief
+*    Provide the module version revision string
+*
+*  @return
+*    Static string containing module version revision
+*/
+${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_revision(void);
+
+/**
+*  @brief
+*    Provide the module version name
+*
+*  @return
+*    Static string containing module version name
+*/
+${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_name(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ${META_PROJECT_NAME_UPPER}_VERSION_H */

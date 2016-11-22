@@ -1,0 +1,66 @@
+/*
+ *	CMake Versioning Utility by Parra Studios
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A template for generating versioning utilities.
+ *
+ */
+
+/* -- Headers -- */
+
+#include <${META_PROJECT_NAME}/${META_PROJECT_NAME}-version.h>
+
+/* -- Methods -- */
+
+const void * ${META_PROJECT_NAME}_version_data()
+{
+	static const struct ${META_PROJECT_NAME}_version_type version =
+	{
+		${META_PROJECT_NAME_UPPER}_VERSION_MAJOR_ID,
+		${META_PROJECT_NAME_UPPER}_VERSION_MINOR_ID,
+		${META_PROJECT_NAME_UPPER}_VERSION_PATCH_ID,
+		${META_PROJECT_NAME_UPPER}_VERSION_REVISION,
+		${META_PROJECT_NAME_UPPER}_VERSION,
+		${META_PROJECT_NAME_UPPER}_NAME_VERSION
+	};
+
+	return &version;
+}
+
+uint32_t ${META_PROJECT_NAME}_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch)
+{
+	const uint32_t version_hex = (major << 0x18) + (minor << 0x10) + patch;
+
+	return version_hex;
+}
+
+uint32_t ${META_PROJECT_NAME}_version_hex()
+{
+	static const uint32_t version_hex =
+		(${META_PROJECT_NAME_UPPER}_VERSION_MAJOR_ID << 0x18) +
+		(${META_PROJECT_NAME_UPPER}_VERSION_MINOR_ID << 0x10) +
+		${META_PROJECT_NAME_UPPER}_VERSION_PATCH_ID;
+
+	return version_hex;
+}
+
+const char * ${META_PROJECT_NAME}_version_str()
+{
+	static const char version_string[] = ${META_PROJECT_NAME_UPPER}_VERSION;
+
+	return version_string;
+}
+
+${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_revision()
+{
+	static const char version_revision[] = ${META_PROJECT_NAME_UPPER}_VERSION_REVISION;
+
+	return version_revision;
+}
+
+const char * ${META_PROJECT_NAME}_version_name()
+{
+	static const char version_name[] = ${META_PROJECT_NAME_UPPER}_NAME_VERSION;
+
+	return version_name;
+}
