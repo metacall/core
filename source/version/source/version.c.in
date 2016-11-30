@@ -51,7 +51,7 @@ const char * ${META_PROJECT_NAME}_version_str()
 	return version_string;
 }
 
-${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_revision()
+const char * ${META_PROJECT_NAME}_version_revision()
 {
 	static const char version_revision[] = ${META_PROJECT_NAME_UPPER}_VERSION_REVISION;
 

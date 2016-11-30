@@ -147,6 +147,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
+    ${META_PROJECT_NAME}::version
     ${META_PROJECT_NAME}::preprocessor
     ${META_PROJECT_NAME}::format
     ${META_PROJECT_NAME}::log

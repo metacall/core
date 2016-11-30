@@ -2,11 +2,6 @@
 # Configuration for all sub-projects
 #
 
-# Generate version-header
-string(TOUPPER ${META_PROJECT_NAME} META_PROJECT_NAME_UPPER)
-configure_file(version/include/version/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-version.h)
-configure_file(version/source/version.c.in ${CMAKE_CURRENT_BINARY_DIR}/${META_PROJECT_NAME}/${META_PROJECT_NAME}-version.c)
-
 # Generate plugin-header
 configure_file(plugins/plugins.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-plugins.h)
 
@@ -22,6 +17,7 @@ set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/")
 
 # Libraries
 set(IDE_FOLDER "")
+add_subdirectory(version)
 add_subdirectory(preprocessor)
 add_subdirectory(format)
 add_subdirectory(log)

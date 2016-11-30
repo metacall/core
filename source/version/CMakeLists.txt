@@ -1,28 +1,18 @@
-# Check if this plugin is enabled
-if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_PY)
-    return()
-endif()
-
 #
 # External dependencies
 #
 
-find_package(PythonLibs)
-
-if(NOT PYTHONLIBS_FOUND)
-    message(STATUS "Python libraries not found")
-    return()
-endif()
+# find_package(THIRDPARTY REQUIRED)
 
 #
-# Plugin name and options
+# Library name and options
 #
 
 # Target name
-set(target py_loader)
+set(target version)
 
 # Exit here if required dependencies are not met
-message(STATUS "Plugin ${target}")
+message(STATUS "Lib ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
@@ -46,17 +36,24 @@ include(SecurityFlags)
 # Sources
 #
 
-set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+set(template_include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
+set(template_source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+
+set(include_path "${CMAKE_BINARY_DIR}/source/include/${META_PROJECT_NAME}")
+set(source_path  "${CMAKE_BINARY_DIR}/source/${META_PROJECT_NAME}/source")
+
+# Generate version-header
+string(TOUPPER ${META_PROJECT_NAME} META_PROJECT_NAME_UPPER)
+
+configure_file(${template_include_path}/version.h.in ${include_path}/${META_PROJECT_NAME}-version.h)
+configure_file(${template_source_path}/version.c.in ${source_path}/${META_PROJECT_NAME}-version.c)
 
 set(headers
-    ${include_path}/py_loader.h
-    ${include_path}/py_loader_impl.h
+    ${include_path}/${META_PROJECT_NAME}-version.h
 )
 
 set(sources
-    ${source_path}/py_loader.c
-    ${source_path}/py_loader_impl.c
+    ${source_path}/${META_PROJECT_NAME}-version.c
 )
 
 # Group source files
@@ -130,8 +127,6 @@ target_include_directories(${target}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${PYTHON_INCLUDE_DIRS} # Python includes
-
     PUBLIC
     ${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -147,16 +142,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
     PRIVATE
-    ${META_PROJECT_NAME}::version
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::format
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::dynlink
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::loader
-
-    ${PYTHON_LIBRARIES} # Python libraries
 
     PUBLIC
     ${DEFAULT_LIBRARIES}

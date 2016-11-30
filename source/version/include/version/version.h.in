@@ -11,7 +11,7 @@
 
 /* -- Headers -- */
 
-#include <${META_PROJECT_NAME}/${META_PROJECT_NAME}_api.h>
+#include <version/version_api.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -62,7 +62,7 @@ struct ${META_PROJECT_NAME}_version_type
 *  @return
 *    Static struct containing unpacked version
 */
-${META_PROJECT_NAME_UPPER}_API const void * ${META_PROJECT_NAME}_version(void);
+VERSION_API const void * ${META_PROJECT_NAME}_version(void);
 
 /**
 *  @brief
@@ -82,7 +82,7 @@ ${META_PROJECT_NAME_UPPER}_API const void * ${META_PROJECT_NAME}_version(void);
 *  @return
 *    Hexadecimal integer containing packed version
 */
-${META_PROJECT_NAME_UPPER}_API uint32_t ${META_PROJECT_NAME}_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
+VERSION_API uint32_t ${META_PROJECT_NAME}_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
 
 /**
 *  @brief
@@ -93,7 +93,7 @@ ${META_PROJECT_NAME_UPPER}_API uint32_t ${META_PROJECT_NAME}_version_hex_make(un
 *  @return
 *    Hexadecimal integer containing packed version
 */
-${META_PROJECT_NAME_UPPER}_API uint32_t ${META_PROJECT_NAME}_version_hex(void);
+VERSION_API uint32_t ${META_PROJECT_NAME}_version_hex(void);
 
 /**
 *  @brief
@@ -102,7 +102,7 @@ ${META_PROJECT_NAME_UPPER}_API uint32_t ${META_PROJECT_NAME}_version_hex(void);
 *  @return
 *    Static string containing module version
 */
-${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_str(void);
+VERSION_API const char * ${META_PROJECT_NAME}_version_str(void);
 
 /**
 *  @brief
@@ -111,7 +111,7 @@ ${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_str(voi
 *  @return
 *    Static string containing module version revision
 */
-${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_revision(void);
+VERSION_API const char * ${META_PROJECT_NAME}_version_revision(void);
 
 /**
 *  @brief
@@ -120,7 +120,7 @@ ${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_revisio
 *  @return
 *    Static string containing module version name
 */
-${META_PROJECT_NAME_UPPER}_API const char * ${META_PROJECT_NAME}_version_name(void);
+VERSION_API const char * ${META_PROJECT_NAME}_version_name(void);
 
 #ifdef __cplusplus
 }
