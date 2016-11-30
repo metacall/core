@@ -100,6 +100,7 @@ target_link_libraries(${target}
     Qt5::Gui
     Qt5::Widgets
 
+    ${META_PROJECT_NAME}::version
     ${META_PROJECT_NAME}::preprocessor
     ${META_PROJECT_NAME}::log
     ${META_PROJECT_NAME}::reflect
