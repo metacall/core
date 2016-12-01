@@ -39,10 +39,6 @@
 extern "C" {
 #endif
 
-/* -- Type Definitions -- */
-
-typedef void * value;
-
 /* -- Type Maps -- */
 
 /**
@@ -52,52 +48,65 @@ typedef void * value;
 */
 %typemap(in) (const char * name, ...)
 {
-	value * argv;
-	size_t argc, i;
+	value * args;
+	size_t args_size, args_it;
 
 	/* Format string */
 	$1 = PyUnicode_AsUTF8($input);
 
 	/* Variable length arguments */
-	argc = PyTuple_Size(varargs);
+	args_size = PyTuple_Size(varargs);
 
-	argv = (value *) malloc(argc * sizeof(value));
+	args = (value *) malloc(args_size * sizeof(value));
 
-	for (i = 0; i < argc; ++i)
+	if (args == NULL)
 	{
-		PyObject * o = PyTuple_GetItem(varargs, i);
+		/* TODO: Remove this by a local array? */
 
-		/*if (PyInt_Check(o))
+		PyErr_SetString(PyExc_ValueError,"Invalid argument allocation");
+
+		SWIG_fail;
+
+		return NULL;
+	}
+
+	for (args_it = 0; args_it < args_size; ++args_it)
+	{
+		PyObject * py_arg = PyTuple_GetItem(varargs, args_it);
+
+		/*if (PyInt_Check(py_arg))
 		{
-			argv[i] = value_create_int((int) PyInt_AsLong(o));
+			args[args_it] = value_create_int((int) PyInt_AsLong(py_arg));
 		}
-		else */if (PyLong_Check(o))
+		else */if (PyLong_Check(py_arg))
 		{
-			argv[i] = value_create_long(PyLong_AsLong(o));
+			args[args_it] = value_create_long(PyLong_AsLong(py_arg));
 		}
-		else if (PyFloat_Check(o))
+		else if (PyFloat_Check(py_arg))
 		{
-			argv[i] = value_create_double(PyFloat_AsDouble(o));
+			args[args_it] = value_create_double(PyFloat_AsDouble(py_arg));
 		}
-		else if (PyUnicode_Check(o))
+		else if (PyUnicode_Check(py_arg))
 		{
 			Py_ssize_t size;
 
-			const char * str = PyUnicode_AsUTF8AndSize(o, &size);
+			const char * str = PyUnicode_AsUTF8AndSize(py_arg, &size);
 
-			argv[i] = value_create_string(str, (size_t)size);
+			args[args_it] = value_create_string(str, (size_t)size);
 		}
 		else
 		{
+			free(args);
+
 			PyErr_SetString(PyExc_ValueError,"Unsupported argument type");
 
-			free(argv);
+			SWIG_fail;
 
 			return NULL;
 		}
 	}
 
-	$2 = (void *) argv;
+	$2 = (void *) args;
 }
 
 /* -- Features -- */
@@ -112,19 +121,19 @@ typedef void * value;
 */
 %feature("action") metacall
 {
-	size_t			i, vc;
-	value		*args, ret;
+	size_t args_it, args_size;
+	value * args, ret;
 
-	vc = PyTuple_Size(varargs);
-	args   = (value *) arg2;
+	args_size = PyTuple_Size(varargs);
+	args = (value *) arg2;
 
 	/* Execute call */
 	ret = metacallv(arg1, args);
 
 	/* Clear args */
-	for (i = 0; i < vc; ++i)
+	for (args_it = 0; args_it < args_size; ++args_it)
 	{
-		value_destroy(args[i]);
+		value_destroy(args[args_it]);
 	}
 
 	free(args);
@@ -136,25 +145,30 @@ typedef void * value;
 		{
 			case TYPE_INT :
 			{
-				$result = PyInt_FromLong((long)value_to_int(ret));
+				/*$result = PyInt_FromLong((long)value_to_int(ret));*/
+				$result = PyLong_FromLong((long)value_to_int(ret));
+
 				break;
 			}
 
 			case TYPE_LONG :
 			{
 				$result = PyLong_FromLong(value_to_long(ret));
+
 				break;
 			}
 
 			case TYPE_DOUBLE :
 			{
 				$result = PyFloat_FromDouble(value_to_double(ret));
+
 				break;
 			}
 
 			case TYPE_STRING :
 			{
 				$result = PyUnicode_FromString(value_to_string(ret));
+
 				break;
 			}
 
@@ -172,6 +186,8 @@ typedef void * value;
 	{
 		$result = Py_None;
 	}
+
+	return $result;
 }
 
 /* -- Headers -- */

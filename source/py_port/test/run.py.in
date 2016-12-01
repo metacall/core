@@ -5,16 +5,24 @@ import os
 os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
+import unittest
 import _py_port as metacall
 
-# MetaCall (Python)
-metacall.metacall("hello")
+class py_port_test(unittest.TestCase):
 
-metacall.metacall("multiply", 5, 7)
+	# MetaCall (Python)
+	def test_python(self):
+		self.assertEqual(metacall.metacall('hello'), None)
 
-# MetaCall (Ruby)
-metacall.metacall("say_null")
+		self.assertEqual(metacall.metacall('multiply', 5, 7), 35)
 
-metacall.metacall("say_multiply", 3, 4)
+	# MetaCall (Ruby)
+	def test_python(self):
+		self.assertEqual(metacall.metacall('say_null'), None)
 
-metacall.metacall("say_hello", "helloooo")
+		self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
+
+		self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!')
+
+if __name__ == '__main__':
+	unittest.main()
