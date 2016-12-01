@@ -40,10 +40,10 @@ function(script_project name language configuration)
 	#
 
 	# Install cmake script config
-	install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/${custom_target}/${custom_target}-config.cmake"
-		DESTINATION ${INSTALL_CMAKE}/${custom_target}
-		COMPONENT   runtime
-	)
+	#install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/${custom_target}/${custom_target}-config.cmake"
+	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
+	#	COMPONENT   runtime
+	#)
 
 	# CMake config
 	#install(EXPORT  ${custom_target}-export

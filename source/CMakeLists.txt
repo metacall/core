@@ -12,6 +12,12 @@ set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/")
 set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/")
 
 #
+# CMake modules
+#
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+#
 # Sub-projects
 #
 
