@@ -2,10 +2,19 @@
 # External dependencies
 #
 
-find_package(PythonLibs)
+find_package(PythonLibs 3 REQUIRED)
 
 if(NOT PYTHONLIBS_FOUND)
     message(STATUS "Python libraries not found")
+    return()
+endif()
+
+set(Python_ADDITIONAL_VERSIONS 3.4)
+
+find_package(PythonInterp REQUIRED)
+
+if(NOT PYTHONINTERP_FOUND)
+    message(STATUS "Python interpreter not found")
     return()
 endif()
 
@@ -239,7 +248,25 @@ install(EXPORT ${target}-export
 )
 
 #
-# Tests
+# Configure test
 #
 
-configure_file(test/run.py.in ${CMAKE_BINARY_DIR}/${target}_test.py)
+set(py_port_test "${CMAKE_BINARY_DIR}/${target}_test.py")
+
+configure_file(test/run.py.in ${py_port_test})
+
+#
+# Define test
+#
+
+add_test(NAME ${target}
+    COMMAND ${PYTHON3_EXECUTABLE} ${py_port_test}
+)
+
+#
+# Define test labels
+#
+
+set_property(TEST ${target}
+    PROPERTY LABELS ${target}
+)
