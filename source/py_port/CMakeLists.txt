@@ -29,16 +29,12 @@ set(export_macro "${target_upper}_API")
 # Sources
 #
 
-set(metacall_interface_path "${CMAKE_SOURCE_DIR}/source/ports/interface/metacall")
 set(interface_path "${CMAKE_CURRENT_SOURCE_DIR}/interface/${target}")
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(interfaces
-    ${metacall_interface_path}/metacall.i
-
     ${interface_path}/py_port.i
-    ${interface_path}/py_port_typemap.i
 )
 
 set(headers
@@ -85,37 +81,6 @@ foreach(files ${interfaces} ${headers} ${sources})
         PROPERTIES CPLUSPLUS OFF
     )
 endforeach()
-
-# Build library
-macro(swig_add_depends target)
-    foreach(dependency ${ARGN})
-        get_property(include_list
-            TARGET ${dependency}
-            PROPERTY INTERFACE_INCLUDE_DIRECTORIES
-        )
-
-        foreach(path ${include_list})
-            include_directories(${path})
-
-            file(GLOB_RECURSE header_files "${path}/*.[h|hpp]")
-
-            list(APPEND SWIG_MODULE_${target}_EXTRA_DEPS ${header_files})
-
-            set(SWIG_MODULE_${target}_EXTRA_DEPS SWIG_MODULE_${target}_EXTRA_DEPS PARENT_SCOPE)
-
-        endforeach()
-    endforeach()
-endmacro()
-
-swig_add_depends(${target}
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::dynlink
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::loader
-    ${META_PROJECT_NAME}::metacall
-)
 
 swig_add_module(${target}
     python
@@ -193,14 +158,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
     PRIVATE
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::dynlink
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::loader
-    ${META_PROJECT_NAME}::metacall
-
+    ${METACALL_LIBRARIES}
     ${PYTHON_LIBRARIES} # Python libraries
 
     PUBLIC
@@ -279,3 +237,9 @@ install(EXPORT ${target}-export
     DESTINATION ${INSTALL_CMAKE}/${target}
     COMPONENT   dev
 )
+
+#
+# Tests
+#
+
+configure_file(test/run.py.in ${CMAKE_BINARY_DIR}/${target}_test.py)

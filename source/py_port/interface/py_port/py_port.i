@@ -12,142 +12,38 @@
 /* -- Headers -- */
 
 #ifdef SWIG
-	%module metacall_py_port
+	%module py_port
 
 	%{
 		#include <py_port/py_port.h>
 
+		#include <metacall/metacall_api.h>
 		#include <metacall/metacall.h>
 		#include <reflect/reflect_value_type.h>
-
-		#include <format/format.h> /* TODO: Remove this */
 
 		#include <Python.h>
 	%}
 
-	/*%include <py_port/py_port_typemap.i>*/
-
 	%include <py_port/py_port.h>
+
+	#ifndef LOADER_LAZY
+		%init
+		%{
+			metacall_initialize();
+		%}
+	#endif
+
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Headers -- */
-
-/*
-#include <stdlib.h>
-#include <stdarg.h>
-*/
-
 /* -- Type Definitions -- */
 
 typedef void * value;
 
-/* -- Global Variables -- */
-
-extern void * metacall_null_args[1];
-
-/* -- Methods -- */
-
-/**
-*  @brief
-*    Initialize MetaCall library singleton
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
-int metacall_initialize(void);
-
-/**
-*  @brief
-*    Amount of function call arguments supported by MetaCall
-*
-*  @return
-*    Number of arguments suported
-*/
-size_t metacall_args_size(void);
-
-/**
-*  @brief
-*    Loads a script from file specified by @path
-*
-*  @param[in] path
-*    Path of the file
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
-int metacall_load_from_file(const char * path);
-
-/**
-*  @brief
-*    Loads a script from memory
-*
-*  @param[in] extension
-*    Extension of the script
-*
-*  @param[in] buffer
-*    Memory block representing the string of the script
-*
-*  @param[in] size
-*    Memory block representing the string of the script
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
-int metacall_load_from_memory(const char * extension, const char * buffer, size_t size);
-
-/**
-*  @brief
-*    Call a function anonymously by value array @args
-*
-*  @param[in] name
-*    Name of the function
-*
-*  @param[in] args
-*    Array of pointers to data
-*
-*  @return
-*    Pointer to value containing the result of the call
-*/
-value metacallv(const char * name, void * args[]);
-
-/**
-*  @brief
-*    Call a function anonymously by variable arguments @va_args
-*
-*  @param[in] name
-*    Name of the function
-*
-*  @param[in] va_args
-*    Varidic function parameters
-*
-*  @return
-*    Pointer to value containing the result of the call
-*/
-value metacall(const char * name, ...);
-
-/**
-*  @brief
-*    Destroy MetaCall library singleton
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
-int metacall_destroy(void);
-
-/**
-*  @brief
-*    Provide the module information
-*
-*  @return
-*    Static string containing module information
-*/
-const char * metacall_print_info(void);
-
-/* -- Typemaps -- */
+/* -- Type Maps -- */
 
 /**
 *  @brief
@@ -157,40 +53,19 @@ const char * metacall_print_info(void);
 %typemap(in) (const char * name, ...)
 {
 	value * argv;
-	int    argc;
-	int    i;
+	size_t argc, i;
 
 	/* Format string */
 	$1 = PyUnicode_AsUTF8($input);
 
-	printf("\nA) ");
-
-	PyObject_Print($input, stdout, 0);
-
-	printf("\n");
-
 	/* Variable length arguments */
 	argc = PyTuple_Size(varargs);
 
-	printf("B) ");
-
-	PyObject_Print(varargs, stdout, 0);
-
-	printf("\n");
-
 	argv = (value *) malloc(argc * sizeof(value));
-
-	printf("C) Number of arguments: %d\n", argc);
 
 	for (i = 0; i < argc; ++i)
 	{
 		PyObject * o = PyTuple_GetItem(varargs, i);
-
-		printf("D) ");
-
-		PyObject_Print(o, stdout, 0);
-
-		printf("\n");
 
 		/*if (PyInt_Check(o))
 		{
@@ -215,10 +90,13 @@ const char * metacall_print_info(void);
 		else
 		{
 			PyErr_SetString(PyExc_ValueError,"Unsupported argument type");
+
 			free(argv);
+
 			return NULL;
 		}
 	}
+
 	$2 = (void *) argv;
 }
 
@@ -234,7 +112,7 @@ const char * metacall_print_info(void);
 */
 %feature("action") metacall
 {
-	int			i, vc;
+	size_t			i, vc;
 	value		*args, ret;
 
 	vc = PyTuple_Size(varargs);
@@ -242,8 +120,6 @@ const char * metacall_print_info(void);
 
 	/* Execute call */
 	ret = metacallv(arg1, args);
-
-	printf("E) ret_value: %p\n", ret);
 
 	/* Clear args */
 	for (i = 0; i < vc; ++i)
@@ -285,6 +161,7 @@ const char * metacall_print_info(void);
 			default :
 			{
 				PyErr_SetString(PyExc_ValueError, "Unsupported return type");
+
 				$result = Py_None;
 			}
 		}
@@ -295,13 +172,22 @@ const char * metacall_print_info(void);
 	{
 		$result = Py_None;
 	}
-
-	printf("F) Result: ");
-
-	PyObject_Print($result, stdout, 0);
-
-	printf("\n");
 }
+
+/* -- Headers -- */
+
+#ifdef SWIG
+
+	%include <metacall/metacall_api.h>
+
+	#ifdef METACALL_API
+	#	undef METACALL_API
+	#	define METACALL_API
+	#endif
+
+	%include <metacall/metacall.h>
+
+#endif
 
 #ifdef __cplusplus
 }

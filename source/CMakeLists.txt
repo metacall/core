@@ -1,10 +1,14 @@
+#
+#	MetaCall Ports by Parra Studios
+#	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	Language porting infrastructure for MetaCall library.
+#
+
 # Check if ports are enabled
 if(NOT OPTION_BUILD_PORTS)
     return()
 endif()
-
-# Port interface
-add_subdirectory(interface)
 
 # Port languages
 add_subdirectory(cs_port)
