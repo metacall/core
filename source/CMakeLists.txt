@@ -46,8 +46,8 @@ set(IDE_FOLDER "Scripts")
 add_subdirectory(scripts)
 
 # Ports
-#set(IDE_FOLDER "Ports")
-#add_subdirectory(ports)
+set(IDE_FOLDER "Ports")
+add_subdirectory(ports)
 
 #
 # Deployment

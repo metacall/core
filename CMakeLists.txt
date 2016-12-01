@@ -65,7 +65,7 @@ option(OPTION_BUILD_DOCS     "Build documentation."                             
 option(OPTION_BUILD_EXAMPLES "Build examples."                                        ON)
 option(OPTION_BUILD_PLUGINS  "Build plugins."                                         ON)
 option(OPTION_BUILD_SCRIPTS  "Build scripts."                                         ON)
-#option(OPTION_BUILD_PORTS    "Build ports."                                           ON)
+option(OPTION_BUILD_PORTS    "Build ports."                                           ON)
 
 #
 # Declare project
