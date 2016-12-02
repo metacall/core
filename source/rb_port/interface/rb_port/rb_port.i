@@ -6,25 +6,26 @@
  *
  */
 
-#ifndef METACALL_SWIG_WRAPPER_PY_PORT_I
-#define METACALL_SWIG_WRAPPER_PY_PORT_I 1
+#ifndef METACALL_SWIG_WRAPPER_RB_PORT_I
+#define METACALL_SWIG_WRAPPER_RB_PORT_I 1
 
 /* -- Headers -- */
 
 #ifdef SWIG
-	%module py_port
+	%module rb_port
 
 	%{
-		#include <py_port/py_port.h>
+		#include <rb_port/rb_port.h>
 
 		#include <metacall/metacall_api.h>
 		#include <metacall/metacall.h>
 		#include <reflect/reflect_value_type.h>
 
-		#include <Python.h>
+		#include <ruby.h>
+		#include <ruby/intern.h>
 	%}
 
-	%include <py_port/py_port.h>
+	%include <rb_port/rb_port.h>
 
 	#ifndef LOADER_LAZY
 		%init
@@ -52,16 +53,16 @@ extern "C" {
 	size_t args_size, args_count;
 
 	/* Format string */
-	$1 = PyUnicode_AsUTF8($input);
+	$1 = RSTRING_PTR($input);
 
-	/* Variable length arguments */
+	/* Variable length arguments *//*
 	args_size = PyTuple_Size(varargs);
 
 	args = (value *) malloc(args_size * sizeof(value));
 
 	if (args == NULL)
 	{
-		/* TODO: Remove this by a local array? */
+		*//* TODO: Remove this by a local array? *//*
 
 		PyErr_SetString(PyExc_ValueError,"Invalid argument allocation");
 
@@ -80,11 +81,11 @@ extern "C" {
 
  			args[args_count] = value_create_bool(b);
 		}
-		/*if (PyInt_Check(py_arg))
+		*//*if (PyInt_Check(py_arg))
 		{
 			args[args_count] = value_create_int((int) PyInt_AsLong(py_arg));
 		}
-		*/else if (PyLong_Check(py_arg))
+		*//*else if (PyLong_Check(py_arg))
 		{
 			args[args_count] = value_create_long(PyLong_AsLong(py_arg));
 		}
@@ -112,7 +113,7 @@ extern "C" {
 		}
 	}
 
-	$2 = (void *) args;
+	$2 = (void *) args;*/
 }
 
 /* -- Features -- */
@@ -125,7 +126,7 @@ extern "C" {
 *  @return
 *    A value converted into Python format
 */
-%feature("action") metacall
+/*%feature("action") metacall
 {
 	size_t args_count, args_size;
 	value * args, ret;
@@ -133,10 +134,10 @@ extern "C" {
 	args_size = PyTuple_Size(varargs);
 	args = (value *) arg2;
 
-	/* Execute call */
+	*//* Execute call *//*
 	ret = metacallv(arg1, args);
 
-	/* Clear args */
+	*//* Clear args *//*
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		value_destroy(args[args_count]);
@@ -144,7 +145,7 @@ extern "C" {
 
 	free(args);
 
-	/* Return value */
+	*//* Return value *//*
 	if (ret != NULL)
 	{
 		switch (value_type_id(ret))
@@ -159,7 +160,7 @@ extern "C" {
 
 			case TYPE_INT :
 			{
-				/*$result = PyInt_FromLong((long)value_to_int(ret));*/
+				*//*$result = PyInt_FromLong((long)value_to_int(ret));*//*
 				$result = PyLong_FromLong((long)value_to_int(ret));
 
 				break;
@@ -203,6 +204,7 @@ extern "C" {
 
 	return $result;
 }
+*/
 
 #ifdef __cplusplus
 }
@@ -223,4 +225,4 @@ extern "C" {
 
 #endif
 
-#endif /* METACALL_SWIG_WRAPPER_PY_PORT_I */
+#endif /* METACALL_SWIG_WRAPPER_RB_PORT_I */

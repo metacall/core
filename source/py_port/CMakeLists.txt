@@ -1,3 +1,8 @@
+# Check if port is enabled
+if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
+    return()
+endif()
+
 #
 # External dependencies
 #
@@ -74,6 +79,7 @@ set(CMAKE_SWIG_FLAGS "")
 
 # Set SWIG include path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
 
 #
 # Create library
@@ -251,16 +257,17 @@ install(EXPORT ${target}-export
 # Configure test
 #
 
-set(py_port_test "${CMAKE_BINARY_DIR}/${target}_test.py")
+set(py_port_test "${target}_test")
+set(py_port_test_path "${CMAKE_BINARY_DIR}/${py_port_test}.py")
 
-configure_file(test/run.py.in ${py_port_test})
+configure_file(test/run.py.in ${py_port_test_path})
 
 #
 # Define test
 #
 
 add_test(NAME ${target}
-    COMMAND ${PYTHON3_EXECUTABLE} ${py_port_test}
+    COMMAND ${PYTHON3_EXECUTABLE} ${py_port_test_path}
 )
 
 #
@@ -268,5 +275,5 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-    PROPERTY LABELS ${target}
+    PROPERTY LABELS ${py_port_test}
 )
