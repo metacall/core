@@ -97,7 +97,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			{
 				boolean * value_ptr = (boolean *)(args[args_count]);
 
-				args_value[args_count] = (*value_ptr == 0) ? Qfalse : Qtrue;
+				args_value[args_count] = (*value_ptr == 0L) ? Qfalse : Qtrue;
 			}
 			else if (id == TYPE_INT)
 			{
@@ -159,19 +159,19 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 		if (result_type == T_TRUE)
 		{
-			boolean b = 1;
+			boolean b = 1L;
 
 			v = value_create_bool(b);
 		}
 		else if (result_type == T_FALSE)
 		{
-			boolean b = 0;
+			boolean b = 0L;
 
 			v = value_create_bool(b);
 		}
 		else if (result_type == T_FIXNUM)
 		{
-			int i = NUM2INT(result_value);
+			int i = FIX2INT(result_value);
 
 			v = value_create_int(i);
 		}
