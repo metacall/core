@@ -4,24 +4,24 @@ ENV['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 ENV['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
 require 'test/unit'
-metacall = require_relative 'rb_port'
+require_relative 'rb_port'
 
 class RbPortTest < Test::Unit::TestCase
 
 	# MetaCall (Python)
 	def test_python
-		assert_equal(metacall.metacall('hello'), None)
+		assert_equal(nil, Rb_port.metacall('hello'))
 
-		assert_equal(metacall.metacall('multiply', 5, 7), 35)
+#		assert_equal(35, Rb_port.metacall('multiply', 5, 7))
 	end
 
 	# MetaCall (Ruby)
-	def test_python
-		assert_equal(metacall.metacall('say_null'), None)
+	def test_ruby
+		assert_equal(nil, Rb_port.metacall('say_null'))
+		
+#		assert_equal(12, Rb_port.metacall('say_multiply', 3, 4))
 
-		assert_equal(metacall.metacall('say_multiply', 3, 4), 12)
-
-		assert_equal(metacall.metacall('say_hello', 'world'), 'Hello world!')
+#		assert_equal('Hello world!', Rb_port.metacall('say_hello', 'world'))
 	end
 
 end

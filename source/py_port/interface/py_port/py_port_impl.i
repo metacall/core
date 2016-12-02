@@ -31,13 +31,19 @@ extern "C" {
 	/* Variable length arguments */
 	args_size = PyTuple_Size(varargs);
 
+	if (args_size == 0)
+	{
+		PyErr_SetString(PyExc_ValueError, "Invalid number of arguments");
+
+		return Py_None;
+	}
+
+	/* TODO: Remove this by a local array? */
 	args = (value *) malloc(args_size * sizeof(value));
 
 	if (args == NULL)
 	{
-		/* TODO: Remove this by a local array? */
-
-		PyErr_SetString(PyExc_ValueError,"Invalid argument allocation");
+		PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
 
 		SWIG_fail;
 
@@ -76,9 +82,10 @@ extern "C" {
 		}
 		else
 		{
+			/* TODO: Remove this by a local array? */
 			free(args);
 
-			PyErr_SetString(PyExc_ValueError,"Unsupported argument type");
+			PyErr_SetString(PyExc_ValueError, "Unsupported argument type");
 
 			SWIG_fail;
 
@@ -116,6 +123,7 @@ extern "C" {
 		value_destroy(args[args_count]);
 	}
 
+	/* TODO: Remove this by a local array? */
 	free(args);
 
 	/* Return value */
