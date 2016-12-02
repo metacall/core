@@ -1,9 +1,7 @@
 #!/usr/bin/ruby
 
-#import os
-
-#os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
-#os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
+ENV['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
+ENV['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
 require 'test/unit'
 metacall = require_relative 'rb_port'
