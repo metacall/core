@@ -5,6 +5,11 @@
 #	A complete infraestructure for supporting multiple langauge bindings in MetaCall.
 #
 
+# Check if port is enabled
+if(NOT OPTION_BUILD_PORTS)
+    return()
+endif()
+
 #
 # External dependencies
 #

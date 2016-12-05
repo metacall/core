@@ -162,7 +162,7 @@ extern "C" {
 
 			case TYPE_INT :
 			{
-				/*$result*/ vresult = INT2NUM(value_to_int(ret));
+				/*$result*/ vresult = INT2FIX(value_to_int(ret));
 
 				break;
 			}

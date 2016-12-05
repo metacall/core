@@ -12,7 +12,7 @@ class RbPortTest < Test::Unit::TestCase
 	def test_python
 		assert_equal(nil, Rb_port.metacall('hello'))
 
-#		assert_equal(35, Rb_port.metacall('multiply', 5, 7))
+		assert_equal(35, Rb_port.metacall('multiply', 5, 7))
 	end
 
 	# MetaCall (Ruby)
