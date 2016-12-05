@@ -123,7 +123,15 @@ bool command_cb_call(application & app, tokenizer & t)
 
 		value result = app.metacallv_adaptor(func_name, args);
 
-		std::cout << "result : " << result << std::endl;
+		const size_t value_str_size = 0xFF;
+
+		size_t length = 0;
+
+		char value_str[value_str_size];
+
+		value_stringify(result, value_str, value_str_size, &length);
+
+		std::cout << "result : " << value_str << std::endl;
 
 		value_destroy(result);
 
