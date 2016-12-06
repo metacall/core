@@ -34,6 +34,54 @@ typedef int type_id;
 
 /**
 *  @brief
+*    Check if type id is integer value (bool, char, short, int, long)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is integer, different from zero otherwhise
+*/
+REFLECT_API int type_id_integer(type_id id);
+
+/**
+*  @brief
+*    Check if type id is decimal value (double)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is decimal, different from zero otherwhise
+*/
+REFLECT_API int type_id_decimal(type_id id);
+
+/**
+*  @brief
+*    Check if type id is string value (char *)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is string, different from zero otherwhise
+*/
+REFLECT_API int type_id_string(type_id id);
+
+/**
+*  @brief
+*    Check if type id is pointer (void *)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is pointer, different from zero otherwhise
+*/
+REFLECT_API int type_id_pointer(type_id id);
+
+/**
+*  @brief
 *    Check if type id is invalid
 *
 *  @param[in] id

@@ -146,9 +146,16 @@ value value_from(value v, const void * data, size_t bytes)
 {
 	void * dest = value_data(v);
 
-	if (dest != NULL && data != NULL && bytes > 0)
+	if (dest != NULL && bytes > 0)
 	{
-		memcpy(dest, data, bytes);
+		if (data != NULL)
+		{
+			memcpy(dest, data, bytes);
+		}
+		else
+		{
+			memset(dest, 0, bytes);
+		}
 	}
 
 	return v;

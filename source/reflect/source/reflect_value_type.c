@@ -12,29 +12,9 @@
 
 #include <stdint.h>
 
-/* -- Private Methods -- */
-
-/**
-*  @brief
-*    Create a value type from @data with size @bytes and typeid @id
-*
-*  @param[in] data
-*    Pointer to memory block
-*
-*  @param[in] bytes
-*    Size in bytes of the memory block @data
-*
-*  @param[in] id
-*    Type of memory block @data
-*
-*  @return
-*    Pointer to value if success, null otherwhise
-*/
-static value value_type_create(const void * data, size_t bytes, type_id id);
-
 /* -- Methods -- */
 
-static value value_type_create(const void * data, size_t bytes, type_id id)
+value value_type_create(const void * data, size_t bytes, type_id id)
 {
 	value v = value_alloc(bytes + sizeof(type_id));
 

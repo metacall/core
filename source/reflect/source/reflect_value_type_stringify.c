@@ -9,6 +9,7 @@
 /* -- Headers -- */
 
 #include <reflect/reflect_value_type.h>
+#include <reflect/reflect_value_type_stringify.h>
 
 #include <format/format_print.h>
 

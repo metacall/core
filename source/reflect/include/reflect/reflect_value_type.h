@@ -14,6 +14,8 @@
 #include <reflect/reflect_api.h>
 
 #include <reflect/reflect_value.h>
+#include <reflect/reflect_value_type_stringify.h>
+#include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_type_id.h>
 
 #ifdef __cplusplus
@@ -21,6 +23,24 @@ extern "C" {
 #endif
 
 /* -- Methods -- */
+
+/**
+*  @brief
+*    Create a value type from @data with size @bytes and typeid @id
+*
+*  @param[in] data
+*    Pointer to memory block
+*
+*  @param[in] bytes
+*    Size in bytes of the memory block @data
+*
+*  @param[in] id
+*    Type of memory block @data
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+value value_type_create(const void * data, size_t bytes, type_id id);
 
 /**
 *  @brief
@@ -33,24 +53,6 @@ extern "C" {
 *    Return type id assigned to value
 */
 REFLECT_API type_id value_type_id(value v);
-
-/**
-*  @brief
-*    Convert to string the value @v
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[out] dest
-*    Destination address where string will be stored
-*
-*  @param[in] size
-*    Size of buffer @dest in bytes
-*
-*  @param[out] length
-*    Length of string stored in @dest
-*/
-REFLECT_API void value_stringify(value v, char * dest, size_t size, size_t * length);
 
 /**
 *  @brief

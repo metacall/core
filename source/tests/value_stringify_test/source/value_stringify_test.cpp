@@ -9,6 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <reflect/reflect_value_type.h>
+#include <reflect/reflect_value_type_stringify.h>
 
 #include <log/log.h>
 
