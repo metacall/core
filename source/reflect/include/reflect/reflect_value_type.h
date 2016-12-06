@@ -116,6 +116,18 @@ REFLECT_API value value_create_long(long l);
 
 /**
 *  @brief
+*    Create a value from single precision floating point number @f
+*
+*  @param[in] f
+*    Float will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_float(float f);
+
+/**
+*  @brief
 *    Create a value from double precision floating point number @d
 *
 *  @param[in] d
@@ -212,6 +224,18 @@ REFLECT_API int value_to_int(value v);
 *    Value converted to long integer
 */
 REFLECT_API long value_to_long(value v);
+
+/**
+*  @brief
+*    Convert value @v to single precision floating point
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to float
+*/
+REFLECT_API float value_to_float(value v);
 
 /**
 *  @brief
@@ -323,6 +347,21 @@ REFLECT_API value value_from_int(value v, int i);
 *    Value with long @l assigned to it
 */
 REFLECT_API value value_from_long(value v, long l);
+
+/**
+*  @brief
+*    Assign single precision floating point @f to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] f
+*    Float to be assigned to value @v
+*
+*  @return
+*    Value with float @f assigned to it
+*/
+REFLECT_API value value_from_float(value v, float f);
 
 /**
 *  @brief

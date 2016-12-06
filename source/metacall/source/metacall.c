@@ -151,6 +151,10 @@ value metacall(const char * name, ...)
 			{
 				args[iterator] = value_create_long(va_arg(va, long));
 			}
+			else if (id == TYPE_FLOAT)
+			{
+				args[iterator] = value_create_float((float)va_arg(va, double));
+			}
 			else if (id == TYPE_DOUBLE)
 			{
 				args[iterator] = value_create_double(va_arg(va, double));

@@ -35,6 +35,7 @@ TEST_F(value_stringify_test, DefaultConstructor)
 		"123",
 		"56464",
 		"251251251",
+		"13.545000f",
 		"545.345300",
 		hello_world,
 		#if defined(_WIN32) && defined(_MSC_VER)
@@ -53,6 +54,7 @@ TEST_F(value_stringify_test, DefaultConstructor)
 		value_create_short(123),
 		value_create_int(56464),
 		value_create_long(251251251L),
+		value_create_float(13.545f),
 		value_create_double(545.3453),
 		value_create_string(hello_world, sizeof(hello_world)),
 		value_create_ptr((void *)0x000A7EF2)

@@ -53,6 +53,8 @@ static void value_stringify_int(value v, char * dest, size_t size, const char * 
 
 static void value_stringify_long(value v, char * dest, size_t size, const char * format, size_t * length);
 
+static void value_stringify_float(value v, char * dest, size_t size, const char * format, size_t * length);
+
 static void value_stringify_double(value v, char * dest, size_t size, const char * format, size_t * length);
 
 static void value_stringify_string(value v, char * dest, size_t size, const char * format, size_t * length);
@@ -70,6 +72,7 @@ static const char * value_stringify_format(type_id id)
 		"%d",
 		"%d",
 		"%ld",
+		"%.6ff",
 		"%.6f",
 		"%s",
 		#if defined(_WIN32) && defined(_MSC_VER)
@@ -93,6 +96,7 @@ static value_stringify_impl_ptr value_stringify_impl(type_id id)
 		&value_stringify_short,
 		&value_stringify_int,
 		&value_stringify_long,
+		&value_stringify_float,
 		&value_stringify_double,
 		&value_stringify_string,
 		&value_stringify_ptr
@@ -133,6 +137,11 @@ static void value_stringify_int(value v, char * dest, size_t size, const char * 
 static void value_stringify_long(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_long(v));
+}
+
+static void value_stringify_float(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	*length = snprintf(dest, size, format, value_to_float(v));
 }
 
 static void value_stringify_double(value v, char * dest, size_t size, const char * format, size_t * length)

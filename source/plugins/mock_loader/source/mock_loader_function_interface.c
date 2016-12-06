@@ -95,6 +95,12 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Long value: %ld", *value_ptr);
 			}
+			else if (id == TYPE_FLOAT)
+			{
+				float * value_ptr = (float *)(args[args_count]);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Float value: %f", *value_ptr);
+			}
 			else if (id == TYPE_DOUBLE)
 			{
 				double * value_ptr = (double *)(args[args_count]);
@@ -147,6 +153,10 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 		else if (id == TYPE_LONG)
 		{
 			return value_create_long(90000L);
+		}
+		else if (id == TYPE_FLOAT)
+		{
+			return value_create_float(0.2f);
 		}
 		else if (id == TYPE_DOUBLE)
 		{

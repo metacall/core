@@ -22,9 +22,10 @@ enum type_primitive_id
 	TYPE_SHORT	= 2,
 	TYPE_INT	= 3,
 	TYPE_LONG	= 4,
-	TYPE_DOUBLE = 5,
-	TYPE_STRING = 6,
-	TYPE_PTR	= 7,
+	TYPE_FLOAT	= 5,
+	TYPE_DOUBLE	= 6,
+	TYPE_STRING = 7,
+	TYPE_PTR	= 8,
 
 	TYPE_SIZE,
 	TYPE_INVALID
@@ -46,7 +47,7 @@ REFLECT_API int type_id_integer(type_id id);
 
 /**
 *  @brief
-*    Check if type id is decimal value (double)
+*    Check if type id is decimal value (float, double)
 *
 *  @param[in] id
 *    Type id to be checked

@@ -68,6 +68,11 @@ value value_create_long(long l)
 	return value_type_create(&l, sizeof(long), TYPE_LONG);
 }
 
+value value_create_float(float f)
+{
+	return value_type_create(&f, sizeof(float), TYPE_FLOAT);
+}
+
 value value_create_double(double d)
 {
 	return value_type_create(&d, sizeof(double), TYPE_DOUBLE);
@@ -133,6 +138,15 @@ long value_to_long(value v)
 	return l;
 }
 
+float value_to_float(value v)
+{
+	float f = 0.0f;
+
+	value_to(v, &f, sizeof(float));
+
+	return f;
+}
+
 double value_to_double(value v)
 {
 	double d = 0.0;
@@ -177,6 +191,11 @@ value value_from_int(value v, int i)
 value value_from_long(value v, long l)
 {
 	return value_from(v, &l, sizeof(long));
+}
+
+value value_from_float(value v, float f)
+{
+	return value_from(v, &f, sizeof(float));
 }
 
 value value_from_double(value v, double d)

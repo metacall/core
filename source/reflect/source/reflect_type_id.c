@@ -16,7 +16,7 @@ int type_id_integer(type_id id)
 
 int type_id_decimal(type_id id)
 {
-	return !(id == TYPE_DOUBLE);
+	return !(id == TYPE_FLOAT || id == TYPE_DOUBLE);
 }
 
 int type_id_pointer(type_id id)

@@ -18,6 +18,7 @@ size_t value_type_id_size(type_id id)
 		sizeof(short),		/* TYPE_SHORT */
 		sizeof(int),		/* TYPE_INT */
 		sizeof(long),		/* TYPE_LONG */
+		sizeof(float),		/* TYPE_FLOAT */
 		sizeof(double),		/* TYPE_DOUBLE */
 		sizeof(char *),		/* TYPE_STRING */
 		sizeof(void *)		/* TYPE_PTR */
