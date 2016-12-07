@@ -27,7 +27,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
     ${source_path}/main.cpp
-    ${source_path}/value_cast_test.cpp
+    ${source_path}/value_cast_bool_test.cpp
+    ${source_path}/value_cast_char_test.cpp
+    ${source_path}/value_cast_short_test.cpp
+    ${source_path}/value_cast_int_test.cpp
+    ${source_path}/value_cast_long_test.cpp
+    ${source_path}/value_cast_float_test.cpp
+    ${source_path}/value_cast_double_test.cpp
 )
 
 # Group source files
