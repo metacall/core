@@ -174,6 +174,13 @@ extern "C" {
 				break;
 			}
 
+			case TYPE_FLOAT :
+			{
+				/*$result*/ vresult = DBL2NUM((double)value_to_float(ret));
+
+				break;
+			}
+
 			case TYPE_DOUBLE :
 			{
 				/*$result*/ vresult = DBL2NUM(value_to_double(ret));

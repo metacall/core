@@ -154,6 +154,13 @@ extern "C" {
 				break;
 			}
 
+			case TYPE_FLOAT :
+			{
+				$result = PyFloat_FromDouble((double)value_to_float(ret));
+
+				break;
+			}
+
 			case TYPE_DOUBLE :
 			{
 				$result = PyFloat_FromDouble(value_to_double(ret));
