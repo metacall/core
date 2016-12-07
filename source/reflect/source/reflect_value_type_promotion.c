@@ -16,7 +16,7 @@
 
 value value_type_promotion_integer(value v, type_id id)
 {
-	char buffer[sizeof(long)];
+	char buffer[8] = { 0 };
 
 	value promotion = NULL;
 
@@ -32,7 +32,7 @@ value value_type_promotion_integer(value v, type_id id)
 		return v;
 	}
 
-	value_to(v, (void *)&buffer[0], value_size(v));
+	value_to(v, (void *)&buffer[0], value_type_id_size(v_id));
 
 	promotion = value_type_create((void *)&buffer[0], value_type_id_size(id), id);
 
@@ -52,7 +52,11 @@ value value_type_promotion_decimal(value v, type_id id)
 	{
 		float f;
 		double d;
-	} decimal_promotion;
+	}
+	decimal_promotion =
+	{
+		0.0f, 0.0
+	};
 
 	value promotion = NULL;
 
@@ -70,7 +74,7 @@ value value_type_promotion_decimal(value v, type_id id)
 
 	decimal_promotion.f = value_to_float(v);
 
-	decimal_promotion.d = (double)decimal_promotion.d;
+	decimal_promotion.d = (double)decimal_promotion.f;
 
 	promotion = value_create_double(decimal_promotion.d);
 

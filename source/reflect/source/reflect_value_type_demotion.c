@@ -14,9 +14,84 @@
 
 /* -- Methods -- */
 
+value value_type_demotion_boolean(value v, type_id id)
+{
+	union
+	{
+		char b[8];
+		float f;
+		double d;
+	}
+	buffer =
+	{
+		{ 0 }
+	};
+
+	value demotion = NULL;
+
+	type_id v_id = value_type_id(v);
+
+	if (!(type_id_integer(v_id) == 0 || type_id_decimal(v_id) == 0) || type_id_boolean(id) != 0)
+	{
+		return NULL;
+	}
+
+	if (v_id == id)
+	{
+		return v;
+	}
+
+	value_to(v, (void *)&buffer.b[0], value_type_id_size(v_id));
+
+	demotion = value_type_create(NULL, value_type_id_size(id), id);
+
+	if (demotion == NULL)
+	{
+		return v;
+	}
+
+	value_destroy(v);
+
+	if (type_id_decimal(v_id) == 0)
+	{
+		if (v_id == TYPE_FLOAT)
+		{
+			if (buffer.f != 0.0f && buffer.f != -0.0f)
+			{
+				return value_from_bool(demotion, 1L);
+			}
+		}
+		else if (v_id == TYPE_DOUBLE)
+		{
+			if (buffer.d != 0.0 && buffer.d != -0.0)
+			{
+				return value_from_bool(demotion, 1L);
+			}
+		}
+		else
+		{
+			/* error */
+		}
+	}
+	else
+	{
+		size_t iterator;
+
+		for (iterator = 0; iterator < 8; ++iterator)
+		{
+			if (buffer.b[iterator] != 0x00)
+			{
+				return value_from_bool(demotion, 1L);
+			}
+		}
+	}
+
+	return demotion;
+}
+
 value value_type_demotion_integer(value v, type_id id)
 {
-	char buffer[sizeof(long)];
+	char buffer[8] = { 0 };
 
 	value demotion = NULL;
 
@@ -32,7 +107,7 @@ value value_type_demotion_integer(value v, type_id id)
 		return v;
 	}
 
-	value_to(v, (void *)&buffer[0], value_size(v));
+	value_to(v, (void *)&buffer[0], value_type_id_size(v_id));
 
 	demotion = value_type_create((void *)&buffer[0], value_type_id_size(id), id);
 

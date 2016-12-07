@@ -35,6 +35,18 @@ typedef int type_id;
 
 /**
 *  @brief
+*    Check if type id is boolean value (bool)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is integer, different from zero otherwhise
+*/
+REFLECT_API int type_id_boolean(type_id id);
+
+/**
+*  @brief
 *    Check if type id is integer value (bool, char, short, int, long)
 *
 *  @param[in] id

@@ -8,6 +8,11 @@
 
 #include <reflect/reflect_type_id.h>
 
+int type_id_boolean(type_id id)
+{
+	return !(id == TYPE_BOOL);
+}
+
 int type_id_integer(type_id id)
 {
 	return !(id == TYPE_BOOL || id == TYPE_CHAR || id == TYPE_SHORT ||

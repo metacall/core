@@ -24,6 +24,21 @@ extern "C" {
 
 /**
 *  @brief
+*    Demotes a boolean value @v to new type @id
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] id
+*    New type id of value to be demoted
+*
+*  @return
+*    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
+*/
+value value_type_demotion_boolean(value v, type_id id);
+
+/**
+*  @brief
 *    Demotes a integer value @v to new type @id
 *
 *  @param[in] v

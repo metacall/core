@@ -22,7 +22,7 @@ value value_type_cast(value v, type_id id)
 {
 	type_id src_id = value_type_id(v);
 
-	size_t src_size = value_size(v);
+	size_t src_size = value_type_id_size(src_id);
 
 	size_t dest_size = value_type_id_size(id);
 
@@ -52,15 +52,15 @@ value value_type_cast(value v, type_id id)
 		{
 			value dest = NULL;
 
-			long l = 0L;
+			int64_t data = 0L;
 
-			value_to(v, &l, src_size);
+			value_to(v, &data, src_size);
 
 			if (src_size == dest_size)
 			{
-				size_t offset = src_size - sizeof(type_id);
+				value_from((value)(((uintptr_t)v) + src_size), &id, sizeof(type_id));
 
-				dest = value_from((value)(((uintptr_t)v) + offset), &id, sizeof(type_id));
+				dest = v;
 			}
 			else
 			{
@@ -74,13 +74,13 @@ value value_type_cast(value v, type_id id)
 
 			if (id == TYPE_FLOAT)
 			{
-				float f = (float)l;
+				float f = (float)data;
 
 				return value_from_float(dest, f);
 			}
 			else if (id == TYPE_DOUBLE)
 			{
-				double d = (double)l;
+				double d = (double)data;
 
 				return value_from_double(dest, d);
 			}
@@ -93,6 +93,11 @@ value value_type_cast(value v, type_id id)
 
 	if (src_id > id)
 	{
+		if (type_id_boolean(id) == 0)
+		{
+			return value_type_demotion_boolean(v, id);
+		}
+
 		if (type_id_integer(src_id) == 0 && type_id_integer(id) == 0)
 		{
 			return value_type_demotion_integer(v, id);
@@ -107,15 +112,15 @@ value value_type_cast(value v, type_id id)
 		{
 			value dest = NULL;
 
-			long l = 0L;
+			int64_t data = 0L;
 
 			if (src_id == TYPE_FLOAT)
 			{
-				l = (long)value_to_float(v);
+				data = (int64_t)value_to_float(v);
 			}
 			else if (src_id == TYPE_DOUBLE)
 			{
-				l = (long)value_to_double(v);
+				data = (int64_t)value_to_double(v);
 			}
 			else
 			{
@@ -124,9 +129,9 @@ value value_type_cast(value v, type_id id)
 
 			if (src_size == dest_size)
 			{
-				size_t offset = src_size - sizeof(type_id);
+				value_from((value)(((uintptr_t)v) + src_size), &id, sizeof(type_id));
 
-				dest = value_from((value)(((uintptr_t)v) + offset), &id, sizeof(type_id));
+				dest = v;
 			}
 			else
 			{
@@ -138,7 +143,7 @@ value value_type_cast(value v, type_id id)
 				}
 			}
 
-			return value_from(dest, &l, dest_size);
+			return value_from(dest, &data, dest_size);
 		}
 
 		return NULL;
