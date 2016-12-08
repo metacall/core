@@ -15,6 +15,7 @@
 #include <loader/loader.h>
 
 #include <reflect/reflect_value_type.h>
+#include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_function.h>
 
 #include <string.h>
@@ -101,7 +102,39 @@ value metacallv(const char * name, void * args[])
 
 	if (f != NULL)
 	{
-		return function_call(f, args);
+		signature s = function_signature(f);
+
+		size_t iterator;
+
+		value ret;
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		{
+			type t = signature_get_type(s, iterator);
+
+			type_id id = type_index(t);
+
+			if (id != value_type_id((value)args[iterator]))
+			{
+				args[iterator] = value_type_cast((value)args[iterator], id);
+			}
+		}
+
+		ret = function_call(f, args);
+
+		if (ret != NULL)
+		{
+			type t = signature_get_return(s);
+
+			type_id id = type_index(t);
+
+			if (id != value_type_id(ret))
+			{
+				return value_type_cast(ret, id);
+			}
+		}
+
+		return ret;
 	}
 
 	return NULL;

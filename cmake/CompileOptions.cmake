@@ -67,24 +67,24 @@ set(DEFAULT_COMPILE_OPTIONS)
 
 if (WIN32)
   add_compile_options(/nologo) # Suppress Startup Banner
-  add_compile_options(/W4) # set warning level to 4
-  add_compile_options(/WX) # treat warnings as errors
-  add_compile_options(/Gm-) # disable minimal rebuild
+  add_compile_options(/W4) # Set warning level to 4
+  add_compile_options(/WX-) # Do not treat warnings as errors
+  add_compile_options(/Gm-) # Disable minimal rebuild
   add_compile_options(/MP) # Build with Multiple Processes (number of processes equal to the number of processors)
   #add_compile_options(/wd4251 /wd4592)
   #add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
   # Release
-  #add_compile_options(/GL) # enable debugging information
+  #add_compile_options(/GL) # Enable debugging information
   add_compile_options(/GS) # Buffer Security Check
-  add_compile_options(/GF) # enable read-only string pooling
-  #add_compile_options(/GW) # enable read-only string pooling
+  add_compile_options(/GF) # Enable read-only string pooling
+  #add_compile_options(/GW) # Enable read-only string pooling
 endif()
 
 if (PROJECT_OS_FAMILY MATCHES "unix")
 
   if(APPLE)
-    # We cannot enable "stack-protector-strong" on OS X due to a bug in clang compiler (current version 7.0.2)
+    # We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
     add_compile_options(-fstack-protector)
 
     # Enable threads in OS X
