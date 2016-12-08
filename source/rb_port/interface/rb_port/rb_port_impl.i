@@ -160,6 +160,13 @@ extern "C" {
 				break;
 			}
 
+			case TYPE_CHAR :
+			{
+				/*$result*/ vresult = INT2FIX((char)value_to_char(ret));
+
+				break;
+			}
+
 			case TYPE_SHORT :
 			{
 				/*$result*/ vresult = INT2FIX((int)value_to_short(ret));

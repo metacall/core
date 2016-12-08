@@ -139,6 +139,22 @@ extern "C" {
 				break;
 			}
 
+			case TYPE_CHAR :
+			{
+				/*$result = PyInt_FromLong((long)value_to_char(ret));*/
+				$result = PyLong_FromLong((long)value_to_char(ret));
+
+				break;
+			}
+
+			case TYPE_SHORT :
+			{
+				/*$result = PyInt_FromLong((long)value_to_short(ret));*/
+				$result = PyLong_FromLong((long)value_to_short(ret));
+
+				break;
+			}
+
 			case TYPE_INT :
 			{
 				/*$result = PyInt_FromLong((long)value_to_int(ret));*/

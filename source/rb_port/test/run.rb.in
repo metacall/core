@@ -19,9 +19,9 @@ class RbPortTest < Test::Unit::TestCase
 	def test_ruby
 		assert_equal(nil, Rb_port.metacall('say_null'))
 		
-#		assert_equal(12, Rb_port.metacall('say_multiply', 3, 4))
+		#assert_equal(12, Rb_port.metacall('say_multiply', 3, 4))
 
-#		assert_equal('Hello world!', Rb_port.metacall('say_hello', 'world'))
+		#assert_equal('Hello world!', Rb_port.metacall('say_hello', 'world'))
 	end
 
 end
