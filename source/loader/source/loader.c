@@ -105,7 +105,7 @@ void loader_initialize()
 
 		l->script_path = getenv(loader_script_path);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->library_path);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->script_path);
 	}
 }
 

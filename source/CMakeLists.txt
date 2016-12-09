@@ -6,11 +6,9 @@
 configure_file(plugins/plugins.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-plugins.h)
 
 # Export output script directory
-#set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/" CACHE PATH "MetaCall scripts path")
 set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/")
 
 # Export output plugin directory
-#set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/" CACHE PATH "MetaCall loader library plugins path")
 set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/")
 
 #

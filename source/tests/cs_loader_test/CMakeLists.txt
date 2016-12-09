@@ -142,10 +142,8 @@ set_property(TEST ${target}
     PROPERTY LABELS ${target}
 )
 
-set_property(TEST ${target}
-    PROPERTY ENVIRONMENT "LOADER_LIBRARY_PATH=${LOADER_LIBRARY_PATH}"
-)
+include(TestEnvironmentVariables)
 
-set_property(TEST ${target}
-    APPEND PROPERTY ENVIRONMENT "LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}"
+test_environment_variables(${target}
+    "LOADER_LIBRARY_PATH=${LOADER_LIBRARY_PATH};LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}"
 )
