@@ -73,6 +73,28 @@ template <> bool parser_parameter::is<long>()
 	return (str_stream >> std::noskipws >> l && !str_stream.ignore());
 }
 
+template <> bool parser_parameter::is<float>()
+{
+	const std::string & str = *it;
+
+	size_t length = str.length();
+
+	std::stringstream str_stream;
+
+	float f;
+
+	if (str[length - 1] == 'f')
+	{
+		str_stream.str(str.substr(0, length - 1));
+	}
+	else
+	{
+		str_stream.str(str);
+	}
+
+	return (str_stream >> std::noskipws >> f && !str_stream.ignore());
+}
+
 template <> bool parser_parameter::is<std::string>()
 {
 	const std::string & str = *it;
@@ -148,6 +170,30 @@ template <> long parser_parameter::to<long>()
 	str_stream >> std::noskipws >> l;
 
 	return l;
+}
+
+template <> float parser_parameter::to<float>()
+{
+	const std::string & str = *it;
+
+	size_t length = str.length();
+
+	std::stringstream str_stream;
+
+	float f;
+
+	if (str[length - 1] == 'f')
+	{
+		str_stream.str(str.substr(0, length - 1));
+	}
+	else
+	{
+		str_stream.str(str);
+	}
+
+	str_stream >> std::noskipws >> f;
+
+	return f;
 }
 
 template <> std::string parser_parameter::to<std::string>()

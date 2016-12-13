@@ -43,6 +43,7 @@ bool command_cb_help(application & app, tokenizer & /*t*/)
 	std::cout << "\t\t\tchar ['A', 'B', 'C']," << std::endl;
 	std::cout << "\t\t\tint [234, 0, -16673]," << std::endl;
 	std::cout << "\t\t\tlong [58L, 9857 ... 3942]," << std::endl;
+	std::cout << "\t\t\tfloat [5.42f, 458E3f]," << std::endl;
 	std::cout << "\t\t\tdouble [5.42, 458E12]," << std::endl;
 	std::cout << "\t\t\tpointer [0x07d97e32]," << std::endl;
 	std::cout << "\t\t\tstring [\"hello world\"]" << std::endl;
@@ -366,9 +367,7 @@ value application::argument_parse(parser_parameter & p)
 	{
 		float f = p.to<float>();
 
-		double d = static_cast<double>(f);
-
-		return value_create_double(d);
+		return value_create_float(f);
 	}
 	else if (p.is<double>())
 	{

@@ -68,7 +68,7 @@ class parser
 
 	/**
 	*  @brief
-	*    Return current token trnasformed to type @T
+	*    Return current token transformed to type @T
 	*
 	*  @param[template] T
 	*    Type of value to check against token
@@ -133,7 +133,7 @@ class parser_parameter : public parser
 
 	/**
 	*  @brief
-	*    Return current token trnasformed to type @T
+	*    Return current token transformed to type @T
 	*
 	*  @param[template] T
 	*    Type of value to check against token
@@ -173,6 +173,15 @@ template <> bool parser_parameter::is<long>(void);
 
 /**
 *  @brief
+*    Check if current token is a custom float ending with (f)
+*
+*  @return
+*    True if current token is a custom float
+*/
+template <> bool parser_parameter::is<float>(void);
+
+/**
+*  @brief
 *    Check if current token is a custom quoted string ("")
 *
 *  @return
@@ -182,7 +191,7 @@ template <> bool parser_parameter::is<std::string>(void);
 
 /**
 *  @brief
-*    Return current token trnasformed from custom quoted char ('')
+*    Return current token transformed from custom quoted char ('')
 *
 *  @return
 *    A copy of the value transformed to char
@@ -191,7 +200,7 @@ template <> char parser_parameter::to<char>(void);
 
 /**
 *  @brief
-*    Return current token trnasformed from custom long ending with (L)
+*    Return current token transformed from custom long ending with (L)
 *
 *  @return
 *    A copy of the value transformed to long
@@ -200,7 +209,16 @@ template <> long parser_parameter::to(void);
 
 /**
 *  @brief
-*    Return current token trnasformed from custom quoted string ('')
+*    Return current token transformed from custom float ending with (f)
+*
+*  @return
+*    A copy of the value transformed to float
+*/
+template <> float parser_parameter::to(void);
+
+/**
+*  @brief
+*    Return current token transformed from custom quoted string ('')
 *
 *  @return
 *    A copy of the value transformed to string
