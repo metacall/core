@@ -8,6 +8,11 @@
 # V8_FOUND - True if V8 was found
 # V8_INCLUDE_DIR - V8 headers path
 # V8_LIBRARIES - List of V8 libraries
+# V8_VERSION - V8 version
+# V8_VERSION_MAJOR - V8 major version
+# V8_VERSION_MINOR - V8 minor version
+# V8_VERSION_REVISION - V8 revision version
+# V8_VERSION_HEX - V8 version in hexadecimal format
 
 # Prevent vervosity if already included
 if(V8_INCLUDE_DIR)
@@ -20,6 +25,9 @@ include(FindPackageHandleStandardArgs)
 # V8 search paths
 set(V8_PATHS
 	${V8_HOME}
+	${V8_ROOT}
+    $ENV{ProgramFiles}/v8
+    $ENV{SystemDrive}/v8
 	$ENV{V8_HOME}
 	$ENV{EXTERNLIBS}/v8
 	${V8_DIR}
@@ -62,7 +70,6 @@ endif()
 set(V8_LIBRARY_PATH_SUFFIXES lib lib64 lib.target)
 
 # Find include path
-
 if(MSVC OR CMAKE_BUILD_TYPE EQUAL "DEBUG")
 	set(V8_HEADERS v8.h v8-debug.h v8-profiler.h v8stdint.h)
 else()
@@ -273,6 +280,32 @@ if(NOT V8_FOUND)
 	endif()
 
 	find_package_handle_standard_args(V8 DEFAULT_MSG V8_LIBRARY V8_INCLUDE_DIR)
+endif()
+
+# Detect V8 version
+if(V8_FOUND AND V8_INCLUDE_DIR)
+    file(READ ${V8_INCLUDE_DIR}/v8-version.h V8_VERSION_FILE)
+
+    string(REGEX MATCH "#define V8_MAJOR_VERSION ([0-9]+)" V8_VERSION_MAJOR_DEF ${V8_VERSION_FILE})
+    string(REGEX MATCH "([0-9]+)$" V8_VERSION_MAJOR ${V8_VERSION_MAJOR_DEF})
+
+    string(REGEX MATCH "#define V8_MINOR_VERSION ([0-9]+)" V8_VERSION_MINOR_DEF ${V8_VERSION_FILE})
+    string(REGEX MATCH "([0-9]+)$" V8_VERSION_MINOR ${V8_VERSION_MINOR_DEF})
+
+    string(REGEX MATCH "#define V8_BUILD_NUMBER ([0-9]+)" V8_VERSION_REVISION_DEF ${V8_VERSION_FILE})
+    string(REGEX MATCH "([0-9]+)$" V8_VERSION_REVISION ${V8_VERSION_REVISION_DEF})
+
+    set(V8_VERSION "${V8_VERSION_MAJOR}.${V8_VERSION_MINOR}.${V8_VERSION_REVISION}")
+
+    set(V8_VERSION_HEX 0x0${V8_VERSION_MAJOR}${V8_VERSION_MINOR}${V8_VERSION_REVISION})
+    string(LENGTH "${V8_VERSION_HEX}" V8_VERSION_HEX_LENGTH)
+
+    while(V8_VERSION_HEX_LENGTH LESS 8)
+
+	set(V8_VERSION_HEX "${V8_VERSION_HEX}0")
+	string(LENGTH "${V8_VERSION_HEX_LENGTH}" V8_VERSION_HEX_LENGTH)
+
+    endwhile()
 endif()
 
 mark_as_advanced(V8_LIBRARY V8_INCLUDE_DIR)
