@@ -111,6 +111,12 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 				args_value[args_count] = LONG2NUM(*value_ptr);
 			}
+			else if (id == TYPE_FLOAT)
+			{
+				float * value_ptr = (float *)(args[args_count]);
+
+				args_value[args_count] = DBL2NUM((double)*value_ptr);
+			}
 			else if (id == TYPE_DOUBLE)
 			{
 				double * value_ptr = (double *)(args[args_count]);

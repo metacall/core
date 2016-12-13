@@ -26,8 +26,6 @@ typedef struct {
 	reflect_function * func;
 } cs_function;
 
-
-
 int function_cs_interface_create(function func, function_impl impl)
 {
 	(void)func;

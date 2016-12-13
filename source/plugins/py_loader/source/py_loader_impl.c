@@ -146,6 +146,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 			py_func->values[args_count] = PyLong_FromLong(*value_ptr);
 		}
+		else if (id == TYPE_FLOAT)
+		{
+			float * value_ptr = (float *)(args[args_count]);
+
+			py_func->values[args_count] = PyFloat_FromDouble((double)*value_ptr);
+		}
 		else if (id == TYPE_DOUBLE)
 		{
 			double * value_ptr = (double *)(args[args_count]);
@@ -210,6 +216,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			long l = PyLong_AsLong(result);
 
 			v = value_create_long(l);
+		}
+		else if (id == TYPE_FLOAT)
+		{
+			double d = PyFloat_AsDouble(result);
+
+			v = value_create_float((float)d);
 		}
 		else if (id == TYPE_DOUBLE)
 		{

@@ -356,6 +356,12 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 				value_args[args_count] = Integer::New(js_func->get_isolate(), *value_ptr);
 			}
+			else if (id == TYPE_FLOAT)
+			{
+				float * value_ptr = (float *)(args[args_count]);
+
+				value_args[args_count] = Number::New(js_func->get_isolate(), (double)*value_ptr);
+			}
 			else if (id == TYPE_DOUBLE)
 			{
 				double * value_ptr = (double *)(args[args_count]);
@@ -419,6 +425,12 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 			long l = result->IntegerValue();
 
 			return value_create_long(l);
+		}
+		else if (id == TYPE_FLOAT)
+		{
+			double d = result->NumberValue();
+
+			return value_create_float((float)d);
 		}
 		else if (id == TYPE_DOUBLE)
 		{
