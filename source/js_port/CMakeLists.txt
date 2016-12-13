@@ -1,3 +1,7 @@
+# Check if port is enabled
+if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_JS)
+    return()
+endif()
 
 #
 # External dependencies
@@ -9,18 +13,6 @@ if(NOT V8_FOUND)
     message(STATUS "V8 libraries not found")
     return()
 endif()
-
-# Generate a valid version of V8 for SWIG
-#set(V8_VERSION_HEX 0x0${V8_VERSION_MAJOR}${V8_VERSION_MINOR}${V8_VERSION_PATCH})
-#string(LENGTH "${V8_VERSION_HEX}" V8_VERSION_HEX_LENGTH)
-#
-#while(V8_VERSION_HEX_LENGTH LESS 8)
-#
-#	set(V8_VERSION_HEX "${V8_VERSION_HEX}0")
-#
-#	string(LENGTH "${V8_VERSION_HEX_LENGTH}" V8_VERSION_HEX_LENGTH)
-#
-#endwhile()
 
 #
 # Port name and options
@@ -42,44 +34,80 @@ set(export_macro "${target_upper}_API")
 # Sources
 #
 
+set(interface_path "${CMAKE_CURRENT_SOURCE_DIR}/interface/${target}")
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
+set(interfaces
+    ${interface_path}/js_port.i
+)
+
 set(headers
-#    ${include_path}/js_loader.h
-#    ${include_path}/js_loader_impl.h
-#    ${include_path}/js_loader_impl_guard.h
+    ${include_path}/js_port.h
 )
 
 set(sources
-#    ${source_path}/js_loader.c
-#    ${source_path}/js_loader_impl.cpp
-#    ${source_path}/js_loader_impl_guard.cpp
+    ${source_path}/js_port.c
 )
 
 # Group source files
+set(interface_group "Interface Files (SWIG)")
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
+source_group_by_path(${interface_path} "\\\\.i$"
+    ${interface_group} ${interfaces})
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
     ${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
     ${source_group} ${sources})
 
 #
+# SWIG Configuration
+#
+
+# Set SWIG flags
+set(CMAKE_SWIG_FLAGS "")
+
+# Set SWIG include path
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
+
+#
 # Create library
 #
 
-# Build library
-add_library(${target}
-    ${sources}
+foreach(file ${interfaces} ${headers} ${sources})
+
+    if(${V8_VERSION} LESS "4.3.0")
+        set_source_files_properties(
+            ${file}
+            PROPERTY SWIG_FLAGS "-javascript" "-v8" "-DV8_VERSION=${V8_VERSION_HEX}" "-includeall"
+        )
+    else()
+        set_source_files_properties(
+            ${file}
+            PROPERTY SWIG_FLAGS "-javascript" "-v8" "-includeall"
+        )
+    endif()
+
+    set_source_files_properties(
+        ${file}
+        PROPERTIES CPLUSPLUS ON
+    )
+endforeach()
+
+swig_add_module(${target}
+    javascript
+    ${interfaces}
     ${headers}
+    ${sources}
 )
 
 # Create namespaced alias
-add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
+add_library(${META_PROJECT_NAME}::${target} ALIAS ${SWIG_MODULE_${target}_REAL_NAME})
 
 # Export library for downstream projects
-export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
+export(TARGETS ${SWIG_MODULE_${target}_REAL_NAME} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
 
 # Create feature detection header
 # Compilers: https://cmake.org/cmake/help/v3.1/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID
@@ -103,7 +131,7 @@ else()
 endif()
 
 # Create API export header
-generate_export_header(${target}
+generate_export_header(${SWIG_MODULE_${target}_REAL_NAME}
     EXPORT_FILE_NAME  ${export_file}
     EXPORT_MACRO_NAME ${export_macro}
 )
@@ -112,7 +140,7 @@ generate_export_header(${target}
 # Project options
 #
 
-set_target_properties(${target}
+set_target_properties(${SWIG_MODULE_${target}_REAL_NAME}
     PROPERTIES
     ${DEFAULT_PROJECT_OPTIONS}
     FOLDER "${IDE_FOLDER}"
@@ -121,8 +149,7 @@ set_target_properties(${target}
 #
 # Include directories
 #
-
-target_include_directories(${target}
+target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
     PRIVATE
     ${PROJECT_BINARY_DIR}/source/include
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -143,14 +170,10 @@ target_include_directories(${target}
 # Libraries
 #
 
-target_link_libraries(${target}
+swig_link_libraries(${target}
     PRIVATE
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::dynlink
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::loader
-
-    ${V8_LIBRARIES} # V8 library
+    ${METACALL_LIBRARIES}
+    ${V8_LIBRARIES} # V8 libraries
 
     PUBLIC
     ${DEFAULT_LIBRARIES}
@@ -162,7 +185,7 @@ target_link_libraries(${target}
 # Compile definitions
 #
 
-target_compile_definitions(${target}
+target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
     PRIVATE
 
     PUBLIC
@@ -176,7 +199,7 @@ target_compile_definitions(${target}
 # Compile options
 #
 
-target_compile_options(${target}
+target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
     PRIVATE
 
     PUBLIC
@@ -189,7 +212,7 @@ target_compile_options(${target}
 # Linker options
 #
 
-target_link_libraries(${target}
+target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
     PRIVATE
 
     PUBLIC
@@ -203,7 +226,7 @@ target_link_libraries(${target}
 #
 
 # Library
-install(TARGETS ${target}
+install(TARGETS ${SWIG_MODULE_${target}_REAL_NAME}
     EXPORT  "${target}-export"            COMPONENT dev
     RUNTIME DESTINATION ${INSTALL_BIN}    COMPONENT runtime
     LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
@@ -230,9 +253,26 @@ install(EXPORT ${target}-export
 )
 
 #
-# SWIG Configuration
+# Configure test
 #
 
-set_property(
-    SOURCE ${CMAKE_SOURCE_DIR}/ports/interface/metacall.i
-    PROPERTY SWIG_FLAGS "-node" "-
+#set(js_port_test "${target}_test")
+#set(js_port_test_path "${CMAKE_BINARY_DIR}/${js_port_test}.js")
+
+#configure_file(test/run.js.in ${js_port_test_path})
+
+#
+# Define test
+#
+
+#add_test(NAME ${target}
+#    COMMAND ${V8_EXECUTABLE} ${js_port_test_path}
+#)
+
+#
+# Define test labels
+#
+
+#set_property(TEST ${target}
+#    PROPERTY LABELS ${js_port_test}
+#)

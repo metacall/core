@@ -85,14 +85,14 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
 # Create library
 #
 
-foreach(files ${interfaces} ${headers} ${sources})
+foreach(file ${interfaces} ${headers} ${sources})
     set_source_files_properties(
-        ${interfaces}
+        ${file}
         PROPERTY SWIG_FLAGS "-python" "-includeall"
     )
 
     set_source_files_properties(
-        ${interfaces}
+        ${file}
         PROPERTIES CPLUSPLUS OFF
     )
 endforeach()
