@@ -1,0 +1,30 @@
+/*
+#!/usr/bin/python3.4
+
+import os
+
+os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
+os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
+
+import unittest
+import _py_port as metacall
+
+class py_port_test(unittest.TestCase):
+
+	# MetaCall (Python)
+	def test_python(self):
+		self.assertEqual(metacall.metacall('hello'), None)
+
+		self.assertEqual(metacall.metacall('multiply', 5, 7), 35)
+
+	# MetaCall (Ruby)
+	def test_python(self):
+		self.assertEqual(metacall.metacall('say_null'), None)
+
+		#self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
+
+		#self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!')
+
+if __name__ == '__main__':
+	unittest.main()
+*/

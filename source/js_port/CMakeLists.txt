@@ -65,8 +65,8 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # SWIG Configuration
 #
 
-# Set SWIG flags
-set(CMAKE_SWIG_FLAGS "")
+# Set SWIG flags (use V8 engine)
+set(CMAKE_SWIG_FLAGS "-v8")
 
 # Set SWIG include path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -81,12 +81,12 @@ foreach(file ${interfaces} ${headers} ${sources})
     if(${V8_VERSION} LESS "4.3.0")
         set_source_files_properties(
             ${file}
-            PROPERTY SWIG_FLAGS "-javascript" "-v8" "-DV8_VERSION=${V8_VERSION_HEX}" "-includeall"
+            PROPERTY SWIG_FLAGS "-javascript" "-DV8_VERSION=${V8_VERSION_HEX}" "-includeall"
         )
     else()
         set_source_files_properties(
             ${file}
-            PROPERTY SWIG_FLAGS "-javascript" "-v8" "-includeall"
+            PROPERTY SWIG_FLAGS "-javascript" "-includeall"
         )
     endif()
 
