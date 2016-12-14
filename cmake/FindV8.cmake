@@ -13,6 +13,7 @@
 # V8_VERSION_MINOR - V8 minor version
 # V8_VERSION_REVISION - V8 revision version
 # V8_VERSION_HEX - V8 version in hexadecimal format
+# V8_EXECUTABLE - V8 shell
 
 # Prevent vervosity if already included
 if(V8_INCLUDE_DIR)
@@ -307,6 +308,13 @@ if(V8_FOUND AND V8_INCLUDE_DIR)
 
     endwhile()
 endif()
+
+# Detect V8 shell
+set(V8_EXECUTABLE_NAMES d8)
+
+find_program(V8_EXECUTABLE
+    NAMES ${V8_EXECUTABLE_NAMES}
+)
 
 mark_as_advanced(V8_LIBRARY V8_INCLUDE_DIR)
 
