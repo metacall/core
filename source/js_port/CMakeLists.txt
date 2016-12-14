@@ -256,23 +256,36 @@ install(EXPORT ${target}-export
 # Configure test
 #
 
-#set(js_port_test "${target}_test")
-#set(js_port_test_path "${CMAKE_BINARY_DIR}/${js_port_test}.js")
+set(JS_PORT_TEST_BINARY_PATH ${CMAKE_BINARY_DIR})
 
-#configure_file(test/run.js.in ${js_port_test_path})
+set(js_port_test "${target}_test")
+set(js_port_test_path "${JS_PORT_TEST_BINARY_PATH}/${js_port_test}.js")
+
+configure_file(test/run.js.in ${js_port_test_path})
+
+set(js_port_test_utility "${js_port_test}_utility")
+set(js_port_test_utility_path "test/${js_port_test_utility}.js")
+
+file(COPY ${js_port_test_utility_path}
+    DESTINATION ${JS_PORT_TEST_BINARY_PATH}
+)
 
 #
 # Define test
 #
 
-#add_test(NAME ${target}
-#    COMMAND ${V8_EXECUTABLE} ${js_port_test_path}
-#)
+add_test(NAME ${target}
+    COMMAND ${V8_EXECUTABLE} ${js_port_test_path}
+)
 
 #
 # Define test labels
 #
 
-#set_property(TEST ${target}
-#    PROPERTY LABELS ${js_port_test}
-#)
+set_property(TEST ${target}
+    PROPERTY LABELS ${js_port_test}
+)
+
+set_property(TEST ${target}
+    PROPERTY WORKING_DIRECTORY ${JS_PORT_TEST_BINARY_PATH}
+)

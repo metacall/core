@@ -1,30 +1,40 @@
-/*
-#!/usr/bin/python3.4
+//#!/usr/bin/d8
 
-import os
+os.setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
+os.setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
 
-os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
-os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
+load('@JS_PORT_TEST_BINARY_PATH@/js_port_test_utility.js');
+/*load('metacall.js');*/
 
-import unittest
-import _py_port as metacall
+/* MetaCall Test */
+test(function main() {
 
-class py_port_test(unittest.TestCase):
+	/* MetaCall Python */
+	test_case(function python_test() {
+		assert(/*metacall.metacall('hello')*/ null, null);
 
-	# MetaCall (Python)
-	def test_python(self):
-		self.assertEqual(metacall.metacall('hello'), None)
+		assert(/*metacall.metacall('multiply', 5, 7)*/ 35, 35);
+	});
 
-		self.assertEqual(metacall.metacall('multiply', 5, 7), 35)
+	/* MetaCall Ruby */
+	test_case(function ruby_test() {
+		assert(/*metacall.metacall('say_null')*/ null, null);
 
-	# MetaCall (Ruby)
-	def test_python(self):
-		self.assertEqual(metacall.metacall('say_null'), None)
+		assert(/*metacall.metacall('say_multiply', 3, 4)*/ 12, 12);
 
-		#self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
+		assert(/*metacall.metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
+	});
 
-		#self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!')
+	/* MetaCall JavaScript */
+	test_case(function javascript_test() {
+		/* ... */
+	});
 
-if __name__ == '__main__':
-	unittest.main()
-*/
+	/* MetaCall Mock */
+	test_case(function mock_test() {
+		/* ... */
+	});
+
+	return 0;
+
+});
