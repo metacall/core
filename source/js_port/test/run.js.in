@@ -1,40 +1,42 @@
-//#!/usr/bin/d8
+#!/usr/bin/metacall-d8
 
-os.setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
-os.setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
-
-load('@JS_PORT_TEST_BINARY_PATH@/js_port_test_utility.js');
-/*load('metacall.js');*/
+(function environment() {
+	if (typeof os !== 'undefined') {
+		os.setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
+		os.setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
+	}
+})();
 
 /* MetaCall Test */
-test(function main() {
+(function main() {
+
+	/*print(metacall_print_info());*/
 
 	/* MetaCall Python */
-	test_case(function python_test() {
+	(function python_test() {
 		assert(/*metacall.metacall('hello')*/ null, null);
 
 		assert(/*metacall.metacall('multiply', 5, 7)*/ 35, 35);
-	});
+	})();
 
 	/* MetaCall Ruby */
-	test_case(function ruby_test() {
+	(function ruby_test() {
 		assert(/*metacall.metacall('say_null')*/ null, null);
 
 		assert(/*metacall.metacall('say_multiply', 3, 4)*/ 12, 12);
 
 		assert(/*metacall.metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
-	});
+	})();
 
 	/* MetaCall JavaScript */
-	test_case(function javascript_test() {
+	(function javascript_test() {
 		/* ... */
-	});
+	})();
 
 	/* MetaCall Mock */
-	test_case(function mock_test() {
+	(function mock_test() {
 		/* ... */
-	});
+	})();
 
 	return 0;
-
-});
+})();

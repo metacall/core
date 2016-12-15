@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(V8)
+find_package(V8 5.1)
 
 if(NOT V8_FOUND)
     message(STATUS "V8 libraries not found")
@@ -173,6 +173,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 swig_link_libraries(${target}
     PRIVATE
     ${METACALL_LIBRARIES}
+
     ${V8_LIBRARIES} # V8 libraries
 
     PUBLIC
@@ -253,29 +254,131 @@ install(EXPORT ${target}-export
 )
 
 #
-# Configure test
+# Test name and options
 #
 
-set(JS_PORT_TEST_BINARY_PATH ${CMAKE_BINARY_DIR})
-
+# Test name
 set(js_port_test "${target}_test")
-set(js_port_test_path "${JS_PORT_TEST_BINARY_PATH}/${js_port_test}.js")
+
+# Exit here if required dependencies are not met
+message(STATUS "Test ${js_port_test}")
+
+# Set API export file and macro
+string(TOUPPER ${js_port_test} js_port_test_upper)
+
+#
+# Configure test scripts
+#
+
+set(js_port_test_path "${CMAKE_BINARY_DIR}/${js_port_test}.js")
 
 configure_file(test/run.js.in ${js_port_test_path})
 
-set(js_port_test_utility "${js_port_test}_utility")
-set(js_port_test_utility_path "test/${js_port_test_utility}.js")
+#
+# Configure test executable
+#
 
-file(COPY ${js_port_test_utility_path}
-    DESTINATION ${JS_PORT_TEST_BINARY_PATH}
+add_executable(${js_port_test}
+    MACOSX_BUNDLE
+    test/main.cpp
+)
+
+# Export library for downstream projects
+export(TARGETS ${js_port_test} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${js_port_test}/${js_port_test}-export.cmake)
+
+#
+# Project options
+#
+
+set_target_properties(${js_port_test}
+    PROPERTIES
+    ${DEFAULT_PROJECT_OPTIONS}
+    FOLDER "${IDE_FOLDER}"
 )
 
 #
-# Define test
+# Include directories
+#
+
+target_include_directories(${js_port_test}
+    PRIVATE
+    ${PROJECT_BINARY_DIR}/source/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_BINARY_DIR}/include
+
+    ${V8_INCLUDE_DIR} # V8 includes
+
+    PUBLIC
+    ${DEFAULT_INCLUDE_DIRECTORIES}
+
+    INTERFACE
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
+
+#
+# Libraries
+#
+
+target_link_libraries(${js_port_test}
+    PRIVATE
+    ${META_PROJECT_NAME}::${target}
+
+    ${V8_LIBRARIES} # V8 library
+
+    PUBLIC
+    ${DEFAULT_LIBRARIES}
+
+    INTERFACE
+)
+
+#
+# Compile definitions
+#
+
+target_compile_definitions(${js_port_test}
+    PRIVATE
+
+    PUBLIC
+    $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
+    ${DEFAULT_COMPILE_DEFINITIONS}
+
+    INTERFACE
+)
+
+#
+# Compile options
+#
+
+target_compile_options(${js_port_test}
+    PRIVATE
+
+    PUBLIC
+    ${DEFAULT_COMPILE_OPTIONS}
+
+    INTERFACE
+)
+
+#
+# Linker options
+#
+
+target_link_libraries(${js_port_test}
+    PRIVATE
+
+    PUBLIC
+    ${DEFAULT_LINKER_OPTIONS}
+
+    INTERFACE
+)
+
+#
+# Define test command
 #
 
 add_test(NAME ${target}
-    COMMAND ${V8_EXECUTABLE} ${js_port_test_path}
+    COMMAND ${js_port_test} ${js_port_test_path}
 )
 
 #
@@ -284,8 +387,4 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
     PROPERTY LABELS ${js_port_test}
-)
-
-set_property(TEST ${target}
-    PROPERTY WORKING_DIRECTORY ${JS_PORT_TEST_BINARY_PATH}
 )
