@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(V8)
+find_package(V8 5.1)
 
 if(NOT V8_FOUND)
     message(STATUS "V8 libraries not found")
