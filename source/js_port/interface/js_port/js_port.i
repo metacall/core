@@ -12,6 +12,7 @@
 /* -- Headers -- */
 
 #ifdef SWIG
+
 	%module js_port
 
 	%{
@@ -51,6 +52,19 @@
 
 	%include <metacall/metacall.h>
 
-#endif
+
+	%{
+		#include <dynlink/dynlink.h>
+
+		#if (NODE_MODULE_VERSION < 0x000C)
+			extern "C" void js_port_initialize(v8::Handle<v8::Object> exports);
+		#else
+			extern "C" void js_port_initialize(v8::Handle<v8::Object> exports, v8::Handle<v8::Object> module);
+		#endif
+
+		extern "C" DYNLINK_SYMBOL_EXPORT(js_port_initialize);
+	%}
+
+#endif /* SWIG */
 
 #endif /* METACALL_SWIG_WRAPPER_JS_PORT_I */

@@ -21,9 +21,22 @@
 #	include <v8-debug.h>
 #endif /* ENALBLE_DEBUGGER_SUPPORT */
 
+#include <log/log.h>
+#include <dynlink/dynlink.h>
+
+#include <map>
+
 /* -- Namespaces -- */
 
 using namespace v8;
+
+/* -- Type Definitions -- */
+
+#if (NODE_MODULE_VERSION < 0x000C)
+	typedef void (*module_initialize)(Handle<Object>);
+#else
+	typedef void (*module_initialize)(Handle<Object>, Handle<Object>);
+#endif
 
 /* -- Methods -- */
 
@@ -33,21 +46,19 @@ int RunMain(Isolate* isolate, Platform* platform, int argc, char * argv[]);
 bool ExecuteString(Isolate* isolate, Local<String> source, Local<Value> name, bool print_result, bool report_exceptions);
 void Print(const FunctionCallbackInfo<Value>& args);
 void Read(const FunctionCallbackInfo<Value>& args);
+int StrEndsWith(const char * const str, const char * const suffix);
+void ModulesClear(void);
 void Load(const FunctionCallbackInfo<Value>& args);
 void Quit(const FunctionCallbackInfo<Value>& args);
 void Version(const FunctionCallbackInfo<Value>& args);
 void Assert(const FunctionCallbackInfo<Value>& args);
+void SetEnv(const FunctionCallbackInfo<Value>& args);
 MaybeLocal<String> ReadFile(Isolate* isolate, const char * name);
 void ReportException(Isolate* isolate, TryCatch* handler);
 
-#if (NODE_MODULE_VERSION < 0x000C)
-	void js_port_initialize(Handle<Object> exports);
-#else
-	void js_port_initialize(Handle<Object> exports, Handle<Object> /*module*/);
-#endif
-
 /* -- Member Data -- */
 
+static std::map<std::string, dynlink> module_map;
 static bool run_shell;
 
 /* -- Classes -- */
@@ -74,6 +85,13 @@ class ShellArrayBufferAllocator : public ArrayBuffer::Allocator
 
 int main(int argc, char * argv[])
 {
+	/* Initialize MetaCall Log */
+	log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout));
+
 	V8::InitializeICU();
 
 	V8::InitializeExternalStartupData(argv[0]);
@@ -117,6 +135,8 @@ int main(int argc, char * argv[])
 			RunShell(context, platform);
 		}
 	}
+
+	ModulesClear();
 
 	isolate->Dispose();
 
@@ -171,17 +191,13 @@ Local<Context> CreateShellContext(Isolate* isolate)
 		String::NewFromUtf8(isolate, "assert", NewStringType::kNormal)
 		.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Assert));
+	// Bind the global 'assert' function to the C++ SetEnv callback.
+	global->Set(
+		String::NewFromUtf8(isolate, "setenv", NewStringType::kNormal)
+		.ToLocalChecked(),
+		FunctionTemplate::New(isolate, SetEnv));
 
-	Local<Context> ctx = Context::New(isolate, NULL, global);
-
-	/* MetaCall JS Port Bindings */
-	#if (NODE_MODULE_VERSION < 0x000C)
-		js_port_initialize(ctx->Global());
-	#else
-		js_port_initialize(ctx->Global(), NULL);
-	#endif
-
-	return ctx;
+	return Context::New(isolate, NULL, global);
 }
 
 // The callback that is invoked by v8 whenever the JavaScript 'print'
@@ -241,6 +257,30 @@ void Read(const FunctionCallbackInfo<Value>& args)
 	args.GetReturnValue().Set(source);
 }
 
+int StrEndsWith(const char * const str, const char * const suffix)
+{
+	if (str == NULL || suffix == NULL)
+	{
+		return 1;
+	}
+
+	size_t str_len = strlen(str);
+	size_t suffix_len = strlen(suffix);
+
+	if (str_len < suffix_len)
+		return 1;
+
+	return strncmp(&str[str_len - suffix_len], suffix, suffix_len);
+}
+
+void ModulesClear()
+{
+	for (std::map<std::string, dynlink>::iterator it = module_map.begin();
+			it != module_map.end(); ++it)
+	{
+		dynlink_unload(it->second);
+	}
+}
 
 // The callback that is invoked by v8 whenever the JavaScript 'load'
 // function is called.	Loads, compiles and executes its argument
@@ -250,7 +290,9 @@ void Load(const FunctionCallbackInfo<Value>& args)
 	for (int i = 0; i < args.Length(); i++)
 	{
 		HandleScope handle_scope(args.GetIsolate());
+
 		String::Utf8Value file(args[i]);
+
 		if (*file == NULL)
 		{
 			args.GetIsolate()->ThrowException(
@@ -258,20 +300,76 @@ void Load(const FunctionCallbackInfo<Value>& args)
 				NewStringType::kNormal).ToLocalChecked());
 			return;
 		}
-		Local<String> source;
-		if (!ReadFile(args.GetIsolate(), *file).ToLocal(&source))
+
+		const char * file_str = ToCString(file);
+
+		if (StrEndsWith(file_str, ".js") != 0)
 		{
-			args.GetIsolate()->ThrowException(
-				String::NewFromUtf8(args.GetIsolate(), "Error loading file",
-				NewStringType::kNormal).ToLocalChecked());
-			return;
+			dynlink lib = dynlink_load(NULL, file_str, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+
+			if (lib == NULL)
+			{
+				args.GetIsolate()->ThrowException(
+					String::NewFromUtf8(args.GetIsolate(), "Error loading library",
+					NewStringType::kNormal).ToLocalChecked());
+				return;
+			}
+
+			static dynlink_symbol_addr module_initialize_addr = NULL;
+
+			dynlink_symbol_name_man symbol_str_man;
+
+			std::string symbol_str(file_str);
+
+			const char symbol_suffix[] = "_initialize";
+
+			symbol_str += symbol_suffix;
+
+			dynlink_symbol_name_mangle(symbol_str.c_str(), symbol_str_man);
+
+			printf("Loading entry point: %s\n", symbol_str_man);
+
+			if (dynlink_symbol(lib, symbol_str_man, &module_initialize_addr) != 0 ||
+				module_initialize_addr == NULL)
+			{
+				args.GetIsolate()->ThrowException(
+					String::NewFromUtf8(args.GetIsolate(), "Error loading library, not entry point found",
+					NewStringType::kNormal).ToLocalChecked());
+				return;
+			}
+
+			module_initialize module_init = (module_initialize)DYNLINK_SYMBOL_GET(module_initialize_addr);
+
+			/* MetaCall JS Port Bindings */
+			/*
+			#if (NODE_MODULE_VERSION < 0x000C)
+				module_init(ctx->Global());
+			#else
+				module_init(ctx->Global(), NULL);
+			#endif
+			*/
+
+			module_map[file_str] = lib;
 		}
-		if (!ExecuteString(args.GetIsolate(), source, args[i], false, false))
+		else
 		{
-			args.GetIsolate()->ThrowException(
-				String::NewFromUtf8(args.GetIsolate(), "Error executing file",
-				NewStringType::kNormal).ToLocalChecked());
-			return;
+			Local<String> source;
+
+			if (!ReadFile(args.GetIsolate(), file_str).ToLocal(&source))
+			{
+				args.GetIsolate()->ThrowException(
+					String::NewFromUtf8(args.GetIsolate(), "Error loading file",
+					NewStringType::kNormal).ToLocalChecked());
+				return;
+			}
+
+			if (!ExecuteString(args.GetIsolate(), source, args[i], false, false))
+			{
+				args.GetIsolate()->ThrowException(
+					String::NewFromUtf8(args.GetIsolate(), "Error executing file",
+					NewStringType::kNormal).ToLocalChecked());
+				return;
+			}
 		}
 	}
 }
@@ -285,6 +383,9 @@ void Quit(const FunctionCallbackInfo<Value>& args)
 	// converts to the integer value 0.
 	int exit_code =
 		args[0]->Int32Value(args.GetIsolate()->GetCurrentContext()).FromMaybe(0);
+
+	ModulesClear();
+
 	fflush(stdout);
 	fflush(stderr);
 	exit(exit_code);
@@ -314,6 +415,46 @@ void Assert(const FunctionCallbackInfo<Value>& args)
 	assert(result);
 
 	args.GetReturnValue().Set(result);
+}
+
+
+void SetEnv(const FunctionCallbackInfo<Value>& args)
+{
+	if (args.Length() != 2)
+	{
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "setenv() invalid number of arguments",
+			NewStringType::kNormal).ToLocalChecked());
+
+		return;
+	}
+
+	String::Utf8Value env_str(args[0]);
+	String::Utf8Value value_str(args[1]);
+
+	if (*env_str == NULL)
+	{
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "setenv() invalid environment variable name",
+			NewStringType::kNormal).ToLocalChecked());
+
+		return;
+	}
+
+	if (*value_str == NULL)
+	{
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "setenv() invalid environment variable value",
+			NewStringType::kNormal).ToLocalChecked());
+
+		return;
+	}
+
+	#ifdef V8_OS_WIN
+		_putenv_s(*env_str, *value_str);
+	#else
+		setenv(*env_str, *value_str, 1);
+	#endif
 }
 
 

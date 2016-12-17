@@ -155,6 +155,8 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}/include
 
+    ${METACALL_INCLUDE_DIRS}
+
     ${V8_INCLUDE_DIR} # V8 includes
 
     PUBLIC
@@ -323,7 +325,7 @@ target_include_directories(${js_port_test}
 
 target_link_libraries(${js_port_test}
     PRIVATE
-    ${META_PROJECT_NAME}::${target}
+    ${METACALL_LIBRARIES}
 
     ${V8_LIBRARIES} # V8 library
 

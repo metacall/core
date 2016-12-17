@@ -1,11 +1,13 @@
 #!/usr/bin/metacall-d8
 
+/* Environment */
 (function environment() {
-	if (typeof os !== 'undefined') {
-		os.setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
-		os.setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
-	}
+	setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
+	setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
 })();
+
+/* Load MetaCall */
+load('js_port');
 
 /* MetaCall Test */
 (function main() {
