@@ -16,6 +16,7 @@
 #include <dynlink/dynlink_flags.h>
 #include <dynlink/dynlink_type.h>
 #include <dynlink/dynlink_interface.h>
+#include <dynlink/dynlink_symbol.h>
 
 #ifdef __cplusplus
 extern "C" {

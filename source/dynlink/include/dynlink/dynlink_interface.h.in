@@ -18,6 +18,9 @@
 #include <dynlink/dynlink_impl_@DYNLINK_IMPL_INTERFACE_NAME@.h>
 #include <dynlink/dynlink_impl.h>
 
+#include <preprocessor/preprocessor_stringify.h>
+#include <preprocessor/preprocessor_concatenation.h>
+
 #include <stdlib.h>
 
 #ifdef __cplusplus
@@ -26,20 +29,17 @@ extern "C" {
 
 /* -- Macros -- */
 
-#define CONCAT_IMPL(a, b) a ## b
-#define CONCAT(a, b) CONCAT_IMPL(a, b)
-
-#define STRINGIFY_IMPL(...) # __VA_ARGS__
-#define STRINGIFY(token) STRINGIFY_IMPL(token)
+#define DYNLINK_SYMBOL_PREFIX_STR() \
+	PREPROCESSOR_STRINGIFY(DYNLINK_SYMBOL_PREFIX)
 
 #define DYNLINK_SYMBOL_NAME(name) \
-	CONCAT(DYNLINK_SYMBOL_PREFIX, name)
+	PREPROCESSOR_CONCAT(DYNLINK_SYMBOL_PREFIX, name)
 
 #define DYNLINK_SYMBOL_NAME_STR(name) \
-	STRINGIFY(DYNLINK_SYMBOL_NAME(name))
+	PREPROCESSOR_STRINGIFY(DYNLINK_SYMBOL_NAME(name))
 
 #define DYNLINK_SYMBOL_STR(name) \
-	STRINGIFY(DYNLINK_SYMBOL_PREFIX) name
+	DYNLINK_SYMBOL_PREFIX_STR() name
 
 /* -- Type definitions -- */
 

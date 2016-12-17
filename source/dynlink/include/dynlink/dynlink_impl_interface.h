@@ -20,14 +20,6 @@
 extern "C" {
 #endif
 
-/* -- Macros -- */
-
-#define DYNLINK_SYMBOL_NAME(name) \
-	CONCAT(dynlink_symbol_, name)
-
-#define DYNLINK_SYMBOL_NAME_STR(name) \
-	STRINGIFY(DYNLINK_SYMBOL_NAME(name))
-
 /* -- Type definitions -- */
 
 typedef const char * (*dynlink_impl_interface_extension)(void);
