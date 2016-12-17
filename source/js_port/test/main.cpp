@@ -327,8 +327,6 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 			dynlink_symbol_name_mangle(symbol_str.c_str(), symbol_str_man);
 
-			printf("Loading entry point: %s\n", symbol_str_man);
-
 			if (dynlink_symbol(lib, symbol_str_man, &module_initialize_addr) != 0 ||
 				module_initialize_addr == NULL)
 			{
@@ -340,14 +338,14 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 			module_initialize module_init = (module_initialize)DYNLINK_SYMBOL_GET(module_initialize_addr);
 
+			printf("Loading entry point: %s (%p)\n", symbol_str_man, module_init);
+
 			/* MetaCall JS Port Bindings */
-			/*
-			#if (NODE_MODULE_VERSION < 0x000C)
-				module_init(ctx->Global());
+			/*#if (NODE_MODULE_VERSION < 0x000C)
+				module_init(Context::GetCurrent()->Global());
 			#else
-				module_init(ctx->Global(), NULL);
-			#endif
-			*/
+				module_init(Context::GetCurrent()->Global(), NULL);
+			#endif*/
 
 			module_map[file_str] = lib;
 		}
