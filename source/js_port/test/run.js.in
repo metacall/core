@@ -12,7 +12,7 @@ load('js_port');
 /* MetaCall Test */
 (function main() {
 
-	/*print(metacall_print_info());*/
+	print(metacall_print_info());
 
 	/* MetaCall Python */
 	(function python_test() {

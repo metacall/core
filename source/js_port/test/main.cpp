@@ -157,7 +157,6 @@ const char * ToCString(const String::Utf8Value& value)
 	return *value ? *value : "<string conversion failed>";
 }
 
-
 // Creates a new execution environment containing the built-in
 // functions.
 Local<Context> CreateShellContext(Isolate* isolate)
@@ -224,7 +223,6 @@ void Print(const FunctionCallbackInfo<Value>& args)
 	printf("\n");
 	fflush(stdout);
 }
-
 
 // The callback that is invoked by v8 whenever the JavaScript 'read'
 // function is called.	This function loads the content of the file named in
@@ -341,11 +339,14 @@ void Load(const FunctionCallbackInfo<Value>& args)
 			printf("Loading entry point: %s (%p)\n", symbol_str_man, module_init);
 
 			/* MetaCall JS Port Bindings */
-			/*#if (NODE_MODULE_VERSION < 0x000C)
-				module_init(Context::GetCurrent()->Global());
+			Local<Context> context(args.GetIsolate()->GetCurrentContext());
+			Local<Object> global(context->Global());
+
+			#if (NODE_MODULE_VERSION < 0x000C)
+				module_init(global);
 			#else
-				module_init(Context::GetCurrent()->Global(), NULL);
-			#endif*/
+				module_init(global, NULL);
+			#endif
 
 			module_map[file_str] = lib;
 		}
@@ -372,7 +373,6 @@ void Load(const FunctionCallbackInfo<Value>& args)
 	}
 }
 
-
 // The callback that is invoked by v8 whenever the JavaScript 'quit'
 // function is called.	Quits.
 void Quit(const FunctionCallbackInfo<Value>& args)
@@ -389,14 +389,12 @@ void Quit(const FunctionCallbackInfo<Value>& args)
 	exit(exit_code);
 }
 
-
 void Version(const FunctionCallbackInfo<Value>& args)
 {
 	args.GetReturnValue().Set(
 		String::NewFromUtf8(args.GetIsolate(), V8::GetVersion(),
 		NewStringType::kNormal).ToLocalChecked());
 }
-
 
 void Assert(const FunctionCallbackInfo<Value>& args)
 {
@@ -414,7 +412,6 @@ void Assert(const FunctionCallbackInfo<Value>& args)
 
 	args.GetReturnValue().Set(result);
 }
-
 
 void SetEnv(const FunctionCallbackInfo<Value>& args)
 {
@@ -455,7 +452,6 @@ void SetEnv(const FunctionCallbackInfo<Value>& args)
 	#endif
 }
 
-
 // Reads a file into a v8 string.
 MaybeLocal<String> ReadFile(Isolate* isolate, const char * name)
 {
@@ -490,7 +486,6 @@ MaybeLocal<String> ReadFile(Isolate* isolate, const char * name)
 	delete[] chars;
 	return result;
 }
-
 
 // Process remaining command line arguments and execute files
 int RunMain(Isolate* isolate, Platform* platform, int argc,
@@ -551,7 +546,6 @@ int RunMain(Isolate* isolate, Platform* platform, int argc,
 	return 0;
 }
 
-
 // The read-eval-execute loop of the shell.
 void RunShell(Local<Context> context, Platform* platform)
 {
@@ -579,7 +573,6 @@ void RunShell(Local<Context> context, Platform* platform)
 	}
 	fprintf(stderr, "\n");
 }
-
 
 // Executes a string within the current v8 context.
 bool ExecuteString(Isolate* isolate, Local<String> source,
@@ -624,7 +617,6 @@ bool ExecuteString(Isolate* isolate, Local<String> source,
 		}
 	}
 }
-
 
 void ReportException(Isolate* isolate, TryCatch* try_catch)
 {
