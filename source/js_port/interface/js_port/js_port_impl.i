@@ -22,80 +22,99 @@ extern "C" {
 */
 %typemap(in) (const char * name, ...)
 {
-	value * args;
+	value * vargs;
 	size_t args_size, args_count;
 
 	/* Format string */
-	/*$1 = PyUnicode_AsUTF8($input);*/
+	String::Utf8Value str_name($input);
+
+	$1 = *str_name;
 
 	/* Variable length arguments */
-	/*
-	args_size = PyTuple_Size(varargs);
+	args_size = args.Length();
 
 	if (args_size == 0)
 	{
-		PyErr_SetString(PyExc_ValueError, "Invalid number of arguments");
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "Invalid number of arguments",
+			NewStringType::kNormal).ToLocalChecked());
 
-		return Py_None;
-	}*/
+		return;
+	}
+
+	/* Remove first argument */
+	--args_size;
 
 	/* TODO: Remove this by a local array? */
-	/*args = (value *) malloc(args_size * sizeof(value));
+	vargs = (value *) malloc(args_size * sizeof(value));
 
-	if (args == NULL)
+	if (vargs == NULL)
 	{
-		PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "Invalid argument allocation",
+			NewStringType::kNormal).ToLocalChecked());
 
 		SWIG_fail;
 
-		return NULL;
+		return;
 	}
 
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
-		PyObject * py_arg = PyTuple_GetItem(varargs, args_count);
+		Local<Value> js_arg = args[args_count + 1];
 
-		if (PyBool_Check(py_arg))
+		if (js_arg->IsBoolean())
 		{
-			boolean b = (PyObject_IsTrue(py_arg) == 1) ? 1L : 0L;
+			boolean b = (js_arg->BooleanValue() == true) ? 1L : 0L;
 
- 			args[args_count] = value_create_bool(b);
+ 			vargs[args_count] = value_create_bool(b);
 		}
-		*//*if (PyInt_Check(py_arg))
+		else if (js_arg->IsInt32())
 		{
-			args[args_count] = value_create_int((int) PyInt_AsLong(py_arg));
-		}
-		*//*else if (PyLong_Check(py_arg))
-		{
-			args[args_count] = value_create_long(PyLong_AsLong(py_arg));
-		}
-		else if (PyFloat_Check(py_arg))
-		{
-			args[args_count] = value_create_double(PyFloat_AsDouble(py_arg));
-		}
-		else if (PyUnicode_Check(py_arg))
-		{
-			Py_ssize_t size;
+			/* Assume int is at least 32-bit width */
+			int i = (int)js_arg->Int32Value();
 
-			const char * str = PyUnicode_AsUTF8AndSize(py_arg, &size);
+			vargs[args_count] = value_create_int(i);
+		}
+		/*else if (js_arg->IsInteger())
+		{
+			*//* Assume long is at least 64-bit width *//*
+			long l = (long)js_arg->IntegerValue();
 
-			args[args_count] = value_create_string(str, (size_t)size);
+			vargs[args_count] = value_create_long(l);
+		}*/
+		else if (js_arg->IsNumber())
+		{
+			double d = js_arg->NumberValue();
+
+			vargs[args_count] = value_create_double(d);
+		}
+		else if (js_arg->IsString())
+		{
+			String::Utf8Value str(js_arg->ToString(args.GetIsolate()));
+
+			vargs[args_count] = value_create_string(*str, str.length());
+		}
+		else if (js_arg->IsNull() || js_arg->IsUndefined())
+		{
+			vargs[args_count] = NULL;
 		}
 		else
 		{
-			*//* TODO: Remove this by a local array? *//*
-			free(args);
+			/* TODO: Remove this by a local array? */
+			free(vargs);
 
-			PyErr_SetString(PyExc_ValueError, "Unsupported argument type");
+			args.GetIsolate()->ThrowException(
+				String::NewFromUtf8(args.GetIsolate(), "Unsupported argument type",
+				NewStringType::kNormal).ToLocalChecked());
 
 			SWIG_fail;
 
-			return NULL;
+			return;
 		}
 	}
 
-	$2 = (void *) args;
-	*/
+	$2 = (void *) vargs;
 }
 
 /* -- Features -- */
@@ -111,93 +130,109 @@ extern "C" {
 %feature("action") metacall
 {
 	size_t args_count, args_size;
-	value * args, ret;
+	value * vargs, ret;
 
-	/*args_size = PyTuple_Size(varargs);
-	args = (value *) arg2;*/
+	args_size = args.Length() - 1;
+	vargs = (value *) arg2;
 
 	/* Execute call */
-	/*ret = metacallv(arg1, args);*/
+	ret = metacallv(arg1, vargs);
 
 	/* Clear args */
-	/*for (args_count = 0; args_count < args_size; ++args_count)
+	for (args_count = 0; args_count < args_size; ++args_count)
 	{
-		value_destroy(args[args_count]);
-	}*/
+		value_destroy(vargs[args_count]);
+	}
 
 	/* TODO: Remove this by a local array? */
-	/*free(args);*/
+	free(vargs);
 
 	/* Return value */
-	/*if (ret != NULL)
+	if (ret != NULL)
 	{
 		switch (value_type_id(ret))
 		{
 
 			case TYPE_BOOL :
 			{
-				$result = PyBool_FromLong((long)value_to_bool(ret));
+				bool b = ((long)value_to_bool(ret) == 1L ? true : false);
+
+				$result = Boolean::New(args.GetIsolate(), b);
 
 				break;
 			}
 
 			case TYPE_CHAR :
 			{
-				*//*$result = PyInt_FromLong((long)value_to_char(ret));*//*
-				$result = PyLong_FromLong((long)value_to_char(ret));
+				char c = value_to_char(ret);
+
+				$result = String::NewFromUtf8(args.GetIsolate(), &c, String::kNormalString, 1);
 
 				break;
 			}
 
 			case TYPE_SHORT :
 			{
-				*//*$result = PyInt_FromLong((long)value_to_short(ret));*//*
-				$result = PyLong_FromLong((long)value_to_short(ret));
+				short s = value_to_short(ret);
+
+				$result = Integer::New(args.GetIsolate(), (int32_t)s);
 
 				break;
 			}
 
 			case TYPE_INT :
 			{
-				*//*$result = PyInt_FromLong((long)value_to_int(ret));*//*
-				$result = PyLong_FromLong((long)value_to_int(ret));
+				int i = value_to_int(ret);
+
+				$result = Integer::New(args.GetIsolate(), (int32_t)i);
 
 				break;
 			}
 
 			case TYPE_LONG :
 			{
-				$result = PyLong_FromLong(value_to_long(ret));
+				long l = value_to_long(ret);
+
+				/* TODO: Check cast... */
+				$result = Integer::New(args.GetIsolate(), (int32_t)l);
 
 				break;
 			}
 
 			case TYPE_FLOAT :
 			{
-				$result = PyFloat_FromDouble((double)value_to_float(ret));
+				float f = value_to_float(ret);
+
+				$result = Number::New(args.GetIsolate(), (double)f);
 
 				break;
 			}
 
 			case TYPE_DOUBLE :
 			{
-				$result = PyFloat_FromDouble(value_to_double(ret));
+				double d = value_to_double(ret);
+
+				$result = Number::New(args.GetIsolate(), d);
 
 				break;
 			}
 
 			case TYPE_STRING :
 			{
-				$result = PyUnicode_FromString(value_to_string(ret));
+				const char * str = value_to_string(ret);
+
+				$result = String::NewFromUtf8(args.GetIsolate(), str);
 
 				break;
 			}
 
 			default :
 			{
-				PyErr_SetString(PyExc_ValueError, "Unsupported return type");
+				args.GetIsolate()->ThrowException(
+					String::NewFromUtf8(args.GetIsolate(), "Unsupported return type",
+					NewStringType::kNormal).ToLocalChecked());
 
-				$result = Py_None;
+				$result = Null(args.GetIsolate());
 			}
 		}
 
@@ -205,11 +240,10 @@ extern "C" {
 	}
 	else
 	{
-		$result = Py_None;
+		$result = Null(args.GetIsolate());
 	}
 
-	return $result;
-	*/
+	SWIGV8_RETURN($result);
 }
 
 #ifdef __cplusplus
