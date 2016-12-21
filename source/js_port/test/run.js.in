@@ -16,28 +16,36 @@ load('js_port');
 
 	/* MetaCall Python */
 	(function python_test() {
-		assert(/*metacall.metacall('hello')*/ null, null);
+		assert(/*metacall('hello')*/ null, null);
 
-		assert(/*metacall.metacall('multiply', 5, 7)*/ 35, 35);
+		assert(/*metacall('multiply', 5, 7)*/ 35, 35);
 	})();
 
 	/* MetaCall Ruby */
 	(function ruby_test() {
-		assert(/*metacall.metacall('say_null')*/ null, null);
+		assert(/*metacall('say_null')*/ null, null);
 
-		assert(/*metacall.metacall('say_multiply', 3, 4)*/ 12, 12);
+		assert(/*metacall('say_multiply', 3, 4)*/ 12, 12);
 
-		assert(/*metacall.metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
+		assert(/*metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
 	})();
 
-	/* MetaCall JavaScript */
+	/* MetaCall JavaScript V8 */
 	(function javascript_test() {
-		/* ... */
+		assert(/*metacall('say_divide', 32.0, 4.0)*/ 8.0, 8.0);
+
+		assert(/*metacall('some_text', 'abc', 'def')*/ 'abcdef', 'abcdef');
 	})();
 
 	/* MetaCall Mock */
 	(function mock_test() {
-		/* ... */
+		assert(/*metacall('my_empty_func')*/ 1234, 1234);
+
+		assert(/*metacall('two_doubles', 3.14, 68.3)*/ 3.1416, 3.1416);
+
+		assert(/*metacall('mixed_args', 'E', 16, 34, 4.6, 'hello')*/ 'A', 'A');
+
+		assert(/*metacall('new_args', 'goodbye')*/ 'Hello World', 'Hello World');
 	})();
 
 	return 0;
