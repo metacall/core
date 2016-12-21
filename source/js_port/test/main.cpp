@@ -110,7 +110,7 @@ int main(int argc, char * argv[])
 
 	create_params.array_buffer_allocator = &array_buffer_allocator;
 
-	Isolate* isolate = Isolate::New(create_params);
+	Isolate * isolate = Isolate::New(create_params);
 
 	run_shell = (argc == 1);
 
