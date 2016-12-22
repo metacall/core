@@ -52,7 +52,7 @@ jmp_args_check:
 	}
 
 	/* TODO: Remove this by a local array? */
-	/*vargs = (value *) malloc(args_size * sizeof(value));*/
+	/*vargs = (value *) malloc(args_size * sizeof(value));
 
 	if (vargs == NULL)
 	{
@@ -63,7 +63,7 @@ jmp_args_check:
 		SWIG_fail;
 
 		return;
-	}
+	}*/
 
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
