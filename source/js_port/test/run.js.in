@@ -40,12 +40,12 @@ load('js_port');
 	/* MetaCall Mock */
 	(function mock_test() {
 		assert(metacall('my_empty_func'), 1234);
-/*
+
 		assert(metacall('two_doubles', 3.14, 68.3), 3.1416);
 
 		assert(metacall('mixed_args', 'E', 16, 34, 4.6, 'hello'), 'A');
 
-		assert(metacall('new_args', 'goodbye'), 'Hello World');*/
+		assert(metacall('new_args', 'goodbye'), 'Hello World');
 	})();
 
 	return 0;

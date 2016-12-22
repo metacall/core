@@ -20,9 +20,13 @@ extern "C" {
 *    Transform variadic arguments from JavaScript into
 *    a valid metacallv format with values
 */
-%typemap(in) (const char * name, ...)
+%typemap(in) (const char * name, ...)(void * vargs[16], goto jmp_args_check)
 {
-	value * vargs;
+
+/* Go to trick in order to avoid argument size checking */
+jmp_args_check:
+
+	/*value * vargs;*/
 	size_t args_size, args_count;
 
 	/* Format string */
@@ -41,12 +45,14 @@ extern "C" {
 
 		return;
 	}
-
-	/* Remove first argument */
-	--args_size;
+	else
+	{
+		/* Remove first argument */
+		--args_size;
+	}
 
 	/* TODO: Remove this by a local array? */
-	vargs = (value *) malloc(args_size * sizeof(value));
+	/*vargs = (value *) malloc(args_size * sizeof(value));*/
 
 	if (vargs == NULL)
 	{
@@ -102,7 +108,7 @@ extern "C" {
 		else
 		{
 			/* TODO: Remove this by a local array? */
-			free(vargs);
+			/*free(vargs);*/
 
 			args.GetIsolate()->ThrowException(
 				String::NewFromUtf8(args.GetIsolate(), "Unsupported argument type",
@@ -145,7 +151,7 @@ extern "C" {
 	}
 
 	/* TODO: Remove this by a local array? */
-	free(vargs);
+	/*free(vargs);*/
 
 	/* Return value */
 	if (ret != NULL)
