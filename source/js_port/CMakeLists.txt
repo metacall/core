@@ -401,7 +401,6 @@ set(js_port_post_generated_file "${swig_generated_file_fullname}.post")
 add_custom_command(
     TARGET ${target}
     PRE_BUILD
-#    COMMAND grep -v '${js_port_args_check}' ${swig_generated_file_fullname} > ${js_port_post_generated_file}
     COMMAND ${CMAKE_COMMAND}
         -DSWIG_GENERATED_FILE=${swig_generated_file_fullname}
         -DOUTPUT_GENERATED_FILE=${js_port_post_generated_file}

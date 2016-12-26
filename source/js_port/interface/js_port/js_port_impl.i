@@ -20,12 +20,8 @@ extern "C" {
 *    Transform variadic arguments from JavaScript into
 *    a valid metacallv format with values
 */
-%typemap(in) (const char * name, ...)(void * vargs[16]/*, goto jmp_args_check*/)
+%typemap(in) (const char * name, ...)(void * vargs[16])
 {
-
-/* Go to trick in order to avoid argument size checking */
-/*jmp_args_check:*/
-
 	/*value * vargs;*/
 	size_t args_size, args_count;
 
