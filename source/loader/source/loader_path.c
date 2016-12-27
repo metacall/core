@@ -12,7 +12,8 @@ int loader_path_get_name(const loader_naming_path path, loader_naming_name name)
 {
 	int i, count, last;
 
-	for (i = 0, count = 0, last = 0; path[i] != '\0' && i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE; ++i)
+	for (i = 0, count = 0, last = 0; path[i] != '\0' &&
+		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
 	{
 		name[count++] = path[i];
 
@@ -35,7 +36,8 @@ int loader_path_get_extension(const loader_naming_path path, loader_naming_exten
 {
 	int i, count;
 
-	for (i = 0, count = 0; path[i] != '\0' && i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_EXTENSION_SIZE; ++i)
+	for (i = 0, count = 0; path[i] != '\0' &&
+		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_EXTENSION_SIZE*/; ++i)
 	{
 		extension[count++] = path[i];
 

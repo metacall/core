@@ -53,11 +53,15 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 	signature s = function_signature(func);
 
+	const char * name = function_name(func);
+
 	type ret_type = signature_get_return(s);
 
 	const size_t args_size = signature_count(s);
 
 	(void)mock_function;
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Invoking mock function %s", name);
 
 	if (args_size > 0)
 	{
