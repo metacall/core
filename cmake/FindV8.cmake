@@ -85,8 +85,8 @@ find_path(V8_INCLUDE_DIR ${V8_HEADERS}
 )
 
 # Define library names
-set(V8_NAMES_DEBUG v8D v8_baseD v8_base.ia32D v8_base.x64D libv8_baseD v8_baseD.lib)
-set(V8_NAMES_RELEASE v8 v8_base v8_base.ia32 v8_base.x64 libv8_base v8_base.lib)
+set(V8_NAMES_DEBUG v8D v8_baseD v8_base.ia32D v8_base.x64D libv8_baseD v8_baseD.lib v8_libbaseD v8_libbase.ia32D v8_libbase.x64D libv8_libbaseD v8_libbaseD.lib)
+set(V8_NAMES_RELEASE v8 v8_base v8_base.ia32 v8_base.x64 libv8_base v8_base.lib v8_libbase v8_libbase.ia32 v8_libbase.x64 libv8_libbase v8_libbase.lib)
 set(V8_PLATFORM_NAMES_DEBUG v8_libplatformD v8_libplatformD.a v8_libplatformD.lib)
 set(V8_PLATFORM_NAMES_RELEASE v8_libplatform v8_libplatform.a v8_libplatform.lib)
 set(V8_SNAPSHOT_NAMES_DEBUG v8_snapshotD libv8_snapshotD v8_snapshotD.lib)
