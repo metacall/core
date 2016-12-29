@@ -76,7 +76,11 @@ static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key 
 
 static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension)
 {
-	const char loader_dynlink_suffix[] = "_loader";
+	#if (!defined(NDEBUG) || defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		const char loader_dynlink_suffix[] = "_loaderd";
+	#else
+		const char loader_dynlink_suffix[] = "_loader";
+	#endif
 
 	#define LOADER_DYNLINK_NAME_SIZE \
 		(sizeof(loader_dynlink_suffix) + LOADER_NAMING_EXTENSION_SIZE)
@@ -396,7 +400,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 			return 0;
 		}
 	}
-	
+
 	return 1;
 }
 

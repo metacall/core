@@ -30,16 +30,7 @@ void dynlink_impl_interface_get_name_win32(dynlink handle, dynlink_name_impl nam
 {
 	strncpy(name_impl, dynlink_get_name(handle), length);
 
-
-	#if !defined(NDEBUG) && (defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	{
-		strncat(name_impl, "d.", length);
-	}
-	#else
-	{
-		strncat(name_impl, ".", length);
-	}
-	#endif
+	strncat(name_impl, ".", length);
 
 	strncat(name_impl, dynlink_impl_extension(), length);
 }
