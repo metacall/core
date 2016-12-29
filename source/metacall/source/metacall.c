@@ -34,8 +34,6 @@ int metacall_initialize()
 {
 	size_t iterator;
 
-	metacall_null_args[0] = NULL;
-
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =
 	{
@@ -67,6 +65,8 @@ int metacall_initialize()
 			"hello.rb",
 		#endif /* OPTION_BUILD_PLUGINS_RB */
 	};
+
+	metacall_null_args[0] = NULL;
 
 	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)
 	{

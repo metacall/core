@@ -75,17 +75,22 @@ if (WIN32)
   #add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
   # Release
-  #add_compile_options(/GL) # Enable debugging information
-  add_compile_options(/GS) # Buffer Security Check
-  add_compile_options(/GF) # Enable read-only string pooling
-  #add_compile_options(/GW) # Enable read-only string pooling
+  if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(/GL) # Enable debugging information
+  else()
+    add_compile_options(/GS) # Buffer Security Check
+    add_compile_options(/GF) # Enable read-only string pooling
+    add_compile_options(/GW) # Enable read-only string pooling
+  endif()
 endif()
 
 if (PROJECT_OS_FAMILY MATCHES "unix")
 
   if(APPLE)
     # We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
-    add_compile_options(-fstack-protector)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+      add_compile_options(-fstack-protector)
+    endif()
 
     # Enable threads in OS X
     add_compile_options(-pthread)
@@ -93,7 +98,9 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
     # clang options only
     add_compile_options(-Wreturn-stack-address)
   else()
-    add_compile_options(-fstack-protector-strong)
+    if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
+      add_compile_options(-fstack-protector-strong)
+    endif()
   endif()
 
   if(PROJECT_OS_LINUX)
