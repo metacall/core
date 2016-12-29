@@ -6,7 +6,7 @@ os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
 import unittest
-import _py_port as metacall
+import @PY_PORT_NAME@ as metacall
 
 class py_port_test(unittest.TestCase):
 

@@ -75,7 +75,11 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Set SWIG flags
-set(CMAKE_SWIG_FLAGS "")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_SWIG_FLAGS "-DDEBUG")
+else()
+    set(CMAKE_SWIG_FLAGS "-DNDEBUG")
+endif()
 
 # Set SWIG include path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -259,6 +263,14 @@ install(EXPORT ${target}-export
 
 set(py_port_test "${target}_test")
 set(py_port_test_path "${CMAKE_BINARY_DIR}/${py_port_test}.py")
+
+# Import module name
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
+    set(PY_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
+else()
+    set(PY_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
+endif()
 
 configure_file(test/run.py.in ${py_port_test_path})
 
