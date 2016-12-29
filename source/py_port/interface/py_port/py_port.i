@@ -12,7 +12,12 @@
 /* -- Headers -- */
 
 #ifdef SWIG
-	%module py_port
+
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		%module py_portd
+	#else
+		%module py_port
+	#endif
 
 	%{
 		#include <py_port/py_port.h>

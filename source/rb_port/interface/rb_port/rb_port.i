@@ -12,7 +12,12 @@
 /* -- Headers -- */
 
 #ifdef SWIG
-	%module rb_port
+
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		%module rb_portd
+	#else
+		%module rb_port
+	#endif
 
 	%{
 		#include <rb_port/rb_port.h>

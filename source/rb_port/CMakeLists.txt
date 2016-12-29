@@ -66,7 +66,11 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Set SWIG flags
-set(CMAKE_SWIG_FLAGS "")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    set(CMAKE_SWIG_FLAGS "-DDEBUG")
+else()
+    set(CMAKE_SWIG_FLAGS "-DNDEBUG")
+endif()
 
 # Set SWIG include path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -250,6 +254,20 @@ install(EXPORT ${target}-export
 
 set(rb_port_test "${target}_test")
 set(rb_port_test_path "${CMAKE_BINARY_DIR}/${rb_port_test}.rb")
+
+# Require module name
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
+    set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
+else()
+    set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
+endif()
+
+# Module object instance (capitalized)
+string(SUBSTRING "${RB_PORT_NAME}" 0 1 RB_PORT_FIRST)
+string(TOUPPER "${RB_PORT_FIRST}" RB_PORT_FIRST_UPPER)
+string(SUBSTRING "${RB_PORT_NAME}" 1 -1 RB_PORT_LAST)
+set(RB_PORT_OBJ "${RB_PORT_FIRST_UPPER}${RB_PORT_LAST}")
 
 configure_file(test/run.rb.in ${rb_port_test_path})
 
