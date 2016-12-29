@@ -76,7 +76,7 @@ static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key 
 
 static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension)
 {
-	#if (!defined(NDEBUG) || defined(_DEBUG) || defined(DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		const char loader_dynlink_suffix[] = "_loaderd";
 	#else
 		const char loader_dynlink_suffix[] = "_loader";
