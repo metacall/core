@@ -67,7 +67,7 @@ source_group_by_path(${interface_path} "\\\\.i$"
 	${interface_group} ${interfaces})
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 	${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
+source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 	${source_group} ${sources})
 
 #
