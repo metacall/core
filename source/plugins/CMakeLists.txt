@@ -1,6 +1,6 @@
 # Check if plugins are enabled
 if(NOT OPTION_BUILD_PLUGINS)
-    return()
+	return()
 endif()
 
 # Plugins options

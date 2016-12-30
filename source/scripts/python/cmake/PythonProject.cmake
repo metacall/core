@@ -6,7 +6,7 @@
 #
 
 if(PYTHONPROJECT_FOUND)
-    return()
+	return()
 endif()
 
 set(PYTHONPROJECT_FOUND YES)
@@ -26,18 +26,18 @@ get_filename_component(PY_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(py_project target version)
 
-    # Configuration
-    set(PACKAGE_NAME         ${target})
-    set(PACKAGE_VERSION      ${version})
-    set(PACKAGE_SETUP_PY_IN "${PY_PROJECT_CONFIG_PATH}/PythonProject.py.in")
-    set(PACKAGE_SETUP_PY    "${CMAKE_CURRENT_BINARY_DIR}/setup.py")
-    set(PACKAGE_DEPS        "${CMAKE_CURRENT_SOURCE_DIR}/depends/__init__.py")
-    set(PACKAGE_OUTPUT      "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
+	# Configuration
+	set(PACKAGE_NAME		 ${target})
+	set(PACKAGE_VERSION	  ${version})
+	set(PACKAGE_SETUP_PY_IN "${PY_PROJECT_CONFIG_PATH}/PythonProject.py.in")
+	set(PACKAGE_SETUP_PY	"${CMAKE_CURRENT_BINARY_DIR}/setup.py")
+	set(PACKAGE_DEPS		"${CMAKE_CURRENT_SOURCE_DIR}/depends/__init__.py")
+	set(PACKAGE_OUTPUT	  "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
-    # Create python setup file
-    configure_file(${PACKAGE_SETUP_PY_IN} ${PACKAGE_SETUP_PY} @ONLY)
+	# Create python setup file
+	configure_file(${PACKAGE_SETUP_PY_IN} ${PACKAGE_SETUP_PY} @ONLY)
 
-    # Create project file
-    script_project(${target} Python ${PY_PROJECT_CONFIG_PATH}/PythonProject.cmake.in)
+	# Create project file
+	script_project(${target} Python ${PY_PROJECT_CONFIG_PATH}/PythonProject.cmake.in)
 
 endfunction()

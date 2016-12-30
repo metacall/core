@@ -19,10 +19,10 @@ include(packages/pack-metacall.cmake)
 #
 
 add_custom_target(
-    component_install
-    COMMAND make preinstall
-    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ComponentInstall.cmake
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+	component_install
+	COMMAND make preinstall
+	COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ComponentInstall.cmake
+	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
 #
@@ -30,8 +30,8 @@ add_custom_target(
 #
 
 add_custom_target(
-    component_uninstall
-    COMMAND make uninstall
-    COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ComponentUninstall.cmake
-    WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
+	component_uninstall
+	COMMAND make uninstall
+	COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ComponentUninstall.cmake
+	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )

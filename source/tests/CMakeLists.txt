@@ -4,18 +4,18 @@
 
 # Check if tests are enabled
 if(NOT OPTION_BUILD_TESTS)
-    return()
+	return()
 endif()
 
 # DISABLE CMP0037: Target names should not be reserved and should match a validity pattern.
 set_policy(CMP0037 OLD)
 
 # Build gmock
-set(gmock_build_tests           OFF CACHE BOOL "")
-set(gtest_build_samples         OFF CACHE BOOL "")
-set(gtest_build_tests           OFF CACHE BOOL "")
-set(gtest_disable_pthreads      OFF CACHE BOOL "")
-set(gtest_force_shared_crt      ON  CACHE BOOL "")
+set(gmock_build_tests		   OFF CACHE BOOL "")
+set(gtest_build_samples		 OFF CACHE BOOL "")
+set(gtest_build_tests		   OFF CACHE BOOL "")
+set(gtest_disable_pthreads	  OFF CACHE BOOL "")
+set(gtest_force_shared_crt	  ON  CACHE BOOL "")
 set(gtest_hide_internal_symbols OFF CACHE BOOL "")
 
 add_subdirectory(googletest/googlemock)
@@ -24,14 +24,14 @@ add_subdirectory(googletest/googlemock)
 add_library(gmock-dev INTERFACE)
 
 target_include_directories(gmock-dev
-    SYSTEM INTERFACE
-    ${CMAKE_CURRENT_SOURCE_DIR}/googletest/googletest/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/googletest/googlemock/include
+	SYSTEM INTERFACE
+	${CMAKE_CURRENT_SOURCE_DIR}/googletest/googletest/include
+	${CMAKE_CURRENT_SOURCE_DIR}/googletest/googlemock/include
 )
 
 target_link_libraries(gmock-dev
-    INTERFACE
-    gmock
+	INTERFACE
+	gmock
 )
 
 #

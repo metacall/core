@@ -1,10 +1,10 @@
 # Check if scripts are enabled
 if(NOT OPTION_BUILD_SCRIPTS)
-    return()
+	return()
 endif()
 
 if(NOT LOADER_SCRIPT_PATH)
-    return()
+	return()
 endif()
 
 # Create output directory

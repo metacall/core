@@ -26,23 +26,23 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
-    ${source_path}/main.cpp
-    ${source_path}/value_cast_bool_test.cpp
-    ${source_path}/value_cast_char_test.cpp
-    ${source_path}/value_cast_short_test.cpp
-    ${source_path}/value_cast_int_test.cpp
-    ${source_path}/value_cast_long_test.cpp
-    ${source_path}/value_cast_float_test.cpp
-    ${source_path}/value_cast_double_test.cpp
+	${source_path}/main.cpp
+	${source_path}/value_cast_bool_test.cpp
+	${source_path}/value_cast_char_test.cpp
+	${source_path}/value_cast_short_test.cpp
+	${source_path}/value_cast_int_test.cpp
+	${source_path}/value_cast_long_test.cpp
+	${source_path}/value_cast_float_test.cpp
+	${source_path}/value_cast_double_test.cpp
 )
 
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
-    ${header_group} ${headers})
+	${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
-    ${source_group} ${sources})
+	${source_group} ${sources})
 
 #
 # Create executable
@@ -50,7 +50,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Build executable
 add_executable(${target}
-    ${sources}
+	${sources}
 )
 
 # Create namespaced alias
@@ -61,9 +61,9 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 #
 
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
@@ -71,9 +71,9 @@ set_target_properties(${target}
 #
 
 target_include_directories(${target}
-    PRIVATE
-    ${DEFAULT_INCLUDE_DIRECTORIES}
-    ${PROJECT_BINARY_DIR}/source/include
+	PRIVATE
+	${DEFAULT_INCLUDE_DIRECTORIES}
+	${PROJECT_BINARY_DIR}/source/include
 )
 
 #
@@ -81,15 +81,15 @@ target_include_directories(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${DEFAULT_LIBRARIES}
+	PRIVATE
+	${DEFAULT_LIBRARIES}
 
-    gmock-dev
+	gmock-dev
 
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::format
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::reflect
 )
 
 #
@@ -97,8 +97,8 @@ target_link_libraries(${target}
 #
 
 target_compile_definitions(${target}
-    PRIVATE
-    ${DEFAULT_COMPILE_DEFINITIONS}
+	PRIVATE
+	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
 #
@@ -106,8 +106,8 @@ target_compile_definitions(${target}
 #
 
 target_compile_options(${target}
-    PRIVATE
-    ${DEFAULT_COMPILE_OPTIONS}
+	PRIVATE
+	${DEFAULT_COMPILE_OPTIONS}
 )
 
 #
@@ -115,8 +115,8 @@ target_compile_options(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${DEFAULT_LINKER_OPTIONS}
+	PRIVATE
+	${DEFAULT_LINKER_OPTIONS}
 )
 
 #
@@ -124,7 +124,7 @@ target_link_libraries(${target}
 #
 
 add_test(NAME ${target}
-    COMMAND $<TARGET_FILE:${target}>
+	COMMAND $<TARGET_FILE:${target}>
 )
 
 #
@@ -132,5 +132,5 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-    PROPERTY LABELS ${target}
+	PROPERTY LABELS ${target}
 )

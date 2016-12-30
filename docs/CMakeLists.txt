@@ -4,7 +4,7 @@
 #
 
 if(NOT OPTION_BUILD_DOCS)
-    return()
+	return()
 endif()
 
 add_custom_target(docs)

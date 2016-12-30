@@ -40,89 +40,89 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-    ${include_path}/log.h
-    ${include_path}/log_preprocessor.h
-    ${include_path}/log_valid_size.h
-    ${include_path}/log_map.h
-    ${include_path}/log_level.h
-    ${include_path}/log_thread_id.h
-    ${include_path}/log_record.h
-    ${include_path}/log_handle.h
-    ${include_path}/log_policy.h
-    ${include_path}/log_aspect.h
-    ${include_path}/log_impl.h
-    ${include_path}/log_singleton.h
+	${include_path}/log.h
+	${include_path}/log_preprocessor.h
+	${include_path}/log_valid_size.h
+	${include_path}/log_map.h
+	${include_path}/log_level.h
+	${include_path}/log_thread_id.h
+	${include_path}/log_record.h
+	${include_path}/log_handle.h
+	${include_path}/log_policy.h
+	${include_path}/log_aspect.h
+	${include_path}/log_impl.h
+	${include_path}/log_singleton.h
 
-    ${include_path}/log_policy_format.h
-    ${include_path}/log_policy_format_binary.h
-    ${include_path}/log_policy_format_text.h
+	${include_path}/log_policy_format.h
+	${include_path}/log_policy_format_binary.h
+	${include_path}/log_policy_format_text.h
 
-    ${include_path}/log_policy_schedule.h
-    ${include_path}/log_policy_schedule_async.h
-    ${include_path}/log_policy_schedule_sync.h
+	${include_path}/log_policy_schedule.h
+	${include_path}/log_policy_schedule_async.h
+	${include_path}/log_policy_schedule_sync.h
 
-    ${include_path}/log_policy_storage.h
-    ${include_path}/log_policy_storage_batch.h
-    ${include_path}/log_policy_storage_sequential.h
+	${include_path}/log_policy_storage.h
+	${include_path}/log_policy_storage_batch.h
+	${include_path}/log_policy_storage_sequential.h
 
-    ${include_path}/log_policy_stream.h
-    ${include_path}/log_policy_stream_file.h
-    ${include_path}/log_policy_stream_nginx.h
-    ${include_path}/log_policy_stream_socket.h
-    ${include_path}/log_policy_stream_stdio.h
-    ${include_path}/log_policy_stream_syslog.h
+	${include_path}/log_policy_stream.h
+	${include_path}/log_policy_stream_file.h
+	${include_path}/log_policy_stream_nginx.h
+	${include_path}/log_policy_stream_socket.h
+	${include_path}/log_policy_stream_stdio.h
+	${include_path}/log_policy_stream_syslog.h
 
-    ${include_path}/log_aspect_format.h
-    ${include_path}/log_aspect_schedule.h
-    ${include_path}/log_aspect_stream.h
-    ${include_path}/log_aspect_storage.h
+	${include_path}/log_aspect_format.h
+	${include_path}/log_aspect_schedule.h
+	${include_path}/log_aspect_stream.h
+	${include_path}/log_aspect_storage.h
 )
 
 set(sources
-    ${source_path}/log.c
-    ${source_path}/log_valid_size.c
-    ${source_path}/log_map.c
-    ${source_path}/log_level.c
-    ${source_path}/log_thread_id.c
-    ${source_path}/log_record.c
-    ${source_path}/log_handle.c
-    ${source_path}/log_policy.c
-    ${source_path}/log_aspect.c
-    ${source_path}/log_impl.c
-    ${source_path}/log_singleton.c
+	${source_path}/log.c
+	${source_path}/log_valid_size.c
+	${source_path}/log_map.c
+	${source_path}/log_level.c
+	${source_path}/log_thread_id.c
+	${source_path}/log_record.c
+	${source_path}/log_handle.c
+	${source_path}/log_policy.c
+	${source_path}/log_aspect.c
+	${source_path}/log_impl.c
+	${source_path}/log_singleton.c
 
-    ${source_path}/log_policy_format.c
-    ${source_path}/log_policy_format_binary.c
-    ${source_path}/log_policy_format_text.c
+	${source_path}/log_policy_format.c
+	${source_path}/log_policy_format_binary.c
+	${source_path}/log_policy_format_text.c
 
-    ${source_path}/log_policy_schedule.c
-    ${source_path}/log_policy_schedule_async.c
-    ${source_path}/log_policy_schedule_sync.c
+	${source_path}/log_policy_schedule.c
+	${source_path}/log_policy_schedule_async.c
+	${source_path}/log_policy_schedule_sync.c
 
-    ${source_path}/log_policy_storage.c
-    ${source_path}/log_policy_storage_batch.c
-    ${source_path}/log_policy_storage_sequential.c
+	${source_path}/log_policy_storage.c
+	${source_path}/log_policy_storage_batch.c
+	${source_path}/log_policy_storage_sequential.c
 
-    ${source_path}/log_policy_stream.c
-    ${source_path}/log_policy_stream_file.c
-    ${source_path}/log_policy_stream_nginx.c
-    ${source_path}/log_policy_stream_socket.c
-    ${source_path}/log_policy_stream_stdio.c
-    ${source_path}/log_policy_stream_syslog.c
+	${source_path}/log_policy_stream.c
+	${source_path}/log_policy_stream_file.c
+	${source_path}/log_policy_stream_nginx.c
+	${source_path}/log_policy_stream_socket.c
+	${source_path}/log_policy_stream_stdio.c
+	${source_path}/log_policy_stream_syslog.c
 
-    ${source_path}/log_aspect_format.c
-    ${source_path}/log_aspect_schedule.c
-    ${source_path}/log_aspect_stream.c
-    ${source_path}/log_aspect_storage.c
+	${source_path}/log_aspect_format.c
+	${source_path}/log_aspect_schedule.c
+	${source_path}/log_aspect_stream.c
+	${source_path}/log_aspect_storage.c
 )
 
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
-    ${header_group} ${headers})
+	${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
-    ${source_group} ${sources})
+	${source_group} ${sources})
 
 #
 # Create library
@@ -130,8 +130,8 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Build library
 add_library(${target}
-    ${sources}
-    ${headers}
+	${sources}
+	${headers}
 )
 
 # Create namespaced alias
@@ -146,25 +146,25 @@ export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_
 
 # Check for availability of module; use pre-generated version if not found
 if (WriterCompilerDetectionHeaderFound)
-    write_compiler_detection_header(
-        FILE ${feature_file}
-        PREFIX ${target_upper}
-        COMPILERS AppleClang Clang GNU MSVC
-        FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
-        VERSION 3.2
-    )
+	write_compiler_detection_header(
+		FILE ${feature_file}
+		PREFIX ${target_upper}
+		COMPILERS AppleClang Clang GNU MSVC
+		FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
+		VERSION 3.2
+	)
 else()
-    file(
-        COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
-        USE_SOURCE_PERMISSIONS
-    )
+	file(
+		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
+		USE_SOURCE_PERMISSIONS
+	)
 endif()
 
 # Create API export header
 generate_export_header(${target}
-    EXPORT_FILE_NAME  ${export_file}
-    EXPORT_MACRO_NAME ${export_macro}
+	EXPORT_FILE_NAME  ${export_file}
+	EXPORT_MACRO_NAME ${export_macro}
 )
 
 #
@@ -172,9 +172,9 @@ generate_export_header(${target}
 #
 
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
@@ -182,18 +182,18 @@ set_target_properties(${target}
 #
 
 target_include_directories(${target}
-    PRIVATE
-    ${PROJECT_BINARY_DIR}/source/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include
+	PRIVATE
+	${PROJECT_BINARY_DIR}/source/include
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_BINARY_DIR}/include
 
-    PUBLIC
-    ${DEFAULT_INCLUDE_DIRECTORIES}
+	PUBLIC
+	${DEFAULT_INCLUDE_DIRECTORIES}
 
-    INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+	INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+	$<INSTALL_INTERFACE:include>
 )
 
 #
@@ -201,15 +201,15 @@ target_include_directories(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${META_PROJECT_NAME}::version
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::format
+	PRIVATE
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::format
 
-    PUBLIC
-    ${DEFAULT_LIBRARIES}
+	PUBLIC
+	${DEFAULT_LIBRARIES}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -217,13 +217,13 @@ target_link_libraries(${target}
 #
 
 target_compile_definitions(${target}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
-    ${DEFAULT_COMPILE_DEFINITIONS}
+	PUBLIC
+	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
+	${DEFAULT_COMPILE_DEFINITIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -231,12 +231,12 @@ target_compile_definitions(${target}
 #
 
 target_compile_options(${target}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    ${DEFAULT_COMPILE_OPTIONS}
+	PUBLIC
+	${DEFAULT_COMPILE_OPTIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -244,12 +244,12 @@ target_compile_options(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    ${DEFAULT_LINKER_OPTIONS}
+	PUBLIC
+	${DEFAULT_LINKER_OPTIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -258,27 +258,27 @@ target_link_libraries(${target}
 
 # Library
 install(TARGETS ${target}
-    EXPORT  "${target}-export"            COMPONENT dev
-    RUNTIME DESTINATION ${INSTALL_BIN}    COMPONENT runtime
-    LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
-    ARCHIVE DESTINATION ${INSTALL_LIB}    COMPONENT dev
+	EXPORT  "${target}-export"				COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
 
 # Header files
 install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-    COMPONENT dev
+	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
 )
 
 # Generated header files
 install(DIRECTORY
-    ${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-    COMPONENT dev
+	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
 )
 
 # CMake config
 install(EXPORT ${target}-export
-    NAMESPACE   ${META_PROJECT_NAME}::
-    DESTINATION ${INSTALL_CMAKE}/${target}
-    COMPONENT   dev
+	NAMESPACE   ${META_PROJECT_NAME}::
+	DESTINATION ${INSTALL_CMAKE}/${target}
+	COMPONENT   dev
 )

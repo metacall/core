@@ -5,8 +5,8 @@
 find_package(PythonInterp)
 
 if(NOT PYTHONINTERP_FOUND)
-    message(STATUS "Python interpreter not found")
-    return()
+	message(STATUS "Python interpreter not found")
+	return()
 endif()
 
 #
@@ -24,7 +24,7 @@ message(STATUS "Example ${target}")
 #
 
 set(sources
-    main.py
+	main.py
 )
 
 #
@@ -33,9 +33,9 @@ set(sources
 
 # Build executable
 add_custom_target(${target}
-    MACOSX_BUNDLE
-    ALL
-    DEPENDS ${sources}
+	MACOSX_BUNDLE
+	ALL
+	DEPENDS ${sources}
 )
 
 # Create namespaced alias
@@ -46,9 +46,9 @@ add_custom_target(${target}
 #
 
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
@@ -56,9 +56,9 @@ set_target_properties(${target}
 #
 
 #target_include_directories(${target}
-#    PRIVATE
-#    ${DEFAULT_INCLUDE_DIRECTORIES}
-#    ${PROJECT_BINARY_DIR}/source/include
+#	PRIVATE
+#	${DEFAULT_INCLUDE_DIRECTORIES}
+#	${PROJECT_BINARY_DIR}/source/include
 #)
 
 #
@@ -66,9 +66,9 @@ set_target_properties(${target}
 #
 
 #target_link_libraries(${target}
-#    PRIVATE
-#    ${DEFAULT_LIBRARIES}
-#    ${META_PROJECT_NAME}::py_port
+#	PRIVATE
+#	${DEFAULT_LIBRARIES}
+#	${META_PROJECT_NAME}::py_port
 #)
 
 #
@@ -76,8 +76,8 @@ set_target_properties(${target}
 #
 
 #target_compile_definitions(${target}
-#    PRIVATE
-#    ${DEFAULT_COMPILE_DEFINITIONS}
+#	PRIVATE
+#	${DEFAULT_COMPILE_DEFINITIONS}
 #)
 
 #
@@ -85,8 +85,8 @@ set_target_properties(${target}
 #
 
 #target_compile_options(${target}
-#    PRIVATE
-#    ${DEFAULT_COMPILE_OPTIONS}
+#	PRIVATE
+#	${DEFAULT_COMPILE_OPTIONS}
 #)
 
 #
@@ -94,8 +94,8 @@ set_target_properties(${target}
 #
 
 #target_link_libraries(${target}
-#    PRIVATE
-#    ${DEFAULT_LINKER_OPTIONS}
+#	PRIVATE
+#	${DEFAULT_LINKER_OPTIONS}
 #)
 
 #
@@ -104,6 +104,6 @@ set_target_properties(${target}
 
 # Executable
 #install(TARGETS ${target}
-#    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
-#    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
+#	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
+#	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
 #)

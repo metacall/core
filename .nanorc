@@ -5,6 +5,7 @@
 #	A configuration for nano text editor.
 #
 
-set tabsize 4		# Define tab size to 4
-set autoindent		# Use auto-indentation
-set casesensitive	# Do case sensitive searches by default
+set tabsize			4		# Define tab size to 4
+set autoindent				# Use auto-indentation
+set casesensitive			# Do case sensitive searches by default
+set whitespace		"¬."	# Show whitespaces

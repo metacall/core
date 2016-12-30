@@ -1,6 +1,6 @@
 # Check if this plugin is enabled
 if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_JS)
-    return()
+	return()
 endif()
 
 #
@@ -10,8 +10,8 @@ endif()
 find_package(V8 5.1)
 
 if(NOT V8_FOUND)
-    message(STATUS "V8 libraries not found")
-    return()
+	message(STATUS "V8 libraries not found")
+	return()
 endif()
 
 #
@@ -50,24 +50,24 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-    ${include_path}/js_loader.h
-    ${include_path}/js_loader_impl.h
-    ${include_path}/js_loader_impl_guard.hpp
+	${include_path}/js_loader.h
+	${include_path}/js_loader_impl.h
+	${include_path}/js_loader_impl_guard.hpp
 )
 
 set(sources
-    ${source_path}/js_loader.c
-    ${source_path}/js_loader_impl.cpp
-    ${source_path}/js_loader_impl_guard.cpp
+	${source_path}/js_loader.c
+	${source_path}/js_loader_impl.cpp
+	${source_path}/js_loader_impl_guard.cpp
 )
 
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
-    ${header_group} ${headers})
+	${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
-    ${source_group} ${sources})
+	${source_group} ${sources})
 
 #
 # Create library
@@ -75,8 +75,8 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Build library
 add_library(${target}
-    ${sources}
-    ${headers}
+	${sources}
+	${headers}
 )
 
 # Create namespaced alias
@@ -91,25 +91,25 @@ export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_
 
 # Check for availability of module; use pre-generated version if not found
 if (WriterCompilerDetectionHeaderFound)
-    write_compiler_detection_header(
-        FILE ${feature_file}
-        PREFIX ${target_upper}
-        COMPILERS AppleClang Clang GNU MSVC
-        FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
-        VERSION 3.2
-    )
+	write_compiler_detection_header(
+		FILE ${feature_file}
+		PREFIX ${target_upper}
+		COMPILERS AppleClang Clang GNU MSVC
+		FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
+		VERSION 3.2
+	)
 else()
-    file(
-        COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
-        USE_SOURCE_PERMISSIONS
-    )
+	file(
+		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
+		USE_SOURCE_PERMISSIONS
+	)
 endif()
 
 # Create API export header
 generate_export_header(${target}
-    EXPORT_FILE_NAME  ${export_file}
-    EXPORT_MACRO_NAME ${export_macro}
+	EXPORT_FILE_NAME  ${export_file}
+	EXPORT_MACRO_NAME ${export_macro}
 )
 
 #
@@ -117,9 +117,9 @@ generate_export_header(${target}
 #
 
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
@@ -127,20 +127,20 @@ set_target_properties(${target}
 #
 
 target_include_directories(${target}
-    PRIVATE
-    ${PROJECT_BINARY_DIR}/source/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include
+	PRIVATE
+	${PROJECT_BINARY_DIR}/source/include
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${V8_INCLUDE_DIR} # V8 includes
+	${V8_INCLUDE_DIR} # V8 includes
 
-    PUBLIC
-    ${DEFAULT_INCLUDE_DIRECTORIES}
+	PUBLIC
+	${DEFAULT_INCLUDE_DIRECTORIES}
 
-    INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+	INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+	$<INSTALL_INTERFACE:include>
 )
 
 #
@@ -148,22 +148,22 @@ target_include_directories(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${META_PROJECT_NAME}::version
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::format
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::adt
-    ${META_PROJECT_NAME}::dynlink
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::loader
+	PRIVATE
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::adt
+	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::loader
 
-    ${V8_LIBRARIES} # V8 library
+	${V8_LIBRARIES} # V8 library
 
-    PUBLIC
-    ${DEFAULT_LIBRARIES}
+	PUBLIC
+	${DEFAULT_LIBRARIES}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -171,13 +171,13 @@ target_link_libraries(${target}
 #
 
 target_compile_definitions(${target}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
-    ${DEFAULT_COMPILE_DEFINITIONS}
+	PUBLIC
+	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
+	${DEFAULT_COMPILE_DEFINITIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -185,12 +185,12 @@ target_compile_definitions(${target}
 #
 
 target_compile_options(${target}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    ${DEFAULT_COMPILE_OPTIONS}
+	PUBLIC
+	${DEFAULT_COMPILE_OPTIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -198,12 +198,12 @@ target_compile_options(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    ${DEFAULT_LINKER_OPTIONS}
+	PUBLIC
+	${DEFAULT_LINKER_OPTIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -212,27 +212,27 @@ target_link_libraries(${target}
 
 # Library
 install(TARGETS ${target}
-    EXPORT  "${target}-export"            COMPONENT dev
-    RUNTIME DESTINATION ${INSTALL_BIN}    COMPONENT runtime
-    LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
-    ARCHIVE DESTINATION ${INSTALL_LIB}    COMPONENT dev
+	EXPORT  "${target}-export"			COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}	COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}	COMPONENT dev
 )
 
 # Header files
 install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-    COMPONENT dev
+	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
 )
 
 # Generated header files
 install(DIRECTORY
-    ${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-    COMPONENT dev
+	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
 )
 
 # CMake config
 install(EXPORT ${target}-export
-    NAMESPACE   ${META_PROJECT_NAME}::
-    DESTINATION ${INSTALL_CMAKE}/${target}
-    COMPONENT   dev
+	NAMESPACE   ${META_PROJECT_NAME}::
+	DESTINATION ${INSTALL_CMAKE}/${target}
+	COMPONENT   dev
 )

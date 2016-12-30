@@ -1,7 +1,7 @@
 
 # Check if examples are enabled
 if(NOT OPTION_BUILD_EXAMPLES)
-    return()
+	return()
 endif()
 
 # Example applications

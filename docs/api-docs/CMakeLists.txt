@@ -6,8 +6,8 @@
 find_package(Doxygen)
 
 if(NOT DOXYGEN_FOUND)
-    message(STATUS "Disabled generation of doxygen documentation (missing doxygen)")
-    return()
+	message(STATUS "Disabled generation of doxygen documentation (missing doxygen)")
+	return()
 endif()
 
 #
@@ -28,23 +28,23 @@ set(doxyfile_in doxyfile.in)
 #
 
 # Set project variables
-set(doxyfile            "${CMAKE_CURRENT_BINARY_DIR}/doxyfile")
+set(doxyfile			"${CMAKE_CURRENT_BINARY_DIR}/doxyfile")
 set(doxyfile_directory  "${CMAKE_CURRENT_BINARY_DIR}/html")
-set(doxyfile_html       "${doxyfile_directory}/index.html")
+set(doxyfile_html	   "${doxyfile_directory}/index.html")
 
 # Get filename and path of doxyfile
 get_filename_component(name ${doxyfile_in} NAME)
 get_filename_component(path ${doxyfile_in} PATH)
 
 if(NOT path)
-    set(path ${CMAKE_CURRENT_SOURCE_DIR})
+	set(path ${CMAKE_CURRENT_SOURCE_DIR})
 endif()
 
 # Define dependencies
 set(depends ${META_PROJECT_NAME}::preprocessor ${META_PROJECT_NAME}::log
-            ${META_PROJECT_NAME}::adt ${META_PROJECT_NAME}::dynlink ${META_PROJECT_NAME}::filesystem
-            ${META_PROJECT_NAME}::reflect ${META_PROJECT_NAME}::loader ${META_PROJECT_NAME}::metacall
-            ${META_PROJECT_NAME}::metacallpp) # TODO: add plugins, ports and examples
+			${META_PROJECT_NAME}::adt ${META_PROJECT_NAME}::dynlink ${META_PROJECT_NAME}::filesystem
+			${META_PROJECT_NAME}::reflect ${META_PROJECT_NAME}::loader ${META_PROJECT_NAME}::metacall
+			${META_PROJECT_NAME}::metacallpp) # TODO: add plugins, ports and examples
 
 # Generate include paths
 set(DOXYGEN_INPUT_PATH "")
@@ -60,12 +60,12 @@ configure_file(config/${doxyfile_in} ${doxyfile})
 
 # Invoke doxygen
 add_custom_command(
-    OUTPUT              ${doxyfile_html}
-    DEPENDS             ${doxyfile} ${depends}
-    WORKING_DIRECTORY   ${path}
-    COMMAND             ${CMAKE_COMMAND} -E copy_directory ${path} ${doxyfile_directory} # TODO: configure doxygen to use source as is
-    COMMAND             ${DOXYGEN} \"${doxyfile}\"
-    COMMENT             "Creating doxygen documentation."
+	OUTPUT			  ${doxyfile_html}
+	DEPENDS			 ${doxyfile} ${depends}
+	WORKING_DIRECTORY   ${path}
+	COMMAND			 ${CMAKE_COMMAND} -E copy_directory ${path} ${doxyfile_directory} # TODO: configure doxygen to use source as is
+	COMMAND			 ${DOXYGEN} \"${doxyfile}\"
+	COMMENT			 "Creating doxygen documentation."
 )
 
 # Declare target
@@ -77,7 +77,7 @@ add_dependencies(docs ${target})
 #
 
 install(
-    DIRECTORY ${doxyfile_directory}
-    DESTINATION ${INSTALL_DOC}
-    COMPONENT docs
+	DIRECTORY ${doxyfile_directory}
+	DESTINATION ${INSTALL_DOC}
+	COMPONENT docs
 )

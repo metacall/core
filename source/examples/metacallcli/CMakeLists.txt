@@ -31,14 +31,14 @@ include(SecurityFlags)
 #
 
 set(sources
-    tokenizer.hpp
-    tokenizer.cpp
-    parser.inl
-    parser.hpp
-    parser.cpp
-    application.hpp
-    application.cpp
-    main.cpp
+	tokenizer.hpp
+	tokenizer.cpp
+	parser.inl
+	parser.hpp
+	parser.cpp
+	application.hpp
+	application.cpp
+	main.cpp
 )
 
 #
@@ -47,8 +47,8 @@ set(sources
 
 # Build executable
 add_executable(${target}
-    MACOSX_BUNDLE
-    ${sources}
+	MACOSX_BUNDLE
+	${sources}
 )
 
 # Create namespaced alias
@@ -59,9 +59,9 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 #
 
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
@@ -69,9 +69,9 @@ set_target_properties(${target}
 #
 
 target_include_directories(${target}
-    PRIVATE
-    ${DEFAULT_INCLUDE_DIRECTORIES}
-    ${PROJECT_BINARY_DIR}/source/include
+	PRIVATE
+	${DEFAULT_INCLUDE_DIRECTORIES}
+	${PROJECT_BINARY_DIR}/source/include
 )
 
 #
@@ -79,13 +79,13 @@ target_include_directories(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${DEFAULT_LIBRARIES}
-    ${META_PROJECT_NAME}::version
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::metacall
+	PRIVATE
+	${DEFAULT_LIBRARIES}
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -93,8 +93,8 @@ target_link_libraries(${target}
 #
 
 target_compile_definitions(${target}
-    PRIVATE
-    ${DEFAULT_COMPILE_DEFINITIONS}
+	PRIVATE
+	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
 #
@@ -102,8 +102,8 @@ target_compile_definitions(${target}
 #
 
 target_compile_options(${target}
-    PRIVATE
-    ${DEFAULT_COMPILE_OPTIONS}
+	PRIVATE
+	${DEFAULT_COMPILE_OPTIONS}
 )
 
 #
@@ -111,8 +111,8 @@ target_compile_options(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${DEFAULT_LINKER_OPTIONS}
+	PRIVATE
+	${DEFAULT_LINKER_OPTIONS}
 )
 
 #
@@ -121,6 +121,6 @@ target_link_libraries(${target}
 
 # Executable
 install(TARGETS ${target}
-    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
-    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
+	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
+	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
 )

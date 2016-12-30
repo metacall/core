@@ -1,6 +1,6 @@
 # dotnet.exe publish {source_path}/  -o {output_path}
 if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS)
-    return()
+	return()
 endif()
 
 execute_process(COMMAND dotnet -v

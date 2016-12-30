@@ -2,8 +2,8 @@
 # External dependencies
 #
 
-find_package(Qt5Core    5.1)
-find_package(Qt5Gui     5.1)
+find_package(Qt5Core	5.1)
+find_package(Qt5Gui	 5.1)
 find_package(Qt5Widgets 5.1)
 
 # Enable automoc
@@ -24,10 +24,10 @@ set(target metacallgui)
 
 # Exit here if required dependencies are not met
 if (NOT Qt5Core_FOUND)
-    message(STATUS "Example ${target} skipped: Qt5 not found")
-    return()
+	message(STATUS "Example ${target} skipped: Qt5 not found")
+	return()
 else()
-    message(STATUS "Example ${target}")
+	message(STATUS "Example ${target}")
 endif()
 
 #
@@ -47,10 +47,10 @@ include(SecurityFlags)
 #
 
 set(sources
-    main_window.ui
-    main_window.hpp
-    main_window.cpp
-    main.cpp
+	main_window.ui
+	main_window.hpp
+	main_window.cpp
+	main.cpp
 )
 
 #
@@ -59,8 +59,8 @@ set(sources
 
 # Build executable
 add_executable(${target}
-    MACOSX_BUNDLE
-    ${sources}
+	MACOSX_BUNDLE
+	${sources}
 )
 
 # Create namespaced alias
@@ -72,9 +72,9 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 #
 
 set_target_properties(${target}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
@@ -82,10 +82,10 @@ set_target_properties(${target}
 #
 
 target_include_directories(${target}
-    PRIVATE
-    ${DEFAULT_INCLUDE_DIRECTORIES}
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${PROJECT_BINARY_DIR}/source/include
+	PRIVATE
+	${DEFAULT_INCLUDE_DIRECTORIES}
+	${CMAKE_CURRENT_BINARY_DIR}
+	${PROJECT_BINARY_DIR}/source/include
 )
 
 #
@@ -93,18 +93,18 @@ target_include_directories(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${DEFAULT_LIBRARIES}
+	PRIVATE
+	${DEFAULT_LIBRARIES}
 
-    Qt5::Core
-    Qt5::Gui
-    Qt5::Widgets
+	Qt5::Core
+	Qt5::Gui
+	Qt5::Widgets
 
-    ${META_PROJECT_NAME}::version
-    ${META_PROJECT_NAME}::preprocessor
-    ${META_PROJECT_NAME}::log
-    ${META_PROJECT_NAME}::reflect
-    ${META_PROJECT_NAME}::metacall
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -112,8 +112,8 @@ target_link_libraries(${target}
 #
 
 target_compile_definitions(${target}
-    PRIVATE
-    ${DEFAULT_COMPILE_DEFINITIONS}
+	PRIVATE
+	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
 #
@@ -121,8 +121,8 @@ target_compile_definitions(${target}
 #
 
 target_compile_options(${target}
-    PRIVATE
-    ${DEFAULT_COMPILE_OPTIONS}
+	PRIVATE
+	${DEFAULT_COMPILE_OPTIONS}
 )
 
 #
@@ -130,8 +130,8 @@ target_compile_options(${target}
 #
 
 target_link_libraries(${target}
-    PRIVATE
-    ${DEFAULT_LINKER_OPTIONS}
+	PRIVATE
+	${DEFAULT_LINKER_OPTIONS}
 )
 
 #
@@ -140,6 +140,6 @@ target_link_libraries(${target}
 
 # Executable
 install(TARGETS ${target}
-    RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
-    BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
+	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
+	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
 )
