@@ -14,7 +14,7 @@ const char * adt_print_info()
 {
 	static const char adt_info[] =
 		"Abstract Data Type Library " METACALL_VERSION "\n"
-		"Copyright (c) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef ADT_STATIC_DEFINE
 			"Compiled as static library type"

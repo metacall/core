@@ -79,7 +79,7 @@ if(WIN32)
 	else()
 		add_compile_options(/GS) # Buffer Security Check
 		add_compile_options(/GF) # Enable read-only string pooling
-		add_compile_options(/GW) # Enable read-only string pooling
+		#add_compile_options(/GW) # Enable read-only string pooling
 	endif()
 endif()
 
