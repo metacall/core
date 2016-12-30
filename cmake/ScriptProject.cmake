@@ -6,7 +6,7 @@
 #
 
 if(SCRIPTPROJECT_FOUND)
-    return()
+	return()
 endif()
 
 set(SCRIPTPROJECT_FOUND YES)
@@ -20,17 +20,17 @@ get_filename_component(SCRIPT_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PAT
 
 function(script_project name language configuration)
 
-    # Create project file
-    string(TOLOWER ${language} language_lower)
+	# Create project file
+	string(TOLOWER ${language} language_lower)
 
-    # Create project file
-    set(custom_target "${language_lower}-${name}")
+	# Create project file
+	set(custom_target "${language_lower}-${name}")
 
-    # Create project file
-    configure_file(${configuration} ${custom_target}-config.cmake @ONLY)
+	# Create project file
+	configure_file(${configuration} ${custom_target}-config.cmake @ONLY)
 
-    # Include generated project file
-    include(${CMAKE_CURRENT_BINARY_DIR}/${custom_target}-config.cmake)
+	# Include generated project file
+	include(${CMAKE_CURRENT_BINARY_DIR}/${custom_target}-config.cmake)
 
 	# Set custom target
 	add_custom_target(${custom_target} ALL)
@@ -47,9 +47,9 @@ function(script_project name language configuration)
 
 	# CMake config
 	#install(EXPORT  ${custom_target}-export
-	#    NAMESPACE   ${META_PROJECT_NAME}::
-	#    DESTINATION ${INSTALL_CMAKE}/${custom_target}
-	#    COMPONENT   dev
+	#	NAMESPACE   ${META_PROJECT_NAME}::
+	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
+	#	COMPONENT   dev
 	#)
 
 	# Set project properties

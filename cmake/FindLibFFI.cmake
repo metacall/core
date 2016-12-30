@@ -12,7 +12,7 @@
 
 # Prevent vervosity if already included
 if(LIBFFI_INCLUDE_DIRS)
-    set(LIBFFI_FIND_QUITELY TRUE)
+	set(LIBFFI_FIND_QUITELY TRUE)
 endif()
 
 include(FindPackageHandleStandardArgs)

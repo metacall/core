@@ -13,15 +13,15 @@
 #
 # The following variables are set:
 #
-# LLVM_FOUND        - Set to YES if LLVM is found.
-# LLVM_VERSION      - Set to the decimal version of the LLVM library.
-# LLVM_C_FLAGS      - All flags that should be passed to a C compiler. 
-# LLVM_CXX_FLAGS    - All flags that should be passed to a C++ compiler.
-# LLVM_CPP_FLAGS    - All flags that should be passed to the C pre-processor.
-# LLVM_LD_FLAGS     - Additional flags to pass to the linker.
+# LLVM_FOUND		- Set to YES if LLVM is found.
+# LLVM_VERSION	  - Set to the decimal version of the LLVM library.
+# LLVM_C_FLAGS	  - All flags that should be passed to a C compiler. 
+# LLVM_CXX_FLAGS	- All flags that should be passed to a C++ compiler.
+# LLVM_CPP_FLAGS	- All flags that should be passed to the C pre-processor.
+# LLVM_LD_FLAGS	 - Additional flags to pass to the linker.
 # LLVM_LIBRARY_DIRS - A list of directories where the LLVM libraries are located.
 # LLVM_INCLUDE_DIRS - A list of directories where the LLVM headers are located.
-# LLVM_LIBRARIES    - A list of libraries which should be linked against.
+# LLVM_LIBRARIES	- A list of libraries which should be linked against.
 
 # A macro to run llvm config
 macro(_llvm_config _var_name)

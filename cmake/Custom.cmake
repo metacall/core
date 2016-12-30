@@ -2,9 +2,9 @@
 # Set policy if policy is available
 function(set_policy POL VAL)
 
-    if(POLICY ${POL})
-        cmake_policy(SET ${POL} ${VAL})
-    endif()
+	if(POLICY ${POL})
+		cmake_policy(SET ${POL} ${VAL})
+	endif()
 
 endfunction(set_policy)
 
@@ -16,17 +16,17 @@ endfunction(set_policy)
 # source_group_by_path("${CMAKE_CURRENT_SOURCE_DIR}/src" "\\\\.h$|\\\\.hpp$|\\\\.cpp$|\\\\.c$|\\\\.ui$|\\\\.qrc$" "Source Files" ${sources})
 function(source_group_by_path PARENT_PATH REGEX GROUP)
 
-    foreach (FILENAME ${ARGN})
+	foreach (FILENAME ${ARGN})
 
-        get_filename_component(FILEPATH "${FILENAME}" REALPATH)
-        file(RELATIVE_PATH FILEPATH ${PARENT_PATH} ${FILEPATH})
-        get_filename_component(FILEPATH "${FILEPATH}" DIRECTORY)
+		get_filename_component(FILEPATH "${FILENAME}" REALPATH)
+		file(RELATIVE_PATH FILEPATH ${PARENT_PATH} ${FILEPATH})
+		get_filename_component(FILEPATH "${FILEPATH}" DIRECTORY)
 
-        string(REPLACE "/" "\\" FILEPATH "${FILEPATH}")
+		string(REPLACE "/" "\\" FILEPATH "${FILEPATH}")
 
 	source_group("${GROUP}\\${FILEPATH}" REGULAR_EXPRESSION "${REGEX}" FILES ${FILENAME})
 
-    endforeach()
+	endforeach()
 
 endfunction(source_group_by_path)
 
@@ -35,12 +35,12 @@ endfunction(source_group_by_path)
 # ${OUTPUT} will store the list of matching filenames.
 function(list_extract OUTPUT REGEX)
 
-    foreach(FILENAME ${ARGN})
-        if(${FILENAME} MATCHES "${REGEX}")
-            list(APPEND ${OUTPUT} ${FILENAME})
-        endif()
-    endforeach()
+	foreach(FILENAME ${ARGN})
+		if(${FILENAME} MATCHES "${REGEX}")
+			list(APPEND ${OUTPUT} ${FILENAME})
+		endif()
+	endforeach()
 
-    set(${OUTPUT} ${${OUTPUT}} PARENT_SCOPE)
+	set(${OUTPUT} ${${OUTPUT}} PARENT_SCOPE)
 
 endfunction(list_extract)

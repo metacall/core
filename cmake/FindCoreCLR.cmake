@@ -12,7 +12,7 @@
 
 # Prevent vervosity if already included
 if(CORECLR_FOUND)
-    set(CORECLR_FIND_QUIETLY TRUE)
+	set(CORECLR_FIND_QUIETLY TRUE)
 endif()
 
 # Include package manager
@@ -23,6 +23,6 @@ set(CORECLR_FOUND 0)
 set(CORECLR_ROOT_REPOSITORY_PATH "" CACHE STRING "CoreCLR repository path")
 
 if(NOT CORECLR_ROOT_REPOSITORY_PATH STREQUAL "")
-    set(CORECLR_INCLUDE_DIR "${CORECLR_ROOT_REPOSITORY_PATH}/src")
+	set(CORECLR_INCLUDE_DIR "${CORECLR_ROOT_REPOSITORY_PATH}/src")
 	set(CORECLR_FOUND 1)
 endif()

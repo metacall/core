@@ -10,7 +10,7 @@
 # LIBDL_LIBRARIES - Path to the dynamic load library
 
 if(LIBDL_INCLUDE_DIR)
-    set(LIBDL_FIND_QUIETLY TRUE)
+	set(LIBDL_FIND_QUIETLY TRUE)
 endif()
 
 find_path(LIBDL_INCLUDE_DIR dlfcn.h)
@@ -24,9 +24,9 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(LibDL DEFAULT_MSG LIBDL_LIBRARY LIBDL_INCLUDE_DIR)
 
 if(LIBDL_FOUND)
-    set(LIBDL_LIBRARIES ${LIBDL_LIBRARY})
+	set(LIBDL_LIBRARIES ${LIBDL_LIBRARY})
 else()
-    set(LIBDL_LIBRARIES)
+	set(LIBDL_LIBRARIES)
 endif()
 
 mark_as_advanced(LIBDL_LIBRARY LIBDL_INCLUDE_DIR)

@@ -5,10 +5,10 @@
 
 # Find the SpiderMonkey header files and libraries
 #
-#  SPIDERMONKEY_INCLUDE_DIR    - where to find jsapi.h, etc.
-#  SPIDERMONKEY_LIBRARY        - List of libraries when using libjs.
-#  SPIDERMONKEY_FOUND          - True if SpiderMonkey found.
-#  SPIDERMONKEY_THREADSAFE     - True if SpiderMonkey is compiled with multi threading support.
+#  SPIDERMONKEY_INCLUDE_DIR	- where to find jsapi.h, etc.
+#  SPIDERMONKEY_LIBRARY		- List of libraries when using libjs.
+#  SPIDERMONKEY_FOUND		  - True if SpiderMonkey found.
+#  SPIDERMONKEY_THREADSAFE	 - True if SpiderMonkey is compiled with multi threading support.
 #
 #  SPIDERMONKEY_VERSION_STRING - The version of SpiderMonkey library found (x.y.z)
 #  SPIDERMONKEY_VERSION_MAJOR  - The major version of SpiderMonkey library

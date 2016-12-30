@@ -13,7 +13,7 @@
 
 if(OPTION_SELF_CONTAINED)
 
-    # Install 3rd-party runtime dependencies into runtime-component
-    # install(FILES ... COMPONENT runtime)
+	# Install 3rd-party runtime dependencies into runtime-component
+	# install(FILES ... COMPONENT runtime)
 
 endif()

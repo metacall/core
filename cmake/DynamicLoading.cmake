@@ -6,7 +6,7 @@
 #
 
 if(DYNAMICLOADING_FOUND)
-    return()
+	return()
 endif()
 
 set(DYNAMICLOADING_FOUND YES)
@@ -17,10 +17,10 @@ include(Portability)
 # Test against linux
 if(PROJECT_OS_LINUX)
 
-    include(FindLibDL)
+	include(FindLibDL)
 
-    set(DYNAMIC_LOADING_INCLUDE_DIR ${LIBDL_INCLUDE_DIR})
-    set(DYNAMIC_LOADING_LIBRARY ${LIBDL_LIBRARIES})
+	set(DYNAMIC_LOADING_INCLUDE_DIR ${LIBDL_INCLUDE_DIR})
+	set(DYNAMIC_LOADING_LIBRARY ${LIBDL_LIBRARIES})
 
 endif()
 

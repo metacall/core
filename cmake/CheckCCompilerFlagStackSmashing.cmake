@@ -14,15 +14,15 @@ get_filename_component(stack_smashing_program_path ${CMAKE_CURRENT_LIST_FILE} PA
 file(READ ${stack_smashing_program_path}/CheckCCompilerFlagStackSmashing.c stack_smashing_program)
 
 macro(check_c_compiler_flag_stack_smashing _flag _result)
-    # Store current definitions
-    set(required_definitions "${CMAKE_REQUIRED_DEFINITIONS}")
+	# Store current definitions
+	set(required_definitions "${CMAKE_REQUIRED_DEFINITIONS}")
 
-    # Use the defined flag
-    set(CMAKE_REQUIRED_DEFINITIONS "${_flag}")
+	# Use the defined flag
+	set(CMAKE_REQUIRED_DEFINITIONS "${_flag}")
 
-    # Compile stack smashing program
-    check_c_source_compiles("${stack_smashing_program}" ${_result})
+	# Compile stack smashing program
+	check_c_source_compiles("${stack_smashing_program}" ${_result})
 
-    # Restore previous required definitions
-    set(CMAKE_REQUIRED_DEFINITIONS ${required_definitions})
+	# Restore previous required definitions
+	set(CMAKE_REQUIRED_DEFINITIONS ${required_definitions})
 endmacro()
