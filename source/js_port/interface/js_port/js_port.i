@@ -11,9 +11,19 @@
 
 /* -- Headers -- */
 
-#ifdef SWIG
+#if defined(SWIG) && defined(SWIGJAVASCRIPT) && defined(SWIG_JAVASCRIPT_V8)
 
-	%module js_port
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		%module js_portd
+		%{
+			#define JS_PORT_INITIALIZE_NAME js_portd_initialize
+		%}
+	#else
+		%module js_port
+		%{
+			#define JS_PORT_INITIALIZE_NAME js_port_initialize
+		%}
+	#endif
 
 	%{
 		#include <js_port/js_port.h>
@@ -52,19 +62,18 @@
 
 	%include <metacall/metacall.h>
 
-
 	%{
 		#include <dynlink/dynlink.h>
 
 		#if (NODE_MODULE_VERSION < 0x000C)
-			extern "C" void js_port_initialize(v8::Handle<v8::Object> exports);
+			extern "C" void JS_PORT_INITIALIZE_NAME (v8::Handle<v8::Object> exports);
 		#else
-			extern "C" void js_port_initialize(v8::Handle<v8::Object> exports, v8::Handle<v8::Object> module);
+			extern "C" void JS_PORT_INITIALIZE_NAME(v8::Handle<v8::Object> exports, v8::Handle<v8::Object> module);
 		#endif
 
-		extern "C" DYNLINK_SYMBOL_EXPORT(js_port_initialize);
+		extern "C" DYNLINK_SYMBOL_EXPORT(JS_PORT_INITIALIZE_NAME);
 	%}
 
-#endif /* SWIG */
+#endif /* SWIG && SWIGJAVASCRIPT && SWIG_JAVASCRIPT_V8 */
 
 #endif /* METACALL_SWIG_WRAPPER_JS_PORT_I */

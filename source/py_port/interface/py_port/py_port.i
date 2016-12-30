@@ -11,7 +11,7 @@
 
 /* -- Headers -- */
 
-#ifdef SWIG
+#if defined(SWIG) && defined(SWIGPYTHON)
 
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		%module py_portd
@@ -49,6 +49,6 @@
 
 	%include <metacall/metacall.h>
 
-#endif
+#endif /* SWIG && SWIGPYTHON */
 
 #endif /* METACALL_SWIG_WRAPPER_PY_PORT_I */

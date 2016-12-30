@@ -66,7 +66,11 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Set SWIG flags (use V8 engine)
-set(CMAKE_SWIG_FLAGS "-v8")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(CMAKE_SWIG_FLAGS "-v8" "-DDEBUG")
+else()
+	set(CMAKE_SWIG_FLAGS "-v8" "-DNDEBUG")
+endif()
 
 # Set SWIG include path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
@@ -273,6 +277,14 @@ string(TOUPPER ${js_port_test} js_port_test_upper)
 #
 
 set(js_port_test_path "${CMAKE_BINARY_DIR}/${js_port_test}.js")
+
+# Require module name
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
+	set(JS_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
+else()
+	set(JS_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
+endif()
 
 configure_file(test/run.js.in ${js_port_test_path})
 

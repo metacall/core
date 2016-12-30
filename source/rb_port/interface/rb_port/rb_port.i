@@ -11,7 +11,7 @@
 
 /* -- Headers -- */
 
-#ifdef SWIG
+#if defined(SWIG) && defined(SWIGRUBY)
 
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		%module rb_portd
@@ -50,6 +50,6 @@
 
 	%include <metacall/metacall.h>
 
-#endif
+#endif /* SWIG && SWIGRUBY */
 
 #endif /* METACALL_SWIG_WRAPPER_RB_PORT_I */

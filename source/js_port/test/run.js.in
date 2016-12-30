@@ -7,7 +7,7 @@
 })();
 
 /* Load MetaCall */
-load('js_port');
+load('@JS_PORT_NAME@');
 
 /* MetaCall Test */
 (function main() {
