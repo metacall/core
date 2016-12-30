@@ -1,6 +1,6 @@
 # Check if port is enabled
 if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RB)
-    return()
+	return()
 endif()
 
 #
@@ -10,8 +10,8 @@ endif()
 find_package(Ruby)
 
 if(NOT RUBY_FOUND)
-    message(STATUS "Ruby libraries not found")
-    return()
+	message(STATUS "Ruby libraries not found")
+	return()
 endif()
 
 #
@@ -39,15 +39,15 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(interfaces
-    ${interface_path}/rb_port.i
+	${interface_path}/rb_port.i
 )
 
 set(headers
-    ${include_path}/rb_port.h
+	${include_path}/rb_port.h
 )
 
 set(sources
-    ${source_path}/rb_port.c
+	${source_path}/rb_port.c
 )
 
 # Group source files
@@ -55,11 +55,11 @@ set(interface_group "Interface Files (SWIG)")
 set(header_group "Header Files (API)")
 set(source_group "Source Files")
 source_group_by_path(${interface_path} "\\\\.i$"
-    ${interface_group} ${interfaces})
+	${interface_group} ${interfaces})
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
-    ${header_group} ${headers})
+	${header_group} ${headers})
 source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
-    ${source_group} ${sources})
+	${source_group} ${sources})
 
 #
 # SWIG Configuration
@@ -67,9 +67,9 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Set SWIG flags
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    set(CMAKE_SWIG_FLAGS "-DDEBUG")
+	set(CMAKE_SWIG_FLAGS "-DDEBUG")
 else()
-    set(CMAKE_SWIG_FLAGS "-DNDEBUG")
+	set(CMAKE_SWIG_FLAGS "-DNDEBUG")
 endif()
 
 # Set SWIG include path
@@ -81,22 +81,22 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
 #
 
 foreach(file ${interfaces} ${headers} ${sources})
-    set_source_files_properties(
-        ${file}
-        PROPERTY SWIG_FLAGS "-ruby" "-includeall"
-    )
+	set_source_files_properties(
+		${file}
+		PROPERTY SWIG_FLAGS "-ruby" "-includeall"
+	)
 
-    set_source_files_properties(
-        ${file}
-        PROPERTIES CPLUSPLUS OFF
-    )
+	set_source_files_properties(
+		${file}
+		PROPERTIES CPLUSPLUS OFF
+	)
 endforeach()
 
 swig_add_module(${target}
-    ruby
-    ${interfaces}
-    ${headers}
-    ${sources}
+	ruby
+	${interfaces}
+	${headers}
+	${sources}
 )
 
 # Create namespaced alias
@@ -111,25 +111,25 @@ export(TARGETS ${SWIG_MODULE_${target}_REAL_NAME} NAMESPACE ${META_PROJECT_NAME}
 
 # Check for availability of module; use pre-generated version if not found
 if (WriterCompilerDetectionHeaderFound)
-    write_compiler_detection_header(
-        FILE ${feature_file}
-        PREFIX ${target_upper}
-        COMPILERS AppleClang Clang GNU MSVC
-        FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
-        VERSION 3.2
-    )
+	write_compiler_detection_header(
+		FILE ${feature_file}
+		PREFIX ${target_upper}
+		COMPILERS AppleClang Clang GNU MSVC
+		FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
+		VERSION 3.2
+	)
 else()
-    file(
-        COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
-        DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
-        USE_SOURCE_PERMISSIONS
-    )
+	file(
+		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
+		USE_SOURCE_PERMISSIONS
+	)
 endif()
 
 # Create API export header
 generate_export_header(${SWIG_MODULE_${target}_REAL_NAME}
-    EXPORT_FILE_NAME  ${export_file}
-    EXPORT_MACRO_NAME ${export_macro}
+	EXPORT_FILE_NAME  ${export_file}
+	EXPORT_MACRO_NAME ${export_macro}
 )
 
 #
@@ -137,29 +137,29 @@ generate_export_header(${SWIG_MODULE_${target}_REAL_NAME}
 #
 
 set_target_properties(${SWIG_MODULE_${target}_REAL_NAME}
-    PROPERTIES
-    ${DEFAULT_PROJECT_OPTIONS}
-    FOLDER "${IDE_FOLDER}"
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 #
 # Include directories
 #
 target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
-    PRIVATE
-    ${PROJECT_BINARY_DIR}/source/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_BINARY_DIR}/include
+	PRIVATE
+	${PROJECT_BINARY_DIR}/source/include
+	${CMAKE_CURRENT_SOURCE_DIR}/include
+	${CMAKE_CURRENT_BINARY_DIR}/include
 
-    ${RUBY_INCLUDE_DIRS} # Ruby includes
+	${RUBY_INCLUDE_DIRS} # Ruby includes
 
-    PUBLIC
-    ${DEFAULT_INCLUDE_DIRECTORIES}
+	PUBLIC
+	${DEFAULT_INCLUDE_DIRECTORIES}
 
-    INTERFACE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
-    $<INSTALL_INTERFACE:include>
+	INTERFACE
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+	$<INSTALL_INTERFACE:include>
 )
 
 #
@@ -167,14 +167,14 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 #
 
 swig_link_libraries(${target}
-    PRIVATE
-    ${METACALL_LIBRARIES}
-    ${RUBY_LIBRARY} # Ruby libraries
+	PRIVATE
+	${METACALL_LIBRARIES}
+	${RUBY_LIBRARY} # Ruby libraries
 
-    PUBLIC
-    ${DEFAULT_LIBRARIES}
+	PUBLIC
+	${DEFAULT_LIBRARIES}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -182,13 +182,13 @@ swig_link_libraries(${target}
 #
 
 target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    $<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
-    ${DEFAULT_COMPILE_DEFINITIONS}
+	PUBLIC
+	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
+	${DEFAULT_COMPILE_DEFINITIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -196,12 +196,12 @@ target_compile_definitions(${SWIG_MODULE_${target}_REAL_NAME}
 #
 
 target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    ${DEFAULT_COMPILE_OPTIONS}
+	PUBLIC
+	${DEFAULT_COMPILE_OPTIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -209,12 +209,12 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 #
 
 target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
-    PRIVATE
+	PRIVATE
 
-    PUBLIC
-    ${DEFAULT_LINKER_OPTIONS}
+	PUBLIC
+	${DEFAULT_LINKER_OPTIONS}
 
-    INTERFACE
+	INTERFACE
 )
 
 #
@@ -223,29 +223,29 @@ target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 
 # Library
 install(TARGETS ${SWIG_MODULE_${target}_REAL_NAME}
-    EXPORT  "${target}-export"            COMPONENT dev
-    RUNTIME DESTINATION ${INSTALL_BIN}    COMPONENT runtime
-    LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
-    ARCHIVE DESTINATION ${INSTALL_LIB}    COMPONENT dev
+	EXPORT  "${target}-export"			COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}	COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}	COMPONENT dev
 )
 
 # Header files
 install(DIRECTORY
-    ${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-    COMPONENT dev
+	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
 )
 
 # Generated header files
 install(DIRECTORY
-    ${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-    COMPONENT dev
+	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	COMPONENT dev
 )
 
 # CMake config
 install(EXPORT ${target}-export
-    NAMESPACE   ${META_PROJECT_NAME}::
-    DESTINATION ${INSTALL_CMAKE}/${target}
-    COMPONENT   dev
+	NAMESPACE   ${META_PROJECT_NAME}::
+	DESTINATION ${INSTALL_CMAKE}/${target}
+	COMPONENT   dev
 )
 
 #
@@ -257,10 +257,10 @@ set(rb_port_test_path "${CMAKE_BINARY_DIR}/${rb_port_test}.rb")
 
 # Require module name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-    get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
-    set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
+	get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
+	set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
 else()
-    set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
+	set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
 endif()
 
 # Module object instance (capitalized)
@@ -276,7 +276,7 @@ configure_file(test/run.rb.in ${rb_port_test_path})
 #
 
 add_test(NAME ${target}
-    COMMAND ${RUBY_EXECUTABLE} ${rb_port_test_path}
+	COMMAND ${RUBY_EXECUTABLE} ${rb_port_test_path}
 )
 
 #
@@ -284,5 +284,5 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-    PROPERTY LABELS ${rb_port_test}
+	PROPERTY LABELS ${rb_port_test}
 )

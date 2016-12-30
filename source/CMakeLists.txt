@@ -7,7 +7,7 @@
 
 # Check if ports are enabled
 if(NOT OPTION_BUILD_PORTS)
-    return()
+	return()
 endif()
 
 # Port languages

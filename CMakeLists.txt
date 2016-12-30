@@ -7,7 +7,7 @@
 
 # Check if port is enabled
 if(NOT OPTION_BUILD_PORTS)
-    return()
+	return()
 endif()
 
 #
@@ -18,8 +18,8 @@ endif()
 find_package(SWIG REQUIRED)
 
 if(NOT SWIG_FOUND)
-    message(STATUS "Swig not found")
-    return()
+	message(STATUS "Swig not found")
+	return()
 endif()
 
 include(${SWIG_USE_FILE})
@@ -28,8 +28,8 @@ include(${SWIG_USE_FILE})
 find_package(MetaCall REQUIRED)
 
 if(NOT METACALL_FOUND)
-    message(STATUS "MetaCall libraries not found")
-    return()
+	message(STATUS "MetaCall libraries not found")
+	return()
 endif()
 
 include_directories(${METACALL_INCLUDE_DIRS})
