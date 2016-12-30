@@ -1,6 +1,6 @@
 #
 # Test Environment Variables by Parra Studios
-# Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+# Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 # Utility for defining cross-platform environment variables in tests
 #
