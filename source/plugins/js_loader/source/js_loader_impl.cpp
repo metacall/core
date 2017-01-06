@@ -631,10 +631,13 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl)
 
 	if (js_impl != nullptr)
 	{
-		if (V8::InitializeICU() == true)
+		#if 0 /* V8 5.7 */
+			V8::InitializeICUDefaultLocation("/../metacall/build", "/../v8/out/x64.debug/icudtl.dat");
+			V8::InitializeExternalStartupData("/../v8/out/x64.debug/");
+		#else /* V8 5.1 */
+			if (V8::InitializeICU() == true)
+		#endif
 		{
-			/* V8::InitializeExternalStartupData(argv[0]); */
-
 			js_impl->platform = platform::CreateDefaultPlatform();
 
 			if (js_impl->platform != nullptr)
