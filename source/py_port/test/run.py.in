@@ -17,7 +17,7 @@ class py_port_test(unittest.TestCase):
 		self.assertEqual(metacall.metacall('multiply', 5, 7), 35)
 
 	# MetaCall (Ruby)
-	def test_python(self):
+	def test_ruby(self):
 		self.assertEqual(metacall.metacall('say_null'), None)
 
 		#self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
