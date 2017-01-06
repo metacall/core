@@ -6,14 +6,20 @@
  *
  */
 
+/* -- Headers -- */
+
 #include <adt/adt_set.h>
 
 #include <log/log.h>
+
+/* -- Definitions -- */
 
 #define SET_BUCKET_PAIRS_DEFAULT	0x04
 #define SET_BUCKET_PAIRS_LIMIT		0x40
 #define SET_BUCKET_RATIO_MIN		0.1f
 #define SET_BUCKET_RATIO_MAX		0.77f
+
+/* -- Member Data -- */
 
 typedef struct set_pair_type
 {
@@ -30,7 +36,7 @@ typedef struct set_bucket_type
 
 } * set_bucket;
 
-typedef struct set_type
+struct set_type
 {
 	size_t count;
 	size_t capacity;
@@ -41,15 +47,17 @@ typedef struct set_type
 	int reallocating;
 	size_t amount;
 
-} * set;
+};
 
-typedef struct set_iterator_type
+struct set_iterator_type
 {
 	set s;
 	size_t bucket;
 	size_t pair;
 
-} * set_iterator;
+};
+
+/* -- Methods -- */
 
 size_t set_bucket_capacity(size_t prime)
 {

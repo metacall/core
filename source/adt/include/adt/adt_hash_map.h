@@ -9,6 +9,8 @@
 #ifndef ADT_HASH_MAP_H
 #define ADT_HASH_MAP_H 1
 
+/* -- Headers -- */
+
 #include <adt/adt_api.h>
 
 #include <adt/adt_hash.h>
@@ -18,7 +20,15 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
 #include <stdlib.h>
+
+/* -- Forward Declarations -- */
+
+struct hash_map_type;
+
+/* -- Type Definitions -- */
 
 typedef struct hash_map_type * hash_map;
 
@@ -35,6 +45,8 @@ typedef hash_callback hash_map_cb_hash;
 typedef comparable_callback hash_map_cb_compare;
 
 typedef int (*hash_map_cb_iterate)(hash_map, hash_map_key, hash_map_value, hash_map_cb_iterate_args);
+
+/* -- Methods -- */
 
 ADT_API hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare compare_cb);
 

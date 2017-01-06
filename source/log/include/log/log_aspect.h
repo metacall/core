@@ -45,8 +45,6 @@ struct log_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef size_t log_policy_id;
-
 typedef struct log_policy_type * log_policy;
 
 typedef void * log_aspect_impl;

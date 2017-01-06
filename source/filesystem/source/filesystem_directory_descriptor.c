@@ -24,13 +24,13 @@ typedef char directory_descriptor_path_str[DIRECTORY_DESCRIPTOR_PATH_SIZE];
 
 /* -- Member Data -- */
 
-typedef struct directory_descriptor_type
+struct directory_descriptor_type
 {
 	directory_descriptor		parent;		/**< Pointer to parent directory */
 	directory_descriptor_path_str	path;		/**< Path of current descriptor */
 	vector				files;		/**< String vector of files contained in current directory */
 
-} * directory_descriptor;
+};
 
 /* -- Methods -- */
 

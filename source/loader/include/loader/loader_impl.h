@@ -18,16 +18,6 @@
 extern "C" {
 #endif
 
-struct context_type;
-
-typedef struct context_type * context;
-
-struct type_type;
-
-typedef struct type_type * type;
-
-typedef struct loader_impl_type * loader_impl;
-
 LOADER_API loader_impl loader_impl_create(const char * path, loader_naming_extension extension);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);

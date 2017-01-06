@@ -26,13 +26,9 @@
 
 struct loader_handle_impl_type;
 
-struct loader_impl_type;
-
 /* -- Type Definitions -- */
 
 typedef struct loader_handle_impl_type * loader_handle_impl;
-
-typedef struct loader_impl_type * loader_impl;
 
 /* -- Member Data -- */
 

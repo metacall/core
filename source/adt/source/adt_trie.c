@@ -25,8 +25,6 @@ struct trie_node_free_type;
 
 struct trie_node_type;
 
-struct trie_type;
-
 struct trie_node_set_iterator_args_type;
 
 struct trie_node_append_iterator_args_type;
@@ -40,8 +38,6 @@ typedef struct trie_node_ref_type * trie_node_ref;
 typedef struct trie_node_free_type * trie_node_free;
 
 typedef struct trie_node_type * trie_node;
-
-typedef struct trie_type * trie;
 
 typedef struct trie_node_set_iterator_args_type * trie_node_set_iterator_args;
 

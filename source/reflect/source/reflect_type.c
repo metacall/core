@@ -11,14 +11,14 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct type_type
+struct type_type
 {
 	type_id id;
 	char * name;
 	type_impl impl;
 	type_interface interface;
 
-} * type;
+};
 
 type type_create(type_id id, const char * name, type_impl impl, type_impl_interface_singleton singleton)
 {

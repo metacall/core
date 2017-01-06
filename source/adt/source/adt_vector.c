@@ -22,13 +22,13 @@
 
 /* -- Member Data -- */
 
-typedef struct vector_type
+struct vector_type
 {
 	size_t	type_size;	/**< Size of element type */
 	size_t	capacity;	/**< Allocated capacity of the vector */
 	size_t	size;		/**< Amount of actual elements cointained in vector */
 	void *	data;		/**< Pointer to memory block */
-} * vector;
+};
 
 /* -- Private Methods -- */
 

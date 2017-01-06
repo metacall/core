@@ -13,13 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct function_type
+struct function_type
 {
 	char * name;
 	signature s;
 	function_impl impl;
 	function_interface interface;
-} * function;
+};
 
 function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
 {

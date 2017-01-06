@@ -13,6 +13,8 @@
 
 #include <filesystem/filesystem_api.h>
 
+#include <adt/adt_vector.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -23,13 +25,9 @@ extern "C" {
 
 /* -- Forward Declarations -- */
 
-struct vector_type;
-
 struct directory_descriptor_type;
 
 /* -- Type Definitions -- */
-
-typedef struct vector_type * vector;
 
 typedef struct directory_descriptor_type * directory_descriptor;
 

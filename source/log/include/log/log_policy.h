@@ -25,21 +25,13 @@ extern "C" {
 
 /* -- Forward Declarations -- */
 
-struct log_aspect_type;
-
-struct log_policy_type;
-
 struct log_policy_ctor_type;
 
 struct log_policy_interface_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_aspect_type * log_aspect;
-
 typedef size_t log_policy_id;
-
-typedef struct log_policy_type * log_policy;
 
 typedef void * log_policy_impl;
 

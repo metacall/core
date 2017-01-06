@@ -51,7 +51,7 @@ typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
 typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr_ptr);
 typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);
 
-typedef struct dynlink_impl_interface_type
+struct dynlink_impl_interface_type
 {
 	dynlink_impl_interface_extension extension;
 	dynlink_impl_interface_get_name get_name;
@@ -59,7 +59,7 @@ typedef struct dynlink_impl_interface_type
 	dynlink_impl_interface_symbol symbol;
 	dynlink_impl_interface_unload unload;
 
-} * dynlink_impl_interface;
+};
 
 typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);
 

@@ -21,14 +21,6 @@
 extern "C" {
 #endif
 
-/* -- Forward Declarations -- */
-
-struct log_impl_type;
-
-/* -- Type Definitions -- */
-
-typedef struct log_impl_type * log_impl;
-
 /* -- Methods -- */
 
 LOG_API log_aspect_interface log_impl_aspect_interface(enum log_aspect_id aspect_id);

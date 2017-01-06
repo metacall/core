@@ -20,13 +20,13 @@ typedef char file_descriptor_extension_str[FILE_DESCRIPTOR_EXTENSION_SIZE];
 
 /* -- Member data -- */
 
-typedef struct file_descriptor_type
+struct file_descriptor_type
 {
 	directory_descriptor		owner;				/**< Directory descriptor which file belongs to */
 	file_descriptor_name_str	name;				/**< File name string */
 	file_descriptor_extension_str	extension;		/**< File extension string */
 
-} * file_descriptor;
+};
 
 /* -- Methods -- */
 

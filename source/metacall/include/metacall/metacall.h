@@ -13,6 +13,8 @@
 
 #include <metacall/metacall_api.h>
 
+#include <reflect/reflect_value_type.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,10 +23,6 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdarg.h>
-
-/* -- Type Definitions -- */
-
-typedef void * value;
 
 /* -- Global Variables -- */
 

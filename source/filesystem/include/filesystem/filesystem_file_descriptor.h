@@ -13,6 +13,8 @@
 
 #include <filesystem/filesystem_api.h>
 
+#include <filesystem/filesystem_directory_descriptor.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,13 +28,9 @@ extern "C" {
 
 struct file_descriptor_type;
 
-struct directory_descriptor_type;
-
 /* -- Type Definitions -- */
 
 typedef struct file_descriptor_type * file_descriptor;
-
-typedef struct directory_descriptor_type * directory_descriptor;
 
 /* -- Methods -- */
 

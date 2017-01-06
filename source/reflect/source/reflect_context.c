@@ -12,12 +12,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct context_type
+struct context_type
 {
 	char * name;
 	scope sp;
 
-} * context;
+};
 
 context context_create(const char * name)
 {

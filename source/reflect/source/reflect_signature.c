@@ -19,11 +19,11 @@ typedef struct signature_node_type
 	type			t;
 } * signature_node;
 
-typedef struct signature_type
+struct signature_type
 {
 	type			ret;
 	size_t			count;
-} * signature;
+};
 
 static signature_node signature_head(signature s);
 

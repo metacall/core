@@ -6,14 +6,20 @@
  *
  */
 
+/* -- Headers -- */
+
 #include <adt/adt_hash_map.h>
 
 #include <log/log.h>
+
+/* -- Definitions -- */
 
 #define HASH_MAP_BUCKET_PAIRS_DEFAULT	0x04
 #define HASH_MAP_BUCKET_PAIRS_LIMIT	0x40
 #define HASH_MAP_BUCKET_RATIO_MIN	0.1f
 #define HASH_MAP_BUCKET_RATIO_MAX	0.77f
+
+/* -- Member Data -- */
 
 typedef struct hash_map_pair_type
 {
@@ -30,7 +36,7 @@ typedef struct hash_map_bucket_type
 
 } * hash_map_bucket;
 
-typedef struct hash_map_type
+struct hash_map_type
 {
 	int count;
 	int capacity;
@@ -41,7 +47,9 @@ typedef struct hash_map_type
 	int reallocating;
 	int amount;
 
-} * hash_map;
+};
+
+/* -- Methods -- */
 
 static int hash_map_bucket_capacity(size_t prime);
 
@@ -162,7 +170,7 @@ static int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 
 				return 0;
 			}
-			
+
 			log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for hash map pairs");
 
 			return 1;

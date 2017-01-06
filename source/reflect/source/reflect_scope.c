@@ -16,13 +16,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct scope_type
+struct scope_type
 {
 	char * name;			/**< Scope name */
 	hash_map map;			/**< Map of scope objects indexed by name string */
 	vector call_stack;		/**< Scope call stack */
 
-} * scope;
+};
 
 static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 

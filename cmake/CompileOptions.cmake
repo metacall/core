@@ -29,6 +29,13 @@ set(DEFAULT_PROJECT_OPTIONS
 	CXX_VISIBILITY_PRESET		"hidden"
 )
 
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+	set(DEFAULT_PROJECT_OPTIONS
+		${DEFAULT_PROJECT_OPTIONS}
+		C_STANDARD			99 # TODO: Provide preprocessor support for older standards (GCC)
+	)
+endif()
+
 #
 # Include directories
 #

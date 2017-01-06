@@ -13,6 +13,8 @@
 
 #include <log/log_api.h>
 
+#include <log/log_impl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,15 +23,11 @@ extern "C" {
 
 struct log_singleton_map_bucket_type;
 
-struct log_impl_type;
-
 struct log_singleton_type;
 
 /* -- Type Definitions -- */
 
 typedef struct log_singleton_map_bucket_type * log_singleton_map_bucket;
-
-typedef struct log_impl_type * log_impl;
 
 typedef struct log_singleton_type * log_singleton;
 
