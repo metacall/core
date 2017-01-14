@@ -21,8 +21,7 @@ void environment::SetUp() {
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout));
 
-	loader_load(name);
-
+	loader_load_from_file(name);
 }
 
 void environment::TearDown() {

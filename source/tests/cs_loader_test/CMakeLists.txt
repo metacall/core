@@ -92,7 +92,9 @@ target_link_libraries(${target}
 
 	gmock-dev
 
+	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::loader
 	${META_PROJECT_NAME}::reflect
