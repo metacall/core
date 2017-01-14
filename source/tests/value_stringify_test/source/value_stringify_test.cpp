@@ -39,7 +39,11 @@ TEST_F(value_stringify_test, DefaultConstructor)
 		"545.345300",
 		hello_world,
 		#if defined(_WIN32) && defined(_MSC_VER)
-			"0x000A7EF2"
+			#if defined(_WIN64)
+				"0x00000000000A7EF2"
+			#else
+				"0x000A7EF2"
+			#endif
 		#elif defined(__linux) || defined(__linux__)
 			"0xa7ef2"
 		#else
