@@ -53,8 +53,10 @@ set(IDE_FOLDER "Scripts")
 add_subdirectory(scripts)
 
 # Ports
-set(IDE_FOLDER "Ports")
-add_subdirectory(ports)
+if(NOT OPTION_BUILD_PORTS)
+	set(IDE_FOLDER "Ports")
+	add_subdirectory(ports)
+endif()
 
 #
 # Deployment
