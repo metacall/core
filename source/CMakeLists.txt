@@ -53,7 +53,7 @@ set(IDE_FOLDER "Scripts")
 add_subdirectory(scripts)
 
 # Ports
-if(NOT OPTION_BUILD_PORTS)
+if(OPTION_BUILD_PORTS)
 	set(IDE_FOLDER "Ports")
 	add_subdirectory(ports)
 endif()
