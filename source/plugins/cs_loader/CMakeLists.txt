@@ -32,6 +32,11 @@ set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
+# force Unicode over Multi-byte
+if(MSVC)
+    add_definitions(-DUNICODE -D_UNICODE)
+endif()
+
 #
 # Compiler warnings
 #
