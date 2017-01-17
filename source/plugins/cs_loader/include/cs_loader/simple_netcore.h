@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 #include <cs_loader/defs.h>
-#include <stdlib.h>
+
 	struct netcore_handle_type;
 	typedef struct netcore_handle_type * netcore_handle;
 
@@ -16,7 +16,7 @@ extern "C" {
 
 	void  simple_netcore_load_script(netcore_handle handle, const char *path, const char* file);
 
-	void  simple_netcore_invoke(netcore_handle, const char *, parameters *params, size_t count);
+	void  simple_netcore_invoke(netcore_handle, const char *);
 
 	void simple_netcore_destroy(netcore_handle);
 #ifdef __cplusplus

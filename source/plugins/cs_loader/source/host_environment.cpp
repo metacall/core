@@ -4,18 +4,18 @@
 host_environment::host_environment(logger *logger) : log(logger), clr_runtime_host(nullptr)
 {
 	// Discover the path to this exe's module. All other files are expected to be in the same directory.
-	DWORD thisModuleLength = ::GetModuleFileName(::GetModuleHandleW(nullptr), this->host_path, MAX_LONGPATH);
+	DWORD thisModuleLength = ::GetModuleFileNameW(::GetModuleHandleW(nullptr), this->host_path, MAX_LONGPATH);
 
 	// Search for the last backslash in the host path.
 	int lastBackslashIndex;
 	for (lastBackslashIndex = thisModuleLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--) {
-		if (this->host_path[lastBackslashIndex] == '\\') {
+		if (this->host_path[lastBackslashIndex] == W('\\')) {
 			break;
 		}
 	}
 
 	// Copy the directory path
-	::strncpy(this->host_directory_path, this->host_path, lastBackslashIndex + 1);
+	::wcsncpy_s(this->host_directory_path, this->host_path, lastBackslashIndex + 1);
 
 	// Save the exe name
 	this->host_exe_name = this->host_path + lastBackslashIndex + 1;
@@ -23,14 +23,12 @@ host_environment::host_environment(logger *logger) : log(logger), clr_runtime_ho
 	*this->log << W("Host directory: ") << this->host_directory_path << logger::endl;
 
 	// Check for %CORE_ROOT% and try to load CoreCLR.dll from it if it is set
-	char * coreRootTmp;
-	char  coreRoot[MAX_LONGPATH] = "";
+	wchar_t coreRoot[MAX_LONGPATH];
+	size_t outSize;
 	this->core_clr_module = NULL; // Initialize this here since we don't call TryLoadCoreCLR if CORE_ROOT is unset.
-	coreRootTmp = getenv("CORE_ROOT");
-	if (coreRootTmp)
+	if (_wgetenv_s(&outSize, coreRoot, MAX_LONGPATH, W("CORE_ROOT")) == 0 && outSize > 0)
 	{
-		strcpy(coreRoot, coreRootTmp);
-		strcat(coreRoot, "\\");
+		wcscat_s(coreRoot, MAX_LONGPATH, W("\\"));
 		this->core_clr_module = this->try_load_core_clr(coreRoot);
 	}
 	else
@@ -48,12 +46,12 @@ host_environment::host_environment(logger *logger) : log(logger), clr_runtime_ho
 	if (this->core_clr_module) {
 
 		// Save the directory that CoreCLR was found in
-		DWORD modulePathLength = ::GetModuleFileName(this->core_clr_module, this->core_clr_directory_path, MAX_LONGPATH);
+		DWORD modulePathLength = ::GetModuleFileNameW(this->core_clr_module, this->core_clr_directory_path, MAX_LONGPATH);
 
 		// Search for the last backslash and terminate it there to keep just the directory path with trailing slash
 		for (lastBackslashIndex = modulePathLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--) {
-			if (this->core_clr_directory_path[lastBackslashIndex] == '\\') {
-				this->core_clr_directory_path[lastBackslashIndex + 1] = '\0';
+			if (this->core_clr_directory_path[lastBackslashIndex] == W('\\')) {
+				this->core_clr_directory_path[lastBackslashIndex + 1] = W('\0');
 				break;
 			}
 		}
@@ -83,15 +81,15 @@ host_environment::~host_environment()
 // Attempts to load CoreCLR.dll from the given directory.
 // On success pins the dll, sets m_coreCLRDirectoryPath and returns the HMODULE.
 // On failure returns nullptr.
-HMODULE host_environment::try_load_core_clr(const char* directory_path) {
+HMODULE host_environment::try_load_core_clr(const wchar_t* directory_path) {
 
-	char coreCLRPath[MAX_LONGPATH] = "";
-	strcpy(coreCLRPath, directory_path);
-	strcat(coreCLRPath, core_clr_dll);
+	wchar_t coreCLRPath[MAX_LONGPATH];
+	wcscpy_s(coreCLRPath, directory_path);
+	wcscat_s(coreCLRPath, core_clr_dll);
 
 	*this->log << W("Attempting to load: ") << coreCLRPath << logger::endl;
 
-	HMODULE result = ::LoadLibraryEx(coreCLRPath, NULL, 0);
+	HMODULE result = ::LoadLibraryExW(coreCLRPath, NULL, 0);
 	if (!result) {
 		*this->log << W("Failed to load: ") << coreCLRPath << logger::endl;
 		*this->log << W("Error code: ") << GetLastError() << logger::endl;
@@ -100,32 +98,32 @@ HMODULE host_environment::try_load_core_clr(const char* directory_path) {
 
 	// Pin the module - CoreCLR.dll does not support being unloaded.
 	HMODULE dummy_coreCLRModule;
-	if (!::GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_PIN, coreCLRPath, &dummy_coreCLRModule)) {
+	if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, coreCLRPath, &dummy_coreCLRModule)) {
 		*this->log << W("Failed to pin: ") << coreCLRPath << logger::endl;
 		return nullptr;
 	}
 
-	char coreCLRLoadedPath[MAX_LONGPATH] = "";
-	::GetModuleFileName(result, coreCLRLoadedPath, MAX_LONGPATH);
+	wchar_t coreCLRLoadedPath[MAX_LONGPATH];
+	::GetModuleFileNameW(result, coreCLRLoadedPath, MAX_LONGPATH);
 
 	*this->log << W("Loaded: ") << coreCLRLoadedPath << logger::endl;
 
 	return result;
 }
 
-bool host_environment::tpa_list_contains_file(_In_z_ char* fileNameWithoutExtension, _In_reads_(countExtensions) char** rgTPAExtensions, int countExtensions) {
+bool host_environment::tpa_list_contains_file(_In_z_ wchar_t* fileNameWithoutExtension, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions) {
 
 	if (!this->tpa_list.c_str()) return false;
 
 	for (int iExtension = 0; iExtension < countExtensions; iExtension++)
 	{
-		char fileName[MAX_LONGPATH] = "";
-		strcat(fileName, "\\"); // So that we don't match other files that end with the current file name
-		strcat(fileName, fileNameWithoutExtension);
-		strcat(fileName, rgTPAExtensions[iExtension] + 1);
-		strcat(fileName, ";"); // So that we don't match other files that begin with the current file name
+		wchar_t fileName[MAX_LONGPATH];
+		wcscpy_s(fileName, MAX_LONGPATH, W("\\")); // So that we don't match other files that end with the current file name
+		wcscat_s(fileName, MAX_LONGPATH, fileNameWithoutExtension);
+		wcscat_s(fileName, MAX_LONGPATH, rgTPAExtensions[iExtension] + 1);
+		wcscat_s(fileName, MAX_LONGPATH, W(";")); // So that we don't match other files that begin with the current file name
 
-		if (strstr(this->tpa_list.c_str(), fileName))
+		if (wcsstr(this->tpa_list.c_str(), fileName))
 		{
 			return true;
 		}
@@ -133,41 +131,40 @@ bool host_environment::tpa_list_contains_file(_In_z_ char* fileNameWithoutExtens
 	return false;
 }
 
-void host_environment::remove_extension_and_ni(_In_z_ char* fileName)
+void host_environment::remove_extension_and_ni(_In_z_ wchar_t* fileName)
 {
 	// Remove extension, if it exists
-	char* extension = strrchr(fileName, '.');
-
+	wchar_t* extension = wcsrchr(fileName, W('.'));
 	if (extension != NULL)
 	{
-		extension[0] = '\0';
+		extension[0] = W('\0');
 
 		// Check for .ni
-		size_t len = strlen(fileName);
+		size_t len = wcslen(fileName);
 		if (len > 3 &&
-			fileName[len - 1] == 'i' &&
-			fileName[len - 2] == 'n' &&
-			fileName[len - 3] == '.')
+			fileName[len - 1] == W('i') &&
+			fileName[len - 2] == W('n') &&
+			fileName[len - 3] == W('.'))
 		{
-			fileName[len - 3] = '\0';
+			fileName[len - 3] = W('\0');
 		}
 	}
 }
 
-void host_environment::add_files_from_directory_to_tpa_list(_In_z_ char* targetPath, _In_reads_(countExtensions) char** rgTPAExtensions, int countExtensions)
+void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targetPath, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions)
 {
 	*this->log << W("Adding assemblies from ") << targetPath << W(" to the TPA list") << logger::endl;
-	char assemblyPath[MAX_LONGPATH] = "";
+	wchar_t assemblyPath[MAX_LONGPATH];
 
 	for (int iExtension = 0; iExtension < countExtensions; iExtension++)
 	{
-		strcpy(assemblyPath, targetPath);
+		wcscpy_s(assemblyPath, MAX_LONGPATH, targetPath);
 
-		const size_t dirLength = strlen(targetPath);
-		char* const fileNameBuffer = assemblyPath + dirLength;
+		const size_t dirLength = wcslen(targetPath);
+		wchar_t* const fileNameBuffer = assemblyPath + dirLength;
 		const size_t fileNameBufferSize = MAX_LONGPATH - dirLength;
 
-		strcat(assemblyPath, rgTPAExtensions[iExtension]);
+		wcscat_s(assemblyPath, rgTPAExtensions[iExtension]);
 		WIN32_FIND_DATA data;
 		HANDLE findHandle = FindFirstFile(assemblyPath, &data);
 
@@ -179,27 +176,27 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ char* targetP
 					// users the opportunity to override Framework assemblies by placing dlls in %CORE_LIBRARIES%
 
 					// ToLower for case-insensitive comparisons
-					char* fileNameChar = data.cFileName;
+					wchar_t* fileNameChar = data.cFileName;
 					while (*fileNameChar)
 					{
-						*fileNameChar = (char)tolower((int)*fileNameChar);
+						*fileNameChar = towlower(*fileNameChar);
 						fileNameChar++;
 					}
 
 					// Remove extension
-					char fileNameWithoutExtension[MAX_LONGPATH] = "";
-					strcpy(fileNameWithoutExtension, data.cFileName);
+					wchar_t fileNameWithoutExtension[MAX_LONGPATH];
+					wcscpy_s(fileNameWithoutExtension, MAX_LONGPATH, data.cFileName);
 
 					this->remove_extension_and_ni(fileNameWithoutExtension);
 
 					// Add to the list if not already on it
 					if (!this->tpa_list_contains_file(fileNameWithoutExtension, rgTPAExtensions, countExtensions))
 					{
-						const size_t fileLength = strlen(data.cFileName);
+						const size_t fileLength = wcslen(data.cFileName);
 						const size_t assemblyPathLength = dirLength + fileLength;
-						strcpy(fileNameBuffer, data.cFileName);
+						wcsncpy_s(fileNameBuffer, fileNameBufferSize, data.cFileName, fileLength);
 						this->tpa_list.append(assemblyPath, assemblyPathLength);
-						this->tpa_list.append(";", 1);
+						this->tpa_list.append(W(";"), 1);
 					}
 					else
 					{
@@ -215,22 +212,21 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ char* targetP
 
 // Returns the semicolon-separated list of paths to runtime dlls that are considered trusted.
 // On first call, scans the coreclr directory for dlls and adds them all to the list.
-const char * host_environment::get_tpa_list() {
+const wchar_t * host_environment::get_tpa_list() {
 	if (!this->tpa_list.c_str()) {
-		char *rgTPAExtensions[] = {
-			"*.ni.dll",		// Probe for .ni.dll first so that it's preferred if ni and il coexist in the same dir
-			"*.dll",
-			"*.ni.exe",
-			"*.exe",
+		wchar_t *rgTPAExtensions[] = {
+			W("*.ni.dll"),		// Probe for .ni.dll first so that it's preferred if ni and il coexist in the same dir
+			W("*.dll"),
+			W("*.ni.exe"),
+			W("*.exe"),
 		};
 
 		// Add files from %CORE_LIBRARIES% if specified
-		char * coreLibraries;
-		coreLibraries = getenv("CORE_LIBRARIES");
-
-		if (coreLibraries)
+		wchar_t coreLibraries[MAX_LONGPATH];
+		size_t outSize;
+		if (_wgetenv_s(&outSize, coreLibraries, MAX_LONGPATH, W("CORE_LIBRARIES")) == 0 && outSize > 0)
 		{
-			strcat(coreLibraries, "\\");
+			wcscat_s(coreLibraries, MAX_LONGPATH, W("\\"));
 			this->add_files_from_directory_to_tpa_list(coreLibraries, rgTPAExtensions, _countof(rgTPAExtensions));
 		}
 		else
@@ -247,12 +243,12 @@ const char * host_environment::get_tpa_list() {
 }
 
 // Returns the path to the host module
-const char * host_environment::get_host_path() const {
+const wchar_t * host_environment::get_host_path() const {
 	return this->host_path;
 }
 
 // Returns the path to the host module
-const char * host_environment::get_host_exe_name() const {
+const wchar_t * host_environment::get_host_exe_name() const {
 	return this->host_exe_name;
 }
 

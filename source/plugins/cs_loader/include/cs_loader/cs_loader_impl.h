@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A plugin for loading net code at run-time into a process.
  *
@@ -21,9 +21,7 @@ CS_LOADER_API loader_impl_data cs_loader_impl_initialize(loader_impl impl);
 
 CS_LOADER_API int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-CS_LOADER_API loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name);
-
-CS_LOADER_API loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension ext, const char * code, size_t size);
+CS_LOADER_API loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name);
 
 CS_LOADER_API int cs_loader_impl_clear(loader_impl impl, loader_handle handle);
 

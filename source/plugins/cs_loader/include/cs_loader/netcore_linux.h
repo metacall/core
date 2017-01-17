@@ -2,20 +2,22 @@
 #ifndef _NETCORELINUX_H_
 #define _NETCORELINUX_H_
 
-#include <cs_loader/netcore.h>
+#include "netcore.h"
 #include <stdio.h>
 #include <string.h>
 #include <sstream>
 #include <iostream>
 #include <ostream>
 #include <stdlib.h>
-#include <dynlink/dynlink.h>
+#include "dl/dynamicLinker.hpp"
+#include <experimental/filesystem>
+#include <functional>
 #include <iostream>
-
-#include <cs_loader/logger.h>
+#include <unistd.h>
+#include "logger.h"
 #define MAX_LONGPATH 255
 
-typedef int(*coreclrInitializeFunction)(
+typedef int (coreclrInitializeFunction)(
 	const char* exePath,
 	const char* appDomainFriendlyName,
 	int propertyCount,
@@ -25,12 +27,12 @@ typedef int(*coreclrInitializeFunction)(
 	unsigned int* domainId);
 
 // Prototype of the coreclr_shutdown function from the libcoreclr.so
-typedef int(*coreclrShutdownFunction)(
+typedef int (coreclrShutdownFunction)(
 	void* hostHandle,
 	unsigned int domainId);
 
 // Prototype of the coreclr_execute_assembly function from the libcoreclr.so
-typedef int(*coreclrCreateDelegateFunction)(
+typedef int (coreclrCreateDelegateFunction)(
 	void* hostHandle,
 	unsigned int domainId,
 	const char* entryPointAssemblyName,
@@ -53,14 +55,14 @@ private:
 	std::string nativeDllSearchDirs;
 	unsigned int domainId = 0;
 
-	std::string coreClrDll = "coreclr";
+	std::string coreClrDll = "libcoreclr.so";
 
 	std::string absoluteLibPath;
-	dynlink dl_handle;
+	std::shared_ptr<dynamicLinker::dynamicLinker> dl;
 
-	coreclrInitializeFunction   coreclr_initialize;
-	coreclrShutdownFunction   coreclr_shutdown;
-	coreclrCreateDelegateFunction  coreclr_create_delegate;
+	dynamicLinker::dynamicLinker::dlSymbol<coreclrInitializeFunction> * coreclr_initialize;
+	dynamicLinker::dynamicLinker::dlSymbol<coreclrShutdownFunction> * coreclr_shutdown;
+	dynamicLinker::dynamicLinker::dlSymbol<coreclrCreateDelegateFunction> * coreclr_create_delegate;
 
 	std::string tpaList;
 
@@ -72,7 +74,17 @@ private:
 
 	bool LoadMain();
 
-	void add_files_from_directory_to_tpa_list(std::string directory, std::string& tpaList);
+	void AddFilesFromDirectoryToTpaList(std::string directory, std::string& tpaList) {
+
+		for (auto& dirent : std::experimental::filesystem::directory_iterator(directory)) {
+			std::string path = dirent.path();
+
+			if (!path.compare(path.length() - 4, 4, ".dll")) {
+				tpaList.append(path + ":");
+			}
+		}
+
+	}
 
 public:
 	netcore_linux();

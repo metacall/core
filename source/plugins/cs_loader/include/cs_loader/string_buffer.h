@@ -13,7 +13,7 @@ class string_buffer
 {
 private:
 	static const int default_size = 4096;
-	char* buffer;
+	wchar_t* buffer;
 	size_t capacity;
 	size_t length;
 
@@ -24,9 +24,9 @@ public:
 
 	~string_buffer();
 
-	const char* c_str() const;
+	const wchar_t* c_str() const;
 
-	void append(const char* str, size_t strLen);
+	void append(const wchar_t* str, size_t strLen);
 };
 
 #endif

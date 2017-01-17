@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A plugin for loading net code at run-time into a process.
  *
@@ -18,13 +18,13 @@
 #include <log/log.h>
 
 #include <stdlib.h>
-
 #include <cs_loader/simple_netcore.h>
 
 typedef struct {
 	netcore_handle handle;
 	reflect_function * func;
 } cs_function;
+
 
 int function_cs_interface_create(function func, function_impl impl)
 {
@@ -36,31 +36,17 @@ int function_cs_interface_create(function func, function_impl impl)
 
 function_return function_cs_interface_invoke(function func, function_impl impl, function_args args)
 {
-	parameters params[0xF];
+	(void)func;
+	(void)impl;
+	(void)args;
 
 	cs_function * cs_f = (cs_function*)impl;
 
-	signature s = function_signature(func);
+	simple_netcore_invoke(cs_f->handle, cs_f->func->name);
 
-	const size_t args_size = signature_count(s);
-
-	//type ret_type = signature_get_return(s);
-
-	size_t args_count;
-
-	for (args_count = 0; args_count < args_size; ++args_count)
-	{
-		params[args_count].type = (short)cs_f->func->pars[args_count].type;
-		params[args_count].ptr = args[args_count];
-	}
-	if (args_size > 0) {
-		simple_netcore_invoke(cs_f->handle, cs_f->func->name, params, args_size);
-	}
-	else
-	{
-		simple_netcore_invoke(cs_f->handle, cs_f->func->name, NULL, 0);
-	}
-
+	//function_name(func);
+	//function_
+	//simple_netcore_invoke()
 	return NULL;
 }
 
@@ -130,6 +116,8 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 {
 	/* TODO: Initialize runtime, call to type initialization if need */
 
+	//netcore_win *netcore_inp = new netcore_win();
+
 	(void)impl;
 
 	return (loader_impl_data)simple_netcore_create();
@@ -145,19 +133,7 @@ int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-
-loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension ext, const char * code, size_t size) {
-	(void)impl;
-	(void)name;
-	(void)ext;
-	(void)code;
-	(void)size;
-
-	return NULL;
-}
-
-
-loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
+loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	/* TODO: Load a new script into a loader_handle by path and name (just that, not inspection / reflection need */
 
@@ -169,7 +145,7 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	simple_netcore_load_script(nhandle, path, name);
 
-	return nhandle;
+	return (loader_handle)impl;
 }
 
 int cs_loader_impl_clear(loader_impl impl, loader_handle handle)
@@ -216,10 +192,10 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			for (size_t j = 0; j < functions[i].param_count; ++j)
 			{
-				signature_set(s, j, functions[i].pars[j].name, (type)&functions[i].pars[j].type);
+				signature_set(s, j, functions[i].pars[j].name, (type)functions[i].pars[j].type);
 			}
 
-			signature_set_return(s, (type)&functions[i].return_type);
+			signature_set_return(s, (type)functions[i].return_type);
 		}
 
 		scope_define(sp, functions[i].name, f);
@@ -231,8 +207,6 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 int cs_loader_impl_destroy(loader_impl impl)
 {
 	/* TODO: Destroy runtime */
-
-	(void)impl;
 
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 

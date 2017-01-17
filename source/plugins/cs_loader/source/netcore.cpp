@@ -1,5 +1,4 @@
 #include <cs_loader/netcore.h>
-#include <stdlib.h>
 #include <ostream>
 #include <iostream>
 netcore::netcore()
@@ -17,7 +16,7 @@ reflect_function * netcore::get_functions(int * count) {
 
 	for (size_t i = 0; i < this->functions_count; i++)
 	{
-		std::cout << "function name2:" << this->functions[i].name << std::endl;
+		std::cout << "function name:" << this->functions[i].name << std::endl;
 		std::cout << "function return type:" << this->functions[i].return_type << std::endl;
 		std::cout << "function param count:" << this->functions[i].param_count << std::endl;
 
@@ -61,22 +60,21 @@ bool netcore::create_delegates() {
 
 
 bool netcore::load_source(wchar_t * source) {
-	return this->core_load_w(source) ? true : false;
+	return this->core_load_w(source);
 };
 bool netcore::load_source(char * source) {
-	return this->core_load_c(source) ? true : false;
+	return this->core_load_c(source);
 }
 
 bool netcore::execute(char * function) {
-	std::cout << "invoke name:" << function << std::endl;
-	return this->execute_c(function) ? true : false;
+	return this->execute_c(function);
 }
 bool netcore::execute(wchar_t * function) {
-	return this->execute_w(function) ? true : false;
+	return this->execute_w(function);
 }
 bool netcore::execute_with_params(char * function, parameters * params, size_t size) {
-	return this->execute_with_params_c(function, params, (short)size) ? true : false;
+	return this->execute_with_params_c(function, params, (short)size);
 }
 bool netcore::execute_with_params(wchar_t * function, parameters * params, size_t size) {
-	return this->execute_with_params_w(function, params, (short)size) ? true : false;
+	return this->execute_with_params_w(function, params, (short)size);
 }

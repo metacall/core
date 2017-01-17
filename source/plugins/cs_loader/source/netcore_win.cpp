@@ -11,6 +11,7 @@
 #include <fstream>
 #include <memory>
 
+#include <cs_loader/logger.h>
 #include <cs_loader/host_environment.h>
 
 netcore_win::netcore_win()
@@ -18,8 +19,6 @@ netcore_win::netcore_win()
 	this->log = new logger();
 	this->log->disable();
 	this->domain_id = 0;
-
-	*this->log << W("ctr netcore") << logger::endl;
 }
 
 
@@ -79,11 +78,9 @@ bool netcore_win::start() {
 	if (!this->create_host()) {
 		return false;
 	}
-	//
-	//if (!this->load_main()) {
-	//	return false;
-	//}
-
+	if (!this->load_main()) {
+		return false;
+	}
 	if (!this->create_delegates()) {
 		return false;
 	}
@@ -92,56 +89,49 @@ bool netcore_win::start() {
 }
 
 bool netcore_win::config_assembly_name() {
-	/*
-	char* filePart = NULL;
-	char loader_dll_char[255];
-	wcstombs(loader_dll_char, this->loader_dll, 255);
 
-	if (!::GetFullPathName(loader_dll_char, MAX_LONGPATH, this->appPath, &filePart)) {
+	wchar_t* filePart = NULL;
+
+	if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
 		*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
 		*this->log << W("Error code: ") << GetLastError() << logger::endl;
 		return false;
 	}
 
-	strcpy(managedAssemblyFullName, this->appPath);
+	wcscpy_s(managedAssemblyFullName, appPath);
+
+	*(filePart) = W('\0');
 
 	*this->log << W("Loading: ") << managedAssemblyFullName << logger::endl;
 
-	strcat(appNiPath, this->appPath);
-	strcat(appNiPath, ";");
-	strcat(appNiPath, this->appPath);
+	wcscpy_s(appNiPath, appPath);
+	wcscat_s(appNiPath, MAX_LONGPATH * 2, W(";"));
+	wcscat_s(appNiPath, MAX_LONGPATH * 2, appPath);
 
 	// Construct native search directory paths
 
-	strcpy(nativeDllSearchDirs, appPath);
-	*/
-	char * coreLibraries = NULL;
-
-	coreLibraries = getenv("CORE_LIBRARIES");
-	strcpy(nativeDllSearchDirs, "\0");
-	if (coreLibraries) {
-		strcat(nativeDllSearchDirs, coreLibraries);
-		strcat(nativeDllSearchDirs, ";");
+	wcscpy_s(nativeDllSearchDirs, appPath);
+	wchar_t coreLibraries[MAX_LONGPATH];
+	size_t outSize;
+	if (_wgetenv_s(&outSize, coreLibraries, MAX_LONGPATH, W("CORE_LIBRARIES")) == 0 && outSize > 0)
+	{
+		wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, W(";"));
+		wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, coreLibraries);
 	}
-
-	//strcat(nativeDllSearchDirs, ";");
-
-	strcat(nativeDllSearchDirs, this->core_environment->core_clr_directory_path);
+	wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, W(";"));
+	wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, this->core_environment->core_clr_directory_path);
 
 	return true;
 }
 
 bool netcore_win::create_host() {
 	this->host = this->core_environment->get_clr_runtime_host();
-
 	if (!host) {
 		*this->log << "fail GetCLRRuntimeHost";
 		return false;
 	}
 
 	HRESULT hr;
-
-	bool set_startup_flags_fail = false;
 
 	*this->log << W("Setting ICLRRuntimeHost2 startup flags") << logger::endl;
 
@@ -150,32 +140,18 @@ bool netcore_win::create_host() {
 		(STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
 			STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
 			STARTUP_FLAGS::STARTUP_CONCURRENT_GC));
-
 	if (FAILED(hr)) {
 		*this->log << W("Failed to set startup flags. ERRORCODE: ") << hr << logger::endl;
-		set_startup_flags_fail = true;
+		return false;
 	}
 
 	*this->log << W("Starting ICLRRuntimeHost2") << logger::endl;
 
 	hr = host->Start();
-
 	if (FAILED(hr)) {
 		*this->log << W("Failed to start CoreCLR. ERRORCODE: ") << hr << logger::endl;
 		return false;
 	}
-
-	if (set_startup_flags_fail == true) {
-		return this->load_default_domain();
-	}
-	else
-	{
-		return this->create_domain();
-	}
-}
-
-bool netcore_win::create_domain() {
-	HRESULT hr;
 
 	//-------------------------------------------------------------
 
@@ -204,29 +180,15 @@ bool netcore_win::create_domain() {
 		W("NATIVE_DLL_SEARCH_DIRECTORIES"),
 		W("AppDomainCompatSwitch")
 	};
-
-	wchar_t tpa_list_w[0xFFFF] = W("");
-	wchar_t app_path_w[0xFFF] = W("");
-	wchar_t app_path_ni_w[0xFFF] = W("");
-	wchar_t nativeDllSearchDirs_w[0xFFF] = W("");
-
-
-	const char * tpa_list = this->core_environment->get_tpa_list();
-
-	mbstowcs(tpa_list_w, tpa_list, strlen(tpa_list));
-	mbstowcs(app_path_w, this->appPath, strlen(this->appPath));
-	mbstowcs(app_path_ni_w, this->appNiPath, strlen(this->appNiPath));
-	mbstowcs(nativeDllSearchDirs_w, this->nativeDllSearchDirs, strlen(this->nativeDllSearchDirs));
-
 	const wchar_t *property_values[] = {
 		// TRUSTED_PLATFORM_ASSEMBLIES
-		tpa_list_w,
+		this->core_environment->get_tpa_list(),
 		// APP_PATHS
-		app_path_w,
+		appPath,
 		// APP_NI_PATHS
-		app_path_ni_w,
+		appNiPath,
 		// NATIVE_DLL_SEARCH_DIRECTORIES
-		nativeDllSearchDirs_w,
+		nativeDllSearchDirs,
 		// AppDomainCompatSwitch
 		W("UseLatestBehaviorWhenTFMNotSpecified")
 	};
@@ -238,24 +200,23 @@ bool netcore_win::create_domain() {
 	*this->log << W("APP_NI_PATHS=") << property_values[2] << logger::endl;
 	*this->log << W("NATIVE_DLL_SEARCH_DIRECTORIES=") << property_values[3] << logger::endl;
 
-	wchar_t host_exe_name_w[0xFF] = W("");
-	mbstowcs(host_exe_name_w, this->core_environment->get_host_exe_name(), strlen(this->core_environment->get_host_exe_name()));
+
 	hr = host->CreateAppDomainWithManager(
-		host_exe_name_w,   // The friendly name of the AppDomain
-						   // Flags:
-						   // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
-						   // - By default CoreCLR only allows platform neutral assembly to be run. To allow
-						   //   assemblies marked as platform specific, include this flag
-						   //
-						   // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
-						   // - Allows sandboxed applications to make P/Invoke calls and use COM interop
-						   //
-						   // APPDOMAIN_SECURITY_SANDBOXED
-						   // - Enables sandboxing. If not set, the app is considered full trust
-						   //
-						   // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
-						   // - Prevents the application from being torn down if a managed exception is unhandled
-						   //
+		this->core_environment->get_host_exe_name(),   // The friendly name of the AppDomain
+											 // Flags:
+											 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
+											 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
+											 //   assemblies marked as platform specific, include this flag
+											 //
+											 // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
+											 // - Allows sandboxed applications to make P/Invoke calls and use COM interop
+											 //
+											 // APPDOMAIN_SECURITY_SANDBOXED
+											 // - Enables sandboxing. If not set, the app is considered full trust
+											 //
+											 // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
+											 // - Prevents the application from being torn down if a managed exception is unhandled
+											 //
 		APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
 		APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
 		APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
@@ -270,30 +231,12 @@ bool netcore_win::create_domain() {
 		*this->log << W("Failed call to CreateAppDomainWithManager. ERRORCODE: ") << hr << logger::endl;
 		return false;
 	}
-
 	return true;
 }
-
-bool netcore_win::load_default_domain() {
-	HRESULT hr;
-	hr = host->GetCurrentAppDomainId(&this->domain_id);
-
-	if (FAILED(hr)) {
-		*this->log << W("GetCurrentAppDomainId. ERRORCODE: ") << hr << logger::endl;
-		return false;
-	}
-
-	return true;
-}
-
 bool netcore_win::load_main() {
 	HRESULT hr;
 	DWORD exitCode = 0;
-	wchar_t full_w[0xFFF] = W("");
-
-	mbstowcs(full_w, this->managedAssemblyFullName, strlen(this->managedAssemblyFullName));
-
-	hr = this->host->ExecuteAssembly((DWORD)this->domain_id, full_w, 0, NULL, &exitCode);
+	hr = this->host->ExecuteAssembly((DWORD)this->domain_id, managedAssemblyFullName, 0, NULL, &exitCode);
 	if (FAILED(hr)) {
 		*this->log << W("Failed call to ExecuteAssembly. ERRORCODE: ") << hr << logger::endl;
 		return false;
