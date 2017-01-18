@@ -11,7 +11,7 @@
       "type": "platform",
       "version": "1.0.1"
     },
-    "System.Runtime.Loader": "4.0.0-rc2-24027"
+    "System.Runtime.Loader": "4.3.0"
   },
 
   "frameworks": {
