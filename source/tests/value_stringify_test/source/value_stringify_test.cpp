@@ -72,17 +72,17 @@ TEST_F(value_stringify_test, DefaultConstructor)
 
 		char buffer[BUFFER_SIZE];
 
-		const size_t size = BUFFER_SIZE;
+		const size_t buffer_size = BUFFER_SIZE;
 
 		size_t length;
 
-		value_stringify(value_array[iterator], buffer, size, &length);
+		value_stringify(value_array[iterator], buffer, buffer_size, &length);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
 
 		EXPECT_EQ((int) 0, (int) strcmp(buffer, value_names[iterator]));
 
-		EXPECT_LT((size_t) length, (size_t) size);
+		EXPECT_LT((size_t) length, (size_t)buffer_size);
 
 		value_destroy(value_array[iterator]);
 
