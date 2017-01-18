@@ -28,7 +28,12 @@ host_environment::host_environment(logger *logger) : log(logger), clr_runtime_ho
 	this->core_clr_module = NULL; // Initialize this here since we don't call TryLoadCoreCLR if CORE_ROOT is unset.
 	if (_wgetenv_s(&outSize, coreRoot, MAX_LONGPATH, W("CORE_ROOT")) == 0 && outSize > 0)
 	{
-		wcscat_s(coreRoot, MAX_LONGPATH, W("\\"));
+		wchar_t last_character = coreRoot[lstrlenW(coreRoot) - 1];
+
+		if (last_character != '\\') {
+			wcscat_s(coreRoot, MAX_LONGPATH, W("\\"));
+		}
+
 		this->core_clr_module = this->try_load_core_clr(coreRoot);
 	}
 	else
@@ -88,8 +93,8 @@ HMODULE host_environment::try_load_core_clr(const wchar_t* directory_path) {
 	wcscat_s(coreCLRPath, core_clr_dll);
 
 	*this->log << W("Attempting to load: ") << coreCLRPath << logger::endl;
-
-	HMODULE result = ::LoadLibraryExW(coreCLRPath, NULL, 0);
+	
+	HMODULE result = LoadLibraryEx(coreCLRPath, NULL, 0);
 	if (!result) {
 		*this->log << W("Failed to load: ") << coreCLRPath << logger::endl;
 		*this->log << W("Error code: ") << GetLastError() << logger::endl;
