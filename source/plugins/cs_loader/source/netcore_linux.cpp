@@ -1,4 +1,4 @@
-#include "netcore_linux.h"
+#include <cs_loader/netcore_linux.h>
 
 netcore_linux::netcore_linux()
 {
@@ -14,11 +14,7 @@ netcore_linux::~netcore_linux()
 
 bool netcore_linux::ConfigAssemblyName() {
 
-	this->absoluteLibPath += this->runtimePath + this->coreClrDll;
-
 	std::cout << "absoluteRuntime: " << this->runtimePath << std::endl;
-
-	std::cout << "absoluteLibPath: " << this->absoluteLibPath << std::endl;
 
 	cout << "absoluteAppPath: " << this->appPath << endl;
 
@@ -38,36 +34,34 @@ bool netcore_linux::ConfigAssemblyName() {
 }
 
 bool netcore_linux::CreateHost() {
-	this->dl = dynamicLinker::dynamicLinker::make_new(this->absoluteLibPath);
-	auto coreclr_initialize = dl->getFunction<coreclrInitializeFunction>("coreclr_initialize");
-	auto coreclr_shutdown = dl->getFunction<coreclrShutdownFunction>("coreclr_shutdown");
-	auto coreclr_create_delegate = dl->getFunction<coreclrCreateDelegateFunction>("coreclr_create_delegate");
 
-	this->coreclr_initialize = &coreclr_initialize;
-	this->coreclr_shutdown = &coreclr_shutdown;
-	this->coreclr_create_delegate = &coreclr_create_delegate;
+	dynlink handle = dynlink_load(this->runtimePath.c_str(), this->coreClrLibName.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
-	try {
-		dl->open();
-		coreclr_initialize.init();
-		coreclr_shutdown.init();
-		coreclr_create_delegate.init();
-	}
-	catch (dynamicLinker::openException e) {
-		std::cerr << "Cannot find " << this->coreClrDll << "Path that was searched: "
-			<< this->runtimePath << std::endl;
-		std::cerr << e.what() << std::endl;
+	if (handle == NULL) {
 		return false;
 	}
-	catch (dynamicLinker::symbolException e) {
-		std::cerr << "Probably your libcoreclr is broken or too old." << std::endl;
-		std::cerr << e.what() << std::endl;
+
+	dynlink_symbol_addr coreclr_initialize;
+	dynlink_symbol_addr coreclr_shutdown;
+	dynlink_symbol_addr coreclr_create_delegate;
+
+	dynlink_symbol(handle, DYNLINK_SYMBOL_STR("coreclr_initialize"), &coreclr_initialize);
+	dynlink_symbol(handle, DYNLINK_SYMBOL_STR("coreclr_shutdown"), &coreclr_shutdown);
+	dynlink_symbol(handle, DYNLINK_SYMBOL_STR("coreclr_create_delegate"), &coreclr_create_delegate);
+
+	if (coreclr_initialize == NULL) {
+		std::cout << "coreclr_initialize fail " << std::endl;
 		return false;
 	}
-	catch (dynamicLinker::dynamicLinkerException e) {
-		std::cerr << e.what() << std::endl;
-		return false;
-	}
+
+	//this->dl = dynamicLinker::dynamicLinker::make_new(this->absoluteLibPath);
+	//auto coreclr_initialize = dl->getFunction<coreclrInitializeFunction>("coreclr_initialize");
+	//auto coreclr_shutdown = dl->getFunction<coreclrShutdownFunction>("coreclr_shutdown");
+	//auto coreclr_create_delegate = dl->getFunction<coreclrCreateDelegateFunction>("coreclr_create_delegate");
+
+	this->coreclr_initialize = (coreclrInitializeFunction*)DYNLINK_SYMBOL_GET(coreclr_initialize);
+	this->coreclr_shutdown = (coreclrShutdownFunction*)DYNLINK_SYMBOL_GET(coreclr_shutdown);
+	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)DYNLINK_SYMBOL_GET(coreclr_create_delegate);
 
 	const char *propertyKeys[] = {
 		"TRUSTED_PLATFORM_ASSEMBLIES",
@@ -94,21 +88,15 @@ bool netcore_linux::CreateHost() {
 	mm.append(getenv("_"));
 	m.append(this->appPath);
 	m.append(mm.substr(1, mm.length() - 1));
-	try {
-		status = (*this->coreclr_initialize)(
-			m.c_str(),
-			"metacall_cs_loader_container",
-			sizeof(propertyKeys) / sizeof(propertyKeys[0]),
-			propertyKeys,
-			propertyValues,
-			&hostHandle,
-			&domainId
-			);
-	}
-	catch (dynamicLinker::dynamicLinkerException e) {
-		std::cerr << e.what() << std::endl;
-		return false;
-	}
+	status = (*this->coreclr_initialize)(
+		m.c_str(),
+		"metacall_cs_loader_container",
+		sizeof(propertyKeys) / sizeof(propertyKeys[0]),
+		propertyKeys,
+		propertyValues,
+		&hostHandle,
+		&domainId
+		);
 
 	if (status < 0) {
 		std::cerr << "ERROR! coreclr_initialize status: 0x" << std::hex << status << std::endl;
@@ -138,28 +126,20 @@ bool netcore_linux::CreateHost() {
 	return true;
 }
 bool netcore_linux::LoadMain() {
-
 	return true;
 }
 
 bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** funcs) {
 	int status = -1;
-	try {
 
-		// create delegate to our entry point
-		status = (*coreclr_create_delegate)(
-			hostHandle,
-			domainId,
-			this->assembly_name,
-			this->class_name,
-			delegateName,
-			funcs);
-
-	}
-	catch (dynamicLinker::dynamicLinkerException e) {
-		std::cerr << e.what() << std::endl;
-		return false;
-	}
+	// create delegate to our entry point
+	status = (*coreclr_create_delegate)(
+		hostHandle,
+		domainId,
+		this->assembly_name,
+		this->class_name,
+		delegateName,
+		funcs);
 
 	if (status < 0) {
 		std::cerr << "ERROR! CreateDelegate status: 0x" << std::hex << status << std::endl;
@@ -173,14 +153,9 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** func
 void netcore_linux::stop() {
 	int status = -1;
 
-	try {
-		status = (*this->coreclr_shutdown)(
-			this->hostHandle,
-			this->domainId);
-	}
-	catch (dynamicLinker::dynamicLinkerException e) {
-		std::cerr << e.what() << std::endl;
-	}
+	status = (*this->coreclr_shutdown)(
+		this->hostHandle,
+		this->domainId);
 
 	if (status < 0) {
 		std::cerr << "ERROR! stop status: 0x" << std::hex << status << std::endl;

@@ -8,8 +8,8 @@
 
 #include <metacall/metacall-version.h>
 
-#include <loader\loader.h>
-#include <loader\loader_impl.h>
+#include <loader/loader.h>
+#include <loader/loader_impl.h>
 #include <loader/loader_impl_interface.h>
 #include <cs_loader/cs_loader.h>
 #include <cs_loader/cs_loader_impl.h>

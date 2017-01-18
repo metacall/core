@@ -57,28 +57,27 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 
-
 if(MSVC)
-set(headers_platform
-	${include_path}/string_buffer.h
-	${include_path}/netcore_win.h
-	${include_path}/host_environment.h
-)
+	set(headers_platform
+		${include_path}/string_buffer.h
+		${include_path}/netcore_win.h
+		${include_path}/host_environment.h
+	)
 
-set(sources_platform
-	${source_path}/string_buffer.cpp
-	${source_path}/netcore_win.cpp
-	${source_path}/host_environment.cpp
-)
+	set(sources_platform
+		${source_path}/string_buffer.cpp
+		${source_path}/netcore_win.cpp
+		${source_path}/host_environment.cpp
+	)
 else()
-set(headers_platform
-	${include_path}/netcore_linux.h
-	
-)
-set(sources_platform
-	${source_path}/netcore_linux.cpp
-	
-)
+	set(headers_platform
+		${include_path}/netcore_linux.h
+		
+	)
+	set(sources_platform
+		${source_path}/netcore_linux.cpp
+		
+	)
 endif()
 
 
@@ -199,6 +198,8 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::reflect
 	${META_PROJECT_NAME}::loader
 
+	$<$<NOT:$<BOOL:${MSVC}>>:stdc++fs>
+	
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

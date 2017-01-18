@@ -2,19 +2,19 @@
 #ifndef _NETCORELINUX_H_
 #define _NETCORELINUX_H_
 
-#include "netcore.h"
+#include <cs_loader/netcore.h>
 #include <stdio.h>
 #include <string.h>
 #include <sstream>
 #include <iostream>
 #include <ostream>
 #include <stdlib.h>
-#include "dl/dynamicLinker.hpp"
+#include <dynlink/dynlink.h>
 #include <experimental/filesystem>
 #include <functional>
 #include <iostream>
 #include <unistd.h>
-#include "logger.h"
+#include <cs_loader/logger.h>
 #define MAX_LONGPATH 255
 
 typedef int (coreclrInitializeFunction)(
@@ -55,14 +55,13 @@ private:
 	std::string nativeDllSearchDirs;
 	unsigned int domainId = 0;
 
-	std::string coreClrDll = "libcoreclr.so";
+	std::string coreClrLibName = "coreclr";
 
 	std::string absoluteLibPath;
-	std::shared_ptr<dynamicLinker::dynamicLinker> dl;
 
-	dynamicLinker::dynamicLinker::dlSymbol<coreclrInitializeFunction> * coreclr_initialize;
-	dynamicLinker::dynamicLinker::dlSymbol<coreclrShutdownFunction> * coreclr_shutdown;
-	dynamicLinker::dynamicLinker::dlSymbol<coreclrCreateDelegateFunction> * coreclr_create_delegate;
+	coreclrInitializeFunction * coreclr_initialize;
+	coreclrShutdownFunction * coreclr_shutdown;
+	coreclrCreateDelegateFunction * coreclr_create_delegate;
 
 	std::string tpaList;
 
