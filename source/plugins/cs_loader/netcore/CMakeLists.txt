@@ -1,18 +1,44 @@
-# dotnet.exe publish {source_path}/  -o {output_path}
+# Check if this plugin is enabled
 if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS)
 	return()
 endif()
 
-execute_process(COMMAND dotnet -v
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-  RESULT_VARIABLE dotnet_result
-  OUTPUT_VARIABLE dotnet_output)
-  
+#
+# External dependencies
+#
 
+find_package(DotNET)
 
-if(dotnet_result EQUAL 0)
-	set(netcore_build_script "dotnet restore ${CMAKE_CURRENT_SOURCE_DIR}/source/\ndotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/source/ -o  ${PROJECT_BINARY_DIR}/")
-	file(WRITE "${PROJECT_BINARY_DIR}/build_dotnet.bat" "${netcore_build_script}")
-	file(WRITE "${PROJECT_BINARY_DIR}/build_dotnet.sh" "#!/bin/bash\n${netcore_build_script}")
-
+if(NOT DOTNET_FOUND)
+	message(STATUS "DotNET command not found")
+	return()
 endif()
+
+#
+# Plugin name and options
+#
+
+# Target name
+set(target cs_loader_impl)
+
+# Exit here if required dependencies are not met
+message(STATUS "Plugin ${target} implementation")
+
+#
+# Create target
+#
+
+add_custom_target(${target} ALL
+	COMMAND dotnet restore ${CMAKE_CURRENT_SOURCE_DIR}/source/
+	COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/source/ -o ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/
+)
+
+#
+# Project options
+#
+
+set_target_properties(${target}
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
+)
