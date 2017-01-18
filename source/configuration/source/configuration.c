@@ -12,6 +12,9 @@
 
 #include <configuration/configuration.h>
 #include <configuration/configuration_singleton.h>
+#include <configuration/configuration_impl.h>
+
+#include <configuration/configuration_interface_rapid_json.h>
 
 #include <log/log.h>
 
@@ -39,7 +42,7 @@ int configuration_initialize(const char * path)
 		return 1;
 	}
 
-	if (configuration_impl_initialize(global) != 0)
+	if (configuration_impl_initialize(configuration_interface_instance_rapid_json()) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation initialization");
 
@@ -47,6 +50,8 @@ int configuration_initialize(const char * path)
 
 		return 1;
 	}
+
+	/* TODO: Initialize all child configurations recursively */
 
 	return 0;
 }

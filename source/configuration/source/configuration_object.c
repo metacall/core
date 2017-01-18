@@ -24,7 +24,7 @@ struct configuration_type
 	char * path;
 	hash_map map;
 	configuration parent;
-	void * impl;
+	configuration_impl impl;
 };
 
 /* -- Private Methods -- */
@@ -74,7 +74,7 @@ configuration configuration_object_initialize(const char * name, const char * pa
 	return config;
 }
 
-void configuration_object_instantiate(configuration config, void * impl)
+void configuration_object_instantiate(configuration config, configuration_impl impl)
 {
 	config->impl = impl;
 }
@@ -94,7 +94,7 @@ configuration configuration_object_parent(configuration config)
 	return config->parent;
 }
 
-void * configuration_object_impl(configuration config)
+configuration_impl configuration_object_impl(configuration config)
 {
 	return config->impl;
 }

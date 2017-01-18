@@ -13,6 +13,8 @@
 
 #include <configuration/configuration_api.h>
 
+#include <configuration/configuration_impl_handle.h>
+
 #include <reflect/reflect_value_type.h>
 
 #ifdef __cplusplus
@@ -59,7 +61,7 @@ CONFIGURATION_API configuration configuration_object_initialize(const char * nam
 *    Pointer to configuration object implementation
 *
 */
-CONFIGURATION_API void configuration_object_instantiate(configuration config, void * impl);
+CONFIGURATION_API void configuration_object_instantiate(configuration config, configuration_impl impl);
 
 /**
 *  @brief
@@ -111,7 +113,7 @@ CONFIGURATION_API configuration configuration_object_parent(configuration config
 *    Returns implementation reference of configuration object @config
 *
 */
-CONFIGURATION_API void * configuration_object_impl(configuration config);
+CONFIGURATION_API configuration_impl configuration_object_impl(configuration config);
 
 /**
 *  @brief
@@ -153,7 +155,7 @@ CONFIGURATION_API value configuration_object_get(configuration config, const cha
 *    Destroy configuration object @config
 *
 *  @param[in] config
-*    Pointer to configuration to be destroye
+*    Pointer to configuration to be destroyed
 *
 */
 CONFIGURATION_API void configuration_object_destroy(configuration config);
