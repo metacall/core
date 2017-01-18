@@ -9,6 +9,7 @@
 /* -- Headers -- */
 
 #include <configuration/configuration_interface_rapid_json.h>
+#include <configuration/configuration_impl_rapid_json.h>
 
 /* -- Methods -- */
 
@@ -16,11 +17,11 @@ configuration_interface configuration_interface_instance_rapid_json()
 {
 	static struct configuration_interface_type interface_instance_rapid_json =
 	{
-		NULL,
-		NULL,
-		NULL,
-		NULL,
-		NULL
+		&configuration_impl_rapid_json_initialize,
+		&configuration_impl_rapid_json_load,
+		&configuration_impl_rapid_json_get,
+		&configuration_impl_rapid_json_unload,
+		&configuration_impl_rapid_json_destroy
 	};
 
 	return &interface_instance_rapid_json;

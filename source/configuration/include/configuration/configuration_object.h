@@ -104,6 +104,19 @@ CONFIGURATION_API configuration configuration_object_parent(configuration config
 
 /**
 *  @brief
+*    Retrieve the source of configuration object @config
+*
+*  @param[in] config
+*    Pointer to configuration object
+*
+*  @return
+*    Returns source of configuration object @config
+*
+*/
+CONFIGURATION_API const char * configuration_object_source(configuration config);
+
+/**
+*  @brief
 *    Retrieve the implementation of configuration object @config
 *
 *  @param[in] config

@@ -9,6 +9,7 @@
 /* -- Headers -- */
 
 #include <configuration/configuration_object.h>
+#include <configuration/configuration_stream.h>
 
 #include <adt/adt_hash_map.h>
 
@@ -24,6 +25,7 @@ struct configuration_type
 	char * path;
 	hash_map map;
 	configuration parent;
+	char * source;
 	configuration_impl impl;
 };
 
@@ -42,6 +44,17 @@ configuration configuration_object_initialize(const char * name, const char * pa
 	if (config == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration object allocation");
+
+		return NULL;
+	}
+
+	config->source = configuration_stream_create(path);
+
+	if (config->source == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file path (%s)", path);
+
+		free(config);
 
 		return NULL;
 	}
@@ -94,6 +107,11 @@ configuration configuration_object_parent(configuration config)
 	return config->parent;
 }
 
+const char * configuration_object_source(configuration config)
+{
+	return config->source;
+}
+
 configuration_impl configuration_object_impl(configuration config)
 {
 	return config->impl;
@@ -137,12 +155,11 @@ void configuration_object_destroy(configuration config)
 		free(config->path);
 	}
 
-	if (config->map != NULL)
-	{
-		hash_map_iterate(config->map, &configuration_object_destroy_cb_iterate, NULL);
+	configuration_stream_destroy(config->source);
 
-		hash_map_destroy(config->map);
-	}
+	hash_map_iterate(config->map, &configuration_object_destroy_cb_iterate, NULL);
+
+	hash_map_destroy(config->map);
 
 	free(config);
 }

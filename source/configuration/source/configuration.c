@@ -51,7 +51,16 @@ int configuration_initialize(const char * path)
 		return 1;
 	}
 
-	/* TODO: Initialize all child configurations recursively */
+	if (configuration_impl_load(global) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load <%p>", global);
+
+		configuration_destroy();
+
+		return 1;
+	}
+
+	/* TODO: Initialize and load all child configurations recursively */
 
 	return 0;
 }

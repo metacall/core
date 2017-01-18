@@ -2,7 +2,12 @@
 # External dependencies
 #
 
-# find_package(THIRDPARTY REQUIRED)
+find_package(RapidJSON 1.1.0 REQUIRED)
+
+if(NOT RAPIDJSON_INCLUDE_DIRS)
+	message(STATUS "RapidJSON libraries not found")
+	return()
+endif()
 
 #
 # Library name and options
@@ -52,20 +57,22 @@ set(headers
 	${include_path}/configuration_impl_handle.h
 	${include_path}/configuration_singleton.h
 	${include_path}/configuration_object.h
+	${include_path}/configuration_stream.h
 	${include_path}/configuration_interface.h
 	${include_path}/configuration_interface_rapid_json.h
 	${include_path}/configuration_impl.h
-	#${include_path}/configuration_impl_rapid_json.h
+	${include_path}/configuration_impl_rapid_json.h
 )
 
 set(sources
 	${source_path}/configuration.c
 	${source_path}/configuration_singleton.c
 	${source_path}/configuration_object.c
+	${source_path}/configuration_stream.c
 	${source_path}/configuration_interface.c
 	${source_path}/configuration_interface_rapid_json.c
 	${source_path}/configuration_impl.c
-	#${source_path}/configuration_impl_rapid_json.c
+	${source_path}/configuration_impl_rapid_json.cpp
 )
 
 # Group source files
@@ -139,6 +146,8 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
+
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -160,7 +169,6 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::dynlink
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
