@@ -49,10 +49,16 @@ set(FILESYSTEM_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
 
 set(headers
 	${include_path}/configuration.h
+	${include_path}/configuration_singleton.h
+	${include_path}/configuration_object.h
+	${include_path}/configuration_impl.h
 )
 
 set(sources
 	${source_path}/configuration.c
+	${source_path}/configuration_singleton.c
+	${source_path}/configuration_object.c
+	${source_path}/configuration_impl.c
 )
 
 # Group source files
@@ -146,6 +152,8 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::adt
+	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::dynlink
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -15,9 +15,9 @@
 /* -- Definitions -- */
 
 #define HASH_MAP_BUCKET_PAIRS_DEFAULT	0x04
-#define HASH_MAP_BUCKET_PAIRS_LIMIT	0x40
-#define HASH_MAP_BUCKET_RATIO_MIN	0.1f
-#define HASH_MAP_BUCKET_RATIO_MAX	0.77f
+#define HASH_MAP_BUCKET_PAIRS_LIMIT		0x40
+#define HASH_MAP_BUCKET_RATIO_MIN		0.1f
+#define HASH_MAP_BUCKET_RATIO_MAX		0.77f
 
 /* -- Member Data -- */
 
@@ -46,7 +46,6 @@ struct hash_map_type
 	hash_map_cb_compare compare_cb;
 	int reallocating;
 	int amount;
-
 };
 
 /* -- Methods -- */
@@ -65,11 +64,11 @@ static int hash_map_bucket_realloc(hash_map map);
 
 static hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, hash_map_key key);
 
-static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map_key key, hash_map_value value);
+static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, const hash_map_key key, hash_map_value value);
 
 static int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args);
 
-static int hash_map_bucket_capacity(size_t prime)
+int hash_map_bucket_capacity(size_t prime)
 {
 	static int capacity_primes[] =
 	{
@@ -88,7 +87,7 @@ static int hash_map_bucket_capacity(size_t prime)
 	return -1;
 }
 
-static int hash_map_bucket_create(hash_map map, size_t prime)
+int hash_map_bucket_create(hash_map map, size_t prime)
 {
 	int capacity = hash_map_bucket_capacity(prime);
 
@@ -155,7 +154,7 @@ size_t hash_map_size(hash_map map)
 	return 0;
 }
 
-static int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
+int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 {
 	if (bucket)
 	{
@@ -182,7 +181,7 @@ static int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 	return 1;
 }
 
-static int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
+int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
 {
 	if (hash_map_bucket_alloc_pairs(bucket) != 0)
 	{
@@ -214,7 +213,7 @@ static int hash_map_bucket_realloc_pairs(hash_map_bucket bucket, int count)
 	return 0;
 }
 
-static int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
 {
 	hash_map new_map = (hash_map)args;
 
@@ -226,7 +225,7 @@ static int hash_map_bucket_realloc_iterator(hash_map map, hash_map_key key, hash
 	return 1;
 }
 
-static int hash_map_bucket_realloc(hash_map map)
+int hash_map_bucket_realloc(hash_map map)
 {
 	struct hash_map_type new_map;
 
@@ -271,7 +270,7 @@ static int hash_map_bucket_realloc(hash_map map)
 	return 1;
 }
 
-static hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, hash_map_key key)
+hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket bucket, hash_map_key key)
 {
 	if (bucket->pairs != NULL && bucket->count > 0)
 	{
@@ -291,7 +290,7 @@ static hash_map_pair hash_map_bucket_get_pair(hash_map map, hash_map_bucket buck
 	return NULL;
 }
 
-static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map_key key, hash_map_value value)
+int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, const hash_map_key key, hash_map_value value)
 {
 	if (bucket->pairs != NULL)
 	{
@@ -329,7 +328,7 @@ static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, hash_map
 	return 1;
 }
 
-int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value)
+int hash_map_insert(hash_map map, const hash_map_key key, hash_map_value value)
 {
 	if (map != NULL && key != NULL && value != NULL)
 	{
@@ -482,7 +481,7 @@ void hash_map_iterate(hash_map map, hash_map_cb_iterate iterate_cb, hash_map_cb_
 	}
 }
 
-static int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
 {
 	hash_map dest = (hash_map)args;
 

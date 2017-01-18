@@ -52,7 +52,7 @@ ADT_API hash_map hash_map_create(hash_map_cb_hash hash_cb, hash_map_cb_compare c
 
 ADT_API size_t hash_map_size(hash_map map);
 
-ADT_API int hash_map_insert(hash_map map, hash_map_key key, hash_map_value value);
+ADT_API int hash_map_insert(hash_map map, const hash_map_key key, hash_map_value value);
 
 ADT_API hash_map_value hash_map_get(hash_map map, const hash_map_key key);
 

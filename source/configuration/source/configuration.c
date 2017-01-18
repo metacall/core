@@ -11,12 +11,85 @@
 #include <metacall/metacall-version.h>
 
 #include <configuration/configuration.h>
+#include <configuration/configuration_singleton.h>
 
 #include <log/log.h>
 
-/* -- Member Data -- */
-
 /* -- Methods -- */
+
+int configuration_initialize(const char * path)
+{
+	configuration global = configuration_object_initialize("global", path, NULL);
+
+	if (global == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration global scope map creation");
+
+		configuration_destroy();
+
+		return 1;
+	}
+
+	if (configuration_singleton_initialize(global) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration singleton initialization");
+
+		configuration_destroy();
+
+		return 1;
+	}
+
+	if (configuration_impl_initialize(global) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation initialization");
+
+		configuration_destroy();
+
+		return 1;
+	}
+
+	return 0;
+}
+
+configuration configuration_scope(const char * name)
+{
+	return configuration_singleton_get(name);
+}
+
+value configuration_value(configuration config, const char * key, type_id id)
+{
+	value v = configuration_object_get(config, key);
+
+	if (v != NULL)
+	{
+		return v;
+	}
+
+	v = configuration_impl_value(config, key, id);
+
+	if (v == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration key / value");
+
+		return NULL;
+	}
+
+	if (configuration_object_set(config, key, v) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration key / value cache insertion");
+
+		value_destroy(v);
+
+		return NULL;
+	}
+
+	return v;
+}
+
+void configuration_destroy()
+{
+	configuration_singleton_destroy();
+}
 
 const char * configuration_print_info()
 {
