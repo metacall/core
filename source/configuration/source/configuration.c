@@ -62,8 +62,6 @@ int configuration_initialize(const char * path)
 		return 1;
 	}
 
-	/* TODO: Initialize and load all child configurations recursively */
-
 	return 0;
 }
 

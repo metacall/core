@@ -10,7 +10,13 @@
 
 #include <configuration/configuration_impl.h>
 
+#include <adt/adt_vector.h>
+
 #include <log/log.h>
+
+/* -- Private Methods -- */
+
+static int configuration_impl_load_impl(configuration config);
 
 /* -- Methods -- */
 
@@ -27,7 +33,7 @@ int configuration_impl_initialize(configuration_interface iface)
 	return config_iface->initialize();
 }
 
-int configuration_impl_load(configuration config)
+int configuration_impl_load_impl(configuration config)
 {
 	configuration_interface config_iface = configuration_interface_instance();
 
@@ -41,6 +47,44 @@ int configuration_impl_load(configuration config)
 	configuration_object_instantiate(config, impl);
 
 	return 0;
+}
+
+int configuration_impl_load(configuration config)
+{
+	vector queue = vector_create(sizeof(configuration));
+
+	if (queue == NULL)
+	{
+		return 1;
+	}
+
+	vector_push_back(queue, &config);
+
+	while (vector_size(queue) > 0)
+	{
+		configuration current = *((configuration *)vector_back(queue));
+
+		vector_pop_back(queue);
+
+		if (configuration_impl_load_impl(current) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load (childs) <%p>", current);
+
+			vector_destroy(queue);
+
+			return 1;
+		}
+
+		/* TODO */
+
+		/* find childs */
+
+		/* initialize and set parents of childs */
+
+		/* push back childs */
+	}
+
+	vector_destroy(queue);
 }
 
 value configuration_impl_value(configuration config, const char * key, type_id id)
