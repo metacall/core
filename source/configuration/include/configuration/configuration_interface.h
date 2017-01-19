@@ -16,6 +16,8 @@
 #include <configuration/configuration_object.h>
 #include <configuration/configuration_impl_handle.h>
 
+#include <adt/adt_vector.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -26,11 +28,11 @@ struct configuration_interface_type;
 
 /* -- Type Definitions -- */
 
+typedef const char * (*configuration_interface_extension)(void);
+
 typedef int (*configuration_interface_initialize)(void);
 
 typedef configuration_impl (*configuration_interface_load)(configuration);
-
-typedef value (*configuration_interface_get)(configuration, const char *, type_id);
 
 typedef int (*configuration_interface_unload)(configuration);
 
@@ -42,9 +44,9 @@ typedef struct configuration_interface_type * configuration_interface;
 
 struct configuration_interface_type
 {
+	configuration_interface_extension extension;
 	configuration_interface_initialize initialize;
 	configuration_interface_load load;
-	configuration_interface_get get;
 	configuration_interface_unload unload;
 	configuration_interface_destroy destroy;
 };

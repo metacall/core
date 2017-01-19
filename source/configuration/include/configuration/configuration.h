@@ -13,7 +13,7 @@
 
 #include <configuration/configuration_api.h>
 
-#include <configuration/configuration_object.h>
+#include <configuration/configuration_object_handle.h>
 
 #include <reflect/reflect_value_type.h>
 
@@ -63,7 +63,7 @@ CONFIGURATION_API configuration configuration_scope(const char * scope);
 *    Returns value containing data related to @key or null if value or type @id are invalid
 *
 */
-CONFIGURATION_API value configuration_value(configuration config, const char * key, type_id id);
+CONFIGURATION_API value configuration_value(configuration config, const char * key);
 
 /**
 *  @brief

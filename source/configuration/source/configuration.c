@@ -70,34 +70,9 @@ configuration configuration_scope(const char * name)
 	return configuration_singleton_get(name);
 }
 
-value configuration_value(configuration config, const char * key, type_id id)
+value configuration_value(configuration config, const char * key)
 {
-	value v = configuration_object_get(config, key);
-
-	if (v != NULL)
-	{
-		return v;
-	}
-
-	v = configuration_impl_value(config, key, id);
-
-	if (v == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration key / value");
-
-		return NULL;
-	}
-
-	if (configuration_object_set(config, key, v) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration key / value cache insertion");
-
-		value_destroy(v);
-
-		return NULL;
-	}
-
-	return v;
+	return configuration_object_get(config, key);
 }
 
 void configuration_destroy()

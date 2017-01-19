@@ -1,0 +1,6 @@
+{
+	"value": 54321,
+	"value_b": 333,
+	"child_c": "child_c.json",
+	"child_d": "child_d.json"
+}

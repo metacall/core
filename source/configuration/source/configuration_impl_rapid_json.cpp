@@ -14,7 +14,18 @@
 
 #include <rapidjson/document.h>
 
+/* -- Private Methods -- */
+
+static value configuration_impl_rapid_json_get(const rapidjson::Value & v);
+
 /* -- Methods -- */
+
+const char * configuration_impl_rapid_json_extension()
+{
+	static const char extension[] = "json";
+
+	return extension;
+}
 
 int configuration_impl_rapid_json_initialize()
 {
@@ -39,249 +50,88 @@ configuration_impl configuration_impl_rapid_json_load(configuration config)
 		return NULL;
 	}
 
+	for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
+	{
+		value v = configuration_impl_rapid_json_get(it->value);
+
+		if (v != NULL)
+		{
+			if (configuration_object_set(config, it->name.GetString(), v) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value insertion in RapidJSON implementation");
+
+				delete document;
+
+				return NULL;
+			}
+		}
+	}
+
 	return document;
 }
 
-value configuration_impl_rapid_json_get(configuration config, const char * key, type_id id)
+value configuration_impl_rapid_json_get(const rapidjson::Value & v)
 {
-	rapidjson::Document & document = *((rapidjson::Document *)configuration_object_impl(config));
-
-	const rapidjson::Value & v = document[key];
-
-	switch (id)
+	if (v.IsBool() == true)
 	{
-		case TYPE_BOOL :
-		{
-			if (v.IsBool() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid boolean type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			return value_create_bool(v.GetBool() == true ? 1L : 0L);
-		}
-
-		case TYPE_CHAR :
-		{
-			if (v.IsString() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid character type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			size_t length = v.GetStringLength();
-
-			if (length != 1)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid character size requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			const char * str = v.GetString();
-
-			return value_create_char(str[0]);
-		}
-
-		case TYPE_SHORT :
-		{
-			if (v.IsInt() == false && v.IsUint() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid short type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			if (v.IsInt() == true)
-			{
-				int i = v.GetInt();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting integer to short (posible information lost) in RapidJSON implementation");
-
-				return value_create_short((short)i);
-			}
-
-			if (v.IsUint() == true)
-			{
-				unsigned int ui = v.GetUint();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to short (posible information lost or overflow) in RapidJSON implementation");
-
-				return value_create_short((short)ui);
-			}
-
-			return NULL;
-		}
-
-		case TYPE_INT :
-		{
-			if (v.IsInt() == false && v.IsUint() == false &&
-				v.IsInt64() == false && v.IsUint64() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid integer type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			if (v.IsInt() == true)
-			{
-				int i = v.GetInt();
-
-				return value_create_int(i);
-			}
-
-			if (v.IsUint() == true)
-			{
-				unsigned int ui = v.GetUint();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
-
-				return value_create_int((int)ui);
-			}
-
-			if (v.IsInt64() == true)
-			{
-				int64_t i = v.GetInt64();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int (posible information lost) in RapidJSON implementation");
-
-				return value_create_int((int)i);
-			}
-
-			if (v.IsUint64() == true)
-			{
-				uint64_t ui = v.GetUint64();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible information lost or overflow) in RapidJSON implementation");
-
-				return value_create_int((int)ui);
-			}
-
-			return NULL;
-		}
-
-		case TYPE_LONG :
-		{
-			if (v.IsInt() == false && v.IsUint() == false &&
-				v.IsInt64() == false && v.IsUint64() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid long type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			if (v.IsInt() == true)
-			{
-				int i = v.GetInt();
-
-				return value_create_long((long)i);
-			}
-
-			if (v.IsUint() == true)
-			{
-				unsigned int ui = v.GetUint();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to long in RapidJSON implementation");
-
-				return value_create_long((long)ui);
-			}
-
-			if (v.IsInt64() == true)
-			{
-				int64_t i = v.GetInt64();
-
-				return value_create_long((long)i);
-			}
-
-			if (v.IsUint64() == true)
-			{
-				uint64_t ui = v.GetUint64();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
-
-				return value_create_long((long)ui);
-			}
-
-			return NULL;
-		}
-
-		case TYPE_FLOAT :
-		{
-			if (v.IsFloat() == false && v.IsDouble() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid float type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			if (v.IsFloat() == true)
-			{
-				float f = v.GetFloat();
-
-				return value_create_float(f);
-			}
-
-			if (v.IsDouble() == true)
-			{
-				double d = v.GetDouble();
-
-				log_write("metacall", LOG_LEVEL_WARNING, "Casting double to float (possible information lost) in RapidJSON implementation");
-
-				return value_create_float((float)d);
-			}
-
-			return NULL;
-		}
-
-		case TYPE_DOUBLE :
-		{
-			if (v.IsFloat() == false && v.IsDouble() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid double type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			if (v.IsFloat() == true)
-			{
-				float f = v.GetFloat();
-
-				return value_create_double((double)f);
-			}
-
-			if (v.IsDouble() == true)
-			{
-				double d = v.GetDouble();
-
-				return value_create_double((double)d);
-			}
-
-			return NULL;
-		}
-
-		case TYPE_STRING :
-		{
-			if (v.IsString() == false)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid string type requested in RapidJSON implementation");
-
-				return NULL;
-			}
-
-			size_t length = v.GetStringLength();
-
-			const char * str = v.GetString();
-
-			return value_create_string(str, length);
-		}
-
-		default :
-		{
-			break;
-		}
+		return value_create_bool(v.GetBool() == true ? 1L : 0L);
 	}
+	else if (v.IsString() == true && v.GetStringLength() == 1)
+	{
+		const char * str = v.GetString();
+
+		return value_create_char(str[0]);
+	}
+	else if (v.IsInt() == true)
+	{
+		int i = v.GetInt();
+
+		return value_create_int(i);
+	}
+	else if (v.IsUint() == true)
+	{
+		unsigned int ui = v.GetUint();
+
+		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
+
+		return value_create_int((int)ui);
+	}
+	else if (v.IsInt64() == true)
+	{
+		int64_t i = v.GetInt64();
+
+		return value_create_long((long)i);
+	}
+	else if (v.IsUint64() == true)
+	{
+		uint64_t ui = v.GetUint64();
+
+		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
+
+		return value_create_long((long)ui);
+	}
+	else if (v.IsFloat() == true)
+	{
+		float f = v.GetFloat();
+
+		return value_create_float(f);
+	}
+	else if (v.IsDouble() == true)
+	{
+		double d = v.GetDouble();
+
+		return value_create_double((double)d);
+	}
+	else if (v.IsString() == true && v.GetStringLength() > 1)
+	{
+		size_t length = v.GetStringLength();
+
+		const char * str = v.GetString();
+
+		return value_create_string(str, length);
+	}
+
+	log_write("metacall", LOG_LEVEL_WARNING, "Unsuported type in RapidJSON implementation");
 
 	return NULL;
 }

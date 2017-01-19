@@ -17,9 +17,9 @@ configuration_interface configuration_interface_instance_rapid_json()
 {
 	static struct configuration_interface_type interface_instance_rapid_json =
 	{
+		&configuration_impl_rapid_json_extension,
 		&configuration_impl_rapid_json_initialize,
 		&configuration_impl_rapid_json_load,
-		&configuration_impl_rapid_json_get,
 		&configuration_impl_rapid_json_unload,
 		&configuration_impl_rapid_json_destroy
 	};

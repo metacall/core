@@ -128,6 +128,10 @@ add_test(NAME ${target}
 #
 
 configure_file(data/global.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(data/child_a.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(data/child_b.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(data/child_c.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(data/child_d.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 
 #
 # Define test labels

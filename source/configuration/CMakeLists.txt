@@ -54,6 +54,7 @@ set(FILESYSTEM_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
 
 set(headers
 	${include_path}/configuration.h
+	${include_path}/configuration_object_handle.h
 	${include_path}/configuration_impl_handle.h
 	${include_path}/configuration_singleton.h
 	${include_path}/configuration_object.h

@@ -1,3 +1,6 @@
 {
-	"value": 12345
+	"value": 12345,
+	"value_local": 321321,
+	"child_a": "child_a.json",
+	"child_b": "child_b.json"
 }

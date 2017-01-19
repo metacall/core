@@ -30,6 +30,13 @@ value value_type_create(const void * data, size_t bytes, type_id id)
 	return v;
 }
 
+size_t value_type_size(value v)
+{
+	size_t size = value_size(v);
+
+	return size - sizeof(type_id);
+}
+
 type_id value_type_id(value v)
 {
 	size_t size = value_size(v);

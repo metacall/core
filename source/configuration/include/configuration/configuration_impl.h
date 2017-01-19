@@ -24,6 +24,16 @@ extern "C" {
 
 /**
 *  @brief
+*    Retrieve extension supported by the configuration implementation
+*
+*  @return
+*    Returns constant string representing configuration extension
+*
+*/
+CONFIGURATION_API const char * configuration_impl_extension(void);
+
+/**
+*  @brief
 *    Initialize configuration object implementation
 *
 *  @param[in] iface
@@ -47,25 +57,6 @@ CONFIGURATION_API int configuration_impl_initialize(configuration_interface ifac
 *
 */
 CONFIGURATION_API int configuration_impl_load(configuration config);
-
-/**
-*  @brief
-*    Retrieve a value from @config by @key of type @id
-*
-*  @param[in] config
-*    Pointer to the config object to be accessed
-*
-*  @param[in] key
-*    Key index to retrieve the value
-*
-*  @param[in] id
-*    Type of value
-*
-*  @return
-*    Returns pointer to value of type @id on valid @key, null otherwise
-*
-*/
-CONFIGURATION_API value configuration_impl_value(configuration config, const char * key, type_id id);
 
 /**
 *  @brief

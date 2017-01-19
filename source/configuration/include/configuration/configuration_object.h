@@ -13,21 +13,16 @@
 
 #include <configuration/configuration_api.h>
 
+#include <configuration/configuration_object_handle.h>
 #include <configuration/configuration_impl_handle.h>
+
+#include <adt/adt_vector.h>
 
 #include <reflect/reflect_value_type.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* -- Forward Declarations -- */
-
-struct configuration_type;
-
-/* -- Type Definitions -- */
-
-typedef struct configuration_type * configuration;
 
 /* -- Methods -- */
 
@@ -49,6 +44,22 @@ typedef struct configuration_type * configuration;
 *
 */
 CONFIGURATION_API configuration configuration_object_initialize(const char * name, const char * path, configuration parent);
+
+/**
+*  @brief
+*    Generate all childs from parent @config
+*
+*  @param[in] config
+*    Pointer to configuration object
+*
+*  @param[in] childs
+*    Array of @config's childs
+*
+*  @return
+*    Returns zero on correct child initialization, distinct from zero otherwise
+*
+*/
+CONFIGURATION_API int configuration_object_childs(configuration config, vector childs);
 
 /**
 *  @brief

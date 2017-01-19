@@ -44,6 +44,18 @@ value value_type_create(const void * data, size_t bytes, type_id id);
 
 /**
 *  @brief
+*    Returns the size of the value type
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Size in bytes of the value type
+*/
+REFLECT_API size_t value_type_size(value v);
+
+/**
+*  @brief
 *    Provide type id of value
 *
 *  @param[in] v

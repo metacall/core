@@ -23,6 +23,16 @@ extern "C" {
 
 /**
 *  @brief
+*    Retrieve extension supported by RapidJSON implementation
+*
+*  @return
+*    Returns constant string representing configuration extension
+*
+*/
+CONFIGURATION_API const char * configuration_impl_rapid_json_extension(void);
+
+/**
+*  @brief
 *    Initialize RapidJSON implementation
 *
 *  @return
@@ -39,29 +49,10 @@ CONFIGURATION_API int configuration_impl_rapid_json_initialize(void);
 *    Pointer to the config object to be loaded
 *
 *  @return
-*    Returns zero on correct loading, distinct from zero otherwise
+*    Returns pointer to implementation on correct loading, null otherwise
 *
 */
 CONFIGURATION_API configuration_impl configuration_impl_rapid_json_load(configuration config);
-
-/**
-*  @brief
-*    Retrieve a value from @config by @key of type @id with RapidJSON implementation
-*
-*  @param[in] config
-*    Pointer to the config object to be accessed
-*
-*  @param[in] key
-*    Key index to retrieve the value
-*
-*  @param[in] id
-*    Type of value
-*
-*  @return
-*    Returns pointer to value of type @id on valid @key, null otherwise
-*
-*/
-CONFIGURATION_API value configuration_impl_rapid_json_get(configuration config, const char * key, type_id id);
 
 /**
 *  @brief
