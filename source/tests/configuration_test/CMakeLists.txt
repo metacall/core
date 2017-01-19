@@ -120,7 +120,14 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+#
+# Configure test data
+#
+
+configure_file(data/global.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 
 #
 # Define test labels
