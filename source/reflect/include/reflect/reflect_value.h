@@ -58,6 +58,18 @@ REFLECT_API value value_create(const void * data, size_t bytes);
 
 /**
 *  @brief
+*    Copy a value from @v
+*
+*  @param[in] v
+*    Reference of value to be copied
+*
+*  @return
+*    Reference to new value copied from @v
+*/
+REFLECT_API value value_copy(value v);
+
+/**
+*  @brief
 *    Returns the size of the value
 *
 *  @param[in] v

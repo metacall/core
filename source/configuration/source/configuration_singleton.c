@@ -10,6 +10,7 @@
 
 #include <configuration/configuration_singleton.h>
 #include <configuration/configuration_object.h>
+#include <configuration/configuration_impl.h>
 
 #include <adt/adt_hash_map.h>
 #include <adt/adt_vector.h>
@@ -115,6 +116,8 @@ int configuration_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, h
 	if (val != NULL)
 	{
 		configuration config = val;
+
+		configuration_impl_unload(config);
 
 		configuration_object_destroy(config);
 	}

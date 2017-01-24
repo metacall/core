@@ -47,11 +47,27 @@ struct configuration_type
 
 /* -- Private Methods -- */
 
+static int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+
 static int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static int configuration_object_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Methods -- */
+
+int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	set map = args;
+
+	(void)s;
+
+	if (key != NULL && val != NULL)
+	{
+		return set_insert(map, key, value_copy(val));
+	}
+
+	return 0;
+}
 
 configuration configuration_object_initialize(const char * name, const char * path, configuration parent)
 {
@@ -104,14 +120,7 @@ configuration configuration_object_initialize(const char * name, const char * pa
 
 	if (config->parent != NULL)
 	{
-		if (set_append(config->map, config->parent->map) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration object parent inheritance");
-
-			configuration_object_destroy(config);
-
-			return NULL;
-		}
+		set_iterate(config->parent->map, &configuration_object_initialize_cb_iterate, config->map);
 	}
 
 	return config;
@@ -203,6 +212,13 @@ configuration_impl configuration_object_impl(configuration config)
 
 int configuration_object_set(configuration config, const char * key, value v)
 {
+	value original = set_get(config->map, (set_key)key);
+
+	if (original != NULL)
+	{
+		value_destroy(original);
+	}
+
 	return set_insert(config->map, (set_key)key, v);
 }
 

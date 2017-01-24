@@ -39,3 +39,22 @@ int comparable_callback_int(const comparable a, const comparable b)
 		return 0;
 	}
 }
+
+int comparable_callback_ptr(const comparable a, const comparable b)
+{
+	const void * void_ptr_a = a;
+	const void * void_ptr_b = b;
+
+	if (void_ptr_a < void_ptr_b)
+	{
+		return -1;
+	}
+	else if (void_ptr_a > void_ptr_b)
+	{
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}

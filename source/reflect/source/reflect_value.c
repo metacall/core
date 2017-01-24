@@ -85,6 +85,22 @@ value value_create(const void * data, size_t bytes)
 	return v;
 }
 
+value value_copy(value v)
+{
+	size_t size = value_size(v);
+
+	value copy = value_alloc(size);
+
+	if (copy == NULL)
+	{
+		return NULL;
+	}
+
+	memcpy(copy, value_data(v), size);
+
+	return copy;
+}
+
 size_t value_size(value v)
 {
 	value_impl impl = value_descriptor(v);

@@ -23,6 +23,8 @@ ADT_API int comparable_callback_str(const comparable a, const comparable b);
 
 ADT_API int comparable_callback_int(const comparable a, const comparable b);
 
+ADT_API int comparable_callback_ptr(const comparable a, const comparable b);
+
 #ifdef __cplusplus
 }
 #endif

@@ -429,6 +429,27 @@ set_value set_get(set s, set_key key)
 	return NULL;
 }
 
+int set_contains(set s, set_key key)
+{
+	if (s != NULL && key != NULL)
+	{
+		set_hash hash = s->hash_cb(key);
+
+		size_t index = hash % s->capacity;
+
+		set_bucket bucket = &s->buckets[index];
+
+		set_pair pair = set_bucket_get_pair(s, bucket, key);
+
+		if (pair != NULL)
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 set_value set_remove(set s, set_key key)
 {
 	if (s != NULL && key != NULL)
