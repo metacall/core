@@ -133,7 +133,7 @@ int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, loader_naming_name name)
 {
 	/* TODO: Load a new script into a loader_handle by path and name (just that, not inspection / reflection need */
 
@@ -143,7 +143,19 @@ loader_handle cs_loader_impl_load(loader_impl impl, const loader_naming_path pat
 
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
-	simple_netcore_load_script(nhandle, path, name);
+	simple_netcore_load_script_from_file(nhandle, path, name);
+
+	return (loader_handle)impl;
+}
+
+loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+{
+
+	(void)name;
+
+	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
+
+	simple_netcore_load_script_from_memory(nhandle, buffer, size);
 
 	return (loader_handle)impl;
 }
@@ -192,10 +204,10 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			for (size_t j = 0; j < functions[i].param_count; ++j)
 			{
-				signature_set(s, j, functions[i].pars[j].name, (type)functions[i].pars[j].type);
+				signature_set(s, j, functions[i].pars[j].name, type_create(functions[i].pars[j].type, NULL, NULL, NULL));
 			}
 
-			signature_set_return(s, (type)functions[i].return_type);
+			signature_set_return(s, type_create(functions[i].return_type, NULL, NULL, NULL));
 		}
 
 		scope_define(sp, functions[i].name, f);

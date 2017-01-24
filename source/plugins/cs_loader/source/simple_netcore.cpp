@@ -40,7 +40,7 @@ void simple_netcore_destroy(netcore_handle handle) {
 	delete core;
 }
 
-void  simple_netcore_load_script(netcore_handle handle, const char *path, const char* file) {
+void  simple_netcore_load_script_from_file(netcore_handle handle, const char *path, const char* file) {
 	netcore * core = (netcore*)handle;
 
 	std::ifstream inFile;
@@ -54,7 +54,13 @@ void  simple_netcore_load_script(netcore_handle handle, const char *path, const 
 
 	}
 }
+void  simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size) {
+	netcore * core = (netcore*)handle;
 
+	if (core->load_source((char*)buffer)) {
+
+	}
+}
 void  simple_netcore_invoke(netcore_handle handle, const char *func) {
 	netcore * core = (netcore*)handle;
 
