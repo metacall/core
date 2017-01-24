@@ -53,3 +53,5 @@ add_subdirectory(metacall_load_memory_test)
 add_subdirectory(metacall_test)
 add_subdirectory(metacall_cast_test)
 add_subdirectory(metacallpp_test)
+add_subdirectory(integration_test)
+
