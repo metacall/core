@@ -140,7 +140,7 @@ int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, se
 			if (strncmp(last, extension, length) == 0)
 			{
 				configuration_childs_cb_iterator iterator = args;
-				
+
 				configuration child = configuration_object_initialize(key, path, iterator->parent);
 
 				if (child == NULL)
@@ -161,7 +161,7 @@ int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, se
 int configuration_object_childs(configuration config, vector childs)
 {
 	struct configuration_childs_cb_iterator_type iterator;
-	
+
 	iterator.result = 0;
 	iterator.parent = config;
 	iterator.childs = childs;
@@ -203,13 +203,6 @@ configuration_impl configuration_object_impl(configuration config)
 
 int configuration_object_set(configuration config, const char * key, value v)
 {
-	value original = set_get(config->map, (set_key)key);
-
-	if (original != NULL)
-	{
-		value_destroy(original);
-	}
-
 	return set_insert(config->map, (set_key)key, v);
 }
 

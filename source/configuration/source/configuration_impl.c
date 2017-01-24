@@ -145,7 +145,7 @@ int configuration_impl_load(configuration config)
 					vector_push_back(queue, &child);
 				}
 
-				if (set_insert(s, (set_key)configuration_object_name(child), child) != 0)
+				if (set_insert(s, (set_key)configuration_object_name(child), &child) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation child set insertion");
 
