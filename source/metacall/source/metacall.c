@@ -28,11 +28,20 @@
 
 void * metacall_null_args[1];
 
+/* -- Private Variables -- */
+
+static int metacall_initialize_flag = 1;
+
 /* -- Methods -- */
 
 int metacall_initialize()
 {
 	size_t iterator;
+
+	if (metacall_initialize_flag == 0)
+	{
+		return 0;
+	}
 
 	/* TODO: load a full path */
 	loader_naming_name module_names[] =
@@ -75,6 +84,8 @@ int metacall_initialize()
 			return 1;
 		}
 	}
+
+	metacall_initialize_flag = 0;
 
 	return 0;
 }
@@ -225,7 +236,14 @@ value metacall(const char * name, ...)
 
 int metacall_destroy()
 {
-	return loader_unload();
+	if (loader_unload() != 0)
+	{
+		return 1;
+	}
+
+	metacall_initialize_flag = 1;
+
+	return 0;
 }
 
 const char * metacall_print_info()

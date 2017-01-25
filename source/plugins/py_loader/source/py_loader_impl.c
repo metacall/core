@@ -330,11 +330,13 @@ int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, ty
 
 		if (builtin_type != NULL)
 		{
+			/*
 			log_write("metacall", LOG_LEVEL_DEBUG, "Builtin [%p]: ", (void *)builtin);
 
 			PyObject_Print(builtin, stdout, 0);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "");
+			*/
 
 			if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) == 0)
 			{
@@ -631,6 +633,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 						PyObject * annotation = PyObject_GetAttrString(parameter, "annotation");
 
+						/*
 						log_write("metacall", LOG_LEVEL_DEBUG, "Parameter %ld (name: ", iterator);
 
 						PyObject_Print(name, stdout, 0);
@@ -640,6 +643,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 						PyObject_Print(annotation, stdout, 0);
 
 						log_write("metacall", LOG_LEVEL_DEBUG, ")");
+						*/
 
 						signature_set(s, iterator, parameter_name, py_loader_impl_discover_type(impl, annotation));
 

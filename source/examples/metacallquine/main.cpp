@@ -17,6 +17,8 @@ int main(int argc, char * argv[])
 	const char python_script[] =
 		"#!/usr/bin/python3.4\n"
 		"\n"
+		"import _py_portd as metacall\n"
+		"\n"
 		"def py_quine(script: str) -> int:\n"
 		"	print('Python:', script);\n"
 		"	return 4;\n";
