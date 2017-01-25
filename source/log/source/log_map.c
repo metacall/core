@@ -261,11 +261,18 @@ const void * log_map_remove(log_map map, const char * key)
 
 int log_map_clear(log_map map)
 {
-	log_map_iterator map_iterator = log_map_iterator_begin(map);
+	log_map_iterator map_iterator;
 
 	size_t block_iterator;
 
 	int result = 0;
+
+	if (!(map != NULL && log_map_size(map) > 0))
+	{
+		return 0;
+	}
+
+	map_iterator = log_map_iterator_begin(map);
 
 	do
 	{
