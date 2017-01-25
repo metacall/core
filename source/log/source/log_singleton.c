@@ -133,13 +133,8 @@ void log_singleton_clear()
 {
 	log_singleton s = log_singleton_instance();
 
-	/* iterate in map and log_impl_destroy(impl); */
-
 	if (log_map_clear(s->map) != 0)
 	{
-		if (log_singleton_destroy() != 0)
-		{
-			abort();
-		}
+		/* ... */
 	}
 }

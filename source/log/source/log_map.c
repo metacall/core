@@ -261,21 +261,53 @@ const void * log_map_remove(log_map map, const char * key)
 
 int log_map_clear(log_map map)
 {
-	/* TODO: clear all buckets and blocks */
-	(void)map;
+	log_map_iterator map_iterator = log_map_iterator_begin(map);
 
-	return 0;
+	size_t block_iterator;
+
+	int result = 0;
+
+	do
+	{
+		log_impl impl = (log_impl)log_map_iterator_value(map_iterator);
+
+		if (!(log_impl_clear(impl) == 0 && log_impl_destroy(impl) == 0))
+		{
+			result = 1;
+		}
+
+		if (log_map_iterator_next(map_iterator) != 0)
+		{
+			result = 1;
+		}
+
+	} while (log_map_iterator_end(map_iterator) != 0);
+
+	map->table.count = 0;
+
+	for (block_iterator = 0; block_iterator < map->block.count; ++block_iterator)
+	{
+		if (map->block.data[block_iterator] != NULL)
+		{
+			free(map->block.data[block_iterator]);
+
+			map->block.data[block_iterator] = NULL;
+		}
+	}
+
+	map->block.count = 0;
+	map->block.position = LOG_MAP_BUCKET_SIZE;
+
+	return result;
 }
 
 int log_map_destroy(log_map map)
 {
-	size_t iterator;
-
 	if (map == NULL)
 	{
 		return 1;
 	}
-	
+
 	if (map->table.data != NULL)
 	{
 		free(map->table.data);
@@ -283,6 +315,8 @@ int log_map_destroy(log_map map)
 
 	if (map->block.data != NULL)
 	{
+		size_t iterator;
+
 		for (iterator = 0; iterator < map->block.count; ++iterator)
 		{
 			if (map->block.data[iterator] != NULL)
@@ -377,7 +411,7 @@ int log_map_iterator_next(log_map_iterator iterator)
 
 		iterator->bucket = &iterator->map->table.data[iterator->position];
 	}
-	
+
 	return 1;
 }
 
@@ -387,7 +421,7 @@ int log_map_iterator_end(log_map_iterator iterator)
 	{
 		return 1;
 	}
-	
+
 	if (iterator->position < iterator->map->table.size && iterator->bucket != NULL)
 	{
 		return 1;
