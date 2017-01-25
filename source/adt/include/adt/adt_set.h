@@ -82,4 +82,8 @@ ADT_API void set_iterator_next(set_iterator it);
 
 ADT_API int set_iterator_end(set_iterator * it);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ADT_SET_H */

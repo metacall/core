@@ -12,8 +12,6 @@
 #include <configuration/configuration_stream.h>
 #include <configuration/configuration_impl.h>
 
-#include <adt/adt_set.h>
-
 #include <log/log.h>
 
 #include <string.h>
@@ -33,6 +31,7 @@ struct configuration_childs_cb_iterator_type
 	int result;
 	configuration parent;
 	vector childs;
+	set storage;
 };
 
 struct configuration_type
@@ -150,16 +149,19 @@ int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, se
 			{
 				configuration_childs_cb_iterator iterator = args;
 
-				configuration child = configuration_object_initialize(key, path, iterator->parent);
-
-				if (child == NULL)
+				if (set_get(iterator->storage, key) == NULL)
 				{
-					iterator->result = 1;
+					configuration child = configuration_object_initialize(key, path, iterator->parent);
 
-					return 1;
+					if (child == NULL)
+					{
+						iterator->result = 1;
+
+						return 1;
+					}
+
+					vector_push_back(iterator->childs, &child);
 				}
-
-				vector_push_back(iterator->childs, &child);
 			}
 		}
 	}
@@ -167,13 +169,14 @@ int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, se
 	return 0;
 }
 
-int configuration_object_childs(configuration config, vector childs)
+int configuration_object_childs(configuration config, vector childs, set storage)
 {
 	struct configuration_childs_cb_iterator_type iterator;
 
 	iterator.result = 0;
 	iterator.parent = config;
 	iterator.childs = childs;
+	iterator.storage = storage;
 
 	set_iterate(config->map, &configuration_object_childs_cb_iterate, &iterator);
 

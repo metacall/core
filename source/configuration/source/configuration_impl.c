@@ -60,11 +60,11 @@ int configuration_impl_load_impl(configuration config)
 
 int configuration_impl_load(configuration config)
 {
-	set s = set_create(&hash_callback_str, &comparable_callback_str);
+	set storage = set_create(&hash_callback_str, &comparable_callback_str);
 
 	vector queue, childs;
 
-	if (s == NULL)
+	if (storage == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load set allocation");
 
@@ -77,7 +77,7 @@ int configuration_impl_load(configuration config)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load queue allocation");
 
-		set_destroy(s);
+		set_destroy(storage);
 
 		return 1;
 	}
@@ -88,7 +88,7 @@ int configuration_impl_load(configuration config)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load childs allocation");
 
-		set_destroy(s);
+		set_destroy(storage);
 
 		vector_destroy(queue);
 
@@ -107,7 +107,7 @@ int configuration_impl_load(configuration config)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load (childs) <%p>", current);
 
-			set_destroy(s);
+			set_destroy(storage);
 
 			vector_destroy(queue);
 
@@ -118,7 +118,7 @@ int configuration_impl_load(configuration config)
 
 		vector_clear(childs);
 
-		if (configuration_object_childs(current, childs) == 0 && vector_size(childs) > 0)
+		if (configuration_object_childs(current, childs, storage) == 0 && vector_size(childs) > 0)
 		{
 			size_t iterator;
 
@@ -126,14 +126,14 @@ int configuration_impl_load(configuration config)
 			{
 				configuration child = *((configuration *)vector_at(childs, iterator));
 
-				if (set_get(s, (set_key)configuration_object_name(child)) == NULL)
+				if (set_get(storage, (set_key)configuration_object_name(child)) == NULL)
 				{
 					if (configuration_singleton_register(child) != 0)
 					{
 						log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation child singleton insertion (%s, %s)",
 							configuration_object_name(child), configuration_object_path(child));
 
-						set_destroy(s);
+						set_destroy(storage);
 
 						vector_destroy(queue);
 
@@ -145,11 +145,11 @@ int configuration_impl_load(configuration config)
 					vector_push_back(queue, &child);
 				}
 
-				if (set_insert(s, (set_key)configuration_object_name(child), &child) != 0)
+				if (set_insert(storage, (set_key)configuration_object_name(child), child) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation child set insertion");
 
-					set_destroy(s);
+					set_destroy(storage);
 
 					vector_destroy(queue);
 
@@ -161,7 +161,7 @@ int configuration_impl_load(configuration config)
 		}
 	}
 
-	set_destroy(s);
+	set_destroy(storage);
 
 	vector_destroy(queue);
 

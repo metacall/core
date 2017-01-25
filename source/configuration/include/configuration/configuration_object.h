@@ -17,6 +17,7 @@
 #include <configuration/configuration_impl_handle.h>
 
 #include <adt/adt_vector.h>
+#include <adt/adt_set.h>
 
 #include <reflect/reflect_value_type.h>
 
@@ -52,14 +53,17 @@ CONFIGURATION_API configuration configuration_object_initialize(const char * nam
 *  @param[in] config
 *    Pointer to configuration object
 *
-*  @param[in] childs
+*  @param[out] childs
 *    Array of @config's childs
+*
+*  @param[inout] storage
+*    Set containing already created configurations
 *
 *  @return
 *    Returns zero on correct child initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_object_childs(configuration config, vector childs);
+CONFIGURATION_API int configuration_object_childs(configuration config, vector childs, set storage);
 
 /**
 *  @brief
