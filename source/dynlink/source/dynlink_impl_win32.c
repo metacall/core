@@ -6,11 +6,13 @@
  *
  */
 
-/* -- Headers -- */
+ /* -- Headers -- */
 
 #include <dynlink/dynlink.h>
 
 #include <dynlink/dynlink_impl.h>
+
+#include <log/log.h>
 
 #include <string.h>
 
@@ -43,6 +45,8 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 	{
 		return (dynlink_impl)impl;
 	}
+
+	log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s with error code: %d", dynlink_get_name_impl(handle), GetLastError());
 
 	return NULL;
 }
