@@ -13,6 +13,8 @@
 
 #include <loader/loader_impl_interface.h>
 
+#include <string.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

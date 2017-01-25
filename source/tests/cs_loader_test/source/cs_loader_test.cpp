@@ -26,6 +26,31 @@ TEST_F(cs_loader_test, SayHello)
 
 TEST_F(cs_loader_test, SayAny)
 {
-	metacall("Say","Any");
+	metacall("Say", "Any");
 }
 
+TEST_F(cs_loader_test, Sum)
+{
+	value ret = NULL;
+
+	ret = metacall("Sum", 5, 10);
+
+	EXPECT_NE((value)NULL, (value)ret);
+
+	EXPECT_EQ((int)value_to_long(ret), (int)15);
+
+	value_destroy(ret);
+}
+
+TEST_F(cs_loader_test, Concat)
+{
+	value ret = NULL;
+
+	ret = metacall("Concat", "Hello ", "World");
+
+	EXPECT_NE((value)NULL, (value)ret);
+
+	EXPECT_EQ(strcmp((const char*)value_to_string(ret), "Hello World"), 0);
+
+	value_destroy(ret);
+}

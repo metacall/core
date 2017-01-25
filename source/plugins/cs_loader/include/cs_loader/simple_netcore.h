@@ -15,12 +15,17 @@ extern "C" {
 	reflect_function * simple_netcore_get_functions(netcore_handle, int*);
 
 	void  simple_netcore_load_script_from_file(netcore_handle handle, const char *path, const char* file);
-	
+
 	void   simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size);
 
-	void  simple_netcore_invoke(netcore_handle, const char *);
+	execution_result* simple_netcore_invoke(netcore_handle, const char *);
 
 	void simple_netcore_destroy(netcore_handle);
+
+	execution_result* simple_netcore_invoke_with_params(netcore_handle handle, const char *func, parameters * params);
+
+	void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result* er);
+
 #ifdef __cplusplus
 }
 #endif

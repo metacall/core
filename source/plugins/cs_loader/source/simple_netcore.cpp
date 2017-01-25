@@ -61,8 +61,20 @@ void  simple_netcore_load_script_from_memory(netcore_handle handle, const char *
 
 	}
 }
-void  simple_netcore_invoke(netcore_handle handle, const char *func) {
+execution_result*  simple_netcore_invoke(netcore_handle handle, const char *func) {
 	netcore * core = (netcore*)handle;
 
-	core->execute((char*)func);
+	return core->execute((char*)func);
+}
+
+execution_result*  simple_netcore_invoke_with_params(netcore_handle handle, const char *func, parameters* params) {
+	netcore * core = (netcore*)handle;
+
+	return core->execute_with_params((char*)func, params);
+}
+
+void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result* er) {
+	netcore * core = (netcore*)handle;
+
+	core->destroy_execution_result(er);
 }

@@ -12,3 +12,8 @@
         {
            return a+b;
         }
+		
+		public static string Concat(string a,string b)
+        {
+           return a+b;
+        }

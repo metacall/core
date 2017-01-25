@@ -18,6 +18,7 @@ public:
 	execute_function_with_params_w * execute_with_params_w;
 	execute_function_with_params_c * execute_with_params_c;
 	get_loaded_functions * core_get_functions;
+	destroy_execution_result * core_destroy_execution_result;
 
 	const CHARSTRING *loader_dll = W("CSLoader.dll");
 	const CHARSTRING *class_name = W("CSLoader.Loader");
@@ -29,6 +30,7 @@ public:
 	const CHARSTRING *delegate_execute_with_params_w = W("ExecuteWithParamsW");
 	const CHARSTRING *delegate_execute_with_params_c = W("ExecuteWithParamsC");
 	const CHARSTRING *delegate_get_functions = W("GetFunctions");
+	const CHARSTRING *delegate_destroy_execution_result = W("DestroyExecutionResult");
 
 	explicit netcore();
 	virtual ~netcore();
@@ -39,17 +41,18 @@ public:
 	bool load_source(wchar_t * source);
 	bool load_source(char * source);
 
-	bool execute(char * function);
-	bool execute(wchar_t * function);
+	execution_result* execute(char * function);
+	execution_result* execute(wchar_t * function);
 
-	bool execute_with_params(char * function, parameters * params, size_t size);
-	bool execute_with_params(wchar_t * function, parameters * params, size_t size);
+	execution_result* execute_with_params(char * function, parameters * params);
+	execution_result* execute_with_params(wchar_t * function, parameters * params);
 
 	bool create_delegates();
 
 	virtual bool create_delegate(const CHARSTRING * delegate_name, void** func) = 0;
 
 	reflect_function * get_functions(int * count);
+	void destroy_execution_result(execution_result* er);
 };
 
 #endif

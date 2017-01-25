@@ -41,13 +41,56 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	(void)args;
 
 	cs_function * cs_f = (cs_function*)impl;
+	execution_result * result;
 
-	simple_netcore_invoke(cs_f->handle, cs_f->func->name);
+	if (cs_f->func->param_count == 0) {
+		result = simple_netcore_invoke(cs_f->handle, cs_f->func->name);
+	}
+	else
+	{
+		parameters params[10];
 
-	//function_name(func);
-	//function_
-	//simple_netcore_invoke()
-	return NULL;
+		for (size_t i = 0; i < cs_f->func->param_count; i++) {
+			params[i].ptr = args[i];
+			params[i].type = cs_f->func->pars[i].type;
+		}
+
+		result = simple_netcore_invoke_with_params(cs_f->handle, cs_f->func->name, params);
+	}
+
+	value v = NULL;
+
+	if (result->ptr != NULL) {
+
+		switch (cs_f->func->return_type)
+		{
+		case TYPE_BOOL:
+			v = value_create_bool(*(boolean*)result->ptr);
+			break;
+		case TYPE_CHAR:
+			v = value_create_bool(*(char*)result->ptr);
+			break;
+		case TYPE_INT:
+			v = value_create_int(*(int*)result->ptr);
+			break;
+		case TYPE_LONG:
+			v = value_create_long(*(long*)result->ptr);
+			break;
+		case TYPE_FLOAT:
+			v = value_create_float(*(long*)result->ptr);
+			break;
+		case TYPE_DOUBLE:
+			v = value_create_double(*(long*)result->ptr);
+			break;
+		case TYPE_STRING:
+			v = value_create_string((const char*)result->ptr, strlen((const char*)result->ptr));
+			break;
+		}
+	}
+
+	simple_netcore_destroy_execution_result(cs_f->handle, result);
+
+	return v;
 }
 
 void function_cs_interface_destroy(function func, function_impl impl)
@@ -204,10 +247,10 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			for (size_t j = 0; j < functions[i].param_count; ++j)
 			{
-				signature_set(s, j, functions[i].pars[j].name, type_create(functions[i].pars[j].type, NULL, NULL, NULL));
+				signature_set(s, j, functions[i].pars[j].name, type_create(functions[i].pars[j].type, "holder", NULL, NULL));
 			}
 
-			signature_set_return(s, type_create(functions[i].return_type, NULL, NULL, NULL));
+			signature_set_return(s, type_create(functions[i].return_type, "holder", NULL, NULL));
 		}
 
 		scope_define(sp, functions[i].name, f);

@@ -54,6 +54,9 @@ bool netcore::create_delegates() {
 	if (!this->create_delegate(this->delegate_execute_with_params_c, (void**)&this->execute_with_params_c)) {
 		return false;
 	}
+	if (!this->create_delegate(this->delegate_destroy_execution_result, (void**)&this->core_destroy_execution_result)) {
+		return false;
+	}
 
 	return true;
 }
@@ -66,15 +69,19 @@ bool netcore::load_source(char * source) {
 	return this->core_load_c(source);
 }
 
-bool netcore::execute(char * function) {
+execution_result* netcore::execute(char * function) {
 	return this->execute_c(function);
 }
-bool netcore::execute(wchar_t * function) {
+execution_result* netcore::execute(wchar_t * function) {
 	return this->execute_w(function);
 }
-bool netcore::execute_with_params(char * function, parameters * params, size_t size) {
-	return this->execute_with_params_c(function, params, (short)size);
+execution_result* netcore::execute_with_params(char * function, parameters * params) {
+	return  this->execute_with_params_c(function, params);
 }
-bool netcore::execute_with_params(wchar_t * function, parameters * params, size_t size) {
-	return this->execute_with_params_w(function, params, (short)size);
+execution_result* netcore::execute_with_params(wchar_t * function, parameters * params) {
+	return this->execute_with_params_w(function, params);
+}
+
+void netcore::destroy_execution_result(execution_result* er) {
+	this->core_destroy_execution_result(er);
 }

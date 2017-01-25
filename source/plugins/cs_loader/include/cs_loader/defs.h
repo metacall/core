@@ -12,12 +12,18 @@ typedef struct {
 } parameters;
 
 typedef struct {
-	int type;
+	short type;
+	char failed;
+	void * ptr;
+} execution_result;
+
+typedef struct {
+	short type;
 	char  name[100];
 } reflect_param;
 
 typedef struct {
-	int return_type;
+	short return_type;
 	int param_count;
 	char  name[100];
 	reflect_param pars[10];
@@ -26,10 +32,11 @@ typedef struct {
 typedef void(void_func)(void);
 typedef char(load_function_w)(wchar_t * source);
 typedef char(load_function_c)(const char * source);
-typedef char(execute_function_c)(char * function);
-typedef char(execute_function_w)(wchar_t * function);
-typedef char(execute_function_with_params_w)(wchar_t * function, parameters *, short count);
-typedef char(execute_function_with_params_c)(char * function, parameters *, short count);
+typedef void(destroy_execution_result)(execution_result* er);
+typedef execution_result*(execute_function_c)(char * function);
+typedef execution_result*(execute_function_w)(wchar_t * function);
+typedef execution_result*(execute_function_with_params_w)(wchar_t * function, parameters *);
+typedef execution_result*(execute_function_with_params_c)(char * function, parameters *);
 typedef void(get_loaded_functions)(int *, reflect_function*);
 
 #if defined(__linux) | defined( linux)

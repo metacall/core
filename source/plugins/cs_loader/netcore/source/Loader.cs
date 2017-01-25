@@ -76,57 +76,67 @@ namespace CSLoader
             return Load(source);
         }
 
-        public static void ExecuteC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string function)
+        public unsafe static IntPtr ExecuteC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string function)
         {
-            ExecuteFunction(function);
+            return ExecuteFunction(function);
         }
 
-        public static void ExecuteW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string function)
+        public unsafe static IntPtr ExecuteW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string function)
         {
-            ExecuteFunction(function);
+            return ExecuteFunction(function);
         }
 
-        public static bool ExecuteWithParamsC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string function,
-         [MarshalAs(UnmanagedType.LPArray, SizeConst = 10)]   Parameters[] parameters, int size)
+        public unsafe static void DestroyExecutionResult(ExecutionResult* executionResult)
+        {
+            if (executionResult->ptr != IntPtr.Zero)
+            {
+                Marshal.FreeHGlobal(executionResult->ptr);
+            }
+
+            Marshal.FreeHGlobal((IntPtr)executionResult);
+        }
+
+        public unsafe static IntPtr ExecuteWithParamsC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string function,
+         [MarshalAs(UnmanagedType.LPArray, SizeConst = 10)]   Parameters[] parameters)
         {
             if (loader == null)
             {
                 Console.WriteLine("Loader is null");
-                return false;
+                return (IntPtr)CreateExecutionResult(true, type_primitive_id.TYPE_PTR);
             }
             else
             {
                 Console.WriteLine("Executing " + function);
-                return loader.Execute(function, parameters.Take(size).ToArray());
+                return (IntPtr)loader.Execute(function, parameters);
             }
         }
 
-        public static bool ExecuteWithParamsW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string function,
-         [MarshalAs(UnmanagedType.LPArray, SizeConst = 10)]   Parameters[] parameters, int size)
+        public unsafe static IntPtr ExecuteWithParamsW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string function,
+         [MarshalAs(UnmanagedType.LPArray, SizeConst = 10)]   Parameters[] parameters)
         {
             if (loader == null)
             {
                 Console.WriteLine("Loader is null");
-                return false;
+                return (IntPtr)CreateExecutionResult(true, type_primitive_id.TYPE_PTR);
             }
             else
             {
                 Console.WriteLine("Executing " + function);
-                return loader.Execute(function, parameters.Take(size).ToArray());
+                return (IntPtr)loader.Execute(function, parameters);
             }
         }
 
-        public static bool ExecuteFunction(string function)
+        public unsafe static IntPtr ExecuteFunction(string function)
         {
             if (loader == null)
             {
                 Console.WriteLine("Loader is null");
-                return false;
+                return (IntPtr)CreateExecutionResult(true, type_primitive_id.TYPE_PTR);
             }
             else
             {
                 Console.WriteLine("Executing " + function);
-                return loader.Execute(function);
+                return (IntPtr)loader.Execute(function);
             }
         }
 
@@ -229,35 +239,43 @@ namespace CSLoader
             GC.Collect();
         }
 
-        public bool Execute(string function, Parameters[] parameters)
+        public unsafe ExecutionResult* Execute(string function, Parameters[] parameters)
         {
             var objs = new object[parameters.Length];
 
             var con = this.functions[function];
 
-            for (int i = 0; i < parameters.Length; i++)
+            for (int i = 0; i < con.Parameters.Length; i++)
             {
-                if (parameters[i].type == type_primitive_id.TYPE_STRING)
-                {
-                    objs[i] = Marshal.PtrToStringUni(parameters[i].ptr);
-                }
-                else
-                {
-                    objs[i] = Marshal.PtrToStringAnsi(parameters[i].ptr);
-                }
-
+                objs[i] = MetacallDef.GetValue(parameters[i].type, parameters[i].ptr);
             }
 
-            con.Method.Invoke(null, objs);
-            return true;
+            var result = con.Method.Invoke(null, objs.Take(con.Parameters.Length).ToArray());
+
+            if (result == null)
+            {
+                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType));
+            }
+            else
+            {
+                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
+            }
         }
 
-        public bool Execute(string function)
+        public unsafe ExecutionResult* Execute(string function)
         {
             var con = this.functions[function];
 
-            con.Method.Invoke(null, null);
-            return true;
+            var result = con.Method.Invoke(null, null);
+
+            if (result == null)
+            {
+                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType));
+            }
+            else
+            {
+                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
+            }
             /*
             Type container = assembly.GetType("BEAST.BEASTFUNCTIONCONTAINER");
 
@@ -290,6 +308,24 @@ namespace CSLoader
                 }
             }
             */
+        }
+
+        public unsafe static ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type)
+        {
+            ExecutionResult* er = (ExecutionResult*)Marshal.AllocHGlobal(sizeof(ExecutionResult));
+            er->failed = failed;
+            er->type = type;
+            er->ptr = IntPtr.Zero;
+            return er;
+        }
+
+        public unsafe static ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type, object value)
+        {
+            ExecutionResult* er = CreateExecutionResult(failed, type);
+
+            er->ptr = MetacallDef.GetIntPtr(type, value);
+
+            return er;
         }
     }
 }
