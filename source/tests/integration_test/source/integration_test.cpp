@@ -44,3 +44,16 @@ TEST_F(integration_test, PyMultiply)
 	log_write("metacall", LOG_LEVEL_DEBUG, "7's multiples dude!");
 
 }
+
+TEST_F(integration_test, Sum)
+{
+	value ret = NULL;
+
+	ret = metacall("Sum", 5, 10);
+
+	EXPECT_NE((value)NULL, (value)ret);
+
+	EXPECT_EQ((int)value_to_long(ret), (int)15);
+
+	value_destroy(ret);
+}
