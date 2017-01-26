@@ -27,7 +27,6 @@
 		#include <reflect/reflect_value_type.h>
 
 		#include <ruby.h>
-		#include <ruby/intern.h>
 	%}
 
 	%include <rb_port/rb_port.h>
