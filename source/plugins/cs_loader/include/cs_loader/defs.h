@@ -32,7 +32,7 @@ typedef struct {
 typedef void(void_func)(void);
 typedef char(load_function_w)(wchar_t * source);
 typedef char(load_function_c)(const char * source);
-typedef void(destroy_execution_result)(execution_result* er);
+typedef void(corefunction_destroy_execution_result)(execution_result* er);
 typedef execution_result*(execute_function_c)(char * function);
 typedef execution_result*(execute_function_w)(wchar_t * function);
 typedef execution_result*(execute_function_with_params_w)(wchar_t * function, parameters *);

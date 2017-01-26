@@ -18,7 +18,7 @@ public:
 	execute_function_with_params_w * execute_with_params_w;
 	execute_function_with_params_c * execute_with_params_c;
 	get_loaded_functions * core_get_functions;
-	destroy_execution_result * core_destroy_execution_result;
+	corefunction_destroy_execution_result * core_destroy_execution_result;
 
 	const CHARSTRING *loader_dll = W("CSLoader.dll");
 	const CHARSTRING *class_name = W("CSLoader.Loader");
