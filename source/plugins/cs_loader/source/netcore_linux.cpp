@@ -41,15 +41,15 @@ bool netcore_linux::CreateHost() {
 		return false;
 	}
 
-	dynlink_symbol_addr coreclr_initialize;
-	dynlink_symbol_addr coreclr_shutdown;
-	dynlink_symbol_addr coreclr_create_delegate;
+	dynlink_symbol_addr dynlink_coreclr_initialize;
+	dynlink_symbol_addr dynlink_coreclr_shutdown;
+	dynlink_symbol_addr dynlink_coreclr_create_delegate;
 
-	dynlink_symbol(handle, DYNLINK_SYMBOL_STR("coreclr_initialize"), &coreclr_initialize);
-	dynlink_symbol(handle, DYNLINK_SYMBOL_STR("coreclr_shutdown"), &coreclr_shutdown);
-	dynlink_symbol(handle, DYNLINK_SYMBOL_STR("coreclr_create_delegate"), &coreclr_create_delegate);
+	dynlink_symbol(handle, "coreclr_initialize", &dynlink_coreclr_initialize);
+	dynlink_symbol(handle, "coreclr_shutdown", &dynlink_coreclr_shutdown);
+	dynlink_symbol(handle, "coreclr_create_delegate", &dynlink_coreclr_create_delegate);
 
-	if (coreclr_initialize == NULL) {
+	if (dynlink_coreclr_initialize == NULL) {
 		std::cout << "coreclr_initialize fail " << std::endl;
 		return false;
 	}
@@ -59,9 +59,14 @@ bool netcore_linux::CreateHost() {
 	//auto coreclr_shutdown = dl->getFunction<coreclrShutdownFunction>("coreclr_shutdown");
 	//auto coreclr_create_delegate = dl->getFunction<coreclrCreateDelegateFunction>("coreclr_create_delegate");
 
-	this->coreclr_initialize = (coreclrInitializeFunction*)DYNLINK_SYMBOL_GET(coreclr_initialize);
-	this->coreclr_shutdown = (coreclrShutdownFunction*)DYNLINK_SYMBOL_GET(coreclr_shutdown);
-	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)DYNLINK_SYMBOL_GET(coreclr_create_delegate);
+	this->coreclr_initialize = (coreclrInitializeFunction*)dynlink_coreclr_initialize;
+	this->coreclr_shutdown = (coreclrShutdownFunction*)dynlink_coreclr_shutdown;
+	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)dynlink_coreclr_create_delegate;
+	
+	if (this->coreclr_initialize == NULL) {
+		std::cout << "coreclr_initialize fail " << std::endl;
+		return false;
+	}
 
 	const char *propertyKeys[] = {
 		"TRUSTED_PLATFORM_ASSEMBLIES",
