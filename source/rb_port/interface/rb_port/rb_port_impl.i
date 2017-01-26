@@ -227,6 +227,8 @@ extern "C" {
 	return /*$result*/ vresult;
 }
 
+
+
 #ifdef __cplusplus
 }
 #endif

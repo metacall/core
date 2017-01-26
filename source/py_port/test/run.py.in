@@ -12,12 +12,16 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Python)
 	def test_python(self):
+		self.assertEqual(metacall.metacall_load_from_file('example.py'), 0);
+
 		self.assertEqual(metacall.metacall('hello'), None)
 
 		self.assertEqual(metacall.metacall('multiply', 5, 7), 35)
 
 	# MetaCall (Ruby)
 	def test_ruby(self):
+		self.assertEqual(metacall.metacall_load_from_file('hello.rb'), 0);
+
 		self.assertEqual(metacall.metacall('say_null'), None)
 
 		#self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
