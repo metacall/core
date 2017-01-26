@@ -13,7 +13,5 @@ int main(int argc, char * argv[])
 {
 	::testing::InitGoogleMock(&argc, argv);
 	::testing::AddGlobalTestEnvironment(new environment());
-	auto a = RUN_ALL_TESTS();
-	getchar();
-	return a;
+	return RUN_ALL_TESTS();
 }
