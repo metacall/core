@@ -1,9 +1,14 @@
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_RB)
+	#return()
+endif()
+
 #
 # Executable name and options
 #
 
 # Target name
-set(target function-test)
+set(target rb-loader-parser-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/function_test.cpp
+	${source_path}/rb_loader_parser_test.cpp
 )
 
 # Group source files
@@ -84,8 +89,8 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::reflect
-
+	${META_PROJECT_NAME}::adt
+	${META_PROJECT_NAME}::rb_loader
 )
 
 #
@@ -124,9 +129,15 @@ add_test(NAME ${target}
 )
 
 #
-# Define test labels
+# Define test properties
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	"LOADER_LIBRARY_PATH=${LOADER_LIBRARY_PATH};LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}"
 )

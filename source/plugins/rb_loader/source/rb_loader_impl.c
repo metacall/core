@@ -7,6 +7,7 @@
  */
 
 #include <rb_loader/rb_loader_impl.h>
+#include <rb_loader/rb_loader_impl_key.h>
 
 #include <loader/loader_impl.h>
 
@@ -24,7 +25,6 @@
 #endif
 
 #include <ruby.h>
-/*#include <ruby/intern.h>*/
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 

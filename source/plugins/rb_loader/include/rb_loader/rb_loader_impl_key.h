@@ -16,30 +16,34 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-/*#include <string>
-#include <vector>
-#include <map>
 
-struct js_parameter;
+#define RB_LOADER_IMPL_PARSER_FUNC	0x40
+#define RB_LOADER_IMPL_PARSER_KEY	0x40
+#define RB_LOADER_IMPL_PARSER_TYPE	0x10
+#define RB_LOADER_IMPL_PARSER_PARAM	0x10
 
-typedef std::vector<js_parameter> parameter_list;
-
-struct js_parameter
+typedef struct rb_function_parameter_parser_type
 {
 	int index;
-	std::string name;
-	std::string type;
-};
+	char name[RB_LOADER_IMPL_PARSER_KEY];
+	char type[RB_LOADER_IMPL_PARSER_TYPE];
 
-struct js_function
+} * rb_function_parameter_parser;
+
+typedef struct rb_function_parser_type
 {
-	std::string name;
-	std::string return_type;
-	parameter_list parameters;
-};*/
+	char name[RB_LOADER_IMPL_PARSER_FUNC];
+	/*char ret[RB_LOADER_IMPL_PARSER_TYPE];*/
+	struct rb_function_parameter_parser_type params[RB_LOADER_IMPL_PARSER_PARAM];
+	size_t params_size;
 
+} * rb_function_parser;
 
 RB_LOADER_API int rb_loader_impl_key_parse(const char * source, set function_map);
+
+RB_LOADER_API int rb_loader_impl_key_print(set function_map);
+
+RB_LOADER_API int rb_loader_impl_key_clear(set function_map);
 
 #ifdef __cplusplus
 }

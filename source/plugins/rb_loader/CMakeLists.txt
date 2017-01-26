@@ -52,11 +52,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/rb_loader.h
 	${include_path}/rb_loader_impl.h
+	${include_path}/rb_loader_impl_key.h
 )
 
 set(sources
 	${source_path}/rb_loader.c
 	${source_path}/rb_loader_impl.c
+	${source_path}/rb_loader_impl_key.c
 )
 
 # Group source files

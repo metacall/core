@@ -77,8 +77,11 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
-	${META_PROJECT_NAME}::preprocessor
+
 	gmock-dev
+
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
 )
 
 #

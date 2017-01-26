@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
- *	A plugin for loading python code at run-time into a process.
+ *	A plugin for loading ruby code at run-time into a process.
  *
  */
 
@@ -12,14 +12,14 @@
 
 #include <log/log.h>
 
-class py_loader_test : public testing::Test
+class rb_loader_test : public testing::Test
 {
   protected:
 };
 
-TEST_F(py_loader_test, DefaultConstructor)
+TEST_F(rb_loader_test, DefaultConstructor)
 {
-	loader_naming_name name = "example.py";
+	loader_naming_name name = "hello.rb";
 
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),

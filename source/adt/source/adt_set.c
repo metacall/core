@@ -616,7 +616,7 @@ void set_destroy(set s)
 
 set_iterator set_iterator_begin(set s)
 {
-	if (s != NULL && s->buckets != NULL)
+	if (s != NULL && s->buckets != NULL && set_size(s) > 0)
 	{
 		set_iterator it = malloc(sizeof(struct set_iterator_type));
 
@@ -697,5 +697,5 @@ int set_iterator_end(set_iterator * it)
 		return 1;
 	}
 
-	return -1;
+	return 0;
 }
