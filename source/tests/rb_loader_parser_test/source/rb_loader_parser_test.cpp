@@ -52,7 +52,7 @@ TEST_F(rb_loader_parser_test, DefaultConstructor)
 
 	EXPECT_EQ((int) 0, (int) rb_loader_impl_key_parse(script, function_map));
 
-	EXPECT_EQ((int) 0, (int) rb_loader_impl_key_print(function_map));
+	rb_loader_impl_key_print(function_map);
 
 	EXPECT_EQ((int) 0, (int) rb_loader_impl_key_clear(function_map));
 

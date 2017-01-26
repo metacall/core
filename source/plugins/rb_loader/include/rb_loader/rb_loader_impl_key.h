@@ -41,7 +41,7 @@ typedef struct rb_function_parser_type
 
 RB_LOADER_API int rb_loader_impl_key_parse(const char * source, set function_map);
 
-RB_LOADER_API int rb_loader_impl_key_print(set function_map);
+RB_LOADER_API void rb_loader_impl_key_print(set function_map);
 
 RB_LOADER_API int rb_loader_impl_key_clear(set function_map);
 

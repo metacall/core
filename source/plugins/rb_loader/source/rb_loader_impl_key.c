@@ -24,40 +24,20 @@ enum rb_loader_impl_parser_state
 
 /* -- Private Methods -- */
 
-static const char * rb_loader_impl_function_begin(void);
+static int rb_loader_impl_key_print_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args);
 
-static const char * rb_loader_impl_function_do(void);
-
-static const char * rb_loader_impl_function_end(void);
+static int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args);
 
 /* -- Methods -- */
 
-const char * rb_loader_impl_function_begin()
-{
-	static const char func_begin_name[] = "def";
-
-	return func_begin_name;
-}
-
-const char * rb_loader_impl_function_do()
-{
-	static const char func_do_name[] = "do";
-
-	return func_do_name;
-}
-
-const char * rb_loader_impl_function_end()
-{
-	static const char func_end_name[] = "end";
-
-	return func_end_name;
-}
-
 int rb_loader_impl_key_parse(const char * source, set function_map)
 {
+	static const char func_def_name[] = "def", func_do_name[] = "do", func_end_name[] = "end";
+
 	enum rb_loader_impl_parser_state state = rb_loader_impl_parser_state_function;
 
-	size_t function_keyword_index = 0, function_index = 0;
+	size_t func_def_index = 0, func_do_index = 0, func_end_index = 0;
+	size_t function_index = 0;
 
 	char function_name[RB_LOADER_IMPL_PARSER_FUNC];
 
@@ -87,19 +67,20 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 			{
 				case rb_loader_impl_parser_state_function :
 				{
-					const char * function_keyword = rb_loader_impl_function_begin();
-
-					if (character == function_keyword[function_keyword_index])
+					if (character == func_def_name[func_def_index])
 					{
-						++function_keyword_index;
+						++func_def_index;
 
-						state = rb_loader_impl_parser_state_function_name;
+						if (func_def_index == sizeof(func_def_name) - 1)
+						{
+							state = rb_loader_impl_parser_state_function_name;
 
-						memset(function_name, 0, RB_LOADER_IMPL_PARSER_FUNC);
+							memset(function_name, 0, RB_LOADER_IMPL_PARSER_FUNC);
+						}
 					}
 					else
 					{
-						function_keyword_index = 0;
+						func_def_index = 0;
 					}
 
 					break;
@@ -113,7 +94,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 						{
 							state = rb_loader_impl_parser_state_function;
 
-							function_keyword_index = 0;
+							func_def_index = 0;
 						}
 						else
 						{
@@ -133,11 +114,15 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 						{
 							state = rb_loader_impl_parser_state_function;
 
-							function_keyword_index = 0;
+							func_def_index = 0;
 						}
 						else
 						{
 							state = rb_loader_impl_parser_state_reset;
+
+							func_def_index = func_do_index = func_end_index = 0;
+
+							reset_depth = 1;
 
 							parameter_size = function_index = 0;
 						}
@@ -189,6 +174,8 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 							log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby parser function map insertion");
 						}
 
+						func_def_index = func_do_index = func_end_index = 0;
+
 						reset_depth = 1;
 					}
 					else
@@ -238,19 +225,39 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 
 				case rb_loader_impl_parser_state_reset :
 				{
-					const char * func_do = rb_loader_impl_function_do();
+					if (character == func_do_name[func_do_index])
+					{
+						++func_do_index;
+					}
+					else
+					{
+						func_do_index = 0;
+					}
 
-					const char * func_def = rb_loader_impl_function_begin();
+					if (character == func_def_name[func_def_index])
+					{
+						++func_def_index;
+					}
+					else
+					{
+						func_def_index = 0;
+					}
 
-					const char * func_end = rb_loader_impl_function_end();
+					if (character == func_end_name[func_end_index])
+					{
+						++func_end_index;
+					}
+					else
+					{
+						func_end_index = 0;
+					}
 
-					if (strcmp(&source[iterator], func_do) == 0 ||
-						strcmp(&source[iterator], func_def) == 0)
+					if (func_do_index == sizeof(func_do_name) - 1 || func_def_index == sizeof(func_def_name) - 1)
 					{
 						++reset_depth;
 					}
 
-					if (strcmp(&source[iterator], func_end) == 0)
+					if (func_end_index == sizeof(func_end_name) - 1)
 					{
 						--reset_depth;
 					}
@@ -258,6 +265,8 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 					if (reset_depth == 0)
 					{
 						state = rb_loader_impl_parser_state_function;
+
+						func_def_index = func_do_index = func_end_index = 0;
 					}
 
 					break;
@@ -274,31 +283,45 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 	return 0;
 }
 
-int rb_loader_impl_key_print(set function_map)
+int rb_loader_impl_key_print_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args)
 {
-	if (set_size(function_map) > 0)
+	size_t parameter;
+
+	rb_function_parser function = v;
+
+	(void)s;
+	(void)key;
+	(void)args;
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader key parse function (%s)", function->name);
+
+	for (parameter = 0; parameter < function->params_size; ++parameter)
 	{
-		set_iterator iterator = set_iterator_begin(function_map);
+		log_write("metacall", LOG_LEVEL_DEBUG, "	Ruby loader key parse parameter [%d] (%s : %s)",
+			function->params[parameter].index,
+			function->params[parameter].name,
+			function->params[parameter].type);
+	}
 
-		do
-		{
-			size_t parameter;
+	return 0;
+}
 
-			rb_function_parser function = set_iterator_get_value(iterator);
+void rb_loader_impl_key_print(set function_map)
+{
+	set_iterate(function_map, &rb_loader_impl_key_print_cb_iterate, NULL);
+}
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader key parse function (%s)", function->name);
+int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args)
+{
+	rb_function_parser function = v;
 
-			for (parameter = 0; parameter < function->params_size; ++parameter)
-			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "	Ruby loader key parse parameter [%d] (%s : %s)",
-					function->params[parameter].index,
-					function->params[parameter].name,
-					function->params[parameter].type);
-			}
+	(void)s;
+	(void)key;
+	(void)args;
 
-			set_iterator_next(iterator);
-
-		} while (set_iterator_end(&iterator) != 0);
+	if (function != NULL)
+	{
+		free(function);
 	}
 
 	return 0;
@@ -306,25 +329,7 @@ int rb_loader_impl_key_print(set function_map)
 
 int rb_loader_impl_key_clear(set function_map)
 {
-	if (set_size(function_map) > 0)
-	{
-		set_iterator iterator = set_iterator_begin(function_map);
+	set_iterate(function_map, &rb_loader_impl_key_clear_cb_iterate, NULL);
 
-		do
-		{
-			rb_function_parser function = set_iterator_get_value(iterator);
-
-			if (function != NULL)
-			{
-				free(function);
-			}
-
-			set_iterator_next(iterator);
-
-		} while (set_iterator_end(&iterator) != 0);
-
-		return set_clear(function_map);
-	}
-
-	return 0;
+	return set_clear(function_map);
 }
