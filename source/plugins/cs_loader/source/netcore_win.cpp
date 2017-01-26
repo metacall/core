@@ -18,7 +18,7 @@ netcore_win::netcore_win()
 {
 	this->log = new logger();
 	this->log->disable();
-	this->domain_id = 0;
+	this->domain_id = -1;
 }
 
 
@@ -132,6 +132,7 @@ bool netcore_win::create_host() {
 	}
 
 	HRESULT hr;
+	bool flgasError = false;
 
 	*this->log << W("Setting ICLRRuntimeHost2 startup flags") << logger::endl;
 
@@ -142,7 +143,7 @@ bool netcore_win::create_host() {
 			STARTUP_FLAGS::STARTUP_CONCURRENT_GC));
 	if (FAILED(hr)) {
 		*this->log << W("Failed to set startup flags. ERRORCODE: ") << hr << logger::endl;
-		return false;
+		flgasError = true;
 	}
 
 	*this->log << W("Starting ICLRRuntimeHost2") << logger::endl;
@@ -153,84 +154,94 @@ bool netcore_win::create_host() {
 		return false;
 	}
 
-	//-------------------------------------------------------------
-
-	// Create an AppDomain
-
-	// Allowed property names:
-	// APPBASE
-	// - The base path of the application from which the exe and other assemblies will be loaded
-	//
-	// TRUSTED_PLATFORM_ASSEMBLIES
-	// - The list of complete paths to each of the fully trusted assemblies
-	//
-	// APP_PATHS
-	// - The list of paths which will be probed by the assembly loader
-	//
-	// APP_NI_PATHS
-	// - The list of additional paths that the assembly loader will probe for ngen images
-	//
-	// NATIVE_DLL_SEARCH_DIRECTORIES
-	// - The list of paths that will be probed for native DLLs called by PInvoke
-	//
-	const wchar_t *property_keys[] = {
-		W("TRUSTED_PLATFORM_ASSEMBLIES"),
-		W("APP_PATHS"),
-		W("APP_NI_PATHS"),
-		W("NATIVE_DLL_SEARCH_DIRECTORIES"),
-		W("AppDomainCompatSwitch")
-	};
-	const wchar_t *property_values[] = {
-		// TRUSTED_PLATFORM_ASSEMBLIES
-		this->core_environment->get_tpa_list(),
-		// APP_PATHS
-		appPath,
-		// APP_NI_PATHS
-		appNiPath,
-		// NATIVE_DLL_SEARCH_DIRECTORIES
-		nativeDllSearchDirs,
-		// AppDomainCompatSwitch
-		W("UseLatestBehaviorWhenTFMNotSpecified")
-	};
-
-
-	*this->log << W("Creating an AppDomain") << logger::endl;
-	*this->log << W("TRUSTED_PLATFORM_ASSEMBLIES=") << property_values[0] << logger::endl;
-	*this->log << W("APP_PATHS=") << property_values[1] << logger::endl;
-	*this->log << W("APP_NI_PATHS=") << property_values[2] << logger::endl;
-	*this->log << W("NATIVE_DLL_SEARCH_DIRECTORIES=") << property_values[3] << logger::endl;
-
-
-	hr = host->CreateAppDomainWithManager(
-		this->core_environment->get_host_exe_name(),   // The friendly name of the AppDomain
-											 // Flags:
-											 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
-											 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
-											 //   assemblies marked as platform specific, include this flag
-											 //
-											 // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
-											 // - Allows sandboxed applications to make P/Invoke calls and use COM interop
-											 //
-											 // APPDOMAIN_SECURITY_SANDBOXED
-											 // - Enables sandboxing. If not set, the app is considered full trust
-											 //
-											 // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
-											 // - Prevents the application from being torn down if a managed exception is unhandled
-											 //
-		APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-		APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
-		APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
-		NULL,                // Name of the assembly that contains the AppDomainManager implementation
-		NULL,                    // The AppDomainManager implementation type name
-		sizeof(property_keys) / sizeof(wchar_t*),  // The number of properties
-		property_keys,
-		property_values,
-		(DWORD*)&this->domain_id);
-
-	if (FAILED(hr)) {
-		*this->log << W("Failed call to CreateAppDomainWithManager. ERRORCODE: ") << hr << logger::endl;
-		return false;
+	if (flgasError) {
+		hr = host->GetCurrentAppDomainId(&this->domain_id);
+		if (FAILED(hr)) {
+			*this->log << W("Failed to GetCurrentAppDomainId. ERRORCODE: ") << hr << logger::endl;
+			return false;
+		}
 	}
+	else {
+		//-------------------------------------------------------------
+
+		// Create an AppDomain
+
+		// Allowed property names:
+		// APPBASE
+		// - The base path of the application from which the exe and other assemblies will be loaded
+		//
+		// TRUSTED_PLATFORM_ASSEMBLIES
+		// - The list of complete paths to each of the fully trusted assemblies
+		//
+		// APP_PATHS
+		// - The list of paths which will be probed by the assembly loader
+		//
+		// APP_NI_PATHS
+		// - The list of additional paths that the assembly loader will probe for ngen images
+		//
+		// NATIVE_DLL_SEARCH_DIRECTORIES
+		// - The list of paths that will be probed for native DLLs called by PInvoke
+		//
+		const wchar_t *property_keys[] = {
+			W("TRUSTED_PLATFORM_ASSEMBLIES"),
+			W("APP_PATHS"),
+			W("APP_NI_PATHS"),
+			W("NATIVE_DLL_SEARCH_DIRECTORIES"),
+			W("AppDomainCompatSwitch")
+		};
+		const wchar_t *property_values[] = {
+			// TRUSTED_PLATFORM_ASSEMBLIES
+			this->core_environment->get_tpa_list(),
+			// APP_PATHS
+			appPath,
+			// APP_NI_PATHS
+			appNiPath,
+			// NATIVE_DLL_SEARCH_DIRECTORIES
+			nativeDllSearchDirs,
+			// AppDomainCompatSwitch
+			W("UseLatestBehaviorWhenTFMNotSpecified")
+		};
+
+
+		*this->log << W("Creating an AppDomain") << logger::endl;
+		//*this->log << W("TRUSTED_PLATFORM_ASSEMBLIES=") << property_values[0] << logger::endl;
+		//*this->log << W("APP_PATHS=") << property_values[1] << logger::endl;
+		//*this->log << W("APP_NI_PATHS=") << property_values[2] << logger::endl;
+		//*this->log << W("NATIVE_DLL_SEARCH_DIRECTORIES=") << property_values[3] << logger::endl;
+
+
+		hr = host->CreateAppDomainWithManager(
+			this->core_environment->get_host_exe_name(),   // The friendly name of the AppDomain
+												 // Flags:
+												 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
+												 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
+												 //   assemblies marked as platform specific, include this flag
+												 //
+												 // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
+												 // - Allows sandboxed applications to make P/Invoke calls and use COM interop
+												 //
+												 // APPDOMAIN_SECURITY_SANDBOXED
+												 // - Enables sandboxing. If not set, the app is considered full trust
+												 //
+												 // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
+												 // - Prevents the application from being torn down if a managed exception is unhandled
+												 //
+			APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
+			APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
+			APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
+			NULL,                // Name of the assembly that contains the AppDomainManager implementation
+			NULL,                    // The AppDomainManager implementation type name
+			sizeof(property_keys) / sizeof(wchar_t*),  // The number of properties
+			property_keys,
+			property_values,
+			(DWORD*)&this->domain_id);
+
+		if (FAILED(hr)) {
+			*this->log << W("Failed call to CreateAppDomainWithManager. ERRORCODE: ") << hr << logger::endl;
+			return false;
+		}
+	}
+
 	return true;
 }
 bool netcore_win::load_main() {
