@@ -36,54 +36,18 @@ static int metacall_initialize_flag = 1;
 
 int metacall_initialize()
 {
-	size_t iterator;
-
 	if (metacall_initialize_flag == 0)
 	{
 		return 0;
 	}
 
-	/* TODO: load a full path */
-	loader_naming_name module_names[] =
-	{
-		#if defined(OPTION_BUILD_PLUGINS_C)
-			"compiled.c",
-		#endif /* OPTION_BUILD_PLUGINS_C */
-
-		#if defined(OPTION_BUILD_PLUGINS_CS)
-			"hello.cs",
-		#endif /* OPTION_BUILD_PLUGINS_CS */
-
-		#if defined(OPTION_BUILD_PLUGINS_JSM)
-			"spider.jsm",
-		#endif /* OPTION_BUILD_PLUGINS_JSM */
-
-		#if defined(OPTION_BUILD_PLUGINS_JS)
-			"divide.js",
-		#endif /* OPTION_BUILD_PLUGINS_JS */
-
-		#if defined(OPTION_BUILD_PLUGINS_MOCK)
-			"empty.mock",
-		#endif /* OPTION_BUILD_PLUGINS_MOCK */
-
-		#if defined(OPTION_BUILD_PLUGINS_PY)
-			"example.py",
-		#endif /* OPTION_BUILD_PLUGINS_PY */
-
-		#if defined(OPTION_BUILD_PLUGINS_RB)
-			"hello.rb",
-		#endif /* OPTION_BUILD_PLUGINS_RB */
-	};
-
 	metacall_null_args[0] = NULL;
 
-	for (iterator = 0; iterator < sizeof(module_names) / sizeof(module_names[0]); ++iterator)
+	/*if (configure_initialize(...) != 0)
 	{
-		if (loader_load_from_file(module_names[iterator]) != 0)
-		{
-			return 1;
-		}
-	}
+		return 1;
+	}*/
+
 
 	metacall_initialize_flag = 0;
 

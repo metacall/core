@@ -44,6 +44,8 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		value args[2];
 
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("example.py"));
+
 		args[0] = value_create_int(5);
 		args[1] = value_create_int(15);
 

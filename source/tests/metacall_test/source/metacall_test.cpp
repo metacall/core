@@ -39,6 +39,8 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value ret = NULL;
 
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("example.py"));
+
 		ret = metacall("multiply", 5, 15);
 
 		EXPECT_NE((value) NULL, (value) ret);
@@ -101,6 +103,8 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		value ret = NULL;
 
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("hello.rb"));
+
 		ret = metacall("say_multiply", 5, 7);
 
 		EXPECT_NE((value) NULL, (value) ret);
@@ -124,6 +128,8 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* JavaScript SpiderMonkey */
 	#if defined(OPTION_BUILD_PLUGINS_JSM)
 	{
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("spider.jsm"));
+
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_JSM */
@@ -132,6 +138,8 @@ TEST_F(metacall_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_JS)
 	{
 		value ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("divide.js"));
 
 		ret = metacall("say_divide", 32.0, 4.0);
 
@@ -155,6 +163,8 @@ TEST_F(metacall_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_MOCK)
 	{
 		value ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("empty.mock"));
 
 		ret = metacall("my_empty_func");
 
@@ -193,9 +203,18 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* C# Netcore */
 	#if defined(OPTION_BUILD_PLUGINS_CS)
 	{
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("hello.cs"));
+
 		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_CS */
+
+	/* C */
+	#if defined(OPTION_BUILD_PLUGINS_C)
+	{
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("compiled.c"));
+	}
+	#endif /* OPTION_BUILD_PLUGINS_C */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

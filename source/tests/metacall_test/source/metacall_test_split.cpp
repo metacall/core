@@ -64,6 +64,8 @@ public:
 
 		value ret = NULL;
 
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("example.py"));
+
 		ret = metacall("multiply", 5, 15);
 
 		EXPECT_NE((value) NULL, (value) ret);
@@ -129,6 +131,8 @@ public:
 	{
 		value ret = NULL;
 
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("hello.rb"));
+
 		ret = metacall("say_multiply", 5, 7);
 
 		EXPECT_NE((value) NULL, (value) ret);
@@ -155,6 +159,8 @@ public:
 
 	TEST_F(metacall_loader_test, JavascriptSpiderMonkey)
 	{
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("spider.jsm"));
+
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 	}
 
@@ -166,6 +172,8 @@ public:
 	TEST_F(metacall_loader_test, JavascriptV8)
 	{
 		value ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("divide.js"));
 
 		ret = metacall("say_divide", 32.0, 4.0);
 
@@ -192,6 +200,8 @@ public:
 	TEST_F(metacall_loader_test, Mock)
 	{
 		value ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("empty.mock"));
 
 		ret = metacall("my_empty_func");
 
@@ -241,7 +251,19 @@ public:
 
 	TEST_F(metacall_loader_test, CSharpNetCore)
 	{
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("hello.cs"));
+
 		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
 
 #endif /* OPTION_BUILD_PLUGINS_CS */
+
+/* C */
+#if defined(OPTION_BUILD_PLUGINS_C)
+
+	TEST_F(metacall_loader_test, C)
+	{
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("compiled.c"));
+	}
+
+#endif /* OPTION_BUILD_PLUGINS_C */
