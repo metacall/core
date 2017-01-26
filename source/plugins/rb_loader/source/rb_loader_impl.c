@@ -19,8 +19,14 @@
 
 #include <stdlib.h>
 
+#if (defined(_WIN32) || defined(_WIN64)) && defined(boolean)
+#	undef boolean
+#endif
+
 #include <ruby.h>
-#include <ruby/intern.h>
+/*#include <ruby/intern.h>*/
+
+#define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 
 #define LOADER_IMPL_RB_INSPECT_OPTIONAL 0
 #define LOADER_IMPL_RB_INSPECT_OPTIONAL_NAME ":opt"
@@ -62,6 +68,7 @@ int function_rb_interface_create(function func, function_impl impl)
 	signature s = function_signature(func);
 
 	/* Set to null, deduced dynamically */
+	/* TODO: Solve this, it breaks return and makes return always null in the frontend */
 	signature_set_return(s, NULL);
 
 	(void)impl;
@@ -79,11 +86,16 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	VALUE result_value = Qnil;
 
+	if (args_size > LOADER_IMPL_RB_FUNCTION_ARGS_SIZE)
+	{
+		return NULL;
+	}
+
 	if (args_size > 0)
 	{
 		size_t args_count;
 
-		VALUE args_value[args_size];
+		VALUE args_value[LOADER_IMPL_RB_FUNCTION_ARGS_SIZE];
 
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
@@ -629,7 +641,7 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
 
 			for (index = 0; index < size; ++index)
 			{
-				VALUE parameter_pair = rb_ary_entry(parameter_array, index);
+				VALUE parameter_pair = rb_ary_entry(parameter_array, (long)index);
 
 				VALUE parameter_symbol = rb_ary_entry(parameter_pair, 0);
 

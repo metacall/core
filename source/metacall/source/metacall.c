@@ -177,7 +177,7 @@ value metacall(const char * name, ...)
 
 			if (id == TYPE_BOOL)
 			{
-				args[iterator] = value_create_bool(va_arg(va, boolean));
+				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
 			}
 			if (id == TYPE_CHAR)
 			{

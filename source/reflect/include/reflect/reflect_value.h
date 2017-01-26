@@ -21,9 +21,13 @@ extern "C" {
 
 #include <stdlib.h>
 
-/* -- Type Definitions -- */
+/* -- Definitions -- */
 
-typedef int boolean;
+#if !defined(boolean)
+#	define boolean unsigned char
+#endif
+
+/* -- Type Definitions -- */
 
 typedef void * value;
 
