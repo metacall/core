@@ -9,16 +9,13 @@
 #
 
 # Target name
-set(target metacall)
+set(target metacall_distributable)
 
 # Exit here if required dependencies are not met
-message(STATUS "Lib ${target}")
+message(STATUS "Distributable ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
-set(feature_file "include/${target}/${target}_features.h")
-set(export_file  "include/${target}/${target}_api.h")
-set(export_macro "${target_upper}_API")
 
 #
 # Compiler warnings
@@ -33,70 +30,71 @@ include(Warnings)
 include(SecurityFlags)
 
 #
-# Sources
-#
-
-set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
-
-set(headers
-	${include_path}/metacall.h
-)
-
-set(sources
-	${source_path}/metacall.c
-)
-
-# Group source files
-set(header_group "Header Files (API)")
-set(source_group "Source Files")
-source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
-	${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
-	${source_group} ${sources})
-
-#
 # Create library
 #
 
+# Generate object files for target
+function(generate_object_library target)
+
+	# Get target source files
+	get_target_property(target_sources
+		${META_PROJECT_NAME}::${target}
+		SOURCES
+	)
+
+	set(target_object ${target}_object)
+
+	# Create distributable library
+	add_library(${target_object} OBJECT
+		${target_sources}
+	)
+
+	# Create namespaced alias
+	add_library(${META_PROJECT_NAME}::${target_object} ALIAS ${target_object})
+
+endfunction()
+
+# Generate object libraries
+macro(generate_object_libraries)
+	set(targets "${ARGN}")
+
+	set(target_objects)
+
+	foreach(object_library ${targets})
+		generate_object_library(${object_library})
+
+		set(target_objects "${target_objects} $<TARGET_OBJECTS:${META_PROJECT_NAME}::${object_library}_object>")
+
+	endforeach()
+
+	add_library(${target}
+		${target_objects}
+	)
+endmacro()
+
 # Build library
-add_library(${target}
-	${sources}
-	${headers}
+generate_object_libraries(
+	version
+	preprocessor
+	format
+	log
+	adt
+	reflect
+	configuration
+	loader
+	metacall
 )
+
+# Set custom library output directory
+#set_target_properties(${target} PROPERTIES
+#	LIBRARY_OUTPUT_DIRECTORY "$"
+#)
 
 # Create namespaced alias
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 # Export library for downstream projects
 export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
-
-# Create feature detection header
-# Compilers: https://cmake.org/cmake/help/v3.1/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID
-# Feature: https://cmake.org/cmake/help/v3.1/prop_gbl/CMAKE_CXX_KNOWN_FEATURES.html
-
-# Check for availability of module; use pre-generated version if not found
-if (WriterCompilerDetectionHeaderFound)
-	write_compiler_detection_header(
-		FILE ${feature_file}
-		PREFIX ${target_upper}
-		COMPILERS AppleClang Clang GNU MSVC
-		FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
-		VERSION 3.2
-	)
-else()
-	file(
-		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
-		USE_SOURCE_PERMISSIONS
-	)
-endif()
-
-# Create API export header
-generate_export_header(${target}
-	EXPORT_FILE_NAME  ${export_file}
-	EXPORT_MACRO_NAME ${export_macro}
-)
 
 #
 # Project options
@@ -133,14 +131,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::configuration
-	${META_PROJECT_NAME}::loader
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

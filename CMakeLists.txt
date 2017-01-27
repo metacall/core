@@ -59,6 +59,7 @@ set(META_NAME_VERSION			"${META_PROJECT_NAME} v${META_VERSION} (${META_VERSION_R
 
 # Project options
 option(BUILD_SHARED_LIBS		"Build shared instead of static libraries."					ON)
+option(BUILD_DISTRIBUTABLE_LIBS	"Build all libraries into a single compilation unit."		ON)
 option(OPTION_SELF_CONTAINED	"Create a self-contained install with all dependencies."	OFF)
 option(OPTION_BUILD_TESTS		"Build tests."												ON)
 option(OPTION_BUILD_DOCS		"Build documentation."										OFF)

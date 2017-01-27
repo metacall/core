@@ -34,7 +34,7 @@ add_subdirectory(dynlink)
 add_subdirectory(reflect)
 add_subdirectory(loader)
 add_subdirectory(metacall)
-add_subdirectory(metacallpp)
+add_subdirectory(metacallpp) # TODO: Distributable library
 
 # Tests
 set(IDE_FOLDER "Tests")
@@ -56,6 +56,12 @@ add_subdirectory(scripts)
 if(OPTION_BUILD_PORTS)
 	set(IDE_FOLDER "Ports")
 	add_subdirectory(ports)
+endif()
+
+# Distributable
+if(BUILD_DISTRIBUTABLE_LIBS)
+	set(IDE_FOLDER "Distributable")
+	add_subdirectory(distributable)
 endif()
 
 #
