@@ -41,10 +41,11 @@ if(NOT path)
 endif()
 
 # Define dependencies
-set(depends ${META_PROJECT_NAME}::preprocessor ${META_PROJECT_NAME}::log
+set(depends ${META_PROJECT_NAME}::version ${META_PROJECT_NAME}::preprocessor
+			${META_PROJECT_NAME}::format ${META_PROJECT_NAME}::log
 			${META_PROJECT_NAME}::adt ${META_PROJECT_NAME}::dynlink ${META_PROJECT_NAME}::filesystem
-			${META_PROJECT_NAME}::reflect ${META_PROJECT_NAME}::loader ${META_PROJECT_NAME}::metacall
-			${META_PROJECT_NAME}::metacallpp) # TODO: add plugins, ports and examples
+			${META_PROJECT_NAME}::reflect ${META_PROJECT_NAME}::loader ${META_PROJECT_NAME}::metacall)
+			# TODO: add plugins, ports and examples (automatize with module names)
 
 # Generate include paths
 set(DOXYGEN_INPUT_PATH "")

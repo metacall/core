@@ -34,7 +34,6 @@ add_subdirectory(dynlink)
 add_subdirectory(reflect)
 add_subdirectory(loader)
 add_subdirectory(metacall)
-add_subdirectory(metacallpp) # TODO: Distributable library
 
 # Tests
 set(IDE_FOLDER "Tests")

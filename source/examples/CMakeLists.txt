@@ -6,7 +6,6 @@ endif()
 
 # Example applications
 add_subdirectory(metacallcli)
-add_subdirectory(metacallppcli)
 add_subdirectory(metacallgui)
 add_subdirectory(metacallweb)
 add_subdirectory(metacallnginx)

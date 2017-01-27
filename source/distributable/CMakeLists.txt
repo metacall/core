@@ -52,10 +52,37 @@ function(generate_object_library target)
 	# Create namespaced alias
 	add_library(${META_PROJECT_NAME}::${target_object} ALIAS ${target_object})
 
+	# Enable full compilation of all objects
+	if(WIN32)
+		if(MSVC)
+			if(MSVC_VERSION GREATER 1800)
+				set_target_properties(${target_object} PROPERTIES
+					COMPILE_FLAGS "/Zc:inline-"
+					LINK_FLAGS "/WHOLEARCHIVE"
+				)
+			else()
+				set_target_properties(${target_object} PROPERTIES
+					COMPILE_FLAGS "/Zc:inline-"
+					LINK_FLAGS "/OPT:NOREF"
+				)
+			endif()
+		else()
+			message(WARNING "Unsuported MinGW/CygWin object compilation for unused modules")
+		endif()
+	elseif(APPLE OR IRIX)
+		set_target_properties(${target_object} PROPERTIES
+			LINK_FLAGS "-Wl,-all_load"
+		)
+	else()
+		set_target_properties(${target_object} PROPERTIES
+			LINK_FLAGS "-Wl,--whole-archive"
+		)
+	endif()
+
 endfunction()
 
 # Generate object libraries
-macro(generate_object_libraries)
+macro(generate_object_libraries target)
 	set(targets "${ARGN}")
 
 	set(target_objects)
@@ -64,25 +91,20 @@ macro(generate_object_libraries)
 		generate_object_library(${object_library})
 
 		set(target_objects "${target_objects} $<TARGET_OBJECTS:${META_PROJECT_NAME}::${object_library}_object>")
-
 	endforeach()
 
 	add_library(${target}
 		${target_objects}
 	)
+
+	add_dependencies(${target}
+		${targets}
+	)
 endmacro()
 
 # Build library
-generate_object_libraries(
-	version
-	preprocessor
-	format
-	log
-	adt
-	reflect
-	configuration
-	loader
-	metacall
+generate_object_libraries(${target}
+	${MODULE_NAMES}
 )
 
 # Set custom library output directory

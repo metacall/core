@@ -160,12 +160,36 @@ if(OPTION_BUILD_TESTS)
 endif()
 
 #
-# Project modules
+# Project module names
+#
+
+set(MODULE_NAMES
+	version
+	preprocessor
+	format
+	log
+	adt
+	filesystem
+	dynlink
+	reflect
+	loader
+	metacall
+)
+
+#
+# Project module includes
 #
 
 add_subdirectory(source)
 add_subdirectory(docs)
 add_subdirectory(deploy)
+
+#
+# Project configuration generation
+#
+
+set(PROJECT_CONFIGURATION "metacall-config.cmake")
+configure_file("${PROJECT_CONFIGURATION}.in" "${PROJECT_BINARY_DIR}/${PROJECT_CONFIGURATION}" @ONLY)
 
 #
 # Deployment (global project files)
