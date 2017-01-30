@@ -1,12 +1,29 @@
+# Check if this configuration is enabled
+if(NOT OPTION_BUILD_CONFIGS OR NOT OPTION_BUILD_CONFIGS_RAPID_JSON)
+	return()
+endif()
+
+
+#
+# External dependencies
+#
+
+find_package(RapidJSON 1.1.0 REQUIRED)
+
+if(NOT RAPIDJSON_INCLUDE_DIRS)
+	message(STATUS "RapidJSON libraries not found")
+	return()
+endif()
+
 #
 # Library name and options
 #
 
 # Target name
-set(target configuration)
+set(target rapid_json_config)
 
 # Exit here if required dependencies are not met
-message(STATUS "Lib ${target}")
+message(STATUS "Config ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
@@ -34,23 +51,13 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/configuration.h
-	${include_path}/configuration_object_handle.h
-	${include_path}/configuration_impl_handle.h
-	${include_path}/configuration_singleton.h
-	${include_path}/configuration_object.h
-	${include_path}/configuration_stream.h
-	${include_path}/configuration_interface.h
-	${include_path}/configuration_impl.h
+	${include_path}/rapid_json_config.h
+	${include_path}/rapid_json_config_impl.h
 )
 
 set(sources
-	${source_path}/configuration.c
-	${source_path}/configuration_singleton.c
-	${source_path}/configuration_object.c
-	${source_path}/configuration_stream.c
-	${source_path}/configuration_interface.c
-	${source_path}/configuration_impl.c
+	${source_path}/rapid_json_config.c
+	${source_path}/rapid_json_config_impl.cpp
 )
 
 # Group source files
@@ -124,6 +131,8 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
+
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -146,6 +155,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::dynlink
 	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::configuration
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

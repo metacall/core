@@ -36,14 +36,14 @@ CONFIGURATION_API const char * configuration_impl_extension(void);
 *  @brief
 *    Initialize configuration object implementation
 *
-*  @param[in] iface
-*    Dependency to be injected
+*  @param[in] name
+*    Dependency name to be injected
 *
 *  @return
 *    Returns zero on correct initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_impl_initialize(configuration_interface iface);
+CONFIGURATION_API int configuration_impl_initialize(const char * name);
 
 /**
 *  @brief

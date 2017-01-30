@@ -57,6 +57,12 @@ if(OPTION_BUILD_PORTS)
 	add_subdirectory(ports)
 endif()
 
+# Configurations
+if(OPTION_BUILD_CONFIGS)
+	set(IDE_FOLDER "Configurations")
+	add_subdirectory(configs)
+endif()
+
 # Distributable
 if(BUILD_DISTRIBUTABLE_LIBS)
 	set(IDE_FOLDER "Distributable")

@@ -20,6 +20,8 @@
 
 static int configuration_impl_load_impl(configuration config);
 
+static configuration_interface configuration_impl_initialize_impl(const char * name);
+
 /* -- Methods -- */
 
 const char * configuration_impl_extension()
@@ -29,9 +31,23 @@ const char * configuration_impl_extension()
 	return config_iface->extension();
 }
 
-int configuration_impl_initialize(configuration_interface iface)
+configuration_interface configuration_impl_initialize_impl(const char * name)
+{
+	(void)name;
+
+	return NULL;
+}
+
+int configuration_impl_initialize(const char * name)
 {
 	configuration_interface config_iface = configuration_interface_instance();
+
+	configuration_interface iface = configuration_impl_initialize_impl(name);
+
+	if (iface == NULL)
+	{
+		return 1;
+	}
 
 	config_iface->extension = iface->extension;
 	config_iface->initialize = iface->initialize;

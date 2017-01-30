@@ -14,8 +14,6 @@
 #include <configuration/configuration_singleton.h>
 #include <configuration/configuration_impl.h>
 
-#include <configuration/configuration_interface_rapid_json.h>
-
 #include <log/log.h>
 
 /* -- Methods -- */
@@ -44,7 +42,7 @@ int configuration_initialize(const char * path)
 
 	/* TODO: Implement flexible dependency injection */
 
-	if (configuration_impl_initialize(configuration_interface_instance_rapid_json()) != 0)
+	if (configuration_impl_initialize("rapid_json") != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation initialization");
 

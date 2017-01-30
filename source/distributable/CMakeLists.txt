@@ -33,84 +33,75 @@ include(SecurityFlags)
 # Create library
 #
 
-# Generate object files for target
-function(generate_object_library target)
+function(generate_unity_build unity_build_file)
 
-	# Get target source files
-	get_target_property(target_sources
-		${META_PROJECT_NAME}::${target}
-		SOURCES
-	)
+	set(target_list "${ARGN}")
 
-	set(target_object ${target}_object)
+	set(unity_build_source)
 
-	# Create distributable library
-	add_library(${target_object} OBJECT
-		${target_sources}
-	)
+	foreach(target ${target_list})
 
-	# Create namespaced alias
-	add_library(${META_PROJECT_NAME}::${target_object} ALIAS ${target_object})
+		# Get target source files
+		get_target_property(target_sources
+			${META_PROJECT_NAME}::${target}
+			SOURCES
+		)
 
-	# Enable full compilation of all objects
-	if(WIN32)
-		if(MSVC)
-			if(MSVC_VERSION GREATER 1800)
-				set_target_properties(${target_object} PROPERTIES
-					COMPILE_FLAGS "/Zc:inline-"
-					LINK_FLAGS "/WHOLEARCHIVE"
-				)
+		# Add private linkage for all targets except metacall
+		if(NOT "${target}" STREQUAL "metacall")
+			string(TOUPPER ${target} target_upper)
+			set(unity_build_source "${unity_build_source}\n\#ifndef ${target_upper}_API")
+
+			if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
+				set(unity_build_source "${unity_build_source}\n\#	define ${target_upper}_API __attribute__ ((visibility(\"hidden\")))")
 			else()
-				set_target_properties(${target_object} PROPERTIES
-					COMPILE_FLAGS "/Zc:inline-"
-					LINK_FLAGS "/OPT:NOREF"
-				)
+				set(unity_build_source "${unity_build_source}\n\#	define ${target_upper}_API")
 			endif()
+
+			set(unity_build_source "${unity_build_source}\n\#endif /* ${target_upper}_API */")
 		else()
-			message(WARNING "Unsuported MinGW/CygWin object compilation for unused modules")
+			set(unity_build_source "${unity_build_source}\n\#ifndef ${target}_EXPORTS")
+			set(unity_build_source "${unity_build_source}\n\#	define ${target}_EXPORTS")
+			set(unity_build_source "${unity_build_source}\n\#endif /* ${target}_EXPORTS */")
 		endif()
-	elseif(APPLE OR IRIX)
-		set_target_properties(${target_object} PROPERTIES
-			LINK_FLAGS "-Wl,-all_load"
-		)
-	else()
-		set_target_properties(${target_object} PROPERTIES
-			LINK_FLAGS "-Wl,--whole-archive"
-		)
-	endif()
+
+		# Add include paths
+		include_directories("${CMAKE_BINARY_DIR}/source/${target}/include")
+		include_directories("${CMAKE_SOURCE_DIR}/source/${target}/include")
+
+		# Write auto-generated includes into unity build
+		set(unity_build_source "${unity_build_source}\n\#include <${CMAKE_BINARY_DIR}/source/${target}/include/${target}/${target}_api.h>")
+		set(unity_build_source "${unity_build_source}\n\#include <${CMAKE_BINARY_DIR}/source/${target}/include/${target}/${target}_features.h>")
+
+		# Write all includes into unity build
+		foreach(source ${target_sources})
+			set(unity_build_source "${unity_build_source}\n\#include <${source}>")
+		endforeach()
+
+	endforeach()
+
+	file(WRITE ${unity_build_file} "${unity_build_source}")
+
+	message(STATUS "Unity build written in ${unity_build_file}")
 
 endfunction()
 
-# Generate object libraries
-macro(generate_object_libraries target)
-	set(targets "${ARGN}")
+# Create unity build library
+set(metacall_unity_build "${CMAKE_CURRENT_BINARY_DIR}/metacall_unity_build.c")
 
-	set(target_objects)
-
-	foreach(object_library ${targets})
-		generate_object_library(${object_library})
-
-		set(target_objects "${target_objects} $<TARGET_OBJECTS:${META_PROJECT_NAME}::${object_library}_object>")
-	endforeach()
-
-	add_library(${target}
-		${target_objects}
-	)
-
-	add_dependencies(${target}
-		${targets}
-	)
-endmacro()
-
-# Build library
-generate_object_libraries(${target}
+generate_unity_build(${metacall_unity_build}
 	${MODULE_NAMES}
 )
 
-# Set custom library output directory
-#set_target_properties(${target} PROPERTIES
-#	LIBRARY_OUTPUT_DIRECTORY "$"
-#)
+# Build library
+add_library(${target}
+	${metacall_unity_build}
+)
+
+# Add target dependencies
+add_dependencies(${target}
+	${MODULE_NAMES}
+)
 
 # Create namespaced alias
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
@@ -126,6 +117,11 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+	DEBUG_POSTFIX ""
+	OUTPUT_NAME "metacall"
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/distributable"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/distributable"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/distributable"
 )
 
 #
