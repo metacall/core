@@ -320,6 +320,8 @@ target_include_directories(${js_port_test}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${METACALL_INCLUDE_DIRS} # MetaCall includes
+
 	${V8_INCLUDE_DIR} # V8 includes
 
 	PUBLIC
@@ -335,17 +337,36 @@ target_include_directories(${js_port_test}
 # Libraries
 #
 
-target_link_libraries(${js_port_test}
-	PRIVATE
-	${METACALL_LIBRARIES}
+if(UNIX)
+	target_link_libraries(${js_port_test}
+		PRIVATE
+		${METACALL_LIBRARIES} # MetaCall library
 
-	${V8_LIBRARIES} # V8 library
+		${V8_LIBRARIES} # V8 library
 
-	PUBLIC
-	${DEFAULT_LIBRARIES}
+		dl # Dynamic link library (unix)
 
-	INTERFACE
-)
+		PUBLIC
+		${DEFAULT_LIBRARIES}
+
+		INTERFACE
+	)
+else()
+	target_link_libraries(${js_port_test}
+		PRIVATE
+		${METACALL_LIBRARIES} # MetaCall library
+
+		${V8_LIBRARIES} # V8 library
+
+		PUBLIC
+		${DEFAULT_LIBRARIES}
+
+		INTERFACE
+	)
+endif()
+
+
+
 
 #
 # Compile definitions

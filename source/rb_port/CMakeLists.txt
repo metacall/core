@@ -151,6 +151,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${METACALL_INCLUDE_DIRS} # MetaCall includes
 	${RUBY_INCLUDE_DIRS} # Ruby includes
 
 	PUBLIC
@@ -168,7 +169,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
 	PRIVATE
-	${METACALL_LIBRARIES}
+	${METACALL_LIBRARIES} # MetaCall libraries
 	${RUBY_LIBRARY} # Ruby libraries
 
 	PUBLIC

@@ -22,7 +22,7 @@ extern "C" {
 */
 %typemap(in) (const char * name, ...)
 {
-	value * args;
+	void ** args;
 	size_t args_size, args_count;
 
 	/* Format string */
@@ -41,7 +41,7 @@ extern "C" {
 	}
 
 	/* TODO: Remove this by a local array? */
-	args = (value *) malloc(args_size * sizeof(value));
+	args = (void **) malloc(args_size * sizeof(void *));
 
 	if (args == NULL)
 	{
@@ -62,31 +62,31 @@ extern "C" {
 		{
 			boolean b = 1L;
 
-			args[args_count] = value_create_bool(b);
+			args[args_count] = metacall_value_create_bool(b);
 		}
 		else if (rb_arg_type == T_FALSE)
 		{
 			boolean b = 0L;
 
-			args[args_count] = value_create_bool(b);
+			args[args_count] = metacall_value_create_bool(b);
 		}
 		else if (rb_arg_type == T_FIXNUM)
 		{
 			int i = FIX2INT(rb_arg);
 
-			args[args_count] = value_create_int(i);
+			args[args_count] = metacall_value_create_int(i);
 		}
 		else if (rb_arg_type == T_BIGNUM)
 		{
 			long l = NUM2LONG(rb_arg);
 
-			args[args_count] = value_create_long(l);
+			args[args_count] = metacall_value_create_long(l);
 		}
 		else if (rb_arg_type == T_FLOAT)
 		{
 			double d = NUM2DBL(rb_arg);
 
-			args[args_count] = value_create_double(d);
+			args[args_count] = metacall_value_create_double(d);
 		}
 		else if (rb_arg_type == T_STRING)
 		{
@@ -96,7 +96,7 @@ extern "C" {
 
 			if (length > 0 && str != NULL)
 			{
-				args[args_count] = value_create_string(str, (size_t)length);
+				args[args_count] = metacall_value_create_string(str, (size_t)length);
 			}
 		}
 		else
@@ -128,10 +128,11 @@ extern "C" {
 %feature("action") metacall
 {
 	size_t args_count, args_size;
-	value * args, ret;
+	void ** args;
+	void * ret;
 
 	args_size = argc - 1;
-	args = (value *) arg2;
+	args = (void **) arg2;
 
 	/* Execute call */
 	ret = metacallv(arg1, args);
@@ -139,7 +140,7 @@ extern "C" {
 	/* Clear args */
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
-		value_destroy(args[args_count]);
+		metacall_value_destroy(args[args_count]);
 	}
 
 	/* TODO: Remove this by a local array? */
@@ -148,63 +149,63 @@ extern "C" {
 	/* Return value */
 	if (ret != NULL)
 	{
-		switch (value_type_id(ret))
+		switch (metacall_value_id(ret))
 		{
 
-			case TYPE_BOOL :
+			case METACALL_BOOL :
 			{
-				boolean b = value_to_bool(ret);
+				boolean b = metacall_value_to_bool(ret);
 
 				/*$result*/ vresult = (b == 0L) ? Qfalse : Qtrue;
 
 				break;
 			}
 
-			case TYPE_CHAR :
+			case METACALL_CHAR :
 			{
-				/*$result*/ vresult = INT2FIX((char)value_to_char(ret));
+				/*$result*/ vresult = INT2FIX((char)metacall_value_to_char(ret));
 
 				break;
 			}
 
-			case TYPE_SHORT :
+			case METACALL_SHORT :
 			{
-				/*$result*/ vresult = INT2FIX((int)value_to_short(ret));
+				/*$result*/ vresult = INT2FIX((int)metacall_value_to_short(ret));
 
 				break;
 			}
 
-			case TYPE_INT :
+			case METACALL_INT :
 			{
-				/*$result*/ vresult = INT2FIX(value_to_int(ret));
+				/*$result*/ vresult = INT2FIX(metacall_value_to_int(ret));
 
 				break;
 			}
 
-			case TYPE_LONG :
+			case METACALL_LONG :
 			{
-				/*$result*/ vresult = LONG2NUM(value_to_long(ret));
+				/*$result*/ vresult = LONG2NUM(metacall_value_to_long(ret));
 
 				break;
 			}
 
-			case TYPE_FLOAT :
+			case METACALL_FLOAT :
 			{
-				/*$result*/ vresult = DBL2NUM((double)value_to_float(ret));
+				/*$result*/ vresult = DBL2NUM((double)metacall_value_to_float(ret));
 
 				break;
 			}
 
-			case TYPE_DOUBLE :
+			case METACALL_DOUBLE :
 			{
-				/*$result*/ vresult = DBL2NUM(value_to_double(ret));
+				/*$result*/ vresult = DBL2NUM(metacall_value_to_double(ret));
 
 				break;
 			}
 
-			case TYPE_STRING :
+			case METACALL_STRING :
 			{
-				/*$result*/ vresult = rb_str_new_cstr(value_to_string(ret));
+				/*$result*/ vresult = rb_str_new_cstr(metacall_value_to_string(ret));
 
 				break;
 			}
@@ -217,7 +218,7 @@ extern "C" {
 			}
 		}
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	else
 	{

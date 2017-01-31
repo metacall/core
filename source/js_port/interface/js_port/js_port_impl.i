@@ -22,7 +22,7 @@ extern "C" {
 */
 %typemap(in) (const char * name, ...)(void * vargs[16])
 {
-	/*value * vargs;*/
+	/*void ** vargs;*/
 	size_t args_size, args_count;
 
 	/* Format string */
@@ -48,7 +48,7 @@ extern "C" {
 	}
 
 	/* TODO: Remove this by a local array? */
-	/*vargs = (value *) malloc(args_size * sizeof(value));
+	/*vargs = (void **) malloc(args_size * sizeof(void *));
 
 	if (vargs == NULL)
 	{
@@ -69,33 +69,33 @@ extern "C" {
 		{
 			boolean b = (js_arg->BooleanValue() == true) ? 1L : 0L;
 
- 			vargs[args_count] = value_create_bool(b);
+ 			vargs[args_count] = metacall_value_create_bool(b);
 		}
 		else if (js_arg->IsInt32())
 		{
 			/* Assume int is at least 32-bit width */
 			int i = (int)js_arg->Int32Value();
 
-			vargs[args_count] = value_create_int(i);
+			vargs[args_count] = metacall_value_create_int(i);
 		}
 		/*else if (js_arg->IsInteger())
 		{
 			*//* Assume long is at least 64-bit width *//*
 			long l = (long)js_arg->IntegerValue();
 
-			vargs[args_count] = value_create_long(l);
+			vargs[args_count] = metacall_value_create_long(l);
 		}*/
 		else if (js_arg->IsNumber())
 		{
 			double d = js_arg->NumberValue();
 
-			vargs[args_count] = value_create_double(d);
+			vargs[args_count] = metacall_value_create_double(d);
 		}
 		else if (js_arg->IsString())
 		{
 			String::Utf8Value str(js_arg->ToString(args.GetIsolate()));
 
-			vargs[args_count] = value_create_string(*str, str.length());
+			vargs[args_count] = metacall_value_create_string(*str, str.length());
 		}
 		else if (js_arg->IsNull() || js_arg->IsUndefined())
 		{
@@ -132,10 +132,11 @@ extern "C" {
 %feature("action") metacall
 {
 	size_t args_count, args_size;
-	value * vargs, ret;
+	void ** vargs;
+	void * ret;
 
 	args_size = args.Length() - 1;
-	vargs = (value *) arg2;
+	vargs = (void **) arg2;
 
 	/* Execute call */
 	ret = metacallv(arg1, vargs);
@@ -143,7 +144,7 @@ extern "C" {
 	/* Clear args */
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
-		value_destroy(vargs[args_count]);
+		metacall_value_destroy(vargs[args_count]);
 	}
 
 	/* TODO: Remove this by a local array? */
@@ -152,48 +153,48 @@ extern "C" {
 	/* Return value */
 	if (ret != NULL)
 	{
-		switch (value_type_id(ret))
+		switch (metacall_value_id(ret))
 		{
 
-			case TYPE_BOOL :
+			case METACALL_BOOL :
 			{
-				bool b = ((long)value_to_bool(ret) == 1L ? true : false);
+				bool b = ((long)metacall_value_to_bool(ret) == 1L ? true : false);
 
 				$result = Boolean::New(args.GetIsolate(), b);
 
 				break;
 			}
 
-			case TYPE_CHAR :
+			case METACALL_CHAR :
 			{
-				char c = value_to_char(ret);
+				char c = metacall_value_to_char(ret);
 
 				$result = String::NewFromUtf8(args.GetIsolate(), &c, String::kNormalString, 1);
 
 				break;
 			}
 
-			case TYPE_SHORT :
+			case METACALL_SHORT :
 			{
-				short s = value_to_short(ret);
+				short s = metacall_value_to_short(ret);
 
 				$result = Integer::New(args.GetIsolate(), (int32_t)s);
 
 				break;
 			}
 
-			case TYPE_INT :
+			case METACALL_INT :
 			{
-				int i = value_to_int(ret);
+				int i = metacall_value_to_int(ret);
 
 				$result = Integer::New(args.GetIsolate(), (int32_t)i);
 
 				break;
 			}
 
-			case TYPE_LONG :
+			case METACALL_LONG :
 			{
-				long l = value_to_long(ret);
+				long l = metacall_value_to_long(ret);
 
 				/* TODO: Check cast... */
 				$result = Integer::New(args.GetIsolate(), (int32_t)l);
@@ -201,27 +202,27 @@ extern "C" {
 				break;
 			}
 
-			case TYPE_FLOAT :
+			case METACALL_FLOAT :
 			{
-				float f = value_to_float(ret);
+				float f = metacall_value_to_float(ret);
 
 				$result = Number::New(args.GetIsolate(), (double)f);
 
 				break;
 			}
 
-			case TYPE_DOUBLE :
+			case METACALL_DOUBLE :
 			{
-				double d = value_to_double(ret);
+				double d = metacall_value_to_double(ret);
 
 				$result = Number::New(args.GetIsolate(), d);
 
 				break;
 			}
 
-			case TYPE_STRING :
+			case METACALL_STRING :
 			{
-				const char * str = value_to_string(ret);
+				const char * str = metacall_value_to_string(ret);
 
 				$result = String::NewFromUtf8(args.GetIsolate(), str);
 
@@ -238,7 +239,7 @@ extern "C" {
 			}
 		}
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	else
 	{

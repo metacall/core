@@ -30,7 +30,7 @@
 
 		#include <metacall/metacall_api.h>
 		#include <metacall/metacall.h>
-		#include <reflect/reflect_value_type.h>
+		#include <metacall/metacall_value.h>
 
 		#include <libplatform/libplatform.h>
 		#include <v8.h>
@@ -63,15 +63,11 @@
 	%include <metacall/metacall.h>
 
 	%{
-		#include <dynlink/dynlink.h>
-
 		#if (NODE_MODULE_VERSION < 0x000C)
 			extern "C" void JS_PORT_INITIALIZE_NAME (v8::Handle<v8::Object> exports);
 		#else
 			extern "C" void JS_PORT_INITIALIZE_NAME(v8::Handle<v8::Object> exports, v8::Handle<v8::Object> module);
 		#endif
-
-		extern "C" DYNLINK_SYMBOL_EXPORT(JS_PORT_INITIALIZE_NAME);
 	%}
 
 #endif /* SWIG && SWIGJAVASCRIPT && SWIG_JAVASCRIPT_V8 */

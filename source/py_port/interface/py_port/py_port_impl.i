@@ -22,7 +22,7 @@ extern "C" {
 */
 %typemap(in) (const char * name, ...)
 {
-	value * args;
+	void ** args;
 	size_t args_size, args_count;
 
 	/* Format string */
@@ -39,7 +39,7 @@ extern "C" {
 	}
 
 	/* TODO: Remove this by a local array? */
-	args = (value *) malloc(args_size * sizeof(value));
+	args = (void **) malloc(args_size * sizeof(void *));
 
 	if (args == NULL)
 	{
@@ -58,19 +58,19 @@ extern "C" {
 		{
 			boolean b = (PyObject_IsTrue(py_arg) == 1) ? 1L : 0L;
 
- 			args[args_count] = value_create_bool(b);
+ 			args[args_count] = metacall_value_create_bool(b);
 		}
 		/*if (PyInt_Check(py_arg))
 		{
-			args[args_count] = value_create_int((int) PyInt_AsLong(py_arg));
+			args[args_count] = metacall_value_create_int((int) PyInt_AsLong(py_arg));
 		}
 		*/else if (PyLong_Check(py_arg))
 		{
-			args[args_count] = value_create_long(PyLong_AsLong(py_arg));
+			args[args_count] = metacall_value_create_long(PyLong_AsLong(py_arg));
 		}
 		else if (PyFloat_Check(py_arg))
 		{
-			args[args_count] = value_create_double(PyFloat_AsDouble(py_arg));
+			args[args_count] = metacall_value_create_double(PyFloat_AsDouble(py_arg));
 		}
 		else if (PyUnicode_Check(py_arg))
 		{
@@ -78,7 +78,7 @@ extern "C" {
 
 			const char * str = PyUnicode_AsUTF8AndSize(py_arg, &size);
 
-			args[args_count] = value_create_string(str, (size_t)size);
+			args[args_count] = metacall_value_create_string(str, (size_t)size);
 		}
 		else
 		{
@@ -109,10 +109,11 @@ extern "C" {
 %feature("action") metacall
 {
 	size_t args_count, args_size;
-	value * args, ret;
+	void ** args;
+	void * ret;
 
 	args_size = PyTuple_Size(varargs);
-	args = (value *) arg2;
+	args = (void **) arg2;
 
 	/* Execute call */
 	ret = metacallv(arg1, args);
@@ -120,7 +121,7 @@ extern "C" {
 	/* Clear args */
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
-		value_destroy(args[args_count]);
+		metacall_value_destroy(args[args_count]);
 	}
 
 	/* TODO: Remove this by a local array? */
@@ -129,64 +130,64 @@ extern "C" {
 	/* Return value */
 	if (ret != NULL)
 	{
-		switch (value_type_id(ret))
+		switch (metacall_value_id(ret))
 		{
 
-			case TYPE_BOOL :
+			case METACALL_BOOL :
 			{
-				$result = PyBool_FromLong((long)value_to_bool(ret));
+				$result = PyBool_FromLong((long)metacall_value_to_bool(ret));
 
 				break;
 			}
 
-			case TYPE_CHAR :
+			case METACALL_CHAR :
 			{
-				/*$result = PyInt_FromLong((long)value_to_char(ret));*/
-				$result = PyLong_FromLong((long)value_to_char(ret));
+				/*$result = PyInt_FromLong((long)metacall_value_to_char(ret));*/
+				$result = PyLong_FromLong((long)metacall_value_to_char(ret));
 
 				break;
 			}
 
-			case TYPE_SHORT :
+			case METACALL_SHORT :
 			{
-				/*$result = PyInt_FromLong((long)value_to_short(ret));*/
-				$result = PyLong_FromLong((long)value_to_short(ret));
+				/*$result = PyInt_FromLong((long)metacall_value_to_short(ret));*/
+				$result = PyLong_FromLong((long)metacall_value_to_short(ret));
 
 				break;
 			}
 
-			case TYPE_INT :
+			case METACALL_INT :
 			{
-				/*$result = PyInt_FromLong((long)value_to_int(ret));*/
-				$result = PyLong_FromLong((long)value_to_int(ret));
+				/*$result = PyInt_FromLong((long)metacall_value_to_int(ret));*/
+				$result = PyLong_FromLong((long)metacall_value_to_int(ret));
 
 				break;
 			}
 
-			case TYPE_LONG :
+			case METACALL_LONG :
 			{
-				$result = PyLong_FromLong(value_to_long(ret));
+				$result = PyLong_FromLong(metacall_value_to_long(ret));
 
 				break;
 			}
 
-			case TYPE_FLOAT :
+			case METACALL_FLOAT :
 			{
-				$result = PyFloat_FromDouble((double)value_to_float(ret));
+				$result = PyFloat_FromDouble((double)metacall_value_to_float(ret));
 
 				break;
 			}
 
-			case TYPE_DOUBLE :
+			case METACALL_DOUBLE :
 			{
-				$result = PyFloat_FromDouble(value_to_double(ret));
+				$result = PyFloat_FromDouble(metacall_value_to_double(ret));
 
 				break;
 			}
 
-			case TYPE_STRING :
+			case METACALL_STRING :
 			{
-				$result = PyUnicode_FromString(value_to_string(ret));
+				$result = PyUnicode_FromString(metacall_value_to_string(ret));
 
 				break;
 			}
@@ -199,7 +200,7 @@ extern "C" {
 			}
 		}
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	else
 	{

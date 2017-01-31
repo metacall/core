@@ -160,6 +160,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${METACALL_INCLUDE_DIRS} # MetaCall includes
 	${PYTHON_INCLUDE_DIRS} # Python includes
 
 	PUBLIC
@@ -177,7 +178,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
 	PRIVATE
-	${METACALL_LIBRARIES}
+	${METACALL_LIBRARIES} # MetaCall libraries
 	${PYTHON_LIBRARIES} # Python libraries
 
 	PUBLIC

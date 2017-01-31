@@ -24,7 +24,7 @@
 
 		#include <metacall/metacall_api.h>
 		#include <metacall/metacall.h>
-		#include <reflect/reflect_value_type.h>
+		#include <metacall/metacall_value.h>
 
 		#include <Python.h>
 	%}

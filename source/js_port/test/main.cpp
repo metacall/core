@@ -21,10 +21,26 @@
 #	include <v8-debug.h>
 #endif /* ENALBLE_DEBUGGER_SUPPORT */
 
-#include <log/log.h>
-#include <dynlink/dynlink.h>
-
 #include <map>
+
+/* -- Definitions -- */
+
+#if defined(_WIN32)
+#	define JS_PORT_TEST_WIN 1
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
+#	define JS_PORT_TEST_UNIX 1
+#else
+#	error "Unsuported dynamic library link type"
+#endif
+
+/* -- Headers -- */
+
+#if defined(JS_PORT_TEST_WIN)
+#	include <windows.h>
+#elif defined(JS_PORT_TEST_UNIX)
+#	include <dlfcn.h>
+#endif
 
 /* -- Namespaces -- */
 
@@ -37,6 +53,16 @@ using namespace v8;
 #else
 	typedef void (*module_initialize)(Handle<Object>, Handle<Object>);
 #endif
+
+#if defined(JS_PORT_TEST_WIN)
+	typedef FARPROC module_handle_symbol;
+	typedef HMODULE module_handle;
+#elif defined(JS_PORT_TEST_UNIX)
+	typedef void * module_handle_symbol;
+	typedef void * module_handle;
+#endif
+
+typedef std::map<std::string, module_handle> module_map;
 
 /* -- Methods -- */
 
@@ -58,7 +84,7 @@ void ReportException(Isolate* isolate, TryCatch* handler);
 
 /* -- Member Data -- */
 
-static std::map<std::string, dynlink> module_map;
+static module_map modules;
 static bool run_shell;
 
 /* -- Classes -- */
@@ -85,13 +111,6 @@ class ShellArrayBufferAllocator : public ArrayBuffer::Allocator
 
 int main(int argc, char * argv[])
 {
-	/* Initialize MetaCall Log */
-	log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout));
-
 	V8::InitializeICU();
 
 	V8::InitializeExternalStartupData(argv[0]);
@@ -273,10 +292,14 @@ int StrEndsWith(const char * const str, const char * const suffix)
 
 void ModulesClear()
 {
-	for (std::map<std::string, dynlink>::iterator it = module_map.begin();
-			it != module_map.end(); ++it)
+	for (module_map::iterator it = modules.begin();
+			it != modules.end(); ++it)
 	{
-		dynlink_unload(it->second);
+		#if defined(JS_PORT_TEST_WIN)
+			FreeLibrary(it->second);
+		#elif defined(JS_PORT_TEST_UNIX)
+			dlclose(it->second);
+		#endif
 	}
 }
 
@@ -303,7 +326,12 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 		if (StrEndsWith(file_str, ".js") != 0)
 		{
-			dynlink lib = dynlink_load(NULL, file_str, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+			module_handle lib =
+				#if defined(JS_PORT_TEST_WIN)
+					LoadLibrary(file_str);
+				#elif defined(JS_PORT_TEST_UNIX)
+					dlopen(file_str, RTLD_NOW | RTLD_GLOBAL);
+				#endif
 
 			if (lib == NULL)
 			{
@@ -313,20 +341,23 @@ void Load(const FunctionCallbackInfo<Value>& args)
 				return;
 			}
 
-			static dynlink_symbol_addr module_initialize_addr = NULL;
+			static module_handle_symbol module_initialize_addr = NULL;
 
-			dynlink_symbol_name_man symbol_str_man;
+			static const char symbol_suffix[] = "_initialize";
 
 			std::string symbol_str(file_str);
 
-			const char symbol_suffix[] = "_initialize";
-
 			symbol_str += symbol_suffix;
 
-			dynlink_symbol_name_mangle(symbol_str.c_str(), symbol_str_man);
+			module_initialize_addr =
+				#if defined(JS_PORT_TEST_WIN)
+					GetProcAddress(lib, symbol_str.c_str());
+				#elif defined(JS_PORT_TEST_UNIX)
+					dlsym(lib, symbol_str.c_str());
+				#endif
 
-			if (dynlink_symbol(lib, symbol_str_man, &module_initialize_addr) != 0 ||
-				module_initialize_addr == NULL)
+
+			if (module_initialize_addr == NULL)
 			{
 				args.GetIsolate()->ThrowException(
 					String::NewFromUtf8(args.GetIsolate(), "Error loading library, not entry point found",
@@ -334,9 +365,9 @@ void Load(const FunctionCallbackInfo<Value>& args)
 				return;
 			}
 
-			module_initialize module_init = (module_initialize)DYNLINK_SYMBOL_GET(module_initialize_addr);
+			module_initialize module_init = (module_initialize)module_initialize_addr;
 
-			printf("Loading entry point: %s (%p)\n", symbol_str_man, module_init);
+			printf("Loading entry point: %s (%p)\n", symbol_str.c_str(), module_init);
 
 			/* MetaCall JS Port Bindings */
 			Local<Context> context(args.GetIsolate()->GetCurrentContext());
@@ -348,7 +379,7 @@ void Load(const FunctionCallbackInfo<Value>& args)
 				module_init(global, NULL);
 			#endif
 
-			module_map[file_str] = lib;
+			modules[file_str] = lib;
 		}
 		else
 		{
