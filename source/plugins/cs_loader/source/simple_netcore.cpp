@@ -40,20 +40,20 @@ void simple_netcore_destroy(netcore_handle handle) {
 	delete core;
 }
 
-void  simple_netcore_load_script_from_file(netcore_handle handle, const char *path, const char* file) {
+void  simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size) {
 	netcore * core = (netcore*)handle;
-
-	std::ifstream inFile;
-	inFile.open(path);
-
-	std::stringstream strStream;
-	strStream << inFile.rdbuf();
-	std::string str = strStream.str();
-
-	if (core->load_source((char*)str.c_str())) {
+	if (core->load_files(files, size)) {
 
 	}
 }
+
+void  simple_netcore_load_script_from_assembly(netcore_handle handle, char * file) {
+	netcore * core = (netcore*)handle;
+	if (core->load_assembly(file)) {
+
+	}
+}
+
 void  simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size) {
 	netcore * core = (netcore*)handle;
 

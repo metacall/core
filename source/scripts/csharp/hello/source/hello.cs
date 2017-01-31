@@ -1,4 +1,10 @@
-        public static void SayHello()
+using System;
+
+namespace Scripts
+{
+    public class Program
+    {
+		public static void SayHello()
         {
             Console.WriteLine("HELLO");
         }
@@ -17,3 +23,5 @@
         {
            return a+b;
         }
+	}
+}

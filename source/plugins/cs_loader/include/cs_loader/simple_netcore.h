@@ -8,14 +8,19 @@ extern "C" {
 #include <cs_loader/defs.h>
 #include <stdlib.h>
 
+#define MAX_FILES 0xFF
 	struct netcore_handle_type;
 	typedef struct netcore_handle_type * netcore_handle;
+
+	typedef char source_file[512];
 
 	netcore_handle simple_netcore_create();
 
 	reflect_function * simple_netcore_get_functions(netcore_handle, int*);
 
-	void  simple_netcore_load_script_from_file(netcore_handle handle, const char *path, const char* file);
+	void  simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size);
+
+	void  simple_netcore_load_script_from_assembly(netcore_handle handle, char * file);
 
 	void   simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size);
 

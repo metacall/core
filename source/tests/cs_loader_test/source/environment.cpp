@@ -15,15 +15,9 @@
 
 void environment::SetUp() {
 
-	loader_naming_path names[] = {"hello.cs"};
+	loader_naming_path names[] = {"hello.cs","IJump.cs","JumpMaster.cs","SuperJump.cs","TinyJump.cs"};
 
-	log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout));
-
-	loader_load_from_files(names, 1);
+	loader_load_from_files(names, 5);
 }
 
 void environment::TearDown() {

@@ -10,11 +10,13 @@ using Microsoft.CodeAnalysis.Emit;
 using System.Runtime.Loader;
 using System.Runtime.InteropServices;
 using static CSLoader.MetacallDef;
+using System.Collections.Immutable;
 
 namespace CSLoader
 {
     public class Loader
     {
+
         public static void Main(string[] args)
         {
             var src = @"
@@ -39,7 +41,7 @@ namespace CSLoader
             loader = new Loader();
         }
 
-        public static bool Load(string source)
+        public unsafe static bool LoadFromPointer(string[] source)
         {
             if (loader == null)
             {
@@ -48,9 +50,35 @@ namespace CSLoader
 
             return loader.LoadFromSourceFunctions(source);
         }
+
+        public static bool Load(string source)
+        {
+            if (loader == null)
+            {
+                loader = new Loader();
+            }
+
+            return loader.LoadFromSourceFunctions(new string[] { source });
+        }
+
+        public static bool Load(string[] files)
+        {
+            if (loader == null)
+            {
+                loader = new Loader();
+            }
+
+            return loader.LoadFromSourceFunctions(files.Select(x => System.IO.File.ReadAllText(x)).ToArray());
+        }
+
         public ReflectFunction[] Functions()
         {
             return this.functions.Select(x => x.Value.GetReflectFunction()).ToArray();
+        }
+
+        public static ReflectFunction[] GetFunctionsInternal()
+        {
+            return loader.Functions();
         }
 
         public static void GetFunctions(ref int count, IntPtr p)
@@ -65,13 +93,32 @@ namespace CSLoader
             }
         }
 
+        public unsafe static bool LoadFilesC([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]IntPtr[] source, long size)
+        {
+            return Load(source.Select(x => Marshal.PtrToStringAnsi(x)).ToArray());
+        }
 
-        public static bool LoadW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string source)
+        public unsafe static bool LoadFilesW([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)]IntPtr[] source, long size)
+        {
+            return Load(source.Select(x => Marshal.PtrToStringUni(x)).ToArray());
+        }
+
+        public static bool LoadAssemblyC([MarshalAs(UnmanagedType.LPStr)]string assemblyFile)
+        {
+            return LoadFromAssembly(assemblyFile);
+        }
+
+        public static bool LoadAssemblyW([MarshalAs(UnmanagedType.LPWStr)]string assemblyFile)
+        {
+            return LoadFromAssembly(assemblyFile);
+        }
+
+        public static bool LoadSourceC([MarshalAs(UnmanagedType.LPStr)]string source)
         {
             return Load(source);
         }
 
-        public static bool LoadC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string source)
+        public static bool LoadSourceW([MarshalAs(UnmanagedType.LPWStr)]string source)
         {
             return Load(source);
         }
@@ -146,27 +193,25 @@ namespace CSLoader
         {
         }
 
-        public bool LoadFromSourceFunctions(string source)
+        public bool LoadFromSourceFunctions(string[] source)
         {
             Assembly assembly = null;
 
-            var generatedSource = this.GenerateSource(source);
-
-            SyntaxTree syntaxTree = CSharpSyntaxTree.ParseText(generatedSource);
+            SyntaxTree[] syntaxTrees = source.Select(x => CSharpSyntaxTree.ParseText(x)).ToArray();
 
             string assemblyName = Path.GetRandomFileName();
+
             MetadataReference[] references = new MetadataReference[]
-            {
+{
     MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
     MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location)
-            };
+};
 
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
-                syntaxTrees: new[] { syntaxTree },
+                syntaxTrees: syntaxTrees,
                 references: references,
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
-
 
             using (var ms = new MemoryStream())
             {
@@ -175,12 +220,12 @@ namespace CSLoader
                 if (!result.Success)
                 {
                     IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
-                        diagnostic.IsWarningAsError ||
+
                         diagnostic.Severity == DiagnosticSeverity.Error);
 
                     foreach (Diagnostic diagnostic in failures)
                     {
-                        Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                        Console.Error.WriteLine("{ 0}: {1}", diagnostic.Id, diagnostic.GetMessage());
                     }
                 }
                 else
@@ -203,21 +248,33 @@ namespace CSLoader
             }
         }
 
-        private string GenerateSource(string source)
+        public static bool LoadFromAssembly(string assemblyFile)
         {
-            var src = @"
-    using System;
+            AssemblyLoadContext context = AssemblyLoadContext.Default;
+            Assembly asm = context.LoadFromAssemblyPath(assemblyFile);
 
-    namespace BEAST
-    {
-        public static class BEASTFUNCTIONCONTAINER
-        {
-           %FUNCS%
+            if (asm != null)
+            {
+                if (loader == null)
+                {
+                    loader = new Loader();
+                }
+
+                loader.LoadFunctions(asm);
+                return true;
+            }
+
+            return false;
         }
-    }".Replace("%FUNCS%", source);
 
+        public static bool LoadFromAssemblyC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string assemblyFile)
+        {
+            return LoadFromAssembly(assemblyFile);
+        }
 
-            return src;
+        public static bool LoadFromAssemblyW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)] string assemblyFile)
+        {
+            return LoadFromAssembly(assemblyFile);
         }
 
         public void LoadFunctions(Assembly assembly)
@@ -276,38 +333,6 @@ namespace CSLoader
             {
                 return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
             }
-            /*
-            Type container = assembly.GetType("BEAST.BEASTFUNCTIONCONTAINER");
-
-            List<Container> col = new List<Container>();
-
-            foreach (var item in assembly.DefinedTypes.SelectMany(x => x.GetMethods()).Where(x => x.IsStatic))
-            {
-                var con = new Container();
-                con.FunctionName = item.Name;
-                con.RetunType = item.ReturnType.Name ?? "void";
-                con.Parameters = item.GetParameters();
-                con.Assembly = assembly;
-                col.Add(con);
-            }
-
-            var f = container.GetTypeInfo().GetMethod(function);
-
-            //f.Invoke(null, null);
-
-            foreach (var item in col)
-            {
-                Console.WriteLine(item.FunctionName);
-                Console.WriteLine(item.RetunType);
-                if (item.Parameters != null)
-                {
-                    foreach (var par in item.Parameters)
-                    {
-                        Console.WriteLine($"type:{par.ParameterType.Name} name:{par.Name}");
-                    }
-                }
-            }
-            */
         }
 
         public unsafe static ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type)

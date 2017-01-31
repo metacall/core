@@ -31,6 +31,19 @@ TEST_F(cs_loader_test, SayAny)
 	metacall("Say", "Any");
 }
 
+TEST_F(cs_loader_test, Jump)
+{
+	value ret = NULL;
+
+	ret = metacall("SuperJump");
+
+	EXPECT_NE((value)NULL, (value)ret);
+
+	EXPECT_EQ((int)value_to_long(ret), (int)2);
+
+	value_destroy(ret);
+}
+
 TEST_F(cs_loader_test, Sum)
 {
 	value ret = NULL;

@@ -186,7 +186,14 @@ loader_handle cs_loader_impl_load_from_files(loader_impl impl, const loader_nami
 
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
-	simple_netcore_load_script_from_file(nhandle, path[0], name);
+	char * files[MAX_FILES];
+
+	for (size_t i = 0; i < size; i++)
+	{
+		files[i] = (char*)path[i];
+	}
+
+	simple_netcore_load_script_from_files(nhandle, files, size);
 
 	return (loader_handle)impl;
 }

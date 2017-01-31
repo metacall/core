@@ -36,10 +36,22 @@ bool netcore::create_delegates() {
 	if (!this->create_delegate(this->delegate_get_functions, (void**)&this->core_get_functions)) {
 		return false;
 	}
-	if (!this->create_delegate(this->delegate_load_w, (void**)&this->core_load_w)) {
+	if (!this->create_delegate(this->delegate_load_source_w, (void**)&this->core_load_from_source_w)) {
 		return false;
 	}
-	if (!this->create_delegate(this->delegate_load_c, (void**)&this->core_load_c)) {
+	if (!this->create_delegate(this->delegate_load_source_c, (void**)&this->core_load_from_source_c)) {
+		return false;
+	}
+	if (!this->create_delegate(this->delegate_load_files_w, (void**)&this->core_load_from_files_w)) {
+		return false;
+	}
+	if (!this->create_delegate(this->delegate_load_files_c, (void**)&this->core_load_from_files_c)) {
+		return false;
+	}
+	if (!this->create_delegate(this->delegate_load_assembly_w, (void**)&this->core_load_from_assembly_w)) {
+		return false;
+	}
+	if (!this->create_delegate(this->delegate_load_assembly_c, (void**)&this->core_load_from_assembly_c)) {
 		return false;
 	}
 	if (!this->create_delegate(this->delegate_execute_w, (void**)&this->execute_w)) {
@@ -61,12 +73,25 @@ bool netcore::create_delegates() {
 	return true;
 }
 
-
 bool netcore::load_source(wchar_t * source) {
-	return this->core_load_w(source);
+	return this->core_load_from_source_w(source);
 };
 bool netcore::load_source(char * source) {
-	return this->core_load_c(source);
+	return this->core_load_from_source_c(source);
+}
+
+bool netcore::load_files(wchar_t ** source, size_t size) {
+	return this->core_load_from_files_w(source, size);
+};
+bool netcore::load_files(char ** source, size_t size) {
+	return this->core_load_from_files_c(source, size);
+}
+
+bool netcore::load_assembly(wchar_t * source) {
+	return this->core_load_from_assembly_w(source);
+};
+bool netcore::load_assembly(char * source) {
+	return this->core_load_from_assembly_c(source);
 }
 
 execution_result* netcore::execute(char * function) {

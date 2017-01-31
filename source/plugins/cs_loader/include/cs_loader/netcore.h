@@ -10,9 +10,15 @@ protected:
 	reflect_function functions[100];
 	int functions_count;
 public:
+	load_from_source_w * core_load_from_source_w;
+	load_from_source_c * core_load_from_source_c;
 
-	load_function_w * core_load_w;
-	load_function_c * core_load_c;
+	load_from_files_w * core_load_from_files_w;
+	load_from_files_c * core_load_from_files_c;
+
+	load_from_assembly_w * core_load_from_assembly_w;
+	load_from_assembly_c * core_load_from_assembly_c;
+
 	execute_function_w * execute_w;
 	execute_function_c * execute_c;
 	execute_function_with_params_w * execute_with_params_w;
@@ -23,8 +29,16 @@ public:
 	const CHARSTRING *loader_dll = W("CSLoader.dll");
 	const CHARSTRING *class_name = W("CSLoader.Loader");
 	const CHARSTRING *assembly_name = W("CSLoader");
-	const CHARSTRING *delegate_load_w = W("LoadW");
-	const CHARSTRING *delegate_load_c = W("LoadC");
+
+	const CHARSTRING *delegate_load_source_w = W("LoadSourceW");
+	const CHARSTRING *delegate_load_source_c = W("LoadSourceC");
+
+	const CHARSTRING *delegate_load_files_w = W("LoadFilesW");
+	const CHARSTRING *delegate_load_files_c = W("LoadFilesC");
+
+	const CHARSTRING *delegate_load_assembly_w = W("LoadAssemblyW");
+	const CHARSTRING *delegate_load_assembly_c = W("LoadAssemblyC");
+
 	const CHARSTRING *delegate_execute_w = W("ExecuteW");
 	const CHARSTRING *delegate_execute_c = W("ExecuteC");
 	const CHARSTRING *delegate_execute_with_params_w = W("ExecuteWithParamsW");
@@ -40,6 +54,12 @@ public:
 
 	bool load_source(wchar_t * source);
 	bool load_source(char * source);
+
+	bool load_files(wchar_t ** source, size_t size);
+	bool load_files(char ** source, size_t size);
+
+	bool load_assembly(wchar_t * source);
+	bool load_assembly(char * source);
 
 	execution_result* execute(char * function);
 	execution_result* execute(wchar_t * function);
