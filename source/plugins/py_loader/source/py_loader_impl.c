@@ -474,7 +474,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
+loader_handle py_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
 
@@ -482,7 +482,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	Py_DECREF(module_name);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from (%s) module at (%p)", (void *)impl, path, name, (void *)module);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from (%s) module at (%p)", (void *)impl, path[0], name, (void *)module);
 
 	return (loader_handle)module;
 }

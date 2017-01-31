@@ -19,7 +19,7 @@ class py_loader_test : public testing::Test
 
 TEST_F(py_loader_test, DefaultConstructor)
 {
-	loader_naming_name name = "example.py";
+	loader_naming_path names[] = {"example.py"};
 
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
@@ -27,7 +27,7 @@ TEST_F(py_loader_test, DefaultConstructor)
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout)));
 
-	EXPECT_EQ((int) 0, loader_load_from_file(name));
+	EXPECT_EQ((int) 0, loader_load_from_files(names,1));
 
 	EXPECT_EQ((int) 0, loader_unload());
 }

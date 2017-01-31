@@ -58,7 +58,7 @@ METACALL_API size_t metacall_args_size(void);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_file(const char * path);
+METACALL_API int metacall_load_from_files(char * path[], size_t size);
 
 /**
 *  @brief

@@ -678,7 +678,7 @@ int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
+loader_handle js_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
@@ -686,7 +686,7 @@ loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	if (js_impl != nullptr)
 	{
-		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, path/*, name*/);
+		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, path[0]/*, name*/);
 
 		if (js_handle != nullptr)
 		{

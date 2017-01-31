@@ -36,12 +36,12 @@ TEST_F(metacall_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
 		const long seven_multiples_limit = 10;
-
+		char * py_scripts[] = {(char *)"example.py"};
 		long iterator;
 
 		value ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("example.py"));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(py_scripts, 1));
 
 		ret = metacall("multiply", 5, 15);
 
@@ -104,8 +104,9 @@ TEST_F(metacall_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_RB)
 	{
 		value ret = NULL;
-
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("hello.rb"));
+		char * rb_scripts[] = {(char *)"hello.rb"};
+		
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(rb_scripts, 1));
 
 		ret = metacall("say_multiply", 5, 7);
 
@@ -130,7 +131,8 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* JavaScript SpiderMonkey */
 	#if defined(OPTION_BUILD_PLUGINS_JSM)
 	{
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("spider.jsm"));
+		char * jsm_scripts[] = {(char *)"spider.jsm")};
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(jsm_scripts,1);
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 	}
@@ -140,8 +142,9 @@ TEST_F(metacall_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_JS)
 	{
 		value ret = NULL;
+		char * js_scripts[] = {(char *)"divide.js"};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("divide.js"));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(js_scripts ,1));
 
 		ret = metacall("say_divide", 32.0, 4.0);
 
@@ -165,8 +168,9 @@ TEST_F(metacall_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_MOCK)
 	{
 		value ret = NULL;
+		char * mock_scripts[] = {(char *)"empty.mock"};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("empty.mock"));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(mock_scripts, 1));
 
 		ret = metacall("my_empty_func");
 
@@ -205,7 +209,9 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* C# Netcore */
 	#if defined(OPTION_BUILD_PLUGINS_CS)
 	{
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("hello.cs"));
+		char * cs_scripts[] = {(char *)"hello.cs"};
+		
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(cs_scripts, 1));
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
@@ -214,7 +220,9 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* C */
 	#if defined(OPTION_BUILD_PLUGINS_C)
 	{
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("compiled.c"));
+		char * c_scripts[] = {(char *)"compiled.c"};
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(c_scripts, 1));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_C */
 

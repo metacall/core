@@ -513,7 +513,7 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
-loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
+loader_handle rb_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -523,7 +523,7 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	if (module != Qnil)
 	{
-		VALUE module_data = rb_loader_impl_load_data(impl, path);
+		VALUE module_data = rb_loader_impl_load_data(impl, path[0]);
 
 		if (module_data != Qnil)
 		{
@@ -543,7 +543,7 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 					rb_include_module(handle->instance, handle->module);
 
-					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path[0]);
 
 					return (loader_handle)handle;
 				}

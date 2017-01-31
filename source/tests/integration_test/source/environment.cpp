@@ -22,8 +22,11 @@ void environment::SetUp() {
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout));
 
-	metacall_load_from_file(this->cs_script_name);
-	metacall_load_from_file(this->py_script_name);
+	char * py_scripts[] = {(char *) "example.py"};
+	char * cs_scripts[] = {(char *) "hello.cs"};
+
+	metacall_load_from_files(py_scripts, 1);
+	metacall_load_from_files(cs_scripts, 1);
 }
 
 void environment::TearDown() {

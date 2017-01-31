@@ -181,7 +181,7 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_from_file(const loader_naming_path path)
+int loader_load_from_files(loader_naming_path path[], size_t size)
 {
 	loader l = loader_singleton();
 
@@ -191,11 +191,11 @@ int loader_load_from_file(const loader_naming_path path)
 		loader_initialize();
 	#endif
 
-	if (l->impl_map != NULL)
+	if (l->impl_map != NULL && size >0)
 	{
 		loader_naming_extension extension;
 
-		if (loader_path_get_extension(path, extension) > 1)
+		if (loader_path_get_extension(path[0], extension) > 1)
 		{
 			loader_impl impl = loader_get_impl(extension);
 
@@ -205,17 +205,20 @@ int loader_load_from_file(const loader_naming_path path)
 			{
 				if (l->script_path != NULL)
 				{
-					loader_naming_path absolute_path;
+					loader_naming_path absolute_path[size];
 
-					memcpy(absolute_path, l->script_path, strlen(l->script_path) + 1);
+					for (size_t i = 0; i < size; i++)
+					{
+						memcpy(absolute_path[i], l->script_path, strlen(l->script_path) + 1);
 
-					strncat(absolute_path, path, LOADER_NAMING_PATH_SIZE - 1);
+						strncat(absolute_path[i], path[i], LOADER_NAMING_PATH_SIZE - 1);
+					}
 
-					return loader_impl_load_from_file(impl, absolute_path);
+					return loader_impl_load_from_files(impl, absolute_path, size);
 				}
 				else
 				{
-					return loader_impl_load_from_file(impl, path);
+					return loader_impl_load_from_files(impl, path, size);
 				}
 			}
 		}

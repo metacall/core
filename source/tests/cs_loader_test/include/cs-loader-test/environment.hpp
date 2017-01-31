@@ -12,9 +12,6 @@
 
 class environment : public  testing::Environment
 {
-protected:
-	loader_naming_name name = "hello.cs";
-
 public:
 	void SetUp();
 

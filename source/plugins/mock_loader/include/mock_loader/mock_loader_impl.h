@@ -21,7 +21,7 @@ MOCK_LOADER_API loader_impl_data mock_loader_impl_initialize(loader_impl impl);
 
 MOCK_LOADER_API int mock_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-MOCK_LOADER_API loader_handle mock_loader_impl_load_from_file(loader_impl impl, const loader_naming_path path, const loader_naming_name name);
+MOCK_LOADER_API loader_handle mock_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name);
 
 MOCK_LOADER_API loader_handle mock_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size);
 

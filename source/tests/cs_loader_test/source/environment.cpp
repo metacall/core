@@ -15,13 +15,15 @@
 
 void environment::SetUp() {
 
+	loader_naming_path names[] = {"hello.cs"};
+
 	log_configure("metacall",
 		log_policy_format_text(),
 		log_policy_schedule_sync(),
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout));
 
-	loader_load_from_file(name);
+	loader_load_from_files(names, 1);
 }
 
 void environment::TearDown() {

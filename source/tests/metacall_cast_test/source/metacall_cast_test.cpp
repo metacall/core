@@ -36,6 +36,8 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
+		char * py_scripts[] = {(char *)"example.py"};
+
 		const int seven_multiples_limit = 10;
 
 		int iterator;
@@ -44,7 +46,7 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		value args[2];
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("example.py"));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(py_scripts, 1));
 
 		args[0] = value_create_int(5);
 		args[1] = value_create_int(15);

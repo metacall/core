@@ -12,6 +12,8 @@
 
 #include <metacall/metacall.h>
 
+#include <reflect/reflect_value_type.h>
+
 #include <log/log.h>
 
 class integration_test : public testing::Test

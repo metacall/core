@@ -12,10 +12,6 @@
 
 class environment : public  testing::Environment
 {
-protected:
-	loader_naming_name cs_script_name = "hello.cs";
-	loader_naming_name py_script_name = "example.py";
-
 public:
 	void SetUp();
 

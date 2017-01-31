@@ -17,7 +17,7 @@ loader_impl_interface js_loader_impl_interface_singleton(void)
 	{
 		&js_loader_impl_initialize,
 		&js_loader_impl_execution_path,
-		&js_loader_impl_load_from_file,
+		&js_loader_impl_load_from_files,
 		&js_loader_impl_load_from_memory,
 		&js_loader_impl_clear,
 		&js_loader_impl_discover,
