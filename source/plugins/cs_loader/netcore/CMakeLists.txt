@@ -1,8 +1,10 @@
 # Check if this plugin is enabled
-if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS)
+
+if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS OR NOT OPTION_BUILD_PLUGINS_CS_IMP)
 	return()
 endif()
 
+option(OPTION_BUILD_PLUGINS_CS_IMP		"Build Netcore library."	ON)
 #
 # External dependencies
 #
