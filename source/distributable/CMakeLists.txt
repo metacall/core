@@ -11,6 +11,9 @@
 # Target name
 set(target metacall_distributable)
 
+# Library name
+set(target_root "metacall")
+
 # Exit here if required dependencies are not met
 message(STATUS "Distributable ${target}")
 
@@ -48,7 +51,7 @@ function(generate_unity_build unity_build_file)
 		)
 
 		# Add private linkage for all targets except metacall
-		if(NOT "${target}" STREQUAL "metacall")
+		if(NOT "${target}" STREQUAL "${target_root}")
 			string(TOUPPER ${target} target_upper)
 			set(unity_build_source "${unity_build_source}\n\#ifndef ${target_upper}_API")
 
@@ -87,7 +90,7 @@ function(generate_unity_build unity_build_file)
 endfunction()
 
 # Create unity build library
-set(metacall_unity_build "${CMAKE_CURRENT_BINARY_DIR}/metacall_unity_build.c")
+set(metacall_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target_root}_unity_build.c")
 
 generate_unity_build(${metacall_unity_build}
 	${MODULE_NAMES}
@@ -118,7 +121,7 @@ set_target_properties(${target}
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
 	DEBUG_POSTFIX ""
-	OUTPUT_NAME "metacall"
+	OUTPUT_NAME "${target_root}"
 	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/distributable"
 	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/distributable"
 	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/distributable"
@@ -202,27 +205,8 @@ target_link_libraries(${target}
 
 # Library
 install(TARGETS ${target}
-	EXPORT  "${target}-export"				COMPONENT dev
+	EXPORT  "${target_root}-export"			COMPONENT dev
 	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
-)
-
-# Header files
-install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# Generated header files
-install(DIRECTORY
-	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# CMake config
-install(EXPORT ${target}-export
-	NAMESPACE   ${META_PROJECT_NAME}::
-	DESTINATION ${INSTALL_CMAKE}/${target}
-	COMPONENT   dev
 )

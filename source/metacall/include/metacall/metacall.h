@@ -13,7 +13,7 @@
 
 #include <metacall/metacall_api.h>
 
-#include <reflect/reflect_value_type.h>
+#include <metacall/metacall_value.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +32,7 @@ extern void * metacall_null_args[1];
 
 /**
 *  @brief
-*    Initialize MetaCall library singleton
+*    Initialize MetaCall library
 *
 *  @return
 *    Zero if success, different from zero otherwise
@@ -91,7 +91,7 @@ METACALL_API int metacall_load_from_memory(const char * extension, const char * 
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API value metacallv(const char * name, void * args[]);
+METACALL_API void * metacallv(const char * name, void * args[]);
 
 /**
 *  @brief
@@ -106,11 +106,11 @@ METACALL_API value metacallv(const char * name, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API value metacall(const char * name, ...);
+METACALL_API void * metacall(const char * name, ...);
 
 /**
 *  @brief
-*    Destroy MetaCall library singleton
+*    Destroy MetaCall library
 *
 *  @return
 *    Zero if success, different from zero otherwise

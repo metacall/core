@@ -71,7 +71,7 @@ int metacall_load_from_memory(const char * extension, const char * buffer, size_
 	return loader_load_from_memory(extension, buffer, size);
 }
 
-value metacallv(const char * name, void * args[])
+void * metacallv(const char * name, void * args[])
 {
 	function f = (function)loader_get(name);
 
@@ -115,7 +115,7 @@ value metacallv(const char * name, void * args[])
 	return NULL;
 }
 
-value metacall(const char * name, ...)
+void * metacall(const char * name, ...)
 {
 	function f = loader_get(name);
 

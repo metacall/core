@@ -191,7 +191,10 @@ add_subdirectory(deploy)
 #
 
 set(PROJECT_CONFIGURATION "metacall-config.cmake")
-configure_file("${PROJECT_CONFIGURATION}.in" "${PROJECT_BINARY_DIR}/${PROJECT_CONFIGURATION}" @ONLY)
+
+set(PROJECT_CONFIGURATION_PATH "${PROJECT_BINARY_DIR}/${PROJECT_CONFIGURATION}")
+
+configure_file("${PROJECT_CONFIGURATION}.in" "${PROJECT_CONFIGURATION_PATH}" @ONLY)
 
 #
 # Deployment (global project files)
@@ -201,7 +204,7 @@ configure_file("${PROJECT_CONFIGURATION}.in" "${PROJECT_BINARY_DIR}/${PROJECT_CO
 install(FILES "${PROJECT_BINARY_DIR}/VERSION" DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 
 # Install cmake find script for the project
-install(FILES ${META_PROJECT_NAME}-config.cmake DESTINATION ${INSTALL_ROOT} COMPONENT dev)
+install(FILES ${PROJECT_CONFIGURATION_PATH} DESTINATION ${INSTALL_ROOT} COMPONENT dev)
 
 # Install the project meta files
 install(FILES AUTHORS   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)

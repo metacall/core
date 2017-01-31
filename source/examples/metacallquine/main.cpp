@@ -23,7 +23,7 @@ int main(int argc, char * argv[])
 		"	print('Python:', script);\n"
 		"	return 4;\n";
 
-	value result;
+	void * result;
 
 	(void)argc;
 	(void)argv;
@@ -40,12 +40,12 @@ int main(int argc, char * argv[])
 
 	result = metacall("py_quine", "hello");
 
-	if (value_to_int(result) != 4)
+	if (metacall_value_to_int(result) != 4)
 	{
 		return 1;
 	}
 
-	value_destroy(result);
+	metacall_value_destroy(result);
 
 	return 0;
 }

@@ -41,10 +41,12 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/metacall.h
+	${include_path}/metacall_value.h
 )
 
 set(sources
 	${source_path}/metacall.c
+	${source_path}/metacall_value.c
 )
 
 # Group source files
@@ -191,14 +193,6 @@ target_link_libraries(${target}
 #
 # Deployment
 #
-
-# Library
-install(TARGETS ${target}
-	EXPORT  "${target}-export"				COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
-)
 
 # Header files
 install(DIRECTORY
