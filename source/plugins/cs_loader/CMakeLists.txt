@@ -3,6 +3,8 @@ if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS)
 	return()
 endif()
 
+option(OPTION_BUILD_PLUGINS_CS_IMPL		"Build Netcore library."	ON)
+
 #
 # External dependencies
 #
