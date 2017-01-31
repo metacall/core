@@ -29,6 +29,8 @@
 
 #define LOADER_SCRIPT_PATH "LOADER_SCRIPT_PATH"
 
+#define LOADER_MAX_FILES 50
+
 /* -- Forward Declarations -- */
 
 struct loader_type;
@@ -205,7 +207,7 @@ int loader_load_from_files(loader_naming_path path[], size_t size)
 			{
 				if (l->script_path != NULL)
 				{
-					loader_naming_path absolute_path[size];
+					loader_naming_path absolute_path[LOADER_MAX_FILES];
 
 					for (size_t i = 0; i < size; i++)
 					{
