@@ -78,6 +78,16 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/ruby\n"
+			"#def comment_line(a: Fixnum)\n"
+			"#	puts('This never will be shown', a, '!')\n"
+			"#	return a\n"
+			"#end\n"
+			"=begin\n"
+			"def comment_multi_line(a: Fixnum)\n"
+			"	puts('This =begin =end block never will be shown', a, '!')\n"
+			"	return a\n"
+			"end\n"
+			"=end\n"
 			"def mem_multiply(left: Fixnum, right: Fixnum)\n"
 			"	result = left * right\n"
 			"	puts('Multiply', result, '!')\n"
@@ -97,6 +107,14 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) value_to_int(ret), (int) 25);
 
 		value_destroy(ret);
+
+		ret = metacall("comment_line", 15);
+
+		EXPECT_EQ((value) NULL, (value) ret);
+
+		ret = metacall("comment_multi_line", 25);
+
+		EXPECT_EQ((value) NULL, (value) ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_RB */
 

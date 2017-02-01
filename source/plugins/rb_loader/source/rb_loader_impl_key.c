@@ -22,6 +22,14 @@ enum rb_loader_impl_parser_state
 	rb_loader_impl_parser_state_reset
 };
 
+enum rb_loader_impl_comment_state
+{
+	rb_loader_impl_comment_state_none,
+	rb_loader_impl_comment_state_line,
+	rb_loader_impl_comment_state_multi_line,
+	rb_loader_impl_comment_state_multi_line_end
+};
+
 /* -- Private Methods -- */
 
 static int rb_loader_impl_key_print_cb_iterate(set s, set_key key, set_value v, set_cb_iterate_args args);
@@ -33,8 +41,10 @@ static int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, 
 int rb_loader_impl_key_parse(const char * source, set function_map)
 {
 	static const char func_def_name[] = "def", func_do_name[] = "do", func_end_name[] = "end";
+	static const char comment_begin[] = "begin\n", comment_end[] = "end\n";
 
 	enum rb_loader_impl_parser_state state = rb_loader_impl_parser_state_function;
+	enum rb_loader_impl_comment_state comment = rb_loader_impl_comment_state_none;
 
 	size_t func_def_index = 0, func_do_index = 0, func_end_index = 0;
 	size_t function_index = 0;
@@ -47,7 +57,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 
 	struct rb_function_parameter_parser_type parameter;
 
-	size_t parameter_size;
+	size_t parameter_size = 0;
 
 	int reading_parameter_type = 1;
 
@@ -55,13 +65,106 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 
 	size_t parameter_type_size = 0, parameter_name_size = 0;
 
+	size_t comment_begin_index = 0, comment_end_index = 0;
+
+	int comment_multi_line = 1;
+
 	for (iterator = 0; iterator < length; ++iterator)
 	{
 		const char character = source[iterator];
 
-		if ((character != ' ') && (character != '\t') &&
+		switch (comment)
+		{
+			case rb_loader_impl_comment_state_none :
+			{
+				if (character == '#')
+				{
+					comment = rb_loader_impl_comment_state_line;
+				}
+				else if (character == '=' && (iterator == 0 || (iterator > 0 && source[iterator - 1] == '\n')))
+				{
+					if (comment_multi_line == 1)
+					{
+						comment = rb_loader_impl_comment_state_multi_line;
+
+						comment_begin_index = 0;
+					}
+					else
+					{
+						comment = rb_loader_impl_comment_state_multi_line_end;
+
+						comment_end_index = 0;
+					}
+				}
+
+				break;
+			}
+
+			case rb_loader_impl_comment_state_line :
+			{
+				if (character == '\n')
+				{
+					comment = rb_loader_impl_comment_state_none;
+				}
+
+				break;
+			}
+
+			case rb_loader_impl_comment_state_multi_line :
+			{
+				if (character == comment_begin[comment_begin_index])
+				{
+					++comment_begin_index;
+
+					if (comment_begin_index == sizeof(comment_begin) - 1)
+					{
+						comment = rb_loader_impl_comment_state_none;
+
+						comment_multi_line = 0;
+
+						comment_end_index = 0;
+					}
+				}
+				else
+				{
+					comment_begin_index = 0;
+
+					comment = rb_loader_impl_comment_state_none;
+				}
+
+				break;
+			}
+
+			case rb_loader_impl_comment_state_multi_line_end :
+			{
+				if (character == comment_end[comment_end_index])
+				{
+					++comment_end_index;
+
+					if (comment_end_index == sizeof(comment_end) - 1)
+					{
+						comment = rb_loader_impl_comment_state_none;
+
+						comment_multi_line = 1;
+
+						comment_end_index = 0;
+					}
+				}
+				else
+				{
+					comment_end_index = 0;
+
+					comment = rb_loader_impl_comment_state_none;
+				}
+
+				break;
+			}
+		}
+
+		if ((comment == rb_loader_impl_comment_state_none && comment_multi_line == 1) &&
+			((character != ' ') && (character != '\t') &&
 			(character != '\n' || (character == '\n' && state == rb_loader_impl_parser_state_function_name)) &&
-			(character != '\r'))
+			(character != '\r')))
 		{
 			switch (state)
 			{
