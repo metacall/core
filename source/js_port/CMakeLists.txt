@@ -365,9 +365,6 @@ else()
 	)
 endif()
 
-
-
-
 #
 # Compile definitions
 #
