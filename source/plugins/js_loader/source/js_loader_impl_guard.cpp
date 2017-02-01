@@ -13,6 +13,11 @@ enum js_parser_state
 	Function, FunctionName, Params, Return, Reset
 };
 
+enum js_parser_comment_state
+{
+	None, Slash, Line, MultiLine, MultiLineSlash
+};
+
 std::string & function_name()
 {
 	static std::string func("function");
@@ -22,9 +27,9 @@ std::string & function_name()
 
 bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_function *> & result, std::string & output)
 {
-	/* loopzer was here */
-
 	js_parser_state state = js_parser_state::Function;
+
+	js_parser_comment_state comment = js_parser_comment_state::None;
 
 	size_t function_index = 0;
 
@@ -52,7 +57,76 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 	{
 		iterator = source[i];
 
-		if ((iterator != ' ') && (iterator != '\t') && (iterator != '\n') && (iterator != '\r'))
+		switch (comment)
+		{
+			case None :
+			{
+				if (iterator == '/')
+				{
+					comment = js_parser_comment_state::Slash;
+				}
+
+				break;
+			}
+
+			case Slash :
+			{
+				if (iterator == '/')
+				{
+					comment = js_parser_comment_state::Line;
+				}
+				else if (iterator == '*')
+				{
+					comment = js_parser_comment_state::MultiLine;
+				}
+				else
+				{
+					comment = js_parser_comment_state::None;
+				}
+
+				break;
+			}
+
+			case Line :
+			{
+				if (iterator == '\n')
+				{
+					comment = js_parser_comment_state::None;
+				}
+
+				break;
+			}
+
+			case MultiLine :
+			{
+				if (iterator == '*')
+				{
+					comment = js_parser_comment_state::MultiLineSlash;
+				}
+
+				break;
+			}
+
+			case MultiLineSlash :
+			{
+				if (iterator == '/')
+				{
+					comment = js_parser_comment_state::None;
+				}
+				else
+				{
+					if (iterator != '*')
+					{
+						comment = js_parser_comment_state::MultiLine;
+					}
+				}
+
+				break;
+			}
+		}
+
+		if (comment == js_parser_comment_state::None &&
+			(iterator != ' ') && (iterator != '\t') && (iterator != '\n') && (iterator != '\r'))
 		{
 			switch (state)
 			{

@@ -106,6 +106,9 @@ TEST_F(metacall_test, DefaultConstructor)
 		static const char buffer[] =
 			"#!/bin/sh\n"
 			/*"':' //; exec \"$(command -v nodejs || command -v node)\" \"$0\" \"$@\"\n"*/
+			"/* function mem_comment(a :: Number) {\n"
+			"	return 15;\n"
+			"} */\n"
 			"function mem_divide(a :: Number, b :: Number) :: Number {\n"
 			"	return (a / b);\n"
 			"}\n";
@@ -123,6 +126,10 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((double) value_to_double(ret), (double) 2.0);
 
 		value_destroy(ret);
+
+		ret = metacall("mem_comment", 10.0);
+
+		EXPECT_EQ((value) NULL, (value) ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_JS */
 
