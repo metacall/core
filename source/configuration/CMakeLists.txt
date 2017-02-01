@@ -49,7 +49,6 @@ set(sources
 	${source_path}/configuration_singleton.c
 	${source_path}/configuration_object.c
 	${source_path}/configuration_stream.c
-	${source_path}/configuration_interface.c
 	${source_path}/configuration_impl.c
 )
 

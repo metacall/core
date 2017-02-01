@@ -28,7 +28,7 @@ TEST_F(configuration_test, DefaultConstructor)
 	const char path[] = "global.json";
 	const char key_value[] = "value";
 
-	ASSERT_EQ((int) 0, (int) configuration_initialize(path));
+	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", path));
 
 	/* Global */
 	{

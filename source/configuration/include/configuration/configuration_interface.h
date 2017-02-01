@@ -40,6 +40,8 @@ typedef int (*configuration_interface_destroy)(void);
 
 typedef struct configuration_interface_type * configuration_interface;
 
+typedef configuration_interface (*configuration_interface_singleton)(void);
+
 /* -- Member Data -- */
 
 struct configuration_interface_type
@@ -50,18 +52,6 @@ struct configuration_interface_type
 	configuration_interface_unload unload;
 	configuration_interface_destroy destroy;
 };
-
-/* -- Methods -- */
-
-/**
-*  @brief
-*    Instance of interface implementation
-*
-*  @return
-*    Returns ointer to interface to be used by implementation
-*
-*/
-CONFIGURATION_API configuration_interface configuration_interface_instance(void);
 
 #ifdef __cplusplus
 }

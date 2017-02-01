@@ -18,7 +18,7 @@
 
 /* -- Methods -- */
 
-int configuration_initialize(const char * path)
+int configuration_initialize(const char * name, const char * path)
 {
 	configuration global = configuration_object_initialize("global", path, NULL);
 
@@ -40,9 +40,7 @@ int configuration_initialize(const char * path)
 		return 1;
 	}
 
-	/* TODO: Implement flexible dependency injection */
-
-	if (configuration_impl_initialize("rapid_json") != 0)
+	if (configuration_impl_initialize(name) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation initialization");
 

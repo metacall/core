@@ -16,23 +16,23 @@
 
 /* -- Private Methods -- */
 
-static value configuration_impl_rapid_json_get(const rapidjson::Value & v);
+static value rapid_json_config_impl_get(const rapidjson::Value & v);
 
 /* -- Methods -- */
 
-const char * configuration_impl_rapid_json_extension()
+const char * rapid_json_config_impl_extension()
 {
 	static const char extension[] = "json";
 
 	return extension;
 }
 
-int configuration_impl_rapid_json_initialize()
+int rapid_json_config_impl_initialize()
 {
 	return 0;
 }
 
-configuration_impl configuration_impl_rapid_json_load(configuration config)
+configuration_impl rapid_json_config_impl_load(configuration config)
 {
 	const char * source = configuration_object_source(config);
 
@@ -52,7 +52,7 @@ configuration_impl configuration_impl_rapid_json_load(configuration config)
 
 	for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
 	{
-		value v = configuration_impl_rapid_json_get(it->value);
+		value v = rapid_json_config_impl_get(it->value);
 
 		if (v != NULL)
 		{
@@ -70,7 +70,7 @@ configuration_impl configuration_impl_rapid_json_load(configuration config)
 	return document;
 }
 
-value configuration_impl_rapid_json_get(const rapidjson::Value & v)
+value rapid_json_config_impl_get(const rapidjson::Value & v)
 {
 	if (v.IsBool() == true)
 	{
@@ -136,7 +136,7 @@ value configuration_impl_rapid_json_get(const rapidjson::Value & v)
 	return NULL;
 }
 
-int configuration_impl_rapid_json_unload(configuration config)
+int rapid_json_config_impl_unload(configuration config)
 {
 	rapidjson::Document * document = (rapidjson::Document *)configuration_object_impl(config);
 
@@ -148,7 +148,7 @@ int configuration_impl_rapid_json_unload(configuration config)
 	return 0;
 }
 
-int configuration_impl_rapid_json_destroy()
+int rapid_json_config_impl_destroy()
 {
 	return 0;
 }

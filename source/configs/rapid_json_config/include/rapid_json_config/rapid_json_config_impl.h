@@ -29,7 +29,7 @@ extern "C" {
 *    Returns constant string representing configuration extension
 *
 */
-RAPID_JSON_CONFIG_API const char * configuration_impl_rapid_json_extension(void);
+RAPID_JSON_CONFIG_API const char * rapid_json_config_impl_extension(void);
 
 /**
 *  @brief
@@ -39,7 +39,7 @@ RAPID_JSON_CONFIG_API const char * configuration_impl_rapid_json_extension(void)
 *    Returns zero on correct initialization, distinct from zero otherwise
 *
 */
-RAPID_JSON_CONFIG_API int configuration_impl_rapid_json_initialize(void);
+RAPID_JSON_CONFIG_API int rapid_json_config_impl_initialize(void);
 
 /**
 *  @brief
@@ -52,7 +52,7 @@ RAPID_JSON_CONFIG_API int configuration_impl_rapid_json_initialize(void);
 *    Returns pointer to implementation on correct loading, null otherwise
 *
 */
-RAPID_JSON_CONFIG_API configuration_impl configuration_impl_rapid_json_load(configuration config);
+RAPID_JSON_CONFIG_API configuration_impl rapid_json_config_impl_load(configuration config);
 
 /**
 *  @brief
@@ -65,7 +65,7 @@ RAPID_JSON_CONFIG_API configuration_impl configuration_impl_rapid_json_load(conf
 *    Returns zero on correct unloading, distinct from zero otherwise
 *
 */
-RAPID_JSON_CONFIG_API int configuration_impl_rapid_json_unload(configuration config);
+RAPID_JSON_CONFIG_API int rapid_json_config_impl_unload(configuration config);
 
 /**
 *  @brief
@@ -75,7 +75,7 @@ RAPID_JSON_CONFIG_API int configuration_impl_rapid_json_unload(configuration con
 *    Returns zero on correct destruction, distinct from zero otherwise
 *
 */
-RAPID_JSON_CONFIG_API int configuration_impl_rapid_json_destroy(void);
+RAPID_JSON_CONFIG_API int rapid_json_config_impl_destroy(void);
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,10 @@ extern "C" {
 
 /**
 *  @brief
-*    Initialize configuration from root @path
+*    Initialize configuration from root @path with reader @name
+*
+*  @param[in] name
+*    Reader will be used to parse configurations
 *
 *  @param[in] path
 *    Path where is located the root configuration
@@ -34,7 +37,7 @@ extern "C" {
 *    Returns zero on correct configuration initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_initialize(const char * path);
+CONFIGURATION_API int configuration_initialize(const char * name, const char * path);
 
 /**
 *  @brief

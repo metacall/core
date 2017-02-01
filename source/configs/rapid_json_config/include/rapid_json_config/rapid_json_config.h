@@ -15,6 +15,8 @@
 
 #include <configuration/configuration_interface.h>
 
+#include <dynlink/dynlink.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -29,7 +31,21 @@ extern "C" {
 *    Returns ointer to interface to be used by implementation
 *
 */
-RAPID_JSON_CONFIG_API configuration_interface configuration_interface_instance_rapid_json(void);
+RAPID_JSON_CONFIG_API configuration_interface rapid_json_config_impl_interface_singleton(void);
+
+DYNLINK_SYMBOL_EXPORT(rapid_json_config_impl_interface_singleton);
+
+/**
+*  @brief
+*    Provide the module information
+*
+*  @return
+*    Static string containing module information
+*
+*/
+RAPID_JSON_CONFIG_API const char * rapid_json_config_print_info(void);
+
+DYNLINK_SYMBOL_EXPORT(rapid_json_config_print_info);
 
 #ifdef __cplusplus
 }

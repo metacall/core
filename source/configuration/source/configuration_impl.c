@@ -14,55 +14,149 @@
 #include <adt/adt_vector.h>
 #include <adt/adt_set.h>
 
+#include <dynlink/dynlink.h>
+
 #include <log/log.h>
+
+#include <string.h>
+
+/* -- Definitions -- */
+
+#define CONFIG_DYNLINK_NAME_SIZE 0x40
+
+/* -- Forward Declarations -- */
+
+struct configuration_impl_singleton_type;
+
+/* -- Type Definitions -- */
+
+typedef struct configuration_impl_singleton_type * configuration_impl_singleton;
+
+/* -- Member Data -- */
+
+struct configuration_impl_singleton_type
+{
+	configuration_interface iface;
+	dynlink handle;
+};
 
 /* -- Private Methods -- */
 
+static configuration_impl_singleton configuration_impl_singleton_instance(void);
+
 static int configuration_impl_load_impl(configuration config);
 
-static configuration_interface configuration_impl_initialize_impl(const char * name);
+static dynlink configuration_impl_initialize_load(const char * name);
+
+static int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr);
 
 /* -- Methods -- */
 
-const char * configuration_impl_extension()
+configuration_impl_singleton configuration_impl_singleton_instance()
 {
-	configuration_interface config_iface = configuration_interface_instance();
+	static struct configuration_impl_singleton_type instance =
+	{
+		NULL,
+		NULL
+	};
 
-	return config_iface->extension();
+	return &instance;
 }
 
-configuration_interface configuration_impl_initialize_impl(const char * name)
+const char * configuration_impl_extension()
 {
-	(void)name;
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	return NULL;
+	return singleton->iface->extension();
+}
+
+dynlink configuration_impl_initialize_load(const char * name)
+{
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		const char config_dynlink_suffix[] = "_configd";
+	#else
+		const char config_dynlink_suffix[] = "_config";
+	#endif
+
+	#define CONFIG_DYNLINK_NAME_FULL_SIZE \
+		(sizeof(config_dynlink_suffix) + CONFIG_DYNLINK_NAME_SIZE)
+
+	char config_dynlink_name[CONFIG_DYNLINK_NAME_FULL_SIZE];
+
+	strncpy(config_dynlink_name, name, CONFIG_DYNLINK_NAME_FULL_SIZE - 1);
+
+	strncat(config_dynlink_name, config_dynlink_suffix,
+		CONFIG_DYNLINK_NAME_FULL_SIZE - strnlen(config_dynlink_name, CONFIG_DYNLINK_NAME_FULL_SIZE - 1) - 1);
+
+	#undef CONFIG_DYNLINK_NAME_FULL_SIZE
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loading config: %s", config_dynlink_name);
+
+	return dynlink_load(NULL, config_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+}
+
+int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr)
+{
+	const char config_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
+	const char config_dynlink_symbol_suffix[] = "_config_impl_interface_singleton";
+	/* configuration_interface_instance_rapid_json */
+
+	#define CONFIG_DYNLINK_SYMBOL_SIZE \
+		(sizeof(config_dynlink_symbol_prefix) + CONFIG_DYNLINK_NAME_SIZE + sizeof(config_dynlink_symbol_suffix))
+
+	char config_dynlink_symbol[CONFIG_DYNLINK_SYMBOL_SIZE];
+
+	strncpy(config_dynlink_symbol, config_dynlink_symbol_prefix, CONFIG_DYNLINK_SYMBOL_SIZE - 1);
+
+	strncat(config_dynlink_symbol, name,
+		CONFIG_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIG_DYNLINK_SYMBOL_SIZE - 1) - 1);
+
+	strncat(config_dynlink_symbol, config_dynlink_symbol_suffix,
+		CONFIG_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIG_DYNLINK_SYMBOL_SIZE - 1) - 1);
+
+	#undef CONFIG_DYNLINK_SYMBOL_SIZE
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Config symbol: %s", config_dynlink_symbol);
+
+	return dynlink_symbol(handle, config_dynlink_symbol, singleton_addr_ptr);
 }
 
 int configuration_impl_initialize(const char * name)
 {
-	configuration_interface config_iface = configuration_interface_instance();
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	configuration_interface iface = configuration_impl_initialize_impl(name);
+	dynlink_symbol_addr singleton_addr;
 
-	if (iface == NULL)
+	configuration_interface_singleton iface_singleton;
+
+	singleton->handle = configuration_impl_initialize_load(name);
+
+	if (singleton->handle == NULL)
 	{
 		return 1;
 	}
 
-	config_iface->extension = iface->extension;
-	config_iface->initialize = iface->initialize;
-	config_iface->load = iface->load;
-	config_iface->unload = iface->unload;
-	config_iface->destroy = iface->destroy;
+	if (configuration_impl_initialize_symbol(singleton->handle, name, &singleton_addr) != 0)
+	{
+		dynlink_unload(singleton->handle);
 
-	return config_iface->initialize();
+		singleton->handle = NULL;
+
+		return 1;
+	}
+
+	iface_singleton = (configuration_interface_singleton)DYNLINK_SYMBOL_GET(singleton_addr);
+
+	singleton->iface = iface_singleton();
+
+	return singleton->iface->initialize();
 }
 
 int configuration_impl_load_impl(configuration config)
 {
-	configuration_interface config_iface = configuration_interface_instance();
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	configuration_impl impl = config_iface->load(config);
+	configuration_impl impl = singleton->iface->load(config);
 
 	if (impl == NULL)
 	{
@@ -188,22 +282,25 @@ int configuration_impl_load(configuration config)
 
 int configuration_impl_unload(configuration config)
 {
-	configuration_interface config_iface = configuration_interface_instance();
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	return config_iface->unload(config);
+	return singleton->iface->unload(config);
 }
 
 int configuration_impl_destroy()
 {
-	configuration_interface config_iface = configuration_interface_instance();
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	int result = config_iface->destroy();
+	int result = singleton->iface->destroy();
 
-	config_iface->extension = NULL;
-	config_iface->initialize = NULL;
-	config_iface->load = NULL;
-	config_iface->unload = NULL;
-	config_iface->destroy = NULL;
+	singleton->iface = NULL;
+
+	if (singleton->handle != NULL)
+	{
+		dynlink_unload(singleton->handle);
+	}
+
+	singleton->handle = NULL;
 
 	return result;
 }
