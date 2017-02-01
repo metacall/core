@@ -129,23 +129,11 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 				args_value[args_count] = Qnil;
 			}
 
-			#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
-
-				rb_hash_aset(rb_function->args_hash, ID2SYM(rb_intern(signature_get_name(s, args_count))), args_value[args_count]);
-
-			#endif
+			rb_hash_aset(rb_function->args_hash, ID2SYM(rb_intern(signature_get_name(s, args_count))), args_value[args_count]);
 		}
 
-		#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_OPTIONAL
-
-			result_value = rb_funcallv(rb_function->rb_handle->instance, rb_function->method_id, args_size, args_value);
-
-		#elif LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
-
-			result_value = rb_funcall(rb_function->rb_handle->instance, rb_intern("send"), 2,
-				ID2SYM(rb_function->method_id), rb_function->args_hash);
-
-		#endif
+		result_value = rb_funcall(rb_function->rb_handle->instance, rb_intern("send"), 2,
+			ID2SYM(rb_function->method_id), rb_function->args_hash);
 	}
 	else
 	{
@@ -475,7 +463,20 @@ loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 					rb_include_module(handle->instance, handle->module);
 
+					handle->function_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+					if (!(handle->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), handle->function_map) == 0))
+					{
+						set_destroy(handle->function_map);
+
+						free(handle);
+
+						return NULL;
+					}
+
 					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s.%s loaded", name, extension);
+
+					rb_loader_impl_key_print(handle->function_map);
 
 					return (loader_handle)handle;
 				}

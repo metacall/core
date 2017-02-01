@@ -78,7 +78,6 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/ruby\n"
-			"#def mem_multiply(left = 0, right = 0)\n"
 			"def mem_multiply(left: Fixnum, right: Fixnum)\n"
 			"	result = left * right\n"
 			"	puts('Multiply', result, '!')\n"
