@@ -30,19 +30,6 @@
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 
-#define LOADER_IMPL_RB_INSPECT_OPTIONAL 0
-#define LOADER_IMPL_RB_INSPECT_OPTIONAL_NAME ":opt"
-#define LOADER_IMPL_RB_INSPECT_KEYWORD 1
-#define LOADER_IMPL_RB_INSPECT_KEYWORD_NAME ":key"
-
-#define LOADER_IMPL_RB_INSPECT_TYPE LOADER_IMPL_RB_INSPECT_KEYWORD
-
-#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_OPTIONAL
-#	define LOADER_IMPL_RB_INSPECT_NAME LOADER_IMPL_RB_INSPECT_OPTIONAL_NAME
-#elif LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
-#	define LOADER_IMPL_RB_INSPECT_NAME LOADER_IMPL_RB_INSPECT_KEYWORD_NAME
-#endif
-
 typedef struct loader_impl_rb_handle_type
 {
 	VALUE module;
@@ -243,127 +230,6 @@ function_interface function_rb_singleton(void)
 	return &rb_interface;
 }
 
-/*const char * rb_inspect_module_data()
-{
-	static const char inspect_script_str[] =
-
-	*//* TODO: re-implement this in C instead of evaluating Ruby code *//*
-
-	"def self.class_method_params(klass, meth)\n"
-		"captured_binding = nil\n"
-
-		"TracePoint.new(:call) do |tp|\n"
-			"captured_binding = tp.binding\n"
-		"end.enable {\n"
-			"obj = Class.new(klass) do\n"
-				"def initialize\n"
-
-				"end\n"
-			"end.new\n"
-
-			"meth_obj = klass.method(meth) rescue nil\n"
-
-			"meth_obj = obj.method(meth) rescue nil if not meth_obj\n"
-
-			"if meth_obj\n"
-				"params = meth_obj.parameters\n"
-
-				"method_params = params.collect { |i| i.last if i.first == " LOADER_IMPL_RB_INSPECT_NAME " }.compact\n"
-
-				"required_params = [\"\"] * (params.size - method_params.size)\n"
-
-				"meth_obj.call(*required_params) rescue nil\n"
-
-				"method_params.each_with_object({}) do |i, hash|\n"
-					"hash[i] = captured_binding.local_variable_get(i)\n"
-				"end\n"
-			"end\n"
-		"}\n"
-	"end\n"
-
-	"def self.class_method_ret_value(klass, meth)\n"
-
-		"TracePoint.new(:return) do |tp|\n"
-			"puts \"returning #{tp.return_value} from #{tp.defined_class}.#{tp.method_id}\"\n"
-		"end.enable {\n"
-			"obj = Class.new(klass)\n"
-
-			"meth_obj = klass.method(meth) rescue nil\n"
-
-			"meth_obj = obj.method(meth) rescue nil if not meth_obj\n"
-
-			"if meth_obj\n"
-				"params = meth_obj.parameters\n"
-
-				"puts \"params #{params}\"\n"
-
-				"method_params = params.collect { |i| i.last if i.first == " LOADER_IMPL_RB_INSPECT_NAME " }.compact\n"
-
-				"required_params = [\"\"] * (params.size - method_params.size)\n"
-
-				"meth_obj.call(*required_params) rescue nil\n"
-			"end\n"
-		"}\n"
-	"end\n"
-
-	"def self.module_method_params(mod, meth)\n"
-		"captured_binding = nil\n"
-
-		"TracePoint.new(:call) do |tp|\n"
-			"captured_binding = tp.binding\n"
-		"end.enable {\n"
-			"obj = Class.new(Object) do\n"
-				"include mod\n"
-
-				"def initialize\n"
-				"end\n"
-			"end.new\n"
-
-			"meth_obj = mod.method(meth) rescue nil\n"
-
-			"meth_obj = obj.method(meth) rescue nil if not meth_obj\n"
-
-			"if meth_obj\n"
-				"params = meth_obj.parameters\n"
-
-				"method_params = params.collect { |i| i.last if i.first == " LOADER_IMPL_RB_INSPECT_NAME " }.compact\n"
-
-				"required_params = [\"\"] * (params.size - method_params.size)\n"
-
-				"meth_obj.call(*required_params) rescue nil\n"
-
-				"method_params.each_with_object({}) do |i, hash|\n"
-					"hash[i] = captured_binding.local_variable_get(i)\n"
-				"end\n"
-			"end\n"
-		"}\n"
-	"end\n";
-
-	return inspect_script_str;
-}
-
-int rb_loader_impl_initialize_inspect(loader_impl_rb rb_impl)
-{
-	rb_impl->inspect_module = rb_define_module("Inspect");
-
-	if (rb_impl->inspect_module != Qnil)
-	{
-		rb_impl->inspect_module_data = rb_str_new_cstr(rb_inspect_module_data());
-
-		if (rb_impl->inspect_module_data != Qnil)
-		{
-			VALUE result = rb_funcall(rb_impl->inspect_module, rb_intern("module_eval"), 1, rb_impl->inspect_module_data);
-
-			if (result != Qnil)
-			{
-				return 0;
-			}
-		}
-	}
-
-	return 1;
-}*/
-
 int rb_loader_impl_initialize_types(loader_impl impl)
 {
 	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
@@ -424,7 +290,6 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl)
 
 	if (rb_loader_impl_initialize_types(impl) != 0)
 	{
-		/* TODO: Check if it is 0-fiendly */
 		ruby_cleanup(0);
 
 		return NULL;
@@ -432,13 +297,12 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl)
 
 	if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
-
-		/* TODO: Check if it is 0-fiendly */
 		ruby_cleanup(0);
 
 		return NULL;
 	}
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 
 	return (loader_impl_data)&rb_loader_impl_unused;
 }
@@ -464,24 +328,7 @@ VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 
 	if (file_exists == Qtrue)
 	{
-		/* TODO: Remove this... */
-		/*VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);*/
-
-		VALUE module_data = rb_str_new_cstr(
-			"def say_hello(value: String)\n"
-			"	result = 'Hello ' + value + '!'\n"
-			"	puts(result)\n"
-			"	return result\n"
-			"end\n"
-			"def say_multiply(left: Fixnum, right: Fixnum)\n"
-			"	result = left * right\n"
-			"	puts('Multiply', result, '!')\n"
-			"	return result\n"
-			"end\n"
-			"def say_null()\n"
-			"	puts('Helloooo from null method!')\n"
-			"end\n"
-		);
+		VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);
 
 		if (module_data != Qnil)
 		{
@@ -663,55 +510,26 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-/*int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
-	VALUE parameter_array, function f, loader_impl_rb_function rb_f)
+int rb_loader_impl_discover_func(loader_impl impl, function f, rb_function_parser function_parser)
 {
-	if (rb_impl != NULL && parameter_array != Qnil)
+	signature s = function_signature(f);
+
+	if (s != NULL)
 	{
-		signature s = function_signature(f);
+		const size_t size = signature_count(s);
 
-		if (s != NULL)
+		size_t index;
+
+		for (index = 0; index < size; ++index)
 		{
-			const size_t size = signature_count(s);
-
-			size_t index;
-
-			for (index = 0; index < size; ++index)
-			{
-				VALUE parameter_pair = rb_ary_entry(parameter_array, (long)index);
-
-				VALUE parameter_symbol = rb_ary_entry(parameter_pair, 0);
-
-				VALUE parameter_name = rb_funcall(parameter_symbol, rb_intern("id2name"), 0);
-
-				const char * parameter_name_str = RSTRING_PTR(parameter_name);
-
-				VALUE parameter_value = rb_ary_entry(parameter_pair, 1);
-
-				#if LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_OPTIONAL
-					VALUE parameter_value_type = rb_funcall(parameter_value, rb_intern("class"), 0);
-				#elif LOADER_IMPL_RB_INSPECT_TYPE == LOADER_IMPL_RB_INSPECT_KEYWORD
-					VALUE parameter_value_type = parameter_value;
-				#endif
-
-				VALUE parameter_value_type_name = rb_funcall(parameter_value_type, rb_intern("to_s"), 0);
-
-				const char * parameter_value_type_name_str = RSTRING_PTR(parameter_value_type_name);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Parameter (%ld) <%s> Type %s %ld", index,
-					parameter_name_str, parameter_value_type_name_str, parameter_value_type);
-
-				signature_set(s, index, parameter_name_str, loader_impl_type(impl, parameter_value_type_name_str));
-
-				rb_hash_aset(rb_f->args_hash, parameter_symbol, parameter_value);
-			}
-
-			return 0;
+			signature_set(s, index, function_parser->params[index].name, loader_impl_type(impl, function_parser->params[index].type));
 		}
+
+		return 0;
 	}
 
 	return 1;
-}*/
+}
 
 loader_impl_rb_function rb_function_create(loader_impl_rb_handle rb_handle, ID id)
 {
@@ -751,45 +569,38 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			const char * method_name_str = RSTRING_PTR(method_name);
 
-			rb_function_parser function_parser = set_get(rb_handle->function_map, method_name_str);
+			rb_function_parser function_parser = set_get(rb_handle->function_map, (set_key)method_name_str);
+
+			loader_impl_rb_function rb_function = NULL;
 
 			if (function_parser == NULL)
 			{
 				continue;
 			}
 
-			/*
-			loader_impl_rb rb_impl = loader_impl_get(impl);
-
-			VALUE method_name = rb_funcall(method, rb_intern("id2name"), 0);
-
-			const char * method_name_str = RSTRING_PTR(method_name);
-
-			VALUE parameter_map = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_params"), 2, rb_handle->instance, method);
-
-			*//*VALUE ret_value = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_ret_value"), 2, rb_handle->instance, method);*//*
-
-			VALUE parameter_array = rb_funcall(parameter_map, rb_intern("to_a"), 0);
-
-			VALUE parameters_size = rb_funcall(parameter_array, rb_intern("size"), 0);
-
-			int parameters_size_integer = FIX2INT(parameters_size);
-
-			loader_impl_rb_function rb_function = rb_function_create(rb_handle, rb_intern(method_name_str));
+			rb_function = rb_function_create(rb_handle, rb_intern(method_name_str));
 
 			if (rb_function)
 			{
-				function f = function_create(method_name_str, parameters_size_integer, rb_function, &function_rb_singleton);
+				function f = function_create(method_name_str, function_parser->params_size, rb_function, &function_rb_singleton);
 
-				if (f != NULL && rb_loader_impl_discover_func(impl, rb_impl, parameter_array, f, rb_function) == 0)
+				if (f != NULL && rb_loader_impl_discover_func(impl, f, function_parser) == 0)
 				{
 					scope sp = context_scope(ctx);
 
 					scope_define(sp, function_name(f), f);
 
-					log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, parameters_size_integer);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, function_parser->params_size);
 				}
-			}*/
+				else
+				{
+					return 1;
+				}
+			}
+			else
+			{
+				return 1;
+			}
 		}
 	}
 
@@ -800,6 +611,5 @@ int rb_loader_impl_destroy(loader_impl impl)
 {
 	(void)impl;
 
-	/* TODO: Check if it is 0-fiendly */
 	return ruby_cleanup(0);
 }

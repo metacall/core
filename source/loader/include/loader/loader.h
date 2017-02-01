@@ -19,6 +19,8 @@ extern "C" {
 
 #include <stdlib.h>
 
+#define LOADER_LOAD_FROM_FILES_SIZE 0x20
+
 typedef void * loader_data;
 
 LOADER_API void loader_initialize(void);

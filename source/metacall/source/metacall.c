@@ -63,7 +63,16 @@ size_t metacall_args_size()
 
 int metacall_load_from_files(const char * path[], size_t size)
 {
-	return loader_load_from_files((const loader_naming_path *)path, size);
+	loader_naming_path path_impl[LOADER_LOAD_FROM_FILES_SIZE];
+
+	size_t iterator;
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		strncpy(path_impl[iterator], path[iterator], LOADER_NAMING_PATH_SIZE);
+	}
+
+	return loader_load_from_files((const loader_naming_path *)path_impl, size);
 }
 
 int metacall_load_from_memory(const char * extension, const char * buffer, size_t size)
