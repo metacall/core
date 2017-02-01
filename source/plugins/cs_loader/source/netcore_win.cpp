@@ -18,7 +18,7 @@ netcore_win::netcore_win()
 {
 	this->log = new logger();
 	this->log->disable();
-	this->domain_id = -1;
+	this->domain_id = 0;
 }
 
 

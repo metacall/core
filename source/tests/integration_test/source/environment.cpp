@@ -22,8 +22,8 @@ void environment::SetUp() {
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout));
 
-	char * py_scripts[] = {(char *) "example.py"};
-	char * cs_scripts[] = {(char *) "hello.cs"};
+	const char * py_scripts[] = { "example.py" };
+	const char * cs_scripts[] = { "hello.cs" };
 
 	metacall_load_from_files(py_scripts, 1);
 	metacall_load_from_files(cs_scripts, 1);
@@ -31,5 +31,5 @@ void environment::SetUp() {
 
 void environment::TearDown() {
 	loader_unload();
-	
+
 }

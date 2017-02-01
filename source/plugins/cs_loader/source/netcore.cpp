@@ -74,24 +74,24 @@ bool netcore::create_delegates() {
 }
 
 bool netcore::load_source(wchar_t * source) {
-	return this->core_load_from_source_w(source);
+	return this->core_load_from_source_w(source) > 0 ? true : false;
 };
 bool netcore::load_source(char * source) {
-	return this->core_load_from_source_c(source);
+	return this->core_load_from_source_c(source) > 0 ? true : false;
 }
 
 bool netcore::load_files(wchar_t ** source, size_t size) {
-	return this->core_load_from_files_w(source, size);
+	return this->core_load_from_files_w(source, size) > 0 ? true : false;
 };
 bool netcore::load_files(char ** source, size_t size) {
-	return this->core_load_from_files_c(source, size);
+	return this->core_load_from_files_c(source, size) > 0 ? true : false;
 }
 
 bool netcore::load_assembly(wchar_t * source) {
-	return this->core_load_from_assembly_w(source);
+	return this->core_load_from_assembly_w(source) > 0 ? true : false;
 };
 bool netcore::load_assembly(char * source) {
-	return this->core_load_from_assembly_c(source);
+	return this->core_load_from_assembly_c(source) > 0 ? true : false;
 }
 
 execution_result* netcore::execute(char * function) {

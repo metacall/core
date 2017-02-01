@@ -230,7 +230,7 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* C# Netcore */
 	#if defined(OPTION_BUILD_PLUGINS_CS)
 	{
-		const char * mock_scripts[] =
+		const char * cs_scripts[] =
 		{
 			"hello.cs"
 		};
