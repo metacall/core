@@ -183,7 +183,7 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_from_files(loader_naming_path path[], size_t size)
+int loader_load_from_files(const loader_naming_path path[], size_t size)
 {
 	loader l = loader_singleton();
 
@@ -209,14 +209,16 @@ int loader_load_from_files(loader_naming_path path[], size_t size)
 				{
 					loader_naming_path absolute_path[LOADER_MAX_FILES];
 
-					for (size_t i = 0; i < size; i++)
-					{
-						memcpy(absolute_path[i], l->script_path, strlen(l->script_path) + 1);
+					size_t iterator;
 
-						strncat(absolute_path[i], path[i], LOADER_NAMING_PATH_SIZE - 1);
+					for (iterator = 0; iterator < size; ++iterator)
+					{
+						memcpy(absolute_path[iterator], l->script_path, strlen(l->script_path) + 1);
+
+						strncat(absolute_path[iterator], path[iterator], LOADER_NAMING_PATH_SIZE - 1);
 					}
 
-					return loader_impl_load_from_files(impl, absolute_path, size);
+					return loader_impl_load_from_files(impl, (const loader_naming_path *)absolute_path, size);
 				}
 				else
 				{

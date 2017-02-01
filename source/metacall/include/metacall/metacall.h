@@ -53,12 +53,12 @@ METACALL_API size_t metacall_args_size(void);
 *    Loads a script from file specified by @path
 *
 *  @param[in] path
-*    Path of the file
+*    Path array of files
 *
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_files(char * path[], size_t size);
+METACALL_API int metacall_load_from_files(const char * path[], size_t size);
 
 /**
 *  @brief

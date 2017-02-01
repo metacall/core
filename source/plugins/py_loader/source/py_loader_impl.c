@@ -474,7 +474,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-loader_handle py_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name)
+loader_handle py_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
 {
 	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
 

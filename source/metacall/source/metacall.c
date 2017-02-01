@@ -61,9 +61,9 @@ size_t metacall_args_size()
 	return args_size;
 }
 
-int metacall_load_from_files(char * path[],size_t size)
+int metacall_load_from_files(const char * path[], size_t size)
 {
-	return loader_load_from_files((loader_naming_path *)path, size);
+	return loader_load_from_files((const loader_naming_path *)path, size);
 }
 
 int metacall_load_from_memory(const char * extension, const char * buffer, size_t size)

@@ -16,6 +16,8 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
+#include <adt/adt_set.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -41,17 +43,11 @@
 #	define LOADER_IMPL_RB_INSPECT_NAME LOADER_IMPL_RB_INSPECT_KEYWORD_NAME
 #endif
 
-typedef struct loader_impl_rb_type
-{
-	VALUE inspect_module;
-	VALUE inspect_module_data;
-
-} * loader_impl_rb;
-
 typedef struct loader_impl_rb_handle_type
 {
 	VALUE module;
 	VALUE instance;
+	set function_map;
 
 } * loader_impl_rb_handle;
 
@@ -247,11 +243,11 @@ function_interface function_rb_singleton(void)
 	return &rb_interface;
 }
 
-const char * rb_inspect_module_data()
+/*const char * rb_inspect_module_data()
 {
 	static const char inspect_script_str[] =
 
-	/* TODO: re-implement this in C instead of evaluating Ruby code */
+	*//* TODO: re-implement this in C instead of evaluating Ruby code *//*
 
 	"def self.class_method_params(klass, meth)\n"
 		"captured_binding = nil\n"
@@ -366,7 +362,7 @@ int rb_loader_impl_initialize_inspect(loader_impl_rb rb_impl)
 	}
 
 	return 1;
-}
+}*/
 
 int rb_loader_impl_initialize_types(loader_impl impl)
 {
@@ -410,35 +406,41 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 
 loader_impl_data rb_loader_impl_initialize(loader_impl impl)
 {
-	loader_impl_rb rb_impl = malloc(sizeof(struct loader_impl_rb_type));
+	static struct rb_loader_impl_type
+	{
+		void * unused;
+
+	}
+	rb_loader_impl_unused =
+	{
+		NULL
+	};
 
 	(void)impl;
 
-	if (rb_impl != NULL)
+	ruby_init();
+
+	ruby_init_loadpath();
+
+	if (rb_loader_impl_initialize_types(impl) != 0)
 	{
-		ruby_init();
-
-		ruby_init_loadpath();
-
-		if (rb_loader_impl_initialize_types(impl) == 0)
-		{
-			if (rb_loader_impl_initialize_inspect(rb_impl) == 0)
-			{
-				if (rb_gv_set("$VERBOSE", Qtrue) == Qtrue)
-				{
-					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
-
-					return rb_impl;
-				}
-			}
-		}
-
+		/* TODO: Check if it is 0-fiendly */
 		ruby_cleanup(0);
 
-		free(rb_impl);
+		return NULL;
 	}
 
-	return NULL;
+	if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
+
+		/* TODO: Check if it is 0-fiendly */
+		ruby_cleanup(0);
+
+		return NULL;
+	}
+
+	return (loader_impl_data)&rb_loader_impl_unused;
 }
 
 int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
@@ -462,7 +464,24 @@ VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 
 	if (file_exists == Qtrue)
 	{
-		VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);
+		/* TODO: Remove this... */
+		/*VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);*/
+
+		VALUE module_data = rb_str_new_cstr(
+			"def say_hello(value: String)\n"
+			"	result = 'Hello ' + value + '!'\n"
+			"	puts(result)\n"
+			"	return result\n"
+			"end\n"
+			"def say_multiply(left: Fixnum, right: Fixnum)\n"
+			"	result = left * right\n"
+			"	puts('Multiply', result, '!')\n"
+			"	return result\n"
+			"end\n"
+			"def say_null()\n"
+			"	puts('Helloooo from null method!')\n"
+			"end\n"
+		);
 
 		if (module_data != Qnil)
 		{
@@ -513,13 +532,16 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
-loader_handle rb_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name)
+loader_handle rb_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
 	VALUE name_capitalized = rb_funcall(name_value, rb_intern("capitalize"), 0);
 
 	VALUE module = rb_define_module(RSTRING_PTR(name_capitalized));
+
+	/* TODO: Load from files.. */
+	(void)size;
 
 	if (module != Qnil)
 	{
@@ -543,7 +565,20 @@ loader_handle rb_loader_impl_load_from_files(loader_impl impl, loader_naming_pat
 
 					rb_include_module(handle->instance, handle->module);
 
+					handle->function_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+					if (!(handle->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), handle->function_map) == 0))
+					{
+						set_destroy(handle->function_map);
+
+						free(handle);
+
+						return NULL;
+					}
+
 					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path[0]);
+
+					rb_loader_impl_key_print(handle->function_map);
 
 					return (loader_handle)handle;
 				}
@@ -618,6 +653,8 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (rb_handle != NULL)
 	{
+		set_destroy(rb_handle->function_map);
+
 		free(rb_handle);
 
 		return 0;
@@ -626,7 +663,7 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
+/*int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
 	VALUE parameter_array, function f, loader_impl_rb_function rb_f)
 {
 	if (rb_impl != NULL && parameter_array != Qnil)
@@ -674,7 +711,7 @@ int rb_loader_impl_discover_func(loader_impl impl, loader_impl_rb rb_impl,
 	}
 
 	return 1;
-}
+}*/
 
 loader_impl_rb_function rb_function_create(loader_impl_rb_handle rb_handle, ID id)
 {
@@ -710,6 +747,18 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 		if (method != Qnil)
 		{
+			VALUE method_name = rb_funcall(method, rb_intern("id2name"), 0);
+
+			const char * method_name_str = RSTRING_PTR(method_name);
+
+			rb_function_parser function_parser = set_get(rb_handle->function_map, method_name_str);
+
+			if (function_parser == NULL)
+			{
+				continue;
+			}
+
+			/*
 			loader_impl_rb rb_impl = loader_impl_get(impl);
 
 			VALUE method_name = rb_funcall(method, rb_intern("id2name"), 0);
@@ -718,7 +767,7 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			VALUE parameter_map = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_params"), 2, rb_handle->instance, method);
 
-			/*VALUE ret_value = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_ret_value"), 2, rb_handle->instance, method);*/
+			*//*VALUE ret_value = rb_funcall(rb_impl->inspect_module, rb_intern("class_method_ret_value"), 2, rb_handle->instance, method);*//*
 
 			VALUE parameter_array = rb_funcall(parameter_map, rb_intern("to_a"), 0);
 
@@ -740,7 +789,7 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 					log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, parameters_size_integer);
 				}
-			}
+			}*/
 		}
 	}
 
@@ -749,16 +798,8 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 int rb_loader_impl_destroy(loader_impl impl)
 {
-	loader_impl_rb rb_impl = loader_impl_get(impl);
+	(void)impl;
 
-	if (rb_impl != NULL)
-	{
-		ruby_cleanup(0);
-
-		free(rb_impl);
-
-		return 0;
-	}
-
-	return 1;
+	/* TODO: Check if it is 0-fiendly */
+	return ruby_cleanup(0);
 }

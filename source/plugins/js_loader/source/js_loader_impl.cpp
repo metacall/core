@@ -678,7 +678,7 @@ int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle js_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name)
+loader_handle js_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 

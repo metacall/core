@@ -303,7 +303,7 @@ int loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 	return 1;
 }
 
-int loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size)
+int loader_impl_load_from_files(loader_impl impl, const loader_naming_path path[], size_t size)
 {
 	if (impl != NULL)
 	{
@@ -311,14 +311,16 @@ int loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], siz
 
 		loader_naming_name module_name;
 
-		for (size_t i = 0; i < size; i++)
+		size_t iterator;
+
+		for (iterator = 0; iterator < size; ++iterator)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loading %s", path[i]);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loading %s", path[iterator]);
 		}
 
 		if (interface_impl != NULL && loader_path_get_name(path[0], module_name) > 1)
 		{
-			loader_handle handle = interface_impl->load_from_files(impl, path, size, module_name);
+			loader_handle handle = interface_impl->load_from_files(impl, module_name, path, size);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 

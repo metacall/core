@@ -31,7 +31,7 @@ typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl);
 
 typedef int (*loader_impl_interface_execution_path)(loader_impl, const loader_naming_path);
 
-typedef loader_handle (*loader_impl_interface_load_from_files)(loader_impl, loader_naming_path[], size_t size, const loader_naming_name);
+typedef loader_handle (*loader_impl_interface_load_from_files)(loader_impl, const loader_naming_name, const loader_naming_path[], size_t);
 
 typedef loader_handle (*loader_impl_interface_load_from_memory)(loader_impl, const loader_naming_name, const loader_naming_extension, const char *, size_t);
 

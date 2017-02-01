@@ -21,7 +21,7 @@ PY_LOADER_API loader_impl_data py_loader_impl_initialize(loader_impl impl);
 
 PY_LOADER_API int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-PY_LOADER_API loader_handle py_loader_impl_load_from_files(loader_impl impl, loader_naming_path path[], size_t size, const loader_naming_name name);
+PY_LOADER_API loader_handle py_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size);
 
 PY_LOADER_API loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size);
 

@@ -23,7 +23,7 @@ public:
 
 TEST_F(metacall_cast_test, DefaultConstructor)
 {
-	EXPECT_EQ((int)0, (int)log_configure("metacall",
+	EXPECT_EQ((int) 0, (int)log_configure("metacall",
 		log_policy_format_text(),
 		log_policy_schedule_sync(),
 		log_policy_storage_sequential(),
@@ -36,7 +36,10 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
-		char * py_scripts[] = {(char *)"example.py"};
+		const char * py_scripts[] =
+		{
+			"example.py"
+		};
 
 		const int seven_multiples_limit = 10;
 
@@ -46,7 +49,7 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		value args[2];
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(py_scripts, 1));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_files(py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
 		args[0] = value_create_int(5);
 		args[1] = value_create_int(15);
