@@ -26,15 +26,16 @@ typedef struct loader_impl_py_function_type
 	PyObject * func;
 	PyObject ** values;
 
-} * loader_impl_py_function;
+} *loader_impl_py_function;
 
 typedef struct loader_impl_py_type
 {
 	PyObject * inspect_module;
 	PyObject * inspect_signature;
 	PyObject * builtins_module;
+	PyObject * main_module;
 
-} * loader_impl_py;
+} *loader_impl_py;
 
 int type_py_interface_create(type t, type_impl impl)
 {
@@ -132,13 +133,13 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			int * value_ptr = (int *)(args[args_count]);
 
-			#if PY_MAJOR_VERSION == 2
-				py_func->values[args_count] = PyInt_FromLong(*value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				long l = (long)(*value_ptr);
+#if PY_MAJOR_VERSION == 2
+			py_func->values[args_count] = PyInt_FromLong(*value_ptr);
+#elif PY_MAJOR_VERSION == 3
+			long l = (long)(*value_ptr);
 
-				py_func->values[args_count] = PyLong_FromLong(l);
-			#endif
+			py_func->values[args_count] = PyLong_FromLong(l);
+#endif
 		}
 		else if (id == TYPE_LONG)
 		{
@@ -162,11 +163,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			const char * value_ptr = (const char *)(args[args_count]);
 
-			#if PY_MAJOR_VERSION == 2
-				py_func->values[args_count] = PyString_FromString(value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyUnicode_FromString(value_ptr);
-			#endif
+#if PY_MAJOR_VERSION == 2
+			py_func->values[args_count] = PyString_FromString(value_ptr);
+#elif PY_MAJOR_VERSION == 3
+			py_func->values[args_count] = PyUnicode_FromString(value_ptr);
+#endif
 
 		}
 		else if (id == TYPE_PTR)
@@ -200,11 +201,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 		else if (id == TYPE_INT)
 		{
-			#if PY_MAJOR_VERSION == 2
-				long l = PyInt_AsLong(result);
-			#elif PY_MAJOR_VERSION == 3
-				long l = PyLong_AsLong(result);
-			#endif
+#if PY_MAJOR_VERSION == 2
+			long l = PyInt_AsLong(result);
+#elif PY_MAJOR_VERSION == 3
+			long l = PyLong_AsLong(result);
+#endif
 
 			/* TODO: Review overflow */
 			int i = (int)l;
@@ -234,14 +235,14 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			char * str = NULL;
 			Py_ssize_t length = 0;
 
-			#if PY_MAJOR_VERSION == 2
-				if (PyString_AsStringAndSize(result, &str, &length) == -1)
-				{
-					/* error */
-				}
-			#elif PY_MAJOR_VERSION == 3
-				str = PyUnicode_AsUTF8AndSize(result, &length);
-			#endif
+#if PY_MAJOR_VERSION == 2
+			if (PyString_AsStringAndSize(result, &str, &length) == -1)
+			{
+				/* error */
+			}
+#elif PY_MAJOR_VERSION == 3
+			str = PyUnicode_AsUTF8AndSize(result, &length);
+#endif
 
 			v = value_create_string(str, (size_t)length);
 		}
@@ -446,7 +447,19 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl)
 
 		if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
 		{
-			return py_impl;
+			PyModuleDef module_def = { 0 };
+
+			module_def.m_name = "__metacall__";
+
+			PyObject* py_module_def = PyModuleDef_Init(&module_def);
+
+			py_impl->main_module = PyModule_Create(py_module_def);
+			
+			Py_IncRef(py_impl->main_module);
+
+			if (py_impl->main_module != NULL) {
+				return py_impl;
+			}
 		}
 
 		free(py_impl);
@@ -476,15 +489,37 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 
 loader_handle py_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
 {
-	PyObject * module_name = PyUnicode_DecodeFSDefault(name);
+	loader_impl_py py_impl = loader_impl_get(impl);
 
-	PyObject * module = PyImport_Import(module_name);
+	PyObject* main_dict = PyModule_GetDict(py_impl->main_module);
 
-	Py_DECREF(module_name);
+	loader_naming_name module_name;
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from (%s) module at (%p)", (void *)impl, path[0], name, (void *)module);
+	char location_path[512] = { 0 };
 
-	return (loader_handle)module;
+	for (size_t i = 0; i < size; i++)
+	{
+		loader_path_get_name(path[i], module_name);
+		PyObject* py_module_name = PyUnicode_DecodeFSDefault(module_name);
+
+		strncpy(location_path, path[i], strlen(path[i]) - (strlen(module_name) + 3));
+		
+		/* ugly wave*/
+		
+		PyObject * system_path = PySys_GetObject("path");
+		PyObject * current_path = PyUnicode_DecodeFSDefault(location_path);
+
+		PyList_Append(system_path, current_path);
+
+		Py_DECREF(current_path);
+
+		PyObject * module = PyImport_Import(py_module_name);
+		PyObject * module_dict = PyModule_GetDict(module);
+		PyDict_Merge(main_dict, module_dict, 0);
+	}
+
+
+	return (loader_handle)py_impl->main_module;
 }
 
 loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
@@ -592,7 +627,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 	if (args != NULL)
 	{
 		PyTuple_SetItem(args, 0, func);
-
+		PyErr_Print();
 		result = PyObject_CallObject(py_impl->inspect_signature, args);
 	}
 
@@ -652,7 +687,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 			}
 		}
 
-		signature_set_return(s,	py_loader_impl_discover_type(impl, return_annotation));
+		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation));
 
 		return 0;
 	}
@@ -672,7 +707,7 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 		{
 			Py_ssize_t position = 0;
 
-			PyObject * key, * value;
+			PyObject * key, *value;
 
 			while (PyDict_Next(module_dict, &position, &key, &value))
 			{
@@ -729,6 +764,8 @@ int py_loader_impl_destroy(loader_impl impl)
 		Py_DECREF(py_impl->inspect_module);
 
 		Py_DECREF(py_impl->builtins_module);
+
+		Py_DECREF(py_impl->main_module);
 
 		Py_Finalize();
 
