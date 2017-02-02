@@ -451,9 +451,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl)
 
 			module_def.m_name = "__metacall__";
 
-			PyObject* py_module_def = PyModuleDef_Init(&module_def);
-
-			py_impl->main_module = PyModule_Create(py_module_def);
+			py_impl->main_module = PyModule_Create(&module_def);
 			
 			Py_IncRef(py_impl->main_module);
 
