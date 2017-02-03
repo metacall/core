@@ -218,8 +218,8 @@ install(DIRECTORY ${PROJECT_SOURCE_DIR}/data DESTINATION ${INSTALL_DATA} COMPONE
 # Configure variables
 #
 
-set(CONFIGURATION_DIR "${CMAKE_BINARY_DIR}/configurations/" CACHE PATH "Metacall configuration dir")
-set(CONFIGURATION_PATH "${CONFIGURATION_DIR}/global.json" CACHE PATH "Metacall configuration path")
+set(CONFIGURATION_DIR "${CMAKE_BINARY_DIR}/configurations/" PATH "Metacall configuration dir")
+set(CONFIGURATION_PATH "${CONFIGURATION_DIR}/global.json" PATH "Metacall configuration path")
 
 set(CONFIGURATION_GLOBAL "{")
 
