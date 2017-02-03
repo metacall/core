@@ -63,6 +63,10 @@ int metacall_initialize()
 
 	metacall_initialize_flag = 0;
 
+	#ifndef LOADER_LAZY
+		loader_initialize();
+	#endif
+
 	return 0;
 }
 

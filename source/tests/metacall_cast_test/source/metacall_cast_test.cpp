@@ -23,7 +23,7 @@ public:
 
 TEST_F(metacall_cast_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int)log_configure("metacall",
+	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
 		log_policy_schedule_sync(),
 		log_policy_storage_sequential(),
