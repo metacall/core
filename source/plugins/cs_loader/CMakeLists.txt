@@ -4,6 +4,7 @@ if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_CS)
 endif()
 
 option(OPTION_BUILD_PLUGINS_CS_IMPL		"Build Netcore library."	ON)
+set(DOTNET_CORE_PATH "" CACHE PATH "Dotnet runtime path")
 
 #
 # External dependencies
@@ -198,6 +199,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::dynlink
 	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::configuration
 	${META_PROJECT_NAME}::loader
 
 	$<$<NOT:$<BOOL:${MSVC}>>:stdc++fs>
@@ -272,3 +274,10 @@ install(DIRECTORY
 	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
 	COMPONENT dev
 )
+
+#
+# Configuration
+#
+
+string(REPLACE "\\" "/" DOTNET_CORE_PATH ${DOTNET_CORE_PATH})
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${CONFIGURATION_DIR}/cs_loader.json)

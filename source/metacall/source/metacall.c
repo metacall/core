@@ -18,11 +18,15 @@
 #include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_function.h>
 
+#include <configuration/configuration.h>
+
 #include <string.h>
 
 /* -- Definitions -- */
 
 #define METACALL_ARGS_SIZE 0x10
+
+#define METACALL_DEFAULT_CONFIGURATION_PATH "configurations/globa.json";
 
 /* -- Global Variables -- */
 
@@ -36,6 +40,8 @@ static int metacall_initialize_flag = 1;
 
 int metacall_initialize()
 {
+	char * configuration_path;
+
 	if (metacall_initialize_flag == 0)
 	{
 		return 0;
@@ -43,11 +49,17 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
-	/*if (configure_initialize(...) != 0)
+	//TODO: Add CONFIGURATION_PATH to define
+	configuration_path = getenv("CONFIGURATION_PATH");
+
+	if (configuration_path == NULL) {
+		configuration_path = METACALL_DEFAULT_CONFIGURATION_PATH;
+	}
+
+	if (configuration_initialize("rapid_json", configuration_path) != 0)
 	{
 		return 1;
-	}*/
-
+	}
 
 	metacall_initialize_flag = 0;
 

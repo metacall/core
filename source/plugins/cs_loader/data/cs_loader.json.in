@@ -1,0 +1,3 @@
+{
+	"dotnet_root":"@DOTNET_CORE_PATH@"
+}
