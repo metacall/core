@@ -17,8 +17,9 @@ loader_impl_interface mock_loader_impl_interface_singleton()
 	{
 		&mock_loader_impl_initialize,
 		&mock_loader_impl_execution_path,
-		&mock_loader_impl_load_from_files,
+		&mock_loader_impl_load_from_file,
 		&mock_loader_impl_load_from_memory,
+		&mock_loader_impl_load_from_package,
 		&mock_loader_impl_clear,
 		&mock_loader_impl_discover,
 		&mock_loader_impl_destroy

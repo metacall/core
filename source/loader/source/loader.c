@@ -181,7 +181,7 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_from_files(const loader_naming_path path[], size_t size)
+int loader_load_from_file(const loader_naming_path paths[], size_t size)
 {
 	loader l = loader_singleton();
 
@@ -195,7 +195,7 @@ int loader_load_from_files(const loader_naming_path path[], size_t size)
 	{
 		loader_naming_extension extension;
 
-		if (loader_path_get_extension(path[0], extension) > 1)
+		if (loader_path_get_extension(paths[0], extension) > 1)
 		{
 			loader_impl impl = loader_get_impl(extension);
 
@@ -213,14 +213,14 @@ int loader_load_from_files(const loader_naming_path path[], size_t size)
 					{
 						memcpy(absolute_path[iterator], l->script_path, strlen(l->script_path) + 1);
 
-						strncat(absolute_path[iterator], path[iterator], LOADER_NAMING_PATH_SIZE - 1);
+						strncat(absolute_path[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
 					}
 
-					return loader_impl_load_from_files(impl, (const loader_naming_path *)absolute_path, size);
+					return loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_path, size);
 				}
 				else
 				{
-					return loader_impl_load_from_files(impl, path, size);
+					return loader_impl_load_from_file(impl, paths, size);
 				}
 			}
 		}
@@ -248,6 +248,31 @@ int loader_load_from_memory(const loader_naming_extension extension, const char 
 		if (impl != NULL)
 		{
 			return loader_impl_load_from_memory(impl, extension, buffer, size);
+		}
+	}
+
+	return 1;
+}
+
+int loader_load_from_package(const loader_naming_extension extension, const loader_naming_path path)
+{
+	loader l = loader_singleton();
+
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+
+		loader_initialize();
+	#endif
+
+	if (l->impl_map != NULL)
+	{
+		loader_impl impl = loader_get_impl(extension);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
+
+		if (impl != NULL)
+		{
+			return loader_impl_load_from_package(impl, path);
 		}
 	}
 

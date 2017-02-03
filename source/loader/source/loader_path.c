@@ -51,3 +51,23 @@ int loader_path_get_extension(const loader_naming_path path, loader_naming_exten
 
 	return count + 1;
 }
+
+int loader_path_get_path(const loader_naming_path path, loader_naming_path absolute)
+{
+	int i, last;
+
+	for (i = 0, last = 0; path[i] != '\0' &&
+		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
+	{
+		absolute[i] = path[i];
+
+		if (path[i] == '/' || path[i] == '\\')
+		{
+			last = i + 1;
+		}
+	}
+
+	absolute[last] = '\0';
+
+	return last + 1;
+}

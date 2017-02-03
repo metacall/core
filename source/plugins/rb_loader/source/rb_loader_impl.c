@@ -17,6 +17,7 @@
 #include <reflect/reflect_context.h>
 
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #include <log/log.h>
 
@@ -30,11 +31,17 @@
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 
-typedef struct loader_impl_rb_handle_type
+typedef struct loader_impl_rb_module_type
 {
 	VALUE module;
 	VALUE instance;
 	set function_map;
+
+} * loader_impl_rb_module;
+
+typedef struct loader_impl_rb_handle_type
+{
+	vector modules;
 
 } * loader_impl_rb_handle;
 
@@ -51,7 +58,6 @@ int function_rb_interface_create(function func, function_impl impl)
 	signature s = function_signature(func);
 
 	/* Set to null, deduced dynamically */
-	/* TODO: Solve this, it breaks return and makes return always null in the frontend */
 	signature_set_return(s, NULL);
 
 	(void)impl;
@@ -367,7 +373,7 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
-loader_handle rb_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
+loader_impl_rb_module rb_loader_impl_load_module(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -375,12 +381,9 @@ loader_handle rb_loader_impl_load_from_files(loader_impl impl, const loader_nami
 
 	VALUE module = rb_define_module(RSTRING_PTR(name_capitalized));
 
-	/* TODO: Load from files.. */
-	(void)size;
-
 	if (module != Qnil)
 	{
-		VALUE module_data = rb_loader_impl_load_data(impl, path[0]);
+		VALUE module_data = rb_loader_impl_load_data(impl, path);
 
 		if (module_data != Qnil)
 		{
@@ -388,34 +391,34 @@ loader_handle rb_loader_impl_load_from_files(loader_impl impl, const loader_nami
 
 			if (result != Qnil)
 			{
-				loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
+				loader_impl_rb_module rb_module = malloc(sizeof(struct loader_impl_rb_module_type));
 
-				if (handle != NULL)
+				if (rb_module != NULL)
 				{
-					handle->module = module;
+					rb_module->module = module;
 
-					handle->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
+					rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
 
-					rb_extend_object(handle->instance, handle->module);
+					rb_extend_object(rb_module->instance, rb_module->module);
 
-					rb_include_module(handle->instance, handle->module);
+					rb_include_module(rb_module->instance, rb_module->module);
 
-					handle->function_map = set_create(&hash_callback_str, &comparable_callback_str);
+					rb_module->function_map = set_create(&hash_callback_str, &comparable_callback_str);
 
-					if (!(handle->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), handle->function_map) == 0))
+					if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
 					{
-						set_destroy(handle->function_map);
+						set_destroy(rb_module->function_map);
 
-						free(handle);
+						free(rb_module);
 
 						return NULL;
 					}
 
-					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path[0]);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", path);
 
-					rb_loader_impl_key_print(handle->function_map);
+					rb_loader_impl_key_print(rb_module->function_map);
 
-					return (loader_handle)handle;
+					return rb_module;
 				}
 			}
 			else
@@ -428,6 +431,54 @@ loader_handle rb_loader_impl_load_from_files(loader_impl impl, const loader_nami
 	}
 
 	return NULL;
+}
+
+
+loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+{
+	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
+
+	size_t iterator;
+
+	if (handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby handle allocation");
+
+		return NULL;
+	}
+
+	handle->modules = vector_create_reserve(sizeof(loader_impl_rb_module), size);
+
+	if (handle->modules == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby modules vector allocation");
+
+		free(handle);
+
+		return NULL;
+	}
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		loader_impl_rb_module rb_module;
+
+		loader_naming_name module_name;
+
+		loader_path_get_name(paths[iterator], module_name);
+
+		rb_module = rb_loader_impl_load_module(impl, paths[iterator], module_name);
+
+		if (rb_module == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby module loading %s", paths[iterator]);
+
+			continue;
+		}
+
+		vector_push_back(handle->modules, &rb_module);
+	}
+
+	return (loader_handle)handle;
 }
 
 loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
@@ -493,6 +544,16 @@ loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return NULL;
 }
 
+loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	/* TODO */
+
+	(void)impl;
+	(void)path;
+
+	return NULL;
+}
+
 int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
 	loader_impl_rb_handle rb_handle = (loader_impl_rb_handle)handle;
@@ -501,7 +562,16 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (rb_handle != NULL)
 	{
-		set_destroy(rb_handle->function_map);
+		size_t iterator, size = vector_size(rb_handle->modules);
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			loader_impl_rb_module * rb_module = vector_at(rb_handle->modules, iterator);
+
+			set_destroy((*rb_module)->function_map);
+		}
+
+		vector_destroy(rb_handle->modules);
 
 		free(rb_handle);
 

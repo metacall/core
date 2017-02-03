@@ -34,9 +34,11 @@ LOADER_API int loader_impl_type_define(loader_impl impl, const char * name, type
 
 LOADER_API int loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 
-LOADER_API int loader_impl_load_from_files(loader_impl impl, const loader_naming_path path[], size_t size);
+LOADER_API int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
 
 LOADER_API int loader_impl_load_from_memory(loader_impl impl, const loader_naming_extension extension, const char * buffer, size_t size);
+
+LOADER_API int loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 

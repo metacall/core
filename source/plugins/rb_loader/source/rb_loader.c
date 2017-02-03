@@ -17,8 +17,9 @@ loader_impl_interface rb_loader_impl_interface_singleton(void)
 	{
 		&rb_loader_impl_initialize,
 		&rb_loader_impl_execution_path,
-		&rb_loader_impl_load_from_files,
+		&rb_loader_impl_load_from_file,
 		&rb_loader_impl_load_from_memory,
+		&rb_loader_impl_load_from_package,
 		&rb_loader_impl_clear,
 		&rb_loader_impl_discover,
 		&rb_loader_impl_destroy

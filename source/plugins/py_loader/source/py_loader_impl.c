@@ -488,31 +488,27 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-loader_handle py_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
+loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
 	PyObject * main_dict = PyModule_GetDict(py_impl->main_module);
 
-	loader_naming_name module_name;
-
-	char location_path[512] = { 0 };
-
 	size_t iterator;
-
-	/* TODO: Remove name from the interface */
-	(void)name;
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		PyObject * py_module_name, * system_path, * current_path;
 		PyObject * module, * module_dict;
 
-		loader_path_get_name(path[iterator], module_name);
+		loader_naming_name module_name;
+		loader_naming_path location_path;
+
+		loader_path_get_name(paths[iterator], module_name);
 
 		py_module_name = PyUnicode_DecodeFSDefault(module_name);
 
-		strncpy(location_path, path[iterator], strlen(path[iterator]) - (strlen(module_name) + 3));
+		loader_path_get_path(paths[iterator], location_path);
 
 		system_path = PySys_GetObject("path");
 
@@ -554,6 +550,17 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 	return NULL;
 }
+
+loader_handle py_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	/* TODO */
+
+	(void)impl;
+	(void)path;
+
+	return NULL;
+}
+
 
 int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 {

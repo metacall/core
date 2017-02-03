@@ -49,7 +49,7 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		value args[2];
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
 		args[0] = value_create_int(5);
 		args[1] = value_create_int(15);

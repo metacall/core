@@ -52,13 +52,16 @@ METACALL_API size_t metacall_args_size(void);
 *  @brief
 *    Loads a script from file specified by @path
 *
-*  @param[in] path
+*  @param[in] paths
 *    Path array of files
+*
+*  @param[in] size
+*    Size of the array @paths
 *
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_files(const char * path[], size_t size);
+METACALL_API int metacall_load_from_file(const char * path[], size_t size);
 
 /**
 *  @brief
@@ -77,6 +80,21 @@ METACALL_API int metacall_load_from_files(const char * path[], size_t size);
 *    Zero if success, different from zero otherwise
 */
 METACALL_API int metacall_load_from_memory(const char * extension, const char * buffer, size_t size);
+
+/**
+*  @brief
+*    Loads a package of scrips from file specified by @path into loader defined by @extension
+*
+*  @param[in] extension
+*    Extension of the script
+*
+*  @param[in] path
+*    Path of the package
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_load_from_package(const char * extension, const char * path);
 
 /**
 *  @brief

@@ -46,7 +46,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
 		ret = metacall("multiply", 5, 15);
 
@@ -115,7 +115,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value ret = NULL;
 		
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
 
 		ret = metacall("say_multiply", 5, 7);
 
@@ -145,7 +145,7 @@ TEST_F(metacall_test, DefaultConstructor)
 			"spider.jsm"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(jsm_scripts, sizeof(jsm_scripts) / sizeof(jsm_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(jsm_scripts, sizeof(jsm_scripts) / sizeof(jsm_scripts[0])));
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 	}
@@ -161,7 +161,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0])));
 
 		ret = metacall("say_divide", 32.0, 4.0);
 
@@ -191,7 +191,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		value ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0])));
 
 		ret = metacall("my_empty_func");
 
@@ -235,7 +235,7 @@ TEST_F(metacall_test, DefaultConstructor)
 			"hello.cs"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0])));
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
@@ -249,7 +249,7 @@ TEST_F(metacall_test, DefaultConstructor)
 			"compiled.c"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_files(c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file(c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0])));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_C */
 

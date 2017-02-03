@@ -294,7 +294,7 @@ int mock_loader_impl_execution_path(loader_impl impl, const loader_naming_path p
 	return 0;
 }
 
-loader_handle mock_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
+loader_handle mock_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_mock_handle handle = malloc(sizeof(struct loader_impl_mock_handle_type));
 
@@ -306,7 +306,7 @@ loader_handle mock_loader_impl_load_from_files(loader_impl impl, const loader_na
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Mock module %s (%s) loaded from file", path[iterator], name);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Mock module %s loaded from file", paths[iterator]);
 		}
 
 		handle->handle_mock_data = NULL;
@@ -328,6 +328,24 @@ loader_handle mock_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	if (handle != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "Mock module %s.%s loaded from memory", name, extension);
+
+		handle->handle_mock_data = NULL;
+
+		return (loader_handle)handle;
+	}
+
+	return NULL;
+}
+
+loader_handle mock_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	loader_impl_mock_handle handle = malloc(sizeof(struct loader_impl_mock_handle_type));
+
+	(void)impl;
+
+	if (handle != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Mock module %s loaded from package", path);
 
 		handle->handle_mock_data = NULL;
 

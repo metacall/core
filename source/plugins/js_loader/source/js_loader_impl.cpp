@@ -678,15 +678,16 @@ int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle js_loader_impl_load_from_files(loader_impl impl, const loader_naming_name name, const loader_naming_path path[], size_t size)
+loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
-	(void)name;
+	/* TODO: Load the whole array */
+	(void)size;
 
 	if (js_impl != nullptr)
 	{
-		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, path[0]/*, name*/);
+		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, paths[0]);
 
 		if (js_handle != nullptr)
 		{
@@ -713,6 +714,16 @@ loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 			return js_handle;
 		}
 	}
+
+	return NULL;
+}
+
+loader_handle js_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	/* TODO */
+
+	(void)impl;
+	(void)path;
 
 	return NULL;
 }
