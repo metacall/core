@@ -17,11 +17,13 @@
 extern "C" {
 #endif
 
-LOADER_API int loader_path_get_name(const loader_naming_path path, loader_naming_name name);
+#include <stdlib.h>
 
-LOADER_API int loader_path_get_extension(const loader_naming_path path, loader_naming_extension extension);
+LOADER_API size_t loader_path_get_name(const loader_naming_path path, loader_naming_name name);
 
-LOADER_API int loader_path_get_path(const loader_naming_path path, loader_naming_path absolute);
+LOADER_API size_t loader_path_get_extension(const loader_naming_path path, loader_naming_extension extension);
+
+LOADER_API size_t loader_path_get_path(const loader_naming_path path, loader_naming_path absolute);
 
 #ifdef __cplusplus
 }

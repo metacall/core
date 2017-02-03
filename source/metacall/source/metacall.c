@@ -26,7 +26,7 @@
 
 #define METACALL_ARGS_SIZE 0x10
 
-#define METACALL_DEFAULT_CONFIGURATION_PATH "configurations/globa.json";
+#define METACALL_DEFAULT_CONFIGURATION_PATH "configurations/global.json";
 
 /* -- Global Variables -- */
 
@@ -49,10 +49,10 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
-	//TODO: Add CONFIGURATION_PATH to define
 	configuration_path = getenv("CONFIGURATION_PATH");
 
-	if (configuration_path == NULL) {
+	if (configuration_path == NULL)
+	{
 		configuration_path = METACALL_DEFAULT_CONFIGURATION_PATH;
 	}
 

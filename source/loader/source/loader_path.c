@@ -8,9 +8,9 @@
 
 #include <loader/loader_path.h>
 
-int loader_path_get_name(const loader_naming_path path, loader_naming_name name)
+size_t loader_path_get_name(const loader_naming_path path, loader_naming_name name)
 {
-	int i, count, last;
+	size_t i, count, last;
 
 	for (i = 0, count = 0, last = 0; path[i] != '\0' &&
 		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
@@ -23,7 +23,14 @@ int loader_path_get_name(const loader_naming_path path, loader_naming_name name)
 		}
 		else if (path[i] == '.')
 		{
-			last = count - 1;
+			if (count > 0)
+			{
+				last = count - 1;
+			}
+			else
+			{
+				last = 0;
+			}
 		}
 	}
 
@@ -32,9 +39,9 @@ int loader_path_get_name(const loader_naming_path path, loader_naming_name name)
 	return last + 1;
 }
 
-int loader_path_get_extension(const loader_naming_path path, loader_naming_extension extension)
+size_t loader_path_get_extension(const loader_naming_path path, loader_naming_extension extension)
 {
-	int i, count;
+	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
 		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_EXTENSION_SIZE*/; ++i)
@@ -52,9 +59,9 @@ int loader_path_get_extension(const loader_naming_path path, loader_naming_exten
 	return count + 1;
 }
 
-int loader_path_get_path(const loader_naming_path path, loader_naming_path absolute)
+size_t loader_path_get_path(const loader_naming_path path, loader_naming_path absolute)
 {
-	int i, last;
+	size_t i, last;
 
 	for (i = 0, last = 0; path[i] != '\0' &&
 		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
