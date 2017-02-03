@@ -20,8 +20,9 @@ loader_impl_interface cs_loader_impl_interface_singleton(void)
 	{
 		&cs_loader_impl_initialize,
 		&cs_loader_impl_execution_path,
-		&cs_loader_impl_load_from_files,
+		&cs_loader_impl_load_from_file,
 		&cs_loader_impl_load_from_memory,
+		&cs_loader_impl_load_from_package,
 		&cs_loader_impl_clear,
 		&cs_loader_impl_discover,
 		&cs_loader_impl_destroy

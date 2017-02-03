@@ -17,7 +17,7 @@ void environment::SetUp() {
 
 	loader_naming_path names[] = {"hello.cs","IJump.cs","JumpMaster.cs","SuperJump.cs","TinyJump.cs"};
 
-	loader_load_from_files(names, 5);
+	loader_load_from_file(names, 5);
 }
 
 void environment::TearDown() {
