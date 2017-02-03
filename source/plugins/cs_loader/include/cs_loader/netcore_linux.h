@@ -86,7 +86,7 @@ private:
 	}
 
 public:
-	netcore_linux();
+	netcore_linux(char * dotnet_root);
 	~netcore_linux();
 
 	bool start() {

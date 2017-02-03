@@ -14,7 +14,7 @@ extern "C" {
 
 	typedef char source_file[512];
 
-	netcore_handle simple_netcore_create();
+	netcore_handle simple_netcore_create(char * dotnet_root);
 
 	reflect_function * simple_netcore_get_functions(netcore_handle, int*);
 

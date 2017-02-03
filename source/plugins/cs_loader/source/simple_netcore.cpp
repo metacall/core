@@ -12,12 +12,12 @@
 #include <fstream>
 #include <ostream>
 
-netcore_handle simple_netcore_create() {
+netcore_handle simple_netcore_create(char * dotnet_root) {
 #if defined(__linux) | defined( linux)
 
-	netcore_linux * netcore_inp = new netcore_linux();
+	netcore_linux * netcore_inp = new netcore_linux(dotnet_root);
 #else
-	netcore_win *netcore_inp = new netcore_win();
+	netcore_win *netcore_inp = new netcore_win(dotnet_root);
 #endif
 
 	if (netcore_inp->start()) {

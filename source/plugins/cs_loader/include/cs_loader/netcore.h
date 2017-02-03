@@ -9,6 +9,7 @@ protected:
 
 	reflect_function functions[100];
 	int functions_count;
+	char * dotnet_root;
 public:
 	load_from_source_w * core_load_from_source_w;
 	load_from_source_c * core_load_from_source_c;
@@ -46,7 +47,7 @@ public:
 	const CHARSTRING *delegate_get_functions = W("GetFunctions");
 	const CHARSTRING *delegate_destroy_execution_result = W("DestroyExecutionResult");
 
-	explicit netcore();
+	explicit netcore(char * dotnet_root);
 	virtual ~netcore();
 
 	virtual bool start() = 0;

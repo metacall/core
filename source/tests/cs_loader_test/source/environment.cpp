@@ -11,11 +11,17 @@
 
 #include <loader/loader.h>
 
+#include <metacall/metacall.h>
+
+#include <configuration/configuration.h>
+
 #include <log/log.h>
 
 void environment::SetUp() {
 
 	loader_naming_path names[] = {"hello.cs","IJump.cs","JumpMaster.cs","SuperJump.cs","TinyJump.cs"};
+	
+	metacall_initialize();
 
 	loader_load_from_file(names, 5);
 }

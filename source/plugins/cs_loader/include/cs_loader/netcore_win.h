@@ -29,7 +29,7 @@ private:
 	bool load_main();
 
 public:
-	netcore_win();
+	netcore_win(char * dotnet_root);
 	~netcore_win();
 
 	bool start();

@@ -17,6 +17,8 @@
 
 #include <log/log.h>
 
+#include <configuration/configuration.h>
+
 #include <stdlib.h>
 #include <cs_loader/simple_netcore.h>
 
@@ -157,13 +159,22 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 
 loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 {
-	/* TODO: Initialize runtime, call to type initialization if need */
-
-	//netcore_win *netcore_inp = new netcore_win();
-
 	(void)impl;
 
-	return (loader_impl_data)simple_netcore_create();
+	char * dotnet_root = NULL;
+	value v = NULL;
+
+	configuration config = configuration_scope("cs_loader");
+
+	if (config != NULL) {
+		v = configuration_value(config, "dotnet_root");
+
+		if (v != NULL) {
+			dotnet_root = value_to_string(v);
+		}
+	}
+
+	return (loader_impl_data)simple_netcore_create(dotnet_root);
 }
 
 int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
@@ -194,7 +205,7 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path) {
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
-	
+
 	simple_netcore_load_script_from_assembly(nhandle, path);
 
 	return (loader_handle)impl;

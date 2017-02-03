@@ -1,8 +1,15 @@
 #include <cs_loader/netcore_linux.h>
 
-netcore_linux::netcore_linux()
+netcore_linux::netcore_linux(char * dotnet_root) :netcore(dotnet_root)
 {
-	this->runtimePath.append(getenv("CORE_ROOT"));
+	if (dotnet_root == NULL) {
+		this->runtimePath.append(getenv("CORE_ROOT"));
+	}
+	else
+	{
+		this->runtimePath.append(dotnet_root);
+	}
+
 	getcwd(this->appPath, MAX_LONGPATH);
 	this->domainId = 0;
 }
@@ -62,7 +69,7 @@ bool netcore_linux::CreateHost() {
 	this->coreclr_initialize = (coreclrInitializeFunction*)dynlink_coreclr_initialize;
 	this->coreclr_shutdown = (coreclrShutdownFunction*)dynlink_coreclr_shutdown;
 	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)dynlink_coreclr_create_delegate;
-	
+
 	if (this->coreclr_initialize == NULL) {
 		std::cout << "coreclr_initialize fail " << std::endl;
 		return false;

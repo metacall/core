@@ -1,7 +1,7 @@
 #include <cs_loader/host_environment.h>
 
 
-host_environment::host_environment(logger *logger) : log(logger), clr_runtime_host(nullptr)
+host_environment::host_environment(char * dotnet_root, logger *logger) : log(logger), clr_runtime_host(nullptr)
 {
 	// Discover the path to this exe's module. All other files are expected to be in the same directory.
 	DWORD thisModuleLength = ::GetModuleFileNameW(::GetModuleHandleW(nullptr), this->host_path, MAX_LONGPATH);
@@ -26,22 +26,31 @@ host_environment::host_environment(logger *logger) : log(logger), clr_runtime_ho
 	wchar_t coreRoot[MAX_LONGPATH];
 	size_t outSize;
 	this->core_clr_module = NULL; // Initialize this here since we don't call TryLoadCoreCLR if CORE_ROOT is unset.
-	if (_wgetenv_s(&outSize, coreRoot, MAX_LONGPATH, W("CORE_ROOT")) == 0 && outSize > 0)
-	{
-		wchar_t last_character = coreRoot[lstrlenW(coreRoot) - 1];
 
-		if (last_character != '\\') {
-			wcscat_s(coreRoot, MAX_LONGPATH, W("\\"));
+	if (dotnet_root == NULL) {
+		if (!_wgetenv_s(&outSize, coreRoot, MAX_LONGPATH, W("CORE_ROOT")) == 0 && outSize > 0)
+		{
+			//error ?
 		}
-
-		this->core_clr_module = this->try_load_core_clr(coreRoot);
+		//else
+		//{
+		//	*this->log << W("CORE_ROOT not set; skipping") << logger::endl;
+		//	*this->log << W("You can set the environment variable CORE_ROOT to point to the path") << logger::endl;
+		//	*this->log << W("where CoreCLR.dll lives to help this executable find it.") << logger::endl;
+		//}
 	}
 	else
 	{
-		*this->log << W("CORE_ROOT not set; skipping") << logger::endl;
-		*this->log << W("You can set the environment variable CORE_ROOT to point to the path") << logger::endl;
-		*this->log << W("where CoreCLR.dll lives to help this executable find it.") << logger::endl;
+		mbstowcs(coreRoot, dotnet_root, MAX_LONGPATH);
 	}
+
+	wchar_t last_character = coreRoot[lstrlenW(coreRoot) - 1];
+
+	if (last_character != '\\') {
+		wcscat_s(coreRoot, MAX_LONGPATH, W("\\"));
+	}
+
+	this->core_clr_module = this->try_load_core_clr(coreRoot);
 
 	// Try to load CoreCLR from the directory that this exexutable is in
 	if (!this->core_clr_module) {
@@ -93,7 +102,7 @@ HMODULE host_environment::try_load_core_clr(const wchar_t* directory_path) {
 	wcscat_s(coreCLRPath, core_clr_dll);
 
 	*this->log << W("Attempting to load: ") << coreCLRPath << logger::endl;
-	
+
 	HMODULE result = LoadLibraryEx(coreCLRPath, NULL, 0);
 	if (!result) {
 		*this->log << W("Failed to load: ") << coreCLRPath << logger::endl;

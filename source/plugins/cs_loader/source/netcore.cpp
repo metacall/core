@@ -1,8 +1,9 @@
 #include <cs_loader/netcore.h>
 #include <ostream>
 #include <iostream>
-netcore::netcore()
+netcore::netcore(char * dotnet_root)
 {
+	this->dotnet_root = dotnet_root;
 }
 
 

@@ -44,7 +44,7 @@ public:
 	wchar_t core_clr_directory_path[MAX_LONGPATH];
 
 	host_environment();
-	host_environment(logger *logger);
+	host_environment(char * dotnet_root, logger *logger);
 	~host_environment();
 
 	bool tpa_list_contains_file(_In_z_ wchar_t* file_name_without_extension, _In_reads_(count_extensions) wchar_t** rg_tpa_extensions, int count_extensions);

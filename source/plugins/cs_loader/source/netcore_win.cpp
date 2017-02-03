@@ -14,7 +14,7 @@
 #include <cs_loader/logger.h>
 #include <cs_loader/host_environment.h>
 
-netcore_win::netcore_win()
+netcore_win::netcore_win(char * dotnet_root) :netcore(dotnet_root)
 {
 	this->log = new logger();
 	this->log->disable();
@@ -69,7 +69,7 @@ void netcore_win::stop()
 }
 
 bool netcore_win::start() {
-	this->core_environment = new host_environment(this->log);
+	this->core_environment = new host_environment(this->dotnet_root, this->log);
 
 	if (!this->config_assembly_name()) {
 		return false;
