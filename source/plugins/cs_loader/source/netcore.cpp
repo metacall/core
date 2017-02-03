@@ -1,9 +1,10 @@
 #include <cs_loader/netcore.h>
 #include <ostream>
 #include <iostream>
-netcore::netcore(char * dotnet_root)
+netcore::netcore(char * dotnet_root,char * dotnet_loader_assembly_path)
 {
 	this->dotnet_root = dotnet_root;
+	this->dotnet_loader_assembly_path=dotnet_loader_assembly_path;
 }
 
 

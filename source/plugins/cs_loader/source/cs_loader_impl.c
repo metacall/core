@@ -162,18 +162,27 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 	(void)impl;
 
 	char * dotnet_root = NULL;
-	value v = NULL;
+	char * dotnet_loader_assembly_path = NULL;
+	value dotnet_root_value = NULL;
+	value dotnet_loader_assembly_path_value = NULL;
 
 	configuration config = configuration_scope("cs_loader");
-
+	
+	
+	
 	if (config != NULL) {
-		v = configuration_value(config, "dotnet_root");
+		dotnet_root_value = configuration_value(config, "dotnet_root");
+		dotnet_loader_assembly_path_value = configuration_value(config, "dotnet_loader_assembly_path");
 
-		if (v != NULL) {
-			dotnet_root = value_to_string(v);
+		if (dotnet_root_value != NULL) {
+			dotnet_root = value_to_string(dotnet_root_value);
+		}
+		if (dotnet_loader_assembly_path_value != NULL) {
+			dotnet_loader_assembly_path = value_to_string(dotnet_loader_assembly_path_value);
 		}
 	}
-	return (loader_impl_data)simple_netcore_create(dotnet_root);
+
+	return (loader_impl_data)simple_netcore_create(dotnet_root,dotnet_loader_assembly_path);
 }
 
 int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)

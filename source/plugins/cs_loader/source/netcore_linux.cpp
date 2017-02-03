@@ -1,6 +1,6 @@
 #include <cs_loader/netcore_linux.h>
 
-netcore_linux::netcore_linux(char * dotnet_root) :netcore(dotnet_root)
+netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path) :netcore(dotnet_root,dotnet_loader_assembly_path)
 {
 	if (dotnet_root == NULL) {
 		this->runtimePath.append(getenv("CORE_ROOT"));
@@ -34,9 +34,15 @@ bool netcore_linux::ConfigAssemblyName() {
 
 	cout << "absoluteAppPath: " << this->appPath << endl;
 
-	this->managedAssemblyFullName.append(this->appPath);
-	this->managedAssemblyFullName.append("/");
-	this->managedAssemblyFullName.append(this->loader_dll);
+
+
+	if(this->dotnet_loader_assembly_path==NULL){
+		this->managedAssemblyFullName.append(this->appPath);
+		this->managedAssemblyFullName.append("/");
+		this->managedAssemblyFullName.append(this->loader_dll);
+	}else{
+		this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
+	}
 
 	cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << endl;
 

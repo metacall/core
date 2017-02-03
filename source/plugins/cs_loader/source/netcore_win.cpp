@@ -14,7 +14,7 @@
 #include <cs_loader/logger.h>
 #include <cs_loader/host_environment.h>
 
-netcore_win::netcore_win(char * dotnet_root) :netcore(dotnet_root)
+netcore_win::netcore_win(char * dotnet_root, char * dotnet_loader_assembly_path) :netcore(dotnet_root, dotnet_loader_assembly_path)
 {
 	this->log = new logger();
 	this->log->disable();
@@ -90,15 +90,20 @@ bool netcore_win::start() {
 
 bool netcore_win::config_assembly_name() {
 
-	wchar_t* filePart = NULL;
+	if(this->dotnet_loader_assembly_path==NULL){
 
-	if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
-		*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
-		*this->log << W("Error code: ") << GetLastError() << logger::endl;
-		return false;
+		wchar_t* filePart = NULL;
+
+		if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
+			*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
+			*this->log << W("Error code: ") << GetLastError() << logger::endl;
+			return false;
+		}
+
+		wcscpy_s(managedAssemblyFullName, appPath);
+	}else{
+		managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
 	}
-
-	wcscpy_s(managedAssemblyFullName, appPath);
 
 	*(filePart) = W('\0');
 
