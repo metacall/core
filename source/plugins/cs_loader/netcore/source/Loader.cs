@@ -35,7 +35,10 @@ namespace CSLoader
         }
 
         private static Loader loader = null;
-
+        static Loader()
+        {
+            AssemblyLoadContext.Default.Resolving += Context_Resolving;
+        }
         public static void Init()
         {
             loader = new Loader();
@@ -248,10 +251,38 @@ namespace CSLoader
             }
         }
 
+        protected static List<string> paths = new List<string>();
+
         public static bool LoadFromAssembly(string assemblyFile)
         {
             AssemblyLoadContext context = AssemblyLoadContext.Default;
-            Assembly asm = context.LoadFromAssemblyPath(assemblyFile);
+            Assembly asm = null;
+
+            string path = System.IO.Path.GetDirectoryName(assemblyFile);
+
+            if (!paths.Contains(path))
+            {
+                paths.Add(path);
+            }
+
+            try
+            {
+                asm = context.LoadFromAssemblyPath(assemblyFile);
+            }
+            catch (Exception)
+            {
+            }
+            if (asm == null)
+            {
+                try
+                {
+                    asm = context.LoadFromAssemblyName(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
+                }
+                catch (Exception)
+                {
+                }
+            }
+
 
             if (asm != null)
             {
@@ -265,6 +296,28 @@ namespace CSLoader
             }
 
             return false;
+        }
+
+        private static Assembly Context_Resolving(AssemblyLoadContext context, AssemblyName name)
+        {
+            Assembly asm = null;
+
+            foreach (var path in paths)
+            {
+                try
+                {
+                    asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
+                    if (asm != null)
+                    {
+                        return asm;
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
+            return asm;
         }
 
         public static bool LoadFromAssemblyC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string assemblyFile)
@@ -322,17 +375,25 @@ namespace CSLoader
         public unsafe ExecutionResult* Execute(string function)
         {
             var con = this.functions[function];
-
-            var result = con.Method.Invoke(null, null);
-
-            if (result == null)
+            try
             {
-                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType));
+                var result = con.Method.Invoke(null, null);
+
+                if (result == null)
+                {
+                    return CreateExecutionResult(false, MetacallDef.Get(con.RetunType));
+                }
+                else
+                {
+                    return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                return CreateExecutionResult(false, MetacallDef.Get(con.RetunType), result);
+                Console.WriteLine(ex.Message);
             }
+
+            return null;
         }
 
         public unsafe static ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type)

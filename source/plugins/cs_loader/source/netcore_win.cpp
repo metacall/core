@@ -90,16 +90,18 @@ bool netcore_win::start() {
 
 bool netcore_win::config_assembly_name() {
 
+	wchar_t* filePart = NULL;
+
+	wchar_t localPath[MAX_LONGPATH];
+
+	if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
+		*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
+		*this->log << W("Error code: ") << GetLastError() << logger::endl;
+		return false;
+	}
+
+
 	if(this->dotnet_loader_assembly_path==NULL){
-
-		wchar_t* filePart = NULL;
-
-		if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
-			*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
-			*this->log << W("Error code: ") << GetLastError() << logger::endl;
-			return false;
-		}
-
 		wcscpy_s(managedAssemblyFullName, appPath);
 	}else{
 		mbstowcs(managedAssemblyFullName, this->dotnet_loader_assembly_path, MAX_LONGPATH);
@@ -107,7 +109,7 @@ bool netcore_win::config_assembly_name() {
 
 	*this->log << W("Loading: ") << managedAssemblyFullName << logger::endl;
 
-	wcscpy_s(appNiPath, appPath);
+	wcscpy_s(appNiPath, managedAssemblyFullName);
 	wcscat_s(appNiPath, MAX_LONGPATH * 2, W(";"));
 	wcscat_s(appNiPath, MAX_LONGPATH * 2, appPath);
 

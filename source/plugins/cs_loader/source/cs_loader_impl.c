@@ -79,10 +79,10 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 			v = value_create_long(*(long*)result->ptr);
 			break;
 		case TYPE_FLOAT:
-			v = value_create_float(*(long*)result->ptr);
+			v = value_create_float(*(float*)result->ptr);
 			break;
 		case TYPE_DOUBLE:
-			v = value_create_double(*(long*)result->ptr);
+			v = value_create_double(*(double*)result->ptr);
 			break;
 		case TYPE_STRING:
 			v = value_create_string((const char*)result->ptr, strlen((const char*)result->ptr));
@@ -167,9 +167,9 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 	value dotnet_loader_assembly_path_value = NULL;
 
 	configuration config = configuration_scope("cs_loader");
-	
-	
-	
+
+
+
 	if (config != NULL) {
 		dotnet_root_value = configuration_value(config, "dotnet_root");
 		dotnet_loader_assembly_path_value = configuration_value(config, "dotnet_loader_assembly_path");
@@ -182,7 +182,7 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 		}
 	}
 
-	return (loader_impl_data)simple_netcore_create(dotnet_root,dotnet_loader_assembly_path);
+	return (loader_impl_data)simple_netcore_create(dotnet_root, dotnet_loader_assembly_path);
 }
 
 int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
@@ -214,7 +214,7 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path) {
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
-	simple_netcore_load_script_from_assembly(nhandle, path);
+	simple_netcore_load_script_from_assembly(nhandle, (char *)path);
 
 	return (loader_handle)impl;
 }
@@ -223,6 +223,7 @@ loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 {
 
 	(void)name;
+	(void)extension;
 
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
