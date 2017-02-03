@@ -25,6 +25,8 @@ void environment::SetUp() {
 	const char * py_scripts[] = { "example.py" };
 	const char * cs_scripts[] = { "hello.cs" };
 
+	metacall_initialize();
+
 	metacall_load_from_file(py_scripts, 1);
 	metacall_load_from_file(cs_scripts, 1);
 }
