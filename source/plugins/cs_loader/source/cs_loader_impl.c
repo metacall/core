@@ -173,7 +173,6 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 			dotnet_root = value_to_string(v);
 		}
 	}
-
 	return (loader_impl_data)simple_netcore_create(dotnet_root);
 }
 

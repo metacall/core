@@ -7,7 +7,16 @@ netcore_linux::netcore_linux(char * dotnet_root) :netcore(dotnet_root)
 	}
 	else
 	{
-		this->runtimePath.append(dotnet_root);
+		if (dotnet_root[strlen(dotnet_root)] == '/') {
+			this->runtimePath.append(dotnet_root);
+		}
+		else
+		{
+			char new_dotnet_root[0xff];
+			strcpy(new_dotnet_root, dotnet_root);
+			strcat(new_dotnet_root, "/");
+			this->runtimePath.append(new_dotnet_root);
+		}
 	}
 
 	getcwd(this->appPath, MAX_LONGPATH);
