@@ -164,7 +164,7 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		const char * js_scripts[] =
 		{
-			"divide.js"
+			"divide.js", "third.js"
 		};
 
 		value ret = NULL;
@@ -184,6 +184,14 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_NE((value) NULL, (value) ret);
 
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "abcdef"));
+
+		value_destroy(ret);
+
+		ret = metacall("third_value", "abc", "def", "efg");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "efg"));
 
 		value_destroy(ret);
 	}

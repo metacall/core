@@ -127,22 +127,25 @@ typedef class loader_impl_js_handle_type
 {
 	public:
 		loader_impl_js_handle_type(loader_impl impl, loader_impl_js js_impl,
-			const loader_naming_path path/*, loader_naming_name name*/) :
+			const loader_naming_path paths[], size_t size) :
 				impl(impl),
 				handle_scope(js_impl->isolate),
 				ctx_impl(Context::New(js_impl->isolate)), ctx_scope(ctx_impl)
 		{
-			Local<String> source = js_loader_impl_read_script(js_impl->isolate, path, functions).ToLocalChecked();
+			for (size_t i = 0; i < size; ++i)
+			{
+				Local<String> source = js_loader_impl_read_script(js_impl->isolate, paths[i], functions).ToLocalChecked();
 
-			script = Script::Compile(ctx_impl, source).ToLocalChecked();
+				script = Script::Compile(ctx_impl, source).ToLocalChecked();
 
-			Local<Value> result = script->Run(ctx_impl).ToLocalChecked();
+				Local<Value> result = script->Run(ctx_impl).ToLocalChecked();
 
-			String::Utf8Value utf8(result);
+				String::Utf8Value utf8(result);
 
-			/*
-			std::cout << "Result: " << *utf8 << std::endl;
-			*/
+				/*
+				std::cout << "Result: " << *utf8 << std::endl;
+				*/
+			}
 		}
 
 		loader_impl_js_handle_type(loader_impl impl, loader_impl_js js_impl,
@@ -682,12 +685,9 @@ loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_namin
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
-	/* TODO: Load the whole array */
-	(void)size;
-
 	if (js_impl != nullptr)
 	{
-		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, paths[0]);
+		loader_impl_js_handle js_handle = new loader_impl_js_handle_type(impl, js_impl, paths, size);
 
 		if (js_handle != nullptr)
 		{

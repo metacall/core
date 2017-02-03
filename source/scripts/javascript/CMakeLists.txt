@@ -10,4 +10,5 @@ include(JavaScriptProject)
 #
 
 add_subdirectory(divide)
+add_subdirectory(third)
 add_subdirectory(spider)
