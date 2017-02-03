@@ -785,7 +785,8 @@ int py_loader_impl_destroy(loader_impl impl)
 
 		Py_DECREF(py_impl->main_module);
 
-		Py_Finalize();
+		//TODO resolve GC error on finalize
+		//Py_Finalize();
 
 		free(py_impl);
 
