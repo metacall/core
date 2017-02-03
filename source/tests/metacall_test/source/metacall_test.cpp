@@ -41,7 +41,7 @@ TEST_F(metacall_test, DefaultConstructor)
 		};
 
 		const long seven_multiples_limit = 10;
-	
+
 		long iterator;
 
 		value ret = NULL;
@@ -110,11 +110,11 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		const char * rb_scripts[] =
 		{
-			"hello.rb"
+			"hello.rb", "second.rb"
 		};
 
 		value ret = NULL;
-		
+
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file(rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
 
 		ret = metacall("say_multiply", 5, 7);
@@ -132,6 +132,14 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_NE((value) NULL, (value) ret);
 
 		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello meta-programmer!"));
+
+		value_destroy(ret);
+
+		ret = metacall("get_second", 5, 12);
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		EXPECT_EQ((int) value_to_int(ret), (int) 12);
 
 		value_destroy(ret);
 	}
