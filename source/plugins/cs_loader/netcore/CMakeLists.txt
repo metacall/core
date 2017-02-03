@@ -31,7 +31,7 @@ message(STATUS "Plugin ${target} implementation")
 
 add_custom_target(${target} ALL
 	COMMAND dotnet restore ${CMAKE_CURRENT_SOURCE_DIR}/source/
-	COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/source/ -o ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/
+	COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/source/ -o ${CMAKE_BINARY_DIR}
 )
 
 #

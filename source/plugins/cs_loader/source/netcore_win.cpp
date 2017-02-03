@@ -102,10 +102,8 @@ bool netcore_win::config_assembly_name() {
 
 		wcscpy_s(managedAssemblyFullName, appPath);
 	}else{
-		managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
+		mbstowcs(managedAssemblyFullName, this->dotnet_loader_assembly_path, MAX_LONGPATH);
 	}
-
-	*(filePart) = W('\0');
 
 	*this->log << W("Loading: ") << managedAssemblyFullName << logger::endl;
 
