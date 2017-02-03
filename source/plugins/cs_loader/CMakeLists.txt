@@ -280,4 +280,4 @@ install(DIRECTORY
 #
 
 string(REPLACE "\\" "/" DOTNET_CORE_PATH "${DOTNET_CORE_PATH}")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${CONFIGURATION_DIR}/cs_loader.json)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${META_CONFIGURATION_DIR}/cs_loader.json)
