@@ -270,6 +270,7 @@ loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration con
 	loader_impl_mock mock_impl = malloc(sizeof(struct loader_impl_mock_type));
 
 	(void)impl;
+	(void)config;
 
 	if (mock_impl != NULL)
 	{

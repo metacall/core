@@ -441,6 +441,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
 
 	(void)impl;
+	(void)config;
 
 	if (py_impl != NULL)
 	{

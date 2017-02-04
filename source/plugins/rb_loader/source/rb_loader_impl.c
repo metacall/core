@@ -277,6 +277,7 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	};
 
 	(void)impl;
+	(void)config;
 
 	ruby_init();
 

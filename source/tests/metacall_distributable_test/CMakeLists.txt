@@ -94,6 +94,8 @@ target_link_libraries(${target}
 
 	gmock-dev
 
+	${CMAKE_DL_LIBS}
+
 	${METACALL_LIBRARIES} # MetaCall libraries
 )
 
