@@ -72,10 +72,23 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
+include(Distributable)
+
+# Create unity build library
+set(rapid_json_config_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+
+distributable_generate(${rapid_json_config_unity_build}
+	${CONFIGURATION_MODULE_NAMES}
+)
+
 # Build library
 add_library(${target}
-	${sources}
-	${headers}
+	${rapid_json_config_unity_build}
+)
+
+# Add target dependencies
+add_dependencies(${target}
+	${CONFIGURATION_MODULE_NAMES}
 )
 
 # Create namespaced alias

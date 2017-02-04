@@ -99,7 +99,6 @@ int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynl
 {
 	const char config_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char config_dynlink_symbol_suffix[] = "_config_impl_interface_singleton";
-	/* configuration_interface_instance_rapid_json */
 
 	#define CONFIG_DYNLINK_SYMBOL_SIZE \
 		(sizeof(config_dynlink_symbol_prefix) + CONFIG_DYNLINK_NAME_SIZE + sizeof(config_dynlink_symbol_suffix))
@@ -284,14 +283,24 @@ int configuration_impl_unload(configuration config)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	return singleton->iface->unload(config);
+	if (singleton->iface != NULL && singleton->iface->unload != NULL)
+	{
+		return singleton->iface->unload(config);
+	}
+
+	return 0;
 }
 
 int configuration_impl_destroy()
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	int result = singleton->iface->destroy();
+	int result = 0;
+
+	if (singleton->iface != NULL && singleton->iface->destroy)
+	{
+        result = singleton->iface->destroy();
+	}
 
 	singleton->iface = NULL;
 
