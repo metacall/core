@@ -17,6 +17,8 @@
 
 #include <reflect/reflect_context.h>
 
+#include <configuration/configuration.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -27,7 +29,7 @@ struct loader_impl_type;
 
 typedef struct loader_impl_type * loader_impl;
 
-typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl);
+typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration config);
 
 typedef int (*loader_impl_interface_execution_path)(loader_impl, const loader_naming_path);
 

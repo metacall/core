@@ -12,12 +12,13 @@
 #include <js_loader/js_loader_api.h>
 
 #include <loader/loader_impl_interface.h>
+#include <configuration/configuration.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-JS_LOADER_API loader_impl_data js_loader_impl_initialize(loader_impl impl);
+JS_LOADER_API loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration config);
 
 JS_LOADER_API int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

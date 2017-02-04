@@ -19,6 +19,8 @@
 
 #include <log/log.h>
 
+#include <configuration/configuration.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -171,7 +173,15 @@ loader_impl loader_impl_create(const char * path, loader_naming_extension extens
 
 						if (impl->ctx != NULL)
 						{
-							impl->data = impl->singleton()->initialize(impl);
+							char configuration_key[0xFF];
+							configuration config;
+
+							strcpy(configuration_key, extension);
+							strcat(configuration_key,"_loader");
+
+							config = configuration_scope(configuration_key);
+
+							impl->data = impl->singleton()->initialize(impl, config);
 
 							if (impl->data != NULL)
 							{

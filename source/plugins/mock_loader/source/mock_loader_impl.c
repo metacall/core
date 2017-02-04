@@ -265,7 +265,7 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data mock_loader_impl_initialize(loader_impl impl)
+loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_mock mock_impl = malloc(sizeof(struct loader_impl_mock_type));
 

@@ -13,13 +13,15 @@
 
 #include <loader/loader_impl_interface.h>
 
+#include <configuration/configuration.h>
+
 #include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-CS_LOADER_API loader_impl_data cs_loader_impl_initialize(loader_impl impl);
+CS_LOADER_API loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config);
 
 CS_LOADER_API int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

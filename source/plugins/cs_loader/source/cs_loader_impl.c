@@ -157,7 +157,7 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data cs_loader_impl_initialize(loader_impl impl)
+loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
 
@@ -165,10 +165,6 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl)
 	char * dotnet_loader_assembly_path = NULL;
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
-
-	configuration config = configuration_scope("cs_loader");
-
-
 
 	if (config != NULL) {
 		dotnet_root_value = configuration_value(config, "dotnet_root");

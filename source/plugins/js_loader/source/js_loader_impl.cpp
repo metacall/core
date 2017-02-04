@@ -626,7 +626,7 @@ int js_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_js js_
 	return 0;
 }
 
-loader_impl_data js_loader_impl_initialize(loader_impl impl)
+loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_js js_impl = new loader_impl_js_type();
 
