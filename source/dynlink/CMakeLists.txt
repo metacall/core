@@ -14,9 +14,6 @@ set(target dynlink)
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
 
-# Include dynamic loading libraries
-include(DynamicLoading)
-
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
 set(feature_file "include/${target}/${target}_features.h")
@@ -167,10 +164,10 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
 
-	${DYNAMIC_LOADING_LIBRARY} # Native dynamic load library
-
 	PUBLIC
 	${DEFAULT_LIBRARIES}
+
+	${CMAKE_DL_LIBS} # Native dynamic load library
 
 	INTERFACE
 )
