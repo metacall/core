@@ -150,6 +150,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::configuration
 	${META_PROJECT_NAME}::dynlink
 
 	PUBLIC
