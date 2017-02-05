@@ -22,7 +22,8 @@
 
 /* -- Definitions -- */
 
-#define CONFIG_DYNLINK_NAME_SIZE 0x40
+#define CONFIGURATION_DYNLINK_NAME_SIZE	0x40
+#define CONFIGURATION_LIBRARY_PATH		"CONFIGURATION_LIBRARY_PATH"
 
 /* -- Forward Declarations -- */
 
@@ -36,6 +37,7 @@ typedef struct configuration_impl_singleton_type * configuration_impl_singleton;
 
 struct configuration_impl_singleton_type
 {
+	char * library_path;
 	configuration_interface iface;
 	dynlink handle;
 };
@@ -57,6 +59,7 @@ configuration_impl_singleton configuration_impl_singleton_instance()
 	static struct configuration_impl_singleton_type instance =
 	{
 		NULL,
+		NULL,
 		NULL
 	};
 
@@ -72,27 +75,29 @@ const char * configuration_impl_extension()
 
 dynlink configuration_impl_initialize_load(const char * name)
 {
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
+
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		const char config_dynlink_suffix[] = "_configd";
 	#else
 		const char config_dynlink_suffix[] = "_config";
 	#endif
 
-	#define CONFIG_DYNLINK_NAME_FULL_SIZE \
-		(sizeof(config_dynlink_suffix) + CONFIG_DYNLINK_NAME_SIZE)
+	#define CONFIGURATION_DYNLINK_NAME_FULL_SIZE \
+		(sizeof(config_dynlink_suffix) + CONFIGURATION_DYNLINK_NAME_SIZE)
 
-	char config_dynlink_name[CONFIG_DYNLINK_NAME_FULL_SIZE];
+	char config_dynlink_name[CONFIGURATION_DYNLINK_NAME_FULL_SIZE];
 
-	strncpy(config_dynlink_name, name, CONFIG_DYNLINK_NAME_FULL_SIZE - 1);
+	strncpy(config_dynlink_name, name, CONFIGURATION_DYNLINK_NAME_FULL_SIZE - 1);
 
 	strncat(config_dynlink_name, config_dynlink_suffix,
-		CONFIG_DYNLINK_NAME_FULL_SIZE - strnlen(config_dynlink_name, CONFIG_DYNLINK_NAME_FULL_SIZE - 1) - 1);
+		CONFIGURATION_DYNLINK_NAME_FULL_SIZE - strnlen(config_dynlink_name, CONFIGURATION_DYNLINK_NAME_FULL_SIZE - 1) - 1);
 
-	#undef CONFIG_DYNLINK_NAME_FULL_SIZE
+	#undef CONFIGURATION_DYNLINK_NAME_FULL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading config: %s", config_dynlink_name);
 
-	return dynlink_load(NULL, config_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+	return dynlink_load(singleton->library_path, config_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
 int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr)
@@ -100,20 +105,20 @@ int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynl
 	const char config_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char config_dynlink_symbol_suffix[] = "_config_impl_interface_singleton";
 
-	#define CONFIG_DYNLINK_SYMBOL_SIZE \
-		(sizeof(config_dynlink_symbol_prefix) + CONFIG_DYNLINK_NAME_SIZE + sizeof(config_dynlink_symbol_suffix))
+	#define CONFIGURATION_DYNLINK_SYMBOL_SIZE \
+		(sizeof(config_dynlink_symbol_prefix) + CONFIGURATION_DYNLINK_NAME_SIZE + sizeof(config_dynlink_symbol_suffix))
 
-	char config_dynlink_symbol[CONFIG_DYNLINK_SYMBOL_SIZE];
+	char config_dynlink_symbol[CONFIGURATION_DYNLINK_SYMBOL_SIZE];
 
-	strncpy(config_dynlink_symbol, config_dynlink_symbol_prefix, CONFIG_DYNLINK_SYMBOL_SIZE - 1);
+	strncpy(config_dynlink_symbol, config_dynlink_symbol_prefix, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1);
 
 	strncat(config_dynlink_symbol, name,
-		CONFIG_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIG_DYNLINK_SYMBOL_SIZE - 1) - 1);
+		CONFIGURATION_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
 	strncat(config_dynlink_symbol, config_dynlink_symbol_suffix,
-		CONFIG_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIG_DYNLINK_SYMBOL_SIZE - 1) - 1);
+		CONFIGURATION_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-	#undef CONFIG_DYNLINK_SYMBOL_SIZE
+	#undef CONFIGURATION_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Config symbol: %s", config_dynlink_symbol);
 
@@ -127,6 +132,39 @@ int configuration_impl_initialize(const char * name)
 	dynlink_symbol_addr singleton_addr;
 
 	configuration_interface_singleton iface_singleton;
+
+	static const char configuration_library_path[] = CONFIGURATION_LIBRARY_PATH;
+
+	const char * path = getenv(configuration_library_path);
+
+	size_t length = strlen(path);
+
+	if (path[length] == '/' || path[length] == '\\')
+	{
+		size_t size = length + 1;
+
+		singleton->library_path = malloc(sizeof(char) * size);
+
+		strncpy(singleton->library_path, path, length);
+
+		singleton->library_path[length] = '\0';
+	}
+	else
+	{
+		size_t size;
+
+		++length;
+
+		size = length + 1;
+
+		singleton->library_path = malloc(sizeof(char) * size);
+
+		strncpy(singleton->library_path, path, length - 1);
+
+		singleton->library_path[length - 1] = '\0';
+
+		strncat(singleton->library_path, "/", length);
+	}
 
 	singleton->handle = configuration_impl_initialize_load(name);
 
@@ -296,6 +334,13 @@ int configuration_impl_destroy()
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
 	int result = 0;
+
+	if (singleton->library_path != NULL)
+	{
+		free(singleton->library_path);
+
+		singleton->library_path = NULL;
+	}
 
 	if (singleton->iface != NULL && singleton->iface->destroy)
 	{

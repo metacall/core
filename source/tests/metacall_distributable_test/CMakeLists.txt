@@ -145,5 +145,5 @@ set_property(TEST ${target}
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
-	"LOADER_LIBRARY_PATH=${LOADER_LIBRARY_PATH};LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH};CONFIGURATION_PATH=${META_CONFIGURATION_PATH}"
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

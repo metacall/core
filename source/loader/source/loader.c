@@ -94,7 +94,36 @@ void loader_initialize()
 	{
 		static const char loader_library_path[] = LOADER_LIBRARY_PATH;
 
-		l->library_path = getenv(loader_library_path);
+		const char * path = getenv(loader_library_path);
+
+		size_t length = strlen(path);
+
+		if (path[length] == '/' || path[length] == '\\')
+		{
+			size_t size = length + 1;
+
+			l->library_path = malloc(sizeof(char) * size);
+
+			strncpy(l->library_path, path, length);
+
+			l->library_path[length] = '\0';
+		}
+		else
+		{
+			size_t size;
+
+			++length;
+
+			size = length + 1;
+
+			l->library_path = malloc(sizeof(char)* size);
+
+			strncpy(l->library_path, path, length - 1);
+
+			l->library_path[length - 1] = '\0';
+
+			strncat(l->library_path, "/", length);
+		}
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader library path: %s", l->library_path);
 	}
@@ -103,7 +132,36 @@ void loader_initialize()
 	{
 		static const char loader_script_path[] = LOADER_SCRIPT_PATH;
 
-		l->script_path = getenv(loader_script_path);
+		const char * path = getenv(loader_script_path);
+
+		size_t length = strlen(path);
+
+		if (path[length] == '/' || path[length] == '\\')
+		{
+			size_t size = length + 1;
+
+			l->script_path = malloc(sizeof(char) * size);
+
+			strncpy(l->script_path, path, length);
+
+			l->script_path[length] = '\0';
+		}
+		else
+		{
+			size_t size;
+
+			++length;
+
+			size = length + 1;
+
+			l->script_path = malloc(sizeof(char) * size);
+
+			strncpy(l->script_path, path, length - 1);
+
+			l->script_path[length - 1] = '\0';
+
+			strncat(l->script_path, "/", length);
+		}
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->script_path);
 	}
@@ -386,11 +444,15 @@ void loader_destroy()
 
 	if (l->library_path != NULL)
 	{
+		free(l->library_path);
+
 		l->library_path = NULL;
 	}
 
 	if (l->script_path != NULL)
 	{
+		free(l->script_path);
+
 		l->script_path = NULL;
 	}
 }

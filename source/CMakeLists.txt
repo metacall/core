@@ -6,10 +6,17 @@
 configure_file(plugins/plugins.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-plugins.h)
 
 # Export output script directory
-set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/")
+set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/" CACHE PATH "MetaCall scripts path")
 
 # Export output plugin directory
-set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/")
+set(LOADER_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall plugins path")
+
+# Export output configuration directory
+set(CONFIGURATION_DIR "${PROJECT_BINARY_DIR}/configurations" CACHE PATH "MetaCall configuration directory")
+set(CONFIGURATION_PATH "${CONFIGURATION_DIR}/global.json" CACHE PATH "MetaCall configuration path")
+
+# Export output configuration plugin directory
+set(CONFIGURATION_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall configuration library path")
 
 #
 # CMake modules

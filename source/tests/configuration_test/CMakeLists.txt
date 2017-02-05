@@ -141,3 +141,9 @@ configure_file(data/child_d.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	"${TESTS_LOADER_ENVIRONMENT_VARIABLES};CONFIGURATION_PATH=${CMAKE_CURRENT_BINARY_DIR}/global.json;CONFIGURATION_LIBRARY_PATH=${CONFIGURATION_LIBRARY_PATH}"
+)

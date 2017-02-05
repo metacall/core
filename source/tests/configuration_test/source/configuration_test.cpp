@@ -25,10 +25,9 @@ TEST_F(configuration_test, DefaultConstructor)
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout)));
 
-	const char path[] = "global.json";
 	const char key_value[] = "value";
 
-	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", path));
+	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", getenv("CONFIGURATION_PATH")));
 
 	/* Global */
 	{

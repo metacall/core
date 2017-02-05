@@ -26,7 +26,7 @@
 
 #define METACALL_ARGS_SIZE 0x10
 
-#define METACALL_DEFAULT_CONFIGURATION_PATH "configurations/global.json";
+#define METACALL_DEFAULT_CONFIGURATION_PATH "configurations/global.json"
 
 /* -- Global Variables -- */
 
