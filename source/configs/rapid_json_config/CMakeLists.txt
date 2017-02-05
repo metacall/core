@@ -77,12 +77,14 @@ include(Distributable)
 # Create unity build library
 set(rapid_json_config_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
 
-distributable_generate(${rapid_json_config_unity_build}
+distributable_generate(${target} ${rapid_json_config_unity_build}
 	${CONFIGURATION_MODULE_NAMES}
 )
 
 # Build library
 add_library(${target}
+	${headers}
+	${sources}
 	${rapid_json_config_unity_build}
 )
 
@@ -161,14 +163,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::configuration
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -3,7 +3,7 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
-function(distributable_generate unity_build_file)
+function(distributable_generate target_root unity_build_file)
 
 	set(target_list "${ARGN}")
 

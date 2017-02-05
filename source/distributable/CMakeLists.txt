@@ -41,7 +41,7 @@ include(Distributable)
 # Create unity build library
 set(metacall_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target_root}_unity_build.c")
 
-distributable_generate(${metacall_unity_build}
+distributable_generate(${target_root} ${metacall_unity_build}
 	${MODULE_NAMES}
 )
 
