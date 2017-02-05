@@ -6,7 +6,7 @@
  *
  */
 
-/* -- Headers -- */
+ /* -- Headers -- */
 
 #include <metacall/metacall-version.h>
 
@@ -98,7 +98,7 @@ void loader_initialize()
 
 		size_t length = strlen(path);
 
-		if (path[length] == '/' || path[length] == '\\')
+		if (path[length - 1] == '/' || path[length - 1] == '\\')
 		{
 			size_t size = length + 1;
 
@@ -136,7 +136,7 @@ void loader_initialize()
 
 		size_t length = strlen(path);
 
-		if (path[length] == '/' || path[length] == '\\')
+		if (path[length - 1] == '/' || path[length - 1] == '\\')
 		{
 			size_t size = length + 1;
 
@@ -243,11 +243,11 @@ int loader_load_from_file(const loader_naming_path paths[], size_t size)
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+#ifdef LOADER_LAZY
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-		loader_initialize();
-	#endif
+	loader_initialize();
+#endif
 
 	if (l->impl_map != NULL && size > 0)
 	{
@@ -291,11 +291,11 @@ int loader_load_from_memory(const loader_naming_extension extension, const char 
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+#ifdef LOADER_LAZY
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-		loader_initialize();
-	#endif
+	loader_initialize();
+#endif
 
 	if (l->impl_map != NULL)
 	{
@@ -316,11 +316,11 @@ int loader_load_from_package(const loader_naming_extension extension, const load
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+#ifdef LOADER_LAZY
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-		loader_initialize();
-	#endif
+	loader_initialize();
+#endif
 
 	if (l->impl_map != NULL)
 	{
@@ -412,21 +412,21 @@ int loader_unload()
 
 		if (hash_map_clear(l->impl_map) != 0)
 		{
-			#ifdef LOADER_LAZY
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
+#ifdef LOADER_LAZY
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
 
-				loader_destroy();
-			#endif
+			loader_destroy();
+#endif
 
 			return 1;
 		}
 	}
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
+#ifdef LOADER_LAZY
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
 
-		loader_destroy();
-	#endif
+	loader_destroy();
+#endif
 
 	return 0;
 }
@@ -463,17 +463,17 @@ const char * loader_print_info()
 		"Loader Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
-		#ifdef LOADER_LAZY
-			"Compiled with lazy initialization and destruction"
-		#else
-			"Compiled with explicit initialization and destruction"
-		#endif
+#ifdef LOADER_LAZY
+		"Compiled with lazy initialization and destruction"
+#else
+		"Compiled with explicit initialization and destruction"
+#endif
 
 		"\n";
 
