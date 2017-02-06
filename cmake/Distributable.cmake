@@ -52,6 +52,10 @@ function(distributable_generate target_root unity_build_file)
 
 	file(WRITE ${unity_build_file} "${unity_build_source}")
 
+	#set_source_files_properties(${unity_build_file}
+	#	PROPERTIES HEADER_FILE_ONLY true
+	#)
+
 	message(STATUS "Unity build written in ${unity_build_file}")
 
 endfunction()

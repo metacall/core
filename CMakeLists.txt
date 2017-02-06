@@ -167,6 +167,7 @@ endif()
 set(MODULE_NAMES
 	version
 	preprocessor
+	environment
 	format
 	log
 	adt

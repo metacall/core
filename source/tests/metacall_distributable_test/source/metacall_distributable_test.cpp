@@ -20,7 +20,7 @@ TEST_F(metacall_distributable_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	EXPECT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)

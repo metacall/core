@@ -55,6 +55,7 @@ set(TESTS_ENVIRONMENT_VARIABLES
 #
 
 add_subdirectory(preprocessor_test)
+add_subdirectory(environment_test)
 add_subdirectory(log_test)
 add_subdirectory(hash_map_test)
 add_subdirectory(trie_test)

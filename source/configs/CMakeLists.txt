@@ -10,6 +10,7 @@ option(OPTION_BUILD_CONFIGS_RAPID_JSON "Build RapidJSON library configuration." 
 set(CONFIGURATION_MODULE_NAMES
 	version
 	preprocessor
+	environment
 	format
 	log
 	adt

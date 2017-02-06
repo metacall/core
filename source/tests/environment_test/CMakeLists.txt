@@ -1,21 +1,9 @@
 #
-# External dependencies
-#
-
-# MetaCall Library
-find_package(MetaCall REQUIRED)
-
-if(NOT METACALL_FOUND)
-	message(STATUS "MetaCall libraries not found")
-	return()
-endif()
-
-#
 # Executable name and options
 #
 
 # Target name
-set(target metacall-distributable-test)
+set(target environment-test)
 message(STATUS "Test ${target}")
 
 #
@@ -39,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_distributable_test.cpp
+	${source_path}/environment_test.cpp
 )
 
 # Group source files
@@ -63,15 +51,6 @@ add_executable(${target}
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 #
-# Dependecies
-#
-
-# Add metacall distributable dependency
-add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall_distributable
-)
-
-#
 # Project options
 #
 
@@ -89,8 +68,6 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
-
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
 )
 
 #
@@ -103,9 +80,8 @@ target_link_libraries(${target}
 
 	gmock-dev
 
-	${CMAKE_DL_LIBS}
-
-	${METACALL_LIBRARIES} # MetaCall libraries
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::environment
 )
 
 #
@@ -153,6 +129,16 @@ set_property(TEST ${target}
 
 include(TestEnvironmentVariables)
 
+set(ENVIRONMENT_TEST_VARIABLES
+	"ENVIRONMENT_TEST_VARIABLE_TEXT=abcd;ENVIRONMENT_TEST_VARIABLE_PATH=abcd"
+)
+
+if(WIN32)
+	set(ENVIRONMENT_TEST_VARIABLES "${ENVIRONMENT_TEST_VARIABLES};ENVIRONMENT_TEST_VARIABLE_PATH_SANITIZED=abcd\\")
+else()
+	set(ENVIRONMENT_TEST_VARIABLES "${ENVIRONMENT_TEST_VARIABLES};ENVIRONMENT_TEST_VARIABLE_PATH_SANITIZED=abcd/")
+endif()
+
 test_environment_variables(${target}
-	${TESTS_ENVIRONMENT_VARIABLES}
+	${ENVIRONMENT_TEST_VARIABLES}
 )
