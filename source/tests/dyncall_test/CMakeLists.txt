@@ -27,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/dyncall_test.cpp
+	${source_path}/dynlink_test.cpp
 )
 
 # Group source files
@@ -82,6 +82,7 @@ target_link_libraries(${target}
 
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::environment
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::dynlink
@@ -128,4 +129,10 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	"DYNLINK_TEST_LIBRARY_PATH=@OUTPUT_DIRECTORY_DIR@"
 )

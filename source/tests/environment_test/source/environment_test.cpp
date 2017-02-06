@@ -15,9 +15,9 @@ class environment_test : public testing::Test
 public:
 };
 
-#define ENVIRONMENT_TEST_VARIABLE_TEXT "ENVIRONMENT_TEST_VARIABLE_TEXT"
-#define ENVIRONMENT_TEST_VARIABLE_PATH "ENVIRONMENT_TEST_VARIABLE_PATH"
-#define ENVIRONMENT_TEST_VARIABLE_PATH_SANITIZED "ENVIRONMENT_TEST_VARIABLE_PATH_SANITIZED"
+#define ENVIRONMENT_TEST_VARIABLE_TEXT "ENV_TEXT"
+#define ENVIRONMENT_TEST_VARIABLE_PATH "ENV_PATH"
+#define ENVIRONMENT_TEST_VARIABLE_PATH_SANITIZED "ENV_SAN"
 
 TEST_F(environment_test, variable_text)
 {
@@ -62,14 +62,7 @@ TEST_F(environment_test, variable_path)
 
 	ASSERT_NE((const char *) NULL, (const char *) variable_path);
 	
-	#if defined(_WIN32)
-		EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd\\"));
-	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd/"));
-	#endif
+	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR));
 
 	environment_variable_path_destroy(variable_path);
 }
@@ -81,15 +74,8 @@ TEST_F(environment_test, variable_path_default)
 	char * variable_path = environment_variable_path_create(variable_path_name, "default_path");
 
 	ASSERT_NE((const char *) NULL, (const char *) variable_path);
-	
-	#if defined(_WIN32)
-		EXPECT_EQ((int) 0, (int) strcmp(variable_path, "default_path\\"));
-	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		EXPECT_EQ((int) 0, (int) strcmp(variable_path, "default_path/"));
-	#endif
+
+	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "default_path" ENVIRONMENT_VARIABLE_PATH_SEPARATOR));
 
 	environment_variable_path_destroy(variable_path);
 }
@@ -102,15 +88,8 @@ TEST_F(environment_test, variable_path_sanitized)
 	char * variable_path = environment_variable_path_create(variable_path_name, "default_path");
 
 	ASSERT_NE((const char *) NULL, (const char *) variable_path);
-	
-	#if defined(_WIN32)
-		EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd\\"));
-	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd/"));
-	#endif
+
+	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR));
 
 	environment_variable_path_destroy(variable_path);
 }

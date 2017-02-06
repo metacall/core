@@ -26,8 +26,6 @@
 
 #define METACALL_ARGS_SIZE 0x10
 
-#define METACALL_DEFAULT_CONFIGURATION_PATH "configurations/global.json"
-
 /* -- Global Variables -- */
 
 void * metacall_null_args[1];
@@ -40,8 +38,6 @@ static int metacall_initialize_flag = 1;
 
 int metacall_initialize()
 {
-	char * configuration_path;
-
 	if (metacall_initialize_flag == 0)
 	{
 		return 0;
@@ -49,14 +45,7 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
-	configuration_path = getenv("CONFIGURATION_PATH");
-
-	if (configuration_path == NULL)
-	{
-		configuration_path = METACALL_DEFAULT_CONFIGURATION_PATH;
-	}
-
-	if (configuration_initialize("rapid_json", configuration_path) != 0)
+	if (configuration_initialize("rapid_json", NULL) != 0)
 	{
 		return 1;
 	}

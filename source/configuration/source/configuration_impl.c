@@ -11,6 +11,8 @@
 #include <configuration/configuration_impl.h>
 #include <configuration/configuration_singleton.h>
 
+#include <environment/environment_variable_path.h>
+
 #include <adt/adt_vector.h>
 #include <adt/adt_set.h>
 
@@ -22,8 +24,9 @@
 
 /* -- Definitions -- */
 
-#define CONFIGURATION_DYNLINK_NAME_SIZE	0x40
-#define CONFIGURATION_LIBRARY_PATH		"CONFIGURATION_LIBRARY_PATH"
+#define CONFIGURATION_DYNLINK_NAME_SIZE		0x40
+#define CONFIGURATION_LIBRARY_PATH			"CONFIGURATION_LIBRARY_PATH"
+#define CONFIGURATION_DEFAULT_LIBRARY_PATH	"configurations"
 
 /* -- Forward Declarations -- */
 
@@ -135,35 +138,11 @@ int configuration_impl_initialize(const char * name)
 
 	static const char configuration_library_path[] = CONFIGURATION_LIBRARY_PATH;
 
-	const char * path = getenv(configuration_library_path);
+	singleton->library_path = environment_variable_path_create(configuration_library_path, CONFIGURATION_DEFAULT_LIBRARY_PATH);
 
-	size_t length = strlen(path);
-
-	if (path[length - 1] == '/' || path[length - 1] == '\\')
+	if (singleton->library_path == NULL)
 	{
-		size_t size = length + 1;
-
-		singleton->library_path = malloc(sizeof(char) * size);
-
-		strncpy(singleton->library_path, path, length);
-
-		singleton->library_path[length] = '\0';
-	}
-	else
-	{
-		size_t size;
-
-		++length;
-
-		size = length + 1;
-
-		singleton->library_path = malloc(sizeof(char) * size);
-
-		strncpy(singleton->library_path, path, length - 1);
-
-		singleton->library_path[length - 1] = '\0';
-
-		strncat(singleton->library_path, "/", length);
+		return 1;
 	}
 
 	singleton->handle = configuration_impl_initialize_load(name);
@@ -337,7 +316,7 @@ int configuration_impl_destroy()
 
 	if (singleton->library_path != NULL)
 	{
-		free(singleton->library_path);
+		environment_variable_path_destroy(singleton->library_path);
 
 		singleton->library_path = NULL;
 	}

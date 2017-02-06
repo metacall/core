@@ -14,13 +14,34 @@
 #include <configuration/configuration_singleton.h>
 #include <configuration/configuration_impl.h>
 
+#include <environment/environment_variable.h>
+#include <environment/environment_variable_path.h>
+
 #include <log/log.h>
+
+/* -- Definitions -- */
+
+#define CONFIGURATION_PATH			"CONFIGURATION_PATH"
+#define CONFIGURATION_DEFAULT_PATH	"configurations" ENVIRONMENT_VARIABLE_PATH_SEPARATOR "global.json"
 
 /* -- Methods -- */
 
 int configuration_initialize(const char * name, const char * path)
 {
-	configuration global = configuration_object_initialize("global", path, NULL);
+	configuration global = NULL;
+
+	if (path == NULL)
+	{
+		static const char configuration_path[] = CONFIGURATION_PATH;
+
+		const char * env_path = environment_variable_get(configuration_path, CONFIGURATION_DEFAULT_PATH);
+
+		global = configuration_object_initialize("global", env_path, NULL);
+	}
+	else
+	{
+		global = configuration_object_initialize("global", path, NULL);
+	}
 
 	if (global == NULL)
 	{

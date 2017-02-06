@@ -16,12 +16,12 @@
 /* -- Definitions -- */
 
 #if defined(_WIN32)
-#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR '\\'
+#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C '\\'
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR '/'
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C '/'
 #else
 #	error "Unknown environment variable path separator"
 #endif
@@ -52,7 +52,7 @@ char * environment_variable_path_create(const char * name, const char * default_
 
 	last = length - 1;
 
-	if (path_ptr[last] == ENVIRONMENT_VARIABLE_PATH_SEPARATOR)
+	if (path_ptr[last] == ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C)
 	{
 		end = length;
 		size = length + 1;
@@ -73,7 +73,7 @@ char * environment_variable_path_create(const char * name, const char * default_
 
 	strncpy(path, path_ptr, length);
 
-	path[last] = ENVIRONMENT_VARIABLE_PATH_SEPARATOR;
+	path[last] = ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C;
 	path[end] = '\0';
 
 	return path;

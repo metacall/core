@@ -10,9 +10,13 @@
 
 #include <dynlink/dynlink.h>
 
+#include <environment/environment_variable_path.h>
+
 #include <log/log.h>
 
-typedef void (*py_loader_print_func)(void);
+#define DYNLINK_TEST_LIBRARY_PATH "DYNLINK_TEST_LIBRARY_PATH"
+
+typedef void (*mock_loader_print_func)(void);
 
 class dynlink_test : public testing::Test
 {
@@ -32,7 +36,17 @@ TEST_F(dynlink_test, DefaultConstructor)
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
 	{
-		dynlink handle = dynlink_load(NULL, "py_loader", DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+			const char library_name[] = "mock_loaderd";
+		#else
+			const char library_name[] = "mock_loader";
+		#endif
+
+		char * path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL);
+
+		dynlink handle = dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+
+		environment_variable_path_destroy(path);
 
 		EXPECT_NE(handle, (dynlink) NULL);
 
@@ -40,19 +54,19 @@ TEST_F(dynlink_test, DefaultConstructor)
 
 		if (handle != NULL)
 		{
-			static dynlink_symbol_addr py_loader_print_info_addr;
+			static dynlink_symbol_addr mock_loader_print_info_addr;
 
-			EXPECT_EQ((int) 0, dynlink_symbol(handle, DYNLINK_SYMBOL_STR("py_loader_print_info"), &py_loader_print_info_addr));
+			EXPECT_EQ((int) 0, dynlink_symbol(handle, DYNLINK_SYMBOL_STR("mock_loader_print_info"), &mock_loader_print_info_addr));
 
-			if (py_loader_print_info_addr != NULL)
+			if (mock_loader_print_info_addr != NULL)
 			{
-				py_loader_print_func print = DYNLINK_SYMBOL_GET(py_loader_print_info_addr);
+				mock_loader_print_func print = DYNLINK_SYMBOL_GET(mock_loader_print_info_addr);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Print function: %p", (void *)print);
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)py_loader_print_info_addr);
+				log_write("metacall", LOG_LEVEL_DEBUG, "Symbol pointer: %p", (void *)mock_loader_print_info_addr);
 
-				if (DYNLINK_SYMBOL_GET(py_loader_print_info_addr) != NULL)
+				if (DYNLINK_SYMBOL_GET(mock_loader_print_info_addr) != NULL)
 				{
 					log_write("metacall", LOG_LEVEL_DEBUG, "Pointer is valid");
 				}

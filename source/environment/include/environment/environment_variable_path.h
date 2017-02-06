@@ -17,6 +17,19 @@
 extern "C" {
 #endif
 
+/* -- Definitions -- */
+
+#if defined(_WIN32)
+#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR "\\"
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR "/"
+#else
+#	error "Unknown environment variable path separator"
+#endif
+
 /* -- Methods -- */
 
 ENVIRONMENT_API char * environment_variable_path_create(const char * name, const char * default_path);

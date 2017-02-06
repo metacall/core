@@ -12,6 +12,8 @@
 
 #include <log/log.h>
 
+#define CONFIGURATION_PATH "CONFIGURATION_PATH"
+
 class configuration_test : public testing::Test
 {
   public:
@@ -27,7 +29,9 @@ TEST_F(configuration_test, DefaultConstructor)
 
 	const char key_value[] = "value";
 
-	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", getenv("CONFIGURATION_PATH")));
+	const char * configuration_path = getenv(CONFIGURATION_PATH);
+
+	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", configuration_path));
 
 	/* Global */
 	{
