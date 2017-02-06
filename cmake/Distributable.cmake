@@ -21,18 +21,16 @@ function(distributable_generate target_root unity_build_file)
 		if(NOT "${target}" STREQUAL "${target_root}")
 			string(TOUPPER ${target} target_upper)
 			set(unity_build_source "${unity_build_source}\n\#ifndef ${target_upper}_API")
-
-			if("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
-				set(unity_build_source "${unity_build_source}\n\#	define ${target_upper}_API __attribute__ ((visibility(\"hidden\")))")
-			else()
-				set(unity_build_source "${unity_build_source}\n\#	define ${target_upper}_API")
-			endif()
-
+			set(unity_build_source "${unity_build_source}\n\#	define ${target_upper}_API ${target_upper}_NO_EXPORT)")
 			set(unity_build_source "${unity_build_source}\n\#endif /* ${target_upper}_API */")
+
+			add_definitions("-D${target_upper}_API=${target_upper}_NO_EXPORT")
 		else()
 			set(unity_build_source "${unity_build_source}\n\#ifndef ${target}_EXPORTS")
 			set(unity_build_source "${unity_build_source}\n\#	define ${target}_EXPORTS")
 			set(unity_build_source "${unity_build_source}\n\#endif /* ${target}_EXPORTS */")
+
+			add_definitions("-D${target}_EXPORTS")
 		endif()
 
 		# Add include paths
