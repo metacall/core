@@ -43,7 +43,7 @@ struct loader_handle_impl_type
 
 struct loader_impl_type
 {
-	loader_naming_extension extension;
+	loader_naming_tag tag;
 	dynlink handle;
 	loader_impl_interface_singleton singleton;
 	hash_map handle_impl_map;
@@ -54,13 +54,13 @@ struct loader_impl_type
 
 /* -- Private Methods -- */
 
-static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension);
+static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag);
 
-static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr);
+static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr);
 
 static void loader_impl_dynlink_destroy(loader_impl impl);
 
-static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension);
+static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag);
 
 static loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name);
 
@@ -72,7 +72,7 @@ static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key 
 
 /* -- Methods -- */
 
-static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extension extension)
+static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
 {
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		const char loader_dynlink_suffix[] = "_loaderd";
@@ -81,11 +81,11 @@ static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extensi
 	#endif
 
 	#define LOADER_DYNLINK_NAME_SIZE \
-		(sizeof(loader_dynlink_suffix) + LOADER_NAMING_EXTENSION_SIZE)
+		(sizeof(loader_dynlink_suffix) + LOADER_NAMING_TAG_SIZE)
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
 
-	strncpy(loader_dynlink_name, extension, LOADER_DYNLINK_NAME_SIZE - 1);
+	strncpy(loader_dynlink_name, tag, LOADER_DYNLINK_NAME_SIZE - 1);
 
 	strncat(loader_dynlink_name, loader_dynlink_suffix,
 		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
@@ -97,19 +97,19 @@ static dynlink loader_impl_dynlink_load(const char * path, loader_naming_extensi
 	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_extension extension, dynlink_symbol_addr * singleton_addr_ptr)
+static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr)
 {
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
 
 	#define LOADER_DYNLINK_SYMBOL_SIZE \
-		(sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_EXTENSION_SIZE + sizeof(loader_dynlink_symbol_suffix))
+		(sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_TAG_SIZE + sizeof(loader_dynlink_symbol_suffix))
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
 
 	strncpy(loader_dynlink_symbol, loader_dynlink_symbol_prefix, LOADER_DYNLINK_SYMBOL_SIZE - 1);
 
-	strncat(loader_dynlink_symbol, extension,
+	strncat(loader_dynlink_symbol, tag,
 		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
 	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix,
@@ -127,15 +127,15 @@ static void loader_impl_dynlink_destroy(loader_impl impl)
 	dynlink_unload(impl->handle);
 }
 
-static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_extension extension)
+static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag)
 {
-	impl->handle = loader_impl_dynlink_load(path, extension);
+	impl->handle = loader_impl_dynlink_load(path, tag);
 
 	if (impl->handle != NULL)
 	{
 		dynlink_symbol_addr singleton_addr;
 
-		if (loader_impl_dynlink_symbol(impl, extension, &singleton_addr) == 0)
+		if (loader_impl_dynlink_symbol(impl, tag, &singleton_addr) == 0)
 		{
 			impl->singleton = (loader_impl_interface_singleton)DYNLINK_SYMBOL_GET(singleton_addr);
 
@@ -151,15 +151,15 @@ static int loader_impl_create_singleton(loader_impl impl, const char * path, loa
 	return 1;
 }
 
-loader_impl loader_impl_create(const char * path, loader_naming_extension extension)
+loader_impl loader_impl_create(const char * path, loader_naming_tag tag)
 {
-	if (extension != NULL)
+	if (tag != NULL)
 	{
 		loader_impl impl = malloc(sizeof(struct loader_impl_type));
 
 		if (impl != NULL)
 		{
-			if (loader_impl_create_singleton(impl, path, extension) == 0)
+			if (loader_impl_create_singleton(impl, path, tag) == 0)
 			{
 				impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
@@ -169,14 +169,14 @@ loader_impl loader_impl_create(const char * path, loader_naming_extension extens
 
 					if (impl->type_info_map != NULL)
 					{
-						impl->ctx = context_create(extension);
+						impl->ctx = context_create(tag);
 
 						if (impl->ctx != NULL)
 						{
 							char configuration_key[0xFF];
 							configuration config;
 
-							strcpy(configuration_key, extension);
+							strcpy(configuration_key, tag);
 							strcat(configuration_key,"_loader");
 
 							config = configuration_scope(configuration_key);
@@ -185,7 +185,7 @@ loader_impl loader_impl_create(const char * path, loader_naming_extension extens
 
 							if (impl->data != NULL)
 							{
-								strncpy(impl->extension, extension, LOADER_NAMING_EXTENSION_SIZE);
+								strncpy(impl->tag, tag, LOADER_NAMING_TAG_SIZE);
 
 								return impl;
 							}
@@ -225,11 +225,11 @@ loader_impl_interface loader_impl_symbol(loader_impl impl)
 	return NULL;
 }
 
-loader_naming_extension * loader_impl_extension(loader_impl impl)
+loader_naming_tag * loader_impl_tag(loader_impl impl)
 {
 	if (impl != NULL)
 	{
-		return &impl->extension;
+		return &impl->tag;
 	}
 
 	return NULL;
@@ -415,7 +415,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 	return 1;
 }
 
-int loader_impl_load_from_memory(loader_impl impl, const loader_naming_extension extension, const char * buffer, size_t size)
+int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t size)
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
@@ -434,7 +434,7 @@ int loader_impl_load_from_memory(loader_impl impl, const loader_naming_extension
 				return 1;
 			}
 
-			handle = interface_impl->load_from_memory(impl, name, extension, buffer, size);
+			handle = interface_impl->load_from_memory(impl, name, buffer, size);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 
@@ -554,7 +554,7 @@ void loader_impl_destroy(loader_impl impl)
 
 		if (interface_impl->destroy(impl) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", impl->extension, interface_impl->destroy);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", impl->tag, interface_impl->destroy);
 		}
 
 		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);

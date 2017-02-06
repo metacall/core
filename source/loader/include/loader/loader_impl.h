@@ -18,13 +18,13 @@
 extern "C" {
 #endif
 
-LOADER_API loader_impl loader_impl_create(const char * path, loader_naming_extension extension);
+LOADER_API loader_impl loader_impl_create(const char * path, loader_naming_tag tag);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
 
 LOADER_API loader_impl_interface loader_impl_symbol(loader_impl impl);
 
-LOADER_API loader_naming_extension * loader_impl_extension(loader_impl impl);
+LOADER_API loader_naming_tag * loader_impl_tag(loader_impl impl);
 
 LOADER_API context loader_impl_context(loader_impl impl);
 
@@ -36,7 +36,7 @@ LOADER_API int loader_impl_execution_path(loader_impl impl, const loader_naming_
 
 LOADER_API int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
 
-LOADER_API int loader_impl_load_from_memory(loader_impl impl, const loader_naming_extension extension, const char * buffer, size_t size);
+LOADER_API int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t size);
 
 LOADER_API int loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
 

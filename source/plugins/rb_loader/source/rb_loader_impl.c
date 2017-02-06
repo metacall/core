@@ -482,7 +482,7 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return (loader_handle)handle;
 }
 
-loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -526,7 +526,7 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 						return NULL;
 					}
 
-					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s.%s loaded", name, extension);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s. loaded", name);
 
 					rb_loader_impl_key_print(rb_module->function_map);
 
@@ -545,7 +545,7 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 	return NULL;
 }
 
-loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
 	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
 
@@ -569,7 +569,7 @@ loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 		return NULL;
 	}
 
-	rb_module = rb_loader_impl_load_from_memory_module(impl, name, extension, buffer, size);
+	rb_module = rb_loader_impl_load_from_memory_module(impl, name, buffer, size);
 
 	if (rb_module == NULL)
 	{

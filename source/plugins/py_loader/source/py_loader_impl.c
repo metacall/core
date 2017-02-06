@@ -534,7 +534,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return (loader_handle)py_impl->main_module;
 }
 
-loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
 	PyObject * compiled = Py_CompileString(buffer, name, Py_file_input);
 
@@ -544,7 +544,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	{
 		PyObject * module = PyImport_ExecCodeModule(name, compiled);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s.%s from memory module at (%p)", (void *)impl, name, extension, (void *)module);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s. from memory module at (%p)", (void *)impl, name, (void *)module);
 
 		return (loader_handle)module;
 	}

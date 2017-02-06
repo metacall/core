@@ -27,8 +27,8 @@ void environment::SetUp() {
 
 	metacall_initialize();
 
-	metacall_load_from_file(py_scripts, 1);
-	metacall_load_from_file(cs_scripts, 1);
+	metacall_load_from_file("py", py_scripts, 1);
+	metacall_load_from_file("cs", cs_scripts, 1);
 }
 
 void environment::TearDown() {
