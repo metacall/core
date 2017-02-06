@@ -61,9 +61,9 @@ struct loader_get_iterator_args_type
 
 static loader loader_singleton(void);
 
-static loader_impl loader_create_impl(const loader_naming_extension extension);
+static loader_impl loader_create_impl(const loader_naming_tag extension);
 
-static loader_impl loader_get_impl(const loader_naming_extension extension);
+static loader_impl loader_get_impl(const loader_naming_tag extension);
 
 static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
@@ -167,17 +167,15 @@ void loader_initialize()
 	}
 }
 
-static loader_impl loader_create_impl(const loader_naming_extension extension)
+static loader_impl loader_create_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = loader_impl_create(l->library_path, (const hash_map_key)extension);
+	loader_impl impl = loader_impl_create(l->library_path, (const hash_map_key)tag);
 
 	if (impl != NULL)
 	{
-		loader_naming_extension * extension_ptr = loader_impl_extension(impl);
-
-		if (hash_map_insert(l->impl_map, *extension_ptr, impl) == 0)
+		if (hash_map_insert(l->impl_map, (hash_map_key)tag, impl) == 0)
 		{
 			if (loader_impl_execution_path(impl, ".") == 0)
 			{
@@ -194,7 +192,7 @@ static loader_impl loader_create_impl(const loader_naming_extension extension)
 				}
 			}
 
-			hash_map_remove(l->impl_map, *extension_ptr);
+			hash_map_remove(l->impl_map, (hash_map_key)tag);
 		}
 
 		loader_impl_destroy(impl);
@@ -203,17 +201,17 @@ static loader_impl loader_create_impl(const loader_naming_extension extension)
 	return NULL;
 }
 
-static loader_impl loader_get_impl(const loader_naming_extension extension)
+static loader_impl loader_get_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = (loader_impl)hash_map_get(l->impl_map, (const hash_map_key)extension);
+	loader_impl impl = (loader_impl)hash_map_get(l->impl_map, (const hash_map_key)tag);
 
 	if (impl == NULL)
 	{
-		impl = loader_create_impl(extension);
+		impl = loader_create_impl(tag);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", extension, (void *)impl);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", tag, (void *)impl);
 	}
 
 	return impl;
@@ -239,7 +237,7 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_from_file(const loader_naming_path paths[], size_t size)
+int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size)
 {
 	loader l = loader_singleton();
 
@@ -251,13 +249,11 @@ int loader_load_from_file(const loader_naming_path paths[], size_t size)
 
 	if (l->impl_map != NULL && size > 0)
 	{
-		loader_naming_extension extension;
-
-		if (loader_path_get_extension(paths[0], extension) > 1)
+		if (tag != NULL)
 		{
-			loader_impl impl = loader_get_impl(extension);
+			loader_impl impl = loader_get_impl(tag);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", tag, (void *)impl);
 
 			if (impl != NULL)
 			{
@@ -287,7 +283,7 @@ int loader_load_from_file(const loader_naming_path paths[], size_t size)
 	return 1;
 }
 
-int loader_load_from_memory(const loader_naming_extension extension, const char * buffer, size_t size)
+int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, size_t size)
 {
 	loader l = loader_singleton();
 
@@ -299,20 +295,20 @@ int loader_load_from_memory(const loader_naming_extension extension, const char 
 
 	if (l->impl_map != NULL)
 	{
-		loader_impl impl = loader_get_impl(extension);
+		loader_impl impl = loader_get_impl(tag);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", tag, (void *)impl);
 
 		if (impl != NULL)
 		{
-			return loader_impl_load_from_memory(impl, extension, buffer, size);
+			return loader_impl_load_from_memory(impl, buffer, size);
 		}
 	}
 
 	return 1;
 }
 
-int loader_load_from_package(const loader_naming_extension extension, const loader_naming_path path)
+int loader_load_from_package(const loader_naming_tag extension, const loader_naming_path path)
 {
 	loader l = loader_singleton();
 

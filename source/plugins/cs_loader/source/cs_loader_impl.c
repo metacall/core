@@ -215,11 +215,10 @@ loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_na
 	return (loader_handle)impl;
 }
 
-loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size)
+loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
 
 	(void)name;
-	(void)extension;
 
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 

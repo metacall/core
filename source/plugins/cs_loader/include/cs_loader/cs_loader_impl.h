@@ -29,7 +29,7 @@ CS_LOADER_API loader_handle cs_loader_impl_load_from_file(loader_impl impl,const
 
 CS_LOADER_API loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
 
-CS_LOADER_API loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const loader_naming_extension extension, const char * buffer, size_t size);
+CS_LOADER_API loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size);
 
 CS_LOADER_API int cs_loader_impl_clear(loader_impl impl, loader_handle handle);
 

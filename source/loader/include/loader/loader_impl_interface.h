@@ -29,13 +29,13 @@ struct loader_impl_type;
 
 typedef struct loader_impl_type * loader_impl;
 
-typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration config);
+typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration);
 
 typedef int (*loader_impl_interface_execution_path)(loader_impl, const loader_naming_path);
 
 typedef loader_handle (*loader_impl_interface_load_from_file)(loader_impl, const loader_naming_path[], size_t);
 
-typedef loader_handle (*loader_impl_interface_load_from_memory)(loader_impl, const loader_naming_name, const loader_naming_extension, const char *, size_t);
+typedef loader_handle (*loader_impl_interface_load_from_memory)(loader_impl, const loader_naming_name, const char *, size_t);
 
 typedef loader_handle (*loader_impl_interface_load_from_package)(loader_impl, const loader_naming_path);
 

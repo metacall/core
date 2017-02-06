@@ -39,12 +39,12 @@ size_t loader_path_get_name(const loader_naming_path path, loader_naming_name na
 	return last + 1;
 }
 
-size_t loader_path_get_extension(const loader_naming_path path, loader_naming_extension extension)
+size_t loader_path_get_extension(const loader_naming_path path, loader_naming_tag extension)
 {
 	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_EXTENSION_SIZE*/; ++i)
+		i < LOADER_NAMING_PATH_SIZE /*&& count < loader_naming_tag_SIZE*/; ++i)
 	{
 		extension[count++] = path[i];
 

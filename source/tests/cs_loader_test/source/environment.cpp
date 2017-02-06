@@ -25,7 +25,7 @@ void environment::SetUp() {
 		FAIL();
 	}
 
-	if (loader_load_from_file(names, 5) != 0) {
+	if (loader_load_from_file((loader_naming_tag)"cs",names, 5) != 0) {
 		FAIL();
 	}
 }

@@ -66,7 +66,7 @@ size_t metacall_args_size()
 	return args_size;
 }
 
-int metacall_load_from_file(const char * paths[], size_t size)
+int metacall_load_from_file(const loader_naming_tag tag, const char * paths[], size_t size)
 {
 	loader_naming_path path_impl[LOADER_LOAD_FROM_FILES_SIZE];
 
@@ -77,17 +77,17 @@ int metacall_load_from_file(const char * paths[], size_t size)
 		strncpy(path_impl[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE);
 	}
 
-	return loader_load_from_file((const loader_naming_path *)path_impl, size);
+	return loader_load_from_file(tag, (const loader_naming_path *)path_impl, size);
 }
 
-int metacall_load_from_memory(const char * extension, const char * buffer, size_t size)
+int metacall_load_from_memory(const loader_naming_tag tag, const char * buffer, size_t size)
 {
-	return loader_load_from_memory(extension, buffer, size);
+	return loader_load_from_memory(tag, buffer, size);
 }
 
-int metacall_load_from_package(const char * extension, const char * path)
+int metacall_load_from_package(const loader_naming_tag tag, const char * path)
 {
-	return loader_load_from_package(extension, path);
+	return loader_load_from_package(tag, path);
 }
 
 void * metacallv(const char * name, void * args[])
