@@ -30,7 +30,7 @@ TEST_F(rb_loader_test, DefaultConstructor)
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout)));
 
-	EXPECT_EQ((int) 0, (int) loader_load_from_file(names, sizeof(names) / sizeof(names[0])));
+	EXPECT_EQ((int) 0, (int) loader_load_from_file("rb", names, sizeof(names) / sizeof(names[0])));
 
 	EXPECT_EQ((int) 0, (int) loader_unload());
 }

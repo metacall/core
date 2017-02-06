@@ -61,7 +61,7 @@ METACALL_API size_t metacall_args_size(void);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_file(const char * path[], size_t size);
+METACALL_API int metacall_load_from_file(const char * tag, const char * path[], size_t size);
 
 /**
 *  @brief
@@ -79,7 +79,7 @@ METACALL_API int metacall_load_from_file(const char * path[], size_t size);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_memory(const char * extension, const char * buffer, size_t size);
+METACALL_API int metacall_load_from_memory(const char * tag, const char * buffer, size_t size);
 
 /**
 *  @brief
@@ -94,7 +94,7 @@ METACALL_API int metacall_load_from_memory(const char * extension, const char * 
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_package(const char * extension, const char * path);
+METACALL_API int metacall_load_from_package(const char * tag, const char * path);
 
 /**
 *  @brief
