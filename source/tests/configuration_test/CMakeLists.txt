@@ -129,11 +129,11 @@ add_test(NAME ${target}
 # Configure test data
 #
 
-configure_file(data/global.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file(data/child_a.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file(data/child_b.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file(data/child_c.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file(data/child_d.json ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file(data/global.json.in ${CMAKE_CURRENT_BINARY_DIR}/global.json)
+configure_file(data/child_a.json.in ${CMAKE_CURRENT_BINARY_DIR}/child_a.json)
+configure_file(data/child_b.json.in ${CMAKE_CURRENT_BINARY_DIR}/child_b.json)
+configure_file(data/child_c.json.in ${CMAKE_CURRENT_BINARY_DIR}/child_c.json)
+configure_file(data/child_d.json.in ${CMAKE_CURRENT_BINARY_DIR}/child_d.json)
 
 #
 # Define test labels

@@ -1,0 +1,6 @@
+{
+	"value": 12345,
+	"value_local": 321321,
+	"child_a": "${CMAKE_CURRENT_BINARY_DIR}/child_a.json",
+	"child_b": "${CMAKE_CURRENT_BINARY_DIR}/child_b.json"
+}

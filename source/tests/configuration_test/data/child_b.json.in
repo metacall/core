@@ -1,0 +1,6 @@
+{
+	"value": 54321,
+	"value_b": 333,
+	"child_c": "${CMAKE_CURRENT_BINARY_DIR}/child_c.json",
+	"child_d": "${CMAKE_CURRENT_BINARY_DIR}/child_d.json"
+}
