@@ -1,4 +1,13 @@
 #
+# Setup distributable environment
+#
+
+# Check if distributable libs are enabled
+if(NOT OPTION_BUILD_DISTRIBUTABLE_LIBS)
+	return()
+endif()
+
+#
 # External dependencies
 #
 

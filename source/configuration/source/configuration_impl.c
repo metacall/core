@@ -80,13 +80,13 @@ dynlink configuration_impl_initialize_load(const char * name)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	const char config_dynlink_suffix[] = "_configd";
-#else
-	const char config_dynlink_suffix[] = "_config";
-#endif
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		const char config_dynlink_suffix[] = "_configd";
+	#else
+		const char config_dynlink_suffix[] = "_config";
+	#endif
 
-#define CONFIGURATION_DYNLINK_NAME_FULL_SIZE \
+	#define CONFIGURATION_DYNLINK_NAME_FULL_SIZE \
 		(sizeof(config_dynlink_suffix) + CONFIGURATION_DYNLINK_NAME_SIZE)
 
 	char config_dynlink_name[CONFIGURATION_DYNLINK_NAME_FULL_SIZE];
@@ -96,7 +96,7 @@ dynlink configuration_impl_initialize_load(const char * name)
 	strncat(config_dynlink_name, config_dynlink_suffix,
 		CONFIGURATION_DYNLINK_NAME_FULL_SIZE - strnlen(config_dynlink_name, CONFIGURATION_DYNLINK_NAME_FULL_SIZE - 1) - 1);
 
-#undef CONFIGURATION_DYNLINK_NAME_FULL_SIZE
+	#undef CONFIGURATION_DYNLINK_NAME_FULL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading config: %s", config_dynlink_name);
 
@@ -108,7 +108,7 @@ int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynl
 	const char config_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char config_dynlink_symbol_suffix[] = "_config_impl_interface_singleton";
 
-#define CONFIGURATION_DYNLINK_SYMBOL_SIZE \
+	#define CONFIGURATION_DYNLINK_SYMBOL_SIZE \
 		(sizeof(config_dynlink_symbol_prefix) + CONFIGURATION_DYNLINK_NAME_SIZE + sizeof(config_dynlink_symbol_suffix))
 
 	char config_dynlink_symbol[CONFIGURATION_DYNLINK_SYMBOL_SIZE];
@@ -121,7 +121,7 @@ int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynl
 	strncat(config_dynlink_symbol, config_dynlink_symbol_suffix,
 		CONFIGURATION_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-#undef CONFIGURATION_DYNLINK_SYMBOL_SIZE
+	#undef CONFIGURATION_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Config symbol: %s", config_dynlink_symbol);
 

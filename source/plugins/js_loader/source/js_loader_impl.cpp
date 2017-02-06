@@ -631,9 +631,12 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration confi
 	loader_impl_js js_impl = new loader_impl_js_type();
 
 	(void)impl;
+	(void)config;
 
 	if (js_impl != nullptr)
 	{
+		/* TODO: Implement by config */
+
 		#if 0 /* V8 5.7 */
 			V8::InitializeICUDefaultLocation("/../metacall/build", "/../v8/out/x64.debug/icudtl.dat");
 			V8::InitializeExternalStartupData("/../v8/out/x64.debug/");

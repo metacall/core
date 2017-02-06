@@ -449,9 +449,13 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 		if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
 		{
-			PyModuleDef module_def = { 0 };
+			static const char main_module_name[] = "__metacall__";
 
-			module_def.m_name = "__metacall__";
+			PyModuleDef module_def;
+
+			memset(&module_def, 0, sizeof(PyModuleDef));
+
+			module_def.m_name = main_module_name;
 
 			py_impl->main_module = PyModule_Create(&module_def);
 
