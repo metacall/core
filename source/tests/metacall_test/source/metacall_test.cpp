@@ -17,9 +17,9 @@
 #include <log/log.h>
 
 
-value c_function(void * args[]) {
+void * c_function(void * args[]) {
 	printf("%s\n", (char*)args[0]);
-	return value_create_int(1);
+	return metacall_value_create_int(1);
 }
 
 class metacall_test : public testing::Test
