@@ -144,6 +144,8 @@ METACALL_API int metacall_destroy(void);
 */
 METACALL_API const char * metacall_print_info(void);
 
+METACALL_API int metacall_register(const char * name, void *(*invoke)(void * []), int return_type,size_t arg_size, ...);
+
 #ifdef __cplusplus
 }
 #endif

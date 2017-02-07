@@ -67,12 +67,15 @@ static loader loader_singleton(void);
 
 static loader_impl loader_create_impl(const loader_naming_tag extension);
 
-static loader_impl loader_get_impl(const loader_naming_tag extension);
-
 static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
 static int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
+static function_interface get_interface_proxy();
+
+static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args);
+
+static void loader_register_destroy_proxy(function func, function_impl func_impl);
 /* -- Methods -- */
 
 static loader loader_singleton()
@@ -111,6 +114,10 @@ void loader_initialize()
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->script_path);
 	}
+
+	if (hash_map_insert(l->impl_map, (hash_map_key)LOADER_HOST_PROXY_NAME, loader_impl_create_proxy()) == 0) {
+
+	}
 }
 
 static loader_impl loader_create_impl(const loader_naming_tag tag)
@@ -147,7 +154,7 @@ static loader_impl loader_create_impl(const loader_naming_tag tag)
 	return NULL;
 }
 
-static loader_impl loader_get_impl(const loader_naming_tag tag)
+loader_impl loader_get_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
@@ -397,6 +404,75 @@ void loader_destroy()
 
 		l->script_path = NULL;
 	}
+}
+
+static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args) {
+	
+	(void)func;
+	
+	host_invoke * hinvoke = (host_invoke*)func_impl;
+
+	return hinvoke->invoke(args);
+}
+
+static void loader_register_destroy_proxy(function func, function_impl func_impl) {
+	(void)func;
+
+	if (func_impl != NULL) {
+		free(func_impl);
+	}
+}
+
+
+static function_interface get_interface_proxy(void)
+{
+	static struct function_interface_type interface =
+	{
+		NULL,
+		&loader_register_invoke_proxy,
+		&loader_register_destroy_proxy
+	};
+
+	return &interface;
+}
+
+int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]) {
+	function f = NULL;
+
+	loader_impl loader = loader_get_impl(LOADER_HOST_PROXY_NAME);
+
+	context ctx = loader_impl_context(loader);
+
+	scope sp = context_scope(ctx);
+	
+	host_invoke * hinvoke = malloc(sizeof(host_invoke));
+	
+	hinvoke->invoke = invoke;
+	
+	f = function_create(name, arg_size, hinvoke, &get_interface_proxy);
+
+	if (f != NULL) {
+
+		signature s = function_signature(f);
+
+		if (arg_size > 0) {
+
+			size_t iterator;
+
+			for (iterator = 0; iterator < arg_size; iterator++)
+			{
+				signature_set(s, iterator, "holder", type_create(args_type_id[iterator], "holder", NULL, NULL));
+			}
+		}
+
+		signature_set_return(s, type_create(return_type, "holder", NULL, NULL));
+
+		scope_define(sp, name, f);
+
+		return 0;
+	}
+
+	return 1;
 }
 
 const char * loader_print_info()

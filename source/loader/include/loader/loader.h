@@ -13,6 +13,8 @@
 
 #include <loader/loader_naming.h>
 
+#include <loader/loader_impl_interface.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -21,7 +23,15 @@ extern "C" {
 
 #define LOADER_LOAD_FROM_FILES_SIZE 0x20
 
+#define LOADER_HOST_PROXY_NAME		"__metacall_host__"
+
+typedef value (*loader_register_invoke)(void * []);
+
 typedef void * loader_data;
+
+typedef struct{
+	loader_register_invoke invoke;
+} host_invoke;
 
 LOADER_API void loader_initialize(void);
 
@@ -33,6 +43,8 @@ LOADER_API int loader_load_from_memory(const loader_naming_tag tag, const char *
 
 LOADER_API int loader_load_from_package(const loader_naming_tag tag, const loader_naming_path path);
 
+LOADER_API loader_impl loader_get_impl(const loader_naming_tag tag);
+
 LOADER_API loader_data loader_get(const char * name);
 
 LOADER_API int loader_unload(void);
@@ -40,6 +52,8 @@ LOADER_API int loader_unload(void);
 LOADER_API void loader_destroy(void);
 
 LOADER_API const char * loader_print_info(void);
+
+LOADER_API int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]);
 
 #ifdef __cplusplus
 }

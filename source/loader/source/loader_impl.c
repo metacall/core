@@ -6,9 +6,10 @@
  *
  */
 
-/* -- Headers -- */
+ /* -- Headers -- */
 
 #include <loader/loader_impl.h>
+#include <loader/loader.h>
 
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_context.h>
@@ -74,13 +75,13 @@ static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key 
 
 static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
 {
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char loader_dynlink_suffix[] = "_loaderd";
-	#else
-		const char loader_dynlink_suffix[] = "_loader";
-	#endif
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	const char loader_dynlink_suffix[] = "_loaderd";
+#else
+	const char loader_dynlink_suffix[] = "_loader";
+#endif
 
-	#define LOADER_DYNLINK_NAME_SIZE \
+#define LOADER_DYNLINK_NAME_SIZE \
 		(sizeof(loader_dynlink_suffix) + LOADER_NAMING_TAG_SIZE)
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
@@ -90,7 +91,7 @@ static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag
 	strncat(loader_dynlink_name, loader_dynlink_suffix,
 		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
 
-	#undef LOADER_DYNLINK_NAME_SIZE
+#undef LOADER_DYNLINK_NAME_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader: %s", loader_dynlink_name);
 
@@ -102,7 +103,7 @@ static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, d
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
 
-	#define LOADER_DYNLINK_SYMBOL_SIZE \
+#define LOADER_DYNLINK_SYMBOL_SIZE \
 		(sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_TAG_SIZE + sizeof(loader_dynlink_symbol_suffix))
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
@@ -115,7 +116,7 @@ static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, d
 	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix,
 		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-	#undef LOADER_DYNLINK_SYMBOL_SIZE
+#undef LOADER_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader symbol: %s", loader_dynlink_symbol);
 
@@ -151,6 +152,41 @@ static int loader_impl_create_singleton(loader_impl impl, const char * path, loa
 	return 1;
 }
 
+loader_impl loader_impl_create_proxy()
+{
+	loader_impl impl = malloc(sizeof(struct loader_impl_type));
+
+	memset(impl, 0, sizeof(struct loader_impl_type));
+
+	if (impl != NULL)
+	{
+		impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+
+		if (impl->handle_impl_map != NULL)
+		{
+			impl->type_info_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+
+			if (impl->type_info_map != NULL)
+			{
+				impl->ctx = context_create(LOADER_HOST_PROXY_NAME);
+
+				if (impl->ctx != NULL)
+				{
+					strncpy(impl->tag, LOADER_HOST_PROXY_NAME, LOADER_NAMING_TAG_SIZE);
+
+					return impl;
+				}
+
+				hash_map_destroy(impl->type_info_map);
+			}
+
+			hash_map_destroy(impl->handle_impl_map);
+		}
+	}
+
+	return NULL;
+}
+
 loader_impl loader_impl_create(const char * path, loader_naming_tag tag)
 {
 	if (tag != NULL)
@@ -177,7 +213,7 @@ loader_impl loader_impl_create(const char * path, loader_naming_tag tag)
 							configuration config;
 
 							strcpy(configuration_key, tag);
-							strcat(configuration_key,"_loader");
+							strcat(configuration_key, "_loader");
 
 							config = configuration_scope(configuration_key);
 
@@ -370,39 +406,39 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 	/* TODO: Improve name with time */
 	static const char format[] = "%p-%p-%" PRIuS;
 
-	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
 
-		size_t length = _snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
+	size_t length = _snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
 
-	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
 		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
 		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
 
-		size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
+	size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
 
-	#else
+#else
 
-		size_t length = sprintf(NULL, format, (const void *)impl, (const void *)buffer, size);
+	size_t length = sprintf(NULL, format, (const void *)impl, (const void *)buffer, size);
 
-	#endif
+#endif
 
 	if (length < LOADER_NAMING_NAME_SIZE)
 	{
-		#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
 
-			size_t written = _snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+		size_t written = _snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
 
-		#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
 			defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
 			defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
 
-			size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+		size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
 
-		#else
+#else
 
-			size_t written = sprintf(name, format, (const void *)impl, (const void *)buffer, size);
+		size_t written = sprintf(name, format, (const void *)impl, (const void *)buffer, size);
 
-		#endif
+#endif
 
 		if (written == length)
 		{
@@ -552,7 +588,7 @@ void loader_impl_destroy(loader_impl impl)
 
 		hash_map_destroy(impl->type_info_map);
 
-		if (interface_impl->destroy(impl) != 0)
+		if (interface_impl != NULL && interface_impl->destroy(impl) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", impl->tag, interface_impl->destroy);
 		}

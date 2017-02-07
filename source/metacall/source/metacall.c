@@ -6,7 +6,7 @@
  *
  */
 
-/* -- Headers -- */
+ /* -- Headers -- */
 
 #include <metacall/metacall-version.h>
 #include <metacall/metacall-plugins.h>
@@ -15,9 +15,10 @@
 #include <loader/loader.h>
 
 #include <reflect/reflect_value_type.h>
+#include <reflect/reflect_context.h>
+#include <reflect/reflect_scope.h>
 #include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_function.h>
-
 #include <configuration/configuration.h>
 
 #include <string.h>
@@ -52,9 +53,9 @@ int metacall_initialize()
 
 	metacall_initialize_flag = 0;
 
-	#ifndef LOADER_LAZY
-		loader_initialize();
-	#endif
+#ifndef LOADER_LAZY
+	loader_initialize();
+#endif
 
 	return 0;
 }
@@ -229,17 +230,42 @@ int metacall_destroy()
 	return 0;
 }
 
+int metacall_register(const char * name, value (*invoke)(void *[]), int return_type, size_t arg_size, ...) {
+
+	if (arg_size > 0) {
+
+		int types[METACALL_ARGS_SIZE];
+
+		va_list va;
+
+		va_start(va, arg_size);
+
+		size_t iterator;
+
+		for (iterator = 0; iterator < arg_size; iterator++)
+		{
+			types[iterator] = va_arg(va, int);
+		}
+
+		va_end(va);
+
+		return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, arg_size, types);
+	}
+
+	return 1;
+}
+
 const char * metacall_print_info()
 {
 	static const char metacall_info[] =
 		"MetaCall Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef METACALL_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef METACALL_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

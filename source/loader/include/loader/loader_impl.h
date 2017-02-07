@@ -42,6 +42,8 @@ LOADER_API int loader_impl_load_from_package(loader_impl impl, const loader_nami
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 
+loader_impl loader_impl_create_proxy();
+
 #ifdef __cplusplus
 }
 #endif
