@@ -124,3 +124,29 @@ install(TARGETS ${target}
 	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT examples
 	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
 )
+
+#
+# Define test
+#
+
+set(TEST_COMMAND_LINE_ARGS "mock test.mock")
+
+add_test(NAME ${target}
+	COMMAND ${CMAKE_COMMAND} -E echo exit | $<TARGET_FILE:${target}> ${TEST_COMMAND_LINE_ARGS}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+#
+# Define test labels
+#
+
+set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	${TEST_COMMAND_LINE_ARGS}
+	${TESTS_ENVIRONMENT_VARIABLES}
+)

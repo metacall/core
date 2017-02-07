@@ -147,5 +147,6 @@ set_property(TEST ${target}
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
+	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 )

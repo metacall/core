@@ -144,5 +144,6 @@ else()
 endif()
 
 test_environment_variables(${target}
+	""
 	${ENVIRONMENT_TEST_VARIABLES}
 )

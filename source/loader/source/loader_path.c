@@ -44,7 +44,7 @@ size_t loader_path_get_extension(const loader_naming_path path, loader_naming_ta
 	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE /*&& count < loader_naming_tag_SIZE*/; ++i)
+		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_TAG_SIZE*/; ++i)
 	{
 		extension[count++] = path[i];
 

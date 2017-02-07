@@ -134,5 +134,6 @@ set_property(TEST ${target}
 include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
+	""
 	"DYNLINK_TEST_LIBRARY_PATH=@OUTPUT_DIRECTORY_DIR@"
 )

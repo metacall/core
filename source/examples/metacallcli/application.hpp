@@ -70,13 +70,16 @@ class application
 	*  @brief
 	*    Application script loader
 	*
+	*  @param[in] tag
+	*    Loader tag reference
+	*
 	*  @param[in] script
 	*    Reference to script name
 	*
 	*  @return
 	*    Return true on success, false otherwhise
 	*/
-	bool load(const std::string & script);
+	bool load(const std::string & tag, const std::string & script);
 
 	/**
 	*  @brief
@@ -187,10 +190,13 @@ class application
 		*  @param[in] app
 		*    Reference to the application
 		*
+		*  @param[in] tag
+		*    Loader tag reference
+		*
 		*  @param[in] scripts
 		*    Reference to list of scripts to be iterated
 		*/
-		parameter_iterator(application & app, script_list & scripts);
+		parameter_iterator(application & app, const std::string & tag, script_list & scripts);
 
 		/**
 		*  @brief
@@ -220,7 +226,9 @@ class application
 
 		/* -- Private Member Data -- */
 
-		application & app;	/**< Reference to the application */
+		application & app;		/**< Reference to the application */
+
+		std::string tag;		/**< Loader tag reference */
 
 		script_list & scripts;	/**< Reference to the script list */
 	};

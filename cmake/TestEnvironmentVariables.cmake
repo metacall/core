@@ -13,13 +13,14 @@ set(TEST_ENVIRONMENT_VARIABLES_FOUND YES)
 
 get_filename_component(TEST_ENVIRONMENT_VARIABLES_PATH ${CMAKE_CURRENT_LIST_FILE} PATH)
 
-function(test_environment_variables target)
+function(test_environment_variables target args)
 
 	set(env_vars ${ARGN})
 
 	if(MSVC)
 
 		set(MSVC_LOCAL_DEBUGGER_ENVIRONMENT ${env_vars})
+		set(MSVC_COMMAND_LINE_ARGS ${args})
 
 		set(OUTPUT_DIRECTORY_DIR "$(OutDir)")
 		string(CONFIGURE "${MSVC_LOCAL_DEBUGGER_ENVIRONMENT}" MSVC_LOCAL_DEBUGGER_ENVIRONMENT @ONLY)
@@ -55,6 +56,7 @@ function(test_environment_variables target)
 					<LocalDebuggerEnvironment>\n@MSVC_LOCAL_DEBUGGER_ENVIRONMENT@\n$(LocalDebuggerEnvironment)\n \
 					</LocalDebuggerEnvironment>\n \
 					<LocalDebuggerWorkingDirectory>$(OutDir)</LocalDebuggerWorkingDirectory>\n \
+					<LocalDebuggerCommandArguments>@MSVC_COMMAND_LINE_ARGS@</LocalDebuggerCommandArguments>\n \
 					<DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>\n \
 				</PropertyGroup>\n \
 			")
@@ -101,6 +103,7 @@ function(test_environment_variables target)
 				<Configuration Name=\"@MSVC_BUILD_CONFIG@|@MSVC_PLATFORM@\">\n \
 					<DebugSettings\n \
 						WorkingDirectory=\"$(OutDir)\"\n \
+						CommandArguments=\"@MSVC_COMMAND_LINE_ARGS@\"\n \
 						Environment=\"@MSVC_LOCAL_DEBUGGER_ENVIRONMENT@\"\n \
 						EnvironmentMerge=\"true\"\n \
 					 /> \

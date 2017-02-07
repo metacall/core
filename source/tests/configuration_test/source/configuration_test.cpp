@@ -10,6 +10,8 @@
 
 #include <configuration/configuration.h>
 
+#include <environment/environment_variable.h>
+
 #include <log/log.h>
 
 #define CONFIGURATION_PATH "CONFIGURATION_PATH"
@@ -29,9 +31,11 @@ TEST_F(configuration_test, DefaultConstructor)
 
 	const char key_value[] = "value";
 
-	const char * configuration_path = getenv(CONFIGURATION_PATH);
+	char * configuration_path = environment_variable_create(CONFIGURATION_PATH, NULL);
 
 	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", configuration_path));
+
+	environment_variable_destroy(configuration_path);
 
 	/* Global */
 	{

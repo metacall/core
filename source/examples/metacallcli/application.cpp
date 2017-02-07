@@ -49,7 +49,8 @@ bool command_cb_help(application & app, tokenizer & /*t*/)
 	std::cout << "\t\t\tstring [\"hello world\"]" << std::endl;
 
 	/* Load command */
-	std::cout << std::endl << "\tload <script0> <script1> ... <scriptN>" << std::endl;
+	std::cout << std::endl << "\tload <tag> <script0> <script1> ... <scriptN>" << std::endl;
+	std::cout << "\t\ttag : loader tag will be used to run scripts [rb, js, py, mock, node]" << std::endl;
 
 	/* Exit command */
 	std::cout << std::endl << "\texit" << std::endl;
@@ -153,11 +154,18 @@ bool command_cb_load(application & app, tokenizer & t)
 
 	parser p(it);
 
+	std::string loader_tag;
+
+	if (p.is<std::string>())
+	{
+		loader_tag = *it;
+	}
+
 	do
 	{
 		++it;
 
-	} while (it != t.end() && p.is<std::string>() && app.load(*it));
+	} while (it != t.end() && p.is<std::string>() && app.load(loader_tag, *it));
 
 	return true;
 }
@@ -173,8 +181,8 @@ bool command_cb_exit(application & app, tokenizer & /*t*/)
 
 /* -- Methods -- */
 
-application::parameter_iterator::parameter_iterator(application & app, application::script_list & scripts) :
-	app(app), scripts(scripts)
+application::parameter_iterator::parameter_iterator(application & app, const std::string & tag, application::script_list & scripts) :
+	app(app), tag(tag), scripts(scripts)
 {
 
 }
@@ -184,14 +192,24 @@ application::parameter_iterator::~parameter_iterator()
 
 }
 
-bool application::load(const std::string & script)
+void application::parameter_iterator::operator()(const char * parameter)
+{
+	std::string script(parameter);
+
+	if (app.load(tag, script) == false)
+	{
+		std::cout << "Invalid parameter (" << parameter << ")" << std::endl;
+	}
+}
+
+bool application::load(const std::string & tag, const std::string & script)
 {
 	const char * script_list[] =
 	{
 		script.c_str()
 	};
 
-	if (metacall_load_from_file(script_list, sizeof(script_list) / sizeof(script_list[0])) == 0)
+	if (metacall_load_from_file(tag.c_str(), script_list, sizeof(script_list) / sizeof(script_list[0])) == 0)
 	{
 		scripts.push_back(script);
 
@@ -201,16 +219,6 @@ bool application::load(const std::string & script)
 	}
 
 	return false;
-}
-
-void application::parameter_iterator::operator()(const char * parameter)
-{
-	std::string script(parameter);
-
-	if (app.load(script) == false)
-	{
-		std::cout << "Invalid parameter (" << parameter << ")" << std::endl;
-	}
 }
 
 application::application(int argc, char * argv[]) : exit_condition(false)
@@ -236,10 +244,10 @@ application::application(int argc, char * argv[]) : exit_condition(false)
 	}
 	else
 	{
-		parameter_iterator param_it(*this, scripts);
+		parameter_iterator param_it(*this, argv[1], scripts);
 
 		/* Parse program parameters */
-		std::for_each(&argv[1], argv + argc, param_it);
+		std::for_each(&argv[2], argv + argc, param_it);
 	}
 
 	/* Define available commands */
@@ -261,7 +269,7 @@ application::~application()
 
 void application::usage()
 {
-	std::cout << std::endl << "Usage: metacallcli <script0> <script1> ... <scriptN>" << std::endl;
+	std::cout << std::endl << "Usage: metacallcli <tag> <script0> <script1> ... <scriptN>" << std::endl;
 }
 
 void application::run()
