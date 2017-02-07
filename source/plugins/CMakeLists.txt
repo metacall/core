@@ -3,6 +3,20 @@ if(NOT OPTION_BUILD_PLUGINS)
 	return()
 endif()
 
+# Define loader modules
+set(LOADER_MODULE_NAMES
+	version
+	preprocessor
+	environment
+	format
+	log
+	adt
+	dynlink
+	reflect
+	loader
+	configuration
+)
+
 # Plugins options
 option(OPTION_BUILD_PLUGINS_C "Build C Foreign Function Interface library plugin." OFF)
 option(OPTION_BUILD_PLUGINS_CS "Build C# CoreCLR 1.0.1 Runtime plugin." OFF)

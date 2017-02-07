@@ -116,10 +116,25 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
+include(Distributable)
+
+# Create unity build library
+set(cs_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+
+distributable_generate(${target} ${cs_loader_unity_build}
+	${LOADER_MODULE_NAMES}
+)
+
 # Build library
 add_library(${target}
+	${cs_loader_unity_build}
 	${sources}
 	${headers}
+)
+
+# Add target dependencies
+add_dependencies(${target}
+	${LOADER_MODULE_NAMES}
 )
 
 # Create namespaced alias
@@ -192,15 +207,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::configuration
-	${META_PROJECT_NAME}::loader
 
 	$<$<NOT:$<BOOL:${MSVC}>>:stdc++fs>
 	

@@ -84,8 +84,8 @@ distributable_generate(${target} ${rapid_json_config_unity_build}
 # Build library
 add_library(${target}
 	${rapid_json_config_unity_build}
-	${headers}
 	${sources}
+	${headers}
 )
 
 # Add target dependencies
