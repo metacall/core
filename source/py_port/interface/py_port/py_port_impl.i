@@ -85,7 +85,27 @@ extern "C" {
 					}
 				%#endif
 
-				$1[iterator] = str;
+				$1[iterator] = (char *)malloc(sizeof(char) * (length + 1));
+
+				if ($1[iterator] == NULL)
+				{
+					PyErr_SetString(PyExc_ValueError, "Invalid string path allocation");
+
+					size_t alloc_iterator;
+
+					for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+					{
+						free($1[iterator]);
+					}
+
+					free($1);
+
+					SWIG_fail;
+				}
+
+				memcpy($1[iterator], str, length + 1);
+
+				$1[iterator][length] = '\0';
 			}
 		}
 	}
@@ -187,11 +207,16 @@ extern "C" {
 {
 	const char * tag = (const char *)arg1;
 
-	const char ** paths = (const char **)arg2;
+	char ** paths = (char **)arg2;
 
-	size_t size = arg3;
+	size_t iterator, size = arg3;
 
-	result = metacall_load_from_file(tag, paths, size);
+	result = metacall_load_from_file(tag, (const char **)paths, size);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		free(paths[iterator]);
+	}
 
 	free(paths);
 }
