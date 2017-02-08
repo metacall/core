@@ -218,6 +218,26 @@ void * metacall(const char * name, ...)
 	return NULL;
 }
 
+int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...)
+{
+	enum metacall_value_id types[METACALL_ARGS_SIZE];
+
+	va_list va;
+
+	va_start(va, size);
+
+	size_t iterator;
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		types[iterator] = (enum metacall_value_id)va_arg(va, int);
+	}
+
+	va_end(va);
+
+	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, types);
+}
+
 int metacall_destroy()
 {
 	if (loader_unload() != 0)
@@ -228,31 +248,6 @@ int metacall_destroy()
 	metacall_initialize_flag = 1;
 
 	return 0;
-}
-
-int metacall_register(const char * name, value (*invoke)(void *[]), int return_type, size_t arg_size, ...) {
-
-	if (arg_size > 0) {
-
-		int types[METACALL_ARGS_SIZE];
-
-		va_list va;
-
-		va_start(va, arg_size);
-
-		size_t iterator;
-
-		for (iterator = 0; iterator < arg_size; iterator++)
-		{
-			types[iterator] = va_arg(va, int);
-		}
-
-		va_end(va);
-
-		return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, arg_size, types);
-	}
-
-	return 1;
 }
 
 const char * metacall_print_info()

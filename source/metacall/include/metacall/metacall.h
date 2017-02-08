@@ -61,7 +61,7 @@ METACALL_API size_t metacall_args_size(void);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_file(const char * tag, const char * path[], size_t size);
+METACALL_API int metacall_load_from_file(const char * tag, const char * paths[], size_t size);
 
 /**
 *  @brief
@@ -128,6 +128,30 @@ METACALL_API void * metacall(const char * name, ...);
 
 /**
 *  @brief
+*    Register a function by name @name and arguments @va_args
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] invoke
+*    Pointer to function invoke interface
+*
+*  @param[in] return_type
+*    Type of return value
+*
+*  @param[in] size
+*    Number of function arguments
+*
+*  @param[in] va_args
+*    Varidic function parameter types
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...);
+
+/**
+*  @brief
 *    Destroy MetaCall library
 *
 *  @return
@@ -143,8 +167,6 @@ METACALL_API int metacall_destroy(void);
 *    Static string containing module information
 */
 METACALL_API const char * metacall_print_info(void);
-
-METACALL_API int metacall_register(const char * name, void *(*invoke)(void * []), int return_type,size_t arg_size, ...);
 
 #ifdef __cplusplus
 }
