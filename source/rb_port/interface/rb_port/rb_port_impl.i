@@ -52,7 +52,29 @@ extern "C" {
 
 	for (iterator = 0; iterator < size; ++iterator, ++array_ptr)
 	{
-		$1[iterator] = StringValuePtr(*array_ptr);
+		size_t length = RSTRING_LEN(*array_ptr);
+
+		$1[iterator] = malloc(sizeof(char) * (length + 1));
+
+		if ($1[iterator] == NULL)
+		{
+			size_t alloc_iterator;
+
+			for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+			{
+				free($1[alloc_iterator]);
+			}
+
+			free($1);
+
+			rb_raise(rb_eArgError, "Invalid string path allocation");
+
+			SWIG_fail;
+		}
+
+		memcpy($1[iterator], StringValuePtr(*array_ptr), length);
+
+		$1[iterator][length] = '\0';
 	}
 }
 
@@ -167,11 +189,16 @@ extern "C" {
 {
 	const char * tag = (const char *)arg1;
 
-	const char ** paths = (const char **)arg2;
+	char ** paths = (char **)arg2;
 
-	size_t size = arg3;
+	size_t iterator, size = arg3;
 
-	result = metacall_load_from_file(tag, paths, size);
+	result = metacall_load_from_file(tag, (const char **)paths, size);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		free(paths[iterator]);
+	}
 
 	free(paths);
 }

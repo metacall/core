@@ -70,6 +70,13 @@ extern "C" {
 				%#if PY_MAJOR_VERSION == 2
 					if (PyString_AsStringAndSize(object_str, &str, &length) == -1)
 					{
+						size_t alloc_iterator;
+
+						for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+						{
+							free($1[alloc_iterator]);
+						}
+
 						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
 
 						SWIG_fail;
@@ -79,6 +86,13 @@ extern "C" {
 
 					if (str == NULL)
 					{
+						size_t alloc_iterator;
+
+						for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+						{
+							free($1[alloc_iterator]);
+						}
+
 						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
 
 						SWIG_fail;
@@ -89,21 +103,21 @@ extern "C" {
 
 				if ($1[iterator] == NULL)
 				{
-					PyErr_SetString(PyExc_ValueError, "Invalid string path allocation");
-
 					size_t alloc_iterator;
 
 					for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
 					{
-						free($1[iterator]);
+						free($1[alloc_iterator]);
 					}
 
 					free($1);
 
+					PyErr_SetString(PyExc_ValueError, "Invalid string path allocation");
+
 					SWIG_fail;
 				}
 
-				memcpy($1[iterator], str, length + 1);
+				memcpy($1[iterator], str, length);
 
 				$1[iterator][length] = '\0';
 			}
