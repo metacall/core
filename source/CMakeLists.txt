@@ -18,6 +18,9 @@ set(CONFIGURATION_PATH "${CONFIGURATION_DIR}/global.json" CACHE PATH "MetaCall c
 # Export output configuration plugin directory
 set(CONFIGURATION_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall configuration library path")
 
+# Add extra environment varible
+set(EXTRA_ENVIRONMENT_VARIABLES "" CACHE PATH "MetaCall extra environment variable")
+
 #
 # Configure variables
 #
@@ -35,6 +38,7 @@ set(TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES
 set(TESTS_ENVIRONMENT_VARIABLES
 	${TESTS_LOADER_ENVIRONMENT_VARIABLES}
 	${TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES}
+	${EXTRA_ENVIRONMENT_VARIABLES}
 )
 
 #
