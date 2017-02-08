@@ -32,6 +32,13 @@ extern "C" {
 	{
 		size_t iterator, size = PyList_Size($input);
 
+		if (size == 0)
+		{
+			PyErr_SetString(PyExc_ValueError, "Empty script path list");
+
+			return Py_None;
+		}
+
 		$1 = (char **)malloc(sizeof(char *) * size);
 
 		if ($1 == NULL)

@@ -270,6 +270,14 @@ string(TOUPPER "${RB_PORT_FIRST}" RB_PORT_FIRST_UPPER)
 string(SUBSTRING "${RB_PORT_NAME}" 1 -1 RB_PORT_LAST)
 set(RB_PORT_OBJ "${RB_PORT_FIRST_UPPER}${RB_PORT_LAST}")
 
+if(MSVC)
+	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+endif()
+
 configure_file(test/run.rb.in ${rb_port_test_path})
 
 #
@@ -286,4 +294,11 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${rb_port_test}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

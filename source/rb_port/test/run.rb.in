@@ -1,5 +1,7 @@
 #!/usr/bin/ruby
 
+ENV['CONFIGURATION_LIBRARY_PATH'] = '@CONFIGURATION_LIBRARY_PATH@'
+ENV['CONFIGURATION_PATH'] = '@CONFIGURATION_PATH@'
 ENV['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 ENV['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
@@ -12,7 +14,7 @@ class RbPortTest < Test::Unit::TestCase
 
 	# MetaCall (Python)
 	def test_python
-		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('example.py'))
+		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('py', ['example.py']))
 
 		assert_equal(nil, @@meta.call('hello'))
 
@@ -21,7 +23,7 @@ class RbPortTest < Test::Unit::TestCase
 
 	# MetaCall (Ruby)
 	def test_ruby
-		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('hello.rb'))
+		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('rb', ['hello.rb']))
 
 		assert_equal(nil, @@meta.call('say_null'))
 		

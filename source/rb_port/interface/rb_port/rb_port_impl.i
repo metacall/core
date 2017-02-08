@@ -17,7 +17,7 @@ extern "C" {
 
 %ignore metacall_null_args;
 
-%ignore metacall_register;
+%ignore metacall_register; /* TODO */
 
 /* -- Type Maps -- */
 
@@ -28,7 +28,32 @@ extern "C" {
 */
 %typemap(in) (const char * paths[], size_t size)
 {
-	/* TODO */
+	size_t iterator, size = RARRAY_LEN($input);
+
+	VALUE * array_ptr = RARRAY_PTR($input);
+
+	if (size == 0)
+	{
+		rb_raise(rb_eArgError, "Empty script path list");
+
+		return Qnil;
+	}
+
+	$1 = (char **)malloc(sizeof(char *) * size);
+
+	if ($1 == NULL)
+	{
+		rb_raise(rb_eArgError, "Invalid argument allocation");
+
+		SWIG_fail;
+	}
+
+	$2 = size;
+
+	for (iterator = 0; iterator < size; ++iterator, ++array_ptr)
+	{
+		$1[iterator] = StringValuePtr(*array_ptr);
+	}
 }
 
 /**
@@ -64,8 +89,6 @@ extern "C" {
 		rb_raise(rb_eArgError, "Invalid argument allocation");
 
 		SWIG_fail;
-
-		return Qnil;
 	}
 
 	for (args_count = 0; args_count < args_size; ++args_count)
@@ -142,7 +165,15 @@ extern "C" {
 */
 %feature("action") metacall_load_from_file
 {
-	/* TODO */
+	const char * tag = (const char *)arg1;
+
+	const char ** paths = (const char **)arg2;
+
+	size_t size = arg3;
+
+	result = metacall_load_from_file(tag, paths, size);
+
+	free(paths);
 }
 
 /**
