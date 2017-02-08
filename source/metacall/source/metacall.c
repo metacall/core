@@ -235,7 +235,7 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 
 	va_end(va);
 
-	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, types);
+	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
 }
 
 int metacall_destroy()
