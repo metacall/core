@@ -2,6 +2,8 @@
 
 import os
 
+os.environ['CONFIGURATION_LIBRARY_PATH'] = '@CONFIGURATION_LIBRARY_PATH@'
+os.environ['CONFIGURATION_PATH'] = '@CONFIGURATION_PATH@'
 os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
@@ -12,7 +14,7 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Python)
 	def test_python(self):
-		self.assertEqual(metacall.metacall_load_from_file('example.py'), 0);
+		self.assertEqual(metacall.metacall_load_from_file('py', ['example.py']), 0);
 
 		self.assertEqual(metacall.metacall('hello'), None)
 
@@ -20,7 +22,7 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Ruby)
 	def test_ruby(self):
-		self.assertEqual(metacall.metacall_load_from_file('hello.rb'), 0);
+		self.assertEqual(metacall.metacall_load_from_file('rb' ['hello.rb']), 0);
 
 		self.assertEqual(metacall.metacall('say_null'), None)
 

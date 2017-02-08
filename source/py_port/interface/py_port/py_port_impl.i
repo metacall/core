@@ -13,7 +13,82 @@
 extern "C" {
 #endif
 
+/* -- Ignores -- */
+
+%ignore metacall_null_args;
+
+%ignore metacall_register; /* TODO */
+
 /* -- Type Maps -- */
+
+/**
+*  @brief
+*    Transform load mechanism from Python list into
+*    a valid load from file format (array of strings)
+*/
+%typemap(in) (const char * paths[], size_t size)
+{
+	if (PyList_Check($input))
+	{
+		size_t iterator, size = PyList_Size($input);
+
+		$1 = (char **)malloc(sizeof(char *) * size);
+
+		if ($1 == NULL)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
+
+			SWIG_fail;
+		}
+
+		$2 = size;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			PyObject * object_str = PyList_GetItem($input, iterator);
+
+			int check_str =
+				%#if PY_MAJOR_VERSION == 2
+					PyString_Check(object_str);
+				%#elif PY_MAJOR_VERSION == 3
+					PyUnicode_Check(object_str);
+				%#endif
+
+			if (check_str != 0)
+			{
+				char * str = NULL;
+
+				Py_ssize_t length = 0;
+
+				%#if PY_MAJOR_VERSION == 2
+					if (PyString_AsStringAndSize(object_str, &str, &length) == -1)
+					{
+						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+						SWIG_fail;
+					}
+				%#elif PY_MAJOR_VERSION == 3
+					str = PyUnicode_AsUTF8AndSize(object_str, &length);
+
+					if (str == NULL)
+					{
+						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+						SWIG_fail;
+					}
+				%#endif
+
+				$1[iterator] = str;
+			}
+		}
+	}
+	else
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type (a list must be used)");
+
+		SWIG_fail;
+	}
+}
 
 /**
 *  @brief
@@ -46,8 +121,6 @@ extern "C" {
 		PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
 
 		SWIG_fail;
-
-		return NULL;
 	}
 
 	for (args_count = 0; args_count < args_size; ++args_count)
@@ -88,8 +161,6 @@ extern "C" {
 			PyErr_SetString(PyExc_ValueError, "Unsupported argument type");
 
 			SWIG_fail;
-
-			return NULL;
 		}
 	}
 
@@ -97,6 +168,26 @@ extern "C" {
 }
 
 /* -- Features -- */
+
+/**
+*  @brief
+*    Execute the load from file
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+%feature("action") metacall_load_from_file
+{
+	const char * tag = (const char *)arg1;
+
+	const char ** paths = (const char **)arg2;
+
+	size_t size = arg3;
+
+	result = metacall_load_from_file(tag, paths, size);
+
+	free(paths);
+}
 
 /**
 *  @brief

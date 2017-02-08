@@ -273,6 +273,12 @@ else()
 	set(PY_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
 endif()
 
+if(MSVC)
+	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+endif()
+
 configure_file(test/run.py.in ${py_port_test_path})
 
 #
@@ -289,4 +295,11 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${py_port_test}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

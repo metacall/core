@@ -13,7 +13,23 @@
 extern "C" {
 #endif
 
+/* -- Ignores -- */
+
+%ignore metacall_null_args;
+
+%ignore metacall_register;
+
 /* -- Type Maps -- */
+
+/**
+*  @brief
+*    Transform load mechanism from Ruby array into
+*    a valid load from file format (array of strings)
+*/
+%typemap(in) (const char * paths[], size_t size)
+{
+	/* TODO */
+}
 
 /**
 *  @brief
@@ -116,6 +132,18 @@ extern "C" {
 }
 
 /* -- Features -- */
+
+/**
+*  @brief
+*    Execute the load from file
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+%feature("action") metacall_load_from_file
+{
+	/* TODO */
+}
 
 /**
 *  @brief
