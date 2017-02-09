@@ -18,7 +18,7 @@ class RbPortTest < Test::Unit::TestCase
 
 		assert_equal(nil, @@meta.call('hello'))
 
-		#assert_equal(35, @@meta.call('multiply', 5, 7))
+		assert_equal(35, @@meta.call('multiply', 5, 7))
 	end
 
 	# MetaCall (Ruby)
@@ -26,9 +26,11 @@ class RbPortTest < Test::Unit::TestCase
 		assert_equal(0, @RB_PORT_OBJ@.metacall_load_from_file('rb', ['hello.rb']))
 
 		assert_equal(nil, @@meta.call('say_null'))
-		
+
+		# TODO: Solve <nil> return		
 		#assert_equal(12, @@meta.call('say_multiply', 3, 4))
 
+		# TODO: Solve <nil> return
 		#assert_equal('Hello world!', @@meta.call('say_hello', 'world'))
 	end
 

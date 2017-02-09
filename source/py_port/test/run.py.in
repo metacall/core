@@ -22,13 +22,13 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Ruby)
 	def test_ruby(self):
-		self.assertEqual(metacall.metacall_load_from_file('rb' ['hello.rb']), 0);
+		self.assertEqual(metacall.metacall_load_from_file('rb', ['hello.rb']), 0);
 
 		self.assertEqual(metacall.metacall('say_null'), None)
 
-		#self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
+		self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12)
 
-		#self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!')
+		self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!')
 
 if __name__ == '__main__':
 	unittest.main()
