@@ -19,7 +19,10 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_function.h>
+
 #include <configuration/configuration.h>
+
+#include <log/log.h>
 
 #include <string.h>
 
@@ -46,6 +49,15 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
+	/* TODO: Initialize by config or default */
+	/*
+	log_configure("metacall",
+		log_policy_format_text(),
+		log_policy_schedule_sync(),
+		log_policy_storage_sequential(),
+		log_policy_stream_stdio(stdout));
+	*/
+
 	if (configuration_initialize("rapid_json", NULL) != 0)
 	{
 		return 1;
@@ -53,9 +65,9 @@ int metacall_initialize()
 
 	metacall_initialize_flag = 0;
 
-#ifndef LOADER_LAZY
-	loader_initialize();
-#endif
+	#ifndef LOADER_LAZY
+		loader_initialize();
+	#endif
 
 	return 0;
 }
@@ -256,11 +268,11 @@ const char * metacall_print_info()
 		"MetaCall Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-#ifdef METACALL_STATIC_DEFINE
-		"Compiled as static library type"
-#else
-		"Compiled as shared library type"
-#endif
+		#ifdef METACALL_STATIC_DEFINE
+			"Compiled as static library type"
+		#else
+			"Compiled as shared library type"
+		#endif
 
 		"\n";
 
