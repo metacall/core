@@ -53,11 +53,15 @@ function(distributable_generate target_root unity_build_file)
 
 	endforeach()
 
-	file(WRITE ${unity_build_file} "${unity_build_source}")
+	if(EXISTS "${unity_build_file}")
+		file(READ "${unity_build_file}" unity_build_source_old)
 
-	#set_source_files_properties(${unity_build_file}
-	#	PROPERTIES HEADER_FILE_ONLY true
-	#)
+		if("${unity_build_source_old}" STREQUAL "${unity_build_source}")
+			return()
+		endif()
+	endif()
+
+	file(WRITE ${unity_build_file} "${unity_build_source}")
 
 	message(STATUS "Unity build written in ${unity_build_file}")
 
