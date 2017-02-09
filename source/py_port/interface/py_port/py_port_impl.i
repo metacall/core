@@ -181,65 +181,65 @@ extern "C" {
 	/* Variable length arguments */
 	args_size = PyTuple_Size(varargs);
 
-	if (args_size == 0)
+	if (args_size > 0)
 	{
-		PyErr_SetString(PyExc_ValueError, "Invalid number of arguments");
+		/* TODO: Remove this by a local array? */
+		args = (void **) malloc(args_size * sizeof(void *));
 
-		return Py_None;
-	}
-
-	/* TODO: Remove this by a local array? */
-	args = (void **) malloc(args_size * sizeof(void *));
-
-	if (args == NULL)
-	{
-		PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
-
-		SWIG_fail;
-	}
-
-	for (args_count = 0; args_count < args_size; ++args_count)
-	{
-		PyObject * py_arg = PyTuple_GetItem(varargs, args_count);
-
-		if (PyBool_Check(py_arg))
+		if (args == NULL)
 		{
-			boolean b = (PyObject_IsTrue(py_arg) == 1) ? 1L : 0L;
-
- 			args[args_count] = metacall_value_create_bool(b);
-		}
-		/*if (PyInt_Check(py_arg))
-		{
-			args[args_count] = metacall_value_create_int((int) PyInt_AsLong(py_arg));
-		}
-		*/else if (PyLong_Check(py_arg))
-		{
-			args[args_count] = metacall_value_create_long(PyLong_AsLong(py_arg));
-		}
-		else if (PyFloat_Check(py_arg))
-		{
-			args[args_count] = metacall_value_create_double(PyFloat_AsDouble(py_arg));
-		}
-		else if (PyUnicode_Check(py_arg))
-		{
-			Py_ssize_t size;
-
-			const char * str = PyUnicode_AsUTF8AndSize(py_arg, &size);
-
-			args[args_count] = metacall_value_create_string(str, (size_t)size);
-		}
-		else
-		{
-			/* TODO: Remove this by a local array? */
-			free(args);
-
-			PyErr_SetString(PyExc_ValueError, "Unsupported argument type");
+			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
 
 			SWIG_fail;
 		}
-	}
 
-	$2 = (void *) args;
+		for (args_count = 0; args_count < args_size; ++args_count)
+		{
+			PyObject * py_arg = PyTuple_GetItem(varargs, args_count);
+
+			if (PyBool_Check(py_arg))
+			{
+				boolean b = (PyObject_IsTrue(py_arg) == 1) ? 1L : 0L;
+
+ 				args[args_count] = metacall_value_create_bool(b);
+			}
+			/*if (PyInt_Check(py_arg))
+			{
+				args[args_count] = metacall_value_create_int((int) PyInt_AsLong(py_arg));
+			}
+			*/else if (PyLong_Check(py_arg))
+			{
+				args[args_count] = metacall_value_create_long(PyLong_AsLong(py_arg));
+			}
+			else if (PyFloat_Check(py_arg))
+			{
+				args[args_count] = metacall_value_create_double(PyFloat_AsDouble(py_arg));
+			}
+			else if (PyUnicode_Check(py_arg))
+			{
+				Py_ssize_t size;
+
+				const char * str = PyUnicode_AsUTF8AndSize(py_arg, &size);
+
+				args[args_count] = metacall_value_create_string(str, (size_t)size);
+			}
+			else
+			{
+				/* TODO: Remove this by a local array? */
+				free(args);
+
+				PyErr_SetString(PyExc_ValueError, "Unsupported argument type");
+
+				SWIG_fail;
+			}
+		}
+
+		$2 = (void *) args;
+	}
+	else
+	{
+		$2 = (void *) NULL;
+	}
 }
 
 /* -- Features -- */
@@ -304,17 +304,24 @@ extern "C" {
 	args_size = PyTuple_Size(varargs);
 	args = (void **) arg2;
 
-	/* Execute call */
-	ret = metacallv(arg1, args);
-
-	/* Clear args */
-	for (args_count = 0; args_count < args_size; ++args_count)
+	if (args != NULL)
 	{
-		metacall_value_destroy(args[args_count]);
-	}
+		/* Execute call */
+		ret = metacallv(arg1, args);
 
-	/* TODO: Remove this by a local array? */
-	free(args);
+		/* Clear args */
+		for (args_count = 0; args_count < args_size; ++args_count)
+		{
+			metacall_value_destroy(args[args_count]);
+		}
+
+		/* TODO: Remove this by a local array? */
+		free(args);
+	}
+	else
+	{
+		ret = metacallv(arg1, metacall_null_args);
+	}
 
 	/* Return value */
 	if (ret != NULL)

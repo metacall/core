@@ -119,74 +119,88 @@ extern "C" {
 		return Qnil;
 	}
 
-	/* TODO: Remove this by a local array? */
-	args = (void **) malloc(args_size * sizeof(void *));
-
-	if (args == NULL)
+	if (args_size > 0)
 	{
-		rb_raise(rb_eArgError, "Invalid argument allocation");
+		/* TODO: Remove this by a local array? */
+		args = (void **) malloc(args_size * sizeof(void *));
 
-		SWIG_fail;
-	}
-
-	for (args_count = 0; args_count < args_size; ++args_count)
-	{
-		VALUE rb_arg = argv[args_count + 1];
-
-		int rb_arg_type = TYPE(rb_arg);
-
-		if (rb_arg_type == T_TRUE)
+		if (args == NULL)
 		{
-			boolean b = 1L;
-
-			args[args_count] = metacall_value_create_bool(b);
-		}
-		else if (rb_arg_type == T_FALSE)
-		{
-			boolean b = 0L;
-
-			args[args_count] = metacall_value_create_bool(b);
-		}
-		else if (rb_arg_type == T_FIXNUM)
-		{
-			int i = FIX2INT(rb_arg);
-
-			args[args_count] = metacall_value_create_int(i);
-		}
-		else if (rb_arg_type == T_BIGNUM)
-		{
-			long l = NUM2LONG(rb_arg);
-
-			args[args_count] = metacall_value_create_long(l);
-		}
-		else if (rb_arg_type == T_FLOAT)
-		{
-			double d = NUM2DBL(rb_arg);
-
-			args[args_count] = metacall_value_create_double(d);
-		}
-		else if (rb_arg_type == T_STRING)
-		{
-			long length = RSTRING_LEN(rb_arg);
-
-			char * str = StringValuePtr(rb_arg);
-
-			if (length > 0 && str != NULL)
-			{
-				args[args_count] = metacall_value_create_string(str, (size_t)length);
-			}
-		}
-		else
-		{
-			/* TODO: Remove this by a local array? */
-			free(args);
-
 			rb_raise(rb_eArgError, "Invalid argument allocation");
 
 			SWIG_fail;
-
-			return Qnil;
 		}
+
+		for (args_count = 0; args_count < args_size; ++args_count)
+		{
+			VALUE rb_arg = argv[args_count + 1];
+
+			int rb_arg_type = TYPE(rb_arg);
+
+			if (rb_arg_type == T_TRUE)
+			{
+				boolean b = 1L;
+
+				args[args_count] = metacall_value_create_bool(b);
+			}
+			else if (rb_arg_type == T_FALSE)
+			{
+				boolean b = 0L;
+
+				args[args_count] = metacall_value_create_bool(b);
+			}
+			else if (rb_arg_type == T_FIXNUM)
+			{
+				int i = FIX2INT(rb_arg);
+
+				args[args_count] = metacall_value_create_int(i);
+			}
+			else if (rb_arg_type == T_BIGNUM)
+			{
+				long l = NUM2LONG(rb_arg);
+
+				args[args_count] = metacall_value_create_long(l);
+			}
+			else if (rb_arg_type == T_FLOAT)
+			{
+				double d = NUM2DBL(rb_arg);
+
+				args[args_count] = metacall_value_create_double(d);
+			}
+			else if (rb_arg_type == T_STRING)
+			{
+				long length = RSTRING_LEN(rb_arg);
+
+				char * str = StringValuePtr(rb_arg);
+
+				if (length > 0 && str != NULL)
+				{
+					args[args_count] = metacall_value_create_string(str, (size_t)length);
+				}
+			}
+			else
+			{
+				size_t alloc_iterator;
+
+				for (alloc_iterator = 0; alloc_iterator < args_count; ++alloc_iterator)
+				{
+					metacall_value_destroy(args[alloc_iterator]);
+				}
+
+				/* TODO: Remove this by a local array? */
+				free(args);
+
+				rb_raise(rb_eArgError, "Invalid argument allocation");
+
+				SWIG_fail;
+
+				return Qnil;
+			}
+		}
+	}
+	else
+	{
+		args = NULL;
 	}
 
 	$2 = (void *) args;
@@ -254,17 +268,25 @@ extern "C" {
 	args_size = argc - 1;
 	args = (void **) arg2;
 
-	/* Execute call */
-	ret = metacallv(arg1, args);
-
-	/* Clear args */
-	for (args_count = 0; args_count < args_size; ++args_count)
+	if (args != NULL)
 	{
-		metacall_value_destroy(args[args_count]);
-	}
+		/* Execute call */
+		ret = metacallv(arg1, args);
 
-	/* TODO: Remove this by a local array? */
-	free(args);
+		/* Clear args */
+		for (args_count = 0; args_count < args_size; ++args_count)
+		{
+			metacall_value_destroy(args[args_count]);
+		}
+
+		/* TODO: Remove this by a local array? */
+		free(args);
+	}
+	else
+	{
+		/* Execute call */
+		ret = metacallv(arg1, metacall_null_args);
+	}
 
 	/* Return value */
 	if (ret != NULL)
