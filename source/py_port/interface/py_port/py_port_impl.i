@@ -23,6 +23,40 @@ extern "C" {
 
 /**
 *  @brief
+*    Transform load mechanism from Python string into
+*    a valid load from memory format (buffer and size)
+*/
+%typemap(in) (const char * buffer, size_t size)
+{
+	char * buffer_str = NULL;
+
+	Py_ssize_t length = 0;
+
+	%#if PY_MAJOR_VERSION == 2
+		if (PyString_AsStringAndSize($input, &buffer_str, &length) == -1)
+		{
+			PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+			SWIG_fail;
+		}
+	%#elif PY_MAJOR_VERSION == 3
+		buffer_str = PyUnicode_AsUTF8AndSize($input, &length);
+
+		if (buffer_str == NULL)
+		{
+			PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+			SWIG_fail;
+		}
+	%#endif
+
+	$1 = buffer_str;
+
+	$2 = (length + 1);
+}
+
+/**
+*  @brief
 *    Transform load mechanism from Python list into
 *    a valid load from file format (array of strings)
 */
@@ -209,6 +243,24 @@ extern "C" {
 }
 
 /* -- Features -- */
+
+/**
+*  @brief
+*    Execute the load from memory
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+%feature("action") metacall_load_from_memory
+{
+	const char * tag = (const char *)arg1;
+
+	char * buffer = (char *)arg2;
+
+	size_t size = (size_t)arg3;
+
+	result = metacall_load_from_memory(tag, (const char *)buffer, size);
+}
 
 /**
 *  @brief

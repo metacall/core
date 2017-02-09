@@ -23,6 +23,22 @@ extern "C" {
 
 /**
 *  @brief
+*    Transform load mechanism from Ruby string into
+*    a valid load from memory format (buffer and size)
+*/
+%typemap(in) (const char * buffer, size_t size)
+{
+	char * buffer_str = StringValuePtr($input);
+
+	size_t length = RSTRING_LEN($input);
+
+	$1 = buffer_str;
+
+	$2 = (length + 1);
+}
+
+/**
+*  @brief
 *    Transform load mechanism from Ruby array into
 *    a valid load from file format (array of strings)
 */
@@ -177,6 +193,24 @@ extern "C" {
 }
 
 /* -- Features -- */
+
+/**
+*  @brief
+*    Execute the load from memory
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+%feature("action") metacall_load_from_memory
+{
+	const char * tag = (const char *)arg1;
+
+	char * buffer = (char *)arg2;
+
+	size_t size = (size_t)arg3;
+
+	result = metacall_load_from_memory(tag, (const char *)buffer, size);
+}
 
 /**
 *  @brief
