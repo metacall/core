@@ -133,13 +133,13 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			int * value_ptr = (int *)(args[args_count]);
 
-			#if PY_MAJOR_VERSION == 2
-				py_func->values[args_count] = PyInt_FromLong(*value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				long l = (long)(*value_ptr);
+#if PY_MAJOR_VERSION == 2
+			py_func->values[args_count] = PyInt_FromLong(*value_ptr);
+#elif PY_MAJOR_VERSION == 3
+			long l = (long)(*value_ptr);
 
-				py_func->values[args_count] = PyLong_FromLong(l);
-			#endif
+			py_func->values[args_count] = PyLong_FromLong(l);
+#endif
 		}
 		else if (id == TYPE_LONG)
 		{
@@ -163,11 +163,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			const char * value_ptr = (const char *)(args[args_count]);
 
-			#if PY_MAJOR_VERSION == 2
-				py_func->values[args_count] = PyString_FromString(value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyUnicode_FromString(value_ptr);
-			#endif
+#if PY_MAJOR_VERSION == 2
+			py_func->values[args_count] = PyString_FromString(value_ptr);
+#elif PY_MAJOR_VERSION == 3
+			py_func->values[args_count] = PyUnicode_FromString(value_ptr);
+#endif
 
 		}
 		else if (id == TYPE_PTR)
@@ -201,11 +201,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 		else if (id == TYPE_INT)
 		{
-			#if PY_MAJOR_VERSION == 2
-				long l = PyInt_AsLong(result);
-			#elif PY_MAJOR_VERSION == 3
-				long l = PyLong_AsLong(result);
-			#endif
+#if PY_MAJOR_VERSION == 2
+			long l = PyInt_AsLong(result);
+#elif PY_MAJOR_VERSION == 3
+			long l = PyLong_AsLong(result);
+#endif
 
 			/* TODO: Review overflow */
 			int i = (int)l;
@@ -236,14 +236,14 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 			Py_ssize_t length = 0;
 
-			#if PY_MAJOR_VERSION == 2
-				if (PyString_AsStringAndSize(result, &str, &length) == -1)
-				{
-					/* error */
-				}
-			#elif PY_MAJOR_VERSION == 3
-				str = PyUnicode_AsUTF8AndSize(result, &length);
-			#endif
+#if PY_MAJOR_VERSION == 2
+			if (PyString_AsStringAndSize(result, &str, &length) == -1)
+			{
+				/* error */
+			}
+#elif PY_MAJOR_VERSION == 3
+			str = PyUnicode_AsUTF8AndSize(result, &length);
+#endif
 
 			v = value_create_string(str, (size_t)length);
 		}
@@ -503,8 +503,8 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		PyObject * py_module_name, * system_path, * current_path;
-		PyObject * module, * module_dict;
+		PyObject * py_module_name, *system_path, *current_path;
+		PyObject * module, *module_dict;
 
 		loader_naming_name module_name;
 		loader_naming_path location_path;
@@ -585,17 +585,23 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 type py_loader_impl_discover_type(loader_impl impl, PyObject * annotation)
 {
+	type t = NULL;
+
 	PyObject * annotation_qualname = PyObject_GetAttrString(annotation, "__qualname__");
 
 	const char * annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
-	type t = loader_impl_type(impl, annotation_name);
+	if (strcmp(annotation_name, "_empty") != 0) {
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+		t = loader_impl_type(impl, annotation_name);
 
-	Py_DECREF(annotation_qualname);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+
+		Py_DECREF(annotation_qualname);
+	}
 
 	return t;
+
 }
 
 int py_loader_impl_discover_func_args_count(PyObject * func)
@@ -703,7 +709,15 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 						log_write("metacall", LOG_LEVEL_DEBUG, ")");
 						*/
 
-						signature_set(s, iterator, parameter_name, py_loader_impl_discover_type(impl, annotation));
+						type t = py_loader_impl_discover_type(impl, annotation);
+
+						if (t == NULL) {
+							return 1;
+						}
+						else
+						{
+							signature_set(s, iterator, parameter_name, t);
+						}
 
 					}
 				}
@@ -764,6 +778,10 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 							scope sp = context_scope(ctx);
 
 							scope_define(sp, func_name, f);
+						}
+						else
+						{
+							function_destroy(f);
 						}
 					}
 				}

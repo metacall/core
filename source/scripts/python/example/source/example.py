@@ -1,5 +1,10 @@
 #!/usr/bin/python3.4
 
+def dont_load_this_function(left, right):
+	result = left * right;
+	print(left, ' * ', right, ' = ', result);
+	return result;
+
 def multiply(left: int, right: int) -> int:
 	result = left * right;
 	print(left, ' * ', right, ' = ', result);
