@@ -232,7 +232,7 @@ void * metacall(const char * name, ...)
 
 int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...)
 {
-	enum metacall_value_id types[METACALL_ARGS_SIZE];
+	type_id types[METACALL_ARGS_SIZE];
 
 	va_list va;
 
@@ -242,7 +242,7 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		types[iterator] = (enum metacall_value_id)va_arg(va, int);
+		types[iterator] = (type_id)va_arg(va, int);
 	}
 
 	va_end(va);
