@@ -50,13 +50,16 @@ int metacall_initialize()
 	metacall_null_args[0] = NULL;
 
 	/* TODO: Initialize by config or default */
-	/*
-	log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout));
-	*/
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		if (log_configure("metacall",
+			log_policy_format_text(),
+			log_policy_schedule_sync(),
+			log_policy_storage_sequential(),
+			log_policy_stream_stdio(stdout)) != 0)
+		{
+			return 1;
+		}
+	#endif
 
 	if (configuration_initialize("rapid_json", NULL) != 0)
 	{
