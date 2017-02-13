@@ -287,8 +287,15 @@ configure_file(test/run.py.in ${py_port_test_path})
 # Define test
 #
 
+if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
+	message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
+	message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
+	message(WARNING "Use: \"sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10\" to modify default python executable")
+	return()
+endif()
+
 add_test(NAME ${target}
-	COMMAND ${PYTHON3_EXECUTABLE} ${py_port_test_path}
+	COMMAND ${PYTHON_EXECUTABLE} ${py_port_test_path}
 )
 
 #
