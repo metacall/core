@@ -47,7 +47,9 @@
 	#	define METACALL_API
 	#endif
 
+	%thread;
 	%include <metacall/metacall.h>
+	%nothread;
 
 #endif /* SWIG && SWIGPYTHON */
 

@@ -76,13 +76,16 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Set SWIG flags
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(CMAKE_SWIG_FLAGS "-DDEBUG")
+	set(PY_PORT_DEBUG_FLAGS "-DDEBUG")
 else()
-	set(CMAKE_SWIG_FLAGS "-DNDEBUG")
+	set(PY_PORT_DEBUG_FLAGS "-DNDEBUG")
 endif()
+
+set(CMAKE_SWIG_FLAGS "${PY_PORT_DEBUG_FLAGS}" "-threads")
 
 if(MSVC)
 	set(SWIG_MODULE_${target}_NOPROXY TRUE)
+	set(SWIG_MODULE_${target}_REAL_NAME "_${target}")
 endif()
 
 # Set SWIG include path
@@ -101,7 +104,7 @@ foreach(file ${interfaces} ${headers} ${sources})
 
 	set_source_files_properties(
 		${file}
-		PROPERTIES CPLUSPLUS OFF
+		PROPERTIES CPLUSPLUS ON
 	)
 endforeach()
 
@@ -270,6 +273,11 @@ set(py_port_test "${target}_test")
 set(py_port_test_path "${CMAKE_BINARY_DIR}/${py_port_test}.py")
 
 # Import module name
+if(NOT CMAKE_BUILD_TYPE)
+	message(WARNING "CMAKE_BUILD_TYPE must be specified in order to generate Python port module")
+	return()
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
 	set(PY_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
