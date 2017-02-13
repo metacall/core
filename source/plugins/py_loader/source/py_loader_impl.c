@@ -108,7 +108,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
 	signature s = function_signature(func);
-        
+
 	const size_t args_size = signature_count(s);
 
 	type ret_type = signature_get_return(s);
@@ -835,7 +835,7 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 						}
 
 						py_func->func = value;
-						
+
 						f = function_create(func_name, args_count, py_func, &function_py_singleton);
 
 						log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %ld", func_name, args_count);
@@ -893,7 +893,7 @@ int py_loader_impl_destroy(loader_impl impl)
 
 			PyGILState_Release(gstate);
 
-			Py_Finalize();
+			/*Py_Finalize();*/
 		}
 		else
 		{
