@@ -26,7 +26,7 @@ typedef struct loader_impl_py_function_type
 	PyObject * func;
 	PyObject ** values;
 
-} *loader_impl_py_function;
+} * loader_impl_py_function;
 
 typedef struct loader_impl_py_type
 {
@@ -35,7 +35,7 @@ typedef struct loader_impl_py_type
 	PyObject * builtins_module;
 	PyObject * main_module;
 
-} *loader_impl_py;
+} * loader_impl_py;
 
 int type_py_interface_create(type t, type_impl impl)
 {
@@ -47,11 +47,17 @@ int type_py_interface_create(type t, type_impl impl)
 
 void type_py_interface_destroy(type t, type_impl impl)
 {
+	PyGILState_STATE gstate;
+
 	PyObject * builtin = (PyObject *)impl;
 
 	(void)t;
 
+	gstate = PyGILState_Ensure();
+
 	Py_DECREF(builtin);
+
+	PyGILState_Release(gstate);
 }
 
 type_interface type_py_singleton(void)
@@ -113,6 +119,8 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	size_t args_count;
 
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
@@ -133,13 +141,13 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			int * value_ptr = (int *)(args[args_count]);
 
-#if PY_MAJOR_VERSION == 2
-			py_func->values[args_count] = PyInt_FromLong(*value_ptr);
-#elif PY_MAJOR_VERSION == 3
-			long l = (long)(*value_ptr);
+			#if PY_MAJOR_VERSION == 2
+				py_func->values[args_count] = PyInt_FromLong(*value_ptr);
+			#elif PY_MAJOR_VERSION == 3
+				long l = (long)(*value_ptr);
 
-			py_func->values[args_count] = PyLong_FromLong(l);
-#endif
+				py_func->values[args_count] = PyLong_FromLong(l);
+			#endif
 		}
 		else if (id == TYPE_LONG)
 		{
@@ -163,11 +171,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			const char * value_ptr = (const char *)(args[args_count]);
 
-#if PY_MAJOR_VERSION == 2
-			py_func->values[args_count] = PyString_FromString(value_ptr);
-#elif PY_MAJOR_VERSION == 3
-			py_func->values[args_count] = PyUnicode_FromString(value_ptr);
-#endif
+			#if PY_MAJOR_VERSION == 2
+				py_func->values[args_count] = PyString_FromString(value_ptr);
+			#elif PY_MAJOR_VERSION == 3
+				py_func->values[args_count] = PyUnicode_FromString(value_ptr);
+			#endif
 
 		}
 		else if (id == TYPE_PTR)
@@ -181,12 +189,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 	}
 
-	PyGILState_STATE gstate;
-	gstate = PyGILState_Ensure();
-
 	result = PyObject_CallObject(py_func->func, tuple_args);
-
-	PyGILState_Release(gstate);
 
 	Py_DECREF(tuple_args);
 
@@ -206,11 +209,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 		else if (id == TYPE_INT)
 		{
-#if PY_MAJOR_VERSION == 2
-			long l = PyInt_AsLong(result);
-#elif PY_MAJOR_VERSION == 3
-			long l = PyLong_AsLong(result);
-#endif
+			#if PY_MAJOR_VERSION == 2
+				long l = PyInt_AsLong(result);
+			#elif PY_MAJOR_VERSION == 3
+				long l = PyLong_AsLong(result);
+			#endif
 
 			/* TODO: Review overflow */
 			int i = (int)l;
@@ -241,14 +244,14 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 			Py_ssize_t length = 0;
 
-#if PY_MAJOR_VERSION == 2
-			if (PyString_AsStringAndSize(result, &str, &length) == -1)
-			{
-				/* error */
-			}
-#elif PY_MAJOR_VERSION == 3
-			str = PyUnicode_AsUTF8AndSize(result, &length);
-#endif
+			#if PY_MAJOR_VERSION == 2
+				if (PyString_AsStringAndSize(result, &str, &length) == -1)
+				{
+					/* error */
+				}
+			#elif PY_MAJOR_VERSION == 3
+				str = PyUnicode_AsUTF8AndSize(result, &length);
+			#endif
 
 			v = value_create_string(str, (size_t)length);
 		}
@@ -263,8 +266,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		Py_DECREF(result);
 
+		PyGILState_Release(gstate);
+
 		return v;
 	}
+
+	PyGILState_Release(gstate);
 
 	return NULL;
 }
@@ -287,7 +294,15 @@ void function_py_interface_destroy(function func, function_impl impl)
 			{
 				if (py_func->values[iterator] != NULL)
 				{
-					/* Py_DECREF(py_func->values[iterator]); */
+					/*
+					PyGILState_STATE gstate;
+
+					gstate = PyGILState_Ensure();
+
+					Py_DECREF(py_func->values[iterator]);
+
+					PyGILState_Release(gstate);
+					*/
 				}
 			}
 
@@ -450,7 +465,21 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	if (py_impl != NULL)
 	{
-		Py_Initialize();
+		PyGILState_STATE gstate;
+
+		if (Py_IsInitialized() == 0)
+		{
+			Py_InitializeEx(0);
+		}
+
+		if (PyEval_ThreadsInitialized() == 0)
+		{
+			PyEval_InitThreads();
+
+			/*py_impl->main_py_thread = PyEval_SaveThread();*/
+		}
+
+		gstate = PyGILState_Ensure();
 
 		if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
 		{
@@ -464,13 +493,19 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 			py_impl->main_module = PyModule_Create(&module_def);
 
-			Py_IncRef(py_impl->main_module);
-
 			if (py_impl->main_module != NULL)
 			{
+				Py_INCREF(py_impl->main_module);
+
+				PyGILState_Release(gstate);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Python loader initialized correctly");
+
 				return py_impl;
 			}
 		}
+
+		PyGILState_Release(gstate);
 
 		free(py_impl);
 	}
@@ -484,13 +519,21 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 
 	if (py_impl != NULL)
 	{
-		PyObject * system_path = PySys_GetObject("path");
+		PyGILState_STATE gstate;
 
-		PyObject * current_path = PyUnicode_DecodeFSDefault(path);
+		PyObject * system_path, * current_path;
+
+		gstate = PyGILState_Ensure();
+
+		system_path = PySys_GetObject("path");
+
+		current_path = PyUnicode_DecodeFSDefault(path);
 
 		PyList_Append(system_path, current_path);
 
 		Py_DECREF(current_path);
+
+		PyGILState_Release(gstate);
 
 		return 0;
 	}
@@ -502,9 +545,15 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
-	PyObject * main_dict = PyModule_GetDict(py_impl->main_module);
+	PyGILState_STATE gstate;
+
+	PyObject * main_dict;
 
 	size_t iterator;
+
+	gstate = PyGILState_Ensure();
+
+	main_dict = PyModule_GetDict(py_impl->main_module);
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
@@ -529,19 +578,25 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		Py_DECREF(current_path);
 
 		module = PyImport_Import(py_module_name);
-                PyErr_Print();
+
 		module_dict = PyModule_GetDict(module);
 
 		PyDict_Merge(main_dict, module_dict, 0);
 	}
 
+	PyGILState_Release(gstate);
 
 	return (loader_handle)py_impl->main_module;
 }
 
 loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
-	PyObject * compiled = Py_CompileString(buffer, name, Py_file_input);
+	PyGILState_STATE gstate;
+
+	PyObject * compiled;
+
+	gstate = PyGILState_Ensure();
+	compiled = Py_CompileString(buffer, name, Py_file_input);
 
 	(void)size;
 
@@ -551,10 +606,14 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s. from memory module at (%p)", (void *)impl, name, (void *)module);
 
+		PyGILState_Release(gstate);
+
 		return (loader_handle)module;
 	}
 	else
 	{
+		PyGILState_Release(gstate);
+
 		PyErr_Print();
 	}
 
@@ -580,7 +639,13 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 	{
 		PyObject * module = (PyObject *)handle;
 
+		PyGILState_STATE gstate;
+
+		gstate = PyGILState_Ensure();
+
 		Py_DECREF(module);
+
+		PyGILState_Release(gstate);
 
 		return 0;
 	}
@@ -702,18 +767,6 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 						PyObject * annotation = PyObject_GetAttrString(parameter, "annotation");
 
-						/*
-						log_write("metacall", LOG_LEVEL_DEBUG, "Parameter %ld (name: ", iterator);
-
-						PyObject_Print(name, stdout, 0);
-
-						log_write("metacall", LOG_LEVEL_DEBUG, ", annotation [%p]: ", (void *)annotation);
-
-						PyObject_Print(annotation, stdout, 0);
-
-						log_write("metacall", LOG_LEVEL_DEBUG, ")");
-						*/
-
 						type t = py_loader_impl_discover_type(impl, annotation);
 
 						if (t == NULL) {
@@ -740,6 +793,10 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	PyObject * module = (PyObject *)handle;
+
+	PyGILState_STATE gstate;
+
+	gstate = PyGILState_Ensure();
 
 	if (module != NULL && PyModule_Check(module))
 	{
@@ -769,6 +826,8 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 						if (py_func == NULL)
 						{
+							PyGILState_Release(gstate);
+
 							return 1;
 						}
 
@@ -793,8 +852,12 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 			}
 		}
 
+		PyGILState_Release(gstate);
+
 		return 0;
 	}
+
+	PyGILState_Release(gstate);
 
 	return 1;
 }
@@ -805,6 +868,10 @@ int py_loader_impl_destroy(loader_impl impl)
 
 	if (py_impl != NULL)
 	{
+		PyGILState_STATE gstate;
+
+		gstate = PyGILState_Ensure();
+
 		Py_DECREF(py_impl->inspect_signature);
 
 		Py_DECREF(py_impl->inspect_module);
@@ -813,8 +880,19 @@ int py_loader_impl_destroy(loader_impl impl)
 
 		Py_DECREF(py_impl->main_module);
 
-		//TODO resolve GC error on finalize
-		//Py_Finalize();
+		/* TODO: Resolve GC error on finalize */
+		if (Py_IsInitialized() != 0)
+		{
+			PyErr_Print();
+
+			PyGILState_Release(gstate);
+
+			/*Py_Finalize();*/
+		}
+		else
+		{
+			PyGILState_Release(gstate);
+		}
 
 		free(py_impl);
 
