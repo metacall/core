@@ -2,9 +2,9 @@
 # External dependencies
 #
 
-find_package(Qt5Core	5.1)
-find_package(Qt5Gui	 5.1)
-find_package(Qt5Widgets 5.1)
+find_package(Qt5Core 5.1 QUIET)
+find_package(Qt5Gui 5.1 QUIET)
+find_package(Qt5Widgets 5.1 QUIET)
 
 # Enable automoc
 set(CMAKE_AUTOMOC ON)
