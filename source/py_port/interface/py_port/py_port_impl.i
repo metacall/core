@@ -320,7 +320,12 @@ extern "C" {
 	}
 	else
 	{
-		ret = metacallv(arg1, metacall_null_args);
+		void * metacall_null_args_proxy[1] =
+		{
+			NULL
+		};
+
+		ret = metacallv(arg1, metacall_null_args_proxy);
 	}
 
 	/* Return value */

@@ -81,6 +81,10 @@ else()
 	set(CMAKE_SWIG_FLAGS "-DNDEBUG")
 endif()
 
+if(MSVC)
+	set(SWIG_MODULE_${target}_NOPROXY TRUE)
+endif()
+
 # Set SWIG include path
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
