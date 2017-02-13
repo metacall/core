@@ -191,6 +191,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	result = PyObject_CallObject(py_func->func, tuple_args);
 
+	if (PyErr_Occurred() != NULL)
+	{
+		PyErr_Print();
+	}
+
 	Py_DECREF(tuple_args);
 
 	if (result != NULL && ret_type != NULL)
@@ -352,14 +357,6 @@ int py_loader_impl_get_builtin_type(loader_impl impl, loader_impl_py py_impl, ty
 
 		if (builtin_type != NULL)
 		{
-			/*
-			log_write("metacall", LOG_LEVEL_DEBUG, "Builtin [%p]: ", (void *)builtin);
-
-			PyObject_Print(builtin, stdout, 0);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "");
-			*/
-
 			if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) == 0)
 			{
 				return 0;
@@ -475,8 +472,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		if (PyEval_ThreadsInitialized() == 0)
 		{
 			PyEval_InitThreads();
-
-			/*py_impl->main_py_thread = PyEval_SaveThread();*/
 		}
 
 		gstate = PyGILState_Ensure();
@@ -612,9 +607,12 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	}
 	else
 	{
-		PyGILState_Release(gstate);
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Print();
+		}
 
-		PyErr_Print();
+		PyGILState_Release(gstate);
 	}
 
 	return NULL;
@@ -726,7 +724,12 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 	if (args != NULL)
 	{
 		PyTuple_SetItem(args, 0, func);
-		PyErr_Print();
+
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Print();
+		}
+
 		result = PyObject_CallObject(py_impl->inspect_signature, args);
 	}
 
@@ -883,11 +886,14 @@ int py_loader_impl_destroy(loader_impl impl)
 		/* TODO: Resolve GC error on finalize */
 		if (Py_IsInitialized() != 0)
 		{
-			PyErr_Print();
+			if (PyErr_Occurred() != NULL)
+			{
+				PyErr_Print();
+			}
 
 			PyGILState_Release(gstate);
 
-			/*Py_Finalize();*/
+			Py_Finalize();
 		}
 		else
 		{
