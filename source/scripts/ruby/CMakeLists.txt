@@ -11,3 +11,4 @@ include(RubyProject)
 
 add_subdirectory(hello)
 add_subdirectory(second)
+add_subdirectory(blog)
