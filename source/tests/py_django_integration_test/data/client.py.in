@@ -1,0 +1,21 @@
+#!/usr/bin/python3
+
+import time
+#import psutil
+import sys
+
+if __name__ == "__main__":
+
+	print('Client: Waiting for python django server ...');
+
+	time.sleep(5);
+
+	django_server_proc = '${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@';
+
+	print('Client: Killing python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
+
+	#for proc in psutil.process_iter():
+	#	if proc.name() == django_server_proc:
+	#		proc.kill()
+
+	#sys.exit(0);

@@ -1,0 +1,34 @@
+#!/usr/bin/python3
+
+
+import os
+
+os.environ['CONFIGURATION_LIBRARY_PATH'] = '@CONFIGURATION_LIBRARY_PATH@'
+os.environ['CONFIGURATION_PATH'] = '@CONFIGURATION_PATH@'
+os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
+os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
+
+import subprocess
+import sys
+
+if __name__ == "__main__":
+
+	print('Server: Launching python django client in background (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@)');
+
+	django_client = subprocess.Popen(['${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@']);
+
+	print('Server: Launching python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
+
+	django_server_output = subprocess.Popen(['${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@'], env = os.environ.copy(), stderr = subprocess.STDOUT);
+
+	print(django_server_output);
+
+	print('Server: Python django server killed gracefully');
+
+	#django_client_output = django_client.communicate()[0];
+
+	#print(django_client_output);
+
+	print('Server: Python django client finished gracefully');
+
+	#sys.exit(django_client.returncode);
