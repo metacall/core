@@ -38,7 +38,9 @@ namespace CSLoader
         static Loader()
         {
             AssemblyLoadContext.Default.Resolving += Context_Resolving;
+            Init();
         }
+        
         public static void Init()
         {
             loader = new Loader();
