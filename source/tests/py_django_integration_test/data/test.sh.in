@@ -1,0 +1,19 @@
+#!/bin/sh
+
+${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@ &
+
+sleep 5
+
+wget 127.0.0.1:8080
+
+RESULT=0
+
+#if [[ $(< index.html) != "hello world" ]]; then
+#	RESULT=1
+#fi
+
+rm index.html
+
+kill -9 `pgrep @TEST_SCRIPT_LAUNCHER_BASE_NAME@`
+
+exit $RESULT;

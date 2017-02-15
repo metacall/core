@@ -148,8 +148,41 @@ target_link_libraries(${target}
 # Define test
 #
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	get_target_property(DEBUG_POSTFIX ${target} "DEBUG_POSTFIX")
+	set(TEST_SCRIPT_LAUNCHER_BASE_NAME
+		${target}${DEBUG_POSTFIX}
+	)
+else()
+	set(TEST_SCRIPT_LAUNCHER_BASE_NAME
+		${target}
+	)
+endif()
+
+if(WIN32)
+	# TODO:
+	set(TEST_SCRIPT_LAUNCHER_EXTENSION bat)
+	message(FATAL_ERROR "Not implemented")
+elseif(UNIX)
+	set(TEST_SCRIPT_LAUNCHER_EXTENSION sh)
+endif()
+
+if(NOT TEST_SCRIPT_LAUNCHER_EXTENSION)
+	return()
+endif()
+
+set(TEST_SCRIPT_LAUNCHER_NAME
+	${TEST_SCRIPT_LAUNCHER_BASE_NAME}.${TEST_SCRIPT_LAUNCHER_EXTENSION}
+)
+
+set(TEST_SCRIPT_LAUNCHER_NAME_IN
+	"data/test.${TEST_SCRIPT_LAUNCHER_EXTENSION}.in"
+)
+
+configure_file(${TEST_SCRIPT_LAUNCHER_NAME_IN} ${CMAKE_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME})
+
 add_test(NAME ${target}
-	COMMAND $<TARGET_FILE:${target}>
+	COMMAND ${CMAKE_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME}
 )
 
 #
