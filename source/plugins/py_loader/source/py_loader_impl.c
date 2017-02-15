@@ -299,7 +299,6 @@ void function_py_interface_destroy(function func, function_impl impl)
 			{
 				if (py_func->values[iterator] != NULL)
 				{
-					/*
 					PyGILState_STATE gstate;
 
 					gstate = PyGILState_Ensure();
@@ -307,10 +306,8 @@ void function_py_interface_destroy(function func, function_impl impl)
 					Py_DECREF(py_func->values[iterator]);
 
 					PyGILState_Release(gstate);
-					*/
 				}
 			}
-
 
 			free(py_func->values);
 		}
@@ -837,9 +834,9 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 							return 1;
 						}
-						
+
 						Py_INCREF(value);
-						
+
 						py_func->func = value;
 
 						f = function_create(func_name, args_count, py_func, &function_py_singleton);
@@ -889,7 +886,6 @@ int py_loader_impl_destroy(loader_impl impl)
 
 		Py_DECREF(py_impl->main_module);
 
-		/* TODO: Resolve GC error on finalize */
 		if (Py_IsInitialized() != 0)
 		{
 			if (PyErr_Occurred() != NULL)
@@ -899,7 +895,7 @@ int py_loader_impl_destroy(loader_impl impl)
 
 			PyGILState_Release(gstate);
 
-			/*Py_Finalize();*/
+			Py_Finalize();
 		}
 		else
 		{
