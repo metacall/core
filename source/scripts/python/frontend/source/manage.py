@@ -20,6 +20,7 @@ def frontend_execute(args):
                 "forget to activate a virtual environment?"
             )
         raise
+    sys.argv = args;
     execute_from_command_line(sys.argv)
 
 def frontend_initialize(port: int) -> int:

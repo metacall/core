@@ -480,7 +480,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		{
 			static const char main_module_name[] = "__metacall__";
 
-			PyModuleDef module_def;
+			static PyModuleDef module_def;
 
 			memset(&module_def, 0, sizeof(PyModuleDef));
 
@@ -573,6 +573,10 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		Py_DECREF(current_path);
 
 		module = PyImport_Import(py_module_name);
+
+		if (PyErr_Occurred()) {
+			PyErr_Print();
+		}
 
 		module_dict = PyModule_GetDict(module);
 

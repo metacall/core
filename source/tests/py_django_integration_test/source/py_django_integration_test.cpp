@@ -34,7 +34,7 @@ TEST_F(py_django_integration_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
-		ret = metacall("frontend_initialize", 6000);
+		ret = metacall("frontend_initialize", 8080);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
