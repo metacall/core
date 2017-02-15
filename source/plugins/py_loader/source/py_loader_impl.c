@@ -837,7 +837,9 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 							return 1;
 						}
-
+						
+						Py_INCREF(value);
+						
 						py_func->func = value;
 
 						f = function_create(func_name, args_count, py_func, &function_py_singleton);
