@@ -9,11 +9,18 @@ os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
 import unittest
+import signal
 import subprocess
+
+def sigint_handler(signal, frame):
+	print('Server: SIGINT signal from client to server (Ctrl-C)');
+
 
 class py_django_integration_test(unittest.TestCase):
 
 	def test_py_django_server(self):
+
+		signal.signal(signal.SIGINT, sigint_handler);
 
 		print('Server: Launching python django client in background (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@)');
 

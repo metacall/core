@@ -18,17 +18,13 @@ if(NOT PYTHONINTERP_FOUND)
 endif()
 
 # Build frontend
-if(NOT EXISTS "${CMAKE_CURRENT_BINARY_DIR}/migrate")
-
-	if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
-		message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
-		message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
-		message(WARNING "Use: \"sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10\" to modify default python executable")
-		return()
-	endif()
-
-	execute_process(
-		COMMAND ${PYTHON_EXECUTABLE}  ${LOADER_SCRIPT_PATH}/manage.py migrate
-		OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/migrate"
-	)
+if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
+	message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
+	message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
+	message(WARNING "Use: \"sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10\" to modify default python executable")
+	return()
 endif()
+
+add_custom_target(python-frontend-migrate ALL
+	COMMAND ${PYTHON_EXECUTABLE} ${LOADER_SCRIPT_PATH}/manage.py migrate
+)
