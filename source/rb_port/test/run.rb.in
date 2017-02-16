@@ -43,13 +43,9 @@ class RbPortTest < Test::Unit::TestCase
 
 		assert_equal(nil, @@meta.call('say_null'))
 
-		# TODO: Solve <nil> return		
-		#assert_equal(12, @@meta.call('say_multiply', 3, 4))
-		assert_equal(nil, @@meta.call('say_multiply', 3, 4))
+		assert_equal(12, @@meta.call('say_multiply', 3, 4))
 
-		# TODO: Solve <nil> return
-		#assert_equal('Hello world!', @@meta.call('say_hello', 'world'))
-		assert_equal(nil, @@meta.call('say_hello', 'world'))
+		assert_equal('Hello world!', @@meta.call('say_hello', 'world'))
 	end
 
 end
