@@ -3,6 +3,7 @@
 import unittest
 import time
 import urllib.request
+import requests
 import signal
 import os
 
@@ -13,11 +14,27 @@ class py_django_integration_client_test(unittest.TestCase):
 
 		time.sleep(5);
 
+		print('Client: Sending GET request to index');
+
 		request = urllib.request.urlopen('http://127.0.0.1:8080').read();
 
 		print('Client: Request { ' + str(request) + ' }');
 
 		self.assertEqual(request, b'hello world');
+
+		print('Client: Sending POST request to media');
+
+		file_handle = open('${CMAKE_CURRENT_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_FILE_NAME@');
+
+		files = { 'file': file_handle };
+
+		request = requests.post('http://127.0.0.1:8080/media/', files = files);
+
+		file_handle.close();
+
+		print('Client: Request { ' + str(request) + ' }');
+
+		self.assertEqual(request.content, b'123456');
 
 		print('Client: Killing python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
 
