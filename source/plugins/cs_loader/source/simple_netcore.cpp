@@ -56,7 +56,7 @@ void  simple_netcore_load_script_from_assembly(netcore_handle handle, char * fil
 
 void  simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size) {
 	netcore * core = (netcore*)handle;
-
+	(void)size;
 	if (core->load_source((char*)buffer)) {
 
 	}

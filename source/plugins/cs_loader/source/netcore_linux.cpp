@@ -19,7 +19,10 @@ netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_p
 		}
 	}
 
-	getcwd(this->appPath, MAX_LONGPATH);
+	if(getcwd(this->appPath, MAX_LONGPATH)==NULL){
+		cout << "getcwd error!";
+	}
+	
 	this->domainId = 0;
 }
 
