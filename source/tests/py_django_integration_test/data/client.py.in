@@ -1,21 +1,33 @@
 #!/usr/bin/python3
 
+import unittest
 import time
-#import psutil
-import sys
+import urllib.request
+import signal
+import os
 
-if __name__ == "__main__":
+class py_django_integration_client_test(unittest.TestCase):
+	def test_py_django_client(self):
 
-	print('Client: Waiting for python django server ...');
+		print('Client: Waiting for python django server ...');
 
-	time.sleep(5);
+		time.sleep(5);
 
-	django_server_proc = '${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@';
+		request = urllib.request.urlopen('http://127.0.0.1:8080').read();
 
-	print('Client: Killing python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
+		print('Client: Request { ' + str(request) + ' }');
 
-	#for proc in psutil.process_iter():
-	#	if proc.name() == django_server_proc:
-	#		proc.kill()
+		self.assertEqual(request, b'hello world');
 
-	#sys.exit(0);
+		print('Client: Killing python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
+
+		request = urllib.request.urlopen('http://127.0.0.1:8080/pid/').read();
+
+		print('Client: Request { ' + str(request) + ' }');
+
+		os.kill(int(request), signal.SIGINT);
+
+		print('Server: Python django server killed gracefully');
+
+if __name__ == '__main__':
+	unittest.main()
