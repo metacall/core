@@ -35,9 +35,12 @@ bool netcore_linux::ConfigAssemblyName() {
 
 	std::cout << "absoluteRuntime: " << this->runtimePath << std::endl;
 
+	string::size_type pos = string(this->dotnet_loader_assembly_path).find_last_of( "\\/" );
+    string  dotnet_loader_assembly_directory = string(this->dotnet_loader_assembly_path).substr( 0, pos);
+	
+	strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
+	
 	cout << "absoluteAppPath: " << this->appPath << endl;
-
-
 
 	if(this->dotnet_loader_assembly_path==NULL){
 		this->managedAssemblyFullName.append(this->appPath);
@@ -116,10 +119,9 @@ bool netcore_linux::CreateHost() {
 	string mm;
 
 	mm.append(getenv("_"));
-	m.append(this->appPath);
-	m.append(mm.substr(1, mm.length() - 1));
+
 	status = (*this->coreclr_initialize)(
-		m.c_str(),
+		mm.c_str(),
 		"metacall_cs_loader_container",
 		sizeof(propertyKeys) / sizeof(propertyKeys[0]),
 		propertyKeys,
