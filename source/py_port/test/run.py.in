@@ -36,13 +36,9 @@ class py_port_test(unittest.TestCase):
 
 		self.assertEqual(metacall.metacall('say_null'), None);
 
-		# TODO: Solve None return
-		#self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12);
-		self.assertEqual(metacall.metacall('say_multiply', 3, 4), None);
+		self.assertEqual(metacall.metacall('say_multiply', 3, 4), 12);
 
-		# TODO: Solve None return
-		#self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!');
-		self.assertEqual(metacall.metacall('say_hello', 'world'), None);
+		self.assertEqual(metacall.metacall('say_hello', 'world'), 'Hello world!');
 
 if __name__ == '__main__':
 	unittest.main()
