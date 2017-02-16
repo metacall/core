@@ -12,6 +12,7 @@
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
+#include <reflect/reflect_type_id.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
@@ -50,6 +51,7 @@ typedef struct loader_impl_rb_function_type
 	loader_impl_rb_module rb_module;
 	ID method_id;
 	VALUE args_hash;
+	loader_impl impl;
 
 } * loader_impl_rb_function;
 
@@ -68,7 +70,7 @@ int function_rb_interface_create(function func, function_impl impl)
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
-
+	
 	signature s = function_signature(func);
 
 	const size_t args_size = signature_count(s);
@@ -157,30 +159,40 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			boolean b = 1L;
 
 			v = value_create_bool(b);
+			
+			signature_set_return(s, loader_impl_type(rb_function->impl, "Boolean"));
 		}
 		else if (result_type == T_FALSE)
 		{
 			boolean b = 0L;
 
 			v = value_create_bool(b);
+			
+			signature_set_return(s, loader_impl_type(rb_function->impl, "Boolean"));
 		}
 		else if (result_type == T_FIXNUM)
 		{
 			int i = FIX2INT(result_value);
 
 			v = value_create_int(i);
+			
+			signature_set_return(s, loader_impl_type(rb_function->impl, "Fixnum"));
 		}
 		else if (result_type == T_BIGNUM)
 		{
 			long l = NUM2LONG(result_value);
 
 			v = value_create_long(l);
+			
+			signature_set_return(s, loader_impl_type(rb_function->impl, "Bignum"));
 		}
 		else if (result_type == T_FLOAT)
 		{
 			double d = NUM2DBL(result_value);
 
 			v = value_create_double(d);
+			
+			signature_set_return(s, loader_impl_type(rb_function->impl, "Float"));
 		}
 		else if (result_type == T_STRING)
 		{
@@ -192,6 +204,8 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			{
 				v = value_create_string(str, (size_t)length);
 			}
+			
+			signature_set_return(s, loader_impl_type(rb_function->impl, "String"));
 		}
 
 		return v;
@@ -235,9 +249,7 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 	}
 	type_id_name_pair[] =
 	{
-		/*
 		{ TYPE_BOOL, "Boolean" },
-		*/
 		{ TYPE_INT, "Fixnum" },
 		{ TYPE_LONG, "Bignum" },
 		{ TYPE_DOUBLE, "Float" },
@@ -695,12 +707,14 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 			if (rb_function)
 			{
 				function f = function_create(method_name_str, function_parser->params_size, rb_function, &function_rb_singleton);
-
+	
 				if (f != NULL && rb_loader_impl_discover_func(impl, f, function_parser) == 0)
 				{
 					scope sp = context_scope(ctx);
 
 					scope_define(sp, function_name(f), f);
+
+					rb_function->impl = impl;
 
 					log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, function_parser->params_size);
 				}
