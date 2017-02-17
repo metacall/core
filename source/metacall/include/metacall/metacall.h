@@ -23,8 +23,6 @@ extern "C" {
 
 #include <stdlib.h>
 #include <stdarg.h>
-	
-typedef void * metacall_function;
 
 /* -- Global Variables -- */
 
@@ -130,6 +128,45 @@ METACALL_API void * metacall(const char * name, ...);
 
 /**
 *  @brief
+*    Get the function by @name
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @return
+*    Function reference, if null the function does not exist
+*/
+METACALL_API void * metacall_function(const char * name);
+
+/**
+*  @brief
+*    Call a function anonymously by value array @args and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacall_function_invokev(void * func, void * args[]);
+
+/**
+*  @brief
+*    Call a function anonymously by variable arguments @va_args and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacall_function_invoke(void * func, ...);
+
+/**
+*  @brief
 *    Register a function by name @name and arguments @va_args
 *
 *  @param[in] name
@@ -150,24 +187,8 @@ METACALL_API void * metacall(const char * name, ...);
 *  @return
 *    Pointer to value containing the result of the call
 */
-
 METACALL_API int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...);
 
-/**
-*  @brief
-*    Get the function by @name
-*
-*  @param[in] name
-*    Name of the function
-*
-*  @return
-*    metacall_function reference, if null the function does not exist
-*/
-METACALL_API metacall_function metacall_get_function(const char * name);
-
-METACALL_API void * metacall_invoke(metacall_function func, ...);
-
-METACALL_API void * metacallv_invoke(metacall_function func, void * args[]);
 /**
 *  @brief
 *    Destroy MetaCall library

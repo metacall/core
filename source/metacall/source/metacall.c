@@ -106,12 +106,14 @@ int metacall_load_from_package(const char * tag, const char * path)
 	return loader_load_from_package(tag, path);
 }
 
-metacall_function metacall_get_function(const char * name){
-	return loader_get(name);
+void * metacallv(const char * name, void * args[])
+{
+	return metacall_function_invokev(loader_get(name), args);
 }
 
-void * metacall_invoke(metacall_function func, ...){
-	function f = (function)func;
+void * metacall(const char * name, ...)
+{
+	function f = loader_get(name);
 
 	if (f != NULL)
 	{
@@ -125,7 +127,7 @@ void * metacall_invoke(metacall_function func, ...){
 
 		va_list va;
 
-		va_start(va, func);
+		va_start(va, name);
 
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
@@ -192,7 +194,13 @@ void * metacall_invoke(metacall_function func, ...){
 	return NULL;
 }
 
-void * metacallv_invoke(metacall_function func, void * args[]){
+void * metacall_function(const char * name)
+{
+	return loader_get(name);
+}
+
+void * metacall_function_invokev(void * func, void * args[])
+{
 	function f = (function)func;
 
 	if (f != NULL)
@@ -235,14 +243,9 @@ void * metacallv_invoke(metacall_function func, void * args[]){
 	return NULL;
 }
 
-void * metacallv(const char * name, void * args[])
+void * metacall_function_invoke(void * func, ...)
 {
-	return metacallv_invoke(loader_get(name), args);
-}
-
-void * metacall(const char * name, ...)
-{
-	function f = loader_get(name);
+	function f = (function)func;
 
 	if (f != NULL)
 	{
@@ -256,7 +259,7 @@ void * metacall(const char * name, ...)
 
 		va_list va;
 
-		va_start(va, name);
+		va_start(va, func);
 
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
