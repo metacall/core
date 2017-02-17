@@ -108,7 +108,100 @@ int metacall_load_from_package(const char * tag, const char * path)
 
 void * metacallv(const char * name, void * args[])
 {
-	function f = (function)loader_get(name);
+	return metacall_function_invokev(loader_get(name), args);
+}
+
+void * metacall(const char * name, ...)
+{
+	function f = loader_get(name);
+
+	if (f != NULL)
+	{
+		void * args[METACALL_ARGS_SIZE];
+
+		value ret = NULL;
+
+		signature s = function_signature(f);
+
+		size_t iterator;
+
+		va_list va;
+
+		va_start(va, name);
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		{
+			type t = signature_get_type(s, iterator);
+
+			type_id id = type_index(t);
+
+			if (id == TYPE_BOOL)
+			{
+				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
+			}
+			if (id == TYPE_CHAR)
+			{
+				args[iterator] = value_create_char((char)va_arg(va, int));
+			}
+			else if (id == TYPE_SHORT)
+			{
+				args[iterator] = value_create_short((short)va_arg(va, int));
+			}
+			else if (id == TYPE_INT)
+			{
+				args[iterator] = value_create_int(va_arg(va, int));
+			}
+			else if (id == TYPE_LONG)
+			{
+				args[iterator] = value_create_long(va_arg(va, long));
+			}
+			else if (id == TYPE_FLOAT)
+			{
+				args[iterator] = value_create_float((float)va_arg(va, double));
+			}
+			else if (id == TYPE_DOUBLE)
+			{
+				args[iterator] = value_create_double(va_arg(va, double));
+			}
+			else if (id == TYPE_STRING)
+			{
+				const char * str = va_arg(va, const char *);
+
+				args[iterator] = value_create_string(str, strlen(str));
+			}
+			else if (id == TYPE_PTR)
+			{
+				args[iterator] = value_create_ptr(va_arg(va, const void *));
+			}
+			else
+			{
+				args[iterator] = NULL;
+			}
+		}
+
+		va_end(va);
+
+		ret = function_call(f, args);
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		{
+			value_destroy(args[iterator]);
+		}
+
+		return ret;
+	}
+
+	return NULL;
+}
+
+void * metacall_function(const char * name)
+{
+	return loader_get(name);
+}
+
+void * metacall_function_invokev(void * func, void * args[])
+{
+	function f = (function)func;
 
 	if (f != NULL)
 	{
@@ -150,9 +243,9 @@ void * metacallv(const char * name, void * args[])
 	return NULL;
 }
 
-void * metacall(const char * name, ...)
+void * metacall_function_invoke(void * func, ...)
 {
-	function f = loader_get(name);
+	function f = (function)func;
 
 	if (f != NULL)
 	{
@@ -166,7 +259,7 @@ void * metacall(const char * name, ...)
 
 		va_list va;
 
-		va_start(va, name);
+		va_start(va, func);
 
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{

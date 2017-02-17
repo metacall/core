@@ -36,11 +36,27 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		void * ret = NULL;
 
+		void * func = NULL;
+
 		int result = 0;
 
 		metacall_register("c_print", c_function, METACALL_INT, 1, METACALL_STRING);
 
 		ret = metacall("c_print", "Hello native function!");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		result = metacall_value_to_int(ret);
+
+		EXPECT_EQ((int) result, (int) 1);
+
+		metacall_value_destroy(ret);
+
+		func = metacall_function("c_print");
+
+		EXPECT_NE((void *) NULL, (void *) func);
+		
+		ret = metacall_function_invoke(func, "Hello native function!");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
