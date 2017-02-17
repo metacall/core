@@ -94,7 +94,7 @@ bool netcore_win::config_assembly_name() {
 
 	wchar_t localPath[MAX_LONGPATH];
 
-	if (!::GetFullPathName(this->loader_dll, MAX_LONGPATH, appPath, &filePart)) {
+	if (!::GetModuleFileName(NULL, appPath, MAX_LONGPATH)) {
 		*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
 		*this->log << W("Error code: ") << GetLastError() << logger::endl;
 		return false;
