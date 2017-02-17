@@ -80,7 +80,7 @@ dynlink configuration_impl_initialize_load(const char * name)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	#if (defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		const char config_dynlink_suffix[] = "_configd";
 	#else
 		const char config_dynlink_suffix[] = "_config";
