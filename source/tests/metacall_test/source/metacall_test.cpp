@@ -16,7 +16,6 @@
 
 #include <log/log.h>
 
-
 void * c_function(void * args[])
 {
 	printf("%s\n", (char*)args[0]);
@@ -43,6 +42,8 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	/* Native register */
 	{
+		metacall_function func;
+		
 		value ret = NULL;
 
 		int result = 0;
@@ -50,6 +51,20 @@ TEST_F(metacall_test, DefaultConstructor)
 		metacall_register("c_print", c_function, METACALL_INT, 1, METACALL_STRING);
 
 		ret = metacall("c_print", "Hello native function!");
+
+		EXPECT_NE((value) NULL, (value) ret);
+
+		result = value_to_int(ret);
+
+		EXPECT_EQ((int) result, (int) 1);
+
+		value_destroy(ret);
+		
+		func = metacall_get_function("c_print");
+		
+		EXPECT_NE((metacall_function) NULL, (metacall_function) func);
+		
+		ret = metacall_invoke(func, "Hello native function!");
 
 		EXPECT_NE((value) NULL, (value) ret);
 
