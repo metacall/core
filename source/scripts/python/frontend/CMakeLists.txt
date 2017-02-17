@@ -25,6 +25,13 @@ if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
 	return()
 endif()
 
-add_custom_target(python-frontend-migrate ALL
+set(target python-frontend-migrate)
+
+add_custom_target(${target} ALL
 	COMMAND ${PYTHON_EXECUTABLE} ${LOADER_SCRIPT_PATH}/manage.py migrate
+)
+
+set_target_properties(${target}
+	PROPERTIES
+	FOLDER "${IDE_FOLDER}/Python"
 )

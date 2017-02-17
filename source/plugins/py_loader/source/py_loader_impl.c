@@ -810,7 +810,7 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 		{
 			Py_ssize_t position = 0;
 
-			PyObject * key, *value;
+			PyObject * key, * value;
 
 			while (PyDict_Next(module_dict, &position, &key, &value))
 			{
@@ -834,6 +834,10 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 							return 1;
 						}
+
+						/* TODO: Why two refs? Understand what is happening */
+
+						Py_INCREF(value);
 
 						Py_INCREF(value);
 

@@ -76,6 +76,7 @@ static function_interface get_interface_proxy();
 static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args);
 
 static void loader_register_destroy_proxy(function func, function_impl func_impl);
+
 /* -- Methods -- */
 
 static loader loader_singleton()
@@ -115,8 +116,21 @@ void loader_initialize()
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->script_path);
 	}
 
-	if (hash_map_insert(l->impl_map, (hash_map_key)LOADER_HOST_PROXY_NAME, loader_impl_create_proxy()) == 0) {
+	if (hash_map_get(l->impl_map, (hash_map_key)LOADER_HOST_PROXY_NAME) == NULL)
+	{
+		loader_impl proxy = loader_impl_create_proxy();
 
+		if (proxy == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy initialization");
+		}
+
+		if (hash_map_insert(l->impl_map, (hash_map_key)LOADER_HOST_PROXY_NAME, proxy) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
+
+			loader_impl_destroy(proxy);
+		}
 	}
 }
 

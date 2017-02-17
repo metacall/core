@@ -14,7 +14,7 @@ endif()
 # External dependencies
 #
 
-find_package(RubyEx)
+find_package(Ruby)
 
 # Target name
 set(target @PACKAGE_NAME@)

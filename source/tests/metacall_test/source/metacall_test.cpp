@@ -12,10 +12,7 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall-plugins.h>
 
-#include <reflect/reflect_value_type.h>
-
 #include <log/log.h>
-
 
 void * c_function(void * args[])
 {
@@ -31,19 +28,13 @@ public:
 
 TEST_F(metacall_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
-
 	metacall_print_info();
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Native register */
 	{
-		value ret = NULL;
+		void * ret = NULL;
 
 		int result = 0;
 
@@ -51,13 +42,13 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		ret = metacall("c_print", "Hello native function!");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		result = value_to_int(ret);
+		result = metacall_value_to_int(ret);
 
 		EXPECT_EQ((int) result, (int) 1);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 
 	/* Python */
@@ -72,17 +63,17 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		long iterator;
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
 		ret = metacall("multiply", 5, 15);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) value_to_long(ret), (long) 75);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "7's multiples dude!");
 
@@ -90,46 +81,46 @@ TEST_F(metacall_test, DefaultConstructor)
 		{
 			ret = metacall("multiply", 7, iterator);
 
-			EXPECT_NE((value) NULL, (value) ret);
+			EXPECT_NE((void *) NULL, (void *) ret);
 
-			EXPECT_EQ((long) value_to_long(ret), (long) (7 * iterator));
+			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
 
-			value_destroy(ret);
+			metacall_value_destroy(ret);
 		}
 
 		ret = metacall("divide", 64.0, 2.0);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) value_to_double(ret), (double) 32.0);
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 32.0);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("sum", 1000, 3500);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) value_to_long(ret), (long) 4500);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 4500);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("sum", 3, 4);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) value_to_long(ret), (long) 7);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 7);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
-		EXPECT_EQ((value) NULL, (value)metacall("hello"));
+		EXPECT_EQ((void *) NULL, (void *)metacall("hello"));
 
 		ret = metacall("strcat", "Hello ", "Universe");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello Universe"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
 
@@ -141,35 +132,35 @@ TEST_F(metacall_test, DefaultConstructor)
 			"hello.rb", "second.rb"
 		};
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
 
 		ret = metacall("say_multiply", 5, 7);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) value_to_int(ret), (int) 35);
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 35);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
 
 		ret = metacall("say_hello", "meta-programmer");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello meta-programmer!"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello meta-programmer!"));
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("get_second", 5, 12);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) value_to_int(ret), (int) 12);
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 12);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_RB */
 
@@ -195,33 +186,33 @@ TEST_F(metacall_test, DefaultConstructor)
 			"divide.js", "third.js"
 		};
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0])));
 
 		ret = metacall("say_divide", 32.0, 4.0);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) value_to_double(ret), (double) 8.0);
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 8.0);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("some_text", "abc", "def");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "abcdef"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "abcdef"));
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("third_value", "abc", "def", "efg");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "efg"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "efg"));
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_JS */
 
@@ -233,41 +224,41 @@ TEST_F(metacall_test, DefaultConstructor)
 			"empty.mock"
 		};
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0])));
 
 		ret = metacall("my_empty_func");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) value_to_int(ret), (int) 1234);
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 1234);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("two_doubles", 3.14, 68.3);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) value_to_double(ret), (double) 3.1416);
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 3.1416);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("mixed_args", 'E', 16, 34L, 4.6, "hello");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((char) value_to_char(ret), (char) 'A');
+		EXPECT_EQ((char) metacall_value_to_char(ret), (char) 'A');
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("new_args", "goodbye");
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello World"));
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_MOCK */
 
