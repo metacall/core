@@ -50,7 +50,7 @@ int metacall_initialize()
 	metacall_null_args[0] = NULL;
 
 	/* TODO: Initialize by config or default */
-	#if (defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		if (log_configure("metacall",
 			log_policy_format_text(),
 			log_policy_schedule_sync(),

@@ -36,7 +36,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
 	{
-		#if (defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 			const char library_name[] = "mock_loaderd";
 		#else
 			const char library_name[] = "mock_loader";
