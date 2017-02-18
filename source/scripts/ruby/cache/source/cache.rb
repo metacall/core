@@ -30,12 +30,17 @@ def cache_set(key: String, value: String)
 
 	@dic[key] = value
 
+	puts 'workaround to avoid parser bug'
 end
 
 def cache_get(key: String)
 
 	puts 'ruby: get value'
 
-	@dic[key]
+	return @dic[key]
+
+end
+
+def cache_nothing(key: String)
 
 end

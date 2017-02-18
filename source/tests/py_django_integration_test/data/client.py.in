@@ -12,7 +12,7 @@ class py_django_integration_client_test(unittest.TestCase):
 
 		print('Client: Waiting for python django server ...');
 
-		time.sleep(5);
+		time.sleep(3); # Fake reactive behavior
 
 		print('Client: Sending GET request to index');
 

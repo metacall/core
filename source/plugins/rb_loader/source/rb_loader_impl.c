@@ -70,7 +70,7 @@ int function_rb_interface_create(function func, function_impl impl)
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
-	
+
 	signature s = function_signature(func);
 
 	const size_t args_size = signature_count(s);
@@ -159,7 +159,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			boolean b = 1L;
 
 			v = value_create_bool(b);
-			
+
 			signature_set_return(s, loader_impl_type(rb_function->impl, "Boolean"));
 		}
 		else if (result_type == T_FALSE)
@@ -167,7 +167,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			boolean b = 0L;
 
 			v = value_create_bool(b);
-			
+
 			signature_set_return(s, loader_impl_type(rb_function->impl, "Boolean"));
 		}
 		else if (result_type == T_FIXNUM)
@@ -175,7 +175,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			int i = FIX2INT(result_value);
 
 			v = value_create_int(i);
-			
+
 			signature_set_return(s, loader_impl_type(rb_function->impl, "Fixnum"));
 		}
 		else if (result_type == T_BIGNUM)
@@ -183,7 +183,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			long l = NUM2LONG(result_value);
 
 			v = value_create_long(l);
-			
+
 			signature_set_return(s, loader_impl_type(rb_function->impl, "Bignum"));
 		}
 		else if (result_type == T_FLOAT)
@@ -191,7 +191,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			double d = NUM2DBL(result_value);
 
 			v = value_create_double(d);
-			
+
 			signature_set_return(s, loader_impl_type(rb_function->impl, "Float"));
 		}
 		else if (result_type == T_STRING)
@@ -204,7 +204,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			{
 				v = value_create_string(str, (size_t)length);
 			}
-			
+
 			signature_set_return(s, loader_impl_type(rb_function->impl, "String"));
 		}
 
@@ -707,7 +707,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 			if (rb_function)
 			{
 				function f = function_create(method_name_str, function_parser->params_size, rb_function, &function_rb_singleton);
-	
+
 				if (f != NULL && rb_loader_impl_discover_func(impl, f, function_parser) == 0)
 				{
 					scope sp = context_scope(ctx);

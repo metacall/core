@@ -73,6 +73,14 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 	{
 		const char character = source[iterator];
 
+		/*
+		if ((character != ' ') && (character != '\t') &&
+			(character != '\n') && (character != '\r'))
+		{
+			func_def_index = func_do_index = func_end_index = 0;
+		}
+		*/
+
 		switch (comment)
 		{
 			case rb_loader_impl_comment_state_none :
