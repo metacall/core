@@ -11,6 +11,22 @@ endif()
 # External dependencies
 #
 
+find_package(PythonLibs 3 REQUIRED)
+
+if(NOT PYTHONLIBS_FOUND)
+	message(STATUS "Python libraries not found")
+	return()
+endif()
+
+set(Python_ADDITIONAL_VERSIONS 3.4)
+
+find_package(PythonInterp REQUIRED)
+
+if(NOT PYTHONINTERP_FOUND)
+	message(STATUS "Python interpreter not found")
+	return()
+endif()
+
 # MetaCall Library
 find_package(MetaCall REQUIRED)
 
@@ -190,19 +206,28 @@ set(TEST_SCRIPT_LAUNCHER_FILE_NAME_IN
 if(MSVC)
 	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
 	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	set(TEST_SCRIPT_LAUNCHER_APP "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${TEST_SCRIPT_LAUNCHER_BASE_NAME}.exe")
 else()
 	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
 	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+	set(TEST_SCRIPT_LAUNCHER_APP "${PROJECT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_BASE_NAME}")
 endif()
 
-configure_file(${TEST_SCRIPT_LAUNCHER_NAME_IN} ${CMAKE_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME})
+configure_file(${TEST_SCRIPT_LAUNCHER_NAME_IN} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME})
 
-configure_file(${TEST_SCRIPT_LAUNCHER_CLIENT_NAME_IN} ${CMAKE_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_CLIENT_NAME})
+configure_file(${TEST_SCRIPT_LAUNCHER_CLIENT_NAME_IN} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_CLIENT_NAME})
 
 configure_file(${TEST_SCRIPT_LAUNCHER_FILE_NAME_IN} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_FILE_NAME} COPYONLY)
 
+if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
+	message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
+	message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
+	message(WARNING "Use: \"sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10\" to modify default python executable")
+	return()
+endif()
+
 add_test(NAME ${target}
-	COMMAND ${CMAKE_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME}
+	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME}
 )
 
 #

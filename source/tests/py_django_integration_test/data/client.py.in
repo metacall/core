@@ -36,7 +36,7 @@ class py_django_integration_client_test(unittest.TestCase):
 
 		self.assertEqual(request.content, b'123456');
 
-		print('Client: Killing python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
+		print('Client: Killing python django server (${CMAKE_CURRENT_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
 
 		request = urllib.request.urlopen('http://127.0.0.1:8080/pid/').read();
 

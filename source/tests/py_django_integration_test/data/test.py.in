@@ -22,13 +22,13 @@ class py_django_integration_test(unittest.TestCase):
 
 		signal.signal(signal.SIGINT, sigint_handler);
 
-		print('Server: Launching python django client in background (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@)');
+		print('Server: Launching python django client in background (${CMAKE_CURRENT_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@)');
 
-		django_client = subprocess.Popen(['${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@']);
+		django_client = subprocess.Popen(['${CMAKE_CURRENT_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_CLIENT_NAME@']);
 
-		print('Server: Launching python django server (${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@)');
+		print('Server: Launching python django server (@TEST_SCRIPT_LAUNCHER_APP@)');
 
-		django_server = subprocess.Popen(['${CMAKE_BINARY_DIR}/@TEST_SCRIPT_LAUNCHER_BASE_NAME@'], env = os.environ.copy(), stderr = subprocess.STDOUT);
+		django_server = subprocess.Popen(['@TEST_SCRIPT_LAUNCHER_APP@'], env = os.environ.copy(), stderr = subprocess.STDOUT);
 
 		django_client_output = django_client.communicate()[0];
 
