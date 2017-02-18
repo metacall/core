@@ -55,8 +55,8 @@ TEST_F(metacall_test, DefaultConstructor)
 		func = metacall_function("c_print");
 
 		EXPECT_NE((void *) NULL, (void *) func);
-		
-		ret = metacall_function_invoke(func, "Hello native function!");
+
+		ret = metacallf(func, "Hello native function!");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 

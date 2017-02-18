@@ -151,7 +151,7 @@ METACALL_API void * metacall_function(const char * name);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacall_function_invokev(void * func, void * args[]);
+METACALL_API void * metacallfv(void * func, void * args[]);
 
 /**
 *  @brief
@@ -163,7 +163,7 @@ METACALL_API void * metacall_function_invokev(void * func, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacall_function_invoke(void * func, ...);
+METACALL_API void * metacallf(void * func, ...);
 
 /**
 *  @brief

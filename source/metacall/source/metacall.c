@@ -108,7 +108,7 @@ int metacall_load_from_package(const char * tag, const char * path)
 
 void * metacallv(const char * name, void * args[])
 {
-	return metacall_function_invokev(loader_get(name), args);
+	return metacallfv(loader_get(name), args);
 }
 
 void * metacall(const char * name, ...)
@@ -199,7 +199,7 @@ void * metacall_function(const char * name)
 	return loader_get(name);
 }
 
-void * metacall_function_invokev(void * func, void * args[])
+void * metacallfv(void * func, void * args[])
 {
 	function f = (function)func;
 
@@ -243,7 +243,7 @@ void * metacall_function_invokev(void * func, void * args[])
 	return NULL;
 }
 
-void * metacall_function_invoke(void * func, ...)
+void * metacallf(void * func, ...)
 {
 	function f = (function)func;
 
