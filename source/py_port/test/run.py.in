@@ -7,8 +7,13 @@ os.environ['CONFIGURATION_PATH'] = '@CONFIGURATION_PATH@'
 os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
 os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
 
-import unittest
+import sys
+
+sys.path.append('@PORT_LIBRARY_PATH@');
+
 import @PY_PORT_NAME@ as metacall
+
+import unittest
 
 class py_port_test(unittest.TestCase):
 

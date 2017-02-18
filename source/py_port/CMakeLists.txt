@@ -85,7 +85,6 @@ set(CMAKE_SWIG_FLAGS "${PY_PORT_DEBUG_FLAGS}" "-threads")
 
 if(MSVC)
 	set(SWIG_MODULE_${target}_NOPROXY TRUE)
-	set(SWIG_MODULE_${target}_REAL_NAME "_${target}")
 endif()
 
 # Set SWIG include path
@@ -270,7 +269,7 @@ install(EXPORT ${target}-export
 #
 
 set(py_port_test "${target}_test")
-set(py_port_test_path "${CMAKE_BINARY_DIR}/${py_port_test}.py")
+set(py_port_test_path "${CMAKE_CURRENT_BINARY_DIR}/${py_port_test}.py")
 
 # Import module name
 if(NOT CMAKE_BUILD_TYPE)
@@ -286,14 +285,26 @@ else()
 endif()
 
 if(MSVC)
+	# TODO:
+	#	Windows loads Release pyhton libraries with working with Debug
+	#	The library name doesn't has the "_" at the beginning
+	#	Also, exporting "d" postfix in release mode for the "PyInit__portd" entry point
+	set(PY_PORT_NAME "_${PY_PORT_NAME}")
+
+	message(WARNING "Deploy of python port library not properly working in MSVC (errors with naming & symbols)")
+endif()
+
+if(MSVC)
 	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
 	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	set(PORT_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
 else()
 	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
 	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+	set(PORT_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
 endif()
 
-configure_file(test/run.py.in ${py_port_test_path})
+configure_file(test/run.py.in ${py_port_test_path} @ONLY)
 
 #
 # Define test
