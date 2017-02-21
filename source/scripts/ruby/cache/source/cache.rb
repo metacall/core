@@ -1,9 +1,9 @@
 #require_relative 'rb_portd'
 
-@dic={}
+@@dic={}
 
 def cache_initialize()
-	@dic={}
+	@@dic={}
 
 	puts 'ruby: initialize'
 
@@ -20,7 +20,7 @@ def cache_has_key(key: String)
 
 	puts 'ruby: has key'
 
-	return @dic.has_key? key
+	return @@dic.has_key? key
 
 end
 
@@ -28,16 +28,15 @@ def cache_set(key: String, value: String)
 
 	puts 'ruby: set value'
 
-	@dic[key] = value
+	@@dic[key] = value
 
-	puts 'workaround to avoid parser bug'
 end
 
 def cache_get(key: String)
 
 	puts 'ruby: get value'
 
-	return @dic[key]
+	return @@dic[key]
 
 end
 

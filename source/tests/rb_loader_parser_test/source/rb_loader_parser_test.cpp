@@ -8,7 +8,7 @@
 
 #include <gmock/gmock.h>
 
-#include <rb_loader/rb_loader_impl_key.h>
+#include <rb_loader/rb_loader_impl_parser.h>
 
 #include <log/log.h>
 
@@ -19,6 +19,7 @@ class rb_loader_parser_test : public testing::Test
 
 TEST_F(rb_loader_parser_test, DefaultConstructor)
 {
+	/*
 	const char script[] =
 		"#!/usr/bin/ruby\n"
 
@@ -37,6 +38,35 @@ TEST_F(rb_loader_parser_test, DefaultConstructor)
 		"def say_null_inline()\n"
 		"	puts('Helloooo from null method!')\n"
 		"end\n";
+	*/
+
+	const char script_crash[] =
+		"#!/usr/bin/ruby\n"
+
+		"@@dic={}\n"
+
+		"def cache_initialize()\n"
+		"	@@dic={}\n"
+		"	puts 'ruby: initialize'\n"
+		"end\n"
+
+		"def cache_has_key(key: String)\n"
+		"	puts 'ruby: has key'\n"
+		"	return @@dic.has_key? key\n"
+		"end\n"
+
+		"def cache_set(key: String, value: String)\n"
+		"	puts 'ruby: set value'\n"
+		"	@@dic[key] = value\n"
+		"end\n"
+
+		"def cache_get(key: String)\n"
+		"	puts 'ruby: get value'\n"
+		"	return @@dic[key]\n"
+		"end\n"
+
+		"def cache_nothing(key: String)\n"
+		"end\n";
 
 	set function_map;
 
@@ -50,7 +80,7 @@ TEST_F(rb_loader_parser_test, DefaultConstructor)
 
 	EXPECT_NE((set) NULL, (set) function_map);
 
-	EXPECT_EQ((int) 0, (int) rb_loader_impl_key_parse(script, function_map));
+	EXPECT_EQ((int) 0, (int) rb_loader_impl_key_parse(script_crash, function_map));
 
 	rb_loader_impl_key_print(function_map);
 

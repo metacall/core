@@ -6,8 +6,8 @@
  *
  */
 
-#ifndef RB_LOADER_IMPL_KEY_H
-#define RB_LOADER_IMPL_KEY_H 1
+#ifndef RB_LOADER_IMPL_PARSER_H
+#define RB_LOADER_IMPL_PARSER_H 1
 
 #include <rb_loader/rb_loader_api.h>
 
@@ -33,7 +33,6 @@ typedef struct rb_function_parameter_parser_type
 typedef struct rb_function_parser_type
 {
 	char name[RB_LOADER_IMPL_PARSER_FUNC];
-	/*char ret[RB_LOADER_IMPL_PARSER_TYPE];*/
 	struct rb_function_parameter_parser_type params[RB_LOADER_IMPL_PARSER_PARAM];
 	size_t params_size;
 
@@ -49,4 +48,4 @@ RB_LOADER_API int rb_loader_impl_key_clear(set function_map);
 }
 #endif
 
-#endif /* RB_LOADER_IMPL_KEY_H */
+#endif /* RB_LOADER_IMPL_PARSER_H */

@@ -4,32 +4,20 @@ if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_RB)
 endif()
 
 #
-# External dependencies
-#
-
-find_package(RubyEx)
-
-if(NOT RUBY_FOUND)
-	message(STATUS "Ruby libraries not found")
-	return()
-endif()
-
-add_subdirectory(parser)
-
-#
 # Plugin name and options
 #
 
 # Target name
-set(target rb_loader)
+set(target rb_loader_parser)
+set(target_parent rb_loader)
 
 # Exit here if required dependencies are not met
-message(STATUS "Plugin ${target}")
+message(STATUS "Plugin parser ${target}")
 
 # Set API export file and macro
-string(TOUPPER ${target} target_upper)
-set(feature_file "include/${target}/${target}_features.h")
-set(export_file  "include/${target}/${target}_api.h")
+string(TOUPPER ${target_parent} target_upper)
+set(feature_file "include/${target_parent}/${target_parent}_features.h")
+set(export_file  "include/${target_parent}/${target_parent}_api.h")
 set(export_macro "${target_upper}_API")
 
 #
@@ -48,21 +36,15 @@ include(SecurityFlags)
 # Sources
 #
 
-set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(include_parser_path "${CMAKE_CURRENT_SOURCE_DIR}/parser/include/${target}")
+set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target_parent}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
-set(source_parser_path  "${CMAKE_CURRENT_SOURCE_DIR}/parser/source")
 
 set(headers
-	${include_path}/rb_loader.h
-	${include_path}/rb_loader_impl.h
-	${include_parser_path}/rb_loader_impl_parser.h
+	${include_path}/rb_loader_impl_parser.h
 )
 
 set(sources
-	${source_path}/rb_loader.c
-	${source_path}/rb_loader_impl.c
-	${source_parser_path}/rb_loader_impl_parser.c
+	${source_path}/rb_loader_impl_parser.c
 )
 
 # Group source files
@@ -77,25 +59,10 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(rb_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${rb_loader_unity_build}
-	${LOADER_MODULE_NAMES}
-)
-
 # Build library
 add_library(${target}
-	${rb_loader_unity_build}
 	${sources}
 	${headers}
-)
-
-# Add target dependencies
-add_dependencies(${target}
-	${LOADER_MODULE_NAMES}
 )
 
 # Create namespaced alias
@@ -119,8 +86,8 @@ if (WriterCompilerDetectionHeaderFound)
 	)
 else()
 	file(
-		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target}_features.h
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target}
+		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target_parent}_features.h
+		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target_parent}
 		USE_SOURCE_PERMISSIONS
 	)
 endif()
@@ -148,13 +115,8 @@ set_target_properties(${target}
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
-	${PROJECT_BINARY_DIR}/source/parser/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
-	${CMAKE_CURRENT_SOURCE_DIR}/parser/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
-	${CMAKE_CURRENT_BINARY_DIR}/parser/include
-
-	${RUBY_INCLUDE_DIRS} # Ruby includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -171,8 +133,11 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-
-	${RUBY_LIBRARY} # Ruby library
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::adt
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -234,12 +199,12 @@ install(TARGETS ${target}
 
 # Header files
 install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	${CMAKE_CURRENT_SOURCE_DIR}/include/${target_parent} DESTINATION ${INSTALL_INCLUDE}
 	COMPONENT dev
 )
 
 # Generated header files
 install(DIRECTORY
-	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
+	${CMAKE_CURRENT_BINARY_DIR}/include/${target_parent} DESTINATION ${INSTALL_INCLUDE}
 	COMPONENT dev
 )
