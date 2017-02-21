@@ -7,7 +7,7 @@
  */
 
 #include <rb_loader/rb_loader_impl.h>
-#include <rb_loader/rb_loader_impl_key.h>
+#include <rb_loader/rb_loader_impl_parser.h>
 
 #include <loader/loader_impl.h>
 
