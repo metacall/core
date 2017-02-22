@@ -53,109 +53,98 @@ extern "C" {
 */
 %typemap(in) (const char * paths[], size_t size)
 {
-/*
-	if (PyList_Check($input))
+	Local<Value> paths_value = args[1];
+
+	if (!paths_value->IsArray())
 	{
-		size_t iterator, size = PyList_Size($input);
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "Invalid argument (must be array)",
+			NewStringType::kNormal).ToLocalChecked());
 
-		if (size == 0)
+		SWIG_fail;
+	}
+
+	Local<Array> paths_array = Local<Array>::Cast(args[1]);
+
+	const size_t size = paths_array->Length();
+
+	if (size == 0)
+	{
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "Invalid path array (must be not empty)",
+			NewStringType::kNormal).ToLocalChecked());
+
+		SWIG_fail;
+	}
+
+	$1 = (char **)malloc(sizeof(char *) * size);
+
+	if ($1 == NULL)
+	{
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "Invalid argument allocation",
+			NewStringType::kNormal).ToLocalChecked());
+
+		SWIG_fail;
+	}
+
+	$2 = size;
+
+	for (size_t iterator = 0; iterator < size; ++iterator)
+	{
+		Local<Value> path_value = paths_array->Get(iterator);
+
+		if (!path_value->IsString())
 		{
-			PyErr_SetString(PyExc_ValueError, "Empty script path list");
-
-			return Py_None;
-		}
-
-		$1 = (char **)malloc(sizeof(char *) * size);
-
-		if ($1 == NULL)
-		{
-			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
+			args.GetIsolate()->ThrowException(
+				String::NewFromUtf8(args.GetIsolate(), "Invalid array content (must be strings)",
+				NewStringType::kNormal).ToLocalChecked());
 
 			SWIG_fail;
 		}
 
-		$2 = size;
+		String::Utf8Value path_str(path_value->ToString());
 
-		for (iterator = 0; iterator < size; ++iterator)
+		int length = path_str.length();
+
+		if (length <= 0)
 		{
-			PyObject * object_str = PyList_GetItem($input, iterator);
-
-			int check_str =
-				%#if PY_MAJOR_VERSION == 2
-					PyString_Check(object_str);
-				%#elif PY_MAJOR_VERSION == 3
-					PyUnicode_Check(object_str);
-				%#endif
-
-			if (check_str != 0)
+			for (size_t alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
 			{
-				char * str = NULL;
-
-				Py_ssize_t length = 0;
-
-				%#if PY_MAJOR_VERSION == 2
-					if (PyString_AsStringAndSize(object_str, &str, &length) == -1)
-					{
-						size_t alloc_iterator;
-
-						for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
-						{
-							free($1[alloc_iterator]);
-						}
-
-						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
-
-						SWIG_fail;
-					}
-				%#elif PY_MAJOR_VERSION == 3
-					str = PyUnicode_AsUTF8AndSize(object_str, &length);
-
-					if (str == NULL)
-					{
-						size_t alloc_iterator;
-
-						for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
-						{
-							free($1[alloc_iterator]);
-						}
-
-						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
-
-						SWIG_fail;
-					}
-				%#endif
-
-				$1[iterator] = (char *)malloc(sizeof(char) * (length + 1));
-
-				if ($1[iterator] == NULL)
-				{
-					size_t alloc_iterator;
-
-					for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
-					{
-						free($1[alloc_iterator]);
-					}
-
-					free($1);
-
-					PyErr_SetString(PyExc_ValueError, "Invalid string path allocation");
-
-					SWIG_fail;
-				}
-
-				memcpy($1[iterator], str, length);
-
-				$1[iterator][length] = '\0';
+				free($1[alloc_iterator]);
 			}
-		}
-	}
-	else
-	{
-		PyErr_SetString(PyExc_TypeError, "Invalid parameter type (a list must be used)");
 
-		SWIG_fail;
+			free($1);
+
+			args.GetIsolate()->ThrowException(
+				String::NewFromUtf8(args.GetIsolate(), "Invalid string length (must be greater than zero)",
+				NewStringType::kNormal).ToLocalChecked());
+
+			SWIG_fail;
+		}
+
+		$1[iterator] = (char *)malloc(sizeof(char) * (length + 1));
+
+		if ($1[iterator] == NULL)
+		{
+			for (size_t alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+			{
+				free($1[alloc_iterator]);
+			}
+
+			free($1);
+
+			args.GetIsolate()->ThrowException(
+				String::NewFromUtf8(args.GetIsolate(), "Invalid string path allocation",
+				NewStringType::kNormal).ToLocalChecked());
+
+			SWIG_fail;
+		}
+
+		memcpy($1[iterator], *path_str, length);
+
+		$1[iterator][length] = '\0';
 	}
-*/
 }
 
 /**

@@ -18,6 +18,8 @@ load('@JS_PORT_NAME@');
 
 	/* MetaCall Python */
 	(function python_test() {
+		assert_eq(/*metacall_load_from_file('py', ['example.py'])*/ 0, 0);
+
 		assert_eq(/*metacall('hello')*/ null, null);
 
 		assert_eq(/*metacall('multiply', 5, 7)*/ 35, 35);
@@ -25,6 +27,8 @@ load('@JS_PORT_NAME@');
 
 	/* MetaCall Ruby */
 	(function ruby_test() {
+		assert_eq(/*metacall_load_from_file('rb', ['hello.rb'])*/ 0, 0);
+
 		assert_eq(/*metacall('say_null')*/ null, null);
 
 		assert_eq(/*metacall('say_multiply', 3, 4)*/ 12, 12);
@@ -34,6 +38,8 @@ load('@JS_PORT_NAME@');
 
 	/* MetaCall JavaScript V8 */
 	(function javascript_test() {
+		assert_eq(/*metacall_load_from_file('js', ['divide.js'])*/ 0, 0);
+
 		assert_eq(/*metacall('say_divide', 32.0, 4.0)*/ 8.0, 8.0);
 
 		assert_eq(/*metacall('some_text', 'abc', 'def')*/ 'abcdef', 'abcdef');
@@ -41,12 +47,7 @@ load('@JS_PORT_NAME@');
 
 	/* MetaCall Mock */
 	(function mock_test() {
-
-		assert_eq(metacall_load_from_memory("mock", "..."), 0);
-
-		/*
-		assert_eq(metacall_load_from_file("mock", ["empty.mock"]), 0);
-		*/
+		assert_eq(metacall_load_from_file('mock', ['empty.mock']), 0);
 
 		var my_empty_func = metacall_function('my_empty_func');
 
@@ -59,6 +60,13 @@ load('@JS_PORT_NAME@');
 		assert_eq(metacall('mixed_args', 'E', 16, 34, 4.6, 'hello'), 'A');
 
 		assert_eq(metacall('new_args', 'goodbye'), 'Hello World');
+	})();
+
+	/* MetaCall C# NetCore */
+	(function javascript_test() {
+		assert_eq(/*metacall_load_from_file('cs', ['hello.cs'])*/ 0, 0);
+
+		assert_eq(/*metacall('Say', 'Hello world!')*/ null, null);
 	})();
 
 	return 0;
