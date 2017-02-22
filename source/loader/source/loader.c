@@ -420,25 +420,27 @@ void loader_destroy()
 	}
 }
 
-static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args) {
-	
-	(void)func;
-	
+value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args)
+{
 	host_invoke * hinvoke = (host_invoke*)func_impl;
+
+	(void)func;
 
 	return hinvoke->invoke(args);
 }
 
-static void loader_register_destroy_proxy(function func, function_impl func_impl) {
+void loader_register_destroy_proxy(function func, function_impl func_impl)
+{
 	(void)func;
 
-	if (func_impl != NULL) {
+	if (func_impl != NULL)
+	{
 		free(func_impl);
 	}
 }
 
 
-static function_interface get_interface_proxy(void)
+function_interface get_interface_proxy()
 {
 	static struct function_interface_type interface =
 	{
@@ -450,7 +452,8 @@ static function_interface get_interface_proxy(void)
 	return &interface;
 }
 
-int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]) {
+int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[])
+{
 	function f = NULL;
 
 	loader_impl loader = loader_get_impl(LOADER_HOST_PROXY_NAME);
@@ -458,19 +461,19 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 	context ctx = loader_impl_context(loader);
 
 	scope sp = context_scope(ctx);
-	
+
 	host_invoke * hinvoke = malloc(sizeof(host_invoke));
-	
+
 	hinvoke->invoke = invoke;
-	
+
 	f = function_create(name, arg_size, hinvoke, &get_interface_proxy);
 
-	if (f != NULL) {
-
+	if (f != NULL)
+	{
 		signature s = function_signature(f);
 
-		if (arg_size > 0) {
-
+		if (arg_size > 0)
+		{
 			size_t iterator;
 
 			for (iterator = 0; iterator < arg_size; iterator++)

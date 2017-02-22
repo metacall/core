@@ -25,6 +25,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* -- Definitions -- */
+
+#define LOADER_IMPL_FUNCTION_INIT "__metacall_initialize__"
+#define LOADER_IMPL_FUNCTION_FINI "__metacall_finalize__"
+
 /* -- Forward Declarations -- */
 
 struct loader_handle_impl_type;
@@ -65,6 +70,8 @@ static int loader_impl_create_singleton(loader_impl impl, const char * path, loa
 
 static loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name);
 
+static int loader_impl_function_hook_call(context ctx, const char func_name[]);
+
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 
 static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
@@ -73,7 +80,7 @@ static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key 
 
 /* -- Methods -- */
 
-static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
+dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
 {
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	const char loader_dynlink_suffix[] = "_loaderd";
@@ -98,7 +105,7 @@ static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag
 	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr)
+int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr)
 {
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
@@ -123,12 +130,12 @@ static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, d
 	return dynlink_symbol(impl->handle, loader_dynlink_symbol, singleton_addr_ptr);
 }
 
-static void loader_impl_dynlink_destroy(loader_impl impl)
+void loader_impl_dynlink_destroy(loader_impl impl)
 {
 	dynlink_unload(impl->handle);
 }
 
-static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag)
+int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag)
 {
 	impl->handle = loader_impl_dynlink_load(path, tag);
 
@@ -210,9 +217,11 @@ loader_impl loader_impl_create(const char * path, loader_naming_tag tag)
 						if (impl->ctx != NULL)
 						{
 							char configuration_key[0xFF];
+
 							configuration config;
 
 							strcpy(configuration_key, tag);
+
 							strcat(configuration_key, "_loader");
 
 							config = configuration_scope(configuration_key);
@@ -301,7 +310,7 @@ int loader_impl_type_define(loader_impl impl, const char * name, type t)
 	return 1;
 }
 
-static loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name)
+loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
@@ -324,10 +333,17 @@ static loader_handle_impl loader_impl_load_handle(loader_handle module, const lo
 	return NULL;
 }
 
-static void loader_impl_destroy_handle(loader_handle_impl handle_impl)
+void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 {
 	if (handle_impl != NULL)
 	{
+		static const char func_fini_name[] = LOADER_IMPL_FUNCTION_FINI;
+
+		if (loader_impl_function_hook_call(handle_impl->ctx, func_fini_name) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when destroying handle impl: %p (%s)", (void *)handle_impl, func_fini_name);
+		}
+
 		context_destroy(handle_impl->ctx);
 
 		free(handle_impl);
@@ -347,6 +363,31 @@ int loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 	}
 
 	return 1;
+}
+
+int loader_impl_function_hook_call(context ctx, const char func_name[])
+{
+	scope sp = context_scope(ctx);
+
+	function func_init = scope_get(sp, func_name);
+
+	if (func_init != NULL)
+	{
+		void * unused[1] = { NULL };
+
+		function_return ret = function_call(func_init, unused);
+
+		if (ret != NULL)
+		{
+			int result = value_to_int(ret);
+
+			value_destroy(ret);
+
+			return result;
+		}
+	}
+
+	return 0;
 }
 
 int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
@@ -388,7 +429,16 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
-								return 0;
+								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
+
+								int result = loader_impl_function_hook_call(impl->ctx, func_init_name);
+
+								if (result != 0)
+								{
+									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+								}
+
+								return result;
 							}
 						}
 					}
@@ -492,7 +542,16 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 						{
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
-								return 0;
+								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
+
+								int result = loader_impl_function_hook_call(impl->ctx, func_init_name);
+
+								if (result != 0)
+								{
+									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+								}
+
+								return result;
 							}
 						}
 					}
@@ -537,7 +596,16 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 						{
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
-								return 0;
+								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
+
+								int result = loader_impl_function_hook_call(impl->ctx, func_init_name);
+
+								if (result != 0)
+								{
+									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+								}
+
+								return result;
 							}
 						}
 					}
@@ -556,7 +624,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
@@ -570,7 +638,7 @@ static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key ke
 	return 1;
 }
 
-static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
@@ -590,6 +658,8 @@ void loader_impl_destroy(loader_impl impl)
 	{
 		loader_impl_interface interface_impl = loader_impl_symbol(impl);
 
+		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
+
 		hash_map_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
 
 		hash_map_destroy(impl->type_info_map);
@@ -598,8 +668,6 @@ void loader_impl_destroy(loader_impl impl)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", impl->tag, interface_impl->destroy);
 		}
-
-		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
 
 		hash_map_destroy(impl->handle_impl_map);
 

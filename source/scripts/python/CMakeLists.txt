@@ -11,3 +11,4 @@ include(PythonProject)
 
 add_subdirectory(example)
 add_subdirectory(frontend)
+add_subdirectory(initfini)
