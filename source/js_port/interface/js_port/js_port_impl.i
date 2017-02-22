@@ -268,7 +268,9 @@ extern "C" {
 
 	size_t size = (size_t)arg3;
 
-	result = metacall_load_from_memory(tag, (const char *)buffer, size);
+	int ret = metacall_load_from_memory(tag, (const char *)buffer, size);
+
+	$result = Integer::New(args.GetIsolate(), (int32_t)ret);
 }
 
 /**
@@ -286,7 +288,7 @@ extern "C" {
 
 	size_t iterator, size = arg3;
 
-	result = metacall_load_from_file(tag, (const char **)paths, size);
+	int ret = metacall_load_from_file(tag, (const char **)paths, size);
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
@@ -294,6 +296,8 @@ extern "C" {
 	}
 
 	free(paths);
+
+	$result = Integer::New(args.GetIsolate(), (int32_t)ret);
 }
 
 /**
