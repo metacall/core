@@ -18,43 +18,47 @@ load('@JS_PORT_NAME@');
 
 	/* MetaCall Python */
 	(function python_test() {
-		assert(/*metacall('hello')*/ null, null);
+		assert_eq(/*metacall('hello')*/ null, null);
 
-		assert(/*metacall('multiply', 5, 7)*/ 35, 35);
+		assert_eq(/*metacall('multiply', 5, 7)*/ 35, 35);
 	})();
 
 	/* MetaCall Ruby */
 	(function ruby_test() {
-		assert(/*metacall('say_null')*/ null, null);
+		assert_eq(/*metacall('say_null')*/ null, null);
 
-		assert(/*metacall('say_multiply', 3, 4)*/ 12, 12);
+		assert_eq(/*metacall('say_multiply', 3, 4)*/ 12, 12);
 
-		assert(/*metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
+		assert_eq(/*metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
 	})();
 
 	/* MetaCall JavaScript V8 */
 	(function javascript_test() {
-		assert(/*metacall('say_divide', 32.0, 4.0)*/ 8.0, 8.0);
+		assert_eq(/*metacall('say_divide', 32.0, 4.0)*/ 8.0, 8.0);
 
-		assert(/*metacall('some_text', 'abc', 'def')*/ 'abcdef', 'abcdef');
+		assert_eq(/*metacall('some_text', 'abc', 'def')*/ 'abcdef', 'abcdef');
 	})();
 
 	/* MetaCall Mock */
 	(function mock_test() {
 
+		assert_eq(metacall_load_from_memory("mock", "..."), 0);
+
 		/*
-		assert(metacall_load_from_memory("mock", "..."), 0);
+		assert_eq(metacall_load_from_file("mock", ["empty.mock"]), 0);
 		*/
 
-		assert(metacall_load_from_file("mock", ["empty.mock"]), 0);
+		var my_empty_func = metacall_function('my_empty_func');
 
-		assert(metacall('my_empty_func'), 1234);
+		assert_ne(my_empty_func, null);
 
-		assert(metacall('two_doubles', 3.14, 68.3), 3.1416);
+		assert_eq(metacall('my_empty_func'), 1234);
 
-		assert(metacall('mixed_args', 'E', 16, 34, 4.6, 'hello'), 'A');
+		assert_eq(metacall('two_doubles', 3.14, 68.3), 3.1416);
 
-		assert(metacall('new_args', 'goodbye'), 'Hello World');
+		assert_eq(metacall('mixed_args', 'E', 16, 34, 4.6, 'hello'), 'A');
+
+		assert_eq(metacall('new_args', 'goodbye'), 'Hello World');
 	})();
 
 	return 0;

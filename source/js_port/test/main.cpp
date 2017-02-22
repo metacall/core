@@ -77,7 +77,8 @@ void ModulesClear(void);
 void Load(const FunctionCallbackInfo<Value>& args);
 void Quit(const FunctionCallbackInfo<Value>& args);
 void Version(const FunctionCallbackInfo<Value>& args);
-void Assert(const FunctionCallbackInfo<Value>& args);
+void AssertEq(const FunctionCallbackInfo<Value>& args);
+void AssertNe(const FunctionCallbackInfo<Value>& args);
 void SetEnv(const FunctionCallbackInfo<Value>& args);
 MaybeLocal<String> ReadFile(Isolate* isolate, const char * name);
 void ReportException(Isolate* isolate, TryCatch* handler);
@@ -204,12 +205,17 @@ Local<Context> CreateShellContext(Isolate* isolate)
 		String::NewFromUtf8(isolate, "version", NewStringType::kNormal)
 		.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Version));
-	// Bind the global 'assert' function to the C++ Assert callback.
+	// Bind the global 'assert_eq' function to the C++ AssertEq callback.
 	global->Set(
-		String::NewFromUtf8(isolate, "assert", NewStringType::kNormal)
+		String::NewFromUtf8(isolate, "assert_eq", NewStringType::kNormal)
 		.ToLocalChecked(),
-		FunctionTemplate::New(isolate, Assert));
-	// Bind the global 'assert' function to the C++ SetEnv callback.
+		FunctionTemplate::New(isolate, AssertEq));
+	// Bind the global 'assert_ne' function to the C++ AssertNe callback.
+	global->Set(
+		String::NewFromUtf8(isolate, "assert_ne", NewStringType::kNormal)
+		.ToLocalChecked(),
+		FunctionTemplate::New(isolate, AssertNe));
+	// Bind the global 'setenv' function to the C++ SetEnv callback.
 	global->Set(
 		String::NewFromUtf8(isolate, "setenv", NewStringType::kNormal)
 		.ToLocalChecked(),
@@ -468,9 +474,26 @@ void Version(const FunctionCallbackInfo<Value>& args)
 		NewStringType::kNormal).ToLocalChecked());
 }
 
-void Assert(const FunctionCallbackInfo<Value>& args)
+void AssertEq(const FunctionCallbackInfo<Value>& args)
 {
 	const bool result = args[0]->Equals(args[1]);
+
+	if (!result)
+	{
+		String::Utf8Value left(args[0]);
+		String::Utf8Value right(args[1]);
+
+		printf("Assertion failed (%s != %s)\n", ToCString(left), ToCString(right));
+	}
+
+	assert(result);
+
+	args.GetReturnValue().Set(result);
+}
+
+void AssertNe(const FunctionCallbackInfo<Value>& args)
+{
+	const bool result = !args[0]->Equals(args[1]);
 
 	if (!result)
 	{
