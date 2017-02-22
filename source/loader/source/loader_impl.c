@@ -374,12 +374,18 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 			{
 				loader_handle_impl handle_impl = loader_impl_load_handle(handle, module_name);
 
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl);
+
 				if (handle_impl != NULL)
 				{
 					if (hash_map_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
 					{
+						log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle inserted");
+
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
+							log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle discovered");
+
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								return 0;

@@ -400,6 +400,8 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 	(void)mock_impl;
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "Mock module %p discovering", handle);
+
 	if (mock_function != NULL)
 	{
 		function f = function_create("my_empty_func", 0, mock_function, &function_mock_singleton);

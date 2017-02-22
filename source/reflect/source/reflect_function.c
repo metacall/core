@@ -114,6 +114,8 @@ function_return function_call(function func, function_args args)
 	{
 		if (func->interface != NULL && func->interface->invoke != NULL)
 		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
+
 			return func->interface->invoke(func, func->impl, args);
 		}
 	}
