@@ -21,6 +21,9 @@ if(V8_INCLUDE_DIR)
 	set(V8_FIND_QUIETLY TRUE)
 endif()
 
+# Debug flag
+set(_V8_CMAKE_DEBUG TRUE)
+
 # Include package manager
 include(FindPackageHandleStandardArgs)
 
@@ -326,4 +329,10 @@ if(V8_FOUND)
 	set(V8_INCLUDE_DIRS ${V8_INCLUDE_DIR})
 endif()
 
-message(STATUS "V8 Libraries: ${V8_LIBRARIES}")
+if(_V8_CMAKE_DEBUG)
+	message(STATUS "V8_INCLUDE_DIR: ${V8_INCLUDE_DIR}")
+	message(STATUS "V8_LIBRARIES: ${V8_LIBRARIES}")
+	message(STATUS "V8_VERSION: ${V8_VERSION}")
+	message(STATUS "V8_VERSION_HEX: ${V8_VERSION_HEX}")
+	message(STATUS "V8_EXECUTABLE: ${V8_EXECUTABLE}")
+endif()
