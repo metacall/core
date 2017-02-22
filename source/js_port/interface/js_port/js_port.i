@@ -55,20 +55,20 @@
 
 	%include <metacall/metacall_api.h>
 
+	%{
+		#if (NODE_MODULE_VERSION < 0x000C)
+			extern "C" METACALL_API void JS_PORT_INITIALIZE_NAME(v8::Handle<v8::Object> exports);
+		#else
+			extern "C" METACALL_API void JS_PORT_INITIALIZE_NAME(v8::Handle<v8::Object> exports, v8::Handle<v8::Object> module);
+		#endif
+	%}
+
 	#ifdef METACALL_API
 	#	undef METACALL_API
 	#	define METACALL_API
 	#endif
 
 	%include <metacall/metacall.h>
-
-	%{
-		#if (NODE_MODULE_VERSION < 0x000C)
-			extern "C" void JS_PORT_INITIALIZE_NAME (v8::Handle<v8::Object> exports);
-		#else
-			extern "C" void JS_PORT_INITIALIZE_NAME(v8::Handle<v8::Object> exports, v8::Handle<v8::Object> module);
-		#endif
-	%}
 
 #endif /* SWIG && SWIGJAVASCRIPT && SWIG_JAVASCRIPT_V8 */
 

@@ -2,6 +2,8 @@
 
 /* Environment */
 (function environment() {
+	setenv('CONFIGURATION_LIBRARY_PATH', '@CONFIGURATION_LIBRARY_PATH@');
+	setenv('CONFIGURATION_PATH', '@CONFIGURATION_PATH@');
 	setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
 	setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
 })();
@@ -39,6 +41,13 @@ load('@JS_PORT_NAME@');
 
 	/* MetaCall Mock */
 	(function mock_test() {
+
+		/*
+		assert(metacall_load_from_memory("mock", "..."), 0);
+		*/
+
+		assert(metacall_load_from_file("mock", ["empty.mock"]), 0);
+
 		assert(metacall('my_empty_func'), 1234);
 
 		assert(metacall('two_doubles', 3.14, 68.3), 3.1416);

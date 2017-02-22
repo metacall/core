@@ -303,6 +303,35 @@ void ModulesClear()
 	}
 }
 
+module_handle LoadLibraryImpl(const char * lib_str)
+{
+	#if defined(JS_PORT_TEST_WIN)
+		std::string lib_name(lib_str);
+
+		lib_name += ".dll";
+
+		return LoadLibrary(lib_name.c_str());
+
+	#elif defined(JS_PORT_TEST_UNIX)
+		std::string lib_name(lib_str);
+
+		lib_name += ".so";
+
+		module_handle lib = dlopen(lib_name.c_str(), RTLD_NOW | RTLD_GLOBAL);
+
+		if (lib == NULL)
+		{
+			lib_name = "lib" + lib_name;
+
+			lib = dlopen(lib_name.c_str(), RTLD_NOW | RTLD_GLOBAL);
+		}
+
+		return lib;
+	#endif
+
+	return NULL;
+}
+
 // The callback that is invoked by v8 whenever the JavaScript 'load'
 // function is called.	Loads, compiles and executes its argument
 // JavaScript file.
@@ -326,18 +355,26 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 		if (StrEndsWith(file_str, ".js") != 0)
 		{
-			module_handle lib =
-				#if defined(JS_PORT_TEST_WIN)
-					LoadLibrary(file_str);
-				#elif defined(JS_PORT_TEST_UNIX)
-					dlopen(file_str, RTLD_NOW | RTLD_GLOBAL);
-				#endif
+			module_handle lib = LoadLibraryImpl(file_str);
 
 			if (lib == NULL)
 			{
+				std::string err_str = "Error loading library";
+
+				#if defined(JS_PORT_TEST_WIN)
+					/* TODO */
+				#elif defined(JS_PORT_TEST_UNIX)
+					err_str += " (";
+
+					err_str += dlerror();
+
+					err_str += ")";
+				#endif
+
 				args.GetIsolate()->ThrowException(
-					String::NewFromUtf8(args.GetIsolate(), "Error loading library",
+					String::NewFromUtf8(args.GetIsolate(), err_str.c_str(),
 					NewStringType::kNormal).ToLocalChecked());
+
 				return;
 			}
 
@@ -359,8 +396,12 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 			if (module_initialize_addr == NULL)
 			{
+				std::string err_str = "Error loading library, not entry point found (";
+
+				err_str += symbol_str + ")";
+
 				args.GetIsolate()->ThrowException(
-					String::NewFromUtf8(args.GetIsolate(), "Error loading library, not entry point found",
+					String::NewFromUtf8(args.GetIsolate(), err_str.c_str(),
 					NewStringType::kNormal).ToLocalChecked());
 				return;
 			}

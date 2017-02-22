@@ -286,6 +286,14 @@ else()
 	set(JS_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
 endif()
 
+if(MSVC)
+	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(CONFIGURATION_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+endif()
+
 configure_file(test/run.js.in ${js_port_test_path})
 
 #

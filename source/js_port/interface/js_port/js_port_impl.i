@@ -13,7 +13,150 @@
 extern "C" {
 #endif
 
+/* -- Ignores -- */
+
+%ignore metacall_null_args;
+
+%ignore metacall_register; /* TODO */
+
 /* -- Type Maps -- */
+
+/**
+*  @brief
+*    Transform load mechanism from JavaScript string into
+*    a valid load from memory format (buffer and size)
+*/
+%typemap(in) (const char * buffer, size_t size)
+{
+	Local<Value> js_arg = args[0];
+
+	if (!js_arg->IsString())
+	{
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), "Invalid argument (must be string)",
+			NewStringType::kNormal).ToLocalChecked());
+
+			SWIG_fail;
+	}
+
+	String::Utf8Value str(js_arg->ToString(args.GetIsolate()));
+
+	$1 = *str;
+
+	$2 = str.length() + 1;
+}
+
+/**
+*  @brief
+*    Transform load mechanism from JavaScript array into
+*    a valid load from file format (array of strings)
+*/
+%typemap(in) (const char * paths[], size_t size)
+{
+/*
+	if (PyList_Check($input))
+	{
+		size_t iterator, size = PyList_Size($input);
+
+		if (size == 0)
+		{
+			PyErr_SetString(PyExc_ValueError, "Empty script path list");
+
+			return Py_None;
+		}
+
+		$1 = (char **)malloc(sizeof(char *) * size);
+
+		if ($1 == NULL)
+		{
+			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
+
+			SWIG_fail;
+		}
+
+		$2 = size;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			PyObject * object_str = PyList_GetItem($input, iterator);
+
+			int check_str =
+				%#if PY_MAJOR_VERSION == 2
+					PyString_Check(object_str);
+				%#elif PY_MAJOR_VERSION == 3
+					PyUnicode_Check(object_str);
+				%#endif
+
+			if (check_str != 0)
+			{
+				char * str = NULL;
+
+				Py_ssize_t length = 0;
+
+				%#if PY_MAJOR_VERSION == 2
+					if (PyString_AsStringAndSize(object_str, &str, &length) == -1)
+					{
+						size_t alloc_iterator;
+
+						for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+						{
+							free($1[alloc_iterator]);
+						}
+
+						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+						SWIG_fail;
+					}
+				%#elif PY_MAJOR_VERSION == 3
+					str = PyUnicode_AsUTF8AndSize(object_str, &length);
+
+					if (str == NULL)
+					{
+						size_t alloc_iterator;
+
+						for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+						{
+							free($1[alloc_iterator]);
+						}
+
+						PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+						SWIG_fail;
+					}
+				%#endif
+
+				$1[iterator] = (char *)malloc(sizeof(char) * (length + 1));
+
+				if ($1[iterator] == NULL)
+				{
+					size_t alloc_iterator;
+
+					for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
+					{
+						free($1[alloc_iterator]);
+					}
+
+					free($1);
+
+					PyErr_SetString(PyExc_ValueError, "Invalid string path allocation");
+
+					SWIG_fail;
+				}
+
+				memcpy($1[iterator], str, length);
+
+				$1[iterator][length] = '\0';
+			}
+		}
+	}
+	else
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type (a list must be used)");
+
+		SWIG_fail;
+	}
+*/
+}
 
 /**
 *  @brief
@@ -120,6 +263,49 @@ extern "C" {
 }
 
 /* -- Features -- */
+
+/**
+*  @brief
+*    Execute the load from memory
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+%feature("action") metacall_load_from_memory
+{
+	const char * tag = (const char *)arg1;
+
+	char * buffer = (char *)arg2;
+
+	size_t size = (size_t)arg3;
+
+	result = metacall_load_from_memory(tag, (const char *)buffer, size);
+}
+
+/**
+*  @brief
+*    Execute the load from file
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+%feature("action") metacall_load_from_file
+{
+	const char * tag = (const char *)arg1;
+
+	char ** paths = (char **)arg2;
+
+	size_t iterator, size = arg3;
+
+	result = metacall_load_from_file(tag, (const char **)paths, size);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		free(paths[iterator]);
+	}
+
+	free(paths);
+}
 
 /**
 *  @brief
