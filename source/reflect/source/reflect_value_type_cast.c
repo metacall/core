@@ -13,6 +13,8 @@
 #include <reflect/reflect_value_type_id_size.h>
 #include <reflect/reflect_value_type_promotion.h>
 #include <reflect/reflect_value_type_demotion.h>
+#include <reflect/reflect_value_type_stringify.h>
+#include <reflect/reflect_value_type_parse.h>
 
 #include <stdint.h>
 
@@ -34,6 +36,16 @@ value value_type_cast(value v, type_id id)
 	if (src_id == id)
 	{
 		return v;
+	}
+
+	if (type_id_string(src_id) == 0)
+	{
+		return value_type_parse(v, id);
+	}
+
+	if (type_id_string(id) == 0)
+	{
+		return value_type_stringify(v);
 	}
 
 	if (src_id < id)

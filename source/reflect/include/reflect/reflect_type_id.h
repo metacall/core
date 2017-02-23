@@ -47,6 +47,18 @@ REFLECT_API int type_id_boolean(type_id id);
 
 /**
 *  @brief
+*    Check if type id is char value (char)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is char, different from zero otherwhise
+*/
+REFLECT_API int type_id_char(type_id id);
+
+/**
+*  @brief
 *    Check if type id is integer value (bool, char, short, int, long)
 *
 *  @param[in] id

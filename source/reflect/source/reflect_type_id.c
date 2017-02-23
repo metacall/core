@@ -13,6 +13,11 @@ int type_id_boolean(type_id id)
 	return !(id == TYPE_BOOL);
 }
 
+int type_id_char(type_id id)
+{
+	return !(id == TYPE_CHAR);
+}
+
 int type_id_integer(type_id id)
 {
 	return !(id == TYPE_BOOL || id == TYPE_CHAR || id == TYPE_SHORT ||
@@ -26,12 +31,12 @@ int type_id_decimal(type_id id)
 
 int type_id_pointer(type_id id)
 {
-	return !(id == TYPE_STRING);
+	return !(id == TYPE_PTR);
 }
 
 int type_id_string(type_id id)
 {
-	return !(id == TYPE_PTR);
+	return !(id == TYPE_STRING);
 }
 
 int type_id_invalid(type_id id)
