@@ -10,9 +10,16 @@
 # CORECLR_LIBRARIES - List of CoreCLR libraries
 # CORECLR_CGINFO - List of CoreCLR libraries
 
+
+
 # Prevent vervosity if already included
 if(CORECLR_FOUND)
 	set(CORECLR_FIND_QUIETLY TRUE)
+endif()
+
+if(UNIX)
+	set(CORECLR_FOUND 1)
+	return()
 endif()
 
 # Include package manager
