@@ -17,9 +17,9 @@ extern "C" {
 
 %ignore metacall_null_args;
 
-%ignore metacallv
+%ignore metacallv;
 
-%ignore metacallvf
+%ignore metacallvf;
 
 %ignore metacall_register; /* TODO */
 
