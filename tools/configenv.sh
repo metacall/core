@@ -176,13 +176,12 @@ sub_install(){
 	if [ $INSTALL_V8REPO = 1 ]; then
 		sub_v8repo
 	fi
-	if [ $INSTALL_METACALL = 1 ]; then
-		sub_metacall
-	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
 	fi
-
+	if [ $INSTALL_METACALL = 1 ]; then
+		sub_metacall
+	fi
 }
 
 sub_config(){
