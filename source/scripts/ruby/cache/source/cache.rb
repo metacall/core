@@ -29,7 +29,8 @@ def cache_set(key: String, value: String)
 	puts 'ruby: set value'
 
 	@@dic[key] = value
-
+	
+	nil
 end
 
 def cache_get(key: String)
