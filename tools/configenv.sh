@@ -229,13 +229,13 @@ sub_config(){
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO51=1
 		fi
-		if [ "$var" = 'metacall' ]; then
-		    echo "metacall selected"
-			INSTALL_METACALL=1
-		fi
 		if [ "$var" = 'swig' ]; then
 		    echo "swig selected"
 			INSTALL_SWIG=1
+		fi
+		if [ "$var" = 'metacall' ]; then
+		    echo "metacall selected"
+			INSTALL_METACALL=1
 		fi
 	done
 }
