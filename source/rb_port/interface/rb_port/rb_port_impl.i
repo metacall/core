@@ -17,7 +17,13 @@ extern "C" {
 
 %ignore metacall_null_args;
 
+%ignore metacallv
+
+%ignore metacallvf
+
 %ignore metacall_register; /* TODO */
+
+%ignore metacall_load_from_package; /* TODO */
 
 /* -- Type Maps -- */
 

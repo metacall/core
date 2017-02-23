@@ -17,7 +17,13 @@ extern "C" {
 
 %ignore metacall_null_args;
 
+%ignore metacallv;
+
+%ignore metacallvf;
+
 %ignore metacall_register; /* TODO */
+
+%ignore metacall_load_from_package; /* TODO */
 
 /* -- Type Maps -- */
 
@@ -158,9 +164,11 @@ extern "C" {
 	size_t args_size, args_count;
 
 	/* Format string */
+	/*
 	String::Utf8Value str_name($input);
 
 	$1 = *str_name;
+	*/
 
 	/* Variable length arguments */
 	args_size = args.Length();
@@ -271,6 +279,13 @@ extern "C" {
 	int ret = metacall_load_from_memory(tag, (const char *)buffer, size);
 
 	$result = Integer::New(args.GetIsolate(), (int32_t)ret);
+
+	if (alloc1 == SWIG_NEWOBJ)
+	{
+		delete[] buf1;
+	}
+
+	SWIGV8_RETURN($result);
 }
 
 /**
@@ -298,6 +313,13 @@ extern "C" {
 	free(paths);
 
 	$result = Integer::New(args.GetIsolate(), (int32_t)ret);
+
+	if (alloc1 == SWIG_NEWOBJ)
+	{
+		delete[] buf1;
+	}
+
+	SWIGV8_RETURN($result);
 }
 
 /**
@@ -315,10 +337,16 @@ extern "C" {
 	void * ret;
 
 	args_size = args.Length() - 1;
+
 	vargs = (void **) arg2;
 
+	/* Format string */
+	String::Utf8Value str_name(args[0]);
+
+	/* TODO: Check if args[0] is an string */
+
 	/* Execute call */
-	ret = metacallv(arg1, vargs);
+	ret = metacallv(*str_name, vargs);
 
 	/* Clear args */
 	for (args_count = 0; args_count < args_size; ++args_count)
