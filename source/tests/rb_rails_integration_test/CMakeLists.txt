@@ -150,6 +150,7 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}
 )
 
 #
