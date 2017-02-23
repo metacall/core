@@ -483,10 +483,20 @@ void AssertEq(const FunctionCallbackInfo<Value>& args)
 		String::Utf8Value left(args[0]);
 		String::Utf8Value right(args[1]);
 
-		printf("Assertion failed (%s != %s)\n", ToCString(left), ToCString(right));
-	}
+		std::string assert_msg("Assertion Equal failed (");
 
-	assert(result);
+		assert_msg += ToCString(left);
+
+		assert_msg += " != ";
+
+		assert_msg += ToCString(right);
+
+		assert_msg += ")";
+
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), assert_msg.c_str(),
+			NewStringType::kNormal).ToLocalChecked());
+	}
 
 	args.GetReturnValue().Set(result);
 }
@@ -500,10 +510,20 @@ void AssertNe(const FunctionCallbackInfo<Value>& args)
 		String::Utf8Value left(args[0]);
 		String::Utf8Value right(args[1]);
 
-		printf("Assertion failed (%s != %s)\n", ToCString(left), ToCString(right));
-	}
+		std::string assert_msg("Assertion Not Equal failed (");
 
-	assert(result);
+		assert_msg += ToCString(left);
+
+		assert_msg += " == ";
+
+		assert_msg += ToCString(right);
+
+		assert_msg += ")";
+
+		args.GetIsolate()->ThrowException(
+			String::NewFromUtf8(args.GetIsolate(), assert_msg.c_str(),
+			NewStringType::kNormal).ToLocalChecked());
+	}
 
 	args.GetReturnValue().Set(result);
 }
@@ -716,48 +736,66 @@ bool ExecuteString(Isolate* isolate, Local<String> source,
 void ReportException(Isolate* isolate, TryCatch* try_catch)
 {
 	HandleScope handle_scope(isolate);
+
 	String::Utf8Value exception(try_catch->Exception());
+
 	const char * exception_string = ToCString(exception);
+
 	Local<Message> message = try_catch->Message();
+
 	if (message.IsEmpty())
 	{
 		// V8 didn't provide any extra information about this error; just
 		// print the exception.
 		fprintf(stderr, "%s\n", exception_string);
 	}
-	else
+
+	// Print (filename):(line number): (message).
+	String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
+
+	Local<Context> context(isolate->GetCurrentContext());
+
+	const char * filename_string = ToCString(filename);
+
+	int linenum = message->GetLineNumber(context).FromJust();
+
+	fprintf(stderr, "%s:%i: %s\n", filename_string, linenum, exception_string);
+
+	// Print line of source code.
+	String::Utf8Value sourceline(
+		message->GetSourceLine(context).ToLocalChecked());
+
+	const char * sourceline_string = ToCString(sourceline);
+
+	fprintf(stderr, "%s\n", sourceline_string);
+
+	// Print wavy underline (GetUnderline is deprecated).
+	int start = message->GetStartColumn(context).FromJust();
+
+	for (int i = 0; i < start; i++)
 	{
-		// Print (filename):(line number): (message).
-		String::Utf8Value filename(message->GetScriptOrigin().ResourceName());
-		Local<Context> context(isolate->GetCurrentContext());
-		const char * filename_string = ToCString(filename);
-		int linenum = message->GetLineNumber(context).FromJust();
-		fprintf(stderr, "%s:%i: %s\n", filename_string, linenum, exception_string);
-		// Print line of source code.
-		String::Utf8Value sourceline(
-			message->GetSourceLine(context).ToLocalChecked());
-		const char * sourceline_string = ToCString(sourceline);
-		fprintf(stderr, "%s\n", sourceline_string);
-		// Print wavy underline (GetUnderline is deprecated).
-		int start = message->GetStartColumn(context).FromJust();
-		for (int i = 0; i < start; i++)
-		{
-			fprintf(stderr, " ");
-		}
-		int end = message->GetEndColumn(context).FromJust();
-		for (int i = start; i < end; i++)
-		{
-			fprintf(stderr, "^");
-		}
-		fprintf(stderr, "\n");
-		Local<Value> stack_trace_string;
-		if (try_catch->StackTrace(context).ToLocal(&stack_trace_string) &&
-			stack_trace_string->IsString() &&
-			Local<String>::Cast(stack_trace_string)->Length() > 0)
-		{
-			String::Utf8Value stack_trace(stack_trace_string);
-			const char * stack_trace_string = ToCString(stack_trace);
-			fprintf(stderr, "%s\n", stack_trace_string);
-		}
+		fprintf(stderr, " ");
+	}
+
+	int end = message->GetEndColumn(context).FromJust();
+
+	for (int i = start; i < end; i++)
+	{
+		fprintf(stderr, "^");
+	}
+
+	fprintf(stderr, "\n");
+
+	Local<Value> stack_trace_string;
+
+	if (try_catch->StackTrace(context).ToLocal(&stack_trace_string) &&
+		stack_trace_string->IsString() &&
+		Local<String>::Cast(stack_trace_string)->Length() > 0)
+	{
+		String::Utf8Value stack_trace(stack_trace_string);
+
+		const char * stack_trace_string = ToCString(stack_trace);
+
+		fprintf(stderr, "%s\n", stack_trace_string);
 	}
 }
