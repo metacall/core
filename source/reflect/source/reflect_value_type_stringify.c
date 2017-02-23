@@ -63,7 +63,7 @@ static void value_stringify_ptr(value v, char * dest, size_t size, const char * 
 
 /* -- Methods -- */
 
-static const char * value_stringify_format(type_id id)
+const char * value_stringify_format(type_id id)
 {
 	static const char * value_format[TYPE_SIZE] =
 	{
@@ -87,7 +87,7 @@ static const char * value_stringify_format(type_id id)
 	return value_format[id];
 }
 
-static value_stringify_impl_ptr value_stringify_impl(type_id id)
+value_stringify_impl_ptr value_stringify_impl(type_id id)
 {
 	static value_stringify_impl_ptr stringify_ptr[TYPE_SIZE] =
 	{
@@ -105,7 +105,7 @@ static value_stringify_impl_ptr value_stringify_impl(type_id id)
 	return stringify_ptr[id];
 }
 
-static void value_stringify_bool(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_bool(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	static const char value_boolean_str[] = "false\0true";
 
@@ -119,42 +119,42 @@ static void value_stringify_bool(value v, char * dest, size_t size, const char *
 	*length = snprintf(dest, size, format, (const char *)(&value_boolean_str[offset]));
 }
 
-static void value_stringify_char(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_char(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_char(v));
 }
 
-static void value_stringify_short(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_short(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_short(v));
 }
 
-static void value_stringify_int(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_int(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_int(v));
 }
 
-static void value_stringify_long(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_long(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_long(v));
 }
 
-static void value_stringify_float(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_float(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_float(v));
 }
 
-static void value_stringify_double(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_double(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_double(v));
 }
 
-static void value_stringify_string(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_string(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_string(v));
 }
 
-static void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length)
+void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_ptr(v));
 }
@@ -168,4 +168,44 @@ void value_stringify(value v, char * dest, size_t size, size_t * length)
 	value_stringify_impl_ptr stringify_ptr = value_stringify_impl(id);
 
 	stringify_ptr(v, dest, size, format, length);
+}
+
+value value_type_stringify(value v)
+{
+	type_id id = value_type_id(v);
+
+	const char * format = value_stringify_format(id);
+
+	value_stringify_impl_ptr stringify_ptr = value_stringify_impl(id);
+
+	size_t length, size;
+
+	value result;
+
+	stringify_ptr(v, NULL, 0, format, &length);
+
+	if (length == 0)
+	{
+		return NULL;
+	}
+
+	size = length + 1;
+
+	result = value_type_create(NULL, size, TYPE_STRING);
+
+	if (result == NULL)
+	{
+		return NULL;
+	}
+
+	stringify_ptr(v, value_data(result), size, format, &length);
+
+	if (length + 1 != size)
+	{
+		value_destroy(result);
+	}
+
+	value_destroy(v);
+
+	return result;
 }

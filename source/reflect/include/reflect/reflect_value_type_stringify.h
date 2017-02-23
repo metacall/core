@@ -39,6 +39,20 @@ extern "C" {
 */
 REFLECT_API void value_stringify(value v, char * dest, size_t size, size_t * length);
 
+/**
+*  @brief
+*    Convert to string value the value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Reference to the new string value (and destroy
+*    old value @v from memory) if success, null (and
+*    destroy is not performed) otherwise
+*/
+REFLECT_API value value_type_stringify(value v);
+
 #ifdef __cplusplus
 }
 #endif
