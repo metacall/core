@@ -91,7 +91,7 @@ sub_v8repo(){
 		sudo sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main\" > /etc/apt/sources.list.d/libv851.list"
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		sudo dpkg -i libicu55_55.1-7_amd64.deb
-		sudo apt-get updatesudo apt-get -y --allow-unauthenticated
+		sudo apt-get update
 		sudo apt-get -y --allow-unauthenticated install libv8-5.1-dev		
 	fi
 #v85.4
