@@ -87,19 +87,19 @@ sub_v8repo(){
 	sudo apt-get -y install software-properties-common python-software-properties
 #v85.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
-		sudo echo "deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main" > /etc/apt/sources.list.d/libv851.list
+		sudo sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main\" > /etc/apt/sources.list.d/libv851.list"
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		sudo dpkg -i libicu55_55.1-7_amd64.deb
-		sudo apt-get update
-		sudo apt-get -y install libv8-5.1-dev		
+		sudo apt-get updatesudo apt-get -y --allow-unauthenticated
+		sudo apt-get -y --allow-unauthenticated install libv8-5.1-dev		
 	fi
 #v85.4
 	if [ $INSTALL_V8REPO54 = 1 ]; then
-		sudo echo "deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main" > /etc/apt/sources.list.d/libv854.list
+		sudo sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main\" > /etc/apt/sources.list.d/libv854.list"
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		sudo dpkg -i libicu55_55.1-7_amd64.deb
 		sudo apt-get update
-		sudo apt-get -y install libv8-5.4-dev		
+		sudo apt-get -y --allow-unauthenticated install libv8-5.4-dev		
 	fi
 #v85.8
 	if [ $INSTALL_V8REPO58 = 1 ]; then	
@@ -178,6 +178,10 @@ sub_install(){
 	if [ $INSTALL_METACALL = 1 ]; then
 		sub_metacall
 	fi
+	if [ $INSTALL_SWIG = 1 ]; then
+		sub_swig
+	fi
+
 }
 
 sub_config(){
@@ -227,6 +231,10 @@ sub_config(){
 		if [ "$var" = 'metacall' ]; then
 		    echo "metacall selected"
 			INSTALL_METACALL=1
+		fi
+		if [ "$var" = 'swig' ]; then
+		    echo "swig selected"
+			INSTALL_SWIG=1
 		fi
 	done
 }
