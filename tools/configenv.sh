@@ -8,6 +8,11 @@ INSTALL_RAPIDJSON=0
 INSTALL_NETCORE=0
 INSTALL_V8=0
 INSTALL_V8REPO=0
+INSTALL_V8REPO58=0
+INSTALL_V8REPO57=0
+INSTALL_V8REPO54=0
+INSTALL_V8REPO51=0
+INSTALL_SWIG=0
 INSTALL_METACALL=0
 SHOW_HELP=0 
 PROGNAME=$(basename $0)
@@ -17,6 +22,21 @@ sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt for C build"
 	sudo apt-get -y install build-essential git cmake 
+}
+
+#swig
+sub_swig(){
+	echo "configure swig"
+	cd $ROOT_DIR
+	sub_python
+	sub_ruby
+	sudo apt-get install libpcre3-dev
+	wget "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz?r=http%3A%2F%2Fwww.swig.org%2Fdownload.html&ts=1487810080&use_mirror=netix" -O swig.tar.gz
+	tar -xf swig.tar.gz -C ./swig --strip-components=1
+	cd swig
+	./configure
+	make
+	sudo make install
 }
 
 #python
@@ -65,9 +85,34 @@ sub_v8repo(){
 	cd $ROOT_DIR
 	sudo apt-get -y install add-apt-key
 	sudo apt-get -y install software-properties-common python-software-properties
-	sudo add-apt-repository -y ppa:pinepain/libv8-5.8
-	sudo apt-get update
-	sudo apt-get -y install libv8-5.8-dev 
+#v85.1
+	if [ $INSTALL_V8REPO51 = 1 ]; then
+		sudo echo "deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main" > /etc/apt/sources.list.d/libv851.list
+		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
+		sudo dpkg -i libicu55_55.1-7_amd64.deb
+		sudo apt-get update
+		sudo apt-get -y install libv8-5.1-dev		
+	fi
+#v85.4
+	if [ $INSTALL_V8REPO54 = 1 ]; then
+		sudo echo "deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main" > /etc/apt/sources.list.d/libv854.list
+		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
+		sudo dpkg -i libicu55_55.1-7_amd64.deb
+		sudo apt-get update
+		sudo apt-get -y install libv8-5.4-dev		
+	fi
+#v85.8
+	if [ $INSTALL_V8REPO58 = 1 ]; then	
+		sudo add-apt-repository -y ppa:pinepain/libv8-5.8
+		sudo apt-get update
+		sudo apt-get -y install libv8-5.8-dev
+	fi
+#v85.7
+	if [ $INSTALL_V8REPO57 = 1 ]; then
+		sudo add-apt-repository -y ppa:pinepain/libv8-5.7
+		sudo apt-get update
+		sudo apt-get -y install libv8-5.7-dev 
+	fi
 }
 
 #v8
@@ -93,14 +138,14 @@ sub_v8(){
 sub_metacall(){
 	echo "configure metacall"
 	cd $ROOT_DIR
-	sudo apt-get -y install swig3.0
 	git clone --recursive git@bitbucket.org:parrastudios/metacall.git
 	cd metacall
 	git checkout develop
+	git submodule update --init
 	mkdir build
 	cd build
 
-	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_PORTS=off -DOPTION_BUILD_PORTS_PY=off -DOPTION_BUILD_PORTS_JS=off -DOPTION_BUILD_PORTS_RB=off -DOPTION_BUILD_PLUGINS_PY=on -DOPTION_BUILD_PLUGINS_RB=on -DOPTION_BUILD_PLUGINS_CS=on -DCORECLR_ROOT_REPOSITORY_PATH=$ROOT_DIR/coreclr/ -DOPTION_BUILD_PLUGINS_CS_IMPL=on -DOPTION_BUILD_PLUGINS_JS=on -DV8_HOME=/opt/libv8-5.8/ -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.0/
+	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_PORTS=off -DOPTION_BUILD_PORTS_PY=off -DOPTION_BUILD_PORTS_JS=off -DOPTION_BUILD_PORTS_RB=off -DOPTION_BUILD_PLUGINS_PY=on -DOPTION_BUILD_PLUGINS_RB=on -DOPTION_BUILD_PLUGINS_CS=on -DCORECLR_ROOT_REPOSITORY_PATH=$ROOT_DIR/coreclr/ -DOPTION_BUILD_PLUGINS_CS_IMPL=on -DOPTION_BUILD_PLUGINS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.0/
 	make
 	make test && echo "test ok!"
 
@@ -158,13 +203,26 @@ sub_config(){
 		    echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
 		fi
-		if [ "$var" = 'v8rep' ]; then
+
+		if [ "$var" = 'v8rep54' ]; then
 		    echo "v8 selected"
 			INSTALL_V8REPO=1
+			INSTALL_V8REPO54=1
 		fi
-		if [ "$var" = 'v8' ]; then
+		if [ "$var" = 'v8rep57' ]; then
 		    echo "v8 selected"
-			INSTALL_V8=1
+			INSTALL_V8REPO=1
+			INSTALL_V8REPO57=1
+		fi
+		if [ "$var" = 'v8rep58' ]; then
+		    echo "v8 selected"
+			INSTALL_V8REPO=1
+			INSTALL_V8REPO58=1
+		fi
+		if [ "$var" = 'v8rep51' ]; then
+		    echo "v8 selected"
+			INSTALL_V8REPO=1
+			INSTALL_V8REPO51=1
 		fi
 		if [ "$var" = 'metacall' ]; then
 		    echo "metacall selected"
@@ -181,7 +239,11 @@ sub_help(){
     echo "	netcore"
     echo "	rapidjson"
     echo "	v8"
-	echo "	v8rep"
+	echo "	v8rep51"
+	echo "	v8rep54"
+	echo "	v8rep57"
+	echo "	v8rep58"
+	echo "	swig"
     echo "	metacall"
 	echo ""
 }
