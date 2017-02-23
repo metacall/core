@@ -41,7 +41,7 @@ TEST_F(rb_loader_parser_integration_test, DefaultConstructor)
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("cache_set", "meta", "call"));
 
-		ret = metacall("cache_has_key");
+		ret = metacall("cache_has_key","meta");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
