@@ -27,7 +27,7 @@ TEST_F(rb_rails_integration_test, DefaultConstructor)
 	{
 		const char * rb_scripts[] =
 		{
-			"blog.rb"
+			"blog_test.rb"
 		};
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));

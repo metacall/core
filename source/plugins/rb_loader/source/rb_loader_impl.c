@@ -31,6 +31,7 @@
 #include <ruby.h>
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
+#define LOADER_IMPL_RB_PROTECT_ARGS_SIZE 0x10
 
 typedef struct loader_impl_rb_module_type
 {
@@ -54,6 +55,15 @@ typedef struct loader_impl_rb_function_type
 	loader_impl impl;
 
 } * loader_impl_rb_function;
+
+typedef struct loader_impl_rb_protect_type
+{
+	VALUE obj;
+	ID method_id;
+	size_t args_size;
+	VALUE args[LOADER_IMPL_RB_PROTECT_ARGS_SIZE];
+
+} * loader_impl_rb_protect;
 
 int function_rb_interface_create(function func, function_impl impl)
 {
@@ -386,6 +396,58 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
+VALUE rb_loader_impl_module_eval_callback(VALUE rdata)
+{
+	/* TODO: Too tricky */
+	loader_impl_rb_protect data = (loader_impl_rb_protect)rdata;
+
+	return rb_funcall2(data->obj, data->method_id, data->args_size, data->args);
+}
+
+VALUE rb_loader_impl_module_eval(VALUE module, VALUE module_data)
+{
+	int error = 0;
+
+	struct loader_impl_rb_protect_type data;
+
+	VALUE result;
+
+	data.obj = module;
+	data.method_id = rb_intern("module_eval");
+	data.args_size = 1;
+	data.args[0] = module_data;
+
+	result = rb_protect(rb_loader_impl_module_eval_callback, (VALUE)(&data), &error);
+
+	if (error != 0)
+	{
+		VALUE exception;
+
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby module evaluation failed (status: %d)", error);
+
+		exception = rb_gv_get("$!");
+
+		if (RTEST(exception))
+		{
+			VALUE inspect, backtrace;
+
+			inspect = rb_inspect(exception);
+
+			rb_io_puts(1, &inspect, rb_stderr);
+
+			backtrace = rb_funcall(exception, rb_intern("backtrace"), 0);
+
+			rb_io_puts(1, &backtrace, rb_stderr);
+
+			rb_raise(rb_eLoadError, "Invalid module evaluation");
+
+			return Qnil;
+		}
+	}
+
+	return result;
+}
+
 loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
@@ -400,7 +462,7 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 
 		if (module_data != Qnil)
 		{
-			VALUE result = rb_funcall(module, rb_intern("module_eval"), 1, module_data);
+			VALUE result = rb_loader_impl_module_eval(module, module_data);
 
 			if (result != Qnil)
 			{
@@ -511,7 +573,7 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 
 		if (module_data != Qnil)
 		{
-			VALUE result = rb_funcall(module, rb_intern("module_eval"), 1, module_data);
+			VALUE result = rb_loader_impl_module_eval(module, module_data);
 
 			if (result != Qnil)
 			{

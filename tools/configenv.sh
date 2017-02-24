@@ -14,14 +14,14 @@ INSTALL_V8REPO54=0
 INSTALL_V8REPO51=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
-SHOW_HELP=0 
+SHOW_HELP=0
 PROGNAME=$(basename $0)
 
 #initial apt
 sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt for C build"
-	sudo apt-get -y install build-essential git cmake 
+	sudo apt-get -y install build-essential git cmake
 }
 
 #swig
@@ -32,7 +32,7 @@ sub_swig(){
 	sub_ruby
 	sudo apt-get -y install libpcre3-dev
 	wget "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz?r=http%3A%2F%2Fwww.swig.org%2Fdownload.html&ts=1487810080&use_mirror=netix" -O swig.tar.gz
-	mkdir swig	
+	mkdir swig
 	tar -xf swig.tar.gz -C ./swig --strip-components=1
 	cd swig
 	./configure
@@ -51,7 +51,12 @@ sub_python(){
 #ruby
 sub_ruby(){
 	echo "configure ruby"
+	sudo apt-get update
+	sudo apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
 	sudo apt-get install -y ruby2.3-dev
+	curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
+	sudo apt-get install -y nodejs
+	sudo gem install rails
 }
 
 #rapidjson
@@ -92,7 +97,7 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		sudo dpkg -i libicu55_55.1-7_amd64.deb
 		sudo apt-get update
-		sudo apt-get -y --allow-unauthenticated install libv8-5.1-dev		
+		sudo apt-get -y --allow-unauthenticated install libv8-5.1-dev
 	fi
 #v85.4
 	if [ $INSTALL_V8REPO54 = 1 ]; then
@@ -100,10 +105,10 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		sudo dpkg -i libicu55_55.1-7_amd64.deb
 		sudo apt-get update
-		sudo apt-get -y --allow-unauthenticated install libv8-5.4-dev		
+		sudo apt-get -y --allow-unauthenticated install libv8-5.4-dev
 	fi
 #v85.8
-	if [ $INSTALL_V8REPO58 = 1 ]; then	
+	if [ $INSTALL_V8REPO58 = 1 ]; then
 		sudo add-apt-repository -y ppa:pinepain/libv8-5.8
 		sudo apt-get update
 		sudo apt-get -y install libv8-5.8-dev
@@ -112,7 +117,7 @@ sub_v8repo(){
 	if [ $INSTALL_V8REPO57 = 1 ]; then
 		sudo add-apt-repository -y ppa:pinepain/libv8-5.7
 		sudo apt-get update
-		sudo apt-get -y install libv8-5.7-dev 
+		sudo apt-get -y install libv8-5.7-dev
 	fi
 }
 
@@ -132,7 +137,7 @@ sub_v8(){
 	git checkout 5.1-lkgr
 	gclient sync
 
-	patch build/all.gyp $ROOT_DIR/nobuildtest.patch 
+	patch build/all.gyp $ROOT_DIR/nobuildtest.patch
 	GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make library=shared native
 }
 
