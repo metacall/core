@@ -42,35 +42,43 @@ static int metacall_initialize_flag = 1;
 
 int metacall_initialize()
 {
+	loader l = loader_singleton();
+
 	if (metacall_initialize_flag == 0)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized <%p>", (void *)l);
+
 		return 0;
+	}
+	else
+	{
+		/* TODO: Initialize by config or default */
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+			if (log_configure("metacall",
+				log_policy_format_text(),
+				log_policy_schedule_sync(),
+				log_policy_storage_sequential(),
+				log_policy_stream_stdio(stdout)) != 0)
+			{
+				return 1;
+			}
+		#endif
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall <%p>", (void *)l);
 	}
 
 	metacall_null_args[0] = NULL;
-
-	/* TODO: Initialize by config or default */
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		if (log_configure("metacall",
-			log_policy_format_text(),
-			log_policy_schedule_sync(),
-			log_policy_storage_sequential(),
-			log_policy_stream_stdio(stdout)) != 0)
-		{
-			return 1;
-		}
-	#endif
 
 	if (configuration_initialize("rapid_json", NULL) != 0)
 	{
 		return 1;
 	}
 
-	metacall_initialize_flag = 0;
-
 	#ifndef LOADER_LAZY
 		loader_initialize();
 	#endif
+
+	metacall_initialize_flag = 0;
 
 	return 0;
 }

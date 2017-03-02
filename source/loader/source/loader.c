@@ -35,15 +35,15 @@
 
 /* -- Forward Declarations -- */
 
-struct loader_type;
-
 struct loader_get_iterator_args_type;
+
+struct loader_host_invoke_type;
 
 /* -- Type Definitions -- */
 
-typedef struct loader_type * loader;
-
 typedef struct loader_get_iterator_args_type * loader_get_iterator_args;
+
+typedef struct loader_host_invoke_type * loader_host_invoke;
 
 /* -- Member Data -- */
 
@@ -61,9 +61,12 @@ struct loader_get_iterator_args_type
 
 };
 
-/* -- Private Methods -- */
+struct loader_host_invoke_type
+{
+	loader_register_invoke invoke;
+};
 
-static loader loader_singleton(void);
+/* -- Private Methods -- */
 
 static loader_impl loader_create_impl(const loader_naming_tag extension);
 
@@ -79,7 +82,7 @@ static void loader_register_destroy_proxy(function func, function_impl func_impl
 
 /* -- Methods -- */
 
-static loader loader_singleton()
+loader loader_singleton()
 {
 	static struct loader_type loader_instance =
 	{
@@ -134,7 +137,7 @@ void loader_initialize()
 	}
 }
 
-static loader_impl loader_create_impl(const loader_naming_tag tag)
+loader_impl loader_create_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
@@ -188,11 +191,11 @@ int loader_load_path(const loader_naming_path path)
 {
 	loader l = loader_singleton();
 
-#ifdef LOADER_LAZY
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-	loader_initialize();
-#endif
+		loader_initialize();
+	#endif
 
 	if (l->impl_map != NULL)
 	{
@@ -208,11 +211,11 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 {
 	loader l = loader_singleton();
 
-#ifdef LOADER_LAZY
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-	loader_initialize();
-#endif
+		loader_initialize();
+	#endif
 
 	if (l->impl_map != NULL && size > 0)
 	{
@@ -254,11 +257,11 @@ int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, si
 {
 	loader l = loader_singleton();
 
-#ifdef LOADER_LAZY
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-	loader_initialize();
-#endif
+		loader_initialize();
+	#endif
 
 	if (l->impl_map != NULL)
 	{
@@ -279,11 +282,11 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 {
 	loader l = loader_singleton();
 
-#ifdef LOADER_LAZY
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
 
-	loader_initialize();
-#endif
+		loader_initialize();
+	#endif
 
 	if (l->impl_map != NULL)
 	{
@@ -300,7 +303,7 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 	return 1;
 }
 
-static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && val != NULL && args != NULL)
 	{
@@ -351,7 +354,7 @@ loader_data loader_get(const char * name)
 	return NULL;
 }
 
-static int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
@@ -375,21 +378,21 @@ int loader_unload()
 
 		if (hash_map_clear(l->impl_map) != 0)
 		{
-#ifdef LOADER_LAZY
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
+			#ifdef LOADER_LAZY
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
 
-			loader_destroy();
-#endif
+				loader_destroy();
+			#endif
 
 			return 1;
 		}
 	}
 
-#ifdef LOADER_LAZY
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
 
-	loader_destroy();
-#endif
+		loader_destroy();
+	#endif
 
 	return 0;
 }
@@ -422,11 +425,11 @@ void loader_destroy()
 
 value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args)
 {
-	host_invoke * hinvoke = (host_invoke*)func_impl;
+	loader_host_invoke host_invoke = (loader_host_invoke)func_impl;
 
 	(void)func;
 
-	return hinvoke->invoke(args);
+	return host_invoke->invoke(args);
 }
 
 void loader_register_destroy_proxy(function func, function_impl func_impl)
@@ -462,11 +465,11 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 
 	scope sp = context_scope(ctx);
 
-	host_invoke * hinvoke = malloc(sizeof(host_invoke));
+	loader_host_invoke host_invoke = malloc(sizeof(struct loader_host_invoke_type));
 
-	hinvoke->invoke = invoke;
+	host_invoke->invoke = invoke;
 
-	f = function_create(name, arg_size, hinvoke, &get_interface_proxy);
+	f = function_create(name, arg_size, host_invoke, &get_interface_proxy);
 
 	if (f != NULL)
 	{
@@ -476,7 +479,7 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 		{
 			size_t iterator;
 
-			for (iterator = 0; iterator < arg_size; iterator++)
+			for (iterator = 0; iterator < arg_size; ++iterator)
 			{
 				signature_set(s, iterator, "holder", type_create(args_type_id[iterator], "holder", NULL, NULL));
 			}
@@ -498,17 +501,17 @@ const char * loader_print_info()
 		"Loader Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-#ifdef LOADER_STATIC_DEFINE
-		"Compiled as static library type\n"
-#else
-		"Compiled as shared library type\n"
-#endif
+		#ifdef LOADER_STATIC_DEFINE
+			"Compiled as static library type\n"
+		#else
+			"Compiled as shared library type\n"
+		#endif
 
-#ifdef LOADER_LAZY
-		"Compiled with lazy initialization and destruction"
-#else
-		"Compiled with explicit initialization and destruction"
-#endif
+		#ifdef LOADER_LAZY
+			"Compiled with lazy initialization and destruction"
+		#else
+			"Compiled with explicit initialization and destruction"
+		#endif
 
 		"\n";
 

@@ -9,6 +9,8 @@
 #ifndef LOADER_H
 #define LOADER_H 1
 
+/* -- Headers -- */
+
 #include <loader/loader_api.h>
 
 #include <loader/loader_naming.h>
@@ -19,19 +21,31 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
 #include <stdlib.h>
+
+/* -- Definitions -- */
 
 #define LOADER_LOAD_FROM_FILES_SIZE 0x20
 
 #define LOADER_HOST_PROXY_NAME		"__metacall_host__"
 
+/* -- Forward Declarations -- */
+
+struct loader_type;
+
+/* -- Type Definitions -- */
+
 typedef value (*loader_register_invoke)(void * []);
 
 typedef void * loader_data;
 
-typedef struct{
-	loader_register_invoke invoke;
-} host_invoke;
+typedef struct loader_type * loader;
+
+/* -- Methods  -- */
+
+LOADER_API loader loader_singleton(void);
 
 LOADER_API void loader_initialize(void);
 
