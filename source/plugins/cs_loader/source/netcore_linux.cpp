@@ -38,7 +38,7 @@ bool netcore_linux::ConfigAssemblyName() {
 	string::size_type pos = string(this->dotnet_loader_assembly_path).find_last_of( "\\/" );
     string  dotnet_loader_assembly_directory = string(this->dotnet_loader_assembly_path).substr( 0, pos);
 	
-	strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
+	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
 	
 	cout << "absoluteAppPath: " << this->appPath << endl;
 
@@ -47,9 +47,24 @@ bool netcore_linux::ConfigAssemblyName() {
 		this->managedAssemblyFullName.append("/");
 		this->managedAssemblyFullName.append(this->loader_dll);
 	}else{
-		this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
+		if( this->dotnet_loader_assembly_path[0] == '/'){
+			this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
+			AddFilesFromDirectoryToTpaList(dotnet_loader_assembly_directory, tpaList);
+		}else{
+			this->managedAssemblyFullName.append(this->appPath);
+			this->managedAssemblyFullName.append("/");
+			
+			if(this->dotnet_loader_assembly_path[0] == '.'){
+				string simpleName;
+				simpleName.append(this->dotnet_loader_assembly_path+2);
+				this->managedAssemblyFullName.append(simpleName);
+				
+			}else{
+				this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
+			}
+		}
 	}
-
+	
 	cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << endl;
 
 	this->nativeDllSearchDirs.append(this->appPath);
@@ -57,7 +72,6 @@ bool netcore_linux::ConfigAssemblyName() {
 	this->nativeDllSearchDirs.append(this->runtimePath);
 
 	AddFilesFromDirectoryToTpaList(this->runtimePath, tpaList);
-
 	return true;
 }
 
