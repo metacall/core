@@ -1,0 +1,18 @@
+import sys
+
+sys.path.append('@PROJECT_METACALL_PORTS_DIRECTORY@')
+
+from @PROJECT_METACALL_PORTS_PY@ import metacall, metacall_function
+
+def callback_host(text):
+	print('Python callback_host: ' + text);
+
+	func = metacall_function('callback_host');
+
+	print('Python reference to host callback_host: ' + str(func));
+
+	result = metacall('callback_host', text);
+
+	print('Python result from host callback_host: ' + str(result));
+
+	return result;
