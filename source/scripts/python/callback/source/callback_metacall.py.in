@@ -16,3 +16,16 @@ def callback_host(text):
 	print('Python result from host callback_host: ' + str(result));
 
 	return result;
+
+def callback_ruby(left, right):
+	print('Python callback_ruby: ' + str(left) + ' * ' + str(right));
+
+	func = metacall_function('say_multiply');
+
+	print('Python reference to ruby say_multiply: ' + str(func));
+
+	result = metacall('say_multiply', left, right);
+
+	print('Python result from ruby say_multiply: ' + str(result));
+
+	return result;

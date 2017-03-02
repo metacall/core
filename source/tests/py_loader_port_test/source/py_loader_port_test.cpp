@@ -40,6 +40,46 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 		EXPECT_NE((void *) NULL, (void *) metacall_function("callback_host"));
 	}
 
+	/* Ruby */
+	#if defined(OPTION_BUILD_PLUGINS_RB)
+	{
+		const char * rb_scripts[] =
+		{
+			"hello.rb", "second.rb"
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+
+		ret = metacall("say_multiply", 5, 7);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 35);
+
+		metacall_value_destroy(ret);
+
+		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
+
+		ret = metacall("say_hello", "meta-programmer");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello meta-programmer!"));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("get_second", 5, 12);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 12);
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_PLUGINS_RB */
+
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
@@ -57,6 +97,14 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((int) 25, (int) metacall_value_to_int(ret));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("hello_ruby", 12, 4);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 48, (int) metacall_value_to_int(ret));
 
 		metacall_value_destroy(ret);
 	}
