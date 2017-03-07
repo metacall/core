@@ -1,0 +1,192 @@
+#
+# CMake Find NodeJS JavaScript Runtime by Parra Studios
+# Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+
+# Find NodeJS executable and include paths
+#
+# NODEJS_FOUND - True if NodeJS was found
+# NODEJS_INCLUDE_DIR - NodeJS headers path
+# NODEJS_VERSION - NodeJS version
+# NODEJS_VERSION_MAJOR - NodeJS major version
+# NODEJS_VERSION_MINOR - NodeJS minor version
+# NODEJS_VERSION_PATCH - NodeJS patch version
+# NODEJS_UV_VERSION - UV version of NodeJS
+# NODEJS_UV_VERSION_MAJOR - UV major version of NodeJS
+# NODEJS_UV_VERSION_MINOR - UV minor version of NodeJS
+# NODEJS_UV_VERSION_PATCH - UV patch version of NodeJS
+# NODEJS_V8_VERSION - V8 version of NodeJS
+# NODEJS_V8_VERSION_MAJOR - V8 major version of NodeJS
+# NODEJS_V8_VERSION_MINOR - V8 minor version of NodeJS
+# NODEJS_V8_VERSION_PATCH - V8 patch version of NodeJS
+# NODEJS_V8_VERSION_TWEAK - V8 patch version of NodeJS
+# NODEJS_V8_VERSION_HEX - V8 version of NodeJS in hexadecimal format
+# NODEJS_EXECUTABLE - NodeJS shell
+
+# Prevent vervosity if already included
+if(NODEJS_INCLUDE_DIR)
+	set(NODEJS_FIND_QUIETLY TRUE)
+endif()
+
+# Debug flag
+set(_NODEJS_CMAKE_DEBUG TRUE)
+
+# Include package manager
+include(FindPackageHandleStandardArgs)
+
+# NodeJS paths
+set(NODEJS_PATHS
+	${NODE_HOME}
+	${NODE_ROOT}
+	$ENV{ProgramFiles}/node
+	$ENV{SystemDrive}/node
+	$ENV{NODE_HOME}
+	$ENV{EXTERNLIBS}/node
+	${NODE_DIR}
+	$ENV{NODE_DIR}
+	~/Library/Frameworks
+	/Library/Frameworks
+	/usr/local
+	/usr
+	/sw # Fink
+	/opt/local # DarwinPorts
+	/opt/csw # Blastwave
+	/opt
+	/usr/freeware
+)
+
+# Find NodeJS include directories
+if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
+	set(NODEJS_V8_HEADERS v8.h v8-debug.h v8-profiler.h v8stdint.h v8-version.h)
+else()
+	set(NODEJS_V8_HEADERS v8.h v8stdint.h v8-version.h)
+endif()
+
+set(NODEJS_UV_HEADERS uv.h) # TODO: Add uv-(platform).h?
+
+find_path(NODEJS_UV_INCLUDE_DIR ${NODEJS_UV_HEADERS}
+	PATHS /usr/include/compat-libuv010
+	NO_DEFAULT_PATH
+)
+
+set(NODEJS_HEADERS
+	node.h
+	${NODEJS_V8_HEADERS}
+)
+
+set(NODEJS_INCLUDE_SUFFIXES
+	include include/node include/nodejs include/src include/deps/v8/include
+)
+
+if(NOT NODEJS_UV_INCLUDE_DIR)
+	set(NODEJS_HEADERS
+		${NODEJS_HEADERS}
+		${NODEJS_UV_HEADERS}
+	)
+
+	set(NODEJS_INCLUDE_SUFFIXES
+		${NODEJS_INCLUDE_SUFFIXES}
+		include/deps/uv/include
+	)
+endif()
+
+find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
+	PATHS ${NODEJS_INCLUDE_PATHS}
+	PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+	DOC "NodeJS JavaScript Runtime Headers"
+)
+
+if(NODEJS_INCLUDE_DIR AND NODEJS_UV_INCLUDE_DIR)
+	set(NODEJS_INCLUDE_DIR ${NODEJS_INCLUDE_DIR} ${NODEJS_UV_INCLUDE_DIR})
+endif()
+
+# Find NodeJS executable
+find_program(NODEJS_EXECUTABLE
+	NAMES node nodejs
+	HINTS ${NODEJS_PATHS}
+	PATH_SUFFIXES bin
+	DOC "NodeJS JavaScript Runtime Interpreter"
+)
+
+find_package_handle_standard_args(NODEJS DEFAULT_MSG NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR)
+
+if (NODEJS_FOUND)
+
+	# Detect NodeJS version
+	execute_process(COMMAND ${NODEJS_EXECUTABLE} --version
+		OUTPUT_VARIABLE NODEJS_VERSION_TAG
+		RESULT_VARIABLE NODEJS_VERSION_TAG_RESULT
+	)
+
+	if(NODEJS_VERSION_TAG_RESULT EQUAL 0)
+		string(REPLACE "v" "" NODEJS_VERSION_TAG "${NODEJS_VERSION_TAG}")
+		string(REPLACE "\n" "" NODEJS_VERSION_TAG "${NODEJS_VERSION_TAG}")
+		set(NODEJS_VERSION "${NODEJS_VERSION_TAG}")
+		string(REPLACE "." ";" NODEJS_VERSION_LIST "${NODEJS_VERSION}")
+		list(GET NODEJS_VERSION_LIST 0 NODEJS_VERSION_MAJOR)
+		list(GET NODEJS_VERSION_LIST 1 NODEJS_VERSION_MINOR)
+		list(GET NODEJS_VERSION_LIST 2 NODEJS_VERSION_PATCH)
+	endif()
+
+	# Detect UV version
+	execute_process(COMMAND ${NODEJS_EXECUTABLE} -e "console.log(process.versions.uv)"
+		OUTPUT_VARIABLE NODEJS_UV_VERSION_TAG
+		RESULT_VARIABLE NODEJS_UV_VERSION_TAG_RESULT
+	)
+
+	if(NODEJS_VERSION_TAG_RESULT EQUAL 0)
+		string(REPLACE "\n" "" NODEJS_UV_VERSION_TAG "${NODEJS_UV_VERSION_TAG}")
+		set(NODEJS_UV_VERSION "${NODEJS_UV_VERSION_TAG}")
+		string(REPLACE "." ";" NODEJS_UV_VERSION_LIST "${NODEJS_UV_VERSION}")
+		list(GET NODEJS_UV_VERSION_LIST 0 NODEJS_UV_VERSION_MAJOR)
+		list(GET NODEJS_UV_VERSION_LIST 1 NODEJS_UV_VERSION_MINOR)
+		list(GET NODEJS_UV_VERSION_LIST 2 NODEJS_UV_VERSION_PATCH)
+	endif()
+
+	# TODO: Implement V8 version by command?
+
+endif()
+
+# Detect NodeJS V8 version
+if(NODEJS_INCLUDE_DIR)
+	file(READ ${NODEJS_INCLUDE_DIR}/v8-version.h NODEJS_VERSION_FILE)
+
+	string(REGEX MATCH "#define V8_MAJOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MAJOR_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_MAJOR ${NODEJS_V8_VERSION_MAJOR_DEF})
+
+	string(REGEX MATCH "#define V8_MINOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MINOR_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_MINOR ${NODEJS_V8_VERSION_MINOR_DEF})
+
+	string(REGEX MATCH "#define V8_BUILD_NUMBER ([0-9]+)" NODEJS_V8_VERSION_PATCH_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_PATCH ${NODEJS_V8_VERSION_PATCH_DEF})
+
+	string(REGEX MATCH "#define V8_PATCH_LEVEL ([0-9]+)" NODEJS_V8_VERSION_TWEAK_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_TWEAK ${NODEJS_V8_VERSION_TWEAK_DEF})
+
+	set(NODEJS_V8_VERSION "${NODEJS_V8_VERSION_MAJOR}.${NODEJS_V8_VERSION_MINOR}.${NODEJS_V8_VERSION_PATCH}.${NODEJS_V8_VERSION_TWEAK}")
+
+	set(NODEJS_V8_VERSION_HEX 0x0${NODEJS_V8_VERSION_MAJOR}${NODEJS_V8_VERSION_MINOR}${NODEJS_V8_VERSION_PATCH}${NODEJS_V8_VERSION_TWEAK})
+	string(LENGTH "${NODEJS_V8_VERSION_HEX}" NODEJS_V8_VERSION_HEX_LENGTH)
+
+	while(NODEJS_V8_VERSION_HEX_LENGTH LESS 8)
+
+		set(NODEJS_V8_VERSION_HEX "${NODEJS_V8_VERSION_HEX}0")
+		string(LENGTH "${NODEJS_V8_VERSION_HEX}" NODEJS_V8_VERSION_HEX_LENGTH)
+
+	endwhile()
+endif()
+
+mark_as_advanced(NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR)
+
+if(NODEJS_FOUND)
+	set(NODEJS_INCLUDE_DIRS ${NODEJS_INCLUDE_DIR})
+endif()
+
+if(_NODEJS_CMAKE_DEBUG)
+	message(STATUS "NODEJS_INCLUDE_DIR: ${NODEJS_INCLUDE_DIR}")
+	message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
+	message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
+	message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")
+	message(STATUS "NODEJS_V8_VERSION_HEX: ${NODEJS_V8_VERSION_HEX}")
+	message(STATUS "NODEJS_EXECUTABLE: ${NODEJS_EXECUTABLE}")
+endif()
