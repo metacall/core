@@ -1,6 +1,9 @@
 #!/bin/bash
+
 ROOT_DIR=$(pwd)
 
+RUN_AS_ROOT=0
+SUDO_CMD=sudo
 INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
@@ -17,49 +20,49 @@ INSTALL_METACALL=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
-#initial apt
+# Base packages
 sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt for C build"
-	sudo apt-get -y install build-essential git cmake
+	$SUDO_CMD apt-get -y install build-essential git cmake
 }
 
-#swig
+# Swig
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
 	sub_python
 	sub_ruby
-	sudo apt-get -y install libpcre3-dev
+	$SUDO_CMD apt-get -y install libpcre3-dev
 	wget "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz?r=http%3A%2F%2Fwww.swig.org%2Fdownload.html&ts=1487810080&use_mirror=netix" -O swig.tar.gz
 	mkdir swig
 	tar -xf swig.tar.gz -C ./swig --strip-components=1
 	cd swig
 	./configure
 	make
-	sudo make install
+	$SUDO_CMD make install
 }
 
-#python
+# Python
 sub_python(){
 	echo "configure pyton"
-	sudo apt-get install -y python2.7  python3.5-dev python python3-pip
-	sudo pip3 install django
-	sudo pip3 install request
+	$SUDO_CMD apt-get install -y python2.7  python3.5-dev python python3-pip
+	$SUDO_CMD pip3 install django
+	$SUDO_CMD pip3 install request
 }
 
-#ruby
+# Ruby
 sub_ruby(){
 	echo "configure ruby"
-	sudo apt-get update
-	sudo apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
-	sudo apt-get install -y ruby2.3-dev
-	curl -sL https://deb.nodesource.com/setup_4.x | sudo -E bash -
-	sudo apt-get install -y nodejs
-	sudo gem install rails
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
+	$SUDO_CMD apt-get install -y ruby2.3-dev
+	curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD -E bash -
+	$SUDO_CMD apt-get install -y nodejs
+	$SUDO_CMD gem install rails
 }
 
-#rapidjson
+# RapidJSON
 sub_rapidjson(){
 	echo "configure rapidjson"
 	cd $ROOT_DIR
@@ -70,63 +73,67 @@ sub_rapidjson(){
 	cd build
 	cmake ..
 	make
-	sudo make install
+	$SUDO_CMD make install
 }
 
-#netcore
+# NetCore
 sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
-	sudo apt-get -y install apt-transport-https
-	sudo sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ yakkety main" > /etc/apt/sources.list.d/dotnetdev.list'
-	sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
-	sudo apt-get update
+	$SUDO_CMD apt-get -y install apt-transport-https
+	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ yakkety main" > /etc/apt/sources.list.d/dotnetdev.list'
+	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
+	$SUDO_CMD apt-get update
 
-	sudo apt-get -y install dotnet-dev-1.0.0-preview2.1-003177
+	$SUDO_CMD apt-get -y install dotnet-dev-1.0.0-preview2.1-003177
 }
 
-#v8
+# V8 Repository
 sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
-	sudo apt-get -y install add-apt-key
-	sudo apt-get -y install software-properties-common python-software-properties
-#v85.1
+	$SUDO_CMD apt-get -y install add-apt-key
+	$SUDO_CMD apt-get -y install software-properties-common python-software-properties
+
+	# V8 5.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
-		sudo sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main\" > /etc/apt/sources.list.d/libv851.list"
+		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main\" > /etc/apt/sources.list.d/libv851.list"
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
-		sudo dpkg -i libicu55_55.1-7_amd64.deb
-		sudo apt-get update
-		sudo apt-get -y --allow-unauthenticated install libv8-5.1-dev
+		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get -y --allow-unauthenticated install libv8-5.1-dev
 	fi
-#v85.4
+
+	# V8 5.4
 	if [ $INSTALL_V8REPO54 = 1 ]; then
-		sudo sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main\" > /etc/apt/sources.list.d/libv854.list"
+		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.4/ubuntu xenial main\" > /etc/apt/sources.list.d/libv854.list"
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
-		sudo dpkg -i libicu55_55.1-7_amd64.deb
-		sudo apt-get update
-		sudo apt-get -y --allow-unauthenticated install libv8-5.4-dev
+		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get -y --allow-unauthenticated install libv8-5.4-dev
 	fi
-#v85.8
+
+	# V8 5.8
 	if [ $INSTALL_V8REPO58 = 1 ]; then
-		sudo add-apt-repository -y ppa:pinepain/libv8-5.8
-		sudo apt-get update
-		sudo apt-get -y install libv8-5.8-dev
+		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.8
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get -y install libv8-5.8-dev
 	fi
-#v85.7
+
+	# V8 5.7
 	if [ $INSTALL_V8REPO57 = 1 ]; then
-		sudo add-apt-repository -y ppa:pinepain/libv8-5.7
-		sudo apt-get update
-		sudo apt-get -y install libv8-5.7-dev
+		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get -y install libv8-5.7-dev
 	fi
 }
 
-#v8
+# V8
 sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
 
-	sudo apt-get install -y python
+	$SUDO_CMD apt-get install -y python
 	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 	export PATH=`pwd`/depot_tools:"$PATH"
 
@@ -141,6 +148,7 @@ sub_v8(){
 	GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make library=shared native
 }
 
+# MetaCall
 sub_metacall(){
 	echo "configure metacall"
 	cd $ROOT_DIR
@@ -158,8 +166,11 @@ sub_metacall(){
 	echo "configure with cmake .. <options>"
 }
 
-
+# Install
 sub_install(){
+	if [ $RUN_AS_ROOT = 1 ]; then
+		SUDO_CMD=""
+	fi
 	if [ $INSTALL_APT = 1 ]; then
 		sub_apt
 	fi
@@ -189,64 +200,72 @@ sub_install(){
 	fi
 }
 
+# Configuration
 sub_config(){
 	for var in "$@"
 	do
+		if [ "$var" = 'root' ]; then
+			echo "running as root"
+			RUN_AS_ROOT=1
+		fi
 		if [ "$var" = 'base' ]; then
-		   echo "apt selected"
+			echo "apt selected"
 			INSTALL_APT=1
 		fi
 		if [ "$var" = 'python' ]; then
-		    echo "python selected"
+			echo "python selected"
 			INSTALL_PYTHON=1
 		fi
 		if [ "$var" = 'ruby' ]; then
-		    echo "ruby selected"
+			echo "ruby selected"
 			INSTALL_RUBY=1
 		fi
 		if [ "$var" = 'netcore' ]; then
-		    echo "netcore selected"
+			echo "netcore selected"
 			INSTALL_NETCORE=1
 		fi
 		if [ "$var" = 'rapidjson' ]; then
-		    echo "rapidjson selected"
+			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
 		fi
 
 		if [ "$var" = 'v8rep54' ]; then
-		    echo "v8 selected"
+			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO54=1
 		fi
 		if [ "$var" = 'v8rep57' ]; then
-		    echo "v8 selected"
+			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO57=1
 		fi
 		if [ "$var" = 'v8rep58' ]; then
-		    echo "v8 selected"
+			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO58=1
 		fi
 		if [ "$var" = 'v8rep51' ]; then
-		    echo "v8 selected"
+			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO51=1
 		fi
 		if [ "$var" = 'swig' ]; then
-		    echo "swig selected"
+			echo "swig selected"
 			INSTALL_SWIG=1
 		fi
 		if [ "$var" = 'metacall' ]; then
-		    echo "metacall selected"
+			echo "metacall selected"
 			INSTALL_METACALL=1
 		fi
 	done
 }
 
+# Help
 sub_help(){
     echo "Usage: $PROGNAME list of component"
     echo "Components:"
+    echo "	root"
+    echo "	base"
     echo "	python"
     echo "	ruby"
     echo "	netcore"
