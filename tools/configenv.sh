@@ -101,7 +101,7 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --allow-unauthenticated install libv8-5.1-dev
+		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.1-dev
 	fi
 
 	# V8 5.4
@@ -110,21 +110,21 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --allow-unauthenticated install libv8-5.4-dev
+		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.4-dev
 	fi
 
 	# V8 5.8
 	if [ $INSTALL_V8REPO58 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.8
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y install libv8-5.8-dev
+		$SUDO_CMD apt-get -y install libicu55 libv8-5.8-dev
 	fi
 
 	# V8 5.7
 	if [ $INSTALL_V8REPO57 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y install libv8-5.7-dev
+		$SUDO_CMD apt-get -y install libicu55 libv8-5.7-dev
 	fi
 }
 
