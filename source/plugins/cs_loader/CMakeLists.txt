@@ -75,11 +75,9 @@ if(MSVC)
 else()
 	set(headers_platform
 		${include_path}/netcore_linux.h
-		
 	)
 	set(sources_platform
 		${source_path}/netcore_linux.cpp
-		
 	)
 endif()
 
@@ -207,9 +205,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-
 	$<$<NOT:$<BOOL:${MSVC}>>:stdc++fs>
-	
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

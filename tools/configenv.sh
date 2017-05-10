@@ -80,7 +80,7 @@ sub_rapidjson(){
 sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y install apt-transport-https
+	$SUDO_CMD apt-get -y install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
 	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ yakkety main" > /etc/apt/sources.list.d/dotnetdev.list'
 	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
 	$SUDO_CMD apt-get update
@@ -198,6 +198,8 @@ sub_install(){
 	if [ $INSTALL_METACALL = 1 ]; then
 		sub_metacall
 	fi
+
+	echo "install finished in workspace $ROOT_DIR"
 }
 
 # Configuration
