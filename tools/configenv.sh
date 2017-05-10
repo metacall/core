@@ -85,7 +85,7 @@ sub_netcore(){
 	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
 	$SUDO_CMD apt-get update
 
-	$SUDO_CMD apt-get -y install dotnet-dev-1.0.0-preview2.1-003177
+	$SUDO_CMD apt-get -y install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
 }
 
 # V8 Repository
