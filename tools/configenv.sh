@@ -80,12 +80,12 @@ sub_rapidjson(){
 sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
+	$SUDO_CMD apt-get -y --allow-unauthenticated install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
 	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ yakkety main" > /etc/apt/sources.list.d/dotnetdev.list'
 	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
 	$SUDO_CMD apt-get update
-
-	$SUDO_CMD apt-get -y install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
+	$SUDO_CMD apt-get -y --allow-unauthenticated install libgssapi-krb5-2 libicu57 libstdc++6
+	$SUDO_CMD apt-get -y --allow-unauthenticated install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
 }
 
 # V8 Repository
@@ -102,7 +102,7 @@ sub_v8repo(){
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
 		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.1-dev
-		$SUDO_CMD apt-get install -f
+		$SUDO_CMD apt-get -y install -f
 	fi
 
 	# V8 5.4
