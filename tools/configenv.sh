@@ -55,9 +55,9 @@ sub_python(){
 sub_ruby(){
 	echo "configure ruby"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev python-software-properties libffi-dev
+	$SUDO_CMD apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
 	$SUDO_CMD apt-get install -y ruby2.3-dev
-	curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD -E bash -
+	curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 	$SUDO_CMD apt-get install -y nodejs
 	$SUDO_CMD gem install rails
 }
@@ -93,7 +93,7 @@ sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get -y install add-apt-key
-	$SUDO_CMD apt-get -y install software-properties-common python-software-properties
+	$SUDO_CMD apt-get -y install software-properties-common
 
 	# V8 5.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
