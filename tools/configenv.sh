@@ -24,7 +24,7 @@ PROGNAME=$(basename $0)
 sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt for C build"
-	$SUDO_CMD apt-get -y install build-essential git cmake
+	$SUDO_CMD apt-get -y install build-essential git cmake wget
 }
 
 # Swig
