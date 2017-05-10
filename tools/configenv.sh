@@ -102,6 +102,7 @@ sub_v8repo(){
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
 		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.1-dev
+		$SUDO_CMD apt-get install -f
 	fi
 
 	# V8 5.4
