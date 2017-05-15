@@ -28,7 +28,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 				log_policy_format_text(),
 				log_policy_schedule_sync(),
 				log_policy_storage_sequential(),
-				log_policy_stream_stdio(stdio->stream)) != 0)
+				log_policy_stream_stdio(stdio_ctx->stream)) != 0)
 			{
 				return 1;
 			}

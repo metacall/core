@@ -42,11 +42,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/metacall.h
 	${include_path}/metacall_value.h
+	${include_path}/metacall_log.h
 )
 
 set(sources
 	${source_path}/metacall.c
 	${source_path}/metacall_value.c
+	${source_path}/metacall_log.c
 )
 
 # Group source files

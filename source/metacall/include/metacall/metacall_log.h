@@ -30,7 +30,7 @@ enum metacall_log_id
 	METACALL_LOG_FILE,
 	METACALL_LOG_SOCKET,
 	METACALL_LOG_SYSLOG,
-	METACALL_LOG_NGNIX
+	METACALL_LOG_NGINX
 };
 
 /* -- Type Definitions -- */
