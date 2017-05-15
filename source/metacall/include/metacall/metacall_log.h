@@ -17,6 +17,11 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
+#include <stdint.h>
+#include <stdio.h>
+
 /* -- Enumerations -- */
 
 enum metacall_log_id
