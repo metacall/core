@@ -71,6 +71,8 @@ int metacall_initialize()
 
 	if (configuration_initialize("rapid_json", NULL) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall configuration initialization");
+
 		return 1;
 	}
 
