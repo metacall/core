@@ -13,6 +13,7 @@
 
 #include <metacall/metacall_api.h>
 
+#include <metacall/metacall_log.h>
 #include <metacall/metacall_value.h>
 
 #ifdef __cplusplus
