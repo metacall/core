@@ -15,10 +15,6 @@
 #	include <windows.h>
 #endif
 
-/* -- Definitions -- */
-
-#define LOG_POLICY_STREAM_NGINX_ERR_NOTICE ((uintptr_t) 6)
-
 /* -- Forward Declarations -- */
 
 #if defined(_WIN32)
@@ -41,6 +37,7 @@ struct log_policy_stream_nginx_data_type
 {
 	ngx_log_t * ngx_log_ptr;
 	log_policy_stream_nginx_error ngx_error_ptr;
+	uint16_t ngx_log_level;
 };
 
 /* -- Private Methods -- */
@@ -95,6 +92,8 @@ static int log_policy_stream_nginx_create(log_policy policy, const log_policy_ct
 
 	nginx_data->ngx_error_ptr = (log_policy_stream_nginx_error)nginx_ctor->ngx_error_ptr;
 
+	nginx_data->ngx_log_level = nginx_ctor->ngx_log_level;
+
 	log_policy_instantiate(policy, nginx_data, LOG_POLICY_STREAM_NGINX);
 
 	return 0;
@@ -106,7 +105,7 @@ static int log_policy_stream_nginx_write(log_policy policy, const void * buffer,
 
 	(void)size;
 
-	nginx_data->ngx_error_ptr(LOG_POLICY_STREAM_NGINX_ERR_NOTICE, nginx_data->ngx_log_ptr, 0, (const char *)buffer);
+	nginx_data->ngx_error_ptr(nginx_data->ngx_log_level, nginx_data->ngx_log_ptr, 0, (const char *)buffer);
 
 	return 0;
 }

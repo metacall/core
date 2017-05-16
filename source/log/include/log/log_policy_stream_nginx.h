@@ -42,6 +42,7 @@ struct log_policy_stream_nginx_ctor_type
 {
 	ngx_log_t * ngx_log_ptr;
 	void (*ngx_error_ptr)();
+	uint16_t ngx_log_level;
 };
 
 /* -- Methods -- */

@@ -52,7 +52,7 @@ log_policy log_policy_stream_file(const char * file_name, const char * mode)
 	return policy;
 }
 
-log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr)())
+log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr)(), uint16_t ngx_log_level)
 {
 	log_policy policy;
 
@@ -60,6 +60,7 @@ log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr
 
 	nginx_ctor.ngx_log_ptr = ngx_log_ptr;
 	nginx_ctor.ngx_error_ptr = ngx_error_ptr;
+	nginx_ctor.ngx_log_level = ngx_log_level;
 
 	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_NGINX), &nginx_ctor);
 

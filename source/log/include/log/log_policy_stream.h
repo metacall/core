@@ -62,7 +62,7 @@ LOG_API log_policy_interface log_policy_stream(const log_policy_id policy_stream
 
 LOG_API log_policy log_policy_stream_file(const char * file_name, const char * mode);
 
-LOG_API log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr)());
+LOG_API log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr)(), uint16_t ngx_log_level);
 
 LOG_API log_policy log_policy_stream_socket(const char * ip, uint16_t port);
 
