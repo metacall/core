@@ -72,7 +72,7 @@ struct metacall_log_syslog_type
 struct metacall_log_nginx_type
 {
 	void * log;
-	void (*log_error)();
+	void (*log_error)(void);
 	uint16_t log_level;
 };
 

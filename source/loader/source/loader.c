@@ -74,7 +74,7 @@ static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value 
 
 static int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
-static function_interface get_interface_proxy();
+static function_interface loader_register_interface_proxy(void);
 
 static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args);
 
@@ -442,8 +442,7 @@ void loader_register_destroy_proxy(function func, function_impl func_impl)
 	}
 }
 
-
-function_interface get_interface_proxy()
+function_interface loader_register_interface_proxy(void)
 {
 	static struct function_interface_type interface =
 	{
@@ -465,11 +464,13 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 
 	scope sp = context_scope(ctx);
 
+	function_impl_interface_singleton singleton = &loader_register_interface_proxy;
+
 	loader_host_invoke host_invoke = malloc(sizeof(struct loader_host_invoke_type));
 
 	host_invoke->invoke = invoke;
 
-	f = function_create(name, arg_size, host_invoke, &get_interface_proxy);
+	f = function_create(name, arg_size, host_invoke, singleton);
 
 	if (f != NULL)
 	{
