@@ -1,5 +1,12 @@
 #!/bin/bash
 
+#
+# MetaCall Configuration Environment Bash Script by Parra Studios
+# Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+# Configure and install MetaCall environment script utility.
+#
+
 ROOT_DIR=$(pwd)
 
 RUN_AS_ROOT=0
@@ -24,7 +31,7 @@ PROGNAME=$(basename $0)
 sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt for C build"
-	$SUDO_CMD apt-get -y install build-essential git cmake wget
+	$SUDO_CMD apt-get -y install build-essential git cmake wget apt-utils
 }
 
 # Swig
@@ -47,6 +54,7 @@ sub_swig(){
 sub_python(){
 	echo "configure pyton"
 	$SUDO_CMD apt-get install -y python2.7  python3.5-dev python python3-pip
+	$SUDO_CMD pip3 install --upgrade pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install request
 }
@@ -264,31 +272,31 @@ sub_config(){
 }
 
 # Help
-sub_help(){
-    echo "Usage: $PROGNAME list of component"
-    echo "Components:"
-    echo "	root"
-    echo "	base"
-    echo "	python"
-    echo "	ruby"
-    echo "	netcore"
-    echo "	rapidjson"
-    echo "	v8"
+sub_help() {
+	echo "Usage: $PROGNAME list of component"
+	echo "Components:"
+	echo "	root"
+	echo "	base"
+	echo "	python"
+	echo "	ruby"
+	echo "	netcore"
+	echo "	rapidjson"
+	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"
 	echo "	v8rep57"
 	echo "	v8rep58"
 	echo "	swig"
-    echo "	metacall"
+	echo "	metacall"
 	echo ""
 }
 
 case "$#" in
-    0)
-        sub_help
-        ;;
-    *)
+	0)
+		sub_help
+		;;
+	*)
 		sub_config $@
 		sub_install
-        ;;
+		;;
 esac
