@@ -12,8 +12,6 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall-plugins.h>
 
-#include <log/log.h>
-
 void * c_function(void * args[])
 {
 	printf("%s\n", (char*)args[0]);
@@ -90,8 +88,6 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
 
 		metacall_value_destroy(ret);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "7's multiples dude!");
 
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
 		{

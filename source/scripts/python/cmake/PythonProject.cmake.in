@@ -31,7 +31,7 @@ if(PYTHONINTERP_FOUND)
 					   DEPENDS "@PACKAGE_DEPS@")
 
 	# Deploy generated config file
-	install(CODE   "execute_process(COMMAND ${PYTHON_EXECUTABLE} @PACKAGE_SETUP_PY@ install)"
-		COMPONENT   runtime
-	)
+	#install(CODE   "execute_process(COMMAND ${PYTHON_EXECUTABLE} @PACKAGE_SETUP_PY@ install)"
+	#	COMPONENT   runtime
+	#)
 endif()

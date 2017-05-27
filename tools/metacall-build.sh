@@ -186,6 +186,13 @@ sub_build() {
 
 	# Install
 	if [ $BUILD_INSTALL = 1 ]; then
+
+		# Build without scripts on release
+		if [ "$BUILD_TYPE" = 'Release' ]; then
+			cmake -DOPTION_BUILD_SCRIPTS=Off ..
+			make -j$(getconf _NPROCESSORS_ONLN)
+		fi
+
 		$SUDO_CMD make install
 	fi
 }
