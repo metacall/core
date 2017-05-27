@@ -19,22 +19,22 @@ namespace CSLoader
 
         public static void Main(string[] args)
         {
+            /*
             var src = @"
-        public static void DoTheMagic()
-        {
-            Console.WriteLine(DateTime.Now.ToString());
-        }
+                public static void DoTheMagic()
+                {
+                    Console.WriteLine(DateTime.Now.ToString());
+                }
 
-        public static void DoTheMagic2(int entero,string texto,System.Threading.Tasks.Task task)
-        {
-            Console.WriteLine(DateTime.Now.ToString());
-        }
-";
-            // Load(src);
-
+                public static void DoTheMagic2(int entero,string texto,System.Threading.Tasks.Task task)
+                {
+                    Console.WriteLine(DateTime.Now.ToString());
+                }";
+            */
         }
 
         private static Loader loader = null;
+
         static Loader()
         {
             AssemblyLoadContext.Default.Resolving += Context_Resolving;
@@ -316,6 +316,7 @@ namespace CSLoader
                 }
                 catch (Exception ex)
                 {
+                    Console.WriteLine(ex.Message);
                 }
             }
 

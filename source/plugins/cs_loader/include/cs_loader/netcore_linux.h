@@ -41,6 +41,11 @@ typedef int (coreclrCreateDelegateFunction)(
 	void** delegatea);
 
 using namespace std;
+
+#ifdef W
+#	undef W
+#endif
+
 #define W(x) x
 
 class netcore_linux : public netcore

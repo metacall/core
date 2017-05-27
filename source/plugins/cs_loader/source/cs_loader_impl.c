@@ -52,7 +52,8 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	{
 		parameters params[10];
 
-		for (size_t i = 0; i < cs_f->func->param_count; i++) {
+		for (int i = 0; i < cs_f->func->param_count; ++i)
+		{
 			params[i].ptr = args[i];
 			params[i].type = cs_f->func->pars[i].type;
 		}
@@ -256,7 +257,7 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	function f = NULL;
 
-	for (size_t i = 0; i < function_count; ++i)
+	for (int i = 0; i < function_count; ++i)
 	{
 		cs_function * cs_f = (cs_function*)malloc(sizeof(cs_function));
 
@@ -269,7 +270,7 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 			signature s = function_signature(f);
 
-			for (size_t j = 0; j < functions[i].param_count; ++j)
+			for (int j = 0; j < functions[i].param_count; ++j)
 			{
 				signature_set(s, j, functions[i].pars[j].name, type_create(functions[i].pars[j].type, "holder", NULL, NULL));
 			}
