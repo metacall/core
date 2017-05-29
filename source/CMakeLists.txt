@@ -92,6 +92,9 @@ endif()
 if(OPTION_BUILD_CONFIGS)
 	set(IDE_FOLDER "Configurations")
 	add_subdirectory(configs)
+
+	# Install runtime configuration
+	install(DIRECTORY ${CONFIGURATION_DIR} DESTINATION ${INSTALL_DATA} COMPONENT runtime)
 endif()
 
 # Distributable

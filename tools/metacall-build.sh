@@ -198,21 +198,9 @@ sub_build() {
 }
 
 sub_clear() {
-	if [ "$BUILD_TYPE" = 'Debug' ]; then
-		# Install debug packages
-		apt-get install -y gdb gdbserver --no-install-recommends --no-install-suggests
-
-		# No not delete MetaCall path (TODO: install global.json with CMake)
-		cd $METACALL_PATH \
-			&& mkdir -p $METACALL_PATH/configurations \
-			&& mv $CONFIGURATION_PATH $METACALL_PATH/configurations
-	elif [ "$BUILD_TYPE" = 'Release' ]; then
-		# Delete MetaCall path except from configuration file (TODO: install global.json with CMake)
-		cd $METACALL_PATH \
-			&& mv $CONFIGURATION_PATH /tmp/global.json \
-			&& rm -rf $METACALL_PATH \
-			&& mkdir -p $METACALL_PATH/configurations \
-			&& mv /tmp/global.json $METACALL_PATH/configurations
+	if [ "$BUILD_TYPE" = 'Release' ]; then
+		# Delete MetaCall path
+		rm -rf $METACALL_PATH
 	fi
 }
 
