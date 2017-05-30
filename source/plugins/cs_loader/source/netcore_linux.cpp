@@ -22,7 +22,7 @@ netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_p
 	if(getcwd(this->appPath, MAX_LONGPATH)==NULL){
 		cout << "getcwd error!";
 	}
-	
+
 	this->domainId = 0;
 }
 
@@ -37,9 +37,9 @@ bool netcore_linux::ConfigAssemblyName() {
 
 	string::size_type pos = string(this->dotnet_loader_assembly_path).find_last_of( "\\/" );
     string  dotnet_loader_assembly_directory = string(this->dotnet_loader_assembly_path).substr( 0, pos);
-	
+
 	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
-	
+
 	cout << "absoluteAppPath: " << this->appPath << endl;
 
 	if(this->dotnet_loader_assembly_path==NULL){
@@ -53,18 +53,18 @@ bool netcore_linux::ConfigAssemblyName() {
 		}else{
 			this->managedAssemblyFullName.append(this->appPath);
 			this->managedAssemblyFullName.append("/");
-			
+
 			if(this->dotnet_loader_assembly_path[0] == '.'){
 				string simpleName;
 				simpleName.append(this->dotnet_loader_assembly_path+2);
 				this->managedAssemblyFullName.append(simpleName);
-				
+
 			}else{
 				this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
 			}
 		}
 	}
-	
+
 	cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << endl;
 
 	this->nativeDllSearchDirs.append(this->appPath);
@@ -128,14 +128,12 @@ bool netcore_linux::CreateHost() {
 
 	int status = -1;
 
-	// initialize coreclr
-	string m;
-	string mm;
+    /* TODO: Make this trick more portable... */
+	const char * exe_path = getenv("_");
 
-	mm.append(getenv("_"));
-
+	// Initialize CoreCLR
 	status = (*this->coreclr_initialize)(
-		mm.c_str(),
+		exe_path,
 		"metacall_cs_loader_container",
 		sizeof(propertyKeys) / sizeof(propertyKeys[0]),
 		propertyKeys,
