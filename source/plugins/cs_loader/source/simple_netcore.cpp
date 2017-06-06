@@ -17,19 +17,22 @@ netcore_handle simple_netcore_create(char * dotnet_root, char * dotnet_loader_as
 
 	netcore_linux * netcore_inp = new netcore_linux(dotnet_root, dotnet_loader_assembly_path);
 #else
-	netcore_win *netcore_inp = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
+	netcore_win * netcore_inp = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
 #endif
 
-	if (netcore_inp->start()) {
-		return (netcore_handle)netcore_inp;
-	}
-	else
+    bool result = netcore_inp->start();
+
+	if (result == false)
 	{
-		return (netcore_handle)0;
+        delete netcore_inp;
+
+		return (netcore_handle)NULL;
 	}
+
+    return (netcore_handle)netcore_inp;
 }
 
-reflect_function * simple_netcore_get_functions(netcore_handle handle, int *count) {
+reflect_function * simple_netcore_get_functions(netcore_handle handle, int * count) {
 	netcore * core = (netcore*)handle;
 
 	return core->get_functions(count);
@@ -61,19 +64,19 @@ void  simple_netcore_load_script_from_memory(netcore_handle handle, const char *
 
 	}
 }
-execution_result*  simple_netcore_invoke(netcore_handle handle, const char *func) {
+execution_result *  simple_netcore_invoke(netcore_handle handle, const char * func) {
 	netcore * core = (netcore*)handle;
 
 	return core->execute((char*)func);
 }
 
-execution_result*  simple_netcore_invoke_with_params(netcore_handle handle, const char *func, parameters* params) {
+execution_result *  simple_netcore_invoke_with_params(netcore_handle handle, const char * func, parameters * params) {
 	netcore * core = (netcore*)handle;
 
 	return core->execute_with_params((char*)func, params);
 }
 
-void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result* er) {
+void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result * er) {
 	netcore * core = (netcore*)handle;
 
 	core->destroy_execution_result(er);

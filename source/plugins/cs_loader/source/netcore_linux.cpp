@@ -72,6 +72,7 @@ bool netcore_linux::ConfigAssemblyName() {
 	this->nativeDllSearchDirs.append(this->runtimePath);
 
 	AddFilesFromDirectoryToTpaList(this->runtimePath, tpaList);
+
 	return true;
 }
 
@@ -131,9 +132,16 @@ bool netcore_linux::CreateHost() {
     /* TODO: Make this trick more portable... */
 	const char * exe_path = getenv("_");
 
+	std::string exe_path_str;
+
+	if (exe_path != NULL)
+	{
+        exe_path_str = exe_path;
+	}
+
 	// Initialize CoreCLR
 	status = (*this->coreclr_initialize)(
-		exe_path,
+		exe_path_str.c_str(),
 		"metacall_cs_loader_container",
 		sizeof(propertyKeys) / sizeof(propertyKeys[0]),
 		propertyKeys,
@@ -193,6 +201,25 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** func
 	return true;
 }
 
+bool netcore_linux::start()
+{
+    if (!ConfigAssemblyName())
+    {
+		return false;
+	}
+
+	if (!this->CreateHost())
+	{
+		return false;
+	}
+
+	if (!this->LoadMain())
+	{
+		return false;
+	}
+
+	return true;
+}
 
 void netcore_linux::stop() {
 	int status = -1;

@@ -78,7 +78,7 @@ private:
 
 	bool LoadMain();
 
-	void AddFilesFromDirectoryToTpaList(std::string directory, std::string& tpaList) {
+	void AddFilesFromDirectoryToTpaList(std::string directory, std::string & tpaList) {
 
 		for (auto& dirent : std::experimental::filesystem::directory_iterator(directory)) {
 			std::string path = dirent.path();
@@ -92,22 +92,10 @@ private:
 
 public:
 	netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path);
+
 	~netcore_linux();
 
-	bool start() {
-		if (!ConfigAssemblyName()) {
-			return false;
-		}
-
-		if (!this->CreateHost()) {
-			return false;
-		}
-		if (!this->LoadMain()) {
-			return false;
-		}
-
-		return true;
-	}
+	bool start();
 
 	void stop();
 };
