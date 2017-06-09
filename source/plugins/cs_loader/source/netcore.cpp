@@ -17,13 +17,13 @@ reflect_function * netcore::get_functions(int * count)
 {
 	this->core_get_functions(&this->functions_count, this->functions);
 
-	for (size_t i = 0; i < this->functions_count; ++i)
+	for (int i = 0; i < this->functions_count; ++i)
 	{
 		std::cout << "function name:" << this->functions[i].name << std::endl;
 		std::cout << "function return type:" << this->functions[i].return_type << std::endl;
 		std::cout << "function param count:" << this->functions[i].param_count << std::endl;
 
-		for (size_t p = 0; p < this->functions[i].param_count; ++p)
+		for (int p = 0; p < this->functions[i].param_count; ++p)
 		{
 			std::cout << "params:" << this->functions[i].pars[p].name << std::endl;
 		}
