@@ -1,13 +1,17 @@
 #include <cs_loader/netcore_linux.h>
 
-netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path) :netcore(dotnet_root,dotnet_loader_assembly_path)
+#include <limits.h>
+
+netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path) : netcore(dotnet_root,dotnet_loader_assembly_path)
 {
-	if (dotnet_root == NULL) {
+	if (dotnet_root == NULL)
+	{
 		this->runtimePath.append(getenv("CORE_ROOT"));
 	}
 	else
 	{
-		if (dotnet_root[strlen(dotnet_root)] == '/') {
+		if (dotnet_root[strlen(dotnet_root)] == '/')
+		{
 			this->runtimePath.append(dotnet_root);
 		}
 		else
@@ -19,7 +23,8 @@ netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_p
 		}
 	}
 
-	if(getcwd(this->appPath, MAX_LONGPATH)==NULL){
+	if(getcwd(this->appPath, MAX_LONGPATH)==NULL)
+	{
 		cout << "getcwd error!";
 	}
 
@@ -31,41 +36,51 @@ netcore_linux::~netcore_linux()
 	//this->stop();
 }
 
-bool netcore_linux::ConfigAssemblyName() {
-
+bool netcore_linux::ConfigAssemblyName()
+{
 	std::cout << "absoluteRuntime: " << this->runtimePath << std::endl;
 
-	string::size_type pos = string(this->dotnet_loader_assembly_path).find_last_of( "\\/" );
-    string  dotnet_loader_assembly_directory = string(this->dotnet_loader_assembly_path).substr( 0, pos);
+	std::string::size_type pos = std::string(this->dotnet_loader_assembly_path).find_last_of("\\/");
+
+    std::string dotnet_loader_assembly_directory = std::string(this->dotnet_loader_assembly_path).substr(0, pos);
 
 	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
 
-	cout << "absoluteAppPath: " << this->appPath << endl;
+	std::cout << "absoluteAppPath: " << this->appPath << std::endl;
 
-	if(this->dotnet_loader_assembly_path==NULL){
+	if (this->dotnet_loader_assembly_path == NULL)
+	{
 		this->managedAssemblyFullName.append(this->appPath);
 		this->managedAssemblyFullName.append("/");
 		this->managedAssemblyFullName.append(this->loader_dll);
-	}else{
-		if( this->dotnet_loader_assembly_path[0] == '/'){
+	}
+	else
+	{
+		if (this->dotnet_loader_assembly_path[0] == '/')
+		{
 			this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
 			AddFilesFromDirectoryToTpaList(dotnet_loader_assembly_directory, tpaList);
-		}else{
+		}
+		else
+		{
 			this->managedAssemblyFullName.append(this->appPath);
 			this->managedAssemblyFullName.append("/");
 
-			if(this->dotnet_loader_assembly_path[0] == '.'){
+			if(this->dotnet_loader_assembly_path[0] == '.')
+			{
 				string simpleName;
 				simpleName.append(this->dotnet_loader_assembly_path+2);
 				this->managedAssemblyFullName.append(simpleName);
 
-			}else{
+			}
+			else
+			{
 				this->managedAssemblyFullName.append(this->dotnet_loader_assembly_path);
 			}
 		}
 	}
 
-	cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << endl;
+	std::cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << std::endl;
 
 	this->nativeDllSearchDirs.append(this->appPath);
 	this->nativeDllSearchDirs.append(":");
@@ -76,8 +91,8 @@ bool netcore_linux::ConfigAssemblyName() {
 	return true;
 }
 
-bool netcore_linux::CreateHost() {
-
+bool netcore_linux::CreateHost()
+{
 	dynlink handle = dynlink_load(this->runtimePath.c_str(), this->coreClrLibName.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 	if (handle == NULL) {
@@ -92,8 +107,10 @@ bool netcore_linux::CreateHost() {
 	dynlink_symbol(handle, "coreclr_shutdown", &dynlink_coreclr_shutdown);
 	dynlink_symbol(handle, "coreclr_create_delegate", &dynlink_coreclr_create_delegate);
 
-	if (dynlink_coreclr_initialize == NULL) {
+	if (dynlink_coreclr_initialize == NULL)
+	{
 		std::cout << "coreclr_initialize fail " << std::endl;
+
 		return false;
 	}
 
@@ -130,14 +147,31 @@ bool netcore_linux::CreateHost() {
 	int status = -1;
 
     /* TODO: Make this trick more portable... */
-	const char * exe_path = getenv("_");
-
 	std::string exe_path_str;
+
+	const char * exe_path = getenv("_");
 
 	if (exe_path != NULL)
 	{
-        exe_path_str = exe_path;
+		exe_path_str = exe_path;
 	}
+	else
+	{
+		char exe_path_proc[PATH_MAX];
+
+		ssize_t length = ::readlink("/proc/self/exe", exe_path_proc, PATH_MAX);
+
+		if (length == -1 || length == PATH_MAX)
+		{
+			std::cout << "ERROR: coreclr_initialize invalid working directory path (" << exe_path_proc << ")" << std::endl;
+
+			return false;
+		}
+
+		exe_path_str = std::string(exe_path_proc, length);
+	}
+
+	std::cout << "DEBUG: coreclr_initialize working directory path (" << exe_path_str << ")" << std::endl;
 
 	// Initialize CoreCLR
 	status = (*this->coreclr_initialize)(
@@ -150,38 +184,28 @@ bool netcore_linux::CreateHost() {
 		&domainId
 		);
 
-	if (status < 0) {
-		std::cerr << "ERROR! coreclr_initialize status: 0x" << std::hex << status << std::endl;
-		return false;
-	}
-	/*
-	try {
-		// create delegate to our entry point
-		status = (*this->coreclr_create_delegate)(
-			hostHandle,
-			domainId,
-			this->assemblyName,
-			this->className,
-			this->delegateLoadC,
-			(void**)&this->coreLoadC);
-	}
-	catch (dynamicLinker::dynamicLinkerException e) {
-		std::cerr << e.what() << std::endl;
-		return false;
-	}
-	*/
+	if (status < 0)
+	{
+		std::cout << "ERROR: coreclr_initialize status 0x" << std::hex << status << std::endl;
 
-	if (!this->create_delegates()) {
+		return false;
+	}
+
+
+	if (!this->create_delegates())
+	{
 		return false;
 	}
 
 	return true;
 }
-bool netcore_linux::LoadMain() {
+bool netcore_linux::LoadMain()
+{
 	return true;
 }
 
-bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** funcs) {
+bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void ** funcs)
+{
 	int status = -1;
 
 	// create delegate to our entry point
@@ -193,8 +217,10 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void** func
 		delegateName,
 		funcs);
 
-	if (status < 0) {
-		std::cerr << "ERROR! CreateDelegate status: 0x" << std::hex << status << std::endl;
+	if (status < 0)
+	{
+		std::cout << "ERROR: CreateDelegate status 0x" << std::hex << status << std::endl;
+
 		return false;
 	}
 
@@ -221,14 +247,14 @@ bool netcore_linux::start()
 	return true;
 }
 
-void netcore_linux::stop() {
+void netcore_linux::stop()
+{
 	int status = -1;
 
-	status = (*this->coreclr_shutdown)(
-		this->hostHandle,
-		this->domainId);
+	status = (*this->coreclr_shutdown)(this->hostHandle, this->domainId);
 
-	if (status < 0) {
-		std::cerr << "ERROR! stop status: 0x" << std::hex << status << std::endl;
+	if (status < 0)
+	{
+		std::cout << "ERROR: stop status 0x" << std::hex << status << std::endl;
 	}
 }
