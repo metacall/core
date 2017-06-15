@@ -660,8 +660,8 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject * annotation)
 
 	const char * annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
-	if (strcmp(annotation_name, "_empty") != 0) {
-
+	if (strcmp(annotation_name, "_empty") != 0)
+	{
 		t = loader_impl_type(impl, annotation_name);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
@@ -773,7 +773,10 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 						type t = py_loader_impl_discover_type(impl, annotation);
 
-						if (t == NULL) {
+						if (t == NULL)
+						{
+							/* TODO: Duck typing */
+
 							return 1;
 						}
 						else

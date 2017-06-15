@@ -114,6 +114,24 @@ METACALL_API void * metacallv(const char * name, void * args[]);
 
 /**
 *  @brief
+*    Call a function anonymously by value array @args and type array @ids
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] ids
+*    Array of types refered to @args
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallvt(const char * name, void * args[], enum metacall_value_id ids[]);
+
+/**
+*  @brief
 *    Call a function anonymously by variable arguments @va_args
 *
 *  @param[in] name
@@ -126,6 +144,24 @@ METACALL_API void * metacallv(const char * name, void * args[]);
 *    Pointer to value containing the result of the call
 */
 METACALL_API void * metacall(const char * name, ...);
+
+/**
+*  @brief
+*    Call a function anonymously by type array @ids and variable arguments @va_args
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] ids
+*    Array of types refered to @va_args
+*
+*  @param[in] va_args
+*    Varidic function parameters
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallt(const char * name, enum metacall_value_id ids[], ...);
 
 /**
 *  @brief
@@ -153,6 +189,24 @@ METACALL_API void * metacall_function(const char * name);
 *    Pointer to value containing the result of the call
 */
 METACALL_API void * metacallfv(void * func, void * args[]);
+
+/**
+*  @brief
+*    Call a function anonymously by value array @args, type array @ids and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] ids
+*    Array of types refered to @args
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallfvt(void * func, void * args[], enum metacall_value_id ids[]);
 
 /**
 *  @brief
