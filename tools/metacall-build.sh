@@ -131,7 +131,6 @@ sub_build() {
 	if [ $BUILD_NETCORE = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_PLUGINS_CS=On \
-			-DCORECLR_ROOT_REPOSITORY_PATH=$METACALL_PATH/build/coreclr/ \
 			-DOPTION_BUILD_PLUGINS_CS_IMPL=On \
 			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.0/"
 
@@ -168,7 +167,7 @@ sub_build() {
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
 	# Execute CMake without distributable
-	cmake $BUILD_STRING ..
+	cmake $BUILD_STRING -DBUILD_DISTRIBUTABLE_LIBS=Off ..
 
 	# Make without distributable
 	make -j$(getconf _NPROCESSORS_ONLN)
@@ -177,11 +176,6 @@ sub_build() {
 	if [ $BUILD_DISTRIBUTABLE = 1 ]; then
 		cmake -DBUILD_DISTRIBUTABLE_LIBS=On ..
 		make -j$(getconf _NPROCESSORS_ONLN)
-	fi
-
-	# Tests
-	if [ $BUILD_TESTS = 1 ]; then
-		ctest -VV -C $BUILD_TYPE
 	fi
 
 	# Install
@@ -194,6 +188,11 @@ sub_build() {
 		fi
 
 		$SUDO_CMD make install
+	fi
+
+	# Tests
+	if [ $BUILD_TESTS = 1 ]; then
+		ctest -VV -C $BUILD_TYPE
 	fi
 }
 

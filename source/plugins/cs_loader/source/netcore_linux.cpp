@@ -123,7 +123,8 @@ bool netcore_linux::CreateHost()
 	this->coreclr_shutdown = (coreclrShutdownFunction*)dynlink_coreclr_shutdown;
 	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)dynlink_coreclr_create_delegate;
 
-	if (this->coreclr_initialize == NULL) {
+	if (this->coreclr_initialize == NULL)
+	{
 		std::cout << "coreclr_initialize fail " << std::endl;
 		return false;
 	}
@@ -133,7 +134,8 @@ bool netcore_linux::CreateHost()
 		"APP_PATHS",
 		"APP_NI_PATHS",
 		"NATIVE_DLL_SEARCH_DIRECTORIES",
-		"AppDomainCompatSwitch"
+		"AppDomainCompatSwitch",
+		"APP_CONTEXT_BASE_DIRECTORY"
 	};
 
 	const char *propertyValues[] = {
@@ -141,7 +143,8 @@ bool netcore_linux::CreateHost()
 		appPath,
 		appPath,
 		nativeDllSearchDirs.c_str(),
-		"UseLatestBehaviorWhenTFMNotSpecified"
+		"UseLatestBehaviorWhenTFMNotSpecified",
+		appPath
 	};
 
 	int status = -1;
@@ -208,14 +211,23 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void ** fun
 {
 	int status = -1;
 
-	// create delegate to our entry point
-	status = (*coreclr_create_delegate)(
-		hostHandle,
-		domainId,
-		this->assembly_name,
-		this->class_name,
-		delegateName,
-		funcs);
+	/* TODO: Implement exception handling with TRY_EX/CATCH_EX,
+		STL exceptions are not working */
+	try
+	{
+		// create delegate to our entry point
+		status = (*coreclr_create_delegate)(
+			hostHandle,
+			domainId,
+			this->assembly_name,
+			this->class_name,
+			delegateName,
+			funcs);
+	}
+	catch (std::exception & ex)
+	{
+		std::cout << "ERROR: CreateDelegate exception " << ex.what() << std::endl;
+	}
 
 	if (status < 0)
 	{
