@@ -24,6 +24,11 @@ TEST_F(rb_loader_parser_test, DefaultConstructor)
 
 		"@@dic={}\n"
 
+		"def asd(a)\n"
+		"	@@dic={}\n"
+		"	puts 'ruby: initialize'\n"
+		"end\n"
+
 		"def cache_initialize()\n"
 		"	@@dic={}\n"
 		"	puts 'ruby: initialize'\n"
@@ -40,6 +45,16 @@ TEST_F(rb_loader_parser_test, DefaultConstructor)
 		"end\n"
 
 		"def cache_get(key: String)\n"
+		"	puts 'ruby: get value'\n"
+		"	return @@dic[key]\n"
+		"end\n"
+
+		"def ducktype(key)\n"
+		"	puts 'ruby: get value'\n"
+		"	return @@dic[key]\n"
+		"end\n"
+
+		"def ducktype_multi(key, a, b, c, d)\n"
 		"	puts 'ruby: get value'\n"
 		"	return @@dic[key]\n"
 		"end\n"

@@ -19,7 +19,7 @@ extern "C" {
 
 #define RB_LOADER_IMPL_PARSER_FUNC	0x40
 #define RB_LOADER_IMPL_PARSER_KEY	0x40
-#define RB_LOADER_IMPL_PARSER_TYPE	0x10
+#define RB_LOADER_IMPL_PARSER_TYPE	0x20
 #define RB_LOADER_IMPL_PARSER_PARAM	0x10
 
 typedef struct rb_function_parameter_parser_type

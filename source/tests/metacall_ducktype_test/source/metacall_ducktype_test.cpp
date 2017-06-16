@@ -40,7 +40,6 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
-		/* MetaCall Type */
 		const enum metacall_value_id multiply_ids[] =
 		{
 			METACALL_INT, METACALL_INT
@@ -50,7 +49,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) metacall_value_cast_long(&ret), (long) 75);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
 
 		metacall_value_destroy(ret);
 
@@ -60,7 +59,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 			EXPECT_NE((void *) NULL, (void *) ret);
 
-			EXPECT_EQ((long) metacall_value_cast_long(&ret), (long) (7 * iterator));
+			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
 
 			metacall_value_destroy(ret);
 		}
@@ -74,7 +73,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) metacall_value_cast_double(&ret), (double) 32.0);
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 32.0);
 
 		metacall_value_destroy(ret);
 
@@ -87,7 +86,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) metacall_value_cast_long(&ret), (long) 4500);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 4500);
 
 		metacall_value_destroy(ret);
 
@@ -95,7 +94,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) metacall_value_cast_long(&ret), (long) 7);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 7);
 
 		metacall_value_destroy(ret);
 
@@ -110,7 +109,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "Hello Universe"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
 
 		metacall_value_destroy(ret);
 
@@ -123,11 +122,10 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((float) metacall_value_cast_float(&ret), (float) 30.0f);
+		EXPECT_EQ((float) metacall_value_to_float(ret), (float) 30.0f);
 
 		metacall_value_destroy(ret);
 
-		/* MetaCall Type Value */
 		void * args[2];
 
 		args[0] = metacall_value_create_int(5);
@@ -137,7 +135,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) metacall_value_cast_int(&ret), (int) 75);
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 75);
 
 		metacall_value_destroy(ret);
 
@@ -145,10 +143,10 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		args[1] = metacall_value_create_double(5.0);
 
 		ret = metacallv("divide", args);
-
+		
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) metacall_value_cast_double(&ret), (double) 3.0);
+		EXPECT_EQ((int) metacall_value_to_double(ret), (int) 3.0);
 
 		metacall_value_destroy(ret);
 
@@ -162,11 +160,71 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "PepicoWalas"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "PepicoWalas"));
 
 		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
+
+	/* Ruby */
+	#if defined(OPTION_BUILD_PLUGINS_RB)
+	{
+		const char * rb_scripts[] =
+		{
+			"ducktype.rb"
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+
+		const enum metacall_value_id say_multiply_int_ids[] =
+		{
+			METACALL_INT, METACALL_INT
+		};
+
+		ret = metacallt("say_multiply", say_multiply_int_ids, 5, 7);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_cast_int(&ret), (int) 35);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id say_null_invalid_ids[] =
+		{
+			METACALL_INVALID
+		};
+
+		EXPECT_EQ((void *) NULL, (void *) metacallt("say_null", say_null_invalid_ids));
+
+		const enum metacall_value_id say_hello_str_ids[] =
+		{
+			METACALL_STRING
+		};
+
+		ret = metacall("say_hello", say_hello_str_ids, "meta-programmer");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
+
+		metacall_value_destroy(ret);
+
+		void * args[2];
+
+		args[0] = metacall_value_create_int(5);
+		args[1] = metacall_value_create_int(12);
+
+		ret = metacallv("get_second", args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_cast_int(&ret), (int) 12);
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_PLUGINS_RB */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

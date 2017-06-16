@@ -248,7 +248,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 
 						state = rb_loader_impl_parser_state_reset;
 
-						if (reading_parameter_type == 0)
+						if (parameter_name_size > 0)
 						{
 							parameters[parameter_size].index = parameter.index;
 							strncpy(parameters[parameter_size].name, parameter.name, RB_LOADER_IMPL_PARSER_KEY);
