@@ -427,6 +427,115 @@ METACALL_API void * metacall_value_from_string(void * v, const char * str, size_
 *    Value with pointer @ptr assigned to it
 */
 METACALL_API void * metacall_value_from_ptr(void * v, const void * ptr);
+
+/**
+*  @brief
+*    Convert value @v implicitly to boolean
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to boolean
+*/
+METACALL_API boolean metacall_value_cast_bool(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to char
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to char
+*/
+METACALL_API char metacall_value_cast_char(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to short
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to short
+*/
+METACALL_API short metacall_value_cast_short(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to int
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to int
+*/
+METACALL_API int metacall_value_cast_int(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to long
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to long
+*/
+METACALL_API long metacall_value_cast_long(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to float
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to float
+*/
+METACALL_API float metacall_value_cast_float(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to double
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to double
+*/
+METACALL_API double metacall_value_cast_double(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to string
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to string
+*/
+METACALL_API char * metacall_value_cast_string(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to ptr
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to ptr
+*/
+METACALL_API void * metacall_value_cast_ptr(void ** v);
+
 /**
 *  @brief
 *    Convert to string the value @v

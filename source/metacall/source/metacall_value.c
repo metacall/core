@@ -16,6 +16,8 @@
 
 #include <preprocessor/preprocessor_concatenation.h>
 
+#include <assert.h>
+
 #ifndef static_assert
 
 #	define static_assert_impl_expr(predicate, expr) \
@@ -137,90 +139,63 @@ enum metacall_value_id metacall_value_id(void * v)
 
 boolean metacall_value_to_bool(void * v)
 {
-	if (value_type_id(v) != TYPE_BOOL)
-	{
-		v = value_type_cast(v, TYPE_BOOL);
-	}
+	assert(value_type_id(v) == TYPE_BOOL);
 
 	return value_to_bool(v);
 }
 
 char metacall_value_to_char(void * v)
 {
-	if (value_type_id(v) != TYPE_CHAR)
-	{
-		v = value_type_cast(v, TYPE_CHAR);
-	}
+	assert(value_type_id(v) == TYPE_CHAR);
 
 	return value_to_char(v);
 }
 
 short metacall_value_to_short(void * v)
 {
-	if (value_type_id(v) != TYPE_SHORT)
-	{
-		v = value_type_cast(v, TYPE_SHORT);
-	}
+	assert(value_type_id(v) == TYPE_SHORT);
 
 	return value_to_short(v);
 }
 
 int metacall_value_to_int(void * v)
 {
-	if (value_type_id(v) != TYPE_INT)
-	{
-		v = value_type_cast(v, TYPE_INT);
-	}
+	assert(value_type_id(v) == TYPE_INT);
 
 	return value_to_int(v);
 }
 
 long metacall_value_to_long(void * v)
 {
-	if (value_type_id(v) != TYPE_LONG)
-	{
-		v = value_type_cast(v, TYPE_LONG);
-	}
+	assert(value_type_id(v) == TYPE_LONG);
 
 	return value_to_long(v);
 }
 
 float metacall_value_to_float(void * v)
 {
-	if (value_type_id(v) != TYPE_FLOAT)
-	{
-		v = value_type_cast(v, TYPE_FLOAT);
-	}
+	assert(value_type_id(v) == TYPE_FLOAT);
 
 	return value_to_float(v);
 }
 
 double metacall_value_to_double(void * v)
 {
-	if (value_type_id(v) != TYPE_DOUBLE)
-	{
-		v = value_type_cast(v, TYPE_DOUBLE);
-	}
+	assert(value_type_id(v) == TYPE_DOUBLE);
 
 	return value_to_double(v);
 }
 
 char * metacall_value_to_string(void * v)
 {
-	if (value_type_id(v) != TYPE_STRING)
-	{
-		v = value_type_cast(v, TYPE_STRING);
-	}
+	assert(value_type_id(v) == TYPE_STRING);
 
 	return value_to_string(v);
 }
 
 void * metacall_value_to_ptr(void * v)
 {
-	if (value_type_id(v) != TYPE_PTR)
-	{
-		v = value_type_cast(v, TYPE_PTR);
-	}
+	assert(value_type_id(v) == TYPE_PTR);
 
 	return value_to_ptr(v);
 }
@@ -268,6 +243,96 @@ void * metacall_value_from_string(void * v, const char * str, size_t length)
 void * metacall_value_from_ptr(void * v, const void * ptr)
 {
 	return value_from_ptr(v, ptr);
+}
+
+boolean metacall_value_cast_bool(void ** v)
+{
+	if (value_type_id(*v) != TYPE_BOOL)
+	{
+		*v = value_type_cast(*v, TYPE_BOOL);
+	}
+
+	return value_to_bool(*v);
+}
+
+char metacall_value_cast_char(void ** v)
+{
+	if (value_type_id(*v) != TYPE_CHAR)
+	{
+		*v = value_type_cast(*v, TYPE_CHAR);
+	}
+
+	return value_to_char(*v);
+}
+
+short metacall_value_cast_short(void ** v)
+{
+	if (value_type_id(*v) != TYPE_SHORT)
+	{
+		*v = value_type_cast(*v, TYPE_SHORT);
+	}
+
+	return value_to_short(*v);
+}
+
+int metacall_value_cast_int(void ** v)
+{
+	if (value_type_id(*v) != TYPE_INT)
+	{
+		*v = value_type_cast(*v, TYPE_INT);
+	}
+
+	return value_to_int(*v);
+}
+
+long metacall_value_cast_long(void ** v)
+{
+	if (value_type_id(*v) != TYPE_LONG)
+	{
+		*v = value_type_cast(*v, TYPE_LONG);
+	}
+
+	return value_to_long(*v);
+}
+
+float metacall_value_cast_float(void ** v)
+{
+	if (value_type_id(*v) != TYPE_FLOAT)
+	{
+		*v = value_type_cast(*v, TYPE_FLOAT);
+	}
+
+	return value_to_float(*v);
+}
+
+double metacall_value_cast_double(void ** v)
+{
+	if (value_type_id(*v) != TYPE_DOUBLE)
+	{
+		*v = value_type_cast(*v, TYPE_DOUBLE);
+	}
+
+	return value_to_double(*v);
+}
+
+char * metacall_value_cast_string(void ** v)
+{
+	if (value_type_id(*v) != TYPE_STRING)
+	{
+		*v = value_type_cast(*v, TYPE_STRING);
+	}
+
+	return value_to_string(*v);
+}
+
+void * metacall_value_cast_ptr(void ** v)
+{
+	if (value_type_id(*v) != TYPE_PTR)
+	{
+		*v = value_type_cast(*v, TYPE_PTR);
+	}
+
+	return value_to_ptr(*v);
 }
 
 void metacall_value_stringify(void * v, char * dest, size_t size, size_t * length)
