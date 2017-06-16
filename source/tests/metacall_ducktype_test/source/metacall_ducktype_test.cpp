@@ -41,7 +41,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
 
 		/* MetaCall Type */
-		enum metacall_value_id multiply_ids[] =
+		const enum metacall_value_id multiply_ids[] =
 		{
 			METACALL_INT, METACALL_INT
 		};
@@ -65,7 +65,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 			metacall_value_destroy(ret);
 		}
 
-		enum metacall_value_id divide_ids[] =
+		const enum metacall_value_id divide_ids[] =
 		{
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
@@ -78,7 +78,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		enum metacall_value_id sum_ids[] =
+		const enum metacall_value_id sum_ids[] =
 		{
 			METACALL_INT, METACALL_INT
 		};
@@ -101,16 +101,29 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("hello"));
 
-		enum metacall_value_id strcat_ids[] =
+		const enum metacall_value_id strcat_str_ids[] =
 		{
 			METACALL_STRING, METACALL_STRING
 		};
 
-		ret = metacallt("strcat", strcat_ids, "Hello ", "Universe");
+		ret = metacallt("strcat", strcat_str_ids, "Hello ", "Universe");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id strcat_float_ids[] =
+		{
+			METACALL_FLOAT, METACALL_FLOAT
+		};
+
+		ret = metacallt("strcat", strcat_float_ids, 10.0f, 20.0f);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((float) metacall_value_to_float(ret), (float) 30.0f);
 
 		metacall_value_destroy(ret);
 
@@ -120,7 +133,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		args[0] = metacall_value_create_int(5);
 		args[1] = metacall_value_create_int(15);
 
-		ret = metacallvt("multiply", args, multiply_ids);
+		ret = metacallv("multiply", args);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -131,7 +144,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		args[0] = metacall_value_create_double(15.0);
 		args[1] = metacall_value_create_double(5.0);
 
-		ret = metacallvt("divide", args, divide_ids);
+		ret = metacallv("divide", args);
 		
 		EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -145,11 +158,11 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		args[0] = metacall_value_create_string(pepico_str, sizeof(pepico_str));
 		args[1] = metacall_value_create_string(walas_str, sizeof(walas_str));
 
-		ret = metacallvt("strcat", args, strcat_ids);
-		
+		ret = metacallv("strcat", args);
+
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) metacall_value_to_string(ret), (int) "PepicoWalas");
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "PepicoWalas"));
 
 		metacall_value_destroy(ret);
 	}

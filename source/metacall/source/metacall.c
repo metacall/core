@@ -121,11 +121,6 @@ void * metacallv(const char * name, void * args[])
 	return metacallfv(loader_get(name), args);
 }
 
-void * metacallvt(const char * name, void * args[], enum metacall_value_id ids[])
-{
-	return metacallfvt(loader_get(name), args, ids);
-}
-
 void * metacall(const char * name, ...)
 {
 	function f = loader_get(name);
@@ -154,7 +149,7 @@ void * metacall(const char * name, ...)
 			{
 				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
 			}
-			if (id == TYPE_CHAR)
+			else if (id == TYPE_CHAR)
 			{
 				args[iterator] = value_create_char((char)va_arg(va, int));
 			}
@@ -221,7 +216,7 @@ void * metacall(const char * name, ...)
 	return NULL;
 }
 
-void * metacallt(const char * name, enum metacall_value_id ids[], ...)
+void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 {
 	function f = loader_get(name);
 
@@ -237,7 +232,7 @@ void * metacallt(const char * name, enum metacall_value_id ids[], ...)
 
 		va_list va;
 
-		va_start(va, name);
+		va_start(va, ids);
 
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
@@ -294,18 +289,6 @@ void * metacallt(const char * name, enum metacall_value_id ids[], ...)
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
 			value_destroy(args[iterator]);
-		}
-
-		if (ret != NULL)
-		{
-			type t = signature_get_return(s);
-
-			type_id id = type_index(t);
-
-			if (id != value_type_id(ret))
-			{
-				return value_type_cast(ret, id);
-			}
 		}
 
 		return ret;
@@ -335,11 +318,14 @@ void * metacallfv(void * func, void * args[])
 		{
 			type t = signature_get_type(s, iterator);
 
-			type_id id = type_index(t);
-
-			if (id != value_type_id((value)args[iterator]))
+			if (t != NULL)
 			{
-				args[iterator] = value_type_cast((value)args[iterator], id);
+				type_id id = type_index(t);
+
+				if (id != value_type_id((value)args[iterator]))
+				{
+					args[iterator] = value_type_cast((value)args[iterator], id);
+				}
 			}
 		}
 
@@ -349,58 +335,14 @@ void * metacallfv(void * func, void * args[])
 		{
 			type t = signature_get_return(s);
 
-			type_id id = type_index(t);
-
-			if (id != value_type_id(ret))
+			if (t != NULL)
 			{
-				return value_type_cast(ret, id);
-			}
-		}
+				type_id id = type_index(t);
 
-		return ret;
-	}
-
-	return NULL;
-}
-
-void * metacallfvt(void * func, void * args[], enum metacall_value_id ids[])
-{
-	function f = (function)func;
-
-	if (f != NULL)
-	{
-		signature s = function_signature(f);
-
-		size_t iterator;
-
-		value ret;
-
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
-		{
-			type_id id = ids[iterator];
-
-			if (id != value_type_id((value)args[iterator]))
-			{
-				args[iterator] = value_type_cast((value)args[iterator], id);
-			}
-		}
-
-		ret = function_call(f, args); //, ids);
-
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
-		{
-			value_destroy(args[iterator]);
-		}
-
-		if (ret != NULL)
-		{
-			type t = signature_get_return(s);
-
-			type_id id = type_index(t);
-
-			if (id != value_type_id(ret))
-			{
-				return value_type_cast(ret, id);
+				if (id != value_type_id(ret))
+				{
+					return value_type_cast(ret, id);
+				}
 			}
 		}
 

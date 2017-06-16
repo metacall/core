@@ -126,7 +126,7 @@ type signature_get_return(signature s)
 
 void signature_set(signature s, size_t index, const char * name, type t)
 {
-	if (s != NULL && index < s->count && name != NULL && t != NULL)
+	if (s != NULL && index < s->count && name != NULL)
 	{
 		signature_node node = signature_at(s, index);
 
@@ -156,7 +156,7 @@ void signature_set(signature s, size_t index, const char * name, type t)
 
 void signature_set_return(signature s, type t)
 {
-	if (s != NULL && t != NULL)
+	if (s != NULL)
 	{
 		s->ret = t;
 	}

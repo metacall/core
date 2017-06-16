@@ -103,6 +103,42 @@ int function_py_interface_create(function func, function_impl impl)
 	return 0;
 }
 
+type_id py_loader_impl_get_return_type(PyObject * result)
+{
+	if (PyBool_Check(result))
+	{
+		return TYPE_BOOL;
+	}
+#if PY_MAJOR_VERSION == 2
+	else if (PyInt_Check(result))
+	{
+		return TYPE_INT;
+	}
+#elif PY_MAJOR_VERSION == 3
+	else if (PyLong_Check(result))
+	{
+		return TYPE_LONG;
+	}
+#endif
+	else if (PyFloat_Check(result))
+	{
+		return TYPE_DOUBLE;
+	}
+#if PY_MAJOR_VERSION == 2
+	else if (PyString_Check(result))
+	{
+		return TYPE_STRING;
+	}
+#elif PY_MAJOR_VERSION == 3
+	else if (PyUnicode_Check(result))
+	{
+		return TYPE_STRING;
+	}
+#endif
+
+	return TYPE_INVALID;
+}
+
 function_return function_py_interface_invoke(function func, function_impl impl, function_args args)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
@@ -125,7 +161,16 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	{
 		type t = signature_get_type(s, args_count);
 
-		type_id id = type_index(t);
+		type_id id = TYPE_INVALID;
+
+		if (t == NULL)
+		{
+			id = value_type_id((value)args[args_count]);
+		}
+		else
+		{
+			id = type_index(t);
+		}
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Type (%p): %d", (void *)t, id);
 
@@ -198,11 +243,20 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	Py_DECREF(tuple_args);
 
-	if (result != NULL && ret_type != NULL)
+	if (result != NULL)
 	{
 		value v = NULL;
 
-		type_id id = type_index(ret_type);
+		type_id id = TYPE_INVALID;
+
+		if (ret_type == NULL)
+		{
+			id = py_loader_impl_get_return_type(result);
+		}
+		else
+		{
+			id = type_index(ret_type);
+		}
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
 
@@ -773,17 +827,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 						type t = py_loader_impl_discover_type(impl, annotation);
 
-						if (t == NULL)
-						{
-							/* TODO: Duck typing */
-
-							return 1;
-						}
-						else
-						{
-							signature_set(s, iterator, parameter_name, t);
-						}
-
+						signature_set(s, iterator, parameter_name, t);
 					}
 				}
 			}

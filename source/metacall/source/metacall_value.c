@@ -137,46 +137,91 @@ enum metacall_value_id metacall_value_id(void * v)
 
 boolean metacall_value_to_bool(void * v)
 {
+	if (value_type_id(v) != TYPE_BOOL)
+	{
+		v = value_type_cast(v, TYPE_BOOL);
+	}
+
 	return value_to_bool(v);
 }
 
 char metacall_value_to_char(void * v)
 {
+	if (value_type_id(v) != TYPE_CHAR)
+	{
+		v = value_type_cast(v, TYPE_CHAR);
+	}
+
 	return value_to_char(v);
 }
 
 short metacall_value_to_short(void * v)
 {
+	if (value_type_id(v) != TYPE_SHORT)
+	{
+		v = value_type_cast(v, TYPE_SHORT);
+	}
+
 	return value_to_short(v);
 }
 
 int metacall_value_to_int(void * v)
 {
+	if (value_type_id(v) != TYPE_INT)
+	{
+		v = value_type_cast(v, TYPE_INT);
+	}
+
 	return value_to_int(v);
 }
 
 long metacall_value_to_long(void * v)
 {
+	if (value_type_id(v) != TYPE_LONG)
+	{
+		v = value_type_cast(v, TYPE_LONG);
+	}
+
 	return value_to_long(v);
 }
 
 float metacall_value_to_float(void * v)
 {
+	if (value_type_id(v) != TYPE_FLOAT)
+	{
+		v = value_type_cast(v, TYPE_FLOAT);
+	}
+
 	return value_to_float(v);
 }
 
 double metacall_value_to_double(void * v)
 {
+	if (value_type_id(v) != TYPE_DOUBLE)
+	{
+		v = value_type_cast(v, TYPE_DOUBLE);
+	}
+
 	return value_to_double(v);
 }
 
 char * metacall_value_to_string(void * v)
 {
+	if (value_type_id(v) != TYPE_STRING)
+	{
+		v = value_type_cast(v, TYPE_STRING);
+	}
+
 	return value_to_string(v);
 }
 
 void * metacall_value_to_ptr(void * v)
 {
+	if (value_type_id(v) != TYPE_PTR)
+	{
+		v = value_type_cast(v, TYPE_PTR);
+	}
+
 	return value_to_ptr(v);
 }
 

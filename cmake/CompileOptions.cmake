@@ -82,7 +82,9 @@ if(WIN32)
 
 	# Release
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		add_compile_options(/GL) # Enable debugging information
+		# TODO: Review debug optimization
+		#add_compile_options(/GL) # Enable debugging information
+		##add_compile_options(/LTCG) # Enable debugging information
 	else()
 		add_compile_options(/GS) # Buffer Security Check
 		add_compile_options(/GF) # Enable read-only string pooling
