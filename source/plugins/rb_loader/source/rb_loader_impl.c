@@ -102,7 +102,16 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 		{
 			type t = signature_get_type(s, args_count);
 
-			type_id id = type_index(t);
+			type_id id = TYPE_INVALID;
+
+			if (t == NULL)
+			{
+				id = value_type_id((value)args[args_count]);
+			}
+			else
+			{
+				id = type_index(t);
+			}
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Type %p, %d", (void *)t, id);
 
