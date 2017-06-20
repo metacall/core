@@ -94,9 +94,17 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	if (args_size > 0)
 	{
-		size_t args_count;
+		enum function_rb_interface_invoke_id
+		{
+			FUNCTION_RB_UNKNOWN,
+			FUNCTION_RB_TYPED,
+			FUNCTION_RB_DUCKTYPED,
+			FUNCTION_RB_MIXED
+		} invoke_type = FUNCTION_RB_UNKNOWN;
 
-		VALUE args_value[LOADER_IMPL_RB_FUNCTION_ARGS_SIZE];
+		size_t args_count, ducktype_args_count = 0;
+
+		VALUE args_value[LOADER_IMPL_RB_FUNCTION_ARGS_SIZE + 1];
 
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
@@ -107,9 +115,25 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 			if (t == NULL)
 			{
 				id = value_type_id((value)args[args_count]);
+
+				if (invoke_type == FUNCTION_RB_UNKNOWN)
+				{
+					invoke_type = FUNCTION_RB_DUCKTYPED;
+				}
 			}
 			else
 			{
+				if (invoke_type == FUNCTION_RB_UNKNOWN)
+				{
+					invoke_type = FUNCTION_RB_TYPED;
+				}
+				else if (invoke_type == FUNCTION_RB_DUCKTYPED)
+				{
+					invoke_type = FUNCTION_RB_MIXED;
+
+					ducktype_args_count = args_count;
+				}
+
 				id = type_index(t);
 			}
 
@@ -156,11 +180,43 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 				args_value[args_count] = Qnil;
 			}
 
-			rb_hash_aset(rb_function->args_hash, ID2SYM(rb_intern(signature_get_name(s, args_count))), args_value[args_count]);
+			if (t != NULL)
+			{
+				rb_hash_aset(rb_function->args_hash, ID2SYM(rb_intern(signature_get_name(s, args_count))), args_value[args_count]);
+			}
 		}
 
-		result_value = rb_funcall(rb_function->rb_module->instance, rb_intern("send"), 2,
-			ID2SYM(rb_function->method_id), rb_function->args_hash);
+		if (invoke_type == FUNCTION_RB_TYPED)
+		{
+			result_value = rb_funcall(rb_function->rb_module->instance, rb_intern("send"), 2,
+				ID2SYM(rb_function->method_id), rb_function->args_hash);
+		}
+		else if (invoke_type == FUNCTION_RB_DUCKTYPED)
+		{
+			/* TODO: Improve this horrible code in the future */
+			for (args_count = args_size; args_count > 0; --args_count)
+			{
+				args_value[args_count] = args_value[args_count - 1];
+			}
+
+			args_value[0] = ID2SYM(rb_function->method_id);
+
+			result_value = rb_funcall2(rb_function->rb_module->instance, rb_intern("send"), 1 + args_size, args_value);
+		}
+		else if (invoke_type == FUNCTION_RB_MIXED)
+		{
+			/* TODO: Improve this horrible code in the future */
+			for (args_count = ducktype_args_count; args_count > 0; --args_count)
+			{
+				args_value[args_count] = args_value[args_count - 1];
+			}
+
+			args_value[0] = ID2SYM(rb_function->method_id);
+
+			args_value[ducktype_args_count + 1] = rb_function->args_hash;
+
+			result_value = rb_funcall2(rb_function->rb_module->instance, rb_intern("send"), 1 + ducktype_args_count + 1, args_value);
+		}
 	}
 	else
 	{

@@ -26,7 +26,6 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
-		/* Load */
 		const char * py_scripts[] =
 		{
 			"ducktype.py"
@@ -77,12 +76,12 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		const enum metacall_value_id sum_ids[] =
+		const enum metacall_value_id sum_int_ids[] =
 		{
 			METACALL_INT, METACALL_INT
 		};
 
-		ret = metacallt("sum", sum_ids, 1000, 3500);
+		ret = metacallt("sum", sum_int_ids, 1000, 3500);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -90,7 +89,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		ret = metacallt("sum", sum_ids, 3, 4);
+		ret = metacallt("sum", sum_int_ids, 3, 4);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -123,6 +122,40 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((float) metacall_value_cast_float(&ret), (float) 30.0f);
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("old_style", 1, 2);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_cast_int(&ret), (int) 3);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id mixed_int_ids[] =
+		{
+			METACALL_INT, METACALL_INT
+		};
+
+		ret = metacallt("mixed_style", mixed_int_ids, 200, 100);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((long) metacall_value_cast_long(&ret), (long) 300);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id mixed_noret_int_ids[] =
+		{
+			METACALL_INT, METACALL_INT
+		};
+
+		ret = metacallt("mixed_style_noreturn", mixed_noret_int_ids, 2, 6);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_cast_int(&ret), (int) 8);
 
 		metacall_value_destroy(ret);
 
@@ -203,11 +236,32 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 			METACALL_STRING
 		};
 
-		ret = metacall("say_hello", say_hello_str_ids, "meta-programmer");
+		ret = metacallt("say_hello", say_hello_str_ids, "meta-programmer");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id mixed_int_ids[] =
+		{
+			METACALL_INT, METACALL_INT, METACALL_INT, METACALL_INT
+		};
+
+		ret = metacallt("mixed", mixed_int_ids, 1, 2, 3, 4);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_cast_int(&ret), (int) 10);
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("map_style", 1, 2);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 3);
 
 		metacall_value_destroy(ret);
 
