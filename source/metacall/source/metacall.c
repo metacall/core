@@ -236,7 +236,18 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
-			type_id id = ids[iterator];
+			type t = signature_get_type(s, iterator);
+
+			type_id id = type_index(t);
+
+			if (t != NULL)
+			{
+				id = type_index(t);
+			}
+			else
+			{
+				id = ids[iterator];
+			}
 
 			if (id == TYPE_BOOL)
 			{

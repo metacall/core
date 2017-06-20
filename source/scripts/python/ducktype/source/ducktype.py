@@ -26,3 +26,18 @@ def strcat(left, right):
 	result = left + right;
 	print(left, ' + ', right, ' = ', result);
 	return result;
+
+def old_style(left: int, right: int) -> int:
+	result = left + right;
+	print(left, ' + ', right, ' = ', result);
+	return result;
+
+def mixed_style(left, right: int) -> int:
+	result = left + right;
+	print(left, ' + ', right, ' = ', result);
+	return result;
+
+def mixed_style_noreturn(left, right: int):
+	result = left + right;
+	print(left, ' + ', right, ' = ', result);
+	return result;
