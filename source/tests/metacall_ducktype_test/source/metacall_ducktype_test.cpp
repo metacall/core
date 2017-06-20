@@ -280,5 +280,62 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_PLUGINS_RB */
 
+	/* JavaScript V8 */
+	#if defined(OPTION_BUILD_PLUGINS_JS)
+	{
+		const char * js_scripts[] =
+		{
+			"ducktype.js"
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0])));
+
+		const enum metacall_value_id say_divide_double_ids[] =
+		{
+			METACALL_DOUBLE, METACALL_DOUBLE
+		};
+
+		ret = metacallt("say_divide", say_divide_double_ids, 32.0, 4.0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_cast_double(&ret), (double) 8.0);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id say_divide_float_ids[] =
+		{
+			METACALL_FLOAT, METACALL_FLOAT
+		};
+
+		ret = metacallt("say_divide", say_divide_float_ids, 32.0f, 4.0f);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((float) metacall_value_cast_float(&ret), (float) 8.0f);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id some_text_str_ids[] =
+		{
+			METACALL_STRING, METACALL_STRING
+		};
+
+		ret = metacallt("some_text", some_text_str_ids, "abc", "def");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "abcdef"));
+
+		metacall_value_destroy(ret);
+
+
+		/* TODO: Mixed */
+
+	}
+	#endif /* OPTION_BUILD_PLUGINS_JS */
+
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

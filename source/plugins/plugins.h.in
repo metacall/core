@@ -1,5 +1,5 @@
-#ifndef PLUGINS_H
-#define PLUGINS_H 1
+#ifndef METACALL_PLUGINS_H
+#define METACALL_PLUGINS_H 1
 
 #cmakedefine OPTION_BUILD_PLUGINS_C		1
 #cmakedefine OPTION_BUILD_PLUGINS_JSM	1
@@ -9,4 +9,4 @@
 #cmakedefine OPTION_BUILD_PLUGINS_CS	1
 #cmakedefine OPTION_BUILD_PLUGINS_MOCK	1
 
-#endif /* PLUGINS_H */
+#endif /* METACALL_PLUGINS_H */
