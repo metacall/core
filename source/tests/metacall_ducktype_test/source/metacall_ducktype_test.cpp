@@ -331,9 +331,44 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+		const enum metacall_value_id mixed_double_ids[] =
+		{
+			METACALL_DOUBLE, METACALL_DOUBLE, METACALL_DOUBLE, METACALL_DOUBLE
+		};
 
-		/* TODO: Mixed */
+		ret = metacallt("mixed", mixed_double_ids, 1.0, 2.0, 3.0, 4.0);
 
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_cast_double(&ret), (double) 10.0);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id mixed_noreturn_double_ids[] =
+		{
+			METACALL_DOUBLE, METACALL_DOUBLE, METACALL_DOUBLE, METACALL_DOUBLE
+		};
+
+		ret = metacallt("mixed_noreturn", mixed_noreturn_double_ids, 1.0, 2.0, 3.0, 4.0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_cast_double(&ret), (double) 10.0);
+
+		metacall_value_destroy(ret);
+
+		const enum metacall_value_id mixed_noreturn_float_ids[] =
+		{
+			METACALL_FLOAT, METACALL_FLOAT, METACALL_FLOAT, METACALL_FLOAT
+		};
+
+		ret = metacallt("mixed_noreturn", mixed_noreturn_float_ids, 1.0f, 2.0f, 3.0f, 4.0f);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((float) metacall_value_cast_float(&ret), (float) 10.0f);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_JS */
 

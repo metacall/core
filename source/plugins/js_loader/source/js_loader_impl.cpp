@@ -142,9 +142,7 @@ typedef class loader_impl_js_handle_type
 
 				String::Utf8Value utf8(result);
 
-				/*
-				std::cout << "Result: " << *utf8 << std::endl;
-				*/
+				log_write("metacall", LOG_LEVEL_DEBUG, "JS load from file result: %s", *utf8);
 			}
 		}
 
@@ -162,9 +160,7 @@ typedef class loader_impl_js_handle_type
 
 			String::Utf8Value utf8(result);
 
-			/*
-			std::cout << "Result: " << *utf8 << std::endl;
-			*/
+			log_write("metacall", LOG_LEVEL_DEBUG, "JS load from file result: %s", *utf8);
 		}
 
 		int discover(loader_impl_js js_impl, context ctx)
@@ -197,19 +193,15 @@ typedef class loader_impl_js_handle_type
 
 					if (arg_count >= 0)
 					{
-						std::string func_name/*, func_obj_name*/;
+						std::string func_name, func_obj_name;
 
 						js_loader_impl_obj_to_string(element, func_name);
 
-						/*
 						js_loader_impl_obj_to_string(func, func_obj_name);
 
-						std::cout << "Function (" << i << ") - { "
-							<< func_name << ", " << arg_count
-							<< " }" <<  std::endl
-							<< "=>" << std::endl
-							<< func_obj_name << std::endl;
-						*/
+						log_write("metacall", LOG_LEVEL_DEBUG,
+							"Function (%d) { %s, %d-arity } => %s",
+							i, func_name.c_str(), func_obj_name.c_str());
 
 						function f = function_create(func_name.c_str(),
 							arg_count,
@@ -325,8 +317,6 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 	Local<Value> result;
 
-	type ret_type = signature_get_return(s);
-
 	if (args_size > 0)
 	{
 		std::vector<Local<Value>> value_args(args_size);
@@ -337,7 +327,16 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 		{
 			type t = signature_get_type(s, args_count);
 
-			type_id id = type_index(t);
+			type_id id = TYPE_INVALID;
+
+			if (t == NULL)
+			{
+				id = value_type_id((value)args[args_count]);
+			}
+			else
+			{
+				id = type_index(t);
+			}
 
 			if (id == TYPE_BOOL)
 			{
@@ -405,9 +404,39 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 		result = func_impl_local->Call(js_func->get_ctx_impl()->Global(), 0, nullptr);
 	}
 
-	if (ret_type != NULL)
+	if (!result->IsUndefined())
 	{
-		type_id id = type_index(ret_type);
+		type ret_type = signature_get_return(s);
+
+		type_id id = TYPE_INVALID;
+
+		if (ret_type == NULL)
+		{
+			if (result->IsNull())
+			{
+				return NULL;
+			}
+			else if (result->IsTrue() || result->IsFalse() || result->IsBoolean())
+			{
+				id = TYPE_BOOL;
+			}
+			else if (result->IsNumber())
+			{
+				id = TYPE_DOUBLE;
+			}
+			else if (result->IsInt32() || result->IsUint32())
+			{
+				id = TYPE_INT;
+			}
+			else if (result->IsString())
+			{
+				id = TYPE_STRING;
+			}
+		}
+		else
+		{
+			id = type_index(ret_type);
+		}
 
 		if (id == TYPE_BOOL)
 		{
@@ -419,6 +448,7 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 		}
 		else if (id == TYPE_INT)
 		{
+			/* TODO: Check signed / unsigned for avoid integer overflow */
 			int i = result->Int32Value();
 
 			return value_create_int(i);

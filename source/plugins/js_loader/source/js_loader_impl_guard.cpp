@@ -188,10 +188,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 				{
 					if (iterator == ')')
 					{
-						if (reading_type)
-						{
-							parameters.push_back(parameter);
-						}
+						parameters.push_back(parameter);
 
 						/*
 						if (!parameters.empty())
