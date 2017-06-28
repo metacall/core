@@ -7,6 +7,7 @@
  */
 
 #include <reflect/reflect_scope.h>
+#include <reflect/reflect_function.h>
 
 #include <adt/adt_hash_map.h>
 #include <adt/adt_vector.h>
@@ -142,6 +143,8 @@ int scope_define(scope sp, const char * key, scope_object obj)
 {
 	if (sp != NULL && key != NULL && obj != NULL)
 	{
+		/* TODO: Support for other scope objects (e.g: class) */
+
 		return hash_map_insert(sp->map, (hash_map_key)key, (hash_map_value)obj);
 	}
 
@@ -173,11 +176,15 @@ int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, ha
 	{
 		struct scope_dump_cb_iterator_type * iterator = args;
 
-		size_t size = strlen((char *)key) + 1;
+		/* TODO: Support for other scope objects (e.g: class) */
+
+		size_t func_buffer_size = 0;
+
+		char * func_buffer = function_dump((function)val, &func_buffer_size);
 
 		if (iterator->buffer == NULL && iterator->size == 0)
 		{
-			iterator->buffer = malloc(size * sizeof(char));
+			iterator->buffer = malloc(func_buffer_size * sizeof(char));
 
 			if (iterator->buffer == NULL)
 			{
@@ -186,14 +193,10 @@ int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, ha
 		}
 		else
 		{
-			char * buffer = malloc((iterator->size + size) * sizeof(char));
+			char * buffer = realloc(iterator->buffer, (iterator->size + func_buffer_size) * sizeof(char));
 
 			if (buffer != NULL)
 			{
-				memcpy(buffer, iterator->buffer, iterator->size);
-
-				free(iterator->buffer);
-
 				iterator->buffer = buffer;
 			}
 			else
@@ -207,9 +210,9 @@ int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, ha
 			}
 		}
 
-		memcpy(&iterator->buffer[iterator->size], key, size);
+		memcpy(&iterator->buffer[iterator->size], func_buffer, func_buffer_size);
 
-		iterator->size += size;
+		iterator->size += func_buffer_size;
 
 		iterator->buffer[iterator->size - 1] = '\n';
 
@@ -227,6 +230,11 @@ char * scope_dump(scope sp, size_t * size)
 	scope_dump_cb_iterator.size = 0;
 
 	hash_map_iterate(sp->map, &scope_dump_cb_iterate, &scope_dump_cb_iterator);
+
+	if (scope_dump_cb_iterator.buffer == NULL)
+	{
+		return NULL;
+	}
 
 	scope_dump_cb_iterator.buffer[scope_dump_cb_iterator.size - 1] = '\0';
 

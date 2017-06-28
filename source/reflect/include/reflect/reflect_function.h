@@ -50,6 +50,8 @@ REFLECT_API signature function_signature(function func);
 
 REFLECT_API void function_print(function func);
 
+REFLECT_API char * function_dump(function func, size_t * size);
+
 REFLECT_API function_return function_call(function func, function_args args);
 
 REFLECT_API void function_destroy(function func);

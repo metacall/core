@@ -112,7 +112,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 	if (sp && char_type != NULL && int_type != NULL && ptr_type != NULL)
 	{
-		function f1, f2;
+		function f1, f2, f3, f4, f5, f6, f7;
 
 		function_impl_example example_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
@@ -125,17 +125,6 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f1), 0, "c", char_type);
 			signature_set(function_signature(f1), 1, "i", int_type);
 			signature_set(function_signature(f1), 2, "p", ptr_type);
-
-			/* function call example */
-			{
-				char c = 'm';
-				int i = 123456789;
-				struct example_arg_type e = { 5, 3.3f, "ABCDEFGHI" };
-
-				function_args args = { &c, &i, &e };
-
-				function_call(f1, args);
-			}
 
 			EXPECT_EQ((int) scope_define(sp, function_name(f1), f1), (int) 0);
 		}
@@ -152,18 +141,87 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f2), 1, "o", int_type);
 			signature_set(function_signature(f2), 2, "u", ptr_type);
 
-			/* function call example_asd */
-			{
-				char e = 'c';
-				int o = 12349;
-				struct example_arg_type u = { 25, 1.3f, "ABCDEFGHI" };
-
-				function_args args = { &e, &o, &u };
-
-				function_call(f2, args);
-			}
-
 			EXPECT_EQ((int) scope_define(sp, function_name(f2), f2), (int) 0);
+		}
+
+		function_impl_example example_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f3 = function_create("example_ret", 3, example_ret_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f3, (function) NULL);
+
+		if (f3 != NULL)
+		{
+			signature_set_return(function_signature(f3), int_type);
+			signature_set(function_signature(f3), 0, "e", char_type);
+			signature_set(function_signature(f3), 1, "o", int_type);
+			signature_set(function_signature(f3), 2, "u", ptr_type);
+
+			EXPECT_EQ((int) scope_define(sp, function_name(f3), f3), (int) 0);
+		}
+
+		function_impl_example example_duck_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f4 = function_create("example_duck", 3, example_duck_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f4, (function) NULL);
+
+		if (f4 != NULL)
+		{
+			signature_set(function_signature(f4), 0, "e", NULL);
+			signature_set(function_signature(f4), 1, "o", NULL);
+			signature_set(function_signature(f4), 2, "u", NULL);
+
+			EXPECT_EQ((int) scope_define(sp, function_name(f4), f4), (int) 0);
+		}
+
+		function_impl_example example_duck_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f5 = function_create("example_duck_ret", 3, example_duck_ret_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f5, (function) NULL);
+
+		if (f5 != NULL)
+		{
+			signature_set_return(function_signature(f5), int_type);
+			signature_set(function_signature(f5), 0, "asdfe", NULL);
+			signature_set(function_signature(f5), 1, "do", NULL);
+			signature_set(function_signature(f5), 2, "dafu", NULL);
+
+			EXPECT_EQ((int) scope_define(sp, function_name(f5), f5), (int) 0);
+		}
+
+		function_impl_example example_duck_mix_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f6 = function_create("example_duck_mix", 4, example_duck_mix_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f6, (function) NULL);
+
+		if (f6 != NULL)
+		{
+			signature_set(function_signature(f6), 0, "asdfe", NULL);
+			signature_set(function_signature(f6), 1, "do", int_type);
+			signature_set(function_signature(f6), 2, "dafu", NULL);
+			signature_set(function_signature(f6), 3, "dafu", ptr_type);
+
+			EXPECT_EQ((int) scope_define(sp, function_name(f6), f6), (int) 0);
+		}
+
+		function_impl_example example_duck_mix_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f7 = function_create("example_duck_mix_ret", 4, example_duck_mix_ret_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f7, (function) NULL);
+
+		if (f7 != NULL)
+		{
+			signature_set_return(function_signature(f7), int_type);
+			signature_set(function_signature(f7), 0, "asdfe", int_type);
+			signature_set(function_signature(f7), 1, "do", NULL);
+			signature_set(function_signature(f7), 2, "dafu", ptr_type);
+			signature_set(function_signature(f7), 3, "dafufs", NULL);
+
+			EXPECT_EQ((int) scope_define(sp, function_name(f7), f7), (int) 0);
 		}
 
 		{
@@ -180,6 +238,11 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 		function_destroy(f1);
 		function_destroy(f2);
+		function_destroy(f3);
+		function_destroy(f4);
+		function_destroy(f5);
+		function_destroy(f6);
+		function_destroy(f7);
 
 		type_destroy(char_type);
 		type_destroy(int_type);

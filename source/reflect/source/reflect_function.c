@@ -108,6 +108,123 @@ void function_print(function func)
 	}
 }
 
+char * function_dump(function func, size_t * size)
+{
+	if (func != NULL)
+	{
+		char * buffer = NULL;
+
+		size_t func_name_length = strlen(func->name);
+
+		size_t index, copy_length = 0, length = func_name_length;
+
+		type ret = signature_get_return(func->s);
+
+		size_t args_count = signature_count(func->s);
+
+		const char * ret_name = type_name(ret);
+
+		size_t ret_name_length = (ret_name == NULL) ? 0 : strlen(ret_name);
+
+		size_t duck_type_count = 0;
+
+		length += ret_name_length;
+
+		for (index = 0; index < args_count; ++index)
+		{
+			const char * arg_name = signature_get_name(func->s, index);
+
+			type t = signature_get_type(func->s, index);
+
+			length += strlen(arg_name);
+
+			if (t != NULL)
+			{
+				length += strlen(type_name(t));
+			}
+			else
+			{
+				++duck_type_count;
+			}
+		}
+
+		length += (3 * args_count) - duck_type_count;
+
+		if (ret_name != NULL)
+		{
+			++length;
+		}
+
+		buffer = malloc((length + 1) * sizeof(char));
+		
+		if (buffer == NULL)
+		{
+			return NULL;
+		}
+
+		if (ret_name != NULL)
+		{
+			memcpy(buffer, ret_name, ret_name_length);
+
+			buffer[ret_name_length] = ' ';
+
+			copy_length += ret_name_length + 1;
+		}
+
+		memcpy(&buffer[copy_length], func->name, func_name_length);
+
+		copy_length += func_name_length;
+
+		buffer[copy_length++] = '(';
+
+		for (index = 0; index < args_count; ++index)
+		{
+			const char * arg_name = signature_get_name(func->s, index);
+
+			type t = signature_get_type(func->s, index);
+
+			size_t arg_name_length = strlen(arg_name);
+
+			memcpy(&buffer[copy_length], arg_name, arg_name_length);
+
+			copy_length += arg_name_length;
+
+			if (t != NULL)
+			{
+				size_t arg_type_name_length = strlen(type_name(t));
+
+				buffer[copy_length++] = ' ';
+
+				memcpy(&buffer[copy_length], type_name(t), arg_type_name_length);
+
+				copy_length += arg_type_name_length;
+			}
+
+			if (index < args_count - 1)
+			{
+				buffer[copy_length++] = ',';
+				buffer[copy_length++] = ' ';
+			}
+		}
+
+		buffer[copy_length++] = ')';
+		buffer[copy_length] = '\0';
+
+		if (copy_length != length)
+		{
+			free(buffer);
+
+			return NULL;
+		}
+
+		*size = copy_length + 1;
+
+		return buffer;
+	}
+
+	return NULL;
+}
+
 function_return function_call(function func, function_args args)
 {
 	if (func != NULL && args != NULL)
