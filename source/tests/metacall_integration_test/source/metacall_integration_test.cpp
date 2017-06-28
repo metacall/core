@@ -16,22 +16,22 @@
 
 #include <log/log.h>
 
-class integration_test : public testing::Test
+class metacall_integration_test : public testing::Test
 {
 protected:
 };
 
-TEST_F(integration_test, CsSayHello)
+TEST_F(metacall_integration_test, CsSayHello)
 {
 	metacall("SayHello");
 }
 
-TEST_F(integration_test, CsSayAny)
+TEST_F(metacall_integration_test, CsSayAny)
 {
 	metacall("Say", "Any");
 }
 
-TEST_F(integration_test, PyMultiply)
+TEST_F(metacall_integration_test, PyMultiply)
 {
 	value ret = NULL;
 
@@ -47,7 +47,7 @@ TEST_F(integration_test, PyMultiply)
 
 }
 
-TEST_F(integration_test, Sum)
+TEST_F(metacall_integration_test, Sum)
 {
 	value ret = NULL;
 

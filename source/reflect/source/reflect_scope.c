@@ -182,12 +182,19 @@ int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, ha
 
 		char * func_buffer = function_dump((function)val, &func_buffer_size);
 
+		if (func_buffer == NULL)
+		{
+			return 0;
+		}
+
 		if (iterator->buffer == NULL && iterator->size == 0)
 		{
 			iterator->buffer = malloc(func_buffer_size * sizeof(char));
 
 			if (iterator->buffer == NULL)
 			{
+				free(func_buffer);
+
 				return 1;
 			}
 		}
@@ -202,6 +209,7 @@ int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, ha
 			else
 			{
 				free(iterator->buffer);
+				free(func_buffer);
 
 				iterator->buffer = NULL;
 				iterator->size = 0;

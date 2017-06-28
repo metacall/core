@@ -206,7 +206,19 @@ METACALL_API void * metacallf(void * func, ...);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...);
+METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[]), enum metacall_value_id return_type, size_t size, ...);
+
+/**
+*  @brief
+*    Provide information about all loaded objects
+*
+*  @param[out] size
+*    Size in bytes of return buffer
+*
+*  @return
+*    Static string containing introspection information
+*/
+METACALL_API char * metacall_inspect(size_t * size);
 
 /**
 *  @brief

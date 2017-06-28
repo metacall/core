@@ -148,7 +148,7 @@ char * function_dump(function func, size_t * size)
 			}
 		}
 
-		length += (3 * args_count) - duck_type_count;
+		length += (args_count > 0) ? (3 * args_count) - duck_type_count : 2;
 
 		if (ret_name != NULL)
 		{

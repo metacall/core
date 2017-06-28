@@ -112,7 +112,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 	if (sp && char_type != NULL && int_type != NULL && ptr_type != NULL)
 	{
-		function f1, f2, f3, f4, f5, f6, f7;
+		function f1, f2, f3, f4, f5, f6, f7, f8, f9;
 
 		function_impl_example example_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
@@ -224,6 +224,30 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			EXPECT_EQ((int) scope_define(sp, function_name(f7), f7), (int) 0);
 		}
 
+		function_impl_example example_empty_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f8 = function_create("example_empty_ret", 0, example_empty_ret_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f8, (function) NULL);
+
+		if (f8 != NULL)
+		{
+			signature_set_return(function_signature(f8), int_type);
+
+			EXPECT_EQ((int) scope_define(sp, function_name(f8), f8), (int) 0);
+		}
+
+		function_impl_example example_empty_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
+
+		f9 = function_create("example_empty", 0, example_empty_impl, &function_example_singleton);
+
+		EXPECT_NE((function) f9, (function) NULL);
+
+		if (f9 != NULL)
+		{
+			EXPECT_EQ((int) scope_define(sp, function_name(f9), f9), (int) 0);
+		}
+
 		{
 			size_t size = 0;
 
@@ -243,6 +267,8 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 		function_destroy(f5);
 		function_destroy(f6);
 		function_destroy(f7);
+		function_destroy(f8);
+		function_destroy(f9);
 
 		type_destroy(char_type);
 		type_destroy(int_type);

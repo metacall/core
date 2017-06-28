@@ -49,6 +49,8 @@ LOADER_API loader loader_singleton(void);
 
 LOADER_API void loader_initialize(void);
 
+LOADER_API int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]);
+
 LOADER_API int loader_load_path(const loader_naming_path path);
 
 LOADER_API int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size);
@@ -61,13 +63,13 @@ LOADER_API loader_impl loader_get_impl(const loader_naming_tag tag);
 
 LOADER_API loader_data loader_get(const char * name);
 
+LOADER_API char * loader_inspect(size_t * size);
+
 LOADER_API int loader_unload(void);
 
 LOADER_API void loader_destroy(void);
 
 LOADER_API const char * loader_print_info(void);
-
-LOADER_API int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]);
 
 #ifdef __cplusplus
 }

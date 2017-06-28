@@ -5,7 +5,7 @@
  *	A library for dynamic loading and linking shared objects at run-time.
  *
  */
-#include <integration-test/environment.hpp>
+#include <metacall-integration-test/environment.hpp>
 
 #include <gmock/gmock.h>
 

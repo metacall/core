@@ -466,6 +466,11 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
 }
 
+char * metacall_inspect(size_t * size)
+{
+	return loader_inspect(size);
+}
+
 int metacall_destroy()
 {
 	if (loader_unload() != 0)

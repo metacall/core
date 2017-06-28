@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target integration-test)
+set(target metacall-integration-test)
 message(STATUS "Test ${target}")
 
 #
@@ -37,7 +37,7 @@ set(headers
 set(sources
 	${source_path}/main.cpp
 	${source_path}/environment.cpp
-	${source_path}/integration_test.cpp
+	${source_path}/metacall_integration_test.cpp
 )
 
 # Group source files
