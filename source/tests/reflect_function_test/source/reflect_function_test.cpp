@@ -84,12 +84,12 @@ function_interface function_example_singleton()
 	return &example_interface;
 }
 
-class function_test : public testing::Test
+class reflect_function_test : public testing::Test
 {
   public:
 };
 
-TEST_F(function_test, DefaultConstructor)
+TEST_F(reflect_function_test, DefaultConstructor)
 {
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),

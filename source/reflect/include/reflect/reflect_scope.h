@@ -34,6 +34,8 @@ REFLECT_API int scope_define(scope sp, const char * key, scope_object obj);
 
 REFLECT_API void scope_print(scope sp);
 
+REFLECT_API char * scope_dump(scope sp, size_t * size);
+
 REFLECT_API scope_object scope_get(scope sp, const char * key);
 
 REFLECT_API scope_object scope_undef(scope sp, const char * key);

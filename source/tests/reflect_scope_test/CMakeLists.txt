@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target function-test)
+set(target reflect-scope-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/function_test.cpp
+	${source_path}/reflect_scope_test.cpp
 )
 
 # Group source files

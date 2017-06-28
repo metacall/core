@@ -24,7 +24,15 @@ struct scope_type
 
 };
 
+struct scope_dump_cb_iterator_type
+{
+	char * buffer;
+	size_t size;
+};
+
 static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
+static int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
 scope scope_create(const char * name)
 {
@@ -140,7 +148,7 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	return 1;
 }
 
-static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && val != NULL && args == NULL)
 	{
@@ -157,6 +165,74 @@ void scope_print(scope sp)
 	log_write("metacall", LOG_LEVEL_DEBUG, "Scope (%s):", sp->name);
 
 	hash_map_iterate(sp->map, &scope_print_cb_iterate, NULL);
+}
+
+int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+{
+	if (map != NULL && key != NULL && val != NULL && args != NULL)
+	{
+		struct scope_dump_cb_iterator_type * iterator = args;
+
+		size_t size = strlen((char *)key) + 1;
+
+		if (iterator->buffer == NULL && iterator->size == 0)
+		{
+			iterator->buffer = malloc(size * sizeof(char));
+
+			if (iterator->buffer == NULL)
+			{
+				return 1;
+			}
+		}
+		else
+		{
+			char * buffer = malloc((iterator->size + size) * sizeof(char));
+
+			if (buffer != NULL)
+			{
+				memcpy(buffer, iterator->buffer, iterator->size);
+
+				free(iterator->buffer);
+
+				iterator->buffer = buffer;
+			}
+			else
+			{
+				free(iterator->buffer);
+
+				iterator->buffer = NULL;
+				iterator->size = 0;
+
+				return 1;
+			}
+		}
+
+		memcpy(&iterator->buffer[iterator->size], key, size);
+
+		iterator->size += size;
+
+		iterator->buffer[iterator->size - 1] = '\n';
+
+		return 0;
+	}
+
+	return 1;
+}
+
+char * scope_dump(scope sp, size_t * size)
+{
+	struct scope_dump_cb_iterator_type scope_dump_cb_iterator;
+
+	scope_dump_cb_iterator.buffer = NULL;
+	scope_dump_cb_iterator.size = 0;
+
+	hash_map_iterate(sp->map, &scope_dump_cb_iterate, &scope_dump_cb_iterator);
+
+	scope_dump_cb_iterator.buffer[scope_dump_cb_iterator.size - 1] = '\0';
+
+	*size = scope_dump_cb_iterator.size;
+
+	return scope_dump_cb_iterator.buffer;
 }
 
 scope_object scope_get(scope sp, const char * key)
