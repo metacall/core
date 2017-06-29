@@ -221,7 +221,9 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	char * files[MAX_FILES];
 
-	for (size_t i = 0; i < size; i++)
+	size_t i;
+
+	for (i = 0; i < size; ++i)
 	{
 		files[i] = (char*)paths[i];
 	}
@@ -261,6 +263,46 @@ int cs_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 0;
 }
 
+static const char * cs_loader_impl_discover_type(short id)
+{
+	/* TODO:
+		This function is needed because of a bad implementation
+		which breaks the original design, reimplementing its own type id system
+		and function representation system without respecting original data types.
+		This plugin has to be reestructured and reimplemented if necessary to
+		keep the whole system consistent and to fit the original design.
+		Remove this function in the future.
+	*/
+
+	static struct
+	{
+		short id;
+		const char * name;
+	}
+	type_id_name_pair[] =
+	{
+		{ TYPE_BOOL, "bool" },
+		{ TYPE_CHAR, "char" },
+		{ TYPE_INT, "int" },
+		{ TYPE_LONG, "long" },
+		{ TYPE_FLOAT, "float" },
+		{ TYPE_DOUBLE, "double" },
+		{ TYPE_STRING, "string" }
+	};
+
+	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (index = 0; index < size; ++index)
+	{
+		if (type_id_name_pair[index].id == id)
+		{
+			return type_id_name_pair[index].name;
+		}
+	}
+
+	return "(NULL)";
+}
+
 int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	/* TODO: Discover handle (script) and insert metadata information of the script into context */
@@ -289,16 +331,18 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 		f = function_create(functions[i].name, functions[i].param_count, cs_f, &function_cs_singleton);
 
-		if (functions[i].param_count > 0) {
-
+		if (f != NULL)
+		{
 			signature s = function_signature(f);
+
+			signature_set_return(s, loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].return_type)));
 
 			for (int j = 0; j < functions[i].param_count; ++j)
 			{
-				signature_set(s, j, functions[i].pars[j].name, type_create(functions[i].pars[j].type, "holder", NULL, NULL));
-			}
+				type t = loader_impl_type(impl, cs_loader_impl_discover_type(functions[i].pars[j].type));
 
-			signature_set_return(s, type_create(functions[i].return_type, "holder", NULL, NULL));
+				signature_set(s, j, functions[i].pars[j].name, t);
+			}
 		}
 
 		scope_define(sp, functions[i].name, f);
