@@ -7,7 +7,7 @@
  */
 
 #include <gmock/gmock.h>
-#include <integration-test/environment.hpp>
+#include <metacall-integration-test/environment.hpp>
 
 int main(int argc, char * argv[])
 {

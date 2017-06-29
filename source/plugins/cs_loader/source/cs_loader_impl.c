@@ -45,7 +45,8 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	cs_function * cs_f = (cs_function*)impl;
 	execution_result * result;
 
-	if (cs_f->func->param_count == 0) {
+	if (cs_f->func->param_count == 0)
+	{
 		result = simple_netcore_invoke(cs_f->handle, cs_f->func->name);
 	}
 	else
@@ -63,31 +64,51 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 
 	value v = NULL;
 
-	if (result->ptr != NULL) {
-
+	if (result->ptr != NULL)
+	{
 		switch (cs_f->func->return_type)
 		{
-		case TYPE_BOOL:
-			v = value_create_bool(*(boolean*)result->ptr);
-			break;
-		case TYPE_CHAR:
-			v = value_create_bool(*(char*)result->ptr);
-			break;
-		case TYPE_INT:
-			v = value_create_int(*(int*)result->ptr);
-			break;
-		case TYPE_LONG:
-			v = value_create_long(*(long*)result->ptr);
-			break;
-		case TYPE_FLOAT:
-			v = value_create_float(*(float*)result->ptr);
-			break;
-		case TYPE_DOUBLE:
-			v = value_create_double(*(double*)result->ptr);
-			break;
-		case TYPE_STRING:
-			v = value_create_string((const char*)result->ptr, strlen((const char*)result->ptr));
-			break;
+			case TYPE_BOOL:
+			{
+				v = value_create_bool(*(boolean*)result->ptr);
+				break;
+			}
+
+			case TYPE_CHAR:
+			{
+				v = value_create_bool(*(char*)result->ptr);
+				break;
+			}
+
+			case TYPE_INT:
+			{
+				v = value_create_int(*(int*)result->ptr);
+				break;
+			}
+
+			case TYPE_LONG:
+			{
+				v = value_create_long(*(long*)result->ptr);
+				break;
+			}
+
+			case TYPE_FLOAT:
+			{
+				v = value_create_float(*(float*)result->ptr);
+				break;
+			}
+
+			case TYPE_DOUBLE:
+			{
+				v = value_create_double(*(double*)result->ptr);
+				break;
+			}
+
+			case TYPE_STRING:
+			{
+				v = value_create_string((const char*)result->ptr, strlen((const char*)result->ptr));
+				break;
+			}
 		}
 	}
 
@@ -118,11 +139,6 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 {
 	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
 
-	(void)impl;
-
-	/* TODO: Load your custom types if required */
-
-	/*
 	static struct
 	{
 		type_id id;
@@ -131,8 +147,10 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 	type_id_name_pair[] =
 	{
 		{ TYPE_BOOL, "bool" },
+		{ TYPE_CHAR, "char" },
 		{ TYPE_INT, "int" },
 		{ TYPE_LONG, "long" },
+		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
 		{ TYPE_STRING, "string" }
 	};
@@ -153,27 +171,32 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 			}
 		}
 	}
-	*/
 
 	return 0;
 }
 
 loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config)
 {
-	(void)impl;
-
 	char * dotnet_root = NULL;
 	char * dotnet_loader_assembly_path = NULL;
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
 
-	if (config != NULL) {
+	if (cs_loader_impl_initialize_types(impl) != 0)
+	{
+		return NULL;
+	}
+
+	if (config != NULL)
+	{
 		dotnet_root_value = configuration_value(config, "dotnet_root");
 		dotnet_loader_assembly_path_value = configuration_value(config, "dotnet_loader_assembly_path");
 
-		if (dotnet_root_value != NULL) {
+		if (dotnet_root_value != NULL)
+		{
 			dotnet_root = value_to_string(dotnet_root_value);
 		}
+
 		if (dotnet_loader_assembly_path_value != NULL) {
 			dotnet_loader_assembly_path = value_to_string(dotnet_loader_assembly_path_value);
 		}
