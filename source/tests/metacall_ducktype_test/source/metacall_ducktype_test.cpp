@@ -336,7 +336,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 			METACALL_DOUBLE, METACALL_DOUBLE, METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
-		ret = metacallt("mixed", mixed_double_ids, 1.0, 2.0, 3.0, 4.0);
+		ret = metacallt("mixed_js", mixed_double_ids, 1.0, 2.0, 3.0, 4.0);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 

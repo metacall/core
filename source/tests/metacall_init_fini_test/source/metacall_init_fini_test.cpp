@@ -38,7 +38,7 @@ TEST_F(metacall_init_fini_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 15, (int) metacall_value_to_int(ret));
+		EXPECT_EQ((int) 15, (int) metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 	}

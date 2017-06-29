@@ -446,6 +446,22 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 			return value_create_bool(bo);
 		}
+		else if (id == TYPE_CHAR)
+		{
+			/* TODO: Check signed / unsigned for avoid integer overflow */
+			/* TODO: Check rage for avoid integer overflow */
+			int i = result->Int32Value();
+
+			return value_create_char((char)i);
+		}
+		else if (id == TYPE_SHORT)
+		{
+			/* TODO: Check signed / unsigned for avoid integer overflow */
+			/* TODO: Check rage for avoid integer overflow */
+			int i = result->Int32Value();
+
+			return value_create_short((short)i);
+		}
 		else if (id == TYPE_INT)
 		{
 			/* TODO: Check signed / unsigned for avoid integer overflow */
@@ -632,8 +648,11 @@ int js_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_js js_
 	type_id_name_pair[] =
 	{
 		{ TYPE_BOOL, "Boolean" },
+		{ TYPE_CHAR, "Int8" },
+		{ TYPE_SHORT, "Int16" },
 		{ TYPE_INT, "Int32" },
 		{ TYPE_LONG, "Integer" },
+		{ TYPE_FLOAT, "Float" },
 		{ TYPE_DOUBLE, "Number" },
 		{ TYPE_STRING, "String" },
 		{ TYPE_PTR, "Object" },

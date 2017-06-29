@@ -9,7 +9,7 @@ function some_text(a, b) {
 	return (a + b);
 }
 
-function mixed(a, b :: Number, c :: Number, d) :: Number {
+function mixed_js(a, b :: Number, c :: Number, d) :: Number {
 	return (a + b + c + d);
 }
 

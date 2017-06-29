@@ -76,37 +76,43 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 
 			case TYPE_CHAR:
 			{
-				v = value_create_bool(*(char*)result->ptr);
+				v = value_create_bool(*(char *)result->ptr);
+				break;
+			}
+
+			case TYPE_SHORT:
+			{
+				v = value_create_short(*(short *)result->ptr);
 				break;
 			}
 
 			case TYPE_INT:
 			{
-				v = value_create_int(*(int*)result->ptr);
+				v = value_create_int(*(int *)result->ptr);
 				break;
 			}
 
 			case TYPE_LONG:
 			{
-				v = value_create_long(*(long*)result->ptr);
+				v = value_create_long(*(long *)result->ptr);
 				break;
 			}
 
 			case TYPE_FLOAT:
 			{
-				v = value_create_float(*(float*)result->ptr);
+				v = value_create_float(*(float *)result->ptr);
 				break;
 			}
 
 			case TYPE_DOUBLE:
 			{
-				v = value_create_double(*(double*)result->ptr);
+				v = value_create_double(*(double *)result->ptr);
 				break;
 			}
 
 			case TYPE_STRING:
 			{
-				v = value_create_string((const char*)result->ptr, strlen((const char*)result->ptr));
+				v = value_create_string((const char *)result->ptr, strlen((const char *)result->ptr));
 				break;
 			}
 		}
@@ -148,6 +154,7 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 	{
 		{ TYPE_BOOL, "bool" },
 		{ TYPE_CHAR, "char" },
+		{ TYPE_SHORT, "short" },
 		{ TYPE_INT, "int" },
 		{ TYPE_LONG, "long" },
 		{ TYPE_FLOAT, "float" },
