@@ -107,7 +107,7 @@ value value_create_array(const void * arr, size_t element_size, size_t size)
 	return value_type_create(arr, element_size * size, TYPE_ARRAY);
 }
 
-value value_create_list(const value values[], size_t size)
+value value_create_list(const value * values, size_t size)
 {
 	if (values == NULL || size == 0)
 	{
@@ -274,7 +274,7 @@ value value_from_array(value v, const void * arr, size_t element_size, size_t si
 	return v;
 }
 
-value value_from_list(value v, const value values[], size_t size)
+value value_from_list(value v, const value * values, size_t size)
 {
 	if (v != NULL && values != NULL && size > 0)
 	{

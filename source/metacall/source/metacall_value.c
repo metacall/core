@@ -94,7 +94,7 @@ void * metacall_value_create_array(const void * arr, size_t element_size, size_t
 
 void * metacall_value_create_list(const void * values[], size_t size)
 {
-	return value_create_list(values, size);
+	return value_create_list((const value *)values, size);
 }
 
 void * metacall_value_create_ptr(const void * ptr)
@@ -275,7 +275,7 @@ void * metacall_value_from_array(void * v, const void * arr, size_t element_size
 
 void * metacall_value_from_list(void * v, const void * values[], size_t size)
 {
-	return value_from_list(v, values, size);
+	return value_from_list(v, (const value *)values, size);
 }
 
 void * metacall_value_from_ptr(void * v, const void * ptr)

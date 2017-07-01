@@ -18,6 +18,12 @@
 extern "C" {
 #endif
 
+/* -- Definitions -- */
+
+#define LOADER_HOST_PROXY_NAME		"__metacall_host__"
+
+/* -- Methods -- */
+
 LOADER_API loader_impl loader_impl_create(const char * path, loader_naming_tag tag);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);

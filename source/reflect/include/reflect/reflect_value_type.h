@@ -196,7 +196,7 @@ REFLECT_API value value_create_array(const void * arr, size_t element_size, size
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_list(const value values[], size_t size);
+REFLECT_API value value_create_list(const value * values, size_t size);
 
 /**
 *  @brief
@@ -502,7 +502,7 @@ REFLECT_API value value_from_array(value v, const void * arr, size_t element_siz
 *  @return
 *    Value with array of values @values assigned to it
 */
-REFLECT_API value value_from_list(value v, const value values[], size_t size);
+REFLECT_API value value_from_list(value v, const value * values, size_t size);
 
 /**
 *  @brief

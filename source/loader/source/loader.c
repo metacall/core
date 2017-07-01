@@ -458,14 +458,17 @@ int loader_load_from_configuration(const loader_naming_path path)
 
 	for (index = 0; index < size; ++index)
 	{
-		const char * str = value_to_string(scripts_array[index]);
+		if (scripts_array[index] != NULL)
+		{
+			const char * str = value_to_string(scripts_array[index]);
 
-		strncpy(paths[index], str, value_type_size(scripts_array[index]));
+			strncpy(paths[index], str, value_type_size(scripts_array[index]));
 
-		value_destroy(scripts_array[index]);
+			value_destroy(scripts_array[index]);
+		}
 	}
 
-	if (loader_load_from_file(value_to_string(tag), paths, size) != 0)
+	if (loader_load_from_file((const char *)value_to_string(tag), (const loader_naming_path *)paths, size) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid load from file");
 

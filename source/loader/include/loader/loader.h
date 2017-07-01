@@ -27,9 +27,7 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define LOADER_LOAD_FROM_FILES_SIZE 0x20
-
-#define LOADER_HOST_PROXY_NAME		"__metacall_host__"
+#define LOADER_LOAD_FROM_FILES_SIZE 0x40
 
 /* -- Forward Declarations -- */
 
