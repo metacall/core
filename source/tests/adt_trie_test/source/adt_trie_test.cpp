@@ -15,7 +15,7 @@
 
 #include <cstring>
 
-class trie_test : public testing::Test
+class adt_trie_test : public testing::Test
 {
   public:
 };
@@ -53,7 +53,7 @@ int trie_iterator_cb_clear(trie t, trie_key key, trie_value value, trie_cb_itera
 	return 1;
 }
 
-TEST_F(trie_test, DefaultConstructor)
+TEST_F(adt_trie_test, DefaultConstructor)
 {
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),

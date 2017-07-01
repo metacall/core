@@ -28,26 +28,96 @@ value value_type_cast(value v, type_id id)
 
 	size_t dest_size = value_type_id_size(id);
 
+	/* Invalid value type */
 	if (type_id_invalid(src_id) == 0 || type_id_invalid(id) == 0)
 	{
 		return NULL;
 	}
 
+	/* Equal types, avoid casting */
 	if (src_id == id)
 	{
 		return v;
 	}
 
+	/* Cast from string to any type */
 	if (type_id_string(src_id) == 0)
 	{
 		return value_type_parse(v, id);
 	}
 
+	/* Cast from any type to string */
 	if (type_id_string(id) == 0)
 	{
 		return value_type_stringify(v);
 	}
 
+	/* Convert single value to array */
+	if (type_id_array(id) == 0 && src_id < TYPE_ARRAY)
+	{
+		value dest = value_type_create(value_data(v), value_type_id_size(src_id), TYPE_ARRAY);
+
+		if (dest == NULL)
+		{
+			return NULL;
+		}
+
+		value_destroy(v);
+
+		return dest;
+	}
+
+	/* TODO: Convert array to list (element size must be known) */
+
+	/* TODO: Convert array of size 1 to a single type (element type id must be known) */
+
+	/* Convert single value to list */
+	if (type_id_list(id) == 0 && src_id < TYPE_ARRAY)
+	{
+		value dest = value_type_create(&v, sizeof(value), TYPE_LIST);
+
+		if (dest == NULL)
+		{
+			return NULL;
+		}
+
+		value_destroy(v);
+
+		return dest;
+	}
+
+	/* TODO: Convert list to array (all list values must be the same type) */
+
+	/* Convert list of size 1 to a single type */
+	if (type_id_list(src_id) == 0 && id < TYPE_ARRAY && value_type_size(v) == sizeof(value))
+	{
+		value * values = value_data(v);
+
+		value dest = values[0];
+
+		if (dest == NULL)
+		{
+			return NULL;
+		}
+
+		if (value_type_id(dest) != id && value_type_id(dest) < TYPE_ARRAY)
+		{
+			value cast = value_type_cast(dest, id);
+
+			if (cast == NULL)
+			{
+				return NULL;
+			}
+
+			dest = cast;
+		}
+
+		value_destroy(v);
+
+		return dest;
+	}
+
+	/* Promote value type */
 	if (src_id < id)
 	{
 		if (type_id_integer(src_id) == 0 && type_id_integer(id) == 0)
@@ -103,6 +173,7 @@ value value_type_cast(value v, type_id id)
 		return NULL;
 	}
 
+	/* Demote value type */
 	if (src_id > id)
 	{
 		if (type_id_boolean(id) == 0)

@@ -39,7 +39,9 @@ enum metacall_value_id
 	METACALL_FLOAT	= 5,
 	METACALL_DOUBLE	= 6,
 	METACALL_STRING	= 7,
-	METACALL_PTR	= 8,
+	METACALL_ARRAY	= 8,
+	METACALL_LIST	= 9,
+	METACALL_PTR	= 10,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -145,6 +147,39 @@ METACALL_API void * metacall_value_create_double(double d);
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void * metacall_value_create_string(const char * str, size_t length);
+
+/**
+*  @brief
+*    Create a value from array @arr
+*
+*  @param[in] arr
+*    Constant memory block will be copied into value array
+*
+*  @param[in] element_size
+*    Size in bytes of array element
+*
+*  @param[in] size
+*    Number of elements contained in the array
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_array(const void * arr, size_t element_size, size_t size);
+
+/**
+*  @brief
+*    Create a value list from array of values @values
+*
+*  @param[in] values
+*    Constant array of values will be copied into value list
+*
+*  @param[in] size
+*    Number of elements contained in the list
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_list(const void * values[], size_t size);
 
 /**
 *  @brief
@@ -277,6 +312,30 @@ METACALL_API double metacall_value_to_double(void * v);
 *    Value converted to C string
 */
 METACALL_API char * metacall_value_to_string(void * v);
+
+/**
+*  @brief
+*    Convert value @v to array
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to memory block
+*/
+METACALL_API void * metacall_value_to_array(void * v);
+
+/**
+*  @brief
+*    Convert value @v to array of values
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to array of values
+*/
+METACALL_API void ** metacall_value_to_list(void * v);
 
 /**
 *  @brief
@@ -415,6 +474,45 @@ METACALL_API void * metacall_value_from_string(void * v, const char * str, size_
 
 /**
 *  @brief
+*    Assign array @arr to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] arr
+*    Constant array to be assigned to value @v
+*
+*  @param[in] element_size
+*    Size in bytes of array element
+*
+*  @param[in] size
+*    Number of elements contained in @arr
+*
+*  @return
+*    Value with array @arr assigned to it
+*/
+METACALL_API void * metacall_value_from_array(void * v, const void * arr, size_t element_size, size_t size);
+
+/**
+*  @brief
+*    Assign array of values @values to value list @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] values
+*    Constant array of values to be assigned to value list @v
+*
+*  @param[in] size
+*    Number of values contained in constant array @values
+*
+*  @return
+*    Value with array of values @values assigned to it
+*/
+METACALL_API void * metacall_value_from_list(void * v, const void * values[], size_t size);
+
+/**
+*  @brief
 *    Assign pointer reference @ptr to value @v
 *
 *  @param[in] v
@@ -523,6 +621,30 @@ METACALL_API double metacall_value_cast_double(void ** v);
 *    Value converted to string
 */
 METACALL_API char * metacall_value_cast_string(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to array
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to array
+*/
+METACALL_API void * metacall_value_cast_array(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to list
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to array of values
+*/
+METACALL_API void ** metacall_value_cast_list(void ** v);
 
 /**
 *  @brief

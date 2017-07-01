@@ -107,6 +107,23 @@ configuration configuration_singleton_get(const char * name)
 	return hash_map_get(singleton->scopes, (const hash_map_key)name);
 }
 
+int configuration_singleton_clear(configuration config)
+{
+	configuration_singleton singleton = configuration_singleton_instance();
+
+	if (hash_map_get(singleton->scopes, (const hash_map_key)configuration_object_name(config)) == NULL)
+	{
+		return 0;
+	}
+
+	if (hash_map_remove(singleton->scopes, (const hash_map_key)configuration_object_name(config)) == NULL)
+	{
+		return 1;
+	}
+
+	return 0;
+}
+
 int configuration_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	(void)map;

@@ -13,12 +13,12 @@
 
 #include <log/log.h>
 
-class value_stringify_test : public testing::Test
+class reflect_value_stringify_test : public testing::Test
 {
   public:
 };
 
-TEST_F(value_stringify_test, DefaultConstructor)
+TEST_F(reflect_value_stringify_test, DefaultConstructor)
 {
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
@@ -38,6 +38,8 @@ TEST_F(value_stringify_test, DefaultConstructor)
 		"13.545000f",
 		"545.345300",
 		hello_world,
+		"[ 5, 6, 7, 8 ]",
+		"{ 244, 6.800000, \"hello world\" }",
 		#if defined(_WIN32) && defined(_MSC_VER)
 			#if defined(_WIN64)
 				"0x00000000000A7EF2"
@@ -51,6 +53,18 @@ TEST_F(value_stringify_test, DefaultConstructor)
 		#endif
 	};
 
+	static const int int_array[] =
+	{
+		5, 6, 7, 8
+	};
+
+	static const value value_list[] =
+	{
+		value_create_int(244),
+		value_create_double(6.8),
+		value_create_string(hello_world, sizeof(hello_world))
+	};
+
 	value value_array[TYPE_SIZE] =
 	{
 		value_create_bool(1),
@@ -61,6 +75,8 @@ TEST_F(value_stringify_test, DefaultConstructor)
 		value_create_float(13.545f),
 		value_create_double(545.3453),
 		value_create_string(hello_world, sizeof(hello_world)),
+		value_create_array(int_array, sizeof(int_array[0]), sizeof(int_array) / sizeof(int_array[0])),
+		value_create_list(value_list, sizeof(value_list) / sizeof(value_list[0])),
 		value_create_ptr((void *)0x000A7EF2)
 	};
 
@@ -76,16 +92,31 @@ TEST_F(value_stringify_test, DefaultConstructor)
 
 		size_t length;
 
-		value_stringify(value_array[iterator], buffer, buffer_size, &length);
+		/* TODO: Remove this check when implementing array and list stringify */
+		if (value_type_id(value_array[iterator]) != TYPE_ARRAY && value_type_id(value_array[iterator]) != TYPE_LIST)
+		{
+			value_stringify(value_array[iterator], buffer, buffer_size, &length);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
+			log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
 
-		EXPECT_EQ((int) 0, (int) strcmp(buffer, value_names[iterator]));
+			EXPECT_EQ((int) 0, (int) strcmp(buffer, value_names[iterator]));
 
-		EXPECT_LT((size_t) length, (size_t)buffer_size);
+			EXPECT_LT((size_t) length, (size_t)buffer_size);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_WARNING, "WARNING: Avoiding test for TYPE_ARRAY and TYPE_LIST");
+		}
 
 		value_destroy(value_array[iterator]);
 
 		#undef BUFFER_SIZE
+	}
+
+	const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
+
+	for (size_t iterator = 0; iterator < value_list_size; ++iterator)
+	{
+		value_destroy(value_list[iterator]);
 	}
 }

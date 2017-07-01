@@ -87,6 +87,16 @@ void * metacall_value_create_string(const char * str, size_t length)
 	return value_create_string(str, length);
 }
 
+void * metacall_value_create_array(const void * arr, size_t element_size, size_t size)
+{
+	return value_create_array(arr, element_size, size);
+}
+
+void * metacall_value_create_list(const void * values[], size_t size)
+{
+	return value_create_list(values, size);
+}
+
 void * metacall_value_create_ptr(const void * ptr)
 {
 	return value_create_ptr(ptr);
@@ -113,6 +123,8 @@ enum metacall_value_id metacall_value_id(void * v)
 			METACALL_FLOAT,
 			METACALL_DOUBLE,
 			METACALL_STRING,
+			METACALL_ARRAY,
+			METACALL_LIST,
 			METACALL_PTR,
 
 			METACALL_SIZE,
@@ -127,6 +139,8 @@ enum metacall_value_id metacall_value_id(void * v)
 			((int) TYPE_FLOAT == (int) METACALL_FLOAT) &&
 			((int) TYPE_DOUBLE == (int) METACALL_DOUBLE) &&
 			((int) TYPE_STRING == (int) METACALL_STRING) &&
+			((int) TYPE_ARRAY == (int) METACALL_ARRAY) &&
+			((int) TYPE_LIST == (int) METACALL_LIST) &&
 			((int) TYPE_PTR == (int) METACALL_PTR) &&
 			((int) TYPE_SIZE == (int) METACALL_SIZE) &&
 			((int) TYPE_INVALID == (int) METACALL_INVALID));
@@ -193,6 +207,20 @@ char * metacall_value_to_string(void * v)
 	return value_to_string(v);
 }
 
+void * metacall_value_to_array(void * v)
+{
+	assert(value_type_id(v) == TYPE_ARRAY);
+
+	return value_to_array(v);
+}
+
+void ** metacall_value_to_list(void * v)
+{
+	assert(value_type_id(v) == TYPE_LIST);
+
+	return value_to_list(v);
+}
+
 void * metacall_value_to_ptr(void * v)
 {
 	assert(value_type_id(v) == TYPE_PTR);
@@ -238,6 +266,16 @@ void * metacall_value_from_double(void * v, double d)
 void * metacall_value_from_string(void * v, const char * str, size_t length)
 {
 	return value_from_string(v, str, length);
+}
+
+void * metacall_value_from_array(void * v, const void * arr, size_t element_size, size_t size)
+{
+	return value_from_array(v, arr, element_size, size);
+}
+
+void * metacall_value_from_list(void * v, const void * values[], size_t size)
+{
+	return value_from_list(v, values, size);
 }
 
 void * metacall_value_from_ptr(void * v, const void * ptr)
@@ -323,6 +361,26 @@ char * metacall_value_cast_string(void ** v)
 	}
 
 	return value_to_string(*v);
+}
+
+void * metacall_value_cast_array(void ** v)
+{
+	if (value_type_id(*v) != TYPE_ARRAY)
+	{
+		*v = value_type_cast(*v, TYPE_ARRAY);
+	}
+
+	return value_to_array(*v);
+}
+
+void ** metacall_value_cast_list(void ** v)
+{
+	if (value_type_id(*v) != TYPE_LIST)
+	{
+		*v = value_type_cast(*v, TYPE_LIST);
+	}
+
+	return value_to_list(*v);
 }
 
 void * metacall_value_cast_ptr(void ** v)

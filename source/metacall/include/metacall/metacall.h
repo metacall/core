@@ -99,6 +99,24 @@ METACALL_API int metacall_load_from_package(const char * tag, const char * path)
 
 /**
 *  @brief
+*    Loads a a list of scrips from configuration specified by @path into loader
+*    with the following format:
+*        {
+*            "language_id": "<tag>",
+*            "path": "<path>",
+*            "scripts": [ "<script0>", "<script1>", ..., "<scriptN>" ]
+*        }
+*
+*  @param[in] path
+*    Path of the configuration
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_load_from_configuration(const char * path);
+
+/**
+*  @brief
 *    Call a function anonymously by value array @args
 *
 *  @param[in] name

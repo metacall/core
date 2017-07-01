@@ -116,6 +116,11 @@ int metacall_load_from_package(const char * tag, const char * path)
 	return loader_load_from_package(tag, path);
 }
 
+int metacall_load_from_configuration(const char * path)
+{
+	return loader_load_from_configuration(path);
+}
+
 void * metacallv(const char * name, void * args[])
 {
 	return metacallfv(loader_get(name), args);

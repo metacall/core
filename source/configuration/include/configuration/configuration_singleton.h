@@ -70,6 +70,19 @@ CONFIGURATION_API configuration configuration_singleton_get(const char * name);
 
 /**
 *  @brief
+*    Remove configuration object from scope map
+*
+*  @param[in] config
+*    Pointer to configuration object
+*
+*  @return
+*    Returns zero on correct configuration singleton removing, distinct from zero otherwise
+*
+*/
+CONFIGURATION_API int configuration_singleton_clear(configuration config);
+
+/**
+*  @brief
 *    Destroy configuration singleton
 *
 */

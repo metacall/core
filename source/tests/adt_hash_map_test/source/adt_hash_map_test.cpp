@@ -32,12 +32,12 @@ int hash_map_cb_iterate_str_to_int(hash_map map, hash_map_key key, hash_map_valu
 	return 1;
 }
 
-class hash_map_test : public testing::Test
+class adt_hash_map_test : public testing::Test
 {
   public:
 };
 
-TEST_F(hash_map_test, DefaultConstructor)
+TEST_F(adt_hash_map_test, DefaultConstructor)
 {
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),

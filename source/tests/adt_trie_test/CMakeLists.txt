@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target value-cast-test)
+set(target adt-trie-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,13 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/value_cast_bool_test.cpp
-	${source_path}/value_cast_char_test.cpp
-	${source_path}/value_cast_short_test.cpp
-	${source_path}/value_cast_int_test.cpp
-	${source_path}/value_cast_long_test.cpp
-	${source_path}/value_cast_float_test.cpp
-	${source_path}/value_cast_double_test.cpp
+	${source_path}/adt_trie_test.cpp
 )
 
 # Group source files
@@ -90,7 +84,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::adt
 )
 
 #

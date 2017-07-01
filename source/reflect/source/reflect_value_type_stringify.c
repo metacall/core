@@ -13,6 +13,16 @@
 
 #include <format/format_print.h>
 
+/* -- Definitions -- */
+
+#if defined(_WIN32) && defined(_MSC_VER)
+#	define VALUE_TYPE_STRINGIFY_FORMAT_PTR "0x%p"
+#elif defined(__linux) || defined(__linux__)
+#	define VALUE_TYPE_STRINGIFY_FORMAT_PTR "%p"
+#else
+#	define VALUE_TYPE_STRINGIFY_FORMAT_PTR "%p"
+#endif
+
 /* -- Type Definitions -- */
 
 typedef void (*value_stringify_impl_ptr)(value, char *, size_t, const char *, size_t *);
@@ -59,6 +69,10 @@ static void value_stringify_double(value v, char * dest, size_t size, const char
 
 static void value_stringify_string(value v, char * dest, size_t size, const char * format, size_t * length);
 
+static void value_stringify_array(value v, char * dest, size_t size, const char * format, size_t * length);
+
+static void value_stringify_list(value v, char * dest, size_t size, const char * format, size_t * length);
+
 static void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length);
 
 /* -- Methods -- */
@@ -75,13 +89,9 @@ const char * value_stringify_format(type_id id)
 		"%.6ff",
 		"%.6f",
 		"%s",
-		#if defined(_WIN32) && defined(_MSC_VER)
-			"0x%p"
-		#elif defined(__linux) || defined(__linux__)
-			"%p"
-		#else
-			"%p"
-		#endif
+		/* "%s", */ VALUE_TYPE_STRINGIFY_FORMAT_PTR, /* TODO: Array format needs to know element type */
+		/* "%s", */ VALUE_TYPE_STRINGIFY_FORMAT_PTR, /* TODO */
+		VALUE_TYPE_STRINGIFY_FORMAT_PTR
 	};
 
 	return value_format[id];
@@ -99,6 +109,8 @@ value_stringify_impl_ptr value_stringify_impl(type_id id)
 		&value_stringify_float,
 		&value_stringify_double,
 		&value_stringify_string,
+		&value_stringify_array,
+		&value_stringify_list,
 		&value_stringify_ptr
 	};
 
@@ -152,6 +164,26 @@ void value_stringify_double(value v, char * dest, size_t size, const char * form
 void value_stringify_string(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_string(v));
+}
+
+void value_stringify_array(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO */
+
+	*length = snprintf(dest, size, format, value_to_array(v));
+}
+
+void value_stringify_list(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO:
+		1) Iterate through all list elements counting each value strings length
+		2) Alloc a string with size calculated previously
+		3) Iterate through all list elements stringifying each value into previously allocated string
+		4) Call to sprintf as other functions
+		5) Free temporal string
+	*/
+
+	*length = snprintf(dest, size, format, value_to_list(v));
 }
 
 void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length)

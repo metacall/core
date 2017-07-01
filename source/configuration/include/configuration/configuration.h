@@ -21,13 +21,17 @@
 extern "C" {
 #endif
 
+/* -- Definitions -- */
+
+#define CONFIGURATION_GLOBAL_SCOPE "global"
+
 /* -- Methods -- */
 
 /**
 *  @brief
 *    Initialize configuration from root @path with reader @name
 *
-*  @param[in] name
+*  @param[in] reader
 *    Reader will be used to parse configurations
 *
 *  @param[in] path
@@ -37,7 +41,26 @@ extern "C" {
 *    Returns zero on correct configuration initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_initialize(const char * name, const char * path);
+CONFIGURATION_API int configuration_initialize(const char * reader, const char * path);
+
+/**
+*  @brief
+*    Create configuration from @path with name @name
+*
+*  @param[in] scope
+*    Scope of the configuration
+*
+*  @param[in] path
+*    Path where is located the child configuration
+*
+*  @param[in] parent
+*    Scope of the parent configuration if any
+*
+*  @return
+*    Returns object containing all configuration data
+*
+*/
+CONFIGURATION_API configuration configuration_create(const char * scope, const char * path, const char * parent);
 
 /**
 *  @brief
@@ -57,7 +80,7 @@ CONFIGURATION_API configuration configuration_scope(const char * scope);
 *    Get value from @key inside a configuration @config
 *
 *  @param[in] config
-*    Configuration 
+*    Configuration
 *
 *  @param[in] key
 *    Scope of the configuration
@@ -67,6 +90,19 @@ CONFIGURATION_API configuration configuration_scope(const char * scope);
 *
 */
 CONFIGURATION_API value configuration_value(configuration config, const char * key);
+
+/**
+*  @brief
+*    Delete a configuration @config from the system
+*
+*  @param[in] config
+*    Configuration
+*
+*  @return
+*    Returns zero on correct configuration clearing, distinct from zero otherwise
+*
+*/
+CONFIGURATION_API int configuration_clear(configuration config);
 
 /**
 *  @brief

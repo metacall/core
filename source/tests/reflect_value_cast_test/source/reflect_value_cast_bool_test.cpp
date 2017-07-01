@@ -11,12 +11,12 @@
 #include <reflect/reflect_value_type.h>
 #include <reflect/reflect_value_type_cast.h>
 
-class value_cast_bool_test : public testing::Test
+class reflect_value_cast_bool_test : public testing::Test
 {
   public:
 };
 
-TEST_F(value_cast_bool_test, bool_to_bool_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_bool_cast)
 {
 	value v = value_create_bool(1L);
 
@@ -29,7 +29,7 @@ TEST_F(value_cast_bool_test, bool_to_bool_cast)
 	value_destroy(v);
 }
 
-TEST_F(value_cast_bool_test, bool_to_char_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_char_cast)
 {
 	value v = value_create_bool(1L);
 
@@ -42,7 +42,7 @@ TEST_F(value_cast_bool_test, bool_to_char_cast)
 	value_destroy(v);
 }
 
-TEST_F(value_cast_bool_test, bool_to_short_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_short_cast)
 {
 	value v = value_create_bool(1L);
 
@@ -55,7 +55,7 @@ TEST_F(value_cast_bool_test, bool_to_short_cast)
 	value_destroy(v);
 }
 
-TEST_F(value_cast_bool_test, bool_to_int_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_int_cast)
 {
 	value v = value_create_bool(1L);
 
@@ -68,7 +68,7 @@ TEST_F(value_cast_bool_test, bool_to_int_cast)
 	value_destroy(v);
 }
 
-TEST_F(value_cast_bool_test, bool_to_long_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_long_cast)
 {
 	value v = value_create_bool(1L);
 
@@ -81,7 +81,7 @@ TEST_F(value_cast_bool_test, bool_to_long_cast)
 	value_destroy(v);
 }
 
-TEST_F(value_cast_bool_test, bool_to_float_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_float_cast)
 {
 	value v = value_create_bool(1L);
 
@@ -94,7 +94,7 @@ TEST_F(value_cast_bool_test, bool_to_float_cast)
 	value_destroy(v);
 }
 
-TEST_F(value_cast_bool_test, bool_to_double_cast)
+TEST_F(reflect_value_cast_bool_test, bool_to_double_cast)
 {
 	value v = value_create_bool(1L);
 

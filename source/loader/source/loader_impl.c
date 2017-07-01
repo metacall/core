@@ -82,13 +82,13 @@ static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key 
 
 dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
 {
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	const char loader_dynlink_suffix[] = "_loaderd";
-#else
-	const char loader_dynlink_suffix[] = "_loader";
-#endif
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		const char loader_dynlink_suffix[] = "_loaderd";
+	#else
+		const char loader_dynlink_suffix[] = "_loader";
+	#endif
 
-#define LOADER_DYNLINK_NAME_SIZE \
+	#define LOADER_DYNLINK_NAME_SIZE \
 		(sizeof(loader_dynlink_suffix) + LOADER_NAMING_TAG_SIZE)
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
@@ -98,7 +98,7 @@ dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
 	strncat(loader_dynlink_name, loader_dynlink_suffix,
 		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
 
-#undef LOADER_DYNLINK_NAME_SIZE
+	#undef LOADER_DYNLINK_NAME_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader: %s", loader_dynlink_name);
 
@@ -110,7 +110,7 @@ int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
 
-#define LOADER_DYNLINK_SYMBOL_SIZE \
+	#define LOADER_DYNLINK_SYMBOL_SIZE \
 		(sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_TAG_SIZE + sizeof(loader_dynlink_symbol_suffix))
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
@@ -123,7 +123,7 @@ int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_
 	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix,
 		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-#undef LOADER_DYNLINK_SYMBOL_SIZE
+	#undef LOADER_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader symbol: %s", loader_dynlink_symbol);
 
@@ -462,39 +462,39 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 	/* TODO: Improve name with time */
 	static const char format[] = "%p-%p-%" PRIuS;
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
 
-	size_t length = _snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
+		size_t length = _snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
 
-#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
-		defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
-		defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-
-	size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
-
-#else
-
-	size_t length = sprintf(NULL, format, (const void *)impl, (const void *)buffer, size);
-
-#endif
-
-	if (length < LOADER_NAMING_NAME_SIZE)
-	{
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
-
-		size_t written = _snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
-
-#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
 			defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
 			defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
 
-		size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+		size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
 
-#else
+	#else
 
-		size_t written = sprintf(name, format, (const void *)impl, (const void *)buffer, size);
+		size_t length = sprintf(NULL, format, (const void *)impl, (const void *)buffer, size);
 
-#endif
+	#endif
+
+	if (length < LOADER_NAMING_NAME_SIZE)
+	{
+		#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+
+			size_t written = _snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+
+		#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
+					defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+					defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+
+			size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+
+		#else
+
+			size_t written = sprintf(name, format, (const void *)impl, (const void *)buffer, size);
+
+		#endif
 
 		if (written == length)
 		{

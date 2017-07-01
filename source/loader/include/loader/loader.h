@@ -59,6 +59,8 @@ LOADER_API int loader_load_from_memory(const loader_naming_tag tag, const char *
 
 LOADER_API int loader_load_from_package(const loader_naming_tag tag, const loader_naming_path path);
 
+LOADER_API int loader_load_from_configuration(const loader_naming_path path);
+
 LOADER_API loader_impl loader_get_impl(const loader_naming_tag tag);
 
 LOADER_API loader_data loader_get(const char * name);

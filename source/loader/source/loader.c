@@ -195,6 +195,7 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 
 	if (f != NULL)
 	{
+		/* TODO: Change this to the correct type system */
 		const char register_holder_str[] = "__metacall_register__";
 
 		signature s = function_signature(f);
@@ -351,10 +352,11 @@ int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, si
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", tag, (void *)impl);
 
-		if (impl != NULL)
+		if (impl == NULL)
 		{
-			return loader_impl_load_from_memory(impl, buffer, size);
+			return 1;
 		}
+		return loader_impl_load_from_memory(impl, buffer, size);
 	}
 
 	return 1;
@@ -376,13 +378,109 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", extension, (void *)impl);
 
-		if (impl != NULL)
+		if (impl == NULL)
 		{
-			return loader_impl_load_from_package(impl, path);
+			return 1;
 		}
+
+		return loader_impl_load_from_package(impl, path);
 	}
 
 	return 1;
+}
+
+int loader_load_from_configuration(const loader_naming_path path)
+{
+	loader_naming_name config_name;
+
+	configuration config;
+
+	value tag, scripts;
+
+	value * scripts_array;
+
+	loader_naming_path * paths;
+
+	size_t index, size;
+
+	if (loader_path_get_name(path, config_name) == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid config name (%s)", path);
+
+		return 1;
+	}
+
+	config = configuration_create(config_name, path, NULL);
+
+	if (config == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid initialization (%s)", path);
+
+		return 1;
+	}
+
+	tag = configuration_value(config, "tag");
+
+	if (tag == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid tag (%s)", path);
+
+		configuration_clear(config);
+
+		return 1;
+	}
+
+	scripts = configuration_value(config, "scripts");
+
+	if (tag == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid scripts (%s)", path);
+
+		configuration_clear(config);
+
+		return 1;
+	}
+
+	size = value_type_size(scripts) / sizeof(value);
+
+	paths = malloc(sizeof(loader_naming_path) * size);
+
+	if (paths == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid paths allocation");
+
+		configuration_clear(config);
+
+		return 1;
+	}
+
+	scripts_array = value_to_list(scripts);
+
+	for (index = 0; index < size; ++index)
+	{
+		const char * str = value_to_string(scripts_array[index]);
+
+		strncpy(paths[index], str, value_type_size(scripts_array[index]));
+
+		value_destroy(scripts_array[index]);
+	}
+
+	if (loader_load_from_file(value_to_string(tag), paths, size) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid load from file");
+
+		configuration_clear(config);
+
+		free(paths);
+
+		return 1;
+	}
+
+	configuration_clear(config);
+
+	free(paths);
+
+	return 0;
 }
 
 int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)

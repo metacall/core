@@ -130,6 +130,24 @@ value rapid_json_config_impl_get(const rapidjson::Value & v)
 
 		return value_create_string(str, length);
 	}
+	else if (v.IsArray() == true && v.Empty() == false)
+	{
+		rapidjson::SizeType index, size = v.Size();
+
+		value * values = static_cast<value *>(malloc(sizeof(value) * size));
+
+		if (values == NULL)
+		{
+			return NULL;
+		}
+
+		for (index = 0; index < size; ++index)
+		{
+			values[index] = rapid_json_config_impl_get(v[index]);
+		}
+
+		return value_create_list(values, size);
+	}
 
 	log_write("metacall", LOG_LEVEL_WARNING, "Unsuported type in RapidJSON implementation");
 

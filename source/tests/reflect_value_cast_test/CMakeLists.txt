@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target value-stringify-test)
+set(target reflect-value-cast-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +27,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/value_stringify_test.cpp
+	${source_path}/reflect_value_cast_bool_test.cpp
+	${source_path}/reflect_value_cast_char_test.cpp
+	${source_path}/reflect_value_cast_short_test.cpp
+	${source_path}/reflect_value_cast_int_test.cpp
+	${source_path}/reflect_value_cast_long_test.cpp
+	${source_path}/reflect_value_cast_float_test.cpp
+	${source_path}/reflect_value_cast_double_test.cpp
 )
 
 # Group source files
