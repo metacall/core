@@ -419,7 +419,7 @@ int loader_load_from_configuration(const loader_naming_path path)
 		return 1;
 	}
 
-	tag = configuration_value(config, "tag");
+	tag = configuration_value(config, "language_id");
 
 	if (tag == NULL)
 	{
@@ -432,7 +432,7 @@ int loader_load_from_configuration(const loader_naming_path path)
 
 	scripts = configuration_value(config, "scripts");
 
-	if (tag == NULL)
+	if (scripts == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid scripts (%s)", path);
 

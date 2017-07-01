@@ -15,12 +15,12 @@
 
 #include <log/log.h>
 
-class metacall_test : public testing::Test
+class metacall_load_memory_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_test, DefaultConstructor)
+TEST_F(metacall_load_memory_test, DefaultConstructor)
 {
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
