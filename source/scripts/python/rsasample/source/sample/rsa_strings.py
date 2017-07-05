@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 #
 #	RSA String Encriptation Decriptation Sample by Parra Studios
 #	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
@@ -12,17 +14,19 @@ def encript_decript_strings():
 
 	message = unicode_string.encode('utf-8')
 
-	print("\tMessage:   %s" % message)
+	buf = "\tMessage:   %s\n" % message
 
 	encrypted = rsa.encrypt(message, pub)
 
-	print("\tEncrypted: %s" % encrypted)
+	buf += "\tEncrypted: %s\n" % encrypted
 
 	decrypted = rsa.decrypt(encrypted, priv)
 
-	print("\tDecrypted: %s" % decrypted)
+	buf += "\tDecrypted: %s\n" % decrypted
 
 	if message == decrypted:
-		print("\tRSA encriptation / decriptation success")
+		buf += "\tRSA encriptation / decriptation success"
 	else:
-		print("\tRSA encriptation / decriptation error")
+		buf += "\tRSA encriptation / decriptation error"
+
+	return buf
