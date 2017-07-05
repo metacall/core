@@ -25,6 +25,8 @@ LOADER_API size_t loader_path_get_extension(const loader_naming_path path, loade
 
 LOADER_API size_t loader_path_get_path(const loader_naming_path path, loader_naming_path absolute);
 
+LOADER_API int loader_path_is_absolute(const loader_naming_path path);
+
 #ifdef __cplusplus
 }
 #endif

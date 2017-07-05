@@ -318,9 +318,16 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 
 					for (iterator = 0; iterator < size; ++iterator)
 					{
-						memcpy(absolute_path[iterator], l->script_path, strlen(l->script_path) + 1);
+						if (loader_path_is_absolute(paths[iterator]) != 0)
+						{
+							memcpy(absolute_path[iterator], l->script_path, strlen(l->script_path) + 1);
 
-						strncat(absolute_path[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+							strncat(absolute_path[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+						}
+						else
+						{
+							strncpy(absolute_path[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+						}
 					}
 
 					return loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_path, size);
