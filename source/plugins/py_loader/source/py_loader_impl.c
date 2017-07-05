@@ -37,6 +37,8 @@ typedef struct loader_impl_py_type
 
 } * loader_impl_py;
 
+static void py_loader_impl_error_print(void);
+
 int type_py_interface_create(type t, type_impl impl)
 {
 	(void)t;
@@ -109,32 +111,32 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 	{
 		return TYPE_BOOL;
 	}
-#if PY_MAJOR_VERSION == 2
-	else if (PyInt_Check(result))
-	{
-		return TYPE_INT;
-	}
-#elif PY_MAJOR_VERSION == 3
-	else if (PyLong_Check(result))
-	{
-		return TYPE_LONG;
-	}
-#endif
+	#if PY_MAJOR_VERSION == 2
+		else if (PyInt_Check(result))
+		{
+			return TYPE_INT;
+		}
+	#elif PY_MAJOR_VERSION == 3
+		else if (PyLong_Check(result))
+		{
+			return TYPE_LONG;
+		}
+	#endif
 	else if (PyFloat_Check(result))
 	{
 		return TYPE_DOUBLE;
 	}
-#if PY_MAJOR_VERSION == 2
-	else if (PyString_Check(result))
-	{
-		return TYPE_STRING;
-	}
-#elif PY_MAJOR_VERSION == 3
-	else if (PyUnicode_Check(result))
-	{
-		return TYPE_STRING;
-	}
-#endif
+	#if PY_MAJOR_VERSION == 2
+		else if (PyString_Check(result))
+		{
+			return TYPE_STRING;
+		}
+	#elif PY_MAJOR_VERSION == 3
+		else if (PyUnicode_Check(result))
+		{
+			return TYPE_STRING;
+		}
+	#endif
 
 	return TYPE_INVALID;
 }
@@ -238,7 +240,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	if (PyErr_Occurred() != NULL)
 	{
-		PyErr_Print();
+		py_loader_impl_error_print();
 	}
 
 	Py_DECREF(tuple_args);
@@ -625,8 +627,13 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 		module = PyImport_Import(py_module_name);
 
-		if (PyErr_Occurred()) {
-			PyErr_Print();
+		if (PyErr_Occurred() != NULL || module == NULL)
+		{
+			py_loader_impl_error_print();
+
+			PyGILState_Release(gstate);
+
+			return NULL;
 		}
 
 		module_dict = PyModule_GetDict(module);
@@ -664,7 +671,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	{
 		if (PyErr_Occurred() != NULL)
 		{
-			PyErr_Print();
+			py_loader_impl_error_print();
 		}
 
 		PyGILState_Release(gstate);
@@ -782,7 +789,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 		if (PyErr_Occurred() != NULL)
 		{
-			PyErr_Print();
+			py_loader_impl_error_print();
 		}
 
 		result = PyObject_CallObject(py_impl->inspect_signature, args);
@@ -941,7 +948,7 @@ int py_loader_impl_destroy(loader_impl impl)
 		{
 			if (PyErr_Occurred() != NULL)
 			{
-				PyErr_Print();
+				py_loader_impl_error_print();
 			}
 
 			PyGILState_Release(gstate);
@@ -959,4 +966,40 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 
 	return 1;
+}
+
+void py_loader_impl_error_print()
+{
+	PyObject * type, * value, * traceback;
+
+	PyObject * type_str_obj, * value_str_obj, * traceback_str_obj;
+
+	char * type_str, * value_str, * traceback_str;
+
+	PyErr_Fetch(&type, &value, &traceback);
+
+	type_str_obj = PyObject_Str(type);
+
+	value_str_obj = PyObject_Str(value);
+
+	traceback_str_obj = PyObject_Str(traceback);
+
+	#if PY_MAJOR_VERSION == 2
+		type_str = PyString_AsString(type_str_obj);
+
+		value_str = PyString_AsString(value_str_obj);
+
+		traceback_str = PyString_AsString(traceback_str_obj);
+	#elif PY_MAJOR_VERSION == 3
+		type_str = PyUnicode_AsUTF8(type_str_obj);
+
+		value_str = PyUnicode_AsUTF8(value_str_obj);
+
+		traceback_str = PyUnicode_AsUTF8(traceback_str_obj);
+	#endif
+
+	log_write("metacall", LOG_LEVEL_ERROR, "Python Error: (%s): %s\n{\n%s\n}",
+		type_str, value_str, traceback_str);
+
+	PyErr_Restore(type, value, traceback);
 }
