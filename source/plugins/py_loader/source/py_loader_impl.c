@@ -605,8 +605,8 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		PyObject * py_module_name, *system_path, *current_path;
-		PyObject * module, *module_dict;
+		PyObject * py_module_name;
+		PyObject * module, * module_dict;
 
 		loader_naming_name module_name;
 

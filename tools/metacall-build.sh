@@ -19,6 +19,7 @@ BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_DISTRIBUTABLE=0
 BUILD_TESTS=0
+BUILD_STATIC=0
 BUILD_INSTALL=0
 
 sub_config() {
@@ -72,6 +73,10 @@ sub_config() {
 		if [ "$option" = 'tests' ]; then
 			echo "Build and run all tests"
 			BUILD_TESTS=1
+		fi
+		if [ "$option" = 'static' ]; then
+			echo "Build static libraries"
+			BUILD_STATIC=1
 		fi
 		if [ "$option" = 'install' ]; then
 			echo "Install all libraries"
@@ -163,8 +168,15 @@ sub_build() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=Off"
 	fi
 
-	# Build Type
+	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
+
+	# Build as static libraries 
+	if [ $BUILD_STATIC = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DBUILD_SHARED_LIBS=Off"
+	else
+		BUILD_STRING="$BUILD_STRING -DBUILD_SHARED_LIBS=On"
+	fi
 
 	# Execute CMake without distributable
 	cmake $BUILD_STRING -DBUILD_DISTRIBUTABLE_LIBS=Off ..
@@ -198,6 +210,27 @@ sub_build() {
 
 sub_clear() {
 	if [ "$BUILD_TYPE" = 'Release' ]; then
+		CLEAR_CMD="$METACALL_PATH/tools/metacall-clear.sh base rapidjson"
+
+		if [ $RUN_AS_ROOT = 1 ]; then
+			CLEAR_CMD="$CLEAR_CMD root"
+		fi
+		if [ $BUILD_PYTHON = 1 ]; then
+			CLEAR_CMD="$CLEAR_CMD python"
+		fi
+		if [ $BUILD_RUBY = 1 ]; then
+			CLEAR_CMD="$CLEAR_CMD ruby"
+		fi
+		if [ $BUILD_NETCORE = 1 ]; then
+			CLEAR_CMD="$CLEAR_CMD netcore"
+		fi
+		if [ $BUILD_V8 = 1 ]; then
+			CLEAR_CMD="$CLEAR_CMD v8"
+		fi
+
+		# Execute clear script
+		/bin/bash -c "$CLEAR_CMD"
+
 		# Delete MetaCall path
 		rm -rf $METACALL_PATH
 	fi

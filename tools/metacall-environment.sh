@@ -38,8 +38,6 @@ sub_apt(){
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	sub_python
-	sub_ruby
 	$SUDO_CMD apt-get -y install libpcre3-dev
 	wget "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz?r=http%3A%2F%2Fwww.swig.org%2Fdownload.html&ts=1487810080&use_mirror=netix" -O swig.tar.gz
 	mkdir swig
@@ -48,12 +46,14 @@ sub_swig(){
 	./configure
 	make
 	$SUDO_CMD make install
+	cd ..
+	rm -rf ./swig
 }
 
 # Python
 sub_python(){
-	echo "configure pyton"
-	$SUDO_CMD apt-get install -y python2.7  python3.5-dev python python3-pip
+	echo "configure python"
+	$SUDO_CMD apt-get install -y python2.7 python3.5-dev python python3-pip
 	$SUDO_CMD pip3 install --upgrade pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install request
@@ -82,6 +82,7 @@ sub_rapidjson(){
 	cmake ..
 	make
 	$SUDO_CMD make install
+	cd ../.. && rm -rf ./rapidjson
 }
 
 # NetCore
@@ -241,7 +242,6 @@ sub_config(){
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
 		fi
-
 		if [ "$var" = 'v8rep54' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
