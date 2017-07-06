@@ -27,7 +27,7 @@ sub_apt(){
 }
 
 # RapidJSON
-sub_apt(){
+sub_rapidjson(){
 	echo "clean rapidJSON"
 	$SUDO_CMD rm -rf /usr/local/lib/cmake
 	$SUDO_CMD rm -rf /usr/local/include/rapidjson
@@ -57,6 +57,7 @@ sub_v8(){
 	echo "clean v8"
 }
 
+# MetaCall
 sub_metacall(){
 	echo "clean metacall"
 	$SUDO_CMD rm -rf /usr/local/share/metacall/data
@@ -66,13 +67,16 @@ sub_metacall(){
 }
 
 
-# Install
-sub_install(){
+# Clear
+sub_clear(){
 	if [ $RUN_AS_ROOT = 1 ]; then
 		SUDO_CMD=""
 	fi
 	if [ $CLEAR_APT = 1 ]; then
 		sub_apt
+	fi
+	if [ $CLEAR_RAPIDJSON = 1 ]; then
+		sub_rapidjson
 	fi
 	if [ $CLEAR_PYTHON = 1 ]; then
 		sub_python
@@ -86,6 +90,8 @@ sub_install(){
 	if [ $CLEAR_V8 = 1 ]; then
 		sub_v8
 	fi
+
+	sub_metacall
 
 	echo "clean finished in workspace $ROOT_DIR"
 }
@@ -145,6 +151,6 @@ case "$#" in
 		;;
 	*)
 		sub_config $@
-		sub_install
+		sub_clear
 		;;
 esac
