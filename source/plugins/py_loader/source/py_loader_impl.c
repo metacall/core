@@ -609,21 +609,28 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		PyObject * module, *module_dict;
 
 		loader_naming_name module_name;
-		loader_naming_path location_path;
 
 		loader_path_get_name(paths[iterator], module_name);
 
 		py_module_name = PyUnicode_DecodeFSDefault(module_name);
 
-		loader_path_get_path(paths[iterator], location_path);
+		/* TODO: Implement a map in the core to hold all directories by each loader impl */
 
-		system_path = PySys_GetObject("path");
+		/* if (loader_impl_has_execution_path(location_path) != 0) */
+		{
+			loader_naming_path location_path;
 
-		current_path = PyUnicode_DecodeFSDefault(location_path);
+			loader_path_get_path(paths[iterator], location_path);
 
-		PyList_Append(system_path, current_path);
+			if (py_loader_impl_execution_path(impl, location_path) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Python loader invalid execution path: %s", location_path);
 
-		Py_DECREF(current_path);
+				PyGILState_Release(gstate);
+
+				return NULL;
+			}
+		}
 
 		module = PyImport_Import(py_module_name);
 
