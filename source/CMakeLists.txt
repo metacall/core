@@ -94,7 +94,7 @@ if(OPTION_BUILD_CONFIGS)
 	add_subdirectory(configs)
 
 	# Install runtime configuration
-	install(DIRECTORY ${CONFIGURATION_DIR} DESTINATION ${INSTALL_DATA} COMPONENT runtime)
+	install(DIRECTORY ${CONFIGURATION_DIR}/install/configurations DESTINATION ${INSTALL_DATA} COMPONENT runtime)
 endif()
 
 # Distributable

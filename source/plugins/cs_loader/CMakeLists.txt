@@ -270,5 +270,9 @@ install(TARGETS ${target}
 #
 
 string(REPLACE "\\" "/" DOTNET_CORE_PATH "${DOTNET_CORE_PATH}")
+
 set(DOTNET_CORE_LOADER_ASSEMBLY_PATH  ${CMAKE_BINARY_DIR}/CSLoader.dll)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${CONFIGURATION_DIR}/cs_loader.json)
+
+set(DOTNET_CORE_LOADER_ASSEMBLY_PATH  ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/CSLoader.dll)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${CONFIGURATION_DIR}/install/configurations/cs_loader.json)

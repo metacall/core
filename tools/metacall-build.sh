@@ -78,6 +78,10 @@ sub_config() {
 			echo "Build static libraries"
 			BUILD_STATIC=1
 		fi
+		if [ "$option" = 'dynamic' ]; then
+			echo "Build dynamic libraries"
+			BUILD_STATIC=0
+		fi
 		if [ "$option" = 'install' ]; then
 			echo "Install all libraries"
 			BUILD_INSTALL=1
