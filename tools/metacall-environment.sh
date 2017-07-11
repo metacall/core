@@ -57,6 +57,8 @@ sub_python(){
 	$SUDO_CMD pip3 install --upgrade pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install request
+	$SUDO_CMD pip3 install requests
+	$SUDO_CMD pip3 install rsa
 }
 
 # Ruby

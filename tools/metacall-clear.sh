@@ -38,6 +38,8 @@ sub_python(){
 	echo "clean python"
 	/usr/bin/yes | $SUDO_CMD pip3 uninstall django
 	/usr/bin/yes | $SUDO_CMD pip3 uninstall request
+	/usr/bin/yes | $SUDO_CMD pip3 uninstall requests
+	/usr/bin/yes | $SUDO_CMD pip3 uninstall rsa
 }
 
 # Ruby

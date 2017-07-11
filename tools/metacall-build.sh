@@ -20,6 +20,7 @@ BUILD_EXAMPLES=0
 BUILD_DISTRIBUTABLE=0
 BUILD_TESTS=0
 BUILD_STATIC=0
+BUILD_DYNAMIC=0
 BUILD_INSTALL=0
 
 sub_config() {
@@ -80,7 +81,7 @@ sub_config() {
 		fi
 		if [ "$option" = 'dynamic' ]; then
 			echo "Build dynamic libraries"
-			BUILD_STATIC=0
+			BUILD_DYNAMIC=1
 		fi
 		if [ "$option" = 'install' ]; then
 			echo "Install all libraries"
@@ -175,13 +176,6 @@ sub_build() {
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
-	# Build as static libraries 
-	if [ $BUILD_STATIC = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DBUILD_SHARED_LIBS=Off"
-	else
-		BUILD_STRING="$BUILD_STRING -DBUILD_SHARED_LIBS=On"
-	fi
-
 	# Execute CMake without distributable
 	cmake $BUILD_STRING -DBUILD_DISTRIBUTABLE_LIBS=Off ..
 
@@ -194,15 +188,35 @@ sub_build() {
 		make -j$(getconf _NPROCESSORS_ONLN)
 	fi
 
-	# Install
+	# Build without scripts on release
 	if [ $BUILD_INSTALL = 1 ]; then
-
-		# Build without scripts on release
 		if [ "$BUILD_TYPE" = 'Release' ]; then
 			cmake -DOPTION_BUILD_SCRIPTS=Off ..
-			make -j$(getconf _NPROCESSORS_ONLN)
 		fi
+	fi
 
+	# Build as dynamic libraries
+	if [ $BUILD_DYNAMIC = 1 ]; then
+		cmake -DBUILD_SHARED_LIBS=On ..
+		make -j$(getconf _NPROCESSORS_ONLN)
+
+		if [ $BUILD_INSTALL = 1 ]; then
+			$SUDO_CMD make install
+		fi
+	fi
+
+	# Build as static libraries
+	if [ $BUILD_STATIC = 1 ]; then
+		cmake -DBUILD_SHARED_LIBS=Off ..
+		make -j$(getconf _NPROCESSORS_ONLN)
+
+		if [ $BUILD_INSTALL = 1 ]; then
+			$SUDO_CMD make install
+		fi
+	fi
+
+	# Install
+	if [ $BUILD_INSTALL = 1 ] && [ $BUILD_STATIC = 0 ] && [ $BUILD_DYNAMIC = 0 ]; then
 		$SUDO_CMD make install
 	fi
 
@@ -255,7 +269,8 @@ sub_help() {
 	echo "	distributable: build distributable libraries"
 	echo "	tests: build and run all tests"
 	echo "	install: install all libraries"
-	echo "	static | dynamic: build as static or dynamic libraries [TODO]"
+	echo "	static: build as static libraries"
+	echo "	dynamic: build as dynamic libraries"
 	echo ""
 }
 
