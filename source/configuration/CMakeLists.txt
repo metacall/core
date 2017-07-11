@@ -234,8 +234,7 @@ endfunction()
 configurations_write(${CONFIGURATION_DIR} ${CONFIGURATION_PATH})
 
 #
-# Release Configuration
-#
+# Install Configuration
 #
 
 configurations_write(${CMAKE_INSTALL_PREFIX}/${INSTALL_DATA}/configurations ${CONFIGURATION_DIR}/install/configurations/global.json)

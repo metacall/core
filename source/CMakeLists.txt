@@ -109,3 +109,34 @@ endif()
 
 # Deploy generated headers
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME} DESTINATION include COMPONENT dev)
+
+# Show deploy info
+function(install_print color msg)
+	install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E cmake_echo_color --${color} --bold \"${msg}\")")
+endfunction()
+
+install_print("yellow" "MetaCall configuration paths (overwritables)")
+
+install_print("green" "LOADER_SCRIPT_PATH:")
+	install_print("normal" "\tDescription: Directory where scripts are located")
+	install_print("normal" "\tInstall Location: N/A")
+	install_print("normal" "\tDefault Location: scripts")
+
+if(BUILD_SHARED_LIBS)
+	install_print("green" "LOADER_LIBRARY_PATH:")
+		install_print("normal" "\tDescription: Directory where MetaCall loader plugins are located")
+		install_print("normal" "\tInstall Location: ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
+		install_print("normal" "\tDefault Location: .")
+endif()
+
+install_print("green" "CONFIGURATION_PATH:")
+	install_print("normal" "\tDescription: Path to the main global MetaCall configuration")
+	install_print("normal" "\tInstall Location: ${CMAKE_INSTALL_PREFIX}/${INSTALL_DATA}/configurations/global.json")
+	install_print("normal" "\tDefault Location: configurations/global.json")
+
+if(BUILD_SHARED_LIBS)
+	install_print("green" "CONFIGURATION_LIBRARY_PATH:")
+		install_print("normal" "\tDescription: Directory where MetaCall configuration plugins are located")
+		install_print("normal" "\tInstall Location: ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
+		install_print("normal" "\tDefault Location: configurations")
+endif()
