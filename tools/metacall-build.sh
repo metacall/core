@@ -166,6 +166,11 @@ sub_build() {
 		fi
 	fi
 
+	# Mock
+	if [ "$BUILD_TYPE" = 'Release' ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PLUGINS_MOCK=Off"
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
