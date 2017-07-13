@@ -11,6 +11,7 @@
 
 #include <loader/loader_api.h>
 
+#include <loader/loader_host.h>
 #include <loader/loader_handle.h>
 #include <loader/loader_naming.h>
 #include <loader/loader_impl_data.h>
@@ -29,7 +30,7 @@ struct loader_impl_type;
 
 typedef struct loader_impl_type * loader_impl;
 
-typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration);
+typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration, loader_host);
 
 typedef int (*loader_impl_interface_execution_path)(loader_impl, const loader_naming_path);
 

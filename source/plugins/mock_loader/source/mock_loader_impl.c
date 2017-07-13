@@ -265,26 +265,35 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration config)
+loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	loader_impl_mock mock_impl = malloc(sizeof(struct loader_impl_mock_type));
+	loader_impl_mock mock_impl;
 
 	(void)impl;
 	(void)config;
 
-	if (mock_impl != NULL)
+	if (log_copy(host->log) != 0)
 	{
-		if (mock_loader_impl_initialize_types(impl) == 0)
-		{
-			mock_impl->impl_mock_data = NULL;
-
-			return mock_impl;
-		}
-
-		free(mock_impl);
+		return NULL;
 	}
 
-	return NULL;
+	mock_impl = malloc(sizeof(struct loader_impl_mock_type));
+
+	if (mock_impl == NULL)
+	{
+		return NULL;
+	}
+
+	if (mock_loader_impl_initialize_types(impl) != 0)
+	{
+		free(mock_impl);
+
+		return NULL;
+	}
+
+	mock_impl->impl_mock_data = NULL;
+
+	return mock_impl;
 }
 
 int mock_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)

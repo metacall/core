@@ -675,12 +675,19 @@ int js_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_js js_
 	return 0;
 }
 
-loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration config)
+loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	loader_impl_js js_impl = new loader_impl_js_type();
+	loader_impl_js js_impl;
 
 	(void)impl;
 	(void)config;
+
+	if (log_copy(host->log) != 0)
+	{
+		return NULL;
+	}
+
+	js_impl = new loader_impl_js_type();
 
 	if (js_impl != nullptr)
 	{

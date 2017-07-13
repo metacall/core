@@ -182,12 +182,17 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config)
+loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
 	char * dotnet_root = NULL;
 	char * dotnet_loader_assembly_path = NULL;
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
+
+	if (log_copy(host->log) != 0)
+	{
+		return NULL;
+	}
 
 	if (cs_loader_impl_initialize_types(impl) != 0)
 	{

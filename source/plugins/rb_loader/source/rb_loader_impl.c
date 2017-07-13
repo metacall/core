@@ -351,7 +351,7 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config)
+loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
 	static struct rb_loader_impl_type
 	{
@@ -365,6 +365,11 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 	(void)impl;
 	(void)config;
+
+	if (log_copy(host->log) != 0)
+	{
+		return NULL;
+	}
 
 	ruby_init();
 

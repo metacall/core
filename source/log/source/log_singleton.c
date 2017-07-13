@@ -28,7 +28,7 @@ static log_singleton log_singleton_create(void);
 
 static int log_singleton_destroy(void);
 
-static log_singleton log_singleton_instance(void);
+static log_singleton log_singleton_instance_impl(void);
 
 /* -- Methods -- */
 
@@ -39,7 +39,7 @@ static void log_atexit_callback(void)
 	(void)result;
 }
 
-static log_singleton log_singleton_create()
+log_singleton log_singleton_create()
 {
 	log_singleton s = malloc(sizeof(struct log_singleton_type));
 
@@ -60,36 +60,36 @@ static log_singleton log_singleton_create()
 	return s;
 }
 
-static int log_singleton_destroy()
+int log_singleton_destroy()
 {
-	log_singleton s = log_singleton_instance();
+	log_singleton * s = log_singleton_instance();
 
-	if (s == NULL)
+	if (*s == NULL)
 	{
 		abort();
 	}
 
 	log_singleton_clear();
 
-	if (log_map_destroy(s->map) != 0)
+	if (log_map_destroy((*s)->map) != 0)
 	{
 		return 1;
 	}
 
-	s->map = NULL;
+	(*s)->map = NULL;
 
 	return 0;
 }
 
-static log_singleton log_singleton_instance()
+log_singleton log_singleton_instance_impl()
 {
-	static log_singleton singleton = NULL;
+	log_singleton * singleton_ptr = log_singleton_instance();
 
-	if (singleton == NULL)
+	if (*singleton_ptr == NULL)
 	{
-		singleton = log_singleton_create();
+		*singleton_ptr = log_singleton_create();
 
-		if (singleton == NULL)
+		if (*singleton_ptr == NULL)
 		{
 			abort();
 		}
@@ -105,33 +105,56 @@ static log_singleton log_singleton_instance()
 		}
 	}
 
-	return singleton;
+	return *singleton_ptr;
+}
+
+log_singleton * log_singleton_instance()
+{
+	static log_singleton s = NULL;
+
+	return &s;
+}
+
+int log_singleton_initialize(log_singleton singleton)
+{
+	log_singleton * s = log_singleton_instance();
+
+	if (*s != NULL)
+	{
+		/* Log already initialized */
+
+		return 1;
+	}
+
+	*s = singleton;
+
+	return 0;
 }
 
 int log_singleton_insert(const char * name, log_impl impl)
 {
-	log_singleton s = log_singleton_instance();
+	log_singleton s = log_singleton_instance_impl();
 
 	return log_map_insert(s->map, name, impl);
 }
 
 log_impl log_singleton_get(const char * name)
 {
-	log_singleton s = log_singleton_instance();
+	log_singleton s = log_singleton_instance_impl();
 
 	return (log_impl)log_map_get(s->map, name);
 }
 
 log_impl log_singleton_remove(const char * name)
 {
-	log_singleton s = log_singleton_instance();
+	log_singleton s = log_singleton_instance_impl();
 
 	return (log_impl)log_map_remove(s->map, name);
 }
 
 void log_singleton_clear()
 {
-	log_singleton s = log_singleton_instance();
+	log_singleton s = log_singleton_instance_impl();
 
 	if (log_map_clear(s->map) != 0)
 	{

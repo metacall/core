@@ -17,7 +17,7 @@
 extern "C" {
 #endif
 
-C_LOADER_API loader_impl_data c_loader_impl_initialize(loader_impl impl);
+C_LOADER_API loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
 
 C_LOADER_API int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

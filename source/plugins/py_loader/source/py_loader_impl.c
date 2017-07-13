@@ -506,57 +506,66 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 	return 1;
 }
 
-loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
+loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
+	loader_impl_py py_impl;
+
+	PyGILState_STATE gstate;
 
 	(void)impl;
 	(void)config;
 
-	if (py_impl != NULL)
+	if (log_copy(host->log) != 0)
 	{
-		PyGILState_STATE gstate;
-
-		if (Py_IsInitialized() == 0)
-		{
-			Py_InitializeEx(0);
-		}
-
-		if (PyEval_ThreadsInitialized() == 0)
-		{
-			PyEval_InitThreads();
-		}
-
-		gstate = PyGILState_Ensure();
-
-		if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
-		{
-			static const char main_module_name[] = "__metacall__";
-
-			static PyModuleDef module_def;
-
-			memset(&module_def, 0, sizeof(PyModuleDef));
-
-			module_def.m_name = main_module_name;
-
-			py_impl->main_module = PyModule_Create(&module_def);
-
-			if (py_impl->main_module != NULL)
-			{
-				Py_INCREF(py_impl->main_module);
-
-				PyGILState_Release(gstate);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Python loader initialized correctly");
-
-				return py_impl;
-			}
-		}
-
-		PyGILState_Release(gstate);
-
-		free(py_impl);
+		return NULL;
 	}
+
+	py_impl = malloc(sizeof(struct loader_impl_py_type));
+
+	if (py_impl == NULL)
+	{
+		return NULL;
+	}
+
+	if (Py_IsInitialized() == 0)
+	{
+		Py_InitializeEx(0);
+	}
+
+	if (PyEval_ThreadsInitialized() == 0)
+	{
+		PyEval_InitThreads();
+	}
+
+	gstate = PyGILState_Ensure();
+
+	if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
+	{
+		static const char main_module_name[] = "__metacall__";
+
+		static PyModuleDef module_def;
+
+		memset(&module_def, 0, sizeof(PyModuleDef));
+
+		module_def.m_name = main_module_name;
+
+		py_impl->main_module = PyModule_Create(&module_def);
+
+		if (py_impl->main_module != NULL)
+		{
+			Py_INCREF(py_impl->main_module);
+
+			PyGILState_Release(gstate);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Python loader initialized correctly");
+
+			return py_impl;
+		}
+	}
+
+	PyGILState_Release(gstate);
+
+	free(py_impl);
 
 	return NULL;
 }

@@ -44,6 +44,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/loader.h
+	${include_path}/loader_host.h
 	${include_path}/loader_handle.h
 	${include_path}/loader_impl_data.h
 	${include_path}/loader_impl_interface.h

@@ -16,6 +16,18 @@
 
 /* -- Methods -- */
 
+void * log_instance()
+{
+	return log_singleton_instance();
+}
+
+int log_copy(void * instance)
+{
+	log_singleton * singleton_ptr = instance;
+
+	return log_singleton_initialize(*singleton_ptr);
+}
+
 int log_create(const char * name)
 {
 	log_impl impl = log_impl_create(name);

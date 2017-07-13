@@ -224,7 +224,13 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = loader_impl_create(l->library_path, (const hash_map_key)tag);
+	loader_impl impl;
+
+	struct loader_host_type host;
+	
+	host.log = log_instance();
+
+	impl = loader_impl_create(l->library_path, (const hash_map_key)tag, &host);
 
 	if (impl != NULL)
 	{

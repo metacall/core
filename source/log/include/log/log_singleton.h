@@ -33,6 +33,10 @@ typedef struct log_singleton_type * log_singleton;
 
 /* -- Methods -- */
 
+LOG_API log_singleton * log_singleton_instance(void);
+
+LOG_API int log_singleton_initialize(log_singleton singleton);
+
 LOG_API int log_singleton_insert(const char * name, log_impl impl);
 
 LOG_API log_impl log_singleton_get(const char * name);

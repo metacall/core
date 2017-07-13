@@ -34,12 +34,13 @@
 
 using namespace v8;
 
-loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config)
+loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
 	/* TODO */
 
 	(void)impl;
 	(void)config;
+	(void)host;
 
 	return NULL;
 }

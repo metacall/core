@@ -9,7 +9,6 @@
  /* -- Headers -- */
 
 #include <loader/loader_impl.h>
-#include <loader/loader.h>
 
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_context.h>
@@ -194,7 +193,7 @@ loader_impl loader_impl_create_proxy()
 	return NULL;
 }
 
-loader_impl loader_impl_create(const char * path, loader_naming_tag tag)
+loader_impl loader_impl_create(const char * path, loader_naming_tag tag, loader_host host)
 {
 	if (tag != NULL)
 	{
@@ -226,7 +225,7 @@ loader_impl loader_impl_create(const char * path, loader_naming_tag tag)
 
 							config = configuration_scope(configuration_key);
 
-							impl->data = impl->singleton()->initialize(impl, config);
+							impl->data = impl->singleton()->initialize(impl, config, host);
 
 							if (impl->data != NULL)
 							{
