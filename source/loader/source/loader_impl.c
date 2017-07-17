@@ -193,57 +193,100 @@ loader_impl loader_impl_create_proxy()
 	return NULL;
 }
 
+void loader_impl_configuration(loader_impl impl, configuration config)
+{
+	value execution_paths_value = configuration_value(config, "execution_paths");
+
+	size_t size = value_type_size(execution_paths_value) / sizeof(value);
+
+	if (execution_paths_value != NULL)
+	{
+		value * execution_paths_array = value_to_list(execution_paths_value);
+
+		if (execution_paths_array != NULL)
+		{
+			size_t index;
+
+			for (index = 0; index < size; ++index)
+			{
+				if (execution_paths_array[index] != NULL)
+				{
+					const char * str = value_to_string(execution_paths_array[index]);
+
+					if (str != NULL)
+					{
+						loader_naming_path execution_path;
+
+						strncpy(execution_path, str, LOADER_NAMING_PATH_SIZE);
+
+						impl->singleton()->execution_path(impl, execution_path);
+					}
+				}
+			}
+		}
+	}
+}
+
 loader_impl loader_impl_create(const char * path, loader_naming_tag tag, loader_host host)
 {
 	if (tag != NULL)
 	{
 		loader_impl impl = malloc(sizeof(struct loader_impl_type));
 
-		if (impl != NULL)
+		if (impl == NULL)
 		{
-			if (loader_impl_create_singleton(impl, path, tag) == 0)
+			return NULL;
+		}
+
+		if (loader_impl_create_singleton(impl, path, tag) == 0)
+		{
+			impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+
+			if (impl->handle_impl_map != NULL)
 			{
-				impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+				impl->type_info_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
 
-				if (impl->handle_impl_map != NULL)
+				if (impl->type_info_map != NULL)
 				{
-					impl->type_info_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+					impl->ctx = context_create(tag);
 
-					if (impl->type_info_map != NULL)
+					if (impl->ctx != NULL)
 					{
-						impl->ctx = context_create(tag);
+						char configuration_key[0xFF];
 
-						if (impl->ctx != NULL)
+						configuration config;
+
+						strcpy(configuration_key, tag);
+
+						strcat(configuration_key, "_loader");
+
+						config = configuration_scope(configuration_key);
+
+						impl->data = impl->singleton()->initialize(impl, config, host);
+
+						if (impl->data != NULL)
 						{
-							char configuration_key[0xFF];
+							strncpy(impl->tag, tag, LOADER_NAMING_TAG_SIZE);
 
-							configuration config;
-
-							strcpy(configuration_key, tag);
-
-							strcat(configuration_key, "_loader");
-
-							config = configuration_scope(configuration_key);
-
-							impl->data = impl->singleton()->initialize(impl, config, host);
-
-							if (impl->data != NULL)
+							if (config != NULL)
 							{
-								strncpy(impl->tag, tag, LOADER_NAMING_TAG_SIZE);
-
-								return impl;
+								loader_impl_configuration(impl, config);
 							}
 
-							context_destroy(impl->ctx);
+							return impl;
 						}
 
-						hash_map_destroy(impl->type_info_map);
+						context_destroy(impl->ctx);
 					}
 
-					hash_map_destroy(impl->handle_impl_map);
+					hash_map_destroy(impl->type_info_map);
 				}
+
+				hash_map_destroy(impl->handle_impl_map);
 			}
 		}
+
+		free(impl);
 	}
 
 	return NULL;

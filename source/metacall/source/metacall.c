@@ -207,11 +207,14 @@ void * metacall(const char * name, ...)
 		{
 			type t = signature_get_return(s);
 
-			type_id id = type_index(t);
-
-			if (id != value_type_id(ret))
+			if (t != NULL)
 			{
-				return value_type_cast(ret, id);
+				type_id id = type_index(t);
+
+				if (id != value_type_id(ret))
+				{
+					return value_type_cast(ret, id);
+				}
 			}
 		}
 

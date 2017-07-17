@@ -125,44 +125,75 @@ configuration configuration_object_initialize(const char * name, const char * pa
 	return config;
 }
 
-int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+int configuration_object_childs_cb_iterate_valid(set_key key, set_value val)
 {
 	value v = val;
 
-	(void)s;
+	(void)key;
+
+	/*
+	static const char config_name[] = "_loader";
+
+	const char * name = key;
+
+	size_t name_length = strlen(name), config_name_size = sizeof(config_name);
+
+	const char * name_last = &name[name_length - config_name_size + 1];
+
+	if (strcmp(name_last, config_name) != 0)
+	{
+		return 1;
+	}
+	*/
 
 	if (value_type_id(v) == TYPE_STRING)
 	{
-		size_t size = value_type_size(v);
+		size_t config_size = value_type_size(v);
 
-		const char * extension = configuration_impl_extension();
+		const char * config_extension = configuration_impl_extension();
 
-		size_t length = strlen(extension);
+		size_t config_length = strlen(config_extension);
 
-		if (size > length + 1)
+		if (config_size > config_length + 1)
 		{
 			const char * path = value_to_string(v);
 
-			const char * last = &path[size - length - 1];
+			const char * extension_last = &path[config_size - config_length - 1];
 
-			if (strncmp(last, extension, length) == 0)
+			if (strncmp(extension_last, config_extension, config_length) == 0)
 			{
-				configuration_childs_cb_iterator iterator = args;
-
-				if (set_get(iterator->storage, key) == NULL)
-				{
-					configuration child = configuration_object_initialize(key, path, iterator->parent);
-
-					if (child == NULL)
-					{
-						iterator->result = 1;
-
-						return 1;
-					}
-
-					vector_push_back(iterator->childs, &child);
-				}
+				return 0;
 			}
+		}
+	}
+
+	return 1;
+}
+
+int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	(void)s;
+
+	if (configuration_object_childs_cb_iterate_valid(key, val) == 0)
+	{
+		configuration_childs_cb_iterator iterator = args;
+
+		if (set_get(iterator->storage, key) == NULL)
+		{
+			value v = val;
+
+			const char * path = value_to_string(v);
+
+			configuration child = configuration_object_initialize(key, path, iterator->parent);
+
+			if (child == NULL)
+			{
+				iterator->result = 1;
+
+				return 1;
+			}
+
+			vector_push_back(iterator->childs, &child);
 		}
 	}
 
