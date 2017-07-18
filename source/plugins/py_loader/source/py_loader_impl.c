@@ -25,6 +25,7 @@ typedef struct loader_impl_py_function_type
 {
 	PyObject * func;
 	PyObject ** values;
+	loader_impl impl;
 
 } * loader_impl_py_function;
 
@@ -33,11 +34,13 @@ typedef struct loader_impl_py_type
 	PyObject * inspect_module;
 	PyObject * inspect_signature;
 	PyObject * builtins_module;
+	PyObject * traceback_module;
+	PyObject * traceback_format_exception;
 	PyObject * main_module;
 
 } * loader_impl_py;
 
-static void py_loader_impl_error_print(void);
+static void py_loader_impl_error_print(loader_impl impl);
 
 int type_py_interface_create(type t, type_impl impl)
 {
@@ -240,7 +243,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print();
+		py_loader_impl_error_print(py_func->impl);
 	}
 
 	Py_DECREF(tuple_args);
@@ -506,6 +509,33 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 	return 1;
 }
 
+int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl)
+{
+	PyObject * module_name = PyUnicode_DecodeFSDefault("traceback");
+
+	(void)impl;
+
+	py_impl->traceback_module = PyImport_Import(module_name);
+
+	Py_DECREF(module_name);
+
+	if (py_impl->traceback_module != NULL)
+	{
+		py_impl->traceback_format_exception = PyObject_GetAttrString(py_impl->traceback_module, "format_exception");
+
+		if (py_impl->traceback_format_exception != NULL && PyCallable_Check(py_impl->traceback_format_exception))
+		{
+			return 0;
+		}
+
+		Py_XDECREF(py_impl->traceback_format_exception);
+	}
+
+	Py_DECREF(py_impl->traceback_module);
+
+	return 1;
+}
+
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
 	loader_impl_py py_impl;
@@ -538,6 +568,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	gstate = PyGILState_Ensure();
+
+	if (py_loader_impl_initialize_traceback(impl, py_impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid traceback module creation");
+	}
 
 	if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
 	{
@@ -645,7 +680,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 		if (PyErr_Occurred() != NULL || module == NULL)
 		{
-			py_loader_impl_error_print();
+			py_loader_impl_error_print(impl);
 
 			PyGILState_Release(gstate);
 
@@ -687,7 +722,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	{
 		if (PyErr_Occurred() != NULL)
 		{
-			py_loader_impl_error_print();
+			py_loader_impl_error_print(impl);
 		}
 
 		PyGILState_Release(gstate);
@@ -805,7 +840,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 		if (PyErr_Occurred() != NULL)
 		{
-			py_loader_impl_error_print();
+			py_loader_impl_error_print(impl);
 		}
 
 		result = PyObject_CallObject(py_impl->inspect_signature, args);
@@ -913,6 +948,8 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 						py_func->func = value;
 
+						py_func->impl = impl;
+
 						f = function_create(func_name, args_count, py_func, &function_py_singleton);
 
 						log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %ld", func_name, args_count);
@@ -958,13 +995,17 @@ int py_loader_impl_destroy(loader_impl impl)
 
 		Py_DECREF(py_impl->builtins_module);
 
+		Py_DECREF(py_impl->traceback_format_exception);
+
+		Py_DECREF(py_impl->traceback_module);
+
 		Py_DECREF(py_impl->main_module);
 
 		if (Py_IsInitialized() != 0)
 		{
 			if (PyErr_Occurred() != NULL)
 			{
-				py_loader_impl_error_print();
+				py_loader_impl_error_print(impl);
 			}
 
 			PyGILState_Release(gstate);
@@ -984,13 +1025,18 @@ int py_loader_impl_destroy(loader_impl impl)
 	return 1;
 }
 
-void py_loader_impl_error_print()
+void py_loader_impl_error_print(loader_impl impl)
 {
+	static const char error_format_str[] = "Python Error [Type: %s]: %s\n{\n%s\n}";
+	static const char separator_str[] = "\n";
+
+	loader_impl_py py_impl = loader_impl_get(impl);
+
 	PyObject * type, * value, * traceback;
 
 	PyObject * type_str_obj, * value_str_obj, * traceback_str_obj;
 
-	char * type_str, * value_str, * traceback_str;
+	PyObject * traceback_list, * separator;
 
 	PyErr_Fetch(&type, &value, &traceback);
 
@@ -998,24 +1044,31 @@ void py_loader_impl_error_print()
 
 	value_str_obj = PyObject_Str(value);
 
-	traceback_str_obj = PyObject_Str(traceback);
+	traceback_list = PyObject_CallFunctionObjArgs(py_impl->traceback_format_exception, type, value, traceback, NULL);
 
 	#if PY_MAJOR_VERSION == 2
-		type_str = PyString_AsString(type_str_obj);
+		PyString_FromString(separator_str);
 
-		value_str = PyString_AsString(value_str_obj);
+		traceback_str_obj = PyString_Join(separator, traceback_list);
 
-		traceback_str = PyString_AsString(traceback_str_obj);
+		log_write("metacall", LOG_LEVEL_ERROR, error_format_str,
+			PyString_AsString(type_str_obj),
+			PyString_AsString(value_str_obj),
+			PyString_AsString(traceback_str_obj));
 	#elif PY_MAJOR_VERSION == 3
-		type_str = PyUnicode_AsUTF8(type_str_obj);
+		separator = PyUnicode_FromString(separator_str);
 
-		value_str = PyUnicode_AsUTF8(value_str_obj);
+		traceback_str_obj = PyUnicode_Join(separator, traceback_list);
 
-		traceback_str = PyUnicode_AsUTF8(traceback_str_obj);
+		log_write("metacall", LOG_LEVEL_ERROR, error_format_str,
+			PyUnicode_AsUTF8(type_str_obj),
+			PyUnicode_AsUTF8(value_str_obj),
+			PyUnicode_AsUTF8(traceback_str_obj));
 	#endif
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Python Error: (%s): %s\n{\n%s\n}",
-		type_str, value_str, traceback_str);
+	Py_DECREF(traceback_list);
+	Py_DECREF(separator);
+	Py_DECREF(traceback_str_obj);
 
 	PyErr_Restore(type, value, traceback);
 }
