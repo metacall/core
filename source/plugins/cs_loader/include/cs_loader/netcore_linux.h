@@ -1,22 +1,27 @@
-#pragma once
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #ifndef _NETCORELINUX_H_
 #define _NETCORELINUX_H_
 
 #include <cs_loader/netcore.h>
-#include <stdio.h>
-#include <string.h>
-#include <sstream>
-#include <iostream>
-#include <ostream>
-#include <stdlib.h>
+
 #include <dynlink/dynlink.h>
+
 #include <experimental/filesystem>
+
 #include <functional>
-#include <iostream>
+
 #include <unistd.h>
-#include <cs_loader/logger.h>
+
 #define MAX_LONGPATH 255
 
+// Prototype of the coreclr_initialize function from the libcoreclr.so
 typedef int (coreclrInitializeFunction)(
 	const char* exePath,
 	const char* appDomainFriendlyName,
@@ -52,7 +57,6 @@ class netcore_linux : public netcore
 {
 private:
 	void* hostHandle = NULL;
-	logger log;
 	std::string managedAssemblyFullName;
 	char appPath[MAX_LONGPATH] = "";
 	std::string runtimePath;

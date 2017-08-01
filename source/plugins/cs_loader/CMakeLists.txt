@@ -87,7 +87,6 @@ set(headers
 	${include_path}/cs_loader_impl.h
 	${include_path}/defs.h
 	${include_path}/netcore.h
-	${include_path}/logger.h
 	${include_path}/simple_netcore.h
 	${headers_platform}
 )
@@ -96,7 +95,6 @@ set(sources
 	${source_path}/cs_loader.c
 	${source_path}/cs_loader_impl.c
 	${source_path}/netcore.cpp
-	${source_path}/logger.cpp
 	${source_path}/simple_netcore.cpp
 	${sources_platform}
 )

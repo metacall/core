@@ -1,7 +1,14 @@
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #include <cs_loader/host_environment.h>
 
-
-host_environment::host_environment(char * dotnet_root, logger *logger) : log(logger), clr_runtime_host(nullptr)
+host_environment::host_environment(char * dotnet_root) : clr_runtime_host(nullptr)
 {
 	// Discover the path to this exe's module. All other files are expected to be in the same directory.
 	DWORD thisModuleLength = ::GetModuleFileNameW(::GetModuleHandleW(nullptr), this->host_path, MAX_LONGPATH);
@@ -20,24 +27,25 @@ host_environment::host_environment(char * dotnet_root, logger *logger) : log(log
 	// Save the exe name
 	this->host_exe_name = this->host_path + lastBackslashIndex + 1;
 
-	*this->log << W("Host directory: ") << this->host_directory_path << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Host directory: %s", this->host_directory_path);
 
 	// Check for %CORE_ROOT% and try to load CoreCLR.dll from it if it is set
 	wchar_t coreRoot[MAX_LONGPATH];
 	size_t outSize;
 	this->core_clr_module = NULL; // Initialize this here since we don't call TryLoadCoreCLR if CORE_ROOT is unset.
 
-	if (dotnet_root == NULL) {
+	if (dotnet_root == NULL)
+	{
 		if (!_wgetenv_s(&outSize, coreRoot, MAX_LONGPATH, W("CORE_ROOT")) == 0 && outSize > 0)
 		{
 			//error ?
 		}
-		//else
-		//{
-		//	*this->log << W("CORE_ROOT not set; skipping") << logger::endl;
-		//	*this->log << W("You can set the environment variable CORE_ROOT to point to the path") << logger::endl;
-		//	*this->log << W("where CoreCLR.dll lives to help this executable find it.") << logger::endl;
-		//}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_WARNING, "CORE_ROOT not set; skipping\n"
+				"You can set the environment variable CORE_ROOT to point to the path\n"
+				"where CoreCLR.dll lives to help this executable find it.");
+		}
 	}
 	else
 	{
@@ -71,8 +79,9 @@ host_environment::host_environment(char * dotnet_root, logger *logger) : log(log
 		}
 
 	}
-	else {
-		*this->log << W("Unable to load ") << core_clr_dll << logger::endl;
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Unable to load  %s", core_clr_dll);
 	}
 }
 
@@ -98,40 +107,49 @@ host_environment::~host_environment()
 HMODULE host_environment::try_load_core_clr(const wchar_t* directory_path) {
 
 	wchar_t coreCLRPath[MAX_LONGPATH];
+
 	wcscpy_s(coreCLRPath, directory_path);
 	wcscat_s(coreCLRPath, core_clr_dll);
 
-	*this->log << W("Attempting to load: ") << coreCLRPath << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Attempting to load: %s", coreCLRPath);
 
 	HMODULE result = LoadLibraryEx(coreCLRPath, NULL, 0);
-	if (!result) {
-		*this->log << W("Failed to load: ") << coreCLRPath << logger::endl;
-		*this->log << W("Error code: ") << GetLastError() << logger::endl;
+
+	if (!result)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to load: %s [ERRORCODE: %d]", coreCLRPath, GetLastError());
 		return nullptr;
 	}
 
-	// Pin the module - CoreCLR.dll does not support being unloaded.
 	HMODULE dummy_coreCLRModule;
-	if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, coreCLRPath, &dummy_coreCLRModule)) {
-		*this->log << W("Failed to pin: ") << coreCLRPath << logger::endl;
+
+	// Pin the module - CoreCLR.dll does not support being unloaded
+	if (!::GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_PIN, coreCLRPath, &dummy_coreCLRModule))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to pin: %s", coreCLRPath);
 		return nullptr;
 	}
 
 	wchar_t coreCLRLoadedPath[MAX_LONGPATH];
+
 	::GetModuleFileNameW(result, coreCLRLoadedPath, MAX_LONGPATH);
 
-	*this->log << W("Loaded: ") << coreCLRLoadedPath << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loaded:  %s", coreCLRLoadedPath);
 
 	return result;
 }
 
-bool host_environment::tpa_list_contains_file(_In_z_ wchar_t* fileNameWithoutExtension, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions) {
-
-	if (!this->tpa_list.c_str()) return false;
+bool host_environment::tpa_list_contains_file(_In_z_ wchar_t* fileNameWithoutExtension, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions)
+{
+	if (!this->tpa_list.c_str())
+	{
+		return false;
+	}
 
 	for (int iExtension = 0; iExtension < countExtensions; iExtension++)
 	{
 		wchar_t fileName[MAX_LONGPATH];
+
 		wcscpy_s(fileName, MAX_LONGPATH, W("\\")); // So that we don't match other files that end with the current file name
 		wcscat_s(fileName, MAX_LONGPATH, fileNameWithoutExtension);
 		wcscat_s(fileName, MAX_LONGPATH, rgTPAExtensions[iExtension] + 1);
@@ -142,13 +160,15 @@ bool host_environment::tpa_list_contains_file(_In_z_ wchar_t* fileNameWithoutExt
 			return true;
 		}
 	}
+
 	return false;
 }
 
-void host_environment::remove_extension_and_ni(_In_z_ wchar_t* fileName)
+void host_environment::remove_extension_and_ni(_In_z_ wchar_t * fileName)
 {
 	// Remove extension, if it exists
 	wchar_t* extension = wcsrchr(fileName, W('.'));
+
 	if (extension != NULL)
 	{
 		extension[0] = W('\0');
@@ -167,8 +187,9 @@ void host_environment::remove_extension_and_ni(_In_z_ wchar_t* fileName)
 
 void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targetPath, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions)
 {
-	*this->log << W("Adding assemblies from ") << targetPath << W(" to the TPA list") << logger::endl;
 	wchar_t assemblyPath[MAX_LONGPATH];
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Adding assemblies from %s to the TPA list", targetPath);
 
 	for (int iExtension = 0; iExtension < countExtensions; iExtension++)
 	{
@@ -214,7 +235,8 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targ
 					}
 					else
 					{
-						*this->log << W("Not adding ") << targetPath << data.cFileName << W(" to the TPA list because another file with the same name is already present on the list") << logger::endl;
+						log_write("metacall", LOG_LEVEL_ERROR, "Not adding %s%s to the TPA list because "
+							"another file with the same name is already present on the list", targetPath, data.cFileName);
 					}
 				}
 			} while (0 != FindNextFile(findHandle, &data));
@@ -226,9 +248,12 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targ
 
 // Returns the semicolon-separated list of paths to runtime dlls that are considered trusted.
 // On first call, scans the coreclr directory for dlls and adds them all to the list.
-const wchar_t * host_environment::get_tpa_list() {
-	if (!this->tpa_list.c_str()) {
-		wchar_t *rgTPAExtensions[] = {
+const wchar_t * host_environment::get_tpa_list()
+{
+	if (!this->tpa_list.c_str())
+	{
+		wchar_t *rgTPAExtensions[] =
+		{
 			W("*.ni.dll"),		// Probe for .ni.dll first so that it's preferred if ni and il coexist in the same dir
 			W("*.dll"),
 			W("*.ni.exe"),
@@ -238,6 +263,7 @@ const wchar_t * host_environment::get_tpa_list() {
 		// Add files from %CORE_LIBRARIES% if specified
 		wchar_t coreLibraries[MAX_LONGPATH];
 		size_t outSize;
+
 		if (_wgetenv_s(&outSize, coreLibraries, MAX_LONGPATH, W("CORE_LIBRARIES")) == 0 && outSize > 0)
 		{
 			wcscat_s(coreLibraries, MAX_LONGPATH, W("\\"));
@@ -245,9 +271,9 @@ const wchar_t * host_environment::get_tpa_list() {
 		}
 		else
 		{
-			*this->log << W("CORE_LIBRARIES not set; skipping") << logger::endl;
-			*this->log << W("You can set the environment variable CORE_LIBRARIES to point to a") << logger::endl;
-			*this->log << W("path containing additional platform assemblies,") << logger::endl;
+			log_write("metacall", LOG_LEVEL_WARNING, "CORE_LIBRARIES not set; skipping\n"
+				"You can set the environment variable CORE_LIBRARIES to point to a\n"
+				"path containing additional platform assemblies");
 		}
 
 		this->add_files_from_directory_to_tpa_list(this->core_clr_directory_path, rgTPAExtensions, _countof(rgTPAExtensions));
@@ -257,40 +283,46 @@ const wchar_t * host_environment::get_tpa_list() {
 }
 
 // Returns the path to the host module
-const wchar_t * host_environment::get_host_path() const {
+const wchar_t * host_environment::get_host_path() const
+{
 	return this->host_path;
 }
 
 // Returns the path to the host module
-const wchar_t * host_environment::get_host_exe_name() const {
+const wchar_t * host_environment::get_host_exe_name() const
+{
 	return this->host_exe_name;
 }
 
-
 // Returns the ICLRRuntimeHost2 instance, loading it from CoreCLR.dll if necessary, or nullptr on failure.
-ICLRRuntimeHost2* host_environment::get_clr_runtime_host() {
-	if (!this->clr_runtime_host) {
-
-		if (!this->core_clr_module) {
-			*this->log << W("Unable to load ") << core_clr_dll << logger::endl;
+ICLRRuntimeHost2 * host_environment::get_clr_runtime_host()
+{
+	if (!this->clr_runtime_host)
+	{
+		if (!this->core_clr_module)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to load %s", core_clr_dll);
 			return nullptr;
 		}
 
-		*this->log << W("Finding GetCLRRuntimeHost(...)") << logger::endl;
+		log_write("metacall", LOG_LEVEL_DEBUG, "Finding GetCLRRuntimeHost");
 
 		FnGetCLRRuntimeHost pfnGetCLRRuntimeHost =
 			(FnGetCLRRuntimeHost)::GetProcAddress(this->core_clr_module, "GetCLRRuntimeHost");
 
-		if (!pfnGetCLRRuntimeHost) {
-			*this->log << W("Failed to find function GetCLRRuntimeHost in ") << core_clr_dll << logger::endl;
+		if (!pfnGetCLRRuntimeHost)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to find function GetCLRRuntimeHost in %s", core_clr_dll);
 			return nullptr;
 		}
 
-		*this->log << W("Calling GetCLRRuntimeHost(...)") << logger::endl;
+		log_write("metacall", LOG_LEVEL_DEBUG, "Calling GetCLRRuntimeHost");
 
 		HRESULT hr = pfnGetCLRRuntimeHost(IID_ICLRRuntimeHost2, (IUnknown**)&this->clr_runtime_host);
-		if (FAILED(hr)) {
-			*this->log << W("Failed to get ICLRRuntimeHost2 interface. ERRORCODE: ") << hr << logger::endl;
+
+		if (FAILED(hr))
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to get ICLRRuntimeHost2 interface [ERRORCODE: %d]", core_clr_dll);
 			return nullptr;
 		}
 	}

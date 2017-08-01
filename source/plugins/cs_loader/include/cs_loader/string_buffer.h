@@ -1,13 +1,13 @@
-#pragma once
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #ifndef _STRING_BUFFER_H_
 #define _STRING_BUFFER_H_
-
-#include <stdio.h>
-#include <iostream>
-#include <istream>
-#include <sstream>
-#include <fstream>
-
 
 class string_buffer
 {
@@ -24,7 +24,7 @@ public:
 
 	~string_buffer();
 
-	const wchar_t* c_str() const;
+	const wchar_t * c_str() const;
 
 	void append(const wchar_t* str, size_t strLen);
 };

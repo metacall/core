@@ -1,19 +1,21 @@
-#pragma once
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #ifndef _HOST_ENVIRONMENT_H_
 #define _HOST_ENVIRONMENT_H_
 
-#include <stdio.h>
+#include <cs_loader/string_buffer.h>
+
 #include <pal/prebuilt/inc/mscoree.h>
-#include <cs_loader/logger.h>
 #include <inc/palclr.h>
 
 #include <functional>
-#include <iostream>
-#include <istream>
-#include <sstream>
-#include <fstream>
 #include <memory>
-#include <cs_loader/string_buffer.h>
 
 static const wchar_t *core_clr_dll = W("CoreCLR.dll");
 
@@ -35,8 +37,6 @@ private:
 
 	HMODULE core_clr_module;
 
-	logger *log;
-
 	HMODULE try_load_core_clr(const wchar_t* directory_path);
 
 public:
@@ -44,7 +44,7 @@ public:
 	wchar_t core_clr_directory_path[MAX_LONGPATH];
 
 	host_environment();
-	host_environment(char * dotnet_root, logger *logger);
+	host_environment(char * dotnet_root);
 	~host_environment();
 
 	bool tpa_list_contains_file(_In_z_ wchar_t* file_name_without_extension, _In_reads_(count_extensions) wchar_t** rg_tpa_extensions, int count_extensions);

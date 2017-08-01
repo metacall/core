@@ -1,5 +1,15 @@
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #include <cs_loader/netcore.h>
-#include <iostream>
+
+#include <log/log.h>
+
 #include <exception>
 
 netcore::netcore(char * dotnet_root,char * dotnet_loader_assembly_path)
@@ -16,18 +26,6 @@ netcore::~netcore()
 reflect_function * netcore::get_functions(int * count)
 {
 	this->core_get_functions(&this->functions_count, this->functions);
-
-	for (int i = 0; i < this->functions_count; ++i)
-	{
-		std::cout << "function name:" << this->functions[i].name << std::endl;
-		std::cout << "function return type:" << this->functions[i].return_type << std::endl;
-		std::cout << "function param count:" << this->functions[i].param_count << std::endl;
-
-		for (int p = 0; p < this->functions[i].param_count; ++p)
-		{
-			std::cout << "params:" << this->functions[i].pars[p].name << std::endl;
-		}
-	}
 
 	*count = this->functions_count;
 
@@ -107,7 +105,7 @@ bool netcore::load_source(wchar_t * source)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return false;
@@ -121,7 +119,7 @@ bool netcore::load_source(char * source)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return false;
@@ -135,7 +133,7 @@ bool netcore::load_files(wchar_t ** source, size_t size)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return false;
@@ -149,7 +147,7 @@ bool netcore::load_files(char ** source, size_t size)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return false;
@@ -163,7 +161,7 @@ bool netcore::load_assembly(wchar_t * source)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return false;
@@ -177,7 +175,7 @@ bool netcore::load_assembly(char * source)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return false;
@@ -191,7 +189,7 @@ execution_result * netcore::execute(char * function)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return NULL;
@@ -204,7 +202,7 @@ execution_result * netcore::execute(wchar_t * function)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return NULL;
@@ -217,7 +215,7 @@ execution_result * netcore::execute_with_params(char * function, parameters * pa
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return NULL;
@@ -231,7 +229,7 @@ execution_result * netcore::execute_with_params(wchar_t * function, parameters *
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 
 	return NULL;
@@ -245,6 +243,6 @@ void netcore::destroy_execution_result(execution_result * er)
 	}
 	catch (const std::exception & ex)
 	{
-		std::cerr << ex.what();
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
 	}
 }

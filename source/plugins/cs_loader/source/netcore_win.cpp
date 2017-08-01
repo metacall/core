@@ -1,123 +1,118 @@
-#include <cs_loader/netcore_win.h>
 
-#include <stdio.h>
+#include <log/log.h>
+
+#include <cs_loader/netcore_win.h>
+#include <cs_loader/host_environment.h>
+
 #include <pal/prebuilt/inc/mscoree.h>
 #include <inc/palclr.h>
 
 #include <functional>
-#include <iostream>
-#include <istream>
-#include <sstream>
-#include <fstream>
 #include <memory>
 
-#include <cs_loader/logger.h>
-#include <cs_loader/host_environment.h>
-
-netcore_win::netcore_win(char * dotnet_root, char * dotnet_loader_assembly_path) :netcore(dotnet_root, dotnet_loader_assembly_path)
+netcore_win::netcore_win(char * dotnet_root, char * dotnet_loader_assembly_path) : netcore(dotnet_root, dotnet_loader_assembly_path), domain_id(0)
 {
-	this->log = new logger();
-	this->log->disable();
-	this->domain_id = 0;
+
 }
 
 
 netcore_win::~netcore_win()
 {
 	this->stop();
-	if (this->core_environment != nullptr) {
+
+	if (this->core_environment != nullptr)
+	{
 		delete this->core_environment;
 	}
-
-	delete 	this->log;
 }
 
 void netcore_win::stop()
 {
 	HRESULT hr;
-	*this->log << W("Unloading the AppDomain") << logger::endl;
 
-	hr = host->UnloadAppDomain(
-		(DWORD)this->domain_id,
-		true);                          // Wait until done
+	log_write("metacall", LOG_LEVEL_DEBUG, "Unloading the AppDomain");
 
-	if (FAILED(hr)) {
-		*this->log << W("Failed to unload the AppDomain. ERRORCODE: ") << hr << logger::endl;
+	// Wait until unload
+	hr = host->UnloadAppDomain((DWORD)this->domain_id, true);
+
+	if (FAILED(hr))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to unload the AppDomain [ERRORCODE: %d]", hr);
 		return;
 	}
 
-	//-------------------------------------------------------------
-
 	// Stop the host
-
-	*this->log << W("Stopping the host") << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Stopping the host");
 
 	hr = this->host->Stop();
 
-	if (FAILED(hr)) {
-		*this->log << W("Failed to stop the host. ERRORCODE: ") << hr << logger::endl;
+	if (FAILED(hr))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to stop the host [ERRORCODE: %d]", hr);
 		return;
 	}
 
-	//-------------------------------------------------------------
-
 	// Release the reference to the host
-
-	*this->log << W("Releasing ICLRRuntimeHost2") << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Releasing ICLRRuntimeHost2");
 
 	this->host->Release();
 }
 
-bool netcore_win::start() {
-	this->core_environment = new host_environment(this->dotnet_root, this->log);
+bool netcore_win::start()
+{
+	this->core_environment = new host_environment(this->dotnet_root);
 
-	if (!this->config_assembly_name()) {
+	if (!this->config_assembly_name())
+	{
 		return false;
 	}
 
-	if (!this->create_host()) {
+	if (!this->create_host())
+	{
 		return false;
 	}
-	if (!this->load_main()) {
+
+	if (!this->load_main())
+	{
 		return false;
 	}
-	if (!this->create_delegates()) {
+
+	if (!this->create_delegates())
+	{
 		return false;
 	}
 
 	return true;
 }
 
-bool netcore_win::config_assembly_name() {
-
-	wchar_t* filePart = NULL;
-
-	wchar_t localPath[MAX_LONGPATH];
-
-	if (!::GetModuleFileName(NULL, appPath, MAX_LONGPATH)) {
-		*this->log << W("Failed to get full path: ") << this->loader_dll << logger::endl;
-		*this->log << W("Error code: ") << GetLastError() << logger::endl;
+bool netcore_win::config_assembly_name()
+{
+	if (!::GetModuleFileName(NULL, appPath, MAX_LONGPATH))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to get full path: % [ERRORCODE: %d]", this->loader_dll, GetLastError());
 		return false;
 	}
 
-
-	if(this->dotnet_loader_assembly_path==NULL){
+	if(this->dotnet_loader_assembly_path==NULL)
+	{
 		wcscpy_s(managedAssemblyFullName, appPath);
-	}else{
+	}
+	else
+	{
 		mbstowcs(managedAssemblyFullName, this->dotnet_loader_assembly_path, MAX_LONGPATH);
 	}
 
-	*this->log << W("Loading: ") << managedAssemblyFullName << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loading: %s", managedAssemblyFullName);
 
 	wcscpy_s(appNiPath, managedAssemblyFullName);
 	wcscat_s(appNiPath, MAX_LONGPATH * 2, W(";"));
 	wcscat_s(appNiPath, MAX_LONGPATH * 2, appPath);
 
 	// Construct native search directory paths
-
 	wcscpy_s(nativeDllSearchDirs, appPath);
 	wchar_t coreLibraries[MAX_LONGPATH];
 	size_t outSize;
+
 	if (_wgetenv_s(&outSize, coreLibraries, MAX_LONGPATH, W("CORE_LIBRARIES")) == 0 && outSize > 0)
 	{
 		wcscat_s(nativeDllSearchDirs, MAX_LONGPATH * 3, W(";"));
@@ -129,48 +124,57 @@ bool netcore_win::config_assembly_name() {
 	return true;
 }
 
-bool netcore_win::create_host() {
+bool netcore_win::create_host()
+{
+	HRESULT hr;
+	bool flagsError = false;
+
 	this->host = this->core_environment->get_clr_runtime_host();
-	if (!host) {
-		*this->log << "fail GetCLRRuntimeHost";
+
+	if (!host)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error in GetCLRRuntimeHost");
 		return false;
 	}
 
-	HRESULT hr;
-	bool flgasError = false;
-
-	*this->log << W("Setting ICLRRuntimeHost2 startup flags") << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Setting ICLRRuntimeHost2 startup flags");
 
 	// Default startup flags
 	hr = host->SetStartupFlags((STARTUP_FLAGS)
 		(STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
 			STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
 			STARTUP_FLAGS::STARTUP_CONCURRENT_GC));
-	if (FAILED(hr)) {
-		*this->log << W("Failed to set startup flags. ERRORCODE: ") << hr << logger::endl;
-		flgasError = true;
+
+	if (FAILED(hr))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to set startup flags [ERRORCODE: %d]", hr);
+		flagsError = true;
 	}
 
-	*this->log << W("Starting ICLRRuntimeHost2") << logger::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "Starting ICLRRuntimeHost2");
 
 	hr = host->Start();
-	if (FAILED(hr)) {
-		*this->log << W("Failed to start CoreCLR. ERRORCODE: ") << hr << logger::endl;
+
+	if (FAILED(hr))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to start CoreCLR [ERRORCODE: %d]", hr);
 		return false;
 	}
 
-	if (flgasError) {
+	if (flagsError)
+	{
 		hr = host->GetCurrentAppDomainId(&this->domain_id);
-		if (FAILED(hr)) {
-			*this->log << W("Failed to GetCurrentAppDomainId. ERRORCODE: ") << hr << logger::endl;
+
+		if (FAILED(hr))
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to GetCurrentAppDomainId [ERRORCODE: %d]", hr);
 			return false;
 		}
 	}
-	else {
-		//-------------------------------------------------------------
-
+	else
+	{
 		// Create an AppDomain
-
+		//
 		// Allowed property names:
 		// APPBASE
 		// - The base path of the application from which the exe and other assemblies will be loaded
@@ -187,14 +191,16 @@ bool netcore_win::create_host() {
 		// NATIVE_DLL_SEARCH_DIRECTORIES
 		// - The list of paths that will be probed for native DLLs called by PInvoke
 		//
-		const wchar_t *property_keys[] = {
+		const wchar_t * property_keys[] =
+		{
 			W("TRUSTED_PLATFORM_ASSEMBLIES"),
 			W("APP_PATHS"),
 			W("APP_NI_PATHS"),
 			W("NATIVE_DLL_SEARCH_DIRECTORIES"),
 			W("AppDomainCompatSwitch")
 		};
-		const wchar_t *property_values[] = {
+
+		const wchar_t * property_values[] = {
 			// TRUSTED_PLATFORM_ASSEMBLIES
 			this->core_environment->get_tpa_list(),
 			// APP_PATHS
@@ -207,13 +213,7 @@ bool netcore_win::create_host() {
 			W("UseLatestBehaviorWhenTFMNotSpecified")
 		};
 
-
-		*this->log << W("Creating an AppDomain") << logger::endl;
-		//*this->log << W("TRUSTED_PLATFORM_ASSEMBLIES=") << property_values[0] << logger::endl;
-		//*this->log << W("APP_PATHS=") << property_values[1] << logger::endl;
-		//*this->log << W("APP_NI_PATHS=") << property_values[2] << logger::endl;
-		//*this->log << W("NATIVE_DLL_SEARCH_DIRECTORIES=") << property_values[3] << logger::endl;
-
+		log_write("metacall", LOG_LEVEL_DEBUG, "Creating an AppDomain");
 
 		hr = host->CreateAppDomainWithManager(
 			this->core_environment->get_host_exe_name(),   // The friendly name of the AppDomain
@@ -241,33 +241,40 @@ bool netcore_win::create_host() {
 			property_values,
 			(DWORD*)&this->domain_id);
 
-		if (FAILED(hr)) {
-			*this->log << W("Failed call to CreateAppDomainWithManager. ERRORCODE: ") << hr << logger::endl;
+		if (FAILED(hr))
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed call to CreateAppDomainWithManager [ERRORCODE: %d]", hr);
 			return false;
 		}
 	}
 
 	return true;
 }
-bool netcore_win::load_main() {
+bool netcore_win::load_main()
+{
 	HRESULT hr;
 	DWORD exitCode = 0;
+
 	hr = this->host->ExecuteAssembly((DWORD)this->domain_id, managedAssemblyFullName, 0, NULL, &exitCode);
-	if (FAILED(hr)) {
-		*this->log << W("Failed call to ExecuteAssembly. ERRORCODE: ") << hr << logger::endl;
+
+	if (FAILED(hr))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed call to ExecuteAssembly [ERRORCODE: %d]", hr);
 		return false;
 	}
 
 	return true;
 }
 
-bool netcore_win::create_delegate(const wchar_t * delegateName, void** func) {
+bool netcore_win::create_delegate(const wchar_t * delegateName, void ** func)
+{
 	HRESULT hr;
 
-	hr = this->host->CreateDelegate((DWORD)this->domain_id, this->assembly_name, this->class_name, delegateName, (INT_PTR*)func);
+	hr = this->host->CreateDelegate((DWORD)this->domain_id, this->assembly_name, this->class_name, delegateName, (INT_PTR *)func);
 
-	if (FAILED(hr)) {
-		*this->log << W("Failed to CreateDelegate.") << delegateName << W("ERRORCODE: ") << hr << logger::endl;
+	if (FAILED(hr))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "ailed to CreateDelegate [ERRORCODE: %d]", hr);
 		return false;
 	}
 

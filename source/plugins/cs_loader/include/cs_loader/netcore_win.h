@@ -1,4 +1,11 @@
-#pragma once
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #ifndef _NETCORE_WIN_H_
 #define _NETCORE_WIN_H_
 #include "defs.h"
@@ -6,12 +13,10 @@
 
 typedef class host_environment;
 typedef class ICLRRuntimeHost2;
-typedef class logger;
 
 class netcore_win : public netcore
 {
 private:
-	logger * log;
 	host_environment * core_environment;
 	ICLRRuntimeHost2 * host;
 	wchar_t managedAssemblyFullName[MAX_LONGPATH] = W("");

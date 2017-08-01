@@ -1,8 +1,19 @@
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #include <cs_loader/netcore_linux.h>
 
+#include <log/log.h>
+
+#include <string.h>
 #include <limits.h>
 
-netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path) : netcore(dotnet_root,dotnet_loader_assembly_path)
+netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path) : netcore(dotnet_root, dotnet_loader_assembly_path), domainId(0)
 {
 	if (dotnet_root == NULL)
 	{
@@ -23,12 +34,10 @@ netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_p
 		}
 	}
 
-	if(getcwd(this->appPath, MAX_LONGPATH)==NULL)
+	if(getcwd(this->appPath, MAX_LONGPATH) == NULL)
 	{
-		cout << "getcwd error!";
+		log_write("metacall", LOG_LEVEL_ERROR, "getcwd error");
 	}
-
-	this->domainId = 0;
 }
 
 netcore_linux::~netcore_linux()
@@ -38,15 +47,11 @@ netcore_linux::~netcore_linux()
 
 bool netcore_linux::ConfigAssemblyName()
 {
-	std::cout << "absoluteRuntime: " << this->runtimePath << std::endl;
-
 	std::string::size_type pos = std::string(this->dotnet_loader_assembly_path).find_last_of("\\/");
 
     std::string dotnet_loader_assembly_directory = std::string(this->dotnet_loader_assembly_path).substr(0, pos);
 
 	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
-
-	std::cout << "absoluteAppPath: " << this->appPath << std::endl;
 
 	if (this->dotnet_loader_assembly_path == NULL)
 	{
@@ -80,13 +85,15 @@ bool netcore_linux::ConfigAssemblyName()
 		}
 	}
 
-	std::cout << "absoluteLoaderDll: " << this->managedAssemblyFullName << std::endl;
-
 	this->nativeDllSearchDirs.append(this->appPath);
 	this->nativeDllSearchDirs.append(":");
 	this->nativeDllSearchDirs.append(this->runtimePath);
 
 	AddFilesFromDirectoryToTpaList(this->runtimePath, tpaList);
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteRuntime: %s", this->runtimePath);
+	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteAppPath: %s", this->appPath);
+	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteLoaderDll: %s", this->managedAssemblyFullName);
 
 	return true;
 }
@@ -109,8 +116,7 @@ bool netcore_linux::CreateHost()
 
 	if (dynlink_coreclr_initialize == NULL)
 	{
-		std::cout << "coreclr_initialize fail " << std::endl;
-
+		log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize pointer not found");
 		return false;
 	}
 
@@ -125,7 +131,7 @@ bool netcore_linux::CreateHost()
 
 	if (this->coreclr_initialize == NULL)
 	{
-		std::cout << "coreclr_initialize fail " << std::endl;
+		log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize fail");
 		return false;
 	}
 
@@ -166,15 +172,14 @@ bool netcore_linux::CreateHost()
 
 		if (length == -1 || length == PATH_MAX)
 		{
-			std::cout << "ERROR: coreclr_initialize invalid working directory path (" << exe_path_proc << ")" << std::endl;
-
+			log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize invalid working directory path (%s)", exe_path_proc);
 			return false;
 		}
 
 		exe_path_str = std::string(exe_path_proc, length);
 	}
 
-	std::cout << "DEBUG: coreclr_initialize working directory path (" << exe_path_str << ")" << std::endl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "coreclr_initialize working directory path (%s)", exe_path_str.c_str());
 
 	// Initialize CoreCLR
 	status = (*this->coreclr_initialize)(
@@ -185,12 +190,11 @@ bool netcore_linux::CreateHost()
 		propertyValues,
 		&hostHandle,
 		&domainId
-		);
+	);
 
 	if (status < 0)
 	{
-		std::cout << "ERROR: coreclr_initialize status 0x" << std::hex << status << std::endl;
-
+		log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize status (0x%08x)", status);
 		return false;
 	}
 
@@ -226,13 +230,12 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void ** fun
 	}
 	catch (std::exception & ex)
 	{
-		std::cout << "ERROR: CreateDelegate exception " << ex.what() << std::endl;
+		log_write("metacall", LOG_LEVEL_ERROR, "CreateDelegate exception (%s)", ex.what());
 	}
 
 	if (status < 0)
 	{
-		std::cout << "ERROR: CreateDelegate status 0x" << std::hex << status << std::endl;
-
+		log_write("metacall", LOG_LEVEL_ERROR, "CreateDelegate status (0x%08x)", status);
 		return false;
 	}
 
@@ -267,6 +270,6 @@ void netcore_linux::stop()
 
 	if (status < 0)
 	{
-		std::cout << "ERROR: stop status 0x" << std::hex << status << std::endl;
+		log_write("metacall", LOG_LEVEL_ERROR, "Stop status (0x%08x)", status);
 	}
 }

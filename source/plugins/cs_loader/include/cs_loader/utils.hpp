@@ -1,41 +1,19 @@
 /*
- *  Copyright (c) Hubert Jarosz. All rights reserved.
- *  Licensed under the MIT license. See LICENSE file in the project root for full license information.
- */
-
-#pragma once
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
 
 #include <cstdlib>
 #include <set>
 #include <string>
 #include <cstring>
 
-// Prototype of the coreclr_initialize function from the libcoreclr.so
-typedef int (coreclrInitializeFunction)(
-            const char* exePath,
-            const char* appDomainFriendlyName,
-            int propertyCount,
-            const char** propertyKeys,
-            const char** propertyValues,
-            void** hostHandle,
-            unsigned int* domainId);
+/* TODO: Remove this limitation */
 
-// Prototype of the coreclr_shutdown function from the libcoreclr.so
-typedef int (coreclrShutdownFunction)(
-            void* hostHandle,
-            unsigned int domainId);
-
-// Prototype of the coreclr_execute_assembly function from the libcoreclr.so
-typedef int (coreclrCreateDelegateFunction)(
-              void* hostHandle,
-              unsigned int domainId,
-              const char* entryPointAssemblyName,
-              const char* entryPointTypeName,
-              const char* entryPointMethodName,
-              void** delegate);
-
-
-#if not defined ( __GNUC__ ) || __GNUC__ < 5 || ( __GNUC__ == 5 && __GNUC_MINOR__ < 3 )
+#if !defined(__GNUC__) || __GNUC__ < 5 || ( __GNUC__ == 5 && __GNUC_MINOR__ < 3)
   #error THIS SOFTWARE CURRENTLY BUILDS ONLY ON GCC 5.3 OR NEWER!
 #endif
 

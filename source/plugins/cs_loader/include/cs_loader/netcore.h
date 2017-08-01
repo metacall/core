@@ -1,8 +1,17 @@
-#pragma once
+/*
+*	Loader Library by Parra Studios
+*	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*
+*	A plugin for loading net code at run-time into a process.
+*
+*/
+
 #ifndef _NETCORE_H_
 #define _NETCORE_H_
+
 #include <cs_loader/defs.h>
 #include <stdlib.h>
+
 class netcore
 {
 protected:
