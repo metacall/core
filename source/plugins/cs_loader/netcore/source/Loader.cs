@@ -19,18 +19,7 @@ namespace CSLoader
 
         public static void Main(string[] args)
         {
-            /*
-            var src = @"
-                public static void DoTheMagic()
-                {
-                    Console.WriteLine(DateTime.Now.ToString());
-                }
 
-                public static void DoTheMagic2(int entero,string texto,System.Threading.Tasks.Task task)
-                {
-                    Console.WriteLine(DateTime.Now.ToString());
-                }";
-            */
         }
 
         private static Loader loader = null;
@@ -153,12 +142,10 @@ namespace CSLoader
         {
             if (loader == null)
             {
-                Console.WriteLine("Loader is null");
                 return (IntPtr)CreateExecutionResult(true, type_primitive_id.TYPE_PTR);
             }
             else
             {
-                Console.WriteLine("Executing " + function);
                 return (IntPtr)loader.Execute(function, parameters);
             }
         }
@@ -168,12 +155,10 @@ namespace CSLoader
         {
             if (loader == null)
             {
-                Console.WriteLine("Loader is null");
                 return (IntPtr)CreateExecutionResult(true, type_primitive_id.TYPE_PTR);
             }
             else
             {
-                Console.WriteLine("Executing " + function);
                 return (IntPtr)loader.Execute(function, parameters);
             }
         }
@@ -182,12 +167,10 @@ namespace CSLoader
         {
             if (loader == null)
             {
-                Console.WriteLine("Loader is null");
                 return (IntPtr)CreateExecutionResult(true, type_primitive_id.TYPE_PTR);
             }
             else
             {
-                Console.WriteLine("Executing " + function);
                 return (IntPtr)loader.Execute(function);
             }
         }
@@ -309,6 +292,7 @@ namespace CSLoader
                 try
                 {
                     asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
+
                     if (asm != null)
                     {
                         return asm;
@@ -316,7 +300,7 @@ namespace CSLoader
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Console.Error.WriteLine(ex.Message);
                 }
             }
 
@@ -393,7 +377,7 @@ namespace CSLoader
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Console.Error.WriteLine(ex.Message);
             }
 
             return null;
