@@ -32,7 +32,7 @@ extern "C" {
 *    Transform load mechanism from Python string into
 *    a valid load from memory format (buffer and size)
 */
-%typemap(in) (const char * buffer, size_t size)
+%typemap(in) (const char * buffer, size_t size, void ** handle)
 {
 	char * buffer_str = NULL;
 
@@ -66,7 +66,7 @@ extern "C" {
 *    Transform load mechanism from Python list into
 *    a valid load from file format (array of strings)
 */
-%typemap(in) (const char * paths[], size_t size)
+%typemap(in) (const char * paths[], size_t size, void ** handle)
 {
 	if (PyList_Check($input))
 	{
@@ -265,7 +265,7 @@ extern "C" {
 
 	size_t size = (size_t)arg3;
 
-	result = metacall_load_from_memory(tag, (const char *)buffer, size);
+	result = metacall_load_from_memory(tag, (const char *)buffer, size, NULL);
 }
 
 /**
@@ -283,7 +283,7 @@ extern "C" {
 
 	size_t iterator, size = arg3;
 
-	result = metacall_load_from_file(tag, (const char **)paths, size);
+	result = metacall_load_from_file(tag, (const char **)paths, size, NULL);
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{

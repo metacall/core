@@ -32,7 +32,7 @@ extern "C" {
 *    Transform load mechanism from JavaScript string into
 *    a valid load from memory format (buffer and size)
 */
-%typemap(in) (const char * buffer, size_t size)
+%typemap(in) (const char * buffer, size_t size, void ** handle)
 {
 	Local<Value> js_arg = args[0];
 
@@ -57,7 +57,7 @@ extern "C" {
 *    Transform load mechanism from JavaScript array into
 *    a valid load from file format (array of strings)
 */
-%typemap(in) (const char * paths[], size_t size)
+%typemap(in) (const char * paths[], size_t size, void ** handle)
 {
 	Local<Value> paths_value = args[1];
 
@@ -276,7 +276,7 @@ extern "C" {
 
 	size_t size = (size_t)arg3;
 
-	int ret = metacall_load_from_memory(tag, (const char *)buffer, size);
+	int ret = metacall_load_from_memory(tag, (const char *)buffer, size, NULL);
 
 	$result = Integer::New(args.GetIsolate(), (int32_t)ret);
 
@@ -303,7 +303,7 @@ extern "C" {
 
 	size_t iterator, size = arg3;
 
-	int ret = metacall_load_from_file(tag, (const char **)paths, size);
+	int ret = metacall_load_from_file(tag, (const char **)paths, size, NULL);
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{

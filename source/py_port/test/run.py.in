@@ -19,9 +19,7 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Python from memory)
 	def test_python_memory(self):
-		script = ('#!/usr/bin/python3.4\n'
-			'def inline_multiply_mem(left: int, right: int) -> int:\n'
-			'	return left * right;\n');
+		script = '#!/usr/bin/python3.5\ndef inline_multiply_mem(left, right):\n\treturn left * right\n';
 
 		self.assertEqual(metacall.metacall_load_from_memory('py', script), 0);
 
