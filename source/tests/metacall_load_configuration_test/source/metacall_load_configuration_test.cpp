@@ -41,7 +41,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_test.json"));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_test.json", NULL));
 
 		ret = metacall("multiply", 5, 15);
 

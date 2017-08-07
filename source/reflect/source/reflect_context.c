@@ -76,6 +76,11 @@ int context_append(context dest, context src)
 	return scope_append(dest->sp, src->sp);
 }
 
+int context_remove(context dest, context src)
+{
+	return scope_remove(dest->sp, src->sp);
+}
+
 void context_destroy(context ctx)
 {
 	if (ctx != NULL)

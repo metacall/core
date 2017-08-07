@@ -260,16 +260,6 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			free(buffer);
 		}
 
-		function_destroy(f1);
-		function_destroy(f2);
-		function_destroy(f3);
-		function_destroy(f4);
-		function_destroy(f5);
-		function_destroy(f6);
-		function_destroy(f7);
-		function_destroy(f8);
-		function_destroy(f9);
-
 		type_destroy(char_type);
 		type_destroy(int_type);
 		type_destroy(ptr_type);

@@ -33,7 +33,7 @@ int main(int argc, char * argv[])
 		return 1;
 	}
 
-	if (metacall_load_from_memory("py", python_script, sizeof(python_script)) != 0)
+	if (metacall_load_from_memory("py", python_script, sizeof(python_script), NULL) != 0)
 	{
 		return 1;
 	}

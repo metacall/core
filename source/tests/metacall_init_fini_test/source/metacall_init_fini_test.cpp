@@ -30,7 +30,7 @@ TEST_F(metacall_init_fini_test, DefaultConstructor)
 			"initfini.py"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		void * ret = NULL;
 

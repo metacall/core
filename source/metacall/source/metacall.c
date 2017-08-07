@@ -92,7 +92,7 @@ size_t metacall_args_size()
 	return args_size;
 }
 
-int metacall_load_from_file(const char * tag, const char * paths[], size_t size)
+int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle)
 {
 	loader_naming_path path_impl[LOADER_LOAD_FROM_FILES_SIZE];
 
@@ -103,22 +103,22 @@ int metacall_load_from_file(const char * tag, const char * paths[], size_t size)
 		strncpy(path_impl[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE);
 	}
 
-	return loader_load_from_file(tag, (const loader_naming_path *)path_impl, size);
+	return loader_load_from_file(tag, (const loader_naming_path *)path_impl, size, handle);
 }
 
-int metacall_load_from_memory(const char * tag, const char * buffer, size_t size)
+int metacall_load_from_memory(const char * tag, const char * buffer, size_t size, void ** handle)
 {
-	return loader_load_from_memory(tag, buffer, size);
+	return loader_load_from_memory(tag, buffer, size, handle);
 }
 
-int metacall_load_from_package(const char * tag, const char * path)
+int metacall_load_from_package(const char * tag, const char * path, void ** handle)
 {
-	return loader_load_from_package(tag, path);
+	return loader_load_from_package(tag, path, handle);
 }
 
-int metacall_load_from_configuration(const char * path)
+int metacall_load_from_configuration(const char * path, void ** handle)
 {
-	return loader_load_from_configuration(path);
+	return loader_load_from_configuration(path, handle);
 }
 
 void * metacallv(const char * name, void * args[])
@@ -318,7 +318,17 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 void * metacall_function(const char * name)
 {
-	return loader_get(name);
+	return (void *)loader_get(name);
+}
+
+void * metacall_handle(const char * tag, const char * name)
+{
+	return (void *)loader_get_handle(tag, name);
+}
+
+const char * metacall_handle_id(void * handle)
+{
+	return loader_handle_id(handle);
 }
 
 void * metacallfv(void * func, void * args[])
@@ -477,6 +487,11 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 char * metacall_inspect(size_t * size)
 {
 	return loader_inspect(size);
+}
+
+int metacall_clear(void * handle)
+{
+	return loader_clear(handle);
 }
 
 int metacall_destroy()

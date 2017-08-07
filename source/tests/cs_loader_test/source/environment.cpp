@@ -9,27 +9,25 @@
 
 #include <gmock/gmock.h>
 
-#include <loader/loader.h>
-
 #include <metacall/metacall.h>
 
-#include <configuration/configuration.h>
+void environment::SetUp()
+{
+	const char * cs_scripts[] =
+	{
+		"hello.cs",
+		"IJump.cs",
+		"JumpMaster.cs",
+		"SuperJump.cs",
+		"TinyJump.cs"
+	};
 
-#include <log/log.h>
+	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
-void environment::SetUp() {
-
-	loader_naming_path names[] = {"hello.cs","IJump.cs","JumpMaster.cs","SuperJump.cs","TinyJump.cs"};
-	
-	if (metacall_initialize()!=0) {
-		FAIL();
-	}
-
-	if (loader_load_from_file("cs" ,names, 5) != 0) {
-		FAIL();
-	}
+	EXPECT_EQ((int) 0, (int) metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
 }
 
-void environment::TearDown() {
-	loader_unload();
+void environment::TearDown()
+{
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

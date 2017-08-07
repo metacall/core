@@ -35,6 +35,8 @@ static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value
 
 static int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
+static int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
 scope scope_create(const char * name)
 {
 	if (name != NULL)
@@ -276,6 +278,11 @@ int scope_append(scope dest, scope src)
 	return hash_map_append(dest->map, src->map);
 }
 
+int scope_remove(scope dest, scope src)
+{
+	return hash_map_disjoint(dest->map, src->map);
+}
+
 size_t * scope_stack_return(scope sp)
 {
 	if (sp != NULL && sp->call_stack != NULL)
@@ -394,13 +401,31 @@ int scope_stack_pop(scope sp)
 	return 1;
 }
 
+int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+{
+	if (map != NULL && key != NULL && val != NULL && args == NULL)
+	{
+		/* TODO: Support for polyphormism */
+
+		function func = (function)val;
+
+		function_destroy(func);
+
+		return 0;
+	}
+
+	return 1;
+}
+
 void scope_destroy(scope sp)
 {
 	if (sp)
 	{
-		vector_destroy(sp->call_stack);
+		hash_map_iterate(sp->map, &scope_destroy_cb_iterate, NULL);
 
 		hash_map_destroy(sp->map);
+
+		vector_destroy(sp->call_stack);
 
 		free(sp->name);
 

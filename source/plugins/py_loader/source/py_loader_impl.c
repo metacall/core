@@ -348,6 +348,9 @@ void function_py_interface_destroy(function func, function_impl impl)
 	{
 		if (py_func->values != NULL)
 		{
+			/* TODO: Check why Py_DECREF of each value segfaults */
+
+			/*
 			signature s = function_signature(func);
 
 			const size_t args_size = signature_count(s);
@@ -367,6 +370,7 @@ void function_py_interface_destroy(function func, function_impl impl)
 					PyGILState_Release(gstate);
 				}
 			}
+			*/
 
 			free(py_func->values);
 		}
@@ -741,7 +745,6 @@ loader_handle py_loader_impl_load_from_package(loader_impl impl, const loader_na
 	return NULL;
 }
 
-
 int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
 	(void)impl;
@@ -1029,6 +1032,7 @@ void py_loader_impl_error_print(loader_impl impl)
 {
 	static const char error_format_str[] = "Python Error [Type: %s]: %s\n{\n%s\n}";
 	static const char separator_str[] = "\n";
+	static const char traceback_not_found[] = "Traceback not available";
 
 	loader_impl_py py_impl = loader_impl_get(impl);
 
@@ -1054,7 +1058,7 @@ void py_loader_impl_error_print(loader_impl impl)
 		log_write("metacall", LOG_LEVEL_ERROR, error_format_str,
 			PyString_AsString(type_str_obj),
 			PyString_AsString(value_str_obj),
-			PyString_AsString(traceback_str_obj));
+			traceback_str_obj ? PyString_AsString(traceback_str_obj) : traceback_not_found);
 	#elif PY_MAJOR_VERSION == 3
 		separator = PyUnicode_FromString(separator_str);
 
@@ -1063,7 +1067,7 @@ void py_loader_impl_error_print(loader_impl impl)
 		log_write("metacall", LOG_LEVEL_ERROR, error_format_str,
 			PyUnicode_AsUTF8(type_str_obj),
 			PyUnicode_AsUTF8(value_str_obj),
-			PyUnicode_AsUTF8(traceback_str_obj));
+			traceback_str_obj ? PyUnicode_AsUTF8(traceback_str_obj) : traceback_not_found);
 	#endif
 
 	Py_DECREF(traceback_list);

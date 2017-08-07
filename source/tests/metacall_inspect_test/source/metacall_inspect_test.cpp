@@ -30,7 +30,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"example.py"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
 
@@ -42,7 +42,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"hello.rb", "second.rb"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_RB */
 
@@ -54,7 +54,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"spider.jsm"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("jsm", jsm_scripts, sizeof(jsm_scripts) / sizeof(jsm_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("jsm", jsm_scripts, sizeof(jsm_scripts) / sizeof(jsm_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_JSM */
 
@@ -66,7 +66,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"divide.js", "third.js"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_JS */
 
@@ -78,7 +78,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"empty.mock"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_MOCK */
 
@@ -90,7 +90,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"hello.cs"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_CS */
 
@@ -102,7 +102,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 			"compiled.c"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_C */
 

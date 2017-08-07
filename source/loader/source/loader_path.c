@@ -8,8 +8,13 @@
 
 #include <loader/loader_path.h>
 
-#if defined(_WIN32)
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+/*
 #	define LOADER_PATH_SEPARATOR '\\'
+*/
+#	define LOADER_PATH_SEPARATOR '/'
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
@@ -95,12 +100,12 @@ int loader_path_is_absolute(const loader_naming_path path)
 	#if defined(_WIN32)
 		return !((path[0] != '\0' && (path[0] >= 'A' && path[0] <= 'Z')) &&
 			(path[1] != '\0' && path[1] == ':') &&
-			(path[2] != '\0' && path[2] == '\\'));
+			(path[2] != '\0' && path[2] == LOADER_PATH_SEPARATOR));
 	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
 		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		return !(path[0] != '\0' && path[0] == '/');
+		return !(path[0] != '\0' && path[0] == LOADER_PATH_SEPARATOR);
 	#else
 	#	error "Unknown loader path separator"
 	#endif

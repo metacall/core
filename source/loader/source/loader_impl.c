@@ -41,6 +41,7 @@ typedef struct loader_handle_impl_type * loader_handle_impl;
 
 struct loader_handle_impl_type
 {
+	loader_impl impl;
 	loader_naming_name name;
 	loader_handle module;
 	context ctx;
@@ -67,7 +68,7 @@ static void loader_impl_dynlink_destroy(loader_impl impl);
 
 static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag);
 
-static loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name);
+static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name);
 
 static int loader_impl_function_hook_call(context ctx, const char func_name[]);
 
@@ -352,12 +353,14 @@ int loader_impl_type_define(loader_impl impl, const char * name, type t)
 	return 1;
 }
 
-loader_handle_impl loader_impl_load_handle(loader_handle module, const loader_naming_name name)
+loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
 	if (handle_impl != NULL)
 	{
+		handle_impl->impl = impl;
+
 		strncpy(handle_impl->name, name, LOADER_NAMING_NAME_SIZE);
 
 		handle_impl->module = module;
@@ -385,6 +388,8 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Error when destroying handle impl: %p (%s)", (void *)handle_impl, func_fini_name);
 		}
+
+		context_remove(handle_impl->impl->ctx, handle_impl->ctx);
 
 		context_destroy(handle_impl->ctx);
 
@@ -432,7 +437,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 	return 0;
 }
 
-int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size, void ** handle_ptr)
 {
 	if (impl != NULL)
 	{
@@ -455,7 +460,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(handle, module_name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, module_name);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl);
 
@@ -478,6 +483,11 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 								if (result != 0)
 								{
 									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+								}
+
+								if (handle_ptr != NULL)
+								{
+									*handle_ptr = handle_impl;
 								}
 
 								return result;
@@ -549,7 +559,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 	return 1;
 }
 
-int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t size)
+int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t size, void ** handle_ptr)
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
@@ -574,7 +584,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(handle, name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, name);
 
 				if (handle_impl != NULL)
 				{
@@ -591,6 +601,11 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 								if (result != 0)
 								{
 									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+								}
+
+								if (handle_ptr != NULL)
+								{
+									*handle_ptr = handle_impl;
 								}
 
 								return result;
@@ -612,7 +627,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 	return 1;
 }
 
-int loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+int loader_impl_load_from_package(loader_impl impl, const loader_naming_path path, void ** handle_ptr)
 {
 	if (impl != NULL)
 	{
@@ -628,7 +643,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(handle, package_name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, package_name);
 
 				if (handle_impl != NULL)
 				{
@@ -647,6 +662,11 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
 								}
 
+								if (handle_ptr != NULL)
+								{
+									*handle_ptr = handle_impl;
+								}
+
 								return result;
 							}
 						}
@@ -661,6 +681,41 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 				}
 			}
 		}
+	}
+
+	return 1;
+}
+
+void * loader_impl_get_handle(loader_impl impl, const char * name)
+{
+	if (impl != NULL && name != NULL)
+	{
+		return (void *)hash_map_get(impl->handle_impl_map, (hash_map_key)name);
+	}
+
+	return NULL;
+}
+
+const char * loader_impl_handle_id(void * handle)
+{
+	loader_handle_impl handle_impl = handle;
+
+	return handle_impl->name;
+}
+
+int loader_impl_clear(void * handle)
+{
+	if (handle != NULL)
+	{
+		loader_handle_impl handle_impl = handle;
+
+		loader_impl impl = handle_impl->impl;
+
+		int result = !(hash_map_remove(impl->handle_impl_map, (hash_map_key)(handle_impl->name)) == handle_impl);
+
+		loader_impl_destroy_handle(handle_impl);
+
+		return result;
 	}
 
 	return 1;

@@ -19,8 +19,13 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#if defined(_WIN32)
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+/*
 #	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR "\\"
+*/
+#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR "/"
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \

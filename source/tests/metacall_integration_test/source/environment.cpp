@@ -9,29 +9,20 @@
 
 #include <gmock/gmock.h>
 
-#include <loader/loader.h>
-
-#include <log/log.h>
-
 #include <metacall/metacall.h>
 
-void environment::SetUp() {
-	log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout));
-
+void environment::SetUp()
+{
 	const char * py_scripts[] = { "example.py" };
 	const char * cs_scripts[] = { "hello.cs" };
 
-	metacall_initialize();
+	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
-	metacall_load_from_file("py", py_scripts, 1);
-	metacall_load_from_file("cs", cs_scripts, 1);
+	EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+	EXPECT_EQ((int) 0, (int) metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
 }
 
-void environment::TearDown() {
-	loader_unload();
-
+void environment::TearDown()
+{
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

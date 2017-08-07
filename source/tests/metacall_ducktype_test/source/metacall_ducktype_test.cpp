@@ -37,7 +37,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		const enum metacall_value_id multiply_ids[] =
 		{
@@ -209,7 +209,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
 		const enum metacall_value_id say_multiply_int_ids[] =
 		{
@@ -290,7 +290,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0]), NULL));
 
 		const enum metacall_value_id say_divide_double_ids[] =
 		{

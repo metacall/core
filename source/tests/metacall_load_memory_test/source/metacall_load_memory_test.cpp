@@ -46,7 +46,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		long iterator;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer)));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
 		value ret = NULL;
 
@@ -96,7 +96,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		static const char extension[] = "rb";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer)));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
 
 		value ret = NULL;
 
@@ -133,7 +133,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		static const char extension[] = "js";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer)));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
 
 		value ret = NULL;
 

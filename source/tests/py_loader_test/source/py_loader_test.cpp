@@ -30,7 +30,7 @@ TEST_F(py_loader_test, DefaultConstructor)
 	//	log_policy_storage_sequential(),
 	//	log_policy_stream_stdio(stdout)));
 	
-	EXPECT_EQ((int) 0, loader_load_from_file("py", names, sizeof(names) / sizeof(names[0])));
+	EXPECT_EQ((int) 0, loader_load_from_file("py", names, sizeof(names) / sizeof(names[0]), NULL));
 
 	EXPECT_EQ((int) 0, loader_unload());
 }

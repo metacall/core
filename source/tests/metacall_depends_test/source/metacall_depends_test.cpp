@@ -30,15 +30,25 @@ TEST_F(metacall_depends_test, DefaultConstructor)
 			"rsasample.py", "sample/rsa_strings.py"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		EXPECT_NE((void *) NULL, (void *) metacall_function("main"));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall("main"));
+		ret = metacall("main");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		metacall_value_destroy(ret);
 
 		EXPECT_NE((void *) NULL, (void *) metacall_function("encript_decript_strings"));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall("encript_decript_strings"));
+		ret = metacall("encript_decript_strings");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
 

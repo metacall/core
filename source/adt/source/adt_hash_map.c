@@ -68,6 +68,8 @@ static int hash_map_bucket_insert(hash_map map, hash_map_bucket bucket, const ha
 
 static int hash_map_append_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args);
 
+static int hash_map_disjoint_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args);
+
 int hash_map_bucket_capacity(size_t prime)
 {
 	static int capacity_primes[] =
@@ -495,6 +497,26 @@ int hash_map_append(hash_map dest, hash_map src)
 	hash_map_cb_iterate_args args = (hash_map_cb_iterate_args)dest;
 
 	hash_map_iterate(src, &hash_map_append_cb_iterate, args);
+
+	return 0;
+}
+
+int hash_map_disjoint_cb_iterate(hash_map map, hash_map_key key, hash_map_value value, hash_map_cb_iterate_args args)
+{
+	hash_map dest = (hash_map)args;
+
+	hash_map_value deleted = hash_map_remove(dest, key);
+
+	(void)map;
+
+	return !(deleted == value);
+}
+
+int hash_map_disjoint(hash_map dest, hash_map src)
+{
+	hash_map_cb_iterate_args args = (hash_map_cb_iterate_args)dest;
+
+	hash_map_iterate(src, &hash_map_disjoint_cb_iterate, args);
 
 	return 0;
 }

@@ -209,7 +209,7 @@ bool application::load(const std::string & tag, const std::string & script)
 		script.c_str()
 	};
 
-	if (metacall_load_from_file(tag.c_str(), script_list, sizeof(script_list) / sizeof(script_list[0])) == 0)
+	if (metacall_load_from_file(tag.c_str(), script_list, sizeof(script_list) / sizeof(script_list[0]), NULL) == 0)
 	{
 		scripts.push_back(script);
 

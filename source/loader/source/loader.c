@@ -296,7 +296,7 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size)
+int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void ** handle)
 {
 	loader l = loader_singleton();
 
@@ -336,11 +336,11 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 						}
 					}
 
-					return loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_path, size);
+					return loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_path, size, handle);
 				}
 				else
 				{
-					return loader_impl_load_from_file(impl, paths, size);
+					return loader_impl_load_from_file(impl, paths, size, handle);
 				}
 			}
 		}
@@ -349,7 +349,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 	return 1;
 }
 
-int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, size_t size)
+int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, size_t size, void ** handle)
 {
 	loader l = loader_singleton();
 
@@ -369,13 +369,14 @@ int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, si
 		{
 			return 1;
 		}
-		return loader_impl_load_from_memory(impl, buffer, size);
+
+		return loader_impl_load_from_memory(impl, buffer, size, handle);
 	}
 
 	return 1;
 }
 
-int loader_load_from_package(const loader_naming_tag extension, const loader_naming_path path)
+int loader_load_from_package(const loader_naming_tag extension, const loader_naming_path path, void ** handle)
 {
 	loader l = loader_singleton();
 
@@ -396,13 +397,13 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 			return 1;
 		}
 
-		return loader_impl_load_from_package(impl, path);
+		return loader_impl_load_from_package(impl, path, handle);
 	}
 
 	return 1;
 }
 
-int loader_load_from_configuration(const loader_naming_path path)
+int loader_load_from_configuration(const loader_naming_path path, void ** handle)
 {
 	loader_naming_name config_name;
 
@@ -481,7 +482,7 @@ int loader_load_from_configuration(const loader_naming_path path)
 		}
 	}
 
-	if (loader_load_from_file((const char *)value_to_string(tag), (const loader_naming_path *)paths, size) != 0)
+	if (loader_load_from_file((const char *)value_to_string(tag), (const loader_naming_path *)paths, size, handle) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid load from file");
 
@@ -548,6 +549,16 @@ loader_data loader_get(const char * name)
 	}
 
 	return NULL;
+}
+
+void * loader_get_handle(const loader_naming_tag tag, const char * name)
+{
+	return loader_impl_get_handle(loader_get_impl(tag), name);
+}
+
+const char * loader_handle_id(void * handle)
+{
+	return loader_impl_handle_id(handle);
 }
 
 int loader_inspect_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
@@ -668,6 +679,11 @@ int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_v
 	}
 
 	return 1;
+}
+
+int loader_clear(void * handle)
+{
+	return loader_impl_clear(handle);
 }
 
 int loader_unload()

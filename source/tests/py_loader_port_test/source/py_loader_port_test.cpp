@@ -18,7 +18,7 @@ public:
 
 void * callback_host(void * args[])
 {
-	const char * str = metacall_value_to_string(args[0]);
+	const char * str = metacall_value_cast_string(&args[0]);
 
 	printf("Host callback: %s\n", str);
 
@@ -50,13 +50,13 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
 		ret = metacall("say_multiply", 5, 7);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 35);
+		EXPECT_EQ((int) 35, (int) metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 
@@ -66,7 +66,7 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello meta-programmer!"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
 
 		metacall_value_destroy(ret);
 
@@ -74,7 +74,7 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 12);
+		EXPECT_EQ((int) 12, (int) metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 	}
@@ -90,13 +90,13 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		ret = metacall("hello_world", "some text");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 25, (int) metacall_value_to_int(ret));
+		EXPECT_EQ((int) 25, (int) metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 
@@ -104,7 +104,7 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 48, (int) metacall_value_to_int(ret));
+		EXPECT_EQ((int) 48, (int) metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 	}

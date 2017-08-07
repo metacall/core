@@ -53,22 +53,28 @@ METACALL_API size_t metacall_args_size(void);
 *  @brief
 *    Loads a script from file specified by @path
 *
+*  @param[in] tag
+*    Extension of the script
+*
 *  @param[in] paths
 *    Path array of files
 *
 *  @param[in] size
 *    Size of the array @paths
 *
+*  @param[out] handle
+*    Optional pointer to reference of loaded handle
+*
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_file(const char * tag, const char * paths[], size_t size);
+METACALL_API int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle);
 
 /**
 *  @brief
 *    Loads a script from memory
 *
-*  @param[in] extension
+*  @param[in] tag
 *    Extension of the script
 *
 *  @param[in] buffer
@@ -77,25 +83,31 @@ METACALL_API int metacall_load_from_file(const char * tag, const char * paths[],
 *  @param[in] size
 *    Memory block representing the string of the script
 *
+*  @param[out] handle
+*    Optional pointer to reference of loaded handle
+*
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_memory(const char * tag, const char * buffer, size_t size);
+METACALL_API int metacall_load_from_memory(const char * tag, const char * buffer, size_t size, void ** handle);
 
 /**
 *  @brief
 *    Loads a package of scrips from file specified by @path into loader defined by @extension
 *
-*  @param[in] extension
+*  @param[in] tag
 *    Extension of the script
 *
 *  @param[in] path
 *    Path of the package
 *
+*  @param[out] handle
+*    Optional pointer to reference of loaded handle
+*
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_package(const char * tag, const char * path);
+METACALL_API int metacall_load_from_package(const char * tag, const char * path, void ** handle);
 
 /**
 *  @brief
@@ -110,10 +122,13 @@ METACALL_API int metacall_load_from_package(const char * tag, const char * path)
 *  @param[in] path
 *    Path of the configuration
 *
+*  @param[out] handle
+*    Optional pointer to reference of loaded handle
+*
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_configuration(const char * path);
+METACALL_API int metacall_load_from_configuration(const char * path, void ** handle);
 
 /**
 *  @brief
@@ -171,9 +186,36 @@ METACALL_API void * metacallt(const char * name, const enum metacall_value_id id
 *    Name of the function
 *
 *  @return
-*    Function reference, if null the function does not exist
+*    Function reference, null if the function does not exist
 */
 METACALL_API void * metacall_function(const char * name);
+
+/**
+*  @brief
+*    Get the handle by @name
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @param[in] name
+*    Name of the handle
+*
+*  @return
+*    Handle reference, null if the function does not exist
+*/
+METACALL_API void * metacall_handle(const char * tag, const char * name);
+
+/**
+*  @brief
+*    Get name of a @handle
+*
+*  @param[in] handle
+*    Pointer to the handle to be retrieved
+*
+*  @return
+*    String that references the handle
+*/
+METACALL_API const char * metacall_handle_id(void * handle);
 
 /**
 *  @brief
@@ -237,6 +279,18 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[])
 *    Static string containing introspection information
 */
 METACALL_API char * metacall_inspect(size_t * size);
+
+/**
+*  @brief
+*    Clear handle from memory and unload related resources
+*
+*  @param[in] handle
+*    String id reference to the handle to be unloaded
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_clear(void * handle);
 
 /**
 *  @brief
