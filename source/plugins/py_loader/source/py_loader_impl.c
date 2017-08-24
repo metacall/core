@@ -349,6 +349,7 @@ void function_py_interface_destroy(function func, function_impl impl)
 		if (py_func->values != NULL)
 		{
 			/* TODO: Check why Py_DECREF of each value segfaults */
+			(void)func;
 
 			/*
 			signature s = function_signature(func);
