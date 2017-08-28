@@ -1,0 +1,16 @@
+**
+!cmake/*
+!data/*
+!deploy/*
+!docs/*
+!source/*
+!tools/metacall-build.sh
+!tools/metacall-clear.sh
+!CMakeLists.txt
+!metacall-config.cmake.in
+!AUTHORS
+!DESCRIPTION
+!LICENSE
+!README
+!WELCOME
+!COPYRIGHT

@@ -1,0 +1,38 @@
+#
+# MetaCall Library by Parra Studios
+# Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+
+version: "3"
+
+services:
+  base:
+    image: metacall/base
+    build:
+      context: tools
+      dockerfile: Dockerfile
+      args:
+        METACALL_PATH: $METACALL_PATH
+        METACALL_TOOLS_PATH: $METACALL_PATH/tools
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+
+  core:
+    image: metacall/core
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        METACALL_PATH: $METACALL_PATH
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+      LOADER_LIBRARY_PATH: $METACALL_PATH/build
+      LOADER_SCRIPT_PATH: $METACALL_PATH/build/scripts
+      CONFIGURATION_PATH: $METACALL_PATH/build/configurations/global.json
+      CONFIGURATION_LIBRARY_PATH: $METACALL_PATH/build
+    depends_on:
+      - base
