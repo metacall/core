@@ -6,11 +6,11 @@
 version: "3"
 
 services:
-  base:
-    image: metacall/base
+  deps:
+    image: metacall/core:deps
     build:
       context: tools
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.deps
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
@@ -35,4 +35,4 @@ services:
       CONFIGURATION_PATH: $METACALL_PATH/build/configurations/global.json
       CONFIGURATION_LIBRARY_PATH: $METACALL_PATH/build
     depends_on:
-      - base
+      - deps

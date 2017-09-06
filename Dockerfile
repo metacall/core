@@ -3,8 +3,8 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
-# MetaCall base image
-FROM metacall/base
+# MetaCall Depends image
+FROM metacall/core:deps
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
