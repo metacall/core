@@ -1,5 +1,5 @@
 #
-# MetaCall NginX Docker Image by Parra Studios
+# MetaCall Library by Parra Studios
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
