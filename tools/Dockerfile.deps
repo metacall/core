@@ -36,6 +36,9 @@ WORKDIR $METACALL_PATH
 # Copy MetaCall tool dependecies
 COPY . $METACALL_TOOLS_PATH
 
+# Configure MetaCall environment tool script
+RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh
+
 # Install MetaCall and runtimes then build
 RUN apt-get update \
 	&& $METACALL_TOOLS_PATH/metacall-environment.sh root base python ruby netcore v8rep51 rapidjson
