@@ -8,6 +8,7 @@ version: "3"
 services:
   deps:
     image: metacall/core:deps
+    container_name: metacall_core_deps
     build:
       context: tools
       dockerfile: Dockerfile.deps
@@ -21,6 +22,7 @@ services:
 
   core:
     image: metacall/core
+    container_name: metacall_core
     build:
       context: .
       dockerfile: Dockerfile
