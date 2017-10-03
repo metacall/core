@@ -7,7 +7,7 @@ version: "3"
 
 services:
   deps:
-    image: metacall/core:deps
+    image: metacall/core_deps
     container_name: metacall_core_deps
     build:
       context: tools

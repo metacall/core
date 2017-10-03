@@ -4,7 +4,7 @@
 #
 
 # MetaCall Depends image
-FROM metacall/core:deps
+FROM metacall/core_deps
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
