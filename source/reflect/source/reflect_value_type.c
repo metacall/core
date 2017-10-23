@@ -95,28 +95,24 @@ value value_create_string(const char * str, size_t length)
 	return value_type_create(str, length + 1, TYPE_STRING);
 }
 
-value value_create_array(const void * arr, size_t element_size, size_t size)
+value value_create_buffer(const void * buffer, size_t size)
 {
-	if (arr == NULL || element_size == 0 || size == 0)
+	if (buffer == NULL || size == 0)
 	{
 		return NULL;
 	}
 
-	/* TODO: Store element size + element count => for all values ? */
-
-	return value_type_create(arr, element_size * size, TYPE_ARRAY);
+	return value_type_create(buffer, sizeof(char) * size, TYPE_BUFFER);
 }
 
-value value_create_list(const value * values, size_t size)
+value value_create_array(const value * values, size_t size)
 {
 	if (values == NULL || size == 0)
 	{
 		return NULL;
 	}
 
-	/* TODO: Store element size and size to query it after ? */
-
-	return value_type_create(values, sizeof(const value) * size, TYPE_LIST);
+	return value_type_create(values, sizeof(const value) * size, TYPE_ARRAY);
 }
 
 value value_create_ptr(const void * ptr)
@@ -192,12 +188,12 @@ char * value_to_string(value v)
 	return value_data(v);
 }
 
-void * value_to_array(value v)
+void * value_to_buffer(value v)
 {
 	return value_data(v);
 }
 
-value * value_to_list(value v)
+value * value_to_array(value v)
 {
 	return value_data(v);
 }
@@ -260,21 +256,21 @@ value value_from_string(value v, const char * str, size_t length)
 	return v;
 }
 
-value value_from_array(value v, const void * arr, size_t element_size, size_t size)
+value value_from_buffer(value v, const void * buffer, size_t size)
 {
-	if (v != NULL && arr != NULL && element_size > 0 && size > 0)
+	if (v != NULL && buffer != NULL && size > 0)
 	{
 		size_t current_size = value_size(v);
 
-		size_t bytes = element_size * size;
+		size_t bytes = sizeof(char) * size;
 
-		return value_from(v, arr, (bytes <= current_size) ? bytes : current_size);
+		return value_from(v, buffer, (bytes <= current_size) ? bytes : current_size);
 	}
 
 	return v;
 }
 
-value value_from_list(value v, const value * values, size_t size)
+value value_from_array(value v, const value * values, size_t size)
 {
 	if (v != NULL && values != NULL && size > 0)
 	{

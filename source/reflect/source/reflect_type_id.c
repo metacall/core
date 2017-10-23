@@ -34,14 +34,14 @@ int type_id_string(type_id id)
 	return !(id == TYPE_STRING);
 }
 
+int type_id_buffer(type_id id)
+{
+	return !(id == TYPE_BUFFER);
+}
+
 int type_id_array(type_id id)
 {
 	return !(id == TYPE_ARRAY);
-}
-
-int type_id_list(type_id id)
-{
-	return !(id == TYPE_LIST);
 }
 
 int type_id_pointer(type_id id)

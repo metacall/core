@@ -21,8 +21,8 @@ size_t value_type_id_size(type_id id)
 		sizeof(float),		/* TYPE_FLOAT */
 		sizeof(double),		/* TYPE_DOUBLE */
 		sizeof(char *),		/* TYPE_STRING */
-		sizeof(void *),		/* TYPE_ARRAY */
-		sizeof(value *),	/* TYPE_LIST */
+		sizeof(void *),		/* TYPE_BUFFER */
+		sizeof(value *),	/* TYPE_ARRAY */
 		sizeof(void *)		/* TYPE_PTR */
 	};
 

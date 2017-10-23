@@ -75,8 +75,8 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		value_create_float(13.545f),
 		value_create_double(545.3453),
 		value_create_string(hello_world, sizeof(hello_world)),
-		value_create_array(int_array, sizeof(int_array[0]), sizeof(int_array) / sizeof(int_array[0])),
-		value_create_list(value_list, sizeof(value_list) / sizeof(value_list[0])),
+		value_create_buffer(int_array, sizeof(int_array)),
+		value_create_array(value_list, sizeof(value_list) / sizeof(value_list[0])),
 		value_create_ptr((void *)0x000A7EF2)
 	};
 
@@ -92,8 +92,8 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 
 		size_t length;
 
-		/* TODO: Remove this check when implementing array and list stringify */
-		if (value_type_id(value_array[iterator]) != TYPE_ARRAY && value_type_id(value_array[iterator]) != TYPE_LIST)
+		/* TODO: Remove this workaround when implementing buffer and array stringify */
+		if (value_type_id(value_array[iterator]) != TYPE_BUFFER && value_type_id(value_array[iterator]) != TYPE_ARRAY)
 		{
 			value_stringify(value_array[iterator], buffer, buffer_size, &length);
 
@@ -105,7 +105,7 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_WARNING, "WARNING: Avoiding test for TYPE_ARRAY and TYPE_LIST");
+			log_write("metacall", LOG_LEVEL_WARNING, "WARNING: Avoiding test for TYPE_BUFFER and TYPE_ARRAY");
 		}
 
 		value_destroy(value_array[iterator]);

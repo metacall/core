@@ -52,10 +52,29 @@ value value_type_cast(value v, type_id id)
 		return value_type_stringify(v);
 	}
 
+	/* Convert single value to buffer */
+	if (type_id_buffer(id) == 0 && src_id < TYPE_BUFFER)
+	{
+		value dest = value_type_create(value_data(v), value_type_id_size(src_id), TYPE_BUFFER);
+
+		if (dest == NULL)
+		{
+			return NULL;
+		}
+
+		value_destroy(v);
+
+		return dest;
+	}
+
+	/* TODO: Convert buffer to array */
+
+	/* TODO: Convert buffer of size 1 to a single type */
+
 	/* Convert single value to array */
-	if (type_id_array(id) == 0 && src_id < TYPE_ARRAY)
+	if (type_id_array(id) == 0 && src_id < TYPE_BUFFER)
 	{
-		value dest = value_type_create(value_data(v), value_type_id_size(src_id), TYPE_ARRAY);
+		value dest = value_type_create(&v, sizeof(value), TYPE_ARRAY);
 
 		if (dest == NULL)
 		{
@@ -67,29 +86,10 @@ value value_type_cast(value v, type_id id)
 		return dest;
 	}
 
-	/* TODO: Convert array to list (element size must be known) */
+	/* TODO: Convert array to buffer */
 
-	/* TODO: Convert array of size 1 to a single type (element type id must be known) */
-
-	/* Convert single value to list */
-	if (type_id_list(id) == 0 && src_id < TYPE_ARRAY)
-	{
-		value dest = value_type_create(&v, sizeof(value), TYPE_LIST);
-
-		if (dest == NULL)
-		{
-			return NULL;
-		}
-
-		value_destroy(v);
-
-		return dest;
-	}
-
-	/* TODO: Convert list to array (all list values must be the same type) */
-
-	/* Convert list of size 1 to a single type */
-	if (type_id_list(src_id) == 0 && id < TYPE_ARRAY && value_type_size(v) == sizeof(value))
+	/* Convert array of size 1 to a single type */
+	if (type_id_array(src_id) == 0 && id < TYPE_BUFFER && value_type_size(v) == sizeof(value))
 	{
 		value * values = value_data(v);
 
@@ -100,7 +100,7 @@ value value_type_cast(value v, type_id id)
 			return NULL;
 		}
 
-		if (value_type_id(dest) != id && value_type_id(dest) < TYPE_ARRAY)
+		if (value_type_id(dest) != id && value_type_id(dest) < TYPE_BUFFER)
 		{
 			value cast = value_type_cast(dest, id);
 

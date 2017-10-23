@@ -25,8 +25,8 @@ enum type_primitive_id
 	TYPE_FLOAT	= 5,
 	TYPE_DOUBLE	= 6,
 	TYPE_STRING = 7,
-	TYPE_ARRAY	= 8,
-	TYPE_LIST	= 9,
+	TYPE_BUFFER	= 8,
+	TYPE_ARRAY	= 9,
 	TYPE_PTR	= 10,
 
 	TYPE_SIZE,
@@ -97,7 +97,19 @@ REFLECT_API int type_id_string(type_id id);
 
 /**
 *  @brief
-*    Check if type id is array value (void *)
+*    Check if type id is buffer value (void *)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is buffer, different from zero otherwhise
+*/
+REFLECT_API int type_id_buffer(type_id id);
+
+/**
+*  @brief
+*    Check if type id is array of values (value *)
 *
 *  @param[in] id
 *    Type id to be checked
@@ -106,18 +118,6 @@ REFLECT_API int type_id_string(type_id id);
 *    Returns zero if type is array, different from zero otherwhise
 */
 REFLECT_API int type_id_array(type_id id);
-
-/**
-*  @brief
-*    Check if type id is array of values (void **)
-*
-*  @param[in] id
-*    Type id to be checked
-*
-*  @return
-*    Returns zero if type is list, different from zero otherwhise
-*/
-REFLECT_API int type_id_list(type_id id);
 
 /**
 *  @brief

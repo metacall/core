@@ -167,13 +167,25 @@ REFLECT_API value value_create_string(const char * str, size_t length);
 
 /**
 *  @brief
-*    Create a value from array @arr
+*    Create a value buffer from array @buffer
 *
 *  @param[in] arr
-*    Constant memory block will be copied into value array
+*    Constant memory block will be copied into value buffer
 *
-*  @param[in] element_size
-*    Size in bytes of array element
+*  @param[in] size
+*    Size in bytes of data contained in the array
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_buffer(const void * buffer, size_t size);
+
+/**
+*  @brief
+*    Create a value array from array of values @values
+*
+*  @param[in] values
+*    Constant array of values will be copied into value array
 *
 *  @param[in] size
 *    Number of elements contained in the array
@@ -181,22 +193,7 @@ REFLECT_API value value_create_string(const char * str, size_t length);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_array(const void * arr, size_t element_size, size_t size);
-
-/**
-*  @brief
-*    Create a value list from array of values @values
-*
-*  @param[in] values
-*    Constant array of values will be copied into value list
-*
-*  @param[in] size
-*    Number of elements contained in the list
-*
-*  @return
-*    Pointer to value if success, null otherwhise
-*/
-REFLECT_API value value_create_list(const value * values, size_t size);
+REFLECT_API value value_create_array(const value * values, size_t size);
 
 /**
 *  @brief
@@ -308,7 +305,7 @@ REFLECT_API char * value_to_string(value v);
 
 /**
 *  @brief
-*    Convert value @v to array
+*    Convert value @v to buffer
 *
 *  @param[in] v
 *    Reference to the value
@@ -316,7 +313,7 @@ REFLECT_API char * value_to_string(value v);
 *  @return
 *    Value converted to memory block
 */
-REFLECT_API void * value_to_array(value v);
+REFLECT_API void * value_to_buffer(value v);
 
 /**
 *  @brief
@@ -328,7 +325,7 @@ REFLECT_API void * value_to_array(value v);
 *  @return
 *    Value converted to array of values
 */
-REFLECT_API value * value_to_list(value v);
+REFLECT_API value * value_to_array(value v);
 
 /**
 *  @brief
@@ -467,34 +464,31 @@ REFLECT_API value value_from_string(value v, const char * str, size_t length);
 
 /**
 *  @brief
-*    Assign array @arr to value @v
+*    Assign array @buffer to value @v
 *
 *  @param[in] v
 *    Reference to the value
 *
-*  @param[in] arr
-*    Constant array to be assigned to value @v
-*
-*  @param[in] element_size
-*    Size in bytes of array element
+*  @param[in] buffer
+*    Constant byte array to be assigned to value @v
 *
 *  @param[in] size
-*    Number of elements contained in @arr
+*    Size in bytes of data contained in @buffer
 *
 *  @return
-*    Value with array @arr assigned to it
+*    Value with array @buffer assigned to it
 */
-REFLECT_API value value_from_array(value v, const void * arr, size_t element_size, size_t size);
+REFLECT_API value value_from_buffer(value v, const void * buffer, size_t size);
 
 /**
 *  @brief
-*    Assign array of values @values to value list @v
+*    Assign array of values @values to value array @v
 *
 *  @param[in] v
 *    Reference to the value
 *
 *  @param[in] values
-*    Constant array of values to be assigned to value list @v
+*    Constant array of values to be assigned to value array @v
 *
 *  @param[in] size
 *    Number of values contained in constant array @values
@@ -502,7 +496,7 @@ REFLECT_API value value_from_array(value v, const void * arr, size_t element_siz
 *  @return
 *    Value with array of values @values assigned to it
 */
-REFLECT_API value value_from_list(value v, const value * values, size_t size);
+REFLECT_API value value_from_array(value v, const value * values, size_t size);
 
 /**
 *  @brief
