@@ -2,18 +2,6 @@
 	path = source/tests/googletest
 	url = https://github.com/google/googletest.git
 
-[submodule "web"]
-	path = web
-	url = git@bitbucket.org:parrastudios/metacall-landing-page.git
-
-[submodule "source/examples/metacallnginx"]
-	path = source/examples/metacallnginx
-	url = git@bitbucket.org:parrastudios/metacall-http-rest-nginx-module.git
-
-[submodule "source/examples/metacalldocker"]
-	path = source/examples/metacalldocker
-	url = git@bitbucket.org:parrastudios/metacall-docker.git
-
 [submodule "source/ports"]
 	path = source/ports
 	url = git@bitbucket.org:parrastudios/metacall-ports.git
