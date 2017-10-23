@@ -13,6 +13,8 @@
 
 #include <format/format_print.h>
 
+#include <log/log.h>
+
 /* -- Definitions -- */
 
 #if defined(_WIN32) && defined(_MSC_VER)
@@ -90,7 +92,7 @@ const char * value_stringify_format(type_id id)
 		"%.6f",
 		"%s",
 		"%02x",
-		/* "%s", */ VALUE_TYPE_STRINGIFY_FORMAT_PTR, /* TODO */
+		NULL, /* Unused */
 		VALUE_TYPE_STRINGIFY_FORMAT_PTR
 	};
 
@@ -190,15 +192,87 @@ void value_stringify_buffer(value v, char * dest, size_t size, const char * form
 
 void value_stringify_array(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	/* TODO:
-		1) Iterate through all list elements counting each value strings length
-		2) Alloc a string with size calculated previously
-		3) Iterate through all list elements stringifying each value into previously allocated string
-		4) Call to sprintf as other functions
-		5) Free temporal string
-	*/
+	size_t index, array_value_length = 0, array_size = value_type_size(v) / sizeof(const value);
 
-	*length = snprintf(dest, size, format, value_to_array(v));
+	value * array_value = value_to_array(v);
+
+	(void)format;
+
+	/* Calculate sum of all array values lenght */
+	for (index = 0; index < array_size; ++index)
+	{
+		value current_value = array_value[index];
+
+		type_id id = value_type_id(current_value);
+
+		const char * format = value_stringify_format(id);
+
+		value_stringify_impl_ptr stringify_ptr = value_stringify_impl(id);
+
+		size_t length = 0;
+
+		stringify_ptr(current_value, NULL, 0, format, &length);
+
+		array_value_length += length;
+	}
+
+	/* Add length of parethesis and comas */
+	array_value_length += 2 + (array_size - 1);
+
+	if (dest == NULL && size == 0)
+	{
+		/* Return length if no destination available */
+		*length = array_value_length;
+	}
+	else
+	{
+		/* Stringify all values */
+		size_t array_value_length_current = 0;
+
+		if (array_value_length >= size)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Not enough space for value array stringification need %" PRIuS " bytes", array_value_length - size + 1);
+
+			*length = 0;
+
+			return;
+		}
+
+		dest[array_value_length_current++] = '[';
+
+		for (index = 0; index < array_size; ++index)
+		{
+			value current_value = array_value[index];
+
+			type_id id = value_type_id(current_value);
+
+			const char * format = value_stringify_format(id);
+
+			value_stringify_impl_ptr stringify_ptr = value_stringify_impl(id);
+
+			size_t length = 0;
+
+			stringify_ptr(current_value, &dest[array_value_length_current], array_value_length - array_value_length_current, format, &length);
+
+			array_value_length_current += length;
+
+			if (index < array_size - 1)
+			{
+				dest[array_value_length_current++] = ',';
+			}
+		}
+
+		dest[array_value_length_current++] = ']';
+
+		dest[array_value_length_current] = '\0';
+
+		if (array_value_length_current != array_value_length)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid string length calculation in value array stringification");
+		}
+
+		*length = array_value_length;
+	}
 }
 
 void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length)

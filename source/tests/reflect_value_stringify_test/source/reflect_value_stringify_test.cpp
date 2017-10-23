@@ -39,7 +39,7 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		"545.345300",
 		hello_world,
 		"05060708",
-		"[244,6.800000,\"hello world\"]",
+		"[244,6.800000,hello world]",
 		#if defined(_WIN32) && defined(_MSC_VER)
 			#if defined(_WIN64)
 				"0x00000000000A7EF2"
@@ -90,23 +90,15 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 
 		const size_t buffer_size = BUFFER_SIZE;
 
-		size_t length;
+		size_t length = 0;
 
-		/* TODO: Remove this workaround when implementing array stringify */
-		if (value_type_id(value_array[iterator]) != TYPE_ARRAY)
-		{
-			value_stringify(value_array[iterator], buffer, buffer_size, &length);
+		value_stringify(value_array[iterator], buffer, buffer_size, &length);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
+		log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
 
-			EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], length));
+		EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], length));
 
-			EXPECT_LT((size_t) length, (size_t)buffer_size);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "WARNING: Avoiding test for TYPE_ARRAY");
-		}
+		EXPECT_LT((size_t) length, (size_t)buffer_size);
 
 		value_destroy(value_array[iterator]);
 
