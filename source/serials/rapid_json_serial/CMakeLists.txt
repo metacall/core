@@ -1,12 +1,29 @@
+# Check if this	serial is enabled
+if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_RAPID_JSON)
+	return()
+endif()
+
+
+#
+# External dependencies
+#
+
+find_package(RapidJSON 1.1.0 REQUIRED)
+
+if(NOT RAPIDJSON_INCLUDE_DIRS)
+	message(STATUS "RapidJSON libraries not found")
+	return()
+endif()
+
 #
 # Library name and options
 #
 
 # Target name
-set(target configuration)
+set(target rapid_json_serial)
 
 # Exit here if required dependencies are not met
-message(STATUS "Lib ${target}")
+message(STATUS "Serial ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
@@ -34,22 +51,13 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/configuration.h
-	${include_path}/configuration_object_handle.h
-	${include_path}/configuration_impl_handle.h
-	${include_path}/configuration_singleton.h
-	${include_path}/configuration_object.h
-	${include_path}/configuration_stream.h
-	${include_path}/configuration_interface.h
-	${include_path}/configuration_impl.h
+	${include_path}/rapid_json_serial.h
+	${include_path}/rapid_json_serial_impl.h
 )
 
 set(sources
-	${source_path}/configuration.c
-	${source_path}/configuration_singleton.c
-	${source_path}/configuration_object.c
-	${source_path}/configuration_stream.c
-	${source_path}/configuration_impl.c
+	${source_path}/rapid_json_serial.c
+	${source_path}/rapid_json_serial_impl.cpp
 )
 
 # Group source files
@@ -64,10 +72,25 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
+include(Distributable)
+
+# Create unity build library
+set(rapid_json_serial_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+
+distributable_generate(${target} ${rapid_json_serial_unity_build}
+	${SERIAL_MODULE_NAMES}
+)
+
 # Build library
 add_library(${target}
+	${rapid_json_serial_unity_build}
 	${sources}
 	${headers}
+)
+
+# Add target dependencies
+add_dependencies(${target}
+	${SERIAL_MODULE_NAMES}
 )
 
 # Create namespaced alias
@@ -123,6 +146,8 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
+
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -138,15 +163,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::serial
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -195,52 +211,13 @@ target_link_libraries(${target}
 )
 
 #
-# Global configuration
+# Deployment
 #
 
-function(configurations_write config_dir config_path)
-	set(CONFIGURATION_GLOBAL "{")
-
-	if(OPTION_BUILD_PLUGINS)
-		set(CONFIGURATION_GLOBAL_PLUGINS 0)
-
-		if(OPTION_BUILD_PLUGINS_CS)
-			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"cs_loader\":\"${config_dir}/cs_loader.json\",")
-			set(CONFIGURATION_GLOBAL_PLUGINS 1)
-		endif()
-
-		#if(OPTION_BUILD_PLUGINS_JS)
-		#	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"js_loader\":\"${config_dir}/js_loader.json\",")
-		#	set(CONFIGURATION_GLOBAL_PLUGINS 1)
-		#endif()
-
-		if(CONFIGURATION_GLOBAL_PLUGINS EQUAL 1)
-			string(LENGTH "${CONFIGURATION_GLOBAL}" CONFIGURATION_GLOBAL_LENGTH)
-
-			math(EXPR CONFIGURATION_GLOBAL_LENGTH "${CONFIGURATION_GLOBAL_LENGTH} - 1")
-
-			string(SUBSTRING "${CONFIGURATION_GLOBAL}" 0 ${CONFIGURATION_GLOBAL_LENGTH} CONFIGURATION_GLOBAL)
-		endif()
-	endif()
-
-	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n}")
-
-	file(WRITE "${config_path}" "${CONFIGURATION_GLOBAL}")
-endfunction()
-
-#
-# Development Configuration
-#
-
-# Generate runtime configuration
-configurations_write(${CONFIGURATION_DIR} ${CONFIGURATION_PATH})
-
-#
-# Install Configuration
-#
-
-# Generate runtime configuration
-configurations_write(${CMAKE_INSTALL_PREFIX}/${INSTALL_DATA}/configurations ${CONFIGURATION_DIR}/install/configurations/global.json)
-
-# Install runtime configuration
-install(DIRECTORY ${CONFIGURATION_DIR}/install/configurations DESTINATION ${INSTALL_DATA} COMPONENT runtime)
+# Library
+install(TARGETS ${target}
+	EXPORT  "${target}-export"				COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
+)

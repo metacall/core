@@ -15,8 +15,8 @@ set(LOADER_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall plugins pa
 set(CONFIGURATION_DIR "${PROJECT_BINARY_DIR}/configurations" CACHE PATH "MetaCall configuration directory")
 set(CONFIGURATION_PATH "${CONFIGURATION_DIR}/global.json" CACHE PATH "MetaCall configuration path")
 
-# Export output configuration plugin directory
-set(CONFIGURATION_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall configuration library path")
+# Export output serial plugin directory
+set(SERIAL_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall serial library path")
 
 # Add extra environment varible
 set(EXTRA_ENVIRONMENT_VARIABLES "" CACHE PATH "MetaCall extra environment variable")
@@ -32,12 +32,16 @@ set(TESTS_LOADER_ENVIRONMENT_VARIABLES
 
 set(TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES
 	"CONFIGURATION_PATH=${CONFIGURATION_PATH}"
-	"CONFIGURATION_LIBRARY_PATH=${CONFIGURATION_LIBRARY_PATH}"
+)
+
+set(TESTS_SERIAL_ENVIRONMENT_VARIABLES
+	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
 )
 
 set(TESTS_ENVIRONMENT_VARIABLES
 	${TESTS_LOADER_ENVIRONMENT_VARIABLES}
 	${TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES}
+	${TESTS_SERIAL_ENVIRONMENT_VARIABLES}
 	${EXTRA_ENVIRONMENT_VARIABLES}
 )
 
@@ -60,9 +64,10 @@ add_subdirectory(format)
 add_subdirectory(log)
 add_subdirectory(adt)
 add_subdirectory(filesystem)
-add_subdirectory(configuration)
 add_subdirectory(dynlink)
 add_subdirectory(reflect)
+add_subdirectory(serial)
+add_subdirectory(configuration)
 add_subdirectory(loader)
 add_subdirectory(metacall)
 
@@ -82,25 +87,18 @@ add_subdirectory(plugins)
 set(IDE_FOLDER "Scripts")
 add_subdirectory(scripts)
 
+# Serials
+set(IDE_FOLDER "Serials")
+add_subdirectory(serials)
+
+# Distributable
+set(IDE_FOLDER "Distributable")
+add_subdirectory(distributable)
+
 # Ports
 if(OPTION_BUILD_PORTS)
 	set(IDE_FOLDER "Ports")
 	add_subdirectory(ports)
-endif()
-
-# Configurations
-if(OPTION_BUILD_CONFIGS)
-	set(IDE_FOLDER "Configurations")
-	add_subdirectory(configs)
-
-	# Install runtime configuration
-	install(DIRECTORY ${CONFIGURATION_DIR}/install/configurations DESTINATION ${INSTALL_DATA} COMPONENT runtime)
-endif()
-
-# Distributable
-if(BUILD_DISTRIBUTABLE_LIBS)
-	set(IDE_FOLDER "Distributable")
-	add_subdirectory(distributable)
 endif()
 
 #
@@ -135,8 +133,8 @@ install_print("green" "CONFIGURATION_PATH:")
 	install_print("normal" "\tDefault Location: configurations/global.json")
 
 if(BUILD_SHARED_LIBS)
-	install_print("green" "CONFIGURATION_LIBRARY_PATH:")
-		install_print("normal" "\tDescription: Directory where MetaCall configuration plugins are located")
+	install_print("green" "SERIAL_LIBRARY_PATH:")
+		install_print("normal" "\tDescription: Directory where MetaCall serial plugins are located")
 		install_print("normal" "\tInstall Location: ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
-		install_print("normal" "\tDefault Location: configurations")
+		install_print("normal" "\tDefault Location: serials")
 endif()

@@ -1,29 +1,12 @@
-# Check if this configuration is enabled
-if(NOT OPTION_BUILD_CONFIGS OR NOT OPTION_BUILD_CONFIGS_RAPID_JSON)
-	return()
-endif()
-
-
-#
-# External dependencies
-#
-
-find_package(RapidJSON 1.1.0 REQUIRED)
-
-if(NOT RAPIDJSON_INCLUDE_DIRS)
-	message(STATUS "RapidJSON libraries not found")
-	return()
-endif()
-
 #
 # Library name and options
 #
 
 # Target name
-set(target rapid_json_config)
+set(target serial)
 
 # Exit here if required dependencies are not met
-message(STATUS "Config ${target}")
+message(STATUS "Lib ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
@@ -51,13 +34,17 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/rapid_json_config.h
-	${include_path}/rapid_json_config_impl.h
+	${include_path}/serial.h
+	${include_path}/serial_impl.h
+	${include_path}/serial_impl_handle.h
+	${include_path}/serial_interface.h
+	${include_path}/serial_singleton.h
 )
 
 set(sources
-	${source_path}/rapid_json_config.c
-	${source_path}/rapid_json_config_impl.cpp
+	${source_path}/serial.c
+	${source_path}/serial_impl.c
+	${source_path}/serial_singleton.c
 )
 
 # Group source files
@@ -72,25 +59,10 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(rapid_json_config_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${rapid_json_config_unity_build}
-	${CONFIGURATION_MODULE_NAMES}
-)
-
 # Build library
 add_library(${target}
-	${rapid_json_config_unity_build}
 	${sources}
 	${headers}
-)
-
-# Add target dependencies
-add_dependencies(${target}
-	${CONFIGURATION_MODULE_NAMES}
 )
 
 # Create namespaced alias
@@ -146,8 +118,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -163,6 +133,14 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
+	${META_PROJECT_NAME}::version
+	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::environment
+	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::adt
+	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::reflect
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -208,16 +186,4 @@ target_link_libraries(${target}
 	${DEFAULT_LINKER_OPTIONS}
 
 	INTERFACE
-)
-
-#
-# Deployment
-#
-
-# Library
-install(TARGETS ${target}
-	EXPORT  "${target}-export"				COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
