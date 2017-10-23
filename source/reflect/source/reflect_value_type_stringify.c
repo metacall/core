@@ -89,7 +89,7 @@ const char * value_stringify_format(type_id id)
 		"%.6ff",
 		"%.6f",
 		"%s",
-		/* "%s", */ VALUE_TYPE_STRINGIFY_FORMAT_PTR, /* TODO */
+		"%02x",
 		/* "%s", */ VALUE_TYPE_STRINGIFY_FORMAT_PTR, /* TODO */
 		VALUE_TYPE_STRINGIFY_FORMAT_PTR
 	};
@@ -168,9 +168,24 @@ void value_stringify_string(value v, char * dest, size_t size, const char * form
 
 void value_stringify_buffer(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	/* TODO */
+	if (dest == NULL && size == 0)
+	{
+		/* Each byte is going to be printed as two chars */
+		*length = (value_type_size(v) * 2) - 1;
+	}
+	else
+	{
+		const char * buffer = (const char *)value_to_buffer(v);
 
-	*length = snprintf(dest, size, format, value_to_buffer(v));
+		size_t dest_index, index, buffer_length = 0, buffer_size = value_type_size(v);
+
+		for (index = 0, dest_index = 0; index < buffer_size && dest_index < size; ++index, dest_index += 2)
+		{
+			buffer_length += snprintf(&dest[dest_index], size - dest_index, format, buffer[index]);
+		}
+
+		*length = buffer_length;
+	}
 }
 
 void value_stringify_array(value v, char * dest, size_t size, const char * format, size_t * length)

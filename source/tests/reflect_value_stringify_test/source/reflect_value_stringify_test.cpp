@@ -38,8 +38,8 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		"13.545000f",
 		"545.345300",
 		hello_world,
-		"[ 5, 6, 7, 8 ]",
-		"{ 244, 6.800000, \"hello world\" }",
+		"05060708",
+		"[244,6.800000,\"hello world\"]",
 		#if defined(_WIN32) && defined(_MSC_VER)
 			#if defined(_WIN64)
 				"0x00000000000A7EF2"
@@ -53,9 +53,9 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		#endif
 	};
 
-	static const int int_array[] =
+	static const char char_array[] =
 	{
-		5, 6, 7, 8
+		0x05, 0x06, 0x07, 0x08
 	};
 
 	static const value value_list[] =
@@ -75,7 +75,7 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		value_create_float(13.545f),
 		value_create_double(545.3453),
 		value_create_string(hello_world, sizeof(hello_world)),
-		value_create_buffer(int_array, sizeof(int_array)),
+		value_create_buffer(char_array, sizeof(char_array)),
 		value_create_array(value_list, sizeof(value_list) / sizeof(value_list[0])),
 		value_create_ptr((void *)0x000A7EF2)
 	};
@@ -92,20 +92,20 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 
 		size_t length;
 
-		/* TODO: Remove this workaround when implementing buffer and array stringify */
-		if (value_type_id(value_array[iterator]) != TYPE_BUFFER && value_type_id(value_array[iterator]) != TYPE_ARRAY)
+		/* TODO: Remove this workaround when implementing array stringify */
+		if (value_type_id(value_array[iterator]) != TYPE_ARRAY)
 		{
 			value_stringify(value_array[iterator], buffer, buffer_size, &length);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
 
-			EXPECT_EQ((int) 0, (int) strcmp(buffer, value_names[iterator]));
+			EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], length));
 
 			EXPECT_LT((size_t) length, (size_t)buffer_size);
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_WARNING, "WARNING: Avoiding test for TYPE_BUFFER and TYPE_ARRAY");
+			log_write("metacall", LOG_LEVEL_WARNING, "WARNING: Avoiding test for TYPE_ARRAY");
 		}
 
 		value_destroy(value_array[iterator]);
