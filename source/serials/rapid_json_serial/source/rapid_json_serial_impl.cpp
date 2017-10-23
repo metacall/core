@@ -13,8 +13,14 @@
 #include <log/log.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 /* -- Private Methods -- */
+
+static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_value, rapidjson::Document::AllocatorType & allocator);
+
+static const char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size);
 
 static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v);
 
@@ -39,13 +45,296 @@ serial_impl rapid_json_serial_impl_initialize()
 	return document;
 }
 
-const char * rapid_json_serial_impl_serialize(serial_impl impl, value v, size_t * size)
+void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_value, rapidjson::Document::AllocatorType & allocator)
 {
-	/* TODO */
+	type_id id = value_type_id(v);
 
-	return NULL;
+	if (id == TYPE_BOOL)
+	{
+		boolean b = value_to_bool(v);
+
+		json_value.SetBool(b == 1L ? true : false);
+	}
+	else if (id == TYPE_CHAR)
+	{
+		char str[1];
+
+		size_t length = 1;
+
+		str[0] = value_to_char(v);
+
+		json_value.SetString(str, length);
+	}
+	else if (id == TYPE_SHORT)
+	{
+		short s = value_to_short(v);
+
+		int i = (int)s;
+
+		json_value.SetInt(i);
+	}
+	else if (id == TYPE_INT)
+	{
+		int i = value_to_int(v);
+
+		json_value.SetInt(i);
+	}
+	else if (id == TYPE_LONG)
+	{
+		long l = value_to_long(v);
+
+		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int64_t (posible incompatible types) in RapidJSON implementation");
+
+		json_value.SetInt64(l);
+	}
+	else if (id == TYPE_FLOAT)
+	{
+		float f = value_to_float(v);
+
+		json_value.SetFloat(f);
+	}
+	else if (id == TYPE_DOUBLE)
+	{
+		double d = value_to_double(v);
+
+		json_value.SetDouble(d);
+	}
+	else if (id == TYPE_STRING)
+	{
+		const char * str = value_to_string(v);
+
+		size_t size = value_type_size(v);
+
+		size_t length = size > 0 ? size - 1 : 0;
+
+		json_value.SetString(str, length);
+	}
+	else if (id == TYPE_BUFFER)
+	{
+		/* TODO: Implement array-like map */
+	}
+	else if (id == TYPE_ARRAY)
+	{
+		rapidjson::Value & json_array = json_value.SetArray();
+
+		value * value_array = value_to_array(v);
+
+		size_t array_size = value_type_size(v) / sizeof(const value);
+
+		for (size_t index = 0; index < array_size; ++array_size)
+		{
+			value current_value = value_array[index];
+
+			rapidjson::Value json_inner_value;
+
+			rapid_json_serial_impl_serialize_value(current_value, json_inner_value);
+
+			json_array.PushBack(json_inner_value, allocator);
+		}
+	}
+	/*else if (id == TYPE_MAP)
+	{
+		for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
+		{
+			*//* TODO: Implement map conversion */
+			/*
+			value v = rapid_json_config_impl_get(it->value);
+
+			if (v != NULL)
+			{
+			if (configuration_object_set(config, it->name.GetString(), v) != 0)
+			{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid value insertion in RapidJSON implementation");
+
+			delete document;
+
+			return NULL;
+			}
+			}
+			*//*
+		}
+	}*/
+	else if (id == TYPE_PTR)
+	{
+		const size_t PTR_STR_MAX_SIZE = 19; /* 16 (64-bit pointer to string) + 2 (0x prefix) + '\0' */
+
+		char ptr_str[PTR_STR_MAX_SIZE] = { 0 };
+
+		size_t length = 0;
+
+		value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
+
+		json_value.SetString(ptr_str, length);
+	}
 }
 
+const char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size)
+{
+	char * buffer_str;
+
+	size_t buffer_size = 0;
+
+	rapidjson::StringBuffer buffer;
+
+	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+
+	document->Accept(writer);
+
+	buffer_size = buffer.GetSize();
+
+	buffer_str = static_cast<char *>(malloc(sizeof(char) * buffer_size));
+
+	if (buffer_str == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid string allocation for document stringifycation in RapidJSON implementation");
+
+		return NULL;
+	}
+
+	strncpy(buffer_str, buffer.GetString(), buffer_size);
+
+	*size = buffer_size;
+
+	return buffer_str;
+}
+
+const char * rapid_json_serial_impl_serialize(serial_impl impl, value v, size_t * size)
+{
+	rapidjson::Document * document = (rapidjson::Document *)impl;
+
+	type_id id;
+
+	if (impl == NULL || v == NULL || size == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Serialization called with wrong arguments in RapidJSON implementation");
+
+		return NULL;
+	}
+
+	id = value_type_id(v);
+
+	if (id == TYPE_BOOL)
+	{
+		boolean b = value_to_bool(v);
+
+		document->SetBool(b == 1L ? true : false);
+	}
+	else if (id == TYPE_CHAR)
+	{
+		char str[1];
+
+		size_t length = 1;
+		
+		str[0] = value_to_char(v);
+
+		document->SetString(str, length);
+	}
+	else if (id == TYPE_SHORT)
+	{
+		short s = value_to_short(v);
+
+		int i = (int)s;
+
+		document->SetInt(i);
+	}
+	else if (id == TYPE_INT)
+	{
+		int i = value_to_int(v);
+
+		document->SetInt(i);
+	}
+	else if (id == TYPE_LONG)
+	{
+		long l = value_to_long(v);
+
+		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int64_t (posible incompatible types) in RapidJSON implementation");
+
+		document->SetInt64(l);
+	}
+	else if (id == TYPE_FLOAT)
+	{
+		float f = value_to_float(v);
+
+		document->SetFloat(f);
+	}
+	else if (id == TYPE_DOUBLE)
+	{
+		double d = value_to_double(v);
+
+		document->SetDouble(d);
+	}
+	else if (id == TYPE_STRING)
+	{
+		const char * str = value_to_string(v);
+
+		size_t size = value_type_size(v);
+
+		size_t length = size > 0 ? size - 1 : 0;
+
+		document->SetString(str, length);
+	}
+	else if (id == TYPE_BUFFER)
+	{
+		/* TODO: Implement array-like map */
+	}
+	else if (id == TYPE_ARRAY)
+	{
+		rapidjson::Document::AllocatorType & allocator = document->GetAllocator();
+
+		rapidjson::Value & json_array = document->SetArray();
+
+		value * value_array = value_to_array(v);
+
+		size_t array_size = value_type_size(v) / sizeof(const value);
+
+		for (size_t index = 0; index < array_size; ++array_size)
+		{
+			value current_value = value_array[index];
+
+			rapidjson::Value json_value;
+
+			rapid_json_serial_impl_serialize_value(current_value, json_value, allocator);
+
+			json_array.PushBack(json_value, allocator);
+		}
+	}
+	/*else if (id == TYPE_MAP)
+	{
+		for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
+		{
+			*//* TODO: Implement map conversion */
+			/*
+			value v = rapid_json_config_impl_get(it->value);
+
+			if (v != NULL)
+			{
+			if (configuration_object_set(config, it->name.GetString(), v) != 0)
+			{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid value insertion in RapidJSON implementation");
+
+			delete document;
+
+			return NULL;
+			}
+			}
+			*//*
+		}
+	}*/
+	else if (id == TYPE_PTR)
+	{
+		const size_t PTR_STR_MAX_SIZE = 19; /* 16 (64-bit pointer to string) + 2 (0x prefix) + '\0' */
+
+		char ptr_str[PTR_STR_MAX_SIZE] = { 0 };
+
+		size_t length = 0;
+
+		value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
+
+		document->SetString(ptr_str, length);
+	}
+
+	return rapid_json_serial_impl_document_stringify(document, size);
+}
 
 value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v)
 {
@@ -123,7 +412,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v)
 			values[index] = rapid_json_serial_impl_deserialize_value(v[index]);
 		}
 
-		return value_create_list(values, size);
+		return value_create_array(values, size);
 	}
 	else if (v.IsObject() == true)
 	{
@@ -141,11 +430,15 @@ value rapid_json_serial_impl_deserialize(serial_impl impl, const char * buffer, 
 
 	if (impl == NULL || buffer == NULL || size == 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Deserialization called with wrong arguments in RapidJSON implementation");
+
 		return NULL;
 	}
 
 	if (document->Parse(buffer, size - 1).HasParseError() == false)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid parsing of document (%s) in RapidJSON implementation", buffer);
+
 		delete document;
 
 		return NULL;
@@ -225,7 +518,7 @@ value rapid_json_serial_impl_deserialize(serial_impl impl, const char * buffer, 
 			values[index] = rapid_json_serial_impl_deserialize_value(document[index]);
 		}
 
-		return value_create_list(values, size);
+		return value_create_array(values, size);
 	}
 	else if (document->IsObject() == true)
 	{
