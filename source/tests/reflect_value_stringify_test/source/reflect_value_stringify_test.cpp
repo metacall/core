@@ -28,6 +28,8 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 
 	static const char hello_world[] = "hello world";
 
+	static const size_t hello_world_length = sizeof(hello_world) - 1;
+
 	static const char * value_names[TYPE_SIZE] =
 	{
 		"true",
@@ -62,7 +64,7 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 	{
 		value_create_int(244),
 		value_create_double(6.8),
-		value_create_string(hello_world, sizeof(hello_world))
+		value_create_string(hello_world, hello_world_length)
 	};
 
 	value value_array[TYPE_SIZE] =
@@ -74,7 +76,7 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		value_create_long(251251251L),
 		value_create_float(13.545f),
 		value_create_double(545.3453),
-		value_create_string(hello_world, sizeof(hello_world)),
+		value_create_string(hello_world, hello_world_length),
 		value_create_buffer(char_array, sizeof(char_array)),
 		value_create_array(value_list, sizeof(value_list) / sizeof(value_list[0])),
 		value_create_ptr((void *)0x000A7EF2)

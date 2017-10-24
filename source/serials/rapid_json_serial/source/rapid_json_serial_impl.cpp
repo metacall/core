@@ -172,7 +172,7 @@ char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document,
 {
 	char * buffer_str;
 
-	size_t buffer_size = 0;
+	size_t buffer_size, buffer_str_size;
 
 	rapidjson::StringBuffer buffer;
 
@@ -180,9 +180,12 @@ char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document,
 
 	document->Accept(writer);
 
+	/* StringBuffer does not contain '\0' character so buffer size equals to buffer_str length */
 	buffer_size = buffer.GetSize();
 
-	buffer_str = static_cast<char *>(malloc(sizeof(char) * buffer_size));
+	buffer_str_size = buffer_size + 1;
+
+	buffer_str = static_cast<char *>(malloc(sizeof(char) * buffer_str_size));
 
 	if (buffer_str == NULL)
 	{
@@ -193,7 +196,9 @@ char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document,
 
 	strncpy(buffer_str, buffer.GetString(), buffer_size);
 
-	*size = buffer_size;
+	buffer_str[buffer_size] = '\0';
+
+	*size = buffer_str_size;
 
 	return buffer_str;
 }

@@ -28,7 +28,7 @@ TEST_F(serial_test, DefaultConstructor)
 	{
 		value_create_int(244),
 		value_create_double(6.8),
-		value_create_string(hello_world, sizeof(hello_world))
+		value_create_string(hello_world, sizeof(hello_world) - 1)
 	};
 
 	size_t serialize_size = 0;
@@ -43,7 +43,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 	serial s = serial_create(rapid_json_name);
 
-	EXPECT_NE((serial) NULL, (serial) s);
+	ASSERT_NE((serial) NULL, (serial) s);
 
 	EXPECT_EQ((int) 0, (int) strcmp(rapid_json_name, serial_name(s)));
 
