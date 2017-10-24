@@ -21,6 +21,7 @@
 struct serial_singleton_type
 {
 	set serials;
+	char * library_path;
 };
 
 /* -- Private Methods -- */
@@ -63,30 +64,56 @@ serial_singleton serial_singleton_instance()
 {
 	static struct serial_singleton_type singleton =
 	{
+		NULL,
 		NULL
 	};
 
 	return &singleton;
 }
 
-int serial_singleton_initialize()
+int serial_singleton_initialize(char * library_path)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
-	if (singleton->serials != NULL)
-	{
-		return 0;
-	}
-
-	singleton->serials = set_create(&hash_callback_str, &comparable_callback_str);
-
 	if (singleton->serials == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton set initialization");
+		singleton->serials = set_create(&hash_callback_str, &comparable_callback_str);
 
-		serial_singleton_destroy();
+		if (singleton->serials == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton set initialization");
 
-		return 1;
+			serial_singleton_destroy();
+
+			return 1;
+		}
+	}
+
+	if (singleton->library_path == NULL)
+	{
+		size_t library_path_size = strlen(library_path) + 1;
+
+		if (library_path_size <= 1)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton library path size");
+
+			serial_singleton_destroy();
+
+			return 1;
+		}
+
+		singleton->library_path = malloc(sizeof(char) * library_path_size);
+
+		if (singleton->library_path == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton library path initialization");
+
+			serial_singleton_destroy();
+
+			return 1;
+		}
+
+		strncpy(singleton->library_path, library_path, library_path_size);
 	}
 
 	return 0;
@@ -111,6 +138,13 @@ serial serial_singleton_get(const char * name)
 	serial_singleton singleton = serial_singleton_instance();
 
 	return set_get(singleton->serials, (const set_key)name);
+}
+
+const char * serial_singleton_path()
+{
+	serial_singleton singleton = serial_singleton_instance();
+
+	return singleton->library_path;
 }
 
 int serial_singleton_clear(serial s)
@@ -157,5 +191,12 @@ void serial_singleton_destroy()
 		set_destroy(singleton->serials);
 
 		singleton->serials = NULL;
+	}
+
+	if (singleton->library_path != NULL)
+	{
+		free(singleton->library_path);
+
+		singleton->library_path = NULL;
 	}
 }
