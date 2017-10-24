@@ -18,11 +18,11 @@
 
 /* -- Private Methods -- */
 
-static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_value, rapidjson::Document::AllocatorType & allocator);
+static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, rapidjson::Document::AllocatorType & allocator);
 
 static char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size);
 
-static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v);
+static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v);
 
 /* -- Methods -- */
 
@@ -45,7 +45,7 @@ serial_impl_handle rapid_json_serial_impl_initialize()
 	return (serial_impl_handle)document;
 }
 
-void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_value, rapidjson::Document::AllocatorType & allocator)
+void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, rapidjson::Document::AllocatorType & allocator)
 {
 	type_id id = value_type_id(v);
 
@@ -53,7 +53,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 	{
 		boolean b = value_to_bool(v);
 
-		json_value.SetBool(b == 1L ? true : false);
+		json_v->SetBool(b == 1L ? true : false);
 	}
 	else if (id == TYPE_CHAR)
 	{
@@ -63,7 +63,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 		str[0] = value_to_char(v);
 
-		json_value.SetString(str, length);
+		json_v->SetString(str, length);
 	}
 	else if (id == TYPE_SHORT)
 	{
@@ -71,13 +71,13 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 		int i = (int)s;
 
-		json_value.SetInt(i);
+		json_v->SetInt(i);
 	}
 	else if (id == TYPE_INT)
 	{
 		int i = value_to_int(v);
 
-		json_value.SetInt(i);
+		json_v->SetInt(i);
 	}
 	else if (id == TYPE_LONG)
 	{
@@ -85,19 +85,19 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int64_t (posible incompatible types) in RapidJSON implementation");
 
-		json_value.SetInt64(l);
+		json_v->SetInt64(l);
 	}
 	else if (id == TYPE_FLOAT)
 	{
 		float f = value_to_float(v);
 
-		json_value.SetFloat(f);
+		json_v->SetFloat(f);
 	}
 	else if (id == TYPE_DOUBLE)
 	{
 		double d = value_to_double(v);
 
-		json_value.SetDouble(d);
+		json_v->SetDouble(d);
 	}
 	else if (id == TYPE_STRING)
 	{
@@ -107,7 +107,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 		size_t length = size > 0 ? size - 1 : 0;
 
-		json_value.SetString(str, length);
+		json_v->SetString(str, length);
 	}
 	else if (id == TYPE_BUFFER)
 	{
@@ -115,7 +115,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 	}
 	else if (id == TYPE_ARRAY)
 	{
-		rapidjson::Value & json_array = json_value.SetArray();
+		rapidjson::Value & json_array = json_v->SetArray();
 
 		value * value_array = value_to_array(v);
 
@@ -127,7 +127,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 			rapidjson::Value json_inner_value;
 
-			rapid_json_serial_impl_serialize_value(current_value, json_inner_value, allocator);
+			rapid_json_serial_impl_serialize_value(current_value, &json_inner_value, allocator);
 
 			json_array.PushBack(json_inner_value, allocator);
 		}
@@ -164,7 +164,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 		value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
 
-		json_value.SetString(ptr_str, length);
+		json_v->SetString(ptr_str, length);
 	}
 }
 
@@ -207,8 +207,6 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 {
 	rapidjson::Document * document = (rapidjson::Document *)handle;
 
-	type_id id;
-
 	if (handle == NULL || v == NULL || size == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Serialization called with wrong arguments in RapidJSON implementation");
@@ -216,210 +214,94 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 		return NULL;
 	}
 
-	id = value_type_id(v);
+	rapidjson::Document::AllocatorType & allocator = document->GetAllocator();
 
-	if (id == TYPE_BOOL)
-	{
-		boolean b = value_to_bool(v);
-
-		document->SetBool(b == 1L ? true : false);
-	}
-	else if (id == TYPE_CHAR)
-	{
-		char str[1];
-
-		size_t length = 1;
-		
-		str[0] = value_to_char(v);
-
-		document->SetString(str, length);
-	}
-	else if (id == TYPE_SHORT)
-	{
-		short s = value_to_short(v);
-
-		int i = (int)s;
-
-		document->SetInt(i);
-	}
-	else if (id == TYPE_INT)
-	{
-		int i = value_to_int(v);
-
-		document->SetInt(i);
-	}
-	else if (id == TYPE_LONG)
-	{
-		long l = value_to_long(v);
-
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting long to int64_t (posible incompatible types) in RapidJSON implementation");
-
-		document->SetInt64(l);
-	}
-	else if (id == TYPE_FLOAT)
-	{
-		float f = value_to_float(v);
-
-		document->SetFloat(f);
-	}
-	else if (id == TYPE_DOUBLE)
-	{
-		double d = value_to_double(v);
-
-		document->SetDouble(d);
-	}
-	else if (id == TYPE_STRING)
-	{
-		const char * str = value_to_string(v);
-
-		size_t size = value_type_size(v);
-
-		size_t length = size > 0 ? size - 1 : 0;
-
-		document->SetString(str, length);
-	}
-	else if (id == TYPE_BUFFER)
-	{
-		/* TODO: Implement array-like map */
-	}
-	else if (id == TYPE_ARRAY)
-	{
-		rapidjson::Document::AllocatorType & allocator = document->GetAllocator();
-
-		rapidjson::Value & json_array = document->SetArray();
-
-		value * value_array = value_to_array(v);
-
-		size_t array_size = value_type_size(v) / sizeof(const value);
-
-		for (size_t index = 0; index < array_size; ++index)
-		{
-			value current_value = value_array[index];
-
-			rapidjson::Value json_value;
-
-			rapid_json_serial_impl_serialize_value(current_value, json_value, allocator);
-
-			json_array.PushBack(json_value, allocator);
-		}
-	}
-	/*else if (id == TYPE_MAP)
-	{
-		for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
-		{
-			*//* TODO: Implement map conversion */
-			/*
-			value v = rapid_json_config_impl_get(it->value);
-
-			if (v != NULL)
-			{
-			if (configuration_object_set(config, it->name.GetString(), v) != 0)
-			{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid value insertion in RapidJSON implementation");
-
-			delete document;
-
-			return NULL;
-			}
-			}
-			*//*
-		}
-	}*/
-	else if (id == TYPE_PTR)
-	{
-		const size_t PTR_STR_MAX_SIZE = 19; /* 16 (64-bit pointer to string) + 2 (0x prefix) + '\0' */
-
-		char ptr_str[PTR_STR_MAX_SIZE] = { 0 };
-
-		size_t length = 0;
-
-		value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
-
-		document->SetString(ptr_str, length);
-	}
+	rapid_json_serial_impl_serialize_value(v, document, allocator);
 
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
 
-value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v)
+value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 {
-	if (v.IsBool() == true)
+	if (v->IsBool() == true)
 	{
-		return value_create_bool(v.GetBool() == true ? 1L : 0L);
+		return value_create_bool(v->GetBool() == true ? 1L : 0L);
 	}
-	else if (v.IsString() == true && v.GetStringLength() == 1)
+	else if (v->IsString() == true && v->GetStringLength() == 1)
 	{
-		const char * str = v.GetString();
+		const char * str = v->GetString();
 
 		return value_create_char(str[0]);
 	}
-	else if (v.IsInt() == true)
+	else if (v->IsInt() == true)
 	{
-		int i = v.GetInt();
+		int i = v->GetInt();
 
 		return value_create_int(i);
 	}
-	else if (v.IsUint() == true)
+	else if (v->IsUint() == true)
 	{
-		unsigned int ui = v.GetUint();
+		unsigned int ui = v->GetUint();
 
 		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
 
 		return value_create_int((int)ui);
 	}
-	else if (v.IsInt64() == true)
+	else if (v->IsInt64() == true)
 	{
-		int64_t i = v.GetInt64();
+		int64_t i = v->GetInt64();
 
 		return value_create_long((long)i);
 	}
-	else if (v.IsUint64() == true)
+	else if (v->IsUint64() == true)
 	{
-		uint64_t ui = v.GetUint64();
+		uint64_t ui = v->GetUint64();
 
 		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
 
 		return value_create_long((long)ui);
 	}
-	else if (v.IsFloat() == true || v.IsLosslessFloat() == true)
+	else if (v->IsFloat() == true || v->IsLosslessFloat() == true)
 	{
-		float f = v.GetFloat();
+		float f = v->GetFloat();
 
 		return value_create_float(f);
 	}
-	else if (v.IsDouble() == true || v.IsLosslessDouble() == true)
+	else if (v->IsDouble() == true || v->IsLosslessDouble() == true)
 	{
-		double d = v.GetDouble();
+		double d = v->GetDouble();
 
 		return value_create_double((double)d);
 	}
-	else if (v.IsString() == true && v.GetStringLength() > 1)
+	else if (v->IsString() == true && v->GetStringLength() > 1)
 	{
-		size_t length = v.GetStringLength();
+		size_t length = v->GetStringLength();
 
-		const char * str = v.GetString();
+		const char * str = v->GetString();
 
 		return value_create_string(str, length);
 	}
-	else if (v.IsArray() == true && v.Empty() == false)
+	else if (v->IsArray() == true && v->Empty() == false)
 	{
-		rapidjson::SizeType index, size = v.Size();
+		rapidjson::SizeType size = v->Size();
 
-		value * values = static_cast<value *>(malloc(sizeof(value) * size));
+		value * values = static_cast<value *>(malloc(sizeof(value)* size));
+
+		size_t index = 0;
 
 		if (values == NULL)
 		{
 			return NULL;
 		}
 
-		for (index = 0; index < size; ++index)
+		for (rapidjson::Value::ConstValueIterator it = v->Begin(); it != v->End(); ++it)
 		{
-			values[index] = rapid_json_serial_impl_deserialize_value(v[index]);
+			values[index++] = rapid_json_serial_impl_deserialize_value(it);
 		}
 
 		return value_create_array(values, size);
 	}
-	else if (v.IsObject() == true)
+	else if (v->IsObject() == true)
 	{
 		/* TODO: Implement map conversion */
 	}
@@ -440,7 +322,7 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 		return NULL;
 	}
 
-	if (document->Parse(buffer, size - 1).HasParseError() == false)
+	if (document->Parse(buffer, size - 1).HasParseError() == true)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid parsing of document (%s) in RapidJSON implementation", buffer);
 
@@ -449,108 +331,7 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 		return NULL;
 	}
 
-	if (document->IsBool() == true)
-	{
-		return value_create_bool(document->GetBool() == true ? 1L : 0L);
-	}
-	else if (document->IsString() == true && document->GetStringLength() == 1)
-	{
-		const char * str = document->GetString();
-
-		return value_create_char(str[0]);
-	}
-	else if (document->IsInt() == true)
-	{
-		int i = document->GetInt();
-
-		return value_create_int(i);
-	}
-	else if (document->IsUint() == true)
-	{
-		unsigned int ui = document->GetUint();
-
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned integer to integer (posible overflow) in RapidJSON implementation");
-
-		return value_create_int((int)ui);
-	}
-	else if (document->IsInt64() == true)
-	{
-		int64_t i = document->GetInt64();
-
-		return value_create_long((long)i);
-	}
-	else if (document->IsUint64() == true)
-	{
-		uint64_t ui = document->GetUint64();
-
-		log_write("metacall", LOG_LEVEL_WARNING, "Casting unsigned long to int (posible overflow) in RapidJSON implementation");
-
-		return value_create_long((long)ui);
-	}
-	else if (document->IsFloat() == true || document->IsLosslessFloat() == true)
-	{
-		float f = document->GetFloat();
-
-		return value_create_float(f);
-	}
-	else if (document->IsDouble() == true || document->IsLosslessDouble() == true)
-	{
-		double d = document->GetDouble();
-
-		return value_create_double((double)d);
-	}
-	else if (document->IsString() == true && document->GetStringLength() > 1)
-	{
-		size_t length = document->GetStringLength();
-
-		const char * str = document->GetString();
-
-		return value_create_string(str, length);
-	}
-	else if (document->IsArray() == true && document->Empty() == false)
-	{
-		rapidjson::SizeType index, size = document->Size();
-
-		value * values = static_cast<value *>(malloc(sizeof(value)* size));
-
-		if (values == NULL)
-		{
-			return NULL;
-		}
-
-		for (index = 0; index < size; ++index)
-		{
-			values[index] = rapid_json_serial_impl_deserialize_value(document[index]);
-		}
-
-		return value_create_array(values, size);
-	}
-	else if (document->IsObject() == true)
-	{
-		for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
-		{
-			/* TODO: Implement map conversion */
-			/*
-			value v = rapid_json_config_impl_get(it->value);
-
-			if (v != NULL)
-			{
-				if (configuration_object_set(config, it->name.GetString(), v) != 0)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid value insertion in RapidJSON implementation");
-
-					delete document;
-
-					return NULL;
-				}
-			}
-			*/
-		}
-	}
-
-	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported document type in RapidJSON implementation");
-
-	return NULL;
+	return rapid_json_serial_impl_deserialize_value(document);
 }
 
 int rapid_json_serial_impl_destroy(serial_impl_handle handle)
