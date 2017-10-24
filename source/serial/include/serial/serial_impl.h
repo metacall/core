@@ -33,17 +33,11 @@ typedef struct serial_impl_type * serial_impl;
 *  @brief
 *    Create serial implementation
 *
-*  @param[in] name
-*    Dependency name to be injected
-*
-*  @param[in] path
-*    Path where dependency is located
-*
 *  @return
 *    Returns pointer to serial implementation correct creation, null otherwise
 *
 */
-SERIAL_API serial_impl serial_impl_create(const char * name, const char * path);
+SERIAL_API serial_impl serial_impl_create(void);
 
 /**
 *  @brief
@@ -65,11 +59,17 @@ SERIAL_API const char * serial_impl_extension(serial_impl impl);
 *  @param[in] impl
 *    Pointer to the serial implementation to be loaded
 *
+*  @param[in] path
+*    Path where dependency is located
+*
+*  @param[in] name
+*    Dependency name to be injected
+*
 *  @return
 *    Returns zero on correct loading, distinct from zero otherwise
 *
 */
-SERIAL_API int serial_impl_load(serial_impl impl);
+SERIAL_API int serial_impl_load(serial_impl impl, const char * path, const char * name);
 
 /**
 *  @brief

@@ -95,7 +95,7 @@ serial serial_create(const char * name)
 
 	strncpy(s->name, name, name_size);
 
-	s->impl = serial_impl_create(name, serial_singleton_path());
+	s->impl = serial_impl_create();
 
 	if (s->impl == NULL)
 	{
@@ -108,7 +108,7 @@ serial serial_create(const char * name)
 		return NULL;
 	}
 
-	if (serial_impl_load(s->impl) != 0)
+	if (serial_impl_load(s->impl, serial_singleton_path(), s->name) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation loading");
 
