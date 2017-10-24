@@ -33,20 +33,20 @@ RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_extension(void);
 
 /**
 *  @brief
-*    Initialize RapidJSON implementation
+*    Initialize RapidJSON document implementation
 *
 *  @return
-*    Returns pointer to serial implementation on success, null pointer otherwise
+*    Returns pointer to serial document implementation on success, null pointer otherwise
 *
 */
-RAPID_JSON_SERIAL_API serial_impl rapid_json_serial_impl_initialize(void);
+RAPID_JSON_SERIAL_API serial_impl_handle rapid_json_serial_impl_initialize(void);
 
 /**
 *  @brief
-*    Serialize with RapidJSON implementation @impl
+*    Serialize with RapidJSON document implementation @impl
 *
-*  @param[in] impl
-*    Pointer to the serial implementation
+*  @param[in] handle
+*    Pointer to the serial document implementation
 *
 *  @param[in] v
 *    Reference to the value is going to be serialized
@@ -58,14 +58,14 @@ RAPID_JSON_SERIAL_API serial_impl rapid_json_serial_impl_initialize(void);
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_serialize(serial_impl impl, value v, size_t * size);
+RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size);
 
 /**
 *  @brief
-*    Deserialize with RapidJSON implementation @impl
+*    Deserialize with RapidJSON document implementation @handle
 *
-*  @param[in] impl
-*    Pointer to the serial implementation
+*  @param[in] handle
+*    Pointer to the serial document implementation
 *
 *  @param[in] buffer
 *    Reference to the string is going to be deserialized
@@ -77,17 +77,17 @@ RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_serialize(serial_impl 
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-RAPID_JSON_SERIAL_API value rapid_json_serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size);
+RAPID_JSON_SERIAL_API value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size);
 
 /**
 *  @brief
-*    Destroy RapidJSON implementation
+*    Destroy RapidJSON document implementation
 *
 *  @return
 *    Returns zero on correct destruction, distinct from zero otherwise
 *
 */
-RAPID_JSON_SERIAL_API int rapid_json_serial_impl_destroy(serial_impl impl);
+RAPID_JSON_SERIAL_API int rapid_json_serial_impl_destroy(serial_impl_handle handle);
 
 #ifdef __cplusplus
 }

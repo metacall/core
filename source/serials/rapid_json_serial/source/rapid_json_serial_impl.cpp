@@ -33,7 +33,7 @@ const char * rapid_json_serial_impl_extension()
 	return extension;
 }
 
-serial_impl rapid_json_serial_impl_initialize()
+serial_impl_handle rapid_json_serial_impl_initialize()
 {
 	rapidjson::Document * document = new rapidjson::Document();
 
@@ -42,7 +42,7 @@ serial_impl rapid_json_serial_impl_initialize()
 		return NULL;
 	}
 
-	return document;
+	return (serial_impl_handle)document;
 }
 
 void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_value, rapidjson::Document::AllocatorType & allocator)
@@ -198,13 +198,13 @@ const char * rapid_json_serial_impl_document_stringify(rapidjson::Document * doc
 	return buffer_str;
 }
 
-const char * rapid_json_serial_impl_serialize(serial_impl impl, value v, size_t * size)
+const char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
 {
-	rapidjson::Document * document = (rapidjson::Document *)impl;
+	rapidjson::Document * document = (rapidjson::Document *)handle;
 
 	type_id id;
 
-	if (impl == NULL || v == NULL || size == NULL)
+	if (handle == NULL || v == NULL || size == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Serialization called with wrong arguments in RapidJSON implementation");
 
@@ -424,11 +424,11 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v)
 	return NULL;
 }
 
-value rapid_json_serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size)
+value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size)
 {
-	rapidjson::Document * document = (rapidjson::Document *)impl;
+	rapidjson::Document * document = (rapidjson::Document *)handle;
 
-	if (impl == NULL || buffer == NULL || size == 0)
+	if (handle == NULL || buffer == NULL || size == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Deserialization called with wrong arguments in RapidJSON implementation");
 
@@ -548,9 +548,9 @@ value rapid_json_serial_impl_deserialize(serial_impl impl, const char * buffer, 
 	return NULL;
 }
 
-int rapid_json_serial_impl_destroy(serial_impl impl)
+int rapid_json_serial_impl_destroy(serial_impl_handle handle)
 {
-	rapidjson::Document * document = (rapidjson::Document *)impl;
+	rapidjson::Document * document = (rapidjson::Document *)handle;
 
 	if (document != nullptr)
 	{

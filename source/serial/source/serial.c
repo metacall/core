@@ -11,18 +11,19 @@
 #include <metacall/metacall-version.h>
 
 #include <serial/serial.h>
-/*
 #include <serial/serial_singleton.h>
 #include <serial/serial_impl.h>
-*/
 
 #include <log/log.h>
+
+#include <string.h>
 
 /* -- Member Data -- */
 
 struct serial_type
 {
-
+	char * name;
+	struct serial_impl_type impl;
 };
 
 /* -- Methods -- */
@@ -34,17 +35,64 @@ int serial_initialize()
 
 serial serial_create(const char * name)
 {
+	serial s;
+
+	size_t name_size;
+
+	if (name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name");
+
+		return NULL;
+	}
+
+	name_size = strlen(name) + 1;
+
+	if (name_size <= 1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name length");
+
+		return NULL;
+	}
+
+	s = malloc(sizeof(struct serial_type));
+
+	if (s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial allocation");
+
+		return NULL;
+	}
+
+	s->name = malloc(sizeof(char) * name_size);
+
+	if (s->name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name allocation");
+
+		free(s);
+
+		return NULL;
+	}
+
+	strncpy(s->name, name, name_size);
+
+	/*
+	s->impl = serial_impl_create()
+	*/
+
+
 	return NULL;
 }
 
 const char * serial_extension(serial s)
 {
-	return NULL;
+	return serial_impl_extension(s->impl);
 }
 
 const char * serial_name(serial s)
 {
-	return NULL;
+	return s->name;
 }
 
 const char * serial_serialize(serial s, value v, size_t * size)

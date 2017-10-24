@@ -29,13 +29,13 @@ struct serial_interface_type;
 
 typedef const char * (*serial_interface_extension)(void);
 
-typedef serial_impl (*serial_interface_initialize)(void);
+typedef serial_impl_handle (*serial_interface_initialize)(void);
 
-typedef const char * (*serial_interface_serialize)(serial_impl, value, size_t *);
+typedef const char * (*serial_interface_serialize)(serial_impl_handle, value, size_t *);
 
-typedef value (*serial_interface_deserialize)(serial_impl, const char *, size_t);
+typedef value (*serial_interface_deserialize)(serial_impl_handle, const char *, size_t);
 
-typedef int (*serial_interface_destroy)(serial_impl);
+typedef int (*serial_interface_destroy)(serial_impl_handle);
 
 typedef struct serial_interface_type * serial_interface;
 

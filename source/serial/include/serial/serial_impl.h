@@ -13,72 +13,127 @@
 
 #include <serial/serial_api.h>
 
-#include <serial/serial_interface.h>
+#include <reflect/reflect.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* -- Forward Declarations -- */
+
+struct serial_impl_type;
+
+/* -- Type Definitions -- */
+
+typedef struct serial_impl_type * serial_impl;
+
 /* -- Methods -- */
+
+/**
+*  @brief
+*    Create serial implementation
+*
+*  @param[in] name
+*    Dependency name to be injected
+*
+*  @param[in] path
+*    Path where dependency is located
+*
+*  @return
+*    Returns pointer to serial implementation correct creation, null otherwise
+*
+*/
+SERIAL_API serial_impl serial_impl_create(const char * name, const char * path);
 
 /**
 *  @brief
 *    Retrieve extension supported by the serial implementation
 *
+*  @param[in] impl
+*    Pointer to serial implementation instance
+*
 *  @return
 *    Returns constant string representing serial extension
 *
 */
-SERIAL_API const char * serial_impl_extension(void);
+SERIAL_API const char * serial_impl_extension(serial_impl impl);
 
 /**
 *  @brief
-*    Initialize serial object implementation
+*    Load serial implementation @impl
 *
-*  @param[in] name
-*    Dependency name to be injected
-*
-*  @return
-*    Returns zero on correct initialization, distinct from zero otherwise
-*
-*/
-SERIAL_API int serial_impl_initialize(const char * name);
-
-/**
-*  @brief
-*    Load serial object implementation @s
-*
-*  @param[in] config
-*    Pointer to the serial object to be loaded
+*  @param[in] impl
+*    Pointer to the serial implementation to be loaded
 *
 *  @return
 *    Returns zero on correct loading, distinct from zero otherwise
 *
 */
-SERIAL_API int serial_impl_load(serial s);
+SERIAL_API int serial_impl_load(serial_impl impl);
 
 /**
 *  @brief
-*    Unload serial object implementation @s
+*    Convert a value @v to a serialized string using serial implementation @impl
 *
-*  @param[in] s
-*    Pointer to the config object to be unloaded
+*  @param[in] impl
+*    Reference to the serial implementation will be used to serialize value @v
+*
+*  @param[in] v
+*    Reference to the value is going to be serialized
+*
+*  @param[out] size
+*    Size in bytes of the return buffer
+*
+*  @return
+*    String with the value serialized on correct serialization, null otherwise
+*
+*/
+SERIAL_API const char * serial_impl_serialize(serial_impl impl, value v, size_t * size);
+
+/**
+*  @brief
+*    Convert a string @buffer to a deserialized value using serial implementation @impl
+*
+*  @param[in] impl
+*    Reference to the serial implementation will be used to deserialize string @buffer
+*
+*  @param[in] buffer
+*    Reference to the string is going to be deserialized
+*
+*  @param[in] size
+*    Size in bytes of the string @buffer
+*
+*  @return
+*    Pointer to value deserialized on correct serialization, null otherwise
+*
+*/
+SERIAL_API value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size);
+
+/**
+*  @brief
+*    Unload serial implementation @impl
+*
+*  @param[in] impl
+*    Pointer to the serial implementation to be unloaded
 *
 *  @return
 *    Returns zero on correct unloading, distinct from zero otherwise
 *
 */
-SERIAL_API int serial_impl_unload(serial s);
+SERIAL_API int serial_impl_unload(serial_impl impl);
 
 /**
 *  @brief
-*    Destroy serial object implementation
+*    Destroy serial implementation
+*
+*  @param[in] impl
+*    Pointer to the serial implementation to be destroyed
 *
 *  @return
 *    Returns zero on correct destruction, distinct from zero otherwise
 *
 */
-SERIAL_API int serial_impl_destroy(void);
+SERIAL_API int serial_impl_destroy(serial_impl impl);
 
 #ifdef __cplusplus
 }

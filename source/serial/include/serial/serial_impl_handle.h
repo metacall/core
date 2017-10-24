@@ -19,7 +19,7 @@ extern "C" {
 
 /* -- Type Definitions -- */
 
-typedef void * serial_impl;
+typedef void * serial_impl_handle;
 
 #ifdef __cplusplus
 }

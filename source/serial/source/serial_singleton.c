@@ -10,7 +10,7 @@
 
 #include <serial/serial_singleton.h>
 
-#include <adt/adt_hash_map.h>
+#include <adt/adt_set.h>
 
 #include <log/log.h>
 
@@ -20,7 +20,7 @@
 
 struct serial_singleton_type
 {
-	hash_map serials;
+	set serials;
 };
 
 /* -- Private Methods -- */
@@ -39,8 +39,8 @@ static serial_singleton serial_singleton_instance(void);
 *  @brief
 *    Serial singleton destroy callback iterator
 *
-*  @param[in] map
-*    Pointer to serials map
+*  @param[in] s
+*    Pointer to serials set
 *
 *  @param[in] key
 *    Pointer to current serial key
@@ -55,7 +55,7 @@ static serial_singleton serial_singleton_instance(void);
 *    Returns zero to continue iteration, distinct from zero otherwise
 *
 */
-static int serial_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int serial_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Methods -- */
 
@@ -78,11 +78,11 @@ int serial_singleton_initialize()
 		return 0;
 	}
 
-	singleton->serials = hash_map_create(&hash_callback_str, &comparable_callback_str);
+	singleton->serials = set_create(&hash_callback_str, &comparable_callback_str);
 
 	if (singleton->serials == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton scope map initialization");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton set initialization");
 
 		serial_singleton_destroy();
 
@@ -98,19 +98,19 @@ int serial_singleton_register(serial s)
 
 	const char * name = serial_name(s);
 
-	if (hash_map_get(singleton->serials, (const hash_map_key)name) != NULL)
+	if (set_get(singleton->serials, (const set_key)name) != NULL)
 	{
 		return 1;
 	}
 
-	return hash_map_insert(singleton->serials, (const hash_map_key)name, s);
+	return set_insert(singleton->serials, (const set_key)name, s);
 }
 
 serial serial_singleton_get(const char * name)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
-	return hash_map_get(singleton->serials, (const hash_map_key)name);
+	return set_get(singleton->serials, (const set_key)name);
 }
 
 int serial_singleton_clear(serial s)
@@ -119,12 +119,12 @@ int serial_singleton_clear(serial s)
 
 	const char * name = serial_name(s);
 
-	if (hash_map_get(singleton->serials, (const hash_map_key)name) == NULL)
+	if (set_get(singleton->serials, (const set_key)name) == NULL)
 	{
 		return 0;
 	}
 
-	if (hash_map_remove(singleton->serials, (const hash_map_key)name) == NULL)
+	if (set_remove(singleton->serials, (const set_key)name) == NULL)
 	{
 		return 1;
 	}
@@ -132,17 +132,15 @@ int serial_singleton_clear(serial s)
 	return 0;
 }
 
-int serial_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int serial_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	(void)map;
+	(void)s;
 	(void)key;
 	(void)args;
 
 	if (val != NULL)
 	{
-		serial s = val;
-
-		serial_clear(s);
+		serial_clear((serial)val);
 	}
 
 	return 0;
@@ -154,9 +152,9 @@ void serial_singleton_destroy()
 
 	if (singleton->serials != NULL)
 	{
-		hash_map_iterate(singleton->serials, &serial_singleton_destroy_cb_iterate, NULL);
+		set_iterate(singleton->serials, &serial_singleton_destroy_cb_iterate, NULL);
 
-		hash_map_destroy(singleton->serials);
+		set_destroy(singleton->serials);
 
 		singleton->serials = NULL;
 	}
