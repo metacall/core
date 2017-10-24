@@ -95,7 +95,7 @@ SERIAL_API const char * serial_name(serial s);
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-SERIAL_API const char * serial_serialize(serial s, value v, size_t * size);
+SERIAL_API char * serial_serialize(serial s, value v, size_t * size);
 
 /**
 *  @brief

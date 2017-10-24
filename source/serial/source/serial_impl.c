@@ -154,30 +154,32 @@ int serial_impl_load(serial_impl impl, const char * path, const char * name)
 	return 0;
 }
 
-const char * serial_impl_serialize(serial_impl impl, value v, size_t * size)
+char * serial_impl_serialize(serial_impl impl, value v, size_t * size)
 {
 	serial_impl_handle handle = impl->iface->initialize();
 
-	if (handle != NULL)
+	char * buffer;
+
+	if (handle == NULL)
 	{
-		const char * buffer = impl->iface->serialize(handle, v, size);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle initialization");
 
-		if (buffer == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle serialization");
-		}
-
-		if (impl->iface->destroy(handle) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle destruction");
-		}
-
-		return buffer;
+		return NULL;
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle initialization");
+	buffer = impl->iface->serialize(handle, v, size);
 
-	return NULL;
+	if (buffer == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle serialization");
+	}
+
+	if (impl->iface->destroy(handle) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle destruction");
+	}
+
+	return buffer;
 }
 
 value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size)

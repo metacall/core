@@ -16,7 +16,6 @@ set(SERIAL_MODULE_NAMES
 	adt
 	dynlink
 	reflect
-	configuration
 	serial
 )
 

@@ -20,7 +20,7 @@
 
 static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_value, rapidjson::Document::AllocatorType & allocator);
 
-static const char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size);
+static char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size);
 
 static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value & v);
 
@@ -127,7 +127,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 			rapidjson::Value json_inner_value;
 
-			rapid_json_serial_impl_serialize_value(current_value, json_inner_value);
+			rapid_json_serial_impl_serialize_value(current_value, json_inner_value, allocator);
 
 			json_array.PushBack(json_inner_value, allocator);
 		}
@@ -168,7 +168,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 	}
 }
 
-const char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size)
+char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size)
 {
 	char * buffer_str;
 
@@ -198,7 +198,7 @@ const char * rapid_json_serial_impl_document_stringify(rapidjson::Document * doc
 	return buffer_str;
 }
 
-const char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
+char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
 {
 	rapidjson::Document * document = (rapidjson::Document *)handle;
 

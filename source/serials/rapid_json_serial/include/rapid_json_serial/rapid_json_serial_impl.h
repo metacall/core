@@ -58,7 +58,7 @@ RAPID_JSON_SERIAL_API serial_impl_handle rapid_json_serial_impl_initialize(void)
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size);
+RAPID_JSON_SERIAL_API char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size);
 
 /**
 *  @brief

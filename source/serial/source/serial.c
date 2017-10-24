@@ -134,7 +134,7 @@ const char * serial_name(serial s)
 	return s->name;
 }
 
-const char * serial_serialize(serial s, value v, size_t * size)
+char * serial_serialize(serial s, value v, size_t * size)
 {
 	if (s == NULL || v == NULL || size == NULL)
 	{

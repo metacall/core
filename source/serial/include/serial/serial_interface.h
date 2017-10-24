@@ -31,7 +31,7 @@ typedef const char * (*serial_interface_extension)(void);
 
 typedef serial_impl_handle (*serial_interface_initialize)(void);
 
-typedef const char * (*serial_interface_serialize)(serial_impl_handle, value, size_t *);
+typedef char * (*serial_interface_serialize)(serial_impl_handle, value, size_t *);
 
 typedef value (*serial_interface_deserialize)(serial_impl_handle, const char *, size_t);
 
