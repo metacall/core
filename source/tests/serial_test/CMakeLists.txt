@@ -133,3 +133,10 @@ add_test(NAME ${target}
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
+)

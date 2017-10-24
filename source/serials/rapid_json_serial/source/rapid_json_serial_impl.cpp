@@ -121,7 +121,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value & json_val
 
 		size_t array_size = value_type_size(v) / sizeof(const value);
 
-		for (size_t index = 0; index < array_size; ++array_size)
+		for (size_t index = 0; index < array_size; ++index)
 		{
 			value current_value = value_array[index];
 
@@ -287,7 +287,7 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 
 		size_t array_size = value_type_size(v) / sizeof(const value);
 
-		for (size_t index = 0; index < array_size; ++array_size)
+		for (size_t index = 0; index < array_size; ++index)
 		{
 			value current_value = value_array[index];
 
