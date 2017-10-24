@@ -11,9 +11,9 @@
 
 /* -- Headers -- */
 
-#include <configuration/configuration_api.h>
+#include <serial/serial_api.h>
 
-#include <configuration/configuration_object.h>
+#include <serial/serial.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -21,72 +21,69 @@ extern "C" {
 
 /* -- Forward Declarations -- */
 
-struct configuration_singleton_type;
+struct serial_singleton_type;
 
 /* -- Type Definitions -- */
 
-typedef struct configuration_singleton_type * configuration_singleton;
+typedef struct serial_singleton_type * serial_singleton;
 
 /* -- Methods -- */
 
 /**
 *  @brief
-*    Initialize configuration singleton
-*
-*  @param[in] global
-*    Reference to global configuration object
+*    Initialize serial singleton
 *
 *  @return
-*    Returns zero on correct configuration singleton initialization, distinct from zero otherwise
+*    Returns zero on correct serial singleton initialization, distinct from zero otherwise
 *
 */
-SERIAL_API int configuration_singleton_initialize(configuration global);
+SERIAL_API int serial_singleton_initialize(void);
 
 /**
 *  @brief
-*    Register configuration object into scope map
+*    Register serial into serials map
 *
-*  @param[in] config
-*    Pointer to configuration object
+*  @param[in] s
+*    Pointer to serial
 *
 *  @return
-*    Returns zero on correct configuration singleton insertion, distinct from zero otherwise
+*    Returns zero on correct serial singleton insertion, distinct from zero otherwise
 *
 */
-SERIAL_API int configuration_singleton_register(configuration config);
+SERIAL_API int serial_singleton_register(serial s);
 
 /**
 *  @brief
-*    Retrieve configuration object from scope map by @name
+*    Retrieve serial from serials map by @name
 *
 *  @param[in] name
-*    Index which references the configuration object to be retrieved
+*    Index which references the serial to be retrieved
 *
 *  @return
-*    Returns pointer to configuration object if exists, null otherwise
+*    Returns pointer to serial if exists, null otherwise
 *
 */
-SERIAL_API configuration configuration_singleton_get(const char * name);
+SERIAL_API serial serial_singleton_get(const char * name);
 
 /**
 *  @brief
-*    Remove configuration object from scope map
+*    Remove serial from serials map
 *
-*  @param[in] config
-*    Pointer to configuration object
+*  @param[in] s
+*    Pointer to serial
 *
 *  @return
-*    Returns zero on correct configuration singleton removing, distinct from zero otherwise
+*    Returns zero on correct serial singleton removing, distinct from zero otherwise
 *
 */
-SERIAL_API int configuration_singleton_clear(configuration config);
+SERIAL_API int serial_singleton_clear(serial s);
 
 /**
 *  @brief
-*    Destroy configuration singleton
+*    Destroy serial singleton
 *
 */
-SERIAL_API void configuration_singleton_destroy(void);
+SERIAL_API void serial_singleton_destroy(void);
 
 #ifdef __cplusplus
 }

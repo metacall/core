@@ -54,6 +54,32 @@ SERIAL_API serial serial_create(const char * name);
 
 /**
 *  @brief
+*    Get extension of serial
+*
+*  @param[in] s
+*    Reference to the serial
+*
+*  @return
+*    Static const string with serial extension
+*
+*/
+SERIAL_API const char * serial_extension(serial s);
+
+/**
+*  @brief
+*    Get name of serial
+*
+*  @param[in] s
+*    Reference to the serial
+*
+*  @return
+*    Static const string with serial name
+*
+*/
+SERIAL_API const char * serial_name(serial s);
+
+/**
+*  @brief
 *    Convert a value @v to a serialized string using serial @s
 *
 *  @param[in] s

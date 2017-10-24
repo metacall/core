@@ -11,13 +11,19 @@
 #include <metacall/metacall-version.h>
 
 #include <serial/serial.h>
+/*
 #include <serial/serial_singleton.h>
 #include <serial/serial_impl.h>
-
-#include <environment/environment_variable.h>
-#include <environment/environment_variable_path.h>
+*/
 
 #include <log/log.h>
+
+/* -- Member Data -- */
+
+struct serial_type
+{
+
+};
 
 /* -- Methods -- */
 
@@ -27,6 +33,16 @@ int serial_initialize()
 }
 
 serial serial_create(const char * name)
+{
+	return NULL;
+}
+
+const char * serial_extension(serial s)
+{
+	return NULL;
+}
+
+const char * serial_name(serial s)
 {
 	return NULL;
 }
@@ -43,18 +59,12 @@ value serial_deserialize(serial s, const char * buffer, size_t size)
 
 int serial_clear(serial s)
 {
-	int result = serial_impl_unload(s);
-
-	result |= serial_singleton_clear(s);
-
-	return result;
+	return 0;
 }
 
 void serial_destroy()
 {
-	serial_singleton_destroy();
 
-	serial_impl_destroy();
 }
 
 const char * serial_print_info()
