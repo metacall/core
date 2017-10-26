@@ -44,6 +44,11 @@ int type_id_array(type_id id)
 	return !(id == TYPE_ARRAY);
 }
 
+int type_id_map(type_id id)
+{
+	return !(id == TYPE_MAP);
+}
+
 int type_id_pointer(type_id id)
 {
 	return !(id == TYPE_PTR);

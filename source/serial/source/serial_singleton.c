@@ -10,11 +10,18 @@
 
 #include <serial/serial_singleton.h>
 
+#include <environment/environment_variable_path.h>
+
 #include <adt/adt_set.h>
 
 #include <log/log.h>
 
 #include <string.h>
+
+/* -- Definitions -- */
+
+#define SERIAL_LIBRARY_PATH			"SERIAL_LIBRARY_PATH"
+#define SERIAL_DEFAULT_LIBRARY_PATH	"serials"
 
 /* -- Member Data -- */
 
@@ -71,7 +78,7 @@ serial_singleton serial_singleton_instance()
 	return &singleton;
 }
 
-int serial_singleton_initialize(char * library_path)
+int serial_singleton_initialize()
 {
 	serial_singleton singleton = serial_singleton_instance();
 
@@ -91,18 +98,9 @@ int serial_singleton_initialize(char * library_path)
 
 	if (singleton->library_path == NULL)
 	{
-		size_t library_path_size = strlen(library_path) + 1;
+		static const char serial_library_path[] = SERIAL_LIBRARY_PATH;
 
-		if (library_path_size <= 1)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton library path size");
-
-			serial_singleton_destroy();
-
-			return 1;
-		}
-
-		singleton->library_path = malloc(sizeof(char) * library_path_size);
+		singleton->library_path = environment_variable_path_create(serial_library_path, SERIAL_DEFAULT_LIBRARY_PATH);
 
 		if (singleton->library_path == NULL)
 		{
@@ -112,8 +110,6 @@ int serial_singleton_initialize(char * library_path)
 
 			return 1;
 		}
-
-		strncpy(singleton->library_path, library_path, library_path_size);
 	}
 
 	return 0;
@@ -195,7 +191,7 @@ void serial_singleton_destroy()
 
 	if (singleton->library_path != NULL)
 	{
-		free(singleton->library_path);
+		environment_variable_path_destroy(singleton->library_path);
 
 		singleton->library_path = NULL;
 	}

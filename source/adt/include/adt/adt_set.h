@@ -58,6 +58,8 @@ ADT_API size_t set_size(set s);
 
 ADT_API int set_insert(set s, set_key key, set_value value);
 
+ADT_API int set_insert_array(set s, set_key keys[], set_value values[], size_t size);
+
 ADT_API set_value set_get(set s, set_key key);
 
 ADT_API int set_contains(set s, set_key key);
@@ -76,7 +78,7 @@ ADT_API set_iterator set_iterator_begin(set s);
 
 ADT_API set_key set_iterator_get_key(set_iterator it);
 
-ADT_API set_key set_iterator_get_value(set_iterator it);
+ADT_API set_value set_iterator_get_value(set_iterator it);
 
 ADT_API void set_iterator_next(set_iterator it);
 

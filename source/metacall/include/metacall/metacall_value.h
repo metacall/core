@@ -41,10 +41,62 @@ enum metacall_value_id
 	METACALL_STRING	= 7,
 	METACALL_BUFFER	= 8,
 	METACALL_ARRAY	= 9,
-	METACALL_PTR	= 10,
+	METACALL_MAP	= 10,
+	METACALL_PTR	= 11,
 
 	METACALL_SIZE,
 	METACALL_INVALID
+};
+
+/* -- Forward Declarations -- */
+
+struct metacall_value_map_iterator_type;
+
+struct metacall_value_map_type;
+
+/* -- Type Definitions -- */
+
+typedef int (*metacall_value_map_cb_iterate)(void *, void *, void *, void *);
+
+typedef struct metacall_value_map_iterator_type * metacall_value_map_iterator;
+
+typedef struct metacall_value_map_type * metacall_value_map;
+
+/* -- Member Data -- */
+
+/* TODO: Implement map manipulation */
+
+struct metacall_value_map_iterator_type
+{
+	void * iterator;
+
+	struct
+	{
+		void * (*key)(void *);
+		void * (*value)(void *);
+		void (*next)(void *);
+		int (*end)(void **);
+	};
+};
+
+struct metacall_value_map_type
+{
+	void * map;
+
+	struct
+	{
+		void * (*create)(void);
+		size_t (*size)(void *);
+		int (*insert)(void *, void *, void *);
+		void * (*get)(void *, void *);
+		int (*contains)(void *, void *);
+		void * (*remove)(void *, void *);
+		int (*append)(void *, void *);
+		void (*iterate)(void *, metacall_value_map_cb_iterate, void *);
+		void * (*begin)(void *);
+		int (*clear)(void *);
+		void (*destroy)(void *);
+	};
 };
 
 /* -- Methods -- */
@@ -177,6 +229,24 @@ METACALL_API void * metacall_value_create_buffer(const void * buffer, size_t siz
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void * metacall_value_create_array(const void * values[], size_t size);
+
+/**
+*  @brief
+*    Create a value map from array of keys @keys and values @values
+*
+*  @param[in] keys
+*    Constant array of keys will be copied into value map
+*
+*  @param[in] values
+*    Constant array of values will be copied into value map
+*
+*  @param[in] size
+*    Number of elements contained in the map
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_map(const char * keys[], const void * values[], size_t size);
 
 /**
 *  @brief
@@ -333,6 +403,18 @@ METACALL_API void * metacall_value_to_buffer(void * v);
 *    Value converted to array of values
 */
 METACALL_API void ** metacall_value_to_array(void * v);
+
+/**
+*  @brief
+*    Convert value @v to map
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to map
+*/
+METACALL_API void * metacall_value_to_map(void * v);
 
 /**
 *  @brief
@@ -507,6 +589,27 @@ METACALL_API void * metacall_value_from_array(void * v, const void * values[], s
 
 /**
 *  @brief
+*    Assign array of values @values to value map @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] keys
+*    Constant array of keys to be assigned to value map @v
+*
+*  @param[in] values
+*    Constant array of values to be assigned to value map @v
+*
+*  @param[in] size
+*    Number of values contained in constant arrays @values and @keys
+*
+*  @return
+*    Value with map of keys @keys to values @values assigned to it
+*/
+METACALL_API void * metacall_value_from_map(void * v, const char * keys[], const void * values[], size_t size);
+
+/**
+*  @brief
 *    Assign pointer reference @ptr to value @v
 *
 *  @param[in] v
@@ -639,6 +742,18 @@ METACALL_API void * metacall_value_cast_buffer(void ** v);
 *    Value converted to array of values
 */
 METACALL_API void ** metacall_value_cast_array(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to map
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to map
+*/
+METACALL_API void * metacall_value_cast_map(void ** v);
 
 /**
 *  @brief

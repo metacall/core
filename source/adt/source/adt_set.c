@@ -353,7 +353,6 @@ int set_insert(set s, set_key key, set_value value)
 
 	set_bucket bucket;
 
-
 	if (s == NULL || key == NULL || value == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set insertion parameters");
@@ -404,6 +403,30 @@ int set_insert(set s, set_key key, set_value value)
 	}
 
 	++s->amount;
+
+	return 0;
+}
+
+int set_insert_array(set s, set_key keys[], set_value values[], size_t size)
+{
+	size_t index;
+
+	if (s == NULL || keys == NULL || values == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set insertion parameters");
+
+		return 1;
+	}
+
+	for (index = 0; index < size; ++index)
+	{
+		if (set_insert(s, keys[index], values[index]) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set array insertion");
+
+			return 1;
+		}
+	}
 
 	return 0;
 }
@@ -645,7 +668,7 @@ set_key set_iterator_get_key(set_iterator it)
 	return NULL;
 }
 
-set_key set_iterator_get_value(set_iterator it)
+set_value set_iterator_get_value(set_iterator it)
 {
 	if (it != NULL && it->bucket < it->s->capacity && it->pair > 0)
 	{

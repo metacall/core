@@ -33,14 +33,11 @@ typedef struct serial_singleton_type * serial_singleton;
 *  @brief
 *    Initialize serial singleton
 *
-*  @param[in] library_path
-*    Default location for serial libraries
-*
 *  @return
 *    Returns zero on correct serial singleton initialization, distinct from zero otherwise
 *
 */
-SERIAL_API int serial_singleton_initialize(char * library_path);
+SERIAL_API int serial_singleton_initialize();
 
 /**
 *  @brief

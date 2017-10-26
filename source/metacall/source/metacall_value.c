@@ -97,6 +97,11 @@ void * metacall_value_create_array(const void * values[], size_t size)
 	return value_create_array((const value *)values, size);
 }
 
+void * metacall_value_create_map(const char * keys[], const void * values[], size_t size)
+{
+	return value_create_map(keys, (const value *)values, size);
+}
+
 void * metacall_value_create_ptr(const void * ptr)
 {
 	return value_create_ptr(ptr);
@@ -125,6 +130,7 @@ enum metacall_value_id metacall_value_id(void * v)
 			METACALL_STRING,
 			METACALL_BUFFER,
 			METACALL_ARRAY,
+			METACALL_MAP,
 			METACALL_PTR,
 
 			METACALL_SIZE,
@@ -139,8 +145,9 @@ enum metacall_value_id metacall_value_id(void * v)
 			((int) TYPE_FLOAT == (int) METACALL_FLOAT) &&
 			((int) TYPE_DOUBLE == (int) METACALL_DOUBLE) &&
 			((int) TYPE_STRING == (int) METACALL_STRING) &&
-			((int) TYPE_BUFFER == (int) METACALL_BUFFER) &&
+			((int)TYPE_BUFFER == (int)METACALL_BUFFER) &&
 			((int) TYPE_ARRAY == (int) METACALL_ARRAY) &&
+			((int) TYPE_MAP == (int) METACALL_MAP) &&
 			((int) TYPE_PTR == (int) METACALL_PTR) &&
 			((int) TYPE_SIZE == (int) METACALL_SIZE) &&
 			((int) TYPE_INVALID == (int) METACALL_INVALID));
@@ -221,6 +228,13 @@ void ** metacall_value_to_array(void * v)
 	return value_to_array(v);
 }
 
+void * metacall_value_to_map(void * v)
+{
+	assert(value_type_id(v) == TYPE_MAP);
+
+	return value_to_map(v);
+}
+
 void * metacall_value_to_ptr(void * v)
 {
 	assert(value_type_id(v) == TYPE_PTR);
@@ -276,6 +290,11 @@ void * metacall_value_from_buffer(void * v, const void * buffer, size_t size)
 void * metacall_value_from_array(void * v, const void * values[], size_t size)
 {
 	return value_from_array(v, (const value *)values, size);
+}
+
+void * metacall_value_from_map(void * v, const char * keys[], const void * values[], size_t size)
+{
+	return value_from_map(v, keys, (const value *)values, size);
 }
 
 void * metacall_value_from_ptr(void * v, const void * ptr)
@@ -381,6 +400,16 @@ void ** metacall_value_cast_array(void ** v)
 	}
 
 	return value_to_array(*v);
+}
+
+void * metacall_value_cast_map(void ** v)
+{
+	if (value_type_id(*v) != TYPE_MAP)
+	{
+		*v = value_type_cast(*v, TYPE_MAP);
+	}
+
+	return value_to_map(*v);
 }
 
 void * metacall_value_cast_ptr(void ** v)

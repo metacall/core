@@ -27,7 +27,8 @@ enum type_primitive_id
 	TYPE_STRING = 7,
 	TYPE_BUFFER	= 8,
 	TYPE_ARRAY	= 9,
-	TYPE_PTR	= 10,
+	TYPE_MAP	= 10,
+	TYPE_PTR	= 11,
 
 	TYPE_SIZE,
 	TYPE_INVALID
@@ -118,6 +119,18 @@ REFLECT_API int type_id_buffer(type_id id);
 *    Returns zero if type is array, different from zero otherwhise
 */
 REFLECT_API int type_id_array(type_id id);
+
+/**
+*  @brief
+*    Check if type id is map of values (string -> value)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is map, different from zero otherwhise
+*/
+REFLECT_API int type_id_map(type_id id);
 
 /**
 *  @brief

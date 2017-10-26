@@ -75,6 +75,8 @@ static void value_stringify_buffer(value v, char * dest, size_t size, const char
 
 static void value_stringify_array(value v, char * dest, size_t size, const char * format, size_t * length);
 
+static void value_stringify_map(value v, char * dest, size_t size, const char * format, size_t * length);
+
 static void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length);
 
 /* -- Methods -- */
@@ -92,6 +94,7 @@ const char * value_stringify_format(type_id id)
 		"%.6f",
 		"%s",
 		"%02x",
+		NULL, /* Unused */
 		NULL, /* Unused */
 		VALUE_TYPE_STRINGIFY_FORMAT_PTR
 	};
@@ -113,6 +116,7 @@ value_stringify_impl_ptr value_stringify_impl(type_id id)
 		&value_stringify_string,
 		&value_stringify_buffer,
 		&value_stringify_array,
+		&value_stringify_map,
 		&value_stringify_ptr
 	};
 
@@ -273,6 +277,13 @@ void value_stringify_array(value v, char * dest, size_t size, const char * forma
 
 		*length = array_value_length;
 	}
+}
+
+void value_stringify_map(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO: Implement map iteration like array stringify */
+
+	*length = snprintf(dest, size, format, value_to_map(v));
 }
 
 void value_stringify_ptr(value v, char * dest, size_t size, const char * format, size_t * length)

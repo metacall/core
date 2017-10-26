@@ -117,6 +117,8 @@ value value_type_cast(value v, type_id id)
 		return dest;
 	}
 
+	/* TODO: Map */
+
 	/* Promote value type */
 	if (src_id < id)
 	{

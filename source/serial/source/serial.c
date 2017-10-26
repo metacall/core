@@ -14,16 +14,9 @@
 #include <serial/serial_singleton.h>
 #include <serial/serial_impl.h>
 
-#include <environment/environment_variable_path.h>
-
 #include <log/log.h>
 
 #include <string.h>
-
-/* -- Definitions -- */
-
-#define SERIAL_LIBRARY_PATH			"SERIAL_LIBRARY_PATH"
-#define SERIAL_DEFAULT_LIBRARY_PATH	"serials"
 
 /* -- Member Data -- */
 
@@ -37,11 +30,7 @@ struct serial_type
 
 int serial_initialize()
 {
-	static const char serial_library_path[] = SERIAL_LIBRARY_PATH;
-
-	char * library_path = environment_variable_path_create(serial_library_path, SERIAL_DEFAULT_LIBRARY_PATH);
-
-	if (serial_singleton_initialize(library_path) != 0)
+	if (serial_singleton_initialize() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton initialization");
 

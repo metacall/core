@@ -18,6 +18,8 @@
 #include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_type_id.h>
 
+#include <adt/adt_set.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -197,6 +199,24 @@ REFLECT_API value value_create_array(const value * values, size_t size);
 
 /**
 *  @brief
+*    Create a value map from array of keys @keys and values @values
+*
+*  @param[in] keys
+*    Constant array of keys will be copied into value map
+*
+*  @param[in] values
+*    Constant array of values will be copied into value map
+*
+*  @param[in] size
+*    Number of elements contained in the map
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_map(const char * keys[], const void * values[]);
+
+/**
+*  @brief
 *    Create a value from pointer @p
 *
 *  @param[in] ptr
@@ -326,6 +346,18 @@ REFLECT_API void * value_to_buffer(value v);
 *    Value converted to array of values
 */
 REFLECT_API value * value_to_array(value v);
+
+/**
+*  @brief
+*    Convert value @v to a set data type
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to set data type
+*/
+REFLECT_API set value_to_map(value v);
 
 /**
 *  @brief
@@ -497,6 +529,27 @@ REFLECT_API value value_from_buffer(value v, const void * buffer, size_t size);
 *    Value with array of values @values assigned to it
 */
 REFLECT_API value value_from_array(value v, const value * values, size_t size);
+
+/**
+*  @brief
+*    Assign array of values @values to value map @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] keys
+*    Constant array of keys to be assigned to value map @v
+*
+*  @param[in] values
+*    Constant array of values to be assigned to value map @v
+*
+*  @param[in] size
+*    Number of values contained in constant arrays @values and @keys
+*
+*  @return
+*    Value with map of keys @keys to values @values assigned to it
+*/
+REFLECT_API value value_from_map(value v, const char * keys[], const value * values, size_t size);
 
 /**
 *  @brief
