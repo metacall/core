@@ -114,7 +114,7 @@ int configuration_impl_load(configuration config)
 	{
 		configuration current = *((configuration *)vector_front(queue));
 
-		const char * source = configuration_object_source(config);
+		const char * source = configuration_object_source(current);
 
 		value v;
 

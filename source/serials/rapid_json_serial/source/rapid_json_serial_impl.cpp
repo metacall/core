@@ -304,7 +304,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	}
 	else if (v->IsObject() == true)
 	{
-		rapidjson::SizeType size = v->MemberCount();
+		const rapidjson::SizeType size = v->MemberCount();
 
 		value * tuples = static_cast<value *>(malloc(sizeof(value) * size));
 
@@ -317,7 +317,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 		for (rapidjson::Value::ConstMemberIterator it = v->MemberBegin(); it != v->MemberEnd(); ++it)
 		{
-			value tupla[] =
+			const value tupla[] =
 			{
 				rapid_json_serial_impl_deserialize_value(&it->name),
 				rapid_json_serial_impl_deserialize_value(&it->value)
@@ -326,7 +326,11 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 			tuples[index++] = value_create_array(tupla, sizeof(tupla) / sizeof(tupla[0]));
 		}
 
-		return value_create_map(tuples, size);
+		value v = value_create_map(tuples, size);
+
+		free(tuples);
+
+		return v;
 	}
 
 	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported value type in RapidJSON implementation");
