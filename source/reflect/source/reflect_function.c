@@ -116,7 +116,7 @@ char * function_dump(function func, size_t * size)
 
 		size_t func_name_length = strlen(func->name);
 
-		size_t index, copy_length = 0, length = func_name_length;
+		size_t iterator, copy_length = 0, length = func_name_length;
 
 		type ret = signature_get_return(func->s);
 
@@ -130,11 +130,11 @@ char * function_dump(function func, size_t * size)
 
 		length += ret_name_length;
 
-		for (index = 0; index < args_count; ++index)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
-			const char * arg_name = signature_get_name(func->s, index);
+			const char * arg_name = signature_get_name(func->s, iterator);
 
-			type t = signature_get_type(func->s, index);
+			type t = signature_get_type(func->s, iterator);
 
 			length += strlen(arg_name);
 
@@ -177,11 +177,11 @@ char * function_dump(function func, size_t * size)
 
 		buffer[copy_length++] = '(';
 
-		for (index = 0; index < args_count; ++index)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
-			const char * arg_name = signature_get_name(func->s, index);
+			const char * arg_name = signature_get_name(func->s, iterator);
 
-			type t = signature_get_type(func->s, index);
+			type t = signature_get_type(func->s, iterator);
 
 			size_t arg_name_length = strlen(arg_name);
 
@@ -200,7 +200,7 @@ char * function_dump(function func, size_t * size)
 				copy_length += arg_type_name_length;
 			}
 
-			if (index < args_count - 1)
+			if (iterator < args_count - 1)
 			{
 				buffer[copy_length++] = ',';
 				buffer[copy_length++] = ' ';

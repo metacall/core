@@ -97,9 +97,16 @@ void * metacall_value_create_array(const void * values[], size_t size)
 	return value_create_array((const value *)values, size);
 }
 
-void * metacall_value_create_map(const char * keys[], const void * values[], size_t size)
+void * metacall_value_create_map(const void * tuples[], size_t size)
 {
-	return value_create_map(keys, (const value *)values, size);
+	size_t iterator;
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		assert(value_type_id(tuples[iterator]) == TYPE_ARRAY);
+	}
+
+	return value_create_map((const value *)tuples, size);
 }
 
 void * metacall_value_create_ptr(const void * ptr)
@@ -228,7 +235,7 @@ void ** metacall_value_to_array(void * v)
 	return value_to_array(v);
 }
 
-void * metacall_value_to_map(void * v)
+void ** metacall_value_to_map(void * v)
 {
 	assert(value_type_id(v) == TYPE_MAP);
 
@@ -292,9 +299,9 @@ void * metacall_value_from_array(void * v, const void * values[], size_t size)
 	return value_from_array(v, (const value *)values, size);
 }
 
-void * metacall_value_from_map(void * v, const char * keys[], const void * values[], size_t size)
+void * metacall_value_from_map(void * v, const void * tuples[], size_t size)
 {
-	return value_from_map(v, keys, (const value *)values, size);
+	return value_from_map(v, (const value *)tuples, size);
 }
 
 void * metacall_value_from_ptr(void * v, const void * ptr)

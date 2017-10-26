@@ -183,11 +183,11 @@ void value_stringify_buffer(value v, char * dest, size_t size, const char * form
 	{
 		const char * buffer = (const char *)value_to_buffer(v);
 
-		size_t dest_index, index, buffer_length = 0, buffer_size = value_type_size(v);
+		size_t dest_iterator, iterator, buffer_length = 0, buffer_size = value_type_size(v);
 
-		for (index = 0, dest_index = 0; index < buffer_size && dest_index < size; ++index, dest_index += 2)
+		for (iterator = 0, dest_iterator = 0; iterator < buffer_size && dest_iterator < size; ++iterator, dest_iterator += 2)
 		{
-			buffer_length += snprintf(&dest[dest_index], size - dest_index, format, buffer[index]);
+			buffer_length += snprintf(&dest[dest_iterator], size - dest_iterator, format, buffer[iterator]);
 		}
 
 		*length = buffer_length;
@@ -196,16 +196,16 @@ void value_stringify_buffer(value v, char * dest, size_t size, const char * form
 
 void value_stringify_array(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	size_t index, array_value_length = 0, array_size = value_type_size(v) / sizeof(const value);
+	size_t iterator, array_value_length = 0, array_size = value_type_size(v) / sizeof(const value);
 
 	value * array_value = value_to_array(v);
 
 	(void)format;
 
 	/* Calculate sum of all array values lenght */
-	for (index = 0; index < array_size; ++index)
+	for (iterator = 0; iterator < array_size; ++iterator)
 	{
-		value current_value = array_value[index];
+		value current_value = array_value[iterator];
 
 		type_id id = value_type_id(current_value);
 
@@ -244,9 +244,9 @@ void value_stringify_array(value v, char * dest, size_t size, const char * forma
 
 		dest[array_value_length_current++] = '[';
 
-		for (index = 0; index < array_size; ++index)
+		for (iterator = 0; iterator < array_size; ++iterator)
 		{
-			value current_value = array_value[index];
+			value current_value = array_value[iterator];
 
 			type_id id = value_type_id(current_value);
 
@@ -260,7 +260,7 @@ void value_stringify_array(value v, char * dest, size_t size, const char * forma
 
 			array_value_length_current += length;
 
-			if (index < array_size - 1)
+			if (iterator < array_size - 1)
 			{
 				dest[array_value_length_current++] = ',';
 			}

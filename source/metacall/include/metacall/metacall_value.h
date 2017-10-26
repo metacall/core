@@ -48,57 +48,6 @@ enum metacall_value_id
 	METACALL_INVALID
 };
 
-/* -- Forward Declarations -- */
-
-struct metacall_value_map_iterator_type;
-
-struct metacall_value_map_type;
-
-/* -- Type Definitions -- */
-
-typedef int (*metacall_value_map_cb_iterate)(void *, void *, void *, void *);
-
-typedef struct metacall_value_map_iterator_type * metacall_value_map_iterator;
-
-typedef struct metacall_value_map_type * metacall_value_map;
-
-/* -- Member Data -- */
-
-/* TODO: Implement map manipulation */
-
-struct metacall_value_map_iterator_type
-{
-	void * iterator;
-
-	struct
-	{
-		void * (*key)(void *);
-		void * (*value)(void *);
-		void (*next)(void *);
-		int (*end)(void **);
-	};
-};
-
-struct metacall_value_map_type
-{
-	void * map;
-
-	struct
-	{
-		void * (*create)(void);
-		size_t (*size)(void *);
-		int (*insert)(void *, void *, void *);
-		void * (*get)(void *, void *);
-		int (*contains)(void *, void *);
-		void * (*remove)(void *, void *);
-		int (*append)(void *, void *);
-		void (*iterate)(void *, metacall_value_map_cb_iterate, void *);
-		void * (*begin)(void *);
-		int (*clear)(void *);
-		void (*destroy)(void *);
-	};
-};
-
 /* -- Methods -- */
 
 /**
@@ -232,13 +181,10 @@ METACALL_API void * metacall_value_create_array(const void * values[], size_t si
 
 /**
 *  @brief
-*    Create a value map from array of keys @keys and values @values
+*    Create a value map from array of tuples @map
 *
-*  @param[in] keys
-*    Constant array of keys will be copied into value map
-*
-*  @param[in] values
-*    Constant array of values will be copied into value map
+*  @param[in] tuples
+*    Constant array of tuples will be copied into value map
 *
 *  @param[in] size
 *    Number of elements contained in the map
@@ -246,7 +192,7 @@ METACALL_API void * metacall_value_create_array(const void * values[], size_t si
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_map(const char * keys[], const void * values[], size_t size);
+METACALL_API void * metacall_value_create_map(const void * tuples[], size_t size);
 
 /**
 *  @brief
@@ -412,9 +358,9 @@ METACALL_API void ** metacall_value_to_array(void * v);
 *    Reference to the value
 *
 *  @return
-*    Value converted to map
+*    Value converted to map (array of tuples (array of values))
 */
-METACALL_API void * metacall_value_to_map(void * v);
+METACALL_API void ** metacall_value_to_map(void * v);
 
 /**
 *  @brief
@@ -594,19 +540,16 @@ METACALL_API void * metacall_value_from_array(void * v, const void * values[], s
 *  @param[in] v
 *    Reference to the value
 *
-*  @param[in] keys
-*    Constant array of keys to be assigned to value map @v
-*
-*  @param[in] values
-*    Constant array of values to be assigned to value map @v
+*  @param[in] tuples
+*    Constant array of tuples to be assigned to value map @v
 *
 *  @param[in] size
-*    Number of values contained in constant arrays @values and @keys
+*    Number of values contained in constant array @tuples
 *
 *  @return
-*    Value with map of keys @keys to values @values assigned to it
+*    Value with array of tuples @tuples assigned to it
 */
-METACALL_API void * metacall_value_from_map(void * v, const char * keys[], const void * values[], size_t size);
+METACALL_API void * metacall_value_from_map(void * v, const void * tuples[], size_t size);
 
 /**
 *  @brief

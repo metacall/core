@@ -23,7 +23,7 @@ size_t value_type_id_size(type_id id)
 		sizeof(char *),		/* TYPE_STRING */
 		sizeof(void *),		/* TYPE_BUFFER */
 		sizeof(value *),	/* TYPE_ARRAY */
-		sizeof(set),		/* TYPE_MAP */
+		sizeof(value *),	/* TYPE_MAP */
 		sizeof(void *)		/* TYPE_PTR */
 	};
 

@@ -121,9 +121,9 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 
 		size_t array_size = value_type_size(v) / sizeof(const value);
 
-		for (size_t index = 0; index < array_size; ++index)
+		for (size_t iterator = 0; iterator < array_size; ++iterator)
 		{
-			value current_value = value_array[index];
+			value current_value = value_array[iterator];
 
 			rapidjson::Value json_inner_value;
 
@@ -132,28 +132,29 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 			json_array.PushBack(json_inner_value, allocator);
 		}
 	}
-	/*else if (id == TYPE_MAP)
+	else if (id == TYPE_MAP)
 	{
-		for (rapidjson::Value::ConstMemberIterator it = document->MemberBegin(); it != document->MemberEnd(); ++it)
+		rapidjson::Value & json_map = json_v->SetObject();
+
+		value * value_map = value_to_map(v);
+
+		size_t map_size = value_type_size(v) / sizeof(const value);
+
+		for (size_t iterator = 0; iterator < map_size; ++iterator)
 		{
-			*//* TODO: Implement map conversion */
-			/*
-			value v = rapid_json_config_impl_get(it->value);
+			value tupla = value_map[iterator];
 
-			if (v != NULL)
-			{
-			if (configuration_object_set(config, it->name.GetString(), v) != 0)
-			{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid value insertion in RapidJSON implementation");
+			value * tupla_array = value_to_array(tupla);
 
-			delete document;
+			rapidjson::Value json_member, json_inner_value;
 
-			return NULL;
-			}
-			}
-			*//*
+			rapid_json_serial_impl_serialize_value(tupla_array[0], &json_member, allocator);
+
+			rapid_json_serial_impl_serialize_value(tupla_array[1], &json_inner_value, allocator);
+
+			json_map.AddMember(json_member, json_inner_value, allocator);
 		}
-	}*/
+	}
 	else if (id == TYPE_PTR)
 	{
 		const size_t PTR_STR_MAX_SIZE = 19; /* 16 (64-bit pointer to string) + 2 (0x prefix) + '\0' */
@@ -275,17 +276,17 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	}
 	else if (v->IsString() == true && v->GetStringLength() > 1)
 	{
-		size_t length = v->GetStringLength();
+		rapidjson::SizeType length = v->GetStringLength();
 
 		const char * str = v->GetString();
 
-		return value_create_string(str, length);
+		return value_create_string(str, (size_t)length);
 	}
 	else if (v->IsArray() == true && v->Empty() == false)
 	{
 		rapidjson::SizeType size = v->Size();
 
-		value * values = static_cast<value *>(malloc(sizeof(value)* size));
+		value * values = static_cast<value *>(malloc(sizeof(value) * size));
 
 		size_t index = 0;
 
@@ -303,7 +304,29 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	}
 	else if (v->IsObject() == true)
 	{
-		/* TODO: Implement map conversion */
+		rapidjson::SizeType size = v->MemberCount();
+
+		value * tuples = static_cast<value *>(malloc(sizeof(value) * size));
+
+		size_t index = 0;
+
+		if (tuples == NULL)
+		{
+			return NULL;
+		}
+
+		for (rapidjson::Value::ConstMemberIterator it = v->MemberBegin(); it != v->MemberEnd(); ++it)
+		{
+			value tupla[] =
+			{
+				rapid_json_serial_impl_deserialize_value(&it->name),
+				rapid_json_serial_impl_deserialize_value(&it->value)
+			};
+
+			tuples[index++] = value_create_array(tupla, sizeof(tupla) / sizeof(tupla[0]));
+		}
+
+		return value_create_map(tuples, size);
 	}
 
 	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported value type in RapidJSON implementation");

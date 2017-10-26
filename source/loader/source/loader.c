@@ -415,7 +415,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	loader_naming_path * paths;
 
-	size_t index, size;
+	size_t iterator, size;
 
 	if (loader_path_get_name(path, config_name) == 0)
 	{
@@ -470,15 +470,15 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	scripts_array = value_to_list(scripts);
 
-	for (index = 0; index < size; ++index)
+	for (iterator = 0; iterator < size; ++iterator)
 	{
-		if (scripts_array[index] != NULL)
+		if (scripts_array[iterator] != NULL)
 		{
-			const char * str = value_to_string(scripts_array[index]);
+			const char * str = value_to_string(scripts_array[iterator]);
 
-			strncpy(paths[index], str, value_type_size(scripts_array[index]));
+			strncpy(paths[iterator], str, value_type_size(scripts_array[iterator]));
 
-			value_destroy(scripts_array[index]);
+			value_destroy(scripts_array[iterator]);
 		}
 	}
 

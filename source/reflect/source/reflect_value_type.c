@@ -112,35 +112,17 @@ value value_create_array(const value * values, size_t size)
 		return NULL;
 	}
 
-	return value_type_create(values, sizeof(const value)* size, TYPE_ARRAY);
+	return value_type_create(values, sizeof(const value) * size, TYPE_ARRAY);
 }
 
-value value_create_map(const char * keys[], const void * values[], size_t size)
+value value_create_map(const value * tuples, size_t size)
 {
-	set s;
-
-	size_t index;
-
-	if (keys == NULL || values == NULL || size == 0)
+	if (tuples == NULL || size == 0)
 	{
 		return NULL;
 	}
 
-	s = set_create(&hash_callback_str, &comparable_callback_str);
-
-	if (s == NULL)
-	{
-		return NULL;
-	}
-
-	if (set_insert_array(s, keys, values, size) != 0)
-	{
-		set_destroy(s);
-
-		return NULL;
-	}
-
-	return value_type_create(s, sizeof(set), TYPE_MAP);
+	return value_type_create(tuples, sizeof(const value) * size, TYPE_MAP);
 }
 
 value value_create_ptr(const void * ptr)
@@ -226,7 +208,7 @@ value * value_to_array(value v)
 	return value_data(v);
 }
 
-set value_to_map(value v)
+value * value_to_map(value v)
 {
 	return value_data(v);
 }
@@ -317,23 +299,15 @@ value value_from_array(value v, const value * values, size_t size)
 	return v;
 }
 
-value value_from_map(value v, const char * keys[], const value * values, size_t size)
+value value_from_map(value v, const value * tuples, size_t size)
 {
-	if (v != NULL && keys != NULL && values != NULL && size > 0)
+	if (v != NULL && tuples != NULL && size > 0)
 	{
-		set s = value_to_map(v);
+		size_t current_size = value_size(v);
 
-		if (set_clear(s) != 0)
-		{
-			return v;
-		}
+		size_t bytes = sizeof(const value) * size;
 
-		if (set_insert_array(s, keys, values, size) != 0)
-		{
-			return v;
-		}
-
-		return value_from(v, values, sizeof(set));
+		return value_from(v, tuples, (bytes <= current_size) ? bytes : current_size);
 	}
 
 	return v;

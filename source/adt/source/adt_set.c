@@ -409,7 +409,7 @@ int set_insert(set s, set_key key, set_value value)
 
 int set_insert_array(set s, set_key keys[], set_value values[], size_t size)
 {
-	size_t index;
+	size_t iterator;
 
 	if (s == NULL || keys == NULL || values == NULL)
 	{
@@ -418,9 +418,9 @@ int set_insert_array(set s, set_key keys[], set_value values[], size_t size)
 		return 1;
 	}
 
-	for (index = 0; index < size; ++index)
+	for (iterator = 0; iterator < size; ++iterator)
 	{
-		if (set_insert(s, keys[index], values[index]) != 0)
+		if (set_insert(s, keys[iterator], values[iterator]) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set array insertion");
 
