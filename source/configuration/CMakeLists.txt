@@ -36,11 +36,8 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/configuration.h
 	${include_path}/configuration_object_handle.h
-	${include_path}/configuration_impl_handle.h
 	${include_path}/configuration_singleton.h
 	${include_path}/configuration_object.h
-	${include_path}/configuration_stream.h
-	${include_path}/configuration_interface.h
 	${include_path}/configuration_impl.h
 )
 
@@ -48,7 +45,6 @@ set(sources
 	${source_path}/configuration.c
 	${source_path}/configuration_singleton.c
 	${source_path}/configuration_object.c
-	${source_path}/configuration_stream.c
 	${source_path}/configuration_impl.c
 )
 

@@ -206,13 +206,13 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 
 		if (execution_paths_array != NULL)
 		{
-			size_t index;
+			size_t iterator;
 
-			for (index = 0; index < size; ++index)
+			for (iterator = 0; iterator < size; ++iterator)
 			{
-				if (execution_paths_array[index] != NULL)
+				if (execution_paths_array[iterator] != NULL)
 				{
-					const char * str = value_to_string(execution_paths_array[index]);
+					const char * str = value_to_string(execution_paths_array[iterator]);
 
 					if (str != NULL)
 					{

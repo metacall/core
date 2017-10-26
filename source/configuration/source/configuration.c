@@ -104,8 +104,6 @@ configuration configuration_create(const char * scope, const char * path, const 
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load <%p>", config);
 
-		configuration_impl_unload(config);
-
 		configuration_object_destroy(config);
 
 		return NULL;
@@ -126,9 +124,7 @@ value configuration_value(configuration config, const char * key)
 
 int configuration_clear(configuration config)
 {
-	int result = configuration_impl_unload(config);
-
-	result |= configuration_singleton_clear(config);
+	int result = configuration_singleton_clear(config);
 
 	configuration_object_destroy(config);
 

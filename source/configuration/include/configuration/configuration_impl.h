@@ -14,7 +14,6 @@
 #include <configuration/configuration_api.h>
 
 #include <configuration/configuration_object.h>
-#include <configuration/configuration_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,19 +56,6 @@ CONFIGURATION_API int configuration_impl_initialize(const char * name);
 *
 */
 CONFIGURATION_API int configuration_impl_load(configuration config);
-
-/**
-*  @brief
-*    Unload configuration object implementation @config
-*
-*  @param[in] config
-*    Pointer to the config object to be unloaded
-*
-*  @return
-*    Returns zero on correct unloading, distinct from zero otherwise
-*
-*/
-CONFIGURATION_API int configuration_impl_unload(configuration config);
 
 /**
 *  @brief

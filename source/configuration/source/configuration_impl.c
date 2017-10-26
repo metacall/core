@@ -11,22 +11,14 @@
 #include <configuration/configuration_impl.h>
 #include <configuration/configuration_singleton.h>
 
-#include <environment/environment_variable_path.h>
+#include <serial/serial.h>
 
 #include <adt/adt_vector.h>
 #include <adt/adt_set.h>
 
-#include <dynlink/dynlink.h>
-
 #include <log/log.h>
 
 #include <string.h>
-
-/* -- Definitions -- */
-
-#define CONFIGURATION_DYNLINK_NAME_SIZE		0x40
-#define CONFIGURATION_LIBRARY_PATH			"CONFIGURATION_LIBRARY_PATH"
-#define CONFIGURATION_DEFAULT_LIBRARY_PATH	"configurations"
 
 /* -- Forward Declarations -- */
 
@@ -40,9 +32,7 @@ typedef struct configuration_impl_singleton_type * configuration_impl_singleton;
 
 struct configuration_impl_singleton_type
 {
-	char * library_path;
-	configuration_interface iface;
-	dynlink handle;
+	serial s;
 };
 
 /* -- Private Methods -- */
@@ -51,10 +41,6 @@ static configuration_impl_singleton configuration_impl_singleton_instance(void);
 
 static int configuration_impl_load_impl(configuration config);
 
-static dynlink configuration_impl_initialize_load(const char * name);
-
-static int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr);
-
 /* -- Methods -- */
 
 configuration_impl_singleton configuration_impl_singleton_instance()
@@ -62,8 +48,6 @@ configuration_impl_singleton configuration_impl_singleton_instance()
 	static struct configuration_impl_singleton_type instance =
 	{
 		NULL,
-		NULL,
-		NULL
 	};
 
 	return &instance;
@@ -73,119 +57,22 @@ const char * configuration_impl_extension()
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	return singleton->iface->extension();
-}
-
-dynlink configuration_impl_initialize_load(const char * name)
-{
-	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
-
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char config_dynlink_suffix[] = "_configd";
-	#else
-		const char config_dynlink_suffix[] = "_config";
-	#endif
-
-	#define CONFIGURATION_DYNLINK_NAME_FULL_SIZE \
-		(sizeof(config_dynlink_suffix) + CONFIGURATION_DYNLINK_NAME_SIZE)
-
-	char config_dynlink_name[CONFIGURATION_DYNLINK_NAME_FULL_SIZE];
-
-	strncpy(config_dynlink_name, name, CONFIGURATION_DYNLINK_NAME_FULL_SIZE - 1);
-
-	strncat(config_dynlink_name, config_dynlink_suffix,
-		CONFIGURATION_DYNLINK_NAME_FULL_SIZE - strnlen(config_dynlink_name, CONFIGURATION_DYNLINK_NAME_FULL_SIZE - 1) - 1);
-
-	#undef CONFIGURATION_DYNLINK_NAME_FULL_SIZE
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loading config: %s", config_dynlink_name);
-
-	return dynlink_load(singleton->library_path, config_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
-}
-
-int configuration_impl_initialize_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr)
-{
-	const char config_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
-	const char config_dynlink_symbol_suffix[] = "_config_impl_interface_singleton";
-
-	#define CONFIGURATION_DYNLINK_SYMBOL_SIZE \
-		(sizeof(config_dynlink_symbol_prefix) + CONFIGURATION_DYNLINK_NAME_SIZE + sizeof(config_dynlink_symbol_suffix))
-
-	char config_dynlink_symbol[CONFIGURATION_DYNLINK_SYMBOL_SIZE];
-
-	strncpy(config_dynlink_symbol, config_dynlink_symbol_prefix, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1);
-
-	strncat(config_dynlink_symbol, name,
-		CONFIGURATION_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1) - 1);
-
-	strncat(config_dynlink_symbol, config_dynlink_symbol_suffix,
-		CONFIGURATION_DYNLINK_SYMBOL_SIZE - strnlen(config_dynlink_symbol, CONFIGURATION_DYNLINK_SYMBOL_SIZE - 1) - 1);
-
-	#undef CONFIGURATION_DYNLINK_SYMBOL_SIZE
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Config symbol: %s", config_dynlink_symbol);
-
-	return dynlink_symbol(handle, config_dynlink_symbol, singleton_addr_ptr);
+	return serial_extension(singleton->s);
 }
 
 int configuration_impl_initialize(const char * name)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	dynlink_symbol_addr singleton_addr;
+	singleton->s = serial_create(name);
 
-	configuration_interface_singleton iface_singleton;
-
-	static const char configuration_library_path[] = CONFIGURATION_LIBRARY_PATH;
-
-	singleton->library_path = environment_variable_path_create(configuration_library_path, CONFIGURATION_DEFAULT_LIBRARY_PATH);
-
-	if (singleton->library_path == NULL)
-	{
-		return 1;
-	}
-
-	singleton->handle = configuration_impl_initialize_load(name);
-
-	if (singleton->handle == NULL)
-	{
-		return 1;
-	}
-
-	if (configuration_impl_initialize_symbol(singleton->handle, name, &singleton_addr) != 0)
-	{
-		dynlink_unload(singleton->handle);
-
-		singleton->handle = NULL;
-
-		return 1;
-	}
-
-	iface_singleton = (configuration_interface_singleton)DYNLINK_SYMBOL_GET(singleton_addr);
-
-	singleton->iface = iface_singleton();
-
-	return singleton->iface->initialize();
-}
-
-int configuration_impl_load_impl(configuration config)
-{
-	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
-
-	configuration_impl impl = singleton->iface->load(config);
-
-	if (impl == NULL)
-	{
-		return 1;
-	}
-
-	configuration_object_instantiate(config, impl);
-
-	return 0;
+	return !(singleton->s != NULL);
 }
 
 int configuration_impl_load(configuration config)
 {
+	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
+
 	set storage = set_create(&hash_callback_str, &comparable_callback_str);
 
 	vector queue, childs;
@@ -227,9 +114,15 @@ int configuration_impl_load(configuration config)
 	{
 		configuration current = *((configuration *)vector_front(queue));
 
+		const char * source = configuration_object_source(config);
+
+		value v;
+
 		vector_pop_front(queue);
 
-		if (configuration_impl_load_impl(current) != 0)
+		v = serial_deserialize(singleton->s, source, strlen(source) + 1);
+
+		if (v == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load (childs) <%p>", current);
 
@@ -241,6 +134,8 @@ int configuration_impl_load(configuration config)
 
 			return 1;
 		}
+
+		configuration_object_instantiate(current, v);
 
 		vector_clear(childs);
 
@@ -296,44 +191,9 @@ int configuration_impl_load(configuration config)
 	return 0;
 }
 
-int configuration_impl_unload(configuration config)
-{
-	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
-
-	if (singleton->iface != NULL && singleton->iface->unload != NULL)
-	{
-		return singleton->iface->unload(config);
-	}
-
-	return 0;
-}
-
 int configuration_impl_destroy()
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
-	int result = 0;
-
-	if (singleton->library_path != NULL)
-	{
-		environment_variable_path_destroy(singleton->library_path);
-
-		singleton->library_path = NULL;
-	}
-
-	if (singleton->iface != NULL && singleton->iface->destroy)
-	{
-		result = singleton->iface->destroy();
-	}
-
-	singleton->iface = NULL;
-
-	if (singleton->handle != NULL)
-	{
-		dynlink_unload(singleton->handle);
-	}
-
-	singleton->handle = NULL;
-
-	return result;
+	return serial_clear(singleton->s);
 }

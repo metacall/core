@@ -134,8 +134,6 @@ int configuration_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, h
 	{
 		configuration config = val;
 
-		configuration_impl_unload(config);
-
 		configuration_object_destroy(config);
 	}
 

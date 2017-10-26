@@ -9,7 +9,6 @@
 /* -- Headers -- */
 
 #include <configuration/configuration_object.h>
-#include <configuration/configuration_stream.h>
 #include <configuration/configuration_impl.h>
 
 #include <log/log.h>
@@ -41,12 +40,14 @@ struct configuration_type
 	set map;
 	configuration parent;
 	char * source;
-	configuration_impl impl;
+	value v;
 };
 
 /* -- Private Methods -- */
 
 static int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+
+static char * configuration_object_read(const char * path);
 
 static int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
@@ -68,6 +69,56 @@ int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val
 	return 0;
 }
 
+char * configuration_object_read(const char * path)
+{
+	FILE * file = fopen(path, "rb");
+
+	size_t size, size_read;
+
+	char * buffer;
+
+	if (file == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file path (%s)", path);
+
+		return NULL;
+	}
+
+	fseek(file, 0, SEEK_END);
+
+	size = ftell(file);
+
+	fseek(file, 0, SEEK_SET);
+
+	buffer = malloc(sizeof(char) * (size + 1));
+
+	if (buffer == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file stream allocation");
+
+		fclose(file);
+
+		return NULL;
+	}
+
+	size_read = fread(buffer, sizeof(char), size, file);
+
+	fclose(file);
+
+	if (size_read != size)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file size read (%u != %u)", size_read, size);
+
+		free(buffer);
+
+		return NULL;
+	}
+
+	buffer[size_read] = '\0';
+
+	return buffer;
+}
+
 configuration configuration_object_initialize(const char * name, const char * path, configuration parent)
 {
 	configuration config = malloc(sizeof(struct configuration_type));
@@ -81,7 +132,7 @@ configuration configuration_object_initialize(const char * name, const char * pa
 		return NULL;
 	}
 
-	config->source = configuration_stream_create(path);
+	config->source = configuration_object_read(path);
 
 	if (config->source == NULL)
 	{
@@ -214,9 +265,24 @@ int configuration_object_childs(configuration config, vector childs, set storage
 	return iterator.result;
 }
 
-void configuration_object_instantiate(configuration config, configuration_impl impl)
+void configuration_object_instantiate(configuration config, value v)
 {
-	config->impl = impl;
+	size_t index, size = value_type_size(v) / sizeof(value);
+
+	value * v_map = value_to_map(v);
+
+	for (index = 0; index < size; ++index)
+	{
+		value iterator = v_map[index];
+
+		value * tupla = value_to_array(iterator);
+
+		const char * key = value_to_string(tupla[0]);
+
+		configuration_object_set(config, key, tupla[1]);
+	}
+
+	config->v = v;
 }
 
 const char * configuration_object_name(configuration config)
@@ -239,9 +305,9 @@ const char * configuration_object_source(configuration config)
 	return config->source;
 }
 
-configuration_impl configuration_object_impl(configuration config)
+value configuration_object_value(configuration config)
 {
-	return config->impl;
+	return config->v;
 }
 
 int configuration_object_set(configuration config, const char * key, value v)
@@ -289,7 +355,32 @@ void configuration_object_destroy(configuration config)
 		free(config->path);
 	}
 
-	configuration_stream_destroy(config->source);
+	if (config->v != NULL)
+	{
+		size_t index, size = value_type_size(config->v) / sizeof(value);
+
+		value * v_map = value_to_map(config->v);
+
+		for (index = 0; index < size; ++index)
+		{
+			value iterator = v_map[index];
+
+			value * tupla = value_to_array(iterator);
+
+			value_destroy(tupla[0]);
+
+			value_destroy(tupla[1]);
+
+			value_destroy(iterator);
+		}
+
+		value_destroy(config->v);
+	}
+
+	if (config->source != NULL)
+	{
+		free(config->source);
+	}
 
 	set_iterate(config->map, &configuration_object_destroy_cb_iterate, NULL);
 

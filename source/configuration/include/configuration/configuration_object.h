@@ -14,7 +14,6 @@
 #include <configuration/configuration_api.h>
 
 #include <configuration/configuration_object_handle.h>
-#include <configuration/configuration_impl_handle.h>
 
 #include <adt/adt_vector.h>
 #include <adt/adt_set.h>
@@ -67,16 +66,16 @@ CONFIGURATION_API int configuration_object_childs(configuration config, vector c
 
 /**
 *  @brief
-*    Set configuration object implementation to configuration object @config
+*    Set value of configuration object @config
 *
 *  @param[in] config
 *    Pointer to configuration object
 *
-*  @param[in] path
-*    Pointer to configuration object implementation
+*  @param[in] v
+*    Pointer to configuration value representation
 *
 */
-CONFIGURATION_API void configuration_object_instantiate(configuration config, configuration_impl impl);
+CONFIGURATION_API void configuration_object_instantiate(configuration config, value v);
 
 /**
 *  @brief
@@ -132,16 +131,16 @@ CONFIGURATION_API const char * configuration_object_source(configuration config)
 
 /**
 *  @brief
-*    Retrieve the implementation of configuration object @config
+*    Retrieve the value of configuration object @config
 *
 *  @param[in] config
 *    Pointer to configuration object
 *
 *  @return
-*    Returns implementation reference of configuration object @config
+*    Returns value representing configuration object @config
 *
 */
-CONFIGURATION_API configuration_impl configuration_object_impl(configuration config);
+CONFIGURATION_API value configuration_object_value(configuration config);
 
 /**
 *  @brief
