@@ -87,11 +87,6 @@ value value_create_double(double d)
 
 value value_create_string(const char * str, size_t length)
 {
-	if (str == NULL || length == 0)
-	{
-		return NULL;
-	}
-
 	return value_type_create(str, length + 1, TYPE_STRING);
 }
 

@@ -12,6 +12,7 @@
 #include <reflect/reflect_api.h>
 
 #include <reflect/reflect_type.h>
+#include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +35,8 @@ REFLECT_API type signature_get_return(signature s);
 REFLECT_API void signature_set(signature s, size_t index, const char * name, type t);
 
 REFLECT_API void signature_set_return(signature s, type t);
+
+REFLECT_API value signature_metadata(signature s);
 
 REFLECT_API void signature_destroy(signature s);
 

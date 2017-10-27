@@ -21,6 +21,10 @@ struct function_type
 	function_interface interface;
 };
 
+static value function_metadata_name(function func);
+
+static value function_metadata_signature(function func);
+
 function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
 {
 	if (name != NULL)
@@ -97,121 +101,133 @@ signature function_signature(function func)
 	return NULL;
 }
 
-char * function_dump(function func, size_t * size)
+value function_metadata_name(function func)
 {
-	if (func != NULL)
+	static const char func_str[] = "name";
+
+	value name = value_create_array(NULL, 2);
+
+	value * name_array;
+
+	if (name == NULL)
 	{
-		char * buffer = NULL;
-
-		size_t func_name_length = strlen(func->name);
-
-		size_t iterator, copy_length = 0, length = func_name_length;
-
-		type ret = signature_get_return(func->s);
-
-		size_t args_count = signature_count(func->s);
-
-		const char * ret_name = type_name(ret);
-
-		size_t ret_name_length = (ret_name == NULL) ? 0 : strlen(ret_name);
-
-		size_t duck_type_count = 0;
-
-		length += ret_name_length;
-
-		for (iterator = 0; iterator < args_count; ++iterator)
-		{
-			const char * arg_name = signature_get_name(func->s, iterator);
-
-			type t = signature_get_type(func->s, iterator);
-
-			length += strlen(arg_name);
-
-			if (t != NULL)
-			{
-				length += strlen(type_name(t));
-			}
-			else
-			{
-				++duck_type_count;
-			}
-		}
-
-		length += (args_count > 0) ? (3 * args_count) - duck_type_count : 2;
-
-		if (ret_name != NULL)
-		{
-			++length;
-		}
-
-		buffer = malloc((length + 1) * sizeof(char));
-		
-		if (buffer == NULL)
-		{
-			return NULL;
-		}
-
-		if (ret_name != NULL)
-		{
-			memcpy(buffer, ret_name, ret_name_length);
-
-			buffer[ret_name_length] = ' ';
-
-			copy_length += ret_name_length + 1;
-		}
-
-		memcpy(&buffer[copy_length], func->name, func_name_length);
-
-		copy_length += func_name_length;
-
-		buffer[copy_length++] = '(';
-
-		for (iterator = 0; iterator < args_count; ++iterator)
-		{
-			const char * arg_name = signature_get_name(func->s, iterator);
-
-			type t = signature_get_type(func->s, iterator);
-
-			size_t arg_name_length = strlen(arg_name);
-
-			memcpy(&buffer[copy_length], arg_name, arg_name_length);
-
-			copy_length += arg_name_length;
-
-			if (t != NULL)
-			{
-				size_t arg_type_name_length = strlen(type_name(t));
-
-				buffer[copy_length++] = ' ';
-
-				memcpy(&buffer[copy_length], type_name(t), arg_type_name_length);
-
-				copy_length += arg_type_name_length;
-			}
-
-			if (iterator < args_count - 1)
-			{
-				buffer[copy_length++] = ',';
-				buffer[copy_length++] = ' ';
-			}
-		}
-
-		buffer[copy_length++] = ')';
-		buffer[copy_length] = '\0';
-
-		if (copy_length != length)
-		{
-			free(buffer);
-
-			return NULL;
-		}
-
-		*size = copy_length + 1;
-
-		return buffer;
+		return NULL;
 	}
 
-	return NULL;
+	name_array = value_to_array(name);
+
+	name_array[0] = value_create_string(func_str, sizeof(func_str) - 1);
+
+	if (name_array[0] == NULL)
+	{
+		/*
+		value_type_destroy(name);
+		*/
+
+		return NULL;
+	}
+
+	name_array[1] = value_create_string(func->name, strlen(func->name));
+
+	if (name_array[1] == NULL)
+	{
+		/*
+		value_type_destroy(name);
+		*/
+
+		return NULL;
+	}
+
+	return name;
+}
+
+value function_metadata_signature(function func)
+{
+	static const char sig_str[] = "signature";
+
+	value sig = value_create_array(NULL, 2);
+
+	value * sig_array;
+
+	if (sig == NULL)
+	{
+		return NULL;
+	}
+
+	sig_array = value_to_array(sig);
+
+	sig_array[0] = value_create_string(sig_str, sizeof(sig_str) - 1);
+
+	if (sig_array[0] == NULL)
+	{
+		/*
+		value_type_destroy(sig);
+		*/
+
+		return NULL;
+	}
+
+	sig_array[1] = signature_metadata(func->s);
+
+	if (sig_array[1] == NULL)
+	{
+		/*
+		value_type_destroy(sig);
+		*/
+
+		return NULL;
+	}
+
+	return sig;
+}
+
+value function_metadata(function func)
+{
+	value name, sig, f;
+
+	value * f_map;
+
+	/* Create function name array */
+	name = function_metadata_name(func);
+
+	if (name == NULL)
+	{
+		return NULL;
+	}
+
+	/* Create signature array */
+	sig = function_metadata_signature(func);
+
+	if (sig == NULL)
+	{
+		/*
+		value_destroy_type(name);
+		*/
+
+		return NULL;
+	}
+
+	/* Create function map (name + signature) */
+	f = value_create_map(NULL, 2);
+
+	if (f == NULL)
+	{
+		/*
+		value_type_destroy(name);
+
+		value_type_destroy(sig);
+		*/
+
+		return NULL;
+	}
+
+	f_map = value_to_map(f);
+
+	f_map[0] = name;
+
+	f_map[1] = sig;
+
+	return f;
 }
 
 function_return function_call(function func, function_args args)

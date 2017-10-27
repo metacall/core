@@ -167,11 +167,12 @@ int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, h
 
 int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
+	/*
 	if (map != NULL && key != NULL && val != NULL && args != NULL)
 	{
 		struct scope_dump_cb_iterator_type * iterator = args;
 
-		/* TODO: Support for other scope objects (e.g: class) */
+		*//* TODO: Support for other scope objects (e.g: class) *//*
 
 		size_t func_buffer_size = 0;
 
@@ -220,7 +221,7 @@ int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, ha
 		iterator->buffer[iterator->size - 1] = '\n';
 
 		return 0;
-	}
+	}*/
 
 	return 1;
 }
