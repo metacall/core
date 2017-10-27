@@ -39,8 +39,6 @@ struct configuration_impl_singleton_type
 
 static configuration_impl_singleton configuration_impl_singleton_instance(void);
 
-static int configuration_impl_load_impl(configuration config);
-
 /* -- Methods -- */
 
 configuration_impl_singleton configuration_impl_singleton_instance()

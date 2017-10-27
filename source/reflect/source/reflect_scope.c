@@ -165,13 +165,6 @@ int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, h
 	return 1;
 }
 
-void scope_print(scope sp)
-{
-	log_write("metacall", LOG_LEVEL_DEBUG, "Scope (%s):", sp->name);
-
-	hash_map_iterate(sp->map, &scope_print_cb_iterate, NULL);
-}
-
 int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
 	if (map != NULL && key != NULL && val != NULL && args != NULL)

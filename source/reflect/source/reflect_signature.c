@@ -162,33 +162,6 @@ void signature_set_return(signature s, type t)
 	}
 }
 
-void signature_print(signature s)
-{
-	size_t index;
-
-	if (s == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid null signature");
-
-		return;
-	}
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Signature { %" PRIuS " }:", s->count);
-
-	for (index = 0; index < s->count; ++index)
-	{
-		signature_node node = signature_at(s, index);
-
-		if (node == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid signature element (%" PRIuS ") <%p>", index, node);
-		}
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Param < %" PRIuS " > Name %s : Type %p",
-			index, node->name, (void *)node->t);
-	}
-}
-
 void signature_destroy(signature s)
 {
 	if (s != NULL)

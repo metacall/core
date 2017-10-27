@@ -97,17 +97,6 @@ signature function_signature(function func)
 	return NULL;
 }
 
-void function_print(function func)
-{
-	if (func != NULL)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Function <%s> Impl (%p) Interface (%p):",
-			func->name, (void *)func->impl, (void *)func->interface);
-
-		signature_print(func->s);
-	}
-}
-
 char * function_dump(function func, size_t * size)
 {
 	if (func != NULL)

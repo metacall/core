@@ -171,9 +171,8 @@ set(MODULE_NAMES
 	format
 	log
 	adt
-	filesystem
-	dynlink
 	reflect
+	dynlink
 	configuration
 	loader
 	metacall
