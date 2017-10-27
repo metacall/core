@@ -120,9 +120,7 @@ value function_metadata_name(function func)
 
 	if (name_array[0] == NULL)
 	{
-		/*
 		value_type_destroy(name);
-		*/
 
 		return NULL;
 	}
@@ -131,9 +129,7 @@ value function_metadata_name(function func)
 
 	if (name_array[1] == NULL)
 	{
-		/*
 		value_type_destroy(name);
-		*/
 
 		return NULL;
 	}
@@ -160,9 +156,7 @@ value function_metadata_signature(function func)
 
 	if (sig_array[0] == NULL)
 	{
-		/*
 		value_type_destroy(sig);
-		*/
 
 		return NULL;
 	}
@@ -171,9 +165,7 @@ value function_metadata_signature(function func)
 
 	if (sig_array[1] == NULL)
 	{
-		/*
 		value_type_destroy(sig);
-		*/
 
 		return NULL;
 	}
@@ -200,9 +192,7 @@ value function_metadata(function func)
 
 	if (sig == NULL)
 	{
-		/*
-		value_destroy_type(name);
-		*/
+		value_type_destroy(name);
 
 		return NULL;
 	}
@@ -212,11 +202,9 @@ value function_metadata(function func)
 
 	if (f == NULL)
 	{
-		/*
 		value_type_destroy(name);
 
 		value_type_destroy(sig);
-		*/
 
 		return NULL;
 	}

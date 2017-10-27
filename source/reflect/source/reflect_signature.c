@@ -191,9 +191,7 @@ value signature_metadata_return(signature s)
 
 	if (ret_array[0] == NULL)
 	{
-		/*
 		value_type_destroy(ret);
-		*/
 
 		return NULL;
 	}
@@ -202,9 +200,7 @@ value signature_metadata_return(signature s)
 
 	if (ret_array[1] == NULL)
 	{
-		/*
 		value_type_destroy(ret);
-		*/
 
 		return NULL;
 	}
@@ -239,9 +235,7 @@ value signature_metadata_args_map(signature s)
 
 			if (args_map[index] == NULL)
 			{
-				/*
 				value_type_destroy(args);
-				*/
 
 				return NULL;
 			}
@@ -252,9 +246,7 @@ value signature_metadata_args_map(signature s)
 
 			if (args_map_array[0] == NULL)
 			{
-				/*
 				value_type_destroy(args);
-				*/
 
 				return NULL;
 			}
@@ -263,9 +255,7 @@ value signature_metadata_args_map(signature s)
 
 			if (args_map_array[1] == NULL)
 			{
-				/*
 				value_type_destroy(args);
-				*/
 
 				return NULL;
 			}
@@ -289,9 +279,7 @@ value signature_metadata_args(signature s)
 
 		if (args == NULL)
 		{
-			/*
 			value_type_destroy(args);
-			*/
 
 			return NULL;
 		}
@@ -302,9 +290,7 @@ value signature_metadata_args(signature s)
 
 		if (args_array[0] == NULL)
 		{
-			/*
 			value_type_destroy(args);
-			*/
 
 			return NULL;
 		}
@@ -337,9 +323,7 @@ value signature_metadata(signature s)
 
 	if (args == NULL)
 	{
-		/*
-		value_destroy_type(ret);
-		*/
+		value_type_destroy(ret);
 
 		return NULL;
 	}
@@ -349,11 +333,9 @@ value signature_metadata(signature s)
 
 	if (sig == NULL)
 	{
-		/*
 		value_type_destroy(ret);
 
 		value_type_destroy(args);
-		*/
 
 		return NULL;
 	}

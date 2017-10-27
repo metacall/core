@@ -156,9 +156,7 @@ TEST_F(reflect_metadata_test, DefaultConstructor)
 
 			free(str);
 
-			/*
 			value_type_destroy(metadata);
-			*/
 
 			function_destroy(f);
 		}

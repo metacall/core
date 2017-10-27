@@ -558,6 +558,16 @@ REFLECT_API value value_from_map(value v, const value * tuples, size_t size);
 */
 REFLECT_API value value_from_ptr(value v, const void * ptr);
 
+/**
+*  @brief
+*    Destroy recursively a value type @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*/
+REFLECT_API void value_type_destroy(value v);
+
 #ifdef __cplusplus
 }
 #endif
