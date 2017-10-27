@@ -11,10 +11,11 @@ set(LOADER_MODULE_NAMES
 	format
 	log
 	adt
-	dynlink
 	reflect
-	loader
+	dynlink
+	serial
 	configuration
+	loader
 )
 
 # Plugins options

@@ -202,7 +202,7 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 
 	if (execution_paths_value != NULL)
 	{
-		value * execution_paths_array = value_to_list(execution_paths_value);
+		value * execution_paths_array = value_to_array(execution_paths_value);
 
 		if (execution_paths_array != NULL)
 		{

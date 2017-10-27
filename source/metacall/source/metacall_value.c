@@ -99,13 +99,6 @@ void * metacall_value_create_array(const void * values[], size_t size)
 
 void * metacall_value_create_map(const void * tuples[], size_t size)
 {
-	size_t iterator;
-
-	for (iterator = 0; iterator < size; ++iterator)
-	{
-		assert(value_type_id(tuples[iterator]) == TYPE_ARRAY);
-	}
-
 	return value_create_map((const value *)tuples, size);
 }
 

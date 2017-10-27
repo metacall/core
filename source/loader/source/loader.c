@@ -468,7 +468,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 		return 1;
 	}
 
-	scripts_array = value_to_list(scripts);
+	scripts_array = value_to_array(scripts);
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{

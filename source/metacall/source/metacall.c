@@ -496,6 +496,8 @@ int metacall_clear(void * handle)
 
 int metacall_destroy()
 {
+	configuration_destroy();
+
 	if (loader_unload() != 0)
 	{
 		return 1;

@@ -107,21 +107,11 @@ value value_create_buffer(const void * buffer, size_t size)
 
 value value_create_array(const value * values, size_t size)
 {
-	if (values == NULL || size == 0)
-	{
-		return NULL;
-	}
-
 	return value_type_create(values, sizeof(const value) * size, TYPE_ARRAY);
 }
 
 value value_create_map(const value * tuples, size_t size)
 {
-	if (tuples == NULL || size == 0)
-	{
-		return NULL;
-	}
-
 	return value_type_create(tuples, sizeof(const value) * size, TYPE_MAP);
 }
 

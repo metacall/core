@@ -53,6 +53,15 @@ serial serial_create(const char * name)
 		return NULL;
 	}
 
+	s = serial_singleton_get(name);
+
+	if (s != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Serial <%p> already exists", (void *)s);
+
+		return s;
+	}
+
 	name_size = strlen(name) + 1;
 
 	if (name_size <= 1)

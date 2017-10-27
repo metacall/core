@@ -11,12 +11,12 @@
 #include <configuration/configuration_impl.h>
 #include <configuration/configuration_singleton.h>
 
-#include <serial/serial.h>
-
 #include <adt/adt_vector.h>
 #include <adt/adt_set.h>
 
 #include <log/log.h>
+
+#include <serial/serial.h>
 
 #include <string.h>
 

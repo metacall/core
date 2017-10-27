@@ -27,8 +27,10 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		log_policy_stream_stdio(stdout)));
 
 	static const char hello_world[] = "hello world";
+	static const char good_bye[] = "good bye";
 
 	static const size_t hello_world_length = sizeof(hello_world) - 1;
+	static const size_t good_bye_length = sizeof(good_bye) - 1;
 
 	static const char * value_names[TYPE_SIZE] =
 	{
@@ -67,6 +69,28 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		value_create_string(hello_world, hello_world_length)
 	};
 
+	static const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
+
+	static const value value_map_tupla_a[] =
+	{
+		value_create_string(hello_world, hello_world_length),
+		value_create_int(9874),
+	};
+
+	static const value value_map_tupla_b[] =
+	{
+		value_create_string(good_bye, good_bye_length),
+		value_create_int(1111),
+	};
+
+	static const value value_map[] =
+	{
+		value_create_array(value_map_tupla_a, sizeof(value_map_tupla_a) / sizeof(value_map_tupla_a[0])),
+		value_create_array(value_map_tupla_b, sizeof(value_map_tupla_b) / sizeof(value_map_tupla_b[0])),
+	};
+
+	static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
+
 	value value_array[TYPE_SIZE] =
 	{
 		value_create_bool(1),
@@ -78,7 +102,8 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 		value_create_double(545.3453),
 		value_create_string(hello_world, hello_world_length),
 		value_create_buffer(char_array, sizeof(char_array)),
-		value_create_array(value_list, sizeof(value_list) / sizeof(value_list[0])),
+		value_create_array(value_list, value_list_size),
+		value_create_map(value_map, value_map_size),
 		value_create_ptr((void *)0x000A7EF2)
 	};
 
@@ -94,23 +119,37 @@ TEST_F(reflect_value_stringify_test, DefaultConstructor)
 
 		size_t length = 0;
 
-		value_stringify(value_array[iterator], buffer, buffer_size, &length);
+		/* TODO: Remove this workaround when type map stringification is implemented */
+		if (value_type_id(value_array[iterator]) != TYPE_MAP)
+		{
+			value_stringify(value_array[iterator], buffer, buffer_size, &length);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
+			log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
 
-		EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], length));
+			EXPECT_EQ((int)0, (int)strncmp(buffer, value_names[iterator], length));
 
-		EXPECT_LT((size_t) length, (size_t)buffer_size);
+			EXPECT_LT((size_t)length, (size_t)buffer_size);
 
-		value_destroy(value_array[iterator]);
+			value_destroy(value_array[iterator]);
+		}
 
 		#undef BUFFER_SIZE
 	}
 
-	const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
-
-	for (size_t iterator = 0; iterator < value_list_size; ++iterator)
+	for (size_t index = 0; index < value_list_size; ++index)
 	{
-		value_destroy(value_list[iterator]);
+		value_destroy(value_list[index]);
+	}
+
+	for (size_t index = 0; index < value_map_size; ++index)
+	{
+		value iterator = value_map[index];
+
+		value * tupla = value_to_array(iterator);
+
+		value_destroy(tupla[0]);
+		value_destroy(tupla[1]);
+
+		value_destroy(iterator);
 	}
 }

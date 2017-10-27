@@ -282,13 +282,20 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 		return value_create_string(str, (size_t)length);
 	}
-	else if (v->IsArray() == true && v->Empty() == false)
+	else if (v->IsArray() == true)
 	{
 		rapidjson::SizeType size = v->Size();
 
-		value * values = static_cast<value *>(malloc(sizeof(value) * size));
+		value * values;
 
 		size_t index = 0;
+
+		if (size == 0)
+		{
+			return value_create_array(NULL, 0);
+		}
+
+		values = static_cast<value *>(malloc(sizeof(value) * size));
 
 		if (values == NULL)
 		{
@@ -306,9 +313,16 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	{
 		const rapidjson::SizeType size = v->MemberCount();
 
-		value * tuples = static_cast<value *>(malloc(sizeof(value) * size));
+		value * tuples;
 
 		size_t index = 0;
+
+		if (size == 0)
+		{
+			return value_create_map(NULL, 0);
+		}
+
+		tuples = static_cast<value *>(malloc(sizeof(value) * size));
 
 		if (tuples == NULL)
 		{

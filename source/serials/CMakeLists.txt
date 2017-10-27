@@ -14,8 +14,8 @@ set(SERIAL_MODULE_NAMES
 	format
 	log
 	adt
-	dynlink
 	reflect
+	dynlink
 	serial
 )
 
