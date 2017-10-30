@@ -210,7 +210,7 @@ value signature_metadata_return(signature s)
 
 value signature_metadata_args_map(signature s)
 {
-	value args = value_create_map(NULL, s->count);
+	value args = value_create_array(NULL, s->count);
 
 	if (args == NULL)
 	{
@@ -229,9 +229,9 @@ value signature_metadata_args_map(signature s)
 
 			const char * type_str = node->t != NULL ? type_name(node->t) : "";
 
-			value * args_map_array;
+			value * args_map_ptr, * args_map_array;
 
-			args_map[index] = value_create_array(NULL, 2);
+			args_map[index] = value_create_map(NULL, 1);
 
 			if (args_map[index] == NULL)
 			{
@@ -240,7 +240,18 @@ value signature_metadata_args_map(signature s)
 				return NULL;
 			}
 
-			args_map_array = value_to_array(args_map[index]);
+			args_map_ptr = value_to_map(args_map[index]);
+
+			args_map_ptr[0] = value_create_array(NULL, 2);
+
+			if (args_map_ptr[0] == NULL)
+			{
+				value_type_destroy(args);
+
+				return NULL;
+			}
+
+			args_map_array = value_to_array(args_map_ptr[0]);
 
 			args_map_array[0] = value_create_string(node->name, strlen(node->name));
 
