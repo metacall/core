@@ -11,6 +11,8 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 
+#include <serial/serial.h>
+
 #include <log/log.h>
 
 #include <cstdlib>
@@ -97,6 +99,12 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 		log_policy_schedule_sync(),
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout)));
+
+	// Initialize serial
+	EXPECT_EQ((int) 0, (int) serial_initialize());
+
+	// Create serial
+	serial s = serial_create("rapid_json");
 
 	scope sp = scope_create("test");
 
@@ -251,13 +259,17 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 		{
 			size_t size = 0;
 
-			char * buffer = scope_dump(sp, &size);
+			value v = scope_metadata(sp);
 
-			EXPECT_NE((char *) buffer, (char *) NULL);
+			EXPECT_NE((value) NULL, (value) v);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Output scope buffer: [\n%s\n]", buffer);
+			char * str = serial_serialize(s, v, &size);
 
-			free(buffer);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Scope serialization info: %s", str);
+
+			free(str);
+
+			value_type_destroy(v);
 		}
 
 		type_destroy(char_type);
@@ -266,4 +278,10 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 		scope_destroy(sp);
 	}
+
+	// Clear serial
+	EXPECT_EQ((int) 0, (int) serial_clear(s));
+
+	// Destroy serial
+	serial_destroy();
 }

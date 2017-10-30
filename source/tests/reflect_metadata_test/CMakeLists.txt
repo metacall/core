@@ -138,4 +138,3 @@ test_environment_variables(${target}
 	""
 	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
 )
-

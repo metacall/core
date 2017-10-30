@@ -305,33 +305,36 @@ value value_from_ptr(value v, const void * ptr)
 
 void value_type_destroy(value v)
 {
-	type_id id = value_type_id(v);
-
-	if (type_id_array(id) == 0)
+	if (v != NULL)
 	{
-		size_t index, size = value_type_size(v) / sizeof(value);
+		type_id id = value_type_id(v);
 
-		value * v_array = value_to_array(v);
-
-		for (index = 0; index < size; ++index)
+		if (type_id_array(id) == 0)
 		{
-			value_type_destroy(v_array[index]);
+			size_t index, size = value_type_size(v) / sizeof(value);
+
+			value * v_array = value_to_array(v);
+
+			for (index = 0; index < size; ++index)
+			{
+				value_type_destroy(v_array[index]);
+			}
 		}
-	}
-	else if (type_id_map(id) == 0)
-	{
-		size_t index, size = value_type_size(v) / sizeof(value);
-
-		value * v_map = value_to_map(v);
-
-		for (index = 0; index < size; ++index)
+		else if (type_id_map(id) == 0)
 		{
-			value_type_destroy(v_map[index]);
-		}
-	}
+			size_t index, size = value_type_size(v) / sizeof(value);
 
-	if (type_id_invalid(id) != 0)
-	{
-		value_destroy(v);
+			value * v_map = value_to_map(v);
+
+			for (index = 0; index < size; ++index)
+			{
+				value_type_destroy(v_map[index]);
+			}
+		}
+
+		if (type_id_invalid(id) != 0)
+		{
+			value_destroy(v);
+		}
 	}
 }

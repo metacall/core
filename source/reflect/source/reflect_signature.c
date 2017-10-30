@@ -227,7 +227,7 @@ value signature_metadata_args_map(signature s)
 		{
 			signature_node node = signature_at(s, index);
 
-			const char * type_str = type_name(node->t);
+			const char * type_str = node->t != NULL ? type_name(node->t) : "";
 
 			value * args_map_array;
 

@@ -125,7 +125,7 @@ TEST_F(reflect_metadata_test, DefaultConstructor)
 
 		f = function_create("example", 3, example_impl, &function_example_singleton);
 
-		EXPECT_NE((function)f, (function)NULL);
+		EXPECT_NE((function) f, (function) NULL);
 
 		if (f != NULL)
 		{
@@ -167,7 +167,7 @@ TEST_F(reflect_metadata_test, DefaultConstructor)
 	}
 
 	// Clear serial
-	EXPECT_EQ((int)0, (int)serial_clear(s));
+	EXPECT_EQ((int) 0, (int) serial_clear(s));
 
 	// Destroy serial
 	serial_destroy();

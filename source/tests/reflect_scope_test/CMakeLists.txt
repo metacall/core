@@ -85,6 +85,8 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::serial
 
 )
 
@@ -129,4 +131,11 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
 )

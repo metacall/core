@@ -17,6 +17,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+struct scope_metadata_cb_iterator_type;
+
+typedef struct scope_metadata_cb_iterator_type * scope_metadata_cb_iterator;
+
 struct scope_type
 {
 	char * name;			/**< Scope name */
@@ -25,15 +29,13 @@ struct scope_type
 
 };
 
-struct scope_dump_cb_iterator_type
+struct scope_metadata_cb_iterator_type
 {
-	char * buffer;
-	size_t size;
+	size_t iterator;
+	value * values;
 };
 
-static int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
-
-static int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int scope_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
 static int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
@@ -153,98 +155,37 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	return 1;
 }
 
-int scope_print_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int scope_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && val != NULL && args == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Key (%s) -> Value (%p)", (char *)key, val);
+	scope_metadata_cb_iterator metadata_iterator = (scope_metadata_cb_iterator)args;
 
-		return 0;
+	/* TODO: Support to other scope objects (e.g: class) */
+	(void)map;
+	(void)key;
+
+	metadata_iterator->values[metadata_iterator->iterator] = function_metadata((function)val);
+
+	if (metadata_iterator->values[metadata_iterator->iterator] != NULL)
+	{
+		++metadata_iterator->iterator;
 	}
 
-	return 1;
+	return 0;
 }
 
-int scope_dump_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+value scope_metadata(scope sp)
 {
-	/*
-	if (map != NULL && key != NULL && val != NULL && args != NULL)
-	{
-		struct scope_dump_cb_iterator_type * iterator = args;
+	struct scope_metadata_cb_iterator_type metadata_iterator;
 
-		*//* TODO: Support for other scope objects (e.g: class) *//*
+	value v = value_create_array(NULL, scope_size(sp));
 
-		size_t func_buffer_size = 0;
+	metadata_iterator.iterator = 0;
 
-		char * func_buffer = function_dump((function)val, &func_buffer_size);
+	metadata_iterator.values = value_to_array(v);
 
-		if (func_buffer == NULL)
-		{
-			return 0;
-		}
+	hash_map_iterate(sp->map, &scope_metadata_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
 
-		if (iterator->buffer == NULL && iterator->size == 0)
-		{
-			iterator->buffer = malloc(func_buffer_size * sizeof(char));
-
-			if (iterator->buffer == NULL)
-			{
-				free(func_buffer);
-
-				return 1;
-			}
-		}
-		else
-		{
-			char * buffer = realloc(iterator->buffer, (iterator->size + func_buffer_size) * sizeof(char));
-
-			if (buffer != NULL)
-			{
-				iterator->buffer = buffer;
-			}
-			else
-			{
-				free(iterator->buffer);
-				free(func_buffer);
-
-				iterator->buffer = NULL;
-				iterator->size = 0;
-
-				return 1;
-			}
-		}
-
-		memcpy(&iterator->buffer[iterator->size], func_buffer, func_buffer_size);
-
-		iterator->size += func_buffer_size;
-
-		iterator->buffer[iterator->size - 1] = '\n';
-
-		return 0;
-	}*/
-
-	return 1;
-}
-
-char * scope_dump(scope sp, size_t * size)
-{
-	struct scope_dump_cb_iterator_type scope_dump_cb_iterator;
-
-	scope_dump_cb_iterator.buffer = NULL;
-	scope_dump_cb_iterator.size = 0;
-
-	hash_map_iterate(sp->map, &scope_dump_cb_iterate, &scope_dump_cb_iterator);
-
-	if (scope_dump_cb_iterator.buffer == NULL)
-	{
-		return NULL;
-	}
-
-	scope_dump_cb_iterator.buffer[scope_dump_cb_iterator.size - 1] = '\0';
-
-	*size = scope_dump_cb_iterator.size;
-
-	return scope_dump_cb_iterator.buffer;
+	return v;
 }
 
 scope_object scope_get(scope sp, const char * key)
@@ -413,7 +354,7 @@ int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val,
 
 void scope_destroy(scope sp)
 {
-	if (sp)
+	if (sp != NULL)
 	{
 		hash_map_iterate(sp->map, &scope_destroy_cb_iterate, NULL);
 
