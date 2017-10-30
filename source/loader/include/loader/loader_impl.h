@@ -52,9 +52,11 @@ LOADER_API const char * loader_impl_handle_id(void * handle);
 
 LOADER_API int loader_impl_clear(void * handle);
 
+LOADER_API value loader_impl_metadata(loader_impl impl);
+
 LOADER_API void loader_impl_destroy(loader_impl impl);
 
-loader_impl loader_impl_create_proxy();
+LOADER_API loader_impl loader_impl_create_proxy();
 
 #ifdef __cplusplus
 }

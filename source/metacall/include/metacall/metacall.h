@@ -276,7 +276,7 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[])
 *    Size in bytes of return buffer
 *
 *  @return
-*    Static string containing introspection information
+*    String containing introspection information (must be freed)
 */
 METACALL_API char * metacall_inspect(size_t * size);
 

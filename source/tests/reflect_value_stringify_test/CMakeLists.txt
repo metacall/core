@@ -82,9 +82,13 @@ target_link_libraries(${target}
 
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
+	${META_PROJECT_NAME}::environment
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::reflect
+	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::serial
 )
 
 #

@@ -429,5 +429,5 @@ void metacall_value_stringify(void * v, char * dest, size_t size, size_t * lengt
 
 void metacall_value_destroy(void * v)
 {
-	value_destroy(v);
+	value_type_destroy(v);
 }

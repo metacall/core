@@ -33,19 +33,15 @@
 
 struct loader_handle_impl_type;
 
+struct loader_impl_metadata_cb_iterator_type;
+
 /* -- Type Definitions -- */
 
 typedef struct loader_handle_impl_type * loader_handle_impl;
 
-/* -- Member Data -- */
+typedef struct loader_impl_metadata_cb_iterator_type * loader_impl_metadata_cb_iterator;
 
-struct loader_handle_impl_type
-{
-	loader_impl impl;
-	loader_naming_name name;
-	loader_handle module;
-	context ctx;
-};
+/* -- Member Data -- */
 
 struct loader_impl_type
 {
@@ -56,6 +52,20 @@ struct loader_impl_type
 	loader_impl_data data;
 	context ctx;
 	hash_map type_info_map;
+};
+
+struct loader_handle_impl_type
+{
+	loader_impl impl;
+	loader_naming_name name;
+	loader_handle module;
+	context ctx;
+};
+
+struct loader_impl_metadata_cb_iterator_type
+{
+	size_t iterator;
+	value * values;
 };
 
 /* -- Private Methods -- */
@@ -71,6 +81,16 @@ static int loader_impl_create_singleton(loader_impl impl, const char * path, loa
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name);
 
 static int loader_impl_function_hook_call(context ctx, const char func_name[]);
+
+static value loader_impl_metadata_handle_name(loader_handle_impl handle_impl);
+
+static value loader_impl_metadata_handle_context(loader_handle_impl handle_impl);
+
+static value loader_impl_metadata_handle(loader_handle_impl handle_impl);
+
+static int loader_impl_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
+static value loader_impl_metadata_name(loader_impl impl);
 
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 
@@ -719,6 +739,142 @@ int loader_impl_clear(void * handle)
 	}
 
 	return 1;
+}
+
+value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)
+{
+	static const char name[] = "name";
+
+	value * v_ptr, v = value_create_array(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_ptr = value_to_array(v);
+
+	v_ptr[0] = value_create_string(name, sizeof(name) - 1);
+
+	if (v_ptr[0] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	v_ptr[1] = value_create_string(handle_impl->name, strlen(handle_impl->name));
+
+	if (v_ptr[1] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	return v;
+}
+
+value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
+{
+	static const char name[] = "handles";
+
+	value * v_ptr, v = value_create_array(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_ptr = value_to_array(v);
+
+	v_ptr[0] = value_create_string(name, sizeof(name) - 1);
+
+	if (v_ptr[0] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	v_ptr[1] = scope_metadata(context_scope(handle_impl->ctx));
+
+	if (v_ptr[1] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	return v;
+}
+
+value loader_impl_metadata_handle(loader_handle_impl handle_impl)
+{
+	value * v_ptr, v = value_create_map(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_ptr = value_to_map(v);
+
+	v_ptr[0] = loader_impl_metadata_handle_name(handle_impl);
+
+	if (v_ptr[0] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	v_ptr[1] = loader_impl_metadata_handle_context(handle_impl);
+
+	if (v_ptr[1] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	return v;
+}
+
+int loader_impl_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+{
+	loader_impl_metadata_cb_iterator metadata_iterator = (loader_impl_metadata_cb_iterator)args;
+
+	(void)map;
+	(void)key;
+
+	metadata_iterator->values[metadata_iterator->iterator] = loader_impl_metadata_handle((loader_handle_impl)val);
+
+	if (metadata_iterator->values[metadata_iterator->iterator] != NULL)
+	{
+		++metadata_iterator->iterator;
+	}
+
+	return 0;
+}
+
+value loader_impl_metadata(loader_impl impl)
+{
+	struct loader_impl_metadata_cb_iterator_type metadata_iterator;
+
+	value v = value_create_array(NULL, hash_map_size(impl->handle_impl_map));
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	metadata_iterator.iterator = 0;
+	metadata_iterator.values = value_to_array(v);
+
+	hash_map_iterate(impl->handle_impl_map, &loader_impl_metadata_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
+
+	return v;
 }
 
 int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)

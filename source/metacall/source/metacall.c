@@ -24,11 +24,14 @@
 
 #include <log/log.h>
 
+#include <serial/serial.h>
+
 #include <string.h>
 
 /* -- Definitions -- */
 
-#define METACALL_ARGS_SIZE 0x10
+#define METACALL_ARGS_SIZE	0x10
+#define METACALL_SERIAL		"rapid_json"
 
 /* -- Global Variables -- */
 
@@ -38,7 +41,18 @@ void * metacall_null_args[1];
 
 static int metacall_initialize_flag = 1;
 
+/* Private Methods */
+
+static const char * metacall_serial(void);
+
 /* -- Methods -- */
+
+const char * metacall_serial()
+{
+	static const char metacall_serial_str[] = METACALL_SERIAL;
+
+	return metacall_serial_str;
+}
 
 int metacall_initialize()
 {
@@ -69,7 +83,7 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
-	if (configuration_initialize("rapid_json", NULL) != 0)
+	if (configuration_initialize(metacall_serial(), NULL) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall configuration initialization");
 
@@ -486,7 +500,35 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 
 char * metacall_inspect(size_t * size)
 {
-	return loader_inspect(size);
+	serial s;
+
+	value v = loader_metadata();
+
+	char * str;
+
+	if (v == NULL)
+	{
+		v = value_create_map(NULL, 0);
+
+		if (v == NULL)
+		{
+			static const char invalid_inspect_str[] = "(null)";
+
+			str = malloc(sizeof(invalid_inspect_str));
+
+			memcpy(str, invalid_inspect_str, sizeof(invalid_inspect_str));
+
+			return str;
+		}
+	}
+
+	s = serial_create(metacall_serial());
+
+	str = serial_serialize(s, v, size);
+
+	value_type_destroy(v);
+
+	return str;
 }
 
 int metacall_clear(void * handle)

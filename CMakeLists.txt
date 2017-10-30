@@ -173,6 +173,7 @@ set(MODULE_NAMES
 	adt
 	reflect
 	dynlink
+	serial
 	configuration
 	loader
 	metacall

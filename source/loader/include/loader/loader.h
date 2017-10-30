@@ -14,7 +14,6 @@
 #include <loader/loader_api.h>
 
 #include <loader/loader_naming.h>
-
 #include <loader/loader_impl_interface.h>
 
 #ifdef __cplusplus
@@ -67,7 +66,7 @@ LOADER_API void * loader_get_handle(const loader_naming_tag tag, const char * na
 
 LOADER_API const char * loader_handle_id(void * handle);
 
-LOADER_API char * loader_inspect(size_t * size);
+LOADER_API value loader_metadata(void);
 
 LOADER_API int loader_clear(void * handle);
 

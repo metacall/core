@@ -300,5 +300,18 @@ TEST_F(metacall_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_PLUGINS_C */
 
+	/* Print inspect information */
+	{
+		size_t size = 0;
+
+		char * inspect_str = metacall_inspect(&size);
+
+		EXPECT_NE((char *) NULL, (char *) inspect_str);
+
+		EXPECT_GT((size_t)size, (size_t) 0);
+
+		free(inspect_str);
+	}
+
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }
