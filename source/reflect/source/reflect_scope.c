@@ -17,9 +17,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct scope_metadata_cb_iterator_type;
+struct scope_metadata_array_cb_iterator_type;
 
-typedef struct scope_metadata_cb_iterator_type * scope_metadata_cb_iterator;
+typedef struct scope_metadata_array_cb_iterator_type * scope_metadata_array_cb_iterator;
 
 struct scope_type
 {
@@ -29,13 +29,19 @@ struct scope_type
 
 };
 
-struct scope_metadata_cb_iterator_type
+struct scope_metadata_array_cb_iterator_type
 {
 	size_t iterator;
 	value * values;
 };
 
-static int scope_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int scope_metadata_array_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+
+static value scope_metadata_array(scope sp);
+
+static value scope_metadata_map(scope sp);
+
+static value scope_metadata_name(scope sp);
 
 static int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
@@ -148,16 +154,15 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	if (sp != NULL && key != NULL && obj != NULL)
 	{
 		/* TODO: Support for other scope objects (e.g: class) */
-
 		return hash_map_insert(sp->map, (hash_map_key)key, (hash_map_value)obj);
 	}
 
 	return 1;
 }
 
-int scope_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int scope_metadata_array_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
 {
-	scope_metadata_cb_iterator metadata_iterator = (scope_metadata_cb_iterator)args;
+	scope_metadata_array_cb_iterator metadata_iterator = (scope_metadata_array_cb_iterator)args;
 
 	/* TODO: Support to other scope objects (e.g: class) */
 	(void)map;
@@ -173,17 +178,111 @@ int scope_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val
 	return 0;
 }
 
-value scope_metadata(scope sp)
+value scope_metadata_array(scope sp)
 {
-	struct scope_metadata_cb_iterator_type metadata_iterator;
+	struct scope_metadata_array_cb_iterator_type metadata_iterator;
 
 	value v = value_create_array(NULL, scope_size(sp));
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
 
 	metadata_iterator.iterator = 0;
 
 	metadata_iterator.values = value_to_array(v);
 
-	hash_map_iterate(sp->map, &scope_metadata_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
+	hash_map_iterate(sp->map, &scope_metadata_array_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
+
+	return v;
+}
+
+value scope_metadata_map(scope sp)
+{
+	static const char funcs[] = "funcs";
+
+	value * v_ptr, v = value_create_array(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_ptr = value_to_array(v);
+
+	/* TODO: Support to other scope objects (e.g: class) */
+	v_ptr[0] = value_create_string(funcs, sizeof(funcs) - 1);
+
+	if (v_ptr[0] == NULL)
+	{
+		value_type_destroy(v);
+	}
+
+	v_ptr[1] = scope_metadata_array(sp);
+
+	if (v_ptr[1] == NULL)
+	{
+		value_type_destroy(v);
+	}
+
+	return v;
+}
+
+value scope_metadata_name(scope sp)
+{
+	static const char name[] = "name";
+
+	value * v_ptr, v = value_create_array(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_ptr = value_to_array(v);
+
+	v_ptr[0] = value_create_string(name, sizeof(name) - 1);
+
+	if (v_ptr[0] == NULL)
+	{
+		value_type_destroy(v);
+	}
+
+	v_ptr[1] = value_create_string(sp->name, strlen(sp->name));
+
+	if (v_ptr[1] == NULL)
+	{
+		value_type_destroy(v);
+	}
+
+	return v;
+}
+
+value scope_metadata(scope sp)
+{
+	value * v_map, v = value_create_map(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_map = value_to_map(v);
+
+	v_map[0] = scope_metadata_name(sp);
+
+	if (v_map[0] == NULL)
+	{
+		value_type_destroy(v);
+	}
+
+	v_map[1] = scope_metadata_map(sp);
+
+	if (v_map[1] == NULL)
+	{
+		value_type_destroy(v);
+	}
 
 	return v;
 }
