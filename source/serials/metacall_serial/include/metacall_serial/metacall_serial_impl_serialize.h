@@ -39,13 +39,13 @@ METACALL_SERIAL_API const char * metacall_serial_impl_serialize_format(type_id i
 
 /**
 *  @brief
-*    Provides pointer to function for printing depending on type id @id
+*    Provides pointer to function for serialize depending on type id @id
 *
 *  @param[in] id
-*    Type of wanted stringify function pointer
+*    Type of wanted serialize function pointer
 *
 *  @return
-*    Stringify function pointer assigned to type id @id
+*    Serialize function pointer assigned to type id @id
 */
 METACALL_SERIAL_API metacall_serialize_impl_ptr metacall_serial_impl_serialize_func(type_id id);
 

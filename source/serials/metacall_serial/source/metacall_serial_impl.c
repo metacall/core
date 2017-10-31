@@ -10,12 +10,15 @@
 
 #include <metacall_serial/metacall_serial_impl.h>
 #include <metacall_serial/metacall_serial_impl_serialize.h>
+#include <metacall_serial/metacall_serial_impl_deserialize.h>
 
 #include <log/log.h>
 
 /* -- Private Methods -- */
 
 static void metacall_serial_impl_serialize_value(value v, char * dest, size_t size, size_t * length);
+
+static value metacall_serial_impl_deserialize_value(const char * buffer, size_t size);
 
 /* -- Methods -- */
 
@@ -98,16 +101,26 @@ char * metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t
 	return buffer;
 }
 
-/*
-value metacall_serial_impl_deserialize_value(const rapidjson::Value * v)
+value metacall_serial_impl_deserialize_value(const char * buffer, size_t size)
 {
+	value v = NULL;
 
+	type_id id;
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported value type in MetaCall Native Format implementation");
+	for (id = 0; id < TYPE_SIZE; ++id)
+	{
+		metacall_deserialize_impl_ptr deserialize_ptr = metacall_serial_impl_deserialize_func(id);
+
+		if (deserialize_ptr(&v, buffer, size) == 0)
+		{
+			return v;
+		}
+	}
+
+	log_write("metacall", LOG_LEVEL_ERROR, "Deserialization unsuported value type in MetaCall Native Format implementation");
 
 	return NULL;
 }
-*/
 
 value metacall_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size)
 {
@@ -118,11 +131,7 @@ value metacall_serial_impl_deserialize(serial_impl_handle handle, const char * b
 		return NULL;
 	}
 
-	/*
-	return metacall_serial_impl_deserialize_value(document);
-	*/
-	
-	return NULL;
+	return metacall_serial_impl_deserialize_value(buffer, size);
 }
 
 int metacall_serial_impl_destroy(serial_impl_handle handle)

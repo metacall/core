@@ -19,24 +19,23 @@
 extern "C" {
 #endif
 
+/* -- Type Definitions -- */
+
+typedef int (*metacall_deserialize_impl_ptr)(value *, const char *, size_t);
+
 /* -- Methods -- */
 
 /**
 *  @brief
-*    Convert to string value @v to a parsed value
-*
-*  @param[in] v
-*    Reference to the value to be parsed
+*    Provides pointer to function for deserialize depending on type id @id
 *
 *  @param[in] id
-*    Result type will have the returned value when parsed
+*    Type of wanted deserialize function pointer
 *
 *  @return
-*    Reference to the new parsed value (and destroy
-*    old string value @v from memory) if success, null (and
-*    destroy is not performed) otherwise
+*    Deserialize function pointer assigned to type id @id
 */
-//METACALL_SERIAL_API value value_type_parse(value v, type_id id);
+METACALL_SERIAL_API metacall_deserialize_impl_ptr metacall_serial_impl_deserialize_func(type_id id);
 
 #ifdef __cplusplus
 }
