@@ -42,6 +42,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/format.h
 	${include_path}/format_specifier.h
+	${include_path}/format_print.h
 )
 
 set(sources

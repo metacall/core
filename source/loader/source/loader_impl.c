@@ -17,6 +17,8 @@
 
 #include <dynlink/dynlink.h>
 
+#include <format/format_print.h>
+
 #include <log/log.h>
 
 #include <configuration/configuration.h>
@@ -534,39 +536,11 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 	/* TODO: Improve name with time */
 	static const char format[] = "%p-%p-%" PRIuS;
 
-	#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
+	size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
 
-		size_t length = _snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
-
-	#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
-			defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
-			defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-
-		size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
-
-	#else
-
-		size_t length = sprintf(NULL, format, (const void *)impl, (const void *)buffer, size);
-
-	#endif
-
-	if (length < LOADER_NAMING_NAME_SIZE)
+	if (length > 0 && length < LOADER_NAMING_NAME_SIZE)
 	{
-		#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
-
-			size_t written = _snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
-
-		#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
-					defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
-					defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
-
-			size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
-
-		#else
-
-			size_t written = sprintf(name, format, (const void *)impl, (const void *)buffer, size);
-
-		#endif
+		size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
 
 		if (written == length)
 		{
