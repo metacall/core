@@ -41,11 +41,15 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/metacall_serial.h
 	${include_path}/metacall_serial_impl.h
+	${include_path}/metacall_serial_impl_serialize.h
+	${include_path}/metacall_serial_impl_deserialize.h
 )
 
 set(sources
 	${source_path}/metacall_serial.c
 	${source_path}/metacall_serial_impl.c
+	${source_path}/metacall_serial_impl_serialize.c
+	${source_path}/metacall_serial_impl_deserialize.c
 )
 
 # Group source files
