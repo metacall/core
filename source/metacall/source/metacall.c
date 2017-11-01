@@ -369,9 +369,12 @@ void * metacallfv(void * func, void * args[])
 
 				if (id != value_type_id((value)args[iterator]))
 				{
-					value cast_ret = value_type_cast((value)args[iterator], id);
+					value cast_arg = value_type_cast((value)args[iterator], id);
 
-					args[iterator] = (cast_ret == NULL) ? ret : cast_ret;
+					if (cast_arg != NULL)
+					{
+						args[iterator] = cast_arg;
+					}
 				}
 			}
 		}
@@ -535,6 +538,21 @@ char * metacall_inspect(size_t * size)
 	value_type_destroy(v);
 
 	return str;
+}
+
+
+char * metacall_serialize(void * v, size_t * size)
+{
+	serial s = serial_create(metacall_serial());
+
+	return serial_serialize(s, (value)v, size);
+}
+
+void * metacall_deserialize(const char * buffer, size_t size)
+{
+	serial s = serial_create(metacall_serial());
+
+	return (void *)serial_deserialize(s, buffer, size);
 }
 
 int metacall_clear(void * handle)

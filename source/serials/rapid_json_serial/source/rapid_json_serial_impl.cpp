@@ -16,6 +16,8 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <sstream>
+
 /* -- Private Methods -- */
 
 static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, rapidjson::Document::AllocatorType & allocator);
@@ -157,21 +159,13 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 	else if (id == TYPE_PTR)
 	{
-		/*
-		const size_t PTR_STR_MAX_SIZE = 19; // 16 (64-bit pointer to string) + 2 (0x prefix) + '\0'
+		std::ostringstream ostream;
 
-		char ptr_str[PTR_STR_MAX_SIZE] = { 0 };
+		ostream << value_to_ptr(v);
 
-		size_t length = 0;
+		std::string s = ostream.str();
 
-		//value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
-
-		json_v->SetString(ptr_str, length);
-		*/
-
-		static const char not_implemented[] = "(not implemented)";
-
-		json_v->SetString(not_implemented, sizeof(not_implemented) - 1);
+		json_v->SetString(s.c_str(), s.length());
 	}
 }
 

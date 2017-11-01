@@ -712,24 +712,6 @@ METACALL_API void * metacall_value_cast_ptr(void ** v);
 
 /**
 *  @brief
-*    Convert to string the value @v
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[out] dest
-*    Destination address where string will be stored
-*
-*  @param[in] size
-*    Size of buffer @dest in bytes
-*
-*  @param[out] length
-*    Length of string stored in @dest
-*/
-METACALL_API void metacall_value_stringify(void * v, char * dest, size_t size, size_t * length);
-
-/**
-*  @brief
 *    Destroy a value from scope stack
 *
 *  @param[in] v

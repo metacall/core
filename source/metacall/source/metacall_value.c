@@ -481,11 +481,6 @@ void * metacall_value_cast_ptr(void ** v)
 	return value_to_ptr(*v);
 }
 
-void metacall_value_stringify(void * v, char * dest, size_t size, size_t * length)
-{
-	value_stringify(v, dest, size, length);
-}
-
 void metacall_value_destroy(void * v)
 {
 	value_type_destroy(v);

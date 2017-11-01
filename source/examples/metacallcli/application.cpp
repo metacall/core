@@ -12,8 +12,6 @@
 #include "tokenizer.hpp"
 #include "parser.hpp"
 
-#include <metacall/metacall.h>
-
 #include <algorithm>
 #include <iostream>
 
@@ -78,7 +76,7 @@ bool command_cb_call(application & app, tokenizer & t)
 
 	parser_parameter p(it);
 
-	std::vector<value> args;
+	std::vector<void *> args;
 
 	/* Set custom function delimiters */
 	t.delimit(func_delimiters);
@@ -101,7 +99,7 @@ bool command_cb_call(application & app, tokenizer & t)
 		{
 			const std::string param_escape(" \n\t\r\v\f");
 
-			value v = NULL;
+			void * v = NULL;
 
 			do
 			{
@@ -123,23 +121,21 @@ bool command_cb_call(application & app, tokenizer & t)
 			} while (it != t.end());
 		}
 
-		value result = app.metacallv_adaptor(func_name, args);
+		void * result = app.metacallv_adaptor(func_name, args);
 
-		const size_t value_str_size = 0xFF;
+		size_t size = 0;
 
-		size_t length = 0;
-
-		char value_str[value_str_size];
-
-		value_stringify(result, value_str, value_str_size, &length);
+		char * value_str = metacall_serialize(result, &size);
 
 		std::cout << "result : " << value_str << std::endl;
 
-		value_destroy(result);
+		free(value_str);
 
-		std::for_each(args.begin(), args.end(), [](value v)
+		metacall_value_destroy(result);
+
+		std::for_each(args.begin(), args.end(), [](void * v)
 		{
-			value_destroy(v);
+			metacall_value_destroy(v);
 		});
 
 		return true;
@@ -348,7 +344,7 @@ void application::define(const char * key, application::command_callback command
 	commands[cmd] = command_cb;
 }
 
-value application::argument_parse(parser_parameter & p)
+void * application::argument_parse(parser_parameter & p)
 {
 	if (p.is<bool>())
 	{
@@ -356,65 +352,65 @@ value application::argument_parse(parser_parameter & p)
 
 		boolean bo = static_cast<boolean>(b);
 
-		return value_create_bool(bo);
+		return metacall_value_create_bool(bo);
 	}
 	else if (p.is<char>())
 	{
 		char c = p.to<char>();
 
-		return value_create_char(c);
+		return metacall_value_create_char(c);
 	}
 	else if (p.is<int>())
 	{
 		int i = p.to<int>();
 
-		return value_create_int(i);
+		return metacall_value_create_int(i);
 	}
 	else if (p.is<long>())
 	{
 		long l = p.to<long>();
 
-		return value_create_long(l);
+		return metacall_value_create_long(l);
 	}
 	else if (p.is<float>())
 	{
 		float f = p.to<float>();
 
-		return value_create_float(f);
+		return metacall_value_create_float(f);
 	}
 	else if (p.is<double>())
 	{
 		double d = p.to<double>();
 
-		return value_create_double(d);
+		return metacall_value_create_double(d);
 	}
 	else if (p.is<void *>())
 	{
 		void * ptr = p.to<void *>();
 
-		return value_create_ptr(ptr);
+		return metacall_value_create_ptr(ptr);
 	}
 	else if (p.is<std::string>())
 	{
 		std::string str = p.to<std::string>();
 
-		return value_create_string(str.c_str(), str.length());
+		return metacall_value_create_string(str.c_str(), str.length());
 	}
 
 	return NULL;
 }
 
-value application::metacallv_adaptor(const std::string & name, const std::vector<value> & args)
+void * application::metacallv_adaptor(const std::string & name, const std::vector<void *> & args)
 {
 	void ** args_ptr = new void * [args.size()];
 
-	value result = NULL;
+	void * result = NULL;
 
 	if (args_ptr != nullptr)
 	{
 		size_t iterator = 0;
 
-		std::for_each(args.begin(), args.end(), [&iterator, args_ptr](value v)
+		std::for_each(args.begin(), args.end(), [&iterator, args_ptr](void * v)
 		{
 			args_ptr[iterator] = v;
 

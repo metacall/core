@@ -11,9 +11,7 @@
 
 /* -- Headers -- */
 
-#include <metacall/metacall_api.h>
-
-#include <reflect/reflect_value_type.h>
+#include <metacall/metacall.h>
 
 #include <string>
 #include <vector>
@@ -121,7 +119,7 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct
 	*/
-	value argument_parse(parser_parameter & p);
+	void * argument_parse(parser_parameter & p);
 
 	/**
 	*  @brief
@@ -136,7 +134,7 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct with the result of the call
 	*/
-	value metacallv_adaptor(const std::string & name, const std::vector<value> & args);
+	void * metacallv_adaptor(const std::string & name, const std::vector<void *> & args);
 
   protected:
 

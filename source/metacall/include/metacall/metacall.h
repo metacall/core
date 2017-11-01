@@ -282,6 +282,36 @@ METACALL_API char * metacall_inspect(size_t * size);
 
 /**
 *  @brief
+*    Convert the value @v to serialized string
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[out] size
+*    Size of new allocated string
+*
+*  @return
+*    New allocated string containing stringified value (must be freed)
+*/
+METACALL_API char * metacall_serialize(void * v, size_t * size);
+
+/**
+*  @brief
+*    Convert the string @buffer to value
+*
+*  @param[in] buffer
+*    String to be deserialized
+*
+*  @param[in] size
+*    Size of string @buffer
+*
+*  @return
+*    New allocated value representing the string (must be freed)
+*/
+METACALL_API void * metacall_deserialize(const char * buffer, size_t size);
+
+/**
+*  @brief
 *    Clear handle from memory and unload related resources
 *
 *  @param[in] handle
