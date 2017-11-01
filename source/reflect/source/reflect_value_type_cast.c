@@ -13,8 +13,6 @@
 #include <reflect/reflect_value_type_id_size.h>
 #include <reflect/reflect_value_type_promotion.h>
 #include <reflect/reflect_value_type_demotion.h>
-#include <reflect/reflect_value_type_stringify.h>
-#include <reflect/reflect_value_type_parse.h>
 
 #include <stdint.h>
 
@@ -24,11 +22,9 @@ value value_type_cast(value v, type_id id)
 {
 	type_id src_id = value_type_id(v);
 
-	size_t src_size = value_type_id_size(src_id);
+	size_t src_size, dest_size;
 
-	size_t dest_size = value_type_id_size(id);
-
-	/* Invalid value type */
+	/* Invalid source value type */
 	if (type_id_invalid(src_id) == 0 || type_id_invalid(id) == 0)
 	{
 		return NULL;
@@ -43,13 +39,17 @@ value value_type_cast(value v, type_id id)
 	/* Cast from string to any type */
 	if (type_id_string(src_id) == 0)
 	{
-		return value_type_parse(v, id);
+		/*return value_type_parse(v, id);*/
+
+		return NULL;
 	}
 
 	/* Cast from any type to string */
 	if (type_id_string(id) == 0)
 	{
-		return value_type_stringify(v);
+		/*return value_type_stringify(v);*/
+
+		return NULL;
 	}
 
 	/* Convert single value to buffer */
@@ -118,6 +118,10 @@ value value_type_cast(value v, type_id id)
 	}
 
 	/* TODO: Map */
+
+	src_size = value_type_id_size(src_id);
+
+	dest_size = value_type_id_size(id);
 
 	/* Promote value type */
 	if (src_id < id)

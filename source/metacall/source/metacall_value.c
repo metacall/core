@@ -12,7 +12,6 @@
 
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type.h>
-#include <reflect/reflect_value_type_stringify.h>
 
 #include <preprocessor/preprocessor_concatenation.h>
 
@@ -306,7 +305,12 @@ boolean metacall_value_cast_bool(void ** v)
 {
 	if (value_type_id(*v) != TYPE_BOOL)
 	{
-		*v = value_type_cast(*v, TYPE_BOOL);
+		value v_cast = value_type_cast(*v, TYPE_BOOL);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_bool(*v);
@@ -316,7 +320,12 @@ char metacall_value_cast_char(void ** v)
 {
 	if (value_type_id(*v) != TYPE_CHAR)
 	{
-		*v = value_type_cast(*v, TYPE_CHAR);
+		value v_cast = value_type_cast(*v, TYPE_CHAR);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_char(*v);
@@ -326,7 +335,12 @@ short metacall_value_cast_short(void ** v)
 {
 	if (value_type_id(*v) != TYPE_SHORT)
 	{
-		*v = value_type_cast(*v, TYPE_SHORT);
+		value v_cast = value_type_cast(*v, TYPE_SHORT);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_short(*v);
@@ -336,7 +350,12 @@ int metacall_value_cast_int(void ** v)
 {
 	if (value_type_id(*v) != TYPE_INT)
 	{
-		*v = value_type_cast(*v, TYPE_INT);
+		value v_cast = value_type_cast(*v, TYPE_INT);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_int(*v);
@@ -346,7 +365,12 @@ long metacall_value_cast_long(void ** v)
 {
 	if (value_type_id(*v) != TYPE_LONG)
 	{
-		*v = value_type_cast(*v, TYPE_LONG);
+		value v_cast = value_type_cast(*v, TYPE_LONG);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_long(*v);
@@ -356,7 +380,12 @@ float metacall_value_cast_float(void ** v)
 {
 	if (value_type_id(*v) != TYPE_FLOAT)
 	{
-		*v = value_type_cast(*v, TYPE_FLOAT);
+		value v_cast = value_type_cast(*v, TYPE_FLOAT);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_float(*v);
@@ -366,7 +395,12 @@ double metacall_value_cast_double(void ** v)
 {
 	if (value_type_id(*v) != TYPE_DOUBLE)
 	{
-		*v = value_type_cast(*v, TYPE_DOUBLE);
+		value v_cast = value_type_cast(*v, TYPE_DOUBLE);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_double(*v);
@@ -376,7 +410,12 @@ char * metacall_value_cast_string(void ** v)
 {
 	if (value_type_id(*v) != TYPE_STRING)
 	{
-		*v = value_type_cast(*v, TYPE_STRING);
+		value v_cast = value_type_cast(*v, TYPE_STRING);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_string(*v);
@@ -386,7 +425,12 @@ void * metacall_value_cast_buffer(void ** v)
 {
 	if (value_type_id(*v) != TYPE_BUFFER)
 	{
-		*v = value_type_cast(*v, TYPE_BUFFER);
+		value v_cast = value_type_cast(*v, TYPE_BUFFER);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_buffer(*v);
@@ -396,7 +440,12 @@ void ** metacall_value_cast_array(void ** v)
 {
 	if (value_type_id(*v) != TYPE_ARRAY)
 	{
-		*v = value_type_cast(*v, TYPE_ARRAY);
+		value v_cast = value_type_cast(*v, TYPE_ARRAY);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_array(*v);
@@ -406,7 +455,12 @@ void * metacall_value_cast_map(void ** v)
 {
 	if (value_type_id(*v) != TYPE_MAP)
 	{
-		*v = value_type_cast(*v, TYPE_MAP);
+		value v_cast = value_type_cast(*v, TYPE_MAP);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_map(*v);
@@ -416,7 +470,12 @@ void * metacall_value_cast_ptr(void ** v)
 {
 	if (value_type_id(*v) != TYPE_PTR)
 	{
-		*v = value_type_cast(*v, TYPE_PTR);
+		value v_cast = value_type_cast(*v, TYPE_PTR);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
 	}
 
 	return value_to_ptr(*v);

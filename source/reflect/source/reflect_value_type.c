@@ -39,13 +39,16 @@ size_t value_type_size(value v)
 
 type_id value_type_id(value v)
 {
-	size_t size = value_size(v);
-
-	size_t offset = size - sizeof(type_id);
-
 	type_id id = TYPE_INVALID;
 
-	value_to((value)(((uintptr_t)v) + offset), &id, sizeof(type_id));
+	if (v != NULL)
+	{
+		size_t size = value_size(v);
+
+		size_t offset = size - sizeof(type_id);
+
+		value_to((value)(((uintptr_t)v) + offset), &id, sizeof(type_id));
+	}
 
 	return id;
 }

@@ -91,6 +91,8 @@ int metacall_serial_impl_deserialize_char(value * v, const char * src, size_t le
 {
 	long l = 0;
 
+	(void)length;
+
 	if (src[0] != '0' || src[1] != 'x')
 	{
 		return 1;
@@ -111,6 +113,9 @@ int metacall_serial_impl_deserialize_char(value * v, const char * src, size_t le
 int metacall_serial_impl_deserialize_short(value * v, const char * src, size_t length)
 {
 	/* TODO */
+	(void)v;
+	(void)src;
+	(void)length;
 
 	return 1;
 }
@@ -260,6 +265,9 @@ int metacall_serial_impl_deserialize_string(value * v, const char * src, size_t 
 int metacall_serial_impl_deserialize_buffer(value * v, const char * src, size_t length)
 {
 	/* TODO */
+	(void)v;
+	(void)src;
+	(void)length;
 
 	return 1;
 }
@@ -267,6 +275,9 @@ int metacall_serial_impl_deserialize_buffer(value * v, const char * src, size_t 
 int metacall_serial_impl_deserialize_array(value * v, const char * src, size_t length)
 {
 	/* TODO */
+	(void)v;
+	(void)src;
+	(void)length;
 
 	return 1;
 }
@@ -274,6 +285,9 @@ int metacall_serial_impl_deserialize_array(value * v, const char * src, size_t l
 int metacall_serial_impl_deserialize_map(value * v, const char * src, size_t length)
 {
 	/* TODO */
+	(void)v;
+	(void)src;
+	(void)length;
 
 	return 1;
 }
@@ -281,6 +295,9 @@ int metacall_serial_impl_deserialize_map(value * v, const char * src, size_t len
 int metacall_serial_impl_deserialize_ptr(value * v, const char * src, size_t length)
 {
 	/* TODO */
+	(void)v;
+	(void)src;
+	(void)length;
 
 	return 1;
 }

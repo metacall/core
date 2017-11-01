@@ -227,7 +227,9 @@ void * metacall(const char * name, ...)
 
 				if (id != value_type_id(ret))
 				{
-					return value_type_cast(ret, id);
+					value cast_ret = value_type_cast(ret, id);
+
+					return (cast_ret == NULL) ? ret : cast_ret;
 				}
 			}
 		}
@@ -367,7 +369,9 @@ void * metacallfv(void * func, void * args[])
 
 				if (id != value_type_id((value)args[iterator]))
 				{
-					args[iterator] = value_type_cast((value)args[iterator], id);
+					value cast_ret = value_type_cast((value)args[iterator], id);
+
+					args[iterator] = (cast_ret == NULL) ? ret : cast_ret;
 				}
 			}
 		}
@@ -384,7 +388,9 @@ void * metacallfv(void * func, void * args[])
 
 				if (id != value_type_id(ret))
 				{
-					return value_type_cast(ret, id);
+					value cast_ret = value_type_cast(ret, id);
+
+					return (cast_ret == NULL) ? ret : cast_ret;
 				}
 			}
 		}

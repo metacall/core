@@ -157,15 +157,21 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 	else if (id == TYPE_PTR)
 	{
-		const size_t PTR_STR_MAX_SIZE = 19; /* 16 (64-bit pointer to string) + 2 (0x prefix) + '\0' */
+		/*
+		const size_t PTR_STR_MAX_SIZE = 19; // 16 (64-bit pointer to string) + 2 (0x prefix) + '\0'
 
 		char ptr_str[PTR_STR_MAX_SIZE] = { 0 };
 
 		size_t length = 0;
 
-		value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
+		//value_stringify(v, ptr_str, PTR_STR_MAX_SIZE, &length);
 
 		json_v->SetString(ptr_str, length);
+		*/
+
+		static const char not_implemented[] = "(not implemented)";
+
+		json_v->SetString(not_implemented, sizeof(not_implemented) - 1);
 	}
 }
 

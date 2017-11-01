@@ -148,7 +148,7 @@ void metacall_serial_impl_serialize_buffer(value v, char * dest, size_t size, co
 	if (dest == NULL && size == 0)
 	{
 		/* Each byte is going to be printed as two chars */
-		*length = (value_type_size(v) * 2) - 1;
+		*length = (value_type_size(v) * 2);
 	}
 	else
 	{

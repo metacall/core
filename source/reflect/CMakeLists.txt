@@ -50,8 +50,6 @@ set(headers
 	${include_path}/reflect_value.h
 	${include_path}/reflect_value_type.h
 	${include_path}/reflect_value_type_id_size.h
-	${include_path}/reflect_value_type_stringify.h
-	${include_path}/reflect_value_type_parse.h
 	${include_path}/reflect_value_type_promotion.h
 	${include_path}/reflect_value_type_demotion.h
 	${include_path}/reflect_value_type_cast.h
@@ -68,8 +66,6 @@ set(sources
 	${source_path}/reflect_value.c
 	${source_path}/reflect_value_type.c
 	${source_path}/reflect_value_type_id_size.c
-	${source_path}/reflect_value_type_stringify.c
-	${source_path}/reflect_value_type_parse.c
 	${source_path}/reflect_value_type_promotion.c
 	${source_path}/reflect_value_type_demotion.c
 	${source_path}/reflect_value_type_cast.c
