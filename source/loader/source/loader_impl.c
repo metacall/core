@@ -92,8 +92,6 @@ static value loader_impl_metadata_handle(loader_handle_impl handle_impl);
 
 static int loader_impl_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
 
-static value loader_impl_metadata_name(loader_impl impl);
-
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 
 static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);

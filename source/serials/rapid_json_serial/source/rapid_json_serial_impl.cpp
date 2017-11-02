@@ -113,7 +113,32 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 	else if (id == TYPE_BUFFER)
 	{
-		/* TODO: Implement array-like map */
+		rapidjson::Value & json_map = json_v->SetObject();
+
+		void * buffer = value_to_buffer(v);
+
+		size_t size = value_type_size(v);
+
+		for (size_t iterator = 0; iterator < size; ++iterator)
+		{
+			const char * data = (const char *)(((uintptr_t)buffer) + iterator);
+
+			rapidjson::Value json_member, json_inner_value;
+
+			json_member.SetUint64((uint64_t)iterator);
+
+			json_inner_value.SetUint((unsigned int)*data);
+
+			json_map.AddMember(json_member, json_inner_value, allocator);
+		}
+
+		rapidjson::Value json_member, json_inner_value;
+
+		json_member.SetString("length");
+
+		json_inner_value.SetUint64((uint64_t)size);
+
+		json_map.AddMember(json_member, json_inner_value, allocator);
 	}
 	else if (id == TYPE_ARRAY)
 	{
