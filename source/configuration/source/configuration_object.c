@@ -314,7 +314,7 @@ int configuration_object_set(configuration config, const char * key, value v)
 
 	if (original != NULL)
 	{
-		value_destroy(original);
+		value_type_destroy(original);
 	}
 
 	return set_insert(config->map, (set_key)key, v);

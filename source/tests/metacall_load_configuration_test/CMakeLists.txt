@@ -134,9 +134,11 @@ add_test(NAME ${target}
 #
 
 if(MSVC)
-	configure_file(data/metacall_load_from_configuration_test.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_test.json)
+	configure_file(data/metacall_load_from_configuration_py_test.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_py_test.json)
+	configure_file(data/metacall_load_from_configuration_rb_test.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_rb_test.json)
 else()
-	configure_file(data/metacall_load_from_configuration_test.json.in ${CMAKE_CURRENT_BINARY_DIR}/metacall_load_from_configuration_test.json)
+	configure_file(data/metacall_load_from_configuration_py_test.json.in ${CMAKE_CURRENT_BINARY_DIR}/metacall_load_from_configuration_py_test.json)
+	configure_file(data/metacall_load_from_configuration_rb_test.json.in ${CMAKE_CURRENT_BINARY_DIR}/metacall_load_from_configuration_rb_test.json)
 endif()
 
 

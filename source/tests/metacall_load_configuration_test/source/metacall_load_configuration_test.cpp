@@ -22,12 +22,6 @@ public:
 
 TEST_F(metacall_load_configuration_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
-
 	metacall_print_info();
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
@@ -41,7 +35,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_test.json", NULL));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test.json", NULL));
 
 		ret = metacall("multiply", 5, 15);
 
@@ -97,6 +91,34 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
+
+	/* Ruby */
+	#if defined(OPTION_BUILD_PLUGINS_RB)
+	{
+		void * ret = NULL;
+
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL));
+
+		ret = metacall("say_multiply", 5, 7);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 35);
+
+		metacall_value_destroy(ret);
+
+		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
+
+		ret = metacall("say_hello", "meta-programmer");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello meta-programmer!"));
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_PLUGINS_RB */
+
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

@@ -233,7 +233,7 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 	loader_impl impl;
 
 	struct loader_host_type host;
-	
+
 	host.log = log_instance();
 
 	impl = loader_impl_create(l->library_path, (const hash_map_key)tag, &host);
@@ -483,8 +483,6 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 			const char * str = value_to_string(scripts_array[iterator]);
 
 			strncpy(paths[iterator], str, value_type_size(scripts_array[iterator]));
-
-			value_destroy(scripts_array[iterator]);
 		}
 	}
 
