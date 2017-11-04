@@ -1,9 +1,15 @@
 #
+# External dependencies
+#
+
+# find_package(THIRDPARTY REQUIRED)
+
+#
 # Library name and options
 #
 
 # Target name
-set(target serial)
+set(target memory)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -34,17 +40,23 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/serial.h
-	${include_path}/serial_impl.h
-	${include_path}/serial_impl_handle.h
-	${include_path}/serial_interface.h
-	${include_path}/serial_singleton.h
+	${include_path}/memory.h
+	${include_path}/memory_allocator.h
+	${include_path}/memory_allocator_iface.h
+	${include_path}/memory_allocator_impl.h
+	${include_path}/memory_allocator_std.h
+	${include_path}/memory_allocator_std_impl.h
+	${include_path}/memory_allocator_nginx.h
+	${include_path}/memory_allocator_nginx_impl.h
 )
 
 set(sources
-	${source_path}/serial.c
-	${source_path}/serial_impl.c
-	${source_path}/serial_singleton.c
+	${source_path}/memory.c
+	${source_path}/memory_allocator.c
+	${source_path}/memory_allocator_std.c
+	${source_path}/memory_allocator_std_impl.c
+	${source_path}/memory_allocator_nginx.c
+	${source_path}/memory_allocator_nginx_impl.c
 )
 
 # Group source files
@@ -135,13 +147,8 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::dynlink
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

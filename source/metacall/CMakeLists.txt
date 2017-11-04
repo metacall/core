@@ -43,12 +43,14 @@ set(headers
 	${include_path}/metacall.h
 	${include_path}/metacall_value.h
 	${include_path}/metacall_log.h
+	${include_path}/metacall_allocator.h
 )
 
 set(sources
 	${source_path}/metacall.c
 	${source_path}/metacall_value.c
 	${source_path}/metacall_log.c
+	${source_path}/metacall_allocator.c
 )
 
 # Group source files
@@ -142,6 +144,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::environment
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::memory
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::dynlink
 	${META_PROJECT_NAME}::reflect

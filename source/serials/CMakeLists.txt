@@ -13,6 +13,7 @@ set(SERIAL_MODULE_NAMES
 	environment
 	format
 	log
+	memory
 	adt
 	reflect
 	dynlink
