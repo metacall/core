@@ -125,11 +125,17 @@ bool command_cb_call(application & app, tokenizer & t)
 
 		size_t size = 0;
 
-		char * value_str = metacall_serialize(result, &size);
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		char * value_str = metacall_serialize(result, &size, allocator);
 
 		std::cout << "result : " << value_str << std::endl;
 
-		free(value_str);
+		metacall_allocator_free(allocator, value_str);
+
+		metacall_allocator_destroy(allocator);
 
 		metacall_value_destroy(result);
 

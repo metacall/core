@@ -133,6 +133,8 @@ TEST_F(reflect_metadata_test, DefaultConstructor)
 
 			value metadata;
 
+			memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
+
 			signature_set(sig, 0, "c", char_type);
 			signature_set(sig, 1, "i", int_type);
 			signature_set(sig, 2, "p", ptr_type);
@@ -150,11 +152,13 @@ TEST_F(reflect_metadata_test, DefaultConstructor)
 
 			metadata = function_metadata(f);
 
-			str = serial_serialize(s, metadata, &size);
+			str = serial_serialize(s, metadata, &size, allocator);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Function serialization info: %s", str);
 
-			free(str);
+			memory_allocator_deallocate(allocator, str);
+
+			memory_allocator_destroy(allocator);
 
 			value_type_destroy(metadata);
 

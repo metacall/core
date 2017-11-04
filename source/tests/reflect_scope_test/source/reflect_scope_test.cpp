@@ -263,11 +263,15 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 			EXPECT_NE((value) NULL, (value) v);
 
-			char * str = serial_serialize(s, v, &size);
+			memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
+
+			char * str = serial_serialize(s, v, &size, allocator);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Scope serialization info: %s", str);
 
-			free(str);
+			memory_allocator_deallocate(allocator, str);
+
+			memory_allocator_destroy(allocator);
 
 			value_type_destroy(v);
 		}

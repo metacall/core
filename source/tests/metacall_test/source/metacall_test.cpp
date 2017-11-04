@@ -304,13 +304,19 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		size_t size = 0;
 
-		char * inspect_str = metacall_inspect(&size);
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		char * inspect_str = metacall_inspect(&size, allocator);
 
 		EXPECT_NE((char *) NULL, (char *) inspect_str);
 
 		EXPECT_GT((size_t)size, (size_t) 0);
 
-		free(inspect_str);
+		metacall_allocator_free(allocator, inspect_str);
+
+		metacall_allocator_destroy(allocator);
 	}
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());

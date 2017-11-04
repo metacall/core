@@ -51,6 +51,9 @@ CONFIGURATION_API int configuration_impl_initialize(const char * name);
 *  @param[in] config
 *    Pointer to the config object to be loaded
 *
+*  @param[in] allocator
+*    Pointer to the allocator will be used to deserialize the configuration
+*
 *  @return
 *    Returns zero on correct loading, distinct from zero otherwise
 *

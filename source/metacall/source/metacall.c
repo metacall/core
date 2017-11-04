@@ -507,7 +507,7 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
 }
 
-char * metacall_inspect(size_t * size)
+char * metacall_inspect(size_t * size, void * allocator)
 {
 	serial s;
 
@@ -529,7 +529,7 @@ char * metacall_inspect(size_t * size)
 
 	s = serial_create(metacall_serial());
 
-	str = serial_serialize(s, v, size);
+	str = serial_serialize(s, v, size, allocator);
 
 	value_type_destroy(v);
 
@@ -537,18 +537,18 @@ char * metacall_inspect(size_t * size)
 }
 
 
-char * metacall_serialize(void * v, size_t * size)
+char * metacall_serialize(void * v, size_t * size, void * allocator)
 {
 	serial s = serial_create(metacall_serial());
 
-	return serial_serialize(s, (value)v, size);
+	return serial_serialize(s, (value)v, size, (memory_allocator)allocator);
 }
 
-void * metacall_deserialize(const char * buffer, size_t size)
+void * metacall_deserialize(const char * buffer, size_t size, void * allocator)
 {
 	serial s = serial_create(metacall_serial());
 
-	return (void *)serial_deserialize(s, buffer, size);
+	return (void *)serial_deserialize(s, buffer, size, (memory_allocator)allocator);
 }
 
 int metacall_clear(void * handle)

@@ -276,10 +276,13 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[])
 *  @param[out] size
 *    Size in bytes of return buffer
 *
+*  @param[in] allocator
+*    Pointer to allocator will allocate the string
+*
 *  @return
-*    String containing introspection information (must be freed)
+*    String containing introspection information
 */
-METACALL_API char * metacall_inspect(size_t * size);
+METACALL_API char * metacall_inspect(size_t * size, void * allocator);
 
 /**
 *  @brief
@@ -291,10 +294,13 @@ METACALL_API char * metacall_inspect(size_t * size);
 *  @param[out] size
 *    Size of new allocated string
 *
+*  @param[in] allocator
+*    Pointer to allocator will allocate the string
+*
 *  @return
-*    New allocated string containing stringified value (must be freed)
+*    New allocated string containing stringified value
 */
-METACALL_API char * metacall_serialize(void * v, size_t * size);
+METACALL_API char * metacall_serialize(void * v, size_t * size, void * allocator);
 
 /**
 *  @brief
@@ -306,10 +312,13 @@ METACALL_API char * metacall_serialize(void * v, size_t * size);
 *  @param[in] size
 *    Size of string @buffer
 *
+*  @param[in] allocator
+*    Pointer to allocator will allocate the value
+*
 *  @return
 *    New allocated value representing the string (must be freed)
 */
-METACALL_API void * metacall_deserialize(const char * buffer, size_t size);
+METACALL_API void * metacall_deserialize(const char * buffer, size_t size, void * allocator);
 
 /**
 *  @brief
