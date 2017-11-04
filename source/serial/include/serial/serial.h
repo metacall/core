@@ -13,6 +13,8 @@
 
 #include <serial/serial_api.h>
 
+#include <memory/memory.h>
+
 #include <reflect/reflect.h>
 
 #ifdef __cplusplus
@@ -91,11 +93,17 @@ SERIAL_API const char * serial_name(serial s);
 *  @param[out] size
 *    Size in bytes of the return buffer
 *
+*  @param[out] size
+*    Size in bytes of the return buffer
+*
+*  @param[in] allocator
+*    Allocator to be used serialize @v
+*
 *  @return
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-SERIAL_API char * serial_serialize(serial s, value v, size_t * size);
+SERIAL_API char * serial_serialize(serial s, value v, size_t * size, memory_allocator allocator);
 
 /**
 *  @brief
@@ -110,11 +118,14 @@ SERIAL_API char * serial_serialize(serial s, value v, size_t * size);
 *  @param[in] size
 *    Size in bytes of the string @buffer
 *
+*  @param[in] allocator
+*    Allocator to be used deserialize @buffer
+*
 *  @return
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-SERIAL_API value serial_deserialize(serial s, const char * buffer, size_t size);
+SERIAL_API value serial_deserialize(serial s, const char * buffer, size_t size, memory_allocator allocator);
 
 /**
 *  @brief

@@ -39,16 +39,16 @@ typedef struct metacall_allocator_nginx_type * metacall_allocator_nginx;
 
 struct metacall_allocator_std_type
 {
-	void * (*std_malloc)(size_t);
-	void * (*std_realloc)(void *, size_t);
-	void (*std_free)(void *);
+	void * (*malloc)(size_t);
+	void * (*realloc)(void *, size_t);
+	void (*free)(void *);
 };
 
 struct metacall_allocator_nginx_type
 {
 	void * pool;
-	void * (*nginx_palloc)(void *, size_t);
-	int (*nginx_pfree)(void *, void *);
+	void * (*palloc)(void *, size_t);
+	int (*pfree)(void *, void *);
 };
 
 /* -- Methods -- */
@@ -66,7 +66,61 @@ struct metacall_allocator_nginx_type
 *  @return
 *    Pointer to allocator if success, null otherwise
 */
-METACALL_API void * metacall_allocator(enum metacall_allocator_id allocator_id, void * ctx);
+METACALL_API void * metacall_allocator_create(enum metacall_allocator_id allocator_id, void * ctx);
+
+/**
+*  @brief
+*    Reserve memory from an allocator instance
+*
+*  @param[in] allocator
+*    Pointer to allocator instance
+*
+*  @param[in] size
+*    Size in bytes to be allocated
+*
+*  @return
+*    Pointer to allocated data on success, null otherwise
+*/
+METACALL_API void * metacall_allocator_alloc(void * allocator, size_t size);
+
+/**
+*  @brief
+*    Reallocate memory from an allocator instance
+*
+*  @param[in] allocator
+*    Pointer to allocator instance
+*
+*  @param[in] data
+*    Original pointer to data
+*
+*  @param[in] size
+*    New size in bytes to be reallocated
+*
+*  @return
+*    Pointer to new reallocated data on success, null otherwise
+*/
+METACALL_API void * metacall_allocator_realloc(void * allocator, void * data, size_t size);
+
+/**
+*  @brief
+*    Free memory from an allocator instance
+*
+*  @param[in] allocator
+*    Pointer to allocator instance
+*
+*  @param[in] data
+*    Pointer to data to be freed
+*/
+METACALL_API void metacall_allocator_free(void * allocator, void * data);
+
+/**
+*  @brief
+*    Destroy an allocator instance
+*
+*  @param[in] allocator
+*    Pointer to allocator instance
+*/
+METACALL_API void metacall_allocator_destroy(void * allocator);
 
 #ifdef __cplusplus
 }

@@ -521,13 +521,9 @@ char * metacall_inspect(size_t * size)
 
 		if (v == NULL)
 		{
-			static const char invalid_inspect_str[] = "(null)";
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall inspect map creation");
 
-			str = malloc(sizeof(invalid_inspect_str));
-
-			memcpy(str, invalid_inspect_str, sizeof(invalid_inspect_str));
-
-			return str;
+			return NULL;
 		}
 	}
 

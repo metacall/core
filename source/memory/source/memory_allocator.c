@@ -49,10 +49,7 @@ memory_allocator memory_allocator_create(memory_allocator_iface iface, void * ct
 		return NULL;
 	}
 
-	allocator->iface->create = iface->create;
-	allocator->iface->allocate = iface->allocate;
-	allocator->iface->deallocate = iface->deallocate;
-	allocator->iface->destroy = iface->destroy;
+	allocator->iface = iface;
 	allocator->impl = impl;
 
 	allocator->size.alloc = 0;
@@ -117,7 +114,7 @@ void memory_allocator_destroy(memory_allocator allocator)
 
 	memory_allocator_destroy_ptr destroy = allocator->iface->destroy;
 
-	allocator->iface->deallocate(allocator, allocator);
+	allocator->iface->deallocate(impl, allocator);
 
 	destroy(impl);
 }

@@ -18,13 +18,102 @@
 
 #include <sstream>
 
+/* Forward Declarations -- */
+
+class MemoryAllocator;
+
+/* -- Type Definitions -- */
+
+typedef rapidjson::GenericDocument<rapidjson::UTF8<>, MemoryAllocator> RapidJSONSerialDocument;
+
+typedef rapidjson::GenericValue<rapidjson::UTF8<>, MemoryAllocator> RapidJSONSerialValue;
+
 /* -- Private Methods -- */
 
-static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, rapidjson::Document::AllocatorType & allocator);
+static void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json_v, RapidJSONSerialDocument::AllocatorType & allocator);
 
-static char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size);
+static char * rapid_json_serial_impl_document_stringify(RapidJSONSerialDocument * document, size_t * size);
 
-static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v);
+static value rapid_json_serial_impl_deserialize_value(const RapidJSONSerialValue * v);
+
+/* -- Classes -- */
+
+/**
+*  @brief
+*    Memory allocator concept to decouple document allocation.
+*    Head like approach with each allocator has been implemented
+*    in order to support static like Free method used in RapidJSON
+*
+*/
+class MemoryAllocator
+{
+public:
+	static const bool kNeedFree = true;
+
+	MemoryAllocator()
+	{
+		this->allocator = memory_allocator_std(&malloc, &realloc, &free);
+	}
+
+	MemoryAllocator(memory_allocator allocator) : allocator(allocator)
+	{
+
+	}
+
+	memory_allocator Impl()
+	{
+		return this->allocator;
+	}
+
+	void * Malloc(size_t size)
+	{
+		void * data;
+
+		if (size == 0)
+		{
+			return NULL;
+		}
+
+		data = memory_allocator_allocate(allocator, sizeof(memory_allocator) + size);
+
+		memcpy(data, &allocator, sizeof(memory_allocator));
+
+		return reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(data) + sizeof(memory_allocator));
+	}
+
+	void * Realloc(void * data, size_t size, size_t new_size)
+	{
+		void * data_ptr, * new_data;
+
+		(void)size;
+
+		if (data == NULL)
+		{
+			return this->Malloc(new_size);
+		}
+
+		data_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(data) - sizeof(memory_allocator));
+
+		new_data = memory_allocator_reallocate(allocator, data_ptr, new_size);
+
+		return reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(new_data) + sizeof(memory_allocator));
+	}
+
+	static void Free(void * data)
+	{
+		if (data != NULL)
+		{
+			void * data_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(data)-sizeof(memory_allocator));
+
+			memory_allocator allocator = *(static_cast<memory_allocator *>(data_ptr));
+
+			memory_allocator_deallocate(allocator, data_ptr);
+		}
+	}
+
+private:
+	memory_allocator allocator;
+};
 
 /* -- Methods -- */
 
@@ -35,9 +124,9 @@ const char * rapid_json_serial_impl_extension()
 	return extension;
 }
 
-serial_impl_handle rapid_json_serial_impl_initialize()
+serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 {
-	rapidjson::Document * document = new rapidjson::Document();
+	RapidJSONSerialDocument * document = new RapidJSONSerialDocument(new MemoryAllocator(allocator));
 
 	if (document == nullptr)
 	{
@@ -47,7 +136,7 @@ serial_impl_handle rapid_json_serial_impl_initialize()
 	return (serial_impl_handle)document;
 }
 
-void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, rapidjson::Document::AllocatorType & allocator)
+void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json_v, RapidJSONSerialDocument::AllocatorType & allocator)
 {
 	type_id id = value_type_id(v);
 
@@ -113,7 +202,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 	else if (id == TYPE_BUFFER)
 	{
-		rapidjson::Value & json_map = json_v->SetObject();
+		RapidJSONSerialValue & json_map = json_v->SetObject();
 
 		void * buffer = value_to_buffer(v);
 
@@ -123,7 +212,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 		{
 			const char * data = (const char *)(((uintptr_t)buffer) + iterator);
 
-			rapidjson::Value json_member, json_inner_value;
+			RapidJSONSerialValue json_member, json_inner_value;
 
 			json_member.SetUint64((uint64_t)iterator);
 
@@ -132,7 +221,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 			json_map.AddMember(json_member, json_inner_value, allocator);
 		}
 
-		rapidjson::Value json_member, json_inner_value;
+		RapidJSONSerialValue json_member, json_inner_value;
 
 		json_member.SetString("length");
 
@@ -142,7 +231,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 	else if (id == TYPE_ARRAY)
 	{
-		rapidjson::Value & json_array = json_v->SetArray();
+		RapidJSONSerialValue & json_array = json_v->SetArray();
 
 		value * value_array = value_to_array(v);
 
@@ -152,7 +241,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 		{
 			value current_value = value_array[iterator];
 
-			rapidjson::Value json_inner_value;
+			RapidJSONSerialValue json_inner_value;
 
 			rapid_json_serial_impl_serialize_value(current_value, &json_inner_value, allocator);
 
@@ -161,7 +250,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 	else if (id == TYPE_MAP)
 	{
-		rapidjson::Value & json_map = json_v->SetObject();
+		RapidJSONSerialValue & json_map = json_v->SetObject();
 
 		value * value_map = value_to_map(v);
 
@@ -173,7 +262,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 
 			value * tupla_array = value_to_array(tupla);
 
-			rapidjson::Value json_member, json_inner_value;
+			RapidJSONSerialValue json_member, json_inner_value;
 
 			rapid_json_serial_impl_serialize_value(tupla_array[0], &json_member, allocator);
 
@@ -194,7 +283,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v, 
 	}
 }
 
-char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size)
+char * rapid_json_serial_impl_document_stringify(RapidJSONSerialDocument * document, size_t * size)
 {
 	char * buffer_str;
 
@@ -211,7 +300,11 @@ char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document,
 
 	buffer_str_size = buffer_size + 1;
 
-	buffer_str = static_cast<char *>(malloc(sizeof(char) * buffer_str_size));
+	RapidJSONSerialDocument::AllocatorType & allocator = document->GetAllocator();
+
+	memory_allocator impl = allocator.Impl();
+
+	buffer_str = static_cast<char *>(memory_allocator_allocate(impl, sizeof(char) * buffer_str_size));
 
 	if (buffer_str == NULL)
 	{
@@ -231,7 +324,7 @@ char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document,
 
 char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
 {
-	rapidjson::Document * document = (rapidjson::Document *)handle;
+	RapidJSONSerialDocument *  document = (RapidJSONSerialDocument * )handle;
 
 	if (handle == NULL || v == NULL || size == NULL)
 	{
@@ -240,14 +333,14 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 		return NULL;
 	}
 
-	rapidjson::Document::AllocatorType & allocator = document->GetAllocator();
+	RapidJSONSerialDocument::AllocatorType & allocator = document->GetAllocator();
 
 	rapid_json_serial_impl_serialize_value(v, document, allocator);
 
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
 
-value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
+value rapid_json_serial_impl_deserialize_value(const RapidJSONSerialValue * v)
 {
 	if (v->IsBool() == true)
 	{
@@ -311,50 +404,44 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	{
 		rapidjson::SizeType size = v->Size();
 
+		value v_array = value_create_array(NULL, size);
+
 		value * values;
 
 		size_t index = 0;
 
-		if (size == 0)
+		if (size == 0 || v_array == NULL)
 		{
-			return value_create_array(NULL, 0);
+			return v_array;
 		}
 
-		values = static_cast<value *>(malloc(sizeof(value) * size));
+		values = static_cast<value *>(value_to_array(v_array));
 
-		if (values == NULL)
-		{
-			return NULL;
-		}
-
-		for (rapidjson::Value::ConstValueIterator it = v->Begin(); it != v->End(); ++it)
+		for (RapidJSONSerialValue::ConstValueIterator it = v->Begin(); it != v->End(); ++it)
 		{
 			values[index++] = rapid_json_serial_impl_deserialize_value(it);
 		}
 
-		return value_create_array(values, size);
+		return v_array;
 	}
 	else if (v->IsObject() == true)
 	{
 		const rapidjson::SizeType size = v->MemberCount();
 
+		value v_map = value_create_map(NULL, size);
+
 		value * tuples;
 
 		size_t index = 0;
 
-		if (size == 0)
+		if (size == 0 || v_map == NULL)
 		{
-			return value_create_map(NULL, 0);
+			return v_map;
 		}
 
-		tuples = static_cast<value *>(malloc(sizeof(value) * size));
+		tuples = static_cast<value *>(value_to_map(v_map));
 
-		if (tuples == NULL)
-		{
-			return NULL;
-		}
-
-		for (rapidjson::Value::ConstMemberIterator it = v->MemberBegin(); it != v->MemberEnd(); ++it)
+		for (RapidJSONSerialValue::ConstMemberIterator it = v->MemberBegin(); it != v->MemberEnd(); ++it)
 		{
 			const value tupla[] =
 			{
@@ -365,11 +452,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 			tuples[index++] = value_create_array(tupla, sizeof(tupla) / sizeof(tupla[0]));
 		}
 
-		value v = value_create_map(tuples, size);
-
-		free(tuples);
-
-		return v;
+		return v_map;
 	}
 
 	log_write("metacall", LOG_LEVEL_ERROR, "Unsuported value type in RapidJSON implementation");
@@ -379,7 +462,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size)
 {
-	rapidjson::Document * document = (rapidjson::Document *)handle;
+	RapidJSONSerialDocument *  document = (RapidJSONSerialDocument *)handle;
 
 	if (handle == NULL || buffer == NULL || size == 0)
 	{
@@ -402,7 +485,7 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 
 int rapid_json_serial_impl_destroy(serial_impl_handle handle)
 {
-	rapidjson::Document * document = (rapidjson::Document *)handle;
+	RapidJSONSerialDocument * document = (RapidJSONSerialDocument *)handle;
 
 	if (document != nullptr)
 	{

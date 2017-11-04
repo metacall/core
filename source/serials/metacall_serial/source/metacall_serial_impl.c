@@ -29,11 +29,9 @@ const char * metacall_serial_impl_extension()
 	return extension;
 }
 
-serial_impl_handle metacall_serial_impl_initialize()
+serial_impl_handle metacall_serial_impl_initialize(memory_allocator allocator)
 {
-	serial_impl_handle handle = malloc(sizeof(serial_impl_handle));
-
-	return handle;
+	return allocator;
 }
 
 void metacall_serial_impl_serialize_value(value v, char * dest, size_t size, size_t * length)
@@ -49,6 +47,8 @@ void metacall_serial_impl_serialize_value(value v, char * dest, size_t size, siz
 
 char * metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
 {
+	memory_allocator allocator;
+
 	size_t length, buffer_size;
 
 	char * buffer;
@@ -59,6 +59,8 @@ char * metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t
 
 		return NULL;
 	}
+
+	allocator = (memory_allocator)handle;
 
 	metacall_serial_impl_serialize_value(v, NULL, 0, &length);
 
@@ -71,7 +73,7 @@ char * metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t
 
 	buffer_size = length + 1;
 
-	buffer = malloc(sizeof(char) * (buffer_size));
+	buffer = memory_allocator_allocate(allocator, sizeof(char) * (buffer_size));
 
 	if (buffer == NULL)
 	{
@@ -89,7 +91,7 @@ char * metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t
 		log_write("metacall", LOG_LEVEL_ERROR, "Serialization invalid length + 1 != buffer "
 			"(%" PRIuS " != %" PRIuS ") in MetaCall Native Format implementation", length + 1, buffer_size);
 		
-		free(buffer);
+		memory_allocator_deallocate(allocator, buffer);
 
 		*size = 0;
 
@@ -136,7 +138,7 @@ value metacall_serial_impl_deserialize(serial_impl_handle handle, const char * b
 
 int metacall_serial_impl_destroy(serial_impl_handle handle)
 {
-	free(handle);
+	(void)handle;
 
 	return 0;
 }

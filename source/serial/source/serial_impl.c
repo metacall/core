@@ -154,9 +154,9 @@ int serial_impl_load(serial_impl impl, const char * path, const char * name)
 	return 0;
 }
 
-char * serial_impl_serialize(serial_impl impl, value v, size_t * size)
+char * serial_impl_serialize(serial_impl impl, value v, size_t * size, memory_allocator allocator)
 {
-	serial_impl_handle handle = impl->iface->initialize();
+	serial_impl_handle handle = impl->iface->initialize(allocator);
 
 	char * buffer;
 
@@ -182,9 +182,9 @@ char * serial_impl_serialize(serial_impl impl, value v, size_t * size)
 	return buffer;
 }
 
-value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size)
+value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size, memory_allocator allocator)
 {
-	serial_impl_handle handle = impl->iface->initialize();
+	serial_impl_handle handle = impl->iface->initialize(allocator);
 
 	value v;
 

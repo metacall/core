@@ -132,7 +132,7 @@ const char * serial_name(serial s)
 	return s->name;
 }
 
-char * serial_serialize(serial s, value v, size_t * size)
+char * serial_serialize(serial s, value v, size_t * size, memory_allocator allocator)
 {
 	if (s == NULL || v == NULL || size == NULL)
 	{
@@ -141,10 +141,10 @@ char * serial_serialize(serial s, value v, size_t * size)
 		return NULL;
 	}
 
-	return serial_impl_serialize(s->impl, v, size);
+	return serial_impl_serialize(s->impl, v, size, allocator);
 }
 
-value serial_deserialize(serial s, const char * buffer, size_t size)
+value serial_deserialize(serial s, const char * buffer, size_t size, memory_allocator allocator)
 {
 	if (s == NULL || buffer == NULL || size == 0)
 	{
@@ -153,7 +153,7 @@ value serial_deserialize(serial s, const char * buffer, size_t size)
 		return NULL;
 	}
 
-	return serial_impl_deserialize(s->impl, buffer, size);
+	return serial_impl_deserialize(s->impl, buffer, size, allocator);
 }
 
 int serial_clear(serial s)

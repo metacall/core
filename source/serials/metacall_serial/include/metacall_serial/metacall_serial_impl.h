@@ -39,7 +39,7 @@ METACALL_SERIAL_API const char * metacall_serial_impl_extension(void);
 *    Returns pointer to serial document implementation on success, null pointer otherwise
 *
 */
-METACALL_SERIAL_API serial_impl_handle metacall_serial_impl_initialize(void);
+METACALL_SERIAL_API serial_impl_handle metacall_serial_impl_initialize(memory_allocator allocator);
 
 /**
 *  @brief

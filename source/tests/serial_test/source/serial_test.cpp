@@ -52,6 +52,11 @@ TEST_F(serial_test, DefaultConstructor)
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout)));
 
+	// Create allocator
+	memory_allocator allocator = memory_allocator_std(&malloc, &realloc, &free);
+
+	EXPECT_NE((memory_allocator) NULL, (memory_allocator) allocator);
+
 	// Initialize serial
 	EXPECT_EQ((int) 0, (int) serial_initialize());
 
@@ -114,7 +119,7 @@ TEST_F(serial_test, DefaultConstructor)
 		EXPECT_NE((value) NULL, (value) v);
 
 		// Serialize value array into buffer
-		char * buffer = serial_serialize(s, v, &serialize_size);
+		char * buffer = serial_serialize(s, v, &serialize_size, allocator);
 
 		EXPECT_EQ((size_t) sizeof(value_list_str), (size_t) serialize_size);
 		EXPECT_NE((char *) NULL, (char *) buffer);
@@ -127,7 +132,7 @@ TEST_F(serial_test, DefaultConstructor)
 			value_destroy(value_list[iterator]);
 		}
 
-		free(buffer);
+		memory_allocator_deallocate(allocator, buffer);
 
 		// Create value map from value list map
 		v = value_create_map(value_map, value_map_size);
@@ -135,7 +140,7 @@ TEST_F(serial_test, DefaultConstructor)
 		EXPECT_NE((value) NULL, (value) v);
 
 		// Serialize value map into buffer
-		buffer = serial_serialize(s, v, &serialize_size);
+		buffer = serial_serialize(s, v, &serialize_size, allocator);
 
 		EXPECT_EQ((size_t) sizeof(value_map_str), (size_t) serialize_size);
 		EXPECT_NE((value) NULL, (value) v);
@@ -155,10 +160,10 @@ TEST_F(serial_test, DefaultConstructor)
 
 		value_destroy(v);
 
-		free(buffer);
+		memory_allocator_deallocate(allocator, buffer);
 	
 		// Deserialize json buffer array into value
-		v = serial_deserialize(s, json_buffer_array, sizeof(json_buffer_array));
+		v = serial_deserialize(s, json_buffer_array, sizeof(json_buffer_array), allocator);
 
 		EXPECT_EQ((type_id) TYPE_ARRAY, (type_id) value_type_id(v));
 		EXPECT_EQ((size_t) json_buffer_array_size, (size_t) value_type_size(v) / sizeof(const value));
@@ -184,7 +189,7 @@ TEST_F(serial_test, DefaultConstructor)
 		value_destroy(v);
 
 		// Deserialize json buffer map into value
-		v = serial_deserialize(s, json_buffer_map, sizeof(json_buffer_map));
+		v = serial_deserialize(s, json_buffer_map, sizeof(json_buffer_map), allocator);
 
 		EXPECT_EQ((type_id) TYPE_MAP, (type_id) value_type_id(v));
 		EXPECT_EQ((size_t) json_buffer_map_size, (size_t) value_type_size(v) / sizeof(const value));
@@ -320,13 +325,15 @@ TEST_F(serial_test, DefaultConstructor)
 			{
 				size_t size;
 
-				char * buffer = serial_serialize(s, value_array[iterator], &size);
+				char * buffer = serial_serialize(s, value_array[iterator], &size, allocator);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "(%s == %s)", buffer, value_names[iterator]);
 
 				EXPECT_GT((size_t) size, (size_t) 0);
 
 				EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], size - 1));
+
+				memory_allocator_deallocate(allocator, buffer);
 
 				value_destroy(value_array[iterator]);
 			}
@@ -358,4 +365,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 	// Destroy serial
 	serial_destroy();
+
+	// Destroy allocator
+	memory_allocator_destroy(allocator);
 }

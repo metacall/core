@@ -15,6 +15,8 @@
 
 #include <serial/serial_impl_handle.h>
 
+#include <memory/memory.h>
+
 #include <reflect/reflect.h>
 
 #ifdef __cplusplus
@@ -29,7 +31,7 @@ struct serial_interface_type;
 
 typedef const char * (*serial_interface_extension)(void);
 
-typedef serial_impl_handle (*serial_interface_initialize)(void);
+typedef serial_impl_handle (*serial_interface_initialize)(memory_allocator);
 
 typedef char * (*serial_interface_serialize)(serial_impl_handle, value, size_t *);
 
