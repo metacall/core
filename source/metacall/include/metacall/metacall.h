@@ -126,10 +126,13 @@ METACALL_API int metacall_load_from_package(const char * tag, const char * path,
 *  @param[out] handle
 *    Optional pointer to reference of loaded handle
 *
+*  @param[in] allocator
+*    Pointer to allocator will allocate the configuration
+*
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_configuration(const char * path, void ** handle);
+METACALL_API int metacall_load_from_configuration(const char * path, void ** handle, void * allocator);
 
 /**
 *  @brief

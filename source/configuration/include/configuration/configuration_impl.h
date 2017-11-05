@@ -58,7 +58,7 @@ CONFIGURATION_API int configuration_impl_initialize(const char * name);
 *    Returns zero on correct loading, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_impl_load(configuration config);
+CONFIGURATION_API int configuration_impl_load(configuration config, void * allocator);
 
 /**
 *  @brief

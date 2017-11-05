@@ -37,11 +37,14 @@ extern "C" {
 *  @param[in] path
 *    Path where is located the root configuration
 *
+*  @param[in] allocator
+*    Pointer to the allocator will be used to deserialize the configuration
+*
 *  @return
 *    Returns zero on correct configuration initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_initialize(const char * reader, const char * path);
+CONFIGURATION_API int configuration_initialize(const char * reader, const char * path, void * allocator);
 
 /**
 *  @brief
@@ -56,11 +59,14 @@ CONFIGURATION_API int configuration_initialize(const char * reader, const char *
 *  @param[in] parent
 *    Scope of the parent configuration if any
 *
+*  @param[in] allocator
+*    Pointer to the allocator will be used to deserialize the configuration
+*
 *  @return
 *    Returns object containing all configuration data
 *
 */
-CONFIGURATION_API configuration configuration_create(const char * scope, const char * path, const char * parent);
+CONFIGURATION_API configuration configuration_create(const char * scope, const char * path, const char * parent, void * allocator);
 
 /**
 *  @brief

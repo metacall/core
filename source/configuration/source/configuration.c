@@ -26,7 +26,7 @@
 
 /* -- Methods -- */
 
-int configuration_initialize(const char * reader, const char * path)
+int configuration_initialize(const char * reader, const char * path, void * allocator)
 {
 	configuration global = NULL;
 
@@ -70,7 +70,7 @@ int configuration_initialize(const char * reader, const char * path)
 		return 1;
 	}
 
-	if (configuration_impl_load(global) != 0)
+	if (configuration_impl_load(global, allocator) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load <%p>", global);
 
@@ -82,7 +82,7 @@ int configuration_initialize(const char * reader, const char * path)
 	return 0;
 }
 
-configuration configuration_create(const char * scope, const char * path, const char * parent)
+configuration configuration_create(const char * scope, const char * path, const char * parent, void * allocator)
 {
 	configuration config = configuration_singleton_get(scope);
 
@@ -100,7 +100,7 @@ configuration configuration_create(const char * scope, const char * path, const 
 		return NULL;
 	}
 
-	if (configuration_impl_load(config) != 0)
+	if (configuration_impl_load(config, allocator) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load <%p>", config);
 

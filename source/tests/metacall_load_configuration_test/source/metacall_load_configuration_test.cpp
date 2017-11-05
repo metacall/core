@@ -11,7 +11,7 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall-plugins.h>
 
-#include <reflect/reflect_value_type.h>
+#include <memory/memory.h>
 
 #include <log/log.h>
 
@@ -26,6 +26,10 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
+	memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
+
+	ASSERT_NE((memory_allocator) NULL, (memory_allocator) allocator);
+
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
@@ -35,7 +39,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test.json", NULL));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test.json", NULL, allocator));
 
 		ret = metacall("multiply", 5, 15);
 
@@ -97,7 +101,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 	{
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL, allocator));
 
 		ret = metacall("say_multiply", 5, 7);
 
@@ -119,6 +123,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_PLUGINS_RB */
 
+	memory_allocator_destroy(allocator);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

@@ -12,6 +12,8 @@
 
 #include <environment/environment_variable.h>
 
+#include <memory/memory.h>
+
 #include <log/log.h>
 
 #define CONFIGURATION_PATH "CONFIGURATION_PATH"
@@ -33,7 +35,11 @@ TEST_F(configuration_test, DefaultConstructor)
 
 	char * configuration_path = environment_variable_create(CONFIGURATION_PATH, NULL);
 
-	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", configuration_path));
+	memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
+
+	ASSERT_NE((memory_allocator) NULL, (memory_allocator) allocator);
+
+	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", configuration_path, allocator));
 
 	environment_variable_destroy(configuration_path);
 
@@ -148,4 +154,6 @@ TEST_F(configuration_test, DefaultConstructor)
 	}
 
 	configuration_destroy();
+
+	memory_allocator_destroy(allocator);
 }

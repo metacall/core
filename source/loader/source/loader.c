@@ -409,7 +409,7 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 	return 1;
 }
 
-int loader_load_from_configuration(const loader_naming_path path, void ** handle)
+int loader_load_from_configuration(const loader_naming_path path, void ** handle, void * allocator)
 {
 	loader_naming_name config_name;
 
@@ -430,7 +430,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 		return 1;
 	}
 
-	config = configuration_create(config_name, path, NULL);
+	config = configuration_create(config_name, path, NULL, allocator);
 
 	if (config == NULL)
 	{

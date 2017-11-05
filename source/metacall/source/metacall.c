@@ -58,6 +58,8 @@ int metacall_initialize()
 {
 	loader l = loader_singleton();
 
+	memory_allocator allocator;
+
 	if (metacall_initialize_flag == 0)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized <%p>", (void *)l);
@@ -83,12 +85,18 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
-	if (configuration_initialize(metacall_serial(), NULL) != 0)
+	allocator = memory_allocator_std(&malloc, &realloc, &free);
+
+	if (configuration_initialize(metacall_serial(), NULL, allocator) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall configuration initialization");
 
+		memory_allocator_destroy(allocator);
+
 		return 1;
 	}
+
+	memory_allocator_destroy(allocator);
 
 	#ifndef LOADER_LAZY
 		loader_initialize();
@@ -130,9 +138,9 @@ int metacall_load_from_package(const char * tag, const char * path, void ** hand
 	return loader_load_from_package(tag, path, handle);
 }
 
-int metacall_load_from_configuration(const char * path, void ** handle)
+int metacall_load_from_configuration(const char * path, void ** handle, void * allocator)
 {
-	return loader_load_from_configuration(path, handle);
+	return loader_load_from_configuration(path, handle, allocator);
 }
 
 void * metacallv(const char * name, void * args[])
