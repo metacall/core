@@ -19,7 +19,8 @@ extern "C" {
 
 /* -- Headers -- */
 
-#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
 
 /* -- Enumerations -- */
 
@@ -29,9 +30,15 @@ enum metacall_allocator_id
 	METACALL_ALLOCATOR_NGINX
 };
 
+/* -- Forward Declarations -- */
+
+struct ngx_pool_s;
+
 /* -- Type Definitions -- */
 
 typedef struct metacall_allocator_std_type * metacall_allocator_std;
+
+typedef struct ngx_pool_s ngx_pool_t;
 
 typedef struct metacall_allocator_nginx_type * metacall_allocator_nginx;
 
@@ -46,10 +53,10 @@ struct metacall_allocator_std_type
 
 struct metacall_allocator_nginx_type
 {
-	void * pool;
-	void * (*palloc)(void *, size_t);
+	ngx_pool_t * pool;
+	void * (*palloc)(ngx_pool_t *, size_t);
 	void * (*pcopy)(void *, const void *, size_t);
-	int (*pfree)(void *, void *);
+	intptr_t (*pfree)(ngx_pool_t *, void *);
 };
 
 /* -- Methods -- */

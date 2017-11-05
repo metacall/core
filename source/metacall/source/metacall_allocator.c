@@ -29,7 +29,10 @@ void * metacall_allocator_create(enum metacall_allocator_id allocator_id, void *
 		{
 			metacall_allocator_nginx nginx_ctx = (metacall_allocator_nginx)ctx;
 
-			return memory_allocator_nginx(nginx_ctx->pool, nginx_ctx->palloc, nginx_ctx->pcopy, nginx_ctx->pfree);
+			return memory_allocator_nginx((void *)nginx_ctx->pool,
+				(memory_allocator_nginx_impl_palloc)nginx_ctx->palloc,
+				(memory_allocator_nginx_impl_pcopy)nginx_ctx->pcopy,
+				(memory_allocator_nginx_impl_pfree)nginx_ctx->pfree);
 		}
 	}
 
