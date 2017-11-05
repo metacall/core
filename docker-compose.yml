@@ -35,6 +35,6 @@ services:
       LOADER_LIBRARY_PATH: $METACALL_PATH/build
       LOADER_SCRIPT_PATH: $METACALL_PATH/build/scripts
       CONFIGURATION_PATH: $METACALL_PATH/build/configurations/global.json
-      CONFIGURATION_LIBRARY_PATH: $METACALL_PATH/build
+      SERIAL_LIBRARY_PATH: $METACALL_PATH/build
     depends_on:
       - deps

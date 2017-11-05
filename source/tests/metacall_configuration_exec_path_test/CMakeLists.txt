@@ -175,7 +175,7 @@ test_environment_variables(${target}
 	"LOADER_LIBRARY_PATH=${LOADER_LIBRARY_PATH}"
 	"LOADER_SCRIPT_PATH=${PY_LOADER_SCRIPT_PATH}"
 	"CONFIGURATION_PATH=${PY_CONFIGURATION_PATH}/global.json"
-	"CONFIGURATION_LIBRARY_PATH=${CONFIGURATION_LIBRARY_PATH}"
+	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
 )
 
 #
@@ -183,6 +183,9 @@ test_environment_variables(${target}
 #
 
 configure_file(data/configurations/global.json.in ${PY_CONFIGURATION_PATH}/global.json @ONLY)
+
 configure_file(data/configurations/py_loader.json.in ${PY_CONFIGURATION_PATH}/py_loader.json @ONLY)
+
 file(COPY data/scripts/main.py DESTINATION ${PY_LOADER_SCRIPT_PATH})
+
 file(COPY data/scripts/metacall_configuration_exec_path_test.py DESTINATION ${PY_EXECUTION_PATH})
