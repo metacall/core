@@ -29,7 +29,7 @@ void * metacall_allocator_create(enum metacall_allocator_id allocator_id, void *
 		{
 			metacall_allocator_nginx nginx_ctx = (metacall_allocator_nginx)ctx;
 
-			return memory_allocator_nginx(nginx_ctx->pool, nginx_ctx->palloc, nginx_ctx->pfree);
+			return memory_allocator_nginx(nginx_ctx->pool, nginx_ctx->palloc, nginx_ctx->pcopy, nginx_ctx->pfree);
 		}
 	}
 
@@ -41,9 +41,9 @@ void * metacall_allocator_alloc(void * allocator, size_t size)
 	return memory_allocator_allocate((memory_allocator)allocator, size);
 }
 
-void * metacall_allocator_realloc(void * allocator, void * data, size_t size)
+void * metacall_allocator_realloc(void * allocator, void * data, size_t size, size_t new_size)
 {
-	return memory_allocator_reallocate((memory_allocator)allocator, data, size);
+	return memory_allocator_reallocate((memory_allocator)allocator, data, size, new_size);
 }
 
 void metacall_allocator_free(void * allocator, void * data)

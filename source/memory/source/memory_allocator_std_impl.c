@@ -36,7 +36,7 @@ static memory_allocator_impl memory_allocator_std_create(void * ctx);
 
 static void * memory_allocator_std_allocate(memory_allocator_impl impl, size_t size);
 
-static void * memory_allocator_std_reallocate(memory_allocator_impl impl, void * data, size_t size);
+static void * memory_allocator_std_reallocate(memory_allocator_impl impl, void * data, size_t size, size_t new_size);
 
 static void memory_allocator_std_deallocate(memory_allocator_impl impl, void * data);
 
@@ -83,11 +83,13 @@ void * memory_allocator_std_allocate(memory_allocator_impl impl, size_t size)
 	return std_impl->malloc(size);
 }
 
-void * memory_allocator_std_reallocate(memory_allocator_impl impl, void * data, size_t size)
+void * memory_allocator_std_reallocate(memory_allocator_impl impl, void * data, size_t size, size_t new_size)
 {
 	memory_allocator_std_impl std_impl = (memory_allocator_std_impl)impl;
 
-	return std_impl->realloc(data, size);
+	(void)size;
+
+	return std_impl->realloc(data, new_size);
 }
 
 void memory_allocator_std_deallocate(memory_allocator_impl impl, void * data)

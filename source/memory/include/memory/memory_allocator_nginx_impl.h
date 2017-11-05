@@ -27,6 +27,8 @@ struct memory_allocator_nginx_ctx_type;
 
 typedef void * (*memory_allocator_nginx_impl_palloc)(void *, size_t);
 
+typedef void * (*memory_allocator_nginx_impl_pcopy)(void *, const void *, size_t);
+
 typedef int (*memory_allocator_nginx_impl_pfree)(void *, void *);
 
 typedef struct memory_allocator_nginx_ctx_type * memory_allocator_nginx_ctx;
@@ -37,6 +39,7 @@ struct memory_allocator_nginx_ctx_type
 {
 	void * pool;
 	memory_allocator_nginx_impl_palloc palloc;
+	memory_allocator_nginx_impl_pcopy pcopy;
 	memory_allocator_nginx_impl_pfree pfree;
 };
 

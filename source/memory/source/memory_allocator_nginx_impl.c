@@ -26,6 +26,7 @@ struct memory_allocator_nginx_impl_type
 {
 	void * pool;
 	memory_allocator_nginx_impl_palloc palloc;
+	memory_allocator_nginx_impl_pcopy pcopy;
 	memory_allocator_nginx_impl_pfree pfree;
 };
 
@@ -35,7 +36,7 @@ static memory_allocator_impl memory_allocator_nginx_create(void * ctx);
 
 static void * memory_allocator_nginx_allocate(memory_allocator_impl impl, size_t size);
 
-static void * memory_allocator_nginx_reallocate(memory_allocator_impl impl, void * data, size_t size);
+static void * memory_allocator_nginx_reallocate(memory_allocator_impl impl, void * data, size_t size, size_t new_size);
 
 static void memory_allocator_nginx_deallocate(memory_allocator_impl impl, void * data);
 
@@ -70,6 +71,7 @@ memory_allocator_impl memory_allocator_nginx_create(void * ctx)
 
 	nginx_impl->pool = nginx_ctx->pool;
 	nginx_impl->palloc = nginx_ctx->palloc;
+	nginx_impl->pcopy = nginx_ctx->pcopy;
 	nginx_impl->pfree = nginx_ctx->pfree;
 
 	return (memory_allocator_impl)nginx_impl;
@@ -82,14 +84,29 @@ void * memory_allocator_nginx_allocate(memory_allocator_impl impl, size_t size)
 	return nginx_impl->palloc(nginx_impl->pool, size);
 }
 
-void * memory_allocator_nginx_reallocate(memory_allocator_impl impl, void * data, size_t size)
+void * memory_allocator_nginx_reallocate(memory_allocator_impl impl, void * data, size_t size, size_t new_size)
 {
-	/* TODO */
-	(void)impl;
-	(void)data;
-	(void)size;
+	memory_allocator_nginx_impl nginx_impl = (memory_allocator_nginx_impl)impl;
 
-	return NULL;
+	void * new_data = nginx_impl->palloc(nginx_impl->pool, new_size);
+
+	if (new_data == NULL)
+	{
+		return NULL;
+	}
+
+	if (size < new_size)
+	{
+		nginx_impl->pcopy(new_data, data, size);
+	}
+	else
+	{
+		nginx_impl->pcopy(new_data, data, new_size);
+	}
+
+	nginx_impl->pfree(nginx_impl->pool, data);
+
+	return new_data;
 }
 
 void memory_allocator_nginx_deallocate(memory_allocator_impl impl, void * data)

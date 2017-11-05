@@ -77,9 +77,9 @@ void * memory_allocator_allocate(memory_allocator allocator, size_t size)
 	return data;
 }
 
-void * memory_allocator_reallocate(memory_allocator allocator, void * data, size_t size)
+void * memory_allocator_reallocate(memory_allocator allocator, void * data, size_t size, size_t new_size)
 {
-	void * new_data = allocator->iface->reallocate(allocator->impl, data, size);
+	void * new_data = allocator->iface->reallocate(allocator->impl, data, size, new_size);
 
 	if (new_data == NULL)
 	{

@@ -48,6 +48,7 @@ struct metacall_allocator_nginx_type
 {
 	void * pool;
 	void * (*palloc)(void *, size_t);
+	void * (*pcopy)(void *, const void *, size_t);
 	int (*pfree)(void *, void *);
 };
 
@@ -94,12 +95,15 @@ METACALL_API void * metacall_allocator_alloc(void * allocator, size_t size);
 *    Original pointer to data
 *
 *  @param[in] size
+*    Original size in bytes
+*
+*  @param[in] new_size
 *    New size in bytes to be reallocated
 *
 *  @return
 *    Pointer to new reallocated data on success, null otherwise
 */
-METACALL_API void * metacall_allocator_realloc(void * allocator, void * data, size_t size);
+METACALL_API void * metacall_allocator_realloc(void * allocator, void * data, size_t size, size_t new_size);
 
 /**
 *  @brief

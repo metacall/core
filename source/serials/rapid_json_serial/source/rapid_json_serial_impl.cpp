@@ -94,7 +94,7 @@ public:
 
 		data_ptr = reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(data) - sizeof(memory_allocator));
 
-		new_data = memory_allocator_reallocate(allocator, data_ptr, new_size);
+		new_data = memory_allocator_reallocate(allocator, data_ptr, size, new_size);
 
 		return reinterpret_cast<void *>(reinterpret_cast<uintptr_t>(new_data) + sizeof(memory_allocator));
 	}

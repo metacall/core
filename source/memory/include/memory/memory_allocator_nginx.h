@@ -22,7 +22,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-MEMORY_API memory_allocator memory_allocator_nginx(void * pool, memory_allocator_nginx_impl_palloc palloc, memory_allocator_nginx_impl_pfree pfree);
+MEMORY_API memory_allocator memory_allocator_nginx(void * pool, memory_allocator_nginx_impl_palloc palloc, memory_allocator_nginx_impl_pcopy pcopy, memory_allocator_nginx_impl_pfree pfree);
 
 #ifdef __cplusplus
 }
