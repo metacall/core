@@ -33,6 +33,10 @@ static signature_node signature_at(signature s, size_t index);
 
 static value signature_metadata_return(signature s);
 
+static value signature_metadata_args_map_name(const char * name);
+
+static value signature_metadata_args_map_type(const char * type);
+
 static value signature_metadata_args_map(signature s);
 
 static value signature_metadata_args(signature s);
@@ -208,6 +212,74 @@ value signature_metadata_return(signature s)
 	return ret;
 }
 
+value signature_metadata_args_map_name(const char * name)
+{
+	static const char name_str[] = "name";
+
+	value * v_array, v = value_create_array(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_array = value_to_array(v);
+
+	v_array[0] = value_create_string(name_str, sizeof(name_str) - 1);
+
+	if (v_array[0] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	v_array[1] = value_create_string(name, strlen(name));
+
+	if (v_array[1] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	return v;
+}
+
+value signature_metadata_args_map_type(const char * type)
+{
+	static const char type_str[] = "type";
+
+	value * v_array, v = value_create_array(NULL, 2);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_array = value_to_array(v);
+
+	v_array[0] = value_create_string(type_str, sizeof(type_str) - 1);
+
+	if (v_array[0] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	v_array[1] = value_create_string(type, strlen(type));
+
+	if (v_array[1] == NULL)
+	{
+		value_type_destroy(v);
+
+		return NULL;
+	}
+
+	return v;
+}
+
 value signature_metadata_args_map(signature s)
 {
 	value args = value_create_array(NULL, s->count);
@@ -219,7 +291,7 @@ value signature_metadata_args_map(signature s)
 
 	if (s->count > 0)
 	{
-		value * args_map = value_to_map(args);
+		value * args_array = value_to_array(args);
 
 		size_t index;
 
@@ -229,20 +301,20 @@ value signature_metadata_args_map(signature s)
 
 			const char * type_str = node->t != NULL ? type_name(node->t) : "";
 
-			value * args_map_ptr, * args_map_array;
+			value * args_map_ptr;
 
-			args_map[index] = value_create_map(NULL, 1);
+			args_array[index] = value_create_map(NULL, 2);
 
-			if (args_map[index] == NULL)
+			if (args_array[index] == NULL)
 			{
 				value_type_destroy(args);
 
 				return NULL;
 			}
 
-			args_map_ptr = value_to_map(args_map[index]);
+			args_map_ptr = value_to_map(args_array[index]);
 
-			args_map_ptr[0] = value_create_array(NULL, 2);
+			args_map_ptr[0] = signature_metadata_args_map_name(node->name);
 
 			if (args_map_ptr[0] == NULL)
 			{
@@ -251,20 +323,9 @@ value signature_metadata_args_map(signature s)
 				return NULL;
 			}
 
-			args_map_array = value_to_array(args_map_ptr[0]);
+			args_map_ptr[1] = signature_metadata_args_map_type(type_str);
 
-			args_map_array[0] = value_create_string(node->name, strlen(node->name));
-
-			if (args_map_array[0] == NULL)
-			{
-				value_type_destroy(args);
-
-				return NULL;
-			}
-
-			args_map_array[1] = value_create_string(type_str, strlen(type_str));
-
-			if (args_map_array[1] == NULL)
+			if (args_map_ptr[1] == NULL)
 			{
 				value_type_destroy(args);
 

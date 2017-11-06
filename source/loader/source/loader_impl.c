@@ -195,11 +195,13 @@ loader_impl loader_impl_create_proxy()
 
 			if (impl->type_info_map != NULL)
 			{
-				impl->ctx = context_create(LOADER_HOST_PROXY_NAME);
+				static char loader_host_proxy_name[] = LOADER_HOST_PROXY_NAME;
+
+				impl->ctx = context_create(loader_host_proxy_name);
 
 				if (impl->ctx != NULL)
 				{
-					strncpy(impl->tag, LOADER_HOST_PROXY_NAME, LOADER_NAMING_TAG_SIZE);
+					strncpy(impl->tag, loader_host_proxy_name, LOADER_NAMING_TAG_SIZE);
 
 					return impl;
 				}
