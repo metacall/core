@@ -17,7 +17,7 @@ extern "C" {
 
 #define LOADER_NAMING_PATH_SIZE			0x01FF
 #define LOADER_NAMING_NAME_SIZE			0xFF
-#define LOADER_NAMING_TAG_SIZE			0x10
+#define LOADER_NAMING_TAG_SIZE			0x12
 
 typedef char loader_naming_path[LOADER_NAMING_PATH_SIZE];
 typedef char loader_naming_name[LOADER_NAMING_NAME_SIZE];

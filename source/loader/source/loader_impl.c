@@ -749,7 +749,7 @@ value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)
 
 value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
 {
-	static const char name[] = "handles";
+	static const char name[] = "scope";
 
 	value * v_ptr, v = value_create_array(NULL, 2);
 
