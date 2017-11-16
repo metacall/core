@@ -96,6 +96,27 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_b.json", NULL, allocator));
 
+		/* Print inspect information */
+		{
+			size_t size = 0;
+
+			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+			void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+			char * inspect_str = metacall_inspect(&size, allocator);
+
+			EXPECT_NE((char *) NULL, (char *) inspect_str);
+
+			EXPECT_GT((size_t) size, (size_t) 0);
+
+			std::cout << inspect_str << std::endl;
+
+			metacall_allocator_free(allocator, inspect_str);
+
+			metacall_allocator_destroy(allocator);
+		}
+
 		ret = metacall("s_multiply", 5, 15);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
