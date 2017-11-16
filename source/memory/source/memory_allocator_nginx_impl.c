@@ -104,7 +104,7 @@ void * memory_allocator_nginx_reallocate(memory_allocator_impl impl, void * data
 		nginx_impl->pcopy(new_data, data, new_size);
 	}
 
-	nginx_impl->pfree(nginx_impl->pool, data);
+	(void)nginx_impl->pfree(nginx_impl->pool, data);
 
 	return new_data;
 }
@@ -113,10 +113,7 @@ void memory_allocator_nginx_deallocate(memory_allocator_impl impl, void * data)
 {
 	memory_allocator_nginx_impl nginx_impl = (memory_allocator_nginx_impl)impl;
 
-	if (nginx_impl->pfree(nginx_impl->pool, data) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NginX memory allocator deallocation (pool: %p, data: %p)", nginx_impl->pool, data);
-	}
+	(void)nginx_impl->pfree(nginx_impl->pool, data);
 }
 
 void memory_allocator_nginx_destroy(memory_allocator_impl impl)
@@ -127,8 +124,5 @@ void memory_allocator_nginx_destroy(memory_allocator_impl impl)
 
 	memory_allocator_nginx_impl_pfree pfree = nginx_impl->pfree;
 
-	if (pfree(pool, nginx_impl) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NginX memory allocator destruction (pool: %p)", pool);
-	}
+	(void)pfree(pool, nginx_impl);
 }
