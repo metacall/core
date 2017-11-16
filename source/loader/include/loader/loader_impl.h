@@ -24,7 +24,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-LOADER_API loader_impl loader_impl_create(const char * path, loader_naming_tag tag, loader_host host);
+LOADER_API loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, loader_host host);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
 

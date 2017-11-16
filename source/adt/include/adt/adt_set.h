@@ -70,6 +70,8 @@ ADT_API void set_iterate(set s, set_cb_iterate iterate_cb, set_cb_iterate_args a
 
 ADT_API int set_append(set dest, set src);
 
+ADT_API int set_disjoint(set dest, set src);
+
 ADT_API int set_clear(set s);
 
 ADT_API void set_destroy(set s);

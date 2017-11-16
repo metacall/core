@@ -16,7 +16,7 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
-#include <adt/adt_hash_map.h>
+#include <adt/adt_set.h>
 
 #include <environment/environment_variable_path.h>
 
@@ -53,7 +53,7 @@ typedef struct loader_metadata_cb_iterator_type * loader_metadata_cb_iterator;
 
 struct loader_type
 {
-	hash_map impl_map;
+	set impl_map;
 	char * library_path;
 	char * script_path;
 };
@@ -83,15 +83,15 @@ static value loader_register_invoke_proxy(function func, function_impl func_impl
 
 static void loader_register_destroy_proxy(function func, function_impl func_impl);
 
-static loader_impl loader_create_impl(const loader_naming_tag extension);
+static loader_impl loader_create_impl(const loader_naming_tag tag);
 
-static int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int loader_get_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static value loader_metadata_impl(loader_impl impl);
 
-static int loader_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int loader_unload_impl_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Methods -- */
 
@@ -111,7 +111,7 @@ void loader_initialize()
 
 	if (l->impl_map == NULL)
 	{
-		l->impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+		l->impl_map = set_create(&hash_callback_str, &comparable_callback_str);
 	}
 
 	if (l->library_path == NULL)
@@ -132,7 +132,7 @@ void loader_initialize()
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->script_path);
 	}
 
-	if (hash_map_get(l->impl_map, (hash_map_key)LOADER_HOST_PROXY_NAME) == NULL)
+	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
 		loader_impl proxy = loader_impl_create_proxy();
 
@@ -141,7 +141,7 @@ void loader_initialize()
 			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy initialization");
 		}
 
-		if (hash_map_insert(l->impl_map, (hash_map_key)LOADER_HOST_PROXY_NAME, proxy) != 0)
+		if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
 
@@ -236,11 +236,11 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 	host.log = log_instance();
 
-	impl = loader_impl_create(l->library_path, (const hash_map_key)tag, &host);
+	impl = loader_impl_create(l->library_path, tag, &host);
 
 	if (impl != NULL)
 	{
-		if (hash_map_insert(l->impl_map, (hash_map_key)tag, impl) == 0)
+		if (set_insert(l->impl_map, (set_key)loader_impl_tag(impl), impl) == 0)
 		{
 			if (loader_impl_execution_path(impl, ".") == 0)
 			{
@@ -257,7 +257,7 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 				}
 			}
 
-			hash_map_remove(l->impl_map, (hash_map_key)tag);
+			(void)set_remove(l->impl_map, (set_key)loader_impl_tag(impl));
 		}
 
 		loader_impl_destroy(impl);
@@ -270,7 +270,7 @@ loader_impl loader_get_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl = (loader_impl)hash_map_get(l->impl_map, (const hash_map_key)tag);
+	loader_impl impl = (loader_impl)set_get(l->impl_map, (const set_key)tag);
 
 	if (impl == NULL)
 	{
@@ -504,9 +504,12 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 	return 0;
 }
 
-int loader_get_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_get_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && val != NULL && args != NULL)
+	(void)s;
+	(void)key;
+
+	if (val != NULL && args != NULL)
 	{
 		loader_impl impl = val;
 
@@ -535,16 +538,12 @@ loader_data loader_get(const char * name)
 
 	if (l->impl_map != NULL)
 	{
-		hash_map_cb_iterate_args args;
-
 		struct loader_get_iterator_args_type get_args;
 
 		get_args.name = name;
 		get_args.obj = NULL;
 
-		args = (loader_get_iterator_args)&get_args;
-
-		hash_map_iterate(l->impl_map, &loader_get_cb_iterate, args);
+		set_iterate(l->impl_map, &loader_get_cb_iterate, (set_cb_iterate_args)&get_args);
 
 		if (get_args.obj != NULL)
 		{
@@ -599,11 +598,11 @@ value loader_metadata_impl(loader_impl impl)
 	return v;
 }
 
-int loader_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
 	loader_metadata_cb_iterator metadata_iterator = (loader_metadata_cb_iterator)args;
 
-	(void)map;
+	(void)s;
 	(void)key;
 
 	metadata_iterator->values[metadata_iterator->iterator] = loader_metadata_impl((loader_impl)val);
@@ -629,7 +628,7 @@ value loader_metadata()
 		return NULL;
 	}
 
-	v = value_create_map(NULL, hash_map_size(l->impl_map));
+	v = value_create_map(NULL, set_size(l->impl_map));
 
 	if (v == NULL)
 	{
@@ -639,14 +638,18 @@ value loader_metadata()
 	metadata_iterator.iterator = 0;
 	metadata_iterator.values = value_to_map(v);
 
-	hash_map_iterate(l->impl_map, &loader_metadata_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
+	set_iterate(l->impl_map, &loader_metadata_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
 
 	return v;
 }
 
-int loader_unload_impl_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_unload_impl_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && val != NULL && args == NULL)
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
 	{
 		loader_impl impl = val;
 
@@ -669,9 +672,9 @@ int loader_unload()
 
 	if (l->impl_map != NULL)
 	{
-		hash_map_iterate(l->impl_map, &loader_unload_impl_map_cb_iterate, NULL);
+		set_iterate(l->impl_map, &loader_unload_impl_map_cb_iterate, NULL);
 
-		if (hash_map_clear(l->impl_map) != 0)
+		if (set_clear(l->impl_map) != 0)
 		{
 			#ifdef LOADER_LAZY
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
@@ -698,7 +701,7 @@ void loader_destroy()
 
 	if (l->impl_map != NULL)
 	{
-		hash_map_destroy(l->impl_map);
+		set_destroy(l->impl_map);
 
 		l->impl_map = NULL;
 	}

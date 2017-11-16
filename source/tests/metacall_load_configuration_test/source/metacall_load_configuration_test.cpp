@@ -39,7 +39,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test.json", NULL, allocator));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_a.json", NULL, allocator));
 
 		ret = metacall("multiply", 5, 15);
 
@@ -91,6 +91,61 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
+
+		metacall_value_destroy(ret);
+
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_b.json", NULL, allocator));
+
+		ret = metacall("s_multiply", 5, 15);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
+
+		metacall_value_destroy(ret);
+
+		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
+		{
+			ret = metacall("s_multiply", 7, iterator);
+
+			EXPECT_NE((void *) NULL, (void *) ret);
+
+			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
+
+			metacall_value_destroy(ret);
+		}
+
+		ret = metacall("s_divide", 64.0, 2.0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 32.0);
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("s_sum", 1000, 3500);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)4500);
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("s_sum", 3, 4);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
+
+		metacall_value_destroy(ret);
+
+		EXPECT_EQ((void *)NULL, (void *)metacall("s_hello"));
+
+		ret = metacall("s_strcat", "Hello ", "Universe");
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello Universe"));
 
 		metacall_value_destroy(ret);
 	}

@@ -13,7 +13,7 @@
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_context.h>
 
-#include <adt/adt_hash_map.h>
+#include <adt/adt_set.h>
 
 #include <dynlink/dynlink.h>
 
@@ -50,10 +50,10 @@ struct loader_impl_type
 	loader_naming_tag tag;
 	dynlink handle;
 	loader_impl_interface_singleton singleton;
-	hash_map handle_impl_map;
+	set handle_impl_map;
 	loader_impl_data data;
 	context ctx;
-	hash_map type_info_map;
+	set type_info_map;
 };
 
 struct loader_handle_impl_type
@@ -72,13 +72,13 @@ struct loader_impl_metadata_cb_iterator_type
 
 /* -- Private Methods -- */
 
-static dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag);
+static dynlink loader_impl_dynlink_load(const char * path, const loader_naming_tag tag);
 
-static int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr);
+static int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr);
 
 static void loader_impl_dynlink_destroy(loader_impl impl);
 
-static int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag);
+static int loader_impl_create_singleton(loader_impl impl, const char * path, const loader_naming_tag tag);
 
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name);
 
@@ -90,17 +90,17 @@ static value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
 
 static value loader_impl_metadata_handle(loader_handle_impl handle_impl);
 
-static int loader_impl_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int loader_impl_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 
-static int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Methods -- */
 
-dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
+dynlink loader_impl_dynlink_load(const char * path, const loader_naming_tag tag)
 {
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		const char loader_dynlink_suffix[] = "_loaderd";
@@ -125,7 +125,7 @@ dynlink loader_impl_dynlink_load(const char * path, loader_naming_tag tag)
 	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-int loader_impl_dynlink_symbol(loader_impl impl, loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr)
+int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr)
 {
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
@@ -155,7 +155,7 @@ void loader_impl_dynlink_destroy(loader_impl impl)
 	dynlink_unload(impl->handle);
 }
 
-int loader_impl_create_singleton(loader_impl impl, const char * path, loader_naming_tag tag)
+int loader_impl_create_singleton(loader_impl impl, const char * path, const loader_naming_tag tag)
 {
 	impl->handle = loader_impl_dynlink_load(path, tag);
 
@@ -187,11 +187,11 @@ loader_impl loader_impl_create_proxy()
 
 	if (impl != NULL)
 	{
-		impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+		impl->handle_impl_map = set_create(&hash_callback_str, &comparable_callback_str);
 
 		if (impl->handle_impl_map != NULL)
 		{
-			impl->type_info_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+			impl->type_info_map = set_create(&hash_callback_str, &comparable_callback_str);
 
 			if (impl->type_info_map != NULL)
 			{
@@ -206,10 +206,10 @@ loader_impl loader_impl_create_proxy()
 					return impl;
 				}
 
-				hash_map_destroy(impl->type_info_map);
+				set_destroy(impl->type_info_map);
 			}
 
-			hash_map_destroy(impl->handle_impl_map);
+			set_destroy(impl->handle_impl_map);
 		}
 	}
 
@@ -250,7 +250,7 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 	}
 }
 
-loader_impl loader_impl_create(const char * path, loader_naming_tag tag, loader_host host)
+loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, loader_host host)
 {
 	if (tag != NULL)
 	{
@@ -263,11 +263,11 @@ loader_impl loader_impl_create(const char * path, loader_naming_tag tag, loader_
 
 		if (loader_impl_create_singleton(impl, path, tag) == 0)
 		{
-			impl->handle_impl_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+			impl->handle_impl_map = set_create(&hash_callback_str, &comparable_callback_str);
 
 			if (impl->handle_impl_map != NULL)
 			{
-				impl->type_info_map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+				impl->type_info_map = set_create(&hash_callback_str, &comparable_callback_str);
 
 				if (impl->type_info_map != NULL)
 				{
@@ -302,10 +302,10 @@ loader_impl loader_impl_create(const char * path, loader_naming_tag tag, loader_
 						context_destroy(impl->ctx);
 					}
 
-					hash_map_destroy(impl->type_info_map);
+					set_destroy(impl->type_info_map);
 				}
 
-				hash_map_destroy(impl->handle_impl_map);
+				set_destroy(impl->handle_impl_map);
 			}
 		}
 
@@ -359,7 +359,7 @@ type loader_impl_type(loader_impl impl, const char * name)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
-		return (type)hash_map_get(impl->type_info_map, (const hash_map_key)name);
+		return (type)set_get(impl->type_info_map, (const set_key)name);
 	}
 
 	return NULL;
@@ -369,7 +369,7 @@ int loader_impl_type_define(loader_impl impl, const char * name, type t)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
-		return hash_map_insert(impl->type_info_map, (const hash_map_key)name, (hash_map_value)t);
+		return set_insert(impl->type_info_map, (const set_key)name, (set_value)t);
 	}
 
 	return 1;
@@ -488,7 +488,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 				if (handle_impl != NULL)
 				{
-					if (hash_map_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
 					{
 						log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle inserted");
 
@@ -582,7 +582,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 
 				if (handle_impl != NULL)
 				{
-					if (hash_map_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
@@ -641,7 +641,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 				if (handle_impl != NULL)
 				{
-					if (hash_map_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
@@ -684,7 +684,7 @@ void * loader_impl_get_handle(loader_impl impl, const char * name)
 {
 	if (impl != NULL && name != NULL)
 	{
-		return (void *)hash_map_get(impl->handle_impl_map, (hash_map_key)name);
+		return (void *)set_get(impl->handle_impl_map, (set_key)name);
 	}
 
 	return NULL;
@@ -705,7 +705,7 @@ int loader_impl_clear(void * handle)
 
 		loader_impl impl = handle_impl->impl;
 
-		int result = !(hash_map_remove(impl->handle_impl_map, (hash_map_key)(handle_impl->name)) == handle_impl);
+		int result = !(set_remove(impl->handle_impl_map, (set_key)(handle_impl->name)) == handle_impl);
 
 		loader_impl_destroy_handle(handle_impl);
 
@@ -815,11 +815,11 @@ value loader_impl_metadata_handle(loader_handle_impl handle_impl)
 	return v;
 }
 
-int loader_impl_metadata_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_impl_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
 	loader_impl_metadata_cb_iterator metadata_iterator = (loader_impl_metadata_cb_iterator)args;
 
-	(void)map;
+	(void)s;
 	(void)key;
 
 	metadata_iterator->values[metadata_iterator->iterator] = loader_impl_metadata_handle((loader_handle_impl)val);
@@ -836,7 +836,7 @@ value loader_impl_metadata(loader_impl impl)
 {
 	struct loader_impl_metadata_cb_iterator_type metadata_iterator;
 
-	value v = value_create_array(NULL, hash_map_size(impl->handle_impl_map));
+	value v = value_create_array(NULL, set_size(impl->handle_impl_map));
 
 	if (v == NULL)
 	{
@@ -846,14 +846,18 @@ value loader_impl_metadata(loader_impl impl)
 	metadata_iterator.iterator = 0;
 	metadata_iterator.values = value_to_array(v);
 
-	hash_map_iterate(impl->handle_impl_map, &loader_impl_metadata_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
+	set_iterate(impl->handle_impl_map, &loader_impl_metadata_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
 
 	return v;
 }
 
-int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && val != NULL && args == NULL)
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
 	{
 		type t = val;
 
@@ -865,9 +869,13 @@ int loader_impl_destroy_type_map_cb_iterate(hash_map map, hash_map_key key, hash
 	return 1;
 }
 
-int loader_impl_destroy_handle_map_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && val != NULL && args == NULL)
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
 	{
 		loader_handle_impl handle_impl = val;
 
@@ -885,18 +893,18 @@ void loader_impl_destroy(loader_impl impl)
 	{
 		loader_impl_interface interface_impl = loader_impl_symbol(impl);
 
-		hash_map_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
+		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
 
-		hash_map_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
+		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
 
-		hash_map_destroy(impl->type_info_map);
+		set_destroy(impl->type_info_map);
 
 		if (interface_impl != NULL && interface_impl->destroy(impl) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", impl->tag, interface_impl->destroy);
 		}
 
-		hash_map_destroy(impl->handle_impl_map);
+		set_destroy(impl->handle_impl_map);
 
 		context_destroy(impl->ctx);
 

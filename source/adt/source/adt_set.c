@@ -579,6 +579,27 @@ int set_append(set dest, set src)
 	return 0;
 }
 
+int set_disjoint_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
+{
+	set dest = (set)args;
+
+	set_value deleted = set_remove(dest, key);
+
+	(void)s;
+
+	return !(deleted == value);
+}
+
+int set_disjoint(set dest, set src)
+{
+	set_cb_iterate_args args = (set_cb_iterate_args)dest;
+
+	set_iterate(src, &set_disjoint_cb_iterate, args);
+
+	return 0;
+}
+
+
 int set_clear(set s)
 {
 	if (s != NULL)

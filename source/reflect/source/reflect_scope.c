@@ -9,7 +9,7 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_function.h>
 
-#include <adt/adt_hash_map.h>
+#include <adt/adt_set.h>
 #include <adt/adt_vector.h>
 
 #include <log/log.h>
@@ -24,7 +24,7 @@ typedef struct scope_metadata_array_cb_iterator_type * scope_metadata_array_cb_i
 struct scope_type
 {
 	char * name;			/**< Scope name */
-	hash_map map;			/**< Map of scope objects indexed by name string */
+	set objects;				/**< Map of scope objects indexed by name string */
 	vector call_stack;		/**< Scope call stack */
 
 };
@@ -35,7 +35,7 @@ struct scope_metadata_array_cb_iterator_type
 	value * values;
 };
 
-static int scope_metadata_array_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static value scope_metadata_array(scope sp);
 
@@ -43,7 +43,7 @@ static value scope_metadata_map(scope sp);
 
 static value scope_metadata_name(scope sp);
 
-static int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 scope scope_create(const char * name)
 {
@@ -70,9 +70,9 @@ scope scope_create(const char * name)
 
 			memcpy(sp->name, name, sp_name_size);
 
-			sp->map = hash_map_create(&hash_callback_str, &comparable_callback_str);
+			sp->objects = set_create(&hash_callback_str, &comparable_callback_str);
 
-			if (sp->map == NULL)
+			if (sp->objects == NULL)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Scope create map bad allocation");
 
@@ -89,7 +89,7 @@ scope scope_create(const char * name)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Scope create call stack bad allocation");
 
-				hash_map_destroy(sp->map);
+				set_destroy(sp->objects);
 
 				free(sp->name);
 
@@ -104,7 +104,7 @@ scope scope_create(const char * name)
 
 				vector_destroy(sp->call_stack);
 
-				hash_map_destroy(sp->map);
+				set_destroy(sp->objects);
 
 				free(sp->name);
 
@@ -143,7 +143,7 @@ size_t scope_size(scope sp)
 {
 	if (sp != NULL)
 	{
-		return hash_map_size(sp->map);
+		return set_size(sp->objects);
 	}
 
 	return 0;
@@ -154,18 +154,18 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	if (sp != NULL && key != NULL && obj != NULL)
 	{
 		/* TODO: Support for other scope objects (e.g: class) */
-		return hash_map_insert(sp->map, (hash_map_key)key, (hash_map_value)obj);
+		return set_insert(sp->objects, (set_key)key, (set_value)obj);
 	}
 
 	return 1;
 }
 
-int scope_metadata_array_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
 	scope_metadata_array_cb_iterator metadata_iterator = (scope_metadata_array_cb_iterator)args;
 
 	/* TODO: Support to other scope objects (e.g: class) */
-	(void)map;
+	(void)s;
 	(void)key;
 
 	metadata_iterator->values[metadata_iterator->iterator] = function_metadata((function)val);
@@ -193,7 +193,7 @@ value scope_metadata_array(scope sp)
 
 	metadata_iterator.values = value_to_array(v);
 
-	hash_map_iterate(sp->map, &scope_metadata_array_cb_iterate, (hash_map_cb_iterate_args)&metadata_iterator);
+	set_iterate(sp->objects, &scope_metadata_array_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
 
 	return v;
 }
@@ -291,7 +291,7 @@ scope_object scope_get(scope sp, const char * key)
 {
 	if (sp != NULL && key != NULL)
 	{
-		return (scope_object)hash_map_get(sp->map, (hash_map_key)key);
+		return (scope_object)set_get(sp->objects, (set_key)key);
 	}
 
 	return NULL;
@@ -301,7 +301,7 @@ scope_object scope_undef(scope sp, const char * key)
 {
 	if (sp != NULL && key != NULL)
 	{
-		return (scope_object)hash_map_remove(sp->map, (hash_map_key)key);
+		return (scope_object)set_remove(sp->objects, (set_key)key);
 	}
 
 	return NULL;
@@ -309,12 +309,12 @@ scope_object scope_undef(scope sp, const char * key)
 
 int scope_append(scope dest, scope src)
 {
-	return hash_map_append(dest->map, src->map);
+	return set_append(dest->objects, src->objects);
 }
 
 int scope_remove(scope dest, scope src)
 {
-	return hash_map_disjoint(dest->map, src->map);
+	return set_disjoint(dest->objects, src->objects);
 }
 
 size_t * scope_stack_return(scope sp)
@@ -435,9 +435,13 @@ int scope_stack_pop(scope sp)
 	return 1;
 }
 
-int scope_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	if (map != NULL && key != NULL && val != NULL && args == NULL)
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
 	{
 		/* TODO: Support for polyphormism */
 
@@ -455,9 +459,9 @@ void scope_destroy(scope sp)
 {
 	if (sp != NULL)
 	{
-		hash_map_iterate(sp->map, &scope_destroy_cb_iterate, NULL);
+		set_iterate(sp->objects, &scope_destroy_cb_iterate, NULL);
 
-		hash_map_destroy(sp->map);
+		set_destroy(sp->objects);
 
 		vector_destroy(sp->call_stack);
 

@@ -12,7 +12,7 @@
 #include <configuration/configuration_object.h>
 #include <configuration/configuration_impl.h>
 
-#include <adt/adt_hash_map.h>
+#include <adt/adt_set.h>
 #include <adt/adt_vector.h>
 
 #include <log/log.h>
@@ -23,7 +23,7 @@
 
 struct configuration_singleton_type
 {
-	hash_map scopes;
+	set scopes;
 	configuration global;
 };
 
@@ -39,7 +39,7 @@ struct configuration_singleton_type
 */
 static configuration_singleton configuration_singleton_instance(void);
 
-static int configuration_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args);
+static int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Methods -- */
 
@@ -63,7 +63,7 @@ int configuration_singleton_initialize(configuration global)
 		return 0;
 	}
 
-	singleton->scopes = hash_map_create(&hash_callback_str, &comparable_callback_str);
+	singleton->scopes = set_create(&hash_callback_str, &comparable_callback_str);
 
 	if (singleton->scopes == NULL)
 	{
@@ -76,7 +76,7 @@ int configuration_singleton_initialize(configuration global)
 
 	singleton->global = global;
 
-	if (hash_map_insert(singleton->scopes, (const hash_map_key)configuration_object_name(singleton->global), singleton->global) != 0)
+	if (set_insert(singleton->scopes, (const set_key)configuration_object_name(singleton->global), singleton->global) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration singleton global scope map insertion");
 
@@ -92,31 +92,31 @@ int configuration_singleton_register(configuration config)
 {
 	configuration_singleton singleton = configuration_singleton_instance();
 
-	if (hash_map_get(singleton->scopes, (const hash_map_key)configuration_object_name(config)) != NULL)
+	if (set_get(singleton->scopes, (const set_key)configuration_object_name(config)) != NULL)
 	{
 		return 1;
 	}
 
-	return hash_map_insert(singleton->scopes, (const hash_map_key)configuration_object_name(config), config);
+	return set_insert(singleton->scopes, (const set_key)configuration_object_name(config), config);
 }
 
 configuration configuration_singleton_get(const char * name)
 {
 	configuration_singleton singleton = configuration_singleton_instance();
 
-	return hash_map_get(singleton->scopes, (const hash_map_key)name);
+	return set_get(singleton->scopes, (const set_key)name);
 }
 
 int configuration_singleton_clear(configuration config)
 {
 	configuration_singleton singleton = configuration_singleton_instance();
 
-	if (hash_map_get(singleton->scopes, (const hash_map_key)configuration_object_name(config)) == NULL)
+	if (set_get(singleton->scopes, (const set_key)configuration_object_name(config)) == NULL)
 	{
 		return 0;
 	}
 
-	if (hash_map_remove(singleton->scopes, (const hash_map_key)configuration_object_name(config)) == NULL)
+	if (set_remove(singleton->scopes, (const set_key)configuration_object_name(config)) == NULL)
 	{
 		return 1;
 	}
@@ -124,9 +124,9 @@ int configuration_singleton_clear(configuration config)
 	return 0;
 }
 
-int configuration_singleton_destroy_cb_iterate(hash_map map, hash_map_key key, hash_map_value val, hash_map_cb_iterate_args args)
+int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
-	(void)map;
+	(void)s;
 	(void)key;
 	(void)args;
 
@@ -148,9 +148,9 @@ void configuration_singleton_destroy()
 
 	if (singleton->scopes != NULL)
 	{
-		hash_map_iterate(singleton->scopes, &configuration_singleton_destroy_cb_iterate, NULL);
+		set_iterate(singleton->scopes, &configuration_singleton_destroy_cb_iterate, NULL);
 
-		hash_map_destroy(singleton->scopes);
+		set_destroy(singleton->scopes);
 
 		singleton->scopes = NULL;
 	}
