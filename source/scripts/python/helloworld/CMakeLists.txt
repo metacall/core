@@ -2,4 +2,4 @@
 # Configure python project
 #
 
-py_project(sample 0.1.0)
+py_project(helloworld 0.1.0)

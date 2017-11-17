@@ -943,10 +943,9 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject * module, context 
 
 			while (PyDict_Next(module_dict, &position, &key, &value))
 			{
-				char * func_name = PyUnicode_AsUTF8(key);
-
 				if (PyCallable_Check(value))
 				{
+					char * func_name = PyUnicode_AsUTF8(key);
 
 					int discover_args_count = py_loader_impl_discover_func_args_count(value);
 
