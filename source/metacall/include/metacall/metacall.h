@@ -196,6 +196,18 @@ METACALL_API void * metacall_function(const char * name);
 
 /**
 *  @brief
+*    Get minimun mumber of arguments accepted by function @func
+*
+*  @param[in] func
+*    Function reference
+*
+*  @return
+*    Return mumber of arguments
+*/
+METACALL_API size_t metacall_function_size(void * func);
+
+/**
+*  @brief
 *    Get the handle by @name
 *
 *  @param[in] tag

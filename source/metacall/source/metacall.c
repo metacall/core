@@ -345,6 +345,20 @@ void * metacall_function(const char * name)
 	return (void *)loader_get(name);
 }
 
+size_t metacall_function_size(void * func)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		return signature_count(s);
+	}
+
+	return 0;
+}
+
 void * metacall_handle(const char * tag, const char * name)
 {
 	return (void *)loader_get_handle(tag, name);
