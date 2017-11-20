@@ -43,9 +43,13 @@ typedef struct loader_impl_py_type
 	PyObject * builtins_module;
 	PyObject * traceback_module;
 	PyObject * traceback_format_exception;
-	PyObject * gc_module;
-	PyObject * gc_debug_leak;
-	PyObject * gc_debug_stats;
+
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		PyObject * gc_module;
+		PyObject * gc_set_debug;
+		PyObject * gc_debug_leak;
+		PyObject * gc_debug_stats;
+	#endif
 
 } * loader_impl_py;
 
@@ -614,15 +618,25 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 
 	if (py_impl->gc_module != NULL)
 	{
-		py_impl->gc_debug_leak = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_LEAK");
-		py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
+		py_impl->gc_set_debug = PyObject_GetAttrString(py_impl->gc_module, "set_debug");
 
-		if (py_impl->gc_debug_leak != NULL && py_impl->gc_debug_stats != NULL)
+		if (py_impl->gc_set_debug != NULL)
 		{
-			Py_INCREF(py_impl->gc_debug_leak);
-			Py_INCREF(py_impl->gc_debug_stats);
+			if (PyCallable_Check(py_impl->gc_set_debug))
+			{
+				py_impl->gc_debug_leak = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_LEAK");
+				py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
 
-			return 0;
+				if (py_impl->gc_debug_leak != NULL && py_impl->gc_debug_stats != NULL)
+				{
+					Py_INCREF(py_impl->gc_debug_leak);
+					Py_INCREF(py_impl->gc_debug_stats);
+
+					return 0;
+				}
+			}
+
+			Py_XDECREF(py_impl->gc_set_debug);
 		}
 
 		Py_DECREF(py_impl->gc_module);
@@ -673,7 +687,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		if (py_loader_impl_initialize_gc(py_impl) != 0)
 		{
-			PyObject_CallMethod(py_impl->gc_module, "set_debug", "i",  0xFF /* py_impl->gc_debug_stats | py_impl->gc_debug_leak */);
+			PyObject_CallMethodObjArgs(py_impl->gc_module, py_impl->gc_set_debug, py_impl->gc_debug_leak /* py_impl->gc_debug_stats */);
 		}
 		else
 		{
@@ -1239,6 +1253,8 @@ int py_loader_impl_destroy(loader_impl impl)
 		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		{
 			py_loader_impl_gc_print(py_impl);
+
+			Py_DECREF(py_impl->gc_set_debug);
 
 			Py_DECREF(py_impl->gc_debug_leak);
 
