@@ -601,48 +601,58 @@ int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl
 
 int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 {
-	PyObject * module_name = PyUnicode_DecodeFSDefault("gc");
-
-	py_impl->gc_module = PyImport_Import(module_name);
-
-	if (PyErr_Occurred() != NULL)
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	{
-		py_loader_impl_error_print(py_impl);
+		PyObject * module_name = PyUnicode_DecodeFSDefault("gc");
+
+		py_impl->gc_module = PyImport_Import(module_name);
+
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+
+			Py_DECREF(module_name);
+
+			return 1;
+		}
 
 		Py_DECREF(module_name);
 
-		return 1;
-	}
-
-	Py_DECREF(module_name);
-
-	if (py_impl->gc_module != NULL)
-	{
-		py_impl->gc_set_debug = PyObject_GetAttrString(py_impl->gc_module, "set_debug");
-
-		if (py_impl->gc_set_debug != NULL)
+		if (py_impl->gc_module != NULL)
 		{
-			if (PyCallable_Check(py_impl->gc_set_debug))
+			py_impl->gc_set_debug = PyObject_GetAttrString(py_impl->gc_module, "set_debug");
+
+			if (py_impl->gc_set_debug != NULL)
 			{
-				py_impl->gc_debug_leak = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_LEAK");
-				py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
-
-				if (py_impl->gc_debug_leak != NULL && py_impl->gc_debug_stats != NULL)
+				if (PyCallable_Check(py_impl->gc_set_debug))
 				{
-					Py_INCREF(py_impl->gc_debug_leak);
-					Py_INCREF(py_impl->gc_debug_stats);
+					py_impl->gc_debug_leak = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_LEAK");
+					py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
 
-					return 0;
+					if (py_impl->gc_debug_leak != NULL && py_impl->gc_debug_stats != NULL)
+					{
+						Py_INCREF(py_impl->gc_debug_leak);
+						Py_INCREF(py_impl->gc_debug_stats);
+
+						return 0;
+					}
 				}
+
+				Py_XDECREF(py_impl->gc_set_debug);
 			}
 
-			Py_XDECREF(py_impl->gc_set_debug);
+			Py_DECREF(py_impl->gc_module);
 		}
 
-		Py_DECREF(py_impl->gc_module);
+		return 1;
 	}
+	#else
+	{
+		(void)py_impl;
 
-	return 1;
+		return 1;
+	}
+	#endif
 }
 
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
@@ -1204,30 +1214,38 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 void py_loader_impl_gc_print(loader_impl_py py_impl)
 {
-	static const char garbage_format_str[] = "Python Garbage Collector:\n%s";
-	static const char separator_str[] = "\n";
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	{
+		static const char garbage_format_str[] = "Python Garbage Collector:\n%s";
+		static const char separator_str[] = "\n";
 
-	PyObject * garbage_list, * separator, * garbage_str_obj;
+		PyObject * garbage_list, * separator, * garbage_str_obj;
 
-	garbage_list = PyObject_GetAttrString(py_impl->gc_module, "garbage");
+		garbage_list = PyObject_GetAttrString(py_impl->gc_module, "garbage");
 
-	#if PY_MAJOR_VERSION == 2
-		separator = PyString_FromString(separator_str);
+		#if PY_MAJOR_VERSION == 2
+			separator = PyString_FromString(separator_str);
 
-		garbage_str_obj = PyString_Join(separator, garbage_list);
+			garbage_str_obj = PyString_Join(separator, garbage_list);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyString_AsString(garbage_str_obj));
-	#elif PY_MAJOR_VERSION == 3
-		separator = PyUnicode_FromString(separator_str);
+			log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyString_AsString(garbage_str_obj));
+		#elif PY_MAJOR_VERSION == 3
+			separator = PyUnicode_FromString(separator_str);
 
-		garbage_str_obj = PyUnicode_Join(separator, garbage_list);
+			garbage_str_obj = PyUnicode_Join(separator, garbage_list);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyUnicode_AsUTF8(garbage_str_obj));
+			log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyUnicode_AsUTF8(garbage_str_obj));
+		#endif
+
+		Py_DECREF(garbage_list);
+		Py_DECREF(separator);
+		Py_DECREF(garbage_str_obj);
+	}
+	#else
+	{
+		(void)py_impl;
+	}
 	#endif
-
-	Py_DECREF(garbage_list);
-	Py_DECREF(separator);
-	Py_DECREF(garbage_str_obj);
 }
 
 int py_loader_impl_destroy(loader_impl impl)
