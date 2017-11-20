@@ -43,10 +43,13 @@ typedef struct loader_impl_py_type
 	PyObject * builtins_module;
 	PyObject * traceback_module;
 	PyObject * traceback_format_exception;
+	PyObject * gc_module;
+	PyObject * gc_debug_leak;
+	PyObject * gc_debug_stats;
 
 } * loader_impl_py;
 
-static void py_loader_impl_error_print(loader_impl impl);
+static void py_loader_impl_error_print(loader_impl_py py_impl);
 
 int type_py_interface_create(type t, type_impl impl)
 {
@@ -249,7 +252,9 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(py_func->impl);
+		loader_impl_py py_impl = loader_impl_get(py_func->impl);
+
+		py_loader_impl_error_print(py_impl);
 	}
 
 	Py_DECREF(tuple_args);
@@ -317,7 +322,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			#if PY_MAJOR_VERSION == 2
 				if (PyString_AsStringAndSize(result, &str, &length) == -1)
 				{
-					/* error */
+					if (PyErr_Occurred() != NULL)
+					{
+						loader_impl_py py_impl = loader_impl_get(py_func->impl);
+
+						py_loader_impl_error_print(py_impl);
+					}
 				}
 			#elif PY_MAJOR_VERSION == 3
 				str = PyUnicode_AsUTF8AndSize(result, &length);
@@ -358,25 +368,25 @@ void function_py_interface_destroy(function func, function_impl impl)
 			(void)func;
 
 			/*
+			PyGILState_STATE gstate;
+
 			signature s = function_signature(func);
 
 			const size_t args_size = signature_count(s);
 
 			size_t iterator;
 
+			gstate = PyGILState_Ensure();
+
 			for (iterator = 0; iterator < args_size; ++iterator)
 			{
 				if (py_func->values[iterator] != NULL)
 				{
-					PyGILState_STATE gstate;
-
-					gstate = PyGILState_Ensure();
-
 					Py_DECREF(py_func->values[iterator]);
-
-					PyGILState_Release(gstate);
 				}
 			}
+
+			PyGILState_Release(gstate);
 			*/
 
 			free(py_func->values);
@@ -403,6 +413,8 @@ function_interface function_py_singleton(void)
 PyObject * py_loader_impl_get_builtin(loader_impl_py py_impl, const char * builtin_name)
 {
 	PyObject * builtin = PyObject_GetAttrString(py_impl->builtins_module, builtin_name);
+
+	Py_XINCREF(builtin);
 
 	if (builtin != NULL && PyType_Check(builtin))
 	{
@@ -444,6 +456,15 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 
 	py_impl->builtins_module = PyImport_Import(module_name);
 
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+
+		Py_DECREF(module_name);
+
+		return 1;
+	}
+
 	Py_DECREF(module_name);
 
 	if (py_impl->builtins_module != NULL)
@@ -478,7 +499,10 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 				type_id_name_pair[index].id,
 				type_id_name_pair[index].name) != 0)
 			{
-				/* error */
+				if (PyErr_Occurred() != NULL)
+				{
+					py_loader_impl_error_print(py_impl);
+				}
 
 				Py_DECREF(py_impl->builtins_module);
 
@@ -498,24 +522,36 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 
 	py_impl->inspect_module = PyImport_Import(module_name);
 
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+
+		Py_DECREF(module_name);
+
+		return 1;
+	}
+
 	Py_DECREF(module_name);
 
 	if (py_impl->inspect_module != NULL)
 	{
 		py_impl->inspect_signature = PyObject_GetAttrString(py_impl->inspect_module, "signature");
 
-		if (py_impl->inspect_signature != NULL && PyCallable_Check(py_impl->inspect_signature))
+		if (py_impl->inspect_signature != NULL)
 		{
-			if (py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
+			if (PyCallable_Check(py_impl->inspect_signature))
 			{
-				return 0;
+				if (py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
+				{
+					return 0;
+				}
 			}
+
+			Py_XDECREF(py_impl->inspect_signature);
 		}
 
-		Py_XDECREF(py_impl->inspect_signature);
+		Py_DECREF(py_impl->inspect_module);
 	}
-
-	Py_DECREF(py_impl->inspect_module);
 
 	return 1;
 }
@@ -528,21 +564,69 @@ int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl
 
 	py_impl->traceback_module = PyImport_Import(module_name);
 
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+
+		Py_DECREF(module_name);
+
+		return 1;
+	}
+
 	Py_DECREF(module_name);
 
 	if (py_impl->traceback_module != NULL)
 	{
 		py_impl->traceback_format_exception = PyObject_GetAttrString(py_impl->traceback_module, "format_exception");
 
-		if (py_impl->traceback_format_exception != NULL && PyCallable_Check(py_impl->traceback_format_exception))
+		if (py_impl->traceback_format_exception != NULL)
 		{
+			if (PyCallable_Check(py_impl->traceback_format_exception))
+			{
+				return 0;
+			}
+
+			Py_XDECREF(py_impl->traceback_format_exception);
+		}
+
+		Py_DECREF(py_impl->traceback_module);
+	}
+
+	return 1;
+}
+
+int py_loader_impl_initialize_gc(loader_impl_py py_impl)
+{
+	PyObject * module_name = PyUnicode_DecodeFSDefault("gc");
+
+	py_impl->gc_module = PyImport_Import(module_name);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+
+		Py_DECREF(module_name);
+
+		return 1;
+	}
+
+	Py_DECREF(module_name);
+
+	if (py_impl->gc_module != NULL)
+	{
+		py_impl->gc_debug_leak = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_LEAK");
+		py_impl->gc_debug_stats = PyDict_GetItemString(PyModule_GetDict(py_impl->gc_module), "DEBUG_STATS");
+
+		if (py_impl->gc_debug_leak != NULL && py_impl->gc_debug_stats != NULL)
+		{
+			Py_INCREF(py_impl->gc_debug_leak);
+			Py_INCREF(py_impl->gc_debug_stats);
+
 			return 0;
 		}
 
-		Py_XDECREF(py_impl->traceback_format_exception);
+		Py_DECREF(py_impl->gc_module);
 	}
-
-	Py_DECREF(py_impl->traceback_module);
 
 	return 1;
 }
@@ -584,6 +668,19 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid traceback module creation");
 	}
+
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	{
+		if (py_loader_impl_initialize_gc(py_impl) != 0)
+		{
+			PyObject_CallMethod(py_impl->gc_module, "set_debug", "i",  0xFF /* py_impl->gc_debug_stats | py_impl->gc_debug_leak */);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid garbage collector module creation");
+		}
+	}
+	#endif
 
 	if (py_loader_impl_initialize_inspect(impl, py_impl) == 0)
 	{
@@ -707,7 +804,9 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 		if (PyErr_Occurred() != NULL || py_handle->modules[iterator] == NULL)
 		{
-			py_loader_impl_error_print(impl);
+			loader_impl_py py_impl = loader_impl_get(impl);
+
+			py_loader_impl_error_print(py_impl);
 
 			PyGILState_Release(gstate);
 
@@ -745,6 +844,19 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	{
 		py_handle->modules[0] = PyImport_ExecCodeModule(name, compiled);
 
+		if (PyErr_Occurred() != NULL)
+		{
+			loader_impl_py py_impl = loader_impl_get(impl);
+
+			py_loader_impl_error_print(py_impl);
+
+			PyGILState_Release(gstate);
+
+			py_loader_impl_handle_destroy(py_handle);
+
+			return NULL;
+		}
+
 		PyGILState_Release(gstate);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s. from memory module at (%p)", (void *)impl, name, (void *)py_handle->modules[0]);
@@ -754,7 +866,9 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(impl);
+		loader_impl_py py_impl = loader_impl_get(impl);
+
+		py_loader_impl_error_print(py_impl);
 	}
 
 	PyGILState_Release(gstate);
@@ -866,7 +980,9 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 		if (PyErr_Occurred() != NULL)
 		{
-			py_loader_impl_error_print(impl);
+			loader_impl_py py_impl = loader_impl_get(impl);
+
+			py_loader_impl_error_print(py_impl);
 		}
 
 		result = PyObject_CallObject(py_impl->inspect_signature, args);
@@ -892,7 +1008,10 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 				if ((size_t)parameter_list_size != signature_count(s))
 				{
-					/* error */
+					if (PyErr_Occurred() != NULL)
+					{
+						py_loader_impl_error_print(py_impl);
+					}
 
 					return 1;
 				}
@@ -1022,57 +1141,11 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 	return 0;
 }
 
-int py_loader_impl_destroy(loader_impl impl)
-{
-	loader_impl_py py_impl = loader_impl_get(impl);
-
-	if (py_impl != NULL)
-	{
-		PyGILState_STATE gstate;
-
-		gstate = PyGILState_Ensure();
-
-		Py_DECREF(py_impl->inspect_signature);
-
-		Py_DECREF(py_impl->inspect_module);
-
-		Py_DECREF(py_impl->builtins_module);
-
-		Py_DECREF(py_impl->traceback_format_exception);
-
-		Py_DECREF(py_impl->traceback_module);
-
-		if (Py_IsInitialized() != 0)
-		{
-			if (PyErr_Occurred() != NULL)
-			{
-				py_loader_impl_error_print(impl);
-			}
-
-			PyGILState_Release(gstate);
-
-			Py_Finalize();
-		}
-		else
-		{
-			PyGILState_Release(gstate);
-		}
-
-		free(py_impl);
-
-		return 0;
-	}
-
-	return 1;
-}
-
-void py_loader_impl_error_print(loader_impl impl)
+void py_loader_impl_error_print(loader_impl_py py_impl)
 {
 	static const char error_format_str[] = "Python Error [Type: %s]: %s\n{\n%s\n}";
 	static const char separator_str[] = "\n";
 	static const char traceback_not_found[] = "Traceback not available";
-
-	loader_impl_py py_impl = loader_impl_get(impl);
 
 	PyObject * type, * value, * traceback;
 
@@ -1089,7 +1162,7 @@ void py_loader_impl_error_print(loader_impl impl)
 	traceback_list = PyObject_CallFunctionObjArgs(py_impl->traceback_format_exception, type, value, traceback, NULL);
 
 	#if PY_MAJOR_VERSION == 2
-		PyString_FromString(separator_str);
+		separator = PyString_FromString(separator_str);
 
 		traceback_str_obj = PyString_Join(separator, traceback_list);
 
@@ -1113,4 +1186,88 @@ void py_loader_impl_error_print(loader_impl impl)
 	Py_DECREF(traceback_str_obj);
 
 	PyErr_Restore(type, value, traceback);
+}
+
+void py_loader_impl_gc_print(loader_impl_py py_impl)
+{
+	static const char garbage_format_str[] = "Python Garbage Collector:\n%s";
+	static const char separator_str[] = "\n";
+
+	PyObject * garbage_list, * separator, * garbage_str_obj;
+
+	garbage_list = PyObject_GetAttrString(py_impl->gc_module, "garbage");
+
+	#if PY_MAJOR_VERSION == 2
+		separator = PyString_FromString(separator_str);
+
+		garbage_str_obj = PyString_Join(separator, garbage_list);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyString_AsString(garbage_str_obj));
+	#elif PY_MAJOR_VERSION == 3
+		separator = PyUnicode_FromString(separator_str);
+
+		garbage_str_obj = PyUnicode_Join(separator, garbage_list);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, garbage_format_str, PyUnicode_AsUTF8(garbage_str_obj));
+	#endif
+
+	Py_DECREF(garbage_list);
+	Py_DECREF(separator);
+	Py_DECREF(garbage_str_obj);
+}
+
+int py_loader_impl_destroy(loader_impl impl)
+{
+	loader_impl_py py_impl = loader_impl_get(impl);
+
+	if (py_impl != NULL)
+	{
+		PyGILState_STATE gstate;
+
+		gstate = PyGILState_Ensure();
+
+		Py_DECREF(py_impl->inspect_signature);
+
+		Py_DECREF(py_impl->inspect_module);
+
+		Py_DECREF(py_impl->builtins_module);
+
+		Py_DECREF(py_impl->traceback_format_exception);
+
+		Py_DECREF(py_impl->traceback_module);
+
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		{
+			py_loader_impl_gc_print(py_impl);
+
+			Py_DECREF(py_impl->gc_debug_leak);
+
+			Py_DECREF(py_impl->gc_debug_stats);
+
+			Py_DECREF(py_impl->gc_module);
+		}
+		#endif
+
+		if (Py_IsInitialized() != 0)
+		{
+			if (PyErr_Occurred() != NULL)
+			{
+				py_loader_impl_error_print(py_impl);
+			}
+
+			PyGILState_Release(gstate);
+
+			Py_Finalize();
+		}
+		else
+		{
+			PyGILState_Release(gstate);
+		}
+
+		free(py_impl);
+
+		return 0;
+	}
+
+	return 1;
 }
