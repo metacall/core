@@ -1177,6 +1177,8 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 	PyObject * traceback_list, * separator;
 
+	char * type_str, * value_str, * traceback_str;
+
 	PyErr_Fetch(&type, &value, &traceback);
 
 	type_str_obj = PyObject_Str(type);
@@ -1190,20 +1192,20 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 		traceback_str_obj = PyString_Join(separator, traceback_list);
 
-		log_write("metacall", LOG_LEVEL_ERROR, error_format_str,
-			PyString_AsString(type_str_obj),
-			PyString_AsString(value_str_obj),
-			traceback_str_obj ? PyString_AsString(traceback_str_obj) : traceback_not_found);
+		type_str = PyString_AsString(type_str_obj);
+		value_str = PyString_AsString(value_str_obj);
+		traceback_str = traceback_str_obj ? PyString_AsString(traceback_str_obj) : traceback_not_found;
 	#elif PY_MAJOR_VERSION == 3
 		separator = PyUnicode_FromString(separator_str);
 
 		traceback_str_obj = PyUnicode_Join(separator, traceback_list);
 
-		log_write("metacall", LOG_LEVEL_ERROR, error_format_str,
-			PyUnicode_AsUTF8(type_str_obj),
-			PyUnicode_AsUTF8(value_str_obj),
-			traceback_str_obj ? PyUnicode_AsUTF8(traceback_str_obj) : traceback_not_found);
+		type_str = PyUnicode_AsUTF8(type_str_obj);
+		value_str = PyUnicode_AsUTF8(value_str_obj);
+		traceback_str = traceback_str_obj ? PyUnicode_AsUTF8(traceback_str_obj) : traceback_not_found;
 	#endif
+
+	log_write("metacall", LOG_LEVEL_ERROR, error_format_str, type_str, value_str, traceback_str);
 
 	Py_DECREF(traceback_list);
 	Py_DECREF(separator);

@@ -39,6 +39,10 @@ sub_config() {
 			echo "Build all scripts in release mode"
 			BUILD_TYPE=Release
 		fi
+		if [ "$option" = 'relwithdebinfo' ]; then
+			echo "Build all scripts in release mode with debug symbols"
+			BUILD_TYPE=RelWithDebInfo
+		fi
 		if [ "$option" = 'python' ]; then
 			echo "Build with python support"
 			BUILD_PYTHON=1
@@ -190,7 +194,7 @@ sub_build() {
 
 	# Build without scripts on release
 	if [ $BUILD_INSTALL = 1 ]; then
-		if [ "$BUILD_TYPE" = 'Release' ]; then
+		if [ "$BUILD_TYPE" = 'Release' ] || [ "$BUILD_TYPE" = 'RelWithDebInfo' ]; then
 			cmake -DOPTION_BUILD_SCRIPTS=Off ..
 		fi
 	fi
@@ -227,7 +231,7 @@ sub_build() {
 }
 
 sub_clear() {
-	if [ "$BUILD_TYPE" = 'Release' ]; then
+	if [ "$BUILD_TYPE" = 'Release' ] || [ "$BUILD_TYPE" = 'RelWithDebInfo' ]; then
 		CLEAR_CMD="$METACALL_PATH/tools/metacall-clear.sh base rapidjson"
 
 		if [ $RUN_AS_ROOT = 1 ]; then
@@ -258,7 +262,7 @@ sub_help() {
 	echo "Usage: $PROGNAME list of options"
 	echo "Options:"
 	echo "	root: build being run by root"
-	echo "	debug | release: build type"
+	echo "	debug | release | relwithdebinfo: build type"
 	echo "	python: build with python support"
 	echo "	ruby: build with ruby support"
 	echo "	netcore: build with netcore support"
