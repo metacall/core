@@ -302,6 +302,33 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
+int loader_execution_path(const loader_naming_tag tag, const loader_naming_path path)
+{
+	loader l = loader_singleton();
+
+	#ifdef LOADER_LAZY
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
+
+		loader_initialize();
+	#endif
+
+	if (l->impl_map != NULL)
+	{
+		loader_impl impl = loader_get_impl(tag);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", tag, (void *)impl);
+
+		if (impl == NULL)
+		{
+			return 1;
+		}
+
+		return loader_impl_execution_path(impl, path);
+	}
+
+	return 1;
+}
+
 int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void ** handle)
 {
 	loader l = loader_singleton();

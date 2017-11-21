@@ -114,6 +114,20 @@ size_t metacall_args_size()
 	return args_size;
 }
 
+int metacall_execution_path(const char * tag, const char * path)
+{
+	loader_naming_path path_impl;
+
+	if (tag == NULL || path == NULL)
+	{
+		return 1;
+	}
+
+	strncpy(path_impl, path, LOADER_NAMING_PATH_SIZE);
+
+	return loader_execution_path(tag, path_impl);
+}
+
 int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle)
 {
 	loader_naming_path path_impl[LOADER_LOAD_FROM_FILES_SIZE];

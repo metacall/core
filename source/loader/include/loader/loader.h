@@ -50,6 +50,8 @@ LOADER_API int loader_register(const char * name, loader_register_invoke invoke,
 
 LOADER_API int loader_load_path(const loader_naming_path path);
 
+LOADER_API int loader_execution_path(const loader_naming_tag tag, const loader_naming_path path);
+
 LOADER_API int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void ** handle);
 
 LOADER_API int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, size_t size, void ** handle);

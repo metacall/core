@@ -425,6 +425,8 @@ int loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 	{
 		loader_impl_interface interface_impl = loader_impl_symbol(impl);
 
+		/* TODO: Implement a cache map for holding all execution paths */
+
 		if (interface_impl != NULL)
 		{
 			return interface_impl->execution_path(impl, path);

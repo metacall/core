@@ -52,6 +52,21 @@ METACALL_API size_t metacall_args_size(void);
 
 /**
 *  @brief
+*    Set a execution path defined by @path to the extension script @tag
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @param[in] path
+*    Path to be loaded
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_execution_path(const char * tag, const char * path);
+
+/**
+*  @brief
 *    Loads a script from file specified by @path
 *
 *  @param[in] tag

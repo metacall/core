@@ -55,7 +55,9 @@ typedef struct loader_impl_py_type
 
 static void py_loader_impl_error_print(loader_impl_py py_impl);
 
-static void py_loader_impl_gc_print(loader_impl_py py_impl);
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	static void py_loader_impl_gc_print(loader_impl_py py_impl);
+#endif
 
 static void py_loader_impl_sys_path_print(PyObject * sys_path_list);
 
@@ -1220,9 +1222,8 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 	PyErr_Restore(type, value, traceback);
 }
 
-void py_loader_impl_gc_print(loader_impl_py py_impl)
-{
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	void py_loader_impl_gc_print(loader_impl_py py_impl)
 	{
 		static const char garbage_format_str[] = "Python Garbage Collector:\n%s";
 		static const char separator_str[] = "\n";
@@ -1249,12 +1250,7 @@ void py_loader_impl_gc_print(loader_impl_py py_impl)
 		Py_DECREF(separator);
 		Py_DECREF(garbage_str_obj);
 	}
-	#else
-	{
-		(void)py_impl;
-	}
-	#endif
-}
+#endif
 
 void py_loader_impl_sys_path_print(PyObject * sys_path_list)
 {
