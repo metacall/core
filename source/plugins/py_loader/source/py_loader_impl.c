@@ -55,6 +55,10 @@ typedef struct loader_impl_py_type
 
 static void py_loader_impl_error_print(loader_impl_py py_impl);
 
+static void py_loader_impl_gc_print(loader_impl_py py_impl);
+
+static void py_loader_impl_sys_path_print(PyObject * sys_path_list);
+
 int type_py_interface_create(type t, type_impl impl)
 {
 	(void)t;
@@ -740,6 +744,8 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 
 		PyList_Append(system_path, current_path);
 
+		py_loader_impl_sys_path_print(system_path);
+
 		Py_DECREF(current_path);
 
 		PyGILState_Release(gstate);
@@ -1248,6 +1254,35 @@ void py_loader_impl_gc_print(loader_impl_py py_impl)
 		(void)py_impl;
 	}
 	#endif
+}
+
+void py_loader_impl_sys_path_print(PyObject * sys_path_list)
+{
+	static const char sys_path_format_str[] = "Python System Paths:\n%s";
+	static const char separator_str[] = "\n";
+
+	PyObject * separator, * sys_path_str_obj;
+
+	char * sys_path_str = NULL;
+
+	#if PY_MAJOR_VERSION == 2
+		separator = PyString_FromString(separator_str);
+
+		sys_path_str_obj = PyString_Join(separator, sys_path_list);
+
+		sys_path_str = PyString_AsString(sys_path_str_obj);
+	#elif PY_MAJOR_VERSION == 3
+		separator = PyUnicode_FromString(separator_str);
+
+		sys_path_str_obj = PyUnicode_Join(separator, sys_path_list);
+
+		sys_path_str = PyUnicode_AsUTF8(sys_path_str_obj);
+	#endif
+
+	log_write("metacall", LOG_LEVEL_DEBUG, sys_path_format_str, sys_path_str);
+
+	Py_DECREF(separator);
+	Py_DECREF(sys_path_str_obj);
 }
 
 int py_loader_impl_destroy(loader_impl impl)
