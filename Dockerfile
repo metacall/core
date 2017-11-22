@@ -16,6 +16,7 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 
 # Arguments
 ARG METACALL_PATH
+ARG METACALL_BUILD_TYPE
 
 # Environment variables
 ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
@@ -36,4 +37,4 @@ RUN chmod 500 $METACALL_PATH/tools/metacall-build.sh
 # Build and install MetaCall libraries then run tests
 RUN mkdir -p $METACALL_PATH/build \
 	&& cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-build.sh root release python ruby netcore v8 distributable tests scripts dynamic install
+	&& $METACALL_PATH/tools/metacall-build.sh root ${METACALL_BUILD_TYPE} python ruby netcore v8 distributable tests scripts dynamic install

@@ -3,8 +3,11 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
-# Debian image
-FROM ubuntu:yakkety
+# Configure MetaCall base image
+ARG METACALL_BASE_IMAGE
+
+# MetaCall base image
+FROM ${METACALL_BASE_IMAGE}
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

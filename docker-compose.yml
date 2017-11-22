@@ -15,6 +15,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
+        METACALL_BASE_IMAGE: ubuntu:yakkety
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -28,6 +29,7 @@ services:
       dockerfile: Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
+        METACALL_BUILD_TYPE: release
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
