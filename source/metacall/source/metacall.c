@@ -523,6 +523,117 @@ void * metacallf(void * func, ...)
 	return NULL;
 }
 
+void * metacallfmv(void * func, void * keys[], void * values[])
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		void * args[METACALL_ARGS_SIZE];
+
+		signature s = function_signature(f);
+
+		size_t iterator;
+
+		value ret;
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		{
+			type_id key_id = value_type_id((value)keys[iterator]);
+
+			size_t index = METACALL_ARGS_SIZE;
+
+			/* Obtain signature index */
+			if (type_id_integer(key_id) == 0)
+			{
+				value cast_key = value_type_cast((value)keys[iterator], TYPE_INT);
+
+				int key_index;
+
+				if (cast_key != NULL)
+				{
+					keys[iterator] = cast_key;
+				}
+
+				key_index = value_to_int((value)keys[iterator]);
+
+				if (key_index >= 0 && key_index < METACALL_ARGS_SIZE)
+				{
+					index = (size_t)key_index;
+				}
+			}
+			else if (type_id_string(key_id) == 0)
+			{
+				const char * key = value_to_string(keys[iterator]);
+
+				index = signature_get_index(s, key);
+			}
+
+			/* If index is valid, cast values and build arguments */
+			if (index < METACALL_ARGS_SIZE)
+			{
+				type t = signature_get_type(s, iterator);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id((value)values[iterator]))
+					{
+						value cast_arg = value_type_cast((value)values[iterator], id);
+
+						if (cast_arg != NULL)
+						{
+							values[iterator] = cast_arg;
+						}
+					}
+				}
+
+				args[index] = values[iterator];
+			}
+			else
+			{
+				return NULL;
+			}
+		}
+
+		ret = function_call(f, args);
+
+		if (ret != NULL)
+		{
+			type t = signature_get_return(s);
+
+			if (t != NULL)
+			{
+				type_id id = type_index(t);
+
+				if (id != value_type_id(ret))
+				{
+					value cast_ret = value_type_cast(ret, id);
+
+					return (cast_ret == NULL) ? ret : cast_ret;
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	return NULL;
+}
+
+void * metacallfs(void * func, const char * buffer, size_t size, void * allocator)
+{
+	(void)func;
+	(void)buffer;
+	(void)size;
+	(void)allocator;
+
+	/* TODO: Implement call by map, call by array, call by value (if one value is passed) and empty call */
+
+	return NULL;
+}
+
 int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...)
 {
 	type_id types[METACALL_ARGS_SIZE];

@@ -73,7 +73,7 @@ then
     echo "Please review and adjust the configuration, then run again"
     echo ""
     echo "  ./configure $@"
-    
+
     exit
 fi
 

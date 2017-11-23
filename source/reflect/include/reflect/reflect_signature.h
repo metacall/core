@@ -26,6 +26,8 @@ REFLECT_API signature signature_create(size_t count);
 
 REFLECT_API size_t signature_count(signature s);
 
+REFLECT_API size_t signature_get_index(signature s, const char * name);
+
 REFLECT_API const char * signature_get_name(signature s, size_t index);
 
 REFLECT_API type signature_get_type(signature s, size_t index);

@@ -7,24 +7,30 @@
  */
 
 #include <reflect/reflect_signature.h>
-
 #include <reflect/reflect_value_type.h>
+
+#include <adt/adt_set.h>
 
 #include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
 
+#define REFLECT_SIGNATURE_INVALID_INDEX ((size_t)~0)
+
 typedef struct signature_node_type
 {
-	char *			name;
-	type			t;
+	size_t index;
+	char * name;
+	type t;
+
 } * signature_node;
 
 struct signature_type
 {
-	type			ret;
-	size_t			count;
+	type ret;
+	set map;
+	size_t count;
 };
 
 static signature_node signature_head(signature s);
@@ -71,6 +77,17 @@ signature signature_create(size_t count)
 	{
 		size_t index;
 
+		s->map = set_create(&hash_callback_str, &comparable_callback_str);
+
+		if (s->map == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid signature set allocation");
+
+			free(s);
+
+			return NULL;
+		}
+
 		s->ret = NULL;
 
 		s->count = count;
@@ -81,6 +98,7 @@ signature signature_create(size_t count)
 
 			if (node != NULL)
 			{
+				node->index = REFLECT_SIGNATURE_INVALID_INDEX;
 				node->name = NULL;
 				node->t = NULL;
 			}
@@ -100,6 +118,21 @@ size_t signature_count(signature s)
 	}
 
 	return 0;
+}
+
+size_t signature_get_index(signature s, const char * name)
+{
+	if (s != NULL && name != NULL)
+	{
+		signature_node node = set_get(s->map, (set_key)name);
+
+		if (node != NULL)
+		{
+			return node->index;
+		}
+	}
+
+	return REFLECT_SIGNATURE_INVALID_INDEX;
 }
 
 const char * signature_get_name(signature s, size_t index)
@@ -148,7 +181,7 @@ void signature_set(signature s, size_t index, const char * name, type t)
 
 		if (name_node == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid name allocation");
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid signature name allocation");
 
 			return;
 		}
@@ -163,6 +196,19 @@ void signature_set(signature s, size_t index, const char * name, type t)
 		memcpy(node->name, name, name_size);
 
 		node->t = t;
+
+		node->index = index;
+
+		if (set_insert(s->map, (set_key)node->name, (set_value)node) != 0)
+		{
+			free(node->name);
+
+			node->index = REFLECT_SIGNATURE_INVALID_INDEX;
+			node->name = NULL;
+			node->t = NULL;
+
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid signature set insertion");
+		}
 	}
 }
 
@@ -436,6 +482,8 @@ void signature_destroy(signature s)
 				free(node->name);
 			}
 		}
+
+		set_destroy(s->map);
 
 		free(s);
 	}

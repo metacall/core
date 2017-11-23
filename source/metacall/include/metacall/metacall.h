@@ -277,6 +277,45 @@ METACALL_API void * metacallf(void * func, ...);
 
 /**
 *  @brief
+*    Call a function anonymously by value map (@keys -> @values) and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] keys
+*    Array of values representing argument keys
+*
+*  @param[in] values
+*    Array of values representing argument values data
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallfmv(void * func, void * keys[], void * values[]);
+
+/**
+*  @brief
+*    Call a function anonymously by function @func and serial @buffer of size @size
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] buffer
+*    String to be deserialized into arguments of the function
+*
+*  @param[in] size
+*    Size of string @buffer
+*
+*  @param[in] allocator
+*    Pointer to allocator will allocate the value
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallfs(void * func, const char * buffer, size_t size, void * allocator);
+
+/**
+*  @brief
 *    Register a function by name @name and arguments @va_args
 *
 *  @param[in] name
