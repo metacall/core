@@ -109,6 +109,11 @@ TEST_F(serial_test, DefaultConstructor)
 		static const char json_buffer_map[] = "{\"abc\":9.9,\"cde\":1.5}";
 		static const size_t json_buffer_map_size = 2;
 
+		static const char json_true[] = "true";
+		static const char json_number[] = "23434";
+		static const char json_string[] = "\"Hello World\"";
+		static const char json_string_value[] = "Hello World";
+
 		size_t serialize_size = 0;
 
 		serial s = serial_create(rapid_json_name());
@@ -226,6 +231,33 @@ TEST_F(serial_test, DefaultConstructor)
 		value_destroy(tupla[1]);
 
 		value_destroy(v_map[1]);
+
+		value_destroy(v);
+
+		// Deserialize json boolean primitive type into value
+		v = serial_deserialize(s, json_true, sizeof(json_true), allocator);
+
+		EXPECT_EQ((type_id) TYPE_BOOL, (type_id) value_type_id(v));
+		EXPECT_EQ((size_t) sizeof(boolean), (size_t)value_type_size(v));
+		EXPECT_EQ((boolean) 1L, (boolean) value_to_bool(v));
+
+		value_destroy(v);
+
+		// Deserialize json number primitive type into value
+		v = serial_deserialize(s, json_number, sizeof(json_number), allocator);
+
+		EXPECT_EQ((type_id) TYPE_INT, (type_id) value_type_id(v));
+		EXPECT_EQ((size_t) sizeof(int), (size_t) value_type_size(v));
+		EXPECT_EQ((int) 23434, (int) value_to_int(v));
+
+		value_destroy(v);
+
+		// Deserialize json string primitive type into value
+		v = serial_deserialize(s, json_string, sizeof(json_string), allocator);
+
+		EXPECT_EQ((type_id) TYPE_STRING, (type_id) value_type_id(v));
+		EXPECT_EQ((size_t) sizeof(json_string_value), (size_t) value_type_size(v));
+		EXPECT_EQ((int) 0, (int) strncmp(value_to_string(v), json_string_value, sizeof(json_string_value) - 1));
 
 		value_destroy(v);
 	}
