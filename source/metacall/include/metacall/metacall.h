@@ -312,7 +312,7 @@ METACALL_API void * metacallfmv(void * func, void * keys[], void * values[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallfs(void * func, const char * buffer, size_t size, void * allocator);
+METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, void * allocator);
 
 /**
 *  @brief

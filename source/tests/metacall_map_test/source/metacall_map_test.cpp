@@ -23,6 +23,10 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
 	/* Python */
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
@@ -54,8 +58,11 @@ TEST_F(metacall_map_test, DefaultConstructor)
 			metacall_value_create_long(0)
 		};
 
+		static const char args_map[] = "{\"left\":10,\"right\":2}";
+
 		void * func = metacall_function("multiply");
 
+		/* Call by map using arrays */
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
 		{
 			values[1] = metacall_value_from_long(values[1], iterator);
@@ -65,6 +72,8 @@ TEST_F(metacall_map_test, DefaultConstructor)
 			EXPECT_NE((void *) NULL, (void *) ret);
 
 			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
+
+			metacall_value_destroy(ret);
 		}
 
 		metacall_value_destroy(keys[0]);
@@ -72,8 +81,20 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 		metacall_value_destroy(values[0]);
 		metacall_value_destroy(values[1]);
+
+		/* Call by map using serial */
+		ret = metacallfms(func, args_map, sizeof(args_map), allocator);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 20);
+
+		metacall_value_destroy(ret);
+
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
+
+	metacall_allocator_destroy(allocator);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

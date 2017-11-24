@@ -593,6 +593,7 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 			}
 			else
 			{
+				/* TODO: Handle properly exceptions */
 				return NULL;
 			}
 		}
@@ -622,14 +623,120 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 	return NULL;
 }
 
-void * metacallfs(void * func, const char * buffer, size_t size, void * allocator)
+void * metacallfms(void * func, const char * buffer, size_t size, void * allocator)
 {
-	(void)func;
-	(void)buffer;
-	(void)size;
-	(void)allocator;
+	function f = (function)func;
 
-	/* TODO: Implement call by map, call by array, call by value (if one value is passed) and empty call */
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		if (buffer == NULL || size == 0)
+		{
+			if (signature_count(s) == 0)
+			{
+				value ret = function_call(f, metacall_null_args);
+
+				if (ret != NULL)
+				{
+					type t = signature_get_return(s);
+
+					if (t != NULL)
+					{
+						type_id id = type_index(t);
+
+						if (id != value_type_id(ret))
+						{
+							value cast_ret = value_type_cast(ret, id);
+
+							return (cast_ret == NULL) ? ret : cast_ret;
+						}
+					}
+				}
+
+				return ret;
+			}
+
+			return NULL;
+		}
+		else
+		{
+			void * keys[METACALL_ARGS_SIZE];
+			void * values[METACALL_ARGS_SIZE];
+
+			value * v_map, ret, v = (value)metacall_deserialize(buffer, size, allocator);
+
+			size_t iterator, args_count;
+
+			if (v == NULL)
+			{
+				return NULL;
+			}
+
+			if (type_id_map(value_type_id(v)) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			args_count = signature_count(s);
+
+			/* TODO: No optional arguments allowed, review in the future */
+			if (args_count != value_type_size(v) / sizeof(const value))
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			v_map = value_to_map(v);
+
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				value element = v_map[iterator];
+
+				value * v_element = value_to_array(element);
+
+				keys[iterator] = v_element[0];
+				values[iterator] = v_element[1];
+			}
+
+			ret = metacallfmv(f, keys, values);
+
+			if (ret != NULL)
+			{
+				type t = signature_get_return(s);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id(ret))
+					{
+						value cast_ret = value_type_cast(ret, id);
+
+						if (cast_ret != NULL)
+						{
+							ret = cast_ret;
+						}
+					}
+				}
+			}
+
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				/* Due to casting, destroy must be done to arrays instead of to the map */
+				value_destroy(keys[iterator]);
+				value_destroy(values[iterator]);
+				value_destroy(v_map[iterator]);
+			}
+
+			value_destroy(v);
+
+			return ret;
+		}
+	}
 
 	return NULL;
 }
