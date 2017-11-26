@@ -544,7 +544,13 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 			size_t index = METACALL_ARGS_SIZE;
 
 			/* Obtain signature index */
-			if (type_id_integer(key_id) == 0)
+			if (type_id_string(key_id) == 0)
+			{
+				const char * key = value_to_string(keys[iterator]);
+
+				index = signature_get_index(s, key);
+			}
+			else if (type_id_integer(key_id) == 0)
 			{
 				value cast_key = value_type_cast((value)keys[iterator], TYPE_INT);
 
@@ -561,12 +567,6 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 				{
 					index = (size_t)key_index;
 				}
-			}
-			else if (type_id_string(key_id) == 0)
-			{
-				const char * key = value_to_string(keys[iterator]);
-
-				index = signature_get_index(s, key);
 			}
 
 			/* If index is valid, cast values and build arguments */

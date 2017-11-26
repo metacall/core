@@ -346,12 +346,12 @@ value rapid_json_serial_impl_deserialize_value(const RapidJSONSerialValue * v)
 	{
 		return value_create_bool(v->GetBool() == true ? 1L : 0L);
 	}
-	else if (v->IsString() == true && v->GetStringLength() == 1)
+	/*else if (v->IsString() == true && v->GetStringLength() == 1)
 	{
 		const char * str = v->GetString();
 
 		return value_create_char(str[0]);
-	}
+	}*/
 	else if (v->IsInt() == true)
 	{
 		int i = v->GetInt();
@@ -392,7 +392,7 @@ value rapid_json_serial_impl_deserialize_value(const RapidJSONSerialValue * v)
 
 		return value_create_double((double)d);
 	}
-	else if (v->IsString() == true && v->GetStringLength() > 1)
+	else if (v->IsString() == true /*&& v->GetStringLength() > 1*/)
 	{
 		rapidjson::SizeType length = v->GetStringLength();
 
