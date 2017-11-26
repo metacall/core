@@ -15,6 +15,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <rapidjson/error/en.h>
 
 #include <sstream>
 
@@ -471,9 +472,14 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 		return NULL;
 	}
 
-	if (document->Parse(buffer, size - 1).HasParseError() == true)
+	rapidjson::ParseResult parse_result = document->Parse(buffer, size - 1);
+
+	if (parse_result.IsError() == true)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid parsing of document (%s) in RapidJSON implementation", buffer);
+		const RAPIDJSON_ERROR_CHARTYPE * error_message = rapidjson::GetParseError_En(parse_result.Code());
+
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid parsing of document (%s) in RapidJSON implementation: %s at %" PRIuS,
+			buffer, error_message, parse_result.Offset());
 
 		delete document;
 
