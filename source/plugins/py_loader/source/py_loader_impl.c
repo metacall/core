@@ -1215,7 +1215,7 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 	log_write("metacall", LOG_LEVEL_ERROR, error_format_str, type_str, value_str, traceback_str ? traceback_str : traceback_not_found);
 
-	Py_DECREF(traceback_list);
+	Py_XDECREF(traceback_list);
 	Py_DECREF(separator);
 	Py_DECREF(traceback_str_obj);
 
