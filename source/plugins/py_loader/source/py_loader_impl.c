@@ -973,12 +973,12 @@ int py_loader_impl_discover_func_args_count(PyObject * func)
 		{
 			PyObject * func_call = PyObject_GetAttrString(func, "__call__");
 
-			if (func_call != NULL)
+			if (func_call != NULL && PyObject_HasAttrString(func_call, "__code__"))
 			{
 				func_code = PyObject_GetAttrString(func_call, "__code__");
-
-				Py_DECREF(func_call);
 			}
+
+			Py_XDECREF(func_call);
 		}
 
 		if (func_code != NULL)
@@ -1217,7 +1217,7 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 	Py_XDECREF(traceback_list);
 	Py_DECREF(separator);
-	Py_DECREF(traceback_str_obj);
+	Py_XDECREF(traceback_str_obj);
 
 	PyErr_Restore(type, value, traceback);
 }
