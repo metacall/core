@@ -478,7 +478,16 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 		if (interface_impl != NULL && loader_path_get_name(paths[0], module_name) > 1)
 		{
-			loader_handle handle = interface_impl->load_from_file(impl, paths, size);
+			loader_handle handle;
+
+			if (loader_impl_get_handle(impl, module_name) != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", module_name);
+
+				return 1;
+			}
+
+			handle = interface_impl->load_from_file(impl, paths, size);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 
@@ -571,6 +580,15 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 
 			if (loader_impl_load_from_memory_name(impl, name, buffer, size) != 0)
 			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Load from memory handle failed, name could not be generated correctly");
+
+				return 1;
+			}
+
+			if (loader_impl_get_handle(impl, name) != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Load from memory handle failed, handle with name %s already loaded", name);
+
 				return 1;
 			}
 
@@ -633,7 +651,16 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 		if (interface_impl != NULL && loader_path_get_name(path, package_name) > 1)
 		{
-			loader_handle handle = interface_impl->load_from_package(impl, path);
+			loader_handle handle;
+
+			if (loader_impl_get_handle(impl, package_name) != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Load from package handle failed, handle with name %s already loaded", package_name);
+
+				return 1;
+			}
+
+			handle = interface_impl->load_from_package(impl, path);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
 
