@@ -312,7 +312,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_NE((char *) NULL, (char *) inspect_str);
 
-		EXPECT_GT((size_t)size, (size_t) 0);
+		EXPECT_GT((size_t) size, (size_t) 0);
 
 		metacall_allocator_free(allocator, inspect_str);
 

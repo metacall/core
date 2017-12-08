@@ -11,12 +11,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall-plugins.h>
 
-class metacall_duplicated_handle_test : public testing::Test
+class metacall_python_class_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
+TEST_F(metacall_python_class_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -27,14 +27,33 @@ TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
 	{
 		const char * py_scripts[] =
 		{
-			"example.py"
+			"classname.py"
 		};
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
-
-		EXPECT_NE((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_PY */
+
+	/* Print inspect information */
+	{
+		size_t size = 0;
+
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		char * inspect_str = metacall_inspect(&size, allocator);
+
+		EXPECT_NE((char *) NULL, (char *) inspect_str);
+
+		EXPECT_GT((size_t) size, (size_t) 0);
+
+		std::cout << inspect_str << std::endl;
+
+		metacall_allocator_free(allocator, inspect_str);
+
+		metacall_allocator_destroy(allocator);
+	}
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }
