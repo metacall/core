@@ -48,8 +48,9 @@ set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode
 add_subdirectory(preprocessor_test)
 add_subdirectory(environment_test)
 add_subdirectory(log_test)
-add_subdirectory(adt_hash_map_test)
-add_subdirectory(adt_trie_test)
+add_subdirectory(adt_set_test)
+#add_subdirectory(adt_hash_map_test) # TODO: Valgrind
+#add_subdirectory(adt_trie_test) # TODO: Valgrind
 add_subdirectory(reflect_value_cast_test)
 add_subdirectory(reflect_function_test)
 add_subdirectory(reflect_scope_test)

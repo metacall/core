@@ -19,22 +19,30 @@
 #define SET_BUCKET_RATIO_MIN		0.1f
 #define SET_BUCKET_RATIO_MAX		0.77f
 
+/* -- Forward Declarations -- */
+
+struct set_pair_type;
+struct set_bucket_type;
+
+/* -- Type Definitions -- */
+
+typedef struct set_pair_type * set_pair;
+typedef struct set_bucket_type * set_bucket;
+
 /* -- Member Data -- */
 
-typedef struct set_pair_type
+struct set_pair_type
 {
 	set_key key;
 	set_value value;
+};
 
-} * set_pair;
-
-typedef struct set_bucket_type
+struct set_bucket_type
 {
 	size_t count;
 	size_t capacity;
 	set_pair pairs;
-
-} * set_bucket;
+};
 
 struct set_type
 {
@@ -46,7 +54,6 @@ struct set_type
 	set_cb_compare compare_cb;
 	int reallocating;
 	size_t amount;
-
 };
 
 struct set_iterator_type
@@ -54,7 +61,6 @@ struct set_iterator_type
 	set s;
 	size_t bucket;
 	size_t pair;
-
 };
 
 /* -- Methods -- */
@@ -63,7 +69,7 @@ size_t set_bucket_capacity(size_t prime)
 {
 	static size_t capacity_primes[] =
 	{
-		/* todo: make a better (or configurable) policy */
+		/* TODO: make a better (or configurable) policy */
 
 		13, 31, 61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521
 	};

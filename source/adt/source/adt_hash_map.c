@@ -164,7 +164,7 @@ int hash_map_bucket_alloc_pairs(hash_map_bucket bucket)
 		{
 			bucket->pairs = malloc(sizeof(struct hash_map_pair_type) * HASH_MAP_BUCKET_PAIRS_DEFAULT);
 
-			if (bucket->pairs)
+			if (bucket->pairs != NULL)
 			{
 				bucket->count = 0;
 				bucket->capacity = HASH_MAP_BUCKET_PAIRS_DEFAULT;
