@@ -1,5 +1,5 @@
 #
-# CMake Debug utilities by Parra Studios
+# CMake Debug Utilities by Parra Studios
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 # CMake debugging utilities and inspection facilities

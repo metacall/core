@@ -1,4 +1,11 @@
 #
+# Compile options configuration
+#
+
+option(OPTION_BUILD_SANITIZER	"Build with sanitizer compiler options."		OFF)
+
+
+#
 # Platform and architecture setup
 #
 
@@ -32,7 +39,7 @@ set(DEFAULT_PROJECT_OPTIONS
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	set(DEFAULT_PROJECT_OPTIONS
 		${DEFAULT_PROJECT_OPTIONS}
-		C_STANDARD			99 # TODO: Provide preprocessor support for older standards (GCC)
+		C_STANDARD				99 # TODO: Provide preprocessor support for older standards (GCC)
 	)
 endif()
 
@@ -46,7 +53,11 @@ set(DEFAULT_INCLUDE_DIRECTORIES)
 # Libraries
 #
 
-set(DEFAULT_LIBRARIES)
+if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+	set(DEFAULT_LIBRARIES -lasan -lubsan)
+else()
+	set(DEFAULT_LIBRARIES)
+endif()
 
 #
 # Compile definitions
@@ -118,6 +129,22 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 
 	# All warnings that are not explicitly disabled are reported as errors
 	#add_compile_options(-Werror)
+
+	# Sanitizers
+	if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(-fuse-ld=gold)
+		add_compile_options(-fno-omit-frame-pointer)
+		add_compile_options(-fno-optimize-sibling-calls)
+		add_compile_options(-fsanitize=undefined)
+		add_compile_options(-fsanitize=address)
+		add_compile_options(-fsanitize=leak)
+		#add_compile_options(-fsanitize=thread)
+
+		if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+			add_compile_options(-fsanitize=memory)
+			add_compile_options(-fsanitize=memory-track-origins)
+		endif()
+	endif()
 endif()
 
 #
