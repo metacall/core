@@ -90,7 +90,7 @@ TEST_F(adt_set_test, DefaultConstructor)
 	set_iterate(s, &set_cb_iterate_str_to_int, NULL);
 
 	EXPECT_EQ((size_t) iterator_counter, (size_t) value_array_size);
-/*
+
 	for (size_t i = 0; i < key_array_size; ++i)
 	{
 		int * value = (int *)set_get(s, key_array[i]);
@@ -106,6 +106,6 @@ TEST_F(adt_set_test, DefaultConstructor)
 
 		EXPECT_EQ((int) value_array[i], (int) *value);
 	}
-*/
+
 	set_destroy(s);
 }

@@ -9,40 +9,16 @@
 /* -- Headers -- */
 
 #include <adt/adt_set.h>
+#include <adt/adt_set_bucket.h>
 
 #include <log/log.h>
 
 /* -- Definitions -- */
 
-#define SET_BUCKET_PAIRS_DEFAULT	0x04
-#define SET_BUCKET_PAIRS_LIMIT		0x40
 #define SET_BUCKET_RATIO_MIN		0.1f
 #define SET_BUCKET_RATIO_MAX		0.77f
 
-/* -- Forward Declarations -- */
-
-struct set_pair_type;
-struct set_bucket_type;
-
-/* -- Type Definitions -- */
-
-typedef struct set_pair_type * set_pair;
-typedef struct set_bucket_type * set_bucket;
-
 /* -- Member Data -- */
-
-struct set_pair_type
-{
-	set_key key;
-	set_value value;
-};
-
-struct set_bucket_type
-{
-	size_t count;
-	size_t capacity;
-	set_pair pairs;
-};
 
 struct set_type
 {
@@ -52,8 +28,6 @@ struct set_type
 	set_bucket buckets;
 	set_cb_hash hash_cb;
 	set_cb_compare compare_cb;
-	int reallocating;
-	size_t amount;
 };
 
 struct set_iterator_type
@@ -65,59 +39,9 @@ struct set_iterator_type
 
 /* -- Methods -- */
 
-size_t set_bucket_capacity(size_t prime)
-{
-	static size_t capacity_primes[] =
-	{
-		/* TODO: make a better (or configurable) policy */
-
-		13, 31, 61, 127, 251, 509, 1021, 2039, 4093, 8191, 16381, 32749, 65521
-	};
-
-	if (prime < sizeof(capacity_primes) / sizeof(capacity_primes[0]))
-	{
-		return capacity_primes[prime];
-	}
-
-	log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket capacity");
-
-	return 0;
-}
-
-int set_bucket_create(set s, size_t prime)
-{
-	size_t capacity = set_bucket_capacity(prime);
-
-	set_bucket buckets = malloc(sizeof(struct set_bucket_type) * capacity);
-
-	size_t iterator;
-
-	if (buckets == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for set bucket");
-
-		return 1;
-	}
-
-
-	for (iterator = 0; iterator < capacity; ++iterator)
-	{
-		buckets[iterator].count = 0;
-		buckets[iterator].capacity = 0;
-		buckets[iterator].pairs = NULL;
-	}
-
-	s->buckets = buckets;
-	s->capacity = capacity;
-	s->prime = prime;
-	s->count = 0;
-
-	return 0;
-}
-
 set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb)
 {
-	set s = NULL;
+	set s;
 
 	if (hash_cb == NULL || compare_cb == NULL)
 	{
@@ -135,10 +59,12 @@ set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb)
 
 	s->hash_cb = hash_cb;
 	s->compare_cb = compare_cb;
-	s->reallocating = 0;
-	s->amount = 0;
+	s->count = 0;
+	s->prime = 0;
+	s->capacity = set_bucket_capacity(s->prime);
+	s->buckets = set_bucket_create(s->capacity);
 
-	if (set_bucket_create(s, 0) != 0)
+	if (s->buckets == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Bad set bucket creation");
 
@@ -154,72 +80,7 @@ size_t set_size(set s)
 {
 	if (s != NULL)
 	{
-		return s->amount;
-	}
-
-	return 0;
-}
-
-int set_bucket_alloc_pairs(set_bucket bucket)
-{
-	if (bucket == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid null bucket");
-
-		return 1;
-	}
-
-	if (bucket->pairs == NULL && bucket->capacity == 0)
-	{
-		bucket->pairs = malloc(sizeof(struct set_pair_type) * SET_BUCKET_PAIRS_DEFAULT);
-
-		if (bucket->pairs == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Bad set pairs allocation");
-
-			return 1;
-		}
-
-		bucket->count = 0;
-		bucket->capacity = SET_BUCKET_PAIRS_DEFAULT;
-	}
-
-	return 0;
-}
-
-int set_bucket_realloc_pairs(set_bucket bucket, size_t count)
-{
-	if (set_bucket_alloc_pairs(bucket) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set pairs creation");
-
-		return 1;
-	}
-
-	if (count >= bucket->capacity)
-	{
-		size_t new_capacity = bucket->capacity << 1;
-
-		set_pair pairs = NULL;
-
-		if (new_capacity > SET_BUCKET_PAIRS_LIMIT)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Set capacity overflow");
-
-			return 1;
-		}
-
-		pairs = realloc(bucket->pairs, sizeof(struct set_pair_type) * new_capacity);
-
-		if (pairs == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Bad set pairs reallocation");
-
-			return 1;
-		}
-
-		bucket->pairs = pairs;
-		bucket->capacity = new_capacity;
+		return s->count;
 	}
 
 	return 0;
@@ -229,11 +90,24 @@ int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iter
 {
 	set new_set = (set)args;
 
-	(void)s;
-
-	if (new_set != s && key != NULL && value != NULL)
+	if (new_set != s && key != NULL && args != NULL)
 	{
-		return set_insert(new_set, key, value);
+		set_hash h = new_set->hash_cb(key);
+
+		size_t index = h % new_set->capacity;
+
+		set_bucket bucket = &new_set->buckets[index];
+
+		if (set_bucket_insert(bucket, new_set->compare_cb, key, value) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket realloc insertion");
+
+			return 1;
+		}
+
+		++new_set->count;
+
+		return 0;
 	}
 
 	return 1;
@@ -247,7 +121,7 @@ int set_bucket_realloc(set s)
 
 	float ratio = (float)((float)s->count / (float)s->capacity);
 
-	if (s->reallocating == 0 && (prime > 0 && ratio <= SET_BUCKET_RATIO_MIN))
+	if (prime > 0 && ratio <= SET_BUCKET_RATIO_MIN)
 	{
 		--prime;
 	}
@@ -262,91 +136,35 @@ int set_bucket_realloc(set s)
 
 	new_set.hash_cb = s->hash_cb;
 	new_set.compare_cb = s->compare_cb;
-	new_set.reallocating = 1;
+	new_set.count = 0;
+	new_set.prime = prime;
+	new_set.capacity = set_bucket_capacity(prime);
+	new_set.buckets = set_bucket_create(new_set.capacity);
 
-	if (set_bucket_create(&new_set, prime) == 0)
+	if (new_set.buckets != NULL)
 	{
+		size_t iterator;
+
 		set_iterate(s, &set_bucket_realloc_iterator, &new_set);
 
-		s->count = new_set.count;
-		s->capacity = new_set.capacity;
-		s->prime = new_set.prime;
+		for (iterator = 0; iterator < s->capacity; ++iterator)
+		{
+			set_bucket bucket = &s->buckets[iterator];
 
-		s->reallocating = 0;
+			if (bucket->pairs != NULL)
+			{
+				free(bucket->pairs);
+			}
+		}
 
 		free(s->buckets);
 
+		s->capacity = new_set.capacity;
+		s->prime = new_set.prime;
 		s->buckets = new_set.buckets;
 
 		return 0;
 	}
-
-	return 1;
-}
-
-set_pair set_bucket_get_pair(set s, set_bucket bucket, set_key key)
-{
-	if (bucket->pairs != NULL && bucket->count > 0)
-	{
-		size_t i;
-
-		for (i = 0; i < bucket->count; ++i)
-		{
-			set_pair pair = &bucket->pairs[i];
-
-			if (s->compare_cb(key, pair->key) == 0)
-			{
-				return pair;
-			}
-		}
-	}
-
-	return NULL;
-}
-
-int set_bucket_insert(set s, set_bucket bucket, set_key key, set_value value)
-{
-	if (bucket->pairs != NULL)
-	{
-		set_pair pair = set_bucket_get_pair(s, bucket, key);
-
-		if (pair != NULL)
-		{
-			pair->value = value;
-
-			return 0;
-		}
-		else
-		{
-			size_t pair_count = bucket->count + 1;
-
-			if (set_bucket_realloc_pairs(bucket, pair_count) != 0)
-			{
-				size_t set_count = s->count;
-
-				if (set_bucket_realloc(s) == 0)
-				{
-					if (set_count != s->count)
-					{
-						return set_insert(s, key, value);
-					}
-				}
-
-				return 1;
-			}
-
-			pair = &bucket->pairs[bucket->count];
-
-			pair->key = key;
-			pair->value = value;
-
-			bucket->count = pair_count;
-
-			return 0;
-		}
-	}
-
-	bucket->capacity = 0;
 
 	return 1;
 }
@@ -372,45 +190,16 @@ int set_insert(set s, set_key key, set_value value)
 
 	bucket = &s->buckets[index];
 
-	if (bucket->pairs == NULL)
-	{
-		++s->count;
-	}
-
-	if (set_bucket_realloc(s) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket reallocation");
-
-		--s->count;
-
-		return 1;
-	}
-
-	index = h % s->capacity;
-
-	bucket = &s->buckets[index];
-
-	if (set_bucket_alloc_pairs(bucket) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket pairs allocation");
-
-		--s->count;
-
-		return 1;
-	}
-
-	if (set_bucket_insert(s, bucket, key, value) != 0)
+	if (set_bucket_insert(bucket, s->compare_cb, key, value) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insertion");
 
-		--s->count;
-
 		return 1;
 	}
 
-	++s->amount;
+	++s->count;
 
-	return 0;
+	return set_bucket_realloc(s);
 }
 
 int set_insert_array(set s, set_key keys[], set_value values[], size_t size)
@@ -447,7 +236,7 @@ set_value set_get(set s, set_key key)
 
 		set_bucket bucket = &s->buckets[index];
 
-		set_pair pair = set_bucket_get_pair(s, bucket, key);
+		set_pair pair = set_bucket_get_pair(bucket, s->compare_cb, key);
 
 		if (pair != NULL)
 		{
@@ -468,7 +257,7 @@ int set_contains(set s, set_key key)
 
 		set_bucket bucket = &s->buckets[index];
 
-		set_pair pair = set_bucket_get_pair(s, bucket, key);
+		set_pair pair = set_bucket_get_pair(bucket, s->compare_cb, key);
 
 		if (pair != NULL)
 		{
@@ -481,81 +270,63 @@ int set_contains(set s, set_key key)
 
 set_value set_remove(set s, set_key key)
 {
-	if (s != NULL && key != NULL)
+	set_hash h;
+
+	size_t index;
+
+	set_bucket bucket;
+
+	set_value value = NULL;
+
+	if (s == NULL || key == NULL)
 	{
-		set_hash hash = s->hash_cb(key);
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set remove parameters");
 
-		size_t index = hash % s->capacity;
-
-		set_bucket bucket = &s->buckets[index];
-
-		if (bucket->pairs != NULL && bucket->count > 0)
-		{
-			set_value value = NULL;
-
-			size_t i;
-
-			for (i = 0; i < bucket->count; ++i)
-			{
-				set_pair pair = &bucket->pairs[i];
-
-				if (s->compare_cb(key, pair->key) == 0)
-				{
-					value = pair->value;
-
-					for ( ; i < bucket->count - 1; ++i)
-					{
-						set_pair next = &bucket->pairs[i + 1];
-
-						pair = &bucket->pairs[i];
-
-						pair->key = next->key;
-						pair->value = next->value;
-					}
-
-					--bucket->count;
-				}
-			}
-
-			if (bucket->count == 0)
-			{
-				--s->count;
-
-				if (set_bucket_realloc(s) != 0)
-				{
-					return NULL;
-				}
-			}
-
-			if (value != NULL)
-			{
-				--s->amount;
-			}
-
-			return value;
-		}
+		return NULL;
 	}
 
-	return NULL;
+	h = s->hash_cb(key);
+
+	index = h % s->capacity;
+
+	bucket = &s->buckets[index];
+
+	if (set_bucket_remove(bucket, s->compare_cb, key, &value) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove");
+
+		return NULL;
+	}
+
+	--s->count;
+
+	if (set_bucket_realloc(s) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove reallocation");
+
+		return NULL;
+	}
+
+	return value;
 }
 
 void set_iterate(set s, set_cb_iterate iterate_cb, set_cb_iterate_args args)
 {
 	if (s != NULL && s->buckets != NULL && iterate_cb != NULL)
 	{
-		size_t i;
+		size_t bucket_iterator;
 
-		for (i = 0; i < s->capacity; ++i)
+		for (bucket_iterator = 0; bucket_iterator < s->capacity; ++bucket_iterator)
 		{
-			set_bucket bucket = &s->buckets[i];
+			set_bucket bucket = &s->buckets[bucket_iterator];
 
 			if (bucket->pairs != NULL && bucket->count > 0)
 			{
-				size_t j;
+				size_t pair_iterator;
 
-				for (j = 0; j < bucket->count; ++j)
+				for (pair_iterator = 0; pair_iterator < bucket->count; ++pair_iterator)
 				{
-					set_pair pair = &bucket->pairs[j];
+					set_pair pair = &bucket->pairs[pair_iterator];
 
 					if (iterate_cb(s, pair->key, pair->value, args) != 0)
 					{
@@ -605,63 +376,70 @@ int set_disjoint(set dest, set src)
 	return 0;
 }
 
-
 int set_clear(set s)
 {
-	if (s != NULL)
+	if (s == NULL)
 	{
-		if (s->buckets != NULL)
-		{
-			size_t i;
-
-			for (i = 0; i < s->capacity; ++i)
-			{
-				set_bucket bucket = &s->buckets[i];
-
-				if (bucket->pairs != NULL)
-				{
-					free(bucket->pairs);
-				}
-			}
-
-			free(s->buckets);
-		}
-
-		s->reallocating = 0;
-		s->amount = 0;
-
-		if (set_bucket_create(s, 0) == 0)
-		{
-			return 0;
-		}
+		return 1;
 	}
 
-	return 1;
+	if (s->buckets != NULL)
+	{
+		size_t iterator;
+
+		for (iterator = 0; iterator < s->capacity; ++iterator)
+		{
+			set_bucket bucket = &s->buckets[iterator];
+
+			if (bucket->pairs != NULL)
+			{
+				free(bucket->pairs);
+			}
+		}
+
+		free(s->buckets);
+	}
+
+	s->count = 0;
+	s->prime = 0;
+	s->capacity = set_bucket_capacity(s->prime);
+	s->buckets = set_bucket_create(s->capacity);
+
+	if (s->buckets == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad set clear bucket creation");
+
+		return 1;
+	}
+
+	return 0;
 }
 
 void set_destroy(set s)
 {
-	if (s != NULL)
+	if (s == NULL)
 	{
-		if (s->buckets != NULL)
+		return;
+	}
+
+	if (s->buckets != NULL)
+	{
+		size_t iterator;
+
+		for (iterator = 0; iterator < s->capacity; ++iterator)
 		{
-			size_t i;
+			set_bucket bucket = &s->buckets[iterator];
 
-			for (i = 0; i < s->capacity; ++i)
+			if (bucket->pairs != NULL)
 			{
-				set_bucket bucket = &s->buckets[i];
-
-				if (bucket->pairs != NULL)
-				{
-					free(bucket->pairs);
-				}
+				free(bucket->pairs);
 			}
-
-			free(s->buckets);
 		}
 
-		free(s);
+		free(s->buckets);
 	}
+
+	free(s);
 }
 
 set_iterator set_iterator_begin(set s)
