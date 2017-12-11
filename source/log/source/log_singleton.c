@@ -78,6 +78,10 @@ int log_singleton_destroy()
 
 	(*s)->map = NULL;
 
+	free(*s);
+
+	*s = NULL;
+
 	return 0;
 }
 
