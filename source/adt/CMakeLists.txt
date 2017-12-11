@@ -43,7 +43,6 @@ set(headers
 	${include_path}/adt.h
 	${include_path}/adt_comparable.h
 	${include_path}/adt_hash.h
-#	${include_path}/adt_hash_map.h
 	${include_path}/adt_set.h
 	${include_path}/adt_set_bucket.h
 	${include_path}/adt_trie.h
@@ -54,7 +53,6 @@ set(sources
 	${source_path}/adt.c
 	${source_path}/adt_comparable.c
 	${source_path}/adt_hash.c
-#	${source_path}/adt_hash_map.c
 	${source_path}/adt_set.c
 	${source_path}/adt_set_bucket.c
 	${source_path}/adt_trie.c
