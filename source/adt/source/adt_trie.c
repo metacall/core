@@ -264,6 +264,8 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list reallocation");
 
+				free(child_ref);
+
 				return NULL;
 			}
 
@@ -298,6 +300,8 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid child insertion");
 
+			free(child_ref);
+
 			return NULL;
 		}
 
@@ -309,6 +313,8 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 
 		return child;
 	}
+
+	free(child_ref);
 
 	return NULL;
 }
@@ -592,6 +598,8 @@ int trie_node_clear(trie t, trie_node n)
 						trie_node current_node = &t->node_list[ref_node->index];
 
 						vector_push_back(node_stack, &current_node);
+
+						free(ref_node);
 					}
 
 					set_destroy(back->childs);
