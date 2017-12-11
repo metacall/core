@@ -13,7 +13,6 @@
 
 #include <adt/adt_comparable.h>
 #include <adt/adt_hash.h>
-#include <adt/adt_hash_map.h>
 #include <adt/adt_vector.h>
 #include <adt/adt_trie.h>
 

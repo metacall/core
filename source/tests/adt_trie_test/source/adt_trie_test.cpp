@@ -111,7 +111,7 @@ TEST_F(adt_trie_test, DefaultConstructor)
 
 		const char * value_str = reinterpret_cast<const char *>(value);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "%lu -> %s", iterator, value_str);
+		log_write("metacall", LOG_LEVEL_DEBUG, "%" PRIuS " -> %s", iterator, value_str);
 
 		EXPECT_EQ((int) 0, (int) strcmp(values_str[keys_size - iterator - 1], value_str));
 

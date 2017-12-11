@@ -15,9 +15,6 @@
 #include <reflect/scope.h>
 #include <reflect/context.h>
 
-#include <adt/adt_hash_map.h>
-#include <adt/adt_hash_map_str.h>
-
 #include <stdlib.h>
 
 #include <js/Initialization.h>

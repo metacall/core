@@ -15,7 +15,7 @@
 
 /* -- Definitions -- */
 
-#define TRIE_CAPACITY_MIN	16
+#define TRIE_CAPACITY_MIN	((size_t)0x10)
 
 /* -- Forward Declarations -- */
 
@@ -121,60 +121,60 @@ trie trie_create(trie_cb_hash hash_cb, trie_cb_compare compare_cb)
 
 trie trie_create_reserve(size_t capacity, size_t key_limit, size_t depth_limit, trie_cb_hash hash_cb, trie_cb_compare compare_cb)
 {
-	if (hash_cb != NULL && compare_cb != NULL)
-	{
-		trie t = malloc(sizeof(struct trie_type));
+	trie t;
 
-		if (t != NULL)
-		{
-			t->size = 1;
-			t->capacity = (capacity < TRIE_CAPACITY_MIN) ? TRIE_CAPACITY_MIN : capacity;
-			t->key_limit = key_limit;
-			t->depth_limit = depth_limit;
-			t->hash_cb = hash_cb;
-			t->compare_cb = compare_cb;
+	size_t iterator;
 
-			t->node_list = malloc(t->capacity * sizeof(struct trie_node_type));
-
-			if (t->node_list != NULL)
-			{
-				size_t iterator;
-
-				for (iterator = 0; iterator < t->capacity; ++iterator)
-				{
-					trie_node n = &t->node_list[iterator];
-
-					n->parent_index = 0;
-					n->self_index = 0;
-					n->key = NULL;
-					n->value = NULL;
-					n->childs = NULL;
-				}
-
-				t->root = &t->node_list[0];
-
-				t->free_node_list = NULL;
-
-				return t;
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list creation");
-			}
-
-			free(t);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Trie bad allocation");
-		}
-	}
-	else
+	if (hash_cb == NULL && compare_cb == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid callback");
+
+		return NULL;
 	}
 
-	return NULL;
+	t = malloc(sizeof(struct trie_type));
+
+	if (t == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Trie bad allocation");
+
+		return NULL;
+	}
+
+	t->size = 1;
+	t->capacity = (capacity < TRIE_CAPACITY_MIN) ? TRIE_CAPACITY_MIN : capacity;
+	t->key_limit = key_limit;
+	t->depth_limit = depth_limit;
+	t->hash_cb = hash_cb;
+	t->compare_cb = compare_cb;
+
+	t->node_list = malloc(t->capacity * sizeof(struct trie_node_type));
+
+	if (t->node_list == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list creation");
+
+		free(t);
+
+		return NULL;
+	}
+
+	for (iterator = 0; iterator < t->capacity; ++iterator)
+	{
+		trie_node n = &t->node_list[iterator];
+
+		n->parent_index = 0;
+		n->self_index = 0;
+		n->key = NULL;
+		n->value = NULL;
+		n->childs = NULL;
+	}
+
+	t->root = &t->node_list[0];
+
+	t->free_node_list = NULL;
+
+	return t;
 }
 
 size_t trie_size(trie t)
@@ -199,117 +199,116 @@ size_t trie_capacity(trie t)
 
 trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value value)
 {
-	if (t != NULL && parent != NULL && key != NULL)
+	trie_node child;
+	trie_node_ref child_ref;
+
+	if (t == NULL || parent == NULL || key == NULL)
 	{
-		trie_node child;
+		log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid node insertion parameters");
 
-		trie_node_ref child_ref = malloc(sizeof(struct trie_node_ref_type));
+		return NULL;
+	}
 
-		if (child_ref == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Trie node insert bad reference node allocation");
+	child_ref = malloc(sizeof(struct trie_node_ref_type));
 
-			return NULL;
-		}
+	if (child_ref == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Trie node insert bad reference node allocation");
 
-		child_ref->key = key;
+		return NULL;
+	}
+
+	child_ref->key = key;
+
+	if (parent->childs == NULL)
+	{
+		parent->childs = set_create(t->hash_cb, t->compare_cb);
 
 		if (parent->childs == NULL)
 		{
-			parent->childs = set_create(t->hash_cb, t->compare_cb);
+			log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid child set allocation");
 
-			if (parent->childs == NULL)
+			free(child_ref);
+
+			return NULL;
+		}
+	}
+
+	if (t->free_node_list != NULL)
+	{
+		trie_node_free node_free = t->free_node_list;
+
+		t->free_node_list = node_free->next;
+
+		child_ref->index = node_free->index;
+
+		child = &t->node_list[child_ref->index];
+
+		free(node_free);
+
+		++t->size;
+	}
+	else
+	{
+		if ((t->size + 1) >= t->capacity)
+		{
+			register void * node_list;
+
+			size_t capacity = t->capacity << 1;
+
+			size_t iterator;
+
+			node_list = realloc(t->node_list, capacity * sizeof(struct trie_node_type));
+
+			if (node_list == NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid child set allocation");
-
-				free(child_ref);
+				log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list reallocation");
 
 				return NULL;
 			}
-		}
 
-		if (t->free_node_list != NULL)
-		{
-			trie_node_free node_free = t->free_node_list;
+			t->node_list = node_list;
 
-			t->free_node_list = node_free->next;
+			t->capacity = capacity;
 
-			child_ref->index = node_free->index;
+			t->root = &t->node_list[0];
 
-			child = &t->node_list[child_ref->index];
-
-			free(node_free);
-
-			++t->size;
-		}
-		else
-		{
-			if ((t->size + 1) >= t->capacity)
+			for (iterator = t->size + 1; iterator < t->capacity; ++iterator)
 			{
-				register void * data;
+				trie_node n = &t->node_list[iterator];
 
-				size_t capacity = t->capacity << 1;
-
-				size_t iterator;
-
-				data = realloc(t->node_list, capacity * sizeof(struct trie_node_type));
-
-				if (data == NULL)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Trie bad node list reallocation");
-
-					return NULL;
-				}
-
-				t->node_list = data;
-
-				t->capacity = capacity;
-
-				t->root = &t->node_list[0];
-
-				for (iterator = t->size + 1; iterator < t->capacity; ++iterator)
-				{
-					trie_node n = &t->node_list[iterator];
-
-					n->parent_index = 0;
-					n->self_index = 0;
-					n->key = NULL;
-					n->value = NULL;
-					n->childs = NULL;
-				}
+				n->parent_index = 0;
+				n->self_index = 0;
+				n->key = NULL;
+				n->value = NULL;
+				n->childs = NULL;
 			}
-
-			child_ref->index = t->size;
-
-			child = &t->node_list[child_ref->index];
-
-			++t->size;
 		}
 
-		if (child != NULL)
+		child_ref->index = t->size;
+
+		child = &t->node_list[child_ref->index];
+
+		++t->size;
+	}
+
+	if (child != NULL)
+	{
+		if (set_insert(parent->childs, key, child_ref) != 0)
 		{
-			if (set_insert(parent->childs, key, child_ref) == 0)
-			{
-				child->parent_index = parent->self_index;
-				child->self_index = child_ref->index;
-				child->key = key;
-				child->value = value;
-				child->childs = NULL;
-
-				return child;
-			}
-
 			log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid child insertion");
 
 			return NULL;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid node child reference");
+		child->parent_index = parent->self_index;
+		child->self_index = child_ref->index;
+		child->key = key;
+		child->value = value;
+		child->childs = NULL;
 
-		return NULL;
+		return child;
 	}
-
-	log_write("metacall", LOG_LEVEL_ERROR, "Trie invalid node insertion parameters");
 
 	return NULL;
 }
@@ -594,6 +593,8 @@ int trie_node_clear(trie t, trie_node n)
 
 						vector_push_back(node_stack, &current_node);
 					}
+
+					set_destroy(back->childs);
 				}
 
 				free_node = malloc(sizeof(struct trie_node_free_type));
