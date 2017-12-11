@@ -218,15 +218,6 @@ int set_bucket_insert(set_bucket bucket, comparable_callback compare_cb, void * 
 		return 1;
 	}
 
-	pair = set_bucket_get_pair(bucket, compare_cb, key);
-
-	if (pair != NULL)
-	{
-		pair->value = value;
-
-		return 0;
-	}
-
 	if ((bucket->count + 1) >= bucket->capacity)
 	{
 		if (set_bucket_realloc_pairs(bucket, bucket->capacity << 1) != 0)

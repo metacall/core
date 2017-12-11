@@ -82,6 +82,7 @@ TEST_F(adt_set_test, DefaultConstructor)
 
 	EXPECT_EQ((size_t) key_array_size, (size_t) value_array_size);
 
+	/* Insert value */
 	for (size_t i = 0; i < key_array_size; ++i)
 	{
 		EXPECT_EQ((int) 0, (int) set_insert(s, key_array[i], &value_array[i]));
@@ -91,6 +92,7 @@ TEST_F(adt_set_test, DefaultConstructor)
 
 	EXPECT_EQ((size_t) iterator_counter, (size_t) value_array_size);
 
+	/* Get value */
 	for (size_t i = 0; i < key_array_size; ++i)
 	{
 		int * value = (int *)set_get(s, key_array[i]);
@@ -100,11 +102,28 @@ TEST_F(adt_set_test, DefaultConstructor)
 		EXPECT_EQ((int) value_array[i], (int) *value);
 	}
 
+	/* Overwrite value */
+	EXPECT_EQ((int) 0, (int) set_insert(s, key_array[1], &value_array[0]));
+
+	int * value = (int *)set_get(s, key_array[1]);
+
+	EXPECT_EQ((int) value_array[0], (int) *value);
+
+	EXPECT_EQ((size_t) key_array_size, (size_t) set_size(s));
+
+	/* Remove value */
 	for (size_t i = 0; i < key_array_size; ++i)
 	{
 		int * value = (int *)set_remove(s, key_array[i]);
 
-		EXPECT_EQ((int) value_array[i], (int) *value);
+		if (i == 1)
+		{
+			EXPECT_EQ((int) value_array[0], (int) *value);
+		}
+		else
+		{
+			EXPECT_EQ((int) value_array[i], (int) *value);
+		}
 	}
 
 	set_destroy(s);

@@ -177,6 +177,8 @@ int set_insert(set s, set_key key, set_value value)
 
 	set_bucket bucket;
 
+	set_pair pair;
+
 	if (s == NULL || key == NULL || value == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set insertion parameters");
@@ -189,6 +191,15 @@ int set_insert(set s, set_key key, set_value value)
 	index = h % s->capacity;
 
 	bucket = &s->buckets[index];
+
+	pair = set_bucket_get_pair(bucket, s->compare_cb, key);
+
+	if (pair != NULL)
+	{
+		pair->value = value;
+
+		return 0;
+	}
 
 	if (set_bucket_insert(bucket, s->compare_cb, key, value) != 0)
 	{
