@@ -1,6 +1,7 @@
+# GLIBC
 {
-	Ignore dlopen bug dlopen@@GLIBC_2.2.5 _dlerror_run.
+	Ignore dlopen allocation memory leak from GLIB.
 	Memcheck:Leak
-	fun:dlopen
-	fun:_dlerror_run
+	...
+	fun:dlopen@@GLIBC_2.2.5
 }

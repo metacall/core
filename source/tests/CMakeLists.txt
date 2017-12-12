@@ -61,7 +61,7 @@ if(OPTION_TEST_MEMORYCHECK)
 			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
-			--timeout 30
+			--timeout 60
 		#COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
 
