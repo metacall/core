@@ -276,6 +276,9 @@ void application::usage()
 
 void application::run()
 {
+	/* Show welcome message  */
+	std::cout << "Welcome to Tijuana, tequila, sexo & marijuana.";
+
 	while (exit_condition != true)
 	{
 		std::string input;
