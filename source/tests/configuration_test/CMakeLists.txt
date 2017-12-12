@@ -151,5 +151,6 @@ include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
 	""
+	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
 	"CONFIGURATION_PATH=${CMAKE_CURRENT_BINARY_DIR}/global.json"
 )

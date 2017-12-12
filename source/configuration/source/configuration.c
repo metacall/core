@@ -17,6 +17,8 @@
 #include <environment/environment_variable.h>
 #include <environment/environment_variable_path.h>
 
+#include <serial/serial.h>
+
 #include <log/log.h>
 
 /* -- Definitions -- */
@@ -29,6 +31,13 @@
 int configuration_initialize(const char * reader, const char * path, void * allocator)
 {
 	configuration global = NULL;
+
+	if (serial_initialize() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration serial initialization");
+
+		return 1;
+	}
 
 	if (path == NULL)
 	{

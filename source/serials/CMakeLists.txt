@@ -3,8 +3,9 @@ if(NOT OPTION_BUILD_SERIALS)
 	return()
 endif()
 
-# Configuration options
-option(OPTION_BUILD_SERIALS_RAPID_JSON "Build RapidJSON library serial." ON)
+# Serial options
+option(OPTION_BUILD_SERIALS_METACALL "MetaCall Native Format library serial." ON)
+option(OPTION_BUILD_SERIALS_RAPID_JSON "RapidJSON library serial." ON)
 
 # Define serial modules
 set(SERIAL_MODULE_NAMES
@@ -19,10 +20,6 @@ set(SERIAL_MODULE_NAMES
 	dynlink
 	serial
 )
-
-# Serial options
-option(OPTION_BUILD_SERIALS_METACALL "MetaCall Native Format library serial." ON)
-option(OPTION_BUILD_SERIALS_RAPID_JSON "RapidJSON library serial." ON)
 
 # Serial packages
 add_subdirectory(metacall_serial) # MetaCall Native Format library

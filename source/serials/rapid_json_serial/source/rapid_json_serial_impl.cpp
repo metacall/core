@@ -126,7 +126,9 @@ const char * rapid_json_serial_impl_extension()
 
 serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 {
-	RapidJSONSerialDocument * document = new RapidJSONSerialDocument(new MemoryAllocator(allocator));
+	MemoryAllocator * rapid_json_allocator = new MemoryAllocator(allocator);
+
+	RapidJSONSerialDocument * document = new RapidJSONSerialDocument(rapid_json_allocator);
 
 	if (document == nullptr)
 	{

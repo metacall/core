@@ -171,6 +171,8 @@ configuration configuration_object_initialize(const char * name, const char * pa
 		set_iterate(config->parent->map, &configuration_object_initialize_cb_iterate, config->map);
 	}
 
+	config->v = NULL;
+
 	return config;
 }
 
