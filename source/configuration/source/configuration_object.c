@@ -51,6 +51,8 @@ static char * configuration_object_read(const char * path);
 
 static int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
+static int configuration_object_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+
 /* -- Methods -- */
 
 int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
@@ -61,7 +63,7 @@ int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val
 
 	if (key != NULL && val != NULL)
 	{
-		return set_insert(map, key, value_copy(val));
+		return set_insert(map, key, value_type_copy(val));
 	}
 
 	return 0;
@@ -279,7 +281,7 @@ void configuration_object_instantiate(configuration config, value v)
 
 		const char * key = value_to_string(tupla[0]);
 
-		configuration_object_set(config, key, tupla[1]);
+		configuration_object_set(config, key, value_type_copy(tupla[1]));
 	}
 
 	config->v = v;
@@ -327,6 +329,22 @@ value configuration_object_get(configuration config, const char * key)
 	return set_get(config->map, (set_key)key);
 }
 
+int configuration_object_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
+	{
+		value v = (value)val;
+
+		value_type_destroy(v);
+	}
+
+	return 0;
+}
+
 void configuration_object_destroy(configuration config)
 {
 	if (config->name != NULL)
@@ -339,17 +357,19 @@ void configuration_object_destroy(configuration config)
 		free(config->path);
 	}
 
-	if (config->v != NULL)
-	{
-		value_type_destroy(config->v);
-	}
-
 	if (config->source != NULL)
 	{
 		free(config->source);
 	}
 
+	set_iterate(config->map, &configuration_object_destroy_cb_iterate, NULL);
+
 	set_destroy(config->map);
+
+	if (config->v != NULL)
+	{
+		value_type_destroy(config->v);
+	}
 
 	free(config);
 }

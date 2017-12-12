@@ -30,6 +30,52 @@ value value_type_create(const void * data, size_t bytes, type_id id)
 	return v;
 }
 
+value value_type_copy(value v)
+{
+	if (v != NULL)
+	{
+		type_id id = value_type_id(v);
+
+		if (type_id_array(id) == 0)
+		{
+			size_t index, size = value_type_size(v) / sizeof(value);
+
+			value new_v = value_create_array(NULL, size);
+
+			value * new_v_array = value_to_array(new_v);
+
+			value * v_array = value_to_array(v);
+
+			for (index = 0; index < size; ++index)
+			{
+				new_v_array[index] = value_type_copy(v_array[index]);
+			}
+		}
+		else if (type_id_map(id) == 0)
+		{
+			size_t index, size = value_type_size(v) / sizeof(value);
+
+			value new_v = value_create_map(NULL, size);
+
+			value * new_v_map = value_to_map(new_v);
+
+			value * v_map = value_to_map(v);
+
+			for (index = 0; index < size; ++index)
+			{
+				new_v_map[index] = value_type_copy(v_map[index]);
+			}
+		}
+
+		if (type_id_invalid(id) != 0)
+		{
+			return value_copy(v);
+		}
+	}
+
+	return NULL;
+}
+
 size_t value_type_size(value v)
 {
 	size_t size = value_size(v);

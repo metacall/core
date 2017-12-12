@@ -39,7 +39,19 @@ extern "C" {
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-value value_type_create(const void * data, size_t bytes, type_id id);
+REFLECT_API value value_type_create(const void * data, size_t bytes, type_id id);
+
+/**
+*  @brief
+*    Make a deep copy of value @v
+*
+*  @param[in] v
+*    Reference to the value is going to be copied
+*
+*  @return
+*    Pointer to a deep copy of new value if success, null otherwhise
+*/
+REFLECT_API value value_type_copy(value v);
 
 /**
 *  @brief

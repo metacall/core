@@ -145,6 +145,8 @@ void configuration_destroy()
 	configuration_singleton_destroy();
 
 	configuration_impl_destroy();
+
+	serial_destroy();
 }
 
 const char * configuration_print_info()
