@@ -47,15 +47,18 @@ if(OPTION_TEST_MEMORYCHECK)
 	set(MEMORYCHECK_SUPPRESSIONS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/valgrind.supp")
 
 	# TODO: Memory check does not work properly with CoreCLR
+	#
+	# 	Remove MEMCHECK_IGNORE label from the following tests:
+	#		- cs-loader-test
+	#		- metacall-test
+	#		- metacall-distributable-test
+	#		- metacall-inspect-test
+	#		- metacall-integration-test
 
 	add_custom_target(memcheck
 		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 		COMMAND ${CMAKE_CTEST_COMMAND}
-			--exclude-regex cs-loader-test
-			--exclude-regex metacall-test
-			--exclude-regex metacall-distributable-test
-			--exclude-regex metacall-inspect-test
-			--exclude-regex metacall-integration-test
+			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
 			--timeout 30

@@ -135,7 +135,7 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-	PROPERTY LABELS ${target}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)
