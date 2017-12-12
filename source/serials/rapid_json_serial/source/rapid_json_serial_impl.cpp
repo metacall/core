@@ -496,6 +496,13 @@ int rapid_json_serial_impl_destroy(serial_impl_handle handle)
 
 	if (document != nullptr)
 	{
+		RapidJSONSerialDocument::AllocatorType * allocator = &document->GetAllocator();
+
+		if (allocator != nullptr)
+		{
+			delete allocator;
+		}
+
 		delete document;
 	}
 
