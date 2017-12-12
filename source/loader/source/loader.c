@@ -33,6 +33,8 @@
 #define LOADER_SCRIPT_PATH			"LOADER_SCRIPT_PATH"
 #define LOADER_DEFAULT_SCRIPT_PATH	"scripts"
 
+#define LOADER_LAZY					1
+
 /* -- Forward Declarations -- */
 
 struct loader_get_iterator_args_type;
