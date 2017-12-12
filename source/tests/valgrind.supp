@@ -1,0 +1,6 @@
+{
+	Ignore dlopen bug dlopen@@GLIBC_2.2.5 _dlerror_run.
+	Memcheck:Leak
+	fun:dlopen
+	fun:_dlerror_run
+}

@@ -4,7 +4,6 @@
 
 option(OPTION_BUILD_SANITIZER	"Build with sanitizer compiler options."		OFF)
 
-
 #
 # Platform and architecture setup
 #

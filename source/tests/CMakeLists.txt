@@ -36,10 +36,34 @@ target_link_libraries(gmock-dev
 
 # Set memory check configuration
 
-set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --leak-check=full")
-set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-fds=yes")
-set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --trace-children=yes")
-set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --error-exitcode=1")
+option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
+
+if(OPTION_TEST_MEMORYCHECK)
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --leak-check=full")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --trace-children=yes")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --show-reachable=yes")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=50")
+
+	set(MEMORYCHECK_SUPPRESSIONS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/valgrind.supp")
+
+	# TODO: Memory check does not work properly with CoreCLR
+
+	add_custom_target(memcheck
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+		COMMAND ${CMAKE_CTEST_COMMAND}
+			--exclude-regex cs-loader-test
+			--exclude-regex metacall-test
+			--exclude-regex metacall-distributable-test
+			--exclude-regex metacall-inspect-test
+			--exclude-regex metacall-integration-test
+			--force-new-ctest-process
+			--test-action memcheck
+			--timeout 30
+		#COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
+	)
+
+	include(CTest)
+endif()
 
 #
 # Tests
