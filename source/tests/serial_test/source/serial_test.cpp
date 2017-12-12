@@ -366,26 +366,9 @@ TEST_F(serial_test, DefaultConstructor)
 				EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], size - 1));
 
 				memory_allocator_deallocate(allocator, buffer);
-
-				value_destroy(value_array[iterator]);
 			}
-		}
 
-		for (size_t index = 0; index < value_list_size; ++index)
-		{
-			value_destroy(value_list[index]);
-		}
-
-		for (size_t index = 0; index < value_map_size; ++index)
-		{
-			value iterator = value_map[index];
-
-			value * tupla = value_to_array(iterator);
-
-			value_destroy(tupla[0]);
-			value_destroy(tupla[1]);
-
-			value_destroy(iterator);
+			value_type_destroy(value_array[iterator]);
 		}
 	}
 
