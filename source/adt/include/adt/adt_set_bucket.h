@@ -60,7 +60,7 @@ ADT_API int set_bucket_realloc_pairs(set_bucket bucket, size_t new_capacity);
 
 ADT_API set_pair set_bucket_get_pair(set_bucket bucket, comparable_callback compare_cb, void * key);
 
-ADT_API int set_bucket_insert(set_bucket bucket, comparable_callback compare_cb, void * key, void * value);
+ADT_API int set_bucket_insert(set_bucket bucket, void * key, void * value);
 
 ADT_API int set_bucket_remove(set_bucket bucket, comparable_callback compare_cb, void * key, void ** value);
 

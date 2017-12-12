@@ -200,11 +200,11 @@ set_pair set_bucket_get_pair(set_bucket bucket, comparable_callback compare_cb, 
 	return NULL;
 }
 
-int set_bucket_insert(set_bucket bucket, comparable_callback compare_cb, void * key, void * value)
+int set_bucket_insert(set_bucket bucket, void * key, void * value)
 {
 	set_pair pair;
 
-	if (bucket == NULL || compare_cb == NULL || key == NULL || value == NULL)
+	if (bucket == NULL || key == NULL || value == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insert parameters");
 

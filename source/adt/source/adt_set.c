@@ -98,7 +98,7 @@ int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iter
 
 		set_bucket bucket = &new_set->buckets[index];
 
-		if (set_bucket_insert(bucket, new_set->compare_cb, key, value) != 0)
+		if (set_bucket_insert(bucket, key, value) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket realloc insertion");
 
@@ -201,7 +201,7 @@ int set_insert(set s, set_key key, set_value value)
 		return 0;
 	}
 
-	if (set_bucket_insert(bucket, s->compare_cb, key, value) != 0)
+	if (set_bucket_insert(bucket, key, value) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insertion");
 

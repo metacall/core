@@ -121,19 +121,19 @@ int serial_singleton_register(serial s)
 
 	const char * name = serial_name(s);
 
-	if (set_get(singleton->serials, (const set_key)name) != NULL)
+	if (set_get(singleton->serials, (set_key)name) != NULL)
 	{
 		return 1;
 	}
 
-	return set_insert(singleton->serials, (const set_key)name, s);
+	return set_insert(singleton->serials, (set_key)name, s);
 }
 
 serial serial_singleton_get(const char * name)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
-	return set_get(singleton->serials, (const set_key)name);
+	return set_get(singleton->serials, (set_key)name);
 }
 
 const char * serial_singleton_path()
@@ -149,7 +149,7 @@ int serial_singleton_clear(serial s)
 
 	const char * name = serial_name(s);
 
-	if (set_get(singleton->serials, (const set_key)name) == NULL)
+	if (set_get(singleton->serials, (set_key)name) == NULL)
 	{
 		return 0;
 	}

@@ -44,7 +44,6 @@ static value rapid_json_serial_impl_deserialize_value(const RapidJSONSerialValue
 *    Memory allocator concept to decouple document allocation.
 *    Head like approach with each allocator has been implemented
 *    in order to support static like Free method used in RapidJSON
-*
 */
 class MemoryAllocator
 {
@@ -325,7 +324,7 @@ char * rapid_json_serial_impl_document_stringify(RapidJSONSerialDocument * docum
 
 char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
 {
-	RapidJSONSerialDocument *  document = (RapidJSONSerialDocument * )handle;
+	RapidJSONSerialDocument * document = (RapidJSONSerialDocument *)handle;
 
 	if (handle == NULL || v == NULL || size == NULL)
 	{

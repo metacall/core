@@ -44,7 +44,7 @@ serial serial_create(const char * name)
 {
 	serial s;
 
-	size_t name_size;
+	size_t name_length;
 
 	if (name == NULL)
 	{
@@ -62,9 +62,9 @@ serial serial_create(const char * name)
 		return s;
 	}
 
-	name_size = strlen(name) + 1;
+	name_length = strlen(name);
 
-	if (name_size <= 1)
+	if (name_length == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name length");
 
@@ -80,7 +80,7 @@ serial serial_create(const char * name)
 		return NULL;
 	}
 
-	s->name = malloc(sizeof(char) * name_size);
+	s->name = malloc(sizeof(char) * (name_length + 1));
 
 	if (s->name == NULL)
 	{
@@ -91,7 +91,9 @@ serial serial_create(const char * name)
 		return NULL;
 	}
 
-	strncpy(s->name, name, name_size);
+	strncpy(s->name, name, name_length);
+
+	s->name[name_length] = '\0';
 
 	s->impl = serial_impl_create();
 
@@ -109,6 +111,19 @@ serial serial_create(const char * name)
 	if (serial_impl_load(s->impl, serial_singleton_path(), s->name) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation loading");
+
+		serial_impl_destroy(s->impl);
+
+		free(s->name);
+
+		free(s);
+
+		return NULL;
+	}
+
+	if (serial_singleton_register(s) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton insert");
 
 		serial_impl_destroy(s->impl);
 
@@ -161,6 +176,13 @@ int serial_clear(serial s)
 	if (s != NULL)
 	{
 		int result = 0;
+
+		if (serial_singleton_clear(s) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton clear");
+
+			result = 1;
+		}
 
 		if (s->name != NULL)
 		{
