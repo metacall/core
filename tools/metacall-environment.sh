@@ -21,6 +21,7 @@ INSTALL_V8REPO=0
 INSTALL_V8REPO58=0
 INSTALL_V8REPO57=0
 INSTALL_V8REPO54=0
+INSTALL_V8REPO52=0
 INSTALL_V8REPO51=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
@@ -92,10 +93,10 @@ sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get -y --allow-unauthenticated install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
-	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ yakkety main" > /etc/apt/sources.list.d/dotnetdev.list'
+	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ xenial main" > /etc/apt/sources.list.d/dotnetdev.list'
 	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --allow-unauthenticated install libgssapi-krb5-2 libicu57 libstdc++6
+	$SUDO_CMD apt-get -y --allow-unauthenticated install libgssapi-krb5-2 libicu55 libstdc++6
 	$SUDO_CMD apt-get -y --allow-unauthenticated install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
 }
 
@@ -125,6 +126,13 @@ sub_v8repo(){
 		$SUDO_CMD apt-get update
 		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.4-dev
 		$SUDO_CMD rm libicu55_55.1-7_amd64.deb
+	fi
+
+	# V8 5.2
+	if [ $INSTALL_V8REPO52 = 1 ]; then
+		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.2
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get -y install libicu55 libv8-5.2-dev
 	fi
 
 	# V8 5.8
@@ -258,6 +266,11 @@ sub_config(){
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO58=1
+		fi
+		if [ "$var" = 'v8rep52' ]; then
+			echo "v8 selected"
+			INSTALL_V8REPO=1
+			INSTALL_V8REPO52=1
 		fi
 		if [ "$var" = 'v8rep51' ]; then
 			echo "v8 selected"

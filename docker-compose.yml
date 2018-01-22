@@ -15,7 +15,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_BASE_IMAGE: ubuntu:yakkety
+        METACALL_BASE_IMAGE: ubuntu:xenial
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
