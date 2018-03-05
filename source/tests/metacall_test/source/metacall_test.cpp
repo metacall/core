@@ -173,6 +173,24 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 12);
 
 		metacall_value_destroy(ret);
+
+		const enum metacall_value_id backwards_prime_int_ids[] =
+		{
+			METACALL_INT, METACALL_INT
+		};
+
+		ret = metacallt("backwardsPrime", backwards_prime_int_ids, 9900, 10000);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		void ** v_array = metacall_value_to_array(ret);
+
+		EXPECT_EQ((int) metacall_value_to_int(v_array[0]), (int) 9923);
+		EXPECT_EQ((int) metacall_value_to_int(v_array[1]), (int) 9931);
+		EXPECT_EQ((int) metacall_value_to_int(v_array[2]), (int) 9941);
+		EXPECT_EQ((int) metacall_value_to_int(v_array[3]), (int) 9967);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_PLUGINS_RB */
 

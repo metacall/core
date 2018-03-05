@@ -23,6 +23,7 @@
 #include <log/log.h>
 
 #include <stdlib.h>
+#include <stdio.h>
 
 #if (defined(_WIN32) || defined(_WIN64)) && defined(boolean)
 #	undef boolean
@@ -75,6 +76,96 @@ int function_rb_interface_create(function func, function_impl impl)
 	(void)impl;
 
 	return 0;
+}
+
+const char * rb_type_deserialize(VALUE v, value * result)
+{
+	if (v != Qnil)
+	{
+		int v_type = TYPE(v);
+
+		if (v_type == T_TRUE)
+		{
+			boolean b = 1L;
+
+			*result = value_create_bool(b);
+
+			return "Boolean";
+		}
+		else if (v_type == T_FALSE)
+		{
+			boolean b = 0L;
+
+			*result = value_create_bool(b);
+
+			return "Boolean";
+		}
+		else if (v_type == T_FIXNUM)
+		{
+			int i = FIX2INT(v);
+
+			*result = value_create_int(i);
+
+			return "Fixnum";
+		}
+		else if (v_type == T_BIGNUM)
+		{
+			long l = NUM2LONG(v);
+
+			*result = value_create_long(l);
+
+			return "Bignum";
+		}
+		else if (v_type == T_FLOAT)
+		{
+			double d = NUM2DBL(v);
+
+			*result = value_create_double(d);
+
+			return "Float";
+		}
+		else if (v_type == T_STRING)
+		{
+			long length = RSTRING_LEN(v);
+
+			char * str = StringValuePtr(v);
+
+			if (length > 0 && str != NULL)
+			{
+				*result = value_create_string(str, (size_t)length);
+			}
+
+			return "String";
+		}
+		else if (v_type == T_ARRAY)
+		{
+			size_t iterator, size = RARRAY_LEN(v);
+
+			VALUE * array_ptr = RARRAY_PTR(v);
+
+			*result = value_create_array(NULL, size);
+
+			if (size > 0 && *result != NULL)
+			{
+				value * v_array_ptr = value_to_array(*result);
+
+				for (iterator = 0; iterator < size; ++iterator, ++array_ptr)
+				{
+					(void)rb_type_deserialize(*array_ptr, &v_array_ptr[iterator]);
+				}
+			}
+
+			return "Array";
+		}
+		else if (v_type == T_OBJECT)
+		{
+			// TODO
+
+			return "Object";
+		}
+	}
+
+	return NULL;
 }
 
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args)
@@ -225,63 +316,11 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	if (result_value != Qnil)
 	{
-		int result_type = TYPE(result_value);
-
 		value v = NULL;
 
-		if (result_type == T_TRUE)
-		{
-			boolean b = 1L;
+		const char * v_type_name = rb_type_deserialize(result_value, &v);
 
-			v = value_create_bool(b);
-
-			signature_set_return(s, loader_impl_type(rb_function->impl, "Boolean"));
-		}
-		else if (result_type == T_FALSE)
-		{
-			boolean b = 0L;
-
-			v = value_create_bool(b);
-
-			signature_set_return(s, loader_impl_type(rb_function->impl, "Boolean"));
-		}
-		else if (result_type == T_FIXNUM)
-		{
-			int i = FIX2INT(result_value);
-
-			v = value_create_int(i);
-
-			signature_set_return(s, loader_impl_type(rb_function->impl, "Fixnum"));
-		}
-		else if (result_type == T_BIGNUM)
-		{
-			long l = NUM2LONG(result_value);
-
-			v = value_create_long(l);
-
-			signature_set_return(s, loader_impl_type(rb_function->impl, "Bignum"));
-		}
-		else if (result_type == T_FLOAT)
-		{
-			double d = NUM2DBL(result_value);
-
-			v = value_create_double(d);
-
-			signature_set_return(s, loader_impl_type(rb_function->impl, "Float"));
-		}
-		else if (result_type == T_STRING)
-		{
-			long length = RSTRING_LEN(result_value);
-
-			char * str = StringValuePtr(result_value);
-
-			if (length > 0 && str != NULL)
-			{
-				v = value_create_string(str, (size_t)length);
-			}
-
-			signature_set_return(s, loader_impl_type(rb_function->impl, "String"));
-		}
+		signature_set_return(s, loader_impl_type(rb_function->impl, v_type_name));
 
 		return v;
 	}
@@ -328,7 +367,8 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_INT, "Fixnum" },
 		{ TYPE_LONG, "Bignum" },
 		{ TYPE_DOUBLE, "Float" },
-		{ TYPE_STRING, "String" }
+		{ TYPE_STRING, "String" },
+		{ TYPE_ARRAY, "Array" }
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
