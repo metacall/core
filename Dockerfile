@@ -32,7 +32,8 @@ WORKDIR $METACALL_PATH
 COPY . $METACALL_PATH
 
 # Configure MetaCall build tool script
-RUN chmod 500 $METACALL_PATH/tools/metacall-build.sh
+RUN chmod 500 $METACALL_PATH/tools/metacall-build.sh \
+	&& chmod 500 $METACALL_PATH/tools/metacall-clear.sh
 
 # Build and install MetaCall libraries then run tests
 RUN mkdir -p $METACALL_PATH/build \
