@@ -109,13 +109,10 @@ sub_v8repo(){
 
 	# V8 5.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
-		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-5.1/ubuntu wily main\" > /etc/apt/sources.list.d/libv851.list"
-		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
-		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
+		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv851.list"
+		$SUDO_CMD sh -c "echo \"deb http://archive.ubuntu.com/ubuntu trusty main\" > /etc/apt/sources.list.d/libicu52.list"
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.1-dev
-		$SUDO_CMD apt-get -y install -f
-		$SUDO_CMD rm libicu55_55.1-7_amd64.deb
+		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu52 libv8-5.1.117 libv8-5.1-dev
 	fi
 
 	# V8 5.4
