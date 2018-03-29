@@ -29,9 +29,16 @@ typedef struct loader_impl_py_function_type
 
 } * loader_impl_py_function;
 
+typedef struct loader_impl_py_handle_module_type
+{
+	PyObject * instance;
+	PyObject * name;
+
+} * loader_impl_py_handle_module;
+
 typedef struct loader_impl_py_handle_type
 {
-	PyObject ** modules;
+	loader_impl_py_handle_module modules;
 	size_t size;
 
 } * loader_impl_py_handle;
@@ -768,7 +775,7 @@ loader_impl_py_handle py_loader_impl_handle_create(size_t size)
 	}
 
 	py_handle->size = size;
-	py_handle->modules = malloc(sizeof(PyObject *) * size);
+	py_handle->modules = malloc(sizeof(struct loader_impl_py_handle_module_type) * size);
 
 	if (py_handle->modules == NULL)
 	{
@@ -782,6 +789,28 @@ loader_impl_py_handle py_loader_impl_handle_create(size_t size)
 
 void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 {
+	size_t iterator;
+
+	PyGILState_STATE gstate;
+
+	PyObject * system_modules;
+
+	gstate = PyGILState_Ensure();
+
+	system_modules = PySys_GetObject("modules");
+
+	for (iterator = 0; iterator < py_handle->size; ++iterator)
+	{
+		PyObject_GC_Del(py_handle->modules[iterator].instance);
+
+		PyObject_DelItem(system_modules, py_handle->modules[iterator].name);
+
+		/*Py_DECREF(py_handle->modules[iterator].instance);*/
+		Py_XDECREF(py_handle->modules[iterator].name);
+	}
+
+	PyGILState_Release(gstate);
+
 	free(py_handle->modules);
 
 	free(py_handle);
@@ -804,13 +833,11 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		PyObject * py_module_name;
-
 		loader_naming_name module_name;
 
 		loader_path_get_name(paths[iterator], module_name);
 
-		py_module_name = PyUnicode_DecodeFSDefault(module_name);
+		py_handle->modules[iterator].name = PyUnicode_DecodeFSDefault(module_name);
 
 		/* TODO: Implement a map in the core to hold all directories by each loader impl */
 
@@ -832,9 +859,9 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 			}
 		}
 
-		py_handle->modules[iterator] = PyImport_Import(py_module_name);
+		py_handle->modules[iterator].instance = PyImport_Import(py_handle->modules[iterator].name);
 
-		if (PyErr_Occurred() != NULL || py_handle->modules[iterator] == NULL)
+		if (PyErr_Occurred() != NULL || py_handle->modules[iterator].instance == NULL)
 		{
 			loader_impl_py py_impl = loader_impl_get(impl);
 
@@ -874,7 +901,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 	if (compiled != NULL)
 	{
-		py_handle->modules[0] = PyImport_ExecCodeModule(name, compiled);
+		py_handle->modules[0].instance = PyImport_ExecCodeModule(name, compiled);
 
 		if (PyErr_Occurred() != NULL)
 		{
@@ -889,9 +916,11 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 			return NULL;
 		}
 
+		py_handle->modules[0].name = PyUnicode_DecodeFSDefault(name);
+
 		PyGILState_Release(gstate);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s. from memory module at (%p)", (void *)impl, name, (void *)py_handle->modules[0]);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s. from memory module at (%p)", (void *)impl, name, (void *)py_handle->modules[0].instance);
 
 		return (loader_handle)py_handle;
 	}
@@ -1162,9 +1191,9 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	for (iterator = 0; iterator < py_handle->size; ++iterator)
 	{
-		if (py_loader_impl_discover_module(impl, py_handle->modules[iterator], ctx) != 0)
+		if (py_loader_impl_discover_module(impl, py_handle->modules[iterator].instance, ctx) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Introspection module discovering error #%" PRIuS" <%p>", iterator, (void *)py_handle->modules[iterator]);
+			log_write("metacall", LOG_LEVEL_ERROR, "Introspection module discovering error #%" PRIuS" <%p>", iterator, (void *)py_handle->modules[iterator].instance);
 
 			return 1;
 		}
