@@ -70,8 +70,18 @@ TEST_F(metacall_test, DefaultConstructor)
 	{
 		const char * py_scripts[] =
 		{
-			"example.py"
+			"example.py", "web.py"
 		};
+
+		const char web_content[] =
+			"<html>\n"
+			"  <head>\n"
+			"    <title>MetaCall Python Web</title>\n"
+			"  </head>\n"
+			"  <body>\n"
+			"    Hello World\n"
+			"  </body>\n"
+			"</html>\n";
 
 		const long seven_multiples_limit = 10;
 
@@ -131,6 +141,14 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("index");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), web_content));
 
 		metacall_value_destroy(ret);
 	}

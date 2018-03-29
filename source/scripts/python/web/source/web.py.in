@@ -1,0 +1,11 @@
+#!/usr/bin/python3.5
+
+from datetime import datetime
+
+def index():
+  f = open('@PROJECT_METACALL_INDEX_PATH@', 'r')
+
+  return f.read()
+
+def time():
+  return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
