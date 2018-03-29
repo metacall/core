@@ -1,9 +1,12 @@
 #!/usr/bin/python3.5
 
+from os import path
 from datetime import datetime
 
 def index():
-  f = open('@PROJECT_METACALL_INDEX_PATH@', 'r')
+  basepath = path.dirname(path.abspath(__file__))
+
+  f = open(path.join(basepath, 'index.html'), 'r')
 
   return f.read()
 
