@@ -406,9 +406,16 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 	{
 		static const char func_fini_name[] = LOADER_IMPL_FUNCTION_FINI;
 
+		loader_impl_interface interface_impl = loader_impl_symbol(handle_impl->impl);
+
 		if (loader_impl_function_hook_call(handle_impl->ctx, func_fini_name) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Error when destroying handle impl: %p (%s)", (void *)handle_impl, func_fini_name);
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when calling destructor from handle impl: %p (%s)", (void *)handle_impl, func_fini_name);
+		}
+
+		if (interface_impl->clear(handle_impl->impl, handle_impl->module) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when clearing handle impl: %p", (void *)handle_impl);
 		}
 
 		context_remove(handle_impl->impl->ctx, handle_impl->ctx);
@@ -530,11 +537,6 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 					loader_impl_destroy_handle(handle_impl);
 				}
-
-				if (interface_impl->clear(impl, handle) != 0)
-				{
-					return 1;
-				}
 			}
 		}
 	}
@@ -629,11 +631,6 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 
 					loader_impl_destroy_handle(handle_impl);
 				}
-
-				if (interface_impl->clear(impl, handle) != 0)
-				{
-					return 1;
-				}
 			}
 		}
 	}
@@ -696,11 +693,6 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 					}
 
 					loader_impl_destroy_handle(handle_impl);
-				}
-
-				if (interface_impl->clear(impl, handle) != 0)
-				{
-					return 1;
 				}
 			}
 		}

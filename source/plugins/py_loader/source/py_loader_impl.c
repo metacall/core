@@ -801,11 +801,14 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 
 	for (iterator = 0; iterator < py_handle->size; ++iterator)
 	{
-		PyObject_GC_Del(py_handle->modules[iterator].instance);
+		/* TODO: Not sure why, but this generate a memory leak */
+		/* In fact, from the interpreter it must be done, but from */
+		/* C API it looks like is not needed */
+		/*PyObject_Del(py_handle->modules[iterator].instance);*/
 
 		PyObject_DelItem(system_modules, py_handle->modules[iterator].name);
 
-		/*Py_DECREF(py_handle->modules[iterator].instance);*/
+		Py_XDECREF(py_handle->modules[iterator].instance);
 		Py_XDECREF(py_handle->modules[iterator].name);
 	}
 
@@ -1041,8 +1044,6 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 
 		if (PyErr_Occurred() != NULL)
 		{
-			loader_impl_py py_impl = loader_impl_get(impl);
-
 			py_loader_impl_error_print(py_impl);
 		}
 

@@ -21,14 +21,11 @@ using namespace metacallcli;
 
 /* -- Private Methods -- */
 
-bool command_cb_help(application & app, tokenizer & /*t*/)
+bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 {
 	std::cout << "MetaCall Command Line Interface by Parra Studios" << std::endl;
 	std::cout << "Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl;
 	std::cout << std::endl << "A command line interface example as metacall wrapper" << std::endl;
-
-	/* CLI usage */
-	app.usage();
 
 	/* Command list */
 	std::cout << std::endl << "Command list :" << std::endl << std::endl;
@@ -48,6 +45,10 @@ bool command_cb_help(application & app, tokenizer & /*t*/)
 
 	/* Load command */
 	std::cout << std::endl << "\tload <tag> <script0> <script1> ... <scriptN>" << std::endl;
+	std::cout << "\t\ttag : loader tag will be used to run scripts [rb, js, py, mock, node]" << std::endl;
+
+	/* Clear command */
+	std::cout << std::endl << "\tclear <tag> <script0> <script1> ... <scriptN>" << std::endl;
 	std::cout << "\t\ttag : loader tag will be used to run scripts [rb, js, py, mock, node]" << std::endl;
 
 	/* Exit command */
@@ -123,26 +124,28 @@ bool command_cb_call(application & app, tokenizer & t)
 
 		void * result = app.metacallv_adaptor(func_name, args);
 
-		size_t size = 0;
-
-		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-		char * value_str = metacall_serialize(result, &size, allocator);
-
-		std::cout << "result : " << value_str << std::endl;
-
-		metacall_allocator_free(allocator, value_str);
-
-		metacall_allocator_destroy(allocator);
-
-		metacall_value_destroy(result);
-
-		std::for_each(args.begin(), args.end(), [](void * v)
+		if (result != NULL)
 		{
-			metacall_value_destroy(v);
-		});
+			size_t size = 0;
+
+			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+			void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+			char * value_str = metacall_serialize(result, &size, allocator);
+
+			std::cout << value_str << std::endl;
+
+			metacall_value_destroy(result);
+
+			metacall_allocator_free(allocator, value_str);
+
+			metacall_allocator_destroy(allocator);
+		}
+		else
+		{
+			std::cout << "(null)" << std::endl;
+		}
 
 		return true;
 	}
@@ -158,6 +161,8 @@ bool command_cb_load(application & app, tokenizer & t)
 
 	std::string loader_tag;
 
+	++it;
+
 	if (p.is<std::string>())
 	{
 		loader_tag = *it;
@@ -168,6 +173,30 @@ bool command_cb_load(application & app, tokenizer & t)
 		++it;
 
 	} while (it != t.end() && p.is<std::string>() && app.load(loader_tag, *it));
+
+	return true;
+}
+
+bool command_cb_clear(application & app, tokenizer & t)
+{
+	tokenizer::iterator it = t.begin();
+
+	parser p(it);
+
+	std::string loader_tag;
+
+	++it;
+
+	if (p.is<std::string>())
+	{
+		loader_tag = *it;
+	}
+
+	do
+	{
+		++it;
+
+	} while (it != t.end() && p.is<std::string>() && app.clear(loader_tag, *it));
 
 	return true;
 }
@@ -211,40 +240,64 @@ bool application::load(const std::string & tag, const std::string & script)
 		script.c_str()
 	};
 
-	if (metacall_load_from_file(tag.c_str(), script_list, sizeof(script_list) / sizeof(script_list[0]), NULL) == 0)
+	if (metacall_load_from_file(tag.c_str(), script_list, sizeof(script_list) / sizeof(script_list[0]), NULL) != 0)
 	{
-		scripts.push_back(script);
+		std::cout << "Script (" << script << ") load error in loader (" << tag << ")" << std::endl;
 
-		std::cout << "Script (" << script << ") loaded correctly" << std::endl;
-
-		return true;
+		return false;
 	}
 
-	return false;
+	scripts.push_back(script);
+
+	std::cout << "Script (" << script << ") loaded correctly" << std::endl;
+
+	return true;
+}
+
+bool application::clear(const std::string & tag, const std::string & script)
+{
+	void * handle = metacall_handle(tag.c_str(), script.c_str());
+
+	if (handle == NULL)
+	{
+		std::cout << "Script (" << script << ") not found in loader (" << tag << ")" << std::endl;
+
+		return false;
+	}
+
+	if (metacall_clear(handle) != 0)
+	{
+		std::cout << "Script (" << script << ") clear error in loader (" << tag << ")" << std::endl;
+
+		return false;
+	}
+
+	script_list::iterator it = std::find(scripts.begin(), scripts.end(), script);
+
+	if (it != scripts.end())
+	{
+		scripts.erase(it);
+	}
+
+	std::cout << "Script (" << script << ") removed correctly" << std::endl;
+
+	return true;
 }
 
 application::application(int argc, char * argv[]) : exit_condition(false)
 {
+	/* Initialize MetaCall */
+	if (metacall_initialize() != 0)
+	{
+		/* Exit from application */
+		shutdown();
+	}
+
 	/* Print MetaCall information */
 	metacall_print_info();
 
 	/* Parse program arguments if any */
-	if (argc <= 1)
-	{
-		std::cout << "Invalid number of arguments (" << argc << ")";
-
-		if (argc == 1)
-		{
-			std::cout << " - { " << argv[0] << " }";
-		}
-
-		/* Print usage information */
-		usage();
-
-		/* Do not enter in main loop */
-		shutdown();
-	}
-	else
+	if (argc > 1)
 	{
 		parameter_iterator param_it(*this, argv[1], scripts);
 
@@ -261,6 +314,8 @@ application::application(int argc, char * argv[]) : exit_condition(false)
 
 	define("load", &command_cb_load);
 
+	define("clear", &command_cb_clear);
+
 	define("exit", &command_cb_exit);
 }
 
@@ -269,15 +324,10 @@ application::~application()
 
 }
 
-void application::usage()
-{
-	std::cout << std::endl << "Usage: metacallcli <tag> <script0> <script1> ... <scriptN>" << std::endl;
-}
-
 void application::run()
 {
 	/* Show welcome message  */
-	std::cout << "Welcome to Tijuana, tequila, sexo & marijuana.";
+	std::cout << "Welcome to Tijuana, tequila, sexo & marijuana." << std::endl;
 
 	while (exit_condition != true)
 	{
@@ -428,7 +478,7 @@ void * application::metacallv_adaptor(const std::string & name, const std::vecto
 
 		result = metacallv(name.c_str(), args_ptr);
 
-		delete args_ptr;
+		delete[] args_ptr;
 	}
 
 	return result;

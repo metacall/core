@@ -81,9 +81,18 @@ class application
 
 	/**
 	*  @brief
-	*    Application usage information
+	*    Application script clearer
+	*
+	*  @param[in] tag
+	*    Loader tag reference
+	*
+	*  @param[in] script
+	*    Reference to script name
+	*
+	*  @return
+	*    Return true on success, false otherwhise
 	*/
-	void usage(void);
+	bool clear(const std::string & tag, const std::string & script);
 
 	/**
 	*  @brief
