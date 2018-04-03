@@ -11,12 +11,12 @@ ROOT_DIR=$(pwd)
 
 RUN_AS_ROOT=0
 SUDO_CMD=sudo
-CLEAR_APT=0
 CLEAR_RAPIDJSON=0
 CLEAR_PYTHON=0
 CLEAR_RUBY=0
 CLEAR_NETCORE=0
 CLEAR_V8=0
+CLEAR_APT=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -24,6 +24,8 @@ PROGNAME=$(basename $0)
 sub_apt(){
 	echo "clean apt of C build"
 	$SUDO_CMD apt-get -y remove --purge build-essential git cmake wget apt-utils
+	$SUDO_CMD apt-get -y autoclean
+	$SUDO_CMD apt-get -y autoremove
 }
 
 # RapidJSON
@@ -74,9 +76,6 @@ sub_clear(){
 	if [ $RUN_AS_ROOT = 1 ]; then
 		SUDO_CMD=""
 	fi
-	if [ $CLEAR_APT = 1 ]; then
-		sub_apt
-	fi
 	if [ $CLEAR_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
@@ -92,6 +91,9 @@ sub_clear(){
 	if [ $CLEAR_V8 = 1 ]; then
 		sub_v8
 	fi
+	if [ $CLEAR_APT = 1 ]; then
+		sub_apt
+	fi
 
 	sub_metacall
 
@@ -105,10 +107,6 @@ sub_config(){
 		if [ "$var" = 'root' ]; then
 			echo "running as root"
 			RUN_AS_ROOT=1
-		fi
-		if [ "$var" = 'base' ]; then
-			echo "apt selected"
-			CLEAR_APT=1
 		fi
 		if [ "$var" = 'rapidjson' ]; then
 			echo "rapidjson selected"
@@ -129,6 +127,10 @@ sub_config(){
 		if [ "$var" = 'v8' ]; then
 			echo "v8 selected"
 			CLEAR_V8=1
+		fi
+		if [ "$var" = 'base' ]; then
+			echo "apt selected"
+			CLEAR_APT=1
 		fi
 	done
 }
