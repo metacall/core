@@ -36,6 +36,7 @@
 
 typedef struct loader_impl_rb_module_type
 {
+	ID id;
 	VALUE module;
 	VALUE instance;
 	set function_map;
@@ -580,6 +581,8 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 
 				if (rb_module != NULL)
 				{
+					rb_module->id = rb_to_id(name_capitalized);
+
 					rb_module->module = module;
 
 					rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
@@ -691,6 +694,8 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 
 				if (rb_module != NULL)
 				{
+					rb_module->id = rb_to_id(name_capitalized);
+
 					rb_module->module = module;
 
 					rb_module->instance = rb_funcall(rb_cClass, rb_intern("new"), 1, rb_cObject);
@@ -710,7 +715,7 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 						return NULL;
 					}
 
-					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s. loaded", name);
+					log_write("metacall", LOG_LEVEL_DEBUG, "Ruby module %s loaded", name);
 
 					rb_loader_impl_key_print(rb_module->function_map);
 
@@ -781,31 +786,61 @@ loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_na
 	return NULL;
 }
 
+int rb_loader_impl_clear_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	VALUE * module = (VALUE *)args;
+
+	rb_function_parser function_parser = (rb_function_parser)val;
+
+	VALUE name = rb_str_new_cstr(function_parser->name);
+
+	(void)s;
+	(void)key;
+
+	rb_undef(*module, rb_to_id(name));
+
+	return 0;
+}
+
 int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
 	loader_impl_rb_handle rb_handle = (loader_impl_rb_handle)handle;
 
+	size_t iterator, size;
+
 	(void)impl;
 
-	if (rb_handle != NULL)
+	if (rb_handle == NULL)
 	{
-		size_t iterator, size = vector_size(rb_handle->modules);
-
-		for (iterator = 0; iterator < size; ++iterator)
-		{
-			loader_impl_rb_module * rb_module = vector_at(rb_handle->modules, iterator);
-
-			set_destroy((*rb_module)->function_map);
-		}
-
-		vector_destroy(rb_handle->modules);
-
-		free(rb_handle);
-
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	size = vector_size(rb_handle->modules);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		loader_impl_rb_module * rb_module = vector_at(rb_handle->modules, iterator);
+
+		/* Undef all methods */
+		set_iterate((*rb_module)->function_map, &rb_loader_impl_clear_cb_iterate, (set_cb_iterate_args)&((*rb_module)->module));
+
+		/* Remove module */
+		if (rb_is_const_id((*rb_module)->id))
+		{
+			VALUE result = rb_const_remove(rb_cObject, (*rb_module)->id);
+
+			/* TODO: Handle result */
+			(void)result;
+		}
+
+		set_destroy((*rb_module)->function_map);
+	}
+
+	vector_destroy(rb_handle->modules);
+
+	free(rb_handle);
+
+	return 0;
 }
 
 int rb_loader_impl_discover_func(loader_impl impl, function f, rb_function_parser function_parser)
