@@ -26,7 +26,7 @@
 #include <streambuf>
 
 #include <libplatform/libplatform.h>
-#include <v8.h> /* version: 5.5.372.40 */
+#include <v8.h> /* version: 6.2.414.50 */
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
 #	include <v8-debug.h>

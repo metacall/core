@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(NodeJS 7.6)
+find_package(NodeJS 8.11.1)
 
 if(NOT NODEJS_FOUND)
 	message(STATUS "NodeJS libraries not found")
@@ -162,6 +162,8 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
+
+	${NODEJS_LIBRARY} # NodeJS library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

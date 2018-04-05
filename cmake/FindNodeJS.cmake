@@ -11,6 +11,7 @@
 # NODEJS_VERSION_MAJOR - NodeJS major version
 # NODEJS_VERSION_MINOR - NodeJS minor version
 # NODEJS_VERSION_PATCH - NodeJS patch version
+# NODEJS_MODULE_VERSION - NodeJS module version
 # NODEJS_UV_VERSION - UV version of NodeJS
 # NODEJS_UV_VERSION_MAJOR - UV major version of NodeJS
 # NODEJS_UV_VERSION_MINOR - UV minor version of NodeJS
@@ -21,6 +22,7 @@
 # NODEJS_V8_VERSION_PATCH - V8 patch version of NodeJS
 # NODEJS_V8_VERSION_TWEAK - V8 patch version of NodeJS
 # NODEJS_V8_VERSION_HEX - V8 version of NodeJS in hexadecimal format
+# NODEJS_LIBRARY - NodeJS shared library
 # NODEJS_EXECUTABLE - NodeJS shell
 
 # Prevent vervosity if already included
@@ -108,10 +110,7 @@ find_program(NODEJS_EXECUTABLE
 	DOC "NodeJS JavaScript Runtime Interpreter"
 )
 
-find_package_handle_standard_args(NODEJS DEFAULT_MSG NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR)
-
-if (NODEJS_FOUND)
-
+if (NODEJS_EXECUTABLE)
 	# Detect NodeJS version
 	execute_process(COMMAND ${NODEJS_EXECUTABLE} --version
 		OUTPUT_VARIABLE NODEJS_VERSION_TAG
@@ -149,18 +148,18 @@ endif()
 
 # Detect NodeJS V8 version
 if(NODEJS_INCLUDE_DIR)
-	file(READ ${NODEJS_INCLUDE_DIR}/v8-version.h NODEJS_VERSION_FILE)
+	file(READ ${NODEJS_INCLUDE_DIR}/v8-version.h NODEJS_V8_VERSION_FILE)
 
-	string(REGEX MATCH "#define V8_MAJOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MAJOR_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "#define V8_MAJOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MAJOR_DEF ${NODEJS_V8_VERSION_FILE})
 	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_MAJOR ${NODEJS_V8_VERSION_MAJOR_DEF})
 
-	string(REGEX MATCH "#define V8_MINOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MINOR_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "#define V8_MINOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MINOR_DEF ${NODEJS_V8_VERSION_FILE})
 	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_MINOR ${NODEJS_V8_VERSION_MINOR_DEF})
 
-	string(REGEX MATCH "#define V8_BUILD_NUMBER ([0-9]+)" NODEJS_V8_VERSION_PATCH_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "#define V8_BUILD_NUMBER ([0-9]+)" NODEJS_V8_VERSION_PATCH_DEF ${NODEJS_V8_VERSION_FILE})
 	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_PATCH ${NODEJS_V8_VERSION_PATCH_DEF})
 
-	string(REGEX MATCH "#define V8_PATCH_LEVEL ([0-9]+)" NODEJS_V8_VERSION_TWEAK_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "#define V8_PATCH_LEVEL ([0-9]+)" NODEJS_V8_VERSION_TWEAK_DEF ${NODEJS_V8_VERSION_FILE})
 	string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_TWEAK ${NODEJS_V8_VERSION_TWEAK_DEF})
 
 	set(NODEJS_V8_VERSION "${NODEJS_V8_VERSION_MAJOR}.${NODEJS_V8_VERSION_MINOR}.${NODEJS_V8_VERSION_PATCH}.${NODEJS_V8_VERSION_TWEAK}")
@@ -174,9 +173,78 @@ if(NODEJS_INCLUDE_DIR)
 		string(LENGTH "${NODEJS_V8_VERSION_HEX}" NODEJS_V8_VERSION_HEX_LENGTH)
 
 	endwhile()
+
+	file(READ ${NODEJS_INCLUDE_DIR}/node_version.h NODEJS_VERSION_FILE)
+
+	string(REGEX MATCH "#define NODE_MODULE_VERSION ([0-9]+)" NODEJS_MODULE_VERSION_DEF ${NODEJS_VERSION_FILE})
+	string(REGEX MATCH "([0-9]+)$" NODEJS_MODULE_VERSION ${NODEJS_MODULE_VERSION_DEF})
+
 endif()
 
-mark_as_advanced(NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR)
+# TODO: Remove this workaround when NodeJS begins to distribute node as a shared library
+
+# NodeJS library names
+set(NODEJS_LIBRARY_NAMES
+	libnode.so.${NODEJS_MODULE_VERSION}
+	libnode.${NODEJS_MODULE_VERSION}.dylib
+	libnode.${NODEJS_MODULE_VERSION}.dll
+)
+
+# NodeJS download and output path (workaround to compile node as a shared library)
+set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}.tar.gz")
+set(NODEJS_DOWNLOAD_FILE "${CMAKE_BINARY_DIR}/node-v${NODEJS_VERSION}.tar.gz")
+set(NODEJS_OUTPUT_PATH "${CMAKE_BINARY_DIR}/node-v${NODEJS_VERSION}")
+set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
+set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}/lib.target")
+
+# Download node if needed
+if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
+	message(STATUS "Downloading NodeJS distribution")
+	file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE})
+endif()
+
+# Decompress node if needed
+if(NOT EXISTS "${NODEJS_OUTPUT_PATH}")
+	message(STATUS "Extract NodeJS distribution")
+	execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" OUTPUT_QUIET)
+endif()
+
+# Compile node as a shared library if needed
+if(NOT EXISTS "${NODEJS_COMPILE_PATH}")
+	message(STATUS "Configure NodeJS shared library")
+
+	if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
+		execute_process(COMMAND sh ./configure --shared --debug WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+	else()
+		execute_process(COMMAND sh ./configure --shared WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+	endif()
+
+	message(STATUS "Build NodeJS shared library")
+
+	include(ProcessorCount)
+
+	ProcessorCount(N)
+
+	if(NOT N EQUAL 0)
+		execute_process(COMMAND make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1 WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+	else()
+		execute_process(COMMAND make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1 WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+	endif()
+endif()
+
+# Find library
+find_library(NODEJS_LIBRARY
+	NAMES ${NODEJS_LIBRARY_NAMES}
+	PATHS ${NODEJS_LIBRARY_PATH}
+	DOC "NodeJS JavaScript Runtime Library"
+)
+
+find_package_handle_standard_args(NODEJS
+	REQUIRED_VARS NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR NODEJS_LIBRARY
+	VERSION_VAR NODEJS_VERSION
+)
+
+mark_as_advanced(NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR NODEJS_LIBRARY)
 
 if(NODEJS_FOUND)
 	set(NODEJS_INCLUDE_DIRS ${NODEJS_INCLUDE_DIR})
@@ -188,5 +256,6 @@ if(_NODEJS_CMAKE_DEBUG)
 	message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
 	message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")
 	message(STATUS "NODEJS_V8_VERSION_HEX: ${NODEJS_V8_VERSION_HEX}")
+	message(STATUS "NODEJS_LIBRARY: ${NODEJS_LIBRARY}")
 	message(STATUS "NODEJS_EXECUTABLE: ${NODEJS_EXECUTABLE}")
 endif()
