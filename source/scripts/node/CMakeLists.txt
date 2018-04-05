@@ -1,0 +1,16 @@
+# Check if this script is enabled
+if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODEJS)
+	return()
+endif()
+
+# Append cmake path
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+# NodeJS project utility
+include(NodeJSProject)
+
+#
+# Sub-projects
+#
+
+add_subdirectory(nod)

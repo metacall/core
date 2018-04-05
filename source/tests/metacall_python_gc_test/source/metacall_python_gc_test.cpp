@@ -11,12 +11,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall-plugins.h>
 
-class metacall_python_gc : public testing::Test
+class metacall_python_gc_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_python_gc, DefaultConstructor)
+TEST_F(metacall_python_gc_test, DefaultConstructor)
 {
 	metacall_print_info();
 
