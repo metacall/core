@@ -24,7 +24,7 @@ get_filename_component(NODEJS_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PAT
 # NodeJS sub-project util function
 #
 
-function(js_project target version)
+function(nodejs_project target version)
 
 	# TODO
 
@@ -40,6 +40,6 @@ function(js_project target version)
 	#configure_file(${PACKAGE_SETUP_NODEJS_IN} ${PACKAGE_SETUP_NODEJS} @ONLY)
 
 	# Create project file
-	script_project(${target} NodeJS ${JS_PROJECT_CONFIG_PATH}/NodeJSProject.cmake.in)
+	script_project(${target} NodeJS ${NODEJS_PROJECT_CONFIG_PATH}/NodeJSProject.cmake.in)
 
 endfunction()

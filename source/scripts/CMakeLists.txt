@@ -17,6 +17,7 @@ option(OPTION_BUILD_SCRIPTS_JS "Build Java scripts." ON)
 option(OPTION_BUILD_SCRIPTS_JS "Build JavaScript scripts." ON)
 option(OPTION_BUILD_SCRIPTS_PY "Build Python scripts." ON)
 option(OPTION_BUILD_SCRIPTS_RB "Build Ruby scripts." ON)
+option(OPTION_BUILD_SCRIPTS_NODE "Build NodeJS scripts." ON)
 
 # Script directory packages
 add_subdirectory(c)
