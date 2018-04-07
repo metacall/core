@@ -35,7 +35,6 @@
 #include <uv.h>
 
 #include <node.h>
-#include <node_api.h>
 
 #define NODE_LOADER_PROCESS_TITLE "node-loader-testd"
 
@@ -43,14 +42,13 @@
 #	define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
 #endif
 
-using namespace v8;
-
 typedef struct loader_impl_node_type
 {
 	uv_thread_t thread_id;
 	uv_loop_t * thread_loop;
 	uv_mutex_t mutex_start;
 	uv_cond_t cond_start;
+	uv_async_t async_initialize;
 	uv_async_t async_load_from_file;
 	uv_async_t async_call;
 	uv_async_t async_destroy;
@@ -64,6 +62,8 @@ typedef struct loader_impl_async_load_from_file_type
 
 } * loader_impl_async_load_from_file;
 
+void node_loader_impl_async_initialize(uv_async_t * async);
+
 void node_loader_impl_async_call(uv_async_t * async);
 
 void node_loader_impl_async_load_from_file(uv_async_t * async);
@@ -71,6 +71,83 @@ void node_loader_impl_async_load_from_file(uv_async_t * async);
 void node_loader_impl_walk(uv_handle_t * handle, void * data);
 
 void node_loader_impl_async_destroy(uv_async_t * async);
+
+/*void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	bool first = true;
+	for (int i = 0; i < args.Length(); i++)
+	{
+		v8::HandleScope handle_scope(args.GetIsolate());
+		if (first)
+		{
+			first = false;
+		}
+		else
+		{
+			printf(" ");
+		}
+		v8::String::Utf8Value str(args.GetIsolate(), args[i]);
+		const char* cstr = *str;
+
+		if (cstr)
+			printf("%s", cstr);
+	}
+	printf("\n");
+	fflush(stdout);
+}*/
+
+void node_loader_impl_async_initialize(uv_async_t * async)
+{
+	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(async->data));
+
+	v8::Isolate * isolate = v8::Isolate::GetCurrent();
+
+	v8::HandleScope handle_scope(isolate);
+
+	v8::Local<v8::Context> context(isolate->GetCurrentContext());
+
+	v8::Context::Scope context_scope(context);
+
+	v8::Local<v8::Object> global(context->Global());
+
+	v8::Handle<v8::Value> value = global->Get(v8::String::NewFromUtf8(isolate,
+		"hello_boy", v8::NewStringType::kNormal).ToLocalChecked());
+
+	v8::Handle<v8::Function> func = v8::Handle<v8::Function>::Cast(value);
+
+	v8::Handle<v8::Value> args[2];
+	v8::Handle<v8::Value> result;
+
+	(void)node_impl;
+
+	/*
+	args[0] = v8::String::NewFromUtf8(isolate,
+		"abc", v8::NewStringType::kNormal).ToLocalChecked();
+	args[1] = v8::String::NewFromUtf8(isolate,
+		"efg", v8::NewStringType::kNormal).ToLocalChecked();
+
+	result = func->Call(global, 2, args);
+
+	v8::Local<v8::String> str_value = result->ToString();
+
+	v8::String::Utf8Value utf8_value(str_value);
+	printf("HELLO BOY RESULT: %s\n", *utf8_value);
+	*/
+
+	/* TODO: Change print for register callback */
+	/*
+	global->Set(
+		v8::String::NewFromUtf8(isolate, "print_custom", v8::NewStringType::kNormal)
+		.ToLocalChecked(),
+		v8::FunctionTemplate::New(isolate, Print));
+	*/
+
+	/* Signal start condition */
+	uv_mutex_lock(&node_impl->mutex_start);
+
+	uv_cond_signal(&node_impl->cond_start);
+
+	uv_mutex_unlock(&node_impl->mutex_start);
+}
 
 void node_loader_impl_async_call(uv_async_t * async)
 {
@@ -97,6 +174,9 @@ void node_loader_impl_thread(void * data)
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
 
 	node_impl->thread_loop = uv_default_loop();
+
+	/* Initialize initialize signal */
+	uv_async_init(node_impl->thread_loop, &node_impl->async_initialize, &node_loader_impl_async_initialize);
 
 	/* Initialize load from file signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_load_from_file, &node_loader_impl_async_load_from_file);
@@ -151,9 +231,17 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	uv_mutex_unlock(&node_impl->mutex_start);
 
-	/* TODO: Waiting for script load (there is a posibility of produce */
-	/* a race condition if something is executed before V8 initialization) */
-	usleep(4000000);
+	/* Initialize node loader entry point */
+	node_impl->async_initialize.data = static_cast<void *>(&node_impl);
+
+	uv_async_send(&node_impl->async_initialize);
+
+	/* Wait until script has been loaded */
+	uv_mutex_lock(&node_impl->mutex_start);
+
+	uv_cond_wait(&node_impl->cond_start, &node_impl->mutex_start);
+
+	uv_mutex_unlock(&node_impl->mutex_start);
 
 	return node_impl;
 }
@@ -297,6 +385,8 @@ int node_loader_impl_destroy(loader_impl impl)
 	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_call), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_load_from_file), NULL);
+
+	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_initialize), NULL);
 
 	uv_thread_join(&node_impl->thread_id);
 
