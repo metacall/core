@@ -36,7 +36,9 @@
 
 #include <node.h>
 
-#define NODE_LOADER_PROCESS_TITLE "node-loader-testd"
+#ifndef NODE_LOADER_PROCESS_TITLE
+#	define NODE_LOADER_PROCESS_TITLE "node-loader-testd"
+#endif /* NODE_LOADER_PROCESS_TITLE */
 
 #ifndef container_of
 #	define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
@@ -72,74 +74,11 @@ void node_loader_impl_walk(uv_handle_t * handle, void * data);
 
 void node_loader_impl_async_destroy(uv_async_t * async);
 
-/*void Print(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	bool first = true;
-	for (int i = 0; i < args.Length(); i++)
-	{
-		v8::HandleScope handle_scope(args.GetIsolate());
-		if (first)
-		{
-			first = false;
-		}
-		else
-		{
-			printf(" ");
-		}
-		v8::String::Utf8Value str(args.GetIsolate(), args[i]);
-		const char* cstr = *str;
-
-		if (cstr)
-			printf("%s", cstr);
-	}
-	printf("\n");
-	fflush(stdout);
-}*/
-
 void node_loader_impl_async_initialize(uv_async_t * async)
 {
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(async->data));
 
-	v8::Isolate * isolate = v8::Isolate::GetCurrent();
-
-	v8::HandleScope handle_scope(isolate);
-
-	v8::Local<v8::Context> context(isolate->GetCurrentContext());
-
-	v8::Context::Scope context_scope(context);
-
-	v8::Local<v8::Object> global(context->Global());
-
-	v8::Handle<v8::Value> value = global->Get(v8::String::NewFromUtf8(isolate,
-		"hello_boy", v8::NewStringType::kNormal).ToLocalChecked());
-
-	v8::Handle<v8::Function> func = v8::Handle<v8::Function>::Cast(value);
-
-	v8::Handle<v8::Value> args[2];
-	v8::Handle<v8::Value> result;
-
 	(void)node_impl;
-
-	/*
-	args[0] = v8::String::NewFromUtf8(isolate,
-		"abc", v8::NewStringType::kNormal).ToLocalChecked();
-	args[1] = v8::String::NewFromUtf8(isolate,
-		"efg", v8::NewStringType::kNormal).ToLocalChecked();
-
-	result = func->Call(global, 2, args);
-
-	v8::Local<v8::String> str_value = result->ToString();
-
-	v8::String::Utf8Value utf8_value(str_value);
-	printf("HELLO BOY RESULT: %s\n", *utf8_value);
-	*/
-
-	/* TODO: Change print for register callback */
-	/*
-	global->Set(
-		v8::String::NewFromUtf8(isolate, "print_custom", v8::NewStringType::kNormal)
-		.ToLocalChecked(),
-		v8::FunctionTemplate::New(isolate, Print));
-	*/
 
 	/* Signal start condition */
 	uv_mutex_lock(&node_impl->mutex_start);
@@ -166,10 +105,14 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 void node_loader_impl_thread(void * data)
 {
-	/* TODO: Do a workaround with app title */
-	char * argv[] = { "node-loader-testd", "scripts/nod.js", NULL };
+	/* TODO: Do a workaround with app title and argv_str (must be contigously allocated) */
+	char argv_str[33 + 16 + 1] = "node-loader-testd\0scripts/nod.js";
 
-	int argc = 2;
+	snprintf(&argv_str[33], 16 + 1, "%p", (void *)&argv_str);
+
+	char * argv[] = { &argv_str[0], &argv_str[18], &argv_str[33], NULL };
+
+	int argc = 3;
 
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
 
@@ -348,12 +291,12 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 	if (uv_loop_alive(node_impl->thread_loop) != 0)
 	{
-		/* TODO: Error message */
+		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
 	}
 
 	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
 	{
-		/* TODO: Error message */
+		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
 	}
 }
 
@@ -365,12 +308,6 @@ int node_loader_impl_destroy(loader_impl impl)
 	{
 		return 1;
 	}
-
-	/* When running on interpreter, closes the stdin handle and */
-	/* gracefully stops the node event loop */
-	/*
-	fclose(stdin);
-	*/
 
 	uv_mutex_destroy(&node_impl->mutex_start);
 
