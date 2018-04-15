@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const trampoline = require('trampoline');
+const trampoline = require('./trampoline.node');
 
 module.exports = ((ptr) => {
 	return trampoline.register(ptr);

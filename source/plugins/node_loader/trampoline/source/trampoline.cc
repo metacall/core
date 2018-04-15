@@ -27,6 +27,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
+	/* Parse arguments */
 	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
 	assert(status == napi_ok);
@@ -38,6 +39,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 		return nullptr;
 	}
 
+	/* Parse argument value type */
 	status = napi_typeof(env, args[0], &valuetype[0]);
 
 	assert(status == napi_ok);
@@ -49,17 +51,28 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 		return nullptr;
 	}
 
+	/* Get pointer in string format (TODO: Review size for 32-64bit) */
 	const size_t ptr_str_size = 16 + 1;
 	size_t ptr_str_size_copied = 0;
 	char ptr_str[ptr_str_size];
+	void * ptr = NULL;
+	node_loader_trampoline_register_ptr register_ptr = NULL;
 
 	status = napi_get_value_string_utf8(env, args[0], ptr_str, ptr_str_size, &ptr_str_size_copied);
 
 	assert(status == napi_ok);
 
-	napi_value ptr_value;
+	/* Convert the string to pointer type */
+	sscanf(ptr_str, "%p", &ptr);
+
+	/* Cast to function and execute the call */
+	register_ptr = (node_loader_trampoline_register_ptr)ptr;
 
 	/* TODO */
+	(void)register_ptr((void *)"hello from trampoline");
+
+	/* TODO: Return */
+	napi_value ptr_value;
 
 	status = napi_create_string_utf8(env, ptr_str, ptr_str_size_copied, &ptr_value);
 

@@ -4,17 +4,6 @@ if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_NODE)
 endif()
 
 #
-# External dependencies
-#
-
-find_package(NodeJS 8.11.1)
-
-if(NOT NODEJS_FOUND)
-	message(STATUS "NodeJS libraries not found")
-	return()
-endif()
-
-#
 # Plugin name and options
 #
 
@@ -39,6 +28,7 @@ add_custom_target(${target} ALL
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND npm install
 	COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} --ensure rebuild
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node ${CMAKE_BINARY_DIR}
 )
 
 #
