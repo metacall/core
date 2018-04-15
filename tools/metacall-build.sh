@@ -14,6 +14,7 @@ BUILD_PYTHON=0
 BUILD_RUBY=0
 BUILD_NETCORE=0
 BUILD_V8=0
+BUILD_NODEJS=0
 BUILD_PORTS=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
@@ -58,6 +59,10 @@ sub_config() {
 		if [ "$option" = 'v8' ]; then
 			echo "Build with v8 support"
 			BUILD_V8=1
+		fi
+		if [ "$option" = 'nodejs' ]; then
+			echo "Build with nodejs support"
+			BUILD_NODEJS=1
 		fi
 		if [ "$option" = 'ports' ]; then
 			echo "Build all ports"
@@ -170,6 +175,19 @@ sub_build() {
 		fi
 	fi
 
+	# NodeJS
+	if [ $BUILD_NODEJS = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PLUGINS_NODE=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_NODE=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_NODE=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -249,6 +267,9 @@ sub_clear() {
 		if [ $BUILD_V8 = 1 ]; then
 			CLEAR_CMD="$CLEAR_CMD v8"
 		fi
+		if [ $BUILD_NODEJS = 1 ]; then
+			CLEAR_CMD="$CLEAR_CMD nodejs"
+		fi
 
 		# Execute clear script
 		/bin/bash -c "$CLEAR_CMD"
@@ -267,6 +288,7 @@ sub_help() {
 	echo "	ruby: build with ruby support"
 	echo "	netcore: build with netcore support"
 	echo "	v8: build with v8 support"
+	echo "	nodejs: build with nodejs support"
 	echo "	ports: build all ports"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"

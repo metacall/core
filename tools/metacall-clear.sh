@@ -16,6 +16,7 @@ CLEAR_PYTHON=0
 CLEAR_RUBY=0
 CLEAR_NETCORE=0
 CLEAR_V8=0
+CLEAR_NODEJS=0
 CLEAR_APT=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
@@ -47,8 +48,9 @@ sub_python(){
 # Ruby
 sub_ruby(){
 	echo "clean ruby"
-	$SUDO_CMD gem uninstall rails
-	$SUDO_CMD apt-get -y remove --purge nodejs
+	# TODO: Review conflict with NodeJS (currently rails test is disabled)
+	#$SUDO_CMD gem uninstall rails
+	#$SUDO_CMD apt-get -y remove --purge nodejs
 }
 
 # NetCore
@@ -59,6 +61,11 @@ sub_netcore(){
 # V8
 sub_v8(){
 	echo "clean v8"
+}
+
+# NodeJS
+sub_nodejs(){
+	echo "clean nodejs"
 }
 
 # MetaCall
@@ -90,6 +97,9 @@ sub_clear(){
 	fi
 	if [ $CLEAR_V8 = 1 ]; then
 		sub_v8
+	fi
+	if [ $CLEAR_NODEJS = 1 ]; then
+		sub_nodejs
 	fi
 	if [ $CLEAR_APT = 1 ]; then
 		sub_apt
@@ -128,6 +138,10 @@ sub_config(){
 			echo "v8 selected"
 			CLEAR_V8=1
 		fi
+		if [ "$var" = 'nodejs' ]; then
+			echo "nodejs selected"
+			CLEAR_NODEJS=1
+		fi
 		if [ "$var" = 'base' ]; then
 			echo "apt selected"
 			CLEAR_APT=1
@@ -146,6 +160,7 @@ sub_help() {
 	echo "	ruby"
 	echo "	netcore"
 	echo "	v8"
+	echo "	nodejs"
 	echo ""
 }
 

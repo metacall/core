@@ -23,6 +23,7 @@ INSTALL_V8REPO57=0
 INSTALL_V8REPO54=0
 INSTALL_V8REPO52=0
 INSTALL_V8REPO51=0
+INSTALL_NODEJS=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 SHOW_HELP=0
@@ -68,9 +69,11 @@ sub_ruby(){
 	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
 	$SUDO_CMD apt-get install -y ruby2.3-dev
-	curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-	$SUDO_CMD apt-get install -y nodejs
-	$SUDO_CMD gem install rails
+
+	# TODO: Review conflict with NodeJS (currently rails test is disabled)
+	#curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+	#$SUDO_CMD apt-get install -y nodejs
+	#$SUDO_CMD gem install rails
 }
 
 # RapidJSON
@@ -167,6 +170,16 @@ sub_v8(){
 	GYP_DEFINES="snapshot=on linux_use_bundled_gold=0 linux_use_gold_flags=0 component=shared_library" make library=shared native
 }
 
+# NodeJS
+sub_nodejs(){
+	# TODO: Review conflicts with Ruby Rails and NodeJS 4.x
+	echo "configure nodejs"
+	$SUDO_CMD apt-get update
+	curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD -E bash -
+	$SUDO_CMD apt-get install -y nodejs
+	$SUDO_CMD npm install node-gyp -g
+}
+
 # MetaCall
 sub_metacall(){
 	echo "configure metacall"
@@ -210,6 +223,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_V8REPO = 1 ]; then
 		sub_v8repo
+	fi
+	if [ $INSTALL_NODEJS = 1 ]; then
+		sub_nodejs
 	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
@@ -274,6 +290,10 @@ sub_config(){
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO51=1
 		fi
+		if [ "$var" = 'nodejs' ]; then
+			echo "nodejs selected"
+			INSTALL_NODEJS=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			INSTALL_SWIG=1
@@ -300,6 +320,7 @@ sub_help() {
 	echo "	v8rep54"
 	echo "	v8rep57"
 	echo "	v8rep58"
+	echo "	nodejs"
 	echo "	swig"
 	echo "	metacall"
 	echo ""
