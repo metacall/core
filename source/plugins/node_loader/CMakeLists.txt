@@ -21,6 +21,9 @@ endif()
 # Target name
 set(target node_loader)
 
+# Add node loader trampoline implementation
+add_subdirectory(trampoline)
+
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 

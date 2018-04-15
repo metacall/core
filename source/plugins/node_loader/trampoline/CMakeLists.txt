@@ -1,0 +1,63 @@
+# Check if this plugin is enabled
+if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_NODE)
+	return()
+endif()
+
+#
+# External dependencies
+#
+
+find_package(NodeJS 8.11.1)
+
+if(NOT NODEJS_FOUND)
+	message(STATUS "NodeJS libraries not found")
+	return()
+endif()
+
+#
+# Plugin name and options
+#
+
+# Target name
+set(target node_loader_trampoline)
+
+# Exit here if required dependencies are not met
+message(STATUS "Plugin ${target} implementation")
+
+#
+# Create target
+#
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(NODE_LOADER_TRAMPOLINE_BUILD_TYPE "--debug")
+else()
+	set(NODE_LOADER_TRAMPOLINE_BUILD_TYPE "--release")
+endif()
+
+add_custom_target(${target} ALL
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND npm install
+	COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} --ensure rebuild
+)
+
+#
+# Project options
+#
+
+set_target_properties(${target}
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
+)
+
+#
+# Deployment
+#
+
+# Library (TODO)
+#install(FILES
+#	${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node
+#	${CMAKE_CURRENT_BINARY_DIR}/node_modules
+#	DESTINATION ${INSTALL_LIB}
+#)

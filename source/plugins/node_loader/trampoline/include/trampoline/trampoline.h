@@ -13,7 +13,7 @@
 extern "C" {
 #endif
 
-typedef void * (*node_loader_trampoline_register_ptr)(void *));
+typedef void * (*node_loader_trampoline_register_ptr)(void *);
 
 #ifdef __cplusplus
 }
