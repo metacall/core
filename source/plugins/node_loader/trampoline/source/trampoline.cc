@@ -21,15 +21,51 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 {
 	napi_status status;
 
-	napi_value world;
+	const size_t args_size = 1;
+	size_t argc = args_size;
 
-	status = napi_create_string_utf8(env, "world", 5, &world);
+	napi_value args[args_size];
+	napi_valuetype valuetype[args_size];
 
-	printf("FUNCTION REGISTERED!!!! -----------\n");
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
 	assert(status == napi_ok);
 
-	return world;
+	if (argc < args_size)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
+
+		return nullptr;
+	}
+
+	status = napi_typeof(env, args[0], &valuetype[0]);
+
+	assert(status == napi_ok);
+
+	if (valuetype[0] != napi_string)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong arguments type");
+
+		return nullptr;
+	}
+
+	const size_t ptr_str_size = 16 + 1;
+	size_t ptr_str_size_copied = 0;
+	char ptr_str[ptr_str_size];
+
+	status = napi_get_value_string_utf8(env, args[0], ptr_str, ptr_str_size, &ptr_str_size_copied);
+
+	assert(status == napi_ok);
+
+	napi_value ptr_value;
+
+	/* TODO */
+
+	status = napi_create_string_utf8(env, ptr_str, ptr_str_size_copied, &ptr_value);
+
+	assert(status == napi_ok);
+
+	return ptr_value;
 }
 
 napi_value node_loader_trampoline_register_initialize(napi_env env, napi_value exports)
