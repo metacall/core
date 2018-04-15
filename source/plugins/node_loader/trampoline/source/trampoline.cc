@@ -6,10 +6,48 @@
  *
  */
 
-#include <binding/binding.hpp>
+#include <trampoline/trampoline.h>
 
-#include <node.h>
+//#include <node.h>
 #include <node_api.h>
+
+#include <stdio.h>
+#include <assert.h>
+
+#define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
+	{ name, 0, func, 0, 0, 0, napi_default, 0 }
+
+napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info)
+{
+	napi_status status;
+
+	napi_value world;
+
+	status = napi_create_string_utf8(env, "world", 5, &world);
+
+	printf("FUNCTION REGISTERED!!!! -----------\n");
+
+	assert(status == napi_ok);
+
+	return world;
+}
+
+napi_value node_loader_trampoline_register_initialize(napi_env env, napi_value exports)
+{
+	napi_status status;
+
+	napi_property_descriptor desc = NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("register", node_loader_trampoline_register);
+
+	status = napi_define_properties(env, exports, 1, &desc);
+
+	assert(status == napi_ok);
+
+	return exports;
+}
+
+NAPI_MODULE(NODE_GYP_MODULE_NAME, node_loader_trampoline_register_initialize)
+
+#if 0
 
  /* Warning: This should be updated because is not present in any header and it's hardcoded */
 #ifndef NODE_CONTEXT_EMBEDDER_DATA_INDEX
@@ -46,7 +84,7 @@ inline node::Environment * node_loader_environment_current(v8::Local<v8::Context
 	fflush(stdout);
 }*/
 
-void node_loader_binding_initialize()
+void node_loader_trampoline_initialize()
 {
 	v8::Isolate * isolate = v8::Isolate::GetCurrent();
 
@@ -347,3 +385,5 @@ void node_loader_binding_initialize()
 		v8::FunctionTemplate::New(isolate, Print));
 	*/
 }
+
+#endif

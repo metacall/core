@@ -6,17 +6,17 @@
  *
  */
 
-#ifndef NODE_LOADER_BINDING_HPP
-#define NODE_LOADER_BINDING_HPP 1
+#ifndef NODE_LOADER_TRAMPOLINE_H
+#define NODE_LOADER_TRAMPOLINE_H 1
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef void * (*node_loader_binding_register_ptr)(void *, void *, void *));
+typedef void * (*node_loader_trampoline_register_ptr)(void *));
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* NODE_LOADER_BINDING_HPP */
+#endif /* NODE_LOADER_TRAMPOLINE_H */

@@ -1,0 +1,11 @@
+{
+  "name": "trampoline",
+  "version": "0.1.0",
+  "description": "MetaCall NodeJS loader trampoline addon.",
+  "main": "lib/index.js",
+  "private": true,
+  "dependencies": {
+    "bindings": "~1.3.0"
+  },
+  "gypfile": true
+}
