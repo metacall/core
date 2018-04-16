@@ -70,6 +70,10 @@ void node_loader_impl_async_call(uv_async_t * async);
 
 void node_loader_impl_async_load_from_file(uv_async_t * async);
 
+void * node_loader_impl_register(void * data);
+
+void node_loader_impl_thread(void * data);
+
 void node_loader_impl_walk(uv_handle_t * handle, void * data);
 
 void node_loader_impl_async_destroy(uv_async_t * async);
@@ -103,8 +107,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	printf("%s\n", async_data->paths[0]);
 }
 
-/* TODO */
-void * node_loader_impl_register_test(void * data)
+void * node_loader_impl_register(void * data)
 {
 	const char * str = (const char *)data;
 
@@ -118,7 +121,7 @@ void node_loader_impl_thread(void * data)
 	/* TODO: Do a workaround with app title and argv_str (must be contigously allocated) */
 	char argv_str[31 + 16 + 1] = "node-loader-testd\0bootstrap.js";
 
-	snprintf(&argv_str[31], 16 + 1, "%p", (void *)&node_loader_impl_register_test);
+	snprintf(&argv_str[31], 16 + 1, "%p", (void *)&node_loader_impl_register);
 
 	char * argv[] = { &argv_str[0], &argv_str[18], &argv_str[31], NULL };
 
