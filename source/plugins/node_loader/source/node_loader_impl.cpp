@@ -19,6 +19,7 @@
 
 #include <cstdlib>
 #include <cstring>
+#include <cassert>
 
 #include <new>
 #include <string>
@@ -35,6 +36,7 @@
 #include <uv.h>
 
 #include <node.h>
+#include <node_api.h>
 
 #ifndef NODE_LOADER_PROCESS_TITLE
 #	define NODE_LOADER_PROCESS_TITLE "node-loader-testd"
@@ -70,7 +72,7 @@ void node_loader_impl_async_call(uv_async_t * async);
 
 void node_loader_impl_async_load_from_file(uv_async_t * async);
 
-void * node_loader_impl_register(void * data);
+void * node_loader_impl_register(void * env_ptr, void * function_table_object_ptr);
 
 void node_loader_impl_thread(void * data);
 
@@ -107,11 +109,53 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	printf("%s\n", async_data->paths[0]);
 }
 
-void * node_loader_impl_register(void * data)
+void * node_loader_impl_register(void * env_ptr, void * function_table_object_ptr)
 {
-	const char * str = (const char *)data;
+	napi_env env = static_cast<napi_env>(env_ptr);
+	napi_value function_table_object = static_cast<napi_value>(function_table_object_ptr);
 
-	printf("hello from host - %s\n", str);
+	const char test_str[] = "test";
+	napi_value test_str_value;
+
+	bool result = false;
+
+	napi_status status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
+
+	assert(status == napi_ok);
+
+	status = napi_has_own_property(env, function_table_object, test_str_value, &result);
+
+	assert(status == napi_ok);
+
+	if (result == true)
+	{
+		napi_value function_trampoline_test;
+		napi_valuetype valuetype;
+
+		status = napi_get_named_property(env, function_table_object, test_str, &function_trampoline_test);
+
+		assert(status == napi_ok);
+
+		status = napi_typeof(env, function_trampoline_test, &valuetype);
+
+		assert(status == napi_ok);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function in function table object");
+		}
+
+		/* Call to test function */
+		napi_value global, return_value;
+
+		status = napi_get_global(env, &global);
+
+		assert(status == napi_ok);
+
+		status = napi_call_function(env, global, function_trampoline_test, 0, nullptr, &return_value);
+
+		assert(status == napi_ok);
+	}
 
 	return NULL;
 }

@@ -8,7 +8,6 @@
 
 #include <trampoline/trampoline.h>
 
-//#include <node.h>
 #include <node_api.h>
 
 #include <stdio.h>
@@ -21,7 +20,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 {
 	napi_status status;
 
-	const size_t args_size = 1;
+	const size_t args_size = 2;
 	size_t argc = args_size;
 
 	napi_value args[args_size];
@@ -44,7 +43,11 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 
 	assert(status == napi_ok);
 
-	if (valuetype[0] != napi_string)
+	status = napi_typeof(env, args[1], &valuetype[1]);
+
+	assert(status == napi_ok);
+
+	if (valuetype[0] != napi_string || valuetype[1] != napi_object)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
@@ -68,8 +71,15 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	/* Cast to function and execute the call */
 	register_ptr = (node_loader_trampoline_register_ptr)ptr;
 
-	/* TODO */
-	(void)register_ptr((void *)"hello from trampoline");
+	/* Get function table object */
+	napi_value function_table_object;
+
+	status = napi_coerce_to_object(env, args[1], &function_table_object);
+
+	assert(status == napi_ok);
+
+	/* Register function table object */
+	(void)register_ptr(static_cast<void *>(env), static_cast<void *>(function_table_object));
 
 	/* TODO: Return */
 	napi_value ptr_value;
