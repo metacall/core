@@ -55,10 +55,9 @@ sub_swig(){
 # Python
 sub_python(){
 	echo "configure python"
-	$SUDO_CMD apt-get install -y python2.7 python3.5-dev python python3-pip
+	$SUDO_CMD apt-get install -y python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install --upgrade pip
 	$SUDO_CMD pip3 install django
-	$SUDO_CMD pip3 install request
 	$SUDO_CMD pip3 install requests
 	$SUDO_CMD pip3 install rsa
 }
