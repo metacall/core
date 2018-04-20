@@ -15,7 +15,7 @@ include(PythonProject)
 
 add_subdirectory(example)
 add_subdirectory(helloworld)
-add_subdirectory(frontend)
+#add_subdirectory(frontend) # TODO: Dependencies
 add_subdirectory(initfini)
 add_subdirectory(callback)
 add_subdirectory(ducktype)
