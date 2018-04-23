@@ -1,9 +1,9 @@
 **
-!cmake/*
-!data/*
-!deploy/*
-!docs/*
-!source/*
+!cmake/**
+!data/**
+!deploy/**
+!docs/**
+!source/**
 !tools/metacall-build.sh
 !tools/metacall-clear.sh
 !CMakeLists.txt
