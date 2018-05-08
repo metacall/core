@@ -2,8 +2,8 @@
 
 const trampoline = require('./trampoline.node');
 
-var Module = require('module');
-var path = require('path');
+const Module = require('module');
+const path = require('path');
 
 function node_loader_trampoline_execution_path() {
 	// TODO
@@ -13,10 +13,10 @@ function node_loader_trampoline_load_from_file(paths) {
 	const handle = {};
 
 	try {
-		for (const path of paths) {
-			const module = require(path);
+		for (const p of paths) {
+			const module = require(path.resolve(__dirname, p));
 
-			handle[path] = module;
+			handle[p] = module;
 		}
 	} catch (ex) {
 		console.log("Exception in node_loader_trampoline_load_from_file", ex);
@@ -61,9 +61,9 @@ function node_loader_trampoline_load_from_package() {
 }
 
 function node_loader_trampoline_clear(handle) {
-	for (const path of handle) {
-		if (require.cache[path]) {
-			delete require.cache[path];
+	for (const p of handle) {
+		if (require.cache[p]) {
+			delete require.cache[p];
 		}
 	}
 }
