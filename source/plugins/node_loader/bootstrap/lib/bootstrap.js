@@ -12,14 +12,18 @@ function node_loader_trampoline_execution_path() {
 function node_loader_trampoline_load_from_file(paths) {
 	const handle = {};
 
+	if (!Array.isArray(paths)) {
+		throw new Error('Load from file paths must be an array, not ' + typeof code);
+	}
+
 	try {
 		for (const p of paths) {
-			const module = require(path.resolve(__dirname, p));
+			const m = require(path.resolve(__dirname, p));
 
-			handle[p] = module;
+			handle[p] = m;
 		}
 	} catch (ex) {
-		console.log("Exception in node_loader_trampoline_load_from_file", ex);
+		console.log('Exception in node_loader_trampoline_load_from_file', ex);
 	}
 
 	return handle;
@@ -63,17 +67,33 @@ function node_loader_trampoline_load_from_package() {
 function node_loader_trampoline_clear(handle) {
 	try {
 		for (const p of handle) {
+			// TODO: Check if p is path or a module
+			console.log('Debug:', p);
+
 			if (require.cache[p]) {
 				delete require.cache[p];
 			}
 		}
 	} catch (ex) {
-		console.log("Exception in node_loader_trampoline_clear", ex);
+		console.log('Exception in node_loader_trampoline_clear', ex);
 	}
 }
 
 function node_loader_trampoline_discover(handle) {
-	// TODO
+	const discover = {};
+
+	console.log('Debug handle:', handle);
+
+	try {
+		for (const p of handle) {
+			// TODO: Check if p is path or a module
+			console.log('Debug:', p);
+		}
+	} catch (ex) {
+		console.log('Exception in node_loader_trampoline_discover', ex);
+	}
+
+	return discover;
 }
 
 function node_loader_trampoline_test() {

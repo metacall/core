@@ -36,6 +36,8 @@ TEST_F(node_loader_test, DefaultConstructor)
 
 	EXPECT_EQ((int) 0, (int) loader_load_from_file(tag, names, size, NULL));
 
+	/* TODO: Test load from memory */
+
 	for (size_t index = 0; index < size; ++index)
 	{
 		void * handle = loader_get_handle(tag, names[index]);
