@@ -12,10 +12,14 @@ function node_loader_trampoline_execution_path() {
 function node_loader_trampoline_load_from_file(paths) {
 	const handle = {};
 
-	for (const path of paths) {
-		const module = require(path);
+	try {
+		for (const path of paths) {
+			const module = require(path);
 
-		handle[path] = module;
+			handle[path] = module;
+		}
+	} catch (ex) {
+		console.log("Exception in node_loader_trampoline_load_from_file", ex);
 	}
 
 	return handle;
@@ -72,8 +76,8 @@ function node_loader_trampoline_test() {
 	console.log('NodeJS Loader Bootstrap Test');
 }
 
-module.exports = ((ptr) => {
-	return trampoline.register(ptr, {
+module.exports = ((impl, ptr) => {
+	return trampoline.register(impl, ptr, {
 		'execution_path': node_loader_trampoline_execution_path,
 		'load_from_file': node_loader_trampoline_load_from_file,
 		'load_from_memory': node_loader_trampoline_load_from_memory,
@@ -82,4 +86,4 @@ module.exports = ((ptr) => {
 		'discover': node_loader_trampoline_discover,
 		'test': node_loader_trampoline_test,
 	});
-})(process.argv[2]);
+})(process.argv[2], process.argv[3]);

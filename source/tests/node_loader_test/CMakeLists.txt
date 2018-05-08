@@ -126,6 +126,7 @@ target_link_libraries(${target}
 #
 
 add_test(NAME ${target}
+	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 	COMMAND $<TARGET_FILE:${target}>
 )
 

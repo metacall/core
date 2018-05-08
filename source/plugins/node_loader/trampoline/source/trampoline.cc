@@ -20,7 +20,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 {
 	napi_status status;
 
-	const size_t args_size = 2;
+	const size_t args_size = 3;
 	size_t argc = args_size;
 
 	napi_value args[args_size];
@@ -47,7 +47,11 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 
 	assert(status == napi_ok);
 
-	if (valuetype[0] != napi_string || valuetype[1] != napi_object)
+	status = napi_typeof(env, args[2], &valuetype[2]);
+
+	assert(status == napi_ok);
+
+	if (valuetype[0] != napi_string || valuetype[1] != napi_string || valuetype[2] != napi_object)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
@@ -59,8 +63,10 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	size_t ptr_str_size_copied = 0;
 	char ptr_str[ptr_str_size];
 	void * ptr = NULL;
+	void * node_impl_ptr;
 	node_loader_trampoline_register_ptr register_ptr = NULL;
 
+	/* Get node impl pointer */
 	status = napi_get_value_string_utf8(env, args[0], ptr_str, ptr_str_size, &ptr_str_size_copied);
 
 	assert(status == napi_ok);
@@ -68,18 +74,29 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	/* Convert the string to pointer type */
 	sscanf(ptr_str, "%p", &ptr);
 
-	/* Cast to function and execute the call */
+	/* Cast to function */
+	node_impl_ptr = ptr;
+
+	/* Get register pointer */
+	status = napi_get_value_string_utf8(env, args[1], ptr_str, ptr_str_size, &ptr_str_size_copied);
+
+	assert(status == napi_ok);
+
+	/* Convert the string to pointer type */
+	sscanf(ptr_str, "%p", &ptr);
+
+	/* Cast to function */
 	register_ptr = (node_loader_trampoline_register_ptr)ptr;
 
 	/* Get function table object */
 	napi_value function_table_object;
 
-	status = napi_coerce_to_object(env, args[1], &function_table_object);
+	status = napi_coerce_to_object(env, args[2], &function_table_object);
 
 	assert(status == napi_ok);
 
 	/* Register function table object */
-	(void)register_ptr(static_cast<void *>(env), static_cast<void *>(function_table_object));
+	(void)register_ptr(node_impl_ptr, static_cast<void *>(env), static_cast<void *>(function_table_object));
 
 	/* TODO: Return */
 	napi_value ptr_value;
@@ -107,6 +124,69 @@ napi_value node_loader_trampoline_register_initialize(napi_env env, napi_value e
 NAPI_MODULE(NODE_GYP_MODULE_NAME, node_loader_trampoline_register_initialize)
 
 #if 0
+
+
+/* Catch exception in C/C++ */
+/*
+		if (status != napi_ok)
+		{
+			const napi_extended_error_info * error_info;
+
+			napi_value ex, prop_list;
+
+			uint32_t length;
+
+			status = napi_get_last_error_info(env, &error_info);
+
+			assert(status == napi_ok);
+
+			printf("%s: %d, %d\n", error_info->error_message, error_info->engine_error_code, error_info->error_code);
+
+			napi_get_and_clear_last_exception(env, &ex);
+
+			status = napi_get_property_names(env, ex, &prop_list);
+
+			assert(status == napi_ok);
+
+			status = napi_get_array_length(env, prop_list, &length);
+
+			assert(status == napi_ok);
+
+			for (size_t index = 0; index < length; ++index)
+			{
+				napi_value result;
+
+				const size_t buf_size = 255;
+
+				char buf[buf_size];
+
+				size_t buf_read = 0;
+
+				status = napi_get_element(env, prop_list, index, &result);
+
+				assert(status == napi_ok);
+
+				status = napi_get_value_string_utf8(env, result, buf, buf_size, &buf_read);
+
+				assert(status == napi_ok);
+
+				printf("DEBUG: %s\n", buf);
+
+				napi_value ex_code;
+
+				status = napi_get_named_property(env, ex, "code", &ex_code);
+
+				assert(status == napi_ok);
+
+				status = napi_get_value_string_utf8(env, ex_code, buf, buf_size, &buf_read);
+
+				assert(status == napi_ok);
+
+				printf("DEBUG: %s\n", buf);
+			}
+		}
+*/
+
 
  /* Warning: This should be updated because is not present in any header and it's hardcoded */
 #ifndef NODE_CONTEXT_EMBEDDER_DATA_INDEX

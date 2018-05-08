@@ -48,6 +48,9 @@
 
 typedef struct loader_impl_node_type
 {
+	napi_env env;
+	napi_ref global_ref;
+	napi_ref function_table_object_ref;
 	uv_thread_t thread_id;
 	uv_loop_t * thread_loop;
 	uv_mutex_t mutex_start;
@@ -61,6 +64,7 @@ typedef struct loader_impl_node_type
 
 typedef struct loader_impl_async_load_from_file_type
 {
+	loader_impl_node node_impl;
 	const loader_naming_path * paths;
 	size_t size;
 
@@ -72,7 +76,7 @@ void node_loader_impl_async_call(uv_async_t * async);
 
 void node_loader_impl_async_load_from_file(uv_async_t * async);
 
-void * node_loader_impl_register(void * env_ptr, void * function_table_object_ptr);
+void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr);
 
 void node_loader_impl_thread(void * data);
 
@@ -106,11 +110,90 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 {
 	loader_impl_async_load_from_file async_data = static_cast<loader_impl_async_load_from_file>(async->data);
 
-	printf("%s\n", async_data->paths[0]);
+	napi_env env = async_data->node_impl->env;
+	napi_value function_table_object;
+
+	const char load_from_file_str[] = "load_from_file";
+	napi_value load_from_file_str_value;
+
+	bool result = false;
+
+	napi_handle_scope scope;
+
+	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &scope);
+
+	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
+
+	assert(status == napi_ok);
+
+	status = napi_create_string_utf8(env, load_from_file_str, sizeof(load_from_file_str) - 1, &load_from_file_str_value);
+
+	assert(status == napi_ok);
+
+	status = napi_has_own_property(env, function_table_object, load_from_file_str_value, &result);
+
+	assert(status == napi_ok);
+
+	if (result == true)
+	{
+		napi_value function_trampoline_load_from_file;
+		napi_valuetype valuetype;
+		napi_value argv[1];
+
+		status = napi_get_named_property(env, function_table_object, load_from_file_str, &function_trampoline_load_from_file);
+
+		assert(status == napi_ok);
+
+		status = napi_typeof(env, function_trampoline_load_from_file, &valuetype);
+
+		assert(status == napi_ok);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function in function table object");
+		}
+
+		/* Define parameters */
+		status = napi_create_array_with_length(env, async_data->size, &argv[0]);
+
+		assert(status == napi_ok);
+
+		for (size_t index = 0; index < async_data->size; ++index)
+		{
+			napi_value path_str;
+
+			size_t length = strnlen(async_data->paths[index], LOADER_NAMING_PATH_SIZE);
+
+			status = napi_create_string_utf8(env, async_data->paths[index], length, &path_str);
+
+			assert(status == napi_ok);
+
+			status = napi_set_element(env, argv[0], (uint32_t)index, path_str);
+
+			assert(status == napi_ok);
+		}
+
+		/* Call to load from file function */
+		napi_value global, return_value;
+
+		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
+
+		assert(status == napi_ok);
+
+		status = napi_call_function(env, global, function_trampoline_load_from_file, 1, argv, &return_value);
+
+		assert(status == napi_ok);
+	}
+
+	status = napi_close_handle_scope(env, scope);
+
+	assert(status == napi_ok);
 }
 
-void * node_loader_impl_register(void * env_ptr, void * function_table_object_ptr)
+void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr)
 {
+	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
+
 	napi_env env = static_cast<napi_env>(env_ptr);
 	napi_value function_table_object = static_cast<napi_value>(function_table_object_ptr);
 
@@ -119,7 +202,38 @@ void * node_loader_impl_register(void * env_ptr, void * function_table_object_pt
 
 	bool result = false;
 
-	napi_status status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
+	uint32_t ref_count = 0;
+
+	napi_status status;
+
+	napi_value global;
+
+	node_impl->env = env;
+
+	/* Make global object persistent */
+	status = napi_get_global(env, &global);
+
+	assert(status == napi_ok);
+
+	status = napi_create_reference(env, global, 0, &node_impl->global_ref);
+
+	assert(status == napi_ok);
+
+	status = napi_reference_ref(env, node_impl->global_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 1);
+
+	/* Make function table object persistent */
+	status = napi_create_reference(env, function_table_object, 0, &node_impl->function_table_object_ref);
+
+	assert(status == napi_ok);
+
+	status = napi_reference_ref(env, node_impl->function_table_object_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 1);
+
+	/* Retrieve test function from object table */
+	status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
 
 	assert(status == napi_ok);
 
@@ -162,16 +276,18 @@ void * node_loader_impl_register(void * env_ptr, void * function_table_object_pt
 
 void node_loader_impl_thread(void * data)
 {
-	/* TODO: Do a workaround with app title and argv_str (must be contigously allocated) */
-	char argv_str[31 + 16 + 1] = "node-loader-testd\0bootstrap.js";
-
-	snprintf(&argv_str[31], 16 + 1, "%p", (void *)&node_loader_impl_register);
-
-	char * argv[] = { &argv_str[0], &argv_str[18], &argv_str[31], NULL };
-
-	int argc = 3;
-
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
+
+	/* TODO: Do a workaround with app title and argv_str (must be contigously allocated) */
+	char argv_str[31 + 16 + 16 + 1] = "node-loader-testd\0bootstrap.js";
+
+	snprintf(&argv_str[31], 16 + 1, "%p", (void *)node_impl);
+
+	snprintf(&argv_str[46], 16 + 1, "%p", (void *)&node_loader_impl_register);
+
+	char * argv[] = { &argv_str[0], &argv_str[18], &argv_str[31], &argv_str[46], NULL };
+
+	int argc = 4;
 
 	node_impl->thread_loop = uv_default_loop();
 
@@ -269,6 +385,7 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 	struct loader_impl_async_load_from_file_type async_data =
 	{
+		node_impl,
 		paths,
 		size
 	};
@@ -361,11 +478,33 @@ int node_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 
+	napi_status status;
+
+	uint32_t ref_count = 0;
+
 	if (node_impl == NULL)
 	{
 		return 1;
 	}
 
+	/* Clear persistent references */
+	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(node_impl->env, node_impl->global_ref);
+
+	assert(status == napi_ok);
+
+	status = napi_reference_unref(node_impl->env, node_impl->function_table_object_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(node_impl->env, node_impl->function_table_object_ref);
+
+	assert(status == napi_ok);
+
+	/* Destroy syncronization objects */
 	uv_mutex_destroy(&node_impl->mutex_start);
 
 	uv_cond_destroy(&node_impl->cond_start);
