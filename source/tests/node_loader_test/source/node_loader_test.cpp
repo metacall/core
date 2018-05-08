@@ -19,10 +19,14 @@ class node_loader_test : public testing::Test
 
 TEST_F(node_loader_test, DefaultConstructor)
 {
+	const loader_naming_tag tag = "node";
+
 	const loader_naming_path names[] =
 	{
 		"nod.js"
 	};
+
+	const size_t size = sizeof(names) / sizeof(names[0]);
 
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
 		log_policy_format_text(),
@@ -30,7 +34,16 @@ TEST_F(node_loader_test, DefaultConstructor)
 		log_policy_storage_sequential(),
 		log_policy_stream_stdio(stdout)));
 
-	EXPECT_EQ((int) 0, (int) loader_load_from_file("node", names, sizeof(names) / sizeof(names[0]), NULL));
+	EXPECT_EQ((int) 0, (int) loader_load_from_file(tag, names, size, NULL));
+
+	for (size_t index = 0; index < size; ++index)
+	{
+		void * handle = loader_get_handle(tag, names[index]);
+
+		EXPECT_NE((void *) NULL, (void *) handle);
+
+		EXPECT_EQ((int) 0, (int) loader_clear(handle));
+	}
 
 	EXPECT_EQ((int) 0, (int) loader_unload());
 }

@@ -55,6 +55,8 @@ typedef struct loader_impl_node_type
 	uv_loop_t * thread_loop;
 	uv_mutex_t mutex_start;
 	uv_cond_t cond_start;
+	uv_mutex_t mutex_load_from_file;
+	uv_cond_t cond_load_from_file;
 	uv_async_t async_initialize;
 	uv_async_t async_load_from_file;
 	uv_async_t async_call;
@@ -67,6 +69,7 @@ typedef struct loader_impl_async_load_from_file_type
 	loader_impl_node node_impl;
 	const loader_naming_path * paths;
 	size_t size;
+	napi_ref handle_ref;
 
 } * loader_impl_async_load_from_file;
 
@@ -139,6 +142,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 		napi_value function_trampoline_load_from_file;
 		napi_valuetype valuetype;
 		napi_value argv[1];
+		uint32_t ref_count = 0;
 
 		status = napi_get_named_property(env, function_table_object, load_from_file_str, &function_trampoline_load_from_file);
 
@@ -183,11 +187,27 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 		status = napi_call_function(env, global, function_trampoline_load_from_file, 1, argv, &return_value);
 
 		assert(status == napi_ok);
+
+		/* Make handle persistent */
+		status = napi_create_reference(env, return_value, 0, &async_data->handle_ref);
+
+		assert(status == napi_ok);
+
+		status = napi_reference_ref(env, async_data->handle_ref, &ref_count);
+
+		assert(status == napi_ok && ref_count == 1);
 	}
 
 	status = napi_close_handle_scope(env, scope);
 
 	assert(status == napi_ok);
+
+	/* Signal load from file condition */
+	uv_mutex_lock(&async_data->node_impl->mutex_load_from_file);
+
+	uv_cond_signal(&async_data->node_impl->cond_load_from_file);
+
+	uv_mutex_unlock(&async_data->node_impl->mutex_load_from_file);
 }
 
 void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr)
@@ -337,6 +357,10 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	uv_mutex_init(&node_impl->mutex_start);
 
+	uv_cond_init(&node_impl->cond_load_from_file);
+
+	uv_mutex_init(&node_impl->mutex_load_from_file);
+
 	/* Create NodeJS thread */
 	uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl);
 
@@ -374,8 +398,6 @@ int node_loader_impl_execution_path(loader_impl impl, const loader_naming_path p
 
 loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
-	static int mock_file_handle = 0;
-
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 
 	if (node_impl == NULL)
@@ -387,17 +409,23 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	{
 		node_impl,
 		paths,
-		size
+		size,
+		NULL
 	};
 
 	node_impl->async_load_from_file.data = static_cast<void *>(&async_data);
 
+	/* Execute load from file async callback */
 	uv_async_send(&node_impl->async_load_from_file);
 
-	/* TODO: Wait until module is loaded or return the promise ? */
-	usleep(4000000);
+	/* Wait until module is loaded */
+	uv_mutex_lock(&node_impl->mutex_load_from_file);
 
-	return &mock_file_handle;
+	uv_cond_wait(&node_impl->cond_load_from_file, &node_impl->mutex_load_from_file);
+
+	uv_mutex_unlock(&node_impl->mutex_load_from_file);
+
+	return static_cast<loader_handle>(async_data.handle_ref);
 }
 
 loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
@@ -424,10 +452,29 @@ loader_handle node_loader_impl_load_from_package(loader_impl impl, const loader_
 
 int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
-	/* TODO */
+	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 
-	(void)impl;
-	(void)handle;
+	napi_ref handle_ref = static_cast<napi_ref>(handle);
+
+	napi_status status;
+
+	uint32_t ref_count = 0;
+
+	if (node_impl == NULL || handle_ref == NULL)
+	{
+		return 1;
+	}
+
+	/* TODO: Call to bootstrap clear */
+
+	/* Clear handle persistent reference */
+	status = napi_reference_unref(node_impl->env, handle_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(node_impl->env, handle_ref);
+
+	assert(status == napi_ok);
 
 	return 0;
 }
@@ -508,6 +555,10 @@ int node_loader_impl_destroy(loader_impl impl)
 	uv_mutex_destroy(&node_impl->mutex_start);
 
 	uv_cond_destroy(&node_impl->cond_start);
+
+	uv_mutex_destroy(&node_impl->mutex_load_from_file);
+
+	uv_cond_destroy(&node_impl->cond_load_from_file);
 
 	node_impl->async_destroy.data = static_cast<void *>(&node_impl);
 

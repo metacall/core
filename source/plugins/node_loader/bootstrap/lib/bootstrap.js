@@ -61,10 +61,14 @@ function node_loader_trampoline_load_from_package() {
 }
 
 function node_loader_trampoline_clear(handle) {
-	for (const p of handle) {
-		if (require.cache[p]) {
-			delete require.cache[p];
+	try {
+		for (const p of handle) {
+			if (require.cache[p]) {
+				delete require.cache[p];
+			}
 		}
+	} catch (ex) {
+		console.log("Exception in node_loader_trampoline_clear", ex);
 	}
 }
 
