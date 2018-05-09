@@ -234,6 +234,8 @@ function node_loader_trampoline_discover(handle) {
 		console.log('Exception in node_loader_trampoline_discover', ex);
 	}
 
+	console.log('Debug node_loader_trampoline_discover', discover);
+
 	return discover;
 }
 

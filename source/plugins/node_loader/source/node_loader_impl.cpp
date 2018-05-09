@@ -285,19 +285,104 @@ void node_loader_impl_async_discover(uv_async_t * async)
 		assert(status == napi_ok);
 
 		/* Call to load from file function */
-		napi_value global, return_value;
+		napi_value global, discover_map;
 
 		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
 
 		assert(status == napi_ok);
 
-		status = napi_call_function(env, global, function_trampoline_discover, 1, argv, &return_value);
+		status = napi_call_function(env, global, function_trampoline_discover, 1, argv, &discover_map);
 
 		assert(status == napi_ok);
 
-		/* TODO: Convert return value (discover object) to context */
+		/* Convert return value (discover object) to context */
+		napi_value function_names;
+		uint32_t function_names_length;
 
-		/* ... */
+		status = napi_get_property_names(env, discover_map, &function_names);
+
+		assert(status == napi_ok);
+
+		status = napi_get_array_length(env, function_names, &function_names_length);
+
+		assert(status == napi_ok);
+
+		for (uint32_t index = 0; index < function_names_length; ++index)
+		{
+			napi_value function_name;
+			size_t function_name_length;
+			char * function_name_str = NULL;
+
+			status = napi_get_element(env, function_names, index, &function_name);
+
+			assert(status == napi_ok);
+
+			status = napi_get_value_string_utf8(env, function_name, NULL, 0, &function_name_length);
+
+			assert(status == napi_ok);
+
+			if (function_name_length > 0)
+			{
+				function_name_str = static_cast<char *>(malloc(sizeof(char) * (function_name_length + 1)));
+			}
+
+			if (function_name_str != NULL)
+			{
+				napi_value function_descriptor;
+				napi_value function_ptr;
+				napi_value function_signature;
+				uint32_t function_signature_length;
+
+				/* Get function name */
+				status = napi_get_value_string_utf8(env, function_name, function_name_str, function_name_length + 1, &function_name_length);
+
+				assert(status == napi_ok);
+
+				/* Get function descriptor */
+				status = napi_get_named_property(env, discover_map, function_name_str, &function_descriptor);
+
+				assert(status == napi_ok);
+
+				/* Get function pointer */
+				status = napi_get_named_property(env, function_descriptor, "ptr", &function_ptr);
+
+				assert(status == napi_ok);
+
+				/* Get function signature */
+				status = napi_get_named_property(env, function_descriptor, "signature", &function_signature);
+
+				assert(status == napi_ok);
+
+				/* Get signature length */
+				status = napi_get_array_length(env, function_signature, &function_signature_length);
+
+				assert(status == napi_ok);
+
+				/* Create node function */
+				loader_impl_node_function node_func = malloc(sizeof(struct loader_impl_py_function_type));
+
+				/* TODO: Check if function_ptr has to be persistent */
+				node_func->func = function_ptr;
+
+				node_func->node_impl = async_data->node_impl;
+
+				function f = function_create(function_name_str, (size_t)function_signature_length, node_func, &function_node_singleton);
+
+				/* TODO */
+				/*
+				if (node_loader_impl_discover_func(impl, value, f) == 0)
+				{
+					scope sp = context_scope(ctx);
+
+					scope_define(sp, func_name, f);
+				}
+				else
+				{
+					function_destroy(f);
+				}
+				*/
+			}
+		}
 	}
 
 	/* Close scope */
