@@ -359,14 +359,18 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				assert(status == napi_ok);
 
 				/* Create node function */
+				/*
 				loader_impl_node_function node_func = malloc(sizeof(struct loader_impl_py_function_type));
+				*/
 
 				/* TODO: Check if function_ptr has to be persistent */
+				/*
 				node_func->func = function_ptr;
 
 				node_func->node_impl = async_data->node_impl;
 
 				function f = function_create(function_name_str, (size_t)function_signature_length, node_func, &function_node_singleton);
+				*/
 
 				/* TODO */
 				/*
