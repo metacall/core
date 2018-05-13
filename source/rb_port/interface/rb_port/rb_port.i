@@ -31,12 +31,10 @@
 
 	%include <rb_port/rb_port.h>
 
-	#ifndef LOADER_LAZY
-		%init
-		%{
-			metacall_initialize();
-		%}
-	#endif
+	%init
+	%{
+		metacall_initialize();
+	%}
 
 	%import <rb_port/rb_port_impl.i>
 

@@ -44,12 +44,10 @@
 
 	%include <js_port/js_port.h>
 
-	#ifndef LOADER_LAZY
-		%init
-		%{
-			metacall_initialize();
-		%}
-	#endif
+	%init
+	%{
+		metacall_initialize();
+	%}
 
 	%import <js_port/js_port_impl.i>
 

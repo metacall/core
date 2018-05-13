@@ -31,12 +31,10 @@
 
 	%include <py_port/py_port.h>
 
-	#ifndef LOADER_LAZY
-		%init
-		%{
-			metacall_initialize();
-		%}
-	#endif
+	%init
+	%{
+		metacall_initialize();
+	%}
 
 	%import <py_port/py_port_impl.i>
 
