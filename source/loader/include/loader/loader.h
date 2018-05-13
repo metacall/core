@@ -46,6 +46,8 @@ LOADER_API loader loader_singleton(void);
 
 LOADER_API void loader_initialize(void);
 
+LOADER_API int loader_is_initialized(const loader_naming_tag tag);
+
 LOADER_API int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[]);
 
 LOADER_API int loader_load_path(const loader_naming_path path);

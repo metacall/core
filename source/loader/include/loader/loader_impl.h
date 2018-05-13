@@ -24,6 +24,8 @@ extern "C" {
 
 /* -- Methods -- */
 
+LOADER_API int loader_impl_is_initialized(loader_impl impl);
+
 LOADER_API loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, loader_host host);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
@@ -56,7 +58,7 @@ LOADER_API value loader_impl_metadata(loader_impl impl);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 
-LOADER_API loader_impl loader_impl_create_proxy();
+LOADER_API loader_impl loader_impl_create_proxy(loader_host host);
 
 #ifdef __cplusplus
 }

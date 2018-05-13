@@ -33,8 +33,6 @@
 #define LOADER_SCRIPT_PATH			"LOADER_SCRIPT_PATH"
 #define LOADER_DEFAULT_SCRIPT_PATH	"scripts"
 
-#define LOADER_LAZY					1
-
 /* -- Forward Declarations -- */
 
 struct loader_get_iterator_args_type;
@@ -136,20 +134,49 @@ void loader_initialize()
 
 	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
-		loader_impl proxy = loader_impl_create_proxy();
+		loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
 
-		if (proxy == NULL)
+		if (host != NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy initialization");
-		}
+			loader_impl proxy;
 
-		if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
+			host->log = log_instance();
 
-			loader_impl_destroy(proxy);
+			proxy = loader_impl_create_proxy(host);
+
+			if (proxy != NULL)
+			{
+				if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
+
+					loader_impl_destroy(proxy);
+
+					free(host);
+				}
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy initialization");
+
+				free(host);
+			}
 		}
 	}
+}
+
+int loader_is_initialized(const loader_naming_tag tag)
+{
+	loader l = loader_singleton();
+
+	loader_impl impl = (loader_impl)set_get(l->impl_map, (const set_key)tag);
+
+	if (impl == NULL)
+	{
+		return 1;
+	}
+
+	return loader_impl_is_initialized(impl);
 }
 
 value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args)
@@ -234,32 +261,17 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 	loader_impl impl;
 
-	struct loader_host_type host;
+	loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
 
-	host.log = log_instance();
+	host->log = log_instance();
 
-	impl = loader_impl_create(l->library_path, tag, &host);
+	impl = loader_impl_create(l->library_path, tag, host);
 
 	if (impl != NULL)
 	{
 		if (set_insert(l->impl_map, (set_key)loader_impl_tag(impl), impl) == 0)
 		{
-			if (loader_impl_execution_path(impl, ".") == 0)
-			{
-				if (l->script_path != NULL)
-				{
-					if (loader_impl_execution_path(impl, l->script_path) == 0)
-					{
-						return impl;
-					}
-				}
-				else
-				{
-					return impl;
-				}
-			}
-
-			(void)set_remove(l->impl_map, (set_key)loader_impl_tag(impl));
+			return impl;
 		}
 
 		loader_impl_destroy(impl);
@@ -288,11 +300,7 @@ int loader_load_path(const loader_naming_path path)
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
-
-		loader_initialize();
-	#endif
+	loader_initialize();
 
 	if (l->impl_map != NULL)
 	{
@@ -308,11 +316,7 @@ int loader_execution_path(const loader_naming_tag tag, const loader_naming_path 
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
-
-		loader_initialize();
-	#endif
+	loader_initialize();
 
 	if (l->impl_map != NULL)
 	{
@@ -335,11 +339,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
-
-		loader_initialize();
-	#endif
+	loader_initialize();
 
 	if (l->impl_map != NULL && size > 0)
 	{
@@ -388,11 +388,7 @@ int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, si
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
-
-		loader_initialize();
-	#endif
+	loader_initialize();
 
 	if (l->impl_map != NULL)
 	{
@@ -415,11 +411,7 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 {
 	loader l = loader_singleton();
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy initialization");
-
-		loader_initialize();
-	#endif
+	loader_initialize();
 
 	if (l->impl_map != NULL)
 	{
@@ -705,21 +697,13 @@ int loader_unload()
 
 		if (set_clear(l->impl_map) != 0)
 		{
-			#ifdef LOADER_LAZY
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
-
-				loader_destroy();
-			#endif
+			loader_destroy();
 
 			return 1;
 		}
 	}
 
-	#ifdef LOADER_LAZY
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader lazy destruction");
-
-		loader_destroy();
-	#endif
+	loader_destroy();
 
 	return 0;
 }
@@ -760,12 +744,6 @@ const char * loader_print_info()
 			"Compiled as static library type\n"
 		#else
 			"Compiled as shared library type\n"
-		#endif
-
-		#ifdef LOADER_LAZY
-			"Compiled with lazy initialization and destruction"
-		#else
-			"Compiled with explicit initialization and destruction"
 		#endif
 
 		"\n";

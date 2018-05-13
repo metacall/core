@@ -321,7 +321,10 @@ application::application(int argc, char * argv[]) : exit_condition(false)
 
 application::~application()
 {
-
+	if (metacall_destroy() != 0)
+	{
+		std::cout << "Error while destroying MetaCall." << std::endl;
+	}
 }
 
 void application::run()

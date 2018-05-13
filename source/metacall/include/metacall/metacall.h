@@ -26,6 +26,18 @@ extern "C" {
 #include <stdlib.h>
 #include <stdarg.h>
 
+/* -- Forward Declarations -- */
+
+struct metacall_initialize_configuration_type;
+
+/* -- Type Definitions -- */
+
+struct metacall_initialize_configuration_type
+{
+	char * tag;
+	void * options;
+};
+
 /* -- Global Variables -- */
 
 extern void * metacall_null_args[1];
@@ -40,6 +52,30 @@ extern void * metacall_null_args[1];
 *    Zero if success, different from zero otherwise
 */
 METACALL_API int metacall_initialize(void);
+
+/**
+*  @brief
+*    Initialize MetaCall library with configuration arguments
+*
+*  @param[in] config
+*    Extension of the script to be loaded in memory with data to be injected
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration_type config[]);
+
+/**
+*  @brief
+*    Check if script context is loaded by @tag
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @return
+*    Zero if context is initialized, different from zero otherwise
+*/
+METACALL_API int metacall_is_initialized(const char * tag);
 
 /**
 *  @brief

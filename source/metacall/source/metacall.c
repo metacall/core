@@ -98,13 +98,40 @@ int metacall_initialize()
 
 	memory_allocator_destroy(allocator);
 
-	#ifndef LOADER_LAZY
-		loader_initialize();
-	#endif
+	loader_initialize();
 
 	metacall_initialize_flag = 0;
 
 	return 0;
+}
+
+int metacall_initialize_ex(struct metacall_initialize_configuration_type config[])
+{
+	size_t index = 0;
+
+	if (metacall_initialize() == 1)
+	{
+		return 1;
+	}
+
+	while (!(config[index].tag == NULL && config[index].options == NULL))
+	{
+		loader_impl impl = loader_get_impl(config[index].tag);
+
+		if (impl == NULL)
+		{
+			return 1;
+		}
+
+		++index;
+	}
+
+	return 0;
+}
+
+int metacall_is_initialized(const char * tag)
+{
+	return loader_is_initialized(tag);
 }
 
 size_t metacall_args_size()
