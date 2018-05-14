@@ -56,6 +56,7 @@ struct loader_impl_type
 	context ctx;
 	set type_info_map;
 	loader_host host;
+	void * options;
 };
 
 struct loader_handle_impl_type
@@ -191,6 +192,7 @@ loader_impl loader_impl_create_proxy(loader_host host)
 
 	impl->init = 0; /* Do not call singleton initialize */
 	impl->host = host;
+	impl->options = NULL;
 
 	if (impl != NULL)
 	{
@@ -328,6 +330,7 @@ loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, l
 
 		impl->init = 1;
 		impl->host = host;
+		impl->options = NULL;
 
 		if (loader_impl_create_singleton(impl, path, tag) == 0)
 		{
@@ -775,6 +778,24 @@ void * loader_impl_get_handle(loader_impl impl, const char * name)
 	if (impl != NULL && name != NULL)
 	{
 		return (void *)set_get(impl->handle_impl_map, (set_key)name);
+	}
+
+	return NULL;
+}
+
+void loader_impl_set_options(loader_impl impl, void * options)
+{
+	if (impl != NULL && options != NULL)
+	{
+		impl->options = options;
+	}
+}
+
+void * loader_impl_get_options(loader_impl impl)
+{
+	if (impl != NULL)
+	{
+		return impl->options;
 	}
 
 	return NULL;

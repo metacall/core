@@ -105,7 +105,7 @@ int metacall_initialize()
 	return 0;
 }
 
-int metacall_initialize_ex(struct metacall_initialize_configuration_type config[])
+int metacall_initialize_ex(struct metacall_initialize_configuration_type initialize_config[])
 {
 	size_t index = 0;
 
@@ -114,14 +114,16 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type config[
 		return 1;
 	}
 
-	while (!(config[index].tag == NULL && config[index].options == NULL))
+	while (!(initialize_config[index].tag == NULL && initialize_config[index].options == NULL))
 	{
-		loader_impl impl = loader_get_impl(config[index].tag);
+		loader_impl impl = loader_get_impl(initialize_config[index].tag);
 
 		if (impl == NULL)
 		{
 			return 1;
 		}
+
+		loader_set_options(initialize_config[index].tag, initialize_config[index].options);
 
 		++index;
 	}

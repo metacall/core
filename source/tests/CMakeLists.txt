@@ -93,6 +93,7 @@ add_subdirectory(rb_loader_parser_integration_test)
 #add_subdirectory(rb_rails_integration_test) # TODO
 add_subdirectory(cs_loader_test)
 add_subdirectory(node_loader_test)
+add_subdirectory(file_loader_test)
 add_subdirectory(metacall_load_memory_test)
 add_subdirectory(metacall_load_configuration_test)
 add_subdirectory(metacall_duplicated_handle_test)

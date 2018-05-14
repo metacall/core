@@ -37,9 +37,9 @@ TEST_F(cs_loader_test, Jump)
 
 	ret = metacall("SuperJump");
 
-	EXPECT_NE((value)NULL, (value)ret);
+	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int)value_to_long(ret), (int)2);
+	EXPECT_EQ((int) 2, (int) value_to_long(ret));
 
 	value_destroy(ret);
 }
@@ -50,9 +50,9 @@ TEST_F(cs_loader_test, Sum)
 
 	ret = metacall("Sum", 5, 10);
 
-	EXPECT_NE((value)NULL, (value)ret);
+	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int)value_to_long(ret), (int)15);
+	EXPECT_EQ((int) 15, (int) value_to_long(ret));
 
 	value_destroy(ret);
 }
@@ -63,9 +63,9 @@ TEST_F(cs_loader_test, Concat)
 
 	ret = metacall("Concat", "Hello ", "World");
 
-	EXPECT_NE((value)NULL, (value)ret);
+	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ(strcmp((const char*)value_to_string(ret), "Hello World"), 0);
+	EXPECT_EQ((int) 0, (int) strcmp((const char *)value_to_string(ret), "Hello World"));
 
 	value_destroy(ret);
 }

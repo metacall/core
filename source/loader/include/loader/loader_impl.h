@@ -50,6 +50,10 @@ LOADER_API int loader_impl_load_from_package(loader_impl impl, const loader_nami
 
 LOADER_API void * loader_impl_get_handle(loader_impl impl, const char * name);
 
+LOADER_API void loader_impl_set_options(loader_impl impl, void * options);
+
+LOADER_API void * loader_impl_get_options(loader_impl impl);
+
 LOADER_API const char * loader_impl_handle_id(void * handle);
 
 LOADER_API int loader_impl_clear(void * handle);

@@ -20,7 +20,7 @@ TEST_F(metacall_initialize_ex_test, DefaultConstructor)
 {
 	char loader_name[] = "mock";
 
-	struct metacall_initialize_configuration_type config[] =
+	static struct metacall_initialize_configuration_type initialize_config[] =
 	{
 		#if defined(OPTION_BUILD_PLUGINS_MOCK)
 		{
@@ -35,7 +35,7 @@ TEST_F(metacall_initialize_ex_test, DefaultConstructor)
 
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize_ex(config));
+	ASSERT_EQ((int) 0, (int) metacall_initialize_ex(initialize_config));
 
 	/* Mock */
 	#if defined(OPTION_BUILD_PLUGINS_MOCK)

@@ -242,6 +242,7 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_DOUBLE,	"Float"		},
 		{ TYPE_DOUBLE,	"Double"	},
 		{ TYPE_STRING,	"String"	},
+		{ TYPE_BUFFER,	"Buffer"	},
 		{ TYPE_PTR,		"Ptr"		}
 	};
 

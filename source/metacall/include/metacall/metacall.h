@@ -57,13 +57,13 @@ METACALL_API int metacall_initialize(void);
 *  @brief
 *    Initialize MetaCall library with configuration arguments
 *
-*  @param[in] config
+*  @param[in] initialize_config
 *    Extension of the script to be loaded in memory with data to be injected
 *
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration_type config[]);
+METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration_type initialize_config[]);
 
 /**
 *  @brief

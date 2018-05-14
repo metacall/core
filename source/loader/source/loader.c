@@ -580,6 +580,16 @@ void * loader_get_handle(const loader_naming_tag tag, const char * name)
 	return loader_impl_get_handle(loader_get_impl(tag), name);
 }
 
+void loader_set_options(const loader_naming_tag tag, void * options)
+{
+	loader_impl_set_options(loader_get_impl(tag), options);
+}
+
+void * loader_get_options(const loader_naming_tag tag)
+{
+	return loader_impl_get_options(loader_get_impl(tag));
+}
+
 const char * loader_handle_id(void * handle)
 {
 	return loader_impl_handle_id(handle);

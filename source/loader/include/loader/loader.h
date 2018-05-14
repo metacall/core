@@ -68,6 +68,10 @@ LOADER_API loader_data loader_get(const char * name);
 
 LOADER_API void * loader_get_handle(const loader_naming_tag tag, const char * name);
 
+LOADER_API void loader_set_options(const loader_naming_tag tag, void * options);
+
+LOADER_API void * loader_get_options(const loader_naming_tag tag);
+
 LOADER_API const char * loader_handle_id(void * handle);
 
 LOADER_API value loader_metadata(void);
