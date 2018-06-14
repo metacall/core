@@ -51,16 +51,23 @@ typedef struct loader_impl_node_type
 	napi_env env;
 	napi_ref global_ref;
 	napi_ref function_table_object_ref;
+
 	uv_thread_t thread_id;
 	uv_loop_t * thread_loop;
-	uv_mutex_t mutex_start;
-	uv_cond_t cond_start;
+
+	uv_mutex_t mutex_initialize;
 	uv_mutex_t mutex_load_from_file;
-	uv_cond_t cond_load_from_file;
+	uv_mutex_t mutex_clear;
 	uv_mutex_t mutex_discover;
+
+	uv_cond_t cond_initialize;
+	uv_cond_t cond_load_from_file;
+	uv_cond_t cond_clear;
 	uv_cond_t cond_discover;
+
 	uv_async_t async_initialize;
 	uv_async_t async_load_from_file;
+	uv_async_t async_clear;
 	uv_async_t async_discover;
 	uv_async_t async_call;
 	uv_async_t async_destroy;
@@ -83,6 +90,13 @@ typedef struct loader_impl_async_discover_type
 	context ctx;
 
 } * loader_impl_async_discover;
+
+typedef struct loader_impl_async_clear_type
+{
+	loader_impl_node node_impl;
+	napi_ref handle_ref;
+
+} * loader_impl_async_clear;
 
 typedef struct loader_impl_node_function_type
 {
@@ -109,8 +123,11 @@ void node_loader_impl_async_call(uv_async_t * async);
 
 void node_loader_impl_async_load_from_file(uv_async_t * async);
 
+void node_loader_impl_async_clear(uv_async_t * async);
+
 void node_loader_impl_async_discover(uv_async_t * async);
 
+/* Loader */
 void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr);
 
 void node_loader_impl_thread(void * data);
@@ -403,11 +420,11 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	(void)node_impl;
 
 	/* Signal start condition */
-	uv_mutex_lock(&node_impl->mutex_start);
+	uv_mutex_lock(&node_impl->mutex_initialize);
 
-	uv_cond_signal(&node_impl->cond_start);
+	uv_cond_signal(&node_impl->cond_initialize);
 
-	uv_mutex_unlock(&node_impl->mutex_start);
+	uv_mutex_unlock(&node_impl->mutex_initialize);
 }
 
 void node_loader_impl_async_call(uv_async_t * async)
@@ -434,6 +451,8 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+
+	assert(status == napi_ok);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
@@ -467,7 +486,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 		if (valuetype != napi_function)
 		{
-			napi_throw_type_error(env, nullptr, "Invalid function in function table object");
+			napi_throw_type_error(env, nullptr, "Invalid function load_from_file in function table object");
 		}
 
 		/* Define parameters */
@@ -524,6 +543,99 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	uv_mutex_unlock(&async_data->node_impl->mutex_load_from_file);
 }
 
+void node_loader_impl_async_clear(uv_async_t * async)
+{
+	loader_impl_async_clear async_data = static_cast<loader_impl_async_clear>(async->data);
+
+	napi_env env = async_data->node_impl->env;
+	napi_value function_table_object;
+
+	const char clear_str[] = "clear";
+	napi_value clear_str_value;
+
+	bool result = false;
+
+	napi_handle_scope handle_scope;
+
+	uint32_t ref_count = 0;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+
+	assert(status == napi_ok);
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
+
+	assert(status == napi_ok);
+
+	/* Create function string */
+	status = napi_create_string_utf8(env, clear_str, sizeof(clear_str) - 1, &clear_str_value);
+
+	assert(status == napi_ok);
+
+	/* Check if exists in the table */
+	status = napi_has_own_property(env, function_table_object, clear_str_value, &result);
+
+	assert(status == napi_ok);
+
+	if (result == true)
+	{
+		napi_value function_trampoline_clear;
+		napi_valuetype valuetype;
+		napi_value argv[1];
+
+		status = napi_get_named_property(env, function_table_object, clear_str, &function_trampoline_clear);
+
+		assert(status == napi_ok);
+
+		status = napi_typeof(env, function_trampoline_clear, &valuetype);
+
+		assert(status == napi_ok);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function clear in function table object");
+		}
+
+		/* Define parameters */
+		status = napi_get_reference_value(env, async_data->handle_ref, &argv[0]);
+
+		assert(status == napi_ok);
+
+		/* Call to load from file function */
+		napi_value global, clear_return;
+
+		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
+
+		assert(status == napi_ok);
+
+		status = napi_call_function(env, global, function_trampoline_clear, 1, argv, &clear_return);
+
+		assert(status == napi_ok);
+	}
+
+	/* Clear handle persistent reference */
+	status = napi_reference_unref(env, async_data->handle_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(env, async_data->handle_ref);
+
+	assert(status == napi_ok);
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	assert(status == napi_ok);
+
+	/* Signal clear condition */
+	uv_mutex_lock(&async_data->node_impl->mutex_clear);
+
+	uv_cond_signal(&async_data->node_impl->cond_clear);
+
+	uv_mutex_unlock(&async_data->node_impl->mutex_clear);
+}
+
 void node_loader_impl_async_discover(uv_async_t * async)
 {
 	loader_impl_async_discover async_data = static_cast<loader_impl_async_discover>(async->data);
@@ -540,6 +652,8 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+
+	assert(status == napi_ok);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
@@ -572,7 +686,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 		if (valuetype != napi_function)
 		{
-			napi_throw_type_error(env, nullptr, "Invalid function in function table object");
+			napi_throw_type_error(env, nullptr, "Invalid function discover in function table object");
 		}
 
 		/* Define parameters */
@@ -730,8 +844,10 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 	napi_env env = static_cast<napi_env>(env_ptr);
 	napi_value function_table_object = static_cast<napi_value>(function_table_object_ptr);
 
-	const char test_str[] = "test";
-	napi_value test_str_value;
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		const char test_str[] = "test";
+		napi_value test_str_value;
+	#endif
 
 	bool result = false;
 
@@ -765,45 +881,50 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 	assert(status == napi_ok && ref_count == 1);
 
-	/* Retrieve test function from object table */
-	status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
-
-	assert(status == napi_ok);
-
-	status = napi_has_own_property(env, function_table_object, test_str_value, &result);
-
-	assert(status == napi_ok);
-
-	if (result == true)
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	{
-		napi_value function_trampoline_test;
-		napi_valuetype valuetype;
-
-		status = napi_get_named_property(env, function_table_object, test_str, &function_trampoline_test);
+		/* Retrieve test function from object table */
+		status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
 
 		assert(status == napi_ok);
 
-		status = napi_typeof(env, function_trampoline_test, &valuetype);
+		status = napi_has_own_property(env, function_table_object, test_str_value, &result);
 
 		assert(status == napi_ok);
 
-		if (valuetype != napi_function)
+		if (result == true)
 		{
-			napi_throw_type_error(env, nullptr, "Invalid function in function table object");
+			napi_value function_trampoline_test;
+			napi_valuetype valuetype;
+
+			status = napi_get_named_property(env, function_table_object, test_str, &function_trampoline_test);
+
+			assert(status == napi_ok);
+
+			status = napi_typeof(env, function_trampoline_test, &valuetype);
+
+			assert(status == napi_ok);
+
+			if (valuetype != napi_function)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid function test in function table object");
+			}
+
+			/* Call to test function */
+			napi_value global, return_value;
+
+			status = napi_get_global(env, &global);
+
+			assert(status == napi_ok);
+
+			status = napi_call_function(env, global, function_trampoline_test, 0, nullptr, &return_value);
+
+			assert(status == napi_ok);
 		}
-
-		/* Call to test function */
-		napi_value global, return_value;
-
-		status = napi_get_global(env, &global);
-
-		assert(status == napi_ok);
-
-		status = napi_call_function(env, global, function_trampoline_test, 0, nullptr, &return_value);
-
-		assert(status == napi_ok);
 	}
+	#endif
 
+	/* TODO: Return */
 	return NULL;
 }
 
@@ -830,6 +951,9 @@ void node_loader_impl_thread(void * data)
 	/* Initialize load from file signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_load_from_file, &node_loader_impl_async_load_from_file);
 
+	/* Initialize clear signal */
+	uv_async_init(node_impl->thread_loop, &node_impl->async_clear, &node_loader_impl_async_clear);
+
 	/* Initialize discover signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_discover, &node_loader_impl_async_discover);
 
@@ -840,11 +964,11 @@ void node_loader_impl_thread(void * data)
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
 	/* Signal start condition */
-	uv_mutex_lock(&node_impl->mutex_start);
+	uv_mutex_lock(&node_impl->mutex_initialize);
 
-	uv_cond_signal(&node_impl->cond_start);
+	uv_cond_signal(&node_impl->cond_initialize);
 
-	uv_mutex_unlock(&node_impl->mutex_start);
+	uv_mutex_unlock(&node_impl->mutex_initialize);
 
 	/* Start NodeJS runtime */
 	node::Start(argc, reinterpret_cast<char **>(argv));
@@ -869,13 +993,17 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
-	uv_cond_init(&node_impl->cond_start);
+	uv_cond_init(&node_impl->cond_initialize);
 
-	uv_mutex_init(&node_impl->mutex_start);
+	uv_mutex_init(&node_impl->mutex_initialize);
 
 	uv_cond_init(&node_impl->cond_load_from_file);
 
 	uv_mutex_init(&node_impl->mutex_load_from_file);
+
+	uv_cond_init(&node_impl->cond_clear);
+
+	uv_mutex_init(&node_impl->mutex_clear);
 
 	uv_cond_init(&node_impl->cond_discover);
 
@@ -885,11 +1013,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl);
 
 	/* Wait until start has been launch */
-	uv_mutex_lock(&node_impl->mutex_start);
+	uv_mutex_lock(&node_impl->mutex_initialize);
 
-	uv_cond_wait(&node_impl->cond_start, &node_impl->mutex_start);
+	uv_cond_wait(&node_impl->cond_initialize, &node_impl->mutex_initialize);
 
-	uv_mutex_unlock(&node_impl->mutex_start);
+	uv_mutex_unlock(&node_impl->mutex_initialize);
 
 	/* Initialize node loader entry point */
 	node_impl->async_initialize.data = static_cast<void *>(&node_impl);
@@ -897,11 +1025,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_async_send(&node_impl->async_initialize);
 
 	/* Wait until script has been loaded */
-	uv_mutex_lock(&node_impl->mutex_start);
+	uv_mutex_lock(&node_impl->mutex_initialize);
 
-	uv_cond_wait(&node_impl->cond_start, &node_impl->mutex_start);
+	uv_cond_wait(&node_impl->cond_initialize, &node_impl->mutex_initialize);
 
-	uv_mutex_unlock(&node_impl->mutex_start);
+	uv_mutex_unlock(&node_impl->mutex_initialize);
 
 	return node_impl;
 }
@@ -976,25 +1104,28 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	napi_ref handle_ref = static_cast<napi_ref>(handle);
 
-	napi_status status;
-
-	uint32_t ref_count = 0;
-
 	if (node_impl == NULL || handle_ref == NULL)
 	{
 		return 1;
 	}
 
-	/* TODO: Call to bootstrap clear */
+	struct loader_impl_async_clear_type async_data =
+	{
+		node_impl,
+		handle_ref
+	};
 
-	/* Clear handle persistent reference */
-	status = napi_reference_unref(node_impl->env, handle_ref, &ref_count);
+	node_impl->async_clear.data = static_cast<void *>(&async_data);
 
-	assert(status == napi_ok && ref_count == 0);
+	/* Execute clear async callback */
+	uv_async_send(&node_impl->async_clear);
 
-	status = napi_delete_reference(node_impl->env, handle_ref);
+	/* Wait until module is cleared */
+	uv_mutex_lock(&node_impl->mutex_clear);
 
-	assert(status == napi_ok);
+	uv_cond_wait(&node_impl->cond_clear, &node_impl->mutex_clear);
+
+	uv_mutex_unlock(&node_impl->mutex_clear);
 
 	return 0;
 }
@@ -1094,13 +1225,17 @@ int node_loader_impl_destroy(loader_impl impl)
 	assert(status == napi_ok);
 
 	/* Destroy syncronization objects */
-	uv_mutex_destroy(&node_impl->mutex_start);
+	uv_mutex_destroy(&node_impl->mutex_initialize);
 
-	uv_cond_destroy(&node_impl->cond_start);
+	uv_cond_destroy(&node_impl->cond_initialize);
 
 	uv_mutex_destroy(&node_impl->mutex_load_from_file);
 
 	uv_cond_destroy(&node_impl->cond_load_from_file);
+
+	uv_mutex_destroy(&node_impl->mutex_clear);
+
+	uv_cond_destroy(&node_impl->cond_clear);
 
 	uv_mutex_destroy(&node_impl->mutex_discover);
 
@@ -1110,15 +1245,17 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	uv_async_send(&node_impl->async_destroy);
 
-	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_destroy), NULL);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_destroy), NULL);
 
-	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_call), NULL);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_call), NULL);
 
-	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_discover), NULL);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_discover), NULL);
 
-	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_load_from_file), NULL);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_clear), NULL);
 
-	uv_close(reinterpret_cast<uv_handle_t*>(&node_impl->async_initialize), NULL);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_load_from_file), NULL);
+
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_initialize), NULL);
 
 	uv_thread_join(&node_impl->thread_id);
 

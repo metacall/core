@@ -188,8 +188,10 @@ function node_loader_trampoline_load_from_package() {
 function node_loader_trampoline_clear(handle) {
 	try {
 		for (const p of Object.getOwnPropertyNames(handle)) {
-			if (require.cache[p]) {
-				delete require.cache[p];
+			const absolute = path.resolve(__dirname, p);
+
+			if (require.cache[absolute]) {
+				delete require.cache[absolute];
 			}
 		}
 	} catch (ex) {
