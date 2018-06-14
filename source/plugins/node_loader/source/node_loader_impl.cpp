@@ -758,10 +758,32 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 				assert(status == napi_ok);
 
+				/* Check function pointer type */
+				napi_valuetype valuetype;
+
+				status = napi_typeof(env, function_ptr, &valuetype);
+
+				assert(status == napi_ok);
+
+				if (valuetype != napi_function)
+				{
+					napi_throw_type_error(env, nullptr, "Invalid NodeJS function");
+				}
+
 				/* Get function signature */
 				status = napi_get_named_property(env, function_descriptor, "signature", &function_sig);
 
 				assert(status == napi_ok);
+
+				/* Check function pointer type */
+				status = napi_typeof(env, function_sig, &valuetype);
+
+				assert(status == napi_ok);
+
+				if (valuetype != napi_object)
+				{
+					napi_throw_type_error(env, nullptr, "Invalid NodeJS signature");
+				}
 
 				/* Get signature length */
 				status = napi_get_array_length(env, function_sig, &function_sig_length);
