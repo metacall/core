@@ -26,6 +26,11 @@ TEST_F(node_loader_test, DefaultConstructor)
 		"nod.js"
 	};
 
+	const loader_naming_path handle_names[] =
+	{
+		"nod"
+	};
+
 	const size_t size = sizeof(names) / sizeof(names[0]);
 
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
@@ -40,7 +45,7 @@ TEST_F(node_loader_test, DefaultConstructor)
 
 	for (size_t index = 0; index < size; ++index)
 	{
-		void * handle = loader_get_handle(tag, names[index]);
+		void * handle = loader_get_handle(tag, handle_names[index]);
 
 		EXPECT_NE((void *) NULL, (void *) handle);
 

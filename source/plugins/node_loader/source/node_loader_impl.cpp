@@ -84,6 +84,25 @@ typedef struct loader_impl_async_discover_type
 
 } * loader_impl_async_discover;
 
+typedef struct loader_impl_node_function_type
+{
+	loader_impl_node node_impl;
+	/* TODO: Check if func and sig has to be persistent */
+	napi_value func;
+	napi_value sig;
+
+} * loader_impl_node_function;
+
+/* Function */
+int function_node_interface_create(function func, function_impl impl);
+
+function_return function_node_interface_invoke(function func, function_impl impl, function_args args);
+
+void function_node_interface_destroy(function func, function_impl impl);
+
+function_interface function_node_singleton(void);
+
+/* Async */
 void node_loader_impl_async_initialize(uv_async_t * async);
 
 void node_loader_impl_async_call(uv_async_t * async);
@@ -99,6 +118,283 @@ void node_loader_impl_thread(void * data);
 void node_loader_impl_walk(uv_handle_t * handle, void * data);
 
 void node_loader_impl_async_destroy(uv_async_t * async);
+
+int function_node_interface_create(function func, function_impl impl)
+{
+	(void)func;
+	(void)impl;
+	/*
+	loader_impl_node_function node_func = (loader_impl_node_function)impl;
+
+	signature s = function_signature(func);
+
+	const size_t args_size = signature_count(s);
+
+	if (args_size > 0)
+	{
+		node_func->values = malloc(sizeof(PyObject *) * args_size);
+
+		if (node_func->values != NULL)
+		{
+			size_t iterator;
+
+			for (iterator = 0; iterator < args_size; ++iterator)
+			{
+				node_func->values[iterator] = NULL;
+			}
+
+			return 0;
+		}
+
+		return 1;
+	}
+
+	node_func->values = NULL;
+	*/
+
+	return 0;
+}
+
+function_return function_node_interface_invoke(function func, function_impl impl, function_args args)
+{
+	(void)func;
+	(void)impl;
+	(void)args;
+	/*
+	loader_impl_node_function node_func = (loader_impl_node_function)impl;
+
+	signature s = function_signature(func);
+
+	const size_t args_size = signature_count(s);
+
+	type ret_type = signature_get_return(s);
+
+	PyObject * tuple_args = PyTuple_New(args_size);
+
+	PyObject * result = NULL;
+
+	size_t args_count;
+
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	for (args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = signature_get_type(s, args_count);
+
+		type_id id = TYPE_INVALID;
+
+		if (t == NULL)
+		{
+			id = value_type_id((value)args[args_count]);
+		}
+		else
+		{
+			id = type_index(t);
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Type (%p): %d", (void *)t, id);
+
+		if (id == TYPE_BOOL)
+		{
+			boolean * value_ptr = (boolean *)(args[args_count]);
+
+			long l = (*value_ptr == 0) ? 0L : 1L;
+
+			node_func->values[args_count] = PyBool_FromLong(l);
+		}
+		else if (id == TYPE_INT)
+		{
+			int * value_ptr = (int *)(args[args_count]);
+
+			#if PY_MAJOR_VERSION == 2
+				node_func->values[args_count] = PyInt_FromLong(*value_ptr);
+			#elif PY_MAJOR_VERSION == 3
+				long l = (long)(*value_ptr);
+
+				node_func->values[args_count] = PyLong_FromLong(l);
+			#endif
+		}
+		else if (id == TYPE_LONG)
+		{
+			long * value_ptr = (long *)(args[args_count]);
+
+			node_func->values[args_count] = PyLong_FromLong(*value_ptr);
+		}
+		else if (id == TYPE_FLOAT)
+		{
+			float * value_ptr = (float *)(args[args_count]);
+
+			node_func->values[args_count] = PyFloat_FromDouble((double)*value_ptr);
+		}
+		else if (id == TYPE_DOUBLE)
+		{
+			double * value_ptr = (double *)(args[args_count]);
+
+			node_func->values[args_count] = PyFloat_FromDouble(*value_ptr);
+		}
+		else if (id == TYPE_STRING)
+		{
+			const char * value_ptr = (const char *)(args[args_count]);
+
+			#if PY_MAJOR_VERSION == 2
+				node_func->values[args_count] = PyString_FromString(value_ptr);
+			#elif PY_MAJOR_VERSION == 3
+				node_func->values[args_count] = PyUnicode_FromString(value_ptr);
+			#endif
+
+		}
+		else if (id == TYPE_PTR)
+		{
+		}
+
+		if (node_func->values[args_count] != NULL)
+		{
+			PyTuple_SetItem(tuple_args, args_count, node_func->values[args_count]);
+		}
+	}
+
+	result = PyObject_CallObject(node_func->func, tuple_args);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		loader_impl_node node_impl = loader_impl_get(node_func->impl);
+
+		node_loader_impl_error_print(node_impl);
+	}
+
+	Py_DECREF(tuple_args);
+
+	if (result != NULL)
+	{
+		value v = NULL;
+
+		type_id id = TYPE_INVALID;
+
+		if (ret_type == NULL)
+		{
+			id = node_loader_impl_get_return_type(result);
+		}
+		else
+		{
+			id = type_index(ret_type);
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
+
+		if (id == TYPE_BOOL)
+		{
+			boolean b = (PyObject_IsTrue(result) == 1) ? 1 : 0;
+
+			v = value_create_bool(b);
+		}
+		else if (id == TYPE_INT)
+		{
+			#if PY_MAJOR_VERSION == 2
+				long l = PyInt_AsLong(result);
+			#elif PY_MAJOR_VERSION == 3
+				long l = PyLong_AsLong(result);
+			#endif
+
+			*//* TODO: Review overflow *//*
+			int i = (int)l;
+
+			v = value_create_int(i);
+		}
+		else if (id == TYPE_LONG)
+		{
+			long l = PyLong_AsLong(result);
+
+			v = value_create_long(l);
+		}
+		else if (id == TYPE_FLOAT)
+		{
+			double d = PyFloat_AsDouble(result);
+
+			v = value_create_float((float)d);
+		}
+		else if (id == TYPE_DOUBLE)
+		{
+			double d = PyFloat_AsDouble(result);
+
+			v = value_create_double(d);
+		}
+		else if (id == TYPE_STRING)
+		{
+			char * str = NULL;
+
+			Py_ssize_t length = 0;
+
+			#if PY_MAJOR_VERSION == 2
+				if (PyString_AsStringAndSize(result, &str, &length) == -1)
+				{
+					if (PyErr_Occurred() != NULL)
+					{
+						loader_impl_node node_impl = loader_impl_get(node_func->impl);
+
+						node_loader_impl_error_print(node_impl);
+					}
+				}
+			#elif PY_MAJOR_VERSION == 3
+				str = PyUnicode_AsUTF8AndSize(result, &length);
+			#endif
+
+			v = value_create_string(str, (size_t)length);
+		}
+		else if (id == TYPE_PTR)
+		{
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
+		}
+
+		Py_DECREF(result);
+
+		PyGILState_Release(gstate);
+
+		return v;
+	}
+
+	PyGILState_Release(gstate);
+	*/
+
+	return NULL;
+}
+
+void function_node_interface_destroy(function func, function_impl impl)
+{
+	loader_impl_node_function node_func = (loader_impl_node_function)impl;
+
+	(void)func;
+
+	if (node_func != NULL)
+	{
+		/*
+		if (node_func->values != NULL)
+		{
+			(void)func;
+
+			free(node_func->values);
+		}
+
+		Py_DECREF(node_func->func);
+		*/
+
+		free(node_func);
+	}
+}
+
+function_interface function_node_singleton()
+{
+	static struct function_interface_type node_function_interface =
+	{
+		&function_node_interface_create,
+		&function_node_interface_invoke,
+		&function_node_interface_destroy
+	};
+
+	return &node_function_interface;
+}
 
 void node_loader_impl_async_initialize(uv_async_t * async)
 {
@@ -134,10 +430,10 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 	bool result = false;
 
-	napi_handle_scope scope;
+	napi_handle_scope handle_scope;
 
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &scope);
+	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
@@ -216,7 +512,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	}
 
 	/* Close scope */
-	status = napi_close_handle_scope(env, scope);
+	status = napi_close_handle_scope(env, handle_scope);
 
 	assert(status == napi_ok);
 
@@ -240,10 +536,10 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 	bool result = false;
 
-	napi_handle_scope scope;
+	napi_handle_scope handle_scope;
 
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &scope);
+	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
@@ -330,8 +626,8 @@ void node_loader_impl_async_discover(uv_async_t * async)
 			{
 				napi_value function_descriptor;
 				napi_value function_ptr;
-				napi_value function_signature;
-				uint32_t function_signature_length;
+				napi_value function_sig;
+				uint32_t function_sig_length;
 
 				/* Get function name */
 				status = napi_get_value_string_utf8(env, function_name, function_name_str, function_name_length + 1, &function_name_length);
@@ -349,48 +645,73 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				assert(status == napi_ok);
 
 				/* Get function signature */
-				status = napi_get_named_property(env, function_descriptor, "signature", &function_signature);
+				status = napi_get_named_property(env, function_descriptor, "signature", &function_sig);
 
 				assert(status == napi_ok);
 
 				/* Get signature length */
-				status = napi_get_array_length(env, function_signature, &function_signature_length);
+				status = napi_get_array_length(env, function_sig, &function_sig_length);
 
 				assert(status == napi_ok);
 
 				/* Create node function */
-				/*
-				loader_impl_node_function node_func = malloc(sizeof(struct loader_impl_py_function_type));
-				*/
+				loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
 
-				/* TODO: Check if function_ptr has to be persistent */
-				/*
 				node_func->func = function_ptr;
+
+				node_func->sig = function_sig;
 
 				node_func->node_impl = async_data->node_impl;
 
-				function f = function_create(function_name_str, (size_t)function_signature_length, node_func, &function_node_singleton);
-				*/
+				function f = function_create(function_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
 
-				/* TODO */
-				/*
-				if (node_loader_impl_discover_func(impl, value, f) == 0)
+				if (f != NULL)
 				{
-					scope sp = context_scope(ctx);
+					signature s = function_signature(f);
+					scope sp = context_scope(async_data->ctx);
+					size_t index;
 
-					scope_define(sp, func_name, f);
+					for (index = 0; index < function_sig_length; ++index)
+					{
+						napi_value parameter_name;
+						size_t parameter_name_length;
+						char * parameter_name_str = NULL;
+
+						/* Get signature parameter name */
+						status = napi_get_element(env, function_sig, index, &parameter_name);
+
+						assert(status == napi_ok);
+
+						/* Get parameter name string length */
+						status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+
+						assert(status == napi_ok);
+
+						if (parameter_name_length > 0)
+						{
+							parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+						}
+
+						/* Get parameter name string */
+						status = napi_get_value_string_utf8(env, parameter_name, parameter_name_str, parameter_name_length + 1, &parameter_name_length);
+
+						assert(status == napi_ok);
+
+						signature_set(s, index, parameter_name_str, NULL);
+					}
+
+					scope_define(sp, function_name_str, f);
 				}
 				else
 				{
-					function_destroy(f);
+					free(node_func);
 				}
-				*/
 			}
 		}
 	}
 
 	/* Close scope */
-	status = napi_close_handle_scope(env, scope);
+	status = napi_close_handle_scope(env, handle_scope);
 
 	assert(status == napi_ok);
 
