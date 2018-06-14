@@ -59,20 +59,32 @@ typedef struct loader_impl_node_type
 	uv_mutex_t mutex_load_from_file;
 	uv_mutex_t mutex_clear;
 	uv_mutex_t mutex_discover;
+	uv_mutex_t mutex_func_call;
+	uv_mutex_t mutex_func_destroy;
 
 	uv_cond_t cond_initialize;
 	uv_cond_t cond_load_from_file;
 	uv_cond_t cond_clear;
 	uv_cond_t cond_discover;
+	uv_cond_t cond_func_call;
+	uv_cond_t cond_func_destroy;
 
 	uv_async_t async_initialize;
 	uv_async_t async_load_from_file;
 	uv_async_t async_clear;
 	uv_async_t async_discover;
-	uv_async_t async_call;
+	uv_async_t async_func_call;
+	uv_async_t async_func_destroy;
 	uv_async_t async_destroy;
 
 } * loader_impl_node;
+
+typedef struct loader_impl_node_function_type
+{
+	loader_impl_node node_impl;
+	napi_ref func_ref;
+
+} * loader_impl_node_function;
 
 typedef struct loader_impl_async_load_from_file_type
 {
@@ -98,14 +110,22 @@ typedef struct loader_impl_async_discover_type
 
 } * loader_impl_async_discover;
 
-typedef struct loader_impl_node_function_type
+typedef struct loader_impl_async_func_call_type
 {
 	loader_impl_node node_impl;
-	/* TODO: Check if func and sig has to be persistent */
-	napi_value func;
-	napi_value sig;
+	function func;
+	loader_impl_node_function node_func;
+	void * args_ptr;
+	function_return ret;
 
-} * loader_impl_node_function;
+} * loader_impl_async_func_call;
+
+typedef struct loader_impl_async_func_destroy_type
+{
+	loader_impl_node node_impl;
+	loader_impl_node_function node_func;
+
+} * loader_impl_async_func_destroy;
 
 /* Function */
 int function_node_interface_create(function func, function_impl impl);
@@ -119,7 +139,9 @@ function_interface function_node_singleton(void);
 /* Async */
 void node_loader_impl_async_initialize(uv_async_t * async);
 
-void node_loader_impl_async_call(uv_async_t * async);
+void node_loader_impl_async_func_call(uv_async_t * async);
+
+void node_loader_impl_async_func_destroy(uv_async_t * async);
 
 void node_loader_impl_async_load_from_file(uv_async_t * async);
 
@@ -174,206 +196,35 @@ int function_node_interface_create(function func, function_impl impl)
 
 function_return function_node_interface_invoke(function func, function_impl impl, function_args args)
 {
-	(void)func;
-	(void)impl;
-	(void)args;
-	/*
 	loader_impl_node_function node_func = (loader_impl_node_function)impl;
 
-	signature s = function_signature(func);
-
-	const size_t args_size = signature_count(s);
-
-	type ret_type = signature_get_return(s);
-
-	PyObject * tuple_args = PyTuple_New(args_size);
-
-	PyObject * result = NULL;
-
-	size_t args_count;
-
-	PyGILState_STATE gstate = PyGILState_Ensure();
-
-	for (args_count = 0; args_count < args_size; ++args_count)
+	if (node_func != NULL)
 	{
-		type t = signature_get_type(s, args_count);
+		loader_impl_node node_impl = node_func->node_impl;
 
-		type_id id = TYPE_INVALID;
-
-		if (t == NULL)
+		struct loader_impl_async_func_call_type async_data =
 		{
-			id = value_type_id((value)args[args_count]);
-		}
-		else
-		{
-			id = type_index(t);
-		}
+			node_impl,
+			func,
+			node_func,
+			static_cast<void *>(args),
+			NULL
+		};
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Type (%p): %d", (void *)t, id);
+		node_impl->async_func_call.data = static_cast<void *>(&async_data);
 
-		if (id == TYPE_BOOL)
-		{
-			boolean * value_ptr = (boolean *)(args[args_count]);
+		/* Execute function call async callback */
+		uv_async_send(&node_impl->async_func_call);
 
-			long l = (*value_ptr == 0) ? 0L : 1L;
+		/* Wait until function is called */
+		uv_mutex_lock(&node_impl->mutex_func_call);
 
-			node_func->values[args_count] = PyBool_FromLong(l);
-		}
-		else if (id == TYPE_INT)
-		{
-			int * value_ptr = (int *)(args[args_count]);
+		uv_cond_wait(&node_impl->cond_func_call, &node_impl->mutex_func_call);
 
-			#if PY_MAJOR_VERSION == 2
-				node_func->values[args_count] = PyInt_FromLong(*value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				long l = (long)(*value_ptr);
+		uv_mutex_unlock(&node_impl->mutex_func_call);
 
-				node_func->values[args_count] = PyLong_FromLong(l);
-			#endif
-		}
-		else if (id == TYPE_LONG)
-		{
-			long * value_ptr = (long *)(args[args_count]);
-
-			node_func->values[args_count] = PyLong_FromLong(*value_ptr);
-		}
-		else if (id == TYPE_FLOAT)
-		{
-			float * value_ptr = (float *)(args[args_count]);
-
-			node_func->values[args_count] = PyFloat_FromDouble((double)*value_ptr);
-		}
-		else if (id == TYPE_DOUBLE)
-		{
-			double * value_ptr = (double *)(args[args_count]);
-
-			node_func->values[args_count] = PyFloat_FromDouble(*value_ptr);
-		}
-		else if (id == TYPE_STRING)
-		{
-			const char * value_ptr = (const char *)(args[args_count]);
-
-			#if PY_MAJOR_VERSION == 2
-				node_func->values[args_count] = PyString_FromString(value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				node_func->values[args_count] = PyUnicode_FromString(value_ptr);
-			#endif
-
-		}
-		else if (id == TYPE_PTR)
-		{
-		}
-
-		if (node_func->values[args_count] != NULL)
-		{
-			PyTuple_SetItem(tuple_args, args_count, node_func->values[args_count]);
-		}
+		return async_data.ret;
 	}
-
-	result = PyObject_CallObject(node_func->func, tuple_args);
-
-	if (PyErr_Occurred() != NULL)
-	{
-		loader_impl_node node_impl = loader_impl_get(node_func->impl);
-
-		node_loader_impl_error_print(node_impl);
-	}
-
-	Py_DECREF(tuple_args);
-
-	if (result != NULL)
-	{
-		value v = NULL;
-
-		type_id id = TYPE_INVALID;
-
-		if (ret_type == NULL)
-		{
-			id = node_loader_impl_get_return_type(result);
-		}
-		else
-		{
-			id = type_index(ret_type);
-		}
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
-
-		if (id == TYPE_BOOL)
-		{
-			boolean b = (PyObject_IsTrue(result) == 1) ? 1 : 0;
-
-			v = value_create_bool(b);
-		}
-		else if (id == TYPE_INT)
-		{
-			#if PY_MAJOR_VERSION == 2
-				long l = PyInt_AsLong(result);
-			#elif PY_MAJOR_VERSION == 3
-				long l = PyLong_AsLong(result);
-			#endif
-
-			*//* TODO: Review overflow *//*
-			int i = (int)l;
-
-			v = value_create_int(i);
-		}
-		else if (id == TYPE_LONG)
-		{
-			long l = PyLong_AsLong(result);
-
-			v = value_create_long(l);
-		}
-		else if (id == TYPE_FLOAT)
-		{
-			double d = PyFloat_AsDouble(result);
-
-			v = value_create_float((float)d);
-		}
-		else if (id == TYPE_DOUBLE)
-		{
-			double d = PyFloat_AsDouble(result);
-
-			v = value_create_double(d);
-		}
-		else if (id == TYPE_STRING)
-		{
-			char * str = NULL;
-
-			Py_ssize_t length = 0;
-
-			#if PY_MAJOR_VERSION == 2
-				if (PyString_AsStringAndSize(result, &str, &length) == -1)
-				{
-					if (PyErr_Occurred() != NULL)
-					{
-						loader_impl_node node_impl = loader_impl_get(node_func->impl);
-
-						node_loader_impl_error_print(node_impl);
-					}
-				}
-			#elif PY_MAJOR_VERSION == 3
-				str = PyUnicode_AsUTF8AndSize(result, &length);
-			#endif
-
-			v = value_create_string(str, (size_t)length);
-		}
-		else if (id == TYPE_PTR)
-		{
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
-		}
-
-		Py_DECREF(result);
-
-		PyGILState_Release(gstate);
-
-		return v;
-	}
-
-	PyGILState_Release(gstate);
-	*/
 
 	return NULL;
 }
@@ -386,16 +237,25 @@ void function_node_interface_destroy(function func, function_impl impl)
 
 	if (node_func != NULL)
 	{
-		/*
-		if (node_func->values != NULL)
+		loader_impl_node node_impl = node_func->node_impl;
+
+		struct loader_impl_async_func_destroy_type async_data =
 		{
-			(void)func;
+			node_impl,
+			node_func
+		};
 
-			free(node_func->values);
-		}
+		node_impl->async_func_destroy.data = static_cast<void *>(&async_data);
 
-		Py_DECREF(node_func->func);
-		*/
+		/* Execute function destroy async callback */
+		uv_async_send(&node_impl->async_func_destroy);
+
+		/* Wait until function is destroyed */
+		uv_mutex_lock(&node_impl->mutex_func_destroy);
+
+		uv_cond_wait(&node_impl->cond_func_destroy, &node_impl->mutex_func_destroy);
+
+		uv_mutex_unlock(&node_impl->mutex_func_destroy);
 
 		free(node_func);
 	}
@@ -427,12 +287,72 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	uv_mutex_unlock(&node_impl->mutex_initialize);
 }
 
-void node_loader_impl_async_call(uv_async_t * async)
+void node_loader_impl_async_func_call(uv_async_t * async)
 {
-	/* TODO: Parameter will be a reflect function type in the future */
-	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(async->data));
+	loader_impl_async_func_call async_data = static_cast<loader_impl_async_func_call>(async->data);
 
-	(void)node_impl;
+	napi_env env = async_data->node_impl->env;
+
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+
+	assert(status == napi_ok);
+
+
+	/* TODO */
+
+
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	assert(status == napi_ok);
+
+	/* Signal function call condition */
+	uv_mutex_lock(&async_data->node_impl->mutex_func_call);
+
+	uv_cond_signal(&async_data->node_impl->cond_func_call);
+
+	uv_mutex_unlock(&async_data->node_impl->mutex_func_call);
+}
+
+void node_loader_impl_async_func_destroy(uv_async_t * async)
+{
+	loader_impl_async_func_destroy async_data = static_cast<loader_impl_async_func_destroy>(async->data);
+
+	napi_env env = async_data->node_impl->env;
+
+	uint32_t ref_count = 0;
+
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+
+	assert(status == napi_ok);
+
+	/* Clear function persistent reference */
+	status = napi_reference_unref(env, async_data->node_func->func_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(env, async_data->node_func->func_ref);
+
+	assert(status == napi_ok);
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	assert(status == napi_ok);
+
+	/* Signal function destroy condition */
+	uv_mutex_lock(&async_data->node_impl->mutex_func_destroy);
+
+	uv_cond_signal(&async_data->node_impl->cond_func_destroy);
+
+	uv_mutex_unlock(&async_data->node_impl->mutex_func_destroy);
 }
 
 void node_loader_impl_async_load_from_file(uv_async_t * async)
@@ -793,12 +713,20 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				/* Create node function */
 				loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
 
-				node_func->func = function_ptr;
+				/* Create reference to function pointer */
+				uint32_t ref_count = 0;
 
-				node_func->sig = function_sig;
+				status = napi_create_reference(env, function_ptr, 0, &node_func->func_ref);
+
+				assert(status == napi_ok);
+
+				status = napi_reference_ref(env, node_func->func_ref, &ref_count);
+
+				assert(status == napi_ok && ref_count == 1);
 
 				node_func->node_impl = async_data->node_impl;
 
+				/* Create function */
 				function f = function_create(function_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
 
 				if (f != NULL)
@@ -979,8 +907,11 @@ void node_loader_impl_thread(void * data)
 	/* Initialize discover signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_discover, &node_loader_impl_async_discover);
 
-	/* Initialize call signal */
-	uv_async_init(node_impl->thread_loop, &node_impl->async_call, &node_loader_impl_async_call);
+	/* Initialize function call signal */
+	uv_async_init(node_impl->thread_loop, &node_impl->async_func_call, &node_loader_impl_async_func_call);
+
+	/* Initialize function destroy signal */
+	uv_async_init(node_impl->thread_loop, &node_impl->async_func_destroy, &node_loader_impl_async_func_destroy);
 
 	/* Initialize destroy signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
@@ -1030,6 +961,14 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_cond_init(&node_impl->cond_discover);
 
 	uv_mutex_init(&node_impl->mutex_discover);
+
+	uv_cond_init(&node_impl->cond_func_call);
+
+	uv_mutex_init(&node_impl->mutex_func_call);
+
+	uv_cond_init(&node_impl->cond_func_destroy);
+
+	uv_mutex_init(&node_impl->mutex_func_destroy);
 
 	/* Create NodeJS thread */
 	uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl);
@@ -1263,13 +1202,23 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	uv_cond_destroy(&node_impl->cond_discover);
 
+	uv_mutex_destroy(&node_impl->mutex_func_call);
+
+	uv_cond_destroy(&node_impl->cond_func_call);
+
+	uv_mutex_destroy(&node_impl->mutex_func_destroy);
+
+	uv_cond_destroy(&node_impl->cond_func_destroy);
+
 	node_impl->async_destroy.data = static_cast<void *>(&node_impl);
 
 	uv_async_send(&node_impl->async_destroy);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_destroy), NULL);
 
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_call), NULL);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_destroy), NULL);
+
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_call), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_discover), NULL);
 
