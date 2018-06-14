@@ -83,6 +83,13 @@ typedef struct loader_impl_async_load_from_file_type
 
 } * loader_impl_async_load_from_file;
 
+typedef struct loader_impl_async_clear_type
+{
+	loader_impl_node node_impl;
+	napi_ref handle_ref;
+
+} * loader_impl_async_clear;
+
 typedef struct loader_impl_async_discover_type
 {
 	loader_impl_node node_impl;
@@ -90,13 +97,6 @@ typedef struct loader_impl_async_discover_type
 	context ctx;
 
 } * loader_impl_async_discover;
-
-typedef struct loader_impl_async_clear_type
-{
-	loader_impl_node node_impl;
-	napi_ref handle_ref;
-
-} * loader_impl_async_clear;
 
 typedef struct loader_impl_node_function_type
 {
