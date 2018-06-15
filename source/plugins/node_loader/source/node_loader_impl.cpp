@@ -267,10 +267,151 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	uv_mutex_unlock(&node_impl->mutex_initialize);
 }
 
-napi_value node_loader_impl_value(void * arg)
+napi_value node_loader_impl_value(loader_impl_node_function node_func, napi_env env, void * arg)
 {
-	(void)arg;
-	return NULL;
+	value arg_value = static_cast<value>(arg);
+
+	type_id id = value_type_id(arg_value);
+
+	napi_status status;
+
+	napi_value v;
+
+	if (id == TYPE_BOOL)
+	{
+		boolean bool_value = value_to_bool(arg_value);
+
+		status = napi_get_boolean(env, (bool_value == 0) ? false : true, &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_CHAR)
+	{
+		char char_value = value_to_char(arg_value);
+
+		status = napi_create_int32(env, static_cast<int32_t>(char_value), &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_SHORT)
+	{
+		short short_value = value_to_short(arg_value);
+
+		status = napi_create_int32(env, static_cast<int32_t>(short_value), &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_INT)
+	{
+		int int_value = value_to_int(arg_value);
+
+		/* TODO: Check integer overflow */
+		status = napi_create_int32(env, static_cast<int32_t>(int_value), &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_LONG)
+	{
+		long long_value = value_to_long(arg_value);
+
+		/* TODO: Check integer overflow */
+		status = napi_create_int64(env, static_cast<int64_t>(long_value), &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_FLOAT)
+	{
+		float float_value = value_to_float(arg_value);
+
+		status = napi_create_double(env, static_cast<double>(float_value), &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_DOUBLE)
+	{
+		double double_value = value_to_double(arg_value);
+
+		status = napi_create_double(env, double_value, &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_STRING)
+	{
+		const char * str_value = value_to_string(arg_value);
+
+		size_t length = value_type_size(arg_value) - 1;
+
+		status = napi_create_string_utf8(env, str_value, length, &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_BUFFER)
+	{
+		void * buff_value = value_to_buffer(arg_value);
+
+		size_t size = value_type_size(arg_value);
+
+		status = napi_create_buffer(env, size, &buff_value, &v);
+
+		assert(status == napi_ok);
+	}
+	else if (id == TYPE_ARRAY)
+	{
+		value * array_value = value_to_array(arg_value);
+
+		size_t iterator, array_size = value_type_size(arg_value) / sizeof(const value);
+
+		status = napi_create_array_with_length(env, array_size, &v);
+
+		assert(status == napi_ok);
+
+		for (iterator = 0; iterator < array_size; ++iterator)
+		{
+			napi_value element_v = node_loader_impl_value(node_func, env, static_cast<void *>(array_value[iterator]));
+
+			status = napi_set_element(env, v, iterator, element_v);
+
+			assert(status == napi_ok);
+		}
+	}
+	else if (id == TYPE_MAP)
+	{
+		value * map_value = value_to_map(arg_value);
+
+		size_t iterator, map_size = value_type_size(arg_value) / sizeof(const value);
+
+		status = napi_create_object(env, &v);
+
+		assert(status == napi_ok);
+
+		for (iterator = 0; iterator < map_size; ++iterator)
+		{
+			value * pair_value = value_to_array(map_value[iterator]);
+
+			const char * key = value_to_string(pair_value[0]);
+
+			napi_value element_v = node_loader_impl_value(node_func, env, static_cast<void *>(pair_value[1]));
+
+			status = napi_set_named_property(env, v, key, element_v);
+
+			assert(status == napi_ok);
+		}
+	}
+	/* TODO */
+	/*
+	else if (id == TYPE_PTR)
+	{
+
+	}
+	*/
+	else
+	{
+		status = napi_get_undefined(env, &v);
+
+		assert(status == napi_ok);
+	}
+
+	return v;
 }
 
 function_return node_loader_impl_return(napi_value v)
@@ -298,7 +439,7 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	size_t args_count;
 
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	assert(status == napi_ok);
 
@@ -306,7 +447,7 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		/* Define parameter */
-		node_func->argv[args_count] = node_loader_impl_value(args[args_count]);
+		node_func->argv[args_count] = node_loader_impl_value(node_func, env, args[args_count]);
 	}
 
 	/* Get function reference */
@@ -354,7 +495,7 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 	napi_handle_scope handle_scope;
 
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	assert(status == napi_ok);
 
