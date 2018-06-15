@@ -310,7 +310,7 @@ TEST_F(metacall_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_PLUGINS_MOCK */
 
-	/* C# Netcore */
+	/* C# NetCore */
 	#if defined(OPTION_BUILD_PLUGINS_CS)
 	{
 		const char * cs_scripts[] =
@@ -335,6 +335,33 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 	}
 	#endif /* OPTION_BUILD_PLUGINS_C */
+
+	/* NodeJS */
+	#if defined(OPTION_BUILD_PLUGINS_NODE)
+	{
+		const char * node_scripts[] =
+		{
+			"nod.js"
+		};
+
+		const enum metacall_value_id hello_boy_double_ids[] =
+		{
+			METACALL_DOUBLE, METACALL_DOUBLE
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+
+		ret = metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_PLUGINS_NODE */
 
 	/* Print inspect information */
 	{

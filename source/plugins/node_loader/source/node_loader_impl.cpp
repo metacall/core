@@ -38,10 +38,6 @@
 #include <node.h>
 #include <node_api.h>
 
-#ifndef NODE_LOADER_PROCESS_TITLE
-#	define NODE_LOADER_PROCESS_TITLE "node-loader-testd"
-#endif /* NODE_LOADER_PROCESS_TITLE */
-
 #ifndef container_of
 #	define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
 #endif
@@ -1231,13 +1227,13 @@ void node_loader_impl_thread(void * data)
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
 
 	/* TODO: Do a workaround with app title and argv_str (must be contigously allocated) */
-	char argv_str[31 + 16 + 16 + 1] = "node-loader-testd\0bootstrap.js";
+	char argv_str[15 + 13 + 16 + 16 + 1] = "metacall-testd\0bootstrap.js";
 
-	snprintf(&argv_str[31], 16 + 1, "%p", (void *)node_impl);
+	snprintf(&argv_str[15 + 13], 16 + 1, "%p", (void *)node_impl);
 
-	snprintf(&argv_str[46], 16 + 1, "%p", (void *)&node_loader_impl_register);
+	snprintf(&argv_str[15 + 13 + 15], 16 + 1, "%p", (void *)&node_loader_impl_register);
 
-	char * argv[] = { &argv_str[0], &argv_str[18], &argv_str[31], &argv_str[46], NULL };
+	char * argv[] = { &argv_str[0], &argv_str[15], &argv_str[15 + 13], &argv_str[15 + 13 + 15], NULL };
 
 	int argc = 4;
 
