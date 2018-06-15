@@ -267,7 +267,7 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	uv_mutex_unlock(&node_impl->mutex_initialize);
 }
 
-napi_value node_loader_impl_value(loader_impl_node_function node_func, napi_env env, void * arg)
+napi_value node_loader_impl_value(napi_env env, void * arg)
 {
 	value arg_value = static_cast<value>(arg);
 
@@ -367,7 +367,8 @@ napi_value node_loader_impl_value(loader_impl_node_function node_func, napi_env 
 
 		for (iterator = 0; iterator < array_size; ++iterator)
 		{
-			napi_value element_v = node_loader_impl_value(node_func, env, static_cast<void *>(array_value[iterator]));
+			/* TODO: Review recursion overflow */
+			napi_value element_v = node_loader_impl_value(env, static_cast<void *>(array_value[iterator]));
 
 			status = napi_set_element(env, v, iterator, element_v);
 
@@ -390,7 +391,8 @@ napi_value node_loader_impl_value(loader_impl_node_function node_func, napi_env 
 
 			const char * key = value_to_string(pair_value[0]);
 
-			napi_value element_v = node_loader_impl_value(node_func, env, static_cast<void *>(pair_value[1]));
+			/* TODO: Review recursion overflow */
+			napi_value element_v = node_loader_impl_value(env, static_cast<void *>(pair_value[1]));
 
 			status = napi_set_named_property(env, v, key, element_v);
 
@@ -414,10 +416,190 @@ napi_value node_loader_impl_value(loader_impl_node_function node_func, napi_env 
 	return v;
 }
 
-function_return node_loader_impl_return(napi_value v)
+function_return node_loader_impl_return(napi_env env, napi_value v)
 {
-	(void)v;
-	return NULL;
+	value ret = NULL;
+
+	napi_valuetype valuetype;
+
+	napi_status status = napi_typeof(env, v, &valuetype);
+
+	assert(status == napi_ok);
+
+	if (valuetype == napi_undefined)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_null)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_boolean)
+	{
+		bool b;
+
+		status = napi_get_value_bool(env, v, &b);
+
+		assert(status == napi_ok);
+
+		ret = value_create_bool((b == true) ? static_cast<boolean>(1) : static_cast<boolean>(0));
+	}
+	else if (valuetype == napi_number)
+	{
+		double d;
+
+		status = napi_get_value_double(env, v, &d);
+
+		assert(status == napi_ok);
+
+		ret = value_create_double(d);
+	}
+	else if (valuetype == napi_string)
+	{
+		size_t length;
+
+		status = napi_get_value_string_utf8(env, v, NULL, 0, &length);
+
+		assert(status == napi_ok);
+
+		ret = value_create_string(NULL, length);
+
+		if (ret != NULL)
+		{
+			char * str = value_to_string(ret);
+
+			status = napi_get_value_string_utf8(env, v, str, length + 1, &length);
+
+			assert(status == napi_ok);
+		}
+	}
+	else if (valuetype == napi_symbol)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_object)
+	{
+		bool result = false;
+
+		if (napi_is_array(env, v, &result) == napi_ok && result == true)
+		{
+			uint32_t iterator, length = 0;
+
+			value * array_value;
+
+			status = napi_get_array_length(env, v, &length);
+
+			assert(status == napi_ok);
+
+			ret = value_create_array(NULL, static_cast<size_t>(length));
+
+			array_value = value_to_array(ret);
+
+			for (iterator = 0; iterator < length; ++iterator)
+			{
+				napi_value element;
+
+				status = napi_get_element(env, v, iterator, &element);
+
+				assert(status == napi_ok);
+
+				/* TODO: Review recursion overflow */
+				array_value[iterator] = node_loader_impl_return(env, element);
+			}
+		}
+		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_typedarray(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_dataview(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else
+		{
+			/* TODO: Strict check if it is an object (map) */
+			uint32_t iterator, length = 0;
+
+			napi_value keys;
+
+			value * map_value;
+
+			status = napi_get_property_names(env, v, &keys);
+
+			assert(status == napi_ok);
+
+			status = napi_get_array_length(env, keys, &length);
+
+			assert(status == napi_ok);
+
+			ret = value_create_map(NULL, static_cast<size_t>(length));
+
+			map_value = value_to_map(ret);
+
+			for (iterator = 0; iterator < length; ++iterator)
+			{
+				napi_value key;
+
+				size_t key_length;
+
+				value * tupla;
+
+				/* Create tupla */
+				map_value[iterator] = value_create_array(NULL, 2);
+
+				tupla = value_to_array(map_value[iterator]);
+
+				/* Get key from object */
+				status = napi_get_element(env, keys, iterator, &key);
+
+				assert(status == napi_ok);
+
+				/* Set key string in the tupla */
+				status = napi_get_value_string_utf8(env, key, NULL, 0, &key_length);
+
+				assert(status == napi_ok);
+
+				tupla[0] = value_create_string(NULL, key_length);
+
+				if (tupla[0] != NULL)
+				{
+					napi_value element;
+
+					char * str = value_to_string(tupla[0]);
+
+					status = napi_get_value_string_utf8(env, key, str, key_length + 1, &key_length);
+
+					assert(status == napi_ok);
+
+					status = napi_get_property(env, v, key, &element);
+
+					assert(status == napi_ok);
+
+					/* TODO: Review recursion overflow */
+					tupla[1] = node_loader_impl_return(env, element);
+				}
+			}
+
+		}
+	}
+	else if (valuetype == napi_function)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_external)
+	{
+		/* TODO */
+	}
+
+	return static_cast<function_return>(ret);
 }
 
 void node_loader_impl_async_func_call(uv_async_t * async)
@@ -447,7 +629,7 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		/* Define parameter */
-		node_func->argv[args_count] = node_loader_impl_value(node_func, env, args[args_count]);
+		node_func->argv[args_count] = node_loader_impl_value(env, args[args_count]);
 	}
 
 	/* Get function reference */
@@ -469,7 +651,7 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Convert function return to value */
-	async_data->ret = node_loader_impl_return(func_return);
+	async_data->ret = node_loader_impl_return(env, func_return);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
