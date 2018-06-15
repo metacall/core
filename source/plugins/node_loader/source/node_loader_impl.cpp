@@ -83,6 +83,7 @@ typedef struct loader_impl_node_function_type
 {
 	loader_impl_node node_impl;
 	napi_ref func_ref;
+	napi_value * argv;
 
 } * loader_impl_node_function;
 
@@ -115,7 +116,7 @@ typedef struct loader_impl_async_func_call_type
 	loader_impl_node node_impl;
 	function func;
 	loader_impl_node_function node_func;
-	void * args_ptr;
+	void ** args;
 	function_return ret;
 
 } * loader_impl_async_func_call;
@@ -160,38 +161,15 @@ void node_loader_impl_async_destroy(uv_async_t * async);
 
 int function_node_interface_create(function func, function_impl impl)
 {
-	(void)func;
-	(void)impl;
-	/*
 	loader_impl_node_function node_func = (loader_impl_node_function)impl;
 
 	signature s = function_signature(func);
 
 	const size_t args_size = signature_count(s);
 
-	if (args_size > 0)
-	{
-		node_func->values = malloc(sizeof(PyObject *) * args_size);
+	node_func->argv = static_cast<napi_value *>(malloc(sizeof(napi_value) * args_size));
 
-		if (node_func->values != NULL)
-		{
-			size_t iterator;
-
-			for (iterator = 0; iterator < args_size; ++iterator)
-			{
-				node_func->values[iterator] = NULL;
-			}
-
-			return 0;
-		}
-
-		return 1;
-	}
-
-	node_func->values = NULL;
-	*/
-
-	return 0;
+	return (node_func->argv == NULL);
 }
 
 function_return function_node_interface_invoke(function func, function_impl impl, function_args args)
@@ -207,7 +185,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 			node_impl,
 			func,
 			node_func,
-			static_cast<void *>(args),
+			static_cast<void **>(args),
 			NULL
 		};
 
@@ -257,6 +235,8 @@ void function_node_interface_destroy(function func, function_impl impl)
 
 		uv_mutex_unlock(&node_impl->mutex_func_destroy);
 
+		free(node_func->argv);
+
 		free(node_func);
 	}
 }
@@ -287,6 +267,18 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	uv_mutex_unlock(&node_impl->mutex_initialize);
 }
 
+napi_value node_loader_impl_value(void * arg)
+{
+	(void)arg;
+	return NULL;
+}
+
+function_return node_loader_impl_return(napi_value v)
+{
+	(void)v;
+	return NULL;
+}
+
 void node_loader_impl_async_func_call(uv_async_t * async)
 {
 	loader_impl_async_func_call async_data = static_cast<loader_impl_async_func_call>(async->data);
@@ -295,15 +287,48 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
+	signature s = function_signature(async_data->func);
+
+	const size_t args_size = signature_count(s);
+
+	void ** args = static_cast<void **>(async_data->args);
+
+	loader_impl_node_function node_func = async_data->node_func;
+
+	size_t args_count;
+
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
 
 	assert(status == napi_ok);
 
+	/* Build parameters */
+	for (args_count = 0; args_count < args_size; ++args_count)
+	{
+		/* Define parameter */
+		node_func->argv[args_count] = node_loader_impl_value(args[args_count]);
+	}
 
-	/* TODO */
+	/* Get function reference */
+	napi_value function_ptr;
 
+	status = napi_get_reference_value(env, node_func->func_ref, &function_ptr);
 
+	assert(status == napi_ok);
+
+	/* Call to function */
+	napi_value global, func_return;
+
+	status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
+
+	assert(status == napi_ok);
+
+	status = napi_call_function(env, global, function_ptr, args_size, node_func->argv, &func_return);
+
+	assert(status == napi_ok);
+
+	/* Convert function return to value */
+	async_data->ret = node_loader_impl_return(func_return);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
