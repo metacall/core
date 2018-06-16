@@ -26,10 +26,9 @@ typedef char directory_descriptor_path_str[DIRECTORY_DESCRIPTOR_PATH_SIZE];
 
 struct directory_descriptor_type
 {
-	directory_descriptor		parent;		/**< Pointer to parent directory */
-	directory_descriptor_path_str	path;		/**< Path of current descriptor */
-	vector				files;		/**< String vector of files contained in current directory */
-
+	directory_descriptor parent;		/**< Pointer to parent directory */
+	directory_descriptor_path_str path;	/**< Path of current descriptor */
+	vector files;						/**< String vector of files contained in current directory */
 };
 
 /* -- Methods -- */
@@ -78,7 +77,7 @@ const char * directory_descriptor_path(directory_descriptor d)
 		return d->path;
 	}
 
-	return "invalid_path";
+	return NULL;
 }
 
 vector directory_descriptor_files(directory_descriptor d)

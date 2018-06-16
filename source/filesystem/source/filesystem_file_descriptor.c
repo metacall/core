@@ -22,10 +22,9 @@ typedef char file_descriptor_extension_str[FILE_DESCRIPTOR_EXTENSION_SIZE];
 
 struct file_descriptor_type
 {
-	directory_descriptor		owner;				/**< Directory descriptor which file belongs to */
-	file_descriptor_name_str	name;				/**< File name string */
-	file_descriptor_extension_str	extension;		/**< File extension string */
-
+	directory_descriptor owner;					/**< Directory descriptor which file belongs to */
+	file_descriptor_name_str name;				/**< File name string */
+	file_descriptor_extension_str extension;	/**< File extension string */
 };
 
 /* -- Methods -- */
@@ -65,7 +64,7 @@ const char * file_descriptor_name(file_descriptor f)
 		return f->name;
 	}
 
-	return "invalid_name";
+	return NULL;
 }
 
 const char * file_descriptor_extension(file_descriptor f)
@@ -75,7 +74,7 @@ const char * file_descriptor_extension(file_descriptor f)
 		return f->extension;
 	}
 
-	return "invalid_extension";
+	return NULL;
 }
 
 void file_descriptor_destroy(file_descriptor f)

@@ -12,6 +12,7 @@ set(LOADER_MODULE_NAMES
 	log
 	memory
 	adt
+	filesystem
 	reflect
 	dynlink
 	serial

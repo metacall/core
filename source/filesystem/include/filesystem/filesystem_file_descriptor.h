@@ -21,7 +21,7 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define FILE_DESCRIPTOR_NAME_SIZE		0x0100
+#define FILE_DESCRIPTOR_NAME_SIZE			0x0100
 #define FILE_DESCRIPTOR_EXTENSION_SIZE		0x0012
 
 /* -- Forward Declarations -- */
