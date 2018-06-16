@@ -22,13 +22,13 @@ set(LOADER_MODULE_NAMES
 # Plugins options
 option(OPTION_BUILD_PLUGINS_C "Build C Foreign Function Interface library plugin." OFF)
 option(OPTION_BUILD_PLUGINS_CS "Build C# CoreCLR 1.0.1 Runtime plugin." OFF)
+option(OPTION_BUILD_PLUGINS_FILE "Build File System plugin." OFF)
 option(OPTION_BUILD_PLUGINS_JSM "Build JavaScript SpiderMonkey 4.8 plugin." OFF)
 option(OPTION_BUILD_PLUGINS_JS "Build JavaScript V8 5.1+ plugin." OFF)
-option(OPTION_BUILD_PLUGINS_NODE "Build NodeJS 8.11.1 JavaScript Runtime plugin." OFF)
 option(OPTION_BUILD_PLUGINS_MOCK "Build mock loader plugin." ON)
+option(OPTION_BUILD_PLUGINS_NODE "Build NodeJS 8.11.1 JavaScript Runtime plugin." OFF)
 option(OPTION_BUILD_PLUGINS_PY "Build Python 3.5 C API plugin." OFF)
 option(OPTION_BUILD_PLUGINS_RB "Build Ruby 2.3 C API plugin." OFF)
-option(OPTION_BUILD_PLUGINS_FILE "Build File System plugin." OFF)
 
 # Plugin packages
 add_subdirectory(c_loader) # Foreign Function Interface library
