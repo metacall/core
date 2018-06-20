@@ -15,7 +15,7 @@
 int main(int argc, char * argv[])
 {
 	const char python_script[] =
-		"#!/usr/bin/python3.4\n"
+		"#!/usr/bin/python3.5\n"
 		"\n"
 		"import _py_portd as metacall\n"
 		"\n"

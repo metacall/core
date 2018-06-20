@@ -34,7 +34,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_PLUGINS_PY)
 	{
 		static const char buffer[] =
-			"#!/usr/bin/python3.4\n"
+			"#!/usr/bin/python3.5\n"
 			"def multmem(left: int, right: int) -> int:\n"
 			"\tresult = left * right;\n"
 			"\tprint(left, ' * ', right, ' = ', result);\n"

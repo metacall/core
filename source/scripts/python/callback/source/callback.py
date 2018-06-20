@@ -1,4 +1,4 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3.5
 
 from callback_metacall import callback_host, callback_ruby
 

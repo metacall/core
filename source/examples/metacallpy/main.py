@@ -1,4 +1,4 @@
-#!/usr/bin/python3.4
+#!/usr/bin/python3.5
 
 from metacall import metacall_initialize, metacall_load, metacall, metacall_destroy
 
