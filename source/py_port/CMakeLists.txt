@@ -14,7 +14,7 @@ if(NOT PYTHONLIBS_FOUND)
 	return()
 endif()
 
-set(Python_ADDITIONAL_VERSIONS 3.4)
+set(Python_ADDITIONAL_VERSIONS 3.5)
 
 find_package(PythonInterp REQUIRED)
 
