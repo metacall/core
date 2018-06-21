@@ -1002,6 +1002,8 @@ void loader_impl_destroy(loader_impl impl)
 {
 	if (impl != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", impl->tag);
+
 		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
 
 		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
