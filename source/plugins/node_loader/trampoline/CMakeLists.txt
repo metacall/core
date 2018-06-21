@@ -45,9 +45,8 @@ set_target_properties(${target}
 # Deployment
 #
 
-# Library (TODO)
-#install(FILES
-#	${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node
-#	${CMAKE_CURRENT_BINARY_DIR}/node_modules
-#	DESTINATION ${INSTALL_LIB}
-#)
+# Library
+install(FILES
+	${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node
+	DESTINATION ${INSTALL_LIB}
+)

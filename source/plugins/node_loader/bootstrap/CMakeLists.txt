@@ -36,8 +36,8 @@ set_target_properties(${target}
 # Deployment
 #
 
-# Library (TODO)
-#install(FILES
-#	${CMAKE_BINARY_DIR}/bootstrap.js
-#	DESTINATION ${INSTALL_LIB}
-#)
+# Library
+install(FILES
+	${CMAKE_BINARY_DIR}/bootstrap.js
+	DESTINATION ${INSTALL_LIB}
+)
