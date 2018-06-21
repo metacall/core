@@ -412,8 +412,8 @@ void vector_insert(vector v, size_t position, void * element)
 
 		if (position < v->size)
 		{
-			memmove(vector_data_offset_bytes(v, position * v->type_size),
-				vector_data_offset_bytes(v, (position + 1) * v->type_size),
+			memmove(vector_data_offset_bytes(v, (position + 1) * v->type_size),
+				vector_data_offset_bytes(v, position * v->type_size),
 				(v->size - position) * v->type_size);
 
 			memcpy(vector_data_offset_bytes(v, position * v->type_size), element, v->type_size);
