@@ -1226,16 +1226,135 @@ void node_loader_impl_thread(void * data)
 {
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
 
-	/* TODO: Do a workaround with app title and argv_str (must be contigously allocated) */
-	char argv_str[15 + 13 + 16 + 16 + 1] = "metacall-testd\0bootstrap.js";
+	/* TODO: Reimplement from here to ... */
 
-	snprintf(&argv_str[15 + 13], 16 + 1, "%p", (void *)node_impl);
+	/* TODO: Make this trick more portable... */
+	char exe_path_str[PATH_MAX];
+	size_t exe_path_str_size, exe_path_str_offset = 0;
 
-	snprintf(&argv_str[15 + 13 + 15], 16 + 1, "%p", (void *)&node_loader_impl_register);
+	ssize_t length = readlink("/proc/self/exe", exe_path_str, PATH_MAX);
 
-	char * argv[] = { &argv_str[0], &argv_str[15], &argv_str[15 + 13], &argv_str[15 + 13 + 15], NULL };
+	size_t iterator;
+
+	if (length == -1 || length == PATH_MAX)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str);
+		return;
+	}
+
+	for (iterator = 0; iterator <= (size_t)length; ++iterator)
+	{
+		if (exe_path_str[iterator] == '/')
+		{
+			exe_path_str_offset = iterator + 1;
+		}
+	}
+
+	exe_path_str_size = (size_t)length - exe_path_str_offset + 1;
+
+	/* Get the boostrap path */
+	const char bootstrap_file_str[] = "bootstrap.js";
+
+	char bootstrap_path_str[PATH_MAX];
+	size_t bootstrap_path_str_size;
+
+	const char * load_library_path_env = getenv("LOADER_LIBRARY_PATH");
+	size_t load_library_path_length;
+
+	if (load_library_path_env == NULL)
+	{
+		return;
+	}
+
+	load_library_path_length = strlen(load_library_path_env);
+
+	strncpy(bootstrap_path_str, load_library_path_env, load_library_path_length);
+
+	bootstrap_path_str[load_library_path_length] = '/';
+
+	++load_library_path_length;
+
+	strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_file_str, sizeof(bootstrap_file_str) - 1);
+
+	bootstrap_path_str_size = load_library_path_length + sizeof(bootstrap_file_str);
+
+	/* Get node impl pointer */
+	char * node_impl_ptr_str;
+	size_t node_impl_ptr_str_size;
+
+	ssize_t node_impl_ptr_length = snprintf(NULL, 0, "%p", (void *)node_impl);
+
+	if (node_impl_ptr_length <= 0)
+	{
+		return;
+	}
+
+	node_impl_ptr_str_size = (size_t)node_impl_ptr_length + 1;
+
+	node_impl_ptr_str = static_cast<char *>(malloc(sizeof(char) * node_impl_ptr_str_size));
+
+	if (node_impl_ptr_str == NULL)
+	{
+		return;
+	}
+
+	snprintf(node_impl_ptr_str, node_impl_ptr_str_size, "%p", (void *)node_impl);
+
+	/* Get register pointer */
+	char * register_ptr_str;
+	size_t register_ptr_str_size;
+
+	ssize_t register_ptr_length = snprintf(NULL, 0, "%p", (void *)&node_loader_impl_register);
+
+	if (register_ptr_length <= 0)
+	{
+		return;
+	}
+
+	register_ptr_str_size = (size_t)register_ptr_length + 1;
+
+	register_ptr_str = static_cast<char *>(malloc(sizeof(char) * register_ptr_str_size));
+
+	if (register_ptr_str == NULL)
+	{
+		free(node_impl_ptr_str);
+		return;
+	}
+
+	snprintf(register_ptr_str, register_ptr_str_size, "%p", (void *)&node_loader_impl_register);
+
+	/* Define argv_str contigously allocated with: executable name, bootstrap file, node impl pointer and register pointer */
+	size_t argv_str_size = exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size + register_ptr_str_size;
+	char * argv_str = static_cast<char *>(malloc(sizeof(char) * argv_str_size));
+
+	if (argv_str == NULL)
+	{
+		free(node_impl_ptr_str);
+		free(register_ptr_str);
+		return;
+	}
+
+	memcpy(&argv_str[0], &exe_path_str[exe_path_str_offset], exe_path_str_size);
+	memcpy(&argv_str[exe_path_str_size], bootstrap_path_str, bootstrap_path_str_size);
+	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size], node_impl_ptr_str, node_impl_ptr_str_size);
+	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size + register_ptr_str_size], register_ptr_str, register_ptr_str_size);
+
+	free(node_impl_ptr_str);
+	free(register_ptr_str);
+
+	/* Define argv */
+	char * argv[] =
+	{
+		&argv_str[0],
+		&argv_str[exe_path_str_size],
+		&argv_str[exe_path_str_size + bootstrap_path_str_size],
+		&argv_str[exe_path_str_size + bootstrap_path_str_size + register_ptr_str_size],
+		NULL
+	};
 
 	int argc = 4;
+
+	/* TODO: ... reimplement until here */
 
 	node_impl->thread_loop = uv_default_loop();
 
