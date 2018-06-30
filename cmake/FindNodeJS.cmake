@@ -98,19 +98,15 @@ find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
 	DOC "NodeJS JavaScript Runtime Headers"
 )
 
-if(NODEJS_INCLUDE_DIR AND NODEJS_UV_INCLUDE_DIR)
-	set(NODEJS_INCLUDE_DIR ${NODEJS_INCLUDE_DIR} ${NODEJS_UV_INCLUDE_DIR})
-endif()
-
 # Find NodeJS executable
 find_program(NODEJS_EXECUTABLE
-	NAMES node nodejs
+	NAMES node nodejs node.exe
 	HINTS ${NODEJS_PATHS}
 	PATH_SUFFIXES bin
 	DOC "NodeJS JavaScript Runtime Interpreter"
 )
 
-if (NODEJS_EXECUTABLE)
+if(NODEJS_EXECUTABLE)
 	# Detect NodeJS version
 	execute_process(COMMAND ${NODEJS_EXECUTABLE} --version
 		OUTPUT_VARIABLE NODEJS_VERSION_TAG
@@ -188,14 +184,21 @@ set(NODEJS_LIBRARY_NAMES
 	libnode.so.${NODEJS_MODULE_VERSION}
 	libnode.${NODEJS_MODULE_VERSION}.dylib
 	libnode.${NODEJS_MODULE_VERSION}.dll
+	node.lib
 )
 
 # NodeJS download and output path (workaround to compile node as a shared library)
 set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}.tar.gz")
 set(NODEJS_DOWNLOAD_FILE "${CMAKE_BINARY_DIR}/node-v${NODEJS_VERSION}.tar.gz")
 set(NODEJS_OUTPUT_PATH "${CMAKE_BINARY_DIR}/node-v${NODEJS_VERSION}")
-set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
-set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}/lib.target")
+
+if(WIN32)
+	set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
+	set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}")
+else()
+	set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
+	set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}/lib.target")
+endif()
 
 # Download node if needed
 if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
@@ -211,24 +214,50 @@ endif()
 
 # Compile node as a shared library if needed
 if(NOT EXISTS "${NODEJS_COMPILE_PATH}")
-	message(STATUS "Configure NodeJS shared library")
+	if(WIN32)
+		message(STATUS "Build NodeJS shared library")
 
-	if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
-		execute_process(COMMAND sh ./configure --shared --debug WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
+			set(NODEJS_COMPILE_ARCH "x86")
+		else()
+			set(NODEJS_COMPILE_ARCH "x64")
+		endif()
+
+		# Check vs2017 or vs2015
+		if(MSVC_VERSION EQUAL 1900)
+			set(NODEJS_MSVC_VER vs2015)
+		elseif(MSVC_VERSION GREATER 1900)
+			set(NODEJS_MSVC_VER vs2017)
+		endif()
+
+		if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
+			execute_process(COMMAND vcbuild.bat dll debug ${NODEJS_COMPILE_ARCH} ${NODEJS_MSVC_VER} WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		else()
+			execute_process(COMMAND vcbuild.bat dll release ${NODEJS_COMPILE_ARCH} ${NODEJS_MSVC_VER} WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		endif()
+
+		# Copy library to MetaCall output path
+		file(COPY ${NODEJS_OUTPUT_PATH}/node.dll DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll)
 	else()
-		execute_process(COMMAND sh ./configure --shared WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
-	endif()
+		message(STATUS "Configure NodeJS shared library")
 
-	message(STATUS "Build NodeJS shared library")
+		if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
+			execute_process(COMMAND sh ./configure --shared --debug WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		else()
+			execute_process(COMMAND sh ./configure --shared WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		endif()
 
-	include(ProcessorCount)
+		message(STATUS "Build NodeJS shared library")
 
-	ProcessorCount(N)
+		include(ProcessorCount)
 
-	if(NOT N EQUAL 0)
-		execute_process(COMMAND make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1 WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
-	else()
-		execute_process(COMMAND make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1 WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		ProcessorCount(N)
+
+		if(NOT N EQUAL 0)
+			execute_process(COMMAND make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1 WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		else()
+			execute_process(COMMAND make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1 WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+		endif()
 	endif()
 endif()
 

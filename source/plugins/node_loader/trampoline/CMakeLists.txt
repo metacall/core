@@ -28,7 +28,7 @@ add_custom_target(${target} ALL
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND npm install
 	COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} --ensure rebuild
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node ${CMAKE_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node ${LOADER_LIBRARY_PATH}
 )
 
 #
@@ -47,6 +47,6 @@ set_target_properties(${target}
 
 # Library
 install(FILES
-	${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node
+	${LOADER_LIBRARY_PATH}/trampoline.node
 	DESTINATION ${INSTALL_LIB}
 )

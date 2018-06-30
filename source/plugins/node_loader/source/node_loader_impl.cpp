@@ -6,6 +6,13 @@
  *
  */
 
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+#	define WIN32_LEAN_AND_MEAN
+#	include <windows.h>
+#endif
+
 #include <node_loader/node_loader_impl.h>
 
 #include <loader/loader_impl.h>
@@ -57,6 +64,7 @@ typedef struct loader_impl_node_type
 	uv_mutex_t mutex_discover;
 	uv_mutex_t mutex_func_call;
 	uv_mutex_t mutex_func_destroy;
+	uv_mutex_t mutex_destroy;
 
 	uv_cond_t cond_initialize;
 	uv_cond_t cond_load_from_file;
@@ -64,6 +72,7 @@ typedef struct loader_impl_node_type
 	uv_cond_t cond_discover;
 	uv_cond_t cond_func_call;
 	uv_cond_t cond_func_destroy;
+	uv_cond_t cond_destroy;
 
 	uv_async_t async_initialize;
 	uv_async_t async_load_from_file;
@@ -355,7 +364,9 @@ napi_value node_loader_impl_value(napi_env env, void * arg)
 	{
 		value * array_value = value_to_array(arg_value);
 
-		size_t iterator, array_size = value_type_size(arg_value) / sizeof(const value);
+		size_t array_size = value_type_size(arg_value) / sizeof(const value);
+
+		uint32_t iterator;
 
 		status = napi_create_array_with_length(env, array_size, &v);
 
@@ -1023,8 +1034,6 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				assert(status == napi_ok);
 
 				/* Check function pointer type */
-				napi_valuetype valuetype;
-
 				status = napi_typeof(env, function_ptr, &valuetype);
 
 				assert(status == napi_ok);
@@ -1077,7 +1086,6 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				{
 					signature s = function_signature(f);
 					scope sp = context_scope(async_data->ctx);
-					size_t index;
 
 					for (index = 0; index < function_sig_length; ++index)
 					{
@@ -1205,11 +1213,7 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 			}
 
 			/* Call to test function */
-			napi_value global, return_value;
-
-			status = napi_get_global(env, &global);
-
-			assert(status == napi_ok);
+			napi_value return_value;
 
 			status = napi_call_function(env, global, function_trampoline_test, 0, nullptr, &return_value);
 
@@ -1232,7 +1236,11 @@ void node_loader_impl_thread(void * data)
 	char exe_path_str[PATH_MAX];
 	size_t exe_path_str_size, exe_path_str_offset = 0;
 
-	ssize_t length = readlink("/proc/self/exe", exe_path_str, PATH_MAX);
+	#if defined(WIN32) || defined(_WIN32)
+		unsigned int length = GetModuleFileName(NULL, exe_path_str, PATH_MAX);
+	#else
+		ssize_t length = readlink("/proc/self/exe", exe_path_str, PATH_MAX);
+	#endif
 
 	size_t iterator;
 
@@ -1244,7 +1252,11 @@ void node_loader_impl_thread(void * data)
 
 	for (iterator = 0; iterator <= (size_t)length; ++iterator)
 	{
-		if (exe_path_str[iterator] == '/')
+		#if defined(WIN32) || defined(_WIN32)
+			if (exe_path_str[iterator] == '\\')
+		#else
+			if (exe_path_str[iterator] == '/')
+		#endif
 		{
 			exe_path_str_offset = iterator + 1;
 		}
@@ -1270,13 +1282,21 @@ void node_loader_impl_thread(void * data)
 
 	strncpy(bootstrap_path_str, load_library_path_env, load_library_path_length);
 
-	bootstrap_path_str[load_library_path_length] = '/';
+	/*
+	#if defined(WIN32) || defined(_WIN32)
+		bootstrap_path_str[load_library_path_length] = '\\';
+	#else
+		bootstrap_path_str[load_library_path_length] = '/';
+	#endif
 
 	++load_library_path_length;
+	*/
 
 	strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_file_str, sizeof(bootstrap_file_str) - 1);
 
 	bootstrap_path_str_size = load_library_path_length + sizeof(bootstrap_file_str);
+
+	bootstrap_path_str[bootstrap_path_str_size - 1] = '\0';
 
 	/* Get node impl pointer */
 	char * node_impl_ptr_str;
@@ -1432,6 +1452,10 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_cond_init(&node_impl->cond_func_destroy);
 
 	uv_mutex_init(&node_impl->mutex_func_destroy);
+
+	uv_cond_init(&node_impl->cond_destroy);
+
+	uv_mutex_init(&node_impl->mutex_destroy);
 
 	/* Create NodeJS thread */
 	uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl);
@@ -1589,9 +1613,9 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 void node_loader_impl_walk(uv_handle_t * handle, void * arg)
 {
-	(void)arg;
+	uv_handle_t * async = static_cast<uv_handle_t *>(arg);
 
-	if (!uv_is_closing(handle))
+	if (handle != async && !uv_is_closing(handle))
 	{
 		uv_close(handle, NULL);
 	}
@@ -1601,52 +1625,22 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 {
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(async->data));
 
-	uv_stop(node_impl->thread_loop);
-
-	uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL);
-
-	while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
-
-	if (uv_loop_alive(node_impl->thread_loop) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
-	}
-
-	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
-	}
-}
-
-int node_loader_impl_destroy(loader_impl impl)
-{
-	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+	uint32_t ref_count = 0;
 
 	napi_status status;
 
-	uint32_t ref_count = 0;
+	/* Destroy async objects */
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_destroy), NULL);
 
-	if (node_impl == NULL)
-	{
-		return 1;
-	}
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_call), NULL);
 
-	/* Clear persistent references */
-	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_discover), NULL);
 
-	assert(status == napi_ok && ref_count == 0);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_clear), NULL);
 
-	status = napi_delete_reference(node_impl->env, node_impl->global_ref);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_load_from_file), NULL);
 
-	assert(status == napi_ok);
-
-	status = napi_reference_unref(node_impl->env, node_impl->function_table_object_ref, &ref_count);
-
-	assert(status == napi_ok && ref_count == 0);
-
-	status = napi_delete_reference(node_impl->env, node_impl->function_table_object_ref);
-
-	assert(status == napi_ok);
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_initialize), NULL);
 
 	/* Destroy syncronization objects */
 	uv_mutex_destroy(&node_impl->mutex_initialize);
@@ -1673,24 +1667,146 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	uv_cond_destroy(&node_impl->cond_func_destroy);
 
+	/* Call destroy function */
+	{
+		const char destroy_str[] = "destroy";
+		napi_value destroy_str_value;
+
+		napi_env env = node_impl->env;
+		napi_value function_table_object;
+
+		bool result = false;
+
+		napi_handle_scope handle_scope;
+
+		/* Create scope */
+		status = napi_open_handle_scope(node_impl->env, &handle_scope);
+
+		assert(status == napi_ok);
+
+		/* Get function table object from reference */
+		status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
+
+		assert(status == napi_ok);
+
+		/* Retrieve destroy function from object table */
+		status = napi_create_string_utf8(env, destroy_str, sizeof(destroy_str) - 1, &destroy_str_value);
+
+		assert(status == napi_ok);
+
+		status = napi_has_own_property(env, function_table_object, destroy_str_value, &result);
+
+		assert(status == napi_ok);
+
+		if (result == true)
+		{
+			napi_value function_trampoline_destroy;
+			napi_valuetype valuetype;
+
+			status = napi_get_named_property(env, function_table_object, destroy_str, &function_trampoline_destroy);
+
+			assert(status == napi_ok);
+
+			status = napi_typeof(env, function_trampoline_destroy, &valuetype);
+
+			assert(status == napi_ok);
+
+			if (valuetype != napi_function)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid function destroy in function table object");
+			}
+
+			/* Call to destroy function */
+			napi_value global, return_value;
+
+			status = napi_get_global(env, &global);
+
+			assert(status == napi_ok);
+
+			status = napi_call_function(env, global, function_trampoline_destroy, 0, nullptr, &return_value);
+
+			assert(status == napi_ok);
+		}
+
+		/* Close scope */
+		status = napi_close_handle_scope(env, handle_scope);
+
+		assert(status == napi_ok);
+	}
+
+	/* Clear persistent references */
+	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(node_impl->env, node_impl->global_ref);
+
+	assert(status == napi_ok);
+
+	status = napi_reference_unref(node_impl->env, node_impl->function_table_object_ref, &ref_count);
+
+	assert(status == napi_ok && ref_count == 0);
+
+	status = napi_delete_reference(node_impl->env, node_impl->function_table_object_ref);
+
+	assert(status == napi_ok);
+
+	/*  Close event loop */
+	uv_stop(node_impl->thread_loop);
+
+	uv_walk(node_impl->thread_loop, node_loader_impl_walk, async);
+
+	while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
+
+	if (uv_loop_alive(node_impl->thread_loop) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
+	}
+
+	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
+	}
+
+	uv_loop_delete(node_impl->thread_loop);
+
+	/* Signal destroy condition */
+	uv_mutex_lock(&node_impl->mutex_destroy);
+
+	uv_cond_signal(&node_impl->cond_destroy);
+
+	uv_mutex_unlock(&node_impl->mutex_destroy);
+}
+
+int node_loader_impl_destroy(loader_impl impl)
+{
+	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+
+	if (node_impl == NULL)
+	{
+		return 1;
+	}
+
+	/* Send async destroy */
 	node_impl->async_destroy.data = static_cast<void *>(&node_impl);
 
 	uv_async_send(&node_impl->async_destroy);
 
+	/* Wait until node is destroyed */
+	uv_mutex_lock(&node_impl->mutex_destroy);
+
+	uv_cond_wait(&node_impl->cond_discover, &node_impl->mutex_destroy);
+
+	uv_mutex_unlock(&node_impl->mutex_destroy);
+
+	/* Clear destroy syncronization and async objects */
+	uv_mutex_destroy(&node_impl->mutex_destroy);
+
+	uv_cond_destroy(&node_impl->cond_destroy);
+
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_destroy), NULL);
 
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_destroy), NULL);
-
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_call), NULL);
-
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_discover), NULL);
-
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_clear), NULL);
-
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_load_from_file), NULL);
-
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_initialize), NULL);
-
+	/* Wait for node thread to finish */
 	uv_thread_join(&node_impl->thread_id);
 
 	free(node_impl);

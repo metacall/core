@@ -236,13 +236,28 @@ function node_loader_trampoline_discover(handle) {
 		console.log('Exception in node_loader_trampoline_discover', ex);
 	}
 
-	console.log('Debug node_loader_trampoline_discover', discover);
-
 	return discover;
 }
 
 function node_loader_trampoline_test() {
 	console.log('NodeJS Loader Bootstrap Test');
+}
+
+function node_loader_trampoline_destroy() {
+	try {
+		const handles = process._getActiveHandles();
+
+		for (const h of handles) {
+			h.write = function () {};
+			h._destroy = function () {};
+
+			if (h.end) {
+				h.end();
+			}
+		}
+	} catch (ex) {
+		console.log('Exception in node_loader_trampoline_destroy', ex);
+	}
 }
 
 module.exports = ((impl, ptr) => {
@@ -254,5 +269,6 @@ module.exports = ((impl, ptr) => {
 		'clear': node_loader_trampoline_clear,
 		'discover': node_loader_trampoline_discover,
 		'test': node_loader_trampoline_test,
+		'destroy': node_loader_trampoline_destroy,
 	});
 })(process.argv[2], process.argv[3]);

@@ -19,7 +19,7 @@ message(STATUS "Plugin ${target} bootstrap")
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${CMAKE_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${LOADER_LIBRARY_PATH}
 )
 
 #
@@ -38,6 +38,6 @@ set_target_properties(${target}
 
 # Library
 install(FILES
-	${CMAKE_BINARY_DIR}/bootstrap.js
+	${LOADER_LIBRARY_PATH}/bootstrap.js
 	DESTINATION ${INSTALL_LIB}
 )
