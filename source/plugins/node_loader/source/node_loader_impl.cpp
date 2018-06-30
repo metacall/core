@@ -6,11 +6,27 @@
  *
  */
 
-#if defined(WIN32) || defined(_WIN32) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(WIN32) || defined(_WIN32)
 #	define WIN32_LEAN_AND_MEAN
 #	include <windows.h>
+#	include <io.h>
+#	ifndef dup
+#		define dup _dup
+#	endif
+#	ifndef dup2
+#		define dup2 _dup2
+#	endif
+#	ifndef STDIN_FILENO
+#		define STDIN_FILENO _fileno(stdin)
+#	endif
+#	ifndef STDOUT_FILENO
+#		define STDOUT_FILENO _fileno(stdout)
+#	endif
+#	ifndef STDERR_FILENO
+#		define STDERR_FILENO _fileno(stderr)
+#	endif
+#else
+#	include <unistd.h>
 #endif
 
 #include <node_loader/node_loader_impl.h>
@@ -25,6 +41,7 @@
 #include <log/log.h>
 
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 #include <cassert>
 
@@ -44,10 +61,6 @@
 
 #include <node.h>
 #include <node_api.h>
-
-#ifndef container_of
-#	define container_of(ptr, type, member) ((type *)((char *)(ptr) - offsetof(type, member)))
-#endif
 
 typedef struct loader_impl_node_type
 {
@@ -163,6 +176,9 @@ void node_loader_impl_thread(void * data);
 void node_loader_impl_walk(uv_handle_t * handle, void * data);
 
 void node_loader_impl_async_destroy(uv_async_t * async);
+
+/* Standard Input Output descriptors */
+static int stdin_copy, stdout_copy, stderr_copy;
 
 int function_node_interface_create(function func, function_impl impl)
 {
@@ -1429,6 +1445,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
+	/* Duplicate stdin, stdout, stderr */
+	stdin_copy = dup(STDIN_FILENO);
+	stdout_copy = dup(STDOUT_FILENO);
+	stderr_copy = dup(STDERR_FILENO);
+
 	uv_cond_init(&node_impl->cond_initialize);
 
 	uv_mutex_init(&node_impl->mutex_initialize);
@@ -1611,16 +1632,6 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	return 0;
 }
 
-void node_loader_impl_walk(uv_handle_t * handle, void * arg)
-{
-	uv_handle_t * async = static_cast<uv_handle_t *>(arg);
-
-	if (handle != async && !uv_is_closing(handle))
-	{
-		uv_close(handle, NULL);
-	}
-}
-
 void node_loader_impl_async_destroy(uv_async_t * async)
 {
 	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(async->data));
@@ -1630,6 +1641,8 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	napi_status status;
 
 	/* Destroy async objects */
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_destroy), NULL);
+
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_destroy), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_call), NULL);
@@ -1667,6 +1680,8 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 	uv_cond_destroy(&node_impl->cond_func_destroy);
 
+	/* TODO: Review if destroy function is needed */
+	#if 0
 	/* Call destroy function */
 	{
 		const char destroy_str[] = "destroy";
@@ -1733,6 +1748,7 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 		assert(status == napi_ok);
 	}
+	#endif
 
 	/* Clear persistent references */
 	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
@@ -1751,24 +1767,10 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 	assert(status == napi_ok);
 
-	/*  Close event loop */
+	/*  Stop event loop */
 	uv_stop(node_impl->thread_loop);
 
-	uv_walk(node_impl->thread_loop, node_loader_impl_walk, async);
-
 	while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
-
-	if (uv_loop_alive(node_impl->thread_loop) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
-	}
-
-	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
-	}
-
-	uv_loop_delete(node_impl->thread_loop);
 
 	/* Signal destroy condition */
 	uv_mutex_lock(&node_impl->mutex_destroy);
@@ -1776,6 +1778,16 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	uv_cond_signal(&node_impl->cond_destroy);
 
 	uv_mutex_unlock(&node_impl->mutex_destroy);
+}
+
+void node_loader_impl_walk(uv_handle_t * handle, void * arg)
+{
+	(void)arg;
+
+	if (!uv_is_closing(handle))
+	{
+		uv_close(handle, NULL);
+	}
 }
 
 int node_loader_impl_destroy(loader_impl impl)
@@ -1795,7 +1807,7 @@ int node_loader_impl_destroy(loader_impl impl)
 	/* Wait until node is destroyed */
 	uv_mutex_lock(&node_impl->mutex_destroy);
 
-	uv_cond_wait(&node_impl->cond_discover, &node_impl->mutex_destroy);
+	uv_cond_wait(&node_impl->cond_destroy, &node_impl->mutex_destroy);
 
 	uv_mutex_unlock(&node_impl->mutex_destroy);
 
@@ -1804,12 +1816,41 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	uv_cond_destroy(&node_impl->cond_destroy);
 
-	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_destroy), NULL);
+	/* TODO: Review if there are any memory leaks */
+	#if 0
+	{
+		/*  Stop event loop */
+		uv_stop(node_impl->thread_loop);
+
+		/* Clear event loop */
+		uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL);
+
+		while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
+
+		/* Destroy node loop */
+		if (uv_loop_alive(node_impl->thread_loop) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
+		}
+
+		if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
+		}
+
+		uv_loop_delete(node_impl->thread_loop);
+	}
+	#endif
 
 	/* Wait for node thread to finish */
 	uv_thread_join(&node_impl->thread_id);
 
 	free(node_impl);
+
+	/* Restore stdin, stdout, stderr */
+	dup2(stdin_copy, STDIN_FILENO);
+	dup2(stdout_copy, STDOUT_FILENO);
+	dup2(stderr_copy, STDERR_FILENO);
 
 	return 0;
 }
