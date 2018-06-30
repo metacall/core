@@ -1298,15 +1298,16 @@ void node_loader_impl_thread(void * data)
 
 	strncpy(bootstrap_path_str, load_library_path_env, load_library_path_length);
 
-	/*
-	#if defined(WIN32) || defined(_WIN32)
-		bootstrap_path_str[load_library_path_length] = '\\';
-	#else
-		bootstrap_path_str[load_library_path_length] = '/';
-	#endif
+	if (bootstrap_path_str[load_library_path_length - 1] != '/' && bootstrap_path_str[load_library_path_length - 1] != '\\')
+	{
+		#if defined(WIN32) || defined(_WIN32)
+			bootstrap_path_str[load_library_path_length] = '\\';
+		#else
+			bootstrap_path_str[load_library_path_length] = '/';
+		#endif
 
-	++load_library_path_length;
-	*/
+		++load_library_path_length;
+	}
 
 	strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_file_str, sizeof(bootstrap_file_str) - 1);
 
