@@ -173,10 +173,23 @@ sub_nodejs(){
 	# TODO: Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
 	$SUDO_CMD apt-get update
-	curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD -E bash -
-	$SUDO_CMD apt-get install -y nodejs
-	$SUDO_CMD apt-get install -y npm
+
+	# This keeps installing NodeJS 4.x (so avoid it)
+	# curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD bash -
+	# $SUDO_CMD apt-get install -y nodejs
+	# $SUDO_CMD apt-get install -y npm
+
+	# Install NodeJS via nvm
+	curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | $SUDO_CMD bash
+
+	export NVM_DIR="$HOME/.nvm"
+	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+	[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+	nvm install 8.11.1
+	nvm use 8.11.1
 	$SUDO_CMD npm install node-gyp -g
+	echo fs.inotify.max_user_watches=524288 | $SUDO_CMD tee -a /etc/sysctl.conf && $SUDO_CMD sysctl -p
 }
 
 # MetaCall

@@ -55,6 +55,7 @@ set(NODEJS_PATHS
 	/opt/csw # Blastwave
 	/opt
 	/usr/freeware
+	$ENV{HOME}/.nvm/versions/node/v8.11.1 # TODO: Make this valid for all versions
 )
 
 # Find NodeJS include directories
