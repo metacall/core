@@ -175,6 +175,7 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 	curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD -E bash -
 	$SUDO_CMD apt-get install -y nodejs
+	$SUDO_CMD apt-get install -y npm
 	$SUDO_CMD npm install node-gyp -g
 }
 
