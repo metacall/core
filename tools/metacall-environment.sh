@@ -174,22 +174,16 @@ sub_nodejs(){
 	echo "configure nodejs"
 	$SUDO_CMD apt-get update
 
-	# This keeps installing NodeJS 4.x (so avoid it)
-	# curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD bash -
-	# $SUDO_CMD apt-get install -y nodejs
-	# $SUDO_CMD apt-get install -y npm
+	# Install python 2.7 to build node (gyp)
+	$SUDO_CMD apt-get install -y python2.7
 
-	# Install NodeJS via nvm
-	curl -sL https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | $SUDO_CMD bash
+	# Install NodeJS via nodesource
+	curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD bash -
+	$SUDO_CMD apt-get install -y nodejs build-essential
 
-	export NVM_DIR="$HOME/.nvm"
-	[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-	[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-
-	nvm install 8.11.1
-	nvm use 8.11.1
-	$SUDO_CMD npm install node-gyp -g
-	echo fs.inotify.max_user_watches=524288 | $SUDO_CMD tee -a /etc/sysctl.conf && $SUDO_CMD sysctl -p
+	# Update npm and install node-gyp
+	npm i npm@latest -g
+	npm i node-gyp -g
 }
 
 # MetaCall
@@ -250,7 +244,7 @@ sub_install(){
 }
 
 # Configuration
-sub_config(){
+sub_options(){
 	for var in "$@"
 	do
 		if [ "$var" = 'root' ]; then
@@ -277,7 +271,7 @@ sub_config(){
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
 		fi
-		if [ "$var" = 'v8rep54' ]; then
+		if [ "$var" = 'v8' ] || [ "$var" = 'v8rep54' ]; then
 			echo "v8 selected"
 			INSTALL_V8REPO=1
 			INSTALL_V8REPO54=1
@@ -343,7 +337,7 @@ case "$#" in
 		sub_help
 		;;
 	*)
-		sub_config $@
+		sub_options $@
 		sub_install
 		;;
 esac

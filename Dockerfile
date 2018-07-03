@@ -17,6 +17,7 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 # Arguments
 ARG METACALL_PATH
 ARG METACALL_BUILD_TYPE
+ARG METACALL_BUILD_OPTIONS
 
 # Environment variables
 ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
@@ -32,10 +33,19 @@ WORKDIR $METACALL_PATH
 COPY . $METACALL_PATH
 
 # Configure MetaCall build tool script
-RUN chmod 500 $METACALL_PATH/tools/metacall-build.sh \
-	&& chmod 500 $METACALL_PATH/tools/metacall-clear.sh
+RUN chmod 500 $METACALL_PATH/tools/metacall-configure.sh \
+	&& chmod 500 $METACALL_PATH/tools/metacall-build.sh \
+	&& chmod 500 $METACALL_PATH/tools/metacall-clear.sh \
+	&& mkdir -p $METACALL_PATH/build
+
+# Configure MetaCall libraries and build runtimes if needed
+RUN cd $METACALL_PATH/build \
+	&& $METACALL_PATH/tools/metacall-configure.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
 # Build and install MetaCall libraries then run tests
-RUN mkdir -p $METACALL_PATH/build \
-	&& cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-build.sh root ${METACALL_BUILD_TYPE} python ruby netcore v8 distributable tests scripts dynamic install
+RUN cd $METACALL_PATH/build \
+	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+
+# Clear MetaCall build dependencies
+RUN cd $METACALL_PATH/build \
+	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}

@@ -106,11 +106,14 @@ sub_clear(){
 
 	sub_metacall
 
+	# Delete MetaCall path
+	rm -rf $METACALL_PATH
+
 	echo "clean finished in workspace $ROOT_DIR"
 }
 
 # Configuration
-sub_config(){
+sub_options(){
 	for var in "$@"
 	do
 		if [ "$var" = 'root' ]; then
@@ -168,7 +171,7 @@ case "$#" in
 		sub_help
 		;;
 	*)
-		sub_config $@
+		sub_options $@
 		sub_clear
 		;;
 esac
