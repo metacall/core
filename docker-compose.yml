@@ -30,6 +30,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: release
+        METACALL_BUILD_TYPE_NAME: Release
         METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs distributable tests scripts dynamic install
     environment:
       DEBIAN_FRONTEND: noninteractive

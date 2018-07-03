@@ -3,6 +3,38 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
+# MetaCall Depends node builder image
+FROM metacall/core_deps AS builder_node
+
+# Image descriptor
+LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
+	copyright.address="vic798@gmail.com" \
+	maintainer.name="Vicente Eduardo Ferrer Garcia" \
+	maintainer.address="vic798@gmail.com" \
+	vendor="MetaCall Inc." \
+	version="0.1"
+
+# Arguments
+ARG METACALL_PATH
+ARG METACALL_BUILD_TYPE_NAME
+
+# Environment variables
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Define working directory
+WORKDIR $METACALL_PATH
+
+# Copy MetaCall dependecies
+COPY cmake/FindNodeJS.cmake $METACALL_PATH/cmake/FindNodeJS.cmake
+
+# Run NodeJS cmake script (TODO: Make find library prefixes/suffixes generic)
+RUN mkdir -p $METACALL_PATH/build \
+	&& cmake \
+		-DCMAKE_BUILD_TYPE=${METACALL_BUILD_TYPE_NAME} \
+		-DCMAKE_FIND_LIBRARY_PREFIXES=lib \
+		-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" \
+		-P $METACALL_PATH/cmake/FindNodeJS.cmake
+
 # MetaCall Depends image
 FROM metacall/core_deps
 
@@ -28,6 +60,9 @@ ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 
 # Define working directory
 WORKDIR $METACALL_PATH
+
+# Copy MetaCall NodeJS dependencies (TODO: Make location fixed)
+COPY --from=builder_node /usr/local/lib/libnode.so.* /usr/local/lib/
 
 # Copy MetaCall dependecies
 COPY . $METACALL_PATH

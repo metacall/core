@@ -184,6 +184,10 @@ sub_nodejs(){
 	# Update npm and install node-gyp
 	npm i npm@latest -g
 	npm i node-gyp -g
+
+	# Install pkg config for icu library
+	$SUDO_CMD apt-get install -y pkg-config
+	pkg-config icu-i18n --cflags --libs
 }
 
 # MetaCall
