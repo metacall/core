@@ -1393,8 +1393,6 @@ void node_loader_impl_thread(void * data)
 
 	/* TODO: ... reimplement until here */
 
-	log_write("metacall", LOG_LEVEL_INFO, "NodeJS arguments: [%s, %s, %s, %s]", argv[0], argv[1], argv[2], argv[3]);
-
 	node_impl->thread_loop = uv_default_loop();
 
 	/* Initialize initialize signal */

@@ -26,7 +26,7 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define LOADER_LOAD_FROM_FILES_SIZE 0x40
+#define LOADER_LOAD_FROM_FILES_SIZE 0x0400
 
 /* -- Forward Declarations -- */
 

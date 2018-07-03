@@ -341,7 +341,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 
 	loader_initialize();
 
-	if (l->impl_map != NULL && size > 0)
+	if (l->impl_map != NULL && size > 0 && size < LOADER_LOAD_FROM_FILES_SIZE)
 	{
 		if (tag != NULL)
 		{
@@ -353,25 +353,38 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 			{
 				if (l->script_path != NULL)
 				{
-					loader_naming_path absolute_path[LOADER_LOAD_FROM_FILES_SIZE];
+					loader_naming_path * absolute_paths = malloc(sizeof(loader_naming_path) * size);
 
 					size_t iterator;
+
+					int result;
+
+					if (absolute_paths == NULL)
+					{
+						log_write("metacall", LOG_LEVEL_ERROR, "Loader load from file invalid absolute paths allocation");
+
+						return 1;
+					}
 
 					for (iterator = 0; iterator < size; ++iterator)
 					{
 						if (loader_path_is_absolute(paths[iterator]) != 0)
 						{
-							memcpy(absolute_path[iterator], l->script_path, strlen(l->script_path) + 1);
+							memcpy(absolute_paths[iterator], l->script_path, strlen(l->script_path) + 1);
 
-							strncat(absolute_path[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+							strncat(absolute_paths[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
 						}
 						else
 						{
-							strncpy(absolute_path[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+							strncpy(absolute_paths[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
 						}
 					}
 
-					return loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_path, size, handle);
+					result = loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_paths, size, handle);
+
+					free(absolute_paths);
+
+					return result;
 				}
 				else
 				{
@@ -483,6 +496,15 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 	}
 
 	size = value_type_size(scripts) / sizeof(value);
+
+	if (size > LOADER_LOAD_FROM_FILES_SIZE)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration too many files (%" PRIuS ")", size);
+
+		configuration_clear(config);
+
+		return 1;
+	}
 
 	paths = malloc(sizeof(loader_naming_path) * size);
 
