@@ -4,7 +4,7 @@
 #
 
 # MetaCall Depends node builder image
-FROM metacall/core_deps AS builder_node
+FROM metacall/core_deps_node AS builder_node
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -16,24 +16,12 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 
 # Arguments
 ARG METACALL_PATH
-ARG METACALL_BUILD_TYPE_NAME
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Define working directory
 WORKDIR $METACALL_PATH
-
-# Copy MetaCall dependecies
-COPY cmake/FindNodeJS.cmake $METACALL_PATH/cmake/FindNodeJS.cmake
-
-# Run NodeJS cmake script (TODO: Make find library prefixes/suffixes generic)
-RUN mkdir -p $METACALL_PATH/build \
-	&& cmake \
-		-DCMAKE_BUILD_TYPE=${METACALL_BUILD_TYPE_NAME} \
-		-DCMAKE_FIND_LIBRARY_PREFIXES=lib \
-		-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" \
-		-P $METACALL_PATH/cmake/FindNodeJS.cmake
 
 # MetaCall Depends image
 FROM metacall/core_deps

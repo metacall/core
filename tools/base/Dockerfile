@@ -37,7 +37,8 @@ ENV NUGET_XMLDOC_MODE=skip
 WORKDIR $METACALL_PATH
 
 # Copy MetaCall tool dependecies
-COPY . $METACALL_TOOLS_PATH
+COPY tools/metacall-environment.sh $METACALL_TOOLS_PATH/metacall-environment.sh
+COPY tools/nobuildtest.patch $METACALL_TOOLS_PATH/nobuildtest.patch
 
 # Configure MetaCall environment tool script
 RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh
