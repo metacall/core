@@ -37,3 +37,6 @@ _start-cmd.bat
 
 # Local config unix
 .localconfig
+
+# Linked dockerignore file in main context
+.dockerignore
