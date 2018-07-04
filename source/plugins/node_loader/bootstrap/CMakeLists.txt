@@ -17,6 +17,12 @@ message(STATUS "Plugin ${target} bootstrap")
 # Create target
 #
 
+if(MSVC)
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+endif()
+
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${LOADER_LIBRARY_PATH}

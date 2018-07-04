@@ -17,6 +17,12 @@ message(STATUS "Plugin ${target} implementation")
 # Create target
 #
 
+if(MSVC)
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(NODE_LOADER_TRAMPOLINE_BUILD_TYPE "--debug")
 else()
