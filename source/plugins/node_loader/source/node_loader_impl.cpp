@@ -1374,7 +1374,7 @@ void node_loader_impl_thread(void * data)
 	memcpy(&argv_str[0], &exe_path_str[exe_path_str_offset], exe_path_str_size);
 	memcpy(&argv_str[exe_path_str_size], bootstrap_path_str, bootstrap_path_str_size);
 	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size], node_impl_ptr_str, node_impl_ptr_str_size);
-	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size + register_ptr_str_size], register_ptr_str, register_ptr_str_size);
+	memcpy(&argv_str[exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size], register_ptr_str, register_ptr_str_size);
 
 	free(node_impl_ptr_str);
 	free(register_ptr_str);
@@ -1385,7 +1385,7 @@ void node_loader_impl_thread(void * data)
 		&argv_str[0],
 		&argv_str[exe_path_str_size],
 		&argv_str[exe_path_str_size + bootstrap_path_str_size],
-		&argv_str[exe_path_str_size + bootstrap_path_str_size + register_ptr_str_size],
+		&argv_str[exe_path_str_size + bootstrap_path_str_size + node_impl_ptr_str_size],
 		NULL
 	};
 
