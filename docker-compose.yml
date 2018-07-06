@@ -21,17 +21,17 @@ services:
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
 
-  deps_node:
-    image: metacall/core_deps_node
-    container_name: metacall_core_deps_node
-    build:
-      context: .
-      dockerfile: tools/node/Dockerfile
-      args:
-        METACALL_PATH: $METACALL_PATH
-        METACALL_BUILD_TYPE_NAME: Release
-    environment:
-      DEBIAN_FRONTEND: noninteractive
+  # deps_node:
+  #   image: metacall/core_deps_node
+  #   container_name: metacall_core_deps_node
+  #   build:
+  #     context: .
+  #     dockerfile: tools/node/Dockerfile
+  #     args:
+  #       METACALL_PATH: $METACALL_PATH
+  #       METACALL_BUILD_TYPE_NAME: Release
+  #   environment:
+  #     DEBIAN_FRONTEND: noninteractive
 
   core:
     image: metacall/core
@@ -42,7 +42,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: release
-        METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs distributable tests scripts dynamic install
+        METACALL_BUILD_OPTIONS: root python ruby netcore v8 distributable tests scripts dynamic install # nodejs
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

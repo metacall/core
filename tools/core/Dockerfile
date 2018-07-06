@@ -3,25 +3,25 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
-# MetaCall Depends node builder image
-FROM metacall/core_deps_node AS builder_node
+# # MetaCall Depends node builder image
+# FROM metacall/core_deps_node AS builder_node
 
-# Image descriptor
-LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
-	copyright.address="vic798@gmail.com" \
-	maintainer.name="Vicente Eduardo Ferrer Garcia" \
-	maintainer.address="vic798@gmail.com" \
-	vendor="MetaCall Inc." \
-	version="0.1"
+# # Image descriptor
+# LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
+# 	copyright.address="vic798@gmail.com" \
+# 	maintainer.name="Vicente Eduardo Ferrer Garcia" \
+# 	maintainer.address="vic798@gmail.com" \
+# 	vendor="MetaCall Inc." \
+# 	version="0.1"
 
-# Arguments
-ARG METACALL_PATH
+# # Arguments
+# ARG METACALL_PATH
 
-# Environment variables
-ENV DEBIAN_FRONTEND=noninteractive
+# # Environment variables
+# ENV DEBIAN_FRONTEND=noninteractive
 
-# Define working directory
-WORKDIR $METACALL_PATH
+# # Define working directory
+# WORKDIR $METACALL_PATH
 
 # MetaCall Depends image
 FROM metacall/core_deps
@@ -49,8 +49,8 @@ ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 # Define working directory
 WORKDIR $METACALL_PATH
 
-# Copy MetaCall NodeJS dependencies (TODO: Make location fixed)
-COPY --from=builder_node /usr/local/lib/libnode.so.* /usr/local/lib/
+# # Copy MetaCall NodeJS dependencies (TODO: Make location fixed)
+# COPY --from=builder_node /usr/local/lib/libnode.so.* /usr/local/lib/
 
 # Copy MetaCall dependecies
 COPY . $METACALL_PATH
@@ -70,5 +70,5 @@ RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
 # Clear MetaCall build dependencies
-RUN cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+#RUN cd $METACALL_PATH/build \
+#	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}

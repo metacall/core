@@ -339,7 +339,6 @@ TEST_F(metacall_test, DefaultConstructor)
 	/* NodeJS */
 	#if defined(OPTION_BUILD_PLUGINS_NODE)
 	/* TODO: This blocks when used in combination to other run-times in CTest */
-	/*
 	{
 		const char * node_scripts[] =
 		{
@@ -363,7 +362,6 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	*/
 	#endif /* OPTION_BUILD_PLUGINS_NODE */
 
 	/* Print inspect information */
