@@ -62,6 +62,21 @@
 #include <node.h>
 #include <node_api.h>
 
+/* TODO:
+	To solve the deadlock we have to make MetaCall fork tolerant.
+	The problem is that when Linux makes a fork it uses fork-one strategy, this means
+	that only the caller thread is cloned, the others are not, so the NodeJS thread pool
+	does not survive. When the thread pool tries to continue it blocks the whole application.
+	To solve this, we have to:
+		- Change all mutex and conditions by a binary sempahore.
+		- Move all calls to MetaCall in async functions to outside of the async methods, passing result data in
+			the async data structure (async_object.data) because MetaCall is not thread safe and it can induce
+			other threads to overwrite data improperly.
+		- Make a detour to function fork. Intercept the function fork to shutdown all runtimes in the parent
+			and then re-initialize all of them in parent and child after the fork. pthread_atfork is not sufficient
+			because it is a bug on the POSIX standard (too many limitations are related to this technique).
+*/
+
 typedef struct loader_impl_node_type
 {
 	napi_env env;
@@ -168,14 +183,14 @@ void node_loader_impl_async_clear(uv_async_t * async);
 
 void node_loader_impl_async_discover(uv_async_t * async);
 
+void node_loader_impl_async_destroy(uv_async_t * async);
+
 /* Loader */
 void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr);
 
 void node_loader_impl_thread(void * data);
 
 void node_loader_impl_walk(uv_handle_t * handle, void * data);
-
-void node_loader_impl_async_destroy(uv_async_t * async);
 
 /* Standard Input Output descriptors */
 static int stdin_copy, stdout_copy, stderr_copy;
@@ -216,7 +231,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		uv_async_send(&node_impl->async_func_call);
 
 		/* Wait until function is called */
-		uv_mutex_lock(&node_impl->mutex_func_call);
+		while (uv_mutex_trylock(&node_impl->mutex_func_call) != 0);
 
 		uv_cond_wait(&node_impl->cond_func_call, &node_impl->mutex_func_call);
 
@@ -250,7 +265,7 @@ void function_node_interface_destroy(function func, function_impl impl)
 		uv_async_send(&node_impl->async_func_destroy);
 
 		/* Wait until function is destroyed */
-		uv_mutex_lock(&node_impl->mutex_func_destroy);
+		while (uv_mutex_trylock(&node_impl->mutex_func_destroy) != 0);
 
 		uv_cond_wait(&node_impl->cond_func_destroy, &node_impl->mutex_func_destroy);
 
@@ -281,7 +296,7 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	(void)node_impl;
 
 	/* Signal start condition */
-	uv_mutex_lock(&node_impl->mutex_initialize);
+	while (uv_mutex_trylock(&node_impl->mutex_initialize) != 0);
 
 	uv_cond_signal(&node_impl->cond_initialize);
 
@@ -682,7 +697,7 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal function call condition */
-	uv_mutex_lock(&async_data->node_impl->mutex_func_call);
+	while (uv_mutex_trylock(&async_data->node_impl->mutex_func_call) != 0);
 
 	uv_cond_signal(&async_data->node_impl->cond_func_call);
 
@@ -719,7 +734,7 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal function destroy condition */
-	uv_mutex_lock(&async_data->node_impl->mutex_func_destroy);
+	while (uv_mutex_trylock(&async_data->node_impl->mutex_func_destroy) != 0);
 
 	uv_cond_signal(&async_data->node_impl->cond_func_destroy);
 
@@ -827,7 +842,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal load from file condition */
-	uv_mutex_lock(&async_data->node_impl->mutex_load_from_file);
+	while (uv_mutex_trylock(&async_data->node_impl->mutex_load_from_file) != 0);
 
 	uv_cond_signal(&async_data->node_impl->cond_load_from_file);
 
@@ -920,7 +935,7 @@ void node_loader_impl_async_clear(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal clear condition */
-	uv_mutex_lock(&async_data->node_impl->mutex_clear);
+	while (uv_mutex_trylock(&async_data->node_impl->mutex_clear) != 0);
 
 	uv_cond_signal(&async_data->node_impl->cond_clear);
 
@@ -1148,7 +1163,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal discover condition */
-	uv_mutex_lock(&async_data->node_impl->mutex_discover);
+	while (uv_mutex_trylock(&async_data->node_impl->mutex_discover) != 0);
 
 	uv_cond_signal(&async_data->node_impl->cond_discover);
 
@@ -1417,14 +1432,17 @@ void node_loader_impl_thread(void * data)
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
 	/* Signal start condition */
-	uv_mutex_lock(&node_impl->mutex_initialize);
+	while (uv_mutex_trylock(&node_impl->mutex_initialize) != 0);
 
 	uv_cond_signal(&node_impl->cond_initialize);
 
 	uv_mutex_unlock(&node_impl->mutex_initialize);
 
 	/* Start NodeJS runtime */
-	node::Start(argc, reinterpret_cast<char **>(argv));
+	int result = node::Start(argc, reinterpret_cast<char **>(argv));
+
+	/* Print NodeJS execution result */
+	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", result);
 }
 
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
@@ -1451,39 +1469,39 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	stdout_copy = dup(STDOUT_FILENO);
 	stderr_copy = dup(STDERR_FILENO);
 
-	uv_cond_init(&node_impl->cond_initialize);
+	assert(uv_cond_init(&node_impl->cond_initialize) == 0);
 
-	uv_mutex_init(&node_impl->mutex_initialize);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_initialize) == 0);
 
-	uv_cond_init(&node_impl->cond_load_from_file);
+	assert(uv_cond_init(&node_impl->cond_load_from_file) == 0);
 
-	uv_mutex_init(&node_impl->mutex_load_from_file);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_load_from_file) == 0);
 
-	uv_cond_init(&node_impl->cond_clear);
+	assert(uv_cond_init(&node_impl->cond_clear) == 0);
 
-	uv_mutex_init(&node_impl->mutex_clear);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_clear) == 0);
 
-	uv_cond_init(&node_impl->cond_discover);
+	assert(uv_cond_init(&node_impl->cond_discover) == 0);
 
-	uv_mutex_init(&node_impl->mutex_discover);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_discover) == 0);
 
-	uv_cond_init(&node_impl->cond_func_call);
+	assert(uv_cond_init(&node_impl->cond_func_call) == 0);
 
-	uv_mutex_init(&node_impl->mutex_func_call);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_func_call) == 0);
 
-	uv_cond_init(&node_impl->cond_func_destroy);
+	assert(uv_cond_init(&node_impl->cond_func_destroy) == 0);
 
-	uv_mutex_init(&node_impl->mutex_func_destroy);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_func_destroy) == 0);
 
-	uv_cond_init(&node_impl->cond_destroy);
+	assert(uv_cond_init(&node_impl->cond_destroy) == 0);
 
-	uv_mutex_init(&node_impl->mutex_destroy);
+	assert(uv_mutex_init_recursive(&node_impl->mutex_destroy) == 0);
 
 	/* Create NodeJS thread */
-	uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl);
+	assert(uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl) == 0);
 
 	/* Wait until start has been launch */
-	uv_mutex_lock(&node_impl->mutex_initialize);
+	while (uv_mutex_trylock(&node_impl->mutex_initialize) != 0);
 
 	uv_cond_wait(&node_impl->cond_initialize, &node_impl->mutex_initialize);
 
@@ -1495,7 +1513,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_async_send(&node_impl->async_initialize);
 
 	/* Wait until script has been loaded */
-	uv_mutex_lock(&node_impl->mutex_initialize);
+	while (uv_mutex_trylock(&node_impl->mutex_initialize) != 0);
 
 	uv_cond_wait(&node_impl->cond_initialize, &node_impl->mutex_initialize);
 
@@ -1537,7 +1555,7 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	uv_async_send(&node_impl->async_load_from_file);
 
 	/* Wait until module is loaded */
-	uv_mutex_lock(&node_impl->mutex_load_from_file);
+	while (uv_mutex_trylock(&node_impl->mutex_load_from_file) != 0);
 
 	uv_cond_wait(&node_impl->cond_load_from_file, &node_impl->mutex_load_from_file);
 
@@ -1591,7 +1609,7 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 	uv_async_send(&node_impl->async_clear);
 
 	/* Wait until module is cleared */
-	uv_mutex_lock(&node_impl->mutex_clear);
+	while (uv_mutex_trylock(&node_impl->mutex_clear) != 0);
 
 	uv_cond_wait(&node_impl->cond_clear, &node_impl->mutex_clear);
 
@@ -1624,7 +1642,7 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	uv_async_send(&node_impl->async_discover);
 
 	/* Wait until module is discovered */
-	uv_mutex_lock(&node_impl->mutex_discover);
+	while (uv_mutex_trylock(&node_impl->mutex_discover) != 0);
 
 	uv_cond_wait(&node_impl->cond_discover, &node_impl->mutex_discover);
 
@@ -1681,8 +1699,6 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 	uv_cond_destroy(&node_impl->cond_func_destroy);
 
-	/* TODO: Review if destroy function is needed */
-	#if 0
 	/* Call destroy function */
 	{
 		const char destroy_str[] = "destroy";
@@ -1749,7 +1765,6 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 		assert(status == napi_ok);
 	}
-	#endif
 
 	/* Clear persistent references */
 	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
@@ -1771,10 +1786,13 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	/*  Stop event loop */
 	uv_stop(node_impl->thread_loop);
 
+	/* Clear event loop */
+	uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL);
+
 	while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
 
 	/* Signal destroy condition */
-	uv_mutex_lock(&node_impl->mutex_destroy);
+	while (uv_mutex_trylock(&node_impl->mutex_destroy) != 0);
 
 	uv_cond_signal(&node_impl->cond_destroy);
 
@@ -1785,10 +1803,18 @@ void node_loader_impl_walk(uv_handle_t * handle, void * arg)
 {
 	(void)arg;
 
+	/* TODO: This method also deletes the handle flush_tasks_ inside the NodePlatform class. */
+	/* So, now I don't know how to identify this pointer in order to avoid closing it... */
+	/* By this way, I prefer to make valgrind angry instead of closing it with an abort or an exception */
+
+	(void)handle;
+
+	/*
 	if (!uv_is_closing(handle))
 	{
 		uv_close(handle, NULL);
 	}
+	*/
 }
 
 int node_loader_impl_destroy(loader_impl impl)
@@ -1806,7 +1832,7 @@ int node_loader_impl_destroy(loader_impl impl)
 	uv_async_send(&node_impl->async_destroy);
 
 	/* Wait until node is destroyed */
-	uv_mutex_lock(&node_impl->mutex_destroy);
+	while (uv_mutex_trylock(&node_impl->mutex_destroy) != 0);
 
 	uv_cond_wait(&node_impl->cond_destroy, &node_impl->mutex_destroy);
 
@@ -1817,31 +1843,17 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	uv_cond_destroy(&node_impl->cond_destroy);
 
-	/* TODO: Review if there are any memory leaks */
-	#if 0
+	/* Destroy node loop */
+	if (uv_loop_alive(node_impl->thread_loop) != 0)
 	{
-		/*  Stop event loop */
-		uv_stop(node_impl->thread_loop);
-
-		/* Clear event loop */
-		uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL);
-
-		while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
-
-		/* Destroy node loop */
-		if (uv_loop_alive(node_impl->thread_loop) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
-		}
-
-		if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
-		}
-
-		uv_loop_delete(node_impl->thread_loop);
+		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive");
 	}
-	#endif
+
+	/* TODO: Check how to delete properly all handles */
+	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy");
+	}
 
 	/* Wait for node thread to finish */
 	uv_thread_join(&node_impl->thread_id);
