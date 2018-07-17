@@ -52,6 +52,45 @@ value value_type_cast(value v, type_id id)
 		return NULL;
 	}
 
+	/* TODO: Cast from null value */
+	if (type_id_null(src_id) == 0)
+	{
+		if (type_id_boolean(id) == 0)
+		{
+			/* TODO: Create boolean set to false */
+			/*
+			return value_type_create_bool
+			*/
+		}
+		/*
+		...
+		*/
+		else if (type_id_array(id) == 0)
+		{
+			/* TODO: Create an empty array */
+			/*
+			return value_type_create_bool
+			*/
+		}
+
+		return v;
+	}
+
+	/* Cast to null value  */
+	if (type_id_null(id) == 0)
+	{
+		value dest = value_create_null();
+
+		if (dest == NULL)
+		{
+			return NULL;
+		}
+
+		value_destroy(v);
+
+		return dest;
+	}
+
 	/* Convert single value to buffer */
 	if (type_id_buffer(id) == 0 && src_id < TYPE_BUFFER)
 	{

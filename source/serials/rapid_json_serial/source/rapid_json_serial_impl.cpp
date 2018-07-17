@@ -283,6 +283,10 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 
 		json_v->SetString(s.c_str(), s.length());
 	}
+	else if (id == TYPE_NULL)
+	{
+		json_v->SetNull();
+	}
 }
 
 char * rapid_json_serial_impl_document_stringify(RapidJSONSerialDocument * document, size_t * size)
@@ -344,7 +348,11 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 
 value rapid_json_serial_impl_deserialize_value(const RapidJSONSerialValue * v)
 {
-	if (v->IsBool() == true)
+	if (v->IsNull())
+	{
+		return value_create_null();
+	}
+	else if (v->IsBool() == true)
 	{
 		return value_create_bool(v->GetBool() == true ? 1L : 0L);
 	}

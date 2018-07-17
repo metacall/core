@@ -285,15 +285,16 @@ TEST_F(serial_test, DefaultConstructor)
 			NULL, /* TODO */
 			#if defined(_WIN32) && defined(_MSC_VER)
 				#if defined(_WIN64)
-					"0x00000000000A7EF2"
+					"0x00000000000A7EF2",
 				#else
-					"0x000A7EF2"
+					"0x000A7EF2",
 				#endif
 			#elif defined(__linux) || defined(__linux__)
-				"0xa7ef2"
+				"0xa7ef2",
 			#else
-				"<unknown>"
+				"<unknown>",
 			#endif
+			"(null)"
 		};
 
 		static const char char_array[] =
@@ -343,7 +344,8 @@ TEST_F(serial_test, DefaultConstructor)
 			value_create_buffer(char_array, sizeof(char_array)),
 			value_create_array(value_list, value_list_size),
 			value_create_map(value_map, value_map_size),
-			value_create_ptr((void *)0x000A7EF2)
+			value_create_ptr((void *)0x000A7EF2),
+			value_create_null()
 		};
 
 		const size_t value_names_size = sizeof(value_names) / sizeof(value_names[0]);

@@ -41,6 +41,8 @@ static int metacall_serial_impl_deserialize_map(value * v, const char * src, siz
 
 static int metacall_serial_impl_deserialize_ptr(value * v, const char * src, size_t length);
 
+static int metacall_serial_impl_deserialize_null(value * v, const char * src, size_t length);
+
 /* -- Methods -- */
 
 metacall_deserialize_impl_ptr metacall_serial_impl_deserialize_func(type_id id)
@@ -58,7 +60,8 @@ metacall_deserialize_impl_ptr metacall_serial_impl_deserialize_func(type_id id)
 		&metacall_serial_impl_deserialize_buffer,
 		&metacall_serial_impl_deserialize_array,
 		&metacall_serial_impl_deserialize_map,
-		&metacall_serial_impl_deserialize_ptr
+		&metacall_serial_impl_deserialize_ptr,
+		metacall_serial_impl_deserialize_null
 	};
 
 	return deserialize_func[id];
@@ -298,6 +301,20 @@ int metacall_serial_impl_deserialize_ptr(value * v, const char * src, size_t len
 	(void)v;
 	(void)src;
 	(void)length;
+
+	return 1;
+}
+
+int metacall_serial_impl_deserialize_null(value * v, const char * src, size_t length)
+{
+	static const char null_str[] = "(null)";
+
+	if (strncmp(src, null_str, length) == 0)
+	{
+		*v = value_create_null();
+
+		return (*v == NULL);
+	}
 
 	return 1;
 }

@@ -43,6 +43,7 @@ enum metacall_value_id
 	METACALL_ARRAY	= 9,
 	METACALL_MAP	= 10,
 	METACALL_PTR	= 11,
+	METACALL_NULL	= 12,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -205,6 +206,15 @@ METACALL_API void * metacall_value_create_map(const void * tuples[], size_t size
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void * metacall_value_create_ptr(const void * ptr);
+
+/**
+*  @brief
+*    Create a value of type null
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_null(void);
 
 /**
 *  @brief
@@ -373,6 +383,18 @@ METACALL_API void ** metacall_value_to_map(void * v);
 *    Value converted to pointer
 */
 METACALL_API void * metacall_value_to_ptr(void * v);
+
+/**
+*  @brief
+*    Convert value @v to null
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to null
+*/
+METACALL_API void * metacall_value_to_null(void * v);
 
 /**
 *  @brief
@@ -568,6 +590,18 @@ METACALL_API void * metacall_value_from_ptr(void * v, const void * ptr);
 
 /**
 *  @brief
+*    Assign null to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value with null assigned to it
+*/
+METACALL_API void * metacall_value_from_null(void * v);
+
+/**
+*  @brief
 *    Convert value @v implicitly to boolean
 *
 *  @param[in] v
@@ -709,6 +743,18 @@ METACALL_API void * metacall_value_cast_map(void ** v);
 *    Value converted to ptr
 */
 METACALL_API void * metacall_value_cast_ptr(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to null
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to null
+*/
+METACALL_API void * metacall_value_cast_null(void ** v);
 
 /**
 *  @brief

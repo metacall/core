@@ -235,6 +235,15 @@ REFLECT_API value value_create_ptr(const void * ptr);
 
 /**
 *  @brief
+*    Create a value of type null
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_null(void);
+
+/**
+*  @brief
 *    Convert value @v to boolean
 *
 *  @param[in] v
@@ -376,6 +385,18 @@ REFLECT_API value * value_to_map(value v);
 *    Value converted to pointer
 */
 REFLECT_API void * value_to_ptr(value v);
+
+/**
+*  @brief
+*    Convert value @v to null
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to null
+*/
+REFLECT_API void * value_to_null(value v);
 
 /**
 *  @brief
@@ -568,6 +589,18 @@ REFLECT_API value value_from_map(value v, const value * tuples, size_t size);
 *    Value with pointer @ptr assigned to it
 */
 REFLECT_API value value_from_ptr(value v, const void * ptr);
+
+/**
+*  @brief
+*    Assign null to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value with null assigned to it
+*/
+REFLECT_API value value_from_null(value v);
 
 /**
 *  @brief

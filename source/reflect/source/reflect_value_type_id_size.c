@@ -24,7 +24,8 @@ size_t value_type_id_size(type_id id)
 		sizeof(void *),		/* TYPE_BUFFER */
 		sizeof(value *),	/* TYPE_ARRAY */
 		sizeof(value *),	/* TYPE_MAP */
-		sizeof(void *)		/* TYPE_PTR */
+		sizeof(void *),		/* TYPE_PTR */
+		(size_t)0			/* TYPE_NULL */
 	};
 
 	if (type_id_invalid(id) == 0)

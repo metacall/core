@@ -50,6 +50,8 @@ static void metacall_serial_impl_serialize_map(value v, char * dest, size_t size
 
 static void metacall_serial_impl_serialize_ptr(value v, char * dest, size_t size, const char * format, size_t * length);
 
+static void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length);
+
 /* -- Methods -- */
 
 const char * metacall_serial_impl_serialize_format(type_id id)
@@ -67,7 +69,8 @@ const char * metacall_serial_impl_serialize_format(type_id id)
 		"%02x",
 		NULL, /* Unused */
 		NULL, /* Unused */
-		METACALL_SERIALIZE_VALUE_FORMAT_PTR
+		METACALL_SERIALIZE_VALUE_FORMAT_PTR,
+		"%s"
 	};
 
 	return metacall_serialize_format[id];
@@ -88,7 +91,8 @@ metacall_serialize_impl_ptr metacall_serial_impl_serialize_func(type_id id)
 		&metacall_serial_impl_serialize_buffer,
 		&metacall_serial_impl_serialize_array,
 		&metacall_serial_impl_serialize_map,
-		&metacall_serial_impl_serialize_ptr
+		&metacall_serial_impl_serialize_ptr,
+		&metacall_serial_impl_serialize_null
 	};
 
 	return serialize_func[id];
@@ -260,4 +264,13 @@ void metacall_serial_impl_serialize_map(value v, char * dest, size_t size, const
 void metacall_serial_impl_serialize_ptr(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_ptr(v));
+}
+
+void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	static const char value_null_str[] = "(null)";
+
+	(void)v;
+
+	*length = snprintf(dest, size, format, value_null_str);
 }

@@ -106,6 +106,11 @@ void * metacall_value_create_ptr(const void * ptr)
 	return value_create_ptr(ptr);
 }
 
+void * metacall_value_create_null()
+{
+	return value_create_null();
+}
+
 size_t metacall_value_size(void * v)
 {
 	return value_type_size(v);
@@ -131,6 +136,7 @@ enum metacall_value_id metacall_value_id(void * v)
 			METACALL_ARRAY,
 			METACALL_MAP,
 			METACALL_PTR,
+			METACALL_NULL,
 
 			METACALL_SIZE,
 			METACALL_INVALID
@@ -148,6 +154,7 @@ enum metacall_value_id metacall_value_id(void * v)
 			((int) TYPE_ARRAY == (int) METACALL_ARRAY) &&
 			((int) TYPE_MAP == (int) METACALL_MAP) &&
 			((int) TYPE_PTR == (int) METACALL_PTR) &&
+			((int) TYPE_NULL == (int) METACALL_NULL) &&
 			((int) TYPE_SIZE == (int) METACALL_SIZE) &&
 			((int) TYPE_INVALID == (int) METACALL_INVALID));
 
@@ -241,6 +248,13 @@ void * metacall_value_to_ptr(void * v)
 	return value_to_ptr(v);
 }
 
+void * metacall_value_to_null(void * v)
+{
+	assert(value_type_id(v) == TYPE_NULL);
+
+	return value_to_null(v);
+}
+
 void * metacall_value_from_bool(void * v, boolean b)
 {
 	return value_from_bool(v, b);
@@ -299,6 +313,11 @@ void * metacall_value_from_map(void * v, const void * tuples[], size_t size)
 void * metacall_value_from_ptr(void * v, const void * ptr)
 {
 	return value_from_ptr(v, ptr);
+}
+
+void * metacall_value_from_null(void * v)
+{
+	return value_from_null(v);
 }
 
 boolean metacall_value_cast_bool(void ** v)
@@ -479,6 +498,21 @@ void * metacall_value_cast_ptr(void ** v)
 	}
 
 	return value_to_ptr(*v);
+}
+
+void * metacall_value_cast_null(void ** v)
+{
+	if (value_type_id(*v) != TYPE_NULL)
+	{
+		value v_cast = value_type_cast(*v, TYPE_NULL);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_null(*v);
 }
 
 void metacall_value_destroy(void * v)

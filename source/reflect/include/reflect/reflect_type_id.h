@@ -29,6 +29,7 @@ enum type_primitive_id
 	TYPE_ARRAY	= 9,
 	TYPE_MAP	= 10,
 	TYPE_PTR	= 11,
+	TYPE_NULL	= 12,
 
 	TYPE_SIZE,
 	TYPE_INVALID
@@ -142,7 +143,19 @@ REFLECT_API int type_id_map(type_id id);
 *  @return
 *    Returns zero if type is pointer, different from zero otherwhise
 */
-REFLECT_API int type_id_pointer(type_id id);
+REFLECT_API int type_id_ptr(type_id id);
+
+/**
+*  @brief
+*    Check if type id is pointer value NULL
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is null, different from zero otherwhise
+*/
+REFLECT_API int type_id_null(type_id id);
 
 /**
 *  @brief
