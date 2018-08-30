@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <serial/serial.h>
 #include <serial/serial_singleton.h>

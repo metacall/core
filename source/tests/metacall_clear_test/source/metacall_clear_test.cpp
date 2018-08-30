@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_clear_test : public testing::Test
 {
@@ -23,7 +23,7 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/python3.5\n"
@@ -50,7 +50,7 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 
 		EXPECT_EQ((void *) NULL, (void *) metacall_function("multmem"));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

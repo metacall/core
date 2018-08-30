@@ -6,7 +6,7 @@
  *
  */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <adt/adt.h>
 

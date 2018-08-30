@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_initialize_test : public testing::Test
 {
@@ -25,7 +25,7 @@ TEST_F(metacall_initialize_test, DefaultConstructor)
 	ASSERT_EQ((int) 1, (int) metacall_is_initialized("mock"));
 
 	/* Mock */
-	#if defined(OPTION_BUILD_PLUGINS_MOCK)
+	#if defined(OPTION_BUILD_LOADERS_MOCK)
 	{
 		const char * mock_scripts[] =
 		{
@@ -36,7 +36,7 @@ TEST_F(metacall_initialize_test, DefaultConstructor)
 
 		ASSERT_EQ((int) 0, (int) metacall_is_initialized("mock"));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_MOCK */
+	#endif /* OPTION_BUILD_LOADERS_MOCK */
 
 	ASSERT_EQ((int) 0, (int) metacall_destroy());
 }

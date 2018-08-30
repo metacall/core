@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_init_fini_test : public testing::Test
 {
@@ -23,7 +23,7 @@ TEST_F(metacall_init_fini_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -42,7 +42,7 @@ TEST_F(metacall_init_fini_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

@@ -4,13 +4,13 @@ TODO List
 [CORE]
 
 	* Improve extension management of loaders (remove restriction of loader extension and names).
-	* Improve versioning of loaders (plugins) and it's [interface](https://accu.org/index.php/journals/1718).
-	* Implement a C++ object oriented interface for implemening loaders (plugins).
+	* Improve versioning of loader plugins and it's [interface](https://accu.org/index.php/journals/1718).
+	* Implement a C++ object oriented interface for implemening loader plugins.
 	* Extend loading process to accept scripts as string, uri or memory block.
 	* Add configuraton library based on simple format (json, libconfig format).
 	* Add a cross-platform library for managing path tree and allow scripts to be loaded by path.
 	* Add watchers and reload policies in order to provide on-the-fly changes and make it fault tolerant against corrupted scripts.
-	* Add new type management and its implementation in each plugin (ptr, array, callback, object).
+	* Add new type management and its implementation in each loader (ptr, array, callback, object).
 	* Improve scope management for encapsulation and add tie-breaker to avoid conflicts between functions with same name.
 	* MetaCall++ front-end compatible with SWIG (avoid common exceptions and unimplemented templates).
 	* Possibly convert the whole project to C++ and export critical parts like metacall front-end and loaders plugin interface as [C API](http://www.drbobbs.com/cpp/building-your-own-plugin-framework-part/204202899?pgno=4).
@@ -20,29 +20,29 @@ TODO List
 	* Add custom benchmarks and small utility library for supporting benchmarks, and integrate it in build process of CMake.
 	* Improve security of loaders and scripts loaded with signatures, and avoid memory injection with a driver.
 
-[PLUGINS]
+[LOADERS]
 
-	* Plugin C/C++:
+	* Loader C/C++:
 		- [Clang](http://clang.llvm.org/docs/ExternalClangExamples.html) as a parser for reflect generation for .h and .hpp files.
 		- [Libffi](http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Using-libffi.html) as a foreing function interface caller.
 		- [LLVM](http://llvm.org/docs/) as a JIT compiler for .c and .cpp files.
 		- [Dynlink](source/dynlink) library as a cross-platform library loader.
 		- Alternatively use [EmbedCh](https://www.softintegration.com/products/sdk/embedch/).
 
-	* Plugin C#:
+	* Loader C#:
 		- [NET Core](https://msdn.microsoft.com/en-us/library/ms404385.aspx) hosting.
 		- [Mono](http://www.mono-project.com/docs/advanced/embedding/).
 
-	* Plugin Java:
+	* Loader Java:
 		- [JVM and JNI](http://docs.oracle.com/javase/1.5.0/docs/guide/jni/spec/invocation.html).
 
-	* Plugin PHP:
+	* Loader PHP:
 		- [PHP C API](http://us.php.net/manual/en/internals2.php).
 
-	* Plugin LUA:
+	* Loader LUA:
 		- [LUA C API](https://www.lua.org/pil/contents.html#P4).
 
-	* Plugin RPC:
+	* Loader RPC:
 		- [Protocol Buffers](https://developers.google.com/protocol-buffers/).
 		- [ZMQ Distributed Messaging](http://zeromq.org).
 

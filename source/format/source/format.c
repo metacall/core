@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <format/format.h>
 

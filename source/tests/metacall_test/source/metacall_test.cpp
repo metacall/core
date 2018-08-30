@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 void * c_function(void * args[])
 {
@@ -66,7 +66,7 @@ TEST_F(metacall_test, DefaultConstructor)
 	}
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -152,10 +152,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		const char * rb_scripts[] =
 		{
@@ -210,10 +210,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	/* JavaScript SpiderMonkey */
-	#if defined(OPTION_BUILD_PLUGINS_JSM)
+	#if defined(OPTION_BUILD_LOADERS_JSM)
 	{
 		const char * jsm_scripts[] =
 		{
@@ -224,10 +224,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("say_spider", 8, 4));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JSM */
+	#endif /* OPTION_BUILD_LOADERS_JSM */
 
 	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_PLUGINS_JS)
+	#if defined(OPTION_BUILD_LOADERS_JS)
 	{
 		const char * js_scripts[] =
 		{
@@ -262,10 +262,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JS */
+	#endif /* OPTION_BUILD_LOADERS_JS */
 
 	/* Mock */
-	#if defined(OPTION_BUILD_PLUGINS_MOCK)
+	#if defined(OPTION_BUILD_LOADERS_MOCK)
 	{
 		const char * mock_scripts[] =
 		{
@@ -308,10 +308,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_MOCK */
+	#endif /* OPTION_BUILD_LOADERS_MOCK */
 
 	/* C# NetCore */
-	#if defined(OPTION_BUILD_PLUGINS_CS)
+	#if defined(OPTION_BUILD_LOADERS_CS)
 	{
 		const char * cs_scripts[] =
 		{
@@ -322,10 +322,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_EQ((void *) NULL, (void *) metacall("Say", "Hello para with params!"));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_CS */
+	#endif /* OPTION_BUILD_LOADERS_CS */
 
 	/* C */
-	#if defined(OPTION_BUILD_PLUGINS_C)
+	#if defined(OPTION_BUILD_LOADERS_C)
 	{
 		const char * c_scripts[] =
 		{
@@ -334,10 +334,10 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_C */
+	#endif /* OPTION_BUILD_LOADERS_C */
 
 	/* NodeJS */
-	#if defined(OPTION_BUILD_PLUGINS_NODE)
+	#if defined(OPTION_BUILD_LOADERS_NODE)
 	/* TODO: This blocks when used with CTest because of fork deadlock problem */
 	{
 		const char * node_scripts[] =
@@ -362,7 +362,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_NODE */
+	#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{

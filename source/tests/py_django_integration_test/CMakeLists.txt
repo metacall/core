@@ -2,8 +2,8 @@
 # Setup distributable environment
 #
 
-# Check if python plugin and distributable libs are enabled
-if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_PY OR NOT BUILD_DISTRIBUTABLE_LIBS)
+# Check if python loader and distributable libs are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT BUILD_DISTRIBUTABLE_LIBS)
 	return()
 endif()
 

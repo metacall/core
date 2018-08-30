@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 #include <reflect/reflect_value_type.h>
 
@@ -31,7 +31,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 	metacall_print_info();
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/python3.5\n"
@@ -71,10 +71,10 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 			value_destroy(ret);
 		}
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/ruby\n"
@@ -116,10 +116,10 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		EXPECT_EQ((value) NULL, (value) ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_PLUGINS_JS)
+	#if defined(OPTION_BUILD_LOADERS_JS)
 	{
 		static const char buffer[] =
 			"#!/bin/sh\n"
@@ -149,7 +149,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		EXPECT_EQ((value) NULL, (value) ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JS */
+	#endif /* OPTION_BUILD_LOADERS_JS */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

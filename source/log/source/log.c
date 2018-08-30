@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <log/log.h>
 #include <log/log_impl.h>

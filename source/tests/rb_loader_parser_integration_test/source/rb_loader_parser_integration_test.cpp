@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 #include <log/log.h>
 
@@ -26,7 +26,7 @@ TEST_F(rb_loader_parser_integration_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		const char * rb_scripts[] =
 		{
@@ -57,7 +57,7 @@ TEST_F(rb_loader_parser_integration_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

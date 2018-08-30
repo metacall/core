@@ -2,8 +2,8 @@
 # Setup distributable environment
 #
 
-# Check if ruby plugin and distributable libs are enabled
-if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_RB OR NOT BUILD_DISTRIBUTABLE_LIBS)
+# Check if ruby loader and distributable libs are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_RB OR NOT BUILD_DISTRIBUTABLE_LIBS)
 	return()
 endif()
 

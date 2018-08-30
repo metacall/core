@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_inspect_test : public testing::Test
 {
@@ -23,7 +23,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -32,10 +32,10 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		const char * rb_scripts[] =
 		{
@@ -44,10 +44,10 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	/* JavaScript SpiderMonkey */
-	#if defined(OPTION_BUILD_PLUGINS_JSM)
+	#if defined(OPTION_BUILD_LOADERS_JSM)
 	{
 		const char * jsm_scripts[] =
 		{
@@ -56,10 +56,10 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("jsm", jsm_scripts, sizeof(jsm_scripts) / sizeof(jsm_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JSM */
+	#endif /* OPTION_BUILD_LOADERS_JSM */
 
 	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_PLUGINS_JS)
+	#if defined(OPTION_BUILD_LOADERS_JS)
 	{
 		const char * js_scripts[] =
 		{
@@ -68,10 +68,10 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("js", js_scripts, sizeof(js_scripts) / sizeof(js_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JS */
+	#endif /* OPTION_BUILD_LOADERS_JS */
 
 	/* Mock */
-	#if defined(OPTION_BUILD_PLUGINS_MOCK)
+	#if defined(OPTION_BUILD_LOADERS_MOCK)
 	{
 		const char * mock_scripts[] =
 		{
@@ -80,10 +80,10 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_MOCK */
+	#endif /* OPTION_BUILD_LOADERS_MOCK */
 
 	/* C# Netcore */
-	#if defined(OPTION_BUILD_PLUGINS_CS)
+	#if defined(OPTION_BUILD_LOADERS_CS)
 	{
 		const char * cs_scripts[] =
 		{
@@ -92,10 +92,10 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("cs", cs_scripts, sizeof(cs_scripts) / sizeof(cs_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_CS */
+	#endif /* OPTION_BUILD_LOADERS_CS */
 
 	/* C */
-	#if defined(OPTION_BUILD_PLUGINS_C)
+	#if defined(OPTION_BUILD_LOADERS_C)
 	{
 		const char * c_scripts[] =
 		{
@@ -104,7 +104,7 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_C */
+	#endif /* OPTION_BUILD_LOADERS_C */
 
 	/* Print inspect information */
 	{

@@ -1,5 +1,5 @@
-# Check if this plugin is enabled
-if(NOT OPTION_BUILD_PLUGINS OR NOT OPTION_BUILD_PLUGINS_NODE)
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE)
 	return()
 endif()
 

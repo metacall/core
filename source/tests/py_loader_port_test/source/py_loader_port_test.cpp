@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class py_loader_port_test : public testing::Test
 {
@@ -41,7 +41,7 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 	}
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		const char * rb_scripts[] =
 		{
@@ -78,10 +78,10 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -108,7 +108,7 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

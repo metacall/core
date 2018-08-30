@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_map_test : public testing::Test
 {
@@ -28,7 +28,7 @@ TEST_F(metacall_map_test, DefaultConstructor)
 	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -92,7 +92,7 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	metacall_allocator_destroy(allocator);
 

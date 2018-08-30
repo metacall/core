@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 #include <memory/memory.h>
 
@@ -31,7 +31,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 	ASSERT_NE((memory_allocator) NULL, (memory_allocator) allocator);
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const long seven_multiples_limit = 10;
 
@@ -170,10 +170,10 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		void * ret = NULL;
 
@@ -197,7 +197,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	memory_allocator_destroy(allocator);
 

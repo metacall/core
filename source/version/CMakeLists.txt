@@ -45,15 +45,15 @@ set(source_path  "${CMAKE_BINARY_DIR}/source/${META_PROJECT_NAME}/source")
 # Generate version-header
 string(TOUPPER ${META_PROJECT_NAME} META_PROJECT_NAME_UPPER)
 
-configure_file(${template_include_path}/version.h.in ${include_path}/${META_PROJECT_NAME}-version.h)
-configure_file(${template_source_path}/version.c.in ${source_path}/${META_PROJECT_NAME}-version.c)
+configure_file(${template_include_path}/version.h.in ${include_path}/${META_PROJECT_NAME}_version.h)
+configure_file(${template_source_path}/version.c.in ${source_path}/${META_PROJECT_NAME}_version.c)
 
 set(headers
-	${include_path}/${META_PROJECT_NAME}-version.h
+	${include_path}/${META_PROJECT_NAME}_version.h
 )
 
 set(sources
-	${source_path}/${META_PROJECT_NAME}-version.c
+	${source_path}/${META_PROJECT_NAME}_version.c
 )
 
 # Group source files

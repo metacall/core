@@ -3,7 +3,7 @@
 #
 
 # Check if distributable libs are enabled
-if(NOT BUILD_DISTRIBUTABLE_LIBS OR NOT OPTION_BUILD_PLUGINS_PY)
+if(NOT BUILD_DISTRIBUTABLE_LIBS OR NOT OPTION_BUILD_LOADERS_PY)
 	return()
 endif()
 

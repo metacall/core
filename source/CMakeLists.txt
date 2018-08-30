@@ -2,14 +2,11 @@
 # Configuration for all sub-projects
 #
 
-# Generate plugin-header
-configure_file(plugins/plugins.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}-plugins.h)
-
 # Export output script directory
 set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/" CACHE PATH "MetaCall scripts path")
 
-# Export output plugin directory
-set(LOADER_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall plugins path")
+# Export output loader plugin directory
+set(LOADER_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall loaders path")
 
 # Export output configuration directory
 set(CONFIGURATION_DIR "${PROJECT_BINARY_DIR}/configurations" CACHE PATH "MetaCall configuration directory")
@@ -80,9 +77,9 @@ add_subdirectory(tests)
 set(IDE_FOLDER "Examples")
 add_subdirectory(examples)
 
-# Plugins
-set(IDE_FOLDER "Plugins")
-add_subdirectory(plugins)
+# Loaders
+set(IDE_FOLDER "Loaders")
+add_subdirectory(loaders)
 
 # Scripts
 set(IDE_FOLDER "Scripts")

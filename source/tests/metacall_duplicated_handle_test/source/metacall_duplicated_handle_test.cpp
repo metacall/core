@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_duplicated_handle_test : public testing::Test
 {
@@ -23,7 +23,7 @@ TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -34,7 +34,7 @@ TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
 
 		EXPECT_NE((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

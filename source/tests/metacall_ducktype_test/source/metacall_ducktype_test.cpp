@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_ducktype_test : public testing::Test
 {
@@ -24,7 +24,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -197,10 +197,10 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Ruby */
-	#if defined(OPTION_BUILD_PLUGINS_RB)
+	#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		const char * rb_scripts[] =
 		{
@@ -278,10 +278,10 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_RB */
+	#endif /* OPTION_BUILD_LOADERS_RB */
 
 	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_PLUGINS_JS)
+	#if defined(OPTION_BUILD_LOADERS_JS)
 	{
 		const char * js_scripts[] =
 		{
@@ -370,7 +370,7 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_JS */
+	#endif /* OPTION_BUILD_LOADERS_JS */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

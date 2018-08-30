@@ -9,7 +9,7 @@
 #include <gmock/gmock.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 #include <reflect/reflect_value_type.h>
 #include <reflect/reflect_value_type_cast.h>
@@ -34,7 +34,7 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
-	#if defined(OPTION_BUILD_PLUGINS_PY)
+	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char * py_scripts[] =
 		{
@@ -108,7 +108,7 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 		value_destroy(args[0]);
 		value_destroy(args[1]);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_PY */
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_loaders.h>
 
 class metacall_node_test : public testing::Test
 {
@@ -24,7 +24,7 @@ TEST_F(metacall_node_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* NodeJS */
-	#if defined(OPTION_BUILD_PLUGINS_NODE)
+	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char * node_scripts[] =
 		{
@@ -48,7 +48,7 @@ TEST_F(metacall_node_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_PLUGINS_NODE */
+	#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{

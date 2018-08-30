@@ -8,8 +8,8 @@
 
  /* -- Headers -- */
 
-#include <metacall/metacall-version.h>
-#include <metacall/metacall-plugins.h>
+#include <metacall/metacall_version.h>
+#include <metacall/metacall_loaders.h>
 #include <metacall/metacall.h>
 
 #include <loader/loader.h>

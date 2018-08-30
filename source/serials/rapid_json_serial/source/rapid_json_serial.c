@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <rapid_json_serial/rapid_json_serial.h>
 #include <rapid_json_serial/rapid_json_serial_impl.h>

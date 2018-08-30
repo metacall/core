@@ -64,7 +64,7 @@ option(OPTION_SELF_CONTAINED	"Create a self-contained install with all dependenc
 option(OPTION_BUILD_TESTS		"Build tests."												ON)
 option(OPTION_BUILD_DOCS		"Build documentation."										OFF)
 option(OPTION_BUILD_EXAMPLES	"Build examples."											ON)
-option(OPTION_BUILD_PLUGINS		"Build plugins."											ON)
+option(OPTION_BUILD_LOADERS		"Build loaders."											ON)
 option(OPTION_BUILD_SCRIPTS		"Build scripts."											ON)
 option(OPTION_BUILD_PORTS		"Build ports."												OFF)
 option(OPTION_BUILD_SERIALS		"Build serials."											ON)
