@@ -28,7 +28,7 @@ extern "C" {
 *    Instance of interface implementation
 *
 *  @return
-*    Returns ointer to interface to be used by implementation
+*    Returns pointer to interface to be used by implementation
 *
 */
 RAPID_JSON_SERIAL_API serial_interface rapid_json_serial_impl_interface_singleton(void);

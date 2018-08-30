@@ -19,7 +19,7 @@
 
 #include <sstream>
 
-/* Forward Declarations -- */
+/* -- Forward Declarations -- */
 
 class MemoryAllocator;
 
