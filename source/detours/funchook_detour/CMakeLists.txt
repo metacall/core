@@ -1,5 +1,5 @@
 # Check if this	detour is enabled
-if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_FUNHOOK)
+if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_FUNCHOOK)
 	return()
 endif()
 
@@ -8,19 +8,47 @@ endif()
 # External dependencies
 #
 
-find_package(FunHook REQUIRED)
+# Target depends name
+set(target_depends funchook_detour_depends)
 
-if(NOT FUNHOOK_INCLUDE_DIRS)
-	message(STATUS "FunhHook libraries not found")
-	return()
+include(ExternalProject)
+
+set(FUNCHOOK_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/funchook/src/funchook)
+
+ExternalProject_Add(
+	${target_depends}
+	PREFIX funchook
+	SOURCE_DIR ${FUNCHOOK_SOURCE_DIR}
+	DOWNLOAD_COMMAND git clone --recursive https://github.com/kubo/funchook.git
+	CONFIGURE_COMMAND ${FUNCHOOK_SOURCE_DIR}/autogen.sh COMMAND ${FUNCHOOK_SOURCE_DIR}/configure
+	BUILD_COMMAND make
+	UPDATE_COMMAND ""
+	INSTALL_COMMAND "" # TODO
+	BUILD_IN_SOURCE 1
+)
+
+set(FUNCHOOK_INCLUDE_DIR ${CMAKE_CURRENT_BINARY_DIR}/funchook/include)
+set(FUNCHOOK_LIBRARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/funchook/src)
+
+if(WIN32)
+	set(FUNCHOOK_LIBRARY_PREFIX "")
+	set(FUNCHOOK_LIBRARY_SUFFIX ".dll")
+elseif(APPLE)
+	set(FUNCHOOK_LIBRARY_PREFIX "lib")
+	set(FUNCHOOK_LIBRARY_SUFFIX ".dylib")
+else()
+	set(FUNCHOOK_LIBRARY_PREFIX "lib")
+	set(FUNCHOOK_LIBRARY_SUFFIX ".so")
 endif()
+
+set(FUNCHOOK_LIBRARIES "${FUNCHOOK_LIBRARY_DIR}/${FUNCHOOK_LIBRARY_PREFIX}funchook${FUNCHOOK_LIBRARY_SUFFIX}")
 
 #
 # Library name and options
 #
 
 # Target name
-set(target funhook_detour)
+set(target funchook_detour)
 
 # Exit here if required dependencies are not met
 message(STATUS "Detour ${target}")
@@ -51,13 +79,13 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/funhook_detour.h
-	${include_path}/funhook_detour_impl.h
+	${include_path}/funchook_detour.h
+	${include_path}/funchook_detour_impl.h
 )
 
 set(sources
-	${source_path}/funhook_detour.c
-	${source_path}/funhook_detour_impl.c
+	${source_path}/funchook_detour.c
+	${source_path}/funchook_detour_impl.c
 )
 
 # Group source files
@@ -75,15 +103,15 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 include(Distributable)
 
 # Create unity build library
-set(funhook_detour_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+set(funchook_detour_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
 
-distributable_generate(${target} ${funhook_detour_unity_build}
+distributable_generate(${target} ${funchook_detour_unity_build}
 	${DETOUR_MODULE_NAMES}
 )
 
 # Build library
 add_library(${target}
-	${funhook_detour_unity_build}
+	${funchook_detour_unity_build}
 	${sources}
 	${headers}
 )
@@ -91,6 +119,7 @@ add_library(${target}
 # Add target dependencies
 add_dependencies(${target}
 	${DETOUR_MODULE_NAMES}
+	${target_depends}
 )
 
 # Create namespaced alias
@@ -146,7 +175,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
+	${FUNCHOOK_INCLUDE_DIRS} # FuncHook includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -163,6 +192,8 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
+
+	${FUNCHOOK_LIBRARIES} # FuncHook libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

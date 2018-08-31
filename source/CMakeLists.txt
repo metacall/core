@@ -15,6 +15,9 @@ set(CONFIGURATION_PATH "${CONFIGURATION_DIR}/global.json" CACHE PATH "MetaCall c
 # Export output serial plugin directory
 set(SERIAL_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall serial library path")
 
+# Export output detour plugin directory
+set(DETOUR_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall detour library path")
+
 # Add extra environment varible
 set(EXTRA_ENVIRONMENT_VARIABLES "" CACHE PATH "MetaCall extra environment variable")
 
@@ -35,10 +38,15 @@ set(TESTS_SERIAL_ENVIRONMENT_VARIABLES
 	"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
 )
 
+set(TESTS_DETOUR_ENVIRONMENT_VARIABLES
+	"DETOUR_LIBRARY_PATH=${DETOUR_LIBRARY_PATH}"
+)
+
 set(TESTS_ENVIRONMENT_VARIABLES
 	${TESTS_LOADER_ENVIRONMENT_VARIABLES}
 	${TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES}
 	${TESTS_SERIAL_ENVIRONMENT_VARIABLES}
+	${TESTS_DETOUR_ENVIRONMENT_VARIABLES}
 	${EXTRA_ENVIRONMENT_VARIABLES}
 )
 
@@ -63,6 +71,7 @@ add_subdirectory(memory)
 add_subdirectory(adt)
 add_subdirectory(filesystem)
 add_subdirectory(dynlink)
+add_subdirectory(detour)
 add_subdirectory(reflect)
 add_subdirectory(serial)
 add_subdirectory(configuration)
@@ -88,6 +97,10 @@ add_subdirectory(scripts)
 # Serials
 set(IDE_FOLDER "Serials")
 add_subdirectory(serials)
+
+# Serials
+set(IDE_FOLDER "Detours")
+add_subdirectory(detours)
 
 # Distributable
 set(IDE_FOLDER "Distributable")
@@ -135,4 +148,11 @@ if(BUILD_SHARED_LIBS)
 		install_print("normal" "\tDescription: Directory where MetaCall serial plugins are located")
 		install_print("normal" "\tInstall Location: ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
 		install_print("normal" "\tDefault Location: serials")
+endif()
+
+if(BUILD_SHARED_LIBS)
+	install_print("green" "DETOUR_LIBRARY_PATH:")
+		install_print("normal" "\tDescription: Directory where MetaCall detour plugins are located")
+		install_print("normal" "\tInstall Location: ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
+		install_print("normal" "\tDefault Location: detours")
 endif()

@@ -6,12 +6,12 @@
  *
  */
 
-#ifndef FUNHOOK_DETOUR_H
-#define FUNHOOK_DETOUR_H 1
+#ifndef FUNCHOOK_DETOUR_H
+#define FUNCHOOK_DETOUR_H 1
 
 /* -- Headers -- */
 
-#include <funhook_detour/funhook_detour_api.h>
+#include <funchook_detour/funchook_detour_api.h>
 
 #include <detour/detour_interface.h>
 
@@ -31,9 +31,9 @@ extern "C" {
 *    Returns pointer to interface to be used by implementation
 *
 */
-FUNHOOK_DETOUR_API detour_interface funhook_detour_impl_interface_singleton(void);
+FUNCHOOK_DETOUR_API detour_interface funchook_detour_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(funhook_detour_impl_interface_singleton);
+DYNLINK_SYMBOL_EXPORT(funchook_detour_impl_interface_singleton);
 
 /**
 *  @brief
@@ -43,12 +43,12 @@ DYNLINK_SYMBOL_EXPORT(funhook_detour_impl_interface_singleton);
 *    Static string containing module information
 *
 */
-FUNHOOK_DETOUR_API const char * funhook_detour_print_info(void);
+FUNCHOOK_DETOUR_API const char * funchook_detour_print_info(void);
 
-DYNLINK_SYMBOL_EXPORT(funhook_detour_print_info);
+DYNLINK_SYMBOL_EXPORT(funchook_detour_print_info);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* FUNHOOK_DETOUR_H */
+#endif /* FUNCHOOK_DETOUR_H */

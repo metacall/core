@@ -4,7 +4,7 @@ if(NOT OPTION_BUILD_DETOURS)
 endif()
 
 # Detour options
-option(OPTION_BUILD_DETOURS_FUNHOOK "FunHook library detour." ON)
+option(OPTION_BUILD_DETOURS_FUNCHOOK "FuncHook library detour." ON)
 
 # Define detour modules
 set(DETOUR_MODULE_NAMES
@@ -20,4 +20,4 @@ set(DETOUR_MODULE_NAMES
 )
 
 # Detour packages
-add_subdirectory(funhook_detour) # FunHook library
+add_subdirectory(funchook_detour) # FuncHook library

@@ -68,6 +68,7 @@ option(OPTION_BUILD_LOADERS		"Build loaders."											ON)
 option(OPTION_BUILD_SCRIPTS		"Build scripts."											ON)
 option(OPTION_BUILD_PORTS		"Build ports."												OFF)
 option(OPTION_BUILD_SERIALS		"Build serials."											ON)
+option(OPTION_BUILD_DETOURS		"Build detours."											ON)
 
 #
 # Declare project
