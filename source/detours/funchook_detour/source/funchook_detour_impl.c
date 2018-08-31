@@ -35,7 +35,7 @@ detour_impl_handle funchook_detour_impl_initialize()
 
 	detour_impl->funchook = funchook_create();
 
-	if (funchook == NULL)
+	if (detour_impl->funchook == NULL)
 	{
 		free(detour_impl);
 
@@ -47,14 +47,16 @@ detour_impl_handle funchook_detour_impl_initialize()
 
 int funchook_detour_impl_install(detour_impl_handle handle, void ** target, void * hook)
 {
-	if (handle != NULL && handle->funchook != NULL && target != NULL && hook != NULL)
+	detour_impl_funchook handle_impl = handle;
+
+	if (handle_impl != NULL && handle_impl->funchook != NULL && target != NULL && hook != NULL)
 	{
-		if (funchook_prepare(handle->funchook, target, hook) != FUNCHOOK_ERROR_SUCCESS)
+		if (funchook_prepare(handle_impl->funchook, target, hook) != FUNCHOOK_ERROR_SUCCESS)
 		{
 			return 1;
 		}
 
-		if (funchook_install(handle->funchook, 0) != FUNCHOOK_ERROR_SUCCESS)
+		if (funchook_install(handle_impl->funchook, 0) != FUNCHOOK_ERROR_SUCCESS)
 		{
 			return 1;
 		}
@@ -67,9 +69,11 @@ int funchook_detour_impl_install(detour_impl_handle handle, void ** target, void
 
 int funchook_detour_impl_uninstall(detour_impl_handle handle)
 {
-	if (handle != NULL && handle->funchook != NULL)
+	detour_impl_funchook handle_impl = handle;
+
+	if (handle_impl != NULL && handle_impl->funchook != NULL)
 	{
-		return !(funchook_uninstall(handle->funchook, 0) == FUNCHOOK_ERROR_SUCCESS);
+		return !(funchook_uninstall(handle_impl->funchook, 0) == FUNCHOOK_ERROR_SUCCESS);
 	}
 
 	return 1;
@@ -77,19 +81,21 @@ int funchook_detour_impl_uninstall(detour_impl_handle handle)
 
 int funchook_detour_impl_destroy(detour_impl_handle handle)
 {
+	detour_impl_funchook handle_impl = handle;
+
 	int result = FUNCHOOK_ERROR_SUCCESS;
 
-	if (handle == NULL)
+	if (handle_impl == NULL)
 	{
 		return 0;
 	}
 
-	if (handle->funchook != NULL)
+	if (handle_impl->funchook != NULL)
 	{
-		result = funchook_destroy(handle->funchook);
+		result = funchook_destroy(handle_impl->funchook);
 	}
 
-	free(handle);
+	free(handle_impl);
 
 	return !(result == FUNCHOOK_ERROR_SUCCESS);
 }
