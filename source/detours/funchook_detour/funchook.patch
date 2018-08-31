@@ -1,0 +1,13 @@
+diff --git a/src/funchook_io.c b/src/funchook_io.c
+index 66cd2e8..3d272d7 100644
+--- a/src/funchook_io.c
++++ b/src/funchook_io.c
+@@ -30,6 +30,8 @@
+  */
+ #if defined __linux
+ #define _GNU_SOURCE
++#include <sys/types.h>
++#include <unistd.h>
+ #endif
+ #include <string.h>
+ #include <errno.h>
