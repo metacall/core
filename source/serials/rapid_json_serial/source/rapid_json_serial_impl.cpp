@@ -152,7 +152,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 	{
 		char str[1];
 
-		size_t length = 1;
+		rapidjson::SizeType length = 1;
 
 		str[0] = value_to_char(v);
 
@@ -198,7 +198,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 
 		size_t size = value_type_size(v);
 
-		size_t length = size > 0 ? size - 1 : 0;
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
 
 		json_v->SetString(str, length);
 	}
@@ -281,7 +281,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 
 		std::string s = ostream.str();
 
-		json_v->SetString(s.c_str(), s.length());
+		json_v->SetString(s.c_str(), (rapidjson::SizeType)s.length());
 	}
 	else if (id == TYPE_NULL)
 	{
