@@ -8,7 +8,9 @@ if(NOT OPTION_BUILD_TESTS)
 endif()
 
 # DISABLE CMP0037: Target names should not be reserved and should match a validity pattern.
-set_policy(CMP0037 OLD)
+if("${CMAKE_VERSION}" VERSION_LESS "3.11" AND POLICY CMP0037)
+	set_policy(CMP0037 OLD)
+endif()
 
 # Build gmock
 set(gmock_build_tests			OFF CACHE BOOL "")
