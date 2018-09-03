@@ -15,17 +15,27 @@ include(ExternalProject)
 
 set(FUNCHOOK_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/funchook/src/funchook)
 
+if(WIN32)
+	set(FUNCHOOK_BUILD_COMMAND nmake)
+	set(FUNCHOOK_PATCH_COMMAND)
+else()
+	set(FUNCHOOK_BUILD_COMMAND make)
+	set(FUNCHOOK_PATCH_COMMAND patch ${FUNCHOOK_SOURCE_DIR}/src/funchook_io.c < ${CMAKE_CURRENT_SOURCE_DIR}/funchook.patch)
+endif()
+
 ExternalProject_Add(
 	${target_depends}
 	PREFIX funchook
 	SOURCE_DIR ${FUNCHOOK_SOURCE_DIR}
 	DOWNLOAD_COMMAND git clone --recursive https://github.com/kubo/funchook.git
 	CONFIGURE_COMMAND ${FUNCHOOK_SOURCE_DIR}/autogen.sh COMMAND ${FUNCHOOK_SOURCE_DIR}/configure
-	BUILD_COMMAND make
+	BUILD_COMMAND ${FUNCHOOK_BUILD_COMMAND}
 	UPDATE_COMMAND ""
-	PATCH_COMMAND patch ${FUNCHOOK_SOURCE_DIR}/src/funchook_io.c < ${CMAKE_CURRENT_SOURCE_DIR}/funchook.patch
+	PATCH_COMMAND ${FUNCHOOK_PATCH_COMMAND}
 	INSTALL_COMMAND "" # TODO
 	BUILD_IN_SOURCE 1
+	LOG_DOWNLOAD 1
+	LOG_BUILD 1
 )
 
 set(FUNCHOOK_INCLUDE_DIR ${FUNCHOOK_SOURCE_DIR}/include)
