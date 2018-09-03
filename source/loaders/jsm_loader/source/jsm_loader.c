@@ -6,7 +6,7 @@
  *
  */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <jsm_loader/jsm_loader.h>
 #include <jsm_loader/jsm_loader_impl.h>

@@ -6,7 +6,7 @@
  *
  */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <rb_loader/rb_loader.h>
 #include <rb_loader/rb_loader_impl.h>

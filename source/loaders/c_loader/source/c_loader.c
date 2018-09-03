@@ -6,7 +6,7 @@
  *
  */
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include <c_loader/c_loader.h>
 #include <c_loader/c_loader_impl.h>

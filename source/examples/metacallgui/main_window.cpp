@@ -3,7 +3,7 @@
 
 #include <QMessageBox>
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 #include "ui_main_window.h"
 

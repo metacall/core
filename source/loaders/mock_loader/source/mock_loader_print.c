@@ -8,7 +8,7 @@
 
 #include <mock_loader/mock_loader_print.h>
 
-#include <metacall/metacall-version.h>
+#include <metacall/metacall_version.h>
 
 const char * mock_loader_print_info()
 {
