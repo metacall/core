@@ -12,6 +12,7 @@ ROOT_DIR=$(pwd)
 RUN_AS_ROOT=0
 SUDO_CMD=sudo
 CLEAR_RAPIDJSON=0
+CLEAR_FUNCHOOK=0
 CLEAR_PYTHON=0
 CLEAR_RUBY=0
 CLEAR_NETCORE=0
@@ -34,6 +35,11 @@ sub_rapidjson(){
 	echo "clean rapidJSON"
 	$SUDO_CMD rm -rf /usr/local/lib/cmake
 	$SUDO_CMD rm -rf /usr/local/include/rapidjson
+}
+
+# FuncHook
+sub_funchook(){
+	echo "clean funchook"
 }
 
 # Python
@@ -85,6 +91,9 @@ sub_clear(){
 	if [ $CLEAR_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
+	if [ $CLEAR_FUNCHOOK = 1 ]; then
+		sub_funchook
+	fi
 	if [ $CLEAR_PYTHON = 1 ]; then
 		sub_python
 	fi
@@ -124,6 +133,10 @@ sub_options(){
 			echo "rapidjson selected"
 			CLEAR_RAPIDJSON=1
 		fi
+		if [ "$var" = 'funchook' ]; then
+			echo "funchook selected"
+			CLEAR_FUNCHOOK=1
+		fi
 		if [ "$var" = 'python' ]; then
 			echo "python selected"
 			CLEAR_PYTHON=1
@@ -158,6 +171,7 @@ sub_help() {
 	echo "	root"
 	echo "	base"
 	echo "	rapidjson"
+	echo "	funchook"
 	echo "	python"
 	echo "	ruby"
 	echo "	netcore"

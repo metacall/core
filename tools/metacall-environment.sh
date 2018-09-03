@@ -15,6 +15,7 @@ INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
 INSTALL_RAPIDJSON=0
+INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
 INSTALL_V8=0
 INSTALL_V8REPO=0
@@ -87,6 +88,13 @@ sub_rapidjson(){
 	make
 	$SUDO_CMD make install
 	cd ../.. && rm -rf ./rapidjson
+}
+
+# FuncHook
+sub_funchook(){
+	echo "configure funchook"
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get -y install autoconf
 }
 
 # NetCore
@@ -225,6 +233,9 @@ sub_install(){
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
+	if [ $INSTALL_FUNCHOOK = 1 ]; then
+		sub_funchook
+	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
 	fi
@@ -274,6 +285,10 @@ sub_options(){
 		if [ "$var" = 'rapidjson' ]; then
 			echo "rapidjson selected"
 			INSTALL_RAPIDJSON=1
+		fi
+		if [ "$var" = 'funchook' ]; then
+			echo "funchook selected"
+			INSTALL_FUNCHOOK=1
 		fi
 		if [ "$var" = 'v8' ] || [ "$var" = 'v8rep54' ]; then
 			echo "v8 selected"
@@ -325,6 +340,7 @@ sub_help() {
 	echo "	ruby"
 	echo "	netcore"
 	echo "	rapidjson"
+	echo "	funchook"
 	echo "	v8"
 	echo "	v8rep51"
 	echo "	v8rep54"

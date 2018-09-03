@@ -15,6 +15,8 @@ include(ExternalProject)
 
 set(FUNCHOOK_SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/funchook/src/funchook)
 
+# TODO: Windows
+
 if(WIN32)
 	set(FUNCHOOK_BUILD_COMMAND nmake)
 	set(FUNCHOOK_PATCH_COMMAND)
@@ -27,11 +29,7 @@ ExternalProject_Add(
 	${target_depends}
 	PREFIX funchook
 	SOURCE_DIR ${FUNCHOOK_SOURCE_DIR}
-	GIT_REPOSITORY https://github.com/kubo/funchook.git
-	GIT_TAG master
-	GIT_REMOTE_NAME origin
-	GIT_SUBMODULES distorm
-	GIT_PROGRESS 1
+	DOWNLOAD_COMMAND git clone --recursive https://github.com/kubo/funchook.git
 	CONFIGURE_COMMAND ${FUNCHOOK_SOURCE_DIR}/autogen.sh COMMAND ${FUNCHOOK_SOURCE_DIR}/configure
 	BUILD_COMMAND ${FUNCHOOK_BUILD_COMMAND}
 	UPDATE_COMMAND ""

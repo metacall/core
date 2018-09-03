@@ -45,7 +45,7 @@ RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh
 
 # Install MetaCall and runtimes then build
 RUN apt-get update \
-	&& $METACALL_TOOLS_PATH/metacall-environment.sh root base python ruby netcore v8rep51 nodejs rapidjson
+	&& $METACALL_TOOLS_PATH/metacall-environment.sh root base python ruby netcore v8rep51 nodejs rapidjson funchook
 
 # Delete MetaCall tools path
 RUN rm -rf $METACALL_PATH
