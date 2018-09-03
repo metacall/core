@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include <${META_PROJECT_NAME}/${META_PROJECT_NAME}-version.h>
+#include <${META_PROJECT_NAME}/${META_PROJECT_NAME}_version.h>
 
 /* -- Methods -- */
 
