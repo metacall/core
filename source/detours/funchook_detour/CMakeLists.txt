@@ -27,7 +27,11 @@ ExternalProject_Add(
 	${target_depends}
 	PREFIX funchook
 	SOURCE_DIR ${FUNCHOOK_SOURCE_DIR}
-	DOWNLOAD_COMMAND git clone --recursive https://github.com/kubo/funchook.git
+	GIT_REPOSITORY https://github.com/kubo/funchook.git
+	GIT_TAG master
+	GIT_REMOTE_NAME origin
+	GIT_SUBMODULES distorm
+	GIT_PROGRESS 1
 	CONFIGURE_COMMAND ${FUNCHOOK_SOURCE_DIR}/autogen.sh COMMAND ${FUNCHOOK_SOURCE_DIR}/configure
 	BUILD_COMMAND ${FUNCHOOK_BUILD_COMMAND}
 	UPDATE_COMMAND ""
