@@ -155,9 +155,11 @@ void * detour_trampoline(detour_handle handle)
 	return handle->target;
 }
 
-detour_handle detour_install(detour d, void ** target, void * hook)
+detour_handle detour_install(detour d, void * target, void * hook)
 {
 	detour_handle handle;
+
+	void ** target_ptr;
 
 	if (d == NULL || target == NULL || hook == NULL)
 	{
@@ -175,7 +177,9 @@ detour_handle detour_install(detour d, void ** target, void * hook)
 		return NULL;
 	}
 
-	handle->impl = detour_impl_install(d->impl, target, hook);
+	target_ptr = &target;
+
+	handle->impl = detour_impl_install(d->impl, target_ptr, hook);
 
 	if (handle->impl == NULL)
 	{
@@ -184,7 +188,7 @@ detour_handle detour_install(detour d, void ** target, void * hook)
 		return NULL;
 	}
 
-	handle->target = *target;
+	handle->target = *target_ptr;
 
 	return handle;
 }

@@ -97,7 +97,7 @@ DETOUR_API void * detour_trampoline(detour_handle handle);
 *    Pointer to the detour handle
 *
 */
-DETOUR_API detour_handle detour_install(detour d, void ** target, void * hook);
+DETOUR_API detour_handle detour_install(detour d, void * target, void * hook);
 
 /**
 *  @brief
