@@ -1,6 +1,3 @@
-# Generate loaders plugin header
-configure_file(loaders.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}_loaders.h)
-
 # Check if loaders are enabled
 if(NOT OPTION_BUILD_LOADERS)
 	return()

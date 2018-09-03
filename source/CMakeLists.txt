@@ -22,6 +22,13 @@ set(DETOUR_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall detour lib
 set(EXTRA_ENVIRONMENT_VARIABLES "" CACHE PATH "MetaCall extra environment variable")
 
 #
+# Configure templates
+#
+
+# Generate loaders plugin header
+configure_file(loaders/loaders.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}_loaders.h)
+
+#
 # Configure variables
 #
 
