@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Download repository if it does not exist
+if [ ! -d @FUNCHOOK_SOURCE_DIR@/.git ]
+then
+	if [ -d @FUNCHOOK_SOURCE_DIR@ ]
+	then
+		rm -rf @FUNCHOOK_SOURCE_DIR@
+	fi
+	@GIT_EXECUTABLE@ clone --recursive https://github.com/kubo/funchook.git @FUNCHOOK_SOURCE_DIR@
+fi
