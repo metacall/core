@@ -1,0 +1,4 @@
+@echo on
+
+rem Copy build libraries
+xcopy /e /v /Y "@FUNCHOOK_SOURCE_DIR@/win32/@CMAKE_VS_PLATFORM_NAME@/@CMAKE_BUILD_TYPE@" "@CMAKE_BINARY_DIR@/@CMAKE_BUILD_TYPE@"

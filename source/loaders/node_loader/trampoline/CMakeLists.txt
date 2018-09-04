@@ -55,4 +55,5 @@ set_target_properties(${target}
 install(FILES
 	${LOADER_LIBRARY_PATH}/trampoline.node
 	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
 )
