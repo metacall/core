@@ -44,6 +44,7 @@ ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 	LOADER_SCRIPT_PATH=$METACALL_PATH/build/scripts \
 	CONFIGURATION_PATH=$METACALL_PATH/build/configurations/global.json \
 	SERIAL_LIBRARY_PATH=$METACALL_PATH/build \
+	DETOUR_LIBRARY_PATH=$METACALL_PATH/build \
 	DEBIAN_FRONTEND=noninteractive
 
 # Define working directory
