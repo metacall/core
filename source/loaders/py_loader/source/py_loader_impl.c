@@ -166,6 +166,10 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 			return TYPE_STRING;
 		}
 	#endif
+	else if (result == Py_None)
+	{
+		return TYPE_NULL;
+	}
 
 	return TYPE_INVALID;
 }
@@ -355,6 +359,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		else if (id == TYPE_PTR)
 		{
 			/* TODO */
+		}
+		else if (id == TYPE_NULL)
+		{
+			/* TODO: MetaCall null is NULL C type or nil value ? */
+			v = NULL;
 		}
 		else
 		{
