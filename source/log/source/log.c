@@ -125,6 +125,13 @@ int log_write_impl(const char * name, const size_t line, const char * func, cons
 		return 1;
 	}
 
+	#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		if (level == LOG_LEVEL_DEBUG)
+		{
+			return 0;
+		}
+	#endif
+
 	record_ctor.line = line;
 	record_ctor.func = func;
 	record_ctor.file = file;
@@ -149,6 +156,13 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 	{
 		return 1;
 	}
+
+	#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		if (level == LOG_LEVEL_DEBUG)
+		{
+			return 0;
+		}
+	#endif
 
 	va_start(variable_args, message);
 
