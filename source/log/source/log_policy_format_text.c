@@ -18,7 +18,11 @@
 
 /* -- Definitions -- */
 
-#define LOG_POLICY_FORMAT_TEXT_STR "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+#	define LOG_POLICY_FORMAT_TEXT_STR "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
+#else
+#	define LOG_POLICY_FORMAT_TEXT_STR "[%.19s] #%" PRIuS " @%s : "
+#endif
 
 /* -- Forward Declarations -- */
 
@@ -106,9 +110,11 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 	result = snprintf(buffer, size, format,
 		ctime(log_record_time(record)),
 		log_record_thread_id(record),
-		log_record_line(record),
-		log_record_func(record),
-		log_record_file(record),
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+			log_record_line(record),
+			log_record_func(record),
+			log_record_file(record),
+		#endif
 		log_level_name(log_record_level(record)),
 		log_record_message(record));
 
@@ -140,9 +146,11 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 	header_size = snprintf(buffer, size, header_format,
 		ctime(log_record_time(record)),
 		log_record_thread_id(record),
-		log_record_line(record),
-		log_record_func(record),
-		log_record_file(record),
+		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+			log_record_line(record),
+			log_record_func(record),
+			log_record_file(record),
+		#endif
 		log_level_name(log_record_level(record)));
 
 	if (header_size <= 0)
