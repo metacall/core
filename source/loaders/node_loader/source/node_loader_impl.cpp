@@ -1673,11 +1673,16 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 void node_loader_impl_async_destroy(uv_async_t * async)
 {
-	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(async->data));
+	loader_impl_node node_impl;
 
 	uint32_t ref_count = 0;
 
 	napi_status status;
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&node_impl_mutex);
+
+	node_impl = *(static_cast<loader_impl_node *>(async->data));
 
 	/* Call destroy function */
 	{
@@ -1799,8 +1804,6 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	}
 
 	/* Signal destroy condition */
-	uv_mutex_lock(&node_impl_mutex);
-
 	uv_cond_signal(&node_impl_cond);
 
 	uv_mutex_unlock(&node_impl_mutex);
