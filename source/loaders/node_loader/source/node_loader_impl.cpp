@@ -633,19 +633,34 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 {
 	loader_impl_async_func_call async_data = static_cast<loader_impl_async_func_call>(async->data);
 
-	napi_env env = async_data->node_impl->env;
+	napi_env env;
 
 	napi_handle_scope handle_scope;
 
-	signature s = function_signature(async_data->func);
+	signature s;
 
-	const size_t args_size = signature_count(s);
+	size_t args_size;
 
-	void ** args = static_cast<void **>(async_data->args);
+	void ** args;
 
-	loader_impl_node_function node_func = async_data->node_func;
+	loader_impl_node_function node_func;
 
 	size_t args_count;
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
+
+	/* Get function data */
+	s = function_signature(async_data->func);
+
+	args_size = signature_count(s);
+
+	args = static_cast<void **>(async_data->args);
+
+	node_func = async_data->node_func;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -686,8 +701,6 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal function call condition */
-	uv_mutex_lock(&async_data->node_impl->mutex);
-
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
@@ -697,11 +710,17 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 {
 	loader_impl_async_func_destroy async_data = static_cast<loader_impl_async_func_destroy>(async->data);
 
-	napi_env env = async_data->node_impl->env;
+	napi_env env;
 
 	uint32_t ref_count = 0;
 
 	napi_handle_scope handle_scope;
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -723,8 +742,6 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal function destroy condition */
-	uv_mutex_lock(&async_data->node_impl->mutex);
-
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
@@ -734,7 +751,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 {
 	loader_impl_async_load_from_file async_data = static_cast<loader_impl_async_load_from_file>(async->data);
 
-	napi_env env = async_data->node_impl->env;
+	napi_env env;
 	napi_value function_table_object;
 
 	const char load_from_file_str[] = "load_from_file";
@@ -744,8 +761,14 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
+
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	assert(status == napi_ok);
 
@@ -831,8 +854,6 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal load from file condition */
-	uv_mutex_lock(&async_data->node_impl->mutex);
-
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
@@ -842,7 +863,7 @@ void node_loader_impl_async_clear(uv_async_t * async)
 {
 	loader_impl_async_clear async_data = static_cast<loader_impl_async_clear>(async->data);
 
-	napi_env env = async_data->node_impl->env;
+	napi_env env;
 	napi_value function_table_object;
 
 	const char clear_str[] = "clear";
@@ -854,8 +875,14 @@ void node_loader_impl_async_clear(uv_async_t * async)
 
 	uint32_t ref_count = 0;
 
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
+
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	assert(status == napi_ok);
 	/* Get function table object from reference */
@@ -924,8 +951,6 @@ void node_loader_impl_async_clear(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal clear condition */
-	uv_mutex_lock(&async_data->node_impl->mutex);
-
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
@@ -935,7 +960,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 {
 	loader_impl_async_discover async_data = static_cast<loader_impl_async_discover>(async->data);
 
-	napi_env env = async_data->node_impl->env;
+	napi_env env;
 	napi_value function_table_object;
 
 	const char discover_str[] = "discover";
@@ -945,8 +970,14 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
+
 	/* Create scope */
-	napi_status status = napi_open_handle_scope(async_data->node_impl->env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	assert(status == napi_ok);
 
@@ -1152,8 +1183,6 @@ void node_loader_impl_async_discover(uv_async_t * async)
 	assert(status == napi_ok);
 
 	/* Signal discover condition */
-	uv_mutex_lock(&async_data->node_impl->mutex);
-
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
