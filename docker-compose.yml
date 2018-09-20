@@ -5,6 +5,10 @@
 
 version: "3"
 
+# TODO: Implement multiple image building allowing V8 at the same too
+# V8 and NodeJS cannot run in the same instance because two V8 of different
+# versions launched in the same process does not work well
+
 services:
   deps:
     image: metacall/core_deps
@@ -16,22 +20,23 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BASE_IMAGE: ubuntu:xenial
+        METACALL_INSTALL_OPTIONS: root base nodejs python ruby netcore nodejs rapidjson funchook # v8rep51
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
 
-  # deps_node:
-  #   image: metacall/core_deps_node
-  #   container_name: metacall_core_deps_node
-  #   build:
-  #     context: .
-  #     dockerfile: tools/node/Dockerfile
-  #     args:
-  #       METACALL_PATH: $METACALL_PATH
-  #       METACALL_BUILD_TYPE_NAME: Release
-  #   environment:
-  #     DEBIAN_FRONTEND: noninteractive
+  deps_node:
+    image: metacall/core_deps_node
+    container_name: metacall_core_deps_node
+    build:
+      context: .
+      dockerfile: tools/node/Dockerfile
+      args:
+        METACALL_PATH: $METACALL_PATH
+        METACALL_BUILD_TYPE_NAME: Release
+    environment:
+      DEBIAN_FRONTEND: noninteractive
 
   core:
     image: metacall/core
@@ -42,7 +47,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: release
-        METACALL_BUILD_OPTIONS: root python ruby netcore v8 distributable tests scripts dynamic install # nodejs
+        METACALL_BUILD_OPTIONS: root python ruby netcore nodejs distributable tests scripts dynamic install # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

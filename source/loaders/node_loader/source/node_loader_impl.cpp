@@ -1204,7 +1204,12 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr)
 {
-	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
+	loader_impl_node node_impl;
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&node_impl_mutex);
+
+	node_impl = static_cast<loader_impl_node>(node_impl_ptr);
 
 	napi_env env = static_cast<napi_env>(env_ptr);
 	napi_value function_table_object = static_cast<napi_value>(function_table_object_ptr);
@@ -1285,13 +1290,23 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 	}
 	#endif
 
+	/* Signal start condition */
+	uv_cond_signal(&node_impl_cond);
+
+	uv_mutex_unlock(&node_impl_mutex);
+
 	/* TODO: Return */
 	return NULL;
 }
 
 void node_loader_impl_thread(void * data)
 {
-	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
+	loader_impl_node node_impl;
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&node_impl_mutex);
+
+	node_impl = *(static_cast<loader_impl_node *>(data));
 
 	/* TODO: Reimplement from here to ... */
 
@@ -1463,11 +1478,7 @@ void node_loader_impl_thread(void * data)
 	/* Initialize destroy signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
-	/* Signal start condition */
-	uv_mutex_lock(&node_impl_mutex);
-
-	uv_cond_signal(&node_impl_cond);
-
+	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl_mutex);
 
 	/* Start NodeJS runtime */
@@ -1501,15 +1512,30 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	stderr_copy = dup(STDERR_FILENO);
 
 	/* Initialize syncronization */
-	assert(uv_cond_init(&node_impl_cond) == 0);
+	if (uv_cond_init(&node_impl_cond) != 0)
+	{
+		delete node_impl;
 
-	assert(uv_mutex_init(&node_impl_mutex) == 0);
+		return NULL;
+	}
+
+	if (uv_mutex_init(&node_impl_mutex) != 0)
+	{
+		delete node_impl;
+
+		return NULL;
+	}
 
 	/* Initialize execution result */
 	node_impl->result = 1;
 
 	/* Create NodeJS thread */
-	assert(uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl) == 0);
+	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl) != 0)
+	{
+		delete node_impl;
+
+		return NULL;
+	}
 
 	/* Wait until start has been launch */
 	uv_mutex_lock(&node_impl_mutex);

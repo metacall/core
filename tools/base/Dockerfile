@@ -20,6 +20,7 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 # Arguments
 ARG METACALL_PATH
 ARG METACALL_TOOLS_PATH
+ARG METACALL_INSTALL_OPTIONS
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -45,7 +46,7 @@ RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh
 
 # Install MetaCall and runtimes then build
 RUN apt-get update \
-	&& $METACALL_TOOLS_PATH/metacall-environment.sh root base python ruby netcore v8rep51 nodejs rapidjson funchook
+	&& $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
 
 # Delete MetaCall tools path
 RUN rm -rf $METACALL_PATH
