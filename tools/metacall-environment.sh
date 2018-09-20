@@ -34,14 +34,14 @@ PROGNAME=$(basename $0)
 sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt for C build"
-	$SUDO_CMD apt-get -y install build-essential git cmake wget apt-utils
+	$SUDO_CMD apt-get -y --no-install-recommends install build-essential git cmake wget apt-utils
 }
 
 # Swig
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y install libpcre3-dev
+	$SUDO_CMD apt-get -y --no-install-recommends install libpcre3-dev
 	wget "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz?r=http%3A%2F%2Fwww.swig.org%2Fdownload.html&ts=1487810080&use_mirror=netix" -O swig.tar.gz
 	mkdir swig
 	tar -xf swig.tar.gz -C ./swig --strip-components=1
@@ -56,7 +56,7 @@ sub_swig(){
 # Python
 sub_python(){
 	echo "configure python"
-	$SUDO_CMD apt-get install -y python3 python3-dev python3-pip
+	$SUDO_CMD apt-get -y --no-install-recommends install python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
 	$SUDO_CMD pip3 install rsa
@@ -66,12 +66,12 @@ sub_python(){
 sub_ruby(){
 	echo "configure ruby"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
-	$SUDO_CMD apt-get install -y ruby2.3-dev
+	$SUDO_CMD apt-get -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
+	$SUDO_CMD apt-get -y --no-install-recommends install ruby2.3-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
-	#$SUDO_CMD apt-get install -y nodejs
+	#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 	#$SUDO_CMD gem install rails
 }
 
@@ -94,34 +94,34 @@ sub_rapidjson(){
 sub_funchook(){
 	echo "configure funchook"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y install autoconf
+	$SUDO_CMD apt-get -y --no-install-recommends install autoconf
 }
 
 # NetCore
 sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y --allow-unauthenticated install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
+	$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
 	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ xenial main" > /etc/apt/sources.list.d/dotnetdev.list'
 	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --allow-unauthenticated install libgssapi-krb5-2 libicu55 libstdc++6
-	$SUDO_CMD apt-get -y --allow-unauthenticated install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
+	$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libgssapi-krb5-2 libicu55 libstdc++6
+	$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
 }
 
 # V8 Repository
 sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y install add-apt-key
-	$SUDO_CMD apt-get -y install software-properties-common
+	$SUDO_CMD apt-get -y --no-install-recommends install add-apt-key
+	$SUDO_CMD apt-get -y --no-install-recommends install software-properties-common
 
 	# V8 5.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
 		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv851.list"
 		$SUDO_CMD sh -c "echo \"deb http://archive.ubuntu.com/ubuntu trusty main\" > /etc/apt/sources.list.d/libicu52.list"
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu52 libv8-5.1.117 libv8-5.1-dev
+		$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libicu52 libv8-5.1.117 libv8-5.1-dev
 	fi
 
 	# V8 5.4
@@ -130,7 +130,7 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --allow-unauthenticated install libicu55 libv8-5.4-dev
+		$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libicu55 libv8-5.4-dev
 		$SUDO_CMD rm libicu55_55.1-7_amd64.deb
 	fi
 
@@ -138,21 +138,21 @@ sub_v8repo(){
 	if [ $INSTALL_V8REPO52 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.2
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y install libicu55 libv8-5.2-dev
+		$SUDO_CMD apt-get -y --no-install-recommends install libicu55 libv8-5.2-dev
 	fi
 
 	# V8 5.8
 	if [ $INSTALL_V8REPO58 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.8
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y install libicu55 libv8-5.8-dev
+		$SUDO_CMD apt-get -y --no-install-recommends install libicu55 libv8-5.8-dev
 	fi
 
 	# V8 5.7
 	if [ $INSTALL_V8REPO57 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y install libicu55 libv8-5.7-dev
+		$SUDO_CMD apt-get -y --no-install-recommends install libicu55 libv8-5.7-dev
 	fi
 }
 
@@ -161,7 +161,7 @@ sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
 
-	$SUDO_CMD apt-get install -y python
+	$SUDO_CMD apt-get -y --no-install-recommends install python
 	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 	export PATH=`pwd`/depot_tools:"$PATH"
 
@@ -183,19 +183,55 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get install -y python2.7
+	$SUDO_CMD apt-get -y --no-install-recommends install python build-essential
 
-	# Install NodeJS via nodesource
-	curl -sL https://deb.nodesource.com/setup_8.x | $SUDO_CMD bash -
-	$SUDO_CMD apt-get install -y nodejs build-essential
+	# Install NodeJS from distributable (TODO: Keys not working)
+	NODE_VERSION=8.11.1
+	PACKAGE_SUFFIX=tar.xz
+
+	# for key in \
+	# 	94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
+	# 	FD3A5288F042B6850C66B31F09FE44734EB7990E \
+	# 	71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+	# 	DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
+	# 	C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+	# 	B9AE9905FFD7803F25714661B63B535A4C206CA9 \
+	# 	56730D5401028683275BD23C23EFEFE93C4CFFFE \
+	# 	77984A986EBC2AA786BC0F66B01FBB92821C587A \
+	# 	8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600; \
+	# do
+	# 	gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" \
+	# 	|| gpg --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" \
+	# 	|| gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key"
+	# done
+
+	DPKG_ARCH="$(dpkg --print-architecture)"
+
+	case "${DPKG_ARCH##*-}" in
+		amd64) ARCH='x64';;
+		ppc64el) ARCH='ppc64le';;
+		s390x) ARCH='s390x';;
+		arm64) ARCH='arm64';;
+		armhf) ARCH='armv7l';;
+		i386) ARCH='x86';;
+		*) echo "unsupported architecture ($DPKG_ARCH) for nodejs"; return 1;;
+	esac
+
+	wget --no-check-certificate "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.$PACKAGE_SUFFIX"
+	wget --no-check-certificate "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc"
+	# gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc
+	# grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c -
+	tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner
+	rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc # SHASUMS256.txt
+	$SUDO_CMD ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 	# Update npm and install node-gyp
 	npm i npm@latest -g
 	npm i node-gyp -g
 
-	# Install pkg config for icu library
-	$SUDO_CMD apt-get install -y pkg-config
-	pkg-config icu-i18n --cflags --libs
+	# # Install pkg config for icu library
+	# $SUDO_CMD apt-get -y --no-install-recommends install pkg-config
+	# pkg-config icu-i18n --cflags --libs
 }
 
 # MetaCall
