@@ -75,7 +75,7 @@ DETOUR_API int detour_impl_load(detour_impl impl, const char * path, const char 
 *    Return pointer to the detour handle on success, null otherwise
 *
 */
-DETOUR_API detour_impl_handle detour_impl_install(detour_impl impl, void ** target, void * hook);
+DETOUR_API detour_impl_handle detour_impl_install(detour_impl impl, void(**target)(void), void(*hook)(void));
 
 /**
 *  @brief

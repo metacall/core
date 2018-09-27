@@ -3,7 +3,6 @@ TODO List
 
 [CORE]
 
-	* Implement thread safety (needed by NodeJS Loader).
 	* Merge serial, detour and loader systems into a generic plugin system.
 	* Improve extension management of loaders (remove restriction of loader extension and names).
 	* Improve versioning of loader plugins and it's [interface](https://accu.org/index.php/journals/1718).
@@ -21,6 +20,7 @@ TODO List
 	* Make an automated architecture and test generation for implement all tests with a workflow (TDD) and similar semantics, and implement them.
 	* Add custom benchmarks and small utility library for supporting benchmarks, and integrate it in build process of CMake.
 	* Improve security of loaders and scripts loaded with signatures, and avoid memory injection with a driver.
+	* Implement thread safety.
 
 [LOADERS]
 

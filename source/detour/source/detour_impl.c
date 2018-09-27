@@ -151,7 +151,7 @@ int detour_impl_load(detour_impl impl, const char * path, const char * name)
 	return 0;
 }
 
-detour_impl_handle detour_impl_install(detour_impl impl, void ** target, void * hook)
+detour_impl_handle detour_impl_install(detour_impl impl, void(**target)(void), void(*hook)(void))
 {
 	detour_impl_handle handle = impl->iface->initialize();
 

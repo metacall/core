@@ -16,6 +16,7 @@
 #include <metacall/metacall_log.h>
 #include <metacall/metacall_allocator.h>
 #include <metacall/metacall_value.h>
+#include <metacall/metacall_fork.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -64,6 +65,15 @@ METACALL_API int metacall_initialize(void);
 *    Zero if success, different from zero otherwise
 */
 METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration_type initialize_config[]);
+
+/**
+*  @brief
+*    Set fork hook callback
+*
+*  @param[in] callback
+*    Callback to be called when fork detour is executed
+*/
+METACALL_API void metacall_fork(int (*callback)(metacall_pid, void *));
 
 /**
 *  @brief

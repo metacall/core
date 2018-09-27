@@ -63,7 +63,7 @@ TEST_F(detour_test, DefaultConstructor)
 	EXPECT_EQ((int) 0, (int) strcmp(name, detour_name(d)));
 
 	/* Install detour */
-	handle = detour_install(d, (void *)&target_function, (void *)&hook_function);
+	handle = detour_install(d, (void(*)(void))&target_function, (void(*)(void))&hook_function);
 
 	EXPECT_NE((detour_handle) NULL, (detour_handle) handle);
 

@@ -78,7 +78,7 @@ DETOUR_API const char * detour_name(detour d);
 *    Pointer to the trampoline function
 *
 */
-DETOUR_API void * detour_trampoline(detour_handle handle);
+DETOUR_API void (*detour_trampoline(detour_handle handle))(void);
 
 /**
 *  @brief
@@ -97,7 +97,7 @@ DETOUR_API void * detour_trampoline(detour_handle handle);
 *    Pointer to the detour handle
 *
 */
-DETOUR_API detour_handle detour_install(detour d, void * target, void * hook);
+DETOUR_API detour_handle detour_install(detour d, void(*target)(void), void(*hook)(void));
 
 /**
 *  @brief

@@ -30,7 +30,7 @@ struct detour_type
 
 struct detour_handle_type
 {
-	void * target;
+	void(*target)(void);
 	detour_impl_handle impl;
 };
 
@@ -150,16 +150,16 @@ const char * detour_name(detour d)
 	return d->name;
 }
 
-void * detour_trampoline(detour_handle handle)
+void (*detour_trampoline(detour_handle handle))(void)
 {
 	return handle->target;
 }
 
-detour_handle detour_install(detour d, void * target, void * hook)
+detour_handle detour_install(detour d, void(*target)(void), void(*hook)(void))
 {
 	detour_handle handle;
 
-	void ** target_ptr;
+	void(**target_ptr)(void);
 
 	if (d == NULL || target == NULL || hook == NULL)
 	{

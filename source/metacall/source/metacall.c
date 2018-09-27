@@ -83,6 +83,15 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
+	#ifdef METACALL_FORK_SAFE
+		if (metacall_fork_initialize() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
+	#endif
+
 	allocator = memory_allocator_std(&malloc, &realloc, &free);
 
 	if (configuration_initialize(metacall_serial(), NULL, allocator) != 0)
@@ -127,6 +136,11 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 	}
 
 	return 0;
+}
+
+void metacall_fork(int (*callback)(metacall_pid, void *))
+{
+	metacall_fork_callback(callback);
 }
 
 int metacall_is_initialized(const char * tag)
@@ -845,6 +859,15 @@ int metacall_destroy()
 	{
 		return 1;
 	}
+
+	#ifdef METACALL_FORK_SAFE
+		if (metacall_fork_destroy() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork destroyed");
+	#endif
 
 	metacall_initialize_flag = 1;
 

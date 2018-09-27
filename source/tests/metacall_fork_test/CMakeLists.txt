@@ -1,9 +1,14 @@
+# Check if detours are enabled
+if(NOT OPTION_FORK_SAFE)
+	return()
+endif()
+
 #
 # Executable name and options
 #
 
 # Target name
-set(target metacall-cast-test)
+set(target metacall-fork-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_cast_test.cpp
+	${source_path}/metacall_fork_test.cpp
 )
 
 # Group source files
@@ -136,7 +141,7 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-	PROPERTY LABELS ${target}
+	PROPERTY LABELS ${target} MEMCHECK_IGNORE
 )
 
 include(TestEnvironmentVariables)

@@ -44,6 +44,7 @@ set(headers
 	${include_path}/metacall_value.h
 	${include_path}/metacall_log.h
 	${include_path}/metacall_allocator.h
+	${include_path}/metacall_fork.h
 )
 
 set(sources
@@ -51,6 +52,7 @@ set(sources
 	${source_path}/metacall_value.c
 	${source_path}/metacall_log.c
 	${source_path}/metacall_allocator.c
+	${source_path}/metacall_fork.c
 )
 
 # Group source files
@@ -147,6 +149,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::memory
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::detour
 	${META_PROJECT_NAME}::reflect
 	${META_PROJECT_NAME}::serial
 	${META_PROJECT_NAME}::configuration
@@ -164,6 +167,8 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	$<$<BOOL:${OPTION_FORK_SAFE}>:${target_upper}_FORK_SAFE>
+	$<$<BOOL:${OPTION_THREAD_SAFE}>:${target_upper}_THREAD_SAFE>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

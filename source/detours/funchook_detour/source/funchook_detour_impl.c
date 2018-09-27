@@ -45,13 +45,15 @@ detour_impl_handle funchook_detour_impl_initialize()
 	return (detour_impl_handle)detour_impl;
 }
 
-int funchook_detour_impl_install(detour_impl_handle handle, void ** target, void * hook)
+int funchook_detour_impl_install(detour_impl_handle handle, void(**target)(void), void(*hook)(void))
 {
 	detour_impl_funchook handle_impl = handle;
 
 	if (handle_impl != NULL && handle_impl->funchook != NULL && target != NULL && hook != NULL)
 	{
-		if (funchook_prepare(handle_impl->funchook, target, hook) != FUNCHOOK_ERROR_SUCCESS)
+		void ** hook_ptr = (void **)&hook;
+
+		if (funchook_prepare(handle_impl->funchook, (void **)target, (void *)*hook_ptr) != FUNCHOOK_ERROR_SUCCESS)
 		{
 			return 1;
 		}
