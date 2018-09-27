@@ -136,6 +136,8 @@ NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
 
 	NTSTATUS result;
 
+	metacall_fork_prepare();
+
 	if (metacall_destroy() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
@@ -185,6 +187,8 @@ pid_t metacall_fork_hook()
 
 	pid_t pid;
 
+	metacall_fork_prepare();
+
 	if (metacall_destroy() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
@@ -217,7 +221,7 @@ pid_t metacall_fork_hook()
 
 int metacall_fork_initialize()
 {
-	void(*fork_func)(void) = metacall_fork_func();
+	void (*fork_func)(void) = metacall_fork_func();
 
 	if (fork_func == NULL)
 	{
@@ -233,26 +237,32 @@ int metacall_fork_initialize()
 		return 1;
 	}
 
-	metacall_detour = detour_create(metacall_fork_detour_name);
-
 	if (metacall_detour == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour creation");
+		metacall_detour = detour_create(metacall_fork_detour_name);
 
-		metacall_fork_destroy();
+		if (metacall_detour == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour creation");
 
-		return 1;
+			metacall_fork_destroy();
+
+			return 1;
+		}
 	}
-
-	metacall_detour_handle = detour_install(metacall_detour, (void(*)(void))fork_func, (void(*)(void))&metacall_fork_hook);
 
 	if (metacall_detour_handle == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour installation");
+		metacall_detour_handle = detour_install(metacall_detour, (void(*)(void))fork_func, (void(*)(void))&metacall_fork_hook);
 
-		metacall_fork_destroy();
+		if (metacall_detour_handle == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour installation");
 
-		return 1;
+			metacall_fork_destroy();
+
+			return 1;
+		}
 	}
 
 	return 0;

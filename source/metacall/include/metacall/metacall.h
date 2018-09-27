@@ -77,6 +77,12 @@ METACALL_API void metacall_fork(int (*callback)(metacall_pid, void *));
 
 /**
 *  @brief
+*    Prepare metacall to do a fork (internal usage)
+*/
+METACALL_API void metacall_fork_prepare(void);
+
+/**
+*  @brief
 *    Check if script context is loaded by @tag
 *
 *  @param[in] tag
