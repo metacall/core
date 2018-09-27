@@ -15,6 +15,8 @@
 
 #include <log/log.h>
 
+#include <stdlib.h>
+
 #if defined(WIN32) || defined(_WIN32) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
@@ -101,6 +103,8 @@ static detour_handle metacall_detour_handle = NULL;
 
 static metacall_fork_callback_ptr metacall_callback = NULL;
 
+static int metacall_fork_flag = 1;
+
 /* -- Methods -- */
 
 #if defined(WIN32) || defined(_WIN32) || \
@@ -135,8 +139,6 @@ NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
 	metacall_fork_callback_ptr callback = metacall_callback;
 
 	NTSTATUS result;
-
-	metacall_fork_prepare();
 
 	if (metacall_destroy() != 0)
 	{
@@ -187,8 +189,6 @@ pid_t metacall_fork_hook()
 
 	pid_t pid;
 
-	metacall_fork_prepare();
-
 	if (metacall_destroy() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
@@ -218,6 +218,18 @@ pid_t metacall_fork_hook()
 #else
 #	error "Unknown metacall fork safety platform"
 #endif
+
+static void metacall_fork_exit(void);
+
+void metacall_fork_exit()
+{
+	if (metacall_fork_destroy() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
+	}
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork destroyed");
+}
 
 int metacall_fork_initialize()
 {
@@ -263,6 +275,13 @@ int metacall_fork_initialize()
 
 			return 1;
 		}
+	}
+
+	if (metacall_fork_flag == 1)
+	{
+		atexit(&metacall_fork_exit);
+
+		metacall_fork_flag = 0;
 	}
 
 	return 0;

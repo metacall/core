@@ -40,7 +40,6 @@ void * metacall_null_args[1];
 /* -- Private Variables -- */
 
 static int metacall_initialize_flag = 1;
-static int metacall_fork_flag = 1;
 
 /* Private Methods */
 
@@ -85,15 +84,10 @@ int metacall_initialize()
 	metacall_null_args[0] = NULL;
 
 	#ifdef METACALL_FORK_SAFE
-		if (metacall_fork_flag == 1)
+		if (metacall_fork_initialize() != 0)
 		{
-			if (metacall_fork_initialize() != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
-			}
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
 		}
-
-		metacall_fork_flag = 1;
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
 	#endif
@@ -147,11 +141,6 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 void metacall_fork(int (*callback)(metacall_pid, void *))
 {
 	metacall_fork_callback(callback);
-}
-
-void metacall_fork_prepare()
-{
-	metacall_fork_flag = 0;
 }
 
 int metacall_is_initialized(const char * tag)
@@ -869,18 +858,6 @@ int metacall_destroy()
 	{
 		return 1;
 	}
-
-	#ifdef METACALL_FORK_SAFE
-		if (metacall_fork_flag == 1)
-		{
-			if (metacall_fork_destroy() != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
-			}
-		}
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork destroyed");
-	#endif
 
 	metacall_initialize_flag = 1;
 
