@@ -19,79 +19,71 @@
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
+ /* -- Headers -- */
+
+#define _WIN32_WINNT 0x0600
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
 /* -- Definitions -- */
 
 #define metacall_fork_pid _getpid
 
-#ifdef UNICODE
-#	define metacall_fork_func CreateProcessW
+/* -- Type Definitions -- */
 
-#	define METACALL_FORK_HOOK_ARGS \
-		LPCWSTR lpApplicationName, \
-		LPWSTR lpCommandLine, \
-		LPSECURITY_ATTRIBUTES lpProcessAttributes, \
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, \
-		BOOL bInheritHandles, \
-		DWORD dwCreationFlags, \
-		LPVOID lpEnvironment, \
-		LPCWSTR lpCurrentDirectory, \
-		LPSTARTUPINFOW lpStartupInfo, \
-		LPPROCESS_INFORMATION lpProcessInformation
+typedef long NTSTATUS;
 
-#	define METACALL_FORK_HOOK_TYPE \
-		LPCWSTR, \
-		LPWSTR, \
-		LPSECURITY_ATTRIBUTES, \
-		LPSECURITY_ATTRIBUTES, \
-		BOOL, \
-		DWORD, \
-		LPVOID, \
-		LPCWSTR, \
-		LPSTARTUPINFOW, \
-		LPPROCESS_INFORMATION
-#else
-#	define metacall_fork_func CreateProcessA
+typedef struct _CLIENT_ID {
+	PVOID UniqueProcess;
+	PVOID UniqueThread;
+} CLIENT_ID, *PCLIENT_ID;
 
-#	define METACALL_FORK_HOOK_ARGS \
-		LPCSTR lpApplicationName, \
-		LPSTR lpCommandLine, \
-		LPSECURITY_ATTRIBUTES lpProcessAttributes, \
-		LPSECURITY_ATTRIBUTES lpThreadAttributes, \
-		BOOL bInheritHandles, \
-		DWORD dwCreationFlags, \
-		LPVOID lpEnvironment, \
-		LPCSTR lpCurrentDirectory, \
-		LPSTARTUPINFOA lpStartupInfo, \
-		LPPROCESS_INFORMATION lpProcessInformation
+typedef struct _SECTION_IMAGE_INFORMATION {
+	PVOID EntryPoint;
+	ULONG StackZeroBits;
+	ULONG StackReserved;
+	ULONG StackCommit;
+	ULONG ImageSubsystem;
+	WORD SubSystemVersionLow;
+	WORD SubSystemVersionHigh;
+	ULONG Unknown1;
+	ULONG ImageCharacteristics;
+	ULONG ImageMachineType;
+	ULONG Unknown2[3];
+} SECTION_IMAGE_INFORMATION, *PSECTION_IMAGE_INFORMATION;
 
-#	define METACALL_FORK_HOOK_TYPE \
-		LPCSTR, \
-		LPSTR, \
-		LPSECURITY_ATTRIBUTES, \
-		LPSECURITY_ATTRIBUTES, \
-		BOOL, \
-		DWORD, \
-		LPVOID, \
-		LPCSTR, \
-		LPSTARTUPINFOA, \
-		LPPROCESS_INFORMATION
-#endif
+typedef struct _RTL_USER_PROCESS_INFORMATION {
+	ULONG Size;
+	HANDLE Process;
+	HANDLE Thread;
+	CLIENT_ID ClientId;
+	SECTION_IMAGE_INFORMATION ImageInformation;
+} RTL_USER_PROCESS_INFORMATION, *PRTL_USER_PROCESS_INFORMATION;
+
+typedef NTSTATUS (*RtlCloneUserProcessPtr)(ULONG ProcessFlags,
+	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
+	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
+	HANDLE DebugPort,
+	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
 /* -- Methods -- */
 
+void (*metacall_fork_func(void))(void);
 
-BOOL metacall_fork_hook(METACALL_FORK_HOOK_ARGS);
+NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
+	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
+	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
+	HANDLE DebugPort,
+	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-/* -- Definitions -- */
+ /* -- Methods -- */
 
-#define metacall_fork_func fork
-
-/* -- Methods -- */
+void (*metacall_fork_func(void))(void);
 
 pid_t metacall_fork_hook(void);
 
@@ -115,32 +107,43 @@ static metacall_fork_callback_ptr metacall_callback = NULL;
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
-BOOL metacall_fork_hook(METACALL_FORK_HOOK_ARGS)
+void (*metacall_fork_func(void))(void)
 {
-	BOOL (*metacall_fork_trampoline)(METACALL_FORK_HOOK_TYPE) = (BOOL(*)(METACALL_FORK_HOOK_TYPE))detour_trampoline(metacall_detour_handle);
+	HMODULE module;
+	RtlCloneUserProcessPtr clone_ptr;
+
+	module = GetModuleHandle("ntdll.dll");
+
+	if (!module)
+	{
+		return NULL;
+	}
+
+	clone_ptr = (RtlCloneUserProcessPtr)GetProcAddress(module, "RtlCloneUserProcess");
+
+	return (void(*)(void))clone_ptr;
+}
+
+NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
+	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
+	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
+	HANDLE DebugPort,
+	PRTL_USER_PROCESS_INFORMATION ProcessInformation)
+{
+	RtlCloneUserProcessPtr metacall_fork_trampoline = (RtlCloneUserProcessPtr)detour_trampoline(metacall_detour_handle);
 
 	metacall_fork_callback_ptr callback = metacall_callback;
 
-	BOOL result;
+	NTSTATUS result;
 
 	if (metacall_destroy() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
 	}
 
-	result = metacall_fork_trampoline(
-		lpApplicationName,
-		lpCommandLine,
-		lpProcessAttributes,
-		lpThreadAttributes,
-		bInheritHandles,
-		dwCreationFlags,
-		lpEnvironment,
-		lpCurrentDirectory,
-		lpStartupInfo,
-		lpProcessInformation);
+	result = metacall_fork_trampoline(ProcessFlags, ProcessSecurityDescriptor, ThreadSecurityDescriptor, DebugPort, ProcessInformation);
 
-	if (result == FALSE)
+	if (result != ((NTSTATUS)0x00000000L))
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork trampoline invocation");
 	}
@@ -168,6 +171,11 @@ BOOL metacall_fork_hook(METACALL_FORK_HOOK_ARGS)
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+
+void (*metacall_fork_func(void))(void)
+{
+	return (void(*)(void))&fork;
+}
 
 pid_t metacall_fork_hook()
 {
@@ -209,6 +217,15 @@ pid_t metacall_fork_hook()
 
 int metacall_fork_initialize()
 {
+	void(*fork_func)(void) = metacall_fork_func();
+
+	if (fork_func == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid fork function pointer");
+
+		return 1;
+	}
+
 	if (detour_initialize() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour initialization");
@@ -227,7 +244,7 @@ int metacall_fork_initialize()
 		return 1;
 	}
 
-	metacall_detour_handle = detour_install(metacall_detour, (void(*)(void))&metacall_fork_func, (void(*)(void))&metacall_fork_hook);
+	metacall_detour_handle = detour_install(metacall_detour, (void(*)(void))fork_func, (void(*)(void))&metacall_fork_hook);
 
 	if (metacall_detour_handle == NULL)
 	{
