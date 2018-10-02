@@ -3,7 +3,7 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
-version: "3"
+version: "3.7"
 
 # TODO: Implement multiple image building allowing V8 at the same too
 # V8 and NodeJS cannot run in the same instance because two V8 of different
