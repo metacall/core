@@ -33,7 +33,8 @@ PROGNAME=$(basename $0)
 # Base packages
 sub_apt(){
 	cd $ROOT_DIR
-	echo "configure apt for C build"
+	echo "configure apt"
+	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get -y --no-install-recommends install build-essential git cmake wget apt-utils
 }
 

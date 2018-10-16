@@ -38,15 +38,13 @@ ENV NUGET_XMLDOC_MODE=skip
 WORKDIR $METACALL_PATH
 
 # Copy MetaCall tool dependecies
-COPY tools/metacall-environment.sh $METACALL_TOOLS_PATH/metacall-environment.sh
-COPY tools/nobuildtest.patch $METACALL_TOOLS_PATH/nobuildtest.patch
+COPY tools/metacall-environment.sh tools/nobuildtest.patch $METACALL_TOOLS_PATH/
 
 # Configure MetaCall environment tool script
 RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh
 
 # Install MetaCall and runtimes then build
-RUN apt-get update \
-	&& $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
+RUN $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
 
 # Delete MetaCall tools path
 RUN rm -rf $METACALL_PATH
