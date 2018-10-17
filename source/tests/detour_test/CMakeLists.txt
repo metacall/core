@@ -1,3 +1,8 @@
+# Check if detours are enabled
+if(NOT OPTION_FORK_SAFE)
+	return()
+endif()
+
 #
 # Executable name and options
 #
