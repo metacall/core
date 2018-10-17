@@ -220,6 +220,12 @@ function(configurations_write config_dir config_path)
 		endif()
 	endif()
 
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Debug\"")
+	elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\"")
+	endif()
+
 	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n}")
 
 	file(WRITE "${config_path}" "${CONFIGURATION_GLOBAL}")

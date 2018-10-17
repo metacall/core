@@ -35,6 +35,10 @@ LOG_API log_handle log_impl_handle(log_impl impl);
 
 LOG_API log_aspect log_impl_aspect(log_impl impl, enum log_aspect_id aspect_id);
 
+LOG_API enum log_level_id log_impl_level(log_impl impl);
+
+LOG_API void log_impl_verbosity(log_impl impl, enum log_level_id level);
+
 LOG_API int log_impl_write(log_impl impl, const log_record_ctor record_ctor);
 
 LOG_API int log_impl_clear(log_impl impl);

@@ -24,6 +24,7 @@ struct log_impl_type
 	const char * name;
 	log_handle handle;
 	log_aspect aspects[LOG_ASPECT_SIZE];
+	enum log_level_id level;
 };
 
 /* -- Methods -- */
@@ -51,6 +52,12 @@ log_impl log_impl_create(const char * name)
 
 		impl->name = name;
 		impl->handle = log_handle_create();
+
+		#if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)
+			impl->level = LOG_LEVEL_DEBUG;
+		#else
+			impl->level = LOG_LEVEL_ERROR;
+		#endif
 
 		for (iterator = 0; iterator < LOG_ASPECT_SIZE; ++iterator)
 		{
@@ -84,6 +91,16 @@ log_aspect log_impl_aspect(log_impl impl, enum log_aspect_id aspect_id)
 	}
 
 	return impl->aspects[aspect_id];
+}
+
+enum log_level_id log_impl_level(log_impl impl)
+{
+	return impl->level;
+}
+
+void log_impl_verbosity(log_impl impl, enum log_level_id level)
+{
+	impl->level = level;
 }
 
 int log_impl_write(log_impl impl, const log_record_ctor record_ctor)

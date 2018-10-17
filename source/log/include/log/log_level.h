@@ -15,6 +15,10 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
+#include <stdlib.h>
+
 /* -- Enumerations -- */
 
 enum log_level_id
@@ -30,7 +34,9 @@ enum log_level_id
 
 /* -- Methods -- */
 
-LOG_API const char * log_level_name(enum log_level_id level);
+LOG_API const char * log_level_to_string(enum log_level_id level);
+
+LOG_API enum log_level_id log_level_to_enum(const char * level, size_t length);
 
 #ifdef __cplusplus
 }

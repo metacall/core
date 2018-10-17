@@ -114,23 +114,39 @@ int log_configure_impl(const char * name, size_t size, ...)
 	return 0;
 }
 
+int log_level(const char * name, const char * level, size_t length)
+{
+	enum log_level_id id = log_level_to_enum(level, length);
+
+	if (id < LOG_LEVEL_SIZE)
+	{
+		log_impl impl = log_singleton_get(name);
+
+		log_impl_verbosity(impl, id);
+
+		return 0;
+	}
+
+	return 1;
+}
+
 int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message)
 {
 	log_impl impl = log_singleton_get(name);
 
 	struct log_record_ctor_type record_ctor;
 
+	enum log_level_id impl_level = log_impl_level(impl);
+
 	if (impl == NULL)
 	{
 		return 1;
 	}
 
-	#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		if (level == LOG_LEVEL_DEBUG)
-		{
-			return 0;
-		}
-	#endif
+	if (level < impl_level)
+	{
+		return 0;
+	}
 
 	record_ctor.line = line;
 	record_ctor.func = func;
@@ -150,6 +166,8 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 
 	int result;
 
+	enum log_level_id impl_level = log_impl_level(impl);
+
 	va_list variable_args;
 
 	if (impl == NULL)
@@ -157,12 +175,10 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 		return 1;
 	}
 
-	#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		if (level == LOG_LEVEL_DEBUG)
-		{
-			return 0;
-		}
-	#endif
+	if (level < impl_level)
+	{
+		return 0;
+	}
 
 	va_start(variable_args, message);
 

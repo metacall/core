@@ -68,7 +68,7 @@ int metacall_initialize()
 	}
 	else
 	{
-		/* TODO: Initialize by config or default */
+		/* TODO: Improve log initialization and configuration */
 		if (log_configure("metacall",
 			log_policy_format_text(),
 			log_policy_schedule_sync(),
@@ -104,6 +104,30 @@ int metacall_initialize()
 	}
 
 	memory_allocator_destroy(allocator);
+
+	/* TODO: Improve log initialization and configuration */
+	{
+		configuration config = configuration_scope(CONFIGURATION_GLOBAL_SCOPE);
+
+		if (config != NULL)
+		{
+			value * level = configuration_value(config, "log_level");
+
+			if (level != NULL)
+			{
+				const char * level_str = (const char *)value_to_string(level);
+
+				if (log_level("metacall", level_str, value_type_size(level) - 1) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall configuration log_level, %s is not valid", level_str);
+				}
+				else
+				{
+					log_write("metacall", LOG_LEVEL_INFO, "Set MetaCall log level to %s", level_str);
+				}
+			}
+		}
+	}
 
 	loader_initialize();
 

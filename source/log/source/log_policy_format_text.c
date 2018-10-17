@@ -11,6 +11,7 @@
 #include <log/log_policy_format_text.h>
 #include <log/log_policy_format.h>
 #include <log/log_level.h>
+#include <log/log_impl.h> /* TODO: Remove by custom log_policy_format_text_data_type instead of impl->level */
 
 #include <format/format_print.h>
 
@@ -18,11 +19,8 @@
 
 /* -- Definitions -- */
 
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-#	define LOG_POLICY_FORMAT_TEXT_STR "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
-#else
-#	define LOG_POLICY_FORMAT_TEXT_STR "[%.19s] #%" PRIuS " @%s : "
-#endif
+#define LOG_POLICY_FORMAT_TEXT_STR_DEBUG "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
+#define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIuS " @%s : "
 
 /* -- Forward Declarations -- */
 
@@ -99,24 +97,39 @@ static size_t log_policy_format_text_size(log_policy policy, const log_record re
 
 static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size)
 {
-	static const char format[] = LOG_POLICY_FORMAT_TEXT_STR "%s\n";
-
 	log_policy_format_text_data text_data = log_policy_instance(policy);
+
+	log_aspect aspect = log_policy_aspect(policy);
+
+	log_impl impl = log_aspect_parent(aspect);
 
 	int result;
 
 	(void)text_data;
 
-	result = snprintf(buffer, size, format,
-		ctime(log_record_time(record)),
-		log_record_thread_id(record),
-		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
+	{
+		static const char format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s\n";
+
+		result = snprintf(buffer, size, format,
+			ctime(log_record_time(record)),
+			log_record_thread_id(record),
 			log_record_line(record),
 			log_record_func(record),
 			log_record_file(record),
-		#endif
-		log_level_name(log_record_level(record)),
-		log_record_message(record));
+			log_level_to_string(log_record_level(record)),
+			log_record_message(record));
+	}
+	else
+	{
+		static const char format[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s\n";
+
+		result = snprintf(buffer, size, format,
+			ctime(log_record_time(record)),
+			log_record_thread_id(record),
+			log_level_to_string(log_record_level(record)),
+			log_record_message(record));
+	}
 
 	if (result <= 0)
 	{
@@ -133,9 +146,11 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 
 static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void * buffer, const size_t size)
 {
-	static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR;
-
 	log_policy_format_text_data text_data = log_policy_instance(policy);
+
+	log_aspect aspect = log_policy_aspect(policy);
+
+	log_impl impl = log_aspect_parent(aspect);
 
 	int header_size = 0, body_size = 0;
 
@@ -143,15 +158,27 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 	(void)text_data;
 
-	header_size = snprintf(buffer, size, header_format,
-		ctime(log_record_time(record)),
-		log_record_thread_id(record),
-		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
+	{
+		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG;
+
+		header_size = snprintf(buffer, size, header_format,
+			ctime(log_record_time(record)),
+			log_record_thread_id(record),
 			log_record_line(record),
 			log_record_func(record),
 			log_record_file(record),
-		#endif
-		log_level_name(log_record_level(record)));
+			log_level_to_string(log_record_level(record)));
+	}
+	else
+	{
+		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE;
+
+		header_size = snprintf(buffer, size, header_format,
+			ctime(log_record_time(record)),
+			log_record_thread_id(record),
+			log_level_to_string(log_record_level(record)));
+	}
 
 	if (header_size <= 0)
 	{
