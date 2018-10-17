@@ -35,7 +35,7 @@ typedef struct log_singleton_type * log_singleton;
 
 LOG_API log_singleton * log_singleton_instance(void);
 
-LOG_API int log_singleton_initialize(log_singleton singleton);
+LOG_API void log_singleton_initialize(log_singleton singleton);
 
 LOG_API int log_singleton_insert(const char * name, log_impl impl);
 

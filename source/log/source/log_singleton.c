@@ -119,24 +119,14 @@ log_singleton * log_singleton_instance()
 	return &s;
 }
 
-int log_singleton_initialize(log_singleton singleton)
+void log_singleton_initialize(log_singleton singleton)
 {
 	log_singleton * s = log_singleton_instance();
 
-	if (*s != NULL)
+	if (*s == NULL)
 	{
-		/* Log already initialized */
-
-		/* TODO: Should the function fail? */
-		/*
-		return 1;
-		*/
-		return 0;
+		*s = singleton;
 	}
-
-	*s = singleton;
-
-	return 0;
 }
 
 int log_singleton_insert(const char * name, log_impl impl)
