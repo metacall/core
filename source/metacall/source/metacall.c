@@ -162,11 +162,6 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 	return 0;
 }
 
-void metacall_fork(int (*callback)(metacall_pid, void *))
-{
-	metacall_fork_callback(callback);
-}
-
 int metacall_is_initialized(const char * tag)
 {
 	return loader_is_initialized(tag);

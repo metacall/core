@@ -108,10 +108,7 @@ loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration conf
 	(void)impl;
 	(void)config;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	if (JS_Init() == true)
 	{

@@ -36,7 +36,7 @@ extern "C" {
 
 LOG_API void * log_instance(void);
 
-LOG_API int log_copy(void * instance);
+LOG_API void log_copy(void * instance);
 
 LOG_API int log_create(const char * name);
 

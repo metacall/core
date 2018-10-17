@@ -1494,10 +1494,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 	(void)config;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	node_impl = new loader_impl_node_type();
 

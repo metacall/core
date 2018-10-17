@@ -127,7 +127,11 @@ int log_singleton_initialize(log_singleton singleton)
 	{
 		/* Log already initialized */
 
+		/* TODO: Should the function fail? */
+		/*
 		return 1;
+		*/
+		return 0;
 	}
 
 	*s = singleton;

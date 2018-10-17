@@ -33,6 +33,23 @@ include(Warnings)
 include(SecurityFlags)
 
 #
+# Configure templates
+#
+
+if(OPTION_FORK_SAFE)
+	set(METACALL_FORK_SAFE 1)
+endif()
+
+if(OPTION_THREAD_SAFE)
+	set(METACALL_THREAD_SAFE 1)
+endif()
+
+set(include_bin_path ${CMAKE_CURRENT_BINARY_DIR}/include/${target})
+
+# Generate loaders plugin header
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/metacall_def.h.in ${include_bin_path}/metacall_def.h)
+
+#
 # Sources
 #
 
@@ -40,11 +57,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
+	${include_bin_path}/metacall_def.h
 	${include_path}/metacall.h
 	${include_path}/metacall_value.h
 	${include_path}/metacall_log.h
 	${include_path}/metacall_allocator.h
-	${include_path}/metacall_fork.h
 )
 
 set(sources
@@ -52,8 +69,16 @@ set(sources
 	${source_path}/metacall_value.c
 	${source_path}/metacall_log.c
 	${source_path}/metacall_allocator.c
-	${source_path}/metacall_fork.c
 )
+
+if(OPTION_FORK_SAFE)
+	set(headers ${headers}
+		${include_path}/metacall_fork.h
+	)
+	set(sources ${sources}
+		${source_path}/metacall_fork.c
+	)
+endif()
 
 # Group source files
 set(header_group "Header Files (API)")

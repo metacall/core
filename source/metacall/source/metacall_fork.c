@@ -157,7 +157,7 @@ NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto initialization");
 	}
 
-	metacall_fork_callback(callback);
+	metacall_fork(callback);
 
 	if (callback != NULL)
 	{
@@ -201,7 +201,7 @@ pid_t metacall_fork_hook()
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto initialization");
 	}
 
-	metacall_fork_callback(callback);
+	metacall_fork(callback);
 
 	if (callback != NULL)
 	{
@@ -287,7 +287,7 @@ int metacall_fork_initialize()
 	return 0;
 }
 
-void metacall_fork_callback(metacall_fork_callback_ptr callback)
+void metacall_fork(metacall_fork_callback_ptr callback)
 {
 	metacall_callback = callback;
 }

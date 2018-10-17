@@ -104,10 +104,7 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	(void)impl;
 	(void)config;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	c_impl = new loader_impl_c_type();
 

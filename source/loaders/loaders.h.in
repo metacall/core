@@ -1,3 +1,11 @@
+/*
+ *	Loader Library by Parra Studios
+ *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A library for loading executable code at run-time into a process.
+ *
+ */
+
 #ifndef METACALL_LOADERS_H
 #define METACALL_LOADERS_H 1
 

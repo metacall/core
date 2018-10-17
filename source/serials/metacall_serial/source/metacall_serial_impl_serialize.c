@@ -184,15 +184,15 @@ void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, con
 
 		type_id id = value_type_id(current_value);
 
-		const char * format = metacall_serial_impl_serialize_format(id);
+		const char * fmt = metacall_serial_impl_serialize_format(id);
 
 		metacall_serialize_impl_ptr serialize_ptr = metacall_serial_impl_serialize_func(id);
 
-		size_t length = 0;
+		size_t len = 0;
 
-		serialize_ptr(current_value, NULL, 0, format, &length);
+		serialize_ptr(current_value, NULL, 0, fmt, &len);
 
-		array_value_length += length;
+		array_value_length += len;
 	}
 
 	/* Add length of parethesis and comas */
@@ -225,15 +225,15 @@ void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, con
 
 			type_id id = value_type_id(current_value);
 
-			const char * format = metacall_serial_impl_serialize_format(id);
+			const char * fmt = metacall_serial_impl_serialize_format(id);
 
 			metacall_serialize_impl_ptr serialize_ptr = metacall_serial_impl_serialize_func(id);
 
-			size_t length = 0;
+			size_t len = 0;
 
-			serialize_ptr(current_value, &dest[array_value_length_current], array_value_length - array_value_length_current, format, &length);
+			serialize_ptr(current_value, &dest[array_value_length_current], array_value_length - array_value_length_current, fmt, &len);
 
-			array_value_length_current += length;
+			array_value_length_current += len;
 
 			if (iterator < array_size - 1)
 			{

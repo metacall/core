@@ -264,10 +264,7 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 	(void)config;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	file_impl = malloc(sizeof(struct loader_impl_file_type));
 

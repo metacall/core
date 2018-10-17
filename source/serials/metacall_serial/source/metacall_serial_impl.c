@@ -29,8 +29,10 @@ const char * metacall_serial_impl_extension()
 	return extension;
 }
 
-serial_impl_handle metacall_serial_impl_initialize(memory_allocator allocator)
+serial_impl_handle metacall_serial_impl_initialize(memory_allocator allocator, serial_host host)
 {
+	log_copy(host->log);
+
 	return allocator;
 }
 

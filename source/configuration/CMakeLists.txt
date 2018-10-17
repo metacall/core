@@ -198,12 +198,6 @@ target_link_libraries(${target}
 function(configurations_write config_dir config_path)
 	set(CONFIGURATION_GLOBAL "{")
 
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Debug\",")
-	elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\",")
-	endif()
-
 	if(OPTION_BUILD_LOADERS)
 		set(CONFIGURATION_GLOBAL_LOADERS 0)
 
@@ -216,14 +210,12 @@ function(configurations_write config_dir config_path)
 		#	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"js_loader\":\"${config_dir}/js_loader.json\",")
 		#	set(CONFIGURATION_GLOBAL_LOADERS 1)
 		#endif()
+	endif()
 
-		if(CONFIGURATION_GLOBAL_LOADERS EQUAL 1)
-			string(LENGTH "${CONFIGURATION_GLOBAL}" CONFIGURATION_GLOBAL_LENGTH)
-
-			math(EXPR CONFIGURATION_GLOBAL_LENGTH "${CONFIGURATION_GLOBAL_LENGTH} - 1")
-
-			string(SUBSTRING "${CONFIGURATION_GLOBAL}" 0 ${CONFIGURATION_GLOBAL_LENGTH} CONFIGURATION_GLOBAL)
-		endif()
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Debug\"")
+	elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\"")
 	endif()
 
 	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n}")

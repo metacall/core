@@ -14,6 +14,7 @@
 #include <serial/serial_api.h>
 
 #include <serial/serial_impl_handle.h>
+#include <serial/serial_host.h>
 
 #include <memory/memory.h>
 
@@ -31,7 +32,7 @@ struct serial_interface_type;
 
 typedef const char * (*serial_interface_extension)(void);
 
-typedef serial_impl_handle (*serial_interface_initialize)(memory_allocator);
+typedef serial_impl_handle (*serial_interface_initialize)(memory_allocator, serial_host);
 
 typedef char * (*serial_interface_serialize)(serial_impl_handle, value, size_t *);
 

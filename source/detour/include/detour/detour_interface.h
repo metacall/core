@@ -14,6 +14,7 @@
 #include <detour/detour_api.h>
 
 #include <detour/detour_impl_handle.h>
+#include <detour/detour_host.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +26,7 @@ struct detour_interface_type;
 
 /* -- Type Definitions -- */
 
-typedef detour_impl_handle (*detour_interface_initialize)(void);
+typedef detour_impl_handle (*detour_interface_initialize)(detour_host);
 
 typedef int (*detour_interface_install)(detour_impl_handle, void(**)(void), void(*)(void));
 

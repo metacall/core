@@ -21,11 +21,11 @@ void * log_instance()
 	return log_singleton_instance();
 }
 
-int log_copy(void * instance)
+void log_copy(void * instance)
 {
 	log_singleton * singleton_ptr = instance;
 
-	return log_singleton_initialize(*singleton_ptr);
+	log_singleton_initialize(*singleton_ptr);
 }
 
 int log_create(const char * name)

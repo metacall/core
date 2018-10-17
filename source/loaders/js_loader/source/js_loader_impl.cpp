@@ -682,10 +682,7 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration confi
 	(void)impl;
 	(void)config;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	js_impl = new loader_impl_js_type();
 

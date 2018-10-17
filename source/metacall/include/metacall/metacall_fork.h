@@ -67,7 +67,7 @@ METACALL_API int metacall_fork_initialize(void);
 *  @param[in] callback
 *    Callback to be called when fork detour is executed
 */
-METACALL_API void metacall_fork_callback(metacall_fork_callback_ptr callback);
+METACALL_API void metacall_fork(metacall_fork_callback_ptr callback);
 
 /**
 *  @brief

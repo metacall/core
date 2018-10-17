@@ -273,10 +273,7 @@ loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 	(void)config;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	mock_impl = malloc(sizeof(struct loader_impl_mock_type));
 

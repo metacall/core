@@ -189,10 +189,7 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
 
-	if (log_copy(host->log) != 0)
-	{
-		return NULL;
-	}
+	log_copy(host->log);
 
 	if (cs_loader_impl_initialize_types(impl) != 0)
 	{

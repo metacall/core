@@ -29,7 +29,7 @@ extern "C" {
 *    Returns pointer to detour hook implementation on success, null pointer otherwise
 *
 */
-FUNCHOOK_DETOUR_API detour_impl_handle funchook_detour_impl_initialize(void);
+FUNCHOOK_DETOUR_API detour_impl_handle funchook_detour_impl_initialize(detour_host host);
 
 /**
 *  @brief
