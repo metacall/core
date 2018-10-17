@@ -66,20 +66,8 @@ int metacall_initialize()
 
 		return 0;
 	}
-	else
-	{
-		/* TODO: Improve log initialization and configuration */
-		if (log_configure("metacall",
-			log_policy_format_text(),
-			log_policy_schedule_sync(),
-			log_policy_storage_sequential(),
-			log_policy_stream_stdio(stdout)) != 0)
-		{
-			return 1;
-		}
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall <%p>", (void *)l);
-	}
+	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall <%p>", (void *)l);
 
 	metacall_null_args[0] = NULL;
 

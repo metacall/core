@@ -28,6 +28,10 @@ TEST_F(metacall_test, DefaultConstructor)
 {
 	metacall_print_info();
 
+	metacall_log_stdio_type log_stdio = { stdout };
+
+	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Native register */

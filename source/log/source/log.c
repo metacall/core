@@ -122,7 +122,10 @@ int log_level(const char * name, const char * level, size_t length)
 	{
 		log_impl impl = log_singleton_get(name);
 
-		log_impl_verbosity(impl, id);
+		if (impl != NULL)
+		{
+			log_impl_verbosity(impl, id);
+		}
 
 		return 0;
 	}
@@ -136,12 +139,14 @@ int log_write_impl(const char * name, const size_t line, const char * func, cons
 
 	struct log_record_ctor_type record_ctor;
 
-	enum log_level_id impl_level = log_impl_level(impl);
+	enum log_level_id impl_level;
 
 	if (impl == NULL)
 	{
-		return 1;
+		return 0;
 	}
+
+	impl_level = log_impl_level(impl);
 
 	if (level < impl_level)
 	{
@@ -166,9 +171,16 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 
 	int result;
 
-	enum log_level_id impl_level = log_impl_level(impl);
+	enum log_level_id impl_level;
 
 	va_list variable_args;
+
+	if (impl == NULL)
+	{
+		return 0;
+	}
+
+	impl_level = log_impl_level(impl);
 
 	if (impl == NULL)
 	{
