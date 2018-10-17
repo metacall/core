@@ -20,7 +20,6 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 # Arguments
 ARG METACALL_PATH
 ARG METACALL_TOOLS_PATH
-ARG METACALL_INSTALL_OPTIONS
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -44,6 +43,8 @@ COPY tools/metacall-environment.sh tools/nobuildtest.patch $METACALL_TOOLS_PATH/
 RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh
 
 # Install MetaCall and runtimes then build
+ARG METACALL_INSTALL_OPTIONS
+
 RUN $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
 
 # Delete MetaCall tools path

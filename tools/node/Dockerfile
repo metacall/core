@@ -16,7 +16,6 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 
 # Arguments
 ARG METACALL_PATH
-ARG METACALL_BUILD_TYPE_NAME
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
@@ -28,6 +27,8 @@ WORKDIR $METACALL_PATH
 COPY cmake/FindNodeJS.cmake $METACALL_PATH/cmake/FindNodeJS.cmake
 
 # Run NodeJS cmake script (TODO: Make find library prefixes/suffixes generic)
+ARG METACALL_BUILD_TYPE_NAME
+
 RUN mkdir -p $METACALL_PATH/build \
 	&& cmake \
 		-DCMAKE_BUILD_TYPE=${METACALL_BUILD_TYPE_NAME} \

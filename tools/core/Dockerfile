@@ -36,8 +36,6 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 
 # Arguments
 ARG METACALL_PATH
-ARG METACALL_BUILD_TYPE
-ARG METACALL_BUILD_OPTIONS
 
 # Environment variables
 ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
@@ -63,6 +61,9 @@ RUN chmod 500 $METACALL_PATH/tools/metacall-configure.sh \
 	&& mkdir -p $METACALL_PATH/build
 
 # Configure MetaCall libraries and build runtimes if needed
+ARG METACALL_BUILD_TYPE
+ARG METACALL_BUILD_OPTIONS
+
 RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-configure.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
