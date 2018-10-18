@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-/* -- Definitions -- */
+/* -- Enumerations -- */
 
 enum log_policy_format_id
 {
@@ -61,6 +61,8 @@ LOG_API log_policy_interface log_policy_format(const log_policy_id policy_format
 LOG_API log_policy log_policy_format_binary(void);
 
 LOG_API log_policy log_policy_format_text(void);
+
+LOG_API log_policy log_policy_format_text_flags(unsigned int flags);
 
 #ifdef __cplusplus
 }

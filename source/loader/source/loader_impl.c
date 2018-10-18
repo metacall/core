@@ -619,8 +619,6 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 
 		if (written == length)
 		{
-			name[length] = '\0';
-
 			return 0;
 		}
 	}

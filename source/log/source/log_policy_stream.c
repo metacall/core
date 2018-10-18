@@ -35,94 +35,49 @@ log_policy_interface log_policy_stream(const log_policy_id policy_stream_id)
 
 log_policy log_policy_stream_file(const char * file_name, const char * mode)
 {
-	log_policy policy;
-
 	struct log_policy_stream_file_ctor_type file_ctor;
 
 	file_ctor.file_name = file_name;
 	file_ctor.mode = mode;
 
-	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_FILE), &file_ctor);
-
-	if (policy == NULL)
-	{
-		return NULL;
-	}
-
-	return policy;
+	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_FILE), &file_ctor);
 }
 
 log_policy log_policy_stream_nginx(ngx_log_t * ngx_log_ptr, void (*ngx_error_ptr)(), uint16_t ngx_log_level)
 {
-	log_policy policy;
-
 	struct log_policy_stream_nginx_ctor_type nginx_ctor;
 
 	nginx_ctor.ngx_log_ptr = ngx_log_ptr;
 	nginx_ctor.ngx_error_ptr = ngx_error_ptr;
 	nginx_ctor.ngx_log_level = ngx_log_level;
 
-	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_NGINX), &nginx_ctor);
-
-	if (policy == NULL)
-	{
-		return NULL;
-	}
-
-	return policy;
+	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_NGINX), &nginx_ctor);
 }
 
 log_policy log_policy_stream_socket(const char * ip, uint16_t port)
 {
-	log_policy policy;
-
 	struct log_policy_stream_socket_ctor_type socket_ctor;
 
 	socket_ctor.ip = ip;
 	socket_ctor.port = port;
 
-	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_SOCKET), &socket_ctor);
-
-	if (policy == NULL)
-	{
-		return NULL;
-	}
-
-	return policy;
+	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_SOCKET), &socket_ctor);
 }
 
 log_policy log_policy_stream_stdio(FILE * stream)
 {
-	log_policy policy;
-
 	struct log_policy_stream_stdio_ctor_type stdio_ctor;
 
 	stdio_ctor.stream = stream;
 
-	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_STDIO), &stdio_ctor);
-
-	if (policy == NULL)
-	{
-		return NULL;
-	}
-
-	return policy;
+	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_STDIO), &stdio_ctor);
 }
 
 log_policy log_policy_stream_syslog(const char * name)
 {
-	log_policy policy;
-
 	struct log_policy_stream_syslog_ctor_type syslog_ctor;
 
 	syslog_ctor.name = name;
 
-	policy = log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_SYSLOG), &syslog_ctor);
-
-	if (policy == NULL)
-	{
-		return NULL;
-	}
-
-	return policy;
+	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_SYSLOG), &syslog_ctor);
 }

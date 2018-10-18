@@ -27,20 +27,11 @@ log_policy_interface log_policy_storage(const log_policy_id policy_storage_id)
 
 log_policy log_policy_storage_batch(size_t size)
 {
-	log_policy policy;
-
 	struct log_policy_storage_batch_ctor_type batch_ctor;
 
 	batch_ctor.size = size;
 
-	policy = log_policy_create(LOG_ASPECT_STORAGE, log_policy_storage(LOG_POLICY_STORAGE_BATCH), &batch_ctor);
-
-	if (policy == NULL)
-	{
-		return NULL;
-	}
-
-	return policy;
+	return log_policy_create(LOG_ASPECT_STORAGE, log_policy_storage(LOG_POLICY_STORAGE_BATCH), &batch_ctor);
 }
 
 log_policy log_policy_storage_sequential(void)

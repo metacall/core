@@ -23,7 +23,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 			metacall_log_stdio stdio_ctx = (metacall_log_stdio)ctx;
 
 			return log_configure("metacall",
-				log_policy_format_text(),
+				log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_NEWLINE),
 				log_policy_schedule_sync(),
 				log_policy_storage_sequential(),
 				log_policy_stream_stdio(stdio_ctx->stream));
@@ -34,7 +34,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 			metacall_log_file file_ctx = (metacall_log_file)ctx;
 
 			return log_configure("metacall",
-				log_policy_format_text(),
+				log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_NEWLINE),
 				log_policy_schedule_sync(),
 				log_policy_storage_sequential(),
 				log_policy_stream_file(file_ctx->file_name, file_ctx->mode));
@@ -56,7 +56,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 			metacall_log_syslog syslog_ctx = (metacall_log_syslog)ctx;
 
 			return log_configure("metacall",
-				log_policy_format_text(),
+				log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_NEWLINE),
 				log_policy_schedule_sync(),
 				log_policy_storage_sequential(),
 				log_policy_stream_syslog(syslog_ctx->name));

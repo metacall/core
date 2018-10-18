@@ -20,7 +20,7 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_BASE_IMAGE: ubuntu:xenial
-        METACALL_INSTALL_OPTIONS: root base nodejs python ruby netcore nodejs rapidjson funchook # v8rep51
+        METACALL_INSTALL_OPTIONS: root base python ruby netcore nodejs rapidjson funchook # v8rep51
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

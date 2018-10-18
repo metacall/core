@@ -19,6 +19,29 @@
 extern "C" {
 #endif
 
+/* -- Enumerations -- */
+
+enum log_policy_format_text_id
+{
+	LOG_POLICY_FORMAT_TEXT_EMPTY	= 0x00,
+	LOG_POLICY_FORMAT_TEXT_NEWLINE	= 0x01 << 0x00
+};
+
+/* -- Forward Declarations -- */
+
+struct log_policy_format_text_ctor_type;
+
+/* -- Type Definitions -- */
+
+typedef struct log_policy_format_text_ctor_type * log_policy_format_text_ctor;
+
+/* -- Member Data -- */
+
+struct log_policy_format_text_ctor_type
+{
+	unsigned int flags;
+};
+
 /* -- Methods -- */
 
 LOG_API log_policy_interface log_policy_format_text_interface(void);

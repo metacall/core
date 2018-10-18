@@ -19,6 +19,22 @@
 
 /* -- Definitions -- */
 
+/* TODO: Check why this +1 is happening on windows, solve the problem in the behavior and delete this macros */
+
+#if defined(_WIN32)
+#	if defined(_MSC_VER) && (_MSC_VER < 1900)
+#		define format_snprintf(buffer, count, format, ...) (snprintf(buffer, count, format, __VA_ARGS__) + 1)
+#		define format_vsnprintf(buffer, count, format, arg_list) (vsnprintf(buffer, count, format, arg_list) + 1)
+#	else
+#		define format_snprintf(buffer, count, format, ...) (snprintf(buffer, count, format, __VA_ARGS__) + 1)
+#		define format_vsnprintf(buffer, count, format, arg_list) (vsnprintf(buffer, count, format, arg_list) + 1)
+#	endif
+#elif defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L)
+#	define format_snprintf(buffer, count, format, ...) snprintf(buffer, count, format, __VA_ARGS__)
+#	define format_vsnprintf(buffer, count, format, arg_list) vsnprintf(buffer, count, format, arg_list)
+#endif
+
 #define LOG_POLICY_FORMAT_TEXT_STR_DEBUG "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
 #define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIuS " @%s : "
 
@@ -34,7 +50,7 @@ typedef struct log_policy_format_text_data_type * log_policy_format_text_data;
 
 struct log_policy_format_text_data_type
 {
-	void * todo;
+	unsigned int flags;
 };
 
 /* -- Private Methods -- */
@@ -78,12 +94,23 @@ static int log_policy_format_text_create(log_policy policy, const log_policy_cto
 {
 	log_policy_format_text_data text_data = malloc(sizeof(struct log_policy_format_text_data_type));
 
-	(void)ctor;
+	const log_policy_format_text_ctor text_ctor = ctor;
 
 	if (text_data == NULL)
 	{
 		return 1;
 	}
+
+	if (text_ctor != NULL)
+	{
+		text_data->flags = text_ctor->flags;
+	}
+	else
+	{
+		text_data->flags = LOG_POLICY_FORMAT_TEXT_EMPTY;
+	}
+
+	text_data->flags = text_ctor->flags;
 
 	log_policy_instantiate(policy, text_data, LOG_POLICY_FORMAT_TEXT);
 
@@ -93,6 +120,40 @@ static int log_policy_format_text_create(log_policy policy, const log_policy_cto
 static size_t log_policy_format_text_size(log_policy policy, const log_record record)
 {
 	return log_policy_format_text_serialize(policy, record, NULL, 0);
+}
+
+static const char * log_policy_format_text_serialize_impl_format(enum log_level_id log_level, unsigned int flags)
+{
+	if (log_level == LOG_LEVEL_DEBUG)
+	{
+		if (flags | LOG_POLICY_FORMAT_TEXT_NEWLINE)
+		{
+			static const char format_debug_newline[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s\n";
+
+			return format_debug_newline;
+		}
+		else
+		{
+			static const char format_debug[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s";
+
+			return format_debug;
+		}
+	}
+	else
+	{
+		if (flags | LOG_POLICY_FORMAT_TEXT_NEWLINE)
+		{
+			static const char format_release_newline[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s\n";
+
+			return format_release_newline;
+		}
+		else
+		{
+			static const char format_release[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s";
+
+			return format_release;
+		}
+	}
 }
 
 static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size)
@@ -105,13 +166,11 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 
 	int result;
 
-	(void)text_data;
+	const char * format = log_policy_format_text_serialize_impl_format(log_impl_level(impl), text_data->flags);
 
 	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
 	{
-		static const char format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s\n";
-
-		result = snprintf(buffer, size, format,
+		result = format_snprintf(buffer, size, format,
 			ctime(log_record_time(record)),
 			log_record_thread_id(record),
 			log_record_line(record),
@@ -122,9 +181,7 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 	}
 	else
 	{
-		static const char format[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s\n";
-
-		result = snprintf(buffer, size, format,
+		result = format_snprintf(buffer, size, format,
 			ctime(log_record_time(record)),
 			log_record_thread_id(record),
 			log_level_to_string(log_record_level(record)),
@@ -134,11 +191,6 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 	if (result <= 0)
 	{
 		return 0;
-	}
-
-	if (buffer != NULL)
-	{
-		*(((char *)buffer) + result) = '\0';
 	}
 
 	return (size_t)result;
@@ -156,13 +208,11 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 	void * buffer_body = NULL;
 
-	(void)text_data;
-
 	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
 	{
 		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG;
 
-		header_size = snprintf(buffer, size, header_format,
+		header_size = format_snprintf(buffer, size, header_format,
 			ctime(log_record_time(record)),
 			log_record_thread_id(record),
 			log_record_line(record),
@@ -174,7 +224,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 	{
 		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE;
 
-		header_size = snprintf(buffer, size, header_format,
+		header_size = format_snprintf(buffer, size, header_format,
 			ctime(log_record_time(record)),
 			log_record_thread_id(record),
 			log_level_to_string(log_record_level(record)));
@@ -196,7 +246,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 		va_copy(args_copy, log_record_data(record));
 
-		body_size = vsnprintf(buffer_body, size, log_record_message(record), args_copy);
+		body_size = format_vsnprintf(buffer_body, size, log_record_message(record), args_copy);
 
 		va_end(args_copy);
 	}
@@ -206,15 +256,20 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 		return 0;
 	}
 
-	if (buffer_body != NULL)
+	if (text_data->flags | LOG_POLICY_FORMAT_TEXT_NEWLINE)
 	{
-		char * buffer_end = (((char *)buffer_body) + body_size);
+		if (buffer_body != NULL)
+		{
+			char * buffer_body_str = (char *)buffer_body;
 
-		buffer_end[0] = '\n';
-		buffer_end[1] = '\0';
+			buffer_body_str[body_size] = '\n';
+			buffer_body_str[body_size + 1] = '\0';
+		}
+
+		++body_size;
 	}
 
-	return (size_t)(header_size + body_size) + 1;
+	return (size_t)(header_size + body_size);
 }
 
 static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)

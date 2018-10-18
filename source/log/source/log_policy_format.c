@@ -34,5 +34,18 @@ log_policy log_policy_format_binary()
 
 log_policy log_policy_format_text()
 {
-	return log_policy_create(LOG_ASPECT_FORMAT, log_policy_format(LOG_POLICY_FORMAT_TEXT), NULL);
+	struct log_policy_format_text_ctor_type text_ctor;
+
+	text_ctor.flags = LOG_POLICY_FORMAT_TEXT_NEWLINE;
+
+	return log_policy_create(LOG_ASPECT_FORMAT, log_policy_format(LOG_POLICY_FORMAT_TEXT), &text_ctor);
+}
+
+log_policy log_policy_format_text_flags(unsigned int flags)
+{
+	struct log_policy_format_text_ctor_type text_ctor;
+
+	text_ctor.flags = flags;
+
+	return log_policy_create(LOG_ASPECT_FORMAT, log_policy_format(LOG_POLICY_FORMAT_TEXT), &text_ctor);
 }

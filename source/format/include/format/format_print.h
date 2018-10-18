@@ -36,15 +36,15 @@ extern "C" {
 	/* Supported */
 
 #else
-#	define snprintf snprintf_c89_impl
-#	define vsnprintf vsnprintf_c89_impl
+#	define snprintf snprintf_impl_c89
+#	define vsnprintf vsnprintf_impl_c89
 #endif
 
 /* -- Methods -- */
 
-FORMAT_API int snprintf_c89_impl(char * s, size_t n, const char * format, ...);
+FORMAT_API int snprintf_impl_c89(char * s, size_t n, const char * format, ...);
 
-FORMAT_API int vsnprintf_c89_impl(char * s, size_t n, const char * format, va_list arg);
+FORMAT_API int vsnprintf_impl_c89(char * s, size_t n, const char * format, va_list arg);
 
 #ifdef __cplusplus
 }
