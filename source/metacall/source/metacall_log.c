@@ -45,7 +45,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 			metacall_log_socket socket_ctx = (metacall_log_socket)ctx;
 
 			return log_configure("metacall",
-				log_policy_format_text(),
+				log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_EMPTY),
 				log_policy_schedule_sync(),
 				log_policy_storage_sequential(),
 				log_policy_stream_socket(socket_ctx->ip, socket_ctx->port));
@@ -67,7 +67,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 			metacall_log_nginx nginx_ctx = (metacall_log_nginx)ctx;
 
 			return log_configure("metacall",
-				log_policy_format_text(),
+				log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_EMPTY),
 				log_policy_schedule_sync(),
 				log_policy_storage_sequential(),
 				log_policy_stream_nginx(nginx_ctx->log, nginx_ctx->log_error, nginx_ctx->log_level));
