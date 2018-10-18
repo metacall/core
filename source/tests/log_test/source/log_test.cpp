@@ -189,4 +189,32 @@ TEST_F(log_test, DefaultConstructor)
 			EXPECT_EQ((int) 0, (int) log_clear(log_name_list[iterator].name));
 		}
 	}
+
+	/* Policy format text flags */
+	{
+		EXPECT_EQ((int) 0, (int) log_configure("newline",
+			log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_NEWLINE),
+			log_policy_schedule_sync(),
+			log_policy_storage_sequential(),
+			log_policy_stream_stdio(stdout)));
+
+		EXPECT_EQ((int) 0, (int) log_write("newline", LOG_LEVEL_INFO, "NEW LINE A"));
+		EXPECT_EQ((int) 0, (int) log_write("newline", LOG_LEVEL_INFO, "NEW LINE B"));
+		EXPECT_EQ((int) 0, (int) log_write("newline", LOG_LEVEL_INFO, "hello world from log (id : %" PRIuS ")", 1234));
+		EXPECT_EQ((int) 0, (int) log_write("newline", LOG_LEVEL_INFO, "hello world from log (id : %" PRIuS ")", 5432));
+
+		EXPECT_EQ((int) 0, (int) log_configure("nonewline",
+			log_policy_format_text_flags(LOG_POLICY_FORMAT_TEXT_EMPTY),
+			log_policy_schedule_sync(),
+			log_policy_storage_sequential(),
+			log_policy_stream_stdio(stdout)));
+
+		EXPECT_EQ((int) 0, (int) log_write("nonewline", LOG_LEVEL_INFO, "NO NEW LINE A"));
+		EXPECT_EQ((int) 0, (int) log_write("nonewline", LOG_LEVEL_INFO, "NO NEW LINE B"));
+		EXPECT_EQ((int) 0, (int) log_write("nonewline", LOG_LEVEL_INFO, "hello world from log (id : %" PRIuS ")", 1234));
+		EXPECT_EQ((int) 0, (int) log_write("nonewline", LOG_LEVEL_INFO, "hello world from log (id : %" PRIuS ")", 5432));
+
+		EXPECT_EQ((int) 0, (int) log_clear("newline"));
+		EXPECT_EQ((int) 0, (int) log_clear("nonewline"));
+	}
 }

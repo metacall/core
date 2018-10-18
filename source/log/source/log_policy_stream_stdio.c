@@ -78,7 +78,10 @@ static int log_policy_stream_stdio_write(log_policy policy, const void * buffer,
 {
 	log_policy_stream_stdio_data stdio_data = log_policy_instance(policy);
 
-	if (fwrite(buffer, 1, size, stdio_data->stream) != size)
+	size_t length = size > 0 ? size - 1 : 0;
+
+	/* Do not write null character */
+	if (fwrite(buffer, 1, length, stdio_data->stream) != length)
 	{
 		return 1;
 	}

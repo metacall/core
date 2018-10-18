@@ -111,7 +111,7 @@ static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy,
 
 	/* TODO: remove this, use storage policy instead */
 	{
-		void * buffer = malloc(size + 1);
+		void * buffer = malloc(size);
 
 		int result = 1;
 
