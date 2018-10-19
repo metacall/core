@@ -67,8 +67,7 @@ sub_python(){
 sub_ruby(){
 	echo "configure ruby"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev
-	$SUDO_CMD apt-get -y --no-install-recommends install ruby2.3-dev
+	$SUDO_CMD apt-get -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.3-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
