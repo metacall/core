@@ -35,7 +35,7 @@ sub_apt(){
 	cd $ROOT_DIR
 	echo "configure apt"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --no-install-recommends install build-essential git cmake wget apt-utils
+	$SUDO_CMD apt-get -y --no-install-recommends install build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 }
 
 # Swig
@@ -57,6 +57,7 @@ sub_swig(){
 # Python
 sub_python(){
 	echo "configure python"
+	cd $ROOT_DIR
 	$SUDO_CMD apt-get -y --no-install-recommends install python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
@@ -66,6 +67,7 @@ sub_python(){
 # Ruby
 sub_ruby(){
 	echo "configure ruby"
+	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.3-dev
 
@@ -101,16 +103,43 @@ sub_funchook(){
 sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install apt-transport-https libunwind8 libunwind8-dev gettext libicu-dev liblttng-ust-dev libcurl4-openssl-dev libssl-dev uuid-dev unzip
-	$SUDO_CMD sh -c 'echo "deb [arch=amd64] https://apt-mo.trafficmanager.net/repos/dotnet-release/ xenial main" > /etc/apt/sources.list.d/dotnetdev.list'
-	$SUDO_CMD apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 417A0893
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libgssapi-krb5-2 libicu55 libstdc++6
-	$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libssl1.0.0 dotnet-sharedframework-microsoft.netcore.app-1.1.0 dotnet-dev-1.0.0-preview2.1-003177
+
+	apt-get update && apt-get install -y --no-install-recommends \
+		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
+
+	# # Install .NET Core
+	# DOTNET_VERSION=1.1.10
+	# DOTNET_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Runtime/$DOTNET_VERSION/dotnet-debian.9-x64.$DOTNET_VERSION.tar.gz
+
+	# wget $DOTNET_DOWNLOAD_URL -O dotnet.tar.gz
+	# mkdir -p /usr/share/dotnet
+	# tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+	# rm dotnet.tar.gz
+	# ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+
+	# Install .NET Runtime
+	DOTNET_SDK_VERSION=1.1.11
+	DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-dev-debian.9-x64.$DOTNET_SDK_VERSION.tar.gz
+
+	wget $DOTNET_SDK_DOWNLOAD_URL -O dotnet.tar.gz
+	mkdir -p /usr/share/dotnet
+	tar -zxf dotnet.tar.gz -C /usr/share/dotnet
+	rm dotnet.tar.gz
+	ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+
+	# Trigger the population of the local package cache
+	mkdir warmup
+	cd warmup
+	dotnet new
+	cd ..
+	rm -rf warmup
+	rm -rf /tmp/NuGetScratch
 }
 
 # V8 Repository
 sub_v8repo(){
+	# TODO: Switch repositories from ubuntu to debian
+
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get -y --no-install-recommends install add-apt-key
@@ -160,7 +189,6 @@ sub_v8repo(){
 sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
-
 	$SUDO_CMD apt-get -y --no-install-recommends install python
 	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 	export PATH=`pwd`/depot_tools:"$PATH"
@@ -180,10 +208,11 @@ sub_v8(){
 sub_nodejs(){
 	# TODO: Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
+	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
 
 	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get -y --no-install-recommends install python build-essential
+	$SUDO_CMD apt-get -y --no-install-recommends install python build-essential libssl1.0.2 libssl1.0-dev
 
 	# Install NodeJS from distributable (TODO: Keys not working)
 	NODE_VERSION=8.11.1
@@ -245,7 +274,7 @@ sub_metacall(){
 	mkdir build
 	cd build
 
-	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_PORTS=off -DOPTION_BUILD_PORTS_PY=off -DOPTION_BUILD_PORTS_JS=off -DOPTION_BUILD_PORTS_RB=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_CS_IMPL=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.0/
+	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_PORTS=off -DOPTION_BUILD_PORTS_PY=off -DOPTION_BUILD_PORTS_JS=off -DOPTION_BUILD_PORTS_RB=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_CS_IMPL=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/
 	make
 	make test && echo "test ok!"
 

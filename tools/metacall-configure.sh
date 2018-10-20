@@ -126,7 +126,7 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
 			-DOPTION_BUILD_LOADERS_CS_IMPL=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.0/"
+			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"

@@ -3,8 +3,11 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
+# Configure MetaCall Depends node image
+ARG METACALL_BASE_IMAGE
+
 # MetaCall Depends node image
-FROM metacall/core_deps
+FROM ${METACALL_BASE_IMAGE}
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -23,15 +26,22 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Define working directory
 WORKDIR $METACALL_PATH
 
-# Copy MetaCall dependecies
+# Copy MetaCall environment script
+COPY tools/metacall-environment.sh tools/metacall-clear.sh $METACALL_PATH/tools/
+
+# Install build dependencies
+RUN tools/metacall-environment.sh root base nodejs
+
+# Copy MetaCall NodeJS cmake script
 COPY cmake/FindNodeJS.cmake $METACALL_PATH/cmake/FindNodeJS.cmake
 
 # Run NodeJS cmake script (TODO: Make find library prefixes/suffixes generic)
-ARG METACALL_BUILD_TYPE_NAME
+ARG METACALL_NODE_BUILD_TYPE
 
-RUN mkdir -p $METACALL_PATH/build \
-	&& cmake \
-		-DCMAKE_BUILD_TYPE=${METACALL_BUILD_TYPE_NAME} \
+RUN cmake \
+		-DCMAKE_BUILD_TYPE=${METACALL_NODE_BUILD_TYPE} \
 		-DCMAKE_FIND_LIBRARY_PREFIXES=lib \
 		-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" \
-		-P $METACALL_PATH/cmake/FindNodeJS.cmake
+		-P $METACALL_PATH/cmake/FindNodeJS.cmake \
+	&& tools/metacall-clear.sh root base nodejs \
+	&& rm -rf $METACALL_PATH

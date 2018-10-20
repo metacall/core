@@ -30,6 +30,7 @@ message(STATUS "Plugin ${target} implementation")
 #
 
 add_custom_target(${target} ALL
+	COMMAND dotnet migrate ${CMAKE_CURRENT_SOURCE_DIR}/source/
 	COMMAND dotnet restore ${CMAKE_CURRENT_SOURCE_DIR}/source/
 	COMMAND dotnet publish ${CMAKE_CURRENT_SOURCE_DIR}/source/ -o ${CMAKE_BINARY_DIR}
 )

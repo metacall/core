@@ -342,7 +342,6 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	/* NodeJS */
 	#if defined(OPTION_BUILD_LOADERS_NODE)
-	/* TODO: This blocks when used with CTest because of fork deadlock problem */
 	{
 		const char * node_scripts[] =
 		{

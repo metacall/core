@@ -17,12 +17,12 @@ endif()
 set(DOTNET_COMMAND dotnet)
 
 # Detect dotnet command
-execute_process(COMMAND ${DOTNET_COMMAND} -v
-  RESULT_VARIABLE DOTNET_COMMAND_RESULT
+execute_process(COMMAND ${DOTNET_COMMAND}
+	RESULT_VARIABLE DOTNET_COMMAND_RESULT
 )
 
-# Set found variable
-if(DOTNET_COMMAND_RESULT EQUAL 0)
+# Set found variable (TODO: Review 129 state in Debian)
+if(DOTNET_COMMAND_RESULT EQUAL 0 OR DOTNET_COMMAND_RESULT EQUAL 129)
 	set(DOTNET_FOUND TRUE)
 else()
 	set(DOTNET_FOUND FALSE)

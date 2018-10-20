@@ -25,7 +25,7 @@ PROGNAME=$(basename $0)
 # Base packages
 sub_apt(){
 	echo "clean apt of C build"
-	$SUDO_CMD apt-get -y remove --purge build-essential git cmake wget apt-utils
+	$SUDO_CMD apt-get -y remove --purge build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 	$SUDO_CMD apt-get -y autoclean
 	$SUDO_CMD apt-get -y autoremove
 }
@@ -61,6 +61,7 @@ sub_ruby(){
 # NetCore
 sub_netcore(){
 	echo "clean netcore"
+	$SUDO_CMD apt-get -y remove --purge libssl1.0-dev libkrb5-dev clang
 }
 
 # V8
@@ -81,7 +82,6 @@ sub_metacall(){
 	$SUDO_CMD rm /usr/local/share/metacall/README
 	$SUDO_CMD rm /usr/local/share/metacall/metacall-config.cmake
 }
-
 
 # Clear
 sub_clear(){

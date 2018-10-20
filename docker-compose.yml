@@ -19,7 +19,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_BASE_IMAGE: ubuntu:xenial
+        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_INSTALL_OPTIONS: root base python ruby netcore nodejs rapidjson funchook # v8rep51
     environment:
       DEBIAN_FRONTEND: noninteractive
@@ -34,7 +34,8 @@ services:
       dockerfile: tools/node/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
-        METACALL_BUILD_TYPE_NAME: $METACALL_NODE_BUILD_TYPE
+        METACALL_NODE_BUILD_TYPE: $METACALL_NODE_BUILD_TYPE
+        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
     environment:
       DEBIAN_FRONTEND: noninteractive
 
