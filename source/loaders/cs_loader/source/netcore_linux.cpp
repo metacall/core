@@ -91,9 +91,13 @@ bool netcore_linux::ConfigAssemblyName()
 
 	AddFilesFromDirectoryToTpaList(this->runtimePath, tpaList);
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "NetCore application absolute path: %s", this->appPath);
+
+	/* TODO: Solve uninitialized strings */
+	/*
 	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteRuntime: %s", this->runtimePath);
-	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteAppPath: %s", this->appPath);
 	log_write("metacall", LOG_LEVEL_DEBUG, "absoluteLoaderDll: %s", this->managedAssemblyFullName);
+	*/
 
 	return true;
 }
