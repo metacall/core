@@ -1324,6 +1324,7 @@ void node_loader_impl_thread(void * data)
 
 	if (length == -1 || length == PATH_MAX)
 	{
+		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str); */
 		return;
 	}
@@ -1817,12 +1818,14 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	/* Destroy node loop */
 	if (uv_loop_alive(node_impl->thread_loop) != 0)
 	{
+		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive"); */
 	}
 
 	/* TODO: Check how to delete properly all handles */
 	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
 	{
+		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy"); */
 	}
 
@@ -1880,7 +1883,7 @@ int node_loader_impl_destroy(loader_impl impl)
 	uv_thread_join(&node_impl->thread_id);
 
 	/* Print NodeJS execution result */
-	/* log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result); */
+	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
 
 	delete node_impl;
 
