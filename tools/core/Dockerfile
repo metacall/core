@@ -3,8 +3,11 @@
 # Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
-# MetaCall Depends node builder image
-FROM metacall/core_deps_node AS builder_node
+# Configure MetaCall base image
+ARG METACALL_BASE_IMAGE
+
+# MetaCall Depends builder image
+FROM metacall/core_dev AS builder
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -23,8 +26,8 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Define working directory
 WORKDIR $METACALL_PATH
 
-# MetaCall Depends image
-FROM metacall/core_deps
+# MetaCall image
+FROM ${METACALL_BASE_IMAGE}
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -38,39 +41,34 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 ARG METACALL_PATH
 
 # Environment variables
-ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
-	LOADER_SCRIPT_PATH=$METACALL_PATH/build/scripts \
-	CONFIGURATION_PATH=$METACALL_PATH/build/configurations/global.json \
-	SERIAL_LIBRARY_PATH=$METACALL_PATH/build \
-	DETOUR_LIBRARY_PATH=$METACALL_PATH/build \
+ENV LOADER_LIBRARY_PATH=/usr/local/lib \
+	LOADER_SCRIPT_PATH=/usr/local/scripts \
+	CONFIGURATION_PATH=/usr/local/share/metacall/configurations/global.json \
+	SERIAL_LIBRARY_PATH=/usr/local/lib \
+	DETOUR_LIBRARY_PATH=/usr/local/lib \
 	DEBIAN_FRONTEND=noninteractive
 
 # Define working directory
 WORKDIR $METACALL_PATH
 
-# Copy MetaCall NodeJS dependencies (TODO: Make location fixed)
-COPY --from=builder_node /usr/local/lib/libnode.so.* /usr/local/lib/
+# Copy libraries from builder
+COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.node /usr/local/lib/
 
 # Copy MetaCall dependecies
-COPY . $METACALL_PATH
+COPY tools/metacall-runtime.sh $METACALL_PATH
 
-# Configure MetaCall build tool script
-RUN chmod 500 $METACALL_PATH/tools/metacall-configure.sh \
-	&& chmod 500 $METACALL_PATH/tools/metacall-build.sh \
-	&& chmod 500 $METACALL_PATH/tools/metacall-clear.sh \
-	&& mkdir -p $METACALL_PATH/build
+# Configure MetaCall runtime tool script
+ARG METACALL_RUNTIME_OPTIONS
 
-# Configure MetaCall libraries and build runtimes if needed
-ARG METACALL_BUILD_TYPE
-ARG METACALL_BUILD_OPTIONS
+# Install runtimes
+RUN mkdir -p /usr/local/scripts \
+	&& chmod 500 $METACALL_PATH/metacall-runtime.sh \
+	&& $METACALL_PATH/metacall-runtime.sh ${METACALL_RUNTIME_OPTIONS} \
+	&& rm -rf $METACALL_PATH/metacall-runtime.sh
 
-RUN cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-configure.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+# Copy headers from builder
+COPY --from=builder /usr/local/include/metacall /usr/local/include/metacall
 
-# Build and install MetaCall libraries then run tests
-RUN cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+# Copy configuration from builder
+COPY --from=builder /usr/local/share/metacall/configurations/* /usr/local/share/metacall/configurations/
 
-# Clear MetaCall build dependencies
-RUN cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}

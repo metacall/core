@@ -32,8 +32,8 @@ PROGNAME=$(basename $0)
 
 # Base packages
 sub_apt(){
-	cd $ROOT_DIR
 	echo "configure apt"
+	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get -y --no-install-recommends install build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 }
@@ -104,7 +104,7 @@ sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
 
-	apt-get update && apt-get install -y --no-install-recommends \
+	$SUDO_CMD apt-get update && apt-get install -y --no-install-recommends \
 		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
 
 	# # Install .NET Core
