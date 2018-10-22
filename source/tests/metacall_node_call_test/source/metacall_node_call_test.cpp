@@ -44,11 +44,11 @@ TEST_F(metacall_node_call_test, DefaultConstructor)
 
 		for (size_t iterator = 0; iterator < call_size; ++iterator)
 		{
-			void * ret =  metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
+			void * ret =  metacallt("call_test", hello_boy_double_ids, 3.0, 4.0);
 
 			EXPECT_NE((void *) NULL, (void *) ret);
 
-			EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+			EXPECT_EQ((double) metacall_value_to_double(ret), (double) 12.0);
 
 			metacall_value_destroy(ret);
 		}
