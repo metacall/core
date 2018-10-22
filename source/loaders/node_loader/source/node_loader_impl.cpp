@@ -78,6 +78,11 @@
 			because it is a bug on the POSIX standard (too many limitations are related to this technique).
 */
 
+/* TODO: (2.0)
+
+	Detour method is not valid because of NodeJS cannot be reinitialized, platform pointer already initialized in CHECK macro
+*/
+
 typedef struct loader_impl_node_type
 {
 	napi_env env;
@@ -215,7 +220,11 @@ function_return function_node_interface_invoke(function func, function_impl impl
 			NULL
 		};
 
+		uv_mutex_lock(&node_impl_mutex);
+
 		node_impl->async_func_call.data = static_cast<void *>(&async_data);
+
+		uv_mutex_unlock(&node_impl_mutex);
 
 		/* Execute function call async callback */
 		uv_async_send(&node_impl->async_func_call);
@@ -1152,14 +1161,14 @@ void node_loader_impl_async_discover(uv_async_t * async)
 					signature s = function_signature(f);
 					scope sp = context_scope(async_data->ctx);
 
-					for (index = 0; index < function_sig_length; ++index)
+					for (uint32_t arg_index = 0; arg_index < function_sig_length; ++arg_index)
 					{
 						napi_value parameter_name;
 						size_t parameter_name_length;
 						char * parameter_name_str = NULL;
 
 						/* Get signature parameter name */
-						status = napi_get_element(env, function_sig, index, &parameter_name);
+						status = napi_get_element(env, function_sig, arg_index, &parameter_name);
 
 						assert(status == napi_ok);
 
@@ -1178,7 +1187,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 						assert(status == napi_ok);
 
-						signature_set(s, index, parameter_name_str, NULL);
+						signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
 					}
 
 					scope_define(sp, function_name_str, f);
