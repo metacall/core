@@ -224,14 +224,10 @@ function_return function_node_interface_invoke(function func, function_impl impl
 
 		node_impl->async_func_call.data = static_cast<void *>(&async_data);
 
-		uv_mutex_unlock(&node_impl_mutex);
-
 		/* Execute function call async callback */
 		uv_async_send(&node_impl->async_func_call);
 
 		/* Wait until function is called */
-		uv_mutex_lock(&node_impl_mutex);
-
 		uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 		uv_mutex_unlock(&node_impl_mutex);
@@ -258,14 +254,14 @@ void function_node_interface_destroy(function func, function_impl impl)
 			node_func
 		};
 
+		uv_mutex_lock(&node_impl_mutex);
+
 		node_impl->async_func_destroy.data = static_cast<void *>(&async_data);
 
 		/* Execute function destroy async callback */
 		uv_async_send(&node_impl->async_func_destroy);
 
 		/* Wait until function is destroyed */
-		uv_mutex_lock(&node_impl_mutex);
-
 		uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 		uv_mutex_unlock(&node_impl_mutex);
@@ -1494,7 +1490,13 @@ void node_loader_impl_thread(void * data)
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&node_impl_mutex);
+
 	node_impl->result = result;
+
+	/* Unlock node implementation mutex */
+	uv_mutex_unlock(&node_impl_mutex);
 }
 
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
@@ -1555,6 +1557,8 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	/* Initialize node loader entry point */
 	/*
+	uv_mutex_lock(&node_impl_mutex);
+
 	node_impl->async_initialize.data = static_cast<void *>(&node_impl);
 	*/
 
@@ -1565,8 +1569,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	/* Wait until script has been loaded */
 	/*
-	uv_mutex_lock(&node_impl_mutex);
-
 	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 	uv_mutex_unlock(&node_impl_mutex);
@@ -1602,14 +1604,14 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		NULL
 	};
 
+	uv_mutex_lock(&node_impl_mutex);
+
 	node_impl->async_load_from_file.data = static_cast<void *>(&async_data);
 
 	/* Execute load from file async callback */
 	uv_async_send(&node_impl->async_load_from_file);
 
 	/* Wait until module is loaded */
-	uv_mutex_lock(&node_impl_mutex);
-
 	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 	uv_mutex_unlock(&node_impl_mutex);
@@ -1656,14 +1658,14 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 		handle_ref
 	};
 
+	uv_mutex_lock(&node_impl_mutex);
+
 	node_impl->async_clear.data = static_cast<void *>(&async_data);
 
 	/* Execute clear async callback */
 	uv_async_send(&node_impl->async_clear);
 
 	/* Wait until module is cleared */
-	uv_mutex_lock(&node_impl_mutex);
-
 	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 	uv_mutex_unlock(&node_impl_mutex);
@@ -1689,14 +1691,14 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		ctx
 	};
 
+	uv_mutex_lock(&node_impl_mutex);
+
 	node_impl->async_discover.data = static_cast<void *>(&async_data);
 
 	/* Execute discover async callback */
 	uv_async_send(&node_impl->async_discover);
 
 	/* Wait until module is discovered */
-	uv_mutex_lock(&node_impl_mutex);
-
 	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 	uv_mutex_unlock(&node_impl_mutex);
@@ -1871,25 +1873,26 @@ int node_loader_impl_destroy(loader_impl impl)
 		return 1;
 	}
 
-	/* Send async destroy */
+	uv_mutex_lock(&node_impl_mutex);
+
 	node_impl->async_destroy.data = static_cast<void *>(&node_impl);
 
+	/* Execute destroy async callback */
 	uv_async_send(&node_impl->async_destroy);
 
 	/* Wait until node is destroyed */
-	uv_mutex_lock(&node_impl_mutex);
-
 	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
 
 	uv_mutex_unlock(&node_impl_mutex);
 
-	/* Clear destroy syncronization and async objects */
-	uv_mutex_destroy(&node_impl_mutex);
-
+	/* Clear condition syncronization object */
 	uv_cond_destroy(&node_impl_cond);
 
 	/* Wait for node thread to finish */
 	uv_thread_join(&node_impl->thread_id);
+
+	/* Clear mutex syncronization object */
+	uv_mutex_destroy(&node_impl_mutex);
 
 	/* Print NodeJS execution result */
 	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
