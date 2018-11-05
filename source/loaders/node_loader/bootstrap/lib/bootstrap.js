@@ -131,23 +131,25 @@ function node_loader_trampoline_execution_path() {
 }
 
 function node_loader_trampoline_load_from_file(paths) {
-	const handle = {};
-
 	if (!Array.isArray(paths)) {
 		throw new Error('Load from file paths must be an array, not ' + typeof code);
 	}
 
 	try {
+		const handle = {};
+
 		for (const p of paths) {
 			const m = require(path.resolve(__dirname, p));
 
 			handle[p] = node_loader_trampoline_module(m);
 		}
+
+		return handle;
 	} catch (ex) {
 		console.log('Exception in node_loader_trampoline_load_from_file', ex);
 	}
 
-	return handle;
+	return null;
 }
 
 function node_loader_trampoline_load_from_memory(name, buffer, opts) {

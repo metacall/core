@@ -853,14 +853,24 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 		assert(status == napi_ok);
 
-		/* Make handle persistent */
-		status = napi_create_reference(env, return_value, 0, &async_data->handle_ref);
+		/* Check return value */
+		napi_valuetype return_valuetype;
+
+		status = napi_typeof(env, return_value, &return_valuetype);
 
 		assert(status == napi_ok);
 
-		status = napi_reference_ref(env, async_data->handle_ref, &ref_count);
+		if (return_valuetype != napi_null)
+		{
+			/* Make handle persistent */
+			status = napi_create_reference(env, return_value, 0, &async_data->handle_ref);
 
-		assert(status == napi_ok && ref_count == 1);
+			assert(status == napi_ok);
+
+			status = napi_reference_ref(env, async_data->handle_ref, &ref_count);
+
+			assert(status == napi_ok && ref_count == 1);
+		}
 	}
 
 	/* Close scope */
