@@ -62,7 +62,7 @@ TEST_F(environment_test, variable_path)
 
 	ASSERT_NE((const char *) NULL, (const char *) variable_path);
 	
-	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR));
+	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR));
 
 	environment_variable_path_destroy(variable_path);
 }
@@ -75,7 +75,7 @@ TEST_F(environment_test, variable_path_default)
 
 	ASSERT_NE((const char *) NULL, (const char *) variable_path);
 
-	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "default_path" ENVIRONMENT_VARIABLE_PATH_SEPARATOR));
+	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "default_path" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR));
 
 	environment_variable_path_destroy(variable_path);
 }
@@ -89,7 +89,7 @@ TEST_F(environment_test, variable_path_sanitized)
 
 	ASSERT_NE((const char *) NULL, (const char *) variable_path);
 
-	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR));
+	EXPECT_EQ((int) 0, (int) strcmp(variable_path, "abcd" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR));
 
 	environment_variable_path_destroy(variable_path);
 }

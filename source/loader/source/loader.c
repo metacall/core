@@ -370,13 +370,11 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 					{
 						if (loader_path_is_absolute(paths[iterator]) != 0)
 						{
-							memcpy(absolute_paths[iterator], l->script_path, strlen(l->script_path) + 1);
-
-							strncat(absolute_paths[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+							(void)loader_path_join(l->script_path, strlen(l->script_path) + 1, paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1) + 1, absolute_paths[iterator]);
 						}
 						else
 						{
-							strncpy(absolute_paths[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE - 1);
+							strncpy(absolute_paths[iterator], paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1));
 						}
 					}
 
@@ -449,11 +447,15 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	configuration config;
 
-	value tag, scripts;
+	value tag, scripts, context_path;
 
 	value * scripts_array;
 
 	loader_naming_path * paths;
+
+	loader_naming_path context_path_str;
+
+	size_t context_path_size;
 
 	size_t iterator, size;
 
@@ -517,6 +519,23 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 		return 1;
 	}
 
+	context_path = configuration_value(config, "path");
+
+	if (context_path != NULL)
+	{
+		const char * str = value_to_string(context_path);
+
+		size_t str_size = value_type_size(context_path);
+
+		loader_naming_path path_base, join_path;
+
+		size_t path_base_size = loader_path_get_path(path, strlen(path), path_base);
+
+		size_t join_path_size = loader_path_join(path_base, path_base_size, str, str_size, join_path);
+
+		context_path_size = loader_path_canonical(join_path, join_path_size, context_path_str);
+	}
+
 	scripts_array = value_to_array(scripts);
 
 	for (iterator = 0; iterator < size; ++iterator)
@@ -525,7 +544,20 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 		{
 			const char * str = value_to_string(scripts_array[iterator]);
 
-			strncpy(paths[iterator], str, value_type_size(scripts_array[iterator]));
+			size_t str_size = value_type_size(scripts_array[iterator]);
+
+			if (context_path == NULL)
+			{
+				(void)loader_path_canonical(str, str_size, paths[iterator]);
+			}
+			else
+			{
+				loader_naming_path join_path;
+
+				size_t join_path_size = loader_path_join(context_path_str, context_path_size, str, str_size, join_path);
+
+				(void)loader_path_canonical(join_path, join_path_size, paths[iterator]);
+			}
 		}
 	}
 
