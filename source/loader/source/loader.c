@@ -374,7 +374,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 						}
 						else
 						{
-							strncpy(absolute_paths[iterator], paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1));
+							strncpy(absolute_paths[iterator], paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1) + 1);
 						}
 					}
 
@@ -529,7 +529,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 		loader_naming_path path_base, join_path;
 
-		size_t path_base_size = loader_path_get_path(path, strlen(path), path_base);
+		size_t path_base_size = loader_path_get_path(path, strlen(path) + 1, path_base);
 
 		size_t join_path_size = loader_path_join(path_base, path_base_size, str, str_size, join_path);
 

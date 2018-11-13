@@ -854,7 +854,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		{
 			loader_naming_path location_path;
 
-			loader_path_get_path(paths[iterator], location_path);
+			loader_path_get_path(paths[iterator], strlen(paths[iterator]) + 1, location_path);
 
 			if (py_loader_impl_execution_path(impl, location_path) != 0)
 			{

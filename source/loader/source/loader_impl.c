@@ -118,7 +118,7 @@ dynlink loader_impl_dynlink_load(const char * path, const loader_naming_tag tag)
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
 
-	strncpy(loader_dynlink_name, tag, LOADER_DYNLINK_NAME_SIZE - 1);
+	strncpy(loader_dynlink_name, tag, LOADER_DYNLINK_NAME_SIZE);
 
 	strncat(loader_dynlink_name, loader_dynlink_suffix,
 		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
@@ -140,7 +140,7 @@ int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dy
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
 
-	strncpy(loader_dynlink_symbol, loader_dynlink_symbol_prefix, LOADER_DYNLINK_SYMBOL_SIZE - 1);
+	strncpy(loader_dynlink_symbol, loader_dynlink_symbol_prefix, LOADER_DYNLINK_SYMBOL_SIZE);
 
 	strncat(loader_dynlink_symbol, tag,
 		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);

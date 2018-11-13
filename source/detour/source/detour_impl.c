@@ -55,7 +55,7 @@ dynlink detour_impl_load_dynlink(const char * path, const char * name)
 
 	char detour_dynlink_name[DETOUR_DYNLINK_NAME_FULL_SIZE];
 
-	strncpy(detour_dynlink_name, name, DETOUR_DYNLINK_NAME_FULL_SIZE - 1);
+	strncpy(detour_dynlink_name, name, DETOUR_DYNLINK_NAME_FULL_SIZE);
 
 	strncat(detour_dynlink_name, detour_dynlink_suffix,
 		DETOUR_DYNLINK_NAME_FULL_SIZE - strnlen(detour_dynlink_name, DETOUR_DYNLINK_NAME_FULL_SIZE - 1) - 1);
@@ -77,7 +77,7 @@ int detour_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_ad
 
 	char detour_dynlink_symbol[DETOUR_DYNLINK_SYMBOL_SIZE];
 
-	strncpy(detour_dynlink_symbol, detour_dynlink_symbol_prefix, DETOUR_DYNLINK_SYMBOL_SIZE - 1);
+	strncpy(detour_dynlink_symbol, detour_dynlink_symbol_prefix, DETOUR_DYNLINK_SYMBOL_SIZE);
 
 	strncat(detour_dynlink_symbol, name,
 		DETOUR_DYNLINK_SYMBOL_SIZE - strnlen(detour_dynlink_symbol, DETOUR_DYNLINK_SYMBOL_SIZE - 1) - 1);

@@ -53,7 +53,7 @@ dynlink serial_impl_load_dynlink(const char * path, const char * name)
 
 	char serial_dynlink_name[SERIAL_DYNLINK_NAME_FULL_SIZE];
 
-	strncpy(serial_dynlink_name, name, SERIAL_DYNLINK_NAME_FULL_SIZE - 1);
+	strncpy(serial_dynlink_name, name, SERIAL_DYNLINK_NAME_FULL_SIZE);
 
 	strncat(serial_dynlink_name, serial_dynlink_suffix,
 		SERIAL_DYNLINK_NAME_FULL_SIZE - strnlen(serial_dynlink_name, SERIAL_DYNLINK_NAME_FULL_SIZE - 1) - 1);
@@ -75,7 +75,7 @@ int serial_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_ad
 
 	char serial_dynlink_symbol[SERIAL_DYNLINK_SYMBOL_SIZE];
 
-	strncpy(serial_dynlink_symbol, serial_dynlink_symbol_prefix, SERIAL_DYNLINK_SYMBOL_SIZE - 1);
+	strncpy(serial_dynlink_symbol, serial_dynlink_symbol_prefix, SERIAL_DYNLINK_SYMBOL_SIZE);
 
 	strncat(serial_dynlink_symbol, name,
 		SERIAL_DYNLINK_SYMBOL_SIZE - strnlen(serial_dynlink_symbol, SERIAL_DYNLINK_SYMBOL_SIZE - 1) - 1);

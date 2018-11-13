@@ -2,6 +2,6 @@
 	"language_id": "rb",
 	"path": "${LOADER_SCRIPT_PATH}",
 	"scripts": [
-		"${LOADER_SCRIPT_PATH}/hello.rb"
+		"hello.rb"
 	]
 }

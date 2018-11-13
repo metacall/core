@@ -199,6 +199,28 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_LOADERS_RB */
 
+	/* NodeJS */
+	#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		const enum metacall_value_id hello_boy_double_ids[] =
+		{
+			METACALL_DOUBLE, METACALL_DOUBLE
+		};
+
+		void * ret = NULL;
+
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_node_test.json", NULL, allocator));
+
+		ret = metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_LOADERS_NODE */
+
 	memory_allocator_destroy(allocator);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());

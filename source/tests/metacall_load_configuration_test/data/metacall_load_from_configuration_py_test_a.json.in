@@ -2,6 +2,6 @@
 	"language_id": "py",
 	"path": "${LOADER_SCRIPT_PATH}",
 	"scripts": [
-		"${LOADER_SCRIPT_PATH}/example.py"
+		"example.py"
 	]
 }

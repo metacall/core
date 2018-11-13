@@ -1,7 +1,7 @@
 {
-	"language_id": "py",
+	"language_id": "node",
 	"path": "${LOADER_SCRIPT_PATH}",
 	"scripts": [
-		"helloworld.py"
+		"nod.js"
 	]
 }
