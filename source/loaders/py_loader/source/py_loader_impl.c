@@ -166,6 +166,10 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 			return TYPE_STRING;
 		}
 	#endif
+	else if (PyBytes_Check(result))
+	{
+		return TYPE_BUFFER;
+	}
 	else if (result == Py_None)
 	{
 		return TYPE_NULL;
@@ -355,6 +359,23 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			#endif
 
 			v = value_create_string(str, (size_t)length);
+		}
+		else if (id == TYPE_BUFFER)
+		{
+			char * str = NULL;
+
+			Py_ssize_t length = 0;
+
+			#if PY_MAJOR_VERSION == 2
+
+				/* TODO */
+
+			#elif PY_MAJOR_VERSION == 3
+				if (PyBytes_AsStringAndSize(result, &str, &length) != -1)
+				{
+					v = value_create_buffer((const void *)str, (size_t)length + 1);
+				}
+			#endif
 		}
 		else if (id == TYPE_PTR)
 		{

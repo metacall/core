@@ -148,6 +148,16 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+		ret = metacall("bytebuff");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((size_t) sizeof("hello world"), (size_t) metacall_value_size(ret));
+
+		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "hello world", metacall_value_size(ret)));
+
+		metacall_value_destroy(ret);
+
 		ret = metacall("index");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
