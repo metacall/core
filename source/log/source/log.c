@@ -1,6 +1,6 @@
 /*
  *	Logger Library by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A generic logger library providing application execution reports.
  *
@@ -236,7 +236,7 @@ const char * log_print_info()
 {
 	static const char log_info[] =
 		"Logger Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef LOG_STATIC_DEFINE
 			"Compiled as static library type\n"

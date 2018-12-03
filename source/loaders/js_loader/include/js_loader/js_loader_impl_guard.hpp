@@ -1,7 +1,7 @@
 
 /*
  *	Loader Library by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A plugin for loading javascript code at run-time into a process.
  *

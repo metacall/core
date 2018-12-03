@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A plugin for loading javascript code at run-time into a process.
  *
@@ -32,7 +32,7 @@ const char * js_loader_print_info()
 {
 	static const char js_loader_info[] =
 		"Javascript Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef JS_LOADER_STATIC_DEFINE
 			"Compiled as static library type\n"
