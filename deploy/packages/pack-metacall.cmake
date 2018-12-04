@@ -30,9 +30,9 @@ elseif(UNIX AND SYSTEM_DIR_INSTALL)
 	# MacOS X disk image
 	# At the moment, DMG generator and CPACK_INCLUDE_TOPLEVEL_DIRECTORY=ON do not work together.
 	# Therefore, we disable dmg images for MacOS until we've found a solution
-#   set(OPTION_PACK_GENERATOR "DragNDrop" CACHE STRING "Package targets")
-#   set(PACK_COMPONENT_INSTALL OFF)
-#   set(PACK_INCLUDE_TOPDIR ON)
+#	set(OPTION_PACK_GENERATOR "DragNDrop" CACHE STRING "Package targets")
+#	set(PACK_COMPONENT_INSTALL OFF)
+#	set(PACK_INCLUDE_TOPDIR ON)
 else()
 	# Default (portable package for any platform)
 	set(OPTION_PACK_GENERATOR "ZIP;TGZ" CACHE STRING "Package targets")
@@ -114,21 +114,21 @@ set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/deploy/packages/${project_name})
 # Package information
 #
 
-set(CPACK_PACKAGE_NAME						 "${package_name}")
-set(CPACK_PACKAGE_VENDOR					   "${package_vendor}")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY		  "${package_description}")
-set(CPACK_PACKAGE_VERSION					  "${META_VERSION}")
+set(CPACK_PACKAGE_NAME						"${package_name}")
+set(CPACK_PACKAGE_VENDOR					"${package_vendor}")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY		"${package_description}")
+set(CPACK_PACKAGE_VERSION					"${META_VERSION}")
 set(CPACK_PACKAGE_VERSION_MAJOR				"${META_VERSION_MAJOR}")
 set(CPACK_PACKAGE_VERSION_MINOR				"${META_VERSION_MINOR}")
 set(CPACK_PACKAGE_VERSION_PATCH				"${META_VERSION_PATCH}")
 set(CPACK_RESOURCE_FILE_LICENSE				"${PROJECT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README				 "${PROJECT_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_README				"${PROJECT_SOURCE_DIR}/README")
 set(CPACK_RESOURCE_FILE_WELCOME				"${PROJECT_SOURCE_DIR}/WELCOME")
-set(CPACK_PACKAGE_DESCRIPTION_FILE			 "${PROJECT_SOURCE_DIR}/DESCRIPTION")
-set(CPACK_PACKAGE_ICON						 "${PROJECT_SOURCE_DIR}/deploy/images/logo.bmp")
+set(CPACK_PACKAGE_DESCRIPTION_FILE			"${PROJECT_SOURCE_DIR}/DESCRIPTION")
+set(CPACK_PACKAGE_ICON						"${PROJECT_SOURCE_DIR}/deploy/images/logo.bmp")
 set(CPACK_PACKAGE_FILE_NAME					"${package_name}-${CPACK_PACKAGE_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY			"${package_name}")
-set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY		 "${package_name}")
+set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY		"${package_name}")
 
 #
 # NSIS package
@@ -228,9 +228,9 @@ set(CPACK_ARCHIVE_COMPONENT_INSTALL ${PACK_COMPONENT_INSTALL})
 # Execute CPack
 #
 
-set(CPACK_OUTPUT_CONFIG_FILE "${PROJECT_BINARY_DIR}/CPackConfig-${project_name}.cmake")
-set(CPACK_GENERATOR		  "${OPTION_PACK_GENERATOR}")
-set(CPack_CMake_INCLUDED	 FALSE)
+set(CPACK_OUTPUT_CONFIG_FILE	"${PROJECT_BINARY_DIR}/CPackConfig-${project_name}.cmake")
+set(CPACK_GENERATOR				"${OPTION_PACK_GENERATOR}")
+set(CPack_CMake_INCLUDED		FALSE)
 
 include(CPack)
 
