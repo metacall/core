@@ -29,28 +29,37 @@ metacall('sum', 3, 4); // 7
 - [Abstract](#abstract)
 - [Table Of Contents](#table-of-contents)
   - [1. Motivation](#1-motivation)
-  - [2. Language Support](#2-language-support)
+  - [2. Language Support (Backends)](#2-language-support-backends)
   - [3. Use Cases](#3-use-cases)
-  - [4. Architecture](#4-architecture)
-    - [4.1 Overview](#41-overview)
-    - [4.2 Reflect](#42-reflect)
-      - [4.2.1 Type System](#421-type-system)
-      - [4.2.2 Values](#422-values)
-      - [4.2.3 Functions](#423-functions)
-    - [4.3 Loaders](#43-loaders)
-      - [4.3.1 Python](#431-python)
-      - [4.3.2 NodeJS](#432-nodejs)
-      - [4.3.3 JavaScript](#433-javascript)
-      - [4.3.4 C#](#434-c)
-      - [4.3.5 Ruby](#435-ruby)
-      - [4.3.6 Mock](#436-mock)
-      - [4.3.7 File](#437-file)
-    - [4.4 Ports](#44-ports)
-    - [4.5 Serialization](#45-serialization)
-    - [4.6 Memory Layout](#46-memory-layout)
-    - [4.7 Fork Model](#47-fork-model)
-    - [4.8 Threading Model](#48-threading-model)
-  - [5. Platform Support](#5-platform-support)
+  - [4. Examples](#4-examples)
+  - [5. Architecture](#5-architecture)
+    - [5.1 Overview](#51-overview)
+    - [5.2 Reflect](#52-reflect)
+      - [5.2.1 Type System](#521-type-system)
+      - [5.2.2 Values](#522-values)
+      - [5.2.3 Functions](#523-functions)
+    - [5.3 Plugins](#53-plugins)
+      - [5.3.1 Loaders](#531-loaders)
+        - [5.3.1.1 Python](#5311-python)
+        - [5.3.1.2 NodeJS](#5312-nodejs)
+        - [5.3.1.3 JavaScript](#5313-javascript)
+        - [5.3.1.4 C#](#5314-c)
+        - [5.3.1.5 Ruby](#5315-ruby)
+        - [5.3.1.6 Mock](#5316-mock)
+        - [5.3.1.7 File](#5317-file)
+      - [5.3.2 Serials](#532-serials)
+        - [5.3.2.1 MetaCall](#5321-metacall)
+        - [5.3.2.2 RapidJSON](#5322-rapidjson)
+      - [5.3.3 Detours](#533-detours)
+        - [5.3.3.1 FuncHook](#5331-funchook)
+    - [5.4 Ports](#54-ports)
+    - [5.5 Serialization](#55-serialization)
+    - [5.6 Memory Layout](#56-memory-layout)
+    - [5.7 Fork Model](#57-fork-model)
+    - [5.8 Threading Model](#58-threading-model)
+  - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
+  - [6. Platform Support](#6-platform-support)
+  - [7. License](#7-license)
 
 <!-- /TOC -->
 
@@ -58,28 +67,28 @@ metacall('sum', 3, 4); // 7
 
 The **METACALL** project started time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers extend the Game Engine easily. By that time, I was finishing the university so I decide to do my [Final Thesis]() based on the plug-in system for my Game Engine. After some refination of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge [FaaS](https://metacall.io/) (Function as a Service) based on this technique to provide high scalability of the functions among multiple cores or **Function Mesh** pattern, a new technique I have developed to interconnect transparently functions in a distributed system based on this library.
 
-## 2. Language Support
+## 2. Language Support (Backends)
 
 - Currently supported languages and run-times:
 
-| Language                                                           | Runtime                                                                                      | Version           | Tag  |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------|-------------------|------|
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   | **>= 3.2 <= 3.6** | py   |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **8.11.1**        | node |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        | **5.1.117**       | js   |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) | **1.1.10**        | cs   |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    | **>= 2.1 <= 2.3** | rb   |
-| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        | **0.1.0**         | mock |
+|                              Language                              |                                           Runtime                                            |      Version      | Tag  |
+|:------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|:-----------------:|:----:|
+|                 [Python](https://www.python.org/)                  |                  [Python C API](https://docs.python.org/3/c-api/intro.html)                  | **>= 3.2 <= 3.6** |  py  |
+|                   [NodeJS](https://nodejs.org/)                    |                          [N API](https://nodejs.org/api/n-api.html)                          |    **8.11.1**     | node |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) |                                    [V8](https://v8.dev/)                                     |    **5.1.117**    |  js  |
+|                [C#](https://dotnet.microsoft.com/)                 | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |    **1.1.10**     |  cs  |
+|                   [Ruby](https://ruby-lang.org/)                   |                  [Ruby C API](https://silverhammermba.github.io/emberb/c/)                   | **>= 2.1 <= 2.3** |  rb  |
+|                [Mock](/source/loaders/mock_loader)                 |                                            **∅**                                             |     **0.1.0**     | mock |
 
 - Languages and run-times under construction:
 
-| Language                                                           | Runtime                                                                                                                                                       | Tag  |
-|--------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|------|
-| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                                                                            | java |
-| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) / [libffcall](https://www.gnu.org/software/libffcall/) | c    |
-| [File](/source/loaders/file_loader)                                | **∅**                                                                                                                                                         | file |
-| [Go](https://golang.org/)                                          | Go Runtime                                                                                                                                                    | go   |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference)                                                        | jsm  |
+|                              Language                              |                                                                            Runtime                                                                            | Tag  |
+|:------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----:|
+|                   [Java](https://www.java.com/)                    |                                              [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                               | java |
+|                 [C/C++](http://www.cplusplus.com/)                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) / [libffcall](https://www.gnu.org/software/libffcall/) |  c   |
+|                [File](/source/loaders/file_loader)                 |                                                                             **∅**                                                                             | file |
+|                     [Go](https://golang.org/)                      |                                                                          Go Runtime                                                                           |  go  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) |                            [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference)                             | jsm  |
 
 ## 3. Use Cases
 
@@ -97,24 +106,26 @@ The **METACALL** project started time ago when I was coding a [Game Engine for a
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows an high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
-## 4. Architecture
+## 4. Examples
 
-### 4.1 Overview
+## 5. Architecture
 
-### 4.2 Reflect
+### 5.1 Overview
+
+### 5.2 Reflect
 
 The module that holds the representation of types, values and functions is called [`reflect`](/source/reflect) and it handles the abstraction of code loaded into **METACALL**.
 
 **METACALL** uses reflection and introspection techniques to inspect the code loaded by the [`loaders`](/source/loaders) in order to interpret it and provide an higher abstraction of it. With this higher abstraction **METACALL** can easily inter-operate between languages transparently.
 
-#### 4.2.1 Type System
+#### 5.2.1 Type System
 
 **METACALL** implements an abstract type system which is a binary representation of the types supported by it. This means that **METACALL** can convert any type of a language to its own type system and back. Each loader is responsible of doing this conversions.
 
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
 | Type    | Value                                                              |
-|---------|--------------------------------------------------------------------|
+|:-------:|--------------------------------------------------------------------|
 | Boolean | `true` or `false`                                                  |
 | Char    | `-128` to `127`                                                    |
 | Short   | `-32,768` to `32,767`                                              |
@@ -127,8 +138,6 @@ The module that holds the representation of types, values and functions is calle
 | Array   | Arrangement of values of any type                                  |
 | Map     | List of elements formed by a key (String) value (Any) pair (Array) |
 | Pointer | Low level representation of a memory reference                     |
-
-The memory layout guarantees to fit at least the same size of the types into memory. This means if a boolean type can be represented with one bit (inside one byte), maybe this value is stored in a bigger memory block and this fact is architecture and platform dependant.
 
 - Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
 
@@ -144,36 +153,114 @@ The memory layout guarantees to fit at least the same size of the types into mem
 
 - Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
 
-If any potential number overflow or invalid conversion between types is done, **METACALL** will warn about it. If any conversion of types can be handled by **METACALL**, it will automatically cast or transform the values into the target type automatically in order to avoid errors in the call.
+#### 5.2.2 Values
 
-#### 4.2.2 Values
+Values represent the instances of the **METACALL** type system.
 
-#### 4.2.3 Functions
+The memory layout guarantees to fit at least the same size of the types into memory. This means if a boolean type can be represented with one bit inside a value of one byte size, maybe this value is stored in a bigger memory block and this fact is architecture and platform dependant.
 
-### 4.3 Loaders
+When converting values between different types, if any potential number overflow or invalid conversion between types is done, **METACALL** will warn about it. If any conversion of types can be handled by **METACALL**, it will automatically cast or transform the values into the target type automatically in order to avoid errors in the call.
 
-#### 4.3.1 Python
+The value model is implemented by means of object pool. Each value is a reference to a memory block allocated from a memory pool (which can be injected into **METACALL**). The references can be passed by value, this means **METACALL** copies the reference value instead of the data which this reference is pointing to, like most run-times do when managing their own values.
 
-#### 4.3.2 NodeJS
+Each created value must be destroyed manually. Otherwise it will lead to a memory leak. This fact only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
 
-#### 4.3.3 JavaScript
+...
 
-#### 4.3.4 C# #
+#### 5.2.3 Functions
 
-#### 4.3.5 Ruby
+...
 
-#### 4.3.6 Mock
+The type deduction can be done at different levels. For example, it is possible to guess function types from the loaded code.
 
-#### 4.3.7 File
+``` python
+def multiply(a: int, b: int) -> int:
+  return a * b
+```
 
-### 4.4 Ports
+If this code is loaded, **METACALL** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments if any, and the return type if any.
 
-### 4.5 Serialization
+It may be possible that the function loaded into **METACALL** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
 
-### 4.6 Memory Layout
+``` python
+def multiply(a, b):
+  return a * b
+```
 
-### 4.7 Fork Model
+At low level **METACALL** must always know the types to do the call. This types can be inferred statically or dynamically and this has implications over the call model.
 
-### 4.8 Threading Model
+In the first example, we can simply call the function without specifying the types.
 
-## 5. Platform Support
+``` c
+metacall("multiply", 3, 4); // 12
+```
+
+As the signature is already know the literal values `3` and `4` can be converted into **METACALL** values automatically. Note that in this case, as literal values are provided, if we pass a double floating point, the memory representation of the value will be corrupted as there is no possible way to detect input values and cast them to the correct target values.
+
+In the second example, the values are not know. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not know. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
+
+``` c
+const enum metacall_value_id multiply_types[] =
+{
+  METACALL_INT, METACALL_INT
+};
+
+metacallt("multiply", multiply_types, 3, 4); // 12
+```
+
+This method allows to pass different value types to the same function. The following call would be valid too.
+
+``` c
+const enum metacall_value_id multiply_types[] =
+{
+  METACALL_DOUBLE, METACALL_DOUBLE
+};
+
+metacallt("multiply", multiply_types, 3.0, 4.0); // 12.0
+```
+
+
+
+### 5.3 Plugins
+
+#### 5.3.1 Loaders
+
+##### 5.3.1.1 Python
+
+##### 5.3.1.2 NodeJS
+
+##### 5.3.1.3 JavaScript
+
+##### 5.3.1.4 C# #
+
+##### 5.3.1.5 Ruby
+
+##### 5.3.1.6 Mock
+
+##### 5.3.1.7 File
+
+#### 5.3.2 Serials
+
+##### 5.3.2.1 MetaCall
+
+##### 5.3.2.2 RapidJSON
+
+#### 5.3.3 Detours
+
+##### 5.3.3.1 FuncHook
+
+### 5.4 Ports
+
+### 5.5 Serialization
+
+### 5.6 Memory Layout
+
+### 5.7 Fork Model
+
+### 5.8 Threading Model
+
+## 5. Application Programming Interface (API)
+
+## 6. Platform Support
+
+## 7. License
