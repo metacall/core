@@ -38,5 +38,8 @@ _start-cmd.bat
 # Local config unix
 .localconfig
 
+# Visual Studio Code
+.vscode
+
 # Linked dockerignore file in main context
 .dockerignore
