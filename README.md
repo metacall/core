@@ -247,7 +247,7 @@ Each plugin is a piece of software that can be dynamically loaded into the **MET
 
 #### 5.3.1 Loaders
 
-Loaders are responsible for embedding run-times into itself. Each loader has the following interface.
+Loaders are responsible for embedding run-times into **METACALL**. Each loader has the following interface.
 
 ``` c
 typedef struct loader_impl_interface_type
