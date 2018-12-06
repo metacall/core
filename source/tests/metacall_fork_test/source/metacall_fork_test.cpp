@@ -61,7 +61,7 @@ typedef struct _RTL_USER_PROCESS_INFORMATION {
 	SECTION_IMAGE_INFORMATION ImageInformation;
 } RTL_USER_PROCESS_INFORMATION, *PRTL_USER_PROCESS_INFORMATION;
 
-typedef NTSTATUS(*RtlCloneUserProcessPtr)(ULONG ProcessFlags,
+typedef NTSTATUS(NTAPI * RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,

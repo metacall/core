@@ -62,7 +62,7 @@ typedef struct _RTL_USER_PROCESS_INFORMATION {
 	SECTION_IMAGE_INFORMATION ImageInformation;
 } RTL_USER_PROCESS_INFORMATION, *PRTL_USER_PROCESS_INFORMATION;
 
-typedef NTSTATUS (*RtlCloneUserProcessPtr)(ULONG ProcessFlags,
+typedef NTSTATUS (NTAPI * RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -72,7 +72,7 @@ typedef NTSTATUS (*RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 
 void (*metacall_fork_func(void))(void);
 
-NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
+NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -128,7 +128,7 @@ void (*metacall_fork_func(void))(void)
 	return (void(*)(void))clone_ptr;
 }
 
-NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
+NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
