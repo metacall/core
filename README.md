@@ -243,7 +243,37 @@ metacallt("multiply", multiply_types, 3.0, 4.0); // 12.0
 
 - Detours is another layer of plugins focused on low level function interception (hooks).
 
+Each plugin is a piece of software that can be dynamically loaded into the **METACALL** core, used and unloaded when it is not needed anymore.
+
 #### 5.3.1 Loaders
+
+Loaders are responsible for embedding run-times into itself. Each loader has the following interface.
+
+``` c
+typedef struct loader_impl_interface_type
+{
+  loader_impl_interface_initialize initialize;
+  loader_impl_interface_execution_path execution_path;
+  loader_impl_interface_load_from_file load_from_file;
+  loader_impl_interface_load_from_memory load_from_memory;
+  loader_impl_interface_load_from_package load_from_package;
+  loader_impl_interface_clear clear;
+  loader_impl_interface_discover discover;
+  loader_impl_interface_destroy destroy;
+
+} * loader_impl_interface;
+```
+
+A loader must implement it to be considered a valid loader.
+
+- `initialize` starts up the run-time.
+- `execution_path` defines a new import path to the run-time.
+- `load_from_file` loads a code from file into the run-time and returns a handle which represents it.
+- `load_from_memory` loads a code from memory into the run-time and returns a handle which represents it.
+- `load_from_package` loads a code from a compiled library or package into the run-time and returns a handle which represents it.
+- `clear` unloads a handle from the run-time.
+- `discover` inspects a handle previously loaded.
+- `destroy` shutdowns the run-time.
 
 ##### 5.3.1.1 Python
 
