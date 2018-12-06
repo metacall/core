@@ -92,7 +92,7 @@ The **METACALL** project started time ago when I was coding a [Game Engine for a
 
 ## 3. Use Cases
 
-**METACALL** can be used for the following use cases:
+**METACALL** can be used in the following cases:
 
 - Interconnect different technologies in the same project. It allows to have heterogeneous teams of developers working over same project in an isolated way and using different programming languages at the same time.
 
@@ -104,7 +104,7 @@ The **METACALL** project started time ago when I was coding a [Game Engine for a
 
 - Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call directly low level libraries from your high level languages without making a wrapper in C or C++ for it.
 
-As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows an high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
+As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
 ## 4. Examples
 
@@ -165,11 +165,25 @@ The value model is implemented by means of object pool. Each value is a referenc
 
 Each created value must be destroyed manually. Otherwise it will lead to a memory leak. This fact only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
 
-...
+The value memory layout is described in the following form.
+
+| Memory Offset | `0` to `sizeof(data) - 1` | `sizeof(data)` to `sizeof(data) + sizeof(type_id) - 1` |
+|:-------------:|:-------------------------:|:------------------------------------------------------:|
+|  **Content**  |         **DATA**          |                      **TYPE ID**                       |
+
+This layout is used by the following reasons.
+
+- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to threat **METACALL** values as a normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
+
+- Data can be accessed faster as it is located at first position of the memory block. There is not extra calculation of an offset when trying to access the pointer.
+
+- Data and type id are contiguously allocated in order to threat it as the same memory block so it can be freed with one operation.
 
 #### 5.2.3 Functions
 
-...
+Functions are an abstract callable representation of functions, methods or procedures loaded by [`loaders`](/source/loaders). The functions are like a template who is linked to a loader run-time and allows to do a foreign function call.
+
+A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time. We can imagine a function like **`function<T>`** where **`T`** is a concrete type related to the run-time implementing initialize, call and destroy procedures in the loader.
 
 The type deduction can be done at different levels. For example, it is possible to guess function types from the loaded code.
 
@@ -219,9 +233,15 @@ const enum metacall_value_id multiply_types[] =
 metacallt("multiply", multiply_types, 3.0, 4.0); // 12.0
 ```
 
-
-
 ### 5.3 Plugins
+
+**METACALL** has a plugin architecture implemented at multiple levels.
+
+- Loaders implement a layer of plugins related to the run-times.
+
+- Serials implement a layer of (de)serializers in order to transform input (arguments) or output (return value) of the calls into a generic format.
+
+- Detours is another layer of plugins focused on low level function interception (hooks).
 
 #### 5.3.1 Loaders
 
