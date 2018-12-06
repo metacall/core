@@ -112,6 +112,20 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 ### 5.1 Overview
 
+...
+
+Design decisions.
+
+- To provide an high level API with a simple UX and to be easy to understand.
+
+- To work in high performance environments.
+
+- To be as cross-platform as possible.
+
+- Avoid to modify run-times directly or use the code inside **METACALL** in order to avoid maintaining them, or propagating security flaws or licenses into **METACALL**.
+
+...
+
 ### 5.2 Reflect
 
 The module that holds the representation of types, values and functions is called [`reflect`](/source/reflect) and it handles the abstraction of code loaded into **METACALL**.
@@ -306,6 +320,50 @@ A loader must implement it to be considered a valid loader.
 ### 5.6 Memory Layout
 
 ### 5.7 Fork Model
+
+**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, thr process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility of the developer and make this transparent.
+
+To understand the fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
+
+The main difference between fork-one and fork-all is that in fork-one only the thread which called the fork is preserved after the fork (i.e. gets cloned). In fork-all model, all threads are preserved after cloning. POSIX uses fork-one model, meanwhile Oracle Solaris use the fork-all model.
+
+Because of fork-one model, forking a running run-time like NodeJS (which has a thread pool) implies that in the child process the thread pool will be almost dead except the thread which did the fork call. So NodeJS run-time cannot continue the execution anymore and the event-loop enters into a deadlock state.
+
+When a fork is done, the status of the execution is lost by the moment. **METACALL** is not able to preserve the state when a fork is done. Some run-times do not allow to preserve the internal state. For example, the bad design of NodeJS does not allow to manage the thread pool from outside, so it cannot be preserved after a fork.
+
+Because of these restrictions, **METACALL** cannot preserve the status of the run-times. In the future this model will be improved to maintain consistency and preserve the execution state of the run-times making **METACALL** more robust.
+
+Although the state is not preserved, fork safety is. The mechanism **METACALL** uses to allow fork safety is described in the following enumeration.
+
+1) Intercept fork call done by the program where **METACALL** is running.
+
+2) Shutdown all run-times by means of unloading all loaders.
+
+3) Execute the real fork function.
+
+4) Restore all run-times by means of reloading all loaders.
+
+5) Execute user defined fork callback if any.
+
+To achieve this, **METACALL** hooks fork primitives depending on the platform.
+
+- `fork` on POSIX systems.
+- `RtlCloneUserProcess` on Windows systems.
+
+If you use `clone` instead of `fork` to spawn a new process in a POSIX system, **METACALL** won't catch it.
+
+Whenever you call a to a cloning primitive **METACALL** intercepts it by means of [**`detour`**](/source/detour). Detours is a way to intercept functions at low level by editing the memory and introducing a jump over your own function preserving the address of the old one. **METACALL** uses this method instead of POSIX `pthread_atfork` for three main reasons.
+
+- The first one is that `pthread_atfork` is only supported by POSIX systems. So it is not a good solution because of the philosophy of **METACALL** is to be as cross-platform as possible.
+
+- The second is that `pthread_atfork` has a [bug in the design of the standard](https://stackoverflow.com/a/6605487). It was designed to solve a problem which cannot be solved with `pthread_atfork` itself. This means that even having the control of NodeJS thread pool, it will not be possible to restore the [mutexes](https://github.com/nodejs/node/blob/v8.x/src/node_platform.cc) in the child process. The only possibility is to re-implement the thread pool of NodeJS with a semaphore (async safe) that would work in the child process handle. But this is not possible as it enters in conflict with the design decision of to not modify the run-times.
+
+- The third one is that the mechanism of `pthread_atfork` also [will be deprecated](http://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_atfork.html) because of second reason.
+  > The `pthread_atfork()` function may be formally deprecated (for example, by shading it OB) in a future version of this standard.
+
+Detours model is not safe. It is platform dependant and implies that the program modifies the memory of itself during the execution which is not safe at all and can induce bugs or security flaws if it is not done correctly. But because of limitations of run-times, there is not another alternative to solve the problem of fork safety.
+
+Usually the developer is the same who does the fork, but it may be possible that **METACALL** is embedded into a larger application and the developer is in the middle between the application code and **METACALL** so it is impossible to control when a fork is done. Because of this the developer can register a callback by means of [**`metacall_fork`**](/source/metacall/include/metacall/metacall_fork.h) to know when a fork is executed to do the actions needed after the fork, for example, re-loading all previous code and restore the state of the run-times. This gives a partial solution to the problem of losing the state when doing a fork.
 
 ### 5.8 Threading Model
 
