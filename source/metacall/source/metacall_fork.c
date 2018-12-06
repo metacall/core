@@ -219,9 +219,7 @@ pid_t metacall_fork_hook()
 #	error "Unknown metacall fork safety platform"
 #endif
 
-static void metacall_fork_exit(void);
-
-void metacall_fork_exit()
+static void metacall_fork_exit(void)
 {
 	if (metacall_fork_destroy() != 0)
 	{
