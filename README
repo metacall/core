@@ -58,8 +58,24 @@ metacall('sum', 3, 4); // 7
     - [5.7 Fork Model](#57-fork-model)
     - [5.8 Threading Model](#58-threading-model)
   - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
-  - [6. Platform Support](#6-platform-support)
-  - [7. License](#7-license)
+  - [6. Build System](#6-build-system)
+    - [6.1 Build Options](#61-build-options)
+  - [7. Platform Support](#7-platform-support)
+  - [8. Licenses](#8-licenses)
+    - [8.1 MetaCall License](#81-metacall-license)
+    - [8.2 Licenses Used In MetaCall](#82-licenses-used-in-metacall)
+    - [8.2.1 Loaders](#821-loaders)
+      - [8.2.1.1 Python](#8211-python)
+      - [8.2.1.2 NodeJS](#8212-nodejs)
+        - [8.2.1.3 JavaScript (V8)](#8213-javascript-v8)
+        - [8.2.1.4 C#](#8214-c)
+        - [8.2.1.5 Ruby](#8215-ruby)
+        - [8.2.1.6 C/C++](#8216-cc)
+        - [8.2.1.6 JavaScript (SpiderMonkey)](#8216-javascript-spidermonkey)
+    - [8.2.2 Serials](#822-serials)
+      - [8.2.2.1 RapidJSON](#8221-rapidjson)
+    - [8.2.3 Detours](#823-detours)
+      - [8.2.3.1 FuncHook](#8231-funchook)
 
 <!-- /TOC -->
 
@@ -69,26 +85,28 @@ The **METACALL** project started time ago when I was coding a [Game Engine for a
 
 ## 2. Language Support (Backends)
 
+This section describes all programming languages that **METACALL** supports, if you are interested in from what languages can be used **METACALL** you must go to [ports section](#54-ports).
+
 - Currently supported languages and run-times:
 
-|                              Language                              |                                           Runtime                                            |      Version      | Tag  |
-|:------------------------------------------------------------------:|:--------------------------------------------------------------------------------------------:|:-----------------:|:----:|
-|                 [Python](https://www.python.org/)                  |                  [Python C API](https://docs.python.org/3/c-api/intro.html)                  | **>= 3.2 <= 3.6** |  py  |
-|                   [NodeJS](https://nodejs.org/)                    |                          [N API](https://nodejs.org/api/n-api.html)                          |    **8.11.1**     | node |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) |                                    [V8](https://v8.dev/)                                     |    **5.1.117**    |  js  |
-|                [C#](https://dotnet.microsoft.com/)                 | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |    **1.1.10**     |  cs  |
-|                   [Ruby](https://ruby-lang.org/)                   |                  [Ruby C API](https://silverhammermba.github.io/emberb/c/)                   | **>= 2.1 <= 2.3** |  rb  |
-|                [Mock](/source/loaders/mock_loader)                 |                                            **∅**                                             |     **0.1.0**     | mock |
+| Language                                                           | Runtime                                                                                      | Version           | Tag   |
+| :----------------------------------------------------------------: | :------------------------------------------------------------------------------------------: | :---------------: | :---: |
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   | **>= 3.2 <= 3.6** | py    |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **8.11.1**        | node  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        | **5.1.117**       | js    |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) | **1.1.10**        | cs    |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    | **>= 2.1 <= 2.3** | rb    |
+| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        | **0.1.0**         | mock  |
 
 - Languages and run-times under construction:
 
-|                              Language                              |                                                                            Runtime                                                                            | Tag  |
-|:------------------------------------------------------------------:|:-------------------------------------------------------------------------------------------------------------------------------------------------------------:|:----:|
-|                   [Java](https://www.java.com/)                    |                                              [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                               | java |
-|                 [C/C++](http://www.cplusplus.com/)                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) / [libffcall](https://www.gnu.org/software/libffcall/) |  c   |
-|                [File](/source/loaders/file_loader)                 |                                                                             **∅**                                                                             | file |
-|                     [Go](https://golang.org/)                      |                                                                          Go Runtime                                                                           |  go  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) |                            [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference)                             | jsm  |
+| Language                                                           | Runtime                                                                                                | Tag  |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---- |
+| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java |
+| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) | c    |
+| [File](/source/loaders/file_loader)                                | **∅**                                                                                                  | file |
+| [Go](https://golang.org/)                                          | Go Runtime                                                                                             | go   |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
 
 ## 3. Use Cases
 
@@ -122,7 +140,11 @@ Design decisions.
 
 - To be as cross-platform as possible.
 
-- Avoid to modify run-times directly or use the code inside **METACALL** in order to avoid maintaining them, or propagating security flaws or licenses into **METACALL**.
+- To avoid to modify run-times directly or use the code inside **METACALL** in order to avoid maintaining them, or propagating security flaws or licenses into **METACALL**.
+
+- To provide support for any embeddable programming language and to provide support for **METACALL** to be used form any programming language.
+
+- All external code used into **METACALL** must be introduced by inversion of control in the plugin system, so that the core must not remain aware from what software is using.
 
 ...
 
@@ -139,7 +161,7 @@ The module that holds the representation of types, values and functions is calle
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
 | Type    | Value                                                              |
-|:-------:|--------------------------------------------------------------------|
+| :-----: | ------------------------------------------------------------------ |
 | Boolean | `true` or `false`                                                  |
 | Char    | `-128` to `127`                                                    |
 | Short   | `-32,768` to `32,767`                                              |
@@ -152,6 +174,7 @@ The module that holds the representation of types, values and functions is calle
 | Array   | Arrangement of values of any type                                  |
 | Map     | List of elements formed by a key (String) value (Any) pair (Array) |
 | Pointer | Low level representation of a memory reference                     |
+| Null    | Representation of NULL value type                                  |
 
 - Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
 
@@ -166,6 +189,8 @@ The module that holds the representation of types, values and functions is calle
 - Map implements an associative key value pair container. A map is implemented with an array of two sized elements array. Each element of the map is an array of size two, where the first element of it is always an String and the second element is a value of any type.
 
 - Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
+
+- Null type implements a null value. This type has only been implemented in order to support null value from multiple run-times. It represents a null value and it does not have data size on the value allocated.
 
 #### 5.2.2 Values
 
@@ -182,8 +207,8 @@ Each created value must be destroyed manually. Otherwise it will lead to a memor
 The value memory layout is described in the following form.
 
 | Memory Offset | `0` to `sizeof(data) - 1` | `sizeof(data)` to `sizeof(data) + sizeof(type_id) - 1` |
-|:-------------:|:-------------------------:|:------------------------------------------------------:|
-|  **Content**  |         **DATA**          |                      **TYPE ID**                       |
+| :-----------: | :-----------------------: | :----------------------------------------------------: |
+| **Content**   | **DATA**                  | **TYPE ID**                                            |
 
 This layout is used by the following reasons.
 
@@ -197,12 +222,28 @@ This layout is used by the following reasons.
 
 Functions are an abstract callable representation of functions, methods or procedures loaded by [`loaders`](/source/loaders). The functions are like a template who is linked to a loader run-time and allows to do a foreign function call.
 
-A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time. We can imagine a function like **`function<T>`** where **`T`** is a concrete type related to the run-time implementing initialize, call and destroy procedures in the loader.
+A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time.
+
+The function interface must be implemented by the [`loaders`](/source/loaders) and it has the following form.
+
+``` c
+typedef struct function_interface_type
+{
+  function_impl_interface_create create;
+  function_impl_interface_invoke invoke;
+  function_impl_interface_destroy destroy;
+
+} * function_interface;
+```
+
+- `create` instantiates the function concrete data related to the run-time.
+- `invoke` transforms arguments from [`reflect`](/source/reflect) abstract types to run-time concrete types, executes the call in the run-time, and converts the result of the call from run-time concrete type to [`reflect`](/source/reflect) abstract type.
+- `destroy` clears all data previously instantiated in `create`.
 
 The type deduction can be done at different levels. For example, it is possible to guess function types from the loaded code.
 
 ``` python
-def multiply(a: int, b: int) -> int:
+def multiply_type(a: int, b: int) -> int:
   return a * b
 ```
 
@@ -211,7 +252,7 @@ If this code is loaded, **METACALL** will be able to inspect the types and defin
 It may be possible that the function loaded into **METACALL** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
 
 ``` python
-def multiply(a, b):
+def multiply_duck(a, b):
   return a * b
 ```
 
@@ -220,7 +261,7 @@ At low level **METACALL** must always know the types to do the call. This types 
 In the first example, we can simply call the function without specifying the types.
 
 ``` c
-metacall("multiply", 3, 4); // 12
+metacall("multiply_type", 3, 4); // 12
 ```
 
 As the signature is already know the literal values `3` and `4` can be converted into **METACALL** values automatically. Note that in this case, as literal values are provided, if we pass a double floating point, the memory representation of the value will be corrupted as there is no possible way to detect input values and cast them to the correct target values.
@@ -233,7 +274,7 @@ const enum metacall_value_id multiply_types[] =
   METACALL_INT, METACALL_INT
 };
 
-metacallt("multiply", multiply_types, 3, 4); // 12
+metacallt("multiply_duck", multiply_types, 3, 4); // 12
 ```
 
 This method allows to pass different value types to the same function. The following call would be valid too.
@@ -244,7 +285,7 @@ const enum metacall_value_id multiply_types[] =
   METACALL_DOUBLE, METACALL_DOUBLE
 };
 
-metacallt("multiply", multiply_types, 3.0, 4.0); // 12.0
+metacallt("multiply_duck", multiply_types, 3.0, 4.0); // 12.0
 ```
 
 ### 5.3 Plugins
@@ -369,6 +410,79 @@ Usually the developer is the same who does the fork, but it may be possible that
 
 ## 5. Application Programming Interface (API)
 
-## 6. Platform Support
+## 6. Build System
 
-## 7. License
+### 6.1 Build Options
+
+## 7. Platform Support
+
+## 8. Licenses
+
+### 8.1 MetaCall License
+
+...
+
+### 8.2 Licenses Used In MetaCall
+
+All external code and licenses used by **METACALL** are always wrapped into plugins and linked dynamically to them. By this reason the **METACALL** core is not polluted with licenses or software restrictions. The developer __**can choose**__ what plugins wants to use in order to fit their requirements.
+
+### 8.2.1 Loaders
+
+#### 8.2.1.1 Python
+
+| Software   | License                                                                      |
+| :--------: | ---------------------------------------------------------------------------- |
+| **Python** | [Python Software Foundation License](https://docs.python.org/3/license.html) |
+
+#### 8.2.1.2 NodeJS
+
+| Software   | License                                                           |
+| :--------: | ----------------------------------------------------------------- |
+| **NodeJS** | [MIT License](https://github.com/nodejs/node/blob/master/LICENSE) |
+
+##### 8.2.1.3 JavaScript (V8)
+
+| Software | License                                                              |
+| :------: | -------------------------------------------------------------------- |
+| **V8**   | [BSD 3-clause License](https://github.com/v8/v8/blob/master/LICENSE) |
+
+##### 8.2.1.4 C# #
+
+| Software    | License                                                                       |
+|-------------|-------------------------------------------------------------------------------|
+| **NetCore** | [MIT License License](https://github.com/dotnet/core/blob/master/LICENSE.TXT) |
+
+##### 8.2.1.5 Ruby
+
+| Software | License                                                                               |
+|----------|---------------------------------------------------------------------------------------|
+| **Ruby** | [BSD 2-clause License - Ruby License](https://www.ruby-lang.org/en/about/license.txt) |
+
+##### 8.2.1.6 C/C++
+
+| Software             | License                                                                                     |
+|----------------------|---------------------------------------------------------------------------------------------|
+| **Clang** - **LLVM** | [University of Illinois/NCSA Open Source License](http://releases.llvm.org/2.8/LICENSE.TXT) |
+| **LibFFI**           | [MIT License](https://github.com/libffi/libffi/blob/master/LICENSE)                         |
+
+##### 8.2.1.6 JavaScript (SpiderMonkey)
+
+| Software         | License                                                                           |
+|------------------|-----------------------------------------------------------------------------------|
+| **SpiderMonkey** | [Mozilla Public License 2.0](https://www.mozilla.org/en-US/foundation/licensing/) |
+
+### 8.2.2 Serials
+
+#### 8.2.2.1 RapidJSON
+
+| Software      | License                                                                     |
+|---------------|-----------------------------------------------------------------------------|
+| **RapidJSON** | [MIT License](https://github.com/Tencent/rapidjson/blob/master/license.txt) |
+
+### 8.2.3 Detours
+
+#### 8.2.3.1 FuncHook
+
+| Software     | License                                                                                             |
+|--------------|-----------------------------------------------------------------------------------------------------|
+| **FuncHook** | [GPLv2 or later with a GPL linking exception](https://github.com/kubo/funchook/blob/master/LICENSE) |
