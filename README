@@ -32,8 +32,12 @@ metacall('sum', 3, 4); // 7
   - [2. Language Support (Backends)](#2-language-support-backends)
   - [3. Use Cases](#3-use-cases)
   - [4. Examples](#4-examples)
+    - [4.1 Environment Variables](#41-environment-variables)
+    - [4.2 ...](#42)
   - [5. Architecture](#5-architecture)
     - [5.1 Overview](#51-overview)
+      - [5.1.1 Design Decisions](#511-design-decisions)
+      - [5.1.2 Modules](#512-modules)
     - [5.2 Reflect](#52-reflect)
       - [5.2.1 Type System](#521-type-system)
       - [5.2.2 Values](#522-values)
@@ -81,7 +85,7 @@ metacall('sum', 3, 4); // 7
 
 ## 1. Motivation
 
-The **METACALL** project started time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers extend the Game Engine easily. By that time, I was finishing the university so I decide to do my [Final Thesis]() based on the plug-in system for my Game Engine. After some refination of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge [FaaS](https://metacall.io/) (Function as a Service) based on this technique to provide high scalability of the functions among multiple cores or **Function Mesh** pattern, a new technique I have developed to interconnect transparently functions in a distributed system based on this library.
+The **METACALL** project started time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers extend the Game Engine easily. By that time, I was finishing the university so I decide to do my [Final Thesis](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-paper.pdf) and [Presentation](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-presentation.pdf) based on the plug-in system for my Game Engine. The Plugin Architecture designed for the Game Engine has similarities with **METACALL** although the architecture has been redefined and the code has been rewritten from scratch. After some refination of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on this technique to provide high scalability of the functions among multiple cores and **[Function Mesh](https://metacall.io/faq#function-mesh)** pattern, a new technique I have developed to interconnect transparently functions in a distributed system based on this library.
 
 ## 2. Language Support (Backends)
 
@@ -126,13 +130,27 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 ## 4. Examples
 
+### 4.1 Environment Variables
+
+This environment variables are optional, in case that you want to modify default paths of **METACALL**.
+
+| Name                      | Description                                                      | Default Value |
+|---------------------------|------------------------------------------------------------------|---------------|
+| **`DETOUR_LIBRARY_PATH`** | Directory where detour plugins to be loaded are located          | **`detours`** |
+| **`SERIAL_LIBRARY_PATH`** | Directory where serial plugins to be loaded are located          | **`serials`** |
+| **`CONFIGURATION_PATH`**  | File path where the **METACALL** global configuration is located | **`configurations/global.json`** |
+| **`LOADER_LIBRARY_PATH`** | Directory where loader plugins to be loaded are located          | **`${execution_path}`** &#x00B9; |
+| **`LOADER_SCRIPT_PATH`**  | Directory where scripts to be loaded are located                 | **`scripts`** |
+
+1) **`${execution_path}`** defines the path where the program is executed, **`.`** in Linux.
+
+### 4.2 ...
+
 ## 5. Architecture
 
 ### 5.1 Overview
 
-...
-
-Design decisions.
+#### 5.1.1 Design Decisions
 
 - To provide an high level API with a simple UX and to be easy to understand.
 
@@ -146,7 +164,56 @@ Design decisions.
 
 - All external code used into **METACALL** must be introduced by inversion of control in the plugin system, so that the core must not remain aware from what software is using.
 
-...
+- All code developed in **METACALL** must be implemented in standalone libraries that can work by itself in an isolated way (aka modules).
+
+#### 5.1.2 Modules
+
+- [`adt`](/source/adt) provides a base for Abstract Data Types and algorithms used in **METACALL**. Implementation must be done in an efficient and generic way. Some of the data structures implemented are vector, set, hash, comparable or trie.
+
+- [`cmake`](/source/cmake) implements the cmake scripts related to **METACALL**. The [FindMetaCall.cmake](/source/cmake/FindMetaCall.cmake) provides an standard way of finding **METACALL** in the system in order to include it in a CMake build system of your project.
+
+- [`detour`](/source/detour) provides an interface to hook into functions. Detours are used by the [fork model](#57-fork-model) to intercept fork calls.
+
+- [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
+  - [`funchook_detour`](/source/detours/funchook_detour) implemented by means of FuncHook library.
+
+- [`distributable`](/source/distributable) defines the compilation of **METACALL** that generates an unique library with all core libraries bundled into it. As the **METACALL** architecture is divided by modules, in order to distribute **METACALL** is needed to build all of them into a single library. This module implements this compilation by means of CMake.
+
+- [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
+
+- [`environment`](/source/environment) implements an standard way to deal with environment variables. **METACALL** uses environment variables to define custom paths for plugins and scripts.
+
+- [`examples`](/source/examples) ...
+
+- [`filesystem`](/source/filesystem) provides an abstraction for operative system file system.
+
+- [`format`](/source/format) provides an standard way for printing to standard input output for old C versions that does not support newest constructions.
+
+- [`loader`](/source/loader) ...
+
+- [`loaders`](/source/loaders)
+
+- [`log`](/source/log)
+
+- [`memory`](/source/memory)
+
+- [`metacall`](/source/metacall)
+
+- [`ports`](/source/ports)
+
+- [`preprocessor`](/source/preprocessor)
+
+- [`reflect`](/source/reflect)
+
+- [`scripts`](/source/scripts)
+
+- [`serial`](/source/serial)
+
+- [`serials`](/source/serials)
+
+- [`tests`](/source/tests)
+
+- [`version`](/source/version)
 
 ### 5.2 Reflect
 
@@ -364,7 +431,7 @@ A loader must implement it to be considered a valid loader.
 
 **METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, thr process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility of the developer and make this transparent.
 
-To understand the fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
+To understand the **METACALL** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
 
 The main difference between fork-one and fork-all is that in fork-one only the thread which called the fork is preserved after the fork (i.e. gets cloned). In fork-all model, all threads are preserved after cloning. POSIX uses fork-one model, meanwhile Oracle Solaris use the fork-all model.
 
@@ -397,7 +464,7 @@ Whenever you call a to a cloning primitive **METACALL** intercepts it by means o
 
 - The first one is that `pthread_atfork` is only supported by POSIX systems. So it is not a good solution because of the philosophy of **METACALL** is to be as cross-platform as possible.
 
-- The second is that `pthread_atfork` has a [bug in the design of the standard](https://stackoverflow.com/a/6605487). It was designed to solve a problem which cannot be solved with `pthread_atfork` itself. This means that even having the control of NodeJS thread pool, it will not be possible to restore the [mutexes](https://github.com/nodejs/node/blob/v8.x/src/node_platform.cc) in the child process. The only possibility is to re-implement the thread pool of NodeJS with a semaphore (async safe) that would work in the child process handle. But this is not possible as it enters in conflict with the design decision of to not modify the run-times.
+- The second is that `pthread_atfork` has a [bug in the design of the standard](https://stackoverflow.com/a/6605487). It was designed to solve a problem which cannot be solved with `pthread_atfork` itself. This means that even having the control of NodeJS thread pool, it will not be possible to restore the [mutexes](https://github.com/nodejs/node/blob/v8.x/src/node_platform.cc) in the child process. The only possibility is to re-implement the thread pool of NodeJS with async safe primitives like a semaphore. Async safe primitives will be able to work in the child process handler. But this is not possible as it enters in conflict with the design decision of to not modify the run-times.
 
 - The third one is that the mechanism of `pthread_atfork` also [will be deprecated](http://pubs.opengroup.org/onlinepubs/9699919799/functions/pthread_atfork.html) because of second reason.
   > The `pthread_atfork()` function may be formally deprecated (for example, by shading it OB) in a future version of this standard.
@@ -420,7 +487,12 @@ Usually the developer is the same who does the fork, but it may be possible that
 
 ### 8.1 MetaCall License
 
-...
+**METACALL** is licensed under **Apache License Version 2.0**. To check the license and copyright ...
+
+
+> ...
+
+
 
 ### 8.2 Licenses Used In MetaCall
 
