@@ -31,9 +31,10 @@ metacall('sum', 3, 4); // 7
   - [1. Motivation](#1-motivation)
   - [2. Language Support (Backends)](#2-language-support-backends)
   - [3. Use Cases](#3-use-cases)
-  - [4. Examples](#4-examples)
-    - [4.1 Environment Variables](#41-environment-variables)
-    - [4.2 ...](#42)
+  - [4. Usage](#4-usage)
+  - [4.1 Installation](#41-installation)
+    - [4.2 Environment Variables](#42-environment-variables)
+    - [4.3 Examples](#43-examples)
   - [5. Architecture](#5-architecture)
     - [5.1 Overview](#51-overview)
       - [5.1.1 Design Decisions](#511-design-decisions)
@@ -65,21 +66,7 @@ metacall('sum', 3, 4); // 7
   - [6. Build System](#6-build-system)
     - [6.1 Build Options](#61-build-options)
   - [7. Platform Support](#7-platform-support)
-  - [8. Licenses](#8-licenses)
-    - [8.1 MetaCall License](#81-metacall-license)
-    - [8.2 Licenses Used In MetaCall](#82-licenses-used-in-metacall)
-    - [8.2.1 Loaders](#821-loaders)
-      - [8.2.1.1 Python](#8211-python)
-      - [8.2.1.2 NodeJS](#8212-nodejs)
-        - [8.2.1.3 JavaScript (V8)](#8213-javascript-v8)
-        - [8.2.1.4 C#](#8214-c)
-        - [8.2.1.5 Ruby](#8215-ruby)
-        - [8.2.1.6 C/C++](#8216-cc)
-        - [8.2.1.6 JavaScript (SpiderMonkey)](#8216-javascript-spidermonkey)
-    - [8.2.2 Serials](#822-serials)
-      - [8.2.2.1 RapidJSON](#8221-rapidjson)
-    - [8.2.3 Detours](#823-detours)
-      - [8.2.3.1 FuncHook](#8231-funchook)
+  - [8. License](#8-license)
 
 <!-- /TOC -->
 
@@ -120,7 +107,7 @@ This section describes all programming languages that **METACALL** supports, if 
 
 - Embedding programming languages to existing softwares. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
 
-- Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own [FaaS](https://metacall.io/) based on **Function Mesh** pattern and high performance function scalability thanks to this library.
+- Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://metacall.io/faq#function-mesh)** pattern and high performance function scalability thanks to this library.
 
 - Source code migrations. **METACALL** can wrap large and legacy code-bases, and provide an agnostic way to work with the codebase into a new programming language. Eventually the code can be migrated by parts, without need of creating a new project or stopping the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
 
@@ -128,9 +115,18 @@ This section describes all programming languages that **METACALL** supports, if 
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
-## 4. Examples
+## 4. Usage
 
-### 4.1 Environment Variables
+## 4.1 Installation
+
+Prior to try any example, you must have **METACALL** installed in your system. To install **METACALL** you have the following options.
+
+- [Download a release](/TODO).
+- [Install via package manager](/TODO).
+- [Build and install it manually](#6-build-system).
+- [Pull it from DockerHub](/TODO).
+
+### 4.2 Environment Variables
 
 This environment variables are optional, in case that you want to modify default paths of **METACALL**.
 
@@ -144,7 +140,11 @@ This environment variables are optional, in case that you want to modify default
 
 1) **`${execution_path}`** defines the path where the program is executed, **`.`** in Linux.
 
-### 4.2 ...
+### 4.3 Examples
+
+- [MetaCall CLI](/source/examples/metacallcli). Example of a Command Language Interpreter based on MetaCall where you can load, unload scripts and call their functions.
+
+- [MetaCall Rotulin](https://github.com/metacall/rotulin). Example of a multi-language application built with **METACALL**. This application embeds a Django server with a Ruby DataBase and C# business layer based on ImageMagick.
 
 ## 5. Architecture
 
@@ -429,7 +429,7 @@ A loader must implement it to be considered a valid loader.
 
 ### 5.7 Fork Model
 
-**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, thr process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility of the developer and make this transparent.
+**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, thr process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
 
 To understand the **METACALL** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
 
@@ -479,82 +479,78 @@ Usually the developer is the same who does the fork, but it may be possible that
 
 ## 6. Build System
 
+Follow these steps to build and install **METACALL** manually.
+
+``` sh
+$ git clone https://github.com/metacall/core
+$ cd metacall
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make
+$ make test
+$ make install
+```
+
 ### 6.1 Build Options
+
+These options can be set using **`-D`** prefix when configuring CMake. For example, the following configuration enables the build of Python and Ruby loaders.
+
+``` sh
+$ cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_RB=On ..
+```
+
+Available build options are the following ones.
+
+|         Build Option         | Description                                            | Default Value |
+|:----------------------------:|--------------------------------------------------------|:-------------:|
+|    **BUILD_SHARED_LIBS**     | Build shared instead of static libraries.              |      ON       |
+| **BUILD_DISTRIBUTABLE_LIBS** | Build all libraries into a single compilation unit.    |      ON       |
+|  **OPTION_SELF_CONTAINED**   | Create a self-contained install with all dependencies. |      OFF      |
+|    **OPTION_BUILD_TESTS**    | Build tests.                                           |      ON       |
+|    **OPTION_BUILD_DOCS**     | Build documentation.                                   |      OFF      |
+|  **OPTION_BUILD_EXAMPLES**   | Build examples.                                        |      ON       |
+|   **OPTION_BUILD_LOADERS**   | Build loaders.                                         |      ON       |
+|   **OPTION_BUILD_SCRIPTS**   | Build scripts.                                         |      ON       |
+|    **OPTION_BUILD_PORTS**    | Build ports.                                           |      OFF      |
+|   **OPTION_BUILD_SERIALS**   | Build serials.                                         |      ON       |
+|   **OPTION_BUILD_DETOURS**   | Build detours.                                         |      ON       |
+|     **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
+|    **OPTION_THREAD_SAFE**    | Enable thread safety.                                  |      OFF      |
+
+It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
+
+| Build Option Prefix       | Build Option Suffix                                                |
+|---------------------------|--------------------------------------------------------------------|
+| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `CS_IMPL` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE` |
+| **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                              |
+| **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                            |
+| **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                         |
 
 ## 7. Platform Support
 
-## 8. Licenses
+The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-### 8.1 MetaCall License
+|     Operative System      |    Architecture     |  Compiler  | Build Status |
+|:-------------------------:|:-------------------:|:----------:|-------------:|
+|    **`ubuntu:xenial`**    |     **`amd64`**     | **`gcc`**  |              |
+| **`debian:stretch-slim`** |     **`amd64`**     | **`gcc`**  |              |
+|       **`windows`**       | **`x86`** **`x64`** | **`msvc`** |              |
 
-**METACALL** is licensed under **Apache License Version 2.0**. To check the license and copyright ...
+## 8. License
 
+**METACALL** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
-> ...
-
-
-
-### 8.2 Licenses Used In MetaCall
-
-All external code and licenses used by **METACALL** are always wrapped into plugins and linked dynamically to them. By this reason the **METACALL** core is not polluted with licenses or software restrictions. The developer __**can choose**__ what plugins wants to use in order to fit their requirements.
-
-### 8.2.1 Loaders
-
-#### 8.2.1.1 Python
-
-| Software   | License                                                                      |
-| :--------: | ---------------------------------------------------------------------------- |
-| **Python** | [Python Software Foundation License](https://docs.python.org/3/license.html) |
-
-#### 8.2.1.2 NodeJS
-
-| Software   | License                                                           |
-| :--------: | ----------------------------------------------------------------- |
-| **NodeJS** | [MIT License](https://github.com/nodejs/node/blob/master/LICENSE) |
-
-##### 8.2.1.3 JavaScript (V8)
-
-| Software | License                                                              |
-| :------: | -------------------------------------------------------------------- |
-| **V8**   | [BSD 3-clause License](https://github.com/v8/v8/blob/master/LICENSE) |
-
-##### 8.2.1.4 C# #
-
-| Software    | License                                                                       |
-|-------------|-------------------------------------------------------------------------------|
-| **NetCore** | [MIT License License](https://github.com/dotnet/core/blob/master/LICENSE.TXT) |
-
-##### 8.2.1.5 Ruby
-
-| Software | License                                                                               |
-|----------|---------------------------------------------------------------------------------------|
-| **Ruby** | [BSD 2-clause License - Ruby License](https://www.ruby-lang.org/en/about/license.txt) |
-
-##### 8.2.1.6 C/C++
-
-| Software             | License                                                                                     |
-|----------------------|---------------------------------------------------------------------------------------------|
-| **Clang** - **LLVM** | [University of Illinois/NCSA Open Source License](http://releases.llvm.org/2.8/LICENSE.TXT) |
-| **LibFFI**           | [MIT License](https://github.com/libffi/libffi/blob/master/LICENSE)                         |
-
-##### 8.2.1.6 JavaScript (SpiderMonkey)
-
-| Software         | License                                                                           |
-|------------------|-----------------------------------------------------------------------------------|
-| **SpiderMonkey** | [Mozilla Public License 2.0](https://www.mozilla.org/en-US/foundation/licensing/) |
-
-### 8.2.2 Serials
-
-#### 8.2.2.1 RapidJSON
-
-| Software      | License                                                                     |
-|---------------|-----------------------------------------------------------------------------|
-| **RapidJSON** | [MIT License](https://github.com/Tencent/rapidjson/blob/master/license.txt) |
-
-### 8.2.3 Detours
-
-#### 8.2.3.1 FuncHook
-
-| Software     | License                                                                                             |
-|--------------|-----------------------------------------------------------------------------------------------------|
-| **FuncHook** | [GPLv2 or later with a GPL linking exception](https://github.com/kubo/funchook/blob/master/LICENSE) |
+>[Copyright](/COPYRIGHT) (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <<vic798@gmail.com>>
+>
+>Licensed under the Apache License, Version 2.0 (the "License");
+>you may not use this file except in compliance with the License.
+>You may obtain a copy of the License at
+>
+>       http://www.apache.org/licenses/LICENSE-2.0
+>
+>Unless required by applicable law or agreed to in writing, software
+>distributed under the License is distributed on an "AS IS" BASIS,
+>WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+>See the License for the specific language governing permissions and
+>limitations under the License.

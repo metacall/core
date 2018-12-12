@@ -176,7 +176,7 @@ class tokenizer
 
 		/**
 		*  @brief
-		*    Assignement operator for tokenizer iterator
+		*    Assignment operator for tokenizer iterator
 		*
 		*  @return
 		*    Returns a reference to itself
