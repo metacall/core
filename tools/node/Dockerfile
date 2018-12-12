@@ -1,6 +1,8 @@
 #
-# MetaCall Library by Parra Studios
-# Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	MetaCall Library by Parra Studios
+#	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#
+#	Docker image infrastructure for MetaCall.
 #
 
 # Configure MetaCall Depends node image

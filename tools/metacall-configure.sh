@@ -1,10 +1,10 @@
 #!/bin/bash
 
 #
-# MetaCall Build Bash Script by Parra Studios
-# Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	MetaCall Build Bash Script by Parra Studios
+#	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-# Build and install bash script utility for MetaCall.
+#	Build and install bash script utility for MetaCall.
 #
 
 RUN_AS_ROOT=0

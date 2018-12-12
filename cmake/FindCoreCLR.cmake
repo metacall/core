@@ -1,6 +1,6 @@
 #
-# CMake Find CoreCLR NET Engine by Parra Studios
-# Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	CMake Find CoreCLR NET Engine by Parra Studios
+#	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
 # Find CoreCLR library and include paths

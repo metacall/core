@@ -1,8 +1,8 @@
 #
-# Compiler checker for stack smashing flags by Parra Studios
-# Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Compiler checker for stack smashing flags by Parra Studios
+#	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-# Tests if a defined stack smashing security flag is available
+#	Tests if a defined stack smashing security flag is available
 #
 
 include(CheckCXXSourceCompiles)

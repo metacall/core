@@ -1,9 +1,9 @@
 /*
-*	Loader Library by Parra Studios
-*	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A plugin for loading net code at run-time into a process.
-*
+ *	Loader Library by Parra Studios
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A plugin for loading net code at run-time into a process.
+ *
 */
 
 #ifndef _NETCORELINUX_H_

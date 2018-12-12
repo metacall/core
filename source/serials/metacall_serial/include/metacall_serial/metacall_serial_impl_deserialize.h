@@ -1,9 +1,9 @@
 /*
-*	Serial Library by Parra Studios
-*	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A cross-platform library for managing multiple serialization and deserialization formats.
-*
+ *	Serial Library by Parra Studios
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A cross-platform library for managing multiple serialization and deserialization formats.
+ *
 */
 
 #ifndef METACALL_SERIAL_IMPL_DESERIALIZE_H

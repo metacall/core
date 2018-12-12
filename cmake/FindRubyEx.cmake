@@ -1,6 +1,6 @@
 #
-# CMake Find Ruby Engine by Parra Studios
-# Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	CMake Find Ruby Engine by Parra Studios
+#	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 
 # Find Ruby library and include paths (Ruby 1.8, 1.9, 2.0, 2.1, 2.2, 2.3 and

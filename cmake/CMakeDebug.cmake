@@ -1,8 +1,8 @@
 #
-# CMake Debug Utilities by Parra Studios
-# Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	CMake Debug Utilities by Parra Studios
+#	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-# CMake debugging utilities and inspection facilities
+#	CMake debugging utilities and inspection facilities
 #
 
 if(CMAKE_DEBUG_FOUND)
