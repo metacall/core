@@ -2,7 +2,7 @@
 #	Compiler and linker options for hardening flags by Parra Studios
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-#	Enables hardening security flags if available
+#	Enables hardening security flags if available.
 #
 
 include(CheckCCompilerFlag)

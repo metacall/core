@@ -2,6 +2,8 @@
 #	CMake Find Foreing Function Interface library by Parra Studios
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
+#	CMake script to find FFI library.
+#
 
 # Find FFI library and include paths
 #

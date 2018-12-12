@@ -19,16 +19,21 @@ find "$EXEC_PATH" -type f -not -path "*/build*" -not -path "*/source/tests/googl
 	then
 		file=$(grep -lrnw "{}" -e "$COPYRIGHT")
 
+		linenum=$(grep -n "{}" -e "$COPYRIGHT" | grep -Eo "^[^:]+")
 
-		expr match "$comment" "\#\t*" >/dev/null
+		echo $file
+		echo $linenum
 
-		if [ $? -eq 0 ]
-		then
-			echo "$comment"
-			# echo "$file"
-			# filename=$(basename "$file")
-			# extension=${filename##*.}
-			# echo "$filename -- $extension"
-		fi
+		# expr match "$comment" "\#*" >/dev/null
+		# # expr match "$comment" "\ \**" >/dev/null
+
+		# if [ $? -eq 0 ]
+		# then
+		# 	# echo "$comment"
+		# 	echo "$file"
+		# 	# filename=$(basename "$file")
+		# 	# extension=${filename##*.}
+		# 	# echo "$filename -- $extension"
+		# fi
 	fi
 ' \;

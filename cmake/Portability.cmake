@@ -2,7 +2,7 @@
 #	Portability CMake support by Parra Studios
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-#	Cross-platform and architecture detection utility
+#	Cross-platform and architecture detection utility.
 #
 
 if(PORTABILITY_FOUND)

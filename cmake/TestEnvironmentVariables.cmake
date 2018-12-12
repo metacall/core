@@ -2,7 +2,7 @@
 #	Test Environment Variables by Parra Studios
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-#	Utility for defining cross-platform environment variables in tests
+#	Utility for defining cross-platform environment variables in tests.
 #
 
 if(TEST_ENVIRONMENT_VARIABLES_FOUND)

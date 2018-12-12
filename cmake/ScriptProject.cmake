@@ -2,7 +2,7 @@
 #	Script project generator by Parra Studios
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-#	Generates a script project embedded into CMake
+#	Generates a script project embedded into CMake.
 #
 
 if(SCRIPTPROJECT_FOUND)
