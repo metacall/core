@@ -28,17 +28,17 @@ find "$EXEC_PATH" -type f \
 	# License
 	LICENSE=$(cat <<-END
 
-	Licensed under the Apache License, Version 2.0 (the "License");
-	you may not use this file except in compliance with the License.
-	You may obtain a copy of the License at
+		\tLicensed under the Apache License, Version 2.0 (the "License");
+		\tyou may not use this file except in compliance with the License.
+		\tYou may obtain a copy of the License at
 
-		http://www.apache.org/licenses/LICENSE-2.0
+		\t\thttp://www.apache.org/licenses/LICENSE-2.0
 
-	Unless required by applicable law or agreed to in writing, software
-	distributed under the License is distributed on an "AS IS" BASIS,
-	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-	See the License for the specific language governing permissions and
-	limitations under the License.
+		\tUnless required by applicable law or agreed to in writing, software
+		\tdistributed under the License is distributed on an "AS IS" BASIS,
+		\tWITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+		\tSee the License for the specific language governing permissions and
+		\tlimitations under the License.
 	END
 	)
 
@@ -49,24 +49,25 @@ find "$EXEC_PATH" -type f \
 		file=$(grep -lrnw {} -e "$COPYRIGHT")
 		linenum=$(grep -n {} -e "$COPYRIGHT" | cut -d : -f 1)
 
-		# Swap description and copyright from the header
-		printf %s\\n $(($linenum + 2))m$(($linenum - 1)) w q | ed -s $file
-		printf %s\\n $(($linenum + 1))m$(($linenum + 2)) w q | ed -s $file
-
 		# Select between comment type
 		expr match "$comment" "\#*" >/dev/null
 		# expr match "$comment" " \**" >/dev/null
 
 		if [ $? -eq 0 ]
 		then
+			# Swap description and copyright from the header
+			printf %s\\n $(($linenum + 2))m$(($linenum - 1)) w q | ed -s $file
+			printf %s\\n $(($linenum + 1))m$(($linenum + 2)) w q | ed -s $file
+
 			lineliteral="i"
 
 			# Apply prefix depending on comment type
-			license=$(echo "$LICENSE" | sed "s/^/#\t/g")
-			# license=$(echo "$LICENSE" | sed "s/^/ \*\t/g")
+			license=$(echo "$LICENSE" | sed "s/^/#/g")
+			# license=$(echo "$LICENSE" | sed "s/^/ \*/g")
 
 			expression="$(($linenum + 3))$lineliteral|$license"
 
+			# Write license
 			# TODO: Review $linenum expansion error, remove the pipe to null when solved
 			ex -s -c "$expression" -c x "$file" &> /dev/null
 		fi
