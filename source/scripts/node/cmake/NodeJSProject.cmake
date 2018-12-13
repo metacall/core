@@ -1,6 +1,6 @@
 #
 #	NodeJS project generator by Parra Studios
-#	Generates a NodeJS project embedded into CMake.
+#	Generates a nodejs project embedded into CMake.
 #
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
