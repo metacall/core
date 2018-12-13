@@ -62,8 +62,8 @@ find "$EXEC_PATH" -type f \
 		linenum=$(grep -n {} -e "$COPYRIGHT" | cut -d : -f 1)
 
 		# Select between comment type
-		expr match "$comment" "\#*" >/dev/null
-		# expr match "$comment" " \**" >/dev/null
+		# expr match "$comment" "\#*" >/dev/null
+		expr match "$comment" " \**" >/dev/null
 
 		if [ $? -eq 0 ]
 		then
@@ -74,8 +74,8 @@ find "$EXEC_PATH" -type f \
 			lineliteral="i"
 
 			# Apply prefix depending on comment type
-			license=$(echo "$LICENSE" | sed "s/^/#/g")
-			# license=$(echo "$LICENSE" | sed "s/^/ \*/g")
+			# license=$(echo "$LICENSE" | sed "s/^/#/g")
+			license=$(echo "$LICENSE" | sed "s/^/ \*/g")
 
 			expression="$(($linenum + 3))$lineliteral|$license"
 
