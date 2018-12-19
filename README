@@ -92,12 +92,14 @@ This section describes all programming languages that **METACALL** supports, if 
 - Languages and run-times under construction:
 
 | Language                                                           | Runtime                                                                                                | Tag  |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | ---- |
+|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|------|
 | [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java |
 | [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) | c    |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                                  | file |
 | [Go](https://golang.org/)                                          | Go Runtime                                                                                             | go   |
+| [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              | hs   |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+
 
 ## 3. Use Cases
 
