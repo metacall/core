@@ -1,0 +1,82 @@
+# Licenses Used In MetaCall (Optional)
+
+All external code and licenses used by **METACALL** are always wrapped into plugins and linked dynamically to them. By this reason the **METACALL** core is not polluted with licenses or software restrictions. The developer __**can choose**__ what plugins wants to use in order to fit their requirements. All license requirements are **optional**.
+
+<!-- TOC -->
+
+- [Licenses Used In MetaCall (Optional)](#licenses-used-in-metacall-optional)
+    - [1. Loaders](#1-loaders)
+        - [1.1 Python](#11-python)
+        - [1.2 NodeJS](#12-nodejs)
+        - [1.3 JavaScript (V8)](#13-javascript-v8)
+        - [1.4 C#](#14-c)
+        - [1.5 Ruby](#15-ruby)
+        - [1.6 C/C++](#16-cc)
+        - [1.6 JavaScript (SpiderMonkey)](#16-javascript-spidermonkey)
+    - [2. Serials](#2-serials)
+        - [2.1 RapidJSON](#21-rapidjson)
+    - [3. Detours](#3-detours)
+        - [3.1 FuncHook](#31-funchook)
+
+<!-- /TOC -->
+
+## 1. Loaders
+
+### 1.1 Python
+
+| Software   | License                                                                      |
+| :--------: | ---------------------------------------------------------------------------- |
+| **Python** | [Python Software Foundation License](https://docs.python.org/3/license.html) |
+
+### 1.2 NodeJS
+
+| Software   | License                                                           |
+| :--------: | ----------------------------------------------------------------- |
+| **NodeJS** | [MIT License](https://github.com/nodejs/node/blob/master/LICENSE) |
+
+### 1.3 JavaScript (V8)
+
+| Software | License                                                              |
+| :------: | -------------------------------------------------------------------- |
+| **V8**   | [BSD 3-clause License](https://github.com/v8/v8/blob/master/LICENSE) |
+
+### 1.4 C# #
+
+| Software    | License                                                                       |
+| ----------- | ----------------------------------------------------------------------------- |
+| **NetCore** | [MIT License License](https://github.com/dotnet/core/blob/master/LICENSE.TXT) |
+
+### 1.5 Ruby
+
+| Software | License                                                                               |
+| -------- | ------------------------------------------------------------------------------------- |
+| **Ruby** | [BSD 2-clause License - Ruby License](https://www.ruby-lang.org/en/about/license.txt) |
+
+### 1.6 C/C++
+
+| Software             | License                                                                                     |
+| -------------------- | ------------------------------------------------------------------------------------------- |
+| **Clang** - **LLVM** | [University of Illinois/NCSA Open Source License](http://releases.llvm.org/2.8/LICENSE.TXT) |
+| **LibFFI**           | [MIT License](https://github.com/libffi/libffi/blob/master/LICENSE)                         |
+
+### 1.6 JavaScript (SpiderMonkey)
+
+| Software         | License                                                                           |
+| ---------------- | --------------------------------------------------------------------------------- |
+| **SpiderMonkey** | [Mozilla Public License 2.0](https://www.mozilla.org/en-US/foundation/licensing/) |
+
+## 2. Serials
+
+### 2.1 RapidJSON
+
+| Software      | License                                                                     |
+| ------------- | --------------------------------------------------------------------------- |
+| **RapidJSON** | [MIT License](https://github.com/Tencent/rapidjson/blob/master/license.txt) |
+
+## 3. Detours
+
+### 3.1 FuncHook
+
+| Software     | License                                                                                             |
+| ------------ | --------------------------------------------------------------------------------------------------- |
+| **FuncHook** | [GPLv2 or later with a GPL linking exception](https://github.com/kubo/funchook/blob/master/LICENSE) |

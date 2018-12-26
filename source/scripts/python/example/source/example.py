@@ -31,3 +31,8 @@ def strcat(left: str, right: str) -> str:
 	result = left + right;
 	print(left, ' + ', right, ' = ', result);
 	return result;
+
+def bytebuff():
+	buffer = b'hello world'
+	print(buffer);
+	return buffer;

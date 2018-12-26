@@ -1,102 +1,75 @@
 TODO List
 =========
 
-[CORE]
+## CORE
 
-	* Merge serial, detour and loader systems into a generic plugin system.
-	* Improve extension management of loaders (remove restriction of loader extension and names).
-	* Improve versioning of loader plugins and it's [interface](https://accu.org/index.php/journals/1718).
-	* Implement a C++ object oriented interface for implemening loader plugins.
-	* Extend loading process to accept scripts as string, uri or memory block.
-	* Add configuraton library based on simple format (json, libconfig format).
-	* Add a cross-platform library for managing path tree and allow scripts to be loaded by path.
-	* Add watchers and reload policies in order to provide on-the-fly changes and make it fault tolerant against corrupted scripts.
-	* Add new type management and its implementation in each loader (ptr, array, callback, object).
-	* Improve scope management for encapsulation and add tie-breaker to avoid conflicts between functions with same name.
-	* MetaCall++ front-end compatible with SWIG (avoid common exceptions and unimplemented templates).
-	* Possibly convert the whole project to C++ and export critical parts like metacall front-end and loaders plugin interface as [C API](http://www.drbobbs.com/cpp/building-your-own-plugin-framework-part/204202899?pgno=4).
-	* Implement a meta-object protocol in order to support a complete AST abstraction representing class and object tree.
-	* Implement an event protocol for supporting reactive architectures based on callbacks.
-	* Make an automated architecture and test generation for implement all tests with a workflow (TDD) and similar semantics, and implement them.
-	* Add custom benchmarks and small utility library for supporting benchmarks, and integrate it in build process of CMake.
-	* Improve security of loaders and scripts loaded with signatures, and avoid memory injection with a driver.
-	* Implement thread safety.
+  * Merge serial, detour and loader systems into a generic plugin system.
+  * Improve versioning of loader plugins and it's [interface](https://accu.org/index.php/journals/1718).
+  * Extend loading process to accept scripts as string, uri or memory block.
+  * Add a cross-platform library for managing path tree and allow scripts to be loaded by path.
+  * Add watchers and reload policies in order to provide on-the-fly changes and make it fault tolerant against corrupted scripts.
+  * Add error management.
+  * Add new type management and its implementation in each loader (ptr, array, callback, object).
+  * Improve scope management for encapsulation and add tie-breaker to avoid conflicts between functions with same name.
+  * **MetaCall++** front-end compatible with SWIG (avoid common exceptions and unimplemented templates).
+  * Possibly convert the whole project to C++ and export critical parts like **MetaCall** front-end and loaders plugin interface as [C API](http://www.drbobbs.com/cpp/building-your-own-plugin-framework-part/204202899?pgno=4).
+  * Implement a meta-object protocol in order to support a complete AST abstraction representing class and object tree.
+  * Implement an event protocol for supporting reactive architectures based on callbacks.
+  * Make an automated architecture and test generation for implement all tests with a workflow (TDD) and similar semantics, and implement them.
+  * Add custom benchmarks and small utility library for supporting benchmarks, and integrate it in build process of CMake.
+  * Improve security of loaders and scripts loaded with signatures, and avoid memory injection with a driver.
+  * Implement thread safety.
 
-[LOADERS]
+## LOADERS
 
-	* Loader C/C++:
-		- [Clang](http://clang.llvm.org/docs/ExternalClangExamples.html) as a parser for reflect generation for .h and .hpp files.
-		- [Libffi](http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Using-libffi.html) as a foreing function interface caller.
-		- [LLVM](http://llvm.org/docs/) as a JIT compiler for .c and .cpp files.
-		- [Dynlink](source/dynlink) library as a cross-platform library loader.
-		- Alternatively use [EmbedCh](https://www.softintegration.com/products/sdk/embedch/).
+  * Loader C/C++:
+    - [Clang](http://clang.llvm.org/docs/ExternalClangExamples.html) as a parser for reflect generation for .h and .hpp files.
+    - [Libffi](http://www.chiark.greenend.org.uk/doc/libffi-dev/html/Using-libffi.html) as a foreing function interface caller.
+    - [LLVM](http://llvm.org/docs/) as a JIT compiler for .c and .cpp files.
+    - [Dynlink](source/dynlink) library as a cross-platform library loader.
+    - Alternatively use [EmbedCh](https://www.softintegration.com/products/sdk/embedch/).
 
-	* Loader C#:
-		- [NET Core](https://msdn.microsoft.com/en-us/library/ms404385.aspx) hosting.
-		- [Mono](http://www.mono-project.com/docs/advanced/embedding/).
+  * Loader C#:
+    - [NET Core](https://msdn.microsoft.com/en-us/library/ms404385.aspx) hosting.
+    - [Mono](http://www.mono-project.com/docs/advanced/embedding/).
 
-	* Loader Java:
-		- [JVM and JNI](http://docs.oracle.com/javase/1.5.0/docs/guide/jni/spec/invocation.html).
+  * Loader Java:
+    - [JVM and JNI](http://docs.oracle.com/javase/1.5.0/docs/guide/jni/spec/invocation.html).
 
-	* Loader PHP:
-		- [PHP C API](http://us.php.net/manual/en/internals2.php).
+  * Loader PHP:
+    - [PHP C API](http://us.php.net/manual/en/internals2.php).
 
-	* Loader LUA:
-		- [LUA C API](https://www.lua.org/pil/contents.html#P4).
+  * Loader LUA:
+    - [LUA C API](https://www.lua.org/pil/contents.html#P4).
 
-	* Loader RPC:
-		- [Protocol Buffers](https://developers.google.com/protocol-buffers/).
-		- [ZMQ Distributed Messaging](http://zeromq.org).
+## DOCUMENTATION
 
-[DOCUMENTATION]
+  * Write a complete documentation of the core source and libraries.
+  * Write a separated text with a complete manual of each example.
+  * Integrate automated generation of documentation with CMake build:
+    - [Doxygen](https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) for extracting code documentation.
+    - [Markdown](https://www.stack.nl/~dimitri/doxygen/manual/markdown.html) for general purpose repoistory based documentation.
+    - [Latex](https://cmake.org/Wiki/CMakeUserUseLATEX) for custom examples and manuals. -- [Already integrated](docs/manual/cmake-init.tex).
+    - [Quickbook](http://www.boost.org/doc/libs/1_61_0/html/quickbook.html) for integrating a complete set of automating tools.
 
-	* Write a complete documentation of the core source and libraries.
-	* Write a separated text with a complete manual of each example.
-	* Integrate automated generation of documentation with CMake build:
-		- [Doxygen](https://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) for extracting code documentation.
-		- [Markdown](https://www.stack.nl/~dimitri/doxygen/manual/markdown.html) for general purpose repoistory based documentation.
-		- --[Latex](https://cmake.org/Wiki/CMakeUserUseLATEX) for custom examples and manuals. -- [Already integrated](docs/manual/cmake-init.tex).
-		- [Quickbook](http://www.boost.org/doc/libs/1_61_0/html/quickbook.html) for integrating a complete set of automating tools.
+## EXAMPLES
 
-	* Write a complete paper over the software, providing a general analysis and proving the tool.
+  * Simple example of a front-end web-page (Js with Angular or React) with a logic based on (C/C++).
+  * Extension of first example providing a custom service as mark-water implemented natively and a custom database layer implementing a persistent cache.
+  * Custom threading, high performance example based on script host language (Python, Ruby, Js) and a guest native language (C/C++), to implement a matrix based solver (Sudoku or some Math problem).
+  * Implement an example of software migration from an old software language to a newer one (possibly Visual Basic 6 to some script).
+  * Implement a CLI for **MetaCall++** and extend current CLI for **MetaCall** (possibly with a common front-end and different adaptors for the back-end).
 
-[EXAMPLES]
+## DEPLOY
 
-	* Simple example of a front-end web-page (Js with Angular or React) with a logic based on (C/C++).
-	* Extension of first example providing a custom service as mark-water implemented natively and a custom database layer implemeting a persistent cache.
-	* Custom threading, high performance example based on script host language (Python, Ruby, Js) and a guest native language (C/C++), to implement a matrix based solver (Sudoku or some Math problem).
-	* Script container, with multiple services attacking to same container, and showing how to reinject scripts on the fly.
-	* Implement an example of software migration from an old software language to a newer one (possibly Visual Basic 6 to some script).
-	* Implement a CLI for metacall++ and extend current CLI for metacall (possibly with a common front-end and different adaptors for the back-end).
+  * Integrate project with SWIG and provide automated port generation for **MetaCall** and **MetaCall++**.
+  * Add continuous integration for multiple architectures and operative systems:
+    - Docker for deploying.
+    - Vagrant for generating workstations for developers.
+    - Set up scripts (sh, bat) for multiple architectures for each CI container.
+  * Add cross-compiling toolkit for multiple architectures integrated with [CMake](https://cmake.org/cmake/help/v3.0/manual/cmake-toolchains.7.html)
 
-[WEB]
+## MISC
 
-	* Write a manifesto, general description and home-page related information.
-	* Record a short video presentation with a general view of the software.
-	* Add tutorials and examples with real use cases (text or video).
-	* Add a public export of autogenerated files from project documentation (public API, examples, ...).
-	* Add a public wikipedia integrating references to manuals, examples and content not related to any area of project documentation.
-	* Add contact section (linked to contributors or maintainers notes).
-	* Add forum and blog for news (linked to release notes).
-	* Add a section for projects using the software and sponsors supporting loaders.
-	* Add a section for selling licences or royalties for using the software.
-	* Provide a web service for deploying loaders developed by sponsors (possibly a marketplace in the future).
-	* Proxy a web service for deploying and executing containers with the software (possibly a saas service).
-	* Intermediate compilation step for packaging and signing the scripts to be executed by the software (possibly a saas service).
-
-[DEPLOY]
-
-	* Integrate project with SWIG and provide automated port generation for metacall and metacall++.
-	* Add deploy process in order to lint, compile and generate packages for scripts (future use for saas service).
-	* Add continuous integration for multiple architectures and operative systems:
-		- Docker for deploying.
-		- Vagrant for generating workstations for developers.
-		- Set up scripts (sh, bat) for multiple architectures for each CI container.
-
-	* Add cross-compiling toolkit for multiple architectures integrated with [CMake](https://cmake.org/cmake/help/v3.0/manual/cmake-toolchains.7.html)
-
-[MISC]
-
-	* Standarize code style guidelines and tabulation (editorconfig and editorconfig tools).
-	* Implement a linter step in build process for style guidelines, static analysis, etc... for C/C++ code (possibly [Boost](https://svn.boost.org/trac/boost/wiki/BestPracticeHandbook) style).
-
+  * Standarize code style guidelines and tabulation (editorconfig and editorconfig tools).
+  * Implement a linter step in build process for style guidelines, static analysis, etc... for C/C++ code (possibly [Boost](https://svn.boost.org/trac/boost/wiki/BestPracticeHandbook) style).

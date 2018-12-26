@@ -1,6 +1,6 @@
 /*
  *	MetaCall Library by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A library for providing a foreign function interface calls.
  *
@@ -62,7 +62,7 @@ typedef struct _RTL_USER_PROCESS_INFORMATION {
 	SECTION_IMAGE_INFORMATION ImageInformation;
 } RTL_USER_PROCESS_INFORMATION, *PRTL_USER_PROCESS_INFORMATION;
 
-typedef NTSTATUS (*RtlCloneUserProcessPtr)(ULONG ProcessFlags,
+typedef NTSTATUS (NTAPI * RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -72,7 +72,7 @@ typedef NTSTATUS (*RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 
 void (*metacall_fork_func(void))(void);
 
-NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
+NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -128,7 +128,7 @@ void (*metacall_fork_func(void))(void)
 	return (void(*)(void))clone_ptr;
 }
 
-NTSTATUS metacall_fork_hook(ULONG ProcessFlags,
+NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -219,9 +219,7 @@ pid_t metacall_fork_hook()
 #	error "Unknown metacall fork safety platform"
 #endif
 
-static void metacall_fork_exit(void);
-
-void metacall_fork_exit()
+static void metacall_fork_exit(void)
 {
 	if (metacall_fork_destroy() != 0)
 	{

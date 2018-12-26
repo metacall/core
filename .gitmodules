@@ -4,4 +4,4 @@
 
 [submodule "source/ports"]
 	path = source/ports
-	url = git@bitbucket.org:parrastudios/metacall-ports.git
+	url = git@github.com:metacall/ports.git

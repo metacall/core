@@ -1,6 +1,6 @@
 /*
  *	MetaCall Command Line Interface by Parra Studios
- *	Copyright (C) 2016 - 2017 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A command line interface example as metacall wrapper.
  *
@@ -176,7 +176,7 @@ class tokenizer
 
 		/**
 		*  @brief
-		*    Assignement operator for tokenizer iterator
+		*    Assignment operator for tokenizer iterator
 		*
 		*  @return
 		*    Returns a reference to itself
