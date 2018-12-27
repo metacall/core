@@ -519,6 +519,7 @@ Available build options are the following ones.
 |   **OPTION_BUILD_DETOURS**   | Build detours.                                         |      ON       |
 |     **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
 |    **OPTION_THREAD_SAFE**    | Enable thread safety.                                  |      OFF      |
+|     **CMAKE_BUILD_TYPE**     | Define the type of build.                              |    Release    |
 
 It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
 

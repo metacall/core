@@ -56,7 +56,7 @@ string(SUBSTRING "${GIT_SHA1}" 0 12 GIT_REV)
 set(META_PROJECT_NAME			"metacall")
 set(META_PROJECT_DESCRIPTION	"MetaCall Framework")
 set(META_AUTHOR_ORGANIZATION	"Parra Studios")
-set(META_AUTHOR_DOMAIN			"https://parrastudios.com/")
+set(META_AUTHOR_DOMAIN			"https://metacall.io/")
 set(META_AUTHOR_MAINTAINER		"vic798@gmail.com")
 set(META_VERSION_MAJOR			"0")
 set(META_VERSION_MINOR			"1")
@@ -83,6 +83,12 @@ option(OPTION_BUILD_SERIALS		"Build serials."											ON)
 option(OPTION_BUILD_DETOURS		"Build detours."											ON)
 option(OPTION_FORK_SAFE			"Enable fork safety."										OFF)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
+
+# Build type
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+	set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Define the type of build." FORCE)
+	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
+endif()
 
 #
 # Declare project
