@@ -43,3 +43,7 @@ _start-cmd.bat
 
 # Linked dockerignore file in main context
 .dockerignore
+!tools/base/.dockerignore
+!tools/core/.dockerignore
+!tools/dev/.dockerignore
+!tools/node/.dockerignore
