@@ -30,7 +30,9 @@ public:
 
 TEST_F(metacall_initialize_ex_test, DefaultConstructor)
 {
-	static char loader_name[] = "mock";
+	#if defined(OPTION_BUILD_LOADERS_MOCK)
+		static char loader_name[] = "mock";
+	#endif /* OPTION_BUILD_LOADERS_MOCK */
 
 	static struct metacall_initialize_configuration_type initialize_config[] =
 	{
