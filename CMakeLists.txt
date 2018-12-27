@@ -71,7 +71,7 @@ set(META_NAME_VERSION			"${META_PROJECT_NAME} v${META_VERSION} (${META_VERSION_R
 
 # Project options
 option(BUILD_SHARED_LIBS		"Build shared instead of static libraries."					ON)
-option(BUILD_DISTRIBUTABLE_LIBS	"Build all libraries into a single compilation unit."		ON)
+option(BUILD_DISTRIBUTABLE_LIBS	"Build all libraries into a single compilation unit."		OFF)
 option(OPTION_SELF_CONTAINED	"Create a self-contained install with all dependencies."	OFF)
 option(OPTION_BUILD_TESTS		"Build tests."												ON)
 option(OPTION_BUILD_DOCS		"Build documentation."										OFF)
@@ -227,7 +227,7 @@ install(FILES ${PROJECT_CONFIGURATION_PATH} DESTINATION ${INSTALL_ROOT} COMPONEN
 # Install the project meta files
 install(FILES AUTHORS   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 install(FILES LICENSE   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
-install(FILES README	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+install(FILES README.md DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 
 # Install runtime data
 install(DIRECTORY ${PROJECT_SOURCE_DIR}/data DESTINATION ${INSTALL_DATA} COMPONENT runtime)

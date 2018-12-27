@@ -91,7 +91,7 @@ sub_metacall(){
 	echo "clean metacall"
 	$SUDO_CMD rm -rf /usr/local/share/metacall/data
 	$SUDO_CMD rm /usr/local/share/metacall/VERSION
-	$SUDO_CMD rm /usr/local/share/metacall/README
+	$SUDO_CMD rm /usr/local/share/metacall/README.md
 	$SUDO_CMD rm /usr/local/share/metacall/metacall-config.cmake
 }
 
