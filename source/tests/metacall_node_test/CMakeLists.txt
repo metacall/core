@@ -1,3 +1,8 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODE)
+	return()
+endif()
+
 #
 # Executable name and options
 #
