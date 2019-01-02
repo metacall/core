@@ -24,7 +24,9 @@ source ./tools/base/hooks/env
 
 # Show message
 echo "[***] Build hook running"
-echo "[***]  - Building $IMAGE_NAME from $DOCKERFILE_PATH"
+echo "[***]  - Building $IMAGE_NAME from dockerfile $DOCKERFILE_PATH"
+echo "[***]  - Building from context `pwd`"
+echo "[***]  - File list: `ls -la`"
 
 # Build base image
 docker build \
