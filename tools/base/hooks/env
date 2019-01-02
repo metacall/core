@@ -20,7 +20,7 @@
 #
 
 # Load default environment variables
-source ./.env
+source ../../.env
 
 # Show message
 echo "[***] Env hook running"

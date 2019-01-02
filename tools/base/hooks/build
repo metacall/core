@@ -20,13 +20,12 @@
 #
 
 # Load environment variables
-source ./tools/base/hooks/env
+source ./hooks/env
 
 # Show message
 echo "[***] Build hook running"
 echo "[***]  - Building $IMAGE_NAME from dockerfile $DOCKERFILE_PATH"
-echo "[***]  - Building from context `pwd`"
-echo "[***]  - File list: `ls -la`"
+echo "[***]  - Running build script from `pwd`"
 
 # Build base image
 docker build \
@@ -40,4 +39,4 @@ docker build \
 	--build-arg "METACALL_BASE_IMAGE=$METACALL_BASE_IMAGE" \
 	--build-arg "METACALL_INSTALL_OPTIONS=$METACALL_INSTALL_OPTIONS" \
 	-t $IMAGE_NAME \
-	-f $DOCKERFILE_PATH .
+	-f $DOCKERFILE_PATH ../..

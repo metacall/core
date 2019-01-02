@@ -23,4 +23,4 @@
 echo "[***] Pre Build hook running"
 
 # Link docker ignore for the context
-ln -sf tools/base/.dockerignore .dockerignore
+ln -sf .dockerignore ../../.dockerignore
