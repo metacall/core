@@ -41,7 +41,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR $METACALL_PATH
 
 # MetaCall image
-FROM ${METACALL_BASE_IMAGE}
+FROM ${METACALL_BASE_IMAGE} AS core
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

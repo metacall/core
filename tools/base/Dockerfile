@@ -21,7 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall base image
-FROM ${METACALL_BASE_IMAGE}
+FROM ${METACALL_BASE_IMAGE} AS core_deps
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \

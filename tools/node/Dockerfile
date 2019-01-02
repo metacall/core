@@ -21,7 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall Depends node image
-FROM ${METACALL_BASE_IMAGE}
+FROM ${METACALL_BASE_IMAGE} AS core_deps_node
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
