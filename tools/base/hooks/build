@@ -19,8 +19,23 @@
 #	limitations under the License.
 #
 
-# Show message
-echo "[***] Pre Build hook running"
+# Load environment variables
+source ./tools/base/hooks/env
 
-# Link docker ignore for the context
-ln -sf tools/base/.dockerignore .dockerignore
+# Show message
+echo "[***] Build hook running"
+echo "[***]  - Building $IMAGE_NAME from $DOCKERFILE_PATH"
+
+# Build base image
+docker build \
+	--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
+	--build-arg "SOURCE_COMMIT=$GIT_SHA1" \
+	--build-arg "DOCKERFILE_PATH=$DOCKERFILE_PATH" \
+	--build-arg "SOURCE_TYPE=$SOURCE_TYPE" \
+	${VERSION:+--build-arg "VERSION=$VERSION"} \
+	--build-arg "METACALL_PATH=$METACALL_PATH" \
+	--build-arg "METACALL_TOOLS_PATH=$METACALL_PATH/tools" \
+	--build-arg "METACALL_BASE_IMAGE=$METACALL_BASE_IMAGE" \
+	--build-arg "METACALL_INSTALL_OPTIONS=$METACALL_INSTALL_OPTIONS" \
+	-t $IMAGE_NAME \
+	-f $DOCKERFILE_PATH .

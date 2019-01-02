@@ -21,6 +21,12 @@ release_build
 /lib
 /install
 
+# Avoid ignoring build hooks
+!tools/base/hooks/build
+!tools/core/hooks/build
+!tools/dev/hooks/build
+!tools/node/hooks/build
+
 # Qt cache
 CMakeLists.txt.user
 CMakeLists.txt.user.*
