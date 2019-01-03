@@ -22,13 +22,18 @@
 # Load common environment variables
 source ../../hooks/env
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
+# Core arguments
+METACALL_RUNTIME_OPTIONS="root base python ruby netcore nodejs" # v8
 
-# Base environment variables
+# Core environment variables
 DEBIAN_FRONTEND=noninteractive
 LTTNG_UST_REGISTER_TIMEOUT=0
 NUGET_XMLDOC_MODE=skip
+LOADER_LIBRARY_PATH=/usr/local/lib
+LOADER_SCRIPT_PATH=/usr/local/scripts
+CONFIGURATION_PATH=/usr/local/share/metacall/configurations/global.json
+SERIAL_LIBRARY_PATH=/usr/local/lib
+DETOUR_LIBRARY_PATH=/usr/local/lib
 
 # Override docker image
-IMAGE_NAME=metacall/core_deps
+IMAGE_NAME=metacall/core

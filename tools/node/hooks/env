@@ -22,13 +22,8 @@
 # Load common environment variables
 source ../../hooks/env
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
-
-# Base environment variables
+# Node environment variables
 DEBIAN_FRONTEND=noninteractive
-LTTNG_UST_REGISTER_TIMEOUT=0
-NUGET_XMLDOC_MODE=skip
 
 # Override docker image
-IMAGE_NAME=metacall/core_deps
+IMAGE_NAME=metacall/core_deps_node

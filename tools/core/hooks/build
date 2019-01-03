@@ -37,11 +37,11 @@ ln -s "`pwd`/.dockerignore" ../../.dockerignore
 # 	--build-arg "SOURCE_TYPE=$SOURCE_TYPE" \
 # 	${VERSION:+--build-arg "VERSION=$VERSION"} \
 
-# Build base image
+# Build core image
 docker build \
 	--build-arg "METACALL_PATH=$METACALL_PATH" \
-	--build-arg "METACALL_TOOLS_PATH=$METACALL_PATH/tools" \
 	--build-arg "METACALL_BASE_IMAGE=$METACALL_BASE_IMAGE" \
-	--build-arg "METACALL_INSTALL_OPTIONS=$METACALL_INSTALL_OPTIONS" \
+	--build-arg "METACALL_BASE_IMAGE=$METACALL_BASE_IMAGE" \
+	--build-arg "METACALL_RUNTIME_OPTIONS=$METACALL_RUNTIME_OPTIONS" \
 	-t $IMAGE_NAME \
 	-f $DOCKERFILE_PATH ../..

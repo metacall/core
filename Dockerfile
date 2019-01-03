@@ -1,8 +1,6 @@
-#!/bin/bash
-
 #
-#	MetaCall Build Bash Script by Parra Studios
-#	Build and install bash script utility for MetaCall.
+#	MetaCall Library by Parra Studios
+#	Docker image infrastructure for MetaCall.
 #
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
@@ -19,16 +17,13 @@
 #	limitations under the License.
 #
 
-# Load common environment variables
-source ../../hooks/env
+# MetaCall dummy image
+FROM scratch AS dummy
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
-
-# Base environment variables
-DEBIAN_FRONTEND=noninteractive
-LTTNG_UST_REGISTER_TIMEOUT=0
-NUGET_XMLDOC_MODE=skip
-
-# Override docker image
-IMAGE_NAME=metacall/core_deps
+# Image descriptor
+LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
+	copyright.address="vic798@gmail.com" \
+	maintainer.name="Vicente Eduardo Ferrer Garcia" \
+	maintainer.address="vic798@gmail.com" \
+	vendor="MetaCall Inc." \
+	version="0.1"

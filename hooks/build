@@ -19,16 +19,14 @@
 #	limitations under the License.
 #
 
-# Load common environment variables
-source ../../hooks/env
+# Run docker core_deps image builder
+bash -c "cd tools/base && ./hooks/build"
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
+# Run docker core_deps_node image builder
+bash -c "cd tools/node && ./hooks/build"
 
-# Base environment variables
-DEBIAN_FRONTEND=noninteractive
-LTTNG_UST_REGISTER_TIMEOUT=0
-NUGET_XMLDOC_MODE=skip
+# Run docker core_dev image builder
+bash -c "cd tools/dev && ./hooks/build"
 
-# Override docker image
-IMAGE_NAME=metacall/core_deps
+# Run docker core image builder
+bash -c "cd tools/core && ./hooks/build"

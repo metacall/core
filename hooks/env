@@ -19,16 +19,19 @@
 #	limitations under the License.
 #
 
-# Load common environment variables
-source ../../hooks/env
+# Load default environment variables (this must be run from tools/<image> path)
+source ../../.env
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
+# These values are passed by the Hub, but if we are running locally we can get them
+[ -n "$SOURCE_TYPE" ]		|| SOURCE_TYPE=git
+[ -n "$SOURCE_BRANCH" ]		|| SOURCE_BRANCH=$(git symbolic-ref -q --short HEAD)
+[ -n "$GIT_SHA1" ]			|| GIT_SHA1=$(git rev-parse -q HEAD)
 
-# Base environment variables
-DEBIAN_FRONTEND=noninteractive
-LTTNG_UST_REGISTER_TIMEOUT=0
-NUGET_XMLDOC_MODE=skip
+if [[ "${SOURCE_BRANCH/-*/}" =~ ^[0-9][0-9.]*$ ]]; then
+	VERSION=${SOURCE_BRANCH/-*/}
+fi
 
-# Override docker image
-IMAGE_NAME=metacall/core_deps
+# Set dockerfile path if it is not absolute or if it is not defined
+if [ ! -n "$DOCKERFILE_PATH" ] || [ ! "${DOCKERFILE_PATH:0:1}" = "/" ]; then
+	DOCKERFILE_PATH="`pwd`/Dockerfile"
+fi

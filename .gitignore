@@ -22,6 +22,7 @@ release_build
 /install
 
 # Avoid ignoring build hooks
+!hooks/build
 !tools/base/hooks/build
 !tools/core/hooks/build
 !tools/dev/hooks/build

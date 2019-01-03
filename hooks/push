@@ -19,16 +19,10 @@
 #	limitations under the License.
 #
 
-# Load common environment variables
-source ../../hooks/env
+# Show message
+echo "[***] Push hook running"
+echo "[***]  - Tagging and pushing $IMAGE_NAME"
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
-
-# Base environment variables
-DEBIAN_FRONTEND=noninteractive
-LTTNG_UST_REGISTER_TIMEOUT=0
-NUGET_XMLDOC_MODE=skip
-
-# Override docker image
-IMAGE_NAME=metacall/core_deps
+# Tag the core image and push it
+docker tag metacall/core:latest $IMAGE_NAME
+docker push $IMAGE_NAME

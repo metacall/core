@@ -74,6 +74,7 @@ services:
       DETOUR_LIBRARY_PATH: $METACALL_PATH/build
     depends_on:
       - deps
+      - deps_node
 
   core:
     image: metacall/core
