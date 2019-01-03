@@ -27,7 +27,6 @@ BUILD_RUBY=0
 BUILD_NETCORE=0
 BUILD_V8=0
 BUILD_NODEJS=0
-BUILD_PORTS=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 
@@ -71,10 +70,6 @@ sub_options() {
 			echo "Build with nodejs support"
 			BUILD_NODEJS=1
 		fi
-		if [ "$option" = 'ports' ]; then
-			echo "Build all ports"
-			BUILD_PORTS=1
-		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
 			BUILD_SCRIPTS=1
@@ -90,13 +85,6 @@ sub_configure() {
 	BUILD_STRING="-DBUILD_DISTRIBUTABLE_LIBS=Off \
 			-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
-
-	# Ports
-	if [ $BUILD_PORTS = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS=On"
-	else
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS=Off"
-	fi
 
 	# Scripts
 	if [ $BUILD_SCRIPTS = 1 ]; then
@@ -114,10 +102,6 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_PY=On"
 		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_PY=On"
-		fi
 	fi
 
 	# Ruby
@@ -126,10 +110,6 @@ sub_configure() {
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RB=On"
-		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RB=On"
 		fi
 	fi
 
@@ -143,10 +123,6 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
 		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
-		fi
 	fi
 
 	# V8
@@ -156,10 +132,6 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_JS=On"
 		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_JS=On"
-		fi
 	fi
 
 	# NodeJS
@@ -168,10 +140,6 @@ sub_configure() {
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_NODE=On"
-		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_NODE=On"
 		fi
 	fi
 

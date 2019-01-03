@@ -3,16 +3,19 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY)
 	return()
 endif()
 
-## Check if port is enabled
-#if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
-#	return()
-#endif()
-
 #
 # External dependencies
 #
 
-# find_package(THIRDPARTY REQUIRED)
+return() # TODO:
+
+# MetaCall Ports
+find_package(MetaCallPorts REQUIRED)
+
+if(NOT METACALL_PORTS_FOUND OR NOT METACALL_PORTS_PY_FOUND)
+	message(STATUS "MetaCall ports not found")
+	return()
+endif()
 
 #
 # Executable name and options

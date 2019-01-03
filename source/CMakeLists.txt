@@ -113,12 +113,6 @@ add_subdirectory(detours)
 set(IDE_FOLDER "Distributable")
 add_subdirectory(distributable)
 
-# Ports
-if(OPTION_BUILD_PORTS)
-	set(IDE_FOLDER "Ports")
-	add_subdirectory(ports)
-endif()
-
 #
 # Deployment
 #

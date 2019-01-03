@@ -4,6 +4,8 @@
 
 py_project(callback 0.1.0)
 
+# TODO: Review this, set ports as a dependency in requirements.txt
+
 # Configure ports path
 if(MSVC)
 	set(PROJECT_METACALL_PORTS_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}")

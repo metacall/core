@@ -1,5 +1,7 @@
 import sys
 
+# TODO: Refactor MetaCall py port dependency into requirements.txt
+
 sys.path.append('@PROJECT_METACALL_PORTS_DIRECTORY@')
 
 from @PROJECT_METACALL_PORTS_PY@ import metacall, metacall_function

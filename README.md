@@ -514,7 +514,6 @@ Available build options are the following ones.
 |  **OPTION_BUILD_EXAMPLES**   | Build examples.                                        |      ON       |
 |   **OPTION_BUILD_LOADERS**   | Build loaders.                                         |      ON       |
 |   **OPTION_BUILD_SCRIPTS**   | Build scripts.                                         |      ON       |
-|    **OPTION_BUILD_PORTS**    | Build ports.                                           |      OFF      |
 |   **OPTION_BUILD_SERIALS**   | Build serials.                                         |      ON       |
 |   **OPTION_BUILD_DETOURS**   | Build detours.                                         |      ON       |
 |     **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
