@@ -2,9 +2,12 @@
 
 All external code and licenses used by **METACALL** are always wrapped into plugins and linked dynamically to them. By this reason the **METACALL** core is not polluted with licenses or software restrictions. The developer __**can choose**__ what plugins wants to use in order to fit their requirements. All license requirements are **optional**.
 
+# Table Of Contents
+
 <!-- TOC -->
 
 - [Licenses Used In MetaCall (Optional)](#licenses-used-in-metacall-optional)
+- [Table Of Contents](#table-of-contents)
     - [1. Loaders](#1-loaders)
         - [1.1 Python](#11-python)
         - [1.2 NodeJS](#12-nodejs)

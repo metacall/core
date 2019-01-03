@@ -63,7 +63,7 @@ sub_swig(){
 	make
 	$SUDO_CMD make install
 	cd ..
-	rm -rf ./swig
+	rm -rf ./swig swig.tar.gz
 }
 
 # Python
