@@ -28,7 +28,7 @@ echo "[***]  - Building $IMAGE_NAME from dockerfile $DOCKERFILE_PATH"
 echo "[***]  - Running build script from `pwd`"
 
 # Link docker ignore for the context
-ln -s "`pwd`/.dockerignore" ../../.dockerignore
+ln -sf "`pwd`/.dockerignore" ../../.dockerignore
 
 # TODO
 # 	--build-arg BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"` \
