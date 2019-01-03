@@ -6,7 +6,7 @@ add_custom_target(pack)
 set_target_properties(pack PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 # Install additional runtime dependencies
-include(${PROJECT_SOURCE_DIR}/cmake/source/RuntimeDependencies.cmake)
+include(${PROJECT_SOURCE_DIR}/cmake/RuntimeDependencies.cmake)
 
 #
 # Packages
@@ -21,7 +21,7 @@ include(packages/pack-metacall.cmake)
 add_custom_target(
 	component_install
 	COMMAND make preinstall
-	COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/source/ComponentInstall.cmake
+	COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ComponentInstall.cmake
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
@@ -32,6 +32,6 @@ add_custom_target(
 add_custom_target(
 	component_uninstall
 	COMMAND make uninstall
-	COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/source/ComponentUninstall.cmake
+	COMMAND ${CMAKE_COMMAND} -P ${PROJECT_SOURCE_DIR}/cmake/ComponentUninstall.cmake
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
