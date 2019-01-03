@@ -5,3 +5,6 @@
 [submodule "source/ports"]
 	path = source/ports
 	url = git@github.com:metacall/ports.git
+[submodule "cmake"]
+	path = cmake
+	url = git@github.com:metacall/cmake.git
