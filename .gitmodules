@@ -1,9 +1,6 @@
 [submodule "googletest"]
 	path = source/tests/googletest
 	url = https://github.com/google/googletest.git
-[submodule "source/ports"]
-	path = source/ports
-	url = git@github.com:metacall/ports.git
 [submodule "cmake"]
 	path = cmake
 	url = git@github.com:metacall/cmake.git
