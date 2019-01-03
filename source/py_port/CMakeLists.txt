@@ -1,5 +1,5 @@
 # Check if port is enabled
-if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
+if(NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
 

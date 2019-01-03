@@ -17,11 +17,6 @@
 #	limitations under the License.
 #
 
-# Check if port is enabled
-if(NOT OPTION_BUILD_PORTS)
-	return()
-endif()
-
 #
 # External dependencies
 #

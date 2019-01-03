@@ -5,11 +5,6 @@
 #	A complete infrastructure for supporting multiple language bindings in MetaCall.
 #
 
-# Check if ports are enabled
-if(NOT OPTION_BUILD_PORTS)
-	return()
-endif()
-
 # Port languages
 add_subdirectory(cs_port)
 add_subdirectory(d_port)
