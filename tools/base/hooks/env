@@ -34,8 +34,12 @@ if [[ "${SOURCE_BRANCH/-*/}" =~ ^[0-9][0-9.]*$ ]]; then
 fi
  
 [ -n "$SOURCE_TYPE" ]		|| SOURCE_TYPE=git
-[ -n "$DOCKERFILE_PATH" ]	|| DOCKERFILE_PATH="`pwd`/Dockerfile"
 [ -n "$IMAGE_NAME" ]		|| IMAGE_NAME=metacall/base
+
+# Set dockerfile path if it is not absolute or if it is not defined
+if [ ! -n "$DOCKERFILE_PATH" ] || [ ! "${DOCKERFILE_PATH:0:1}" = "/" ]; then
+	DOCKERFILE_PATH="`pwd`/Dockerfile"
+fi
 
 # Base arguments
 METACALL_INSTALL_OPTIONS="root base python ruby netcore nodejs rapidjson funchook" # v8rep51
