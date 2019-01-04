@@ -484,7 +484,7 @@ Usually the developer is the same who does the fork, but it may be possible that
 Follow these steps to build and install **METACALL** manually.
 
 ``` sh
-$ git clone https://github.com/metacall/core
+$ git clone https://github.com/metacall/core.git
 $ cd metacall
 $ mkdir build
 $ cd build
