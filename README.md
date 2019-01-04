@@ -485,7 +485,8 @@ Follow these steps to build and install **METACALL** manually.
 
 ``` sh
 $ git clone https://github.com/metacall/core.git
-$ cd metacall
+$ cd core
+$ git submodule update --init --recursive
 $ mkdir build
 $ cd build
 $ cmake ..
