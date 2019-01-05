@@ -535,9 +535,9 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
 |     Operative System      |    Architecture     |  Compiler  | Build Status |
-|:-------------------------:|:-------------------:|:----------:|-------------:|
+|:-------------------------:|:-------------------:|:----------:|:-------------:|
 |    **`ubuntu:xenial`**    |     **`amd64`**     | **`gcc`**  |              |
-| **`debian:stretch-slim`** |     **`amd64`**     | **`gcc`**  |              |
+| **`debian:stretch-slim`** |     **`amd64`**     | **`gcc`**  |[![build](https://gitlab.com/metacall/core/badges/develop/build.svg)](https://gitlab.com/metacall/core)                 |
 |       **`windows`**       | **`x86`** **`x64`** | **`msvc`** |              |
 
 ## 8. License
