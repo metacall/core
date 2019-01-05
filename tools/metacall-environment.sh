@@ -96,8 +96,8 @@ sub_rapidjson(){
 	cd $ROOT_DIR
 	git clone https://github.com/miloyip/rapidjson.git
 	cd rapidjson
-	git checkout v1.1.0
-	sed -i 's/-Werror/-Wno-error/' CMakeLists.txt # Disable Werror to allow compiling without threating warnings as errors on GCC 8
+	# TODO: This version fails with GCC 8, move to master but in the future the version must be pinned
+	# git checkout v1.1.0
 	mkdir build
 	cd build
 	cmake ..
