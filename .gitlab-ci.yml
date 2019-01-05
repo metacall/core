@@ -22,7 +22,7 @@ stages:
 
 build:
   type: build
-  image: gcc
+  image: debian:stretch-slim
   script:
     - ./tools/metacall-environment.sh root base python ruby netcore nodejs rapidjson funchook pack # v8rep51
   only: 

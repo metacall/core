@@ -9,6 +9,7 @@
 !tools/metacall-clear.sh
 !CMakeLists.txt
 !metacall-config.cmake.in
+!metacall-config-version.cmake.in
 !AUTHORS
 !DESCRIPTION
 !LICENSE
