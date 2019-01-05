@@ -18,10 +18,10 @@
 #
 
 stages:
-  - build_code
+  - build
 
-build_code:
-  type: build_code
+build:
+  type: build
   image: gcc
   script:
     - ./tools/metacall-environment.sh root base python ruby netcore nodejs rapidjson funchook pack # v8rep51
