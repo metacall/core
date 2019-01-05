@@ -179,11 +179,11 @@ sub_help() {
 }
 
 case "$#" in
-    0)
-        sub_help
-        ;;
-    *)
+	0)
+		sub_help
+		;;
+	*)
 		sub_options $@
 		sub_configure
-        ;;
+		;;
 esac

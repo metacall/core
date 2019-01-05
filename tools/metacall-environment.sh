@@ -39,6 +39,7 @@ INSTALL_V8REPO51=0
 INSTALL_NODEJS=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
+INSTALL_PACK=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -96,6 +97,7 @@ sub_rapidjson(){
 	git clone https://github.com/miloyip/rapidjson.git
 	cd rapidjson
 	git checkout v1.1.0
+	sed -i 's/-Werror/-Wno-error/' CMakeLists.txt # Disable Werror to allow compiling without threating warnings as errors on GCC 8
 	mkdir build
 	cd build
 	cmake ..
@@ -293,6 +295,14 @@ sub_metacall(){
 	echo "configure with cmake .. <options>"
 }
 
+# Pack
+sub_pack(){
+	echo "configure pack"
+	cd $ROOT_DIR
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get install -y --no-install-recommends rpm
+}
+
 # Install
 sub_install(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -330,6 +340,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_METACALL = 1 ]; then
 		sub_metacall
+	fi
+	if [ $INSTALL_PACK = 1 ]; then
+		sub_pack
 	fi
 
 	echo "install finished in workspace $ROOT_DIR"
@@ -404,6 +417,10 @@ sub_options(){
 			echo "metacall selected"
 			INSTALL_METACALL=1
 		fi
+		if [ "$var" = 'pack' ]; then
+			echo "pack selected"
+			INSTALL_PACK=1
+		fi
 	done
 }
 
@@ -426,6 +443,7 @@ sub_help() {
 	echo "	nodejs"
 	echo "	swig"
 	echo "	metacall"
+	echo "	pack"
 	echo ""
 }
 
