@@ -1,0 +1,12 @@
+stages:
+  - build_code
+
+    
+build_code:
+  type: build_code
+  image: gcc
+  script:
+    - ./tools/metacall-environment.sh root base python ruby netcore nodejs rapidjson funchook # v8rep51
+  only: 
+    - develop
+    - master
