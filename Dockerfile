@@ -17,6 +17,9 @@
 #	limitations under the License.
 #
 
+# This is a dummy image for DockerHub hooks
+# To check the real docker images go to /tools/{base,core,dev,node}
+
 # MetaCall dummy image
 FROM scratch AS dummy
 
