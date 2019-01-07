@@ -7,37 +7,64 @@ if(NOT OPTION_BUILD_TESTS)
 	return()
 endif()
 
-# DISABLE CMP0037: Target names should not be reserved and should match a validity pattern.
+# DISABLE CMP0037: Target names should not be reserved and should match a validity pattern
 if("${CMAKE_VERSION}" VERSION_LESS "3.11" AND POLICY CMP0037)
 	set_policy(CMP0037 OLD)
 endif()
 
-# Build gmock
-set(gmock_build_tests			OFF CACHE BOOL "")
-set(gtest_build_samples			OFF CACHE BOOL "")
-set(gtest_build_tests			OFF CACHE BOOL "")
-set(gtest_disable_pthreads		OFF CACHE BOOL "")
-set(gtest_force_shared_crt		ON  CACHE BOOL "")
-set(gtest_hide_internal_symbols	OFF CACHE BOOL "")
+include(ExternalProject)
 
-add_subdirectory(googletest/googlemock)
+if(MINGW)
+	set(GTEST_DISABLE_PTHREADS ON)
+else()
+	set(GTEST_DISABLE_PTHREADS OFF)
+endif()
+
+# Import Google Test Framework
+ExternalProject_Add(googletest
+	GIT_REPOSITORY https://github.com/google/googletest.git
+	GIT_TAG release-1.8.1
+	CMAKE_ARGS -Dgmock_build_tests=OFF
+		-Dgtest_build_samples=OFF
+		-Dgtest_build_tests=OFF
+		-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
+		-Dgtest_force_shared_crt=ON
+		-Dgtest_hide_internal_symbols=OFF
+	PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
+	UPDATE_COMMAND "" # Disable update step
+	INSTALL_COMMAND "" # Disable install step
+)
+
+# Google Test include directories
+ExternalProject_Get_Property(googletest source_dir)
+set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
+set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
+
+# Google Test binary directories
+ExternalProject_Get_Property(googletest binary_dir)
+set(GTEST_LIBS_DIR "${binary_dir}/lib")
+
+file(GLOB GTEST_LIBS
+	"${GTEST_LIBS_DIR}/*"
+)
 
 # Create interface library to link against gmock
 add_library(gmock-dev INTERFACE)
 
 target_include_directories(gmock-dev
 	SYSTEM INTERFACE
-	${CMAKE_CURRENT_SOURCE_DIR}/googletest/googletest/include
-	${CMAKE_CURRENT_SOURCE_DIR}/googletest/googlemock/include
+	${GTEST_INCLUDE_DIR}
+	${GMOCK_INCLUDE_DIR}
 )
 
 target_link_libraries(gmock-dev
 	INTERFACE
-	gmock
+	${GTEST_LIBS}
 )
 
-# Set memory check configuration
+add_dependencies(gmock-dev googletest)
 
+# Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
 
 if(OPTION_TEST_MEMORYCHECK)
@@ -66,13 +93,13 @@ if(OPTION_TEST_MEMORYCHECK)
 			--timeout 60
 		#COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
-
-	include(CTest)
 endif()
 
 #
 # Tests
 #
+
+include(CTest)
 
 add_subdirectory(preprocessor_test)
 add_subdirectory(environment_test)

@@ -29,7 +29,6 @@ EXEC_PATH="`pwd`"
 # Replacement
 find "$EXEC_PATH" -type f \
 	-not -path "*/build*" \
-	-not -path "*/source/tests/googletest*" \
 	-not -name "LICENSE" \
 	-not -name "COPYRIGHT" \
 	-exec sh -c ' \
