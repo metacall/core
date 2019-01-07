@@ -61,4 +61,5 @@ install(FILES
 	${CMAKE_BINARY_DIR}/CSLoader.dll
 	${CMAKE_BINARY_DIR}/System.Runtime.Loader.dll
 	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
 )
