@@ -3,7 +3,6 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS)
 	return()
 endif()
 
-option(OPTION_BUILD_LOADERS_CS_IMPL		"Build Netcore library."	ON)
 set(DOTNET_CORE_PATH "" CACHE PATH "Dotnet runtime path")
 
 #
