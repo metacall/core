@@ -23,6 +23,8 @@ ROOT_DIR=$(pwd)
 
 RUN_AS_ROOT=0
 SUDO_CMD=sudo
+APT_CACHE=0
+APT_CACHE_CMD=""
 INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
@@ -48,14 +50,14 @@ sub_apt(){
 	echo "configure apt"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --no-install-recommends install build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 }
 
 # Swig
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y --no-install-recommends install libpcre3-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libpcre3-dev
 	wget "https://downloads.sourceforge.net/project/swig/swig/swig-3.0.12/swig-3.0.12.tar.gz?r=http%3A%2F%2Fwww.swig.org%2Fdownload.html&ts=1487810080&use_mirror=netix" -O swig.tar.gz
 	mkdir swig
 	tar -xf swig.tar.gz -C ./swig --strip-components=1
@@ -71,7 +73,7 @@ sub_swig(){
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y --no-install-recommends install python3 python3-dev python3-pip
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
 	$SUDO_CMD pip3 install rsa
@@ -82,7 +84,7 @@ sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.3-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.3-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
@@ -109,7 +111,7 @@ sub_rapidjson(){
 sub_funchook(){
 	echo "configure funchook"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get -y --no-install-recommends install autoconf
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install autoconf
 }
 
 # NetCore
@@ -117,7 +119,7 @@ sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
 
-	$SUDO_CMD apt-get update && apt-get install -y --no-install-recommends \
+	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
 		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
 
 	# # Install .NET Core
@@ -156,14 +158,14 @@ sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get -y --no-install-recommends install add-apt-key
-	$SUDO_CMD apt-get -y --no-install-recommends install software-properties-common
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install software-properties-common
 
 	# V8 5.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
 		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv851.list"
 		$SUDO_CMD sh -c "echo \"deb http://archive.ubuntu.com/ubuntu trusty main\" > /etc/apt/sources.list.d/libicu52.list"
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libicu52 libv8-5.1.117 libv8-5.1-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-unauthenticated install libicu52 libv8-5.1.117 libv8-5.1-dev
 	fi
 
 	# V8 5.4
@@ -172,7 +174,7 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --no-install-recommends --allow-unauthenticated install libicu55 libv8-5.4-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-unauthenticated install libicu55 libv8-5.4-dev
 		$SUDO_CMD rm libicu55_55.1-7_amd64.deb
 	fi
 
@@ -180,21 +182,21 @@ sub_v8repo(){
 	if [ $INSTALL_V8REPO52 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.2
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --no-install-recommends install libicu55 libv8-5.2-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.2-dev
 	fi
 
 	# V8 5.8
 	if [ $INSTALL_V8REPO58 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.8
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --no-install-recommends install libicu55 libv8-5.8-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.8-dev
 	fi
 
 	# V8 5.7
 	if [ $INSTALL_V8REPO57 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get -y --no-install-recommends install libicu55 libv8-5.7-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.7-dev
 	fi
 }
 
@@ -202,7 +204,7 @@ sub_v8repo(){
 sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y --no-install-recommends install python
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python
 	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 	export PATH=`pwd`/depot_tools:"$PATH"
 
@@ -225,7 +227,7 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get -y --no-install-recommends install python build-essential libssl1.0.2 libssl1.0-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python build-essential libssl1.0.2 libssl1.0-dev
 
 	# Install NodeJS from distributable (TODO: Keys not working)
 	NODE_VERSION=8.11.1
@@ -299,13 +301,16 @@ sub_pack(){
 	echo "configure pack"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y --no-install-recommends rpm
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends rpm
 }
 
 # Install
 sub_install(){
 	if [ $RUN_AS_ROOT = 1 ]; then
 		SUDO_CMD=""
+	fi
+	if [ $APT_CACHE = 1 ]; then
+		APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
 	fi
 	if [ $INSTALL_APT = 1 ]; then
 		sub_apt
@@ -354,6 +359,10 @@ sub_options(){
 		if [ "$var" = 'root' ]; then
 			echo "running as root"
 			RUN_AS_ROOT=1
+		fi
+		if [ "$var" = 'cache' ]; then
+			echo "apt caching selected"
+			APT_CACHE=1
 		fi
 		if [ "$var" = 'base' ]; then
 			echo "apt selected"
@@ -428,6 +437,7 @@ sub_help() {
 	echo "Usage: $PROGNAME list of component"
 	echo "Components:"
 	echo "	root"
+	echo "	cache"
 	echo "	base"
 	echo "	python"
 	echo "	ruby"
