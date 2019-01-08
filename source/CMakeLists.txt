@@ -89,6 +89,10 @@ add_subdirectory(metacall)
 set(IDE_FOLDER "Tests")
 add_subdirectory(tests)
 
+# Benchmarks
+set(IDE_FOLDER "Benchmarks")
+add_subdirectory(benchmarks)
+
 # Examples
 set(IDE_FOLDER "Examples")
 add_subdirectory(examples)

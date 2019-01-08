@@ -510,6 +510,7 @@ Available build options are the following ones.
 | **BUILD_DISTRIBUTABLE_LIBS** | Build all libraries into a single compilation unit.    |      OFF      |
 |  **OPTION_SELF_CONTAINED**   | Create a self-contained install with all dependencies. |      OFF      |
 |    **OPTION_BUILD_TESTS**    | Build tests.                                           |      ON       |
+| **OPTION_BUILD_BENCHMARKS**  | Build benchmarks.                                      |      OFF      |
 |    **OPTION_BUILD_DOCS**     | Build documentation.                                   |      OFF      |
 |  **OPTION_BUILD_EXAMPLES**   | Build examples.                                        |      ON       |
 |   **OPTION_BUILD_LOADERS**   | Build loaders.                                         |      ON       |
