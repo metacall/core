@@ -107,7 +107,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	gtest
+	GTest
 
 	${CMAKE_DL_LIBS}
 

@@ -10,10 +10,10 @@ endif()
 
 find_package(RapidJSON 1.1.0)
 
-if(NOT RAPIDJSON_INCLUDE_DIRS)
+if(NOT RAPIDJSON_FOUND)
 	include(InstallRapidJSON)
 
-	if(NOT RAPIDJSON_INCLUDE_DIRS)
+	if(NOT RAPIDJSON_FOUND)
 		message(STATUS "RapidJSON libraries not found")
 		return()
 	endif()

@@ -83,7 +83,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	gtest
+	GTest
 
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor

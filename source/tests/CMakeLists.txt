@@ -17,75 +17,28 @@ set(GTEST_VERSION 1.8.1)
 find_package(GTest ${GTEST_VERSION})
 
 if(NOT GTEST_FOUND)
-	include(ExternalProject)
+	include(InstallGTest)
 
-	find_package(Threads REQUIRED)
-
-	if(MINGW)
-		set(GTEST_DISABLE_PTHREADS ON)
-	else()
-		set(GTEST_DISABLE_PTHREADS OFF)
+	if(NOT GTEST_FOUND)
+		message(STATUS "GTest libraries not found")
+		return()
 	endif()
-
-	# Import Google Test Framework
-	ExternalProject_Add(googletest
-		GIT_REPOSITORY https://github.com/google/googletest.git
-		GIT_TAG release-${GTEST_VERSION}
-		CMAKE_ARGS -Dgmock_build_tests=OFF
-			-Dgtest_build_samples=OFF
-			-Dgtest_build_tests=OFF
-			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
-			-Dgtest_force_shared_crt=ON
-			-Dgtest_hide_internal_symbols=OFF
-			-DINSTALL_GTEST=OFF
-			-DBUILD_GMOCK=ON
-		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
-		UPDATE_COMMAND ""
-		INSTALL_COMMAND ""
-		TEST_COMMAND ""
-	)
-
-	# Google Test include and binary directories
-	ExternalProject_Get_Property(googletest source_dir binary_dir)
-
-	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
-	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
-	set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest")
-	set(GMOCK_LIBS_DIR "${binary_dir}/googlemock")
-
-	# Create interface library to link against gmock
-	add_library(gtest INTERFACE)
-
-	if(MSVC)
-		set(GTEST_LIBS_SUFFIX "lib")
-	else()
-		set(GTEST_LIBS_SUFFIX "a")
-	endif()
-
-	# Define Paths
-	set(GTEST_INCLUDE_DIRS
-		"${GTEST_INCLUDE_DIR}"
-		"${GMOCK_INCLUDE_DIR}"
-	)
-
-	set(GTEST_LIBRARIES
-		"${GTEST_LIBS_DIR}/libgtest.${GTEST_LIBS_SUFFIX}"
-		"${GMOCK_LIBS_DIR}/libgmock.${GTEST_LIBS_SUFFIX}"
-		"${CMAKE_THREAD_LIBS_INIT}"
-	)
 endif()
 
-target_include_directories(gtest
+# Create interface library to link against Google Test
+add_library(GTest INTERFACE)
+
+target_include_directories(GTest
 	SYSTEM INTERFACE
 	${GTEST_INCLUDE_DIRS}
 )
 
-target_link_libraries(gtest
+target_link_libraries(GTest
 	INTERFACE
 	${GTEST_LIBRARIES}
 )
 
-add_dependencies(gtest googletest)
+add_dependencies(GTest GoogleTest)
 
 # Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
