@@ -1,4 +1,3 @@
-
 #
 #	CMake Install RapidJSON by Parra Studios
 #	CMake script to install RapidJSON library.
