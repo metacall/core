@@ -23,21 +23,24 @@ stages:
 cache:
   key: apt-cache
   paths:
-  - apt-cache/
+  - .apt-cache/
 
 variables:
+  APT_CACHE_DIR: $CI_PROJECT_DIR/.apt-cache
   METACALL_INSTALL_OPTIONS: root cache base python ruby netcore nodejs rapidjson funchook pack # v8rep51
   METACALL_BUILD_OPTIONS: release root python ruby netcore nodejs distributable tests scripts dynamic install # v8
 
 # TODO: Review the cache of installation, standalone executables may be not cached correctly
 before_script:
-    - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
-    - ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+    - mkdir -pv $APT_CACHE_DIR
+    - $CI_PROJECT_DIR/tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_LIBRARY_PREFIXES=lib -DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" -P $CI_PROJECT_DIR/cmake/FindNodeJS.cmake
 
 build:
   type: build
   image: debian:stretch-slim
   script:
-    - ./tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
+    - $CI_PROJECT_DIR/tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
+    - $CI_PROJECT_DIR/tools/metacall-build.sh $METACALL_BUILD_OPTIONS
   only: 
     - master
