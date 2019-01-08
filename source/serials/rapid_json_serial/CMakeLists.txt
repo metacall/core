@@ -138,7 +138,7 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
-	COMPILE_FLAGS ${RAPIDJSON_CXX_FLAGS} # RapidJSON compile flags
+	COMPILE_FLAGS "${RAPIDJSON_CXX_FLAGS}" # RapidJSON compile flags
 )
 
 #
