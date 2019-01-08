@@ -20,11 +20,24 @@
 stages:
   - build
 
+cache:
+  key: apt-cache
+  paths:
+  - apt-cache/
+
+variables:
+  METACALL_INSTALL_OPTIONS: root base python ruby netcore nodejs rapidjson funchook pack # v8rep51
+  METACALL_BUILD_OPTIONS: release root python ruby netcore nodejs distributable tests scripts dynamic install # v8
+
+before_script:
+    - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
+    - ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+
 build:
   type: build
   image: debian:stretch-slim
   script:
-    - ./tools/metacall-environment.sh root base python ruby netcore nodejs rapidjson funchook pack # v8rep51
+    - ./tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
   only: 
     - develop
     - master
