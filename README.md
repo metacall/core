@@ -483,11 +483,8 @@ Usually the developer is the same who does the fork, but it may be possible that
 Follow these steps to build and install **METACALL** manually.
 
 ``` sh
-git clone https://github.com/metacall/core.git
-cd core
-git submodule update --init --recursive
-mkdir build
-cd build
+git clone --recursive https://github.com/metacall/core.git
+mkdir core/build && cd core/build
 cmake ..
 make
 make test
