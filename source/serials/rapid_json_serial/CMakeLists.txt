@@ -8,11 +8,15 @@ endif()
 # External dependencies
 #
 
-find_package(RapidJSON 1.1.0 REQUIRED)
+find_package(RapidJSON 1.1.0)
 
 if(NOT RAPIDJSON_INCLUDE_DIRS)
-	message(STATUS "RapidJSON libraries not found")
-	return()
+	include(InstallRapidJSON)
+
+	if(NOT RAPIDJSON_INCLUDE_DIRS)
+		message(STATUS "RapidJSON libraries not found")
+		return()
+	endif()
 endif()
 
 #
