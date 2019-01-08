@@ -1,4 +1,3 @@
-
 #
 #	CMake Find RapidJSON by Parra Studios
 #	CMake script to find RapidJSON library.
@@ -23,7 +22,12 @@
 # RAPIDJSON_CXX_FLAGS - Custom RapidJSON compilation flags.
 # RAPIDJSON_INCLUDE_DIRS - A list of directories where the RapidJSON headers are located.
 
-foreach(opt RAPIDJSON_INCLUDEDIR RAPIDJSON_USE_SSE2 RAPIDJSON_USE_SSE42)
+# Prevent vervosity if already included
+if(RAPIDJSON_FOUND)
+	set(RAPIDJSON_FIND_QUIETLY TRUE)
+endif()
+
+foreach(opt RAPIDJSON_INCLUDE_DIR RAPIDJSON_USE_SSE2 RAPIDJSON_USE_SSE42)
 	if(${opt} AND DEFINED ENV{${opt}} AND NOT ${opt} STREQUAL "$ENV{${opt}}")
 		message(WARNING "Conflicting ${opt} values: ignoring environment variable and using CMake cache entry")
 	elseif(DEFINED ENV{${opt}} AND NOT ${opt})
@@ -31,10 +35,16 @@ foreach(opt RAPIDJSON_INCLUDEDIR RAPIDJSON_USE_SSE2 RAPIDJSON_USE_SSE42)
 	endif()
 endforeach()
 
+# Default RapidJSON include paths
+set(RAPIDJSON_INCLUDE_DIR
+	"${RAPIDJSON_INCLUDE_DIR}"
+	"/usr/local/include/"
+)
+
 find_path(
 	RAPIDJSON_INCLUDE_DIRS
 	NAMES rapidjson/rapidjson.h
-	PATHS ${RAPIDJSON_INCLUDEDIR}
+	PATHS ${RAPIDJSON_INCLUDE_DIR}
 	DOC "Include directory for the RapidJSON library"
 )
 
@@ -67,12 +77,12 @@ endif()
 mark_as_advanced(RAPIDJSON_CXX_FLAGS)
 
 if(RAPIDJSON_FOUND)
-	if(NOT RapidJSON_FIND_QUIETLY)
+	if(NOT RAPIDJSON_FIND_QUIETLY)
 		message(STATUS "Found RapidJSON header files in ${RAPIDJSON_INCLUDE_DIRS}")
 		if(DEFINED RAPIDJSON_CXX_FLAGS)
 			message(STATUS "Found RapidJSON C++ extra compilation flags: ${RAPIDJSON_CXX_FLAGS}")
 		endif()
 	endif()
-elseif(RapidJSON_FIND_REQUIRED)
+elseif(RAPIDJSON_FIND_REQUIRED)
 	message(FATAL_ERROR "Could not find RapidJSON")
 endif()
