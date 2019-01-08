@@ -1,6 +1,6 @@
 /*
  *	Environment Library by Parra Studios
- *	A cross-platform library for supporting formatted input / output.
+ *	A cross-platform library for supporting platform specific environment features.
  *
  *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
