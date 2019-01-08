@@ -12,59 +12,31 @@ if("${CMAKE_VERSION}" VERSION_LESS "3.11" AND POLICY CMP0037)
 	set_policy(CMP0037 OLD)
 endif()
 
-include(ExternalProject)
+find_package(GBench)
 
-# # Import Google Test Framework
-# ExternalProject_Add(googletest
-# 	GIT_REPOSITORY https://github.com/google/googletest.git
-# 	GIT_TAG release-1.8.1
-# 	CMAKE_ARGS -Dgmock_build_tests=OFF
-# 		-Dgtest_build_samples=OFF
-# 		-Dgtest_build_tests=OFF
-# 		-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
-# 		-Dgtest_force_shared_crt=ON
-# 		-Dgtest_hide_internal_symbols=OFF
-# 		-DINSTALL_GTEST=OFF
-# 		-DBUILD_GMOCK=ON
-# 	PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
-# 	UPDATE_COMMAND "" # Disable update step
-# 	INSTALL_COMMAND "" # Disable install step
-# )
+if(NOT GBENCH_FOUND)
+	include(InstallGBench)
 
-# # Google Test include and binary directories
-# ExternalProject_Get_Property(googletest source_dir binary_dir)
+	if(NOT GBENCH_FOUND)
+		message(STATUS "GBench libraries not found")
+		return()
+	endif()
+endif()
 
-# set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
-# set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
-# set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest")
-# set(GMOCK_LIBS_DIR "${binary_dir}/googlemock")
+# Create interface library to link against Google Bench
+add_library(GBench INTERFACE)
 
-# # Create interface library to link against gmock
-# add_library(gtest INTERFACE)
+target_include_directories(GBench
+	SYSTEM INTERFACE
+	${GBENCH_INCLUDE_DIR}
+)
 
-# if(MSVC)
-# 	set(GTEST_LIBS_SUFFIX "lib")
-# else()
-# 	set(GTEST_LIBS_SUFFIX "a")
-# endif()
+target_link_libraries(GBench
+	INTERFACE
+	${GBENCH_LIBRARY}
+)
 
-# set(GTEST_LIBS
-# 	"${GTEST_LIBS_DIR}/libgtest.${GTEST_LIBS_SUFFIX}"
-# 	"${GMOCK_LIBS_DIR}/libgmock.${GTEST_LIBS_SUFFIX}"
-# )
-
-# target_include_directories(gtest
-# 	SYSTEM INTERFACE
-# 	${GTEST_INCLUDE_DIR}
-# 	${GMOCK_INCLUDE_DIR}
-# )
-
-# target_link_libraries(gtest
-# 	INTERFACE
-# 	${GTEST_LIBS}
-# )
-
-# add_dependencies(gtest googletest)
+add_dependencies(GBench GoogleBench)
 
 #
 # Benchmarks
@@ -72,5 +44,4 @@ include(ExternalProject)
 
 include(CTest)
 
-# add_subdirectory(python_call_benchmark_test)
-# add_subdirectory(node_call_benchmark_test)
+add_subdirectory(metacall_py_call_bench)
