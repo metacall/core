@@ -84,7 +84,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	gmock-dev
+	gtest
 
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor

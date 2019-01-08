@@ -126,7 +126,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	gmock-dev
+	gtest
 
 	${CMAKE_DL_LIBS}
 

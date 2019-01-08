@@ -46,7 +46,7 @@ set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest")
 set(GMOCK_LIBS_DIR "${binary_dir}/googlemock")
 
 # Create interface library to link against gmock
-add_library(gmock-dev INTERFACE)
+add_library(gtest INTERFACE)
 
 if(MSVC)
 	set(GTEST_LIBS_SUFFIX "lib")
@@ -59,18 +59,18 @@ set(GTEST_LIBS
 	"${GMOCK_LIBS_DIR}/libgmock.${GTEST_LIBS_SUFFIX}"
 )
 
-target_include_directories(gmock-dev
+target_include_directories(gtest
 	SYSTEM INTERFACE
 	${GTEST_INCLUDE_DIR}
 	${GMOCK_INCLUDE_DIR}
 )
 
-target_link_libraries(gmock-dev
+target_link_libraries(gtest
 	INTERFACE
 	${GTEST_LIBS}
 )
 
-add_dependencies(gmock-dev googletest)
+add_dependencies(gtest googletest)
 
 # Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
