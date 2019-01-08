@@ -30,26 +30,34 @@ ExternalProject_Add(googletest
 		-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
 		-Dgtest_force_shared_crt=ON
 		-Dgtest_hide_internal_symbols=OFF
+		-DINSTALL_GTEST=OFF
+		-DBUILD_GMOCK=ON
 	PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
 	UPDATE_COMMAND "" # Disable update step
 	INSTALL_COMMAND "" # Disable install step
 )
 
-# Google Test include directories
-ExternalProject_Get_Property(googletest source_dir)
+# Google Test include and binary directories
+ExternalProject_Get_Property(googletest source_dir binary_dir)
+
 set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
 set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
-
-# Google Test binary directories
-ExternalProject_Get_Property(googletest binary_dir)
-set(GTEST_LIBS_DIR "${binary_dir}/lib")
-
-file(GLOB GTEST_LIBS
-	"${GTEST_LIBS_DIR}/*"
-)
+set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest")
+set(GMOCK_LIBS_DIR "${binary_dir}/googlemock")
 
 # Create interface library to link against gmock
 add_library(gmock-dev INTERFACE)
+
+if(MSVC)
+	set(GTEST_LIBS_SUFFIX "lib")
+else()
+	set(GTEST_LIBS_SUFFIX "a")
+endif()
+
+set(GTEST_LIBS
+	"${GTEST_LIBS_DIR}/libgtest.${GTEST_LIBS_SUFFIX}"
+	"${GMOCK_LIBS_DIR}/libgmock.${GTEST_LIBS_SUFFIX}"
+)
 
 target_include_directories(gmock-dev
 	SYSTEM INTERFACE

@@ -80,26 +80,25 @@ This section describes all programming languages that **METACALL** supports, if 
 
 - Currently supported languages and run-times:
 
-| Language                                                           | Runtime                                                                                      | Version           | Tag   |
-| :----------------------------------------------------------------: | :------------------------------------------------------------------------------------------: | :---------------: | :---: |
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   | **>= 3.2 <= 3.6** | py    |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **8.11.1**        | node  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        | **5.1.117**       | js    |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) | **1.1.10**        | cs    |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    | **>= 2.1 <= 2.3** | rb    |
-| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        | **0.1.0**         | mock  |
+| Language                                                           | Runtime                                                                                      |         Version         | Tag  |
+|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------|:-----------------------:|:----:|
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   |    **>= 3.2 <= 3.6**    |  py  |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **>= 8.11.1 <= 8.12.0** | node |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |       **5.1.117**       |  js  |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |       **1.1.10**        |  cs  |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |    **>= 2.1 <= 2.3**    |  rb  |
+| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |        **0.1.0**        | mock |
 
 - Languages and run-times under construction:
 
 | Language                                                           | Runtime                                                                                                | Tag  |
-|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|------|
+|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|:----:|
 | [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java |
-| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) | c    |
+| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |  c   |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                                  | file |
-| [Go](https://golang.org/)                                          | Go Runtime                                                                                             | go   |
-| [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              | hs   |
+| [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go  |
+| [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
-
 
 ## 3. Use Cases
 
@@ -132,13 +131,13 @@ Prior to try any example, you must have **METACALL** installed in your system. T
 
 This environment variables are optional, in case that you want to modify default paths of **METACALL**.
 
-| Name                      | Description                                                      | Default Value |
-|---------------------------|------------------------------------------------------------------|---------------|
-| **`DETOUR_LIBRARY_PATH`** | Directory where detour plugins to be loaded are located          | **`detours`** |
-| **`SERIAL_LIBRARY_PATH`** | Directory where serial plugins to be loaded are located          | **`serials`** |
+|           Name            | Description                                                      |          Default Value           |
+|:-------------------------:|------------------------------------------------------------------|:--------------------------------:|
+| **`DETOUR_LIBRARY_PATH`** | Directory where detour plugins to be loaded are located          |          **`detours`**           |
+| **`SERIAL_LIBRARY_PATH`** | Directory where serial plugins to be loaded are located          |          **`serials`**           |
 | **`CONFIGURATION_PATH`**  | File path where the **METACALL** global configuration is located | **`configurations/global.json`** |
 | **`LOADER_LIBRARY_PATH`** | Directory where loader plugins to be loaded are located          | **`${execution_path}`** &#x00B9; |
-| **`LOADER_SCRIPT_PATH`**  | Directory where scripts to be loaded are located                 | **`scripts`** |
+| **`LOADER_SCRIPT_PATH`**  | Directory where scripts to be loaded are located                 |          **`scripts`**           |
 
 1) **`${execution_path}`** defines the path where the program is executed, **`.`** in Linux.
 
@@ -229,21 +228,21 @@ The module that holds the representation of types, values and functions is calle
 
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
-| Type    | Value                                                              |
-| :-----: | ------------------------------------------------------------------ |
+|  Type   | Value                                                              |
+|:-------:|--------------------------------------------------------------------|
 | Boolean | `true` or `false`                                                  |
-| Char    | `-128` to `127`                                                    |
-| Short   | `-32,768` to `32,767`                                              |
-| Int     | `-2,147,483,648` to `2,147,483,647`                                |
-| Long    | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`        |
-| Float   | `1.2E-38` to `3.4E+38`                                             |
+|  Char   | `-128` to `127`                                                    |
+|  Short  | `-32,768` to `32,767`                                              |
+|   Int   | `-2,147,483,648` to `2,147,483,647`                                |
+|  Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`        |
+|  Float  | `1.2E-38` to `3.4E+38`                                             |
 | Double  | `2.3E-308` to `1.7E+308`                                           |
 | String  | NULL terminated list of characters                                 |
 | Buffer  | Blob of memory representing a binary data                          |
-| Array   | Arrangement of values of any type                                  |
-| Map     | List of elements formed by a key (String) value (Any) pair (Array) |
+|  Array  | Arrangement of values of any type                                  |
+|   Map   | List of elements formed by a key (String) value (Any) pair (Array) |
 | Pointer | Low level representation of a memory reference                     |
-| Null    | Representation of NULL value type                                  |
+|  Null   | Representation of NULL value type                                  |
 
 - Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
 
@@ -276,8 +275,8 @@ Each created value must be destroyed manually. Otherwise it will lead to a memor
 The value memory layout is described in the following form.
 
 | Memory Offset | `0` to `sizeof(data) - 1` | `sizeof(data)` to `sizeof(data) + sizeof(type_id) - 1` |
-| :-----------: | :-----------------------: | :----------------------------------------------------: |
-| **Content**   | **DATA**                  | **TYPE ID**                                            |
+|:-------------:|:-------------------------:|:------------------------------------------------------:|
+|  **Content**  |         **DATA**          |                      **TYPE ID**                       |
 
 This layout is used by the following reasons.
 
@@ -500,7 +499,7 @@ make install
 These options can be set using **`-D`** prefix when configuring CMake. For example, the following configuration enables the build of Python and Ruby loaders.
 
 ``` sh
-$ cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_RB=On ..
+cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_RB=On ..
 ```
 
 Available build options are the following ones.
@@ -523,22 +522,22 @@ Available build options are the following ones.
 
 It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
 
-| Build Option Prefix       | Build Option Suffix                                                |
-|---------------------------|--------------------------------------------------------------------|
+|    Build Option Prefix    | Build Option Suffix                                      |
+|:-------------------------:|----------------------------------------------------------|
 | **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE` |
-| **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                              |
-| **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                            |
-| **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                         |
+| **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                    |
+| **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                  |
+| **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                               |
 
 ## 7. Platform Support
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|     Operative System      |    Architecture     |  Compiler  | Build Status |
-|:-------------------------:|:-------------------:|:----------:|:-------------:|
-|    **`ubuntu:xenial`**    |     **`amd64`**     | **`gcc`**  |              |
-| **`debian:stretch-slim`** |     **`amd64`**     | **`gcc`**  |[![build](https://gitlab.com/metacall/core/badges/develop/build.svg)](https://gitlab.com/metacall/core)                 |
-|       **`windows`**       | **`x86`** **`x64`** | **`msvc`** |              |
+|     Operative System      |    Architecture     |    Compiler     |                                              Build Status                                               |
+|:-------------------------:|:-------------------:|:---------------:|:-------------------------------------------------------------------------------------------------------:|
+|    **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                         |
+| **`debian:stretch-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/develop/build.svg)](https://gitlab.com/metacall/core) |
+|       **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                         |
 
 ## 8. License
 
