@@ -26,9 +26,10 @@ cache:
   - apt-cache/
 
 variables:
-  METACALL_INSTALL_OPTIONS: root base python ruby netcore nodejs rapidjson funchook pack # v8rep51
+  METACALL_INSTALL_OPTIONS: root cache base python ruby netcore nodejs rapidjson funchook pack # v8rep51
   METACALL_BUILD_OPTIONS: release root python ruby netcore nodejs distributable tests scripts dynamic install # v8
 
+# TODO: Review the cache of installation, standalone executables may be not cached correctly
 before_script:
     - export APT_CACHE_DIR=`pwd`/apt-cache && mkdir -pv $APT_CACHE_DIR
     - ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
@@ -39,5 +40,4 @@ build:
   script:
     - ./tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
   only: 
-    - develop
     - master
