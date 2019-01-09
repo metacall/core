@@ -142,5 +142,5 @@ include(TestEnvironmentVariables)
 
 test_environment_variables(${target}
 	""
-	${ENVIRONMENT_TEST_VARIABLES}
+	${TESTS_ENVIRONMENT_VARIABLES}
 )
