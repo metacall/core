@@ -28,14 +28,7 @@ class metacall_py_call_bench : public benchmark::Fixture
 public:
 	void SetUp(benchmark::State & state)
 	{
-		metacall_log_stdio_type log_stdio = { stdout };
-
 		metacall_print_info();
-
-		if (metacall_log(METACALL_LOG_STDIO, static_cast<void *>(&log_stdio)) != 0)
-		{
-			state.SkipWithError("Error initializing MetaCall Log");
-		}
 
 		if (metacall_initialize() != 0)
 		{
@@ -69,12 +62,10 @@ public:
 	}
 };
 
-BENCHMARK_DEFINE_F(metacall_py_call_bench, va_args_call)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_call_bench, call_va_args)(benchmark::State & state)
 {
-	/*
-	const int64_t call_count = 10000;
+	const int64_t call_count = 1000000;
 	const int64_t call_size = sizeof(long) * 3; // (long, long) -> long
-	*/
 
 	for (auto _ : state)
 	{
@@ -83,46 +74,105 @@ BENCHMARK_DEFINE_F(metacall_py_call_bench, va_args_call)(benchmark::State & stat
 		{
 			void * ret;
 
-			/*
-			benchmark::DoNotOptimize(ret = metacall("int_mem_type", 0L, 0L));
-			*/
-
-			ret = metacall("int_mem_type", 0L, 0L);
-
-			/*
-			state.PauseTiming();
-
-			if (ret == NULL)
+			for (int64_t it = 0; it < call_count; ++it)
 			{
-				state.SkipWithError("Null return value from int_mem_type");
+				benchmark::DoNotOptimize(ret = metacall("int_mem_type", 0L, 0L));
+
+				state.PauseTiming();
+
+				if (ret == NULL)
+				{
+					state.SkipWithError("Null return value from int_mem_type");
+				}
+
+				if (metacall_value_to_long(ret) != 0L)
+				{
+					state.SkipWithError("Invalid return value from int_mem_type");
+				}
+
+				metacall_value_destroy(ret);
+
+				state.ResumeTiming();
 			}
-
-			if (metacall_value_to_long(ret) != 0L)
-			{
-				state.SkipWithError("Invalid return value from int_mem_type");
-			}
-
-			metacall_value_destroy(ret);
-
-			state.ResumeTiming();
-			*/
 		}
 		#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
-	/*
 	state.SetLabel("MetaCall Python Call Benchmark - Variadic Argument Call");
 	state.SetBytesProcessed(call_size * call_count);
 	state.SetItemsProcessed(call_count);
-	*/
 }
 
-BENCHMARK_REGISTER_F(metacall_py_call_bench, va_args_call)
+BENCHMARK_REGISTER_F(metacall_py_call_bench, call_va_args)
 	->Threads(1)
-	->Unit(benchmark::kNanosecond)
-	/*->Iterations(10000)*/
+	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
-	/*->Repetitions(10)*/;
-	->Repetitions(1);
+	->Repetitions(5);
+
+BENCHMARK_DEFINE_F(metacall_py_call_bench, call_array_args)(benchmark::State & state)
+{
+	const int64_t call_count = 1000000;
+	const int64_t call_size = sizeof(long) * 3; // (long, long) -> long
+
+	for (auto _ : state)
+	{
+		/* Python */
+		#if defined(OPTION_BUILD_LOADERS_PY)
+		{
+			void * ret;
+
+			state.PauseTiming();
+
+			void * args[2] =
+			{
+				metacall_value_create_long(0L),
+				metacall_value_create_long(0L)
+			};
+
+			state.ResumeTiming();
+
+			for (int64_t it = 0; it < call_count; ++it)
+			{
+				benchmark::DoNotOptimize(ret = metacallv("int_mem_type", args));
+
+				state.PauseTiming();
+
+				if (ret == NULL)
+				{
+					state.SkipWithError("Null return value from int_mem_type");
+				}
+
+				if (metacall_value_to_long(ret) != 0L)
+				{
+					state.SkipWithError("Invalid return value from int_mem_type");
+				}
+
+				metacall_value_destroy(ret);
+
+				state.ResumeTiming();
+			}
+
+			state.PauseTiming();
+
+			for (auto arg : args)
+			{
+				metacall_value_destroy(arg);
+			}
+
+			state.ResumeTiming();
+		}
+		#endif /* OPTION_BUILD_LOADERS_PY */
+	}
+
+	state.SetLabel("MetaCall Python Call Benchmark - Array Argument Call");
+	state.SetBytesProcessed(call_size * call_count);
+	state.SetItemsProcessed(call_count);
+}
+
+BENCHMARK_REGISTER_F(metacall_py_call_bench, call_array_args)
+	->Threads(1)
+	->Unit(benchmark::kMillisecond)
+	->Iterations(1)
+	->Repetitions(5);
 
 BENCHMARK_MAIN();
