@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 #
 #	MetaCall Build Bash Script by Parra Studios
@@ -45,12 +45,16 @@ sub_help() {
 	echo "Usage: `basename "$0"` option"
 	echo "Options:"
 	echo "	build"
+	echo "	push"
 	echo ""
 }
 
 case "$1" in
 	build)
 		sub_build
+		;;
+	push)
+		sub_push
 		;;
 	*)
 		sub_help
