@@ -486,7 +486,7 @@ mkdir core/build && cd core/build
 cmake ..
 make
 make test
-make install
+sudo make install
 ```
 
 ### 6.1 Build Options
