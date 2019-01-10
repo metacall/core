@@ -138,8 +138,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
