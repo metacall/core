@@ -502,7 +502,7 @@ Available build options are the following ones.
 |        Build Option         | Description                                            | Default Value |
 |:---------------------------:|--------------------------------------------------------|:-------------:|
 |    **BUILD_SHARED_LIBS**    | Build shared instead of static libraries.              |      ON       |
-| **OPTION_BUILD_DIST_LIBS**  | Build all libraries into a single compilation unit.    |      OFF      |
+| **OPTION_BUILD_DIST_LIBS**  | Build all libraries into a single compilation unit.    |      ON       |
 |  **OPTION_SELF_CONTAINED**  | Create a self-contained install with all dependencies. |      OFF      |
 |   **OPTION_BUILD_TESTS**    | Build tests.                                           |      ON       |
 | **OPTION_BUILD_BENCHMARKS** | Build benchmarks.                                      |      OFF      |
