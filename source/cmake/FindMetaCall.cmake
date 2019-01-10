@@ -32,17 +32,29 @@ endif()
 # Optional root directory
 set(METACALL_ROOT_DIR "$ENV{WORKSPACE_ROOT}/metacall")
 
+# Default includes install location
+set(METACALL_INCLUDE_PATHS
+	"${METACALL_ROOT_DIR}"
+	"/usr/local/include"
+)
+
 # MetaCall include path
 find_path(METACALL_INCLUDE_DIR
 	NAMES metacall/metacall.h
-	PATHS ${METACALL_ROOT_DIR}
-	DOC "MetaCall include directory"
+	PATHS ${METACALL_INCLUDE_PATHS}
+	DOC "MetaCall includes"
+)
+
+# Default library install location
+set(METACALL_LIBRARY_PATHS
+	"${METACALL_ROOT_DIR}"
+	"/usr/local/lib"
 )
 
 # MetaCall library path
 find_library(METACALL_LIBRARY
 	NAMES metacall
-	PATHS ${METACALL_ROOT_DIR}
+	PATHS ${METACALL_LIBRARY_PATHS}
 	DOC "MetaCall library"
 )
 
@@ -58,4 +70,4 @@ if(METACALL_FOUND)
 endif()
 
 # Ignore local variables
-mark_as_advanced(METACALL_ROOT_DIR METACALL_INCLUDE_DIR METACALL_LIBRARY)
+mark_as_advanced(METACALL_INCLUDE_DIRS METACALL_LIBRARIES METACALL_DEFINITIONS)
