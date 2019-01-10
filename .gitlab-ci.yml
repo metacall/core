@@ -21,16 +21,19 @@ stages:
   - build
 
 cache:
-  key: apt-cache
   paths:
-  - .apt-cache/
+  - $CI_PROJECT_DIR/.apt-cache/     # APT Cache
+  - /usr/local/include/rapidjson/   # RapidJSON Cache
+  - /usr/share/dotnet               # DotNET Cache
+  - /usr/local/bin/                 # Bin Cache
+  - /usr/bin/
+  - /usr/local/lib/                 # Lib Cache
 
 variables:
   APT_CACHE_DIR: $CI_PROJECT_DIR/.apt-cache
   METACALL_INSTALL_OPTIONS: root cache base python ruby netcore nodejs rapidjson funchook pack # v8rep51
   METACALL_BUILD_OPTIONS: release root python ruby netcore nodejs distributable tests scripts dynamic install # v8
 
-# TODO: Review the cache of installation, standalone executables may be not cached correctly
 before_script:
     - mkdir -pv $APT_CACHE_DIR
     - $CI_PROJECT_DIR/tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
