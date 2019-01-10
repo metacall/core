@@ -19,6 +19,7 @@
 
 # The following variables are set:
 #
+# RAPIDJSON_CXX_FLAGS - Custom RapidJSON compilation flags.
 # RAPIDJSON_INCLUDE_DIRS - A list of directories where the RapidJSON headers are located.
 
 if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
@@ -31,7 +32,11 @@ if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 		DOWNLOAD_NAME	RapidJSON-${RAPIDJSON_VERSION}.tar.gz
 		URL				https://github.com/miloyip/rapidjson/archive/v${RAPIDJSON_VERSION}.tar.gz
 		URL_MD5			${RAPIDJSON_URL_MD5}
-		CMAKE_ARGS		-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+		CMAKE_ARGS
+			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+			-RAPIDJSON_BUILD_DOC=Off
+			-DRAPIDJSON_BUILD_EXAMPLES=Off
+			-DRAPIDJSON_BUILD_TESTS=Off
 		TEST_COMMAND	""
 	)
 
