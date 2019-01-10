@@ -19,7 +19,7 @@
 #	limitations under the License.
 #
 
-# Build metacall docker compose (link manually dockerignore files)
+# Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
 	ln -sf tools/base/.dockerignore .dockerignore
 	docker-compose build --force-rm deps
@@ -32,6 +32,12 @@ sub_build() {
 
 	ln -sf tools/core/.dockerignore .dockerignore
 	docker-compose build --force-rm core
+}
+
+# Push MetaCall Docker Compose
+sub_push(){
+	docker tag metacall/core:latest $IMAGE_NAME
+	docker push $IMAGE_NAME
 }
 
 # Help

@@ -17,33 +17,26 @@
 #	limitations under the License.
 #
 
-stages:
-  - build
-
-cache:
-  paths:
-  - $CI_PROJECT_DIR/.apt-cache/     # APT Cache
-  - /usr/local/include/rapidjson/   # RapidJSON Cache
-  - /usr/share/dotnet               # DotNET Cache
-  - /usr/local/bin/                 # Bin Cache
-  - /usr/bin/
-  - /usr/local/lib/                 # Lib Cache
-
-variables:
-  APT_CACHE_DIR: $CI_PROJECT_DIR/.apt-cache
-  METACALL_INSTALL_OPTIONS: root cache base python ruby netcore nodejs rapidjson funchook pack # v8rep51
-  METACALL_BUILD_OPTIONS: release root python ruby netcore nodejs distributable tests scripts dynamic install # v8
+services:
+  - docker:dind
 
 before_script:
-    - mkdir -pv $APT_CACHE_DIR
-    - $CI_PROJECT_DIR/tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
-    - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_FIND_LIBRARY_PREFIXES=lib -DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" -P $CI_PROJECT_DIR/cmake/FindNodeJS.cmake
+  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+
+stages:
+  - build
+#  - pack
+
+variables:
+  IMAGE_NAME: registry.gitlab.com/$CI_PROJECT_PATH
+  DOCKER_HOST: tcp://docker:2375
+  DOCKER_DRIVER: overlay2
 
 build:
   type: build
-  image: debian:stretch-slim
+  image: docker/compose:1.23.2
   script:
-    - $CI_PROJECT_DIR/tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
-    - $CI_PROJECT_DIR/tools/metacall-build.sh $METACALL_BUILD_OPTIONS
+    - $CI_PROJECT_DIR/docker-compose.sh build
+    - $CI_PROJECT_DIR/docker-compose.sh push
   only: 
-    - master
+    - develop
