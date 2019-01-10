@@ -7,6 +7,7 @@
 
 # Port languages
 add_subdirectory(cs_port)
+add_subdirectory(cxx_port)
 add_subdirectory(d_port)
 add_subdirectory(go_port)
 add_subdirectory(java_port)
