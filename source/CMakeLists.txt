@@ -5,7 +5,34 @@
 #	A complete infrastructure for supporting multiple language bindings in MetaCall.
 #
 
+#
+# External dependencies
+#
+
+# SWIG
+find_package(SWIG REQUIRED)
+
+if(NOT SWIG_FOUND)
+	message(STATUS "Swig not found")
+	return()
+endif()
+
+include(${SWIG_USE_FILE})
+
+# MetaCall Library
+find_package(MetaCall REQUIRED)
+
+if(NOT METACALL_FOUND)
+	message(STATUS "MetaCall libraries not found")
+	return()
+endif()
+
+include_directories(${METACALL_INCLUDE_DIRS})
+
+#
 # Port languages
+#
+
 add_subdirectory(cs_port)
 add_subdirectory(cxx_port)
 add_subdirectory(d_port)

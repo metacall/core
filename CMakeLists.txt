@@ -24,30 +24,6 @@
 # CMake version
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
-#
-# External dependencies
-#
-
-# SWIG
-find_package(SWIG REQUIRED)
-
-if(NOT SWIG_FOUND)
-	message(STATUS "Swig not found")
-	return()
-endif()
-
-include(${SWIG_USE_FILE})
-
-# MetaCall Library
-find_package(MetaCall REQUIRED)
-
-if(NOT METACALL_FOUND)
-	message(STATUS "MetaCall libraries not found")
-	return()
-endif()
-
-include_directories(${METACALL_INCLUDE_DIRS})
-
 # Include cmake modules
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
