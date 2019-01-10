@@ -41,7 +41,7 @@ target_link_libraries(GTest
 )
 
 if(GTEST_INSTALL)
-	add_dependencies(GTest GoogleTest)
+	add_dependencies(GTest DependsGoogleTest)
 endif()
 
 # Set memory check configuration
