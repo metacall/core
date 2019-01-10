@@ -21,7 +21,6 @@ services:
   - docker:dind
 
 before_script:
-  - git submodule update --init --recursive
   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
 stages:
@@ -29,6 +28,7 @@ stages:
 #  - pack
 
 variables:
+  GIT_SUBMODULE_STRATEGY: recursive
   IMAGE_NAME: registry.gitlab.com/$CI_PROJECT_PATH
   DOCKER_HOST: tcp://docker:2375
   DOCKER_DRIVER: overlay2
