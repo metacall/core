@@ -171,8 +171,6 @@ This environment variables are optional, in case that you want to modify default
 
 - [`adt`](/source/adt) provides a base for Abstract Data Types and algorithms used in **METACALL**. Implementation must be done in an efficient and generic way. Some of the data structures implemented are vector, set, hash, comparable or trie.
 
-- [`cmake`](/source/cmake) implements the cmake scripts related to **METACALL**. The [FindMetaCall.cmake](/source/cmake/FindMetaCall.cmake) provides an standard way of finding **METACALL** in the system in order to include it in a CMake build system of your project.
-
 - [`detour`](/source/detour) provides an interface to hook into functions. Detours are used by the [fork model](#57-fork-model) to intercept fork calls.
 
 - [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
