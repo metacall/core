@@ -25,13 +25,16 @@ sub_build() {
 	docker-compose build --force-rm deps
 
 	ln -sf tools/node/.dockerignore .dockerignore
-	docker-compose build --force-rm deps_node
 
-	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose build --force-rm dev
+	ls -la .dockerignore
 
-	ln -sf tools/core/.dockerignore .dockerignore
-	docker-compose build --force-rm core
+	# docker-compose build --force-rm deps_node
+
+	# ln -sf tools/dev/.dockerignore .dockerignore
+	# docker-compose build --force-rm dev
+
+	# ln -sf tools/core/.dockerignore .dockerignore
+	# docker-compose build --force-rm core
 }
 
 # Push MetaCall Docker Compose
