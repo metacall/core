@@ -34,8 +34,9 @@ variables:
 
 build:
   type: build
-  image: docker/compose:1.23.2
-  entrypoint: sh
+  image:
+    name: docker/compose:1.23.2
+    entrypoint: ["sh"]
   script:
     - $CI_PROJECT_DIR/docker-compose.sh build
     - $CI_PROJECT_DIR/docker-compose.sh push
