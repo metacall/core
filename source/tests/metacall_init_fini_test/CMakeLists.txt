@@ -3,7 +3,7 @@
 #
 
 # Check if distributable libs are enabled
-if(NOT BUILD_DISTRIBUTABLE_LIBS)
+if(NOT OPTION_BUILD_DIST_LIBS)
 	return()
 endif()
 

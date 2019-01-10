@@ -73,14 +73,14 @@ sub_options() {
 
 sub_build() {
 	# Execute CMake without distributable
-	cmake -DBUILD_DISTRIBUTABLE_LIBS=Off ..
+	cmake -DOPTION_BUILD_DIST_LIBS=Off ..
 
 	# Make without distributable
 	make -j$(getconf _NPROCESSORS_ONLN)
 
 	# Build with distributable
 	if [ $BUILD_DISTRIBUTABLE = 1 ]; then
-		cmake -DBUILD_DISTRIBUTABLE_LIBS=On ..
+		cmake -DOPTION_BUILD_DIST_LIBS=On ..
 		make -j$(getconf _NPROCESSORS_ONLN)
 	fi
 

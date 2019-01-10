@@ -501,22 +501,22 @@ cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_RB=On ..
 
 Available build options are the following ones.
 
-|         Build Option         | Description                                            | Default Value |
-|:----------------------------:|--------------------------------------------------------|:-------------:|
-|    **BUILD_SHARED_LIBS**     | Build shared instead of static libraries.              |      ON       |
-| **BUILD_DISTRIBUTABLE_LIBS** | Build all libraries into a single compilation unit.    |      OFF      |
-|  **OPTION_SELF_CONTAINED**   | Create a self-contained install with all dependencies. |      OFF      |
-|    **OPTION_BUILD_TESTS**    | Build tests.                                           |      ON       |
-| **OPTION_BUILD_BENCHMARKS**  | Build benchmarks.                                      |      OFF      |
-|    **OPTION_BUILD_DOCS**     | Build documentation.                                   |      OFF      |
-|  **OPTION_BUILD_EXAMPLES**   | Build examples.                                        |      ON       |
-|   **OPTION_BUILD_LOADERS**   | Build loaders.                                         |      ON       |
-|   **OPTION_BUILD_SCRIPTS**   | Build scripts.                                         |      ON       |
-|   **OPTION_BUILD_SERIALS**   | Build serials.                                         |      ON       |
-|   **OPTION_BUILD_DETOURS**   | Build detours.                                         |      ON       |
-|     **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
-|    **OPTION_THREAD_SAFE**    | Enable thread safety.                                  |      OFF      |
-|     **CMAKE_BUILD_TYPE**     | Define the type of build.                              |    Release    |
+|        Build Option         | Description                                            | Default Value |
+|:---------------------------:|--------------------------------------------------------|:-------------:|
+|    **BUILD_SHARED_LIBS**    | Build shared instead of static libraries.              |      ON       |
+| **OPTION_BUILD_DIST_LIBS**  | Build all libraries into a single compilation unit.    |      OFF      |
+|  **OPTION_SELF_CONTAINED**  | Create a self-contained install with all dependencies. |      OFF      |
+|   **OPTION_BUILD_TESTS**    | Build tests.                                           |      ON       |
+| **OPTION_BUILD_BENCHMARKS** | Build benchmarks.                                      |      OFF      |
+|    **OPTION_BUILD_DOCS**    | Build documentation.                                   |      OFF      |
+|  **OPTION_BUILD_EXAMPLES**  | Build examples.                                        |      ON       |
+|  **OPTION_BUILD_LOADERS**   | Build loaders.                                         |      ON       |
+|  **OPTION_BUILD_SCRIPTS**   | Build scripts.                                         |      ON       |
+|  **OPTION_BUILD_SERIALS**   | Build serials.                                         |      ON       |
+|  **OPTION_BUILD_DETOURS**   | Build detours.                                         |      ON       |
+|    **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
+|   **OPTION_THREAD_SAFE**    | Enable thread safety.                                  |      OFF      |
+|    **CMAKE_BUILD_TYPE**     | Define the type of build.                              |    Release    |
 
 It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
 
