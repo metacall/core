@@ -103,7 +103,7 @@ target_include_directories(RapidJSON
 )
 
 if(RAPIDJSON_INSTALL)
-	add_dependencies(RapidJSON DependsRapidJSON)
+	add_dependencies(RapidJSON rapid-json-depends)
 endif()
 
 # Add target dependencies

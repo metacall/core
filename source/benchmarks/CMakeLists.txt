@@ -21,6 +21,8 @@ if(NOT GBENCH_FOUND)
 		message(STATUS "GBench libraries not found")
 		return()
 	endif()
+
+	set(GBENCH_INSTALL TRUE)
 endif()
 
 # Create interface library to link against Google Bench
@@ -36,7 +38,9 @@ target_link_libraries(GBench
 	${GBENCH_LIBRARY}
 )
 
-add_dependencies(GBench GoogleBench)
+if(GBENCH_INSTALL)
+	add_dependencies(GBench google-bench-depends)
+endif()
 
 #
 # Benchmarks
