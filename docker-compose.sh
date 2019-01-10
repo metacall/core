@@ -21,14 +21,11 @@
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
-	ln -sf tools/base/.dockerignore .dockerignore
-	docker-compose build --force-rm deps
+	# ln -sf tools/base/.dockerignore .dockerignore
+	# docker-compose build --force-rm deps
 
 	ln -sf tools/node/.dockerignore .dockerignore
-
-	ls -la .dockerignore
-
-	# docker-compose build --force-rm deps_node
+	docker-compose build --force-rm deps_node
 
 	# ln -sf tools/dev/.dockerignore .dockerignore
 	# docker-compose build --force-rm dev
