@@ -53,7 +53,7 @@ set(METACALL_LIBRARY_PATHS
 
 # MetaCall library path
 find_library(METACALL_LIBRARY
-	NAMES metacall
+	NAMES metacall libmetacall.dll libmetacall.lib libmetacall.a libmetacall.so libmetacall.dylib
 	PATHS ${METACALL_LIBRARY_PATHS}
 	DOC "MetaCall library"
 )
