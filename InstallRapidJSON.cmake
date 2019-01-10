@@ -28,7 +28,7 @@ if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 		set(RAPIDJSON_URL_MD5 badd12c511e081fec6c89c43a7027bce)
 	endif()
 
-	ExternalProject_Add(DependsRapidJSON
+	ExternalProject_Add(rapid-json-depends
 		DOWNLOAD_NAME	RapidJSON-${RAPIDJSON_VERSION}.tar.gz
 		URL				https://github.com/miloyip/rapidjson/archive/v${RAPIDJSON_VERSION}.tar.gz
 		URL_MD5			${RAPIDJSON_URL_MD5}
@@ -40,7 +40,7 @@ if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 		TEST_COMMAND	""
 	)
 
-	ExternalProject_Get_Property(DependsRapidJSON INSTALL_DIR)
+	ExternalProject_Get_Property(rapid-json-depends INSTALL_DIR)
 
 	set(RAPIDJSON_ROOT_DIR		${INSTALL_DIR})
 	set(RAPIDJSON_INCLUDE_DIRS	${RAPIDJSON_ROOT_DIR}/include)

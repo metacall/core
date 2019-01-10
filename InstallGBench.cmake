@@ -28,7 +28,7 @@ if(NOT GBENCH_FOUND OR USE_BUNDLED_GBENCH)
 		set(GBENCH_URL_MD5 482dddb22bec43f5507a000456d6bb88)
 	endif()
 
-	ExternalProject_Add(GoogleBench
+	ExternalProject_Add(google-bench-depends
 		DOWNLOAD_NAME	GBench-${GBENCH_VERSION}.tar.gz
 		URL				https://github.com/google/benchmark/archive/v${GBENCH_VERSION}.tar.gz
 		URL_MD5			${GBENCH_URL_MD5}
@@ -36,7 +36,7 @@ if(NOT GBENCH_FOUND OR USE_BUNDLED_GBENCH)
 		TEST_COMMAND	""
 	)
 
-	ExternalProject_Get_Property(GoogleBench INSTALL_DIR)
+	ExternalProject_Get_Property(google-bench-depends INSTALL_DIR)
 
 	if(MSVC)
 		set(GBENCH_LIB_SUFFIX "lib")

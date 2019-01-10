@@ -36,7 +36,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	endif()
 
 	# Import Google Test Framework
-	ExternalProject_Add(DependsGoogleTest
+	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
 		GIT_TAG release-${GTEST_VERSION}
 		CMAKE_ARGS -Dgmock_build_tests=OFF
@@ -54,7 +54,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	)
 
 	# Google Test include and binary directories
-	ExternalProject_Get_Property(DependsGoogleTest source_dir binary_dir)
+	ExternalProject_Get_Property(google-test-depends source_dir binary_dir)
 
 	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
 	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
