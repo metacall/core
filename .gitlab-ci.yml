@@ -42,5 +42,4 @@ build:
     - $CI_PROJECT_DIR/docker-compose.sh build
     - $CI_PROJECT_DIR/docker-compose.sh push
   only: 
-    - develop
-#    - master
+    - master
