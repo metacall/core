@@ -17,6 +17,8 @@ if(NOT RAPIDJSON_FOUND)
 		message(STATUS "RapidJSON libraries not found")
 		return()
 	endif()
+
+	set(RAPIDJSON_INSTALL TRUE)
 endif()
 
 #
@@ -92,9 +94,22 @@ add_library(${target}
 	${headers}
 )
 
+# Create interface library to link against RapidJSON
+add_library(RapidJSON INTERFACE)
+
+target_include_directories(RapidJSON
+	SYSTEM INTERFACE
+	${RAPIDJSON_INCLUDE_DIRS}
+)
+
+if(RAPIDJSON_INSTALL)
+	add_dependencies(RapidJSON RapidJson)
+endif()
+
 # Add target dependencies
 add_dependencies(${target}
 	${SERIAL_MODULE_NAMES}
+	RapidJSON
 )
 
 # Create namespaced alias
@@ -150,8 +165,6 @@ target_include_directories(${target}
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
-
-	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

@@ -23,6 +23,8 @@ if(NOT GTEST_FOUND)
 		message(STATUS "GTest libraries not found")
 		return()
 	endif()
+
+	set(GTEST_INSTALL TRUE)
 endif()
 
 # Create interface library to link against Google Test
@@ -38,7 +40,9 @@ target_link_libraries(GTest
 	${GTEST_LIBRARIES}
 )
 
-add_dependencies(GTest GoogleTest)
+if(GTEST_INSTALL)
+	add_dependencies(GTest GoogleTest)
+endif()
 
 # Set memory check configuration
 option(OPTION_TEST_MEMORYCHECK "Run tests with memory checker (valgrind)." OFF)
