@@ -15,11 +15,25 @@
 
 - [Abstract](#abstract)
 - [Table Of Contents](#table-of-contents)
-  - [1. License](#1-license)
+  - [1. Build System](#1-build-system)
+  - [2. License](#2-license)
 
 <!-- /TOC -->
 
-## 1. License
+## 1. Build System
+
+Follow these steps to build and install **METACALL** manually.
+
+``` sh
+git clone --recursive https://github.com/metacall/ports.git
+mkdir ports/build && cd ports/build
+cmake ..
+make
+make test
+sudo make install
+```
+
+## 2. License
 
 **METACALL Ports** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
