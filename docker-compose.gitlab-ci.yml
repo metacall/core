@@ -31,4 +31,3 @@ services:
   core:
     build:
       cache_from: registry.gitlab.com/metacall/core:latest
-
