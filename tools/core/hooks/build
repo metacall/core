@@ -39,8 +39,8 @@ ln -sf "`pwd`/.dockerignore" ../../.dockerignore
 
 # Build core image
 docker build \
+	--cache-from registry.hub.docker.com/metacall/core:latest \
 	--build-arg "METACALL_PATH=$METACALL_PATH" \
-	--build-arg "METACALL_BASE_IMAGE=$METACALL_BASE_IMAGE" \
 	--build-arg "METACALL_BASE_IMAGE=$METACALL_BASE_IMAGE" \
 	--build-arg "METACALL_RUNTIME_OPTIONS=$METACALL_RUNTIME_OPTIONS" \
 	-t $IMAGE_NAME \

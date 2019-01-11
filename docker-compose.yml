@@ -24,22 +24,6 @@ version: "3.7"
 # versions launched in the same process does not work well
 
 services:
-  deps:
-    image: metacall/core_deps
-    container_name: metacall_core_deps
-    build:
-      context: .
-      dockerfile: tools/base/Dockerfile
-      args:
-        METACALL_PATH: $METACALL_PATH
-        METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_INSTALL_OPTIONS: root base python ruby netcore nodejs rapidjson funchook # v8rep51
-    environment:
-      DEBIAN_FRONTEND: noninteractive
-      LTTNG_UST_REGISTER_TIMEOUT: 0
-      NUGET_XMLDOC_MODE: skip
-
   deps_node:
     image: metacall/core_deps_node
     container_name: metacall_core_deps_node
@@ -52,6 +36,21 @@ services:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
     environment:
       DEBIAN_FRONTEND: noninteractive
+
+  deps:
+    image: metacall/core_deps
+    container_name: metacall_core_deps
+    build:
+      context: .
+      dockerfile: tools/base/Dockerfile
+      args:
+        METACALL_PATH: $METACALL_PATH
+        METACALL_TOOLS_PATH: $METACALL_PATH/tools
+        METACALL_INSTALL_OPTIONS: root base python ruby netcore nodejs rapidjson funchook # v8rep51
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
 
   dev:
     image: metacall/core_dev

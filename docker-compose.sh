@@ -21,11 +21,11 @@
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
-	ln -sf tools/base/.dockerignore .dockerignore
-	docker-compose build --force-rm deps
-
 	ln -sf tools/node/.dockerignore .dockerignore
 	docker-compose build --force-rm deps_node
+
+	ln -sf tools/base/.dockerignore .dockerignore
+	docker-compose build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
 	docker-compose build --force-rm dev
@@ -36,8 +36,19 @@ sub_build() {
 
 # Push MetaCall Docker Compose
 sub_push(){
-	docker tag metacall/core:latest $IMAGE_NAME
-	docker push $IMAGE_NAME
+	if [ -z "$IMAGE_NAME" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	docker tag metacall/core_deps:latest $IMAGE_NAME:deps
+	docker push $IMAGE_NAME:deps
+
+	docker tag metacall/core_dev:latest $IMAGE_NAME:dev
+	docker push $IMAGE_NAME:dev
+
+	docker tag metacall/core:latest $IMAGE_NAME:latest
+	docker push $IMAGE_NAME:latest
 }
 
 # Help

@@ -17,11 +17,8 @@
 #	limitations under the License.
 #
 
-# Configure MetaCall base image
-ARG METACALL_BASE_IMAGE
-
 # MetaCall base image
-FROM ${METACALL_BASE_IMAGE} AS core_deps
+FROM metacall/core_deps_node AS core_deps
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
