@@ -67,6 +67,7 @@ TODO List
     - Docker for deploying.
     - Vagrant for generating workstations for developers.
     - Set up scripts (sh, bat) for multiple architectures for each CI container.
+    - CI/CD release of .deb and .rpm packages
   * Add cross-compiling toolkit for multiple architectures integrated with [CMake](https://cmake.org/cmake/help/v3.0/manual/cmake-toolchains.7.html)
 
 ## MISC
