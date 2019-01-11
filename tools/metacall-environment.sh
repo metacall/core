@@ -101,7 +101,7 @@ sub_rapidjson(){
 	git checkout v1.1.0
 	mkdir build
 	cd build
-	cmake ..
+	cmake -DRAPIDJSON_BUILD_DOC=Off -DRAPIDJSON_BUILD_EXAMPLES=Off -DRAPIDJSON_BUILD_TESTS=Off ..
 	make
 	$SUDO_CMD make install
 	cd ../.. && rm -rf ./rapidjson
