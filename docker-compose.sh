@@ -19,6 +19,20 @@
 #	limitations under the License.
 #
 
+# Pull MetaCall Docker Compose
+sub_pull() {
+	if [ -z "$IMAGE_NAME" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	docker pull $IMAGE_NAME:deps
+
+	docker pull $IMAGE_NAME:dev
+
+	docker pull $IMAGE_NAME:core
+}
+
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
 	ln -sf tools/node/.dockerignore .dockerignore
@@ -55,12 +69,16 @@ sub_push(){
 sub_help() {
 	echo "Usage: `basename "$0"` option"
 	echo "Options:"
+	echo "	pull"
 	echo "	build"
 	echo "	push"
 	echo ""
 }
 
 case "$1" in
+	pull)
+		sub_pull
+		;;
 	build)
 		sub_build
 		;;
