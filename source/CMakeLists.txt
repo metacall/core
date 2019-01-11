@@ -9,16 +9,6 @@
 # External dependencies
 #
 
-# SWIG
-find_package(SWIG REQUIRED)
-
-if(NOT SWIG_FOUND)
-	message(STATUS "Swig not found")
-	return()
-endif()
-
-include(${SWIG_USE_FILE})
-
 # MetaCall Library
 find_package(MetaCall REQUIRED)
 
@@ -30,11 +20,30 @@ endif()
 include_directories(${METACALL_INCLUDE_DIRS})
 
 #
-# Port languages
+# Port languages (Standalone)
+#
+
+add_subdirectory(cxx_port)
+
+#
+# External dependencies
+#
+
+# SWIG
+find_package(SWIG)
+
+if(NOT SWIG_FOUND)
+	message(STATUS "Swig not found")
+	return()
+endif()
+
+include(${SWIG_USE_FILE})
+
+#
+# Port languages (Swig)
 #
 
 add_subdirectory(cs_port)
-add_subdirectory(cxx_port)
 add_subdirectory(d_port)
 add_subdirectory(go_port)
 add_subdirectory(java_port)

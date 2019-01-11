@@ -45,6 +45,10 @@
 
 	%init
 	%{
+		metacall_log_stdio_type log_stdio = { stdout };
+
+		(void)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio);
+
 		metacall_initialize();
 	%}
 
