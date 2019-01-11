@@ -51,6 +51,8 @@ services:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
+    depends_on:
+      - deps_node
 
   dev:
     image: metacall/core_dev
