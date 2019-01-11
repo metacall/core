@@ -22,12 +22,12 @@ version: "3.7"
 services:
   deps:
     build:
-      cache_from: registry.gitlab.com/metacall/core:deps
+      cache_from: "registry.gitlab.com/metacall/core:deps"
 
   dev:
     build:
-      cache_from: registry.gitlab.com/metacall/core:dev
+      cache_from: "registry.gitlab.com/metacall/core:dev"
 
   core:
     build:
-      cache_from: registry.gitlab.com/metacall/core:latest
+      cache_from: "registry.gitlab.com/metacall/core:latest"
