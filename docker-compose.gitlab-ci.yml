@@ -21,11 +21,11 @@ version: "3.7"
 
 services:
   deps:
-    cache_from: registry.gitlab.com/metacall/core:deps
+    cache_from: metacall/core:deps
 
   dev:
-    cache_from: registry.gitlab.com/metacall/core:dev
+    cache_from: metacall/core:dev
 
   core:
-    cache_from: registry.gitlab.com/metacall/core:latest
+    cache_from: core:latest
 
