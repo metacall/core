@@ -20,10 +20,10 @@
 #
 
 # Pull docker core_deps image
-docker pull registry.gitlab.com/metacall/core:deps || true
+docker pull registry.hub.docker.com/metacall/core:deps      || true
 
 # Pull docker core_dev image
-docker pull registry.gitlab.com/metacall/core:dev || true
+docker pull registry.hub.docker.com/metacall/core:dev       || true
 
 # Run docker core image builder
-docker pull registry.gitlab.com/metacall/core:latest || true
+docker pull registry.hub.docker.com/metacall/core:latest    || true
