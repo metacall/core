@@ -43,4 +43,4 @@ build:
     - $CI_PROJECT_DIR/docker-compose.sh build-gitlab
     - $CI_PROJECT_DIR/docker-compose.sh push
   only: 
-    - disable
+    - master
