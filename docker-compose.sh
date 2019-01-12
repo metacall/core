@@ -51,16 +51,16 @@ sub_build() {
 # Build MetaCall Docker Compose for GitLab (link manually dockerignore files)
 sub_build_gitlab() {
 	ln -sf tools/node/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --force-rm deps_node
+	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --pull deps_node
 
 	ln -sf tools/base/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --force-rm deps
+	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --pull deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --force-rm dev
+	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --pull dev
 
 	ln -sf tools/core/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --force-rm core
+	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build --pull core
 }
 
 # Push MetaCall Docker Compose
