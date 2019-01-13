@@ -251,18 +251,6 @@ target_link_libraries(${target}
 )
 
 #
-# Deployment
-#
-
-# Library
-install(TARGETS ${target}
-	EXPORT  "${target}-export"				COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
-)
-
-#
 # Configuration
 #
 
@@ -273,3 +261,15 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${CONFIGURATIO
 
 set(DOTNET_CORE_LOADER_ASSEMBLY_PATH  ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}/CSLoader.dll)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/data/cs_loader.json.in ${CONFIGURATION_DIR}/install/configurations/cs_loader.json)
+
+#
+# Deployment
+#
+
+# Library
+install(TARGETS ${target}
+	EXPORT  "${target}-export"				COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
+)
