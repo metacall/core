@@ -90,7 +90,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::rb_loader_parser
+	${META_PROJECT_NAME}::rb_loader
 )
 
 #

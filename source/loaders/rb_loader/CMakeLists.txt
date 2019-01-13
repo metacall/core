@@ -14,8 +14,6 @@ if(NOT RUBY_FOUND)
 	return()
 endif()
 
-add_subdirectory(parser)
-
 #
 # Plugin name and options
 #
@@ -49,20 +47,18 @@ include(SecurityFlags)
 #
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
-set(include_parser_path "${CMAKE_CURRENT_SOURCE_DIR}/parser/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
-set(source_parser_path  "${CMAKE_CURRENT_SOURCE_DIR}/parser/source")
 
 set(headers
 	${include_path}/rb_loader.h
 	${include_path}/rb_loader_impl.h
-	${include_parser_path}/rb_loader_impl_parser.h
+	${include_path}/rb_loader_impl_parser.h
 )
 
 set(sources
 	${source_path}/rb_loader.c
 	${source_path}/rb_loader_impl.c
-	${source_parser_path}/rb_loader_impl_parser.c
+	${source_path}/rb_loader_impl_parser.c
 )
 
 # Group source files
@@ -148,11 +144,8 @@ set_target_properties(${target}
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
-	${PROJECT_BINARY_DIR}/source/parser/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
-	${CMAKE_CURRENT_SOURCE_DIR}/parser/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
-	${CMAKE_CURRENT_BINARY_DIR}/parser/include
 
 	${RUBY_INCLUDE_DIRS} # Ruby includes
 
@@ -226,8 +219,8 @@ target_link_libraries(${target}
 
 # Library
 install(TARGETS ${target}
-	EXPORT  "${target}-export"			COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}	COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}	COMPONENT dev
+	EXPORT  "${target}-export"				COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
