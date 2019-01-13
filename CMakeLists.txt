@@ -202,10 +202,18 @@ set(MODULE_NAMES
 )
 
 #
-# Project distributable names
+# Project export module names
 #
 
-# TODO
+if(NOT OPTION_BUILD_DIST_LIBS)
+	set(EXPORT_MODULE_NAMES
+		${MODULE_NAMES}
+	)
+else()
+	set(EXPORT_MODULE_NAMES
+		metacall
+	)
+endif()
 
 #
 # Project module includes
@@ -244,5 +252,5 @@ install(FILES AUTHORS	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 install(FILES LICENSE	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 
-# Install runtime data
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/data DESTINATION ${INSTALL_DATA} COMPONENT runtime)
+# # Install runtime data
+# install(DIRECTORY ${PROJECT_SOURCE_DIR}/data DESTINATION ${INSTALL_DATA} COMPONENT runtime)
