@@ -29,6 +29,7 @@ BUILD_V8=0
 BUILD_NODEJS=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
+BUILD_DISTRIBUTABLE=0
 
 sub_options() {
 	for option in "$@"
@@ -78,12 +79,15 @@ sub_options() {
 			echo "Build all examples"
 			BUILD_EXAMPLES=1
 		fi
+		if [ "$option" = 'distributable' ]; then
+			echo "Build distributable libraries"
+			BUILD_DISTRIBUTABLE=1
+		fi
 	done
 }
 
 sub_configure() {
-	BUILD_STRING="-DOPTION_BUILD_DIST_LIBS=Off \
-			-DOPTION_BUILD_LOADERS=On \
+	BUILD_STRING="-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
 
 	# Scripts
@@ -149,6 +153,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=Off"
 	fi
 
+	# Distributable
+	if [ $BUILD_DISTRIBUTABLE = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_DIST_LIBS=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_DIST_LIBS=Off"
+	fi
+
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
@@ -157,7 +168,7 @@ sub_configure() {
 }
 
 sub_help() {
-	echo "Usage: $PROGNAME list of options"
+	echo "Usage: `basename "$0"` list of options"
 	echo "Options:"
 	echo "	root: build being run by root"
 	echo "	debug | release | relwithdebinfo: build type"
@@ -174,6 +185,7 @@ sub_help() {
 	echo "	install: install all libraries"
 	echo "	static: build as static libraries"
 	echo "	dynamic: build as dynamic libraries"
+	echo "	distributable: build distributable libraries"
 	echo ""
 }
 

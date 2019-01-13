@@ -165,7 +165,7 @@ sub_options(){
 
 # Help
 sub_help() {
-	echo "Usage: $PROGNAME list of component"
+	echo "Usage: `basename "$0"` list of component"
 	echo "Components:"
 	echo "	root"
 	echo "	base"

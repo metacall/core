@@ -282,13 +282,8 @@ sub_nodejs(){
 sub_metacall(){
 	echo "configure metacall"
 	cd $ROOT_DIR
-	git clone --recursive git@bitbucket.org:parrastudios/metacall.git
-	cd metacall
-	git checkout develop
-	git submodule update --init
-	mkdir build
-	cd build
-
+	git clone --recursive https://github.com/metacall/core.git
+	mkdir core/build && cd core/build
 	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/
 	make
 	make test && echo "test ok!"
@@ -434,7 +429,7 @@ sub_options(){
 
 # Help
 sub_help() {
-	echo "Usage: $PROGNAME list of component"
+	echo "Usage: `basename "$0"` list of component"
 	echo "Components:"
 	echo "	root"
 	echo "	cache"

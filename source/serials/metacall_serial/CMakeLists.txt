@@ -67,15 +67,15 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 include(Distributable)
 
 # Create unity build library
-set(rapid_json_serial_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+set(metacall_serial_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
 
-distributable_generate(${target} ${rapid_json_serial_unity_build}
+distributable_generate(${target} ${metacall_serial_unity_build}
 	${SERIAL_MODULE_NAMES}
 )
 
 # Build library
 add_library(${target}
-	${rapid_json_serial_unity_build}
+	${metacall_serial_unity_build}
 	${sources}
 	${headers}
 )

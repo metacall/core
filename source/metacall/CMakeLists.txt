@@ -102,7 +102,9 @@ add_library(${target}
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 # Export library for downstream projects
-#export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
+if(NOT OPTION_BUILD_DIST_LIBS)
+	export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
+endif()
 
 # Create feature detection header
 # Compilers: https://cmake.org/cmake/help/v3.1/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID
@@ -245,8 +247,11 @@ install(DIRECTORY
 )
 
 # CMake config
-#install(EXPORT ${target}-export
-#	NAMESPACE   ${META_PROJECT_NAME}::
-#	DESTINATION ${INSTALL_CMAKE}/${target}
-#	COMPONENT   dev
-#)
+if(NOT OPTION_BUILD_DIST_LIBS)
+	install(TARGETS ${target}
+		EXPORT  "${target}-export"				COMPONENT dev
+		RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
+		LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
+		ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
+	)
+endif()

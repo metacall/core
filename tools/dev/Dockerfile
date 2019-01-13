@@ -58,7 +58,7 @@ ARG METACALL_BUILD_OPTIONS
 RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-configure.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
-# Build and install MetaCall libraries then run tests
+# Build test and install MetaCall libraries
 RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 

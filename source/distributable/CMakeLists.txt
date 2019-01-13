@@ -8,12 +8,6 @@ if(NOT OPTION_BUILD_DIST_LIBS)
 endif()
 
 #
-# External dependencies
-#
-
-# find_package(THIRDPARTY REQUIRED)
-
-#
 # Library name and options
 #
 
@@ -21,7 +15,7 @@ endif()
 set(target metacall_distributable)
 
 # Library name
-set(target_root "metacall")
+set(target_root metacall)
 
 # Exit here if required dependencies are not met
 message(STATUS "Distributable ${target}")
@@ -68,7 +62,7 @@ add_dependencies(${target}
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 # Export library for downstream projects
-export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target}/${target}-export.cmake)
+export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target_root}/${target_root}-export.cmake)
 
 #
 # Project options
@@ -89,6 +83,9 @@ set_target_properties(${target}
 # Include directories
 #
 
+get_filename_component(CMAKE_PARENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+get_filename_component(CMAKE_PARENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
+
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
@@ -99,8 +96,8 @@ target_include_directories(${target}
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
 	INTERFACE
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-	$<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
+	$<BUILD_INTERFACE:${CMAKE_PARENT_SOURCE_DIR}/${target_root}/include>
+	$<BUILD_INTERFACE:${CMAKE_PARENT_BINARY_DIR}/${target_root}/include>
 	$<INSTALL_INTERFACE:include>
 )
 
@@ -110,7 +107,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-
 	${CMAKE_DL_LIBS}
 
 	PUBLIC

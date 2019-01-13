@@ -8,18 +8,6 @@ if(NOT OPTION_BUILD_DIST_LIBS OR NOT OPTION_BUILD_LOADERS_PY)
 endif()
 
 #
-# External dependencies
-#
-
-# MetaCall Library
-find_package(MetaCall REQUIRED)
-
-if(NOT METACALL_FOUND)
-	message(STATUS "MetaCall libraries not found")
-	return()
-endif()
-
-#
 # Executable name and options
 #
 
@@ -98,8 +86,6 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
-
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
 )
 
 #
@@ -111,10 +97,8 @@ target_link_libraries(${target}
 	${DEFAULT_LIBRARIES}
 
 	GTest
-
 	${CMAKE_DL_LIBS}
-
-	${METACALL_LIBRARIES} # MetaCall libraries
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 #

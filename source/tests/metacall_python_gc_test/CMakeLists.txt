@@ -1,26 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY)
-	return()
-endif()
-
-#
-# Setup distributable environment
-#
-
-# Check if distributable libs are enabled
-if(NOT OPTION_BUILD_DIST_LIBS)
-	return()
-endif()
-
-#
-# External dependencies
-#
-
-# MetaCall Library
-find_package(MetaCall REQUIRED)
-
-if(NOT METACALL_FOUND)
-	message(STATUS "MetaCall libraries not found")
+if(NOT OPTION_BUILD_DIST_LIBS OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY)
 	return()
 endif()
 
@@ -103,8 +82,6 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
-
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
 )
 
 #
@@ -119,7 +96,7 @@ target_link_libraries(${target}
 
 	${CMAKE_DL_LIBS}
 
-	${METACALL_LIBRARIES} # MetaCall libraries
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 #
