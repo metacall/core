@@ -31,6 +31,7 @@ CLEAR_NETCORE=0
 CLEAR_V8=0
 CLEAR_NODEJS=0
 CLEAR_APT=0
+CLEAR_PACK=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -95,6 +96,12 @@ sub_metacall(){
 	$SUDO_CMD rm /usr/local/share/metacall/metacall-config.cmake
 }
 
+# Pack
+sub_pack(){
+	echo "clean pack"
+	$SUDO_CMD apt-get -y remove --purge rpm
+}
+
 # Clear
 sub_clear(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -123,6 +130,9 @@ sub_clear(){
 	fi
 	if [ $CLEAR_APT = 1 ]; then
 		sub_apt
+	fi
+	if [ $CLEAR_PACK = 1 ]; then
+		sub_pack
 	fi
 
 	sub_metacall
@@ -173,6 +183,10 @@ sub_options(){
 			echo "apt selected"
 			CLEAR_APT=1
 		fi
+		if [ "$var" = 'pack' ]; then
+			echo "pack selected"
+			CLEAR_PACK=1
+		fi
 	done
 }
 
@@ -189,6 +203,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	pack"
 	echo ""
 }
 

@@ -177,7 +177,6 @@ sub_help() {
 	echo "	netcore: build with netcore support"
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
-	echo "	ports: build all ports"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	distributable: build distributable libraries"

@@ -74,6 +74,22 @@ sub_push(){
 	docker push $IMAGE_NAME:latest
 }
 
+# Pack MetaCall Docker Compose
+sub_pack(){
+	if [ -z "$ARTIFACTS_PATH" ]; then
+		echo "Error: ARTIFACTS_PATH variable not defined"
+		exit 1
+	fi
+
+	# docker run --name metacall_core_pack -it metacall/core_dev:latest /bin/bash -c ' \
+	# 	cd build && make pack-metacall \
+	# '
+
+	# docker cp metacall_core_pack:$METACALL_PATH/build/metacall-0.1.0-dev.tar.gz $ARTIFACTS_PATH
+
+	# docker rm metacall_core_pack
+}
+
 # Help
 sub_help() {
 	echo "Usage: `basename "$0"` option"
@@ -82,6 +98,7 @@ sub_help() {
 	echo "	build"
 	echo "	build-gitlab"
 	echo "	push"
+	echo "	pack"
 	echo ""
 }
 
@@ -97,6 +114,9 @@ case "$1" in
 		;;
 	push)
 		sub_push
+		;;
+	pack)
+		sub_pack
 		;;
 	*)
 		sub_help
