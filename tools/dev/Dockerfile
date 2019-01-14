@@ -62,6 +62,8 @@ RUN cd $METACALL_PATH/build \
 RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
 
-# Clear MetaCall build dependencies
+# Clear MetaCall build dependencies (METACALL_CLEAR_OPTIONS is used as a tag for docker-compose.sh pack)
+ARG METACALL_CLEAR_OPTIONS
+
 RUN cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_CLEAR_OPTIONS}

@@ -81,13 +81,23 @@ sub_pack(){
 		exit 1
 	fi
 
-	# docker run --name metacall_core_pack -it metacall/core_dev:latest /bin/bash -c ' \
-	# 	cd build && make pack-metacall \
-	# '
+	# Get path where docker-compose.sh is located
+	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-	# docker cp metacall_core_pack:$METACALL_PATH/build/metacall-0.1.0-dev.tar.gz $ARTIFACTS_PATH
+	# Load default environment variables
+	. $BASE_DIR/.env
 
-	# docker rm metacall_core_pack
+	# Get layer with the tag METACALL_CLEAR_OPTIONS to hook into the previous layer of the clean command
+	DOCKER_HOOK_CLEAR=`docker image history --no-trunc metacall/core_dev | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
+
+	# Run the package builds
+	docker run --name metacall_core_pack -it $DOCKER_HOOK_CLEAR /bin/bash -c ' \
+		cd build && make pack-metacall \
+	'
+
+	docker cp metacall_core_pack:$METACALL_PATH/build/metacall-0.1.0-dev.tar.gz $ARTIFACTS_PATH
+
+	docker rm metacall_core_pack
 }
 
 # Help
