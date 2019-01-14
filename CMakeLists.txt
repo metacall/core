@@ -53,9 +53,9 @@ get_git_head_revision(GIT_REFSPEC GIT_SHA1)
 string(SUBSTRING "${GIT_SHA1}" 0 12 GIT_REV)
 
 # Meta information about the project
-set(META_PROJECT_NAME			"metacall")
-set(META_PROJECT_DESCRIPTION	"MetaCall Framework")
-set(META_AUTHOR_ORGANIZATION	"Parra Studios")
+set(META_PROJECT_NAME			"MetaCall")
+set(META_PROJECT_DESCRIPTION	"A library for providing inter-language foreign function interface calls")
+set(META_AUTHOR_ORGANIZATION	"MetaCall Inc.")
 set(META_AUTHOR_DOMAIN			"https://metacall.io/")
 set(META_AUTHOR_MAINTAINER		"vic798@gmail.com")
 set(META_VERSION_MAJOR			"0")

@@ -66,6 +66,7 @@ metacall('sum', 3, 4); // 7
   - [6. Build System](#6-build-system)
     - [6.1 Build Options](#61-build-options)
   - [7. Platform Support](#7-platform-support)
+    - [7.1 Docker Support](#71-docker-support)
   - [8. License](#8-license)
 
 <!-- /TOC -->
@@ -535,6 +536,36 @@ The following platforms and architectures have been tested an work correctly wit
 | **`debian:stretch-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
 | **`debian:buster-slim`**  |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                         |
 |       **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                         |
+
+### 7.1 Docker Support
+
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:stretch-slim` for `amd64` architecture.
+
+For pulling the **METACALL** `latest` image containing the runtime, use:
+
+``` sh
+docker pull metacall/core
+```
+
+For pulling a specific image depending on the tag, use:
+
+- **METACALL** `deps` image. Includes all dependencies for development:
+
+``` sh
+docker pull metacall/core:deps
+```
+
+- **METACALL** `dev` image. Includes all dependencies, headers and libraries for development:
+
+``` sh
+docker pull metacall/core:dev
+```
+
+- **METACALL** `runtime` image. Includes all dependencies and libraries for runtime (equivalent to `latest`):
+
+``` sh
+docker pull metacall/core:runtime
+```
 
 ## 8. License
 

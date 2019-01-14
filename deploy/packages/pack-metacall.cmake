@@ -26,13 +26,13 @@ elseif(UNIX AND SYSTEM_DIR_INSTALL)
 		set(PACK_COMPONENT_INSTALL OFF)
 		set(PACK_INCLUDE_TOPDIR OFF)
 	endif()
-#elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
+elseif("${CMAKE_SYSTEM_NAME}" MATCHES "Darwin")
 	# MacOS X disk image
 	# At the moment, DMG generator and CPACK_INCLUDE_TOPLEVEL_DIRECTORY=ON do not work together.
 	# Therefore, we disable dmg images for MacOS until we've found a solution
-#	set(OPTION_PACK_GENERATOR "DragNDrop" CACHE STRING "Package targets")
-#	set(PACK_COMPONENT_INSTALL OFF)
-#	set(PACK_INCLUDE_TOPDIR ON)
+	set(OPTION_PACK_GENERATOR "DragNDrop" CACHE STRING "Package targets")
+	set(PACK_COMPONENT_INSTALL OFF)
+	set(PACK_INCLUDE_TOPDIR ON)
 else()
 	# Default (portable package for any platform)
 	set(OPTION_PACK_GENERATOR "ZIP;TGZ" CACHE STRING "Package targets")
@@ -98,14 +98,14 @@ else()
 endif()
 
 # Package project
-set(project_name ${META_PROJECT_NAME})   # Name of package project
-set(project_root ${META_PROJECT_NAME})   # Name of root project that is to be installed
+set(project_name ${META_PROJECT_NAME}) # Name of package project
+set(project_root ${META_PROJECT_NAME}) # Name of root project that is to be installed
 
 # Package information
-string(TOLOWER ${META_PROJECT_NAME} package_name)
-set(package_description ${META_PROJECT_DESCRIPTION})
-set(package_vendor	  ${META_AUTHOR_ORGANIZATION})
-set(package_maintainer  ${META_AUTHOR_MAINTAINER})
+string(TOLOWER			${META_PROJECT_NAME} package_name)
+set(package_description	${META_PROJECT_DESCRIPTION})
+set(package_vendor		${META_AUTHOR_ORGANIZATION})
+set(package_maintainer	${META_AUTHOR_MAINTAINER})
 
 # Package specific options
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/deploy/packages/${project_name})

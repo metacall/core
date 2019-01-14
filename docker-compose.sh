@@ -70,7 +70,9 @@ sub_push(){
 	docker tag metacall/core_dev:latest $IMAGE_NAME:dev
 	docker push $IMAGE_NAME:dev
 
+	docker tag metacall/core:latest $IMAGE_NAME:runtime
 	docker tag metacall/core:latest $IMAGE_NAME:latest
+	docker push $IMAGE_NAME:runtime
 	docker push $IMAGE_NAME:latest
 }
 
