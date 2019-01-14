@@ -253,7 +253,7 @@ TEST_F(metacall_test, DefaultConstructor)
 	#endif /* OPTION_BUILD_LOADERS_JSM */
 
 	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_LOADERS_JS)
+	#if defined(OPTION_BUILD_LOADERS_JS) && !defined(OPTION_BUILD_LOADERS_NODE) /* TODO: NodeJS and V8 runtimes do not work at same time */
 	{
 		const char * js_scripts[] =
 		{
