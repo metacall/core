@@ -46,7 +46,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_CORE_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs distributable tests scripts dynamic install pack
+        METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs examples distributable tests scripts dynamic install pack
         METACALL_CLEAR_OPTIONS: root base rapidjson funchook python ruby netcore v8 nodejs pack
     environment:
       DEBIAN_FRONTEND: noninteractive
