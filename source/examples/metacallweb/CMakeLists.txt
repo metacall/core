@@ -74,7 +74,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
-	${META_PROJECT_NAME}::metacall
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 #
