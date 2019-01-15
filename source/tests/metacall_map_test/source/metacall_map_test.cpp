@@ -71,6 +71,7 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		};
 
 		static const char args_map[] = "{\"left\":10,\"right\":2}";
+		static const char args_array[] = "[10, 2]";
 
 		void * func = metacall_function("multiply");
 
@@ -96,6 +97,15 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 		/* Call by map using serial */
 		ret = metacallfms(func, args_map, sizeof(args_map), allocator);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 20);
+
+		metacall_value_destroy(ret);
+
+		/* Call by array using serial */
+		ret = metacallfs(func, args_array, sizeof(args_array), allocator);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 

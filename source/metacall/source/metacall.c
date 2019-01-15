@@ -583,6 +583,110 @@ void * metacallf(void * func, ...)
 	return NULL;
 }
 
+void * metacallfs(void * func, const char * buffer, size_t size, void * allocator)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		if (buffer == NULL || size == 0)
+		{
+			if (signature_count(s) == 0)
+			{
+				value ret = function_call(f, metacall_null_args);
+
+				if (ret != NULL)
+				{
+					type t = signature_get_return(s);
+
+					if (t != NULL)
+					{
+						type_id id = type_index(t);
+
+						if (id != value_type_id(ret))
+						{
+							value cast_ret = value_type_cast(ret, id);
+
+							return (cast_ret == NULL) ? ret : cast_ret;
+						}
+					}
+				}
+
+				return ret;
+			}
+
+			return NULL;
+		}
+		else
+		{
+			void * args[METACALL_ARGS_SIZE];
+
+			value * v_array, ret, v = (value)metacall_deserialize(buffer, size, allocator);
+
+			size_t iterator, args_count;
+
+			if (v == NULL)
+			{
+				return NULL;
+			}
+
+			if (type_id_array(value_type_id(v)) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			args_count = signature_count(s);
+
+			/* TODO: No optional arguments allowed, review in the future */
+			if (args_count != value_type_size(v) / sizeof(const value))
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			v_array = value_to_array(v);
+
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				args[iterator] = v_array[iterator];
+			}
+
+			ret = metacallfv(f, args);
+
+			if (ret != NULL)
+			{
+				type t = signature_get_return(s);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id(ret))
+					{
+						value cast_ret = value_type_cast(ret, id);
+
+						if (cast_ret != NULL)
+						{
+							ret = cast_ret;
+						}
+					}
+				}
+			}
+
+			value_destroy(v);
+
+			return ret;
+		}
+	}
+
+	return NULL;
+}
+
 void * metacallfmv(void * func, void * keys[], void * values[])
 {
 	function f = (function)func;

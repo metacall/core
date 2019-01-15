@@ -28,34 +28,106 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << std::endl << "A command line interface example as metacall wrapper" << std::endl;
 
 	/* Command list */
-	std::cout << std::endl << "Command list :" << std::endl << std::endl;
-
-	/* Call command */
-	std::cout << "\tcall <expression>(<arg0>, <arg1>, ... , <argN>)" << std::endl;
-	std::cout << "\t\texpression : alphanumeric string beginning by letter [method1, method2, hello]" << std::endl;
-	std::cout << "\t\targuments  :" << std::endl;
-	std::cout << "\t\t\tbool [true | false]," << std::endl;
-	std::cout << "\t\t\tchar ['A', 'B', 'C']," << std::endl;
-	std::cout << "\t\t\tint [234, 0, -16673]," << std::endl;
-	std::cout << "\t\t\tlong [58L, 9857 ... 3942]," << std::endl;
-	std::cout << "\t\t\tfloat [5.42f, 458E3f]," << std::endl;
-	std::cout << "\t\t\tdouble [5.42, 458E12]," << std::endl;
-	std::cout << "\t\t\tpointer [0x07d97e32]," << std::endl;
-	std::cout << "\t\t\tstring [\"hello world\"]" << std::endl;
+	std::cout << std::endl << "Command list:" << std::endl << std::endl;
 
 	/* Load command */
-	std::cout << std::endl << "\tload <tag> <script0> <script1> ... <scriptN>" << std::endl;
-	std::cout << "\t\ttag : loader tag will be used to run scripts [rb, js, py, mock, node]" << std::endl;
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Load a script from file into MetaCall                                                  │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ load <runtime tag> <script0> <script1> ... <scriptN>                                   │" << std::endl;
+	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
+	std::cout << "\t│                  options :                                                             │" << std::endl;
+	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
+	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
+	std::cout << "\t│                            py   - Python                                               │" << std::endl;
+	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
+	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
+	std::cout << "\t│                            cs   - C# NET Core                                          │" << std::endl;
+	std::cout << "\t│    <script0> <script1> ... <scriptN> : relative or absolute path to the script(s)      │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Example:                                                                               │" << std::endl;
+	std::cout << "\t│ load node concat.js                                                                    │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Result:                                                                                │" << std::endl;
+	std::cout << "\t│ Script (concat.js) loaded correctly                                                    │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+
+	/* Inspect command */
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Show all functions loaded into MetaCall and their signature                            │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ inspect                                                                                │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Example:                                                                               │" << std::endl;
+	std::cout << "\t│ inspect                                                                                │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Result:                                                                                │" << std::endl;
+	std::cout << "\t│ TODO                                                                                   │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << std::endl << "\tinspect" << std::endl << std::endl;
+
+	/* Call command */
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Call a function previously loaded in MetaCall                                          │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ call <function name>(<arg0>, <arg1>, ... , <argN>)                                     │" << std::endl;
+	std::cout << "\t│    <function name> : alphanumeric string beginning by letter (method1, method2, hello) │" << std::endl;
+	std::cout << "\t│    <arg0>, <arg1>, ... , <argN>  : arguments to be passed to the function in JSON      │" << std::endl;
+	std::cout << "\t│                                    types :                                             │" << std::endl;
+	std::cout << "\t│                                            bool   - true, false                        │" << std::endl;
+	std::cout << "\t│                                            number - 5, 4.34                            │" << std::endl;
+	std::cout << "\t│                                            string - \"hello world\"                      │" << std::endl;
+	std::cout << "\t│                                            array  - [2, true, \"abc\"]                   │" << std::endl;
+	std::cout << "\t│                                            object - { \"one\": 1, \"two\": 2 }             │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Example:                                                                               │" << std::endl;
+	std::cout << "\t│ call concat(\"hello\", \"world\")                                                          │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Result:                                                                                │" << std::endl;
+	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
 
 	/* Clear command */
-	std::cout << std::endl << "\tclear <tag> <script0> <script1> ... <scriptN>" << std::endl;
-	std::cout << "\t\ttag : loader tag will be used to run scripts [rb, js, py, mock, node]" << std::endl;
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Delete a script previously loaded in MetaCall                                          │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ clear <runtime tag> <script0> <script1> ... <scriptN>                                  │" << std::endl;
+	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
+	std::cout << "\t│                  options :                                                             │" << std::endl;
+	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
+	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
+	std::cout << "\t│                            py   - Python                                               │" << std::endl;
+	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
+	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
+	std::cout << "\t│                            cs   - C# NET Core                                          │" << std::endl;
+	std::cout << "\t│    <script0> <script1> ... <scriptN> : id of the script (file name without extension)  |" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Example:                                                                               │" << std::endl;
+	std::cout << "\t│ clear node concat                                                                      │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Result:                                                                                │" << std::endl;
+	std::cout << "\t│ Script (concat) removed correctly                                                      │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
 
 	/* Exit command */
-	std::cout << std::endl << "\texit" << std::endl;
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Exit from MetaCall CLI                                                                 │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ exit                                                                                   │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
 
 	/* Help command */
-	std::cout << std::endl << "\thelp" << std::endl;
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Show help for MetaCall CLI                                                             │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ help                                                                                   │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
 
 	return true;
 }
@@ -75,10 +147,6 @@ bool command_cb_call(application & app, tokenizer & t)
 
 	tokenizer::iterator it = t.begin();
 
-	parser_parameter p(it);
-
-	std::vector<void *> args;
-
 	/* Set custom function delimiters */
 	t.delimit(func_delimiters);
 
@@ -88,9 +156,16 @@ bool command_cb_call(application & app, tokenizer & t)
 	/* Parse function call */
 	if (it != t.end())
 	{
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
 		std::string func_name(*it);
 
-		const std::string param_delimiters("(,)");
+		const std::string param_delimiters("()");
+
+		/* Convert arguments into an array */
+		std::string args = "[";
 
 		t.delimit(param_delimiters);
 
@@ -98,54 +173,35 @@ bool command_cb_call(application & app, tokenizer & t)
 
 		if (it != t.end())
 		{
-			const std::string param_escape(" \n\t\r\v\f");
-
-			void * v = NULL;
-
-			do
-			{
-				it.escape(param_escape);
-
-				v = app.argument_parse(p);
-
-				if (v != NULL)
-				{
-					args.push_back(v);
-				}
-				else
-				{
-					std::cout << "\tinvalid argument : {" << *it << "}" << std::endl;
-				}
-
-				++it;
-
-			} while (it != t.end());
+			args += *it;
 		}
 
+		args += "]";
+
+		/*
 		void * result = app.metacallv_adaptor(func_name, args);
+		*/
+
+		void * result = app.metacallfs_adaptor(func_name, args, allocator);
 
 		if (result != NULL)
 		{
 			size_t size = 0;
 
-			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
-			void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
 			char * value_str = metacall_serialize(result, &size, allocator);
 
 			std::cout << value_str << std::endl;
 
-			metacall_value_destroy(result);
-
 			metacall_allocator_free(allocator, value_str);
 
-			metacall_allocator_destroy(allocator);
+			metacall_value_destroy(result);
 		}
 		else
 		{
 			std::cout << "(null)" << std::endl;
 		}
+
+		metacall_allocator_destroy(allocator);
 
 		return true;
 	}
@@ -485,4 +541,11 @@ void * application::metacallv_adaptor(const std::string & name, const std::vecto
 	}
 
 	return result;
+}
+
+void * application::metacallfs_adaptor(const std::string & name, const std::string & args, void * allocator)
+{
+	void * func = metacall_function(name.c_str());
+
+	return metacallfs(func, args.c_str(), args.length() + 1, allocator);
 }

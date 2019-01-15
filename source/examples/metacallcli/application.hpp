@@ -145,6 +145,24 @@ class application
 	*/
 	void * metacallv_adaptor(const std::string & name, const std::vector<void *> & args);
 
+	/**
+	*  @brief
+	*    Adapts metacallfs from string @name and array string @args
+	*
+	*  @param[in] name
+	*    String object of function name
+	*
+	*  @param[in] args
+	*    String representing an array to be deserialized
+	*
+	*  @param[in] allocator
+	*    Pointer to the allocator to be used in deserialization
+	*
+	*  @return
+	*    Return a new value instanced if argument was correct with the result of the call
+	*/
+	void * metacallfs_adaptor(const std::string & name, const std::string & args, void * allocator);
+
   protected:
 
 	/* -- Protected Definitions -- */
