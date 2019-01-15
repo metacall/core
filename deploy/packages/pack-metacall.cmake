@@ -129,6 +129,7 @@ set(CPACK_PACKAGE_ICON						"${PROJECT_SOURCE_DIR}/deploy/images/logo.bmp")
 set(CPACK_PACKAGE_FILE_NAME					"${package_name}-${CPACK_PACKAGE_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY			"${package_name}")
 set(CPACK_PACKAGE_INSTALL_REGISTRY_KEY		"${package_name}")
+set(CPACK_OUTPUT_FILE_PREFIX				"packages")
 
 #
 # NSIS package
@@ -184,6 +185,7 @@ set(CPACK_DEBIAN_PACKAGE_NAME			"${package_name}")
 set(CPACK_DEBIAN_PACKAGE_VERSION		"${CPACK_PACKAGE_VERSION}")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE	"all")
 #set(CPACK_DEBIAN_PACKAGE_DEPENDS		"libc6 (>= 2.3.1-6), libgcc1 (>= 1:3.4.2-12)")
+set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS		ON)
 set(CPACK_DEBIAN_PACKAGE_MAINTAINER		"${package_maintainer}")
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION	"${CPACK_PACKAGE_DESCRIPTION_SUMMARY}")
 set(CPACK_DEBIAN_PACKAGE_SECTION		"devel")
@@ -244,6 +246,7 @@ add_custom_target(
 	COMMAND ${CPACK_COMMAND} --config ${PROJECT_BINARY_DIR}/CPackConfig-${project_name}.cmake
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
+
 set_target_properties(pack-${project_name} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 # Set dependencies

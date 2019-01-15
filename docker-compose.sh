@@ -94,7 +94,7 @@ sub_pack(){
 
 	# Run the package builds
 	docker run --name metacall_core_pack -it $DOCKER_HOOK_CLEAR /bin/bash -c ' \
-		cd build && make pack-metacall \
+		cd build && make pack \
 	'
 
 	docker cp metacall_core_pack:$METACALL_PATH/build/metacall-0.1.0-dev.tar.gz $ARTIFACTS_PATH
