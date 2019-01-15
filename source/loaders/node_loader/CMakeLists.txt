@@ -228,3 +228,10 @@ install(TARGETS ${target}
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
+
+# Runtime (pack the runtime meanwhile NodeJS is not distributed as a library)
+install(FILES
+	${NODEJS_LIBRARY}
+	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
+)
