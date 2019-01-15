@@ -36,24 +36,25 @@ include(SecurityFlags)
 # Sources
 #
 
+string(TOUPPER ${META_PROJECT_NAME} META_PROJECT_NAME_UPPER)
+string(TOLOWER ${META_PROJECT_NAME} META_PROJECT_NAME_LOWER)
+
 set(template_include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(template_source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
-set(include_path "${CMAKE_BINARY_DIR}/source/include/${META_PROJECT_NAME}")
-set(source_path  "${CMAKE_BINARY_DIR}/source/${META_PROJECT_NAME}/source")
+set(include_path "${CMAKE_BINARY_DIR}/source/include/${META_PROJECT_NAME_LOWER}")
+set(source_path  "${CMAKE_BINARY_DIR}/source/${META_PROJECT_NAME_LOWER}/source")
 
 # Generate version-header
-string(TOUPPER ${META_PROJECT_NAME} META_PROJECT_NAME_UPPER)
-
-configure_file(${template_include_path}/version.h.in ${include_path}/${META_PROJECT_NAME}_version.h)
-configure_file(${template_source_path}/version.c.in ${source_path}/${META_PROJECT_NAME}_version.c)
+configure_file(${template_include_path}/version.h.in ${include_path}/${META_PROJECT_NAME_LOWER}_version.h)
+configure_file(${template_source_path}/version.c.in ${source_path}/${META_PROJECT_NAME_LOWER}_version.c)
 
 set(headers
-	${include_path}/${META_PROJECT_NAME}_version.h
+	${include_path}/${META_PROJECT_NAME_LOWER}_version.h
 )
 
 set(sources
-	${source_path}/${META_PROJECT_NAME}_version.c
+	${source_path}/${META_PROJECT_NAME_LOWER}_version.c
 )
 
 # Group source files

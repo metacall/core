@@ -25,8 +25,10 @@ set(EXTRA_ENVIRONMENT_VARIABLES "" CACHE PATH "MetaCall extra environment variab
 # Configure templates
 #
 
+string(TOLOWER ${META_PROJECT_NAME} META_PROJECT_NAME_LOWER)
+
 # Generate loaders plugin header
-configure_file(loaders/loaders.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME}/${META_PROJECT_NAME}_loaders.h)
+configure_file(loaders/loaders.h.in ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME_LOWER}/${META_PROJECT_NAME_LOWER}_loaders.h)
 
 #
 # Configure variables
@@ -121,8 +123,10 @@ add_subdirectory(distributable)
 # Deployment
 #
 
+string(TOLOWER ${META_PROJECT_NAME} META_PROJECT_NAME_LOWER)
+
 # Deploy generated headers
-install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME} DESTINATION include COMPONENT dev)
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/${META_PROJECT_NAME_LOWER} DESTINATION include COMPONENT dev)
 
 # Show deploy info
 function(install_print color msg)

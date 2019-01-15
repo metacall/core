@@ -119,7 +119,7 @@ include(CompileOptions)
 #
 
 # Get project name
-set(project ${META_PROJECT_NAME})
+string(TOLOWER ${META_PROJECT_NAME} project)
 
 # Check for system dir install
 set(SYSTEM_DIR_INSTALL FALSE)

@@ -20,7 +20,7 @@
 
 /* -- Headers -- */
 
-#include <${META_PROJECT_NAME}/${META_PROJECT_NAME}_version.h>
+#include <${META_PROJECT_NAME_LOWER}/${META_PROJECT_NAME_LOWER}_version.h>
 
 /* -- Methods -- */
 
