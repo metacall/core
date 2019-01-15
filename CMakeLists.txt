@@ -159,11 +159,13 @@ else()
 endif()
 
 # Set runtime path
-set(CMAKE_SKIP_BUILD_RPATH				FALSE) # Add absolute path to all dependencies for BUILD
-set(CMAKE_BUILD_WITH_INSTALL_RPATH		FALSE) # Use CMAKE_INSTALL_RPATH for INSTALL
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH	FALSE) # Do NOT add path to dependencies for INSTALL
+set(CMAKE_SKIP_BUILD_RPATH				FALSE)	# Add absolute path to all dependencies for BUILD
+set(CMAKE_BUILD_WITH_INSTALL_RPATH		FALSE)	# Use CMAKE_INSTALL_RPATH for INSTALL
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH	TRUE)	# Add path to dependencies for INSTALL
 
-if(NOT SYSTEM_DIR_INSTALL)
+if(SYSTEM_DIR_INSTALL)
+	SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB}")
+else()
 	# Find libraries relative to binary
 	if(APPLE)
 		set(CMAKE_INSTALL_RPATH "@loader_path/../../../${INSTALL_LIB}")
