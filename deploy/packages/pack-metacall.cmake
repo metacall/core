@@ -108,7 +108,7 @@ set(package_vendor		${META_AUTHOR_ORGANIZATION})
 set(package_maintainer	${META_AUTHOR_MAINTAINER})
 
 # Package specific options
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/deploy/packages/${project_name})
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/deploy/packages/${package_name})
 
 #
 # Package information
@@ -242,12 +242,12 @@ include(CPack)
 
 # Create target
 add_custom_target(
-	pack-${project_name}
+	pack-${package_name}
 	COMMAND ${CPACK_COMMAND} --config ${PROJECT_BINARY_DIR}/CPackConfig-${project_name}.cmake
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 
-set_target_properties(pack-${project_name} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+set_target_properties(pack-${package_name} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 # Set dependencies
-add_dependencies(pack pack-${project_name})
+add_dependencies(pack pack-${package_name})

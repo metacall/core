@@ -97,7 +97,7 @@ sub_pack(){
 		cd build && make pack \
 	'
 
-	docker cp metacall_core_pack:$METACALL_PATH/build/metacall-0.1.0-dev.tar.gz $ARTIFACTS_PATH
+	docker cp metacall_core_pack:$METACALL_PATH/build/packages $ARTIFACTS_PATH
 
 	docker rm metacall_core_pack
 }
