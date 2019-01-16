@@ -120,6 +120,24 @@ class application
 
 	/**
 	*  @brief
+	*    Show inspect information
+	*
+	*  @param[in] str
+	*    Serialized inspect data
+	*
+	*  @param[in] size
+	*    Size in bytes of str string
+	*
+	*  @param[in] size
+	*    Size in bytes of str string
+	*
+	*  @param[in] allocator
+	*    Pointer to the allocator to be used in deserialization
+	*/
+	void command_inspect(const char * str, size_t size, void * allocator);
+
+	/**
+	*  @brief
 	*    Create a new value from arguments with parser @p
 	*
 	*  @param[in] p

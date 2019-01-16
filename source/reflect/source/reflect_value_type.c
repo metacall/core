@@ -50,7 +50,7 @@ value value_type_copy(value v)
 
 		if (type_id_array(id) == 0)
 		{
-			size_t index, size = value_type_size(v) / sizeof(value);
+			size_t index, size = value_type_count(v);
 
 			value new_v = value_create_array(NULL, size);
 
@@ -65,7 +65,7 @@ value value_type_copy(value v)
 		}
 		else if (type_id_map(id) == 0)
 		{
-			size_t index, size = value_type_size(v) / sizeof(value);
+			size_t index, size = value_type_count(v);
 
 			value new_v = value_create_map(NULL, size);
 
@@ -93,6 +93,25 @@ size_t value_type_size(value v)
 	size_t size = value_size(v);
 
 	return size - sizeof(type_id);
+}
+
+size_t value_type_count(void * v)
+{
+	const type_id id = value_type_id(v);
+
+	if (id == TYPE_ARRAY || id == TYPE_MAP)
+	{
+		/* Array and map can contain multiple values */
+		return value_type_size(v) / sizeof(const value);
+	}
+	else if (id == TYPE_INVALID)
+	{
+		/* Invalid does not contain any value */
+		return 0;
+	}
+
+	/* Rest of values only can contain one value */
+	return 1;
 }
 
 type_id value_type_id(value v)
@@ -389,7 +408,7 @@ void value_type_destroy(value v)
 
 		if (type_id_array(id) == 0)
 		{
-			size_t index, size = value_type_size(v) / sizeof(value);
+			size_t index, size = value_type_count(v);
 
 			value * v_array = value_to_array(v);
 
@@ -400,7 +419,7 @@ void value_type_destroy(value v)
 		}
 		else if (type_id_map(id) == 0)
 		{
-			size_t index, size = value_type_size(v) / sizeof(value);
+			size_t index, size = value_type_count(v);
 
 			value * v_map = value_to_map(v);
 

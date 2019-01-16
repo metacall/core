@@ -393,7 +393,7 @@ napi_value node_loader_impl_value(napi_env env, void * arg)
 	{
 		value * array_value = value_to_array(arg_value);
 
-		size_t array_size = value_type_size(arg_value) / sizeof(const value);
+		size_t array_size = value_type_count(arg_value);
 
 		uint32_t iterator;
 
@@ -415,7 +415,7 @@ napi_value node_loader_impl_value(napi_env env, void * arg)
 	{
 		value * map_value = value_to_map(arg_value);
 
-		size_t iterator, map_size = value_type_size(arg_value) / sizeof(const value);
+		size_t iterator, map_size = value_type_count(arg_value);
 
 		status = napi_create_object(env, &v);
 

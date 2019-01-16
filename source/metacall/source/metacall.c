@@ -642,7 +642,7 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 			args_count = signature_count(s);
 
 			/* TODO: No optional arguments allowed, review in the future */
-			if (args_count != value_type_size(v) / sizeof(const value))
+			if (args_count != value_type_count(v))
 			{
 				value_type_destroy(v);
 
@@ -847,7 +847,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 			args_count = signature_count(s);
 
 			/* TODO: No optional arguments allowed, review in the future */
-			if (args_count != value_type_size(v) / sizeof(const value))
+			if (args_count != value_type_count(v))
 			{
 				value_type_destroy(v);
 

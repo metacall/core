@@ -183,7 +183,7 @@ void metacall_serial_impl_serialize_buffer(value v, char * dest, size_t size, co
 
 void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, const char * format, size_t * length)
 {
-	size_t iterator, array_value_length = 0, array_size = value_type_size(v) / sizeof(const value);
+	size_t iterator, array_value_length = 0, array_size = value_type_count(v);
 
 	value * array_value = value_to_array(v);
 

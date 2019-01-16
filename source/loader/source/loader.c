@@ -497,7 +497,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 		return 1;
 	}
 
-	size = value_type_size(scripts) / sizeof(value);
+	size = value_type_count(scripts);
 
 	if (size > LOADER_LOAD_FROM_FILES_SIZE)
 	{

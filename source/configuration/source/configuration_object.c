@@ -267,7 +267,7 @@ int configuration_object_childs(configuration config, vector childs, set storage
 
 void configuration_object_instantiate(configuration config, value v)
 {
-	size_t index, size = value_type_size(v) / sizeof(value);
+	size_t index, size = value_type_count(v);
 
 	value * v_map = value_to_map(v);
 

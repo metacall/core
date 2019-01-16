@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <functional>
 
 /* -- Namespace Declarations -- */
 
@@ -25,7 +26,7 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 {
 	std::cout << "MetaCall Command Line Interface by Parra Studios" << std::endl;
 	std::cout << "Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl;
-	std::cout << std::endl << "A command line interface example as metacall wrapper" << std::endl;
+	std::cout << std::endl << "A command line interface example as MetaCall wrapper" << std::endl;
 
 	/* Command list */
 	std::cout << std::endl << "Command list:" << std::endl << std::endl;
@@ -55,7 +56,7 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 
 	/* Inspect command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
-	std::cout << "\t│ Show all functions loaded into MetaCall and their signature                            │" << std::endl;
+	std::cout << "\t│ Show all runtimes, modules and functions (with their signature) loaded into MetaCall   │" << std::endl;
 	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
 	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
 	std::cout << "\t│ inspect                                                                                │" << std::endl;
@@ -64,9 +65,12 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│ inspect                                                                                │" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ TODO                                                                                   │" << std::endl;
+	std::cout << "\t│ node {                                                                                 │" << std::endl;
+	std::cout << "\t│     concat {                                                                           │" << std::endl;
+	std::cout << "\t│         concat(left, right)                                                            │" << std::endl;
+	std::cout << "\t│     }                                                                                  │" << std::endl;
+	std::cout << "\t│ }                                                                                       │" << std::endl;
 	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
-	std::cout << std::endl << "\tinspect" << std::endl << std::endl;
 
 	/* Call command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -137,6 +141,35 @@ bool command_cb_debug(application & app, tokenizer & t)
 	std::cout << "[DEBUG]" << std::endl;
 
 	app.command_debug(*t.begin(), t);
+
+	return true;
+}
+
+bool command_cb_inspect(application & app, tokenizer &)
+{
+	size_t size = 0;
+
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	char * inspect_str = metacall_inspect(&size, allocator);
+
+	if (inspect_str == NULL || size == 0)
+	{
+		std::cout << "(null)" << std::endl;
+	}
+	else
+	{
+		app.command_inspect(inspect_str, size, allocator);
+	}
+
+	if (inspect_str != NULL)
+	{
+		metacall_allocator_free(allocator, inspect_str);
+	}
+
+	metacall_allocator_destroy(allocator);
 
 	return true;
 }
@@ -366,6 +399,8 @@ application::application(int argc, char * argv[]) : exit_condition(false)
 
 	define("debug", &command_cb_debug);
 
+	define("inspect", &command_cb_inspect);
+
 	define("call", &command_cb_call);
 
 	define("load", &command_cb_load);
@@ -428,6 +463,112 @@ void application::command_debug(const std::string & key, const tokenizer & t)
 	}
 
 	std::cout << "}" << std::endl;
+}
+
+void value_array_for_each(void * v, const std::function<void(void *)> & lambda)
+{
+	void ** v_array = static_cast<void **>(metacall_value_to_array(v));
+	size_t count = metacall_value_count(v);
+
+	std::for_each(v_array, v_array + count, lambda);
+}
+
+void value_map_for_each(void * v, const std::function<void(const char *, void *)> & lambda)
+{
+	void ** v_map = static_cast<void **>(metacall_value_to_map(v));
+	size_t count = metacall_value_count(v);
+
+	std::for_each(v_map, v_map + count, [&lambda](void * element)
+	{
+		void ** v_element = metacall_value_to_array(element);
+		lambda(metacall_value_to_string(v_element[0]), v_element[1]);
+	});
+}
+
+void application::command_inspect(const char * str, size_t size, void * allocator)
+{
+	void * v = metacall_deserialize(str, size, allocator);
+
+	if (v == NULL)
+	{
+		std::cout << "Invalid deserialization" << std::endl;
+
+		return;
+	}
+
+	/* Print run-times */
+	value_map_for_each(v, [](const char * key, void * modules)
+	{
+		std::cout << key;
+
+		if (metacall_value_count(modules) == 0)
+		{
+			std::cout << std::endl;
+			return;
+		}
+
+		std::cout << " {" << std::endl;
+
+		/* Print scripts */
+		value_array_for_each(modules, [](void * module)
+		{
+			/* Get module name */
+			void ** v_module_map = static_cast<void **>(metacall_value_to_map(module));
+			void ** v_module_name_tuple = metacall_value_to_array(v_module_map[0]);
+			const char * name = metacall_value_to_string(v_module_name_tuple[1]);
+
+			std::cout << "\t" << name << " { " << std::endl;
+
+			/* Get module functions */
+			void ** v_module_scope_tuple = metacall_value_to_array(v_module_map[1]);
+			void ** v_scope_map = metacall_value_to_map(v_module_scope_tuple[1]);
+			void ** v_scope_funcs_tuple = metacall_value_to_array(v_scope_map[1]);
+
+			if (metacall_value_count(v_scope_funcs_tuple[1]) == 0)
+			{
+				return;
+			}
+
+			value_array_for_each(v_scope_funcs_tuple[1], [](void * func)
+			{
+				/* Get function name */
+				void ** v_func_map = static_cast<void **>(metacall_value_to_map(func));
+				void ** v_func_tuple = metacall_value_to_array(v_func_map[0]);
+				const char * func_name = metacall_value_to_string(v_func_tuple[1]);
+
+				std::cout << "\t\t" << func_name << "(";
+
+				/* Get function signature */
+				void ** v_signature_tuple = metacall_value_to_array(v_func_map[1]);
+				void ** v_args_map = metacall_value_to_map(v_signature_tuple[1]);
+				void ** v_args_tuple = metacall_value_to_array(v_args_map[1]);
+				void ** v_args_array = metacall_value_to_array(v_args_tuple[1]);
+
+				size_t iterator = 0, count = metacall_value_count(v_args_tuple[1]);
+
+				value_array_for_each(v_args_array, [&iterator, &count](void * arg)
+				{
+					void ** v_arg_map = metacall_value_to_map(arg);
+					void ** v_arg_name_tupla = metacall_value_to_array(v_arg_map[0]);
+
+					std::cout << metacall_value_to_string(v_arg_name_tupla[1]);
+
+					if (iterator + 1 < count)
+					{
+						std::cout << ", ";
+					}
+
+					++iterator;
+				});
+
+				std::cout << ")" << std::endl;
+			});
+
+			std::cout << "\t}" << std::endl;
+		});
+
+		std::cout << "}" << std::endl;
+	});
 }
 
 void application::execute(tokenizer & t)

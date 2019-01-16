@@ -250,7 +250,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 
 		value * value_array = value_to_array(v);
 
-		size_t array_size = value_type_size(v) / sizeof(const value);
+		size_t array_size = value_type_count(v);
 
 		for (size_t iterator = 0; iterator < array_size; ++iterator)
 		{
@@ -269,7 +269,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 
 		value * value_map = value_to_map(v);
 
-		size_t map_size = value_type_size(v) / sizeof(const value);
+		size_t map_size = value_type_count(v);
 
 		for (size_t iterator = 0; iterator < map_size; ++iterator)
 		{

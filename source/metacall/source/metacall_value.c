@@ -128,6 +128,11 @@ size_t metacall_value_size(void * v)
 	return value_type_size(v);
 }
 
+size_t metacall_value_count(void * v)
+{
+	return value_type_count(v);
+}
+
 enum metacall_value_id metacall_value_id(void * v)
 {
 	type_id id = value_type_id(v);

@@ -183,7 +183,7 @@ TEST_F(serial_test, DefaultConstructor)
 		v = serial_deserialize(s, json_buffer_array, sizeof(json_buffer_array), allocator);
 
 		EXPECT_EQ((type_id) TYPE_ARRAY, (type_id) value_type_id(v));
-		EXPECT_EQ((size_t) json_buffer_array_size, (size_t) value_type_size(v) / sizeof(const value));
+		EXPECT_EQ((size_t) json_buffer_array_size, (size_t) value_type_count(v));
 
 		value * v_array = value_to_array(v);
 
@@ -209,7 +209,7 @@ TEST_F(serial_test, DefaultConstructor)
 		v = serial_deserialize(s, json_buffer_map, sizeof(json_buffer_map), allocator);
 
 		EXPECT_EQ((type_id) TYPE_MAP, (type_id) value_type_id(v));
-		EXPECT_EQ((size_t) json_buffer_map_size, (size_t) value_type_size(v) / sizeof(const value));
+		EXPECT_EQ((size_t) json_buffer_map_size, (size_t) value_type_count(v));
 
 		v_map = value_to_map(v);
 

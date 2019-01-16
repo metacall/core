@@ -79,6 +79,18 @@ REFLECT_API size_t value_type_size(value v);
 
 /**
 *  @brief
+*    Returns the amount of values this value contains
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Number of values @v represents
+*/
+REFLECT_API size_t value_type_count(void * v);
+
+/**
+*  @brief
 *    Provide type id of value
 *
 *  @param[in] v
