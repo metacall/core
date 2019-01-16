@@ -411,10 +411,8 @@ std::string user_directory()
 #endif
 }
 
-application::application(int argc, char * argv[]) : exit_condition(false)
+application::application(int argc, char * argv[]) : exit_condition(false), log_path(user_directory() + std::string("metacall.log"))
 {
-	std::string log_path = user_directory() + std::string("metacall.logs");
-
 	/* Initialize MetaCall logs */
 	metacall_log_file_type log_file =
 	{
@@ -423,6 +421,8 @@ application::application(int argc, char * argv[]) : exit_condition(false)
 
 	if (metacall_log(METACALL_LOG_FILE, (void *)&log_file) != 0)
 	{
+		std::cout << "Error initializing the logs..." << std::endl;
+
 		/* Exit from application */
 		shutdown();
 	}
@@ -500,6 +500,8 @@ void application::run()
 
 void application::shutdown()
 {
+	std::cout << "Log file written in: " << log_path << std::endl;
+
 	exit_condition = true;
 }
 

@@ -283,6 +283,8 @@ class application
 	script_list scripts;	/**< Vector containing a list of script names */
 
 	command_table commands;	/**< Hash table from command strings to command handlers */
+
+	std::string log_path;	/**< Path where logs are located */
 };
 
 } /* namespace metacallcli */
