@@ -78,7 +78,10 @@ static int log_policy_stream_file_write(log_policy policy, const void * buffer, 
 {
 	log_policy_stream_file_data file_data = log_policy_instance(policy);
 
-	if (fwrite(buffer, 1, size, file_data->file) != size)
+	size_t length = size > 0 ? size - 1 : 0;
+
+	/* Do not write null character */
+	if (fwrite(buffer, 1, length, file_data->file) != length)
 	{
 		return 1;
 	}

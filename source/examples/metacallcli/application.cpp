@@ -16,6 +16,16 @@
 #include <iostream>
 #include <functional>
 
+/* Includes for home path */
+#if defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+#	include <unistd.h>
+#	include <sys/types.h>
+#	include <pwd.h>
+#endif
+
 /* -- Namespace Declarations -- */
 
 using namespace metacallcli;
@@ -69,7 +79,7 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│     concat {                                                                           │" << std::endl;
 	std::cout << "\t│         concat(left, right)                                                            │" << std::endl;
 	std::cout << "\t│     }                                                                                  │" << std::endl;
-	std::cout << "\t│ }                                                                                       │" << std::endl;
+	std::cout << "\t│ }                                                                                      │" << std::endl;
 	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
 
 	/* Call command */
@@ -373,8 +383,50 @@ bool application::clear(const std::string & tag, const std::string & script)
 	return true;
 }
 
+std::string user_directory()
+{
+#if defined(WIN32) || defined(_WIN32) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+
+	const char * path = getenv("USERPROFILE");
+
+	return std::string(path) + std::string("\\");
+
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+
+	const char * path = getenv("HOME");
+
+	if (path == NULL)
+	{
+		path = getpwuid(getuid())->pw_dir;
+	}
+
+	return std::string(path) + std::string("/");
+#else
+	return std::string("~/");
+#endif
+}
+
 application::application(int argc, char * argv[]) : exit_condition(false)
 {
+	std::string log_path = user_directory() + std::string("metacall.logs");
+
+	/* Initialize MetaCall logs */
+	metacall_log_file_type log_file =
+	{
+		log_path.c_str(), "w"
+	};
+
+	if (metacall_log(METACALL_LOG_FILE, (void *)&log_file) != 0)
+	{
+		/* Exit from application */
+		shutdown();
+	}
+
 	/* Initialize MetaCall */
 	if (metacall_initialize() != 0)
 	{
