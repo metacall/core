@@ -28,10 +28,10 @@
 /* -- Definitions -- */
 
 #define LOADER_LIBRARY_PATH			"LOADER_LIBRARY_PATH"
-#define LOADER_DEFAULT_LIBRARY_PATH	"."
+#define LOADER_LIBRARY_DEFAULT_PATH	"."
 
 #define LOADER_SCRIPT_PATH			"LOADER_SCRIPT_PATH"
-#define LOADER_DEFAULT_SCRIPT_PATH	"scripts"
+#define LOADER_SCRIPT_DEFAULT_PATH	"scripts"
 
 /* -- Forward Declarations -- */
 
@@ -116,7 +116,11 @@ void loader_initialize()
 
 	if (l->library_path == NULL)
 	{
-		static const char loader_library_default_path[] = LOADER_DEFAULT_LIBRARY_PATH;
+		#if defined(LOADER_LIBRARY_INSTALL_PATH)
+			static const char loader_library_default_path[] = LOADER_LIBRARY_INSTALL_PATH;
+		#else
+			static const char loader_library_default_path[] = LOADER_LIBRARY_DEFAULT_PATH;
+		#endif /* LOADER_LIBRARY_INSTALL_PATH */
 
 		l->library_path = environment_variable_path_create(LOADER_LIBRARY_PATH, loader_library_default_path);
 
@@ -125,7 +129,7 @@ void loader_initialize()
 
 	if (l->script_path == NULL)
 	{
-		static const char loader_script_default_path[] = LOADER_DEFAULT_SCRIPT_PATH;
+		static const char loader_script_default_path[] = LOADER_SCRIPT_DEFAULT_PATH;
 
 		l->script_path = environment_variable_path_create(LOADER_SCRIPT_PATH, loader_script_default_path);
 

@@ -21,7 +21,7 @@
 /* -- Definitions -- */
 
 #define SERIAL_LIBRARY_PATH			"SERIAL_LIBRARY_PATH"
-#define SERIAL_DEFAULT_LIBRARY_PATH	"serials"
+#define SERIAL_LIBRARY_DEFAULT_PATH	"serials"
 
 /* -- Member Data -- */
 
@@ -100,7 +100,13 @@ int serial_singleton_initialize()
 	{
 		static const char serial_library_path[] = SERIAL_LIBRARY_PATH;
 
-		singleton->library_path = environment_variable_path_create(serial_library_path, SERIAL_DEFAULT_LIBRARY_PATH);
+		#if defined(SERIAL_LIBRARY_INSTALL_PATH)
+			static const char serial_library_default_path[] = SERIAL_LIBRARY_INSTALL_PATH;
+		#else
+			static const char serial_library_default_path[] = SERIAL_LIBRARY_DEFAULT_PATH;
+		#endif /* SERIAL_LIBRARY_INSTALL_PATH */
+
+		singleton->library_path = environment_variable_path_create(serial_library_path, serial_library_default_path);
 
 		if (singleton->library_path == NULL)
 		{

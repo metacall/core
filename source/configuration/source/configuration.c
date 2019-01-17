@@ -43,13 +43,23 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 	{
 		static const char configuration_path[] = CONFIGURATION_PATH;
 
-		const char * env_path = environment_variable_get(configuration_path, CONFIGURATION_DEFAULT_PATH);
+		#if defined(CONFIGURATION_INSTALL_PATH)
+			static const char configuration_default_path[] = CONFIGURATION_INSTALL_PATH;
+		#else
+			static const char configuration_default_path[] = CONFIGURATION_DEFAULT_PATH;
+		#endif /* CONFIGURATION_INSTALL_PATH */
+
+		const char * env_path = environment_variable_get(configuration_path, configuration_default_path);
 
 		global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, env_path, NULL);
+
+		log_write("metacall", LOG_LEVEL_INFO, "Global configuration loaded from %s", env_path);
 	}
 	else
 	{
 		global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, path, NULL);
+
+		log_write("metacall", LOG_LEVEL_INFO, "Global configuration loaded from %s", path);
 	}
 
 	if (global == NULL)

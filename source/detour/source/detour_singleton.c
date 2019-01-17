@@ -21,7 +21,7 @@
 /* -- Definitions -- */
 
 #define DETOUR_LIBRARY_PATH			"DETOUR_LIBRARY_PATH"
-#define DETOUR_DEFAULT_LIBRARY_PATH	"detours"
+#define DETOUR_LIBRARY_DEFAULT_PATH	"detours"
 
 /* -- Member Data -- */
 
@@ -100,7 +100,13 @@ int detour_singleton_initialize()
 	{
 		static const char detour_library_path[] = DETOUR_LIBRARY_PATH;
 
-		singleton->library_path = environment_variable_path_create(detour_library_path, DETOUR_DEFAULT_LIBRARY_PATH);
+		#if defined(DETOUR_LIBRARY_INSTALL_PATH)
+			static const char detour_library_default_path[] = DETOUR_LIBRARY_INSTALL_PATH;
+		#else
+			static const char detour_library_default_path[] = DETOUR_LIBRARY_DEFAULT_PATH;
+		#endif /* DETOUR_LIBRARY_INSTALL_PATH */
+
+		singleton->library_path = environment_variable_path_create(detour_library_path, detour_library_default_path);
 
 		if (singleton->library_path == NULL)
 		{
