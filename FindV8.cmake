@@ -54,6 +54,7 @@ set(V8_PATHS
 	~/Library/Frameworks
 	/Library/Frameworks
 	/usr/local
+	/usr/lib
 	/usr
 	/sw # Fink
 	/opt/local # DarwinPorts
@@ -241,6 +242,23 @@ else()
 	set(V8_LIBRARIES ${V8_LIBRARY})
 endif()
 
+set(V8_LIBRARIES_VERSION)
+
+# Set version libraries
+if (V8_LIBRARY_DEBUG)
+	set(V8_LIBRARIES_VERSION
+		${V8_LIBRARIES_VERSION}
+		${V8_LIBRARY_DEBUG}.${V8_FIND_VERSION}
+	)
+endif()
+
+if (V8_LIBRARY_RELEASE)
+	set(V8_LIBRARIES_VERSION
+		${V8_LIBRARIES_VERSION}
+		${V8_LIBRARY_RELEASE}.${V8_FIND_VERSION}
+	)
+endif()
+
 find_package_handle_standard_args(V8 DEFAULT_MSG V8_LIBRARY V8_INCLUDE_DIR)
 
 # Base build
@@ -346,6 +364,7 @@ endif()
 if(_V8_CMAKE_DEBUG)
 	message(STATUS "V8_INCLUDE_DIR: ${V8_INCLUDE_DIR}")
 	message(STATUS "V8_LIBRARIES: ${V8_LIBRARIES}")
+	message(STATUS "V8_LIBRARIES_VERSION: ${V8_LIBRARIES_VERSION}")
 	message(STATUS "V8_VERSION: ${V8_VERSION}")
 	message(STATUS "V8_VERSION_HEX: ${V8_VERSION_HEX}")
 	message(STATUS "V8_EXECUTABLE: ${V8_EXECUTABLE}")
