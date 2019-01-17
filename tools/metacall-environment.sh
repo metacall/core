@@ -153,8 +153,6 @@ sub_netcore(){
 
 # V8 Repository
 sub_v8repo(){
-	# TODO: Switch repositories from ubuntu to debian
-
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get -y --no-install-recommends install add-apt-key

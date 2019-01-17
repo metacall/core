@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(V8 5.1)
+find_package(V8 5.1.117)
 
 if(NOT V8_FOUND)
 	message(STATUS "V8 libraries not found")
@@ -223,4 +223,11 @@ install(TARGETS ${target}
 	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
+)
+
+# Runtime (pack the runtime meanwhile V8 is not distributed correctly as a library)
+install(FILES
+	${V8_LIBRARIES_VERSION}
+	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
 )
