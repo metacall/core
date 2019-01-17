@@ -75,9 +75,9 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│ inspect                                                                                │" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ node {                                                                                 │" << std::endl;
-	std::cout << "\t│     concat {                                                                           │" << std::endl;
-	std::cout << "\t│         concat(left, right)                                                            │" << std::endl;
+	std::cout << "\t│ runtime node {                                                                         |" << std::endl;
+	std::cout << "\t│     module concat {                                                                    │" << std::endl;
+	std::cout << "\t│         function concat(left, right)                                                   │" << std::endl;
 	std::cout << "\t│     }                                                                                  │" << std::endl;
 	std::cout << "\t│ }                                                                                      │" << std::endl;
 	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
@@ -553,7 +553,7 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 	/* Print run-times */
 	value_map_for_each(v, [](const char * key, void * modules)
 	{
-		std::cout << key;
+		std::cout << "runtime " << key;
 
 		if (metacall_value_count(modules) == 0)
 		{
@@ -571,7 +571,7 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 			void ** v_module_name_tuple = metacall_value_to_array(v_module_map[0]);
 			const char * name = metacall_value_to_string(v_module_name_tuple[1]);
 
-			std::cout << "\t" << name << " { " << std::endl;
+			std::cout << "\tmodule" << name << " { " << std::endl;
 
 			/* Get module functions */
 			void ** v_module_scope_tuple = metacall_value_to_array(v_module_map[1]);
@@ -590,7 +590,7 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 				void ** v_func_tuple = metacall_value_to_array(v_func_map[0]);
 				const char * func_name = metacall_value_to_string(v_func_tuple[1]);
 
-				std::cout << "\t\t" << func_name << "(";
+				std::cout << "\t\tfunction " << func_name << "(";
 
 				/* Get function signature */
 				void ** v_signature_tuple = metacall_value_to_array(v_func_map[1]);
