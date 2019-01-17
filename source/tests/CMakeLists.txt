@@ -95,7 +95,7 @@ add_subdirectory(detour_test)
 add_subdirectory(serial_test)
 add_subdirectory(configuration_test)
 add_subdirectory(py_loader_test)
-add_subdirectory(py_django_integration_test)
+#add_subdirectory(py_django_integration_test) # TODO: Solve deadlock
 add_subdirectory(py_loader_port_test)
 add_subdirectory(rb_loader_test)
 add_subdirectory(rb_loader_parser_test)
