@@ -45,16 +45,21 @@ sub_build() {
 	docker-compose -f docker-compose.yml build --force-rm core
 }
 
-# Build MetaCall Docker Compose for GitLab (link manually dockerignore files)
-sub_build_gitlab() {
+# Build MetaCall Docker Compose with caching (link manually dockerignore files)
+sub_build_cache() {
+	if [ -z "$IMAGE_REGISTRY" ]; then
+		echo "Error: IMAGE_REGISTRY variable not defined"
+		exit 1
+	fi
+
 	ln -sf tools/base/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build deps
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build dev
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY dev
 
 	ln -sf tools/core/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.gitlab-ci.yml build core
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY core
 }
 
 # Push MetaCall Docker Compose
@@ -108,7 +113,7 @@ sub_help() {
 	echo "Options:"
 	echo "	pull"
 	echo "	build"
-	echo "	build-gitlab"
+	echo "	build-cache"
 	echo "	push"
 	echo "	pack"
 	echo ""
@@ -121,8 +126,8 @@ case "$1" in
 	build)
 		sub_build
 		;;
-	build-gitlab)
-		sub_build_gitlab
+	build-cache)
+		sub_build_cache
 		;;
 	push)
 		sub_push

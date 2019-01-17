@@ -25,22 +25,39 @@ before_script:
 
 stages:
   - build
-#  - pack
+  - package
 
 variables:
   GIT_SUBMODULE_STRATEGY: recursive
+  IMAGE_REGISTRY: registry.gitlab.com
   IMAGE_NAME: registry.gitlab.com/$CI_PROJECT_PATH
   DOCKER_HOST: tcp://docker:2375
   DOCKER_DRIVER: overlay2
+  ARTIFACTS_PATH: $CI_PROJECT_DIR/artifacts
 
 build:
-  type: build
+  stage: build
   image:
     name: docker/compose:1.23.2
     entrypoint: [""]
   script:
     - $CI_PROJECT_DIR/docker-compose.sh pull
-    - $CI_PROJECT_DIR/docker-compose.sh build-gitlab
+    - $CI_PROJECT_DIR/docker-compose.sh build-cache
     - $CI_PROJECT_DIR/docker-compose.sh push
   only: 
     - master
+    - tags
+
+package:
+  stage: package
+  image:
+    name: docker/compose:1.23.2
+    entrypoint: [""]
+  script:
+    - $CI_PROJECT_DIR/docker-compose.sh pull
+    - $CI_PROJECT_DIR/docker-compose.sh pack
+  artifacts:
+    paths:
+      - $CI_PROJECT_DIR/artifacts/packages/*
+  only:
+    - tags

@@ -23,14 +23,14 @@ services:
   deps:
     build:
       cache_from:
-        - registry.gitlab.com/metacall/core:deps
+        - ${METACALL_REGISTRY}/metacall/core:deps
 
   dev:
     build:
       cache_from:
-        - registry.gitlab.com/metacall/core:dev
+        - ${METACALL_REGISTRY}/metacall/core:dev
 
   core:
     build:
       cache_from:
-        - registry.gitlab.com/metacall/core:latest
+        - ${METACALL_REGISTRY}/metacall/core:runtime
