@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 #
 #	MetaCall Dependencies Bash Script by Parra Studios
@@ -19,38 +19,9 @@
 #	limitations under the License.
 #
 
-function __wget() {
-	: ${DEBUG:=0}
-	local URL=$1
-	local tag="Connection: close"
-	local mark=0
-
-	if [ -z "${URL}" ]; then
-		printf "Usage: %s \"URL\" [e.g.: %s http://www.google.com/]" \
-			   "${FUNCNAME[0]}" "${FUNCNAME[0]}"
-		return 1;
-	fi
-	read proto server path <<<$(echo ${URL//// })
-	DOC=/${path// //}
-	HOST=${server//:*}
-	PORT=${server//*:}
-	[[ x"${HOST}" == x"${PORT}" ]] && PORT=80
-	[[ $DEBUG -eq 1 ]] && echo "HOST=$HOST"
-	[[ $DEBUG -eq 1 ]] && echo "PORT=$PORT"
-	[[ $DEBUG -eq 1 ]] && echo "DOC =$DOC"
-
-	exec 3<>/dev/tcp/${HOST}/$PORT
-	echo -en "GET ${DOC} HTTP/1.1\r\nHost: ${HOST}\r\n${tag}\r\n\r\n" >&3
-	while read line; do
-		[[ $mark -eq 1 ]] && echo $line
-		if [[ "${line}" =~ "${tag}" ]]; then
-			mark=1
-		fi
-	done <&3
-	exec 3>&-
-}
-
 # Download and install NetCore
-__wget https://dot.net/v1/dotnet-install.sh &> dotnet-install.sh \
+curl -s https://dot.net/v1/dotnet-install.sh &> dotnet-install.sh \
 	&& chmod +x dotnet-install.sh \
-	&& ./dotnet-install.sh --runtime dotnet --channel 1.0 --version 1.1.10
+	&& ./dotnet-install.sh --runtime dotnet --channel 1.0 --version 1.1.10 --install-dir /usr/share/dotnet \
+	&& ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet \
+	&& rm dotnet-install.sh
