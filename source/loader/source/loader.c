@@ -28,10 +28,10 @@
 /* -- Definitions -- */
 
 #define LOADER_LIBRARY_PATH			"LOADER_LIBRARY_PATH"
-#define LOADER_LIBRARY_DEFAULT_PATH	"."
+#define LOADER_LIBRARY_DEFAULT_PATH	"loaders"
 
 #define LOADER_SCRIPT_PATH			"LOADER_SCRIPT_PATH"
-#define LOADER_SCRIPT_DEFAULT_PATH	"scripts"
+#define LOADER_SCRIPT_DEFAULT_PATH	"."
 
 /* -- Forward Declarations -- */
 

@@ -137,10 +137,10 @@ This environment variables are optional, in case that you want to modify default
 | **`DETOUR_LIBRARY_PATH`** | Directory where detour plugins to be loaded are located          |          **`detours`**           |
 | **`SERIAL_LIBRARY_PATH`** | Directory where serial plugins to be loaded are located          |          **`serials`**           |
 | **`CONFIGURATION_PATH`**  | File path where the **METACALL** global configuration is located | **`configurations/global.json`** |
-| **`LOADER_LIBRARY_PATH`** | Directory where loader plugins to be loaded are located          | **`${execution_path}`** &#x00B9; |
-| **`LOADER_SCRIPT_PATH`**  | Directory where scripts to be loaded are located                 |          **`scripts`**           |
+| **`LOADER_LIBRARY_PATH`** | Directory where loader plugins to be loaded are located          |          **`loaders`**           |
+| **`LOADER_SCRIPT_PATH`**  | Directory where scripts to be loaded are located                 | **`${execution_path}`** &#x00B9; |
 
-1) **`${execution_path}`** defines the path where the program is executed, **`.`** in Linux.
+&#x00B9; **`${execution_path}`** defines the path where the program is executed, **`.`** in Linux.
 
 ### 4.3 Examples
 
