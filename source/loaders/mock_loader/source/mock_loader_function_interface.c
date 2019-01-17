@@ -133,7 +133,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 			}
 			else
 			{
-				log_write("metacall", LOG_LEVEL_ERROR "Unrecognized value: %p", args[args_count]);
+				log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value: %p", args[args_count]);
 			}
 		}
 

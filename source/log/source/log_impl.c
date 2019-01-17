@@ -68,7 +68,7 @@ log_impl log_impl_create(const char * name)
 		#if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)
 			impl->level = LOG_LEVEL_DEBUG;
 		#else
-			impl->level = LOG_LEVEL_ERROR;
+			impl->level = LOG_LEVEL_INFO;
 		#endif
 
 		for (iterator = 0; iterator < LOG_ASPECT_SIZE; ++iterator)
