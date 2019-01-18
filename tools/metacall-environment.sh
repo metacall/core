@@ -155,7 +155,6 @@ sub_netcore(){
 sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get -y --no-install-recommends install add-apt-key
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install software-properties-common
 
 	# V8 5.1
@@ -183,18 +182,18 @@ sub_v8repo(){
 		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.2-dev
 	fi
 
-	# V8 5.8
-	if [ $INSTALL_V8REPO58 = 1 ]; then
-		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.8
-		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.8-dev
-	fi
-
 	# V8 5.7
 	if [ $INSTALL_V8REPO57 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
 		$SUDO_CMD apt-get update
 		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.7-dev
+	fi
+
+	# V8 5.8
+	if [ $INSTALL_V8REPO58 = 1 ]; then
+		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv8-archived.list"
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu57 libv8-5.8.283 libv8-5.8-dev
 	fi
 }
 

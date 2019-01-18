@@ -7,7 +7,9 @@ endif()
 # External dependencies
 #
 
-find_package(V8 5.1.117)
+set(ICU_FIND_VERSION 52.1)
+
+find_package(V8 5.1.117) # 5.8.283
 
 if(NOT V8_FOUND)
 	message(STATUS "V8 libraries not found")
@@ -227,7 +229,7 @@ install(TARGETS ${target}
 
 # Runtime (pack the runtime meanwhile V8 is not distributed correctly as a library)
 install(FILES
-	${V8_LIBRARIES_VERSION}
+	${V8_LIBRARIES_DEPENDS}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

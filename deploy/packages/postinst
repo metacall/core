@@ -19,9 +19,13 @@
 #	limitations under the License.
 #
 
+NETCORE_INSTALL_DIR=/usr/share/dotnet
+
 # Download and install NetCore
-curl -s https://dot.net/v1/dotnet-install.sh &> dotnet-install.sh \
-	&& chmod +x dotnet-install.sh \
-	&& ./dotnet-install.sh --runtime dotnet --channel 1.0 --version 1.1.10 --install-dir /usr/share/dotnet \
-	&& ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet \
-	&& rm dotnet-install.sh
+if [ ! -f $NETCORE_INSTALL_DIR/dotnet ]; then
+	curl -s https://dot.net/v1/dotnet-install.sh &> dotnet-install.sh \
+		&& chmod +x dotnet-install.sh \
+		&& ./dotnet-install.sh --runtime dotnet --channel 1.0 --version 1.1.10 --install-dir $NETCORE_INSTALL_DIR \
+		&& ln -s $NETCORE_INSTALL_DIR/dotnet /usr/bin/dotnet \
+		&& rm dotnet-install.sh
+fi
