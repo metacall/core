@@ -25,17 +25,13 @@ if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
 	return()
 endif()
 
-# TODO
+set(target python-frontend-migrate)
 
-# set(target python-frontend-migrate)
+add_custom_target(${target} ALL
+	COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR};$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} ${LOADER_SCRIPT_PATH}/manage.py migrate
+)
 
-# add_custom_target(${target} ALL
-# 	COMMAND ${PYTHON_EXECUTABLE} -m pip install --upgrade pip
-# 	COMMAND ${PYTHON_EXECUTABLE} -m pip install --install-option="--prefix=${CMAKE_CURRENT_BINARY_DIR}" -r ${CMAKE_CURRENT_SOURCE_DIR}/requirements.txt
-# 	COMMAND ${CMAKE_COMMAND} -E env "PYTHONPATH=${CMAKE_CURRENT_BINARY_DIR};$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} ${LOADER_SCRIPT_PATH}/manage.py migrate
-# )
-
-# set_target_properties(${target}
-# 	PROPERTIES
-# 	FOLDER "${IDE_FOLDER}/Python"
-# )
+set_target_properties(${target}
+	PROPERTIES
+	FOLDER "${IDE_FOLDER}/Python"
+)
