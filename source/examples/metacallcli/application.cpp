@@ -571,7 +571,7 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 			void ** v_module_name_tuple = metacall_value_to_array(v_module_map[0]);
 			const char * name = metacall_value_to_string(v_module_name_tuple[1]);
 
-			std::cout << "\tmodule" << name << " { " << std::endl;
+			std::cout << "\tmodule " << name << " { " << std::endl;
 
 			/* Get module functions */
 			void ** v_module_scope_tuple = metacall_value_to_array(v_module_map[1]);
