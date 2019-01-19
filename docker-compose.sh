@@ -88,6 +88,11 @@ sub_pack(){
 		exit 1
 	fi
 
+	if [ -z "$IMAGE_NAME" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
 	# Get path where docker-compose.sh is located
 	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -95,7 +100,7 @@ sub_pack(){
 	. $BASE_DIR/.env
 
 	# Get layer with the tag METACALL_CLEAR_OPTIONS to hook into the previous layer of the clean command
-	DOCKER_HOOK_CLEAR=`docker image history --no-trunc metacall/core_dev | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
+	DOCKER_HOOK_CLEAR=`docker image history --no-trunc $IMAGE_NAME:runtime | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
 
 	# Run the package builds
 	docker run --name metacall_core_pack -it $DOCKER_HOOK_CLEAR /bin/bash -c ' \
