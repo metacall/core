@@ -108,11 +108,17 @@ sub_pack(){
 	# Run the package builds
 	docker run --name metacall_core_pack -i $DOCKER_HOOK_CLEAR /bin/bash -c 'cd build && make pack'
 
+	# Create artifacts folder
+	mkdir -p $ARTIFACTS_PATH
+
 	# Copy artifacts
 	docker cp metacall_core_pack:$METACALL_PATH/build/packages $ARTIFACTS_PATH
 
 	# Remove docker instance
 	docker rm metacall_core_pack
+
+	# List generated artifacts
+	ls -la $ARTIFACTS_PATH/packages
 }
 
 # Help

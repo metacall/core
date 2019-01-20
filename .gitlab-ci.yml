@@ -60,6 +60,6 @@ package:
     - $CI_PROJECT_DIR/docker-compose.sh pack
   artifacts:
     paths:
-      - $CI_PROJECT_DIR/artifacts/packages/*
+      - $CI_PROJECT_DIR/artifacts/packages
   only:
     - tags
