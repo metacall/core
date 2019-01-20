@@ -31,8 +31,10 @@ docker push $DOCKER_REPO:deps
 docker tag metacall/core:dev $DOCKER_REPO:dev
 docker push $DOCKER_REPO:dev
 
-# Tag the core image and push it
-docker tag metacall/core:latest $DOCKER_REPO:runtime
-docker tag metacall/core:latest $DOCKER_REPO:latest
+# Tag the runtime image and push it
+docker tag metacall/core:runtime $DOCKER_REPO:runtime
 docker push $DOCKER_REPO:runtime
+
+# Tag the latest image and push it (alias for runtime)
+docker tag metacall/core:runtime $DOCKER_REPO:latest
 docker push $DOCKER_REPO:latest

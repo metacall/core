@@ -69,15 +69,20 @@ sub_push(){
 		exit 1
 	fi
 
+	# Push deps image
 	docker tag metacall/core:deps $IMAGE_NAME:deps
 	docker push $IMAGE_NAME:deps
 
+	# Push dev image
 	docker tag metacall/core:dev $IMAGE_NAME:dev
 	docker push $IMAGE_NAME:dev
 
-	docker tag metacall/core:latest $IMAGE_NAME:runtime
-	docker tag metacall/core:latest $IMAGE_NAME:latest
+	# Push runtime image
+	docker tag metacall/core:runtime $IMAGE_NAME:runtime
 	docker push $IMAGE_NAME:runtime
+
+	# Push runtime as a latest
+	docker tag metacall/core:runtime $IMAGE_NAME:latest
 	docker push $IMAGE_NAME:latest
 }
 
