@@ -102,13 +102,16 @@ sub_pack(){
 	# Get layer with the tag METACALL_CLEAR_OPTIONS to hook into the previous layer of the clean command
 	DOCKER_HOOK_CLEAR=`docker image history --no-trunc metacall/core:dev | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
 
-	# Run the package builds
-	docker run --name metacall_core_pack -it $DOCKER_HOOK_CLEAR /bin/bash -c ' \
-		cd build && make pack \
-	'
+	# Show the base layer for the build
+	echo "Generating the pack from layer: ${DOCKER_HOOK_CLEAR}"
 
+	# Run the package builds
+	docker run --name metacall_core_pack -i $DOCKER_HOOK_CLEAR /bin/bash -c 'cd build && make pack'
+
+	# Copy artifacts
 	docker cp metacall_core_pack:$METACALL_PATH/build/packages $ARTIFACTS_PATH
 
+	# Remove docker instance
 	docker rm metacall_core_pack
 }
 
