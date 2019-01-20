@@ -30,7 +30,7 @@ sub_pull() {
 
 	docker pull $IMAGE_NAME:dev || true
 
-	docker pull $IMAGE_NAME:latest || true
+	docker pull $IMAGE_NAME:runtime || true
 }
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
@@ -100,7 +100,7 @@ sub_pack(){
 	. $BASE_DIR/.env
 
 	# Get layer with the tag METACALL_CLEAR_OPTIONS to hook into the previous layer of the clean command
-	DOCKER_HOOK_CLEAR=`docker image history --no-trunc $IMAGE_NAME:runtime | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
+	DOCKER_HOOK_CLEAR=`docker image history --no-trunc $IMAGE_NAME:dev | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
 
 	# Run the package builds
 	docker run --name metacall_core_pack -it $DOCKER_HOOK_CLEAR /bin/bash -c ' \
