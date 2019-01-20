@@ -21,16 +21,19 @@ version: "3.7"
 
 services:
   deps:
+    image: metacall/core:deps
     build:
       cache_from:
-        - ${METACALL_REGISTRY}/metacall/core:deps
+        - ${IMAGE_REGISTRY}/metacall/core:deps
 
   dev:
+    image: metacall/core:dev
     build:
       cache_from:
-        - ${METACALL_REGISTRY}/metacall/core:dev
+        - ${IMAGE_REGISTRY}/metacall/core:dev
 
-  core:
+  runtime:
+    image: metacall/core:runtime
     build:
       cache_from:
-        - ${METACALL_REGISTRY}/metacall/core:runtime
+        - ${IMAGE_REGISTRY}/metacall/core:runtime

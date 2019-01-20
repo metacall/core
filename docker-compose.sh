@@ -53,13 +53,13 @@ sub_build_cache() {
 	fi
 
 	ln -sf tools/base/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY deps
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY dev
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build dev
 
 	ln -sf tools/core/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY runtime
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build runtime
 }
 
 # Push MetaCall Docker Compose
