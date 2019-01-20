@@ -21,7 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall Depends node image
-FROM ${METACALL_BASE_IMAGE} AS core_deps_node
+FROM ${METACALL_BASE_IMAGE} AS deps_node
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -61,7 +61,7 @@ RUN cmake \
 	&& rm -rf $METACALL_PATH
 
 # MetaCall Depends base image
-FROM ${METACALL_BASE_IMAGE} AS core_deps
+FROM ${METACALL_BASE_IMAGE} AS deps
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -91,7 +91,7 @@ ENV NUGET_XMLDOC_MODE=skip
 WORKDIR $METACALL_PATH
 
 # Copy MetaCall NodeJS dependencies
-COPY --from=core_deps_node /usr/local/lib/libnode.so.* /usr/local/lib/
+COPY --from=deps_node /usr/local/lib/libnode.so.* /usr/local/lib/
 
 # Copy MetaCall tool dependecies
 COPY tools/metacall-environment.sh tools/nobuildtest.patch $METACALL_TOOLS_PATH/

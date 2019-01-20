@@ -31,4 +31,4 @@ LTTNG_UST_REGISTER_TIMEOUT=0
 NUGET_XMLDOC_MODE=skip
 
 # Override docker image
-IMAGE_NAME=metacall/core_deps
+IMAGE_NAME=metacall/core:deps

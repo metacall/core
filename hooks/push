@@ -24,11 +24,11 @@ echo "[***] Push hook running"
 echo "[***]  - Tagging and pushing $DOCKER_REPO:{deps, dev, latest}"
 
 # Tag the deps image and push it
-docker tag metacall/core_deps:latest $DOCKER_REPO:deps
+docker tag metacall/core:deps $DOCKER_REPO:deps
 docker push $DOCKER_REPO:deps
 
 # Tag the dev image and push it
-docker tag metacall/core_dev:latest $DOCKER_REPO:dev
+docker tag metacall/core:dev $DOCKER_REPO:dev
 docker push $DOCKER_REPO:dev
 
 # Tag the core image and push it

@@ -37,4 +37,4 @@ SERIAL_LIBRARY_PATH=$METACALL_PATH/build
 DETOUR_LIBRARY_PATH=$METACALL_PATH/build
 
 # Override docker image
-IMAGE_NAME=metacall/core_dev
+IMAGE_NAME=metacall/core:dev

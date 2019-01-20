@@ -42,7 +42,7 @@ sub_build() {
 	docker-compose -f docker-compose.yml build --force-rm dev
 
 	ln -sf tools/core/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm core
+	docker-compose -f docker-compose.yml build --force-rm runtime
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -59,7 +59,7 @@ sub_build_cache() {
 	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY dev
 
 	ln -sf tools/core/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY core
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build --build-arg METACALL_REGISTRY=$IMAGE_REGISTRY runtime
 }
 
 # Push MetaCall Docker Compose
@@ -69,10 +69,10 @@ sub_push(){
 		exit 1
 	fi
 
-	docker tag metacall/core_deps:latest $IMAGE_NAME:deps
+	docker tag metacall/core:deps $IMAGE_NAME:deps
 	docker push $IMAGE_NAME:deps
 
-	docker tag metacall/core_dev:latest $IMAGE_NAME:dev
+	docker tag metacall/core:dev $IMAGE_NAME:dev
 	docker push $IMAGE_NAME:dev
 
 	docker tag metacall/core:latest $IMAGE_NAME:runtime
@@ -88,11 +88,6 @@ sub_pack(){
 		exit 1
 	fi
 
-	if [ -z "$IMAGE_NAME" ]; then
-		echo "Error: IMAGE_NAME variable not defined"
-		exit 1
-	fi
-
 	# Get path where docker-compose.sh is located
 	BASE_DIR="$(cd "$(dirname "$0")" && pwd)"
 
@@ -100,7 +95,7 @@ sub_pack(){
 	. $BASE_DIR/.env
 
 	# Get layer with the tag METACALL_CLEAR_OPTIONS to hook into the previous layer of the clean command
-	DOCKER_HOOK_CLEAR=`docker image history --no-trunc $IMAGE_NAME:dev | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
+	DOCKER_HOOK_CLEAR=`docker image history --no-trunc metacall/core:dev | grep 'ARG METACALL_CLEAR_OPTIONS' | awk '{print $1}'`
 
 	# Run the package builds
 	docker run --name metacall_core_pack -it $DOCKER_HOOK_CLEAR /bin/bash -c ' \

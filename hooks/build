@@ -19,11 +19,11 @@
 #	limitations under the License.
 #
 
-# Run docker core_deps image builder
+# Run docker deps image builder
 bash -c "cd tools/base && ./hooks/build"
 
-# Run docker core_dev image builder
+# Run docker dev image builder
 bash -c "cd tools/dev && ./hooks/build"
 
-# Run docker core image builder
+# Run docker runtime image builder
 bash -c "cd tools/core && ./hooks/build"

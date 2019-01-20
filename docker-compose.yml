@@ -21,7 +21,7 @@ version: "3.7"
 
 services:
   deps:
-    image: metacall/core_deps
+    image: metacall/core:deps
     container_name: metacall_core_deps
     build:
       context: .
@@ -38,7 +38,7 @@ services:
       NUGET_XMLDOC_MODE: skip
 
   dev:
-    image: metacall/core_dev
+    image: metacall/core:dev
     container_name: metacall_core_dev
     build:
       context: .
@@ -60,9 +60,9 @@ services:
     depends_on:
       - deps
 
-  core:
-    image: metacall/core
-    container_name: metacall_core
+  runtime:
+    image: metacall/core:runtime
+    container_name: metacall_core_runtime
     build:
       context: .
       dockerfile: tools/core/Dockerfile

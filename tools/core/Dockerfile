@@ -21,7 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall Depends builder image
-FROM metacall/core_dev AS builder
+FROM metacall/core:dev AS builder
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
