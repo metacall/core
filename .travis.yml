@@ -33,6 +33,7 @@ dist: trusty
 env:
   global:
     - DOCKER_COMPOSE_VERSION: 1.22.0
+    - GHR_VERSION: 0.12.0
     - GIT_SUBMODULE_STRATEGY: recursive
     - IMAGE_REGISTRY: registry.hub.docker.com
     - IMAGE_NAME: registry.hub.docker.com/$TRAVIS_REPO_SLUG
@@ -45,7 +46,7 @@ addons:
 
 before_install:
   - sudo rm /usr/local/bin/docker-compose
-  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - curl -sL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
@@ -54,7 +55,13 @@ script:
   - $TRAVIS_BUILD_DIR/docker-compose.sh build-cache
   - $TRAVIS_BUILD_DIR/docker-compose.sh pack
 
-# TODO: Deploy to GitHub
-#after_script:
-#  - docker pull tsub/ghr
-#  - docker run -v $TRAVIS_BUILD_DIR:/work -w /work -e GITHUB_TOKEN=$GITHUB_TOKEN ghr --username user --repository repo v1.0.0 pkg/
+after_script:
+  - curl -sL https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/ghr_v${GHR_VERSION}_linux_amd64.tar.gz | tar zx
+  - chmod +x ghr_v${GHR_VERSION}_linux_amd64/ghr
+  - sudo mv ghr_v${GHR_VERSION}_linux_amd64/ghr /usr/local/bin
+  - |
+      ghr -t $GITHUB_TOKEN -u $GITHUB_USER -r $TRAVIS_REPO_SLUG -c $TRAVIS_COMMIT \
+      -n "Test Automated Releases" -b "From Travis" -replace \
+      v0.1.8 $ARTIFACTS_PATH/packages/
+
+# - docker run -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR -w $TRAVIS_BUILD_DIR ghr -t  -u user -r $TRAVIS_REPO_SLUG -replace $TRAVIS_TAG $ARTIFACTS_PATH/packages/
