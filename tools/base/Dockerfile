@@ -21,7 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall Depends node image
-FROM metacall/core_deps:node AS deps_node
+FROM metacall/core:deps_node AS deps_node
 
 # MetaCall Depends base image
 FROM ${METACALL_BASE_IMAGE} AS deps
