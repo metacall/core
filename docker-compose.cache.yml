@@ -25,10 +25,12 @@ services:
     build:
       cache_from:
         - ${IMAGE_REGISTRY}/metacall/core:deps_node
+
   deps:
     image: metacall/core:deps
     build:
       cache_from:
+        - ${IMAGE_REGISTRY}/metacall/core:deps_node
         - ${IMAGE_REGISTRY}/metacall/core:deps
 
   dev:
