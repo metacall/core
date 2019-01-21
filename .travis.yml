@@ -21,7 +21,7 @@ language: cpp
 
 branches:
   only:
-  - development
+  - develop
 
 sudo: required
 
