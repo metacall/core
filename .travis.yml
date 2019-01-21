@@ -59,9 +59,15 @@ after_script:
   - curl -sL https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/ghr_v${GHR_VERSION}_linux_amd64.tar.gz | tar zx
   - chmod +x ghr_v${GHR_VERSION}_linux_amd64/ghr
   - sudo mv ghr_v${GHR_VERSION}_linux_amd64/ghr /usr/local/bin
+  - TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG%/*}
+  - TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG#*/}
+  - PREVIOUS_TAG=`git describe HEAD^1 --abbrev=0 --tags`
+  - GIT_HISTORY=`git log --no-merges --format="- %s" $PREVIOUS_TAG..HEAD`
+  - if [[ $PREVIOUS_TAG == "" ]]; then GIT_HISTORY=`git log --no-merges --format="- %s"` fi
+  - if [[ $TRAVIS_TAG == "" ]]; then TRAVIS_TAG=$PREVIOUS_TAG fi
+  - RELEASE_DATE=`date '+%Y-%m-%d'`
   - |
-      ghr -t $GITHUB_TOKEN -u $GITHUB_USER -r $TRAVIS_REPO_SLUG -c $TRAVIS_COMMIT \
-      -n "Test Automated Releases" -b "From Travis" -replace \
-      v0.1.8 $ARTIFACTS_PATH/packages/
+      ghr -t $GITHUB_TOKEN -u $TRAVIS_REPO_OWNER -r $TRAVIS_REPO_NAME -c $TRAVIS_COMMIT \
+      -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
+      $TRAVIS_TAG $ARTIFACTS_PATH/packages/
 
-# - docker run -v $TRAVIS_BUILD_DIR:$TRAVIS_BUILD_DIR -w $TRAVIS_BUILD_DIR ghr -t  -u user -r $TRAVIS_REPO_SLUG -replace $TRAVIS_TAG $ARTIFACTS_PATH/packages/
