@@ -19,14 +19,11 @@
 #	limitations under the License.
 #
 
-# Run docker deps_node image builder
-bash -c "cd tools/node && ./hooks/build"
+# Load common environment variables
+source ../../hooks/env
 
-# Run docker deps image builder
-bash -c "cd tools/base && ./hooks/build"
+# Node environment variables
+DEBIAN_FRONTEND=noninteractive
 
-# Run docker dev image builder
-bash -c "cd tools/dev && ./hooks/build"
-
-# Run docker runtime image builder
-bash -c "cd tools/core && ./hooks/build"
+# Override docker image
+IMAGE_NAME=metacall/core:deps_node

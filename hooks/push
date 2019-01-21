@@ -21,7 +21,11 @@
 
 # Show message
 echo "[***] Push hook running"
-echo "[***]  - Tagging and pushing $DOCKER_REPO:{deps, dev, latest}"
+echo "[***]  - Tagging and pushing $DOCKER_REPO:{deps_node, deps, dev, latest}"
+
+# Tag the deps_node image and push it
+docker tag metacall/core:deps_node $DOCKER_REPO:deps_node
+docker push $DOCKER_REPO:deps_node
 
 # Tag the deps image and push it
 docker tag metacall/core:deps $DOCKER_REPO:deps

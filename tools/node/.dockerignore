@@ -1,0 +1,4 @@
+**
+!tools/metacall-environment.sh
+!tools/metacall-clear.sh
+!cmake/FindNodeJS.cmake

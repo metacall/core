@@ -1,5 +1,3 @@
 **
 !tools/metacall-environment.sh
 !tools/nobuildtest.patch
-!tools/metacall-clear.sh
-!cmake/FindNodeJS.cmake

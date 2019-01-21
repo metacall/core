@@ -21,10 +21,7 @@
 ARG METACALL_BASE_IMAGE
 
 # MetaCall Depends node image
-FROM metacall/core_deps:node AS deps_node
-
-# MetaCall Depends base image
-FROM ${METACALL_BASE_IMAGE} AS deps
+FROM ${METACALL_BASE_IMAGE} AS deps_node
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -36,32 +33,29 @@ LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
 
 # Arguments
 ARG METACALL_PATH
-ARG METACALL_TOOLS_PATH
 
 # Environment variables
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a
-# fix (https://github.com/docker/docker/issues/20818). This workaround allows
-# the container to be run with the default seccomp Docker settings by avoiding
-# the restart_syscall made by LTTng which causes a failed assertion.
-ENV LTTNG_UST_REGISTER_TIMEOUT=0
-
-# Trigger the population of the local NuGet package cache
-ENV NUGET_XMLDOC_MODE=skip
-
 # Define working directory
 WORKDIR $METACALL_PATH
 
-# Copy MetaCall NodeJS dependencies
-COPY --from=deps_node /usr/local/lib/libnode.so.* /usr/local/lib/
+# Copy MetaCall environment script
+COPY tools/metacall-environment.sh tools/metacall-clear.sh $METACALL_PATH/tools/
 
-# Copy MetaCall tool dependecies
-COPY tools/metacall-environment.sh tools/nobuildtest.patch $METACALL_TOOLS_PATH/
+# Install build dependencies
+RUN tools/metacall-environment.sh root base nodejs
 
-# Install MetaCall and runtimes then build
-ARG METACALL_INSTALL_OPTIONS
+# Copy MetaCall NodeJS cmake script
+COPY cmake/FindNodeJS.cmake $METACALL_PATH/cmake/FindNodeJS.cmake
 
-RUN chmod 500 $METACALL_TOOLS_PATH/metacall-environment.sh \
-	&& $METACALL_TOOLS_PATH/metacall-environment.sh ${METACALL_INSTALL_OPTIONS} \
+# Run NodeJS cmake script (TODO: Make find library prefixes/suffixes generic)
+ARG METACALL_NODE_BUILD_TYPE
+
+RUN cmake \
+		-DCMAKE_BUILD_TYPE=${METACALL_NODE_BUILD_TYPE} \
+		-DCMAKE_FIND_LIBRARY_PREFIXES=lib \
+		-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" \
+		-P $METACALL_PATH/cmake/FindNodeJS.cmake \
+	&& tools/metacall-clear.sh root base nodejs \
 	&& rm -rf $METACALL_PATH

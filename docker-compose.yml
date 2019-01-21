@@ -20,6 +20,19 @@
 version: "3.7"
 
 services:
+  deps_node:
+    image: metacall/core:deps_node
+    container_name: metacall_core_deps_node
+    build:
+      context: .
+      dockerfile: tools/node/Dockerfile
+      args:
+        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
+        METACALL_PATH: $METACALL_PATH
+        METACALL_NODE_BUILD_TYPE: $METACALL_NODE_BUILD_TYPE
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+
   deps:
     image: metacall/core:deps
     container_name: metacall_core_deps
@@ -29,13 +42,14 @@ services:
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
-        METACALL_NODE_BUILD_TYPE: $METACALL_NODE_BUILD_TYPE
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
         METACALL_INSTALL_OPTIONS: root base python ruby netcore v8rep51 nodejs rapidjson funchook pack
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
+    depends_on:
+      - deps_node
 
   dev:
     image: metacall/core:dev

@@ -19,11 +19,14 @@
 #	limitations under the License.
 #
 
-# Pull docker core_deps image
-docker pull registry.hub.docker.com/metacall/core:deps		|| true
+# Pull docker deps_node image
+docker pull registry.hub.docker.com/metacall/core:deps_node || true
 
-# Pull docker core_dev image
-docker pull registry.hub.docker.com/metacall/core:dev		|| true
+# Pull docker deps image
+docker pull registry.hub.docker.com/metacall/core:deps || true
 
-# Run docker core image builder
-docker pull registry.hub.docker.com/metacall/core:runtime	|| true
+# Pull docker dev image
+docker pull registry.hub.docker.com/metacall/core:dev || true
+
+# Run docker runtime image builder
+docker pull registry.hub.docker.com/metacall/core:runtime || true

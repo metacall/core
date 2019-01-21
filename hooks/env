@@ -23,9 +23,9 @@
 source ../../.env
 
 # These values are passed by the Hub, but if we are running locally we can get them
-[ -n "$SOURCE_TYPE" ]		|| SOURCE_TYPE=git
-[ -n "$SOURCE_BRANCH" ]		|| SOURCE_BRANCH=$(git symbolic-ref -q --short HEAD)
-[ -n "$GIT_SHA1" ]			|| GIT_SHA1=$(git rev-parse -q HEAD)
+[ -n "$SOURCE_TYPE" ] || SOURCE_TYPE=git
+[ -n "$SOURCE_BRANCH" ] || SOURCE_BRANCH=$(git symbolic-ref -q --short HEAD)
+[ -n "$GIT_SHA1" ] || GIT_SHA1=$(git rev-parse -q HEAD)
 
 if [[ "${SOURCE_BRANCH/-*/}" =~ ^[0-9][0-9.]*$ ]]; then
 	VERSION=${SOURCE_BRANCH/-*/}
