@@ -32,10 +32,17 @@ dist: trusty
 
 env:
   global:
+    - DOCKER_COMPOSE_VERSION: 1.22.0
     - GIT_SUBMODULE_STRATEGY: recursive
     - IMAGE_REGISTRY: registry.hub.docker.com
     - IMAGE_NAME: registry.hub.docker.com/$TRAVIS_REPO_SLUG
     - ARTIFACTS_PATH: $TRAVIS_BUILD_DIR/artifacts
+
+before_install:
+  - sudo rm /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
 
 script:
   - $TRAVIS_BUILD_DIR/docker-compose.sh pull
@@ -46,4 +53,3 @@ script:
 #after_script:
 #  - docker pull tsub/ghr
 #  - docker run -v $TRAVIS_BUILD_DIR:/work -w /work -e GITHUB_TOKEN=$GITHUB_TOKEN ghr --username user --repository repo v1.0.0 pkg/
-
