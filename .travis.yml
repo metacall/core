@@ -35,8 +35,8 @@ env:
     - DOCKER_COMPOSE_VERSION: 1.22.0
     - GHR_VERSION: 0.12.0
     - GIT_SUBMODULE_STRATEGY: recursive
-    - IMAGE_REGISTRY: registry.hub.docker.com
-    - IMAGE_NAME: registry.hub.docker.com/$TRAVIS_REPO_SLUG
+    - IMAGE_REGISTRY: registry.gitlab.com
+    - IMAGE_NAME: registry.gitlab.com/$TRAVIS_REPO_SLUG
     - ARTIFACTS_PATH: $TRAVIS_BUILD_DIR/artifacts
 
 addons:
