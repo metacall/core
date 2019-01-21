@@ -62,12 +62,12 @@ after_script:
   - TRAVIS_REPO_OWNER=${TRAVIS_REPO_SLUG%/*}
   - TRAVIS_REPO_NAME=${TRAVIS_REPO_SLUG#*/}
   - PREVIOUS_TAG=`git describe HEAD^1 --abbrev=0 --tags`
-  - GIT_HISTORY=`git log --no-merges --format="- %s" $PREVIOUS_TAG..HEAD`
-  - if [[ $PREVIOUS_TAG == "" ]]; then GIT_HISTORY=`git log --no-merges --format="- %s"` fi
-  - if [[ $TRAVIS_TAG == "" ]]; then TRAVIS_TAG=$PREVIOUS_TAG fi
+  - GIT_HISTORY=`git log --no-merges --format="- %s" ${PREVIOUS_TAG}..HEAD`
+  - if [[ $PREVIOUS_TAG == "" ]]; then GIT_HISTORY=`git log --no-merges --format="- %s"`; fi
+  - if [[ $TRAVIS_TAG == "" ]]; then TRAVIS_TAG=${PREVIOUS_TAG}; fi
   - RELEASE_DATE=`date '+%Y-%m-%d'`
+  - echo "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]"
   - |
       ghr -t $GITHUB_TOKEN -u $TRAVIS_REPO_OWNER -r $TRAVIS_REPO_NAME -c $TRAVIS_COMMIT \
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
-
