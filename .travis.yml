@@ -56,11 +56,10 @@ before_install:
 # Pull Docker images
 install:
   - $TRAVIS_BUILD_DIR/docker-compose.sh pull
-  - docker images
-  - docker save metacall/core:deps_node | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz
-  - docker save metacall/core:deps | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz
-  - docker save metacall/core:dev | gzip > $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz
-  - docker save metacall/core:runtime | gzip > $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz
+  - docker save $IMAGE_NAME:deps_node | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz
+  - docker save $IMAGE_NAME:deps | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz
+  - docker save $IMAGE_NAME:dev | gzip > $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz
+  - docker save $IMAGE_NAME:runtime | gzip > $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz
 
 # Load Docker images for cache
 before_script:
@@ -68,6 +67,10 @@ before_script:
   - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz | docker load
   - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz | docker load
   - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz | docker load
+  - docker image tag $IMAGE_NAME:deps_node metacall/core:deps_node
+  - docker image tag $IMAGE_NAME:deps metacall/core:deps
+  - docker image tag $IMAGE_NAME:dev metacall/core:dev
+  - docker image tag $IMAGE_NAME:runtime metacall/core:runtime
 
 # Run the build and packaging steps with cache
 script:
