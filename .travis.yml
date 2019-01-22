@@ -53,6 +53,13 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
+# Set up Docker for caching
+before_script:
+  - sudo service docker stop
+  - if [ "$(ls -A /home/travis/docker)" ]; then echo "/home/travis/docker already set"; else sudo mv /var/lib/docker /home/travis/docker; fi
+  - sudo bash -c "echo 'DOCKER_OPTS=\"-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -g /home/travis/docker\"' > /etc/default/docker"
+  - sudo service docker start
+
 # Run the build and packaging steps with cache
 script:
   - $TRAVIS_BUILD_DIR/docker-compose.sh pull
@@ -76,6 +83,16 @@ after_script:
       ghr -t $GITHUB_TOKEN -u $TRAVIS_REPO_OWNER -r $TRAVIS_REPO_NAME -c $TRAVIS_COMMIT \
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
+
+# Docker cache
+before_cache:
+  - sudo service docker stop
+  - sudo chown -R travis ~/docker
+
+# Cache folders
+cache:
+  directories:
+    ~/docker
 
 # Deploy artifacts to bintray
 deploy:
