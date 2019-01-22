@@ -53,16 +53,23 @@ before_install:
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
-# Set up Docker for caching
+# Pull Docker images
+install:
+  - $TRAVIS_BUILD_DIR/docker-compose.sh pull
+  - docker save metacall/core:deps_node | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz
+  - docker save metacall/core:deps | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz
+  - docker save metacall/core:dev | gzip > $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz
+  - docker save metacall/core:runtime | gzip > $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz
+
+# Load Docker images for cache
 before_script:
-  - sudo service docker stop
-  - if [ "$(ls -A /home/travis/docker)" ]; then echo "/home/travis/docker already set"; else sudo mv /var/lib/docker /home/travis/docker; fi
-  - sudo bash -c "echo 'DOCKER_OPTS=\"-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock -g /home/travis/docker\"' > /etc/default/docker"
-  - sudo service docker start
+  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz | docker load
+  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz | docker load
+  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz | docker load
+  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz | docker load
 
 # Run the build and packaging steps with cache
 script:
-  - $TRAVIS_BUILD_DIR/docker-compose.sh pull
   - $TRAVIS_BUILD_DIR/docker-compose.sh build-cache
   - $TRAVIS_BUILD_DIR/docker-compose.sh pack
 
@@ -84,15 +91,10 @@ after_script:
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
 
-# Docker cache
-before_cache:
-  - sudo service docker stop
-  - sudo chown -R travis ~/docker
-
 # Cache folders
 cache:
   directories:
-    ~/docker
+  - $TRAVIS_BUILD_DIR/docker
 
 # Deploy artifacts to bintray
 deploy:
