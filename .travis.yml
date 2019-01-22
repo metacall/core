@@ -42,7 +42,7 @@ env:
     - ARTIFACTS_PATH: $TRAVIS_BUILD_DIR/artifacts
 
 # Update Docker & Docker Compose
-after_install:
+before_script:
   - sudo rm /usr/local/bin/docker-compose || true
   - curl -sL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
