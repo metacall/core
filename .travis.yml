@@ -28,11 +28,12 @@ sudo: required
 services:
   - docker
 
-dist: trusty
+dist: xenial
 
 # Global environment variables
 env:
   global:
+    - DOCKER_VERSION: 18.06.1
     - DOCKER_COMPOSE_VERSION: 1.22.0
     - GHR_VERSION: 0.12.0
     - GIT_SUBMODULE_STRATEGY: recursive
@@ -40,40 +41,21 @@ env:
     - IMAGE_NAME: registry.gitlab.com/$TRAVIS_REPO_SLUG
     - ARTIFACTS_PATH: $TRAVIS_BUILD_DIR/artifacts
 
-# Update Docker
-addons:
-  apt:
-    packages:
-      - docker-ce
-
-# Update Docker Compose
-before_install:
-  - sudo rm /usr/local/bin/docker-compose
+# Update Docker & Docker Compose
+after_install:
+  - sudo rm /usr/local/bin/docker-compose || true
   - curl -sL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
-
-# Pull Docker images
-install:
-  - $TRAVIS_BUILD_DIR/docker-compose.sh pull
-  - docker save $IMAGE_NAME:deps_node | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz
-  - docker save $IMAGE_NAME:deps | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz
-  - docker save $IMAGE_NAME:dev | gzip > $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz
-  - docker save $IMAGE_NAME:runtime | gzip > $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz
-
-# Load Docker images for cache
-before_script:
-  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz | docker load
-  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz | docker load
-  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz | docker load
-  - gzip -dc $TRAVIS_BUILD_DIR/docker/metacall-runtime.tar.gz | docker load
-  - docker image tag $IMAGE_NAME:deps_node metacall/core:deps_node
-  - docker image tag $IMAGE_NAME:deps metacall/core:deps
-  - docker image tag $IMAGE_NAME:dev metacall/core:dev
-  - docker image tag $IMAGE_NAME:runtime metacall/core:runtime
+  - sudo sh -c 'echo "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" > /etc/apt/sources.list.d/docker.list'
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo apt-key fingerprint 0EBFCD88
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce=${DOCKER_VERSION}~ce~3-0~ubuntu # -$(lsb_release -cs)
 
 # Run the build and packaging steps with cache
 script:
+  - $TRAVIS_BUILD_DIR/docker-compose.sh pull
   - $TRAVIS_BUILD_DIR/docker-compose.sh build-cache
   - $TRAVIS_BUILD_DIR/docker-compose.sh pack
 
@@ -94,11 +76,6 @@ after_script:
       ghr -t $GITHUB_TOKEN -u $TRAVIS_REPO_OWNER -r $TRAVIS_REPO_NAME -c $TRAVIS_COMMIT \
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
-
-# Cache folders
-cache:
-  directories:
-  - $TRAVIS_BUILD_DIR/docker
 
 # Deploy artifacts to bintray
 deploy:

@@ -2,7 +2,6 @@
 	"package": {
 		"name": "metacall",
 		"repo": "core",
-		"subject": "MetaCall",
 		"desc_url": "https://raw.githubusercontent.com/metacall/core/master/README.md",
 		"website_url": "https://metacall.io",
 		"issue_tracker_url": "https://github.com/metacall/core/issues",
