@@ -56,6 +56,7 @@ before_install:
 # Pull Docker images
 install:
   - $TRAVIS_BUILD_DIR/docker-compose.sh pull
+  - docker images
   - docker save metacall/core:deps_node | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps-node.tar.gz
   - docker save metacall/core:deps | gzip > $TRAVIS_BUILD_DIR/docker/metacall-deps.tar.gz
   - docker save metacall/core:dev | gzip > $TRAVIS_BUILD_DIR/docker/metacall-dev.tar.gz
