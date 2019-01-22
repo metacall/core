@@ -1,0 +1,38 @@
+{
+	"package": {
+		"name": "metacall",
+		"repo": "core",
+		"subject": "MetaCall",
+		"desc_url": "https://raw.githubusercontent.com/metacall/core/master/README.md",
+		"website_url": "https://metacall.io",
+		"issue_tracker_url": "https://github.com/metacall/core/issues",
+		"vcs_url": "https://github.com/metacall/core.git",
+		"github_repo": "https://github.com/metacall/core",
+		"github_use_tag_release_notes": true,
+		"github_release_notes_file": "RELEASE.txt",
+		"licenses": ["Apache-2.0"],
+		"labels": ["metacall", "function-mesh", "programming-language", "inter-language", "ffi"],
+		"public_download_numbers": false,
+		"public_stats": false
+	},
+
+	"version": {
+		"name": "@DEPLOY_VERSION@",
+		"desc": "@DEPLOY_DESCRIPTION@",
+		"released": "@DEPLOY_DATE@",
+		"vcs_tag": "@DEPLOY_VERSION@",
+		"gpgSign": false
+	},
+
+	"files": [{
+		"includePattern": "@DEPLOY_ARTIFACTS_PATH@/(.*\\.deb)", "uploadPattern": "$1",
+			"matrixParams": {
+				"deb_distribution": "stretch",
+				"deb_component": "main",
+				"deb_architecture": "amd64"
+			}
+		}
+	],
+
+	"publish": true
+}

@@ -241,10 +241,14 @@ include(CPack)
 # Package target
 #
 
+set(DEPLOY_VERSION "${META_VERSION}")
+set(DEPLOY_ARTIFACTS_PATH "${CMAKE_BINARY_PATH}/${CPACK_OUTPUT_FILE_PREFIX}")
+
 # Create target
 add_custom_target(
 	pack-${package_name}
-	COMMAND ${CPACK_COMMAND} --config ${PROJECT_BINARY_DIR}/CPackConfig-${project_name}.cmake
+#	COMMAND ${CMAKE_COMMAND} -DDEPLOY_VERSION="${DEPLOY_VERSION}" -DDEPLOY_ARTIFACTS_PATH="${DEPLOY_ARTIFACTS_PATH}" -P deploy-${package_name}.cmake
+	COMMAND ${CPACK_COMMAND} --config ${CPACK_OUTPUT_CONFIG_FILE}
 	WORKING_DIRECTORY ${PROJECT_BINARY_DIR}
 )
 

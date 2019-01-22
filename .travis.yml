@@ -56,7 +56,7 @@ before_script:
 # Run the build and packaging steps with cache
 script:
   - $TRAVIS_BUILD_DIR/docker-compose.sh pull
-  #- $TRAVIS_BUILD_DIR/docker-compose.sh build-cache
+  - $TRAVIS_BUILD_DIR/docker-compose.sh build-cache
   - $TRAVIS_BUILD_DIR/docker-compose.sh pack
 
 # Custom script for deploying to GitHub the artifacts
