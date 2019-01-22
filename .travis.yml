@@ -21,7 +21,7 @@ language: cpp
 
 branches:
   only:
-  - develop
+  - develop # TODO: Change to master or tags
 
 sudo: required
 
@@ -30,6 +30,7 @@ services:
 
 dist: trusty
 
+# Global environment variables
 env:
   global:
     - DOCKER_COMPOSE_VERSION: 1.22.0
@@ -39,22 +40,26 @@ env:
     - IMAGE_NAME: registry.gitlab.com/$TRAVIS_REPO_SLUG
     - ARTIFACTS_PATH: $TRAVIS_BUILD_DIR/artifacts
 
+# Update Docker
 addons:
   apt:
     packages:
       - docker-ce
 
+# Update Docker Compose
 before_install:
   - sudo rm /usr/local/bin/docker-compose
   - curl -sL https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
   - chmod +x docker-compose
   - sudo mv docker-compose /usr/local/bin
 
+# Run the build and packaging steps with cache
 script:
   - $TRAVIS_BUILD_DIR/docker-compose.sh pull
   - $TRAVIS_BUILD_DIR/docker-compose.sh build-cache
   - $TRAVIS_BUILD_DIR/docker-compose.sh pack
 
+# Custom script for deploying to GitHub the artifacts
 after_script:
   - curl -sL https://github.com/tcnksm/ghr/releases/download/v${GHR_VERSION}/ghr_v${GHR_VERSION}_linux_amd64.tar.gz | tar zx
   - chmod +x ghr_v${GHR_VERSION}_linux_amd64/ghr
@@ -71,3 +76,12 @@ after_script:
       ghr -t $GITHUB_TOKEN -u $TRAVIS_REPO_OWNER -r $TRAVIS_REPO_NAME -c $TRAVIS_COMMIT \
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
+
+# Deploy artifacts to bintray
+deploy:
+  provider: bintray
+  file: "$TRAVIS_BUILD_DIR/deploy/packages/descriptor-metacall.json"
+  user: "${BINTRAY_USER}"
+  key: "${BINTRAY_KEY}"
+  skip_cleanup: true
+  on: develop # TODO: Change to master or tags
