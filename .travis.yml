@@ -21,7 +21,7 @@ language: cpp
 
 branches:
   only:
-  - develop # TODO: Change to master or tags
+  - master # TODO: Change to master or tags
 
 sudo: required
 
@@ -84,4 +84,4 @@ deploy:
   user: "${BINTRAY_USER}"
   key: "${BINTRAY_KEY}"
   skip_cleanup: true
-  on: develop # TODO: Change to master or tags
+  on: master # TODO: Change to master or tags
