@@ -23,7 +23,7 @@
 source ../../hooks/env
 
 # Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore v8rep51 nodejs rapidjson funchook" # pack not needed
+METACALL_INSTALL_OPTIONS="root base python ruby netcore v8rep51 nodejs rapidjson funchook" # swig and pack not needed in DockerHub
 
 # Base environment variables
 DEBIAN_FRONTEND=noninteractive

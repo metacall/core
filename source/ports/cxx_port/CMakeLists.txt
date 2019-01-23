@@ -128,8 +128,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 	${CMAKE_CURRENT_SOURCE_DIR}/inline
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -172,7 +170,6 @@ target_compile_options(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${METACALL_LIBRARIES} # MetaCall libraries
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

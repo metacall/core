@@ -78,6 +78,15 @@ add_library(${target}
 	${headers}
 )
 
+#
+# Dependecies
+#
+
+# Add metacall distributable dependency
+add_dependencies(${target}
+	${META_PROJECT_NAME}::metacall_distributable
+)
+
 # Create namespaced alias
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
@@ -133,6 +142,8 @@ target_include_directories(${target}
 
 	${V8_INCLUDE_DIR} # V8 includes
 
+	${METACALL_INCLUDE_DIRS} # MetaCall includes
+
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -148,12 +159,9 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::loader
-
 	${V8_LIBRARIES} # V8 library
+
+	${METACALL_LIBRARIES} # MetaCall libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

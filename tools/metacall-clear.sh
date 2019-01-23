@@ -23,6 +23,7 @@ ROOT_DIR=$(pwd)
 
 RUN_AS_ROOT=0
 SUDO_CMD=sudo
+CLEAR_APT=0
 CLEAR_RAPIDJSON=0
 CLEAR_FUNCHOOK=0
 CLEAR_PYTHON=0
@@ -30,7 +31,7 @@ CLEAR_RUBY=0
 CLEAR_NETCORE=0
 CLEAR_V8=0
 CLEAR_NODEJS=0
-CLEAR_APT=0
+CLEAR_SWIG=0
 CLEAR_PACK=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
@@ -87,6 +88,14 @@ sub_nodejs(){
 	echo "clean nodejs"
 }
 
+# SWIG
+sub_swig(){
+	echo "clean swig"
+	$SUDO_CMD apt-get -y remove --purge libpcre3-dev
+
+	# TODO: Remove swig executable
+}
+
 # MetaCall
 sub_metacall(){
 	echo "clean metacall"
@@ -128,11 +137,16 @@ sub_clear(){
 	if [ $CLEAR_NODEJS = 1 ]; then
 		sub_nodejs
 	fi
-	if [ $CLEAR_APT = 1 ]; then
-		sub_apt
+	if [ $CLEAR_SWIG = 1 ]; then
+		sub_swig
 	fi
 	if [ $CLEAR_PACK = 1 ]; then
 		sub_pack
+	fi
+
+	# Clear aptitude (must be at the end)
+	if [ $CLEAR_APT = 1 ]; then
+		sub_apt
 	fi
 
 	sub_metacall
@@ -150,6 +164,10 @@ sub_options(){
 		if [ "$var" = 'root' ]; then
 			echo "running as root"
 			RUN_AS_ROOT=1
+		fi
+		if [ "$var" = 'base' ]; then
+			echo "apt selected"
+			CLEAR_APT=1
 		fi
 		if [ "$var" = 'rapidjson' ]; then
 			echo "rapidjson selected"
@@ -179,9 +197,9 @@ sub_options(){
 			echo "nodejs selected"
 			CLEAR_NODEJS=1
 		fi
-		if [ "$var" = 'base' ]; then
-			echo "apt selected"
-			CLEAR_APT=1
+		if [ "$var" = 'swig' ]; then
+			echo "swig selected"
+			CLEAR_SWIG=1
 		fi
 		if [ "$var" = 'pack' ]; then
 			echo "pack selected"
@@ -203,6 +221,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	swig"
 	echo "	pack"
 	echo ""
 }

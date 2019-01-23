@@ -1,6 +1,7 @@
 #!/usr/bin/metacall-d8
 
 /* Environment */
+/*
 (function environment() {
 	setenv('DETOUR_LIBRARY_PATH', '@DETOUR_LIBRARY_PATH@');
 	setenv('SERIAL_LIBRARY_PATH', '@SERIAL_LIBRARY_PATH@');
@@ -8,6 +9,7 @@
 	setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
 	setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
 })();
+*/
 
 /* Load MetaCall */
 load('@JS_PORT_NAME@');

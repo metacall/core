@@ -159,9 +159,9 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${METACALL_INCLUDE_DIRS}
-
 	${V8_INCLUDE_DIR} # V8 includes
+
+	${METACALL_INCLUDE_DIRS} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -178,9 +178,10 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
 	PRIVATE
-	${METACALL_LIBRARIES}
-
 	${V8_LIBRARIES} # V8 libraries
+
+	${METACALL_LIBRARIES} # MetaCall libraries
+
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -286,16 +287,6 @@ else()
 	set(JS_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
 endif()
 
-if(MSVC)
-	set(DETOUR_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-	set(SERIAL_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(DETOUR_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
-	set(SERIAL_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
-	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
-endif()
-
 configure_file(test/run.js.in ${js_port_test_path})
 
 #
@@ -330,9 +321,9 @@ target_include_directories(${js_port_test}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	${V8_INCLUDE_DIR} # V8 includes
+
+	${METACALL_INCLUDE_DIRS} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -347,33 +338,20 @@ target_include_directories(${js_port_test}
 # Libraries
 #
 
-if(UNIX)
-	target_link_libraries(${js_port_test}
-		PRIVATE
-		${METACALL_LIBRARIES} # MetaCall library
+target_link_libraries(${js_port_test}
+	PRIVATE
+	${V8_LIBRARIES} # V8 library
 
-		${V8_LIBRARIES} # V8 library
+	${CMAKE_DL_LIBS}
 
-		dl # Dynamic link library (unix)
+	${METACALL_LIBRARIES} # MetaCall libraries
 
-		PUBLIC
-		${DEFAULT_LIBRARIES}
 
-		INTERFACE
-	)
-else()
-	target_link_libraries(${js_port_test}
-		PRIVATE
-		${METACALL_LIBRARIES} # MetaCall library
+	PUBLIC
+	${DEFAULT_LIBRARIES}
 
-		${V8_LIBRARIES} # V8 library
-
-		PUBLIC
-		${DEFAULT_LIBRARIES}
-
-		INTERFACE
-	)
-endif()
+	INTERFACE
+)
 
 #
 # Compile definitions
@@ -429,6 +407,13 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${js_port_test}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )
 
 #

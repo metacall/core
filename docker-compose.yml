@@ -43,7 +43,7 @@ services:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_INSTALL_OPTIONS: root base python ruby netcore v8rep51 nodejs rapidjson funchook pack
+        METACALL_INSTALL_OPTIONS: root base python ruby netcore v8rep51 nodejs rapidjson funchook swig pack
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -60,8 +60,8 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_CORE_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs examples distributable tests scripts dynamic install pack
-        METACALL_CLEAR_OPTIONS: root base rapidjson funchook python ruby netcore v8 nodejs pack
+        METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs examples distributable tests scripts ports dynamic install pack
+        METACALL_CLEAR_OPTIONS: root base rapidjson funchook python ruby netcore v8 nodejs swig pack
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

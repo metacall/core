@@ -1,5 +1,5 @@
 # Check if port is enabled
-if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_RB)
+if(NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
 
@@ -7,10 +7,19 @@ endif()
 # External dependencies
 #
 
-find_package(RubyEx)
+find_package(PythonLibs 3 REQUIRED)
 
-if(NOT RUBY_FOUND)
-	message(STATUS "Ruby libraries not found")
+if(NOT PYTHONLIBS_FOUND)
+	message(STATUS "Python libraries not found")
+	return()
+endif()
+
+set(Python_ADDITIONAL_VERSIONS 3.5)
+
+find_package(PythonInterp REQUIRED)
+
+if(NOT PYTHONINTERP_FOUND)
+	message(STATUS "Python interpreter not found")
 	return()
 endif()
 
@@ -19,7 +28,7 @@ endif()
 #
 
 # Target name
-set(target rb_port)
+set(target py_port)
 
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
@@ -39,15 +48,15 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(interfaces
-	${interface_path}/rb_port.i
+	${interface_path}/py_port.i
 )
 
 set(headers
-	${include_path}/rb_port.h
+	${include_path}/py_port.h
 )
 
 set(sources
-	${source_path}/rb_port.c
+	${source_path}/py_port.c
 )
 
 # Group source files
@@ -67,9 +76,15 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Set SWIG flags
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(CMAKE_SWIG_FLAGS "-DDEBUG")
+	set(PY_PORT_DEBUG_FLAGS "-DDEBUG")
 else()
-	set(CMAKE_SWIG_FLAGS "-DNDEBUG")
+	set(PY_PORT_DEBUG_FLAGS "-DNDEBUG")
+endif()
+
+set(CMAKE_SWIG_FLAGS "${PY_PORT_DEBUG_FLAGS}" "-threads")
+
+if(MSVC)
+	set(SWIG_MODULE_${target}_NOPROXY TRUE)
 endif()
 
 # Set SWIG include path
@@ -83,17 +98,17 @@ include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
 foreach(file ${interfaces} ${headers} ${sources})
 	set_source_files_properties(
 		${file}
-		PROPERTY SWIG_FLAGS "-ruby" "-includeall"
+		PROPERTY SWIG_FLAGS "-python" "-includeall"
 	)
 
 	set_source_files_properties(
 		${file}
-		PROPERTIES CPLUSPLUS OFF
+		PROPERTIES CPLUSPLUS ON
 	)
 endforeach()
 
 swig_add_module(${target}
-	ruby
+	python
 	${interfaces}
 	${headers}
 	${sources}
@@ -151,8 +166,9 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	${PYTHON_INCLUDE_DIRS} # Python includes
+
 	${METACALL_INCLUDE_DIRS} # MetaCall includes
-	${RUBY_INCLUDE_DIRS} # Ruby includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -169,8 +185,9 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
 	PRIVATE
+	${PYTHON_LIBRARIES} # Python libraries
+
 	${METACALL_LIBRARIES} # MetaCall libraries
-	${RUBY_LIBRARY} # Ruby libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -253,41 +270,47 @@ install(EXPORT ${target}-export
 # Configure test
 #
 
-set(rb_port_test "${target}_test")
-set(rb_port_test_path "${CMAKE_BINARY_DIR}/${rb_port_test}.rb")
+set(py_port_test "${target}_test")
+set(py_port_test_path "${CMAKE_CURRENT_BINARY_DIR}/${py_port_test}.py")
 
-# Require module name
+# Import module name
+if(NOT CMAKE_BUILD_TYPE)
+	message(WARNING "CMAKE_BUILD_TYPE must be specified in order to generate Python port module")
+	return()
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	get_target_property(DEBUG_POSTFIX ${SWIG_MODULE_${target}_REAL_NAME} "DEBUG_POSTFIX")
-	set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
+	set(PY_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}${DEBUG_POSTFIX}")
 else()
-	set(RB_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
+	set(PY_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
 endif()
-
-# Module object instance (capitalized)
-string(SUBSTRING "${RB_PORT_NAME}" 0 1 RB_PORT_FIRST)
-string(TOUPPER "${RB_PORT_FIRST}" RB_PORT_FIRST_UPPER)
-string(SUBSTRING "${RB_PORT_NAME}" 1 -1 RB_PORT_LAST)
-set(RB_PORT_OBJ "${RB_PORT_FIRST_UPPER}${RB_PORT_LAST}")
 
 if(MSVC)
-	set(DETOUR_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-	set(SERIAL_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(DETOUR_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
-	set(SERIAL_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
-	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+	# TODO:
+	#	Windows loads Release pyhton libraries with working with Debug
+	#	The library name doesn't has the "_" at the beginning
+	#	Also, exporting "d" postfix in release mode for the "PyInit__portd" entry point
+	set(PY_PORT_NAME "_${PY_PORT_NAME}")
+
+	message(WARNING "Deploy of python port library not properly working in MSVC (errors with naming & symbols)")
 endif()
 
-configure_file(test/run.rb.in ${rb_port_test_path})
+configure_file(test/run.py.in ${py_port_test_path} @ONLY)
 
 #
 # Define test
 #
 
+if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
+	message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
+	message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
+	message(WARNING "Use: \"sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10\" to modify default python executable")
+	return()
+endif()
+
 add_test(NAME ${target}
-	COMMAND ${RUBY_EXECUTABLE} ${rb_port_test_path}
+	COMMAND ${PYTHON_EXECUTABLE} ${py_port_test_path}
 )
 
 #
@@ -295,7 +318,7 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-	PROPERTY LABELS ${rb_port_test}
+	PROPERTY LABELS ${py_port_test}
 )
 
 include(TestEnvironmentVariables)

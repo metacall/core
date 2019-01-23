@@ -21,6 +21,17 @@ release_build
 /lib
 /install
 
+# CMake
+CMakeCache.txt
+CMakeFiles
+CMakeScripts
+Testing
+Makefile
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+CTestTestfile.cmake
+
 # Avoid ignoring build hooks
 !hooks/build
 !tools/base/hooks/build

@@ -1,16 +1,9 @@
 #!/usr/bin/python3.5
 
 import os
-
-os.environ['DETOUR_LIBRARY_PATH'] = '@DETOUR_LIBRARY_PATH@'
-os.environ['SERIAL_LIBRARY_PATH'] = '@SERIAL_LIBRARY_PATH@'
-os.environ['CONFIGURATION_PATH'] = '@CONFIGURATION_PATH@'
-os.environ['LOADER_LIBRARY_PATH'] = '@LOADER_LIBRARY_PATH@'
-os.environ['LOADER_SCRIPT_PATH'] = '@LOADER_SCRIPT_PATH@'
-
 import sys
 
-sys.path.append('@PORT_LIBRARY_PATH@');
+sys.path.append(os.environ['PORT_LIBRARY_PATH']);
 
 import @PY_PORT_NAME@ as metacall
 

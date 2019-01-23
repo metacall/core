@@ -80,6 +80,7 @@ option(OPTION_BUILD_LOADERS		"Build loaders."											ON)
 option(OPTION_BUILD_SCRIPTS		"Build scripts."											ON)
 option(OPTION_BUILD_SERIALS		"Build serials."											ON)
 option(OPTION_BUILD_DETOURS		"Build detours."											ON)
+option(OPTION_BUILD_PORTS		"Build ports."												OFF)
 option(OPTION_FORK_SAFE			"Enable fork safety."										OFF)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
 

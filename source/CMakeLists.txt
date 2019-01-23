@@ -18,6 +18,9 @@ set(SERIAL_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall serial lib
 # Export output detour plugin directory
 set(DETOUR_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall detour library path")
 
+# Export output port directory
+set(PORT_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall port library path")
+
 # Add extra environment varible
 set(EXTRA_ENVIRONMENT_VARIABLES "" CACHE PATH "MetaCall extra environment variable")
 
@@ -51,11 +54,16 @@ set(TESTS_DETOUR_ENVIRONMENT_VARIABLES
 	"DETOUR_LIBRARY_PATH=${DETOUR_LIBRARY_PATH}"
 )
 
+set(TESTS_PORT_ENVIRONMENT_VARIABLES
+	"PORT_LIBRARY_PATH=${PORT_LIBRARY_PATH}"
+)
+
 set(TESTS_ENVIRONMENT_VARIABLES
 	${TESTS_LOADER_ENVIRONMENT_VARIABLES}
 	${TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES}
 	${TESTS_SERIAL_ENVIRONMENT_VARIABLES}
 	${TESTS_DETOUR_ENVIRONMENT_VARIABLES}
+	${TESTS_PORT_ENVIRONMENT_VARIABLES}
 	${EXTRA_ENVIRONMENT_VARIABLES}
 )
 
@@ -129,6 +137,10 @@ add_subdirectory(detours)
 # Distributable
 set(IDE_FOLDER "Distributable")
 add_subdirectory(distributable)
+
+# Ports
+set(IDE_FOLDER "Ports")
+add_subdirectory(ports)
 
 #
 # Deployment
