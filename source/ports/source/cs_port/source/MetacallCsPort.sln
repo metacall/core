@@ -1,0 +1,41 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{675263E5-445B-496A-B886-14858BBB5A28}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{182A2BB9-CEF4-4AA5-A97F-C7E06FFECDEE}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "MetacallCsPort", "src\MetacallCsPort\MetacallCsPort.xproj", "{1C922139-3990-4EC3-A4CA-090A32C5794A}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "Metacall.Tests", "test\Metacall.Tests\Metacall.Tests.xproj", "{25C1F2E4-5904-4FF6-BAA9-D65552886A8F}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{57757E93-43F2-48A5-B637-C1948E04781C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1C922139-3990-4EC3-A4CA-090A32C5794A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1C922139-3990-4EC3-A4CA-090A32C5794A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1C922139-3990-4EC3-A4CA-090A32C5794A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1C922139-3990-4EC3-A4CA-090A32C5794A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{25C1F2E4-5904-4FF6-BAA9-D65552886A8F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{25C1F2E4-5904-4FF6-BAA9-D65552886A8F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{25C1F2E4-5904-4FF6-BAA9-D65552886A8F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{25C1F2E4-5904-4FF6-BAA9-D65552886A8F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1C922139-3990-4EC3-A4CA-090A32C5794A} = {675263E5-445B-496A-B886-14858BBB5A28}
+		{25C1F2E4-5904-4FF6-BAA9-D65552886A8F} = {57757E93-43F2-48A5-B637-C1948E04781C}
+	EndGlobalSection
+EndGlobal

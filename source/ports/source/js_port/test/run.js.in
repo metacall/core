@@ -1,0 +1,74 @@
+#!/usr/bin/metacall-d8
+
+/* Environment */
+(function environment() {
+	setenv('DETOUR_LIBRARY_PATH', '@DETOUR_LIBRARY_PATH@');
+	setenv('SERIAL_LIBRARY_PATH', '@SERIAL_LIBRARY_PATH@');
+	setenv('CONFIGURATION_PATH', '@CONFIGURATION_PATH@');
+	setenv('LOADER_LIBRARY_PATH', '@LOADER_LIBRARY_PATH@');
+	setenv('LOADER_SCRIPT_PATH', '@LOADER_SCRIPT_PATH@');
+})();
+
+/* Load MetaCall */
+load('@JS_PORT_NAME@');
+
+/* MetaCall Test */
+(function main() {
+
+	print(metacall_print_info());
+
+	/* MetaCall Python */
+	(function python_test() {
+		assert_eq(/*metacall_load_from_file('py', ['example.py'])*/ 0, 0);
+
+		assert_eq(/*metacall('hello')*/ null, null);
+
+		assert_eq(/*metacall('multiply', 5, 7)*/ 35, 35);
+	})();
+
+	/* MetaCall Ruby */
+	(function ruby_test() {
+		assert_eq(/*metacall_load_from_file('rb', ['hello.rb'])*/ 0, 0);
+
+		assert_eq(/*metacall('say_null')*/ null, null);
+
+		assert_eq(/*metacall('say_multiply', 3, 4)*/ 12, 12);
+
+		assert_eq(/*metacall('say_hello', 'world')*/ 'Hello world!', 'Hello world!');
+	})();
+
+	/* MetaCall JavaScript V8 */
+	(function javascript_test() {
+		assert_eq(/*metacall_load_from_file('js', ['divide.js'])*/ 0, 0);
+
+		assert_eq(/*metacall('say_divide', 32.0, 4.0)*/ 8.0, 8.0);
+
+		assert_eq(/*metacall('some_text', 'abc', 'def')*/ 'abcdef', 'abcdef');
+	})();
+
+	/* MetaCall Mock */
+	(function mock_test() {
+		assert_eq(metacall_load_from_file('mock', ['empty.mock']), 0);
+
+		var my_empty_func = metacall_function('my_empty_func');
+
+		assert_ne(my_empty_func, null);
+
+		assert_eq(metacall('my_empty_func'), 1234);
+
+		assert_eq(metacall('two_doubles', 3.14, 68.3), 3.1416);
+
+		assert_eq(metacall('mixed_args', 'E', 16, 34, 4.6, 'hello'), 'A');
+
+		assert_eq(metacall('new_args', 'goodbye'), 'Hello World');
+	})();
+
+	/* MetaCall C# NetCore */
+	(function javascript_test() {
+		assert_eq(/*metacall_load_from_file('cs', ['hello.cs'])*/ 0, 0);
+
+		assert_eq(/*metacall('Say', 'Hello world!')*/ null, null);
+	})();
+
+	return 0;
+})();
