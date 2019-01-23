@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VisualStudioUserFile ProjectType="Visual C++" Version="@MSVC_VERSION_NUMBER@" ShowAllFiles="true">
+<Configurations>
+@MSVC_LOCAL_CONFIGURATIONS@
+</Configurations>
+</VisualStudioUserFile>
