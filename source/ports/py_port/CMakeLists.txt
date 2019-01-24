@@ -81,7 +81,7 @@ else()
 	set(PY_PORT_DEBUG_FLAGS "-DNDEBUG")
 endif()
 
-set(CMAKE_SWIG_FLAGS "${PY_PORT_DEBUG_FLAGS}" "-threads")
+list(APPEND CMAKE_SWIG_FLAGS "${PY_PORT_DEBUG_FLAGS}" "-threads")
 
 if(MSVC)
 	set(SWIG_MODULE_${target}_NOPROXY TRUE)
@@ -112,6 +112,15 @@ swig_add_module(${target}
 	${interfaces}
 	${headers}
 	${sources}
+)
+
+#
+# Dependecies
+#
+
+# Add metacall distributable dependency
+add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 # Create namespaced alias
@@ -168,8 +177,6 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 	${PYTHON_INCLUDE_DIRS} # Python includes
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -187,7 +194,7 @@ swig_link_libraries(${target}
 	PRIVATE
 	${PYTHON_LIBRARIES} # Python libraries
 
-	${METACALL_LIBRARIES} # MetaCall libraries
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -228,6 +235,7 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 
 target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

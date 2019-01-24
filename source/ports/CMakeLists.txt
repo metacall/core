@@ -62,20 +62,6 @@ set(MODULE_NAMES
 )
 
 #
-# External dependencies
-#
-
-# MetaCall Library
-find_package(MetaCall)
-
-if(NOT METACALL_FOUND)
-	message(STATUS "MetaCall libraries not found")
-	return()
-endif()
-
-include_directories(${METACALL_INCLUDE_DIRS})
-
-#
 # Port languages (Standalone)
 #
 
@@ -94,6 +80,18 @@ if(NOT SWIG_FOUND)
 endif()
 
 include(${SWIG_USE_FILE})
+
+#
+# Set MetaCall inlcude directories for SWIG
+#
+
+get_filename_component(CMAKE_PARENT_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} DIRECTORY)
+get_filename_component(CMAKE_PARENT_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} DIRECTORY)
+
+list(APPEND CMAKE_SWIG_FLAGS
+	"-I${CMAKE_PARENT_SOURCE_DIR}/metacall/include"
+	"-I${CMAKE_PARENT_BINARY_DIR}/metacall/include"
+)
 
 #
 # Port languages (Swig)

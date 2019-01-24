@@ -83,7 +83,7 @@ add_library(${target}
 #
 
 # Add metacall distributable dependency
-add_dependencies(${target}
+add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
 	${META_PROJECT_NAME}::metacall_distributable
 )
 
@@ -142,8 +142,6 @@ target_include_directories(${target}
 
 	${V8_INCLUDE_DIR} # V8 includes
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -161,7 +159,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${V8_LIBRARIES} # V8 library
 
-	${METACALL_LIBRARIES} # MetaCall libraries
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

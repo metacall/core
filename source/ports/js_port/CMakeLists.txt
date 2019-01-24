@@ -67,9 +67,9 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Set SWIG flags (use V8 engine)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(CMAKE_SWIG_FLAGS "-v8" "-DDEBUG")
+	list(APPEND CMAKE_SWIG_FLAGS "-v8" "-DDEBUG")
 else()
-	set(CMAKE_SWIG_FLAGS "-v8" "-DNDEBUG")
+	list(APPEND CMAKE_SWIG_FLAGS "-v8" "-DNDEBUG")
 endif()
 
 # Set SWIG include path
@@ -105,6 +105,17 @@ swig_add_module(${target}
 	${interfaces}
 	${headers}
 	${sources}
+)
+
+set_property(TARGET ${target} PROPERTY SWIG_USE_LIBRARY_INCLUDE_DIRECTORIES TRUE)
+
+#
+# Dependecies
+#
+
+# Add metacall distributable dependency
+add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 # Create namespaced alias
@@ -161,8 +172,6 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 	${V8_INCLUDE_DIR} # V8 includes
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -180,8 +189,7 @@ swig_link_libraries(${target}
 	PRIVATE
 	${V8_LIBRARIES} # V8 libraries
 
-	${METACALL_LIBRARIES} # MetaCall libraries
-
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -222,6 +230,9 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 
 target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
+	${V8_LIBRARIES} # V8 libraries
+
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -298,6 +309,15 @@ add_executable(${js_port_test}
 	test/main.cpp
 )
 
+#
+# Dependecies
+#
+
+# Add metacall distributable dependency
+add_dependencies(${js_port_test}
+	${META_PROJECT_NAME}::metacall_distributable
+)
+
 # Export library for downstream projects
 export(TARGETS ${js_port_test} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${js_port_test}/${js_port_test}-export.cmake)
 
@@ -323,8 +343,6 @@ target_include_directories(${js_port_test}
 
 	${V8_INCLUDE_DIR} # V8 includes
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -344,8 +362,7 @@ target_link_libraries(${js_port_test}
 
 	${CMAKE_DL_LIBS}
 
-	${METACALL_LIBRARIES} # MetaCall libraries
-
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -67,9 +67,9 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Set SWIG flags
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-	set(CMAKE_SWIG_FLAGS "-DDEBUG")
+	list(APPEND CMAKE_SWIG_FLAGS "-DDEBUG")
 else()
-	set(CMAKE_SWIG_FLAGS "-DNDEBUG")
+	list(APPEND CMAKE_SWIG_FLAGS "-DNDEBUG")
 endif()
 
 # Set SWIG include path
@@ -97,6 +97,15 @@ swig_add_module(${target}
 	${interfaces}
 	${headers}
 	${sources}
+)
+
+#
+# Dependecies
+#
+
+# Add metacall distributable dependency
+add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 # Create namespaced alias
@@ -153,8 +162,6 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 	${RUBY_INCLUDE_DIRS} # Ruby includes
 
-	${METACALL_INCLUDE_DIRS} # MetaCall includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -172,7 +179,7 @@ swig_link_libraries(${target}
 	PRIVATE
 	${RUBY_LIBRARY} # Ruby libraries
 
-	${METACALL_LIBRARIES} # MetaCall libraries
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -213,6 +220,7 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 
 target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
