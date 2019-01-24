@@ -9,7 +9,8 @@ endif()
 
 # Target name
 set(target cxx_port)
-set(target_name ${META_PROJECT_NAME})
+string(TOLOWER ${META_PROJECT_NAME} target_name)
+
 set(target_export "${META_PROJECT_NAME}-cxx")
 
 # Exit here if required dependencies are not met
