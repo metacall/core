@@ -513,18 +513,20 @@ Available build options are the following ones.
 |  **OPTION_BUILD_SCRIPTS**   | Build scripts.                                         |      ON       |
 |  **OPTION_BUILD_SERIALS**   | Build serials.                                         |      ON       |
 |  **OPTION_BUILD_DETOURS**   | Build detours.                                         |      ON       |
+|   **OPTION_BUILD_PORTS**    | Build ports.                                           |      OFF      |
 |    **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
 |   **OPTION_THREAD_SAFE**    | Enable thread safety.                                  |      OFF      |
 |    **CMAKE_BUILD_TYPE**     | Define the type of build.                              |    Release    |
 
 It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
 
-|    Build Option Prefix    | Build Option Suffix                                      |
-|:-------------------------:|----------------------------------------------------------|
-| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE` |
-| **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                    |
-| **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                  |
-| **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                               |
+|    Build Option Prefix    | Build Option Suffix                                                   |
+|:-------------------------:|-----------------------------------------------------------------------|
+| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE`              |
+| **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
+| **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                               |
+| **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                            |
+|  **OPTION_BUILD_PORTS_**  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
 ## 7. Platform Support
 
