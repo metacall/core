@@ -91,9 +91,7 @@ sub_nodejs(){
 # SWIG
 sub_swig(){
 	echo "clean swig"
-	$SUDO_CMD apt-get -y remove --purge libpcre3-dev
-
-	# TODO: Remove swig executable
+	$SUDO_CMD apt-get -y remove --purge libpcre3-dev swig
 }
 
 # MetaCall
