@@ -30,7 +30,6 @@ EXEC_PATH="`pwd`"
 find "$EXEC_PATH" -type f \
 	-not -path "*/build*" \
 	-not -name "LICENSE" \
-	-not -name "COPYRIGHT" \
 	-exec sh -c ' \
 
 	# Copyright
