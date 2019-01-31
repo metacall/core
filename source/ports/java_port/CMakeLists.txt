@@ -85,7 +85,6 @@ endif()
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}/interface")
 
-
 #
 # Create library
 #
@@ -171,7 +170,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${JAVA_INCLUDE_DIRS} # Java includes
-	${JNI_INCLUDE_DIRS} #jni includes
+	${JNI_INCLUDE_DIRS} # JNI includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
