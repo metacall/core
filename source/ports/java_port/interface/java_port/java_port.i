@@ -45,7 +45,8 @@
 
 	%init
 	%{
-		metacall_log_stdio_type log_stdio = { stdout };
+		struct metacall_log_stdio_type log_stdio;
+		log_stdio.stream = stdout;
 
 		(void)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio);
 
@@ -61,9 +62,7 @@
 	#	define METACALL_API
 	#endif
 
-	%thread;
 	%include <metacall/metacall.h>
-	%nothread;
 
 #endif /* SWIG && SWIGJAVA */
 
