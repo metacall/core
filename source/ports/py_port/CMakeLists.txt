@@ -335,3 +335,8 @@ test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 )
+
+# TODO: This is a nasty mock. It only will work if python port library (binary) is already installed and the
+# environment variable correctly set up. This must be removed when metacall is correctly distributed
+# and we can automate all distributions for all architectures, operative systems and all ports for all languages
+install(CODE "execute_process(COMMAND pip3 install --user ${CMAKE_CURRENT_SOURCE_DIR}/package)")

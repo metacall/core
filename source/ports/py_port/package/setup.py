@@ -23,9 +23,9 @@ setup(
     # Versions should comply with PEP440.  For a discussion on single-sourcing
     # the version across setup.py and the project code, see
     # https://packaging.python.org/en/latest/single_source_version.html
-    version='0.0.1',
+    version='0.1.0',
 
-    description='A sample Python project',
+    description='A library for providing inter-language foreign function interface calls',
     long_description=long_description,
 
     # The project's main homepage.
@@ -33,10 +33,10 @@ setup(
 
     # Author details
     author='Vicente Eduardo Ferrer Garcia',
-    author_email='viferga@gmail.com',
+    author_email='vic798@gmail.com',
 
     # Choose your license
-    #license='MIT',
+    license='Apache License 2.0',
 
     # See https://pypi.python.org/pypi?%3Aaction=list_classifiers
     classifiers=[
@@ -44,24 +44,27 @@ setup(
         #   3 - Alpha
         #   4 - Beta
         #   5 - Production/Stable
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 4 - Beta',
 
         # Indicate who your project is intended for
         'Intended Audience :: Developers',
         'Topic :: Software Development :: Build Tools',
 
         # Pick your license as you wish (should match "license" above)
-        #'License :: OSI Approved :: MIT License',
+        'License :: OSI Approved :: Apache Software License',
 
         # Specify the Python versions you support here. In particular, ensure
         # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
+        #'Programming Language :: Python :: 2',
+        #'Programming Language :: Python :: 2.6',
+        #'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
 
     # What does your project relate to?

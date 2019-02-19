@@ -43,6 +43,7 @@
 
 	%include <java_port/java_port.h>
 
+	/*
 	%init
 	%{
 		struct metacall_log_stdio_type log_stdio;
@@ -52,6 +53,7 @@
 
 		metacall_initialize();
 	%}
+	*/
 
 	%import <java_port/java_port_impl.i>
 
