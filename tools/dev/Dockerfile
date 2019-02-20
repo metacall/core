@@ -37,6 +37,7 @@ ENV LOADER_LIBRARY_PATH=$METACALL_PATH/build \
 	CONFIGURATION_PATH=$METACALL_PATH/build/configurations/global.json \
 	SERIAL_LIBRARY_PATH=$METACALL_PATH/build \
 	DETOUR_LIBRARY_PATH=$METACALL_PATH/build \
+	PORT_LIBRARY_PATH=$METACALL_PATH/build \
 	DEBIAN_FRONTEND=noninteractive
 
 # Define working directory
@@ -48,7 +49,6 @@ COPY . $METACALL_PATH
 # Configure MetaCall build tool script
 RUN chmod 500 $METACALL_PATH/tools/metacall-configure.sh \
 	&& chmod 500 $METACALL_PATH/tools/metacall-build.sh \
-	&& chmod 500 $METACALL_PATH/tools/metacall-clear.sh \
 	&& mkdir -p $METACALL_PATH/build
 
 # Configure MetaCall libraries and build runtimes if needed
@@ -61,9 +61,3 @@ RUN cd $METACALL_PATH/build \
 # Build test and install MetaCall libraries
 RUN cd $METACALL_PATH/build \
 	&& $METACALL_PATH/tools/metacall-build.sh ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
-
-# Clear MetaCall build dependencies (METACALL_CLEAR_OPTIONS is used as a tag for docker-compose.sh pack)
-ARG METACALL_CLEAR_OPTIONS
-
-RUN cd $METACALL_PATH/build \
-	&& $METACALL_PATH/tools/metacall-clear.sh ${METACALL_CLEAR_OPTIONS}

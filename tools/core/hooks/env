@@ -23,7 +23,7 @@
 source ../../hooks/env
 
 # Core arguments
-METACALL_RUNTIME_OPTIONS="root base python ruby netcore v8 nodejs"
+METACALL_RUNTIME_OPTIONS="root base python ruby netcore v8 nodejs ports"
 
 # Core environment variables
 DEBIAN_FRONTEND=noninteractive

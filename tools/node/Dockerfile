@@ -41,7 +41,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR $METACALL_PATH
 
 # Copy MetaCall environment script
-COPY tools/metacall-environment.sh tools/metacall-clear.sh $METACALL_PATH/tools/
+COPY tools/metacall-environment.sh $METACALL_PATH/tools/
 
 # Install build dependencies
 RUN tools/metacall-environment.sh root base nodejs
@@ -56,6 +56,4 @@ RUN cmake \
 		-DCMAKE_BUILD_TYPE=${METACALL_NODE_BUILD_TYPE} \
 		-DCMAKE_FIND_LIBRARY_PREFIXES=lib \
 		-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" \
-		-P $METACALL_PATH/cmake/FindNodeJS.cmake \
-	&& tools/metacall-clear.sh root base nodejs \
-	&& rm -rf $METACALL_PATH
+		-P $METACALL_PATH/cmake/FindNodeJS.cmake

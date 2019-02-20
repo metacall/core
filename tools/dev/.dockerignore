@@ -6,7 +6,6 @@
 !source/**
 !tools/metacall-configure.sh
 !tools/metacall-build.sh
-!tools/metacall-clear.sh
 !CMakeLists.txt
 !metacall-config.cmake.in
 !metacall-config-version.cmake.in

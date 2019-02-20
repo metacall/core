@@ -107,6 +107,11 @@ sub_metacall(){
 sub_pack(){
 	echo "clean pack"
 	$SUDO_CMD apt-get -y remove --purge rpm
+
+	# Uninstall Python Port Dependencies (TODO: This must be removed when enabled the pip3 install metacall)
+	if [ $CLEAR_PYTHON = 1 ]; then
+		/usr/bin/yes | $SUDO_CMD pip3 uninstall setuptools
+	fi
 }
 
 # Clear

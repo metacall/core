@@ -61,7 +61,6 @@ services:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_CORE_BUILD_TYPE
         METACALL_BUILD_OPTIONS: root python ruby netcore v8 nodejs examples distributable tests scripts ports dynamic install pack
-        METACALL_CLEAR_OPTIONS: root base rapidjson funchook python ruby netcore v8 nodejs swig pack
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -71,6 +70,7 @@ services:
       CONFIGURATION_PATH: $METACALL_PATH/build/configurations/global.json
       SERIAL_LIBRARY_PATH: $METACALL_PATH/build
       DETOUR_LIBRARY_PATH: $METACALL_PATH/build
+      PORT_LIBRARY_PATH: $METACALL_PATH/build
     depends_on:
       - deps
 
@@ -83,7 +83,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_RUNTIME_OPTIONS: root base python ruby netcore nodejs v8
+        METACALL_RUNTIME_OPTIONS: root base python ruby netcore nodejs v8 ports
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -93,5 +93,6 @@ services:
       CONFIGURATION_PATH: /usr/local/share/metacall/configurations/global.json
       SERIAL_LIBRARY_PATH: /usr/local/lib
       DETOUR_LIBRARY_PATH: /usr/local/lib
+      PORT_LIBRARY_PATH: /usr/local/lib
     depends_on:
       - dev

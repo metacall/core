@@ -58,6 +58,9 @@ sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libpcre3-dev swig
+
+	# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
+	$SUDO_CMD pip3 install setuptools
 }
 
 # Python

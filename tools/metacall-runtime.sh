@@ -29,6 +29,7 @@ INSTALL_RUBY=0
 INSTALL_NETCORE=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
+INSTALL_PORTS=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -94,6 +95,14 @@ sub_nodejs(){
 	# are already compiled in the runtime
 }
 
+# Ports
+sub_ports(){
+	echo "configure ports"
+
+	# TODO: Implement correctly the metacall distribution
+	# $SUDO_CMD pip3 install metacall
+}
+
 # Install
 sub_install(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -116,6 +125,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $INSTALL_PORTS = 1 ]; then
+		sub_ports
 	fi
 
 	echo "install finished in workspace $ROOT_DIR"
@@ -160,6 +172,10 @@ sub_options(){
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
+		if [ "$var" = 'ports' ]; then
+			echo "ports selected"
+			INSTALL_PORTS=1
+		fi
 	done
 }
 
@@ -174,6 +190,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	ports"
 	echo ""
 }
 

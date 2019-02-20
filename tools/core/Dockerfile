@@ -68,6 +68,9 @@ WORKDIR $METACALL_PATH
 # Copy libraries from builder
 COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.node /usr/local/lib/
 
+# TODO: Remove this when metacall is able to be installed from package managers (pip, npm, gem)
+COPY --from=builder /usr/local/lib/python3.5/dist-packages/ /usr/local/lib/python3.5/dist-packages/
+
 # Copy MetaCall dependecies
 COPY tools/metacall-runtime.sh $METACALL_PATH
 
