@@ -58,13 +58,23 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 
 	set(GTEST_INCLUDE_DIR "${source_dir}/googletest/include")
 	set(GMOCK_INCLUDE_DIR "${source_dir}/googlemock/include")
-	set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest")
-	set(GMOCK_LIBS_DIR "${binary_dir}/googlemock")
 
 	if(MSVC)
+		set(GTEST_LIB_PREFIX "")
 		set(GTEST_LIB_SUFFIX "lib")
+		set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest/${CMAKE_BUILD_TYPE}")
+		set(GMOCK_LIBS_DIR "${binary_dir}/googlemock/${CMAKE_BUILD_TYPE}")
+		if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+			set(GTEST_LIB_DEBUG "d")
+		else()
+			set(GTEST_LIB_DEBUG "")
+		endif()
 	else()
+		set(GTEST_LIB_PREFIX "lib")
 		set(GTEST_LIB_SUFFIX "a")
+		set(GTEST_LIBS_DIR "${binary_dir}/googlemock/gtest")
+		set(GMOCK_LIBS_DIR "${binary_dir}/googlemock")
+		set(GTEST_LIB_DEBUG "")
 	endif()
 
 	# Define Paths
@@ -74,8 +84,8 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	)
 
 	set(GTEST_LIBRARIES
-		"${GTEST_LIBS_DIR}/libgtest.${GTEST_LIB_SUFFIX}"
-		"${GMOCK_LIBS_DIR}/libgmock.${GTEST_LIB_SUFFIX}"
+		"${GTEST_LIBS_DIR}/${GTEST_LIB_PREFIX}gtest${GTEST_LIB_DEBUG}.${GTEST_LIB_SUFFIX}"
+		"${GMOCK_LIBS_DIR}/${GTEST_LIB_PREFIX}gmock${GTEST_LIB_DEBUG}.${GTEST_LIB_SUFFIX}"
 		"${CMAKE_THREAD_LIBS_INIT}"
 	)
 

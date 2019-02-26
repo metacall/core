@@ -236,8 +236,8 @@ find_library(NODEJS_LIBRARY
 if(NOT NODEJS_LIBRARY)
 	# NodeJS download and output path (workaround to compile node as a shared library)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}.tar.gz")
-	set(NODEJS_DOWNLOAD_FILE "${CMAKE_BINARY_DIR}/node-v${NODEJS_VERSION}.tar.gz")
-	set(NODEJS_OUTPUT_PATH "${CMAKE_BINARY_DIR}/node-v${NODEJS_VERSION}")
+	set(NODEJS_DOWNLOAD_FILE "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}.tar.gz")
+	set(NODEJS_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}")
 
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
@@ -248,40 +248,50 @@ if(NOT NODEJS_LIBRARY)
 	# Decompress node if needed
 	if(NOT EXISTS "${NODEJS_OUTPUT_PATH}")
 		message(STATUS "Extract NodeJS distribution")
-		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" OUTPUT_QUIET)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" OUTPUT_QUIET)
 	endif()
 
 	# Compile node as a shared library if needed
 	if(NOT EXISTS "${NODEJS_COMPILE_PATH}")
 		if(WIN32)
-			message(STATUS "Build NodeJS shared library")
+			if(NOT EXISTS "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll")
+				message(STATUS "Build NodeJS shared library")
 
-			if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
-				set(NODEJS_COMPILE_ARCH "x86")
-			else()
-				set(NODEJS_COMPILE_ARCH "x64")
+				if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
+					set(NODEJS_COMPILE_ARCH "x86")
+				else()
+					set(NODEJS_COMPILE_ARCH "x64")
+				endif()
+
+				# Check vs2017 or vs2015 (TODO: Add more versions if they are supported by NodeJS)
+				if(MSVC_VERSION EQUAL 1900)
+					set(NODEJS_MSVC_VER vs2015)
+				elseif(MSVC_VERSION GREATER 1900)
+					set(NODEJS_MSVC_VER vs2017)
+				endif()
+
+				if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+					set(NODEJS_BUILD_TYPE debug)
+				else()
+					set(NODEJS_BUILD_TYPE release)
+				endif()
+
+				execute_process(COMMAND vcbuild.bat dll ${NODEJS_BUILD_TYPE} ${NODEJS_COMPILE_ARCH} ${NODEJS_MSVC_VER} WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+
+				# TODO: Implement msi build
+				# execute_process(COMMAND vcbuild.bat dll ${NODEJS_BUILD_TYPE} ${NODEJS_COMPILE_ARCH} ${NODEJS_MSVC_VER} msi WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+
+				# Copy library to MetaCall output path
+				file(COPY ${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/node.dll DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll)
+
+				message(STATUS "Install NodeJS shared library")
+
+				# TODO: Implement install command
+				#execute_process(COMMAND msiexec /a "node-v${NODEJS_VERSION}-${NODEJS_COMPILE_ARCH}.msi" WORKING_DIRECTORY "${NODEJS_COMPILE_PATH}" OUTPUT_QUIET)
 			endif()
 
-			# Check vs2017 or vs2015
-			if(MSVC_VERSION EQUAL 1900)
-				set(NODEJS_MSVC_VER vs2015)
-			elseif(MSVC_VERSION GREATER 1900)
-				set(NODEJS_MSVC_VER vs2017)
-			endif()
-
-			if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
-				execute_process(COMMAND vcbuild.bat dll debug ${NODEJS_COMPILE_ARCH} ${NODEJS_MSVC_VER} msi WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
-			else()
-				execute_process(COMMAND vcbuild.bat dll release ${NODEJS_COMPILE_ARCH} ${NODEJS_MSVC_VER} msi WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
-			endif()
-
-			# Copy library to MetaCall output path
-			file(COPY ${NODEJS_OUTPUT_PATH}/node.dll DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll)
-
-			message(STATUS "Install NodeJS shared library")
-
-			# TODO: Implement install command
-			#execute_process(COMMAND msiexec /a "node-v${NODEJS_VERSION}-${NODEJS_COMPILE_ARCH}.msi" WORKING_DIRECTORY "${NODEJS_COMPILE_PATH}" OUTPUT_QUIET)
+			# TODO: Delete this workaround after implementing the install command
+			set(NODEJS_LIBRARY_PATH ${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE})
 		else()
 			message(STATUS "Configure NodeJS shared library")
 
