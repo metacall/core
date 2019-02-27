@@ -43,17 +43,39 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 	{
 		static const char configuration_path[] = CONFIGURATION_PATH;
 
-		#if defined(CONFIGURATION_INSTALL_PATH)
-			static const char configuration_default_path[] = CONFIGURATION_INSTALL_PATH;
-		#else
+		const char * env_path = environment_variable_get(configuration_path, NULL);
+
+		if (env_path != NULL)
+		{
+			global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, env_path, NULL);
+
+			path = env_path;
+		}
+
+		if (global == NULL)
+		{
 			static const char configuration_default_path[] = CONFIGURATION_DEFAULT_PATH;
+
+			global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, configuration_default_path, NULL);
+
+			path = configuration_default_path;
+		}
+
+		#if defined(CONFIGURATION_INSTALL_PATH)
+			if (global == NULL)
+			{
+				static const char configuration_install_path[] = CONFIGURATION_INSTALL_PATH;
+
+				global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, configuration_install_path, NULL);
+
+				path = configuration_install_path;
+			}
 		#endif /* CONFIGURATION_INSTALL_PATH */
 
-		const char * env_path = environment_variable_get(configuration_path, configuration_default_path);
-
-		global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, env_path, NULL);
-
-		log_write("metacall", LOG_LEVEL_INFO, "Global configuration loaded from %s", env_path);
+		if (global != NULL && path != NULL)
+		{
+			log_write("metacall", LOG_LEVEL_INFO, "Global configuration loaded from %s", path);
+		}
 	}
 	else
 	{
