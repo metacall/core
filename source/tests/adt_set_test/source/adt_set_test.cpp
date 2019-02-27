@@ -126,15 +126,15 @@ TEST_F(adt_set_test, DefaultConstructor)
 	/* Remove value */
 	for (size_t i = 0; i < key_array_size; ++i)
 	{
-		int * value = (int *)set_remove(s, key_array[i]);
+		int * remove_value = (int *)set_remove(s, key_array[i]);
 
 		if (i == 1)
 		{
-			EXPECT_EQ((int) value_array[0], (int) *value);
+			EXPECT_EQ((int) value_array[0], (int) *remove_value);
 		}
 		else
 		{
-			EXPECT_EQ((int) value_array[i], (int) *value);
+			EXPECT_EQ((int) value_array[i], (int) *remove_value);
 		}
 	}
 
