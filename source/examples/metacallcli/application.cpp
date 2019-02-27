@@ -231,7 +231,7 @@ bool command_cb_call(application & app, tokenizer & t)
 		{
 			size_t size = 0;
 
-			char * value_str = metacall_serialize(result, &size, allocator);
+			char * value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
 
 			std::cout << value_str << std::endl;
 
@@ -541,7 +541,7 @@ void value_map_for_each(void * v, const std::function<void(const char *, void *)
 
 void application::command_inspect(const char * str, size_t size, void * allocator)
 {
-	void * v = metacall_deserialize(str, size, allocator);
+	void * v = metacall_deserialize(metacall_serial(), str, size, allocator);
 
 	if (v == NULL)
 	{

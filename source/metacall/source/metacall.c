@@ -53,10 +53,6 @@ void * metacall_null_args[1];
 
 static int metacall_initialize_flag = 1;
 
-/* Private Methods */
-
-static const char * metacall_serial(void);
-
 /* -- Methods -- */
 
 const char * metacall_serial()
@@ -623,7 +619,7 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 		{
 			void * args[METACALL_ARGS_SIZE];
 
-			value * v_array, ret, v = (value)metacall_deserialize(buffer, size, allocator);
+			value * v_array, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
 
 			size_t iterator, args_count;
 
@@ -828,7 +824,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 			void * keys[METACALL_ARGS_SIZE];
 			void * values[METACALL_ARGS_SIZE];
 
-			value * v_map, ret, v = (value)metacall_deserialize(buffer, size, allocator);
+			value * v_map, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
 
 			size_t iterator, args_count;
 
@@ -954,16 +950,16 @@ char * metacall_inspect(size_t * size, void * allocator)
 	return str;
 }
 
-char * metacall_serialize(void * v, size_t * size, void * allocator)
+char * metacall_serialize(const char * name, void * v, size_t * size, void * allocator)
 {
-	serial s = serial_create(metacall_serial());
+	serial s = serial_create(name);
 
 	return serial_serialize(s, (value)v, size, (memory_allocator)allocator);
 }
 
-void * metacall_deserialize(const char * buffer, size_t size, void * allocator)
+void * metacall_deserialize(const char * name, const char * buffer, size_t size, void * allocator)
 {
-	serial s = serial_create(metacall_serial());
+	serial s = serial_create(name);
 
 	return (void *)serial_deserialize(s, buffer, size, (memory_allocator)allocator);
 }

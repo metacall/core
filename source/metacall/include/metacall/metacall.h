@@ -63,6 +63,15 @@ extern void * metacall_null_args[1];
 
 /**
 *  @brief
+*    Returns default serializer used by MetaCall
+*
+*  @return
+*    Name of the serializer to be used with serialization methods
+*/
+METACALL_API const char * metacall_serial(void);
+
+/**
+*  @brief
 *    Initialize MetaCall library
 *
 *  @return
@@ -431,6 +440,9 @@ METACALL_API char * metacall_inspect(size_t * size, void * allocator);
 *  @brief
 *    Convert the value @v to serialized string
 *
+*  @param[in] name
+*    Name of the serial to be used
+*
 *  @param[in] v
 *    Reference to the value
 *
@@ -443,11 +455,14 @@ METACALL_API char * metacall_inspect(size_t * size, void * allocator);
 *  @return
 *    New allocated string containing stringified value
 */
-METACALL_API char * metacall_serialize(void * v, size_t * size, void * allocator);
+METACALL_API char * metacall_serialize(const char * name, void * v, size_t * size, void * allocator);
 
 /**
 *  @brief
 *    Convert the string @buffer to value
+*
+*  @param[in] name
+*    Name of the serial to be used
 *
 *  @param[in] buffer
 *    String to be deserialized
@@ -461,7 +476,7 @@ METACALL_API char * metacall_serialize(void * v, size_t * size, void * allocator
 *  @return
 *    New allocated value representing the string (must be freed)
 */
-METACALL_API void * metacall_deserialize(const char * buffer, size_t size, void * allocator);
+METACALL_API void * metacall_deserialize(const char * name, const char * buffer, size_t size, void * allocator);
 
 /**
 *  @brief
