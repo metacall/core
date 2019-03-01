@@ -25,27 +25,27 @@ extern "C" {
 /* -- Macros -- */
 
 #define DYNLINK_SYMBOL_EXPORT(name) \
-	DYNLINK_API struct dynlink_symbol_addr_unix_type DYNLINK_SYMBOL_NAME(name) = \
+	DYNLINK_API struct dynlink_symbol_addr_macos_type DYNLINK_SYMBOL_NAME(name) = \
 	{ \
-		(dynlink_symbol_addr_unix_impl)&name \
+		(dynlink_symbol_addr_macos_impl)&name \
 	}
 
 #define DYNLINK_SYMBOL_GET(name) \
-	((dynlink_symbol_addr_unix)(name))->symbol
+	((dynlink_symbol_addr_macos)(name))->symbol
 
 /* -- Type definitions -- */
 
-typedef void (*dynlink_symbol_addr_unix_impl)(void);
+typedef void (*dynlink_symbol_addr_macos_impl)(void);
 
-typedef struct dynlink_symbol_addr_unix_type
+typedef struct dynlink_symbol_addr_macos_type
 {
-	dynlink_symbol_addr_unix_impl symbol;
-} * dynlink_symbol_addr_unix;
+	dynlink_symbol_addr_macos_impl symbol;
+} * dynlink_symbol_addr_macos;
 
-typedef dynlink_symbol_addr_unix dynlink_symbol_addr;
+typedef dynlink_symbol_addr_macos dynlink_symbol_addr;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DYNLINK_IMPL_SYMBOL_UNIX_H */
+#endif /* DYNLINK_IMPL_SYMBOL_MACOS_H */
