@@ -15,6 +15,8 @@
 
 #include <log/log_level.h>
 
+#include <time.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
