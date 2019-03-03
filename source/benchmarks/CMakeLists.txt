@@ -33,9 +33,16 @@ target_include_directories(GBench
 	${GBENCH_INCLUDE_DIR}
 )
 
+if(MSVC)
+	set(DEFAULT_GBENCH_OPTIONS Shlwapi.lib)
+else()
+	set(DEFAULT_GBENCH_OPTIONS)
+endif()
+
 target_link_libraries(GBench
 	INTERFACE
 	${GBENCH_LIBRARY}
+	${DEFAULT_GBENCH_OPTIONS}
 )
 
 if(GBENCH_INSTALL)
