@@ -55,5 +55,6 @@ endif()
 
 include(CTest)
 
-add_subdirectory(metacall_py_call_bench)
 add_subdirectory(metacall_py_c_api_bench)
+add_subdirectory(metacall_py_call_bench)
+add_subdirectory(metacall_py_init_bench)
