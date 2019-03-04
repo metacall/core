@@ -75,6 +75,9 @@ if(APPLE)
 	endif()
 
 	set(PROJECT_OS_FAMILY macos)
+
+	exec_program(uname ARGS -v  OUTPUT_VARIABLE PROJECT_OS_VERSION)
+	string(REGEX MATCH "[0-9]+" PROJECT_OS_VERSION ${PROJECT_OS_VERSION})
 endif()
 
 # Check QNX

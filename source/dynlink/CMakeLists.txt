@@ -43,9 +43,15 @@ set(generated_include_path "${CMAKE_CURRENT_BINARY_DIR}/include/${target}")
 set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
 
 # Configure cross-platform support implementation
-include(Portability)
+if(APPLE AND PROJECT_OS_VERSION GREATER 8)
+	# From macOS 10.5 (version 9), dlopen compatible library is available
+	set(DYNLINK_IMPL_INTERFACE_NAME unix)
+else()
+	include(Portability)
 
-set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
+	set(DYNLINK_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
+endif()
+
 
 configure_file(${include_path}/dynlink_interface.h.in ${generated_include_path}/dynlink_interface.h)
 configure_file(${source_path}/dynlink_interface.c.in ${generated_source_path}/dynlink_interface.c)

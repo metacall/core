@@ -88,9 +88,9 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 
 	DYNLINK_FLAGS_SET(flags_impl, NSLINKMODULE_OPTION_RETURN_ON_ERROR);
 
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NOW))
+	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LOCAL))
 	{
-		DYNLINK_FLAGS_ADD(flags_impl, RTLD_NOW);
+		DYNLINK_FLAGS_ADD(flags_impl, NSLINKMODULE_OPTION_PRIVATE);
 	}
 
 	if (!DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
