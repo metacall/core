@@ -13,21 +13,19 @@
 
 #include <dynlink/dynlink_api.h>
 
+#include <dynlink/dynlink_impl_symbol_macos.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Macros -- */
+/* -- Forward declarations -- */
 
-#define DYNLINK_SYMBOL_EXPORT(type, name) /* TODO */
-
-#define DYNLINK_SYMBOL_GET(name) /* TODO */
+struct dynlink_impl_interface_type;
 
 /* -- Type definitions -- */
 
-typedef void * dynlink_symbol_addr_macos; /* TODO */
-
-typedef dynlink_symbol_addr_macos dynlink_symbol_addr;
+typedef struct dynlink_impl_interface_type * dynlink_impl_interface;
 
 /* -- Methods -- */
 

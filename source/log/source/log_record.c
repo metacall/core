@@ -10,8 +10,6 @@
 #include <log/log_level.h>
 #include <log/log_thread_id.h>
 
-#include <time.h>
-
 /* -- Member Data -- */
 
 struct log_record_type

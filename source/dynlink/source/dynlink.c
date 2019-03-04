@@ -20,10 +20,10 @@
 
 struct dynlink_type
 {
-	dynlink_name_impl				name;			/**< Dynamically linked shared object name */
-	dynlink_name_impl				name_impl;		/**< Dynamically linked shared object file name */
-	dynlink_flags					flags;			/**< Dynamically linked shared object flags */
-	dynlink_impl					impl;			/**< Dynamically linked shared object loader implementation */
+	dynlink_name_impl	name;		/**< Dynamically linked shared object name */
+	dynlink_name_impl	name_impl;	/**< Dynamically linked shared object file name */
+	dynlink_flags		flags;		/**< Dynamically linked shared object flags */
+	dynlink_impl		impl;		/**< Dynamically linked shared object loader implementation */
 
 };
 

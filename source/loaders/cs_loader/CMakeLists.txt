@@ -34,9 +34,9 @@ set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
-# force Unicode over Multi-byte
+# Force Unicode over Multi-byte
 if(MSVC)
-    add_definitions(-DUNICODE -D_UNICODE)
+	add_definitions(-DUNICODE -D_UNICODE)
 endif()
 
 #
@@ -121,7 +121,7 @@ distributable_generate(${target} ${cs_loader_unity_build}
 )
 
 # Build library
-add_library(${target}
+add_library(${target} MODULE
 	${cs_loader_unity_build}
 	${sources}
 	${headers}
@@ -173,6 +173,7 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+	BUNDLE TRUE
 )
 
 #

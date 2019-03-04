@@ -22,6 +22,7 @@ extern "C" {
 /* -- Headers -- */
 
 #include <stdlib.h>
+#include <time.h>
 
 /* -- Macros -- */
 

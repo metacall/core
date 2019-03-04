@@ -88,7 +88,7 @@ distributable_generate(${target} ${rapid_json_serial_unity_build}
 )
 
 # Build library
-add_library(${target}
+add_library(${target} MODULE
 	${rapid_json_serial_unity_build}
 	${sources}
 	${headers}
@@ -154,6 +154,7 @@ set_target_properties(${target}
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
 	COMPILE_FLAGS "${RAPIDJSON_CXX_FLAGS}" # RapidJSON compile flags
+	BUNDLE TRUE
 )
 
 #

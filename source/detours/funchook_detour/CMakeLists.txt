@@ -170,7 +170,7 @@ distributable_generate(${target} ${funchook_detour_unity_build}
 )
 
 # Build library
-add_library(${target}
+add_library(${target} MODULE
 	${funchook_detour_unity_build}
 	${sources}
 	${headers}
@@ -223,6 +223,7 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+	BUNDLE TRUE
 )
 
 #

@@ -71,8 +71,17 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
+include(Distributable)
+
+# Create unity build library
+set(jsm_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+
+distributable_generate(${target} ${jsm_loader_unity_build}
+	${LOADER_MODULE_NAMES}
+)
+
 # Build library
-add_library(${target}
+add_library(${target} MODULE
 	${sources}
 	${headers}
 )
@@ -118,6 +127,7 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+	BUNDLE TRUE
 )
 
 #
