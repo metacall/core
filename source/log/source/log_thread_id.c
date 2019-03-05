@@ -22,6 +22,10 @@
 
 #include <log/log_thread_id.h>
 
+#if defined(__APPLE__)
+#	include <AvailabilityMacros.h>
+#endif
+
 #if defined(_WIN32)
 #	ifndef NOMINMAX
 #		define NOMINMAX
@@ -36,11 +40,13 @@
 #	if defined(__MINGW32__) || defined(__MINGW64__)
 #		include <share.h>
 #	endif
-#elif defined(__linux__) || defined(__APPLE__)
+#elif defined(__linux__) || (defined(__APPLE__) && (!defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12))
 #	define _GNU_SOURCE
 #	include <unistd.h>
 #	include <sys/syscall.h>
 #	include <sys/types.h>
+#elif defined(__APPLE__) && (defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12)
+#	include <pthread.h>
 #elif defined(__FreeBSD__)
 #	include <sys/thr.h>
 #endif
@@ -58,7 +64,15 @@ size_t log_thread_id()
 			return syscall(SYS_gettid);
 	#	endif
 	#elif defined(__APPLE__)
-		return syscall(SYS_thread_selfid);
+		#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+			uint64_t thread_id;
+
+			pthread_threadid_np(NULL, &thread_id);
+
+			return (size_t)thread_id;
+		#else
+			return syscall(SYS_thread_selfid);
+		#endif
 	#elif defined(__FreeBSD__)
 		long thread_id = 0;
 
