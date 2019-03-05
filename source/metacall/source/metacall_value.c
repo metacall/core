@@ -30,14 +30,8 @@
 #include <assert.h>
 
 #ifndef static_assert
-
 #	define static_assert_impl_expr(predicate, expr) \
-	typedef char expr[2 * !!(predicate) - 1]
-
-#	define static_assert_local_impl_expr(predicate, expr) \
-	static_assert_impl_expr(predicate, expr); \
-	expr PREPROCESSOR_CONCAT(expr, _var); \
-	(void) PREPROCESSOR_CONCAT(expr, _var)
+		typedef char expr[2 * !!(predicate) - 1]
 
 #	if defined(__COUNTER__)
 #		define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __COUNTER__))
@@ -50,11 +44,28 @@
 
 #	define static_assert_impl(macro, predicate) static_assert_impl_line(macro, predicate, static_assert_)
 
-#	define static_assert(predicate) static_assert_impl(static_assert_impl_expr, predicate)
-
-#	define static_assert_local(predicate) static_assert_impl(static_assert_local_impl_expr, predicate)
-
+#	define static_assert(predicate, message) static_assert_impl(static_assert_impl_expr, predicate)
 #endif
+
+/* -- Static Assertions -- */
+
+static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
+	((int) TYPE_CHAR == (int) METACALL_CHAR) &&
+	((int) TYPE_SHORT == (int) METACALL_SHORT) &&
+	((int) TYPE_INT == (int) METACALL_INT) &&
+	((int) TYPE_LONG == (int) METACALL_LONG) &&
+	((int) TYPE_FLOAT == (int) METACALL_FLOAT) &&
+	((int) TYPE_DOUBLE == (int) METACALL_DOUBLE) &&
+	((int) TYPE_STRING == (int) METACALL_STRING) &&
+	((int) TYPE_BUFFER == (int) METACALL_BUFFER) &&
+	((int) TYPE_ARRAY == (int) METACALL_ARRAY) &&
+	((int) TYPE_MAP == (int) METACALL_MAP) &&
+	((int) TYPE_PTR == (int) METACALL_PTR) &&
+	((int) TYPE_NULL == (int) METACALL_NULL) &&
+	((int) TYPE_SIZE == (int) METACALL_SIZE) &&
+	((int) TYPE_INVALID == (int) METACALL_INVALID),
+	"Internal reflect value types does not match with public metacall API value types");
+
 
 /* -- Methods -- */
 
@@ -158,22 +169,6 @@ enum metacall_value_id metacall_value_id(void * v)
 			METACALL_SIZE,
 			METACALL_INVALID
 		};
-
-		static_assert_local(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
-			((int) TYPE_CHAR == (int) METACALL_CHAR) &&
-			((int) TYPE_SHORT == (int) METACALL_SHORT) &&
-			((int) TYPE_INT == (int) METACALL_INT) &&
-			((int) TYPE_LONG == (int) METACALL_LONG) &&
-			((int) TYPE_FLOAT == (int) METACALL_FLOAT) &&
-			((int) TYPE_DOUBLE == (int) METACALL_DOUBLE) &&
-			((int) TYPE_STRING == (int) METACALL_STRING) &&
-			((int)TYPE_BUFFER == (int)METACALL_BUFFER) &&
-			((int) TYPE_ARRAY == (int) METACALL_ARRAY) &&
-			((int) TYPE_MAP == (int) METACALL_MAP) &&
-			((int) TYPE_PTR == (int) METACALL_PTR) &&
-			((int) TYPE_NULL == (int) METACALL_NULL) &&
-			((int) TYPE_SIZE == (int) METACALL_SIZE) &&
-			((int) TYPE_INVALID == (int) METACALL_INVALID));
 
 		return value_id_map[id];
 	}
