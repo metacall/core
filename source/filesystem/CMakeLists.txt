@@ -43,8 +43,6 @@ set(generated_include_path "${CMAKE_CURRENT_BINARY_DIR}/include/${target}")
 set(generated_source_path  "${CMAKE_CURRENT_BINARY_DIR}/source")
 
 # Configure cross-platform support implementation
-include(Portability)
-
 set(FILESYSTEM_IMPL_INTERFACE_NAME ${PROJECT_OS_FAMILY})
 
 #configure_file(${include_path}/filesystem_interface.h.in ${generated_include_path}/filesystem_interface.h)

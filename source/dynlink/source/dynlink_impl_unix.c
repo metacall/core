@@ -22,24 +22,16 @@
 
 const char * dynlink_impl_interface_extension_unix(void)
 {
-	#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		static const char extension_unix[0x07] = "bundle";
-	#else
-		static const char extension_unix[0x03] = "so";
-	#endif
+	static const char extension_unix[0x03] = "so";
 
 	return extension_unix;
 }
 
 void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t length)
 {
-	#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		strncpy(name_impl, dynlink_get_name(handle), length);
-	#else
-		strncpy(name_impl, "lib", length);
+	strncpy(name_impl, "lib", length);
 
-		strncat(name_impl, dynlink_get_name(handle), length);
-	#endif
+	strncat(name_impl, dynlink_get_name(handle), length);
 
 	strncat(name_impl, ".", length);
 

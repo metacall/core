@@ -111,6 +111,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 file(WRITE "${PROJECT_BINARY_DIR}/VERSION" "${META_NAME_VERSION}")
 
 #
+# Portability
+#
+
+include(Portability)
+
+#
 # Compiler settings and options
 #
 
