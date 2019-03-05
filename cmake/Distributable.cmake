@@ -67,6 +67,8 @@ function(distributable_generate target_root unity_build_file)
 
 	endforeach()
 
+	set(unity_build_source "${unity_build_source}\n")
+
 	if(EXISTS "${unity_build_file}")
 		file(READ "${unity_build_file}" unity_build_source_old)
 

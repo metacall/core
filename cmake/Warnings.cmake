@@ -68,7 +68,7 @@ if(WARNINGS_ENABLED)
 		#add_compile_options(-Wundef)
 		add_compile_options(-Wredundant-decls)
 
-		if(APPLE)
+		if("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")
 			add_compile_options(-Wuninitialized)
 		else()
 			add_compile_options(-Wmaybe-uninitialized)
