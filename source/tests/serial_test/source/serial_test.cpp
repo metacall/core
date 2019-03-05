@@ -301,7 +301,7 @@ TEST_F(serial_test, DefaultConstructor)
 				#else
 					"0x000A7EF2",
 				#endif
-			#elif defined(__linux) || defined(__linux__)
+			#elif defined(__linux) || defined(__linux__) || defined(__APPLE__)
 				"0xa7ef2",
 			#else
 				"<unknown>",
