@@ -22,7 +22,7 @@
 
 #include <log/log_thread_id.h>
 
-#if defined(__APPLE__)
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 #	include <AvailabilityMacros.h>
 #endif
 
@@ -40,12 +40,13 @@
 #	if defined(__MINGW32__) || defined(__MINGW64__)
 #		include <share.h>
 #	endif
-#elif defined(__linux__) || (defined(__APPLE__) && (!defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12))
+#elif defined(__linux__) || \
+	((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) && (!defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12))
 #	define _GNU_SOURCE
 #	include <unistd.h>
 #	include <sys/syscall.h>
 #	include <sys/types.h>
-#elif defined(__APPLE__) && (defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12)
+#elif ((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12)
 #	include <pthread.h>
 #elif defined(__FreeBSD__)
 #	include <sys/thr.h>
@@ -63,7 +64,7 @@ size_t log_thread_id()
 	#	else
 			return syscall(SYS_gettid);
 	#	endif
-	#elif defined(__APPLE__)
+	#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 		#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
 			uint64_t thread_id;
 
