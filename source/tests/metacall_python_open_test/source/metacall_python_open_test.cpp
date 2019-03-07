@@ -44,7 +44,7 @@ TEST_F(metacall_python_open_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		void * ret = metacall("landing");
+		void * ret = metacall("index");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
