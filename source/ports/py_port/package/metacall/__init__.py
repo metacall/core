@@ -8,4 +8,7 @@ import sys
 # and we can automate all distributions for all architectures, operative systems and all ports for all languages
 sys.path.append(os.environ['PORT_LIBRARY_PATH']);
 
-from _py_port import *
+try:
+    from _py_port import *
+except ImportError:
+    from _py_portd import *
