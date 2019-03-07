@@ -33,6 +33,8 @@ extern "C" {
 
 %ignore metacallvf;
 
+%ignore metacall_serial; /* TODO */
+
 %ignore metacall_register; /* TODO */
 
 %ignore metacall_load_from_package; /* TODO */

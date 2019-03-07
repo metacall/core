@@ -263,6 +263,11 @@ install(EXPORT ${target}-export
 # Configure test
 #
 
+# Check if port is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB)
+	return()
+endif()
+
 set(rb_port_test "${target}_test")
 set(rb_port_test_path "${CMAKE_BINARY_DIR}/${rb_port_test}.rb")
 

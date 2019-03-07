@@ -4,7 +4,10 @@ import sys
 
 sys.path.append('@PROJECT_METACALL_PORTS_DIRECTORY@')
 
-from @PROJECT_METACALL_PORTS_PY@ import metacall, metacall_function
+try:
+	from @PROJECT_METACALL_PORTS_PY@ import metacall, metacall_function
+except ImportError as e:
+	print('Error when loading @PROJECT_METACALL_PORTS_PY@: ' + str(e));
 
 def callback_host(text):
 	print('Python callback_host: ' + text);
