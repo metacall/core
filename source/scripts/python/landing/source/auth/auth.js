@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 
+const jwt = require('jsonwebtoken');
+
+const secret = 'secret';
+
 function sign(data) {
-	return data;
+	return jwt.sign(data, secret);
 }
 
 function verify(token) {
-	return true;
+	return jwt.verify(token, secret);
 }
 
 module.exports = {
