@@ -26,6 +26,8 @@
 #	include <pwd.h>
 #endif
 
+#include <clocale>
+
 /* -- Namespace Declarations -- */
 
 using namespace metacallcli;
@@ -413,6 +415,9 @@ std::string user_directory()
 
 application::application(int argc, char * argv[]) : exit_condition(false), log_path(user_directory() + std::string("metacall.log"))
 {
+	/* Set locale */
+	setlocale(LC_CTYPE, "C");
+
 	/* Initialize MetaCall logs */
 	metacall_log_file_type log_file =
 	{
@@ -484,6 +489,12 @@ void application::run()
 
 		/* Get whole line */
 		std::getline(std::cin, input);
+
+		if (std::cin.eof() || std::cin.fail() || std::cin.bad())
+		{
+			shutdown();
+			return;
+		}
 
 		/* Check for valid data */
 		if (input.length() > 0)

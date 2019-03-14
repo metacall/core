@@ -127,8 +127,15 @@ install(TARGETS ${target}
 
 set(TEST_COMMAND_LINE_ARGS "mock test.mock")
 
+
+if(WIN32)
+	set(TEST_COMMAND cmd /c)
+else()
+	set(TEST_COMMAND sh -c)
+endif()
+
 add_test(NAME ${target}
-	COMMAND ${CMAKE_COMMAND} -E echo exit | $<TARGET_FILE:${target}> ${TEST_COMMAND_LINE_ARGS}
+	COMMAND ${TEST_COMMAND} "echo 'inspect\nexit' | $<TARGET_FILE:${target}> ${TEST_COMMAND_LINE_ARGS}"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
