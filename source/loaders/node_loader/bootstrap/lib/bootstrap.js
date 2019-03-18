@@ -92,6 +92,7 @@ const load_from_file = paths =>
 	}, {});
 
 const node_loader_trampoline_is_class = value => {
+	// TODO
 	const re = /^\s*class /;
 
 	try {
@@ -118,6 +119,7 @@ const node_loader_trampoline_is_generator_function = value =>
 	value.constructor.name === 'GeneratorFunction';
 
 const node_loader_trampoline_is_callable = (has_to_string_tag => {
+	// TODO
 
 	function node_loader_trampoline_try_call(value) {
 		try {
@@ -157,6 +159,7 @@ const node_loader_trampoline_is_callable = (has_to_string_tag => {
 })(typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol');
 
 const node_loader_trampoline_is_arrow_function = value => {
+	// TODO
 	if (!node_loader_trampoline_is_callable(value)) {
 		return false;
 	}
@@ -182,6 +185,7 @@ const node_loader_trampoline_is_arrow_function = value => {
 };
 
 const node_loader_trampoline_is_valid_symbol = value => {
+	// TODO
 	if (node_loader_trampoline_is_class(value)) {
 		console.log(
 			'Exception in node_loader_trampoline_is_valid',
@@ -213,7 +217,7 @@ const node_loader_trampoline_is_valid_symbol = value => {
 
 
 const t_module = m => {
-
+	// TODO
 	if (!node_loader_trampoline_is_valid_symbol(m)) {
 		return {};
 	}
@@ -231,6 +235,7 @@ const t_module = m => {
 
 
 const load_from_memory = (name, buffer, opts = {}) => {
+	// TODO
 	const {
 		prepend_paths = [],
 		append_paths = []
@@ -261,15 +266,16 @@ const load_from_memory = (name, buffer, opts = {}) => {
 
 };
 
+const [ impl, ptr ] = process.argv.slice(2);
 
-module.exports = ((impl, ptr) =>
-	trampoline.register(impl, ptr, {
-		clear,
-		destroy,
-		discover,
-		execution_path,
-		load_from_file,
-		load_from_memory,
-		load_from_package,
-		test
-	}))(...process.argv);
+
+module.exports = trampoline.register(impl, ptr, {
+	clear,
+	destroy,
+	discover,
+	execution_path,
+	load_from_file,
+	load_from_memory,
+	load_from_package,
+	test
+});
