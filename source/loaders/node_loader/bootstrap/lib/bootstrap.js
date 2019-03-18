@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 'use strict';
 
-const { dirname } = require('path');
+const { dirname, resolve } = require('path');
 const Module = require('module');
 
 const { parse } = require('espree');
 
 // eslint-disable-next-line global-require
-const trampoline = { register: (x, y, m) => m } || require('./trampoline.node');
+const trampoline = require('./trampoline.node');
 
 const clear = handle =>
 	Object.keys(handle).forEach(p =>
@@ -83,7 +83,7 @@ const ensureArray = x =>
 
 const load_from_file = paths =>
 	ensureArray(paths).reduce((acc, path) => {
-		const abs = require.resolve(path);
+		const abs = resolve(__dirname, path);
 		return {
 			...acc,
 			// eslint-disable-next-line global-require
@@ -267,7 +267,6 @@ const load_from_memory = (name, buffer, opts = {}) => {
 };
 
 const [ impl, ptr ] = process.argv.slice(2);
-
 
 module.exports = trampoline.register(impl, ptr, {
 	clear,
