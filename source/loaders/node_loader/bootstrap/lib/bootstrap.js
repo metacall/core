@@ -91,7 +91,7 @@ const load_from_file = paths =>
 		};
 	}, {});
 
-const node_loader_trampoline_is_class = value => {
+const is_class = value => {
 	// TODO
 	const re = /^\s*class /;
 
@@ -108,59 +108,57 @@ const node_loader_trampoline_is_class = value => {
 	}
 };
 
-const node_loader_trampoline_is_generator = value =>
+const is_generator = value =>
 	value &&
 	typeof value.next === 'function' &&
 	typeof value.throw === 'function';
 
-const node_loader_trampoline_is_generator_function = value =>
+const is_generator_function = value =>
 	typeof value === 'function' &&
 	value.constructor &&
 	value.constructor.name === 'GeneratorFunction';
 
-const node_loader_trampoline_is_callable = (has_to_string_tag => {
-	// TODO
-
-	function node_loader_trampoline_try_call(value) {
-		try {
-			if (node_loader_trampoline_is_class(value)) {
-				return false;
-			}
-			Function.prototype.toString.call(value);
-			return true;
-		} catch (e) {
+const try_call = value => {
+	try {
+		if (is_class(value)) {
 			return false;
 		}
+		Function.prototype.toString.call(value);
+		return true;
+	} catch (e) {
+		return false;
+	}
+}
+const has_to_string_tag =
+	typeof Symbol === 'function' &&
+	typeof Symbol.toStringTag === 'symbol';
+
+const is_callable = value => {
+	if (!value) {
+		return false;
 	}
 
-	return function node_loader_trampoline_is_callable(value) {
-		if (!value) {
-			return false;
-		}
+	if (typeof value !== 'function' && typeof value !== 'object') {
+		return false;
+	}
 
-		if (typeof value !== 'function' && typeof value !== 'object') {
-			return false;
-		}
+	if (has_to_string_tag) {
+		return try_call(value);
+	}
 
-		if (has_to_string_tag) {
-			return node_loader_trampoline_try_call(value);
-		}
+	if (is_class(value)) {
+		return false;
+	}
 
-		if (node_loader_trampoline_is_class(value)) {
-			return false;
-		}
+	const str = Object.prototype.toString.call(value);
 
-		const str = Object.prototype.toString.call(value);
+	return str === '[object Function]' ||
+		str === '[object GeneratorFunction]';
+};
 
-		return str === '[object Function]' ||
-			str === '[object GeneratorFunction]';
-	};
-
-})(typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol');
-
-const node_loader_trampoline_is_arrow_function = value => {
+const is_arrow_function = value => {
 	// TODO
-	if (!node_loader_trampoline_is_callable(value)) {
+	if (!is_callable(value)) {
 		return false;
 	}
 
@@ -184,9 +182,9 @@ const node_loader_trampoline_is_arrow_function = value => {
 	return false;
 };
 
-const node_loader_trampoline_is_valid_symbol = value => {
+const is_valid_symbol = value => {
 	// TODO
-	if (node_loader_trampoline_is_class(value)) {
+	if (is_class(value)) {
 		console.log(
 			'Exception in node_loader_trampoline_is_valid',
 			'classes are not suported');
@@ -194,8 +192,8 @@ const node_loader_trampoline_is_valid_symbol = value => {
 	}
 
 	if (
-		node_loader_trampoline_is_generator(value) ||
-		node_loader_trampoline_is_generator_function(value)
+		is_generator(value) ||
+		is_generator_function(value)
 	) {
 		console.log(
 			'Exception in node_loader_trampoline_is_valid',
@@ -203,7 +201,7 @@ const node_loader_trampoline_is_valid_symbol = value => {
 		return false;
 	}
 
-	if (node_loader_trampoline_is_arrow_function(value)) {
+	if (is_arrow_function(value)) {
 		console.log(
 			'Exception in node_loader_trampoline_is_valid',
 			'anonymous arrow functions are not suported');
@@ -218,11 +216,11 @@ const node_loader_trampoline_is_valid_symbol = value => {
 
 const t_module = m => {
 	// TODO
-	if (!node_loader_trampoline_is_valid_symbol(m)) {
+	if (!is_valid_symbol(m)) {
 		return {};
 	}
 
-	if (node_loader_trampoline_is_callable(m)) {
+	if (is_callable(m)) {
 		const wrapper = {};
 
 		wrapper[m.name] = m;
