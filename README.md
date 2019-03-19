@@ -67,6 +67,7 @@ metacall('sum', 3, 4); // 7
     - [6.1 Build Options](#61-build-options)
   - [7. Platform Support](#7-platform-support)
     - [7.1 Docker Support](#71-docker-support)
+    - [7.1.1 Docker Development](#711-docker-development)
   - [8. License](#8-license)
 
 <!-- /TOC -->
@@ -568,6 +569,26 @@ docker pull metacall/core:dev
 ``` sh
 docker pull metacall/core:runtime
 ```
+
+### 7.1.1 Docker Development
+
+It is possible to develop **METACALL** itself or applications using **METACALL** as standalone library with Docker. The `dev` image can be used for development. It contains all dependencies with all run-times installed with the code, allowing debugging too.
+
+Use the following commands to start developing with **METACALL**:
+
+``` sh
+mkdir -p $HOME/metacall
+code $HOME/metacall
+```
+
+We are going to run a docker container with a mounted volume. This volume will connect the `LOADER_SCRIPT_PATH` inside the container, and your development path in the host. We are using `$HOME/metacall`, where we have our editor opened.
+
+``` sh
+docker pull metacall/core:dev
+docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:dev /bin/bash
+```
+
+With the last terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call) with **METACALL** as a host.
 
 ## 8. License
 
