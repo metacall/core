@@ -588,7 +588,7 @@ docker pull metacall/core:dev
 docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:dev /bin/bash
 ```
 
-With the last terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call) with **METACALL** as a host.
+Inside docker terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call).
 
 ## 8. License
 
