@@ -190,10 +190,10 @@ namespace CSLoader
             string assemblyName = Path.GetRandomFileName();
 
             MetadataReference[] references = new MetadataReference[]
-{
-    MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
-    MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location)
-};
+            {
+                MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location)
+            };
 
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
@@ -213,7 +213,7 @@ namespace CSLoader
 
                     foreach (Diagnostic diagnostic in failures)
                     {
-                        Console.Error.WriteLine("{ 0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                        Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
                     }
                 }
                 else
