@@ -37,13 +37,19 @@ const setUnnamedArgs = args =>
 			? a
 			: prefixArg(args, i));
 
-const discoverArguments = fun => {
-	if (typeof fun !== 'function') {
-		throw new TypeError(fun.name + ' is not a function');
+const parseFunc = f => {
+	if (typeof f !== 'function') {
+		return null;
 	}
-	const { body: [ f ] } =
-		parse(`(\n${fun.toString()}\n)`, { ecmaVersion: 2019 });
+	return parse(
+		`(\n${f.toString()}\n)`,
+		{ ecmaVersion: 2019 }).body[0];
+};
+
+const discoverArguments = fun => {
+	const f = parseFunc(fun);
 	if (
+		!f ||
 		f.type !== 'FunctionDeclaration' &&
 		f.type !== 'ExpressionStatement' &&
 		f.expression.type !== 'ArrowFunctionExpression'
@@ -91,177 +97,35 @@ const load_from_file = paths =>
 		};
 	}, {});
 
-const is_class = value => {
-	// TODO
-	const re = /^\s*class /;
+const is_callable = value =>
+	typeof value === 'function';
 
-	try {
-		const stripped = Function.prototype.toString.call(value)
-			.replace(/\/\/.*\n/g, '')
-			.replace(/\/\*[.\s\S]*\*\//g, '')
-			.replace(/\n/mg, ' ')
-			.replace(/ {2}/g, ' ');
-
-		return re.test(stripped);
-	} catch (ex) {
-		return false;
-	}
-};
-
-const is_generator = value =>
-	value &&
-	typeof value.next === 'function' &&
-	typeof value.throw === 'function';
-
-const is_generator_function = value =>
-	typeof value === 'function' &&
-	value.constructor &&
-	value.constructor.name === 'GeneratorFunction';
-
-const try_call = value => {
-	try {
-		if (is_class(value)) {
-			return false;
-		}
-		Function.prototype.toString.call(value);
-		return true;
-	} catch (e) {
-		return false;
-	}
-}
-const has_to_string_tag =
-	typeof Symbol === 'function' &&
-	typeof Symbol.toStringTag === 'symbol';
-
-const is_callable = value => {
-	if (!value) {
-		return false;
-	}
-
-	if (typeof value !== 'function' && typeof value !== 'object') {
-		return false;
-	}
-
-	if (has_to_string_tag) {
-		return try_call(value);
-	}
-
-	if (is_class(value)) {
-		return false;
-	}
-
-	const str = Object.prototype.toString.call(value);
-
-	return str === '[object Function]' ||
-		str === '[object GeneratorFunction]';
-};
-
-const is_arrow_function = value => {
-	// TODO
-	if (!is_callable(value)) {
-		return false;
-	}
-
-	try {
-		const re_function = /^\s*function/;
-		const re_arrow_with_parents = /^\([^)]*\) *=>/;
-		const re_arrow_without_parents = /^[^=]*=>/;
-
-		const str = Function.prototype.toString.call(value);
-
-		return str.length > 0 &&
-			!re_function.test(str) &&
-			(re_arrow_with_parents.test(str) ||
-			re_arrow_without_parents.test(str));
-	} catch (ex) {
-		console.log(
-			'Exception in node_loader_trampoline_is_arrow_function',
-			ex);
-	}
-
-	return false;
-};
-
-const is_valid_symbol = value => {
-	// TODO
-	if (is_class(value)) {
-		console.log(
-			'Exception in node_loader_trampoline_is_valid',
-			'classes are not suported');
-		return false;
-	}
-
-	if (
-		is_generator(value) ||
-		is_generator_function(value)
-	) {
-		console.log(
-			'Exception in node_loader_trampoline_is_valid',
-			'anonymous generator (functions) are not suported');
-		return false;
-	}
-
-	if (is_arrow_function(value)) {
-		console.log(
-			'Exception in node_loader_trampoline_is_valid',
-			'anonymous arrow functions are not suported');
-		return false;
-	}
-
-	/* TODO: Add extra type detection */
-
-	return true;
-};
-
-
-const t_module = m => {
-	// TODO
-	if (!is_valid_symbol(m)) {
-		return {};
-	}
-
-	if (is_callable(m)) {
-		const wrapper = {};
-
-		wrapper[m.name] = m;
-
-		return wrapper;
-	}
-
-	return m;
-};
-
+const t_module = m =>
+	is_callable(m)
+			? { [m.name]: m }
+			: m;
 
 const load_from_memory = (name, buffer, opts = {}) => {
-	// TODO
-	const {
-		prepend_paths = [],
-		append_paths = []
-	} = opts;
 
-	// eslint-disable-next-line no-underscore-dangle
-	const paths = Module._nodeModulePaths(dirname(name));
 	const { parent } = module;
-	const m = new Module(name, parent);
-
-	m.filename = name;
-	m.paths = [
-		...prepend_paths,
-		...paths,
-		...append_paths
-	];
-
-	// eslint-disable-next-line no-underscore-dangle
-	m._compile(String(buffer), name);
-
-	const { exports } = m;
+	const m = Object.assign(new Module(name, parent), {
+		filename: name,
+		paths: [
+			...opts.prepend_paths || [],
+			// eslint-disable-next-line no-underscore-dangle
+			...Module._nodeModulePaths(dirname(name)),
+			...opts.append_paths || []
+		]
+	});
 
 	if (parent && parent.children) {
 		parent.children.splice(parent.children.indexOf(m), 1);
 	}
 
-	return { [name]: t_module(exports) };
+	// eslint-disable-next-line no-underscore-dangle
+	m._compile(String(buffer), name);
 
+	return { [name]: t_module(m.exports) };
 };
 
 const [ impl, ptr ] = process.argv.slice(2);
