@@ -581,14 +581,14 @@ mkdir -p $HOME/metacall
 code $HOME/metacall
 ```
 
-We are going to run a docker container with a mounted volume. This volume will connect the `LOADER_SCRIPT_PATH` inside the container, and your development path in the host. We are using `~/metacall`, where we have our editor opened.
+We are going to run a docker container with a mounted volume. This volume will connect the `LOADER_SCRIPT_PATH` inside the container, and your development path in the host. We are using `$HOME/metacall`, where we have our editor opened.
 
 ``` sh
 docker pull metacall/core:dev
 docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:dev /bin/bash
 ```
 
-With the last terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call) with **METACALL** as a host.
+Inside docker terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call).
 
 ## 8. License
 
