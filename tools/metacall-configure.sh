@@ -31,6 +31,7 @@ BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_DISTRIBUTABLE=0
 BUILD_PORTS=0
+BUILD_COVERAGE=0
 
 sub_options() {
 	for option in "$@"
@@ -87,6 +88,10 @@ sub_options() {
 		if [ "$option" = 'ports' ]; then
 			echo "Build all ports"
 			BUILD_PORTS=1
+		fi
+		if [ "$option" = 'coverage' ]; then
+			echo "Build all coverage reports"
+			BUILD_COVERAGE=1
 		fi
 	done
 }
@@ -172,6 +177,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS=Off"
 	fi
 
+	# Coverage
+	if [ $BUILD_COVERAGE = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_COVERAGE=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_COVERAGE=Off"
+	fi
+
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
@@ -197,6 +209,7 @@ sub_help() {
 	echo "	static: build as static libraries"
 	echo "	dynamic: build as dynamic libraries"
 	echo "	ports: build all ports"
+	echo "	coverage: build all coverage reports"
 	echo ""
 }
 

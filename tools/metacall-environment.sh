@@ -42,6 +42,7 @@ INSTALL_NODEJS=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
+INSTALL_COVERAGE=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -70,7 +71,8 @@ sub_python(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
-	$SUDO_CMD pip3 install rsa
+	$SUDO_CMD pip3 install 'rsa==3.4.2'
+	$SUDO_CMD pip3 install 'joblib==0.13.2'
 }
 
 # Ruby
@@ -290,6 +292,14 @@ sub_pack(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends rpm
 }
 
+# Coverage
+sub_coverage(){
+	echo "configure coverage"
+	cd $ROOT_DIR
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get install -y --no-install-recommends lcov
+}
+
 # Install
 sub_install(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -333,6 +343,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_PACK = 1 ]; then
 		sub_pack
+	fi
+	if [ $INSTALL_COVERAGE = 1 ]; then
+		sub_coverage
 	fi
 
 	echo "install finished in workspace $ROOT_DIR"
@@ -415,6 +428,10 @@ sub_options(){
 			echo "pack selected"
 			INSTALL_PACK=1
 		fi
+		if [ "$var" = 'coverage' ]; then
+			echo "coverage selected"
+			INSTALL_COVERAGE=1
+		fi
 	done
 }
 
@@ -439,6 +456,7 @@ sub_help() {
 	echo "	swig"
 	echo "	metacall"
 	echo "	pack"
+	echo "	coverage"
 	echo ""
 }
 

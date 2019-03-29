@@ -65,6 +65,7 @@ metacall('sum', 3, 4); // 7
   - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
   - [6. Build System](#6-build-system)
     - [6.1 Build Options](#61-build-options)
+    - [6.2 Coverage](#62-coverage)
   - [7. Platform Support](#7-platform-support)
     - [7.1 Docker Support](#71-docker-support)
     - [7.1.1 Docker Development](#711-docker-development)
@@ -517,6 +518,7 @@ Available build options are the following ones.
 |   **OPTION_BUILD_PORTS**    | Build ports.                                           |      OFF      |
 |    **OPTION_FORK_SAFE**     | Enable fork safety.                                    |      OFF      |
 |   **OPTION_THREAD_SAFE**    | Enable thread safety.                                  |      OFF      |
+|     **OPTION_COVERAGE**     | Enable coverage.                                       |      OFF      |
 |    **CMAKE_BUILD_TYPE**     | Define the type of build.                              |    Release    |
 
 It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
@@ -529,16 +531,40 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 | **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                            |
 |  **OPTION_BUILD_PORTS_**  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
+### 6.2 Coverage
+
+In order to run code coverage and obtain html reports use the following commands. Note, test must be run before executing code coverage.
+
+``` sh
+make
+make test
+make -k gcov
+make -k lcov
+make -k lcov-genhtml
+```
+
+The output reports will be generated in `${CMAKE_BINARY_DIR}/lcov/html/selected_targets` in html format.
+
+To obtain a report of a single `target` do:
+
+``` sh
+make
+make test
+make <target>-gcov
+make <target>-geninfo
+make <target>-genhtml
+```
+
 ## 7. Platform Support
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|     Operative System      |    Architecture     |    Compiler     |                                              Build Status                                               |
-|:-------------------------:|:-------------------:|:---------------:|:-------------------------------------------------------------------------------------------------------:|
-|    **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                         |
+|     Operative System      |    Architecture     |    Compiler     |                                              Build Status                                              |
+|:-------------------------:|:-------------------:|:---------------:|:------------------------------------------------------------------------------------------------------:|
+|    **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
 | **`debian:stretch-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
-| **`debian:buster-slim`**  |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                         |
-|       **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                         |
+| **`debian:buster-slim`**  |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
+|       **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
 
 ### 7.1 Docker Support
 
