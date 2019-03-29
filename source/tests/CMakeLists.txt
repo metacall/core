@@ -54,6 +54,7 @@ if(OPTION_TEST_MEMORYCHECK)
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=50")
 
 	set(MEMORYCHECK_SUPPRESSIONS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind.supp")
+	set(MEMORYCHECK_SUPPRESSIONS_FILE "${MEMORYCHECK_SUPPRESSIONS_FILE};${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-python.supp")
 
 	# TODO: Memory check does not work properly with CoreCLR
 	#
@@ -124,6 +125,7 @@ add_subdirectory(metacall_clear_test)
 add_subdirectory(metacall_python_class_test)
 add_subdirectory(metacall_python_gc_test)
 add_subdirectory(metacall_python_open_test)
+add_subdirectory(metacall_python_model_test)
 add_subdirectory(metacall_map_test)
 add_subdirectory(metacall_initialize_test)
 add_subdirectory(metacall_initialize_ex_test)

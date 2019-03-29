@@ -72,6 +72,9 @@ sub_python(){
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
 	$SUDO_CMD pip3 install 'rsa==3.4.2'
+	$SUDO_CMD pip3 install 'scipy==1.2.1'
+	$SUDO_CMD pip3 install 'numpy==1.16.1'
+	$SUDO_CMD pip3 install 'scikit-learn==0.19.1'
 	$SUDO_CMD pip3 install 'joblib==0.13.2'
 }
 
