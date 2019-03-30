@@ -59,7 +59,8 @@ typedef pid_t metacall_pid;
 #	error "Unknown metacall fork safety platform"
 #endif
 
-typedef int (*metacall_fork_callback_ptr)(metacall_pid, void *);
+typedef int (*metacall_pre_fork_callback_ptr)(void *);
+typedef int (*metacall_post_fork_callback_ptr)(metacall_pid, void *);
 
 /* -- Methods -- */
 
@@ -76,10 +77,13 @@ METACALL_API int metacall_fork_initialize(void);
 *  @brief
 *    Set fork hook callback
 *
-*  @param[in] callback
-*    Callback to be called when fork detour is executed
+*  @param[in] pre_callback
+*    Callback to be called before fork detour is executed
+*
+*  @param[in] post_callback
+*    Callback to be called after fork detour is executed
 */
-METACALL_API void metacall_fork(metacall_fork_callback_ptr callback);
+METACALL_API void metacall_fork(metacall_pre_fork_callback_ptr pre_callback, metacall_post_fork_callback_ptr post_callback);
 
 /**
 *  @brief
