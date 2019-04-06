@@ -142,15 +142,21 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 
 	NTSTATUS result;
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process forked");
+
 	/* Execute pre fork callback */
 	if (pre_callback != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process pre fork callback execution");
+
 		/* TODO: Context */
 		if (pre_callback(NULL) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "MetaCall invalid detour pre callback invocation");
 		}
 	}
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork auto destroy");
 
 	/* Destroy metacall before the fork */
 	if (metacall_destroy() != 0)
@@ -166,6 +172,8 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork trampoline invocation");
 	}
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork re-initialize");
+
 	/* Initialize metacall again */
 	if (metacall_initialize() != 0)
 	{
@@ -178,6 +186,8 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	/* Execute post fork callback */
 	if (post_callback != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process post fork callback execution");
+
 		/* TODO: Context */
 		if (post_callback(_getpid(), NULL) != 0)
 		{
@@ -207,9 +217,13 @@ pid_t metacall_fork_hook()
 
 	pid_t pid;
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process forked");
+
 	/* Execute pre fork callback */
 	if (pre_callback != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process pre fork callback execution");
+
 		/* TODO: Context */
 		if (pre_callback(NULL) != 0)
 		{
@@ -217,14 +231,18 @@ pid_t metacall_fork_hook()
 		}
 	}
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork auto destroy");
+
 	/* Destroy metacall before the fork */
 	if (metacall_destroy() != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction");
+		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall fork auto destruction fail");
 	}
 
 	/* Execute the real fork */
 	pid = metacall_fork_trampoline();
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process fork re-initialize");
 
 	/* Initialize metacall again */
 	if (metacall_initialize() != 0)
@@ -238,6 +256,8 @@ pid_t metacall_fork_hook()
 	/* Execute post fork callback */
 	if (post_callback != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall process post fork callback execution");
+
 		/* TODO: Context */
 		if (post_callback(pid, NULL) != 0)
 		{
@@ -254,6 +274,8 @@ pid_t metacall_fork_hook()
 
 static void metacall_fork_exit(void)
 {
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall atexit triggered");
+
 	if (metacall_fork_destroy() != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork destruction");
