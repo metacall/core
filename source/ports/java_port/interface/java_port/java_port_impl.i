@@ -46,6 +46,7 @@ extern "C" {
 */
 %typemap(in) (const char * buffer, size_t size, void ** handle)
 {
+	char * buffer_str = NULL;
 
 	const char * c_string = (*jenv)->GetStringUTFChars(jenv, (jstring)$input, 0);
 
@@ -55,10 +56,11 @@ extern "C" {
 
 	if (buffer_str == NULL)
 	{
-		jclass c = (*jenv)->FindClass(jenv, "java/lang/Exception");
+		jclass c = jenv->FindClass("java/lang/Exception");
 
-		(*jenv)->ThrowNew(jenv, c, "Invalid memory allocation for buffer");
+		jenv->ThrowNew(c, "Invalid memory allocation for buffer");
 
+		SWIG_fail;
 	}
 
 	strncpy(buffer_str, c_string, c_string_size);
