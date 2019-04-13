@@ -39,7 +39,7 @@ def download(urls):
             res = requests.get(url, stream=True)
             total_length = res.headers.get('content-length')
 
-            if total_length is None:
+            if total_length is None or int(total_length) < 4096:
                 print('Downloading {} from {}\n'.format(url.split("/")[-1], url))
                 file.write(res.content)
             else:
@@ -102,11 +102,45 @@ def spawn(args):
     return output, error, process.returncode
 
 
+def pre_install(components):
+    download(['https://raw.githubusercontent.com/metacall/core/develop/tools/metacall-runtime.sh'])
+    args = ['bash', '/tmp/metacall-runtime.sh']
+    args = args + components
+    subprocess.call(args)
+
+
+def pre_install_prompt():
+
+    answers = {'yes': True, 'y': True, 'no': False, 'n': False}
+    components = ['python', 'ruby', 'netcore', 'v8', 'nodejs', 'ports']
+    args = []
+
+    try:
+        while True:
+            for component in components:
+                message = '''do you want to install {} (y/n)? '''.format(component)
+                sys.stdout.write(message)
+                choice = input().lower()
+                if choice in answers and answers[choice]:
+                    args.append(component)
+                elif choice not in answers:
+                    sys.stdout.write("Please respond with 'yes' or 'no' (or 'y' or 'n').\n")
+                    exit(0)
+            if len(args) == 0:
+                exit(0)
+            pre_install(args)
+            break
+
+    except KeyboardInterrupt:
+        exit(1)
+
+
 def install(ignore=False):
     if ignore is False:
         if os.path.isfile('/usr/local/bin/metacallcli'):
             print('MetaCall CLI is already installed')
             exit(0)
+        pre_install_prompt()
 
     if os.getuid() != 0:
         print('You need to have root privileges to run this script.')
