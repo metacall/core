@@ -1,35 +1,11 @@
-import subprocess
 import sys
-
 import os
 import re
-import requests
 import shutil
 import tarfile
+import subprocess
 
-LIB_CONTENT = [
-    'bootstrap.js',
-    'CSLoader.dll',
-    'libcs_loader.so',
-    'libcxx_port.so',
-    'libicudata.so.52.1',
-    'libicui18n.so.52.1',
-    'libicuuc.so.52.1',
-    'libjs_loader.so',
-    'libmetacall.so',
-    'libmetacall_serial.so',
-    'libmock_loader.so',
-    'libnode.so.57',
-    'libnode_loader.so',
-    'libpy_loader.so',
-    'librapid_json_serial.so',
-    'librb_loader.so',
-    'libv8.so.5.1.117',
-    '_py_port.so',
-    'rb_port.so',
-    'System.Runtime.Loader.dll',
-    'trampoline.node'
-]
+import requests
 
 
 def file_size(num, suffix='B'):
@@ -93,16 +69,30 @@ def unpack(files):
             file.extractall()
 
 
+def write_install_log(content):
+    with open('/tmp/mc-install.tmp', 'w') as logger:
+        logger.write('\n'.join(content))
+
+    shutil.move('/tmp/mc-install.tmp', '/usr/local/share/metacall/install')
+
+
+def read_install_log():
+    with open('/usr/local/share/metacall/install', 'r') as logger:
+        lines = logger.read().splitlines()
+    return lines
+
+
 def overwrite(src, dest):
     if os.path.isdir(src):
         if not os.path.isdir(dest):
             os.makedirs(dest)
         files = os.listdir(src)
         for file in files:
-            overwrite(os.path.join(src, file), os.path.join(dest, file))
+            yield from overwrite(os.path.join(src, file), os.path.join(dest, file))
     else:
         print('copying {} to {}'.format(src, dest))
         shutil.copyfile(src, dest)
+        yield str(dest)
 
 
 def spawn(args):
@@ -140,7 +130,7 @@ def install(ignore=False):
 
         unpack(assets)
 
-        overwrite('/tmp/usr/local/', '/usr/local/')
+        write_install_log(list(overwrite('/tmp/usr/local/', '/usr/local/')))
 
         print('\n')
 
@@ -176,15 +166,14 @@ def update():
     install(ignore=True)
 
 
-def uninstall():
+def uninstall(paths):
+
+    for fp in paths:
+        if os.path.isfile(fp):
+            os.remove(fp)
+
     if os.path.isdir('/usr/local/share/metacall'):
         shutil.rmtree('/usr/local/share/metacall')
-    if os.path.isfile('/usr/local/bin/metacallcli'):
-        os.remove('/usr/local/bin/metacallcli')
-
-    for file in LIB_CONTENT:
-        if os.path.isfile('/usr/local/lib/' + file):
-            os.remove('/usr/local/lib/' + file)
 
     spawn(['ldconfig'])
 
@@ -192,12 +181,13 @@ def uninstall():
 
 
 def uninstall_prompt():
-    message = '''This action would remove:\n   /usr/local/bin/metacallcli\n   /usr/local/bin/share/metacall/*\n   {}
+    paths = read_install_log()
+    message = '''This action would remove:\n   {}
 * this action DOES NOT uninstall the python package, only MetaCall CLI and MetaCall libs
 * for a complete uninstall you have to run metacall-uninstall && pip uninstall metacall 
 * (the order of execution is important)
   
-Proceed (y/n)? '''.format(''.join('''/usr/local/lib/{}\n   '''.format(l) for l in LIB_CONTENT))
+Proceed (y/n)? '''.format(''.join('''{}\n   '''.format(l) for l in paths))
 
     answers = {'yes': True, 'y': True, 'no': False, 'n': False}
 
@@ -207,7 +197,7 @@ Proceed (y/n)? '''.format(''.join('''/usr/local/lib/{}\n   '''.format(l) for l i
             choice = input().lower()
             if choice in answers:
                 if answers[choice]:
-                    uninstall()
+                    uninstall(paths)
                 else:
                     exit(0)
             else:
