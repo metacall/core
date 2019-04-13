@@ -83,7 +83,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_RUNTIME_OPTIONS: root base python ruby netcore nodejs v8 ports
+        METACALL_RUNTIME_OPTIONS: root base python ruby netcore nodejs v8 ports clean
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
