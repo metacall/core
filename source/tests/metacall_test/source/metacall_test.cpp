@@ -160,7 +160,19 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		ret = metacall("bytebuff");
+		char buffer[] = { 0, 1, 2, 3, 4 };
+
+		void * buffer_value = metacall_value_create_buffer((void *)buffer, sizeof(buffer));
+
+		void * args[] = {
+			buffer_value
+		};
+
+		EXPECT_NE((void *) NULL, (void *) buffer_value);
+
+		ret = metacallv("bytebuff", args);
+
+		metacall_value_destroy(buffer_value);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 

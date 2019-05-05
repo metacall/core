@@ -384,7 +384,21 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 		else if (id == TYPE_BUFFER)
 		{
-			/* TODO */
+			/* This forces that you wont never be able to pass a buffer as a pointer to metacall without be wrapped into a value type */
+			/* If a pointer is passed this will produce a garbage read from outside of the memory range of the parameter */
+			value * v = (value)args[args_count];
+
+			size_t size = value_type_size(v);
+
+			const char * buffer = value_to_buffer(v);
+
+			#if PY_MAJOR_VERSION == 2
+
+				/* TODO */
+
+			#elif PY_MAJOR_VERSION == 3
+				py_func->values[args_count] = PyBytes_FromStringAndSize(buffer, (Py_ssize_t) size - 1);
+			#endif
 		}
 		else if (id == TYPE_ARRAY)
 		{
@@ -575,7 +589,7 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 			{ TYPE_DOUBLE, "float" },
 
 			{ TYPE_STRING, "str" },
-			{ TYPE_BUFFER, "bytearray" },
+			{ TYPE_BUFFER, "bytes" },
 			{ TYPE_ARRAY, "list" }
 		};
 
