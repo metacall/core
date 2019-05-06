@@ -60,6 +60,7 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	CONFIGURATION_PATH=/usr/local/share/metacall/configurations/global.json \
 	SERIAL_LIBRARY_PATH=/usr/local/lib \
 	DETOUR_LIBRARY_PATH=/usr/local/lib \
+	PORT_LIBRARY_PATH=/usr/local/lib \
 	DEBIAN_FRONTEND=noninteractive
 
 # Define working directory

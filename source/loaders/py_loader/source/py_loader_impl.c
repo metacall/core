@@ -397,7 +397,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 				/* TODO */
 
 			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyBytes_FromStringAndSize(buffer, (Py_ssize_t) size - 1);
+				py_func->values[args_count] = PyBytes_FromStringAndSize(buffer, (Py_ssize_t) size);
 			#endif
 		}
 		else if (id == TYPE_ARRAY)

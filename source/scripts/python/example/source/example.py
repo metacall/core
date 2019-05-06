@@ -34,6 +34,8 @@ def strcat(left: str, right: str) -> str:
 
 def bytebuff(input: bytes) -> bytes:
 	print(input);
-	buffer = b'hello world'
+	print('Input length: ', len(input))
+	buffer = b'abcd'
 	print(buffer);
+	print('Output length: ', len(buffer))
 	return buffer;

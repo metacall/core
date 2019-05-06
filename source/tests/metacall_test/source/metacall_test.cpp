@@ -160,6 +160,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+		/* Testing Python Buffer */
 		char buffer[] = { 0, 1, 2, 3, 4 };
 
 		void * buffer_value = metacall_value_create_buffer((void *)buffer, sizeof(buffer));
@@ -181,6 +182,33 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "hello world", metacall_value_size(ret)));
 
 		metacall_value_destroy(ret);
+
+		unsigned char * dyn_buffer = (unsigned char *)malloc(sizeof(unsigned char) * 256);
+
+		for (int i = 0; i < 256; ++i)
+		{
+			dyn_buffer[i] = i;
+		}
+
+		buffer_value = metacall_value_create_buffer((void *)dyn_buffer, 256);
+
+		EXPECT_NE((void *) NULL, (void *) buffer_value);
+
+		args[0] = buffer_value;
+
+		ret = metacallv("bytebuff", args);
+
+		metacall_value_destroy(buffer_value);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((size_t) sizeof("hello world"), (size_t) metacall_value_size(ret));
+
+		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "hello world", metacall_value_size(ret)));
+
+		metacall_value_destroy(ret);
+
+		free(dyn_buffer);
 
 		ret = metacall("index");
 
