@@ -174,6 +174,10 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 	{
 		return TYPE_ARRAY;
 	}
+	else if (PyCapsule_CheckExact(result))
+	{
+		return TYPE_PTR;
+	}
 	else if (result == Py_None)
 	{
 		return TYPE_NULL;
@@ -283,7 +287,17 @@ value py_loader_impl_return(PyObject * result, type_id id)
 	}
 	else if (id == TYPE_PTR)
 	{
-		/* TODO */
+		void * ptr = NULL;
+
+		#if PY_MAJOR_VERSION == 2
+
+			/* TODO */
+
+		#elif PY_MAJOR_VERSION == 3
+			ptr = PyCapsule_GetPointer(result, NULL); /* TODO: Implement name ? */
+
+			v = value_create_ptr(ptr);
+		#endif
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -404,9 +418,21 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		{
 			/* TODO */
 		}
-		else if (id == TYPE_PTR)
+		else if (id == TYPE_MAP)
 		{
 			/* TODO */
+		}
+		else if (id == TYPE_PTR)
+		{
+			void ** value_ptr = (void **)(args[args_count]);
+
+			#if PY_MAJOR_VERSION == 2
+
+				/* TODO */
+
+			#elif PY_MAJOR_VERSION == 3
+				py_func->values[args_count] = PyCapsule_New(*value_ptr, NULL, NULL); /* TODO: Name of capsule or destructor ? */
+			#endif
 		}
 
 		if (py_func->values[args_count] != NULL)
