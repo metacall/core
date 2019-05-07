@@ -294,7 +294,7 @@ value py_loader_impl_return(PyObject * result, type_id id)
 			/* TODO */
 
 		#elif PY_MAJOR_VERSION == 3
-			ptr = PyCapsule_GetPointer(result, NULL); /* TODO: Implement name ? */
+			ptr = PyCapsule_GetPointer(result, NULL);
 
 			v = value_create_ptr(ptr);
 		#endif
@@ -424,14 +424,14 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		}
 		else if (id == TYPE_PTR)
 		{
-			void ** value_ptr = (void **)(args[args_count]);
+			void * value_ptr = *((void **)(args[args_count]));
 
 			#if PY_MAJOR_VERSION == 2
 
 				/* TODO */
 
 			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyCapsule_New(*value_ptr, NULL, NULL); /* TODO: Name of capsule or destructor ? */
+				py_func->values[args_count] = PyCapsule_New(value_ptr, NULL, NULL);
 			#endif
 		}
 

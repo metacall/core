@@ -43,7 +43,7 @@ void * native_set_value(void * args[])
 
 	t->value = value;
 
-	return metacall_value_create_int(25); // TODO: Review memory leak?
+	return metacall_value_create_ptr((void *)t);
 }
 
 TEST_F(metacall_python_pointer_test, DefaultConstructor)
@@ -54,7 +54,7 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 
 	/* Native register */
 	{
-		metacall_register("native_set_value", native_set_value, METACALL_INT, 1, METACALL_PTR, METACALL_LONG);
+		metacall_register("native_set_value", native_set_value, METACALL_PTR, 2, METACALL_PTR, METACALL_LONG);
 
 		EXPECT_NE((void *) NULL, (void *) metacall_function("native_set_value"));
 	}
@@ -71,6 +71,10 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 
 		struct test_type t = { 0 };
 
+		void * t_ptr = (void *)&t;
+
+		long value = 3000;
+
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		const enum metacall_value_id ids[] =
@@ -78,11 +82,13 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 			METACALL_PTR, METACALL_LONG
 		};
 
-		//ret = metacallt("python_set_value", ids, &t, 3000);
+		ret = metacallt("python_set_value", ids, t_ptr, value);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) 25, (int) metacall_value_cast_int(&ret));
+		EXPECT_EQ((void *) t_ptr, (void *) metacall_value_cast_ptr(&ret));
+
+		EXPECT_EQ((long) value, (long) t.value);
 
 		metacall_value_destroy(ret);
 	}

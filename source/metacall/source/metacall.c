@@ -320,13 +320,7 @@ void * metacall(const char * name, ...)
 
 void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 {
-			printf("----------------s iiiiiiiiiiiign\n");
-			fflush(stdout);
-
 	function f = loader_get(name);
-
-			printf("----------------s iiiiiiiiiiiign\n");
-			fflush(stdout);
 
 	if (f != NULL)
 	{
@@ -344,16 +338,9 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 		for (iterator = 0; iterator < signature_count(s); ++iterator)
 		{
-			printf("----------------s iiiiiiiiiiiign\n");
-
 			type t = signature_get_type(s, iterator);
 
-			printf("----------------s iiiiiiiiiiiign %p\n", t);
-
 			type_id id = type_index(t);
-
-			printf("----------------s iiiiiiiiiiiign %d\n", (int)id);
-
 
 			if (t != NULL)
 			{
@@ -401,13 +388,9 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 			else if (id == TYPE_PTR)
 			{
 				args[iterator] = value_create_ptr(va_arg(va, const void *));
-
-				printf("----------------%p\n", args[iterator]);
 			}
 			else
 			{
-				printf("----------------NUUUUUUUUL\n" );
-
 				args[iterator] = NULL;
 			}
 		}

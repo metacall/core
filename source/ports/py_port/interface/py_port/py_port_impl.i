@@ -243,6 +243,18 @@ extern "C" {
 
 				args[args_count] = metacall_value_create_string(str, (size_t)size);
 			}
+			else if (PyCapsule_CheckExact(py_arg))
+			{
+				void * ptr = NULL;
+
+				%#if PY_MAJOR_VERSION == 2
+					/* TODO */
+				%#elif PY_MAJOR_VERSION == 3
+					ptr = PyCapsule_GetPointer(py_arg, NULL);
+
+					args[args_count] = metacall_value_create_ptr(ptr);
+				%#endif
+			}
 			else
 			{
 				/* TODO: Remove this by a local array? */
@@ -409,6 +421,17 @@ extern "C" {
 			case METACALL_STRING :
 			{
 				$result = PyUnicode_FromString(metacall_value_to_string(ret));
+
+				break;
+			}
+
+			case METACALL_PTR :
+			{
+				%#if PY_MAJOR_VERSION == 2
+					/* TODO */
+				%#elif PY_MAJOR_VERSION == 3
+					$result = PyCapsule_New(metacall_value_to_ptr(ret), NULL, NULL);
+				%#endif
 
 				break;
 			}

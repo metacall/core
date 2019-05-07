@@ -18,6 +18,6 @@ def python_set_value(t, value):
 
 	result = metacall('native_set_value', t, value);
 
-	print('Python result from host native_set_value: ' + str(result));
+	print('Python result from host native_set_value: ' + str(result), type(result));
 
 	return result;
