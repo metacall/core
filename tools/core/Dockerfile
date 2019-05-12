@@ -66,12 +66,6 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 # Define working directory
 WORKDIR $METACALL_PATH
 
-# Copy libraries from builder
-COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.node /usr/local/lib/
-
-# TODO: Remove this when metacall is able to be installed from package managers (pip, npm, gem)
-COPY --from=builder /usr/local/lib/python3.5/dist-packages/ /usr/local/lib/python3.5/dist-packages/
-
 # Copy MetaCall dependecies
 COPY tools/metacall-runtime.sh $METACALL_PATH
 
@@ -84,9 +78,14 @@ RUN mkdir -p /usr/local/scripts \
 	&& $METACALL_PATH/metacall-runtime.sh ${METACALL_RUNTIME_OPTIONS} \
 	&& rm -rf $METACALL_PATH/metacall-runtime.sh
 
+# Copy libraries from builder
+COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.node /usr/local/lib/node_modules /usr/local/lib/
+
+# TODO: Remove this when metacall is able to be installed from package managers (pip, npm, gem)
+COPY --from=builder /usr/local/lib/python3.5/dist-packages/ /usr/local/lib/python3.5/dist-packages/
+
 # Copy headers from builder
 COPY --from=builder /usr/local/include/metacall /usr/local/include/metacall
 
 # Copy configuration from builder
 COPY --from=builder /usr/local/share/metacall/configurations/* /usr/local/share/metacall/configurations/
-
