@@ -26,6 +26,9 @@ endif()
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${LOADER_LIBRARY_PATH}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${LOADER_LIBRARY_PATH}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${LOADER_LIBRARY_PATH}
+	COMMAND npm install
 )
 
 #
@@ -45,6 +48,12 @@ set_target_properties(${target}
 # Library
 install(FILES
 	${LOADER_LIBRARY_PATH}/bootstrap.js
+	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
+)
+
+install(DIRECTORY
+	${LOADER_LIBRARY_PATH}/node_modules
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

@@ -170,12 +170,146 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 	{
 		return TYPE_BUFFER;
 	}
+	else if (PyList_Check(result))
+	{
+		return TYPE_ARRAY;
+	}
+	else if (PyCapsule_CheckExact(result))
+	{
+		return TYPE_PTR;
+	}
 	else if (result == Py_None)
 	{
 		return TYPE_NULL;
 	}
 
 	return TYPE_INVALID;
+}
+
+value py_loader_impl_return(PyObject * result, type_id id)
+{
+	value v = NULL;
+
+	if (id == TYPE_BOOL)
+	{
+		boolean b = (PyObject_IsTrue(result) == 1) ? 1 : 0;
+
+		v = value_create_bool(b);
+	}
+	else if (id == TYPE_INT)
+	{
+		#if PY_MAJOR_VERSION == 2
+			long l = PyInt_AsLong(result);
+		#elif PY_MAJOR_VERSION == 3
+			long l = PyLong_AsLong(result);
+		#endif
+
+		/* TODO: Review overflow */
+		int i = (int)l;
+
+		v = value_create_int(i);
+	}
+	else if (id == TYPE_LONG)
+	{
+		long l = PyLong_AsLong(result);
+
+		v = value_create_long(l);
+	}
+	else if (id == TYPE_FLOAT)
+	{
+		double d = PyFloat_AsDouble(result);
+
+		v = value_create_float((float)d);
+	}
+	else if (id == TYPE_DOUBLE)
+	{
+		double d = PyFloat_AsDouble(result);
+
+		v = value_create_double(d);
+	}
+	else if (id == TYPE_STRING)
+	{
+		char * str = NULL;
+
+		Py_ssize_t length = 0;
+
+		#if PY_MAJOR_VERSION == 2
+			if (PyString_AsStringAndSize(result, &str, &length) == -1)
+			{
+				if (PyErr_Occurred() != NULL)
+				{
+					loader_impl_py py_impl = loader_impl_get(py_func->impl);
+
+					py_loader_impl_error_print(py_impl);
+				}
+			}
+		#elif PY_MAJOR_VERSION == 3
+			str = PyUnicode_AsUTF8AndSize(result, &length);
+		#endif
+
+		v = value_create_string(str, (size_t)length);
+	}
+	else if (id == TYPE_BUFFER)
+	{
+		char * str = NULL;
+
+		Py_ssize_t length = 0;
+
+		#if PY_MAJOR_VERSION == 2
+
+			/* TODO */
+
+		#elif PY_MAJOR_VERSION == 3
+			if (PyBytes_AsStringAndSize(result, &str, &length) != -1)
+			{
+				v = value_create_buffer((const void *)str, (size_t)length + 1);
+			}
+		#endif
+	}
+	else if (id == TYPE_ARRAY)
+	{
+		Py_ssize_t iterator, length = 0;
+		value * array_value;
+
+		length = PyList_Size(result);
+
+		v = value_create_array(NULL, (size_t)length);
+
+		array_value = value_to_array(v);
+
+		for (iterator = 0; iterator < length; ++iterator)
+		{
+			PyObject * element = PyList_GetItem(result, iterator);
+
+			/* TODO: Review recursion overflow */
+			array_value[iterator] = py_loader_impl_return(element, py_loader_impl_get_return_type(element));
+		}
+	}
+	else if (id == TYPE_PTR)
+	{
+		void * ptr = NULL;
+
+		#if PY_MAJOR_VERSION == 2
+
+			/* TODO */
+
+		#elif PY_MAJOR_VERSION == 3
+			ptr = PyCapsule_GetPointer(result, NULL);
+
+			v = value_create_ptr(ptr);
+		#endif
+	}
+	else if (id == TYPE_NULL)
+	{
+		/* TODO: MetaCall null is NULL C type or nil value ? */
+		v = NULL;
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
+	}
+
+	return v;
 }
 
 function_return function_py_interface_invoke(function func, function_impl impl, function_args args)
@@ -262,9 +396,43 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			#endif
 
 		}
-		else if (id == TYPE_PTR)
+		else if (id == TYPE_BUFFER)
+		{
+			/* This forces that you wont never be able to pass a buffer as a pointer to metacall without be wrapped into a value type */
+			/* If a pointer is passed this will produce a garbage read from outside of the memory range of the parameter */
+			value * v = (value)args[args_count];
+
+			size_t size = value_type_size(v);
+
+			const char * buffer = value_to_buffer(v);
+
+			#if PY_MAJOR_VERSION == 2
+
+				/* TODO */
+
+			#elif PY_MAJOR_VERSION == 3
+				py_func->values[args_count] = PyBytes_FromStringAndSize(buffer, (Py_ssize_t) size);
+			#endif
+		}
+		else if (id == TYPE_ARRAY)
 		{
 			/* TODO */
+		}
+		else if (id == TYPE_MAP)
+		{
+			/* TODO */
+		}
+		else if (id == TYPE_PTR)
+		{
+			void * value_ptr = *((void **)(args[args_count]));
+
+			#if PY_MAJOR_VERSION == 2
+
+				/* TODO */
+
+			#elif PY_MAJOR_VERSION == 3
+				py_func->values[args_count] = PyCapsule_New(value_ptr, NULL, NULL);
+			#endif
 		}
 
 		if (py_func->values[args_count] != NULL)
@@ -301,95 +469,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
 
-		if (id == TYPE_BOOL)
-		{
-			boolean b = (PyObject_IsTrue(result) == 1) ? 1 : 0;
-
-			v = value_create_bool(b);
-		}
-		else if (id == TYPE_INT)
-		{
-			#if PY_MAJOR_VERSION == 2
-				long l = PyInt_AsLong(result);
-			#elif PY_MAJOR_VERSION == 3
-				long l = PyLong_AsLong(result);
-			#endif
-
-			/* TODO: Review overflow */
-			int i = (int)l;
-
-			v = value_create_int(i);
-		}
-		else if (id == TYPE_LONG)
-		{
-			long l = PyLong_AsLong(result);
-
-			v = value_create_long(l);
-		}
-		else if (id == TYPE_FLOAT)
-		{
-			double d = PyFloat_AsDouble(result);
-
-			v = value_create_float((float)d);
-		}
-		else if (id == TYPE_DOUBLE)
-		{
-			double d = PyFloat_AsDouble(result);
-
-			v = value_create_double(d);
-		}
-		else if (id == TYPE_STRING)
-		{
-			char * str = NULL;
-
-			Py_ssize_t length = 0;
-
-			#if PY_MAJOR_VERSION == 2
-				if (PyString_AsStringAndSize(result, &str, &length) == -1)
-				{
-					if (PyErr_Occurred() != NULL)
-					{
-						loader_impl_py py_impl = loader_impl_get(py_func->impl);
-
-						py_loader_impl_error_print(py_impl);
-					}
-				}
-			#elif PY_MAJOR_VERSION == 3
-				str = PyUnicode_AsUTF8AndSize(result, &length);
-			#endif
-
-			v = value_create_string(str, (size_t)length);
-		}
-		else if (id == TYPE_BUFFER)
-		{
-			char * str = NULL;
-
-			Py_ssize_t length = 0;
-
-			#if PY_MAJOR_VERSION == 2
-
-				/* TODO */
-
-			#elif PY_MAJOR_VERSION == 3
-				if (PyBytes_AsStringAndSize(result, &str, &length) != -1)
-				{
-					v = value_create_buffer((const void *)str, (size_t)length + 1);
-				}
-			#endif
-		}
-		else if (id == TYPE_PTR)
-		{
-			/* TODO */
-		}
-		else if (id == TYPE_NULL)
-		{
-			/* TODO: MetaCall null is NULL C type or nil value ? */
-			v = NULL;
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
-		}
+		v = py_loader_impl_return(result, id);
 
 		Py_DECREF(result);
 
@@ -535,7 +615,8 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 			{ TYPE_DOUBLE, "float" },
 
 			{ TYPE_STRING, "str" },
-			{ TYPE_PTR, "bytearray" }
+			{ TYPE_BUFFER, "bytes" },
+			{ TYPE_ARRAY, "list" }
 		};
 
 		size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);

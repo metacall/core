@@ -50,6 +50,21 @@ sub_build() {
 	docker-compose -f docker-compose.yml build --force-rm runtime
 }
 
+# Build MetaCall Docker Compose without cache (link manually dockerignore files)
+sub_build_nocache() {
+	ln -sf tools/node/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build --force-rm --no-cache deps_node
+
+	ln -sf tools/base/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build --force-rm --no-cache deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build --force-rm --no-cache dev
+
+	ln -sf tools/core/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build --force-rm --no-cache runtime
+}
+
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
 sub_build_cache() {
 	if [ -z "$IMAGE_REGISTRY" ]; then
@@ -133,6 +148,7 @@ sub_help() {
 	echo "Options:"
 	echo "	pull"
 	echo "	build"
+	echo "	build-nocache"
 	echo "	build-cache"
 	echo "	push"
 	echo "	pack"
@@ -145,6 +161,9 @@ case "$1" in
 		;;
 	build)
 		sub_build
+		;;
+	build-nocache)
+		sub_build_nocache
 		;;
 	build-cache)
 		sub_build_cache

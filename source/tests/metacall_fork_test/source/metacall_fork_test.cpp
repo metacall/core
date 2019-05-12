@@ -17,6 +17,9 @@ class metacall_fork_test : public testing::Test
 public:
 };
 
+static int pre_callback_fired = 0;
+static int post_callback_fired = 0;
+
 #if defined(WIN32) || defined(_WIN32) || \
 		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 		defined(__MINGW32__) || defined(__MINGW64__)
@@ -119,11 +122,24 @@ pid_t fork()
 
 #endif
 
-int callback_test(metacall_pid pid, void * ctx)
+int pre_callback_test(void * ctx)
 {
 	(void)ctx;
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork callback test %d", (int)pid);
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall pre fork callback test");
+
+	pre_callback_fired = 1;
+
+	return 0;
+}
+
+int post_callback_test(metacall_pid pid, void * ctx)
+{
+	(void)ctx;
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall post fork callback test %d", (int)pid);
+
+	post_callback_fired = 1;
 
 	return 0;
 }
@@ -134,7 +150,7 @@ TEST_F(metacall_fork_test, DefaultConstructor)
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
-	metacall_fork(&callback_test);
+	metacall_fork(&pre_callback_test, &post_callback_test);
 
 	if (fork() == 0)
 	{
@@ -144,6 +160,9 @@ TEST_F(metacall_fork_test, DefaultConstructor)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork parent");
 	}
+
+	EXPECT_EQ((int) 1, (int) pre_callback_fired);
+	EXPECT_EQ((int) 1, (int) post_callback_fired);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

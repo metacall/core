@@ -23,6 +23,7 @@ RUN_AS_ROOT=0
 SUDO_CMD=sudo
 BUILD_TYPE=Release
 BUILD_TESTS=0
+BUILD_COVERAGE=0
 BUILD_INSTALL=0
 
 sub_options() {
@@ -49,6 +50,10 @@ sub_options() {
 			echo "Build and run all tests"
 			BUILD_TESTS=1
 		fi
+		if [ "$option" = 'coverage' ]; then
+			echo "Build coverage reports"
+			BUILD_COVERAGE=1
+		fi
 		if [ "$option" = 'install' ]; then
 			echo "Install all libraries"
 			BUILD_INSTALL=1
@@ -59,11 +64,19 @@ sub_options() {
 sub_build() {
 
 	# Make without distributable
-	make -j$(getconf _NPROCESSORS_ONLN)
+	make -k -j$(getconf _NPROCESSORS_ONLN)
 
-	# Tests
-	if [ $BUILD_TESTS = 1 ]; then
+	# Tests (coverage needs to run the tests)
+	if [ $BUILD_TESTS = 1 ] || [ $BUILD_COVERAGE = 1 ]; then
 		ctest -VV -C $BUILD_TYPE
+	fi
+
+	# Coverage
+	if [ $BUILD_COVERAGE = 1 ]; then
+		# TODO: Remove -k, solve coverage issues
+		make -k gcov
+		make -k lcov
+		make -k lcov-genhtml
 	fi
 
 	# Install
@@ -78,6 +91,7 @@ sub_help() {
 	echo "	root: build being run by root"
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	tests: build and run all tests"
+	echo "	coverage: build coverage reports"
 	echo "	install: install all libraries"
 	echo ""
 }

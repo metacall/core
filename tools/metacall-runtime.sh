@@ -30,6 +30,7 @@ INSTALL_NETCORE=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
 INSTALL_PORTS=0
+INSTALL_CLEAN=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -99,8 +100,7 @@ sub_nodejs(){
 sub_ports(){
 	echo "configure ports"
 
-	# TODO: Implement correctly the metacall distribution
-	# $SUDO_CMD pip3 install metacall
+	# Nothing needed, there are no dependencies for ports by now
 }
 
 # Install
@@ -129,12 +129,17 @@ sub_install(){
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
 	fi
+	if [ $INSTALL_CLEAN = 1 ]; then
+		sub_clean
+	fi
 
 	echo "install finished in workspace $ROOT_DIR"
 }
 
 # Clean dependencies
 sub_clean(){
+	echo "clean dependencies"
+
 	$SUDO_CMD apt-get -y remove wget
 	$SUDO_CMD apt-get -y autoclean
 	$SUDO_CMD apt-get -y autoremove
@@ -176,6 +181,10 @@ sub_options(){
 			echo "ports selected"
 			INSTALL_PORTS=1
 		fi
+		if [ "$var" = 'clean' ]; then
+			echo "clean selected"
+			INSTALL_CLEAN=1
+		fi
 	done
 }
 
@@ -191,6 +200,7 @@ sub_help() {
 	echo "	v8"
 	echo "	nodejs"
 	echo "	ports"
+	echo "	clean"
 	echo ""
 }
 
@@ -201,6 +211,5 @@ case "$#" in
 	*)
 		sub_options $@
 		sub_install
-		sub_clean
 		;;
 esac

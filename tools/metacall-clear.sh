@@ -33,6 +33,7 @@ CLEAR_V8=0
 CLEAR_NODEJS=0
 CLEAR_SWIG=0
 CLEAR_PACK=0
+CLEAR_COVERAGE=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -62,6 +63,7 @@ sub_python(){
 	/usr/bin/yes | $SUDO_CMD pip3 uninstall django
 	/usr/bin/yes | $SUDO_CMD pip3 uninstall requests
 	/usr/bin/yes | $SUDO_CMD pip3 uninstall rsa
+	/usr/bin/yes | $SUDO_CMD pip3 uninstall joblib
 }
 
 # Ruby
@@ -114,6 +116,12 @@ sub_pack(){
 	fi
 }
 
+# Coverage
+sub_coverage(){
+	echo "clean pack"
+	$SUDO_CMD apt-get -y remove --purge lcov
+}
+
 # Clear
 sub_clear(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -145,6 +153,9 @@ sub_clear(){
 	fi
 	if [ $CLEAR_PACK = 1 ]; then
 		sub_pack
+	fi
+	if [ $CLEAR_COVERAGE = 1 ]; then
+		sub_coverage
 	fi
 
 	# Clear aptitude (must be at the end)
@@ -208,6 +219,10 @@ sub_options(){
 			echo "pack selected"
 			CLEAR_PACK=1
 		fi
+		if [ "$var" = 'coverage' ]; then
+			echo "coverage selected"
+			CLEAR_COVERAGE=1
+		fi
 	done
 }
 
@@ -226,6 +241,7 @@ sub_help() {
 	echo "	nodejs"
 	echo "	swig"
 	echo "	pack"
+	echo "	coverage"
 	echo ""
 }
 

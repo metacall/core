@@ -1,142 +1,230 @@
 #!/usr/bin/env node
 'use strict';
 
-const { dirname, resolve } = require('path');
-const Module = require('module');
-
-const { parse } = require('espree');
-
 // eslint-disable-next-line global-require
 const trampoline = require('./trampoline.node');
 
-const clear = handle =>
-	Object.keys(handle).forEach(p =>
-		delete require.cache[p]);
+const Module = require('module');
+const path = require('path');
 
-const destroy = () =>
+const cherow = require('./node_modules/cherow');
+
+function node_loader_trampoline_is_callable(value) {
+	return typeof value === 'function';
+}
+
+function node_loader_trampoline_is_valid_symbol(ast) {
+	// TODO: Enable more function types
+	return ast.type === 'FunctionDeclaration' ||
+		ast.type === 'ArrowFunctionExpression' ||
+		(ast.type === 'ExpressionStatement' && ast.expression && ast.expression.type === 'ArrowFunctionExpression');
+}
+
+function node_loader_trampoline_module(m) {
+	if (node_loader_trampoline_is_callable(m)) {
+		const wrapper = {};
+
+		wrapper[m.name] = m;
+
+		return wrapper;
+	}
+
+	return m;
+};
+
+// eslint-disable-next-line no-empty-function
+function node_loader_trampoline_execution_path() {
+	// TODO
+}
+
+function node_loader_trampoline_load_from_file(paths) {
+	if (!Array.isArray(paths)) {
+		throw new Error('Load from file paths must be an array, not ' + typeof code);
+	}
+
+	try {
+		const handle = {};
+
+		for (let i = 0; i < paths.length; ++i) {
+			const p = paths[i];
+			const m = require(path.resolve(__dirname, p));
+
+			handle[p] = node_loader_trampoline_module(m);
+		}
+
+		return handle;
+	} catch (ex) {
+		console.log('Exception in node_loader_trampoline_load_from_file', ex);
+	}
+
+	return null;
+}
+
+function node_loader_trampoline_load_from_memory(name, buffer, opts) {
+	if (typeof buffer !== 'string') {
+		throw new Error('Load from memory buffer must be a string, not ' + typeof code);
+	}
+
+	const paths = Module._nodeModulePaths(path.dirname(name));
+	const parent = module.parent;
+	const m = new Module(name, parent);
+
+	m.filename = name;
+	m.paths = [
+		...opts.prepend_paths || [],
+		// eslint-disable-next-line no-underscore-dangle
+		...Module._nodeModulePaths(dirname(name)),
+		...opts.append_paths || [],
+	];
 	// eslint-disable-next-line no-underscore-dangle
-	process._getActiveHandles().forEach(h => {
-		// eslint-disable-next-line no-param-reassign, no-empty-function
-		h.write = () => {};
-		// eslint-disable-next-line max-len
-		// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
-		h._destroy = () => {};
-		return h.end && h.end();
-	});
-
-const prefixArg = (args, index, n = 0) => {
-	const name = '_'.repeat(n) + 'arg' + index;
-	return args.includes(name)
-		? prefixArg(args, index, n + 1)
-		: name;
-};
-
-const setUnnamedArgs = args =>
-	args.map((a, i) =>
-		typeof a === 'string'
-			? a
-			: prefixArg(args, i));
-
-const parseFunc = f => {
-	if (typeof f !== 'function') {
-		return null;
-	}
-	return parse(
-		`(\n${f.toString()}\n)`,
-		{ ecmaVersion: 2019 }).body[0];
-};
-
-const discoverArguments = fun => {
-	const f = parseFunc(fun);
-	if (
-		!f ||
-		f.type !== 'FunctionDeclaration' &&
-		f.type !== 'ExpressionStatement' &&
-		f.expression.type !== 'ArrowFunctionExpression'
-	) {
-		throw new TypeError(fun.name + ' is not a function');
-	}
-	return setUnnamedArgs((f.params || f.expression.params).map(p =>
-		/* eslint-disable no-nested-ternary, operator-linebreak, indent */
-		p.type === 'Identifier' ? p.name :
-		p.type === 'AssignmentPattern' &&
-		p.left.type === 'Identifier' ? p.left.name :
-		false));
-};
-
-const discover = handle =>
-	Object.values(handle).reduce((discovered, exports) => ({
-		...discovered,
-		...Object.entries(exports).reduce((acc, [ key, value ]) => ({
-			...acc,
-			[key]: {
-				ptr: value,
-				signature: discoverArguments(value)
-			}
-		}), {})
-	}), {});
-
-// eslint-disable-next-line no-empty-function
-const execution_path = () => {}; // TODO
-// eslint-disable-next-line no-empty-function
-const load_from_package = () => {}; // TODO
-
-const test = () =>
-	console.log('NodeJS Loader Bootstrap Test');
-
-const ensureArray = x =>
-	Array.isArray(x) ? x : [ x ];
-
-const load_from_file = paths =>
-	ensureArray(paths).reduce((acc, path) => {
-		const abs = resolve(__dirname, path);
-		return {
-			...acc,
-			// eslint-disable-next-line global-require
-			[abs]: require(abs)
-		};
-	}, {});
-
-const is_callable = value =>
-	typeof value === 'function';
-
-const t_module = m =>
-	is_callable(m)
-			? { [m.name]: m }
-			: m;
-
-const load_from_memory = (name, buffer, opts = {}) => {
-
-	const { parent } = module;
-	const m = Object.assign(new Module(name, parent), {
-		filename: name,
-		paths: [
-			...opts.prepend_paths || [],
-			// eslint-disable-next-line no-underscore-dangle
-			...Module._nodeModulePaths(dirname(name)),
-			...opts.append_paths || []
-		]
-	});
+	m._compile(code, name);
 
 	if (parent && parent.children) {
 		parent.children.splice(parent.children.indexOf(m), 1);
 	}
 
-	// eslint-disable-next-line no-underscore-dangle
-	m._compile(String(buffer), name);
+	const handle = {};
 
-	return { [name]: t_module(m.exports) };
-};
+	handle[name] = node_loader_trampoline_module(m.exports);
 
-const [ impl, ptr ] = process.argv.slice(2);
+	return handle;
+}
 
-module.exports = trampoline.register(impl, ptr, {
-	clear,
-	destroy,
-	discover,
-	execution_path,
-	load_from_file,
-	load_from_memory,
-	load_from_package,
-	test
-});
+// eslint-disable-next-line no-empty-function
+function node_loader_trampoline_load_from_package() {
+	// TODO
+}
+
+function node_loader_trampoline_clear(handle) {
+	try {
+		const names = Object.getOwnPropertyNames(handle);
+
+		for (let i = 0; i < names.length; ++i) {
+			const p = names[i];
+			const absolute = path.resolve(__dirname, p);
+
+			if (require.cache[absolute]) {
+				delete require.cache[absolute];
+			}
+		}
+	} catch (ex) {
+		console.log('Exception in node_loader_trampoline_clear', ex);
+	}
+}
+
+function node_loader_trampoline_discover_arguments_generate(args, index) {
+	let name = `_arg${index}`;
+
+	while (args.includes(name)) {
+		name = `_${name}`;
+	}
+
+	return name;
+}
+
+function node_loader_trampoline_discover_arguments(ast) {
+	const params = ast.params || (ast.expression ? ast.expression.params : []);
+	const args = [];
+
+	for (let i = 0; i < params.length; ++i) {
+		const p = params[i];
+
+		if (p.type === 'Identifier') {
+			args.push(p.name);
+		} else if (p.type === 'AssignmentPattern' && p.left && p.left.type === 'Identifier') {
+			args.push(p.left.name);
+		} else if (p.type === 'ObjectPattern') {
+			// TODO: Use this trick until meta object protocol
+			args.push(null);
+		}
+	}
+
+	// TODO: Use this trick until meta object protocol
+	for (let i = 0; i < params.length; ++i) {
+		const p = args[i];
+
+		if (p === null) {
+			args[i] = node_loader_trampoline_discover_arguments_generate(args, i);
+		}
+	}
+
+	return args;
+}
+
+function node_loader_trampoline_discover(handle) {
+	const discover = {};
+
+	try {
+		const names = Object.getOwnPropertyNames(handle);
+
+		for (let i = 0; i < names.length; ++i) {
+			const exports = handle[names[i]];
+			const keys = Object.getOwnPropertyNames(exports);
+
+			for (let j = 0; j < keys.length; ++j) {
+				const key = keys[j];
+				const func = exports[key];
+
+				if (node_loader_trampoline_is_callable(func)) {
+					const ast = cherow.parse(func.toString(), {
+						module: true,
+						skipShebang: true,
+					}).body[0];
+
+					if (node_loader_trampoline_is_valid_symbol(ast)) {
+						const args = node_loader_trampoline_discover_arguments(ast);
+
+						discover[key] = {
+							ptr: func,
+							signature: args,
+						};
+					}
+				}
+			}
+		}
+	} catch (ex) {
+		console.log('Exception in node_loader_trampoline_discover', ex);
+	}
+
+	return discover;
+}
+
+function node_loader_trampoline_test() {
+	console.log('NodeJS Loader Bootstrap Test');
+}
+
+function node_loader_trampoline_destroy() {
+	try {
+		// eslint-disable-next-line no-underscore-dangle
+		const handles = process._getActiveHandles();
+
+		for (let i = 0; i < handles.length; ++i) {
+			const h = handles[i];
+
+			// eslint-disable-next-line no-param-reassign, no-empty-function
+			h.write = function () {};
+			// eslint-disable-next-line max-len
+			// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
+			h._destroy = function () {};
+
+			if (h.end) {
+				h.end();
+			}
+		}
+	} catch (ex) {
+		console.log('Exception in node_loader_trampoline_destroy', ex);
+	}
+}
+
+module.exports = ((impl, ptr) => {
+	return trampoline.register(impl, ptr, {
+		'execution_path': node_loader_trampoline_execution_path,
+		'load_from_file': node_loader_trampoline_load_from_file,
+		'load_from_memory': node_loader_trampoline_load_from_memory,
+		'load_from_package': node_loader_trampoline_load_from_package,
+		'clear': node_loader_trampoline_clear,
+		'discover': node_loader_trampoline_discover,
+		'test': node_loader_trampoline_test,
+		'destroy': node_loader_trampoline_destroy,
+	});
+})(process.argv[2], process.argv[3]);

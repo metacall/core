@@ -32,7 +32,10 @@ def strcat(left: str, right: str) -> str:
 	print(left, ' + ', right, ' = ', result);
 	return result;
 
-def bytebuff():
-	buffer = b'hello world'
+def bytebuff(input: bytes) -> bytes:
+	print(input);
+	print('Input length: ', len(input))
+	buffer = b'abcd'
 	print(buffer);
+	print('Output length: ', len(buffer))
 	return buffer;

@@ -1,15 +1,15 @@
 {
-  "name": "lib",
+  "name": "node_loader_bootstrap",
   "version": "1.0.0",
   "description": "",
   "main": "bootstrap.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"TODO: Test not implemented\" && exit 0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "espree": "^5.0.1"
+    "cherow": "^1.6.9"
   }
 }

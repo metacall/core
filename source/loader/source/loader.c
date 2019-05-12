@@ -158,6 +158,8 @@ void loader_initialize()
 
 					free(host);
 				}
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loader proxy initialized");
 			}
 			else
 			{
@@ -277,6 +279,8 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 		{
 			return impl;
 		}
+
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader implementation insertion error (%s)", tag);
 
 		loader_impl_destroy(impl);
 	}
@@ -742,6 +746,8 @@ int loader_unload_impl_map_cb_iterate(set s, set_key key, set_value val, set_cb_
 	{
 		loader_impl impl = val;
 
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s)", loader_impl_tag(impl));
+
 		loader_impl_destroy(impl);
 
 		return 0;
@@ -758,6 +764,8 @@ int loader_clear(void * handle)
 int loader_unload()
 {
 	loader l = loader_singleton();
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "Loader begin unload");
 
 	if (l->impl_map != NULL)
 	{

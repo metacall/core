@@ -84,6 +84,7 @@ option(OPTION_BUILD_DETOURS		"Build detours."											ON)
 option(OPTION_BUILD_PORTS		"Build ports."												OFF)
 option(OPTION_FORK_SAFE			"Enable fork safety."										OFF)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
+option(OPTION_COVERAGE			"Enable coverage."											OFF)
 
 # Build type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -121,6 +122,19 @@ include(Portability)
 #
 
 include(CompileOptions)
+
+#
+# Coverage
+#
+
+if(OPTION_COVERAGE)
+	list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/coverage")
+
+	set(ENABLE_COVERAGE ON CACHE BOOL "Enable coverage build." FORCE)
+	set(ENABLE_COVERAGE_ALL ON CACHE BOOL "Enable coverage build for all targets." FORCE)
+
+	find_package(codecov)
+endif()
 
 #
 # Deployment/installation setup
@@ -232,6 +246,14 @@ endif()
 add_subdirectory(source)
 add_subdirectory(docs)
 add_subdirectory(deploy)
+
+#
+# Coverage evaluation (must run after all targets)
+#
+
+if(OPTION_COVERAGE)
+	coverage_evaluate()
+endif()
 
 #
 # Project configuration generation

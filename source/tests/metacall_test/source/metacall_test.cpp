@@ -160,15 +160,55 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		ret = metacall("bytebuff");
+		/* Testing Python Buffer */
+		char buffer[] = { 0, 1, 2, 3, 4 };
+
+		void * buffer_value = metacall_value_create_buffer((void *)buffer, sizeof(buffer));
+
+		void * args[] = {
+			buffer_value
+		};
+
+		EXPECT_NE((void *) NULL, (void *) buffer_value);
+
+		ret = metacallv("bytebuff", args);
+
+		metacall_value_destroy(buffer_value);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((size_t) sizeof("hello world"), (size_t) metacall_value_size(ret));
+		EXPECT_EQ((size_t) sizeof("abcd"), (size_t) metacall_value_size(ret));
 
-		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "hello world", metacall_value_size(ret)));
+		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "abcd", metacall_value_size(ret)));
 
 		metacall_value_destroy(ret);
+
+		unsigned char * dyn_buffer = (unsigned char *)malloc(sizeof(unsigned char) * 256);
+
+		for (int i = 0; i < 256; ++i)
+		{
+			dyn_buffer[i] = i;
+		}
+
+		buffer_value = metacall_value_create_buffer((void *)dyn_buffer, 256);
+
+		EXPECT_NE((void *) NULL, (void *) buffer_value);
+
+		args[0] = buffer_value;
+
+		ret = metacallv("bytebuff", args);
+
+		metacall_value_destroy(buffer_value);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((size_t) sizeof("abcd"), (size_t) metacall_value_size(ret));
+
+		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "abcd", metacall_value_size(ret)));
+
+		metacall_value_destroy(ret);
+
+		free(dyn_buffer);
 
 		ret = metacall("index");
 
@@ -386,6 +426,16 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
 
 		metacall_value_destroy(ret);
+
+		ret = metacall("lambda");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 15.0);
+
+		metacall_value_destroy(ret);
+
+		/* TODO: Implement all remaining calls for nod.js */
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 
@@ -402,6 +452,8 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_NE((char *) NULL, (char *) inspect_str);
 
 		EXPECT_GT((size_t) size, (size_t) 0);
+
+		std::cout << inspect_str << std::endl;
 
 		metacall_allocator_free(allocator, inspect_str);
 
