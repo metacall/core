@@ -28,48 +28,49 @@ metacall('sum', 3, 4); // 7
 
 - [Abstract](#abstract)
 - [Table Of Contents](#table-of-contents)
-  - [1. Motivation](#1-motivation)
-  - [2. Language Support (Backends)](#2-language-support-backends)
-  - [3. Use Cases](#3-use-cases)
-  - [4. Usage](#4-usage)
-  - [4.1 Installation](#41-installation)
-    - [4.2 Environment Variables](#42-environment-variables)
-    - [4.3 Examples](#43-examples)
-  - [5. Architecture](#5-architecture)
-    - [5.1 Overview](#51-overview)
-      - [5.1.1 Design Decisions](#511-design-decisions)
-      - [5.1.2 Modules](#512-modules)
-    - [5.2 Reflect](#52-reflect)
-      - [5.2.1 Type System](#521-type-system)
-      - [5.2.2 Values](#522-values)
-      - [5.2.3 Functions](#523-functions)
-    - [5.3 Plugins](#53-plugins)
-      - [5.3.1 Loaders](#531-loaders)
-        - [5.3.1.1 Python](#5311-python)
-        - [5.3.1.2 NodeJS](#5312-nodejs)
-        - [5.3.1.3 JavaScript](#5313-javascript)
-        - [5.3.1.4 C#](#5314-c)
-        - [5.3.1.5 Ruby](#5315-ruby)
-        - [5.3.1.6 Mock](#5316-mock)
-        - [5.3.1.7 File](#5317-file)
-      - [5.3.2 Serials](#532-serials)
-        - [5.3.2.1 MetaCall](#5321-metacall)
-        - [5.3.2.2 RapidJSON](#5322-rapidjson)
-      - [5.3.3 Detours](#533-detours)
-        - [5.3.3.1 FuncHook](#5331-funchook)
-    - [5.4 Ports](#54-ports)
-    - [5.5 Serialization](#55-serialization)
-    - [5.6 Memory Layout](#56-memory-layout)
-    - [5.7 Fork Model](#57-fork-model)
-    - [5.8 Threading Model](#58-threading-model)
-  - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
-  - [6. Build System](#6-build-system)
-    - [6.1 Build Options](#61-build-options)
-    - [6.2 Coverage](#62-coverage)
-  - [7. Platform Support](#7-platform-support)
-    - [7.1 Docker Support](#71-docker-support)
-    - [7.1.1 Docker Development](#711-docker-development)
-  - [8. License](#8-license)
+    - [1. Motivation](#1-motivation)
+    - [2. Language Support (Backends)](#2-language-support-backends)
+    - [3. Use Cases](#3-use-cases)
+    - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
+    - [4. Usage](#4-usage)
+    - [4.1 Installation](#41-installation)
+        - [4.2 Environment Variables](#42-environment-variables)
+        - [4.3 Examples](#43-examples)
+    - [5. Architecture](#5-architecture)
+        - [5.1 Overview](#51-overview)
+            - [5.1.1 Design Decisions](#511-design-decisions)
+            - [5.1.2 Modules](#512-modules)
+        - [5.2 Reflect](#52-reflect)
+            - [5.2.1 Type System](#521-type-system)
+            - [5.2.2 Values](#522-values)
+            - [5.2.3 Functions](#523-functions)
+        - [5.3 Plugins](#53-plugins)
+            - [5.3.1 Loaders](#531-loaders)
+                - [5.3.1.1 Python](#5311-python)
+                - [5.3.1.2 NodeJS](#5312-nodejs)
+                - [5.3.1.3 JavaScript](#5313-javascript)
+                - [5.3.1.4 C#](#5314-c)
+                - [5.3.1.5 Ruby](#5315-ruby)
+                - [5.3.1.6 Mock](#5316-mock)
+                - [5.3.1.7 File](#5317-file)
+            - [5.3.2 Serials](#532-serials)
+                - [5.3.2.1 MetaCall](#5321-metacall)
+                - [5.3.2.2 RapidJSON](#5322-rapidjson)
+            - [5.3.3 Detours](#533-detours)
+                - [5.3.3.1 FuncHook](#5331-funchook)
+        - [5.4 Ports](#54-ports)
+        - [5.5 Serialization](#55-serialization)
+        - [5.6 Memory Layout](#56-memory-layout)
+        - [5.7 Fork Model](#57-fork-model)
+        - [5.8 Threading Model](#58-threading-model)
+    - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
+    - [6. Build System](#6-build-system)
+        - [6.1 Build Options](#61-build-options)
+        - [6.2 Coverage](#62-coverage)
+    - [7. Platform Support](#7-platform-support)
+        - [7.1 Docker Support](#71-docker-support)
+        - [7.1.1 Docker Development](#711-docker-development)
+    - [8. License](#8-license)
 
 <!-- /TOC -->
 
@@ -83,14 +84,14 @@ This section describes all programming languages that **METACALL** supports, if 
 
 - Currently supported languages and run-times:
 
-| Language                                                           | Runtime                                                                                      |         Version         | Tag  |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------|:-----------------------:|:----:|
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   |    **>= 3.2 <= 3.6**    |  py  |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **>= 8.11.1 <= 8.12.0** | node |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |       **5.1.117**       |  js  |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |       **1.1.10**        |  cs  |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |    **>= 2.1 <= 2.3**    |  rb  |
-| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |        **0.1.0**        | mock |
+| Language                                                           | Runtime                                                                                      |         Version          | Tag  |
+|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------|:------------------------:|:----:|
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   |    **>= 3.2 <= 3.7**     |  py  |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **>= 8.11.1 <= 10.15.3** | node |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |       **5.1.117**        |  js  |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |        **1.1.10**        |  cs  |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |    **>= 2.1 <= 2.3**     |  rb  |
+| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |        **0.1.0**         | mock |
 
 - Languages and run-times under construction:
 
@@ -102,6 +103,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+| [WebAssembly](https://webassembly.org/)                            | [Intel WebAssembly Micro Runtime](https://github.com/intel/wasm-micro-runtime)                         | wasm |
 
 ## 3. Use Cases
 
@@ -118,6 +120,10 @@ This section describes all programming languages that **METACALL** supports, if 
 - Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call directly low level libraries from your high level languages without making a wrapper in C or C++ for it.
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
+
+## 3.1 Known Projects Using MetaCall
+
+- **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
 
 ## 4. Usage
 

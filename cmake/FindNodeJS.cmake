@@ -298,12 +298,13 @@ if(NOT NODEJS_LIBRARY)
 			# TODO: Select correct ICU version depending on NodeJS version
 			# http://download.icu-project.org/files/icu4c/60.2/icu4c-60_2-src.tgz
 			# http://download.icu-project.org/files/icu4c/61.1/icu4c-61_1-src.tgz
-			# http://download.icu-project.org/files/icu4c/62.1/icu4c-62_1-src.zip
+			# http://download.icu-project.org/files/icu4c/62.1/icu4c-62_1-src.tgz
+			# http://download.icu-project.org/files/icu4c/64.2/icu4c-64_2-src.tgz
 
 			if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
-				execute_process(COMMAND sh -c "./configure --with-icu-source=http://download.icu-project.org/files/icu4c/60.2/icu4c-60_2-src.tgz --shared --debug" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "./configure --with-icu-source=http://download.icu-project.org/files/icu4c/64.2/icu4c-64_2-src.tgz --shared --debug" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			else()
-				execute_process(COMMAND sh -c "./configure --with-icu-source=http://download.icu-project.org/files/icu4c/60.2/icu4c-60_2-src.tgz --shared" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "./configure --with-icu-source=http://download.icu-project.org/files/icu4c/64.2/icu4c-64_2-src.tgz --shared" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			endif()
 
 			message(STATUS "Build NodeJS shared library")

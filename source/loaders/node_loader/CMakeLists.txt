@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(NodeJS 8.11.1)
+find_package(NodeJS 10.15.3)
 
 if(NOT NODEJS_FOUND)
 	message(STATUS "NodeJS libraries not found")

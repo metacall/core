@@ -226,7 +226,7 @@ sub_nodejs(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python build-essential libssl1.0.2 libssl1.0-dev
 
 	# Install NodeJS from distributable (TODO: Keys not working)
-	NODE_VERSION=8.11.1
+	NODE_VERSION=10.15.3
 	PACKAGE_SUFFIX=tar.xz
 
 	# for key in \
