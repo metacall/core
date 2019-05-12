@@ -426,6 +426,16 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
 
 		metacall_value_destroy(ret);
+
+		ret = metacall("lambda");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 15.0);
+
+		metacall_value_destroy(ret);
+
+		/* TODO: Implement all remaining calls for nod.js */
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 
@@ -442,6 +452,8 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_NE((char *) NULL, (char *) inspect_str);
 
 		EXPECT_GT((size_t) size, (size_t) 0);
+
+		std::cout << inspect_str << std::endl;
 
 		metacall_allocator_free(allocator, inspect_str);
 

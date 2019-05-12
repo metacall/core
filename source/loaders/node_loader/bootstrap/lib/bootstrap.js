@@ -1,120 +1,26 @@
 #!/usr/bin/env node
+'use strict';
 
+// eslint-disable-next-line global-require
 const trampoline = require('./trampoline.node');
 
 const Module = require('module');
 const path = require('path');
 
-const node_loader_trampoline_is_class = ((value) => {
-	const re = /^\s*class /;
+const cherow = require('./node_modules/cherow');
 
-	try {
-		const stripped = Function.prototype.toString.call(value)
-			.replace(/\/\/.*\n/g, '')
-			.replace(/\/\*[.\s\S]*\*\//g, '')
-			.replace(/\n/mg, ' ')
-			.replace(/ {2}/g, ' ');
+function node_loader_trampoline_is_callable(value) {
+	return typeof value === 'function';
+}
 
-		return re.test(stripped);
-	} catch (ex) {
-		return false;
-	}
-});
+function node_loader_trampoline_is_valid_symbol(ast) {
+	// TODO: Enable more function types
+	return ast.type === 'FunctionDeclaration' ||
+		ast.type === 'ArrowFunctionExpression' ||
+		(ast.type === 'ExpressionStatement' && ast.expression && ast.expression.type === 'ArrowFunctionExpression');
+}
 
-const node_loader_trampoline_is_callable = ((has_to_string_tag) => {
-
-	function node_loader_trampoline_try_call(value) {
-		try {
-			if (node_loader_trampoline_is_class(value)) {
-				return false;
-			}
-			Function.prototype.toString.call(value);
-			return true;
-		} catch (e) {
-			return false;
-		}
-	};
-
-	return function node_loader_trampoline_is_callable(value) {
-		if (!value) {
-			return false;
-		}
-
-		if (typeof value !== 'function' && typeof value !== 'object') {
-			return false;
-		}
-
-		if (has_to_string_tag) {
-			return node_loader_trampoline_try_call(value);
-		}
-
-		if (node_loader_trampoline_is_class(value)) {
-			return false;
-		}
-
-		const str = Object.prototype.toString.call(value);
-
-		return str === '[object Function]' || str === '[object GeneratorFunction]';
-	};
-
-})(typeof Symbol === 'function' && typeof Symbol.toStringTag === 'symbol');
-
-const node_loader_trampoline_is_generator = ((value) => {
-	return value && typeof value.next === 'function' && typeof value.throw === 'function';
-});
-
-const node_loader_trampoline_is_generator_function = ((value) => {
-	return typeof value === 'function' && value.constructor && value.constructor.name === 'GeneratorFunction';
-});
-
-const node_loader_trampoline_is_arrow_function = ((value) => {
-	if (!node_loader_trampoline_is_callable(value)) {
-		return false;
-	}
-
-	try {
-		const re_function = /^\s*function/;
-		const re_arrow_with_parents = /^\([^)]*\) *=>/;
-		const re_arrow_without_parents = /^[^=]*=>/;
-
-		const str = Function.prototype.toString.call(value);
-
-		return str.length > 0 && !re_function.test(str) &&
-			(re_arrow_with_parents.test(str) || re_arrow_without_parents.test(str));
-	} catch(ex) {
-		console.log('Exception in node_loader_trampoline_is_arrow_function', ex);
-	}
-
-	return false;
-});
-
-const node_loader_trampoline_is_valid_symbol = ((value) => {
-	if (node_loader_trampoline_is_class(value)) {
-		console.log('Exception in node_loader_trampoline_is_valid', 'classes are not suported');
-		return false;
-	}
-
-	if (node_loader_trampoline_is_generator(value) || node_loader_trampoline_is_generator_function(value)) {
-		console.log('Exception in node_loader_trampoline_is_valid', 'anonymous generator (functions) are not suported');
-		return false;
-	}
-
-	if (node_loader_trampoline_is_arrow_function(value)) {
-		console.log('Exception in node_loader_trampoline_is_valid', 'anonymous arrow functions are not suported');
-		return false;
-	}
-
-	/* TODO: Add extra type detection */
-
-	return true;
-})
-
-const node_loader_trampoline_module = ((m) => {
-
-	if (!node_loader_trampoline_is_valid_symbol(m)) {
-		return {};
-	}
-
+function node_loader_trampoline_module(m) {
 	if (node_loader_trampoline_is_callable(m)) {
 		const wrapper = {};
 
@@ -124,8 +30,9 @@ const node_loader_trampoline_module = ((m) => {
 	}
 
 	return m;
-});
+};
 
+// eslint-disable-next-line no-empty-function
 function node_loader_trampoline_execution_path() {
 	// TODO
 }
@@ -138,7 +45,8 @@ function node_loader_trampoline_load_from_file(paths) {
 	try {
 		const handle = {};
 
-		for (const p of paths) {
+		for (let i = 0; i < paths.length; ++i) {
+			const p = paths[i];
 			const m = require(path.resolve(__dirname, p));
 
 			handle[p] = node_loader_trampoline_module(m);
@@ -153,24 +61,23 @@ function node_loader_trampoline_load_from_file(paths) {
 }
 
 function node_loader_trampoline_load_from_memory(name, buffer, opts) {
-	opts.prepend_paths = opts.prepend_paths || [];
-	opts.append_paths = opts.append_paths || [];
-
 	if (typeof buffer !== 'string') {
 		throw new Error('Load from memory buffer must be a string, not ' + typeof code);
 	}
 
 	const paths = Module._nodeModulePaths(path.dirname(name));
-
 	const parent = module.parent;
-
 	const m = new Module(name, parent);
 
 	m.filename = name;
-	m.paths = [].concat(opts.prepend_paths).concat(paths).concat(opts.append_paths);
+	m.paths = [
+		...opts.prepend_paths || [],
+		// eslint-disable-next-line no-underscore-dangle
+		...Module._nodeModulePaths(dirname(name)),
+		...opts.append_paths || [],
+	];
+	// eslint-disable-next-line no-underscore-dangle
 	m._compile(code, name);
-
-	const exports = m.exports;
 
 	if (parent && parent.children) {
 		parent.children.splice(parent.children.indexOf(m), 1);
@@ -178,18 +85,22 @@ function node_loader_trampoline_load_from_memory(name, buffer, opts) {
 
 	const handle = {};
 
-	handle[name] = node_loader_trampoline_module(exports);
+	handle[name] = node_loader_trampoline_module(m.exports);
 
 	return handle;
 }
 
+// eslint-disable-next-line no-empty-function
 function node_loader_trampoline_load_from_package() {
 	// TODO
 }
 
 function node_loader_trampoline_clear(handle) {
 	try {
-		for (const p of Object.getOwnPropertyNames(handle)) {
+		const names = Object.getOwnPropertyNames(handle);
+
+		for (let i = 0; i < names.length; ++i) {
+			const p = names[i];
 			const absolute = path.resolve(__dirname, p);
 
 			if (require.cache[absolute]) {
@@ -201,36 +112,73 @@ function node_loader_trampoline_clear(handle) {
 	}
 }
 
-function node_loader_trampoline_discover_arguments(fun) {
-	try {
-		const names = fun.toString()
-			.match(/^[\s\(]*function[^(]*\(([^)]*)\)/)[1]
-			.replace(/\/\/.*?[\r\n]|\/\*(?:.|[\r\n])*?\*\//g, '')
-			.replace(/\s+/g, '').split(',');
+function node_loader_trampoline_discover_arguments_generate(args, index) {
+	let name = `_arg${index}`;
 
-		return names.length == 1 && !names[0] ? [] : names;
-	} catch (ex) {
-		console.log('Exception in node_loader_trampoline_discover_arguments', ex);
+	while (args.includes(name)) {
+		name = `_${name}`;
 	}
+
+	return name;
+}
+
+function node_loader_trampoline_discover_arguments(ast) {
+	const params = ast.params || (ast.expression ? ast.expression.params : []);
+	const args = [];
+
+	for (let i = 0; i < params.length; ++i) {
+		const p = params[i];
+
+		if (p.type === 'Identifier') {
+			args.push(p.name);
+		} else if (p.type === 'AssignmentPattern' && p.left && p.left.type === 'Identifier') {
+			args.push(p.left.name);
+		} else if (p.type === 'ObjectPattern') {
+			// TODO: Use this trick until meta object protocol
+			args.push(null);
+		}
+	}
+
+	// TODO: Use this trick until meta object protocol
+	for (let i = 0; i < params.length; ++i) {
+		const p = args[i];
+
+		if (p === null) {
+			args[i] = node_loader_trampoline_discover_arguments_generate(args, i);
+		}
+	}
+
+	return args;
 }
 
 function node_loader_trampoline_discover(handle) {
 	const discover = {};
 
 	try {
-		for (const p of Object.getOwnPropertyNames(handle)) {
-			const exports = handle[p];
+		const names = Object.getOwnPropertyNames(handle);
 
-			for (const key of Object.getOwnPropertyNames(exports)) {
-				const value = exports[key];
+		for (let i = 0; i < names.length; ++i) {
+			const exports = handle[names[i]];
+			const keys = Object.getOwnPropertyNames(exports);
 
-				if (node_loader_trampoline_is_valid_symbol(value) && node_loader_trampoline_is_callable(value)) {
-					const args = node_loader_trampoline_discover_arguments(value);
+			for (let j = 0; j < keys.length; ++j) {
+				const key = keys[j];
+				const func = exports[key];
 
-					discover[key] = {
-						ptr: value,
-						signature: args,
-					};
+				if (node_loader_trampoline_is_callable(func)) {
+					const ast = cherow.parse(func.toString(), {
+						module: true,
+						skipShebang: true,
+					}).body[0];
+
+					if (node_loader_trampoline_is_valid_symbol(ast)) {
+						const args = node_loader_trampoline_discover_arguments(ast);
+
+						discover[key] = {
+							ptr: func,
+							signature: args,
+						};
+					}
 				}
 			}
 		}
@@ -247,10 +195,16 @@ function node_loader_trampoline_test() {
 
 function node_loader_trampoline_destroy() {
 	try {
+		// eslint-disable-next-line no-underscore-dangle
 		const handles = process._getActiveHandles();
 
-		for (const h of handles) {
+		for (let i = 0; i < handles.length; ++i) {
+			const h = handles[i];
+
+			// eslint-disable-next-line no-param-reassign, no-empty-function
 			h.write = function () {};
+			// eslint-disable-next-line max-len
+			// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
 			h._destroy = function () {};
 
 			if (h.end) {
