@@ -39,6 +39,7 @@ INSTALL_V8REPO54=0
 INSTALL_V8REPO52=0
 INSTALL_V8REPO51=0
 INSTALL_NODEJS=0
+INSTALL_WASM=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
@@ -274,6 +275,13 @@ sub_nodejs(){
 	# pkg-config icu-i18n --cflags --libs
 }
 
+# WebAssembly
+sub_wasm(){
+	echo "configure webassembly"
+	# $SUDO_CMD apt-get update
+	# $SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --fix-broken install lib32gcc-6-dev g++-multilib
+}
+
 # MetaCall
 sub_metacall(){
 	echo "configure metacall"
@@ -337,6 +345,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $INSTALL_WASM = 1 ]; then
+		sub_wasm
 	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
@@ -419,6 +430,10 @@ sub_options(){
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
+		if [ "$var" = 'wasm' ]; then
+			echo "wasm selected"
+			INSTALL_WASM=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			INSTALL_SWIG=1
@@ -456,6 +471,7 @@ sub_help() {
 	echo "	v8rep57"
 	echo "	v8rep58"
 	echo "	nodejs"
+	echo "	wasm"
 	echo "	swig"
 	echo "	metacall"
 	echo "	pack"
