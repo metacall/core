@@ -103,7 +103,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
-| [WebAssembly](https://webassembly.org/)                            | [Intel WebAssembly Micro Runtime](https://github.com/intel/wasm-micro-runtime)                         | wasm |
+| [WebAssembly](https://webassembly.org/)                            | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm |
 
 ## 3. Use Cases
 

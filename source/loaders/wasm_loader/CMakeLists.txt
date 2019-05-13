@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-# TODO
+# TODO: https://github.com/WinBuilds/ethvm-hera/blob/master/cmake/ProjectWAVM.cmake
 
 # find_package(WAVM REQUIRED)
 

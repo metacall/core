@@ -278,6 +278,9 @@ sub_nodejs(){
 # WebAssembly
 sub_wasm(){
 	echo "configure webassembly"
+
+	# TODO
+
 	# $SUDO_CMD apt-get update
 	# $SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --fix-broken install lib32gcc-6-dev g++-multilib
 }

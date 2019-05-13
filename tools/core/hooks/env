@@ -36,4 +36,4 @@ SERIAL_LIBRARY_PATH=/usr/local/lib
 DETOUR_LIBRARY_PATH=/usr/local/lib
 
 # Override docker image
-IMAGE_NAME=metacall/core
+IMAGE_NAME=metacall/core:runtime
