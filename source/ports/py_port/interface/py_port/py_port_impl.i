@@ -243,6 +243,30 @@ extern "C" {
 
 				args[args_count] = metacall_value_create_string(str, (size_t)size);
 			}
+			else if (PyList_Check(py_arg))
+			{
+				Py_ssize_t iterator, length = 0;
+				void ** array_value;
+
+				length = PyList_Size(py_arg);
+
+				args[args_count] = metacall_value_create_array(NULL, (size_t)length);
+
+				array_value = metacall_value_to_array(args[args_count]);
+
+				for (iterator = 0; iterator < length; ++iterator)
+				{
+					PyObject * element = PyList_GetItem(py_arg, iterator);
+
+					/* TODO */
+					(void)element;
+
+					/* TODO: Review recursion overflow */
+					/*
+					array_value[iterator] = py_loader_impl_return(element, py_loader_impl_get_return_type(element));
+					*/
+				}
+			}
 			else if (PyCapsule_CheckExact(py_arg))
 			{
 				void * ptr = NULL;
@@ -363,85 +387,11 @@ extern "C" {
 	/* Return value */
 	if (ret != NULL)
 	{
-		switch (metacall_value_id(ret))
+		$result = metacall_value_to_python(ret);
+
+		if ($result == NULL)
 		{
-
-			case METACALL_BOOL :
-			{
-				$result = PyBool_FromLong((long)metacall_value_to_bool(ret));
-
-				break;
-			}
-
-			case METACALL_CHAR :
-			{
-				/*$result = PyInt_FromLong((long)metacall_value_to_char(ret));*/
-				$result = PyLong_FromLong((long)metacall_value_to_char(ret));
-
-				break;
-			}
-
-			case METACALL_SHORT :
-			{
-				/*$result = PyInt_FromLong((long)metacall_value_to_short(ret));*/
-				$result = PyLong_FromLong((long)metacall_value_to_short(ret));
-
-				break;
-			}
-
-			case METACALL_INT :
-			{
-				/*$result = PyInt_FromLong((long)metacall_value_to_int(ret));*/
-				$result = PyLong_FromLong((long)metacall_value_to_int(ret));
-
-				break;
-			}
-
-			case METACALL_LONG :
-			{
-				$result = PyLong_FromLong(metacall_value_to_long(ret));
-
-				break;
-			}
-
-			case METACALL_FLOAT :
-			{
-				$result = PyFloat_FromDouble((double)metacall_value_to_float(ret));
-
-				break;
-			}
-
-			case METACALL_DOUBLE :
-			{
-				$result = PyFloat_FromDouble(metacall_value_to_double(ret));
-
-				break;
-			}
-
-			case METACALL_STRING :
-			{
-				$result = PyUnicode_FromString(metacall_value_to_string(ret));
-
-				break;
-			}
-
-			case METACALL_PTR :
-			{
-				%#if PY_MAJOR_VERSION == 2
-					/* TODO */
-				%#elif PY_MAJOR_VERSION == 3
-					$result = PyCapsule_New(metacall_value_to_ptr(ret), NULL, NULL);
-				%#endif
-
-				break;
-			}
-
-			default :
-			{
-				PyErr_SetString(PyExc_ValueError, "Unsupported return type");
-
-				$result = Py_None;
-			}
+			$result = Py_None;
 		}
 
 		metacall_value_destroy(ret);

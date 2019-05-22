@@ -21,6 +21,16 @@
 #ifndef METACALL_SWIG_WRAPPER_PY_PORT_H
 #define METACALL_SWIG_WRAPPER_PY_PORT_H 1
 
-/* ... */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <Python.h>
+
+PyObject * metacall_value_to_python(void * value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* METACALL_SWIG_WRAPPER_PY_PORT_H */
