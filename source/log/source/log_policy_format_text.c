@@ -227,9 +227,11 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 	if (log_record_data(record) != NULL)
 	{
 		va_list args_copy;
-
+#ifdef __arm__
+		va_copy(args_copy, *((va_list*)log_record_data(record)));
+#else
 		va_copy(args_copy, log_record_data(record));
-
+#endif
 		body_length = vsnprintf(buffer_body, size, log_record_message(record), args_copy);
 
 		va_end(args_copy);

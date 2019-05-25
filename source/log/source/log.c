@@ -211,8 +211,11 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 	record_ctor.file = file;
 	record_ctor.level = level;
 	record_ctor.message = message;
+#ifdef __arm__
+	record_ctor.data = &variable_args;
+#else
 	record_ctor.data = variable_args;
-
+#endif
 	result = log_impl_write(impl, &record_ctor);
 
 	va_end(variable_args);
