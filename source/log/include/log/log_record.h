@@ -23,6 +23,7 @@ extern "C" {
 
 #include <stdlib.h>
 #include <time.h>
+#include <stdarg.h>
 
 /* -- Macros -- */
 
@@ -59,6 +60,11 @@ typedef struct log_record_type * log_record;
 
 /* -- Member Data -- */
 
+struct log_record_va_list_type
+{
+	va_list data;
+};
+
 struct log_record_ctor_type
 {
 	size_t line;
@@ -66,7 +72,7 @@ struct log_record_ctor_type
 	const char * file;
 	enum log_level_id level;
 	const char * message;
-	void * data;
+	struct log_record_va_list_type * variable_args;
 };
 
 /* -- Private Methods -- */
@@ -99,7 +105,7 @@ LOG_API enum log_level_id log_record_level(log_record record);
 
 LOG_API const char * log_record_message(log_record record);
 
-LOG_API void * log_record_data(log_record record);
+LOG_API struct log_record_va_list_type * log_record_variable_args(log_record record);
 
 LOG_API int log_record_destroy(log_record record);
 

@@ -16,11 +16,33 @@
 #include <format/format_print.h>
 
 #include <time.h>
+#include <stdarg.h>
 
 /* -- Definitions -- */
 
 #define LOG_POLICY_FORMAT_TEXT_STR_DEBUG "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
 #define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIuS " @%s : "
+
+/* -- Macros -- */
+
+#ifndef va_copy
+#	if defined(__va_copy)
+		/* GCC and others define this for older standards compatibility (C89) */
+#		define va_copy(dest, src)	__va_copy((dest), (src))
+#	elif defined(__builtin_va_copy)
+#		define va_copy(dest, src)	__builtin_va_copy((dest), (src))
+#	elif defined(_WIN32) || defined(_WIN64) || \
+		defined(_ARCH_PPC) || defined(_POWER) || defined(powerpc) || defined(__powerpc) || \
+		defined(__powerpc__) || defined(__PowerPC__) || defined(__POWERPC__) || defined(PPC) || \
+		defined(__ppc__) || defined(__PPC) || defined(__PPC__) || \
+		defined(_ARCH_PPC64) || defined(__powerpc64__) || defined(__ppc64) || defined(__ppc64__) || defined(__PPC64__)
+		/* Works for Microsoft x86, x64 and PowerPC-based platforms */
+#		define va_copy(dest, src)	((void)memcpy(&(dest), &(src), sizeof(va_list)))
+#	else
+#		warning "va_copy may be not supported for this architecture, assuming va_list can be copied as a normal pointer"
+#		define va_copy(dest, src)	((dest) = (src))
+#	endif
+#endif
 
 /* -- Forward Declarations -- */
 
@@ -192,6 +214,8 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 	void * buffer_body = NULL;
 
+	struct log_record_va_list_type * variable_args;
+
 	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
 	{
 		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG;
@@ -224,11 +248,13 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 		buffer_body = (void *)(((char *)buffer) + header_length);
 	}
 
-	if (log_record_data(record) != NULL)
+	variable_args = log_record_variable_args(record);
+
+	if (variable_args != NULL)
 	{
 		va_list args_copy;
 
-		va_copy(args_copy, log_record_data(record));
+		va_copy(args_copy, variable_args->data);
 
 		body_length = vsnprintf(buffer_body, size, log_record_message(record), args_copy);
 
@@ -258,7 +284,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 
 static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
 {
-	if (log_record_data(record) == NULL)
+	if (log_record_variable_args(record) == NULL)
 	{
 		return log_policy_format_text_serialize_impl(policy, record, buffer, size);
 	}

@@ -21,7 +21,7 @@ struct log_record_type
 	const char * file;
 	enum log_level_id level;
 	const char * message;
-	void * data;
+	struct log_record_va_list_type * variable_args;
 };
 
 /* -- Private Methods -- */
@@ -70,7 +70,7 @@ log_record log_record_initialize(log_record record, const log_record_ctor record
 		record->file = record_ctor->file;
 		record->level = record_ctor->level;
 		record->message = record_ctor->message;
-		record->data = record_ctor->data;
+		record->variable_args = record_ctor->variable_args;
 
 		return record;
 	}
@@ -113,9 +113,9 @@ const char * log_record_message(log_record record)
 	return record->message;
 }
 
-void * log_record_data(log_record record)
+struct log_record_va_list_type * log_record_variable_args(log_record record)
 {
-	return record->data;
+	return record->variable_args;
 }
 
 int log_record_destroy(log_record record)

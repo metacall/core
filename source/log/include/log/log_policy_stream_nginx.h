@@ -22,7 +22,6 @@ extern "C" {
 /* -- Headers -- */
 
 #include <stdint.h>
-#include <stdarg.h>
 
 /* -- Forward Declarations -- */
 

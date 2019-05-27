@@ -26,6 +26,8 @@
 #include <log/log_impl.h>
 #include <log/log_singleton.h>
 
+#include <stdarg.h>
+
 /* -- Methods -- */
 
 void * log_instance()
@@ -170,7 +172,7 @@ int log_write_impl(const char * name, const size_t line, const char * func, cons
 	record_ctor.file = file;
 	record_ctor.level = level;
 	record_ctor.message = message;
-	record_ctor.data = NULL;
+	record_ctor.variable_args = NULL;
 
 	return log_impl_write(impl, &record_ctor);
 }
@@ -185,7 +187,7 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 
 	enum log_level_id impl_level;
 
-	va_list variable_args;
+	struct log_record_va_list_type variable_args;
 
 	if (impl == NULL)
 	{
@@ -204,18 +206,18 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 		return 0;
 	}
 
-	va_start(variable_args, message);
+	va_start(variable_args.data, message);
 
 	record_ctor.line = line;
 	record_ctor.func = func;
 	record_ctor.file = file;
 	record_ctor.level = level;
 	record_ctor.message = message;
-	record_ctor.data = variable_args;
+	record_ctor.variable_args = &variable_args;
 
 	result = log_impl_write(impl, &record_ctor);
 
-	va_end(variable_args);
+	va_end(variable_args.data);
 
 	return result;
 }
