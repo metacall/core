@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 #	MetaCall Configuration Environment Bash Script by Parra Studios

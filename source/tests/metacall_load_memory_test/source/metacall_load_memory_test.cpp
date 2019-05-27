@@ -134,7 +134,7 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_JS)
 	{
 		static const char buffer[] =
-			"#!/bin/sh\n"
+			"#!/usr/bin/env sh\n"
 			/*"':' //; exec \"$(command -v nodejs || command -v node)\" \"$0\" \"$@\"\n"*/
 			"/* function mem_comment(a :: Number) {\n"
 			"	return 15;\n"

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Default options
 BUILD_DIR="build"
@@ -12,7 +12,7 @@ then
     mkdir ".localconfig"
 
     touch ".localconfig/default"
-    echo "#!/bin/bash" >> ".localconfig/default"
+    echo "#!/usr/bin/env bash" >> ".localconfig/default"
     echo "" >> ".localconfig/default"
     echo "# Default configuration for configure (is always sourced)" >> ".localconfig/default"
     echo "" >> ".localconfig/default"
@@ -45,7 +45,7 @@ then
     echo "#export CMAKE_PREFIX_PATH=\"\${CMAKE_PREFIX_PATH}:/opt/Qt5.2.1/5.2.1/gcc_64/\"" >> ".localconfig/default"
 
     touch ".localconfig/debug"
-    echo "#!/bin/bash" >> ".localconfig/debug"
+    echo "#!/usr/bin/env bash" >> ".localconfig/debug"
     echo "" >> ".localconfig/debug"
     echo "# Configuration for debug builds" >> ".localconfig/debug"
     echo "" >> ".localconfig/debug"
@@ -54,7 +54,7 @@ then
     echo "BUILD_TYPE=\"Debug\"" >> ".localconfig/debug"
 
     touch ".localconfig/pack"
-    echo "#!/bin/bash" >> ".localconfig/pack"
+    echo "#!/usr/bin/env bash" >> ".localconfig/pack"
     echo "" >> ".localconfig/pack"
     echo "# Configuration for creating packages" >> ".localconfig/pack"
     echo "" >> ".localconfig/pack"

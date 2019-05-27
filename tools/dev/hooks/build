@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #
 #	MetaCall Build Bash Script by Parra Studios

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # Download repository if it does not exist
 if [ ! -d @FUNCHOOK_SOURCE_DIR@/.git ]
