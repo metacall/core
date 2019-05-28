@@ -96,3 +96,23 @@ services:
       PORT_LIBRARY_PATH: /usr/local/lib
     depends_on:
       - dev
+
+  cli:
+    image: metacall/core:cli
+    container_name: metacall_core_cli
+    build:
+      context: .
+      dockerfile: tools/cli/Dockerfile
+    environment:
+      DEBIAN_FRONTEND: noninteractive
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
+      LOADER_LIBRARY_PATH: /usr/local/lib
+      LOADER_SCRIPT_PATH: /usr/local/scripts
+      CONFIGURATION_PATH: /usr/local/share/metacall/configurations/global.json
+      SERIAL_LIBRARY_PATH: /usr/local/lib
+      DETOUR_LIBRARY_PATH: /usr/local/lib
+      PORT_LIBRARY_PATH: /usr/local/lib
+    depends_on:
+      - dev
+      - runtime

@@ -70,6 +70,7 @@ metacall('sum', 3, 4); // 7
     - [7. Platform Support](#7-platform-support)
         - [7.1 Docker Support](#71-docker-support)
         - [7.1.1 Docker Development](#711-docker-development)
+        - [7.1.2 Docker Testing](#712-docker-testing)
     - [8. License](#8-license)
 
 <!-- /TOC -->
@@ -596,10 +597,16 @@ docker pull metacall/core:deps
 docker pull metacall/core:dev
 ```
 
-- **METACALL** `runtime` image. Includes all dependencies and libraries for runtime (equivalent to `latest`):
+- **METACALL** `runtime` image. Includes all dependencies and libraries for runtime:
 
 ``` sh
 docker pull metacall/core:runtime
+```
+
+- **METACALL** `cli` image. Includes all dependencies and libraries for runtime and the CLI as entry point (equivalent to `latest`):
+
+``` sh
+docker pull metacall/core:cli
 ```
 
 ### 7.1.1 Docker Development
@@ -621,6 +628,26 @@ docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metac
 ```
 
 Inside docker terminal you can run `python` or `ruby` command to test what you are developing. You can also run `metacallcli` to test (load, clear, inspect and call).
+
+### 7.1.2 Docker Testing
+
+An alternative for testing is to use a reduced image that includes the runtime and also the CLI. This alternative allows fast prototyping and CLI management in order to test and inspect your own scripts.
+
+Use the following commands to start testing with **METACALL**:
+
+``` sh
+mkdir -p $HOME/metacall
+code $HOME/metacall
+```
+
+We are going to run a docker container with a mounted volume. This volume will connect the `LOADER_SCRIPT_PATH` inside the container, and your development path in the host. We are using `$HOME/metacall`, where we have our editor opened.
+
+``` sh
+docker pull metacall/core:cli
+docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:cli script.js
+```
+
+Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.
 
 ## 8. License
 

@@ -33,6 +33,8 @@ sub_pull() {
 	docker pull $IMAGE_NAME:dev || true
 
 	docker pull $IMAGE_NAME:runtime || true
+
+	docker pull $IMAGE_NAME:cli || true
 }
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
@@ -48,10 +50,13 @@ sub_build() {
 
 	ln -sf tools/core/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm runtime
+
+	ln -sf tools/cli/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build --force-rm cli
 }
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
-sub_build_nocache() {
+sub_rebuild() {
 	ln -sf tools/node/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm --no-cache deps_node
 
@@ -63,10 +68,13 @@ sub_build_nocache() {
 
 	ln -sf tools/core/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm --no-cache runtime
+
+	ln -sf tools/cli/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build --force-rm --no-cache cli
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
-sub_build_cache() {
+sub_cache() {
 	if [ -z "$IMAGE_REGISTRY" ]; then
 		echo "Error: IMAGE_REGISTRY variable not defined"
 		exit 1
@@ -83,6 +91,9 @@ sub_build_cache() {
 
 	ln -sf tools/core/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build runtime
+
+	ln -sf tools/cli/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build cli
 }
 
 # Push MetaCall Docker Compose
@@ -108,8 +119,12 @@ sub_push(){
 	docker tag metacall/core:runtime $IMAGE_NAME:runtime
 	docker push $IMAGE_NAME:runtime
 
-	# Push runtime as a latest
-	docker tag metacall/core:runtime $IMAGE_NAME:latest
+	# Push cli image
+	docker tag metacall/core:cli $IMAGE_NAME:cli
+	docker push $IMAGE_NAME:cli
+
+	# Push cli as a latest
+	docker tag metacall/core:cli $IMAGE_NAME:latest
 	docker push $IMAGE_NAME:latest
 }
 
@@ -148,8 +163,8 @@ sub_help() {
 	echo "Options:"
 	echo "	pull"
 	echo "	build"
-	echo "	build-nocache"
-	echo "	build-cache"
+	echo "	rebuild"
+	echo "	cache"
 	echo "	push"
 	echo "	pack"
 	echo ""
@@ -162,11 +177,11 @@ case "$1" in
 	build)
 		sub_build
 		;;
-	build-nocache)
-		sub_build_nocache
+	rebuild)
+		sub_rebuild
 		;;
-	build-cache)
-		sub_build_cache
+	cache)
+		sub_cache
 		;;
 	push)
 		sub_push

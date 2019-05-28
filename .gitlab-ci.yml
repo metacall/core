@@ -42,7 +42,7 @@ build:
     entrypoint: [""]
   script:
     - $CI_PROJECT_DIR/docker-compose.sh pull
-    - $CI_PROJECT_DIR/docker-compose.sh build-cache
+    - $CI_PROJECT_DIR/docker-compose.sh cache
     - $CI_PROJECT_DIR/docker-compose.sh push
   only: 
     - master
@@ -55,7 +55,7 @@ package:
     entrypoint: [""]
   script:
     - $CI_PROJECT_DIR/docker-compose.sh pull
-    - $CI_PROJECT_DIR/docker-compose.sh build-cache
+    - $CI_PROJECT_DIR/docker-compose.sh cache
     - $CI_PROJECT_DIR/docker-compose.sh push
     - $CI_PROJECT_DIR/docker-compose.sh pack
   artifacts:
