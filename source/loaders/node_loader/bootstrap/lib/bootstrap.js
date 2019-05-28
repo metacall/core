@@ -13,11 +13,9 @@ function node_loader_trampoline_is_callable(value) {
 	return typeof value === 'function';
 }
 
-function node_loader_trampoline_is_valid_symbol(ast) {
+function node_loader_trampoline_is_valid_symbol(node) {
 	// TODO: Enable more function types
-	return ast.type === 'FunctionDeclaration' ||
-		ast.type === 'ArrowFunctionExpression' ||
-		(ast.type === 'ExpressionStatement' && ast.expression && ast.expression.type === 'ArrowFunctionExpression');
+	return node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression';
 }
 
 function node_loader_trampoline_module(m) {
@@ -122,8 +120,8 @@ function node_loader_trampoline_discover_arguments_generate(args, index) {
 	return name;
 }
 
-function node_loader_trampoline_discover_arguments(ast) {
-	const params = ast.params || (ast.expression ? ast.expression.params : []);
+function node_loader_trampoline_discover_arguments(node) {
+	const params = node.params;
 	const args = [];
 
 	for (let i = 0; i < params.length; ++i) {
@@ -166,13 +164,15 @@ function node_loader_trampoline_discover(handle) {
 				const func = exports[key];
 
 				if (node_loader_trampoline_is_callable(func)) {
-					const ast = cherow.parse(func.toString(), {
-						module: true,
+					const ast = cherow.parse(`(${func.toString()})`, {
+						module: false,
 						skipShebang: true,
 					}).body[0];
 
-					if (node_loader_trampoline_is_valid_symbol(ast)) {
-						const args = node_loader_trampoline_discover_arguments(ast);
+					const node = ast.expression;
+
+					if (node_loader_trampoline_is_valid_symbol(node)) {
+						const args = node_loader_trampoline_discover_arguments(node);
 
 						discover[key] = {
 							ptr: func,
