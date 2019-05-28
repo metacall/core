@@ -644,7 +644,36 @@ We are going to run a docker container with a mounted volume. This volume will c
 
 ``` sh
 docker pull metacall/core:cli
-docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:cli script.js
+docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:cli
+```
+
+After the container is up, it is possible to load any script contained in host folder `$HOME/metacall`. If we have a `script.js` inside the folder, we can just load it (each line beginning with `>` is the input command):
+
+`script.js`
+``` js
+function sum(left, right) {
+    return left + right;
+}
+
+module.exports = {
+    sum
+};
+```
+
+`Command Line Interface`
+``` sh
+> load node script.js
+Script (script.js) loaded correctly
+> inspect
+runtime node {
+    module script {
+        function sum(left, right)
+    }
+}
+runtime __metacall_host__
+> call sum(3, 5)
+8.0
+> exit
 ```
 
 Where `script.js` is a script contained in host folder `$HOME/metacall` that will be loaded on the CLI after starting up the container. Type `help` to see all available CLI commands.

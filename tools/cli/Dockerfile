@@ -49,10 +49,7 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	SERIAL_LIBRARY_PATH=/usr/local/lib \
 	DETOUR_LIBRARY_PATH=/usr/local/lib \
 	PORT_LIBRARY_PATH=/usr/local/lib \
-	DEBIAN_FRONTEND=noninteractive \
-	LC_ALL=en_US.UTF-8 \
-	LANG=en_US.UTF-8 \
-	LANGUAGE=en_US.UTF-8
+	DEBIAN_FRONTEND=noninteractive
 
 # Define working directory
 WORKDIR $LOADER_SCRIPT_PATH
