@@ -30,3 +30,6 @@ bash -c "cd tools/dev && ./hooks/build"
 
 # Run docker runtime image builder
 bash -c "cd tools/core && ./hooks/build"
+
+# Run docker cli image builder
+bash -c "cd tools/cli && ./hooks/build"

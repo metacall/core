@@ -30,3 +30,6 @@ docker pull registry.hub.docker.com/metacall/core:dev || true
 
 # Run docker runtime image builder
 docker pull registry.hub.docker.com/metacall/core:runtime || true
+
+# Run docker cli image builder
+docker pull registry.hub.docker.com/metacall/core:cli || true
