@@ -438,7 +438,7 @@ A loader must implement it to be considered a valid loader.
 
 ### 5.7 Fork Model
 
-**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, thr process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
+**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, the process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
 
 To understand the **METACALL** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
 
