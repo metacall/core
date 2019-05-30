@@ -29,7 +29,7 @@ setup(
 	long_description=long_description,
 
 	# The project's main homepage
-	url='http://metacall.io',
+	url='https://github.com/metacall/core',
 
 	# Author details
 	author='Vicente Eduardo Ferrer Garcia',
