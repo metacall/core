@@ -14,7 +14,7 @@ With **METACALL** Python Port you can transparently execute code from Python to 
 `sum.js`
 ``` javascript
 module.exports = function sum(a, b) {
-    return a + b;
+	return a + b;
 };
 ```
 
