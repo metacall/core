@@ -25,6 +25,7 @@ BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
 BUILD_NETCORE=0
+BUILD_NETCORE2=0
 BUILD_V8=0
 BUILD_NODEJS=0
 BUILD_SCRIPTS=0
@@ -64,6 +65,10 @@ sub_options() {
 		if [ "$option" = 'netcore' ]; then
 			echo "Build with netcore support"
 			BUILD_NETCORE=1
+		fi
+		if [ "$option" = 'netcore2' ]; then
+			echo "Build with netcore 2 support"
+			BUILD_NETCORE2=1
 		fi
 		if [ "$option" = 'v8' ]; then
 			echo "Build with v8 support"
@@ -138,6 +143,17 @@ sub_configure() {
 		fi
 	fi
 
+	# NetCore 2
+	if [ $BUILD_NETCORE2 = 1 ]; then
+		BUILD_STRING="$BUILD_STRING \
+			-DOPTION_BUILD_LOADERS_CS=On \
+			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.5/"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
+		fi
+	fi
+
 	# V8
 	if [ $BUILD_V8 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_JS=On"
@@ -199,6 +215,7 @@ sub_help() {
 	echo "	python: build with python support"
 	echo "	ruby: build with ruby support"
 	echo "	netcore: build with netcore support"
+	echo "	netcore: build with netcore 2 support"
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
 	echo "	scripts: build all scripts"

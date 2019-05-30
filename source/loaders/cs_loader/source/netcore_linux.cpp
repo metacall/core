@@ -222,6 +222,7 @@ bool netcore_linux::CreateHost()
 
 	return true;
 }
+
 bool netcore_linux::LoadMain()
 {
 	return true;

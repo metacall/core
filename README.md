@@ -85,14 +85,14 @@ This section describes all programming languages that **METACALL** supports, if 
 
 - Currently supported languages and run-times:
 
-| Language                                                           | Runtime                                                                                      |         Version          | Tag  |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------|:------------------------:|:----:|
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   |    **>= 3.2 <= 3.7**     |  py  |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **>= 8.11.1 <= 10.15.3** | node |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |       **5.1.117**        |  js  |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |        **1.1.10**        |  cs  |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |    **>= 2.1 <= 2.3**     |  rb  |
-| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |        **0.1.0**         | mock |
+| Language                                                           | Runtime                                                                                      |            Version             | Tag  |
+|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------|:------------------------------:|:----:|
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                   |       **>= 3.2 <= 3.7**        |  py  |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   |    **>= 8.11.1 <= 10.15.3**    | node |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |          **5.1.117**           |  js  |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) | **>= 1.0.0-preview2 <= 2.2.5** |  cs  |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |       **>= 2.1 <= 2.3**        |  rb  |
+| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |           **0.1.0**            | mock |
 
 - Languages and run-times under construction:
 
