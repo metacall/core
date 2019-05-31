@@ -23,7 +23,7 @@ setup(
 	# Versions should comply with PEP440.  For a discussion on single-sourcing
 	# the version across setup.py and the project code, see
 	# https://packaging.python.org/en/latest/single_source_version.html
-	version='0.1.9',
+	version='0.1.11',
 
 	description='A library for providing inter-language foreign function interface calls',
 	long_description=long_description,
@@ -109,9 +109,9 @@ setup(
 	# pip to create the appropriate form of executable for the target platform.
 	entry_points={
 		'console_scripts': [
-			'metacall-install=helper:install',
-			'metacall-uninstall=helper:uninstall_prompt',
-			'metacall-update=helper:update'
+			'metacall-install=metacall.__helper__:install',
+			'metacall-uninstall=metacall.__helper__:uninstall_prompt',
+			'metacall-update=metacall.__helper__:update'
 		],
 	},
 )

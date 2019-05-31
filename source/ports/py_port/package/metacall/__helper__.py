@@ -4,7 +4,6 @@ import re
 import shutil
 import tarfile
 import subprocess
-
 import requests
 
 def file_size(num, suffix='B'):
@@ -13,7 +12,6 @@ def file_size(num, suffix='B'):
 			return "%3.1f%s%s" % (num, unit, suffix)
 		num /= 1024.0
 	return "%.1f%s%s" % (num, 'Yi', suffix)
-
 
 def find_assets(patterns):
 	api_url = 'https://api.github.com/repos/metacall/core/releases/latest'
@@ -25,7 +23,6 @@ def find_assets(patterns):
 		regex = re.compile(p)
 		urls.append(list(filter(regex.search, data))[0])
 	return urls
-
 
 def download(urls):
 	for url in urls:
@@ -59,7 +56,6 @@ def download(urls):
 
 		os.rename(filename + '.tmp', filename)
 
-
 def unpack(files):
 	for filename in files:
 		filename = filename.split("/")[-1]
@@ -67,19 +63,16 @@ def unpack(files):
 		with tarfile.open(filename) as file:
 			file.extractall()
 
-
 def write_install_log(content):
 	with open('/tmp/mc-install.tmp', 'w') as logger:
 		logger.write('\n'.join(content))
 
 	shutil.move('/tmp/mc-install.tmp', '/usr/local/share/metacall/install')
 
-
 def read_install_log():
 	with open('/usr/local/share/metacall/install', 'r') as logger:
 		lines = logger.read().splitlines()
 	return lines
-
 
 def overwrite(src, dest):
 	if os.path.isdir(src):
@@ -93,13 +86,11 @@ def overwrite(src, dest):
 		shutil.copyfile(src, dest)
 		yield str(dest)
 
-
 def spawn(args):
 	process = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 	output, error = process.communicate()
 
 	return output, error, process.returncode
-
 
 def pre_install(components):
 	download(['https://raw.githubusercontent.com/metacall/core/develop/tools/metacall-runtime.sh'])
@@ -107,9 +98,7 @@ def pre_install(components):
 	args = args + components
 	subprocess.call(args)
 
-
 def pre_install_prompt():
-
 	answers = {'yes': True, 'y': True, 'no': False, 'n': False}
 	components = ['python', 'ruby', 'netcore', 'v8', 'nodejs', 'ports']
 	args = []
@@ -132,7 +121,6 @@ def pre_install_prompt():
 
 	except KeyboardInterrupt:
 		exit(1)
-
 
 def install(ignore=False):
 	if ignore is False:
@@ -194,10 +182,8 @@ def install(ignore=False):
 	except KeyboardInterrupt:
 		print('\nCanceled by user.')
 
-
 def update():
 	install(ignore=True)
-
 
 def uninstall(paths):
 
@@ -211,7 +197,6 @@ def uninstall(paths):
 	spawn(['ldconfig'])
 
 	exit(0)
-
 
 def uninstall_prompt():
 	paths = read_install_log()

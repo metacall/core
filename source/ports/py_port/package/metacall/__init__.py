@@ -3,12 +3,17 @@
 import os
 import sys
 
-# TODO: This is a nasty mock. It only will work if python port library (binary) is already installed and the
-# environment variable correctly set up. This must be removed when metacall is correctly distributed
-# and we can automate all distributions for all architectures, operative systems and all ports for all languages
-sys.path.append(os.environ['PORT_LIBRARY_PATH']);
+port_path = os.environ.get('PORT_LIBRARY_PATH')
+
+if not port_path:
+	port_path = '/usr/local/lib'
+
+sys.path.append(port_path);
 
 try:
 	from _py_port import *
 except ImportError:
-	from _py_portd import *
+	try:
+		from _py_portd import *
+	except ImportError:
+		pass
