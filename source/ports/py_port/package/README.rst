@@ -10,7 +10,11 @@ Abstract
 **METACALL** Python Port is the port of **METACALL** to Python
 Programming Language. With **METACALL** Python Port you can
 transparently execute code from Python to any programming language, for
-example, calling JavaScript (NodeJS) code from Python.
+example, calling JavaScript, NodeJS, Ruby or C# code from Python.
+
+.. code:: console
+
+   pip install metacall
 
 ``sum.js``
 
@@ -28,4 +32,4 @@ example, calling JavaScript (NodeJS) code from Python.
 
    metacall_load_from_file('node', [ 'sum.js' ]);
 
-   metacall('sum', 3, 4); // 7
+   metacall('sum', 3, 4); # 7
