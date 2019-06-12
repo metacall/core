@@ -24,6 +24,9 @@ sys.path.append(os.environ.get('PORT_LIBRARY_PATH', '/usr/local/lib'));
 
 try:
 	from _py_port import * # TODO: Import only the functions that will be exported
-except ImportError:
+except ImportError as e:
 	try:
 		from _py_portd import * # TODO: Import only the functions that will be exported
+	except ImportError as ed:
+		print("MetaCall Core (Debug) is not correctly installed:", e, "-", ed)
+		pass
