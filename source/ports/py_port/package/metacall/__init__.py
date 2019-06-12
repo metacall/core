@@ -27,5 +27,3 @@ try:
 except ImportError:
 	try:
 		from _py_portd import * # TODO: Import only the functions that will be exported
-	except ImportError: # TODO: Remove this (even with the build + install or pip install, runtime should be installed before reaching this)
-		pass #	This never must happen, the import error must be raised explaining that the port library (or runtime) is not installed
