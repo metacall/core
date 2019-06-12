@@ -28,5 +28,5 @@ except ImportError as e:
 	try:
 		from _py_portd import * # TODO: Import only the functions that will be exported
 	except ImportError as ed:
-		print("MetaCall Core (Debug) is not correctly installed:", e, "-", ed)
+		print("MetaCall Core is not correctly installed:", e, "-", ed)
 		pass
