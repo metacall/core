@@ -1,8 +1,9 @@
 
 <div align="center">
-  <a href="https://metacall.io" target="_blank"><img src="/deploy/images/logo.png" alt="M E T A C A L L" style="max-width:100%;" width="32" height="32">
+  <a href="https://metacall.io" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/logo.png" alt="M E T A C A L L" style="max-width:100%;padding-right:2.5rem;" width="128" height="128">
   <p><b>M E T A C A L L</b></p></a>
   <p>A library for providing inter-language foreign function interface calls</p>
+  <a href="https://medium.com/@metacall/call-functions-methods-or-procedures-between-programming-languages-with-metacall-58cfece35d7" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/overview.png" alt="M E T A C A L L" style="max-width:100%;" width="256" height="182">
 </div>
 
 # Abstract
