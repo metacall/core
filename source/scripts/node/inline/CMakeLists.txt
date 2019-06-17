@@ -2,4 +2,4 @@
 # Configure nodejs project
 #
 
-nodejs_project(nod 0.1.0)
+nodejs_project(inline 0.1.0)
