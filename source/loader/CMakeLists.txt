@@ -49,6 +49,7 @@ set(headers
 	${include_path}/loader_impl_data.h
 	${include_path}/loader_impl_interface.h
 	${include_path}/loader_impl.h
+	${include_path}/loader_env.h
 	${include_path}/loader_naming.h
 	${include_path}/loader_path.h
 )
@@ -56,6 +57,7 @@ set(headers
 set(sources
 	${source_path}/loader.c
 	${source_path}/loader_impl.c
+	${source_path}/loader_env.c
 	${source_path}/loader_path.c
 )
 

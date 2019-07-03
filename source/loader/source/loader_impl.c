@@ -9,6 +9,7 @@
  /* -- Headers -- */
 
 #include <loader/loader_impl.h>
+#include <loader/loader_env.h>
 
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_context.h>
@@ -265,6 +266,8 @@ int loader_impl_initialize(loader_impl impl)
 
 	configuration config;
 
+	const char * script_path = NULL;
+
 	if (impl->init == 0)
 	{
 		return 0;
@@ -292,22 +295,15 @@ int loader_impl_initialize(loader_impl impl)
 		loader_impl_configuration(impl, config);
 	}
 
-	if (loader_impl_execution_path(impl, ".") != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path ./");
-	}
+	script_path = loader_env_script_path();
 
-	/* TODO */
-
-	/*
-	if (l->script_path != NULL)
+	if (script_path != NULL)
 	{
-		if (loader_impl_execution_path(impl, l->script_path) != 0)
+		if (loader_impl_execution_path(impl, script_path) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", l->script_path);
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", script_path);
 		}
 	}
-	*/
 
 	return 0;
 }
