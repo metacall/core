@@ -1,22 +1,22 @@
 {
-  "name": "Metacall NodeJs Port",
-  "version": "1.0.0",
-  "description": "A nodejs port for Metacall",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "rebuild:dev": "node-gyp -j 16 rebuild --debug",
-    "build:dev": "node-gyp -j 16 build --debug",
-    "clean": "node-gyp clean",
-    "build": "node-gyp -j 16 build",
-    "rebuild": "node-gyp -j 16 rebuild",
-    "configure":"node-gyp configure",
-    "preinstall":"node scripts/preinstall.js",
-    "install" : "npm run configure && npm run build"
-  },
-  "author": "Declan Nnadozie",
-  "license": "MIT",
-  "devDependencies": {
-    "node-addon-api": "^1.6.3"
-  }
+	"name": "metacall",
+	"version": "0.1.0",
+	"description": "A NodeJS Port for Metacall",
+	"main": "index.js",
+	"scripts": {
+		"test": "node test.js",
+		"rebuild:dev": "node-gyp -j 2 rebuild --debug",
+		"build:dev": "node-gyp -j 2 build --debug",
+		"clean": "node-gyp clean",
+		"build": "node-gyp configure && node-gyp -j 2 build",
+		"rebuild": "node-gyp -j 2 rebuild",
+		"configure": "node-gyp configure",
+		"preinstall": "node scripts/preinstall.js",
+		"install": "npm run configure && npm run build"
+	},
+	"author": "Declan Nnadozie",
+	"license": "Apache 2.0",
+	"devDependencies": {
+		"node-addon-api": "^1.6.3"
+	}
 }
