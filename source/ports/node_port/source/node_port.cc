@@ -1,9 +1,7 @@
 #include <node_api.h>
 #include <metacall/metacall.h>
 #include <cstring>
-
-#define FUNCTION_NAME_LENGTH 50
-#define GENERAL_STRING_LENGTH 256
+#include <node_port/node_port.h>
 
 void convertMetacall_To_NODEJS(napi_env env, void *metacallValue, napi_value *jsObj_to_return)
 {
