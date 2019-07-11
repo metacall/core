@@ -1,19 +1,29 @@
+const addon = require('./build/Release/metacall.node');
+
+/* TODO: Override require and monkey patch the functions */
+
 module.exports = {
-	metacall () {
-		if(arguments.length == 0) throw Error("No Argument Passed!");
+	metacall() {
+		if (arguments.length === 0) {
+			throw Error('At least one argument should be passed indicating the name of the function to be called.');
+		}
 
-		var functionName = typeof arguments[0] == "string" ? arguments[0] : null
-		if(functionName == null) throw Error("Function Name should be of string type");
+		if (typeof arguments[0] !== 'string') {
+			throw Error('Function name should be of string type.');
+		}
 
+		addon.metacall(...arguments);
 	},
 
-	metacall_load_from_file (filename, arrayOfFileNames) {
-		var tag = typeof filename == "string" ? filename : null;
-		var array = arrayOfFileNames instanceof  Array ? arrayOfFileNames : null;
-		if(tag == null && array == null){
-			throw Error("Invalid Arguments, The valid arguments should be a tag string and an Array of strings(filenames)");
+	metacall_load_from_file(tag, paths) {
+		if (typeof tag !== 'string') {
+			throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node...].');
 		}
-		// check how to know when node is in debug mode....
-		// make call to Node Addon....
-	}
+
+		if (!(paths instanceof Array)) {
+			throw Error('Paths should be an array with file names and paths to be loaded by the loader.');
+		}
+
+		addon.metacall_load_from_file(tag, paths);
+	},
 }
