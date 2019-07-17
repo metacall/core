@@ -20,8 +20,7 @@ module.exports = {
 			throw Error('Function name should be of string type.');
 		}
 
-		/* TODO: This is not working */
-		addon.metacall(name, ...args);
+		return addon.metacall(name, ...args);
 	},
 
 	metacall_load_from_file: (tag, paths) => {
@@ -33,6 +32,6 @@ module.exports = {
 			throw Error('Paths should be an array with file names and paths to be loaded by the loader.');
 		}
 
-		addon.metacall_load_from_file(tag, paths);
+		return addon.metacall_load_from_file(tag, paths);
 	},
 };
