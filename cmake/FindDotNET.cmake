@@ -33,6 +33,7 @@ set(DOTNET_COMMAND dotnet)
 # Detect dotnet command
 execute_process(COMMAND ${DOTNET_COMMAND}
 	RESULT_VARIABLE DOTNET_COMMAND_RESULT
+	OUTPUT_QUIET
 )
 
 # Set found variable (TODO: Review 129 state in Debian)

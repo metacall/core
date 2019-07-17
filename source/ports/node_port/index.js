@@ -1,23 +1,32 @@
-const addon = require('./build/Release/metacall.node');
+'use strict';
+
+let addon = null;
+
+try {
+	addon = require('./build/node_port.node');
+} catch (e) {
+	if (e.code !== 'MODULE_NOT_FOUND') {
+		throw e;
+	}
+
+	addon = require('./build/node_portd.node');
+}
 
 /* TODO: Override require and monkey patch the functions */
 
 module.exports = {
-	metacall() {
-		if (arguments.length === 0) {
-			throw Error('At least one argument should be passed indicating the name of the function to be called.');
-		}
-
-		if (typeof arguments[0] !== 'string') {
+	metacall: (name, ...args) => {
+		if (Object.prototype.toString.call(name) !== '[object String]') {
 			throw Error('Function name should be of string type.');
 		}
 
-		addon.metacall(...arguments);
+		/* TODO: This is not working */
+		addon.metacall(name, ...args);
 	},
 
-	metacall_load_from_file(tag, paths) {
-		if (typeof tag !== 'string') {
-			throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node...].');
+	metacall_load_from_file: (tag, paths) => {
+		if (Object.prototype.toString.call(tag) !== '[object String]') {
+			throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
 		}
 
 		if (!(paths instanceof Array)) {
@@ -26,4 +35,4 @@ module.exports = {
 
 		addon.metacall_load_from_file(tag, paths);
 	},
-}
+};

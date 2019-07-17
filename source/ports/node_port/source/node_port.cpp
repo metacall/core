@@ -1,99 +1,156 @@
-#include <node_api.h>
+/*
+ *	MetaCall NodeJS Port by Parra Studios
+ *	A complete infrastructure for supporting multiple language bindings in MetaCall.
+ *
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
+ *
+ */
+
+#include <node_port/node_port.h>
+#include <external-napi/node_api.h>
 #include <metacall/metacall.h>
 #include <cstring>
-#include <node_port/node_port.h>
 
-void convertMetacall_To_NODEJS(napi_env env, void *metacallValue, napi_value *jsObj_to_return)
+void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 {
-	auto value = metacall_value_id(metacallValue);
-	switch (value)
-	{
-	case METACALL_BOOL:{
-		bool truth = (bool)metacall_value_to_bool(metacallValue);
-		napi_get_boolean(env, truth, jsObj_to_return);
-		break;
-	}
-	case METACALL_STRING:{
-		//char string = metacall_value_to_string(metacallValue);
-		char *string = metacall_value_to_string(metacallValue);
-		napi_create_string_utf8(env, string, NAPI_AUTO_LENGTH, jsObj_to_return);
-		break;
-	}
-	case METACALL_CHAR:{
-		char character = metacall_value_to_char(metacallValue);
-		char str[2] = { character, '\0' };
+	enum metacall_value_id id = metacall_value_id(v);
 
-		// am using "1" because char is a single string
-		napi_create_string_utf8(env, (const char *)str, 1, jsObj_to_return);
-		break;
-	}
-	case METACALL_INT:{
-		int number = metacall_value_to_int(metacallValue);
-		napi_create_int32(env, number, jsObj_to_return);
-		break;
-	}
-	case METACALL_FLOAT:{
-		float number = metacall_value_to_float(metacallValue);
-		napi_create_double(env, (double)number, jsObj_to_return);
-		break;
-	}
-	case METACALL_LONG:{
-		long number = metacall_value_to_long(metacallValue);
-		napi_create_int64(env, (double)number, jsObj_to_return);
-		break;
-	}
-	case METACALL_NULL:{
-		napi_get_null(env, jsObj_to_return);
-		break;
-	}
-	case METACALL_DOUBLE:{
-		double number = metacall_value_to_double(metacallValue);
-		napi_create_double(env, number, jsObj_to_return);
-		break;
-	}
-	case METACALL_ARRAY:{
-		// will do this one 2mao..
-		auto arrayptr = metacall_value_to_array(metacallValue);
-		size_t arraysize = metacall_value_size(metacallValue);
-		napi_create_array_with_length(env, arraysize, jsObj_to_return);
-		for (size_t i = 0; i < arraysize; i++)
+	switch (id)
+	{
+		case METACALL_BOOL :
 		{
-			napi_value tempValue;
-			convertMetacall_To_NODEJS(env, arrayptr[i], &tempValue);
-			napi_set_element(env, *jsObj_to_return, i, tempValue);
-			//convertMetacallArray_To_NodeJsArray(env, i, arrayptr, jsObj_to_return);   
+			bool b = (bool)metacall_value_to_bool(v);
+			napi_get_boolean(env, b, js_value);
+			break;
 		}
-		
-		break;
-	}
-	case METACALL_BUFFER:{
-		auto bufferPtr = metacall_value_to_buffer(metacallValue);
-		auto typeSize = metacall_value_size(metacallValue);
-		napi_create_buffer(env, typeSize, &bufferPtr, jsObj_to_return);
-		break;
-	}
-	case METACALL_SHORT:{
-		auto shortptr = metacall_value_to_short(metacallValue);
-		napi_create_int32(env, shortptr, jsObj_to_return);
-		break;
-	}
-	case METACALL_MAP:{
-		 auto mapValu = metacall_value_to_map(metacallValue);
-		auto mapSize = metacall_value_count(metacallValue);
-		for (size_t i = 0; i < mapSize; i++)
+
+		case METACALL_CHAR :
 		{
-			auto value = metacall_value_to_array(mapValu[i]);
-			auto key = metacall_value_to_string(value[0]);
-			napi_value js_Value;
-			convertMetacall_To_NODEJS(env, value[1], &js_Value);
-			napi_set_named_property(env, *jsObj_to_return, key, js_Value);
+			char c = metacall_value_to_char(v);
+			const char str[2] = { c, '\0' };
+			napi_create_string_utf8(env, (const char *)str, 1, js_value);
+			break;
 		}
-		break;
-	}
-	default:
-		break;
+
+		case METACALL_SHORT :
+		{
+			short s = metacall_value_to_short(v);
+			napi_create_int32(env, (int32_t)s, js_value);
+			break;
+		}
+
+		case METACALL_INT :
+		{
+			int n = metacall_value_to_int(v);
+			napi_create_int32(env, (int32_t)n, js_value);
+			break;
+		}
+
+		case METACALL_LONG :
+		{
+			long l = metacall_value_to_long(v);
+			napi_create_int64(env, (int64_t)l, js_value);
+			break;
+		}
+
+		case METACALL_FLOAT :
+		{
+			float f = metacall_value_to_float(v);
+			napi_create_double(env, (double)f, js_value);
+			break;
+		}
+
+		case METACALL_DOUBLE :
+		{
+			double d = metacall_value_to_double(v);
+			napi_create_double(env, d, js_value);
+			break;
+		}
+
+		case METACALL_STRING :
+		{
+			char * str = metacall_value_to_string(v);
+			size_t length = metacall_value_size(v) - 1;
+			napi_create_string_utf8(env, str, length, js_value);
+			break;
+		}
+
+		/* BEGIN-TODO: Review Buffer, Array and Map */
+
+		case METACALL_BUFFER:
+		{
+			auto bufferPtr = metacall_value_to_buffer(v);
+			auto typeSize = metacall_value_size(v);
+			napi_create_buffer(env, typeSize, &bufferPtr, js_value);
+			break;
+		}
+
+		case METACALL_ARRAY:
+		{
+			auto arrayptr = metacall_value_to_array(v);
+			size_t arraysize = metacall_value_size(v);
+			napi_create_array_with_length(env, arraysize, js_value);
+			for (size_t i = 0; i < arraysize; i++)
+			{
+				napi_value tempValue;
+				metacall_value_to_napi(env, arrayptr[i], &tempValue);
+				napi_set_element(env, *js_value, i, tempValue);
+				//convertMetacallArray_To_NodeJsArray(env, i, arrayptr, js_value);
+			}
+			break;
+		}
+
+		case METACALL_MAP:
+		{
+			auto mapValu = metacall_value_to_map(v);
+			auto mapSize = metacall_value_count(v);
+			for (size_t i = 0; i < mapSize; i++)
+			{
+				auto value = metacall_value_to_array(mapValu[i]);
+				auto key = metacall_value_to_string(value[0]);
+				napi_value js_Value;
+				metacall_value_to_napi(env, value[1], &js_Value);
+				napi_set_named_property(env, *js_value, key, js_Value);
+			}
+			break;
+		}
+
+		/* END-TODO */
+
+		case METACALL_PTR :
+		{
+			/* TODO: Implement opaque pointer */
+			break;
+		}
+
+		case METACALL_NULL:
+		{
+			napi_get_null(env, js_value);
+			break;
+		}
+
+		default :
+		{
+			/* TODO: This should never be reach, throw an exception */
+			break;
+		}
 	}
 }
+
+/* TODO: Review the whole code from here to the bottom */
+
 void convertNodeArray_to_Metacall_Array(napi_env env, void *metacallArgs[], napi_value js_array)
 {
 	size_t array_count;
@@ -205,9 +262,9 @@ napi_value JS_Metacall(napi_env env, napi_callback_info info)
 			{
 				size_t length;
 				napi_get_arraybuffer_info(env, argv[i], NULL, &length);
-				void *metacallValues[length];
-				convertNodeArray_to_Metacall_Array(env, metacallValues, argv[i]);
-				auto ptr = const_cast<const void **>(metacallValues);
+				void *vs[length];
+				convertNodeArray_to_Metacall_Array(env, vs, argv[i]);
+				auto ptr = const_cast<const void **>(vs);
 				metacallArgs[i - 1] = metacall_value_create_array(ptr, length);
 			}
 			else
@@ -231,7 +288,7 @@ napi_value JS_Metacall(napi_env env, napi_callback_info info)
 	// Phew!!!.... after we are done converting JS types to Metacall Type into a single Array Above
 	void * ptr = metacallv(functionName, metacallArgs);
 	napi_value js_object;
-	convertMetacall_To_NODEJS(env, ptr, &js_object);
+	metacall_value_to_napi(env, ptr, &js_object);
 	return js_object;
 }
 // this function is the handler of the "metacall_load_from_file"
@@ -295,4 +352,4 @@ napi_value init(napi_env env, napi_value exports)
 	return metacall_js_object;
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, init);
+NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
