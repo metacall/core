@@ -21,7 +21,37 @@
 #ifndef METACALL_NODE_PORT_H
 #define METACALL_NODE_PORT_H 1
 
-#define FUNCTION_NAME_LENGTH 50
-#define GENERAL_STRING_LENGTH 256
+/* -- Headers -- */
+
+#include <node_port/node_port_api.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* -- Headers -- */
+
+#include <external-napi/node_api.h>
+
+/* -- Methods -- */
+
+/**
+*  @brief
+*    Convert a MetaCall value into a N-API value
+*
+*  @param[in] env
+*    Environment context of N-API
+*
+*  @param[in] v
+*    MetaCall value to be converted
+*
+*  @param[out] js_v
+*    N-API value result after conversion from MetaCall
+*/
+NODE_PORT_API void metacall_node_value_to_napi(napi_env env, void * v, napi_value * js_v);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* METACALL_NODE_PORT_H */

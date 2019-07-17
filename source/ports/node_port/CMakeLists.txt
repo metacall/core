@@ -229,3 +229,38 @@ install(TARGETS ${target}
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
+
+#
+# Configure test
+#
+
+# Check if loaders are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB)
+	return()
+endif()
+
+set(node_port_test "${target}_test")
+
+#
+# Define test
+#
+
+add_test(NAME ${target}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMAND npm test
+)
+
+#
+# Define test labels
+#
+
+set_property(TEST ${target}
+	PROPERTY LABELS ${py_port_test}
+)
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)

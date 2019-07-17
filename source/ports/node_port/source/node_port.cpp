@@ -18,12 +18,19 @@
  *
  */
 
+/* -- Headers -- */
+
 #include <node_port/node_port.h>
-#include <external-napi/node_api.h>
 #include <metacall/metacall.h>
 #include <cstring>
 
-void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
+/* TODO: Remove this? */
+#define FUNCTION_NAME_LENGTH 50
+#define GENERAL_STRING_LENGTH 256
+
+/* -- Methods -- */
+
+void metacall_node_value_to_napi(napi_env env, void * v, napi_value * js_v)
 {
 	enum metacall_value_id id = metacall_value_id(v);
 
@@ -32,7 +39,7 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 		case METACALL_BOOL :
 		{
 			bool b = (bool)metacall_value_to_bool(v);
-			napi_get_boolean(env, b, js_value);
+			napi_get_boolean(env, b, js_v);
 			break;
 		}
 
@@ -40,42 +47,42 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 		{
 			char c = metacall_value_to_char(v);
 			const char str[2] = { c, '\0' };
-			napi_create_string_utf8(env, (const char *)str, 1, js_value);
+			napi_create_string_utf8(env, (const char *)str, 1, js_v);
 			break;
 		}
 
 		case METACALL_SHORT :
 		{
 			short s = metacall_value_to_short(v);
-			napi_create_int32(env, (int32_t)s, js_value);
+			napi_create_int32(env, (int32_t)s, js_v);
 			break;
 		}
 
 		case METACALL_INT :
 		{
 			int n = metacall_value_to_int(v);
-			napi_create_int32(env, (int32_t)n, js_value);
+			napi_create_int32(env, (int32_t)n, js_v);
 			break;
 		}
 
 		case METACALL_LONG :
 		{
 			long l = metacall_value_to_long(v);
-			napi_create_int64(env, (int64_t)l, js_value);
+			napi_create_int64(env, (int64_t)l, js_v);
 			break;
 		}
 
 		case METACALL_FLOAT :
 		{
 			float f = metacall_value_to_float(v);
-			napi_create_double(env, (double)f, js_value);
+			napi_create_double(env, (double)f, js_v);
 			break;
 		}
 
 		case METACALL_DOUBLE :
 		{
 			double d = metacall_value_to_double(v);
-			napi_create_double(env, d, js_value);
+			napi_create_double(env, d, js_v);
 			break;
 		}
 
@@ -83,7 +90,7 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 		{
 			char * str = metacall_value_to_string(v);
 			size_t length = metacall_value_size(v) - 1;
-			napi_create_string_utf8(env, str, length, js_value);
+			napi_create_string_utf8(env, str, length, js_v);
 			break;
 		}
 
@@ -93,7 +100,7 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 		{
 			auto bufferPtr = metacall_value_to_buffer(v);
 			auto typeSize = metacall_value_size(v);
-			napi_create_buffer(env, typeSize, &bufferPtr, js_value);
+			napi_create_buffer(env, typeSize, &bufferPtr, js_v);
 			break;
 		}
 
@@ -101,13 +108,13 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 		{
 			auto arrayptr = metacall_value_to_array(v);
 			size_t arraysize = metacall_value_size(v);
-			napi_create_array_with_length(env, arraysize, js_value);
+			napi_create_array_with_length(env, arraysize, js_v);
 			for (size_t i = 0; i < arraysize; i++)
 			{
 				napi_value tempValue;
-				metacall_value_to_napi(env, arrayptr[i], &tempValue);
-				napi_set_element(env, *js_value, i, tempValue);
-				//convertMetacallArray_To_NodeJsArray(env, i, arrayptr, js_value);
+				metacall_node_value_to_napi(env, arrayptr[i], &tempValue);
+				napi_set_element(env, *js_v, i, tempValue);
+				//convertMetacallArray_To_NodeJsArray(env, i, arrayptr, js_v);
 			}
 			break;
 		}
@@ -121,8 +128,8 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 				auto value = metacall_value_to_array(mapValu[i]);
 				auto key = metacall_value_to_string(value[0]);
 				napi_value js_Value;
-				metacall_value_to_napi(env, value[1], &js_Value);
-				napi_set_named_property(env, *js_value, key, js_Value);
+				metacall_node_value_to_napi(env, value[1], &js_Value);
+				napi_set_named_property(env, *js_v, key, js_Value);
 			}
 			break;
 		}
@@ -137,7 +144,7 @@ void metacall_value_to_napi(napi_env env, void * v, napi_value * js_value)
 
 		case METACALL_NULL:
 		{
-			napi_get_null(env, js_value);
+			napi_get_null(env, js_v);
 			break;
 		}
 
@@ -209,7 +216,7 @@ void convertNodeArray_to_Metacall_Array(napi_env env, void *metacallArgs[], napi
 	}
 }
 
-napi_value JS_Metacall(napi_env env, napi_callback_info info)
+napi_value metacall_node(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
 	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
@@ -288,11 +295,11 @@ napi_value JS_Metacall(napi_env env, napi_callback_info info)
 	// Phew!!!.... after we are done converting JS types to Metacall Type into a single Array Above
 	void * ptr = metacallv(functionName, metacallArgs);
 	napi_value js_object;
-	metacall_value_to_napi(env, ptr, &js_object);
+	metacall_node_value_to_napi(env, ptr, &js_object);
 	return js_object;
 }
 // this function is the handler of the "metacall_load_from_file"
-napi_value JS_metacall_load_file(napi_env env, napi_callback_info info)
+napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 {
 	size_t argc = 2, result;
 	uint32_t length_of_JS_array;
@@ -327,29 +334,33 @@ napi_value JS_metacall_load_file(napi_env env, napi_callback_info info)
 	/* TODO */
 	return NULL;
 }
+
 // This functions sets the necessary js functions that could be called in NodeJs
-void setMetall_JS_Properties(napi_env env, napi_value *js_obj)
+void metacall_node_exports(napi_env env, napi_value exports)
 {
-	napi_value function_metacall_load_file, function_metacall; // the js function object
-	napi_create_object(env, js_obj);
-	napi_create_function(env, "metacall", NAPI_AUTO_LENGTH, JS_Metacall, NULL, &function_metacall);
-	napi_create_function(env, "metacall_load_from_file", NAPI_AUTO_LENGTH, JS_metacall_load_file, NULL, &function_metacall_load_file);
-	napi_set_named_property(env, *js_obj, "metacall_load_from_file", function_metacall_load_file);
-	napi_set_named_property(env, *js_obj, "metacall", function_metacall);
-}
-/*This function is called by NodeJs when the module is imported/require*/
-napi_value init(napi_env env, napi_value exports)
-{
-	napi_value metacall_js_object;
-	// make sure you call metacall initialize...
-	int result = metacall_initialize();
-	if (result > 0)
-	{
-		napi_throw_error(env, NULL, "Sorry Could not Initialize MetaCall!");
-		return NULL;
-	}
-	setMetall_JS_Properties(env, &metacall_js_object);
-	return metacall_js_object;
+	const char function_metacall_str[] = "metacall";
+	const char function_metacall_load_file_str[] = "metacall_load_from_file";
+	napi_value function_metacall_load_file, function_metacall;
+
+	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, metacall_node, NULL, &function_metacall);
+	napi_create_function(env, function_metacall_load_file_str, sizeof(function_metacall_load_file_str) - 1, metacall_node_load_from_file, NULL, &function_metacall_load_file);
+	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
+	napi_set_named_property(env, exports, function_metacall_load_file_str, function_metacall_load_file);
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, init)
+/* This function is called by NodeJs when the module is required */
+napi_value metacall_node_initialize(napi_env env, napi_value exports)
+{
+	if (metacall_initialize() != 0)
+	{
+		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
+		napi_throw_error(env, NULL, "MetaCall failed to initialize");
+		return NULL;
+	}
+
+	metacall_node_exports(env, exports);
+
+	return exports;
+}
+
+NAPI_MODULE(NODE_GYP_MODULE_NAME, metacall_node_initialize)

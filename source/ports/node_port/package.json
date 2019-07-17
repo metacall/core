@@ -17,8 +17,9 @@
 	"keywords": [
 		"polyglot",
 		"ffi",
-		"function-mesh",
-		"inter-language"
+		"inter-language",
+		"multi-language",
+		"function-mesh"
 	],
 	"license": "Apache 2.0",
 	"devDependencies": {
