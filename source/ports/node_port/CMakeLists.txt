@@ -224,10 +224,17 @@ target_link_libraries(${target}
 
 # Library
 install(TARGETS ${target}
-	EXPORT  "${target}-export"				COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
+	EXPORT  "${target}-export"									COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}/node_modules/metacall	COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}/node_modules/metacall	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}/node_modules/metacall	COMPONENT dev
+)
+
+# Index
+install(FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/index.js
+	DESTINATION ${INSTALL_LIB}/node_modules/metacall
+	COMPONENT runtime
 )
 
 #
@@ -255,7 +262,7 @@ add_test(NAME ${target}
 #
 
 set_property(TEST ${target}
-	PROPERTY LABELS ${py_port_test}
+	PROPERTY LABELS ${node_port_test}
 )
 
 include(TestEnvironmentVariables)
