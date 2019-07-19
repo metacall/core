@@ -1,8 +1,8 @@
 /*
- *	Loader Library by Declan Nnadozie
- *	A plugin for loading rpc code at run-time into a process.
+ *	Loader Library by Parra Studios
+ *	A plugin for loading rpc endpoints at run-time into a process.
  *
- *	Corpcright (C) 2016 - 2019 Declan Nnadozie <zedonbiz@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef rpc_LOADER_H
-#define rpc_LOADER_H 1
+#ifndef RPC_LOADER_H
+#define RPC_LOADER_H 1
 
 #include <rpc_loader/rpc_loader_api.h>
 
@@ -43,4 +43,4 @@ DYNLINK_SYMBOL_EXPORT(rpc_loader_print_info);
 }
 #endif
 
-#endif /* rpc_LOADER_H */
+#endif /* RPC_LOADER_H */

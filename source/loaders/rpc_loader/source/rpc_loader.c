@@ -1,12 +1,12 @@
 /*
  *	Loader Library by Parra Studios
- *	A plugin for loading rpc code at run-time into a process.
+ *	A plugin for loading rpc endpoints at run-time into a process.
  *
- *	Corpcright (C) 2016 - 2019 Declan Nnadozie <zedonbiz@gmail.com>
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
- *	You may obtain a corpc of the License at
+ *	You may obtain a copy of the License at
  *
  *		http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -44,7 +44,7 @@ const char * rpc_loader_print_info()
 {
 	static const char rpc_loader_info[] =
 		"RPC Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2019 Declan Nnadozie <zedonbiz@gmail.com>\n"
+		"Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef RPC_LOADER_STATIC_DEFINE
 			"Compiled as static library type\n"
