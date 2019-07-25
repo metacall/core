@@ -35,12 +35,16 @@ describe('metacall', () => {
 			/* TODO: This creates a segmentation fault, it seems due to lack of thread-safety */
 			/*
 				54: -- C level backtrace information -------------------------------------------
-				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7fcfd8d27025]
-				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7fcfd8d2725c]
-				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7fcfd8c00904]
-				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7fcfd8cb281e]
-				54: /lib/x86_64-linux-gnu/libpthread.so.0 [0x7fcfdd60a0e0]
-				54: [0x3089380fa9ff]
+				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7f1c3b04a025]
+				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7f1c3b04a25c]
+				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7f1c3af23904]
+				54: /usr/lib/x86_64-linux-gnu/libruby-2.3.so.2.3 [0x7f1c3afd581e]
+				54: /lib/x86_64-linux-gnu/libpthread.so.0 [0x7f1c4b92e0e0]
+				54: /usr/bin/node [0x8d5ea0]
+				54: /usr/bin/node [0x8d660c]
+				54: /usr/bin/node(_ZN2v88internal25FunctionCallbackArguments4CallEPFvRKNS_20FunctionCallbackInfoINS_5ValueEEEE+0x193) [0xa94a43]
+				54: /usr/bin/node [0xb0bbec]
+				54: /usr/bin/node(_ZN2v88internal21Builtin_HandleApiCallEiPPNS0_6ObjectEPNS0_7IsolateE+0xaf) [0xb0c83f]
 			*/
 			/* assert.strictEqual(metacall('get_second', 5, 12), 12); */
 		});
