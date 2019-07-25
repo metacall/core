@@ -156,7 +156,7 @@ void metacall_node_value_to_napi(napi_env env, void * v, napi_value * js_v)
 	}
 }
 
-/* TODO: Review the whole code from here to the bottom */
+/* BEGIN-TODO: Review the whole code from here to the bottom */
 
 void convertNodeArray_to_Metacall_Array(napi_env env, void *metacallArgs[], napi_value js_array)
 {
@@ -321,7 +321,7 @@ napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 		napi_get_value_string_utf8(env, tmpValue, c_strings, 256, &_result);
 		file_name_strings[i] = new char[_result];
 		strncpy((char *)file_name_strings[i], c_strings, _result);
-		
+
 	}
 	if(_result == 0) return NULL;
 	int met_result = metacall_load_from_file(tagBuf, file_name_strings, sizeof(file_name_strings)/sizeof(file_name_strings[0]), NULL);
@@ -335,6 +335,9 @@ napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 	return NULL;
 }
 
+/* END-TODO */
+
+/* TODO: Review documentation */
 // This functions sets the necessary js functions that could be called in NodeJs
 void metacall_node_exports(napi_env env, napi_value exports)
 {
@@ -348,6 +351,7 @@ void metacall_node_exports(napi_env env, napi_value exports)
 	napi_set_named_property(env, exports, function_metacall_load_file_str, function_metacall_load_file);
 }
 
+/* TODO: Review documentation */
 /* This function is called by NodeJs when the module is required */
 napi_value metacall_node_initialize(napi_env env, napi_value exports)
 {
