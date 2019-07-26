@@ -98,13 +98,16 @@ void loader_initialize()
 {
 	loader l = loader_singleton();
 
+	/* Initialize environment variables */
+	loader_env_initialize();
+
+	/* Initialize implementation map */
 	if (l->impl_map == NULL)
 	{
 		l->impl_map = set_create(&hash_callback_str, &comparable_callback_str);
 	}
 
-	loader_env_initialize();
-
+	/* Initialize host proxy */
 	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
 		loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
@@ -297,6 +300,7 @@ int loader_execution_path(const loader_naming_tag tag, const loader_naming_path 
 
 	if (l->impl_map != NULL)
 	{
+		/* If loader is initialized, load the execution path */
 		loader_impl impl = loader_get_impl(tag);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", tag, (void *)impl);

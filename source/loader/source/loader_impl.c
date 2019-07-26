@@ -15,6 +15,7 @@
 #include <reflect/reflect_context.h>
 
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #include <dynlink/dynlink.h>
 
@@ -58,6 +59,7 @@ struct loader_impl_type
 	set type_info_map;
 	loader_host host;
 	void * options;
+	set exec_path_map;
 };
 
 struct loader_handle_impl_type
@@ -268,6 +270,8 @@ int loader_impl_initialize(loader_impl impl)
 
 	const char * script_path = NULL;
 
+	vector paths;
+
 	if (impl->init == 0)
 	{
 		return 0;
@@ -302,6 +306,24 @@ int loader_impl_initialize(loader_impl impl)
 		if (loader_impl_execution_path(impl, script_path) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", script_path);
+		}
+	}
+
+	paths = set_get(impl->exec_path_map, (const set_key)impl->tag);
+
+	/* Load all execution paths */
+	if (paths != NULL)
+	{
+		size_t iterator, size = vector_size(paths);
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			char * path = vector_at(paths, iterator);
+
+			if (loader_impl_execution_path(impl, path) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Loader (%s) failed to load path: %s", impl->tag, path);
+			}
 		}
 	}
 
@@ -344,7 +366,14 @@ loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, l
 					{
 						strncpy(impl->tag, tag, LOADER_NAMING_TAG_SIZE);
 
-						return impl;
+						impl->exec_path_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+						if (impl->exec_path_map != NULL)
+						{
+							return impl;
+						}
+
+						context_destroy(impl->ctx);
 					}
 
 					set_destroy(impl->type_info_map);
@@ -478,18 +507,41 @@ int loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	if (impl != NULL)
 	{
-		loader_impl_interface interface_impl = loader_impl_symbol(impl);
-
-		/* TODO: Implement a cache map for holding all execution paths */
-
-		if (interface_impl != NULL)
+		if (impl->init == 0)
 		{
-			if (loader_impl_initialize(impl) != 0)
+			/* If loader is initialized, load the execution path */
+			loader_impl_interface interface_impl = loader_impl_symbol(impl);
+
+			if (interface_impl != NULL)
 			{
-				return 1;
+				return interface_impl->execution_path(impl, path);
+			}
+		}
+		else
+		{
+			/* If loader is not initialized, store the execution path for later use */
+			vector paths = set_get(impl->exec_path_map, (set_key)impl->tag);
+
+			if (paths == NULL)
+			{
+				paths = vector_create(sizeof(char) * LOADER_NAMING_PATH_SIZE);
+
+				if (paths == NULL)
+				{
+					return 1;
+				}
+
+				if (set_insert(impl->exec_path_map, (set_key)impl->tag, paths) != 0)
+				{
+					vector_destroy(paths);
+
+					return 1;
+				}
 			}
 
-			return interface_impl->execution_path(impl, path);
+			vector_push_back(paths, (void *)path);
+
+			return 0;
 		}
 	}
 
@@ -1009,6 +1061,22 @@ int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val,
 	return 1;
 }
 
+int loader_impl_destroy_exec_path_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
+	{
+		vector paths = val;
+
+		vector_destroy(paths);
+	}
+
+	return 0;
+}
+
 void loader_impl_destroy(loader_impl impl)
 {
 	if (impl != NULL)
@@ -1032,6 +1100,10 @@ void loader_impl_destroy(loader_impl impl)
 
 			impl->init = 1;
 		}
+
+		set_iterate(impl->exec_path_map, &loader_impl_destroy_exec_path_map_cb_iterate, NULL);
+
+		set_destroy(impl->exec_path_map);
 
 		set_destroy(impl->handle_impl_map);
 
