@@ -31,6 +31,7 @@ CLEAR_RUBY=0
 CLEAR_NETCORE=0
 CLEAR_V8=0
 CLEAR_NODEJS=0
+CLEAR_FILE=0
 CLEAR_SWIG=0
 CLEAR_PACK=0
 CLEAR_COVERAGE=0
@@ -90,6 +91,11 @@ sub_nodejs(){
 	echo "clean nodejs"
 }
 
+# File
+sub_file(){
+	echo "clean file"
+}
+
 # SWIG
 sub_swig(){
 	echo "clean swig"
@@ -147,6 +153,9 @@ sub_clear(){
 	fi
 	if [ $CLEAR_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $CLEAR_FILE = 1 ]; then
+		sub_file
 	fi
 	if [ $CLEAR_SWIG = 1 ]; then
 		sub_swig
@@ -211,6 +220,10 @@ sub_options(){
 			echo "nodejs selected"
 			CLEAR_NODEJS=1
 		fi
+		if [ "$var" = 'file' ]; then
+			echo "file selected"
+			CLEAR_FILE=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			CLEAR_SWIG=1
@@ -239,6 +252,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	file"
 	echo "	swig"
 	echo "	pack"
 	echo "	coverage"

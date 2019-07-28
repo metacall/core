@@ -29,6 +29,7 @@ INSTALL_RUBY=0
 INSTALL_NETCORE=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
+INSTALL_FILE=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
@@ -96,6 +97,12 @@ sub_nodejs(){
 	# are already compiled in the runtime
 }
 
+# File
+sub_file(){
+	echo "configure file"
+	# Nothing needed
+}
+
 # Ports
 sub_ports(){
 	echo "configure ports"
@@ -125,6 +132,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $INSTALL_FILE = 1 ]; then
+		sub_file
 	fi
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
@@ -177,6 +187,10 @@ sub_options(){
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
+		if [ "$var" = 'file' ]; then
+			echo "file selected"
+			INSTALL_FILE=1
+		fi
 		if [ "$var" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
@@ -199,6 +213,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	file"
 	echo "	ports"
 	echo "	clean"
 	echo ""

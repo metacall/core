@@ -42,8 +42,8 @@ if(JAVASCRIPT_FOUND)
 	# TODO
 
 	# Set custom setup command
-	#add_custom_command(OUTPUT  "@PACKAGE_OUTPUT@"
-	#				   COMMAND "${JAVASCRIPT_EXECUTABLE}" "@PACKAGE_SETUP_JS@" build
-	#				   COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
-	#				   DEPENDS "@PACKAGE_DEPS@")
+	#add_custom_command(OUTPUT "@PACKAGE_OUTPUT@"
+	#					COMMAND "${JAVASCRIPT_EXECUTABLE}" "@PACKAGE_SETUP_JS@" build
+	#					COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
+	#					DEPENDS "@PACKAGE_DEPS@")
 endif()

@@ -1,8 +1,6 @@
-#!/usr/bin/env bash
-
 #
-#	MetaCall Build Bash Script by Parra Studios
-#	Build and install bash script utility for MetaCall.
+#	File project generator by Parra Studios
+#	Generates a file project embedded into CMake.
 #
 #	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
@@ -19,16 +17,26 @@
 #	limitations under the License.
 #
 
-# Load common environment variables
-source ../../hooks/env
+#
+# Generic script project generator
+#
 
-# Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore v8rep51 nodejs file rapidjson funchook swig" # pack and coverage not needed in DockerHub
+include(ScriptProject)
 
-# Base environment variables
-DEBIAN_FRONTEND=noninteractive
-LTTNG_UST_REGISTER_TIMEOUT=0
-NUGET_XMLDOC_MODE=skip
+# Define current file project configuration path
+get_filename_component(FILE_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PATH)
 
-# Override docker image
-IMAGE_NAME=metacall/core:deps
+#
+# File sub-project util function
+#
+
+function(file_project target version)
+
+	# Configuration
+	set(PACKAGE_NAME		${target})
+	set(PACKAGE_VERSION		${version})
+
+	# Create project file
+	script_project(${target} File ${FILE_PROJECT_CONFIG_PATH}/FileProject.cmake.in)
+
+endfunction()

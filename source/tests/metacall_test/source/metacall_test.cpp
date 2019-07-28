@@ -85,6 +85,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	#endif
 
+	/* Lazy evaluation of execution paths (do not initialize Python runtime) */
 	ASSERT_EQ((int) 0, (int) metacall_execution_path("py", cwd));
 
 	/* Native register */
@@ -479,6 +480,38 @@ TEST_F(metacall_test, DefaultConstructor)
 		/* TODO: Implement all remaining calls for nod.js */
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
+
+
+	/* File */
+	#if defined(OPTION_BUILD_LOADERS_FILE)
+	{
+		const char * file_scripts[] =
+		{
+			"static.html",
+			"favicon.ico"
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("file", file_scripts, sizeof(file_scripts) / sizeof(file_scripts[0]), NULL));
+
+		ret = metacall("static.html");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		std::cout << metacall_value_to_string(ret) << std::endl;
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("favicon.ico");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		std::cout << metacall_value_to_string(ret) << std::endl;
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_LOADERS_FILE */
 
 	/* Print inspect information */
 	{
