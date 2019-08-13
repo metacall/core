@@ -29,6 +29,8 @@
 
 #include <log/log.h>
 
+// The Curl Libraries
+#include "curl/curl.h"
 #include <stdlib.h>
 
 typedef struct loader_impl_rpc_function_type
@@ -45,7 +47,7 @@ typedef struct loader_impl_rpc_handle_type
 
 typedef struct loader_impl_rpc_type
 {
-	void * todo;
+	CURL * curl;
 
 } * loader_impl_rpc;
 
@@ -121,13 +123,18 @@ function_interface function_rpc_singleton(void)
 
 loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	/* TODO */
-
+	loader_impl_rpc rpc_impl;
+	rpc_impl = malloc(sizeof(struct loader_impl_rpc));
+	rpc_impl->curl = curl_easy_init()
+	if(!rpc_impl->curl){
+		log_write("metacall", LOG_LEVEL_ERROR, "Could Not create Curl object");
+		return NULL;
+	}
 	(void)impl;
 	(void)config;
 	(void)host;
 
-	return NULL;
+	return rpc_impl;
 }
 
 int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
@@ -196,7 +203,8 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 int rpc_loader_impl_destroy(loader_impl impl)
 {
-	/* TODO */
+	loader_impl_rpc rpc_impl = (loader_impl_rpc)impl;
+	curl_easy_cleanup(rpc_impl->curl)
 
 	(void)impl;
 
