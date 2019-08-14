@@ -4,7 +4,7 @@
     <AssemblyName>CSLoader</AssemblyName>
     <PackageId>CSLoader</PackageId>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <RuntimeFrameworkVersion>1.0.3</RuntimeFrameworkVersion>
     <AssetTargetFallback>$(AssetTargetFallback);dnxcore50;</AssetTargetFallback>
