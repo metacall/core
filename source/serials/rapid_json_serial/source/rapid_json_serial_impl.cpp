@@ -219,6 +219,8 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 	{
 		RapidJSONSerialValue & json_map = json_v->SetObject();
 
+		RapidJSONSerialValue json_array(rapidjson::kArrayType);
+
 		void * buffer = value_to_buffer(v);
 
 		size_t size = value_type_size(v);
@@ -227,22 +229,32 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 		{
 			const char * data = (const char *)(((uintptr_t)buffer) + iterator);
 
-			RapidJSONSerialValue json_member, json_inner_value;
-
-			json_member.SetUint64((uint64_t)iterator);
+			RapidJSONSerialValue json_inner_value;
 
 			json_inner_value.SetUint((unsigned int)*data);
 
-			json_map.AddMember(json_member, json_inner_value, allocator);
+			json_array.PushBack(json_inner_value, allocator);
 		}
 
-		RapidJSONSerialValue json_member, json_inner_value;
+		// Set data
+		{
+			RapidJSONSerialValue json_member;
 
-		json_member.SetString("length");
+			json_member.SetString("data");
 
-		json_inner_value.SetUint64((uint64_t)size);
+			json_map.AddMember(json_member, json_array, allocator);
+		}
 
-		json_map.AddMember(json_member, json_inner_value, allocator);
+		// Set length
+		{
+			RapidJSONSerialValue json_member, json_inner_value;
+
+			json_member.SetString("length");
+
+			json_inner_value.SetUint64((uint64_t)size);
+
+			json_map.AddMember(json_member, json_inner_value, allocator);
+		}
 	}
 	else if (id == TYPE_ARRAY)
 	{

@@ -21,32 +21,79 @@
 #include <file_loader/file_loader_impl.h>
 
 #include <loader/loader_impl.h>
+#include <loader/loader_path.h>
 
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
+#include <adt/adt_vector.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
+#include <string.h>
+#include <sys/stat.h>
+
+#if defined(WIN32) || defined(_WIN32)
+#	ifndef NOMINMAX
+#		define NOMINMAX
+#	endif
+
+#	ifndef WIN32_LEAN_AND_MEAN
+#		define WIN32_LEAN_AND_MEAN
+#	endif
+
+#	include <windows.h>
+
+#	define LOADER_IMPL_FILE_SIZE MAX_PATH
+
+	typedef struct _stat file_stat_type;
+
+#	define file_stat _stat
+
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+
+#	include <limits.h>
+#	include <unistd.h>
+
+#	define LOADER_IMPL_FILE_SIZE PATH_MAX
+
+	typedef struct stat file_stat_type;
+
+#	define file_stat stat
+
+#endif
+
+typedef char loader_impl_file_path[LOADER_IMPL_FILE_SIZE];
+
+typedef struct loader_impl_file_descriptor_type
+{
+	loader_impl_file_path path;
+	size_t length;
+
+} * loader_impl_file_descriptor;
 
 typedef struct loader_impl_file_type
 {
-	void * impl_file_data;
+	void * nil;
 
 } * loader_impl_file;
 
 typedef struct loader_impl_file_handle_type
 {
-	void * handle_file_data;
+	vector paths;
 
 } * loader_impl_file_handle;
 
 typedef struct loader_impl_file_function_type
 {
-	loader_impl_file_handle file_handle;
-	void * function_file_data;
+	loader_impl_file_descriptor descriptor;
 
 } * loader_impl_file_function;
 
@@ -62,152 +109,10 @@ function_return function_file_interface_invoke(function func, function_impl impl
 {
 	loader_impl_file_function file_function = (loader_impl_file_function)impl;
 
-	signature s = function_signature(func);
+	(void)func;
+	(void)args;
 
-	const char * name = function_name(func);
-
-	type ret_type = signature_get_return(s);
-
-	const size_t args_size = signature_count(s);
-
-	(void)file_function;
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Invoking file function %s", name);
-
-	if (args_size > 0)
-	{
-		size_t args_count;
-
-		for (args_count = 0; args_count < args_size; ++args_count)
-		{
-			type t = signature_get_type(s, args_count);
-
-			type_id id = type_index(t);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Type %p, %d", (void *)t, id);
-
-			if (id == TYPE_BOOL)
-			{
-				boolean * value_ptr = (boolean *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Boolean value: %d", *value_ptr);
-			}
-			else if (id == TYPE_CHAR)
-			{
-				char * value_ptr = (char *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Char value: %c", *value_ptr);
-			}
-			else if (id == TYPE_SHORT)
-			{
-				short * value_ptr = (short *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Short value: %d", *value_ptr);
-			}
-			else if (id == TYPE_INT)
-			{
-				int * value_ptr = (int *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Int value: %d", *value_ptr);
-			}
-			else if (id == TYPE_LONG)
-			{
-				long * value_ptr = (long *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Long value: %ld", *value_ptr);
-			}
-			else if (id == TYPE_FLOAT)
-			{
-				float * value_ptr = (float *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Float value: %f", *value_ptr);
-			}
-			else if (id == TYPE_DOUBLE)
-			{
-				double * value_ptr = (double *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Double value: %f", *value_ptr);
-			}
-			else if (id == TYPE_STRING)
-			{
-				const char * value_ptr = (const char *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "String value: %s", value_ptr);
-			}
-			else if (id == TYPE_PTR)
-			{
-				void * value_ptr = (void *)(args[args_count]);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Pointer value: %p", value_ptr);
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value: %p", args[args_count]);
-			}
-		}
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Calling file function with arguments (%lu)", args_size);
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Calling file function without arguments");
-	}
-
-	if (ret_type != NULL)
-	{
-		type_id id = type_index(ret_type);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
-
-		if (id == TYPE_BOOL)
-		{
-			boolean b = 1;
-
-			return value_create_bool(b);
-		}
-		else if (id == TYPE_CHAR)
-		{
-			return value_create_char('A');
-		}
-		else if (id == TYPE_SHORT)
-		{
-			return value_create_short(124);
-		}
-		else if (id == TYPE_INT)
-		{
-			return value_create_int(1234);
-		}
-		else if (id == TYPE_LONG)
-		{
-			return value_create_long(90000L);
-		}
-		else if (id == TYPE_FLOAT)
-		{
-			return value_create_float(0.2f);
-		}
-		else if (id == TYPE_DOUBLE)
-		{
-			return value_create_double(3.1416);
-		}
-		else if (id == TYPE_STRING)
-		{
-			static const char str[] = "Hello World";
-
-			return value_create_string(str, sizeof(str) / sizeof(str[0]));
-		}
-		else if (id == TYPE_PTR)
-		{
-			static int int_val = 15;
-
-			return value_create_ptr(&int_val);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
-		}
-	}
-
-	return NULL;
+	return value_create_string(file_function->descriptor->path, file_function->descriptor->length);
 }
 
 void function_file_interface_destroy(function func, function_impl impl)
@@ -243,10 +148,7 @@ int file_loader_impl_initialize_types(loader_impl impl)
 	}
 	type_id_name_pair[] =
 	{
-		{ TYPE_SHORT,	"Short"		},
-		{ TYPE_INT,		"Integer"	},
-		{ TYPE_LONG,	"Long"		},
-		{ TYPE_BUFFER,	"Buffer"	},
+		{ TYPE_STRING,	"File"	},
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -292,15 +194,17 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
-	file_impl->impl_file_data = NULL;
+	file_impl->nil = NULL;
 
-	return file_impl;
+	return (loader_impl_data)file_impl;
 }
 
 int file_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
 	(void)impl;
 	(void)path;
+
+	/* TODO ? */
 
 	return 0;
 }
@@ -315,12 +219,34 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	{
 		size_t iterator;
 
-		for (iterator = 0; iterator < size; ++iterator)
+		handle->paths = vector_create(sizeof(struct loader_impl_file_descriptor_type));
+
+		if (handle->paths == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from file", paths[iterator]);
+			free(handle);
+
+			return NULL;
 		}
 
-		handle->handle_file_data = NULL;
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			file_stat_type s;
+
+			if (file_stat(paths[iterator], &s) == 0)
+			{
+				loader_impl_file_descriptor descriptor = NULL;
+
+				vector_insert_empty(handle->paths, vector_size(handle->paths));
+
+				descriptor = vector_back(handle->paths);
+
+				strncpy(descriptor->path, paths[iterator], LOADER_IMPL_FILE_SIZE);
+
+				descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from file", paths[iterator]);
+			}
+		}
 
 		return (loader_handle)handle;
 	}
@@ -338,9 +264,26 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 	if (handle != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "File module %s. loaded from memory", name);
+		loader_impl_file_descriptor descriptor = NULL;
 
-		handle->handle_file_data = NULL;
+		handle->paths = vector_create(sizeof(struct loader_impl_file_descriptor_type));
+
+		if (handle->paths == NULL)
+		{
+			free(handle);
+
+			return NULL;
+		}
+
+		vector_insert_empty(handle->paths, 0);
+
+		descriptor = vector_back(handle->paths);
+
+		strncpy(descriptor->path, name, LOADER_IMPL_FILE_SIZE);
+
+		descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from memory", name);
 
 		return (loader_handle)handle;
 	}
@@ -356,9 +299,31 @@ loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_
 
 	if (handle != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from package", path);
+		file_stat_type s;
 
-		handle->handle_file_data = NULL;
+		handle->paths = vector_create(sizeof(struct loader_impl_file_descriptor_type));
+
+		if (handle->paths == NULL)
+		{
+			free(handle);
+
+			return NULL;
+		}
+
+		if (file_stat(path, &s) == 0)
+		{
+			loader_impl_file_descriptor descriptor = NULL;
+
+			vector_insert_empty(handle->paths, 0);
+
+			descriptor = vector_back(handle->paths);
+
+			strncpy(descriptor->path, path, LOADER_IMPL_FILE_SIZE);
+
+			descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from package", path);
+		}
 
 		return (loader_handle)handle;
 	}
@@ -374,6 +339,8 @@ int file_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (file_handle != NULL)
 	{
+		vector_destroy(file_handle->paths);
+
 		free(file_handle);
 
 		return 0;
@@ -382,49 +349,46 @@ int file_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-loader_impl_file_function file_function_create(loader_impl_file_handle file_handle)
-{
-	loader_impl_file_function file_function = malloc(sizeof(struct loader_impl_file_function_type));
-
-	if (file_function != NULL)
-	{
-		file_function->file_handle = file_handle;
-
-		file_function->function_file_data = NULL;
-
-		return file_function;
-	}
-
-	return NULL;
-}
-
 int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	loader_impl_file file_impl = loader_impl_get(impl);
 
 	loader_impl_file_handle file_handle = (loader_impl_file_handle)handle;
 
-	loader_impl_file_function file_function = file_function_create(file_handle);
-
 	scope sp = context_scope(ctx);
+
+	size_t iterator, size = vector_size(file_handle->paths);
 
 	(void)file_impl;
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "File module %p discovering", handle);
 
-	if (file_function != NULL)
+	for (iterator = 0; iterator < size; ++iterator)
 	{
-		function f = function_create("two_doubles", 2, file_function, &function_file_singleton);
+		loader_impl_file_descriptor descriptor = vector_at(file_handle->paths, iterator);
 
-		signature s = function_signature(f);
+		loader_impl_file_function file_function = malloc(sizeof(struct loader_impl_file_function_type));
 
-		signature_set_return(s, loader_impl_type(impl, "Long"));
+		if (file_function != NULL)
+		{
+			loader_naming_name name;
 
-		signature_set(s, 0, "first_parameter", loader_impl_type(impl, "Long"));
+			function f;
 
-		signature_set(s, 1, "second_parameter", loader_impl_type(impl, "Long"));
+			signature s;
 
-		scope_define(sp, function_name(f), f);
+			(void)loader_path_get_fullname(descriptor->path, name);
+
+			file_function->descriptor = descriptor;
+
+			f = function_create(name, 0, file_function, &function_file_singleton);
+
+			s = function_signature(f);
+
+			signature_set_return(s, loader_impl_type(impl, "Path"));
+
+			scope_define(sp, function_name(f), f);
+		}
 	}
 
 	return 0;

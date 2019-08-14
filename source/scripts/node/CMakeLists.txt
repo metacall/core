@@ -14,3 +14,4 @@ include(NodeJSProject)
 #
 
 add_subdirectory(nod)
+add_subdirectory(inline)

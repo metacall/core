@@ -30,6 +30,7 @@ option(OPTION_BUILD_LOADERS_MOCK "Build mock loader loader plugin." ON)
 option(OPTION_BUILD_LOADERS_NODE "Build NodeJS 8.11.1 JavaScript Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_PY "Build Python 3.5 C API loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_RB "Build Ruby 2.3 C API loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_RPC "Build cURL Remote Procedure Call loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugin." OFF)
 
 # Plugin packages
@@ -42,4 +43,5 @@ add_subdirectory(mock_loader) # Mock loader plugin without dependencies (core te
 add_subdirectory(py_loader) # Python 3.5 C API
 add_subdirectory(rb_loader) # Ruby 2.3 C API
 add_subdirectory(file_loader) # File System
+add_subdirectory(rpc_loader) # cURL Remote Procedure Call
 add_subdirectory(wasm_loader) # WebAssembly Virtual Machine

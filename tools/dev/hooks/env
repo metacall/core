@@ -23,7 +23,7 @@
 source ../../hooks/env
 
 # Core arguments
-METACALL_BUILD_OPTIONS="root python ruby netcore2 v8 nodejs examples distributable tests scripts ports dynamic install" # pack and coverage not needed in DockerHub
+METACALL_BUILD_OPTIONS="root python ruby netcore2 v8 nodejs file examples distributable tests scripts ports dynamic install" # pack and coverage not needed in DockerHub
 
 # Core environment variables
 DEBIAN_FRONTEND=noninteractive

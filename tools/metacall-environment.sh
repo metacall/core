@@ -40,6 +40,7 @@ INSTALL_V8REPO54=0
 INSTALL_V8REPO52=0
 INSTALL_V8REPO51=0
 INSTALL_NODEJS=0
+INSTALL_FILE=0
 INSTALL_WASM=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
@@ -286,6 +287,11 @@ sub_nodejs(){
 	# pkg-config icu-i18n --cflags --libs
 }
 
+# File
+sub_file(){
+	echo "configure file"
+}
+
 # WebAssembly
 sub_wasm(){
 	echo "configure webassembly"
@@ -371,6 +377,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $INSTALL_FILE = 1 ]; then
+		sub_file
 	fi
 	if [ $INSTALL_WASM = 1 ]; then
 		sub_wasm
@@ -460,6 +469,10 @@ sub_options(){
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
+		if [ "$var" = 'file' ]; then
+			echo "file selected"
+			INSTALL_FILE=1
+		fi
 		if [ "$var" = 'wasm' ]; then
 			echo "wasm selected"
 			INSTALL_WASM=1
@@ -502,6 +515,7 @@ sub_help() {
 	echo "	v8rep57"
 	echo "	v8rep58"
 	echo "	nodejs"
+	echo "	file"
 	echo "	wasm"
 	echo "	swig"
 	echo "	metacall"

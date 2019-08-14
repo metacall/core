@@ -60,6 +60,26 @@ size_t loader_path_get_name(const loader_naming_path path, loader_naming_name na
 	return last + 1;
 }
 
+size_t loader_path_get_fullname(const loader_naming_path path, loader_naming_name name)
+{
+	size_t i, count;
+
+	for (i = 0, count = 0; path[i] != '\0' &&
+		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
+	{
+		name[count++] = path[i];
+
+		if (LOADER_PATH_SEPARATOR(path[i]))
+		{
+			count = 0;
+		}
+	}
+
+	name[count] = '\0';
+
+	return count + 1;
+}
+
 size_t loader_path_get_extension(const loader_naming_path path, loader_naming_tag extension)
 {
 	size_t i, count;

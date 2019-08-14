@@ -41,12 +41,12 @@ function(js_project target version)
 	# TODO
 
 	# Configuration
-	set(PACKAGE_NAME		 ${target})
-	set(PACKAGE_VERSION	  ${version})
-	#set(PACKAGE_SETUP_JS_IN "${JS_PROJECT_CONFIG_PATH}/JavaScriptProject.json.in")
+	set(PACKAGE_NAME		${target})
+	set(PACKAGE_VERSION		${version})
+	#set(PACKAGE_SETUP_JS_IN	"${JS_PROJECT_CONFIG_PATH}/JavaScriptProject.json.in")
 	#set(PACKAGE_SETUP_JS	"${CMAKE_CURRENT_BINARY_DIR}/setup.js")
 	#set(PACKAGE_DEPS		"${CMAKE_CURRENT_SOURCE_DIR}/depends/__init__.js")
-	set(PACKAGE_OUTPUT	  "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
+	set(PACKAGE_OUTPUT		"${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
 	# Create javascript setup file
 	#configure_file(${PACKAGE_SETUP_JS_IN} ${PACKAGE_SETUP_JS} @ONLY)

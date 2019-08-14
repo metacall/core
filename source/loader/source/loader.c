@@ -12,26 +12,17 @@
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
+#include <loader/loader_env.h>
 
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
 #include <adt/adt_set.h>
 
-#include <environment/environment_variable_path.h>
-
 #include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
-
-/* -- Definitions -- */
-
-#define LOADER_LIBRARY_PATH			"LOADER_LIBRARY_PATH"
-#define LOADER_LIBRARY_DEFAULT_PATH	"loaders"
-
-#define LOADER_SCRIPT_PATH			"LOADER_SCRIPT_PATH"
-#define LOADER_SCRIPT_DEFAULT_PATH	"."
 
 /* -- Forward Declarations -- */
 
@@ -54,8 +45,6 @@ typedef struct loader_metadata_cb_iterator_type * loader_metadata_cb_iterator;
 struct loader_type
 {
 	set impl_map;
-	char * library_path;
-	char * script_path;
 };
 
 struct loader_metadata_cb_iterator_type
@@ -99,7 +88,7 @@ loader loader_singleton()
 {
 	static struct loader_type loader_instance =
 	{
-		NULL, NULL, NULL
+		NULL
 	};
 
 	return &loader_instance;
@@ -109,33 +98,16 @@ void loader_initialize()
 {
 	loader l = loader_singleton();
 
+	/* Initialize environment variables */
+	loader_env_initialize();
+
+	/* Initialize implementation map */
 	if (l->impl_map == NULL)
 	{
 		l->impl_map = set_create(&hash_callback_str, &comparable_callback_str);
 	}
 
-	if (l->library_path == NULL)
-	{
-		#if defined(LOADER_LIBRARY_INSTALL_PATH)
-			static const char loader_library_default_path[] = LOADER_LIBRARY_INSTALL_PATH;
-		#else
-			static const char loader_library_default_path[] = LOADER_LIBRARY_DEFAULT_PATH;
-		#endif /* LOADER_LIBRARY_INSTALL_PATH */
-
-		l->library_path = environment_variable_path_create(LOADER_LIBRARY_PATH, loader_library_default_path);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader library path: %s", l->library_path);
-	}
-
-	if (l->script_path == NULL)
-	{
-		static const char loader_script_default_path[] = LOADER_SCRIPT_DEFAULT_PATH;
-
-		l->script_path = environment_variable_path_create(LOADER_SCRIPT_PATH, loader_script_default_path);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader script path: %s", l->script_path);
-	}
-
+	/* Initialize host proxy */
 	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
 		loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
@@ -271,7 +243,7 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 	host->log = log_instance();
 
-	impl = loader_impl_create(l->library_path, tag, host);
+	impl = loader_impl_create(loader_env_library_path(), tag, host);
 
 	if (impl != NULL)
 	{
@@ -328,6 +300,7 @@ int loader_execution_path(const loader_naming_tag tag, const loader_naming_path 
 
 	if (l->impl_map != NULL)
 	{
+		/* If loader is initialized, load the execution path */
 		loader_impl impl = loader_get_impl(tag);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) implementation <%p>", tag, (void *)impl);
@@ -359,7 +332,9 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 
 			if (impl != NULL)
 			{
-				if (l->script_path != NULL)
+				const char * script_path = loader_env_script_path();
+
+				if (script_path != NULL)
 				{
 					loader_naming_path * absolute_paths = malloc(sizeof(loader_naming_path) * size);
 
@@ -378,7 +353,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 					{
 						if (loader_path_is_absolute(paths[iterator]) != 0)
 						{
-							(void)loader_path_join(l->script_path, strlen(l->script_path) + 1, paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1) + 1, absolute_paths[iterator]);
+							(void)loader_path_join(script_path, strlen(script_path) + 1, paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1) + 1, absolute_paths[iterator]);
 						}
 						else
 						{
@@ -795,19 +770,7 @@ void loader_destroy()
 		l->impl_map = NULL;
 	}
 
-	if (l->library_path != NULL)
-	{
-		environment_variable_path_destroy(l->library_path);
-
-		l->library_path = NULL;
-	}
-
-	if (l->script_path != NULL)
-	{
-		environment_variable_path_destroy(l->script_path);
-
-		l->script_path = NULL;
-	}
+	loader_env_destroy();
 }
 
 const char * loader_print_info()

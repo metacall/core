@@ -20,8 +20,8 @@
 # Configure MetaCall Depends node image
 ARG METACALL_BASE_IMAGE
 
-# MetaCall Depends node image
-FROM ${METACALL_BASE_IMAGE} AS deps_node
+# MetaCall Depends node builder image
+FROM ${METACALL_BASE_IMAGE} AS builder
 
 # Image descriptor
 LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
@@ -57,3 +57,17 @@ RUN cmake \
 		-DCMAKE_FIND_LIBRARY_PREFIXES=lib \
 		-DCMAKE_FIND_LIBRARY_SUFFIXES=".a;.so" \
 		-P $METACALL_PATH/cmake/FindNodeJS.cmake
+
+# MetaCall Depends node image
+FROM scratch AS deps_node
+
+# Image descriptor
+LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
+	copyright.address="vic798@gmail.com" \
+	maintainer.name="Vicente Eduardo Ferrer Garcia" \
+	maintainer.address="vic798@gmail.com" \
+	vendor="MetaCall Inc." \
+	version="0.1"
+
+# Copy MetaCall NodeJS dependencies
+COPY --from=builder /usr/local/lib/libnode.so.* /usr/local/lib/

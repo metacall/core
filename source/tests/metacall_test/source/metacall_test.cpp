@@ -24,6 +24,26 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
+#include <limits.h>
+
+#if defined(WIN32) || defined(_WIN32)
+#	ifndef NOMINMAX
+#		define NOMINMAX
+#	endif
+
+#	ifndef WIN32_LEAN_AND_MEAN
+#		define WIN32_LEAN_AND_MEAN
+#	endif
+
+#	include <windows.h>
+#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__) || \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+#	include <unistd.h>
+#endif
+
 void * c_function(void * args[])
 {
 	printf("%s\n", (char*)args[0]);
@@ -45,6 +65,28 @@ TEST_F(metacall_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
+
+	#if defined(WIN32) || defined(_WIN32)
+
+		DWORD length = MAX_PATH;
+		char cwd[MAX_PATH];
+
+		ASSERT_NE((DWORD) 0, (DWORD) GetCurrentDirectory(length, cwd));
+
+	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+		defined(__MINGW32__) || defined(__MINGW64__) || \
+		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+
+		char cwd[PATH_MAX];
+
+		ASSERT_NE((char *) NULL, (char *) getcwd(cwd, sizeof(cwd)));
+
+	#endif
+
+	/* Lazy evaluation of execution paths (do not initialize Python runtime) */
+	ASSERT_EQ((int) 0, (int) metacall_execution_path("py", cwd));
 
 	/* Native register */
 	{
@@ -183,14 +225,14 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		unsigned char * dyn_buffer = (unsigned char *)malloc(sizeof(unsigned char) * 256);
+		unsigned char * dyn_buffer = (unsigned char *)malloc(sizeof(unsigned char) * 255);
 
-		for (int i = 0; i < 256; ++i)
+		for (unsigned char i = 0; i < 255; ++i)
 		{
 			dyn_buffer[i] = i;
 		}
 
-		buffer_value = metacall_value_create_buffer((void *)dyn_buffer, 256);
+		buffer_value = metacall_value_create_buffer((void *)dyn_buffer, 255);
 
 		EXPECT_NE((void *) NULL, (void *) buffer_value);
 
@@ -438,6 +480,38 @@ TEST_F(metacall_test, DefaultConstructor)
 		/* TODO: Implement all remaining calls for nod.js */
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
+
+
+	/* File */
+	#if defined(OPTION_BUILD_LOADERS_FILE)
+	{
+		const char * file_scripts[] =
+		{
+			"static.html",
+			"favicon.ico"
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("file", file_scripts, sizeof(file_scripts) / sizeof(file_scripts[0]), NULL));
+
+		ret = metacall("static.html");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		std::cout << metacall_value_to_string(ret) << std::endl;
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("favicon.ico");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		std::cout << metacall_value_to_string(ret) << std::endl;
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_LOADERS_FILE */
 
 	/* Print inspect information */
 	{

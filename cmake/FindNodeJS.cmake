@@ -24,14 +24,16 @@
 # NODEJS_V8_VERSION_HEX - V8 version of NodeJS in hexadecimal format
 # NODEJS_LIBRARY - NodeJS shared library
 # NODEJS_EXECUTABLE - NodeJS shell
+#
+# Configuration variables:
+#
+# NODEJS_CMAKE_DEBUG - Print paths for debugging
+# NODEJS_EXECUTABLE_ONLY - Find only NodeJS executable (avoid library and include files)
 
 # Prevent vervosity if already included
 if(NODEJS_INCLUDE_DIR)
 	set(NODEJS_FIND_QUIETLY TRUE)
 endif()
-
-# Debug flag
-set(_NODEJS_CMAKE_DEBUG TRUE)
 
 # Include package manager
 include(FindPackageHandleStandardArgs)
@@ -204,6 +206,26 @@ if(NODEJS_INCLUDE_DIR)
 	endif()
 endif()
 
+# Check if NodeJS executable only is requested
+if(NODEJS_EXECUTABLE_ONLY)
+	find_package_handle_standard_args(NODEJS
+		REQUIRED_VARS NODEJS_EXECUTABLE
+		VERSION_VAR NODEJS_VERSION
+	)
+
+	mark_as_advanced(NODEJS_EXECUTABLE)
+
+	if(NODEJS_CMAKE_DEBUG)
+		message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
+		message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
+		message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")
+		message(STATUS "NODEJS_V8_VERSION_HEX: ${NODEJS_V8_VERSION_HEX}")
+		message(STATUS "NODEJS_EXECUTABLE: ${NODEJS_EXECUTABLE}")
+	endif()
+
+	return()
+endif()
+
 # TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?)
 
 # NodeJS library names
@@ -344,7 +366,7 @@ if(NODEJS_FOUND)
 	set(NODEJS_INCLUDE_DIRS ${NODEJS_INCLUDE_DIR})
 endif()
 
-if(_NODEJS_CMAKE_DEBUG)
+if(NODEJS_CMAKE_DEBUG)
 	message(STATUS "NODEJS_INCLUDE_DIR: ${NODEJS_INCLUDE_DIR}")
 	message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
 	message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")

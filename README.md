@@ -1,6 +1,5 @@
-
 <div align="center">
-  <a href="https://metacall.io" target="_blank"><img src="/deploy/images/logo.png" alt="M E T A C A L L" style="max-width:100%;" width="32" height="32">
+  <a href="https://metacall.io" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/logo.png" alt="M E T A C A L L" style="max-width:100%; margin: 0 auto;" width="80" height="80">
   <p><b>M E T A C A L L</b></p></a>
   <p>A library for providing inter-language foreign function interface calls</p>
 </div>
@@ -21,6 +20,10 @@ metacall_load_from_file('py', [ 'sum.py' ]);
 
 metacall('sum', 3, 4); // 7
 ```
+
+<div align="center">
+  <a href="https://medium.com/@metacall/call-functions-methods-or-procedures-between-programming-languages-with-metacall-58cfece35d7" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/overview.png" alt="M E T A C A L L" style="max-width:100%; margin: 0 auto;" width="350" height="auto">
+</div>
 
 # Table Of Contents
 
@@ -92,19 +95,20 @@ This section describes all programming languages that **METACALL** supports, if 
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |          **5.1.117**           |  js  |
 | [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) | **>= 1.0.0-preview2 <= 2.2.5** |  cs  |
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |       **>= 2.1 <= 2.3**        |  rb  |
+| [File](/source/loaders/file_loader)                                | **∅**                                                                                        |           **0.1.0**            | file |
 | [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |           **0.1.0**            | mock |
 
 - Languages and run-times under construction:
 
 | Language                                                           | Runtime                                                                                                | Tag  |
 |--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|:----:|
-| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java |
+| [WebAssembly](https://webassembly.org/)                            | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm |
 | [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |  c   |
-| [File](/source/loaders/file_loader)                                | **∅**                                                                                                  | file |
+| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java |
+| [PHP](https://php.net/)                                            | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       | php  |
 | [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
-| [WebAssembly](https://webassembly.org/)                            | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm |
 
 ## 3. Use Cases
 

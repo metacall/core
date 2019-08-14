@@ -131,15 +131,6 @@ add_test(NAME ${target}
 )
 
 #
-# Create custom target for data
-#
-
-add_custom_target(${target}-data ALL
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/data/favicon.ico ${LOADER_SCRIPT_PATH}
-)
-
-#
 # Define test properties
 #
 

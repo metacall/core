@@ -1,7 +1,13 @@
+# Check if port is enabled
+if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
+	return()
+endif()
 
 #
 # External dependencies
 #
+
+set(NODEJS_EXECUTABLE_ONLY ON)
 
 find_package(NodeJS)
 
@@ -10,23 +16,8 @@ if(NOT NODEJS_FOUND)
 	return()
 endif()
 
-# Generate a valid version of V8 for SWIG
-#set(V8_VERSION_HEX 0x0${V8_VERSION_MAJOR}${V8_VERSION_MINOR}${V8_VERSION_PATCH})
-
-set(V8_VERSION_HEX_SWIG ${V8_VERSION_HEX})
-
-string(LENGTH "${V8_VERSION_HEX_SWIG}" V8_VERSION_HEX_SWIG_LENGTH)
-
-while(V8_VERSION_HEX_SWIG_LENGTH LESS 8)
-
-	set(V8_VERSION_HEX_SWIG "${V8_VERSION_HEX_SWIG}0")
-
-	string(LENGTH "${V8_VERSION_HEX_SWIG_LENGTH}" V8_VERSION_HEX_SWIG_LENGTH)
-
-endwhile()
-
 #
-# Port name and options
+# Plugin name and options
 #
 
 # Target name
@@ -42,6 +33,18 @@ set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
 
 #
+# Compiler warnings
+#
+
+include(Warnings)
+
+#
+# Compiler security
+#
+
+include(SecurityFlags)
+
+#
 # Sources
 #
 
@@ -49,15 +52,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-#	${include_path}/js_loader.h
-#	${include_path}/js_loader_impl.h
-#	${include_path}/js_loader_impl_guard.h
+	${include_path}/node_port.h
 )
 
 set(sources
-#	${source_path}/js_loader.c
-#	${source_path}/js_loader_impl.cpp
-#	${source_path}/js_loader_impl_guard.cpp
+	${source_path}/node_port.cpp
 )
 
 # Group source files
@@ -73,17 +72,13 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Build library
-add_library(${target}
+add_library(${target} MODULE
 	${sources}
 	${headers}
 )
 
-#
-# Dependecies
-#
-
-# Add metacall distributable dependency
-add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
+# Add target dependencies
+add_dependencies(${target}
 	${META_PROJECT_NAME}::metacall_distributable
 )
 
@@ -128,11 +123,29 @@ set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
+	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
+
+	# Set valid format for NodeJS addon
+	PREFIX "" SUFFIX ".node"
+
+	# Set runtime output directory (mimic node-gyp)
+	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build"
+	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build"
+	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build"
 )
 
 #
 # Include directories
 #
+
+execute_process(
+	COMMAND node -p "require('node-addon-api').include"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	OUTPUT_VARIABLE NODE_ADDON_API_INCLUDE_DIR
+)
+
+string(REPLACE "\n" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
+string(REPLACE "\"" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
 
 target_include_directories(${target}
 	PRIVATE
@@ -140,7 +153,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${V8_INCLUDE_DIR} # V8 includes
+	${NODE_ADDON_API_INCLUDE_DIR} # N-API wrappers
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -157,9 +170,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${V8_LIBRARIES} # V8 library
-
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall_distributable # MetaCall Library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -213,43 +224,50 @@ target_link_libraries(${target}
 
 # Library
 install(TARGETS ${target}
-	EXPORT  "${target}-export"			COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}	COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED} COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}	COMPONENT dev
+	EXPORT  "${target}-export"									COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}/node_modules/metacall	COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}/node_modules/metacall	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}/node_modules/metacall	COMPONENT dev
 )
 
-# Header files
-install(DIRECTORY
-	${CMAKE_CURRENT_SOURCE_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# Generated header files
-install(DIRECTORY
-	${CMAKE_CURRENT_BINARY_DIR}/include/${target} DESTINATION ${INSTALL_INCLUDE}
-	COMPONENT dev
-)
-
-# CMake config
-install(EXPORT ${target}-export
-	NAMESPACE   ${META_PROJECT_NAME}::
-	DESTINATION ${INSTALL_CMAKE}/${target}
-	COMPONENT   dev
+# Index
+install(FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/index.js
+	DESTINATION ${INSTALL_LIB}/node_modules/metacall
+	COMPONENT runtime
 )
 
 #
-# SWIG Configuration
+# Configure test
 #
 
-set_property(
-	SOURCE ${CMAKE_SOURCE_DIR}/ports/interface/metacall.i
-	PROPERTY SWIG_FLAGS "-node" #"-I${CMAKE_BINARY_DIR}/source" "-DV8_VERSION=${V8_VERSION_HEX_SWIG}"
+# Check if loaders are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB)
+	return()
+endif()
+
+set(node_port_test "${target}_test")
+
+#
+# Define test
+#
+
+add_test(NAME ${target}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMAND npm test
 )
 
-set_source_files_properties(
-	${CMAKE_SOURCE_DIR}/ports/interface/metacall.i
-	PROPERTIES CPLUSPLUS OFF
+#
+# Define test labels
+#
+
+set_property(TEST ${target}
+	PROPERTY LABELS ${node_port_test}
 )
 
-swig_add_module(${META_PROJECT_NAME}_${target}
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)

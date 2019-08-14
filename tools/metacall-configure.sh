@@ -28,6 +28,7 @@ BUILD_NETCORE=0
 BUILD_NETCORE2=0
 BUILD_V8=0
 BUILD_NODEJS=0
+BUILD_FILE=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_DISTRIBUTABLE=0
@@ -77,6 +78,10 @@ sub_options() {
 		if [ "$option" = 'nodejs' ]; then
 			echo "Build with nodejs support"
 			BUILD_NODEJS=1
+		fi
+		if [ "$option" = 'file' ]; then
+			echo "Build with file support"
+			BUILD_FILE=1
 		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
@@ -172,6 +177,15 @@ sub_configure() {
 		fi
 	fi
 
+	# File
+	if [ $BUILD_FILE = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_FILE=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_FILE=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -218,6 +232,7 @@ sub_help() {
 	echo "	netcore: build with netcore 2 support"
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
+	echo "	file: build with file support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	distributable: build distributable libraries"

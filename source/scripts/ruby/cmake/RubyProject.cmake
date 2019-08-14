@@ -41,12 +41,12 @@ function(rb_project target version)
 	# TODO
 
 	# Configuration
-	set(PACKAGE_NAME		 ${target})
-	set(PACKAGE_VERSION	  ${version})
-	#set(PACKAGE_SETUP_RB_IN "${RB_PROJECT_CONFIG_PATH}/RubyProject.rb.in")
+	set(PACKAGE_NAME		${target})
+	set(PACKAGE_VERSION		${version})
+	#set(PACKAGE_SETUP_RB_IN	"${RB_PROJECT_CONFIG_PATH}/RubyProject.rb.in")
 	#set(PACKAGE_SETUP_RB	"${CMAKE_CURRENT_BINARY_DIR}/setup.rb")
 	#set(PACKAGE_DEPS		"${CMAKE_CURRENT_SOURCE_DIR}/depends/__init__.rb")
-	set(PACKAGE_OUTPUT	  "${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
+	set(PACKAGE_OUTPUT		"${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
 	# Create ruby setup file
 	#configure_file(${PACKAGE_SETUP_RB_IN} ${PACKAGE_SETUP_RB} @ONLY)
