@@ -465,7 +465,8 @@ TEST_F(metacall_test, DefaultConstructor)
 		const char buffer[] =
 			"function nodmem() {\n"
 			"\treturn 43;\n"
-			"\t}";
+			"\t}\n"
+			"module.exports = { nodmem };\n";
 
 		void * ret = NULL;
 
