@@ -462,6 +462,11 @@ TEST_F(metacall_test, DefaultConstructor)
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
+		const char buffer[] =
+			"function nodmem() {\n"
+			"\treturn 43;\n"
+			"\t}";
+
 		void * ret = NULL;
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
@@ -483,6 +488,16 @@ TEST_F(metacall_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 
 		/* TODO: Implement all remaining calls for nod.js */
+
+		ASSERT_EQ((int) 0, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+
+		ret = metacall("nodmem");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 43.0);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

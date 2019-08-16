@@ -37,7 +37,7 @@ function node_loader_trampoline_execution_path() {
 
 function node_loader_trampoline_load_from_file(paths) {
 	if (!Array.isArray(paths)) {
-		throw new Error('Load from file paths must be an array, not ' + typeof code);
+		throw new Error('Load from file paths must be an array, not ' + typeof paths);
 	}
 
 	try {
@@ -59,8 +59,12 @@ function node_loader_trampoline_load_from_file(paths) {
 }
 
 function node_loader_trampoline_load_from_memory(name, buffer, opts) {
+	if (typeof name !== 'string') {
+		throw new Error('Load from memory name must be a string, not ' + typeof name);
+	}
+
 	if (typeof buffer !== 'string') {
-		throw new Error('Load from memory buffer must be a string, not ' + typeof code);
+		throw new Error('Load from memory buffer must be a string, not ' + typeof buffer);
 	}
 
 	const paths = Module._nodeModulePaths(path.dirname(name));
@@ -75,7 +79,7 @@ function node_loader_trampoline_load_from_memory(name, buffer, opts) {
 		...opts.append_paths || [],
 	];
 	// eslint-disable-next-line no-underscore-dangle
-	m._compile(code, name);
+	m._compile(buffer, name);
 
 	if (parent && parent.children) {
 		parent.children.splice(parent.children.indexOf(m), 1);
