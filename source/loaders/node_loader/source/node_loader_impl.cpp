@@ -968,7 +968,7 @@ void node_loader_impl_async_load_from_memory(uv_async_t * async)
 
 		assert(status == napi_ok);
 
-		status = napi_get_undefined(env, &argv[2]);
+		status = napi_create_object(env, &argv[2]);
 
 		assert(status == napi_ok);
 
