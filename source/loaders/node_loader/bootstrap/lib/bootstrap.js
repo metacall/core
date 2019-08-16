@@ -67,16 +67,19 @@ function node_loader_trampoline_load_from_memory(name, buffer, opts) {
 		throw new Error('Load from memory buffer must be a string, not ' + typeof buffer);
 	}
 
+	/* TODO: Implement opts check properly */
+
 	const paths = Module._nodeModulePaths(path.dirname(name));
 	const parent = module.parent;
 	const m = new Module(name, parent);
 
 	m.filename = name;
+
+	/* TODO: Implement opts */
 	m.paths = [
-		...opts.prepend_paths || [],
-		// eslint-disable-next-line no-underscore-dangle
-		...Module._nodeModulePaths(dirname(name)),
-		...opts.append_paths || [],
+		/*...opts.prepend_paths || [],*/
+		...paths,
+		/*...opts.append_paths || [],*/
 	];
 	// eslint-disable-next-line no-underscore-dangle
 	m._compile(buffer, name);
