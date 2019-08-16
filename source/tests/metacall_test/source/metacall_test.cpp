@@ -66,27 +66,32 @@ TEST_F(metacall_test, DefaultConstructor)
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
-	#if defined(WIN32) || defined(_WIN32)
+	/* Python */
+	#if defined(OPTION_BUILD_LOADERS_PY)
+	{
+		#if defined(WIN32) || defined(_WIN32)
 
-		DWORD length = MAX_PATH;
-		char cwd[MAX_PATH];
+			DWORD length = MAX_PATH;
+			char cwd[MAX_PATH];
 
-		ASSERT_NE((DWORD) 0, (DWORD) GetCurrentDirectory(length, cwd));
+			ASSERT_NE((DWORD) 0, (DWORD) GetCurrentDirectory(length, cwd));
 
-	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		defined(__MINGW32__) || defined(__MINGW64__) || \
-		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+		#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+			defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+			defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+			defined(__MINGW32__) || defined(__MINGW64__) || \
+			(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-		char cwd[PATH_MAX];
+			char cwd[PATH_MAX];
 
-		ASSERT_NE((char *) NULL, (char *) getcwd(cwd, sizeof(cwd)));
+			ASSERT_NE((char *) NULL, (char *) getcwd(cwd, sizeof(cwd)));
 
-	#endif
+		#endif
 
-	/* Lazy evaluation of execution paths (do not initialize Python runtime) */
-	ASSERT_EQ((int) 0, (int) metacall_execution_path("py", cwd));
+		/* Lazy evaluation of execution paths (do not initialize Python runtime) */
+		ASSERT_EQ((int) 0, (int) metacall_execution_path("py", cwd));
+	}
+	#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Native register */
 	{
