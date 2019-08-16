@@ -450,7 +450,7 @@ The main difference between fork-one and fork-all is that in fork-one only the t
 
 Because of fork-one model, forking a running run-time like NodeJS (which has a thread pool) implies that in the child process the thread pool will be almost dead except the thread which did the fork call. So NodeJS run-time cannot continue the execution anymore and the event-loop enters into a deadlock state.
 
-When a fork is done, the status of the execution is lost by the moment. **METACALL** is not able to preserve the state when a fork is done. Some run-times do not allow to preserve the internal state. For example, the bad design of NodeJS does not allow to manage the thread pool from outside, so it cannot be preserved after a fork.
+When a fork is done, the status of the execution is lost by the moment. **METACALL** is not able to preserve the state when a fork is done. Some run-times do not allow to preserve the internal state. For example, the bad design<sup>[[0]](https://github.com/nodejs/node/issues/23265)[[1]](https://github.com/nodejs/node/issues/23265#issuecomment-452690239)[[2]](https://github.com/nodejs/node/issues/23265#issuecomment-496873739)[[3]](https://github.com/nodejs/node/issues/23265#issuecomment-496878712)[[4]](https://github.com/nodejs/node/issues/23265#issuecomment-496910654)[[5]](https://github.com/nodejs/node/issues/23265#issuecomment-496918901)</sup> of NodeJS does not allow to manage the thread pool from outside, so it cannot be preserved after a fork.
 
 Because of these restrictions, **METACALL** cannot preserve the status of the run-times. In the future this model will be improved to maintain consistency and preserve the execution state of the run-times making **METACALL** more robust.
 
