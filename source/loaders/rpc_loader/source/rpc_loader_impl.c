@@ -123,16 +123,26 @@ function_interface function_rpc_singleton(void)
 
 loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	loader_impl_rpc rpc_impl;
-	rpc_impl = malloc(sizeof(struct loader_impl_rpc));
-	rpc_impl->curl = curl_easy_init()
-	if(!rpc_impl->curl){
-		log_write("metacall", LOG_LEVEL_ERROR, "Could Not create Curl object");
-		return NULL;
-	}
+	loader_impl_rpc rpc_impl = malloc(sizeof(struct loader_impl_rpc_type));
+
 	(void)impl;
 	(void)config;
-	(void)host;
+
+	if (rpc_impl == NULL)
+	{
+		return NULL;
+	}
+
+	log_copy(host->log);
+
+	rpc_impl->curl = curl_easy_init();
+
+	if (rpc_impl->curl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL object");
+
+		return NULL;
+	}
 
 	return rpc_impl;
 }
@@ -203,10 +213,9 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 int rpc_loader_impl_destroy(loader_impl impl)
 {
-	loader_impl_rpc rpc_impl = (loader_impl_rpc)impl;
-	curl_easy_cleanup(rpc_impl->curl)
+	loader_impl_rpc rpc_impl = loader_impl_get(impl);
 
-	(void)impl;
+	curl_easy_cleanup(rpc_impl->curl);
 
 	return 0;
 }
