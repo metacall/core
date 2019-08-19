@@ -16,7 +16,41 @@ namespace CSLoader
 {
     public class Loader
     {
+    [System.Diagnostics.Conditional("DEBUG_FILE")]
+    private static void Log(string text){
 
+    var message= $"{DateTime.Now.Ticks}: {text}\n";
+    System.IO.File.AppendAllText("log.txt", message);
+    }
+    
+    private static Assembly MyResolveEventHandler(object sender, ResolveEventArgs args)
+    {
+        Assembly asm = null;
+        Log("MyResolveEventHandler" + paths.Count.ToString());
+            foreach (var path in paths)
+            {
+                try
+                {
+                    var p =path + "\\" + args.Name + ".dll";
+                    Log(p);
+
+                    asm = Assembly.LoadFile(p);
+                    if (asm != null)
+                    {
+                        return asm;
+                    }else{
+                        Log("NULL");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Log("EX! " + ex.Message);
+                    
+                }
+            }
+
+            return asm;
+    }
         public static void Main(string[] args)
         {
 
@@ -26,7 +60,9 @@ namespace CSLoader
 
         static Loader()
         {
-            AssemblyLoadContext.Default.Resolving += Context_Resolving;
+            Log("start");
+            AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(MyResolveEventHandler);
+            AppDomain.CurrentDomain.TypeResolve+= new ResolveEventHandler(MyResolveEventHandler);
             Init();
         }
         
@@ -74,7 +110,6 @@ namespace CSLoader
         {
             return loader.Functions();
         }
-
         public static void GetFunctions(ref int count, IntPtr p)
         {
             var f = loader.Functions();
@@ -189,11 +224,14 @@ namespace CSLoader
 
             string assemblyName = Path.GetRandomFileName();
 
-            MetadataReference[] references = new MetadataReference[]
-            {
-                MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location)
-            };
+            MetadataReference[] references;
+            
+            var mainPath = Path.GetDirectoryName( typeof(object).GetTypeInfo().Assembly.Location) +"/";
+            var assemblyFiles = System.IO.Directory.GetFiles(mainPath,"*.dll");
+
+            assemblyFiles = assemblyFiles.Concat(System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory,"*.dll")).Distinct().ToArray();
+
+            references = assemblyFiles.Select(x=> MetadataReference.CreateFromFile(x)).ToArray();
 
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
@@ -213,15 +251,13 @@ namespace CSLoader
 
                     foreach (Diagnostic diagnostic in failures)
                     {
-                        Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                        Log($"{diagnostic.Id}: {diagnostic.GetMessage()}");
                     }
                 }
                 else
                 {
                     ms.Seek(0, SeekOrigin.Begin);
-
-                    AssemblyLoadContext context = AssemblyLoadContext.Default;
-                    assembly = context.LoadFromStream(ms);
+                       assembly = Assembly.Load(ms.ToArray());
                 }
             }
 
@@ -240,7 +276,6 @@ namespace CSLoader
 
         public static bool LoadFromAssembly(string assemblyFile)
         {
-            AssemblyLoadContext context = AssemblyLoadContext.Default;
             Assembly asm = null;
 
             string path = System.IO.Path.GetDirectoryName(assemblyFile);
@@ -252,7 +287,7 @@ namespace CSLoader
 
             try
             {
-                asm = context.LoadFromAssemblyPath(assemblyFile);
+                asm =Assembly.LoadFile(assemblyFile);
             }
             catch (Exception)
             {
@@ -261,7 +296,7 @@ namespace CSLoader
             {
                 try
                 {
-                    asm = context.LoadFromAssemblyName(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
+                    asm = Assembly.Load(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
                 }
                 catch (Exception)
                 {
@@ -281,30 +316,6 @@ namespace CSLoader
             }
 
             return false;
-        }
-
-        private static Assembly Context_Resolving(AssemblyLoadContext context, AssemblyName name)
-        {
-            Assembly asm = null;
-
-            foreach (var path in paths)
-            {
-                try
-                {
-                    asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
-
-                    if (asm != null)
-                    {
-                        return asm;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine(ex.Message);
-                }
-            }
-
-            return asm;
         }
 
         public static bool LoadFromAssemblyC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string assemblyFile)
@@ -377,7 +388,7 @@ namespace CSLoader
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.Message);
+                Log(ex.Message);
             }
 
             return null;
