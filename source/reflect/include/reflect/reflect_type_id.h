@@ -41,7 +41,8 @@ enum type_primitive_id
 	TYPE_ARRAY	= 9,
 	TYPE_MAP	= 10,
 	TYPE_PTR	= 11,
-	TYPE_NULL	= 12,
+	TYPE_FUTURE = 12,
+	TYPE_NULL	= 13,
 
 	TYPE_SIZE,
 	TYPE_INVALID

@@ -423,6 +423,59 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[])
 
 /**
 *  @brief
+*   Executes an asynchronous call to the function and returns a future (it does not block)
+*
+*  @param[in] name
+*    The name of the function to be called asynchronously
+*
+*  @param[in] args
+*    Array of pointers to the values to be passed to the function
+*
+*  @param[in] callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @callback wrapped in a future
+*/
+METACALL_API void * metacall_async(const char * name, void * args[], void * (*callback)(void *, void *), void * data);
+
+/**
+*  @brief
+*   Register a callback to be executed when the future is resolved (it does block)
+*
+*  @param[in] future
+*    Value representing the future
+*
+*  @param[in] callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain 
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @callback wrapped in a future
+*/
+METACALL_API void * metacall_await(void * future, void * (*callback)(void *, void *), void * data);
+
+/**
+*  @brief
 *    Provide information about all loaded objects
 *
 *  @param[out] size

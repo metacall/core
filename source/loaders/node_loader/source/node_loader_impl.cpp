@@ -83,6 +83,8 @@
 	Detour method is not valid because of NodeJS cannot be reinitialized, platform pointer already initialized in CHECK macro
 */
 
+/* TODO: Refactor all asserts into proper error handling system */
+
 typedef struct loader_impl_node_type
 {
 	napi_env env;
@@ -465,6 +467,32 @@ napi_value node_loader_impl_value(napi_env env, void * arg)
 	return v;
 }
 
+/*
+napi_value node_loader_impl_await(loader_impl_node node_impl, napi_value promise)
+{
+	napi_env env = node_impl->env;
+
+	napi_value then;
+
+	napi_status status = napi_get_named_property(env, promise, "then", &then);
+
+	assert(status == napi_ok);
+
+	*//* Call to function *//*
+	napi_value global, func_return;
+
+	status = napi_get_reference_value(env, node_impl->global_ref, &global);
+
+	assert(status == napi_ok);
+
+	status = napi_call_function(env, global, then, 2, argv, &func_return);
+
+	assert(status == napi_ok);
+
+	return func_return;
+}
+*/
+
 function_return node_loader_impl_return(napi_env env, napi_value v)
 {
 	value ret = NULL;
@@ -569,6 +597,10 @@ function_return node_loader_impl_return(napi_env env, napi_value v)
 			/* TODO */
 		}
 		else if (napi_is_dataview(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_promise(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
 		}

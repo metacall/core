@@ -39,29 +39,40 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char buffer[] =
-			"function sleep(ms) {\n"
-			"\treturn new Promise(resolve => setTimeout(resolve, ms));\n"
+			"async function sleep(ms) {\n"
+			"\tawait new Promise(resolve => setTimeout(resolve, ms));\n"
 			"}\n"
-			"function f() {\n"
-			"\t(new Promise(async (resolve) => {\n"
-			"\t\tconsole.log('Inside f promise');\n"
-			"\t\tawait sleep(100);\n"
-			"\t\treturn resolve(20);\n"
-			"\t})).then((x) => { process.stdout.write(`Result: ${x}`) || process.stdout.once('drain') })\n"
-			"\t.catch((x) => { process.stdout.write(`Error: ${x}`) || process.stdout.once('drain') });\n"
+			"async function f() {\n"
+			"\tawait sleep(100);\n"
 			"\treturn 10;\n"
 			"}\n"
 			"module.exports = { f };\n";
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
-		void * ret = metacall("f");
+		void * promise = metacall_async("f", metacall_null_args, [](void * v, void * data) {
+			EXPECT_NE((void *) NULL, (void *) v);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_EQ((void *) NULL, (void *) data);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 10.0);
+			EXPECT_EQ((double) metacall_value_to_double(v), (double) 10.0);
 
-		metacall_value_destroy(ret);
+			metacall_value_destroy(v);
+
+			return metacall_value_create_int(15);
+		}, NULL);
+
+		EXPECT_NE((void *) NULL, (void *) promise);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(promise), (enum metacall_value_id) METACALL_FUTURE);
+
+		promise = metacall_await(promise, NULL, NULL);
+
+		EXPECT_NE((void *) NULL, (void *) promise);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(promise), (enum metacall_value_id) METACALL_FUTURE);
+
+		metacall_value_destroy(promise);
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

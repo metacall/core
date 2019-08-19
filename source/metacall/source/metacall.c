@@ -921,6 +921,16 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
 }
 
+void * metacall_async(const char * name, void * args[], void * (*callback)(void *, void *), void * data)
+{
+	return NULL;
+}
+
+void * metacall_await(void * future, void * (*callback)(void *, void *), void * data)
+{
+	return NULL;
+}
+
 char * metacall_inspect(size_t * size, void * allocator)
 {
 	serial s;

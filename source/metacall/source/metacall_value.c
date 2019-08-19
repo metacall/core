@@ -61,6 +61,7 @@ static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
 	((int) TYPE_ARRAY == (int) METACALL_ARRAY) &&
 	((int) TYPE_MAP == (int) METACALL_MAP) &&
 	((int) TYPE_PTR == (int) METACALL_PTR) &&
+	((int) TYPE_FUTURE == (int) METACALL_FUTURE) &&
 	((int) TYPE_NULL == (int) METACALL_NULL) &&
 	((int) TYPE_SIZE == (int) METACALL_SIZE) &&
 	((int) TYPE_INVALID == (int) METACALL_INVALID),

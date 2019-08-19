@@ -23,7 +23,7 @@
 
 size_t value_type_id_size(type_id id)
 {
-	static const size_t type_id_size_list[TYPE_SIZE] =
+	static const size_t type_id_size_list[] =
 	{
 		sizeof(boolean),	/* TYPE_BOOL */
 		sizeof(char),		/* TYPE_CHAR */
@@ -36,9 +36,12 @@ size_t value_type_id_size(type_id id)
 		sizeof(void *),		/* TYPE_BUFFER */
 		sizeof(value *),	/* TYPE_ARRAY */
 		sizeof(value *),	/* TYPE_MAP */
+		sizeof(value *),	/* TYPE_FUTURE */
 		sizeof(void *),		/* TYPE_PTR */
 		(size_t)0			/* TYPE_NULL */
 	};
+
+	static_assert((int) sizeof(type_id_size_list) / sizeof(type_id_size_list[0]) == (int) TYPE_SIZE);
 
 	if (type_id_invalid(id) == 0)
 	{
