@@ -63,10 +63,16 @@ set_target_properties(${target}
 # Deployment
 #
 
+if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
+	set(DOTNET_INSTALL_DEPENDENCIES)
+else()
+	set(DOTNET_INSTALL_DEPENDENCIES ${CMAKE_BINARY_DIR}/System.Runtime.Loader.dll)
+endif()
+
 # Library
 install(FILES
 	${CMAKE_BINARY_DIR}/CSLoader.dll
-	${CMAKE_BINARY_DIR}/System.Runtime.Loader.dll
+	${DOTNET_INSTALL_DEPENDENCIES}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
