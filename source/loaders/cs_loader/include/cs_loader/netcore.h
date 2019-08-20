@@ -51,7 +51,7 @@ public:
 	corefunction_destroy_execution_result * core_destroy_execution_result;
 
 	const CHARSTRING *loader_dll = W("CSLoader.dll");
-	const CHARSTRING *class_name = W("CSLoader.Loader");
+	const CHARSTRING *class_name = W("CSLoader.MetacallEntryPoint");
 	const CHARSTRING *assembly_name = W("CSLoader");
 
 	const CHARSTRING *delegate_load_source_w = W("LoadSourceW");
