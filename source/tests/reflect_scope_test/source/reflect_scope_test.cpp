@@ -22,6 +22,7 @@
 
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
+#include <reflect/reflect_value_type.h>
 
 #include <serial/serial.h>
 

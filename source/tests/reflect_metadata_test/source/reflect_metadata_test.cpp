@@ -21,6 +21,7 @@
 #include <gmock/gmock.h>
 
 #include <reflect/reflect_signature.h>
+#include <reflect/reflect_value_type.h>
 
 #include <serial/serial.h>
 

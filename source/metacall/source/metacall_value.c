@@ -27,6 +27,26 @@
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type.h>
 
+/* -- Member Data -- */
+
+static const enum metacall_value_id value_id_map[] =
+{
+	METACALL_BOOL,
+	METACALL_CHAR,
+	METACALL_SHORT,
+	METACALL_INT,
+	METACALL_LONG,
+	METACALL_FLOAT,
+	METACALL_DOUBLE,
+	METACALL_STRING,
+	METACALL_BUFFER,
+	METACALL_ARRAY,
+	METACALL_MAP,
+	METACALL_PTR,
+	METACALL_FUTURE,
+	METACALL_NULL
+};
+
 /* -- Static Assertions -- */
 
 static_assert((int)TYPE_SIZE == (int)METACALL_SIZE,
@@ -50,6 +70,8 @@ static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
 	((int) TYPE_INVALID == (int) METACALL_INVALID),
 	"Internal reflect value types does not match with public metacall API value types");
 
+static_assert((int) sizeof(value_id_map) / sizeof(value_id_map[0]) == (int) METACALL_SIZE,
+	"Size of value id map does not match the type size");
 
 /* -- Methods -- */
 
@@ -139,27 +161,6 @@ enum metacall_value_id metacall_value_id(void * v)
 
 	if (id >= 0 && id < TYPE_SIZE)
 	{
-		static const enum metacall_value_id value_id_map[] =
-		{
-			METACALL_BOOL,
-			METACALL_CHAR,
-			METACALL_SHORT,
-			METACALL_INT,
-			METACALL_LONG,
-			METACALL_FLOAT,
-			METACALL_DOUBLE,
-			METACALL_STRING,
-			METACALL_BUFFER,
-			METACALL_ARRAY,
-			METACALL_MAP,
-			METACALL_PTR,
-			METACALL_FUTURE,
-			METACALL_NULL
-		};
-
-		static_assert((int) sizeof(value_id_map) / sizeof(value_id_map[0]) == (int) METACALL_SIZE,
-			"Size of value id map does not match the type size");
-
 		return value_id_map[id];
 	}
 

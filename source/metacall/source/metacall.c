@@ -26,11 +26,7 @@
 
 #include <loader/loader.h>
 
-#include <reflect/reflect_value_type.h>
-#include <reflect/reflect_context.h>
-#include <reflect/reflect_scope.h>
-#include <reflect/reflect_value_type_cast.h>
-#include <reflect/reflect_function.h>
+#include <reflect/reflect.h>
 
 #include <configuration/configuration.h>
 
@@ -923,11 +919,19 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 
 void * metacall_async(const char * name, void * args[])
 {
+	(void)name;
+	(void)args;
+
 	return NULL;
 }
 
 void * metacall_await(void * future, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
+	(void)future;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)data;
+
 	return NULL;
 }
 
