@@ -21,6 +21,8 @@
 
 NETCORE_INSTALL_DIR=/usr/share/dotnet
 
+# TODO: NetCore 2
+
 # Download and install NetCore
 if [ ! -f $NETCORE_INSTALL_DIR/dotnet ]; then
 	curl -s https://dot.net/v1/dotnet-install.sh &> dotnet-install.sh \

@@ -31,6 +31,7 @@ INSTALL_RUBY=0
 INSTALL_RAPIDJSON=0
 INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
+INSTALL_NETCORE2=0
 INSTALL_V8=0
 INSTALL_V8REPO=0
 INSTALL_V8REPO58=0
@@ -123,17 +124,7 @@ sub_netcore(){
 	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
 		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
 
-	# # Install .NET Core
-	# DOTNET_VERSION=1.1.10
-	# DOTNET_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Runtime/$DOTNET_VERSION/dotnet-debian.9-x64.$DOTNET_VERSION.tar.gz
-
-	# wget $DOTNET_DOWNLOAD_URL -O dotnet.tar.gz
-	# mkdir -p /usr/share/dotnet
-	# tar -zxf dotnet.tar.gz -C /usr/share/dotnet
-	# rm dotnet.tar.gz
-	# ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
-
-	# Install .NET Runtime
+	# Install .NET Sdk
 	DOTNET_SDK_VERSION=1.1.11
 	DOTNET_SDK_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Sdk/$DOTNET_SDK_VERSION/dotnet-dev-debian.9-x64.$DOTNET_SDK_VERSION.tar.gz
 
@@ -150,6 +141,26 @@ sub_netcore(){
 	cd ..
 	rm -rf warmup
 	rm -rf /tmp/NuGetScratch
+}
+
+# NetCore 2
+sub_netcore2(){
+	echo "configure netcore 2"
+	cd $ROOT_DIR
+
+	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
+		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 zlib1g
+
+	# Set up repository
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
+	mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+	wget -q https://packages.microsoft.com/config/debian/9/prod.list
+	mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+	chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+	chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+
+	# Install .NET Core Sdk
+	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
 }
 
 # V8 Repository
@@ -297,7 +308,16 @@ sub_metacall(){
 	cd $ROOT_DIR
 	git clone --recursive https://github.com/metacall/core.git
 	mkdir core/build && cd core/build
-	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/
+
+	if [ $INSTALL_NETCORE = 1 ]; then
+		NETCORE_VERSION=1.1.10
+	elif [ INSTALL_NETCORE2 = 1 ]; then
+		NETCORE_VERSION=2.2.5
+	else
+		NETCORE_VERSION=0
+	fi
+
+	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/$NETCORE_VERSION/
 	make
 	make test && echo "test ok!"
 
@@ -345,6 +365,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
+	fi
+	if [ $INSTALL_NETCORE2 = 1 ]; then
+		sub_netcore2
 	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
@@ -404,6 +427,10 @@ sub_options(){
 		if [ "$var" = 'netcore' ]; then
 			echo "netcore selected"
 			INSTALL_NETCORE=1
+		fi
+		if [ "$var" = 'netcore2' ]; then
+			echo "netcore 2 selected"
+			INSTALL_NETCORE2=1
 		fi
 		if [ "$var" = 'rapidjson' ]; then
 			echo "rapidjson selected"
@@ -479,6 +506,7 @@ sub_help() {
 	echo "	python"
 	echo "	ruby"
 	echo "	netcore"
+	echo "	netcore2"
 	echo "	rapidjson"
 	echo "	funchook"
 	echo "	v8"
