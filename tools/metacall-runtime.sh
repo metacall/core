@@ -27,6 +27,7 @@ INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
 INSTALL_NETCORE=0
+INSTALL_NETCORE2=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
 INSTALL_FILE=0
@@ -45,7 +46,7 @@ sub_apt_install_hold(){
 sub_apt(){
 	echo "configure apt"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update && apt-get -y install --no-install-recommends wget
+	$SUDO_CMD apt-get update && apt-get -y install --no-install-recommends wget gpg
 }
 
 # Python
@@ -72,7 +73,7 @@ sub_netcore(){
 	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
 		liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g ca-certificates
 
-	# Install .NET Core
+	# Install .NET Core Runtime
 	DOTNET_VERSION=1.1.10
 	DOTNET_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Runtime/$DOTNET_VERSION/dotnet-debian.9-x64.$DOTNET_VERSION.tar.gz
 
@@ -81,6 +82,25 @@ sub_netcore(){
 	tar -zxf dotnet.tar.gz -C /usr/share/dotnet
 	rm dotnet.tar.gz
 	ln -s /usr/share/dotnet/dotnet /usr/bin/dotnet
+}
+
+# NetCore 2
+sub_netcore2(){
+	echo "configure netcore 2"
+	cd $ROOT_DIR
+	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
+		liblttng-ust0 libssl1.0.2 libstdc++6 zlib1g ca-certificates
+
+	# Set up repository
+	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
+	mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+	wget -q https://packages.microsoft.com/config/debian/9/prod.list
+	mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+	chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+	chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+
+	# Install .NET Core Runtime
+	sub_apt_install_hold dotnet-runtime-2.2
 }
 
 # V8
@@ -126,6 +146,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NETCORE = 1 ]; then
 		sub_netcore
+	fi
+	if [ $INSTALL_NETCORE2 = 1 ]; then
+		sub_netcore2
 	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
@@ -179,6 +202,10 @@ sub_options(){
 			echo "netcore selected"
 			INSTALL_NETCORE=1
 		fi
+		if [ "$var" = 'netcore2' ]; then
+			echo "netcore 2 selected"
+			INSTALL_NETCORE2=1
+		fi
 		if [ "$var" = 'v8' ]; then
 			echo "v8 selected"
 			INSTALL_V8=1
@@ -211,6 +238,7 @@ sub_help() {
 	echo "	python"
 	echo "	ruby"
 	echo "	netcore"
+	echo "	netcore2"
 	echo "	v8"
 	echo "	nodejs"
 	echo "	file"

@@ -16,6 +16,76 @@ namespace CSLoader
 {
     public class Loader
     {
+        [System.Diagnostics.Conditional("DEBUG_FILE")]
+        private static void Log(string text)
+        {
+            // TODO: Expose logs from host and use them here
+            var message= $"{DateTime.Now.Ticks}: {text}\n";
+            System.IO.File.AppendAllText("cs_loader_log.txt", message);
+        }
+
+
+        #if NETCOREAPP1_0 || NETCOREAPP1_1
+            private static Assembly Context_Resolving(AssemblyLoadContext context, AssemblyName name)
+            {
+                Assembly asm = null;
+
+                foreach (var path in paths)
+                {
+                    try
+                    {
+                        asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
+
+                        if (asm != null)
+                        {
+                            return asm;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.Error.WriteLine(ex.Message);
+                    }
+                }
+
+                return asm;
+            }
+        #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+            private static Assembly AssemblyResolveEventHandler(object sender, ResolveEventArgs args)
+            {
+                Assembly asm = null;
+
+                Log("AssemblyResolveEventHandler " + paths.Count.ToString());
+
+                foreach (var path in paths)
+                {
+                    try
+                    {
+                        var p = path + "\\" + args.Name + ".dll";
+
+                        Log(p);
+
+                        asm = Assembly.LoadFile(p);
+
+                        if (asm != null)
+                        {
+                            return asm;
+                        }
+                        else
+                        {
+                            // TODO: Write proper error message handling
+                            Console.Error.WriteLine("Invalid Assembly.LoadFile: " + p);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // TODO: Write proper error message handling
+                        Console.Error.WriteLine("Exception when loading the Assembly {0}: {1}", args.Name, ex.Message);
+                    }
+                }
+
+                return asm;
+            }
+        #endif
 
         public static void Main(string[] args)
         {
@@ -26,7 +96,15 @@ namespace CSLoader
 
         static Loader()
         {
-            AssemblyLoadContext.Default.Resolving += Context_Resolving;
+            Log("CSLoader static initialization");
+
+            #if NETCOREAPP1_0 || NETCOREAPP1_1
+                AssemblyLoadContext.Default.Resolving += Context_Resolving;
+            #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+                AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
+                AppDomain.CurrentDomain.TypeResolve+= new ResolveEventHandler(AssemblyResolveEventHandler);
+            #endif
+
             Init();
         }
         
@@ -74,7 +152,6 @@ namespace CSLoader
         {
             return loader.Functions();
         }
-
         public static void GetFunctions(ref int count, IntPtr p)
         {
             var f = loader.Functions();
@@ -189,11 +266,22 @@ namespace CSLoader
 
             string assemblyName = Path.GetRandomFileName();
 
-            MetadataReference[] references = new MetadataReference[]
-            {
-                MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
-                MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location)
-            };
+            #if NETCOREAPP1_0 || NETCOREAPP1_1
+                MetadataReference[] references = new MetadataReference[]
+                {
+                    MetadataReference.CreateFromFile(typeof(object).GetTypeInfo().Assembly.Location),
+                    MetadataReference.CreateFromFile(typeof(Enumerable).GetTypeInfo().Assembly.Location)
+                };
+            #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+                MetadataReference[] references;
+
+                var mainPath = Path.GetDirectoryName( typeof(object).GetTypeInfo().Assembly.Location) + "/";
+                var assemblyFiles = System.IO.Directory.GetFiles(mainPath, "*.dll");
+
+                assemblyFiles = assemblyFiles.Concat(System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll")).Distinct().ToArray();
+
+                references = assemblyFiles.Select(x => MetadataReference.CreateFromFile(x)).ToArray();
+            #endif
 
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
@@ -213,6 +301,7 @@ namespace CSLoader
 
                     foreach (Diagnostic diagnostic in failures)
                     {
+                        // TODO: Write proper error message handling
                         Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
                     }
                 }
@@ -220,8 +309,12 @@ namespace CSLoader
                 {
                     ms.Seek(0, SeekOrigin.Begin);
 
-                    AssemblyLoadContext context = AssemblyLoadContext.Default;
-                    assembly = context.LoadFromStream(ms);
+                    #if NETCOREAPP1_0 || NETCOREAPP1_1
+                        AssemblyLoadContext context = AssemblyLoadContext.Default;
+                        assembly = context.LoadFromStream(ms);
+                    #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+                        assembly = Assembly.Load(ms.ToArray());
+                    #endif
                 }
             }
 
@@ -240,7 +333,9 @@ namespace CSLoader
 
         public static bool LoadFromAssembly(string assemblyFile)
         {
-            AssemblyLoadContext context = AssemblyLoadContext.Default;
+            #if NETCOREAPP1_0 || NETCOREAPP1_1
+                AssemblyLoadContext context = AssemblyLoadContext.Default;
+            #endif
             Assembly asm = null;
 
             string path = System.IO.Path.GetDirectoryName(assemblyFile);
@@ -252,7 +347,11 @@ namespace CSLoader
 
             try
             {
-                asm = context.LoadFromAssemblyPath(assemblyFile);
+                #if NETCOREAPP1_0 || NETCOREAPP1_1
+                    asm = context.LoadFromAssemblyPath(assemblyFile);
+                #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+                    asm = Assembly.LoadFile(assemblyFile);
+                #endif
             }
             catch (Exception)
             {
@@ -261,7 +360,11 @@ namespace CSLoader
             {
                 try
                 {
-                    asm = context.LoadFromAssemblyName(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
+                    #if NETCOREAPP1_0 || NETCOREAPP1_1
+                        asm = context.LoadFromAssemblyName(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
+                    #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+                        asm = Assembly.Load(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
+                    #endif
                 }
                 catch (Exception)
                 {
@@ -281,30 +384,6 @@ namespace CSLoader
             }
 
             return false;
-        }
-
-        private static Assembly Context_Resolving(AssemblyLoadContext context, AssemblyName name)
-        {
-            Assembly asm = null;
-
-            foreach (var path in paths)
-            {
-                try
-                {
-                    asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
-
-                    if (asm != null)
-                    {
-                        return asm;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.Error.WriteLine(ex.Message);
-                }
-            }
-
-            return asm;
         }
 
         public static bool LoadFromAssemblyC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)] string assemblyFile)
@@ -377,7 +456,8 @@ namespace CSLoader
             }
             catch (Exception ex)
             {
-                Console.Error.WriteLine(ex.Message);
+                // TODO: Write proper error message handling
+                Console.Error.WriteLine("Error executing function {0}: {1}", function, ex.Message);
             }
 
             return null;
