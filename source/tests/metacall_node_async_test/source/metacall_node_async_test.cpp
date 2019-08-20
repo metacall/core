@@ -50,29 +50,19 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
-		void * promise = metacall_async("f", metacall_null_args, [](void * v, void * data) {
-			EXPECT_NE((void *) NULL, (void *) v);
+		void * future = metacall_async("f", metacall_null_args);
 
-			EXPECT_EQ((void *) NULL, (void *) data);
+		EXPECT_NE((void *) NULL, (void *) future);
 
-			EXPECT_EQ((double) metacall_value_to_double(v), (double) 10.0);
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
-			metacall_value_destroy(v);
+		future = metacall_await(future, NULL, NULL, NULL);
 
-			return metacall_value_create_int(15);
-		}, NULL);
+		EXPECT_NE((void *) NULL, (void *) future);
 
-		EXPECT_NE((void *) NULL, (void *) promise);
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
-		EXPECT_EQ((enum metacall_value_id) metacall_value_id(promise), (enum metacall_value_id) METACALL_FUTURE);
-
-		promise = metacall_await(promise, NULL, NULL);
-
-		EXPECT_NE((void *) NULL, (void *) promise);
-
-		EXPECT_EQ((enum metacall_value_id) metacall_value_id(promise), (enum metacall_value_id) METACALL_FUTURE);
-
-		metacall_value_destroy(promise);
+		metacall_value_destroy(future);
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

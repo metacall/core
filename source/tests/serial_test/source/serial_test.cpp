@@ -282,7 +282,7 @@ TEST_F(serial_test, DefaultConstructor)
 		static const size_t hello_world_length = sizeof(hello_world) - 1;
 		static const size_t good_bye_length = sizeof(good_bye) - 1;
 
-		static const char * value_names[TYPE_SIZE] =
+		static const char * value_names[] =
 		{
 			"true",
 			"A",
@@ -294,7 +294,7 @@ TEST_F(serial_test, DefaultConstructor)
 			hello_world,
 			"05060708",
 			"[244,6.800000,hello world]",
-			NULL, /* TODO */
+			NULL, /* TODO: Map */
 			#if defined(_WIN32) && defined(_MSC_VER)
 				#if defined(_WIN64)
 					"0x00000000000A7EF2",
@@ -306,8 +306,12 @@ TEST_F(serial_test, DefaultConstructor)
 			#else
 				"<unknown>",
 			#endif
+			NULL, /* TODO: Future */
 			"(null)"
 		};
+
+		static_assert((int) sizeof(value_names) / sizeof(value_names[0]) == (int) TYPE_SIZE,
+			"Value names size does not match type size.");
 
 		static const char char_array[] =
 		{
@@ -366,8 +370,8 @@ TEST_F(serial_test, DefaultConstructor)
 
 		for (size_t iterator = 0; iterator < value_names_size; ++iterator)
 		{
-			/* TODO: Remove this workaround when type map stringification is implemented */
-			if (value_type_id(value_array[iterator]) != TYPE_MAP)
+			/* TODO: Remove this workaround when type map and future stringification is implemented */
+			if (value_type_id(value_array[iterator]) != TYPE_MAP || value_type_id(value_array[iterator]) != TYPE_FUTURE)
 			{
 				size_t size;
 
