@@ -82,6 +82,7 @@ add_definitions(
 	-DSERIAL_LIBRARY_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED}\"
 	-DLOADER_LIBRARY_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED}\"
 	-DDETOUR_LIBRARY_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED}\"
+	-DPORT_LIBRARY_INSTALL_PATH=\"${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED}\"
 )
 
 #
@@ -96,6 +97,7 @@ add_subdirectory(environment)
 add_subdirectory(format)
 add_subdirectory(log)
 add_subdirectory(memory)
+add_subdirectory(portability)
 add_subdirectory(adt)
 add_subdirectory(filesystem)
 add_subdirectory(dynlink)

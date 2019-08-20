@@ -14,6 +14,7 @@ set(DETOUR_MODULE_NAMES
 	format
 	log
 	memory
+	portability
 	adt
 	dynlink
 	detour

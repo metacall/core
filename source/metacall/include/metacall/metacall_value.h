@@ -210,7 +210,7 @@ METACALL_API void * metacall_value_create_map(const void * tuples[], size_t size
 
 /**
 *  @brief
-*    Create a value from pointer @p
+*    Create a value from pointer @ptr
 *
 *  @param[in] ptr
 *    Pointer to constant data will be copied into value
@@ -219,6 +219,18 @@ METACALL_API void * metacall_value_create_map(const void * tuples[], size_t size
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void * metacall_value_create_ptr(const void * ptr);
+
+/**
+*  @brief
+*    Create a value from future @f
+*
+*  @param[in] f
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_future(void * f);
 
 /**
 *  @brief
@@ -408,6 +420,18 @@ METACALL_API void ** metacall_value_to_map(void * v);
 *    Value converted to pointer
 */
 METACALL_API void * metacall_value_to_ptr(void * v);
+
+/**
+*  @brief
+*    Convert value @v to future
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to future
+*/
+METACALL_API void * metacall_value_to_future(void * v);
 
 /**
 *  @brief
@@ -615,6 +639,21 @@ METACALL_API void * metacall_value_from_ptr(void * v, const void * ptr);
 
 /**
 *  @brief
+*    Assign future @f to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] f
+*    Future to be assigned to value @v
+*
+*  @return
+*    Value with future @future assigned to it
+*/
+METACALL_API void * metacall_value_from_future(void * v, void * f);
+
+/**
+*  @brief
 *    Assign null to value @v
 *
 *  @param[in] v
@@ -768,6 +807,18 @@ METACALL_API void * metacall_value_cast_map(void ** v);
 *    Value converted to ptr
 */
 METACALL_API void * metacall_value_cast_ptr(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to future
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to future
+*/
+METACALL_API void * metacall_value_cast_future(void ** v);
 
 /**
 *  @brief

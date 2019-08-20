@@ -28,6 +28,8 @@
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type_cast.h>
 #include <reflect/reflect_type_id.h>
+#include <reflect/reflect_future.h>
+#include <reflect/reflect_function.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -247,7 +249,7 @@ REFLECT_API value value_create_map(const value * tuples, size_t size);
 
 /**
 *  @brief
-*    Create a value from pointer @p
+*    Create a value from pointer @ptr
 *
 *  @param[in] ptr
 *    Pointer to constant data will be copied into value
@@ -256,6 +258,18 @@ REFLECT_API value value_create_map(const value * tuples, size_t size);
 *    Pointer to value if success, null otherwhise
 */
 REFLECT_API value value_create_ptr(const void * ptr);
+
+/**
+*  @brief
+*    Create a value from future @f
+*
+*  @param[in] f
+*    Pointer to future will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_future(future f);
 
 /**
 *  @brief
@@ -409,6 +423,18 @@ REFLECT_API value * value_to_map(value v);
 *    Value converted to pointer
 */
 REFLECT_API void * value_to_ptr(value v);
+
+/**
+*  @brief
+*    Convert value @v to future
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to future
+*/
+REFLECT_API void * value_to_future(value v);
 
 /**
 *  @brief
@@ -613,6 +639,21 @@ REFLECT_API value value_from_map(value v, const value * tuples, size_t size);
 *    Value with pointer @ptr assigned to it
 */
 REFLECT_API value value_from_ptr(value v, const void * ptr);
+
+/**
+*  @brief
+*    Assign future reference @f to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] f
+*    Future to be assigned to value @v
+*
+*  @return
+*    Value with future @future assigned to it
+*/
+REFLECT_API value value_from_future(value v, future f);
 
 /**
 *  @brief

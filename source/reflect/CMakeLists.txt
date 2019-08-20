@@ -45,6 +45,7 @@ set(headers
 	${include_path}/reflect_type_id.h
 	${include_path}/reflect_signature.h
 	${include_path}/reflect_function.h
+	${include_path}/reflect_future.h
 	${include_path}/reflect_scope.h
 	${include_path}/reflect_context.h
 	${include_path}/reflect_value.h
@@ -61,6 +62,7 @@ set(sources
 	${source_path}/reflect_type_id.c
 	${source_path}/reflect_signature.c
 	${source_path}/reflect_function.c
+	${source_path}/reflect_future.c
 	${source_path}/reflect_scope.c
 	${source_path}/reflect_context.c
 	${source_path}/reflect_value.c
@@ -164,6 +166,8 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::memory
+	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::adt
 
 	PUBLIC

@@ -22,32 +22,15 @@
 
 #include <metacall/metacall_value.h>
 
+#include <portability/portability_assert.h>
+
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type.h>
 
-#include <preprocessor/preprocessor_concatenation.h>
-
-#include <assert.h>
-
-#ifndef static_assert
-#	define static_assert_impl_expr(predicate, expr) \
-		typedef char expr[2 * !!(predicate) - 1]
-
-#	if defined(__COUNTER__)
-#		define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __COUNTER__))
-#	elif defined(__LINE__)
-		/* WARNING: It can collide if it's used in header files */
-#		define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __LINE__))
-#	else
-#		define static_assert_impl_line(macro, predicate, expr) macro((predicate), expr)
-#	endif
-
-#	define static_assert_impl(macro, predicate) static_assert_impl_line(macro, predicate, static_assert_)
-
-#	define static_assert(predicate, message) static_assert_impl(static_assert_impl_expr, predicate)
-#endif
-
 /* -- Static Assertions -- */
+
+static_assert((int)TYPE_SIZE == (int)METACALL_SIZE,
+	"Type size does not match MetaCall type size");
 
 static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
 	((int) TYPE_CHAR == (int) METACALL_CHAR) &&
@@ -130,6 +113,11 @@ void * metacall_value_create_ptr(const void * ptr)
 	return value_create_ptr(ptr);
 }
 
+void * metacall_value_create_future(void * f)
+{
+	return value_create_future(f);
+}
+
 void * metacall_value_create_null()
 {
 	return value_create_null();
@@ -151,7 +139,7 @@ enum metacall_value_id metacall_value_id(void * v)
 
 	if (id >= 0 && id < TYPE_SIZE)
 	{
-		static enum metacall_value_id value_id_map[] =
+		static const enum metacall_value_id value_id_map[] =
 		{
 			METACALL_BOOL,
 			METACALL_CHAR,
@@ -165,11 +153,12 @@ enum metacall_value_id metacall_value_id(void * v)
 			METACALL_ARRAY,
 			METACALL_MAP,
 			METACALL_PTR,
-			METACALL_NULL,
-
-			METACALL_SIZE,
-			METACALL_INVALID
+			METACALL_FUTURE,
+			METACALL_NULL
 		};
+
+		static_assert((int) sizeof(value_id_map) / sizeof(value_id_map[0]) == (int) METACALL_SIZE,
+			"Size of value id map does not match the type size");
 
 		return value_id_map[id];
 	}
@@ -261,6 +250,13 @@ void * metacall_value_to_ptr(void * v)
 	return value_to_ptr(v);
 }
 
+void * metacall_value_to_future(void * v)
+{
+	assert(value_type_id(v) == TYPE_FUTURE);
+
+	return value_to_future(v);
+}
+
 void * metacall_value_to_null(void * v)
 {
 	assert(value_type_id(v) == TYPE_NULL);
@@ -326,6 +322,11 @@ void * metacall_value_from_map(void * v, const void * tuples[], size_t size)
 void * metacall_value_from_ptr(void * v, const void * ptr)
 {
 	return value_from_ptr(v, ptr);
+}
+
+void * metacall_value_from_future(void * v, void * f)
+{
+	return value_from_future(v, f);
 }
 
 void * metacall_value_from_null(void * v)
@@ -511,6 +512,21 @@ void * metacall_value_cast_ptr(void ** v)
 	}
 
 	return value_to_ptr(*v);
+}
+
+void * metacall_value_cast_future(void ** v)
+{
+	if (value_type_id(*v) != TYPE_FUTURE)
+	{
+		value v_cast = value_type_cast(*v, TYPE_FUTURE);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_future(*v);
 }
 
 void * metacall_value_cast_null(void ** v)

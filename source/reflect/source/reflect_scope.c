@@ -19,7 +19,7 @@
  */
 
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_function.h>
+#include <reflect/reflect_value_type.h>
 
 #include <adt/adt_set.h>
 #include <adt/adt_vector.h>
@@ -36,7 +36,7 @@ typedef struct scope_metadata_array_cb_iterator_type * scope_metadata_array_cb_i
 struct scope_type
 {
 	char * name;			/**< Scope name */
-	set objects;				/**< Map of scope objects indexed by name string */
+	set objects;			/**< Map of scope objects indexed by name string */
 	vector call_stack;		/**< Scope call stack */
 
 };

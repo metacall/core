@@ -195,6 +195,11 @@ value value_create_ptr(const void * ptr)
 	return value_type_create(&ptr, sizeof(const void *), TYPE_PTR);
 }
 
+value value_create_future(future f)
+{
+	return value_type_create(&f, sizeof(const void *), TYPE_FUTURE);
+}
+
 value value_create_null()
 {
 	return value_type_create(NULL, 0, TYPE_NULL);
@@ -288,6 +293,13 @@ void * value_to_ptr(value v)
 	uintptr_t * uint_ptr = value_data(v);
 
 	return (void *)(*uint_ptr);
+}
+
+void * value_to_future(value v)
+{
+	uintptr_t * uint_future = value_data(v);
+
+	return (void *)(*uint_future);
 }
 
 void * value_to_null(value v)
@@ -393,6 +405,11 @@ value value_from_map(value v, const value * tuples, size_t size)
 value value_from_ptr(value v, const void * ptr)
 {
 	return value_from(v, &ptr, sizeof(const void *));
+}
+
+value value_from_future(value v, future f)
+{
+	return value_from(v, &f, sizeof(const void *));
 }
 
 value value_from_null(value v)

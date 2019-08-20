@@ -11,6 +11,7 @@ set(LOADER_MODULE_NAMES
 	format
 	log
 	memory
+	portability
 	adt
 	filesystem
 	reflect

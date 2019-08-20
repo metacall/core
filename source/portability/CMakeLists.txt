@@ -9,7 +9,7 @@
 #
 
 # Target name
-set(target loader)
+set(target portability)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -19,9 +19,6 @@ string(TOUPPER ${target} target_upper)
 set(feature_file "include/${target}/${target}_features.h")
 set(export_file  "include/${target}/${target}_api.h")
 set(export_macro "${target_upper}_API")
-
-# Define project options
-option(${target_upper}_LAZY "Defines a lazy initialization and destruction of the loader library" ON)
 
 #
 # Compiler warnings
@@ -43,22 +40,12 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/loader.h
-	${include_path}/loader_host.h
-	${include_path}/loader_handle.h
-	${include_path}/loader_impl_data.h
-	${include_path}/loader_impl_interface.h
-	${include_path}/loader_impl.h
-	${include_path}/loader_env.h
-	${include_path}/loader_naming.h
-	${include_path}/loader_path.h
+	${include_path}/portability.h
+	${include_path}/portability_assert.h
 )
 
 set(sources
-	${source_path}/loader.c
-	${source_path}/loader_impl.c
-	${source_path}/loader_env.c
-	${source_path}/loader_path.c
+	${source_path}/portability.c
 )
 
 # Group source files
@@ -121,8 +108,8 @@ generate_export_header(${target}
 set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}")
-
+	FOLDER "${IDE_FOLDER}"
+)
 
 #
 # Include directories
@@ -151,16 +138,6 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::portability
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::serial
-	${META_PROJECT_NAME}::configuration
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -174,7 +151,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	$<$<BOOL:${target_upper}_LAZY>:${target_upper}_LAZY>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

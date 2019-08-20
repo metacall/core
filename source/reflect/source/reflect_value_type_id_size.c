@@ -21,6 +21,8 @@
 #include <reflect/reflect_value_type.h>
 #include <reflect/reflect_value_type_id_size.h>
 
+#include <portability/portability_assert.h>
+
 size_t value_type_id_size(type_id id)
 {
 	static const size_t type_id_size_list[] =
@@ -36,12 +38,13 @@ size_t value_type_id_size(type_id id)
 		sizeof(void *),		/* TYPE_BUFFER */
 		sizeof(value *),	/* TYPE_ARRAY */
 		sizeof(value *),	/* TYPE_MAP */
-		sizeof(value *),	/* TYPE_FUTURE */
 		sizeof(void *),		/* TYPE_PTR */
+		sizeof(future),		/* TYPE_FUTURE */
 		(size_t)0			/* TYPE_NULL */
 	};
 
-	static_assert((int) sizeof(type_id_size_list) / sizeof(type_id_size_list[0]) == (int) TYPE_SIZE);
+	static_assert((int) sizeof(type_id_size_list) / sizeof(type_id_size_list[0]) == (int) TYPE_SIZE,
+		"Size of type_id size list does not match the type size.");
 
 	if (type_id_invalid(id) == 0)
 	{

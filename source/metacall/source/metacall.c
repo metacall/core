@@ -921,12 +921,12 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
 }
 
-void * metacall_async(const char * name, void * args[], void * (*callback)(void *, void *), void * data)
+void * metacall_async(const char * name, void * args[])
 {
 	return NULL;
 }
 
-void * metacall_await(void * future, void * (*callback)(void *, void *), void * data)
+void * metacall_await(void * future, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
 	return NULL;
 }

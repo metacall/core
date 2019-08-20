@@ -15,6 +15,7 @@ set(SERIAL_MODULE_NAMES
 	format
 	log
 	memory
+	portability
 	adt
 	reflect
 	dynlink
