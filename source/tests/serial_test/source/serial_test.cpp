@@ -347,7 +347,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 		static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
 
-		value value_array[TYPE_SIZE] =
+		value value_array[] =
 		{
 			value_create_bool(1),
 			value_create_char('A'),
@@ -361,8 +361,12 @@ TEST_F(serial_test, DefaultConstructor)
 			value_create_array(value_list, value_list_size),
 			value_create_map(value_map, value_map_size),
 			value_create_ptr((void *)0x000A7EF2),
-			value_create_null()
+			value_create_null(),
+			value_create_future(NULL) /* TODO: Implement future properly */
 		};
+
+		static_assert((int) sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,
+			"Value array size does not match type size.");
 
 		const size_t value_names_size = sizeof(value_names) / sizeof(value_names[0]);
 
@@ -371,7 +375,7 @@ TEST_F(serial_test, DefaultConstructor)
 		for (size_t iterator = 0; iterator < value_names_size; ++iterator)
 		{
 			/* TODO: Remove this workaround when type map and future stringification is implemented */
-			if (value_type_id(value_array[iterator]) != TYPE_MAP || value_type_id(value_array[iterator]) != TYPE_FUTURE)
+			if (value_names[iterator] != NULL)
 			{
 				size_t size;
 
