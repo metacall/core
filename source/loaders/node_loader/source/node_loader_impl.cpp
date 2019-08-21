@@ -45,7 +45,6 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <cassert> /* TODO: Delete this */
 
 #include <new>
 #include <string>
@@ -709,9 +708,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	*/
 	else if (id == TYPE_FUTURE)
 	{
-		/* TODO: Promise */
-		int TODO_IMPLEMENT_FUTURE_TYPE = 0;
-		assert(TODO_IMPLEMENT_FUTURE_TYPE != 0);
+		/* TODO: Implement promise properly for await */
 	}
 	else
 	{

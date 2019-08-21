@@ -39,9 +39,8 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char buffer[] =
-			"async function f(x) {\n"
-			"\tawait undefined;\n"
-			"\treturn x;\n"
+			"function f(x) {\n"
+			"\treturn new Promise(r => r(x));\n"
 			"}\n"
 			"module.exports = { f };\n";
 
