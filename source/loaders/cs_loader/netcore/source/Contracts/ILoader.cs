@@ -15,19 +15,16 @@ namespace CSLoader.Contracts
 
     public interface ILoader
     {
-           ReflectFunction[] Functions();
+        ReflectFunction[] Functions();
 
-         bool LoadFromSourceFunctions(string[] source);
-         void LoadFunctions(Assembly assembly);
-         bool LoadFromAssembly(string assemblyFile);
+        bool LoadFromSourceFunctions(string[] source);
+        void LoadFunctions(Assembly assembly);
+        bool LoadFromAssembly(string assemblyFile);
 
-         unsafe ExecutionResult* Execute(string function, Parameters[] parameters);
-        unsafe   ExecutionResult* Execute(string function);
+        unsafe ExecutionResult* Execute(string function, Parameters[] parameters);
+        unsafe ExecutionResult* Execute(string function);
 
-         unsafe ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type);
-
-         unsafe ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type, object value);
-
+        unsafe ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type);
+        unsafe ExecutionResult* CreateExecutionResult(bool failed, type_primitive_id type, object value);
     }
-
 }

@@ -43,7 +43,9 @@ namespace CSLoader.Providers
 
         protected override Assembly MakeAssembly(MemoryStream stream)
         {
-            return AssemblyLoadContext.Default.LoadFromStream(stream);
+            AssemblyLoadContext context = AssemblyLoadContext.Default;
+
+            return context.LoadFromStream(stream);
         }
 
         protected override Assembly Load(AssemblyName assemblyName)

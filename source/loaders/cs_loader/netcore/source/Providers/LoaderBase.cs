@@ -34,6 +34,7 @@ namespace CSLoader.Providers
         }
 
         protected abstract Assembly MakeAssembly(MemoryStream stream);
+
         public bool LoadFromSourceFunctions(string[] source)
         {
             Assembly assembly = null;
