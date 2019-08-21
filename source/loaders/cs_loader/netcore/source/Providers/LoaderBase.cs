@@ -69,8 +69,7 @@ namespace CSLoader.Providers
 
                     foreach (Diagnostic diagnostic in failures)
                     {
-                        // TODO: Write proper error message handling
-                        Console.Error.WriteLine("{0}: {1}", diagnostic.Id, diagnostic.GetMessage());
+                        this.log.Error(diagnostic.GetMessage());
                     }
 
                     return false;
@@ -80,15 +79,9 @@ namespace CSLoader.Providers
                     ms.Seek(0, SeekOrigin.Begin);
 
                     assembly = this.MakeAssembly(ms);
-                    /*
-                    #if NETCOREAPP1_0 || NETCOREAPP1_1
-                                            AssemblyLoadContext context = AssemblyLoadContext.Default;
-                                            assembly = context.LoadFromStream(ms);
-                    #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
-                                        assembly = Assembly.Load(ms.ToArray());
-                    #endif
-                    */
+
                     this.LoadFunctions(assembly);
+
                     return true;
                 }
             }
@@ -126,13 +119,12 @@ namespace CSLoader.Providers
 
             try
             {
-
                 asm = this.LoadFile(assemblyFile);
-
             }
             catch (Exception ex)
             {
-                this.log.Error(ex.Message,ex);
+                this.log.Error(ex.Message, ex);
+
                 try
                 {
 
@@ -140,7 +132,7 @@ namespace CSLoader.Providers
                 }
                 catch (Exception exName)
                 {
-                    this.log.Error(exName.Message,exName);
+                    this.log.Error(exName.Message, exName);
                 }
             }
 
@@ -194,8 +186,7 @@ namespace CSLoader.Providers
             }
             catch (Exception ex)
             {
-                // TODO: Write proper error message handling
-                Console.Error.WriteLine("Error executing function {0}: {1}", function, ex.Message);
+                this.log.Error("Error executing function " + function, ex);
             }
 
             return null;
