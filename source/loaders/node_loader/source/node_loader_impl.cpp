@@ -51,6 +51,9 @@
 #include <fstream>
 #include <streambuf>
 
+#include <node.h>
+#include <node_api.h>
+
 #include <libplatform/libplatform.h>
 #include <v8.h> /* version: 6.2.414.50 */
 
@@ -59,9 +62,6 @@
 #endif /* ENALBLE_DEBUGGER_SUPPORT */
 
 #include <uv.h>
-
-#include <node.h>
-#include <node_api.h>
 
 /* TODO:
 	To solve the deadlock we have to make MetaCall fork tolerant.
@@ -82,6 +82,26 @@
 
 	Detour method is not valid because of NodeJS cannot be reinitialized, platform pointer already initialized in CHECK macro
 */
+
+/* TODO: (3.0)
+
+	Use uv_loop_fork if available to fork and avoid reinitializing
+*/
+
+#define NODE_GET_EVENT_LOOP \
+	(NAPI_VERSION >= 2) && \
+	((NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION >= 10) || \
+	(NODE_MAJOR_VERSION == 9 && NODE_MINOR_VERSION >= 3) || \
+	(NODE_MAJOR_VERSION >= 10))
+
+#define NODE_THREADSAFE_FUNCTION \
+	(NAPI_VERSION >= 4) && \
+	(NODE_MAJOR_VERSION >= 8 && NODE_MINOR_VERSION >= 10) && \
+	(NODE_MAJOR_VERSION < 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION < 6))
+
+#define NODE_THREADSAFE_FUNCTION_OPTIONAL \
+	(NAPI_VERSION >= 4) && \
+	(NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 6))
 
 static const char loader_impl_node_resolve_trampoline[] = "__metacall_loader_impl_node_resolve_trampoline__";
 static const char loader_impl_node_reject_trampoline[] = "__metacall_loader_impl_node_reject_trampoline__";
@@ -137,6 +157,13 @@ typedef struct loader_impl_node_future_type
 	napi_ref promise_ref;
 
 } * loader_impl_node_future;
+
+typedef struct loader_impl_async_initialize_type
+{
+	loader_impl_node node_impl;
+	int result;
+
+} * loader_impl_async_initialize;
 
 typedef struct loader_impl_async_load_from_file_type
 {
@@ -1013,15 +1040,15 @@ napi_value future_node_on_reject(napi_env env, napi_callback_info info)
 
 void node_loader_impl_async_initialize(uv_async_t * async)
 {
-	loader_impl_node node_impl;
-
 	napi_status status;
 
 	napi_value resolve_func, reject_func;
 
 	napi_handle_scope handle_scope;
 
-	node_impl = *(static_cast<loader_impl_node *>(async->data));
+	loader_impl_async_initialize async_initialize = static_cast<loader_impl_async_initialize>(async->data);
+
+	loader_impl_node node_impl = async_initialize->node_impl;
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
@@ -1030,6 +1057,32 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	status = napi_open_handle_scope(node_impl->env, &handle_scope);
 
 	node_loader_impl_exception(node_impl->env, status);
+
+	/* Check if event loop is correctly initialized */
+	#if NODE_GET_EVENT_LOOP
+	{
+		struct uv_loop_s * loop;
+
+		status = napi_get_uv_event_loop(node_impl->env, &loop);
+
+		node_loader_impl_exception(node_impl->env, status);
+
+		if (loop != node_impl->thread_loop)
+		{
+			/* TODO: error_raise("Invalid event loop"); */
+
+			/* Set error */
+			async_initialize->result = 1;
+
+			/* Signal start condition */
+			uv_cond_signal(&node_impl->cond);
+
+			uv_mutex_unlock(&node_impl->mutex);
+
+			return;
+		}
+	}
+	#endif /* NODE_GET_EVENT_LOOP */
 
 	/* Initialize future trampolines (TODO: Check version and use napi_create_threadsafe_function if available) */
 	status = napi_create_function(node_impl->env, loader_impl_node_resolve_trampoline, sizeof(loader_impl_node_resolve_trampoline) - 1, &future_node_on_resolve, node_impl, &resolve_func);
@@ -2060,7 +2113,7 @@ void node_loader_impl_thread(void * data)
 
 	/* TODO: ... reimplement until here */
 
-	node_impl->thread_loop = uv_default_loop();
+	node_impl->thread_loop = uv_default_loop(); /* TODO: napi_get_uv_event_loop() */
 
 	/* Initialize initialize signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_initialize, &node_loader_impl_async_initialize);
@@ -2162,10 +2215,17 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	uv_mutex_unlock(&node_impl->mutex);
 
+	/* Set initialize async data */
+	struct loader_impl_async_initialize_type async_initialize =
+	{
+		node_impl,
+		0
+	};
+
 	/* Initialize node loader entry point */
 	uv_mutex_lock(&node_impl->mutex);
 
-	node_impl->async_initialize.data = static_cast<void *>(&node_impl);
+	node_impl->async_initialize.data = static_cast<loader_impl_async_initialize>(&async_initialize);
 
 	/* Execute initialize async callback */
 	uv_async_send(&node_impl->async_initialize);
@@ -2174,6 +2234,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
 	uv_mutex_unlock(&node_impl->mutex);
+
+	if (async_initialize.result != 0)
+	{
+		/* TODO: Handle error properly */
+	}
 
 	return node_impl;
 }
