@@ -1,5 +1,4 @@
 ﻿#if NETCOREAPP1_0 || NETCOREAPP1_1
- 
 
 using System;
 using System.Reflection;
