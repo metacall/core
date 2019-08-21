@@ -3,7 +3,7 @@
   "version": "1.0.0-*",
   "buildOptions": {
     "allowUnsafe": true,
-    "emitEntryPoint": true
+    "emitEntryPoint": false
   },
   "dependencies": {
     "Microsoft.CodeAnalysis.CSharp": "1.3.0",

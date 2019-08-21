@@ -55,7 +55,6 @@ namespace CSLoader.Providers
         {
             return AssemblyLoadContext.Default.LoadFromAssemblyPath(assemblyFile);
         }
-
     }
 }
 #endif
