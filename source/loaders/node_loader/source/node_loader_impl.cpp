@@ -35,6 +35,7 @@
 
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_future.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
@@ -44,7 +45,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
-#include <cassert>
+#include <cassert> /* TODO: Delete this */
 
 #include <new>
 #include <string>
@@ -83,7 +84,8 @@
 	Detour method is not valid because of NodeJS cannot be reinitialized, platform pointer already initialized in CHECK macro
 */
 
-/* TODO: Refactor all asserts into proper error handling system */
+static const char loader_impl_node_resolve_trampoline[] = "__metacall_loader_impl_node_resolve_trampoline__";
+static const char loader_impl_node_reject_trampoline[] = "__metacall_loader_impl_node_reject_trampoline__";
 
 typedef struct loader_impl_node_type
 {
@@ -101,7 +103,22 @@ typedef struct loader_impl_node_type
 	uv_async_t async_discover;
 	uv_async_t async_func_call;
 	uv_async_t async_func_destroy;
+	uv_async_t async_future_await;
 	uv_async_t async_destroy;
+
+	napi_ref resolve_trampoline_ref;
+	napi_ref reject_trampoline_ref;
+
+	/* TODO: This data must be binded to the promise, not here */
+	future_resolve_callback resolve_callback;
+	future_reject_callback reject_callback;
+
+	uv_mutex_t mutex;
+	uv_cond_t cond;
+
+	int stdin_copy;
+	int stdout_copy;
+	int stderr_copy;
 
 	int result;
 
@@ -114,6 +131,13 @@ typedef struct loader_impl_node_function_type
 	napi_value * argv;
 
 } * loader_impl_node_function;
+
+typedef struct loader_impl_node_future_type
+{
+	loader_impl_node node_impl;
+	napi_ref promise_ref;
+
+} * loader_impl_node_future;
 
 typedef struct loader_impl_async_load_from_file_type
 {
@@ -166,44 +190,538 @@ typedef struct loader_impl_async_func_destroy_type
 
 } * loader_impl_async_func_destroy;
 
-static uv_mutex_t node_impl_mutex;
-static uv_cond_t node_impl_cond;
+typedef struct loader_impl_async_future_await_type
+{
+	loader_impl_node node_impl;
+	future f;
+	loader_impl_node_future node_future;
+	future_impl impl;
+	future_resolve_callback resolve_callback;
+	future_reject_callback reject_callback;
+	void * data;
+	future_return ret;
+
+} * loader_impl_async_future_await;
+
+/* Exception */
+
+static inline void node_loader_impl_exception(napi_env env, napi_status status);
+
+/* Type conversion */
+static value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value v);
+
+static napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg);
 
 /* Function */
-int function_node_interface_create(function func, function_impl impl);
+static int function_node_interface_create(function func, function_impl impl);
 
-function_return function_node_interface_invoke(function func, function_impl impl, function_args args);
+static function_return function_node_interface_invoke(function func, function_impl impl, function_args args);
 
-void function_node_interface_destroy(function func, function_impl impl);
+static void function_node_interface_destroy(function func, function_impl impl);
 
-function_interface function_node_singleton(void);
+static function_interface function_node_singleton(void);
+
+/* Future */
+static int future_node_interface_create(future f, future_impl impl);
+
+static future_return future_node_interface_await(future f, future_impl impl, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * data);
+
+static void future_node_interface_destroy(future f, future_impl impl);
+
+static future_interface future_node_singleton(void);
+
+napi_value future_node_on_resolve(napi_env env, napi_callback_info info);
+
+napi_value future_node_on_reject(napi_env env, napi_callback_info info);
 
 /* Async */
-void node_loader_impl_async_initialize(uv_async_t * async);
+static void node_loader_impl_async_initialize(uv_async_t * async);
 
-void node_loader_impl_async_func_call(uv_async_t * async);
+static void node_loader_impl_async_func_call(uv_async_t * async);
 
-void node_loader_impl_async_func_destroy(uv_async_t * async);
+static void node_loader_impl_async_func_destroy(uv_async_t * async);
 
-void node_loader_impl_async_load_from_file(uv_async_t * async);
+static void node_loader_impl_async_future_await(uv_async_t * async);
 
-void node_loader_impl_async_load_from_memory(uv_async_t * async);
+static void node_loader_impl_async_load_from_file(uv_async_t * async);
 
-void node_loader_impl_async_clear(uv_async_t * async);
+static void node_loader_impl_async_load_from_memory(uv_async_t * async);
 
-void node_loader_impl_async_discover(uv_async_t * async);
+static void node_loader_impl_async_clear(uv_async_t * async);
 
-void node_loader_impl_async_destroy(uv_async_t * async);
+static void node_loader_impl_async_discover(uv_async_t * async);
+
+static void node_loader_impl_async_destroy(uv_async_t * async);
 
 /* Loader */
-void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr);
+static void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr);
 
-void node_loader_impl_thread(void * data);
+static void node_loader_impl_thread(void * data);
 
-void node_loader_impl_walk(uv_handle_t * handle, void * data);
+static void node_loader_impl_walk(uv_handle_t * handle, void * data);
 
-/* Standard Input Output descriptors */
-static int stdin_copy, stdout_copy, stderr_copy;
+/* -- Methods -- */
+
+inline void node_loader_impl_exception(napi_env env, napi_status status)
+{
+	if (status != napi_ok)
+	{
+		if (status != napi_pending_exception)
+		{
+			const napi_extended_error_info * error_info = NULL;
+
+			bool pending;
+
+			napi_get_last_error_info(env, &error_info);
+
+			napi_is_exception_pending(env, &pending);
+
+			const char * message = (error_info->error_message == NULL) ? "Error message not available" : error_info->error_message;
+
+			/* TODO: Notify MetaCall error handling system when it is implemented */
+			/* ... */
+
+			if (pending)
+			{
+				napi_throw_error(env, NULL, message);
+			}
+		}
+		else
+		{
+			napi_value error, message;
+			bool result;
+			napi_valuetype valuetype;
+			size_t length;
+			char * str;
+
+			status = napi_get_and_clear_last_exception(env, &error);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_is_error(env, error, &result);
+
+			node_loader_impl_exception(env, status);
+
+			if (result == false)
+			{
+				/* TODO: Notify MetaCall error handling system when it is implemented */
+				return;
+			}
+
+			status = napi_get_named_property(env, error, "message", &message);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_typeof(env, message, &valuetype);
+
+			node_loader_impl_exception(env, status);
+
+			if (valuetype != napi_string)
+			{
+				/* TODO: Notify MetaCall error handling system when it is implemented */
+				return;
+			}
+
+			status = napi_get_value_string_utf8(env, message, NULL, 0, &length);
+
+			node_loader_impl_exception(env, status);
+
+			str = static_cast<char *>(malloc(sizeof(char) * (length + 1)));
+
+			if (str == NULL)
+			{
+				/* TODO: Notify MetaCall error handling system when it is implemented */
+				return;
+			}
+
+			status = napi_get_value_string_utf8(env, message, str, length + 1, &length);
+
+			node_loader_impl_exception(env, status);
+
+			/* TODO: Notify MetaCall error handling system when it is implemented */
+			/* error_raise(str); */
+
+			free(str);
+		}
+	}
+}
+
+value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value v)
+{
+	value ret = NULL;
+
+	napi_valuetype valuetype;
+
+	napi_status status = napi_typeof(env, v, &valuetype);
+
+	node_loader_impl_exception(env, status);
+
+	if (valuetype == napi_undefined)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_null)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_boolean)
+	{
+		bool b;
+
+		status = napi_get_value_bool(env, v, &b);
+
+		node_loader_impl_exception(env, status);
+
+		ret = value_create_bool((b == true) ? static_cast<boolean>(1) : static_cast<boolean>(0));
+	}
+	else if (valuetype == napi_number)
+	{
+		double d;
+
+		status = napi_get_value_double(env, v, &d);
+
+		node_loader_impl_exception(env, status);
+
+		ret = value_create_double(d);
+	}
+	else if (valuetype == napi_string)
+	{
+		size_t length;
+
+		status = napi_get_value_string_utf8(env, v, NULL, 0, &length);
+
+		node_loader_impl_exception(env, status);
+
+		ret = value_create_string(NULL, length);
+
+		if (ret != NULL)
+		{
+			char * str = value_to_string(ret);
+
+			status = napi_get_value_string_utf8(env, v, str, length + 1, &length);
+
+			node_loader_impl_exception(env, status);
+		}
+	}
+	else if (valuetype == napi_symbol)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_object)
+	{
+		bool result = false;
+
+		if (napi_is_array(env, v, &result) == napi_ok && result == true)
+		{
+			uint32_t iterator, length = 0;
+
+			value * array_value;
+
+			status = napi_get_array_length(env, v, &length);
+
+			node_loader_impl_exception(env, status);
+
+			ret = value_create_array(NULL, static_cast<size_t>(length));
+
+			array_value = value_to_array(ret);
+
+			for (iterator = 0; iterator < length; ++iterator)
+			{
+				napi_value element;
+
+				status = napi_get_element(env, v, iterator, &element);
+
+				node_loader_impl_exception(env, status);
+
+				/* TODO: Review recursion overflow */
+				array_value[iterator] = node_loader_impl_napi_to_value(node_impl, env, element);
+			}
+		}
+		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_typedarray(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_dataview(env, v, &result) == napi_ok && result == true)
+		{
+			/* TODO */
+		}
+		else if (napi_is_promise(env, v, &result) == napi_ok && result == true)
+		{
+			loader_impl_node_future node_future = static_cast<loader_impl_node_future>(malloc(sizeof(struct loader_impl_node_future_type)));
+
+			future f;
+
+			if (node_future == NULL)
+			{
+				return static_cast<function_return>(NULL);
+			}
+
+			f = future_create(node_future, &future_node_singleton);
+
+			if (f == NULL)
+			{
+				free(node_future);
+
+				return static_cast<function_return>(NULL);
+			}
+
+			ret = value_create_future(f);
+
+			if (ret == NULL)
+			{
+				future_destroy(f);
+			}
+
+			/* Create reference to promise */
+			node_future->node_impl = node_impl;
+
+			status = napi_create_reference(env, v, 1, &node_future->promise_ref);
+
+			node_loader_impl_exception(env, status);
+		}
+		else
+		{
+			/* TODO: Strict check if it is an object (map) */
+			uint32_t iterator, length = 0;
+
+			napi_value keys;
+
+			value * map_value;
+
+			status = napi_get_property_names(env, v, &keys);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_get_array_length(env, keys, &length);
+
+			node_loader_impl_exception(env, status);
+
+			ret = value_create_map(NULL, static_cast<size_t>(length));
+
+			map_value = value_to_map(ret);
+
+			for (iterator = 0; iterator < length; ++iterator)
+			{
+				napi_value key;
+
+				size_t key_length;
+
+				value * tupla;
+
+				/* Create tupla */
+				map_value[iterator] = value_create_array(NULL, 2);
+
+				tupla = value_to_array(map_value[iterator]);
+
+				/* Get key from object */
+				status = napi_get_element(env, keys, iterator, &key);
+
+				node_loader_impl_exception(env, status);
+
+				/* Set key string in the tupla */
+				status = napi_get_value_string_utf8(env, key, NULL, 0, &key_length);
+
+				node_loader_impl_exception(env, status);
+
+				tupla[0] = value_create_string(NULL, key_length);
+
+				if (tupla[0] != NULL)
+				{
+					napi_value element;
+
+					char * str = value_to_string(tupla[0]);
+
+					status = napi_get_value_string_utf8(env, key, str, key_length + 1, &key_length);
+
+					node_loader_impl_exception(env, status);
+
+					status = napi_get_property(env, v, key, &element);
+
+					node_loader_impl_exception(env, status);
+
+					/* TODO: Review recursion overflow */
+					tupla[1] = node_loader_impl_napi_to_value(node_impl, env, element);
+				}
+			}
+
+		}
+	}
+	else if (valuetype == napi_function)
+	{
+		/* TODO */
+	}
+	else if (valuetype == napi_external)
+	{
+		/* TODO */
+	}
+
+	return ret;
+}
+
+napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg)
+{
+	value arg_value = static_cast<value>(arg);
+
+	type_id id = value_type_id(arg_value);
+
+	napi_status status;
+
+	napi_value v = nullptr;
+
+	if (id == TYPE_BOOL)
+	{
+		boolean bool_value = value_to_bool(arg_value);
+
+		status = napi_get_boolean(env, (bool_value == 0) ? false : true, &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_CHAR)
+	{
+		char char_value = value_to_char(arg_value);
+
+		status = napi_create_int32(env, static_cast<int32_t>(char_value), &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_SHORT)
+	{
+		short short_value = value_to_short(arg_value);
+
+		status = napi_create_int32(env, static_cast<int32_t>(short_value), &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_INT)
+	{
+		int int_value = value_to_int(arg_value);
+
+		/* TODO: Check integer overflow */
+		status = napi_create_int32(env, static_cast<int32_t>(int_value), &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_LONG)
+	{
+		long long_value = value_to_long(arg_value);
+
+		/* TODO: Check integer overflow */
+		status = napi_create_int64(env, static_cast<int64_t>(long_value), &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_FLOAT)
+	{
+		float float_value = value_to_float(arg_value);
+
+		status = napi_create_double(env, static_cast<double>(float_value), &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_DOUBLE)
+	{
+		double double_value = value_to_double(arg_value);
+
+		status = napi_create_double(env, double_value, &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_STRING)
+	{
+		const char * str_value = value_to_string(arg_value);
+
+		size_t length = value_type_size(arg_value) - 1;
+
+		status = napi_create_string_utf8(env, str_value, length, &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_BUFFER)
+	{
+		void * buff_value = value_to_buffer(arg_value);
+
+		size_t size = value_type_size(arg_value);
+
+		status = napi_create_buffer(env, size, &buff_value, &v);
+
+		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_ARRAY)
+	{
+		value * array_value = value_to_array(arg_value);
+
+		size_t array_size = value_type_count(arg_value);
+
+		uint32_t iterator;
+
+		status = napi_create_array_with_length(env, array_size, &v);
+
+		node_loader_impl_exception(env, status);
+
+		for (iterator = 0; iterator < array_size; ++iterator)
+		{
+			/* TODO: Review recursion overflow */
+			napi_value element_v =node_loader_impl_value_to_napi(node_impl, env, static_cast<value>(array_value[iterator]));
+
+			status = napi_set_element(env, v, iterator, element_v);
+
+			node_loader_impl_exception(env, status);
+		}
+	}
+	else if (id == TYPE_MAP)
+	{
+		value * map_value = value_to_map(arg_value);
+
+		size_t iterator, map_size = value_type_count(arg_value);
+
+		status = napi_create_object(env, &v);
+
+		node_loader_impl_exception(env, status);
+
+		for (iterator = 0; iterator < map_size; ++iterator)
+		{
+			value * pair_value = value_to_array(map_value[iterator]);
+
+			const char * key = value_to_string(pair_value[0]);
+
+			/* TODO: Review recursion overflow */
+			napi_value element_v =node_loader_impl_value_to_napi(node_impl, env, static_cast<value>(pair_value[1]));
+
+			status = napi_set_named_property(env, v, key, element_v);
+
+			node_loader_impl_exception(env, status);
+		}
+	}
+	/* TODO */
+	/*
+	else if (id == TYPE_PTR)
+	{
+
+	}
+	*/
+	else if (id == TYPE_FUTURE)
+	{
+		/* TODO: Promise */
+		int TODO_IMPLEMENT_FUTURE_TYPE = 0;
+		assert(TODO_IMPLEMENT_FUTURE_TYPE != 0);
+	}
+	else
+	{
+		status = napi_get_undefined(env, &v);
+
+		node_loader_impl_exception(env, status);
+	}
+
+	return v;
+}
 
 int function_node_interface_create(function func, function_impl impl)
 {
@@ -235,7 +753,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 			NULL
 		};
 
-		uv_mutex_lock(&node_impl_mutex);
+		uv_mutex_lock(&node_impl->mutex);
 
 		node_impl->async_func_call.data = static_cast<void *>(&async_data);
 
@@ -243,9 +761,9 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		uv_async_send(&node_impl->async_func_call);
 
 		/* Wait until function is called */
-		uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-		uv_mutex_unlock(&node_impl_mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return async_data.ret;
 	}
@@ -269,7 +787,7 @@ void function_node_interface_destroy(function func, function_impl impl)
 			node_func
 		};
 
-		uv_mutex_lock(&node_impl_mutex);
+		uv_mutex_lock(&node_impl->mutex);
 
 		node_impl->async_func_destroy.data = static_cast<void *>(&async_data);
 
@@ -277,9 +795,9 @@ void function_node_interface_destroy(function func, function_impl impl)
 		uv_async_send(&node_impl->async_func_destroy);
 
 		/* Wait until function is destroyed */
-		uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-		uv_mutex_unlock(&node_impl_mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		free(node_func->argv);
 
@@ -299,388 +817,249 @@ function_interface function_node_singleton()
 	return &node_function_interface;
 }
 
+int future_node_interface_create(future f, future_impl impl)
+{
+	(void)f;
+	(void)impl;
+
+	return 0;
+}
+
+future_return future_node_interface_await(future f, future_impl impl, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * data)
+{
+	loader_impl_node_future node_future = (loader_impl_node_future)impl;
+
+	if (node_future != NULL)
+	{
+		loader_impl_node node_impl = node_future->node_impl;
+
+		struct loader_impl_async_future_await_type async_data =
+		{
+			node_impl,
+			f,
+			node_future,
+			impl,
+			resolve_callback,
+			reject_callback,
+			data,
+			NULL
+		};
+
+		uv_mutex_lock(&node_impl->mutex);
+
+		node_impl->async_future_await.data = static_cast<void *>(&async_data);
+
+		/* Execute future await async callback */
+		uv_async_send(&node_impl->async_future_await);
+
+		/* Wait until function is called */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		uv_mutex_unlock(&node_impl->mutex);
+
+		return async_data.ret;
+	}
+
+	return NULL;
+}
+
+void future_node_interface_destroy(future f, future_impl impl)
+{
+	/* TODO */
+	(void)f;
+	(void)impl;
+}
+
+future_interface future_node_singleton()
+{
+	static struct future_interface_type node_future_interface =
+	{
+		&future_node_interface_create,
+		&future_node_interface_await,
+		&future_node_interface_destroy
+	};
+
+	return &node_future_interface;
+}
+
+napi_value future_node_on_resolve(napi_env env, napi_callback_info info)
+{
+	loader_impl_node node_impl;
+
+	size_t argc;
+
+	napi_value argv[1], this_arg, result;
+
+	void * data;
+
+	napi_status status;
+
+	value arg, ret;
+
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Retrieve the arguments and bind data */
+	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != 1)
+	{
+		/* TODO: Error handling */
+	}
+
+	node_impl = static_cast<loader_impl_node>(data);
+
+	if (node_impl->resolve_callback == NULL)
+	{
+		return nullptr;
+	}
+
+	/* Convert the argument to a value */
+	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+
+	if (arg == NULL)
+	{
+		arg = value_create_null();
+	}
+
+	/* Call the resolve callback */
+	ret = node_impl->resolve_callback(arg, NULL /* TODO: data*/);
+
+	/* Destroy parameter argument */
+	value_type_destroy(arg);
+
+	/* Return the result */
+	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	/* Close scope */
+	status = napi_close_handle_scope(node_impl->env, handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	/* Destroy return value */
+	value_type_destroy(ret);
+
+	return result;
+}
+
+napi_value future_node_on_reject(napi_env env, napi_callback_info info)
+{
+	loader_impl_node node_impl;
+
+	size_t argc;
+
+	napi_value argv[1], this_arg, result;
+
+	void * data;
+
+	napi_status status;
+
+	value arg, ret;
+
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Retrieve the arguments and bind data */
+	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != 1)
+	{
+		/* TODO: Error handling */
+	}
+
+	node_impl = static_cast<loader_impl_node>(data);
+
+	if (node_impl->reject_callback == NULL)
+	{
+		return nullptr;
+	}
+
+	/* Convert the argument to a value */
+	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+
+	if (arg == NULL)
+	{
+		arg = value_create_null();
+	}
+
+	/* Call the resolve callback */
+	ret = node_impl->reject_callback(arg, NULL /* TODO: data*/);
+
+	/* Destroy parameter argument */
+	value_type_destroy(arg);
+
+	/* Return the result */
+	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	/* Close scope */
+	status = napi_close_handle_scope(node_impl->env, handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	/* Destroy return value */
+	value_type_destroy(ret);
+
+	return result;
+}
+
 void node_loader_impl_async_initialize(uv_async_t * async)
 {
 	loader_impl_node node_impl;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
+	napi_status status;
+
+	napi_value resolve_func, reject_func;
+
+	napi_handle_scope handle_scope;
 
 	node_impl = *(static_cast<loader_impl_node *>(async->data));
 
-	(void)node_impl;
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&node_impl->mutex);
+
+	/* Create scope */
+	status = napi_open_handle_scope(node_impl->env, &handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	/* Initialize future trampolines (TODO: Check version and use napi_create_threadsafe_function if available) */
+	status = napi_create_function(node_impl->env, loader_impl_node_resolve_trampoline, sizeof(loader_impl_node_resolve_trampoline) - 1, &future_node_on_resolve, node_impl, &resolve_func);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	status = napi_create_reference(node_impl->env, resolve_func, 1, &node_impl->resolve_trampoline_ref);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	status = napi_create_function(node_impl->env, loader_impl_node_reject_trampoline, sizeof(loader_impl_node_reject_trampoline) - 1, &future_node_on_reject, node_impl, &reject_func);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	status = napi_create_reference(node_impl->env, reject_func, 1, &node_impl->reject_trampoline_ref);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	/* Close scope */
+	status = napi_close_handle_scope(node_impl->env, handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
 
 	/* Signal start condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
-}
-
-napi_value node_loader_impl_value(napi_env env, void * arg)
-{
-	value arg_value = static_cast<value>(arg);
-
-	type_id id = value_type_id(arg_value);
-
-	napi_status status;
-
-	napi_value v;
-
-	if (id == TYPE_BOOL)
-	{
-		boolean bool_value = value_to_bool(arg_value);
-
-		status = napi_get_boolean(env, (bool_value == 0) ? false : true, &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_CHAR)
-	{
-		char char_value = value_to_char(arg_value);
-
-		status = napi_create_int32(env, static_cast<int32_t>(char_value), &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_SHORT)
-	{
-		short short_value = value_to_short(arg_value);
-
-		status = napi_create_int32(env, static_cast<int32_t>(short_value), &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_INT)
-	{
-		int int_value = value_to_int(arg_value);
-
-		/* TODO: Check integer overflow */
-		status = napi_create_int32(env, static_cast<int32_t>(int_value), &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_LONG)
-	{
-		long long_value = value_to_long(arg_value);
-
-		/* TODO: Check integer overflow */
-		status = napi_create_int64(env, static_cast<int64_t>(long_value), &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_FLOAT)
-	{
-		float float_value = value_to_float(arg_value);
-
-		status = napi_create_double(env, static_cast<double>(float_value), &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_DOUBLE)
-	{
-		double double_value = value_to_double(arg_value);
-
-		status = napi_create_double(env, double_value, &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_STRING)
-	{
-		const char * str_value = value_to_string(arg_value);
-
-		size_t length = value_type_size(arg_value) - 1;
-
-		status = napi_create_string_utf8(env, str_value, length, &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_BUFFER)
-	{
-		void * buff_value = value_to_buffer(arg_value);
-
-		size_t size = value_type_size(arg_value);
-
-		status = napi_create_buffer(env, size, &buff_value, &v);
-
-		assert(status == napi_ok);
-	}
-	else if (id == TYPE_ARRAY)
-	{
-		value * array_value = value_to_array(arg_value);
-
-		size_t array_size = value_type_count(arg_value);
-
-		uint32_t iterator;
-
-		status = napi_create_array_with_length(env, array_size, &v);
-
-		assert(status == napi_ok);
-
-		for (iterator = 0; iterator < array_size; ++iterator)
-		{
-			/* TODO: Review recursion overflow */
-			napi_value element_v = node_loader_impl_value(env, static_cast<void *>(array_value[iterator]));
-
-			status = napi_set_element(env, v, iterator, element_v);
-
-			assert(status == napi_ok);
-		}
-	}
-	else if (id == TYPE_MAP)
-	{
-		value * map_value = value_to_map(arg_value);
-
-		size_t iterator, map_size = value_type_count(arg_value);
-
-		status = napi_create_object(env, &v);
-
-		assert(status == napi_ok);
-
-		for (iterator = 0; iterator < map_size; ++iterator)
-		{
-			value * pair_value = value_to_array(map_value[iterator]);
-
-			const char * key = value_to_string(pair_value[0]);
-
-			/* TODO: Review recursion overflow */
-			napi_value element_v = node_loader_impl_value(env, static_cast<void *>(pair_value[1]));
-
-			status = napi_set_named_property(env, v, key, element_v);
-
-			assert(status == napi_ok);
-		}
-	}
-	/* TODO */
-	/*
-	else if (id == TYPE_PTR)
-	{
-
-	}
-	*/
-	else
-	{
-		status = napi_get_undefined(env, &v);
-
-		assert(status == napi_ok);
-	}
-
-	return v;
-}
-
-/*
-napi_value node_loader_impl_await(loader_impl_node node_impl, napi_value promise)
-{
-	napi_env env = node_impl->env;
-
-	napi_value then;
-
-	napi_status status = napi_get_named_property(env, promise, "then", &then);
-
-	assert(status == napi_ok);
-
-	*//* Call to function *//*
-	napi_value global, func_return;
-
-	status = napi_get_reference_value(env, node_impl->global_ref, &global);
-
-	assert(status == napi_ok);
-
-	status = napi_call_function(env, global, then, 2, argv, &func_return);
-
-	assert(status == napi_ok);
-
-	return func_return;
-}
-*/
-
-function_return node_loader_impl_return(napi_env env, napi_value v)
-{
-	value ret = NULL;
-
-	napi_valuetype valuetype;
-
-	napi_status status = napi_typeof(env, v, &valuetype);
-
-	assert(status == napi_ok);
-
-	if (valuetype == napi_undefined)
-	{
-		/* TODO */
-	}
-	else if (valuetype == napi_null)
-	{
-		/* TODO */
-	}
-	else if (valuetype == napi_boolean)
-	{
-		bool b;
-
-		status = napi_get_value_bool(env, v, &b);
-
-		assert(status == napi_ok);
-
-		ret = value_create_bool((b == true) ? static_cast<boolean>(1) : static_cast<boolean>(0));
-	}
-	else if (valuetype == napi_number)
-	{
-		double d;
-
-		status = napi_get_value_double(env, v, &d);
-
-		assert(status == napi_ok);
-
-		ret = value_create_double(d);
-	}
-	else if (valuetype == napi_string)
-	{
-		size_t length;
-
-		status = napi_get_value_string_utf8(env, v, NULL, 0, &length);
-
-		assert(status == napi_ok);
-
-		ret = value_create_string(NULL, length);
-
-		if (ret != NULL)
-		{
-			char * str = value_to_string(ret);
-
-			status = napi_get_value_string_utf8(env, v, str, length + 1, &length);
-
-			assert(status == napi_ok);
-		}
-	}
-	else if (valuetype == napi_symbol)
-	{
-		/* TODO */
-	}
-	else if (valuetype == napi_object)
-	{
-		bool result = false;
-
-		if (napi_is_array(env, v, &result) == napi_ok && result == true)
-		{
-			uint32_t iterator, length = 0;
-
-			value * array_value;
-
-			status = napi_get_array_length(env, v, &length);
-
-			assert(status == napi_ok);
-
-			ret = value_create_array(NULL, static_cast<size_t>(length));
-
-			array_value = value_to_array(ret);
-
-			for (iterator = 0; iterator < length; ++iterator)
-			{
-				napi_value element;
-
-				status = napi_get_element(env, v, iterator, &element);
-
-				assert(status == napi_ok);
-
-				/* TODO: Review recursion overflow */
-				array_value[iterator] = node_loader_impl_return(env, element);
-			}
-		}
-		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
-		{
-			/* TODO */
-		}
-		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
-		{
-			/* TODO */
-		}
-		else if (napi_is_typedarray(env, v, &result) == napi_ok && result == true)
-		{
-			/* TODO */
-		}
-		else if (napi_is_dataview(env, v, &result) == napi_ok && result == true)
-		{
-			/* TODO */
-		}
-		else if (napi_is_promise(env, v, &result) == napi_ok && result == true)
-		{
-			/* TODO */
-		}
-		else
-		{
-			/* TODO: Strict check if it is an object (map) */
-			uint32_t iterator, length = 0;
-
-			napi_value keys;
-
-			value * map_value;
-
-			status = napi_get_property_names(env, v, &keys);
-
-			assert(status == napi_ok);
-
-			status = napi_get_array_length(env, keys, &length);
-
-			assert(status == napi_ok);
-
-			ret = value_create_map(NULL, static_cast<size_t>(length));
-
-			map_value = value_to_map(ret);
-
-			for (iterator = 0; iterator < length; ++iterator)
-			{
-				napi_value key;
-
-				size_t key_length;
-
-				value * tupla;
-
-				/* Create tupla */
-				map_value[iterator] = value_create_array(NULL, 2);
-
-				tupla = value_to_array(map_value[iterator]);
-
-				/* Get key from object */
-				status = napi_get_element(env, keys, iterator, &key);
-
-				assert(status == napi_ok);
-
-				/* Set key string in the tupla */
-				status = napi_get_value_string_utf8(env, key, NULL, 0, &key_length);
-
-				assert(status == napi_ok);
-
-				tupla[0] = value_create_string(NULL, key_length);
-
-				if (tupla[0] != NULL)
-				{
-					napi_value element;
-
-					char * str = value_to_string(tupla[0]);
-
-					status = napi_get_value_string_utf8(env, key, str, key_length + 1, &key_length);
-
-					assert(status == napi_ok);
-
-					status = napi_get_property(env, v, key, &element);
-
-					assert(status == napi_ok);
-
-					/* TODO: Review recursion overflow */
-					tupla[1] = node_loader_impl_return(env, element);
-				}
-			}
-
-		}
-	}
-	else if (valuetype == napi_function)
-	{
-		/* TODO */
-	}
-	else if (valuetype == napi_external)
-	{
-		/* TODO */
-	}
-
-	return static_cast<function_return>(ret);
+	uv_mutex_unlock(&node_impl->mutex);
 }
 
 void node_loader_impl_async_func_call(uv_async_t * async)
@@ -695,16 +1074,16 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	size_t args_size;
 
-	void ** args;
+	value * args;
 
 	loader_impl_node_function node_func;
 
 	size_t args_count;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	async_data = static_cast<loader_impl_async_func_call>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -714,20 +1093,20 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	args_size = signature_count(s);
 
-	args = static_cast<void **>(async_data->args);
+	args = static_cast<value *>(async_data->args);
 
 	node_func = async_data->node_func;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Build parameters */
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		/* Define parameter */
-		node_func->argv[args_count] = node_loader_impl_value(env, args[args_count]);
+		node_func->argv[args_count] = node_loader_impl_value_to_napi(async_data->node_impl, env, args[args_count]);
 	}
 
 	/* Get function reference */
@@ -735,31 +1114,31 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	status = napi_get_reference_value(env, node_func->func_ref, &function_ptr);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Call to function */
 	napi_value global, func_return;
 
 	status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	status = napi_call_function(env, global, function_ptr, args_size, node_func->argv, &func_return);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Convert function return to value */
-	async_data->ret = node_loader_impl_return(env, func_return);
+	async_data->ret = node_loader_impl_napi_to_value(async_data->node_impl, env, func_return);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Signal function call condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_func_destroy(uv_async_t * async)
@@ -772,10 +1151,10 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	async_data = static_cast<loader_impl_async_func_destroy>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -783,26 +1162,102 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Clear function persistent reference */
 	status = napi_reference_unref(env, async_data->node_func->func_ref, &ref_count);
 
-	assert(status == napi_ok && ref_count == 0);
+	node_loader_impl_exception(env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
 
 	status = napi_delete_reference(env, async_data->node_func->func_ref);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Signal function destroy condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
+}
+
+void node_loader_impl_async_future_await(uv_async_t * async)
+{
+	loader_impl_async_future_await async_data;
+
+	napi_env env;
+
+	napi_value then;
+
+	napi_value argv[2];
+
+	napi_handle_scope handle_scope;
+
+	async_data = static_cast<loader_impl_async_future_await>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get promise reference */
+	napi_value promise;
+
+	status = napi_get_reference_value(env, async_data->node_future->promise_ref, &promise);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get then function */
+	status = napi_get_named_property(env, promise, "then", &then);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get trampoline functions from JS to C and assign them to argv */
+	status = napi_get_reference_value(env, async_data->node_impl->resolve_trampoline_ref, &argv[0]);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_get_reference_value(env, async_data->node_impl->reject_trampoline_ref, &argv[1]);
+
+	node_loader_impl_exception(env, status);
+
+	/* Set current callbacks to node impl in order to make them accessible to the trampolines */
+	async_data->node_impl->resolve_callback = async_data->resolve_callback;
+
+	async_data->node_impl->reject_callback = async_data->reject_callback;
+
+	/* Call to function */
+	napi_value promise_return;
+
+	status = napi_call_function(env, promise, then, 2, argv, &promise_return);
+
+	node_loader_impl_exception(env, status);
+
+	/* TODO: Proccess the promise_return */
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Signal function destroy condition */
+	uv_cond_signal(&async_data->node_impl->cond);
+
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_load_from_file(uv_async_t * async)
@@ -819,10 +1274,10 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	async_data = static_cast<loader_impl_async_load_from_file>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -830,37 +1285,36 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Create function string */
 	status = napi_create_string_utf8(env, load_from_file_str, sizeof(load_from_file_str) - 1, &load_from_file_str_value);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Check if exists in the table */
 	status = napi_has_own_property(env, function_table_object, load_from_file_str_value, &result);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	if (result == true)
 	{
 		napi_value function_trampoline_load_from_file;
 		napi_valuetype valuetype;
 		napi_value argv[1];
-		uint32_t ref_count = 0;
 
 		status = napi_get_named_property(env, function_table_object, load_from_file_str, &function_trampoline_load_from_file);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_typeof(env, function_trampoline_load_from_file, &valuetype);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (valuetype != napi_function)
 		{
@@ -870,7 +1324,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 		/* Define parameters */
 		status = napi_create_array_with_length(env, async_data->size, &argv[0]);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		for (size_t index = 0; index < async_data->size; ++index)
 		{
@@ -880,11 +1334,11 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 			status = napi_create_string_utf8(env, async_data->paths[index], length, &path_str);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			status = napi_set_element(env, argv[0], (uint32_t)index, path_str);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Call to load from file function */
@@ -892,41 +1346,37 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_call_function(env, global, function_trampoline_load_from_file, 1, argv, &return_value);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Check return value */
 		napi_valuetype return_valuetype;
 
 		status = napi_typeof(env, return_value, &return_valuetype);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (return_valuetype != napi_null)
 		{
 			/* Make handle persistent */
-			status = napi_create_reference(env, return_value, 0, &async_data->handle_ref);
+			status = napi_create_reference(env, return_value, 1, &async_data->handle_ref);
 
-			assert(status == napi_ok);
-
-			status = napi_reference_ref(env, async_data->handle_ref, &ref_count);
-
-			assert(status == napi_ok && ref_count == 1);
+			node_loader_impl_exception(env, status);
 		}
 	}
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Signal load from file condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_load_from_memory(uv_async_t * async)
@@ -943,10 +1393,10 @@ void node_loader_impl_async_load_from_memory(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	async_data = static_cast<loader_impl_async_load_from_memory>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -954,37 +1404,36 @@ void node_loader_impl_async_load_from_memory(uv_async_t * async)
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Create function string */
 	status = napi_create_string_utf8(env, load_from_memory_str, sizeof(load_from_memory_str) - 1, &load_from_memory_str_value);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Check if exists in the table */
 	status = napi_has_own_property(env, function_table_object, load_from_memory_str_value, &result);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	if (result == true)
 	{
 		napi_value function_trampoline_load_from_memory;
 		napi_valuetype valuetype;
 		napi_value argv[3];
-		uint32_t ref_count = 0;
 
 		status = napi_get_named_property(env, function_table_object, load_from_memory_str, &function_trampoline_load_from_memory);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_typeof(env, function_trampoline_load_from_memory, &valuetype);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (valuetype != napi_function)
 		{
@@ -994,56 +1443,52 @@ void node_loader_impl_async_load_from_memory(uv_async_t * async)
 		/* Define parameters */
 		status = napi_create_string_utf8(env, async_data->name, strlen(async_data->name), &argv[0]);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_create_string_utf8(env, async_data->buffer, async_data->size - 1, &argv[1]);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_create_object(env, &argv[2]);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Call to load from memory function */
 		napi_value global, return_value;
 
 		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_call_function(env, global, function_trampoline_load_from_memory, 3, argv, &return_value);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Check return value */
 		napi_valuetype return_valuetype;
 
 		status = napi_typeof(env, return_value, &return_valuetype);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (return_valuetype != napi_null)
 		{
 			/* Make handle persistent */
-			status = napi_create_reference(env, return_value, 0, &async_data->handle_ref);
+			status = napi_create_reference(env, return_value, 1, &async_data->handle_ref);
 
-			assert(status == napi_ok);
-
-			status = napi_reference_ref(env, async_data->handle_ref, &ref_count);
-
-			assert(status == napi_ok && ref_count == 1);
+			node_loader_impl_exception(env, status);
 		}
 	}
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Signal load from memory condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_clear(uv_async_t * async)
@@ -1062,10 +1507,10 @@ void node_loader_impl_async_clear(uv_async_t * async)
 
 	uint32_t ref_count = 0;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	async_data = static_cast<loader_impl_async_clear>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1073,21 +1518,21 @@ void node_loader_impl_async_clear(uv_async_t * async)
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Create function string */
 	status = napi_create_string_utf8(env, clear_str, sizeof(clear_str) - 1, &clear_str_value);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Check if exists in the table */
 	status = napi_has_own_property(env, function_table_object, clear_str_value, &result);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	if (result == true)
 	{
@@ -1097,11 +1542,11 @@ void node_loader_impl_async_clear(uv_async_t * async)
 
 		status = napi_get_named_property(env, function_table_object, clear_str, &function_trampoline_clear);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_typeof(env, function_trampoline_clear, &valuetype);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (valuetype != napi_function)
 		{
@@ -1111,38 +1556,43 @@ void node_loader_impl_async_clear(uv_async_t * async)
 		/* Define parameters */
 		status = napi_get_reference_value(env, async_data->handle_ref, &argv[0]);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Call to load from file function */
 		napi_value global, clear_return;
 
 		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_call_function(env, global, function_trampoline_clear, 1, argv, &clear_return);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 	}
 
 	/* Clear handle persistent reference */
 	status = napi_reference_unref(env, async_data->handle_ref, &ref_count);
 
-	assert(status == napi_ok && ref_count == 0);
+	node_loader_impl_exception(env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
 
 	status = napi_delete_reference(env, async_data->handle_ref);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Signal clear condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_discover(uv_async_t * async)
@@ -1159,10 +1609,10 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	async_data = static_cast<loader_impl_async_discover>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1170,22 +1620,22 @@ void node_loader_impl_async_discover(uv_async_t * async)
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Get function table object from reference */
 	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Create function string */
 	status = napi_create_string_utf8(env, discover_str, sizeof(discover_str) - 1, &discover_str_value);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Check if exists in the table */
 	status = napi_has_own_property(env, function_table_object, discover_str_value, &result);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	if (result == true)
 	{
@@ -1195,11 +1645,11 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 		status = napi_get_named_property(env, function_table_object, discover_str, &function_trampoline_discover);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_typeof(env, function_trampoline_discover, &valuetype);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (valuetype != napi_function)
 		{
@@ -1209,18 +1659,18 @@ void node_loader_impl_async_discover(uv_async_t * async)
 		/* Define parameters */
 		status = napi_get_reference_value(env, async_data->handle_ref, &argv[0]);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Call to load from file function */
 		napi_value global, discover_map;
 
 		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_call_function(env, global, function_trampoline_discover, 1, argv, &discover_map);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Convert return value (discover object) to context */
 		napi_value function_names;
@@ -1228,11 +1678,11 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 		status = napi_get_property_names(env, discover_map, &function_names);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_get_array_length(env, function_names, &function_names_length);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		for (uint32_t index = 0; index < function_names_length; ++index)
 		{
@@ -1242,11 +1692,11 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 			status = napi_get_element(env, function_names, index, &function_name);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			status = napi_get_value_string_utf8(env, function_name, NULL, 0, &function_name_length);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			if (function_name_length > 0)
 			{
@@ -1263,22 +1713,22 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				/* Get function name */
 				status = napi_get_value_string_utf8(env, function_name, function_name_str, function_name_length + 1, &function_name_length);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				/* Get function descriptor */
 				status = napi_get_named_property(env, discover_map, function_name_str, &function_descriptor);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				/* Get function pointer */
 				status = napi_get_named_property(env, function_descriptor, "ptr", &function_ptr);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				/* Check function pointer type */
 				status = napi_typeof(env, function_ptr, &valuetype);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				if (valuetype != napi_function)
 				{
@@ -1288,12 +1738,12 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				/* Get function signature */
 				status = napi_get_named_property(env, function_descriptor, "signature", &function_sig);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				/* Check function pointer type */
 				status = napi_typeof(env, function_sig, &valuetype);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				if (valuetype != napi_object)
 				{
@@ -1303,21 +1753,15 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				/* Get signature length */
 				status = napi_get_array_length(env, function_sig, &function_sig_length);
 
-				assert(status == napi_ok);
+				node_loader_impl_exception(env, status);
 
 				/* Create node function */
 				loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
 
 				/* Create reference to function pointer */
-				uint32_t ref_count = 0;
+				status = napi_create_reference(env, function_ptr, 1, &node_func->func_ref);
 
-				status = napi_create_reference(env, function_ptr, 0, &node_func->func_ref);
-
-				assert(status == napi_ok);
-
-				status = napi_reference_ref(env, node_func->func_ref, &ref_count);
-
-				assert(status == napi_ok && ref_count == 1);
+				node_loader_impl_exception(env, status);
 
 				node_func->node_impl = async_data->node_impl;
 
@@ -1338,12 +1782,12 @@ void node_loader_impl_async_discover(uv_async_t * async)
 						/* Get signature parameter name */
 						status = napi_get_element(env, function_sig, arg_index, &parameter_name);
 
-						assert(status == napi_ok);
+						node_loader_impl_exception(env, status);
 
 						/* Get parameter name string length */
 						status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
 
-						assert(status == napi_ok);
+						node_loader_impl_exception(env, status);
 
 						if (parameter_name_length > 0)
 						{
@@ -1353,7 +1797,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 						/* Get parameter name string */
 						status = napi_get_value_string_utf8(env, parameter_name, parameter_name_str, parameter_name_length + 1, &parameter_name_length);
 
-						assert(status == napi_ok);
+						node_loader_impl_exception(env, status);
 
 						signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
 					}
@@ -1371,22 +1815,20 @@ void node_loader_impl_async_discover(uv_async_t * async)
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
 	/* Signal discover condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr)
 {
-	loader_impl_node node_impl;
+	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
-	node_impl = static_cast<loader_impl_node>(node_impl_ptr);
+	uv_mutex_lock(&node_impl->mutex);
 
 	napi_env env = static_cast<napi_env>(env_ptr);
 	napi_value function_table_object = static_cast<napi_value>(function_table_object_ptr);
@@ -1398,8 +1840,6 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 	bool result = false;
 
-	uint32_t ref_count = 0;
-
 	napi_status status;
 
 	napi_value global;
@@ -1409,35 +1849,27 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 	/* Make global object persistent */
 	status = napi_get_global(env, &global);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(env, status);
 
-	status = napi_create_reference(env, global, 0, &node_impl->global_ref);
+	status = napi_create_reference(env, global, 1, &node_impl->global_ref);
 
-	assert(status == napi_ok);
-
-	status = napi_reference_ref(env, node_impl->global_ref, &ref_count);
-
-	assert(status == napi_ok && ref_count == 1);
+	node_loader_impl_exception(env, status);
 
 	/* Make function table object persistent */
-	status = napi_create_reference(env, function_table_object, 0, &node_impl->function_table_object_ref);
+	status = napi_create_reference(env, function_table_object, 1, &node_impl->function_table_object_ref);
 
-	assert(status == napi_ok);
-
-	status = napi_reference_ref(env, node_impl->function_table_object_ref, &ref_count);
-
-	assert(status == napi_ok && ref_count == 1);
+	node_loader_impl_exception(env, status);
 
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	{
 		/* Retrieve test function from object table */
 		status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_has_own_property(env, function_table_object, test_str_value, &result);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (result == true)
 		{
@@ -1446,11 +1878,11 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 			status = napi_get_named_property(env, function_table_object, test_str, &function_trampoline_test);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			status = napi_typeof(env, function_trampoline_test, &valuetype);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			if (valuetype != napi_function)
 			{
@@ -1462,15 +1894,15 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 			status = napi_call_function(env, global, function_trampoline_test, 0, nullptr, &return_value);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 		}
 	}
 	#endif
 
 	/* Signal start condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	/* TODO: Return */
 	return NULL;
@@ -1478,12 +1910,10 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 void node_loader_impl_thread(void * data)
 {
-	loader_impl_node node_impl;
+	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
-	node_impl = *(static_cast<loader_impl_node *>(data));
+	uv_mutex_lock(&node_impl->mutex);
 
 	/* TODO: Reimplement from here to ... */
 
@@ -1656,22 +2086,25 @@ void node_loader_impl_thread(void * data)
 	/* Initialize function destroy signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_func_destroy, &node_loader_impl_async_func_destroy);
 
+	/* Initialize future await signal */
+	uv_async_init(node_impl->thread_loop, &node_impl->async_future_await, &node_loader_impl_async_future_await);
+
 	/* Initialize destroy signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
 	/* Unlock node implementation mutex */
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->result = result;
 
 	/* Unlock node implementation mutex */
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 }
 
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
@@ -1691,19 +2124,23 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	}
 
 	/* Duplicate stdin, stdout, stderr */
-	stdin_copy = dup(STDIN_FILENO);
-	stdout_copy = dup(STDOUT_FILENO);
-	stderr_copy = dup(STDERR_FILENO);
+	node_impl->stdin_copy = dup(STDIN_FILENO);
+	node_impl->stdout_copy = dup(STDOUT_FILENO);
+	node_impl->stderr_copy = dup(STDERR_FILENO);
+
+	/* Initialize trampolines */
+	node_impl->resolve_callback = NULL;
+	node_impl->reject_callback = NULL;
 
 	/* Initialize syncronization */
-	if (uv_cond_init(&node_impl_cond) != 0)
+	if (uv_cond_init(&node_impl->cond) != 0)
 	{
 		delete node_impl;
 
 		return NULL;
 	}
 
-	if (uv_mutex_init(&node_impl_mutex) != 0)
+	if (uv_mutex_init(&node_impl->mutex) != 0)
 	{
 		delete node_impl;
 
@@ -1722,32 +2159,24 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	}
 
 	/* Wait until start has been launch */
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
-
-	/* TODO: Initialize method unused by now */
+	uv_mutex_unlock(&node_impl->mutex);
 
 	/* Initialize node loader entry point */
-	/*
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->async_initialize.data = static_cast<void *>(&node_impl);
-	*/
 
 	/* Execute initialize async callback */
-	/*
 	uv_async_send(&node_impl->async_initialize);
-	*/
 
 	/* Wait until script has been loaded */
-	/*
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
-	*/
+	uv_mutex_unlock(&node_impl->mutex);
 
 	return node_impl;
 }
@@ -1779,7 +2208,7 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		NULL
 	};
 
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->async_load_from_file.data = static_cast<void *>(&async_data);
 
@@ -1787,9 +2216,9 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	uv_async_send(&node_impl->async_load_from_file);
 
 	/* Wait until module is loaded */
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	return static_cast<loader_handle>(async_data.handle_ref);
 }
@@ -1812,7 +2241,7 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 		NULL
 	};
 
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->async_load_from_memory.data = static_cast<void *>(&async_data);
 
@@ -1820,9 +2249,9 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	uv_async_send(&node_impl->async_load_from_memory);
 
 	/* Wait until module is loaded */
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	return static_cast<loader_handle>(async_data.handle_ref);
 }
@@ -1854,7 +2283,7 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 		handle_ref
 	};
 
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->async_clear.data = static_cast<void *>(&async_data);
 
@@ -1862,9 +2291,9 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 	uv_async_send(&node_impl->async_clear);
 
 	/* Wait until module is cleared */
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	return 0;
 }
@@ -1887,7 +2316,7 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		ctx
 	};
 
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->async_discover.data = static_cast<void *>(&async_data);
 
@@ -1895,9 +2324,9 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	uv_async_send(&node_impl->async_discover);
 
 	/* Wait until module is discovered */
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	return 0;
 }
@@ -1910,10 +2339,10 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 	napi_status status;
 
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl_mutex);
-
 	node_impl = *(static_cast<loader_impl_node *>(async->data));
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&node_impl->mutex);
 
 	/* Call destroy function */
 	{
@@ -1930,21 +2359,21 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 		/* Create scope */
 		status = napi_open_handle_scope(node_impl->env, &handle_scope);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Get function table object from reference */
 		status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		/* Retrieve destroy function from object table */
 		status = napi_create_string_utf8(env, destroy_str, sizeof(destroy_str) - 1, &destroy_str_value);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		status = napi_has_own_property(env, function_table_object, destroy_str_value, &result);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 
 		if (result == true)
 		{
@@ -1953,11 +2382,11 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 			status = napi_get_named_property(env, function_table_object, destroy_str, &function_trampoline_destroy);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			status = napi_typeof(env, function_trampoline_destroy, &valuetype);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			if (valuetype != napi_function)
 			{
@@ -1969,35 +2398,71 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 
 			status = napi_get_global(env, &global);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 
 			status = napi_call_function(env, global, function_trampoline_destroy, 0, nullptr, &return_value);
 
-			assert(status == napi_ok);
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Close scope */
 		status = napi_close_handle_scope(env, handle_scope);
 
-		assert(status == napi_ok);
+		node_loader_impl_exception(env, status);
 	}
 
 	/* Clear persistent references */
+	status = napi_reference_unref(node_impl->env, node_impl->resolve_trampoline_ref, &ref_count);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
+
+	status = napi_delete_reference(node_impl->env, node_impl->resolve_trampoline_ref);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	status = napi_reference_unref(node_impl->env, node_impl->reject_trampoline_ref, &ref_count);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
+
+	status = napi_delete_reference(node_impl->env, node_impl->reject_trampoline_ref);
+
+	node_loader_impl_exception(node_impl->env, status);
+
 	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
 
-	assert(status == napi_ok && ref_count == 0);
+	node_loader_impl_exception(node_impl->env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
 
 	status = napi_delete_reference(node_impl->env, node_impl->global_ref);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(node_impl->env, status);
 
 	status = napi_reference_unref(node_impl->env, node_impl->function_table_object_ref, &ref_count);
 
-	assert(status == napi_ok && ref_count == 0);
+	node_loader_impl_exception(node_impl->env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
 
 	status = napi_delete_reference(node_impl->env, node_impl->function_table_object_ref);
 
-	assert(status == napi_ok);
+	node_loader_impl_exception(node_impl->env, status);
 
 	/* Destroy async objects */
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_destroy), NULL);
@@ -2005,6 +2470,8 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_destroy), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_call), NULL);
+
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_future_await), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_discover), NULL);
 
@@ -2039,9 +2506,9 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	}
 
 	/* Signal destroy condition */
-	uv_cond_signal(&node_impl_cond);
+	uv_cond_signal(&node_impl->cond);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 }
 
 void node_loader_impl_walk(uv_handle_t * handle, void * arg)
@@ -2071,7 +2538,7 @@ int node_loader_impl_destroy(loader_impl impl)
 		return 1;
 	}
 
-	uv_mutex_lock(&node_impl_mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->async_destroy.data = static_cast<void *>(&node_impl);
 
@@ -2079,28 +2546,28 @@ int node_loader_impl_destroy(loader_impl impl)
 	uv_async_send(&node_impl->async_destroy);
 
 	/* Wait until node is destroyed */
-	uv_cond_wait(&node_impl_cond, &node_impl_mutex);
+	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
 
-	uv_mutex_unlock(&node_impl_mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	/* Clear condition syncronization object */
-	uv_cond_destroy(&node_impl_cond);
+	uv_cond_destroy(&node_impl->cond);
 
 	/* Wait for node thread to finish */
 	uv_thread_join(&node_impl->thread_id);
 
 	/* Clear mutex syncronization object */
-	uv_mutex_destroy(&node_impl_mutex);
+	uv_mutex_destroy(&node_impl->mutex);
 
 	/* Print NodeJS execution result */
 	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
 
-	delete node_impl;
-
 	/* Restore stdin, stdout, stderr */
-	dup2(stdin_copy, STDIN_FILENO);
-	dup2(stdout_copy, STDOUT_FILENO);
-	dup2(stderr_copy, STDERR_FILENO);
+	dup2(node_impl->stdin_copy, STDIN_FILENO);
+	dup2(node_impl->stdout_copy, STDOUT_FILENO);
+	dup2(node_impl->stderr_copy, STDERR_FILENO);
+
+	delete node_impl;
 
 	return 0;
 }

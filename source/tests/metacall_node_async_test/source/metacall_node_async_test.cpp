@@ -39,18 +39,22 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char buffer[] =
-			"async function sleep(ms) {\n"
-			"\tawait new Promise(resolve => setTimeout(resolve, ms));\n"
-			"}\n"
-			"async function f() {\n"
-			"\tawait sleep(100);\n"
-			"\treturn 10;\n"
+			"async function f(x) {\n"
+			"\tawait undefined;\n"
+			"\treturn x;\n"
 			"}\n"
 			"module.exports = { f };\n";
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
-		void * future = metacall_async("f", metacall_null_args);
+		void * args[] =
+		{
+			metacall_value_create_double(10.0)
+		};
+
+		void * future = metacall_async("f", args);
+
+		metacall_value_destroy(args[0]);
 
 		EXPECT_NE((void *) NULL, (void *) future);
 

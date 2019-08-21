@@ -919,20 +919,27 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 
 void * metacall_async(const char * name, void * args[])
 {
-	(void)name;
-	(void)args;
-
-	return NULL;
+	/* TODO: Implement true asynchronous call with thread safety */
+	return metacallv(name, args);
 }
 
-void * metacall_await(void * future, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void * metacall_await(void * v, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
-	(void)future;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)data;
+	future f;
 
-	return NULL;
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	if (value_type_id(v) != TYPE_FUTURE)
+	{
+		return NULL;
+	}
+
+	f = value_to_future(v);
+
+	return future_await(f, resolve_callback, reject_callback, data);
 }
 
 char * metacall_inspect(size_t * size, void * allocator)

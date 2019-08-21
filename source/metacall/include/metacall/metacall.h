@@ -440,7 +440,7 @@ METACALL_API void * metacall_async(const char * name, void * args[]);
 *  @brief
 *   Register a callback to be executed when a future is resolved (it does block)
 *
-*  @param[in] future
+*  @param[in] v
 *    Value representing the future
 *
 *  @param[in] resolve_callback
@@ -462,7 +462,7 @@ METACALL_API void * metacall_async(const char * name, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacall_await(void * future, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void * metacall_await(void * v, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
 
 /**
 *  @brief

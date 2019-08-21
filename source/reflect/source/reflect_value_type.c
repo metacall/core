@@ -295,11 +295,11 @@ void * value_to_ptr(value v)
 	return (void *)(*uint_ptr);
 }
 
-void * value_to_future(value v)
+future value_to_future(value v)
 {
 	uintptr_t * uint_future = value_data(v);
 
-	return (void *)(*uint_future);
+	return (future)(*uint_future);
 }
 
 void * value_to_null(value v)

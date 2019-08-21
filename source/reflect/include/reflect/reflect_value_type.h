@@ -434,7 +434,7 @@ REFLECT_API void * value_to_ptr(value v);
 *  @return
 *    Value converted to future
 */
-REFLECT_API void * value_to_future(value v);
+REFLECT_API future value_to_future(value v);
 
 /**
 *  @brief
