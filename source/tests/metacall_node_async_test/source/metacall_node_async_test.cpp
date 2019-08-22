@@ -40,7 +40,7 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	{
 		const char buffer[] =
 			"function f(x) {\n"
-			"\treturn new Promise(r => r(x));\n"
+			"\treturn new Promise(r => console.log('Promise executed') || r(x));\n"
 			"}\n"
 			"module.exports = { f };\n";
 

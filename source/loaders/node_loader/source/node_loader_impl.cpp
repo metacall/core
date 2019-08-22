@@ -96,8 +96,7 @@
 
 #define NODE_THREADSAFE_FUNCTION \
 	(NAPI_VERSION >= 4) && \
-	(NODE_MAJOR_VERSION >= 8 && NODE_MINOR_VERSION >= 10) && \
-	(NODE_MAJOR_VERSION < 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION < 6))
+	(NODE_MAJOR_VERSION >= 8 && NODE_MINOR_VERSION >= 10)
 
 #define NODE_THREADSAFE_FUNCTION_OPTIONAL \
 	(NAPI_VERSION >= 4) && \
@@ -1297,7 +1296,8 @@ void node_loader_impl_async_future_await(uv_async_t * async)
 
 	node_loader_impl_exception(env, status);
 
-	/* TODO: Proccess the promise_return */
+	/* Proccess the promise_return */
+	async_data->ret = node_loader_impl_napi_to_value(async_data->node_impl, env, promise_return);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
