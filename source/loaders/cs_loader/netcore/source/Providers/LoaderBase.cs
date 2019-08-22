@@ -34,6 +34,7 @@ namespace CSLoader.Providers
         }
 
         protected abstract Assembly MakeAssembly(MemoryStream stream);
+
         public bool LoadFromSourceFunctions(string[] source)
         {
             Assembly assembly = null;
@@ -51,6 +52,8 @@ namespace CSLoader.Providers
 
             references = assemblyFiles.Select(x => MetadataReference.CreateFromFile(x)).ToArray();
 
+            this.log.Info("CSLoader compiling from memory stream");
+
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
                 syntaxTrees: syntaxTrees,
@@ -64,12 +67,11 @@ namespace CSLoader.Providers
                 if (!result.Success)
                 {
                     IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
-
                         diagnostic.Severity == DiagnosticSeverity.Error);
 
                     foreach (Diagnostic diagnostic in failures)
                     {
-                        this.log.Error(diagnostic.GetMessage());
+                        this.log.Error("CSLoader compilation error: " + diagnostic.GetMessage());
                     }
 
                     return false;
@@ -89,9 +91,13 @@ namespace CSLoader.Providers
 
         public void LoadFunctions(Assembly assembly)
         {
+            this.log.Info("CSLoader load functions");
+
             foreach (var item in assembly.DefinedTypes.SelectMany(x => x.GetMethods()).Where(x => x.IsStatic))
             {
                 var con = new FunctionContainer(item);
+
+                this.log.Info("CSLoader loading function: " + item.Name);
 
                 if (!this.functions.ContainsKey(item.Name))
                 {

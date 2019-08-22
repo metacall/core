@@ -1,6 +1,8 @@
-﻿#if NETCOREAPP1_0 || NETCOREAPP1_1
+#if NETCOREAPP1_0 || NETCOREAPP1_1 || NETCOREAPP1_2
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.IO;
 using System.Runtime.Loader;
@@ -10,13 +12,16 @@ namespace CSLoader.Providers
 {
     public class LoaderV1 : LoaderBase
     {
-
         private Assembly Context_Resolving(AssemblyLoadContext context, AssemblyName name)
         {
             Assembly asm = null;
 
+            this.log.Info("CSLoader resolving " + name.Name);
+
             foreach (var path in paths)
             {
+                this.log.Info("CSLoader resolving " + path);
+
                 try
                 {
                     asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
@@ -38,7 +43,13 @@ namespace CSLoader.Providers
         public LoaderV1(ILog log) : base(log)
         {
             log.Info("CSLoaderV1 static initialization");
+
             AssemblyLoadContext.Default.Resolving += this.Context_Resolving;
+        }
+
+        protected override IEnumerable<string> AdditionalLibs()
+        {
+            return Array.Empty<string>();
         }
 
         protected override Assembly MakeAssembly(MemoryStream stream)
