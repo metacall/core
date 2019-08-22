@@ -39,8 +39,9 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char buffer[] =
+			"const util = require('util');\n"
 			"function f(x) {\n"
-			"\treturn new Promise(r => console.log(`Promise executed: ${x}`) || r(x));\n"
+			"\treturn new Promise(r => console.log(`Promise executed: ${util.inspect(r)} -> ${x}`) || r(x));\n"
 			"}\n"
 			"module.exports = { f };\n";
 
