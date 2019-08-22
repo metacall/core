@@ -40,7 +40,7 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 	{
 		const char buffer[] =
 			"function f(x) {\n"
-			"\treturn new Promise(r => console.log('Promise executed') || r(x));\n"
+			"\treturn new Promise(r => console.log(`Promise executed: ${x}`) || r(x));\n"
 			"}\n"
 			"module.exports = { f };\n";
 
@@ -59,13 +59,15 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
-		future = metacall_await(future, NULL, NULL, NULL);
-
-		EXPECT_NE((void *) NULL, (void *) future);
-
-		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
+		void * ret = metacall_await(future, NULL, NULL, NULL);
 
 		metacall_value_destroy(future);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

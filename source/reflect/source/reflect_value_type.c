@@ -445,6 +445,18 @@ void value_type_destroy(value v)
 				value_type_destroy(v_map[index]);
 			}
 		}
+		else if (type_id_future(id) == 0)
+		{
+			future f = value_to_future(v);
+
+			future_destroy(f);
+		}
+		/*
+		else if (type_id_function(id) == 0)
+		{
+
+		}
+		*/
 
 		if (type_id_invalid(id) != 0)
 		{

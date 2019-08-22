@@ -66,6 +66,11 @@ int type_id_ptr(type_id id)
 	return !(id == TYPE_PTR);
 }
 
+int type_id_future(type_id id)
+{
+	return !(id == TYPE_FUTURE);
+}
+
 int type_id_null(type_id id)
 {
 	return !(id == TYPE_NULL);

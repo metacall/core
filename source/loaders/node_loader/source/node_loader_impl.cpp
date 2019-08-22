@@ -122,6 +122,7 @@ typedef struct loader_impl_node_type
 	uv_async_t async_func_call;
 	uv_async_t async_func_destroy;
 	uv_async_t async_future_await;
+	uv_async_t async_future_delete;
 	uv_async_t async_destroy;
 
 	napi_ref resolve_trampoline_ref;
@@ -228,6 +229,14 @@ typedef struct loader_impl_async_future_await_type
 
 } * loader_impl_async_future_await;
 
+typedef struct loader_impl_async_future_delete_type
+{
+	loader_impl_node node_impl;
+	future f;
+	loader_impl_node_future node_future;
+
+} * loader_impl_async_future_delete;
+
 /* Exception */
 
 static inline void node_loader_impl_exception(napi_env env, napi_status status);
@@ -267,6 +276,8 @@ static void node_loader_impl_async_func_call(uv_async_t * async);
 static void node_loader_impl_async_func_destroy(uv_async_t * async);
 
 static void node_loader_impl_async_future_await(uv_async_t * async);
+
+static void node_loader_impl_async_future_delete(uv_async_t * async);
 
 static void node_loader_impl_async_load_from_file(uv_async_t * async);
 
@@ -718,7 +729,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 			const char * key = value_to_string(pair_value[0]);
 
 			/* TODO: Review recursion overflow */
-			napi_value element_v =node_loader_impl_value_to_napi(node_impl, env, static_cast<value>(pair_value[1]));
+			napi_value element_v = node_loader_impl_value_to_napi(node_impl, env, static_cast<value>(pair_value[1]));
 
 			status = napi_set_named_property(env, v, key, element_v);
 
@@ -888,9 +899,33 @@ future_return future_node_interface_await(future f, future_impl impl, future_res
 
 void future_node_interface_destroy(future f, future_impl impl)
 {
-	/* TODO */
-	(void)f;
-	(void)impl;
+	loader_impl_node_future node_future = (loader_impl_node_future)impl;
+
+	if (node_future != NULL)
+	{
+		loader_impl_node node_impl = node_future->node_impl;
+
+		struct loader_impl_async_future_delete_type async_data =
+		{
+			node_impl,
+			f,
+			node_future
+		};
+
+		uv_mutex_lock(&node_impl->mutex);
+
+		node_impl->async_future_delete.data = static_cast<void *>(&async_data);
+
+		/* Execute future await async callback */
+		uv_async_send(&node_impl->async_future_delete);
+
+		/* Wait until function is called */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		uv_mutex_unlock(&node_impl->mutex);
+
+		free(node_future);
+	}
 }
 
 future_interface future_node_singleton()
@@ -1083,7 +1118,7 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	}
 	#endif /* NODE_GET_EVENT_LOOP */
 
-	/* Initialize future trampolines (TODO: Check version and use napi_create_threadsafe_function if available) */
+	/* Initialize future trampolines */
 	status = napi_create_function(node_impl->env, loader_impl_node_resolve_trampoline, sizeof(loader_impl_node_resolve_trampoline) - 1, &future_node_on_resolve, node_impl, &resolve_func);
 
 	node_loader_impl_exception(node_impl->env, status);
@@ -1298,6 +1333,54 @@ void node_loader_impl_async_future_await(uv_async_t * async)
 
 	/* Proccess the promise_return */
 	async_data->ret = node_loader_impl_napi_to_value(async_data->node_impl, env, promise_return);
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Signal function destroy condition */
+	uv_cond_signal(&async_data->node_impl->cond);
+
+	uv_mutex_unlock(&async_data->node_impl->mutex);
+}
+
+void node_loader_impl_async_future_delete(uv_async_t * async)
+{
+	loader_impl_async_future_delete async_data;
+
+	napi_env env;
+
+	napi_handle_scope handle_scope;
+
+	async_data = static_cast<loader_impl_async_future_delete>(async->data);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&async_data->node_impl->mutex);
+
+	/* Get environment reference */
+	env = async_data->node_impl->env;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Clear promise reference */
+	uint32_t ref_count = 0;
+
+	status = napi_reference_unref(env, async_data->node_future->promise_ref, &ref_count);
+
+	node_loader_impl_exception(env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
+
+	status = napi_delete_reference(env, async_data->node_future->promise_ref);
+
+	node_loader_impl_exception(env, status);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
@@ -2139,6 +2222,9 @@ void node_loader_impl_thread(void * data)
 	/* Initialize future await signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_future_await, &node_loader_impl_async_future_await);
 
+	/* Initialize future await signal */
+	uv_async_init(node_impl->thread_loop, &node_impl->async_future_delete, &node_loader_impl_async_future_delete);
+
 	/* Initialize destroy signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
@@ -2534,6 +2620,8 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_func_call), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_future_await), NULL);
+
+	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_future_delete), NULL);
 
 	uv_close(reinterpret_cast<uv_handle_t *>(&node_impl->async_discover), NULL);
 

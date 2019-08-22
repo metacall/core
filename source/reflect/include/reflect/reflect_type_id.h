@@ -160,6 +160,18 @@ REFLECT_API int type_id_ptr(type_id id);
 
 /**
 *  @brief
+*    Check if type id is future value (future)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is future, different from zero otherwhise
+*/
+REFLECT_API int type_id_future(type_id id);
+
+/**
+*  @brief
 *    Check if type id is pointer value NULL
 *
 *  @param[in] id
