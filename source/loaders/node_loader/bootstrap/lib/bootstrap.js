@@ -6,6 +6,7 @@ const trampoline = require('./trampoline.node');
 
 const Module = require('module');
 const path = require('path');
+const util = require('util');
 
 const cherow = require('./node_modules/cherow');
 
@@ -197,8 +198,12 @@ function node_loader_trampoline_discover(handle) {
 	return discover;
 }
 
-function node_loader_trampoline_test() {
+function node_loader_trampoline_test(obj) {
 	console.log('NodeJS Loader Bootstrap Test');
+
+	if (obj !== undefined) {
+		console.log(util.inspect(obj, false, null, true));
+	}
 }
 
 function node_loader_trampoline_destroy() {
