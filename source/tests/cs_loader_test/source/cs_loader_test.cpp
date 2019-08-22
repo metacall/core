@@ -24,8 +24,6 @@
 
 #include <metacall/metacall.h>
 
-#include <reflect/reflect_value_type.h>
-
 #include <log/log.h>
 
 class cs_loader_test : public testing::Test
@@ -35,11 +33,15 @@ protected:
 
 TEST_F(cs_loader_test, SayHello)
 {
+	ASSERT_NE((void *) NULL, (void *) metacall_function("SayHello"));
+
 	metacall("SayHello");
 }
 
 TEST_F(cs_loader_test, SayAny)
 {
+	ASSERT_NE((void *) NULL, (void *) metacall_function("Say"));
+
 	metacall("Say", "Any");
 }
 
@@ -47,11 +49,13 @@ TEST_F(cs_loader_test, Jump)
 {
 	value ret = NULL;
 
+	ASSERT_NE((void *) NULL, (void *) metacall_function("SuperJump"));
+
 	ret = metacall("SuperJump");
 
 	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int) 2, (int) value_to_long(ret));
+	EXPECT_EQ((int) 2, (int) metacall_value_to_long(ret));
 
 	value_destroy(ret);
 }
@@ -60,11 +64,13 @@ TEST_F(cs_loader_test, Sum)
 {
 	value ret = NULL;
 
+	ASSERT_NE((void *) NULL, (void *) metacall_function("Sum"));
+
 	ret = metacall("Sum", 5, 10);
 
 	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int) 15, (int) value_to_long(ret));
+	EXPECT_EQ((int) 15, (int) metacall_value_to_long(ret));
 
 	value_destroy(ret);
 }
@@ -73,11 +79,13 @@ TEST_F(cs_loader_test, Concat)
 {
 	value ret = NULL;
 
+	ASSERT_NE((void *) NULL, (void *) metacall_function("Concat"));
+
 	ret = metacall("Concat", "Hello ", "World");
 
 	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int) 0, (int) strcmp((const char *)value_to_string(ret), "Hello World"));
+	EXPECT_EQ((int) 0, (int) strcmp((const char *)metacall_value_to_string(ret), "Hello World"));
 
-	value_destroy(ret);
+	metacall_value_destroy(ret);
 }

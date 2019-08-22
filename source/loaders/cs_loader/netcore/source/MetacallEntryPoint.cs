@@ -26,7 +26,7 @@ namespace CSLoader
 
             log.Info("CSLoader static initialization");
 
-            #if NETCOREAPP1_0 || NETCOREAPP1_1
+            #if NETCOREAPP1_0 || NETCOREAPP1_1 || NETCOREAPP1_2
                 loader = new Providers.LoaderV1(log);
             #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
                 loader = new Providers.LoaderV2(log);
