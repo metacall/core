@@ -206,20 +206,24 @@ function node_loader_trampoline_test(obj) {
 	}
 }
 
-function node_loader_trampoline_await(promise, resolve_ptr, reject_ptr) {
+function node_loader_trampoline_await(promise, trampoline_ptr) {
 	if (!(promise && promise.then && typeof promise.then === 'function')) {
-		throw new Error('Await only accepts a then-able object');
+		throw new Error('Await only accepts a then-able object as promise');
 	}
 
-	setTimeout(() => {
-		promise.then((x) => {
-			console.log('Resolveeeeeeeeee: ' + x);
-		}, (x) => {
-			console.log('Rejeeeect: ' + x);
-		}).catch((x) => {
-			console.log('CATCH: ' + x);
-		});
-	}, 0);
+	if (typeof trampoline_ptr !== 'object') {
+		throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
+	}
+
+	return new Promise((resolve, reject) => {
+		setTimeout(() => {
+			promise.then((x) => {
+				resolve(trampoline.resolve(trampoline_ptr, x));
+			}, (x) => {
+				reject(trampoline.reject(trampoline_ptr, x));
+			});
+		}, 0);
+	});
 }
 
 function node_loader_trampoline_destroy() {

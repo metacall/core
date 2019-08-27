@@ -52,6 +52,13 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 			metacall_value_create_double(10.0)
 		};
 
+		struct async_context
+		{
+			int value;
+		} ctx = {
+			234
+		};
+
 		void * future = metacall_async("f", args);
 
 		metacall_value_destroy(args[0]);
@@ -61,9 +68,26 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
 		void * ret = metacall_await(future, [](void * result, void * data) -> void * {
-			// here result is a value representing the 10
+			EXPECT_NE((void *) NULL, (void *) result);
+
+			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+
+			EXPECT_EQ((double) 10.0, (double) metacall_value_to_double(result));
+
+			EXPECT_NE((void *) NULL, (void *) data);
+
+			struct async_context * ctx = static_cast<struct async_context *>(data);
+
+			EXPECT_EQ((int) 234, (int) ctx->value);
+
+			return metacall_value_create_double(15.0);
+		}, [](void *, void *) -> void * {
+			int this_should_never_be_executed = 0;
+
+			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+
 			return NULL;
-		}, NULL, NULL);
+		}, static_cast<void *>(&ctx));
 
 		metacall_value_destroy(future);
 

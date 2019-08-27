@@ -18,10 +18,27 @@
 #include <node_api.h>
 
 #include <stdio.h>
-#include <assert.h>
+#include <assert.h> /* TODO: Improve error handling */
 
 #define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
-	{ name, 0, func, 0, 0, 0, napi_default, 0 }
+	{ name, NULL, func, NULL, NULL, NULL, napi_default, NULL }
+
+typedef void * (*future_resolve_callback)(void *, void *);
+
+typedef void * (*future_reject_callback)(void *, void *);
+
+typedef napi_value (*future_resolve_trampoline)(napi_env, napi_callback_info, future_resolve_callback, void *);
+typedef napi_value (*future_reject_trampoline)(napi_env, napi_callback_info, future_reject_callback, void *);
+
+typedef struct loader_impl_async_future_await_trampoline_type
+{
+	future_resolve_trampoline resolve_trampoline;
+	future_reject_trampoline reject_trampoline;
+	future_resolve_callback resolve_callback;
+	future_resolve_callback reject_callback;
+	void * context;
+
+} * loader_impl_async_future_await_trampoline;
 
 /* Win32 Delay Load */
 #if (defined(WIN32) || defined(_WIN32)) && (_MSC_VER >= 1200)
@@ -143,157 +160,109 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	return ptr_value;
 }
 
-#if 0
-/* TODO: This data must be binded to the promise, not here */
-future_resolve_callback resolve_callback;
-future_reject_callback reject_callback;
-
-napi_value future_node_on_resolve(napi_env env, napi_callback_info info)
+napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 {
-	loader_impl_node node_impl;
-
-	size_t argc;
-
-	napi_value argv[1], this_arg, result;
-
-	void * data;
-
 	napi_status status;
 
-	value arg, ret;
+	const size_t args_size = 2;
+	size_t argc = args_size;
 
-	napi_handle_scope handle_scope;
+	napi_value args[args_size];
+	napi_valuetype valuetype[args_size];
 
-	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	/* Parse arguments */
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
-	node_loader_impl_exception(env, status);
+	assert(status == napi_ok);
 
-	/* Retrieve the arguments and bind data */
-	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
-
-	node_loader_impl_exception(env, status);
-
-	if (argc != 1)
+	if (argc < args_size)
 	{
-		/* TODO: Error handling */
-	}
+		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
 
-	node_impl = static_cast<loader_impl_node>(data);
-
-	if (node_impl->resolve_callback == NULL)
-	{
 		return nullptr;
 	}
 
-	/* Convert the argument to a value */
-	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+	/* Parse argument value type */
+	status = napi_typeof(env, args[0], &valuetype[0]);
 
-	if (arg == NULL)
+	assert(status == napi_ok);
+
+	status = napi_typeof(env, args[1], &valuetype[1]);
+
+	assert(status == napi_ok);
+
+	if (valuetype[0] != napi_object || valuetype[1] != napi_object)
 	{
-		arg = value_create_null();
-	}
+		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
-	/* Call the resolve callback */
-	ret = node_impl->resolve_callback(arg, NULL /* TODO: data*/);
-
-	/* Destroy parameter argument */
-	value_type_destroy(arg);
-
-	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
-
-	/* Close scope */
-	status = napi_close_handle_scope(node_impl->env, handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	/* Destroy return value */
-	value_type_destroy(ret);
-
-	return result;
-}
-
-napi_value future_node_on_reject(napi_env env, napi_callback_info info)
-{
-	loader_impl_node node_impl;
-
-	size_t argc;
-
-	napi_value argv[1], this_arg, result;
-
-	void * data;
-
-	napi_status status;
-
-	value arg, ret;
-
-	napi_handle_scope handle_scope;
-
-	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
-
-	node_loader_impl_exception(env, status);
-
-	/* Retrieve the arguments and bind data */
-	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
-
-	node_loader_impl_exception(env, status);
-
-	if (argc != 1)
-	{
-		/* TODO: Error handling */
-	}
-
-	node_impl = static_cast<loader_impl_node>(data);
-
-	if (node_impl->reject_callback == NULL)
-	{
 		return nullptr;
 	}
 
-	/* Convert the argument to a value */
-	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+	/* TODO */
 
-	if (arg == NULL)
+	return NULL;
+}
+
+napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
+{
+	napi_status status;
+
+	const size_t args_size = 2;
+	size_t argc = args_size;
+
+	napi_value args[args_size];
+	napi_valuetype valuetype[args_size];
+
+	/* Parse arguments */
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+
+	assert(status == napi_ok);
+
+	if (argc < args_size)
 	{
-		arg = value_create_null();
+		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
+
+		return nullptr;
 	}
 
-	/* Call the resolve callback */
-	ret = node_impl->reject_callback(arg, NULL /* TODO: data*/);
+	/* Parse argument value type */
+	status = napi_typeof(env, args[0], &valuetype[0]);
 
-	/* Destroy parameter argument */
-	value_type_destroy(arg);
+	assert(status == napi_ok);
 
-	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	status = napi_typeof(env, args[1], &valuetype[1]);
 
-	/* Close scope */
-	status = napi_close_handle_scope(node_impl->env, handle_scope);
+	assert(status == napi_ok);
 
-	node_loader_impl_exception(node_impl->env, status);
+	if (valuetype[0] != napi_object || valuetype[1] != napi_object)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
-	/* Destroy return value */
-	value_type_destroy(ret);
+		return nullptr;
+	}
 
-	return result;
+	/* TODO */
+
+	return NULL;
 }
-#endif
 
-
-napi_value node_loader_trampoline_register_initialize(napi_env env, napi_value exports)
+napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)
 {
 	napi_status status;
 
 	/* Declare register function */
-	napi_property_descriptor desc = NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("register", node_loader_trampoline_register);
+	napi_property_descriptor desc[] =
+	{
+		NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("register", node_loader_trampoline_register),
+		NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("resolve", node_loader_trampoline_resolve),
+		NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("reject", node_loader_trampoline_reject)
+	};
 
-	status = napi_define_properties(env, exports, 1, &desc);
+	status = napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc);
 
 	assert(status == napi_ok);
 
 	return exports;
 }
 
-NAPI_MODULE(NODE_GYP_MODULE_NAME, node_loader_trampoline_register_initialize)
+NAPI_MODULE(NODE_GYP_MODULE_NAME, node_loader_trampoline_initialize)
