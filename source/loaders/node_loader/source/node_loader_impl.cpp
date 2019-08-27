@@ -102,9 +102,6 @@
 	(NAPI_VERSION >= 4) && \
 	(NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 6))
 
-static const char loader_impl_node_resolve_trampoline[] = "__metacall_loader_impl_node_promise_resolve_trampoline__";
-static const char loader_impl_node_reject_trampoline[] = "__metacall_loader_impl_node_promise_reject_trampoline__";
-
 typedef struct loader_impl_node_type
 {
 	napi_env env;
@@ -124,13 +121,6 @@ typedef struct loader_impl_node_type
 	uv_async_t async_future_await;
 	uv_async_t async_future_delete;
 	uv_async_t async_destroy;
-
-	napi_ref resolve_trampoline_ref;
-	napi_ref reject_trampoline_ref;
-
-	/* TODO: This data must be binded to the promise, not here */
-	future_resolve_callback resolve_callback;
-	future_reject_callback reject_callback;
 
 	uv_mutex_t mutex;
 	uv_cond_t cond;
@@ -263,10 +253,6 @@ static future_return future_node_interface_await(future f, future_impl impl, fut
 static void future_node_interface_destroy(future f, future_impl impl);
 
 static future_interface future_node_singleton(void);
-
-napi_value future_node_on_resolve(napi_env env, napi_callback_info info);
-
-napi_value future_node_on_reject(napi_env env, napi_callback_info info);
 
 /* Async */
 static void node_loader_impl_async_initialize(uv_async_t * async);
@@ -940,143 +926,9 @@ future_interface future_node_singleton()
 	return &node_future_interface;
 }
 
-napi_value future_node_on_resolve(napi_env env, napi_callback_info info)
-{
-	loader_impl_node node_impl;
-
-	size_t argc;
-
-	napi_value argv[1], this_arg, result;
-
-	void * data;
-
-	napi_status status;
-
-	value arg, ret;
-
-	napi_handle_scope handle_scope;
-
-	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
-
-	node_loader_impl_exception(env, status);
-
-	/* Retrieve the arguments and bind data */
-	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
-
-	node_loader_impl_exception(env, status);
-
-	if (argc != 1)
-	{
-		/* TODO: Error handling */
-	}
-
-	node_impl = static_cast<loader_impl_node>(data);
-
-	if (node_impl->resolve_callback == NULL)
-	{
-		return nullptr;
-	}
-
-	/* Convert the argument to a value */
-	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
-
-	if (arg == NULL)
-	{
-		arg = value_create_null();
-	}
-
-	/* Call the resolve callback */
-	ret = node_impl->resolve_callback(arg, NULL /* TODO: data*/);
-
-	/* Destroy parameter argument */
-	value_type_destroy(arg);
-
-	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
-
-	/* Close scope */
-	status = napi_close_handle_scope(node_impl->env, handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	/* Destroy return value */
-	value_type_destroy(ret);
-
-	return result;
-}
-
-napi_value future_node_on_reject(napi_env env, napi_callback_info info)
-{
-	loader_impl_node node_impl;
-
-	size_t argc;
-
-	napi_value argv[1], this_arg, result;
-
-	void * data;
-
-	napi_status status;
-
-	value arg, ret;
-
-	napi_handle_scope handle_scope;
-
-	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
-
-	node_loader_impl_exception(env, status);
-
-	/* Retrieve the arguments and bind data */
-	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
-
-	node_loader_impl_exception(env, status);
-
-	if (argc != 1)
-	{
-		/* TODO: Error handling */
-	}
-
-	node_impl = static_cast<loader_impl_node>(data);
-
-	if (node_impl->reject_callback == NULL)
-	{
-		return nullptr;
-	}
-
-	/* Convert the argument to a value */
-	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
-
-	if (arg == NULL)
-	{
-		arg = value_create_null();
-	}
-
-	/* Call the resolve callback */
-	ret = node_impl->reject_callback(arg, NULL /* TODO: data*/);
-
-	/* Destroy parameter argument */
-	value_type_destroy(arg);
-
-	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
-
-	/* Close scope */
-	status = napi_close_handle_scope(node_impl->env, handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	/* Destroy return value */
-	value_type_destroy(ret);
-
-	return result;
-}
-
 void node_loader_impl_async_initialize(uv_async_t * async)
 {
 	napi_status status;
-
-	napi_value resolve_func, reject_func;
 
 	napi_handle_scope handle_scope;
 
@@ -1117,23 +969,6 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 		}
 	}
 	#endif /* NODE_GET_EVENT_LOOP */
-
-	/* Initialize future trampolines */
-	status = napi_create_function(node_impl->env, loader_impl_node_resolve_trampoline, sizeof(loader_impl_node_resolve_trampoline) - 1, &future_node_on_resolve, node_impl, &resolve_func);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	status = napi_create_reference(node_impl->env, resolve_func, 1, &node_impl->resolve_trampoline_ref);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	status = napi_create_function(node_impl->env, loader_impl_node_reject_trampoline, sizeof(loader_impl_node_reject_trampoline) - 1, &future_node_on_reject, node_impl, &reject_func);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	status = napi_create_reference(node_impl->env, reject_func, 1, &node_impl->reject_trampoline_ref);
-
-	node_loader_impl_exception(node_impl->env, status);
 
 	/* Close scope */
 	status = napi_close_handle_scope(node_impl->env, handle_scope);
@@ -1279,9 +1114,15 @@ void node_loader_impl_async_future_await(uv_async_t * async)
 
 	napi_env env;
 
-	napi_value then;
+	const char await_str[] = "await";
+	napi_value await_str_value;
 
-	napi_value argv[2];
+	napi_value function_table_object;
+	napi_value function_await;
+
+	bool result = false;
+
+	napi_value argv[1];
 
 	napi_handle_scope handle_scope;
 
@@ -1299,35 +1140,50 @@ void node_loader_impl_async_future_await(uv_async_t * async)
 	node_loader_impl_exception(env, status);
 
 	/* Get promise reference */
-	napi_value promise;
-
-	status = napi_get_reference_value(env, async_data->node_future->promise_ref, &promise);
+	status = napi_get_reference_value(env, async_data->node_future->promise_ref, &argv[0]);
 
 	node_loader_impl_exception(env, status);
 
-	/* Get then function */
-	status = napi_get_named_property(env, promise, "then", &then);
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, async_data->node_impl->function_table_object_ref, &function_table_object);
 
 	node_loader_impl_exception(env, status);
 
-	/* Get trampoline functions from JS to C and assign them to argv */
-	status = napi_get_reference_value(env, async_data->node_impl->resolve_trampoline_ref, &argv[0]);
+	/* Retrieve resolve function from object table */
+	status = napi_create_string_utf8(env, await_str, sizeof(await_str) - 1, &await_str_value);
 
 	node_loader_impl_exception(env, status);
 
-	status = napi_get_reference_value(env, async_data->node_impl->reject_trampoline_ref, &argv[1]);
+	status = napi_has_own_property(env, function_table_object, await_str_value, &result);
 
 	node_loader_impl_exception(env, status);
 
-	/* Set current callbacks to node impl in order to make them accessible to the trampolines */
-	async_data->node_impl->resolve_callback = async_data->resolve_callback;
+	if (result == true)
+	{
+		napi_valuetype valuetype;
 
-	async_data->node_impl->reject_callback = async_data->reject_callback;
+		status = napi_get_named_property(env, function_table_object, await_str, &function_await);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_typeof(env, function_await, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function test in function table object");
+		}
+	}
 
 	/* Call to function */
-	napi_value promise_return;
+	napi_value global, promise_return;
 
-	status = napi_call_function(env, promise, then, 2, argv, &promise_return);
+	status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_call_function(env, global, function_await, 1, argv, &promise_return);
 
 	node_loader_impl_exception(env, status);
 
@@ -2262,10 +2118,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	node_impl->stdout_copy = dup(STDOUT_FILENO);
 	node_impl->stderr_copy = dup(STDERR_FILENO);
 
-	/* Initialize trampolines */
-	node_impl->resolve_callback = NULL;
-	node_impl->reject_callback = NULL;
-
 	/* Initialize syncronization */
 	if (uv_cond_init(&node_impl->cond) != 0)
 	{
@@ -2558,32 +2410,6 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	}
 
 	/* Clear persistent references */
-	status = napi_reference_unref(node_impl->env, node_impl->resolve_trampoline_ref, &ref_count);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
-
-	status = napi_delete_reference(node_impl->env, node_impl->resolve_trampoline_ref);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	status = napi_reference_unref(node_impl->env, node_impl->reject_trampoline_ref, &ref_count);
-
-	node_loader_impl_exception(node_impl->env, status);
-
-	if (ref_count != 0)
-	{
-		/* TODO: Error handling */
-	}
-
-	status = napi_delete_reference(node_impl->env, node_impl->reject_trampoline_ref);
-
-	node_loader_impl_exception(node_impl->env, status);
-
 	status = napi_reference_unref(node_impl->env, node_impl->global_ref, &ref_count);
 
 	node_loader_impl_exception(node_impl->env, status);

@@ -206,6 +206,22 @@ function node_loader_trampoline_test(obj) {
 	}
 }
 
+function node_loader_trampoline_await(promise, resolve_ptr, reject_ptr) {
+	if (!(promise && promise.then && typeof promise.then === 'function')) {
+		throw new Error('Await only accepts a then-able object');
+	}
+
+	setTimeout(() => {
+		promise.then((x) => {
+			console.log('Resolveeeeeeeeee: ' + x);
+		}, (x) => {
+			console.log('Rejeeeect: ' + x);
+		}).catch((x) => {
+			console.log('CATCH: ' + x);
+		});
+	}, 0);
+}
+
 function node_loader_trampoline_destroy() {
 	try {
 		// eslint-disable-next-line no-underscore-dangle
@@ -238,6 +254,7 @@ module.exports = ((impl, ptr) => {
 		'clear': node_loader_trampoline_clear,
 		'discover': node_loader_trampoline_discover,
 		'test': node_loader_trampoline_test,
+		'await': node_loader_trampoline_await,
 		'destroy': node_loader_trampoline_destroy,
 	});
 })(process.argv[2], process.argv[3]);

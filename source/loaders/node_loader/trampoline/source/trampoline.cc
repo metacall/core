@@ -143,6 +143,145 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	return ptr_value;
 }
 
+#if 0
+/* TODO: This data must be binded to the promise, not here */
+future_resolve_callback resolve_callback;
+future_reject_callback reject_callback;
+
+napi_value future_node_on_resolve(napi_env env, napi_callback_info info)
+{
+	loader_impl_node node_impl;
+
+	size_t argc;
+
+	napi_value argv[1], this_arg, result;
+
+	void * data;
+
+	napi_status status;
+
+	value arg, ret;
+
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Retrieve the arguments and bind data */
+	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != 1)
+	{
+		/* TODO: Error handling */
+	}
+
+	node_impl = static_cast<loader_impl_node>(data);
+
+	if (node_impl->resolve_callback == NULL)
+	{
+		return nullptr;
+	}
+
+	/* Convert the argument to a value */
+	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+
+	if (arg == NULL)
+	{
+		arg = value_create_null();
+	}
+
+	/* Call the resolve callback */
+	ret = node_impl->resolve_callback(arg, NULL /* TODO: data*/);
+
+	/* Destroy parameter argument */
+	value_type_destroy(arg);
+
+	/* Return the result */
+	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	/* Close scope */
+	status = napi_close_handle_scope(node_impl->env, handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	/* Destroy return value */
+	value_type_destroy(ret);
+
+	return result;
+}
+
+napi_value future_node_on_reject(napi_env env, napi_callback_info info)
+{
+	loader_impl_node node_impl;
+
+	size_t argc;
+
+	napi_value argv[1], this_arg, result;
+
+	void * data;
+
+	napi_status status;
+
+	value arg, ret;
+
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Retrieve the arguments and bind data */
+	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != 1)
+	{
+		/* TODO: Error handling */
+	}
+
+	node_impl = static_cast<loader_impl_node>(data);
+
+	if (node_impl->reject_callback == NULL)
+	{
+		return nullptr;
+	}
+
+	/* Convert the argument to a value */
+	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+
+	if (arg == NULL)
+	{
+		arg = value_create_null();
+	}
+
+	/* Call the resolve callback */
+	ret = node_impl->reject_callback(arg, NULL /* TODO: data*/);
+
+	/* Destroy parameter argument */
+	value_type_destroy(arg);
+
+	/* Return the result */
+	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	/* Close scope */
+	status = napi_close_handle_scope(node_impl->env, handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
+	/* Destroy return value */
+	value_type_destroy(ret);
+
+	return result;
+}
+#endif
+
+
 napi_value node_loader_trampoline_register_initialize(napi_env env, napi_value exports)
 {
 	napi_status status;

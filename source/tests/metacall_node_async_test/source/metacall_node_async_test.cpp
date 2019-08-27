@@ -60,7 +60,10 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
-		void * ret = metacall_await(future, NULL, NULL, NULL);
+		void * ret = metacall_await(future, [](void * result, void * data) -> void * {
+			// here result is a value representing the 10
+			return NULL;
+		}, NULL, NULL);
 
 		metacall_value_destroy(future);
 
