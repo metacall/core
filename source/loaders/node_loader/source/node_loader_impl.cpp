@@ -102,8 +102,8 @@
 	(NAPI_VERSION >= 4) && \
 	(NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 6))
 
-static const char loader_impl_node_resolve_trampoline[] = "__metacall_loader_impl_node_resolve_trampoline__";
-static const char loader_impl_node_reject_trampoline[] = "__metacall_loader_impl_node_reject_trampoline__";
+static const char loader_impl_node_resolve_trampoline[] = "__metacall_loader_impl_node_promise_resolve_trampoline__";
+static const char loader_impl_node_reject_trampoline[] = "__metacall_loader_impl_node_promise_reject_trampoline__";
 
 typedef struct loader_impl_node_type
 {
@@ -1966,13 +1966,6 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 	napi_env env = static_cast<napi_env>(env_ptr);
 	napi_value function_table_object = static_cast<napi_value>(function_table_object_ptr);
 
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char test_str[] = "test";
-		napi_value test_str_value;
-	#endif
-
-	bool result = false;
-
 	napi_status status;
 
 	napi_value global;
@@ -1995,6 +1988,11 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	{
+		const char test_str[] = "test";
+		napi_value test_str_value;
+
+		bool result = false;
+
 		/* Retrieve test function from object table */
 		status = napi_create_string_utf8(env, test_str, sizeof(test_str) - 1, &test_str_value);
 
