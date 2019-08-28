@@ -80,11 +80,15 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 			EXPECT_EQ((int) 234, (int) ctx->value);
 
+			printf("Resolve C Callback\n");
+
 			return metacall_value_create_double(15.0);
 		}, [](void *, void *) -> void * {
 			int this_should_never_be_executed = 0;
 
 			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+
+			printf("Reject C Callback\n");
 
 			return NULL;
 		}, static_cast<void *>(&ctx));

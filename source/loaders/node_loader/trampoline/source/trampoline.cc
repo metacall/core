@@ -26,8 +26,8 @@
 typedef void * (*future_resolve_callback)(void *, void *);
 typedef void * (*future_reject_callback)(void *, void *);
 
-typedef napi_value (*future_resolve_trampoline)(napi_env, napi_callback_info, future_resolve_callback, void *);
-typedef napi_value (*future_reject_trampoline)(napi_env, napi_callback_info, future_reject_callback, void *);
+typedef napi_value (*future_resolve_trampoline)(void *, future_resolve_callback, napi_value, void *);
+typedef napi_value (*future_reject_trampoline)(void *, future_reject_callback, napi_value, void *);
 
 typedef struct loader_impl_async_future_await_trampoline_type
 {
@@ -169,8 +169,10 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
+	void * node_loader;
+
 	/* Parse arguments */
-	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, &node_loader);
 
 	assert(status == napi_ok);
 
@@ -190,16 +192,29 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 
 	assert(status == napi_ok);
 
-	if (valuetype[0] != napi_object)
+	if (valuetype[0] != napi_object /* TODO: check valuetype[1] */)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
 		return nullptr;
 	}
 
-	/* TODO */
+	/* Unwrap trampoline pointer */
+	void * result;
 
-	return NULL;
+	status = napi_unwrap(env, args[0], &result);
+
+	assert(status == napi_ok);
+
+	if (result == NULL)
+	{
+		return NULL;
+	}
+
+	/* Execute the callback */
+	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+
+	return trampoline->resolve_trampoline(node_loader, trampoline->resolve_callback, args[1], trampoline->context);
 }
 
 napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
@@ -212,8 +227,10 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
+	void * node_loader;
+
 	/* Parse arguments */
-	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, &node_loader);
 
 	assert(status == napi_ok);
 
@@ -233,16 +250,29 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 	assert(status == napi_ok);
 
-	if (valuetype[0] != napi_object)
+	if (valuetype[0] != napi_object /* TODO: check valuetype[1] */)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
 		return nullptr;
 	}
 
-	/* TODO */
+	/* Unwrap trampoline pointer */
+	void * result;
 
-	return NULL;
+	status = napi_unwrap(env, args[0], &result);
+
+	assert(status == napi_ok);
+
+	if (result == NULL)
+	{
+		return NULL;
+	}
+
+	/* Execute the callback */
+	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
+
+	return trampoline->reject_trampoline(node_loader, trampoline->reject_callback, args[1], trampoline->context);
 }
 
 napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)

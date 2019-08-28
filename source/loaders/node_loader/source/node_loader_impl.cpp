@@ -219,8 +219,8 @@ typedef struct loader_impl_async_future_await_type
 
 } * loader_impl_async_future_await;
 
-typedef napi_value (*future_resolve_trampoline)(napi_env, napi_callback_info, future_resolve_callback, void *);
-typedef napi_value (*future_reject_trampoline)(napi_env, napi_callback_info, future_reject_callback, void *);
+typedef napi_value (*future_resolve_trampoline)(loader_impl_node, future_resolve_callback, napi_value, void *);
+typedef napi_value (*future_reject_trampoline)(loader_impl_node, future_reject_callback, napi_value, void *);
 
 typedef struct loader_impl_async_future_await_trampoline_type
 {
@@ -1129,15 +1129,9 @@ void node_loader_impl_async_future_await_finalize(napi_env, void * finalize_data
 	free(trampoline);
 }
 
-napi_value node_loader_impl_async_future_resolve(napi_env env, napi_callback_info info, future_resolve_callback resolve, void * ctx)
+napi_value node_loader_impl_async_future_resolve(loader_impl_node node_impl, future_resolve_callback resolve, napi_value v, void * ctx)
 {
-	loader_impl_node node_impl;
-
-	size_t argc;
-
-	napi_value argv[1], this_arg, result;
-
-	void * data;
+	napi_value result;
 
 	napi_status status;
 
@@ -1145,30 +1139,18 @@ napi_value node_loader_impl_async_future_resolve(napi_env env, napi_callback_inf
 
 	napi_handle_scope handle_scope;
 
-	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
-
-	node_loader_impl_exception(env, status);
-
-	/* Retrieve the arguments and bind data */
-	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
-
-	node_loader_impl_exception(env, status);
-
-	if (argc != 1)
-	{
-		/* TODO: Error handling */
-	}
-
-	node_impl = static_cast<loader_impl_node>(data);
-
-	if (resolve == NULL)
+	if (node_impl == NULL || resolve == NULL)
 	{
 		return nullptr;
 	}
 
+	/* Create scope */
+	status = napi_open_handle_scope(node_impl->env, &handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
 	/* Convert the argument to a value */
-	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+	arg = node_loader_impl_napi_to_value(node_impl, node_impl->env, v);
 
 	if (arg == NULL)
 	{
@@ -1182,7 +1164,7 @@ napi_value node_loader_impl_async_future_resolve(napi_env env, napi_callback_inf
 	value_type_destroy(arg);
 
 	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	result = node_loader_impl_value_to_napi(node_impl, node_impl->env, ret);
 
 	/* Close scope */
 	status = napi_close_handle_scope(node_impl->env, handle_scope);
@@ -1195,15 +1177,9 @@ napi_value node_loader_impl_async_future_resolve(napi_env env, napi_callback_inf
 	return result;
 }
 
-napi_value node_loader_impl_async_future_reject(napi_env env, napi_callback_info info, future_reject_callback reject, void * ctx)
+napi_value node_loader_impl_async_future_reject(loader_impl_node node_impl, future_reject_callback reject, napi_value v, void * ctx)
 {
-	loader_impl_node node_impl;
-
-	size_t argc;
-
-	napi_value argv[1], this_arg, result;
-
-	void * data;
+	napi_value result;
 
 	napi_status status;
 
@@ -1211,44 +1187,32 @@ napi_value node_loader_impl_async_future_reject(napi_env env, napi_callback_info
 
 	napi_handle_scope handle_scope;
 
-	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
-
-	node_loader_impl_exception(env, status);
-
-	/* Retrieve the arguments and bind data */
-	status = napi_get_cb_info(env, info, &argc, &argv[0], &this_arg, &data);
-
-	node_loader_impl_exception(env, status);
-
-	if (argc != 1)
-	{
-		/* TODO: Error handling */
-	}
-
-	node_impl = static_cast<loader_impl_node>(data);
-
-	if (reject == NULL)
+	if (node_impl == NULL || reject == NULL)
 	{
 		return nullptr;
 	}
 
+	/* Create scope */
+	status = napi_open_handle_scope(node_impl->env, &handle_scope);
+
+	node_loader_impl_exception(node_impl->env, status);
+
 	/* Convert the argument to a value */
-	arg = node_loader_impl_napi_to_value(node_impl, env, argv[0]);
+	arg = node_loader_impl_napi_to_value(node_impl, node_impl->env, v);
 
 	if (arg == NULL)
 	{
 		arg = value_create_null();
 	}
 
-	/* Call the resolve callback */
+	/* Call the reject callback */
 	ret = reject(arg, ctx);
 
 	/* Destroy parameter argument */
 	value_type_destroy(arg);
 
 	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	result = node_loader_impl_value_to_napi(node_impl, node_impl->env, ret);
 
 	/* Close scope */
 	status = napi_close_handle_scope(node_impl->env, handle_scope);
