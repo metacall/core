@@ -31,6 +31,7 @@ typedef napi_value (*future_reject_trampoline)(void *, future_reject_callback, n
 
 typedef struct loader_impl_async_future_await_trampoline_type
 {
+	void * node_loader;
 	future_resolve_trampoline resolve_trampoline;
 	future_reject_trampoline reject_trampoline;
 	future_resolve_callback resolve_callback;
@@ -169,10 +170,8 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
-	void * node_loader;
-
 	/* Parse arguments */
-	status = napi_get_cb_info(env, info, &argc, args, nullptr, &node_loader);
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
 	assert(status == napi_ok);
 
@@ -214,7 +213,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	/* Execute the callback */
 	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
 
-	return trampoline->resolve_trampoline(node_loader, trampoline->resolve_callback, args[1], trampoline->context);
+	return trampoline->resolve_trampoline(trampoline->node_loader, trampoline->resolve_callback, args[1], trampoline->context);
 }
 
 napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
@@ -227,10 +226,8 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
-	void * node_loader;
-
 	/* Parse arguments */
-	status = napi_get_cb_info(env, info, &argc, args, nullptr, &node_loader);
+	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
 
 	assert(status == napi_ok);
 
@@ -272,7 +269,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	/* Execute the callback */
 	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
 
-	return trampoline->reject_trampoline(node_loader, trampoline->reject_callback, args[1], trampoline->context);
+	return trampoline->reject_trampoline(trampoline->node_loader, trampoline->reject_callback, args[1], trampoline->context);
 }
 
 napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)

@@ -56,7 +56,7 @@ if(MSVC)
 		FOLDER "${IDE_FOLDER}"
 	)
 
-	add_dependencies(${target} ${target_binding})
+	add_dependencies(${target_binding} ${target})
 else()
 	add_custom_target(${target} ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}

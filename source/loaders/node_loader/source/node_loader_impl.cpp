@@ -224,6 +224,7 @@ typedef napi_value (*future_reject_trampoline)(loader_impl_node, future_reject_c
 
 typedef struct loader_impl_async_future_await_trampoline_type
 {
+	loader_impl_node node_loader;
 	future_resolve_trampoline resolve_trampoline;
 	future_reject_trampoline reject_trampoline;
 	future_resolve_callback resolve_callback;
@@ -1301,6 +1302,7 @@ void node_loader_impl_async_future_await(uv_async_t * async)
 		napi_ref trampoline_ref;
 
 		/* Set trampoline object values */
+		trampoline->node_loader = async_data->node_impl;
 		trampoline->resolve_trampoline = &node_loader_impl_async_future_resolve;
 		trampoline->reject_trampoline = &node_loader_impl_async_future_reject;
 		trampoline->resolve_callback = async_data->resolve_callback;
