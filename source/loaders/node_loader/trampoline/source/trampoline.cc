@@ -21,10 +21,9 @@
 #include <assert.h> /* TODO: Improve error handling */
 
 #define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
-	{ name, NULL, func, NULL, NULL, NULL, napi_default, NULL }
+	{ name, 0, func, 0, 0, 0, napi_default, 0 }
 
 typedef void * (*future_resolve_callback)(void *, void *);
-
 typedef void * (*future_reject_callback)(void *, void *);
 
 typedef napi_value (*future_resolve_trampoline)(napi_env, napi_callback_info, future_resolve_callback, void *);
@@ -73,7 +72,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	napi_status status;
 
 	const size_t args_size = 3;
-	size_t argc = args_size;
+	size_t argc;
 
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
@@ -83,7 +82,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 
 	assert(status == napi_ok);
 
-	if (argc < args_size)
+	if (argc != args_size)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
 
@@ -165,7 +164,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	napi_status status;
 
 	const size_t args_size = 2;
-	size_t argc = args_size;
+	size_t argc;
 
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
@@ -175,7 +174,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 
 	assert(status == napi_ok);
 
-	if (argc < args_size)
+	if (argc != args_size)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
 
@@ -208,7 +207,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	napi_status status;
 
 	const size_t args_size = 2;
-	size_t argc = args_size;
+	size_t argc;
 
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
@@ -218,7 +217,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 	assert(status == napi_ok);
 
-	if (argc < args_size)
+	if (argc != args_size)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
 
