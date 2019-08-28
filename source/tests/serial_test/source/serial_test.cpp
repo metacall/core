@@ -106,8 +106,8 @@ TEST_F(serial_test, DefaultConstructor)
 
 		static const value value_map[] =
 		{
-			value_create_array(value_map_a, sizeof(value_map_a)),
-			value_create_array(value_map_b, sizeof(value_map_b))
+			value_create_array(value_map_a, sizeof(value_map_a) / sizeof(value_map_a[0])),
+			value_create_array(value_map_b, sizeof(value_map_b) / sizeof(value_map_b[0]))
 		};
 
 		static const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
@@ -342,7 +342,7 @@ TEST_F(serial_test, DefaultConstructor)
 		static const value value_map[] =
 		{
 			value_create_array(value_map_tupla_a, sizeof(value_map_tupla_a) / sizeof(value_map_tupla_a[0])),
-			value_create_array(value_map_tupla_b, sizeof(value_map_tupla_b) / sizeof(value_map_tupla_b[0])),
+			value_create_array(value_map_tupla_b, sizeof(value_map_tupla_b) / sizeof(value_map_tupla_b[0]))
 		};
 
 		static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
