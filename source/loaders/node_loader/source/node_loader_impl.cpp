@@ -962,6 +962,7 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	{
 		struct uv_loop_s * loop;
 
+		/* It is impossible to inject the event loop, so we must add an assert to verfy it */
 		status = napi_get_uv_event_loop(node_impl->env, &loop);
 
 		node_loader_impl_exception(node_impl->env, status);
@@ -2231,7 +2232,7 @@ void node_loader_impl_thread(void * data)
 
 	/* TODO: ... reimplement until here */
 
-	node_impl->thread_loop = uv_default_loop(); /* TODO: napi_get_uv_event_loop() */
+	node_impl->thread_loop = uv_default_loop();
 
 	/* Initialize initialize signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_initialize, &node_loader_impl_async_initialize);

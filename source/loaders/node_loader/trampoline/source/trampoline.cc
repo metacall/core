@@ -190,7 +190,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 
 	assert(status == napi_ok);
 
-	if (valuetype[0] != napi_object || valuetype[1] != napi_object)
+	if (valuetype[0] != napi_object)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
@@ -233,7 +233,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 	assert(status == napi_ok);
 
-	if (valuetype[0] != napi_object || valuetype[1] != napi_object)
+	if (valuetype[0] != napi_object)
 	{
 		napi_throw_type_error(env, nullptr, "Wrong arguments type");
 
