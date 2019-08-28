@@ -1134,21 +1134,12 @@ napi_value node_loader_impl_async_future_resolve(loader_impl_node node_impl, fut
 {
 	napi_value result;
 
-	napi_status status;
-
 	value arg, ret;
-
-	napi_handle_scope handle_scope;
 
 	if (node_impl == NULL || resolve == NULL)
 	{
 		return nullptr;
 	}
-
-	/* Create scope */
-	status = napi_open_handle_scope(node_impl->env, &handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
 
 	/* Convert the argument to a value */
 	arg = node_loader_impl_napi_to_value(node_impl, node_impl->env, v);
@@ -1167,11 +1158,6 @@ napi_value node_loader_impl_async_future_resolve(loader_impl_node node_impl, fut
 	/* Return the result */
 	result = node_loader_impl_value_to_napi(node_impl, node_impl->env, ret);
 
-	/* Close scope */
-	status = napi_close_handle_scope(node_impl->env, handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
-
 	/* Destroy return value */
 	value_type_destroy(ret);
 
@@ -1182,21 +1168,12 @@ napi_value node_loader_impl_async_future_reject(loader_impl_node node_impl, futu
 {
 	napi_value result;
 
-	napi_status status;
-
 	value arg, ret;
-
-	napi_handle_scope handle_scope;
 
 	if (node_impl == NULL || reject == NULL)
 	{
 		return nullptr;
 	}
-
-	/* Create scope */
-	status = napi_open_handle_scope(node_impl->env, &handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
 
 	/* Convert the argument to a value */
 	arg = node_loader_impl_napi_to_value(node_impl, node_impl->env, v);
@@ -1214,11 +1191,6 @@ napi_value node_loader_impl_async_future_reject(loader_impl_node node_impl, futu
 
 	/* Return the result */
 	result = node_loader_impl_value_to_napi(node_impl, node_impl->env, ret);
-
-	/* Close scope */
-	status = napi_close_handle_scope(node_impl->env, handle_scope);
-
-	node_loader_impl_exception(node_impl->env, status);
 
 	/* Destroy return value */
 	value_type_destroy(ret);
