@@ -218,8 +218,10 @@ function node_loader_trampoline_await(promise, trampoline_ptr) {
 	return new Promise((resolve, reject) => {
 		setTimeout(() => {
 			promise.then((x) => {
+				console.log(`Resolve: ${x}`);
 				resolve(trampoline.resolve(trampoline_ptr, x));
 			}, (x) => {
+				console.log(`Reject: ${x}`);
 				reject(trampoline.reject(trampoline_ptr, x));
 			});
 		}, 0);
