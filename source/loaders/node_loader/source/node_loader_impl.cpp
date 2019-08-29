@@ -2068,18 +2068,24 @@ void node_loader_impl_thread(void * data)
 	/* TODO: Reimplement from here to ... */
 
 	/* TODO: Make this trick more portable... */
-	char exe_path_str[PATH_MAX];
+	#if defined(WIN32) || defined(_WIN32)
+		const size_t path_max_length = MAX_PATH;
+	#else
+		const size_t path_max_length = PATH_MAX;
+	#endif
+
+	char exe_path_str[path_max_length];
 	size_t exe_path_str_size, exe_path_str_offset = 0;
 
 	#if defined(WIN32) || defined(_WIN32)
-		unsigned int length = GetModuleFileName(NULL, exe_path_str, PATH_MAX);
+		unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
 	#else
-		ssize_t length = readlink("/proc/self/exe", exe_path_str, PATH_MAX);
+		ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
 	#endif
 
 	size_t iterator;
 
-	if (length == -1 || length == PATH_MAX)
+	if (length == -1 || length == path_max_length)
 	{
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str); */
@@ -2103,7 +2109,7 @@ void node_loader_impl_thread(void * data)
 	/* Get the boostrap path */
 	const char bootstrap_file_str[] = "bootstrap.js";
 
-	char bootstrap_path_str[PATH_MAX];
+	char bootstrap_path_str[path_max_length];
 	size_t bootstrap_path_str_size;
 
 	const char * load_library_path_env = getenv("LOADER_LIBRARY_PATH");
