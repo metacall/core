@@ -495,6 +495,20 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	return NULL;
 }
 
+function_return function_py_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
+}
+
 void function_py_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
@@ -543,6 +557,7 @@ function_interface function_py_singleton(void)
 	{
 		&function_py_interface_create,
 		&function_py_interface_invoke,
+		&function_py_interface_await,
 		&function_py_interface_destroy
 	};
 

@@ -917,29 +917,11 @@ int metacall_register(const char * name, void * (*invoke)(void * []), enum metac
 	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
 }
 
-void * metacall_async(const char * name, void * args[])
+void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
-	/* TODO: Implement true asynchronous call with thread safety */
-	return metacallv(name, args);
-}
+	function f = (function)loader_get(name);
 
-void * metacall_await(void * v, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
-{
-	future f;
-
-	if (v == NULL)
-	{
-		return NULL;
-	}
-
-	if (value_type_id(v) != TYPE_FUTURE)
-	{
-		return NULL;
-	}
-
-	f = value_to_future(v);
-
-	return future_await(f, resolve_callback, reject_callback, data);
+	return function_await(f, args, resolve_callback, reject_callback, data);
 }
 
 char * metacall_inspect(size_t * size, void * allocator)

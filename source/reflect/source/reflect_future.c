@@ -66,23 +66,6 @@ future future_create(future_impl impl, future_impl_interface_singleton singleton
 	return f;
 }
 
-future_return future_await(future f, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * data)
-{
-	if (f == NULL)
-	{
-		return NULL;
-	}
-
-	if (f->interface != NULL && f->interface->await != NULL)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Await future (%p)", f);
-
-		return f->interface->await(f, f->impl, resolve_callback, reject_callback, data);
-	}
-
-	return NULL;
-}
-
 void future_destroy(future f)
 {
 	if (f != NULL)

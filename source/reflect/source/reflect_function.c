@@ -246,6 +246,21 @@ function_return function_call(function func, function_args args)
 	return NULL;
 }
 
+function_return function_await(function func, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	if (func != NULL && args != NULL)
+	{
+		if (func->interface != NULL && func->interface->await != NULL)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Await function (%s) with args <%p>", func->name, (void *)args);
+
+			return func->interface->await(func, func->impl, args, resolve_callback, reject_callback, context);
+		}
+	}
+
+	return NULL;
+}
+
 void function_destroy(function func)
 {
 	if (func != NULL)

@@ -38,9 +38,15 @@ typedef void * function_args[];
 
 typedef value function_return;
 
+typedef value (*function_resolve_callback)(value, void *);
+
+typedef value (*function_reject_callback)(value, void *);
+
 typedef int (*function_impl_interface_create)(function, function_impl);
 
 typedef function_return (*function_impl_interface_invoke)(function, function_impl, function_args);
+
+typedef function_return (*function_impl_interface_await)(function, function_impl, function_args, function_resolve_callback, function_reject_callback, void *);
 
 typedef void (*function_impl_interface_destroy)(function, function_impl);
 
@@ -48,6 +54,7 @@ typedef struct function_interface_type
 {
 	function_impl_interface_create create;
 	function_impl_interface_invoke invoke;
+	function_impl_interface_await await;
 	function_impl_interface_destroy destroy;
 
 } * function_interface;
@@ -63,6 +70,8 @@ REFLECT_API signature function_signature(function func);
 REFLECT_API value function_metadata(function func);
 
 REFLECT_API function_return function_call(function func, function_args args);
+
+REFLECT_API function_return function_await(function func, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
 
 REFLECT_API void function_destroy(function func);
 

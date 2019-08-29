@@ -115,6 +115,20 @@ function_return function_file_interface_invoke(function func, function_impl impl
 	return value_create_string(file_function->descriptor->path, file_function->descriptor->length);
 }
 
+function_return function_file_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
+}
+
 void function_file_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_file_function file_function = (loader_impl_file_function)impl;
@@ -133,6 +147,7 @@ function_interface function_file_singleton(void)
 	{
 		&function_file_interface_create,
 		&function_file_interface_invoke,
+		&function_file_interface_await,
 		&function_file_interface_destroy
 	};
 

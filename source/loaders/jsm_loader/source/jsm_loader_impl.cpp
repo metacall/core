@@ -67,11 +67,29 @@ int function_jsm_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-void function_jsm_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_jsm_interface_invoke(function func, function_impl impl, function_args args)
 {
+	/* TODO */
+
 	(void)func;
 	(void)impl;
 	(void)args;
+
+	return NULL;
+}
+
+function_return function_jsm_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
 }
 
 void function_jsm_interface_destroy(function func, function_impl impl)
@@ -86,6 +104,7 @@ function_interface function_jsm_singleton()
 	{
 		&function_jsm_interface_create,
 		&function_jsm_interface_invoke,
+		&function_jsm_interface_await,
 		&function_jsm_interface_destroy
 	};
 

@@ -311,6 +311,7 @@ typedef struct function_interface_type
 {
   function_impl_interface_create create;
   function_impl_interface_invoke invoke;
+  function_impl_interface_await await;
   function_impl_interface_destroy destroy;
 
 } * function_interface;
@@ -318,6 +319,7 @@ typedef struct function_interface_type
 
 - `create` instantiates the function concrete data related to the run-time.
 - `invoke` transforms arguments from [`reflect`](/source/reflect) abstract types to run-time concrete types, executes the call in the run-time, and converts the result of the call from run-time concrete type to [`reflect`](/source/reflect) abstract type.
+- `await` idem to invoke but awaiting the promise that is expected to be returned by the function.
 - `destroy` clears all data previously instantiated in `create`.
 
 The type deduction can be done at different levels. For example, it is possible to guess function types from the loaded code.

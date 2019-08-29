@@ -529,6 +529,20 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 	return NULL;
 }
 
+function_return function_js_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
+}
+
 void function_js_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_js_function js_func = static_cast<loader_impl_js_function>(impl);
@@ -544,6 +558,7 @@ function_interface function_js_singleton(void)
 	{
 		&function_js_interface_create,
 		&function_js_interface_invoke,
+		&function_js_interface_await,
 		&function_js_interface_destroy
 	};
 

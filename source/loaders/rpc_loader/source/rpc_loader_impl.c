@@ -101,6 +101,20 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	return NULL;
 }
 
+function_return function_rpc_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
+}
+
 void function_rpc_interface_destroy(function func, function_impl impl)
 {
 	/* TODO */
@@ -115,6 +129,7 @@ function_interface function_rpc_singleton(void)
 	{
 		&function_rpc_interface_create,
 		&function_rpc_interface_invoke,
+		&function_rpc_interface_await,
 		&function_rpc_interface_destroy
 	};
 

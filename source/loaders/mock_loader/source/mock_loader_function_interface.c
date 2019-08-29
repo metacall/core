@@ -32,6 +32,8 @@ int function_mock_interface_create(function func, function_impl impl);
 
 function_return function_mock_interface_invoke(function func, function_impl impl, function_args args);
 
+void function_mock_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
+
 void function_mock_interface_destroy(function func, function_impl impl);
 
 function_impl_interface_singleton mock_loader_impl_function_interface()
@@ -45,6 +47,7 @@ function_interface function_mock_singleton()
 	{
 		&function_mock_interface_create,
 		&function_mock_interface_invoke,
+		&function_mock_interface_await,
 		&function_mock_interface_destroy
 	};
 
@@ -191,6 +194,20 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 			log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
 		}
 	}
+
+	return NULL;
+}
+
+function_return function_mock_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
 
 	return NULL;
 }

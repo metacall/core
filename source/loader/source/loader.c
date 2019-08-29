@@ -157,13 +157,27 @@ int loader_is_initialized(const loader_naming_tag tag)
 	return loader_impl_is_initialized(impl);
 }
 
-value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args)
+function_return loader_register_invoke_proxy(function func, function_impl func_impl, function_args args)
 {
 	loader_host_invoke host_invoke = (loader_host_invoke)func_impl;
 
 	(void)func;
 
 	return host_invoke->invoke(args);
+}
+
+function_return loader_register_await_proxy(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
 }
 
 void loader_register_destroy_proxy(function func, function_impl func_impl)
@@ -182,6 +196,7 @@ function_interface loader_register_interface_proxy(void)
 	{
 		NULL,
 		&loader_register_invoke_proxy,
+		&loader_register_await_proxy,
 		&loader_register_destroy_proxy
 	};
 

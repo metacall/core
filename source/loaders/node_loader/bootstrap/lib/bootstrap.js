@@ -206,9 +206,13 @@ function node_loader_trampoline_test(obj) {
 	}
 }
 
-function node_loader_trampoline_await(promise, trampoline_ptr) {
-	if (!(promise && promise.then && typeof promise.then === 'function')) {
-		throw new Error('Await only accepts a then-able object as promise');
+function node_loader_trampoline_await(func, args, trampoline_ptr) {
+	if (typeof func !== 'function') {
+		throw new Error('Await only accepts a callable function func, not ' + typeof func);
+	}
+
+	if (!Array.isArray(args)) {
+		throw new Error('Await only accepts a array as arguments args, not ' + typeof args);
 	}
 
 	if (typeof trampoline_ptr !== 'object') {
@@ -216,15 +220,13 @@ function node_loader_trampoline_await(promise, trampoline_ptr) {
 	}
 
 	return new Promise((resolve, reject) => {
-		setTimeout(() => {
-			promise.then((x) => {
-				console.log(`Resolve: ${x}`);
-				resolve(trampoline.resolve(trampoline_ptr, x));
-			}, (x) => {
-				console.log(`Reject: ${x}`);
-				reject(trampoline.reject(trampoline_ptr, x));
-			});
-		}, 0);
+		func(...args).then((x) => {
+			resolve(trampoline.resolve(trampoline_ptr, x));
+		}, (x) => {
+			reject(trampoline.reject(trampoline_ptr, x));
+		}).catch((x) => {
+			console.error(`Await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`);
+		});
 	});
 }
 

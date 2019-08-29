@@ -197,7 +197,7 @@ value value_create_ptr(const void * ptr)
 
 value value_create_future(future f)
 {
-	return value_type_create(&f, sizeof(const void *), TYPE_FUTURE);
+	return value_type_create(&f, sizeof(future), TYPE_FUTURE);
 }
 
 value value_create_null()
@@ -409,7 +409,7 @@ value value_from_ptr(value v, const void * ptr)
 
 value value_from_future(value v, future f)
 {
-	return value_from(v, &f, sizeof(const void *));
+	return value_from(v, &f, sizeof(future));
 }
 
 value value_from_null(value v)

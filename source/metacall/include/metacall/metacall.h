@@ -423,25 +423,13 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[])
 
 /**
 *  @brief
-*   Executes an asynchronous call to the function
+*    Executes an asynchronous call to the function and registers a callback to be executed when a future is resolved (it does block)
 *
 *  @param[in] name
 *    The name of the function to be called asynchronously
 *
 *  @param[in] args
 *    Array of pointers to the values to be passed to the function
-*
-*  @return
-*    Pointer to value containing the result of the call
-*/
-METACALL_API void * metacall_async(const char * name, void * args[]);
-
-/**
-*  @brief
-*   Register a callback to be executed when a future is resolved (it does block)
-*
-*  @param[in] v
-*    Value representing the future
 *
 *  @param[in] resolve_callback
 *    Pointer to function that will be executed when task completion
@@ -462,7 +450,7 @@ METACALL_API void * metacall_async(const char * name, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacall_await(void * v, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
 
 /**
 *  @brief

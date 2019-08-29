@@ -135,6 +135,20 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	return v;
 }
 
+function_return function_cs_interface_await(function func, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	/* TODO */
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	return NULL;
+}
+
 void function_cs_interface_destroy(function func, function_impl impl)
 {
 	(void)func;
@@ -147,6 +161,7 @@ function_interface function_cs_singleton(void)
 	{
 		&function_cs_interface_create,
 		&function_cs_interface_invoke,
+		&function_cs_interface_await,
 		&function_cs_interface_destroy
 	};
 
