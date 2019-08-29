@@ -135,7 +135,7 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	return v;
 }
 
-function_return function_cs_interface_await(function func, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_cs_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
