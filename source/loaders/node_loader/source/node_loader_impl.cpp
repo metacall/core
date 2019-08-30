@@ -102,6 +102,10 @@
 	(NAPI_VERSION >= 4) && \
 	(NODE_MAJOR_VERSION > 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 6))
 
+#define NODE_ASYNC_FUNCTION \
+	(NODE_MAJOR_VERSION == 8 && NODE_MINOR_VERSION > 12) || \
+	(NODE_MAJOR_VERSION > 8) /* TODO: Detect exactly what version fails */
+
 typedef struct loader_impl_node_type
 {
 	napi_env env;
@@ -805,6 +809,8 @@ function_return function_node_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
+#if NODE_ASYNC_FUNCTION
+
 function_return function_node_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	loader_impl_node_function node_future = (loader_impl_node_function)impl;
@@ -842,6 +848,38 @@ function_return function_node_interface_await(function func, function_impl impl,
 
 	return NULL;
 }
+
+#else
+
+function_return function_node_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+{
+	future f = future_create(NULL, NULL);
+
+	value ret;
+
+	(void)func;
+	(void)impl;
+	(void)args;
+	(void)resolve_callback;
+	(void)reject_callback;
+	(void)context;
+
+	if (f == NULL)
+	{
+		return static_cast<function_return>(NULL);
+	}
+
+	ret = value_create_future(f);
+
+	if (ret == NULL)
+	{
+		future_destroy(f);
+	}
+
+	return static_cast<function_return>(ret);
+}
+
+#endif /* NODE_ASYNC_FUNCTION */
 
 void function_node_interface_destroy(function func, function_impl impl)
 {
