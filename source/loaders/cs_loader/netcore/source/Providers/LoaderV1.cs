@@ -16,11 +16,11 @@ namespace CSLoader.Providers
         {
             Assembly asm = null;
 
-            this.log.Info("CSLoader resolving " + name.Name);
+            this.log.Info("CSLoader resolving assembly " + name.Name);
 
             foreach (var path in paths)
             {
-                this.log.Info("CSLoader resolving " + path);
+                this.log.Info("CSLoader resolving path " + path);
 
                 try
                 {

@@ -22,8 +22,12 @@ namespace CSLoader.Providers
         {
             Assembly asm = null;
 
+            this.log.Info("CSLoader resolving assembly " + args.Name);
+
             foreach (var path in paths)
             {
+                this.log.Info("CSLoader resolving path " + path);
+
                 try
                 {
                     var fullPath = path + "\\" + args.Name + ".dll";
@@ -49,7 +53,6 @@ namespace CSLoader.Providers
 
             return asm;
         }
-
 
         protected override IEnumerable<string> AdditionalLibs()
         {

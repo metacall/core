@@ -133,7 +133,6 @@ namespace CSLoader.Providers
 
                 try
                 {
-
                     asm = this.Load(new AssemblyName(System.IO.Path.GetFileNameWithoutExtension(assemblyFile)));
                 }
                 catch (Exception exName)

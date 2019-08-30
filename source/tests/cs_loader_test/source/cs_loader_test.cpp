@@ -55,7 +55,7 @@ TEST_F(cs_loader_test, Jump)
 
 	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int) 2, (int) metacall_value_to_long(ret));
+	EXPECT_EQ((int) 2, (int) metacall_value_to_int(ret));
 
 	value_destroy(ret);
 }
@@ -70,7 +70,7 @@ TEST_F(cs_loader_test, Sum)
 
 	EXPECT_NE((value) NULL, (value) ret);
 
-	EXPECT_EQ((int) 15, (int) metacall_value_to_long(ret));
+	EXPECT_EQ((int) 15, (int) metacall_value_to_int(ret));
 
 	value_destroy(ret);
 }
