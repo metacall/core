@@ -50,6 +50,12 @@ namespace CSLoader.Providers
 
             assemblyFiles = assemblyFiles.Concat(this.AdditionalLibs()).Distinct().ToArray();
 
+            // Console exists in both System.Console and System.Private.CoreLib in NetCore 1.x
+            // So it must be removed in order to avoid name collision
+            #if NETCOREAPP1_0 || NETCOREAPP1_1 || NETCOREAPP1_2
+                assemblyFiles = assemblyFiles.Where(asm => !asm.Contains("System.Console")).ToArray();
+            #endif
+
             references = assemblyFiles.Select(x => MetadataReference.CreateFromFile(x)).ToArray();
 
             this.log.Info("CSLoader compiling from memory stream");
