@@ -173,9 +173,8 @@ sub_install(){
 sub_clean(){
 	echo "clean dependencies"
 
-	$SUDO_CMD apt-get -y remove wget
+	$SUDO_CMD apt-get -y remove wget gpg apt-transport-https
 	$SUDO_CMD apt-get -y autoclean
-	$SUDO_CMD apt-get -y autoremove
 }
 
 # Configuration
