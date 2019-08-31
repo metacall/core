@@ -46,7 +46,7 @@ sub_apt_install_hold(){
 sub_apt(){
 	echo "configure apt"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get update && apt-get -y install --no-install-recommends wget gpg
+	$SUDO_CMD apt-get update && apt-get -y install --no-install-recommends wget gpg apt-transport-https
 }
 
 # Python
@@ -73,7 +73,7 @@ sub_netcore(){
 	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
 		liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g ca-certificates
 
-	# Install .NET Core Runtime
+	# Install .NET Core Runtime 1.x
 	DOTNET_VERSION=1.1.10
 	DOTNET_DOWNLOAD_URL=https://dotnetcli.blob.core.windows.net/dotnet/Runtime/$DOTNET_VERSION/dotnet-debian.9-x64.$DOTNET_VERSION.tar.gz
 
@@ -89,18 +89,18 @@ sub_netcore2(){
 	echo "configure netcore 2"
 	cd $ROOT_DIR
 	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
-		liblttng-ust0 libssl1.0.2 libstdc++6 zlib1g ca-certificates
+		liblttng-ust0 libssl1.0.2 libstdc++6 zlib1g ca-certificates libunwind-dev
 
-	# Set up repository
+	# Install NET Core Runtime 2.x
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
-	mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+	$SUDO_CMD mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
 	wget -q https://packages.microsoft.com/config/debian/9/prod.list
-	mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
-	chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
-	chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+	$SUDO_CMD mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+	$SUDO_CMD chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+	$SUDO_CMD chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
-	# Install .NET Core Runtime
-	sub_apt_install_hold dotnet-runtime-2.2
+	$SUDO_CMD apt-get update
+	sub_apt_install_hold dotnet-runtime-2.2=2.2.6-1
 }
 
 # V8
