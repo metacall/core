@@ -2112,8 +2112,8 @@ void node_loader_impl_thread(void * data)
 		const size_t path_max_length = PATH_MAX;
 	#endif
 
-	char exe_path_str[path_max_length];
-	size_t exe_path_str_size, exe_path_str_offset = 0;
+	char exe_path_str[path_max_length] = { 0 };
+	size_t exe_path_str_size = 0, exe_path_str_offset = 0;
 
 	#if defined(WIN32) || defined(_WIN32)
 		unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
@@ -2125,8 +2125,15 @@ void node_loader_impl_thread(void * data)
 
 	if (length == -1 || length == path_max_length)
 	{
+		/* TODO: Report error */
+
+
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str); */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
@@ -2147,14 +2154,19 @@ void node_loader_impl_thread(void * data)
 	/* Get the boostrap path */
 	const char bootstrap_file_str[] = "bootstrap.js";
 
-	char bootstrap_path_str[path_max_length];
-	size_t bootstrap_path_str_size;
+	char bootstrap_path_str[path_max_length] = { 0 };
+	size_t bootstrap_path_str_size = 0;
 
 	const char * load_library_path_env = getenv("LOADER_LIBRARY_PATH");
-	size_t load_library_path_length;
+	size_t load_library_path_length = 0;
 
 	if (load_library_path_env == NULL)
 	{
+		/* TODO: Report error */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
@@ -2187,6 +2199,11 @@ void node_loader_impl_thread(void * data)
 
 	if (node_impl_ptr_length <= 0)
 	{
+		/* TODO: Report error */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
@@ -2196,6 +2213,11 @@ void node_loader_impl_thread(void * data)
 
 	if (node_impl_ptr_str == NULL)
 	{
+		/* TODO: Report error */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
@@ -2209,6 +2231,11 @@ void node_loader_impl_thread(void * data)
 
 	if (register_ptr_length <= 0)
 	{
+		/* TODO: Report error */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
@@ -2219,6 +2246,12 @@ void node_loader_impl_thread(void * data)
 	if (register_ptr_str == NULL)
 	{
 		free(node_impl_ptr_str);
+
+		/* TODO: Report error */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
@@ -2232,6 +2265,12 @@ void node_loader_impl_thread(void * data)
 	{
 		free(node_impl_ptr_str);
 		free(register_ptr_str);
+
+		/* TODO: Report error */
+
+		/* Unlock node implementation mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+
 		return;
 	}
 
