@@ -336,9 +336,9 @@ if(NOT NODEJS_LIBRARY)
 			ProcessorCount(N)
 
 			if(NOT N EQUAL 0)
-				execute_process(COMMAND sh -c "alias pyhton=`which python2.7`; make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+				execute_process(COMMAND sh -c "alias python=`which python2.7`; make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
 			else()
-				execute_process(COMMAND sh -c "alias pyhton=`which python2.7`; make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+				execute_process(COMMAND sh -c "alias python=`which python2.7`; make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
 			endif()
 
 			message(STATUS "Install NodeJS shared library")
