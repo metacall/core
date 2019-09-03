@@ -10,6 +10,7 @@
 
 #include <log/log_policy_stream.h>
 #include <log/log_aspect_stream.h>
+#include <log/log_policy_stream_custom.h>
 #include <log/log_policy_stream_file.h>
 #include <log/log_policy_stream_nginx.h>
 #include <log/log_policy_stream_socket.h>
@@ -27,7 +28,8 @@ log_policy_interface log_policy_stream(const log_policy_id policy_stream_id)
 		&log_policy_stream_nginx_interface,
 		&log_policy_stream_socket_interface,
 		&log_policy_stream_stdio_interface,
-		&log_policy_stream_syslog_interface
+		&log_policy_stream_syslog_interface,
+		&log_policy_stream_custom_interface
 	};
 
 	return policy_stream_singleton[policy_stream_id]();
@@ -80,4 +82,15 @@ log_policy log_policy_stream_syslog(const char * name)
 	syslog_ctor.name = name;
 
 	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_SYSLOG), &syslog_ctor);
+}
+
+log_policy log_policy_stream_custom(void * context, int (*stream_write)(void *, const char *, const size_t), int (*stream_flush)(void *))
+{
+	struct log_policy_stream_custom_ctor_type custom_ctor;
+
+	custom_ctor.context = context;
+	custom_ctor.stream_write = stream_write;
+	custom_ctor.stream_flush = stream_flush;
+
+	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_CUSTOM), &custom_ctor);
 }

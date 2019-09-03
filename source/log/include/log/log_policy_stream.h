@@ -14,6 +14,7 @@
 #include <log/log_api.h>
 
 #include <log/log_policy.h>
+#include <log/log_policy_stream_custom.h>
 #include <log/log_policy_stream_file.h>
 #include <log/log_policy_stream_nginx.h>
 #include <log/log_policy_stream_socket.h>
@@ -33,6 +34,7 @@ enum log_policy_stream_id
 	LOG_POLICY_STREAM_SOCKET	= 0x02,
 	LOG_POLICY_STREAM_STDIO		= 0x03,
 	LOG_POLICY_STREAM_SYSLOG	= 0x04,
+	LOG_POLICY_STREAM_CUSTOM	= 0x05,
 
 	LOG_POLICY_STREAM_SIZE
 };
@@ -69,6 +71,8 @@ LOG_API log_policy log_policy_stream_socket(const char * ip, uint16_t port);
 LOG_API log_policy log_policy_stream_stdio(FILE * stream);
 
 LOG_API log_policy log_policy_stream_syslog(const char * name);
+
+LOG_API log_policy log_policy_stream_custom(void * context, int (*stream_write)(void *, const char *, const size_t), int (*stream_flush)(void *));
 
 #ifdef __cplusplus
 }

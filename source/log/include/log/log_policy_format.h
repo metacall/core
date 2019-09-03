@@ -15,6 +15,7 @@
 
 #include <log/log_policy.h>
 #include <log/log_policy_format_binary.h>
+#include <log/log_policy_format_custom.h>
 #include <log/log_policy_format_text.h>
 
 #include <log/log_record.h>
@@ -29,6 +30,7 @@ enum log_policy_format_id
 {
 	LOG_POLICY_FORMAT_BINARY	= 0x00,
 	LOG_POLICY_FORMAT_TEXT		= 0x01,
+	LOG_POLICY_FORMAT_CUSTOM	= 0x02,
 
 	LOG_POLICY_FORMAT_SIZE
 };
@@ -63,6 +65,8 @@ LOG_API log_policy log_policy_format_binary(void);
 LOG_API log_policy log_policy_format_text(void);
 
 LOG_API log_policy log_policy_format_text_flags(unsigned int flags);
+
+LOG_API log_policy log_policy_format_custom(void * context, log_policy_format_custom_size_ptr format_size, log_policy_format_custom_serialize_ptr format_serialize, log_policy_format_custom_deserialize_ptr format_deserialize);
 
 #ifdef __cplusplus
 }

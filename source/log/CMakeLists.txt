@@ -55,6 +55,7 @@ set(headers
 
 	${include_path}/log_policy_format.h
 	${include_path}/log_policy_format_binary.h
+	${include_path}/log_policy_format_custom.h
 	${include_path}/log_policy_format_text.h
 
 	${include_path}/log_policy_schedule.h
@@ -66,6 +67,7 @@ set(headers
 	${include_path}/log_policy_storage_sequential.h
 
 	${include_path}/log_policy_stream.h
+	${include_path}/log_policy_stream_custom.h
 	${include_path}/log_policy_stream_file.h
 	${include_path}/log_policy_stream_nginx.h
 	${include_path}/log_policy_stream_socket.h
@@ -93,6 +95,7 @@ set(sources
 
 	${source_path}/log_policy_format.c
 	${source_path}/log_policy_format_binary.c
+	${source_path}/log_policy_format_custom.c
 	${source_path}/log_policy_format_text.c
 
 	${source_path}/log_policy_schedule.c
@@ -104,6 +107,7 @@ set(sources
 	${source_path}/log_policy_storage_sequential.c
 
 	${source_path}/log_policy_stream.c
+	${source_path}/log_policy_stream_custom.c
 	${source_path}/log_policy_stream_file.c
 	${source_path}/log_policy_stream_nginx.c
 	${source_path}/log_policy_stream_socket.c
