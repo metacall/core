@@ -2127,7 +2127,6 @@ void node_loader_impl_thread(void * data)
 	{
 		/* TODO: Report error */
 
-
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str); */
 

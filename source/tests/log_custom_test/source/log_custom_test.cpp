@@ -40,7 +40,13 @@ size_t format_size(void * context, const char * time, size_t thread_id, size_t l
 
 	if (args != NULL)
 	{
-		length = vsnprintf(NULL, 0, message, args->va);
+		va_list va;
+
+		va_copy(va, args->va);
+
+		length = vsnprintf(NULL, 0, message, va);
+
+		va_end(va);
 	}
 	else
 	{
@@ -53,16 +59,23 @@ size_t format_size(void * context, const char * time, size_t thread_id, size_t l
 size_t format_serialize(void * context, void * buffer, const size_t size, const char * time, size_t thread_id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
 {
 	size_t length = snprintf((char *)buffer, size, format, time, thread_id, file, line, func, level);
+	char * body = &(((char *)buffer)[length]);
 
 	(void)context;
 
 	if (args != NULL)
 	{
-		length += vsnprintf(&(((char *)buffer)[length]), size - length, message, args->va);
+		va_list va;
+
+		va_copy(va, args->va);
+
+		length += vsnprintf(body, size - length, message, va);
+
+		va_end(va);
 	}
 	else
 	{
-		length += snprintf(&(((char *)buffer)[length]), size - length, message);
+		length += snprintf(body, size - length, message);
 	}
 
 	return length + 1;

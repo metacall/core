@@ -42,8 +42,25 @@ enum metacall_log_id
 	METACALL_LOG_FILE,
 	METACALL_LOG_SOCKET,
 	METACALL_LOG_SYSLOG,
-	METACALL_LOG_NGINX
+	METACALL_LOG_NGINX,
+	METACALL_LOG_CUSTOM
 };
+
+/* -- Forward Declarations -- */
+
+struct metacall_log_stdio_type;
+
+struct metacall_log_file_type;
+
+struct metacall_log_socket_type;
+
+struct metacall_log_syslog_type;
+
+struct metacall_log_nginx_type;
+
+struct metacall_log_custom_va_list_type;
+
+struct metacall_log_custom_type;
 
 /* -- Type Definitions -- */
 
@@ -56,6 +73,10 @@ typedef struct metacall_log_socket_type * metacall_log_socket;
 typedef struct metacall_log_syslog_type * metacall_log_syslog;
 
 typedef struct metacall_log_nginx_type * metacall_log_nginx;
+
+typedef struct metacall_log_custom_va_list_type * metacall_log_custom_va_list;
+
+typedef struct metacall_log_custom_type * metacall_log_custom;
 
 /* -- Member Data -- */
 
@@ -88,6 +109,21 @@ struct metacall_log_nginx_type
 	uint16_t log_level;
 };
 
+struct metacall_log_custom_va_list_type
+{
+	va_list va;
+};
+
+struct metacall_log_custom_type
+{
+	void * context;
+	size_t (*format_size)(void *, const char *, size_t, size_t, const char *, const char *, const char *, const char *, metacall_log_custom_va_list);
+	size_t (*format_serialize)(void *, void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, metacall_log_custom_va_list);
+	size_t (*format_deserialize)(void *, const void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, metacall_log_custom_va_list);
+	int (*stream_write)(void *, const char *, const size_t);
+	int (*stream_flush)(void *);
+};
+
 /* -- Methods -- */
 
 /**
@@ -98,7 +134,7 @@ struct metacall_log_nginx_type
 *    Type of log to be created
 *
 *  @param[in] ctx
-*    Context of the log
+*    Context of the log (a pointer to metacall_log_{stdio, file, socket, syslog, nginx, custom}_type)
 *
 *  @return
 *    Zero if success, different from zero otherwise

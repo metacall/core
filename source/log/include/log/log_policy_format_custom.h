@@ -15,6 +15,8 @@
 
 #include <log/log_policy.h>
 
+#include <stdarg.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
