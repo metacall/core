@@ -230,9 +230,12 @@ install(TARGETS ${target}
 	ARCHIVE DESTINATION ${INSTALL_LIB}/node_modules/metacall	COMPONENT dev
 )
 
-# Index
+# Files
 install(FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/index.js
+	${CMAKE_CURRENT_SOURCE_DIR}/package.json
+	${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json
+	${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
 	DESTINATION ${INSTALL_LIB}/node_modules/metacall
 	COMPONENT runtime
 )
