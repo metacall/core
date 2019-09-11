@@ -1,16 +1,39 @@
 'use strict';
 
-let addon = null;
+const Path = require('path');
 
-try {
-	addon = require('./build/node_port.node');
-} catch (e) {
-	if (e.code !== 'MODULE_NOT_FOUND') {
-		throw e;
-	}
+const addon = (() => {
+	const paths = [
+		Path.join(__dirname, 'build'),
+		process.cwd(),
+		process.env.LOADER_LIBRARY_PATH,
+	];
 
-	addon = require('./build/node_portd.node');
-}
+	const names = [
+		'node_port',
+		'node_portd',
+	];
+
+	const addon = (() => {
+		for (let path of paths) {
+			for (let name of names) {
+				try {
+					const addon = require(Path.join(path, `${name}.node`));
+
+					if (addon) {
+						return addon;
+					}
+				} catch (e) {
+					if (e.code !== 'MODULE_NOT_FOUND') {
+						throw e;
+					}
+				}
+			}
+		}
+	})();
+
+	return addon;
+})();
 
 /* TODO: Override require and monkey patch the functions */
 
