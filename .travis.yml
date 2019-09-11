@@ -77,11 +77,17 @@ after_script:
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
 
-# Deploy artifacts to bintray
+# Deploy artifacts to bintray and npm
 deploy:
-  provider: bintray
-  file: "$TRAVIS_BUILD_DIR/deploy/packages/descriptor-metacall.json"
-  user: "${BINTRAY_USER}"
-  key: "${BINTRAY_KEY}"
-  skip_cleanup: true
-  on: master # TODO: Change to master or tags
+  - provider: bintray
+    file: "$TRAVIS_BUILD_DIR/deploy/packages/descriptor-metacall.json"
+    user: "${BINTRAY_USER}"
+    key: "${BINTRAY_KEY}"
+    skip_cleanup: true
+    on: master # TODO: Change to master or tags
+  - provider: script
+    script:
+      - cd $TRAVIS_BUILD_DIR/source/ports/node_port
+      - npm publish --access public
+    skip_cleanup: true
+    on: master # TODO: Change to master or tags
