@@ -4,9 +4,11 @@ const Path = require('path');
 
 const addon = (() => {
 	const paths = [
+		__dirname,
 		Path.join(__dirname, 'build'),
 		process.cwd(),
 		process.env.LOADER_LIBRARY_PATH,
+		Path.join(process.env.LOADER_LIBRARY_PATH, 'build'),
 	];
 
 	const names = [
