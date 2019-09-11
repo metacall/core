@@ -77,6 +77,12 @@ after_script:
       -n "MetaCall ${TRAVIS_TAG} [${RELEASE_DATE}]" -b "${GIT_HISTORY}" -replace \
       $TRAVIS_TAG $ARTIFACTS_PATH/packages/
 
+# Install NPM for deploy
+before_deploy:
+  - sudo apt-get install curl
+  - curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  - sudo apt-get install nodejs
+
 # Deploy artifacts to bintray and npm
 deploy:
   - provider: bintray
@@ -87,7 +93,6 @@ deploy:
     on: master # TODO: Change to master or tags
   - provider: script
     script:
-      - cd $TRAVIS_BUILD_DIR/source/ports/node_port
-      - npm publish --access public
+      - NPM_API_KEY=${NPM_KEY} npm publish $TRAVIS_BUILD_DIR/source/ports/node_port --access public # TODO: --tag <tag>
     skip_cleanup: true
     on: master # TODO: Change to master or tags
