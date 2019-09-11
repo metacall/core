@@ -79,9 +79,9 @@ after_script:
 
 # Install NPM for deploy
 before_deploy:
-  - sudo apt-get install curl
+  - sudo apt-get -y install curl
   - curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-  - sudo apt-get install nodejs
+  - sudo apt-get -y install nodejs
 
 # Deploy artifacts to bintray and npm
 deploy:
