@@ -130,7 +130,7 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 ## 3.1 Known Projects Using MetaCall
 
-- **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
+- **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art by means of OpenCV. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
 
 ## 4. Usage
 
