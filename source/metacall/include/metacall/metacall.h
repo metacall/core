@@ -72,7 +72,11 @@ METACALL_API const char * metacall_serial(void);
 
 /**
 *  @brief
-*    Disables MetaCall logs, must be called before @metacall_initialize
+*    Disables MetaCall logs, must be called before @metacall_initialize.
+*
+*   When initializing MetaCall, it initializes a default logs to stdout
+*   if none was defined. If you want to benchmark or simply disable this
+*   default logs, you can call to this function before @metacall_initialize.
 */
 METACALL_API void metacall_log_null(void);
 
