@@ -3,14 +3,16 @@
 const Path = require('path');
 
 const addon = (() => {
+	const LIBRARY_PATH = process.env.LOADER_LIBRARY_PATH || '';
+
 	const paths = [
 		__dirname,
 		Path.join(__dirname, 'build'),
 		process.cwd(),
-		process.env.LOADER_LIBRARY_PATH,
-		Path.join(process.env.LOADER_LIBRARY_PATH, 'build'),
-		Path.join(process.env.LOADER_LIBRARY_PATH, 'node_modules', 'metacall'),
-		Path.join(process.env.LOADER_LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
+		LIBRARY_PATH,
+		Path.join(LIBRARY_PATH, 'build'),
+		Path.join(LIBRARY_PATH, 'node_modules', 'metacall'),
+		Path.join(LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
 	];
 
 	const names = [
