@@ -82,6 +82,9 @@ before_deploy:
   - sudo apt-get -y install curl
   - curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
   - sudo apt-get -y install nodejs
+  - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
+  - echo "//registry.npmjs.org/:username=${NPM_USERNAME}" >> $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
+  - echo "//registry.npmjs.org/:email=${NPM_EMAIL}" >> $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
 
 # Deploy artifacts to bintray and npm
 deploy:
@@ -93,7 +96,6 @@ deploy:
     on: master # TODO: Change to master or tags
   - provider: script
     script:
-      - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
       - npm publish $TRAVIS_BUILD_DIR/source/ports/node_port --access public # TODO: --tag <tag>
     skip_cleanup: true
     on: master # TODO: Change to master or tags
