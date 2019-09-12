@@ -82,9 +82,7 @@ before_deploy:
   - sudo apt-get -y install curl
   - curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
   - sudo apt-get -y install nodejs
-  - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
-  - echo "//registry.npmjs.org/:username=${NPM_USERNAME}" >> $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
-  - echo "//registry.npmjs.org/:email=${NPM_EMAIL}" >> $TRAVIS_BUILD_DIR/source/ports/node_port/.npmrc
+  - echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > $HOME/.npmrc
 
 # Deploy artifacts to bintray and npm
 deploy:
