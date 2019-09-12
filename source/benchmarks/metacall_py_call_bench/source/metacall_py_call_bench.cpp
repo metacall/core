@@ -30,10 +30,7 @@ public:
 	{
 		metacall_print_info();
 
-		if (metacall_log(METACALL_LOG_NULL, NULL) != 0)
-		{
-			state.SkipWithError("Error setting up MetaCall logs");
-		}
+		metacall_log_null();
 
 		if (metacall_initialize() != 0)
 		{

@@ -35,7 +35,7 @@ TEST_F(metacall_node_call_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_NULL, NULL));
+	metacall_log_null();
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 

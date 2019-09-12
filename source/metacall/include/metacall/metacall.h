@@ -72,6 +72,12 @@ METACALL_API const char * metacall_serial(void);
 
 /**
 *  @brief
+*    Disables MetaCall logs, must be called before @metacall_initialize
+*/
+METACALL_API void metacall_log_null(void);
+
+/**
+*  @brief
 *    Initialize MetaCall library
 *
 *  @return

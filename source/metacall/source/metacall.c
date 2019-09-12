@@ -49,6 +49,7 @@ void * metacall_null_args[1];
 /* -- Private Variables -- */
 
 static int metacall_initialize_flag = 1;
+static int metacall_log_null_flag = 1;
 
 /* -- Methods -- */
 
@@ -59,6 +60,11 @@ const char * metacall_serial()
 	return metacall_serial_str;
 }
 
+void metacall_log_null()
+{
+	metacall_log_null_flag = 0;
+}
+
 int metacall_initialize()
 {
 	loader l = loader_singleton();
@@ -66,7 +72,7 @@ int metacall_initialize()
 	memory_allocator allocator;
 
 	/* Initialize logs by default to stdout if none has been defined */
-	if (log_size() == 0)
+	if (metacall_log_null_flag != 0 && log_size() == 0)
 	{
 		struct metacall_log_stdio_type log_stdio =
 		{
