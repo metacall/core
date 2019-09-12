@@ -26,9 +26,14 @@
 class metacall_py_init_bench : public benchmark::Fixture
 {
 public:
-	void SetUp(benchmark::State &)
+	void SetUp(benchmark::State & state)
 	{
 		metacall_print_info();
+
+		if (metacall_log(METACALL_LOG_NULL, NULL) != 0)
+		{
+			state.SkipWithError("Error setting up MetaCall logs");
+		}
 	}
 
 	void TearDown(benchmark::State & state)
