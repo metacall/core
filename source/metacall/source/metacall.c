@@ -34,6 +34,7 @@
 
 #include <serial/serial.h>
 
+#include <stdio.h>
 #include <string.h>
 
 /* -- Definitions -- */
@@ -63,6 +64,22 @@ int metacall_initialize()
 	loader l = loader_singleton();
 
 	memory_allocator allocator;
+
+	/* Initialize logs by default to stdout if none has been defined */
+	if (log_size() == 0)
+	{
+		struct metacall_log_stdio_type log_stdio =
+		{
+			stdout
+		};
+
+		if (metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio) != 0)
+		{
+			return 1;
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall default logger to stdout initialized");
+	}
 
 	if (metacall_initialize_flag == 0)
 	{

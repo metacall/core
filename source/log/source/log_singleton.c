@@ -129,6 +129,13 @@ void log_singleton_initialize(log_singleton singleton)
 	}
 }
 
+size_t log_singleton_size()
+{
+	log_singleton s = log_singleton_instance_impl();
+
+	return log_map_size(s->map);
+}
+
 int log_singleton_insert(const char * name, log_impl impl)
 {
 	log_singleton s = log_singleton_instance_impl();

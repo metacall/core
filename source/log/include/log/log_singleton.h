@@ -37,6 +37,8 @@ LOG_API log_singleton * log_singleton_instance(void);
 
 LOG_API void log_singleton_initialize(log_singleton singleton);
 
+LOG_API size_t log_singleton_size(void);
+
 LOG_API int log_singleton_insert(const char * name, log_impl impl);
 
 LOG_API log_impl log_singleton_get(const char * name);

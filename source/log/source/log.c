@@ -42,6 +42,11 @@ void log_copy(void * instance)
 	log_singleton_initialize(*singleton_ptr);
 }
 
+size_t log_size()
+{
+	return log_singleton_size();
+}
+
 int log_create(const char * name)
 {
 	log_impl impl = log_impl_create(name);
