@@ -134,6 +134,7 @@ typedef struct loader_impl_node_type
 	int stderr_copy;
 
 	int result;
+	const char * error_message;
 
 } * loader_impl_node;
 
@@ -2125,10 +2126,14 @@ void node_loader_impl_thread(void * data)
 
 	if (length == -1 || length == path_max_length)
 	{
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "Node loader register invalid working directory path";
 
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str); */
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2161,7 +2166,11 @@ void node_loader_impl_thread(void * data)
 
 	if (load_library_path_env == NULL)
 	{
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "LOADER_LIBRARY_PATH not defined, bootstrap.js cannot be found";
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2198,7 +2207,11 @@ void node_loader_impl_thread(void * data)
 
 	if (node_impl_ptr_length <= 0)
 	{
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "Invalid node impl pointer length in NodeJS thread";
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2212,7 +2225,11 @@ void node_loader_impl_thread(void * data)
 
 	if (node_impl_ptr_str == NULL)
 	{
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "Invalid node impl pointer initialization in NodeJS thread";
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2230,7 +2247,11 @@ void node_loader_impl_thread(void * data)
 
 	if (register_ptr_length <= 0)
 	{
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "Invalid register pointer length in NodeJS thread";
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2246,7 +2267,11 @@ void node_loader_impl_thread(void * data)
 	{
 		free(node_impl_ptr_str);
 
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "Invalid register pointer initialization in NodeJS thread";
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2265,7 +2290,11 @@ void node_loader_impl_thread(void * data)
 		free(node_impl_ptr_str);
 		free(register_ptr_str);
 
-		/* TODO: Report error */
+		/* Report error (TODO: Implement it with thread safe logs) */
+		node_impl->error_message = "Invalid argv initialization in NodeJS thread";
+
+		/* Signal start condition */
+		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -2358,6 +2387,8 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
+	/* TODO: On error, delete dup, condition and mutex */
+
 	/* Duplicate stdin, stdout, stderr */
 	node_impl->stdin_copy = dup(STDIN_FILENO);
 	node_impl->stdout_copy = dup(STDOUT_FILENO);
@@ -2366,6 +2397,10 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	/* Initialize syncronization */
 	if (uv_cond_init(&node_impl->cond) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread condition creation");
+
+		/* TODO: Clear resources */
+
 		delete node_impl;
 
 		return NULL;
@@ -2373,6 +2408,10 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	if (uv_mutex_init(&node_impl->mutex) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread mutex creation");
+
+		/* TODO: Clear resources */
+
 		delete node_impl;
 
 		return NULL;
@@ -2380,10 +2419,15 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	/* Initialize execution result */
 	node_impl->result = 1;
+	node_impl->error_message = NULL;
 
 	/* Create NodeJS thread */
 	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl) != 0)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
+
+		/* TODO: Clear resources */
+
 		delete node_impl;
 
 		return NULL;
@@ -2393,6 +2437,16 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	uv_mutex_lock(&node_impl->mutex);
 
 	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+	if (node_impl->error_message != NULL)
+	{
+		uv_mutex_unlock(&node_impl->mutex);
+
+		/* TODO: Remove this when implementing thread safe */
+		log_write("metacall", LOG_LEVEL_ERROR, node_impl->error_message);
+
+		return NULL;
+	}
 
 	uv_mutex_unlock(&node_impl->mutex);
 

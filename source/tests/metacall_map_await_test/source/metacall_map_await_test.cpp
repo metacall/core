@@ -41,7 +41,7 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 
 	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	/* Python */
+	/* NodeJS */
 	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char * node_scripts[] =
