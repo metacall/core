@@ -947,6 +947,226 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	return function_await(f, args, resolve_callback, reject_callback, data);
 }
 
+/* TODO: Unify code between metacallfmv and metacallfmv_await */
+void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		void * args[METACALL_ARGS_SIZE];
+
+		signature s = function_signature(f);
+
+		size_t iterator;
+
+		value ret;
+
+		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		{
+			type_id key_id = value_type_id((value)keys[iterator]);
+
+			size_t index = METACALL_ARGS_SIZE;
+
+			/* Obtain signature index */
+			if (type_id_string(key_id) == 0)
+			{
+				const char * key = value_to_string(keys[iterator]);
+
+				index = signature_get_index(s, key);
+			}
+			else if (type_id_integer(key_id) == 0)
+			{
+				value cast_key = value_type_cast((value)keys[iterator], TYPE_INT);
+
+				int key_index;
+
+				if (cast_key != NULL)
+				{
+					keys[iterator] = cast_key;
+				}
+
+				key_index = value_to_int((value)keys[iterator]);
+
+				if (key_index >= 0 && key_index < METACALL_ARGS_SIZE)
+				{
+					index = (size_t)key_index;
+				}
+			}
+
+			/* If index is valid, cast values and build arguments */
+			if (index < METACALL_ARGS_SIZE)
+			{
+				type t = signature_get_type(s, iterator);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id((value)values[iterator]))
+					{
+						value cast_arg = value_type_cast((value)values[iterator], id);
+
+						if (cast_arg != NULL)
+						{
+							values[iterator] = cast_arg;
+						}
+					}
+				}
+
+				args[index] = values[iterator];
+			}
+			else
+			{
+				/* TODO: Handle properly exceptions */
+				return NULL;
+			}
+		}
+
+		ret = function_await(f, args, resolve_callback, reject_callback, data);
+
+		if (ret != NULL)
+		{
+			type t = signature_get_return(s);
+
+			if (t != NULL)
+			{
+				type_id id = type_index(t);
+
+				if (id != value_type_id(ret))
+				{
+					value cast_ret = value_type_cast(ret, id);
+
+					return (cast_ret == NULL) ? ret : cast_ret;
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	return NULL;
+}
+
+/* TODO: Unify code between metacallfms and metacallfms_await */
+void * metacallfms_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		if (buffer == NULL || size == 0)
+		{
+			if (signature_count(s) == 0)
+			{
+				value ret = function_call(f, metacall_null_args);
+
+				if (ret != NULL)
+				{
+					type t = signature_get_return(s);
+
+					if (t != NULL)
+					{
+						type_id id = type_index(t);
+
+						if (id != value_type_id(ret))
+						{
+							value cast_ret = value_type_cast(ret, id);
+
+							return (cast_ret == NULL) ? ret : cast_ret;
+						}
+					}
+				}
+
+				return ret;
+			}
+
+			return NULL;
+		}
+		else
+		{
+			void * keys[METACALL_ARGS_SIZE];
+			void * values[METACALL_ARGS_SIZE];
+
+			value * v_map, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
+
+			size_t iterator, args_count;
+
+			if (v == NULL)
+			{
+				return NULL;
+			}
+
+			if (type_id_map(value_type_id(v)) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			args_count = signature_count(s);
+
+			/* TODO: No optional arguments allowed, review in the future */
+			if (args_count != value_type_count(v))
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			v_map = value_to_map(v);
+
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				value element = v_map[iterator];
+
+				value * v_element = value_to_array(element);
+
+				keys[iterator] = v_element[0];
+				values[iterator] = v_element[1];
+			}
+
+			ret = metacallfmv_await(f, keys, values, resolve_callback, reject_callback, data);
+
+			if (ret != NULL)
+			{
+				type t = signature_get_return(s);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id(ret))
+					{
+						value cast_ret = value_type_cast(ret, id);
+
+						if (cast_ret != NULL)
+						{
+							ret = cast_ret;
+						}
+					}
+				}
+			}
+
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				/* Due to casting, destroy must be done to arrays instead of to the map */
+				value_destroy(keys[iterator]);
+				value_destroy(values[iterator]);
+				value_destroy(v_map[iterator]);
+			}
+
+			value_destroy(v);
+
+			return ret;
+		}
+	}
+
+	return NULL;
+}
+
 char * metacall_inspect(size_t * size, void * allocator)
 {
 	serial s;

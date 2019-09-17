@@ -75,6 +75,8 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 		void * func = metacall_function("multiply");
 
+		ASSERT_NE((void *) NULL, (void *) func);
+
 		/* Call by map using arrays */
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
 		{

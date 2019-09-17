@@ -5,6 +5,16 @@ function hello_boy(a, b) {
 	return (a + b);
 }
 
+function sleep(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function hello_boy_await(a, b) {
+	await sleep(50);
+	console.log('Hey boy!!');
+	return (a + b);
+}
+
 function call_test(a, b) {
 	return (a * b);
 }
@@ -39,6 +49,7 @@ const all_mixed = ({a}, _arg0, b = 'asd') => {
 
 module.exports = {
 	hello_boy,
+	hello_boy_await,
 	call_test,
 	lambda,
 	inline_lambda: (a, b) => {},

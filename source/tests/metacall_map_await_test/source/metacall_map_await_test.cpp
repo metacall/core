@@ -1,0 +1,157 @@
+/*
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
+ *
+ *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
+ *
+ */
+
+#include <gmock/gmock.h>
+
+#include <metacall/metacall.h>
+#include <metacall/metacall_value.h>
+#include <metacall/metacall_loaders.h>
+
+#include <cstdio>
+
+class metacall_map_await_test : public testing::Test
+{
+public:
+};
+
+TEST_F(metacall_map_await_test, DefaultConstructor)
+{
+	metacall_print_info();
+
+	ASSERT_EQ((int) 0, (int) metacall_initialize());
+
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	/* Python */
+	#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		const char * node_scripts[] =
+		{
+			"nod.js"
+		};
+
+		void * ret = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+
+		static const char left[] = "a";
+		static const char right[] = "b";
+
+		void * keys[] =
+		{
+			metacall_value_create_string(left, sizeof(left) - 1),
+			metacall_value_create_string(right, sizeof(right) - 1)
+		};
+
+		void * values[] =
+		{
+			metacall_value_create_double(7.0),
+			metacall_value_create_double(0.0)
+		};
+
+		static const char args_map[] = "{\"a\":10,\"b\":2}";
+
+		void * func = metacall_function("hello_boy_await");
+
+		ASSERT_NE((void *) NULL, (void *) func);
+
+		/* Call by map using arrays */
+		for (double iterator = 0.0; iterator <= 10.0; iterator += 1.0)
+		{
+			double * context = new double(iterator);
+
+			values[1] = metacall_value_from_double(values[1], iterator);
+
+			ret = metacallfmv_await(func, keys, values, [](void * result, void * data) -> void * {
+				double * it = (double *)data;
+
+				EXPECT_NE((void *) NULL, (void *) result);
+
+				EXPECT_NE((void *) NULL, (void *) data);
+
+				EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+
+				printf("hello_boy_await future (from map) callback: %f\n", metacall_value_to_double(result));
+
+				fflush(stdout);
+
+				EXPECT_EQ((double) metacall_value_to_double(result), (double) (7.0 + *it));
+
+				delete it;
+
+				return NULL;
+
+			}, [](void *, void * data) -> void * {
+				double * it = (double *)data;
+
+				int this_should_never_happen = 1;
+
+				EXPECT_NE((void *) NULL, (void *) data);
+
+				delete it;
+
+				EXPECT_NE((int) 0, (int) this_should_never_happen);
+
+				return NULL;
+			}, (void *)context);
+
+			EXPECT_NE((void *) NULL, (void *) ret);
+
+			EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+			metacall_value_destroy(ret);
+		}
+
+		metacall_value_destroy(keys[0]);
+		metacall_value_destroy(keys[1]);
+
+		metacall_value_destroy(values[0]);
+		metacall_value_destroy(values[1]);
+
+		/* Call by map using serial */
+		ret = metacallfms_await(func, args_map, sizeof(args_map), allocator, [](void * result, void *) -> void * {
+			EXPECT_NE((void *) NULL, (void *) result);
+
+			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+
+			EXPECT_EQ((double) metacall_value_to_double(result), (double) 12.0);
+
+			printf("hello_boy_await future (from map serial) callback: %f\n", metacall_value_to_double(result));
+
+			fflush(stdout);
+
+			return NULL;
+
+		}, NULL, NULL);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
+	}
+	#endif /* OPTION_BUILD_LOADERS_NODE */
+
+	metacall_allocator_destroy(allocator);
+
+	EXPECT_EQ((int) 0, (int) metacall_destroy());
+}
