@@ -946,6 +946,11 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	return function_await(f, args, resolve_callback, reject_callback, data);
 }
 
+void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	return function_await(func, args, resolve_callback, reject_callback, data);
+}
+
 /* TODO: Unify code between metacallfmv and metacallfmv_await */
 void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
