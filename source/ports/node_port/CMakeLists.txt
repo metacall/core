@@ -139,6 +139,11 @@ set_target_properties(${target}
 #
 
 execute_process(
+	COMMAND npm install
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+execute_process(
 	COMMAND node -p "require('node-addon-api').include"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	OUTPUT_VARIABLE NODE_ADDON_API_INCLUDE_DIR
