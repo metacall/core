@@ -91,9 +91,11 @@ deploy:
     user: "${BINTRAY_USER}"
     key: "${BINTRAY_KEY}"
     skip_cleanup: true
-    on: master # TODO: Change to master or tags
+    on:
+      tags: true
   - provider: script
     script:
       - npm publish $TRAVIS_BUILD_DIR/source/ports/node_port --access public # TODO: --tag <tag>
     skip_cleanup: true
-    on: master # TODO: Change to master or tags
+    on:
+      tags: true
