@@ -100,7 +100,7 @@ sub_netcore2(){
 	$SUDO_CMD chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
 	$SUDO_CMD apt-get update
-	sub_apt_install_hold dotnet-runtime-2.2=2.2.6-1
+	sub_apt_install_hold dotnet-runtime-2.2=2.2.7-1
 }
 
 # V8

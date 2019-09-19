@@ -312,7 +312,7 @@ sub_metacall(){
 	if [ $INSTALL_NETCORE = 1 ]; then
 		NETCORE_VERSION=1.1.10
 	elif [ INSTALL_NETCORE2 = 1 ]; then
-		NETCORE_VERSION=2.2.6
+		NETCORE_VERSION=2.2.7
 	else
 		NETCORE_VERSION=0
 	fi
