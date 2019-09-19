@@ -23,6 +23,8 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
+#include <cstdio>
+
 class metacall_inspect_test : public testing::Test
 {
 public:
@@ -131,6 +133,8 @@ TEST_F(metacall_inspect_test, DefaultConstructor)
 		EXPECT_NE((char *) NULL, (char *) inspect_str);
 
 		EXPECT_GT((size_t)size, (size_t) 0);
+
+		printf("%s\n", inspect_str);
 
 		metacall_allocator_free(allocator, inspect_str);
 
