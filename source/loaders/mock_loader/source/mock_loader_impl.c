@@ -33,21 +33,20 @@
 
 typedef struct loader_impl_mock_type
 {
-	void * impl_mock_data;
+	void *impl_mock_data;
 
 } * loader_impl_mock;
 
 typedef struct loader_impl_mock_handle_type
 {
-	void * handle_mock_data;
+	void *handle_mock_data;
 
 } * loader_impl_mock_handle;
-
 
 typedef struct loader_impl_mock_function_type
 {
 	loader_impl_mock_handle mock_handle;
-	void * function_mock_data;
+	void *function_mock_data;
 
 } * loader_impl_mock_function;
 
@@ -65,7 +64,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 	signature s = function_signature(func);
 
-	const char * name = function_name(func);
+	const char *name = function_name(func);
 
 	type ret_type = signature_get_return(s);
 
@@ -89,55 +88,55 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 			if (id == TYPE_BOOL)
 			{
-				boolean * value_ptr = (boolean *)(args[args_count]);
+				boolean *value_ptr = (boolean *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Boolean value: %d", *value_ptr);
 			}
 			else if (id == TYPE_CHAR)
 			{
-				char * value_ptr = (char *)(args[args_count]);
+				char *value_ptr = (char *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Char value: %c", *value_ptr);
 			}
 			else if (id == TYPE_SHORT)
 			{
-				short * value_ptr = (short *)(args[args_count]);
+				short *value_ptr = (short *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Short value: %d", *value_ptr);
 			}
 			else if (id == TYPE_INT)
 			{
-				int * value_ptr = (int *)(args[args_count]);
+				int *value_ptr = (int *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Int value: %d", *value_ptr);
 			}
 			else if (id == TYPE_LONG)
 			{
-				long * value_ptr = (long *)(args[args_count]);
+				long *value_ptr = (long *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Long value: %ld", *value_ptr);
 			}
 			else if (id == TYPE_FLOAT)
 			{
-				float * value_ptr = (float *)(args[args_count]);
+				float *value_ptr = (float *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Float value: %f", *value_ptr);
 			}
 			else if (id == TYPE_DOUBLE)
 			{
-				double * value_ptr = (double *)(args[args_count]);
+				double *value_ptr = (double *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Double value: %f", *value_ptr);
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * value_ptr = (const char *)(args[args_count]);
+				const char *value_ptr = (const char *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "String value: %s", value_ptr);
 			}
 			else if (id == TYPE_PTR)
 			{
-				void * value_ptr = (void *)(args[args_count]);
+				void *value_ptr = (void *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Pointer value: %p", value_ptr);
 			}
@@ -211,7 +210,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
-function_return function_mock_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_mock_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -240,12 +239,11 @@ void function_mock_interface_destroy(function func, function_impl impl)
 function_interface function_mock_singleton(void)
 {
 	static struct function_interface_type mock_interface =
-	{
-		&function_mock_interface_create,
-		&function_mock_interface_invoke,
-		&function_mock_interface_await,
-		&function_mock_interface_destroy
-	};
+		{
+			&function_mock_interface_create,
+			&function_mock_interface_invoke,
+			&function_mock_interface_await,
+			&function_mock_interface_destroy};
 
 	return &mock_interface;
 }
@@ -257,21 +255,19 @@ int mock_loader_impl_initialize_types(loader_impl impl)
 	static struct
 	{
 		type_id id;
-		const char * name;
-	}
-	type_id_name_pair[] =
-	{
-		{ TYPE_BOOL,	"Boolean"	},
-		{ TYPE_CHAR,	"Char"		},
-		{ TYPE_SHORT,	"Short"		},
-		{ TYPE_INT,		"Integer"	},
-		{ TYPE_LONG,	"Long"		},
-		{ TYPE_DOUBLE,	"Float"		},
-		{ TYPE_DOUBLE,	"Double"	},
-		{ TYPE_STRING,	"String"	},
-		{ TYPE_BUFFER,	"Buffer"	},
-		{ TYPE_PTR,		"Ptr"		}
-	};
+		const char *name;
+	} type_id_name_pair[] =
+		{
+			{TYPE_BOOL, "Boolean"},
+			{TYPE_CHAR, "Char"},
+			{TYPE_SHORT, "Short"},
+			{TYPE_INT, "Integer"},
+			{TYPE_LONG, "Long"},
+			{TYPE_DOUBLE, "Float"},
+			{TYPE_DOUBLE, "Double"},
+			{TYPE_STRING, "String"},
+			{TYPE_BUFFER, "Buffer"},
+			{TYPE_PTR, "Ptr"}};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
 
@@ -352,7 +348,7 @@ loader_handle mock_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle mock_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle mock_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	loader_impl_mock_handle handle = malloc(sizeof(struct loader_impl_mock_handle_type));
 
