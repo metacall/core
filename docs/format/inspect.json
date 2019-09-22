@@ -1,0 +1,283 @@
+{
+	"py": [{
+		"name": "example",
+		"scope": {
+			"name": "global_namespace",
+			"funcs": [{
+				"name": "sum",
+				"signature": {
+					"ret": "int",
+					"args": [{
+						"name": "left",
+						"type": "int"
+					}, {
+						"name": "right",
+						"type": "int"
+					}]
+				}
+			}, {
+				"name": "hello",
+				"signature": {
+					"ret": "",
+					"args": []
+				}
+			}, {
+				"name": "divide",
+				"signature": {
+					"ret": "float",
+					"args": [{
+						"name": "left",
+						"type": "float"
+					}, {
+						"name": "right",
+						"type": "float"
+					}]
+				}
+			}, {
+				"name": "strcat",
+				"signature": {
+					"ret": "str",
+					"args": [{
+						"name": "left",
+						"type": "str"
+					}, {
+						"name": "right",
+						"type": "str"
+					}]
+				}
+			}, {
+				"name": "multiply",
+				"signature": {
+					"ret": "int",
+					"args": [{
+						"name": "left",
+						"type": "int"
+					}, {
+						"name": "right",
+						"type": "int"
+					}]
+				}
+			}, {
+				"name": "bytebuff",
+				"signature": {
+					"ret": "bytes",
+					"args": [{
+						"name": "input",
+						"type": "bytes"
+					}]
+				}
+			}, {
+				"name": "dont_load_this_function",
+				"signature": {
+					"ret": "",
+					"args": [{
+						"name": "left",
+						"type": ""
+					}, {
+						"name": "right",
+						"type": ""
+					}]
+				}
+			}]
+		}
+	}],
+	"rb": [{
+		"name": "hello",
+		"scope": {
+			"name": "global_namespace",
+			"funcs": [{
+				"name": "get_second",
+				"signature": {
+					"ret": "",
+					"args": [{
+						"name": "first",
+						"type": "Fixnum"
+					}, {
+						"name": "second",
+						"type": "Fixnum"
+					}]
+				}
+			}, {
+				"name": "say_null",
+				"signature": {
+					"ret": "",
+					"args": []
+				}
+			}, {
+				"name": "say_multiply",
+				"signature": {
+					"ret": "",
+					"args": [{
+						"name": "left",
+						"type": "Fixnum"
+					}, {
+						"name": "right",
+						"type": "Fixnum"
+					}]
+				}
+			}, {
+				"name": "say_hello",
+				"signature": {
+					"ret": "",
+					"args": [{
+						"name": "value",
+						"type": "String"
+					}]
+				}
+			}, {
+				"name": "backwardsPrime",
+				"signature": {
+					"ret": "",
+					"args": [{
+						"name": "start",
+						"type": ""
+					}, {
+						"name": "stop",
+						"type": ""
+					}]
+				}
+			}]
+		}
+	}],
+	"cs": [{
+		"name": "hello",
+		"scope": {
+			"name": "global_namespace",
+			"funcs": [{
+				"name": "Sum",
+				"signature": {
+					"ret": "int",
+					"args": [{
+						"name": "a",
+						"type": "int"
+					}, {
+						"name": "b",
+						"type": "int"
+					}]
+				}
+			}, {
+				"name": "Say",
+				"signature": {
+					"ret": "",
+					"args": [{
+						"name": "text",
+						"type": "string"
+					}]
+				}
+			}, {
+				"name": "Concat",
+				"signature": {
+					"ret": "string",
+					"args": [{
+						"name": "a",
+						"type": "string"
+					}, {
+						"name": "b",
+						"type": "string"
+					}]
+				}
+			}, {
+				"name": "SayHello",
+				"signature": {
+					"ret": "",
+					"args": []
+				}
+			}]
+		}
+	}],
+	"__metacall_host__": [],
+	"mock": [{
+		"name": "empty",
+		"scope": {
+			"name": "global_namespace",
+			"funcs": [{
+				"name": "three_str",
+				"signature": {
+					"ret": "String",
+					"args": [{
+						"name": "a_str",
+						"type": "String"
+					}, {
+						"name": "b_str",
+						"type": "String"
+					}, {
+						"name": "c_str",
+						"type": "String"
+					}]
+				}
+			}, {
+				"name": "my_empty_func_str",
+				"signature": {
+					"ret": "String",
+					"args": []
+				}
+			}, {
+				"name": "my_empty_func_int",
+				"signature": {
+					"ret": "Integer",
+					"args": []
+				}
+			}, {
+				"name": "new_args",
+				"signature": {
+					"ret": "String",
+					"args": [{
+						"name": "a_str",
+						"type": "String"
+					}]
+				}
+			}, {
+				"name": "two_str",
+				"signature": {
+					"ret": "String",
+					"args": [{
+						"name": "a_str",
+						"type": "String"
+					}, {
+						"name": "b_str",
+						"type": "String"
+					}]
+				}
+			}, {
+				"name": "two_doubles",
+				"signature": {
+					"ret": "Double",
+					"args": [{
+						"name": "first_parameter",
+						"type": "Double"
+					}, {
+						"name": "second_parameter",
+						"type": "Double"
+					}]
+				}
+			}, {
+				"name": "my_empty_func",
+				"signature": {
+					"ret": "Integer",
+					"args": []
+				}
+			}, {
+				"name": "mixed_args",
+				"signature": {
+					"ret": "Char",
+					"args": [{
+						"name": "a_char",
+						"type": "Char"
+					}, {
+						"name": "b_int",
+						"type": "Integer"
+					}, {
+						"name": "c_long",
+						"type": "Long"
+					}, {
+						"name": "d_double",
+						"type": "Double"
+					}, {
+						"name": "e_ptr",
+						"type": "Ptr"
+					}]
+				}
+			}]
+		}
+	}]
+}

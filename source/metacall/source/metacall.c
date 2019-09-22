@@ -74,10 +74,9 @@ int metacall_initialize()
 	/* Initialize logs by default to stdout if none has been defined */
 	if (metacall_log_null_flag != 0 && log_size() == 0)
 	{
-		struct metacall_log_stdio_type log_stdio =
-		{
-			stdout
-		};
+		struct metacall_log_stdio_type log_stdio;
+
+		log_stdio.stream = stdout;
 
 		if (metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio) != 0)
 		{
@@ -945,6 +944,11 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	function f = (function)loader_get(name);
 
 	return function_await(f, args, resolve_callback, reject_callback, data);
+}
+
+void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	return function_await(func, args, resolve_callback, reject_callback, data);
 }
 
 /* TODO: Unify code between metacallfmv and metacallfmv_await */

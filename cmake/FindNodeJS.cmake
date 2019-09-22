@@ -343,7 +343,7 @@ if(NOT NODEJS_LIBRARY)
 
 			message(STATUS "Install NodeJS shared library")
 
-			execute_process(COMMAND sh -c "make install PREFIX=\"${CMAKE_INSTALL_PREFIX}\"" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+			execute_process(COMMAND sh -c "make install" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
 		endif()
 	endif()
 
