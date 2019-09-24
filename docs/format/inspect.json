@@ -6,76 +6,144 @@
 			"funcs": [{
 				"name": "sum",
 				"signature": {
-					"ret": "int",
+					"ret": {
+						"type": {
+							"name": "int",
+							"id": 4
+						}
+					},
 					"args": [{
 						"name": "left",
-						"type": "int"
+						"type": {
+							"name": "int",
+							"id": 4
+						}
 					}, {
 						"name": "right",
-						"type": "int"
+						"type": {
+							"name": "int",
+							"id": 4
+						}
 					}]
 				}
 			}, {
 				"name": "hello",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": []
 				}
 			}, {
 				"name": "divide",
 				"signature": {
-					"ret": "float",
+					"ret": {
+						"type": {
+							"name": "float",
+							"id": 6
+						}
+					},
 					"args": [{
 						"name": "left",
-						"type": "float"
+						"type": {
+							"name": "float",
+							"id": 6
+						}
 					}, {
 						"name": "right",
-						"type": "float"
+						"type": {
+							"name": "float",
+							"id": 6
+						}
 					}]
 				}
 			}, {
 				"name": "strcat",
 				"signature": {
-					"ret": "str",
+					"ret": {
+						"type": {
+							"name": "str",
+							"id": 7
+						}
+					},
 					"args": [{
 						"name": "left",
-						"type": "str"
+						"type": {
+							"name": "str",
+							"id": 7
+						}
 					}, {
 						"name": "right",
-						"type": "str"
+						"type": {
+							"name": "str",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "multiply",
 				"signature": {
-					"ret": "int",
+					"ret": {
+						"type": {
+							"name": "int",
+							"id": 4
+						}
+					},
 					"args": [{
 						"name": "left",
-						"type": "int"
+						"type": {
+							"name": "int",
+							"id": 4
+						}
 					}, {
 						"name": "right",
-						"type": "int"
+						"type": {
+							"name": "int",
+							"id": 4
+						}
 					}]
 				}
 			}, {
 				"name": "bytebuff",
 				"signature": {
-					"ret": "bytes",
+					"ret": {
+						"type": {
+							"name": "bytes",
+							"id": 8
+						}
+					},
 					"args": [{
 						"name": "input",
-						"type": "bytes"
+						"type": {
+							"name": "bytes",
+							"id": 8
+						}
 					}]
 				}
 			}, {
 				"name": "dont_load_this_function",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": [{
 						"name": "left",
-						"type": ""
+						"type": {
+							"name": "",
+							"id": 15
+						}
 					}, {
 						"name": "right",
-						"type": ""
+						"type": {
+							"name": "",
+							"id": 15
+						}
 					}]
 				}
 			}]
@@ -88,52 +156,98 @@
 			"funcs": [{
 				"name": "get_second",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": [{
 						"name": "first",
-						"type": "Fixnum"
+						"type": {
+							"name": "Fixnum",
+							"id": 3
+						}
 					}, {
 						"name": "second",
-						"type": "Fixnum"
+						"type": {
+							"name": "Fixnum",
+							"id": 3
+						}
 					}]
 				}
 			}, {
 				"name": "say_null",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": []
 				}
 			}, {
 				"name": "say_multiply",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": [{
 						"name": "left",
-						"type": "Fixnum"
+						"type": {
+							"name": "Fixnum",
+							"id": 3
+						}
 					}, {
 						"name": "right",
-						"type": "Fixnum"
+						"type": {
+							"name": "Fixnum",
+							"id": 3
+						}
 					}]
 				}
 			}, {
 				"name": "say_hello",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": [{
 						"name": "value",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "backwardsPrime",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": [{
 						"name": "start",
-						"type": ""
+						"type": {
+							"name": "",
+							"id": 15
+						}
 					}, {
 						"name": "stop",
-						"type": ""
+						"type": {
+							"name": "",
+							"id": 15
+						}
 					}]
 				}
 			}]
@@ -146,40 +260,75 @@
 			"funcs": [{
 				"name": "Sum",
 				"signature": {
-					"ret": "int",
+					"ret": {
+						"type": {
+							"name": "int",
+							"id": 3
+						}
+					},
 					"args": [{
 						"name": "a",
-						"type": "int"
+						"type": {
+							"name": "int",
+							"id": 3
+						}
 					}, {
 						"name": "b",
-						"type": "int"
+						"type": {
+							"name": "int",
+							"id": 3
+						}
 					}]
 				}
 			}, {
 				"name": "Say",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": [{
 						"name": "text",
-						"type": "string"
+						"type": {
+							"name": "string",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "Concat",
 				"signature": {
-					"ret": "string",
+					"ret": {
+						"type": {
+							"name": "string",
+							"id": 7
+						}
+					},
 					"args": [{
 						"name": "a",
-						"type": "string"
+						"type": {
+							"name": "string",
+							"id": 7
+						}
 					}, {
 						"name": "b",
-						"type": "string"
+						"type": {
+							"name": "string",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "SayHello",
 				"signature": {
-					"ret": "",
+					"ret": {
+						"type": {
+							"name": "",
+							"id": 15
+						}
+					},
 					"args": []
 				}
 			}]
@@ -193,88 +342,167 @@
 			"funcs": [{
 				"name": "three_str",
 				"signature": {
-					"ret": "String",
+					"ret": {
+						"type": {
+							"name": "String",
+							"id": 7
+						}
+					},
 					"args": [{
 						"name": "a_str",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}, {
 						"name": "b_str",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}, {
 						"name": "c_str",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "my_empty_func_str",
 				"signature": {
-					"ret": "String",
+					"ret": {
+						"type": {
+							"name": "String",
+							"id": 7
+						}
+					},
 					"args": []
 				}
 			}, {
 				"name": "my_empty_func_int",
 				"signature": {
-					"ret": "Integer",
+					"ret": {
+						"type": {
+							"name": "Integer",
+							"id": 3
+						}
+					},
 					"args": []
 				}
 			}, {
 				"name": "new_args",
 				"signature": {
-					"ret": "String",
+					"ret": {
+						"type": {
+							"name": "String",
+							"id": 7
+						}
+					},
 					"args": [{
 						"name": "a_str",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "two_str",
 				"signature": {
-					"ret": "String",
+					"ret": {
+						"type": {
+							"name": "String",
+							"id": 7
+						}
+					},
 					"args": [{
 						"name": "a_str",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}, {
 						"name": "b_str",
-						"type": "String"
+						"type": {
+							"name": "String",
+							"id": 7
+						}
 					}]
 				}
 			}, {
 				"name": "two_doubles",
 				"signature": {
-					"ret": "Double",
+					"ret": {
+						"type": {
+							"name": "Double",
+							"id": 6
+						}
+					},
 					"args": [{
 						"name": "first_parameter",
-						"type": "Double"
+						"type": {
+							"name": "Double",
+							"id": 6
+						}
 					}, {
 						"name": "second_parameter",
-						"type": "Double"
+						"type": {
+							"name": "Double",
+							"id": 6
+						}
 					}]
 				}
 			}, {
 				"name": "my_empty_func",
 				"signature": {
-					"ret": "Integer",
+					"ret": {
+						"type": {
+							"name": "Integer",
+							"id": 3
+						}
+					},
 					"args": []
 				}
 			}, {
 				"name": "mixed_args",
 				"signature": {
-					"ret": "Char",
+					"ret": {
+						"type": {
+							"name": "Char",
+							"id": 1
+						}
+					},
 					"args": [{
 						"name": "a_char",
-						"type": "Char"
+						"type": {
+							"name": "Char",
+							"id": 1
+						}
 					}, {
 						"name": "b_int",
-						"type": "Integer"
+						"type": {
+							"name": "Integer",
+							"id": 3
+						}
 					}, {
 						"name": "c_long",
-						"type": "Long"
+						"type": {
+							"name": "Long",
+							"id": 4
+						}
 					}, {
 						"name": "d_double",
-						"type": "Double"
+						"type": {
+							"name": "Double",
+							"id": 6
+						}
 					}, {
 						"name": "e_ptr",
-						"type": "Ptr"
+						"type": {
+							"name": "Ptr",
+							"id": 11
+						}
 					}]
 				}
 			}]

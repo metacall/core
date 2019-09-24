@@ -53,8 +53,6 @@ static value signature_metadata_return(signature s);
 
 static value signature_metadata_args_map_name(const char * name);
 
-static value signature_metadata_args_map_type(const char * type);
-
 static value signature_metadata_args_map(signature s);
 
 static value signature_metadata_args(signature s);
@@ -236,11 +234,9 @@ value signature_metadata_return(signature s)
 {
 	static const char ret_str[] = "ret";
 
-	const char * ret_name = s->ret != NULL ? type_name(s->ret) : "";
-
 	value ret = value_create_array(NULL, 2);
 
-	value * ret_array;
+	value * ret_array, * ret_map;
 
 	if (ret == NULL)
 	{
@@ -258,9 +254,20 @@ value signature_metadata_return(signature s)
 		return NULL;
 	}
 
-	ret_array[1] = value_create_string(ret_name, strlen(ret_name));
+	ret_array[1] = value_create_map(NULL, 1);
 
 	if (ret_array[1] == NULL)
+	{
+		value_type_destroy(ret);
+
+		return NULL;
+	}
+
+	ret_map = value_to_map(ret_array[1]);
+
+	ret_map[0] = type_metadata(s->ret);
+
+	if (ret_map[0] == NULL)
 	{
 		value_type_destroy(ret);
 
@@ -304,40 +311,6 @@ value signature_metadata_args_map_name(const char * name)
 	return v;
 }
 
-value signature_metadata_args_map_type(const char * type)
-{
-	static const char type_str[] = "type";
-
-	value * v_array, v = value_create_array(NULL, 2);
-
-	if (v == NULL)
-	{
-		return NULL;
-	}
-
-	v_array = value_to_array(v);
-
-	v_array[0] = value_create_string(type_str, sizeof(type_str) - 1);
-
-	if (v_array[0] == NULL)
-	{
-		value_type_destroy(v);
-
-		return NULL;
-	}
-
-	v_array[1] = value_create_string(type, strlen(type));
-
-	if (v_array[1] == NULL)
-	{
-		value_type_destroy(v);
-
-		return NULL;
-	}
-
-	return v;
-}
-
 value signature_metadata_args_map(signature s)
 {
 	value args = value_create_array(NULL, s->count);
@@ -356,8 +329,6 @@ value signature_metadata_args_map(signature s)
 		for (index = 0; index < s->count; ++index)
 		{
 			signature_node node = signature_at(s, index);
-
-			const char * type_str = node->t != NULL ? type_name(node->t) : "";
 
 			value * args_map_ptr;
 
@@ -381,7 +352,7 @@ value signature_metadata_args_map(signature s)
 				return NULL;
 			}
 
-			args_map_ptr[1] = signature_metadata_args_map_type(type_str);
+			args_map_ptr[1] = type_metadata(node->t);
 
 			if (args_map_ptr[1] == NULL)
 			{
@@ -432,7 +403,6 @@ value signature_metadata_args(signature s)
 
 	return NULL;
 }
-
 
 value signature_metadata(signature s)
 {

@@ -24,6 +24,7 @@
 #include <reflect/reflect_api.h>
 
 #include <reflect/reflect_type_id.h>
+#include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +58,8 @@ REFLECT_API type_id type_index(type t);
 REFLECT_API const char * type_name(type t);
 
 REFLECT_API type_impl type_derived(type t);
+
+REFLECT_API value type_metadata(type t);
 
 REFLECT_API void type_destroy(type t);
 
