@@ -43,45 +43,40 @@ const addon = (() => {
 	return addon;
 })();
 
+const node_require = Module.require;
+
+const metacall_require = (tag, name) => {
+	// TODO: Inspect the current handle and append it to an object mocking the function calls with metacall
+	return addon.metacall_load_from_file(tag, [ name ]);
+};
+
 /* Monkey patch require for simplifying load */
-Module.prototype.require = new Proxy(Module.prototype.require, {
-	apply(target, module, args) {
+Module.prototype.require = (id) => {
 
-		const node_require = () => {
-			return Reflect.apply(target, module, args);
-		};
+	const tags = {
+		mock: 'mock',
+		py: 'py',
+		rb: 'rb',
+		cs: 'cs',
+		/*dll: 'cs',*/
+	};
 
-		const metacall_require = (tag, name) => {
-			// TODO: Inspect the current handle and append it to an object mocking the function calls with metacall
-			return addon.metacall_load_from_file(tag, [ name ]);
-		};
+	const index = id.lastIndexOf('.');
 
-		const tags = {
-			mock: 'mock',
-			py: 'py',
-			rb: 'rb',
-			cs: 'cs',
-			/*dll: 'cs',*/
-		};
+	if (index === -1) {
+		return node_require(id);
+	} else {
+		// Load the module
+		const extension = id.substr(index + 1);
+		const tag = tags[extension];
 
-		const name = args[0];
-		const index = name.lastIndexOf('.');
-
-		if (index === -1) {
-			return node_require();
+		if (tag) {
+			return metacall_require(tag, id);
 		} else {
-			// Load the module
-			const ext = name.substr(index + 1);
-			const tag = tags[ext];
-
-			if (tag) {
-				return metacall_require(tag, name);
-			} else {
-				return node_require();
-			}
+			return node_require(id);
 		}
 	}
-});
+};
 
 /* Export the API */
 module.exports = {
