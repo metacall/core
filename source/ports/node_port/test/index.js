@@ -14,13 +14,13 @@ describe('metacall', () => {
 
 	describe('load', () => {
 		it('metacall_load_from_file (mock)', () => {
-			assert.strictEqual(metacall_load_from_file('mock', ['asd.mock']), undefined); /* TODO: Do not return undefined */
+			assert.strictEqual(require('asd.mock'), undefined); /* TODO: Do not return undefined */
 		});
 		it('metacall_load_from_file (py)', () => {
-			assert.strictEqual(metacall_load_from_file('py', ['example.py']), undefined); /* TODO: Do not return undefined */
+			assert.strictEqual(require('example.py'), undefined); /* TODO: Do not return undefined */
 		});
 		it('metacall_load_from_file (rb)', () => {
-			assert.strictEqual(metacall_load_from_file('rb', ['second.rb']), undefined); /* TODO: Do not return undefined */
+			assert.strictEqual(/*require('second.rb')*/ undefined, undefined); /* TODO: Do not return undefined */
 		});
 	});
 

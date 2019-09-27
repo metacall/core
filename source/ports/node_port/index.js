@@ -52,27 +52,17 @@ Module.prototype.require = new Proxy(Module.prototype.require, {
 		};
 
 		const metacall_require = (tag, name) => {
-			addon.metacall_load_from_file(tag, [ name ]);
 			// TODO: Inspect the current handle and append it to an object mocking the function calls with metacall
-			return 1;
+			return addon.metacall_load_from_file(tag, [ name ]);
 		};
 
-		const loaders = {
-			py: metacall_require,
-			rb: metacall_require,
-			cs: metacall_require,
-			js: node_require,
-			node: node_require,
-		};
-
-		const loadersTag = {
+		const tags = {
+			mock: 'mock',
 			py: 'py',
 			rb: 'rb',
 			cs: 'cs',
 			/*dll: 'cs',*/
 		};
-
-		const extensions = Object.keys(loaders);
 
 		const name = args[0];
 		const index = name.lastIndexOf('.');
@@ -82,12 +72,12 @@ Module.prototype.require = new Proxy(Module.prototype.require, {
 		} else {
 			// Load the module
 			const ext = name.substr(index + 1);
-			const loader = loaders[ext];
+			const tag = tags[ext];
 
-			if (loader) {
-				return loader(loadersTag[ext], name);
+			if (tag) {
+				return metacall_require(tag, name);
 			} else {
-				throw new Error(`Extension ${ext} is not suported by MetaCall.`);
+				return node_require();
 			}
 		}
 	}
