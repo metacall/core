@@ -29,20 +29,21 @@ extern "C" {
 
 enum type_primitive_id
 {
-	TYPE_BOOL	= 0,
-	TYPE_CHAR	= 1,
-	TYPE_SHORT	= 2,
-	TYPE_INT	= 3,
-	TYPE_LONG	= 4,
-	TYPE_FLOAT	= 5,
-	TYPE_DOUBLE	= 6,
-	TYPE_STRING = 7,
-	TYPE_BUFFER	= 8,
-	TYPE_ARRAY	= 9,
-	TYPE_MAP	= 10,
-	TYPE_PTR	= 11,
-	TYPE_FUTURE = 12,
-	TYPE_NULL	= 13,
+	TYPE_BOOL		= 0,
+	TYPE_CHAR		= 1,
+	TYPE_SHORT		= 2,
+	TYPE_INT		= 3,
+	TYPE_LONG		= 4,
+	TYPE_FLOAT		= 5,
+	TYPE_DOUBLE		= 6,
+	TYPE_STRING		= 7,
+	TYPE_BUFFER		= 8,
+	TYPE_ARRAY		= 9,
+	TYPE_MAP		= 10,
+	TYPE_PTR		= 11,
+	TYPE_FUTURE		= 12,
+	TYPE_FUNCTION	= 13,
+	TYPE_NULL		= 14,
 
 	TYPE_SIZE,
 	TYPE_INVALID
@@ -169,6 +170,18 @@ REFLECT_API int type_id_ptr(type_id id);
 *    Returns zero if type is future, different from zero otherwhise
 */
 REFLECT_API int type_id_future(type_id id);
+
+/**
+*  @brief
+*    Check if type id is function value (function)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is function, different from zero otherwhise
+*/
+REFLECT_API int type_id_function(type_id id);
 
 /**
 *  @brief

@@ -71,6 +71,11 @@ int type_id_future(type_id id)
 	return !(id == TYPE_FUTURE);
 }
 
+int type_id_function(type_id id)
+{
+	return !(id == TYPE_FUNCTION);
+}
+
 int type_id_null(type_id id)
 {
 	return !(id == TYPE_NULL);

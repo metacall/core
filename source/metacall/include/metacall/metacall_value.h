@@ -43,20 +43,21 @@ extern "C" {
 
 enum metacall_value_id
 {
-	METACALL_BOOL	= 0,
-	METACALL_CHAR	= 1,
-	METACALL_SHORT	= 2,
-	METACALL_INT	= 3,
-	METACALL_LONG	= 4,
-	METACALL_FLOAT	= 5,
-	METACALL_DOUBLE	= 6,
-	METACALL_STRING	= 7,
-	METACALL_BUFFER	= 8,
-	METACALL_ARRAY	= 9,
-	METACALL_MAP	= 10,
-	METACALL_PTR	= 11,
-	METACALL_FUTURE = 12,
-	METACALL_NULL	= 13,
+	METACALL_BOOL		= 0,
+	METACALL_CHAR		= 1,
+	METACALL_SHORT		= 2,
+	METACALL_INT		= 3,
+	METACALL_LONG		= 4,
+	METACALL_FLOAT		= 5,
+	METACALL_DOUBLE		= 6,
+	METACALL_STRING		= 7,
+	METACALL_BUFFER		= 8,
+	METACALL_ARRAY		= 9,
+	METACALL_MAP		= 10,
+	METACALL_PTR		= 11,
+	METACALL_FUTURE		= 12,
+	METACALL_FUNCTION	= 13,
+	METACALL_NULL		= 14,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -231,6 +232,18 @@ METACALL_API void * metacall_value_create_ptr(const void * ptr);
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void * metacall_value_create_future(void * f);
+
+/**
+*  @brief
+*    Create a value from function @f
+*
+*  @param[in] f
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_function(void * f);
 
 /**
 *  @brief
@@ -432,6 +445,18 @@ METACALL_API void * metacall_value_to_ptr(void * v);
 *    Value converted to future
 */
 METACALL_API void * metacall_value_to_future(void * v);
+
+/**
+*  @brief
+*    Convert value @v to function
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to function
+*/
+METACALL_API void * metacall_value_to_function(void * v);
 
 /**
 *  @brief
@@ -648,9 +673,24 @@ METACALL_API void * metacall_value_from_ptr(void * v, const void * ptr);
 *    Future to be assigned to value @v
 *
 *  @return
-*    Value with future @future assigned to it
+*    Value with future @f assigned to it
 */
 METACALL_API void * metacall_value_from_future(void * v, void * f);
+
+/**
+*  @brief
+*    Assign function @f to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] f
+*    Function to be assigned to value @v
+*
+*  @return
+*    Value with function @f assigned to it
+*/
+METACALL_API void * metacall_value_from_function(void * v, void * f);
 
 /**
 *  @brief
@@ -819,6 +859,18 @@ METACALL_API void * metacall_value_cast_ptr(void ** v);
 *    Value converted to future
 */
 METACALL_API void * metacall_value_cast_future(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to function
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to function
+*/
+METACALL_API void * metacall_value_cast_function(void ** v);
 
 /**
 *  @brief

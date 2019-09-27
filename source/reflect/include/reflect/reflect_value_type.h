@@ -30,6 +30,7 @@
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_function.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -273,6 +274,18 @@ REFLECT_API value value_create_future(future f);
 
 /**
 *  @brief
+*    Create a value from function @f
+*
+*  @param[in] f
+*    Pointer to function will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_function(function f);
+
+/**
+*  @brief
 *    Create a value of type null
 *
 *  @return
@@ -435,6 +448,18 @@ REFLECT_API void * value_to_ptr(value v);
 *    Value converted to future
 */
 REFLECT_API future value_to_future(value v);
+
+/**
+*  @brief
+*    Convert value @v to function
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to function
+*/
+REFLECT_API function value_to_function(value v);
 
 /**
 *  @brief
@@ -654,6 +679,21 @@ REFLECT_API value value_from_ptr(value v, const void * ptr);
 *    Value with future @future assigned to it
 */
 REFLECT_API value value_from_future(value v, future f);
+
+/**
+*  @brief
+*    Assign function reference @f to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] f
+*    Function to be assigned to value @v
+*
+*  @return
+*    Value with function @f assigned to it
+*/
+REFLECT_API value value_from_function(value v, function f);
 
 /**
 *  @brief

@@ -44,12 +44,13 @@ static const enum metacall_value_id value_id_map[] =
 	METACALL_MAP,
 	METACALL_PTR,
 	METACALL_FUTURE,
+	METACALL_FUNCTION,
 	METACALL_NULL
 };
 
 /* -- Static Assertions -- */
 
-static_assert((int)TYPE_SIZE == (int)METACALL_SIZE,
+static_assert((int) TYPE_SIZE == (int) METACALL_SIZE,
 	"Type size does not match MetaCall type size");
 
 static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
@@ -65,6 +66,7 @@ static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
 	((int) TYPE_MAP == (int) METACALL_MAP) &&
 	((int) TYPE_PTR == (int) METACALL_PTR) &&
 	((int) TYPE_FUTURE == (int) METACALL_FUTURE) &&
+	((int) TYPE_FUNCTION == (int) METACALL_FUNCTION) &&
 	((int) TYPE_NULL == (int) METACALL_NULL) &&
 	((int) TYPE_SIZE == (int) METACALL_SIZE) &&
 	((int) TYPE_INVALID == (int) METACALL_INVALID),
@@ -138,6 +140,11 @@ void * metacall_value_create_ptr(const void * ptr)
 void * metacall_value_create_future(void * f)
 {
 	return value_create_future(f);
+}
+
+void * metacall_value_create_function(void * f)
+{
+	return value_create_function(f);
 }
 
 void * metacall_value_create_null()
@@ -258,6 +265,13 @@ void * metacall_value_to_future(void * v)
 	return value_to_future(v);
 }
 
+void * metacall_value_to_function(void * v)
+{
+	assert(value_type_id(v) == TYPE_FUNCTION);
+
+	return value_to_function(v);
+}
+
 void * metacall_value_to_null(void * v)
 {
 	assert(value_type_id(v) == TYPE_NULL);
@@ -328,6 +342,11 @@ void * metacall_value_from_ptr(void * v, const void * ptr)
 void * metacall_value_from_future(void * v, void * f)
 {
 	return value_from_future(v, f);
+}
+
+void * metacall_value_from_function(void * v, void * f)
+{
+	return value_from_function(v, f);
 }
 
 void * metacall_value_from_null(void * v)
@@ -528,6 +547,21 @@ void * metacall_value_cast_future(void ** v)
 	}
 
 	return value_to_future(*v);
+}
+
+void * metacall_value_cast_function(void ** v)
+{
+	if (value_type_id(*v) != TYPE_FUNCTION)
+	{
+		value v_cast = value_type_cast(*v, TYPE_FUNCTION);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_function(*v);
 }
 
 void * metacall_value_cast_null(void ** v)

@@ -307,6 +307,7 @@ TEST_F(serial_test, DefaultConstructor)
 				"<unknown>",
 			#endif
 			NULL, /* TODO: Future */
+			NULL, /* TODO: Function */
 			"(null)"
 		};
 
@@ -361,8 +362,9 @@ TEST_F(serial_test, DefaultConstructor)
 			value_create_array(value_list, value_list_size),
 			value_create_map(value_map, value_map_size),
 			value_create_ptr((void *)0x000A7EF2),
-			value_create_null(),
-			value_create_future(NULL) /* TODO: Implement future properly */
+			value_create_future(NULL), /* TODO: Implement future properly */
+			value_create_function(NULL), /* TODO: Implement function properly */
+			value_create_null()
 		};
 
 		static_assert((int) sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,
@@ -374,7 +376,7 @@ TEST_F(serial_test, DefaultConstructor)
 
 		for (size_t iterator = 0; iterator < value_names_size; ++iterator)
 		{
-			/* TODO: Remove this workaround when type map and future stringification is implemented */
+			/* TODO: Remove this workaround when type map and future/function stringification is implemented */
 			if (value_names[iterator] != NULL)
 			{
 				size_t size;

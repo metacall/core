@@ -38,6 +38,7 @@ static const size_t type_id_size_list[] =
 	sizeof(value *),	/* TYPE_MAP */
 	sizeof(void *),		/* TYPE_PTR */
 	sizeof(future),		/* TYPE_FUTURE */
+	sizeof(function),	/* TYPE_FUNCTION */
 	(size_t)0			/* TYPE_NULL */
 };
 

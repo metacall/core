@@ -200,6 +200,11 @@ value value_create_future(future f)
 	return value_type_create(&f, sizeof(future), TYPE_FUTURE);
 }
 
+value value_create_function(function f)
+{
+	return value_type_create(&f, sizeof(function), TYPE_FUNCTION);
+}
+
 value value_create_null()
 {
 	return value_type_create(NULL, 0, TYPE_NULL);
@@ -300,6 +305,13 @@ future value_to_future(value v)
 	uintptr_t * uint_future = value_data(v);
 
 	return (future)(*uint_future);
+}
+
+function value_to_function(value v)
+{
+	uintptr_t * uint_function = value_data(v);
+
+	return (function)(*uint_function);
 }
 
 void * value_to_null(value v)
@@ -412,6 +424,11 @@ value value_from_future(value v, future f)
 	return value_from(v, &f, sizeof(future));
 }
 
+value value_from_function(value v, function f)
+{
+	return value_from(v, &f, sizeof(function));
+}
+
 value value_from_null(value v)
 {
 	return value_from(v, NULL, 0);
@@ -451,12 +468,12 @@ void value_type_destroy(value v)
 
 			future_destroy(f);
 		}
-		/*
 		else if (type_id_function(id) == 0)
 		{
+			function f = value_to_function(v);
 
+			function_destroy(f);
 		}
-		*/
 
 		if (type_id_invalid(id) != 0)
 		{

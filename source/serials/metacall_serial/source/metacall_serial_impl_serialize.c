@@ -22,6 +22,8 @@
 
 #include <metacall_serial/metacall_serial_impl_serialize.h>
 
+#include <portability/portability_assert.h>
+
 #include <format/format_print.h>
 
 #include <log/log.h>
@@ -62,51 +64,67 @@ static void metacall_serial_impl_serialize_map(value v, char * dest, size_t size
 
 static void metacall_serial_impl_serialize_ptr(value v, char * dest, size_t size, const char * format, size_t * length);
 
+static void metacall_serial_impl_serialize_future(value v, char * dest, size_t size, const char * format, size_t * length);
+
+static void metacall_serial_impl_serialize_function(value v, char * dest, size_t size, const char * format, size_t * length);
+
 static void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length);
+
+/* -- Definitions -- */
+
+static const char * metacall_serialize_format[] =
+{
+	"%s",
+	"%c",
+	"%d",
+	"%d",
+	"%ld",
+	"%.6ff",
+	"%.6f",
+	"%s",
+	"%02x",
+	NULL, /* Unused */
+	NULL, /* Unused */
+	METACALL_SERIALIZE_VALUE_FORMAT_PTR,
+	NULL, /* TODO: Future */
+	NULL, /* TODO: Function */
+	"%s"
+};
+
+static_assert((size_t) TYPE_SIZE == (size_t) sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
+	"MetaCall serializer format does not match MetaCall type size");
+
+static metacall_serialize_impl_ptr serialize_func[] =
+{
+	&metacall_serial_impl_serialize_bool,
+	&metacall_serial_impl_serialize_char,
+	&metacall_serial_impl_serialize_short,
+	&metacall_serial_impl_serialize_int,
+	&metacall_serial_impl_serialize_long,
+	&metacall_serial_impl_serialize_float,
+	&metacall_serial_impl_serialize_double,
+	&metacall_serial_impl_serialize_string,
+	&metacall_serial_impl_serialize_buffer,
+	&metacall_serial_impl_serialize_array,
+	&metacall_serial_impl_serialize_map,
+	&metacall_serial_impl_serialize_ptr,
+	&metacall_serial_impl_serialize_future,
+	&metacall_serial_impl_serialize_function,
+	&metacall_serial_impl_serialize_null
+};
+
+static_assert((size_t) TYPE_SIZE == (size_t) sizeof(serialize_func) / sizeof(serialize_func[0]),
+	"MetaCall serializer function does not match MetaCall type size");
 
 /* -- Methods -- */
 
 const char * metacall_serial_impl_serialize_format(type_id id)
 {
-	static const char * metacall_serialize_format[TYPE_SIZE] =
-	{
-		"%s",
-		"%c",
-		"%d",
-		"%d",
-		"%ld",
-		"%.6ff",
-		"%.6f",
-		"%s",
-		"%02x",
-		NULL, /* Unused */
-		NULL, /* Unused */
-		METACALL_SERIALIZE_VALUE_FORMAT_PTR,
-		"%s"
-	};
-
 	return metacall_serialize_format[id];
 }
 
 metacall_serialize_impl_ptr metacall_serial_impl_serialize_func(type_id id)
 {
-	static metacall_serialize_impl_ptr serialize_func[TYPE_SIZE] =
-	{
-		&metacall_serial_impl_serialize_bool,
-		&metacall_serial_impl_serialize_char,
-		&metacall_serial_impl_serialize_short,
-		&metacall_serial_impl_serialize_int,
-		&metacall_serial_impl_serialize_long,
-		&metacall_serial_impl_serialize_float,
-		&metacall_serial_impl_serialize_double,
-		&metacall_serial_impl_serialize_string,
-		&metacall_serial_impl_serialize_buffer,
-		&metacall_serial_impl_serialize_array,
-		&metacall_serial_impl_serialize_map,
-		&metacall_serial_impl_serialize_ptr,
-		&metacall_serial_impl_serialize_null
-	};
-
 	return serialize_func[id];
 }
 
@@ -276,6 +294,28 @@ void metacall_serial_impl_serialize_map(value v, char * dest, size_t size, const
 void metacall_serial_impl_serialize_ptr(value v, char * dest, size_t size, const char * format, size_t * length)
 {
 	*length = snprintf(dest, size, format, value_to_ptr(v));
+}
+
+void metacall_serial_impl_serialize_future(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO: Implement future serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
+}
+
+void metacall_serial_impl_serialize_function(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO: Implement function serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
 }
 
 void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length)
