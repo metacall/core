@@ -7,6 +7,18 @@ if(NOT OPTION_BUILD_DIST_LIBS)
 	return()
 endif()
 
+# Check if python dependencies are installed
+execute_process(
+	COMMAND python -c "import rsa"
+	ERROR_QUIET
+	OUTPUT_QUIET
+	RESULT_VARIABLE PYTHON_DEPENDS
+)
+
+if(PYTHON_DEPENDS)
+	return()
+endif()
+
 #
 # Executable name and options
 #

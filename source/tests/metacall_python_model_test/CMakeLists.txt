@@ -3,6 +3,18 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_L
 	return()
 endif()
 
+# Check if python dependencies are installed
+execute_process(
+	COMMAND python -c "import scipy; import numpy; import scikit-learn; import joblib"
+	ERROR_QUIET
+	OUTPUT_QUIET
+	RESULT_VARIABLE PYTHON_DEPENDS
+)
+
+if(PYTHON_DEPENDS)
+	return()
+endif()
+
 #
 # Executable name and options
 #
