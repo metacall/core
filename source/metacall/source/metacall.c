@@ -454,7 +454,22 @@ void * metacall_handle(const char * tag, const char * name)
 
 const char * metacall_handle_id(void * handle)
 {
+	if (handle == NULL)
+	{
+		return NULL;
+	}
+
 	return loader_handle_id(handle);
+}
+
+void * metacall_handle_export(void * handle)
+{
+	if (handle == NULL)
+	{
+		return NULL;
+	}
+
+	return loader_handle_export(handle);
 }
 
 void * metacallfv(void * func, void * args[])

@@ -68,9 +68,11 @@ LOADER_API void * loader_impl_get_options(loader_impl impl);
 
 LOADER_API const char * loader_impl_handle_id(void * handle);
 
-LOADER_API int loader_impl_clear(void * handle);
+LOADER_API value loader_impl_handle_export(void * handle);
 
 LOADER_API value loader_impl_metadata(loader_impl impl);
+
+LOADER_API int loader_impl_clear(void * handle);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 

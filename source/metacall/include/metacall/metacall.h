@@ -322,6 +322,18 @@ METACALL_API const char * metacall_handle_id(void * handle);
 
 /**
 *  @brief
+*    Return a value representing the handle as a map of functions (or values)
+*
+*  @param[in] handle
+*    Reference to the handle to be described
+*
+*  @return
+*    A value of type map on success, null otherwise
+*/
+METACALL_API void * metacall_handle_export(void * handle);
+
+/**
+*  @brief
 *    Call a function anonymously by value array @args and function @func
 *
 *  @param[in] func
@@ -626,7 +638,7 @@ METACALL_API void * metacall_deserialize(const char * name, const char * buffer,
 *    Clear handle from memory and unload related resources
 *
 *  @param[in] handle
-*    String id reference to the handle to be unloaded
+*    Reference to the handle to be unloaded
 *
 *  @return
 *    Zero if success, different from zero otherwise

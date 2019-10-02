@@ -647,6 +647,11 @@ const char * loader_handle_id(void * handle)
 	return loader_impl_handle_id(handle);
 }
 
+value loader_handle_export(void * handle)
+{
+	return loader_impl_handle_export(handle);
+}
+
 value loader_metadata_impl(loader_impl impl)
 {
 	loader_naming_tag * tag_ptr = loader_impl_tag(impl);

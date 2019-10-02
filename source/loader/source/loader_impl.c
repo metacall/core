@@ -871,22 +871,11 @@ const char * loader_impl_handle_id(void * handle)
 	return handle_impl->name;
 }
 
-int loader_impl_clear(void * handle)
+value loader_impl_handle_export(void * handle)
 {
-	if (handle != NULL)
-	{
-		loader_handle_impl handle_impl = handle;
+	loader_handle_impl handle_impl = handle;
 
-		loader_impl impl = handle_impl->impl;
-
-		int result = !(set_remove(impl->handle_impl_map, (set_key)(handle_impl->name)) == handle_impl);
-
-		loader_impl_destroy_handle(handle_impl);
-
-		return result;
-	}
-
-	return 1;
+	return scope_export(context_scope(handle_impl->ctx));
 }
 
 value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)
@@ -1023,6 +1012,24 @@ value loader_impl_metadata(loader_impl impl)
 	set_iterate(impl->handle_impl_map, &loader_impl_metadata_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
 
 	return v;
+}
+
+int loader_impl_clear(void * handle)
+{
+	if (handle != NULL)
+	{
+		loader_handle_impl handle_impl = handle;
+
+		loader_impl impl = handle_impl->impl;
+
+		int result = !(set_remove(impl->handle_impl_map, (set_key)(handle_impl->name)) == handle_impl);
+
+		loader_impl_destroy_handle(handle_impl);
+
+		return result;
+	}
+
+	return 1;
 }
 
 int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)

@@ -46,6 +46,8 @@ REFLECT_API int scope_define(scope sp, const char * key, scope_object obj);
 
 REFLECT_API value scope_metadata(scope sp);
 
+REFLECT_API value scope_export(scope sp);
+
 REFLECT_API scope_object scope_get(scope sp, const char * key);
 
 REFLECT_API scope_object scope_undef(scope sp, const char * key);

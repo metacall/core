@@ -31,7 +31,11 @@
 
 struct scope_metadata_array_cb_iterator_type;
 
+struct scope_export_cb_iterator_type;
+
 typedef struct scope_metadata_array_cb_iterator_type * scope_metadata_array_cb_iterator;
+
+typedef struct scope_export_cb_iterator_type * scope_export_cb_iterator;
 
 struct scope_type
 {
@@ -47,7 +51,15 @@ struct scope_metadata_array_cb_iterator_type
 	value * values;
 };
 
+struct scope_export_cb_iterator_type
+{
+	size_t iterator;
+	value * values;
+};
+
 static int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+
+static int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static value scope_metadata_array(scope sp);
 
@@ -297,6 +309,69 @@ value scope_metadata(scope sp)
 	}
 
 	return v;
+}
+
+int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	scope_export_cb_iterator export_iterator = (scope_export_cb_iterator)args;
+
+	const char * key_str = (const char *)key;
+
+	/* TODO: Support to other scope objects (e.g: class) */
+	function f = (function)val;
+
+	value * v_array, v = value_create_array(NULL, 2);
+
+	(void)s;
+
+	if (v == NULL)
+	{
+		return 0;
+	}
+
+	v_array = value_to_array(v);
+
+	v_array[0] = value_create_string(key_str, strlen(key_str));
+
+	if (v_array[0] == NULL)
+	{
+		value_type_destroy(v);
+
+		return 0;
+	}
+
+	v_array[1] = value_create_function(f);
+
+	if (v_array[1] == NULL)
+	{
+		value_type_destroy(v);
+
+		return 0;
+	}
+
+	export_iterator->values[export_iterator->iterator] = v;
+	++export_iterator->iterator;
+
+	return 0;
+}
+
+value scope_export(scope sp)
+{
+	struct scope_export_cb_iterator_type export_iterator;
+
+	value export = value_create_map(NULL, scope_size(sp));
+
+	if (export == NULL)
+	{
+		return NULL;
+	}
+
+	export_iterator.iterator = 0;
+	export_iterator.values = value_to_map(export);
+
+	set_iterate(sp->objects, &scope_export_cb_iterate, (set_cb_iterate_args)&export_iterator);
+
+	return export;
 }
 
 scope_object scope_get(scope sp, const char * key)

@@ -298,6 +298,28 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 			json_map.AddMember(json_member, json_inner_value, allocator);
 		}
 	}
+	else if (id == TYPE_FUTURE)
+	{
+		/* TODO: Improve future serialization */
+		const char str[] = "[Future]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
+	else if (id == TYPE_FUNCTION)
+	{
+		/* TODO: Improve function serialization */
+		const char str[] = "[Function]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
 	else if (id == TYPE_PTR)
 	{
 		std::ostringstream ostream;

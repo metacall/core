@@ -35,8 +35,10 @@ value value_type_create(const void * data, size_t bytes, type_id id)
 		return NULL;
 	}
 
+	/* Memset body */
 	value_from(v, data, bytes);
 
+	/* Memset header */
 	value_from((value)(((uintptr_t)v) + bytes), &id, sizeof(type_id));
 
 	return v;
@@ -468,12 +470,13 @@ void value_type_destroy(value v)
 
 			future_destroy(f);
 		}
-		else if (type_id_function(id) == 0)
+		/* TODO: Functions are destroyed by the handle, so avoid destroying them or implement ref count mechanism */
+		/*else if (type_id_function(id) == 0)
 		{
 			function f = value_to_function(v);
 
 			function_destroy(f);
-		}
+		}*/
 
 		if (type_id_invalid(id) != 0)
 		{
