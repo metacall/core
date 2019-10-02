@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 
-def run_server
+def run_server()
 	IO.popen('@LOADER_SCRIPT_PATH@/bin/rails server') do |io|
 		puts 'Launching rails server on process..', io.pid
 	
@@ -24,7 +24,7 @@ def run_server
 	end
 end
 
-def run_and_kill_server
+def run_and_kill_server()
 	t = Thread.new do
 		run_server
 	end

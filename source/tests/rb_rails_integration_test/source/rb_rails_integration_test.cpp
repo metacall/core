@@ -46,7 +46,7 @@ TEST_F(rb_rails_integration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0])));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
 		EXPECT_NE((void *) NULL, (void *) metacall_function(func_run));
 
