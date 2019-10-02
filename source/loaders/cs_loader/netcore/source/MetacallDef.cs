@@ -11,6 +11,7 @@ namespace CSLoader
     {
         public enum type_primitive_id : short
         {
+            /* TODO: Update this properly for new types */
             TYPE_BOOL = 0,
             TYPE_CHAR = 1,
             TYPE_SHORT = 2,
