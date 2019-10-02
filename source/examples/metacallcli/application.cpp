@@ -61,6 +61,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Example:                                                                               │" << std::endl;
 	std::cout << "\t│ load node concat.js                                                                    │" << std::endl;
+	std::cout << "\t│ load py example.py                                                                     │" << std::endl;
+	std::cout << "\t│ load rb hello.rb                                                                       │" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
 	std::cout << "\t│ Script (concat.js) loaded correctly                                                    │" << std::endl;
@@ -589,45 +591,43 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 			void ** v_scope_map = metacall_value_to_map(v_module_scope_tuple[1]);
 			void ** v_scope_funcs_tuple = metacall_value_to_array(v_scope_map[1]);
 
-			if (metacall_value_count(v_scope_funcs_tuple[1]) == 0)
+			if (metacall_value_count(v_scope_funcs_tuple[1]) != 0)
 			{
-				return;
-			}
-
-			value_array_for_each(v_scope_funcs_tuple[1], [](void * func)
-			{
-				/* Get function name */
-				void ** v_func_map = static_cast<void **>(metacall_value_to_map(func));
-				void ** v_func_tuple = metacall_value_to_array(v_func_map[0]);
-				const char * func_name = metacall_value_to_string(v_func_tuple[1]);
-
-				std::cout << "\t\tfunction " << func_name << "(";
-
-				/* Get function signature */
-				void ** v_signature_tuple = metacall_value_to_array(v_func_map[1]);
-				void ** v_args_map = metacall_value_to_map(v_signature_tuple[1]);
-				void ** v_args_tuple = metacall_value_to_array(v_args_map[1]);
-				void ** v_args_array = metacall_value_to_array(v_args_tuple[1]);
-
-				size_t iterator = 0, count = metacall_value_count(v_args_tuple[1]);
-
-				value_array_for_each(v_args_array, [&iterator, &count](void * arg)
+				value_array_for_each(v_scope_funcs_tuple[1], [](void * func)
 				{
-					void ** v_arg_map = metacall_value_to_map(arg);
-					void ** v_arg_name_tupla = metacall_value_to_array(v_arg_map[0]);
+					/* Get function name */
+					void ** v_func_map = static_cast<void **>(metacall_value_to_map(func));
+					void ** v_func_tuple = metacall_value_to_array(v_func_map[0]);
+					const char * func_name = metacall_value_to_string(v_func_tuple[1]);
 
-					std::cout << metacall_value_to_string(v_arg_name_tupla[1]);
+					std::cout << "\t\tfunction " << func_name << "(";
 
-					if (iterator + 1 < count)
+					/* Get function signature */
+					void ** v_signature_tuple = metacall_value_to_array(v_func_map[1]);
+					void ** v_args_map = metacall_value_to_map(v_signature_tuple[1]);
+					void ** v_args_tuple = metacall_value_to_array(v_args_map[1]);
+					void ** v_args_array = metacall_value_to_array(v_args_tuple[1]);
+
+					size_t iterator = 0, count = metacall_value_count(v_args_tuple[1]);
+
+					value_array_for_each(v_args_array, [&iterator, &count](void * arg)
 					{
-						std::cout << ", ";
-					}
+						void ** v_arg_map = metacall_value_to_map(arg);
+						void ** v_arg_name_tupla = metacall_value_to_array(v_arg_map[0]);
 
-					++iterator;
+						std::cout << metacall_value_to_string(v_arg_name_tupla[1]);
+
+						if (iterator + 1 < count)
+						{
+							std::cout << ", ";
+						}
+
+						++iterator;
+					});
+
+					std::cout << ")" << std::endl;
 				});
-
-				std::cout << ")" << std::endl;
-			});
+			}
 
 			std::cout << "\t}" << std::endl;
 		});
