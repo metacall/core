@@ -31,8 +31,50 @@
 
 #include <ruby.h>
 
+/* TODO: Make mprotect cross-platform */
+/* https://docs.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualprotect */
+/* http://pubs.opengroup.org/onlinepubs/009695399/functions/mprotect.html */
+
+/* TODO: Secure stack */
+/* https://github.com/whitequark/coldruby/blob/master/libcoldruby/MRIRubyCompiler.cpp */
+
+/* TODO: Bind stack */
+/* https://github.com/sunaku/ruby-coroutine-example/blob/master/main.c */
+
+/* TODO: Protect against memory access from other threads */
+/* https://www.ruby-forum.com/t/ruby-embed-called-from-a-pthread/208641/6 */
+/* https://redmine.ruby-lang.org/issues/2294#note-18 */
+/* https://redmine.ruby-lang.org/issues/2294 */
+
+#ifdef STACK_END_ADDRESS
+#include <sys/mman.h> /* TODO: Make this cross-platform */
+#endif
+
+#ifdef STACK_END_ADDRESS
+extern void *STACK_END_ADDRESS;
+
+#define RUBY_PROLOGUE \
+	do { \
+		char stack_dummy;\
+		do {\
+			void *stack_backup = STACK_END_ADDRESS; \
+			STACK_END_ADDRESS = &stack_dummy;
+
+#define RUBY_EPILOGUE \
+			STACK_END_ADDRESS = stack_backup; \
+		} while(0); \
+	} while(0);
+#else
+#define RUBY_PROLOGUE
+#define RUBY_EPILOGUE
+#endif
+
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 #define LOADER_IMPL_RB_PROTECT_ARGS_SIZE 0x10
+
+#ifdef RUBY_GLOBAL_SETUP
+	RUBY_GLOBAL_SETUP
+#endif
 
 typedef struct loader_impl_rb_module_type
 {
@@ -179,10 +221,14 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	VALUE result_value = Qnil;
 
+	value v = NULL;
+
 	if (args_size > LOADER_IMPL_RB_FUNCTION_ARGS_SIZE)
 	{
 		return NULL;
 	}
+
+	RUBY_PROLOGUE
 
 	if (args_size > 0)
 	{
@@ -317,16 +363,14 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	if (result_value != Qnil)
 	{
-		value v = NULL;
-
 		const char * v_type_name = rb_type_deserialize(result_value, &v);
 
 		signature_set_return(s, loader_impl_type(rb_function->impl, v_type_name));
-
-		return v;
 	}
 
-	return NULL;
+	RUBY_EPILOGUE
+
+	return v;
 }
 
 function_return function_rb_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
@@ -419,10 +463,27 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 		NULL
 	};
 
+	struct rb_loader_impl_type * rb_impl = &rb_loader_impl_unused;
+
+#ifdef STACK_END_ADDRESS
+	int page = sysconf(_SC_PAGE_SIZE);
+	mprotect((void *)((unsigned long)&STACK_END_ADDRESS & ~(page - 1)), page, PROT_READ | PROT_WRITE | PROT_EXEC);
+#endif
+
 	(void)impl;
 	(void)config;
 
 	log_copy(host->log);
+
+	RUBY_PROLOGUE
+
+	#ifdef HAVE_RUBY_SYSINIT
+		int argc = 0;
+		char * argv[] = { "" };
+		ruby_sysinit(&argc, &argv);
+	#endif
+
+	RUBY_INIT_STACK;
 
 	ruby_init();
 
@@ -432,23 +493,27 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		ruby_cleanup(0);
 
-		return NULL;
+		rb_impl = NULL;
 	}
 
 	if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
 	{
 		ruby_cleanup(0);
 
-		return NULL;
+		rb_impl = NULL;
 	}
+
+	RUBY_EPILOGUE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 
-	return (loader_impl_data)&rb_loader_impl_unused;
+	return (loader_impl_data)rb_impl;
 }
 
 int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
+	RUBY_PROLOGUE
+
 	VALUE load_path_array = rb_gv_get("$:");
 
 	VALUE path_value = rb_str_new_cstr(path);
@@ -456,6 +521,8 @@ int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	(void)impl;
 
 	rb_ary_push(load_path_array, path_value);
+
+	RUBY_EPILOGUE
 
 	return 0;
 }
@@ -658,6 +725,8 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		return NULL;
 	}
 
+	RUBY_PROLOGUE
+
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		loader_impl_rb_module rb_module;
@@ -677,6 +746,8 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 		vector_push_back(handle->modules, &rb_module);
 	}
+
+	RUBY_EPILOGUE
 
 	return (loader_handle)handle;
 }
@@ -770,7 +841,11 @@ loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 		return NULL;
 	}
 
+	RUBY_PROLOGUE
+
 	rb_module = rb_loader_impl_load_from_memory_module(impl, name, buffer, size);
+
+	RUBY_EPILOGUE
 
 	if (rb_module == NULL)
 	{
@@ -792,8 +867,12 @@ loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_na
 {
 	/* TODO */
 
+	RUBY_PROLOGUE
+
 	(void)impl;
 	(void)path;
+
+	RUBY_EPILOGUE
 
 	return NULL;
 }
@@ -829,6 +908,8 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	size = vector_size(rb_handle->modules);
 
+	RUBY_PROLOGUE
+
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		loader_impl_rb_module * rb_module = vector_at(rb_handle->modules, iterator);
@@ -847,6 +928,8 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 		set_destroy((*rb_module)->function_map);
 	}
+
+	RUBY_EPILOGUE
 
 	vector_destroy(rb_handle->modules);
 
@@ -882,9 +965,13 @@ loader_impl_rb_function rb_function_create(loader_impl_rb_module rb_module, ID i
 
 	if (rb_function != NULL)
 	{
+		RUBY_PROLOGUE
+
 		rb_function->rb_module = rb_module;
 		rb_function->method_id = id;
 		rb_function->args_hash = rb_hash_new();
+
+		RUBY_EPILOGUE
 
 		return rb_function;
 	}
@@ -960,6 +1047,8 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	int result = 0;
 
+	RUBY_PROLOGUE
+
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		loader_impl_rb_module * rb_module = vector_at(rb_handle->modules, iterator);
@@ -970,12 +1059,22 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 		}
 	}
 
+	RUBY_EPILOGUE
+
 	return result;
 }
 
 int rb_loader_impl_destroy(loader_impl impl)
 {
+	int result;
+
 	(void)impl;
 
-	return ruby_cleanup(0);
+	RUBY_PROLOGUE
+
+	result = ruby_cleanup(0);
+
+	RUBY_EPILOGUE
+
+	return result;
 }
