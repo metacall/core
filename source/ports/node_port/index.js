@@ -8,10 +8,10 @@ const addon = (() => {
 	const LIBRARY_PATH = process.env.LOADER_LIBRARY_PATH || '';
 
 	const paths = [
+		LIBRARY_PATH,
 		__dirname,
 		Path.join(__dirname, 'build'),
 		process.cwd(),
-		LIBRARY_PATH,
 		Path.join(LIBRARY_PATH, 'build'),
 		Path.join(LIBRARY_PATH, 'node_modules', 'metacall'),
 		Path.join(LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
@@ -22,6 +22,13 @@ const addon = (() => {
 		'node_portd',
 	];
 
+	/* Set NODE_PATH for finding metacall lib */
+	/*
+	process.env.NODE_PATH = `${process.env.NODE_PATH}:${paths.join(':')}`;
+	Module._initPaths();
+	*/
+
+	/* Load addon */
 	const addon = (() => {
 		for (let path of paths) {
 			for (let name of names) {
