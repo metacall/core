@@ -202,6 +202,22 @@ int metacall_execution_path(const char * tag, const char * path)
 	return loader_execution_path(tag, path_impl);
 }
 
+int metacall_execution_path_s(const char * tag, size_t tag_length, const char * path, size_t path_length)
+{
+	loader_naming_path path_impl;
+	loader_naming_tag tag_impl;
+
+	if (tag == NULL || tag_length == 0 || tag_length >= LOADER_NAMING_TAG_SIZE || path == NULL || path_length == 0 || path_length >= LOADER_NAMING_PATH_SIZE)
+	{
+		return 1;
+	}
+
+	strncpy(path_impl, path, path_length);
+	strncpy(tag_impl, tag, tag_length);
+
+	return loader_execution_path(tag_impl, path_impl);
+}
+
 int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle)
 {
 	loader_naming_path path_impl[LOADER_LOAD_FROM_FILES_SIZE];

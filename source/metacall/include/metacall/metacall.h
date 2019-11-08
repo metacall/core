@@ -139,6 +139,27 @@ METACALL_API int metacall_execution_path(const char * tag, const char * path);
 
 /**
 *  @brief
+*    Set a execution path defined by @path to the extension script @tag with length
+*
+*  @param[in] tag
+*    Extension of the script
+*
+*  @param[in] tag_length
+*    Length of the extension of the tag
+*
+*  @param[in] path
+*    Path to be loaded
+*
+*  @param[in] path_length
+*    Length of the path
+*
+*  @return
+*    Zero if success, different from zero otherwise
+*/
+METACALL_API int metacall_execution_path_s(const char * tag, size_t tag_length, const char * path, size_t path_length);
+
+/**
+*  @brief
 *    Loads a script from file specified by @path
 *
 *  @param[in] tag
