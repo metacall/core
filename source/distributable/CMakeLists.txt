@@ -156,6 +156,19 @@ target_link_libraries(${target}
 )
 
 #
+# Post build script
+#
+
+# Register Library
+if(UNIX)
+	add_custom_command(
+		TARGET ${target}
+		POST_BUILD
+		COMMAND ldconfig ${CMAKE_BINARY_DIR}/distributable
+	)
+endif()
+
+#
 # Deployment
 #
 
@@ -166,3 +179,10 @@ install(TARGETS ${target}
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
+
+# Register Library
+if(UNIX)
+	install(CODE "execute_process(COMMAND ldconfig ${CMAKE_INSTALL_PREFIX}/${INSTALL_BIN})")
+	install(CODE "execute_process(COMMAND ldconfig ${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED})")
+	install(CODE "execute_process(COMMAND ldconfig ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB})")
+endif()
