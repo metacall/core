@@ -75,7 +75,7 @@ source_group_by_path(${source_path} "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Set SWIG flags
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR MAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 	set(PY_PORT_DEBUG_FLAGS "-DDEBUG")
 else()
 	set(PY_PORT_DEBUG_FLAGS "-DNDEBUG")

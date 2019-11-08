@@ -74,6 +74,18 @@ if(WIN32)
 	)
 endif ()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR MAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+	set(DEFAULT_COMPILE_DEFINITIONS
+		${DEFAULT_COMPILE_DEFINITIONS}
+		DEBUG
+	)
+else()
+	set(DEFAULT_COMPILE_DEFINITIONS
+		${DEFAULT_COMPILE_DEFINITIONS}
+		NDEBUG
+	)
+endif()
+
 #
 # Compile options
 #
@@ -91,14 +103,28 @@ if(WIN32)
 	#add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
 	# Release
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		# TODO: Review debug optimization
-		#add_compile_options(/GL) # Enable debugging information
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		# Disable optimizations
+		add_compile_options(/Od)
+
+		# Multithread MSV CTR
+		add_compile_options(/MDd)
+
 		##add_compile_options(/LTCG) # Enable debugging information
 	else()
 		add_compile_options(/GS) # Buffer Security Check
 		add_compile_options(/GF) # Enable read-only string pooling
-		#add_compile_options(/GW) # Enable read-only string pooling
+		add_compile_options(/GW) # Enable read-only string pooling
+
+		# Multithread MSV CTR
+		add_compile_options(/MD)
+
+		# Enable optimizations
+		add_compile_options(/O2)
+		add_compile_options(/Ob)
+		add_compile_options(/Og)
+		add_compile_options(/Oi)
+		add_compile_options(/Oy)
 	endif()
 endif()
 
@@ -106,19 +132,12 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 
 	if(APPLE)
 		# We cannot enable "stack-protector-strong" On OS X due to a bug in clang compiler (current version 7.0.2)
-		if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-			add_compile_options(-fstack-protector)
-		endif()
 
 		# Enable threads in OS X
 		add_compile_options(-pthread)
 
 		# clang options only
 		add_compile_options(-Wreturn-stack-address)
-	else()
-		if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
-			add_compile_options(-fstack-protector-strong)
-		endif()
 	endif()
 
 	if(PROJECT_OS_LINUX)
@@ -128,6 +147,14 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 
 	# All warnings that are not explicitly disabled are reported as errors
 	#add_compile_options(-Werror)
+	add_compile_options(-Wall)
+	add_compile_options(-Wextra)
+
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+		add_compile_options(-g)
+	else()
+		add_compile_options(-O3)
+	endif()
 
 	# Sanitizers
 	if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
@@ -153,7 +180,7 @@ endif()
 set(DEFAULT_LINKER_OPTIONS)
 
 # Use pthreads on mingw and linux
-if("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU" OR "${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+if(("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR "${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
 	set(DEFAULT_LINKER_OPTIONS
 		-pthread
 	)
