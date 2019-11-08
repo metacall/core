@@ -118,6 +118,68 @@ TEST_F(metacall_map_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 
+	/* NodeJS */
+	#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		const char * node_scripts[] =
+		{
+			"nod.js"
+		};
+
+		const enum metacall_value_id double_ids[] =
+		{
+			METACALL_DOUBLE, METACALL_DOUBLE
+		};
+
+		static const char args_map[] = "{\"a\":10,\"b\":2}";
+		static const char args_bad_map[] = "{a:10,b:2}";
+		static const char args_array[] = "[10, 2]";
+		static const char args_bad_array[] = "[10 2";
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+
+		void * func = metacall_function("call_test");
+
+		ASSERT_NE((void *)NULL, (void *)func);
+
+		void * ret = metacallt("call_test", double_ids, 10.0, 2.0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 20.0);
+
+		metacall_value_destroy(ret);
+
+		/* Call by map using serial */
+		ret = metacallfms(func, args_map, sizeof(args_map), allocator);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 20.0);
+
+		metacall_value_destroy(ret);
+
+		/* Bad call by map using serial */
+		ret = metacallfms(func, args_bad_map, sizeof(args_bad_map), allocator);
+
+		EXPECT_EQ((void *) NULL, (void *) ret);
+
+		/* Call by array using serial */
+		ret = metacallfs(func, args_array, sizeof(args_array), allocator);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 20.0);
+
+		metacall_value_destroy(ret);
+
+		/* Bad call by array using serial */
+		ret = metacallfs(func, args_bad_array, sizeof(args_bad_array), allocator);
+
+		EXPECT_EQ((void *) NULL, (void *) ret);
+	}
+	#endif /* OPTION_BUILD_LOADERS_NODE */
+
 	metacall_allocator_destroy(allocator);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());

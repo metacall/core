@@ -537,8 +537,6 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid parsing of document (%s) in RapidJSON implementation: %s at %" PRIuS,
 			buffer, error_message, parse_result.Offset());
 
-		delete document;
-
 		return NULL;
 	}
 
