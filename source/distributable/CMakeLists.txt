@@ -164,7 +164,7 @@ if(UNIX)
 	add_custom_command(
 		TARGET ${target}
 		POST_BUILD
-		COMMAND ldconfig ${CMAKE_BINARY_DIR}/distributable
+		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_BINARY_DIR}/distributable
 	)
 endif()
 
@@ -182,7 +182,7 @@ install(TARGETS ${target}
 
 # Register Library
 if(UNIX)
-	install(CODE "execute_process(COMMAND ldconfig ${CMAKE_INSTALL_PREFIX}/${INSTALL_BIN})")
-	install(CODE "execute_process(COMMAND ldconfig ${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED})")
-	install(CODE "execute_process(COMMAND ldconfig ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB})")
+	install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_BIN})")
+	install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED})")
+	install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB})")
 endif()
