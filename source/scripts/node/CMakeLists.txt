@@ -15,3 +15,4 @@ include(NodeJSProject)
 
 add_subdirectory(nod)
 add_subdirectory(inline)
+add_subdirectory(export)

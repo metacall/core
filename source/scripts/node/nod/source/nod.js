@@ -47,6 +47,10 @@ const all_mixed = ({a}, _arg0, b = 'asd') => {
 	return 21;
 };
 
+function this_function_should_not_be_exported() {
+	return 5;
+}
+
 module.exports = {
 	hello_boy,
 	hello_boy_await,
@@ -59,4 +63,5 @@ module.exports = {
 	object_pattern_evil_repeat,
 	default_values,
 	all_mixed,
+	/* this_function_should_not_be_exported, */
 };
