@@ -349,7 +349,7 @@ void set_iterate(set s, set_cb_iterate iterate_cb, set_cb_iterate_args args)
 	}
 }
 
-int set_append_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
+static int set_append_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
 {
 	set dest = (set)args;
 
@@ -367,7 +367,7 @@ int set_append(set dest, set src)
 	return 0;
 }
 
-int set_disjoint_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
+static int set_disjoint_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
 {
 	set dest = (set)args;
 

@@ -114,15 +114,23 @@ struct trie_node_suffixes_iterator_args_type
 
 /* -- Private Methods -- */
 
-trie_node trie_node_get(trie t, vector keys);
+static trie_node trie_node_get(trie t, vector keys);
 
-trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value value);
+static trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value value);
 
-void trie_node_iterate_recursive(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_iterate_args args);
+static int trie_node_childs_cb_iterator(set s, set_key key, set_value value, set_cb_iterate_args args);
 
-void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_iterate_args args);
+static void trie_node_iterate_recursive(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_iterate_args args);
 
-int trie_node_clear(trie t, trie_node n);
+static void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_iterate_args args);
+
+static int trie_node_append_cb_iterator(trie t, trie_key key, trie_value value, trie_cb_iterate_args args);
+
+static int trie_node_clear(trie t, trie_node n);
+
+static trie_node trie_node_find(trie t, trie_key key);
+
+static int trie_node_suffixes_cb_iterator(trie t, trie_key key, trie_value value, trie_cb_iterate_args args);
 
 /* -- Methods -- */
 

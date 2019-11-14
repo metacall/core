@@ -45,7 +45,7 @@ struct vector_type
 *  @return
 *    A pointer to data vector memory block with offset @bytes
 */
-void * vector_data_offset_bytes(vector v, size_t bytes);
+static void * vector_data_offset_bytes(vector v, size_t bytes);
 
 /* -- Methods -- */
 
