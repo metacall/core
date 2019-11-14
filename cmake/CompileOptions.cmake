@@ -106,23 +106,15 @@ if(WIN32)
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		# Disable optimizations
 		add_compile_options(/Od)
-
-		# Multithread MSV CTR
-		add_compile_options(/MDd)
-
-		##add_compile_options(/LTCG) # Enable debugging information
 	else()
-		add_compile_options(/GS) # Buffer Security Check
-		add_compile_options(/GF) # Enable read-only string pooling
-		add_compile_options(/GW) # Enable read-only string pooling
+		# Enable read-only string pooling
+		add_compile_options(/GF)
 
-		# Multithread MSV CTR
-		add_compile_options(/MD)
+		# Buffer Security Check
+		add_compile_options(/GS)
 
 		# Enable optimizations
 		add_compile_options(/O2)
-		add_compile_options(/Ob)
-		add_compile_options(/Og)
 		add_compile_options(/Oi)
 		add_compile_options(/Oy)
 	endif()
