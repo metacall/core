@@ -86,7 +86,7 @@ size_t set_size(set s)
 	return 0;
 }
 
-int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iterate_args args)
+static int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iterate_args args)
 {
 	set new_set = (set)args;
 
@@ -113,7 +113,7 @@ int set_bucket_realloc_iterator(set s, set_key key, set_value value, set_cb_iter
 	return 1;
 }
 
-int set_bucket_realloc(set s)
+static int set_bucket_realloc(set s)
 {
 	struct set_type new_set;
 
