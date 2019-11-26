@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 #
 #	RSA String Encriptation Decriptation Sample by Parra Studios
