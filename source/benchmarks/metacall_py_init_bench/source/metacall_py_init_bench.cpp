@@ -76,7 +76,7 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load)(benchmark::State & state)
 			static const char tag[] = "py";
 
 			static const char int_mem_type[] =
-				"#!/usr/bin/python3.5\n"
+				"#!/usr/bin/env python3\n"
 				"def int_mem_type(left: int, right: int) -> int:\n"
 				"\treturn 0;";
 
@@ -116,11 +116,11 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)(benchmark::State & state)
 			static const char tag[] = "py";
 
 			static const char int_a_type[] =
-				"#!/usr/bin/python3.5\n"
+				"#!/usr/bin/env python3\n"
 				"def int_a_type(left: int, right: int) -> int:\n"
 				"\treturn 0;";
 			static const char int_b_type[] =
-				"#!/usr/bin/python3.5\n"
+				"#!/usr/bin/env python3\n"
 				"def int_b_type(left: int, right: int) -> int:\n"
 				"\treturn 0;";
 

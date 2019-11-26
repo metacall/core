@@ -27,7 +27,7 @@
 int main(int argc, char * argv[])
 {
 	const char python_script[] =
-		"#!/usr/bin/python3.5\n"
+		"#!/usr/bin/env python3\n"
 		"\n"
 		"try:\n"
 		"	import _py_port as metacall\n"

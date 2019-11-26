@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/env python3
 
 class MyClass:
     "This is a class"

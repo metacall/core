@@ -43,7 +43,7 @@ public:
 			static const char tag[] = "py";
 
 			static const char int_mem_type[] =
-				"#!/usr/bin/python3.5\n"
+				"#!/usr/bin/env python3\n"
 				"def int_mem_type(left: int, right: int) -> int:\n"
 				"\treturn 0;";
 

@@ -28,7 +28,7 @@ public:
 	void SetUp(benchmark::State & state)
 	{
 		static const char buffer[] =
-			"#!/usr/bin/python3.5\n"
+			"#!/usr/bin/env python3\n"
 			"def int_mem_type(left: int, right: int) -> int:\n"
 			"\treturn 0;";
 		

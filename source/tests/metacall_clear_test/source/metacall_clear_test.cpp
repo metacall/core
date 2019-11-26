@@ -38,7 +38,7 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
-			"#!/usr/bin/python3.5\n"
+			"#!/usr/bin/env python3\n"
 			"def multmem(left: int, right: int) -> int:\n"
 			"\tresult = left * right;\n"
 			"\tprint(left, ' * ', right, ' = ', result);\n"

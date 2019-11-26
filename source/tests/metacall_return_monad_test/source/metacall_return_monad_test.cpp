@@ -50,7 +50,7 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
-			"#!/usr/bin/python3.5\n"
+			"#!/usr/bin/env python3\n"
 			"def monad(value: int):\n"
 			"\tresult = 'asd';\n"
 			"\tif value > 0:\n"

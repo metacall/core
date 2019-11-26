@@ -1,4 +1,4 @@
-#!/usr/bin/python3.5
+#!/usr/bin/env python3
 
 def s_dont_load_this_function(left, right):
 	result = left * right;

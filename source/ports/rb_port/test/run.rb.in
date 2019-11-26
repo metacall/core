@@ -9,7 +9,7 @@ class RbPortTest < Test::Unit::TestCase
 
 	# MetaCall (Python from memory)
 	def test_python_memory
-		script = '#!/usr/bin/python3.5\n' \
+		script = '#!/usr/bin/env python3\n' \
 			'def inline_multiply_mem(left: int, right: int) -> int:\n' \
 			'	return left * right;\n'
 			'def inline_hello(left: int, right: int) -> int:\n' \
