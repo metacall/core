@@ -127,11 +127,6 @@ set_target_properties(${target}
 
 	# Set valid format for NodeJS addon
 	PREFIX "" SUFFIX ".node"
-
-	# Set runtime output directory (mimic node-gyp)
-	ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build"
-	LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build"
-	RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build"
 )
 
 #

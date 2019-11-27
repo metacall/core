@@ -82,6 +82,7 @@ distributable_generate(${target} ${jsm_loader_unity_build}
 
 # Build library
 add_library(${target} MODULE
+	${jsm_loader_unity_build}
 	${sources}
 	${headers}
 )
