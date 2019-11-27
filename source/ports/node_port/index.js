@@ -29,14 +29,14 @@ const addon = (() => {
 	*/
 
 	/* Load addon */
-	const addon = (() => {
+	return (() => {
 		for (let path of paths) {
 			for (let name of names) {
 				try {
-					const addon = require(Path.join(path, `${name}.node`));
+					const port = require(Path.join(path, `${name}.node`));
 
-					if (addon) {
-						return addon;
+					if (port) {
+						return port;
 					}
 				} catch (e) {
 					if (e.code !== 'MODULE_NOT_FOUND') {
@@ -46,8 +46,6 @@ const addon = (() => {
 			}
 		}
 	})();
-
-	return addon;
 })();
 
 const node_require = Module.require;
