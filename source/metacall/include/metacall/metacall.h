@@ -43,6 +43,10 @@ extern "C" {
 #include <stdlib.h>
 #include <stdarg.h>
 
+/* -- Definitions -- */
+
+#define METACALL_FLAGS_FORK_SAFE 0x01 << 0x00
+
 /* -- Forward Declarations -- */
 
 struct metacall_initialize_configuration_type;
@@ -79,6 +83,15 @@ METACALL_API const char * metacall_serial(void);
 *   default logs, you can call to this function before @metacall_initialize.
 */
 METACALL_API void metacall_log_null(void);
+
+/**
+*  @brief
+*    Flags to be set in MetaCall library
+*
+*  @param[in] flags
+*    Combination of flags referring to definitions METACALL_FLAGS_*
+*/
+METACALL_API void metacall_flags(int flags);
 
 /**
 *  @brief

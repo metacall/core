@@ -50,6 +50,7 @@ void * metacall_null_args[1];
 
 static int metacall_initialize_flag = 1;
 static int metacall_log_null_flag = 1;
+static int metacall_config_flags = 0;
 
 /* -- Methods -- */
 
@@ -63,6 +64,11 @@ const char * metacall_serial()
 void metacall_log_null()
 {
 	metacall_log_null_flag = 0;
+}
+
+void metacall_flags(int flags)
+{
+	metacall_config_flags = flags;
 }
 
 int metacall_initialize()
@@ -98,13 +104,16 @@ int metacall_initialize()
 	metacall_null_args[0] = NULL;
 
 	#ifdef METACALL_FORK_SAFE
-		if (metacall_fork_initialize() != 0)
+		if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
-		}
+			if (metacall_fork_initialize() != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
+			}
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
-	#endif
+			log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
+		}
+	#endif /* METACALL_FORK_SAFE */
 
 	allocator = memory_allocator_std(&malloc, &realloc, &free);
 

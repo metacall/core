@@ -148,6 +148,8 @@ TEST_F(metacall_fork_test, DefaultConstructor)
 {
 	metacall_print_info();
 
+	metacall_flags(METACALL_FLAGS_FORK_SAFE);
+
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	metacall_fork(&pre_callback_test, &post_callback_test);
