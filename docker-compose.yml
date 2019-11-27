@@ -94,6 +94,7 @@ services:
       SERIAL_LIBRARY_PATH: /usr/local/lib
       DETOUR_LIBRARY_PATH: /usr/local/lib
       PORT_LIBRARY_PATH: /usr/local/lib
+      NODE_PATH: /usr/local/lib/node_modules
     depends_on:
       - dev
 
@@ -113,6 +114,7 @@ services:
       SERIAL_LIBRARY_PATH: /usr/local/lib
       DETOUR_LIBRARY_PATH: /usr/local/lib
       PORT_LIBRARY_PATH: /usr/local/lib
+      NODE_PATH: /usr/local/lib/node_modules
     depends_on:
       - dev
       - runtime

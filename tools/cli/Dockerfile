@@ -49,7 +49,8 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	SERIAL_LIBRARY_PATH=/usr/local/lib \
 	DETOUR_LIBRARY_PATH=/usr/local/lib \
 	PORT_LIBRARY_PATH=/usr/local/lib \
-	DEBIAN_FRONTEND=noninteractive
+	DEBIAN_FRONTEND=noninteractive \
+	NODE_PATH=/usr/local/lib/node_modules
 
 # Define working directory
 WORKDIR $LOADER_SCRIPT_PATH
