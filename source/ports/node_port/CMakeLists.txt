@@ -126,7 +126,7 @@ set_target_properties(${target}
 	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 
 	# Set valid format for NodeJS addon
-	PREFIX "" SUFFIX ".node"
+	SUFFIX ".node"
 )
 
 #

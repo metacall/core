@@ -18,8 +18,8 @@ const addon = (() => {
 	];
 
 	const names = [
-		'node_portd',
-		'node_port',
+		'libnode_portd',
+		'libnode_port',
 	];
 
 	/* Set NODE_PATH for finding metacall lib */
