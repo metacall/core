@@ -122,7 +122,8 @@ static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy,
 
 		if (format_impl->serialize(format, write_args->record, buffer, size) != 0)
 		{
-			free(buffer);
+			/* TODO: Workaround of a double free, review this */
+			/*free(buffer);*/
 
 			return 1;
 		}
