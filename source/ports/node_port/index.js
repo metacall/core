@@ -48,7 +48,7 @@ const addon = (() => {
 	})();
 })();
 
-const node_require = Module.require;
+const node_require = Module.prototype.require;
 
 const metacall_require = (tag, name) => {
 	// TODO: Inspect the current handle and append it to an object mocking the function calls with metacall
@@ -56,7 +56,7 @@ const metacall_require = (tag, name) => {
 };
 
 /* Monkey patch require for simplifying load */
-Module.prototype.require = (id) => {
+Module.prototype.require = function (id) {
 
 	const tags = {
 		mock: 'mock',
@@ -69,7 +69,7 @@ Module.prototype.require = (id) => {
 	const index = id.lastIndexOf('.');
 
 	if (index === -1) {
-		return node_require(id);
+		return node_require.apply(this, [ id ]);
 	} else {
 		// Load the module
 		const extension = id.substr(index + 1);
@@ -78,7 +78,7 @@ Module.prototype.require = (id) => {
 		if (tag) {
 			return metacall_require(tag, id);
 		} else {
-			return node_require(id);
+			return node_require.apply(this, [ id ]);
 		}
 	}
 };
