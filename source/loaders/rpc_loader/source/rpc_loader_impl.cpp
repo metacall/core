@@ -26,6 +26,7 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
+#include <memory/memory_allocator_std.h>
 //#include <serial/serial.h>
 
 #include <log/log.h>
@@ -66,7 +67,8 @@ typedef struct loader_impl_rpc_type
 
 typedef struct JsonData
 {
-	std::string url();
+	std::string url;
+	std::string response;
 } JsonData;
 
 void jsondata_constructor(JsonData *thiz, std::string url)
@@ -262,11 +264,19 @@ static loader_impl_rpc_function rpc_function_create(loader_impl_rpc_handle handl
 
 static size_t write_data(void *buffer, size_t size, size_t nmemb, void *userp)
 {
-
+	size_t realsize = size * nmemb;
+	JsonData *jd = (JsonData*)userp;
+	char *buf = static_cast<char *>(buffer);
+	for (size_t i = 0; i < realsize; i++)
+	{
+		jd->response.append(&buf[i]);
+	}
+	
 }
 
 int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
+	loader_impl_rpc rpc_impl = (loader_impl_rpc)loader_impl_get(impl);
 	FILE *fp = fopen(METACALL, "r");
 	if (fp == NULL)
 	{
@@ -285,9 +295,9 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 		{
 			if(endpoint->length() == 0){
 				continue;
-			} else if(endpoint->length > 0){
+			} else if(endpoint->length() > 0){
 				vctrSrings.push_back(*endpoint);
-				endpoint = new std::string();
+				endpoint->clear();
 			}
 		}
 		else
@@ -296,8 +306,28 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 		}
 	}
 
+	memory_allocator allocator = memory_allocator_std(&malloc, &realloc, &free);
+	JsonData jd;
+
+	for (auto &&i : vctrSrings)
+	{
+		jsondata_constructor(&jd, i);
+		i.append("/inspect");
+		curl_easy_setopt(rpc_impl->curl, CURLOPT_WRITEFUNCTION, write_data);
+		curl_easy_setopt(rpc_impl->curl, CURLOPT_WRITEDATA, &jd);
+		curl_easy_setopt(rpc_impl->curl, CURLOPT_URL, i);
+		CURLcode res = curl_easy_perform(rpc_impl->curl);
+		if(res != CURLE_OK && jd.response.length() == 0) {
+			// Do some logging here
+			continue;
+		}
+		command_inspect(jd.response.c_str(), jd.response.length(), allocator, [](const std::string, size_t, void *){
+			// TODO get params and create objects
+		});
+		
+	}
 	// TODO handle inpect funtion output
-	// Free all Prisoners(pointers)
+	// Free all Prisoners(pointers)0.0
 }
 
 int rpc_loader_impl_destroy(loader_impl impl)
@@ -330,7 +360,7 @@ void value_map_for_each(void *v, const std::function<void(const char *, void *)>
 	});
 }
 
-static void command_inspect(const char *str, size_t size, void *allocator, std::function<void(const std::string, size_t, void *)> &functionLambda)
+static void command_inspect(const char *str, size_t size, memory_allocator allocator, const std::function<void(const std::string, size_t, void *)> &functionLambda)
 {
 	void *v = metacall_deserialize(metacall_serial(), str, size, allocator);
 
