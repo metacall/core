@@ -364,7 +364,7 @@ napi_value metacall_node_inspect(napi_env env, napi_callback_info)
 
 	size_t size = 0;
 
-	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+	struct metacall_allocator_std_type std_ctx = { &malloc, &realloc, &free };
 
 	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
