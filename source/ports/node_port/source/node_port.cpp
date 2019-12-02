@@ -24,6 +24,27 @@
 #include <metacall/metacall.h>
 #include <cstring>
 
+#define napi_call(env, call) \
+	do { \
+		napi_status status = (call); \
+		\
+		if (status != napi_ok) \
+		{ \
+			const napi_extended_error_info * error_info = NULL; \
+			bool is_pending; \
+			napi_get_last_error_info((env), &error_info); \
+			napi_is_exception_pending((env), &is_pending); \
+			if (!is_pending) \
+			{ \
+				const char * message = (error_info->error_message == NULL) \
+					? "empty error message" \
+					: error_info->error_message; \
+				napi_throw_error((env), NULL, message); \
+				return NULL; \
+			} \
+		} \
+	} while(0)
+
 /* TODO: Remove this? */
 #define FUNCTION_NAME_LENGTH 50
 #define GENERAL_STRING_LENGTH 256
@@ -336,18 +357,48 @@ napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 
 /* END-TODO */
 
+/* TODO: Add documentation */
+napi_value metacall_node_inspect(napi_env env, napi_callback_info)
+{
+	napi_value result;
+
+	size_t size = 0;
+
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	char * inspect_str = metacall_inspect(&size, allocator);
+
+	if (!(inspect_str != NULL && size != 0))
+	{
+		napi_throw_error(env, NULL, "Invalid MetaCall inspect string");
+	}
+
+	napi_call(env, napi_create_string_utf8(env, inspect_str, size - 1, &result));
+
+	metacall_allocator_free(allocator, inspect_str);
+
+	metacall_allocator_destroy(allocator);
+
+	return result;
+}
+
 /* TODO: Review documentation */
 // This functions sets the necessary js functions that could be called in NodeJs
 void metacall_node_exports(napi_env env, napi_value exports)
 {
 	const char function_metacall_str[] = "metacall";
-	const char function_metacall_load_file_str[] = "metacall_load_from_file";
-	napi_value function_metacall_load_file, function_metacall;
+	const char function_load_from_file_str[] = "metacall_load_from_file";
+	const char function_inspect_str[] = "metacall_inspect";
+	napi_value function_metacall, function_load_from_file, function_inspect;
 
 	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, metacall_node, NULL, &function_metacall);
-	napi_create_function(env, function_metacall_load_file_str, sizeof(function_metacall_load_file_str) - 1, metacall_node_load_from_file, NULL, &function_metacall_load_file);
+	napi_create_function(env, function_load_from_file_str, sizeof(function_load_from_file_str) - 1, metacall_node_load_from_file, NULL, &function_load_from_file);
+	napi_create_function(env, function_inspect_str, sizeof(function_inspect_str) - 1, metacall_node_inspect, NULL, &function_inspect);
 	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
-	napi_set_named_property(env, exports, function_metacall_load_file_str, function_metacall_load_file);
+	napi_set_named_property(env, exports, function_load_from_file_str, function_load_from_file);
+	napi_set_named_property(env, exports, function_inspect_str, function_inspect);
 }
 
 /* TODO: Review documentation */

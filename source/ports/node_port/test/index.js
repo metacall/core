@@ -2,13 +2,14 @@
 
 const assert = require('assert');
 
-const { metacall, metacall_load_from_file } = require('../index.js');
+const { metacall, metacall_load_from_file, metacall_inspect } = require('../index.js');
 
 describe('metacall', () => {
 	describe('require', () => {
 		it('functions metacall and metacall_load_from_file must be defined', () => {
 			assert.notStrictEqual(metacall, undefined);
 			assert.notStrictEqual(metacall_load_from_file, undefined);
+			assert.notStrictEqual(metacall_inspect, undefined);
 		});
 	});
 
@@ -21,6 +22,14 @@ describe('metacall', () => {
 		});
 		it('metacall_load_from_file (rb)', () => {
 			assert.strictEqual(/*require('second.rb')*/ undefined, undefined); /* TODO: Do not return undefined */
+		});
+	});
+
+	describe('inspect', () => {
+		it('metacall_inspect', () => {
+			const json = metacall_inspect();
+			console.log(JSON.stringify(json));
+			assert.notStrictEqual(json, undefined);
 		});
 	});
 

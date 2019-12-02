@@ -104,4 +104,16 @@ module.exports = {
 
 		return addon.metacall_load_from_file(tag, paths);
 	},
+
+	metacall_inspect: () => {
+		const json_data = addon.metacall_inspect();
+
+		if (json_data !== undefined) {
+			const json = JSON.parse(json_data);
+
+			delete json['__metacall_host__'];
+
+			return json;
+		}
+	},
 };
