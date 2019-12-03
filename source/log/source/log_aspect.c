@@ -167,7 +167,7 @@ int log_aspect_attach(log_aspect aspect, log_policy policy)
 			size = LOG_ASPECT_POLICIES_MAX_SIZE;
 		}
 
-		data = realloc(aspect->policies, size);
+		data = realloc(aspect->policies, sizeof(log_policy) * size);
 
 		if (data == NULL)
 		{
