@@ -43,6 +43,7 @@ describe('metacall', () => {
 	describe('call', () => {
 		it('metacall (mock)', () => {
 			assert.strictEqual(metacall('my_empty_func'), 1234);
+			assert.strictEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World\u0000');
 		});
 		it('metacall (py)', () => {
 			assert.strictEqual(metacall('multiply', 2, 2), 4);

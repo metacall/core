@@ -196,16 +196,8 @@ void convertNodeArray_to_Metacall_Array(napi_env env, void *metacallArgs[], napi
 			size_t _result;
 			napi_get_value_string_utf8(env, element, string, GENERAL_STRING_LENGTH, &_result);
 
-			// checking if its a char(there is no char Javascript)
-			if (_result == 1)
-			{
-				metacallArgs[i - 1] = metacall_value_create_char(string[0]);
-			}
-			else
-			{
-				// remember the for loop started from index 1 NOT 0.....
-				metacallArgs[i - 1] = metacall_value_create_string(string, _result);
-			}
+			// remember the for loop started from index 1 NOT 0.....
+			metacallArgs[i - 1] = metacall_value_create_string(string, _result);
 
 			break;
 		case napi_number:
@@ -258,16 +250,8 @@ napi_value metacall_node(napi_env env, napi_callback_info info)
 			size_t _result;
 			napi_get_value_string_utf8(env, argv[i], string, 256, &_result);
 
-			// checking if its a char(there is no char Javascript)
-			if (_result == 1)
-			{
-				metacallArgs[i - 1] = metacall_value_create_char(string[0]);
-			}
-			else
-			{
-				// remember the for loop started from index 1 NOT 0.....
-				metacallArgs[i - 1] = metacall_value_create_string(string, _result);
-			}
+			// remember the for loop started from index 1 NOT 0.....
+			metacallArgs[i - 1] = metacall_value_create_string(string, _result);
 
 			break;
 		case napi_number:
