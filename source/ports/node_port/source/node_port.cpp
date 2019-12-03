@@ -24,6 +24,15 @@
 #include <metacall/metacall.h>
 #include <cstring>
 
+/* TODO:
+	This port is going to be refactored eventually, here is the first step through the next approach:
+	https://github.com/metacall/core/blob/cb5372609c9acdc7fc3cf6b3ebb4c8e799c57f23/source/ports/node_port/source/node_port.cpp
+
+	Here is information about how to do the refactor including loader:
+	https://github.com/metacall/core/blob/cb5372609c9acdc7fc3cf6b3ebb4c8e799c57f23/source/loaders/node_loader/include/node_loader/node_loader_impl_port.h#L26
+*/
+
+/* TODO: Remove this */
 #define napi_call(env, call) \
 	do { \
 		napi_status status = (call); \
