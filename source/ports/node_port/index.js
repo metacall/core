@@ -83,6 +83,12 @@ Module.prototype.require = function (id) {
 	}
 };
 
+/* Debug logs */
+if (process.env['NODE_ENV'] === 'debug')
+{
+	addon.metacall_logs();
+}
+
 /* Export the API */
 module.exports = {
 	metacall: (name, ...args) => {
@@ -115,5 +121,10 @@ module.exports = {
 
 			return json;
 		}
+	},
+
+	/* TODO: Remove this from user or provide better ways of configuring logs */
+	metacall_logs: () => {
+		addon.metacall_logs();
 	},
 };

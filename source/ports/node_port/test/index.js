@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 
-const { metacall, metacall_load_from_file, metacall_inspect } = require('../index.js');
+const { metacall, metacall_load_from_file, metacall_inspect, metacall_logs } = require('../index.js');
 
 describe('metacall', () => {
 	describe('require', () => {
@@ -10,6 +10,13 @@ describe('metacall', () => {
 			assert.notStrictEqual(metacall, undefined);
 			assert.notStrictEqual(metacall_load_from_file, undefined);
 			assert.notStrictEqual(metacall_inspect, undefined);
+			assert.notStrictEqual(metacall_logs, undefined);
+		});
+	});
+
+	describe('logs', () => {
+		it('metacall_logs', () => {
+			assert.strictEqual(metacall_logs(), undefined);
 		});
 	});
 

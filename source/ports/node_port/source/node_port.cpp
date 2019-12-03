@@ -319,6 +319,7 @@ napi_value metacall_node(napi_env env, napi_callback_info info)
 	metacall_node_value_to_napi(env, ptr, &js_object);
 	return js_object;
 }
+
 // this function is the handler of the "metacall_load_from_file"
 napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 {
@@ -384,6 +385,19 @@ napi_value metacall_node_inspect(napi_env env, napi_callback_info)
 	return result;
 }
 
+/* TODO: Add documentation */
+napi_value metacall_node_logs(napi_env env, napi_callback_info)
+{
+	struct metacall_log_stdio_type log_stdio = { stdout };
+
+	if (metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio) != 0)
+	{
+		napi_throw_error(env, NULL, "MetaCall failed to initialize debug logs");
+	}
+
+	return NULL;
+}
+
 /* TODO: Review documentation */
 // This functions sets the necessary js functions that could be called in NodeJs
 void metacall_node_exports(napi_env env, napi_value exports)
@@ -391,14 +405,19 @@ void metacall_node_exports(napi_env env, napi_value exports)
 	const char function_metacall_str[] = "metacall";
 	const char function_load_from_file_str[] = "metacall_load_from_file";
 	const char function_inspect_str[] = "metacall_inspect";
-	napi_value function_metacall, function_load_from_file, function_inspect;
+	const char function_logs_str[] = "metacall_logs";
+
+	napi_value function_metacall, function_load_from_file, function_inspect, function_logs;
 
 	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, metacall_node, NULL, &function_metacall);
 	napi_create_function(env, function_load_from_file_str, sizeof(function_load_from_file_str) - 1, metacall_node_load_from_file, NULL, &function_load_from_file);
 	napi_create_function(env, function_inspect_str, sizeof(function_inspect_str) - 1, metacall_node_inspect, NULL, &function_inspect);
+	napi_create_function(env, function_logs_str, sizeof(function_logs_str) - 1, metacall_node_logs, NULL, &function_logs);
+
 	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
 	napi_set_named_property(env, exports, function_load_from_file_str, function_load_from_file);
 	napi_set_named_property(env, exports, function_inspect_str, function_inspect);
+	napi_set_named_property(env, exports, function_logs_str, function_logs);
 }
 
 /* TODO: Review documentation */
