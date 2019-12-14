@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(RubyEx)
+find_package(Ruby)
 
 if(NOT RUBY_FOUND)
 	message(STATUS "Ruby libraries not found")
