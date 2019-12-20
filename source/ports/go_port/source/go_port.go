@@ -1,28 +1,35 @@
 package main
 
 // #cgo CFLAGS: -Wall
-// #cgo LDFLAGS: -lmetacall -lpthread
+// #cgo LDFLAGS: -lmetacall
 // #include <metacall/metacall.h>
 // #include <stdlib.h>
 import "C"
 
 import (
 	"unsafe"
+	"errors"
 	"os"
 	"fmt"
 )
 
-func metacall_initialize() int {
-	return int(C.metacall_initialize())
+const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
+
+func metacall_initialize() error {
+	if (int(C.metacall_initialize()) != 0) {
+		return errors.New("MetaCall failed to initialize")
+	}
+
+	return nil
 }
 
-func metacall_load_from_file(tag string, scripts []string) int {
-	length := len(scripts)
+func metacall_load_from_file(tag string, scripts []string) error {
+	size := len(scripts)
 
 	cTag := C.CString(tag)
 	defer C.free(unsafe.Pointer(cTag))
 
-	cScripts := C.malloc(C.size_t(length) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cScripts := C.malloc(C.size_t(size) * C.size_t(unsafe.Sizeof(uintptr(0))))
 	defer C.free(unsafe.Pointer(cScripts))
 
 	// Convert cScripts to a Go Array so we can index it
@@ -32,12 +39,62 @@ func metacall_load_from_file(tag string, scripts []string) int {
 		goScripts[index] = C.CString(script)
 	}
 
-	return int(C.metacall_load_from_file(cTag, (**C.char)(cScripts), (C.size_t)(length), nil))
+	if int(C.metacall_load_from_file(cTag, (**C.char)(cScripts), (C.size_t)(size), nil)) != 0 {
+		return errors.New("MetaCall failed to load script")
+	}
+
+	return nil
 }
 
-func metacall(function string, args ...interface{}) interface{} {
-	// TODO
-	return nil
+func metacall(function string, args ...interface{}) (interface{}, error) {
+
+	cFunction := C.CString(function)
+	defer C.free(unsafe.Pointer(cFunction))
+
+	cFunc := C.metacall_function(cFunction)
+
+	if cFunc == nil {
+		return nil, errors.New("Function not found")
+	}
+
+	size := len(args)
+
+	cArgs := C.malloc(C.size_t(size) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(unsafe.Pointer(cArgs))
+
+	for index, arg := range args {
+		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index) * PtrSizeInBytes))
+
+		// Create int
+		if i, ok := arg.(int); ok {
+			*cArg = C.metacall_value_create_int((C.int)(i))
+		}
+
+		// Create string
+		if str, ok := arg.(string); ok {
+			cStr := C.CString(str)
+			defer C.free(unsafe.Pointer(cStr))
+			*cArg = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
+		}
+
+		// TODO: Other types ...
+	}
+
+	defer (func () {
+		for index, _ := range args {
+			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index) * PtrSizeInBytes))
+			C.metacall_value_destroy(*cArg)
+		}
+	})()
+
+	ret := C.metacallfv(cFunc, (*unsafe.Pointer)(cArgs))
+
+	if ret != nil {
+		// TODO: return value
+		return "TODO", nil
+	}
+
+	return nil, nil
 }
 
 func metacall_destroy() {
@@ -45,7 +102,9 @@ func metacall_destroy() {
 }
 
 func main() {
-	if (metacall_initialize() != 0) {
+
+	if err := metacall_initialize(); err != nil {
+		fmt.Println(err)
 		os.Exit(1)
 	}
 
@@ -53,10 +112,19 @@ func main() {
 
 	scripts := []string{ "test.mock" }
 
-	if (metacall_load_from_file("mock", scripts) != 0) {
+	if err := metacall_load_from_file("mock", scripts); err != nil {
+		fmt.Println(err)
+		return
+	}
 
-		result := metacall("three_str", "a", "b", "c")
+	ret, err := metacall("three_str", "e", "f", "g")
 
-		fmt.Println(result.(string))
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if str, ok := ret.(string); ok {
+		fmt.Println(str)
 	}
 }
