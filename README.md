@@ -61,7 +61,7 @@ metacall('sum', 3, 4); // 7
                 - [5.3.2.2 RapidJSON](#5322-rapidjson)
             - [5.3.3 Detours](#533-detours)
                 - [5.3.3.1 FuncHook](#5331-funchook)
-        - [5.4 Ports](#54-ports)
+        - [5.4 Ports (Frontends)](#54-ports-frontends)
         - [5.5 Serialization](#55-serialization)
         - [5.6 Memory Layout](#56-memory-layout)
         - [5.7 Fork Model](#57-fork-model)
@@ -84,7 +84,7 @@ The **METACALL** project started time ago when I was coding a [Game Engine for a
 
 ## 2. Language Support (Backends)
 
-This section describes all programming languages that **METACALL** supports, if you are interested in from what languages can be used **METACALL** you must go to [ports section](#54-ports).
+This section describes all programming languages that **METACALL** supports, if you are interested in from what languages can be used **METACALL** you must go to [ports section](#54-ports-frontends).
 
 - Currently supported languages and run-times:
 
