@@ -96,9 +96,12 @@ func metacall(function string, args ...interface{}) (interface{}, error) {
 			case C.METACALL_INT: {
 				return int(C.metacall_value_to_int(unsafe.Pointer(ret))), nil
 			}
+
 			case C.METACALL_STRING: {
 				return C.GoString(C.metacall_value_to_string(unsafe.Pointer(ret))), nil
 			}
+
+			// TODO: Other types ...
 		}
 	}
 
