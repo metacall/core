@@ -138,10 +138,10 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 Prior to try any example, you must have **METACALL** installed in your system. To install **METACALL** you have the following options.
 
-- [Download a release](/TODO).
-- [Install via package manager](/TODO).
+- [Download a release through a precompiled tarball](https://github.com/metacall/distributable/releases).
+- [Install via GuixSD](https://github.com/metacall/distributable/blob/master/source/metacall.scm).
 - [Build and install it manually](#6-build-system).
-- [Pull it from DockerHub](/TODO).
+- [Pull it from DockerHub](https://hub.docker.com/r/metacall/core).
 
 ### 4.2 Environment Variables
 
