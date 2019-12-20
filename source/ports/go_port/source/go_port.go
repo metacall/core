@@ -90,8 +90,16 @@ func metacall(function string, args ...interface{}) (interface{}, error) {
 	ret := C.metacallfv(cFunc, (*unsafe.Pointer)(cArgs))
 
 	if ret != nil {
-		// TODO: return value
-		return "TODO", nil
+		defer C.metacall_value_destroy(ret)
+
+		switch (C.metacall_value_id(unsafe.Pointer(ret))) {
+			case C.METACALL_INT: {
+				return int(C.metacall_value_to_int(unsafe.Pointer(ret))), nil
+			}
+			case C.METACALL_STRING: {
+				return C.GoString(C.metacall_value_to_string(unsafe.Pointer(ret))), nil
+			}
+		}
 	}
 
 	return nil, nil

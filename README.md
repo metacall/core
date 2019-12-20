@@ -438,7 +438,20 @@ A loader must implement it to be considered a valid loader.
 
 ##### 5.3.3.1 FuncHook
 
-### 5.4 Ports
+### 5.4 Ports (Frontends)
+
+Ports are the frontends to the **METACALL C API** from other languages. They allow to use **METACALL** from different languages.
+
+- Currently supported languages and run-times:
+
+| Language                                                           | Runtime                                                    |        Version        |
+|--------------------------------------------------------------------|------------------------------------------------------------|:---------------------:|
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html) |        **3.x**        |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                 |     **>= 8.11.1**     |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [D8 (V8)](https://v8.dev/docs/d8)                          |      **5.1.117**      |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/core)                  | **>= 1.0.0-preview2** |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)  |        **2.x**        |
+| [Go](https://golang.org/)                                          | [CGO](https://golang.org/cmd/cgo/)                         |        **1.x**        |
 
 ### 5.5 Serialization
 
