@@ -8,6 +8,20 @@
 
 **METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call Python code from NodeJS.
 
+# Install
+
+Install MetaCall binaries first:
+```bash
+curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | bash
+```
+
+Then install NodeJS package:
+```bash
+npm install metacall
+```
+
+# Example
+
 `sum.py`
 ``` python
 def sum(a, b):
