@@ -20,8 +20,10 @@
 
 'use strict';
 
-if (require('./addon') === undefined) {
-	const path = require('path');
+const path = require('path');
+const addon = require(path.resolve(__dirname, '../addon.js'));
+
+if (addon === undefined) {
 	const fs = require('fs');
 
 	const basePath = '/gnu/store';
@@ -65,5 +67,5 @@ if (require('./addon') === undefined) {
 module.exports = '${folders[0]}/lib';
 `;
 
-	fs.writeFileSync('./installPath.js', script);
+	fs.writeFileSync(path.resolve(__dirname, '../installPath.js'), script);
 }

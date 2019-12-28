@@ -21,7 +21,8 @@
 'use strict';
 
 const Module = require('module');
-const Addon = require('./addon');
+const Path = require('path');
+const Addon = require(path.resolve(__dirname, './addon.js'));
 
 const node_require = Module.prototype.require;
 
