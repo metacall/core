@@ -20,7 +20,7 @@
 
 'use strict';
 
-if (require('../addon') === undefined) {
+if (require('./addon') === undefined) {
 	const path = require('path');
 	const fs = require('fs');
 
@@ -62,8 +62,8 @@ if (require('../addon') === undefined) {
 	}
 
 	const script = `'use strict';
-		module.exports = '${folders[0]}/lib';
-	`;
+module.exports = '${folders[0]}/lib';
+`;
 
-	fs.writeFileSync('../installPath.js', script);
+	fs.writeFileSync('./installPath.js', script);
 }
