@@ -310,6 +310,7 @@ value py_loader_impl_return(PyObject * result, type_id id)
 		keys = PyDict_Keys(result);
 		keys_size = PyList_Size(keys);
 
+		/* TODO: Allow different key types in the future */
 		for (iterator = 0; iterator < keys_size; ++iterator)
 		{
 			PyObject * key = PyList_GetItem(keys, iterator);
