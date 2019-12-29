@@ -19,14 +19,20 @@
 #	limitations under the License.
 #
 
-# Install dependencies
-python3 -m pip install --user --upgrade twine setuptools wheel
+# TODO: Update version in setup.py
+# TODO: Automate for CD/CI
 
-# Upload MetaCall package
-python3 setup.py sdist bdist_wheel
-python3 -m twine check dist/*
-python3 -m twine upload dist/*
+# Define exit code
+fail=0
+
+# Install dependencies and upload MetaCall package
+python3 -m pip install --user --upgrade twine setuptools wheel \
+	&& python3 setup.py sdist bdist_wheel \
+	&& python3 -m twine check dist/* \
+	&& python3 -m twine upload dist/* || fail=1
 
 # Delete output
-rm -rf dist/*
-rm -rf build/*
+rm -rf dist/* build/* || fail=1
+
+# Exit
+exit ${fail}

@@ -17,6 +17,8 @@
 #	See the License for the specific language governing permissions and
 #	limitations under the License.
 
+# TODO: Update to the new install / distributable tarballs
+
 import sys
 import os
 import re
@@ -223,7 +225,7 @@ def uninstall_prompt():
 * this action DOES NOT uninstall the python package, only MetaCall CLI and MetaCall libs
 * for a complete uninstall you have to run metacall-uninstall && pip uninstall metacall 
 * (the order of execution is important)
-  
+
 Proceed (y/n)? '''.format(''.join('''{}\n   '''.format(l) for l in paths))
 
 	answers = {'yes': True, 'y': True, 'no': False, 'n': False}

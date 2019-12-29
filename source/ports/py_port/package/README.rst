@@ -12,17 +12,31 @@ Programming Language. With **METACALL** Python Port you can
 transparently execute code from Python to any programming language, for
 example, calling JavaScript, NodeJS, Ruby or C# code from Python.
 
+Install
+========
+
+Install MetaCall binaries first:
+
+.. code:: console
+
+   curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | bash
+
+Then install Python package:
+
 .. code:: console
 
    pip install metacall
 
-``sum.js``
+Example
+========
 
-.. code:: javascript
+``multiply.rb``
 
-   module.exports = function sum(a, b) {
-       return a + b;
-   };
+.. code:: ruby
+
+    def multiply(left, right)
+        return left * right
+    end
 
 ``main.py``
 
@@ -30,6 +44,10 @@ example, calling JavaScript, NodeJS, Ruby or C# code from Python.
 
    from metacall import metacall_load_from_file, metacall
 
-   metacall_load_from_file('node', [ 'sum.js' ]);
+   metacall_load_from_file('rb', [ 'multiply.rb' ]);
 
-   metacall('sum', 3, 4); # 7
+   metacall('multiply', 3, 4); # 12
+
+.. code:: console
+
+   metacall py main.py

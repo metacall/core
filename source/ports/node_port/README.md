@@ -36,3 +36,7 @@ metacall_load_from_file('py', [ 'sum.py' ]);
 
 metacall('sum', 3, 4); // 7
 ```
+
+``` sh
+metacall node main.js
+```

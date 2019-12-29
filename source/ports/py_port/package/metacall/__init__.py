@@ -19,14 +19,34 @@
 
 import os
 import sys
+import re
 
-sys.path.append(os.environ.get('PORT_LIBRARY_PATH', '/usr/local/lib'));
+# Append environment variable or default install path when building manually (TODO: Cross-platform paths)
+sys.path.append(os.environ.get('PORT_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')));
+
+# Find is MetaCall is installed as a distributable tarball (TODO: Cross-platform paths)
+rootdir = os.path.join(os.path.sep, 'gnu', 'store')
+regex = re.compile('.*-metacall-.*')
+
+for root, dirs, _ in os.walk(rootdir):
+	for folder in dirs:
+		if regex.match(folder) and not folder.endswith('R'):
+			sys.path.append(os.path.join(rootdir, folder, 'lib'))
 
 try:
 	from _py_port import * # TODO: Import only the functions that will be exported
 except ImportError as e:
 	try:
+		print('Error when importing MetaCall Python Port:', e);
 		from _py_portd import * # TODO: Import only the functions that will be exported
-	except ImportError as ed:
-		print("MetaCall Core is not correctly installed:", e, "-", ed)
+		print('MetaCall Python Port Debug Imported');
+	except ImportError as e:
+		print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m');
+		print('\x1b[33m\x1b[1m', 'If you do not have it installed, you have three options:', '\x1b[0m');
+		print('\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m');
+		print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m');
+		print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m');
+		print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m');
 		pass
+
+# TODO: Monkey patch
