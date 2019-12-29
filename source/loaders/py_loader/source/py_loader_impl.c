@@ -186,6 +186,10 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 	{
 		return TYPE_ARRAY;
 	}
+	else if (PyDict_Check(result))
+	{
+		return TYPE_MAP;
+	}
 	else if (PyCapsule_CheckExact(result))
 	{
 		return TYPE_PTR;
@@ -295,6 +299,86 @@ value py_loader_impl_return(PyObject * result, type_id id)
 
 			/* TODO: Review recursion overflow */
 			array_value[iterator] = py_loader_impl_return(element, py_loader_impl_get_return_type(element));
+		}
+	}
+	else if (id == TYPE_MAP)
+	{
+		Py_ssize_t key_iterator, iterator, keys_size, length = 0;
+		value * map_value;
+		PyObject * keys;
+
+		keys = PyDict_Keys(result);
+		keys_size = PyList_Size(keys);
+
+		for (iterator = 0; iterator < keys_size; ++iterator)
+		{
+			PyObject * key = PyList_GetItem(keys, iterator);
+
+			#if PY_MAJOR_VERSION == 2
+				if (PyString_Check(key))
+				{
+					++length;
+				}
+			#elif PY_MAJOR_VERSION == 3
+				if (PyUnicode_Check(key))
+				{
+					++length;
+				}
+			#endif
+		}
+
+		v = value_create_map(NULL, (size_t)length);
+
+		map_value = value_to_map(v);
+
+		for (iterator = 0, key_iterator = 0; iterator < keys_size; ++iterator)
+		{
+			char * key_str = NULL;
+
+			Py_ssize_t key_length = 0;
+
+			PyObject * element, * key;
+
+			value * array_value;
+
+			key = PyList_GetItem(keys, iterator);
+
+			#if PY_MAJOR_VERSION == 2
+				if (PyString_Check(key))
+				{
+					if (PyString_AsStringAndSize(key, &key_str, &key_length) == -1)
+					{
+						if (PyErr_Occurred() != NULL)
+						{
+							loader_impl_py py_impl = loader_impl_get(py_func->impl);
+
+							py_loader_impl_error_print(py_impl);
+						}
+					}
+				}
+			#elif PY_MAJOR_VERSION == 3
+				if (PyUnicode_Check(key))
+				{
+					key_str = PyUnicode_AsUTF8AndSize(key, &key_length);
+				}
+			#endif
+
+			/* Allow only string keys by the moment */
+			if (key_str != NULL)
+			{
+				element = PyDict_GetItem(result, key);
+
+				map_value[key_iterator] = value_create_array(NULL, 2);
+
+				array_value = value_to_array(map_value[key_iterator]);
+
+				array_value[0] = value_create_string(key_str, (size_t)key_length);
+
+				/* TODO: Review recursion overflow */
+				array_value[1] = py_loader_impl_return(element, py_loader_impl_get_return_type(element));
+
+				++key_iterator;
+			}
 		}
 	}
 	else if (id == TYPE_PTR)
@@ -643,7 +727,8 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 
 			{ TYPE_STRING, "str" },
 			{ TYPE_BUFFER, "bytes" },
-			{ TYPE_ARRAY, "list" }
+			{ TYPE_ARRAY, "list" },
+			{ TYPE_MAP, "dict" }
 		};
 
 		size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
