@@ -424,25 +424,30 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 	log_copy(host->log);
 
-	ruby_init();
-
-	ruby_init_loadpath();
-
-	if (rb_loader_impl_initialize_types(impl) != 0)
+	/* Initialize Ruby */
 	{
-		ruby_cleanup(0);
+		RUBY_INIT_STACK;
 
-		return NULL;
+		ruby_init();
+
+		ruby_init_loadpath();
+
+		if (rb_loader_impl_initialize_types(impl) != 0)
+		{
+			ruby_cleanup(0);
+
+			return NULL;
+		}
+
+		if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
+		{
+			ruby_cleanup(0);
+
+			return NULL;
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 	}
-
-	if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
-	{
-		ruby_cleanup(0);
-
-		return NULL;
-	}
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 
 	return (loader_impl_data)&rb_loader_impl_unused;
 }
