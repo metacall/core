@@ -60,7 +60,7 @@ extern "C" {
 			SWIG_fail;
 		}
 	%#elif PY_MAJOR_VERSION == 3
-		buffer_str = PyUnicode_AsUTF8AndSize($input, &length);
+		buffer_str = (char *)PyUnicode_AsUTF8AndSize($input, &length);
 
 		if (buffer_str == NULL)
 		{
@@ -136,7 +136,7 @@ extern "C" {
 						SWIG_fail;
 					}
 				%#elif PY_MAJOR_VERSION == 3
-					str = PyUnicode_AsUTF8AndSize(object_str, &length);
+					str = (char *)PyUnicode_AsUTF8AndSize(object_str, &length);
 
 					if (str == NULL)
 					{
@@ -196,7 +196,7 @@ extern "C" {
 	size_t args_size, args_count;
 
 	/* Format string */
-	$1 = PyUnicode_AsUTF8($input);
+	$1 = (char *)PyUnicode_AsUTF8($input);
 
 	/* Variable length arguments */
 	args_size = PyTuple_Size(varargs);

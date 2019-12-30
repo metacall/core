@@ -100,11 +100,9 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_module(${target}
-	javascript
-	${interfaces}
-	${headers}
-	${sources}
+swig_add_library(${target}
+	LANGUAGE javascript
+	SOURCES ${interfaces} ${headers} ${sources}
 )
 
 set_property(TARGET ${target} PROPERTY SWIG_USE_LIBRARY_INCLUDE_DIRECTORIES TRUE)

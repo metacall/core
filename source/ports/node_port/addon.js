@@ -20,14 +20,14 @@
 
 'use strict';
 
-const Path = require('path');
+const path = require('path');
 
 /* Load MetaCall addon */
 module.exports = (() => {
 	let installPath = '';
 
 	try {
-		installPath = require('./installPath');
+		installPath = require(path.resolve(__dirname, './installPath.js'));
 	} catch (e) {
 		if (e.code !== 'MODULE_NOT_FOUND') {
 			throw e;
@@ -36,14 +36,14 @@ module.exports = (() => {
 
 	const LIBRARY_PATH = process.env.LOADER_LIBRARY_PATH || installPath;
 
-	const paths = [
-		Path.join(__dirname, 'build'),
+	const folders = [
+		path.join(__dirname, 'build'),
 		__dirname,
 		process.cwd(),
 		LIBRARY_PATH,
-		Path.join(LIBRARY_PATH, 'build'),
-		Path.join(LIBRARY_PATH, 'node_modules', 'metacall'),
-		Path.join(LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
+		path.join(LIBRARY_PATH, 'build'),
+		path.join(LIBRARY_PATH, 'node_modules', 'metacall'),
+		path.join(LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
 		'/usr/local/lib',
 	];
 
@@ -54,16 +54,16 @@ module.exports = (() => {
 
 	/* Set NODE_PATH for finding metacall lib */
 	/*
-	process.env.NODE_PATH = `${process.env.NODE_PATH}:${paths.join(':')}`;
+	process.env.NODE_PATH = `${process.env.NODE_PATH}:${folders.join(':')}`;
 	Module._initPaths();
 	*/
 
 	/* Load addon */
 	return (() => {
-		for (let path of paths) {
+		for (let folder of folders) {
 			for (let name of names) {
 				try {
-					const port = require(Path.join(path, `${name}.node`));
+					const port = require(path.join(folder, `${name}.node`));
 
 					if (port) {
 						return port;

@@ -20,19 +20,19 @@
 
 'use strict';
 
-const Module = require('module');
-const Path = require('path');
-const Addon = require(path.resolve(__dirname, './addon.js'));
+const mod = require('module');
+const path = require('path');
+const addon = require(path.resolve(__dirname, './addon.js'));
 
-const node_require = Module.prototype.require;
+const node_require = mod.prototype.require;
 
 const metacall_require = (tag, name) => {
 	// TODO: Inspect the current handle and append it to an object mocking the function calls with metacall
-	return Addon.metacall_load_from_file(tag, [ name ]);
+	return addon.metacall_load_from_file(tag, [ name ]);
 };
 
 /* Monkey patch require for simplifying load */
-Module.prototype.require = function (id) {
+mod.prototype.require = function (id) {
 
 	const tags = {
 		mock: 'mock',
@@ -62,7 +62,7 @@ Module.prototype.require = function (id) {
 /* Debug logs */
 if (process.env['NODE_ENV'] === 'debug')
 {
-	Addon.metacall_logs();
+	addon.metacall_logs();
 }
 
 /* Export the API */
@@ -72,7 +72,7 @@ module.exports = {
 			throw Error('Function name should be of string type.');
 		}
 
-		return Addon.metacall(name, ...args);
+		return addon.metacall(name, ...args);
 	},
 
 	metacall_load_from_file: (tag, paths) => {
@@ -84,11 +84,11 @@ module.exports = {
 			throw Error('Paths should be an array with file names and paths to be loaded by the loader.');
 		}
 
-		return Addon.metacall_load_from_file(tag, paths);
+		return addon.metacall_load_from_file(tag, paths);
 	},
 
 	metacall_inspect: () => {
-		const json_data = Addon.metacall_inspect();
+		const json_data = addon.metacall_inspect();
 
 		if (json_data !== undefined) {
 			const json = JSON.parse(json_data);
@@ -101,6 +101,6 @@ module.exports = {
 
 	/* TODO: Remove this from user or provide better ways of configuring logs */
 	metacall_logs: () => {
-		Addon.metacall_logs();
+		addon.metacall_logs();
 	},
 };

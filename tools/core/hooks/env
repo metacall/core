@@ -23,7 +23,7 @@
 source ../../hooks/env
 
 # Core arguments
-METACALL_RUNTIME_OPTIONS="root base python ruby netcore2 v8 nodejs file ports clean"
+METACALL_RUNTIME_OPTIONS="root base python ruby netcore2 nodejs file ports clean" # v8
 
 # Core environment variables
 DEBIAN_FRONTEND=noninteractive

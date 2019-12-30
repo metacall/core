@@ -8,7 +8,7 @@ py_project(frontend 0.1.0)
 # External dependencies
 #
 
-set(Python_ADDITIONAL_VERSIONS 3.5)
+set(Python_ADDITIONAL_VERSIONS 3.7)
 
 find_package(PythonInterp REQUIRED)
 

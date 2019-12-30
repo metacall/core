@@ -53,23 +53,23 @@ sub_apt(){
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	sub_apt_install_hold python3 libpython3.5
+	sub_apt_install_hold python3 libpython3.7
 }
 
 # Ruby
 sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
-	sub_apt_install_hold ruby2.3 libruby2.3 \
-		libgdbm3 libncurses5 libssl1.0.2 libyaml-0-2 rake ruby ruby-did-you-mean \
-		ruby-minitest ruby-net-telnet ruby-power-assert ruby-test-unit \
-		rubygems-integration ca-certificates
+	sub_apt_install_hold ruby2.5 libruby2.5
 }
 
 # NetCore
 sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
+
+	# Debian Stretch
+
 	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
 		liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g ca-certificates
 
@@ -88,13 +88,11 @@ sub_netcore(){
 sub_netcore2(){
 	echo "configure netcore 2"
 	cd $ROOT_DIR
-	sub_apt_install_hold libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 \
-		liblttng-ust0 libssl1.0.2 libstdc++6 zlib1g ca-certificates libunwind-dev
 
 	# Install NET Core Runtime 2.x
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
 	$SUDO_CMD mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
-	wget -q https://packages.microsoft.com/config/debian/9/prod.list
+	wget -q https://packages.microsoft.com/config/debian/10/prod.list
 	$SUDO_CMD mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
 	$SUDO_CMD chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
 	$SUDO_CMD chown root:root /etc/apt/sources.list.d/microsoft-prod.list

@@ -92,11 +92,9 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_module(${target}
-	ruby
-	${interfaces}
-	${headers}
-	${sources}
+swig_add_library(${target}
+	LANGUAGE ruby
+	SOURCES ${interfaces} ${headers} ${sources}
 )
 
 #

@@ -120,7 +120,7 @@ sub_configure() {
 	# Python
 	if [ $BUILD_PYTHON = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
-			-DPYTHON_EXECUTABLE=/usr/bin/python3.5 \
+			-DPYTHON_EXECUTABLE=/usr/bin/python3.7 \
 			-DOPTION_BUILD_LOADERS_PY=On"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
@@ -218,7 +218,7 @@ sub_configure() {
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
 	# Execute CMake
-	cmake $BUILD_STRING ..
+	cmake -Wno-dev $BUILD_STRING ..
 }
 
 sub_help() {

@@ -61,10 +61,22 @@ sub_apt(){
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libpcre3-dev swig
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install g++ libpcre3-dev curl tar
+
+	curl -sL http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz &> swig.tar.gz
+
+	tar -xzf swig.tar.gz
+	cd swig-4.0.1
+	./configure --prefix=/usr/local
+	make
+	$SUDO_CMD make install
+	cd ..
+	rm -rf swig-4.0.1
 
 	# Install Python Port Dependencies (TODO: This must be transformed into pip3 install metacall)
 	$SUDO_CMD pip3 install setuptools
+
+
 }
 
 # Python
@@ -74,11 +86,13 @@ sub_python(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
-	$SUDO_CMD pip3 install 'rsa==3.4.2'
-	$SUDO_CMD pip3 install 'scipy==1.2.1'
-	$SUDO_CMD pip3 install 'numpy==1.16.1'
-	$SUDO_CMD pip3 install 'scikit-learn==0.19.1'
-	$SUDO_CMD pip3 install 'joblib==0.13.2'
+	$SUDO_CMD pip3 install setuptools
+	$SUDO_CMD pip3 install wheel
+	$SUDO_CMD pip3 install rsa
+	$SUDO_CMD pip3 install scipy
+	$SUDO_CMD pip3 install numpy
+	$SUDO_CMD pip3 install scikit-learn
+	$SUDO_CMD pip3 install joblib
 }
 
 # Ruby
@@ -86,7 +100,7 @@ sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.3-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.5-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
@@ -121,6 +135,8 @@ sub_netcore(){
 	echo "configure netcore"
 	cd $ROOT_DIR
 
+	# Debian Stretch
+
 	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
 		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 libunwind8 libuuid1 zlib1g
 
@@ -148,13 +164,10 @@ sub_netcore2(){
 	echo "configure netcore 2"
 	cd $ROOT_DIR
 
-	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends \
-		libc6 libcurl3 libgcc1 libgssapi-krb5-2 libicu57 liblttng-ust0 libssl1.0.2 libstdc++6 zlib1g
-
 	# Set up repository
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
 	mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
-	wget -q https://packages.microsoft.com/config/debian/9/prod.list
+	wget -q https://packages.microsoft.com/config/debian/10/prod.list
 	mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
 	chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
 	chown root:root /etc/apt/sources.list.d/microsoft-prod.list
@@ -236,7 +249,7 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python build-essential libssl1.0.2 libssl1.0-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make
 
 	# Install NodeJS from distributable (TODO: Keys not working)
 	NODE_VERSION=10.16.3
@@ -317,7 +330,7 @@ sub_metacall(){
 		NETCORE_VERSION=0
 	fi
 
-	cmake ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.5 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/$NETCORE_VERSION/
+	cmake -Wno-dev ../ -DPYTHON_EXECUTABLE=/usr/bin/python3.7 -DOPTION_BUILD_EXAMPLES=off -DOPTION_BUILD_LOADERS_PY=on -DOPTION_BUILD_LOADERS_RB=on -DOPTION_BUILD_LOADERS_CS=on -DOPTION_BUILD_LOADERS_JS=on -DCMAKE_BUILD_TYPE=Release -DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/$NETCORE_VERSION/
 	make
 	make test && echo "test ok!"
 

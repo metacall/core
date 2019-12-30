@@ -94,7 +94,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **>= 8.11.1<sup>†</sup> <= 10.16.3** | node |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |             **5.1.117**              |  js  |
 | [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |    **>= 1.0.0-preview2 <= 2.2.8**    |  cs  |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |          **>= 2.1 <= 2.3**           |  rb  |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |          **>= 2.1 <= 2.5**           |  rb  |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                        |              **0.1.0**               | file |
 | [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |              **0.1.0**               | mock |
 
@@ -591,13 +591,13 @@ The following platforms and architectures have been tested an work correctly wit
 |     Operative System      |    Architecture     |    Compiler     |                                              Build Status                                              |
 |:-------------------------:|:-------------------:|:---------------:|:------------------------------------------------------------------------------------------------------:|
 |    **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
-| **`debian:stretch-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
+| **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
 | **`debian:buster-slim`**  |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
 |       **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
 
 ### 7.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:stretch-slim` for `amd64` architecture.
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:buster-slim` for `amd64` architecture.
 
 For pulling the **METACALL** `latest` image containing the runtime, use:
 

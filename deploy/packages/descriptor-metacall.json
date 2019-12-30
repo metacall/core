@@ -26,7 +26,7 @@
 	"files": [{
 		"includePattern": "artifacts/packages/(.*\\.deb)", "uploadPattern": "$1",
 			"matrixParams": {
-				"deb_distribution": "stretch",
+				"deb_distribution": "buster",
 				"deb_component": "main",
 				"deb_architecture": "amd64"
 			}

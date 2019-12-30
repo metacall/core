@@ -48,6 +48,8 @@ Example
 
    metacall('multiply', 3, 4); # 12
 
+Running the example:
+
 .. code:: console
 
    metacall py main.py

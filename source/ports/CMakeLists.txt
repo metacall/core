@@ -100,7 +100,7 @@ list(APPEND CMAKE_SWIG_FLAGS
 
 add_subdirectory(cs_port)
 add_subdirectory(d_port)
-add_subdirectory(go_port)
+# add_subdirectory(go_port) # TODO: Integrate it with CMake properly and with Docker
 add_subdirectory(java_port)
 add_subdirectory(js_port)
 add_subdirectory(lua_port)

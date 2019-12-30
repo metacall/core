@@ -1,3 +1,4 @@
 CMakeLists.txt
 source/*
 include/*
+installPath.js

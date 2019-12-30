@@ -14,7 +14,7 @@ if(NOT PYTHONLIBS_FOUND)
 	return()
 endif()
 
-set(Python_ADDITIONAL_VERSIONS 3.5)
+set(Python_ADDITIONAL_VERSIONS 3.7)
 
 find_package(PythonInterp REQUIRED)
 
@@ -107,12 +107,15 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_module(${target}
-	python
-	${interfaces}
-	${headers}
-	${sources}
+swig_add_library(${target}
+	LANGUAGE python
+	SOURCES ${interfaces} ${headers} ${sources}
 )
+
+# # Disable warnings as errors
+# set(SWIG_COMPILE_FLAGS "-w")
+# set_property(TARGET ${SWIG_MODULE_${target}_REAL_NAME} PROPERTY SWIG_GENERATED_COMPILE_OPTIONS "${SWIG_COMPILE_FLAGS}")
+# set_property(TARGET ${SWIG_MODULE_${target}_REAL_NAME} PROPERTY GENERATED_COMPILE_OPTIONS "${SWIG_COMPILE_FLAGS}")
 
 #
 # Dependecies

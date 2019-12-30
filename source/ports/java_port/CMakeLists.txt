@@ -101,11 +101,9 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_module(${target}
-	java
-	${interfaces}
-	${headers}
-	${sources}
+swig_add_library(${target}
+	LANGUAGE java
+	SOURCES ${interfaces} ${headers} ${sources}
 )
 
 #
