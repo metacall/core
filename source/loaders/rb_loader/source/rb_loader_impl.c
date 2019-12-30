@@ -58,15 +58,6 @@ typedef struct loader_impl_rb_function_type
 
 } * loader_impl_rb_function;
 
-typedef struct loader_impl_rb_protect_type
-{
-	VALUE obj;
-	ID method_id;
-	size_t args_size;
-	VALUE args[LOADER_IMPL_RB_PROTECT_ARGS_SIZE];
-
-} * loader_impl_rb_protect;
-
 int function_rb_interface_create(function func, function_impl impl)
 {
 	signature s = function_signature(func);
@@ -524,34 +515,21 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
-VALUE rb_loader_impl_module_eval_callback(VALUE rdata)
-{
-	/* TODO: Too tricky */
-	loader_impl_rb_protect data = (loader_impl_rb_protect)rdata;
-
-	return rb_funcall2(data->obj, data->method_id, data->args_size, data->args);
-}
-
 VALUE rb_loader_impl_module_eval(VALUE module, VALUE module_data)
 {
-	int error = 0;
-
-	struct loader_impl_rb_protect_type data;
-
+	const int argc = 1;
 	VALUE result;
+	VALUE args[argc];
 
-	data.obj = module;
-	data.method_id = rb_intern("module_eval");
-	data.args_size = 1;
-	data.args[0] = module_data;
+	args[0] = module_data;
 
-	result = rb_protect(rb_loader_impl_module_eval_callback, (VALUE)(&data), &error);
+	result = rb_mod_module_eval(1, args, module);
 
-	if (error != 0)
+	if (result == Qnil)
 	{
 		VALUE exception;
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Ruby module evaluation failed (status: %d)", error);
+		log_write("metacall", LOG_LEVEL_ERROR, "Ruby module evaluation failed");
 
 		exception = rb_gv_get("$!");
 
