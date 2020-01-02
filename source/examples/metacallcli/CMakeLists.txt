@@ -125,8 +125,8 @@ install(TARGETS ${target}
 # Define test
 #
 
-set(TEST_COMMAND_LINE_ARGS "mock test.mock")
-
+#set(TEST_COMMAND_LINE_ARGS "load mock test.mock")
+set(TEST_COMMAND_LINE_ARGS "install py numpy")
 
 if(WIN32)
 	set(TEST_COMMAND cmd /c)

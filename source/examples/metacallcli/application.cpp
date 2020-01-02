@@ -38,7 +38,7 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 {
 	std::cout << "MetaCall Command Line Interface by Parra Studios" << std::endl;
 	std::cout << "Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl;
-	std::cout << std::endl << "A command line interface example as MetaCall wrapper" << std::endl;
+	std::cout << std::endl << "A command line interface for MetaCall Core" << std::endl;
 
 	/* Command list */
 	std::cout << std::endl << "Command list:" << std::endl << std::endl;
@@ -315,8 +315,8 @@ bool command_cb_exit(application & app, tokenizer & /*t*/)
 
 /* -- Methods -- */
 
-application::parameter_iterator::parameter_iterator(application & app, const std::string & tag, application::script_list & scripts) :
-	app(app), tag(tag), scripts(scripts)
+application::parameter_iterator::parameter_iterator(application & app, const char * command, const char * tag, application::arg_list & arguments) :
+	app(app), command(command), tag(tag), arguments(arguments)
 {
 
 }
@@ -328,22 +328,113 @@ application::parameter_iterator::~parameter_iterator()
 
 void application::parameter_iterator::operator()(const char * parameter)
 {
-	std::string script(parameter);
+	arguments.push_back(parameter);
+}
 
-	if (app.load(tag, script) == false)
+void application::parameter_iterator::evaluate()
+{
+	typedef std::function<void(application &, const std::string &, const std::string &, application::arg_list &)> parameter_callback;
+
+	/* List of scripts that run pip/npm/gem */
+	static std::unordered_map<std::string, std::string> install_scripts =
 	{
-		std::cout << "Invalid parameter (" << parameter << ")" << std::endl;
+		{
+			"py",
+			"#!/usr/bin/env python3\n"
+			"\n"
+			"try:\n"
+			"	from pip import main as pipmain\n"
+			"except ImportError:\n"
+			"	from pip._internal import main as pipmain\n"
+			"\n"
+			"def package_manager(args):\n"
+			"	return pipmain(args);\n"
+		}
+	};
+
+	/* List of available commands when installing */
+	static std::unordered_map<std::string, parameter_callback> parameter_commands =
+	{
+		{
+			"load", [](application & app, const std::string & tag, const std::string &, application::arg_list & args)
+			{
+				std::for_each(args.begin(), args.end(), [&app, &tag](const std::string & script)
+				{
+					app.load(tag, script);
+				});
+			}
+		},
+		{
+			"install", [](application & app, const std::string & tag, const std::string & command, application::arg_list & args)
+			{
+				const std::string & script = install_scripts[tag];
+
+				if (script == "")
+				{
+					std::cout << "Package manager script not available for tag (" << tag << ")" << std::endl;
+
+					app.shutdown();
+
+					return;
+				}
+
+				if (metacall_load_from_memory(tag.c_str(), script.c_str(), script.size(), NULL) != 0)
+				{
+					std::cout << "Error when loading (" << tag << ") package manager script" << std::endl;
+
+					app.shutdown();
+
+					return;
+				}
+
+				void * args_values[1] =
+				{
+					metacall_value_create_array(NULL, args.size() + 1)
+				};
+
+				void ** array_value = static_cast<void **>(metacall_value_to_array(args_values[0]));
+
+				size_t iterator = 0;
+
+				array_value[iterator++] = metacall_value_create_string(command.c_str(), command.length());
+
+				std::for_each(args.begin(), args.end(), [&array_value, &iterator](const std::string & arg)
+				{
+					array_value[iterator++] = metacall_value_create_string(arg.c_str(), arg.length());
+				});
+
+				void * result = metacallv("package_manager", args_values);
+
+				metacall_value_destroy(args_values[0]);
+
+				/* TODO: Do something with result */
+
+				if (result != NULL)
+				{
+					metacall_value_destroy(result);
+				}
+
+				app.shutdown();
+			}
+		}
+	};
+
+	const parameter_callback cb = parameter_commands[command];
+
+	if (cb != nullptr)
+	{
+		cb(app, tag, command, arguments);
 	}
 }
 
 bool application::load(const std::string & tag, const std::string & script)
 {
-	const char * script_list[] =
+	const char * load_scripts[] =
 	{
 		script.c_str()
 	};
 
-	if (metacall_load_from_file(tag.c_str(), script_list, sizeof(script_list) / sizeof(script_list[0]), NULL) != 0)
+	if (metacall_load_from_file(tag.c_str(), load_scripts, sizeof(load_scripts) / sizeof(load_scripts[0]), NULL) != 0)
 	{
 		std::cout << "Script (" << script << ") load error in loader (" << tag << ")" << std::endl;
 
@@ -444,13 +535,16 @@ application::application(int argc, char * argv[]) : exit_condition(false), log_p
 	/* Print MetaCall information */
 	metacall_print_info();
 
-	/* Parse program arguments if any */
-	if (argc > 1)
+	/* Parse program arguments if any (e.g metacall (0) load (1) py (2) asd.py (3)) */
+	if (argc > 3)
 	{
-		parameter_iterator param_it(*this, argv[1], scripts);
+		parameter_iterator param_it(*this, argv[1], argv[2], arguments);
 
 		/* Parse program parameters */
-		std::for_each(&argv[2], argv + argc, param_it);
+		std::for_each(&argv[3], argv + argc, param_it);
+
+		/* Execute the action */
+		param_it.evaluate();
 	}
 
 	/* Define available commands */
@@ -480,7 +574,10 @@ application::~application()
 void application::run()
 {
 	/* Show welcome message  */
-	std::cout << "Welcome to Tijuana, tequila, sexo & marijuana." << std::endl;
+	if (exit_condition != true)
+	{
+		std::cout << "Welcome to Tijuana, tequila, sexo & marijuana." << std::endl;
+	}
 
 	while (exit_condition != true)
 	{

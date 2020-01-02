@@ -187,7 +187,7 @@ class tokenizer
 
 		/* -- Private Member Data -- */
 
-		const tokenizer & t;			/**< Reference to tokenizer */
+		const tokenizer & t;		/**< Reference to tokenizer */
 
 		size_t offset;				/**< Current position over iteration */
 
