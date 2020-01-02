@@ -409,6 +409,112 @@ value py_loader_impl_return(PyObject * result, type_id id)
 	return v;
 }
 
+PyObject * py_loader_impl_value_to_capi(type_id id, value v)
+{
+	if (id == TYPE_BOOL)
+	{
+		boolean b = value_to_bool(v);
+
+		long l = (b == 0) ? 0L : 1L;
+
+		return PyBool_FromLong(l);
+	}
+	else if (id == TYPE_INT)
+	{
+		int i = value_to_int(v);
+
+		#if PY_MAJOR_VERSION == 2
+			return PyInt_FromLong(i);
+		#elif PY_MAJOR_VERSION == 3
+			long l = (long)i;
+
+			return PyLong_FromLong(l);
+		#endif
+	}
+	else if (id == TYPE_LONG)
+	{
+		long l = value_to_long(v);
+
+		return PyLong_FromLong(l);
+	}
+	else if (id == TYPE_FLOAT)
+	{
+		float f = value_to_float(v);
+
+		return PyFloat_FromDouble((double)f);
+	}
+	else if (id == TYPE_DOUBLE)
+	{
+		double d = value_to_double(v);
+
+		return PyFloat_FromDouble(d);
+	}
+	else if (id == TYPE_STRING)
+	{
+		const char * str = value_to_string(v);
+
+		#if PY_MAJOR_VERSION == 2
+			return PyString_FromString(str);
+		#elif PY_MAJOR_VERSION == 3
+			return PyUnicode_FromString(str);
+		#endif
+	}
+	else if (id == TYPE_BUFFER)
+	{
+		/* This forces that you wont never be able to pass a buffer as a pointer to metacall without be wrapped into a value type */
+		/* If a pointer is passed this will produce a garbage read from outside of the memory range of the parameter */
+		size_t size = value_type_size(v);
+
+		const char * buffer = value_to_buffer(v);
+
+		#if PY_MAJOR_VERSION == 2
+
+			/* TODO */
+
+		#elif PY_MAJOR_VERSION == 3
+			return PyBytes_FromStringAndSize(buffer, (Py_ssize_t)size);
+		#endif
+	}
+	else if (id == TYPE_ARRAY)
+	{
+		value * array_value = value_to_array(v);
+
+		Py_ssize_t iterator, array_size = (Py_ssize_t)value_type_count(v);
+
+		PyObject * list = PyList_New(array_size);
+
+		for (iterator = 0; iterator < array_size; ++iterator)
+		{
+			PyObject * item = py_loader_impl_value_to_capi(value_type_id((value)array_value[iterator]), (value)array_value[iterator]);
+
+			if (PyList_SetItem(list, iterator, item) != 0)
+			{
+				/* TODO: Report error */
+			}
+		}
+
+		return list;
+	}
+	else if (id == TYPE_MAP)
+	{
+		/* TODO */
+	}
+	else if (id == TYPE_PTR)
+	{
+		void * ptr = value_to_ptr(v);
+
+		#if PY_MAJOR_VERSION == 2
+
+			/* TODO */
+
+		#elif PY_MAJOR_VERSION == 3
+			return PyCapsule_New(ptr, NULL, NULL);
+		#endif
+	}
+
+	return NULL;
+}
+
 function_return function_py_interface_invoke(function func, function_impl impl, function_args args)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
@@ -444,93 +550,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Type (%p): %d", (void *)t, id);
 
-		if (id == TYPE_BOOL)
-		{
-			boolean * value_ptr = (boolean *)(args[args_count]);
-
-			long l = (*value_ptr == 0) ? 0L : 1L;
-
-			py_func->values[args_count] = PyBool_FromLong(l);
-		}
-		else if (id == TYPE_INT)
-		{
-			int * value_ptr = (int *)(args[args_count]);
-
-			#if PY_MAJOR_VERSION == 2
-				py_func->values[args_count] = PyInt_FromLong(*value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				long l = (long)(*value_ptr);
-
-				py_func->values[args_count] = PyLong_FromLong(l);
-			#endif
-		}
-		else if (id == TYPE_LONG)
-		{
-			long * value_ptr = (long *)(args[args_count]);
-
-			py_func->values[args_count] = PyLong_FromLong(*value_ptr);
-		}
-		else if (id == TYPE_FLOAT)
-		{
-			float * value_ptr = (float *)(args[args_count]);
-
-			py_func->values[args_count] = PyFloat_FromDouble((double)*value_ptr);
-		}
-		else if (id == TYPE_DOUBLE)
-		{
-			double * value_ptr = (double *)(args[args_count]);
-
-			py_func->values[args_count] = PyFloat_FromDouble(*value_ptr);
-		}
-		else if (id == TYPE_STRING)
-		{
-			const char * value_ptr = (const char *)(args[args_count]);
-
-			#if PY_MAJOR_VERSION == 2
-				py_func->values[args_count] = PyString_FromString(value_ptr);
-			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyUnicode_FromString(value_ptr);
-			#endif
-
-		}
-		else if (id == TYPE_BUFFER)
-		{
-			/* This forces that you wont never be able to pass a buffer as a pointer to metacall without be wrapped into a value type */
-			/* If a pointer is passed this will produce a garbage read from outside of the memory range of the parameter */
-			value * v = (value)args[args_count];
-
-			size_t size = value_type_size(v);
-
-			const char * buffer = value_to_buffer(v);
-
-			#if PY_MAJOR_VERSION == 2
-
-				/* TODO */
-
-			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyBytes_FromStringAndSize(buffer, (Py_ssize_t) size);
-			#endif
-		}
-		else if (id == TYPE_ARRAY)
-		{
-			/* TODO */
-		}
-		else if (id == TYPE_MAP)
-		{
-			/* TODO */
-		}
-		else if (id == TYPE_PTR)
-		{
-			void * value_ptr = *((void **)(args[args_count]));
-
-			#if PY_MAJOR_VERSION == 2
-
-				/* TODO */
-
-			#elif PY_MAJOR_VERSION == 3
-				py_func->values[args_count] = PyCapsule_New(value_ptr, NULL, NULL);
-			#endif
-		}
+		py_func->values[args_count] = py_loader_impl_value_to_capi(id, args[args_count]);
 
 		if (py_func->values[args_count] != NULL)
 		{

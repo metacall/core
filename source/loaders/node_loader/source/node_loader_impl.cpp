@@ -710,7 +710,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		for (iterator = 0; iterator < array_size; ++iterator)
 		{
 			/* TODO: Review recursion overflow */
-			napi_value element_v =node_loader_impl_value_to_napi(node_impl, env, static_cast<value>(array_value[iterator]));
+			napi_value element_v = node_loader_impl_value_to_napi(node_impl, env, static_cast<value>(array_value[iterator]));
 
 			status = napi_set_element(env, v, iterator, element_v);
 
