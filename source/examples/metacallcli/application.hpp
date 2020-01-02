@@ -214,6 +214,8 @@ class application
 
 	/* -- Private Type Definitions -- */
 
+	typedef std::vector<std::string> arg_list;
+
 	typedef std::vector<std::string> script_list;
 
 	typedef std::unordered_map<std::string, command_callback> command_table;
@@ -233,13 +235,16 @@ class application
 		*  @param[in] app
 		*    Reference to the application
 		*
+		*  @param[in] command
+		*    Command to be executed
+		*
 		*  @param[in] tag
 		*    Loader tag reference
 		*
-		*  @param[in] scripts
-		*    Reference to list of scripts to be iterated
+		*  @param[in] arguments
+		*    Reference to list of arguments to be iterated
 		*/
-		parameter_iterator(application & app, const std::string & tag, script_list & scripts);
+		parameter_iterator(application & app, const char * command, const char * tag, arg_list & arguments);
 
 		/**
 		*  @brief
@@ -258,6 +263,12 @@ class application
 
 		/**
 		*  @brief
+		*    Execute the action parsed by parameters
+		*/
+		void evaluate();
+
+		/**
+		*  @brief
 		*    Assignement operator for parameter iterator
 		*
 		*  @return
@@ -269,21 +280,18 @@ class application
 
 		/* -- Private Member Data -- */
 
-		application & app;		/**< Reference to the application */
-
-		std::string tag;		/**< Loader tag reference */
-
-		script_list & scripts;	/**< Reference to the script list */
+		application & app;			/**< Reference to the application */
+		std::string command;		/**< Command to be executed */
+		std::string tag;			/**< Loader tag reference */
+		arg_list & arguments;		/**< Reference to the argument list */
 	};
 
 	/* -- Private Member Data -- */
 
 	bool exit_condition;	/**< Condition for main loop */
-
+	arg_list arguments;		/**< Vector containing a list of arguments */
 	script_list scripts;	/**< Vector containing a list of script names */
-
 	command_table commands;	/**< Hash table from command strings to command handlers */
-
 	std::string log_path;	/**< Path where logs are located */
 };
 
