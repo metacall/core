@@ -1,6 +1,6 @@
 /*
 *	Configuration Library by Parra Studios
-*	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+*	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 *
 *	A cross-platform library for managing multiple configuration formats.
 *
@@ -185,7 +185,7 @@ const char * configuration_print_info()
 {
 	static const char configuration_info[] =
 		"Configuration Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef CONFIGURATION_STATIC_DEFINE
 			"Compiled as static library type"

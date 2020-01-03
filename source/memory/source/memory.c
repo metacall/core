@@ -2,7 +2,7 @@
  *	Memory Library by Parra Studios
  *	A generic cross-platform memory utility.
  *
- *	Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ const char * memory_print_info()
 {
 	static const char memory_info[] =
 		"Memory Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2019 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef MEMORY_STATIC_DEFINE
 			"Compiled as static library type"
