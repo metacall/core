@@ -52,4 +52,4 @@ Running the example:
 
 .. code:: console
 
-   metacall py main.py
+   metacall load py main.py
