@@ -2,6 +2,7 @@
   'targets': [
     {
       'target_name': 'trampoline',
+      'type': 'shared_library',
       'win_delay_load_hook': 'true',
       'sources': [ 'source/trampoline.cc' ],
       'msvs_settings': {
@@ -24,7 +25,7 @@
         'MACOSX_DEPLOYMENT_TARGET': '10.7'
       },
       'include_dirs': [
-        "include"
+        'include'
       ],
       'conditions': [
         ['OS == "win" and MSVS_VERSION == "2015"', {

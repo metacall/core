@@ -42,6 +42,7 @@ if(MSVC)
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND npm config set msvs_version ${NODE_LOADER_TRAMPOLINE_MSVS_VERSION}
+			# TODO: Implement build with gyp
 		)
 	else()
 		add_custom_target(${target} ALL
@@ -68,9 +69,37 @@ if(MSVC)
 else()
 
 	if(OPTION_BUILD_GUIX)
+		# Get the includes
+		execute_process(
+			COMMAND node -p "require('node-addon-api').include"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+			OUTPUT_VARIABLE NODE_ADDON_API_INCLUDE_DIR
+		)
+
+		string(REPLACE "\n" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
+		string(REPLACE "\"" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
+
+		# Generate additional gyp file for the addon
+		set(NODE_ADDON_INCLUDES
+			"{
+				'target_defaults': {
+					'include_dirs': [
+						'@NODE_ADDON_API_INCLUDE_DIR@/external-napi'
+					]
+				}
+			}"
+		)
+
+		string(REPLACE "@NODE_ADDON_API_INCLUDE_DIR@" "${NODE_ADDON_API_INCLUDE_DIR}" NODE_ADDON_INCLUDES ${NODE_ADDON_INCLUDES})
+
+		file(WRITE binding.gypi "${NODE_ADDON_INCLUDES}")
+
 		add_custom_target(${target} ALL
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+			COMMAND gyp binding.gyp -f make --depth . -Ibinding.gypi # TODO: ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE}
+			COMMAND make -f binding.Makefile
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/out/Default/lib.target/libtrampoline.so ${LOADER_LIBRARY_PATH}/trampoline.node
 		)
 	else()
 		add_custom_target(${target} ALL

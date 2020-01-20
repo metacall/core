@@ -59,8 +59,12 @@ install(FILES
 	COMPONENT runtime
 )
 
-install(DIRECTORY
-	${LOADER_LIBRARY_PATH}/node_modules
-	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
-)
+if(NOT OPTION_BUILD_GUIX)
+	# In Guix Bootstrap dependencies (aka Cherow
+	# at the moment of writting) must be installed manually
+	install(DIRECTORY
+		${LOADER_LIBRARY_PATH}/node_modules
+		DESTINATION ${INSTALL_LIB}
+		COMPONENT runtime
+	)
+endif()
