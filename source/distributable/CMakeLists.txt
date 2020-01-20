@@ -161,11 +161,13 @@ target_link_libraries(${target}
 
 # Register Library
 if(UNIX)
-	add_custom_command(
-		TARGET ${target}
-		POST_BUILD
-		COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_BINARY_DIR}/distributable
-	)
+	if(NOT OPTION_BUILD_GUIX)
+		add_custom_command(
+			TARGET ${target}
+			POST_BUILD
+			COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_BINARY_DIR}/distributable
+		)
+	endif()
 endif()
 
 #
@@ -182,7 +184,9 @@ install(TARGETS ${target}
 
 # Register Library
 if(UNIX)
-	install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_BIN})")
-	install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED})")
-	install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB})")
+	if(NOT OPTION_BUILD_GUIX)
+		install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_BIN})")
+		install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_SHARED})")
+		install(CODE "execute_process(COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/source/ldconfig.sh ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB})")
+	endif()
 endif()

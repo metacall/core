@@ -133,10 +133,12 @@ set_target_properties(${target}
 # Include directories
 #
 
-execute_process(
-	COMMAND npm install
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+if(NOT OPTION_BUILD_GUIX)
+	execute_process(
+		COMMAND npm install
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+endif()
 
 execute_process(
 	COMMAND node -p "require('node-addon-api').include"
