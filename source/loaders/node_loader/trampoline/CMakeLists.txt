@@ -42,9 +42,6 @@ if(MSVC)
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND npm config set msvs_version ${NODE_LOADER_TRAMPOLINE_MSVS_VERSION}
-			# COMMAND npm install --msvs_version=${NODE_LOADER_TRAMPOLINE_MSVS_VERSION}
-			COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} rebuild --verbose
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node ${LOADER_LIBRARY_PATH}
 		)
 	else()
 		add_custom_target(${target} ALL
@@ -74,9 +71,6 @@ else()
 		add_custom_target(${target} ALL
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
-			# COMMAND npm install
-			COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} rebuild --verbose
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node ${LOADER_LIBRARY_PATH}
 		)
 	else()
 		add_custom_target(${target} ALL
