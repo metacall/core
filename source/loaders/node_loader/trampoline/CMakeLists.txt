@@ -83,6 +83,9 @@ else()
 		set(NODE_ADDON_INCLUDES
 			"{
 				'target_defaults': {
+					'cflags': [
+						'-fPIC'
+					],
 					'include_dirs': [
 						'@NODE_ADDON_API_INCLUDE_DIR@/external-napi'
 					]
