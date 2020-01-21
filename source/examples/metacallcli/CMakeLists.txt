@@ -125,7 +125,11 @@ install(TARGETS ${target}
 # Define test
 #
 
+set(TEST_COMMAND_LINE_ARGS "help") # TODO: Forward all commands, create an adaptor to existing system
 set(TEST_COMMAND_LINE_ARGS "load mock test.mock")
+
+# TODO: NODE_PATH=`npm root --quiet -g`
+#set(TEST_COMMAND_LINE_ARGS "install node rambda")
 
 if(WIN32)
 	set(TEST_COMMAND cmd /c)

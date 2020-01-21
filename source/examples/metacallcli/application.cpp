@@ -28,6 +28,10 @@
 
 #include <clocale>
 
+/* Package Managers */
+#include "package_manager/pip.hpp"
+#include "package_manager/npm.hpp"
+
 /* -- Namespace Declarations -- */
 
 using namespace metacallcli;
@@ -338,18 +342,8 @@ void application::parameter_iterator::evaluate()
 	/* List of scripts that run pip/npm/gem */
 	static std::unordered_map<std::string, std::string> install_scripts =
 	{
-		{
-			"py",
-			"#!/usr/bin/env python3\n"
-			"\n"
-			"try:\n"
-			"	from pip import main as pipmain\n"
-			"except ImportError:\n"
-			"	from pip._internal import main as pipmain\n"
-			"\n"
-			"def package_manager(args):\n"
-			"	return pipmain(args);\n"
-		}
+		{ "py", package_manager::pip },
+		{ "node", package_manager::npm }
 	};
 
 	/* List of available commands when installing */
