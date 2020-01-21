@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+/* #!/usr/bin/env node */ // Shebang fails when inlining the source in a C++ header and installing with Guix (the shebang cannot be patched properly)
 
 /* This has been ripped off from NPM and adapted to be callable instead of invoked by exec */
 

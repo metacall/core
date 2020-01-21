@@ -16,7 +16,7 @@ namespace metacallcli {
 namespace package_manager {
 
 static const char npm[] =
-"#!/usr/bin/env node\n"
+"/* #!/usr/bin/env node */ // Shebang fails when inlining the source in a C++ header and installing with Guix (the shebang cannot be patched properly)\n"
 "\n"
 "/* This has been ripped off from NPM and adapted to be callable instead of invoked by exec */\n"
 "\n"
