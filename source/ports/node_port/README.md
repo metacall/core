@@ -17,7 +17,7 @@ curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | 
 
 Then install NodeJS package:
 ```bash
-npm install metacall
+metacall install node metacall
 ```
 
 # Example
@@ -38,5 +38,5 @@ metacall('sum', 3, 4); // 7
 ```
 
 ``` sh
-metacall node main.js
+metacall load node main.js
 ```
