@@ -54,6 +54,23 @@ add_executable(${target}
 # Create namespaced alias
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
+# Configure package manager path
+if(MSVC)
+	set(PROJECT_METACALL_PACK_MAN_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(PROJECT_METACALL_PACK_MAN_DIR "${CMAKE_BINARY_DIR}")
+endif()
+
+# Copy package manager scripts
+add_custom_target(${target}-scripts ALL
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package_manager/pip.py ${PROJECT_METACALL_PACK_MAN_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package_manager/npm.js ${PROJECT_METACALL_PACK_MAN_DIR}
+)
+
+# Set dependency to metacallcli
+add_dependencies(${target} ${target}-scripts)
+
 #
 # Project options
 #
@@ -121,15 +138,22 @@ install(TARGETS ${target}
 	BUNDLE  DESTINATION ${INSTALL_BIN} COMPONENT examples
 )
 
+# Scripts (Package Managers)
+install(FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/package_manager/pip.py
+	${CMAKE_CURRENT_SOURCE_DIR}/package_manager/npm.js
+	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
+)
+
 #
 # Define test
 #
 
-set(TEST_COMMAND_LINE_ARGS "help") # TODO: Forward all commands, create an adaptor to existing system
+#set(TEST_COMMAND_LINE_ARGS "help") # TODO: Forward all commands, create an adaptor to existing system
 set(TEST_COMMAND_LINE_ARGS "load mock test.mock")
-
-# TODO: NODE_PATH=`npm root --quiet -g`
-#set(TEST_COMMAND_LINE_ARGS "install node rambda")
+#set(TEST_COMMAND_LINE_ARGS "install py numpy")
+#set(TEST_COMMAND_LINE_ARGS "install node rambda") # TODO: This segfaults during ctest but not when running it normally
 
 if(WIN32)
 	set(TEST_COMMAND cmd /c)
@@ -152,7 +176,19 @@ set_property(TEST ${target}
 
 include(TestEnvironmentVariables)
 
+if(NOT OPTION_BUILD_GUIX)
+	# Get node path for npm
+	execute_process(
+		COMMAND npm root --quiet -g
+		OUTPUT_VARIABLE NODE_PATH
+	)
+	set(NODE_PATH "NODE_PATH=${NODE_PATH}")
+else()
+	set(NODE_PATH "NODE_PATH=$ENV{NODE_PATH}")
+endif()
+
 test_environment_variables(${target}
 	${TEST_COMMAND_LINE_ARGS}
 	${TESTS_ENVIRONMENT_VARIABLES}
+	${NODE_PATH}
 )

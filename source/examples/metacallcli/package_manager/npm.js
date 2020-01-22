@@ -1,10 +1,10 @@
-/* #!/usr/bin/env node */ // Shebang fails when inlining the source in a C++ header and installing with Guix (the shebang cannot be patched properly)
+#!/usr/bin/env node
 
 /* This has been ripped off from NPM and adapted to be callable instead of invoked by exec */
 
 function package_manager(args) {
 	// windows: running "npm blah" in this folder will invoke WSH, not node.
-	/* global WScript */
+	// global WScript
 	if (typeof WScript !== 'undefined') {
 		WScript.echo(
 			'npm does not work when run\n' +
@@ -37,7 +37,11 @@ function package_manager(args) {
 	var nopt = require('npm/node_modules/nopt')
 
 	// Overwrite process args
-	process.argv = [ 'node', 'npm', ...args ];
+	process.argv = [
+		process.env['NODE_EXE_PATH'] || 'node',
+		process.env['NODE_PATH'] ? path.join(process.env['NODE_PATH'], 'npm', 'bin', 'npm-cli.js') : 'npm',
+		...args,
+	];
 
 	log.verbose('cli', process.argv)
 

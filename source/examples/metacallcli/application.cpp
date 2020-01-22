@@ -28,10 +28,6 @@
 
 #include <clocale>
 
-/* Package Managers */
-#include "package_manager/pip.hpp"
-#include "package_manager/npm.hpp"
-
 /* -- Namespace Declarations -- */
 
 using namespace metacallcli;
@@ -342,8 +338,31 @@ void application::parameter_iterator::evaluate()
 	/* List of scripts that run pip/npm/gem */
 	static std::unordered_map<std::string, std::string> install_scripts =
 	{
-		{ "py", package_manager::pip },
-		{ "node", package_manager::npm }
+		{
+			"py",
+
+			"#!/usr/bin/env python3\n"
+			"\n"
+			"try:\n"
+			"	from pip import main as pipmain\n"
+			"except ImportError:\n"
+			"	from pip._internal import main as pipmain\n"
+			"\n"
+			"def package_manager(args):\n"
+			"	return pipmain(args);\n"
+		},
+		{
+			"node",
+
+			"const path = require('path');\n"
+			"let npm = { package_manager: function (args) { console.log('NPM could not be found, please set up LOADER_LIBRARY_PATH enviroment variable,'); } };\n"
+			"try {\n"
+			"	npm = require(path.join(process.env['LOADER_LIBRARY_PATH'], 'npm.js'));\n"
+			"} catch (e) {\n"
+			"	console.log(e);\n"
+			"}\n"
+			"module.exports = npm;\n"
+		}
 	};
 
 	/* List of available commands when installing */
