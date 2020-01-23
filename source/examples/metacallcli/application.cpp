@@ -341,10 +341,8 @@ void application::parameter_iterator::operator()(const char * parameter)
 
 	const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
 
-	if (!app.load(tag, script))
-	{
-		app.shutdown();
-	}
+	app.load(tag, script);
+	app.shutdown();
 }
 
 bool application::load(const std::string & tag, const std::string & script)

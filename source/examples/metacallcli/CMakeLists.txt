@@ -125,8 +125,6 @@ install(TARGETS ${target}
 # Define test
 #
 
-set(TEST_COMMAND_LINE_ARGS "test.mock")
-
 if(WIN32)
 	set(TEST_COMMAND cmd /c)
 else()
@@ -134,7 +132,7 @@ else()
 endif()
 
 add_test(NAME ${target}
-	COMMAND ${TEST_COMMAND} "echo 'inspect\nexit' | $<TARGET_FILE:${target}> ${TEST_COMMAND_LINE_ARGS}"
+	COMMAND ${TEST_COMMAND} "echo 'load mock a.mock\ninspect\nexit' | $<TARGET_FILE:${target}>"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 

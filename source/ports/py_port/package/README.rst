@@ -21,11 +21,11 @@ Install MetaCall binaries first:
 
    curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | bash
 
-Then install Python package through MetaCall:
+Then install MetaCall Python package through MetaCall:
 
 .. code:: console
 
-   metacall install py metacall
+   metacall pip3 install metacall
 
 Example
 ========
@@ -52,4 +52,4 @@ Running the example:
 
 .. code:: console
 
-   metacall load py main.py
+   metacall main.py
