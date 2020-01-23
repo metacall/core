@@ -315,8 +315,8 @@ bool command_cb_exit(application & app, tokenizer & /*t*/)
 
 /* -- Methods -- */
 
-application::parameter_iterator::parameter_iterator(application & app, const char * command, const char * tag, application::arg_list & arguments) :
-	app(app), command(command), tag(tag), arguments(arguments)
+application::parameter_iterator::parameter_iterator(application & app) :
+	app(app)
 {
 
 }
@@ -328,115 +328,22 @@ application::parameter_iterator::~parameter_iterator()
 
 void application::parameter_iterator::operator()(const char * parameter)
 {
-	arguments.push_back(parameter);
-}
+	std::string script(parameter);
 
-void application::parameter_iterator::evaluate()
-{
-	typedef std::function<void(application &, const std::string &, const std::string &, application::arg_list &)> parameter_callback;
-
-	/* List of scripts that run pip/npm/gem */
-	static std::unordered_map<std::string, std::string> install_scripts =
+	static std::unordered_map<std::string, std::string> extension_to_tag =
 	{
-		{
-			"py",
-
-			"#!/usr/bin/env python3\n"
-			"\n"
-			"try:\n"
-			"	from pip import main as pipmain\n"
-			"except ImportError:\n"
-			"	from pip._internal import main as pipmain\n"
-			"\n"
-			"def package_manager(args):\n"
-			"	return pipmain(args);\n"
-		},
-		{
-			"node",
-
-			"const path = require('path');\n"
-			"let npm = { package_manager: function (args) { console.log('NPM could not be found, please set up LOADER_LIBRARY_PATH enviroment variable,'); } };\n"
-			"try {\n"
-			"	npm = require(path.join(process.env['LOADER_LIBRARY_PATH'], 'npm.js'));\n"
-			"} catch (e) {\n"
-			"	console.log(e);\n"
-			"}\n"
-			"module.exports = npm;\n"
-		}
+		{ "mock", "mock" },
+		{ "py", "py" },
+		{ "js", "node" },
+		{ "rb", "rb" },
+		{ "cs", "cs" }
 	};
 
-	/* List of available commands when installing */
-	static std::unordered_map<std::string, parameter_callback> parameter_commands =
+	const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
+
+	if (!app.load(tag, script))
 	{
-		{
-			"load", [](application & app, const std::string & tag, const std::string &, application::arg_list & args)
-			{
-				std::for_each(args.begin(), args.end(), [&app, &tag](const std::string & script)
-				{
-					app.load(tag, script);
-				});
-			}
-		},
-		{
-			"install", [](application & app, const std::string & tag, const std::string & command, application::arg_list & args)
-			{
-				const std::string & script = install_scripts[tag];
-
-				if (script == "")
-				{
-					std::cout << "Package manager script not available for tag (" << tag << ")" << std::endl;
-
-					app.shutdown();
-
-					return;
-				}
-
-				if (metacall_load_from_memory(tag.c_str(), script.c_str(), script.size(), NULL) != 0)
-				{
-					std::cout << "Error when loading (" << tag << ") package manager script" << std::endl;
-
-					app.shutdown();
-
-					return;
-				}
-
-				void * args_values[1] =
-				{
-					metacall_value_create_array(NULL, args.size() + 1)
-				};
-
-				void ** array_value = static_cast<void **>(metacall_value_to_array(args_values[0]));
-
-				size_t iterator = 0;
-
-				array_value[iterator++] = metacall_value_create_string(command.c_str(), command.length());
-
-				std::for_each(args.begin(), args.end(), [&array_value, &iterator](const std::string & arg)
-				{
-					array_value[iterator++] = metacall_value_create_string(arg.c_str(), arg.length());
-				});
-
-				void * result = metacallv("package_manager", args_values);
-
-				metacall_value_destroy(args_values[0]);
-
-				/* TODO: Do something with result */
-
-				if (result != NULL)
-				{
-					metacall_value_destroy(result);
-				}
-
-				app.shutdown();
-			}
-		}
-	};
-
-	const parameter_callback cb = parameter_commands[command];
-
-	if (cb != nullptr)
-	{
-		cb(app, tag, command, arguments);
+		app.shutdown();
 	}
 }
 
@@ -548,16 +455,13 @@ application::application(int argc, char * argv[]) : exit_condition(false), log_p
 	/* Print MetaCall information */
 	metacall_print_info();
 
-	/* Parse program arguments if any (e.g metacall (0) load (1) py (2) asd.py (3)) */
-	if (argc > 3)
+	/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
+	if (argc > 1)
 	{
-		parameter_iterator param_it(*this, argv[1], argv[2], arguments);
+		parameter_iterator param_it(*this);
 
 		/* Parse program parameters */
-		std::for_each(&argv[3], argv + argc, param_it);
-
-		/* Execute the action */
-		param_it.evaluate();
+		std::for_each(&argv[1], argv + argc, param_it);
 	}
 
 	/* Define available commands */

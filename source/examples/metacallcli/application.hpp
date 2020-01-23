@@ -234,17 +234,8 @@ class application
 		*
 		*  @param[in] app
 		*    Reference to the application
-		*
-		*  @param[in] command
-		*    Command to be executed
-		*
-		*  @param[in] tag
-		*    Loader tag reference
-		*
-		*  @param[in] arguments
-		*    Reference to list of arguments to be iterated
 		*/
-		parameter_iterator(application & app, const char * command, const char * tag, arg_list & arguments);
+		parameter_iterator(application & app);
 
 		/**
 		*  @brief
@@ -263,12 +254,6 @@ class application
 
 		/**
 		*  @brief
-		*    Execute the action parsed by parameters
-		*/
-		void evaluate();
-
-		/**
-		*  @brief
 		*    Assignement operator for parameter iterator
 		*
 		*  @return
@@ -281,9 +266,6 @@ class application
 		/* -- Private Member Data -- */
 
 		application & app;			/**< Reference to the application */
-		std::string command;		/**< Command to be executed */
-		std::string tag;			/**< Loader tag reference */
-		arg_list & arguments;		/**< Reference to the argument list */
 	};
 
 	/* -- Private Member Data -- */
