@@ -67,6 +67,8 @@ describe('metacall', () => {
 		});
 		it('metacall (py)', () => {
 			assert.strictEqual(metacall('multiply', 2, 2), 4);
+			assert.deepEqual(metacall('return_array'), [1, 2, 3]);
+			assert.deepEqual(metacall('return_same_array', [4, 5, 6]), [4, 5, 6]);
 		});
 		it('metacall (rb)', () => {
 			/* TODO: This creates a segmentation fault, it seems due to lack of thread-safety */

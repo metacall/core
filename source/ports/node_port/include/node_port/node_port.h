@@ -48,7 +48,7 @@ extern "C" {
 *  @param[out] js_v
 *    N-API value result after conversion from MetaCall
 */
-NODE_PORT_API void metacall_node_value_to_napi(napi_env env, void * v, napi_value * js_v);
+/* NODE_PORT_API void metacall_node_value_to_napi(napi_env env, void * v, napi_value * js_v); */
 
 #ifdef __cplusplus
 }

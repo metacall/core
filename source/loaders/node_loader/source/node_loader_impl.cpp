@@ -247,7 +247,6 @@ typedef struct loader_impl_async_future_delete_type
 } * loader_impl_async_future_delete;
 
 /* Exception */
-
 static inline void node_loader_impl_exception(napi_env env, napi_status status);
 
 /* Type conversion */

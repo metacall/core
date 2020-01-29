@@ -39,3 +39,9 @@ def bytebuff(input: bytes) -> bytes:
 	print(buffer);
 	print('Output length: ', len(buffer))
 	return buffer;
+
+def return_array():
+	return list([1, 2, 3]);
+
+def return_same_array(arr):
+	return arr;
