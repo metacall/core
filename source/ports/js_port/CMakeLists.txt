@@ -100,10 +100,19 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_library(${target}
-	LANGUAGE javascript
-	SOURCES ${interfaces} ${headers} ${sources}
-)
+if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
+	swig_add_module(${target}
+		javascript
+		${interfaces}
+		${headers}
+		${sources}
+	)
+else()
+	swig_add_library(${target}
+		LANGUAGE javascript
+		SOURCES ${interfaces} ${headers} ${sources}
+	)
+endif()
 
 set_property(TARGET ${target} PROPERTY SWIG_USE_LIBRARY_INCLUDE_DIRECTORIES TRUE)
 

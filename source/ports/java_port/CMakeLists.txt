@@ -101,10 +101,19 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_library(${target}
-	LANGUAGE java
-	SOURCES ${interfaces} ${headers} ${sources}
-)
+if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
+	swig_add_module(${target}
+		java
+		${interfaces}
+		${headers}
+		${sources}
+	)
+else()
+	swig_add_library(${target}
+		LANGUAGE java
+		SOURCES ${interfaces} ${headers} ${sources}
+	)
+endif()
 
 #
 # Dependecies

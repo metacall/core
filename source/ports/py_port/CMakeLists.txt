@@ -107,10 +107,19 @@ foreach(file ${interfaces} ${headers} ${sources})
 	)
 endforeach()
 
-swig_add_library(${target}
-	LANGUAGE python
-	SOURCES ${interfaces} ${headers} ${sources}
-)
+if(${CMAKE_VERSION} VERSION_LESS "3.8.0")
+	swig_add_module(${target}
+		python
+		${interfaces}
+		${headers}
+		${sources}
+	)
+else()
+	swig_add_library(${target}
+		LANGUAGE python
+		SOURCES ${interfaces} ${headers} ${sources}
+	)
+endif()
 
 # # Disable warnings as errors
 # set(SWIG_COMPILE_FLAGS "-w")
