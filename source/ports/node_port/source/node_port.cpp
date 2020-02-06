@@ -540,9 +540,10 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 // this function is the handler of the "metacall_load_from_file"
 napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 {
-	size_t argc = 2, result;
+	const size_t args_size = 2;
+	size_t argc = args_size, result;
+	napi_value argv[args_size];
 	uint32_t length_of_JS_array;
-	napi_value argv[argc];
 	char tagBuf[18];
 	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
 	// checks will be done in the JS Wrapper..... SO we believe whatever the JS_Wrapper is passing is valid
@@ -574,6 +575,81 @@ napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 }
 
 /* END-TODO */
+
+/**
+*  @brief
+*    Loads a script from string by tag
+*
+*  @param[in] env
+*    N-API reference to the enviroment
+*
+*  @param[in] info
+*    Reference to the call information
+*
+*  @return
+*    TODO: Not implemented yet
+*/
+napi_value metacall_node_load_from_memory(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 2;
+	size_t argc = args_size, tag_length, script_length;
+	napi_value argv[args_size];
+	napi_status status;
+	char * tag, * script;
+
+	// Get arguments
+	status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	metacall_node_exception(env, status);
+
+	// Get tag length
+	status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &tag_length);
+
+	metacall_node_exception(env, status);
+
+	// Allocate tag
+	tag = static_cast<char *>(malloc(sizeof(char) * (tag_length + 1)));
+
+	if (tag == NULL)
+	{
+		napi_throw_error(env, NULL, "Metacall could not load from memory, tag allocation failed");
+		return NULL;
+	}
+
+	// Get tag
+	status = napi_get_value_string_utf8(env, argv[0], tag, tag_length + 1, &tag_length);
+
+	metacall_node_exception(env, status);
+
+	// Get script length
+	status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &script_length);
+
+	metacall_node_exception(env, status);
+
+	// Allocate script
+	script = static_cast<char *>(malloc(sizeof(char) * (script_length + 1)));
+
+	if (script == NULL)
+	{
+		napi_throw_error(env, NULL, "Metacall could not load from memory, script allocation failed");
+		return NULL;
+	}
+
+	// Get script
+	status = napi_get_value_string_utf8(env, argv[1], script, script_length + 1, &script_length);
+
+	metacall_node_exception(env, status);
+
+	// Load script from memory
+	if (metacall_load_from_memory(tag, script, script_length, NULL) != 0)
+	{
+		napi_throw_error(env, NULL, "Metacall could not load from memory");
+		return NULL;
+	}
+
+	/* TODO: Return value and logs */
+	return NULL;
+}
 
 /* TODO: Add documentation */
 napi_value metacall_node_inspect(napi_env env, napi_callback_info)
@@ -625,18 +701,21 @@ void metacall_node_exports(napi_env env, napi_value exports)
 {
 	const char function_metacall_str[] = "metacall";
 	const char function_load_from_file_str[] = "metacall_load_from_file";
+	const char function_load_from_memory_str[] = "metacall_load_from_memory";
 	const char function_inspect_str[] = "metacall_inspect";
 	const char function_logs_str[] = "metacall_logs";
 
-	napi_value function_metacall, function_load_from_file, function_inspect, function_logs;
+	napi_value function_metacall, function_load_from_file, function_load_from_memory, function_inspect, function_logs;
 
 	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, metacall_node_call, NULL, &function_metacall);
 	napi_create_function(env, function_load_from_file_str, sizeof(function_load_from_file_str) - 1, metacall_node_load_from_file, NULL, &function_load_from_file);
+	napi_create_function(env, function_load_from_memory_str, sizeof(function_load_from_memory_str) - 1, metacall_node_load_from_memory, NULL, &function_load_from_memory);
 	napi_create_function(env, function_inspect_str, sizeof(function_inspect_str) - 1, metacall_node_inspect, NULL, &function_inspect);
 	napi_create_function(env, function_logs_str, sizeof(function_logs_str) - 1, metacall_node_logs, NULL, &function_logs);
 
 	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
 	napi_set_named_property(env, exports, function_load_from_file_str, function_load_from_file);
+	napi_set_named_property(env, exports, function_load_from_memory_str, function_load_from_memory);
 	napi_set_named_property(env, exports, function_inspect_str, function_inspect);
 	napi_set_named_property(env, exports, function_logs_str, function_logs);
 }
