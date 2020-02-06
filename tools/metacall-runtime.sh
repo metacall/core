@@ -60,7 +60,23 @@ sub_python(){
 sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
-	sub_apt_install_hold ruby2.5 libruby2.5
+
+	# TODO: Remove this when using ruby2.5 (not available yet because it fails on loading a script with a malloc error)
+	$SUDO_CMD mv /etc/apt/sources.list /etc/apt/sources.list.backup
+	$SUDO_CMD sh -c "echo \"deb http://ftp.debian.org/debian/ stretch main\" > /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://ftp.debian.org/debian/ stretch main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb http://security.debian.org/debian-security stretch/updates main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://security.debian.org/debian-security stretch/updates main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb http://ftp.debian.org/debian/ stretch-updates main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://ftp.debian.org/debian/ stretch-updates main\" >> /etc/apt/sources.list"
+
+	$SUDO_CMD apt-get update
+	# sub_apt_install_hold ruby2.5 libruby2.5
+	$SUDO_CMD apt-get -y install --no-install-recommends --allow-remove-essential libncurses5 libtinfo5 ruby2.3 libruby2.3
+	$SUDO_CMD apt-mark hold libncurses5 libtinfo5 ruby2.3 libruby2.3
+
+	# TODO: Remove this when using ruby2.5 (not available yet because it fails on loading a script with a malloc error)
+	$SUDO_CMD mv /etc/apt/sources.list.backup /etc/apt/sources.list
 }
 
 # NetCore
