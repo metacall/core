@@ -72,8 +72,8 @@ sub_ruby(){
 
 	$SUDO_CMD apt-get update
 	# sub_apt_install_hold ruby2.5 libruby2.5
-	$SUDO_CMD apt-get -y install --no-install-recommends --allow-remove-essential libncurses5 libtinfo5 ruby2.3 libruby2.3
-	$SUDO_CMD apt-mark hold libncurses5 libtinfo5 ruby2.3 libruby2.3
+	$SUDO_CMD apt-get -y install --no-install-recommends --allow-remove-essential --allow-downgrades libssl1.1 libffi6 zlib1g libyaml-0-2 libgmp10=2:6.1.2+dfsg-1 libreadline7 libxml2 libncurses5 libtinfo5 ruby2.3 libruby2.3
+	$SUDO_CMD apt-mark hold libssl1.1 libffi6 zlib1g libyaml-0-2 libgmp10 libreadline7 libxml2 libncurses5 libtinfo5 ruby2.3 libruby2.3
 
 	# TODO: Remove this when using ruby2.5 (not available yet because it fails on loading a script with a malloc error)
 	$SUDO_CMD mv /etc/apt/sources.list.backup /etc/apt/sources.list
