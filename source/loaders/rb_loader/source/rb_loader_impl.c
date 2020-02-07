@@ -58,6 +58,13 @@ typedef struct loader_impl_rb_function_type
 
 } * loader_impl_rb_function;
 
+typedef struct loader_impl_rb_module_eval_protect_type
+{
+	int argc;
+	VALUE * argv;
+	VALUE module;
+} * loader_impl_rb_module_eval_protect;
+
 int function_rb_interface_create(function func, function_impl impl)
 {
 	signature s = function_signature(func);
@@ -515,17 +522,31 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	return Qnil;
 }
 
+VALUE rb_loader_impl_module_eval_protect(VALUE args)
+{
+	/* TODO: Do this properly */
+	loader_impl_rb_module_eval_protect protect = (loader_impl_rb_module_eval_protect)args;
+
+	return rb_mod_module_eval(protect->argc, protect->argv, protect->module);
+}
+
 VALUE rb_loader_impl_module_eval(VALUE module, VALUE module_data)
 {
 	const int argc = 1;
 	VALUE result;
-	VALUE args[argc];
+	VALUE argv[argc];
+	struct loader_impl_rb_module_eval_protect_type protect;
+	int state;
 
-	args[0] = module_data;
+	argv[0] = module_data;
 
-	result = rb_mod_module_eval(1, args, module);
+	protect.argc = argc;
+	protect.argv = argv;
+	protect.module = module;
 
-	if (result == Qnil)
+	result = rb_protect(rb_loader_impl_module_eval_protect, (VALUE)&protect, &state);
+
+	if (state || result == Qnil)
 	{
 		VALUE exception;
 
@@ -544,11 +565,13 @@ VALUE rb_loader_impl_module_eval(VALUE module, VALUE module_data)
 			backtrace = rb_funcall(exception, rb_intern("backtrace"), 0);
 
 			rb_io_puts(1, &backtrace, rb_stderr);
-
-			rb_raise(rb_eLoadError, "Invalid module evaluation");
-
-			return Qnil;
 		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby module backtrace not available");
+		}
+
+		return Qnil;
 	}
 
 	return result;
@@ -604,12 +627,6 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 					return rb_module;
 				}
 			}
-			else
-			{
-				VALUE exception = rb_errinfo();
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader error (%s)", RSTRING_PTR(exception));
-			}
 		}
 	}
 
@@ -654,11 +671,23 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		if (rb_module == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby module loading %s", paths[iterator]);
-
-			continue;
 		}
+		else
+		{
+			vector_push_back(handle->modules, &rb_module);
+		}
+	}
 
-		vector_push_back(handle->modules, &rb_module);
+	// Do not load the handle in case there isn't modules
+	if (vector_size(handle->modules) == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "No module could be loaded");
+
+		vector_destroy(handle->modules);
+
+		free(handle);
+
+		return NULL;
 	}
 
 	return (loader_handle)handle;
@@ -716,12 +745,6 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 
 					return rb_module;
 				}
-			}
-			else
-			{
-				VALUE exception = rb_errinfo();
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader error (%s)", RSTRING_PTR(exception));
 			}
 		}
 	}
