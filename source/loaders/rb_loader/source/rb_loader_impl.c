@@ -444,6 +444,21 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 			return NULL;
 		}
 
+		/* Gem add home folder if any */
+		/*
+		{
+			const char * gem_home_env = getenv("GEM_HOME");
+
+			if (gem_home_env != NULL)
+			{
+				if (rb_loader_impl_execution_path(impl, gem_home_env) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_WARNING, "Ruby GEM_HOME could not be added to execution path list");
+				}
+			}
+		}
+		*/
+
 		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 	}
 
