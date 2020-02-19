@@ -1249,98 +1249,100 @@ void node_loader_impl_async_func_await(uv_async_t * async)
 		{
 			napi_throw_type_error(env, nullptr, "Invalid function test in function table object");
 		}
-	}
-
-	/* Allocate trampoline object */
-	loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(malloc(sizeof(struct loader_impl_async_func_await_trampoline_type)));
-
-	if (trampoline != NULL)
-	{
-		napi_ref trampoline_ref;
-
-		signature s;
-
-		size_t args_size;
-
-		value * args;
-
-		loader_impl_node_function node_func;
-
-		size_t args_count;
-
-		/* Get function reference */
-		status = napi_get_reference_value(env, async_data->node_func->func_ref, &argv[0]);
-
-		node_loader_impl_exception(env, status);
-
-		/* Create array for arguments */
-		status = napi_create_array(env, &argv[1]);
-
-		node_loader_impl_exception(env, status);
-
-		/* Get push property from array */
-		napi_value push_func;
-
-		status = napi_get_named_property(env, argv[1], "push", &push_func);
-
-		node_loader_impl_exception(env, status);
-
-		/* Get function data */
-		s = function_signature(async_data->func);
-
-		args_size = signature_count(s);
-
-		args = static_cast<value *>(async_data->args);
-
-		node_func = async_data->node_func;
-
-		/* Build parameters */
-		for (args_count = 0; args_count < args_size; ++args_count)
+		else
 		{
-			/* Define parameter */
-			node_func->argv[args_count] = node_loader_impl_value_to_napi(async_data->node_impl, env, args[args_count]);
+			/* Allocate trampoline object */
+			loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(malloc(sizeof(struct loader_impl_async_func_await_trampoline_type)));
 
-			/* Push parameter to the array */
-			status = napi_call_function(env, argv[1], push_func, 1, &node_func->argv[args_count], NULL);
+			if (trampoline != NULL)
+			{
+				napi_ref trampoline_ref;
 
-			node_loader_impl_exception(env, status);
+				signature s;
+
+				size_t args_size;
+
+				value * args;
+
+				loader_impl_node_function node_func;
+
+				size_t args_count;
+
+				/* Get function reference */
+				status = napi_get_reference_value(env, async_data->node_func->func_ref, &argv[0]);
+
+				node_loader_impl_exception(env, status);
+
+				/* Create array for arguments */
+				status = napi_create_array(env, &argv[1]);
+
+				node_loader_impl_exception(env, status);
+
+				/* Get push property from array */
+				napi_value push_func;
+
+				status = napi_get_named_property(env, argv[1], "push", &push_func);
+
+				node_loader_impl_exception(env, status);
+
+				/* Get function data */
+				s = function_signature(async_data->func);
+
+				args_size = signature_count(s);
+
+				args = static_cast<value *>(async_data->args);
+
+				node_func = async_data->node_func;
+
+				/* Build parameters */
+				for (args_count = 0; args_count < args_size; ++args_count)
+				{
+					/* Define parameter */
+					node_func->argv[args_count] = node_loader_impl_value_to_napi(async_data->node_impl, env, args[args_count]);
+
+					/* Push parameter to the array */
+					status = napi_call_function(env, argv[1], push_func, 1, &node_func->argv[args_count], NULL);
+
+					node_loader_impl_exception(env, status);
+				}
+
+				/* Set trampoline object values */
+				trampoline->node_loader = async_data->node_impl;
+				trampoline->resolve_trampoline = &node_loader_impl_async_func_resolve;
+				trampoline->reject_trampoline = &node_loader_impl_async_func_reject;
+				trampoline->resolve_callback = async_data->resolve_callback;
+				trampoline->reject_callback = async_data->reject_callback;
+				trampoline->context = async_data->context;
+
+				/* Set the C trampoline object as JS wrapped object */
+				status = napi_create_object(env, &argv[2]);
+
+				node_loader_impl_exception(env, status);
+
+				status = napi_wrap(env, argv[2], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, &trampoline_ref);
+
+				node_loader_impl_exception(env, status);
+
+				/* Call to function */
+				napi_value global, await_return;
+
+				status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
+
+				node_loader_impl_exception(env, status);
+
+				status = napi_call_function(env, global, function_await, 3, argv, &await_return);
+
+				node_loader_impl_exception(env, status);
+
+				/* Delete references references to wrapped objects */
+				status = napi_delete_reference(env, trampoline_ref);
+
+				node_loader_impl_exception(env, status);
+
+				/* Proccess the await return */
+				async_data->ret = node_loader_impl_napi_to_value(async_data->node_impl, env, await_return);
+			}
 		}
-
-		/* Set trampoline object values */
-		trampoline->node_loader = async_data->node_impl;
-		trampoline->resolve_trampoline = &node_loader_impl_async_func_resolve;
-		trampoline->reject_trampoline = &node_loader_impl_async_func_reject;
-		trampoline->resolve_callback = async_data->resolve_callback;
-		trampoline->reject_callback = async_data->reject_callback;
-		trampoline->context = async_data->context;
-
-		/* Set the C trampoline object as JS wrapped object */
-		status = napi_create_object(env, &argv[2]);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_wrap(env, argv[2], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, &trampoline_ref);
-
-		node_loader_impl_exception(env, status);
-
-		/* Call to function */
-		napi_value global, await_return;
-
-		status = napi_get_reference_value(env, async_data->node_impl->global_ref, &global);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_call_function(env, global, function_await, 3, argv, &await_return);
-
-		node_loader_impl_exception(env, status);
-
-		/* Delete references references to wrapped objects */
-		status = napi_delete_reference(env, trampoline_ref);
-
-		node_loader_impl_exception(env, status);
-
-		/* Proccess the await return */
-		async_data->ret = node_loader_impl_napi_to_value(async_data->node_impl, env, await_return);
 	}
 
 	/* Close scope */

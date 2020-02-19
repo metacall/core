@@ -453,7 +453,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	loader_naming_path context_path_str;
 
-	size_t context_path_size;
+	size_t context_path_size = 0;
 
 	size_t iterator, size;
 
