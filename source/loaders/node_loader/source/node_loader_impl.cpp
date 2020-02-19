@@ -1350,7 +1350,7 @@ void node_loader_impl_async_func_await(uv_async_t * async)
 
 	node_loader_impl_exception(env, status);
 
-	/* Signal function destroy condition */
+	/* Signal function await condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
@@ -1446,7 +1446,7 @@ void node_loader_impl_async_future_delete(uv_async_t * async)
 
 	node_loader_impl_exception(env, status);
 
-	/* Signal function destroy condition */
+	/* Signal future delete condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
 	uv_mutex_unlock(&async_data->node_impl->mutex);
