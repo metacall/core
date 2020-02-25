@@ -46,7 +46,6 @@ set(headers
 
 set(sources
 	${source_path}/cr_loader.c
-	${source_path}/cr_loader_impl.c
 )
 
 # Group source files

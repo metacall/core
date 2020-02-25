@@ -39,12 +39,12 @@ option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugi
 add_subdirectory(c_loader) # Foreign Function Interface library
 add_subdirectory(cr_loader) # WebAssembly Virtual Machine
 add_subdirectory(cs_loader) # CoreCLR 2.2.8 Runtime
+add_subdirectory(file_loader) # File System
 add_subdirectory(jsm_loader) # Mozilla's SpiderMonkey 4.8 JavaScript Engine
 add_subdirectory(js_loader) # Google's V8 5.1 JavaScript Engine
 add_subdirectory(node_loader) # NodeJS 10.16.3 JavaScript Runtime
 add_subdirectory(mock_loader) # Mock loader plugin without dependencies (core testing)
 add_subdirectory(py_loader) # Python 3.7 C API
 add_subdirectory(rb_loader) # Ruby 2.5 C API
-add_subdirectory(file_loader) # File System
 add_subdirectory(rpc_loader) # cURL Remote Procedure Call
 add_subdirectory(wasm_loader) # WebAssembly Virtual Machine
