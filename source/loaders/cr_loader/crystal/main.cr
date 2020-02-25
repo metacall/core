@@ -55,6 +55,10 @@ module Crystal
 	# same can be accomplished with `at_exit`. But in some cases
 	# redefinition of C's main is needed.
 	def self.main(&block)
+		# TODO: There is no GC.destroy method so we should implement a mechanism
+		# to reinitialize the GC. A way of doing it maybe calling GC.init only once (like a singleton)
+		# then using GC.collect and GC.disable when destroying, and next time initialize is called,
+		# use GC.enable instead of GC.init
 		GC.init
 
 		remember_blocking_state
