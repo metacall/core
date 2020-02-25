@@ -110,6 +110,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [PHP](https://php.net/)                                            | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       | php  |
 | [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go  |
 | [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
+| [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
 
 ## 3. Use Cases
