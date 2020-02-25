@@ -94,7 +94,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                   | **>= 8.11.1<sup>†</sup> <= 10.16.3** | node |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |             **5.1.117**              |  js  |
 | [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |    **>= 1.0.0-preview2 <= 2.2.8**    |  cs  |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |          **>= 2.1 <= 2.3**           |  rb  |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |          **>= 2.1 <= 2.5**           |  rb  |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                        |              **0.1.0**               | file |
 | [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |              **0.1.0**               | mock |
 
@@ -112,6 +112,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
 | [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+| [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                          | rpc  |
 
 ## 3. Use Cases
 
