@@ -17,39 +17,71 @@
 #	limitations under the License.
 #
 
+require './metacall.cr'
 require './main.cr'
 
-fun cr_loader_impl_initialize(impl : Void*, config : Void*, host : Void*) : Void*
+struct CrystalLoaderImpl
+	# TODO
+end
+
+fun cr_loader_impl_initialize(impl : Void*, config : Void*, host : LibMetaCall::loader_host*) : Void*
 	# TODO: Review this, check NodeJS implementation for obtaining process name
 	crystal_library_init(1, 'metacall')
 
-	return nil
+	LibMetaCall.log_copy(host.log)
+
+	cr_impl = CrystalLoaderImpl.new
+
+	# TODO: Initialize cr_impl properly
+
+	return Box.box(cr_impl)
 end
 
 fun cr_loader_impl_execution_path(impl : Void*, path : LibC::Char*) : LibC::Int
+	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
+
 	return 0
 end
 
 fun cr_loader_impl_load_from_file(impl : Void*, paths : LibC::Char**, size : LibC::SizeT) : Void*
+	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
+
 	return nil
 end
 
 fun cr_loader_impl_load_from_memory(impl : Void*, name : LibC::Char*, buffer : LibC::Char*, size : LibC::SizeT) : Void*
+	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
+
 	return nil
 end
 
 fun cr_loader_impl_load_from_package(impl : Void*, path : LibC::Char*) : Void*
+	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
+
 	return nil
 end
 
 fun cr_loader_impl_clear(impl : Void*, handle : Void*) : LibC::Int
+	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
+
 	return 0
 end
 
 fun cr_loader_impl_discover(impl : Void*, handle : Void*, ctx : Void*) : LibC::Int
+	cr_impl = Box(CrystalLoaderImpl).unbox(LibMetaCall.loader_impl_get(impl))
+
 	return 0
 end
 
 fun cr_loader_impl_destroy(impl : Void*) : LibC::Int
+	ptr = LibMetaCall.loader_impl_get(impl)
+	cr_impl = Box(CrystalLoaderImpl).unbox(ptr)
+
+	# TODO: Do destruction of cr_impl
+
+	GC.free(ptr)
+
+	# TODO: crystal_library_destroy
+
 	return 0
 end
