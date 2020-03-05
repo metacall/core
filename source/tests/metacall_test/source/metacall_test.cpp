@@ -101,7 +101,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		int result = 0;
 
-		metacall_register("c_print", c_function, METACALL_INT, 1, METACALL_STRING);
+		ASSERT_EQ((int) 0, (int) metacall_register("c_print", c_function, METACALL_INT, 1, METACALL_STRING));
 
 		ret = metacall("c_print", "Hello native function!");
 
