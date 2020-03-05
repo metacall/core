@@ -185,7 +185,7 @@ int function_py_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-type_id py_loader_impl_get_return_type(PyObject * result)
+type_id py_loader_impl_capi_to_value_type(PyObject * result)
 {
 	if (PyBool_Check(result))
 	{
@@ -241,7 +241,7 @@ type_id py_loader_impl_get_return_type(PyObject * result)
 	return TYPE_INVALID;
 }
 
-value py_loader_impl_return(PyObject * result, type_id id)
+value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 {
 	value v = NULL;
 
@@ -337,7 +337,7 @@ value py_loader_impl_return(PyObject * result, type_id id)
 			PyObject * element = PyList_GetItem(result, iterator);
 
 			/* TODO: Review recursion overflow */
-			array_value[iterator] = py_loader_impl_return(element, py_loader_impl_get_return_type(element));
+			array_value[iterator] = py_loader_impl_capi_to_value(element, py_loader_impl_capi_to_value_type(element));
 		}
 	}
 	else if (id == TYPE_MAP)
@@ -415,7 +415,7 @@ value py_loader_impl_return(PyObject * result, type_id id)
 				array_value[0] = value_create_string(key_str, (size_t)key_length);
 
 				/* TODO: Review recursion overflow */
-				array_value[1] = py_loader_impl_return(element, py_loader_impl_get_return_type(element));
+				array_value[1] = py_loader_impl_capi_to_value(element, py_loader_impl_capi_to_value_type(element));
 
 				++key_iterator;
 			}
@@ -626,7 +626,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		if (ret_type == NULL)
 		{
-			id = py_loader_impl_get_return_type(result);
+			id = py_loader_impl_capi_to_value_type(result);
 		}
 		else
 		{
@@ -635,7 +635,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
 
-		v = py_loader_impl_return(result, id);
+		v = py_loader_impl_capi_to_value(result, id);
 
 		Py_DECREF(result);
 
@@ -720,15 +720,64 @@ function_interface function_py_singleton(void)
 
 static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 {
-	loader_impl_py_function_type_invoke_state invoke_state;
+	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(self);
 
-	invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(self);
+	signature s = function_signature(invoke_state->callback);
 
-	printf("----------------------------------- CALLBACK ---------------------------------------\n");
-	printf("----------------------------------- %p ---------------------------------------\n", invoke_state->py_impl);
-	printf("----------------------------------- %p ---------------------------------------\n", invoke_state->callback);
+	const size_t args_size = signature_count(s);
 
-	Py_RETURN_NONE;
+	size_t args_count;
+
+	/* type ret_type = signature_get_return(s); */
+
+	Py_ssize_t callee_args_size = PyTuple_Size(args);
+
+	const size_t min_args_size = args_size < (size_t)callee_args_size ? args_size : (size_t)callee_args_size;
+
+	void ** value_args;
+
+	value ret;
+
+	if (args_size != (size_t)callee_args_size)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %ul != %ul", args_size, callee_args_size);
+	}
+
+	value_args = malloc(sizeof(void *) * min_args_size);
+
+	if (value_args == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid allocation of arguments for callback");
+
+		return Py_None;
+	}
+
+	/* Generate metacall values from python values */
+	for (args_count = 0; args_count < min_args_size; ++args_count)
+	{
+		PyObject * arg = PyTuple_GetItem(args, (Py_ssize_t)args_count);
+
+		type_id id = py_loader_impl_capi_to_value_type(arg);
+
+		value_args[args_count] = py_loader_impl_capi_to_value(arg, id);
+	}
+
+	/* Execute the callback */
+	ret = (value)function_call(invoke_state->callback, value_args);
+
+	free(value_args);
+
+	/* Transform the return value into a python value */
+	if (ret != NULL)
+	{
+		PyObject * py_ret = py_loader_impl_value_to_capi(invoke_state->py_impl, value_type_id(ret), ret);
+
+		value_type_destroy(ret);
+
+		return py_ret;
+	}
+
+	return Py_None;
 }
 
 PyObject * py_loader_impl_get_builtin(loader_impl_py py_impl, const char * builtin_name)
@@ -1659,8 +1708,8 @@ int py_loader_impl_destroy(loader_impl impl)
 		}
 		#endif
 
-		Py_DECREF(py_impl->function_type_invoke_mod);
-		Py_DECREF(py_impl->function_type_invoke_func);
+		Py_XDECREF(py_impl->function_type_invoke_mod);
+		Py_XDECREF(py_impl->function_type_invoke_func);
 
 		if (Py_IsInitialized() != 0)
 		{

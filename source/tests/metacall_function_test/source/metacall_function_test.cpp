@@ -30,7 +30,7 @@ void * c_callback(void * args[])
 
 	printf("Callback without args executed\n");
 
-	return metacall_value_create_long(34L);
+	return metacall_value_create_long(32L);
 }
 
 void * c_callback_with_args(void * args[])
