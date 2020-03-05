@@ -22,7 +22,7 @@
 
 const assert = require('assert');
 
-const { metacall, metacall_load_from_file, metacall_inspect, metacall_logs } = require('../index.js');
+const { metacall, metacall_load_from_file, metacall_handle, metacall_inspect, metacall_logs } = require('../index.js');
 
 describe('metacall', () => {
 	describe('require', () => {
@@ -41,14 +41,46 @@ describe('metacall', () => {
 	});
 
 	describe('load', () => {
-		it('metacall_load_from_file (mock)', () => {
-			assert.strictEqual(require('asd.mock'), undefined); /* TODO: Do not return undefined */
-		});
 		it('metacall_load_from_file (py)', () => {
-			assert.strictEqual(require('example.py'), undefined); /* TODO: Do not return undefined */
+			assert.strictEqual(metacall_load_from_file('py', [ 'helloworld.py' ] ), undefined);
+
+			const script = metacall_handle('py', 'helloworld');
+			assert.notStrictEqual(script, undefined);
+			assert.strictEqual(script.name, 'helloworld');
 		});
 		it('metacall_load_from_file (rb)', () => {
-			assert.strictEqual(require('second.rb'), undefined); /* TODO: Do not return undefined */
+			assert.strictEqual(metacall_load_from_file('rb', [ 'ducktype.rb' ]), undefined);
+
+			const script = metacall_handle('rb', 'ducktype');
+			assert.notStrictEqual(script, undefined);
+			assert.strictEqual(script.name, 'ducktype');
+		});
+		it('require (mock)', () => {
+			const asd = require('asd.mock');
+			assert.notStrictEqual(asd, undefined);
+			assert.strictEqual(asd.my_empty_func(), 1234);
+			assert.strictEqual(asd.my_empty_func_str(), 'Hello World\u0000');
+			assert.strictEqual(asd.my_empty_func_int(), 1234);
+			assert.strictEqual(asd.new_args('a'), 'Hello World\u0000');
+			assert.strictEqual(asd.two_str('1', '2'), 'Hello World\u0000');
+			assert.strictEqual(asd.two_doubles(4.4, 5.5), 3.1416);
+			assert.strictEqual(asd.three_str('a', 'b', 'c'), 'Hello World\u0000');
+			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
+		});
+		it('require (py)', () => {
+			const example = require('example.py');
+			assert.notStrictEqual(example, undefined);
+			assert.strictEqual(example.multiply(2, 2), 4);
+			assert.strictEqual(example.divide(4.0, 2.0), 2.0);
+			assert.strictEqual(example.sum(2, 2), 4);
+			assert.strictEqual(example.strcat('2', '2'), '22');
+			assert.deepEqual(example.return_array(), [1, 2, 3]);
+			assert.deepEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
+		});
+		it('require (rb)', () => {
+			const second = require('second.rb');
+			assert.notStrictEqual(second, undefined);
+			assert.strictEqual(second.get_second(3, 4), 4);
 		});
 	});
 

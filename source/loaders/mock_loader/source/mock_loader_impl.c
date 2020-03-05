@@ -239,11 +239,12 @@ void function_mock_interface_destroy(function func, function_impl impl)
 function_interface function_mock_singleton(void)
 {
 	static struct function_interface_type mock_interface =
-		{
-			&function_mock_interface_create,
-			&function_mock_interface_invoke,
-			&function_mock_interface_await,
-			&function_mock_interface_destroy};
+	{
+		&function_mock_interface_create,
+		&function_mock_interface_invoke,
+		&function_mock_interface_await,
+		&function_mock_interface_destroy
+	};
 
 	return &mock_interface;
 }

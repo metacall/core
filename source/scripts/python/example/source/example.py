@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 def dont_load_this_function(left, right):
+	# This function will be loaded anyway because ducktype is supported now
 	result = left * right;
 	print(left, ' * ', right, ' = ', result);
 	return result;
