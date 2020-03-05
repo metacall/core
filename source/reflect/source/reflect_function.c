@@ -32,6 +32,7 @@ struct function_type
 	signature s;
 	function_impl impl;
 	function_interface interface;
+	size_t ref_count;
 };
 
 static value function_metadata_name(function func);
@@ -40,58 +41,101 @@ static value function_metadata_signature(function func);
 
 function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
 {
-	if (name != NULL)
+	function func;
+	size_t func_name_size;
+
+	if (name == NULL)
 	{
-		function func = malloc(sizeof(struct function_type));
+		return NULL;
+	}
 
-		if (func != NULL)
+	func = malloc(sizeof(struct function_type));
+
+	if (func == NULL)
+	{
+		return NULL;
+	}
+
+	func_name_size = strlen(name) + 1;
+
+	func->name = malloc(sizeof(char) * func_name_size);
+
+	if (func->name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function name allocation <%s>", name);
+
+		free(func);
+
+		return NULL;
+	}
+
+	memcpy(func->name, name, func_name_size);
+
+	func->impl = impl;
+	func->ref_count = 0;
+
+	func->s = signature_create(args_count);
+
+	if (func->s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function signature allocation");
+
+		free(func->name);
+		free(func);
+
+		return NULL;
+	}
+
+	func->interface = singleton ? singleton() : NULL;
+
+	if (func->interface != NULL && func->interface->create != NULL)
+	{
+		if (func->interface->create(func, impl) != 0)
 		{
-			size_t func_name_size = strlen(name) + 1;
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid function (%s) create callback <%p>", func->name, func->interface->create);
 
-			func->name = malloc(sizeof(char) * func_name_size);
-
-			if (func->name == NULL)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid function name allocation <%s>", name);
-
-				free(func);
-
-				return NULL;
-			}
-
-			memcpy(func->name, name, func_name_size);
-
-			func->impl = impl;
-
-			func->s = signature_create(args_count);
-
-			if (func->s != NULL)
-			{
-				if (singleton)
-				{
-					func->interface = singleton();
-				}
-				else
-				{
-					func->interface = NULL;
-				}
-
-				if (func->interface != NULL && func->interface->create != NULL)
-				{
-					if (func->interface->create(func, impl) != 0)
-					{
-						log_write("metacall", LOG_LEVEL_ERROR, "Invalid function (%s) create callback <%p>", func->name, func->interface->create);
-					}
-				}
-
-				return func;
-			}
-
+			free(func->name);
 			free(func);
+
+			return NULL;
 		}
 	}
 
-	return NULL;
+	return func;
+}
+
+int function_increment_reference(function func)
+{
+	if (func == NULL)
+	{
+		return 1;
+	}
+
+	if (func->ref_count == SIZE_MAX)
+	{
+		return 1;
+	}
+
+	++func->ref_count;
+
+	return 0;
+}
+
+int function_decrement_reference(function func)
+{
+	if (func == NULL)
+	{
+		return 1;
+	}
+
+	if (func->ref_count == 0)
+	{
+		return 1;
+	}
+
+	--func->ref_count;
+
+	return 0;
 }
 
 const char * function_name(function func)
@@ -263,7 +307,7 @@ function_return function_await(function func, function_args args, function_resol
 
 void function_destroy(function func)
 {
-	if (func != NULL)
+	if (func != NULL && func->ref_count == 0)
 	{
 		if (func->interface != NULL && func->interface->destroy != NULL)
 		{

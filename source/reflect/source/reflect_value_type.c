@@ -470,13 +470,12 @@ void value_type_destroy(value v)
 
 			future_destroy(f);
 		}
-		/* TODO: Functions are destroyed by the handle, so avoid destroying them or implement ref count mechanism */
-		/*else if (type_id_function(id) == 0)
+		else if (type_id_function(id) == 0)
 		{
 			function f = value_to_function(v);
 
 			function_destroy(f);
-		}*/
+		}
 
 		if (type_id_invalid(id) != 0)
 		{

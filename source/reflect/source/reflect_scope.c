@@ -178,7 +178,22 @@ int scope_define(scope sp, const char * key, scope_object obj)
 	if (sp != NULL && key != NULL && obj != NULL)
 	{
 		/* TODO: Support for other scope objects (e.g: class) */
-		return set_insert(sp->objects, (set_key)key, (set_value)obj);
+		if (set_insert(sp->objects, (set_key)key, (set_value)obj) == 0)
+		{
+			/* TODO: Support for polyphormism */
+			function func = (function)obj;
+
+			if (function_increment_reference(func) != 0)
+			{
+				set_remove(sp->objects, (set_key)key);
+
+				/* TODO: Log about the error */
+
+				return 1;
+			}
+
+			return 0;
+		}
 	}
 
 	return 1;
@@ -533,6 +548,11 @@ int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_a
 		/* TODO: Support for polyphormism */
 
 		function func = (function)val;
+
+		if (function_decrement_reference(func) != 0)
+		{
+			/* TODO: Log about the error, possible memory leak */
+		}
 
 		function_destroy(func);
 

@@ -205,6 +205,8 @@ function_interface loader_register_interface_proxy(void)
 
 int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[])
 {
+	static const char register_holder_str[] = "__metacall_register__";
+
 	function f = NULL;
 
 	loader_impl loader = loader_get_impl(LOADER_HOST_PROXY_NAME);
@@ -217,35 +219,34 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 
 	loader_host_invoke host_invoke = malloc(sizeof(struct loader_host_invoke_type));
 
+	signature s;
+
 	host_invoke->invoke = invoke;
 
 	f = function_create(name, arg_size, host_invoke, singleton);
 
-	if (f != NULL)
+	if (f == NULL)
 	{
-		/* TODO: Change this to the correct type system */
-		const char register_holder_str[] = "__metacall_register__";
-
-		signature s = function_signature(f);
-
-		if (arg_size > 0)
-		{
-			size_t iterator;
-
-			for (iterator = 0; iterator < arg_size; ++iterator)
-			{
-				signature_set(s, iterator, register_holder_str, type_create(args_type_id[iterator], register_holder_str, NULL, NULL));
-			}
-		}
-
-		signature_set_return(s, type_create(return_type, register_holder_str, NULL, NULL));
-
-		scope_define(sp, name, f);
-
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	s = function_signature(f);
+
+	if (arg_size > 0)
+	{
+		size_t iterator;
+
+		for (iterator = 0; iterator < arg_size; ++iterator)
+		{
+			signature_set(s, iterator, register_holder_str, type_create(args_type_id[iterator], register_holder_str, NULL, NULL));
+		}
+	}
+
+	signature_set_return(s, type_create(return_type, register_holder_str, NULL, NULL));
+
+	scope_define(sp, name, f);
+
+	return 0;
 }
 
 loader_impl loader_create_impl(const loader_naming_tag tag)
