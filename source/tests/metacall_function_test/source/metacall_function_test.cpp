@@ -111,7 +111,26 @@ TEST_F(metacall_function_test, DefaultConstructor)
 		metacall_value_destroy(function_with_args_args[1]);
 		metacall_value_destroy(function_with_args_args[2]);
 
-		/* TODO: Return */
+		void * function_ret_lambda_args[] =
+		{
+			metacall_value_create_long(5L)
+		};
+
+		ret = metacallv("function_ret_lambda", function_ret_lambda_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		void * f = metacall_value_to_function(ret);
+
+		void * cb_ret = metacallfv(f, function_ret_lambda_args);
+
+		EXPECT_EQ((long) metacall_value_to_long(cb_ret), (long) 25L);
+
+		metacall_value_destroy(cb_ret);
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(function_ret_lambda_args[0]);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 

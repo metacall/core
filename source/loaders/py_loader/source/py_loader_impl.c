@@ -80,6 +80,7 @@ typedef struct loader_impl_py_type
 
 typedef struct loader_impl_py_function_type_invoke_state_type
 {
+	loader_impl impl;
 	loader_impl_py py_impl;
 	function callback;
 
@@ -94,6 +95,12 @@ static void py_loader_impl_error_print(loader_impl_py py_impl);
 static void py_loader_impl_sys_path_print(PyObject * sys_path_list);
 
 static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args);
+
+static function_interface function_py_singleton(void);
+
+static int py_loader_impl_discover_func_args_count(PyObject * func);
+
+static int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f);
 
 static PyMethodDef py_loader_impl_function_type_invoke_defs[] =
 {
@@ -185,55 +192,59 @@ int function_py_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-type_id py_loader_impl_capi_to_value_type(PyObject * result)
+type_id py_loader_impl_capi_to_value_type(PyObject * obj)
 {
-	if (PyBool_Check(result))
+	if (PyBool_Check(obj))
 	{
 		return TYPE_BOOL;
 	}
 	#if PY_MAJOR_VERSION == 2
-		else if (PyInt_Check(result))
+		else if (PyInt_Check(obj))
 		{
 			return TYPE_INT;
 		}
 	#elif PY_MAJOR_VERSION == 3
-		else if (PyLong_Check(result))
+		else if (PyLong_Check(obj))
 		{
 			return TYPE_LONG;
 		}
 	#endif
-	else if (PyFloat_Check(result))
+	else if (PyFloat_Check(obj))
 	{
 		return TYPE_DOUBLE;
 	}
 	#if PY_MAJOR_VERSION == 2
-		else if (PyString_Check(result))
+		else if (PyString_Check(obj))
 		{
 			return TYPE_STRING;
 		}
 	#elif PY_MAJOR_VERSION == 3
-		else if (PyUnicode_Check(result))
+		else if (PyUnicode_Check(obj))
 		{
 			return TYPE_STRING;
 		}
 	#endif
-	else if (PyBytes_Check(result))
+	else if (PyBytes_Check(obj))
 	{
 		return TYPE_BUFFER;
 	}
-	else if (PyList_Check(result))
+	else if (PyList_Check(obj))
 	{
 		return TYPE_ARRAY;
 	}
-	else if (PyDict_Check(result))
+	else if (PyDict_Check(obj))
 	{
 		return TYPE_MAP;
 	}
-	else if (PyCapsule_CheckExact(result))
+	else if (PyCapsule_CheckExact(obj))
 	{
 		return TYPE_PTR;
 	}
-	else if (result == Py_None)
+	else if (PyFunction_Check(obj))
+	{
+		return TYPE_FUNCTION;
+	}
+	else if (obj == Py_None)
 	{
 		return TYPE_NULL;
 	}
@@ -241,22 +252,22 @@ type_id py_loader_impl_capi_to_value_type(PyObject * result)
 	return TYPE_INVALID;
 }
 
-value py_loader_impl_capi_to_value(PyObject * result, type_id id)
+value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 {
 	value v = NULL;
 
 	if (id == TYPE_BOOL)
 	{
-		boolean b = (PyObject_IsTrue(result) == 1) ? 1 : 0;
+		boolean b = (PyObject_IsTrue(obj) == 1) ? 1 : 0;
 
 		v = value_create_bool(b);
 	}
 	else if (id == TYPE_INT)
 	{
 		#if PY_MAJOR_VERSION == 2
-			long l = PyInt_AsLong(result);
+			long l = PyInt_AsLong(obj);
 		#elif PY_MAJOR_VERSION == 3
-			long l = PyLong_AsLong(result);
+			long l = PyLong_AsLong(obj);
 		#endif
 
 		/* TODO: Review overflow */
@@ -266,19 +277,19 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 	}
 	else if (id == TYPE_LONG)
 	{
-		long l = PyLong_AsLong(result);
+		long l = PyLong_AsLong(obj);
 
 		v = value_create_long(l);
 	}
 	else if (id == TYPE_FLOAT)
 	{
-		double d = PyFloat_AsDouble(result);
+		double d = PyFloat_AsDouble(obj);
 
 		v = value_create_float((float)d);
 	}
 	else if (id == TYPE_DOUBLE)
 	{
-		double d = PyFloat_AsDouble(result);
+		double d = PyFloat_AsDouble(obj);
 
 		v = value_create_double(d);
 	}
@@ -289,7 +300,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 		Py_ssize_t length = 0;
 
 		#if PY_MAJOR_VERSION == 2
-			if (PyString_AsStringAndSize(result, &str, &length) == -1)
+			if (PyString_AsStringAndSize(obj, &str, &length) == -1)
 			{
 				if (PyErr_Occurred() != NULL)
 				{
@@ -299,7 +310,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 				}
 			}
 		#elif PY_MAJOR_VERSION == 3
-			str = PyUnicode_AsUTF8AndSize(result, &length);
+			str = PyUnicode_AsUTF8AndSize(obj, &length);
 		#endif
 
 		v = value_create_string(str, (size_t)length);
@@ -315,7 +326,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 			/* TODO */
 
 		#elif PY_MAJOR_VERSION == 3
-			if (PyBytes_AsStringAndSize(result, &str, &length) != -1)
+			if (PyBytes_AsStringAndSize(obj, &str, &length) != -1)
 			{
 				v = value_create_buffer((const void *)str, (size_t)length + 1);
 			}
@@ -326,7 +337,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 		Py_ssize_t iterator, length = 0;
 		value * array_value;
 
-		length = PyList_Size(result);
+		length = PyList_Size(obj);
 
 		v = value_create_array(NULL, (size_t)length);
 
@@ -334,10 +345,10 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 
 		for (iterator = 0; iterator < length; ++iterator)
 		{
-			PyObject * element = PyList_GetItem(result, iterator);
+			PyObject * element = PyList_GetItem(obj, iterator);
 
 			/* TODO: Review recursion overflow */
-			array_value[iterator] = py_loader_impl_capi_to_value(element, py_loader_impl_capi_to_value_type(element));
+			array_value[iterator] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
 		}
 	}
 	else if (id == TYPE_MAP)
@@ -346,7 +357,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 		value * map_value;
 		PyObject * keys;
 
-		keys = PyDict_Keys(result);
+		keys = PyDict_Keys(obj);
 		keys_size = PyList_Size(keys);
 
 		/* TODO: Allow different key types in the future */
@@ -406,7 +417,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 			/* Allow only string keys by the moment */
 			if (key_str != NULL)
 			{
-				element = PyDict_GetItem(result, key);
+				element = PyDict_GetItem(obj, key);
 
 				map_value[key_iterator] = value_create_array(NULL, 2);
 
@@ -415,7 +426,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 				array_value[0] = value_create_string(key_str, (size_t)key_length);
 
 				/* TODO: Review recursion overflow */
-				array_value[1] = py_loader_impl_capi_to_value(element, py_loader_impl_capi_to_value_type(element));
+				array_value[1] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
 
 				++key_iterator;
 			}
@@ -430,10 +441,50 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 			/* TODO */
 
 		#elif PY_MAJOR_VERSION == 3
-			ptr = PyCapsule_GetPointer(result, NULL);
+			ptr = PyCapsule_GetPointer(obj, NULL);
 
 			v = value_create_ptr(ptr);
 		#endif
+	}
+	else if (id == TYPE_FUNCTION)
+	{
+		int discover_args_count = py_loader_impl_discover_func_args_count(obj);
+
+		if (discover_args_count >= 0)
+		{
+			size_t args_count = (size_t)discover_args_count;
+
+			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+
+			function f = NULL;
+
+			if (py_func == NULL)
+			{
+				return NULL;
+			}
+
+			/* TODO: Why two refs? Understand what is happening */
+			Py_INCREF(obj);
+
+			Py_INCREF(obj);
+
+			py_func->func = obj;
+
+			py_func->impl = impl;
+
+			f = function_create(NULL, args_count, py_func, &function_py_singleton);
+
+			if (py_loader_impl_discover_func(impl, obj, f) != 0)
+			{
+				function_destroy(f);
+
+				return NULL;
+			}
+
+			return value_create_function(f);
+		}
+
+		return NULL;
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -448,7 +499,7 @@ value py_loader_impl_capi_to_value(PyObject * result, type_id id)
 	return v;
 }
 
-PyObject * py_loader_impl_value_to_capi(loader_impl_py py_impl, type_id id, value v)
+PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl, type_id id, value v)
 {
 	if (id == TYPE_BOOL)
 	{
@@ -524,7 +575,7 @@ PyObject * py_loader_impl_value_to_capi(loader_impl_py py_impl, type_id id, valu
 
 		for (iterator = 0; iterator < array_size; ++iterator)
 		{
-			PyObject * item = py_loader_impl_value_to_capi(py_impl, value_type_id((value)array_value[iterator]), (value)array_value[iterator]);
+			PyObject * item = py_loader_impl_value_to_capi(impl, py_impl, value_type_id((value)array_value[iterator]), (value)array_value[iterator]);
 
 			if (PyList_SetItem(list, iterator, item) != 0)
 			{
@@ -601,7 +652,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Type (%p): %d", (void *)t, id);
 
-		py_func->values[args_count] = py_loader_impl_value_to_capi(py_impl, id, args[args_count]);
+		py_func->values[args_count] = py_loader_impl_value_to_capi(impl, py_impl, id, args[args_count]);
 
 		if (py_func->values[args_count] != NULL)
 		{
@@ -635,7 +686,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Return type %p, %d", (void *)ret_type, id);
 
-		v = py_loader_impl_capi_to_value(result, id);
+		v = py_loader_impl_capi_to_value(py_func->impl, result, id);
 
 		Py_DECREF(result);
 
@@ -705,7 +756,7 @@ void function_py_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_py_singleton(void)
+function_interface function_py_singleton()
 {
 	static struct function_interface_type py_function_interface =
 	{
@@ -759,7 +810,7 @@ static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject 
 
 		type_id id = py_loader_impl_capi_to_value_type(arg);
 
-		value_args[args_count] = py_loader_impl_capi_to_value(arg, id);
+		value_args[args_count] = py_loader_impl_capi_to_value(invoke_state->impl, arg, id);
 	}
 
 	/* Execute the callback */
@@ -770,7 +821,7 @@ static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject 
 	/* Transform the return value into a python value */
 	if (ret != NULL)
 	{
-		PyObject * py_ret = py_loader_impl_value_to_capi(invoke_state->py_impl, value_type_id(ret), ret);
+		PyObject * py_ret = py_loader_impl_value_to_capi(invoke_state->impl, invoke_state->py_impl, value_type_id(ret), ret);
 
 		value_type_destroy(ret);
 
@@ -1088,6 +1139,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	/* Store python loader into the module state */
 	invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(py_impl->function_type_invoke_mod);
 
+	invoke_state->impl = impl;
 	invoke_state->py_impl = py_impl;
 	invoke_state->callback = NULL;
 

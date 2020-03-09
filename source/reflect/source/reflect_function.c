@@ -41,35 +41,34 @@ static value function_metadata_signature(function func);
 
 function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
 {
-	function func;
-	size_t func_name_size;
-
-	if (name == NULL)
-	{
-		return NULL;
-	}
-
-	func = malloc(sizeof(struct function_type));
+	function func = malloc(sizeof(struct function_type));
 
 	if (func == NULL)
 	{
 		return NULL;
 	}
 
-	func_name_size = strlen(name) + 1;
-
-	func->name = malloc(sizeof(char) * func_name_size);
-
-	if (func->name == NULL)
+	if (name != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function name allocation <%s>", name);
+		size_t func_name_size = strlen(name) + 1;
 
-		free(func);
+		func->name = malloc(sizeof(char) * func_name_size);
 
-		return NULL;
+		if (func->name == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid function name allocation <%s>", name);
+
+			free(func);
+
+			return NULL;
+		}
+
+		memcpy(func->name, name, func_name_size);
 	}
-
-	memcpy(func->name, name, func_name_size);
+	else
+	{
+		func->name = NULL;
+	}
 
 	func->impl = impl;
 	func->ref_count = 0;
@@ -281,7 +280,14 @@ function_return function_call(function func, function_args args)
 	{
 		if (func->interface != NULL && func->interface->invoke != NULL)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
+			if (func->name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Invoke annonymous function with args <%p>", (void *)args);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
+			}
 
 			return func->interface->invoke(func, func->impl, args);
 		}
@@ -316,7 +322,10 @@ void function_destroy(function func)
 
 		signature_destroy(func->s);
 
-		free(func->name);
+		if (func->name != NULL)
+		{
+			free(func->name);
+		}
 
 		free(func);
 	}
