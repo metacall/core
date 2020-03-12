@@ -316,7 +316,7 @@ inline void node_loader_impl_exception(napi_env env, napi_status status)
 
 			napi_is_exception_pending(env, &pending);
 
-			const char * message = (error_info->error_message == NULL) ? "Error message not available" : error_info->error_message;
+			const char * message = (error_info != NULL && error_info->error_message != NULL) ? error_info->error_message : "Error message not available";
 
 			/* TODO: Notify MetaCall error handling system when it is implemented */
 			/* ... */
@@ -2655,7 +2655,7 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 		napi_handle_scope handle_scope;
 
 		/* Create scope */
-		status = napi_open_handle_scope(node_impl->env, &handle_scope);
+		status = napi_open_handle_scope(env, &handle_scope);
 
 		node_loader_impl_exception(env, status);
 

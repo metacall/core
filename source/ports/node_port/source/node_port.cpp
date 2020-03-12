@@ -49,8 +49,8 @@ static void * metacall_node_callback(size_t argc, void * args[], void * data);
 typedef struct metacall_node_callback_closure_type
 {
 	napi_env env;
-	napi_value callback;
-	napi_value recv;
+	napi_ref callback_ref;
+	napi_ref recv_ref;
 
 } * metacall_node_callback_closure;
 
@@ -64,6 +64,7 @@ void * metacall_node_callback(size_t argc, void * args[], void * data)
 	napi_value ret;
 	napi_status status;
 	napi_value * argv = NULL;
+	napi_value callback, recv;
 
 	if (closure == NULL)
 	{
@@ -86,19 +87,36 @@ void * metacall_node_callback(size_t argc, void * args[], void * data)
 		}
 	}
 
-	status = napi_call_function(closure->env, closure->recv, closure->callback, argc, argv, &ret);
+	status = napi_get_reference_value(closure->env, closure->recv_ref, &recv);
 
 	metacall_node_exception(closure->env, status);
 
-	free(closure);
+	status = napi_get_reference_value(closure->env, closure->callback_ref, &callback);
+
+	metacall_node_exception(closure->env, status);
+
+	status = napi_call_function(closure->env, recv, callback, argc, argv, &ret);
+
+	metacall_node_exception(closure->env, status);
+
+	status = napi_delete_reference(closure->env, closure->callback_ref);
+
+	metacall_node_exception(closure->env, status);
 
 	if (argv != NULL)
 	{
 		free(argv);
 	}
 
-	/*return metacall_node_napi_to_value(closure->env, closure->recv, ret);*/
-	return NULL;
+	void * result = metacall_node_napi_to_value(closure->env, recv, ret);
+
+	status = napi_delete_reference(closure->env, closure->recv_ref);
+
+	metacall_node_exception(closure->env, status);
+
+	free(closure);
+
+	return result;
 }
 
 /* END-TODO */
@@ -119,7 +137,7 @@ inline void metacall_node_exception(napi_env env, napi_status status)
 
 			napi_is_exception_pending(env, &pending);
 
-			const char * message = (error_info->error_message == NULL) ? "Error message not available" : error_info->error_message;
+			const char * message = (error_info != NULL && error_info->error_message != NULL) ? error_info->error_message : "Error message not available";
 
 			/* TODO: Notify MetaCall error handling system when it is implemented */
 			/* ... */
@@ -411,8 +429,16 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 		uint32_t argc;
 
 		closure->env = env;
-		closure->callback = v;
-		closure->recv = recv;
+
+		// Create a reference to this
+		status = napi_create_reference(env, v, 1, &closure->recv_ref);
+
+		metacall_node_exception(env, status);
+
+		// Create a reference to the callback
+		status = napi_create_reference(env, v, 1, &closure->callback_ref);
+
+		metacall_node_exception(env, status);
 
 		// Get number of arguments to the callback (this workaround should be reviewed)
 		status = napi_get_named_property(env, v, "length", &length);
