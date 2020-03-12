@@ -161,9 +161,13 @@ function_return loader_register_invoke_proxy(function func, function_impl func_i
 {
 	loader_host_invoke host_invoke = (loader_host_invoke)func_impl;
 
-	(void)func;
+	signature s = function_signature(func);
 
-	return host_invoke->invoke(args);
+	const size_t args_size = signature_count(s);
+
+	void * data = function_closure(func);
+
+	return host_invoke->invoke(args_size, args, data);
 }
 
 function_return loader_register_await_proxy(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)

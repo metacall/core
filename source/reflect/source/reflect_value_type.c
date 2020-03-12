@@ -207,6 +207,13 @@ value value_create_function(function f)
 	return value_type_create(&f, sizeof(function), TYPE_FUNCTION);
 }
 
+value value_create_function_closure(function f, void * c)
+{
+	function_bind(f, c);
+
+	return value_type_create(&f, sizeof(function), TYPE_FUNCTION);
+}
+
 value value_create_null()
 {
 	return value_type_create(NULL, 0, TYPE_NULL);

@@ -28,9 +28,12 @@ class py_loader_port_test : public testing::Test
 public:
 };
 
-void * callback_host(void * args[])
+void * callback_host(size_t argc, void * args[], void * data)
 {
 	const char * str = metacall_value_cast_string(&args[0]);
+
+	(void)argc;
+	(void)data;
 
 	printf("Host callback: %s\n", str);
 

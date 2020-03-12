@@ -329,6 +329,21 @@ METACALL_API size_t metacall_function_size(void * func);
 
 /**
 *  @brief
+*    Resize the mumber of arguments accepted by function @func
+*
+*  @param[in] func
+*    Function reference
+*
+*  @param[in] count
+*    Number of arguments that the function will accept
+*
+*  @return
+*    Zero if function could be resized, different from zero otherwise
+*/
+METACALL_API int metacall_function_resize(void * func, size_t count);
+
+/**
+*  @brief
 *    Get the handle by @name
 *
 *  @param[in] tag
@@ -461,7 +476,7 @@ METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, v
 *    Name of the function
 *
 *  @param[in] invoke
-*    Pointer to function invoke interface
+*    Pointer to function invoke interface (argc, argv, data)
 *
 *  @param[in] return_type
 *    Type of return value
@@ -475,7 +490,7 @@ METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, v
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API int metacall_register(const char * name, void * (*invoke)(void *[]), enum metacall_value_id return_type, size_t size, ...);
+METACALL_API int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), enum metacall_value_id return_type, size_t size, ...);
 
 /**
 *  @brief

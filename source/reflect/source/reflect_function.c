@@ -33,6 +33,7 @@ struct function_type
 	function_impl impl;
 	function_interface interface;
 	size_t ref_count;
+	void * data;
 };
 
 static value function_metadata_name(function func);
@@ -72,6 +73,7 @@ function function_create(const char * name, size_t args_count, function_impl imp
 
 	func->impl = impl;
 	func->ref_count = 0;
+	func->data = NULL;
 
 	func->s = signature_create(args_count);
 
@@ -101,6 +103,27 @@ function function_create(const char * name, size_t args_count, function_impl imp
 	}
 
 	return func;
+}
+
+int function_resize(function func, size_t count)
+{
+	signature new_s;
+
+	if (func == NULL)
+	{
+		return 1;
+	}
+
+	new_s = signature_resize(func->s, count);
+
+	if (new_s == NULL)
+	{
+		return 1;
+	}
+
+	func->s = new_s;
+
+	return 0;
 }
 
 int function_increment_reference(function func)
@@ -135,6 +158,21 @@ int function_decrement_reference(function func)
 	--func->ref_count;
 
 	return 0;
+}
+
+void function_bind(function func, void * data)
+{
+	func->data = data;
+}
+
+void * function_closure(function func)
+{
+	if (func != NULL)
+	{
+		return func->data;
+	}
+
+	return NULL;
 }
 
 const char * function_name(function func)

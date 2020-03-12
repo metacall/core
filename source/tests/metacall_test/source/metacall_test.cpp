@@ -44,8 +44,11 @@
 #	include <unistd.h>
 #endif
 
-void * c_function(void * args[])
+void * c_function(size_t argc, void * args[], void * data)
 {
+	(void)argc;
+	(void)data;
+
 	printf("%s\n", (char*)args[0]);
 
 	return metacall_value_create_int(1);

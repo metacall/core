@@ -247,6 +247,21 @@ METACALL_API void * metacall_value_create_function(void * f);
 
 /**
 *  @brief
+*    Create a value from function @f binding a closure @c to it
+*
+*  @param[in] f
+*    Pointer to constant data will be copied into value
+*
+*  @param[in] c
+*    Pointer to closure that will be binded into function @f
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_function_closure(void * f, void * c);
+
+/**
+*  @brief
 *    Create a value of type null
 *
 *  @return

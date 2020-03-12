@@ -147,6 +147,11 @@ void * metacall_value_create_function(void * f)
 	return value_create_function(f);
 }
 
+void * metacall_value_create_function_closure(void * f, void * c)
+{
+	return value_create_function_closure(f, c);
+}
+
 void * metacall_value_create_null()
 {
 	return value_create_null();

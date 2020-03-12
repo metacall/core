@@ -791,7 +791,7 @@ static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject 
 
 	if (args_size != (size_t)callee_args_size)
 	{
-		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %ul != %ul", args_size, callee_args_size);
+		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %u != %u", args_size, callee_args_size);
 	}
 
 	value_args = malloc(sizeof(void *) * min_args_size);

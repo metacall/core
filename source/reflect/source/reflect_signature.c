@@ -120,6 +120,40 @@ signature signature_create(size_t count)
 	return NULL;
 }
 
+signature signature_resize(signature s, size_t count)
+{
+	signature new_s;
+	size_t index;
+
+	if (s == NULL)
+	{
+		return NULL;
+	}
+
+	new_s = realloc(s, sizeof(struct signature_type) + sizeof(struct signature_node_type) * count);
+
+	if (new_s == NULL)
+	{
+		return NULL;
+	}
+
+	for (index = new_s->count; index < count; ++index)
+	{
+		signature_node node = signature_at(new_s, index);
+
+		if (node != NULL)
+		{
+			node->index = REFLECT_SIGNATURE_INVALID_INDEX;
+			node->name = NULL;
+			node->t = NULL;
+		}
+	}
+
+	new_s->count = count;
+
+	return new_s;
+}
+
 size_t signature_count(signature s)
 {
 	if (s != NULL)

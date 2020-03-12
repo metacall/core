@@ -475,6 +475,18 @@ size_t metacall_function_size(void * func)
 	return 0;
 }
 
+int metacall_function_resize(void * func, size_t count)
+{
+	function f = (function)func;
+
+	if (f == NULL)
+	{
+		return 1;
+	}
+
+	return function_resize(f, count);
+}
+
 void * metacall_handle(const char * tag, const char * name)
 {
 	return (void *)loader_get_handle(tag, name);
@@ -962,7 +974,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 	return NULL;
 }
 
-int metacall_register(const char * name, void * (*invoke)(void * []), enum metacall_value_id return_type, size_t size, ...)
+int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), enum metacall_value_id return_type, size_t size, ...)
 {
 	type_id types[METACALL_ARGS_SIZE];
 

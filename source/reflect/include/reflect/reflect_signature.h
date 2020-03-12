@@ -36,6 +36,8 @@ typedef struct signature_type * signature;
 
 REFLECT_API signature signature_create(size_t count);
 
+REFLECT_API signature signature_resize(signature s, size_t count);
+
 REFLECT_API size_t signature_count(signature s);
 
 REFLECT_API size_t signature_get_index(signature s, const char * name);

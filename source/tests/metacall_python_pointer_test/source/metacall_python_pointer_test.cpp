@@ -34,10 +34,13 @@ struct test_type
 	unsigned char r, g, b;
 };
 
-void * native_set_value(void * args[])
+void * native_set_value(size_t argc, void * args[], void * data)
 {
 	struct test_type * t  = (struct test_type *)metacall_value_to_ptr(args[0]);
 	long value = metacall_value_to_long(args[1]);
+
+	(void)argc;
+	(void)data;
 
 	printf("Pointer: %p\n", (void *)t);
 	printf("Value: %ld\n", value);
@@ -51,7 +54,7 @@ void * native_set_value(void * args[])
 	return metacall_value_create_ptr((void *)t);
 }
 
-void * native_get_value(void * args[])
+void * native_get_value(size_t argc, void * args[], void * data)
 {
 	struct test_type * t  = (struct test_type *)metacall_value_to_ptr(args[0]);
 
@@ -63,6 +66,9 @@ void * native_get_value(void * args[])
 	};
 
 	const size_t size = sizeof(array) / sizeof(array[0]);
+
+	(void)argc;
+	(void)data;
 
 	printf("Array Size: %zu\n", size);
 

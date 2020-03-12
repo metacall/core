@@ -40,11 +40,68 @@
 
 static inline void metacall_node_exception(napi_env env, napi_status status);
 
-static void * metacall_node_napi_to_value(/* loader_impl_node node_impl,*/ napi_env env, napi_value v);
+static void * metacall_node_napi_to_value(/* loader_impl_node node_impl,*/ napi_env env, napi_value recv, napi_value v);
 
 static napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env env, void * arg);
 
+static void * metacall_node_callback(size_t argc, void * args[], void * data);
+
+typedef struct metacall_node_callback_closure_type
+{
+	napi_env env;
+	napi_value callback;
+	napi_value recv;
+
+} * metacall_node_callback_closure;
+
 /* -- Methods -- */
+
+/* BEGIN-TODO: (Maybe) Implement this in the loader, then remove it from here */
+
+void * metacall_node_callback(size_t argc, void * args[], void * data)
+{
+	metacall_node_callback_closure closure = static_cast<metacall_node_callback_closure>(data);
+	napi_value ret;
+	napi_status status;
+	napi_value * argv = NULL;
+
+	if (closure == NULL)
+	{
+		return NULL;
+	}
+
+	if (argc > 0)
+	{
+		argv = static_cast<napi_value *>(malloc(sizeof(napi_value *) * argc));
+
+		if (argv == NULL)
+		{
+			free(closure);
+			return NULL;
+		}
+
+		for (uint32_t args_count = 0; args_count < argc; ++args_count)
+		{
+			argv[args_count] = metacall_node_value_to_napi(closure->env, args[args_count]);
+		}
+	}
+
+	status = napi_call_function(closure->env, closure->recv, closure->callback, argc, argv, &ret);
+
+	metacall_node_exception(closure->env, status);
+
+	free(closure);
+
+	if (argv != NULL)
+	{
+		free(argv);
+	}
+
+	/*return metacall_node_napi_to_value(closure->env, closure->recv, ret);*/
+	return NULL;
+}
+
+/* END-TODO */
 
 /* BEGIN-TODO: Remove this, it is duplicated code copied from node loader */
 
@@ -132,7 +189,7 @@ inline void metacall_node_exception(napi_env env, napi_status status)
 	}
 }
 
-void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env, napi_value v)
+void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env, napi_value recv, napi_value v)
 {
 	void * ret = NULL;
 
@@ -220,7 +277,7 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 				metacall_node_exception(env, status);
 
 				/* TODO: Review recursion overflow */
-				array_value[iterator] = metacall_node_napi_to_value(/*node_impl,*/ env, element);
+				array_value[iterator] = metacall_node_napi_to_value(/*node_impl,*/ env, recv, element);
 			}
 		}
 		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
@@ -340,7 +397,7 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 					metacall_node_exception(env, status);
 
 					/* TODO: Review recursion overflow */
-					tupla[1] = metacall_node_napi_to_value(/* node_impl,*/ env, element);
+					tupla[1] = metacall_node_napi_to_value(/* node_impl,*/ env, recv, element);
 				}
 			}
 
@@ -348,7 +405,28 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 	}
 	else if (valuetype == napi_function)
 	{
-		/* TODO */
+		void * f = metacall_function("__metacall_node_callback__");
+		metacall_node_callback_closure closure = static_cast<metacall_node_callback_closure>(malloc(sizeof(struct metacall_node_callback_closure_type)));
+		napi_value length;
+		uint32_t argc;
+
+		closure->env = env;
+		closure->callback = v;
+		closure->recv = recv;
+
+		// Get number of arguments to the callback (this workaround should be reviewed)
+		status = napi_get_named_property(env, v, "length", &length);
+
+		metacall_node_exception(env, status);
+
+		status = napi_get_value_uint32(env, length, &argc);
+
+		metacall_node_exception(env, status);
+
+		// Workaround for accepting variable arguments
+		metacall_function_resize(f, (size_t)argc);
+
+		return metacall_value_create_function_closure(f, (void *)closure);
 	}
 	else if (valuetype == napi_external)
 	{
@@ -503,6 +581,18 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 	{
 		/* TODO: Implement promise properly for await */
 	}
+	else if (id == METACALL_FUNCTION)
+	{
+		/* TODO: Implement function to pass callbacks through the callback again */
+		/*
+		void * f = metacall_value_to_function(arg_value);
+
+		// TODO:
+		status = napi_create_double(env, double_value, &v);
+
+		metacall_node_exception(env, status);
+		*/
+	}
 	else
 	{
 		status = napi_get_undefined(env, &v);
@@ -519,22 +609,37 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 napi_value metacall_node_call(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
+
 	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
+
 	napi_value argv[argc];
-	void *metacallArgs[argc - 1];
-	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
-	char functionName[FUNCTION_NAME_LENGTH];
-	size_t writeNumber;
-	napi_get_value_string_utf8(env, argv[0], functionName, FUNCTION_NAME_LENGTH, &writeNumber);
+	void * args[argc - 1];
+	napi_value recv;
+
+	napi_get_cb_info(env, info, &argc, argv, &recv, NULL);
+
+	char name[FUNCTION_NAME_LENGTH];
+	size_t name_length;
+
+	napi_get_value_string_utf8(env, argv[0], name, FUNCTION_NAME_LENGTH, &name_length);
+
 	for (size_t i = 1; i < argc; i++)
 	{
-		metacallArgs[i - 1] = metacall_node_napi_to_value(env, argv[i]);
+		args[i - 1] = metacall_node_napi_to_value(env, recv, argv[i]);
 	}
 
-	// Phew!!!.... after we are done converting JS types to Metacall Type into a single Array Above
-	void * ptr = metacallv(functionName, metacallArgs);
+	void * ret = metacallv(name, args);
 
-	return metacall_node_value_to_napi(env, ptr);
+	for (size_t args_count = 0; args_count < argc - 1; ++args_count)
+	{
+		metacall_value_destroy(args[args_count]);
+	}
+
+	napi_value result = metacall_node_value_to_napi(env, ret);
+
+	metacall_value_destroy(ret);
+
+	return result;
 }
 
 // this function is the handler of the "metacall_load_from_file"
@@ -728,6 +833,14 @@ napi_value metacall_node_initialize(napi_env env, napi_value exports)
 	{
 		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
 		napi_throw_error(env, NULL, "MetaCall failed to initialize");
+
+		return NULL;
+	}
+
+	if (metacall_register("__metacall_node_callback__", metacall_node_callback, METACALL_INVALID, 0) != 0)
+	{
+		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
+		napi_throw_error(env, NULL, "MetaCall failed to initialize callback support");
 
 		return NULL;
 	}

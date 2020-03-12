@@ -46,7 +46,7 @@ struct loader_type;
 
 /* -- Type Definitions -- */
 
-typedef value (*loader_register_invoke)(void * []);
+typedef value (*loader_register_invoke)(size_t, void * [], void *);
 
 typedef void * loader_data;
 

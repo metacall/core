@@ -106,4 +106,17 @@ describe('metacall', () => {
 			assert.strictEqual(metacall('get_second', 5, 12), 12);
 		});
 	});
+
+	describe('callback', () => {
+		it('callback (py)', () => {
+			const f = require('function.py');
+			const c = 5;
+			assert.notStrictEqual(f, undefined);
+			assert.strictEqual(f.function_with_args((a, b) => {
+				const result = a + b + c;
+				console.log(`${a} + ${b} + ${c} = ${result}`);
+				return result;
+			}, 2, 3), 10);
+		});
+	});
 });

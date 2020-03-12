@@ -30,7 +30,6 @@
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_function.h>
-#include <reflect/reflect_function.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -283,6 +282,21 @@ REFLECT_API value value_create_future(future f);
 *    Pointer to value if success, null otherwhise
 */
 REFLECT_API value value_create_function(function f);
+
+/**
+*  @brief
+*    Create a value from function @f binding a closure @c to it
+*
+*  @param[in] f
+*    Pointer to constant data will be copied into value
+*
+*  @param[in] c
+*    Pointer to closure that will be binded into function @f
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_function_closure(function f, void * c);
 
 /**
 *  @brief

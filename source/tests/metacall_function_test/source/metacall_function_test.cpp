@@ -24,18 +24,23 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-void * c_callback(void * args[])
+void * c_callback(size_t argc, void * args[], void * data)
 {
+	(void)argc;
 	(void)args;
+	(void)data;
 
 	printf("Callback without args executed\n");
 
 	return metacall_value_create_long(32L);
 }
 
-void * c_callback_with_args(void * args[])
+void * c_callback_with_args(size_t argc, void * args[], void * data)
 {
 	long left = metacall_value_to_long(args[0]), right = metacall_value_to_long(args[1]);
+
+	(void)argc;
+	(void)data;
 
 	printf("Callback with args executed (%ld, %ld)\n", left, right);
 

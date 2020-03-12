@@ -63,9 +63,15 @@ typedef function_interface (*function_impl_interface_singleton)(void);
 
 REFLECT_API function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
 
+REFLECT_API int function_resize(function func, size_t count);
+
 REFLECT_API int function_increment_reference(function func);
 
 REFLECT_API int function_decrement_reference(function func);
+
+REFLECT_API void function_bind(function func, void * data);
+
+REFLECT_API void * function_closure(function func);
 
 REFLECT_API const char * function_name(function func);
 
