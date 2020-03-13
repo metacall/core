@@ -110,13 +110,23 @@ describe('metacall', () => {
 	describe('callback', () => {
 		it('callback (py)', () => {
 			const f = require('function.py');
-			const c = 5;
 			assert.notStrictEqual(f, undefined);
+
+			// Passing callback as an argument
+			const c = 5;
 			assert.strictEqual(f.function_with_args((a, b) => {
 				const result = a + b + c;
+				assert.strictEqual(a, 2);
+				assert.strictEqual(b, 3);
+				assert.strictEqual(c, 5);
 				console.log(`${a} + ${b} + ${c} = ${result}`);
 				return result;
 			}, 2, 3), 10);
+
+			// Passing callback as a return value
+			const callback = f.function_ret_lambda(10);
+			assert.notStrictEqual(callback, undefined);
+			assert.strictEqual(callback(3), 30);
 		});
 	});
 });
