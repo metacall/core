@@ -136,6 +136,20 @@ TEST_F(metacall_function_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 
 		metacall_value_destroy(function_ret_lambda_args[0]);
+
+		ret = metacallv("function_return", metacall_null_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		f = metacall_value_to_function(ret);
+
+		cb_ret = metacallfv(f, metacall_null_args);
+
+		EXPECT_EQ((long) metacall_value_to_long(cb_ret), (long) 4L);
+
+		metacall_value_destroy(cb_ret);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 

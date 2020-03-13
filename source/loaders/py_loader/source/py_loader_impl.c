@@ -771,6 +771,8 @@ function_interface function_py_singleton()
 
 static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 {
+	static void * null_args[1] = { NULL };
+
 	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(self);
 
 	signature s = function_signature(invoke_state->callback);
@@ -794,7 +796,7 @@ static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject 
 		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %u != %u", args_size, callee_args_size);
 	}
 
-	value_args = malloc(sizeof(void *) * min_args_size);
+	value_args = min_args_size == 0 ? null_args : malloc(sizeof(void *) * min_args_size);
 
 	if (value_args == NULL)
 	{
@@ -816,7 +818,16 @@ static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject 
 	/* Execute the callback */
 	ret = (value)function_call(invoke_state->callback, value_args);
 
-	free(value_args);
+	/* Destroy argument values */
+	for (args_count = 0; args_count < min_args_size; ++args_count)
+	{
+		value_type_destroy(value_args[args_count]);
+	}
+
+	if (value_args != null_args)
+	{
+		free(value_args);
+	}
 
 	/* Transform the return value into a python value */
 	if (ret != NULL)
