@@ -124,11 +124,9 @@ describe('metacall', () => {
 			}, 2, 3), 10);
 
 			// Passing callback as a return value
-			/*
 			const callback = f.function_ret_lambda(10);
 			assert.notStrictEqual(callback, undefined);
 			assert.strictEqual(callback(3), 30);
-			*/
 		});
 	});
 });

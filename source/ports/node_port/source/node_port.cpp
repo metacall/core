@@ -677,7 +677,9 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 	char name[FUNCTION_NAME_LENGTH];
 	size_t name_length;
 
-	napi_get_value_string_utf8(env, argv[0], name, FUNCTION_NAME_LENGTH, &name_length);
+	napi_status status = napi_get_value_string_utf8(env, argv[0], name, FUNCTION_NAME_LENGTH, &name_length);
+
+	metacall_node_exception(env, status);
 
 	for (size_t i = 1; i < argc; i++)
 	{
@@ -693,7 +695,47 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
-	metacall_value_destroy(ret);
+	auto finalizer = [](napi_env, void * finalize_data, void *)
+	{
+		metacall_value_destroy(finalize_data);
+	};
+
+	// Create a finalizer for the value
+	#if (NAPI_VERSION < 5)
+	{
+		napi_value symbol, external;
+
+		status = napi_create_symbol(env, nullptr, &symbol);
+
+		metacall_node_exception(env, status);
+
+		status = napi_create_external(env, ret, finalizer, nullptr, &external);
+
+		metacall_node_exception(env, status);
+
+		napi_property_descriptor desc =
+		{
+			nullptr,
+			symbol,
+			nullptr,
+			nullptr,
+			nullptr,
+			external,
+			napi_default,
+			nullptr
+		};
+
+		status = napi_define_properties(env, result, 1, &desc);
+
+		metacall_node_exception(env, status);
+	}
+	#else // NAPI_VERSION >= 5
+	{
+		status = napi_add_finalizer(env, result, ret, finalizer, nullptr, nullptr);
+
+		metacall_node_exception(env, status);
+	}
+	#endif
 
 	return result;
 }
@@ -727,7 +769,7 @@ napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 	int met_result = metacall_load_from_file(tagBuf, file_name_strings, sizeof(file_name_strings)/sizeof(file_name_strings[0]), NULL);
 	if (met_result > 0)
 	{
-		napi_throw_error(env, NULL, "Metacall could not load from file");
+		napi_throw_error(env, NULL, "MetaCall could not load from file");
 		return NULL;
 	}
 
@@ -773,7 +815,7 @@ napi_value metacall_node_load_from_memory(napi_env env, napi_callback_info info)
 
 	if (tag == NULL)
 	{
-		napi_throw_error(env, NULL, "Metacall could not load from memory, tag allocation failed");
+		napi_throw_error(env, NULL, "MetaCall could not load from memory, tag allocation failed");
 		return NULL;
 	}
 
@@ -792,7 +834,7 @@ napi_value metacall_node_load_from_memory(napi_env env, napi_callback_info info)
 
 	if (script == NULL)
 	{
-		napi_throw_error(env, NULL, "Metacall could not load from memory, script allocation failed");
+		napi_throw_error(env, NULL, "MetaCall could not load from memory, script allocation failed");
 		return NULL;
 	}
 
@@ -804,7 +846,7 @@ napi_value metacall_node_load_from_memory(napi_env env, napi_callback_info info)
 	// Load script from memory
 	if (metacall_load_from_memory(tag, script, script_length, NULL) != 0)
 	{
-		napi_throw_error(env, NULL, "Metacall could not load from memory");
+		napi_throw_error(env, NULL, "MetaCall could not load from memory");
 		return NULL;
 	}
 
