@@ -24,3 +24,9 @@ def function_currying(y):
 
 def function_currying_more(y):
 	return lambda x: lambda z: lambda w: lambda n: x * z * w * n * y
+
+def function_factorial_compose(x):
+	return lambda n: x(x)(n)
+
+def function_factorial(x):
+	return lambda n: 1 if n == 0 else n * x(x)(n - 1)

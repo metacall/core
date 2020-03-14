@@ -730,7 +730,7 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 
 	metacall_node_exception(env, status);
 
-	for (size_t i = 1; i < argc; i++)
+	for (size_t i = 1; i < argc; ++i)
 	{
 		args[i - 1] = metacall_node_napi_to_value(env, recv, argv[i]);
 	}

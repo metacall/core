@@ -135,6 +135,13 @@ describe('metacall', () => {
 
 			// Currying more
 			assert.strictEqual(f.function_currying_more(5)(4)(3)(2)(1), 120);
+
+			// Factorial composition (@trgwii)
+			/*
+			const factorial = f.function_factorial_compose(f.function_factorial);
+			assert.notStrictEqual(factorial, undefined);
+			assert.strictEqual(factorial(5), 120);
+			*/
 		});
 	});
 });
