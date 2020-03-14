@@ -18,3 +18,9 @@ def function_print_and_return(x):
 def function_ret_lambda(y):
 	print('Returning lambda with captured arg:', y);
 	return lambda x: function_print_and_return(x) * y
+
+def function_currying(y):
+	return lambda x: lambda z: x * z * y
+
+def function_currying_more(y):
+	return lambda x: lambda z: lambda w: lambda n: x * z * w * n * y

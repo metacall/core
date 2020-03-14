@@ -127,6 +127,14 @@ describe('metacall', () => {
 			const callback = f.function_ret_lambda(10);
 			assert.notStrictEqual(callback, undefined);
 			assert.strictEqual(callback(3), 30);
+
+			// Currying
+			const currying = f.function_currying(10);
+			assert.notStrictEqual(currying, undefined);
+			assert.strictEqual(currying(2)(3), 60);
+
+			// Currying more
+			assert.strictEqual(f.function_currying_more(5)(4)(3)(2)(1), 120);
 		});
 	});
 });

@@ -48,6 +48,8 @@ static void * metacall_node_callback_value_to_napi(size_t argc, void * args[], v
 
 static napi_value metacall_node_callback_napi_to_value(napi_env env, napi_callback_info info);
 
+static void metacall_node_finalizer(napi_env env, napi_value v, void * data);
+
 typedef struct metacall_node_callback_closure_type
 {
 	napi_env env;
@@ -148,9 +150,56 @@ napi_value metacall_node_callback_napi_to_value(napi_env env, napi_callback_info
 
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
-	metacall_value_destroy(ret);
+	metacall_node_finalizer(env, result, ret);
 
 	return result;
+}
+
+void metacall_node_finalizer(napi_env env, napi_value v, void * data)
+{
+	napi_status status;
+
+	auto finalizer = [](napi_env, void * finalize_data, void *)
+	{
+		metacall_value_destroy(finalize_data);
+	};
+
+	// Create a finalizer for the value
+	#if (NAPI_VERSION < 5)
+	{
+		napi_value symbol, external;
+
+		status = napi_create_symbol(env, nullptr, &symbol);
+
+		metacall_node_exception(env, status);
+
+		status = napi_create_external(env, data, finalizer, nullptr, &external);
+
+		metacall_node_exception(env, status);
+
+		napi_property_descriptor desc =
+		{
+			nullptr,
+			symbol,
+			nullptr,
+			nullptr,
+			nullptr,
+			external,
+			napi_default,
+			nullptr
+		};
+
+		status = napi_define_properties(env, v, 1, &desc);
+
+		metacall_node_exception(env, status);
+	}
+	#else // NAPI_VERSION >= 5
+	{
+		status = napi_add_finalizer(env, v, data, finalizer, nullptr, nullptr);
+
+		metacall_node_exception(env, status);
+	}
+	#endif
 }
 
 /* END-TODO */
@@ -695,47 +744,7 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
-	auto finalizer = [](napi_env, void * finalize_data, void *)
-	{
-		metacall_value_destroy(finalize_data);
-	};
-
-	// Create a finalizer for the value
-	#if (NAPI_VERSION < 5)
-	{
-		napi_value symbol, external;
-
-		status = napi_create_symbol(env, nullptr, &symbol);
-
-		metacall_node_exception(env, status);
-
-		status = napi_create_external(env, ret, finalizer, nullptr, &external);
-
-		metacall_node_exception(env, status);
-
-		napi_property_descriptor desc =
-		{
-			nullptr,
-			symbol,
-			nullptr,
-			nullptr,
-			nullptr,
-			external,
-			napi_default,
-			nullptr
-		};
-
-		status = napi_define_properties(env, result, 1, &desc);
-
-		metacall_node_exception(env, status);
-	}
-	#else // NAPI_VERSION >= 5
-	{
-		status = napi_add_finalizer(env, result, ret, finalizer, nullptr, nullptr);
-
-		metacall_node_exception(env, status);
-	}
-	#endif
+	metacall_node_finalizer(env, result, ret);
 
 	return result;
 }
