@@ -240,7 +240,7 @@ type_id py_loader_impl_capi_to_value_type(PyObject * obj)
 	{
 		return TYPE_PTR;
 	}
-	else if (PyFunction_Check(obj))
+	else if (PyFunction_Check(obj) || PyCFunction_Check(obj))
 	{
 		return TYPE_FUNCTION;
 	}
@@ -304,7 +304,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 			{
 				if (PyErr_Occurred() != NULL)
 				{
-					loader_impl_py py_impl = loader_impl_get(py_func->impl);
+					loader_impl_py py_impl = loader_impl_get(impl);
 
 					py_loader_impl_error_print(py_impl);
 				}
@@ -401,7 +401,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 					{
 						if (PyErr_Occurred() != NULL)
 						{
-							loader_impl_py py_impl = loader_impl_get(py_func->impl);
+							loader_impl_py py_impl = loader_impl_get(impl);
 
 							py_loader_impl_error_print(py_impl);
 						}
@@ -448,7 +448,21 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		int discover_args_count = py_loader_impl_discover_func_args_count(obj);
+		int discover_args_count;
+
+		/* Check if we are passing our own hook to the callback */
+		if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
+		{
+			loader_impl_py py_impl = loader_impl_get(impl);
+
+			loader_impl_py_function_type_invoke_state invoke_state;
+
+			invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(py_impl->function_type_invoke_mod);
+
+			return value_create_function(invoke_state->callback);
+		}
+
+		discover_args_count = py_loader_impl_discover_func_args_count(obj);
 
 		if (discover_args_count >= 0)
 		{
@@ -483,8 +497,6 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 
 			return value_create_function(f);
 		}
-
-		return NULL;
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -493,7 +505,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized return type");
+		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized python type");
 	}
 
 	return v;
@@ -610,6 +622,10 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 		invoke_state->callback = value_to_function(v);
 
 		return py_impl->function_type_invoke_func;
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type");
 	}
 
 	return NULL;
@@ -793,7 +809,7 @@ static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject 
 
 	if (args_size != (size_t)callee_args_size)
 	{
-		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %u != %u", args_size, callee_args_size);
+		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %u (signature) != %u (call)", args_size, callee_args_size);
 	}
 
 	value_args = min_args_size == 0 ? null_args : malloc(sizeof(void *) * min_args_size);
@@ -1398,21 +1414,23 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject * annotation)
 {
 	type t = NULL;
 
-	PyObject * annotation_qualname = PyObject_GetAttrString(annotation, "__qualname__");
-
-	const char * annotation_name = PyUnicode_AsUTF8(annotation_qualname);
-
-	if (strcmp(annotation_name, "_empty") != 0)
+	if (annotation != NULL)
 	{
-		t = loader_impl_type(impl, annotation_name);
+		PyObject * annotation_qualname = PyObject_GetAttrString(annotation, "__qualname__");
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+		const char * annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
-		Py_DECREF(annotation_qualname);
+		if (strcmp(annotation_name, "_empty") != 0)
+		{
+			t = loader_impl_type(impl, annotation_name);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+
+			Py_DECREF(annotation_qualname);
+		}
 	}
 
 	return t;
-
 }
 
 int py_loader_impl_discover_func_args_count(PyObject * func)
@@ -1452,6 +1470,21 @@ int py_loader_impl_discover_func_args_count(PyObject * func)
 
 			Py_DECREF(func_code);
 		}
+		else if (PyCFunction_Check(func))
+		{
+			int flags = PyCFunction_GetFlags(func);
+
+			if (flags & METH_NOARGS)
+			{
+				args_count = 0;
+			}
+			else if (flags & METH_VARARGS)
+			{
+				/* TODO: Varidic arguments are not supported */
+				log_write("metacall", LOG_LEVEL_ERROR, "Builtins (C Python Functions) with varidic arguments are not supported");
+				args_count = -1;
+			}
+		}
 	}
 
 	return args_count;
@@ -1471,6 +1504,8 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 		if (PyErr_Occurred() != NULL)
 		{
 			py_loader_impl_error_print(py_impl);
+
+			return 1;
 		}
 
 		result = PyObject_CallObject(py_impl->inspect_signature, args);
@@ -1527,6 +1562,19 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f)
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation));
 
 		return 0;
+	}
+	else
+	{
+		/* TODO: Implement builtins with varidic arguments */
+		if (PyCFunction_Check(func))
+		{
+			signature s = function_signature(f);
+
+			signature_set_return(s, NULL);
+
+			return 0;
+		}
+
 	}
 
 	return 1;

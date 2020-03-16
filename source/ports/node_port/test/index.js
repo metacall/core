@@ -34,12 +34,6 @@ describe('metacall', () => {
 		});
 	});
 
-	describe('logs', () => {
-		it('metacall_logs', () => {
-			assert.strictEqual(metacall_logs(), undefined);
-		});
-	});
-
 	describe('load', () => {
 		it('metacall_load_from_file (py)', () => {
 			assert.strictEqual(metacall_load_from_file('py', [ 'helloworld.py' ] ), undefined);
@@ -138,9 +132,13 @@ describe('metacall', () => {
 
 			// Factorial composition (@trgwii)
 			/*
-			const factorial = f.function_factorial_compose(f.function_factorial);
-			assert.notStrictEqual(factorial, undefined);
-			assert.strictEqual(factorial(5), 120);
+			const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
+			assert.notStrictEqual(js_factorial, undefined);
+			assert.strictEqual(js_factorial(5), 120);
+
+			const py_factorial = f.function_chain(f.function_factorial);
+			assert.notStrictEqual(py_factorial, undefined);
+			assert.strictEqual(py_factorial(5), 120);
 			*/
 		});
 	});

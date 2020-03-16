@@ -514,7 +514,7 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 		closure->env = env;
 
 		// Create a reference to this
-		status = napi_create_reference(env, v, 1, &closure->recv_ref);
+		status = napi_create_reference(env, recv, 1, &closure->recv_ref);
 
 		metacall_node_exception(env, status);
 
@@ -694,7 +694,19 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 	{
 		void * f = metacall_value_to_function(arg_value);
 
+		size_t length = metacall_function_size(f);
+
+		napi_value length_v;
+
 		status = napi_create_function(env, NULL, 0, metacall_node_callback_napi_to_value, f, &v);
+
+		metacall_node_exception(env, status);
+
+		status = napi_create_uint32(env, static_cast<uint32_t>(length), &length_v);
+
+		metacall_node_exception(env, status);
+
+		status = napi_set_named_property(env, v, "length", length_v);
 
 		metacall_node_exception(env, status);
 	}
