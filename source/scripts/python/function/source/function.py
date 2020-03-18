@@ -30,3 +30,6 @@ def function_chain(x):
 
 def function_factorial(x):
 	return lambda n: 1 if n == 0 else n * x(x)(n - 1)
+
+def function_pass():
+	pass

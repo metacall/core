@@ -130,6 +130,9 @@ describe('metacall', () => {
 			// Currying more
 			assert.strictEqual(f.function_currying_more(5)(4)(3)(2)(1), 120);
 
+			// Receiving undefined from a function that returns nothing in Python
+			assert.strictEqual(f.function_pass(), undefined);
+
 			// Factorial composition (@trgwii)
 			/*
 			const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
