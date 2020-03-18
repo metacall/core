@@ -500,8 +500,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 	}
 	else if (id == TYPE_NULL)
 	{
-		/* TODO: MetaCall null is NULL C type or nil value ? */
-		v = NULL;
+		v = value_create_null();
 	}
 	else
 	{
@@ -622,6 +621,10 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 		invoke_state->callback = value_to_function(v);
 
 		return py_impl->function_type_invoke_func;
+	}
+	else if (id == TYPE_NULL)
+	{
+		return Py_None;
 	}
 	else
 	{

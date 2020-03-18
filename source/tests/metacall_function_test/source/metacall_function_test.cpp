@@ -150,6 +150,16 @@ TEST_F(metacall_function_test, DefaultConstructor)
 		metacall_value_destroy(cb_ret);
 
 		metacall_value_destroy(ret);
+
+		ret = metacallv("function_pass", metacall_null_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 
