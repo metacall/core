@@ -396,13 +396,10 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 	node_loader_impl_exception(env, status);
 
-	if (valuetype == napi_undefined)
+	if (valuetype == napi_undefined || valuetype == napi_null)
 	{
-		/* TODO */
-	}
-	else if (valuetype == napi_null)
-	{
-		/* TODO */
+		/* TODO: Review this, type null will be lost due to mapping of two N-API types into one metacall type */
+		ret = value_create_null();
 	}
 	else if (valuetype == napi_boolean)
 	{
