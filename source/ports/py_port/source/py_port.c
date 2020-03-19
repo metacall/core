@@ -103,6 +103,11 @@ PyObject * metacall_value_to_python(void * value)
 			#endif
 		}
 
+		case METACALL_NULL :
+		{
+			return Py_None;
+		}
+
 		default :
 		{
 			PyErr_SetString(PyExc_ValueError, "Unsupported return type");

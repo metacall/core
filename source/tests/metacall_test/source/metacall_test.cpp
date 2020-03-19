@@ -200,7 +200,15 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((void *) NULL, (void *)metacall("hello"));
+		ret = metacall("hello");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+
+		metacall_value_destroy(ret);
 
 		ret = metacall("strcat", "Hello ", "Universe");
 
@@ -233,14 +241,16 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		unsigned char * dyn_buffer = (unsigned char *)malloc(sizeof(unsigned char) * 255);
+		const size_t dyn_buffer_size = 256;
 
-		for (unsigned char i = 0; i < 255; ++i)
+		unsigned char * dyn_buffer = (unsigned char *)malloc(sizeof(unsigned char) * dyn_buffer_size);
+
+		for (size_t i = 0; i < dyn_buffer_size; ++i)
 		{
-			dyn_buffer[i] = i;
+			dyn_buffer[i] = (unsigned char)i;
 		}
 
-		buffer_value = metacall_value_create_buffer((void *)dyn_buffer, 255);
+		buffer_value = metacall_value_create_buffer((void *)dyn_buffer, dyn_buffer_size);
 
 		EXPECT_NE((void *) NULL, (void *) buffer_value);
 

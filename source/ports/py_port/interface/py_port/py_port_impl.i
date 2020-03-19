@@ -279,6 +279,10 @@ extern "C" {
 					args[args_count] = metacall_value_create_ptr(ptr);
 				%#endif
 			}
+			else if (py_arg == Py_None)
+			{
+				args[args_count] = metacall_value_create_null();
+			}
 			else
 			{
 				/* TODO: Remove this by a local array? */

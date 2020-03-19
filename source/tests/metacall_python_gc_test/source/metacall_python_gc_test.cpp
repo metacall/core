@@ -44,9 +44,17 @@ TEST_F(metacall_python_gc_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall("set_debug"));
+		void * ret = metacall("set_debug");
 
-		void * ret = metacall("garbage");
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("garbage");
 
 		ASSERT_NE((void *) NULL, (void *) ret);
 

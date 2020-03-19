@@ -96,7 +96,15 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((void *) NULL, (void *)metacall("hello"));
+		ret = metacall("hello");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+
+		metacall_value_destroy(ret);
 
 		ret = metacall("strcat", "Hello ", "Universe");
 
@@ -158,27 +166,35 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		ret = metacall("s_sum", 1000, 3500);
 
-		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long)metacall_value_to_long(ret), (long)4500);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 4500);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("s_sum", 3, 4);
 
-		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 7);
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((void *)NULL, (void *)metacall("s_hello"));
+		ret = metacall("s_hello");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+
+		metacall_value_destroy(ret);
 
 		ret = metacall("s_strcat", "Hello ", "Universe");
 
-		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello Universe"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
 
 		metacall_value_destroy(ret);
 	}
