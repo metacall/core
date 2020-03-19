@@ -135,6 +135,12 @@ describe('metacall', () => {
 
 			// Factorial composition (@trgwii)
 			/*
+			const fact = f.function_factorial(c => v => v);
+			assert.strictEqual(fact(0), 0);
+			assert.strictEqual(fact(1), 1);
+			assert.strictEqual(fact(2), 2);
+			assert.strictEqual(fact(3), 6);
+
 			const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
 			assert.notStrictEqual(js_factorial, undefined);
 			assert.strictEqual(js_factorial(5), 120);
