@@ -300,13 +300,10 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 
 	metacall_node_exception(env, status);
 
-	if (valuetype == napi_undefined)
+	if (valuetype == napi_undefined || valuetype == napi_null)
 	{
-		/* TODO */
-	}
-	else if (valuetype == napi_null)
-	{
-		/* TODO */
+		/* TODO: Review this, type null will be lost due to mapping of two N-API types into one metacall type */
+		ret = metacall_value_create_null();
 	}
 	else if (valuetype == napi_boolean)
 	{
@@ -710,11 +707,15 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 
 		metacall_node_exception(env, status);
 	}
-	else
+	else if (id == METACALL_NULL)
 	{
 		status = napi_get_undefined(env, &v);
 
 		metacall_node_exception(env, status);
+	}
+	else
+	{
+		napi_throw_error(env, NULL, "MetaCall could not convert the value to N-API");
 	}
 
 	return v;
