@@ -644,8 +644,6 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	type ret_type = signature_get_return(s);
 
-	PyObject * tuple_args = PyTuple_New(args_size);
-
 	PyObject * result = NULL;
 
 	size_t args_count;
@@ -653,6 +651,18 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	PyObject * tuple_args;
+
+	/* Possibly a recursive call */
+	if (Py_EnterRecursiveCall(" while executing a function in Python Loader") != 0)
+	{
+		PyGILState_Release(gstate);
+
+		return NULL;
+	}
+
+	tuple_args = PyTuple_New(args_size);
 
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
@@ -680,6 +690,9 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	}
 
 	result = PyObject_CallObject(py_func->func, tuple_args);
+
+	/* End of recursive call */
+	Py_LeaveRecursiveCall();
 
 	if (PyErr_Occurred() != NULL)
 	{
@@ -788,7 +801,7 @@ function_interface function_py_singleton()
 	return &py_function_interface;
 }
 
-static PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
+PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 {
 	static void * null_args[1] = { NULL };
 
