@@ -6,7 +6,7 @@
 
 # Abstract
 
-**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call Python code from JavaScript code.
+**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call a Python function from NodeJS.
 
 `sum.py`
 ``` python
@@ -16,9 +16,9 @@ def sum(a, b):
 
 `main.js`
 ``` javascript
-metacall_load_from_file('py', [ 'sum.py' ]);
+const { sum } = require('sum.py');
 
-metacall('sum', 3, 4); // 7
+sum(3, 4); // 7
 ```
 
 <div align="center">
