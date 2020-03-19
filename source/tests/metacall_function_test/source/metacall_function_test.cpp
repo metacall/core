@@ -90,7 +90,7 @@ TEST_F(metacall_function_test, DefaultConstructor)
 			c_callback_value,
 		};
 
-		ret = metacallv("function", function_args);
+		ret = metacallv("function_cb", function_args);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 

@@ -159,6 +159,12 @@ void metacall_node_finalizer(napi_env env, napi_value v, void * data)
 {
 	napi_status status;
 
+	if (metacall_value_id(data) == METACALL_NULL)
+	{
+		metacall_value_destroy(data);
+		return;
+	}
+
 	auto finalizer = [](napi_env, void * finalize_data, void *)
 	{
 		metacall_value_destroy(finalize_data);
