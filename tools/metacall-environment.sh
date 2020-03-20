@@ -141,7 +141,7 @@ sub_rapidjson(){
 sub_funchook(){
 	echo "configure funchook"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install autoconf
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install cmake
 }
 
 # NetCore
@@ -180,14 +180,17 @@ sub_netcore2(){
 
 	# Set up repository
 	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
-	mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
+	$SUDO_CMD mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
 	wget -q https://packages.microsoft.com/config/debian/10/prod.list
-	mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
-	chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
-	chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+	$SUDO_CMD mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
+	$SUDO_CMD chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
+	$SUDO_CMD chown root:root /etc/apt/sources.list.d/microsoft-prod.list
 
 	# Install .NET Core Sdk
-	$SUDO_CMD apt-get update && apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
 }
 
 # V8 Repository
