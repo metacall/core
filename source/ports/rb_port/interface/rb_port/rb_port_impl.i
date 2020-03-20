@@ -198,6 +198,10 @@ extern "C" {
 					args[args_count] = metacall_value_create_string(str, (size_t)length);
 				}
 			}
+			else if (rb_arg_type == T_NIL)
+			{
+				args[args_count] = metacall_value_create_null();
+			}
 			else
 			{
 				size_t alloc_iterator;
@@ -372,6 +376,13 @@ extern "C" {
 				break;
 			}
 
+			case METACALL_NULL :
+			{
+				/*$result*/ vresult = Qnil;
+
+				break;
+			}
+
 			default :
 			{
 				rb_raise(rb_eArgError, "Unsupported return type");
@@ -389,8 +400,6 @@ extern "C" {
 
 	return /*$result*/ vresult;
 }
-
-
 
 #ifdef __cplusplus
 }
