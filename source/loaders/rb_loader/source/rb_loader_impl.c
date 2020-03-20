@@ -156,6 +156,12 @@ const char * rb_type_deserialize(VALUE v, value * result)
 
 			return "Array";
 		}
+		else if (v_type == T_NIL)
+		{
+			*result = value_create_null();
+
+			return "NilClass";
+		}
 		else if (v_type == T_OBJECT)
 		{
 			// TODO
@@ -265,8 +271,14 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 				args_value[args_count] = rb_str_new_cstr(value_ptr);
 			}
+			else if (id == TYPE_NULL)
+			{
+				args_value[args_count] = Qnil;
+			}
 			else
 			{
+				rb_raise(rb_eArgError, "Unsupported return type");
+
 				args_value[args_count] = Qnil;
 			}
 
@@ -382,7 +394,8 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_LONG, "Bignum" },
 		{ TYPE_DOUBLE, "Float" },
 		{ TYPE_STRING, "String" },
-		{ TYPE_ARRAY, "Array" }
+		{ TYPE_ARRAY, "Array" },
+		{ TYPE_NULL, "NilClass" }
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
