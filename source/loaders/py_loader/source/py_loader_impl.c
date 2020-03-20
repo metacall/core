@@ -1136,9 +1136,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		return NULL;
 	}
 
+	Py_InitializeEx(0);
+
 	if (Py_IsInitialized() == 0)
 	{
-		Py_InitializeEx(0);
+		return NULL;
 	}
 
 	if (PyEval_ThreadsInitialized() == 0)
@@ -1846,7 +1848,18 @@ int py_loader_impl_destroy(loader_impl impl)
 
 			PyGILState_Release(gstate);
 
-			Py_Finalize();
+			#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
+			{
+				if (Py_FinalizeEx() != 0)
+				{
+					log_write("metacall", LOG_LEVEL_DEBUG, "Error when executing Py_FinalizeEx");
+				}
+			}
+			#else
+			{
+				Py_Finalize();
+			}
+			#endif
 		}
 		else
 		{
