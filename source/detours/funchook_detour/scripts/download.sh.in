@@ -7,5 +7,5 @@ then
 	then
 		rm -rf @FUNCHOOK_SOURCE_DIR@
 	fi
-	@GIT_EXECUTABLE@ clone --recursive https://github.com/kubo/funchook.git @FUNCHOOK_SOURCE_DIR@
+	@GIT_EXECUTABLE@ clone --single-branch --branch v1.0.0 --recursive https://github.com/kubo/funchook.git @FUNCHOOK_SOURCE_DIR@
 fi
