@@ -136,17 +136,11 @@ int type_py_interface_create(type t, type_impl impl)
 
 void type_py_interface_destroy(type t, type_impl impl)
 {
-	PyGILState_STATE gstate;
-
 	PyObject * builtin = (PyObject *)impl;
 
 	(void)t;
 
-	gstate = PyGILState_Ensure();
-
 	Py_DECREF(builtin);
-
-	PyGILState_Release(gstate);
 }
 
 type_interface type_py_singleton(void)
@@ -1251,11 +1245,11 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 {
 	size_t iterator;
 
-	PyGILState_STATE gstate;
+	/* PyGILState_STATE gstate; */
 
 	PyObject * system_modules;
 
-	gstate = PyGILState_Ensure();
+	/* gstate = PyGILState_Ensure(); */
 
 	system_modules = PySys_GetObject("modules");
 
@@ -1272,7 +1266,7 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 		Py_XDECREF(py_handle->modules[iterator].name);
 	}
 
-	PyGILState_Release(gstate);
+	/* PyGILState_Release(gstate); */
 
 	free(py_handle->modules);
 
@@ -1808,9 +1802,9 @@ int py_loader_impl_destroy(loader_impl impl)
 
 	if (py_impl != NULL)
 	{
-		PyGILState_STATE gstate;
+		/* PyGILState_STATE gstate; */
 
-		gstate = PyGILState_Ensure();
+		/* gstate = PyGILState_Ensure(); */
 
 		Py_DECREF(py_impl->inspect_signature);
 
@@ -1846,7 +1840,7 @@ int py_loader_impl_destroy(loader_impl impl)
 				py_loader_impl_error_print(py_impl);
 			}
 
-			PyGILState_Release(gstate);
+			/* PyGILState_Release(gstate); */
 
 			#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
 			{
@@ -1863,7 +1857,7 @@ int py_loader_impl_destroy(loader_impl impl)
 		}
 		else
 		{
-			PyGILState_Release(gstate);
+			/* PyGILState_Release(gstate); */
 		}
 
 		free(py_impl);
