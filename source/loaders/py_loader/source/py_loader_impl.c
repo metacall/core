@@ -1797,8 +1797,7 @@ void py_loader_impl_sys_path_print(PyObject * sys_path_list)
 
 	log_write("metacall", LOG_LEVEL_DEBUG, sys_path_format_str, sys_path_str);
 
-	Py_DECREF(separator);
-	Py_DECREF(sys_path_str_obj);
+	Py_XDECREF(separator);
 }
 
 int py_loader_impl_destroy(loader_impl impl)
