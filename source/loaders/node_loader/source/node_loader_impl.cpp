@@ -155,7 +155,6 @@ typedef struct loader_impl_node_future_type
 
 typedef struct loader_impl_async_initialize_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	int result;
 
@@ -163,7 +162,6 @@ typedef struct loader_impl_async_initialize_type
 
 typedef struct loader_impl_async_load_from_file_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	const loader_naming_path * paths;
 	size_t size;
@@ -173,7 +171,6 @@ typedef struct loader_impl_async_load_from_file_type
 
 typedef struct loader_impl_async_load_from_memory_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	const char * name;
 	const char * buffer;
@@ -184,7 +181,6 @@ typedef struct loader_impl_async_load_from_memory_type
 
 typedef struct loader_impl_async_clear_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	napi_ref handle_ref;
 
@@ -192,7 +188,6 @@ typedef struct loader_impl_async_clear_type
 
 typedef struct loader_impl_async_discover_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	napi_ref handle_ref;
 	context ctx;
@@ -201,7 +196,6 @@ typedef struct loader_impl_async_discover_type
 
 typedef struct loader_impl_async_func_call_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	function func;
 	loader_impl_node_function node_func;
@@ -212,7 +206,6 @@ typedef struct loader_impl_async_func_call_type
 
 typedef struct loader_impl_async_func_await_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	function func;
 	loader_impl_node_function node_func;
@@ -229,7 +222,6 @@ typedef napi_value (*function_reject_trampoline)(loader_impl_node, function_reje
 
 typedef struct loader_impl_async_func_await_trampoline_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_loader;
 	function_resolve_trampoline resolve_trampoline;
 	function_reject_trampoline reject_trampoline;
@@ -241,7 +233,6 @@ typedef struct loader_impl_async_func_await_trampoline_type
 
 typedef struct loader_impl_async_func_destroy_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	loader_impl_node_function node_func;
 
@@ -249,26 +240,11 @@ typedef struct loader_impl_async_func_destroy_type
 
 typedef struct loader_impl_async_future_delete_type
 {
-	uv_mutex_t mutex;
 	loader_impl_node node_impl;
 	future f;
 	loader_impl_node_future node_future;
 
 } * loader_impl_async_future_delete;
-
-typedef struct loader_impl_async_destroy_type
-{
-	uv_mutex_t mutex;
-	loader_impl_node node_impl;
-
-} * loader_impl_async_destroy;
-
-typedef struct loader_impl_thread_data_type
-{
-	uv_mutex_t mutex;
-	loader_impl_node node_impl;
-
-} * loader_impl_thread_data;
 
 /* Exception */
 static inline void node_loader_impl_exception(napi_env env, napi_status status);
@@ -805,7 +781,6 @@ function_return function_node_interface_invoke(function func, function_impl impl
 
 		struct loader_impl_async_func_call_type async_data =
 		{
-			node_impl->mutex,
 			node_impl,
 			func,
 			node_func,
@@ -843,7 +818,6 @@ function_return function_node_interface_await(function func, function_impl impl,
 
 		struct loader_impl_async_func_await_type async_data =
 		{
-			node_impl->mutex,
 			node_impl,
 			func,
 			node_future,
@@ -916,7 +890,6 @@ void function_node_interface_destroy(function func, function_impl impl)
 
 		struct loader_impl_async_func_destroy_type async_data =
 		{
-			node_impl->mutex,
 			node_impl,
 			node_func
 		};
@@ -970,7 +943,6 @@ void future_node_interface_destroy(future f, future_impl impl)
 
 		struct loader_impl_async_future_delete_type async_data =
 		{
-			node_impl->mutex,
 			node_impl,
 			f,
 			node_future
@@ -1011,13 +983,10 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 
 	loader_impl_async_initialize async_initialize = static_cast<loader_impl_async_initialize>(async->data);
 
-	loader_impl_node node_impl;
+	loader_impl_node node_impl = async_initialize->node_impl;
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_initialize->mutex);
-
-	/* Get node implementation */
-	node_impl = async_initialize->node_impl;
+	uv_mutex_lock(&node_impl->mutex);
 
 	/* Create scope */
 	status = napi_open_handle_scope(node_impl->env, &handle_scope);
@@ -1059,7 +1028,7 @@ void node_loader_impl_async_initialize(uv_async_t * async)
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);
 
-	uv_mutex_unlock(&async_initialize->mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 }
 
 void node_loader_impl_async_func_call(uv_async_t * async)
@@ -1080,12 +1049,10 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	size_t args_count;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_func_call>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1137,13 +1104,10 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	node_loader_impl_exception(env, status);
 
-	/* Get mutex reference */
-	mutex = async_data->mutex;
-
 	/* Signal function call condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_func_await_finalize(napi_env, void * finalize_data, void *)
@@ -1239,15 +1203,10 @@ void node_loader_impl_async_func_await(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_func_await>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1391,7 +1350,7 @@ void node_loader_impl_async_func_await(uv_async_t * async)
 	/* Signal function await condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_func_destroy(uv_async_t * async)
@@ -1404,15 +1363,10 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_func_destroy>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1444,7 +1398,7 @@ void node_loader_impl_async_func_destroy(uv_async_t * async)
 	/* Signal function destroy condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_future_delete(uv_async_t * async)
@@ -1455,15 +1409,10 @@ void node_loader_impl_async_future_delete(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_future_delete>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1497,7 +1446,7 @@ void node_loader_impl_async_future_delete(uv_async_t * async)
 	/* Signal future delete condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_load_from_file(uv_async_t * async)
@@ -1514,15 +1463,10 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_load_from_file>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1621,7 +1565,7 @@ void node_loader_impl_async_load_from_file(uv_async_t * async)
 	/* Signal load from file condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_load_from_memory(uv_async_t * async)
@@ -1638,15 +1582,10 @@ void node_loader_impl_async_load_from_memory(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_load_from_memory>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1738,7 +1677,7 @@ void node_loader_impl_async_load_from_memory(uv_async_t * async)
 	/* Signal load from memory condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_clear(uv_async_t * async)
@@ -1757,15 +1696,10 @@ void node_loader_impl_async_clear(uv_async_t * async)
 
 	uint32_t ref_count = 0;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_clear>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -1847,7 +1781,7 @@ void node_loader_impl_async_clear(uv_async_t * async)
 	/* Signal clear condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void node_loader_impl_async_discover(uv_async_t * async)
@@ -1864,15 +1798,10 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	uv_mutex_t mutex;
-
 	async_data = static_cast<loader_impl_async_discover>(async->data);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
+	uv_mutex_lock(&async_data->node_impl->mutex);
 
 	/* Get environment reference */
 	env = async_data->node_impl->env;
@@ -2080,7 +2009,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 	/* Signal discover condition */
 	uv_cond_signal(&async_data->node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&async_data->node_impl->mutex);
 }
 
 void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * function_table_object_ptr)
@@ -2168,20 +2097,10 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 void node_loader_impl_thread(void * data)
 {
-	loader_impl_thread_data thread_data = static_cast<loader_impl_thread_data>(data);
-
-	loader_impl_node node_impl;
-
-	uv_mutex_t mutex;
+	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&thread_data->mutex);
-
-	/* Get mutex reference */
-	mutex = thread_data->mutex;
-
-	/* Get node implementation */
-	node_impl = thread_data->node_impl;
+	uv_mutex_lock(&node_impl->mutex);
 
 	/* TODO: Reimplement from here to ... */
 
@@ -2215,7 +2134,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2252,7 +2171,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2293,7 +2212,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2311,7 +2230,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2333,7 +2252,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2353,7 +2272,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2376,7 +2295,7 @@ void node_loader_impl_thread(void * data)
 		uv_cond_signal(&node_impl->cond);
 
 		/* Unlock node implementation mutex */
-		uv_mutex_unlock(&mutex);
+		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
 	}
@@ -2436,18 +2355,18 @@ void node_loader_impl_thread(void * data)
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
 	/* Unlock node implementation mutex */
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&mutex);
+	uv_mutex_lock(&node_impl->mutex);
 
 	node_impl->result = result;
 
 	/* Unlock node implementation mutex */
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 }
 
 loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
@@ -2500,15 +2419,8 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	node_impl->result = 1;
 	node_impl->error_message = NULL;
 
-	/* Initialize thread data */
-	struct loader_impl_thread_data_type thread_data =
-	{
-		node_impl->mutex,
-		node_impl
-	};
-
 	/* Create NodeJS thread */
-	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &thread_data) != 0)
+	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
@@ -2539,7 +2451,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	/* Set initialize async data */
 	struct loader_impl_async_initialize_type async_initialize =
 	{
-		node_impl->mutex,
 		node_impl,
 		0
 	};
@@ -2586,7 +2497,6 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 	struct loader_impl_async_load_from_file_type async_data =
 	{
-		node_impl->mutex,
 		node_impl,
 		paths,
 		size,
@@ -2619,7 +2529,6 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 	struct loader_impl_async_load_from_memory_type async_data =
 	{
-		node_impl->mutex,
 		node_impl,
 		name,
 		buffer,
@@ -2665,7 +2574,6 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	struct loader_impl_async_clear_type async_data =
 	{
-		node_impl->mutex,
 		node_impl,
 		handle_ref
 	};
@@ -2698,7 +2606,6 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 	struct loader_impl_async_discover_type async_data =
 	{
-		node_impl->mutex,
 		node_impl,
 		handle_ref,
 		ctx
@@ -2721,26 +2628,16 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 void node_loader_impl_async_destroy(uv_async_t * async)
 {
-	loader_impl_async_destroy async_data;
-
 	loader_impl_node node_impl;
 
 	uint32_t ref_count = 0;
 
 	napi_status status;
 
-	uv_mutex_t mutex;
-
-	async_data = static_cast<loader_impl_async_destroy>(async->data);
+	node_impl = *(static_cast<loader_impl_node *>(async->data));
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&async_data->mutex);
-
-	/* Get mutex reference */
-	mutex = async_data->mutex;
-
-	/* Get node implementation */
-	node_impl = async_data->node_impl;
+	uv_mutex_lock(&node_impl->mutex);
 
 	/* Call destroy function */
 	{
@@ -2882,7 +2779,7 @@ void node_loader_impl_async_destroy(uv_async_t * async)
 	/* Signal destroy condition */
 	uv_cond_signal(&node_impl->cond);
 
-	uv_mutex_unlock(&mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 }
 
 void node_loader_impl_walk(uv_handle_t * handle, void * arg)
@@ -2912,15 +2809,9 @@ int node_loader_impl_destroy(loader_impl impl)
 		return 1;
 	}
 
-	struct loader_impl_async_destroy_type async_data =
-	{
-		node_impl->mutex,
-		node_impl
-	};
-
 	uv_mutex_lock(&node_impl->mutex);
 
-	node_impl->async_destroy.data = static_cast<void *>(&async_data);
+	node_impl->async_destroy.data = static_cast<void *>(&node_impl);
 
 	/* Execute destroy async callback */
 	uv_async_send(&node_impl->async_destroy);
@@ -2930,11 +2821,11 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	uv_mutex_unlock(&node_impl->mutex);
 
-	/* Wait for node thread to finish */
-	uv_thread_join(&node_impl->thread_id);
-
 	/* Clear condition syncronization object */
 	uv_cond_destroy(&node_impl->cond);
+
+	/* Wait for node thread to finish */
+	uv_thread_join(&node_impl->thread_id);
 
 	/* Clear mutex syncronization object */
 	uv_mutex_destroy(&node_impl->mutex);
