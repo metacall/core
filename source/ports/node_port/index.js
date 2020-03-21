@@ -46,6 +46,18 @@ const metacall_load_from_file = (tag, paths) => {
 	return addon.metacall_load_from_file(tag, paths);
 };
 
+const metacall_load_from_memory = (tag, code) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (Object.prototype.toString.call(code) !== '[object String]') {
+		throw Error('Code should be a string with the inline code to be loaded.');
+	}
+
+	return addon.metacall_load_from_memory(tag, code);
+};
+
 const metacall_inspect = () => {
 	const json_data = addon.metacall_inspect();
 
@@ -132,6 +144,7 @@ module.exports = {
 	metacall,
 	metacall_inspect,
 	metacall_load_from_file,
+	metacall_load_from_memory,
 	metacall_handle,
 
 	/* TODO: Remove this from user or provide better ways of configuring logs */

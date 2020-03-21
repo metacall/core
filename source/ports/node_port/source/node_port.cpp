@@ -861,6 +861,7 @@ napi_value metacall_node_load_from_memory(napi_env env, napi_callback_info info)
 
 	if (script == NULL)
 	{
+		free(tag);
 		napi_throw_error(env, NULL, "MetaCall could not load from memory, script allocation failed");
 		return NULL;
 	}
@@ -873,9 +874,14 @@ napi_value metacall_node_load_from_memory(napi_env env, napi_callback_info info)
 	// Load script from memory
 	if (metacall_load_from_memory(tag, script, script_length, NULL) != 0)
 	{
+		free(tag);
+		free(script);
 		napi_throw_error(env, NULL, "MetaCall could not load from memory");
 		return NULL;
 	}
+
+	free(tag);
+	free(script);
 
 	/* TODO: Return value and logs */
 	return NULL;
