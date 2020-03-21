@@ -38,6 +38,12 @@ if(NOT OPTION_BUILD_GUIX)
 	)
 
 	add_dependencies(${target} ${target}-depends)
+
+	install(DIRECTORY
+		${CMAKE_CURRENT_BINARY_DIR}/node_modules
+		DESTINATION ${INSTALL_LIB}
+		COMPONENT runtime
+	)
 endif()
 
 #
@@ -57,12 +63,6 @@ set_target_properties(${target}
 # Library
 install(FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js
-	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
-)
-
-install(DIRECTORY
-	${CMAKE_CURRENT_BINARY_DIR}/node_modules
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
