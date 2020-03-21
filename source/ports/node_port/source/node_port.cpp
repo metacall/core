@@ -768,7 +768,6 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 	return result;
 }
 
-// this function is the handler of the "metacall_load_from_file"
 napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
@@ -794,7 +793,7 @@ napi_value metacall_node_load_from_file(napi_env env, napi_callback_info info)
 		strncpy((char *)file_name_strings[i], c_strings, _result + 1);
 	}
 	if(_result == 0) return NULL;
-	int met_result = metacall_load_from_file(tagBuf, file_name_strings, sizeof(file_name_strings)/sizeof(file_name_strings[0]), NULL);
+	int met_result = metacall_load_from_file(tagBuf, file_name_strings, length_of_JS_array, NULL);
 	if (met_result > 0)
 	{
 		napi_throw_error(env, NULL, "MetaCall could not load from file");
