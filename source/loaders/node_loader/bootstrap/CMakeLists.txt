@@ -18,24 +18,26 @@ message(STATUS "Plugin ${target} bootstrap")
 #
 
 if(MSVC)
-	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
 else()
-	set(LOADER_LIBRARY_PATH "${PROJECT_BINARY_DIR}")
+	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 endif()
 
-if(OPTION_BUILD_GUIX)
-	add_custom_target(${target} ALL
+add_custom_target(${target} ALL
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}
+)
+
+if(NOT OPTION_BUILD_GUIX)
+	add_custom_target(${target}-depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${LOADER_LIBRARY_PATH}
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules ${BOOTSTRAP_OUTPUT_PATH}/node_modules
 	)
-else()
-	add_custom_target(${target} ALL
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${LOADER_LIBRARY_PATH}
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${LOADER_LIBRARY_PATH}
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${LOADER_LIBRARY_PATH}
-		COMMAND npm install
-	)
+
+	add_dependencies(${target} ${target}-depends)
 endif()
 
 #
@@ -54,13 +56,13 @@ set_target_properties(${target}
 
 # Library
 install(FILES
-	${LOADER_LIBRARY_PATH}/bootstrap.js
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
 
 install(DIRECTORY
-	${LOADER_LIBRARY_PATH}/node_modules
+	${CMAKE_CURRENT_BINARY_DIR}/node_modules
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

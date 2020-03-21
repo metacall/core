@@ -56,6 +56,26 @@ add_executable(${target}
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 #
+# Dependencies
+#
+
+if(NOT OPTION_BUILD_GUIX)
+	if(MSVC)
+		set(DEPENDS_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+	else()
+		set(DEPENDS_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
+	endif()
+
+	add_custom_target(${target}-depends
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install jsonwebtoken
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules ${DEPENDS_OUTPUT_PATH}/node_modules
+	)
+
+	add_dependencies(${target} ${target}-depends)
+endif()
+
+#
 # Project options
 #
 

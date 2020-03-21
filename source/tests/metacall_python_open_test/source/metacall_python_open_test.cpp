@@ -53,6 +53,25 @@ TEST_F(metacall_python_open_test, DefaultConstructor)
 		EXPECT_NE((int) 0, (int) strcmp(result, "<html><head></head><body>Error</body></html>"));
 
 		metacall_value_destroy(ret);
+
+		static const char str[] = "Hello World";
+
+		void * args[] =
+		{
+			metacall_value_create_string(str, sizeof(str) - 1)
+		};
+
+		ret = metacallv("login", args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		const char * token = metacall_value_to_string(ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(token, "eyJhbGciOiJIUzI1NiJ9.SGVsbG8gV29ybGQ.Iyc6PWVbK538giVdaInTeIO3jvvC1Vuy_czZUzoRRec"));
+
+		metacall_value_destroy(args[0]);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 
