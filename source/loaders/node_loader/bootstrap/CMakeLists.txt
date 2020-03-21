@@ -44,6 +44,13 @@ if(NOT OPTION_BUILD_GUIX)
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)
+else()
+	# Guix stores cherow dependency previously to the build in the output directory
+	install(DIRECTORY
+		${BOOTSTRAP_OUTPUT_PATH}/node_modules/cherow
+		DESTINATION ${INSTALL_LIB}/node_modules
+		COMPONENT runtime
+	)
 endif()
 
 #
