@@ -60,7 +60,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_CORE_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: root python ruby netcore2 nodejs file examples distributable tests scripts ports dynamic install pack # v8 coverage
+        METACALL_BUILD_OPTIONS: root python ruby netcore2 nodejs file examples distributable tests benchmarks scripts ports dynamic install pack # v8 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

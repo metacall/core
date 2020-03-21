@@ -334,6 +334,7 @@ sub_wasm(){
 
 # MetaCall
 sub_metacall(){
+	# TODO: Update this or deprecate it
 	echo "configure metacall"
 	cd $ROOT_DIR
 	git clone --recursive https://github.com/metacall/core.git

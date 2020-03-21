@@ -32,6 +32,8 @@ BUILD_FILE=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_DISTRIBUTABLE=0
+BUILD_TESTS=0
+BUILD_BENCHMARKS=0
 BUILD_PORTS=0
 BUILD_COVERAGE=0
 
@@ -95,6 +97,14 @@ sub_options() {
 			echo "Build distributable libraries"
 			BUILD_DISTRIBUTABLE=1
 		fi
+		if [ "$option" = 'tests' ]; then
+			echo "Build all tests"
+			BUILD_TESTS=1
+		fi
+		if [ "$option" = 'benchmarks' ]; then
+			echo "Build all benchmarks"
+			BUILD_BENCHMARKS=1
+		fi
 		if [ "$option" = 'ports' ]; then
 			echo "Build all ports"
 			BUILD_PORTS=1
@@ -126,6 +136,10 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_PY=On"
 		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_PY=On"
+		fi
 	fi
 
 	# Ruby
@@ -134,6 +148,10 @@ sub_configure() {
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RB=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RB=On"
 		fi
 	fi
 
@@ -146,6 +164,10 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
 		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+		fi
 	fi
 
 	# NetCore 2
@@ -157,6 +179,10 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
 		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+		fi
 	fi
 
 	# V8
@@ -166,6 +192,10 @@ sub_configure() {
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_JS=On"
 		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_JS=On"
+		fi
 	fi
 
 	# NodeJS
@@ -174,6 +204,10 @@ sub_configure() {
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_NODE=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_NODE=On"
 		fi
 	fi
 
@@ -198,6 +232,20 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_DIST_LIBS=On"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_DIST_LIBS=Off"
+	fi
+
+	# Tests
+	if [ $BUILD_TESTS = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_TESTS=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_TESTS=Off"
+	fi
+
+	# Benchmarks
+	if [ $BUILD_BENCHMARKS = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_BENCHMARKS=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_BENCHMARKS=Off"
 	fi
 
 	# Ports
@@ -229,7 +277,7 @@ sub_help() {
 	echo "	python: build with python support"
 	echo "	ruby: build with ruby support"
 	echo "	netcore: build with netcore support"
-	echo "	netcore: build with netcore 2 support"
+	echo "	netcore2: build with netcore 2 support"
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
 	echo "	file: build with file support"
@@ -237,6 +285,7 @@ sub_help() {
 	echo "	examples: build all examples"
 	echo "	distributable: build distributable libraries"
 	echo "	tests: build and run all tests"
+	echo "	benchmarks: build and run all benchmarks"
 	echo "	install: install all libraries"
 	echo "	static: build as static libraries"
 	echo "	dynamic: build as dynamic libraries"
