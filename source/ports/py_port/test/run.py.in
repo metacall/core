@@ -11,6 +11,12 @@ import unittest
 
 class py_port_test(unittest.TestCase):
 
+	# MetaCall (Mock)
+	def test_mock(self):
+		self.assertEqual(metacall.metacall_load_from_file('mock', ['test.mock']), 0);
+
+		self.assertEqual(metacall.metacall('three_str', 'a', 'b', 'c'), 'Hello World');
+
 	# MetaCall (Python from memory)
 	def test_python_memory(self):
 		script = '#!/usr/bin/env python3\ndef inline_multiply_mem(left, right):\n\treturn left * right\n';
