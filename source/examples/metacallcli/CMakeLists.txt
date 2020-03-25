@@ -148,6 +148,13 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		)
 	endif()
+
+	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
+		add_test(NAME ${target}-py-port
+		COMMAND ${TEST_COMMAND} "echo 'load py test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}>"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
+	endif()
 endif()
 
 #
