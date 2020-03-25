@@ -801,21 +801,30 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 
 	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(self);
 
-	signature s = function_signature(invoke_state->callback);
+	signature s;
 
-	const size_t args_size = signature_count(s);
+	size_t args_size, args_count, min_args_size;
 
-	size_t args_count;
-
-	/* type ret_type = signature_get_return(s); */
-
-	Py_ssize_t callee_args_size = PyTuple_Size(args);
-
-	const size_t min_args_size = args_size < (size_t)callee_args_size ? args_size : (size_t)callee_args_size;
+	Py_ssize_t callee_args_size;
 
 	void ** value_args;
 
 	value ret;
+
+	if (invoke_state == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error when invoking a function, state cannot be recovered, avoiding the function call");
+
+		return Py_None;
+	}
+
+	s = function_signature(invoke_state->callback);
+
+	args_size = signature_count(s);
+
+	callee_args_size = PyTuple_Size(args);
+
+	min_args_size = args_size < (size_t)callee_args_size ? args_size : (size_t)callee_args_size;
 
 	if (args_size != (size_t)callee_args_size)
 	{

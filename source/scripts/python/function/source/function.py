@@ -20,16 +20,20 @@ def function_ret_lambda(y):
 	return lambda x: function_print_and_return(x) * y
 
 def function_currying(y):
-	return lambda x: lambda z: x * z * y
+	return lambda x: lambda z: x * z * y;
 
 def function_currying_more(y):
-	return lambda x: lambda z: lambda w: lambda n: x * z * w * n * y
-
-def function_chain(x):
-	return lambda n: x(x)(n)
-
-def function_factorial(x):
-	return lambda n: 1 if n == 0 else n * x(x)(n - 1)
+	return lambda x: lambda z: lambda w: lambda n: x * z * w * n * y;
 
 def function_pass():
-	pass
+	pass;
+
+def function_sum(value, f):
+	return 0 if value <= 0 else value + f(value - 1, function_sum);
+
+def function_chain(x):
+	return lambda n: x(x)(n);
+
+def function_factorial(x):
+	return lambda n: 1 if n == 0 else n * x(x)(n - 1);
+

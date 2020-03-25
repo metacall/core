@@ -133,6 +133,13 @@ describe('metacall', () => {
 			// Receiving undefined from a function that returns nothing in Python
 			assert.strictEqual(f.function_pass(), undefined);
 
+			// Double recursion
+			/*
+			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
+			assert.strictEqual(sum(5, f.function_sum), 15);
+			assert.strictEqual(f.function_sum(5, sum), 15);
+			*/
+
 			// Factorial composition (@trgwii)
 			/*
 			const fact = f.function_factorial(c => v => v);
