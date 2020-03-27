@@ -264,6 +264,17 @@ void * metacallv(const char * name, void * args[])
 	return metacallfv(loader_get(name), args);
 }
 
+void * metacallhv(void * handle, const char * name, void * args[])
+{
+	(void)handle;
+	(void)name;
+	(void)args;
+
+	/* TODO */
+
+	return NULL;
+}
+
 void * metacall(const char * name, ...)
 {
 	function f = loader_get(name);
