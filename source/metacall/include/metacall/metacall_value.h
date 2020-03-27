@@ -307,6 +307,44 @@ METACALL_API enum metacall_value_id metacall_value_id(void * v);
 
 /**
 *  @brief
+*    Returns the owner of the value, useful for lifecycles
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Pointer to the owner of the value,
+*    null means the value is not owned by anybody
+*/
+METACALL_API void * metacall_value_owner(void * v);
+
+/**
+*  @brief
+*    Set up the value ownership, overwrites the previous owner
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] owner
+*    Reference to the new owner
+*/
+METACALL_API void metacall_value_own(void * v, void * owner);
+
+/**
+*  @brief
+*    Deep copies the value @v, the result copy resets
+*    the reference counter and ownership
+*
+*  @param[in] v
+*    Reference to the value to be copied
+*
+*  @return
+*    Copy of the value @v on success, null otherwhise
+*/
+METACALL_API void * metacall_value_copy(void * v);
+
+/**
+*  @brief
 *    Convert value @v to boolean
 *
 *  @param[in] v

@@ -156,6 +156,9 @@ describe('metacall', () => {
 			assert.notStrictEqual(py_factorial, undefined);
 			assert.strictEqual(py_factorial(5), 120);
 			*/
+
+			// Opaque pointer for class instances
+			assert.strictEqual(f.function_capsule_method(f.function_capsule_new_class()), 'hello world');
 		});
 	});
 });
