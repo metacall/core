@@ -43,6 +43,8 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 		};
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+
+		/* TODO: Implement properly class and object reflection and methods */
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 
