@@ -160,6 +160,33 @@ TEST_F(metacall_function_test, DefaultConstructor)
 		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
 
 		metacall_value_destroy(ret);
+
+		/* TODO: This is a workaround to achieve class / object callbacks between languages. */
+		/* It provides interoperatibility but without proper reflection. */
+		/* Enough to implement callbacks with opaque pointers between languages. */
+
+		ret = metacallv("function_capsule_new_class", metacall_null_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_PTR, (enum metacall_value_id) metacall_value_id(ret));
+
+		void * function_capsule_method_args[] =
+		{
+			ret
+		};
+
+		ret = metacallv("function_capsule_method", function_capsule_method_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_STRING, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((int) 0, (int) strcmp("hello world", metacall_value_to_string(ret)));
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(function_capsule_method_args[0]);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 

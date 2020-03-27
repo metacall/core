@@ -39,6 +39,8 @@ struct value_impl_type
 {
 	size_t bytes;
 	size_t ref_count;
+	void * owner;
+	value_finalizer_cb finalizer;
 };
 
 /* -- Private Methods -- */
@@ -77,8 +79,9 @@ value value_alloc(size_t bytes)
 	}
 
 	impl->bytes = bytes;
-
 	impl->ref_count = 1;
+	impl->owner = NULL;
+	impl->finalizer = NULL;
 
 	return (value)(((uintptr_t)impl) + sizeof(struct value_impl_type));
 }
@@ -150,6 +153,38 @@ void value_ref_dec(value v)
 	}
 }
 
+void * value_owner(value v)
+{
+	value_impl impl = value_descriptor(v);
+
+	if (impl == NULL)
+	{
+		return NULL;
+	}
+
+	return impl->owner;
+}
+
+void value_own(value v, void * owner)
+{
+	value_impl impl = value_descriptor(v);
+
+	if (impl != NULL)
+	{
+		impl->owner = owner;
+	}
+}
+
+void value_finalizer(value v, value_finalizer_cb finalizer)
+{
+	value_impl impl = value_descriptor(v);
+
+	if (impl != NULL)
+	{
+		impl->finalizer = finalizer;
+	}
+}
+
 void * value_data(value v)
 {
 	if (v == NULL)
@@ -195,6 +230,11 @@ void value_destroy(value v)
 
 	if (impl != NULL && impl->ref_count <= 1)
 	{
+		if (impl->finalizer != NULL)
+		{
+			impl->finalizer(v, impl->owner);
+		}
+
 		free(impl);
 	}
 }

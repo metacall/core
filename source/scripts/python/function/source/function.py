@@ -37,3 +37,13 @@ def function_chain(x):
 def function_factorial(x):
 	return lambda n: 1 if n == 0 else n * x(x)(n - 1);
 
+class MyClass:
+	def f(self):
+		return 'hello world';
+
+def function_capsule_new_class():
+	return MyClass();
+
+def function_capsule_method(klass):
+	print('Executing class method with instance passed as opaque pointer:', klass.f());
+	return klass.f();

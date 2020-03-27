@@ -102,6 +102,8 @@ static int py_loader_impl_discover_func_args_count(PyObject * func);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject * func, function f);
 
+static void py_loader_impl_value_owner_finalize(value v, void * owner);
+
 static PyMethodDef py_loader_impl_function_type_invoke_defs[] =
 {
 	{
@@ -125,6 +127,21 @@ static struct PyModuleDef py_loader_impl_function_type_invoke_module =
 	NULL,
 	NULL
 };
+
+static void * py_loader_impl_value_ownership = NULL;
+
+void py_loader_impl_value_owner_finalize(value v, void * owner)
+{
+	type_id id = value_type_id(v);
+
+	if (owner == &py_loader_impl_value_ownership)
+	{
+		if (id == TYPE_PTR)
+		{
+			Py_XDECREF(value_to_ptr(v));
+		}
+	}
+}
 
 int type_py_interface_create(type t, type_impl impl)
 {
@@ -498,7 +515,19 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized python type");
+		/* Return the value as opaque pointer */
+		v = value_create_ptr(obj);
+
+		/* Set up the ownership to python loader */
+		value_own(v, &py_loader_impl_value_ownership);
+
+		/* Create reference to the value so it does not get garbage collected */
+		Py_INCREF(obj);
+
+		/* Set up finalizer in order to free the value */
+		value_finalizer(v, &py_loader_impl_value_owner_finalize);
+
+		log_write("metacall", LOG_LEVEL_WARNING, "Unrecognized python type");
 	}
 
 	return v;
@@ -598,13 +627,21 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 	{
 		void * ptr = value_to_ptr(v);
 
-		#if PY_MAJOR_VERSION == 2
+		if (value_owner(v) == &py_loader_impl_value_ownership)
+		{
+			return ptr;
+		}
+		else
+		{
+			#if PY_MAJOR_VERSION == 2
 
-			/* TODO */
+				/* TODO */
 
-		#elif PY_MAJOR_VERSION == 3
-			return PyCapsule_New(ptr, NULL, NULL);
-		#endif
+			#elif PY_MAJOR_VERSION == 3
+				return PyCapsule_New(ptr, NULL, NULL);
+			#endif
+		}
+
 	}
 	else if (id == TYPE_FUNCTION)
 	{
