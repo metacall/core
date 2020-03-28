@@ -53,6 +53,18 @@ typedef int type_id;
 
 /**
 *  @brief
+*    Obtain a human readable form of the type id @id
+*
+*  @param[in] id
+*    Type id to be converted into string
+*
+*  @return
+*    String representing a readable name for @id
+*/
+REFLECT_API const char * type_id_name(type_id id);
+
+/**
+*  @brief
 *    Check if type id is boolean value (bool)
 *
 *  @param[in] id

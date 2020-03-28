@@ -117,7 +117,8 @@ sub_options() {
 }
 
 sub_configure() {
-	BUILD_STRING="-DOPTION_BUILD_LOADERS=On \
+	BUILD_STRING="-DOPTION_BUILD_LOG_PRETTY=Off \
+			-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
 
 	# Scripts

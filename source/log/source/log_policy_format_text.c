@@ -22,6 +22,7 @@
 
 #define LOG_POLICY_FORMAT_TEXT_STR_DEBUG "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
 #define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIuS " @%s : "
+#define LOG_POLICY_FORMAT_TEXT_STR_PRETTY "\x1b[32m%s\x1b[0m: "
 
 /* -- Macros -- */
 
@@ -130,36 +131,57 @@ static size_t log_policy_format_text_size(log_policy policy, const log_record re
 
 static const char * log_policy_format_text_serialize_impl_format(enum log_level_id log_level, unsigned int flags)
 {
-	if (log_level == LOG_LEVEL_DEBUG)
+	#if (LOG_POLICY_FORMAT_PRETTY == 1)
 	{
+		(void)log_level;
+
 		if (flags & LOG_POLICY_FORMAT_TEXT_NEWLINE)
 		{
-			static const char format_debug_newline[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s\n";
+			static const char format_debug_newline[] = LOG_POLICY_FORMAT_TEXT_STR_PRETTY "%s\n";
 
 			return format_debug_newline;
 		}
 		else
 		{
-			static const char format_debug[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s";
+			static const char format_debug[] = LOG_POLICY_FORMAT_TEXT_STR_PRETTY "%s";
 
 			return format_debug;
 		}
 	}
-	else
+	#else
 	{
-		if (flags & LOG_POLICY_FORMAT_TEXT_NEWLINE)
+		if (log_level == LOG_LEVEL_DEBUG)
 		{
-			static const char format_release_newline[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s\n";
+			if (flags & LOG_POLICY_FORMAT_TEXT_NEWLINE)
+			{
+				static const char format_debug_newline[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s\n";
 
-			return format_release_newline;
+				return format_debug_newline;
+			}
+			else
+			{
+				static const char format_debug[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG "%s";
+
+				return format_debug;
+			}
 		}
 		else
 		{
-			static const char format_release[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s";
+			if (flags & LOG_POLICY_FORMAT_TEXT_NEWLINE)
+			{
+				static const char format_release_newline[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s\n";
 
-			return format_release;
+				return format_release_newline;
+			}
+			else
+			{
+				static const char format_release[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE "%s";
+
+				return format_release;
+			}
 		}
 	}
+	#endif
 }
 
 static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size)
@@ -206,37 +228,48 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 {
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 
-	log_aspect aspect = log_policy_aspect(policy);
-
-	log_impl impl = log_aspect_parent(aspect);
-
 	int header_length = 0, body_length = 0;
 
 	void * buffer_body = NULL;
 
 	struct log_record_va_list_type * variable_args;
 
-	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
+	#if (LOG_POLICY_FORMAT_PRETTY == 1)
 	{
-		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG;
+		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_PRETTY;
 
 		header_length = snprintf(buffer, size, header_format,
-			ctime(log_record_time(record)),
-			log_record_thread_id(record),
-			log_record_line(record),
-			log_record_func(record),
-			log_record_file(record),
 			log_level_to_string(log_record_level(record)));
 	}
-	else
+	#else
 	{
-		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE;
+		log_aspect aspect = log_policy_aspect(policy);
 
-		header_length = snprintf(buffer, size, header_format,
-			ctime(log_record_time(record)),
-			log_record_thread_id(record),
-			log_level_to_string(log_record_level(record)));
+		log_impl impl = log_aspect_parent(aspect);
+
+		if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
+		{
+			static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_DEBUG;
+
+			header_length = snprintf(buffer, size, header_format,
+				ctime(log_record_time(record)),
+				log_record_thread_id(record),
+				log_record_line(record),
+				log_record_func(record),
+				log_record_file(record),
+				log_level_to_string(log_record_level(record)));
+		}
+		else
+		{
+			static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_RELEASE;
+
+			header_length = snprintf(buffer, size, header_format,
+				ctime(log_record_time(record)),
+				log_record_thread_id(record),
+				log_level_to_string(log_record_level(record)));
+		}
 	}
+	#endif
 
 	if (header_length <= 0)
 	{

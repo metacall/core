@@ -62,7 +62,14 @@ endif()
 # Compile definitions
 #
 
+if(OPTION_BUILD_LOG_PRETTY)
+	set(LOG_POLICY_FORMAT_PRETTY_VALUE 1)
+else()
+	set(LOG_POLICY_FORMAT_PRETTY_VALUE 0)
+endif()
+
 set(DEFAULT_COMPILE_DEFINITIONS
+	LOG_POLICY_FORMAT_PRETTY=${LOG_POLICY_FORMAT_PRETTY_VALUE}
 	SYSTEM_${SYSTEM_NAME_UPPER}
 )
 
@@ -72,7 +79,7 @@ if(WIN32)
 		_SCL_SECURE_NO_WARNINGS	# Calling any one of the potentially unsafe methods in the Standard C++ Library
 		_CRT_SECURE_NO_WARNINGS	# Calling any one of the potentially unsafe methods in the CRT Library
 	)
-endif ()
+endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR MAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 	set(DEFAULT_COMPILE_DEFINITIONS
