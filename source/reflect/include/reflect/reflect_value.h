@@ -88,6 +88,19 @@ REFLECT_API value value_copy(value v);
 
 /**
 *  @brief
+*    Copies the ownership from @src to @dst, including the finalizer,
+*    and resets the owner and finalizer of @src
+*
+*  @param[in] src
+*    Source value which will lose the ownership
+*
+*  @param[in] dst
+*    Destination value which will recieve the ownership
+*/
+REFLECT_API void value_move(value src, value dst);
+
+/**
+*  @brief
 *    Returns the size of the value
 *
 *  @param[in] v

@@ -47,3 +47,6 @@ def function_capsule_new_class():
 def function_capsule_method(klass):
 	print('Executing class method with instance passed as opaque pointer:', klass.f());
 	return klass.f();
+
+def function_capsule_cb(cb):
+	return cb(MyClass());

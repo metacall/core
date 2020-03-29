@@ -194,6 +194,11 @@ void * metacall_value_copy(void * v)
 	return value_type_copy(v);
 }
 
+void metacall_value_move(void * src, void * dst)
+{
+	value_move(src, dst);
+}
+
 boolean metacall_value_to_bool(void * v)
 {
 	assert(value_type_id(v) == TYPE_BOOL);

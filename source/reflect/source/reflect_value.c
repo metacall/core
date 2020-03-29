@@ -116,6 +116,21 @@ value value_copy(value v)
 	return copy;
 }
 
+void value_move(value src, value dst)
+{
+	if (src != NULL && dst != NULL)
+	{
+		value_impl impl_src = value_descriptor(src);
+		value_impl impl_dst = value_descriptor(dst);
+
+		impl_dst->owner = impl_src->owner;
+		impl_dst->finalizer = impl_src->finalizer;
+
+		impl_src->owner = NULL;
+		impl_src->finalizer = NULL;
+	}
+}
+
 size_t value_size(value v)
 {
 	value_impl impl = value_descriptor(v);

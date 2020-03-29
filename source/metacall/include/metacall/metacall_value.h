@@ -333,7 +333,7 @@ METACALL_API void metacall_value_own(void * v, void * owner);
 /**
 *  @brief
 *    Deep copies the value @v, the result copy resets
-*    the reference counter and ownership
+*    the reference counter and ownership, including the finalizer
 *
 *  @param[in] v
 *    Reference to the value to be copied
@@ -342,6 +342,19 @@ METACALL_API void metacall_value_own(void * v, void * owner);
 *    Copy of the value @v on success, null otherwhise
 */
 METACALL_API void * metacall_value_copy(void * v);
+
+/**
+*  @brief
+*    Copies the ownership from @src to @dst, including the finalizer,
+*    and resets the owner and finalizer of @src
+*
+*  @param[in] src
+*    Source value which will lose the ownership
+*
+*  @param[in] dst
+*    Destination value which will recieve the ownership
+*/
+METACALL_API void metacall_value_move(void * src, void * dest);
 
 /**
 *  @brief

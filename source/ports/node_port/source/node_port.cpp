@@ -289,7 +289,10 @@ inline void metacall_node_exception(napi_env env, napi_status status)
 			metacall_node_exception(env, status);
 
 			/* TODO: Notify MetaCall error handling system when it is implemented */
-			/* error_raise(str); */
+			/* Meanwhile, throw it again */
+			status = napi_throw_error(env, nullptr, str);
+
+			metacall_node_exception(env, status);
 
 			free(str);
 		}
@@ -694,7 +697,7 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 		// Copy value and set the ownership, the old value will be deleted after the call
 		void * c = metacall_value_copy(arg_value);
 
-		metacall_value_own(c, metacall_value_owner(arg_value));
+		metacall_value_move(arg_value, c);
 
 		status = napi_create_external(env, c, nullptr, nullptr, &v);
 
