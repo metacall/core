@@ -33,8 +33,7 @@
 
 #include <Python.h>
 
-#define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_MOD "____metacall_py_loader_impl_function_type_invoke_module____"
-#define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "py_loader_impl_function_type_invoke"
+#define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
 
 typedef struct loader_impl_py_function_type
 {
@@ -73,9 +72,6 @@ typedef struct loader_impl_py_type
 		PyObject * gc_debug_stats;
 	#endif
 
-	PyObject * function_type_invoke_mod;
-	PyObject * function_type_invoke_func;
-
 } * loader_impl_py;
 
 typedef struct loader_impl_py_function_type_invoke_state_type
@@ -113,19 +109,6 @@ static PyMethodDef py_loader_impl_function_type_invoke_defs[] =
 		PyDoc_STR("Implements a trampoline for functions as values in the type system.")
 	},
 	{ NULL, NULL, 0, NULL }
-};
-
-static struct PyModuleDef py_loader_impl_function_type_invoke_module =
-{
-	PyModuleDef_HEAD_INIT,
-	PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_MOD,
-	PyDoc_STR("Module for providing support for functions as values in the MetaCall type system."),
-	sizeof(struct loader_impl_py_function_type_invoke_state_type),
-	py_loader_impl_function_type_invoke_defs,
-	NULL,
-	NULL,
-	NULL,
-	NULL
 };
 
 static void * py_loader_impl_value_ownership = NULL;
@@ -464,13 +447,17 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 		/* Check if we are passing our own hook to the callback */
 		if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
 		{
-			loader_impl_py py_impl = loader_impl_get(impl);
+			PyObject * invoke_state_capsule = PyCFunction_GET_SELF(obj);
 
-			loader_impl_py_function_type_invoke_state invoke_state;
+			loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(invoke_state_capsule, NULL);
 
-			invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(py_impl->function_type_invoke_mod);
+			function callback = invoke_state->callback;
 
-			return value_create_function(invoke_state->callback);
+			Py_DECREF(invoke_state_capsule);
+
+			free(invoke_state);
+
+			return value_create_function(callback);
 		}
 
 		discover_args_count = py_loader_impl_discover_func_args_count(obj);
@@ -527,7 +514,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 		/* Set up finalizer in order to free the value */
 		value_finalizer(v, &py_loader_impl_value_owner_finalize);
 
-		log_write("metacall", LOG_LEVEL_WARNING, "Unrecognized python type");
+		log_write("metacall", LOG_LEVEL_WARNING, "Unrecognized Python Type: %s", Py_TYPE(obj)->tp_name);
 	}
 
 	return v;
@@ -645,13 +632,23 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		loader_impl_py_function_type_invoke_state invoke_state;
+		loader_impl_py_function_type_invoke_state invoke_state = malloc(sizeof(struct loader_impl_py_function_type_invoke_state_type));
+		PyObject * invoke_state_capsule;
 
-		invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(py_impl->function_type_invoke_mod);
+		if (invoke_state == NULL)
+		{
+			return NULL;
+		}
 
+		invoke_state->impl = impl;
+		invoke_state->py_impl = py_impl;
 		invoke_state->callback = value_to_function(v);
 
-		return py_impl->function_type_invoke_func;
+		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
+
+		Py_INCREF(invoke_state_capsule);
+
+		return PyCFunction_New(py_loader_impl_function_type_invoke_defs, invoke_state_capsule);
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -841,8 +838,6 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 {
 	static void * null_args[1] = { NULL };
 
-	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(self);
-
 	signature s;
 
 	size_t args_size, args_count, min_args_size;
@@ -852,6 +847,8 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 	void ** value_args;
 
 	value ret;
+
+	loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(self, NULL);
 
 	if (invoke_state == NULL)
 	{
@@ -1165,7 +1162,6 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
 	loader_impl_py py_impl;
-	loader_impl_py_function_type_invoke_state invoke_state;
 
 	PyGILState_STATE gstate;
 
@@ -1221,17 +1217,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 		return NULL;
 	}
-
-	/* Create module for allowing callbacks */
-	py_impl->function_type_invoke_mod = PyModule_Create(&py_loader_impl_function_type_invoke_module);
-	py_impl->function_type_invoke_func = PyObject_GetAttrString(py_impl->function_type_invoke_mod, PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC);
-
-	/* Store python loader into the module state */
-	invoke_state = (loader_impl_py_function_type_invoke_state)PyModule_GetState(py_impl->function_type_invoke_mod);
-
-	invoke_state->impl = impl;
-	invoke_state->py_impl = py_impl;
-	invoke_state->callback = NULL;
 
 	PyGILState_Release(gstate);
 
@@ -1880,9 +1865,6 @@ int py_loader_impl_destroy(loader_impl impl)
 			Py_DECREF(py_impl->gc_module);
 		}
 		#endif
-
-		Py_XDECREF(py_impl->function_type_invoke_mod);
-		Py_XDECREF(py_impl->function_type_invoke_func);
 
 		if (Py_IsInitialized() != 0)
 		{

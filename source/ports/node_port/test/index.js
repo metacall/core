@@ -159,6 +159,9 @@ describe('metacall', () => {
 
 			// Opaque pointer for class instances
 			assert.strictEqual(f.function_capsule_method(f.function_capsule_new_class()), 'hello world');
+
+			// Opaque pointer for class instances with callback
+			assert.strictEqual(f.function_capsule_cb((klass) => f.function_capsule_method(klass)), 'hello world');
 		});
 	});
 });
