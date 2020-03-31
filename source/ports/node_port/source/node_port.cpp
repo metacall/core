@@ -514,8 +514,6 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 	{
 		void * f = metacall_function("__metacall_node_callback_value_to_napi__");
 		metacall_node_callback_closure closure = static_cast<metacall_node_callback_closure>(malloc(sizeof(struct metacall_node_callback_closure_type)));
-		napi_value length;
-		uint32_t argc;
 
 		closure->env = env;
 
@@ -528,18 +526,6 @@ void * metacall_node_napi_to_value(/*loader_impl_node node_impl,*/ napi_env env,
 		status = napi_create_reference(env, v, 1, &closure->callback_ref);
 
 		metacall_node_exception(env, status);
-
-		// Get number of arguments to the callback (this workaround should be reviewed)
-		status = napi_get_named_property(env, v, "length", &length);
-
-		metacall_node_exception(env, status);
-
-		status = napi_get_value_uint32(env, length, &argc);
-
-		metacall_node_exception(env, status);
-
-		// Workaround for accepting variable arguments
-		metacall_function_resize(f, (size_t)argc);
 
 		return metacall_value_create_function_closure(f, (void *)closure);
 	}
@@ -711,19 +697,7 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 	{
 		void * f = metacall_value_to_function(arg_value);
 
-		size_t length = metacall_function_size(f);
-
-		napi_value length_v;
-
 		status = napi_create_function(env, NULL, 0, metacall_node_callback_napi_to_value, f, &v);
-
-		metacall_node_exception(env, status);
-
-		status = napi_create_uint32(env, static_cast<uint32_t>(length), &length_v);
-
-		metacall_node_exception(env, status);
-
-		status = napi_set_named_property(env, v, "length", length_v);
 
 		metacall_node_exception(env, status);
 	}
