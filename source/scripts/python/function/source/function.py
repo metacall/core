@@ -35,7 +35,7 @@ def function_chain(x):
 	return lambda n: x(x)(n);
 
 def function_factorial(x):
-	return lambda n: 1 if n == 0 else n * x(x)(n - 1);
+	return lambda n: 1 if n <= 0 else n * x(x)(n - 1);
 
 class MyClass:
 	def f(self):
