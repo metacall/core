@@ -173,13 +173,13 @@ const char * rb_type_deserialize(VALUE v, value * result)
 	return NULL;
 }
 
-function_return function_rb_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
 
 	signature s = function_signature(func);
 
-	const size_t args_size = signature_count(s);
+	const size_t args_size = size;
 
 	VALUE result_value = Qnil;
 
@@ -339,13 +339,14 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 	return NULL;
 }
 
-function_return function_rb_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_rb_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;

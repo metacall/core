@@ -317,7 +317,7 @@ int function_js_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_js_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_js_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_js_function js_func = static_cast<loader_impl_js_function>(impl);
 
@@ -325,17 +325,15 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 
 	signature s = function_signature(func);
 
-	const size_t args_size = signature_count(s);
-
 	Local<Value> result;
 
-	if (args_size > 0)
+	if (size > 0)
 	{
-		std::vector<Local<Value>> value_args(args_size);
+		std::vector<Local<Value>> value_args(size);
 
 		size_t args_count;
 
-		for (args_count = 0; args_count < args_size; ++args_count)
+		for (args_count = 0; args_count < size; ++args_count)
 		{
 			type t = signature_get_type(s, args_count);
 
@@ -529,13 +527,14 @@ function_return function_js_interface_invoke(function func, function_impl impl, 
 	return NULL;
 }
 
-function_return function_js_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_js_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;

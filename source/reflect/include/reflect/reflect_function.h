@@ -44,9 +44,9 @@ typedef value (*function_reject_callback)(value, void *);
 
 typedef int (*function_impl_interface_create)(function, function_impl);
 
-typedef function_return (*function_impl_interface_invoke)(function, function_impl, function_args);
+typedef function_return (*function_impl_interface_invoke)(function, function_impl, function_args, size_t);
 
-typedef function_return (*function_impl_interface_await)(function, function_impl, function_args, function_resolve_callback, function_reject_callback, void *);
+typedef function_return (*function_impl_interface_await)(function, function_impl, function_args, size_t, function_resolve_callback, function_reject_callback, void *);
 
 typedef void (*function_impl_interface_destroy)(function, function_impl);
 
@@ -63,8 +63,6 @@ typedef function_interface (*function_impl_interface_singleton)(void);
 
 REFLECT_API function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
 
-REFLECT_API int function_resize(function func, size_t count);
-
 REFLECT_API int function_increment_reference(function func);
 
 REFLECT_API int function_decrement_reference(function func);
@@ -79,9 +77,9 @@ REFLECT_API signature function_signature(function func);
 
 REFLECT_API value function_metadata(function func);
 
-REFLECT_API function_return function_call(function func, function_args args);
+REFLECT_API function_return function_call(function func, function_args args, size_t size);
 
-REFLECT_API function_return function_await(function func, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
+REFLECT_API function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
 
 REFLECT_API void function_destroy(function func);
 

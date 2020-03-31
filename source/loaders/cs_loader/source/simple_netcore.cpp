@@ -21,21 +21,21 @@
 #include <cs_loader/simple_netcore.h>
 
 #include <cs_loader/netcore.h>
-#if defined(__linux) | defined( linux)
-#include <cs_loader/netcore_linux.h>
+#if defined(__linux) | defined(linux)
+#	include <cs_loader/netcore_linux.h>
 #else
-#include <cs_loader/netcore_win.h>
+#	include <cs_loader/netcore_win.h>
 #endif
 
 netcore_handle simple_netcore_create(char * dotnet_root, char * dotnet_loader_assembly_path)
 {
-	#if defined(__linux) | defined( linux)
+	#if defined(__linux) | defined(linux)
 		netcore_linux * netcore_impl = new netcore_linux(dotnet_root, dotnet_loader_assembly_path);
 	#else
 		netcore_win * netcore_impl = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
 	#endif
 
-    bool result = netcore_impl->start();
+	bool result = netcore_impl->start();
 
 	if (result == false)
 	{
@@ -60,7 +60,7 @@ void simple_netcore_destroy(netcore_handle handle)
 	delete core;
 }
 
-void  simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size)
+void simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size)
 {
 	netcore * core = (netcore*)handle;
 
@@ -70,7 +70,7 @@ void  simple_netcore_load_script_from_files(netcore_handle handle, char * files[
 	}
 }
 
-void  simple_netcore_load_script_from_assembly(netcore_handle handle, char * file)
+void simple_netcore_load_script_from_assembly(netcore_handle handle, char * file)
 {
 	netcore * core = (netcore*)handle;
 
@@ -80,7 +80,7 @@ void  simple_netcore_load_script_from_assembly(netcore_handle handle, char * fil
 	}
 }
 
-void  simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size)
+void simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size)
 {
 	netcore * core = (netcore*)handle;
 
@@ -91,14 +91,14 @@ void  simple_netcore_load_script_from_memory(netcore_handle handle, const char *
 
 	}
 }
-execution_result *  simple_netcore_invoke(netcore_handle handle, const char * func)
+execution_result * simple_netcore_invoke(netcore_handle handle, const char * func)
 {
 	netcore * core = (netcore*)handle;
 
 	return core->execute((char*)func);
 }
 
-execution_result *  simple_netcore_invoke_with_params(netcore_handle handle, const char * func, parameters * params)
+execution_result * simple_netcore_invoke_with_params(netcore_handle handle, const char * func, parameters * params)
 {
 	netcore * core = (netcore*)handle;
 

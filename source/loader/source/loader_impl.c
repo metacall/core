@@ -556,9 +556,9 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 
 	if (func_init != NULL)
 	{
-		void * unused[1] = { NULL };
+		void * null_args[1] = { NULL };
 
-		function_return ret = function_call(func_init, unused);
+		function_return ret = function_call(func_init, null_args, 0);
 
 		if (ret != NULL)
 		{

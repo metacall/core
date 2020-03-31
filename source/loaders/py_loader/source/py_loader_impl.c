@@ -662,13 +662,13 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 	return NULL;
 }
 
-function_return function_py_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_py_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 
 	signature s = function_signature(func);
 
-	const size_t args_size = signature_count(s);
+	const size_t args_size = size;
 
 	type ret_type = signature_get_return(s);
 
@@ -765,13 +765,14 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	return NULL;
 }
 
-function_return function_py_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_py_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;
@@ -838,9 +839,7 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 {
 	static void * null_args[1] = { NULL };
 
-	signature s;
-
-	size_t args_size, args_count, min_args_size;
+	size_t args_size, args_count;
 
 	Py_ssize_t callee_args_size;
 
@@ -857,20 +856,11 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 		return Py_None;
 	}
 
-	s = function_signature(invoke_state->callback);
-
-	args_size = signature_count(s);
-
 	callee_args_size = PyTuple_Size(args);
 
-	min_args_size = args_size < (size_t)callee_args_size ? args_size : (size_t)callee_args_size;
+	args_size = callee_args_size < 0 ? 0 : (size_t)callee_args_size;
 
-	if (args_size != (size_t)callee_args_size)
-	{
-		log_write("metacall", LOG_LEVEL_WARNING, "Callback being executed without different number of arguments %u (signature) != %u (call)", args_size, callee_args_size);
-	}
-
-	value_args = min_args_size == 0 ? null_args : malloc(sizeof(void *) * min_args_size);
+	value_args = args_size == 0 ? null_args : malloc(sizeof(void *) * args_size);
 
 	if (value_args == NULL)
 	{
@@ -880,7 +870,7 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 	}
 
 	/* Generate metacall values from python values */
-	for (args_count = 0; args_count < min_args_size; ++args_count)
+	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		PyObject * arg = PyTuple_GetItem(args, (Py_ssize_t)args_count);
 
@@ -890,10 +880,10 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 	}
 
 	/* Execute the callback */
-	ret = (value)function_call(invoke_state->callback, value_args);
+	ret = (value)function_call(invoke_state->callback, value_args, args_size);
 
 	/* Destroy argument values */
-	for (args_count = 0; args_count < min_args_size; ++args_count)
+	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		value_type_destroy(value_args[args_count]);
 	}

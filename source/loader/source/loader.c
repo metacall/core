@@ -68,7 +68,9 @@ struct loader_host_invoke_type
 
 static function_interface loader_register_interface_proxy(void);
 
-static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args);
+static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args, size_t size);
+
+static function_return loader_register_await_proxy(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
 
 static void loader_register_destroy_proxy(function func, function_impl func_impl);
 
@@ -157,26 +159,23 @@ int loader_is_initialized(const loader_naming_tag tag)
 	return loader_impl_is_initialized(impl);
 }
 
-function_return loader_register_invoke_proxy(function func, function_impl func_impl, function_args args)
+function_return loader_register_invoke_proxy(function func, function_impl func_impl, function_args args, size_t size)
 {
 	loader_host_invoke host_invoke = (loader_host_invoke)func_impl;
 
-	signature s = function_signature(func);
-
-	const size_t args_size = signature_count(s);
-
 	void * data = function_closure(func);
 
-	return host_invoke->invoke(args_size, args, data);
+	return host_invoke->invoke(size, args, data);
 }
 
-function_return loader_register_await_proxy(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return loader_register_await_proxy(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;

@@ -70,24 +70,26 @@ int function_example_interface_create(function func, function_impl impl)
 	return 1;
 }
 
-function_return function_example_interface_invoke(function func, function_impl func_impl, function_args args)
+function_return function_example_interface_invoke(function func, function_impl func_impl, function_args args, size_t size)
 {
 	function_impl_example example_impl = (function_impl_example)func_impl;
 
 	(void)func;
+	(void)size;
 
 	example_impl->ptr(*((char *)(args[0])), *((int *)(args[1])), (void *)(args[2]));
 
 	return NULL;
 }
 
-function_return function_example_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;

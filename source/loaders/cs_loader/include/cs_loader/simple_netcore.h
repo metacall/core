@@ -28,28 +28,29 @@ extern "C" {
 #include <stdlib.h>
 
 #define MAX_FILES 0xFF
-	struct netcore_handle_type;
-	typedef struct netcore_handle_type * netcore_handle;
 
-	typedef char source_file[512];
+struct netcore_handle_type;
+typedef struct netcore_handle_type * netcore_handle;
 
-	netcore_handle simple_netcore_create(char * dotnet_root, char * dotnet_loader_assembly_path);
+typedef char source_file[512];
 
-	reflect_function * simple_netcore_get_functions(netcore_handle, int*);
+netcore_handle simple_netcore_create(char * dotnet_root, char * dotnet_loader_assembly_path);
 
-	void  simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size);
+reflect_function * simple_netcore_get_functions(netcore_handle, int *);
 
-	void  simple_netcore_load_script_from_assembly(netcore_handle handle, char * file);
+void simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size);
 
-	void   simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size);
+void simple_netcore_load_script_from_assembly(netcore_handle handle, char * file);
 
-	execution_result* simple_netcore_invoke(netcore_handle, const char *);
+void simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size);
 
-	void simple_netcore_destroy(netcore_handle);
+execution_result * simple_netcore_invoke(netcore_handle, const char *);
 
-	execution_result* simple_netcore_invoke_with_params(netcore_handle handle, const char *func, parameters * params);
+void simple_netcore_destroy(netcore_handle);
 
-	void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result* er);
+execution_result* simple_netcore_invoke_with_params(netcore_handle handle, const char * func, parameters * params);
+
+void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result * er);
 
 #ifdef __cplusplus
 }

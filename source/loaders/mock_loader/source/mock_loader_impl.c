@@ -58,7 +58,7 @@ int function_mock_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_mock_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_mock_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_mock_function mock_function = (loader_impl_mock_function)impl;
 
@@ -68,17 +68,15 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 	type ret_type = signature_get_return(s);
 
-	const size_t args_size = signature_count(s);
-
 	(void)mock_function;
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Invoking mock function %s", name);
 
-	if (args_size > 0)
+	if (size > 0)
 	{
 		size_t args_count;
 
-		for (args_count = 0; args_count < args_size; ++args_count)
+		for (args_count = 0; args_count < size; ++args_count)
 		{
 			type t = signature_get_type(s, args_count);
 
@@ -146,7 +144,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 			}
 		}
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Calling mock function with arguments (%lu)", args_size);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Calling mock function with arguments (%lu)", size);
 	}
 	else
 	{
@@ -210,13 +208,14 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
-function_return function_mock_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+function_return function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;

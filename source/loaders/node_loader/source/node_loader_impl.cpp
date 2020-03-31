@@ -200,6 +200,7 @@ typedef struct loader_impl_async_func_call_type
 	function func;
 	loader_impl_node_function node_func;
 	void ** args;
+	size_t size;
 	function_return ret;
 
 } * loader_impl_async_func_call;
@@ -210,6 +211,7 @@ typedef struct loader_impl_async_func_await_type
 	function func;
 	loader_impl_node_function node_func;
 	void ** args;
+	size_t size;
 	function_resolve_callback resolve_callback;
 	function_reject_callback reject_callback;
 	void * context;
@@ -257,9 +259,9 @@ static napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, nap
 /* Function */
 static int function_node_interface_create(function func, function_impl impl);
 
-static function_return function_node_interface_invoke(function func, function_impl impl, function_args args);
+static function_return function_node_interface_invoke(function func, function_impl impl, function_args args, size_t size);
 
-static function_return function_node_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
+static function_return function_node_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
 
 static void function_node_interface_destroy(function func, function_impl impl);
 
@@ -771,7 +773,7 @@ int function_node_interface_create(function func, function_impl impl)
 	return (node_func->argv == NULL);
 }
 
-function_return function_node_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_node_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_node_function node_func = (loader_impl_node_function)impl;
 
@@ -785,6 +787,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 			func,
 			node_func,
 			static_cast<void **>(args),
+			size,
 			NULL
 		};
 
@@ -808,7 +811,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 
 #if NODE_ASYNC_FUNCTION
 
-function_return function_node_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_node_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	loader_impl_node_function node_future = (loader_impl_node_function)impl;
 
@@ -822,6 +825,7 @@ function_return function_node_interface_await(function func, function_impl impl,
 			func,
 			node_future,
 			args,
+			size,
 			resolve_callback,
 			reject_callback,
 			context,
@@ -848,7 +852,7 @@ function_return function_node_interface_await(function func, function_impl impl,
 
 #else
 
-function_return function_node_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_node_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	future f = future_create(NULL, NULL);
 
@@ -857,6 +861,7 @@ function_return function_node_interface_await(function func, function_impl impl,
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;
@@ -1039,8 +1044,6 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 
 	napi_handle_scope handle_scope;
 
-	signature s;
-
 	size_t args_size;
 
 	value * args;
@@ -1058,9 +1061,7 @@ void node_loader_impl_async_func_call(uv_async_t * async)
 	env = async_data->node_impl->env;
 
 	/* Get function data */
-	s = function_signature(async_data->func);
-
-	args_size = signature_count(s);
+	args_size = async_data->size;
 
 	args = static_cast<value *>(async_data->args);
 
@@ -1255,8 +1256,6 @@ void node_loader_impl_async_func_await(uv_async_t * async)
 			{
 				napi_ref trampoline_ref;
 
-				signature s;
-
 				size_t args_size;
 
 				value * args;
@@ -1283,9 +1282,7 @@ void node_loader_impl_async_func_await(uv_async_t * async)
 				node_loader_impl_exception(env, status);
 
 				/* Get function data */
-				s = function_signature(async_data->func);
-
-				args_size = signature_count(s);
+				args_size = async_data->size;
 
 				args = static_cast<value *>(async_data->args);
 

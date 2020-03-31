@@ -48,11 +48,10 @@ int function_cs_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_cs_interface_invoke(function func, function_impl impl, function_args args)
+function_return function_cs_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	(void)func;
-	(void)impl;
-	(void)args;
+	(void)size; /* TODO: Assert size and param_count are equal, varidic not allowed in C# yet */
 
 	cs_function * cs_f = (cs_function*)impl;
 	execution_result * result;
@@ -135,13 +134,14 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	return v;
 }
 
-function_return function_cs_interface_await(function func, function_impl impl, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_cs_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	/* TODO */
 
 	(void)func;
 	(void)impl;
 	(void)args;
+	(void)size;
 	(void)resolve_callback;
 	(void)reject_callback;
 	(void)context;

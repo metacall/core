@@ -287,13 +287,13 @@ void * metacall(const char * name, ...)
 
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		va_list va;
 
 		va_start(va, name);
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			type t = signature_get_type(s, iterator);
 
@@ -345,9 +345,9 @@ void * metacall(const char * name, ...)
 
 		va_end(va);
 
-		ret = function_call(f, args);
+		ret = function_call(f, args, args_count);
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			value_destroy(args[iterator]);
 		}
@@ -387,13 +387,13 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		va_list va;
 
 		va_start(va, ids);
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			type t = signature_get_type(s, iterator);
 
@@ -454,9 +454,9 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 		va_end(va);
 
-		ret = function_call(f, args);
+		ret = function_call(f, args, args_count);
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			value_destroy(args[iterator]);
 		}
@@ -484,18 +484,6 @@ size_t metacall_function_size(void * func)
 	}
 
 	return 0;
-}
-
-int metacall_function_resize(void * func, size_t count)
-{
-	function f = (function)func;
-
-	if (f == NULL)
-	{
-		return 1;
-	}
-
-	return function_resize(f, count);
 }
 
 void * metacall_handle(const char * tag, const char * name)
@@ -531,11 +519,11 @@ void * metacallfv(void * func, void * args[])
 	{
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		value ret;
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			type t = signature_get_type(s, iterator);
 
@@ -555,7 +543,7 @@ void * metacallfv(void * func, void * args[])
 			}
 		}
 
-		ret = function_call(f, args);
+		ret = function_call(f, args, args_count);
 
 		if (ret != NULL)
 		{
@@ -592,13 +580,13 @@ void * metacallf(void * func, ...)
 
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		va_list va;
 
 		va_start(va, func);
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			type t = signature_get_type(s, iterator);
 
@@ -650,9 +638,9 @@ void * metacallf(void * func, ...)
 
 		va_end(va);
 
-		ret = function_call(f, args);
+		ret = function_call(f, args, args_count);
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			value_destroy(args[iterator]);
 		}
@@ -675,7 +663,7 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 		{
 			if (signature_count(s) == 0)
 			{
-				value ret = function_call(f, metacall_null_args);
+				value ret = function_call(f, metacall_null_args, 0);
 
 				if (ret != NULL)
 				{
@@ -719,15 +707,7 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 				return NULL;
 			}
 
-			args_count = signature_count(s);
-
-			/* TODO: No optional arguments allowed, review in the future */
-			if (args_count != value_type_count(v))
-			{
-				value_type_destroy(v);
-
-				return NULL;
-			}
+			args_count = value_type_count(v);
 
 			v_array = value_to_array(v);
 
@@ -777,11 +757,11 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		value ret;
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			type_id key_id = value_type_id((value)keys[iterator]);
 
@@ -842,7 +822,7 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 			}
 		}
 
-		ret = function_call(f, args);
+		ret = function_call(f, args, args_count);
 
 		if (ret != NULL)
 		{
@@ -879,7 +859,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 		{
 			if (signature_count(s) == 0)
 			{
-				value ret = function_call(f, metacall_null_args);
+				value ret = function_call(f, metacall_null_args, 0);
 
 				if (ret != NULL)
 				{
@@ -1009,12 +989,18 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 {
 	function f = (function)loader_get(name);
 
-	return function_await(f, args, resolve_callback, reject_callback, data);
+	signature s = function_signature(f);
+
+	return function_await(f, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
 void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
-	return function_await(func, args, resolve_callback, reject_callback, data);
+	function f = (function)func;
+
+	signature s = function_signature(f);
+
+	return function_await(func, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
 /* TODO: Unify code between metacallfmv and metacallfmv_await */
@@ -1028,11 +1014,11 @@ void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*r
 
 		signature s = function_signature(f);
 
-		size_t iterator;
+		size_t iterator, args_count = signature_count(s);
 
 		value ret;
 
-		for (iterator = 0; iterator < signature_count(s); ++iterator)
+		for (iterator = 0; iterator < args_count; ++iterator)
 		{
 			type_id key_id = value_type_id((value)keys[iterator]);
 
@@ -1093,7 +1079,7 @@ void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*r
 			}
 		}
 
-		ret = function_await(f, args, resolve_callback, reject_callback, data);
+		ret = function_await(f, args, args_count, resolve_callback, reject_callback, data);
 
 		if (ret != NULL)
 		{
@@ -1131,7 +1117,7 @@ void * metacallfms_await(void * func, const char * buffer, size_t size, void * a
 		{
 			if (signature_count(s) == 0)
 			{
-				value ret = function_call(f, metacall_null_args);
+				value ret = function_call(f, metacall_null_args, 0);
 
 				if (ret != NULL)
 				{

@@ -105,27 +105,6 @@ function function_create(const char * name, size_t args_count, function_impl imp
 	return func;
 }
 
-int function_resize(function func, size_t count)
-{
-	signature new_s;
-
-	if (func == NULL)
-	{
-		return 1;
-	}
-
-	new_s = signature_resize(func->s, count);
-
-	if (new_s == NULL)
-	{
-		return 1;
-	}
-
-	func->s = new_s;
-
-	return 0;
-}
-
 int function_increment_reference(function func)
 {
 	if (func == NULL)
@@ -312,7 +291,7 @@ value function_metadata(function func)
 	return f;
 }
 
-function_return function_call(function func, function_args args)
+function_return function_call(function func, function_args args, size_t size)
 {
 	if (func != NULL && args != NULL)
 	{
@@ -327,22 +306,29 @@ function_return function_call(function func, function_args args)
 				log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
 			}
 
-			return func->interface->invoke(func, func->impl, args);
+			return func->interface->invoke(func, func->impl, args, size);
 		}
 	}
 
 	return NULL;
 }
 
-function_return function_await(function func, function_args args, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
 {
 	if (func != NULL && args != NULL)
 	{
 		if (func->interface != NULL && func->interface->await != NULL)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Await function (%s) with args <%p>", func->name, (void *)args);
+			if (func->name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Await annonymous function with args <%p>", (void *)args);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Await function (%s) with args <%p>", func->name, (void *)args);
+			}
 
-			return func->interface->await(func, func->impl, args, resolve_callback, reject_callback, context);
+			return func->interface->await(func, func->impl, args, size, resolve_callback, reject_callback, context);
 		}
 	}
 

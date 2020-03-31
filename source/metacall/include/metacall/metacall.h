@@ -348,21 +348,6 @@ METACALL_API size_t metacall_function_size(void * func);
 
 /**
 *  @brief
-*    Resize the mumber of arguments accepted by function @func
-*
-*  @param[in] func
-*    Function reference
-*
-*  @param[in] count
-*    Number of arguments that the function will accept
-*
-*  @return
-*    Zero if function could be resized, different from zero otherwise
-*/
-METACALL_API int metacall_function_resize(void * func, size_t count);
-
-/**
-*  @brief
 *    Get the handle by @name
 *
 *  @param[in] tag
