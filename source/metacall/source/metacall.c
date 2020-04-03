@@ -965,7 +965,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 	return NULL;
 }
 
-int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), enum metacall_value_id return_type, size_t size, ...)
+int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, ...)
 {
 	type_id types[METACALL_ARGS_SIZE];
 
@@ -982,7 +982,7 @@ int metacall_register(const char * name, void * (*invoke)(size_t, void * [], voi
 
 	va_end(va);
 
-	return loader_register(name, (loader_register_invoke)invoke, (type_id)return_type, size, (type_id *)types);
+	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types);
 }
 
 void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)

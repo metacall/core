@@ -83,11 +83,11 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 
 	/* Native register */
 	{
-		metacall_register("native_set_value", native_set_value, METACALL_PTR, 2, METACALL_PTR, METACALL_LONG);
+		metacall_register("native_set_value", native_set_value, NULL, METACALL_PTR, 2, METACALL_PTR, METACALL_LONG);
 
 		EXPECT_NE((void *) NULL, (void *) metacall_function("native_set_value"));
 
-		metacall_register("native_get_value", native_get_value, METACALL_ARRAY, 1, METACALL_PTR);
+		metacall_register("native_get_value", native_get_value, NULL, METACALL_ARRAY, 1, METACALL_PTR);
 
 		EXPECT_NE((void *) NULL, (void *) metacall_function("native_get_value"));
 	}

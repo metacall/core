@@ -63,8 +63,8 @@ TEST_F(metacall_function_test, DefaultConstructor)
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Native register */
-	ASSERT_EQ((int) 0, (int) metacall_register("c_callback", c_callback, METACALL_LONG, 0));
-	ASSERT_EQ((int) 0, (int) metacall_register("c_callback_with_args", c_callback_with_args, METACALL_LONG, 2, METACALL_LONG, METACALL_LONG));
+	ASSERT_EQ((int) 0, (int) metacall_register("c_callback", c_callback, NULL, METACALL_LONG, 0));
+	ASSERT_EQ((int) 0, (int) metacall_register("c_callback_with_args", c_callback_with_args, NULL, METACALL_LONG, 2, METACALL_LONG, METACALL_LONG));
 
 	/* Create function types */
 	void * c_callback_value = metacall_value_create_function(metacall_function("c_callback"));

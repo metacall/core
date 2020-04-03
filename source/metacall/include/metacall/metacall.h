@@ -482,6 +482,9 @@ METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, v
 *  @param[in] invoke
 *    Pointer to function invoke interface (argc, argv, data)
 *
+*  @param[out] func
+*    Will set the pointer to the function if the parameter is not null
+*
 *  @param[in] return_type
 *    Type of return value
 *
@@ -494,7 +497,7 @@ METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, v
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), enum metacall_value_id return_type, size_t size, ...);
+METACALL_API int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, ...);
 
 /**
 *  @brief

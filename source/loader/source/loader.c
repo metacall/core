@@ -206,7 +206,7 @@ function_interface loader_register_interface_proxy(void)
 	return &interface;
 }
 
-int loader_register(const char * name, loader_register_invoke invoke, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_register(const char * name, loader_register_invoke invoke, function * func, type_id return_type, size_t arg_size, type_id args_type_id[])
 {
 	static const char register_holder_str[] = "__metacall_register__";
 
@@ -247,7 +247,15 @@ int loader_register(const char * name, loader_register_invoke invoke, type_id re
 
 	signature_set_return(s, type_create(return_type, register_holder_str, NULL, NULL));
 
-	scope_define(sp, name, f);
+	if (name != NULL)
+	{
+		scope_define(sp, name, f);
+	}
+
+	if (func != NULL)
+	{
+		*func = f;
+	}
 
 	return 0;
 }
