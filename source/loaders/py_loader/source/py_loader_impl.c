@@ -633,6 +633,7 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 	else if (id == TYPE_FUNCTION)
 	{
 		loader_impl_py_function_type_invoke_state invoke_state = malloc(sizeof(struct loader_impl_py_function_type_invoke_state_type));
+
 		PyObject * invoke_state_capsule;
 
 		if (invoke_state == NULL)
@@ -646,7 +647,7 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 
 		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
 
-		Py_INCREF(invoke_state_capsule);
+		Py_XINCREF(invoke_state_capsule);
 
 		return PyCFunction_New(py_loader_impl_function_type_invoke_defs, invoke_state_capsule);
 	}
@@ -711,7 +712,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Argument #%u Type (%p): %s", args_count, (void *)t, type_name(t));
 		}
 
-		py_func->values[args_count] = py_loader_impl_value_to_capi(impl, py_impl, id, args[args_count]);
+		py_func->values[args_count] = py_loader_impl_value_to_capi(py_func->impl, py_impl, id, args[args_count]);
 
 		if (py_func->values[args_count] != NULL)
 		{
