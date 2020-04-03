@@ -133,35 +133,33 @@ describe('metacall', () => {
 			// Receiving undefined from a function that returns nothing in Python
 			assert.strictEqual(f.function_pass(), undefined);
 
-			// Double recursion
-			/*
-			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
-			assert.strictEqual(sum(5, f.function_sum), 15);
-			assert.strictEqual(f.function_sum(5, sum), 15);
-			*/
-
-			// Factorial composition (@trgwii)
-			/*
-			const fact = f.function_factorial(c => v => v <= 0 ? 1 : v);
-			assert.strictEqual(fact(0), 1);
-			assert.strictEqual(fact(1), 1);
-			assert.strictEqual(fact(2), 2);
-			assert.strictEqual(fact(3), 6);
-
-			const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
-			assert.notStrictEqual(js_factorial, undefined);
-			assert.strictEqual(js_factorial(5), 120);
-
-			const py_factorial = f.function_chain(f.function_factorial);
-			assert.notStrictEqual(py_factorial, undefined);
-			assert.strictEqual(py_factorial(5), 120);
-			*/
-
 			// Opaque pointer for class instances
 			assert.strictEqual(f.function_capsule_method(f.function_capsule_new_class()), 'hello world');
 
 			// Opaque pointer for class instances with callback
 			assert.strictEqual(f.function_capsule_cb((klass) => f.function_capsule_method(klass)), 'hello world');
+
+			// Double recursion
+			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
+			assert.strictEqual(sum(5, f.function_sum), 15);
+			assert.strictEqual(sum(5, f.function_sum), 15); // Check for function lifetime
+			assert.strictEqual(f.function_sum(5, sum), 15);
+			assert.strictEqual(f.function_sum(5, sum), 15); // Check for function lifetime
+
+			// Factorial composition (@trgwii)
+			// const fact = f.function_factorial(c => v => v <= 0 ? 1 : v);
+			// assert.strictEqual(fact(1), 1);
+			// assert.strictEqual(fact(2), 2);
+			// assert.strictEqual(fact(3), 6);
+			// assert.strictEqual(fact(50000), 2499950000);
+
+			// const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
+			// assert.notStrictEqual(js_factorial, undefined);
+			// assert.strictEqual(js_factorial(5), 120);
+
+			// const py_factorial = f.function_chain(f.function_factorial);
+			// assert.notStrictEqual(py_factorial, undefined);
+			// assert.strictEqual(py_factorial(5), 120);
 		});
 	});
 });

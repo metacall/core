@@ -28,15 +28,6 @@ def function_currying_more(y):
 def function_pass():
 	pass;
 
-def function_sum(value, f):
-	return 0 if value <= 0 else value + f(value - 1, function_sum);
-
-def function_chain(x):
-	return lambda n: x(x)(n);
-
-def function_factorial(x):
-	return lambda n: 1 if n <= 0 else n * x(x)(n - 1);
-
 class MyClass:
 	def f(self):
 		return 'hello world';
@@ -50,3 +41,12 @@ def function_capsule_method(klass):
 
 def function_capsule_cb(cb):
 	return cb(MyClass());
+
+def function_sum(value, f):
+	return 0 if value <= 0 else value + f(value - 1, function_sum);
+
+def function_chain(x):
+	return lambda n: x(x)(n);
+
+def function_factorial(x):
+	return lambda n: 1 if n <= 0 else n * x(x)(n - 1);
