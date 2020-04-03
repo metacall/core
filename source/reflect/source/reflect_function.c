@@ -293,24 +293,44 @@ value function_metadata(function func)
 
 function_return function_call(function func, function_args args, size_t size)
 {
-	if (func != NULL && args != NULL)
+	if (func == NULL)
 	{
-		if (func->interface != NULL && func->interface->invoke != NULL)
-		{
-			if (func->name == NULL)
-			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Invoke annonymous function with args <%p>", (void *)args);
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
-			}
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function call, function pointer is null");
 
-			return func->interface->invoke(func, func->impl, args, size);
-		}
+		return NULL;
 	}
 
-	return NULL;
+	if (args == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function call, arguments are null");
+
+		return NULL;
+	}
+
+	if (func->interface == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function call, function interface is null");
+
+		return NULL;
+	}
+
+	if (func->interface->invoke == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function call, function interface invoke method is null");
+
+		return NULL;
+	}
+
+	if (func->name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Invoke annonymous function with args <%p>", (void *)args);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
+	}
+
+	return func->interface->invoke(func, func->impl, args, size);
 }
 
 function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
