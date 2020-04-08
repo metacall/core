@@ -1,7 +1,7 @@
-﻿namespace Scripts
+namespace Scripts
 {
-    interface IJump 
-    {
-        int Jump();
-    }
+	interface IJump
+	{
+		int Jump();
+	}
 }

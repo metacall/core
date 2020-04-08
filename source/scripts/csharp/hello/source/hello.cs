@@ -2,26 +2,26 @@ using System;
 
 namespace Scripts
 {
-    public class Program
-    {
+	public class Program
+	{
 		public static void SayHello()
-        {
-            Console.WriteLine("HELLO");
-        }
+		{
+			Console.WriteLine("HELLO");
+		}
 
-        public static void Say(string text)
-        {
-             Console.WriteLine(text);
-        }
+		public static void Say(string text)
+		{
+			 Console.WriteLine(text);
+		}
 		
-		public static int Sum(int a,int b)
-        {
-           return a+b;
-        }
+		public static int Sum(int a, int b)
+		{
+			return a + b;
+		}
 		
-		public static string Concat(string a,string b)
-        {
-           return a+b;
-        }
+		public static string Concat(string a, string b)
+		{
+			return a + b;
+		}
 	}
 }
