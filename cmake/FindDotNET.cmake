@@ -28,7 +28,7 @@ if(DOTNET_FOUND)
 endif()
 
 # Define dotnet command
-set(DOTNET_COMMAND dotnet)
+option(DOTNET_COMMAND "Path of .NET Core command" dotnet)
 
 # Detect dotnet command
 execute_process(COMMAND ${DOTNET_COMMAND}
