@@ -34,6 +34,7 @@ if(OPTION_BUILD_GUIX)
 		execute_process(
 			COMMAND sh -c "${DOTNET_COMMAND} nuget locals all --list | grep global-packages | awk '{print $NF}'"
 			OUTPUT_VARIABLE DOTNET_SOURCE
+			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
 	else()
 		set(DOTNET_SOURCE)
