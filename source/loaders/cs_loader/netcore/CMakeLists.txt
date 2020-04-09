@@ -32,7 +32,7 @@ message(STATUS "Plugin ${target} implementation")
 if(OPTION_BUILD_GUIX)
 	if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
 		execute_process(
-			COMMAND ${DOTNET_COMMAND} nuget locals all --list | grep global-packages | awk '{print $NF}'
+			COMMAND sh -c "${DOTNET_COMMAND} nuget locals all --list | grep global-packages | awk '{print $NF}'"
 			OUTPUT_VARIABLE DOTNET_SOURCE
 		)
 	else()
