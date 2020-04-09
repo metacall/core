@@ -28,7 +28,7 @@ if(DOTNET_FOUND)
 endif()
 
 # Define dotnet command
-set(DOTNET_COMMAND dotnet CACHE FILEPATH "Path of .NET Core command" FORCE)
+set(DOTNET_COMMAND dotnet CACHE FILEPATH "Path of .NET Core command")
 
 # Detect dotnet command
 execute_process(COMMAND ${DOTNET_COMMAND}
