@@ -40,6 +40,8 @@ if(OPTION_BUILD_GUIX)
 		message(FATAL_ERROR ".NET Core support not implemented in Guix build for versions less than 2.0.")
 	endif()
 
+	message(STATUS "Using DotNet source ${DOTNET_SOURCE} for Guix build.")
+
 	# Build without internet access
 	add_custom_target(${target} ALL
 		COMMAND ${DOTNET_COMMAND} restore --source ${DOTNET_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj
