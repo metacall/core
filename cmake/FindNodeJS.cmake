@@ -318,15 +318,15 @@ if(NOT NODEJS_LIBRARY)
 			message(STATUS "Configure NodeJS shared library")
 
 			# TODO: Select correct ICU version depending on NodeJS version
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-60_2-src.tgz
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-61_1-src.tgz
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-62_1-src.tgz
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.tgz
+			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-60_2-src.zip
+			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-61_1-src.zip
+			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-62_1-src.zip
+			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip
 
 			if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
-				execute_process(COMMAND sh -c "./configure --with-icu-source=https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.tgz --shared --debug" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "./configure --with-icu-source=https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip --shared --debug" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			else()
-				execute_process(COMMAND sh -c "./configure --with-icu-source=https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.tgz --shared" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "./configure --with-icu-source=https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip --shared" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			endif()
 
 			message(STATUS "Build NodeJS shared library")
