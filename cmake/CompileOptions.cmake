@@ -120,6 +120,9 @@ if(WIN32)
 		# Buffer Security Check
 		add_compile_options(/GS)
 
+		# Disable Run-Time Error Checks
+		add_compile_options(/GR-)
+
 		# Enable optimizations
 		add_compile_options(/O2)
 		add_compile_options(/Oi)
