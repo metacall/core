@@ -35,6 +35,8 @@ if(NODEJS_INCLUDE_DIR)
 	set(NODEJS_FIND_QUIETLY TRUE)
 endif()
 
+option(NODEJS_CMAKE_DEBUG "Print paths for debugging NodeJS dependencies." OFF)
+
 # Include package manager
 include(FindPackageHandleStandardArgs)
 
