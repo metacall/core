@@ -105,12 +105,7 @@ endif()
 
 set(NODEJS_INCLUDE_PATHS
 	/usr
-)
-
-find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
-	PATHS ${NODEJS_INCLUDE_PATHS}
-	PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
-	DOC "NodeJS JavaScript Runtime Headers"
+	/usr/local
 )
 
 # Find NodeJS executable
@@ -155,7 +150,33 @@ if(NODEJS_EXECUTABLE)
 
 	# TODO: Implement V8 version by command?
 
+	# Check if NodeJS executable only is requested
+	if(NODEJS_EXECUTABLE_ONLY)
+		find_package_handle_standard_args(NODEJS
+			REQUIRED_VARS NODEJS_EXECUTABLE
+			VERSION_VAR NODEJS_VERSION
+		)
+
+		mark_as_advanced(NODEJS_EXECUTABLE)
+
+		if(NODEJS_CMAKE_DEBUG)
+			message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
+			message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
+			message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")
+			message(STATUS "NODEJS_V8_VERSION_HEX: ${NODEJS_V8_VERSION_HEX}")
+			message(STATUS "NODEJS_EXECUTABLE: ${NODEJS_EXECUTABLE}")
+		endif()
+
+		return()
+	endif()
 endif()
+
+# Find NodeJS includes
+find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
+	PATHS ${NODEJS_INCLUDE_PATHS}
+	PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+	DOC "NodeJS JavaScript Runtime Headers"
+)
 
 # Detect NodeJS V8 version
 if(NODEJS_INCLUDE_DIR)
@@ -208,55 +229,36 @@ if(NODEJS_INCLUDE_DIR)
 	endif()
 endif()
 
-# Check if NodeJS executable only is requested
-if(NODEJS_EXECUTABLE_ONLY)
-	find_package_handle_standard_args(NODEJS
-		REQUIRED_VARS NODEJS_EXECUTABLE
-		VERSION_VAR NODEJS_VERSION
+if(NODEJS_MODULE_VERSION)
+	# NodeJS library names
+	set(NODEJS_LIBRARY_NAMES
+		libnode.so.${NODEJS_MODULE_VERSION}
+		libnode.${NODEJS_MODULE_VERSION}.dylib
+		libnode.${NODEJS_MODULE_VERSION}.dll
+		node.lib
 	)
 
-	mark_as_advanced(NODEJS_EXECUTABLE)
-
-	if(NODEJS_CMAKE_DEBUG)
-		message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
-		message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
-		message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")
-		message(STATUS "NODEJS_V8_VERSION_HEX: ${NODEJS_V8_VERSION_HEX}")
-		message(STATUS "NODEJS_EXECUTABLE: ${NODEJS_EXECUTABLE}")
+	if(WIN32)
+		set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
+	else()
+		set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
 	endif()
 
-	return()
+	if(WIN32)
+		set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}") # TODO: Set a valid install path
+	else()
+		set(NODEJS_LIBRARY_PATH "/usr/local/lib")
+	endif()
+
+	# Find library
+	find_library(NODEJS_LIBRARY
+		NAMES ${NODEJS_LIBRARY_NAMES}
+		PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH}
+		DOC "NodeJS JavaScript Runtime Library"
+	)
 endif()
 
 # TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?)
-
-# NodeJS library names
-set(NODEJS_LIBRARY_NAMES
-	libnode.so.${NODEJS_MODULE_VERSION}
-	libnode.${NODEJS_MODULE_VERSION}.dylib
-	libnode.${NODEJS_MODULE_VERSION}.dll
-	node.lib
-)
-
-if(WIN32)
-	set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
-else()
-	set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
-endif()
-
-if(WIN32)
-	set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}") # TODO: Set a valid install path
-else()
-	set(NODEJS_LIBRARY_PATH "/usr/local/lib")
-endif()
-
-# Find library
-find_library(NODEJS_LIBRARY
-	NAMES ${NODEJS_LIBRARY_NAMES}
-	PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH}
-	DOC "NodeJS JavaScript Runtime Library"
-)
-
 if(NOT NODEJS_LIBRARY)
 	# NodeJS download and output path (workaround to compile node as a shared library)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}.tar.gz")
@@ -349,12 +351,82 @@ if(NOT NODEJS_LIBRARY)
 		endif()
 	endif()
 
-	# Find library
-	find_library(NODEJS_LIBRARY
-		NAMES ${NODEJS_LIBRARY_NAMES}
-		PATHS ${NODEJS_LIBRARY_PATH}
-		DOC "NodeJS JavaScript Runtime Library"
-	)
+	if(NOT NODEJS_INCLUDE_DIR)
+		# Find NodeJS includes
+		find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
+			PATHS ${NODEJS_INCLUDE_PATHS}
+			PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+			DOC "NodeJS JavaScript Runtime Headers"
+		)
+
+		# Detect NodeJS V8 version
+		if(NODEJS_INCLUDE_DIR)
+			find_file(NODEJS_V8_VERSION_FILE_PATH v8-version.h
+				PATHS ${NODEJS_INCLUDE_DIR}
+				PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+				DOC "NodeJS V8 JavaScript Version Header"
+			)
+
+			if(NODEJS_V8_VERSION_FILE_PATH)
+				file(READ ${NODEJS_V8_VERSION_FILE_PATH} NODEJS_V8_VERSION_FILE)
+
+				string(REGEX MATCH "#define V8_MAJOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MAJOR_DEF ${NODEJS_V8_VERSION_FILE})
+				string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_MAJOR ${NODEJS_V8_VERSION_MAJOR_DEF})
+
+				string(REGEX MATCH "#define V8_MINOR_VERSION ([0-9]+)" NODEJS_V8_VERSION_MINOR_DEF ${NODEJS_V8_VERSION_FILE})
+				string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_MINOR ${NODEJS_V8_VERSION_MINOR_DEF})
+
+				string(REGEX MATCH "#define V8_BUILD_NUMBER ([0-9]+)" NODEJS_V8_VERSION_PATCH_DEF ${NODEJS_V8_VERSION_FILE})
+				string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_PATCH ${NODEJS_V8_VERSION_PATCH_DEF})
+
+				string(REGEX MATCH "#define V8_PATCH_LEVEL ([0-9]+)" NODEJS_V8_VERSION_TWEAK_DEF ${NODEJS_V8_VERSION_FILE})
+				string(REGEX MATCH "([0-9]+)$" NODEJS_V8_VERSION_TWEAK ${NODEJS_V8_VERSION_TWEAK_DEF})
+
+				set(NODEJS_V8_VERSION "${NODEJS_V8_VERSION_MAJOR}.${NODEJS_V8_VERSION_MINOR}.${NODEJS_V8_VERSION_PATCH}.${NODEJS_V8_VERSION_TWEAK}")
+
+				set(NODEJS_V8_VERSION_HEX 0x0${NODEJS_V8_VERSION_MAJOR}${NODEJS_V8_VERSION_MINOR}${NODEJS_V8_VERSION_PATCH}${NODEJS_V8_VERSION_TWEAK})
+				string(LENGTH "${NODEJS_V8_VERSION_HEX}" NODEJS_V8_VERSION_HEX_LENGTH)
+
+				while(NODEJS_V8_VERSION_HEX_LENGTH LESS 8)
+
+					set(NODEJS_V8_VERSION_HEX "${NODEJS_V8_VERSION_HEX}0")
+					string(LENGTH "${NODEJS_V8_VERSION_HEX}" NODEJS_V8_VERSION_HEX_LENGTH)
+
+				endwhile()
+			endif()
+
+			# Get node version
+			find_file(NODEJS_VERSION_FILE_PATH node_version.h
+				PATHS ${NODEJS_INCLUDE_DIR}
+				PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+				DOC "NodeJS JavaScript Version Header"
+			)
+
+			if(NODEJS_VERSION_FILE_PATH)
+				file(READ ${NODEJS_VERSION_FILE_PATH} NODEJS_VERSION_FILE)
+
+				string(REGEX MATCH "#define NODE_MODULE_VERSION ([0-9]+)" NODEJS_MODULE_VERSION_DEF ${NODEJS_VERSION_FILE})
+				string(REGEX MATCH "([0-9]+)$" NODEJS_MODULE_VERSION ${NODEJS_MODULE_VERSION_DEF})
+			endif()
+		endif()
+	endif()
+
+	if(NODEJS_MODULE_VERSION)
+		# NodeJS library names
+		set(NODEJS_LIBRARY_NAMES
+			libnode.so.${NODEJS_MODULE_VERSION}
+			libnode.${NODEJS_MODULE_VERSION}.dylib
+			libnode.${NODEJS_MODULE_VERSION}.dll
+			node.lib
+		)
+
+		# Find library
+		find_library(NODEJS_LIBRARY
+			NAMES ${NODEJS_LIBRARY_NAMES}
+			PATHS ${NODEJS_LIBRARY_PATH}
+			DOC "NodeJS JavaScript Runtime Library"
+		)
+	endif()
 endif()
 
 find_package_handle_standard_args(NODEJS
