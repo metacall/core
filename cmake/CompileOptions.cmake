@@ -121,8 +121,7 @@ if(WIN32)
 		add_compile_options(/GS)
 
 		# Disable Run-Time Error Checks
-		add_compile_options(/RTC1-)
-		add_compile_options(/RTCc-)
+		add_compile_options(/GR-)
 
 		# Enable optimizations
 		add_compile_options(/O2)
