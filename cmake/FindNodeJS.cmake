@@ -63,9 +63,9 @@ set(NODEJS_PATHS
 
 # Find NodeJS include directories
 if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
-	set(NODEJS_V8_HEADERS v8.h v8-debug.h v8-profiler.h v8stdint.h v8-version.h)
+	set(NODEJS_V8_HEADERS v8.h v8-debug.h v8-profiler.h v8-version.h)
 else()
-	set(NODEJS_V8_HEADERS v8.h v8stdint.h v8-version.h)
+	set(NODEJS_V8_HEADERS v8.h v8-version.h)
 endif()
 
 set(NODEJS_UV_HEADERS uv.h) # TODO: Add uv-(platform).h?
@@ -167,6 +167,7 @@ if(NODEJS_INCLUDE_DIR)
 	foreach(HEADER IN ITEMS ${NODEJS_HEADERS})
 		if(NOT EXISTS ${NODEJS_INCLUDE_DIR}/${HEADER})
 			set(NODEJS_INCLUDE_DIR FALSE)
+			break()
 		endif()
 	endforeach()
 endif()

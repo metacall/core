@@ -67,7 +67,6 @@ if(MSVC)
 
 	add_dependencies(${target_binding} ${target})
 else()
-
 	if(OPTION_BUILD_GUIX)
 		# Get the includes
 		execute_process(
@@ -110,10 +109,9 @@ else()
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND npm install
 			COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} rebuild --verbose
-			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.so ${LOADER_LIBRARY_PATH}/trampoline.node
+			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/obj.target/trampoline.so ${LOADER_LIBRARY_PATH}/trampoline.node
 		)
 	endif()
-
 endif()
 
 #
