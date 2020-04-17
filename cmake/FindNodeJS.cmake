@@ -162,21 +162,24 @@ find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
 	DOC "NodeJS JavaScript Runtime Headers"
 )
 
-message(STATUS "1) --- ${NODEJS_INCLUDE_DIR}")
+# Check if the include directory contains all headers in the same folder
+if(NODEJS_INCLUDE_DIR)
+	foreach(HEADER IN ${NODEJS_HEADERS})
+		if(NOT EXISTS ${NODEJS_INCLUDE_DIR}/${HEADER})
+			set(NODEJS_INCLUDE_DIR FALSE)
+		endif()
+	endforeach()
+endif()
 
-# # Check if the include directory contains all headers in the same folder
-# if(NODEJS_INCLUDE_DIR)
-	
-# endif()
+message(STATUS "NodeJS include dir: ${NODEJS_INCLUDE_DIR}")
 
+# TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?) with proper includes
 if(NOT NODEJS_INCLUDE_DIR)
 	if(NOT NODEJS_VERSION)
 		# We do not have any way to know what version to install
 		message(WARNING "NodeJS headers could not be found, neither a valid NodeJS version.")
 		return()
 	endif()
-
-	# TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?) with proper includes
 
 	# NodeJS download and output path (workaround for NodeJS headers)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-headers.tar.gz")
@@ -203,8 +206,6 @@ if(NOT NODEJS_INCLUDE_DIR)
 		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS JavaScript Runtime Headers"
 	)
-
-	message(STATUS "2) --- ${NODEJS_INCLUDE_DIR}")
 endif()
 
 if(NODEJS_INCLUDE_DIR)
