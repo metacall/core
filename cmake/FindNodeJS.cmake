@@ -70,14 +70,10 @@ endif()
 
 set(NODEJS_UV_HEADERS uv.h) # TODO: Add uv-(platform).h?
 
-find_path(NODEJS_UV_INCLUDE_DIR ${NODEJS_UV_HEADERS}
-	PATHS /usr/include/compat-libuv010
-	NO_DEFAULT_PATH
-)
-
 set(NODEJS_HEADERS
 	node.h
 	${NODEJS_V8_HEADERS}
+	${NODEJS_UV_HEADERS}
 )
 
 set(NODEJS_INCLUDE_SUFFIXES
@@ -90,18 +86,6 @@ set(NODEJS_INCLUDE_SUFFIXES
 	include/nodejs/deps/v8/include
 	include/nodejs/deps/uv/include
 )
-
-if(NOT NODEJS_UV_INCLUDE_DIR)
-	set(NODEJS_HEADERS
-		${NODEJS_HEADERS}
-		${NODEJS_UV_HEADERS}
-	)
-
-	set(NODEJS_INCLUDE_SUFFIXES
-		${NODEJS_INCLUDE_SUFFIXES}
-		include/deps/uv/include
-	)
-endif()
 
 set(NODEJS_INCLUDE_PATHS
 	/usr
@@ -178,11 +162,20 @@ find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
 	DOC "NodeJS JavaScript Runtime Headers"
 )
 
-if(NOT NODEJS_INCLUDE_DIR AND NOT NODEJS_VERSION)
-	# We do not have any way to know what version to install
-	message(WARNING "NodeJS headers could not be found, neither a valid NodeJS version.")
-	return()
-else()
+message(STATUS "1) --- ${NODEJS_INCLUDE_DIR}")
+
+# # Check if the include directory contains all headers in the same folder
+# if(NODEJS_INCLUDE_DIR)
+	
+# endif()
+
+if(NOT NODEJS_INCLUDE_DIR)
+	if(NOT NODEJS_VERSION)
+		# We do not have any way to know what version to install
+		message(WARNING "NodeJS headers could not be found, neither a valid NodeJS version.")
+		return()
+	endif()
+
 	# TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?) with proper includes
 
 	# NodeJS download and output path (workaround for NodeJS headers)
@@ -210,6 +203,8 @@ else()
 		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS JavaScript Runtime Headers"
 	)
+
+	message(STATUS "2) --- ${NODEJS_INCLUDE_DIR}")
 endif()
 
 if(NODEJS_INCLUDE_DIR)
