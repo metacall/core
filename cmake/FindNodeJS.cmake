@@ -352,6 +352,30 @@ if(NOT NODEJS_LIBRARY)
 	endif()
 
 	if(NOT NODEJS_INCLUDE_DIR)
+		# TODO: Headers are not properly installed, instead of placing all of them in the same folder
+		# they are placed in different folders after install (deps/{v8,uv}), this workaround will solve
+		# the include dependency problem, but this needs to be refactored in the future for properly handling headers,
+		# meanwhile we will install them manually
+
+		# NodeJS download and output path (workaround to compile node as a shared library)
+		set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-headers.tar.gz")
+		set(NODEJS_DOWNLOAD_FILE "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}-headers.tar.gz")
+		set(NODEJS_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}-headers")
+
+		# Download node if needed
+		if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
+			message(STATUS "Downloading NodeJS headers")
+			file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE})
+		endif()
+
+		# Decompress node if needed
+		if(NOT EXISTS "${NODEJS_OUTPUT_PATH}")
+			message(STATUS "Extract NodeJS headers")
+			execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" OUTPUT_QUIET)
+		endif()
+
+		set(NODEJS_INCLUDE_PATHS ${NODEJS_OUTPUT_PATH})
+
 		# Find NodeJS includes
 		find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
 			PATHS ${NODEJS_INCLUDE_PATHS}
