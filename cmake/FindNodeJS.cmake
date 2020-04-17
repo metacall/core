@@ -182,7 +182,7 @@ if(NOT NODEJS_INCLUDE_DIR)
 	# NodeJS download and output path (workaround for NodeJS headers)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-headers.tar.gz")
 	set(NODEJS_DOWNLOAD_FILE "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}-headers.tar.gz")
-	set(NODEJS_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}-headers")
+	set(NODEJS_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}")
 
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
@@ -196,19 +196,8 @@ if(NOT NODEJS_INCLUDE_DIR)
 		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" OUTPUT_QUIET)
 	endif()
 
-	set(NODEJS_INCLUDE_PATHS ${NODEJS_OUTPUT_PATH})
-
-	execute_process(COMMAND ls -la ${NODEJS_INCLUDE_PATHS})
-
-	# Find NodeJS includes
-	find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
-		PATHS ${NODEJS_INCLUDE_PATHS}
-		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
-		DOC "NodeJS JavaScript Runtime Headers"
-	)
+	set(NODEJS_INCLUDE_DIR ${NODEJS_OUTPUT_PATH}/include/node)
 endif()
-
-message(STATUS "NodeJS include dir: ${NODEJS_INCLUDE_DIR}")
 
 if(NODEJS_INCLUDE_DIR)
 	# Detect NodeJS V8 version
