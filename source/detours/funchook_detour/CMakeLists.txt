@@ -22,7 +22,7 @@ elseif(APPLE)
 	set(FUNCHOOK_LIBRARY_PREFIX "lib")
 	set(FUNCHOOK_LIBRARY_SUFFIX "dylib")
 	set(FUNCHOOK_LIBRARY_INSTALL_SUFFIX "dylib")
-	else()
+else()
 	set(FUNCHOOK_LIBRARY_PREFIX "lib")
 	set(FUNCHOOK_LIBRARY_SUFFIX "so")
 	set(FUNCHOOK_LIBRARY_INSTALL_SUFFIX "so")
@@ -265,9 +265,18 @@ target_link_libraries(${target}
 # Deployment
 #
 
-# Dependency
+if(WIN32)
+	set(FUNCHOOK_LIBRARY_SONAME_INSTALL_DIR)
+else()
+	set(FUNCHOOK_LIBRARY_SONAME_INSTALL_DIR
+		${FUNCHOOK_LIBRARY_INSTALL_DIR}.1
+		${FUNCHOOK_LIBRARY_INSTALL_DIR}.1.0.0)
+endif()
+
+# Dependency (including symbolic links)
 install(FILES
 	${FUNCHOOK_LIBRARY_INSTALL_DIR}
+	${FUNCHOOK_LIBRARY_SONAME_INSTALL_DIR}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
