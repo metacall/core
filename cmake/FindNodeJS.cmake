@@ -164,7 +164,7 @@ find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
 
 # Check if the include directory contains all headers in the same folder
 if(NODEJS_INCLUDE_DIR)
-	foreach(HEADER IN ${NODEJS_HEADERS})
+	foreach(HEADER IN ITEMS ${NODEJS_HEADERS})
 		if(NOT EXISTS ${NODEJS_INCLUDE_DIR}/${HEADER})
 			set(NODEJS_INCLUDE_DIR FALSE)
 		endif()
