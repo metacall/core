@@ -171,8 +171,6 @@ if(NODEJS_INCLUDE_DIR)
 	endforeach()
 endif()
 
-message(STATUS "NodeJS include dir: ${NODEJS_INCLUDE_DIR}")
-
 # TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?) with proper includes
 if(NOT NODEJS_INCLUDE_DIR)
 	if(NOT NODEJS_VERSION)
@@ -200,6 +198,8 @@ if(NOT NODEJS_INCLUDE_DIR)
 
 	set(NODEJS_INCLUDE_PATHS ${NODEJS_OUTPUT_PATH})
 
+	execute_process(COMMAND ls -la ${NODEJS_INCLUDE_PATHS})
+
 	# Find NodeJS includes
 	find_path(NODEJS_INCLUDE_DIR ${NODEJS_HEADERS}
 		PATHS ${NODEJS_INCLUDE_PATHS}
@@ -207,6 +207,8 @@ if(NOT NODEJS_INCLUDE_DIR)
 		DOC "NodeJS JavaScript Runtime Headers"
 	)
 endif()
+
+message(STATUS "NodeJS include dir: ${NODEJS_INCLUDE_DIR}")
 
 if(NODEJS_INCLUDE_DIR)
 	# Detect NodeJS V8 version
