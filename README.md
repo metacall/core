@@ -21,6 +21,8 @@ const { sum } = require('sum.py');
 sum(3, 4); // 7
 ```
 
+Use the [installer](https://github.com/metacall/install) and try [some examples](https://github.com/metacall/beautifulsoup-express-example).
+
 <div align="center">
   <a href="https://medium.com/@metacall/call-functions-methods-or-procedures-between-programming-languages-with-metacall-58cfece35d7" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/overview.png" alt="M E T A C A L L" style="max-width:100%; margin: 0 auto;" width="350" height="auto"></a>
 </div>
