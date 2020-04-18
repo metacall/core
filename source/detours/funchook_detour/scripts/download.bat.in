@@ -5,7 +5,7 @@ if not exist @FUNCHOOK_SOURCE_DIR@/.git (
 	if exist @FUNCHOOK_SOURCE_DIR@ (
 		rmdir /S /Q "@FUNCHOOK_SOURCE_DIR@"
 	)
-	"@GIT_EXECUTABLE@" clone --single-branch --branch v1.0.0 --recursive https://github.com/kubo/funchook.git @FUNCHOOK_SOURCE_DIR@
+	"@GIT_EXECUTABLE@" clone --single-branch --branch v@FUNCHOOK_VERSION@ --recursive https://github.com/kubo/funchook.git @FUNCHOOK_SOURCE_DIR@
 )
 
 rem Write empty CMake file to avoid cmake warnings
