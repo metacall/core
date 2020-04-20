@@ -23,6 +23,7 @@ set(LOADER_MODULE_NAMES
 
 # Plugins options
 option(OPTION_BUILD_LOADERS_C "Build C Foreign Function Interface library loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_COB "Build GNU/COBOL 2.2 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CR "Build Crystal 0.33.0 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 2.2.8 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_FILE "Build File System loader plugin." OFF)
@@ -37,7 +38,8 @@ option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugi
 
 # Plugin packages
 add_subdirectory(c_loader) # Foreign Function Interface library
-add_subdirectory(cr_loader) # WebAssembly Virtual Machine
+add_subdirectory(cob_loader) # GNU/Cobol 2.2 Runtime
+add_subdirectory(cr_loader) # Crystal 0.33.0 Runtime
 add_subdirectory(cs_loader) # CoreCLR 2.2.8 Runtime
 add_subdirectory(file_loader) # File System
 add_subdirectory(jsm_loader) # Mozilla's SpiderMonkey 4.8 JavaScript Engine
