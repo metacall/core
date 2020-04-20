@@ -959,7 +959,7 @@ napi_value metacall_node_initialize(napi_env env, napi_value exports)
 		return NULL;
 	}
 
-	if (metacall_register(NULL, metacall_node_callback_value_to_napi, &metacall_node_callback_value_to_napi_func, METACALL_INVALID, 0) != 0
+	if (metacall_register("__metacall_node_callback_value_to_napi__", metacall_node_callback_value_to_napi, &metacall_node_callback_value_to_napi_func, METACALL_INVALID, 0) != 0
 		|| metacall_node_callback_value_to_napi_func == NULL)
 	{
 		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
