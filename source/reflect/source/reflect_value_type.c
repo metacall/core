@@ -22,6 +22,8 @@
 
 #include <reflect/reflect_value_type.h>
 
+#include <log/log.h>
+
 #include <stdint.h>
 
 /* -- Methods -- */
@@ -455,6 +457,8 @@ void value_type_destroy(value v)
 
 			value * v_array = value_to_array(v);
 
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy array value <%p> of size %u", (void *)v, size); */
+
 			for (index = 0; index < size; ++index)
 			{
 				value_type_destroy(v_array[index]);
@@ -466,6 +470,8 @@ void value_type_destroy(value v)
 
 			value * v_map = value_to_map(v);
 
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy map value <%p> of size %u", (void *)v, size); */
+
 			for (index = 0; index < size; ++index)
 			{
 				value_type_destroy(v_map[index]);
@@ -475,11 +481,23 @@ void value_type_destroy(value v)
 		{
 			future f = value_to_future(v);
 
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy future value <%p>", (void *)v);
+
 			future_destroy(f);
 		}
 		else if (type_id_function(id) == 0)
 		{
 			function f = value_to_function(v);
+			const char * name = function_name(f);
+
+			if (name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous function <%p> value <%p>", (void *)f, (void *)v);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy function %s <%p> value <%p>", name, (void *)f, (void *)v);
+			}
 
 			function_destroy(f);
 		}
@@ -487,6 +505,10 @@ void value_type_destroy(value v)
 		if (type_id_invalid(id) != 0)
 		{
 			value_destroy(v);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Trying to destroy an invalid value <%p>", (void *)v);
 		}
 	}
 }

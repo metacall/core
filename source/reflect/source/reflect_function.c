@@ -291,6 +291,209 @@ value function_metadata(function func)
 	return f;
 }
 
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+static void function_call_value_debug(type_id id, value v)
+{
+	switch (id)
+	{
+		case TYPE_BOOL :
+		{
+			boolean b = value_to_bool(v);
+			if (b == 0L)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "    => False");
+			}
+			else if (b == 1L)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "    => True");
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "    => Invalid");
+			}
+			break;
+		}
+
+		case TYPE_CHAR :
+		{
+			char c = value_to_char(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %c", c);
+			break;
+		}
+
+		case TYPE_SHORT :
+		{
+			short s = value_to_short(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %d", s);
+			break;
+		}
+
+		case TYPE_INT :
+		{
+			int i = value_to_int(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %d", i);
+			break;
+		}
+
+		case TYPE_LONG :
+		{
+			long l = value_to_long(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %d", l);
+			break;
+		}
+
+		case TYPE_FLOAT :
+		{
+			float f = value_to_float(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %f", f);
+			break;
+		}
+
+		case TYPE_DOUBLE :
+		{
+			double d = value_to_double(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %f", d);
+			break;
+		}
+
+		case TYPE_STRING :
+		{
+			char * str = value_to_string(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %s", str);
+			break;
+		}
+
+		case TYPE_BUFFER :
+		{
+			char * buf = value_to_buffer(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %.*s", value_type_size(v), buf);
+			break;
+		}
+
+		case TYPE_ARRAY :
+		{
+			value * v_array = value_to_array(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %p", (void *)v_array);
+			/* TODO: Recursive */
+			break;
+		}
+
+		case TYPE_MAP :
+		{
+			value * v_map = value_to_map(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %p", (void *)v_map);
+			/* TODO: Recursive */
+			break;
+		}
+
+		case TYPE_PTR :
+		{
+			void * ptr = value_to_ptr(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %p", ptr);
+			break;
+		}
+
+		case TYPE_FUTURE :
+		{
+			future f = value_to_future(v);
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => %p", (void *)f); /* TODO */
+			break;
+		}
+
+		case TYPE_FUNCTION :
+		{
+			function f = value_to_function(v);
+			if (f->name != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "    => <%p> function %s with arity %u",
+					(void *)f, f->name, signature_count(f->s));
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "    => <%p> function anonymous with arity %u",
+					(void *)f, signature_count(f->s));
+			}
+			/* TODO: Recursive */
+			break;
+		}
+
+		case TYPE_NULL :
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => NULL");
+			break;
+		}
+
+		default :
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "    => Invalid");
+			break;
+		}
+	}
+}
+
+static function_return function_call_debug(function func, function_args args, size_t size)
+{
+	size_t iterator;
+	value ret;
+	type_id id_ret = TYPE_INVALID, id_ret_sig;
+	type ret_type;
+
+	if (func->name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Invoke annonymous function <%p> with args <%p> arity %u",
+			(void *)func, (void *)args, signature_count(func->s));
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function %s <%p> with args <%p> arity %u",
+			func->name, (void *)func, (void *)args, signature_count(func->s));
+	}
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		type t = signature_get_type(func->s, iterator);
+
+		type_id id_arg = value_type_id((value)args[iterator]), id_sig = TYPE_INVALID;
+
+		if (t != NULL)
+		{
+			id_sig = type_index(t);
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "  #%u Signature Type: %s - Argument Type: %s - Argument Value: %p",
+			iterator, type_id_name(id_sig), type_id_name(id_arg), (void *)args[iterator]);
+
+		function_call_value_debug(id_arg, (value)args[iterator]);
+	}
+
+	ret = func->interface->invoke(func, func->impl, args, size);
+
+	if (ret != NULL)
+	{
+		id_ret = value_type_id((value)ret);
+	}
+
+	ret_type = signature_get_return(func->s);
+
+	id_ret_sig = value_type_id(ret_type);
+
+	if (func->name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "  #ret Signature Type: %s - Argument Type: %s - Argument Value: %p (from annonymous function <%p> with args <%p> arity %u)",
+			type_id_name(id_ret_sig), type_id_name(id_ret), (void *)ret, (void *)func, (void *)args, signature_count(func->s));
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "  #ret Signature Type: %s - Argument Type: %s - Argument Value: %p (from function %s <%p> with args <%p> arity %u)",
+			type_id_name(id_ret_sig), type_id_name(id_ret), (void *)ret, func->name, (void *)func, (void *)args, signature_count(func->s));
+	}
+
+	function_call_value_debug(value_type_id(ret), ret);
+
+	return ret;
+}
+#endif
+
 function_return function_call(function func, function_args args, size_t size)
 {
 	if (func == NULL)
@@ -321,16 +524,11 @@ function_return function_call(function func, function_args args, size_t size)
 		return NULL;
 	}
 
-	if (func->name == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Invoke annonymous function with args <%p>", (void *)args);
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Invoke function (%s) with args <%p>", func->name, (void *)args);
-	}
-
-	return func->interface->invoke(func, func->impl, args, size);
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		return function_call_debug(func, args, size);
+	#else
+		return func->interface->invoke(func, func->impl, args, size);
+	#endif
 }
 
 function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
@@ -359,6 +557,15 @@ void function_destroy(function func)
 {
 	if (func != NULL && func->ref_count == 0)
 	{
+		if (func->name == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous function <%p>", (void *)func);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy function %s <%p>", func->name, (void *)func);
+		}
+
 		if (func->interface != NULL && func->interface->destroy != NULL)
 		{
 			func->interface->destroy(func, func->impl);
