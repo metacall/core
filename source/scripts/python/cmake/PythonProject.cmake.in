@@ -19,7 +19,7 @@
 
 # Check if this loader is enabled
 if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY)
-    return()
+	return()
 endif()
 
 #
