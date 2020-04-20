@@ -97,6 +97,7 @@ This section describes all programming languages that **METACALL** supports, if 
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                        |             **5.1.117**              |  js  |
 | [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md) |    **>= 1.0.0-preview2 <= 2.2.8**    |  cs  |
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                    |          **>= 2.1 <= 2.5**           |  rb  |
+| [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)             |             **>= 1.1.0**             | cob  |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                        |              **0.1.0**               | file |
 | [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                        |              **0.1.0**               | mock |
 
