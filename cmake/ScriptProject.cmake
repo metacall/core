@@ -32,17 +32,17 @@ get_filename_component(SCRIPT_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PAT
 
 function(script_project name language configuration)
 
-	# Create project file
+	# Define upper and lower versions of the language
 	string(TOLOWER ${language} language_lower)
 
-	# Create project file
+	# Define project target name
 	set(custom_target "${language_lower}-${name}")
+
+	# Define target for the configuration
+	set(PACKAGE_TARGET "${custom_target}")
 
 	# Create project file
 	configure_file(${configuration} ${custom_target}-config.cmake @ONLY)
-
-	# Include generated project file
-	include(${CMAKE_CURRENT_BINARY_DIR}/${custom_target}-config.cmake)
 
 	# Set custom target
 	add_custom_target(${custom_target} ALL)
@@ -76,5 +76,8 @@ function(script_project name language configuration)
 		COMMAND ${CMAKE_COMMAND} -E copy_directory
 		${CMAKE_CURRENT_SOURCE_DIR}/source ${LOADER_SCRIPT_PATH}
 	)
+
+	# Include generated project file
+	include(${CMAKE_CURRENT_BINARY_DIR}/${custom_target}-config.cmake)
 
 endfunction()
