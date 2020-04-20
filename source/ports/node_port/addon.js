@@ -37,13 +37,13 @@ module.exports = (() => {
 	const LIBRARY_PATH = process.env.LOADER_LIBRARY_PATH || installPath;
 
 	const folders = [
-		path.join(__dirname, 'build'),
-		__dirname,
-		process.cwd(),
 		LIBRARY_PATH,
 		path.join(LIBRARY_PATH, 'build'),
 		path.join(LIBRARY_PATH, 'node_modules', 'metacall'),
 		path.join(LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
+		path.join(__dirname, 'build'),
+		__dirname,
+		process.cwd(),
 		'/usr/local/lib',
 	];
 
