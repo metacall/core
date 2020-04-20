@@ -12,6 +12,7 @@ file(MAKE_DIRECTORY ${LOADER_SCRIPT_PATH})
 
 # Plugins options
 option(OPTION_BUILD_SCRIPTS_C "Build C scripts." ON)
+option(OPTION_BUILD_SCRIPTS_COB "Build Cobol scripts." ON)
 option(OPTION_BUILD_SCRIPTS_CS "Build C# scripts." ON)
 option(OPTION_BUILD_SCRIPTS_JAVA "Build Java scripts." ON)
 option(OPTION_BUILD_SCRIPTS_JS "Build JavaScript scripts." ON)
@@ -22,6 +23,7 @@ option(OPTION_BUILD_SCRIPTS_FILE "Build File scripts." ON)
 
 # Script directory packages
 add_subdirectory(c)
+add_subdirectory(cobol)
 add_subdirectory(csharp)
 add_subdirectory(java)
 add_subdirectory(javascript)
