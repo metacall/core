@@ -702,14 +702,10 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		if (t == NULL)
 		{
 			id = value_type_id((value)args[args_count]);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Argument #%u Type: %s", args_count, type_id_name(id));
 		}
 		else
 		{
 			id = type_index(t);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Argument #%u Type (%p): %s", args_count, (void *)t, type_name(t));
 		}
 
 		py_func->values[args_count] = py_loader_impl_value_to_capi(py_func->impl, py_impl, id, args[args_count]);
@@ -741,16 +737,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		if (ret_type == NULL)
 		{
 			id = py_loader_impl_capi_to_value_type(result);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Return Type: %s", type_id_name(id));
 		}
 		else
 		{
 			id = type_index(ret_type);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Return Type (%p): %s", (void *)ret_type, type_name(ret_type));
 		}
-
 
 		v = py_loader_impl_capi_to_value(py_func->impl, result, id);
 
