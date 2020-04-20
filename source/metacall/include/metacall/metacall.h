@@ -324,6 +324,27 @@ METACALL_API void * metacallt(const char * name, const enum metacall_value_id id
 
 /**
 *  @brief
+*    Call a function anonymously by type array @ids and variable arguments @va_args
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] ids
+*    Array of types refered to @va_args
+*
+*  @param[in] size
+*    Number of elements of the call
+*
+*  @param[in] va_args
+*    Varidic function parameters
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t size, ...);
+
+/**
+*  @brief
 *    Get the function by @name
 *
 *  @param[in] name
