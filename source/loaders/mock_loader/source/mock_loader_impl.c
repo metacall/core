@@ -191,7 +191,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 		{
 			static const char str[] = "Hello World";
 
-			return value_create_string(str, sizeof(str) / sizeof(str[0]));
+			return value_create_string(str, sizeof(str) - 1);
 		}
 		else if (id == TYPE_PTR)
 		{
