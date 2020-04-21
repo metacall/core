@@ -146,7 +146,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${COBOL_INCLUDE_DIRS} # Cobol includes
+	${COBOL_INCLUDE_DIR} # Cobol includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -164,7 +164,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 
-	${COBOL_LIBRARIES} # Cobol libraries
+	${COBOL_LIBRARY} # Cobol libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
