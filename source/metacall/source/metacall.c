@@ -264,6 +264,11 @@ void * metacallv(const char * name, void * args[])
 	return metacallfv(loader_get(name), args);
 }
 
+void * metacallv_s(const char * name, void * args[], size_t size)
+{
+	return metacallfv_s(loader_get(name), args, size);
+}
+
 void * metacallhv(void * handle, const char * name, void * args[])
 {
 	(void)handle;
@@ -611,11 +616,25 @@ void * metacallfv(void * func, void * args[])
 	{
 		signature s = function_signature(f);
 
-		size_t iterator, args_count = signature_count(s);
+		return metacallfv_s(func, args, signature_count(s));
+	}
+
+	return NULL;
+}
+
+void * metacallfv_s(void * func, void * args[], size_t size)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		size_t iterator;
 
 		value ret;
 
-		for (iterator = 0; iterator < args_count; ++iterator)
+		for (iterator = 0; iterator < size; ++iterator)
 		{
 			type t = signature_get_type(s, iterator);
 
@@ -635,7 +654,7 @@ void * metacallfv(void * func, void * args[])
 			}
 		}
 
-		ret = function_call(f, args, args_count);
+		ret = function_call(f, args, size);
 
 		if (ret != NULL)
 		{

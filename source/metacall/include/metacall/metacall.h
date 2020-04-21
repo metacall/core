@@ -272,6 +272,24 @@ METACALL_API void * metacallv(const char * name, void * args[]);
 
 /**
 *  @brief
+*    Call a function anonymously by value array @args
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of the call
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallv_s(const char * name, void * args[], size_t size);
+
+/**
+*  @brief
 *    Call a function anonymously by handle @handle value array @args
 *    This function allows to avoid name collisions when calling functions by name
 *
@@ -420,6 +438,24 @@ METACALL_API void * metacall_handle_export(void * handle);
 *    Pointer to value containing the result of the call
 */
 METACALL_API void * metacallfv(void * func, void * args[]);
+
+/**
+*  @brief
+*    Call a function anonymously by value array @args and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of function arguments
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallfv_s(void * func, void * args[], size_t size);
 
 /**
 *  @brief
