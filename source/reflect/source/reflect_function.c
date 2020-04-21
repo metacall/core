@@ -291,7 +291,7 @@ value function_metadata(function func)
 	return f;
 }
 
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+#if 0 /* (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)) */
 static void function_call_value_debug(type_id id, value v)
 {
 	switch (id)
@@ -524,11 +524,15 @@ function_return function_call(function func, function_args args, size_t size)
 		return NULL;
 	}
 
+	/*
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		return function_call_debug(func, args, size);
 	#else
 		return func->interface->invoke(func, func->impl, args, size);
 	#endif
+	*/
+
+	return func->interface->invoke(func, func->impl, args, size);
 }
 
 function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
