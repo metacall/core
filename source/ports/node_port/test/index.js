@@ -53,13 +53,26 @@ describe('metacall', () => {
 			const asd = require('asd.mock');
 			assert.notStrictEqual(asd, undefined);
 			assert.strictEqual(asd.my_empty_func(), 1234);
-			assert.strictEqual(asd.my_empty_func_str(), 'Hello World\u0000');
+			assert.strictEqual(asd.my_empty_func_str(), 'Hello World');
 			assert.strictEqual(asd.my_empty_func_int(), 1234);
-			assert.strictEqual(asd.new_args('a'), 'Hello World\u0000');
-			assert.strictEqual(asd.two_str('1', '2'), 'Hello World\u0000');
+			assert.strictEqual(asd.new_args('a'), 'Hello World');
+			assert.strictEqual(asd.two_str('1', '2'), 'Hello World');
 			assert.strictEqual(asd.two_doubles(4.4, 5.5), 3.1416);
-			assert.strictEqual(asd.three_str('a', 'b', 'c'), 'Hello World\u0000');
+			assert.strictEqual(asd.three_str('a', 'b', 'c'), 'Hello World');
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
+		});
+		it('metacall_load_from_file (cob)', () => {
+			assert.strictEqual(metacall_load_from_file('cob', [ 'say.cob' ]), undefined);
+
+			const script = metacall_handle('cob', 'say');
+
+			// Cobol tests are optional (in order to pass CI/CD)
+			if (script) {
+				assert.notStrictEqual(script, undefined);
+				assert.strictEqual(script.name, 'say');
+
+				assert.strictEqual(metacall('say', 'Hello, ', 'world!'), 0);
+			}
 		});
 		it('require (py)', () => {
 			const example = require('example.py');
@@ -89,7 +102,7 @@ describe('metacall', () => {
 	describe('call', () => {
 		it('metacall (mock)', () => {
 			assert.strictEqual(metacall('my_empty_func'), 1234);
-			assert.strictEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World\u0000');
+			assert.strictEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World');
 		});
 		it('metacall (py)', () => {
 			assert.strictEqual(metacall('multiply', 2, 2), 4);
@@ -135,9 +148,11 @@ describe('metacall', () => {
 
 			// Opaque pointer for class instances
 			assert.strictEqual(f.function_capsule_method(f.function_capsule_new_class()), 'hello world');
+			assert.strictEqual(f.function_capsule_method(f.function_capsule_new_class()), 'hello world'); // Check for function lifetime
 
 			// Opaque pointer for class instances with callback
 			assert.strictEqual(f.function_capsule_cb((klass) => f.function_capsule_method(klass)), 'hello world');
+			assert.strictEqual(f.function_capsule_cb((klass) => f.function_capsule_method(klass)), 'hello world'); // Check for function lifetime
 
 			// Double recursion
 			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
@@ -147,18 +162,31 @@ describe('metacall', () => {
 			assert.strictEqual(f.function_sum(5, sum), 15); // Check for function lifetime
 
 			// Factorial composition (@trgwii)
+			// console.log("------------------------------------------------");
 			// const fact = f.function_factorial(c => v => v <= 0 ? 1 : v);
+			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(1), 1);
+			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(2), 2);
+			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(3), 6);
+			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(50000), 2499950000);
 
+			// console.log("------------------------------------------------");
 			// const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
 			// assert.notStrictEqual(js_factorial, undefined);
+			// console.log("------------------------------------------------");
+			// assert.strictEqual(js_factorial(5), 120);
+			// console.log("------------------------------------------------");
 			// assert.strictEqual(js_factorial(5), 120);
 
+			// console.log("------------------------------------------------");
 			// const py_factorial = f.function_chain(f.function_factorial);
 			// assert.notStrictEqual(py_factorial, undefined);
+			// console.log("------------------------------------------------");
+			// assert.strictEqual(py_factorial(5), 120);
+			// console.log("------------------------------------------------");
 			// assert.strictEqual(py_factorial(5), 120);
 		});
 	});
