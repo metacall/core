@@ -153,7 +153,7 @@ napi_value metacall_node_callback_napi_to_value(napi_env env, napi_callback_info
 		metacall_node_finalizer(env, argv[iterator], args[iterator]);
 	}
 
-	void * ret = metacallfv(f, args);
+	void * ret = metacallfv_s(f, args, argc);
 
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
@@ -750,7 +750,7 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 		metacall_node_finalizer(env, argv[args_count], args[args_count - 1]);
 	}
 
-	void * ret = metacallv(name, args);
+	void * ret = metacallv_s(name, args, argc - 1);
 
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
