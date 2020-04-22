@@ -36,6 +36,7 @@ if(NODEJS_INCLUDE_DIR)
 endif()
 
 option(NODEJS_CMAKE_DEBUG "Print paths for debugging NodeJS dependencies." OFF)
+option(NODEJS_SHARED_UV "If it is enabled, libuv won't be required by this script." OFF)
 
 # Include package manager
 include(FindPackageHandleStandardArgs)
@@ -68,7 +69,9 @@ else()
 	set(NODEJS_V8_HEADERS v8.h v8-version.h)
 endif()
 
-set(NODEJS_UV_HEADERS uv.h) # TODO: Add uv-(platform).h?
+if(NOT NODEJS_SHARED_UV)
+	set(NODEJS_UV_HEADERS uv.h)
+endif()
 
 set(NODEJS_HEADERS
 	node.h
