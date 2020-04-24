@@ -49,6 +49,18 @@ describe('metacall', () => {
 			assert.notStrictEqual(script, undefined);
 			assert.strictEqual(script.name, 'ducktype');
 		});
+		// Cobol tests are conditional (in order to pass CI/CD)
+		if (process.env['OPTION_BUILD_LOADERS_COB']) {
+			it('metacall_load_from_file (cob)', () => {
+				assert.strictEqual(metacall_load_from_file('cob', [ 'say.cob' ]), undefined);
+
+				const script = metacall_handle('cob', 'say');
+				assert.notStrictEqual(script, undefined);
+				assert.strictEqual(script.name, 'say');
+
+				assert.strictEqual(metacall('say', 'Hello, ', 'world!'), 0);
+			});
+		}
 		it('require (mock)', () => {
 			const asd = require('asd.mock');
 			assert.notStrictEqual(asd, undefined);
@@ -60,19 +72,6 @@ describe('metacall', () => {
 			assert.strictEqual(asd.two_doubles(4.4, 5.5), 3.1416);
 			assert.strictEqual(asd.three_str('a', 'b', 'c'), 'Hello World');
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
-		});
-		it('metacall_load_from_file (cob)', () => {
-			assert.strictEqual(metacall_load_from_file('cob', [ 'say.cob' ]), undefined);
-
-			const script = metacall_handle('cob', 'say');
-
-			// Cobol tests are optional (in order to pass CI/CD)
-			if (script) {
-				assert.notStrictEqual(script, undefined);
-				assert.strictEqual(script.name, 'say');
-
-				assert.strictEqual(metacall('say', 'Hello, ', 'world!'), 0);
-			}
 		});
 		it('require (py)', () => {
 			const example = require('example.py');

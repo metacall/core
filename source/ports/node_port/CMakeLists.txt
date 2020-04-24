@@ -273,7 +273,13 @@ set_property(TEST ${target}
 
 include(TestEnvironmentVariables)
 
+# Enable cobol test if it is built
+if(OPTION_BUILD_LOADERS_COB)
+	set(TESTS_ENVIRONMENT_VARIABLES_COB "OPTION_BUILD_LOADERS_COB=1")
+endif()
+
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+	${TESTS_ENVIRONMENT_VARIABLES_COB}
 )
