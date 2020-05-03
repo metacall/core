@@ -31,6 +31,70 @@ class metacall_map_await_test : public testing::Test
 public:
 };
 
+static void * hello_boy_await_ok(void * result, void * data)
+{
+	double * it = static_cast<double *>(data);
+
+	EXPECT_NE((void *) NULL, (void *) result);
+
+	EXPECT_NE((void *) NULL, (void *) data);
+
+	EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+
+	printf("hello_boy_await future (from map) callback: %f\n", metacall_value_to_double(result));
+
+	fflush(stdout);
+
+	EXPECT_EQ((double) metacall_value_to_double(result), (double) (7.0 + *it));
+
+	delete it;
+
+	return NULL;
+}
+
+static void * hello_boy_await_fail(void *, void * data)
+{
+	double * it = static_cast<double *>(data);
+
+	int this_should_never_happen = 1;
+
+	EXPECT_NE((void *) NULL, (void *) data);
+
+	delete it;
+
+	EXPECT_NE((int) 0, (int) this_should_never_happen);
+
+	return NULL;
+}
+
+static void * hello_world_await_fail(void *, void * data)
+{
+	int this_should_never_happen = 1;
+
+	EXPECT_EQ((void *) NULL, (void *) data);
+
+	EXPECT_NE((int) 0, (int) this_should_never_happen);
+
+	return NULL;
+}
+
+static void * hello_world_await_ok(void * result, void * data)
+{
+	EXPECT_NE((void *) NULL, (void *) result);
+
+	EXPECT_EQ((void *) NULL, (void *) data);
+
+	EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_STRING);
+
+	printf("hello_world callback: %s\n", metacall_value_to_string(result));
+
+	fflush(stdout);
+
+	EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(result), "Hello World"));
+
+	return NULL;
+}
+
 TEST_F(metacall_map_await_test, DefaultConstructor)
 {
 	metacall_print_info();
@@ -81,38 +145,7 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 
 			values[1] = metacall_value_from_double(values[1], iterator);
 
-			ret = metacallfmv_await(func, keys, values, [](void * result, void * data) -> void * {
-				double * it = (double *)data;
-
-				EXPECT_NE((void *) NULL, (void *) result);
-
-				EXPECT_NE((void *) NULL, (void *) data);
-
-				EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
-
-				printf("hello_boy_await future (from map) callback: %f\n", metacall_value_to_double(result));
-
-				fflush(stdout);
-
-				EXPECT_EQ((double) metacall_value_to_double(result), (double) (7.0 + *it));
-
-				delete it;
-
-				return NULL;
-
-			}, [](void *, void * data) -> void * {
-				double * it = (double *)data;
-
-				int this_should_never_happen = 1;
-
-				EXPECT_NE((void *) NULL, (void *) data);
-
-				delete it;
-
-				EXPECT_NE((int) 0, (int) this_should_never_happen);
-
-				return NULL;
-			}, (void *)context);
+			ret = metacallfmv_await(func, keys, values, hello_boy_await_ok, hello_boy_await_fail, (void *)context);
 
 			EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -120,12 +153,6 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 
 			metacall_value_destroy(ret);
 		}
-
-		metacall_value_destroy(keys[0]);
-		metacall_value_destroy(keys[1]);
-
-		metacall_value_destroy(values[0]);
-		metacall_value_destroy(values[1]);
 
 		/* Call by map using serial */
 		ret = metacallfms_await(func, args_map, sizeof(args_map), allocator, [](void * result, void *) -> void * {
@@ -142,6 +169,50 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 			return NULL;
 
 		}, NULL, NULL);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
+
+		/* Call by map using arrays (nested await) */
+		func = metacall_function("hello_boy_nested_await");
+
+		ASSERT_NE((void *) NULL, (void *) func);
+
+		for (double iterator = 0.0; iterator <= 10.0; iterator += 1.0)
+		{
+			double * context = new double(iterator);
+
+			values[1] = metacall_value_from_double(values[1], iterator);
+
+			ret = metacallfmv_await(func, keys, values, hello_boy_await_ok, hello_boy_await_fail, (void *)context);
+
+			EXPECT_NE((void *) NULL, (void *) ret);
+
+			EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+			metacall_value_destroy(ret);
+		}
+
+		metacall_value_destroy(keys[0]);
+		metacall_value_destroy(keys[1]);
+
+		metacall_value_destroy(values[0]);
+		metacall_value_destroy(values[1]);
+
+		/* Await function that throws */
+		ret = metacall_await("throw_await", metacall_null_args, hello_world_await_fail, hello_world_await_ok, NULL);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
+
+		/* Await function that returns */
+		ret = metacall_await("return_await", metacall_null_args, hello_world_await_ok, hello_world_await_fail, NULL);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 

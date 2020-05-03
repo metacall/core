@@ -15,6 +15,23 @@ async function hello_boy_await(a, b) {
 	return (a + b);
 }
 
+async function hello_boy_nested_await(a, b) {
+	try {
+		await sleep(50);
+		return (a + b);
+	} catch (e) {
+		return 'Fail';
+	}
+}
+
+async function throw_await() {
+	throw 'Hello World';
+}
+
+async function return_await() {
+	return 'Hello World';
+}
+
 function call_test(a, b) {
 	return (a * b);
 }
@@ -54,6 +71,9 @@ function this_function_should_not_be_exported() {
 module.exports = {
 	hello_boy,
 	hello_boy_await,
+	hello_boy_nested_await,
+	throw_await,
+	return_await,
 	call_test,
 	lambda,
 	inline_lambda: (a, b) => {},

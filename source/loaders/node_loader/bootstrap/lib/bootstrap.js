@@ -219,15 +219,14 @@ function node_loader_trampoline_await(func, args, trampoline_ptr) {
 		throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
 	}
 
-	return new Promise((resolve, reject) => {
-		func(...args).then((x) => {
-			resolve(trampoline.resolve(trampoline_ptr, x));
-		}, (x) => {
-			reject(trampoline.reject(trampoline_ptr, x));
-		}).catch((x) => {
-			console.error(`Await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`);
-		});
-	});
+	return new Promise((resolve, reject) =>
+		func(...args).then(
+			x => resolve(trampoline.resolve(trampoline_ptr, x)),
+			x => reject(trampoline.reject(trampoline_ptr, x)),
+		).catch(
+			x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`),
+		)
+	);
 }
 
 function node_loader_trampoline_destroy() {
