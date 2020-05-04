@@ -145,6 +145,81 @@ BENCHMARK_REGISTER_F(metacall_node_call_bench, call_array_args)
 	->Iterations(1)
 	->Repetitions(3);
 
+BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)(benchmark::State & state)
+{
+	const int64_t call_count = 100000;
+	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
+
+	for (auto _ : state)
+	{
+		/* NodeJS */
+		#if defined(OPTION_BUILD_LOADERS_NODE)
+		{
+			void * ret;
+
+			state.PauseTiming();
+
+			void * args[2] =
+			{
+				metacall_value_create_double(0.0),
+				metacall_value_create_double(0.0)
+			};
+
+			state.ResumeTiming();
+
+			for (int64_t it = 0; it < call_count; ++it)
+			{
+				benchmark::DoNotOptimize(ret = metacall_await("int_mem_async_type", args, [](void * result, void * data) -> void * {
+					benchmark::State * state = static_cast<benchmark::State *>(data);
+
+					if (metacall_value_to_double(result) != 0.0)
+					{
+						state->SkipWithError("Invalid return value from int_mem_async_type");
+					}
+
+					state->PauseTiming();
+
+					return NULL;
+				}, NULL, static_cast<void *>(&state)));
+
+				if (ret == NULL)
+				{
+					state.SkipWithError("Null return value from int_mem_async_type");
+				}
+
+				if (metacall_value_id(ret) != METACALL_FUTURE)
+				{
+					state.SkipWithError("Invalid return type from int_mem_async_type");
+				}
+
+				metacall_value_destroy(ret);
+
+				state.ResumeTiming();
+			}
+
+			state.PauseTiming();
+
+			for (auto arg : args)
+			{
+				metacall_value_destroy(arg);
+			}
+
+			state.ResumeTiming();
+		}
+		#endif /* OPTION_BUILD_LOADERS_NODE */
+	}
+
+	state.SetLabel("MetaCall NodeJS Call Benchmark - Async Call");
+	state.SetBytesProcessed(call_size * call_count);
+	state.SetItemsProcessed(call_count);
+}
+
+BENCHMARK_REGISTER_F(metacall_node_call_bench, call_async)
+	->Threads(1)
+	->Unit(benchmark::kMillisecond)
+	->Iterations(1)
+	->Repetitions(3);
+
 /* TODO: NodeJS re-initialization */
 /* BENCHMARK_MAIN(); */
 
@@ -177,7 +252,10 @@ int main(int argc, char ** argv)
 
 		static const char int_mem_type[] =
 			"#!/usr/bin/env node\n"
-			"module.exports = { int_mem_type: (left, right) => 0 };\n";
+			"module.exports = {\n"
+			"	int_mem_type: (left, right) => 0,\n"
+			"	int_mem_async_type: async (left, right) => new Promise(resolve => 0),\n"
+			"};\n";
 
 		if (metacall_load_from_memory(tag, int_mem_type, sizeof(int_mem_type), NULL) != 0)
 		{
