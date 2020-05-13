@@ -33,6 +33,7 @@ struct function_type
 	function_impl impl;
 	function_interface interface;
 	size_t ref_count;
+	int async;
 	void * data;
 };
 
@@ -73,6 +74,7 @@ function function_create(const char * name, size_t args_count, function_impl imp
 
 	func->impl = impl;
 	func->ref_count = 0;
+	func->async = FUNCTION_SYNC;
 	func->data = NULL;
 
 	func->s = signature_create(args_count);
@@ -137,6 +139,11 @@ int function_decrement_reference(function func)
 	--func->ref_count;
 
 	return 0;
+}
+
+void function_async(function func, enum function_async_id async)
+{
+	func->async = async;
 }
 
 void function_bind(function func, void * data)
@@ -210,6 +217,42 @@ value function_metadata_name(function func)
 	return name;
 }
 
+value function_metadata_async(function func)
+{
+	static const char async_str[] = "async";
+
+	value async = value_create_array(NULL, 2);
+
+	value * async_array;
+
+	if (async == NULL)
+	{
+		return NULL;
+	}
+
+	async_array = value_to_array(async);
+
+	async_array[0] = value_create_string(async_str, sizeof(async_str) - 1);
+
+	if (async_array[0] == NULL)
+	{
+		value_type_destroy(async);
+
+		return NULL;
+	}
+
+	async_array[1] = value_create_bool(func->async == FUNCTION_SYNC ? 0L : 1L);
+
+	if (async_array[1] == NULL)
+	{
+		value_type_destroy(async);
+
+		return NULL;
+	}
+
+	return async;
+}
+
 value function_metadata_signature(function func)
 {
 	static const char sig_str[] = "signature";
@@ -248,7 +291,7 @@ value function_metadata_signature(function func)
 
 value function_metadata(function func)
 {
-	value name, sig, f;
+	value name, sig, async, f;
 
 	value * f_map;
 
@@ -270,14 +313,25 @@ value function_metadata(function func)
 		return NULL;
 	}
 
-	/* Create function map (name + signature) */
-	f = value_create_map(NULL, 2);
+	/* Create function async array */
+	async = function_metadata_async(func);
+
+	if (async == NULL)
+	{
+		value_type_destroy(name);
+		value_type_destroy(sig);
+
+		return NULL;
+	}
+
+	/* Create function map (name + signature + async) */
+	f = value_create_map(NULL, 3);
 
 	if (f == NULL)
 	{
 		value_type_destroy(name);
-
 		value_type_destroy(sig);
+		value_type_destroy(async);
 
 		return NULL;
 	}
@@ -285,11 +339,13 @@ value function_metadata(function func)
 	f_map = value_to_map(f);
 
 	f_map[0] = name;
-
 	f_map[1] = sig;
+	f_map[2] = async;
 
 	return f;
 }
+
+/* TODO: Implement a complete new module for debugging and tracking the values */
 
 #if 0 /* (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)) */
 static void function_call_value_debug(type_id id, value v)

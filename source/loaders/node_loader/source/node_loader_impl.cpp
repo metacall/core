@@ -1894,6 +1894,7 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				napi_value function_descriptor;
 				napi_value function_ptr;
 				napi_value function_sig;
+				napi_value function_is_async;
 				uint32_t function_sig_length;
 
 				/* Get function name */
@@ -1941,6 +1942,21 @@ void node_loader_impl_async_discover(uv_async_t * async)
 
 				node_loader_impl_exception(env, status);
 
+				/* Get function async */
+				status = napi_get_named_property(env, function_descriptor, "async", &function_is_async);
+
+				node_loader_impl_exception(env, status);
+
+				/* Check function async type */
+				status = napi_typeof(env, function_is_async, &valuetype);
+
+				node_loader_impl_exception(env, status);
+
+				if (valuetype != napi_boolean)
+				{
+					napi_throw_type_error(env, nullptr, "Invalid NodeJS async flag");
+				}
+
 				/* Create node function */
 				loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
 
@@ -1958,7 +1974,16 @@ void node_loader_impl_async_discover(uv_async_t * async)
 				{
 					signature s = function_signature(f);
 					scope sp = context_scope(async_data->ctx);
+					bool is_async = false;
 
+					/* Set function async */
+					status = napi_get_value_bool(env, function_is_async, &is_async);
+
+					node_loader_impl_exception(env, status);
+
+					function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
+
+					/* Set signature */
 					for (uint32_t arg_index = 0; arg_index < function_sig_length; ++arg_index)
 					{
 						napi_value parameter_name;

@@ -186,6 +186,7 @@ function node_loader_trampoline_discover(handle) {
 						discover[key] = {
 							ptr: func,
 							signature: args,
+							async: node.async,
 						};
 					}
 				}

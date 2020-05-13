@@ -59,6 +59,12 @@ typedef struct function_interface_type
 
 } * function_interface;
 
+enum function_async_id
+{
+	FUNCTION_SYNC = 0,
+	FUNCTION_ASYNC = 1
+};
+
 typedef function_interface (*function_impl_interface_singleton)(void);
 
 REFLECT_API function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
@@ -66,6 +72,8 @@ REFLECT_API function function_create(const char * name, size_t args_count, funct
 REFLECT_API int function_increment_reference(function func);
 
 REFLECT_API int function_decrement_reference(function func);
+
+REFLECT_API void function_async(function func, enum function_async_id async);
 
 REFLECT_API void function_bind(function func, void * data);
 

@@ -76,6 +76,8 @@ TEST_F(metacall_node_test, DefaultConstructor)
 
 		EXPECT_GT((size_t) size, (size_t) 0);
 
+		std::cout << inspect_str << std::endl;
+
 		metacall_allocator_free(allocator, inspect_str);
 
 		metacall_allocator_destroy(allocator);
