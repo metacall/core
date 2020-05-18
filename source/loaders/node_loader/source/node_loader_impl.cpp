@@ -6,29 +6,6 @@
  *
  */
 
-#if defined(WIN32) || defined(_WIN32)
-#	define WIN32_LEAN_AND_MEAN
-#	include <windows.h>
-#	include <io.h>
-#	ifndef dup
-#		define dup _dup
-#	endif
-#	ifndef dup2
-#		define dup2 _dup2
-#	endif
-#	ifndef STDIN_FILENO
-#		define STDIN_FILENO _fileno(stdin)
-#	endif
-#	ifndef STDOUT_FILENO
-#		define STDOUT_FILENO _fileno(stdout)
-#	endif
-#	ifndef STDERR_FILENO
-#		define STDERR_FILENO _fileno(stderr)
-#	endif
-#else
-#	include <unistd.h>
-#endif
-
 #include <node_loader/node_loader_impl.h>
 
 #include <loader/loader_impl.h>
@@ -128,10 +105,6 @@ typedef struct loader_impl_node_type
 
 	uv_mutex_t mutex;
 	uv_cond_t cond;
-
-	int stdin_copy;
-	int stdout_copy;
-	int stderr_copy;
 
 	int result;
 	const char * error_message;
@@ -2407,12 +2380,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
-	/* TODO: On error, delete dup, condition and mutex */
-
-	/* Duplicate stdin, stdout, stderr */
-	node_impl->stdin_copy = dup(STDIN_FILENO);
-	node_impl->stdout_copy = dup(STDOUT_FILENO);
-	node_impl->stderr_copy = dup(STDERR_FILENO);
+	/* TODO: On error, delete condition and mutex */
 
 	/* Initialize syncronization */
 	if (uv_cond_init(&node_impl->cond) != 0)
@@ -2854,11 +2822,6 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	/* Print NodeJS execution result */
 	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
-
-	/* Restore stdin, stdout, stderr */
-	dup2(node_impl->stdin_copy, STDIN_FILENO);
-	dup2(node_impl->stdout_copy, STDOUT_FILENO);
-	dup2(node_impl->stderr_copy, STDERR_FILENO);
 
 	delete node_impl;
 
