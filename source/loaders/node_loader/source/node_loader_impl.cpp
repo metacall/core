@@ -2349,6 +2349,11 @@ void node_loader_impl_thread(void * data)
 	/* Initialize destroy signal */
 	uv_async_init(node_impl->thread_loop, &node_impl->async_destroy, &node_loader_impl_async_destroy);
 
+	/* Disable stdio buffering, it interacts poorly with printf()
+	calls elsewhere in the program (e.g., any logging from V8.) */
+	setvbuf(stdout, nullptr, _IONBF, 0);
+	setvbuf(stderr, nullptr, _IONBF, 0);
+
 	/* Unlock node implementation mutex */
 	uv_mutex_unlock(&node_impl->mutex);
 
