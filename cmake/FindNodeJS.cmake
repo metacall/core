@@ -64,7 +64,7 @@ set(NODEJS_PATHS
 
 # Find NodeJS include directories
 if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
-	set(NODEJS_V8_HEADERS v8.h v8-debug.h v8-profiler.h v8-version.h)
+	set(NODEJS_V8_HEADERS v8.h v8-version.h v8-profiler.h) # v8-debug.h
 else()
 	set(NODEJS_V8_HEADERS v8.h v8-version.h)
 endif()
@@ -75,6 +75,7 @@ endif()
 
 set(NODEJS_HEADERS
 	node.h
+	node_api.h
 	${NODEJS_V8_HEADERS}
 	${NODEJS_UV_HEADERS}
 )
@@ -88,6 +89,7 @@ set(NODEJS_INCLUDE_SUFFIXES
 	include/nodejs/src
 	include/nodejs/deps/v8/include
 	include/nodejs/deps/uv/include
+	src
 )
 
 set(NODEJS_INCLUDE_PATHS
@@ -170,6 +172,7 @@ find_path(NODEJS_INCLUDE_DIR
 if(NODEJS_INCLUDE_DIR)
 	foreach(HEADER IN ITEMS ${NODEJS_HEADERS})
 		if(NOT EXISTS ${NODEJS_INCLUDE_DIR}/${HEADER})
+			message(WARNING "NodeJS header ${HEADER} not found in ${NODEJS_INCLUDE_DIR}")
 			set(NODEJS_INCLUDE_DIR FALSE)
 			break()
 		endif()
@@ -201,7 +204,13 @@ if(NOT NODEJS_INCLUDE_DIR)
 		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" OUTPUT_QUIET)
 	endif()
 
-	set(NODEJS_INCLUDE_DIR ${NODEJS_OUTPUT_PATH}/include/node)
+	# Find NodeJS includes
+	find_path(NODEJS_INCLUDE_DIR
+		NAMES ${NODEJS_HEADERS}
+		PATHS ${NODEJS_OUTPUT_PATH}
+		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Runtime Headers"
+	)
 endif()
 
 if(NODEJS_INCLUDE_DIR)
