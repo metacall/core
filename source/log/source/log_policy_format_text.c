@@ -196,25 +196,35 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 
 	const char * format = log_policy_format_text_serialize_impl_format(log_impl_level(impl), text_data->flags);
 
-	if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
+	#if (LOG_POLICY_FORMAT_PRETTY == 1)
 	{
 		length = snprintf(buffer, size, format,
-			ctime(log_record_time(record)),
-			log_record_thread_id(record),
-			log_record_line(record),
-			log_record_func(record),
-			log_record_file(record),
 			log_level_to_string(log_record_level(record)),
 			log_record_message(record));
 	}
-	else
+	#else
 	{
-		length = snprintf(buffer, size, format,
-			ctime(log_record_time(record)),
-			log_record_thread_id(record),
-			log_level_to_string(log_record_level(record)),
-			log_record_message(record));
+		if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
+		{
+			length = snprintf(buffer, size, format,
+				ctime(log_record_time(record)),
+				log_record_thread_id(record),
+				log_record_line(record),
+				log_record_func(record),
+				log_record_file(record),
+				log_level_to_string(log_record_level(record)),
+				log_record_message(record));
+		}
+		else
+		{
+			length = snprintf(buffer, size, format,
+				ctime(log_record_time(record)),
+				log_record_thread_id(record),
+				log_level_to_string(log_record_level(record)),
+				log_record_message(record));
+		}
 	}
+	#endif
 
 	if (length <= 0)
 	{
