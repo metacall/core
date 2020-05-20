@@ -2,6 +2,8 @@
 
 function hello_boy(a, b) {
 	console.log('Hey boy!!');
+	hello_boy_await(4, 5).then(result => process.stdout.write(`Result: ${result}.`));
+	console.log('Hoy boy!!');
 	return (a + b);
 }
 
@@ -11,7 +13,7 @@ function sleep(ms) {
 
 async function hello_boy_await(a, b) {
 	await sleep(50);
-	console.log('Hey boy!!');
+	console.log('Hey await boy!!');
 	return (a + b);
 }
 
