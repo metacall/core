@@ -81,7 +81,7 @@ GEM
       mini_portile2 (~> 2.4.0)
     puma (4.3.3)
       nio4r (~> 2.0)
-    rack (2.0.8)
+    rack (2.2.3)
     rack-test (0.6.3)
       rack (>= 1.0)
     rails (5.0.7.2)
