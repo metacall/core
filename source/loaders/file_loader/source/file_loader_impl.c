@@ -388,17 +388,13 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		if (file_function != NULL)
 		{
-			loader_naming_name name;
-
 			function f;
 
 			signature s;
 
-			(void)loader_path_get_fullname(descriptor->path, name);
-
 			file_function->descriptor = descriptor;
 
-			f = function_create(name, 0, file_function, &function_file_singleton);
+			f = function_create(descriptor->path, 0, file_function, &function_file_singleton);
 
 			s = function_signature(f);
 

@@ -22,6 +22,8 @@
 
 #include <loader/loader.h>
 
+#include <reflect/reflect.h>
+
 #include <log/log.h>
 
 class file_loader_test : public testing::Test
@@ -35,7 +37,8 @@ TEST_F(file_loader_test, DefaultConstructor)
 
 	const loader_naming_path scripts[] =
 	{
-		"favicon.ico"
+		"favicon.ico",
+		"a/a.txt"
 	};
 
 	const loader_naming_path names[] =
@@ -58,6 +61,12 @@ TEST_F(file_loader_test, DefaultConstructor)
 		void * handle = loader_get_handle(tag, names[index]);
 
 		EXPECT_NE((void *) NULL, (void *) handle);
+
+		function func = (function)handle;
+
+		const char * name = function_name(func);
+
+		printf("%s\n", name);
 
 		EXPECT_EQ((int) 0, (int) loader_clear(handle));
 	}
