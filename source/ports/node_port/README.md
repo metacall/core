@@ -10,9 +10,9 @@
 
 # Install
 
-Install MetaCall binaries first:
+Install MetaCall binaries first ([click here](https://github.com/metacall/install) for additional info about the install script):
 ```bash
-curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | bash
+bash <(curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh)
 ```
 
 Then install MetaCall NodeJS package through MetaCall:
@@ -30,11 +30,9 @@ def sum(a, b):
 
 `main.js`
 ``` javascript
-const { metacall, metacall_load_from_file } = require('metacall');
+const { sum } = require('./sum.py');
 
-metacall_load_from_file('py', [ 'sum.py' ]);
-
-metacall('sum', 3, 4); // 7
+sum(3, 4); // 7
 ```
 
 ``` sh
