@@ -3,3 +3,5 @@ include/*
 source/*
 installPath.js
 CMakeLists.txt
+upload.sh
+

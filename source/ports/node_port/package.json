@@ -1,6 +1,6 @@
 {
 	"name": "metacall",
-	"version": "0.2.1",
+	"version": "0.2.2",
 	"description": "Call Python, C#, Ruby... functions from NodeJS (a NodeJS Port for MetaCall)",
 	"repository": "github:metacall/core",
 	"bugs": "https://github.com/metacall/core/issues",
@@ -26,7 +26,9 @@
 		"access": "public"
 	},
 	"devDependencies": {
-		"mocha": "^6.1.4",
 		"node-addon-api": "^1.6.3"
+	},
+	"dependencies": {
+		"mocha": "^6.1.4"
 	}
 }
