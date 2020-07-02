@@ -119,6 +119,27 @@ size_t loader_path_get_path(const loader_naming_path path, size_t size, loader_n
 	return last + 1;
 }
 
+size_t loader_path_get_relative(const loader_naming_path base, const loader_naming_path path, loader_naming_path relative)
+{
+	size_t i, length = 0;
+
+	for (i = 0; base[i] == path[i] && (base[i] != '\0' || path[i] != '\0') && i < LOADER_NAMING_PATH_SIZE; ++i);
+
+	if (LOADER_PATH_SEPARATOR(path[i]))
+	{
+		++i;
+	}
+
+	for (; path[i] != '\0' && i < LOADER_NAMING_PATH_SIZE; ++i)
+	{
+		relative[length++] = path[i];
+	}
+
+	relative[length] = '\0';
+
+	return length + 1;
+}
+
 int loader_path_is_absolute(const loader_naming_path path)
 {
 	#if defined(WIN32) || defined(_WIN32)

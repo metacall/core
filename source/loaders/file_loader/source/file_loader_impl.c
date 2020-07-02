@@ -263,6 +263,10 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from file", paths[iterator]);
 			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "File %s not found", paths[iterator]);
+			}
 		}
 
 		return (loader_handle)handle;
@@ -388,13 +392,26 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		if (file_function != NULL)
 		{
+			const char * script_path = getenv("LOADER_SCRIPT_PATH");
+
 			function f;
 
 			signature s;
 
 			file_function->descriptor = descriptor;
 
-			f = function_create(descriptor->path, 0, file_function, &function_file_singleton);
+			if (script_path != NULL)
+			{
+				loader_naming_name name;
+
+				(void)loader_path_get_relative(script_path, descriptor->path, name);
+
+				f = function_create(name, 0, file_function, &function_file_singleton);
+			}
+			else
+			{
+				f = function_create(descriptor->path, 0, file_function, &function_file_singleton);
+			}
 
 			s = function_signature(f);
 

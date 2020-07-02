@@ -41,11 +41,6 @@ TEST_F(file_loader_test, DefaultConstructor)
 		"a/a.txt"
 	};
 
-	const loader_naming_path names[] =
-	{
-		"favicon"
-	};
-
 	const size_t size = sizeof(scripts) / sizeof(scripts[0]);
 
 	EXPECT_EQ((int) 0, (int) log_configure("metacall",
@@ -56,20 +51,11 @@ TEST_F(file_loader_test, DefaultConstructor)
 
 	EXPECT_EQ((int) 0, (int) loader_load_from_file(tag, scripts, size, NULL));
 
-	for (size_t index = 0; index < size; ++index)
-	{
-		void * handle = loader_get_handle(tag, names[index]);
+	void * handle = loader_get_handle(tag, "favicon");
 
-		EXPECT_NE((void *) NULL, (void *) handle);
+	EXPECT_NE((void *) NULL, (void *) handle);
 
-		function func = (function)handle;
-
-		const char * name = function_name(func);
-
-		printf("%s\n", name);
-
-		EXPECT_EQ((int) 0, (int) loader_clear(handle));
-	}
+	EXPECT_EQ((int) 0, (int) loader_clear(handle));
 
 	EXPECT_EQ((int) 0, (int) loader_unload());
 }

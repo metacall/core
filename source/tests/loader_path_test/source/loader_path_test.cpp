@@ -40,9 +40,39 @@ TEST_F(loader_path_test, loader_path_test_get_path_of_filepath)
 
 	size_t size = loader_path_get_path(base, sizeof(base), path);
 
-	EXPECT_EQ((int)0, (int)strcmp(path, result));
-	EXPECT_EQ((size_t)size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char)result[size - 1]);
+	EXPECT_EQ((int) 0, (int) strcmp(path, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_get_relative)
+{
+	const char base[] = "/a/b/c/";
+	const char path[] = "/a/b/c/abc";
+	const char result[] = "abc";
+
+	loader_naming_path relative;
+
+	size_t size = loader_path_get_relative(base, path, relative);
+
+	EXPECT_EQ((int) 0, (int) strcmp(relative, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_get_relative_fail)
+{
+	const char base[] = "/this/is/not/shared/with/path";
+	const char path[] = "/a/b/c/abc";
+	const char result[] = "a/b/c/abc";
+
+	loader_naming_path relative;
+
+	size_t size = loader_path_get_relative(base, path, relative);
+
+	EXPECT_EQ((int) 0, (int) strcmp(relative, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_none_slash)
