@@ -30,7 +30,9 @@ def sum(a, b):
 
 `main.js`
 ``` javascript
-const { sum } = require('./sum.py');
+require('metacall'); // Import MetaCall
+
+const { sum } = require('sum.py'); // Import Python script
 
 sum(3, 4); // 7
 ```
