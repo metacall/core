@@ -75,9 +75,7 @@ typedef char loader_impl_file_path[LOADER_IMPL_FILE_SIZE];
 typedef struct loader_impl_file_descriptor_type
 {
 	loader_impl_file_path path;
-	size_t length_path;
-	loader_impl_file_path relative;
-	size_t length_relative;
+	size_t length;
 
 } * loader_impl_file_descriptor;
 
@@ -115,7 +113,7 @@ function_return function_file_interface_invoke(function func, function_impl impl
 	(void)args;
 	(void)size;
 
-	return value_create_string(file_function->descriptor->path, file_function->descriptor->length_path);
+	return value_create_string(file_function->descriptor->path, file_function->descriptor->length);
 }
 
 function_return function_file_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
@@ -253,8 +251,6 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 			if (file_stat(paths[iterator], &s) == 0)
 			{
-				const char * script_path = getenv("LOADER_SCRIPT_PATH");
-
 				loader_impl_file_descriptor descriptor = NULL;
 
 				vector_insert_empty(handle->paths, vector_size(handle->paths));
@@ -263,18 +259,7 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 				strncpy(descriptor->path, paths[iterator], LOADER_IMPL_FILE_SIZE);
 
-				descriptor->length_path = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
-				
-				if (script_path != NULL)
-				{
-					descriptor->length_relative = loader_path_get_relative(script_path, descriptor->path, descriptor->relative);
-				}
-				else
-				{
-					strncpy(descriptor->relative, paths[iterator], LOADER_IMPL_FILE_SIZE);
-				
-					descriptor->length_relative = strnlen(descriptor->relative, LOADER_IMPL_FILE_SIZE);
-				}
+				descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from file", paths[iterator]);
 			}
@@ -317,7 +302,7 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 		strncpy(descriptor->path, name, LOADER_IMPL_FILE_SIZE);
 
-		descriptor->length_path = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+		descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from memory", name);
 
@@ -356,7 +341,7 @@ loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_
 
 			strncpy(descriptor->path, path, LOADER_IMPL_FILE_SIZE);
 
-			descriptor->length_path = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+			descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from package", path);
 		}
@@ -407,13 +392,26 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		if (file_function != NULL)
 		{
+			const char * script_path = getenv("LOADER_SCRIPT_PATH");
+
 			function f;
 
 			signature s;
 
 			file_function->descriptor = descriptor;
 
-			f = function_create(descriptor->relative, 0, file_function, &function_file_singleton);
+			if (script_path != NULL)
+			{
+				loader_naming_name name;
+
+				(void)loader_path_get_relative(script_path, descriptor->path, name);
+
+				f = function_create(name, 0, file_function, &function_file_singleton);
+			}
+			else
+			{
+				f = function_create(descriptor->path, 0, file_function, &function_file_singleton);
+			}
 
 			s = function_signature(f);
 
