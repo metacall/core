@@ -303,7 +303,7 @@ if(NOT NODEJS_LIBRARY)
 
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
-		message(STATUS "Downloading NodeJS distribution")
+		message(STATUS "Downloading NodeJS distribution v${NODEJS_VERSION}")
 		file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE})
 	endif()
 
@@ -357,16 +357,19 @@ if(NOT NODEJS_LIBRARY)
 		else()
 			message(STATUS "Configure NodeJS shared library")
 
-			# TODO: Select correct ICU version depending on NodeJS version
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-60_2-src.zip
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-61_1-src.zip
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-62_1-src.zip
-			# https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip
+			# Select the ICU library depending on the NodeJS version
+			if("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "14")
+				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-66-1/icu4c-66_1-src.zip")
+			elseif("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "12")
+				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-65-1/icu4c-65_1-src.zip")
+			elseif("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "10")
+				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip")
+			endif()
 
 			if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
-				execute_process(COMMAND sh -c "./configure --with-icu-source=https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip --shared --debug" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "./configure --with-icu-source=${ICU_URL} --shared --debug" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			else()
-				execute_process(COMMAND sh -c "./configure --with-icu-source=https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip --shared" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
+				execute_process(COMMAND sh -c "./configure --with-icu-source=${ICU_URL} --shared" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			endif()
 
 			message(STATUS "Build NodeJS shared library")
