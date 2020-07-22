@@ -7,7 +7,9 @@ endif()
 # External dependencies
 #
 
-set(NODEJS_EXECUTABLE_ONLY ON)
+if(NOT MSVC)
+	set(NODEJS_EXECUTABLE_ONLY ON)
+endif()
 
 find_package(NodeJS)
 
@@ -170,9 +172,14 @@ target_include_directories(${target}
 # Libraries
 #
 
+if(MSVC)
+	set(MSVC_NODEJS_LIBRARY ${NODEJS_LIBRARY})
+endif()
+
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall_distributable # MetaCall Library
+	${MSVC_NODEJS_LIBRARY} # NodeJS library (MSVC)
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

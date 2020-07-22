@@ -169,7 +169,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-
 	${NODEJS_LIBRARY} # NodeJS library
 
 	PUBLIC

@@ -140,8 +140,8 @@ napi_value metacall_node_callback_napi_to_value(napi_env env, napi_callback_info
 
 	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
 
-	napi_value argv[argc];
-	void * args[argc];
+	napi_value * argv = new napi_value[argc];
+	void ** args = new void *[argc];
 	napi_value recv;
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, &f);
@@ -158,6 +158,9 @@ napi_value metacall_node_callback_napi_to_value(napi_env env, napi_callback_info
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
 	metacall_node_finalizer(env, result, ret);
+
+	delete[] argv;
+	delete[] args;
 
 	return result;
 }
@@ -723,15 +726,21 @@ napi_value metacall_node_value_to_napi(/* loader_impl_node node_impl,*/ napi_env
 
 /* END-TODO */
 
-/* TODO: Review this against buffer overflows, remove constants and use of stack */
 napi_value metacall_node_call(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
 
 	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
 
-	napi_value argv[argc];
-	void * args[argc - 1];
+	if (argc == 0)
+	{
+		napi_throw_error(env, NULL, "Invalid number of arguments");
+
+		return nullptr;
+	}
+
+	napi_value * argv = new napi_value[argc];
+	void ** args = new void *[argc - 1];
 	napi_value recv;
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, NULL);
@@ -755,6 +764,9 @@ napi_value metacall_node_call(napi_env env, napi_callback_info info)
 	napi_value result = metacall_node_value_to_napi(env, ret);
 
 	metacall_node_finalizer(env, result, ret);
+
+	delete[] argv;
+	delete[] args;
 
 	return result;
 }
