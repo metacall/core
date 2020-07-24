@@ -1,10 +1,4 @@
 #
-# Configure python project
-#
-
-py_project(frontend 0.1.0)
-
-#
 # External dependencies
 #
 
@@ -17,7 +11,6 @@ if(NOT PYTHONINTERP_FOUND)
 	return()
 endif()
 
-# Build frontend
 if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
 	message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
 	message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
@@ -25,8 +18,28 @@ if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
 	return()
 endif()
 
+# Detect if Django is available
+execute_process(
+	COMMAND ${PYTHON_EXECUTABLE} -c "import django"
+	RESULT_VARIABLE PYTHON_DJANGO_FOUND
+	ERROR_QUIET
+	OUTPUT_QUIET
+)
+
+if("${PYTHON_DJANGO_FOUND}" EQUAL "1")
+	message(WARNING "Python Django not found, skipping the python frontend script project")
+	return()
+endif()
+
+#
+# Configure python project
+#
+
+py_project(frontend 0.1.0)
+
 set(target python-frontend-migrate)
 
+# Build frontend
 add_custom_target(${target} ALL
 	COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${CMAKE_CURRENT_BINARY_DIR};$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} ${LOADER_SCRIPT_PATH}/manage.py migrate
 	DEPENDS python-frontend

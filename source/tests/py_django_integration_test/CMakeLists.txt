@@ -23,6 +23,19 @@ if(NOT PYTHONINTERP_FOUND)
 	return()
 endif()
 
+# Detect if Django is available
+execute_process(
+	COMMAND ${PYTHON_EXECUTABLE} -c "import django"
+	RESULT_VARIABLE PYTHON_DJANGO_FOUND
+	ERROR_QUIET
+	OUTPUT_QUIET
+)
+
+if("${PYTHON_DJANGO_FOUND}" EQUAL "1")
+	message(WARNING "Python Django not found, skipping the python djangi integration test project")
+	return()
+endif()
+
 #
 # Executable name and options
 #
