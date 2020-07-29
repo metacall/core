@@ -185,6 +185,8 @@ detour_handle detour_install(detour d, void(*target)(void), void(*hook)(void))
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid install implementation");
 
+		free(handle);
+
 		return NULL;
 	}
 

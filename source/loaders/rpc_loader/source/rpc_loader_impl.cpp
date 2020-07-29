@@ -193,6 +193,8 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL object");
 
+		free(rpc_impl);
+
 		return NULL;
 	}
 
