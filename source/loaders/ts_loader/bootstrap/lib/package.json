@@ -1,0 +1,15 @@
+{
+  "name": "ts_loader_bootstrap",
+  "version": "1.0.0",
+  "description": "",
+  "main": "bootstrap.ts",
+  "scripts": {
+    "test": "echo \"TODO: Test not implemented\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "typescript": "^3.9.7"
+  }
+}

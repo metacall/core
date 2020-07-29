@@ -1,16 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE)
-	return()
-endif()
-
-#
-# External dependencies
-#
-
-find_package(NodeJS 10.16.3)
-
-if(NOT NODEJS_FOUND)
-	message(STATUS "NodeJS libraries not found")
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_TS)
 	return()
 endif()
 
@@ -19,13 +8,7 @@ endif()
 #
 
 # Target name
-set(target node_loader)
-
-# Add node loader bootstrap
-add_subdirectory(bootstrap)
-
-# Add node loader trampoline implementation
-add_subdirectory(trampoline)
+set(target ts_loader)
 
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
@@ -56,13 +39,13 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/node_loader.h
-	${include_path}/node_loader_impl.h
+	${include_path}/ts_loader.h
+	${include_path}/ts_loader_impl.h
 )
 
 set(sources
-	${source_path}/node_loader.c
-	${source_path}/node_loader_impl.cpp
+	${source_path}/ts_loader.c
+	${source_path}/ts_loader_impl.c
 )
 
 # Group source files
@@ -80,15 +63,15 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 include(Distributable)
 
 # Create unity build library
-set(node_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
+set(ts_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
 
-distributable_generate(${target} ${node_loader_unity_build}
+distributable_generate(${target} ${ts_loader_unity_build}
 	${LOADER_MODULE_NAMES}
 )
 
 # Build library
-add_library(${target} SHARED # Needed in order to be linked with TypeScript loader
-	${node_loader_unity_build}
+add_library(${target} SHARED
+	${ts_loader_unity_build}
 	${sources}
 	${headers}
 )
@@ -96,6 +79,9 @@ add_library(${target} SHARED # Needed in order to be linked with TypeScript load
 # Add target dependencies
 add_dependencies(${target}
 	${LOADER_MODULE_NAMES}
+
+	# Define dependency with node loader trampoline
+	node_loader_trampoline
 )
 
 # Create namespaced alias
@@ -152,8 +138,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${NODEJS_INCLUDE_DIR} # NodeJS includes
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -169,7 +153,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${NODEJS_LIBRARY} # NodeJS library
+	${META_PROJECT_NAME}::node_loader # Node Loader
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -227,11 +211,4 @@ install(TARGETS ${target}
 	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
-)
-
-# Runtime (pack the runtime meanwhile NodeJS is not distributed as a library)
-install(FILES
-	${NODEJS_LIBRARY}
-	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
 )

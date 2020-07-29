@@ -20,6 +20,7 @@ option(OPTION_BUILD_SCRIPTS_NODE "Build NodeJS scripts." ON)
 option(OPTION_BUILD_SCRIPTS_PY "Build Python scripts." ON)
 option(OPTION_BUILD_SCRIPTS_RB "Build Ruby scripts." ON)
 option(OPTION_BUILD_SCRIPTS_FILE "Build File scripts." ON)
+option(OPTION_BUILD_SCRIPTS_TS "Build TypeScript scripts." ON)
 
 # Script directory packages
 add_subdirectory(c)
@@ -31,3 +32,4 @@ add_subdirectory(node)
 add_subdirectory(python)
 add_subdirectory(ruby)
 add_subdirectory(file)
+add_subdirectory(typescript)

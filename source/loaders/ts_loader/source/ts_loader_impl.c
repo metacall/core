@@ -1,0 +1,130 @@
+/*
+ *	Loader Library by Parra Studios
+ *	A plugin for loading TypeScript code at run-time into a process.
+ *
+ *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
+ *
+ */
+
+#include <ts_loader/ts_loader_impl.h>
+#include <node_loader/node_loader_impl.h>
+
+#include <loader/loader_impl.h>
+#include <loader/loader_path.h>
+
+#include <reflect/reflect_type.h>
+#include <reflect/reflect_function.h>
+#include <reflect/reflect_scope.h>
+#include <reflect/reflect_context.h>
+
+#include <log/log.h>
+
+int ts_loader_impl_initialize_types(loader_impl impl)
+{
+	static struct
+	{
+		type_id id;
+		const char * name;
+	}
+	type_id_name_pair[] =
+	{
+		{ TYPE_BOOL,	"boolean"	},
+		{ TYPE_DOUBLE,	"number"	},
+		{ TYPE_STRING,	"string"	},
+		{ TYPE_NULL,	"null"		},
+		{ TYPE_MAP,		"object"	},
+		{ TYPE_ARRAY,	"Array<>"	} /* Custom array type for handling all kinds of typed arrays */
+	};
+
+	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (index = 0; index < size; ++index)
+	{
+		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
+
+		if (t != NULL)
+		{
+			if (loader_impl_type_define(impl, type_name(t), t) != 0)
+			{
+				type_destroy(t);
+
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
+loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+{
+	loader_impl_data node_loader_impl = node_loader_impl_initialize(impl, config, host);
+
+	if (node_loader_impl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to initialize Node Loader");
+
+		return NULL;
+	}
+
+	if (ts_loader_impl_initialize_types(impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to initialize the types");
+
+		if (node_loader_impl_destroy(impl) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to destroy Node Loader");
+		}
+
+		return NULL;
+	}
+
+	return node_loader_impl;
+}
+
+int ts_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+{
+	return node_loader_impl_execution_path(impl, path);
+}
+
+loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+{
+	return node_loader_impl_load_from_file(impl, paths, size);
+}
+
+loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+{
+	return node_loader_impl_load_from_memory(impl, name, buffer, size);
+}
+
+loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	return node_loader_impl_load_from_package(impl, path);
+}
+
+int ts_loader_impl_clear(loader_impl impl, loader_handle handle)
+{
+	return node_loader_impl_clear(impl, handle);
+}
+
+int ts_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
+{
+	return node_loader_impl_discover(impl, handle, ctx);
+}
+
+int ts_loader_impl_destroy(loader_impl impl)
+{
+	return node_loader_impl_destroy(impl);
+}
