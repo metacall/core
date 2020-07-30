@@ -22,6 +22,18 @@ const fs = require('fs');
 
 const ts = require('./node_modules/typescript');
 
+/**
+ * Note: This variables should be stored into a object
+ * returned in the initialization, and used in each function
+ * when called as a first parameter, this object will live
+ * during the lifetime of this loader and will represent the
+ * global state of the boostrap script. In order to simplify
+ * the design, by now they are used as global variables.
+*/
+let registry = null;
+let servicesHost = null;
+let services = null;
+
 class TypeScriptLanguageServiceHost {
 	constructor() {
 		this.files = {};
@@ -108,22 +120,37 @@ class TypeScriptLanguageServiceHost {
 	getFile(name) {
 		return this.files[name];
 	}
+
+	clearFile(name) {
+		const file = this.files[name];
+		if (file) {
+			// Dispose the snapshot if method is available
+			if (file.snapshot.dispose) {
+				file.snapshot.dispose();
+			}
+
+			// Remove it from the storage
+			delete this.files[name];
+		}
+	}
 }
 
-// Initialize Language Service API
-const registry = ts.createDocumentRegistry();
-const servicesHost = new TypeScriptLanguageServiceHost();
-const services = ts.createLanguageService(servicesHost, registry);
-const lib = path.dirname(servicesHost.getDefaultLibFileName(servicesHost.getCompilationSettings()));
+function ts_loader_trampoline_initialize() {
+	// Initialize Language Service API
+	registry = ts.createDocumentRegistry();
+	servicesHost = new TypeScriptLanguageServiceHost();
+	services = ts.createLanguageService(servicesHost, registry);
+	const lib = path.dirname(servicesHost.getDefaultLibFileName(servicesHost.getCompilationSettings()));
 
-// Load TypeScript Runtime
-fs.readdirSync(lib).map(file => {
-	const filename = path.join(lib, file);
-	const stat = fs.lstatSync(filename);
-	if (!stat.isDirectory() && file.startsWith('lib') && file.endsWith('.d.ts')) {
-		servicesHost.addFile(filename);
-	}
-});
+	// Load TypeScript Runtime
+	fs.readdirSync(lib).map(file => {
+		const filename = path.join(lib, file);
+		const stat = fs.lstatSync(filename);
+		if (!stat.isDirectory() && file.startsWith('lib') && file.endsWith('.d.ts')) {
+			servicesHost.addFile(filename);
+		}
+	});
+}
 
 function ts_loader_trampoline_is_callable(value) {
 	return typeof value === 'function';
@@ -229,11 +256,13 @@ function ts_loader_trampoline_clear(handle) {
 			const p = names[i];
 			const absolute = path.resolve(__dirname, p);
 
+			// Clear file from NodeJS require cache
 			if (require.cache[absolute]) {
 				delete require.cache[absolute];
 			}
 
-			// TODO: TypeScript: Clear from service host
+			// Clear file from TypeScript service host
+			servicesHost.clearFile(p);
 		}
 	} catch (ex) {
 		console.log('Exception in ts_loader_trampoline_clear', ex);
@@ -373,6 +402,12 @@ function ts_loader_trampoline_destroy() {
 				h.end();
 			}
 		}
+
+		// Clear TypeScript Service API
+		registry = null;
+		servicesHost = null;
+		services.dispose();
+		services = null;
 	} catch (ex) {
 		console.log('Exception in ts_loader_trampoline_destroy', ex);
 	}
@@ -382,6 +417,7 @@ function ts_loader_trampoline_destroy() {
 /*
 module.exports = ((impl, ptr) => {
 	return trampoline.register(impl, ptr, {
+		'initialize': ts_loader_trampoline_initialize,
 		'execution_path': ts_loader_trampoline_execution_path,
 		'load_from_file': ts_loader_trampoline_load_from_file,
 		'load_from_memory': ts_loader_trampoline_load_from_memory,
@@ -396,12 +432,32 @@ module.exports = ((impl, ptr) => {
 */
 
 // TEST
-ts_loader_trampoline_load_from_memory('hello', `
+ts_loader_trampoline_initialize();
+
+const mem = ts_loader_trampoline_load_from_memory('hello', `
 export function lol(left: number, rigth: number): number {
 	return left + rigth;
 }
 `, {});
+ts_loader_trampoline_clear(mem);
+
 const handle = ts_loader_trampoline_load_from_file(['./test.ts']);
+
+const prog = services.getProgram();
+prog.getTypeChecker()
+
+/*
+function getExportList(node, checker) {
+	const symbol = checker.getSymbolAtLocation(node);
+	const aliasedSymbol = typeChecker.getAliasedSymbol(symbol);
+	return checker.getExportsOfModule(aliasedSymbol);
+}*/
+
 const discover = ts_loader_trampoline_discover(handle);
 
 console.log(discover);
+
+ts_loader_trampoline_clear(handle);
+
+
+ts_loader_trampoline_destroy();
