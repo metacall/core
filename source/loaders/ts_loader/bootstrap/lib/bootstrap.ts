@@ -10,13 +10,120 @@
 */
 
 // eslint-disable-next-line global-require
+// TODO: Trampoline
+/*
 const trampoline = require('./trampoline.node');
+*/
 
 const Module = require('module');
 const path = require('path');
 const util = require('util');
+const fs = require('fs');
 
-const typescript = require('./node_modules/typescript');
+const ts = require('./node_modules/typescript');
+
+class TypeScriptLanguageServiceHost {
+	constructor() {
+		this.files = {};
+	}
+
+	fileExists() {
+		return ts.sys.fileExists(...arguments);
+	}
+
+	readFile() {
+		return ts.sys.readFile(...arguments);
+	}
+
+	readDirectory() {
+		return ts.sys.readDirectory(...arguments);
+	}
+
+	log(message) {
+		// TODO: Improve this
+		console.log(message);
+	}
+
+	trace(message) {
+		// TODO: Improve this
+		console.log(message);
+	}
+
+	error(message) {
+		// TODO: Improve this
+		console.log(message);
+	}
+
+	getCompilationSettings() {
+		return ts.getDefaultCompilerOptions();
+	}
+
+	getCurrentDirectory() {
+		// TODO: Return script path
+		return process.cwd();
+	}
+
+	getDefaultLibFileName(options) {
+		return ts.getDefaultLibFilePath(options);
+	}
+
+	getScriptVersion(name) {
+		return this.files[name] && this.files[name].version.toString();
+	}
+
+	getScriptSnapshot(name) {
+		return this.files[name] && this.files[name].snapshot;
+	}
+
+	getScriptFileNames() {
+		const names = [];
+		for (const name in this.files) {
+			if (this.files.hasOwnProperty(name)) {
+				names.push(name);
+			}
+		}
+		return names;
+	}
+
+	addFile(name) {
+		const resolve = path.resolve(__dirname, name);
+		const body = fs.readFileSync(resolve).toString();
+		const snapshot = ts.ScriptSnapshot.fromString(body);
+
+		snapshot.getChangeRange = _ => undefined;
+
+		const file = this.files[name];
+
+		if (file) {
+			file.version++;
+			file.snapshot = snapshot;
+		} else {
+			this.files[name] = {
+				version: 1,
+				snapshot: snapshot,
+			};
+		}
+	}
+
+	getFile(name) {
+		return this.files[name];
+	}
+}
+
+// Initialize Language Service API
+const registry = ts.createDocumentRegistry();
+const servicesHost = new TypeScriptLanguageServiceHost();
+const services = ts.createLanguageService(servicesHost, registry);
+const lib = path.dirname(servicesHost.getDefaultLibFileName(servicesHost.getCompilationSettings()));
+
+// Load TypeScript Runtime
+fs.readdirSync(lib).map(file => {
+	const filename = path.join(lib, file);
+	const stat = fs.lstatSync(filename);
+	if (!stat.isDirectory() && file.startsWith('lib') && file.endsWith('.d.ts')) {
+		servicesHost.addFile(filename);
+	}
+});
 
 function ts_loader_trampoline_is_callable(value) {
 	return typeof value === 'function';
@@ -37,7 +144,29 @@ function ts_loader_trampoline_module(m) {
 	}
 
 	return m;
-};
+}
+
+function ts_loader_trampoline_load_inline(name, buffer, opts) {
+	const paths = Module._nodeModulePaths(path.dirname(name));
+	const parent = module.parent;
+	const m = new Module(name, parent);
+
+	m.filename = name;
+	m.paths = [
+		...opts.prepend_paths || [],
+		...paths,
+		...opts.append_paths || [],
+	];
+
+	// eslint-disable-next-line no-underscore-dangle
+	m._compile(buffer, name);
+
+	if (parent && parent.children) {
+		parent.children.splice(parent.children.indexOf(m), 1);
+	}
+
+	return ts_loader_trampoline_module(m.exports);
+}
 
 // eslint-disable-next-line no-empty-function
 function ts_loader_trampoline_execution_path() {
@@ -54,9 +183,9 @@ function ts_loader_trampoline_load_from_file(paths) {
 
 		for (let i = 0; i < paths.length; ++i) {
 			const p = paths[i];
-			const m = require(path.resolve(__dirname, p));
-
-			handle[p] = ts_loader_trampoline_module(m);
+			servicesHost.addFile(p);
+			const emit = services.getEmitOutput(p);
+			handle[p] = ts_loader_trampoline_load_inline(p, emit.outputFiles[0].text, {});
 		}
 
 		return handle;
@@ -80,27 +209,9 @@ function ts_loader_trampoline_load_from_memory(name, buffer, opts) {
 		throw new Error('Load from memory opts must be an object, not ' + typeof opts);
 	}
 
-	const paths = Module._nodeModulePaths(path.dirname(name));
-	const parent = module.parent;
-	const m = new Module(name, parent);
-
-	m.filename = name;
-	m.paths = [
-		...opts.prepend_paths || [],
-		...paths,
-		...opts.append_paths || [],
-	];
-
-	// eslint-disable-next-line no-underscore-dangle
-	m._compile(buffer, name);
-
-	if (parent && parent.children) {
-		parent.children.splice(parent.children.indexOf(m), 1);
-	}
-
 	const handle = {};
 
-	handle[name] = ts_loader_trampoline_module(m.exports);
+	handle[name] = ts_loader_trampoline_load_inline(name, ts.transpile(buffer), opts);
 
 	return handle;
 }
@@ -121,6 +232,8 @@ function ts_loader_trampoline_clear(handle) {
 			if (require.cache[absolute]) {
 				delete require.cache[absolute];
 			}
+
+			// TODO: TypeScript: Clear from service host
 		}
 	} catch (ex) {
 		console.log('Exception in ts_loader_trampoline_clear', ex);
@@ -176,11 +289,15 @@ function ts_loader_trampoline_discover(handle) {
 			const exports = handle[names[i]];
 			const keys = Object.getOwnPropertyNames(exports);
 
+			// Remove private key generated from transpilation process
+			keys.splice(keys.indexOf('__esModule'), 1);
+
 			for (let j = 0; j < keys.length; ++j) {
 				const key = keys[j];
 				const func = exports[key];
 
 				if (ts_loader_trampoline_is_callable(func)) {
+					// TODO: Store AST in the handle
 					const ast = cherow.parse(`(${func.toString()})`, {
 						module: false,
 						skipShebang: true,
@@ -261,6 +378,8 @@ function ts_loader_trampoline_destroy() {
 	}
 }
 
+// TODO: Trampoline
+/*
 module.exports = ((impl, ptr) => {
 	return trampoline.register(impl, ptr, {
 		'execution_path': ts_loader_trampoline_execution_path,
@@ -274,3 +393,15 @@ module.exports = ((impl, ptr) => {
 		'destroy': ts_loader_trampoline_destroy,
 	});
 })(process.argv[2], process.argv[3]);
+*/
+
+// TEST
+ts_loader_trampoline_load_from_memory('hello', `
+export function lol(left: number, rigth: number): number {
+	return left + rigth;
+}
+`, {});
+const handle = ts_loader_trampoline_load_from_file(['./test.ts']);
+const discover = ts_loader_trampoline_discover(handle);
+
+console.log(discover);
