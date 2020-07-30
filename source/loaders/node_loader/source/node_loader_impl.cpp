@@ -1164,7 +1164,58 @@ napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_in
 	}
 	#endif /* NODE_GET_EVENT_LOOP */
 
-	/* TODO: Implement here any extra initialization method calling to bootstrap.js */
+	/* Execute the call to initialize */
+	{
+		static const char initialize_str[] = "initialize";
+		napi_value function_table_object;
+		napi_value initialize_str_value;
+		bool result = false;
+
+		/* Get function table object from reference */
+		status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
+
+		node_loader_impl_exception(env, status);
+
+		/* Create function string */
+		status = napi_create_string_utf8(env, initialize_str, sizeof(initialize_str) - 1, &initialize_str_value);
+
+		node_loader_impl_exception(env, status);
+
+		/* Check if exists in the table */
+		status = napi_has_own_property(env, function_table_object, initialize_str_value, &result);
+
+		node_loader_impl_exception(env, status);
+
+		if (result == true)
+		{
+			napi_value function_trampoline_initialize;
+			napi_valuetype valuetype;
+
+			status = napi_get_named_property(env, function_table_object, initialize_str, &function_trampoline_initialize);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_typeof(env, function_trampoline_initialize, &valuetype);
+
+			node_loader_impl_exception(env, status);
+
+			if (valuetype != napi_function)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid function initialize in function table object");
+			}
+
+			/* Call to load from file function */
+			napi_value global, return_value;
+
+			status = napi_get_reference_value(env, node_impl->global_ref, &global);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_call_function(env, global, function_trampoline_initialize, 0, nullptr, &return_value);
+
+			node_loader_impl_exception(env, status);
+		}
+	}
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
@@ -1260,7 +1311,6 @@ void node_loader_impl_async_func_await_finalize(napi_env, void * finalize_data, 
 napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_env env, function_resolve_callback resolve, napi_value v, void * context)
 {
 	napi_value result;
-
 	value arg, ret;
 
 	if (node_impl == NULL || resolve == NULL)
@@ -1294,7 +1344,6 @@ napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_
 napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_env env, function_reject_callback reject, napi_value v, void * context)
 {
 	napi_value result;
-
 	value arg, ret;
 
 	if (node_impl == NULL || reject == NULL)

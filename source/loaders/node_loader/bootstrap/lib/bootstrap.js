@@ -10,6 +10,11 @@ const util = require('util');
 
 const cherow = require('./node_modules/cherow');
 
+// eslint-disable-next-line no-empty-function
+function node_loader_trampoline_initialize() {
+	// Nothing to initialize yet
+}
+
 function node_loader_trampoline_is_callable(value) {
 	return typeof value === 'function';
 }
@@ -255,6 +260,7 @@ function node_loader_trampoline_destroy() {
 
 module.exports = ((impl, ptr) => {
 	return trampoline.register(impl, ptr, {
+		'initialize': node_loader_trampoline_initialize,
 		'execution_path': node_loader_trampoline_execution_path,
 		'load_from_file': node_loader_trampoline_load_from_file,
 		'load_from_memory': node_loader_trampoline_load_from_memory,
