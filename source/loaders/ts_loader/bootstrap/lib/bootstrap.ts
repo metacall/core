@@ -10,10 +10,7 @@
 */
 
 // eslint-disable-next-line global-require
-// TODO: Trampoline
-/*
 const trampoline = require('./trampoline.node');
-*/
 
 const Module = require('module');
 const path = require('path');
@@ -71,7 +68,7 @@ class TypeScriptLanguageServiceHost {
 	}
 
 	getCurrentDirectory() {
-		// TODO: Return script path
+		// TODO: Use LOADER_SCRIPT_PATH ?
 		return process.cwd();
 	}
 

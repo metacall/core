@@ -10,6 +10,9 @@ endif()
 # Target name
 set(target ts_loader)
 
+# Add typescript loader bootstrap
+add_subdirectory(bootstrap)
+
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 
