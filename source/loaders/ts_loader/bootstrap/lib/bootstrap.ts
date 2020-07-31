@@ -165,7 +165,7 @@ function ts_loader_trampoline_is_callable(value) {
 
 function ts_loader_trampoline_is_valid_symbol(node) {
 	// TODO: Enable more function types
-	return node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression';
+	return ts.isFunctionDeclaration(node.valueDeclaration);
 }
 
 function ts_loader_trampoline_module(m) {
@@ -247,7 +247,7 @@ function ts_loader_trampoline_load_from_memory(name, buffer, opts) {
 
 	const handle = {};
 
-	// TODO: Implement this with service host instead of transpile
+	// TODO: Implement this with service host instead of transpile, it wont work with discovery
 	handle[name] = ts_loader_trampoline_load_inline(name, ts.transpile(buffer), opts);
 
 	return handle;
@@ -289,33 +289,32 @@ function ts_loader_trampoline_discover_arguments_generate(args, index) {
 	return name;
 }
 
-function ts_loader_trampoline_discover_arguments(node) {
-	const params = node.params;
+function ts_loader_trampoline_discover_signature(checker, node) {
+	const declaration = node.valueDeclaration;
+	const signature = checker.getSignatureFromDeclaration(declaration);
+	const params = declaration.parameters;
 	const args = [];
+	const types = [];
+	const ret = signature.getReturnType().intrinsicName;
 
 	for (let i = 0; i < params.length; ++i) {
-		const p = params[i];
-
-		if (p.type === 'Identifier') {
-			args.push(p.name);
-		} else if (p.type === 'AssignmentPattern' && p.left && p.left.type === 'Identifier') {
-			args.push(p.left.name);
-		} else if (p.type === 'ObjectPattern') {
-			// TODO: Use this trick until meta object protocol
-			args.push(null);
-		}
+		const param = params[i];
+		const type = checker.getTypeAtLocation(param);
+		args.push(param.name.escapedText ? param.name.escapedText : 'undefined');
+		types.push(type.intrinsicName ? type.intrinsicName : 'any');
 	}
 
-	// TODO: Use this trick until meta object protocol
-	for (let i = 0; i < params.length; ++i) {
-		const p = args[i];
-
-		if (p === null) {
+	for (let i = 0; i < args.length; ++i) {
+		if (args[i] === 'undefined') {
 			args[i] = ts_loader_trampoline_discover_arguments_generate(args, i);
 		}
 	}
 
-	return args;
+	return {
+		args,
+		types,
+		ret,
+	};
 }
 
 function ts_loader_trampoline_discover(handle) {
@@ -348,14 +347,16 @@ function ts_loader_trampoline_discover(handle) {
 
 				if (ts_loader_trampoline_is_callable(func)) {
 					const node = tsExports[key];
+					const type = checker.getTypeAtLocation(node);
 
-					// TODO:
 					if (ts_loader_trampoline_is_valid_symbol(node)) {
-						const args = ts_loader_trampoline_discover_arguments(node);
+						const signature = ts_loader_trampoline_discover_signature(checker, node);
 
 						discover[key] = {
 							ptr: func,
-							signature: args,
+							signature: signature.args,
+							types: signature.types,
+							ret: signature.ret,
 							async: node.async,
 						};
 					}
@@ -430,8 +431,6 @@ function ts_loader_trampoline_destroy() {
 	}
 }
 
-// TODO: Trampoline
-/*
 module.exports = ((impl, ptr) => {
 	return trampoline.register(impl, ptr, {
 		'initialize': ts_loader_trampoline_initialize,
@@ -446,24 +445,3 @@ module.exports = ((impl, ptr) => {
 		'destroy': ts_loader_trampoline_destroy,
 	});
 })(process.argv[2], process.argv[3]);
-*/
-
-// TEST
-ts_loader_trampoline_initialize();
-
-const mem = ts_loader_trampoline_load_from_memory('hello', `
-export function lol(left: number, rigth: number): number {
-	return left + rigth;
-}
-`, {});
-ts_loader_trampoline_clear(mem);
-
-const handle = ts_loader_trampoline_load_from_file(['./test.ts']);
-const discover = ts_loader_trampoline_discover(handle);
-
-console.log(discover);
-
-ts_loader_trampoline_clear(handle);
-
-
-ts_loader_trampoline_destroy();
