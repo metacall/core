@@ -127,10 +127,17 @@ class TypeScriptLanguageServiceHost {
 			// Dispose the snapshot if method is available
 			if (file.snapshot.dispose) {
 				file.snapshot.dispose();
+				file.snapshot = null;
 			}
 
 			// Remove it from the storage
 			delete this.files[name];
+		}
+	}
+
+	dispose() {
+		for (const file in this.files) {
+			this.clearFile(file);
 		}
 	}
 }
@@ -212,7 +219,9 @@ function ts_loader_trampoline_load_from_file(paths) {
 			const p = paths[i];
 			servicesHost.addFile(p);
 			const emit = services.getEmitOutput(p);
-			handle[p] = ts_loader_trampoline_load_inline(p, emit.outputFiles[0].text, {});
+			const emitName = emit.outputFiles[0].name;
+			const name = `${emitName.substr(0, emitName.lastIndexOf('.'))}.ts`;
+			handle[name] = ts_loader_trampoline_load_inline(p, emit.outputFiles[0].text, {});
 		}
 
 		return handle;
@@ -238,6 +247,7 @@ function ts_loader_trampoline_load_from_memory(name, buffer, opts) {
 
 	const handle = {};
 
+	// TODO: Implement this with service host instead of transpile
 	handle[name] = ts_loader_trampoline_load_inline(name, ts.transpile(buffer), opts);
 
 	return handle;
@@ -311,29 +321,35 @@ function ts_loader_trampoline_discover_arguments(node) {
 function ts_loader_trampoline_discover(handle) {
 	const discover = {};
 
+	function getExportList(node, checker) {
+		const symbol = checker.getSymbolAtLocation(node);
+		//const aliasedSymbol = checker.getAliasedSymbol(symbol);
+		return checker.getExportsOfModule(symbol);
+	}
+
 	try {
+		const program = services.getProgram();
+		const checker = program.getTypeChecker();
 		const names = Object.getOwnPropertyNames(handle);
+		const sources = program.getSourceFiles();
+		const sourcesMap = sources.reduce((srcs, s) => Object.assign(srcs, { [s.fileName]: s }), {});
+		const tsHandle = names.reduce((srcs, name) => Object.assign(srcs, { [name]: sourcesMap[name] }), {});
 
 		for (let i = 0; i < names.length; ++i) {
-			const exports = handle[names[i]];
-			const keys = Object.getOwnPropertyNames(exports);
-
-			// Remove private key generated from transpilation process
-			keys.splice(keys.indexOf('__esModule'), 1);
+			const name = names[i];
+			const exports = handle[name];
+			const tsFile = tsHandle[name]
+			const tsExports = getExportList(tsFile, checker).reduce((ex, e) => Object.assign(ex, { [e.name]: e }), {});
+			const keys = Object.getOwnPropertyNames(tsExports);
 
 			for (let j = 0; j < keys.length; ++j) {
 				const key = keys[j];
 				const func = exports[key];
 
 				if (ts_loader_trampoline_is_callable(func)) {
-					// TODO: Store AST in the handle
-					const ast = cherow.parse(`(${func.toString()})`, {
-						module: false,
-						skipShebang: true,
-					}).body[0];
+					const node = tsExports[key];
 
-					const node = ast.expression;
-
+					// TODO:
 					if (ts_loader_trampoline_is_valid_symbol(node)) {
 						const args = ts_loader_trampoline_discover_arguments(node);
 
@@ -404,9 +420,10 @@ function ts_loader_trampoline_destroy() {
 		}
 
 		// Clear TypeScript Service API
+		servicesHost.dispose();
+		services.dispose();
 		registry = null;
 		servicesHost = null;
-		services.dispose();
 		services = null;
 	} catch (ex) {
 		console.log('Exception in ts_loader_trampoline_destroy', ex);
@@ -442,17 +459,6 @@ export function lol(left: number, rigth: number): number {
 ts_loader_trampoline_clear(mem);
 
 const handle = ts_loader_trampoline_load_from_file(['./test.ts']);
-
-const prog = services.getProgram();
-prog.getTypeChecker()
-
-/*
-function getExportList(node, checker) {
-	const symbol = checker.getSymbolAtLocation(node);
-	const aliasedSymbol = typeChecker.getAliasedSymbol(symbol);
-	return checker.getExportsOfModule(aliasedSymbol);
-}*/
-
 const discover = ts_loader_trampoline_discover(handle);
 
 console.log(discover);
