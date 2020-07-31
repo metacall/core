@@ -43,14 +43,9 @@ TEST_F(tmetacall_typescript_test, DefaultConstructor)
 			"typed_func.ts"
 		};
 
-		const enum metacall_value_id hello_boy_double_ids[] =
-		{
-			METACALL_DOUBLE, METACALL_DOUBLE
-		};
-
 		void * ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("ts", ts_scripts, sizeof(ts_scripts) / sizeof(ts_scripts[0]), NULL));
 
 		ret = metacall("typed_sum", 3.0, 4.0);
 
