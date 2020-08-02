@@ -3,8 +3,29 @@ module metacall;
 import std.stdio;
 import std.exception;
 import std.string;
+import std.variant;
 import core.vararg;
 import core.stdc.string;
+
+enum metacall_value_id_enum : int {
+  METACALL_BOOL		  = 0,
+  METACALL_CHAR		  = 1,
+  METACALL_SHORT	  = 2,
+  METACALL_INT		  = 3,
+  METACALL_LONG		  = 4,
+  METACALL_FLOAT	  = 5,
+  METACALL_DOUBLE	  = 6,
+  METACALL_STRING	  = 7,
+  METACALL_BUFFER	  = 8,
+  METACALL_ARRAY	  = 9,
+  METACALL_MAP		  = 10,
+  METACALL_PTR		  = 11,
+  METACALL_FUTURE	  = 12,
+  METACALL_FUNCTION	= 13,
+  METACALL_NULL		  = 14,
+  METACALL_SIZE,
+  METACALL_INVALID
+}
 
 extern(C) {
   int metacall_initialize();
@@ -29,10 +50,14 @@ extern(C) {
   float metacall_value_to_float(void* v);
   double metacall_value_to_double(void* v);
   void* metacall_value_to_ptr(void* v);
+  char* metacall_value_to_string(void* v);
   void metacall_value_destroy(void*);
+  metacall_value_id_enum metacall_value_id(void* v);
   void* metacall(const(char*) name, ...);
   void* metacallv(const(char*) name, void** args);
 }
+
+
 
 class MetaCallException : Exception {
   mixin basicExceptionCtors;
@@ -57,7 +82,7 @@ int dmetacall_load_from_file(const char[] tag, string[] paths) {
   return 0;
 }
 
-void* dmetacall(T...)(string name,T args) {
+Variant dmetacall(T...)(string name,T args) {
   void*[args.length] values;
   int i = 0;
   foreach(arg; args) {
@@ -84,11 +109,34 @@ void* dmetacall(T...)(string name,T args) {
     }
     i++;
   }
-  auto ret = metacallv(name.toStringz(),cast(void**)values.ptr);
+
+  void* ret = metacallv(name.toStringz(),cast(void**)values.ptr);
   foreach(void* value; values) {
     metacall_value_destroy(value);
   }
-  return ret;
+
+  switch(metacall_value_id(ret)) {
+    case metacall_value_id_enum.METACALL_CHAR:
+      return Variant(metacall_value_to_char(ret));
+    case metacall_value_id_enum.METACALL_SHORT:
+      return Variant(metacall_value_to_short(ret));
+    case metacall_value_id_enum.METACALL_INT:
+      return Variant(metacall_value_to_int(ret));
+    case metacall_value_id_enum.METACALL_LONG:
+      return Variant(metacall_value_to_long(ret));
+    case metacall_value_id_enum.METACALL_FLOAT:
+      return Variant(metacall_value_to_float(ret));
+    case metacall_value_id_enum.METACALL_DOUBLE:
+      return Variant(metacall_value_to_double(ret));
+    case metacall_value_id_enum.METACALL_STRING:
+      return Variant(metacall_value_to_string(ret).fromStringz());
+    case metacall_value_id_enum.METACALL_PTR:
+      return Variant(metacall_value_to_ptr(ret));
+    case metacall_value_id_enum.METACALL_NULL:
+      return Variant(null);
+    default:
+      return Variant(null);
+  }
 }
 
 int dmetacall_destroy() {

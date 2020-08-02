@@ -1,4 +1,5 @@
 import std.stdio;
+import std.variant;
 import metacall;
 
 int main()
@@ -10,8 +11,8 @@ int main()
 		"script.py"
 	];
 	dmetacall_load_from_file("py",scripts);
-	void* ret = dmetacall!(int,int)("add",1,2);
-	writefln("add(1,2) = %d",metacall_value_to_int(ret));
+	Variant ret = dmetacall!(int,int)("add",1,2);
+	writefln("add(1,2) = %d",ret.get!(long));
 	writeln("destroying metacall");
 	dmetacall_destroy();
 	return 0;
