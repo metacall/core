@@ -115,28 +115,40 @@ Variant dmetacall(T...)(string name,T args) {
     metacall_value_destroy(value);
   }
 
+  Variant returnvariant;
   switch(metacall_value_id(ret)) {
     case metacall_value_id_enum.METACALL_CHAR:
-      return Variant(metacall_value_to_char(ret));
+      returnvariant = metacall_value_to_char(ret);
+      break;
     case metacall_value_id_enum.METACALL_SHORT:
-      return Variant(metacall_value_to_short(ret));
+      returnvariant = metacall_value_to_short(ret);
+      break;
     case metacall_value_id_enum.METACALL_INT:
-      return Variant(metacall_value_to_int(ret));
+      returnvariant = metacall_value_to_int(ret);
+      break;
     case metacall_value_id_enum.METACALL_LONG:
-      return Variant(metacall_value_to_long(ret));
+      returnvariant = metacall_value_to_long(ret);
+      break;
     case metacall_value_id_enum.METACALL_FLOAT:
-      return Variant(metacall_value_to_float(ret));
+      returnvariant = metacall_value_to_float(ret);
+      break;
     case metacall_value_id_enum.METACALL_DOUBLE:
-      return Variant(metacall_value_to_double(ret));
+      returnvariant = metacall_value_to_double(ret);
+      break;
     case metacall_value_id_enum.METACALL_STRING:
-      return Variant(metacall_value_to_string(ret).fromStringz());
+      returnvariant = metacall_value_to_string(ret).fromStringz();
+      break;
     case metacall_value_id_enum.METACALL_PTR:
-      return Variant(metacall_value_to_ptr(ret));
+      returnvariant = metacall_value_to_ptr(ret);
+      break;
     case metacall_value_id_enum.METACALL_NULL:
-      return Variant(null);
+      returnvariant = null;
+      break;
     default:
-      return Variant(null);
+      returnvariant = null;
+      break;
   }
+  return returnvariant;
 }
 
 int dmetacall_destroy() {
