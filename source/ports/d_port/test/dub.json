@@ -1,0 +1,12 @@
+{
+	"authors": [
+		"duxz"
+	],
+	"copyright": "Copyright © 2020, duxz",
+	"description": "MetaCall D port test",
+	"license": "Apache 2.0",
+	"name": "test",
+	"dependencies": {
+		"metacall-d": "~>0.0.1"
+	}
+}

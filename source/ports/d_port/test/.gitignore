@@ -1,0 +1,16 @@
+.dub
+__pycache__
+docs.json
+__dummy.html
+docs/
+/test
+test.so
+test.dylib
+test.dll
+test.a
+test.lib
+test-test-*
+*.exe
+*.o
+*.obj
+*.lst
