@@ -120,19 +120,26 @@ int configuration_impl_load(configuration config, void * allocator)
 
 		vector_pop_front(queue);
 
-		v = serial_deserialize(singleton->s, source, strlen(source) + 1, (memory_allocator)allocator);
-
-		if (v == NULL)
+		if (source == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load (childs) <%p>", current);
+			v = value_create_map(NULL, 0);
+		}
+		else
+		{
+			v = serial_deserialize(singleton->s, source, strlen(source) + 1, (memory_allocator)allocator);
 
-			set_destroy(storage);
+			if (v == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration implementation load (childs) <%p>", current);
 
-			vector_destroy(queue);
+				set_destroy(storage);
 
-			vector_destroy(childs);
+				vector_destroy(queue);
 
-			return 1;
+				vector_destroy(childs);
+
+				return 1;
+			}
 		}
 
 		configuration_object_instantiate(current, v);

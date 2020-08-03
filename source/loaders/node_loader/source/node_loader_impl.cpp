@@ -320,6 +320,13 @@ struct loader_impl_async_destroy_safe_type
 	loader_impl_node node_impl;
 };
 
+typedef struct loader_impl_thread_type
+{
+	loader_impl_node node_impl;
+	configuration config;
+
+} * loader_impl_thread;
+
 /* Exception */
 static inline void node_loader_impl_exception(napi_env env, napi_status status);
 
@@ -2567,7 +2574,9 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 void node_loader_impl_thread(void * data)
 {
-	loader_impl_node node_impl = *(static_cast<loader_impl_node *>(data));
+	loader_impl_thread thread_data = static_cast<loader_impl_thread>(data);
+	loader_impl_node node_impl = thread_data->node_impl;
+	configuration config = thread_data->config;
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
@@ -2659,11 +2668,30 @@ void node_loader_impl_thread(void * data)
 		++load_library_path_length;
 	}
 
-	strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_file_str, sizeof(bootstrap_file_str) - 1);
+	/* Detect if another bootstrap script has been defined in the configuration */
+	value bootstrap_value = configuration_value(config, "bootstrap_script");
 
-	bootstrap_path_str_size = load_library_path_length + sizeof(bootstrap_file_str);
+	if (bootstrap_value != NULL)
+	{
+		/* Load bootstrap script defined in the configuration */
+		const char * bootstrap_script = value_to_string(bootstrap_value);
+		size_t bootstrap_script_length = strlen(bootstrap_script);
 
-	bootstrap_path_str[bootstrap_path_str_size - 1] = '\0';
+		strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_script, bootstrap_script_length);
+
+		bootstrap_path_str_size = load_library_path_length + bootstrap_script_length + 1;
+
+		bootstrap_path_str[bootstrap_path_str_size - 1] = '\0';
+	}
+	else
+	{
+		/* Load default script name */
+		strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_file_str, sizeof(bootstrap_file_str) - 1);
+
+		bootstrap_path_str_size = load_library_path_length + sizeof(bootstrap_file_str);
+
+		bootstrap_path_str[bootstrap_path_str_size - 1] = '\0';
+	}
 
 	/* Get node impl pointer */
 	char * node_impl_ptr_str;
@@ -2865,7 +2893,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	loader_impl_node node_impl;
 
 	(void)impl;
-	(void)config;
 
 	log_copy(host->log);
 
@@ -2939,8 +2966,14 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	}
 	#endif
 
+	struct loader_impl_thread_type thread_data =
+	{
+		node_impl,
+		config
+	};
+
 	/* Create NodeJS thread */
-	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &node_impl) != 0)
+	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &thread_data) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 

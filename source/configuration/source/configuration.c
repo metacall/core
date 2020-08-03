@@ -163,6 +163,16 @@ value configuration_value(configuration config, const char * key)
 	return configuration_object_get(config, key);
 }
 
+int configuration_define(configuration config, const char * key, value v)
+{
+	return configuration_object_set(config, key, v);
+}
+
+int configuration_undefine(configuration config, const char * key)
+{
+	return configuration_object_remove(config, key);
+}
+
 int configuration_clear(configuration config)
 {
 	int result = configuration_singleton_clear(config);

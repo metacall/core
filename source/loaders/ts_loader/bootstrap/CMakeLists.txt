@@ -29,18 +29,25 @@ add_custom_target(${target} ALL
 )
 
 if(NOT OPTION_BUILD_GUIX)
-	add_custom_target(${target}-depends
+	add_custom_target(${target}_depends ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules ${BOOTSTRAP_OUTPUT_PATH}/node_modules
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/typescript ${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
+		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_BINARY_DIR}/node_modules to ${BOOTSTRAP_OUTPUT_PATH}/node_modules"
 	)
 
-	add_dependencies(${target} ${target}-depends)
+	set_target_properties(${target}_depends
+		PROPERTIES
+		${DEFAULT_PROJECT_OPTIONS}
+		FOLDER "${IDE_FOLDER}"
+	)
+
+	add_dependencies(${target} ${target}_depends)
 
 	install(DIRECTORY
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules
+		${CMAKE_CURRENT_BINARY_DIR}/node_modules/typescript
 		DESTINATION ${INSTALL_LIB}
 		COMPONENT runtime
 	)

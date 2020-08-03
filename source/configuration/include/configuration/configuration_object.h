@@ -191,6 +191,22 @@ CONFIGURATION_API value configuration_object_get(configuration config, const cha
 
 /**
 *  @brief
+*    Delete a value by key @key from configuration @config
+*
+*  @param[in] config
+*    Pointer to configuration object to be modified
+*
+*  @param[in] key
+*    Key used to delete the value
+*
+*  @return
+*    Returns zero on correct configuration removed, distinct from zero otherwise
+*
+*/
+CONFIGURATION_API int configuration_object_remove(configuration config, const char * key);
+
+/**
+*  @brief
 *    Destroy configuration object @config
 *
 *  @param[in] config

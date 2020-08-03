@@ -121,7 +121,7 @@ configuration configuration_object_initialize(const char * name, const char * pa
 {
 	configuration config = malloc(sizeof(struct configuration_type));
 
-	size_t name_size, path_size;
+	size_t name_size, path_size = 0;
 
 	if (config == NULL)
 	{
@@ -130,28 +130,51 @@ configuration configuration_object_initialize(const char * name, const char * pa
 		return NULL;
 	}
 
-	config->source = configuration_object_read(path);
-
-	if (config->source == NULL)
+	if (path != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file path (%s)", path);
+		config->source = configuration_object_read(path);
 
-		free(config);
+		if (config->source == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file path (%s)", path);
 
-		return NULL;
+			free(config);
+
+			return NULL;
+		}
+	}
+	else
+	{
+		config->source = NULL;
 	}
 
 	name_size = strlen(name) + 1;
 
 	config->name = malloc(name_size * sizeof(char));
 
-	path_size = strlen(path) + 1;
-
-	config->path = malloc(path_size * sizeof(char));
-
 	config->map = set_create(&hash_callback_str, &comparable_callback_str);
 
-	if (config->name == NULL || config->path == NULL || config->map == NULL)
+	if (path != NULL)
+	{
+		path_size = strlen(path) + 1;
+
+		config->path = malloc(path_size * sizeof(char));
+
+		if (config->path == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration object initialization");
+
+			configuration_object_destroy(config);
+
+			return NULL;
+		}
+	}
+	else
+	{
+		config->path = NULL;
+	}
+
+	if (config->name == NULL || config->map == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration object initialization");
 
@@ -162,7 +185,10 @@ configuration configuration_object_initialize(const char * name, const char * pa
 
 	memcpy(config->name, name, name_size);
 
-	memcpy(config->path, path, path_size);
+	if (config->path && path_size > 0)
+	{
+		memcpy(config->path, path, path_size);
+	}
 
 	config->parent = parent;
 
@@ -318,6 +344,11 @@ int configuration_object_set(configuration config, const char * key, value v)
 value configuration_object_get(configuration config, const char * key)
 {
 	return set_get(config->map, (set_key)key);
+}
+
+int configuration_object_remove(configuration config, const char * key)
+{
+	return set_remove(config->map, (set_key)key) == NULL;
 }
 
 void configuration_object_destroy(configuration config)

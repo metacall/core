@@ -40,7 +40,7 @@ TEST_F(tmetacall_typescript_test, DefaultConstructor)
 	{
 		const char * ts_scripts[] =
 		{
-			"typed_func.ts"
+			"typedfunc.ts"
 		};
 
 		void * ret = NULL;

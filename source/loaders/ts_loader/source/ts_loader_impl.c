@@ -70,7 +70,91 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 
 loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	loader_impl_data node_loader_impl = node_loader_impl_initialize(impl, config, host);
+	loader_impl_data node_loader_impl;
+
+	/* Detect if bootstrap script has been defined */
+	static const char bootstrap_script_key[] = "bootstrap_script";
+	value bootstrap_value = NULL;
+	configuration ts_config = NULL;
+
+	if (config == NULL)
+	{
+		ts_config = configuration_create("ts_loader", NULL, NULL, NULL);
+
+		if (ts_config == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to create the configuration");
+
+			return NULL;
+		}
+		else
+		{
+			config = ts_config;
+		}
+	}
+
+	if (configuration_value(config, bootstrap_script_key) == NULL)
+	{
+		/* Define a default bootstrap script file name */
+		static const char bootstrap_script[] = "bootstrap.ts";
+
+		bootstrap_value = value_create_string(bootstrap_script, sizeof(bootstrap_script) - 1);
+
+		if (bootstrap_value == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to allocate the bootstrap value");
+
+			return NULL;
+		}
+
+		if (configuration_define(config, bootstrap_script_key, bootstrap_value) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to define the bootstrap value in the configuration");
+
+			value_type_destroy(bootstrap_value);
+
+			return NULL;
+		}
+	}
+
+	/* Initialize the Node Loader */
+	node_loader_impl = node_loader_impl_initialize(impl, config, host);
+
+	/* Clear the bootstrap default value */
+	if (bootstrap_value != NULL)
+	{
+		value_type_destroy(bootstrap_value);
+
+		if (configuration_undefine(config, bootstrap_script_key) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to undefine the bootstrap value from the configuration");
+
+			if (node_loader_impl_destroy(impl) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to destroy Node Loader");
+			}
+
+			/* Clear the configuration if any */
+			if (ts_config != NULL)
+			{
+				if (configuration_clear(ts_config) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed clear the configuration");
+				}
+			}
+
+			return NULL;
+		}
+	}
+
+	/* Clear the configuration if any */
+	if (ts_config != NULL)
+	{
+		if (configuration_clear(ts_config) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed clear the configuration");
+		}
+	}
 
 	if (node_loader_impl == NULL)
 	{
@@ -79,6 +163,7 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 		return NULL;
 	}
 
+	/* Initialize TypeScript types */
 	if (ts_loader_impl_initialize_types(impl) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to initialize the types");

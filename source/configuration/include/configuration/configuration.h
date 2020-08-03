@@ -99,6 +99,44 @@ CONFIGURATION_API value configuration_value(configuration config, const char * k
 
 /**
 *  @brief
+*    Set value @v by @key inside a configuration @config.
+*    This function will not include the value into the internal deserialized version of
+*    the configuration, so the value@v must be deleted manually after the configuration is used.
+*
+*  @param[in] config
+*    Configuration
+*
+*  @param[in] key
+*    Scope of the configuration
+*
+*  @param[in] v
+*    Returns value containing data related to @key
+*
+*  @return
+*    Returns zero on correct configuration define, distinct from zero otherwise
+*
+*/
+CONFIGURATION_API int configuration_define(configuration config, const char * key, value v);
+
+/**
+*  @brief
+*    Set value @v by @key inside a configuration @config.
+*    This function will not remove the value into the internal deserialized version of the configuration.
+*
+*  @param[in] config
+*    Configuration
+*
+*  @param[in] key
+*    Scope of the configuration
+*
+*  @return
+*    Returns zero on correct configuration undefine, distinct from zero otherwise
+*
+*/
+CONFIGURATION_API int configuration_undefine(configuration config, const char * key);
+
+/**
+*  @brief
 *    Delete a configuration @config from the system
 *
 *  @param[in] config
