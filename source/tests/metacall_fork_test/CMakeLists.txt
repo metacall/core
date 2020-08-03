@@ -1,5 +1,5 @@
 # Check if detours are enabled
-if(NOT OPTION_FORK_SAFE)
+if(NOT OPTION_BUILD_DETOURS OR NOT OPTION_FORK_SAFE)
 	return()
 endif()
 
