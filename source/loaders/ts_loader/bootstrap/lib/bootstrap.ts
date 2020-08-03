@@ -292,8 +292,11 @@ function ts_loader_trampoline_discover_signature(checker, node) {
 	const params = declaration.parameters;
 	const args = [];
 	const types = [];
+
+	// Get the function return type
 	const ret = signature.getReturnType().intrinsicName;
 
+	// Retrieve the arguments names and types
 	for (let i = 0; i < params.length; ++i) {
 		const param = params[i];
 		const type = checker.getTypeAtLocation(param);
@@ -301,6 +304,7 @@ function ts_loader_trampoline_discover_signature(checker, node) {
 		types.push(type.intrinsicName ? type.intrinsicName : 'any');
 	}
 
+	// Generate names for unnamed arguments
 	for (let i = 0; i < args.length; ++i) {
 		if (args[i] === 'undefined') {
 			args[i] = ts_loader_trampoline_discover_arguments_generate(args, i);

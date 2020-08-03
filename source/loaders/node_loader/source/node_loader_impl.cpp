@@ -259,6 +259,7 @@ struct loader_impl_async_clear_safe_type
 
 struct loader_impl_async_discover_safe_type
 {
+	loader_impl impl;
 	loader_impl_node node_impl;
 	napi_ref handle_ref;
 	context ctx;
@@ -2013,51 +2014,53 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 		node_loader_impl_exception(env, status);
 
 		/* Convert return value (discover object) to context */
-		napi_value function_names;
-		uint32_t function_names_length;
+		napi_value func_names;
+		uint32_t func_names_length;
 
-		status = napi_get_property_names(env, discover_map, &function_names);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_get_array_length(env, function_names, &function_names_length);
+		status = napi_get_property_names(env, discover_map, &func_names);
 
 		node_loader_impl_exception(env, status);
 
-		for (uint32_t index = 0; index < function_names_length; ++index)
+		status = napi_get_array_length(env, func_names, &func_names_length);
+
+		node_loader_impl_exception(env, status);
+
+		for (uint32_t index = 0; index < func_names_length; ++index)
 		{
-			napi_value function_name;
-			size_t function_name_length;
-			char * function_name_str = NULL;
+			napi_value func_name;
+			size_t func_name_length;
+			char * func_name_str = NULL;
 
-			status = napi_get_element(env, function_names, index, &function_name);
-
-			node_loader_impl_exception(env, status);
-
-			status = napi_get_value_string_utf8(env, function_name, NULL, 0, &function_name_length);
+			status = napi_get_element(env, func_names, index, &func_name);
 
 			node_loader_impl_exception(env, status);
 
-			if (function_name_length > 0)
+			status = napi_get_value_string_utf8(env, func_name, NULL, 0, &func_name_length);
+
+			node_loader_impl_exception(env, status);
+
+			if (func_name_length > 0)
 			{
-				function_name_str = static_cast<char *>(malloc(sizeof(char) * (function_name_length + 1)));
+				func_name_str = static_cast<char *>(malloc(sizeof(char) * (func_name_length + 1)));
 			}
 
-			if (function_name_str != NULL)
+			if (func_name_str != NULL)
 			{
 				napi_value function_descriptor;
 				napi_value function_ptr;
 				napi_value function_sig;
+				napi_value function_types;
+				napi_value function_ret;
 				napi_value function_is_async;
 				uint32_t function_sig_length;
 
 				/* Get function name */
-				status = napi_get_value_string_utf8(env, function_name, function_name_str, function_name_length + 1, &function_name_length);
+				status = napi_get_value_string_utf8(env, func_name, func_name_str, func_name_length + 1, &func_name_length);
 
 				node_loader_impl_exception(env, status);
 
 				/* Get function descriptor */
-				status = napi_get_named_property(env, discover_map, function_name_str, &function_descriptor);
+				status = napi_get_named_property(env, discover_map, func_name_str, &function_descriptor);
 
 				node_loader_impl_exception(env, status);
 
@@ -2111,6 +2114,36 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 					napi_throw_type_error(env, nullptr, "Invalid NodeJS async flag");
 				}
 
+				/* Optionally retrieve types if any in order to support typed supersets of JavaScript like TypeScript */
+				status = napi_get_named_property(env, function_descriptor, "types", &function_types);
+
+				node_loader_impl_exception(env, status);
+
+				/* Check types array type */
+				status = napi_typeof(env, function_types, &valuetype);
+
+				node_loader_impl_exception(env, status);
+
+				if (valuetype != napi_object && valuetype != napi_undefined)
+				{
+					napi_throw_type_error(env, nullptr, "Invalid NodeJS function types");
+				}
+
+				/* Optionally retrieve return value type if any in order to support typed supersets of JavaScript like TypeScript */
+				status = napi_get_named_property(env, function_descriptor, "ret", &function_ret);
+
+				node_loader_impl_exception(env, status);
+
+				/* Check return value type */
+				status = napi_typeof(env, function_ret, &valuetype);
+
+				node_loader_impl_exception(env, status);
+
+				if (valuetype != napi_string && valuetype != napi_undefined)
+				{
+					napi_throw_type_error(env, nullptr, "Invalid NodeJS return type");
+				}
+
 				/* Create node function */
 				loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
 
@@ -2122,7 +2155,7 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 				node_func->node_impl = discover_safe->node_impl;
 
 				/* Create function */
-				function f = function_create(function_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
+				function f = function_create(func_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
 
 				if (f != NULL)
 				{
@@ -2136,6 +2169,39 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 					node_loader_impl_exception(env, status);
 
 					function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
+
+					/* Set return value if any */
+					status = napi_typeof(env, function_ret, &valuetype);
+
+					node_loader_impl_exception(env, status);
+
+					if (valuetype == napi_string)
+					{
+						size_t return_type_length;
+						char * return_type_str = NULL;
+
+						/* Get return value string length */
+						status = napi_get_value_string_utf8(env, function_ret, NULL, 0, &return_type_length);
+
+						node_loader_impl_exception(env, status);
+
+						if (return_type_length > 0)
+						{
+							return_type_str = static_cast<char *>(malloc(sizeof(char) * (return_type_length + 1)));
+						}
+
+						if (return_type_str != NULL)
+						{
+							/* Get parameter name string */
+							status = napi_get_value_string_utf8(env, function_ret, return_type_str, return_type_length + 1, &return_type_length);
+
+							node_loader_impl_exception(env, status);
+
+							signature_set_return(s, loader_impl_type(discover_safe->impl, return_type_str));
+
+							free(return_type_str);
+						}
+					}
 
 					/* Set signature */
 					for (uint32_t arg_index = 0; arg_index < function_sig_length; ++arg_index)
@@ -2164,10 +2230,58 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 
 						node_loader_impl_exception(env, status);
 
-						signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
+						/* Check if type info is available */
+						status = napi_typeof(env, function_types, &valuetype);
+
+						node_loader_impl_exception(env, status);
+
+						if (valuetype == napi_object)
+						{
+							napi_value parameter_type;
+							size_t parameter_type_length;
+							char * parameter_type_str = NULL;
+
+							/* Get signature parameter type */
+							status = napi_get_element(env, function_sig, arg_index, &parameter_type);
+
+							node_loader_impl_exception(env, status);
+
+							/* Get parameter type string length */
+							status = napi_get_value_string_utf8(env, parameter_type, NULL, 0, &parameter_type_length);
+
+							node_loader_impl_exception(env, status);
+
+							if (parameter_type_length > 0)
+							{
+								parameter_type_str = static_cast<char *>(malloc(sizeof(char) * (parameter_type_length + 1)));
+							}
+
+							/* Get parameter type string */
+							status = napi_get_value_string_utf8(env, parameter_type, parameter_type_str, parameter_type_length + 1, &parameter_type_length);
+
+							node_loader_impl_exception(env, status);
+
+							signature_set(s, (size_t)arg_index, parameter_name_str, loader_impl_type(discover_safe->impl, parameter_type_str));
+
+							if (parameter_type_str != NULL)
+							{
+								free(parameter_type_str);
+							}
+						}
+						else
+						{
+							signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
+						}
+
+						if (parameter_name_str != NULL)
+						{
+							free(parameter_name_str);
+						}
 					}
 
-					scope_define(sp, function_name_str, f);
+					scope_define(sp, function_name(f), f);
+
+					free(func_name_str);
 				}
 				else
 				{
@@ -3109,6 +3223,7 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	uv_mutex_lock(&node_impl->mutex);
 
 	/* Set up discover safe arguments */
+	node_impl->discover_safe->impl = impl;
 	node_impl->discover_safe->node_impl = node_impl;
 	node_impl->discover_safe->handle_ref = handle_ref;
 	node_impl->discover_safe->ctx = ctx;
