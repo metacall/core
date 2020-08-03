@@ -233,7 +233,8 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 			dotnet_root = value_to_string(dotnet_root_value);
 		}
 
-		if (dotnet_loader_assembly_path_value != NULL) {
+		if (dotnet_loader_assembly_path_value != NULL)
+		{
 			dotnet_loader_assembly_path = value_to_string(dotnet_loader_assembly_path_value);
 		}
 	}
