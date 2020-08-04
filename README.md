@@ -34,11 +34,13 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
 - [Abstract](#abstract)
 - [Table Of Contents](#table-of-contents)
     - [1. Motivation](#1-motivation)
-    - [2. Language Support (Backends)](#2-language-support-backends)
+    - [2. Language Support](#2-language-support)
+        - [2.1 Loaders (Backends)](#21-loaders-backends)
+        - [2.2 Ports (Frontends)](#22-ports-frontends)
     - [3. Use Cases](#3-use-cases)
-    - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
+        - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
     - [4. Usage](#4-usage)
-    - [4.1 Installation](#41-installation)
+        - [4.1 Installation](#41-installation)
         - [4.2 Environment Variables](#42-environment-variables)
         - [4.3 Examples](#43-examples)
     - [5. Architecture](#5-architecture)
@@ -63,7 +65,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
                 - [5.3.2.2 RapidJSON](#5322-rapidjson)
             - [5.3.3 Detours](#533-detours)
                 - [5.3.3.1 FuncHook](#5331-funchook)
-        - [5.4 Ports (Frontends)](#54-ports-frontends)
+        - [5.4 Ports](#54-ports)
         - [5.5 Serialization](#55-serialization)
         - [5.6 Memory Layout](#56-memory-layout)
         - [5.7 Fork Model](#57-fork-model)
@@ -84,9 +86,13 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
 
 The **METACALL** project started time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers extend the Game Engine easily. By that time, I was finishing the university so I decide to do my [Final Thesis](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-paper.pdf) and [Presentation](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-presentation.pdf) based on the plug-in system for my Game Engine. The Plugin Architecture designed for the Game Engine has similarities with **METACALL** although the architecture has been redefined and the code has been rewritten from scratch. After some refination of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on this technique to provide high scalability of the functions among multiple cores and **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern, a new technique I have developed to interconnect transparently functions in a distributed system based on this library.
 
-## 2. Language Support (Backends)
+## 2. Language Support
 
-This section describes all programming languages that **METACALL** supports, if you are interested in from what languages can be used **METACALL** you must go to [ports section](#54-ports-frontends).
+This section describes all programming languages that **METACALL** supports. **METACALL** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) which **METACALL** loads and they have a common interface. They usually implement JITs, VMs or Interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **METACALL** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **METACALL** via pip and use it to call other languages from Python. The combination of both virtually provides full support to call from / to any language.
+
+### 2.1 Loaders (Backends)
+
+This section describes all programming languages that **METACALL** allows to load and invoke from C language, in other words all languages that **METACALL** can embed. If you are interested in design and implementation details of the loaders, please go to [loaders section](#531-loaders).
 
 - Currently supported languages and run-times:
 
@@ -115,6 +121,22 @@ This section describes all programming languages that **METACALL** supports, if 
 | [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
 | [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                          | rpc  |
+
+### 2.2 Ports (Frontends)
+
+Ports are the frontends to the **METACALL C API** from other languages. They allow to use **METACALL** from different languages. If you are interested in design and implementation details of the ports, please go to [ports section](#54-ports).
+
+- Currently supported languages and run-times:
+
+| Language                                                           | Runtime                                                    |        Version        |
+|--------------------------------------------------------------------|------------------------------------------------------------|:---------------------:|
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html) |        **3.x**        |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                 |     **>= 8.11.1**     |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [D8 (V8)](https://v8.dev/docs/d8)                          |      **5.1.117**      |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/core)                  | **>= 1.0.0-preview2** |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)  |        **2.x**        |
+| [Go](https://golang.org/)                                          | [CGO](https://golang.org/cmd/cgo/)                         |        **1.x**        |
+| [D](https://dlang.org/)                                            | [DMD](https://wiki.dlang.org/DMD)                          |        **2.x**        |
 
 ## 3. Use Cases
 
@@ -451,20 +473,7 @@ A loader must implement it to be considered a valid loader.
 
 ##### 5.3.3.1 FuncHook
 
-### 5.4 Ports (Frontends)
-
-Ports are the frontends to the **METACALL C API** from other languages. They allow to use **METACALL** from different languages.
-
-- Currently supported languages and run-times:
-
-| Language                                                           | Runtime                                                    |        Version        |
-|--------------------------------------------------------------------|------------------------------------------------------------|:---------------------:|
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html) |        **3.x**        |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                 |     **>= 8.11.1**     |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [D8 (V8)](https://v8.dev/docs/d8)                          |      **5.1.117**      |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/core)                  | **>= 1.0.0-preview2** |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)  |        **2.x**        |
-| [Go](https://golang.org/)                                          | [CGO](https://golang.org/cmd/cgo/)                         |        **1.x**        |
+### 5.4 Ports
 
 ### 5.5 Serialization
 
@@ -598,12 +607,12 @@ make <target>-genhtml
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|     Operative System      |    Architecture     |    Compiler     |                                              Build Status                                              |
-|:-------------------------:|:-------------------:|:---------------:|:------------------------------------------------------------------------------------------------------:|
-|    **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
+|     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
+|:------------------------:|:-------------------:|:---------------:|:------------------------------------------------------------------------------------------------------:|
+|   **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
-| **`debian:buster-slim`**  |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
-|       **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
+| **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
+|      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
 
 ### 7.1 Docker Support
 
