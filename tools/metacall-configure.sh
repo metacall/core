@@ -28,6 +28,7 @@ BUILD_NETCORE=0
 BUILD_NETCORE2=0
 BUILD_V8=0
 BUILD_NODEJS=0
+BUILD_TYPESCRIPT=0
 BUILD_FILE=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
@@ -80,6 +81,10 @@ sub_options() {
 		if [ "$option" = 'nodejs' ]; then
 			echo "Build with nodejs support"
 			BUILD_NODEJS=1
+		fi
+		if [ "$option" = 'typescript' ]; then
+			echo "Build with typescript support"
+			BUILD_TYPESCRIPT=1
 		fi
 		if [ "$option" = 'file' ]; then
 			echo "Build with file support"
@@ -212,6 +217,19 @@ sub_configure() {
 		fi
 	fi
 
+	# TypeScript
+	if [ $BUILD_TYPESCRIPT = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_TS=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_TS=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_TS=On"
+		fi
+	fi
+
 	# File
 	if [ $BUILD_FILE = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_FILE=On"
@@ -281,6 +299,7 @@ sub_help() {
 	echo "	netcore2: build with netcore 2 support"
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
+	echo "	typescript: build with typescript support"
 	echo "	file: build with file support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"

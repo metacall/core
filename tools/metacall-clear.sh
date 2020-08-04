@@ -31,6 +31,7 @@ CLEAR_RUBY=0
 CLEAR_NETCORE=0
 CLEAR_V8=0
 CLEAR_NODEJS=0
+CLEAR_TYPESCRIPT=0
 CLEAR_FILE=0
 CLEAR_SWIG=0
 CLEAR_PACK=0
@@ -89,6 +90,11 @@ sub_v8(){
 # NodeJS
 sub_nodejs(){
 	echo "clean nodejs"
+}
+
+# TypeScript
+sub_typescript(){
+	echo "clean typescript"
 }
 
 # File
@@ -153,6 +159,9 @@ sub_clear(){
 	fi
 	if [ $CLEAR_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $CLEAR_TYPESCRIPT = 1 ]; then
+		sub_typescript
 	fi
 	if [ $CLEAR_FILE = 1 ]; then
 		sub_file
@@ -220,6 +229,10 @@ sub_options(){
 			echo "nodejs selected"
 			CLEAR_NODEJS=1
 		fi
+		if [ "$var" = 'typescript' ]; then
+			echo "typescript selected"
+			CLEAR_NODEJS=1
+		fi
 		if [ "$var" = 'file' ]; then
 			echo "file selected"
 			CLEAR_FILE=1
@@ -252,6 +265,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	typescript"
 	echo "	file"
 	echo "	swig"
 	echo "	pack"

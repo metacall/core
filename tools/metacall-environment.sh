@@ -40,6 +40,7 @@ INSTALL_V8REPO54=0
 INSTALL_V8REPO52=0
 INSTALL_V8REPO51=0
 INSTALL_NODEJS=0
+INSTALL_TYPESCRIPT=0
 INSTALL_FILE=0
 INSTALL_WASM=0
 INSTALL_SWIG=0
@@ -317,6 +318,11 @@ sub_nodejs(){
 	# pkg-config icu-i18n --cflags --libs
 }
 
+# TypeScript
+sub_typescript(){
+	echo "configure typesecript"
+}
+
 # File
 sub_file(){
 	echo "configure file"
@@ -409,6 +415,9 @@ sub_install(){
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
 	fi
+	if [ $INSTALL_TYPESCRIPT = 1 ]; then
+		sub_typescript
+	fi
 	if [ $INSTALL_FILE = 1 ]; then
 		sub_file
 	fi
@@ -500,6 +509,10 @@ sub_options(){
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
+		if [ "$var" = 'typescript' ]; then
+			echo "typescript selected"
+			INSTALL_TYPESCRIPT=1
+		fi
 		if [ "$var" = 'file' ]; then
 			echo "file selected"
 			INSTALL_FILE=1
@@ -546,6 +559,7 @@ sub_help() {
 	echo "	v8rep57"
 	echo "	v8rep58"
 	echo "	nodejs"
+	echo "	typescript"
 	echo "	file"
 	echo "	wasm"
 	echo "	swig"

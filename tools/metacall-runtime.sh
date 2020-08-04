@@ -30,6 +30,7 @@ INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
+INSTALL_TYPESCRIPT=0
 INSTALL_FILE=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
@@ -131,6 +132,14 @@ sub_nodejs(){
 	# are already compiled in the runtime
 }
 
+# TypeScript
+sub_typescript(){
+	echo "configure typescript"
+	# Nothing needed, node_modules are local to the path,
+	# runtime is located in /usr/local/lib, and node builtins
+	# are already compiled in the runtime
+}
+
 # File
 sub_file(){
 	echo "configure file"
@@ -169,6 +178,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NODEJS = 1 ]; then
 		sub_nodejs
+	fi
+	if [ $INSTALL_TYPESCRIPT = 1 ]; then
+		sub_typescript
 	fi
 	if [ $INSTALL_FILE = 1 ]; then
 		sub_file
@@ -227,6 +239,10 @@ sub_options(){
 			echo "nodejs selected"
 			INSTALL_NODEJS=1
 		fi
+		if [ "$var" = 'typescript' ]; then
+			echo "typescript selected"
+			INSTALL_TYPESCRIPT=1
+		fi
 		if [ "$var" = 'file' ]; then
 			echo "file selected"
 			INSTALL_FILE=1
@@ -254,6 +270,7 @@ sub_help() {
 	echo "	netcore2"
 	echo "	v8"
 	echo "	nodejs"
+	echo "	typescript"
 	echo "	file"
 	echo "	ports"
 	echo "	clean"
