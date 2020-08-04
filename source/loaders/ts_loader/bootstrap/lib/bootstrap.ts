@@ -300,8 +300,8 @@ function ts_loader_trampoline_discover_signature(checker, node) {
 	for (let i = 0; i < params.length; ++i) {
 		const param = params[i];
 		const type = checker.getTypeAtLocation(param);
-		args.push(param.name.escapedText ? param.name.escapedText : 'undefined');
-		types.push(type.intrinsicName ? type.intrinsicName : 'any');
+		args.push(param.name.escapedText || 'undefined');
+		types.push(type.intrinsicName || 'any');
 	}
 
 	// Generate names for unnamed arguments
@@ -352,13 +352,15 @@ function ts_loader_trampoline_discover(handle) {
 
 					if (ts_loader_trampoline_is_valid_symbol(node)) {
 						const signature = ts_loader_trampoline_discover_signature(checker, node);
+						const flags = ts.getCombinedModifierFlags(node.valueDeclaration);
+						const isAsync = Boolean(flags & ts.ModifierFlags.Async);
 
 						discover[key] = {
 							ptr: func,
 							signature: signature.args,
 							types: signature.types,
 							ret: signature.ret,
-							async: node.async || false,
+							async: isAsync,
 						};
 					}
 				}
