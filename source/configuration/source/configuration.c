@@ -160,6 +160,11 @@ configuration configuration_scope(const char * name)
 
 value configuration_value(configuration config, const char * key)
 {
+	if (config == NULL)
+	{
+		return NULL;
+	}
+
 	return configuration_object_get(config, key);
 }
 
