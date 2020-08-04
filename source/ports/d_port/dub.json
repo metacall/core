@@ -1,0 +1,13 @@
+{
+	"authors": [
+		"Duxz"
+	],
+	"copyright": "Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>",
+	"description": "MetaCall D port",
+	"license": "Apache 2.0",
+	"name": "metacall-d",
+	"version": "0.0.1",
+	"homepage": "https://metacall.io",
+	"targetType": "library",
+	"libs": ["metacall"]
+}
