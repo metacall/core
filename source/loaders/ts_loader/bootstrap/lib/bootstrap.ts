@@ -358,7 +358,7 @@ function ts_loader_trampoline_discover(handle) {
 							signature: signature.args,
 							types: signature.types,
 							ret: signature.ret,
-							async: node.async,
+							async: node.async || false,
 						};
 					}
 				}

@@ -2122,33 +2122,53 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 				}
 
 				/* Optionally retrieve types if any in order to support typed supersets of JavaScript like TypeScript */
-				status = napi_get_named_property(env, function_descriptor, "types", &function_types);
+				static const char types_str[] = "types";
+				bool has_types = false;
+
+				status = napi_has_named_property(env, function_descriptor, types_str, &has_types);
 
 				node_loader_impl_exception(env, status);
 
-				/* Check types array type */
-				status = napi_typeof(env, function_types, &valuetype);
-
-				node_loader_impl_exception(env, status);
-
-				if (valuetype != napi_object && valuetype != napi_undefined)
+				if (has_types == true)
 				{
-					napi_throw_type_error(env, nullptr, "Invalid NodeJS function types");
+					status = napi_get_named_property(env, function_descriptor, types_str, &function_types);
+
+					node_loader_impl_exception(env, status);
+
+					/* Check types array type */
+					status = napi_typeof(env, function_types, &valuetype);
+
+					node_loader_impl_exception(env, status);
+
+					if (valuetype != napi_object)
+					{
+						napi_throw_type_error(env, nullptr, "Invalid NodeJS function types");
+					}
 				}
 
 				/* Optionally retrieve return value type if any in order to support typed supersets of JavaScript like TypeScript */
-				status = napi_get_named_property(env, function_descriptor, "ret", &function_ret);
+				static const char ret_str[] = "ret";
+				bool has_ret = false;
+
+				status = napi_has_named_property(env, function_descriptor, ret_str, &has_ret);
 
 				node_loader_impl_exception(env, status);
 
-				/* Check return value type */
-				status = napi_typeof(env, function_ret, &valuetype);
-
-				node_loader_impl_exception(env, status);
-
-				if (valuetype != napi_string && valuetype != napi_undefined)
+				if (has_ret == true)
 				{
-					napi_throw_type_error(env, nullptr, "Invalid NodeJS return type");
+					status = napi_get_named_property(env, function_descriptor, ret_str, &function_ret);
+
+					node_loader_impl_exception(env, status);
+
+					/* Check return value type */
+					status = napi_typeof(env, function_ret, &valuetype);
+
+					node_loader_impl_exception(env, status);
+
+					if (valuetype != napi_string)
+					{
+						napi_throw_type_error(env, nullptr, "Invalid NodeJS return type");
+					}
 				}
 
 				/* Create node function */
@@ -2178,11 +2198,7 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 					function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
 
 					/* Set return value if any */
-					status = napi_typeof(env, function_ret, &valuetype);
-
-					node_loader_impl_exception(env, status);
-
-					if (valuetype == napi_string)
+					if (has_ret)
 					{
 						size_t return_type_length;
 						char * return_type_str = NULL;
@@ -2238,18 +2254,14 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 						node_loader_impl_exception(env, status);
 
 						/* Check if type info is available */
-						status = napi_typeof(env, function_types, &valuetype);
-
-						node_loader_impl_exception(env, status);
-
-						if (valuetype == napi_object)
+						if (has_types)
 						{
 							napi_value parameter_type;
 							size_t parameter_type_length;
 							char * parameter_type_str = NULL;
 
 							/* Get signature parameter type */
-							status = napi_get_element(env, function_sig, arg_index, &parameter_type);
+							status = napi_get_element(env, function_types, arg_index, &parameter_type);
 
 							node_loader_impl_exception(env, status);
 
