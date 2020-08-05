@@ -121,6 +121,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
 | [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                          | rpc  |
+| [Dart](https://dart.dev/)                                          | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
 
 ### 2.2 Ports (Frontends)
 
