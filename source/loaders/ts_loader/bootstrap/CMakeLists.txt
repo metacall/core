@@ -48,7 +48,7 @@ if(NOT OPTION_BUILD_GUIX)
 
 	install(DIRECTORY
 		${CMAKE_CURRENT_BINARY_DIR}/node_modules/typescript
-		DESTINATION ${INSTALL_LIB}
+		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
 else()
