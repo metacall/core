@@ -142,21 +142,12 @@ if(NOT OPTION_BUILD_GUIX)
 	)
 endif()
 
-execute_process(
-	COMMAND ${NODEJS_EXECUTABLE} -p "require('node-addon-api').include"
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	OUTPUT_VARIABLE NODE_ADDON_API_INCLUDE_DIR
-	ERROR_VARIABLE NODE_ADDON_ERROR
-)
+find_package(NodeJSAddonAPI)
 
-if(NODE_ADDON_ERROR)
-	message(FATAL_ERROR "Node addon API includes could not be found. Include: ${NODE_ADDON_API_INCLUDE_DIR}. Error: ${NODE_ADDON_ERROR}")
-else()
-	message(STATUS "Node addon API includes found: ${NODE_ADDON_API_INCLUDE_DIR}")
+if(NOT NODEJS_ADDON_API_FOUND)
+	message(STATUS "NodeJS Addon API not found")
+	return()
 endif()
-
-string(REPLACE "\n" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
-string(REPLACE "\"" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
 
 target_include_directories(${target}
 	PRIVATE
@@ -164,7 +155,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${NODE_ADDON_API_INCLUDE_DIR} # N-API wrappers
+	${NODEJS_ADDON_API_INCLUDE_DIR} # N-API wrappers
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

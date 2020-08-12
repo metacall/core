@@ -68,49 +68,30 @@ if(MSVC)
 	add_dependencies(${target_binding} ${target})
 else()
 	if(OPTION_BUILD_GUIX)
-		set(NODEJS_EXECUTABLE_ONLY ON)
+		find_package(NodeJSAddonAPI)
 
-		find_package(NodeJS)
-
-		if(NOT NODEJS_FOUND)
-			message(STATUS "NodeJS executable not found")
+		if(NOT NODEJS_ADDON_API_FOUND)
+			message(STATUS "NodeJS Addon API not found")
 			return()
 		endif()
 
-		# Get the includes
-		execute_process(
-			COMMAND ${NODEJS_EXECUTABLE} -p "require('node-addon-api').include"
-			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-			OUTPUT_VARIABLE NODE_ADDON_API_INCLUDE_DIR
-			ERROR_VARIABLE NODE_ADDON_ERROR
-		)
-
-		if(NODE_ADDON_ERROR)
-			message(FATAL_ERROR "Node addon API includes could not be found. Include: ${NODE_ADDON_API_INCLUDE_DIR}. Error: ${NODE_ADDON_ERROR}")
-		else()
-			message(STATUS "Node addon API includes found: ${NODE_ADDON_API_INCLUDE_DIR}")
-		endif()
-
-		string(REPLACE "\n" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
-		string(REPLACE "\"" "" NODE_ADDON_API_INCLUDE_DIR ${NODE_ADDON_API_INCLUDE_DIR})
-
 		# Generate additional gyp file for the addon
-		set(NODE_ADDON_INCLUDES
+		set(NODEJS_ADDON_INCLUDES
 			"{
 				'target_defaults': {
 					'cflags': [
 						'-fPIC'
 					],
 					'include_dirs': [
-						'@NODE_ADDON_API_INCLUDE_DIR@/external-napi'
+						'@NODEJS_ADDON_API_INCLUDE_DIR@/external-napi'
 					]
 				}
 			}"
 		)
 
-		string(REPLACE "@NODE_ADDON_API_INCLUDE_DIR@" "${NODE_ADDON_API_INCLUDE_DIR}" NODE_ADDON_INCLUDES ${NODE_ADDON_INCLUDES})
+		string(REPLACE "@NODEJS_ADDON_API_INCLUDE_DIR@" "${NODEJS_ADDON_API_INCLUDE_DIR}" NODEJS_ADDON_INCLUDES ${NODEJS_ADDON_INCLUDES})
 
-		file(WRITE binding.gypi "${NODE_ADDON_INCLUDES}")
+		file(WRITE binding.gypi "${NODEJS_ADDON_INCLUDES}")
 
 		add_custom_target(${target} ALL
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
