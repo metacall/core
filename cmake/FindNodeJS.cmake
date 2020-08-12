@@ -6,6 +6,7 @@
 # Find NodeJS executable and include paths
 #
 # NODEJS_FOUND - True if NodeJS was found
+# NODEJS_INCLUDE_DIR - NodeJS headers path
 # NODEJS_VERSION - NodeJS version
 # NODEJS_VERSION_MAJOR - NodeJS major version
 # NODEJS_VERSION_MINOR - NodeJS minor version
@@ -21,12 +22,11 @@
 # NODEJS_V8_VERSION_PATCH - V8 patch version of NodeJS
 # NODEJS_V8_VERSION_TWEAK - V8 patch version of NodeJS
 # NODEJS_V8_VERSION_HEX - V8 version of NodeJS in hexadecimal format
+# NODEJS_LIBRARY - NodeJS shared library
+# NODEJS_EXECUTABLE - NodeJS shell
 #
 # Configuration variables:
 #
-# NODEJS_LIBRARY_CUSTOM - Define custom NodeJS shared library
-# NODEJS_EXECUTABLE_CUSTOM - Define custom NodeJS shell
-# NODEJS_INCLUDE_DIR_CUSTOM - Define custom NodeJS headers path
 # NODEJS_CMAKE_DEBUG - Print paths for debugging
 # NODEJS_EXECUTABLE_ONLY - Find only NodeJS executable (avoid library and include files)
 
@@ -35,9 +35,6 @@ if(NODEJS_EXECUTABLE)
 	set(NODEJS_FIND_QUIETLY TRUE)
 endif()
 
-option(NODEJS_EXECUTABLE_CUSTOM "Define a custom path for NodeJS executable." OFF)
-option(NODEJS_INCLUDE_DIR_CUSTOM "Define a custom path for NodeJS includes." OFF)
-option(NODEJS_LIBRARY_CUSTOM "Define a custom path for NodeJS library." OFF)
 option(NODEJS_CMAKE_DEBUG "Print paths for debugging NodeJS dependencies." OFF)
 option(NODEJS_SHARED_UV "If it is enabled, libuv won't be required by this script." OFF)
 
@@ -101,16 +98,12 @@ set(NODEJS_INCLUDE_PATHS
 )
 
 # Find NodeJS executable
-if(NOT NODEJS_EXECUTABLE_CUSTOM)
-	find_program(NODEJS_EXECUTABLE
-		NAMES node nodejs node.exe
-		HINTS ${NODEJS_PATHS}
-		PATH_SUFFIXES bin
-		DOC "NodeJS JavaScript Runtime Interpreter"
-	)
-else()
-	set(NODEJS_EXECUTABLE ${NODEJS_EXECUTABLE_CUSTOM})
-endif()
+find_program(NODEJS_EXECUTABLE
+	NAMES node nodejs node.exe
+	HINTS ${NODEJS_PATHS}
+	PATH_SUFFIXES bin
+	DOC "NodeJS JavaScript Runtime Interpreter"
+)
 
 if(NODEJS_EXECUTABLE)
 	# Detect NodeJS version
@@ -157,9 +150,6 @@ if(NODEJS_EXECUTABLE)
 
 		if(NODEJS_CMAKE_DEBUG)
 			message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
-			message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
-			message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")
-			message(STATUS "NODEJS_V8_VERSION_HEX: ${NODEJS_V8_VERSION_HEX}")
 			message(STATUS "NODEJS_EXECUTABLE: ${NODEJS_EXECUTABLE}")
 		endif()
 
@@ -168,16 +158,12 @@ if(NODEJS_EXECUTABLE)
 endif()
 
 # Find NodeJS includes
-if(NOT NODEJS_INCLUDE_DIR_CUSTOM)
-	find_path(NODEJS_INCLUDE_DIR
-		NAMES ${NODEJS_HEADERS}
-		PATHS ${NODEJS_INCLUDE_PATHS}
-		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
-		DOC "NodeJS JavaScript Runtime Headers"
-	)
-else()
-	set(NODEJS_INCLUDE_DIR ${NODEJS_INCLUDE_DIR_CUSTOM})
-endif()
+find_path(NODEJS_INCLUDE_DIR
+	NAMES ${NODEJS_HEADERS}
+	PATHS ${NODEJS_INCLUDE_PATHS}
+	PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+	DOC "NodeJS JavaScript Runtime Headers"
+)
 
 # Check if the include directory contains all headers in the same folder
 if(NODEJS_INCLUDE_DIR)
@@ -276,37 +262,33 @@ if(NODEJS_INCLUDE_DIR)
 endif()
 
 # Find NodeJS library from module version
-if(NOT NODEJS_LIBRARY_CUSTOM)
-	if(NODEJS_MODULE_VERSION)
-		# NodeJS library names
-		set(NODEJS_LIBRARY_NAMES
-			libnode.so.${NODEJS_MODULE_VERSION}
-			libnode.${NODEJS_MODULE_VERSION}.dylib
-			libnode.${NODEJS_MODULE_VERSION}.dll
-			node.lib
-		)
+if(NODEJS_MODULE_VERSION)
+	# NodeJS library names
+	set(NODEJS_LIBRARY_NAMES
+		libnode.so.${NODEJS_MODULE_VERSION}
+		libnode.${NODEJS_MODULE_VERSION}.dylib
+		libnode.${NODEJS_MODULE_VERSION}.dll
+		node.lib
+	)
 
-		if(WIN32)
-			set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
-		else()
-			set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
-		endif()
-
-		if(WIN32)
-			set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}") # TODO: Set a valid install path
-		else()
-			set(NODEJS_LIBRARY_PATH "/usr/local/lib")
-		endif()
-
-		# Find library
-		find_library(NODEJS_LIBRARY
-			NAMES ${NODEJS_LIBRARY_NAMES}
-			PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH}
-			DOC "NodeJS JavaScript Runtime Library"
-		)
+	if(WIN32)
+		set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
+	else()
+		set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
 	endif()
-else()
-	set(NODEJS_LIBRARY ${NODEJS_LIBRARY_CUSTOM})
+
+	if(WIN32)
+		set(NODEJS_LIBRARY_PATH "${NODEJS_COMPILE_PATH}") # TODO: Set a valid install path
+	else()
+		set(NODEJS_LIBRARY_PATH "/usr/local/lib")
+	endif()
+
+	# Find library
+	find_library(NODEJS_LIBRARY
+		NAMES ${NODEJS_LIBRARY_NAMES}
+		PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH}
+		DOC "NodeJS JavaScript Runtime Library"
+	)
 endif()
 
 # TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?)
