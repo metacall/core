@@ -68,9 +68,18 @@ if(MSVC)
 	add_dependencies(${target_binding} ${target})
 else()
 	if(OPTION_BUILD_GUIX)
+		set(NODEJS_EXECUTABLE_ONLY ON)
+
+		find_package(NodeJS)
+
+		if(NOT NODEJS_FOUND)
+			message(STATUS "NodeJS executable not found")
+			return()
+		endif()
+
 		# Get the includes
 		execute_process(
-			COMMAND node -p "require('node-addon-api').include"
+			COMMAND ${NODEJS_EXECUTABLE} -p "require('node-addon-api').include"
 			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 			OUTPUT_VARIABLE NODE_ADDON_API_INCLUDE_DIR
 		)
