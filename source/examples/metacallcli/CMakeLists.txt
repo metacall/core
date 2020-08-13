@@ -55,6 +55,17 @@ add_executable(${target}
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 #
+# Target for scripts (testing)
+#
+
+add_custom_target(${target}-scripts-tests ALL
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/test/* ${LOADER_SCRIPT_PATH}
+)
+
+add_dependencies(${target} ${target}-scripts-tests)
+
+#
 # Project options
 #
 
@@ -136,27 +147,6 @@ add_test(NAME ${target}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_NODE)
-	add_test(NAME ${target}-node
-		COMMAND ${TEST_COMMAND} "echo 'load node nod.js\ninspect\ncall hello_boy(3, 4)\nexit' | $<TARGET_FILE:${target}>"
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	)
-
-	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_NODE AND OPTION_BUILD_LOADERS_PY)
-		add_test(NAME ${target}-node-port-py
-			COMMAND $<TARGET_FILE:${target}> test.js
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		)
-	endif()
-
-	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
-		add_test(NAME ${target}-py-port
-		COMMAND ${TEST_COMMAND} "echo 'load py test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}>"
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		)
-	endif()
-endif()
-
 #
 # Define test labels
 #
@@ -173,22 +163,56 @@ test_environment_variables(${target}
 )
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_NODE)
+	add_test(NAME ${target}-node
+		COMMAND ${TEST_COMMAND} "echo 'load node nod.js\ninspect\ncall hello_boy(3, 4)\nexit' | $<TARGET_FILE:${target}>"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
 	test_environment_variables(${target}-node
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
 
 	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_NODE AND OPTION_BUILD_LOADERS_PY)
-		set(TEST_LOADER_SCRIPT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/test")
-
+		add_test(NAME ${target}-node-port-py
+			COMMAND $<TARGET_FILE:${target}> cli-test.js
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
 		test_environment_variables(${target}-node-port-py
 			""
-			"LOADER_LIBRARY_PATH=${LOADER_LIBRARY_PATH}"
-			"LOADER_SCRIPT_PATH=${TEST_LOADER_SCRIPT_PATH}"
-			"CONFIGURATION_PATH=${CONFIGURATION_PATH}"
-			"SERIAL_LIBRARY_PATH=${SERIAL_LIBRARY_PATH}"
-			"DETOUR_LIBRARY_PATH=${DETOUR_LIBRARY_PATH}"
-			"PORT_LIBRARY_PATH=${PORT_LIBRARY_PATH}"
+			${TESTS_ENVIRONMENT_VARIABLES}
 		)
 	endif()
+
+	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
+		add_test(NAME ${target}-py-port
+			COMMAND ${TEST_COMMAND} "echo 'load py cli-test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}>"
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
+		test_environment_variables(${target}-py-port
+			""
+			${TESTS_ENVIRONMENT_VARIABLES}
+		)
+	endif()
+endif()
+
+if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_FILE)
+	add_test(NAME ${target}-file
+		COMMAND ${TEST_COMMAND} "echo 'load file template.html\ninspect\ncall template.html()\nexit' | $<TARGET_FILE:${target}>"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-file
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+endif()
+
+if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)
+	add_test(NAME ${target}-ts
+		COMMAND ${TEST_COMMAND} "echo 'load ts typedfunc.ts\ninspect\ncall typed_sum(4, 5)\nexit' | $<TARGET_FILE:${target}>"
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-ts
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
 endif()

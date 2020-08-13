@@ -51,12 +51,15 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│ load <runtime tag> <script0> <script1> ... <scriptN>                                   │" << std::endl;
 	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
 	std::cout << "\t│                  options :                                                             │" << std::endl;
-	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
-	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
-	std::cout << "\t│                            py   - Python                                               │" << std::endl;
 	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
+	std::cout << "\t│                            py   - Python                                               │" << std::endl;
 	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
-	std::cout << "\t│                            cs   - C# NET Core                                          │" << std::endl;
+	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
+	std::cout << "\t│                            cs   - C# NetCore                                           │" << std::endl;
+	std::cout << "\t│                            cob  - Cobol                                                │" << std::endl;
+	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
+	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
+	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
 	std::cout << "\t│    <script0> <script1> ... <scriptN> : relative or absolute path to the script(s)      │" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Example:                                                                               │" << std::endl;
@@ -116,12 +119,15 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│ clear <runtime tag> <script0> <script1> ... <scriptN>                                  │" << std::endl;
 	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
 	std::cout << "\t│                  options :                                                             │" << std::endl;
-	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
-	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
-	std::cout << "\t│                            py   - Python                                               │" << std::endl;
 	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
+	std::cout << "\t│                            py   - Python                                               │" << std::endl;
 	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
-	std::cout << "\t│                            cs   - C# NET Core                                          │" << std::endl;
+	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
+	std::cout << "\t│                            cs   - C# NetCore                                           │" << std::endl;
+	std::cout << "\t│                            cob  - Cobol                                                │" << std::endl;
+	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
+	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
+	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
 	std::cout << "\t│    <script0> <script1> ... <scriptN> : id of the script (file name without extension)  |" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Example:                                                                               │" << std::endl;
@@ -330,18 +336,34 @@ void application::parameter_iterator::operator()(const char * parameter)
 {
 	std::string script(parameter);
 
+	/* List of file extensions mapped into loader tags */
 	static std::unordered_map<std::string, std::string> extension_to_tag =
 	{
+		/* Mock Loader */
 		{ "mock", "mock" },
+		/* Python Loader */
 		{ "py", "py" },
+		/* NodeJS Loader */
 		{ "js", "node" },
+		/* Ruby Loader */
 		{ "rb", "rb" },
-		{ "cs", "cs" }
+		/* C# Loader */
+		{ "cs", "cs" },
+		/* Cobol Loader */
+		{ "cob", "cob" },
+		{ "cbl", "cob" },
+		{ "cpy", "cob" },
+		/* TypeScript Loader */
+		{ "ts", "ts" }
+
+		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
+		/* Probably in the future we can differenciate between them, but it is not trivial */
 	};
 
 	const std::string tag = extension_to_tag[script.substr(script.find_last_of(".") + 1)];
+	const std::string safeTag = tag != "" ? tag : "file"; /* Use File Loader if the tag is not found */
 
-	app.load(tag, script);
+	app.load(safeTag, script);
 	app.shutdown();
 }
 
