@@ -51,6 +51,7 @@ if(MSVC)
 			COMMAND npm config set msvs_version ${NODE_LOADER_TRAMPOLINE_MSVS_VERSION}
 			COMMAND npm install --msvs_version=${NODE_LOADER_TRAMPOLINE_MSVS_VERSION}
 			COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} rebuild --verbose
+			COMMAND ${CMAKE_COMMAND} -E  make_directory ${LOADER_LIBRARY_PATH}
 			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/trampoline.node ${LOADER_LIBRARY_PATH}
 		)
 	endif()
@@ -98,6 +99,7 @@ else()
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND gyp binding.gyp -f make --depth . -Ibinding.gypi # TODO: ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE}
 			COMMAND make -f binding.Makefile
+			COMMAND ${CMAKE_COMMAND} -E  make_directory ${LOADER_LIBRARY_PATH}
 			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/out/Default/lib.target/libtrampoline.so ${LOADER_LIBRARY_PATH}/trampoline.node
 		)
 	else()
@@ -106,6 +108,7 @@ else()
 			COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
 			COMMAND npm install
 			COMMAND node-gyp ${NODE_LOADER_TRAMPOLINE_BUILD_TYPE} rebuild --verbose
+			COMMAND ${CMAKE_COMMAND} -E  make_directory ${LOADER_LIBRARY_PATH}
 			COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_BINARY_DIR}/build/${CMAKE_BUILD_TYPE}/obj.target/trampoline.so ${LOADER_LIBRARY_PATH}/trampoline.node
 		)
 	endif()
