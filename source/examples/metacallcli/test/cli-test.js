@@ -1,6 +1,6 @@
 // Require MetaCall directly from Node Port
-require('../../../ports/node_port/index.js');
+require('../../source/ports/node_port/index.js');
 
-const { a } = require('cli-target.py');
+const { a } = require('cli-test-target.py');
 
 console.log(a());

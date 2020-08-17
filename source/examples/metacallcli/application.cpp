@@ -521,7 +521,7 @@ void application::run()
 		std::string input;
 
 		/* Show prompt line */
-		std::cout << "> ";
+		std::cout << "\u03BB ";
 
 		/* Get whole line */
 		std::getline(std::cin, input);

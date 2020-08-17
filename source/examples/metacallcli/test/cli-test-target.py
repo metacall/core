@@ -2,4 +2,4 @@
 
 # Target function
 def a():
-	return 'a'
+	return 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
