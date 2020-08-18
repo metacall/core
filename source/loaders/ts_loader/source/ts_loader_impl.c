@@ -40,12 +40,12 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 	}
 	type_id_name_pair[] =
 	{
-		{ TYPE_BOOL,	"boolean"	},
-		{ TYPE_DOUBLE,	"number"	},
-		{ TYPE_STRING,	"string"	},
-		{ TYPE_NULL,	"null"		},
-		{ TYPE_MAP,		"object"	},
-		{ TYPE_ARRAY,	"Array<>"	} /* Custom array type for handling all kinds of typed arrays */
+		{ TYPE_BOOL,	"boolean"			},
+		{ TYPE_DOUBLE,	"number"			},
+		{ TYPE_STRING,	"string"			},
+		{ TYPE_NULL,	"null"				},
+		{ TYPE_MAP,		"Record<any, any>"	},
+		{ TYPE_ARRAY,	"any[]"				}
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
