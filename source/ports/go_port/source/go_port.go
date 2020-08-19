@@ -9,8 +9,6 @@ import "C"
 import (
 	"unsafe"
 	"errors"
-	"os"
-	"fmt"
 )
 
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
