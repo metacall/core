@@ -1,0 +1,16 @@
+{
+    "name": "metacall/core",
+    "description": "Call Python, C#, Ruby... functions from PHP (a PHP Port for MetaCall)",
+    "type": "library",
+    "require": {
+        "php": ">=5.3.0"
+    },
+    "license": "Apache-2.0",
+    "authors": [
+        {
+            "name": "Vicente Eduardo Ferrer Garcia",
+            "email": "vic798@gmail.com"
+        }
+    ],
+    "minimum-stability": "dev"
+}
