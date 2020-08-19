@@ -286,12 +286,7 @@ else()
 	set(PHP_PORT_NAME "${SWIG_MODULE_${target}_REAL_NAME}")
 endif()
 
-# Module object instance (capitalized)
-string(SUBSTRING "${PHP_PORT_NAME}" 0 1 PHP_PORT_FIRST)
-string(TOUPPER "${PHP_PORT_FIRST}" PHP_PORT_FIRST_UPPER)
-string(SUBSTRING "${PHP_PORT_NAME}" 1 -1 PHP_PORT_LAST)
-set(PHP_PORT_OBJ "${PHP_PORT_FIRST_UPPER}${PHP_PORT_LAST}")
-
+# Configure php test
 configure_file(test/run.php.in ${php_port_test_path})
 
 #
