@@ -13,7 +13,7 @@ import (
 
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
-func metacall_initialize() error {
+func Initialize() error {
 	if (int(C.metacall_initialize()) != 0) {
 		return errors.New("MetaCall failed to initialize")
 	}
@@ -21,7 +21,7 @@ func metacall_initialize() error {
 	return nil
 }
 
-func metacall_load_from_file(tag string, scripts []string) error {
+func LoadFromFile(tag string, scripts []string) error {
 	size := len(scripts)
 
 	cTag := C.CString(tag)
@@ -44,7 +44,7 @@ func metacall_load_from_file(tag string, scripts []string) error {
 	return nil
 }
 
-func metacall(function string, args ...interface{}) (interface{}, error) {
+func MetaCall(function string, args ...interface{}) (interface{}, error) {
 
 	cFunction := C.CString(function)
 	defer C.free(unsafe.Pointer(cFunction))
@@ -106,28 +106,28 @@ func metacall(function string, args ...interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-func metacall_destroy() {
+func Destroy() {
 	C.metacall_destroy()
 }
 
 /*
 func main() {
 
-	if err := metacall_initialize(); err != nil {
+	if err := metacall.Initialize(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	defer metacall_destroy()
+	defer metacall.Destroy()
 
 	scripts := []string{ "test.mock" }
 
-	if err := metacall_load_from_file("mock", scripts); err != nil {
+	if err := metacall.LoadFromFile("mock", scripts); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	ret, err := metacall("three_str", "e", "f", "g")
+	ret, err := metacall.MetaCall("three_str", "e", "f", "g")
 
 	if err != nil {
 		fmt.Println(err)
