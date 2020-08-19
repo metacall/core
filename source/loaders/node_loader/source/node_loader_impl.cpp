@@ -68,14 +68,16 @@
 #include <node.h>
 #include <node_api.h>
 
+#include <uv.h>
+
+#if 0 /* Not needed */
 #include <libplatform/libplatform.h>
 #include <v8.h> /* version: 6.2.414.50 */
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
 #	include <v8-debug.h>
 #endif /* ENALBLE_DEBUGGER_SUPPORT */
-
-#include <uv.h>
+#endif
 
 /* TODO:
 	To solve the deadlock we have to make MetaCall fork tolerant.

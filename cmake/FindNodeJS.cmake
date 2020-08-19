@@ -62,22 +62,23 @@ set(NODEJS_PATHS
 	/usr/freeware
 )
 
-# Find NodeJS include directories
-if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
-	set(NODEJS_V8_HEADERS v8.h v8-version.h v8-profiler.h) # v8-debug.h
-else()
-	set(NODEJS_V8_HEADERS v8.h v8-version.h)
-endif()
-
 if(NOT NODEJS_SHARED_UV)
 	set(NODEJS_UV_HEADERS uv.h)
 endif()
 
+# Find NodeJS include directories
+# if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
+# 	set(NODEJS_V8_HEADERS v8.h v8-version.h v8-profiler.h) # v8-debug.h
+# else()
+# 	set(NODEJS_V8_HEADERS v8.h v8-version.h)
+# endif()
+
 set(NODEJS_HEADERS
 	node.h
 	node_api.h
-	${NODEJS_V8_HEADERS}
 	${NODEJS_UV_HEADERS}
+	# Not needed
+	# ${NODEJS_V8_HEADERS}
 )
 
 set(NODEJS_INCLUDE_SUFFIXES
