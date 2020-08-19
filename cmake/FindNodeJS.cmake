@@ -6,7 +6,7 @@
 # Find NodeJS executable and include paths
 #
 # NODEJS_FOUND - True if NodeJS was found
-# NODEJS_INCLUDE_DIR - NodeJS headers path
+# NODEJS_INCLUDE_DIRS - NodeJS headers paths
 # NODEJS_VERSION - NodeJS version
 # NODEJS_VERSION_MAJOR - NodeJS major version
 # NODEJS_VERSION_MINOR - NodeJS minor version
@@ -62,23 +62,20 @@ set(NODEJS_PATHS
 	/usr/freeware
 )
 
+# Find NodeJS include directories
+if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
+	set(NODEJS_V8_HEADERS v8.h v8-version.h v8-profiler.h) # v8-debug.h
+else()
+	set(NODEJS_V8_HEADERS v8.h v8-version.h)
+endif()
+
 if(NOT NODEJS_SHARED_UV)
 	set(NODEJS_UV_HEADERS uv.h)
 endif()
 
-# Find NodeJS include directories
-# if(MSVC OR CMAKE_BUILD_TYPE EQUAL "Debug")
-# 	set(NODEJS_V8_HEADERS v8.h v8-version.h v8-profiler.h) # v8-debug.h
-# else()
-# 	set(NODEJS_V8_HEADERS v8.h v8-version.h)
-# endif()
-
 set(NODEJS_HEADERS
 	node.h
 	node_api.h
-	${NODEJS_UV_HEADERS}
-	# Not needed
-	# ${NODEJS_V8_HEADERS}
 )
 
 set(NODEJS_INCLUDE_SUFFIXES
@@ -177,8 +174,46 @@ if(NODEJS_INCLUDE_DIR)
 	endforeach()
 endif()
 
+# Find NodeJS V8 includes
+find_path(NODEJS_V8_INCLUDE_DIR
+	NAMES ${NODEJS_V8_HEADERS}
+	PATHS ${NODEJS_INCLUDE_PATHS}
+	PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+	DOC "NodeJS JavaScript Runtime V8 Headers"
+)
+
+# Check if the include directory contains all headers in the same folder
+if(NODEJS_V8_INCLUDE_DIR)
+	foreach(HEADER IN ITEMS ${NODEJS_V8_HEADERS})
+		if(NOT EXISTS ${NODEJS_V8_INCLUDE_DIR}/${HEADER})
+			message(WARNING "NodeJS header ${HEADER} not found in ${NODEJS_V8_INCLUDE_DIR}")
+			set(NODEJS_V8_INCLUDE_DIR FALSE)
+			break()
+		endif()
+	endforeach()
+endif()
+
+# Find NodeJS UV includes
+find_path(NODEJS_UV_INCLUDE_DIR
+	NAMES ${NODEJS_UV_HEADERS}
+	PATHS ${NODEJS_INCLUDE_PATHS}
+	PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+	DOC "NodeJS JavaScript Runtime UV Headers"
+)
+
+# Check if the include directory contains all headers in the same folder
+if(NODEJS_UV_INCLUDE_DIR)
+	foreach(HEADER IN ITEMS ${NODEJS_UV_HEADERS})
+		if(NOT EXISTS ${NODEJS_UV_INCLUDE_DIR}/${HEADER})
+			message(WARNING "NodeJS header ${HEADER} not found in ${NODEJS_UV_INCLUDE_DIR}")
+			set(NODEJS_UV_INCLUDE_DIR FALSE)
+			break()
+		endif()
+	endforeach()
+endif()
+
 # TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?) with proper includes
-if(NOT NODEJS_INCLUDE_DIR)
+if(NOT NODEJS_INCLUDE_DIR OR NOT NODEJS_V8_INCLUDE_DIR OR NOT NODEJS_UV_INCLUDE_DIR)
 	if(NOT NODEJS_VERSION)
 		# We do not have any way to know what version to install
 		message(WARNING "NodeJS headers could not be found, neither a valid NodeJS version.")
@@ -211,10 +246,10 @@ if(NOT NODEJS_INCLUDE_DIR)
 	)
 endif()
 
-if(NODEJS_INCLUDE_DIR)
+if(NODEJS_V8_INCLUDE_DIR)
 	# Detect NodeJS V8 version
 	find_file(NODEJS_V8_VERSION_FILE_PATH v8-version.h
-		PATHS ${NODEJS_INCLUDE_DIR}
+		PATHS ${NODEJS_V8_INCLUDE_DIR}
 		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS V8 JavaScript Version Header"
 	)
@@ -406,19 +441,17 @@ if(NOT NODEJS_LIBRARY)
 	endif()
 endif()
 
+set(NODEJS_INCLUDE_DIRS "${NODEJS_INCLUDE_DIR}" "${NODEJS_V8_INCLUDE_DIR}" "${NODEJS_UV_INCLUDE_DIR}")
+
 find_package_handle_standard_args(NODEJS
-	REQUIRED_VARS NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR NODEJS_LIBRARY
+	REQUIRED_VARS NODEJS_EXECUTABLE NODEJS_INCLUDE_DIRS NODEJS_LIBRARY
 	VERSION_VAR NODEJS_VERSION
 )
 
-mark_as_advanced(NODEJS_EXECUTABLE NODEJS_INCLUDE_DIR NODEJS_LIBRARY)
-
-if(NODEJS_FOUND)
-	set(NODEJS_INCLUDE_DIRS ${NODEJS_INCLUDE_DIR})
-endif()
+mark_as_advanced(NODEJS_EXECUTABLE NODEJS_INCLUDE_DIRS NODEJS_LIBRARY)
 
 if(NODEJS_CMAKE_DEBUG)
-	message(STATUS "NODEJS_INCLUDE_DIR: ${NODEJS_INCLUDE_DIR}")
+	message(STATUS "NODEJS_INCLUDE_DIRS: ${NODEJS_INCLUDE_DIRS}")
 	message(STATUS "NODEJS_VERSION: ${NODEJS_VERSION}")
 	message(STATUS "NODEJS_UV_VERSION: ${NODEJS_UV_VERSION}")
 	message(STATUS "NODEJS_V8_VERSION: ${NODEJS_V8_VERSION}")

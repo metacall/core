@@ -152,7 +152,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${NODEJS_INCLUDE_DIR} # NodeJS includes
+	${NODEJS_INCLUDE_DIRS} # NodeJS includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
