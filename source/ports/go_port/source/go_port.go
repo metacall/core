@@ -68,6 +68,16 @@ func MetaCall(function string, args ...interface{}) (interface{}, error) {
 			*cArg = C.metacall_value_create_int((C.int)(i))
 		}
 
+		// Create float32
+		if i, ok := arg.(float32); ok {
+			*cArg = C.metacall_value_create_float((C.float32)(i))
+		}
+
+		// Create float64
+		if i, ok := arg.(float64); ok {
+			*cArg = C.metacall_value_create_double((C.float64)(i))
+		}
+
 		// Create string
 		if str, ok := arg.(string); ok {
 			cStr := C.CString(str)
@@ -93,6 +103,14 @@ func MetaCall(function string, args ...interface{}) (interface{}, error) {
 		switch (C.metacall_value_id(unsafe.Pointer(ret))) {
 			case C.METACALL_INT: {
 				return int(C.metacall_value_to_int(unsafe.Pointer(ret))), nil
+			}
+
+			case C.METACALL_FLOAT: {
+				return float32(C.metacall_value_to_float(unsafe.Pointer(ret))), nil
+			}
+
+			case C.METACALL_DOUBLE: {
+				return float64(C.metacall_value_to_double(unsafe.Pointer(ret))), nil
 			}
 
 			case C.METACALL_STRING: {
