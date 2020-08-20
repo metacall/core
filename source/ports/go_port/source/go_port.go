@@ -70,12 +70,12 @@ func MetaCall(function string, args ...interface{}) (interface{}, error) {
 
 		// Create float32
 		if i, ok := arg.(float32); ok {
-			*cArg = C.metacall_value_create_float((C.float32)(i))
+			*cArg = C.metacall_value_create_float((C.float)(i))
 		}
 
 		// Create float64
 		if i, ok := arg.(float64); ok {
-			*cArg = C.metacall_value_create_double((C.float64)(i))
+			*cArg = C.metacall_value_create_double((C.double)(i))
 		}
 
 		// Create string
