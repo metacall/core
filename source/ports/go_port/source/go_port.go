@@ -44,7 +44,7 @@ func LoadFromFile(tag string, scripts []string) error {
 	return nil
 }
 
-func MetaCall(function string, args ...interface{}) (interface{}, error) {
+func Call(function string, args ...interface{}) (interface{}, error) {
 
 	cFunction := C.CString(function)
 	defer C.free(unsafe.Pointer(cFunction))
@@ -145,7 +145,7 @@ func main() {
 		return
 	}
 
-	ret, err := metacall.MetaCall("three_str", "e", "f", "g")
+	ret, err := metacall.Call("three_str", "e", "f", "g")
 
 	if err != nil {
 		fmt.Println(err)
