@@ -1,0 +1,5 @@
+Add CMakeLists.txt to integrate with the build. It can use pure rustc as well as there are no deps.
+
+Configure the path for the metacall lib as per the built binary using the env vars $PATH.
+
+Figure out if the .gitignore should be moved. If we use rustc directly gitignore can probably be removed.
