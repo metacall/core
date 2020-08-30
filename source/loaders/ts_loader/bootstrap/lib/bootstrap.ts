@@ -9,9 +9,6 @@
  * not be transpiled or implemented in TypeScript
 */
 
-// eslint-disable-next-line global-require
-const trampoline = require('./trampoline.node');
-
 const Module = require('module');
 const path = require('path');
 const util = require('util');
@@ -286,6 +283,23 @@ function ts_loader_trampoline_discover_arguments_generate(args, index) {
 	return name;
 }
 
+function ts_loader_trampoline_discover_type(type) {
+	// TODO: Implement type detection properly
+	/*
+	if (ts.isArrayTypeNode(node)) {
+		return 'any[]';
+	}
+
+	if (ts.isObjectLiteralExpression(node)) {
+		return 'Record<any, any>';
+	}
+	*/
+
+	// TODO: Function
+
+	return type.intrinsicName || 'any';
+}
+
 function ts_loader_trampoline_discover_signature(checker, node) {
 	const declaration = node.valueDeclaration;
 	const signature = checker.getSignatureFromDeclaration(declaration);
@@ -294,14 +308,14 @@ function ts_loader_trampoline_discover_signature(checker, node) {
 	const types = [];
 
 	// Get the function return type
-	const ret = signature.getReturnType().intrinsicName || 'any';
+	const ret = ts_loader_trampoline_discover_type(signature.getReturnType());
 
 	// Retrieve the arguments names and types
 	for (let i = 0; i < params.length; ++i) {
 		const param = params[i];
 		const type = checker.getTypeAtLocation(param);
 		args.push(param.name.escapedText || 'undefined');
-		types.push(type.intrinsicName || 'any');
+		types.push(ts_loader_trampoline_discover_type(type));
 	}
 
 	// Generate names for unnamed arguments
@@ -434,16 +448,53 @@ function ts_loader_trampoline_destroy() {
 }
 
 module.exports = ((impl, ptr) => {
-	return trampoline.register(impl, ptr, {
-		'initialize': ts_loader_trampoline_initialize,
-		'execution_path': ts_loader_trampoline_execution_path,
-		'load_from_file': ts_loader_trampoline_load_from_file,
-		'load_from_memory': ts_loader_trampoline_load_from_memory,
-		'load_from_package': ts_loader_trampoline_load_from_package,
-		'clear': ts_loader_trampoline_clear,
-		'discover': ts_loader_trampoline_discover,
-		'test': ts_loader_trampoline_test,
-		'await': ts_loader_trampoline_await,
-		'destroy': ts_loader_trampoline_destroy,
-	});
+	try {
+		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
+			throw 'Process arguments (process.argv[2], process.argv[3]) not defined.';
+		}
+
+		const trampoline = require('./trampoline.node');
+
+		return trampoline.register(impl, ptr, {
+			'initialize': ts_loader_trampoline_initialize,
+			'execution_path': ts_loader_trampoline_execution_path,
+			'load_from_file': ts_loader_trampoline_load_from_file,
+			'load_from_memory': ts_loader_trampoline_load_from_memory,
+			'load_from_package': ts_loader_trampoline_load_from_package,
+			'clear': ts_loader_trampoline_clear,
+			'discover': ts_loader_trampoline_discover,
+			'test': ts_loader_trampoline_test,
+			'await': ts_loader_trampoline_await,
+			'destroy': ts_loader_trampoline_destroy,
+		});
+	} catch (ex) {
+		console.log('Exception in bootstrap.ts trampoline initialization:', ex);
+	}
 })(process.argv[2], process.argv[3]);
+
+/* If the arguments are not defined, probably
+ * we are running this script directly with NodeJS executable
+ * instead of TypeScript Loader. Then we run some tests.
+*/
+if (typeof process.argv[2] === 'undefined' && typeof process.argv[3] === 'undefined') {
+	// Tests
+	ts_loader_trampoline_initialize();
+
+	const mem = ts_loader_trampoline_load_from_memory('memory_module', `
+	export function mem_sum(left: number, rigth: number): number {
+		return left + rigth;
+	}
+	`, {});
+
+	ts_loader_trampoline_clear(mem);
+
+	const handle = ts_loader_trampoline_load_from_file(['./test.ts']);
+	const discover = ts_loader_trampoline_discover(handle);
+
+	console.log(discover);
+
+	ts_loader_trampoline_clear(handle);
+
+
+	ts_loader_trampoline_destroy();
+}

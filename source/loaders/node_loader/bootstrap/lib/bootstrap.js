@@ -1,9 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-// eslint-disable-next-line global-require
-const trampoline = require('./trampoline.node');
-
 const Module = require('module');
 const path = require('path');
 const util = require('util');
@@ -259,16 +256,26 @@ function node_loader_trampoline_destroy() {
 }
 
 module.exports = ((impl, ptr) => {
-	return trampoline.register(impl, ptr, {
-		'initialize': node_loader_trampoline_initialize,
-		'execution_path': node_loader_trampoline_execution_path,
-		'load_from_file': node_loader_trampoline_load_from_file,
-		'load_from_memory': node_loader_trampoline_load_from_memory,
-		'load_from_package': node_loader_trampoline_load_from_package,
-		'clear': node_loader_trampoline_clear,
-		'discover': node_loader_trampoline_discover,
-		'test': node_loader_trampoline_test,
-		'await': node_loader_trampoline_await,
-		'destroy': node_loader_trampoline_destroy,
-	});
+	try {
+		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
+			throw 'Process arguments (process.argv[2], process.argv[3]) not defined.';
+		}
+
+		const trampoline = require('./trampoline.node');
+
+		return trampoline.register(impl, ptr, {
+			'initialize': node_loader_trampoline_initialize,
+			'execution_path': node_loader_trampoline_execution_path,
+			'load_from_file': node_loader_trampoline_load_from_file,
+			'load_from_memory': node_loader_trampoline_load_from_memory,
+			'load_from_package': node_loader_trampoline_load_from_package,
+			'clear': node_loader_trampoline_clear,
+			'discover': node_loader_trampoline_discover,
+			'test': node_loader_trampoline_test,
+			'await': node_loader_trampoline_await,
+			'destroy': node_loader_trampoline_destroy,
+		});
+	} catch (ex) {
+		console.log('Exception in bootstrap.js trampoline initialization:', ex);
+	}
 })(process.argv[2], process.argv[3]);
