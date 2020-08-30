@@ -294,7 +294,7 @@ function ts_loader_trampoline_discover_signature(checker, node) {
 	const types = [];
 
 	// Get the function return type
-	const ret = signature.getReturnType().intrinsicName;
+	const ret = signature.getReturnType().intrinsicName || 'any';
 
 	// Retrieve the arguments names and types
 	for (let i = 0; i < params.length; ++i) {
@@ -323,8 +323,7 @@ function ts_loader_trampoline_discover(handle) {
 
 	function getExportList(node, checker) {
 		const symbol = checker.getSymbolAtLocation(node);
-		//const aliasedSymbol = checker.getAliasedSymbol(symbol);
-		return checker.getExportsOfModule(symbol);
+		return symbol ? checker.getExportsOfModule(symbol) : [];
 	}
 
 	try {
