@@ -242,6 +242,7 @@ function ts_loader_trampoline_load_from_memory(name, buffer, opts) {
 	const handle = {};
 
 	// TODO: Implement this with service host instead of transpile, it wont work with discovery
+	// Review this implementation: https://github.com/AlCalzone/virtual-tsc
 	handle[name] = ts_loader_trampoline_load_inline(name, ts.transpile(buffer), opts);
 
 	return handle;
