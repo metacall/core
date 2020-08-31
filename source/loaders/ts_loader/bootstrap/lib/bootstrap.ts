@@ -284,16 +284,15 @@ function ts_loader_trampoline_discover_arguments_generate(args, index) {
 }
 
 function ts_loader_trampoline_discover_type(type) {
-	// TODO: Implement type detection properly
-	/*
-	if (ts.isArrayTypeNode(node)) {
+	// Detect Array type
+	if (type.symbol && type.symbol.name && type.symbol.name === 'Array') {
 		return 'any[]';
 	}
 
-	if (ts.isObjectLiteralExpression(node)) {
+	// Detect Object/Map type
+	if (type.aliasSymbol && type.aliasSymbol.escapedName === 'Record') {
 		return 'Record<any, any>';
 	}
-	*/
 
 	// TODO: Function
 
@@ -480,21 +479,19 @@ if (typeof process.argv[2] === 'undefined' && typeof process.argv[3] === 'undefi
 	// Tests
 	ts_loader_trampoline_initialize();
 
-	const mem = ts_loader_trampoline_load_from_memory('memory_module', `
+	const discoverClear = (handle) => {
+		const discover = ts_loader_trampoline_discover(handle);
+		console.log(discover);
+		ts_loader_trampoline_clear(handle);
+	};
+
+	discoverClear(ts_loader_trampoline_load_from_memory('memory_module', `
 	export function mem_sum(left: number, rigth: number): number {
 		return left + rigth;
 	}
-	`, {});
+	`, {}));
 
-	ts_loader_trampoline_clear(mem);
-
-	const handle = ts_loader_trampoline_load_from_file(['./test.ts']);
-	const discover = ts_loader_trampoline_discover(handle);
-
-	console.log(discover);
-
-	ts_loader_trampoline_clear(handle);
-
+	discoverClear(ts_loader_trampoline_load_from_file(['./test.ts']));
 
 	ts_loader_trampoline_destroy();
 }
