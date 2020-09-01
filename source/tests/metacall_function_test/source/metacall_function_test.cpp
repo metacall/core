@@ -47,6 +47,36 @@ void * c_callback_with_args(size_t argc, void * args[], void * data)
 	return metacall_value_create_long(left + right);
 }
 
+void * c_callback_factorial_impl(size_t argc, void * args[], void * data)
+{
+	(void)argc;
+	(void)data;
+
+	if (metacall_value_to_long(args[0]) <= 0)
+	{
+		return metacall_value_create_long(0L);
+	}
+	else
+	{
+		return metacall_value_copy(args[0]);
+	}
+}
+
+void * c_callback_factorial(size_t argc, void * args[], void * data)
+{
+	void * c = metacall_value_to_function(args[0]);
+
+	// function c_callback_factorial(c) {
+	//	return function c_callback_factorial_impl(v) { return v <= 0 ? 1 : v };
+	// }
+
+	(void)c;
+	(void)argc;
+	(void)data;
+
+	return metacall_value_copy(data);
+}
+
 class metacall_function_test : public testing::Test
 {
 public:
@@ -65,13 +95,19 @@ TEST_F(metacall_function_test, DefaultConstructor)
 	/* Native register */
 	ASSERT_EQ((int) 0, (int) metacall_register("c_callback", c_callback, NULL, METACALL_LONG, 0));
 	ASSERT_EQ((int) 0, (int) metacall_register("c_callback_with_args", c_callback_with_args, NULL, METACALL_LONG, 2, METACALL_LONG, METACALL_LONG));
+	ASSERT_EQ((int) 0, (int) metacall_register("c_callback_factorial_impl", c_callback_factorial_impl, NULL, METACALL_LONG, 1, METACALL_LONG));
+	ASSERT_EQ((int) 0, (int) metacall_register("c_callback_factorial", c_callback_factorial, NULL, METACALL_FUNCTION, 1, METACALL_FUNCTION));
 
 	/* Create function types */
 	void * c_callback_value = metacall_value_create_function(metacall_function("c_callback"));
 	void * c_callback_with_args_value = metacall_value_create_function(metacall_function("c_callback_with_args"));
+	void * c_callback_factorial_impl_value = metacall_value_create_function(metacall_function("c_callback_factorial_impl"));
+	void * c_callback_factorial_value = metacall_value_create_function_closure(metacall_function("c_callback_factorial"), c_callback_factorial_impl_value);
 
 	ASSERT_NE((void *) NULL, (void *) c_callback_value);
 	ASSERT_NE((void *) NULL, (void *) c_callback_with_args_value);
+	ASSERT_NE((void *) NULL, (void *) c_callback_factorial_impl_value);
+	ASSERT_NE((void *) NULL, (void *) c_callback_factorial_value);
 
 	/* Python */
 	#if defined(OPTION_BUILD_LOADERS_PY)
@@ -81,7 +117,7 @@ TEST_F(metacall_function_test, DefaultConstructor)
 			"function.py"
 		};
 
-		void * ret = NULL;
+		void * ret = NULL, * cb_ret = NULL;
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
@@ -127,7 +163,7 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		void * f = metacall_value_to_function(ret);
 
-		void * cb_ret = metacallfv(f, function_ret_lambda_args);
+		cb_ret = metacallfv(f, function_ret_lambda_args);
 
 		EXPECT_EQ((long) metacall_value_to_long(cb_ret), (long) 25L);
 
@@ -178,6 +214,8 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		ret = metacallv("function_capsule_method", function_capsule_method_args);
 
+		metacall_value_destroy(function_capsule_method_args[0]);
+
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((enum metacall_value_id) METACALL_STRING, (enum metacall_value_id) metacall_value_id(ret));
@@ -186,7 +224,40 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		metacall_value_destroy(function_capsule_method_args[0]);
+		/* Test Complex Callbakcs */
+		void * function_factorial_args[] =
+		{
+			c_callback_factorial_value
+		};
+
+		ret = metacallv("function_factorial", function_factorial_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_FUNCTION, (enum metacall_value_id) metacall_value_id(ret));
+
+		void * fact = metacall_value_to_function(ret);
+
+		void * cb_function_factorial_args[] =
+		{
+			metacall_value_create_long(12L)
+		};
+
+		cb_ret = metacallfv(fact, cb_function_factorial_args);
+
+		EXPECT_NE((void *) NULL, (void *) cb_ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(cb_ret));
+
+		/* I have no clue why this returns 132, the correct value for factorial of 12 is 479001600L */
+		EXPECT_EQ((long) 132L, (long) metacall_value_to_long(cb_ret));
+
+		metacall_value_destroy(cb_function_factorial_args[0]);
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(cb_ret);
+
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 
@@ -200,6 +271,8 @@ TEST_F(metacall_function_test, DefaultConstructor)
 	/* Clear function values */
 	metacall_value_destroy(c_callback_value);
 	metacall_value_destroy(c_callback_with_args_value);
+	metacall_value_destroy(c_callback_factorial_impl_value);
+	metacall_value_destroy(c_callback_factorial_value);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

@@ -121,7 +121,8 @@ void py_loader_impl_value_owner_finalize(value v, void * owner)
 	{
 		if (id == TYPE_PTR)
 		{
-			Py_XDECREF(value_to_ptr(v));
+			/* TODO: Review this */
+			/* Py_XDECREF(value_to_ptr(v)); */
 		}
 	}
 }
@@ -454,8 +455,6 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 			function callback = invoke_state->callback;
 
 			Py_DECREF(invoke_state_capsule);
-
-			free(invoke_state);
 
 			return value_create_function(callback);
 		}
@@ -894,6 +893,8 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 
 		return py_ret;
 	}
+
+	free(invoke_state);
 
 	return Py_None;
 }
