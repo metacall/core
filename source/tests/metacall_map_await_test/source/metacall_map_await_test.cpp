@@ -202,10 +202,8 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 		metacall_value_destroy(values[0]);
 		metacall_value_destroy(values[1]);
 
-		void * null_args[1] = { NULL };
-
 		/* Await function that throws */
-		ret = metacall_await("throw_await", null_args, hello_world_await_fail, hello_world_await_ok, NULL);
+		ret = metacall_await("throw_await", metacall_null_args, hello_world_await_fail, hello_world_await_ok, NULL);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -214,7 +212,7 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 
 		/* Await function that returns */
-		ret = metacall_await("return_await", null_args, hello_world_await_ok, hello_world_await_fail, NULL);
+		ret = metacall_await("return_await", metacall_null_args, hello_world_await_ok, hello_world_await_fail, NULL);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
