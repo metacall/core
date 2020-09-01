@@ -15,3 +15,11 @@ export function build_name(first: string, last = 'Smith') {
 export function object_pattern_ts({ asd }) {
 	return asd;
 }
+
+export function typed_array(a: number[]): number {
+	return a[0] + a[1] + a[2];
+}
+
+export function object_record(a: Record<string, number>): number {
+	return a.element;
+}

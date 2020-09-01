@@ -45,8 +45,10 @@ TEST_F(tmetacall_typescript_test, DefaultConstructor)
 
 		void * ret = NULL;
 
+		/* Load scripts */
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("ts", ts_scripts, sizeof(ts_scripts) / sizeof(ts_scripts[0]), NULL));
 
+		/* Test typed sum */
 		ret = metacall("typed_sum", 3.0, 4.0);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
@@ -54,6 +56,55 @@ TEST_F(tmetacall_typescript_test, DefaultConstructor)
 		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
 
 		metacall_value_destroy(ret);
+
+		/* Test arrays */
+		void * array_args[] =
+		{
+			metacall_value_create_array(NULL, 3)
+		};
+
+		void ** array_value = metacall_value_to_array(array_args[0]);
+
+		array_value[0] = metacall_value_create_double(3.0);
+		array_value[1] = metacall_value_create_double(5.0);
+		array_value[2] = metacall_value_create_double(7.0);
+
+		ret = metacallv("typed_array", array_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 15.0);
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(array_args[0]);
+
+		/* Test records */
+		void * record_args[] =
+		{
+			metacall_value_create_map(NULL, 1)
+		};
+
+		void ** map_value = metacall_value_to_map(record_args[0]);
+
+		map_value[0] = metacall_value_create_array(NULL, 2);
+
+		void ** tupla = metacall_value_to_array(map_value[0]);
+
+		static const char key[] = "element";
+
+		tupla[0] = metacall_value_create_string(key, sizeof(key) - 1);
+		tupla[1] = metacall_value_create_double(6.0);
+
+		ret = metacallv("object_record", record_args);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 6.0);
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(record_args[0]);
 	}
 	#endif /* OPTION_BUILD_LOADERS_TS */
 
