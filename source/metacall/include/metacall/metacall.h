@@ -61,7 +61,7 @@ struct metacall_initialize_configuration_type
 
 /* -- Global Variables -- */
 
-extern void * metacall_null_args[1];
+METACALL_API extern void * metacall_null_args[1];
 
 /* -- Methods -- */
 
