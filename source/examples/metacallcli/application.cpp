@@ -26,6 +26,16 @@
 #	include <pwd.h>
 #endif
 
+/* TODO: Windows special characters not working properly */
+/* Set UTF-16 mode for stdout in Windows for the lambda character */
+/*
+#if defined(WIN32) || defined(_WIN32)
+#	include <windows.h>
+#	include <io.h>
+#	include <fcntl.h>
+#endif
+*/
+
 #include <clocale>
 
 /* -- Namespace Declarations -- */
@@ -451,6 +461,21 @@ application::application(int argc, char * argv[]) : exit_condition(false), log_p
 	/* Set locale */
 	setlocale(LC_CTYPE, "C");
 
+	/* TODO: Windows special characters not working properly */
+	/*
+	#if defined(WIN32) || defined(_WIN32)
+	{
+		// SetConsoleOutputCP(CP_UTF16);
+
+		*//* Set UTF-16 mode for stdout in Windows for the lambda character *//*
+		_setmode(_fileno(stdout), _O_U16TEXT);
+
+		*//* Enable buffering to prevent VS from chopping up UTF-16 byte sequences *//*
+		setvbuf(stdout, nullptr, _IOFBF, 1000);
+	}
+	#endif
+	*/
+
 	/* Initialize MetaCall logs */
 	metacall_log_file_type log_file =
 	{
@@ -521,7 +546,12 @@ void application::run()
 		std::string input;
 
 		/* Show prompt line */
-		std::cout << "\u03BB ";
+		#if defined(WIN32) || defined(_WIN32)
+			/* TODO: Windows special characters not working properly */
+			std::cout << L'\u03BB' << ' ';
+		#else
+			std::cout << "\u03BB ";
+		#endif
 
 		/* Get whole line */
 		std::getline(std::cin, input);

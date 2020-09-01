@@ -61,7 +61,7 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 add_custom_target(${target}-scripts-tests ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E  make_directory ${LOADER_SCRIPT_PATH}
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/test/* ${LOADER_SCRIPT_PATH}
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/test/ ${LOADER_SCRIPT_PATH}/
 )
 
 add_dependencies(${target} ${target}-scripts-tests)
