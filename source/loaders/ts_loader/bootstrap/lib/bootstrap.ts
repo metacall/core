@@ -295,7 +295,12 @@ function ts_loader_trampoline_discover_type(type) {
 		return 'Record<any, any>';
 	}
 
-	// TODO: Function
+	// TODO: Detect Function like type
+	/*
+	if (type.symbol && type.symbol.declarations && ts.isFunctionLikeDeclaration(type.symbol.declarations)) {
+		return '(...args: any[]) => any';
+	}
+	*/
 
 	return type.intrinsicName || 'any';
 }
