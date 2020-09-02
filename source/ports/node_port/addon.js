@@ -48,6 +48,8 @@ module.exports = (() => {
 	];
 
 	const names = [
+		'node_portd',
+		'node_port',
 		'libnode_portd',
 		'libnode_port',
 	];
@@ -59,13 +61,15 @@ module.exports = (() => {
 	*/
 
 	/* Load addon */
-	return (() => {
+	const addon = (() => {
 		for (let folder of folders) {
 			for (let name of names) {
 				try {
-					const port = require(path.join(folder, `${name}.node`));
+					const libPath = path.join(folder, `${name}.node`);
+					const port = require(libPath);
 
 					if (port) {
+						console.log('MetaCall NodeJS Port Addon found at:', libPath);
 						return port;
 					}
 				} catch (e) {
@@ -76,4 +80,10 @@ module.exports = (() => {
 			}
 		}
 	})();
+
+	if (addon === undefined) {
+		console.log('Error when loading the MetaCall NodeJS Port Addon. NodeJS module not found.');
+	}
+
+	return addon;
 })();

@@ -191,6 +191,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	$<$<CXX_COMPILER_ID:MSVC>:NODE_GYP_MODULE_NAME=node_port$<$<CONFIG:DEBUG>:d>>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

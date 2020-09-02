@@ -134,7 +134,7 @@ mod.prototype.require = function (name) {
 };
 
 /* Debug logs */
-if (process.env['NODE_ENV'] === 'debug')
+if (process.env['NODE_ENV'] === 'debug' && addon !== undefined)
 {
 	addon.metacall_logs();
 }
