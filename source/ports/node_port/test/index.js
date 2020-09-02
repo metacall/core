@@ -156,7 +156,11 @@ describe('metacall', () => {
 			// Double recursion
 			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
 			assert.strictEqual(sum(5, f.function_sum), 15);
+			assert.strictEqual(sum(5, f.function_sum), 15);
+			assert.strictEqual(sum(5, f.function_sum), 15);
 			assert.strictEqual(sum(5, f.function_sum), 15); // Check for function lifetime
+			assert.strictEqual(f.function_sum(5, sum), 15);
+			assert.strictEqual(f.function_sum(5, sum), 15);
 			assert.strictEqual(f.function_sum(5, sum), 15);
 			assert.strictEqual(f.function_sum(5, sum), 15); // Check for function lifetime
 
@@ -169,8 +173,6 @@ describe('metacall', () => {
 			// assert.strictEqual(fact(2), 2);
 			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(3), 6);
-			// console.log("------------------------------------------------");
-			// assert.strictEqual(fact(50000), 2499950000);
 
 			// console.log("------------------------------------------------");
 			// const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));

@@ -25,10 +25,10 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"devDependencies": {
+	"dependencies": {
 		"node-addon-api": "^1.6.3"
 	},
-	"dependencies": {
-		"mocha": "^6.1.4"
+	"devDependencies": {
+		"mocha": "^8.1.3"
 	}
 }
