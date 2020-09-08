@@ -38,20 +38,21 @@ for root, dirs, _ in os.walk(rootdir):
 # Try to load the extension
 library_names = ['libpy_loaderd', 'py_loaderd', 'libpy_loader', 'py_loader']
 library_found = ''
+module = None
 
 # Find the library
 for name in library_names:
 	try:
-		module = __import__(name, globals=globals())
+		module = __import__(name, globals(), locals(), ['eggs', 'sausage'], 0)
 		library_found = name
-
-		# TODO: Insert module contents into global namespace
-
+		metacall_load_from_file = module.metacall_load_from_file
+		metacall_load_from_memory = module.metacall_load_from_memory
+		metacall = module.metacall
 		break
 	except ImportError as e:
 		pass
 	except:
-		print("Unexpected error while loading the Python port", name, ":", sys.exc_info()[0])
+		print("Unexpected error while loading the MetaCall Python Port", name, ":", sys.exc_info()[0])
 		raise
 
 # Check if library was found and print error message otherwhise
@@ -66,18 +67,21 @@ if library_found == '':
 else:
 	print('MetaCall Python Port loaded:', library_found)
 
+# TODO:
+
+"""
 # Wrap metacall inspect and transform the json string into a dict
 def metacall_inspect():
-	data = _metacall_inspect();
+	data = module.metacall_inspect()
 	if data:
-		dic = json.loads(data);
+		dic = json.loads(data)
 		try:
-			del dic['__metacall_host__'];
+			del dic['__metacall_host__']
 		except:
 			pass
-		return dic;
-	return dict();
-
+		return dic
+	return dict()
+"""
 
 
 # Monkey patch
@@ -97,7 +101,7 @@ builtins.__import__ = _import
 """
 
 
-
+# TODO:
 
 
 """

@@ -478,8 +478,7 @@ static PyMethodDef metacall_methods[] =
 		"Loads a script from a string."
 	},
 	{
-		/* This function is private (prefixed with underscore) because it needs wrapping in the __init__ file */
-		"_metacall_inspect", py_loader_port_inspect, METH_NOARGS,
+		"metacall_inspect", py_loader_port_inspect, METH_NOARGS,
 		"Get information about all loaded objects."
 	},
 	{
