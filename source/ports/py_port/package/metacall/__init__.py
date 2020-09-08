@@ -36,33 +36,35 @@ for root, dirs, _ in os.walk(rootdir):
 			sys.path.append(os.path.join(rootdir, folder, 'lib'))
 
 # Try to load the extension
-try:
-	# TODO: Implement loading properly with correct module names
-	#######################
-	#######################
-	#######################
-	#######################
-	from libpy_loaderd import metacall, metacall_load_from_file, metacall_load_from_memory, _metacall_inspect
-	#######################
-	#######################
-	#######################
-	#######################
-except ImportError as e:
+library_names = ['libpy_loaderd', 'py_loaderd', 'libpy_loader', 'py_loader']
+library_found = ''
+
+# Find the library
+for name in library_names:
 	try:
-		print('Error when importing MetaCall Python Port:', e)
-		from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory, _metacall_inspect
-		print('MetaCall Python Port Debug Imported')
+		module = __import__(name, globals=globals())
+		library_found = name
+
+		# TODO: Insert module contents into global namespace
+
+		break
 	except ImportError as e:
-		print('\x1b[31m\x1b[1m',
-			'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m')
-		print('\x1b[33m\x1b[1m',
-			'If you do not have it installed, you have three options:', '\x1b[0m')
-		print(
-			'\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m')
-		print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m')
-		print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-		print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
 		pass
+	except:
+		print("Unexpected error while loading the Python port", name, ":", sys.exc_info()[0])
+		raise
+
+# Check if library was found and print error message otherwhise
+if library_found == '':
+	print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m')
+	print('\x1b[33m\x1b[1m', 'If you do not have it installed, you have three options:', '\x1b[0m')
+	print('\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m')
+	print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m')
+	print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
+	print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
+	raise ImportError('MetaCall Python Port was not found')
+else:
+	print('MetaCall Python Port loaded:', library_found)
 
 # Wrap metacall inspect and transform the json string into a dict
 def metacall_inspect():
