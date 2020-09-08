@@ -337,16 +337,14 @@ static PyMethodDef metacall_methods[] =
 		"metacall_load_from_file", py_loader_port_load_from_file, METH_VARARGS,
 		"Loads a script from file."
 	},
-	/*
-	{
+	/*{
 		"metacall_load_from_memory", py_loader_port_load_from_memory, METH_VARARGS,
 		"Loads a script from a string."
 	},
 	{
 		"metacall_inspect", py_loader_port_inspect, METH_NOARGS,
 		"Get information about all loaded objects."
-	},
-	*/
+	},*/
 	{
 		"metacall", py_loader_port_invoke, METH_VARARGS,
 		"Call a function anonymously."
@@ -369,14 +367,21 @@ static struct PyModuleDef metacall_definition =
 
 PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void)
 {
-	PyObject * module = PyModule_Create(&metacall_definition);
+	PyObject * module;
 
-	if (module == NULL)
+	/* Initialize MetaCall */
+	if (metacall_initialize() != 0)
 	{
 		return NULL;
 	}
 
-	/* TODO: Add aditional objects */
+	module = PyModule_Create(&metacall_definition);
+
+	if (module == NULL)
+	{
+		metacall_destroy();
+		return NULL;
+	}
 
 	return module;
 }

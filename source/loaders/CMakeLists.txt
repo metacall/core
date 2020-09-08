@@ -20,7 +20,6 @@ set(LOADER_MODULE_NAMES
 	configuration
 	loader
 	detour
-	metacall
 )
 
 # Plugins options

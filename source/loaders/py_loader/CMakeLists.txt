@@ -75,23 +75,18 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 include(Distributable)
 
-# Create unity build library
-set(py_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${py_loader_unity_build}
-	${LOADER_MODULE_NAMES}
-)
+# Include headers
+distributable_include(${LOADER_MODULE_NAMES})
 
 # Build library
 add_library(${target} MODULE
-	${py_loader_unity_build}
 	${sources}
 	${headers}
 )
 
 # Add target dependencies
 add_dependencies(${target}
-	${LOADER_MODULE_NAMES}
+	${META_PROJECT_NAME}::metacall_distributable
 )
 
 # Create namespaced alias
@@ -165,8 +160,8 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-
 	${PYTHON_LIBRARIES} # Python libraries
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
