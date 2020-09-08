@@ -188,7 +188,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 
 	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
 		add_test(NAME ${target}-py-port
-			COMMAND ${TEST_COMMAND} "echo 'load py cli-test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}>" # TODO:  | ${GREP_COMMAND} \"1234\"
+			COMMAND ${TEST_COMMAND} "echo 'load py cli-test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"1234\""
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		)
 		test_environment_variables(${target}-py-port

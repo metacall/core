@@ -44,7 +44,7 @@ try:
 	#######################
 	#from _py_portd import metacall_inspect as _metacall_inspect
 	#from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory
-	from libpy_loaderd import metacall, metacall_load_from_file
+	from libpy_loaderd import metacall, metacall_load_from_file, metacall_load_from_memory
 	#######################
 	#######################
 	#######################

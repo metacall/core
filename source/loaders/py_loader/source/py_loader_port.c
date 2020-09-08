@@ -70,7 +70,7 @@ PyObject * py_loader_port_load_from_file(PyObject * self, PyObject * args)
 	if (!PyUnicode_Check(tag))
 #endif
 	{
-		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: node, rb, ts, cs, js, cob...)");
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
 		return py_loader_port_false();
 	}
 
@@ -195,6 +195,100 @@ clear:
 	free(paths_str);
 
 	return result;
+}
+
+PyObject * py_loader_port_load_from_memory(PyObject * self, PyObject * args)
+{
+	static const char format[] = "OO:metacall_load_from_memory";
+	PyObject * tag, * buffer;
+	char * tag_str, * buffer_str;
+	Py_ssize_t buffer_length = 0, tag_length = 0;
+
+	(void)self;
+
+	/* Parse arguments */
+	if (!PyArg_ParseTuple(args, (char *)format, &tag, &buffer))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_memory('node', 'console.log(\"hello\")');");
+		return py_loader_port_false();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	if (!PyString_Check(tag))
+#elif PY_MAJOR_VERSION == 3
+	if (!PyUnicode_Check(tag))
+#endif
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
+		return py_loader_port_false();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	if (!PyString_Check(buffer))
+#elif PY_MAJOR_VERSION == 3
+	if (!PyUnicode_Check(buffer))
+#endif
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in second argument (a string indicating the tag of the loader must be used: 'console.log(\"hello\")')");
+		return py_loader_port_false();
+	}
+
+	/* Convert tag from unicode into a string */
+	#if PY_MAJOR_VERSION == 2
+	{
+		if (PyString_AsStringAndSize(tag, &tag_str, &tag_length) == -1)
+		{
+			tag_str = NULL;
+		}
+	}
+	#elif PY_MAJOR_VERSION == 3
+	{
+		tag_str = (char *)PyUnicode_AsUTF8AndSize(tag, &tag_length);
+	}
+	#endif
+
+	if (tag_str == NULL)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid tag string conversion");
+		return py_loader_port_false();
+	}
+
+	/* Convert buffer from unicode into a string */
+	#if PY_MAJOR_VERSION == 2
+	{
+		if (PyString_AsStringAndSize(buffer, &buffer_str, &buffer_length) == -1)
+		{
+			buffer_str = NULL;
+		}
+	}
+	#elif PY_MAJOR_VERSION == 3
+	{
+		buffer_str = (char *)PyUnicode_AsUTF8AndSize(buffer, &buffer_length);
+	}
+	#endif
+
+	if (buffer_str == NULL)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid buffer string conversion");
+		return py_loader_port_false();
+	}
+
+	/* Execute the load from memory call */
+	{
+		PyThreadState * thread_state = PyEval_SaveThread();
+
+		int ret = metacall_load_from_memory(tag_str, (const char *)buffer_str, buffer_length + 1, NULL);
+
+		PyEval_RestoreThread(thread_state);
+
+		if (ret != 0)
+		{
+			PyErr_SetString(PyExc_ValueError, "MetaCall could not load from memory");
+			return py_loader_port_false();
+		}
+	}
+
+	return py_loader_port_true();
 }
 
 PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_args, PyObject * var_args)
@@ -337,11 +431,11 @@ static PyMethodDef metacall_methods[] =
 		"metacall_load_from_file", py_loader_port_load_from_file, METH_VARARGS,
 		"Loads a script from file."
 	},
-	/*{
+	{
 		"metacall_load_from_memory", py_loader_port_load_from_memory, METH_VARARGS,
 		"Loads a script from a string."
 	},
-	{
+	/*{
 		"metacall_inspect", py_loader_port_inspect, METH_NOARGS,
 		"Get information about all loaded objects."
 	},*/
