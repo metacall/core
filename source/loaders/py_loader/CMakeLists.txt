@@ -52,11 +52,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/py_loader.h
 	${include_path}/py_loader_impl.h
+	${include_path}/py_loader_port.h
 )
 
 set(sources
 	${source_path}/py_loader.c
 	${source_path}/py_loader_impl.c
+	${source_path}/py_loader_port.c
 )
 
 # Group source files
@@ -176,8 +178,11 @@ target_link_libraries(${target}
 # Compile definitions
 #
 
+
+
 target_compile_definitions(${target}
 	PRIVATE
+	PY_LOADER_PORT_NAME=$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:lib>py_loader$<$<CONFIG:DEBUG>:d>
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

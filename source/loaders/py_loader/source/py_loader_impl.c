@@ -19,6 +19,7 @@
  */
 
 #include <py_loader/py_loader_impl.h>
+#include <py_loader/py_loader_port.h>
 
 #include <loader/loader_impl.h>
 
@@ -57,7 +58,7 @@ typedef struct loader_impl_py_handle_type
 
 } * loader_impl_py_handle;
 
-typedef struct loader_impl_py_type
+struct loader_impl_py_type
 {
 	PyObject * inspect_module;
 	PyObject * inspect_signature;
@@ -72,7 +73,7 @@ typedef struct loader_impl_py_type
 		PyObject * gc_debug_stats;
 	#endif
 
-} * loader_impl_py;
+};
 
 typedef struct loader_impl_py_function_type_invoke_state_type
 {

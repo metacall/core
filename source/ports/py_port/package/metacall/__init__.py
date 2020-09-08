@@ -23,58 +23,87 @@ import re
 import json
 import types
 
-# Am trying to mimick js index.js
 # Append environment variable or default install path when building manually (TODO: Cross-platform paths)
-sys.path.append(os.environ.get('PORT_LIBRARY_PATH',
-                               os.path.join(os.path.sep, 'usr', 'local', 'lib')))
+sys.path.append(os.environ.get('LOADER_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')))
 
 # Find is MetaCall is installed as a distributable tarball (TODO: Cross-platform paths)
 rootdir = os.path.join(os.path.sep, 'gnu', 'store')
 regex = re.compile('.*-metacall-.*')
 
 for root, dirs, _ in os.walk(rootdir):
-    for folder in dirs:
-        if regex.match(folder) and not folder.endswith('R'):
-            sys.path.append(os.path.join(rootdir, folder, 'lib'))
+	for folder in dirs:
+		if regex.match(folder) and not folder.endswith('R'):
+			sys.path.append(os.path.join(rootdir, folder, 'lib'))
 
+# Try to load the extension
 try:
-    # TODO: Import only the functions that will be exported
-    from _py_port import metacall_inspect, metacall_load_from_file, metacall
+	# TODO: Change _py_portd to _py_port
+	#######################
+	#######################
+	#######################
+	#######################
+	#from _py_portd import metacall_inspect as _metacall_inspect
+	#from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory
+	from libpy_loaderd import metacall, metacall_load_from_file
+	#######################
+	#######################
+	#######################
+	#######################
 except ImportError as e:
-    try:
-        print('Error when importing MetaCall Python Port:', e)
-        from _py_portd import *  # TODO: Import only the functions that will be exported
-        print('MetaCall Python Port Debug Imported')
-    except ImportError as e:
-        print('\x1b[31m\x1b[1m',
-              'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m')
-        print('\x1b[33m\x1b[1m',
-              'If you do not have it installed, you have three options:', '\x1b[0m')
-        print(
-            '\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m')
-        print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m')
-        print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-        print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-        pass
+	try:
+		print('Error when importing MetaCall Python Port:', e)
+		from _py_portd import metacall_inspect as _metacall_inspect
+		from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory
+		print('MetaCall Python Port Debug Imported')
+	except ImportError as e:
+		print('\x1b[31m\x1b[1m',
+			'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m')
+		print('\x1b[33m\x1b[1m',
+			'If you do not have it installed, you have three options:', '\x1b[0m')
+		print(
+			'\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m')
+		print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m')
+		print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
+		print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
+		pass
 
-# TODO: Monkey patch
-
-
-def inspect():
-    jsonData = metacall_inspect()
-    if jsonData:
-        dic = json.loads(jsonData)
-        try:
-            del dic['__metacall_host__']
-            return dic
-        except KeyError as e:
-            print('\x1b[31m\x1b[1m',
-                  'Could not delete __metacall_host__ key (', e, ')\x1b[0m')
-            pass
-        pass
-    return dict()
+# Overwrite metacall inspect and transform the json into a dict
+"""
+def metacall_inspect():
+	data = _metacall_inspect();
+	if data:
+		dic = json.loads(data);
+		try:
+			del dic['__metacall_host__'];
+		except:
+			pass
+		return dic;
+	return dict();
+"""
 
 
+
+# Monkey patch
+
+"""
+# Override Import
+def _import(name, *args, **kwargs):
+	# TODO: Implement metacall import
+	# Find in all folders if some file with the name exists
+	if name == 'matplotlib':
+		name = 'my_mocked_matplotlib'
+	return _python_import(name, *args, **kwargs)
+
+import builtins
+_python_import = builtins.__import__
+builtins.__import__ = _import
+"""
+
+
+
+
+
+"""
 def setUpModule(nameMod):
     return sys.modules.setdefault(nameMod, types.ModuleType(nameMod))
 
@@ -127,3 +156,4 @@ for script in files:
             mtag, scriptAbsPAth, fileNameAndExtensionList[0])
         pass
     pass
+"""

@@ -19,6 +19,8 @@ set(LOADER_MODULE_NAMES
 	serial
 	configuration
 	loader
+	detour
+	metacall
 )
 
 # Plugins options

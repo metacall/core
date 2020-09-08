@@ -43,7 +43,7 @@ extern "C" {
 
 /**
 *  @brief
-*    Transform load mechanism from Python string into
+*    Transform load from memory mechanism from Python string into
 *    a valid load from memory format (buffer and size)
 */
 %typemap(in) (const char * buffer, size_t size, void ** handle)
@@ -77,7 +77,7 @@ extern "C" {
 
 /**
 *  @brief
-*    Transform load mechanism from Python list into
+*    Transform load from file mechanism from Python list into
 *    a valid load from file format (array of strings)
 */
 %typemap(in) (const char * paths[], size_t size, void ** handle)
@@ -302,6 +302,24 @@ extern "C" {
 	}
 }
 
+/**
+*  @brief
+*    Transform inspect pointer to size and allocator
+*    into a valid string format
+*/
+%typemap(in) (size_t * size, void * allocator)
+{
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	/* Do nothing with input */
+	(void)$input;
+
+	/* Pass the arguments to the action */
+	$2 = allocator;
+}
+
 /* -- Features -- */
 
 /**
@@ -406,6 +424,55 @@ extern "C" {
 	}
 
 	return $result;
+}
+
+/**
+*  @brief
+*    Provide information about all loaded objects
+*
+*  @return
+*    A dictionary containing all the information
+*/
+%feature("action") metacall_inspect
+{
+	size_t size = 0;
+	char * result_str = NULL, * inspect_str = NULL;
+
+	/* Get the allocator parameter */
+	void * allocator = (void *)arg2;
+
+	/* Retrieve inspect data */
+	result_str = inspect_str = metacall_inspect(&size, allocator);
+
+	if (inspect_str == NULL || size == 0)
+	{
+		static const char empty[] = "{}";
+
+		result_str = (char *)empty;
+		size = sizeof(empty);
+	}
+
+	%#if PY_MAJOR_VERSION == 2
+		/* TODO */
+		PyErr_SetString(PyExc_TypeError, "MetaCall inspect not implemented in Python 2");
+		SWIG_fail;
+	%#elif PY_MAJOR_VERSION == 3
+		$result = PyUnicode_FromStringAndSize(result_str, size);
+	%#endif
+
+	if (inspect_str != NULL)
+	{
+		metacall_allocator_free(allocator, inspect_str);
+	}
+
+	metacall_allocator_destroy(allocator);
+
+	if ($result == NULL)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid string conversion");
+
+		SWIG_fail;
+	}
 }
 
 #ifdef __cplusplus
