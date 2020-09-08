@@ -11,7 +11,7 @@ path = os.path.normpath(os.path.join(abspath, relpath));
 # Insert first in the sys path so we make sure we load the correct port
 sys.path.insert(0, path);
 
-from metacall import metacall, metacall_load_from_file, metacall_load_from_memory # TODO: metacall_inspect
+from metacall import metacall, metacall_load_from_file, metacall_load_from_memory, metacall_inspect
 
 # Load mock
 metacall_load_from_file('mock', ['test.mock']);
@@ -25,5 +25,5 @@ def test():
 
 metacall_load_from_memory('py', script);
 
-# TODO:
-#json.dumps(metacall_inspect(), indent = 4);
+# Inspect contents
+print(json.dumps(metacall_inspect(), indent = 4))

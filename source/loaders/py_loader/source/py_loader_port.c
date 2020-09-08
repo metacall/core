@@ -47,7 +47,7 @@ static PyObject * py_loader_port_true()
 	Py_RETURN_TRUE;
 }
 
-PyObject * py_loader_port_load_from_file(PyObject * self, PyObject * args)
+static PyObject * py_loader_port_load_from_file(PyObject * self, PyObject * args)
 {
 	static const char format[] = "OO:metacall_load_from_file";
 	PyObject * tag, * paths, * result = NULL;
@@ -197,7 +197,7 @@ clear:
 	return result;
 }
 
-PyObject * py_loader_port_load_from_memory(PyObject * self, PyObject * args)
+static PyObject * py_loader_port_load_from_memory(PyObject * self, PyObject * args)
 {
 	static const char format[] = "OO:metacall_load_from_memory";
 	PyObject * tag, * buffer;
@@ -291,7 +291,7 @@ PyObject * py_loader_port_load_from_memory(PyObject * self, PyObject * args)
 	return py_loader_port_true();
 }
 
-PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_args, PyObject * var_args)
+static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_args, PyObject * var_args)
 {
 	static const char format[] = "O:metacall";
 	PyObject * name, * result = NULL;
@@ -412,7 +412,7 @@ clear:
 	return result;
 }
 
-PyObject * py_loader_port_invoke(PyObject * self, PyObject * args)
+static PyObject * py_loader_port_invoke(PyObject * self, PyObject * args)
 {
 	PyObject * new_args = PyTuple_GetSlice(args, 0, 1);
 	PyObject * var_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));
@@ -421,6 +421,48 @@ PyObject * py_loader_port_invoke(PyObject * self, PyObject * args)
 
 	Py_XDECREF(new_args);
 	Py_XDECREF(var_args);
+
+	return result;
+}
+
+static PyObject * py_loader_port_inspect(PyObject * self, PyObject * args)
+{
+	PyObject * result = NULL;
+	size_t size = 0;
+	char * result_str = NULL, * inspect_str = NULL;
+	struct metacall_allocator_std_type std_ctx = { &malloc, &realloc, &free };
+
+	/* Create the allocator */
+	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	(void)self;
+	(void)args;
+
+	/* Retrieve inspect data */
+	result_str = inspect_str = metacall_inspect(&size, allocator);
+
+	if (inspect_str == NULL || size == 0)
+	{
+		static const char empty[] = "{}";
+
+		result_str = (char *)empty;
+		size = sizeof(empty);
+
+		PyErr_SetString(PyExc_ValueError, "Inspect returned an invalid size or string");
+	}
+
+	#if PY_MAJOR_VERSION == 2
+		result = PyString_FromStringAndSize(result_str, (Py_ssize_t)(size - 1));
+	#elif PY_MAJOR_VERSION == 3
+		result = PyUnicode_FromStringAndSize(result_str, (Py_ssize_t)(size - 1));
+	#endif
+
+	if (inspect_str != NULL)
+	{
+		metacall_allocator_free(allocator, inspect_str);
+	}
+
+	metacall_allocator_destroy(allocator);
 
 	return result;
 }
@@ -435,10 +477,11 @@ static PyMethodDef metacall_methods[] =
 		"metacall_load_from_memory", py_loader_port_load_from_memory, METH_VARARGS,
 		"Loads a script from a string."
 	},
-	/*{
-		"metacall_inspect", py_loader_port_inspect, METH_NOARGS,
+	{
+		/* This function is private (prefixed with underscore) because it needs wrapping in the __init__ file */
+		"_metacall_inspect", py_loader_port_inspect, METH_NOARGS,
 		"Get information about all loaded objects."
-	},*/
+	},
 	{
 		"metacall", py_loader_port_invoke, METH_VARARGS,
 		"Call a function anonymously."

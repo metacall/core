@@ -37,14 +37,12 @@ for root, dirs, _ in os.walk(rootdir):
 
 # Try to load the extension
 try:
-	# TODO: Change _py_portd to _py_port
+	# TODO: Implement loading properly with correct module names
 	#######################
 	#######################
 	#######################
 	#######################
-	#from _py_portd import metacall_inspect as _metacall_inspect
-	#from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory
-	from libpy_loaderd import metacall, metacall_load_from_file, metacall_load_from_memory
+	from libpy_loaderd import metacall, metacall_load_from_file, metacall_load_from_memory, _metacall_inspect
 	#######################
 	#######################
 	#######################
@@ -52,8 +50,7 @@ try:
 except ImportError as e:
 	try:
 		print('Error when importing MetaCall Python Port:', e)
-		from _py_portd import metacall_inspect as _metacall_inspect
-		from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory
+		from _py_portd import metacall, metacall_load_from_file, metacall_load_from_memory, _metacall_inspect
 		print('MetaCall Python Port Debug Imported')
 	except ImportError as e:
 		print('\x1b[31m\x1b[1m',
@@ -67,8 +64,7 @@ except ImportError as e:
 		print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
 		pass
 
-# Overwrite metacall inspect and transform the json into a dict
-"""
+# Wrap metacall inspect and transform the json string into a dict
 def metacall_inspect():
 	data = _metacall_inspect();
 	if data:
@@ -79,7 +75,6 @@ def metacall_inspect():
 			pass
 		return dic;
 	return dict();
-"""
 
 
 
