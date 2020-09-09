@@ -57,7 +57,8 @@ for name in library_names:
 
 # Check if library was found and print error message otherwhise
 if library_found == '':
-	print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m');
+	print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it.', '\x1b[0m');
+	print('\x1b[1m', 'Looking for it in the following paths:', sys.path, '\x1b[0m');
 	print('\x1b[33m\x1b[1m', 'If you do not have it installed, you have three options:', '\x1b[0m');
 	print('\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m');
 	print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m');

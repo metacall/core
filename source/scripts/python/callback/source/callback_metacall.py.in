@@ -1,22 +1,17 @@
 import sys
 
-# TODO: Refactor MetaCall py port dependency into requirements.txt
-
-sys.path.append('@PROJECT_METACALL_PORTS_DIRECTORY@')
+# Insert Python Port folder first in the system path list
+sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 
 try:
-	from @PROJECT_METACALL_PORTS_PY@ import metacall, metacall_function
+	from metacall import metacall
 except ImportError as e:
-	print('Error when loading @PROJECT_METACALL_PORTS_PY@: ' + str(e));
+	print('Error when loading MetaCall Python Port: ' + str(e));
 
 def callback_host(text):
 	print('Python callback_host: ' + text);
 
-	func = metacall_function('callback_host');
-
-	print('Python reference to host callback_host: ' + str(func));
-
-	result = metacall('callback_host', text);
+	result = metacall('callback_host_impl', text);
 
 	print('Python result from host callback_host: ' + str(result));
 
@@ -24,10 +19,6 @@ def callback_host(text):
 
 def callback_ruby(left, right):
 	print('Python callback_ruby: ' + str(left) + ' * ' + str(right));
-
-	func = metacall_function('say_multiply');
-
-	print('Python reference to ruby say_multiply: ' + str(func));
 
 	result = metacall('say_multiply', left, right);
 

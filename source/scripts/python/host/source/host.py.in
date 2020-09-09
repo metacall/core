@@ -3,12 +3,10 @@
 import os
 import sys
 
-sys.path.append(os.environ['PORT_LIBRARY_PATH']);
+# Insert Python Port folder first in the system path list
+sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 
-try:
-	from _py_port import metacall, metacall_load_from_memory
-except ImportError:
-	from _py_portd import metacall, metacall_load_from_memory
+from metacall import metacall, metacall_load_from_memory
 
 script = '''#!/usr/bin/env node
 

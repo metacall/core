@@ -54,10 +54,7 @@ import sys
 
 sys.path.append(os.environ['PORT_LIBRARY_PATH']);
 
-try:
-	from _py_port import metacall
-except ImportError:
-	from _py_portd import metacall
+from metacall import metacall
 
 def b():
 	return metacall('c');

@@ -1,28 +1,19 @@
 import sys
 
-# TODO: Refactor MetaCall py port dependency into requirements.txt
-
-sys.path.append('@PROJECT_METACALL_PORTS_DIRECTORY@')
+# Insert Python Port folder first in the system path list
+sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 
 try:
-	from @PROJECT_METACALL_PORTS_PY@ import metacall, metacall_function
+	from metacall import metacall
 except ImportError as e:
-	print('Error when loading @PROJECT_METACALL_PORTS_PY@: ' + str(e));
+	print('Error when loading MetaCall Python Port: ' + str(e));
 
 def python_set_value(t, value):
 	print('Python python_set_value: ', type(t), t, value);
 
-	func = metacall_function('native_set_value');
-
-	print('Python reference to host native_set_value: ' + str(func));
-
 	result = metacall('native_set_value', t, value);
 
 	print('Python result from host native_set_value: ' + str(result), type(result));
-
-	func = metacall_function('native_get_value');
-
-	print('Python reference to host native_get_value: ' + str(func));
 
 	arr = metacall('native_get_value', t);
 

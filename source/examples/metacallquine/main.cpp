@@ -29,10 +29,7 @@ int main(int argc, char * argv[])
 	const char python_script[] =
 		"#!/usr/bin/env python3\n"
 		"\n"
-		"try:\n"
-		"	import _py_port as metacall\n"
-		"except ImportError:\n"
-		"	import _py_portd as metacall\n"
+		"import metacall\n"
 		"\n"
 		"def py_quine(script: str) -> int:\n"
 		"	print('Python:', script);\n"

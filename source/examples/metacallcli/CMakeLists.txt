@@ -59,9 +59,10 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 #
 
 add_custom_target(${target}-scripts-tests ALL
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${CMAKE_COMMAND} -E  make_directory ${LOADER_SCRIPT_PATH}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/test/ ${LOADER_SCRIPT_PATH}/
+	COMMAND ${CMAKE_COMMAND} -DLOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH} -P ${CMAKE_CURRENT_SOURCE_DIR}/configure_tests.cmake
 )
 
 add_dependencies(${target} ${target}-scripts-tests)
@@ -192,6 +193,17 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		)
 		test_environment_variables(${target}-py-port
+			""
+			${TESTS_ENVIRONMENT_VARIABLES}
+		)
+	endif()
+
+	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY AND OPTION_BUILD_LOADERS_RB)
+		add_test(NAME ${target}-py-port-rb
+			COMMAND ${TEST_COMMAND} "echo 'load py cli-test-rb.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"0123456789ABCDEFasd\""
+			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
+		test_environment_variables(${target}-py-port-rb
 			""
 			${TESTS_ENVIRONMENT_VARIABLES}
 		)

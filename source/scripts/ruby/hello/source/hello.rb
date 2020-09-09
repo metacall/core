@@ -16,6 +16,10 @@ def say_null()
 	puts('Helloooo from null method!')
 end
 
+def say_string_without_spaces(value: String)
+	puts('0123456789ABCDEF' + value)
+end
+
 def backwardsPrime(start, stop)
 	# https://github.com/miarhost/Solved_tasks/blob/master/backwards_prime.rb
 	ar = []

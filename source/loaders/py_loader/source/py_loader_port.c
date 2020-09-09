@@ -291,14 +291,14 @@ static PyObject * py_loader_port_load_from_memory(PyObject * self, PyObject * ar
 	return py_loader_port_true();
 }
 
-static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_args, PyObject * var_args)
+static PyObject * py_loader_port_invoke(PyObject * self, PyObject * var_args)
 {
-	static const char format[] = "O:metacall";
 	PyObject * name, * result = NULL;
 	char * name_str;
 	Py_ssize_t name_length = 0;
-	void ** args = NULL;
+	void ** value_args = NULL;
 	size_t args_size = 0, args_count;
+	Py_ssize_t var_args_size;
 	loader_impl impl;
 
 	(void)self;
@@ -312,41 +312,44 @@ static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_arg
 		return py_loader_port_none();
 	}
 
-	/* Parse arguments */
-	if (!PyArg_ParseTuple(new_args, (char *)format, &name))
+	var_args_size = PyTuple_Size(var_args);
+
+	if (var_args_size == 0)
 	{
 		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall('function_name', 'asd', 123, [7, 4]);");
 		return py_loader_port_none();
 	}
 
+	name = PyTuple_GetItem(var_args, 0);
+
 	#if PY_MAJOR_VERSION == 2
 	{
-		if (PyString_AsStringAndSize(name, &name_str, &name_length) == -1)
+		if (!(PyString_Check(name) && PyString_AsStringAndSize(name, &name_str, &name_length) != -1))
 		{
 			name_str = NULL;
 		}
 	}
 	#elif PY_MAJOR_VERSION == 3
 	{
-		name_str = (char *)PyUnicode_AsUTF8AndSize(name, &name_length);
+		name_str = PyUnicode_Check(name) ? (char *)PyUnicode_AsUTF8AndSize(name, &name_length) : NULL;
 	}
 	#endif
 
 	if (name_str == NULL)
 	{
-		PyErr_SetString(PyExc_TypeError, "Invalid name string conversion");
+		PyErr_SetString(PyExc_TypeError, "Invalid function name string conversion, first parameter must be a string");
 		return py_loader_port_none();
 	}
 
 	/* Get variable arguments length */
-	args_size = PyTuple_Size(var_args);
+	args_size = var_args_size - 1;
 
 	/* Allocate arguments */
 	if (args_size != 0)
 	{
-		args = (void **) malloc(args_size * sizeof(void *));
+		value_args = (void **) malloc(args_size * sizeof(void *));
 
-		if (args == NULL)
+		if (value_args == NULL)
 		{
 			PyErr_SetString(PyExc_ValueError, "Invalid argument allocation");
 			return py_loader_port_none();
@@ -355,21 +358,21 @@ static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_arg
 		/* Parse variable arguments */
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
-			PyObject * element = PyList_GetItem(var_args, args_count);
+			PyObject * element = PyTuple_GetItem(var_args, args_count + 1);
 
-			args[args_count] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
+			value_args[args_count] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
 		}
 	}
 
-	/* Execute the invokation */
+	/* Execute the invocation */
 	{
 		PyThreadState * thread_state = PyEval_SaveThread();
 
 		void * ret;
 		
-		if (args != NULL)
+		if (value_args != NULL)
 		{
-			ret = metacallv(name_str, args);
+			ret = metacallv(name_str, value_args);
 		}
 		else
 		{
@@ -396,28 +399,15 @@ static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_arg
 	}
 
 clear:
-	if (args != NULL)
+	if (value_args != NULL)
 	{
 		for (args_count = 0; args_count < args_size; ++args_count)
 		{
-			value_type_destroy(args[args_count]);
+			value_type_destroy(value_args[args_count]);
 		}
 
-		free(args);
+		free(value_args);
 	}
-
-	return result;
-}
-
-static PyObject * py_loader_port_invoke(PyObject * self, PyObject * args)
-{
-	PyObject * new_args = PyTuple_GetSlice(args, 0, 1);
-	PyObject * var_args = PyTuple_GetSlice(args, 1, PyTuple_Size(args));
-
-	PyObject * result = py_loader_port_invoke_impl(self, new_args, var_args);
-
-	Py_XDECREF(new_args);
-	Py_XDECREF(var_args);
 
 	return result;
 }
@@ -512,7 +502,6 @@ PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void)
 
 	if (module == NULL)
 	{
-		metacall_destroy();
 		return NULL;
 	}
 

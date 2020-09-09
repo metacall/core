@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 
 import sys
-from os import path, environ
+from os import path
 
-# TODO: Refactor MetaCall py port dependency into requirements.txt
+# Insert Python Port folder first in the system path list
+sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 
-sys.path.append(environ['PORT_LIBRARY_PATH'])
-
-try:
-	from _py_portd import metacall_load_from_file, metacall
-except ImportError:
-	from _py_port import metacall_load_from_file, metacall
+from metacall import metacall_load_from_file, metacall
 
 print('[DEBUG] PyPort: ' + str(metacall))
 

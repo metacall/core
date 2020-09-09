@@ -50,9 +50,9 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 	/* Native register */
 	{
-		metacall_register("callback_host", callback_host, NULL, METACALL_INT, 1, METACALL_STRING);
+		metacall_register("callback_host_impl", callback_host, NULL, METACALL_INT, 1, METACALL_STRING);
 
-		EXPECT_NE((void *) NULL, (void *) metacall_function("callback_host"));
+		EXPECT_NE((void *) NULL, (void *) metacall_function("callback_host_impl"));
 	}
 
 	/* Ruby */
