@@ -300,7 +300,6 @@ static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_arg
 	void ** args = NULL;
 	size_t args_size = 0, args_count;
 	loader_impl impl;
-	loader_impl_py py_impl;
 
 	(void)self;
 
@@ -312,8 +311,6 @@ static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_arg
 		PyErr_SetString(PyExc_ValueError, "Invalid Python loader instance, MetaCall Port must be used from MetaCall CLI");
 		return py_loader_port_none();
 	}
-
-	py_impl = loader_impl_get(impl);
 
 	/* Parse arguments */
 	if (!PyArg_ParseTuple(new_args, (char *)format, &name))
@@ -387,7 +384,7 @@ static PyObject * py_loader_port_invoke_impl(PyObject * self, PyObject * new_arg
 			goto clear;
 		}
 
-		result = py_loader_impl_value_to_capi(impl, py_impl, value_type_id(ret), ret);
+		result = py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
 
 		value_type_destroy(ret);
 

@@ -40,7 +40,7 @@ PY_LOADER_NO_EXPORT type_id py_loader_impl_capi_to_value_type(PyObject * obj);
 
 PY_LOADER_NO_EXPORT value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id);
 
-PY_LOADER_NO_EXPORT PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl, type_id id, value v);
+PY_LOADER_NO_EXPORT PyObject * py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v);
 
 #ifdef __cplusplus
 }

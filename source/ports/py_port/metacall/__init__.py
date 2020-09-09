@@ -24,48 +24,48 @@ import json
 import types
 
 # Append environment variable or default install path when building manually (TODO: Cross-platform paths)
-sys.path.append(os.environ.get('LOADER_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')))
+sys.path.append(os.environ.get('LOADER_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')));
 
 # Find is MetaCall is installed as a distributable tarball (TODO: Cross-platform paths)
-rootdir = os.path.join(os.path.sep, 'gnu', 'store')
-regex = re.compile('.*-metacall-.*')
+rootdir = os.path.join(os.path.sep, 'gnu', 'store');
+regex = re.compile('.*-metacall-.*');
 
 for root, dirs, _ in os.walk(rootdir):
 	for folder in dirs:
 		if regex.match(folder) and not folder.endswith('R'):
-			sys.path.append(os.path.join(rootdir, folder, 'lib'))
+			sys.path.append(os.path.join(rootdir, folder, 'lib'));
 
 # Try to load the extension
-library_names = ['libpy_loaderd', 'py_loaderd', 'libpy_loader', 'py_loader']
-library_found = ''
-module = None
+library_names = ['libpy_loaderd', 'py_loaderd', 'libpy_loader', 'py_loader'];
+library_found = '';
+module = None;
 
 # Find the library
 for name in library_names:
 	try:
-		module = __import__(name, globals(), locals(), ['eggs', 'sausage'], 0)
-		library_found = name
-		metacall_load_from_file = module.metacall_load_from_file
-		metacall_load_from_memory = module.metacall_load_from_memory
-		metacall = module.metacall
+		module = __import__(name, globals(), locals());
+		library_found = name;
+		metacall_load_from_file = module.metacall_load_from_file;
+		metacall_load_from_memory = module.metacall_load_from_memory;
+		metacall = module.metacall;
 		break
 	except ImportError as e:
 		pass
 	except:
-		print("Unexpected error while loading the MetaCall Python Port", name, ":", sys.exc_info()[0])
+		print("Unexpected error while loading the MetaCall Python Port", name, ":", sys.exc_info()[0]);
 		raise
 
 # Check if library was found and print error message otherwhise
 if library_found == '':
-	print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m')
-	print('\x1b[33m\x1b[1m', 'If you do not have it installed, you have three options:', '\x1b[0m')
-	print('\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m')
-	print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m')
-	print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-	print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m')
-	raise ImportError('MetaCall Python Port was not found')
+	print('\x1b[31m\x1b[1m', 'You do not have MetaCall installed or we cannot find it (', e, ')\x1b[0m');
+	print('\x1b[33m\x1b[1m', 'If you do not have it installed, you have three options:', '\x1b[0m');
+	print('\x1b[1m', '	1) Go to https://github.com/metacall/install and install it.', '\x1b[0m');
+	print('\x1b[1m', '	2) Contribute to https://github.com/metacall/distributable by providing support for your platform and architecture.', '\033[0m');
+	print('\x1b[1m', '	3) Be a x10 programmer and compile it by yourself, then define the install folder (if it is different from the default /usr/local/lib) in os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m');
+	print('\x1b[33m\x1b[1m', 'If you have it installed in an non-standard folder, please define os.environ[\'LOADER_LIBRARY_PATH\'].', '\x1b[0m');
+	raise ImportError('MetaCall Python Port was not found');
 else:
-	print('MetaCall Python Port loaded:', library_found)
+	print('MetaCall Python Port loaded:', library_found);
 
 # TODO:
 

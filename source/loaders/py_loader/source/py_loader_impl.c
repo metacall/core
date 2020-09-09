@@ -520,7 +520,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id)
 	return v;
 }
 
-PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl, type_id id, value v)
+PyObject * py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 {
 	if (id == TYPE_BOOL)
 	{
@@ -596,7 +596,7 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 
 		for (iterator = 0; iterator < array_size; ++iterator)
 		{
-			PyObject * item = py_loader_impl_value_to_capi(impl, py_impl, value_type_id((value)array_value[iterator]), (value)array_value[iterator]);
+			PyObject * item = py_loader_impl_value_to_capi(impl, value_type_id((value)array_value[iterator]), (value)array_value[iterator]);
 
 			if (PyList_SetItem(list, iterator, item) != 0)
 			{
@@ -642,7 +642,7 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 		}
 
 		invoke_state->impl = impl;
-		invoke_state->py_impl = py_impl;
+		invoke_state->py_impl = loader_impl_get(impl);
 		invoke_state->callback = value_to_function(v);
 
 		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
@@ -666,21 +666,13 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, loader_impl_py py_impl
 function_return function_py_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
-
 	signature s = function_signature(func);
-
 	const size_t args_size = size;
-
 	type ret_type = signature_get_return(s);
-
 	PyObject * result = NULL;
-
 	size_t args_count;
-
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
-
 	PyGILState_STATE gstate = PyGILState_Ensure();
-
 	PyObject * tuple_args;
 
 	/* Possibly a recursive call */
@@ -708,7 +700,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			id = type_index(t);
 		}
 
-		py_func->values[args_count] = py_loader_impl_value_to_capi(py_func->impl, py_impl, id, args[args_count]);
+		py_func->values[args_count] = py_loader_impl_value_to_capi(py_func->impl, id, args[args_count]);
 
 		if (py_func->values[args_count] != NULL)
 		{
@@ -888,7 +880,7 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 	/* Transform the return value into a python value */
 	if (ret != NULL)
 	{
-		PyObject * py_ret = py_loader_impl_value_to_capi(invoke_state->impl, invoke_state->py_impl, value_type_id(ret), ret);
+		PyObject * py_ret = py_loader_impl_value_to_capi(invoke_state->impl, value_type_id(ret), ret);
 
 		value_type_destroy(ret);
 

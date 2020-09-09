@@ -20,10 +20,11 @@ metacall_load_from_file('mock', ['test.mock']);
 script = '''
 from metacall import metacall
 def test():
+	print(metacall('three_str', 'a', 'b', 'c'));
 	return metacall('my_empty_func_int');
 '''
 
 metacall_load_from_memory('py', script);
 
 # Inspect contents (TODO)
-# print(json.dumps(metacall_inspect(), indent = 4))
+# print(json.dumps(metacall_inspect(), indent = 4));
