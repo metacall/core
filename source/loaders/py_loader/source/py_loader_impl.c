@@ -653,7 +653,7 @@ PyObject * py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_NULL)
 	{
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 	else
 	{
@@ -837,7 +837,7 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error when invoking a function, state cannot be recovered, avoiding the function call");
 
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 
 	callee_args_size = PyTuple_Size(args);
@@ -850,7 +850,7 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid allocation of arguments for callback");
 
-		return Py_None;
+		Py_RETURN_NONE;
 	}
 
 	/* Generate metacall values from python values */
@@ -889,7 +889,7 @@ PyObject * py_loader_impl_function_type_invoke(PyObject * self, PyObject * args)
 
 	free(invoke_state);
 
-	return Py_None;
+	Py_RETURN_NONE;
 }
 
 PyObject * py_loader_impl_get_builtin(loader_impl_py py_impl, const char * builtin_name)
