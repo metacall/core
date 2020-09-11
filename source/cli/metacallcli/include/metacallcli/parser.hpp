@@ -229,6 +229,6 @@ template <> std::string parser_parameter::to(void);
 
 /* -- Template Implementation -- */
 
-#include "parser.inl"
+#include <metacallcli/parser.inl>
 
 #endif /* METACALL_CLI_PARSER_HPP */

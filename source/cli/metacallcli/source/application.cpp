@@ -8,9 +8,9 @@
 
 /* -- Headers -- */
 
-#include "application.hpp"
-#include "tokenizer.hpp"
-#include "parser.hpp"
+#include <metacallcli/application.hpp>
+#include <metacallcli/tokenizer.hpp>
+#include <metacallcli/parser.hpp>
 
 #include <algorithm>
 #include <iostream>

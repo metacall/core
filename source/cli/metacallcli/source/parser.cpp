@@ -8,7 +8,7 @@
 
 /* -- Headers -- */
 
-#include "parser.hpp"
+#include <metacallcli/parser.hpp>
 
 #include <iostream>
 

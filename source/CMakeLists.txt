@@ -112,6 +112,10 @@ add_subdirectory(metacall)
 set(IDE_FOLDER "Tests")
 add_subdirectory(tests)
 
+# CLIs
+set(IDE_FOLDER "CLIs")
+add_subdirectory(cli)
+
 # Examples
 set(IDE_FOLDER "Examples")
 add_subdirectory(examples)

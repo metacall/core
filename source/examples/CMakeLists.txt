@@ -5,7 +5,6 @@ if(NOT OPTION_BUILD_EXAMPLES)
 endif()
 
 # Example applications
-add_subdirectory(metacallcli)
 # add_subdirectory(metacallgui)
 # add_subdirectory(metacallweb)
 add_subdirectory(metacallquine)
