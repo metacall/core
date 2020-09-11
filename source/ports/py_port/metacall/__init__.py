@@ -89,11 +89,19 @@ def metacall_inspect():
 		return dic
 	return dict()
 
-# Save the original Python import
+# Monkey patching
 import builtins
+import types
+
+# Save the original Python import
 _python_import = builtins.__import__
 
 def _metacall_import(name, *args, **kwargs):
+	def generate_module(name):
+		# TODO: m = types.ModuleType(name)
+
+	# TODO: Get properly the path and the list of symbols to be loaded
+
 	try:
 		return _python_import(name, *args, **kwargs)
 	except:
