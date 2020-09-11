@@ -108,11 +108,28 @@ const metacall_require = (tag, name, id) => {
 mod.prototype.require = function (name) {
 
 	const tags = {
+		/* Mock Loader */
 		mock: 'mock',
+		/* Python Loader */
 		py: 'py',
+		/* Ruby Loader */
 		rb: 'rb',
+		/* C# Loader */
 		cs: 'cs',
-		/*dll: 'cs',*/
+		vb: 'cs',
+		dll: 'cs',
+		/* Cobol Loader */
+		cob: 'cob',
+		cbl: 'cob',
+		cpy: 'cob',
+		/* NodeJS Loader */
+		js: 'node',
+		node: 'node',
+		/* TypeScript Loader */
+		ts: 'ts',
+
+		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
+		/* Probably in the future we can differenciate between them, but it is not trivial */
 	};
 
 	const index = name.lastIndexOf('.');

@@ -353,16 +353,19 @@ void application::parameter_iterator::operator()(const char * parameter)
 		{ "mock", "mock" },
 		/* Python Loader */
 		{ "py", "py" },
-		/* NodeJS Loader */
-		{ "js", "node" },
 		/* Ruby Loader */
 		{ "rb", "rb" },
 		/* C# Loader */
 		{ "cs", "cs" },
+		{ "dll", "cs" },
+		{ "vb", "cs" },
 		/* Cobol Loader */
 		{ "cob", "cob" },
 		{ "cbl", "cob" },
 		{ "cpy", "cob" },
+		/* NodeJS Loader */
+		{ "js", "node" },
+		{ "node", "node" },
 		/* TypeScript Loader */
 		{ "ts", "ts" }
 
