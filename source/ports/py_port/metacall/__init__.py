@@ -45,9 +45,6 @@ for name in library_names:
 	try:
 		module = __import__(name, globals(), locals());
 		library_found = name;
-		metacall_load_from_file = module.metacall_load_from_file;
-		metacall_load_from_memory = module.metacall_load_from_memory;
-		metacall = module.metacall;
 		break
 	except ImportError as e:
 		pass
@@ -68,9 +65,18 @@ if library_found == '':
 else:
 	print('MetaCall Python Port loaded:', library_found);
 
-# TODO:
+# Load from file
+def metacall_load_from_file(tag, paths):
+	return module.metacall_load_from_file(tag, paths);
 
-"""
+# Load from memory
+def metacall_load_from_memory(tag, buffer):
+	return module.metacall_load_from_memory(tag, buffer);
+
+# Invocation
+def metacall(function_name, *args):
+	return module.metacall(function_name, *args);
+
 # Wrap metacall inspect and transform the json string into a dict
 def metacall_inspect():
 	data = module.metacall_inspect()
@@ -82,27 +88,56 @@ def metacall_inspect():
 			pass
 		return dic
 	return dict()
-"""
 
-
-# Monkey patch
-
-"""
-# Override Import
-def _import(name, *args, **kwargs):
-	# TODO: Implement metacall import
-	# Find in all folders if some file with the name exists
-	if name == 'matplotlib':
-		name = 'my_mocked_matplotlib'
-	return _python_import(name, *args, **kwargs)
-
+# Save the original Python import
 import builtins
 _python_import = builtins.__import__
-builtins.__import__ = _import
-"""
+
+def _metacall_import(name, *args, **kwargs):
+	try:
+		return _python_import(name, *args, **kwargs)
+	except:
+		# Map file extension to tags
+		extensions_to_tag = {
+			# Mock Loader
+			['mock']: 'mock',
+			# Python Loader
+			['py']: 'py',
+			# Ruby Loader
+			['rb']: 'rb',
+			# C# Loader
+			['vb', 'cs', 'dll']: 'cs',
+			# Cobol Loader
+			['cob', 'cbl', 'cpy']: 'cob',
+			# NodeJS Loader
+			['js', 'node']: 'node',
+			# TypeScript Loader
+			['ts']: 'ts',
+
+			# Note: By default js extension uses NodeJS loader instead of JavaScript V8
+			# Probably in the future we can differenciate between them, but it is not trivial
+		}
+
+		extension = name.split('.')[-1];
+
+		# Load by extension if there is any
+		if extension in extensions_to_tag:
+			if metacall_load_from_file(extensions_to_tag[extension], [name]):
+				return True; # TODO: Implement module
+		# Otherwise try to load for each loader
+		else:
+			for tag in list(extensions_to_tag.values()):
+				if metacall_load_from_file(tag, [name]):
+					return True; # TODO: Implement module
+
+		raise ImportError('MetaCall could not import:', name);
+
+# Override Python import
+builtins.__import__ = _metacall_import
 
 
 # TODO:
+# Monkey patch
 
 
 """

@@ -7,7 +7,7 @@ import json
 # Insert Python Port folder first in the system path list
 sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 
-from metacall import metacall, metacall_load_from_file, metacall_load_from_memory # TODO: , metacall_inspect
+from metacall import metacall, metacall_load_from_file, metacall_load_from_memory, metacall_inspect
 
 # Load mock
 metacall_load_from_file('mock', ['test.mock']);
@@ -23,5 +23,5 @@ metacall_load_from_memory('py', script);
 
 print(metacall('three_str', 'a', 'b', 'c'));
 
-# Inspect contents (TODO)
-# print(json.dumps(metacall_inspect(), indent = 4));
+# Inspect contents
+print(json.dumps(metacall_inspect(), indent = 2));
