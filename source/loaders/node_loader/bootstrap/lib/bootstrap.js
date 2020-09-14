@@ -209,27 +209,35 @@ function node_loader_trampoline_test(obj) {
 	}
 }
 
-function node_loader_trampoline_await(func, args, trampoline_ptr) {
-	if (typeof func !== 'function') {
-		throw new Error('Await only accepts a callable function func, not ' + typeof func);
+function node_loader_trampoline_await(trampoline) {
+	if (!trampoline) {
+		return function node_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+			console.error('NodeJS await error, trampoline could not be found, await calls are disabled.');
+		};
 	}
 
-	if (!Array.isArray(args)) {
-		throw new Error('Await only accepts a array as arguments args, not ' + typeof args);
-	}
+	return function node_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+		if (typeof func !== 'function') {
+			throw new Error('Await only accepts a callable function func, not ' + typeof func);
+		}
 
-	if (typeof trampoline_ptr !== 'object') {
-		throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
-	}
+		if (!Array.isArray(args)) {
+			throw new Error('Await only accepts a array as arguments args, not ' + typeof args);
+		}
 
-	return new Promise((resolve, reject) =>
-		func(...args).then(
-			x => resolve(trampoline.resolve(trampoline_ptr, x)),
-			x => reject(trampoline.reject(trampoline_ptr, x)),
-		).catch(
-			x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`),
-		)
-	);
+		if (typeof trampoline_ptr !== 'object') {
+			throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
+		}
+
+		return new Promise((resolve, reject) =>
+			func(...args).then(
+				x => resolve(trampoline.resolve(trampoline_ptr, x)),
+				x => reject(trampoline.reject(trampoline_ptr, x)),
+			).catch(
+				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`),
+			)
+		);
+	};
 }
 
 function node_loader_trampoline_destroy() {
@@ -272,7 +280,7 @@ module.exports = ((impl, ptr) => {
 			'clear': node_loader_trampoline_clear,
 			'discover': node_loader_trampoline_discover,
 			'test': node_loader_trampoline_test,
-			'await': node_loader_trampoline_await,
+			'await': node_loader_trampoline_await(trampoline),
 			'destroy': node_loader_trampoline_destroy,
 		});
 	} catch (ex) {
