@@ -91,114 +91,117 @@ def metacall_inspect():
 
 # Monkey patching
 import builtins
-import types
+import imp
+from contextlib import suppress
+import functools
 
 # Save the original Python import
 _python_import = builtins.__import__
 
 def _metacall_import(name, *args, **kwargs):
-	def generate_module(name):
-		# TODO: m = types.ModuleType(name)
+	def find_handle(name):
+		metadata = metacall_inspect();
 
-	# TODO: Get properly the path and the list of symbols to be loaded
+		for loader in metadata.keys():
+			for handle in metadata[loader]:
+				if handle['name'] == name:
+					return handle;
 
-	try:
-		return _python_import(name, *args, **kwargs)
-	except:
-		# Map file extension to tags
-		extensions_to_tag = {
-			# Mock Loader
-			['mock']: 'mock',
-			# Python Loader
-			['py']: 'py',
-			# Ruby Loader
-			['rb']: 'rb',
-			# C# Loader
-			['vb', 'cs', 'dll']: 'cs',
-			# Cobol Loader
-			['cob', 'cbl', 'cpy']: 'cob',
-			# NodeJS Loader
-			['js', 'node']: 'node',
-			# TypeScript Loader
-			['ts']: 'ts',
+		return None;
 
-			# Note: By default js extension uses NodeJS loader instead of JavaScript V8
-			# Probably in the future we can differenciate between them, but it is not trivial
-		}
+	def generate_module(name, handle):
+		mod = sys.modules.setdefault(name, imp.new_module(name));
 
-		extension = name.split('.')[-1];
+		# Set a few properties required by PEP 302
+		base_path = os.environ.get('LOADER_SCRIPT_PATH', os.getcwd());
+		mod.__file__ = os.path.join(base_path, name);
+		mod.__name__ = name;
+		mod.__path__ = base_path;
+		# TODO: Using os.__loader__ instead of self until we implement the custom loader class
+		mod.__loader__ = os.__loader__; # self
+		# PEP-366 specifies that package's set __package__ to
+		# their name, and modules have it set to their parent package (if any)
+		# TODO (https://pymotw.com/3/sys/imports.html):
+		# if self.is_package(name):
+		# 	mod.__package__ = name;
+		# else:
+		# 	mod.__package__ = '.'.join(name.split('.')[:-1]);
+		mod.__package__ = name
 
-		# Load by extension if there is any
-		if extension in extensions_to_tag:
-			if metacall_load_from_file(extensions_to_tag[extension], [name]):
-				return True; # TODO: Implement module
-		# Otherwise try to load for each loader
-		else:
-			for tag in list(extensions_to_tag.values()):
-				if metacall_load_from_file(tag, [name]):
-					return True; # TODO: Implement module
+		# Add the symbols to the module
+		symbol_dict = dict(functools.reduce(lambda symbols, func: {**symbols, func['name']: lambda *args: metacall(func['name'], *args) }, handle['scope']['funcs'], {}));
 
-		raise ImportError('MetaCall could not import:', name);
+		mod.__dict__.update(symbol_dict);
+
+		return mod;
+
+	# Try to load it as a Python module first
+	mod = None;
+
+	with suppress(ImportError):
+		mod = _python_import(name, *args, **kwargs);
+
+	if mod:
+		return mod;
+
+	# Check if it is already loaded in MetaCall
+	handle = find_handle(name);
+
+	if handle != None:
+		# Generate the module from cached handle
+		return generate_module(name, handle);
+
+
+	# If it is not loaded, try to load it by the extension (import puppeteer.js)
+	# Otherwhise, try to load it by guessing the loader
+
+	extensions_to_tag = { # Map file extension to tags
+		# Mock Loader
+		'mock': 'mock',
+		# Python Loader
+		'py': 'py',
+		# Ruby Loader
+		'rb': 'rb',
+		# C# Loader
+		'cs': 'cs',
+		'vb': 'cs',
+		'dll': 'cs',
+		# Cobol Loader
+		'cob': 'cob',
+		'cbl': 'cob',
+		'cpy': 'cob',
+		# NodeJS Loader
+		'node': 'node',
+		'js': 'node',
+		# TypeScript Loader
+		'ts': 'ts',
+
+		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
+		# Probably in the future we can differenciate between them, but it is not trivial
+	}
+
+	extension = name.split('.')[-1];
+
+	# Load by extension if there is any
+	if extension in extensions_to_tag:
+		if metacall_load_from_file(extensions_to_tag[extension], [name]):
+			# Get handle name without extension
+			handle_name = name.split('.')[-2];
+			handle = find_handle(handle_name);
+			if handle != None:
+				# Generate the module from cached handle
+				return generate_module(handle_name, handle);
+
+	# Otherwise try to load for each loader
+	else:
+		for tag in list(set(extensions_to_tag.values())):
+			if metacall_load_from_file(tag, [name]):
+				handle = find_handle(name);
+				if handle != None:
+					# Generate the module from cached handle
+					return generate_module(name, handle);
+
+	raise ImportError('MetaCall could not import:', name);
 
 # Override Python import
 builtins.__import__ = _metacall_import
-
-
-# TODO:
-# Monkey patch
-
-
-"""
-def setUpModule(nameMod):
-    return sys.modules.setdefault(nameMod, types.ModuleType(nameMod))
-
-
-def metacall_require(tag, namePath, id):
-    metacall_load_from_file(tag, [namePath])
-    inspectData = inspect()
-    if not inspectData:
-            print('\x1b[31m\x1b[1m',
-                  'Inspect Data from metacall_inspect is empty\x1b[0m')
-            return
-    listOfScripts = inspectData[tag]
-    script = next((x for x in listOfScripts if x.name == id), None)
-    mod = setUpModule(id)
-    for func in script['scope']['funcs']:
-        mod.__dict__[func.name] = lambda *args: metacall(func.name, *args)
-        pass
-    pass
-
-
-# Get Files from LOADER_SCRIPTS_PATH
-scriptsFolder = None
-try:
-    scriptsFolder = os.environ['LOADER_SCRIPT_PATH']
-except KeyError as e:
-    print('\x1b[31m\x1b[1m',
-          'There is no environment variable called LOADER_SCRIPT_PATH (', e, ')\x1b[0m')
-    pass
-if not os.path.isdir(scriptsFolder):
-    print('\x1b[31m\x1b[1m',
-          'LOADER_SCRIPTS_PATH should be a folder/directory (', e, ')\x1b[0m')
-    pass
-
-tags = {
-    ['mock']: 'mock',
-    ['js', 'node']: 'node',
-    ['py']: 'py',
-    ['rb']: 'rb',
-    ['vb', 'cs']: 'cs'
-}
-
-files = os.listdir(scriptsFolder)
-for script in files:
-    scriptAbsPAth = os.path.join(scriptsFolder, script)
-    if os.path.isfile(scriptAbsPAth):
-        fileNameAndExtensionList = script.split('.')
-        extension = fileNameAndExtensionList[1]
-        mtag = tags[extension]
-        metacall_require(
-            mtag, scriptAbsPAth, fileNameAndExtensionList[0])
-        pass
-    pass
-"""

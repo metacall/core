@@ -18,9 +18,25 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Mock)
 	def test_mock(self):
-		self.assertEqual(metacall_load_from_file('mock', ['test.mock']), True);
+		self.assertEqual(metacall_load_from_file('mock', ['sometestmock.mock']), True);
 
 		self.assertEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World');
+
+		# Monkey patch
+		import sometestmock
+
+		self.assertEqual(sometestmock.my_empty_func_int(), 1234);
+		self.assertEqual(sometestmock.three_str('a', 'b', 'c'), 'Hello World');
+
+		# Monkey patch without preload and with extension
+		import othertest.mock
+
+		self.assertEqual(othertest.my_empty_func_int(), 1234);
+
+		# # TODO: Monkey patch without preload and without extension (it works but some runtimes like C# Loader explode when trying to load it)
+		# import thismoduledoesnotexist
+
+		# self.assertEqual(thismoduledoesnotexist.my_empty_func_int(), 1234)
 
 	# MetaCall (Python from memory)
 	def test_python_memory(self):

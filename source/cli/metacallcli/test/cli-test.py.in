@@ -16,11 +16,13 @@ metacall_load_from_file('mock', ['test.mock']);
 script = '''
 from metacall import metacall
 def test():
+	# Execute a call to mock previously loaded
 	return metacall('my_empty_func_int');
 '''
 
 metacall_load_from_memory('py', script);
 
+# Execute a call to mock
 print(metacall('three_str', 'a', 'b', 'c'));
 
 # Inspect contents
