@@ -21,7 +21,6 @@ import os
 import sys
 import re
 import json
-import types
 
 # Append environment variable or default install path when building manually (TODO: Cross-platform paths)
 sys.path.append(os.environ.get('LOADER_LIBRARY_PATH', os.path.join(os.path.sep, 'usr', 'local', 'lib')));
@@ -91,7 +90,7 @@ def metacall_inspect():
 
 # Monkey patching
 import builtins
-import imp
+import types
 from contextlib import suppress
 import functools
 
@@ -110,7 +109,7 @@ def _metacall_import(name, *args, **kwargs):
 		return None;
 
 	def generate_module(name, handle):
-		mod = sys.modules.setdefault(name, imp.new_module(name));
+		mod = sys.modules.setdefault(name, types.ModuleType(name));
 
 		# Set a few properties required by PEP 302
 		base_path = os.environ.get('LOADER_SCRIPT_PATH', os.getcwd());
@@ -150,7 +149,6 @@ def _metacall_import(name, *args, **kwargs):
 	if handle != None:
 		# Generate the module from cached handle
 		return generate_module(name, handle);
-
 
 	# If it is not loaded, try to load it by the extension (import puppeteer.js)
 	# Otherwhise, try to load it by guessing the loader
