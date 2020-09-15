@@ -270,7 +270,7 @@ sub_nodejs(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make
 
 	# Install NodeJS from distributable (TODO: Keys not working)
-	NODE_VERSION=10.16.3
+	NODE_VERSION=10.22.0
 	PACKAGE_SUFFIX=tar.xz
 
 	# for key in \
