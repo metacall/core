@@ -7,10 +7,12 @@ endif()
 # External dependencies
 #
 
-find_package(PythonLibs 3 REQUIRED)
+set(Python_ADDITIONAL_VERSIONS 3.7)
 
-if(NOT PYTHONLIBS_FOUND)
-	message(STATUS "Python libraries not found")
+find_package(PythonInterp REQUIRED)
+
+if(NOT PYTHONINTERP_FOUND)
+	message(STATUS "Python interpreter not found")
 	return()
 endif()
 
@@ -23,6 +25,10 @@ set(target py_port)
 
 # Exit here if required dependencies are not met
 message(STATUS "Port ${target}")
+
+if(NOT OPTION_BUILD_GUIX)
+	install(CODE "execute_process(COMMAND pip3 install ${CMAKE_CURRENT_SOURCE_DIR})")
+endif()
 
 #
 # Configure test
