@@ -399,27 +399,35 @@ function ts_loader_trampoline_test(obj) {
 	}
 }
 
-function ts_loader_trampoline_await(func, args, trampoline_ptr) {
-	if (typeof func !== 'function') {
-		throw new Error('Await only accepts a callable function func, not ' + typeof func);
+function ts_loader_trampoline_await(trampoline) {
+	if (!trampoline) {
+		return function ts_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+			console.error('TypeScript Loader await error, trampoline could not be found, await calls are disabled.');
+		};
 	}
 
-	if (!Array.isArray(args)) {
-		throw new Error('Await only accepts a array as arguments args, not ' + typeof args);
-	}
+	return function ts_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+		if (typeof func !== 'function') {
+			throw new Error('Await only accepts a callable function func, not ' + typeof func);
+		}
 
-	if (typeof trampoline_ptr !== 'object') {
-		throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
-	}
+		if (!Array.isArray(args)) {
+			throw new Error('Await only accepts a array as arguments args, not ' + typeof args);
+		}
 
-	return new Promise((resolve, reject) =>
-		func(...args).then(
-			x => resolve(trampoline.resolve(trampoline_ptr, x)),
-			x => reject(trampoline.reject(trampoline_ptr, x)),
-		).catch(
-			x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`),
-		)
-	);
+		if (typeof trampoline_ptr !== 'object') {
+			throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
+		}
+
+		return new Promise((resolve, reject) =>
+			func(...args).then(
+				x => resolve(trampoline.resolve(trampoline_ptr, x)),
+				x => reject(trampoline.reject(trampoline_ptr, x)),
+			).catch(
+				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`),
+			)
+		);
+	};
 }
 
 function ts_loader_trampoline_destroy() {
@@ -469,7 +477,7 @@ module.exports = ((impl, ptr) => {
 			'clear': ts_loader_trampoline_clear,
 			'discover': ts_loader_trampoline_discover,
 			'test': ts_loader_trampoline_test,
-			'await': ts_loader_trampoline_await,
+			'await': ts_loader_trampoline_await(trampoline),
 			'destroy': ts_loader_trampoline_destroy,
 		});
 	} catch (ex) {
@@ -485,19 +493,19 @@ if (typeof process.argv[2] === 'undefined' && typeof process.argv[3] === 'undefi
 	// Tests
 	ts_loader_trampoline_initialize();
 
-	const discoverClear = (handle) => {
+	const inspect = (handle) => {
 		const discover = ts_loader_trampoline_discover(handle);
 		console.log(discover);
 		ts_loader_trampoline_clear(handle);
 	};
 
-	discoverClear(ts_loader_trampoline_load_from_memory('memory_module', `
+	inspect(ts_loader_trampoline_load_from_memory('memory_module', `
 	export function mem_sum(left: number, rigth: number): number {
 		return left + rigth;
 	}
 	`, {}));
 
-	discoverClear(ts_loader_trampoline_load_from_file(['./test.ts']));
+	inspect(ts_loader_trampoline_load_from_file(['./test.ts']));
 
 	ts_loader_trampoline_destroy();
 }

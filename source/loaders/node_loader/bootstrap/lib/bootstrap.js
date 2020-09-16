@@ -212,7 +212,7 @@ function node_loader_trampoline_test(obj) {
 function node_loader_trampoline_await(trampoline) {
 	if (!trampoline) {
 		return function node_loader_trampoline_await_impl(func, args, trampoline_ptr) {
-			console.error('NodeJS await error, trampoline could not be found, await calls are disabled.');
+			console.error('NodeJS Loader await error, trampoline could not be found, await calls are disabled.');
 		};
 	}
 
