@@ -107,12 +107,9 @@ sub_netcore2(){
 	cd $ROOT_DIR
 
 	# Install NET Core Runtime 2.x
-	wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.asc.gpg
-	$SUDO_CMD mv microsoft.asc.gpg /etc/apt/trusted.gpg.d/
-	wget -q https://packages.microsoft.com/config/debian/10/prod.list
-	$SUDO_CMD mv prod.list /etc/apt/sources.list.d/microsoft-prod.list
-	$SUDO_CMD chown root:root /etc/apt/trusted.gpg.d/microsoft.asc.gpg
-	$SUDO_CMD chown root:root /etc/apt/sources.list.d/microsoft-prod.list
+	wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+	rm packages-microsoft-prod.deb
 
 	$SUDO_CMD apt-get update
 	sub_apt_install_hold dotnet-runtime-2.2=2.2.8-1
