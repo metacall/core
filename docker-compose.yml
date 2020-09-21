@@ -20,25 +20,12 @@
 version: "3.7"
 
 services:
-  deps_node:
-    image: metacall/core:deps_node
-    container_name: metacall_core_deps_node
-    build:
-      context: .
-      dockerfile: tools/node/Dockerfile
-      args:
-        METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_PATH: $METACALL_PATH
-        METACALL_NODE_BUILD_TYPE: $METACALL_NODE_BUILD_TYPE
-    environment:
-      DEBIAN_FRONTEND: noninteractive
-
   deps:
     image: metacall/core:deps
     container_name: metacall_core_deps
     build:
       context: .
-      dockerfile: tools/base/Dockerfile
+      dockerfile: tools/deps/Dockerfile
       args:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
@@ -48,8 +35,6 @@ services:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
       NUGET_XMLDOC_MODE: skip
-    depends_on:
-      - deps_node
 
   dev:
     image: metacall/core:dev
@@ -59,7 +44,7 @@ services:
       dockerfile: tools/dev/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
-        METACALL_BUILD_TYPE: $METACALL_CORE_BUILD_TYPE
+        METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
         METACALL_BUILD_OPTIONS: root python ruby netcore2 nodejs typescript file examples distributable tests benchmarks scripts ports dynamic install pack # v8 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
@@ -79,7 +64,7 @@ services:
     container_name: metacall_core_runtime
     build:
       context: .
-      dockerfile: tools/core/Dockerfile
+      dockerfile: tools/runtime/Dockerfile
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE

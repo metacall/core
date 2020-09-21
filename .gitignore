@@ -34,10 +34,9 @@ CTestTestfile.cmake
 
 # Avoid ignoring build hooks
 !hooks/build
-!tools/base/hooks/build
-!tools/core/hooks/build
+!tools/deps/hooks/build
 !tools/dev/hooks/build
-!tools/node/hooks/build
+!tools/runtime/hooks/build
 !tools/cli/hooks/build
 
 # Qt cache
@@ -62,10 +61,10 @@ _start-cmd.bat
 
 # Linked dockerignore file in main context
 .dockerignore
-!tools/base/.dockerignore
-!tools/core/.dockerignore
+!tools/deps/.dockerignore
 !tools/dev/.dockerignore
-!tools/node/.dockerignore
+!tools/runtime/.dockerignore
+!tools/cli/.dockerignore
 
 # macOS files
 .DS_Store

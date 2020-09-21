@@ -212,7 +212,7 @@ if(NODEJS_UV_INCLUDE_DIR)
 	endforeach()
 endif()
 
-# TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?) with proper includes
+# Download includes in case they are not distributed
 if(NOT NODEJS_INCLUDE_DIR OR NOT NODEJS_V8_INCLUDE_DIR OR NOT NODEJS_UV_INCLUDE_DIR)
 	if(NOT NODEJS_VERSION)
 		# We do not have any way to know what version to install
@@ -222,8 +222,9 @@ if(NOT NODEJS_INCLUDE_DIR OR NOT NODEJS_V8_INCLUDE_DIR OR NOT NODEJS_UV_INCLUDE_
 
 	# NodeJS download and output path (workaround for NodeJS headers)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}-headers.tar.gz")
-	set(NODEJS_DOWNLOAD_FILE "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}-headers.tar.gz")
-	set(NODEJS_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}")
+	set(NODEJS_BASE_PATH "${CMAKE_CURRENT_BINARY_DIR}/headers")
+	set(NODEJS_DOWNLOAD_FILE "${NODEJS_BASE_PATH}/node-v${NODEJS_VERSION}-headers.tar.gz")
+	set(NODEJS_OUTPUT_PATH "${NODEJS_BASE_PATH}/node-v${NODEJS_VERSION}")
 
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
@@ -234,7 +235,7 @@ if(NOT NODEJS_INCLUDE_DIR OR NOT NODEJS_V8_INCLUDE_DIR OR NOT NODEJS_UV_INCLUDE_
 	# Decompress node if needed
 	if(NOT EXISTS "${NODEJS_OUTPUT_PATH}")
 		message(STATUS "Extract NodeJS headers")
-		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" OUTPUT_QUIET)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${NODEJS_BASE_PATH}" OUTPUT_QUIET)
 	endif()
 
 	# Find NodeJS includes
@@ -244,6 +245,22 @@ if(NOT NODEJS_INCLUDE_DIR OR NOT NODEJS_V8_INCLUDE_DIR OR NOT NODEJS_UV_INCLUDE_
 		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS JavaScript Runtime Headers"
 	)
+endif()
+
+if(NODEJS_INCLUDE_DIR)
+	# Get node module version
+	find_file(NODEJS_VERSION_FILE_PATH node_version.h
+		PATHS ${NODEJS_INCLUDE_DIR}
+		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Version Header"
+	)
+
+	if(NODEJS_VERSION_FILE_PATH)
+		file(READ ${NODEJS_VERSION_FILE_PATH} NODEJS_VERSION_FILE)
+
+		string(REGEX MATCH "#define NODE_MODULE_VERSION ([0-9]+)" NODEJS_MODULE_VERSION_DEF ${NODEJS_VERSION_FILE})
+		string(REGEX MATCH "([0-9]+)$" NODEJS_MODULE_VERSION ${NODEJS_MODULE_VERSION_DEF})
+	endif()
 endif()
 
 if(NODEJS_V8_INCLUDE_DIR)
@@ -281,20 +298,6 @@ if(NODEJS_V8_INCLUDE_DIR)
 
 		endwhile()
 	endif()
-
-	# Get node module version
-	find_file(NODEJS_VERSION_FILE_PATH node_version.h
-		PATHS ${NODEJS_INCLUDE_DIR}
-		PATH_SUFFIXES ${NODEJS_INCLUDE_SUFFIXES}
-		DOC "NodeJS JavaScript Version Header"
-	)
-
-	if(NODEJS_VERSION_FILE_PATH)
-		file(READ ${NODEJS_VERSION_FILE_PATH} NODEJS_VERSION_FILE)
-
-		string(REGEX MATCH "#define NODE_MODULE_VERSION ([0-9]+)" NODEJS_MODULE_VERSION_DEF ${NODEJS_VERSION_FILE})
-		string(REGEX MATCH "([0-9]+)$" NODEJS_MODULE_VERSION ${NODEJS_MODULE_VERSION_DEF})
-	endif()
 endif()
 
 # Find NodeJS library from module version
@@ -306,6 +309,8 @@ if(NODEJS_MODULE_VERSION)
 		libnode.${NODEJS_MODULE_VERSION}.dll
 		node.lib
 	)
+
+	message(STATUS "Searching NodeJS library version ${NODEJS_MODULE_VERSION}")
 
 	if(WIN32)
 		set(NODEJS_COMPILE_PATH "${NODEJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
@@ -319,20 +324,23 @@ if(NODEJS_MODULE_VERSION)
 		set(NODEJS_LIBRARY_PATH "/usr/local/lib")
 	endif()
 
+	set(NODEJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu") # TODO: Add others
+
 	# Find library
 	find_library(NODEJS_LIBRARY
 		NAMES ${NODEJS_LIBRARY_NAMES}
-		PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH}
+		PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH} ${NODEJS_SYSTEM_LIBRARY_PATH}
 		DOC "NodeJS JavaScript Runtime Library"
 	)
 endif()
 
-# TODO: Remove this workaround when NodeJS begins to distribute node as a shared library (maybe never?)
+# Install NodeJS library in case it is not distributed
 if(NOT NODEJS_LIBRARY)
 	# NodeJS download and output path (workaround to compile node as a shared library)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}.tar.gz")
-	set(NODEJS_DOWNLOAD_FILE "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}.tar.gz")
-	set(NODEJS_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/node-v${NODEJS_VERSION}")
+	set(NODEJS_BASE_PATH "${CMAKE_CURRENT_BINARY_DIR}/sources")
+	set(NODEJS_DOWNLOAD_FILE "${NODEJS_BASE_PATH}/node-v${NODEJS_VERSION}.tar.gz")
+	set(NODEJS_OUTPUT_PATH "${NODEJS_BASE_PATH}/node-v${NODEJS_VERSION}")
 
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
@@ -343,7 +351,7 @@ if(NOT NODEJS_LIBRARY)
 	# Decompress node if needed
 	if(NOT EXISTS "${NODEJS_OUTPUT_PATH}")
 		message(STATUS "Extract NodeJS distribution")
-		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}" OUTPUT_QUIET)
+		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NODEJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${NODEJS_BASE_PATH}" OUTPUT_QUIET)
 	endif()
 
 	# Compile node as a shared library if needed

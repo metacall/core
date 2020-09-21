@@ -26,8 +26,6 @@ sub_pull() {
 		exit 1
 	fi
 
-	docker pull $IMAGE_NAME:deps_node || true
-
 	docker pull $IMAGE_NAME:deps || true
 
 	docker pull $IMAGE_NAME:dev || true
@@ -39,16 +37,13 @@ sub_pull() {
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
 sub_build() {
-	ln -sf tools/node/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm deps_node
-
-	ln -sf tools/base/.dockerignore .dockerignore
+	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm dev
 
-	ln -sf tools/core/.dockerignore .dockerignore
+	ln -sf tools/runtime/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
@@ -57,16 +52,13 @@ sub_build() {
 
 # Build MetaCall Docker Compose without cache (link manually dockerignore files)
 sub_rebuild() {
-	ln -sf tools/node/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build --force-rm --no-cache deps_node
-
-	ln -sf tools/base/.dockerignore .dockerignore
+	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm --no-cache deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm --no-cache dev
 
-	ln -sf tools/core/.dockerignore .dockerignore
+	ln -sf tools/runtime/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml build --force-rm --no-cache runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
@@ -80,16 +72,13 @@ sub_cache() {
 		exit 1
 	fi
 
-	ln -sf tools/node/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build deps_node
-
-	ln -sf tools/base/.dockerignore .dockerignore
+	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build dev
 
-	ln -sf tools/core/.dockerignore .dockerignore
+	ln -sf tools/runtime/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.cache.yml build runtime
 
 	ln -sf tools/cli/.dockerignore .dockerignore
@@ -102,10 +91,6 @@ sub_push(){
 		echo "Error: IMAGE_NAME variable not defined"
 		exit 1
 	fi
-
-	# Push deps_node image
-	docker tag metacall/core:deps_node $IMAGE_NAME:deps_node
-	docker push $IMAGE_NAME:deps_node
 
 	# Push deps image
 	docker tag metacall/core:deps $IMAGE_NAME:deps

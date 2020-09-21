@@ -124,9 +124,9 @@ sub_v8(){
 # NodeJS
 sub_nodejs(){
 	echo "configure node"
-	# Nothing needed, node_modules are local to the path,
-	# runtime is located in /usr/local/lib, and node builtins
-	# are already compiled in the runtime
+
+	# Install NodeJS library
+	sub_apt_install_hold libnode64
 }
 
 # TypeScript

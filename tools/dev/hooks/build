@@ -41,7 +41,7 @@ ln -sf "`pwd`/.dockerignore" ../../.dockerignore
 docker build \
 	--cache-from registry.hub.docker.com/$IMAGE_NAME \
 	--build-arg "METACALL_PATH=$METACALL_PATH" \
-	--build-arg "METACALL_CORE_BUILD_TYPE=$METACALL_CORE_BUILD_TYPE" \
+	--build-arg "METACALL_BUILD_TYPE=$METACALL_BUILD_TYPE" \
 	--build-arg "METACALL_BUILD_OPTIONS=$METACALL_BUILD_OPTIONS" \
 	-t $IMAGE_NAME \
 	-f $DOCKERFILE_PATH ../..

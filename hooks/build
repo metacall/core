@@ -19,17 +19,14 @@
 #	limitations under the License.
 #
 
-# Run docker deps_node image builder
-bash -c "cd tools/node && ./hooks/build"
-
 # Run docker deps image builder
-bash -c "cd tools/base && ./hooks/build"
+bash -c "cd tools/deps && ./hooks/build"
 
 # Run docker dev image builder
 bash -c "cd tools/dev && ./hooks/build"
 
 # Run docker runtime image builder
-bash -c "cd tools/core && ./hooks/build"
+bash -c "cd tools/runtime && ./hooks/build"
 
 # Run docker cli image builder
 bash -c "cd tools/cli && ./hooks/build"

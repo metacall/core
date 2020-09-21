@@ -20,17 +20,10 @@
 version: "3.7"
 
 services:
-  deps_node:
-    image: metacall/core:deps_node
-    build:
-      cache_from:
-        - ${IMAGE_REGISTRY}/metacall/core:deps_node
-
   deps:
     image: metacall/core:deps
     build:
       cache_from:
-        - ${IMAGE_REGISTRY}/metacall/core:deps_node
         - ${IMAGE_REGISTRY}/metacall/core:deps
 
   dev:

@@ -264,55 +264,55 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make nodejs npm
 
-	# Install NodeJS from distributable (TODO: Keys not working)
-	NODE_VERSION=10.22.0
-	PACKAGE_SUFFIX=tar.xz
+	# Note: This old version was used before debian buster (10) when NodeJS library was not
+	# distributed as a separate library, since buster we can obviate this, but I let it here
+	# just in case we change the debian distribution to another which does not distribute NodeJS lib
 
-	# for key in \
-	# 	94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
-	# 	FD3A5288F042B6850C66B31F09FE44734EB7990E \
-	# 	71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
-	# 	DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
-	# 	C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
-	# 	B9AE9905FFD7803F25714661B63B535A4C206CA9 \
-	# 	56730D5401028683275BD23C23EFEFE93C4CFFFE \
-	# 	77984A986EBC2AA786BC0F66B01FBB92821C587A \
-	# 	8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600; \
-	# do
-	# 	gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" \
-	# 	|| gpg --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" \
-	# 	|| gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key"
-	# done
+	# # Install NodeJS from distributable (TODO: Keys not working)
+	# NODE_VERSION=10.22.0
+	# PACKAGE_SUFFIX=tar.xz
 
-	DPKG_ARCH="$(dpkg --print-architecture)"
+	# # for key in \
+	# # 	94AE36675C464D64BAFA68DD7434390BDBE9B9C5 \
+	# # 	FD3A5288F042B6850C66B31F09FE44734EB7990E \
+	# # 	71DCFD284A79C3B38668286BC97EC7A07EDE3FC1 \
+	# # 	DD8F2338BAE7501E3DD5AC78C273792F7D83545D \
+	# # 	C4F0DFFF4E8C1A8236409D08E73BC641CC11F4C8 \
+	# # 	B9AE9905FFD7803F25714661B63B535A4C206CA9 \
+	# # 	56730D5401028683275BD23C23EFEFE93C4CFFFE \
+	# # 	77984A986EBC2AA786BC0F66B01FBB92821C587A \
+	# # 	8FCCA13FEF1D0C2E91008E09770F7A9A5AE15600; \
+	# # do
+	# # 	gpg --keyserver hkp://p80.pool.sks-keyservers.net:80 --recv-keys "$key" \
+	# # 	|| gpg --keyserver hkp://ipv4.pool.sks-keyservers.net --recv-keys "$key" \
+	# # 	|| gpg --keyserver hkp://pgp.mit.edu:80 --recv-keys "$key"
+	# # done
 
-	case "${DPKG_ARCH##*-}" in
-		amd64) ARCH='x64';;
-		ppc64el) ARCH='ppc64le';;
-		s390x) ARCH='s390x';;
-		arm64) ARCH='arm64';;
-		armhf) ARCH='armv7l';;
-		i386) ARCH='x86';;
-		*) echo "unsupported architecture ($DPKG_ARCH) for nodejs"; return 1;;
-	esac
+	# DPKG_ARCH="$(dpkg --print-architecture)"
 
-	wget --no-check-certificate "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.$PACKAGE_SUFFIX"
-	wget --no-check-certificate "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc"
-	# gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc
-	# grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c -
-	tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner
-	rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc # SHASUMS256.txt
-	$SUDO_CMD ln -s /usr/local/bin/node /usr/local/bin/nodejs
+	# case "${DPKG_ARCH##*-}" in
+	# 	amd64) ARCH='x64';;
+	# 	ppc64el) ARCH='ppc64le';;
+	# 	s390x) ARCH='s390x';;
+	# 	arm64) ARCH='arm64';;
+	# 	armhf) ARCH='armv7l';;
+	# 	i386) ARCH='x86';;
+	# 	*) echo "unsupported architecture ($DPKG_ARCH) for nodejs"; return 1;;
+	# esac
+
+	# wget --no-check-certificate "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.$PACKAGE_SUFFIX"
+	# wget --no-check-certificate "https://nodejs.org/dist/v$NODE_VERSION/SHASUMS256.txt.asc"
+	# # gpg --batch --decrypt --output SHASUMS256.txt SHASUMS256.txt.asc
+	# # grep " node-v$NODE_VERSION-linux-$ARCH.tar.xz\$" SHASUMS256.txt | sha256sum -c -
+	# tar -xJf "node-v$NODE_VERSION-linux-$ARCH.tar.xz" -C /usr/local --strip-components=1 --no-same-owner
+	# rm "node-v$NODE_VERSION-linux-$ARCH.tar.xz" SHASUMS256.txt.asc # SHASUMS256.txt
+	# $SUDO_CMD ln -s /usr/local/bin/node /usr/local/bin/nodejs
 
 	# Update npm and install node-gyp
 	npm i npm@latest -g
 	npm i node-gyp -g
-
-	# # Install pkg config for icu library
-	# $SUDO_CMD apt-get -y --no-install-recommends install pkg-config
-	# pkg-config icu-i18n --cflags --libs
 }
 
 # TypeScript

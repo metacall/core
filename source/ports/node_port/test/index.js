@@ -22,7 +22,13 @@
 
 const assert = require('assert');
 
-const { metacall, metacall_load_from_file, metacall_handle, metacall_inspect, metacall_logs } = require('../index.js');
+const {
+	metacall,
+	metacall_load_from_file,
+	metacall_handle,
+	metacall_inspect,
+	metacall_logs
+} = require('../index.js');
 
 describe('metacall', () => {
 	describe('require', () => {
