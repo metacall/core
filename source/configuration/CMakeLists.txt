@@ -219,6 +219,8 @@ function(configurations_write config_dir config_path)
 		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Debug\"")
 	elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
 		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\"")
+	else()
+		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\"")
 	endif()
 
 	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n}")
