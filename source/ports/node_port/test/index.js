@@ -25,6 +25,7 @@ const assert = require('assert');
 const {
 	metacall,
 	metacall_load_from_file,
+	metacall_load_from_memory,
 	metacall_handle,
 	metacall_inspect,
 	metacall_logs
@@ -54,6 +55,10 @@ describe('metacall', () => {
 			const script = metacall_handle('rb', 'ducktype');
 			assert.notStrictEqual(script, undefined);
 			assert.strictEqual(script.name, 'ducktype');
+		});
+		it('metacall_load_from_memory (py)', () => {
+			assert.strictEqual(metacall_load_from_memory('py', 'def py_memory():\n\treturn 4;\n'), undefined);
+			assert.strictEqual(metacall('py_memory'), 4.0);
 		});
 		// Cobol tests are conditional (in order to pass CI/CD)
 		if (process.env['OPTION_BUILD_LOADERS_COB']) {
