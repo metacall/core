@@ -37,6 +37,7 @@ endif()
 
 option(NODEJS_CMAKE_DEBUG "Print paths for debugging NodeJS dependencies." OFF)
 option(NODEJS_SHARED_UV "If it is enabled, libuv won't be required by this script." OFF)
+option(NODEJS_BUILD_FROM_SOURCE "If it is enabled, NodeJS runtime library will be built from source." OFF)
 
 # Include package manager
 include(FindPackageHandleStandardArgs)
@@ -301,7 +302,7 @@ if(NODEJS_V8_INCLUDE_DIR)
 endif()
 
 # Find NodeJS library from module version
-if(NODEJS_MODULE_VERSION)
+if(NODEJS_MODULE_VERSION AND NOT NODEJS_BUILD_FROM_SOURCE)
 	# NodeJS library names
 	set(NODEJS_LIBRARY_NAMES
 		libnode.so.${NODEJS_MODULE_VERSION}
