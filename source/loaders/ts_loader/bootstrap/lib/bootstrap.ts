@@ -186,8 +186,13 @@ function ts_loader_trampoline_load_inline(name, buffer, opts) {
 		...opts.append_paths || [],
 	];
 
-	// eslint-disable-next-line no-underscore-dangle
-	m._compile(buffer, name);
+	try {
+		// eslint-disable-next-line no-underscore-dangle
+		m._compile(buffer, name);
+	} catch (ex) {
+		console.log('Exception in ts_loader_trampoline_load_inline', ex);
+		return null;
+	}
 
 	if (parent && parent.children) {
 		parent.children.splice(parent.children.indexOf(m), 1);
