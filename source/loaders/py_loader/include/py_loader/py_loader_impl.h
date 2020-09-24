@@ -27,9 +27,14 @@
 
 #include <configuration/configuration.h>
 
+#include <Python.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct loader_impl_py_type;
+typedef struct loader_impl_py_type * loader_impl_py;
 
 PY_LOADER_API loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
 
@@ -46,6 +51,12 @@ PY_LOADER_API int py_loader_impl_clear(loader_impl impl, loader_handle handle);
 PY_LOADER_API int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx);
 
 PY_LOADER_API int py_loader_impl_destroy(loader_impl impl);
+
+PY_LOADER_NO_EXPORT type_id py_loader_impl_capi_to_value_type(PyObject * obj);
+
+PY_LOADER_NO_EXPORT value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id);
+
+PY_LOADER_NO_EXPORT PyObject * py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v);
 
 #ifdef __cplusplus
 }
