@@ -20,17 +20,6 @@
 # MetaCall Depends builder image
 FROM metacall/core:dev AS builder
 
-# Image descriptor
-LABEL copyright.name="Vicente Eduardo Ferrer Garcia" \
-	copyright.address="vic798@gmail.com" \
-	maintainer.name="Vicente Eduardo Ferrer Garcia" \
-	maintainer.address="vic798@gmail.com" \
-	vendor="MetaCall Inc." \
-	version="0.1"
-
-# Environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-
 # MetaCall image
 FROM metacall/core:runtime AS cli
 
