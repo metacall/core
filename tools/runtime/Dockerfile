@@ -82,6 +82,11 @@ RUN mkdir -p /usr/local/scripts \
 # Copy libraries from builder
 COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.node /usr/local/lib/
 
+# Symlink (lib)node_loader(d).(dll|so) to node_loader(d).node
+RUN [ -f "/usr/local/lib/node_loaderd.node" ] \
+	&& (rm /usr/local/lib/libnode_loaderd.so && ln -s /usr/local/lib/node_loaderd.node /usr/local/lib/libnode_loaderd.so) \
+	|| (rm /usr/local/lib/libnode_loader.so && ln -s /usr/local/lib/node_loader.node /usr/local/lib/libnode_loader.so)
+
 # Copy node dependencies (and port) from builder
 COPY --from=builder /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
 
