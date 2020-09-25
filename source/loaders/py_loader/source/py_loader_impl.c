@@ -20,6 +20,7 @@
 
 #include <py_loader/py_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -1143,7 +1144,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	py_impl = malloc(sizeof(struct loader_impl_py_type));
 

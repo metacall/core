@@ -84,16 +84,28 @@ static int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_
 
 static int loader_unload_impl_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
+/* -- Member Data -- */
+
+
+static struct loader_type loader_instance_default =
+{
+	NULL
+};
+
+static loader loader_instance_ptr = &loader_instance_default;
+
 /* -- Methods -- */
 
 loader loader_singleton()
 {
-	static struct loader_type loader_instance =
-	{
-		NULL
-	};
+	return loader_instance_ptr;
+}
 
-	return &loader_instance;
+void loader_copy(loader_host host)
+{
+	loader_instance_ptr = host->loader;
+	configuration_copy(host->config);
+	log_copy(host->log);
 }
 
 void loader_initialize()
@@ -119,6 +131,8 @@ void loader_initialize()
 			loader_impl proxy;
 
 			host->log = log_instance();
+			host->config = configuration_instance();
+			host->loader = l;
 
 			proxy = loader_impl_create_proxy(host);
 
@@ -269,6 +283,8 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 	loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
 
 	host->log = log_instance();
+	host->config = configuration_instance();
+	host->loader = l;
 
 	impl = loader_impl_create(loader_env_library_path(), tag, host);
 

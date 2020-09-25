@@ -28,7 +28,7 @@ fun cr_loader_impl_initialize(impl : Void*, config : Void*, host : LibMetaCall::
 	# TODO: Review this, check NodeJS implementation for obtaining process name
 	crystal_library_init(1, 'metacall')
 
-	LibMetaCall.log_copy(host.log)
+	LibMetaCall.loader_copy(host)
 
 	cr_impl = CrystalLoaderImpl.new
 

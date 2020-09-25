@@ -26,7 +26,7 @@ lib LibMetaCall
 	fun loader_impl_get(impl : Void*) : Void*
 
 	# Log
-	fun log_copy(instance : Void*) : Void
+	fun loader_copy(instance : struct loader_host*) : Void
 	# TODO: log_write is a macro that must be reimplemented properly (log_write_impl, log_write_impl_va)
 	# fun log_write()
 

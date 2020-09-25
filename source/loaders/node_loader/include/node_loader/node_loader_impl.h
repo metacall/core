@@ -26,9 +26,15 @@
 #include <loader/loader_impl_interface.h>
 #include <configuration/configuration.h>
 
+#include <node_api.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct loader_impl_node_type;
+
+typedef struct loader_impl_node_type * loader_impl_node;
 
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
 
@@ -45,6 +51,14 @@ NODE_LOADER_API int node_loader_impl_clear(loader_impl impl, loader_handle handl
 NODE_LOADER_API int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx);
 
 NODE_LOADER_API int node_loader_impl_destroy(loader_impl impl);
+
+NODE_LOADER_NO_EXPORT void node_loader_impl_exception(napi_env env, napi_status status);
+
+NODE_LOADER_NO_EXPORT void node_loader_impl_finalizer(napi_env env, napi_value v, void * data);
+
+NODE_LOADER_NO_EXPORT value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v);
+
+NODE_LOADER_NO_EXPORT napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg);
 
 #ifdef __cplusplus
 }

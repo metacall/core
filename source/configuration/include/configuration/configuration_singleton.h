@@ -31,6 +31,26 @@ typedef struct configuration_singleton_type * configuration_singleton;
 
 /**
 *  @brief
+*    Wrapper of configuration singleton instance
+*
+*  @return
+*    Pointer to configuration singleton instance
+*
+*/
+CONFIGURATION_API configuration_singleton configuration_singleton_instance();
+
+/**
+*  @brief
+*    Set the configuration singleton instance
+*
+*  @param[in] singleton
+*    Reference to the new configuration singleton object
+*
+*/
+CONFIGURATION_API void configuration_singleton_copy(configuration_singleton singleton);
+
+/**
+*  @brief
 *    Initialize configuration singleton
 *
 *  @param[in] global

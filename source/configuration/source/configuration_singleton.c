@@ -29,29 +29,28 @@ struct configuration_singleton_type
 
 /* -- Private Methods -- */
 
-/**
-*  @brief
-*    Wrapper of configuration singleton instance
-*
-*  @return
-*    Pointer to configuration singleton instance
-*
-*/
-static configuration_singleton configuration_singleton_instance(void);
-
 static int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+
+/* -- Member Data -- */
+
+static struct configuration_singleton_type singleton_default =
+{
+	NULL,
+	NULL
+};
+
+configuration_singleton singleton_ptr = &singleton_default;
 
 /* -- Methods -- */
 
 configuration_singleton configuration_singleton_instance()
 {
-	static struct configuration_singleton_type singleton =
-	{
-		NULL,
-		NULL
-	};
+	return singleton_ptr;
+}
 
-	return &singleton;
+void configuration_singleton_copy(configuration_singleton singleton)
+{
+	singleton_ptr = singleton;
 }
 
 int configuration_singleton_initialize(configuration global)

@@ -77,6 +77,12 @@ add_custom_target(${target}-scripts-tests ALL
 	COMMAND ${CMAKE_COMMAND} -DPROJECT_METACALL_PORTS_DIRECTORY=${PROJECT_METACALL_PORTS_DIRECTORY} -DLOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_tests.cmake
 )
 
+set_target_properties(${target}-scripts-tests
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
+)
+
 add_dependencies(${target} ${target}-scripts-tests)
 
 #

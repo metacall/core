@@ -21,8 +21,8 @@ const addon = (() => {
 	];
 
 	const names = [
-		'libnode_portd',
-		'libnode_port',
+		'node_loaderd',
+		'node_loader',
 	];
 
 	/* Load addon */

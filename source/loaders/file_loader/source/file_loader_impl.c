@@ -20,6 +20,7 @@
 
 #include <file_loader/file_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 #include <loader/loader_path.h>
 
@@ -195,7 +196,7 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	file_impl = malloc(sizeof(struct loader_impl_file_type));
 

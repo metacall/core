@@ -21,6 +21,7 @@
 #include <js_loader/js_loader_impl.h>
 #include <js_loader/js_loader_impl_guard.hpp>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -708,7 +709,7 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration confi
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	js_impl = new loader_impl_js_type();
 

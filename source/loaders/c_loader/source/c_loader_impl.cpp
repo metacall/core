@@ -20,6 +20,7 @@
 
 #include <c_loader/c_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/type.h>
@@ -137,7 +138,7 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	c_impl = new loader_impl_c_type();
 

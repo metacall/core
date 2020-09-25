@@ -20,6 +20,7 @@
 
 #include <cob_loader/cob_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -122,7 +123,7 @@ loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration conf
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host->log);
 
 	// Copy environment variables in order to resolve properly the scripts
 	const char * scripts_path = getenv("LOADER_SCRIPT_PATH");

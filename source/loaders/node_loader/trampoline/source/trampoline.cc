@@ -26,8 +26,8 @@
 typedef void * (*future_resolve_callback)(void *, void *);
 typedef void * (*future_reject_callback)(void *, void *);
 
-typedef napi_value (*future_resolve_trampoline)(void *, napi_env, future_resolve_callback, napi_value, void *);
-typedef napi_value (*future_reject_trampoline)(void *, napi_env, future_reject_callback, napi_value, void *);
+typedef napi_value (*future_resolve_trampoline)(void *, napi_env, future_resolve_callback, napi_value, napi_value, void *);
+typedef napi_value (*future_reject_trampoline)(void *, napi_env, future_reject_callback, napi_value, napi_value, void *);
 
 typedef struct loader_impl_async_future_await_trampoline_type
 {
@@ -166,12 +166,13 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 
 	const size_t args_size = 2;
 	size_t argc = args_size;
+	napi_value recv;
 
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
 	/* Parse arguments */
-	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
 
 	assert(status == napi_ok);
 
@@ -213,7 +214,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	/* Execute the callback */
 	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
 
-	return trampoline->resolve_trampoline(trampoline->node_loader, env, trampoline->resolve_callback, args[1], trampoline->context);
+	return trampoline->resolve_trampoline(trampoline->node_loader, env, trampoline->resolve_callback, recv, args[1], trampoline->context);
 }
 
 napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
@@ -222,12 +223,13 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 	const size_t args_size = 2;
 	size_t argc = args_size;
+	napi_value recv;
 
 	napi_value args[args_size];
 	napi_valuetype valuetype[args_size];
 
 	/* Parse arguments */
-	status = napi_get_cb_info(env, info, &argc, args, nullptr, nullptr);
+	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
 
 	assert(status == napi_ok);
 
@@ -269,7 +271,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	/* Execute the callback */
 	loader_impl_async_future_await_trampoline trampoline = static_cast<loader_impl_async_future_await_trampoline>(result);
 
-	return trampoline->reject_trampoline(trampoline->node_loader, env, trampoline->reject_callback, args[1], trampoline->context);
+	return trampoline->reject_trampoline(trampoline->node_loader, env, trampoline->reject_callback, recv, args[1], trampoline->context);
 }
 
 napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)

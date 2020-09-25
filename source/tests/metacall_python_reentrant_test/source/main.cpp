@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	A library for loading executable code at run-time into a process.
+ *	A plugin for loading python code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,36 +18,11 @@
  *
  */
 
-#ifndef LOADER_HOST_H
-#define LOADER_HOST_H 1
+#include <gmock/gmock.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* -- Forward Declarations -- */
-
-struct loader_host_type;
-
-/* -- Type Definitions -- */
-
-typedef struct loader_host_type * loader_host;
-
-/* -- Member Data -- */
-
-/**
-*  @brief
-*    Structure holding host context from loader
-*/
-struct loader_host_type
+int main(int argc, char * argv[])
 {
-	void * config;
-	void * log;
-	void * loader;
-};
+	::testing::InitGoogleMock(&argc, argv);
 
-#ifdef __cplusplus
+	return RUN_ALL_TESTS();
 }
-#endif
-
-#endif /* LOADER_HOST_H */

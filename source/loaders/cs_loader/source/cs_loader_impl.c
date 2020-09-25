@@ -20,6 +20,7 @@
 
 #include <cs_loader/cs_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -216,7 +217,7 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	if (cs_loader_impl_initialize_types(impl) != 0)
 	{

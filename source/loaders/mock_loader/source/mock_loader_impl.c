@@ -20,6 +20,7 @@
 
 #include <mock_loader/mock_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -298,7 +299,7 @@ loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	mock_impl = malloc(sizeof(struct loader_impl_mock_type));
 

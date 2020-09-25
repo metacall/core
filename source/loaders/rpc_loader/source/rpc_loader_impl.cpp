@@ -20,7 +20,9 @@
 
 #include <rpc_loader/rpc_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
+
 #include <metacall/metacall.h>
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_function.h>
@@ -183,7 +185,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	curl_global_init(CURL_GLOBAL_ALL);
 

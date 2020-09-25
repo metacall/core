@@ -27,6 +27,7 @@
 
 #include <loader/loader_naming.h>
 #include <loader/loader_impl_interface.h>
+#include <loader/loader_host.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,6 +56,8 @@ typedef struct loader_type * loader;
 /* -- Methods  -- */
 
 LOADER_API loader loader_singleton(void);
+
+LOADER_API void loader_copy(loader_host host);
 
 LOADER_API void loader_initialize(void);
 

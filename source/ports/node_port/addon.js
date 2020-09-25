@@ -48,10 +48,8 @@ module.exports = (() => {
 	];
 
 	const names = [
-		'node_portd',
-		'node_port',
-		'libnode_portd',
-		'libnode_port',
+		'node_loaderd',
+		'node_loader',
 	];
 
 	/* Set NODE_PATH for finding metacall lib */

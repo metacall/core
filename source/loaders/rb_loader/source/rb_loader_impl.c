@@ -9,6 +9,7 @@
 #include <rb_loader/rb_loader_impl.h>
 #include <rb_loader/rb_loader_impl_parser.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -434,7 +435,7 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	/* Initialize Ruby */
 	{

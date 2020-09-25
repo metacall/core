@@ -20,6 +20,7 @@
 
 #include <dart_loader/dart_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_type.h>
@@ -298,7 +299,7 @@ loader_impl_data dart_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 	(void)config;
 
-	log_copy(host->log);
+	loader_copy(host);
 
 	dart_impl = new loader_impl_dart_type();
 

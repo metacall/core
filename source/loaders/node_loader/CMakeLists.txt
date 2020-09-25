@@ -58,13 +58,12 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/node_loader.h
 	${include_path}/node_loader_impl.h
-	#${include_path}/node_loader_port.h
 )
 
 set(sources
 	${source_path}/node_loader.c
 	${source_path}/node_loader_impl.cpp
-	#${source_path}/node_loader_port.cpp
+	${source_path}/node_loader_port.cpp
 )
 
 # Group source files
@@ -176,6 +175,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${NODEJS_LIBRARY} # NodeJS library
+	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -245,6 +245,12 @@ set(NODE_LOADER_LIB_NAME "${CMAKE_SHARED_LIBRARY_PREFIX}${target}${NODE_LOADER_B
 add_custom_target(${target}_symlink ALL
 	WORKING_DIRECTORY ${NODE_LOADER_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E create_symlink ${NODE_LOADER_NAME} ${NODE_LOADER_LIB_NAME}
+)
+
+set_target_properties(${target}_symlink
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
 )
 
 add_dependencies(${target}_symlink ${target})

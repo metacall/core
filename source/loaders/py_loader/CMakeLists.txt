@@ -172,8 +172,6 @@ target_link_libraries(${target}
 # Compile definitions
 #
 
-
-
 target_compile_definitions(${target}
 	PRIVATE
 	PY_LOADER_PORT_NAME=$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:lib>py_loader$<$<CONFIG:DEBUG>:d>
