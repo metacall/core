@@ -62,11 +62,11 @@ sub_apt(){
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install g++ libpcre3-dev curl tar
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install g++ libpcre3-dev tar
 
-	curl -sL http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz &> swig.tar.gz
+	wget http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz
 
-	tar -xzf swig.tar.gz
+	tar -xzf swig-4.0.1.tar.gz
 	cd swig-4.0.1
 	./configure --prefix=/usr/local
 	make
@@ -115,7 +115,7 @@ sub_ruby(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-remove-essential --allow-downgrades install libgmp10=2:6.1.2+dfsg-1 libgmp-dev libncurses5 libtinfo5 ruby2.3 libruby2.3 ruby2.3-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
-	#curl -sL https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
+	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 	#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 	#$SUDO_CMD gem install rails
 
@@ -264,7 +264,12 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make nodejs npm node-gyp
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make nodejs curl
+
+	# Install and update npm and node-gyp
+	curl -L https://npmjs.org/install.sh | $SUDO_CMD sh
+	npm i npm@latest -g
+	npm i node-gyp@latest -g
 }
 
 # TypeScript

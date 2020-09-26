@@ -4,6 +4,17 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD
 endif()
 
 #
+# External dependencies
+#
+
+find_package(NodeJS 10.22.0)
+
+if(NOT NODEJS_FOUND)
+	message(STATUS "NodeJS libraries not found")
+	return()
+endif()
+
+#
 # Plugin name and options
 #
 
@@ -140,6 +151,8 @@ target_include_directories(${target}
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
+
+	${NODEJS_INCLUDE_DIRS} # NodeJS includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

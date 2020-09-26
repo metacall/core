@@ -43,6 +43,7 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
+			"import sys\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_REENTRANT_TEST_PY_PORT_PATH "');\n"
 			"from metacall import metacall_load_from_memory, metacall\n"
 			"metacall_load_from_memory('py', 'def python_memory(): return 4;');\n"

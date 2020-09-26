@@ -141,10 +141,6 @@ set_target_properties(${target}
 	${DEFAULT_PROJECT_OPTIONS}
 	FOLDER "${IDE_FOLDER}"
 	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
-
-	# Set valid format for NodeJS addon
-	PREFIX ""
-	SUFFIX ".node"
 )
 
 #
@@ -189,6 +185,12 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	NODE_GYP_MODULE_NAME=$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:lib>node_loader$<$<CONFIG:DEBUG>:d>
+	USING_UV_SHARED=1
+	USING_V8_SHARED=1
+	V8_DEPRECATION_WARNINGS=1
+	_LARGEFILE_SOURCE
+	_FILE_OFFSET_BITS=64
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
@@ -224,38 +226,6 @@ target_link_libraries(${target}
 )
 
 #
-# Symlink target
-#
-
-if(WIN32)
-	set(NODE_LOADER_BINARY_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(NODE_LOADER_BINARY_DIR "${CMAKE_BINARY_DIR}")
-endif()
-
-if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-	set(NODE_LOADER_BUILD_SUFFIX "d")
-else()
-	set(NODE_LOADER_BUILD_SUFFIX "")
-endif()
-
-set(NODE_LOADER_NAME "${target}${NODE_LOADER_BUILD_SUFFIX}.node")
-set(NODE_LOADER_LIB_NAME "${CMAKE_SHARED_LIBRARY_PREFIX}${target}${NODE_LOADER_BUILD_SUFFIX}${CMAKE_SHARED_LIBRARY_SUFFIX}")
-
-add_custom_target(${target}_symlink ALL
-	WORKING_DIRECTORY ${NODE_LOADER_BINARY_DIR}
-	COMMAND ${CMAKE_COMMAND} -E create_symlink ${NODE_LOADER_NAME} ${NODE_LOADER_LIB_NAME}
-)
-
-set_target_properties(${target}_symlink
-	PROPERTIES
-	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
-)
-
-add_dependencies(${target}_symlink ${target})
-
-#
 # Deployment
 #
 
@@ -273,6 +243,3 @@ install(FILES
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
-
-# Link (lib)node_loader(d).(dll|so) to node_loader(d).node
-install(CODE "execute_process(WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/${INSTALL_LIB} COMMAND ${CMAKE_COMMAND} -E create_symlink ${NODE_LOADER_NAME} ${NODE_LOADER_LIB_NAME})")

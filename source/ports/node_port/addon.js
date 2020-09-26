@@ -50,6 +50,8 @@ module.exports = (() => {
 	const names = [
 		'node_loaderd',
 		'node_loader',
+		'libnode_loaderd',
+		'libnode_loader',
 	];
 
 	/* Set NODE_PATH for finding metacall lib */
@@ -58,12 +60,22 @@ module.exports = (() => {
 	Module._initPaths();
 	*/
 
+	/* In order to support the loader and port implemented in the same plugin,
+	the plugin will be loaded by metacall (dlopen) and by node at the same time (napi).
+	NodeJS cannot load extensions with .dll or .so extensions, they must be .node.
+	For solving this, we provide a temporal mock for allowing loading the system library
+	like an extension, even if it has a different one.
+	*/
+	const extension = process.platform === 'win32' ? '.dll' : '.so';
+
+	require.extensions[extension] = require.extensions['.node'];
+
 	/* Load addon */
 	const addon = (() => {
 		for (let folder of folders) {
 			for (let name of names) {
 				try {
-					const libPath = path.join(folder, `${name}.node`);
+					const libPath = path.join(folder, `${name}${extension}`);
 					const port = require(libPath);
 
 					if (port) {
@@ -72,12 +84,15 @@ module.exports = (() => {
 					}
 				} catch (e) {
 					if (e.code !== 'MODULE_NOT_FOUND') {
+						delete require.extensions[extension];
 						throw e;
 					}
 				}
 			}
 		}
 	})();
+
+	delete require.extensions[extension];
 
 	if (addon === undefined) {
 		console.log('Error when loading the MetaCall NodeJS Port Addon. NodeJS module not found.');

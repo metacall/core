@@ -33,7 +33,6 @@ extern "C" {
 #endif
 
 struct loader_impl_node_type;
-
 typedef struct loader_impl_node_type * loader_impl_node;
 
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
