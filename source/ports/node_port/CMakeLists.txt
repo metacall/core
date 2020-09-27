@@ -1,5 +1,5 @@
 # Check if port is enabled
-if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
+if(NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE OR NOT OPTION_BUILD_CLI)
 	return()
 endif()
 
@@ -50,9 +50,16 @@ set(node_port_test "${target}_test")
 # Define test
 #
 
+if(WIN32)
+	set(TEST_COMMAND cmd /c)
+	set(GREP_COMMAND findstr)
+else()
+	set(TEST_COMMAND sh -c)
+	set(GREP_COMMAND grep)
+endif()
+
 add_test(NAME ${target}
-	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND npm test
+	COMMAND ${TEST_COMMAND} "echo 'load node ${CMAKE_CURRENT_SOURCE_DIR}/test.js\nexit' | $<TARGET_FILE:metacallcli>"
 )
 
 #

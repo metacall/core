@@ -22,6 +22,7 @@
 
 const mod = require('module');
 const path = require('path');
+
 const addon = (() => {
 	try {
 		/* This forces metacall port to be run always by metacall cli */

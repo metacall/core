@@ -7,8 +7,7 @@
 	"homepage": "https://metacall.io",
 	"main": "index.js",
 	"scripts": {
-		"preinstall": "node scripts/preinstall.js",
-		"test": "mocha"
+		"preinstall": "node scripts/preinstall.js"
 	},
 	"author": "Vicente Eduardo Ferrer Garcia <vic798@gmail.com> (https://metacall.io)",
 	"contributors": [
@@ -25,9 +24,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
-	"dependencies": {
-		"node-addon-api": "^1.6.3"
-	},
+	"dependencies": {},
 	"devDependencies": {
 		"mocha": "^8.1.3"
 	}
