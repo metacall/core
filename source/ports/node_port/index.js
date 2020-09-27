@@ -22,7 +22,16 @@
 
 const mod = require('module');
 const path = require('path');
-const addon = require(path.resolve(__dirname, './addon.js'));
+const addon = (() => {
+	try {
+		/* This forces metacall port to be run always by metacall cli */
+		return process.binding('node_loader_port_module');
+	} catch (e) {
+		console.error('MetaCall failed to load, probably you are importing this file from NodeJS directly.');
+		console.error('You should use MetaCall CLI instead. Install it from: https://github.com/metacall/install');
+		throw e;
+	}
+})();
 
 const node_require = mod.prototype.require;
 

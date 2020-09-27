@@ -58,6 +58,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/node_loader.h
 	${include_path}/node_loader_impl.h
+	${include_path}/node_loader_port.h
 )
 
 set(sources
@@ -185,12 +186,6 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	NODE_GYP_MODULE_NAME=$<$<NOT:$<CXX_COMPILER_ID:MSVC>>:lib>node_loader$<$<CONFIG:DEBUG>:d>
-	USING_UV_SHARED=1
-	USING_V8_SHARED=1
-	V8_DEPRECATION_WARNINGS=1
-	_LARGEFILE_SOURCE
-	_FILE_OFFSET_BITS=64
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

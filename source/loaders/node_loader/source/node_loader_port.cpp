@@ -21,8 +21,11 @@
 /* -- Headers -- */
 
 #include <node_loader/node_loader_impl.h>
+#include <node_loader/node_loader_port.h>
+
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
+
 #include <metacall/metacall.h>
 
 #include <cstring>
@@ -333,5 +336,3 @@ napi_value node_loader_port_initialize(napi_env env, napi_value exports)
 
 	return exports;
 }
-
-NAPI_MODULE(NODE_GYP_MODULE_NAME, node_loader_port_initialize)

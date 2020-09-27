@@ -44,6 +44,7 @@
 #endif /* __linux__ */
 
 #include <node_loader/node_loader_impl.h>
+#include <node_loader/node_loader_port.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -69,6 +70,7 @@
 #include <streambuf>
 
 #include <node.h>
+#include <node_api.h>
 
 #include <libplatform/libplatform.h>
 #include <v8.h> /* version: 6.2.414.50 */
@@ -3133,6 +3135,28 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	(void)impl;
 
 	loader_copy(host);
+
+	/* Initialize Node Port */
+	{
+		#define NODE_LOADER_STRINGIFY_IMPL(x) #x
+		#define NODE_LOADER_STRINGIFY(x) NODE_LOADER_STRINGIFY_IMPL(x)
+
+		static napi_module node_loader_port_module =
+		{
+			NAPI_MODULE_VERSION,
+			0x01, /* NM_F_BUILTIN */
+			__FILE__,
+			node_loader_port_initialize,
+			"node_loader_port_module",
+			NULL,
+			{ 0 }
+		};
+
+		napi_module_register(&node_loader_port_module);
+
+		#undef NODE_LOADER_STRINGIFY_IMPL
+		#undef NODE_LOADER_STRINGIFY
+	}
 
 	/* Register host function for trampolining callbacks */
 	if (metacall_register("__node_loader_impl_value_to_napi_callback__", node_loader_impl_value_to_napi_callback, (void **)&node_loader_value_to_napi_callback_func, METACALL_INVALID, 0) != 0

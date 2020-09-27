@@ -1,6 +1,3 @@
-# Disable generated install path
-installPath.js
-
 # Logs
 logs
 *.log
