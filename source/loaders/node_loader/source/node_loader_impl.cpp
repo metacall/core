@@ -154,8 +154,9 @@ typedef struct loader_impl_async_destroy_safe_type * loader_impl_async_destroy_s
 
 struct loader_impl_node_type
 {
-	napi_ref global_ref;
-	napi_ref function_table_object_ref;
+	napi_env env; /* Used for storing environment for reentrant calls */
+	napi_ref global_ref; /* Store global reference */
+	napi_ref function_table_object_ref; /* Store function table reference registered by the trampoline */
 
 	napi_value initialize_safe_ptr;
 	loader_impl_async_initialize_safe initialize_safe;
@@ -276,6 +277,7 @@ struct loader_impl_async_func_call_safe_type
 	loader_impl_node_function node_func;
 	void ** args;
 	size_t size;
+	napi_value recv;
 	function_return ret;
 };
 
@@ -289,6 +291,7 @@ struct loader_impl_async_func_await_safe_type
 	function_resolve_callback resolve_callback;
 	function_reject_callback reject_callback;
 	void * context;
+	napi_value recv;
 	function_return ret;
 };
 
@@ -371,23 +374,43 @@ static void future_node_interface_destroy(future f, future_impl impl);
 static future_interface future_node_singleton(void);
 
 /* JavaScript Thread Safe */
+static void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe);
+
 static napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe func_call_safe);
 
 static napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_info info);
 
+static void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe func_await_safe);
+
 static napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe func_destroy_safe);
 
 static napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info);
 
+static void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe future_delete_safe);
+
 static napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe load_from_file_safe);
 
 static napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callback_info info);
 
+static void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe load_from_memory_safe);
+
 static napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clear_safe);
 
 static napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info);
 
+static void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe);
+
 static napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe);
 
 static napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info);
 
@@ -1086,49 +1109,59 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		function_return ret;
 		napi_status status;
 
-		/* Lock the mutex and set the parameters */
-		uv_mutex_lock(&node_impl->mutex);
-
 		/* Set up call safe arguments */
 		node_impl->func_call_safe->node_impl = node_impl;
 		node_impl->func_call_safe->func = func;
 		node_impl->func_call_safe->node_func = node_func;
 		node_impl->func_call_safe->args = static_cast<void **>(args);
 		node_impl->func_call_safe->size = size;
+		node_impl->func_call_safe->recv = NULL;
 		node_impl->func_call_safe->ret = NULL;
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_call);
-
-		if (status != napi_ok)
+		/* Lock the mutex and set the parameters */
+		if (uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function invoke function in NodeJS loader");
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_call);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function invoke function in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_func_call, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function invoke function in NodeJS loader");
+			}
+
+			/* Release call safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_func_call, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function invoke function in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Set up return of the function call */
+			ret = node_impl->func_call_safe->ret;
+
+			/* Unlock the mutex */
+			uv_mutex_unlock(&node_impl->mutex);
 		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_func_call, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
+		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function invoke function in NodeJS loader");
+			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+			node_loader_impl_func_call_safe(node_impl->env, node_impl->func_call_safe);
+
+			/* Set up return of the function call */
+			ret = node_impl->func_call_safe->ret;
 		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_func_call, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function invoke function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Set up return of the function call */
-		ret = node_impl->func_call_safe->ret;
-
-		/* Unlock the mutex */
-		uv_mutex_unlock(&node_impl->mutex);
 
 		return ret;
 	}
@@ -1146,9 +1179,6 @@ function_return function_node_interface_await(function func, function_impl impl,
 		function_return ret;
 		napi_status status;
 
-		/* Lock the mutex and set the parameters */
-		uv_mutex_lock(&node_impl->mutex);
-
 		/* Set up await safe arguments */
 		node_impl->func_await_safe->node_impl = node_impl;
 		node_impl->func_await_safe->func = func;
@@ -1158,40 +1188,53 @@ function_return function_node_interface_await(function func, function_impl impl,
 		node_impl->func_await_safe->resolve_callback = resolve_callback;
 		node_impl->func_await_safe->reject_callback = reject_callback;
 		node_impl->func_await_safe->context = context;
+		node_impl->func_await_safe->recv = NULL;
 		node_impl->func_await_safe->ret = NULL;
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_await);
-
-		if (status != napi_ok)
+		/* Lock the mutex and set the parameters */
+		if (uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function await function in NodeJS loader");
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_await);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function await function in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_func_await, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function await function in NodeJS loader");
+			}
+
+			/* Release call safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function await function in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Set up return of the function call */
+			ret = node_impl->func_await_safe->ret;
+
+			/* Unlock call safe mutex */
+			uv_mutex_unlock(&node_impl->mutex);
 		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_func_await, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
+		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function await function in NodeJS loader");
+			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+			node_loader_impl_func_await_safe(node_impl->env, node_impl->func_await_safe);
+
+			/* Set up return of the function call */
+			ret = node_impl->func_await_safe->ret;
 		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function await function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Set up return of the function call */
-		ret = node_impl->func_await_safe->ret;
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
 
 		return ret;
 	}
@@ -1210,42 +1253,48 @@ void function_node_interface_destroy(function func, function_impl impl)
 		loader_impl_node node_impl = node_func->node_impl;
 		napi_status status;
 
-		/* Lock the mutex and set the parameters */
-		uv_mutex_lock(&node_impl->mutex);
-
 		/* Set up function destroy safe arguments */
 		node_impl->func_destroy_safe->node_impl = node_impl;
 		node_impl->func_destroy_safe->node_func = node_func;
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_destroy);
-
-		if (status != napi_ok)
+		/* Lock the mutex and set the parameters */
+		if (uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function destroy function in NodeJS loader");
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_destroy);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function destroy function in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_func_destroy, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function destroy function in NodeJS loader");
+			}
+
+			/* Release call safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function destroy function in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Unlock call safe mutex */
+			uv_mutex_unlock(&node_impl->mutex);
 		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_func_destroy, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
+		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function destroy function in NodeJS loader");
+			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+			node_loader_impl_func_destroy_safe(node_impl->env, node_impl->func_destroy_safe);
 		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function destroy function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
 
 		/* Free node function arguments */
 		free(node_func->argv);
@@ -1285,43 +1334,49 @@ void future_node_interface_destroy(future f, future_impl impl)
 		loader_impl_node node_impl = node_future->node_impl;
 		napi_status status;
 
-		/* Lock the mutex and set the parameters */
-		uv_mutex_lock(&node_impl->mutex);
-
 		/* Set up future delete safe arguments */
 		node_impl->future_delete_safe->node_impl = node_impl;
 		node_impl->future_delete_safe->node_future = node_future;
 		node_impl->future_delete_safe->f = f;
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_delete);
-
-		if (status != napi_ok)
+		/* Lock the mutex and set the parameters */
+		if (uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe future destroy function in NodeJS loader");
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_delete);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe future destroy function in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_future_delete, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe future destroy function in NodeJS loader");
+			}
+
+			/* Release call safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe future destroy function in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Unlock call safe mutex */
+			uv_mutex_unlock(&node_impl->mutex);
 		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_future_delete, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
+		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe future destroy function in NodeJS loader");
+			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+			node_loader_impl_future_delete_safe(node_impl->env, node_impl->future_delete_safe);
 		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe future destroy function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
 
 		/* Free node future */
 		free(node_future);
@@ -1339,142 +1394,106 @@ future_interface future_node_singleton()
 	return &node_future_interface;
 }
 
-napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe)
 {
-	loader_impl_node node_impl;
+	static const char initialize_str[] = "initialize";
+	napi_value function_table_object;
+	napi_value initialize_str_value;
+	bool result = false;
 	napi_handle_scope handle_scope;
-	loader_impl_async_initialize_safe initialize_safe = NULL;
-	napi_status status;
-
-	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&initialize_safe);
-
-	node_loader_impl_exception(env, status);
-
-	node_impl = initialize_safe->node_impl;
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&node_impl->mutex);
+	loader_impl_node node_impl = initialize_safe->node_impl;
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
-	/* Check if event loop is correctly initialized */
-	#if NODE_GET_EVENT_LOOP
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
+
+	node_loader_impl_exception(env, status);
+
+	/* Create function string */
+	status = napi_create_string_utf8(env, initialize_str, sizeof(initialize_str) - 1, &initialize_str_value);
+
+	node_loader_impl_exception(env, status);
+
+	/* Check if exists in the table */
+	status = napi_has_own_property(env, function_table_object, initialize_str_value, &result);
+
+	node_loader_impl_exception(env, status);
+
+	if (result == true)
 	{
-		struct uv_loop_s * loop;
+		napi_value function_trampoline_initialize;
+		napi_valuetype valuetype;
 
-		/* It is impossible to inject the event loop, so we must add an assert to verfy it */
-		status = napi_get_uv_event_loop(env, &loop);
+		status = napi_get_named_property(env, function_table_object, initialize_str, &function_trampoline_initialize);
 
 		node_loader_impl_exception(env, status);
 
-		if (loop != node_impl->thread_loop)
+		status = napi_typeof(env, function_trampoline_initialize, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_function)
 		{
-			/* TODO: error_raise("Invalid event loop"); */
-
-			/* Set error */
-			initialize_safe->result = 1;
-
-			/* Close scope */
-			status = napi_close_handle_scope(env, handle_scope);
-
-			node_loader_impl_exception(env, status);
-
-			/* Signal start condition */
-			uv_cond_signal(&node_impl->cond);
-
-			uv_mutex_unlock(&node_impl->mutex);
-
-			return nullptr;
+			napi_throw_type_error(env, nullptr, "Invalid function initialize in function table object");
 		}
-	}
-	#endif /* NODE_GET_EVENT_LOOP */
 
-	/* Execute the call to initialize */
-	{
-		static const char initialize_str[] = "initialize";
-		napi_value function_table_object;
-		napi_value initialize_str_value;
-		bool result = false;
+		/* Call to load from file function */
+		napi_value global, return_value;
 
-		/* Get function table object from reference */
-		status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
+		status = napi_get_reference_value(env, node_impl->global_ref, &global);
 
 		node_loader_impl_exception(env, status);
 
-		/* Create function string */
-		status = napi_create_string_utf8(env, initialize_str, sizeof(initialize_str) - 1, &initialize_str_value);
+		status = napi_call_function(env, global, function_trampoline_initialize, 0, nullptr, &return_value);
 
 		node_loader_impl_exception(env, status);
-
-		/* Check if exists in the table */
-		status = napi_has_own_property(env, function_table_object, initialize_str_value, &result);
-
-		node_loader_impl_exception(env, status);
-
-		if (result == true)
-		{
-			napi_value function_trampoline_initialize;
-			napi_valuetype valuetype;
-
-			status = napi_get_named_property(env, function_table_object, initialize_str, &function_trampoline_initialize);
-
-			node_loader_impl_exception(env, status);
-
-			status = napi_typeof(env, function_trampoline_initialize, &valuetype);
-
-			node_loader_impl_exception(env, status);
-
-			if (valuetype != napi_function)
-			{
-				napi_throw_type_error(env, nullptr, "Invalid function initialize in function table object");
-			}
-
-			/* Call to load from file function */
-			napi_value global, return_value;
-
-			status = napi_get_reference_value(env, node_impl->global_ref, &global);
-
-			node_loader_impl_exception(env, status);
-
-			status = napi_call_function(env, global, function_trampoline_initialize, 0, nullptr, &return_value);
-
-			node_loader_impl_exception(env, status);
-		}
 	}
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_initialize_safe initialize_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&initialize_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&initialize_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	initialize_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_initialize_safe(env, initialize_safe);
+
+	/* Clear environment */
+	initialize_safe->node_impl->env = NULL;
 
 	/* Signal start condition */
-	uv_cond_signal(&node_impl->cond);
+	uv_cond_signal(&initialize_safe->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl->mutex);
+	uv_mutex_unlock(&initialize_safe->node_impl->mutex);
 
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe func_call_safe)
 {
 	napi_handle_scope handle_scope;
 	size_t args_size;
 	value * args;
 	loader_impl_node_function node_func;
 	size_t args_count;
-	loader_impl_async_func_call_safe func_call_safe = NULL;
-	napi_status status;
-	napi_value recv;
-
-	status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void**)&func_call_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock the call safe mutex and get the parameters */
-	uv_mutex_lock(&func_call_safe->node_impl->mutex);
 
 	/* Get function data */
 	args_size = func_call_safe->size;
@@ -1482,7 +1501,7 @@ napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_inf
 	node_func = func_call_safe->node_func;
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
@@ -1515,12 +1534,38 @@ napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_inf
 	node_loader_impl_exception(env, status);
 
 	/* Convert function return to value */
-	func_call_safe->ret = node_loader_impl_napi_to_value(func_call_safe->node_impl, env, recv, func_return);
+	func_call_safe->ret = node_loader_impl_napi_to_value(func_call_safe->node_impl, env, func_call_safe->recv, func_return);
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_func_call_safe func_call_safe = NULL;
+	napi_status status;
+	napi_value recv;
+
+	status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void**)&func_call_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&func_call_safe->node_impl->mutex);
+
+	/* Store function recv for reentrant calls */
+	func_call_safe->recv = recv;
+
+	/* Store environment for reentrant calls */
+	func_call_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_func_call_safe(env, func_call_safe);
+
+	/* Clear environment */
+	func_call_safe->node_impl->env = NULL;
 
 	/* Signal function call condition */
 	uv_cond_signal(&func_call_safe->node_impl->cond);
@@ -1603,7 +1648,7 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 	return result;
 }
 
-napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe func_await_safe)
 {
 	static const char await_str[] = "await";
 	napi_value await_str_value;
@@ -1612,18 +1657,9 @@ napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_in
 	bool result = false;
 	napi_value argv[3];
 	napi_handle_scope handle_scope;
-	loader_impl_async_func_await_safe func_await_safe = NULL;
-	napi_value recv;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void**)&func_await_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&func_await_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
@@ -1740,7 +1776,7 @@ napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_in
 				node_loader_impl_exception(env, status);
 
 				/* Proccess the await return */
-				func_await_safe->ret = node_loader_impl_napi_to_value(func_await_safe->node_impl, env, recv, await_return);
+				func_await_safe->ret = node_loader_impl_napi_to_value(func_await_safe->node_impl, env, func_await_safe->recv, await_return);
 			}
 		}
 	}
@@ -1749,6 +1785,31 @@ napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_in
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_info info)
+{
+	napi_value recv;
+	loader_impl_async_func_await_safe func_await_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void**)&func_await_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&func_await_safe->node_impl->mutex);
+
+	/* Store function recv for reentrant calls */
+	func_await_safe->recv = recv;
+
+	/* Store environment for reentrant calls */
+	func_await_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_func_await_safe(env, func_await_safe);
+
+	/* Clear environment */
+	func_await_safe->node_impl->env = NULL;
 
 	/* Signal function await condition */
 	uv_cond_signal(&func_await_safe->node_impl->cond);
@@ -1758,21 +1819,13 @@ napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_in
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe func_destroy_safe)
 {
 	uint32_t ref_count = 0;
 	napi_handle_scope handle_scope;
-	loader_impl_async_func_destroy_safe func_destroy_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&func_destroy_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&func_destroy_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
@@ -1794,6 +1847,27 @@ napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_func_destroy_safe func_destroy_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&func_destroy_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&func_destroy_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	func_destroy_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_func_destroy_safe(env, func_destroy_safe);
+
+	/* Clear environment */
+	func_destroy_safe->node_impl->env = NULL;
 
 	/* Signal function destroy condition */
 	uv_cond_signal(&func_destroy_safe->node_impl->cond);
@@ -1803,26 +1877,17 @@ napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe future_delete_safe)
 {
+	uint32_t ref_count = 0;
 	napi_handle_scope handle_scope;
-	loader_impl_async_future_delete_safe future_delete_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&future_delete_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&future_delete_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
 	/* Clear promise reference */
-	uint32_t ref_count = 0;
-
 	status = napi_reference_unref(env, future_delete_safe->node_future->promise_ref, &ref_count);
 
 	node_loader_impl_exception(env, status);
@@ -1840,6 +1905,27 @@ napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_future_delete_safe future_delete_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&future_delete_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&future_delete_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	future_delete_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_future_delete_safe(env, future_delete_safe);
+
+	/* Clear environment */
+	future_delete_safe->node_impl->env = NULL;
 
 	/* Signal future delete condition */
 	uv_cond_signal(&future_delete_safe->node_impl->cond);
@@ -1849,24 +1935,16 @@ napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_from_file_safe load_from_file_safe)
 {
 	static const char load_from_file_str[] = "load_from_file";
 	napi_value function_table_object;
 	napi_value load_from_file_str_value;
 	bool result = false;
 	napi_handle_scope handle_scope;
-	loader_impl_async_load_from_file_safe load_from_file_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&load_from_file_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&load_from_file_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
@@ -1955,6 +2033,27 @@ napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callbac
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_load_from_file_safe load_from_file_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&load_from_file_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&load_from_file_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	load_from_file_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_load_from_file_safe(env, load_from_file_safe);
+
+	/* Clear environment */
+	load_from_file_safe->node_impl->env = NULL;
 
 	/* Signal load from file condition */
 	uv_cond_signal(&load_from_file_safe->node_impl->cond);
@@ -1964,24 +2063,16 @@ napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callbac
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load_from_memory_safe load_from_memory_safe)
 {
 	static const char load_from_memory_str[] = "load_from_memory";
 	napi_value function_table_object;
 	napi_value load_from_memory_str_value;
 	bool result = false;
 	napi_handle_scope handle_scope;
-	loader_impl_async_load_from_memory_safe load_from_memory_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&load_from_memory_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&load_from_memory_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
@@ -2063,6 +2154,27 @@ napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callb
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_load_from_memory_safe load_from_memory_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&load_from_memory_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&load_from_memory_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	load_from_memory_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_load_from_memory_safe(env, load_from_memory_safe);
+
+	/* Clear environment */
+	load_from_memory_safe->node_impl->env = NULL;
 
 	/* Signal load from memory condition */
 	uv_cond_signal(&load_from_memory_safe->node_impl->cond);
@@ -2072,7 +2184,7 @@ napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callb
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clear_safe)
 {
 	static const char clear_str[] = "clear";
 	napi_value function_table_object;
@@ -2080,17 +2192,9 @@ napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info in
 	bool result = false;
 	napi_handle_scope handle_scope;
 	uint32_t ref_count = 0;
-	loader_impl_async_clear_safe clear_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&clear_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&clear_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 	/* Get function table object from reference */
@@ -2162,6 +2266,27 @@ napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info in
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_clear_safe clear_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&clear_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&clear_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	clear_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_clear_safe(env, clear_safe);
+
+	/* Clear environment */
+	clear_safe->node_impl->env = NULL;
 
 	/* Signal clear condition */
 	uv_cond_signal(&clear_safe->node_impl->cond);
@@ -2171,24 +2296,16 @@ napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info in
 	return nullptr;
 }
 
-napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe)
 {
 	static const char discover_str[] = "discover";
 	napi_value function_table_object;
 	napi_value discover_str_value;
 	bool result = false;
 	napi_handle_scope handle_scope;
-	loader_impl_async_discover_safe discover_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&discover_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock node implementation mutex */
-	uv_mutex_lock(&discover_safe->node_impl->mutex);
 
 	/* Create scope */
-	status = napi_open_handle_scope(env, &handle_scope);
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
@@ -2536,6 +2653,27 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_discover_safe discover_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&discover_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&discover_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	discover_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_discover_safe(env, discover_safe);
+
+	/* Clear environment */
+	discover_safe->node_impl->env = NULL;
 
 	/* Signal discover condition */
 	uv_cond_signal(&discover_safe->node_impl->cond);
@@ -3173,6 +3311,9 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
+	/* Initialize environment for reentrant calls */
+	node_impl->env = NULL;
+
 	/* TODO: On error, delete dup, condition and mutex */
 
 	/* Disable stdio buffering, it interacts poorly with printf()
@@ -3274,46 +3415,56 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	/* Call initialize function with thread safe */
 	{
 		napi_status status;
-
-		/* Lock the mutex and set the parameters */
-		uv_mutex_lock(&node_impl->mutex);
+		int result;
 
 		/* Set up initialize safe arguments */
 		node_impl->initialize_safe->node_impl = node_impl;
 		node_impl->initialize_safe->result = 0;
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_initialize);
-
-		if (status != napi_ok)
+		/* Lock the mutex and set the parameters */
+		if (uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe initialize function in NodeJS loader");
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_initialize);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe initialize function in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_initialize, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe initialize function in NodeJS loader");
+			}
+
+			/* Release initialize safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe initialize function in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Set up return of the function call */
+			result = node_impl->initialize_safe->result;
+
+			/* Unlock the mutex */
+			uv_mutex_unlock(&node_impl->mutex);
 		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_initialize, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
+		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe initialize function in NodeJS loader");
+			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+			node_loader_impl_initialize_safe(node_impl->env, node_impl->initialize_safe);
+
+			/* Set up return of the function call */
+			result = node_impl->initialize_safe->result;
 		}
-
-		/* Release initialize safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe initialize function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Set up return of the function call */
-		int result = node_impl->initialize_safe->result;
-
-		/* Unlock the mutex */
-		uv_mutex_unlock(&node_impl->mutex);
 
 		if (result != 0)
 		{
@@ -3348,47 +3499,56 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		return NULL;
 	}
 
-	/* Lock the mutex and set the parameters */
-	uv_mutex_lock(&node_impl->mutex);
-
 	/* Set up load from file safe arguments */
 	node_impl->load_from_file_safe->node_impl = node_impl;
 	node_impl->load_from_file_safe->paths = paths;
 	node_impl->load_from_file_safe->size = size;
 	node_impl->load_from_file_safe->handle_ref = NULL;
 
-	/* Acquire the thread safe function in order to do the call */
-	status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_file);
-
-	if (status != napi_ok)
+	/* Lock the mutex and set the parameters */
+	if (uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from file function in NodeJS loader");
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_file);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from file function in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_impl->threadsafe_load_from_file, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from file function in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from file function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		/* Retreive the result handle */
+		handle_ref = node_impl->load_from_file_safe->handle_ref;
+
+		/* Unlock call safe mutex */
+		uv_mutex_unlock(&node_impl->mutex);
 	}
-
-	/* Execute the thread safe call in a nonblocking manner */
-	status = napi_call_threadsafe_function(node_impl->threadsafe_load_from_file, nullptr, napi_tsfn_nonblocking);
-
-	if (status != napi_ok)
+	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from file function in NodeJS loader");
+		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+		node_loader_impl_load_from_file_safe(node_impl->env, node_impl->load_from_file_safe);
+
+		/* Retreive the result handle */
+		handle_ref = node_impl->load_from_file_safe->handle_ref;
 	}
-
-	/* Release call safe function */
-	status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_release);
-
-	if (status != napi_ok)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from file function in NodeJS loader");
-	}
-
-	/* Wait for the execution of the safe call */
-	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-	/* Retreive the result handle */
-	handle_ref = node_impl->load_from_file_safe->handle_ref;
-
-	/* Unlock call safe mutex */
-	uv_mutex_unlock(&node_impl->mutex);
 
 	return static_cast<loader_handle>(handle_ref);
 }
@@ -3404,9 +3564,6 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 		return NULL;
 	}
 
-	/* Lock the mutex and set the parameters */
-	uv_mutex_lock(&node_impl->mutex);
-
 	/* Set up load from memory safe arguments */
 	node_impl->load_from_memory_safe->node_impl = node_impl;
 	node_impl->load_from_memory_safe->name = name;
@@ -3414,38 +3571,50 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	node_impl->load_from_memory_safe->size = size;
 	node_impl->load_from_memory_safe->handle_ref = NULL;
 
-	/* Acquire the thread safe function in order to do the call */
-	status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_memory);
-
-	if (status != napi_ok)
+	/* Lock the mutex and set the parameters */
+	if (uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from memory function in NodeJS loader");
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_memory);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from memory function in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_impl->threadsafe_load_from_memory, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from memory function in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from memory function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		/* Retreive the result handle */
+		handle_ref = node_impl->load_from_memory_safe->handle_ref;
+
+		/* Unlock call safe mutex */
+		uv_mutex_unlock(&node_impl->mutex);
 	}
-
-	/* Execute the thread safe call in a nonblocking manner */
-	status = napi_call_threadsafe_function(node_impl->threadsafe_load_from_memory, nullptr, napi_tsfn_nonblocking);
-
-	if (status != napi_ok)
+	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from memory function in NodeJS loader");
+		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+		node_loader_impl_load_from_memory_safe(node_impl->env, node_impl->load_from_memory_safe);
+
+		/* Retreive the result handle */
+		handle_ref = node_impl->load_from_memory_safe->handle_ref;
 	}
-
-	/* Release call safe function */
-	status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_release);
-
-	if (status != napi_ok)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from memory function in NodeJS loader");
-	}
-
-	/* Wait for the execution of the safe call */
-	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-	/* Retreive the result handle */
-	handle_ref = node_impl->load_from_memory_safe->handle_ref;
-
-	/* Unlock call safe mutex */
-	uv_mutex_unlock(&node_impl->mutex);
 
 	return static_cast<loader_handle>(handle_ref);
 }
@@ -3471,42 +3640,48 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 		return 1;
 	}
 
-	/* Lock the mutex and set the parameters */
-	uv_mutex_lock(&node_impl->mutex);
-
 	/* Set up clear safe arguments */
 	node_impl->clear_safe->node_impl = node_impl;
 	node_impl->clear_safe->handle_ref = handle_ref;
 
-	/* Acquire the thread safe function in order to do the call */
-	status = napi_acquire_threadsafe_function(node_impl->threadsafe_clear);
-
-	if (status != napi_ok)
+	/* Lock the mutex and set the parameters */
+	if (uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe clear function in NodeJS loader");
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_impl->threadsafe_clear);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe clear function in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_impl->threadsafe_clear, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe clear function in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe clear function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		/* Unlock call safe mutex */
+		uv_mutex_unlock(&node_impl->mutex);
 	}
-
-	/* Execute the thread safe call in a nonblocking manner */
-	status = napi_call_threadsafe_function(node_impl->threadsafe_clear, nullptr, napi_tsfn_nonblocking);
-
-	if (status != napi_ok)
+	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe clear function in NodeJS loader");
+		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+		node_loader_impl_clear_safe(node_impl->env, node_impl->clear_safe);
 	}
-
-	/* Release call safe function */
-	status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_release);
-
-	if (status != napi_ok)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe clear function in NodeJS loader");
-	}
-
-	/* Wait for the execution of the safe call */
-	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-	/* Unlock call safe mutex */
-	uv_mutex_unlock(&node_impl->mutex);
 
 	return 0;
 }
@@ -3522,64 +3697,61 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		return 1;
 	}
 
-	/* Lock the mutex and set the parameters */
-	uv_mutex_lock(&node_impl->mutex);
-
 	/* Set up discover safe arguments */
 	node_impl->discover_safe->impl = impl;
 	node_impl->discover_safe->node_impl = node_impl;
 	node_impl->discover_safe->handle_ref = handle_ref;
 	node_impl->discover_safe->ctx = ctx;
 
-	/* Acquire the thread safe function in order to do the call */
-	status = napi_acquire_threadsafe_function(node_impl->threadsafe_discover);
-
-	if (status != napi_ok)
+	/* Lock the mutex and set the parameters */
+	if (uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe discover function in NodeJS loader");
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_impl->threadsafe_discover);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe discover function in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_impl->threadsafe_discover, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe discover function in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe discover function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		/* Unlock call safe mutex */
+		uv_mutex_unlock(&node_impl->mutex);
 	}
-
-	/* Execute the thread safe call in a nonblocking manner */
-	status = napi_call_threadsafe_function(node_impl->threadsafe_discover, nullptr, napi_tsfn_nonblocking);
-
-	if (status != napi_ok)
+	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe discover function in NodeJS loader");
+		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+		node_loader_impl_discover_safe(node_impl->env, node_impl->discover_safe);
 	}
-
-	/* Release call safe function */
-	status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_release);
-
-	if (status != napi_ok)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe discover function in NodeJS loader");
-	}
-
-	/* Wait for the execution of the safe call */
-	uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-	/* Unlock call safe mutex */
-	uv_mutex_unlock(&node_impl->mutex);
 
 	return 0;
 }
 
-napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
+void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe)
 {
-	loader_impl_node node_impl;
 	uint32_t ref_count = 0;
 	napi_status status;
-	loader_impl_async_destroy_safe destroy_safe = NULL;
 	napi_handle_scope handle_scope;
 
-	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&destroy_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock the call safe mutex and get the parameters */
-	uv_mutex_lock(&destroy_safe->node_impl->mutex);
-
-	node_impl = destroy_safe->node_impl;
+	loader_impl_node node_impl = destroy_safe->node_impl;
 
 	/* Create scope */
 	status = napi_open_handle_scope(env, &handle_scope);
@@ -3774,11 +3946,32 @@ napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info 
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy"); */
 	}
+}
+
+napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_destroy_safe destroy_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&destroy_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&destroy_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	destroy_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_destroy_safe(env, destroy_safe);
+
+	/* Clear environment */
+	destroy_safe->node_impl->env = NULL;
 
 	/* Signal destroy condition */
-	uv_cond_signal(&node_impl->cond);
+	uv_cond_signal(&destroy_safe->node_impl->cond);
 
-	uv_mutex_unlock(&node_impl->mutex);
+	uv_mutex_unlock(&destroy_safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -3820,35 +4013,44 @@ int node_loader_impl_destroy(loader_impl impl)
 		/* Set up destroy safe arguments */
 		node_impl->destroy_safe->node_impl = node_impl;
 
-		/* Acquire the thread safe function in order to do the call */
-		status = napi_acquire_threadsafe_function(node_impl->threadsafe_destroy);
-
-		if (status != napi_ok)
+		/* Lock the mutex and set the parameters */
+		if (uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe destroy function in NodeJS loader");
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_destroy);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe destroy function in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_destroy, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe destroy function in NodeJS loader");
+			}
+
+			/* Release call safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe destroy function in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Unlock call safe mutex */
+			uv_mutex_unlock(&node_impl->mutex);
 		}
-
-		/* Execute the thread safe call in a nonblocking manner */
-		status = napi_call_threadsafe_function(node_impl->threadsafe_destroy, nullptr, napi_tsfn_nonblocking);
-
-		if (status != napi_ok)
+		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe destroy function in NodeJS loader");
+			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
+			node_loader_impl_destroy_safe(node_impl->env, node_impl->destroy_safe);
 		}
-
-		/* Release call safe function */
-		status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_release);
-
-		if (status != napi_ok)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe destroy function in NodeJS loader");
-		}
-
-		/* Wait for the execution of the safe call */
-		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-		/* Unlock call safe mutex */
-		uv_mutex_unlock(&node_impl->mutex);
 	}
 
 	/* Wait for node thread to finish */
