@@ -3950,6 +3950,7 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
 {
+	loader_impl_node node_impl;
 	loader_impl_async_destroy_safe destroy_safe = NULL;
 
 	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&destroy_safe);
@@ -3959,19 +3960,22 @@ napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info 
 	/* Lock the call safe mutex and get the parameters */
 	uv_mutex_lock(&destroy_safe->node_impl->mutex);
 
+	/* Store node impl reference because destroy_safe gets deteled after calling node_loader_impl_destroy_safe */
+	node_impl = destroy_safe->node_impl;
+
 	/* Store environment for reentrant calls */
-	destroy_safe->node_impl->env = env;
+	node_impl->env = env;
 
 	/* Call to the implementation function */
 	node_loader_impl_destroy_safe(env, destroy_safe);
 
 	/* Clear environment */
-	destroy_safe->node_impl->env = NULL;
+	node_impl->env = NULL;
 
 	/* Signal destroy condition */
-	uv_cond_signal(&destroy_safe->node_impl->cond);
+	uv_cond_signal(&node_impl->cond);
 
-	uv_mutex_unlock(&destroy_safe->node_impl->mutex);
+	uv_mutex_unlock(&node_impl->mutex);
 
 	return nullptr;
 }
@@ -4006,9 +4010,6 @@ int node_loader_impl_destroy(loader_impl impl)
 	/* Call destroy function with thread safe */
 	{
 		napi_status status;
-
-		/* Lock the mutex and set the parameters */
-		uv_mutex_lock(&node_impl->mutex);
 
 		/* Set up destroy safe arguments */
 		node_impl->destroy_safe->node_impl = node_impl;
