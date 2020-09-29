@@ -161,7 +161,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 
 	for (uint32_t i = 0; i < path_index; ++i)
 	{
-		delete[] paths[path_index];
+		delete[] paths[i];
 	}
 
 	delete[] paths;

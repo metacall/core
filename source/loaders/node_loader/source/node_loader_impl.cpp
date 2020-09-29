@@ -509,6 +509,9 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 
 			/* TODO: Notify MetaCall error handling system when it is implemented */
 			/* error_raise(str); */
+			printf("NodeJS Loader Error: %s\n", str);
+			fflush(stdout);
+
 			/* Meanwhile, throw it again */
 			status = napi_throw_error(env, nullptr, str);
 
@@ -813,7 +816,6 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 
 napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info)
 {
-	void * f = NULL;
 	size_t iterator, argc = 0;
 
 	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
@@ -832,7 +834,7 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 		node_loader_impl_finalizer(env, argv[iterator], args[iterator]);
 	}
 
-	void * ret = metacallfv_s(f, args, argc);
+	void * ret = metacallfv_s(closure->f, args, argc);
 
 	napi_value result = node_loader_impl_value_to_napi(closure->node_impl, env, ret);
 
@@ -840,6 +842,8 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 
 	delete[] argv;
 	delete[] args;
+
+	delete closure;
 
 	return result;
 }
@@ -995,11 +999,12 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		void * f = value_to_function(arg_value);
+		loader_impl_napi_to_value_callback_closure closure = new loader_impl_napi_to_value_callback_closure_type();
 
-		/* TODO-YEET: Change f by a struct with f + loader_impl */
+		closure->f = value_to_function(arg_value);
+		closure->node_impl = node_impl;
 
-		status = napi_create_function(env, NULL, 0, node_loader_impl_napi_to_value_callback, f, &v);
+		status = napi_create_function(env, NULL, 0, node_loader_impl_napi_to_value_callback, closure, &v);
 
 		node_loader_impl_exception(env, status);
 	}
@@ -3938,6 +3943,8 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	{
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive"); */
+		printf("NodeJS Loader Error: NodeJS event loop should not be alive\n");
+		fflush(stdout);
 	}
 
 	/* TODO: Check how to delete properly all handles */
@@ -3945,6 +3952,8 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	{
 		/* TODO: Make logs thread safe */
 		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy"); */
+		printf("NodeJS Loader Error: NodeJS event loop should not be busy\n");
+		fflush(stdout);
 	}
 }
 
