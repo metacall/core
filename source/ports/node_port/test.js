@@ -33,6 +33,9 @@ fs.readdirSync(testDir).filter((file) => {
 	);
 });
 
+// Set timeout to 5 min
+mocha.timeout(300000);
+
 // Run the tests
 mocha.run((failures) => {
 	process.exitCode = failures ? 1 : 0;
