@@ -116,7 +116,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 
 	tag = new char[tag_length + 1];
 
-	napi_get_value_string_utf8(env, argv[0], tag, tag_length, &tag_length);
+	napi_get_value_string_utf8(env, argv[0], tag, tag_length + 1, &tag_length);
 
 	tag[tag_length] = '\0';
 
@@ -139,7 +139,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 
 			napi_get_value_string_utf8(env, path, paths[path_index], path_length + 1, &path_length);
 
-			paths[path_index][path_length] = 0;
+			paths[path_index][path_length] = '\0';
 
 			++path_index;
 		}
