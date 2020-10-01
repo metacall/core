@@ -32,9 +32,10 @@ const {
 } = require('../index.js');
 
 describe('metacall', () => {
-	describe('require', () => {
+	describe('defined', () => {
 		it('functions metacall and metacall_load_from_file must be defined', () => {
 			assert.notStrictEqual(metacall, undefined);
+			assert.notStrictEqual(metacall_load_from_memory, undefined);
 			assert.notStrictEqual(metacall_load_from_file, undefined);
 			assert.notStrictEqual(metacall_inspect, undefined);
 			assert.notStrictEqual(metacall_logs, undefined);
@@ -91,8 +92,8 @@ describe('metacall', () => {
 			assert.strictEqual(example.divide(4.0, 2.0), 2.0);
 			assert.strictEqual(example.sum(2, 2), 4);
 			assert.strictEqual(example.strcat('2', '2'), '22');
-			assert.deepEqual(example.return_array(), [1, 2, 3]);
-			assert.deepEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
+			assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
+			assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
 		});
 		it('require (rb)', () => {
 			const second = require('second.rb');
@@ -116,8 +117,8 @@ describe('metacall', () => {
 		});
 		it('metacall (py)', () => {
 			assert.strictEqual(metacall('multiply', 2, 2), 4);
-			assert.deepEqual(metacall('return_array'), [1, 2, 3]);
-			assert.deepEqual(metacall('return_same_array', [4, 5, 6]), [4, 5, 6]);
+			assert.deepStrictEqual(metacall('return_array'), [1, 2, 3]);
+			assert.deepStrictEqual(metacall('return_same_array', [4, 5, 6]), [4, 5, 6]);
 		});
 		it('metacall (rb)', () => {
 			assert.strictEqual(metacall('get_second', 5, 12), 12);
