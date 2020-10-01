@@ -3925,11 +3925,6 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 
 	node_loader_impl_exception(env, status);
 
-	/* Close scope */
-	status = napi_close_handle_scope(env, handle_scope);
-
-	node_loader_impl_exception(env, status);
-
 	/*  Stop event loop */
 	uv_stop(node_impl->thread_loop);
 
@@ -3955,6 +3950,11 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 		printf("NodeJS Loader Error: NodeJS event loop should not be busy\n");
 		fflush(stdout);
 	}
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
 }
 
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
