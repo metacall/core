@@ -27,7 +27,6 @@ endif()
 # Files
 install(FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/index.js
-	${CMAKE_CURRENT_SOURCE_DIR}/addon.js
 	${CMAKE_CURRENT_SOURCE_DIR}/package.json
 	${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json
 	${CMAKE_CURRENT_SOURCE_DIR}/LICENSE
