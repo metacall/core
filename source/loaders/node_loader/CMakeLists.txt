@@ -24,9 +24,6 @@ set(target node_loader)
 # Add node loader bootstrap
 add_subdirectory(bootstrap)
 
-# Add node loader trampoline implementation
-add_subdirectory(trampoline)
-
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 
@@ -59,13 +56,22 @@ set(headers
 	${include_path}/node_loader.h
 	${include_path}/node_loader_impl.h
 	${include_path}/node_loader_port.h
+	${include_path}/node_loader_trampoline.h
 )
 
 set(sources
 	${source_path}/node_loader.c
 	${source_path}/node_loader_impl.cpp
 	${source_path}/node_loader_port.cpp
+	${source_path}/node_loader_trampoline.cpp
 )
+
+if(WIN32 AND MSVC_VERSION GREATER_EQUAL 1200)
+	set(sources
+		${sources}
+		${source_path}/node_loader_win32_delay_load.cpp
+	)
+endif()
 
 # Group source files
 set(header_group "Header Files (API)")

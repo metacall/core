@@ -274,7 +274,7 @@ module.exports = ((impl, ptr) => {
 			throw 'Process arguments (process.argv[2], process.argv[3]) not defined.';
 		}
 
-		const trampoline = require('./trampoline.node');
+		const trampoline = process.binding('node_loader_trampoline_module');
 
 		return trampoline.register(impl, ptr, {
 			'initialize': node_loader_trampoline_initialize,

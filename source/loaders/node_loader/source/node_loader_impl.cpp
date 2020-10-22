@@ -45,6 +45,7 @@
 
 #include <node_loader/node_loader_impl.h>
 #include <node_loader/node_loader_port.h>
+#include <node_loader/node_loader_trampoline.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -3297,11 +3298,24 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 	loader_copy(host);
 
-	/* Initialize Node Port */
+	/* Initialize Node Loader Trampoline */
 	{
-		#define NODE_LOADER_STRINGIFY_IMPL(x) #x
-		#define NODE_LOADER_STRINGIFY(x) NODE_LOADER_STRINGIFY_IMPL(x)
+		static napi_module node_loader_trampoline_module =
+		{
+			NAPI_MODULE_VERSION,
+			0x01, /* NM_F_BUILTIN */
+			__FILE__,
+			node_loader_trampoline_initialize,
+			"node_loader_trampoline_module",
+			NULL,
+			{ 0 }
+		};
 
+		napi_module_register(&node_loader_trampoline_module);
+	}
+
+	/* Initialize Node Loader Port */
+	{
 		static napi_module node_loader_port_module =
 		{
 			NAPI_MODULE_VERSION,
@@ -3314,9 +3328,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		};
 
 		napi_module_register(&node_loader_port_module);
-
-		#undef NODE_LOADER_STRINGIFY_IMPL
-		#undef NODE_LOADER_STRINGIFY
 	}
 
 	/* Register host function for trampolining callbacks */

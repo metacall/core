@@ -32,38 +32,6 @@
 
 #include <node_api.h>
 
-/* Win32 Delay Load */
-#if (defined(WIN32) || defined(_WIN32)) && (_MSC_VER >= 1200)
-#	define WIN32_LEAN_AND_MEAN
-#	include <windows.h>
-#	define DELAYIMP_INSECURE_WRITABLE_HOOKS 1
-#	include <delayimp.h>
-
-	static FARPROC WINAPI node_loader_port_win32_delay_load(unsigned dliNotify, PDelayLoadInfo pdli);
-
-#	if (defined(DELAYLOAD_VERSION) && DELAYLOAD_VERSION >= 0x0200) || (defined(_DELAY_IMP_VER) && (_DELAY_IMP_VER >= 2))
-		extern PfnDliHook __pfnDliFailureHook2 = node_loader_port_win32_delay_load;
-#	else
-		extern PfnDliHook __pfnDliFailureHook = node_loader_port_win32_delay_load;
-#	endif
-
-	FARPROC WINAPI node_loader_port_win32_delay_load(unsigned dliNotify, PDelayLoadInfo pdli)
-	{
-		FARPROC fp_module_register = NULL;
-
-		if (dliNotify == dliFailGetProc)
-		{
-			LPCTSTR module_handle_lpctstr = "node.dll";
-
-			HMODULE module_handle = GetModuleHandle(module_handle_lpctstr);
-
-			fp_module_register = ::GetProcAddress(module_handle, pdli->dlp.szProcName);
-		}
-
-		return fp_module_register;
-	}
-#endif
-
 napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;

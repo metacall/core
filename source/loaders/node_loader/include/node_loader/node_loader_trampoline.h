@@ -21,11 +21,17 @@
 #ifndef NODE_LOADER_TRAMPOLINE_H
 #define NODE_LOADER_TRAMPOLINE_H 1
 
+#include <node_loader/node_loader_api.h>
+
+#include <node_api.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 typedef void * (*node_loader_trampoline_register_ptr)(void *, void *, void *);
+
+NODE_LOADER_NO_EXPORT napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports);
 
 #ifdef __cplusplus
 }
