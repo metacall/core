@@ -680,7 +680,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 
 	if (length > 0 && length < LOADER_NAMING_NAME_SIZE)
 	{
-		size_t written = snprintf(name, length, format, (const void *)impl, (const void *)buffer, size);
+		size_t written = snprintf(name, length + 1, format, (const void *)impl, (const void *)buffer, size);
 
 		if (written == length)
 		{
