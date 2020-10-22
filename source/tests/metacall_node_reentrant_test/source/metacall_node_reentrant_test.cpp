@@ -42,22 +42,43 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 	/* NodeJS */
 	#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		static const char buffer[] =
-			"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "');\n"
-			"metacall_load_from_memory('node', 'module.exports = { node_memory: () => 4 };');\n"
-			"console.log('Reentrant node_memory result:', metacall('node_memory'));\n";
+		/* List of loads (1 level) */
+		{
+			static const char buffer[] =
+				"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory0: () => 0 };');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory1: () => 1 };');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory2: () => 2 };');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory3: () => 3 };');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory4: () => 4 };');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory5: () => 5 };');\n";
 
-			/* TODO: This generates a stack overflow in NodeJS land. We should make a better approach, possibly iterative. */
-			/*
-			"metacall_load_from_memory('node', '"
-				"const { metacall } = require(\"" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "\");"
-				"console.log(\"Reentrant node_memory result:\", metacall(\"node_memory\"));"
-			"');\n";
-			*/
+			static const char tag[] = "node";
 
-		static const char tag[] = "node";
+			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		}
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		/* Reentrant */
+		#if 0
+		{
+			static const char buffer[] =
+				"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "');\n"
+				"metacall_load_from_memory('node', 'module.exports = { node_memory: () => 4 };');\n"
+				"console.log('Reentrant node_memory result:', metacall('node_memory'));\n";
+
+				/* TODO: This generates a stack overflow in NodeJS land. We should make a better approach, possibly iterative. */
+				/*
+				"metacall_load_from_memory('node', '"
+					"const { metacall } = require(\"" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "\");"
+					"console.log(\"Reentrant node_memory result:\", metacall(\"node_memory\"));"
+				"');\n";
+				*/
+
+			static const char tag[] = "node";
+
+			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		}
+		#endif
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

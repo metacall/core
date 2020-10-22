@@ -68,6 +68,7 @@
 #include <string>
 #include <fstream>
 #include <streambuf>
+#include <atomic>
 
 #include <node.h>
 #include <node_api.h>
@@ -203,6 +204,7 @@ struct loader_impl_node_type
 
 	uv_mutex_t mutex;
 	uv_cond_t cond;
+	std::atomic_bool locked;
 
 	int stdin_copy;
 	int stdout_copy;
@@ -1124,8 +1126,10 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		node_impl->func_call_safe->ret = NULL;
 
 		/* Lock the mutex and set the parameters */
-		if (uv_mutex_trylock(&node_impl->mutex) == 0)
+		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
+			node_impl->locked.store(true);
+
 			/* Acquire the thread safe function in order to do the call */
 			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_call);
 
@@ -1155,6 +1159,8 @@ function_return function_node_interface_invoke(function func, function_impl impl
 
 			/* Set up return of the function call */
 			ret = node_impl->func_call_safe->ret;
+
+			node_impl->locked.store(false);
 
 			/* Unlock the mutex */
 			uv_mutex_unlock(&node_impl->mutex);
@@ -1197,8 +1203,10 @@ function_return function_node_interface_await(function func, function_impl impl,
 		node_impl->func_await_safe->ret = NULL;
 
 		/* Lock the mutex and set the parameters */
-		if (uv_mutex_trylock(&node_impl->mutex) == 0)
+		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
+			node_impl->locked.store(true);
+
 			/* Acquire the thread safe function in order to do the call */
 			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_await);
 
@@ -1228,6 +1236,8 @@ function_return function_node_interface_await(function func, function_impl impl,
 
 			/* Set up return of the function call */
 			ret = node_impl->func_await_safe->ret;
+
+			node_impl->locked.store(false);
 
 			/* Unlock call safe mutex */
 			uv_mutex_unlock(&node_impl->mutex);
@@ -1263,8 +1273,10 @@ void function_node_interface_destroy(function func, function_impl impl)
 		node_impl->func_destroy_safe->node_func = node_func;
 
 		/* Lock the mutex and set the parameters */
-		if (uv_mutex_trylock(&node_impl->mutex) == 0)
+		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
+			node_impl->locked.store(true);
+
 			/* Acquire the thread safe function in order to do the call */
 			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_destroy);
 
@@ -1291,6 +1303,8 @@ void function_node_interface_destroy(function func, function_impl impl)
 
 			/* Wait for the execution of the safe call */
 			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			node_impl->locked.store(false);
 
 			/* Unlock call safe mutex */
 			uv_mutex_unlock(&node_impl->mutex);
@@ -1345,8 +1359,10 @@ void future_node_interface_destroy(future f, future_impl impl)
 		node_impl->future_delete_safe->f = f;
 
 		/* Lock the mutex and set the parameters */
-		if (uv_mutex_trylock(&node_impl->mutex) == 0)
+		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
+			node_impl->locked.store(true);
+
 			/* Acquire the thread safe function in order to do the call */
 			status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_delete);
 
@@ -1373,6 +1389,8 @@ void future_node_interface_destroy(future f, future_impl impl)
 
 			/* Wait for the execution of the safe call */
 			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			node_impl->locked.store(false);
 
 			/* Unlock call safe mutex */
 			uv_mutex_unlock(&node_impl->mutex);
@@ -3362,6 +3380,9 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
+	/* Initialize lock info */
+	node_impl->locked.store(false);
+
 	/* Initialize execution result */
 	node_impl->result = 1;
 	node_impl->error_message = NULL;
@@ -3427,8 +3448,10 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		node_impl->initialize_safe->result = 0;
 
 		/* Lock the mutex and set the parameters */
-		if (uv_mutex_trylock(&node_impl->mutex) == 0)
+		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
+			node_impl->locked.store(true);
+
 			/* Acquire the thread safe function in order to do the call */
 			status = napi_acquire_threadsafe_function(node_impl->threadsafe_initialize);
 
@@ -3458,6 +3481,8 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 			/* Set up return of the function call */
 			result = node_impl->initialize_safe->result;
+
+			node_impl->locked.store(false);
 
 			/* Unlock the mutex */
 			uv_mutex_unlock(&node_impl->mutex);
@@ -3511,8 +3536,10 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	node_impl->load_from_file_safe->handle_ref = NULL;
 
 	/* Lock the mutex and set the parameters */
-	if (uv_mutex_trylock(&node_impl->mutex) == 0)
+	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
+		node_impl->locked.store(true);
+
 		/* Acquire the thread safe function in order to do the call */
 		status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_file);
 
@@ -3542,6 +3569,8 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 		/* Retreive the result handle */
 		handle_ref = node_impl->load_from_file_safe->handle_ref;
+
+		node_impl->locked.store(false);
 
 		/* Unlock call safe mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -3577,8 +3606,10 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	node_impl->load_from_memory_safe->handle_ref = NULL;
 
 	/* Lock the mutex and set the parameters */
-	if (uv_mutex_trylock(&node_impl->mutex) == 0)
+	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
+		node_impl->locked.store(true);
+
 		/* Acquire the thread safe function in order to do the call */
 		status = napi_acquire_threadsafe_function(node_impl->threadsafe_load_from_memory);
 
@@ -3608,6 +3639,8 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 		/* Retreive the result handle */
 		handle_ref = node_impl->load_from_memory_safe->handle_ref;
+
+		node_impl->locked.store(false);
 
 		/* Unlock call safe mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -3650,8 +3683,10 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 	node_impl->clear_safe->handle_ref = handle_ref;
 
 	/* Lock the mutex and set the parameters */
-	if (uv_mutex_trylock(&node_impl->mutex) == 0)
+	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
+		node_impl->locked.store(true);
+
 		/* Acquire the thread safe function in order to do the call */
 		status = napi_acquire_threadsafe_function(node_impl->threadsafe_clear);
 
@@ -3678,6 +3713,8 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 		/* Wait for the execution of the safe call */
 		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		node_impl->locked.store(false);
 
 		/* Unlock call safe mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -3709,8 +3746,10 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	node_impl->discover_safe->ctx = ctx;
 
 	/* Lock the mutex and set the parameters */
-	if (uv_mutex_trylock(&node_impl->mutex) == 0)
+	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
+		node_impl->locked.store(true);
+
 		/* Acquire the thread safe function in order to do the call */
 		status = napi_acquire_threadsafe_function(node_impl->threadsafe_discover);
 
@@ -3737,6 +3776,8 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		/* Wait for the execution of the safe call */
 		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		node_impl->locked.store(false);
 
 		/* Unlock call safe mutex */
 		uv_mutex_unlock(&node_impl->mutex);
@@ -3925,7 +3966,7 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 
 	node_loader_impl_exception(env, status);
 
-	/*  Stop event loop */
+	/* Stop event loop */
 	uv_stop(node_impl->thread_loop);
 
 	/* Clear event loop */
@@ -4024,8 +4065,10 @@ int node_loader_impl_destroy(loader_impl impl)
 		node_impl->destroy_safe->node_impl = node_impl;
 
 		/* Lock the mutex and set the parameters */
-		if (uv_mutex_trylock(&node_impl->mutex) == 0)
+		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
+			node_impl->locked.store(true);
+
 			/* Acquire the thread safe function in order to do the call */
 			status = napi_acquire_threadsafe_function(node_impl->threadsafe_destroy);
 
@@ -4052,6 +4095,8 @@ int node_loader_impl_destroy(loader_impl impl)
 
 			/* Wait for the execution of the safe call */
 			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			node_impl->locked.store(false);
 
 			/* Unlock call safe mutex */
 			uv_mutex_unlock(&node_impl->mutex);

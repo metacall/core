@@ -32,6 +32,38 @@
 
 #include <node_api.h>
 
+/* Win32 Delay Load */
+#if (defined(WIN32) || defined(_WIN32)) && (_MSC_VER >= 1200)
+#	define WIN32_LEAN_AND_MEAN
+#	include <windows.h>
+#	define DELAYIMP_INSECURE_WRITABLE_HOOKS 1
+#	include <delayimp.h>
+
+	static FARPROC WINAPI node_loader_port_win32_delay_load(unsigned dliNotify, PDelayLoadInfo pdli);
+
+#	if (defined(DELAYLOAD_VERSION) && DELAYLOAD_VERSION >= 0x0200) || (defined(_DELAY_IMP_VER) && (_DELAY_IMP_VER >= 2))
+		extern PfnDliHook __pfnDliFailureHook2 = node_loader_port_win32_delay_load;
+#	else
+		extern PfnDliHook __pfnDliFailureHook = node_loader_port_win32_delay_load;
+#	endif
+
+	FARPROC WINAPI node_loader_port_win32_delay_load(unsigned dliNotify, PDelayLoadInfo pdli)
+	{
+		FARPROC fp_module_register = NULL;
+
+		if (dliNotify == dliFailGetProc)
+		{
+			LPCTSTR module_handle_lpctstr = "node.dll";
+
+			HMODULE module_handle = GetModuleHandle(module_handle_lpctstr);
+
+			fp_module_register = ::GetProcAddress(module_handle, pdli->dlp.szProcName);
+		}
+
+		return fp_module_register;
+	}
+#endif
+
 napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
@@ -186,7 +218,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
-	size_t argc = args_size, tag_length, script_length;
+	size_t argc = args_size, tag_length, script_length, script_size;
 	napi_value argv[args_size];
 	napi_status status;
 	char * tag, * script;
@@ -220,8 +252,10 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 
 	node_loader_impl_exception(env, status);
 
+	script_size = script_length + 1;
+
 	// Allocate script
-	script = static_cast<char *>(malloc(sizeof(char) * (script_length + 1)));
+	script = static_cast<char *>(malloc(sizeof(char) * script_size));
 
 	if (script == NULL)
 	{
@@ -231,12 +265,12 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 	}
 
 	// Get script
-	status = napi_get_value_string_utf8(env, argv[1], script, script_length + 1, &script_length);
+	status = napi_get_value_string_utf8(env, argv[1], script, script_size, &script_length);
 
 	node_loader_impl_exception(env, status);
 
 	// Load script from memory
-	if (metacall_load_from_memory(tag, script, script_length, NULL) != 0)
+	if (metacall_load_from_memory(tag, script, script_size, NULL) != 0)
 	{
 		free(tag);
 		free(script);
