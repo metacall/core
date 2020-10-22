@@ -14,6 +14,7 @@
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_context.h>
 
+#include <adt/adt_hash.h>
 #include <adt/adt_set.h>
 #include <adt/adt_vector.h>
 
@@ -673,14 +674,16 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name, const char * buffer, size_t size)
 {
-	/* TODO: Improve name with time */
-	static const char format[] = "%p-%p-%" PRIuS;
+	/* TODO: Improve name with time or uuid */
+	static const char format[] = "%p-%p-%" PRIuS "-%u";
 
-	size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size);
+	hash h = hash_callback_str((const hash_key)buffer);
+
+	size_t length = snprintf(NULL, 0, format, (const void *)impl, (const void *)buffer, size, (unsigned int)h);
 
 	if (length > 0 && length < LOADER_NAMING_NAME_SIZE)
 	{
-		size_t written = snprintf(name, length + 1, format, (const void *)impl, (const void *)buffer, size);
+		size_t written = snprintf(name, length + 1, format, (const void *)impl, (const void *)buffer, size, (unsigned int)h);
 
 		if (written == length)
 		{
