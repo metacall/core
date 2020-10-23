@@ -40,6 +40,7 @@ option(OPTION_BUILD_PORTS_PL	"Build Perl port."				OFF)
 option(OPTION_BUILD_PORTS_PY	"Build Python port."			ON)
 option(OPTION_BUILD_PORTS_R		"Build R port."					OFF)
 option(OPTION_BUILD_PORTS_RB	"Build Ruby port."				ON)
+option(OPTION_BUILD_PORTS_RS	"Build Rust port."				OFF)
 
 #
 # Project module names
@@ -67,6 +68,8 @@ set(MODULE_NAMES
 
 add_subdirectory(cxx_port)
 add_subdirectory(node_port)
+add_subdirectory(py_port)
+add_subdirectory(rust_port)
 
 #
 # External dependencies
@@ -98,6 +101,10 @@ list(APPEND CMAKE_SWIG_FLAGS
 # Port languages (Swig)
 #
 
+# TODO: Swig must be completely removed eventually,
+# new architecture needs ports and loaders unified so
+# Swig is not needed anymore
+
 add_subdirectory(cs_port)
 add_subdirectory(d_port)
 # add_subdirectory(go_port) # TODO: Integrate it with CMake properly and with Docker
@@ -106,7 +113,5 @@ add_subdirectory(js_port)
 add_subdirectory(lua_port)
 add_subdirectory(php_port)
 add_subdirectory(pl_port)
-add_subdirectory(py_port)
 add_subdirectory(r_port)
 add_subdirectory(rb_port)
-add_subdirectory(rust_port)

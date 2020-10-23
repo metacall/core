@@ -14,15 +14,40 @@ set(target node_port)
 message(STATUS "Port ${target}")
 
 #
-# Install command
+# Create target
 #
 
+set(source_path "${CMAKE_CURRENT_SOURCE_DIR}")
+
+set(sources
+	${source_path}/scripts/preinstall.js
+	${source_path}/test/index.js
+	${source_path}/index.js
+	${source_path}/test.js
+)
+
+# Group source files
+set(source_group "Source Files")
+source_group_by_path(${source_path}  "\\\\.js$"
+	${source_group} ${sources})
+
 if(NOT OPTION_BUILD_GUIX)
-	execute_process(
+	add_custom_target(${target} ALL
 		COMMAND npm install
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		SOURCES ${sources}
+	)
+
+	set_target_properties(${target}
+		PROPERTIES
+		${DEFAULT_PROJECT_OPTIONS}
+		FOLDER "${IDE_FOLDER}"
 	)
 endif()
+
+#
+# Install command
+#
 
 # Files
 install(FILES

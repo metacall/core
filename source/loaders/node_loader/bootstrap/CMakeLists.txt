@@ -17,6 +17,17 @@ message(STATUS "Plugin ${target} bootstrap")
 # Create target
 #
 
+set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/lib")
+
+set(sources
+	${source_path}/bootstrap.js
+)
+
+# Group source files
+set(source_group "Source Files")
+source_group_by_path(${source_path}  "\\\\.js$"
+	${source_group} ${sources})
+
 if(MSVC)
 	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
 else()
@@ -27,6 +38,7 @@ add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E  make_directory ${BOOTSTRAP_OUTPUT_PATH}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}
+	SOURCES ${sources}
 )
 
 if(NOT OPTION_BUILD_GUIX)
