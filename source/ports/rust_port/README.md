@@ -35,14 +35,14 @@ fn main() {
 	let _d = defer(|| metacall::destroy());
 
 	match metacall::initialize() {
-		Err(e) => { println!("{}", e); panic!(); }, 
+		Err(e) => { println!("{}", e); panic!(); },
 		_ => { println!("MetaCall initialized") }
 	}
 
 	let scripts : Vec<String> = vec!["sum.ts".to_string()];
 
 	match metacall::load_from_file("ts".to_string(), scripts) {
-		Err(e) => { println!("{}", e); panic!(); }, 
+		Err(e) => { println!("{}", e); panic!(); },
 		_ => ()
 	}
 
@@ -52,7 +52,7 @@ fn main() {
 								metacall::Any::Double(2.0)
 								])
 	{
-		Err(e) => { println!("{}", e); panic!(); }, 
+		Err(e) => { println!("{}", e); panic!(); },
 		Ok(ret) => { println!("{:?}", ret); }
   }
 }
