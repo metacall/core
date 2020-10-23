@@ -59,26 +59,43 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 		}
 
 		/* Reentrant */
-		#if 0
 		{
 			static const char buffer[] =
 				"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "');\n"
-				"metacall_load_from_memory('node', 'module.exports = { node_memory: () => 4 };');\n"
-				"console.log('Reentrant node_memory result:', metacall('node_memory'));\n";
-
-				/* TODO: This generates a stack overflow in NodeJS land. We should make a better approach, possibly iterative. */
-				/*
+				"metacall_load_from_memory('node', 'module.exports = { node_memory_reentrant: () => 4 };');\n"
+				"console.log('Reentrant node_memory_reentrant result (main):', metacall('node_memory_reentrant'));\n"
 				"metacall_load_from_memory('node', '"
 					"const { metacall } = require(\"" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "\");"
-					"console.log(\"Reentrant node_memory result:\", metacall(\"node_memory\"));"
+					"console.log(\"Reentrant node_memory_reentrant result (reentrant):\", metacall(\"node_memory_reentrant\"));"
 				"');\n";
-				*/
 
 			static const char tag[] = "node";
 
 			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 		}
-		#endif
+
+		/* Recursion */
+		{
+			static const char buffer[] =
+				"const { metacall } = require('" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "');\n"
+				"const log = (v) => { console.log(v); return v };"
+				"module.exports = { node_memory_recursive: (v) => (v > 0 && v < 100000000000) ? metacall('node_memory_recursive', log(v * 2)) : log(v) };\n";
+
+			static const char tag[] = "node";
+
+			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+
+			const enum metacall_value_id node_memory_recursive_ids[] =
+			{
+				METACALL_INT
+			};
+
+			void * ret = metacallt("node_memory_recursive", node_memory_recursive_ids, 1);
+
+			EXPECT_NE((void *) NULL, (void *) ret);
+
+			EXPECT_EQ((double) 137438953472.0, (double) metacall_value_to_double(ret));
+		}
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

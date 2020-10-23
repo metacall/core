@@ -34,8 +34,6 @@ const addon = (() => {
 	}
 })();
 
-const node_require = mod.prototype.require;
-
 const metacall = (name, ...args) => {
 	if (Object.prototype.toString.call(name) !== '[object String]') {
 		throw Error('Function name should be of string type.');
@@ -114,9 +112,31 @@ const metacall_require = (tag, name, id) => {
 	return obj;
 };
 
+/* Module exports */
+const module_exports = {
+	metacall,
+	metacall_inspect,
+	metacall_load_from_file,
+	metacall_load_from_memory,
+	metacall_handle,
+
+	/* TODO: Remove this from user or provide better ways of configuring logs */
+	metacall_logs: () => {
+		addon.metacall_logs();
+	},
+};
+
 /* Monkey patch require for simplifying load */
+const node_require = mod.prototype.require;
+
 mod.prototype.require = function (name) {
 
+	/* Cache the port */
+	if (require.resolve(name) === path.resolve(__filename)) {
+		return module_exports;
+	}
+
+	/* Extension -> Tag */
 	const tags = {
 		/* Mock Loader */
 		mock: 'mock',
@@ -145,16 +165,19 @@ mod.prototype.require = function (name) {
 	const index = name.lastIndexOf('.');
 
 	if (index === -1) {
+		/* If there is no extension, load it with NodeJS require */
 		return node_require.apply(this, [ name ]);
 	} else {
-		// Load the module
+		/* Otherwise load the module depending on the tag */
 		const extension = name.substr(index + 1);
 		const id = path.basename(name.substr(0, index));
 		const tag = tags[extension];
 
-		if (tag) {
+		if (tag && tag != 'node') {
+			/* Load with MetaCall if we found a tag and it is not NodeJS */
 			return metacall_require(tag, name, id);
 		} else {
+			/* Load with NodeJS if the extension is not supported */
 			return node_require.apply(this, [ name ]);
 		}
 	}
@@ -167,15 +190,4 @@ if (process.env['NODE_ENV'] === 'debug' && addon !== undefined)
 }
 
 /* Export the API */
-module.exports = {
-	metacall,
-	metacall_inspect,
-	metacall_load_from_file,
-	metacall_load_from_memory,
-	metacall_handle,
-
-	/* TODO: Remove this from user or provide better ways of configuring logs */
-	metacall_logs: () => {
-		addon.metacall_logs();
-	},
-};
+module.exports = module_exports;
