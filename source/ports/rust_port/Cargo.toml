@@ -1,0 +1,17 @@
+[package]
+name = "metacall"
+version = "0.1.1"
+repository = "https://github.com/metacall/core/"
+authors = ["Vicente Eduardo Ferrer Garcia <vic798@gmail.com>"]
+edition = "2018"
+license = "Apache-2.0"
+description = "Call NodeJS, TypeScript, Python, C#, Ruby... functions from Rust (a Rust Port for MetaCall)."
+
+[lib]
+name = "metacall"
+crate-type = ["lib"] # TODO: Once this is unified with the loader, we should use cdylib type
+path = "src/lib.rs"
+edition = "2018"
+
+[dependencies]
+# TODO: Is it possible to add dependencies to C?
