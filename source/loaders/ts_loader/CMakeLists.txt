@@ -93,9 +93,6 @@ add_library(${target} SHARED
 # Add target dependencies
 add_dependencies(${target}
 	${LOADER_MODULE_NAMES}
-
-	# Define dependency with node loader trampoline
-	node_loader_trampoline
 )
 
 # Create namespaced alias
