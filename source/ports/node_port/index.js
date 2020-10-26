@@ -131,11 +131,6 @@ const node_require = mod.prototype.require;
 
 mod.prototype.require = function (name) {
 
-	/* Cache the port */
-	if (require.resolve(name) === path.resolve(__filename)) {
-		return module_exports;
-	}
-
 	/* Extension -> Tag */
 	const tags = {
 		/* Mock Loader */
@@ -164,22 +159,30 @@ mod.prototype.require = function (name) {
 
 	const index = name.lastIndexOf('.');
 
-	if (index === -1) {
-		/* If there is no extension, load it with NodeJS require */
-		return node_require.apply(this, [ name ]);
-	} else {
-		/* Otherwise load the module depending on the tag */
+	if (index !== -1) {
+		/* If there is extension, load the module depending on the tag */
 		const extension = name.substr(index + 1);
 		const id = path.basename(name.substr(0, index));
 		const tag = tags[extension];
 
-		if (tag && tag != 'node') {
+		if (tag && tag !== 'node') {
 			/* Load with MetaCall if we found a tag and it is not NodeJS */
 			return metacall_require(tag, name, id);
-		} else {
-			/* Load with NodeJS if the extension is not supported */
-			return node_require.apply(this, [ name ]);
 		}
+	}
+
+	/* If there is no extension or the extension is not supported, load it with NodeJS require */
+	try {
+		/* Cache the port */
+		if (require.resolve(name) === path.resolve(__filename)) {
+			return module_exports;
+		}
+		/* Call to real NodeJS require */
+		return node_require.apply(this, [ name ]);
+	} catch (e) {
+		/* Print the exception and rethrow it */
+		console.log(e);
+		throw e;
 	}
 };
 
