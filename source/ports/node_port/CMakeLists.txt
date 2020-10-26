@@ -33,7 +33,7 @@ source_group_by_path(${source_path}  "\\\\.js$"
 
 if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target} ALL
-		COMMAND npm install
+		COMMAND npm install --ignore-scripts
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		SOURCES ${sources}
 	)
