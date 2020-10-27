@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
+#include <mutex>
+#include <condition_variable>
 
 /* -- Namespace -- */
 
@@ -181,6 +183,24 @@ class application
 	*/
 	void * metacallfs_adaptor(const std::string & name, const std::string & args, void * allocator);
 
+	/**
+	*  @brief
+	*    Adapts metacallfs_await from string @name and array string @args
+	*
+	*  @param[in] name
+	*    String object of function name
+	*
+	*  @param[in] args
+	*    String representing an array to be deserialized
+	*
+	*  @param[in] allocator
+	*    Pointer to the allocator to be used in deserialization
+	*
+	*  @return
+	*    Return a new value instanced if argument was correct with the result of the call
+	*/
+	void * metacallfs_await_adaptor(const std::string & name, const std::string & args, void * allocator);
+
   protected:
 
 	/* -- Protected Definitions -- */
@@ -270,11 +290,13 @@ class application
 
 	/* -- Private Member Data -- */
 
-	bool exit_condition;	/**< Condition for main loop */
-	arg_list arguments;		/**< Vector containing a list of arguments */
-	script_list scripts;	/**< Vector containing a list of script names */
-	command_table commands;	/**< Hash table from command strings to command handlers */
-	std::string log_path;	/**< Path where logs are located */
+	bool exit_condition;				/**< Condition for main loop */
+	arg_list arguments;					/**< Vector containing a list of arguments */
+	script_list scripts;				/**< Vector containing a list of script names */
+	command_table commands;				/**< Hash table from command strings to command handlers */
+	std::string log_path;				/**< Path where logs are located */
+	std::mutex await_mutex;				/**< Mutex for blocking the REPL until await is resolved */
+	std::condition_variable await_cond;	/**< Condition to be fired once await method is resolved or rejected */
 };
 
 } /* namespace metacallcli */

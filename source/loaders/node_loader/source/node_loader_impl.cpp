@@ -1631,7 +1631,16 @@ napi_value node_loader_impl_async_func_resolve(loader_impl_node node_impl, napi_
 	value_type_destroy(arg);
 
 	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	if (ret != NULL)
+	{
+		result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	}
+	else
+	{
+		napi_status status = napi_get_undefined(env, &result);
+
+		node_loader_impl_exception(env, status);
+	}
 
 	/* Destroy return value */
 	value_type_destroy(ret);
@@ -1664,7 +1673,16 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 	value_type_destroy(arg);
 
 	/* Return the result */
-	result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	if (ret != NULL)
+	{
+		result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	}
+	else
+	{
+		napi_status status = napi_get_undefined(env, &result);
+
+		node_loader_impl_exception(env, status);
+	}
 
 	/* Destroy return value */
 	value_type_destroy(ret);

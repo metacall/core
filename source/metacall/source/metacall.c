@@ -1114,6 +1114,102 @@ void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(v
 	return function_await(func, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
+void * metacallfs_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		if (buffer == NULL || size == 0)
+		{
+			if (signature_count(s) == 0)
+			{
+				value ret = function_call(f, metacall_null_args, 0);
+
+				if (ret != NULL)
+				{
+					type t = signature_get_return(s);
+
+					if (t != NULL)
+					{
+						type_id id = type_index(t);
+
+						if (id != value_type_id(ret))
+						{
+							value cast_ret = value_type_cast(ret, id);
+
+							return (cast_ret == NULL) ? ret : cast_ret;
+						}
+					}
+				}
+
+				return ret;
+			}
+
+			return NULL;
+		}
+		else
+		{
+			void * args[METACALL_ARGS_SIZE];
+
+			value * v_array, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
+
+			size_t iterator, args_count;
+
+			if (v == NULL)
+			{
+				return NULL;
+			}
+
+			if (type_id_array(value_type_id(v)) != 0)
+			{
+				value_type_destroy(v);
+
+				return NULL;
+			}
+
+			args_count = value_type_count(v);
+
+			v_array = value_to_array(v);
+
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				args[iterator] = v_array[iterator];
+			}
+
+			ret = metacallfv_await(f, args, resolve_callback, reject_callback, data);
+
+			if (ret != NULL)
+			{
+				type t = signature_get_return(s);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id(ret))
+					{
+						value cast_ret = value_type_cast(ret, id);
+
+						if (cast_ret != NULL)
+						{
+							ret = cast_ret;
+						}
+					}
+				}
+			}
+
+			value_destroy(v);
+
+			return ret;
+		}
+	}
+
+	return NULL;
+}
+
 /* TODO: Unify code between metacallfmv and metacallfmv_await */
 void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {

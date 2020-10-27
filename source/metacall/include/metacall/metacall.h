@@ -620,6 +620,43 @@ METACALL_API void * metacallfv_await(void * func, void * args[], void * (*resolv
 
 /**
 *  @brief
+*    Call an asynchronous function anonymously by function @func and serial @buffer of size @size
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] buffer
+*    String representing an array to be deserialized into arguments of the function
+*
+*  @param[in] size
+*    Size of string @buffer
+*
+*  @param[in] allocator
+*    Pointer to allocator will allocate the value
+*
+*  @param[in] resolve_callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] reject_callback
+*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void * metacallfs_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+
+/**
+*  @brief
 *    Call an asynchronous function anonymously by value map (@keys -> @values) and function @func
 *
 *  @param[in] func

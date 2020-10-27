@@ -36,7 +36,21 @@ fs.readdirSync(testDir).filter((file) => {
 // Set timeout to 5 min
 mocha.timeout(300000);
 
-// Run the tests
-mocha.run((failures) => {
-	process.exitCode = failures ? 1 : 0;
-});
+const waitForMocha = async () => {
+	// Promisfy mocha tests
+	return new Promise((resolve, reject) => mocha.run(failures => failures ? reject(failures) : resolve()));
+};
+
+module.exports = {
+	main: async () => {
+		// Run the tests
+		const failures = await waitForMocha();
+
+		if (failures) {
+			console.log(failures);
+			return 1;
+		}
+
+		return 0;
+	},
+};

@@ -92,7 +92,7 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│ inspect                                                                                │" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
-	std::cout << "\t│ runtime node {                                                                         |" << std::endl;
+	std::cout << "\t│ runtime node {                                                                         │" << std::endl;
 	std::cout << "\t│     module concat {                                                                    │" << std::endl;
 	std::cout << "\t│         function concat(left, right)                                                   │" << std::endl;
 	std::cout << "\t│     }                                                                                  │" << std::endl;
@@ -121,6 +121,28 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
 	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
 
+	/* Await command */
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Await an async function previously loaded in MetaCall                                  │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ await <function name>(<arg0>, <arg1>, ... , <argN>)                                    │" << std::endl;
+	std::cout << "\t│    <function name> : alphanumeric string beginning by letter (method1, method2, hello) │" << std::endl;
+	std::cout << "\t│    <arg0>, <arg1>, ... , <argN>  : arguments to be passed to the function in JSON      │" << std::endl;
+	std::cout << "\t│                                    types :                                             │" << std::endl;
+	std::cout << "\t│                                            bool   - true, false                        │" << std::endl;
+	std::cout << "\t│                                            number - 5, 4.34                            │" << std::endl;
+	std::cout << "\t│                                            string - \"hello world\"                      │" << std::endl;
+	std::cout << "\t│                                            array  - [2, true, \"abc\"]                   │" << std::endl;
+	std::cout << "\t│                                            object - { \"one\": 1, \"two\": 2 }             │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Example:                                                                               │" << std::endl;
+	std::cout << "\t│ await concat(\"hello\", \"world\")                                                         │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Result:                                                                                │" << std::endl;
+	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+
 	/* Clear command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
 	std::cout << "\t│ Delete a script previously loaded in MetaCall                                          │" << std::endl;
@@ -138,7 +160,7 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
 	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
 	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
-	std::cout << "\t│    <script0> <script1> ... <scriptN> : id of the script (file name without extension)  |" << std::endl;
+	std::cout << "\t│    <script0> <script1> ... <scriptN> : id of the script (file name without extension)  │" << std::endl;
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Example:                                                                               │" << std::endl;
 	std::cout << "\t│ clear node concat                                                                      │" << std::endl;
@@ -246,6 +268,74 @@ bool command_cb_call(application & app, tokenizer & t)
 		*/
 
 		void * result = app.metacallfs_adaptor(func_name, args, allocator);
+
+		if (result != NULL)
+		{
+			size_t size = 0;
+
+			char * value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
+
+			std::cout << value_str << std::endl;
+
+			metacall_allocator_free(allocator, value_str);
+
+			metacall_value_destroy(result);
+		}
+		else
+		{
+			std::cout << "(null)" << std::endl;
+		}
+
+		metacall_allocator_destroy(allocator);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool command_cb_await(application & app, tokenizer & t)
+{
+	const std::string func_delimiters(" \n\t\r\v\f(,)");
+
+	tokenizer::iterator it = t.begin();
+
+	/* Set custom function delimiters */
+	t.delimit(func_delimiters);
+
+	/* Skip command key */
+	++it;
+
+	/* Parse function call */
+	if (it != t.end())
+	{
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		std::string func_name(*it);
+
+		const std::string param_delimiters("()");
+
+		/* Convert arguments into an array */
+		std::string args = "[";
+
+		t.delimit(param_delimiters);
+
+		++it;
+
+		if (it != t.end())
+		{
+			args += *it;
+		}
+
+		args += "]";
+
+		/*
+		void * result = app.metacallfv_await_adaptor(func_name, args);
+		*/
+
+		void * result = app.metacallfs_await_adaptor(func_name, args, allocator);
 
 		if (result != NULL)
 		{
@@ -520,6 +610,8 @@ application::application(int argc, char * argv[]) : exit_condition(false), log_p
 	define("inspect", &command_cb_inspect);
 
 	define("call", &command_cb_call);
+
+	define("await", &command_cb_await);
 
 	define("load", &command_cb_load);
 
@@ -822,4 +914,47 @@ void * application::metacallfs_adaptor(const std::string & name, const std::stri
 	void * func = metacall_function(name.c_str());
 
 	return metacallfs(func, args.c_str(), args.length() + 1, allocator);
+}
+
+void * application::metacallfs_await_adaptor(const std::string & name, const std::string & args, void * allocator)
+{
+	void * func = metacall_function(name.c_str());
+	#if 0
+	return metacallfs_await(func, args.c_str(), args.length() + 1, allocator, NULL, NULL, NULL);
+	#endif
+
+	std::unique_lock<std::mutex> lock(this->await_mutex);
+
+	struct await_data_type
+	{
+		void * v;
+		application * app;
+	};
+
+	struct await_data_type data = { NULL, this };
+
+	void * future = metacallfs_await(func, args.c_str(), args.length() + 1, allocator,
+		[](void * result, void * ctx) -> void * {
+			struct await_data_type * await_data = static_cast<struct await_data_type *>(ctx);
+			std::unique_lock<std::mutex> lock(await_data->app->await_mutex);
+			/* Value must be always copied, it gets deteled after the scope */
+			await_data->v = metacall_value_copy(result);
+			await_data->app->await_cond.notify_one();
+			return NULL;
+		},
+		[](void * result, void * ctx) -> void * {
+			struct await_data_type * await_data = static_cast<struct await_data_type *>(ctx);
+			std::unique_lock<std::mutex> lock(await_data->app->await_mutex);
+			/* Value must be always copied, it gets deteled after the scope */
+			await_data->v = metacall_value_copy(result);
+			await_data->app->await_cond.notify_one();
+			return NULL;
+		}, static_cast<void *>(&data));
+
+	this->await_cond.wait(lock);
+
+	/* Unused */
+	metacall_value_destroy(future);
+
+	return data.v;
 }
