@@ -551,7 +551,8 @@ void application::run()
 		/* Show prompt line */
 		#if defined(WIN32) || defined(_WIN32)
 			/* TODO: Windows special characters not working properly */
-			std::cout << L'\u03BB' << ' ';
+			/* std::cout << L'\u03BB' << ' '; */
+			std::cout << "> ";
 		#else
 			std::cout << "\u03BB ";
 		#endif
