@@ -49,9 +49,21 @@ TEST_F(rb_loader_parser_integration_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall("cache_initialize"));
+		ret = metacall("cache_initialize");
 
-		EXPECT_EQ((void *) NULL, (void *) metacall("cache_set", "meta", "call"));
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("cache_set", "meta", "call");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		metacall_value_destroy(ret);
 
 		ret = metacall("cache_has_key","meta");
 

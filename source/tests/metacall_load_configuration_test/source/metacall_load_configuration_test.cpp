@@ -215,7 +215,13 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((void *) NULL, (void *) metacall("say_null"));
+		ret = metacall("say_null");
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		metacall_value_destroy(ret);
 
 		ret = metacall("say_hello", "meta-programmer");
 

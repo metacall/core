@@ -249,7 +249,13 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 			METACALL_INVALID
 		};
 
-		EXPECT_EQ((void *) NULL, (void *) metacallt("say_null", say_null_invalid_ids));
+		ret = metacallt("say_null", say_null_invalid_ids);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+
+		metacall_value_destroy(ret);
 
 		const enum metacall_value_id say_hello_str_ids[] =
 		{
