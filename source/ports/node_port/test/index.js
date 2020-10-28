@@ -96,9 +96,10 @@ describe('metacall', () => {
 			assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
 		});
 		it('require (rb)', () => {
-			const second = require('second.rb');
-			assert.notStrictEqual(second, undefined);
-			assert.strictEqual(second.get_second(3, 4), 4);
+			const cache = require('cache.rb');
+			assert.notStrictEqual(cache, undefined);
+			assert.strictEqual(cache.cache_set('asd', 'efg'), undefined);
+			assert.strictEqual(cache.cache_get('asd'), 'efg');
 		});
 	});
 

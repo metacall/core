@@ -838,7 +838,8 @@ int rb_loader_impl_clear_cb_iterate(set s, set_key key, set_value val, set_cb_it
 	(void)s;
 	(void)key;
 
-	rb_undef(*module, rb_to_id(name));
+	/* TODO: This generates a segmentation fault in node port test */
+	/* rb_undef(*module, rb_to_id(name)); */
 
 	return 0;
 }

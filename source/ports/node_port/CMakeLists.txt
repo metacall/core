@@ -63,8 +63,6 @@ install(FILES
 # Configure test
 #
 
-return() # TODO: Disable this test temporally until we can solve the ruby loader error
-
 # Check if loaders are enabled
 if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB)
 	return()

@@ -46,11 +46,9 @@ module.exports = {
 		// Run the tests
 		const failures = await waitForMocha();
 
-		if (failures) {
-			console.log(failures);
-			return 1;
-		}
+		// TODO: This seems it is not working
+		process.exitCode = failures ? 1 : 0;
 
-		return 0;
+		return process.exitCode;
 	},
 };
