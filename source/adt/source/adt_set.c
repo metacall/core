@@ -37,6 +37,14 @@ struct set_iterator_type
 	size_t pair;
 };
 
+struct set_contains_any_cb_iterator_type
+{
+	set s;
+	int result;
+};
+
+typedef struct set_contains_any_cb_iterator_type * set_contains_any_cb_iterator;
+
 /* -- Methods -- */
 
 set set_create(set_cb_hash hash_cb, set_cb_compare compare_cb)
@@ -277,6 +285,31 @@ int set_contains(set s, set_key key)
 	}
 
 	return 1;
+}
+
+static int set_contains_any_cb_iterate(set s, set_key key, set_value value, set_cb_iterate_args args)
+{
+	set_contains_any_cb_iterator iterator = (set_contains_any_cb_iterator)args;
+
+	(void)s;
+	(void)value;
+
+	iterator->result = set_contains(iterator->s, key);
+
+	return iterator->result;
+}
+
+int set_contains_any(set dest, set src)
+{
+	struct set_contains_any_cb_iterator_type args =
+	{
+		dest,
+		1
+	};
+
+	set_iterate(src, &set_contains_any_cb_iterate, (set_cb_iterate_args)&args);
+
+	return args.result;
 }
 
 set_value set_remove(set s, set_key key)

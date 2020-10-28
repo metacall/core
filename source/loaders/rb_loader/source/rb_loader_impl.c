@@ -80,95 +80,92 @@ int function_rb_interface_create(function func, function_impl impl)
 
 const char * rb_type_deserialize(VALUE v, value * result)
 {
-	if (v != Qnil)
+	int v_type = TYPE(v);
+
+	if (v_type == T_TRUE)
 	{
-		int v_type = TYPE(v);
+		boolean b = 1L;
 
-		if (v_type == T_TRUE)
+		*result = value_create_bool(b);
+
+		return "Boolean";
+	}
+	else if (v_type == T_FALSE)
+	{
+		boolean b = 0L;
+
+		*result = value_create_bool(b);
+
+		return "Boolean";
+	}
+	else if (v_type == T_FIXNUM)
+	{
+		int i = FIX2INT(v);
+
+		*result = value_create_int(i);
+
+		return "Fixnum";
+	}
+	else if (v_type == T_BIGNUM)
+	{
+		long l = NUM2LONG(v);
+
+		*result = value_create_long(l);
+
+		return "Bignum";
+	}
+	else if (v_type == T_FLOAT)
+	{
+		double d = NUM2DBL(v);
+
+		*result = value_create_double(d);
+
+		return "Float";
+	}
+	else if (v_type == T_STRING)
+	{
+		long length = RSTRING_LEN(v);
+
+		char * str = StringValuePtr(v);
+
+		if (length > 0 && str != NULL)
 		{
-			boolean b = 1L;
-
-			*result = value_create_bool(b);
-
-			return "Boolean";
+			*result = value_create_string(str, (size_t)length);
 		}
-		else if (v_type == T_FALSE)
+
+		return "String";
+	}
+	else if (v_type == T_ARRAY)
+	{
+		size_t iterator, size = RARRAY_LEN(v);
+
+		VALUE * array_ptr = RARRAY_PTR(v);
+
+		*result = value_create_array(NULL, size);
+
+		if (size > 0 && *result != NULL)
 		{
-			boolean b = 0L;
+			value * v_array_ptr = value_to_array(*result);
 
-			*result = value_create_bool(b);
-
-			return "Boolean";
-		}
-		else if (v_type == T_FIXNUM)
-		{
-			int i = FIX2INT(v);
-
-			*result = value_create_int(i);
-
-			return "Fixnum";
-		}
-		else if (v_type == T_BIGNUM)
-		{
-			long l = NUM2LONG(v);
-
-			*result = value_create_long(l);
-
-			return "Bignum";
-		}
-		else if (v_type == T_FLOAT)
-		{
-			double d = NUM2DBL(v);
-
-			*result = value_create_double(d);
-
-			return "Float";
-		}
-		else if (v_type == T_STRING)
-		{
-			long length = RSTRING_LEN(v);
-
-			char * str = StringValuePtr(v);
-
-			if (length > 0 && str != NULL)
+			for (iterator = 0; iterator < size; ++iterator, ++array_ptr)
 			{
-				*result = value_create_string(str, (size_t)length);
+				(void)rb_type_deserialize(*array_ptr, &v_array_ptr[iterator]);
 			}
-
-			return "String";
 		}
-		else if (v_type == T_ARRAY)
-		{
-			size_t iterator, size = RARRAY_LEN(v);
 
-			VALUE * array_ptr = RARRAY_PTR(v);
+		return "Array";
+	}
+	else if (v_type == T_NIL)
+	{
+		*result = value_create_null();
 
-			*result = value_create_array(NULL, size);
+		return "NilClass";
+	}
+	else if (v_type == T_OBJECT)
+	{
+		// TODO
 
-			if (size > 0 && *result != NULL)
-			{
-				value * v_array_ptr = value_to_array(*result);
-
-				for (iterator = 0; iterator < size; ++iterator, ++array_ptr)
-				{
-					(void)rb_type_deserialize(*array_ptr, &v_array_ptr[iterator]);
-				}
-			}
-
-			return "Array";
-		}
-		else if (v_type == T_NIL)
-		{
-			*result = value_create_null();
-
-			return "NilClass";
-		}
-		else if (v_type == T_OBJECT)
-		{
-			// TODO
-
-			return "Object";
-		}
+		return "Object";
 	}
 
 	return NULL;
@@ -326,18 +323,14 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 		result_value = rb_funcall(rb_function->rb_module->instance, rb_function->method_id, 0);
 	}
 
-	if (result_value != Qnil)
-	{
-		value v = NULL;
+	value v = NULL;
 
-		const char * v_type_name = rb_type_deserialize(result_value, &v);
+	const char * v_type_name = rb_type_deserialize(result_value, &v);
 
-		signature_set_return(s, loader_impl_type(rb_function->impl, v_type_name));
+	/* TODO: Is this really needed? I don't think so */
+	signature_set_return(s, loader_impl_type(rb_function->impl, v_type_name));
 
-		return v;
-	}
-
-	return NULL;
+	return v;
 }
 
 function_return function_rb_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)

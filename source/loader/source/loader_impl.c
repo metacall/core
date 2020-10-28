@@ -101,7 +101,7 @@ static value loader_impl_metadata_handle(loader_handle_impl handle_impl);
 
 static int loader_impl_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
+static void loader_impl_destroy_handle(loader_handle_impl handle_impl, int unlink);
 
 static int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
@@ -475,7 +475,7 @@ loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle modul
 	return NULL;
 }
 
-void loader_impl_destroy_handle(loader_handle_impl handle_impl)
+void loader_impl_destroy_handle(loader_handle_impl handle_impl, int unlink)
 {
 	if (handle_impl != NULL)
 	{
@@ -496,7 +496,10 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 			}
 		}
 
-		context_remove(handle_impl->impl->ctx, handle_impl->ctx);
+		if (unlink == 0)
+		{
+			context_remove(handle_impl->impl->ctx, handle_impl->ctx);
+		}
 
 		context_destroy(handle_impl->ctx);
 
@@ -650,7 +653,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 								if (result != 0)
 								{
-									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+									log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", module_name);
 								}
 
 								if (handle_ptr != NULL)
@@ -661,9 +664,13 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 								return result;
 							}
 						}
+
+						set_remove(impl->handle_impl_map, handle_impl->name);
 					}
 
-					loader_impl_destroy_handle(handle_impl);
+					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", module_name);
+
+					loader_impl_destroy_handle(handle_impl, 1);
 				}
 			}
 		}
@@ -749,7 +756,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 
 								if (result != 0)
 								{
-									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+									log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", name);
 								}
 
 								if (handle_ptr != NULL)
@@ -760,9 +767,13 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 								return result;
 							}
 						}
+
+						set_remove(impl->handle_impl_map, handle_impl->name);
 					}
 
-					loader_impl_destroy_handle(handle_impl);
+					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", name);
+
+					loader_impl_destroy_handle(handle_impl, 1);
 				}
 			}
 		}
@@ -817,7 +828,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 								if (result != 0)
 								{
-									log_write("metacall", LOG_LEVEL_ERROR, "Error when initializing handle impl: %p (%s)", (void *)handle_impl, func_init_name);
+									log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", package_name);
 								}
 
 								if (handle_ptr != NULL)
@@ -828,9 +839,13 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 								return result;
 							}
 						}
+
+						set_remove(impl->handle_impl_map, handle_impl->name);
 					}
 
-					loader_impl_destroy_handle(handle_impl);
+					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", (void *)package_name);
+
+					loader_impl_destroy_handle(handle_impl, 1);
 				}
 			}
 		}
@@ -1027,7 +1042,7 @@ int loader_impl_clear(void * handle)
 
 		int result = !(set_remove(impl->handle_impl_map, (set_key)(handle_impl->name)) == handle_impl);
 
-		loader_impl_destroy_handle(handle_impl);
+		loader_impl_destroy_handle(handle_impl, 0);
 
 		return result;
 	}
@@ -1063,7 +1078,7 @@ int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val,
 	{
 		loader_handle_impl handle_impl = val;
 
-		loader_impl_destroy_handle(handle_impl);
+		loader_impl_destroy_handle(handle_impl, 0);
 
 		return 0;
 	}
