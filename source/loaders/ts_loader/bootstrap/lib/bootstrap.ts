@@ -61,7 +61,13 @@ class TypeScriptLanguageServiceHost {
 	}
 
 	getCompilationSettings() {
-		return ts.getDefaultCompilerOptions();
+		// TODO: Make it able to load tsconfig.json files
+		const options = {
+			esModuleInterop: true,
+			jsx: 2, /* React */
+		};
+
+		return options;
 	}
 
 	getCurrentDirectory() {
@@ -219,7 +225,7 @@ function ts_loader_trampoline_load_from_file(paths) {
 			servicesHost.addFile(p);
 			const emit = services.getEmitOutput(p);
 			const emitName = emit.outputFiles[0].name;
-			const name = `${emitName.substr(0, emitName.lastIndexOf('.'))}.ts`;
+			const name = `${emitName.substr(0, emitName.lastIndexOf('.'))}.${p.substr(p.lastIndexOf('.') + 1)}`;
 			handle[name] = ts_loader_trampoline_load_inline(p, emit.outputFiles[0].text, {});
 		}
 
@@ -397,7 +403,7 @@ function ts_loader_trampoline_discover(handle) {
 }
 
 function ts_loader_trampoline_test(obj) {
-	console.log('NodeJS Loader Bootstrap Test');
+	console.log('TypeScript Loader Bootstrap Test');
 
 	if (obj !== undefined) {
 		console.log(util.inspect(obj, false, null, true));

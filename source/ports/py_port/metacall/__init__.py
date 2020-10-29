@@ -173,6 +173,8 @@ def _metacall_import(name, *args, **kwargs):
 		'js': 'node',
 		# TypeScript Loader
 		'ts': 'ts',
+		'jsx': 'ts',
+		'tsx': 'ts',
 
 		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
 		# Probably in the future we can differenciate between them, but it is not trivial

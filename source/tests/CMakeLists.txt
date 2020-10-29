@@ -154,4 +154,4 @@ add_subdirectory(metacall_function_test)
 add_subdirectory(metacall_cobol_test)
 add_subdirectory(metacall_file_test)
 add_subdirectory(metacall_typescript_test)
-add_subdirectory(metacall_typescript_tsx_test)
+# add_subdirectory(metacall_typescript_tsx_test) # TODO: Implement dependency management for React and ReactDOM

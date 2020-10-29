@@ -457,7 +457,9 @@ void application::parameter_iterator::operator()(const char * parameter)
 		{ "js", "node" },
 		{ "node", "node" },
 		/* TypeScript Loader */
-		{ "ts", "ts" }
+		{ "ts", "ts" },
+		{ "jsx", "ts" },
+		{ "tsx", "ts" }
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */

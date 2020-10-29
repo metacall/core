@@ -49,11 +49,11 @@ TEST_F(metacall_tsx_test, DefaultConstructor)
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("ts", tsx_scripts, sizeof(tsx_scripts) / sizeof(tsx_scripts[0]), NULL));
 
 		/* Test templating function */
-		ret = metacall("template", "metaprogrammer");
+		ret = metacall("hello", "metaprogrammer");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		//EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "<h1 data-reactroot=\"\">Hello $<!-- -->metaprogrammer</h1>"));
 
 		metacall_value_destroy(ret);
 	}
