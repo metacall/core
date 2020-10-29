@@ -67,7 +67,7 @@ class TypeScriptLanguageServiceHost {
 			jsx: 2, /* React */
 		};
 
-		return options;
+		return options; /* ts.getDefaultCompilerOptions() */
 	}
 
 	getCurrentDirectory() {
