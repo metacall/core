@@ -13,8 +13,7 @@ endif()
 
 # Detect if React is available
 execute_process(
-	COMMAND ${NODEJS_EXECUTABLE} -e "require('react')"
-	COMMAND ${NODEJS_EXECUTABLE} -e "require('react-dom')"
+	COMMAND ${NODEJS_EXECUTABLE} -e "require('react'); require('react-dom')"
 	RESULT_VARIABLE NODEJS_REACT_FOUND
 	ERROR_QUIET
 	OUTPUT_QUIET
