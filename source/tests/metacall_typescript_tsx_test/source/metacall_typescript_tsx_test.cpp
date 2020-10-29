@@ -24,12 +24,12 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_typescript_test : public testing::Test
+class metacall_tsx_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_typescript_test, DefaultConstructor)
+TEST_F(metacall_tsx_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -38,73 +38,24 @@ TEST_F(metacall_typescript_test, DefaultConstructor)
 	/* TypeScript */
 	#if defined(OPTION_BUILD_LOADERS_TS)
 	{
-		const char * ts_scripts[] =
+		const char * tsx_scripts[] =
 		{
-			"typedfunc.ts"
+			"templating.tsx"
 		};
 
 		void * ret = NULL;
 
 		/* Load scripts */
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("ts", ts_scripts, sizeof(ts_scripts) / sizeof(ts_scripts[0]), NULL));
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("ts", tsx_scripts, sizeof(tsx_scripts) / sizeof(tsx_scripts[0]), NULL));
 
-		/* Test typed sum */
-		ret = metacall("typed_sum", 3.0, 4.0);
-
-		EXPECT_NE((void *) NULL, (void *) ret);
-
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
-
-		metacall_value_destroy(ret);
-
-		/* Test arrays */
-		void * array_args[] =
-		{
-			metacall_value_create_array(NULL, 3)
-		};
-
-		void ** array_value = metacall_value_to_array(array_args[0]);
-
-		array_value[0] = metacall_value_create_double(3.0);
-		array_value[1] = metacall_value_create_double(5.0);
-		array_value[2] = metacall_value_create_double(7.0);
-
-		ret = metacallv("typed_array", array_args);
+		/* Test templating function */
+		ret = metacall("template", "metaprogrammer");
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 15.0);
+		//EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
 
 		metacall_value_destroy(ret);
-
-		metacall_value_destroy(array_args[0]);
-
-		/* Test records */
-		void * record_args[] =
-		{
-			metacall_value_create_map(NULL, 1)
-		};
-
-		void ** map_value = metacall_value_to_map(record_args[0]);
-
-		map_value[0] = metacall_value_create_array(NULL, 2);
-
-		void ** tupla = metacall_value_to_array(map_value[0]);
-
-		static const char key[] = "element";
-
-		tupla[0] = metacall_value_create_string(key, sizeof(key) - 1);
-		tupla[1] = metacall_value_create_double(6.0);
-
-		ret = metacallv("object_record", record_args);
-
-		EXPECT_NE((void *) NULL, (void *) ret);
-
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 6.0);
-
-		metacall_value_destroy(ret);
-
-		metacall_value_destroy(record_args[0]);
 	}
 	#endif /* OPTION_BUILD_LOADERS_TS */
 
