@@ -3,7 +3,7 @@ name = "metacall-rs-port"
 version = "0.1.0"
 authors = ["Swarnim Arun <swarnimarun11@gmail.com>"]
 edition = "2018"
-license = "Apache-2.0 OR MIT"
+license = "Apache-2.0"
 description = "Metacall rust port."
 repository = "https://github.com/swarnimarun/metacall-rs-port"
 
