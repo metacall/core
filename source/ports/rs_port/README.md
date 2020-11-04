@@ -6,18 +6,13 @@
 
 # Abstract
 
-**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call Python code from NodeJS.
+**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call TypeScript code from Rust.
 
 # Install
 
 Install MetaCall binaries first ([click here](https://github.com/metacall/install) for additional info about the install script):
 ``` sh
 bash <(curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh)
-```
-
-Then install MetaCall Rust package through Cargo:
-``` sh
-metacall cargo install metacall # Not implemented yet
 ```
 
 # Example
@@ -54,10 +49,6 @@ fn main() {
 	{
 		Err(e) => { println!("{}", e); panic!(); },
 		Ok(ret) => { println!("{:?}", ret); }
-  }
+	}
 }
-```
-
-``` sh
-metacall main.rs # Not implemented yet
 ```

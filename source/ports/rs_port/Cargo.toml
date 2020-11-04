@@ -1,8 +1,8 @@
 [package]
 name = "metacall"
-version = "0.1.1"
+version = "0.1.2"
 repository = "https://github.com/metacall/core/"
-authors = ["Vicente Eduardo Ferrer Garcia <vic798@gmail.com>"]
+authors = ["Vicente Eduardo Ferrer Garcia <vic798@gmail.com>", "Swarnim Arun <swarnimarun11@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
 description = "Call NodeJS, TypeScript, Python, C#, Ruby... functions from Rust (a Rust Port for MetaCall)."
