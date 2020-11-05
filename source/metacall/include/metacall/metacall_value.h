@@ -151,10 +151,10 @@ METACALL_API void * metacall_value_create_double(double d);
 
 /**
 *  @brief
-*    Create a value from string @str
+*    Create a value from a C string @str
 *
 *  @param[in] str
-*    Constant string will be copied into value
+*    Constant string will be copied into value (needs to be null terminated)
 *
 *  @param[in] length
 *    Length of the constant string
@@ -448,7 +448,7 @@ METACALL_API double metacall_value_to_double(void * v);
 *    Reference to the value
 *
 *  @return
-*    Value converted to C string
+*    Value converted to C string (null terminated)
 */
 METACALL_API char * metacall_value_to_string(void * v);
 
@@ -643,13 +643,14 @@ METACALL_API void * metacall_value_from_double(void * v, double d);
 
 /**
 *  @brief
-*    Assign string @str to value @v
+*    Assign string @str to value @v, truncates to @v size if it is smaller
+*    than @length + 1. It does not add null terminator if truncated.
 *
 *  @param[in] v
 *    Reference to the value
 *
 *  @param[in] str
-*    Constant string to be assigned to value @v
+*    Constant string to be assigned to value @v (it needs to be null terminated)
 *
 *  @param[in] length
 *    Length of the constant string @str
@@ -862,7 +863,7 @@ METACALL_API double metacall_value_cast_double(void ** v);
 *    Reference to the reference of the value
 *
 *  @return
-*    Value converted to string
+*    Value converted to a C string (null terminated)
 */
 METACALL_API char * metacall_value_cast_string(void ** v);
 

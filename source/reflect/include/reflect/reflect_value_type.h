@@ -189,10 +189,10 @@ REFLECT_API value value_create_double(double d);
 
 /**
 *  @brief
-*    Create a value from string @str
+*    Create a value from a C string @str
 *
 *  @param[in] str
-*    Constant string will be copied into value
+*    Constant string will be copied into value (needs to be null terminated)
 *
 *  @param[in] length
 *    Length of the constant string
@@ -399,7 +399,7 @@ REFLECT_API double value_to_double(value v);
 *    Reference to the value
 *
 *  @return
-*    Value converted to C string
+*    Value converted to a C string (null terminated)
 */
 REFLECT_API char * value_to_string(value v);
 
@@ -594,13 +594,14 @@ REFLECT_API value value_from_double(value v, double d);
 
 /**
 *  @brief
-*    Assign string @str to value @v
+*    Assign string @str to value @v, truncates to @v size if it is smaller
+*    than @length + 1. It does not add null terminator if truncated.
 *
 *  @param[in] v
 *    Reference to the value
 *
 *  @param[in] str
-*    Constant string to be assigned to value @v
+*    Constant string to be assigned to value @v (it needs to be null terminated)
 *
 *  @param[in] length
 *    Length of the constant string @str
