@@ -27,28 +27,34 @@ export function sum(a: number, b: number): number {
 `main.rs`
 ``` rust
 fn main() {
-	let _d = defer(|| metacall::destroy());
+    let _d = defer(metacall::destroy);
 
-	match metacall::initialize() {
-		Err(e) => { println!("{}", e); panic!(); },
-		_ => { println!("MetaCall initialized") }
-	}
+    match metacall::initialize() {
+        Err(e) => {
+            println!("{}", e);
+            panic!();
+        }
+        _ => println!("MetaCall initialized"),
+    }
 
-	let scripts : Vec<String> = vec!["sum.ts".to_string()];
+    let scripts = ["sum.ts".to_string()];
 
-	match metacall::load_from_file("ts".to_string(), scripts) {
-		Err(e) => { println!("{}", e); panic!(); },
-		_ => ()
-	}
+    if let Err(e) = crate::load_from_file("ts", &scripts) {
+        println!("{}", e);
+        panic!();
+    }
 
-	match metacall::metacall("sum".to_string(),
-							vec![
-								metacall::Any::Double(1.0),
-								metacall::Any::Double(2.0)
-								])
-	{
-		Err(e) => { println!("{}", e); panic!(); },
-		Ok(ret) => { println!("{:?}", ret); }
-	}
+    match metacall::metacall(
+        "sum",
+        &[metacall::Any::Double(1.0), metacall::Any::Double(2.0)],
+    ) {
+        Err(e) => {
+            println!("{}", e);
+            panic!();
+        }
+        Ok(ret) => {
+            println!("{:?}", ret);
+        }
+    }
 }
 ```
