@@ -138,6 +138,7 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)  |        **2.x**        |
 | [Go](https://golang.org/)                                          | [CGO](https://golang.org/cmd/cgo/)                         |        **1.x**        |
 | [D](https://dlang.org/)                                            | [DMD](https://wiki.dlang.org/DMD)                          |        **2.x**        |
+| [Rust](https://www.rust-lang.org/)                                 | **∅**                                                      |     **>= 1.47.0**     |
 
 ## 3. Use Cases
 
