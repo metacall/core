@@ -197,11 +197,7 @@ pub fn metacall(func: String, args: Vec<Any>) -> Result<Any, &'static str> {
             /* TODO: This should be done by an enum or something mimicking the enum in metacall.h */
             match metacall_value_id(ret) {
                 0 => {
-                    rt = Any::Bool(if metacall_value_to_bool(ret) != 0 {
-                        true
-                    } else {
-                        false
-                    });
+                    rt = Any::Bool(metacall_value_to_bool(ret) != 0);
                 }
                 1 => {
                     rt = Any::Char(metacall_value_to_char(ret) as u8 as char);
@@ -255,7 +251,7 @@ pub fn metacall(func: String, args: Vec<Any>) -> Result<Any, &'static str> {
         for arg in c_args {
             metacall_value_destroy(arg);
         }
-        return Ok(rt);
+        Ok(rt)
     }
 }
 
@@ -268,13 +264,13 @@ pub fn destroy() {
 /// Doc test to check if the code can build an run
 #[cfg(test)]
 mod tests {
-    use crate::*;
-
     struct Defer<F: FnOnce()>(Option<F>);
 
     impl<F: FnOnce()> Drop for Defer<F> {
         fn drop(&mut self) {
-            self.0.take().map(|f| f());
+            if let Some(f) = self.0.take() {
+                f()
+            }
         }
     }
 
@@ -300,7 +296,7 @@ mod tests {
 
     #[test]
     fn test_metacall() {
-        let _d = defer(|| crate::destroy());
+        let _d = defer(crate::destroy);
 
         match crate::initialize() {
             Err(e) => {
@@ -312,12 +308,9 @@ mod tests {
 
         let scripts: Vec<String> = vec!["test.mock".to_string()];
 
-        match crate::load_from_file("mock".to_string(), scripts) {
-            Err(e) => {
-                println!("{}", e);
-                panic!();
-            }
-            _ => (),
+        if let Err(e) = crate::load_from_file("mock".to_string(), scripts) {
+            println!("{}", e);
+            panic!();
         }
 
         match crate::metacall(
