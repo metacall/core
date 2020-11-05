@@ -37,16 +37,16 @@ fn main() {
         _ => println!("MetaCall initialized"),
     }
 
-    let scripts: Vec<String> = vec!["sum.ts".to_string()];
+    let scripts = ["sum.ts".to_string()];
 
-    if let Err(e) = crate::load_from_file("ts".to_string(), scripts) {
+    if let Err(e) = crate::load_from_file("ts", &scripts) {
         println!("{}", e);
         panic!();
     }
 
     match metacall::metacall(
-        "sum".to_string(),
-        vec![metacall::Any::Double(1.0), metacall::Any::Double(2.0)],
+        "sum",
+        &[metacall::Any::Double(1.0), metacall::Any::Double(2.0)],
     ) {
         Err(e) => {
             println!("{}", e);
