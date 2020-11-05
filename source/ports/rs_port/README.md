@@ -6,11 +6,11 @@
 
 # Abstract
 
-**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call TypeScript code from Rust.
+**[METACALL](https://github.com/metacall/core)** is a library that allows calling functions, methods or procedures between programming languages. With **[METACALL](https://github.com/metacall/core)** you can transparently execute code from / to any programming language, for example, call TypeScript code from Rust.
 
 # Install
 
-Install MetaCall binaries first ([click here](https://github.com/metacall/install) for additional info about the install script):
+MetaCall is a C plugin based library. This crate wraps the C library into Rust, so in order to make it work, you should install MetaCall binaries first ([click here](https://github.com/metacall/install) for additional info about the install script):
 ``` sh
 bash <(curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh)
 ```

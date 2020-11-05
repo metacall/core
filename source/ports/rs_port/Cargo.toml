@@ -1,7 +1,7 @@
 [package]
 name = "metacall"
-version = "0.1.2"
-repository = "https://github.com/metacall/core/"
+version = "0.1.3"
+repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
 authors = ["Vicente Eduardo Ferrer Garcia <vic798@gmail.com>", "Swarnim Arun <swarnimarun11@gmail.com>"]
 edition = "2018"
 license = "Apache-2.0"
@@ -14,4 +14,4 @@ path = "src/lib.rs"
 edition = "2018"
 
 [dependencies]
-# TODO: Is it possible to add dependencies to C?
+# TODO: Is it possible to add dependencies to C libraries?

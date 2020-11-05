@@ -18,9 +18,6 @@
  *
  */
 
-mod defer;
-use defer::defer;
-
 pub mod metacall {
 	use std::ffi::CString;
 	use std::os::raw::{
@@ -240,28 +237,69 @@ pub mod metacall {
 }
 
 /// Doc test to check if the code can build an run
-#[test]
-fn test() {
-	let _d = defer(|| metacall::destroy());
+#[cfg(test)]
+mod tests {
+	use super::*;
 
-	match metacall::initialize() {
-		Err(e) => { println!("{}", e); panic!(); }, 
-		_ => { println!(" Hello World Metacall created ") }
+	struct Defer<F: FnOnce()>(Option<F>);
+
+	impl<F: FnOnce()> Drop for Defer<F> {
+		fn drop(&mut self) {
+			self.0.take().map(|f| f());
+		}
 	}
 
-	let scripts : Vec<String> = vec!["test.mock".to_string()];
-
-	match metacall::load_from_file("mock".to_string(), scripts) {
-		Err(e) => { println!("{}", e); panic!(); }, 
-		_ => ()
+	/// Defer execution of a closure until the constructed value is dropped
+	/// Works at the end of the scope or manual drop() function
+	pub fn defer<F: FnOnce()>(f: F) -> impl Drop {
+		Defer(Some(f))
 	}
 
-	match metacall::metacall("new_args".to_string(),
-							vec![
-								metacall::Any::Str("a".to_string())
-								])
-	{
-		Err(e) => { println!("{}", e); panic!(); }, 
-		Ok(ret) => { println!("{:?}", ret); }
+	#[test]
+	fn test_defer() {
+		use std::cell::RefCell;
+
+		let i = RefCell::new(0);
+
+		{
+			let _d = defer(|| *i.borrow_mut() += 1);
+			assert_eq!(*i.borrow(), 0);
+		}
+
+		assert_eq!(*i.borrow(), 1);
+	}
+
+	#[test]
+	fn test_metacall() {
+		let _d = defer(|| metacall::destroy());
+
+		match metacall::initialize() {
+			Err(e) => { println!("{}", e); panic!(); },
+			_ => { println!(" Hello World Metacall created ") }
+		}
+
+		let scripts : Vec<String> = vec!["test.mock".to_string()];
+
+		match metacall::load_from_file("mock".to_string(), scripts) {
+			Err(e) => { println!("{}", e); panic!(); },
+			_ => ()
+		}
+
+		match metacall::metacall("new_args".to_string(),
+								vec![
+									metacall::Any::Str("a".to_string())
+									])
+		{
+			Ok(ret) => {
+				match ret {
+					metacall::Any::Str(value) => {
+						assert_eq!("Hello World".to_string(), value);
+						println!("Result: {}", value);
+					},
+					_ => { assert_eq!(0, 1); panic!(); },
+				}
+			},
+			Err(e) => { println!("{}", e); assert_eq!(0, 1); panic!(); },
+		}
 	}
 }
