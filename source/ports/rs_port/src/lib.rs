@@ -56,7 +56,7 @@ extern "C" {
 #[derive(Debug)]
 pub struct Error(String);
 
-/// Enum of all possible Metcall types to allow for safe conversion between them and c_types
+/// Enum of all possible Metacall types to allow for safe conversion between them and c_types
 #[derive(Debug)]
 pub enum Any {
     Null,              // from c_null
