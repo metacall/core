@@ -39,7 +39,7 @@ fn main() {
 
     let scripts = ["sum.ts".to_string()];
 
-    if let Err(e) = crate::load_from_file("ts", &scripts) {
+    if let Err(e) = metacall::load_from_file("ts", &scripts) {
         println!("{}", e);
         panic!();
     }
