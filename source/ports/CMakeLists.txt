@@ -69,7 +69,7 @@ set(MODULE_NAMES
 add_subdirectory(cxx_port)
 add_subdirectory(node_port)
 add_subdirectory(py_port)
-add_subdirectory(rust_port)
+add_subdirectory(rs_port)
 
 #
 # External dependencies
