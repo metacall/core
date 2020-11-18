@@ -28,12 +28,12 @@
 #	error "The path to the Python port is not defined"
 #endif
 
-class metacall_node_reentrant_test : public testing::Test
+class metacall_python_reentrant_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_node_reentrant_test, DefaultConstructor)
+TEST_F(metacall_python_reentrant_test, DefaultConstructor)
 {
 	metacall_print_info();
 
