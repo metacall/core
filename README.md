@@ -122,6 +122,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
 | [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                          | rpc  |
 | [Dart](https://dart.dev/)                                          | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
+| [LuaJIT](https://luajit.org/)                                      | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
 
 ### 2.2 Ports (Frontends)
 
