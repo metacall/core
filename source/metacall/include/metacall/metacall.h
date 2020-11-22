@@ -728,6 +728,159 @@ METACALL_API void * metacallfms_await(void * func, const char * buffer, size_t s
 
 /**
 *  @brief
+*    Get the class by @name
+*
+*  @param[in] name
+*    Name of the class
+*
+*  @return
+*    Class reference, null if the class does not exist
+*/
+METACALL_API void * metacall_class(const char * name);
+
+/**
+*  @brief
+*    Call a class method anonymously by value array @args
+*
+*  @param[in] name
+*    Name of the method
+*
+*  @param[in] cls
+*    Pointer to the class
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of args array
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallv_class(void * cls, const char * name, void * args[], size_t argc);
+
+/**
+*  @brief
+*    Create a new object instance from @cls by value array @args
+*
+*  @param[in] cls
+*    Pointer to the class
+*
+*  @param[in] name
+*    Name of the new object
+*
+*  @param[in] args
+*    Array of pointers constructor parameters
+*
+*  @param[in] size
+*    Number of elements of constructor parameters
+*
+*  @return
+*    Pointer to the new object instance
+*/
+METACALL_API void * metacall_class_new(void * cls, const char * name, void * args[], size_t argc);
+
+/**
+*  @brief
+*    Get an attribute from @cls by @key name
+*
+*  @param[in] cls
+*    Pointer to the class
+*
+*  @param[in] key
+*    Name of the attribute to get
+*
+*  @return
+*    Pointer to the class attribute value or NULL if an error occurred
+*/
+METACALL_API void * metacall_class_static_get(void * cls, const char * key);
+
+/**
+*  @brief
+*    Set an attribute to @cls by @key name
+*
+*  @param[in] cls
+*    Pointer to the class
+*
+*  @param[in] key
+*    Name of the attribute to set
+*
+*  @param[in] value
+*    Value to set
+*
+*  @return
+*    Non-zero integer if an error ocurred
+*/
+METACALL_API int metacall_class_static_set(void * cls, const char * key, void * v);
+
+/**
+*  @brief
+*    Call an object method anonymously by value array @args
+*
+*  @param[in] obj
+*    Pointer to the object
+*
+*  @param[in] name
+*    Name of the method
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of args array
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallv_object(void * obj, const char * name, void * args[], size_t argc);
+
+/**
+*  @brief
+*    Get an attribute from @obj by @key name
+*
+*  @param[in] obj
+*    Pointer to the object
+*
+*  @param[in] key
+*    Name of the attribute to get
+*
+*  @return
+*    Pointer to the object attribute value or NULL if an error occurred
+*/
+METACALL_API void * metacall_object_get(void * obj, const char * key);
+
+/**
+*  @brief
+*    Set an attribute to @obj by @key name
+*
+*  @param[in] obj
+*    Pointer to the object
+*
+*  @param[in] key
+*    Name of the attribute to set
+*
+*  @param[in] value
+*    Value to set
+*
+*  @return
+*    Non-zero integer if an error ocurred
+*/
+METACALL_API int metacall_object_set(void * obj, const char * key, void * v);
+
+/**
+*  @brief
+*    Call @obj destructor and delete its reference. After, @obj should be treated as a null pointer
+*
+*  @param[in] obj
+*    Pointer to the object
+*
+*  @return
+*    Non-zero integer if an error ocurred
+*/
+METACALL_API int metacall_object_delete(void * obj);
+
+/**
+*  @brief
 *    Provide information about all loaded objects
 *
 *  @param[out] size

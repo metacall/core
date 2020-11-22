@@ -39,7 +39,9 @@ static const size_t type_id_size_list[] =
 	sizeof(void *),		/* TYPE_PTR */
 	sizeof(future),		/* TYPE_FUTURE */
 	sizeof(function),	/* TYPE_FUNCTION */
-	(size_t)0			/* TYPE_NULL */
+	(size_t)0,			/* TYPE_NULL */
+	sizeof(klass),		/* TYPE_CLASS */
+	sizeof(object),		/* TYPE_OBJECT */
 };
 
 static_assert((int) sizeof(type_id_size_list) / sizeof(type_id_size_list[0]) == (int) TYPE_SIZE,

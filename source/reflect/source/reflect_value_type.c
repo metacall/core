@@ -221,6 +221,16 @@ value value_create_null()
 	return value_type_create(NULL, 0, TYPE_NULL);
 }
 
+value value_create_class(klass c)
+{
+	return value_type_create(&c, sizeof(klass), TYPE_CLASS);
+}
+
+value value_create_object(object o)
+{
+	return value_type_create(&o, sizeof(object), TYPE_OBJECT);
+}
+
 boolean value_to_bool(value v)
 {
 	boolean b = 0;
@@ -330,6 +340,20 @@ void * value_to_null(value v)
 	(void)v;
 
 	return (void *)NULL;
+}
+
+klass value_to_class(value v)
+{
+	uintptr_t * uint_class = value_data(v);
+
+	return (klass)(*uint_class);
+}
+
+object value_to_object(value v)
+{
+	uintptr_t * uint_object = value_data(v);
+
+	return (object)(*uint_object);
 }
 
 value value_from_bool(value v, boolean b)
@@ -445,6 +469,16 @@ value value_from_null(value v)
 	return value_from(v, NULL, 0);
 }
 
+value value_from_class(value v, klass c)
+{
+	return value_from(v, &c, sizeof(klass));
+}
+
+value value_from_object(value v, object o)
+{
+	return value_from(v, &o, sizeof(object));
+}
+
 void value_type_destroy(value v)
 {
 	if (v != NULL)
@@ -501,7 +535,38 @@ void value_type_destroy(value v)
 
 			function_destroy(f);
 		}
+		else if (type_id_class(id) == 0)
+		{
+			klass c = value_to_class(v);
+			const char * name = class_name(c);
 
+			if (name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous class <%p> value <%p>", (void *)c, (void *)v);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p> value <%p>", name, (void *)c, (void *)v);
+			}
+
+			class_destroy(c);
+		}
+		else if (type_id_object(id) == 0)
+		{
+			object o = value_to_object(v);
+			const char * name = object_name(o);
+
+			if (name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous object <%p> value <%p>", (void *)o, (void *)v);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy object %s <%p> value <%p>", name, (void *)o, (void *)v);
+			}
+
+			object_destroy(o);
+		}
 		if (type_id_invalid(id) != 0)
 		{
 			value_destroy(v);

@@ -30,6 +30,8 @@
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_class.h>
+#include <reflect/reflect_object.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -309,6 +311,30 @@ REFLECT_API value value_create_null(void);
 
 /**
 *  @brief
+*    Create a value from function @c
+*
+*  @param[in] c
+*    Pointer to class will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_class(klass c);
+
+/**
+*  @brief
+*    Create a value from object @o
+*
+*  @param[in] o
+*    Pointer to object will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_object(object o);
+
+/**
+*  @brief
 *    Convert value @v to boolean
 *
 *  @param[in] v
@@ -486,6 +512,30 @@ REFLECT_API function value_to_function(value v);
 *    Value converted to null
 */
 REFLECT_API void * value_to_null(value v);
+
+/**
+*  @brief
+*    Convert value @v to class
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to class
+*/
+REFLECT_API klass value_to_class(value v);
+
+/**
+*  @brief
+*    Convert value @v to object
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to object
+*/
+REFLECT_API object value_to_object(value v);
 
 /**
 *  @brief
@@ -721,6 +771,36 @@ REFLECT_API value value_from_function(value v, function f);
 *    Value with null assigned to it
 */
 REFLECT_API value value_from_null(value v);
+
+/**
+*  @brief
+*    Assign class reference @c to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] c
+*    Class to be assigned to value @v
+*
+*  @return
+*    Value with class @c assigned to it
+*/
+REFLECT_API value value_from_class(value v, klass c);
+
+/**
+*  @brief
+*    Assign object reference @o to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] o
+*    Object to be assigned to value @v
+*
+*  @return
+*    Value with object @o assigned to it
+*/
+REFLECT_API value value_from_object(value v, object o);
 
 /**
 *  @brief

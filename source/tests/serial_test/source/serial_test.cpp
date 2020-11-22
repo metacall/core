@@ -308,7 +308,9 @@ TEST_F(serial_test, DefaultConstructor)
 			#endif
 			NULL, /* TODO: Future */
 			NULL, /* TODO: Function */
-			"(null)"
+			"(null)",
+			NULL /* TODO: Class */,
+			NULL /* TODO: Object */
 		};
 
 		static_assert((int) sizeof(value_names) / sizeof(value_names[0]) == (int) TYPE_SIZE,
@@ -364,7 +366,9 @@ TEST_F(serial_test, DefaultConstructor)
 			value_create_ptr((void *)0x000A7EF2),
 			value_create_future(NULL), /* TODO: Implement future properly */
 			value_create_function(NULL), /* TODO: Implement function properly */
-			value_create_null()
+			value_create_null(),
+			value_create_class(NULL), /* TODO: Implement class properly */
+			value_create_object(NULL) /* TODO: Implement object properly */
 		};
 
 		static_assert((int) sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,
