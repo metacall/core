@@ -205,7 +205,7 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_PTR, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id) METACALL_OBJECT, (enum metacall_value_id) metacall_value_id(ret));
 
 		void * function_capsule_method_args[] =
 		{

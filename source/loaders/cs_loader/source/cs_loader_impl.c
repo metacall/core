@@ -383,7 +383,7 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 			}
 		}
 
-		scope_define(sp, functions[i].name, f);
+		scope_define(sp, functions[i].name, value_create_function(f));
 	}
 
 	return 0;

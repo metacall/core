@@ -20,6 +20,7 @@
 
 #include <adt/adt_set.h>
 
+#include <reflect/reflect_value_type.h>
 #include <reflect/reflect_class.h>
 
 #include <log/log.h>
@@ -35,9 +36,7 @@ struct class_type
 	size_t ref_count;
 };
 
-#if 0 // TODO
 static value class_metadata_name(klass cls);
-#endif
 
 klass class_create(const char * name, class_impl impl, class_impl_interface_singleton singleton)
 {
@@ -139,7 +138,6 @@ const char * class_name(klass cls)
 	return NULL;
 }
 
-#if 0 // TODO
 value class_metadata_name(klass cls)
 {
 	static const char class_str[] = "name";
@@ -175,17 +173,14 @@ value class_metadata_name(klass cls)
 
 	return name;
 }
-#endif
 
 value class_metadata(klass cls)
 {
 	(void)cls;
-	return NULL;
 
-#if 0 // TODO
-	value name, f;
+	value name, c;
 
-	value * f_map;
+	value * c_map;
 
 	/* Create class name array */
 	name = class_metadata_name(cls);
@@ -196,21 +191,20 @@ value class_metadata(klass cls)
 	}
 
 	/* Create class map (name) */
-	f = value_create_map(NULL, 1);
+	c = value_create_map(NULL, 1);
 
-	if (f == NULL)
+	if (c == NULL)
 	{
 		value_type_destroy(name);
 
 		return NULL;
 	}
 
-	f_map = value_to_map(f);
+	c_map = value_to_map(c);
 
-	f_map[0] = name;
+	c_map[0] = name;
 	
-	return f;
-#endif
+	return c;
 }
 
 object class_new(klass cls, const char * name, class_args args, size_t argc)

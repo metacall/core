@@ -2076,7 +2076,6 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 			if (!PyUnicode_CompareWithASCIIString(tuple_key, "__dict__") || !PyUnicode_CompareWithASCIIString(tuple_key, "__weakref__"))
 				continue;
 
-			// TODO: add them to class scope
 			// value key = py_loader_impl_capi_to_value(impl, tuple_key, py_loader_impl_capi_to_value_type(tuple_key));
 			// value val = py_loader_impl_capi_to_value(impl, tuple_val, py_loader_impl_capi_to_value_type(tuple_val));
 
@@ -2170,7 +2169,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 						{
 							scope sp = context_scope(ctx);
 
-							scope_define(sp, func_name, f);
+							scope_define(sp, func_name, value_create_function(f));
 						}
 						else
 						{
@@ -2199,8 +2198,8 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 					if (py_loader_impl_discover_class(impl, module_dict_val, c) == 0)
 					{
 						scope sp = context_scope(ctx);
-						/* TODO: class scope */
-						//scope_define(sp, cls_name, c);
+
+						scope_define(sp, cls_name, value_create_class(c));
 					}
 					else
 					{

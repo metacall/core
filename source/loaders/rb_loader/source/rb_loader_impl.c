@@ -1339,7 +1339,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				{
 					scope sp = context_scope(ctx);
 
-					scope_define(sp, function_name(f), f);
+					scope_define(sp, function_name(f), value_create_function(f));
 
 					rb_function->impl = impl;
 
@@ -1380,9 +1380,9 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 
 				VALUE class = rb_const_get_from(rb_module->module, rb_intern(class_name_str));		
 
+				/*
 				VALUE argv[1] = { Qtrue }; // include_superclasses ? Qtrue : Qfalse;
-   				VALUE methods = rb_class_instance_methods(1, argv, class); /* argc, argv, class */
-
+   				VALUE methods = rb_class_instance_methods(1, argv, class); // argc, argv, class
 				VALUE load_path_array_size = rb_funcall(methods, rb_intern("size"), 0);
 				int method_index, methods_size = FIX2INT(load_path_array_size);
 
@@ -1392,11 +1392,19 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 					VALUE method_name = rb_funcall(method, rb_intern("id2name"), 0);
 					const char * method_name_str = RSTRING_PTR(method_name);
 
-					log_write("metacall", LOG_LEVEL_DEBUG, "Method inside class %s", method_name_str);
-
-					/* TODO: Add methods to module context's class */
+					log_write("metacall", LOG_LEVEL_DEBUG, "Method inside '%s' %s", class_name_str, method_name_str);
 				}
+				*/
 
+				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
+
+				klass c = class_create(class_name_str, rb_cls, &rb_class_interface_singleton);
+
+				rb_cls->impl = impl;
+				rb_cls->class = class;
+
+				scope sp = context_scope(ctx);
+				scope_define(sp, class_name_str, value_create_class(c));
 			}
 			
 		}

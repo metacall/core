@@ -164,7 +164,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f1), 1, "i", int_type);
 			signature_set(function_signature(f1), 2, "p", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f1), f1), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f1), value_create_function(f1)), (int) 0);
 		}
 
 		function_impl_example example_asd_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -179,7 +179,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f2), 1, "o", int_type);
 			signature_set(function_signature(f2), 2, "u", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f2), f2), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f2), value_create_function(f2)), (int) 0);
 		}
 
 		function_impl_example example_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -195,7 +195,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f3), 1, "o", int_type);
 			signature_set(function_signature(f3), 2, "u", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f3), f3), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f3), value_create_function(f3)), (int) 0);
 		}
 
 		function_impl_example example_duck_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -210,7 +210,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f4), 1, "o", NULL);
 			signature_set(function_signature(f4), 2, "u", NULL);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f4), f4), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f4), value_create_function(f4)), (int) 0);
 		}
 
 		function_impl_example example_duck_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -226,7 +226,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f5), 1, "do", NULL);
 			signature_set(function_signature(f5), 2, "dafu", NULL);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f5), f5), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f5), value_create_function(f5)), (int) 0);
 		}
 
 		function_impl_example example_duck_mix_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -242,7 +242,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f6), 2, "dafu", NULL);
 			signature_set(function_signature(f6), 3, "dafu", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f6), f6), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f6), value_create_function(f6)), (int) 0);
 		}
 
 		function_impl_example example_duck_mix_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -259,7 +259,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f7), 2, "dafu", ptr_type);
 			signature_set(function_signature(f7), 3, "dafufs", NULL);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f7), f7), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f7), value_create_function(f7)), (int) 0);
 		}
 
 		function_impl_example example_empty_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -272,7 +272,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 		{
 			signature_set_return(function_signature(f8), int_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f8), f8), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f8), value_create_function(f8)), (int) 0);
 		}
 
 		function_impl_example example_empty_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
@@ -283,7 +283,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 		if (f9 != NULL)
 		{
-			EXPECT_EQ((int) scope_define(sp, function_name(f9), f9), (int) 0);
+			EXPECT_EQ((int) scope_define(sp, function_name(f9), value_create_function(f9)), (int) 0);
 		}
 
 		{

@@ -75,14 +75,8 @@ TEST_F(metacall_test, DefaultConstructor)
 		}
 
 		{
-			void * myclass_value = metacall_class("MyClass"); /* TODO: Refactor context to use values instead of opaque pointers for metacall_class to work */
-			//EXPECT_NE((void *) NULL, (void *) myclass_value); /* then uncomment this */
-			if(myclass_value == NULL)
-			{
-				myclass_value = metacall("return_class_function");
-				ASSERT_EQ((enum metacall_value_id) METACALL_CLASS, (enum metacall_value_id) metacall_value_id(myclass_value));	
-			}
-			void * myclass = metacall_value_to_class(myclass_value);
+			void * myclass = metacall_class("MyClass");
+			ASSERT_NE((void *) NULL, (void *) myclass);
 
 			void * static_method_args[] =
 			{
@@ -92,7 +86,6 @@ TEST_F(metacall_test, DefaultConstructor)
 
 			ASSERT_EQ((enum metacall_value_id) METACALL_STRING, (enum metacall_value_id) metacall_value_id(ret_value));
 			metacall_value_destroy(ret_value);
-			metacall_value_destroy(myclass_value);
 		}
 
 		{

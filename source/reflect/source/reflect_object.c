@@ -20,6 +20,7 @@
 
 #include <adt/adt_set.h>
 
+#include <reflect/reflect_value_type.h>
 #include <reflect/reflect_object.h>
 
 #include <log/log.h>
@@ -37,9 +38,7 @@ struct object_type
 	klass cls;
 };
 
-#if 0 // TODO
 static value object_metadata_name(object obj);
-#endif
 
 object object_create(const char * name, object_impl impl, object_impl_interface_singleton singleton, klass cls)
 {
@@ -143,7 +142,6 @@ const char * object_name(object obj)
 	return NULL;
 }
 
-#if 0 // TODO
 value object_metadata_name(object obj)
 {
 	static const char object_str[] = "name";
@@ -179,14 +177,9 @@ value object_metadata_name(object obj)
 
 	return name;
 }
-#endif
 
 value object_metadata(object obj)
 {
-	(void)obj;
-	return NULL;
-
-#if 0 // TODO
 	value name, f;
 
 	value * f_map;
@@ -214,7 +207,6 @@ value object_metadata(object obj)
 	f_map[0] = name;
 	
 	return f;
-#endif
 }
 
 value object_get(object obj, const char * key)

@@ -56,7 +56,7 @@ struct loader_metadata_cb_iterator_type
 struct loader_get_iterator_args_type
 {
 	const char * name;
-	scope_object obj;
+	value obj; // scope_object
 };
 
 struct loader_host_invoke_type
@@ -263,7 +263,7 @@ int loader_register(const char * name, loader_register_invoke invoke, function *
 
 	if (name != NULL)
 	{
-		scope_define(sp, name, f);
+		scope_define(sp, name, value_create_function(f));
 	}
 
 	if (func != NULL)

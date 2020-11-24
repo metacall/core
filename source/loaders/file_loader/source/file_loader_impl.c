@@ -418,7 +418,7 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 			signature_set_return(s, loader_impl_type(impl, "Path"));
 
-			scope_define(sp, function_name(f), f);
+			scope_define(sp, function_name(f), value_create_function(f));
 		}
 	}
 

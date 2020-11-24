@@ -89,6 +89,8 @@ REFLECT_API value class_static_await(klass cls, const char * name, class_args ar
 
 REFLECT_API const char * class_name(klass cls);
 
+REFLECT_API value class_metadata(klass cls);
+
 REFLECT_API void class_destroy(klass cls);
 
 #ifdef __cplusplus
