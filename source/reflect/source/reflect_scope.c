@@ -185,7 +185,7 @@ int scope_define(scope sp, const char * key, value val)
 		{
 			type_id val_type = value_type_id(val);
 
-			if(val_type == TYPE_FUNCTION)
+			if (val_type == TYPE_FUNCTION)
 			{
 				function func = value_to_function(val);
 
@@ -198,7 +198,7 @@ int scope_define(scope sp, const char * key, value val)
 					return 1;
 				}
 			}
-			else if(val_type == TYPE_CLASS)
+			else if (val_type == TYPE_CLASS)
 			{
 				klass cls = value_to_class(val);
 
@@ -211,7 +211,7 @@ int scope_define(scope sp, const char * key, value val)
 					return 1;
 				}
 			}
-			else if(val_type == TYPE_OBJECT)
+			else if (val_type == TYPE_OBJECT)
 			{
 				object obj = value_to_object(val);
 
@@ -247,15 +247,15 @@ int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_it
 
 	int type_id = value_type_id(val);
 	
-	if(type_id == TYPE_FUNCTION)
+	if (type_id == TYPE_FUNCTION)
 	{
 		metadata_iterator->functions[metadata_iterator->functions_size++] = function_metadata(value_to_function(val));
 	}
-	else if(type_id == TYPE_CLASS)
+	else if (type_id == TYPE_CLASS)
 	{
 		metadata_iterator->classes[metadata_iterator->classes_size++] = class_metadata(value_to_class(val));
 	}
-	else if(type_id == TYPE_OBJECT)
+	else if (type_id == TYPE_OBJECT)
 	{
 		metadata_iterator->objects[metadata_iterator->objects_size++] = object_metadata(value_to_object(val));
 	}
@@ -271,15 +271,15 @@ int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, s
 	(void)key;
 
 	int type_id = value_type_id(val);
-	if(type_id == TYPE_FUNCTION)
+	if (type_id == TYPE_FUNCTION)
 	{
 		metadata_iterator->functions_size++;
 	}
-	else if(type_id == TYPE_CLASS)
+	else if (type_id == TYPE_CLASS)
 	{
 		metadata_iterator->classes_size++;
 	}
-	else if(type_id == TYPE_OBJECT)
+	else if (type_id == TYPE_OBJECT)
 	{
 		metadata_iterator->objects_size++;
 	}
@@ -645,7 +645,7 @@ int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_a
 	{
 		int type_id = value_type_id(val);
 
-		if(type_id == TYPE_FUNCTION)
+		if (type_id == TYPE_FUNCTION)
 		{
 			function func = value_to_function(val);
 
@@ -656,7 +656,7 @@ int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_a
 
 			function_destroy(func);
 		}
-		else if(type_id == TYPE_CLASS)
+		else if (type_id == TYPE_CLASS)
 		{
 			klass cls = value_to_class(val);
 
@@ -667,7 +667,7 @@ int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_a
 
 			class_destroy(cls);
 		} 
-		else if(type_id == TYPE_OBJECT)
+		else if (type_id == TYPE_OBJECT)
 		{
 			object obj = value_to_object(val);
 

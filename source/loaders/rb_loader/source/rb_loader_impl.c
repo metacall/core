@@ -226,7 +226,7 @@ const char * rb_type_deserialize(VALUE v, value * result)
 
 VALUE rb_type_serialize(value v)
 {
-	if(v == NULL)
+	if (v == NULL)
 	{
 		return Qnil;
 	}
@@ -449,7 +449,7 @@ value rb_object_interface_get(object obj, object_impl impl, const char * key)
 
 	VALUE exception = rb_errinfo();
 
-	if(exception != Qnil)
+	if (exception != Qnil)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error getting object '%s' member '%s'", object_name(obj), key);
 
@@ -476,7 +476,7 @@ int rb_object_interface_set(object obj, object_impl impl, const char * key, valu
 
 	VALUE exception = rb_errinfo();
 	
-	if(exception != Qnil)
+	if (exception != Qnil)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error setting object '%s' member '%s'", object_name(obj), key);
 
@@ -495,7 +495,7 @@ value rb_object_interface_method_invoke(object obj, object_impl impl, const char
 
 	loader_impl_rb_object obj_impl = (loader_impl_rb_object)impl;
 
-	if(obj_impl == NULL || obj_impl->object == Qnil)
+	if (obj_impl == NULL || obj_impl->object == Qnil)
 	{
 		return NULL;
 	}
@@ -510,7 +510,7 @@ value rb_object_interface_method_invoke(object obj, object_impl impl, const char
 
 	free(argv);
 
-	if(rb_retval == Qnil) 
+	if (rb_retval == Qnil)
 	{
 		return NULL;
 	}
@@ -551,7 +551,7 @@ void rb_object_interface_destroy(object obj, object_impl impl)
 
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 
-	if(rb_object != NULL)
+	if (rb_object != NULL)
 	{
 		rb_object->object = Qnil;
 
@@ -629,7 +629,7 @@ value rb_class_interface_static_get(klass cls, class_impl impl, const char * key
 
 	VALUE exception = rb_errinfo();
 
-	if(exception != Qnil)
+	if (exception != Qnil)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error getting class '%s' member '%s'", class_name(cls), key);
 
@@ -656,7 +656,7 @@ int rb_class_interface_static_set(klass cls, class_impl impl, const char * key, 
 
 	VALUE exception = rb_errinfo();
 	
-	if(exception != Qnil)
+	if (exception != Qnil)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error setting class '%s' member '%s'", class_name(cls), key);
 
@@ -677,7 +677,7 @@ value rb_class_interface_static_invoke(klass cls, class_impl impl, const char * 
 	
 	loader_impl_rb_class cls_impl = (loader_impl_rb_class)impl;
 
-	if(cls_impl == NULL || cls_impl->class == Qnil)
+	if (cls_impl == NULL || cls_impl->class == Qnil)
 	{
 		return NULL;
 	}
@@ -692,7 +692,7 @@ value rb_class_interface_static_invoke(klass cls, class_impl impl, const char * 
 
 	free(argv);
 
-	if(rb_retval == Qnil) 
+	if (rb_retval == Qnil)
 	{
 		return NULL;
 	}
@@ -724,7 +724,7 @@ void rb_class_interface_destroy(klass cls, class_impl impl)
 
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
 
-	if(rb_class != NULL)
+	if (rb_class != NULL)
 	{
 		rb_class->class = Qnil;
 
@@ -1371,7 +1371,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 		
 		if (constant != Qnil)
 		{
-			if(RB_TYPE_P(constant, T_SYMBOL))
+			if (RB_TYPE_P(constant, T_SYMBOL))
 			{
 				VALUE class_name = rb_funcall(constant, rb_intern("id2name"), 0);
 				const char * class_name_str = RSTRING_PTR(class_name);

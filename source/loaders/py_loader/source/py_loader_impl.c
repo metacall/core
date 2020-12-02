@@ -255,7 +255,7 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 
 	loader_impl_py_object obj_impl = (loader_impl_py_object)impl;
 
-	if(obj_impl == NULL || obj_impl->object == NULL)
+	if (obj_impl == NULL || obj_impl->object == NULL)
 	{
 		return NULL;
 	}
@@ -269,7 +269,7 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 
 	PyObject * args_tuple = PyTuple_New(argc);
 
-	if(args_tuple == NULL)
+	if (args_tuple == NULL)
 	{
 		return NULL;
 	}
@@ -284,7 +284,7 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 	Py_DECREF(args_tuple);
 	Py_DECREF(method);
 
-	if(python_object == NULL) 
+	if (python_object == NULL)
 	{
 		return NULL;
 	}
@@ -324,7 +324,7 @@ void py_object_interface_destroy(object obj, object_impl impl)
 
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
 
-	if(py_object != NULL)
+	if (py_object != NULL)
 	{
 		Py_XDECREF(py_object->object);
 
@@ -371,7 +371,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char * n
 
 	object obj = object_create(name, py_obj, &py_object_interface_singleton, cls);
 
-	if(obj == NULL)
+	if (obj == NULL)
 	{
 		return NULL;
 	}
@@ -381,7 +381,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char * n
 
 	PyObject * args_tuple = PyTuple_New(argc);
 
-	if(args_tuple == NULL)
+	if (args_tuple == NULL)
 		return NULL;
 	
 	for (size_t i = 0; i < argc; i++)
@@ -394,7 +394,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char * n
 
 	Py_DECREF(args_tuple);
 	
-	if(python_object == NULL)
+	if (python_object == NULL)
 	{
 		object_destroy(obj);
 		return NULL;
@@ -450,7 +450,7 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char * 
 	
 	loader_impl_py_class cls_impl = (loader_impl_py_class)impl;
 
-	if(cls_impl == NULL || cls_impl->class == NULL)
+	if (cls_impl == NULL || cls_impl->class == NULL)
 	{
 		return NULL;
 	}
@@ -464,7 +464,7 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char * 
 
 	PyObject * args_tuple = PyTuple_New(argc);
 
-	if(args_tuple == NULL)
+	if (args_tuple == NULL)
 	{
 		return NULL;
 	}
@@ -479,7 +479,7 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char * 
 	Py_DECREF(args_tuple);
 	Py_DECREF(method);
 
-	if(python_object == NULL) 
+	if (python_object == NULL)
 	{
 		return NULL;
 	}
@@ -508,7 +508,7 @@ void py_class_interface_destroy(klass cls, class_impl impl)
 
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
 
-	if(py_class != NULL)
+	if (py_class != NULL)
 	{
 		Py_XDECREF(py_class->class);
 
@@ -1077,7 +1077,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 		
 		loader_impl_py_class obj_impl = class_impl_get(obj);
 
-		if(obj_impl == NULL)
+		if (obj_impl == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_class when converting value to python capi");
 			return NULL;
@@ -1091,7 +1091,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 		
 		loader_impl_py_object obj_impl = object_impl_get(obj);
 
-		if(obj_impl == NULL)
+		if (obj_impl == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_WARNING, "Cannot retrieve loader_impl_py_object when converting value to python capi");
 			return NULL;

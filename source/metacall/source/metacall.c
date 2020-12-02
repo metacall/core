@@ -264,7 +264,7 @@ void * metacallv(const char * name, void * args[])
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -277,7 +277,7 @@ void * metacallv_s(const char * name, void * args[], size_t size)
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -301,7 +301,7 @@ void * metacall(const char * name, ...)
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -407,7 +407,7 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -505,7 +505,7 @@ void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -603,7 +603,7 @@ void * metacall_function(const char * name)
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -1143,7 +1143,7 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	value f_val = loader_get(name);
 
 	function f = NULL;
-	if(value_type_id(f_val) == TYPE_FUNCTION)
+	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
 	}
@@ -1483,7 +1483,7 @@ void * metacall_class(const char * name)
 	value c_val = loader_get(name);
 
 	klass c = NULL;
-	if(value_type_id(c_val) == TYPE_CLASS)
+	if (value_type_id(c_val) == TYPE_CLASS)
 	{
 		c = value_to_class(c_val);
 	}

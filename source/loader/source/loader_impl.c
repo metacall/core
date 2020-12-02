@@ -560,7 +560,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 
 	function func_init = NULL;
 
-	if(val != NULL)
+	if (val != NULL)
 	{
 		func_init = value_to_function(val);
 	}
