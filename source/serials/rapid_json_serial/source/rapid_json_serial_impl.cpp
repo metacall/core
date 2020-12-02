@@ -301,7 +301,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 	else if (id == TYPE_FUTURE)
 	{
 		/* TODO: Improve future serialization */
-		const char str[] = "[Future]";
+		static const char str[] = "[Future]";
 
 		size_t size = sizeof(str);
 
@@ -312,7 +312,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 	else if (id == TYPE_FUNCTION)
 	{
 		/* TODO: Improve function serialization */
-		const char str[] = "[Function]";
+		static const char str[] = "[Function]";
 
 		size_t size = sizeof(str);
 
@@ -323,7 +323,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 	else if (id == TYPE_CLASS)
 	{
 		/* TODO: Improve class serialization */
-		const char str[] = "[Class]";
+		static const char str[] = "[Class]";
 
 		size_t size = sizeof(str);
 
@@ -334,7 +334,7 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 	else if (id == TYPE_OBJECT)
 	{
 		/* TODO: Improve object serialization */
-		const char str[] = "[Object]";
+		static const char str[] = "[Object]";
 
 		size_t size = sizeof(str);
 

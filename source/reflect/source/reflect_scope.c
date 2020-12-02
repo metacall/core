@@ -270,16 +270,17 @@ int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, s
 	(void)s;
 	(void)key;
 
-	int type_id = value_type_id(val);
-	if (type_id == TYPE_FUNCTION)
+	type_id id = value_type_id(val);
+
+	if (id == TYPE_FUNCTION)
 	{
 		metadata_iterator->functions_size++;
 	}
-	else if (type_id == TYPE_CLASS)
+	else if (id == TYPE_CLASS)
 	{
 		metadata_iterator->classes_size++;
 	}
-	else if (type_id == TYPE_OBJECT)
+	else if (id == TYPE_OBJECT)
 	{
 		metadata_iterator->objects_size++;
 	}
