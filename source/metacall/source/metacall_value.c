@@ -166,9 +166,9 @@ void * metacall_value_create_class(void * c)
 	return value_create_class(c);
 }
 
-void * metacall_value_create_object(void * c)
+void * metacall_value_create_object(void * o)
 {
-	return value_create_object(c);
+	return value_create_object(o);
 }
 
 size_t metacall_value_size(void * v)

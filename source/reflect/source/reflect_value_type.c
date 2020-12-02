@@ -82,6 +82,45 @@ value value_type_copy(value v)
 				new_v_map[index] = value_type_copy(v_map[index]);
 			}
 		}
+		else if (type_id_function(id) == 0)
+		{
+			value cpy = value_copy(v);
+
+			if (cpy != NULL)
+			{
+				function f = value_to_function(cpy);
+
+				function_increment_reference(f);
+			}
+
+			return cpy;
+		}
+		else if (type_id_class(id) == 0)
+		{
+			value cpy = value_copy(v);
+
+			if (cpy != NULL)
+			{
+				klass cls = value_to_class(v);
+
+				class_increment_reference(cls);
+			}
+
+			return cpy;
+		}
+		else if (type_id_object(id) == 0)
+		{
+			value cpy = value_copy(v);
+
+			if (cpy != NULL)
+			{
+				object obj = value_to_object(cpy);
+
+				object_increment_reference(obj);
+			}
+
+			return cpy;
+		}
 
 		if (type_id_invalid(id) != 0)
 		{
@@ -206,14 +245,31 @@ value value_create_future(future f)
 
 value value_create_function(function f)
 {
-	return value_type_create(&f, sizeof(function), TYPE_FUNCTION);
+	value v = value_type_create(&f, sizeof(function), TYPE_FUNCTION);
+
+	if (v != NULL)
+	{
+		function_increment_reference(f);
+	}
+
+	return v;
 }
 
 value value_create_function_closure(function f, void * c)
 {
-	function_bind(f, c);
+	// TODO: Review this for the lock-free implementation!!
+	// The functions should be immutable, maybe the binding should be a new type
+	// or the bind should be stored in the value instead of in the function
 
-	return value_type_create(&f, sizeof(function), TYPE_FUNCTION);
+	value v = value_type_create(&f, sizeof(function), TYPE_FUNCTION);
+
+	if (v != NULL)
+	{
+		function_bind(f, c);
+		function_increment_reference(f);
+	}
+
+	return v;
 }
 
 value value_create_null()
@@ -223,12 +279,26 @@ value value_create_null()
 
 value value_create_class(klass c)
 {
-	return value_type_create(&c, sizeof(klass), TYPE_CLASS);
+	value v = value_type_create(&c, sizeof(klass), TYPE_CLASS);
+
+	if (v != NULL)
+	{
+		class_increment_reference(c);
+	}
+
+	return v;
 }
 
 value value_create_object(object o)
 {
-	return value_type_create(&o, sizeof(object), TYPE_OBJECT);
+	value v = value_type_create(&o, sizeof(object), TYPE_OBJECT);
+
+	if (v != NULL)
+	{
+		object_increment_reference(o);
+	}
+
+	return v;
 }
 
 boolean value_to_bool(value v)
@@ -555,6 +625,7 @@ void value_type_destroy(value v)
 		{
 			object o = value_to_object(v);
 			const char * name = object_name(o);
+			int delete_return;
 
 			if (name == NULL)
 			{
@@ -565,8 +636,16 @@ void value_type_destroy(value v)
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy object %s <%p> value <%p>", name, (void *)o, (void *)v);
 			}
 
+			delete_return = object_delete(o);
+
+			if (delete_return != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid deletion of object <%p>, destructor return error code %d", (void *)o, delete_return);
+			}
+
 			object_destroy(o);
 		}
+
 		if (type_id_invalid(id) != 0)
 		{
 			value_destroy(v);

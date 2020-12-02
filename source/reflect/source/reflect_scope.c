@@ -428,6 +428,8 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 
 	value * v_array, v = value_create_array(NULL, 2);
 
+	type_id id;
+
 	(void)s;
 
 	if (v == NULL)
@@ -453,6 +455,21 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 		value_type_destroy(v);
 
 		return 0;
+	}
+
+	id = value_type_id(val);
+
+	if (id == TYPE_FUNCTION)
+	{
+		function_increment_reference(value_to_function(val));
+	}
+	else if (id == TYPE_CLASS)
+	{
+		class_increment_reference(value_to_class(val));
+	}
+	else if (id == TYPE_OBJECT)
+	{
+		object_increment_reference(value_to_object(val));
 	}
 
 	export_iterator->values[export_iterator->iterator] = v;

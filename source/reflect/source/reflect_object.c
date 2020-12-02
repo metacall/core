@@ -305,27 +305,35 @@ int object_delete(object obj)
 
 void object_destroy(object obj)
 {
-	if (obj != NULL && obj->ref_count == 0)
+	if (obj != NULL)
 	{
-		if (obj->name == NULL)
+		if (object_decrement_reference(obj) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous object <%p>", (void *)obj);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy object %s <%p>", obj->name, (void *)obj);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in object: %s", obj->name ? obj->name : "<anonymous>");
 		}
 
-		if (obj->interface != NULL && obj->interface->destroy != NULL)
+		if (obj->ref_count == 0)
 		{
-			obj->interface->destroy(obj, obj->impl);
-		}
+			if (obj->name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous object <%p>", (void *)obj);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy object %s <%p>", obj->name, (void *)obj);
+			}
 
-		if (obj->name != NULL)
-		{
-			free(obj->name);
-		}
+			if (obj->interface != NULL && obj->interface->destroy != NULL)
+			{
+				obj->interface->destroy(obj, obj->impl);
+			}
 
-		free(obj);
+			if (obj->name != NULL)
+			{
+				free(obj->name);
+			}
+
+			free(obj);
+		}
 	}
 }

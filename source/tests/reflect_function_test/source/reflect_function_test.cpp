@@ -142,10 +142,12 @@ TEST_F(reflect_function_test, DefaultConstructor)
 
 		f = function_create("example", 3, example_impl, &function_example_singleton);
 
-		EXPECT_NE((function)f, (function)NULL);
+		EXPECT_NE((function) f, (function) NULL);
 
 		if (f != NULL)
 		{
+			EXPECT_EQ((int) function_increment_reference(f), (int) 0);
+
 			signature_set(function_signature(f), 0, "c", char_type);
 			signature_set(function_signature(f), 1, "i", int_type);
 			signature_set(function_signature(f), 2, "p", ptr_type);

@@ -157,6 +157,8 @@ TEST_F(reflect_metadata_test, DefaultConstructor)
 
 		EXPECT_NE((function) f, (function) NULL);
 
+		EXPECT_EQ((int) function_increment_reference(f), (int) 0);
+
 		if (f != NULL)
 		{
 			signature sig = function_signature(f);

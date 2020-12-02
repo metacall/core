@@ -615,29 +615,37 @@ function_return function_await(function func, function_args args, size_t size, f
 
 void function_destroy(function func)
 {
-	if (func != NULL && func->ref_count == 0)
+	if (func != NULL)
 	{
-		if (func->name == NULL)
+		if (function_decrement_reference(func) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous function <%p>", (void *)func);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy function %s <%p>", func->name, (void *)func);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in function: %s", func->name ? func->name : "<anonymous>");
 		}
 
-		if (func->interface != NULL && func->interface->destroy != NULL)
+		if (func->ref_count == 0)
 		{
-			func->interface->destroy(func, func->impl);
+			if (func->name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous function <%p>", (void *)func);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy function %s <%p>", func->name, (void *)func);
+			}
+
+			if (func->interface != NULL && func->interface->destroy != NULL)
+			{
+				func->interface->destroy(func, func->impl);
+			}
+
+			signature_destroy(func->s);
+
+			if (func->name != NULL)
+			{
+				free(func->name);
+			}
+
+			free(func);
 		}
-
-		signature_destroy(func->s);
-
-		if (func->name != NULL)
-		{
-			free(func->name);
-		}
-
-		free(func);
 	}
 }

@@ -302,27 +302,35 @@ value class_static_await(klass cls, const char * name, class_args args, size_t s
 
 void class_destroy(klass cls)
 {
-	if (cls != NULL && cls->ref_count == 0)
+	if (cls != NULL)
 	{
-		if (cls->name == NULL)
+		if (class_decrement_reference(cls) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous class <%p>", (void *)cls);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p>", cls->name, (void *)cls);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in class: %s", cls->name ? cls->name : "<anonymous>");
 		}
 
-		if (cls->interface != NULL && cls->interface->destroy != NULL)
+		if (cls->ref_count == 0)
 		{
-			cls->interface->destroy(cls, cls->impl);
-		}
+			if (cls->name == NULL)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous class <%p>", (void *)cls);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p>", cls->name, (void *)cls);
+			}
 
-		if (cls->name != NULL)
-		{
-			free(cls->name);
-		}
+			if (cls->interface != NULL && cls->interface->destroy != NULL)
+			{
+				cls->interface->destroy(cls, cls->impl);
+			}
 
-		free(cls);
+			if (cls->name != NULL)
+			{
+				free(cls->name);
+			}
+
+			free(cls);
+		}
 	}
 }

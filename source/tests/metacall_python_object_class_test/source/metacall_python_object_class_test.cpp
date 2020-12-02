@@ -86,10 +86,11 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 
 			void * constructor_params[] =
 			{
-				metacall_value_create_string("John Doe", sizeof("John Doe")), // param1
+				metacall_value_create_string("John Doe", sizeof("John Doe") - 1), // param1
 				metacall_value_create_int(999999) // param2
 			};
-			void * new_object = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params)/sizeof(constructor_params[0]));
+			void * new_object_v = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params)/sizeof(constructor_params[0]));
+			void * new_object = metacall_value_to_object(new_object_v);
 
 			void * param2 = metacall_object_get(new_object, "b");
 			ASSERT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(param2));
@@ -106,7 +107,7 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 
 			metacall_value_destroy(param2);
 
-			metacall_object_delete(new_object);
+			metacall_value_destroy(new_object_v);
 		}
 
 		{

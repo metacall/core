@@ -80,7 +80,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 			void * static_method_args[] =
 			{
-				metacall_value_create_string("It works!", sizeof("It works!"))
+				metacall_value_create_string("It works!", sizeof("It works!") - 1)
 			};	
 			void * ret_value = metacallv_class(myclass, "static_hello", static_method_args, sizeof(static_method_args)/sizeof(static_method_args[0]));
 
@@ -115,7 +115,8 @@ TEST_F(metacall_test, DefaultConstructor)
 				metacall_value_create_string("John Doe", sizeof("John Doe")), // param1
 				metacall_value_create_int(999999) // param2
 			};
-			void * new_object = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params)/sizeof(constructor_params[0]));
+			void * new_object_v = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params)/sizeof(constructor_params[0]));
+			void * new_object = metacall_value_to_object(new_object_v);
 
 			void * param2 = metacall_object_get(new_object, "@param2");
 			ASSERT_EQ((enum metacall_value_id) METACALL_INT, (enum metacall_value_id) metacall_value_id(param2));
@@ -123,12 +124,8 @@ TEST_F(metacall_test, DefaultConstructor)
 
 			metacall_value_destroy(param2);
 			metacall_value_destroy(myclass_value);
-
-			metacall_object_delete(new_object);
+			metacall_value_destroy(new_object_v);
 		}
-		
-
-
 	}
 	#endif /* OPTION_BUILD_LOADERS_RB */
 

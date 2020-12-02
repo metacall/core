@@ -101,16 +101,16 @@ int hello_world_object_impl_interface_set(object obj, object_impl impl, const ch
 
 value hello_world_object_impl_interface_method_invoke(object obj, object_impl impl, const char * key, object_args args, size_t size)
 {
-	// TODO
+	// TODO: Maybe we can improve this with other methods and arguments like in reflect_function_test
+	static const char str[] = "Hello World";
+
 	(void)obj;
 	(void)impl;
 	(void)key;
 	(void)args;
 	(void)size;
 
-	/* Reuse reflect_function_test perhaps? */
-	
-	return NULL;
+	return value_create_string(str, sizeof(str) - 1);
 }
 
 value hello_world_object_impl_interface_method_await(object obj, object_impl impl, const char * key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void * ctx)
@@ -165,7 +165,7 @@ int hello_world_class_impl_interface_create(klass cls, class_impl impl)
 
 	(void)cls;
 
-	EXPECT_NE((void *) NULL, (void *)hello_world);
+	EXPECT_NE((void *) NULL, (void *) hello_world);
 
 	// Default values for static attributes (this will be done automatically by the language runtime)
 	hello_world->a = 0;
@@ -182,6 +182,11 @@ object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, 
 	(void)impl;
 
 	object obj = object_create(name, hello_world_obj, &hello_world_object_impl_interface_singleton, cls);
+
+	if (object_increment_reference(obj) != 0)
+	{
+		/* TODO: Abort? */
+	}
 
 	if (args == 0)
 	{
@@ -236,7 +241,7 @@ int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, cons
 	}
 	else if (strcmp(key, "b") == 0)
 	{
-		hello_world->a = value_to_float(v);
+		hello_world->b = value_to_float(v);
 	}
 	else if (strcmp(key, "c") == 0)
 	{
@@ -311,9 +316,11 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 	// Create class
 	hello_world_class hellow_world_cls = new hello_world_class_type();
 
-	EXPECT_NE((void *) NULL, (void *)hellow_world_cls);
+	EXPECT_NE((void *) NULL, (void *) hellow_world_cls);
 
 	klass cls = class_create("HelloWorld", hellow_world_cls, &hello_world_class_impl_interface_singleton);
+
+	EXPECT_EQ((int) class_increment_reference(cls), (int) 0);
 
 	// Get and set static attributes from the class
 	{
@@ -350,6 +357,8 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 		object obj = class_new(cls, "helloWorldObj", args, 0);
 
+		EXPECT_EQ((int) 0, (int) object_increment_reference(obj));
+
 		// Get & set attributes from object
 		{
 			value d = object_get(obj, "d");
@@ -371,10 +380,13 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			EXPECT_EQ((long) 1234L, (long) value_to_long(e));
 		}
 
-		// TODO: Set hello_world_object_impl_interface_method_invoke
-		object_call(obj, "test_func", args, 0);
+		// Test object call
+		value ret = object_call(obj, "test_func", args, 0);
+		ASSERT_NE((value) NULL, (value) ret);
+		ASSERT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
+		value_type_destroy(ret);
 		
-		// TODO: Await call
+		// TODO: Test object await
 
 		object_destroy(obj);
 	}
@@ -389,6 +401,8 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 		object obj = class_new(cls, "helloWorldObj", args, 2);
 
+		EXPECT_EQ((int) 0, (int) object_increment_reference(obj));
+
 		// Get attributes from object
 		{
 			value d = object_get(obj, "d");
@@ -400,11 +414,13 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			EXPECT_EQ((long) 3435L, (long) value_to_long(e));
 		}
 
-
-		// TODO: Set hello_world_object_impl_interface_method_invoke
-		object_call(obj, "test_func", args, 0);
+		// Test object call
+		value ret = object_call(obj, "test_func", args, 0);
+		ASSERT_NE((value) NULL, (value) ret);
+		ASSERT_EQ((int) 0, (int) strcmp(value_to_string(ret), "Hello World"));
+		value_type_destroy(ret);
 		
-		// TODO: Await call
+		// TODO: Test object await
 
 		object_destroy(obj);
 	}

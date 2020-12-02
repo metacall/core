@@ -1493,7 +1493,23 @@ void * metacall_class(const char * name)
 
 void * metacall_class_new(void * cls, const char * name, void * args[], size_t argc)
 {
-	return class_new(cls, name, args, argc);
+	object o = class_new(cls, name, args, argc);
+
+	value v;
+
+	if (o == NULL)
+	{
+		return NULL;
+	}
+
+	v = value_create_object(o);
+
+	if (v == NULL)
+	{
+		object_destroy(o);
+	}
+
+	return v;
 }
 
 void * metacall_class_static_get(void * cls, const char * key)
@@ -1524,15 +1540,6 @@ void * metacall_object_get(void * obj, const char * key)
 int metacall_object_set(void * obj, const char * key, void * v)
 {
 	return object_set(obj, key, v);
-}
-
-int metacall_object_delete(void * obj)
-{
-	int ret_status = object_delete(obj);
-
-	object_destroy(obj);
-	
-	return ret_status;
 }
 
 char * metacall_inspect(size_t * size, void * allocator)

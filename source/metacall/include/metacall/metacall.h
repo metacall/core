@@ -776,7 +776,7 @@ METACALL_API void * metacallv_class(void * cls, const char * name, void * args[]
 *    Number of elements of constructor parameters
 *
 *  @return
-*    Pointer to the new object instance
+*    Pointer to the new object value instance
 */
 METACALL_API void * metacall_class_new(void * cls, const char * name, void * args[], size_t argc);
 
@@ -866,18 +866,6 @@ METACALL_API void * metacall_object_get(void * obj, const char * key);
 *    Non-zero integer if an error ocurred
 */
 METACALL_API int metacall_object_set(void * obj, const char * key, void * v);
-
-/**
-*  @brief
-*    Call @obj destructor and delete its reference. After, @obj should be treated as a null pointer
-*
-*  @param[in] obj
-*    Pointer to the object
-*
-*  @return
-*    Non-zero integer if an error ocurred
-*/
-METACALL_API int metacall_object_delete(void * obj);
 
 /**
 *  @brief
