@@ -45,7 +45,9 @@ static const enum metacall_value_id value_id_map[] =
 	METACALL_PTR,
 	METACALL_FUTURE,
 	METACALL_FUNCTION,
-	METACALL_NULL
+	METACALL_NULL,
+	METACALL_CLASS,
+	METACALL_OBJECT
 };
 
 /* -- Static Assertions -- */
@@ -68,6 +70,8 @@ static_assert(((int) TYPE_BOOL == (int) METACALL_BOOL) &&
 	((int) TYPE_FUTURE == (int) METACALL_FUTURE) &&
 	((int) TYPE_FUNCTION == (int) METACALL_FUNCTION) &&
 	((int) TYPE_NULL == (int) METACALL_NULL) &&
+	((int) TYPE_CLASS == (int) METACALL_CLASS) &&
+	((int) TYPE_OBJECT == (int) METACALL_OBJECT) &&
 	((int) TYPE_SIZE == (int) METACALL_SIZE) &&
 	((int) TYPE_INVALID == (int) METACALL_INVALID),
 	"Internal reflect value types does not match with public metacall API value types");
@@ -155,6 +159,16 @@ void * metacall_value_create_function_closure(void * f, void * c)
 void * metacall_value_create_null()
 {
 	return value_create_null();
+}
+
+void * metacall_value_create_class(void * c)
+{
+	return value_create_class(c);
+}
+
+void * metacall_value_create_object(void * c)
+{
+	return value_create_object(c);
 }
 
 size_t metacall_value_size(void * v)
@@ -304,6 +318,20 @@ void * metacall_value_to_null(void * v)
 	return value_to_null(v);
 }
 
+void * metacall_value_to_class(void * v)
+{
+	assert(value_type_id(v) == TYPE_CLASS);
+
+	return value_to_class(v);
+}
+
+void * metacall_value_to_object(void * v)
+{
+	assert(value_type_id(v) == TYPE_OBJECT);
+
+	return value_to_object(v);
+}
+
 void * metacall_value_from_bool(void * v, boolean b)
 {
 	return value_from_bool(v, b);
@@ -377,6 +405,16 @@ void * metacall_value_from_function(void * v, void * f)
 void * metacall_value_from_null(void * v)
 {
 	return value_from_null(v);
+}
+
+void * metacall_value_from_class(void * v, void * c)
+{
+	return value_from_class(v, c);
+}
+
+void * metacall_value_from_object(void * v, void * o)
+{
+	return value_from_object(v, o);
 }
 
 boolean metacall_value_cast_bool(void ** v)
@@ -602,6 +640,36 @@ void * metacall_value_cast_null(void ** v)
 	}
 
 	return value_to_null(*v);
+}
+
+void * metacall_value_cast_class(void ** v)
+{
+	if (value_type_id(*v) != TYPE_CLASS)
+	{
+		value v_cast = value_type_cast(*v, TYPE_CLASS);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_class(*v);
+}
+
+void * metacall_value_cast_object(void ** v)
+{
+	if (value_type_id(*v) != TYPE_OBJECT)
+	{
+		value v_cast = value_type_cast(*v, TYPE_OBJECT);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_object(*v);
 }
 
 void metacall_value_destroy(void * v)

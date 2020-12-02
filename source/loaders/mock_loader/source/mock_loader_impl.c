@@ -443,7 +443,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -460,7 +460,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 1, "second_parameter", loader_impl_type(impl, "Double"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -483,7 +483,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 4, "e_ptr", loader_impl_type(impl, "Ptr"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -498,7 +498,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -515,7 +515,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 1, "b_str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -534,7 +534,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 2, "c_str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -547,7 +547,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	mock_function = mock_function_create(mock_handle);
@@ -560,7 +560,7 @@ int mock_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	return 0;

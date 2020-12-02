@@ -59,12 +59,30 @@ typedef struct loader_impl_rb_function_type
 
 } * loader_impl_rb_function;
 
+typedef struct loader_impl_rb_class_type
+{
+	VALUE class;
+	loader_impl impl;
+
+} * loader_impl_rb_class;
+
+typedef struct loader_impl_rb_object_type
+{
+	VALUE object;
+	VALUE object_class;
+	loader_impl impl;
+
+} * loader_impl_rb_object;
+
 typedef struct loader_impl_rb_module_eval_protect_type
 {
 	int argc;
 	VALUE * argv;
 	VALUE module;
 } * loader_impl_rb_module_eval_protect;
+
+class_interface rb_class_interface_singleton();
+object_interface rb_object_interface_singleton();
 
 int function_rb_interface_create(function func, function_impl impl)
 {
@@ -163,12 +181,94 @@ const char * rb_type_deserialize(VALUE v, value * result)
 	}
 	else if (v_type == T_OBJECT)
 	{
-		// TODO
+		loader_impl_rb_object rb_obj = malloc(sizeof(struct loader_impl_rb_object_type));
+
+		VALUE object_class = rb_obj_class(v);
+
+		value obj_cls_val = NULL;
+		rb_type_deserialize(object_class, &obj_cls_val);
+
+		klass kls = value_to_class(obj_cls_val);
+
+		VALUE inspect = rb_inspect(v);
+		char *inspect_str = StringValuePtr(inspect);
+
+		/* inspect vs class_name(kls) as object name ?*/
+		object o = object_create(inspect_str, rb_obj, &rb_object_interface_singleton, kls);
+
+		// rb_obj->impl = impl;
+		rb_obj->object = v;
+		rb_obj->object_class = object_class;
+
+		*result = value_create_object(o);
 
 		return "Object";
 	}
+	else if (v_type == T_CLASS)
+	{
+		loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
+
+		VALUE class_name = rb_funcall(v, rb_intern("name"), 0);
+		const char *class_name_str = RSTRING_PTR(class_name);
+
+		klass c = class_create(class_name_str, rb_cls, &rb_class_interface_singleton);
+
+		// rb_cls->impl = impl;
+		rb_cls->class = v;
+
+		*result = value_create_class(c);
+
+		return "Class";
+	}
 
 	return NULL;
+}
+
+VALUE rb_type_serialize(value v)
+{
+	if(v == NULL)
+	{
+		return Qnil;
+	}
+	
+	type_id v_type = value_type_id(v);
+	
+	if (v_type == TYPE_BOOL)
+	{
+		return (value_to_bool(v) == 0L) ? Qfalse : Qtrue;
+	}
+	else if (v_type == TYPE_INT)
+	{
+		return INT2NUM(value_to_int(v));
+	}
+	else if (v_type == TYPE_LONG)
+	{
+		return LONG2NUM(value_to_long(v));
+	}
+	else if (v_type == TYPE_FLOAT)
+	{
+		return DBL2NUM((double)value_to_float(v));
+	}
+	else if (v_type == TYPE_DOUBLE)
+	{
+		return DBL2NUM(value_to_double(v));
+	}
+	else if (v_type == TYPE_STRING)
+	{
+		const char * str = value_to_string(v);
+
+		return rb_str_new_cstr(str);
+	}
+	else if (v_type == TYPE_NULL)
+	{
+		return Qnil;
+	}
+	else
+	{
+		rb_raise(rb_eArgError, "Unsupported return type");
+
+		return Qnil;
+	}
 }
 
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)
@@ -233,52 +333,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Type %p, %d", (void *)t, id);
 
-			if (id == TYPE_BOOL)
-			{
-				boolean * value_ptr = (boolean *)(args[args_count]);
-
-				args_value[args_count] = (*value_ptr == 0L) ? Qfalse : Qtrue;
-			}
-			else if (id == TYPE_INT)
-			{
-				int * value_ptr = (int *)(args[args_count]);
-
-				args_value[args_count] = INT2NUM(*value_ptr);
-			}
-			else if (id == TYPE_LONG)
-			{
-				long * value_ptr = (long *)(args[args_count]);
-
-				args_value[args_count] = LONG2NUM(*value_ptr);
-			}
-			else if (id == TYPE_FLOAT)
-			{
-				float * value_ptr = (float *)(args[args_count]);
-
-				args_value[args_count] = DBL2NUM((double)*value_ptr);
-			}
-			else if (id == TYPE_DOUBLE)
-			{
-				double * value_ptr = (double *)(args[args_count]);
-
-				args_value[args_count] = DBL2NUM(*value_ptr);
-			}
-			else if (id == TYPE_STRING)
-			{
-				const char * value_ptr = (const char *)(args[args_count]);
-
-				args_value[args_count] = rb_str_new_cstr(value_ptr);
-			}
-			else if (id == TYPE_NULL)
-			{
-				args_value[args_count] = Qnil;
-			}
-			else
-			{
-				rb_raise(rb_eArgError, "Unsupported return type");
-
-				args_value[args_count] = Qnil;
-			}
+			args_value[args_count] = rb_type_serialize(args[args_count]);
 
 			if (t != NULL)
 			{
@@ -327,9 +382,6 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	const char * v_type_name = rb_type_deserialize(result_value, &v);
 
-	/* TODO: Is this really needed? I don't think so */
-	signature_set_return(s, loader_impl_type(rb_function->impl, v_type_name));
-
 	return v;
 }
 
@@ -373,6 +425,330 @@ function_interface function_rb_singleton(void)
 	return &rb_interface;
 }
 
+int rb_object_interface_create(object obj, object_impl impl)
+{
+	(void)obj;
+
+	loader_impl_rb_object rb_obj = impl;
+
+	rb_obj->object = Qnil;
+	rb_obj->object_class = Qnil;
+
+	return 0;
+}
+
+value rb_object_interface_get(object obj, object_impl impl, const char * key)
+{
+	(void)obj;
+
+	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
+
+	VALUE rb_val_object = rb_object->object;
+
+	VALUE got = rb_iv_get(rb_val_object, key);
+
+	VALUE exception = rb_errinfo();
+
+	if(exception != Qnil)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting object '%s' member '%s'", object_name(obj), key);
+
+		rb_set_errinfo(Qnil);
+
+		return NULL;
+	}
+
+	value result = NULL;
+	rb_type_deserialize(got, &result);
+
+	return result;
+}
+
+int rb_object_interface_set(object obj, object_impl impl, const char * key, value v)
+{
+	(void)obj;
+
+	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
+
+	VALUE rb_val_object = rb_object->object;
+	
+	rb_iv_set(rb_val_object, key, rb_type_serialize(v));
+
+	VALUE exception = rb_errinfo();
+	
+	if(exception != Qnil)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error setting object '%s' member '%s'", object_name(obj), key);
+
+		rb_set_errinfo(Qnil);
+
+		return 1;
+	}
+	
+	return 0;
+
+}
+
+value rb_object_interface_method_invoke(object obj, object_impl impl, const char * method_name, object_args args, size_t argc)
+{
+	(void)obj;
+
+	loader_impl_rb_object obj_impl = (loader_impl_rb_object)impl;
+
+	if(obj_impl == NULL || obj_impl->object == Qnil)
+	{
+		return NULL;
+	}
+	
+	VALUE * argv = malloc(sizeof(VALUE) * argc);
+	for (size_t i = 0; i < argc; i++)
+	{
+		argv[i] = rb_type_serialize(args[i]);
+	}
+
+	VALUE rb_retval = rb_funcallv(obj_impl->object, rb_intern(method_name), argc, argv);
+
+	free(argv);
+
+	if(rb_retval == Qnil) 
+	{
+		return NULL;
+	}
+	
+	value result = NULL;
+	rb_type_deserialize(rb_retval, &result);
+
+	return result;
+}
+
+value rb_object_interface_method_await(object obj, object_impl impl, const char * key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void * ctx)
+{
+	// TODO
+	(void)obj;
+	(void)impl;
+	(void)key;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+int rb_object_interface_destructor(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+
+	return 0;
+}
+
+
+void rb_object_interface_destroy(object obj, object_impl impl)
+{
+	(void)obj;
+
+	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
+
+	if(rb_object != NULL)
+	{
+		rb_object->object = Qnil;
+
+		rb_object->object_class = Qnil;
+
+		free(rb_object);
+	}
+}
+
+object_interface rb_object_interface_singleton()
+{
+	static struct object_interface_type rb_object_interface =
+	{
+		&rb_object_interface_create,
+		&rb_object_interface_get,
+		&rb_object_interface_set,
+		&rb_object_interface_method_invoke,
+		&rb_object_interface_method_await,
+		&rb_object_interface_destructor,
+		&rb_object_interface_destroy
+	};
+
+	return &rb_object_interface;
+}
+
+int rb_class_interface_create(klass cls, class_impl impl)
+{
+	(void)cls;
+
+	loader_impl_rb_class rb_cls = impl;
+
+	rb_cls->class = Qnil;
+    
+	return 0;
+}
+
+object rb_class_interface_constructor(klass cls, class_impl impl, const char * name, class_args args, size_t argc)
+{
+	(void)cls;
+
+	loader_impl_rb_class rb_cls = impl;
+
+	loader_impl_rb_object rb_obj = malloc(sizeof(struct loader_impl_rb_object_type));
+
+	object obj = object_create(name, rb_obj, &rb_object_interface_singleton, cls);
+
+	/* Get loader implementation from class */
+	rb_obj->impl = rb_cls->impl;
+
+	VALUE * argv = malloc(sizeof(VALUE) * argc);
+	for (size_t i = 0; i < argc; i++)
+	{
+		argv[i] = rb_type_serialize(args[i]);
+	}
+
+	VALUE rbval_object = rb_funcallv(rb_cls->class, rb_intern("new"), argc, argv);
+
+	free(argv);
+
+	rb_obj->object = rbval_object;
+	rb_obj->object_class = rb_cls->class;
+
+	return obj;
+}
+
+value rb_class_interface_static_get(klass cls, class_impl impl, const char * key)
+{
+	(void)cls;
+
+	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
+
+	VALUE rb_val_class = rb_class->class;
+
+	VALUE got = rb_cv_get(rb_val_class, key);
+
+	VALUE exception = rb_errinfo();
+
+	if(exception != Qnil)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting class '%s' member '%s'", class_name(cls), key);
+
+		rb_set_errinfo(Qnil);
+
+		return NULL;
+	}
+
+	value result = NULL;
+	rb_type_deserialize(got, &result);
+
+	return result;
+}
+
+int rb_class_interface_static_set(klass cls, class_impl impl, const char * key, value v)
+{
+	(void)cls;
+
+	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
+
+	VALUE rb_val_class = rb_class->class;
+	
+	rb_cv_set(rb_val_class, key, rb_type_serialize(v));
+
+	VALUE exception = rb_errinfo();
+	
+	if(exception != Qnil)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error setting class '%s' member '%s'", class_name(cls), key);
+
+		rb_set_errinfo(Qnil);
+
+		return 1;
+	}
+	
+	return 0;
+}
+
+value rb_class_interface_static_invoke(klass cls, class_impl impl, const char * static_method_name, class_args args, size_t argc)
+{
+	// TODO
+	(void)cls;
+	(void)impl;
+	(void)args;
+	
+	loader_impl_rb_class cls_impl = (loader_impl_rb_class)impl;
+
+	if(cls_impl == NULL || cls_impl->class == Qnil)
+	{
+		return NULL;
+	}
+	
+	VALUE * argv = malloc(sizeof(VALUE) * argc);
+	for (size_t i = 0; i < argc; i++)
+	{
+		argv[i] = rb_type_serialize(args[i]);
+	}
+
+	VALUE rb_retval = rb_funcallv(cls_impl->class, rb_intern(static_method_name), argc, argv);
+
+	free(argv);
+
+	if(rb_retval == Qnil) 
+	{
+		return NULL;
+	}
+	
+	value result = NULL;
+	rb_type_deserialize(rb_retval, &result);
+
+	return result;
+}
+
+value rb_class_interface_static_await(klass cls, class_impl impl, const char * key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void * ctx)
+{
+	// TODO
+	(void)cls;
+	(void)impl;
+	(void)key;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+void rb_class_interface_destroy(klass cls, class_impl impl)
+{
+	(void)cls;
+
+	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
+
+	if(rb_class != NULL)
+	{
+		rb_class->class = Qnil;
+
+		free(rb_class);
+	}
+
+}
+
+class_interface rb_class_interface_singleton()
+{
+	static struct class_interface_type rb_class_interface =
+	{
+		&rb_class_interface_create,
+		&rb_class_interface_constructor,
+		&rb_class_interface_static_get,
+		&rb_class_interface_static_set,
+		&rb_class_interface_static_invoke,
+		&rb_class_interface_static_await,
+		&rb_class_interface_destroy
+	};
+
+	return &rb_class_interface;
+}
+
 int rb_loader_impl_initialize_types(loader_impl impl)
 {
 	/* TODO: move this to loader_impl by passing the structure and loader_impl_derived callback */
@@ -390,7 +766,9 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_DOUBLE, "Float" },
 		{ TYPE_STRING, "String" },
 		{ TYPE_ARRAY, "Array" },
-		{ TYPE_NULL, "NilClass" }
+		{ TYPE_NULL, "NilClass" },
+		{ TYPE_CLASS, "Class" },
+		{ TYPE_OBJECT, "Object" }
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -924,13 +1302,13 @@ loader_impl_rb_function rb_function_create(loader_impl_rb_module rb_module, ID i
 
 int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_module, context ctx)
 {
+	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader discovering:");
+	
 	VALUE instance_methods = rb_funcall(rb_module->module, rb_intern("instance_methods"), 0);
 
 	VALUE methods_size = rb_funcall(instance_methods, rb_intern("size"), 0);
 
 	int index, size = FIX2INT(methods_size);
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader discovering:");
 
 	for (index = 0; index < size; ++index)
 	{
@@ -961,7 +1339,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				{
 					scope sp = context_scope(ctx);
 
-					scope_define(sp, function_name(f), f);
+					scope_define(sp, function_name(f), value_create_function(f));
 
 					rb_function->impl = impl;
 
@@ -976,6 +1354,59 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 			{
 				return 1;
 			}
+		}
+	}
+
+
+	/* Now discover classes */
+	VALUE constants = rb_funcall(rb_module->module, rb_intern("constants"), 0);
+
+	VALUE constants_size = rb_funcall(constants, rb_intern("size"), 0);
+
+	size = FIX2INT(constants_size);
+
+	for (index = 0; index < size; index++)
+	{
+		VALUE constant = rb_ary_entry(constants, index);
+		
+		if (constant != Qnil)
+		{
+			if(RB_TYPE_P(constant, T_SYMBOL))
+			{
+				VALUE class_name = rb_funcall(constant, rb_intern("id2name"), 0);
+				const char * class_name_str = RSTRING_PTR(class_name);
+				
+				log_write("metacall", LOG_LEVEL_DEBUG, "Class name %s", class_name_str);
+
+				VALUE class = rb_const_get_from(rb_module->module, rb_intern(class_name_str));		
+
+				/*
+				VALUE argv[1] = { Qtrue }; // include_superclasses ? Qtrue : Qfalse;
+   				VALUE methods = rb_class_instance_methods(1, argv, class); // argc, argv, class
+				VALUE load_path_array_size = rb_funcall(methods, rb_intern("size"), 0);
+				int method_index, methods_size = FIX2INT(load_path_array_size);
+
+				for (method_index = 0; method_index < methods_size; method_index++)
+				{
+					VALUE method = rb_ary_entry(methods, method_index);
+					VALUE method_name = rb_funcall(method, rb_intern("id2name"), 0);
+					const char * method_name_str = RSTRING_PTR(method_name);
+
+					log_write("metacall", LOG_LEVEL_DEBUG, "Method inside '%s' %s", class_name_str, method_name_str);
+				}
+				*/
+
+				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
+
+				klass c = class_create(class_name_str, rb_cls, &rb_class_interface_singleton);
+
+				rb_cls->impl = impl;
+				rb_cls->class = class;
+
+				scope sp = context_scope(ctx);
+				scope_define(sp, class_name_str, value_create_class(c));
+			}
+			
 		}
 	}
 

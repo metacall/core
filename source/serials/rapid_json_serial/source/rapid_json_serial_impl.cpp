@@ -320,6 +320,28 @@ void rapid_json_serial_impl_serialize_value(value v, RapidJSONSerialValue * json
 
 		json_v->SetString(str, length);
 	}
+	else if (id == TYPE_CLASS)
+	{
+		/* TODO: Improve class serialization */
+		const char str[] = "[Class]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
+	else if (id == TYPE_OBJECT)
+	{
+		/* TODO: Improve object serialization */
+		const char str[] = "[Object]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
 	else if (id == TYPE_PTR)
 	{
 		std::ostringstream ostream;

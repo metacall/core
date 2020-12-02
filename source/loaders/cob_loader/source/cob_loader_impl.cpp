@@ -247,7 +247,7 @@ int cob_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 	{
 		function f = function_create(func.first.c_str(), 0, NULL, &function_cob_singleton);
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	return 0;

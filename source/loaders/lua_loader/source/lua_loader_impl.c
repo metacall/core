@@ -496,7 +496,7 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), f);
+		scope_define(sp, function_name(f), value_create_function(f));
 	}
 
 	return 0;

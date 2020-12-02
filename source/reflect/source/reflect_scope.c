@@ -20,6 +20,7 @@
 
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_value_type.h>
+#include <reflect/reflect_class.h>
 
 #include <adt/adt_set.h>
 #include <adt/adt_vector.h>
@@ -47,8 +48,13 @@ struct scope_type
 
 struct scope_metadata_array_cb_iterator_type
 {
-	size_t iterator;
-	value * values;
+	value * functions;
+	value * classes;
+	value * objects;
+
+	size_t functions_size;
+	size_t classes_size;
+	size_t objects_size;
 };
 
 struct scope_export_cb_iterator_type
@@ -62,8 +68,6 @@ static int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, se
 static int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static value scope_metadata_array(scope sp);
-
-static value scope_metadata_map(scope sp);
 
 static value scope_metadata_name(scope sp);
 
@@ -173,27 +177,62 @@ size_t scope_size(scope sp)
 	return 0;
 }
 
-int scope_define(scope sp, const char * key, scope_object obj)
+int scope_define(scope sp, const char * key, value val)
 {
-	if (sp != NULL && key != NULL && obj != NULL)
+	if (sp != NULL && key != NULL && val != NULL)
 	{
-		/* TODO: Support for other scope objects (e.g: class) */
-		if (set_insert(sp->objects, (set_key)key, (set_value)obj) == 0)
+		if (set_insert(sp->objects, (set_key)key, (set_value)val) == 0)
 		{
-			/* TODO: Support for polyphormism */
-			function func = (function)obj;
+			type_id val_type = value_type_id(val);
 
-			if (function_increment_reference(func) != 0)
+			if(val_type == TYPE_FUNCTION)
 			{
-				set_remove(sp->objects, (set_key)key);
+				function func = value_to_function(val);
 
-				/* TODO: Log about the error */
+				if (function_increment_reference(func) != 0)
+				{
+					set_remove(sp->objects, (set_key)key);
 
-				return 1;
+					/* TODO: Log about the error */
+
+					return 1;
+				}
 			}
+			else if(val_type == TYPE_CLASS)
+			{
+				klass cls = value_to_class(val);
 
+				if (class_increment_reference(cls) != 0)
+				{
+					set_remove(sp->objects, (set_key)key);
+
+					/* TODO: Log about the error */
+
+					return 1;
+				}
+			}
+			else if(val_type == TYPE_OBJECT)
+			{
+				object obj = value_to_object(val);
+
+				if (object_increment_reference(obj) != 0)
+				{
+					set_remove(sp->objects, (set_key)key);
+
+					/* TODO: Log about the error */
+
+					return 1;
+				}
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Scope for %d type_id not defined yet", val_type);
+				return 2;
+			}
+			
 			return 0;
 		}
+
 	}
 
 	return 1;
@@ -203,67 +242,98 @@ int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_it
 {
 	scope_metadata_array_cb_iterator metadata_iterator = (scope_metadata_array_cb_iterator)args;
 
-	/* TODO: Support to other scope objects (e.g: class) */
 	(void)s;
 	(void)key;
 
-	metadata_iterator->values[metadata_iterator->iterator] = function_metadata((function)val);
-
-	if (metadata_iterator->values[metadata_iterator->iterator] != NULL)
+	int type_id = value_type_id(val);
+	
+	if(type_id == TYPE_FUNCTION)
 	{
-		++metadata_iterator->iterator;
+		metadata_iterator->functions[metadata_iterator->functions_size++] = function_metadata(value_to_function(val));
+	}
+	else if(type_id == TYPE_CLASS)
+	{
+		metadata_iterator->classes[metadata_iterator->classes_size++] = class_metadata(value_to_class(val));
+	}
+	else if(type_id == TYPE_OBJECT)
+	{
+		metadata_iterator->objects[metadata_iterator->objects_size++] = object_metadata(value_to_object(val));
 	}
 
 	return 0;
 }
 
+int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	scope_metadata_array_cb_iterator metadata_iterator = (scope_metadata_array_cb_iterator)args;
+
+	(void)s;
+	(void)key;
+
+	int type_id = value_type_id(val);
+	if(type_id == TYPE_FUNCTION)
+	{
+		metadata_iterator->functions_size++;
+	}
+	else if(type_id == TYPE_CLASS)
+	{
+		metadata_iterator->classes_size++;
+	}
+	else if(type_id == TYPE_OBJECT)
+	{
+		metadata_iterator->objects_size++;
+	}
+
+	return 0;
+}
+
+
 value scope_metadata_array(scope sp)
 {
 	struct scope_metadata_array_cb_iterator_type metadata_iterator;
 
-	value v = value_create_array(NULL, scope_size(sp));
+	metadata_iterator.classes_size = 0;
+	metadata_iterator.functions_size = 0;
+	metadata_iterator.objects_size = 0;
 
-	if (v == NULL)
+	set_iterate(sp->objects, &scope_metadata_array_cb_iterate_counter, (set_cb_iterate_args)&metadata_iterator);
+
+	value functions_val = value_create_array(NULL, metadata_iterator.functions_size);
+	if (functions_val == NULL)
 	{
 		return NULL;
 	}
+	metadata_iterator.functions = value_to_array(functions_val);
 
-	metadata_iterator.iterator = 0;
+	value classes_val = value_create_array(NULL, metadata_iterator.classes_size);
+	if (classes_val == NULL)
+	{
+		value_destroy(functions_val);
+		return NULL;
+	}
+	metadata_iterator.classes = value_to_array(classes_val);
 
-	metadata_iterator.values = value_to_array(v);
+	value objects_val = value_create_array(NULL, metadata_iterator.objects_size);
+	if (objects_val == NULL)
+	{
+		value_destroy(functions_val);
+		value_destroy(classes_val);
+		return NULL;
+	}
+	metadata_iterator.objects = value_to_array(objects_val);
+
+	/* Reuse counters to fill the arrays */
+	metadata_iterator.classes_size = 0;
+	metadata_iterator.functions_size = 0;
+	metadata_iterator.objects_size = 0;
 
 	set_iterate(sp->objects, &scope_metadata_array_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
 
-	return v;
-}
-
-value scope_metadata_map(scope sp)
-{
-	static const char funcs[] = "funcs";
-
-	value * v_ptr, v = value_create_array(NULL, 2);
-
-	if (v == NULL)
-	{
-		return NULL;
-	}
-
-	v_ptr = value_to_array(v);
-
-	/* TODO: Support to other scope objects (e.g: class) */
-	v_ptr[0] = value_create_string(funcs, sizeof(funcs) - 1);
-
-	if (v_ptr[0] == NULL)
-	{
-		value_type_destroy(v);
-	}
-
-	v_ptr[1] = scope_metadata_array(sp);
-
-	if (v_ptr[1] == NULL)
-	{
-		value_type_destroy(v);
-	}
+	value v = value_create_array(NULL, 3);
+	value * v_array = value_to_array(v);
+	v_array[0] = functions_val;
+	v_array[1] = classes_val;
+	v_array[2] = objects_val;
 
 	return v;
 }
@@ -300,7 +370,7 @@ value scope_metadata_name(scope sp)
 
 value scope_metadata(scope sp)
 {
-	value * v_map, v = value_create_map(NULL, 2);
+	value * v_map, v = value_create_map(NULL, 4);
 
 	if (v == NULL)
 	{
@@ -316,12 +386,35 @@ value scope_metadata(scope sp)
 		value_type_destroy(v);
 	}
 
-	v_map[1] = scope_metadata_map(sp);
+	/* all of the types*/
+	value all_value_types = scope_metadata_array(sp);
+	value * ptr_all_value_types = value_to_array(all_value_types); // 0 index funcs, 1 cls, 2 obj
 
-	if (v_map[1] == NULL)
-	{
-		value_type_destroy(v);
-	}
+	/* TODO: Perhaps put each following type inside its own function (and improve error handling), returning its array of size 2 */
+
+	/* funcs */
+	static const char funcs[] = "funcs";
+	value * v_funcs_ptr, v_funcs = value_create_array(NULL, 2);
+	v_funcs_ptr = value_to_array(v_funcs);
+	v_funcs_ptr[0] = value_create_string(funcs, sizeof(funcs) - 1);
+	v_funcs_ptr[1] = ptr_all_value_types[0];	
+	v_map[1] = v_funcs;
+
+	/* classes */
+	static const char classes[] = "classes";
+	value * v_classes_ptr, v_classes = value_create_array(NULL, 2);
+	v_classes_ptr = value_to_array(v_classes);
+	v_classes_ptr[0] = value_create_string(classes, sizeof(classes) - 1);
+	v_classes_ptr[1] = ptr_all_value_types[1];	
+	v_map[2] = v_classes;
+
+	/* objects */
+	static const char objects[] = "objects";
+	value * v_objects_ptr, v_objects = value_create_array(NULL, 2);
+	v_objects_ptr = value_to_array(v_objects);
+	v_objects_ptr[0] = value_create_string(objects, sizeof(objects) - 1);
+	v_objects_ptr[1] = ptr_all_value_types[2];	
+	v_map[3] = v_objects;
 
 	return v;
 }
@@ -331,9 +424,6 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 	scope_export_cb_iterator export_iterator = (scope_export_cb_iterator)args;
 
 	const char * key_str = (const char *)key;
-
-	/* TODO: Support to other scope objects (e.g: class) */
-	function f = (function)val;
 
 	value * v_array, v = value_create_array(NULL, 2);
 
@@ -355,7 +445,7 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 		return 0;
 	}
 
-	v_array[1] = value_create_function(f);
+	v_array[1] = val;
 
 	if (v_array[1] == NULL)
 	{
@@ -389,21 +479,21 @@ value scope_export(scope sp)
 	return export;
 }
 
-scope_object scope_get(scope sp, const char * key)
+value scope_get(scope sp, const char * key)
 {
 	if (sp != NULL && key != NULL)
 	{
-		return (scope_object)set_get(sp->objects, (set_key)key);
+		return (value)set_get(sp->objects, (set_key)key);
 	}
 
 	return NULL;
 }
 
-scope_object scope_undef(scope sp, const char * key)
+value scope_undef(scope sp, const char * key)
 {
 	if (sp != NULL && key != NULL)
 	{
-		return (scope_object)set_remove(sp->objects, (set_key)key);
+		return (value)set_remove(sp->objects, (set_key)key);
 	}
 
 	return NULL;
@@ -553,16 +643,41 @@ int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_a
 
 	if (val != NULL)
 	{
-		/* TODO: Support for polyphormism */
+		int type_id = value_type_id(val);
 
-		function func = (function)val;
-
-		if (function_decrement_reference(func) != 0)
+		if(type_id == TYPE_FUNCTION)
 		{
-			/* TODO: Log about the error, possible memory leak */
-		}
+			function func = value_to_function(val);
 
-		function_destroy(func);
+			if (function_decrement_reference(func) != 0)
+			{
+				/* TODO: Log about the error, possible memory leak */
+			}
+
+			function_destroy(func);
+		}
+		else if(type_id == TYPE_CLASS)
+		{
+			klass cls = value_to_class(val);
+
+			if (class_decrement_reference(cls) != 0)
+			{
+				/* TODO: Log about the error, possible memory leak */
+			}
+
+			class_destroy(cls);
+		} 
+		else if(type_id == TYPE_OBJECT)
+		{
+			object obj = value_to_object(val);
+
+			if (object_decrement_reference(obj) != 0)
+			{
+				/* TODO: Log about the error, possible memory leak */
+			}
+
+			object_destroy(obj);
+		} 
 
 		return 0;
 	}

@@ -2679,7 +2679,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 						}
 					}
 
-					scope_define(sp, function_name(f), f);
+					scope_define(sp, function_name(f), value_create_function(f));
 
 					free(func_name_str);
 				}

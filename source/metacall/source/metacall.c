@@ -261,12 +261,28 @@ int metacall_load_from_configuration(const char * path, void ** handle, void * a
 
 void * metacallv(const char * name, void * args[])
 {
-	return metacallfv(loader_get(name), args);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
+
+	return metacallfv(f, args);
 }
 
 void * metacallv_s(const char * name, void * args[], size_t size)
 {
-	return metacallfv_s(loader_get(name), args, size);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
+
+	return metacallfv_s(f, args, size);
 }
 
 void * metacallhv(void * handle, const char * name, void * args[])
@@ -282,7 +298,13 @@ void * metacallhv(void * handle, const char * name, void * args[])
 
 void * metacall(const char * name, ...)
 {
-	function f = loader_get(name);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
 
 	if (f != NULL)
 	{
@@ -382,7 +404,13 @@ void * metacall(const char * name, ...)
 
 void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 {
-	function f = loader_get(name);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
 
 	if (f != NULL)
 	{
@@ -474,7 +502,13 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t size, ...)
 {
-	function f = loader_get(name);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
 
 	if (f != NULL)
 	{
@@ -566,7 +600,15 @@ void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t
 
 void * metacall_function(const char * name)
 {
-	return (void *)loader_get(name);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
+
+	return f;
 }
 
 size_t metacall_function_size(void * func)
@@ -1098,7 +1140,13 @@ int metacall_register(const char * name, void * (*invoke)(size_t, void * [], voi
 
 void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
-	function f = (function)loader_get(name);
+	value f_val = loader_get(name);
+
+	function f = NULL;
+	if(value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
 
 	signature s = function_signature(f);
 
@@ -1428,6 +1476,63 @@ void * metacallfms_await(void * func, const char * buffer, size_t size, void * a
 	}
 
 	return NULL;
+}
+
+void * metacall_class(const char * name)
+{
+	value c_val = loader_get(name);
+
+	klass c = NULL;
+	if(value_type_id(c_val) == TYPE_CLASS)
+	{
+		c = value_to_class(c_val);
+	}
+
+	return c;
+}
+
+void * metacall_class_new(void * cls, const char * name, void * args[], size_t argc)
+{
+	return class_new(cls, name, args, argc);
+}
+
+void * metacall_class_static_get(void * cls, const char * key)
+{
+	return class_static_get(cls, key);
+}
+
+int metacall_class_static_set(void * cls, const char * key, void * v)
+{
+	return class_static_set(cls, key, v);
+}
+
+void * metacallv_class(void * cls, const char * name, void * args[], size_t argc)
+{
+	return class_static_call(cls, name, args, argc);
+}
+
+void * metacallv_object(void * obj, const char * name, void * args[], size_t argc)
+{
+	return object_call(obj, name, args, argc);
+}
+
+void * metacall_object_get(void * obj, const char * key)
+{
+	return object_get(obj, key);
+}
+
+int metacall_object_set(void * obj, const char * key, void * v)
+{
+	return object_set(obj, key, v);
+}
+
+int metacall_object_delete(void * obj)
+{
+	int ret_status = object_delete(obj);
+
+	object_destroy(obj);
+	
+	return ret_status;
 }
 
 char * metacall_inspect(size_t * size, void * allocator)

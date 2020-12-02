@@ -70,6 +70,10 @@ static void metacall_serial_impl_serialize_function(value v, char * dest, size_t
 
 static void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length);
 
+static void metacall_serial_impl_serialize_class(value v, char * dest, size_t size, const char * format, size_t * length);
+
+static void metacall_serial_impl_serialize_object(value v, char * dest, size_t size, const char * format, size_t * length);
+
 /* -- Definitions -- */
 
 static const char * metacall_serialize_format[] =
@@ -88,7 +92,9 @@ static const char * metacall_serialize_format[] =
 	METACALL_SERIALIZE_VALUE_FORMAT_PTR,
 	NULL, /* TODO: Future */
 	NULL, /* TODO: Function */
-	"%s"
+	"%s",
+	NULL, /* TODO: Class */
+	NULL /* TODO: Object */
 };
 
 static_assert((size_t) TYPE_SIZE == (size_t) sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
@@ -110,7 +116,9 @@ static metacall_serialize_impl_ptr serialize_func[] =
 	&metacall_serial_impl_serialize_ptr,
 	&metacall_serial_impl_serialize_future,
 	&metacall_serial_impl_serialize_function,
-	&metacall_serial_impl_serialize_null
+	&metacall_serial_impl_serialize_null,
+	&metacall_serial_impl_serialize_class,
+	&metacall_serial_impl_serialize_object
 };
 
 static_assert((size_t) TYPE_SIZE == (size_t) sizeof(serialize_func) / sizeof(serialize_func[0]),
@@ -325,4 +333,27 @@ void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, cons
 	(void)v;
 
 	*length = snprintf(dest, size, format, value_null_str);
+}
+
+
+void metacall_serial_impl_serialize_class(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO: Implement class serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
+}
+
+void metacall_serial_impl_serialize_object(value v, char * dest, size_t size, const char * format, size_t * length)
+{
+	/* TODO: Implement object serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
 }

@@ -227,7 +227,7 @@ typedef class loader_impl_js_handle_type
 							{
 								scope sp = context_scope(ctx);
 
-								if (scope_define(sp, function_name(f), f) != 0)
+								if (scope_define(sp, function_name(f), value_create_function(f)) != 0)
 								{
 									return 1;
 								}

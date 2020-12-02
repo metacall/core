@@ -39,7 +39,9 @@ static const char * type_id_name_map[] =
 	"Pointer",
 	"Future",
 	"Function",
-	"Null"
+	"Null",
+	"Class",
+	"Object"
 };
 
 static_assert((int) sizeof(type_id_name_map) / sizeof(type_id_name_map[0]) == (int) TYPE_SIZE,
@@ -114,6 +116,16 @@ int type_id_function(type_id id)
 int type_id_null(type_id id)
 {
 	return !(id == TYPE_NULL);
+}
+
+int type_id_class(type_id id)
+{
+	return !(id == TYPE_CLASS);
+}
+
+int type_id_object(type_id id)
+{
+	return !(id == TYPE_OBJECT);
 }
 
 int type_id_invalid(type_id id)

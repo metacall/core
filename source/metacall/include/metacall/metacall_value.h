@@ -58,6 +58,8 @@ enum metacall_value_id
 	METACALL_FUTURE		= 12,
 	METACALL_FUNCTION	= 13,
 	METACALL_NULL		= 14,
+	METACALL_CLASS		= 15,
+	METACALL_OBJECT		= 16,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -268,6 +270,30 @@ METACALL_API void * metacall_value_create_function_closure(void * f, void * c);
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void * metacall_value_create_null(void);
+
+/**
+*  @brief
+*    Create a value from class @c
+*
+*  @param[in] c
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_class(void * c);
+
+/**
+*  @brief
+*    Create a value from object @o
+*
+*  @param[in] o
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void * metacall_value_create_object(void * o);
 
 /**
 *  @brief
@@ -538,6 +564,30 @@ METACALL_API void * metacall_value_to_null(void * v);
 
 /**
 *  @brief
+*    Convert value @v to class
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to class
+*/
+METACALL_API void * metacall_value_to_class(void * v);
+
+/**
+*  @brief
+*    Convert value @v to object
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to object
+*/
+METACALL_API void * metacall_value_to_object(void * v);
+
+/**
+*  @brief
 *    Assign boolean @b to value @v
 *
 *  @param[in] v
@@ -773,6 +823,36 @@ METACALL_API void * metacall_value_from_null(void * v);
 
 /**
 *  @brief
+*    Assign class @c to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] c
+*    Class to be assigned to value @v
+*
+*  @return
+*    Value with class @c assigned to it
+*/
+METACALL_API void * metacall_value_from_class(void * v, void * c);
+
+/**
+*  @brief
+*    Assign object @o to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] o
+*    Object to be assigned to value @v
+*
+*  @return
+*    Value with object @c assigned to it
+*/
+METACALL_API void * metacall_value_from_object(void * v, void * o);
+
+/**
+*  @brief
 *    Convert value @v implicitly to boolean
 *
 *  @param[in] v
@@ -950,6 +1030,30 @@ METACALL_API void * metacall_value_cast_function(void ** v);
 *    Value converted to null
 */
 METACALL_API void * metacall_value_cast_null(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to class
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to class
+*/
+METACALL_API void * metacall_value_cast_class(void ** v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to object
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to object
+*/
+METACALL_API void * metacall_value_cast_object(void ** v);
 
 /**
 *  @brief
