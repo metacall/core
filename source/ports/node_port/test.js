@@ -43,12 +43,15 @@ const waitForMocha = async () => {
 
 module.exports = {
 	main: async () => {
-		// Run the tests
-		const failures = await waitForMocha();
+		try {
+			// Run the tests
+			await waitForMocha();
+		} catch (failures) {
+			if (failures !== 0) {
+				process.exit(1);
+			}
+		}
 
-		// TODO: This seems it is not working
-		process.exitCode = failures ? 1 : 0;
-
-		return process.exitCode;
+		return 0;
 	},
 };
