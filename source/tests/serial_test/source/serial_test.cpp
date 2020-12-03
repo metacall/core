@@ -309,7 +309,7 @@ TEST_F(serial_test, DefaultConstructor)
 			NULL, /* TODO: Future */
 			NULL, /* TODO: Function */
 			"(null)",
-			NULL /* TODO: Class */,
+			NULL, /* TODO: Class */
 			NULL /* TODO: Object */
 		};
 
@@ -350,6 +350,9 @@ TEST_F(serial_test, DefaultConstructor)
 
 		static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
 
+		/* TODO: Implement class properly */
+		/* klass cls = class_create(NULL, NULL, NULL); */
+
 		value value_array[] =
 		{
 			value_create_bool(1),
@@ -364,11 +367,21 @@ TEST_F(serial_test, DefaultConstructor)
 			value_create_array(value_list, value_list_size),
 			value_create_map(value_map, value_map_size),
 			value_create_ptr((void *)0x000A7EF2),
-			value_create_future(NULL), /* TODO: Implement future properly */
-			value_create_function(NULL), /* TODO: Implement function properly */
+			/* TODO: Implement class properly */
+			NULL,
+			NULL,
+			/*
+			value_create_future(future_create(NULL, NULL)),
+			value_create_function(function_create(NULL, 0, NULL, NULL)),
+			*/
 			value_create_null(),
-			value_create_class(NULL), /* TODO: Implement class properly */
-			value_create_object(NULL) /* TODO: Implement object properly */
+			/* TODO: Implement class properly */
+			NULL,
+			NULL,
+			/*
+			value_create_class(cls),
+			value_create_object(class_new(cls, NULL, NULL, 0))
+			*/
 		};
 
 		static_assert((int) sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,
@@ -394,9 +407,9 @@ TEST_F(serial_test, DefaultConstructor)
 				EXPECT_EQ((int) 0, (int) strncmp(buffer, value_names[iterator], size - 1));
 
 				memory_allocator_deallocate(allocator, buffer);
-			}
 
-			value_type_destroy(value_array[iterator]);
+				value_type_destroy(value_array[iterator]);
+			}
 		}
 	}
 
