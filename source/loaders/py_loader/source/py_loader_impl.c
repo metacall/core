@@ -110,6 +110,12 @@ static PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *a
 
 static function_interface function_py_singleton(void);
 
+static type_interface type_py_singleton(void);
+
+static object_interface py_object_interface_singleton(void);
+
+static class_interface py_class_interface_singleton(void);
+
 static int py_loader_impl_discover_func_args_count(PyObject *func);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
@@ -334,7 +340,7 @@ void py_object_interface_destroy(object obj, object_impl impl)
 	}
 }
 
-object_interface py_object_interface_singleton()
+object_interface py_object_interface_singleton(void)
 {
 	static struct object_interface_type py_object_interface =
 	{
@@ -517,7 +523,7 @@ void py_class_interface_destroy(klass cls, class_impl impl)
 
 }
 
-class_interface py_class_interface_singleton()
+class_interface py_class_interface_singleton(void)
 {
 	static struct class_interface_type py_class_interface =
 	{
@@ -947,6 +953,20 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		return PyBool_FromLong(l);
 	}
+	else if (id == TYPE_CHAR)
+	{
+		char s = value_to_char(v);
+		long l = (long)s;
+
+		return PyLong_FromLong(l);
+	}
+	else if (id == TYPE_SHORT)
+	{
+		short s = value_to_short(v);
+		long l = (long)s;
+
+		return PyLong_FromLong(l);
+	}
 	else if (id == TYPE_INT)
 	{
 		int i = value_to_int(v);
@@ -1026,6 +1046,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	else if (id == TYPE_MAP)
 	{
 		/* TODO */
+		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python map not implemented yet for arguments");
 	}
 	else if (id == TYPE_PTR)
 	{
@@ -1045,6 +1066,11 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			return PyCapsule_New(ptr, NULL, NULL);
 #endif
 		}
+	}
+	else if (id == TYPE_FUTURE)
+	{
+		/* TODO */
+		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python future not implemented yet for arguments");
 	}
 	else if (id == TYPE_FUNCTION)
 	{
@@ -1101,7 +1127,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type");
+		log_write("metacall", LOG_LEVEL_ERROR, "Unrecognized value type: %d", id);
 	}
 
 	return NULL;
@@ -1112,12 +1138,15 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	loader_impl_py_function py_func = (loader_impl_py_function)impl;
 	signature s = function_signature(func);
 	const size_t args_size = size;
+	const size_t signature_args_size = signature_count(s);
 	type ret_type = signature_get_return(s);
 	PyObject *result = NULL;
 	size_t args_count;
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	PyObject *tuple_args;
+	/* Allocate dynamically more space for values in case of variable arguments */
+	void ** values = args_size > signature_args_size ? malloc(sizeof(void *) * args_size) : py_func->values;
 
 	/* Possibly a recursive call */
 	if (Py_EnterRecursiveCall(" while executing a function in Python Loader") != 0)
@@ -1131,7 +1160,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
-		type t = signature_get_type(s, args_count);
+		type t = args_count < signature_args_size ? signature_get_type(s, args_count) : NULL;
 
 		type_id id = TYPE_INVALID;
 
@@ -1144,11 +1173,11 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 			id = type_index(t);
 		}
 
-		py_func->values[args_count] = py_loader_impl_value_to_capi(py_func->impl, id, args[args_count]);
+		values[args_count] = py_loader_impl_value_to_capi(py_func->impl, id, args[args_count]);
 
-		if (py_func->values[args_count] != NULL)
+		if (values[args_count] != NULL)
 		{
-			PyTuple_SetItem(tuple_args, args_count, py_func->values[args_count]);
+			PyTuple_SetItem(tuple_args, args_count, values[args_count]);
 		}
 	}
 
@@ -1163,6 +1192,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	}
 
 	Py_DECREF(tuple_args);
+
+	/* Variable arguments */
+	if (args_size > signature_args_size)
+	{
+		free(values);
+	}
 
 	if (result != NULL)
 	{
@@ -1250,7 +1285,7 @@ void function_py_interface_destroy(function func, function_impl impl)
 	}
 }
 
-function_interface function_py_singleton()
+function_interface function_py_singleton(void)
 {
 	static struct function_interface_type py_function_interface =
 		{
@@ -1995,14 +2030,15 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 
 				Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
 
-				if ((size_t)parameter_list_size != signature_count(s))
-				{
-					if (PyErr_Occurred() != NULL)
-					{
-						py_loader_impl_error_print(py_impl);
-					}
+				size_t args_count = signature_count(s);
 
-					return 1;
+				if ((size_t)parameter_list_size != args_count)
+				{
+					/* TODO: Implement properly variable arguments with inspection of the names */
+					/* co_argcount in py_loader_impl_discover_func_args_count returns the number */
+					/* of arguments (not including keyword only arguments, * or ** args), so they */
+					/* won't be inspected but the variable call can be done with metacall*_s API */
+					parameter_list_size = (Py_ssize_t)args_count;
 				}
 
 				for (iterator = 0; iterator < parameter_list_size; ++iterator)

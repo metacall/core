@@ -119,7 +119,9 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((void *) t_ptr, (void *) metacall_value_cast_ptr(&ret));
+		EXPECT_EQ((enum metacall_value_id) METACALL_PTR, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((void *) t_ptr, (void *) metacall_value_to_ptr(ret));
 
 		EXPECT_EQ((long) value, (long) t.value);
 		EXPECT_EQ((unsigned char) 10U, (unsigned char) t.r);

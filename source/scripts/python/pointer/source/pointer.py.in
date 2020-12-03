@@ -19,4 +19,8 @@ def python_set_value(t, value):
 
 	print('Python result from host native_get_value: ' + str(arr), type(arr));
 
+	if arr != [10, 50, 70]:
+		print('Error: Invalid array values');
+		return None;
+
 	return result;
