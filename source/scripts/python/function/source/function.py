@@ -32,14 +32,14 @@ class MyClass:
 	def f(self):
 		return 'hello world';
 
-def function_capsule_new_class():
+def function_myclass_new_class():
 	return MyClass();
 
-def function_capsule_method(klass):
+def function_myclass_method(klass):
 	print('Executing class method with instance passed as opaque pointer:', klass.f());
 	return klass.f();
 
-def function_capsule_cb(cb):
+def function_myclass_cb(cb):
 	return cb(MyClass());
 
 def function_sum(value, f):

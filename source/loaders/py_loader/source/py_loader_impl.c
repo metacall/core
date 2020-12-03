@@ -1100,7 +1100,8 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	else if (id == TYPE_CLASS)
 	{
 		klass obj = value_to_class(v);
-		
+
+		/* TODO: The return value of class_impl_get may not be a loader_impl_py_class, it can be a loader_impl_node_class too */
 		loader_impl_py_class obj_impl = class_impl_get(obj);
 
 		if (obj_impl == NULL)
@@ -1115,6 +1116,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	{
 		object obj = value_to_object(v);
 		
+		/* TODO: The return value of object_impl_get may not be a loader_impl_py_object, it can be a loader_impl_node_node too */
 		loader_impl_py_object obj_impl = object_impl_get(obj);
 
 		if (obj_impl == NULL)

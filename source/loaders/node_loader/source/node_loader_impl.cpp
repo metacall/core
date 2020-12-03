@@ -635,6 +635,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	else if (valuetype == napi_symbol)
 	{
 		/* TODO */
+		napi_throw_error(env, NULL, "NodeJS Loader symbol is not implemented");
 	}
 	else if (valuetype == napi_object)
 	{
@@ -669,18 +670,22 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 		else if (napi_is_buffer(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
+			napi_throw_error(env, NULL, "NodeJS Loader buffer is not implemented");
 		}
 		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
+			napi_throw_error(env, NULL, "NodeJS Loader error is not implemented");
 		}
 		else if (napi_is_typedarray(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
+			napi_throw_error(env, NULL, "NodeJS Loader typed array is not implemented");
 		}
 		else if (napi_is_dataview(env, v, &result) == napi_ok && result == true)
 		{
 			/* TODO */
+			napi_throw_error(env, NULL, "NodeJS Loader data view is not implemented");
 		}
 		else if (napi_is_promise(env, v, &result) == napi_ok && result == true)
 		{
@@ -999,6 +1004,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	else if (id == TYPE_FUTURE)
 	{
 		/* TODO: Implement promise properly for await */
+		napi_throw_error(env, NULL, "NodeJS Loader future is not implemented");
 	}
 	else if (id == TYPE_FUNCTION)
 	{
@@ -1010,6 +1016,22 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		status = napi_create_function(env, NULL, 0, node_loader_impl_napi_to_value_callback, closure, &v);
 
 		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_CLASS)
+	{
+		/* TODO */
+		napi_throw_error(env, NULL, "NodeJS Loader class is not implemented");
+
+		/*
+		klass cls = value_to_class(arg_value);
+
+		napi_define_class(env, cls->name, NAPI_AUTO_LENGTH, )
+		*/
+	}
+	else if (id == TYPE_OBJECT)
+	{
+		/* TODO */
+		napi_throw_error(env, NULL, "NodeJS Loader object is not implemented");
 	}
 	else if (id == TYPE_NULL)
 	{

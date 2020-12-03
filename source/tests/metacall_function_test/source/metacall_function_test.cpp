@@ -197,24 +197,20 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		/* TODO: This is a workaround to achieve class / object callbacks between languages. */
-		/* It provides interoperatibility but without proper reflection. */
-		/* Enough to implement callbacks with opaque pointers between languages. */
-
-		ret = metacallv("function_capsule_new_class", metacall_null_args);
+		ret = metacallv("function_myclass_new_class", metacall_null_args);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
 		EXPECT_EQ((enum metacall_value_id) METACALL_OBJECT, (enum metacall_value_id) metacall_value_id(ret));
 
-		void * function_capsule_method_args[] =
+		void * function_myclass_method_args[] =
 		{
 			ret
 		};
 
-		ret = metacallv("function_capsule_method", function_capsule_method_args);
+		ret = metacallv("function_myclass_method", function_myclass_method_args);
 
-		metacall_value_destroy(function_capsule_method_args[0]);
+		metacall_value_destroy(function_myclass_method_args[0]);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
@@ -249,7 +245,7 @@ TEST_F(metacall_function_test, DefaultConstructor)
 
 		EXPECT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(cb_ret));
 
-		/* I have no clue why this returns 132, the correct value for factorial of 12 is 479001600L */
+		/* TODO: I have no clue why this returns 132, the correct value for factorial of 12 is 479001600L */
 		EXPECT_EQ((long) 132L, (long) metacall_value_to_long(cb_ret));
 
 		metacall_value_destroy(cb_function_factorial_args[0]);
