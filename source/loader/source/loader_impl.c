@@ -646,12 +646,10 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 				{
 					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
 					{
-						log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle inserted");
-
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle discovered");
-
+							// TODO: Check if is contained in the context
+							// if (context_contains(impl->ctx, handle_impl->ctx) == 0 && context_append...)
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
@@ -755,6 +753,8 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
+							// TODO: Check if is contained in the context
+							// if (context_contains(impl->ctx, handle_impl->ctx) == 0 && context_append...)
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
@@ -827,6 +827,8 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
+							// TODO: Check if is contained in the context
+							// if (context_contains(impl->ctx, handle_impl->ctx) == 0 && context_append...)
 							if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
