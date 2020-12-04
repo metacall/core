@@ -1,6 +1,16 @@
+#
+# Python
+#
 leak:_PyObject_Malloc
 leak:_PyObject_Realloc
 leak:PyThread_allocate_lock
 leak:libpython*
+#
+# NodeJS
+# Suppress small (intentional) leaks in glibc
+#
 leak:libc.so
+#
+# Ruby
+#
 leak:libruby*
