@@ -56,11 +56,15 @@ if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_
 	set(DEFAULT_LIBRARIES -lasan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
-		# "ASAN_OPTIONS=..."
+		"ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+	)
+	set(SANITIZER_COMPILE_DEFINITIONS
+		"__ADDRESS_SANITIZER__=1"
 	)
 else()
 	set(DEFAULT_LIBRARIES)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
+	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
 
 #
@@ -76,6 +80,7 @@ endif()
 set(DEFAULT_COMPILE_DEFINITIONS
 	LOG_POLICY_FORMAT_PRETTY=${LOG_POLICY_FORMAT_PRETTY_VALUE}
 	SYSTEM_${SYSTEM_NAME_UPPER}
+	${SANITIZER_COMPILE_DEFINITIONS}
 )
 
 # MSVC compiler options
@@ -171,6 +176,8 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 		add_compile_options(-fsanitize=undefined)
 		add_compile_options(-fsanitize=address)
 		add_compile_options(-fsanitize=leak)
+		add_compile_options(-fsanitize-address-use-after-scope)
+		# TODO:
 		#add_compile_options(-fsanitize=thread)
 
 		if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")

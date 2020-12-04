@@ -3,3 +3,4 @@ leak:_PyObject_Realloc
 leak:PyThread_allocate_lock
 leak:libpython*
 leak:libc.so
+leak:libruby*

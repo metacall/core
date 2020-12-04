@@ -316,7 +316,10 @@ void ModulesClear()
 		#if defined(JS_PORT_TEST_WIN)
 			FreeLibrary(it->second);
 		#elif defined(JS_PORT_TEST_UNIX)
-			dlclose(it->second);
+			/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+			#if !defined(__ADDRESS_SANITIZER__)
+				dlclose(it->second);
+			#endif
 		#endif
 	}
 }
