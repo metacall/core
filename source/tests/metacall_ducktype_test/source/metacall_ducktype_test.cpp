@@ -203,11 +203,11 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		const char pepico_str[] = "Pepico";
-		const char walas_str[] = "Walas";
+		static const char pepico_str[] = "Pepico";
+		static const char walas_str[] = "Walas";
 
-		args[0] = metacall_value_create_string(pepico_str, sizeof(pepico_str));
-		args[1] = metacall_value_create_string(walas_str, sizeof(walas_str));
+		args[0] = metacall_value_create_string(pepico_str, sizeof(pepico_str) - 1);
+		args[1] = metacall_value_create_string(walas_str, sizeof(walas_str) - 1);
 
 		ret = metacallv("strcat", args);
 
