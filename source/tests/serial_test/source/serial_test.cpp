@@ -277,10 +277,7 @@ TEST_F(serial_test, DefaultConstructor)
 	// MetaCall
 	{
 		static const char hello_world[] = "hello world";
-		static const char good_bye[] = "good bye";
-
 		static const size_t hello_world_length = sizeof(hello_world) - 1;
-		static const size_t good_bye_length = sizeof(good_bye) - 1;
 
 		static const char * value_names[] =
 		{
@@ -330,6 +327,11 @@ TEST_F(serial_test, DefaultConstructor)
 
 		static const size_t value_list_size = sizeof(value_list) / sizeof(value_list[0]);
 
+		/* TODO: Implement map properly */
+		/*
+		static const char good_bye[] = "good bye";
+		static const size_t good_bye_length = sizeof(good_bye) - 1;
+
 		static const value value_map_tupla_a[] =
 		{
 			value_create_string(hello_world, hello_world_length),
@@ -349,6 +351,7 @@ TEST_F(serial_test, DefaultConstructor)
 		};
 
 		static const size_t value_map_size = sizeof(value_map) / sizeof(value_map[0]);
+		*/
 
 		/* TODO: Implement class properly */
 		/* klass cls = class_create(NULL, NULL, NULL); */
@@ -365,7 +368,11 @@ TEST_F(serial_test, DefaultConstructor)
 			value_create_string(hello_world, hello_world_length),
 			value_create_buffer(char_array, sizeof(char_array)),
 			value_create_array(value_list, value_list_size),
+			/* TODO: Implement map properly */
+			NULL,
+			/*
 			value_create_map(value_map, value_map_size),
+			*/
 			value_create_ptr((void *)0x000A7EF2),
 			/* TODO: Implement class properly */
 			NULL,

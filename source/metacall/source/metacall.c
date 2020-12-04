@@ -603,6 +603,7 @@ void * metacall_function(const char * name)
 	value f_val = loader_get(name);
 
 	function f = NULL;
+
 	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);

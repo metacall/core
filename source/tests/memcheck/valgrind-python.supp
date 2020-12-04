@@ -1,4 +1,6 @@
 #
+# From: https://github.com/python/cpython/blob/master/Misc/valgrind-python.supp
+#
 # This is a valgrind suppression file that should be used when using valgrind.
 #
 #  Here's an example of running valgrind:

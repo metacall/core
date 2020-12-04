@@ -1868,7 +1868,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 		PyGILState_Release(gstate);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s. from memory module at (%p)", (void *)impl, name, (void *)py_handle->modules[0].instance);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from memory module at (%p)", (void *)impl, name, (void *)py_handle->modules[0].instance);
 
 		return (loader_handle)py_handle;
 	}

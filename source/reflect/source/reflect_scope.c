@@ -181,58 +181,7 @@ int scope_define(scope sp, const char * key, value val)
 {
 	if (sp != NULL && key != NULL && val != NULL)
 	{
-		if (set_insert(sp->objects, (set_key)key, (set_value)val) == 0)
-		{
-			type_id val_type = value_type_id(val);
-
-			if (val_type == TYPE_FUNCTION)
-			{
-				function func = value_to_function(val);
-
-				if (function_increment_reference(func) != 0)
-				{
-					set_remove(sp->objects, (set_key)key);
-
-					/* TODO: Log about the error */
-
-					return 1;
-				}
-			}
-			else if (val_type == TYPE_CLASS)
-			{
-				klass cls = value_to_class(val);
-
-				if (class_increment_reference(cls) != 0)
-				{
-					set_remove(sp->objects, (set_key)key);
-
-					/* TODO: Log about the error */
-
-					return 1;
-				}
-			}
-			else if (val_type == TYPE_OBJECT)
-			{
-				object obj = value_to_object(val);
-
-				if (object_increment_reference(obj) != 0)
-				{
-					set_remove(sp->objects, (set_key)key);
-
-					/* TODO: Log about the error */
-
-					return 1;
-				}
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Scope for %d type_id not defined yet", val_type);
-				return 2;
-			}
-			
-			return 0;
-		}
-
+		return set_insert(sp->objects, (set_key)key, (set_value)val);
 	}
 
 	return 1;
@@ -661,41 +610,7 @@ int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_a
 
 	if (val != NULL)
 	{
-		int type_id = value_type_id(val);
-
-		if (type_id == TYPE_FUNCTION)
-		{
-			function func = value_to_function(val);
-
-			if (function_decrement_reference(func) != 0)
-			{
-				/* TODO: Log about the error, possible memory leak */
-			}
-
-			function_destroy(func);
-		}
-		else if (type_id == TYPE_CLASS)
-		{
-			klass cls = value_to_class(val);
-
-			if (class_decrement_reference(cls) != 0)
-			{
-				/* TODO: Log about the error, possible memory leak */
-			}
-
-			class_destroy(cls);
-		} 
-		else if (type_id == TYPE_OBJECT)
-		{
-			object obj = value_to_object(val);
-
-			if (object_decrement_reference(obj) != 0)
-			{
-				/* TODO: Log about the error, possible memory leak */
-			}
-
-			object_destroy(obj);
-		} 
+		value_type_destroy(val);
 
 		return 0;
 	}
