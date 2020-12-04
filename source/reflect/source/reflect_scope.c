@@ -67,7 +67,7 @@ static int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, se
 
 static int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static value scope_metadata_array(scope sp);
+static int scope_metadata_array(scope sp, value v_array[3]);
 
 static value scope_metadata_name(scope sp);
 
@@ -237,8 +237,7 @@ int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, s
 	return 0;
 }
 
-
-value scope_metadata_array(scope sp)
+int scope_metadata_array(scope sp, value v_array[3])
 {
 	struct scope_metadata_array_cb_iterator_type metadata_iterator;
 
@@ -249,27 +248,33 @@ value scope_metadata_array(scope sp)
 	set_iterate(sp->objects, &scope_metadata_array_cb_iterate_counter, (set_cb_iterate_args)&metadata_iterator);
 
 	value functions_val = value_create_array(NULL, metadata_iterator.functions_size);
+
 	if (functions_val == NULL)
 	{
-		return NULL;
+		return 1;
 	}
+
 	metadata_iterator.functions = value_to_array(functions_val);
 
 	value classes_val = value_create_array(NULL, metadata_iterator.classes_size);
+
 	if (classes_val == NULL)
 	{
 		value_destroy(functions_val);
-		return NULL;
+		return 1;
 	}
+
 	metadata_iterator.classes = value_to_array(classes_val);
 
 	value objects_val = value_create_array(NULL, metadata_iterator.objects_size);
+
 	if (objects_val == NULL)
 	{
 		value_destroy(functions_val);
 		value_destroy(classes_val);
-		return NULL;
+		return 1;
 	}
+
 	metadata_iterator.objects = value_to_array(objects_val);
 
 	/* Reuse counters to fill the arrays */
@@ -279,13 +284,11 @@ value scope_metadata_array(scope sp)
 
 	set_iterate(sp->objects, &scope_metadata_array_cb_iterate, (set_cb_iterate_args)&metadata_iterator);
 
-	value v = value_create_array(NULL, 3);
-	value * v_array = value_to_array(v);
 	v_array[0] = functions_val;
 	v_array[1] = classes_val;
 	v_array[2] = objects_val;
 
-	return v;
+	return 0;
 }
 
 value scope_metadata_name(scope sp)
@@ -321,6 +324,7 @@ value scope_metadata_name(scope sp)
 value scope_metadata(scope sp)
 {
 	value * v_map, v = value_create_map(NULL, 4);
+	value v_array[3] = { NULL, NULL, NULL }; // 0: funcs, 1: cls, 2: obj
 
 	if (v == NULL)
 	{
@@ -334,36 +338,38 @@ value scope_metadata(scope sp)
 	if (v_map[0] == NULL)
 	{
 		value_type_destroy(v);
+		return NULL;
 	}
 
-	/* all of the types*/
-	value all_value_types = scope_metadata_array(sp);
-	value * ptr_all_value_types = value_to_array(all_value_types); // 0 index funcs, 1 cls, 2 obj
+	/* Obtain all scope objects of each type (functions, classes and objects) */
+	if (scope_metadata_array(sp, v_array) != 0)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
 
-	/* TODO: Perhaps put each following type inside its own function (and improve error handling), returning its array of size 2 */
-
-	/* funcs */
+	/* Functions */
 	static const char funcs[] = "funcs";
 	value * v_funcs_ptr, v_funcs = value_create_array(NULL, 2);
 	v_funcs_ptr = value_to_array(v_funcs);
 	v_funcs_ptr[0] = value_create_string(funcs, sizeof(funcs) - 1);
-	v_funcs_ptr[1] = ptr_all_value_types[0];	
+	v_funcs_ptr[1] = v_array[0];
 	v_map[1] = v_funcs;
 
-	/* classes */
+	/* Classes */
 	static const char classes[] = "classes";
 	value * v_classes_ptr, v_classes = value_create_array(NULL, 2);
 	v_classes_ptr = value_to_array(v_classes);
 	v_classes_ptr[0] = value_create_string(classes, sizeof(classes) - 1);
-	v_classes_ptr[1] = ptr_all_value_types[1];	
+	v_classes_ptr[1] = v_array[1];
 	v_map[2] = v_classes;
 
-	/* objects */
+	/* Objects */
 	static const char objects[] = "objects";
 	value * v_objects_ptr, v_objects = value_create_array(NULL, 2);
 	v_objects_ptr = value_to_array(v_objects);
 	v_objects_ptr[0] = value_create_string(objects, sizeof(objects) - 1);
-	v_objects_ptr[1] = ptr_all_value_types[2];	
+	v_objects_ptr[1] = v_array[2];
 	v_map[3] = v_objects;
 
 	return v;
@@ -376,8 +382,6 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 	const char * key_str = (const char *)key;
 
 	value * v_array, v = value_create_array(NULL, 2);
-
-	type_id id;
 
 	(void)s;
 
@@ -406,22 +410,7 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 		return 0;
 	}
 
-	id = value_type_id(val);
-
-	if (id == TYPE_FUNCTION)
-	{
-		function_increment_reference(value_to_function(val));
-	}
-	else if (id == TYPE_CLASS)
-	{
-		class_increment_reference(value_to_class(val));
-	}
-	else if (id == TYPE_OBJECT)
-	{
-		object_increment_reference(value_to_object(val));
-	}
-
-	export_iterator->values[export_iterator->iterator] = v;
+	export_iterator->values[export_iterator->iterator] = value_type_copy(v);
 	++export_iterator->iterator;
 
 	return 0;
