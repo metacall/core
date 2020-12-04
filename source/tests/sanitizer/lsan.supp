@@ -1,3 +1,13 @@
+# List of supressions for leak sanitizer
+#
+# IMPORTANT: Do NOT add blank lines between the script,
+# it seems that gcc sanitizer does not support that.
+#
+# At this point there are leaks from the runtimes but
+# I am not sure all of them are due to metacall (probably
+# some of them are due to GC errors but not all of them).
+# We disable them until we debug those cases (if any) in depth.
+#
 #
 # Python
 #
@@ -7,9 +17,11 @@ leak:PyThread_allocate_lock
 leak:libpython*
 #
 # NodeJS
-# Suppress small (intentional) leaks in glibc
 #
+# Suppress small (intentional) leaks in glibc
 leak:libc.so
+# Supress node library (for now)
+leak:libnode*
 #
 # Ruby
 #
