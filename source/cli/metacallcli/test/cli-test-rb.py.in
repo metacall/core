@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
 
-import os
-import sys
-import json
+def main():
+	import os
+	import sys
+	import json
 
-# Insert Python Port folder first in the system path list
-sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
+	# Insert Python Port folder first in the system path list
+	sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 
-from metacall import metacall, metacall_load_from_file, metacall_load_from_memory
+	from metacall import metacall, metacall_load_from_file, metacall_load_from_memory
 
-# Load ruby
-metacall_load_from_file('rb', ['hello.rb']);
+	# Load ruby
+	metacall_load_from_file('rb', ['hello.rb']);
 
-# Load test from memory
-script = '''
+	# Load test from memory
+	script = '''
 from metacall import metacall
 def test():
 	return metacall('say_string_without_spaces', 'asd');
 '''
 
-metacall_load_from_memory('py', script);
+	metacall_load_from_memory('py', script);
+
+# Run the main
+main();
