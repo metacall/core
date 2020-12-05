@@ -84,9 +84,11 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			ASSERT_EQ((enum metacall_value_id) METACALL_CLASS, (enum metacall_value_id) metacall_value_id(myclass_value));
 			void * myclass = metacall_value_to_class(myclass_value);
 
+			static const char john[] = "John Doe";
+
 			void * constructor_params[] =
 			{
-				metacall_value_create_string("John Doe", sizeof("John Doe") - 1), // param1
+				metacall_value_create_string(john, sizeof(john) - 1), // param1
 				metacall_value_create_int(999999) // param2
 			};
 			void * new_object_v = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params)/sizeof(constructor_params[0]));
@@ -137,9 +139,11 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			void * myclass = metacall_class("MyClass");
 			ASSERT_NE((void *) NULL, (void *) myclass);
 
+			static const char works[] = "It works!";
+
 			void * static_method_args[] =
 			{
-				metacall_value_create_string("It works!", sizeof("It works!"))
+				metacall_value_create_string(works, sizeof(works) - 1)
 			};	
 			void * ret_value = metacallv_class(myclass, "static", static_method_args, sizeof(static_method_args)/sizeof(static_method_args[0]));
 
@@ -153,9 +157,11 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			ASSERT_EQ((enum metacall_value_id) METACALL_OBJECT, (enum metacall_value_id) metacall_value_id(obj_value));
 			void * obj = metacall_value_to_object(obj_value);
 
+			static const char john[] = "John Doe";
+
 			void * return_bye_args[] =
 			{
-				metacall_value_create_string("John Doe", sizeof("John Doe"))
+				metacall_value_create_string(john, sizeof(john) - 1)
 			};
 			void * ret = metacallv_object(obj, "return_bye", return_bye_args, sizeof(return_bye_args)/sizeof(return_bye_args[0]));
 
