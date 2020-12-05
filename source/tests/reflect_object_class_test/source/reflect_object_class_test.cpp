@@ -139,8 +139,11 @@ int hello_world_object_impl_interface_destructor(object obj, object_impl impl)
 
 void hello_world_object_impl_interface_destroy(object obj, object_impl impl)
 {
+	hello_world_object hello_world_obj = static_cast<hello_world_object>(impl);
+
 	(void)obj;
-	(void)impl;
+
+	delete hello_world_obj;
 }
 
 object_interface hello_world_object_impl_interface_singleton()
@@ -280,8 +283,11 @@ value hello_world_class_impl_interface_static_await(klass cls, class_impl impl, 
 
 void hello_world_class_impl_interface_destroy(klass cls, class_impl impl)
 {
+	hello_world_class hellow_world_cls = static_cast<hello_world_class>(impl);
+
 	(void)cls;
-	(void)impl;
+
+	delete hellow_world_cls;
 }
 
 class_interface hello_world_class_impl_interface_singleton()
@@ -327,25 +333,35 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 		value a = class_static_get(cls, "a");
 		ASSERT_NE((value) NULL, (value) a);
 		EXPECT_EQ((int) 0, (int) value_to_int(a));
+		value_type_destroy(a);
 		
 		value b = class_static_get(cls, "b");
 		ASSERT_NE((value) NULL, (value) b);
 		EXPECT_EQ((float) 0.0f, (float) value_to_float(b));
+		value_type_destroy(b);
 
 		value c = class_static_get(cls, "c");
 		ASSERT_NE((value) NULL, (value) c);
 		EXPECT_EQ((char) '\0', (char) *value_to_string(c));
+		value_type_destroy(c);
 
-		ASSERT_EQ((int) 0, (int) class_static_set(cls, "a", value_create_int(1234)));
+		value new_a = value_create_int(1234);
+		ASSERT_EQ((int) 0, (int) class_static_set(cls, "a", new_a));
 		a = class_static_get(cls, "a");
 		EXPECT_NE((value) NULL, (value) a);
 		EXPECT_EQ((int) 1234, (int) value_to_int(a));
+		value_type_destroy(a);
+		value_type_destroy(new_a);
 
-		ASSERT_EQ((int) 0, (int) class_static_set(cls, "c", value_create_string("hi", 2)));
+		value new_c = value_create_string("hi", 2);
+
+		ASSERT_EQ((int) 0, (int) class_static_set(cls, "c", new_c));
 		c = class_static_get(cls, "c");
 		EXPECT_NE((value) NULL, (value) c);
 		EXPECT_EQ((char) 'h', (char) value_to_string(c)[0]);
 		EXPECT_EQ((char) 'i', (char) value_to_string(c)[1]);
+		value_type_destroy(c);
+		value_type_destroy(new_c);
 	}
 
 	// Create object (default constructor)
@@ -356,28 +372,35 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 		};
 
 		object obj = class_new(cls, "helloWorldObj", args, 0);
-
-		EXPECT_EQ((int) 0, (int) object_increment_reference(obj));
+		ASSERT_NE((object) NULL, (object) obj);
 
 		// Get & set attributes from object
 		{
 			value d = object_get(obj, "d");
 			ASSERT_NE((value) NULL, (value) d);
 			EXPECT_EQ((char) 'd', (char) value_to_char(d));
-			
+			value_type_destroy(d);
+
 			value e = object_get(obj, "e");
 			ASSERT_NE((value) NULL, (value) e);
 			EXPECT_EQ((long) 55L, (long) value_to_long(e));
+			value_type_destroy(e);
 
-			ASSERT_EQ((char) 0, (char) object_set(obj, "d", value_create_char('M')));
+			value new_d = value_create_char('M');
+			ASSERT_EQ((char) 0, (char) object_set(obj, "d", new_d));
 			d = object_get(obj, "d");
 			EXPECT_NE((value) NULL, (value) d);
 			EXPECT_EQ((char) 'M', (char) value_to_char(d));
+			value_type_destroy(d);
+			value_type_destroy(new_d);
 
-			ASSERT_EQ((long) 0, (long) object_set(obj, "e", value_create_long(1234)));
+			value new_e = value_create_long(1234);
+			ASSERT_EQ((long) 0, (long) object_set(obj, "e", new_e));
 			e = object_get(obj, "e");
 			EXPECT_NE((value) NULL, (value) e);
 			EXPECT_EQ((long) 1234L, (long) value_to_long(e));
+			value_type_destroy(e);
+			value_type_destroy(new_e);
 		}
 
 		// Test object call
@@ -400,18 +423,22 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 		};
 
 		object obj = class_new(cls, "helloWorldObj", args, 2);
+		ASSERT_NE((object) NULL, (object) obj);
 
-		EXPECT_EQ((int) 0, (int) object_increment_reference(obj));
+		value_type_destroy(args[0]);
+		value_type_destroy(args[1]);
 
 		// Get attributes from object
 		{
 			value d = object_get(obj, "d");
 			ASSERT_NE((value) NULL, (value) d);
 			EXPECT_EQ((char) 'F', (char) value_to_char(d));
-			
+			value_type_destroy(d);
+
 			value e = object_get(obj, "e");
 			ASSERT_NE((value) NULL, (value) e);
 			EXPECT_EQ((long) 3435L, (long) value_to_long(e));
+			value_type_destroy(e);
 		}
 
 		// Test object call
@@ -425,4 +452,5 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 		object_destroy(obj);
 	}
 
+	class_destroy(cls);
 }
