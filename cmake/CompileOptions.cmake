@@ -56,7 +56,9 @@ if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_
 	set(DEFAULT_LIBRARIES -lasan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
-		"ASAN_OPTIONS=strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+		# Specify use_sigaltstack=0 as coreclr uses own alternate stack for signal handlers (https://github.com/swgillespie/coreclr/commit/bec020aa466d08e49e007d0011b0e79f8f7c7a62)
+		"ASAN_OPTIONS=symbolize=1:alloc_dealloc_mismatch=0:use_sigaltstack=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
+		"UBSAN_OPTIONS=print_stacktrace=1"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__ADDRESS_SANITIZER__=1"
