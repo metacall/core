@@ -301,11 +301,10 @@ static int set_contains_any_cb_iterate(set s, set_key key, set_value value, set_
 
 int set_contains_any(set dest, set src)
 {
-	struct set_contains_any_cb_iterator_type args =
-	{
-		dest,
-		1
-	};
+	struct set_contains_any_cb_iterator_type args;
+
+	args.s = dest;
+	args.result = 1;
 
 	set_iterate(src, &set_contains_any_cb_iterate, (set_cb_iterate_args)&args);
 
