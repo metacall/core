@@ -239,11 +239,10 @@ int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, s
 
 int scope_metadata_array(scope sp, value v_array[3])
 {
-	struct scope_metadata_array_cb_iterator_type metadata_iterator;
-
-	metadata_iterator.classes_size = 0;
-	metadata_iterator.functions_size = 0;
-	metadata_iterator.objects_size = 0;
+	struct scope_metadata_array_cb_iterator_type metadata_iterator =
+	{
+		NULL, NULL, NULL, 0, 0, 0
+	};
 
 	set_iterate(sp->objects, &scope_metadata_array_cb_iterate_counter, (set_cb_iterate_args)&metadata_iterator);
 
@@ -401,7 +400,7 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 		return 0;
 	}
 
-	v_array[1] = val;
+	v_array[1] = value_type_copy(val);
 
 	if (v_array[1] == NULL)
 	{
@@ -410,7 +409,7 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 		return 0;
 	}
 
-	export_iterator->values[export_iterator->iterator] = value_type_copy(v);
+	export_iterator->values[export_iterator->iterator] = v;
 	++export_iterator->iterator;
 
 	return 0;
