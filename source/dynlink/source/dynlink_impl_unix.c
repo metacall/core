@@ -97,6 +97,7 @@ int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 
 	#if defined(__ADDRESS_SANITIZER__)
 		/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+		(void)impl;
 		return 0;
 	#else
 		return dlclose(impl);
