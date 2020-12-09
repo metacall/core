@@ -131,31 +131,6 @@ REFLECT_API void value_ref_dec(value v);
 
 /**
 *  @brief
-*    Returns the owner of the value, useful for lifecycles
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @return
-*    Pointer to the owner of the value,
-*    null means the value is not owned by anybody
-*/
-REFLECT_API void * value_owner(value v);
-
-/**
-*  @brief
-*    Set up the value ownership, overwrites the previous owner
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[in] owner
-*    Reference to the new owner
-*/
-REFLECT_API void value_own(value v, void * owner);
-
-/**
-*  @brief
 *    Set up the value finalizer, a callback that
 *    will be executed when the value life ends
 *
@@ -164,8 +139,11 @@ REFLECT_API void value_own(value v, void * owner);
 *
 *  @param[in] finalizer
 *    Reference to the callback
+*
+*  @param[in] finalizer_data
+*    Reference to additional data to be passed when the finalizer is called
 */
-REFLECT_API void value_finalizer(value v, value_finalizer_cb finalizer);
+REFLECT_API void value_finalizer(value v, value_finalizer_cb finalizer, void * finalizer_data);
 
 /**
 *  @brief

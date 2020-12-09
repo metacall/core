@@ -94,7 +94,7 @@ typedef struct loader_impl_py_function_type_invoke_state_type
 {
 	loader_impl impl;
 	loader_impl_py py_impl;
-	function callback;
+	value callback;
 
 } * loader_impl_py_function_type_invoke_state;
 
@@ -122,28 +122,40 @@ static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, functi
 
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_dict, klass c);
 
-static void py_loader_impl_value_owner_finalize(value v, void *owner);
+static void py_loader_impl_value_invoke_state_finalize(value v, void *data);
+
+static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
 static PyMethodDef py_loader_impl_function_type_invoke_defs[] =
+{
 	{
-		{PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC,
-		 py_loader_impl_function_type_invoke,
-		 METH_VARARGS,
-		 PyDoc_STR("Implements a trampoline for functions as values in the type system.")},
-		{NULL, NULL, 0, NULL}};
+		PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC,
+		py_loader_impl_function_type_invoke,
+		METH_VARARGS,
+		PyDoc_STR("Implements a trampoline for functions as values in the type system.")
+	},
+	{ NULL, NULL, 0, NULL }
+};
 
-static void *py_loader_impl_value_ownership = NULL;
+void py_loader_impl_value_invoke_state_finalize(value v, void *data)
+{
+	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)data;
 
-void py_loader_impl_value_owner_finalize(value v, void *owner)
+	(void)v;
+
+	free(invoke_state);
+}
+
+void py_loader_impl_value_ptr_finalize(value v, void *data)
 {
 	type_id id = value_type_id(v);
 
-	if (owner == &py_loader_impl_value_ownership)
+	if (id == TYPE_PTR)
 	{
-		if (id == TYPE_PTR)
+		if (data != NULL)
 		{
-			/* TODO: Review this */
-			/* Py_XDECREF(value_to_ptr(v)); */
+			PyObject *obj = (PyObject *)data;
+			Py_XDECREF(obj);
 		}
 	}
 }
@@ -826,11 +838,14 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 			loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(invoke_state_capsule, NULL);
 
-			function callback = invoke_state->callback;
+			value callback = value_type_copy(invoke_state->callback);
+
+			/* Move finalizers */
+			value_move(callback, invoke_state->callback);
 
 			Py_DECREF(invoke_state_capsule);
 
-			return value_create_function(callback);
+			return callback;
 		}
 
 		discover_args_count = py_loader_impl_discover_func_args_count(obj);
@@ -928,14 +943,11 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		/* Return the value as opaque pointer */
 		v = value_create_ptr(obj);
 
-		/* Set up the ownership to python loader */
-		value_own(v, &py_loader_impl_value_ownership);
-
 		/* Create reference to the value so it does not get garbage collected */
 		Py_INCREF(obj);
 
 		/* Set up finalizer in order to free the value */
-		value_finalizer(v, &py_loader_impl_value_owner_finalize);
+		value_finalizer(v, &py_loader_impl_value_ptr_finalize, obj);
 
 		log_write("metacall", LOG_LEVEL_WARNING, "Unrecognized Python Type: %s", Py_TYPE(obj)->tp_name);
 	}
@@ -1052,20 +1064,13 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	{
 		void *ptr = value_to_ptr(v);
 
-		if (value_owner(v) == &py_loader_impl_value_ownership)
-		{
-			return ptr;
-		}
-		else
-		{
 #if PY_MAJOR_VERSION == 2
 
-			/* TODO */
+		/* TODO */
 
 #elif PY_MAJOR_VERSION == 3
-			return PyCapsule_New(ptr, NULL, NULL);
+		return PyCapsule_New(ptr, NULL, NULL);
 #endif
-		}
 	}
 	else if (id == TYPE_FUTURE)
 	{
@@ -1085,7 +1090,10 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		invoke_state->impl = impl;
 		invoke_state->py_impl = loader_impl_get(impl);
-		invoke_state->callback = value_to_function(v);
+		invoke_state->callback = value_type_copy(v);
+
+		/* Set up finalizer in order to free the invoke state */
+		value_finalizer(invoke_state->callback, &py_loader_impl_value_invoke_state_finalize, invoke_state);
 
 		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
 
@@ -1344,7 +1352,7 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	}
 
 	/* Execute the callback */
-	ret = (value)function_call(invoke_state->callback, value_args, args_size);
+	ret = (value)function_call(value_to_function(invoke_state->callback), value_args, args_size);
 
 	/* Destroy argument values */
 	for (args_count = 0; args_count < args_size; ++args_count)
@@ -1366,8 +1374,6 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 
 		return py_ret;
 	}
-
-	free(invoke_state);
 
 	Py_RETURN_NONE;
 }

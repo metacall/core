@@ -193,16 +193,6 @@ enum metacall_value_id metacall_value_id(void * v)
 	return METACALL_INVALID;
 }
 
-void * metacall_value_owner(value v)
-{
-	return value_owner(v);
-}
-
-void metacall_value_own(value v, void * owner)
-{
-	value_own(v, owner);
-}
-
 void * metacall_value_copy(void * v)
 {
 	return value_type_copy(v);

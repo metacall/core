@@ -39,8 +39,8 @@ struct value_impl_type
 {
 	size_t bytes;
 	size_t ref_count;
-	void * owner;
 	value_finalizer_cb finalizer;
+	void * finalizer_data;
 };
 
 /* -- Private Methods -- */
@@ -80,8 +80,8 @@ value value_alloc(size_t bytes)
 
 	impl->bytes = bytes;
 	impl->ref_count = 1;
-	impl->owner = NULL;
 	impl->finalizer = NULL;
+	impl->finalizer_data = NULL;
 
 	return (value)(((uintptr_t)impl) + sizeof(struct value_impl_type));
 }
@@ -123,11 +123,11 @@ void value_move(value src, value dst)
 		value_impl impl_src = value_descriptor(src);
 		value_impl impl_dst = value_descriptor(dst);
 
-		impl_dst->owner = impl_src->owner;
 		impl_dst->finalizer = impl_src->finalizer;
+		impl_dst->finalizer_data = impl_src->finalizer_data;
 
-		impl_src->owner = NULL;
 		impl_src->finalizer = NULL;
+		impl_src->finalizer_data = NULL;
 	}
 }
 
@@ -168,35 +168,14 @@ void value_ref_dec(value v)
 	}
 }
 
-void * value_owner(value v)
-{
-	value_impl impl = value_descriptor(v);
-
-	if (impl == NULL)
-	{
-		return NULL;
-	}
-
-	return impl->owner;
-}
-
-void value_own(value v, void * owner)
-{
-	value_impl impl = value_descriptor(v);
-
-	if (impl != NULL)
-	{
-		impl->owner = owner;
-	}
-}
-
-void value_finalizer(value v, value_finalizer_cb finalizer)
+void value_finalizer(value v, value_finalizer_cb finalizer, void * finalizer_data)
 {
 	value_impl impl = value_descriptor(v);
 
 	if (impl != NULL)
 	{
 		impl->finalizer = finalizer;
+		impl->finalizer_data = finalizer_data;
 	}
 }
 
@@ -247,7 +226,7 @@ void value_destroy(value v)
 	{
 		if (impl->finalizer != NULL)
 		{
-			impl->finalizer(v, impl->owner);
+			impl->finalizer(v, impl->finalizer_data);
 		}
 
 		free(impl);

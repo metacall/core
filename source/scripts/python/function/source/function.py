@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+import sys
+
 def function_cb(cb):
 	print('Executing:', cb);
 	return cb();
@@ -45,8 +47,35 @@ def function_myclass_cb(cb):
 def function_sum(value, f):
 	return 0 if value <= 0 else value + f(value - 1, function_sum);
 
+def function_chain_impl(x, n):
+	print('------------------ py chain', n);
+	print('------------------ py chain pre x call', x);
+	sys.stdout.flush();
+	result = x(x)(n);
+	print('------------------ py chain post x call', x);
+	sys.stdout.flush();
+	return result;
+
 def function_chain(x):
-	return lambda n: x(x)(n);
+	return lambda n: function_chain_impl(x, n);
+
+def py_function_factorial_impl(x, n):
+	print('------------------ py factorial', n);
+	sys.stdout.flush();
+	if n == 0:
+		print('------------------ py factorial case base');
+		sys.stdout.flush();
+		return 1;
+	else:
+		print('------------------ py factorial pre x() call', x);
+		sys.stdout.flush();
+		result = n * x(x)(n - 1);
+		print('------------------ py factorial post x() call', x);
+		sys.stdout.flush();
+		return result;
+
+def py_function_factorial(x):
+	return lambda n: py_function_factorial_impl(x, n);
 
 def function_factorial(x):
 	return lambda n: 1 if n <= 0 else n * x(x)(n - 1);
