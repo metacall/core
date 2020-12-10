@@ -65,11 +65,13 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 		void * args_fact[] = { metacall_value_create_long(5L) };
 		void * ret = metacallfv(metacall_value_to_function(py_py_factorial), args_fact);
 		ASSERT_NE((void *) NULL, (void *) ret);
+		ASSERT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(ret));
 		EXPECT_EQ((long) 120L, (long) metacall_value_to_long(ret));
 		metacall_value_destroy(ret);
 
 		ret = metacallfv(metacall_value_to_function(py_py_factorial), args_fact);
 		ASSERT_NE((void *) NULL, (void *) ret);
+		ASSERT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(ret));
 		EXPECT_EQ((long) 120L, (long) metacall_value_to_long(ret));
 		metacall_value_destroy(ret);
 
@@ -113,12 +115,14 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 		void * args_fact[] = { metacall_value_create_long(5L) };
 		void * ret = metacallfv(metacall_value_to_function(js_js_factorial), args_fact);
 		ASSERT_NE((void *) NULL, (void *) ret);
-		EXPECT_EQ((long) 120L, (long) metacall_value_to_long(ret));
+		ASSERT_EQ((enum metacall_value_id) METACALL_DOUBLE, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((double) 120.0, (double) metacall_value_to_double(ret));
 		metacall_value_destroy(ret);
 
 		ret = metacallfv(metacall_value_to_function(js_js_factorial), args_fact);
 		ASSERT_NE((void *) NULL, (void *) ret);
-		EXPECT_EQ((long) 120L, (long) metacall_value_to_long(ret));
+		ASSERT_EQ((enum metacall_value_id) METACALL_DOUBLE, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((double) 120.0, (double) metacall_value_to_double(ret));
 		metacall_value_destroy(ret);
 
 		metacall_value_destroy(args_fact[0]);
