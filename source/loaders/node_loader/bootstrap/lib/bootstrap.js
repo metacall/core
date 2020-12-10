@@ -165,6 +165,40 @@ function node_loader_trampoline_discover_arguments(node) {
 	return args;
 }
 
+function node_loader_trampoline_discover_function(func) {
+	try {
+		if (node_loader_trampoline_is_callable(func)) {
+			// Cherow can't parse native code functions so we can do a workaround
+			const str = func.toString().replace('{ [native code] }', '{}');
+
+			const ast = cherow.parse(`(${str})`, {
+				module: false,
+				skipShebang: true,
+			}).body[0];
+
+			const node = ast.expression;
+
+			if (node_loader_trampoline_is_valid_symbol(node)) {
+				const args = node_loader_trampoline_discover_arguments(node);
+
+				const discover = {
+					ptr: func,
+					signature: args,
+					async: node.async,
+				};
+
+				if (node.id && node.id.name) {
+					discover['name'] = node.id.name;
+				}
+
+				return discover;
+			}
+		}
+	} catch (ex) {
+		console.log(`Exception while parsing '${func}' in node_loader_trampoline_discover_function`, ex);
+	}
+}
+
 function node_loader_trampoline_discover(handle) {
 	const discover = {};
 
@@ -178,24 +212,10 @@ function node_loader_trampoline_discover(handle) {
 			for (let j = 0; j < keys.length; ++j) {
 				const key = keys[j];
 				const func = exports[key];
+				const descriptor = node_loader_trampoline_discover_function(func);
 
-				if (node_loader_trampoline_is_callable(func)) {
-					const ast = cherow.parse(`(${func.toString()})`, {
-						module: false,
-						skipShebang: true,
-					}).body[0];
-
-					const node = ast.expression;
-
-					if (node_loader_trampoline_is_valid_symbol(node)) {
-						const args = node_loader_trampoline_discover_arguments(node);
-
-						discover[key] = {
-							ptr: func,
-							signature: args,
-							async: node.async,
-						};
-					}
+				if (descriptor !== undefined) {
+					discover[key] = descriptor;
 				}
 			}
 		}
@@ -284,6 +304,7 @@ module.exports = ((impl, ptr) => {
 			'load_from_package': node_loader_trampoline_load_from_package,
 			'clear': node_loader_trampoline_clear,
 			'discover': node_loader_trampoline_discover,
+			'discover_function': node_loader_trampoline_discover_function,
 			'test': node_loader_trampoline_test,
 			'await': node_loader_trampoline_await(trampoline),
 			'destroy': node_loader_trampoline_destroy,
