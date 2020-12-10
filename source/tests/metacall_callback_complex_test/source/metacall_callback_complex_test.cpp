@@ -91,8 +91,6 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 			assert.strictEqual(js_js_factorial(5), 120);
 		*/
 
-		/* TODO */
-		/*
 		const char * node_scripts[] =
 		{
 			"factcallback.js"
@@ -127,7 +125,6 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 
 		metacall_value_destroy(v_js_function_factorial);
 		metacall_value_destroy(js_js_factorial);
-		*/
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

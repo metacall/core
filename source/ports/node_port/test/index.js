@@ -128,12 +128,12 @@ describe('metacall', () => {
 
 	describe('callback', () => {
 		it('callback (py)', () => {
-			const f = require('function.py');
-			assert.notStrictEqual(f, undefined);
+			const py_f = require('function.py');
+			assert.notStrictEqual(py_f, undefined);
 
 			// Passing callback as an argument
 			const c = 5;
-			assert.strictEqual(f.function_with_args((a, b) => {
+			assert.strictEqual(py_f.function_with_args((a, b) => {
 				const result = a + b + c;
 				assert.strictEqual(a, 2);
 				assert.strictEqual(b, 3);
@@ -143,20 +143,20 @@ describe('metacall', () => {
 			}, 2, 3), 10);
 
 			// Passing callback as a return value
-			const callback = f.function_ret_lambda(10);
+			const callback = py_f.function_ret_lambda(10);
 			assert.notStrictEqual(callback, undefined);
 			assert.strictEqual(callback(3), 30);
 
 			// Currying
-			const currying = f.function_currying(10);
+			const currying = py_f.function_currying(10);
 			assert.notStrictEqual(currying, undefined);
 			assert.strictEqual(currying(2)(3), 60);
 
 			// Currying more
-			assert.strictEqual(f.function_currying_more(5)(4)(3)(2)(1), 120);
+			assert.strictEqual(py_f.function_currying_more(5)(4)(3)(2)(1), 120);
 
 			// Receiving undefined from a function that returns nothing in Python
-			assert.strictEqual(f.function_pass(), undefined);
+			assert.strictEqual(py_f.function_pass(), undefined);
 
 			/* TODO: After the refactor of class/object support the following tests do not pass */
 			/* Now the class returned by Python is threated as a TYPE_CLASS instead of a TYPE_PTR */
@@ -164,47 +164,82 @@ describe('metacall', () => {
 
 			// Class test
 			/*
-			assert.strictEqual(f.function_myclass_method(f.function_myclass_new_class()), 'hello world');
-			assert.strictEqual(f.function_myclass_method(f.function_myclass_new_class()), 'hello world'); // Check for function lifetime
+			assert.strictEqual(py_f.function_myclass_method(py_f.function_myclass_new_class()), 'hello world');
+			assert.strictEqual(py_f.function_myclass_method(py_f.function_myclass_new_class()), 'hello world'); // Check for function lifetime
 			*/
 
 			// Class test with callback
 			/*
-			assert.strictEqual(f.function_myclass_cb((klass) => f.function_myclass_method(klass)), 'hello world');
-			assert.strictEqual(f.function_myclass_cb((klass) => f.function_myclass_method(klass)), 'hello world'); // Check for function lifetime
+			assert.strictEqual(py_f.function_myclass_cb((klass) => py_f.function_myclass_method(klass)), 'hello world');
+			assert.strictEqual(py_f.function_myclass_cb((klass) => py_f.function_myclass_method(klass)), 'hello world'); // Check for function lifetime
 			*/
 
 			// Double recursion
 			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
-			assert.strictEqual(sum(5, f.function_sum), 15);
-			assert.strictEqual(sum(5, f.function_sum), 15);
-			assert.strictEqual(sum(5, f.function_sum), 15);
-			assert.strictEqual(sum(5, f.function_sum), 15); // Check for function lifetime
-			assert.strictEqual(f.function_sum(5, sum), 15);
-			assert.strictEqual(f.function_sum(5, sum), 15);
-			assert.strictEqual(f.function_sum(5, sum), 15);
-			assert.strictEqual(f.function_sum(5, sum), 15); // Check for function lifetime
+			assert.strictEqual(sum(5, py_f.function_sum), 15);
+			assert.strictEqual(sum(5, py_f.function_sum), 15);
+			assert.strictEqual(sum(5, py_f.function_sum), 15);
+			assert.strictEqual(sum(5, py_f.function_sum), 15); // Check for function lifetime
+			assert.strictEqual(sum(10, py_f.function_sum), 55);
+			assert.strictEqual(sum(60, py_f.function_sum), 1830);
+			assert.strictEqual(sum(160, py_f.function_sum), 12880); // Big numbers
+			assert.strictEqual(py_f.function_sum(5, sum), 15);
+			assert.strictEqual(py_f.function_sum(5, sum), 15);
+			assert.strictEqual(py_f.function_sum(5, sum), 15);
+			assert.strictEqual(py_f.function_sum(5, sum), 15); // Check for function lifetime
+			assert.strictEqual(py_f.function_sum(10, sum), 55);
+			assert.strictEqual(py_f.function_sum(60, sum), 1830);
+			assert.strictEqual(py_f.function_sum(160, sum), 12880); // Big numbers
 
 			// Factorial composition (@trgwii)
-			// console.log("------------------------------------------------");
-			// const fact = f.function_factorial(c => v => v <= 0 ? 1 : v);
-			// console.log("------------------------------------------------");
+			// const fact = py_f.function_factorial(c => v => v <= 0 ? 1 : v);
 			// assert.strictEqual(fact(1), 1);
-			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(2), 2);
 			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(3), 6);
 
 			// console.log("------------------------------------------------");
-			// const js_factorial = f.function_chain((x) => (n) => n == 0 ? 1 : n * x(x)(n - 1));
-			// assert.notStrictEqual(js_factorial, undefined);
-			// console.log("------------------------------------------------");
-			// assert.strictEqual(js_factorial(5), 120);
-			// console.log("------------------------------------------------");
-			// assert.strictEqual(js_factorial(5), 120);
+			const js_function_chain = function(x) {
+				return function(n) {
+					console.log('------------------ js chain', n);
+					console.log('------------------ js chain pre x() call', x.toString().slice(0, 12), '...');
+					const result = x(x)(n);
+					console.log('------------------ js chain post x() call', x.toString().slice(0, 12), '...');
+					return result;
+				};
+			};
+			const js_factorial_impl = function(x) {
+				return function(n) {
+					console.log('------------------ js factorial', n);
+					if (n == 0) {
+						console.log('------------------ js factorial case base');
+						return 1;
+					} else {
+						console.log('------------------ js factorial pre x() call', x.toString().slice(0, 12), '...');
+						const result = n * x(x)(n - 1);
+						console.log('------------------ js factorial post x() call', x.toString().slice(0, 12), '...');
+						return result;
+					}
+				};
+			}
+
+			const js_js_factorial = js_function_chain(js_factorial_impl);
+			assert.notStrictEqual(js_js_factorial, undefined);
+			assert.strictEqual(js_js_factorial(5), 120);
+			assert.strictEqual(js_js_factorial(5), 120);
+
+			// const py_py_factorial = py_f.function_chain(py_f.py_function_factorial);
+			// assert.notStrictEqual(py_py_factorial, undefined);
+			// assert.strictEqual(py_py_factorial(5), 120);
+			// assert.strictEqual(py_py_factorial(5), 120);
+
+			// const py_js_factorial = py_f.function_chain(js_factorial_impl);
+			// assert.notStrictEqual(py_js_factorial, undefined);
+			// assert.strictEqual(py_js_factorial(5), 120);
+			// assert.strictEqual(py_js_factorial(5), 120);
 
 			// console.log("------------------------------------------------");
-			// const py_factorial = f.function_chain(f.function_factorial);
+			// const py_factorial = py_f.function_chain(py_f.function_factorial);
 			// assert.notStrictEqual(py_factorial, undefined);
 			// console.log("------------------------------------------------");
 			// assert.strictEqual(py_factorial(5), 120);

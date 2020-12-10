@@ -136,6 +136,9 @@ typedef struct loader_impl_async_load_from_memory_safe_type * loader_impl_async_
 struct loader_impl_async_clear_safe_type;
 typedef struct loader_impl_async_clear_safe_type * loader_impl_async_clear_safe;
 
+struct loader_impl_async_discover_function_safe_type;
+typedef struct loader_impl_async_discover_function_safe_type * loader_impl_async_discover_function_safe;
+
 struct loader_impl_async_discover_safe_type;
 typedef struct loader_impl_async_discover_safe_type * loader_impl_async_discover_safe;
 
@@ -265,6 +268,13 @@ struct loader_impl_async_clear_safe_type
 	napi_ref handle_ref;
 };
 
+struct loader_impl_async_discover_function_safe_type
+{
+	loader_impl impl;
+	loader_impl_node node_impl;
+	napi_value func;
+};
+
 struct loader_impl_async_discover_safe_type
 {
 	loader_impl impl;
@@ -337,26 +347,15 @@ typedef struct loader_impl_thread_type
 
 } * loader_impl_thread;
 
-typedef struct loader_impl_callback_closure_type
-{
-	loader_impl_node node_impl;
-	napi_env env;
-	napi_ref callback_ref;
-	napi_ref recv_ref;
-
-} * loader_impl_callback_closure;
-
 typedef struct loader_impl_napi_to_value_callback_closure_type
 {
-	void * f;
+	value func;
 	loader_impl_node node_impl;
 
 } * loader_impl_napi_to_value_callback_closure;
 
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
-
-static void * node_loader_impl_value_to_napi_callback(size_t argc, void * args[], void * data);
 
 /* Function */
 static int function_node_interface_create(function func, function_impl impl);
@@ -409,6 +408,8 @@ static void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_sa
 
 static napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info);
 
+static value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe discover_function_safe);
+
 static void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe);
 
 static napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info);
@@ -427,10 +428,6 @@ static void node_loader_impl_thread(void * data);
 #endif
 
 static void node_loader_impl_walk(uv_handle_t * handle, void * data);
-
-/* -- Member Data -- */
-
-static function node_loader_value_to_napi_callback_func = NULL;
 
 /* -- Methods -- */
 
@@ -790,22 +787,17 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	}
 	else if (valuetype == napi_function)
 	{
-		loader_impl_callback_closure closure = static_cast<loader_impl_callback_closure>(malloc(sizeof(struct loader_impl_callback_closure_type)));
+		struct loader_impl_async_discover_function_safe_type discover_function_safe =
+		{
+			/* TODO: */
+			NULL,
+			/* impl, */
+			node_impl,
+			v
+		};
 
-		closure->node_impl = node_impl;
-		closure->env = env;
-
-		// Create a reference to this
-		status = napi_create_reference(env, recv, 1, &closure->recv_ref);
-
-		node_loader_impl_exception(env, status);
-
-		// Create a reference to the callback
-		status = napi_create_reference(env, v, 1, &closure->callback_ref);
-
-		node_loader_impl_exception(env, status);
-
-		return value_create_function_closure(node_loader_value_to_napi_callback_func, (void *)closure);
+		/* Discover and create the function */
+		return node_loader_impl_discover_function_safe(env, &discover_function_safe);
 	}
 	else if (valuetype == napi_external)
 	{
@@ -842,7 +834,12 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 		node_loader_impl_finalizer(env, argv[iterator], args[iterator]);
 	}
 
-	void * ret = metacallfv_s(closure->f, args, argc);
+	void * ret = metacallfv_s(value_to_function(closure->func), args, argc);
+
+	// TODO: Implement finalizer where the closure is allocated
+
+	// IMPORTANT TODO:
+	//value_type_destroy(closure->func);
 
 	napi_value result = node_loader_impl_value_to_napi(closure->node_impl, env, ret);
 
@@ -851,7 +848,8 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	delete[] argv;
 	delete[] args;
 
-	delete closure;
+	// IMPORTANT TODO:
+	//delete closure;
 
 	return result;
 }
@@ -1010,7 +1008,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	{
 		loader_impl_napi_to_value_callback_closure closure = new loader_impl_napi_to_value_callback_closure_type();
 
-		closure->f = value_to_function(arg_value);
+		closure->func = value_type_copy(arg_value);
 		closure->node_impl = node_impl;
 
 		status = napi_create_function(env, NULL, 0, node_loader_impl_napi_to_value_callback, closure, &v);
@@ -1045,75 +1043,6 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 
 	return v;
-}
-
-void * node_loader_impl_value_to_napi_callback(size_t argc, void * args[], void * data)
-{
-	loader_impl_callback_closure closure = static_cast<loader_impl_callback_closure>(data);
-	napi_value ret;
-	napi_status status;
-	napi_value * argv = NULL;
-	napi_value callback, recv;
-
-	if (closure == NULL)
-	{
-		return NULL;
-	}
-
-	if (argc > 0)
-	{
-		argv = static_cast<napi_value *>(malloc(sizeof(napi_value *) * argc));
-
-		if (argv == NULL)
-		{
-			free(closure);
-			return NULL;
-		}
-
-		for (uint32_t args_count = 0; args_count < argc; ++args_count)
-		{
-			argv[args_count] = node_loader_impl_value_to_napi(closure->node_impl, closure->env, args[args_count]);
-		}
-	}
-
-	status = napi_get_reference_value(closure->env, closure->recv_ref, &recv);
-
-	node_loader_impl_exception(closure->env, status);
-
-	status = napi_get_reference_value(closure->env, closure->callback_ref, &callback);
-
-	node_loader_impl_exception(closure->env, status);
-
-	status = napi_call_function(closure->env, recv, callback, argc, argv, &ret);
-
-	node_loader_impl_exception(closure->env, status);
-
-	if (argv != NULL)
-	{
-		free(argv);
-	}
-
-	void * result = node_loader_impl_napi_to_value(closure->node_impl, closure->env, recv, ret);
-
-	/* TODO: Clean up */
-	/*
-	auto delete_closure = [closure]()
-	{
-		napi_status status = napi_delete_reference(closure->env, closure->callback_ref);
-
-		node_loader_impl_exception(closure->env, status);
-
-		status = napi_delete_reference(closure->env, closure->recv_ref);
-
-		node_loader_impl_exception(closure->env, status);
-
-		free(closure);
-	};
-	*/
-
-	node_loader_impl_finalizer(closure->env, ret, result/*, delete_closure*/);
-
-	return result;
 }
 
 int function_node_interface_create(function func, function_impl impl)
@@ -2360,6 +2289,343 @@ napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info in
 	return nullptr;
 }
 
+value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe discover_function_safe)
+{
+	static const char discover_function_str[] = "discover_function";
+	napi_value discover_function_str_value;
+	napi_value function_table_object;
+	bool result = false;
+	napi_handle_scope handle_scope;
+	value function_value = NULL;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, discover_function_safe->node_impl->function_table_object_ref, &function_table_object);
+
+	node_loader_impl_exception(env, status);
+
+	/* Create function string */
+	status = napi_create_string_utf8(env, discover_function_str, sizeof(discover_function_str) - 1, &discover_function_str_value);
+
+	node_loader_impl_exception(env, status);
+
+	/* Check if exists in the table */
+	status = napi_has_own_property(env, function_table_object, discover_function_str_value, &result);
+
+	node_loader_impl_exception(env, status);
+
+	if (result == true)
+	{
+		napi_value function_trampoline_discover;
+		napi_valuetype valuetype;
+		napi_value argv[1];
+
+		status = napi_get_named_property(env, function_table_object, discover_function_str, &function_trampoline_discover);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_typeof(env, function_trampoline_discover, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function discover in function table object");
+		}
+
+		/* Define parameters */
+		argv[0] = discover_function_safe->func;
+
+		/* Call to load from file function */
+		napi_value global, function_descriptor;
+
+		status = napi_get_reference_value(env, discover_function_safe->node_impl->global_ref, &global);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_call_function(env, global, function_trampoline_discover, 1, argv, &function_descriptor);
+
+		node_loader_impl_exception(env, status);
+
+		/* Convert return value (discover object) to context */
+		napi_value func_name;
+		char * func_name_str = NULL;
+		bool has_name = false;
+
+		status = napi_has_named_property(env, function_descriptor, "name", &has_name);
+
+		node_loader_impl_exception(env, status);
+
+		/* Retrieve the function name if any */
+		if (has_name == true)
+		{
+			size_t func_name_length = 0;
+
+			status = napi_get_named_property(env, function_descriptor, "name", &func_name);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_get_value_string_utf8(env, func_name, NULL, 0, &func_name_length);
+
+			node_loader_impl_exception(env, status);
+
+			if (func_name_length > 0)
+			{
+				func_name_str = static_cast<char *>(malloc(sizeof(char) * (func_name_length + 1)));
+			}
+
+			/* Get function name */
+			status = napi_get_value_string_utf8(env, func_name, func_name_str, func_name_length + 1, &func_name_length);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Retrieve the function properties */
+		napi_value function_sig;
+		napi_value function_types;
+		napi_value function_ret;
+		napi_value function_is_async;
+		uint32_t function_sig_length;
+
+		/* Get function signature */
+		status = napi_get_named_property(env, function_descriptor, "signature", &function_sig);
+
+		node_loader_impl_exception(env, status);
+
+		/* Check function pointer type */
+		status = napi_typeof(env, function_sig, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_object)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid NodeJS signature");
+		}
+
+		/* Get signature length */
+		status = napi_get_array_length(env, function_sig, &function_sig_length);
+
+		node_loader_impl_exception(env, status);
+
+		/* Get function async */
+		status = napi_get_named_property(env, function_descriptor, "async", &function_is_async);
+
+		node_loader_impl_exception(env, status);
+
+		/* Check function async type */
+		status = napi_typeof(env, function_is_async, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_boolean)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid NodeJS async flag");
+		}
+
+		/* Optionally retrieve types if any in order to support typed supersets of JavaScript like TypeScript */
+		static const char types_str[] = "types";
+		bool has_types = false;
+
+		status = napi_has_named_property(env, function_descriptor, types_str, &has_types);
+
+		node_loader_impl_exception(env, status);
+
+		if (has_types == true)
+		{
+			status = napi_get_named_property(env, function_descriptor, types_str, &function_types);
+
+			node_loader_impl_exception(env, status);
+
+			/* Check types array type */
+			status = napi_typeof(env, function_types, &valuetype);
+
+			node_loader_impl_exception(env, status);
+
+			if (valuetype != napi_object)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid NodeJS function types");
+			}
+		}
+
+		/* Optionally retrieve return value type if any in order to support typed supersets of JavaScript like TypeScript */
+		static const char ret_str[] = "ret";
+		bool has_ret = false;
+
+		status = napi_has_named_property(env, function_descriptor, ret_str, &has_ret);
+
+		node_loader_impl_exception(env, status);
+
+		if (has_ret == true)
+		{
+			status = napi_get_named_property(env, function_descriptor, ret_str, &function_ret);
+
+			node_loader_impl_exception(env, status);
+
+			/* Check return value type */
+			status = napi_typeof(env, function_ret, &valuetype);
+
+			node_loader_impl_exception(env, status);
+
+			if (valuetype != napi_string)
+			{
+				napi_throw_type_error(env, nullptr, "Invalid NodeJS return type");
+			}
+		}
+
+		/* Create node function */
+		loader_impl_node_function node_func = static_cast<loader_impl_node_function>(malloc(sizeof(struct loader_impl_node_function_type)));
+
+		/* Create reference to function pointer */
+		status = napi_create_reference(env, discover_function_safe->func, 1, &node_func->func_ref);
+
+		node_loader_impl_exception(env, status);
+
+		node_func->node_impl = discover_function_safe->node_impl;
+
+		/* Create function */
+		function f = function_create(func_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
+
+		if (f != NULL)
+		{
+			signature s = function_signature(f);
+			bool is_async = false;
+
+			/* Set function async */
+			status = napi_get_value_bool(env, function_is_async, &is_async);
+
+			node_loader_impl_exception(env, status);
+
+			function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
+
+			/* Set return value if any */
+			if (has_ret)
+			{
+				size_t return_type_length;
+				char * return_type_str = NULL;
+
+				/* Get return value string length */
+				status = napi_get_value_string_utf8(env, function_ret, NULL, 0, &return_type_length);
+
+				node_loader_impl_exception(env, status);
+
+				if (return_type_length > 0)
+				{
+					return_type_str = static_cast<char *>(malloc(sizeof(char) * (return_type_length + 1)));
+				}
+
+				if (return_type_str != NULL)
+				{
+					/* Get parameter name string */
+					status = napi_get_value_string_utf8(env, function_ret, return_type_str, return_type_length + 1, &return_type_length);
+
+					node_loader_impl_exception(env, status);
+
+					/* TODO: Implement return type with impl (may need an important refactor) */
+					signature_set_return(s, /*loader_impl_type(discover_function_safe->impl, return_type_str)*/ NULL);
+
+					free(return_type_str);
+				}
+			}
+
+			/* Set signature */
+			for (uint32_t arg_index = 0; arg_index < function_sig_length; ++arg_index)
+			{
+				napi_value parameter_name;
+				size_t parameter_name_length;
+				char * parameter_name_str = NULL;
+
+				/* Get signature parameter name */
+				status = napi_get_element(env, function_sig, arg_index, &parameter_name);
+
+				node_loader_impl_exception(env, status);
+
+				/* Get parameter name string length */
+				status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+
+				node_loader_impl_exception(env, status);
+
+				if (parameter_name_length > 0)
+				{
+					parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+				}
+
+				/* Get parameter name string */
+				status = napi_get_value_string_utf8(env, parameter_name, parameter_name_str, parameter_name_length + 1, &parameter_name_length);
+
+				node_loader_impl_exception(env, status);
+
+				/* Check if type info is available */
+				if (has_types)
+				{
+					napi_value parameter_type;
+					size_t parameter_type_length;
+					char * parameter_type_str = NULL;
+
+					/* Get signature parameter type */
+					status = napi_get_element(env, function_types, arg_index, &parameter_type);
+
+					node_loader_impl_exception(env, status);
+
+					/* Get parameter type string length */
+					status = napi_get_value_string_utf8(env, parameter_type, NULL, 0, &parameter_type_length);
+
+					node_loader_impl_exception(env, status);
+
+					if (parameter_type_length > 0)
+					{
+						parameter_type_str = static_cast<char *>(malloc(sizeof(char) * (parameter_type_length + 1)));
+					}
+
+					/* Get parameter type string */
+					status = napi_get_value_string_utf8(env, parameter_type, parameter_type_str, parameter_type_length + 1, &parameter_type_length);
+
+					node_loader_impl_exception(env, status);
+
+					/* TODO: Implement parameter type with impl (may need an important refactor) */
+					signature_set(s, (size_t)arg_index, parameter_name_str, /*loader_impl_type(discover_function_safe->impl, parameter_type_str)*/ NULL);
+
+					if (parameter_type_str != NULL)
+					{
+						free(parameter_type_str);
+					}
+				}
+				else
+				{
+					signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
+				}
+
+				if (parameter_name_str != NULL)
+				{
+					free(parameter_name_str);
+				}
+			}
+
+			/* Create value with the function */
+			function_value = value_create_function(f);
+		}
+		else
+		{
+			free(node_func);
+		}
+
+		if (func_name_str != NULL)
+		{
+			free(func_name_str);
+		}
+	}
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	return function_value;
+}
+
 void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe)
 {
 	static const char discover_str[] = "discover";
@@ -2702,13 +2968,13 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					}
 
 					scope_define(sp, function_name(f), value_create_function(f));
-
-					free(func_name_str);
 				}
 				else
 				{
 					free(node_func);
 				}
+
+				free(func_name_str);
 			}
 		}
 	}
@@ -3368,14 +3634,6 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		};
 
 		napi_module_register(&node_loader_port_module);
-	}
-
-	/* Register host function for trampolining callbacks */
-	if (metacall_register("__node_loader_impl_value_to_napi_callback__", node_loader_impl_value_to_napi_callback, (void **)&node_loader_value_to_napi_callback_func, METACALL_INVALID, 0) != 0
-		|| node_loader_value_to_napi_callback_func == NULL)
-	{
-		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
-		return NULL;
 	}
 
 	node_impl = new loader_impl_node_type();
