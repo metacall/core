@@ -195,10 +195,8 @@ describe('metacall', () => {
 			// const fact = py_f.function_factorial(c => v => v <= 0 ? 1 : v);
 			// assert.strictEqual(fact(1), 1);
 			// assert.strictEqual(fact(2), 2);
-			// console.log("------------------------------------------------");
 			// assert.strictEqual(fact(3), 6);
 
-			// console.log("------------------------------------------------");
 			const js_function_chain = function(x) {
 				return function(n) {
 					console.log('------------------ js chain', n);
@@ -238,12 +236,9 @@ describe('metacall', () => {
 			// assert.strictEqual(py_js_factorial(5), 120);
 			// assert.strictEqual(py_js_factorial(5), 120);
 
-			// console.log("------------------------------------------------");
 			// const py_factorial = py_f.function_chain(py_f.function_factorial);
 			// assert.notStrictEqual(py_factorial, undefined);
-			// console.log("------------------------------------------------");
 			// assert.strictEqual(py_factorial(5), 120);
-			// console.log("------------------------------------------------");
 			// assert.strictEqual(py_factorial(5), 120);
 		});
 	});

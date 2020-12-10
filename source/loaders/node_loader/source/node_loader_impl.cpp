@@ -1467,13 +1467,19 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	napi_handle_scope handle_scope;
 	size_t args_size;
 	value * args;
+	napi_value * argv;
 	loader_impl_node_function node_func;
 	size_t args_count;
+	signature s = function_signature(func_call_safe->func);
+	const size_t signature_args_size = signature_count(s);
 
 	/* Get function data */
 	args_size = func_call_safe->size;
-	args = static_cast<value *>(func_call_safe->args);
 	node_func = func_call_safe->node_func;
+	args = func_call_safe->args;
+
+	/* Allocate dynamically more space for values in case of variable arguments */
+	argv = args_size > signature_args_size ? static_cast<napi_value *>(malloc(sizeof(napi_value) * args_size)) : node_func->argv;
 
 	/* Create scope */
 	napi_status status = napi_open_handle_scope(env, &handle_scope);
@@ -1484,7 +1490,7 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	for (args_count = 0; args_count < args_size; ++args_count)
 	{
 		/* Define parameter */
-		node_func->argv[args_count] = node_loader_impl_value_to_napi(func_call_safe->node_impl, env, args[args_count]);
+		argv[args_count] = node_loader_impl_value_to_napi(func_call_safe->node_impl, env, args[args_count]);
 	}
 
 	/* Get function reference */
@@ -1504,7 +1510,7 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	/* Call to function */
 	napi_value func_return;
 
-	status = napi_call_function(env, global, function_ptr, args_size, node_func->argv, &func_return);
+	status = napi_call_function(env, global, function_ptr, args_size, argv, &func_return);
 
 	node_loader_impl_exception(env, status);
 
@@ -1515,6 +1521,11 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+
+	if (args_size > signature_args_size)
+	{
+		free(argv);
+	}
 }
 
 napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_info info)
@@ -1698,6 +1709,9 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 				value * args;
 				loader_impl_node_function node_func;
 				size_t args_count;
+				napi_value * func_argv;
+				signature s = function_signature(func_await_safe->func);
+				const size_t signature_args_size = signature_count(s);
 
 				/* Get function reference */
 				status = napi_get_reference_value(env, func_await_safe->node_func->func_ref, &argv[0]);
@@ -1718,19 +1732,20 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				/* Get function data */
 				args_size = func_await_safe->size;
-
 				args = static_cast<value *>(func_await_safe->args);
-
 				node_func = func_await_safe->node_func;
+
+				/* Allocate dynamically more space for values in case of variable arguments */
+				func_argv = args_size > signature_args_size ? static_cast<napi_value *>(malloc(sizeof(napi_value) * args_size)) : node_func->argv;
 
 				/* Build parameters */
 				for (args_count = 0; args_count < args_size; ++args_count)
 				{
 					/* Define parameter */
-					node_func->argv[args_count] = node_loader_impl_value_to_napi(func_await_safe->node_impl, env, args[args_count]);
+					func_argv[args_count] = node_loader_impl_value_to_napi(func_await_safe->node_impl, env, args[args_count]);
 
 					/* Push parameter to the array */
-					status = napi_call_function(env, argv[1], push_func, 1, &node_func->argv[args_count], NULL);
+					status = napi_call_function(env, argv[1], push_func, 1, &func_argv[args_count], NULL);
 
 					node_loader_impl_exception(env, status);
 				}
@@ -1770,6 +1785,11 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 
 				/* Proccess the await return */
 				func_await_safe->ret = node_loader_impl_napi_to_value(func_await_safe->node_impl, env, func_await_safe->recv, await_return);
+
+				if (args_size > signature_args_size)
+				{
+					free(func_argv);
+				}
 			}
 		}
 	}
