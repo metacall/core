@@ -30,7 +30,19 @@
 #	undef boolean
 #endif
 
+
+/* Disable warnings from Ruby */
+#if defined(__GNUC__)
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wredundant-decls"
+#endif
+
 #include <ruby.h>
+
+/* Disable warnings from Ruby */
+#if defined(__GNUC__)
+#	pragma GCC diagnostic pop
+#endif
 
 #define LOADER_IMPL_RB_FUNCTION_ARGS_SIZE 0x10
 #define LOADER_IMPL_RB_PROTECT_ARGS_SIZE 0x10
@@ -1014,7 +1026,7 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 
 					if (!(rb_module->function_map != NULL && rb_loader_impl_key_parse(RSTRING_PTR(module_data), rb_module->function_map) == 0))
 					{
-						set_destroy(rb_module->function_map);
+						rb_loader_impl_key_clear(rb_module->function_map);
 
 						free(rb_module);
 
@@ -1253,7 +1265,7 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 			(void)result;
 		}
 
-		set_destroy((*rb_module)->function_map);
+		rb_loader_impl_key_clear((*rb_module)->function_map);
 	}
 
 	vector_destroy(rb_handle->modules);
