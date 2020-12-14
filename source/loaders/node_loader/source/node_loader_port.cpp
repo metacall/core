@@ -74,6 +74,9 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	loader_impl impl = loader_get_impl("node");
 	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
 
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
 	for (size_t args_count = 1; args_count < argc; ++args_count)
 	{
 		args[args_count - 1] = node_loader_impl_napi_to_value(node_impl, env, recv, argv[args_count]);
@@ -81,9 +84,13 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 		node_loader_impl_finalizer(env, argv[args_count], args[args_count - 1]);
 	}
 
+	/* Call to the function */
 	void * ret = metacallv_s(name, args, argc - 1);
 
 	napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	/* Release current reference of the environment */
+	node_loader_impl_env(node_impl, NULL);
 
 	node_loader_impl_finalizer(env, result, ret);
 
@@ -147,10 +154,20 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 
 	if (path_index == paths_size)
 	{
+		/* Obtain NodeJS loader implementation */
+		loader_impl impl = loader_get_impl("node");
+		loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+		/* Store current reference of the environment */
+		node_loader_impl_env(node_impl, env);
+
 		if (metacall_load_from_file(tag, (const char **)paths, paths_size, NULL) != 0)
 		{
 			napi_throw_error(env, NULL, "MetaCall could not load from file");
 		}
+
+		/* Release current reference of the environment */
+		node_loader_impl_env(node_impl, NULL);
 	}
 	else
 	{
@@ -237,14 +254,21 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 
 	node_loader_impl_exception(env, status);
 
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl("node");
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
 	// Load script from memory
 	if (metacall_load_from_memory(tag, script, script_size, NULL) != 0)
 	{
-		free(tag);
-		free(script);
 		napi_throw_error(env, NULL, "MetaCall could not load from memory");
-		return NULL;
 	}
+
+	/* Release current reference of the environment */
+	node_loader_impl_env(node_impl, NULL);
 
 	free(tag);
 	free(script);

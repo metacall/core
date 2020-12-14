@@ -70,6 +70,18 @@
 #include <fstream>
 #include <streambuf>
 #include <atomic>
+#include <thread>
+
+/* Disable warnings from V8 and NodeJS */
+#if defined(_MSC_VER) || defined(__clang__)
+#	pragma warning(push)
+#	pragma warning(disable: 4100)
+#	pragma warning(disable: 4275)
+#	pragma warning(disable: 4251)
+#elif defined(__GNUC__)
+#	pragma GCC diagnostic push
+#	pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 
 #include <node.h>
 #include <node_api.h>
@@ -82,6 +94,13 @@
 #endif /* ENALBLE_DEBUGGER_SUPPORT */
 
 #include <uv.h>
+
+/* Disable warnings from V8 and NodeJS */
+#if defined(_MSC_VER) || defined(__clang__)
+#	pragma warning(pop)
+#elif defined(__GNUC__)
+#	pragma GCC diagnostic pop
+#endif
 
 /* TODO:
 	To solve the deadlock we have to make MetaCall fork tolerant.
@@ -222,6 +241,7 @@ struct loader_impl_node_type
 	int result;
 	const char * error_message;
 
+	std::thread::id js_thread_id;
 };
 
 typedef struct loader_impl_node_function_type
@@ -1045,6 +1065,11 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	return v;
 }
 
+void node_loader_impl_env(loader_impl_node node_impl, napi_env env)
+{
+	node_impl->env = env;
+}
+
 int function_node_interface_create(function func, function_impl impl)
 {
 	loader_impl_node_function node_func = (loader_impl_node_function)impl;
@@ -1065,7 +1090,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 	if (node_func != NULL)
 	{
 		loader_impl_node node_impl = node_func->node_impl;
-		function_return ret;
+		function_return ret = NULL;
 		napi_status status;
 
 		/* Set up call safe arguments */
@@ -1077,8 +1102,17 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		node_impl->func_call_safe->recv = NULL;
 		node_impl->func_call_safe->ret = NULL;
 
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_func_call_safe(node_impl->env, node_impl->func_call_safe);
+
+			/* Set up return of the function call */
+			ret = node_impl->func_call_safe->ret;
+		}
 		/* Lock the mutex and set the parameters */
-		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
 			node_impl->locked.store(true);
 
@@ -1119,11 +1153,7 @@ function_return function_node_interface_invoke(function func, function_impl impl
 		}
 		else
 		{
-			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-			node_loader_impl_func_call_safe(node_impl->env, node_impl->func_call_safe);
-
-			/* Set up return of the function call */
-			ret = node_impl->func_call_safe->ret;
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_invoke, the call has not been executed in order to avoid the deadlock");
 		}
 
 		return ret;
@@ -1139,7 +1169,7 @@ function_return function_node_interface_await(function func, function_impl impl,
 	if (node_func != NULL)
 	{
 		loader_impl_node node_impl = node_func->node_impl;
-		function_return ret;
+		function_return ret = NULL;
 		napi_status status;
 
 		/* Set up await safe arguments */
@@ -1154,8 +1184,17 @@ function_return function_node_interface_await(function func, function_impl impl,
 		node_impl->func_await_safe->recv = NULL;
 		node_impl->func_await_safe->ret = NULL;
 
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_func_await_safe(node_impl->env, node_impl->func_await_safe);
+
+			/* Set up return of the function call */
+			ret = node_impl->func_await_safe->ret;
+		}
 		/* Lock the mutex and set the parameters */
-		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
 			node_impl->locked.store(true);
 
@@ -1196,11 +1235,7 @@ function_return function_node_interface_await(function func, function_impl impl,
 		}
 		else
 		{
-			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-			node_loader_impl_func_await_safe(node_impl->env, node_impl->func_await_safe);
-
-			/* Set up return of the function call */
-			ret = node_impl->func_await_safe->ret;
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_await, the call has not been executed in order to avoid the deadlock");
 		}
 
 		return ret;
@@ -1224,8 +1259,14 @@ void function_node_interface_destroy(function func, function_impl impl)
 		node_impl->func_destroy_safe->node_impl = node_impl;
 		node_impl->func_destroy_safe->node_func = node_func;
 
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_func_destroy_safe(node_impl->env, node_impl->func_destroy_safe);
+		}
 		/* Lock the mutex and set the parameters */
-		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
 			node_impl->locked.store(true);
 
@@ -1263,8 +1304,7 @@ void function_node_interface_destroy(function func, function_impl impl)
 		}
 		else
 		{
-			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-			node_loader_impl_func_destroy_safe(node_impl->env, node_impl->func_destroy_safe);
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
 		}
 
 		/* Free node function arguments */
@@ -1310,8 +1350,14 @@ void future_node_interface_destroy(future f, future_impl impl)
 		node_impl->future_delete_safe->node_future = node_future;
 		node_impl->future_delete_safe->f = f;
 
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_future_delete_safe(node_impl->env, node_impl->future_delete_safe);
+		}
 		/* Lock the mutex and set the parameters */
-		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
 			node_impl->locked.store(true);
 
@@ -1349,8 +1395,7 @@ void future_node_interface_destroy(future f, future_impl impl)
 		}
 		else
 		{
-			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-			node_loader_impl_future_delete_safe(node_impl->env, node_impl->future_delete_safe);
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in future_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
 		}
 
 		/* Free node future */
@@ -3055,9 +3100,12 @@ void node_loader_impl_thread_safe_function_initialize(napi_env env,
 
 	node_loader_impl_exception(env, status);
 
+	// TODO: Does this number must be equivalent to the number of the threads of NodeJS?
+	unsigned int processor_count = std::thread::hardware_concurrency();
+
 	status = napi_create_threadsafe_function(env, *ptr,
 		nullptr, threadsafe_func_name,
-		20, 1,
+		0, processor_count,
 		nullptr, nullptr,
 		nullptr, nullptr,
 		threadsafe_function);
@@ -3088,6 +3136,9 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
+
+	/* Retrieve the js thread id */
+	node_impl->js_thread_id = std::this_thread::get_id();
 
 	env = static_cast<napi_env>(env_ptr);
 	function_table_object = static_cast<napi_value>(function_table_object_ptr);
@@ -3770,14 +3821,23 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	/* Call initialize function with thread safe */
 	{
 		napi_status status;
-		int result;
+		int result = 1;
 
 		/* Set up initialize safe arguments */
 		node_impl->initialize_safe->node_impl = node_impl;
 		node_impl->initialize_safe->result = 0;
 
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_initialize_safe(node_impl->env, node_impl->initialize_safe);
+
+			/* Set up return of the function call */
+			result = node_impl->initialize_safe->result;
+		}
 		/* Lock the mutex and set the parameters */
-		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
 			node_impl->locked.store(true);
 
@@ -3818,11 +3878,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		}
 		else
 		{
-			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-			node_loader_impl_initialize_safe(node_impl->env, node_impl->initialize_safe);
-
-			/* Set up return of the function call */
-			result = node_impl->initialize_safe->result;
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_initialize, the call has not been executed in order to avoid the deadlock");
 		}
 
 		if (result != 0)
@@ -3850,7 +3906,7 @@ int node_loader_impl_execution_path(loader_impl impl, const loader_naming_path p
 loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
-	napi_ref handle_ref;
+	napi_ref handle_ref = NULL;
 	napi_status status;
 
 	if (node_impl == NULL || size == 0)
@@ -3864,8 +3920,17 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	node_impl->load_from_file_safe->size = size;
 	node_impl->load_from_file_safe->handle_ref = NULL;
 
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_load_from_file_safe(node_impl->env, node_impl->load_from_file_safe);
+
+		/* Retreive the result handle */
+		handle_ref = node_impl->load_from_file_safe->handle_ref;
+	}
 	/* Lock the mutex and set the parameters */
-	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
 		node_impl->locked.store(true);
 
@@ -3906,11 +3971,7 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	}
 	else
 	{
-		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-		node_loader_impl_load_from_file_safe(node_impl->env, node_impl->load_from_file_safe);
-
-		/* Retreive the result handle */
-		handle_ref = node_impl->load_from_file_safe->handle_ref;
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_load_from_file, the call has not been executed in order to avoid the deadlock");
 	}
 
 	return static_cast<loader_handle>(handle_ref);
@@ -3919,7 +3980,7 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
-	napi_ref handle_ref;
+	napi_ref handle_ref = NULL;
 	napi_status status;
 
 	if (node_impl == NULL || buffer == NULL || size == 0)
@@ -3934,8 +3995,17 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	node_impl->load_from_memory_safe->size = size;
 	node_impl->load_from_memory_safe->handle_ref = NULL;
 
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_load_from_memory_safe(node_impl->env, node_impl->load_from_memory_safe);
+
+		/* Retreive the result handle */
+		handle_ref = node_impl->load_from_memory_safe->handle_ref;
+	}
 	/* Lock the mutex and set the parameters */
-	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
 		node_impl->locked.store(true);
 
@@ -3976,11 +4046,7 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	}
 	else
 	{
-		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-		node_loader_impl_load_from_memory_safe(node_impl->env, node_impl->load_from_memory_safe);
-
-		/* Retreive the result handle */
-		handle_ref = node_impl->load_from_memory_safe->handle_ref;
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_load_from_memory, the call has not been executed in order to avoid the deadlock");
 	}
 
 	return static_cast<loader_handle>(handle_ref);
@@ -4011,8 +4077,14 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 	node_impl->clear_safe->node_impl = node_impl;
 	node_impl->clear_safe->handle_ref = handle_ref;
 
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_clear_safe(node_impl->env, node_impl->clear_safe);
+	}
 	/* Lock the mutex and set the parameters */
-	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
 		node_impl->locked.store(true);
 
@@ -4050,8 +4122,7 @@ int node_loader_impl_clear(loader_impl impl, loader_handle handle)
 	}
 	else
 	{
-		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-		node_loader_impl_clear_safe(node_impl->env, node_impl->clear_safe);
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_clear, the call has not been executed in order to avoid the deadlock");
 	}
 
 	return 0;
@@ -4074,8 +4145,14 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	node_impl->discover_safe->handle_ref = handle_ref;
 	node_impl->discover_safe->ctx = ctx;
 
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_discover_safe(node_impl->env, node_impl->discover_safe);
+	}
 	/* Lock the mutex and set the parameters */
-	if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 	{
 		node_impl->locked.store(true);
 
@@ -4113,8 +4190,7 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	}
 	else
 	{
-		/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-		node_loader_impl_discover_safe(node_impl->env, node_impl->discover_safe);
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_discover, the call has not been executed in order to avoid the deadlock");
 	}
 
 	return 0;
@@ -4393,8 +4469,14 @@ int node_loader_impl_destroy(loader_impl impl)
 		/* Set up destroy safe arguments */
 		node_impl->destroy_safe->node_impl = node_impl;
 
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_destroy_safe(node_impl->env, node_impl->destroy_safe);
+		}
 		/* Lock the mutex and set the parameters */
-		if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 		{
 			node_impl->locked.store(true);
 
@@ -4432,8 +4514,7 @@ int node_loader_impl_destroy(loader_impl impl)
 		}
 		else
 		{
-			/* If the mutex cannot be locked, then we are already in the V8 thread, we can call safely */
-			node_loader_impl_destroy_safe(node_impl->env, node_impl->destroy_safe);
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_destroy, the call has not been executed in order to avoid the deadlock");
 		}
 	}
 

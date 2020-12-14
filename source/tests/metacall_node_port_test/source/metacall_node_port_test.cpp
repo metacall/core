@@ -72,13 +72,13 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 			return NULL;
 		}, static_cast<void *>(&await_data));
 
+		await_data.c.wait(lock);
+
 		EXPECT_NE((void *) NULL, (void *) future);
 
 		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
 		metacall_value_destroy(future);
-
-		await_data.c.wait(lock);
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 
