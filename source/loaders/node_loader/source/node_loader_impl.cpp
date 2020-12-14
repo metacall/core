@@ -178,6 +178,7 @@ typedef struct loader_impl_async_destroy_safe_type * loader_impl_async_destroy_s
 
 struct loader_impl_node_type
 {
+	/* TODO: The current implementation may not support multi-isolate environments. We should test it. */
 	napi_env env; /* Used for storing environment for reentrant calls */
 	napi_ref global_ref; /* Store global reference */
 	napi_ref function_table_object_ref; /* Store function table reference registered by the trampoline */
@@ -241,6 +242,7 @@ struct loader_impl_node_type
 	int result;
 	const char * error_message;
 
+	/* TODO: This implementation won't work for multi-isolate environments. We should test it. */
 	std::thread::id js_thread_id;
 };
 
@@ -847,6 +849,9 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, (void **)(&closure));
 
+	/* Set environment */
+	closure->node_impl->env = env;
+
 	for (iterator = 0; iterator < argc; ++iterator)
 	{
 		args[iterator] = node_loader_impl_napi_to_value(closure->node_impl, env, recv, argv[iterator]);
@@ -864,6 +869,9 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	napi_value result = node_loader_impl_value_to_napi(closure->node_impl, env, ret);
 
 	node_loader_impl_finalizer(env, result, ret);
+
+	/* Reset environment */
+	// closure->node_impl->env = NULL;
 
 	delete[] argv;
 	delete[] args;
@@ -1497,7 +1505,7 @@ napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_in
 	node_loader_impl_initialize_safe(env, initialize_safe);
 
 	/* Clear environment */
-	initialize_safe->node_impl->env = NULL;
+	// initialize_safe->node_impl->env = NULL;
 
 	/* Signal start condition */
 	uv_cond_signal(&initialize_safe->node_impl->cond);
@@ -1596,7 +1604,7 @@ napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_inf
 	node_loader_impl_func_call_safe(env, func_call_safe);
 
 	/* Clear environment */
-	func_call_safe->node_impl->env = NULL;
+	// func_call_safe->node_impl->env = NULL;
 
 	/* Signal function call condition */
 	uv_cond_signal(&func_call_safe->node_impl->cond);
@@ -1867,7 +1875,7 @@ napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_in
 	node_loader_impl_func_await_safe(env, func_await_safe);
 
 	/* Clear environment */
-	func_await_safe->node_impl->env = NULL;
+	// func_await_safe->node_impl->env = NULL;
 
 	/* Signal function await condition */
 	uv_cond_signal(&func_await_safe->node_impl->cond);
@@ -1925,7 +1933,7 @@ napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_
 	node_loader_impl_func_destroy_safe(env, func_destroy_safe);
 
 	/* Clear environment */
-	func_destroy_safe->node_impl->env = NULL;
+	// func_destroy_safe->node_impl->env = NULL;
 
 	/* Signal function destroy condition */
 	uv_cond_signal(&func_destroy_safe->node_impl->cond);
@@ -1983,7 +1991,7 @@ napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback
 	node_loader_impl_future_delete_safe(env, future_delete_safe);
 
 	/* Clear environment */
-	future_delete_safe->node_impl->env = NULL;
+	// future_delete_safe->node_impl->env = NULL;
 
 	/* Signal future delete condition */
 	uv_cond_signal(&future_delete_safe->node_impl->cond);
@@ -2111,7 +2119,7 @@ napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callbac
 	node_loader_impl_load_from_file_safe(env, load_from_file_safe);
 
 	/* Clear environment */
-	load_from_file_safe->node_impl->env = NULL;
+	// load_from_file_safe->node_impl->env = NULL;
 
 	/* Signal load from file condition */
 	uv_cond_signal(&load_from_file_safe->node_impl->cond);
@@ -2232,7 +2240,7 @@ napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callb
 	node_loader_impl_load_from_memory_safe(env, load_from_memory_safe);
 
 	/* Clear environment */
-	load_from_memory_safe->node_impl->env = NULL;
+	// load_from_memory_safe->node_impl->env = NULL;
 
 	/* Signal load from memory condition */
 	uv_cond_signal(&load_from_memory_safe->node_impl->cond);
@@ -2344,7 +2352,7 @@ napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info in
 	node_loader_impl_clear_safe(env, clear_safe);
 
 	/* Clear environment */
-	clear_safe->node_impl->env = NULL;
+	// clear_safe->node_impl->env = NULL;
 
 	/* Signal clear condition */
 	uv_cond_signal(&clear_safe->node_impl->cond);
@@ -3068,7 +3076,7 @@ napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info
 	node_loader_impl_discover_safe(env, discover_safe);
 
 	/* Clear environment */
-	discover_safe->node_impl->env = NULL;
+	// discover_safe->node_impl->env = NULL;
 
 	/* Signal discover condition */
 	uv_cond_signal(&discover_safe->node_impl->cond);
@@ -4425,7 +4433,7 @@ napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info 
 	node_loader_impl_destroy_safe(env, destroy_safe);
 
 	/* Clear environment */
-	node_impl->env = NULL;
+	// node_impl->env = NULL;
 
 	/* Signal destroy condition */
 	uv_cond_signal(&node_impl->cond);

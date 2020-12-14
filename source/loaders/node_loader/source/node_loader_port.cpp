@@ -90,7 +90,7 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
 
 	/* Release current reference of the environment */
-	node_loader_impl_env(node_impl, NULL);
+	// node_loader_impl_env(node_impl, NULL);
 
 	node_loader_impl_finalizer(env, result, ret);
 
@@ -167,7 +167,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 		}
 
 		/* Release current reference of the environment */
-		node_loader_impl_env(node_impl, NULL);
+		// node_loader_impl_env(node_impl, NULL);
 	}
 	else
 	{
@@ -268,7 +268,7 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 	}
 
 	/* Release current reference of the environment */
-	node_loader_impl_env(node_impl, NULL);
+	// node_loader_impl_env(node_impl, NULL);
 
 	free(tag);
 	free(script);

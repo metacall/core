@@ -192,10 +192,10 @@ describe('metacall', () => {
 			assert.strictEqual(py_f.function_sum(160, sum), 12880); // Big numbers
 
 			// Factorial composition (@trgwii)
-			// const fact = py_f.function_factorial(c => v => v <= 0 ? 1 : v);
-			// assert.strictEqual(fact(1), 1);
-			// assert.strictEqual(fact(2), 2);
-			// assert.strictEqual(fact(3), 6);
+			const fact = py_f.function_factorial(c => v => v <= 0 ? 1 : v);
+			assert.strictEqual(fact(1), 1);
+			assert.strictEqual(fact(2), 2);
+			assert.strictEqual(fact(3), 6);
 
 			const js_function_chain = function(x) {
 				return function(n) {
@@ -226,20 +226,20 @@ describe('metacall', () => {
 			assert.strictEqual(js_js_factorial(5), 120);
 			assert.strictEqual(js_js_factorial(5), 120);
 
-			// const py_py_factorial = py_f.function_chain(py_f.py_function_factorial);
-			// assert.notStrictEqual(py_py_factorial, undefined);
-			// assert.strictEqual(py_py_factorial(5), 120);
-			// assert.strictEqual(py_py_factorial(5), 120);
+			const py_py_factorial = py_f.function_chain(py_f.py_function_factorial);
+			assert.notStrictEqual(py_py_factorial, undefined);
+			assert.strictEqual(py_py_factorial(5), 120);
+			assert.strictEqual(py_py_factorial(5), 120);
 
-			// const py_js_factorial = py_f.function_chain(js_factorial_impl);
-			// assert.notStrictEqual(py_js_factorial, undefined);
-			// assert.strictEqual(py_js_factorial(5), 120);
-			// assert.strictEqual(py_js_factorial(5), 120);
+			const py_js_factorial = py_f.function_chain(js_factorial_impl);
+			assert.notStrictEqual(py_js_factorial, undefined);
+			assert.strictEqual(py_js_factorial(5), 120);
+			assert.strictEqual(py_js_factorial(5), 120);
 
-			// const py_factorial = py_f.function_chain(py_f.function_factorial);
-			// assert.notStrictEqual(py_factorial, undefined);
-			// assert.strictEqual(py_factorial(5), 120);
-			// assert.strictEqual(py_factorial(5), 120);
+			const py_factorial = py_f.function_chain(py_f.function_factorial);
+			assert.notStrictEqual(py_factorial, undefined);
+			assert.strictEqual(py_factorial(5), 120);
+			assert.strictEqual(py_factorial(5), 120);
 		});
 	});
 });
