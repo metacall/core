@@ -22,22 +22,6 @@ class py_port_test(unittest.TestCase):
 
 		self.assertEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World');
 
-		# Monkey patch
-		import sometestmock
-
-		self.assertEqual(sometestmock.my_empty_func_int(), 1234);
-		self.assertEqual(sometestmock.three_str('a', 'b', 'c'), 'Hello World');
-
-		# Monkey patch without preload and with extension
-		import othertest.mock
-
-		self.assertEqual(othertest.my_empty_func_int(), 1234);
-
-		# # TODO: Monkey patch without preload and without extension (it works but some runtimes like C# Loader explode when trying to load it)
-		# import thismoduledoesnotexist
-
-		# self.assertEqual(thismoduledoesnotexist.my_empty_func_int(), 1234)
-
 	# MetaCall (Python from memory)
 	def test_python_memory(self):
 		script = '#!/usr/bin/env python3\ndef inline_multiply_mem(left, right):\n\treturn left * right\n';
@@ -63,6 +47,16 @@ class py_port_test(unittest.TestCase):
 		self.assertEqual(metacall('say_multiply', 3, 4), 12);
 
 		self.assertEqual(metacall('say_hello', 'world'), 'Hello world!');
+
+	# MetaCall (NodeJS)
+	def test_nodejs(self):
+		from derpyramda.js import add, subtract, flip
+
+		self.assertEqual(add(3, 4), 7.0);
+		self.assertEqual(subtract(5, 4), 1.0);
+		# TODO:
+		self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0);
+		# self.assertEqual(flip(subtract)(5, 4), -1.0);
 
 if __name__ == '__main__':
 	unittest.main()

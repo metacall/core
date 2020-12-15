@@ -3,10 +3,13 @@
 import unittest
 import os
 
-loader = unittest.TestLoader()
-abspath = os.path.dirname(os.path.abspath(__file__));
-path = os.path.normpath(os.path.join(abspath, 'test'));
-suite = loader.discover(path)
+def main():
+	loader = unittest.TestLoader()
+	abspath = os.path.dirname(os.path.abspath(__file__));
+	path = os.path.normpath(os.path.join(abspath, 'test'));
+	suite = loader.discover(path)
 
-runner = unittest.TextTestRunner()
-runner.run(suite)
+	runner = unittest.TextTestRunner()
+	result = runner.run(suite)
+
+	return "Tests passed without errors" if result.errors > 0 or result.failures else "";

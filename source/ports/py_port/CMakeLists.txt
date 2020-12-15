@@ -35,7 +35,7 @@ endif()
 #
 
 # Check if loaders are enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB OR NOT OPTION_BUILD_SCRIPTS_NODE)
 	return()
 endif()
 
@@ -47,13 +47,15 @@ set(py_port_test "${target}_test")
 
 if(WIN32)
 	set(TEST_COMMAND cmd /c)
+	set(GREP_COMMAND findstr)
 else()
 	set(TEST_COMMAND sh -c)
+	set(GREP_COMMAND grep)
 endif()
 
 # Add test (must be run with MetaCall CLI)
 add_test(NAME ${target}
-	COMMAND ${TEST_COMMAND} "echo 'load py ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.py\nexit' | $<TARGET_FILE:metacallcli>"
+	COMMAND ${TEST_COMMAND} "echo 'load py ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.py\ncall main()\nexit' | $<TARGET_FILE:metacallcli> | ${GREP_COMMAND} \"Tests passed without errors\""
 )
 
 #
