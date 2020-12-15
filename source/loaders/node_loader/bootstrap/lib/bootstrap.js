@@ -42,19 +42,36 @@ function node_loader_trampoline_load_from_file_require(p) {
 	/* First try to load the absolute path */
 	try {
 		return require(p);
-	} catch (e) {}
+	} catch (e) {
+		if (e.code !== 'MODULE_NOT_FOUND') {
+			throw e;
+		}
+	}
 
 	/* Then try to load without the path */
 	const basename = path.basename(p);
 
 	try {
 		return require(basename);
-	} catch (e) {}
+	} catch (e) {
+		if (e.code !== 'MODULE_NOT_FOUND') {
+			throw e;
+		}
+	}
 
-	/* Finally try to load without the path and extension */
+	/* Try to load without the path and extension */
 	const { name } = path.parse(basename);
 
-	return require(name);
+	try {
+		return require(name);
+	} catch (e) {
+		if (e.code !== 'MODULE_NOT_FOUND') {
+			throw e;
+		}
+	}
+
+	/* Try to load base path without extension and with node modules */
+	return require(path.join(path.dirname(p), 'node_modules', name));
 }
 
 function node_loader_trampoline_load_from_file(paths) {
