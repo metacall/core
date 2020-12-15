@@ -83,7 +83,7 @@ else()
 endif()
 
 add_test(NAME ${target}
-	COMMAND ${TEST_COMMAND} "echo 'load node ${CMAKE_CURRENT_SOURCE_DIR}/test.js\nawait main()\nexit' | $<TARGET_FILE:metacallcli>"
+	COMMAND ${TEST_COMMAND} "echo 'load node ${CMAKE_CURRENT_SOURCE_DIR}/test.js\nawait main()\nexit' | $<TARGET_FILE:metacallcli> | ${GREP_COMMAND} \"Tests passed without errors\""
 )
 
 #

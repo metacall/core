@@ -52,6 +52,6 @@ module.exports = {
 			}
 		}
 
-		return 0;
+		return 'Tests passed without errors';
 	},
 };
