@@ -74,6 +74,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
     - [6. Build System](#6-build-system)
         - [6.1 Build Options](#61-build-options)
         - [6.2 Coverage](#62-coverage)
+        - [6.3 Debugging](#63-debugging)
     - [7. Platform Support](#7-platform-support)
         - [7.1 Docker Support](#71-docker-support)
         - [7.1.1 Docker Development](#711-docker-development)
@@ -606,6 +607,37 @@ make <target>-gcov
 make <target>-geninfo
 make <target>-genhtml
 ```
+
+### 6.3 Debugging
+
+For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
+
+|         Build Option         | Description                                            | Default Value |
+|:----------------------------:|--------------------------------------------------------|:-------------:|
+|  **OPTION_TEST_MEMORYCHECK** | Enable Valgrind with memcheck tool for the tests.      |      OFF      |
+|  **OPTION_BUILD_SANITIZER**  | Build with AddressSanitizer family (GCC and Clang).    |      OFF      |
+
+Both options are mutually exclusive. Valgrind is not compatible with AddressSanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
+
+For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag and then run:
+
+```sh
+make memcheck
+```
+
+For runing a test (or all) with AddressSanitizer, enable the `OPTION_BUILD_SANITIZER` flag and then run:
+
+```sh
+# Run one test
+make py_loader rb_loader node_loader metacall-node-port-test # Build required dependencies and a test
+ctest -VV -R metacall-node-port-test # Run one test (verbose)
+
+# Run all
+make
+ctest
+```
+
+For running other Valgrind's tools like helgrind or similar, I recommend running them manually. Just run one test with `ctest -VV -R metacall-node-port-test`, copy the environment variables, and configure the flags by yourself.
 
 ## 7. Platform Support
 
