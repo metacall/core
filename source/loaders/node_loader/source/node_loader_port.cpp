@@ -80,8 +80,6 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	for (size_t args_count = 1; args_count < argc; ++args_count)
 	{
 		args[args_count - 1] = node_loader_impl_napi_to_value(node_impl, env, recv, argv[args_count]);
-
-		node_loader_impl_finalizer(env, argv[args_count], args[args_count - 1]);
 	}
 
 	/* Call to the function */
@@ -92,7 +90,12 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	/* Release current reference of the environment */
 	// node_loader_impl_env(node_impl, NULL);
 
-	node_loader_impl_finalizer(env, result, ret);
+	for (size_t args_count = 0; args_count < argc -1; ++args_count)
+	{
+		metacall_value_destroy(args[args_count]);
+	}
+
+	metacall_value_destroy(ret);
 
 	delete[] argv;
 	delete[] args;

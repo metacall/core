@@ -377,6 +377,8 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 } * loader_impl_napi_to_value_callback_closure;
 
 /* Type conversion */
+static void node_loader_impl_napi_to_value_callback_finalizer(value v, void * data);
+
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
 
 /* Function */
@@ -836,6 +838,15 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	return ret;
 }
 
+void node_loader_impl_napi_to_value_callback_finalizer(value v, void * data)
+{
+	loader_impl_napi_to_value_callback_closure closure = static_cast<loader_impl_napi_to_value_callback_closure>(data);
+
+	(void)v;
+
+	delete closure;
+}
+
 napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info)
 {
 	size_t iterator, argc = 0;
@@ -861,23 +872,19 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 
 	void * ret = metacallfv_s(value_to_function(closure->func), args, argc);
 
-	// TODO: Implement finalizer where the closure is allocated
-
-	// IMPORTANT TODO:
-	//value_type_destroy(closure->func);
-
 	napi_value result = node_loader_impl_value_to_napi(closure->node_impl, env, ret);
 
+	/* Set result finalizer */
 	node_loader_impl_finalizer(env, result, ret);
+
+	/* Set closure finalizer */
+	value_finalizer(closure->func, &node_loader_impl_napi_to_value_callback_finalizer, closure);
 
 	/* Reset environment */
 	// closure->node_impl->env = NULL;
 
 	delete[] argv;
 	delete[] args;
-
-	// IMPORTANT TODO:
-	//delete closure;
 
 	return result;
 }
@@ -1042,6 +1049,8 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		status = napi_create_function(env, NULL, 0, node_loader_impl_napi_to_value_callback, closure, &v);
 
 		node_loader_impl_exception(env, status);
+
+		node_loader_impl_finalizer(env, v, closure->func);
 	}
 	else if (id == TYPE_CLASS)
 	{
