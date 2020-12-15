@@ -38,6 +38,25 @@ function node_loader_trampoline_execution_path() {
 	// TODO
 }
 
+function node_loader_trampoline_load_from_file_require(p) {
+	/* First try to load the absolute path */
+	try {
+		return require(p);
+	} catch (e) {}
+
+	/* Then try to load without the path */
+	const basename = path.basename(p);
+
+	try {
+		return require(basename);
+	} catch (e) {}
+
+	/* Finally try to load without the path and extension */
+	const { name } = path.parse(basename);
+
+	return require(name);
+}
+
 function node_loader_trampoline_load_from_file(paths) {
 	if (!Array.isArray(paths)) {
 		throw new Error('Load from file paths must be an array, not ' + typeof paths);
@@ -48,7 +67,7 @@ function node_loader_trampoline_load_from_file(paths) {
 
 		for (let i = 0; i < paths.length; ++i) {
 			const p = paths[i];
-			const m = require(path.resolve(__dirname, p));
+			const m = node_loader_trampoline_load_from_file_require(path.resolve(__dirname, p));
 
 			handle[p] = node_loader_trampoline_module(m);
 		}
