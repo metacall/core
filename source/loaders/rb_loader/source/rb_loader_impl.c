@@ -35,6 +35,7 @@
 #if defined(__GNUC__)
 #	pragma GCC diagnostic push
 #	pragma GCC diagnostic ignored "-Wredundant-decls"
+#	pragma GCC diagnostic ignored "-Wpedantic"
 #endif
 
 #include <ruby.h>
