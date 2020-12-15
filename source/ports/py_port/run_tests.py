@@ -12,4 +12,4 @@ def main():
 	runner = unittest.TextTestRunner()
 	result = runner.run(suite)
 
-	return "Tests passed without errors" if result.errors > 0 or result.failures else "";
+	return 'Tests passed without errors' if result.errors > 0 or result.failures else '';

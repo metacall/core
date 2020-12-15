@@ -49,6 +49,12 @@ TEST_F(metacall_python_port_test, DefaultConstructor)
 		};
 
 		ASSERT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+
+		void * ret = metacallv("main", metacall_null_args);
+
+		// EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Tests passed without errors"));
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 

@@ -68,7 +68,7 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 			static const int promise_rejected = 0;
 			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
-			EXPECT_EQ((int) 1, (int) promise_rejected); // This should never be rejected
+			EXPECT_EQ((int) 1, (int) promise_rejected); // This should never happen
 			await_data->c.notify_one();
 			return NULL;
 		}, static_cast<void *>(&await_data));
