@@ -19,6 +19,7 @@
 
 import os
 import sys
+import json
 
 if sys.platform == 'win32':
 	from metacall.module_win32 import metacall_module_load
@@ -33,13 +34,6 @@ else:
 
 # Load metacall extension depending on the platform
 module = metacall_module_load()
-
-print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-print(module)
-print('@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@')
-sys.stdout.flush();
-exit(0);
 
 # Check if library was found and print error message otherwhise
 if module == None:
