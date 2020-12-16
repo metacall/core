@@ -21,16 +21,13 @@
 #include <metacall/metacall.h>
 
 #include <py_loader/py_loader_impl.h>
+#include <py_loader/py_loader_port.h>
 
 #include <loader/loader.h>
 
 #ifndef PY_LOADER_PORT_NAME
 #	error "The Python Loader Port must be defined"
 #endif
-
-#define PY_LOADER_PORT_NAME_FUNC_IMPL_EXPAND(x) PyInit_ ## x
-#define PY_LOADER_PORT_NAME_FUNC_IMPL(x) PY_LOADER_PORT_NAME_FUNC_IMPL_EXPAND(x)
-#define PY_LOADER_PORT_NAME_FUNC PY_LOADER_PORT_NAME_FUNC_IMPL(PY_LOADER_PORT_NAME)
 
 static PyObject * py_loader_port_none()
 {
@@ -488,21 +485,18 @@ static struct PyModuleDef metacall_definition =
 	NULL
 };
 
-PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void)
+PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC()
 {
-	PyObject * module;
-
-	/* Initialize MetaCall */
-	if (metacall_initialize() != 0)
-	{
-		return NULL;
-	}
-
-	module = PyModule_Create(&metacall_definition);
+	static PyObject * module = NULL;
 
 	if (module == NULL)
 	{
-		return NULL;
+		module = PyModule_Create(&metacall_definition);
+
+		if (module == NULL)
+		{
+			return NULL;
+		}
 	}
 
 	return module;

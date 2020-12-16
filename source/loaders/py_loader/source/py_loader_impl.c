@@ -19,6 +19,7 @@
  */
 
 #include <py_loader/py_loader_impl.h>
+#include <py_loader/py_loader_port.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -1671,6 +1672,15 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 #endif
 
 	if (py_loader_impl_initialize_inspect(impl, py_impl) != 0)
+	{
+		PyGILState_Release(gstate);
+
+		free(py_impl);
+
+		return NULL;
+	}
+
+	if (PY_LOADER_PORT_NAME_FUNC() == NULL)
 	{
 		PyGILState_Release(gstate);
 

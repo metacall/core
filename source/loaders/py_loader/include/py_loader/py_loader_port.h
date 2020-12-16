@@ -18,14 +18,20 @@
  *
  */
 
-#ifndef PY_LOADER_WIN32_TEST_H
-#define PY_LOADER_WIN32_TEST_H 1
+#ifndef PY_LOADER_PORT_H
+#define PY_LOADER_PORT_H 1
+
+#include <Python.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int PrintModules();
+#define PY_LOADER_PORT_NAME_FUNC_IMPL_EXPAND(x) PyInit_ ## x
+#define PY_LOADER_PORT_NAME_FUNC_IMPL(x) PY_LOADER_PORT_NAME_FUNC_IMPL_EXPAND(x)
+#define PY_LOADER_PORT_NAME_FUNC PY_LOADER_PORT_NAME_FUNC_IMPL(PY_LOADER_PORT_NAME)
+
+PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC(void);
 
 #ifdef __cplusplus
 }

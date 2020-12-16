@@ -52,6 +52,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/py_loader.h
 	${include_path}/py_loader_impl.h
+	${include_path}/py_loader_port.h
 )
 
 set(sources
