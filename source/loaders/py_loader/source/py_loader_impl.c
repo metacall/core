@@ -46,6 +46,13 @@ typedef struct loader_impl_py_function_type
 
 } * loader_impl_py_function;
 
+typedef struct loader_impl_py_future_type
+{
+	loader_impl_py py_impl;
+	PyObject *future;
+
+} * loader_impl_py_future;
+
 typedef struct loader_impl_py_class_type
 {
 	PyObject *class;
@@ -83,6 +90,12 @@ struct loader_impl_py_type
 	PyObject *traceback_module;
 	PyObject *traceback_format_exception;
 
+	PyObject *asyncio_module;
+	PyObject *asyncio_isfuture;
+	PyObject *asyncio_iscoroutinefunction;
+	PyObject *asyncio_create_task;
+	PyObject *asyncio_get_event_loop;
+
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	PyObject *gc_module;
 	PyObject *gc_set_debug;
@@ -98,6 +111,17 @@ typedef struct loader_impl_py_function_type_invoke_state_type
 	value callback;
 
 } * loader_impl_py_function_type_invoke_state;
+
+typedef struct loader_impl_py_await_invoke_callback_state_type
+{
+	loader_impl_py py_impl;
+	
+	function_resolve_callback resolve_callback;
+	function_reject_callback reject_callback;
+	void * context;
+
+} * loader_impl_py_await_invoke_callback_state;
+
 
 static void py_loader_impl_error_print(loader_impl_py py_impl);
 
@@ -221,6 +245,44 @@ int function_py_interface_create(function func, function_impl impl)
 }
 
 
+int future_py_interface_create(future f, future_impl impl)
+{
+	(void)f;
+	(void)impl;
+
+	// asyncio.loop.create_future
+
+	return 0;
+}
+
+void future_py_interface_destroy(future f, future_impl impl)
+{
+	loader_impl_py_future py_future = (loader_impl_py_future)impl;
+
+	if (py_future != NULL)
+	{
+		loader_impl_py py_impl = py_future->py_impl;
+		
+		/* TODO */
+
+		(void)f;
+		(void)impl;
+
+		free(py_future);
+	}
+}
+
+future_interface future_py_singleton()
+{
+	static struct future_interface_type py_future_interface =
+	{
+		&future_py_interface_create,
+		&future_py_interface_destroy
+	};
+
+	return &py_future_interface;
+}
+
 int py_object_interface_create(object obj, object_impl impl)
 {
 	(void)obj;
@@ -246,7 +308,7 @@ value py_object_interface_get(object obj, object_impl impl, const char * key)
 	PyObject * generic_attr = PyObject_GenericGetAttr(pyobject_object, key_py_str);
 	Py_DECREF(key_py_str);
 
-	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(generic_attr));
+	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_object->impl, generic_attr));
 }
 
 int py_object_interface_set(object obj, object_impl impl, const char * key, value v)
@@ -308,7 +370,7 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 		return NULL;
 	}
 	
-	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(python_object));		
+	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(obj_impl->impl, python_object));		
 }
 
 value py_object_interface_method_await(object obj, object_impl impl, const char * key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void * ctx)
@@ -438,7 +500,7 @@ value py_class_interface_static_get(klass cls, class_impl impl, const char * key
 	PyObject * generic_attr = PyObject_GenericGetAttr(pyobject_class, key_py_str);
 	Py_DECREF(key_py_str);
 
-	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(generic_attr));
+	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_class->impl, generic_attr));
 }
 
 int py_class_interface_static_set(klass cls, class_impl impl, const char * key, value v)
@@ -503,7 +565,7 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char * 
 		return NULL;
 	}
 	
-	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(python_object));	
+	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(cls_impl->impl, python_object));	
 }
 
 value py_class_interface_static_await(klass cls, class_impl impl, const char * key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void * ctx)
@@ -552,8 +614,10 @@ class_interface py_class_interface_singleton(void)
 	return &py_class_interface;
 }
 
-type_id py_loader_impl_capi_to_value_type(PyObject *obj)
+type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 {
+	loader_impl_py py_impl = loader_impl_get(impl);
+
 	if (PyBool_Check(obj))
 	{
 		return TYPE_BOOL;
@@ -608,9 +672,14 @@ type_id py_loader_impl_capi_to_value_type(PyObject *obj)
 	{
 		return TYPE_NULL;
 	}
+	else if (PyObject_CallFunctionObjArgs(py_impl->asyncio_isfuture, obj, NULL))
+	{
+		return TYPE_FUTURE;
+	}
 	else if (PyObject_IsSubclass(obj, (PyObject *)&PyBaseObject_Type) != 0)
 	{
 		/* TODO: This is based on trial and error and is not correct, but hey, it works! (for now) */
+		/* TODO: Better to use inspect.isclass(obj) using py_impl->inspect_module */
 
 		/* PyObject_IsSubclass: if the class derived is identical to or derived from PyBaseObject_Type returns 1 */
 		/* in case of an error, returns -1 */
@@ -730,7 +799,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 			PyObject *element = PyList_GetItem(obj, iterator);
 
 			/* TODO: Review recursion overflow */
-			array_value[iterator] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
+			array_value[iterator] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(impl, element));
 		}
 	}
 	else if (id == TYPE_MAP)
@@ -808,7 +877,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 				array_value[0] = value_create_string(key_str, (size_t)key_length);
 
 				/* TODO: Review recursion overflow */
-				array_value[1] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
+				array_value[1] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(impl, element));
 
 				++key_iterator;
 			}
@@ -889,6 +958,29 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		v = value_create_null();
 	}
+	else if (id == TYPE_FUTURE)
+	{
+		
+		loader_impl_py_future py_future = malloc(sizeof(struct loader_impl_py_future_type));
+
+		future f;
+
+		if (py_future == NULL)
+		{
+			return NULL;
+		}
+
+		f = future_create(py_future, &future_py_singleton);
+
+		if (f == NULL)
+		{
+			free(py_future);
+
+			return NULL;
+		}
+
+		v = value_create_future(f);
+	}
 	else if (id == TYPE_CLASS)
 	{
 		loader_impl_py_class py_cls = malloc(sizeof(struct loader_impl_py_class_type));
@@ -919,7 +1011,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		Py_INCREF(object_class);
 
 		/* TODO: Will capi_to_value recognize and be able to parse a PyTypeObject ? */
-		value obj_cls = py_loader_impl_capi_to_value(impl, (PyObject*)object_class, py_loader_impl_capi_to_value_type((PyObject*)object_class));
+		value obj_cls = py_loader_impl_capi_to_value(impl, (PyObject*)object_class, py_loader_impl_capi_to_value_type(impl, (PyObject*)object_class));
 
 		/* Not using class_new() here because the object is already instantiated in the runtime */
 		/* So we must avoid calling it's constructor again */
@@ -1218,7 +1310,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 		if (ret_type == NULL)
 		{
-			id = py_loader_impl_capi_to_value_type(result);
+			id = py_loader_impl_capi_to_value_type(impl, result);
 		}
 		else
 		{
@@ -1239,17 +1331,211 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	return NULL;
 }
 
+PyObject * task_callback_handler_impl(PyObject * self, PyObject * pyfuture)
+{
+	/* self will always be NULL */
+	(void)self;
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "pyfuture <%x>", pyfuture);
+	
+
+	PyObject * capsule = PyObject_GetAttrString(pyfuture, "__metacall__capsule");
+	if(capsule == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid python capsule");
+		Py_RETURN_NONE;
+	}
+
+	loader_impl_py_await_invoke_callback_state callback_state = PyCapsule_GetPointer(capsule, NULL);
+	Py_DECREF(capsule);
+
+	/* pyfuture should never raise InvalidStateError exception here */
+	/* because this is a callback set in Future.add_done_callback */
+
+	PyObject *result_str = PyUnicode_FromString("result");
+	PyObject *result = PyObject_CallMethodObjArgs(pyfuture, result_str, NULL);
+	Py_DECREF(result_str);
+
+	type_id id = py_loader_impl_capi_to_value_type((loader_impl)callback_state->py_impl, result);
+	value v = py_loader_impl_capi_to_value((loader_impl)callback_state->py_impl, result, id);
+
+	Py_DECREF(result);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(callback_state->py_impl);
+
+		/* Handle CancelledError or any exceptions raised by the user or propagate them up?? */
+
+		callback_state->reject_callback(v, callback_state->context);
+	}
+	else
+	{
+		value ret = callback_state->resolve_callback(v, callback_state->context);
+
+		// value_to_capi(ret)
+		/* ^^ TODO: Take this return value and convert to PyObject and return it from THIS function */
+	}
+	
+	free(callback_state);
+
+	Py_RETURN_NONE;
+}
+
 function_return function_py_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
-	/* TODO */
+	loader_impl_py_function py_func = (loader_impl_py_function)impl;
+	signature s = function_signature(func);
+	const size_t args_size = size;
+	const size_t signature_args_size = signature_count(s);
+	type ret_type = signature_get_return(s);
+	PyObject *pytask = NULL;
+	size_t args_count;
+	loader_impl_py py_impl = loader_impl_get(py_func->impl);
+	PyGILState_STATE gstate = PyGILState_Ensure();
+	PyObject *tuple_args;
+	
+	/* Allocate dynamically more space for values in case of variable arguments */
+	void **values = args_size > signature_args_size ? malloc(sizeof(void *) * args_size) : py_func->values;
 
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)context;
+	tuple_args = PyTuple_New(args_size);
+
+	for (args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = args_count < signature_args_size ? signature_get_type(s, args_count) : NULL;
+
+		type_id id = TYPE_INVALID;
+
+		if (t == NULL)
+		{
+			id = value_type_id((value)args[args_count]);
+		}
+		else
+		{
+			id = type_index(t);
+		}
+
+		values[args_count] = py_loader_impl_value_to_capi(py_func->impl, id, args[args_count]);
+
+		if (values[args_count] != NULL)
+		{
+			PyTuple_SetItem(tuple_args, args_count, values[args_count]);
+		}
+	}
+
+	PyObject *coroutine = PyObject_CallObject(py_func->func, tuple_args);
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		PyGILState_Release(gstate);
+		return NULL;
+	}
+
+	/* TODO. should call  https://docs.python.org/3.6/library/asyncio-eventloop.html#asyncio.AbstractEventLoop.close ??*/
+	PyObject *loop = PyObject_CallFunctionObjArgs(py_impl->asyncio_get_event_loop, NULL);
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		PyGILState_Release(gstate);
+		return NULL;
+	}
+
+	pytask = PyObject_CallFunctionObjArgs(py_impl->asyncio_create_task, coroutine, loop, NULL);
+
+	loader_impl_py_await_invoke_callback_state callback_state = malloc(sizeof(struct loader_impl_py_await_invoke_callback_state_type));
+	callback_state->resolve_callback = resolve_callback;
+	callback_state->reject_callback = reject_callback;
+	callback_state->py_impl = py_impl;
+	callback_state->context = context;
+
+	/* Use this new Task member attribute to handle the callback pointers to the python task callback */
+	PyObject * callback_status = PyCapsule_New(callback_state, NULL, NULL);
+	if (callback_status != NULL && PyObject_SetAttrString(pytask, "__metacall__capsule", callback_status))
+	{
+		PyGILState_Release(gstate);
+		return NULL;
+	}
+
+	/* Wrap the C callback around a PyObject so that the interpreter knows how to call back as if it was python code */
+	PyMethodDef py_task_callback_handler_def = {
+		"metacall_task_callback_handler", 
+		task_callback_handler_impl, 
+		METH_O, 
+		"MetaCall async invoke callback"};
+	PyObject *py_task_callback_handler = PyCFunction_NewEx(&py_task_callback_handler_def, NULL, NULL);
+
+	/* When the future is done, automatically call the callback */
+	PyObject *add_done_callback_str = PyUnicode_FromString("add_done_callback");
+	PyObject_CallMethodObjArgs(pytask, add_done_callback_str, py_task_callback_handler, NULL);
+	Py_DECREF(add_done_callback_str);
+	
+	// TODO: ? Py_DECREF(py_task_callback_handler);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		PyGILState_Release(gstate);
+		return NULL;
+	}
+
+	PyObject *run_forever_str = PyUnicode_FromString("run_forever");
+	PyObject_CallMethodObjArgs(loop, run_forever_str, NULL);
+	Py_DECREF(run_forever_str);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		PyGILState_Release(gstate);
+		return NULL;
+	}
+
+	/* Loop will stop after an iteration. Perhaps this is not correct and something like asyncio.run_until_complete */
+	/* should be used instead although removing the last line of that function which calls to future.result() */
+	PyObject *stop_str = PyUnicode_FromString("stop");
+	PyObject_CallMethodObjArgs(loop, stop_str, NULL);
+	Py_DECREF(stop_str);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		PyGILState_Release(gstate);
+		return NULL;
+	}
+
+
+	Py_DECREF(tuple_args);
+
+	/* Variable arguments */
+	if (args_size > signature_args_size)
+	{
+		free(values);
+	}
+
+	if (pytask != NULL)
+	{
+		value v = NULL;
+
+		type_id id = TYPE_INVALID;
+
+		if (ret_type == NULL)
+		{
+			id = py_loader_impl_capi_to_value_type((loader_impl)py_impl, pytask);
+		}
+		else
+		{
+			id = type_index(ret_type);
+		}
+
+		v = py_loader_impl_capi_to_value(py_func->impl, pytask, id);
+
+		Py_DECREF(pytask);
+
+		PyGILState_Release(gstate);
+
+		return v;
+	}
+
+	PyGILState_Release(gstate);
 
 	return NULL;
 }
@@ -1347,7 +1633,7 @@ PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args)
 	{
 		PyObject *arg = PyTuple_GetItem(args, (Py_ssize_t)args_count);
 
-		type_id id = py_loader_impl_capi_to_value_type(arg);
+		type_id id = py_loader_impl_capi_to_value_type(invoke_state->impl, arg);
 
 		value_args[args_count] = py_loader_impl_capi_to_value(invoke_state->impl, arg, id);
 	}
@@ -1526,6 +1812,70 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 	return 1;
 }
 
+int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py_impl)
+{
+	(void)impl;
+
+	PyObject *module_name = PyUnicode_DecodeFSDefault("asyncio");
+
+	py_impl->asyncio_module = PyImport_Import(module_name);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+
+		Py_DECREF(module_name);
+
+		return 1;
+	}
+
+	if (py_impl->asyncio_module != NULL)
+	{
+		py_impl->asyncio_isfuture = PyObject_GetAttrString(py_impl->asyncio_module, "isfuture");
+
+		if (py_impl->asyncio_isfuture == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.isfuture(obj)");
+			return 1;
+		}
+
+		py_impl->asyncio_iscoroutinefunction = PyObject_GetAttrString(py_impl->asyncio_module, "iscoroutinefunction");
+
+		if (py_impl->asyncio_iscoroutinefunction == NULL)
+		{
+			Py_DECREF(py_impl->asyncio_isfuture);
+			log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.iscoroutinefunction(func)");
+			return 1;
+		}
+
+		py_impl->asyncio_create_task = PyObject_GetAttrString(py_impl->asyncio_module, "run_coroutine_threadsafe");
+
+		if (py_impl->asyncio_create_task == NULL)
+		{
+			Py_DECREF(py_impl->asyncio_isfuture);
+			Py_DECREF(py_impl->asyncio_iscoroutinefunction);
+			log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.run_coroutine_threadsafe(coro, loop)");
+			return 1;
+		}
+	
+		py_impl->asyncio_get_event_loop = PyObject_GetAttrString(py_impl->asyncio_module, "get_event_loop");
+
+		if (py_impl->asyncio_get_event_loop == NULL)
+		{
+			Py_DECREF(py_impl->asyncio_isfuture);
+			Py_DECREF(py_impl->asyncio_iscoroutinefunction);
+			Py_DECREF(py_impl->asyncio_create_task);
+			log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.get_event_loop()");
+			return 1;
+		}	
+	}
+
+	Py_DECREF(module_name);
+
+	return 0;
+}
+
+
 int py_loader_impl_initialize_traceback(loader_impl impl, loader_impl_py py_impl)
 {
 	PyObject *module_name = PyUnicode_DecodeFSDefault("traceback");
@@ -1680,6 +2030,15 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		return NULL;
 	}
 
+	if (py_loader_impl_initialize_asyncio_module(impl, py_impl) != 0)
+		{
+		PyGILState_Release(gstate);
+
+		free(py_impl);
+
+		return NULL;
+	}
+	
 	if (PY_LOADER_PORT_NAME_FUNC() == NULL)
 	{
 		PyGILState_Release(gstate);
@@ -2079,6 +2438,15 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 			}
 		}
 
+		if (PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
+		{
+			function_async(f, FUNCTION_ASYNC);
+		}
+		else
+		{
+			function_async(f, FUNCTION_SYNC);
+		}	
+
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation));
 
 		return 0;
@@ -2130,12 +2498,12 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 			if (!PyUnicode_CompareWithASCIIString(tuple_key, "__dict__") || !PyUnicode_CompareWithASCIIString(tuple_key, "__weakref__"))
 				continue;
 
-			// value key = py_loader_impl_capi_to_value(impl, tuple_key, py_loader_impl_capi_to_value_type(tuple_key));
-			// value val = py_loader_impl_capi_to_value(impl, tuple_val, py_loader_impl_capi_to_value_type(tuple_val));
+			// value key = py_loader_impl_capi_to_value(impl, tuple_key, py_loader_impl_capi_to_value_type(impl, tuple_key));
+			// value val = py_loader_impl_capi_to_value(impl, tuple_val, py_loader_impl_capi_to_value_type(impl, tuple_val));
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s",
 					  PyUnicode_AsUTF8(tuple_key),
-					  type_id_name(py_loader_impl_capi_to_value_type(tuple_val)));
+					  type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)));
 		}
 	}
 
@@ -2152,12 +2520,12 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 
 		while (PyDict_Next(PyObject_GetAttrString(obj, "__dict__"), &pos, &dict_key, &dict_val))
 		{
-			value attribute_key = py_loader_impl_capi_to_value(impl, dict_key, py_loader_impl_capi_to_value_type(dict_key));
-			value attribute_val = py_loader_impl_capi_to_value(impl, dict_val, py_loader_impl_capi_to_value_type(dict_val));
+			value attribute_key = py_loader_impl_capi_to_value(impl, dict_key, py_loader_impl_capi_to_value_type(impl, dict_key));
+			value attribute_val = py_loader_impl_capi_to_value(impl, dict_val, py_loader_impl_capi_to_value_type(impl, dict_val));
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover object member %s, type %s",
 					  PyUnicode_AsUTF8(dict_key),
-					  type_id_name(py_loader_impl_capi_to_value_type(dict_val)));
+					  type_id_name(py_loader_impl_capi_to_value_type(impl, dict_val)));
 			
 		}
 	}
@@ -2414,6 +2782,12 @@ int py_loader_impl_destroy(loader_impl impl)
 		Py_DECREF(py_impl->inspect_module);
 
 		Py_DECREF(py_impl->builtins_module);
+
+		Py_DECREF(py_impl->asyncio_module);
+		Py_DECREF(py_impl->asyncio_isfuture);
+		Py_DECREF(py_impl->asyncio_iscoroutinefunction);
+		Py_DECREF(py_impl->asyncio_create_task);
+		Py_DECREF(py_impl->asyncio_get_event_loop);
 
 		Py_DECREF(py_impl->traceback_format_exception);
 

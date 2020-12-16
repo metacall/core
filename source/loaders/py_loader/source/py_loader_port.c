@@ -355,7 +355,7 @@ static PyObject * py_loader_port_invoke(PyObject * self, PyObject * var_args)
 		{
 			PyObject * element = PyTuple_GetItem(var_args, args_count + 1);
 
-			value_args[args_count] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(element));
+			value_args[args_count] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(impl, element));
 		}
 	}
 

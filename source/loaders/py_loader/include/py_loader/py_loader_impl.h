@@ -52,7 +52,7 @@ PY_LOADER_API int py_loader_impl_discover(loader_impl impl, loader_handle handle
 
 PY_LOADER_API int py_loader_impl_destroy(loader_impl impl);
 
-PY_LOADER_NO_EXPORT type_id py_loader_impl_capi_to_value_type(PyObject * obj);
+PY_LOADER_NO_EXPORT type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject * obj);
 
 PY_LOADER_NO_EXPORT value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id);
 
