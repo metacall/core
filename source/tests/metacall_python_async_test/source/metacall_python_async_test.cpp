@@ -44,6 +44,9 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 		/* TODO: Create another test using Curio library? */
 		const char buffer[] =
 			"import asyncio\n"
+
+			"print('sync message')\n"
+
 			"async def my_sleep(n):\n"
  		  	"\tloop = asyncio.get_event_loop()\n"
     		"\tfuture = loop.create_future()\n"
@@ -51,6 +54,16 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 			"\tprint('before awaiting')\n"
    			"\tawait future\n"
 			"\tprint('after awaiting')\n"
+			"\treturn 'goodbye'\n"
+
+			"async def my_sleep_reject(n):\n"
+ 		  	"\tloop = asyncio.get_event_loop()\n"
+    		"\tfuture = loop.create_future()\n"
+    		"\tloop.call_later(n, future.set_result, None)\n"
+			"\tprint('before awaiting reject')\n"
+   			"\tawait future\n"
+			"\tprint('after awaiting reject')\n"
+			"\tfuture.cancel()\n"
 			"\treturn 'goodbye'\n";
 			
 		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
@@ -70,15 +83,13 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 
 		/* Test resolve */
 		void * future = metacall_await("my_sleep", args, [](void * result, void * data) -> void * {	
-			printf("Resolve C Callbackasdasdasd\n");
+			printf("Got into C callback at least\n");
 			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
-			//std::unique_lock<std::mutex> lock(await_data->m);
+			std::unique_lock<std::mutex> lock(await_data->m);
 
 			EXPECT_NE((void *) NULL, (void *) result);
 
 			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_STRING);
-
-			//EXPECT_EQ((long) 10, (long) metacall_value_to_long(result));
 
 			printf("Resolve C Callback\n");
 
@@ -100,47 +111,51 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 			return NULL;
 		}, static_cast<void *>(&await_data));
 
-		await_data.c.wait(lock);
-
 		EXPECT_NE((void *) NULL, (void *) future);
 
 		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
-		metacall_value_destroy(future);
-#if 0
-		/* Test reject */
-		future = metacall_await("my_sleep_reject", args, [](void *, void *) -> void * {
-			int this_should_never_be_executed = 0;
+		await_data.c.wait(lock);
 
-			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+		metacall_value_destroy(future);
+
+		/* Test reject */
+		future = metacall_await("my_sleep_reject", args, [](void * result, void * data) -> void * {	
+			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
+			std::unique_lock<std::mutex> lock(await_data->m);
+			
+			(void)result;
+
+			/* If we reach here, there's a serious bug in the C code that is called by python after the task is done */
+			int never_executed = 0;
+			EXPECT_EQ((int) 1, (int) never_executed);
 
 			printf("Resolve C Callback\n");
 
+			await_data->c.notify_one();
+
 			return NULL;
-		}, [](void * result, void * data) -> void * {
-			EXPECT_NE((void *) NULL, (void *) result);
-
-			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_LONG);
-
-			EXPECT_EQ((long) 10, (long) metacall_value_to_long(result));
-
-			EXPECT_NE((void *) NULL, (void *) data);
-
-			struct async_context * ctx = static_cast<struct async_context *>(data);
-
-			EXPECT_EQ((int) 234, (int) ctx->value);
-
+		}, [](void *, void * data) -> void * {
+			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
+			std::unique_lock<std::mutex> lock(await_data->m);
+			
 			printf("Reject C Callback\n");
 
-			return metacall_value_create_double(15.0);
-		}, static_cast<void *>(&ctx));
+			await_data->c.notify_one();
+
+			return NULL;
+		}, static_cast<void *>(&await_data));
+
 
 		EXPECT_NE((void *) NULL, (void *) future);
 
 		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
 
+		await_data.c.wait(lock);
+
 		metacall_value_destroy(future);
-#endif
+
+
 		metacall_value_destroy(args[0]);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
