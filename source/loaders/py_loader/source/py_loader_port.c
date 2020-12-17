@@ -490,11 +490,6 @@ PyMODINIT_FUNC PY_LOADER_PORT_NAME_FUNC()
 	if (module == NULL)
 	{
 		module = PyModule_Create(&metacall_definition);
-
-		if (module == NULL)
-		{
-			return NULL;
-		}
 	}
 
 	return module;
