@@ -175,7 +175,6 @@ static PyObject * py_loader_port_load_from_file(PyObject * self, PyObject * args
 
 		if (ret != 0)
 		{
-			PyErr_SetString(PyExc_ValueError, "MetaCall could not load from file");
 			result = py_loader_port_false();
 			goto clear;
 		}
@@ -280,7 +279,6 @@ static PyObject * py_loader_port_load_from_memory(PyObject * self, PyObject * ar
 
 		if (ret != 0)
 		{
-			PyErr_SetString(PyExc_ValueError, "MetaCall could not load from memory");
 			return py_loader_port_false();
 		}
 	}

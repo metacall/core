@@ -1752,11 +1752,11 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 {
 	size_t iterator;
 
-	/* PyGILState_STATE gstate; */
+	PyGILState_STATE gstate;
 
 	PyObject *system_modules;
 
-	/* gstate = PyGILState_Ensure(); */
+	gstate = PyGILState_Ensure();
 
 	system_modules = PySys_GetObject("modules");
 
@@ -1773,7 +1773,7 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 		Py_XDECREF(py_handle->modules[iterator].name);
 	}
 
-	/* PyGILState_Release(gstate); */
+	PyGILState_Release(gstate);
 
 	free(py_handle->modules);
 
