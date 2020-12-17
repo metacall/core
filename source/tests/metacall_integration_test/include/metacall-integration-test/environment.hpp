@@ -20,8 +20,6 @@
 
 #include <gmock/gmock.h>
 
-#include <loader/loader.h>
-
 class environment : public  testing::Environment
 {
 public:

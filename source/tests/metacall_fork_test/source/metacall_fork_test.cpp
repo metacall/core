@@ -10,7 +10,7 @@
 
 #include <metacall/metacall.h>
 
-#include <log/log.h>
+#include <iostream>
 
 class metacall_fork_test : public testing::Test
 {
@@ -126,7 +126,7 @@ int pre_callback_test(void * ctx)
 {
 	(void)ctx;
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall pre fork callback test");
+	std::cout << "MetaCall pre fork callback test" << std::endl;
 
 	pre_callback_fired = 1;
 
@@ -137,7 +137,7 @@ int post_callback_test(metacall_pid pid, void * ctx)
 {
 	(void)ctx;
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall post fork callback test %d", (int)pid);
+	std::cout << "MetaCall post fork callback test " << (int)pid << std::endl;
 
 	post_callback_fired = 1;
 
@@ -156,11 +156,11 @@ TEST_F(metacall_fork_test, DefaultConstructor)
 
 	if (fork() == 0)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork child");
+		std::cout << "MetaCall fork child"<< std::endl;
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork parent");
+		std::cout << "MetaCall fork parent"<< std::endl;
 	}
 
 	EXPECT_EQ((int) 1, (int) pre_callback_fired);

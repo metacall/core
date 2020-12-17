@@ -20,9 +20,7 @@
 
 #include <gmock/gmock.h>
 
-#include <loader/loader.h>
-
-class environment : public  testing::Environment
+class environment : public testing::Environment
 {
 public:
 	void SetUp();

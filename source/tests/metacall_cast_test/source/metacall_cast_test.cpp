@@ -23,11 +23,6 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-#include <reflect/reflect_value_type.h>
-#include <reflect/reflect_value_type_cast.h>
-
-#include <log/log.h>
-
 class metacall_cast_test : public testing::Test
 {
 public:
@@ -35,13 +30,11 @@ public:
 
 TEST_F(metacall_cast_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
-
 	metacall_print_info();
+
+	metacall_log_stdio_type log_stdio = { stdout };
+
+	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
@@ -57,68 +50,60 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		int iterator;
 
-		value ret = NULL;
+		void * ret = NULL;
 
-		value args[2];
+		void * args[2];
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		args[0] = value_create_int(5);
-		args[1] = value_create_int(15);
+		args[0] = metacall_value_create_long(5L);
+		args[1] = metacall_value_create_long(15L);
 
 		ret = metacallv("multiply", args);
 
-		EXPECT_EQ((int) 75, (int) value_to_int(ret));
+		EXPECT_EQ((int) 75L, (int) metacall_value_to_long(ret));
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "7's multiples dude!");
-
-		args[0] = value_from_int(args[0], 7);
+		args[0] = metacall_value_from_int(args[0], 7);
 
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
 		{
-			args[1] = value_from_int(args[1], iterator);
+			args[1] = metacall_value_from_int(args[1], iterator);
 
 			ret = metacallv("multiply", args);
 
-			EXPECT_NE((value) NULL, (value) ret);
+			EXPECT_NE((void *) NULL, (void *) ret);
 
-			ret = value_type_cast(ret, TYPE_INT);
+			EXPECT_EQ((int) (7 * iterator), (int) metacall_value_cast_int(&ret));
 
-			EXPECT_EQ((int) (7 * iterator), (int) value_to_int(ret));
-
-			value_destroy(ret);
+			metacall_value_destroy(ret);
 		}
 
-		args[0] = value_from_float(value_type_cast(args[0], TYPE_FLOAT), 64.0f);
-		args[1] = value_from_float(value_type_cast(args[1], TYPE_FLOAT), 2.0f);
+		args[0] = metacall_value_from_float(metacall_value_cast(args[0], METACALL_FLOAT), 64.0f);
+		args[1] = metacall_value_from_float(metacall_value_cast(args[1], METACALL_FLOAT), 2.0f);
 
 		ret = metacallv("divide", args);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		ret = value_type_cast(ret, TYPE_FLOAT);
+		EXPECT_EQ((float) 32.0f, (float) metacall_value_cast_float(&ret));
 
-		EXPECT_EQ((float) 32.0f, (float) value_to_float(ret));
+		metacall_value_destroy(ret);
 
-		value_destroy(ret);
-
-		args[0] = value_from_int(value_type_cast(args[0], TYPE_INT), 1000);
-		args[1] = value_from_int(value_type_cast(args[1], TYPE_INT), 3500);
+		args[0] = metacall_value_from_int(metacall_value_cast(args[0], METACALL_INT), 1000);
+		args[1] = metacall_value_from_int(metacall_value_cast(args[1], METACALL_INT), 3500);
 
 		ret = metacallv("sum", args);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		ret = value_type_cast(ret, TYPE_INT);
+		EXPECT_EQ((int) 4500, (int) metacall_value_cast_int(&ret));
 
-		EXPECT_EQ((int) 4500, (int) value_to_int(ret));
+		metacall_value_destroy(ret);
 
-		value_destroy(ret);
-
-		value_destroy(args[0]);
-		value_destroy(args[1]);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 

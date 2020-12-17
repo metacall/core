@@ -86,7 +86,7 @@ value value_type_cast(value v, type_id id)
 			return NULL;
 		}
 
-		value_destroy(v);
+		value_type_destroy(v);
 
 		return dest;
 	}
@@ -101,7 +101,7 @@ value value_type_cast(value v, type_id id)
 			return NULL;
 		}
 
-		value_destroy(v);
+		value_type_destroy(v);
 
 		return dest;
 	}
@@ -120,7 +120,7 @@ value value_type_cast(value v, type_id id)
 			return NULL;
 		}
 
-		value_destroy(v);
+		value_type_destroy(v);
 
 		return dest;
 	}
@@ -151,7 +151,7 @@ value value_type_cast(value v, type_id id)
 			dest = cast;
 		}
 
-		value_destroy(v);
+		value_type_destroy(v);
 
 		return dest;
 	}
@@ -195,7 +195,7 @@ value value_type_cast(value v, type_id id)
 
 				if (dest != NULL)
 				{
-					value_destroy(v);
+					value_type_destroy(v);
 				}
 			}
 
@@ -267,7 +267,7 @@ value value_type_cast(value v, type_id id)
 
 				if (dest != NULL)
 				{
-					value_destroy(v);
+					value_type_destroy(v);
 				}
 			}
 

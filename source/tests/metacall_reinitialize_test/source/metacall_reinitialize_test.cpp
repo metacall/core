@@ -44,7 +44,7 @@ TEST_F(metacall_reinitialize_test, DefaultConstructor)
 
 	const size_t initialize_count = 10;
 
-	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
 	for (size_t iterator = 0; iterator < initialize_count; ++iterator)
 	{

@@ -23,10 +23,6 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-#include <memory/memory.h>
-
-#include <log/log.h>
-
 class metacall_load_configuration_test : public testing::Test
 {
 public:
@@ -38,9 +34,11 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
-	memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	ASSERT_NE((memory_allocator) NULL, (memory_allocator) allocator);
+	void * config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	ASSERT_NE((void *) NULL, (void *) config_allocator);
 
 	/* Python */
 	#if defined(OPTION_BUILD_LOADERS_PY)
@@ -51,7 +49,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_a.json", NULL, allocator));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_a.json", NULL, config_allocator));
 
 		ret = metacall("multiply", 5, 15);
 
@@ -114,7 +112,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_b.json", NULL, allocator));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_b.json", NULL, config_allocator));
 
 		/* Print inspect information */
 		{
@@ -205,7 +203,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 	{
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL, allocator));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL, config_allocator));
 
 		ret = metacall("say_multiply", 5, 7);
 
@@ -243,7 +241,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_node_test.json", NULL, allocator));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_node_test.json", NULL, config_allocator));
 
 		ret = metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
 
@@ -255,7 +253,7 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 
-	memory_allocator_destroy(allocator);
+	metacall_allocator_destroy(config_allocator);
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }

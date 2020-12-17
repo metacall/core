@@ -407,6 +407,11 @@ void * metacall_value_from_object(void * v, void * o)
 	return value_from_object(v, o);
 }
 
+void * metacall_value_cast(void * v, enum metacall_value_id id)
+{
+	return (void *)value_type_cast(v, (type_id)id);
+}
+
 boolean metacall_value_cast_bool(void ** v)
 {
 	if (value_type_id(*v) != TYPE_BOOL)

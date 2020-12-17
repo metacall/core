@@ -20,13 +20,7 @@
 
 #include <gmock/gmock.h>
 
-#include <loader/loader.h>
-
 #include <metacall/metacall.h>
-
-#include <reflect/reflect_value_type.h>
-
-#include <log/log.h>
 
 class metacall_integration_test : public testing::Test
 {
@@ -45,29 +39,26 @@ TEST_F(metacall_integration_test, CsSayAny)
 
 TEST_F(metacall_integration_test, PyMultiply)
 {
-	value ret = NULL;
+	void * ret = NULL;
 
 	ret = metacall("multiply", 5, 15);
 
-	EXPECT_NE((value)NULL, (value)ret);
+	EXPECT_NE((void *) NULL, (void *) ret);
 
-	EXPECT_EQ((long)value_to_long(ret), (long)75);
+	EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75L);
 
-	value_destroy(ret);
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "7's multiples dude!");
-
+	metacall_value_destroy(ret);
 }
 
 TEST_F(metacall_integration_test, Sum)
 {
-	value ret = NULL;
+	void * ret = NULL;
 
 	ret = metacall("Sum", 5, 10);
 
-	EXPECT_NE((value)NULL, (value)ret);
+	EXPECT_NE((void *) NULL, (void *) ret);
 
-	EXPECT_EQ((int)value_to_long(ret), (int)15);
+	EXPECT_EQ((int) metacall_value_to_int(ret), (int) 15);
 
-	value_destroy(ret);
+	metacall_value_destroy(ret);
 }

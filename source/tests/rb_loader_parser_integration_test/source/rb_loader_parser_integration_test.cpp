@@ -24,8 +24,6 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-#include <log/log.h>
-
 class rb_loader_parser_integration_test : public testing::Test
 {
 public:

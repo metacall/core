@@ -23,9 +23,6 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-
-#include <log/log.h>
-
 class metacall_python_class_test : public testing::Test
 {
 public:

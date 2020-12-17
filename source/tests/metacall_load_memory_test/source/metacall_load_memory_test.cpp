@@ -23,10 +23,6 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-#include <reflect/reflect_value_type.h>
-
-#include <log/log.h>
-
 class metacall_load_memory_test : public testing::Test
 {
 public:
@@ -34,13 +30,11 @@ public:
 
 TEST_F(metacall_load_memory_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
-
 	metacall_print_info();
+
+	metacall_log_stdio_type log_stdio = { stdout };
+
+	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
 	/* Python */
 	#if defined(OPTION_BUILD_LOADERS_PY)
@@ -60,27 +54,25 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		ret = metacall("multmem", 5, 15);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((long) value_to_long(ret), (long) 75);
+		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
 
-		value_destroy(ret);
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "5's multiples dude!");
+		metacall_value_destroy(ret);
 
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
 		{
 			ret = metacall("multmem", 5, iterator);
 
-			EXPECT_NE((value) NULL, (value) ret);
+			EXPECT_NE((void *) NULL, (void *) ret);
 
-			EXPECT_EQ((long) value_to_long(ret), (long) (5 * iterator));
+			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (5 * iterator));
 
-			value_destroy(ret);
+			metacall_value_destroy(ret);
 		}
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
@@ -110,23 +102,23 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		ret = metacall("mem_multiply", 5, 5);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((int) value_to_int(ret), (int) 25);
+		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 25);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("comment_line", 15);
 
-		EXPECT_EQ((value) NULL, (value) ret);
+		EXPECT_EQ((void *) NULL, (void *) ret);
 
 		ret = metacall("comment_multi_line", 25);
 
-		EXPECT_EQ((value) NULL, (value) ret);
+		EXPECT_EQ((void *) NULL, (void *) ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_RB */
 
@@ -147,19 +139,19 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
 
-		value ret = NULL;
+		void * ret = NULL;
 
 		ret = metacall("mem_divide", 10.0, 5.0);
 
-		EXPECT_NE((value) NULL, (value) ret);
+		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) value_to_double(ret), (double) 2.0);
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 2.0);
 
-		value_destroy(ret);
+		metacall_value_destroy(ret);
 
 		ret = metacall("mem_comment", 10.0);
 
-		EXPECT_EQ((value) NULL, (value) ret);
+		EXPECT_EQ((void *) NULL, (void *) ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_JS */
 

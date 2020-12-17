@@ -828,6 +828,21 @@ METACALL_API void * metacall_value_from_object(void * v, void * o);
 
 /**
 *  @brief
+*    Casts a value to a new type @id
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] id
+*    New type id of value to be casted
+*
+*  @return
+*    Casted value or reference to @v if casting is between equivalent types
+*/
+METACALL_API void * metacall_value_cast(void * v, enum metacall_value_id id);
+
+/**
+*  @brief
 *    Convert value @v implicitly to boolean
 *
 *  @param[in] v

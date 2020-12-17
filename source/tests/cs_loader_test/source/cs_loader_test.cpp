@@ -20,11 +20,7 @@
 
 #include <gmock/gmock.h>
 
-#include <loader/loader.h>
-
 #include <metacall/metacall.h>
-
-#include <log/log.h>
 
 class cs_loader_test : public testing::Test
 {
@@ -47,43 +43,43 @@ TEST_F(cs_loader_test, SayAny)
 
 TEST_F(cs_loader_test, Jump)
 {
-	value ret = NULL;
+	void * ret = NULL;
 
 	ASSERT_NE((void *) NULL, (void *) metacall_function("SuperJump"));
 
 	ret = metacall("SuperJump");
 
-	EXPECT_NE((value) NULL, (value) ret);
+	EXPECT_NE((void *) NULL, (void *) ret);
 
 	EXPECT_EQ((int) 2, (int) metacall_value_to_int(ret));
 
-	value_destroy(ret);
+	metacall_value_destroy(ret);
 }
 
 TEST_F(cs_loader_test, Sum)
 {
-	value ret = NULL;
+	void * ret = NULL;
 
 	ASSERT_NE((void *) NULL, (void *) metacall_function("Sum"));
 
 	ret = metacall("Sum", 5, 10);
 
-	EXPECT_NE((value) NULL, (value) ret);
+	EXPECT_NE((void *) NULL, (void *) ret);
 
 	EXPECT_EQ((int) 15, (int) metacall_value_to_int(ret));
 
-	value_destroy(ret);
+	metacall_value_destroy(ret);
 }
 
 TEST_F(cs_loader_test, Concat)
 {
-	value ret = NULL;
+	void * ret = NULL;
 
 	ASSERT_NE((void *) NULL, (void *) metacall_function("Concat"));
 
 	ret = metacall("Concat", "Hello ", "World");
 
-	EXPECT_NE((value) NULL, (value) ret);
+	EXPECT_NE((void *) NULL, (void *) ret);
 
 	EXPECT_EQ((int) 0, (int) strcmp((const char *)metacall_value_to_string(ret), "Hello World"));
 
