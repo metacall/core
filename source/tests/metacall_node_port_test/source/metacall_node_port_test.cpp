@@ -61,7 +61,8 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 		void * future = metacall_await("main", metacall_null_args, [](void * v, void * data) -> void * {
 			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
-			EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(v), "Tests passed without errors"));
+			const char * str = metacall_value_to_string(v);
+			EXPECT_EQ((int) 0, (int) strcmp(str, "Tests passed without errors"));
 			await_data->c.notify_one();
 			return NULL;
 		}, [](void *, void * data) -> void * {
