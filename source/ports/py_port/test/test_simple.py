@@ -40,6 +40,7 @@ class py_port_test(unittest.TestCase):
 
 		self.assertEqual(metacall_load_from_file('py', ['helloworld.py']), True);
 
+		self.assertEqual(metacall('s_sum', 5, 5), 10);
 
 	# MetaCall (Ruby)
 	def test_ruby(self):
