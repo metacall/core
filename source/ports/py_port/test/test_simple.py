@@ -88,6 +88,14 @@ class py_port_test(unittest.TestCase):
 		# try to solve them in some way, maybe having another interpreter instance, or some co-routine
 		# like mechanism, I don't know.
 		#
+		# For tracking deadlocks, this is the mechanism that we can use:
+		#	1) Get the thread id of the thread where Python was launched, similarly to this:
+		#		https://github.com/metacall/core/blob/9ad4ed8964a53e30d8ab478a53122c396d705cdd/source/loaders/node_loader/source/node_loader_impl.cpp#L3158
+		#	2) Check if the current thread is the same as where Python interpreter was launched and check against this:
+		#		PyGILState_Check: https://python.readthedocs.io/en/latest/c-api/init.html#c.PyGILState_Check
+		# This methodology could be use to implement reentrant calls too, but the GIL already has an internal counter
+		# for tracking how many times the GIL has been acquired so there is no need for that.
+		#
 		# self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0);
 		# self.assertEqual(flip(subtract)(5, 4), -1.0);
 
