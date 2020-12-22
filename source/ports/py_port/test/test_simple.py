@@ -5,12 +5,12 @@ import sys
 import unittest
 
 # Load metacall from Python Port path
-abspath = os.path.dirname(os.path.abspath(__file__));
-relpath = '..';
-path = os.path.normpath(os.path.join(abspath, relpath));
+abspath = os.path.dirname(os.path.abspath(__file__))
+relpath = '..'
+path = os.path.normpath(os.path.join(abspath, relpath))
 
 # Insert first in the sys path so we make sure we load the correct port
-sys.path.insert(0, path);
+sys.path.insert(0, path)
 
 from metacall import *
 
@@ -18,52 +18,52 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Mock)
 	def test_mock(self):
-		self.assertEqual(metacall_load_from_file('mock', ['sometestmock.mock']), True);
+		self.assertEqual(metacall_load_from_file('mock', ['sometestmock.mock']), True)
 
-		self.assertEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World');
+		self.assertEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World')
 
 	# MetaCall (Python from memory)
 	def test_python_memory(self):
-		script = '#!/usr/bin/env python3\ndef inline_multiply_mem(left, right):\n\treturn left * right\n';
+		script = '#!/usr/bin/env python3\ndef inline_multiply_mem(left, right):\n\treturn left * right\n'
 
-		self.assertEqual(metacall_load_from_memory('py', script), True);
+		self.assertEqual(metacall_load_from_memory('py', script), True)
 
-		self.assertEqual(metacall('inline_multiply_mem', 2, 2), 4);
+		self.assertEqual(metacall('inline_multiply_mem', 2, 2), 4)
 
 	# MetaCall (Python)
 	def test_python(self):
 		import example
 
-		self.assertEqual(example.hello(), None);
+		self.assertEqual(example.hello(), None)
 
-		self.assertEqual(example.multiply(5, 7), 35);
+		self.assertEqual(example.multiply(5, 7), 35)
 
-		self.assertEqual(metacall_load_from_file('py', ['helloworld.py']), True);
+		self.assertEqual(metacall_load_from_file('py', ['helloworld.py']), True)
 
-		self.assertEqual(metacall('s_sum', 5, 5), 10);
+		self.assertEqual(metacall('s_sum', 5, 5), 10)
 
 	# MetaCall (Ruby)
 	def test_ruby(self):
 		from second.rb import get_second, get_second_untyped
 
-		self.assertEqual(get_second(34, 22), 22);
+		self.assertEqual(get_second(34, 22), 22)
 
-		self.assertEqual(get_second_untyped(34, 22), 22);
+		self.assertEqual(get_second_untyped(34, 22), 22)
 
-		self.assertEqual(metacall_load_from_file('rb', ['hello.rb']), True);
+		self.assertEqual(metacall_load_from_file('rb', ['hello.rb']), True)
 
-		self.assertEqual(metacall('say_null'), None);
+		self.assertEqual(metacall('say_null'), None)
 
-		self.assertEqual(metacall('say_multiply', 3, 4), 12);
+		self.assertEqual(metacall('say_multiply', 3, 4), 12)
 
-		self.assertEqual(metacall('say_hello', 'world'), 'Hello world!');
+		self.assertEqual(metacall('say_hello', 'world'), 'Hello world!')
 
 	# MetaCall (NodeJS)
 	def test_nodejs(self):
 		from derpyramda.js import add, subtract, flip
 
-		self.assertEqual(add(3, 4), 7.0);
-		self.assertEqual(subtract(5, 4), 1.0);
+		self.assertEqual(add(3, 4), 7.0)
+		self.assertEqual(subtract(5, 4), 1.0)
 
 		# TODO:
 		# The following tests deadlock because this:
@@ -106,8 +106,8 @@ class py_port_test(unittest.TestCase):
 		# This methodology could be use to implement reentrant calls too, but the GIL already has an internal counter
 		# for tracking how many times the GIL has been acquired so there is no need for that.
 		#
-		# self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0);
-		# self.assertEqual(flip(subtract)(5, 4), -1.0);
+		# self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0)
+		# self.assertEqual(flip(subtract)(5, 4), -1.0)
 
 if __name__ == '__main__':
 	unittest.main()

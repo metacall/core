@@ -20,12 +20,12 @@ def frontend_execute(args):
 				"forget to activate a virtual environment?"
 			)
 		raise
-	sys.argv = args;
+	sys.argv = args
 	execute_from_command_line(sys.argv)
 
 def frontend_initialize(port: int) -> int:
-	frontend_execute([os.path.abspath(__file__), 'runserver', str(port), '--noreload']);
-	return 0;
+	frontend_execute([os.path.abspath(__file__), 'runserver', str(port), '--noreload'])
+	return 0
 
 if __name__ == "__main__":
-	frontend_execute(sys.argv);
+	frontend_execute(sys.argv)

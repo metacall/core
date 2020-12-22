@@ -66,13 +66,13 @@ module.exports = {
 };
 '''
 
-metacall_load_from_memory('node', script);
+metacall_load_from_memory('node', script)
 
 def a():
 	result = metacall('b')
 	print('Result call from b:')
 	print(result)
-	return result;
+	return result
 
 def c():
-	return 3.0;
+	return 3.0

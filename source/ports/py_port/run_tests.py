@@ -6,14 +6,14 @@ import sys
 
 def main():
 	loader = unittest.TestLoader()
-	abspath = os.path.dirname(os.path.abspath(__file__));
-	path = os.path.normpath(os.path.join(abspath, 'test'));
-	suite = loader.discover(path);
+	abspath = os.path.dirname(os.path.abspath(__file__))
+	path = os.path.normpath(os.path.join(abspath, 'test'))
+	suite = loader.discover(path)
 
-	runner = unittest.TextTestRunner();
-	result = runner.run(suite);
+	runner = unittest.TextTestRunner()
+	result = runner.run(suite)
 
 	if len(result.errors) + len(result.failures) == 0:
-		return 'Tests passed without errors';
+		return 'Tests passed without errors'
 	else:
-		return '';
+		return ''

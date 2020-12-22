@@ -6,22 +6,22 @@ sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 try:
 	from metacall import metacall
 except ImportError as e:
-	print('Error when loading MetaCall Python Port: ' + str(e));
+	print('Error when loading MetaCall Python Port: ' + str(e))
 
 def callback_host(text):
-	print('Python callback_host: ' + text);
+	print('Python callback_host: ' + text)
 
-	result = metacall('callback_host_impl', text);
+	result = metacall('callback_host_impl', text)
 
-	print('Python result from host callback_host: ' + str(result));
+	print('Python result from host callback_host: ' + str(result))
 
-	return result;
+	return result
 
 def callback_ruby(left, right):
-	print('Python callback_ruby: ' + str(left) + ' * ' + str(right));
+	print('Python callback_ruby: ' + str(left) + ' * ' + str(right))
 
-	result = metacall('say_multiply', left, right);
+	result = metacall('say_multiply', left, right)
 
-	print('Python result from ruby say_multiply: ' + str(result));
+	print('Python result from ruby say_multiply: ' + str(result))
 
-	return result;
+	return result

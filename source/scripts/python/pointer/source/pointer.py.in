@@ -6,21 +6,21 @@ sys.path.insert(0, '@PROJECT_METACALL_PORTS_DIRECTORY@')
 try:
 	from metacall import metacall
 except ImportError as e:
-	print('Error when loading MetaCall Python Port: ' + str(e));
+	print('Error when loading MetaCall Python Port: ' + str(e))
 
 def python_set_value(t, value):
-	print('Python python_set_value: ', type(t), t, value);
+	print('Python python_set_value: ', type(t), t, value)
 
-	result = metacall('native_set_value', t, value);
+	result = metacall('native_set_value', t, value)
 
-	print('Python result from host native_set_value: ' + str(result), type(result));
+	print('Python result from host native_set_value: ' + str(result), type(result))
 
-	arr = metacall('native_get_value', t);
+	arr = metacall('native_get_value', t)
 
-	print('Python result from host native_get_value: ' + str(arr), type(arr));
+	print('Python result from host native_get_value: ' + str(arr), type(arr))
 
 	if arr != [10, 50, 70]:
-		print('Error: Invalid array values');
-		return None;
+		print('Error: Invalid array values')
+		return None
 
-	return result;
+	return result
