@@ -32,14 +32,23 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Python)
 	def test_python(self):
-		self.assertEqual(metacall_load_from_file('py', ['example.py']), True);
+		import example
 
-		self.assertEqual(metacall('hello'), None);
+		self.assertEqual(example.hello(), None);
 
-		self.assertEqual(metacall('multiply', 5, 7), 35);
+		self.assertEqual(example.multiply(5, 7), 35);
+
+		self.assertEqual(metacall_load_from_file('py', ['helloworld.py']), True);
+
 
 	# MetaCall (Ruby)
 	def test_ruby(self):
+		from second.rb import get_second, get_second_untyped
+
+		self.assertEqual(get_second(34, 22), 22);
+
+		self.assertEqual(get_second_untyped(34, 22), 22);
+
 		self.assertEqual(metacall_load_from_file('rb', ['hello.rb']), True);
 
 		self.assertEqual(metacall('say_null'), None);

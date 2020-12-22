@@ -169,7 +169,8 @@ def __metacall_import__(self, name, globals=None, locals=None, fromlist=(), leve
 		mod = None;
 
 		with suppress(ImportError):
-			mod = __python_import__(self, name, globals, locals, fromlist, level);
+			# TODO: Why level is not needed? Does it depend on the Python version?
+			mod = __python_import__(self, name, globals, locals, fromlist); #, level);
 
 		if mod:
 			return mod;

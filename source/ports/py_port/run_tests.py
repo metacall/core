@@ -2,14 +2,18 @@
 
 import unittest
 import os
+import sys
 
 def main():
 	loader = unittest.TestLoader()
 	abspath = os.path.dirname(os.path.abspath(__file__));
 	path = os.path.normpath(os.path.join(abspath, 'test'));
-	suite = loader.discover(path)
+	suite = loader.discover(path);
 
-	runner = unittest.TextTestRunner()
-	result = runner.run(suite)
+	runner = unittest.TextTestRunner();
+	result = runner.run(suite);
 
-	return 'Tests passed without errors' if result.errors > 0 or result.failures else '';
+	if len(result.errors) + len(result.failures) == 0:
+		return 'Tests passed without errors';
+	else:
+		return '';

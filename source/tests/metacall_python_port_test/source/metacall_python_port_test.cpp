@@ -24,9 +24,6 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-#include <mutex>
-#include <condition_variable>
-
 class metacall_python_port_test : public testing::Test
 {
 public:
@@ -52,7 +49,7 @@ TEST_F(metacall_python_port_test, DefaultConstructor)
 
 		void * ret = metacallv("main", metacall_null_args);
 
-		// EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Tests passed without errors"));
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Tests passed without errors"));
 
 		metacall_value_destroy(ret);
 	}
