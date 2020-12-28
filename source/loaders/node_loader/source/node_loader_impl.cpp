@@ -4388,30 +4388,37 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 
 	node_loader_impl_exception(env, status);
 
-	/* Stop event loop */
-	uv_stop(node_impl->thread_loop);
-
 	/* Clear event loop */
-	uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL);
-
-	while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
-
-	/* Destroy node loop */
-	if (uv_loop_alive(node_impl->thread_loop) != 0)
 	{
-		/* TODO: Make logs thread safe */
-		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive"); */
-		printf("NodeJS Loader Error: NodeJS event loop should not be alive\n");
-		fflush(stdout);
-	}
+		/* Stop event loop */
+		uv_stop(node_impl->thread_loop);
 
-	/* TODO: Check how to delete properly all handles */
-	if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
-	{
-		/* TODO: Make logs thread safe */
-		/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy"); */
-		printf("NodeJS Loader Error: NodeJS event loop should not be busy\n");
-		fflush(stdout);
+		/* Clear event loop */
+		uv_walk(node_impl->thread_loop, node_loader_impl_walk, NULL);
+
+		while (uv_run(node_impl->thread_loop, UV_RUN_DEFAULT) != 0);
+
+		/* Destroy node loop */
+		if (uv_loop_alive(node_impl->thread_loop) != 0)
+		{
+			/* TODO: Make logs thread safe */
+			/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be alive"); */
+			printf("NodeJS Loader Error: NodeJS event loop should not be alive\n");
+			fflush(stdout);
+		}
+
+		/* Note: This evaluates to true always due to stdin and stdout handles,
+		which are closed anyway on thread join. So it is removed by now. */
+		#if 0
+		/* TODO: Check how to delete properly all handles */
+		if (uv_loop_close(node_impl->thread_loop) == UV_EBUSY)
+		{
+			/* TODO: Make logs thread safe */
+			/* log_write("metacall", LOG_LEVEL_ERROR, "NodeJS event loop should not be busy"); */
+			printf("NodeJS Loader Error: NodeJS event loop should not be busy\n");
+			fflush(stdout);
+		}
+		#endif
 	}
 
 	/* Close scope */
