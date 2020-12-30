@@ -395,6 +395,8 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 	const char * v_type_name = rb_type_deserialize(result_value, &v);
 
+	(void)v_type_name; /* Unused */
+
 	return v;
 }
 
@@ -1232,8 +1234,7 @@ int rb_loader_impl_clear_cb_iterate(set s, set_key key, set_value val, set_cb_it
 	(void)s;
 	(void)key;
 
-	/* TODO: This generates a segmentation fault in node port test */
-	/* rb_undef(*module, rb_to_id(name)); */
+	rb_undef(*module, rb_to_id(name));
 
 	return 0;
 }
@@ -1372,7 +1373,6 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 			}
 		}
 	}
-
 
 	/* Now discover classes */
 	VALUE constants = rb_funcall(rb_module->module, rb_intern("constants"), 0);
