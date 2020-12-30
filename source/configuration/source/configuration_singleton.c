@@ -33,24 +33,24 @@ static int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_va
 
 /* -- Member Data -- */
 
-static struct configuration_singleton_type singleton_default =
+static struct configuration_singleton_type configuration_singleton_default =
 {
 	NULL,
 	NULL
 };
 
-configuration_singleton singleton_ptr = &singleton_default;
+configuration_singleton configuration_singleton_ptr = &configuration_singleton_default;
 
 /* -- Methods -- */
 
 configuration_singleton configuration_singleton_instance()
 {
-	return singleton_ptr;
+	return configuration_singleton_ptr;
 }
 
 void configuration_singleton_copy(configuration_singleton singleton)
 {
-	singleton_ptr = singleton;
+	configuration_singleton_ptr = singleton;
 }
 
 int configuration_singleton_initialize(configuration global)

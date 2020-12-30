@@ -99,6 +99,7 @@ add_subdirectory(format)
 add_subdirectory(log)
 add_subdirectory(memory)
 add_subdirectory(portability)
+add_subdirectory(threading)
 add_subdirectory(adt)
 add_subdirectory(filesystem)
 add_subdirectory(dynlink)
@@ -108,6 +109,27 @@ add_subdirectory(serial)
 add_subdirectory(configuration)
 add_subdirectory(loader)
 add_subdirectory(metacall)
+
+# Define loader modules (for loaders and distributable)
+set(LOADER_MODULE_NAMES
+	version
+	preprocessor
+	environment
+	format
+	log
+	memory
+	portability
+	threading
+	adt
+	filesystem
+	reflect
+	dynlink
+	serial
+	configuration
+	loader
+	detour
+	metacall
+)
 
 # Tests
 set(IDE_FOLDER "Tests")

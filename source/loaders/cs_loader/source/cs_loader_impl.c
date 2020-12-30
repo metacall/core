@@ -216,6 +216,7 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 	char * dotnet_loader_assembly_path = NULL;
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
+	netcore_handle nhandle = NULL;
 
 	loader_copy(host);
 
@@ -240,7 +241,14 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 	}
 
-	return (loader_impl_data)simple_netcore_create(dotnet_root, dotnet_loader_assembly_path);
+	nhandle = simple_netcore_create(dotnet_root, dotnet_loader_assembly_path);
+
+	if (nhandle != NULL)
+	{
+		loader_initialization_register(impl);
+	}
+
+	return (loader_impl_data)nhandle;
 }
 
 int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
@@ -391,9 +399,10 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 int cs_loader_impl_destroy(loader_impl impl)
 {
-	/* TODO: Destroy runtime */
-
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
+
+	/* Destroy children loaders */
+	loader_unload_children();
 
 	simple_netcore_destroy(nhandle);
 

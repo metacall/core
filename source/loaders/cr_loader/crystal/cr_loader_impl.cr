@@ -34,6 +34,9 @@ fun cr_loader_impl_initialize(impl : Void*, config : Void*, host : LibMetaCall::
 
 	# TODO: Initialize cr_impl properly
 
+	# Register current loader initialization order
+	LibMetaCall.loader_initialization_register(impl);
+
 	return Box.box(cr_impl)
 end
 
@@ -75,6 +78,10 @@ end
 
 fun cr_loader_impl_destroy(impl : Void*) : LibC::Int
 	ptr = LibMetaCall.loader_impl_get(impl)
+
+	# Destroy children loaded by this loader
+	LibMetaCall.loader_unload_children()
+
 	cr_impl = Box(CrystalLoaderImpl).unbox(ptr)
 
 	# TODO: Do destruction of cr_impl

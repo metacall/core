@@ -317,6 +317,9 @@ loader_impl_data dart_loader_impl_initialize(loader_impl impl, configuration con
 
 	dart_impl->impl_dart_data = nullptr;
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return dart_impl;
 }
 
@@ -572,6 +575,9 @@ int dart_loader_impl_destroy(loader_impl impl)
 
 	if (dart_impl != nullptr)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
 		delete dart_impl;
 
 		return 0;

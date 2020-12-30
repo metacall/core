@@ -154,6 +154,9 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 /*
 		clang::tooling::ClangTool tooling(op.getCompilations(), op.getSourcePathList());
 */
+		/* Register initialization */
+		loader_initialization_register(impl);
+
 		return static_cast<loader_impl_data>(c_impl);
 	}
 
@@ -291,6 +294,9 @@ int c_loader_impl_destroy(loader_impl impl)
 
 	if (c_impl != NULL)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
 		delete c_impl;
 
 		return 0;

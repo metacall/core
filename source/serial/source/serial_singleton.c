@@ -35,16 +35,6 @@ struct serial_singleton_type
 
 /**
 *  @brief
-*    Wrapper of serial singleton instance
-*
-*  @return
-*    Pointer to serial singleton instance
-*
-*/
-static serial_singleton serial_singleton_instance(void);
-
-/**
-*  @brief
 *    Serial singleton destroy callback iterator
 *
 *  @param[in] s
@@ -65,17 +55,26 @@ static serial_singleton serial_singleton_instance(void);
 */
 static int serial_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
+/* -- Member Data -- */
+
+static struct serial_singleton_type serial_singleton_default =
+{
+	NULL,
+	NULL
+};
+
+serial_singleton serial_singleton_ptr = &serial_singleton_default;
+
 /* -- Methods -- */
 
 serial_singleton serial_singleton_instance()
 {
-	static struct serial_singleton_type singleton =
-	{
-		NULL,
-		NULL
-	};
+	return serial_singleton_ptr;
+}
 
-	return &singleton;
+void serial_singleton_copy(serial_singleton singleton)
+{
+	serial_singleton_ptr = singleton;
 }
 
 int serial_singleton_initialize()

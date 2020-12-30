@@ -21,6 +21,7 @@
 #include <ts_loader/ts_loader_impl.h>
 #include <node_loader/node_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 #include <loader/loader_path.h>
 
@@ -212,5 +213,8 @@ int ts_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 int ts_loader_impl_destroy(loader_impl impl)
 {
+	/* Destroy children loaders */
+	loader_unload_children();
+
 	return node_loader_impl_destroy(impl);
 }

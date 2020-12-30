@@ -138,11 +138,15 @@ function_interface function_wasm_singleton(void)
 
 loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
+	loader_copy(host);
+
 	/* TODO */
 
 	(void)impl;
 	(void)config;
-	(void)host;
+
+	/* Register initialization */
+	loader_initialization_register(impl);
 
 	return NULL;
 }
@@ -213,6 +217,9 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 int wasm_loader_impl_destroy(loader_impl impl)
 {
+	/* Destroy children loaders */
+	loader_unload_children();
+
 	/* TODO */
 
 	(void)impl;

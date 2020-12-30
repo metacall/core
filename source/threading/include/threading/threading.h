@@ -1,6 +1,6 @@
 /*
- *	Loader Library by Parra Studios
- *	A library for loading executable code at run-time into a process.
+ *	Thrading Library by Parra Studios
+ *	A threading library providing utilities for lock-free data structures and more.
  *
  *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,38 +18,21 @@
  *
  */
 
-#ifndef LOADER_HOST_H
-#define LOADER_HOST_H 1
+#ifndef THREADING_H
+#define THREADING_H 1
+
+#include <threading/threading_api.h>
+
+#include <threading/threading_thread_id.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Forward Declarations -- */
-
-struct loader_host_type;
-
-/* -- Type Definitions -- */
-
-typedef struct loader_host_type * loader_host;
-
-/* -- Member Data -- */
-
-/**
-*  @brief
-*    Structure holding host context from loader
-*/
-struct loader_host_type
-{
-	void * loader;
-	void * config;
-	void * log;
-	void * s;
-	void * detour;
-};
+THREADING_API const char * threading_print_info(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LOADER_HOST_H */
+#endif /* THREADING_H */

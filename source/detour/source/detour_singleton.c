@@ -35,16 +35,6 @@ struct detour_singleton_type
 
 /**
 *  @brief
-*    Wrapper of detour singleton instance
-*
-*  @return
-*    Pointer to detour singleton instance
-*
-*/
-static detour_singleton detour_singleton_instance(void);
-
-/**
-*  @brief
 *    Detour singleton destroy callback iterator
 *
 *  @param[in] s
@@ -65,17 +55,26 @@ static detour_singleton detour_singleton_instance(void);
 */
 static int detour_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
+/* -- Member Data -- */
+
+static struct detour_singleton_type detour_singleton_default =
+{
+	NULL,
+	NULL
+};
+
+detour_singleton detour_singleton_ptr = &detour_singleton_default;
+
 /* -- Methods -- */
 
 detour_singleton detour_singleton_instance()
 {
-	static struct detour_singleton_type singleton =
-	{
-		NULL,
-		NULL
-	};
+	return detour_singleton_ptr;
+}
 
-	return &singleton;
+void detour_singleton_copy(detour_singleton singleton)
+{
+	detour_singleton_ptr = singleton;
 }
 
 int detour_singleton_initialize()

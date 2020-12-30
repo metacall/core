@@ -43,10 +43,13 @@
 
 	%include <rb_port/rb_port.h>
 
+	/* Note: This should not be necessary because we do not allow to use ports outside MetaCall */
+	/*
 	%init
 	%{
 		metacall_initialize();
 	%}
+	*/
 
 	%import <rb_port/rb_port_impl.i>
 

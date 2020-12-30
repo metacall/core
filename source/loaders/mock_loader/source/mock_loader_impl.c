@@ -317,6 +317,9 @@ loader_impl_data mock_loader_impl_initialize(loader_impl impl, configuration con
 
 	mock_impl->impl_mock_data = NULL;
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return mock_impl;
 }
 
@@ -572,6 +575,10 @@ int mock_loader_impl_destroy(loader_impl impl)
 
 	if (mock_impl != NULL)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
+		/* Destroy Mock */
 		free(mock_impl);
 
 		return 0;

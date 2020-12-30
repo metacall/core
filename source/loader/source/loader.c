@@ -11,20 +11,28 @@
 #include <metacall/metacall_version.h>
 
 #include <loader/loader.h>
-#include <loader/loader_impl.h>
 #include <loader/loader_env.h>
 
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
 
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
+
+#include <serial/serial.h>
+
+#include <detour/detour.h>
 
 #include <log/log.h>
+
+#include <threading/threading_thread_id.h>
 
 #include <stdlib.h>
 #include <string.h>
 
 /* -- Forward Declarations -- */
+
+struct loader_initialization_order_type;
 
 struct loader_get_iterator_args_type;
 
@@ -34,6 +42,8 @@ struct loader_metadata_cb_iterator_type;
 
 /* -- Type Definitions -- */
 
+typedef struct loader_initialization_order_type * loader_initialization_order;
+
 typedef struct loader_get_iterator_args_type * loader_get_iterator_args;
 
 typedef struct loader_host_invoke_type * loader_host_invoke;
@@ -42,9 +52,18 @@ typedef struct loader_metadata_cb_iterator_type * loader_metadata_cb_iterator;
 
 /* -- Member Data -- */
 
+struct loader_initialization_order_type
+{
+	thread_id id;
+	loader_impl impl;
+	int being_deleted;
+};
+
 struct loader_type
 {
-	set impl_map;
+	set impl_map;					/* Maps the loader implementations by tag */
+	vector initialization_order;	/* Stores the loader implementations by order of initialization (used for destruction) */
+	thread_id init_thread_id;		/* Stores the thread id of the thread that initialized metacall */
 };
 
 struct loader_metadata_cb_iterator_type
@@ -66,6 +85,8 @@ struct loader_host_invoke_type
 
 /* -- Private Methods -- */
 
+static void loader_initialize_proxy(void);
+
 static function_interface loader_register_interface_proxy(void);
 
 static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args, size_t size);
@@ -82,14 +103,12 @@ static value loader_metadata_impl(loader_impl impl);
 
 static int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static int loader_unload_impl_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 /* -- Member Data -- */
 
 
 static struct loader_type loader_instance_default =
 {
-	NULL
+	NULL, NULL, NULL
 };
 
 static loader loader_instance_ptr = &loader_instance_default;
@@ -106,22 +125,30 @@ void loader_copy(loader_host host)
 	loader_instance_ptr = host->loader;
 	configuration_copy(host->config);
 	log_copy(host->log);
+	serial_copy(host->s);
+	detour_copy(host->detour);
 }
 
-void loader_initialize()
+void loader_initialization_register(loader_impl impl)
 {
 	loader l = loader_singleton();
 
-	/* Initialize environment variables */
-	loader_env_initialize();
-
-	/* Initialize implementation map */
-	if (l->impl_map == NULL)
+	if (l->initialization_order != NULL)
 	{
-		l->impl_map = set_create(&hash_callback_str, &comparable_callback_str);
-	}
+		struct loader_initialization_order_type initialization_order;
 
-	/* Initialize host proxy */
+		initialization_order.id = thread_id_get_current();
+		initialization_order.impl = impl;
+		initialization_order.being_deleted = 1;
+
+		vector_push_back(l->initialization_order, &initialization_order);
+	}
+}
+
+void loader_initialize_proxy()
+{
+	loader l = loader_singleton();
+
 	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
 		loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
@@ -130,9 +157,11 @@ void loader_initialize()
 		{
 			loader_impl proxy;
 
-			host->log = log_instance();
-			host->config = configuration_instance();
 			host->loader = l;
+			host->config = configuration_instance();
+			host->log = log_instance();
+			host->s = serial_instance();
+			host->detour = detour_instance();
 
 			proxy = loader_impl_create_proxy(host);
 
@@ -147,6 +176,9 @@ void loader_initialize()
 					free(host);
 				}
 
+				/* Insert into destruction list */
+				loader_initialization_register(proxy);
+
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loader proxy initialized");
 			}
 			else
@@ -157,6 +189,35 @@ void loader_initialize()
 			}
 		}
 	}
+}
+
+void loader_initialize()
+{
+	loader l = loader_singleton();
+
+	/* Initialize environment variables */
+	loader_env_initialize();
+
+	/* Initialize current thread id */
+	if (l->init_thread_id == NULL)
+	{
+		l->init_thread_id = thread_id_get_current();
+	}
+
+	/* Initialize implementation map */
+	if (l->impl_map == NULL)
+	{
+		l->impl_map = set_create(&hash_callback_str, &comparable_callback_str);
+	}
+
+	/* Initialize implementation vector */
+	if (l->initialization_order == NULL)
+	{
+		l->initialization_order = vector_create(sizeof(struct loader_initialization_order_type));
+	}
+
+	/* Initialize host proxy */
+	loader_initialize_proxy();
 }
 
 int loader_is_initialized(const loader_naming_tag tag)
@@ -282,9 +343,11 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 	loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
 
-	host->log = log_instance();
-	host->config = configuration_instance();
 	host->loader = l;
+	host->config = configuration_instance();
+	host->log = log_instance();
+	host->s = serial_instance();
+	host->detour = detour_instance();
 
 	impl = loader_impl_create(loader_env_library_path(), tag, host);
 
@@ -759,29 +822,56 @@ value loader_metadata()
 	return v;
 }
 
-int loader_unload_impl_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		loader_impl impl = val;
-
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s)", loader_impl_tag(impl));
-
-		loader_impl_destroy(impl);
-
-		return 0;
-	}
-
-	return 1;
-}
-
 int loader_clear(void * handle)
 {
 	return loader_impl_clear(handle);
+}
+
+void loader_unload_children()
+{
+	loader l = loader_singleton();
+	thread_id current = thread_id_get_current();
+	size_t iterator, size = vector_size(l->initialization_order);
+	vector queue = vector_create_type(loader_initialization_order);
+
+	/* Get all loaders that have been initialized in the current thread */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		loader_initialization_order order = vector_at(l->initialization_order, iterator);
+
+		if (order->being_deleted == 1 && order->impl != NULL && thread_id_compare(current, order->id) == 0)
+		{
+			/* Mark for deletion */
+			vector_push_back(queue, &order);
+
+			/* Start to delete the current loader */
+			order->being_deleted = 0;
+		}
+	}
+
+	/* Free all loaders of the current thread and with BFS, look for children */
+	while (vector_size(queue) != 0)
+	{
+		loader_initialization_order order = vector_front_type(queue, loader_initialization_order);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s)", loader_impl_tag(order->impl));
+
+		/* Call recursively for deletion of children */
+		loader_impl_destroy(order->impl);
+
+		/* Destroy thread id of the order */
+		thread_id_destroy(order->id);
+
+		/* Clear current order */
+		order->being_deleted = 1;
+		order->impl = NULL;
+		order->id = NULL;
+
+		vector_pop_front(queue);
+	}
+
+	vector_destroy(queue);
+	thread_id_destroy(current);
 }
 
 int loader_unload()
@@ -790,10 +880,29 @@ int loader_unload()
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader begin unload");
 
+	/* Delete loaders in inverse order */
+	if (l->initialization_order != NULL)
+	{
+		thread_id current = thread_id_get_current();
+
+		if (thread_id_compare(l->init_thread_id, current) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Destruction of the loaders is being executed "
+				"from different thread of where MetaCall was initialized, "
+				"this is very dangerous and it can generate memory leaks and deadlocks, "
+				"I hope you know what are you doing...");
+
+			/* TODO: How to deal with this? */
+		}
+
+		thread_id_destroy(current);
+
+		loader_unload_children();
+	}
+
+	/* Clear the implementation tag map */
 	if (l->impl_map != NULL)
 	{
-		set_iterate(l->impl_map, &loader_unload_impl_map_cb_iterate, NULL);
-
 		if (set_clear(l->impl_map) != 0)
 		{
 			loader_destroy();
@@ -811,11 +920,25 @@ void loader_destroy()
 {
 	loader l = loader_singleton();
 
+	if (l->initialization_order != NULL)
+	{
+		vector_destroy(l->initialization_order);
+
+		l->initialization_order = NULL;
+	}
+
 	if (l->impl_map != NULL)
 	{
 		set_destroy(l->impl_map);
 
 		l->impl_map = NULL;
+	}
+
+	if (l->init_thread_id != NULL)
+	{
+		thread_id_destroy(l->init_thread_id);
+
+		l->init_thread_id = NULL;
 	}
 
 	loader_env_destroy();

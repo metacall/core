@@ -14,6 +14,7 @@ import (
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
 func Initialize() error {
+	// TODO: Remove this once go loader is implemented
 	if (int(C.metacall_initialize()) != 0) {
 		return errors.New("MetaCall failed to initialize")
 	}

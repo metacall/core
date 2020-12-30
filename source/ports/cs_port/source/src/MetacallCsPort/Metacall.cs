@@ -44,7 +44,10 @@ namespace MetacallCsPort
 
         static Metacall()
         {
+            /* Note: This should not be necessary because we do not allow to use ports outside MetaCall */
+            /*
             MetacallAPI.metacall_initialize();
+            */
         }
 
         public Metacall()

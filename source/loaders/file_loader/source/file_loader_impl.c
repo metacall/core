@@ -214,6 +214,9 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 
 	file_impl->nil = NULL;
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return (loader_impl_data)file_impl;
 }
 
@@ -431,6 +434,9 @@ int file_loader_impl_destroy(loader_impl impl)
 
 	if (file_impl != NULL)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
 		free(file_impl);
 
 		return 0;

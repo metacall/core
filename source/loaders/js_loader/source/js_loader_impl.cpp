@@ -743,6 +743,9 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration confi
 					{
 						if (js_loader_impl_initialize_inspect_types(impl, js_impl) == 0)
 						{
+							/* Register initialization */
+							loader_initialization_register(impl);
+
 							return static_cast<loader_impl_data>(js_impl);
 						}
 					}
@@ -849,6 +852,10 @@ int js_loader_impl_destroy(loader_impl impl)
 
 	if (js_impl != nullptr)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
+		/* Destroy V8 */
 		if (js_impl->isolate_scope != nullptr)
 		{
 			delete js_impl->isolate_scope;

@@ -3907,6 +3907,9 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 		}
 	}
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return node_impl;
 }
 
@@ -4220,6 +4223,9 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	napi_handle_scope handle_scope;
 
 	loader_impl_node node_impl = destroy_safe->node_impl;
+
+	/* Destroy children loaders (any loader initialized in the current V8 thread should be deleted first) */
+	loader_unload_children();
 
 	/* Create scope */
 	status = napi_open_handle_scope(env, &handle_scope);

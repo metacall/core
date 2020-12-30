@@ -125,9 +125,7 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 
 void configuration_copy(void * instance)
 {
-	configuration_singleton singleton_ptr = instance;
-
-	configuration_singleton_copy(singleton_ptr);
+	configuration_singleton_copy((configuration_singleton)instance);
 }
 
 void * configuration_instance()

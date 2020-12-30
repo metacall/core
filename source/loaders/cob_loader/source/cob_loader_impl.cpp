@@ -136,6 +136,9 @@ loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration conf
 	// Initialize cobol
 	cobinit();
 
+	// Register initialization
+	loader_initialization_register(impl);
+
 	return &loader_impl_cob_ptr;
 }
 
@@ -256,6 +259,9 @@ int cob_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 int cob_loader_impl_destroy(loader_impl impl)
 {
 	(void)impl;
+
+	// Destroy children loaders
+	loader_unload_children();
 
 	return cobtidy();
 }

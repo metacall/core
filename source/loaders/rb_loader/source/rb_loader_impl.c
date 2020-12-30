@@ -861,6 +861,9 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 		log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader initialized correctly");
 	}
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return (loader_impl_data)&rb_loader_impl_unused;
 }
 
@@ -1450,6 +1453,9 @@ int rb_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 int rb_loader_impl_destroy(loader_impl impl)
 {
 	(void)impl;
+
+	/* Destroy children loaders */
+	loader_unload_children();
 
 	return ruby_cleanup(0);
 }

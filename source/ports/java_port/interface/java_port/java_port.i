@@ -43,17 +43,11 @@
 
 	%include <java_port/java_port.h>
 
-	/*
+	/* TODO: Remove this once java loader is implemented */
 	%init
 	%{
-		struct metacall_log_stdio_type log_stdio;
-		log_stdio.stream = stdout;
-
-		(void)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio);
-
 		metacall_initialize();
 	%}
-	*/
 
 	%import <java_port/java_port_impl.i>
 

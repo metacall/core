@@ -43,6 +43,26 @@ DETOUR_API int detour_initialize(void);
 
 /**
 *  @brief
+*    Copy detour module singleton instance to the host
+*
+*  @param[in] instance
+*    Pointer to the singleton to be copied
+*
+*/
+DETOUR_API void detour_copy(void * instance);
+
+/**
+*  @brief
+*    Get serial singleton instance to be consumed later on by detour_copy
+*
+*  @return
+*    Pointer to the singleton to be copied
+*
+*/
+DETOUR_API void * detour_instance();
+
+/**
+*  @brief
 *    Create detour by @name
 *
 *  @param[in] name

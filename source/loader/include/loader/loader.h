@@ -28,6 +28,7 @@
 #include <loader/loader_naming.h>
 #include <loader/loader_impl_interface.h>
 #include <loader/loader_host.h>
+#include <loader/loader_impl.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -58,6 +59,8 @@ typedef struct loader_type * loader;
 LOADER_API loader loader_singleton(void);
 
 LOADER_API void loader_copy(loader_host host);
+
+LOADER_API void loader_initialization_register(loader_impl impl);
 
 LOADER_API void loader_initialize(void);
 
@@ -94,6 +97,8 @@ LOADER_API void * loader_handle_export(void * handle);
 LOADER_API value loader_metadata(void);
 
 LOADER_API int loader_clear(void * handle);
+
+LOADER_API void loader_unload_children(void);
 
 LOADER_API int loader_unload(void);
 

@@ -45,7 +45,7 @@ include(Distributable)
 set(metacall_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target_root}_unity_build.c")
 
 distributable_export_generate(${metacall_unity_build}
-	${MODULE_NAMES}
+	${LOADER_MODULE_NAMES}
 )
 
 # Build library
@@ -55,7 +55,7 @@ add_library(${target}
 
 # Add target dependencies
 add_dependencies(${target}
-	${MODULE_NAMES}
+	${LOADER_MODULE_NAMES}
 )
 
 # Create namespaced alias

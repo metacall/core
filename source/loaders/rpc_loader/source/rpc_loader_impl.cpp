@@ -200,6 +200,9 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return rpc_impl;
 }
 
@@ -340,6 +343,9 @@ int rpc_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_rpc rpc_impl = (loader_impl_rpc)loader_impl_get(impl);
 
+	/* Destroy children loaders */
+	loader_unload_children();
+
 	curl_easy_cleanup(rpc_impl->curl);
 
 	curl_global_cleanup();
@@ -347,6 +353,7 @@ int rpc_loader_impl_destroy(loader_impl impl)
 	return 0;
 }
 
+#if 0
 void value_array_for_each(void *v, const std::function<void(void *)> &lambda)
 {
 	void **v_array = static_cast<void **>(metacall_value_to_array(v));
@@ -422,3 +429,4 @@ static void command_inspect(const char *str, size_t size, memory_allocator alloc
 		});
 	});
 }
+#endif

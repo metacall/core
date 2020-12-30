@@ -1691,6 +1691,9 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	PyGILState_Release(gstate);
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader initialized correctly");
 
 	return py_impl;
@@ -2406,6 +2409,9 @@ int py_loader_impl_destroy(loader_impl impl)
 	if (py_impl != NULL)
 	{
 		/* PyGILState_STATE gstate; */
+
+		/* Destroy children loaders */
+		loader_unload_children();
 
 		/* gstate = PyGILState_Ensure(); */
 

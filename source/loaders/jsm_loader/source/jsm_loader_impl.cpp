@@ -164,6 +164,9 @@ loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration conf
 
 				if (jsm_impl->cx != NULL)
 				{
+					/* Register initialization */
+					loader_initialization_register(impl);
+
 					return (loader_impl_data)jsm_impl;
 				}
 
@@ -236,6 +239,10 @@ int jsm_loader_impl_destroy(loader_impl impl)
 
 	if (jsm_impl != NULL)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
+		/* Destroy Spider Monkey */
 		if (jsm_impl->cx != NULL)
 		{
 			JS_DestroyContext(jsm_impl->cx);

@@ -354,6 +354,9 @@ loader_impl_data lua_loader_impl_initialize(loader_impl impl, configuration conf
 	/* Open all standard libraries into current Lua state */
 	luaL_openlibs(lua_impl->vm);
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return lua_impl;
 }
 
@@ -508,6 +511,10 @@ int lua_loader_impl_destroy(loader_impl impl)
 
 	if (lua_impl != NULL)
 	{
+		/* Destroy children loaders */
+		loader_unload_children();
+
+		/* Destroy Lua VM */
 		lua_close(lua_impl->vm);
 
 		free(lua_impl);

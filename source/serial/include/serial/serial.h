@@ -43,6 +43,26 @@ SERIAL_API int serial_initialize(void);
 
 /**
 *  @brief
+*    Copy serial module singleton instance to the host
+*
+*  @param[in] instance
+*    Pointer to the singleton to be copied
+*
+*/
+SERIAL_API void serial_copy(void * instance);
+
+/**
+*  @brief
+*    Get serial singleton instance to be consumed later on by serial_copy
+*
+*  @return
+*    Pointer to the singleton to be copied
+*
+*/
+SERIAL_API void * serial_instance();
+
+/**
+*  @brief
 *    Create serial by @name
 *
 *  @param[in] name
