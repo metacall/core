@@ -131,6 +131,15 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+add_dependencies(${target}
+	cs_loader
+	py_loader
+)
+
+#
 # Define test properties
 #
 

@@ -127,6 +127,14 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+add_dependencies(${target}
+	node_loader
+)
+
+#
 # Define test properties
 #
 

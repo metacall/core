@@ -12,6 +12,18 @@ def say_multiply(left: Fixnum, right: Fixnum)
 	return result
 end
 
+def say_multiply_ducktyped(left, right)
+	result = left * right
+	puts('Multiply', result, '!')
+	return result
+end
+
+def say_sum_ducktyped(left, right)
+	result = left + right
+	puts('Sum', result, '!')
+	return result
+end
+
 def say_null()
 	puts('Helloooo from null method!')
 end

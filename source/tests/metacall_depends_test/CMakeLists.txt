@@ -3,7 +3,7 @@
 #
 
 # Check if distributable libs are enabled
-if(NOT OPTION_BUILD_DIST_LIBS)
+if(NOT OPTION_BUILD_DIST_LIBS OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
 
@@ -136,6 +136,14 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+)
+
+#
+# Define dependencies
+#
+
+add_dependencies(${target}
+	py_loader
 )
 
 #

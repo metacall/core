@@ -120,6 +120,15 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+# TODO: Generator expressions do not work in add_dependencies
+# add_dependencies(${target}
+# 	$<$<BOOL:${OPTION_BUILD_LOADERS_NODE}>:node_loader>
+# )
+
+#
 # Configure test data
 #
 

@@ -24,12 +24,12 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_test : public testing::Test
+class metacall_ruby_object_class_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_test, DefaultConstructor)
+TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 {
 	metacall_print_info();
 

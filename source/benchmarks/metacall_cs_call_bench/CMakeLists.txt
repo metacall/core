@@ -1,3 +1,8 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS)
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -115,6 +120,14 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+)
+
+#
+# Define dependencies
+#
+
+add_dependencies(${target}
+	cs_loader
 )
 
 #

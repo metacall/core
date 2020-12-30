@@ -124,6 +124,14 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+add_dependencies(${target}
+	funchook_detour
+)
+
+#
 # Define test properties
 #
 

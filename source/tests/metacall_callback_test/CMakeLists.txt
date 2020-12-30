@@ -126,6 +126,15 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+add_dependencies(${target}
+	py_loader
+	node_loader
+)
+
+#
 # Define test properties
 #
 
