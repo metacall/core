@@ -38,7 +38,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
         - [2.1 Loaders (Backends)](#21-loaders-backends)
         - [2.2 Ports (Frontends)](#22-ports-frontends)
     - [3. Use Cases](#3-use-cases)
-        - [3.1 Known Projects Using **METACALL**](#31-known-projects-using-metacall)
+        - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
     - [4. Usage](#4-usage)
         - [4.1 Installation](#41-installation)
         - [4.2 Environment Variables](#42-environment-variables)
@@ -61,7 +61,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
                 - [5.3.1.6 Mock](#5316-mock)
                 - [5.3.1.7 File](#5317-file)
             - [5.3.2 Serials](#532-serials)
-                - [5.3.2.1 **METACALL**](#5321-metacall)
+                - [5.3.2.1 MetaCall](#5321-metacall)
                 - [5.3.2.2 RapidJSON](#5322-rapidjson)
             - [5.3.3 Detours](#533-detours)
                 - [5.3.3.1 FuncHook](#5331-funchook)
@@ -158,7 +158,7 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
-## 3.1 Known Projects Using **METACALL**
+## 3.1 Known Projects Using MetaCall
 
 - **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art by means of OpenCV. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
 
@@ -470,7 +470,7 @@ A loader must implement it to be considered a valid loader.
 
 #### 5.3.2 Serials
 
-##### 5.3.2.1 **METACALL**
+##### 5.3.2.1 MetaCall
 
 ##### 5.3.2.2 RapidJSON
 
