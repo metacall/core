@@ -1,3 +1,8 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_DIST_LIBS OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODE)
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -122,13 +127,9 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-include(GeneratorExpressions)
-
-cmake_expand_generator_expressions(DEPENDENCIES
-	$<$<BOOL:${OPTION_BUILD_LOADERS_NODE}>:node_loader>
+add_dependencies(${target}
+	node_loader
 )
-
-add_dependencies(${target} ${DEPENDENCIES})
 
 #
 # Define test properties

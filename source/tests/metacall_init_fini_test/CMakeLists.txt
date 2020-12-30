@@ -2,8 +2,8 @@
 # Setup distributable environment
 #
 
-# Check if distributable libs are enabled
-if(NOT OPTION_BUILD_DIST_LIBS)
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_DIST_LIBS OR NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY)
 	return()
 endif()
 
@@ -142,13 +142,9 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-include(GeneratorExpressions)
-
-cmake_expand_generator_expressions(DEPENDENCIES
-	$<$<BOOL:${OPTION_BUILD_LOADERS_PY}>:py_loader>
+add_dependencies(${target}
+	py_loader
 )
-
-add_dependencies(${target} ${DEPENDENCIES})
 
 #
 # Define test properties
