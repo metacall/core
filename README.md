@@ -38,7 +38,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
         - [2.1 Loaders (Backends)](#21-loaders-backends)
         - [2.2 Ports (Frontends)](#22-ports-frontends)
     - [3. Use Cases](#3-use-cases)
-        - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
+        - [3.1 Known Projects Using **METACALL**](#31-known-projects-using-metacall)
     - [4. Usage](#4-usage)
         - [4.1 Installation](#41-installation)
         - [4.2 Environment Variables](#42-environment-variables)
@@ -61,7 +61,7 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
                 - [5.3.1.6 Mock](#5316-mock)
                 - [5.3.1.7 File](#5317-file)
             - [5.3.2 Serials](#532-serials)
-                - [5.3.2.1 MetaCall](#5321-metacall)
+                - [5.3.2.1 **METACALL**](#5321-metacall)
                 - [5.3.2.2 RapidJSON](#5322-rapidjson)
             - [5.3.3 Detours](#533-detours)
                 - [5.3.3.1 FuncHook](#5331-funchook)
@@ -158,7 +158,7 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
-## 3.1 Known Projects Using MetaCall
+## 3.1 Known Projects Using **METACALL**
 
 - **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art by means of OpenCV. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
 
@@ -195,13 +195,13 @@ This environment variables are optional, in case that you want to modify default
 
 - [Embedding Python](https://github.com/metacall/embedding-python-example): Example application for embedding Python code into C/C++ using CMake as a build system.
 
-- [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing MetaCall by compining it by hand.
+- [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **METACALL** by compining it by hand.
 
-- [MetaCall CLI](/source/examples/metacallcli): Example of a Command Language Interpreter based on MetaCall where you can load, unload scripts and call their functions.
+- [**METACALL** CLI](/source/examples/metacallcli): Example of a Command Language Interpreter based on **METACALL** where you can load, unload scripts and call their functions.
 
 - [Rotulin](https://github.com/metacall/rotulin): Example of a multi-language application built with **METACALL**. This application embeds a Django server with a Ruby DataBase and C# business layer based on ImageMagick.
 
-- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [MetaCall CLI](/source/examples/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
+- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**METACALL** CLI](/source/examples/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
 
 ## 5. Architecture
 
@@ -470,7 +470,7 @@ A loader must implement it to be considered a valid loader.
 
 #### 5.3.2 Serials
 
-##### 5.3.2.1 MetaCall
+##### 5.3.2.1 **METACALL**
 
 ##### 5.3.2.2 RapidJSON
 
@@ -531,6 +531,66 @@ Detours model is not safe. It is platform dependant and implies that the program
 Usually the developer is the same who does the fork, but it may be possible that **METACALL** is embedded into a larger application and the developer is in the middle between the application code and **METACALL** so it is impossible to control when a fork is done. Because of this the developer can register a callback by means of [**`metacall_fork`**](/source/metacall/include/metacall/metacall_fork.h) to know when a fork is executed to do the actions needed after the fork, for example, re-loading all previous code and restore the state of the run-times. This gives a partial solution to the problem of losing the state when doing a fork.
 
 ### 5.8 Threading Model
+
+The threading model is still experimental. We are discovering the best ways of designing and implementing it, so it may vary over time. In another hand, at the moment of writing (check the commit history), there are some concerns that are already known and parts of the design that we have achieved thanks to NodeJS event loop nature.
+
+The Node Loader is designed in a way in which the V8 instance is created in a new thread, and from there the event loop "blocks" that thread until the execution. Recent versions of N-API (since NodeJS 14.x) allow you to have control and reimplement your own event loop thanks to the new embedder API. But when this project started and NodeJS loader was implemented, only NodeJS 8.x exist. So the only option (without reimplementing part of NodeJS, because it goes against one design decisions of the project) was to use `node::Start`, a call that blocks your thread while executing the event loop. This also produces a lot of problems, because of lack of control over NodeJS, but they are not directly related to the thread model.
+
+To overcome the blocking nature of `node::Start`, the event loop is launched in a separated thread, and all calls to the loader are executed via submission to the event loop in that thread. In the first implementation, it was done using `uv_async_t`, but in the current implementation (since NodeJS 10.x), with thread safe mechanisms that allow you to enqueue safely into the event loop thanks to the new additions to the N-API. The current thread where the call is done waits with a condition `uv_cond_t` upon termination of the submission and resolution of the call.
+
+This solution of waiting to the call with the condition, introduces new problems. For completely async calls, there is no problem at all, but for synchronous calls, it can deadlock. For example, when calling recursively to the same synchronous function via **METACALL**, in the second call it will try to block twice and deadlock the thread. So in order to solve this an atomic variable was added in addition to a variable storing the thread id of the V8 thread. With this, recursive calls can be detected, and instead of blocking and enqueueing them, it is possible to call directly and safely to the function because we are already in the V8 thread when the second iteration is done.
+
+This solves all (known) issues related to NodeJS threading model __if and only if__ you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
+
+If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low level API), and you want to load scripts from other languages, you have to use **METACALL** through `Ports`. Ports provide a high abstraction of the low level API and allow you to load and call functions of other languages. Here is where the fun begins.
+
+There are few considerations we must take into account. In order to explain this we are going to use a simple example first, using Python and NodeJS. Depending on the runtime, there are different mechanisms to handle threads and thread safety:
+
+  - Python:
+    1) Python uses a Global Interpreter Lock (GIL), which can be acquired from different threads in order to do thread safe calls. This can be problematic due to deadlocks.
+    2) Python event loop can be decoupled from Python interpreter thread by using Python Thread API (work in progress: https://github.com/metacall/core/pull/64). This fact simplifies the design.
+    3) Python can run multiple interpreter instances, starting from newer versions (not implemented yet).
+
+  - NodeJS:
+    1) NodeJS uses a submission queue and does not suffer from a global mutex like Python.
+    2) NodeJS V8 thread is coupled to the event loop (at least with the current version used in **METACALL**, and it is difficult to have control over it).
+    3) NodeJS can execute multiple V8 threads with the multi-isolate library from the latest versions of V8 (not implemented yet).
+
+Once these concerns are clear, now we can go further and inspect some cases where we can find deadlocks or problems related to them:
+
+1) __NodeJS is the host language__, and it launches the Python interprer in the V8 thread:
+
+  ![Threading Model NodeJS Python](docs/diagrams/threading-model-nodejs-python.png)
+
+  This model is relatively safe because Node Loader is completely reentrant, and Python GIL too. This means you can do recursive calls safely, and all those calls will always happen in V8. Even if we do callbacks, all of them will happen in the same thread, so there aren't potential deadlocks. This means we can safely use a functional library from NodeJS, and it won't deadlock. For example: [Using Fn.py from NodeJS](https://github.com/metacall/fn.py-javascript-example).
+
+  But there is a problem when we try to destroy the loaders. Python interpreter does not allow to be destroyed from a different thread where it was launched. This means, if we destroy the Node Loader first, then it will be impossible to destroy the Python Loader, because the V8 thread has been finished. We must destroy the Loaders in order and in the correct thread. This means if we try to destroy Node Loader, during its destruction in the V8 thread, we must destroy Python Loader and any other loader that has been initialized in that thread.
+
+  As a result, each loader must use the following instructions:
+
+  - When the loader has finished the initialization, it must register its initialization order. It will record internally the current thread id too.
+
+    ```c
+    loader_initialization_register(impl);
+    ```
+
+  - When the loader is going to be destroyed, but before destroy starts, the children must be destroyed in a recursive way, so the whole tree can be iterated properly in order.
+
+    ```c
+    loader_unload_children();
+    ```
+
+  The result of the current destruction model is that: __`metacall_initialize` and `metacall_destroy` must be done from the same thread__. This should not be a problem for developers using the CLI. But embedders must take this into account.
+
+
+2) __Python is the host language__, and it launches NodeJS in a new (V8) thread:
+[TODO: Explain why callbacks deadlock in this context]
+
+
+In order to end this section, here's a list of ideas that are not completely implemented yet, but they are in progress:
+ - Lock free data structures for holding the functions.
+ - Asynchronous non-deadlocking, non-stack growing callbacks between runtimes (running multiple event loops between languages). This will solve the second case where Python is the host language and deadlocks because of NodeJS event loop nature.
+ - Support for multi-isolate and multiple interpreters instances.
 
 ## 5. Application Programming Interface (API)
 
