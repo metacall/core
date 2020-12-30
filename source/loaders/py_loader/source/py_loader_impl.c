@@ -1156,8 +1156,17 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	PyObject *tuple_args;
+	void ** values;
+
 	/* Allocate dynamically more space for values in case of variable arguments */
-	void ** values = args_size > signature_args_size ? malloc(sizeof(void *) * args_size) : py_func->values;
+	if (args_size > signature_args_size || py_func->values == NULL)
+	{
+		values = malloc(sizeof(void *) * args_size);
+	}
+	else
+	{
+		values = py_func->values;
+	}
 
 	/* Possibly a recursive call */
 	if (Py_EnterRecursiveCall(" while executing a function in Python Loader") != 0)
@@ -1205,7 +1214,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	Py_DECREF(tuple_args);
 
 	/* Variable arguments */
-	if (args_size > signature_args_size)
+	if (args_size > signature_args_size || py_func->values == NULL)
 	{
 		free(values);
 	}

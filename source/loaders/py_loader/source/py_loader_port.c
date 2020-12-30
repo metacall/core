@@ -367,11 +367,11 @@ static PyObject * py_loader_port_invoke(PyObject * self, PyObject * var_args)
 		
 		if (value_args != NULL)
 		{
-			ret = metacallv(name_str, value_args);
+			ret = metacallv_s(name_str, value_args, args_size);
 		}
 		else
 		{
-			ret = metacallv(name_str, metacall_null_args);
+			ret = metacallv_s(name_str, metacall_null_args, 0);
 		}
 
 		PyEval_RestoreThread(thread_state);
