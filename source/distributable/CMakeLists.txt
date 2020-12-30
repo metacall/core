@@ -44,8 +44,29 @@ include(Distributable)
 # Create unity build library
 set(metacall_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target_root}_unity_build.c")
 
+# Define metacall modules
+set(METACALL_MODULE_NAMES
+	version
+	preprocessor
+	environment
+	format
+	log
+	memory
+	portability
+	threading
+	adt
+	filesystem
+	reflect
+	dynlink
+	serial
+	configuration
+	loader
+	detour
+	metacall
+)
+
 distributable_export_generate(${metacall_unity_build}
-	${LOADER_MODULE_NAMES}
+	${METACALL_MODULE_NAMES}
 )
 
 # Build library
@@ -55,7 +76,7 @@ add_library(${target}
 
 # Add target dependencies
 add_dependencies(${target}
-	${LOADER_MODULE_NAMES}
+	${METACALL_MODULE_NAMES}
 )
 
 # Create namespaced alias

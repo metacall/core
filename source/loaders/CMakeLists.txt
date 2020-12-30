@@ -3,6 +3,26 @@ if(NOT OPTION_BUILD_LOADERS)
 	return()
 endif()
 
+# Define loader modules
+set(LOADER_MODULE_NAMES
+	version
+	preprocessor
+	environment
+	format
+	log
+	memory
+	portability
+	threading
+	adt
+	filesystem
+	reflect
+	dynlink
+	serial
+	configuration
+	loader
+	detour
+)
+
 # Plugins options
 option(OPTION_BUILD_LOADERS_C "Build C Foreign Function Interface library loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_COB "Build GNU/COBOL 2.2 loader plugin." OFF)

@@ -110,27 +110,6 @@ add_subdirectory(configuration)
 add_subdirectory(loader)
 add_subdirectory(metacall)
 
-# Define loader modules (for loaders and distributable)
-set(LOADER_MODULE_NAMES
-	version
-	preprocessor
-	environment
-	format
-	log
-	memory
-	portability
-	threading
-	adt
-	filesystem
-	reflect
-	dynlink
-	serial
-	configuration
-	loader
-	detour
-	metacall
-)
-
 # Tests
 set(IDE_FOLDER "Tests")
 add_subdirectory(tests)
