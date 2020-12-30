@@ -142,10 +142,13 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-# TODO: Generator expressions do not work in add_dependencies
-# add_dependencies(${target}
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_PY}>:py_loader>
-# )
+include(GeneratorExpressions)
+
+cmake_expand_generator_expressions(DEPENDENCIES
+	$<$<BOOL:${OPTION_BUILD_LOADERS_PY}>:py_loader>
+)
+
+add_dependencies(${target} ${DEPENDENCIES})
 
 #
 # Define test properties

@@ -122,18 +122,21 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-# TODO: Generator expressions do not work in add_dependencies
-# add_dependencies(${target}
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_NODE}>:node_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_PY}>:py_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_RB}>:rb_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_CS}>:cs_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_JSM}>:jsm_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_JS}>:js_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>:mock_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_C}>:c_loader>
-# 	$<$<BOOL:${OPTION_BUILD_LOADERS_FILE}>:file_loader>
-# )
+include(GeneratorExpressions)
+
+cmake_expand_generator_expressions(DEPENDENCIES
+	$<$<BOOL:${OPTION_BUILD_LOADERS_NODE}>:node_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_PY}>:py_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_RB}>:rb_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_CS}>:cs_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_JSM}>:jsm_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_JS}>:js_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>:mock_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_C}>:c_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_FILE}>:file_loader>
+)
+
+add_dependencies(${target} ${DEPENDENCIES})
 
 #
 # Define test properties

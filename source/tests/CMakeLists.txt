@@ -133,8 +133,8 @@ add_subdirectory(metacall_node_inline_test)
 add_subdirectory(metacall_node_async_test)
 add_subdirectory(metacall_node_reentrant_test)
 add_subdirectory(metacall_node_port_test)
-#add_subdirectory(metacall_node_python_port_mock_test) # TODO
-#add_subdirectory(metacall_node_python_port_ruby_test) # TODO
+add_subdirectory(metacall_node_python_port_mock_test)
+add_subdirectory(metacall_node_python_port_ruby_test)
 add_subdirectory(metacall_distributable_test)
 add_subdirectory(metacall_cast_test)
 add_subdirectory(metacall_init_fini_test)
