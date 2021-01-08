@@ -1156,12 +1156,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	PyObject *tuple_args;
-	void ** values;
+	PyObject **values;
 
 	/* Allocate dynamically more space for values in case of variable arguments */
 	if (args_size > signature_args_size || py_func->values == NULL)
 	{
-		values = malloc(sizeof(void *) * args_size);
+		values = malloc(sizeof(PyObject *) * args_size);
 	}
 	else
 	{
@@ -1741,6 +1741,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 loader_impl_py_handle py_loader_impl_handle_create(size_t size)
 {
 	loader_impl_py_handle py_handle = malloc(sizeof(struct loader_impl_py_handle_type));
+	size_t iterator;
 
 	if (py_handle == NULL)
 	{
@@ -1755,6 +1756,12 @@ loader_impl_py_handle py_loader_impl_handle_create(size_t size)
 		free(py_handle);
 
 		return NULL;
+	}
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		py_handle->modules[iterator].instance = NULL;
+		py_handle->modules[iterator].name = NULL;
 	}
 
 	return py_handle;
@@ -1779,7 +1786,10 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 		/* C API it looks like is not needed */
 		/*PyObject_Del(py_handle->modules[iterator].instance);*/
 
-		PyObject_DelItem(system_modules, py_handle->modules[iterator].name);
+		if (py_handle->modules[iterator].name != NULL)
+		{
+			PyObject_DelItem(system_modules, py_handle->modules[iterator].name);
+		}
 
 		Py_XDECREF(py_handle->modules[iterator].instance);
 		Py_XDECREF(py_handle->modules[iterator].name);
