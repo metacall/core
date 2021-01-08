@@ -1,5 +1,5 @@
 # Check if loaders are enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_RB OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_RB OR NOT OPTION_BUILD_SCRIPTS_NODE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-python-port-test)
+set(target metacall-python-port-https-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_python_port_test.cpp
+	${source_path}/metacall_python_port_https_test.cpp
 )
 
 # Group source files
@@ -96,8 +96,8 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	# Python Port Test path
-	METACALL_PYTHON_PORT_TEST_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port/run_tests.py"
+	# Python Port path
+	METACALL_PYTHON_PORT_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port"
 )
 
 #

@@ -24,32 +24,48 @@
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_python_port_test : public testing::Test
+class metacall_python_port_https_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_python_port_test, DefaultConstructor)
+TEST_F(metacall_python_port_https_test, DefaultConstructor)
 {
 	metacall_print_info();
-
-	metacall_log_null();
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
 	/* Python */
 	#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		static const char * py_scripts[] =
-		{
-			METACALL_PYTHON_PORT_TEST_PATH
-		};
+		// Test import bug (__metacall_import__() missing 1 required positional argument: 'name')
+		static const char buffer[] =
+			"import sys\n"
+			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import metacall\n"
+			"from http import client\n"
+			"def fetch_http_py(url: str):\n"
+			"	try:\n"
+			"		conn = client.HTTPSConnection(url, 443)\n"
+			"		conn.request('GET', '/')\n"
+			"		response = conn.getresponse()\n"
+			"		data = response.read()\n"
+			"		conn.close()\n"
+			"		return data\n"
+			"	except Exception as e:\n"
+			"		print(e)\n"
+			"		sys.stdout.flush()\n"
+			"		return b'<!doctype invalid>'\n";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
-		void * ret = metacallv("main", metacall_null_args);
+		void * ret = metacall("fetch_http_py", "www.google.com");
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Tests passed without errors"));
+		static const char prefix[] = "<!doctype html>";
+
+		ASSERT_EQ((enum metacall_value_id) METACALL_BUFFER, (enum metacall_value_id) metacall_value_id(ret));
+
+		EXPECT_EQ((int) 0, (int) strncmp((const char *)metacall_value_to_buffer(ret), prefix, sizeof(prefix) - 1));
 
 		metacall_value_destroy(ret);
 	}
