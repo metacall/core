@@ -96,6 +96,9 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
+	# NodeJS Port path
+	METACALL_PYTHON_PORT_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port"
+
 	# NodeJS Port Test path
 	METACALL_PYTHON_PORT_TEST_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port/run_tests.py"
 )

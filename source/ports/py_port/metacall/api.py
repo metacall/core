@@ -79,7 +79,7 @@ import functools
 # Save the original Python import
 __python_import__ = builtins.__import__
 
-def __metacall_import__(self, name, globals=None, locals=None, fromlist=(), level=0):
+def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 	def find_handle(handle_name):
 		metadata = metacall_inspect()
 
@@ -144,13 +144,22 @@ def __metacall_import__(self, name, globals=None, locals=None, fromlist=(), leve
 		# Probably in the future we can differenciate between them, but it is not trivial
 	}
 
+	# Try to load it as a Python module
+	mod = None
+
+	with suppress(ImportError):
+		mod = __python_import__(name, globals, locals, fromlist, level)
+
+	if mod:
+		return mod
+
 	# Obtain the extension of the module if any
-	extension = None if self.count('.') == 0 else self.split('.')[-1]
+	extension = None if name.count('.') == 0 else name.split('.')[-1]
 
 	# Load by extension if there is any (import puppeteer.js)
 	if extension and extension in extensions_to_tag.keys():
 		# Get handle name without extension
-		handle_name = self.split('.')[-2]
+		handle_name = name.split('.')[-2]
 
 		# Check if it is already loaded in MetaCall
 		handle = find_handle(handle_name)
@@ -159,38 +168,28 @@ def __metacall_import__(self, name, globals=None, locals=None, fromlist=(), leve
 			# Generate the module from cached handle
 			return generate_module(handle_name, handle)
 
-		if metacall_load_from_file(extensions_to_tag[extension], [self]):
+		if metacall_load_from_file(extensions_to_tag[extension], [name]):
 			handle = find_handle(handle_name)
 			if handle != None:
 				# Generate the module from cached handle
 				return generate_module(handle_name, handle)
 	else:
-		# Try to load it as a Python module
-		mod = None
-
-		with suppress(ImportError):
-			# TODO: Why level is not needed? Does it depend on the Python version?
-			mod = __python_import__(self, name, globals, locals, fromlist) #, level)
-
-		if mod:
-			return mod
-
 		# Check if it is already loaded in MetaCall
-		handle = find_handle(self)
+		handle = find_handle(name)
 
 		if handle != None:
 			# Generate the module from cached handle
-			return generate_module(self, handle)
+			return generate_module(name, handle)
 
 		# Otherwhise, try to load it by guessing the loader
 		for tag in list(set(extensions_to_tag.values())):
-			if metacall_load_from_file(tag, [self]):
-				handle = find_handle(self)
+			if metacall_load_from_file(tag, [name]):
+				handle = find_handle(name)
 				if handle != None:
 					# Generate the module from cached handle
-					return generate_module(self, handle)
+					return generate_module(name, handle)
 
-	raise ImportError('MetaCall could not import:', self)
+	raise ImportError('MetaCall could not import:', name)
 
 # Override Python import
 builtins.__import__ = __metacall_import__
