@@ -35,7 +35,7 @@ const char * cs_loader_print_info()
 {
 	static const char cs_loader_info[] =
 		"Net Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef CS_LOADER_STATIC_DEFINE
 				"Compiled as static library type\n"

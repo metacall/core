@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	A plugin for loading c code at run-time into a process.
  *
- *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ const char * c_loader_print_info()
 {
 	static const char c_loader_info[] =
 		"C Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef C_LOADER_STATIC_DEFINE
 			"Compiled as static library type\n"

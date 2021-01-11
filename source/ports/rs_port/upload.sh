@@ -4,7 +4,7 @@
 #	MetaCall Rust Port Deploy Script by Parra Studios
 #	Script utility for deploying MetaCall Rust Port to Crates.
 #
-#	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.

@@ -1,6 +1,6 @@
 /*
  *	Serial Library by Parra Studios
- *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A cross-platform library for managing multiple serialization and deserialization formats.
  *
@@ -33,7 +33,7 @@ const char * metacall_serial_print_info()
 {
 	static const char metacall_serial_info[] =
 		"MetaCall Native Format Serial Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef METACALL_SERIAL_STATIC_DEFINE
 			"Compiled as static library type\n"

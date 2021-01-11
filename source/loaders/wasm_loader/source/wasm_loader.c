@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	A plugin for loading WebAssembly code at run-time into a process.
  *
- *	Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ const char * wasm_loader_print_info()
 {
 	static const char wasm_loader_info[] =
 		"WebAssembly Loader Plugin " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 		#ifdef wasm_LOADER_STATIC_DEFINE
 			"Compiled as static library type\n"
