@@ -669,8 +669,7 @@ void application::run()
 			/* Execute the command */
 			execute(t);
 		}
-
-	} while (exit_condition != true);
+	}
 }
 
 void application::shutdown()
