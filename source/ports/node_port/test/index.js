@@ -97,9 +97,9 @@ describe('metacall', () => {
 		});
 		it('require (py module)', () => {
 			// This code loads directly a module without extension from Python
-			const { loads } = require('json');
-			assert.notStrictEqual(loads, undefined);
-			assert.deepStrictEqual(loads('["foo", "bar"]'), ['foo', 'bar']);
+			const { escape } = require('html');
+			assert.notStrictEqual(escape, undefined);
+			assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
 		});
 		it('require (py submodule)', () => {
 			// This code loads directly a module without extension from Python
