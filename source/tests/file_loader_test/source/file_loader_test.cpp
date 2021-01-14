@@ -51,7 +51,7 @@ TEST_F(file_loader_test, DefaultConstructor)
 
 	EXPECT_EQ((int) 0, (int) loader_load_from_file(tag, scripts, size, NULL));
 
-	void * handle = loader_get_handle(tag, "favicon");
+	void * handle = loader_get_handle(tag, scripts[0]);
 
 	EXPECT_NE((void *) NULL, (void *) handle);
 
