@@ -52,7 +52,7 @@ const script = `#!/usr/bin/env python3
 import os
 import sys
 
-sys.path.append(os.environ['PORT_LIBRARY_PATH']);
+sys.path.append(os.environ['PY_PORT_LIBRARY_PATH']);
 
 from metacall import metacall
 

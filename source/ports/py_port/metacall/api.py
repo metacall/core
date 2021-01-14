@@ -162,14 +162,14 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		handle_name = name.split('.')[-2]
 
 		# Check if it is already loaded in MetaCall
-		handle = find_handle(handle_name)
+		handle = find_handle(name)
 
 		if handle != None:
 			# Generate the module from cached handle
 			return generate_module(handle_name, handle)
 
 		if metacall_load_from_file(extensions_to_tag[extension], [name]):
-			handle = find_handle(handle_name)
+			handle = find_handle(name)
 			if handle != None:
 				# Generate the module from cached handle
 				return generate_module(handle_name, handle)

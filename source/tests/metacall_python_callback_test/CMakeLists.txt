@@ -4,13 +4,13 @@
 
 # Check if loaders, scripts and ports are enabled
 if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE
-	OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_SCRIPTS_NODE
-	OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY OR NOT OPTION_BUILD_PORTS_NODE)
+	OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY
+	OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
 
 # Target name
-set(target metacall-callback-test)
+set(target metacall-python-callback-test)
 message(STATUS "Test ${target}")
 
 #
@@ -34,7 +34,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_callback_test.cpp
+	${source_path}/metacall_python_callback_test.cpp
 )
 
 # Group source files

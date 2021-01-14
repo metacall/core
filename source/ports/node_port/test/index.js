@@ -66,9 +66,9 @@ describe('metacall', () => {
 			it('metacall_load_from_file (cob)', () => {
 				assert.strictEqual(metacall_load_from_file('cob', [ 'say.cob' ]), undefined);
 
-				const script = metacall_handle('cob', 'say');
+				const script = metacall_handle('cob', 'say.cob');
 				assert.notStrictEqual(script, undefined);
-				assert.strictEqual(script.name, 'say');
+				assert.strictEqual(script.name, 'say.cob');
 
 				assert.strictEqual(metacall('say', 'Hello, ', 'world!'), 0);
 			});
