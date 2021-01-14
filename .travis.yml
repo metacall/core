@@ -55,8 +55,8 @@ before_script:
 
 # Run the build and packaging steps with cache
 script:
-  - $TRAVIS_BUILD_DIR/docker-compose.sh pull
-  # - $TRAVIS_BUILD_DIR/docker-compose.sh cache
+  # Try to pull the image from docker or build it (if the rate limit was hit)
+  - $TRAVIS_BUILD_DIR/docker-compose.sh pull || $TRAVIS_BUILD_DIR/docker-compose.sh cache
   - $TRAVIS_BUILD_DIR/docker-compose.sh pack
 
 # Custom script for deploying to GitHub the artifacts
