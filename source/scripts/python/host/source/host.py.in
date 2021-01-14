@@ -16,45 +16,14 @@ const path = require('path');
 
 /* Load MetaCall addon */
 const addon = (() => {
-
-	const LIBRARY_PATH = process.env.LOADER_LIBRARY_PATH;
-
-	const folders = [
-		path.join(__dirname, 'build'),
-		__dirname,
-		process.cwd(),
-		LIBRARY_PATH,
-		path.join(LIBRARY_PATH, 'build'),
-		path.join(LIBRARY_PATH, 'node_modules', 'metacall'),
-		path.join(LIBRARY_PATH, 'node_modules', 'metacall', 'build'),
-		'/usr/local/lib',
-	];
-
-	const names = [
-		'node_loaderd',
-		'node_loader',
-	];
-
-	/* Load addon */
-	return (() => {
-		for (let folder of folders) {
-			for (let name of names) {
-				try {
-					const location = path.join(folder, `${name}.node`);
-					const port = require(location);
-
-					if (port) {
-						console.log(`NodeJS Port found at location: ${location}`);
-						return port;
-					}
-				} catch (e) {
-					if (e.code !== 'MODULE_NOT_FOUND') {
-						throw e;
-					}
-				}
-			}
-		}
-	})();
+	try {
+		/* This forces metacall port to be run always by metacall cli */
+		return process.binding('node_loader_port_module');
+	} catch (e) {
+		console.error('MetaCall failed to load, probably you are importing this file from NodeJS directly.');
+		console.error('You should use MetaCall CLI instead. Install it from: https://github.com/metacall/install');
+		throw e;
+	}
 })();
 
 function b() {
