@@ -1821,7 +1821,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	{
 		loader_naming_name module_name;
 
-		loader_path_get_name(paths[iterator], module_name);
+		loader_path_get_module_name(paths[iterator], module_name, "py");
 
 		py_handle->modules[iterator].name = PyUnicode_DecodeFSDefault(module_name);
 

@@ -17,6 +17,174 @@ class loader_path_test : public testing::Test
   public:
 };
 
+TEST_F(loader_path_test, loader_path_test_path_get_module_name)
+{
+	const char base[] = "/a/b/c/asd.txt";
+	const char result[] = "asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_module_name(base, name, "txt");
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_module_name_without_extension)
+{
+	const char base[] = "/a/b/c/asd";
+	const char result[] = "asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_module_name(base, name, "txt");
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_module_name_with_random_extension)
+{
+	const char base[] = "/a/b/c/asd.etc.asd";
+	const char result[] = "asd.etc.asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_module_name(base, name, "txt");
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name)
+{
+	const char base[] = "/a/b/c/asd.txt";
+	const char result[] = "asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_end_dot)
+{
+	const char base[] = "/a/b/c/asd.";
+	const char result[] = "asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_without_dot)
+{
+	const char base[] = "/a/b/c/asd";
+	const char result[] = "asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_only_dot)
+{
+	const char base[] = "/a/b/c/.";
+	const char result[] = "";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_two_dots)
+{
+	const char base[] = "/a/b/c/..";
+	const char result[] = "";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_three_dots)
+{
+	const char base[] = "/a/b/c/...";
+	const char result[] = "";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_only_extension)
+{
+	const char base[] = "/a/b/c/.asd";
+	const char result[] = ".asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_double_extension)
+{
+	const char base[] = "/a/b/c/.asd.yes";
+	const char result[] = ".asd";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
+TEST_F(loader_path_test, loader_path_test_path_get_name_triple_extension)
+{
+	const char base[] = "/a/b/c/.asd.yes.no";
+	const char result[] = ".asd.yes";
+
+	loader_naming_name name;
+
+	size_t size = loader_path_get_name(base, name);
+
+	EXPECT_EQ((int) 0, (int) strcmp(name, result));
+	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
+	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+}
+
 TEST_F(loader_path_test, loader_path_test_get_path_of_path)
 {
 	const char base[] = "/a/b/c/";

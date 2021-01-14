@@ -46,16 +46,16 @@ describe('metacall', () => {
 		it('metacall_load_from_file (py)', () => {
 			assert.strictEqual(metacall_load_from_file('py', [ 'helloworld.py' ] ), undefined);
 
-			const script = metacall_handle('py', 'helloworld');
+			const script = metacall_handle('py', 'helloworld.py');
 			assert.notStrictEqual(script, undefined);
-			assert.strictEqual(script.name, 'helloworld');
+			assert.strictEqual(script.name, 'helloworld.py');
 		});
 		it('metacall_load_from_file (rb)', () => {
 			assert.strictEqual(metacall_load_from_file('rb', [ 'ducktype.rb' ]), undefined);
 
-			const script = metacall_handle('rb', 'ducktype');
+			const script = metacall_handle('rb', 'ducktype.rb');
 			assert.notStrictEqual(script, undefined);
-			assert.strictEqual(script.name, 'ducktype');
+			assert.strictEqual(script.name, 'ducktype.rb');
 		});
 		it('metacall_load_from_memory (py)', () => {
 			assert.strictEqual(metacall_load_from_memory('py', 'def py_memory():\n\treturn 4;\n'), undefined);
@@ -94,6 +94,18 @@ describe('metacall', () => {
 			assert.strictEqual(example.strcat('2', '2'), '22');
 			assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
 			assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
+		});
+		it('require (py module)', () => {
+			// This code loads directly a module without extension from Python
+			const { loads } = require('json');
+			assert.notStrictEqual(loads, undefined);
+			assert.deepStrictEqual(loads('["foo", "bar"]'), ['foo', 'bar']);
+		});
+		it('require (py submodule)', () => {
+			// This code loads directly a module without extension from Python
+			const { py_encode_basestring_ascii } = require('json.encoder');
+			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
+			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
 		it('require (rb)', () => {
 			const cache = require('cache.rb');

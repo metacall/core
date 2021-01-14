@@ -97,12 +97,13 @@ const metacall_handle = (tag, name) => {
 	return ctx.find(script => script.name === name);
 };
 
-const metacall_require = (tag, name, id) => {
+const metacall_require = (tag, name) => {
 	// TODO: Inspect only the handle instead of the whole metacall namespace
 	/* return */ addon.metacall_load_from_file(tag, [ name ]);
 
+
 	const inspect = metacall_inspect();
-	const script = inspect[tag].find(script => script.name === id);
+	const script = inspect[tag].find(s => s.name === name);
 	const obj = {};
 
 	for (const func of script.scope.funcs) {
@@ -164,16 +165,15 @@ mod.prototype.require = function (name) {
 	if (index !== -1) {
 		/* If there is extension, load the module depending on the tag */
 		const extension = name.substr(index + 1);
-		const id = path.basename(name.substr(0, index));
 		const tag = tags[extension];
 
 		if (tag && tag !== 'node') {
 			/* Load with MetaCall if we found a tag and it is not NodeJS */
-			return metacall_require(tag, name, id);
+			return metacall_require(tag, name);
 		}
 	}
 
-	/* If there is no extension or the extension is not supported, load it with NodeJS require */
+	/* If there is no extension or the extension is not supported or it is 'node', load it with NodeJS require */
 	try {
 		/* Cache the port */
 		if (require.resolve(name) === path.resolve(__filename)) {
@@ -182,7 +182,22 @@ mod.prototype.require = function (name) {
 		/* Call to real NodeJS require */
 		return node_require.apply(this, [ name ]);
 	} catch (e) {
-		/* Print the exception and rethrow it */
+		/* If it is not a NodeJS module, try to guess the runtime */
+		const loaders = new Set(Object.values(tags));
+
+		/* Mock and node loaders are not included */
+		loaders.delete('mock');
+		loaders.delete('node');
+
+		for (let it = loaders.values(), tag = null; tag = it.next().value; ) {
+			try {
+				return metacall_require(tag, name);
+			} catch (_) {
+				/* Keep trying with the next loader */
+			}
+		}
+
+		/* It could not be loaded */
 		console.log(e);
 		throw e;
 	}

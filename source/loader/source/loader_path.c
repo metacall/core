@@ -34,7 +34,7 @@ size_t loader_path_get_name(const loader_naming_path path, loader_naming_name na
 	size_t i, count, last;
 
 	for (i = 0, count = 0, last = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
+		i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE; ++i)
 	{
 		name[count++] = path[i];
 
@@ -44,15 +44,28 @@ size_t loader_path_get_name(const loader_naming_path path, loader_naming_name na
 		}
 		else if (path[i] == '.')
 		{
-			if (count > 0)
+			if (i > 0 && path[i - 1] == '.')
 			{
-				last = count - 1;
+				last = 0;
+				count = 0;
 			}
 			else
 			{
-				last = 0;
+				if (count > 0)
+				{
+					last = count - 1;
+				}
+				else
+				{
+					last = 0;
+				}
 			}
 		}
+	}
+
+	if (last == 0 && count > 1)
+	{
+		last = count;
 	}
 
 	name[last] = '\0';
@@ -65,7 +78,7 @@ size_t loader_path_get_fullname(const loader_naming_path path, loader_naming_nam
 	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_NAME_SIZE*/; ++i)
+		i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE; ++i)
 	{
 		name[count++] = path[i];
 
@@ -85,11 +98,11 @@ size_t loader_path_get_extension(const loader_naming_path path, loader_naming_ta
 	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE /*&& count < LOADER_NAMING_TAG_SIZE*/; ++i)
+		i < LOADER_NAMING_PATH_SIZE; ++i)
 	{
 		extension[count++] = path[i];
 
-		if (path[i] == '.')
+		if (LOADER_PATH_SEPARATOR(path[i]) || path[i] == '.' || count == LOADER_NAMING_TAG_SIZE)
 		{
 			count = 0;
 		}
@@ -98,6 +111,23 @@ size_t loader_path_get_extension(const loader_naming_path path, loader_naming_ta
 	extension[count] = '\0';
 
 	return count + 1;
+}
+
+size_t loader_path_get_module_name(const loader_naming_path path, loader_naming_name name, const loader_naming_tag extension)
+{
+	loader_naming_tag name_extension;
+
+	size_t i, size = loader_path_get_extension(path, name_extension);
+
+	for (i = 0; i < size && extension[i] != '\0'; ++i)
+	{
+		if (name_extension[i] != extension[i])
+		{
+			return loader_path_get_fullname(path, name);
+		}
+	}
+
+	return loader_path_get_name(path, name);
 }
 
 size_t loader_path_get_path(const loader_naming_path path, size_t size, loader_naming_path absolute)

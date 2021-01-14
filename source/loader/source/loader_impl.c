@@ -608,24 +608,8 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 				return 1;
 			}
 
-			/* TODO: Refactor loader_path_get_name from path 0 (for avoiding collisions of scripts): */
-			/*
-			int loader_impl_load_from_file_ex(loader_impl impl, const loader_naming_path paths[], size_t size, const char * name, size_t length, void ** handle_ptr)
-			{
-				...
-				if (name == NULL)
-				{
-					loader_path_get_name(paths[0], module_name)
-				}
-				else
-				{
-					// TODO: Name must be a generated UUID to avoid collisions
-					strncpy(module_name, name, length);
-				}
-			}
-			*/
-
-			if (loader_path_get_name(paths[0], module_name) > 1 && loader_impl_get_handle(impl, module_name) != NULL)
+			/* TODO: Refactor loader_path_get_fullname from path 0 (for avoiding collisions of scripts): */
+			if (loader_path_get_fullname(paths[0], module_name) > 1 && loader_impl_get_handle(impl, module_name) != NULL)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", module_name);
 

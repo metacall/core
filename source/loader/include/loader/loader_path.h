@@ -37,6 +37,8 @@ LOADER_API size_t loader_path_get_fullname(const loader_naming_path path, loader
 
 LOADER_API size_t loader_path_get_extension(const loader_naming_path path, loader_naming_tag extension);
 
+LOADER_API size_t loader_path_get_module_name(const loader_naming_path path, loader_naming_name name, const loader_naming_tag extension);
+
 LOADER_API size_t loader_path_get_path(const loader_naming_path path, size_t size, loader_naming_path absolute);
 
 LOADER_API size_t loader_path_get_relative(const loader_naming_path base, const loader_naming_path path, loader_naming_path relative);
