@@ -26,13 +26,13 @@ sub_pull() {
 		exit 1
 	fi
 
-	docker pull $IMAGE_NAME:deps || true
+	docker pull $IMAGE_NAME:deps && docker tag $IMAGE_NAME:deps metacall/core:deps || true
 
-	docker pull $IMAGE_NAME:dev || true
+	docker pull $IMAGE_NAME:dev && docker tag $IMAGE_NAME:dev metacall/core:dev || true
 
-	docker pull $IMAGE_NAME:runtime || true
+	docker pull $IMAGE_NAME:runtime && docker tag $IMAGE_NAME:runtime metacall/core:runtime || true
 
-	docker pull $IMAGE_NAME:cli || true
+	docker pull $IMAGE_NAME:cli && docker tag $IMAGE_NAME:cli metacall/core:cli || true
 }
 
 # Build MetaCall Docker Compose (link manually dockerignore files)
