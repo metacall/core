@@ -23,34 +23,49 @@ package metacall
 import com.sun.jna._
 import java.nio.file.Paths
 
-class size_t(value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
-  def this()  {
-    this(0)
-  }
+class SizeT(value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
+  def this() = this(0)
 }
 
 trait MetaCallBindings extends Library {
   // metacall.h
   def metacall_initialize(): Int
-  def metacall_load_from_file(tag: String, paths: Array[String], size: size_t, handle: Pointer): Int
-  def metacallv_s(name: String, args: Array[Pointer], size: size_t): Pointer
+
+  def metacall_load_from_file(
+      tag: String,
+      paths: Array[String],
+      size: SizeT,
+      handle: Pointer
+  ): Int
+
+  def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
+
   def metacall_destroy(): Int
 
   // metacall_value.h
   def metacall_value_create_int(i: Int): Pointer
-  def metacall_value_create_string(str: String, length: size_t): Pointer
+
+  def metacall_value_create_string(str: String, length: SizeT): Pointer
 
   def metacall_value_to_int(v: Pointer): Int
+
   def metacall_value_to_long(v: Pointer): Long
+
   def metacall_value_to_string(v: Pointer): String
 
   def metacall_value_from_int(v: Pointer, i: Int): Pointer
-  def metacall_value_from_string(v: Pointer, str: String, length: size_t): Pointer
 
-  def metacall_value_size(v: Pointer): size_t
-  def metacall_value_count(v: Pointer): size_t
+  def metacall_value_from_string(
+      v: Pointer,
+      str: String,
+      length: SizeT
+  ): Pointer
 
-  def metacall_value_destroy(v: Pointer)
+  def metacall_value_size(v: Pointer): SizeT
+
+  def metacall_value_count(v: Pointer): SizeT
+
+  def metacall_value_destroy(v: Pointer): Unit
 
   // TODO:
   /*
@@ -77,7 +92,7 @@ trait MetaCallBindings extends Library {
     METACALL_SIZE,
     METACALL_INVALID
   };
-  */
+   */
 
   // TODO:
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
@@ -114,7 +129,7 @@ object MetaCall {
   class Value[@specialized(String) T](str: String) extends ValuePtr(metacall.metacall_value_create_string(i)) {
 
   }
-  */
+   */
 
   if (metacall.metacall_initialize() != 0) {
     throw new RuntimeException("MetaCall could not initialize")
@@ -125,21 +140,32 @@ object MetaCall {
   )
 
   // Load the script list
-  if (metacall.metacall_load_from_file("py", paths, new size_t(paths.length), null) != 0) {
+  if (
+    metacall.metacall_load_from_file(
+      "py",
+      paths,
+      new SizeT(paths.length.toLong),
+      null
+    ) != 0
+  ) {
     throw new RuntimeException("MetaCall failed to load the script")
   }
 
   // Create array of parameters
   var args = Array(
     metacall.metacall_value_create_int(3),
-    metacall.metacall_value_create_int(5),
+    metacall.metacall_value_create_int(5)
   )
 
   // Invoke the function
-  var ret = metacall.metacallv_s("hello_sacala_from_python", args, new size_t(args.length))
+  var ret = metacall.metacallv_s(
+    "hello_sacala_from_python",
+    args,
+    new SizeT(args.length.toLong)
+  )
 
   // Note: Python uses longs, so it returns a long value
-  println("Result:", metacall.metacall_value_to_long(ret))
+  println("Result:" + metacall.metacall_value_to_long(ret))
 
   // For avoiding conversion errors, it is possible to test against metacall_value_id,
   // or there is also a casting API for dealing with it.
