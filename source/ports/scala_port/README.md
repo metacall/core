@@ -1,4 +1,4 @@
-# Metacall Scala Port
+# MetaCall Scala Port
 
 ## Setup
 
@@ -10,7 +10,6 @@ To run the tests, run `sbt test` in this README's directory.
 
 Don't forget to set these environment variables:
 ```
-LD_LIBRARY_PATH
 LOADER_SCRIPT_PATH
 LOADER_LIBRARY_PATH
 CONFIGURATION_PATH
@@ -19,4 +18,4 @@ DETOUR_LIBRARY_PATH
 PORT_LIBRARY_PATH
 ```
 
-> Note: You'll find the bindings and the code that runs on `sbt test` in `src/main/scala/Metacall.scala`.
+> Note: You'll find the bindings and the code that runs on `sbt test` in `src/main/scala/MetaCall.scala`.
