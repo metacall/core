@@ -199,7 +199,9 @@ cmake_expand_generator_expressions(DEPENDENCIES
 	$<$<BOOL:${OPTION_BUILD_LOADERS_FILE}>:file_loader>
 )
 
-add_dependencies(${target} ${DEPENDENCIES})
+if(DEPENDENCIES)
+	add_dependencies(${target} ${DEPENDENCIES})
+endif()
 
 #
 # Define test labels

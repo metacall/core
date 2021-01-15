@@ -130,7 +130,9 @@ cmake_expand_generator_expressions(DEPENDENCIES
 	$<$<BOOL:${OPTION_BUILD_LOADERS_RB}>:rb_loader>
 )
 
-add_dependencies(${target} ${DEPENDENCIES})
+if(DEPENDENCIES)
+	add_dependencies(${target} ${DEPENDENCIES})
+endif()
 
 #
 # Configure test data
