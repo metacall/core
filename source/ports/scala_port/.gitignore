@@ -4,3 +4,4 @@ target/
 .bsp/
 .metals/
 *.log
+*__pycache__/
