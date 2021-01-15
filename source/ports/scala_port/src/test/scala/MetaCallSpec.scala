@@ -22,7 +22,7 @@ class MetaCallSpec extends AnyFlatSpec {
       metacall.metacall_load_from_file(
         "py",
         scriptPaths,
-        new SizeT(scriptPaths.length.toLong),
+        SizeT(scriptPaths.length.toLong),
         null
       ) == 0,
       "MetaCall failed to load the script"
@@ -38,9 +38,9 @@ class MetaCallSpec extends AnyFlatSpec {
 
     // Invoke the function
     val retPtr = metacall.metacallv_s(
-      "hello_sacala_from_python",
+      "hello_scala_from_python",
       args,
-      new SizeT(args.length.toLong)
+      SizeT(args.length.toLong)
     )
 
     // Note: Python uses longs, so it returns a long value
@@ -52,10 +52,67 @@ class MetaCallSpec extends AnyFlatSpec {
     // or there is also a casting API for dealing with it.
 
     // Clear parameters
-    args foreach metacall.metacall_value_destroy
+    args.foreach(metacall.metacall_value_destroy)
 
     // Clear return value
-    metacall metacall_value_destroy retPtr
+    metacall.metacall_value_destroy(retPtr)
+  }
+
+  "MetaCall" should "construct/parse maps correctly" in {
+    val scalaMap = Map("one" -> 1, "two" -> 2)
+    val mcTuples = scalaMap.toArray.map { case (k, v) =>
+      metacall.metacall_value_create_array(
+        Array(
+          metacall.metacall_value_create_string(
+            k,
+            SizeT(k.getBytes().length.toLong)
+          ),
+          metacall.metacall_value_create_int(v)
+        ),
+        SizeT(2)
+      )
+    }
+
+    val mcMapPtr =
+      metacall.metacall_value_create_map(
+        mcTuples,
+        SizeT(mcTuples.length.toLong)
+      )
+
+    val mcMapValueId = metacall.metacall_value_id(mcMapPtr)
+
+    assert(mcMapValueId == 10)
+
+    val mcMap = metacall.metacall_value_to_map(mcMapPtr)
+
+    mcMap foreach (v => println(metacall.metacall_value_id(v)))
+
+    val scalaMapParsed = mcMap
+      .map(metacall.metacall_value_to_array)
+      .map {
+        case Array(keyPtr, valuePtr) => {
+          require(
+            metacall.metacall_value_id(keyPtr) == 7,
+            "Key vaue ID did not match MetaCall string ID"
+          )
+          require(
+            metacall.metacall_value_id(valuePtr) == 3,
+            "Key value ID did not match MetaCall int ID"
+          )
+
+          metacall.metacall_value_to_string(keyPtr) ->
+            metacall.metacall_value_to_int(valuePtr)
+        }
+        case tuple =>
+          fail(
+            s"Array is supposed to be a tuple of 2, found tuple of ${tuple.length}"
+          )
+      }
+      .toMap
+
+    assert(scalaMap == scalaMapParsed)
+
+    metacall.metacall_value_destroy(mcMapPtr)
   }
 
   "MetaCall" should "be destroyed successfully" in {
@@ -64,6 +121,7 @@ class MetaCallSpec extends AnyFlatSpec {
       "MetaCall was not successfully destroyed"
     )
   }
+
 }
 
 // This is a experiment I have been doing in order to implement a high level

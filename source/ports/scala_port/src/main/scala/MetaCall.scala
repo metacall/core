@@ -22,8 +22,11 @@ package metacall
 
 import com.sun.jna._
 
-class SizeT(value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
+class SizeT(val value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
   def this() = this(0)
+}
+object SizeT {
+  def apply(value: Long) = new SizeT(value)
 }
 
 trait MetaCallBindings extends Library {
@@ -46,11 +49,24 @@ trait MetaCallBindings extends Library {
 
   def metacall_value_create_string(str: String, length: SizeT): Pointer
 
+  def metacall_value_create_double(v: Double): Pointer
+
+  def metacall_value_create_array(
+      values: Array[Pointer],
+      valuesSize: SizeT
+  ): Pointer
+
+  def metacall_value_create_map(tuples: Array[Pointer], size: SizeT): Pointer
+
   def metacall_value_to_int(v: Pointer): Int
 
   def metacall_value_to_long(v: Pointer): Long
 
   def metacall_value_to_string(v: Pointer): String
+
+  def metacall_value_to_array(v: Pointer): Array[Pointer]
+
+  def metacall_value_to_map(v: Pointer): Array[Pointer]
 
   def metacall_value_from_int(v: Pointer, i: Int): Pointer
 
@@ -96,6 +112,7 @@ trait MetaCallBindings extends Library {
   // TODO:
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
 }
+
 object MetaCallBindings {
   val instance = Native.load("metacall", classOf[MetaCallBindings])
 }
