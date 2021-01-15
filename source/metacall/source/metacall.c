@@ -870,7 +870,7 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 				args[iterator] = v_array[iterator];
 			}
 
-			ret = metacallfv(f, args);
+			ret = metacallfv_s(f, args, args_count);
 
 			if (ret != NULL)
 			{

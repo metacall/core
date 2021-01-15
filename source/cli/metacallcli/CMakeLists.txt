@@ -239,6 +239,33 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		)
 	endif()
 
+	add_test(NAME ${target}-node-null
+	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined(null)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello 342521512461246!\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-node-null
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+
+	add_test(NAME ${target}-node-null-empty
+	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello 342521512461246!\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-node-null-empty
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+
+	add_test(NAME ${target}-node-null-undefined
+	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined(undefined)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"(null)\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-node-null-undefined
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+
 	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
 		add_test(NAME ${target}-py-port
 			COMMAND ${TEST_COMMAND} "echo 'load py cli-test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"1234\""
