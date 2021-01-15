@@ -33,10 +33,13 @@
 # 	https://gitlab.kitware.com/cmake/cmake/-/issues/19467
 
 macro(cmake_expand_generator_expressions output)
+	# Convert the list of parameters into a list of arguments
 	set(CMAKE_GENERATOR_EXPRESSION_LIST "${ARGN}")
 	set(GENERATOR_EXPRESSION_TEMP_PATH "${CMAKE_CURRENT_BINARY_DIR}/cmake_expand_generator_expressions")
 	string(REGEX REPLACE ";" " " CMAKE_GENERATOR_EXPRESSION_LIST "${CMAKE_GENERATOR_EXPRESSION_LIST}")
 	string(REGEX REPLACE "\n" " " CMAKE_GENERATOR_EXPRESSION_LIST "${CMAKE_GENERATOR_EXPRESSION_LIST}")
+
+	# Generate a CMake script for executing it (needs the build phase to evaluate the generator expressions)
 	set(contents
 		"file(GENERATE"
 		"	OUTPUT \"${GENERATOR_EXPRESSION_TEMP_PATH}/output.tmp\""
@@ -55,8 +58,13 @@ macro(cmake_expand_generator_expressions output)
 		"${GENERATOR_EXPRESSION_TEMP_PATH}/output.tmp"
 		GENERATED_OUTPUT
 	)
+
 	# This is to avoid possible side effects, but I decided to remove it for caching purposes
 	# file(REMOVE_RECURSE "${GENERATOR_EXPRESSION_TEMP_PATH}")
+
+	# Clean the output and generate a list
+	string(STRIP "${GENERATED_OUTPUT}" GENERATED_OUTPUT)
+	string(REGEX REPLACE "\n" "" GENERATED_OUTPUT "${GENERATED_OUTPUT}")
 	string(REGEX REPLACE " " ";" GENERATED_OUTPUT "${GENERATED_OUTPUT}")
 	set(${output} "${GENERATED_OUTPUT}")
 endmacro()

@@ -1,3 +1,8 @@
+# Check if loaders, scripts and ports are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_MOCK)
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -123,7 +128,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	py_loader
+	mock_loader
 )
 
 #

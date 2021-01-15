@@ -1,3 +1,8 @@
+# Check if loaders, scripts and ports are enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY)
+	return()
+endif()
+
 #
 # Executable name and options
 #

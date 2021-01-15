@@ -1,13 +1,13 @@
-#
-# Executable name and options
-#
-
 # Check if loaders, scripts and ports are enabled
 if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE
 	OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY
 	OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
+
+#
+# Executable name and options
+#
 
 # Target name
 set(target metacall-python-callback-test)
