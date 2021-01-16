@@ -60,7 +60,7 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "MetaCall" should "construct/parse maps correctly" in {
-    val scalaMap = Map("one" -> 1, "two" -> 2)
+    val scalaMap = Map("one" -> 1, "two" -> 2, "three" -> 3)
     val mcTuples = scalaMap.toArray.map { case (k, v) =>
       metacall.metacall_value_create_array(
         Array(
@@ -80,20 +80,20 @@ class MetaCallSpec extends AnyFlatSpec {
         SizeT(mcTuples.length.toLong)
       )
 
-    val mcMapPtrSize = metacall.metacall_value_count(mcMapPtr)
-
-    assert(mcMapPtrSize.intValue() == 2)
-
     val mcMapValueId = metacall.metacall_value_id(mcMapPtr)
-
     assert(mcMapValueId == 10)
+
+    val mcMapPtrSize = metacall.metacall_value_count(mcMapPtr)
+    assert(mcMapPtrSize.intValue() == 3)
 
     val mcMap: Array[Pointer] =
       metacall.metacall_value_to_map(mcMapPtr).take(mcMapPtrSize.intValue())
 
     val scalaMapParsed = mcMap
-      .map(metacall.metacall_value_to_array)
-      .map(_.take(2))
+      .map(pairPtr => metacall.metacall_value_to_array(pairPtr) -> pairPtr)
+      .map { case (pair, ptr) =>
+        pair.take(metacall.metacall_value_count(ptr).intValue())
+      }
       .map {
         case Array(keyPtr, valuePtr) => {
           require(
