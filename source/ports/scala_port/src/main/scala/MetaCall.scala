@@ -22,7 +22,7 @@ package metacall
 
 import com.sun.jna._
 
-class SizeT(val value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
+class SizeT(value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
   def this() = this(0)
 }
 object SizeT {

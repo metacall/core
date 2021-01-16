@@ -1,5 +1,6 @@
 package metacall
 
+import com.sun.jna._
 import java.nio.file.Paths
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -79,16 +80,20 @@ class MetaCallSpec extends AnyFlatSpec {
         SizeT(mcTuples.length.toLong)
       )
 
+    val mcMapPtrSize = metacall.metacall_value_count(mcMapPtr)
+
+    assert(mcMapPtrSize.intValue() == 2)
+
     val mcMapValueId = metacall.metacall_value_id(mcMapPtr)
 
     assert(mcMapValueId == 10)
 
-    val mcMap = metacall.metacall_value_to_map(mcMapPtr)
-
-    mcMap foreach (v => println(metacall.metacall_value_id(v)))
+    val mcMap: Array[Pointer] =
+      metacall.metacall_value_to_map(mcMapPtr).take(mcMapPtrSize.intValue())
 
     val scalaMapParsed = mcMap
       .map(metacall.metacall_value_to_array)
+      .map(_.take(2))
       .map {
         case Array(keyPtr, valuePtr) => {
           require(
