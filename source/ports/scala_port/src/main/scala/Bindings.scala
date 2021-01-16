@@ -75,8 +75,16 @@ protected[metacall] trait Bindings extends Library {
       length: SizeT
   ): Pointer
 
-  def metacall_value_size(v: Pointer): SizeT
+  /** Returns the size of the value in bytes
+    *  @param v Reference to the value
+    *  @return Size in bytes of the value
+    */
+  def metacall_value_size(v: Pointer): SizeT // in bytes
 
+  /** Returns the amount of values this value contains
+    *  @param v Reference to the value
+    *  @return Number of values @v represents
+    */
   def metacall_value_count(v: Pointer): SizeT
 
   def metacall_value_destroy(v: Pointer): Unit
