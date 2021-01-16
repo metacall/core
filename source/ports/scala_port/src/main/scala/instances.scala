@@ -42,7 +42,6 @@ object instances {
         ptr: StringPtr
     )(implicit FE: ApplicativeError[F, Throwable]): F[String] =
       Bindings.instance.metacall_value_to_string(ptr.ptr).pure[F]
-
   }
 
 }

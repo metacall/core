@@ -89,34 +89,6 @@ protected[metacall] trait Bindings extends Library {
 
   def metacall_value_destroy(v: Pointer): Unit
 
-  // TODO:
-  /*
-  enum metacall_value_id
-  {
-    METACALL_BOOL		= 0,
-    METACALL_CHAR		= 1,
-    METACALL_SHORT		= 2,
-    METACALL_INT		= 3,
-    METACALL_LONG		= 4,
-    METACALL_FLOAT		= 5,
-    METACALL_DOUBLE		= 6,
-    METACALL_STRING		= 7,
-    METACALL_BUFFER		= 8,
-    METACALL_ARRAY		= 9,
-    METACALL_MAP		= 10,
-    METACALL_PTR		= 11,
-    METACALL_FUTURE		= 12,
-    METACALL_FUNCTION	= 13,
-    METACALL_NULL		= 14,
-    METACALL_CLASS		= 15,
-    METACALL_OBJECT		= 16,
-
-    METACALL_SIZE,
-    METACALL_INVALID
-  };
-   */
-
-  // TODO:
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
 }
 private[metacall] object Bindings {
