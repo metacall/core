@@ -21,15 +21,14 @@
 package metacall
 
 import com.sun.jna._
+import util._
 
-class SizeT(value: Long) extends IntegerType(Native.SIZE_T_SIZE, value) {
-  def this() = this(0)
-}
-object SizeT {
-  def apply(value: Long) = new SizeT(value)
-}
-
-trait MetaCallBindings extends Library {
+/** Interface mirroring the MetaCall library using JNA. See:
+  * - http://java-native-access.github.io/jna/5.6.0/javadoc/overview-summary.html
+  * - https://github.com/metacall/core/blob/develop/source/metacall/include/metacall/metacall.h
+  * - https://github.com/metacall/core/blob/develop/source/metacall/include/metacall/metacall_value.h
+  */
+protected[metacall] trait Bindings extends Library {
   // metacall.h
   def metacall_initialize(): Int
 
@@ -112,7 +111,6 @@ trait MetaCallBindings extends Library {
   // TODO:
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
 }
-
-object MetaCallBindings {
-  val instance = Native.load("metacall", classOf[MetaCallBindings])
+private[metacall] object Bindings {
+  val instance = Native.load("metacall", classOf[Bindings])
 }

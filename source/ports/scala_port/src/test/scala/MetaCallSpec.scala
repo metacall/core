@@ -3,9 +3,10 @@ package metacall
 import com.sun.jna._
 import java.nio.file.Paths
 import org.scalatest.flatspec.AnyFlatSpec
+import metacall.util._
 
 class MetaCallSpec extends AnyFlatSpec {
-  val metacall = MetaCallBindings.instance
+  val metacall = Bindings.instance
 
   val scriptPaths = Array(
     Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString()
