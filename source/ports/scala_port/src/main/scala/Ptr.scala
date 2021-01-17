@@ -41,6 +41,8 @@ object Ptr {
   * ```c
   * enum metacall_value_id {
   *   ...
+  *   METACALL_BUFFER = 8,
+  *  ...
   *   METACALL_PTR		= 11,
   *   METACALL_FUTURE	 = 12,
   *   METACALL_FUNCTION	= 13,
@@ -118,7 +120,7 @@ object ArrayPtrType extends PtrType {
   val id = 9
 }
 
-private[metacall] final class MapPtr(val ptr: Pointer) extends Ptr[Array[Pointer]] {
+private[metacall] final class MapPtr(val ptr: Pointer) extends Ptr[Array[(Pointer, Pointer)]] {
   val ptrType = MapPtrType
 }
 object MapPtrType extends PtrType {

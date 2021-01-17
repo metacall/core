@@ -129,33 +129,3 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
 }
-
-// This is a experiment I have been doing in order to implement a high level
-// abstraction for Scala. The objective is to make it as trasparent as possible,
-// like if you were dealing with normal scala values. Generics can help for sure.
-
-/*
-  trait ValueLifetime {
-    def finalize()
-  }
-
-  def finalizer [T, V <: ValueLifetime] (v : V) (f : V => T) : T =
-    try f(v)
-    finally v.finalize()
-
-  abstract class ValuePtr[T](v: Pointer) extends ValueLifetime {
-    def finalize() {
-      metacall.metacall_value_destroy(v)
-    }
-  }
-
-  class Value[@specialized(Int) T](i: Int) extends ValuePtr[T](metacall.metacall_value_create_int(i)) {
-    def to_value(): T = {
-      metacall.metacall_value_to_int(v)
-    }
-  }
-
-  class Value[@specialized(String) T](str: String) extends ValuePtr(metacall.metacall_value_create_string(i)) {
-
-  }
- */

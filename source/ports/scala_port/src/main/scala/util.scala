@@ -13,9 +13,9 @@ object util {
 
   sealed class MetaCallException(message: String, val cause: Option[String])
       extends Exception(message + cause.map(" Cause: " + _).getOrElse(""))
-  class AllocationError[A](value: Option[A], cause: Option[String])(implicit S: cats.Show[A])
+  class AllocationError[A](value: Option[A], cause: Option[String])
       extends MetaCallException(
-        s"Allocation Error${value.map(v => ": Failed to allocate" + S.show(v)).getOrElse("")}",
+        s"Allocation Error${value.map(v => ": Failed to allocate" + v.toString()).getOrElse("")}",
         cause
       )
   class DestructionError(ptr: Pointer, cause: Option[String])
