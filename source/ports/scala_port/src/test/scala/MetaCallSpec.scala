@@ -3,7 +3,8 @@ package metacall
 import com.sun.jna._
 import java.nio.file.Paths
 import org.scalatest.flatspec.AnyFlatSpec
-import metacall.util._
+import cats.implicits._, cats.effect._
+import metacall.util._, metacall.instances._
 
 class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
@@ -119,6 +120,31 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(scalaMap == scalaMapParsed)
 
     metacall.metacall_value_destroy(mcMapPtr)
+  }
+
+  "Int pointer creator/getter" should "work with IO" in {
+    val intPtr = Ptr.from[Int, IntPtr, IO](22)
+    val intGetter = implicitly[Get[Int, IntPtr]]
+    intPtr
+      .evalMap(iptr => intGetter.get[IO](iptr))
+      .use { v =>
+        IO(assert(v == 22))
+      }
+      .unsafeRunSync()
+  }
+
+  "Array pointer creator/getter" should "work" in {
+    val elems = Vector("Hello", "from", "MetaCall!")
+    val arrPtr = Ptr.fromVector[String, StringPtr, IO](elems)
+    val arrayGetter = implicitly[Get[Array[Pointer], ArrayPtr]]
+
+    arrPtr
+      .evalMap(arrayGetter.get[IO])
+      .use { arr =>
+        val newElems = arr.map(metacall.metacall_value_to_string).toVector
+        IO(assert(newElems == elems))
+      }
+      .unsafeRunSync()
   }
 
   "MetaCall" should "be destroyed successfully" in {

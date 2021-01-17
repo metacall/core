@@ -5,3 +5,4 @@ target/
 .metals/
 *.log
 *__pycache__/
+!build.sbt

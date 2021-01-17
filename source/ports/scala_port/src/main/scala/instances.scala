@@ -6,8 +6,6 @@ import metacall.util._
 
 object instances {
 
-  // TODO: Tests for Array, Map, Null, Size
-
   implicit val sizeCreate =
     new Create[SizeT, SizePtr] {
       def create[F[_]](
@@ -54,7 +52,7 @@ object instances {
   implicit val intCreate =
     new Create[Int, IntPtr] {
       def create[F[_]](
-          value: Int
+          @specialized value: Int
       )(implicit FE: ApplicativeError[F, Throwable]): F[IntPtr] = {
         val ptr = Bindings.instance.metacall_value_create_int(value)
 

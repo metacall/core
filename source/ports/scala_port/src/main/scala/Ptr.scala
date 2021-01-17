@@ -2,7 +2,7 @@ package metacall
 
 import metacall.util._
 import com.sun.jna._
-import cats._, cats.effect._
+import cats._, cats.implicits._, cats.effect._
 
 /** Type class for creating pointers to MetaCall values */
 trait Create[A, P <: Ptr[A]] {
@@ -23,15 +23,28 @@ object Ptr {
   /** Create a managed pointer to a MetaCall value */
   def from[A, P <: Ptr[A], F[_]](value: A)(implicit
       FE: ApplicativeError[F, Throwable],
+      FD: Defer[F],
       C: Create[A, P]
   ): Resource[F, P] =
     Resource.make(C.create[F](value)) { v =>
-      try FE.pure(Bindings.instance.metacall_value_destroy(v.ptr))
-      catch {
-        case e: Throwable =>
-          FE.raiseError(new DestructionError(v.ptr, Some(e.getMessage())))
+      FD.defer {
+        try FE.pure(Bindings.instance.metacall_value_destroy(v.ptr))
+        catch {
+          case e: Throwable =>
+            FE.raiseError(new DestructionError(v.ptr, Some(e.getMessage())))
+        }
       }
     }
+
+  def fromVector[A, P <: Ptr[A], F[_]](vec: Vector[A])(implicit
+      FE: ApplicativeError[F, Throwable],
+      FD: Defer[F],
+      CA: Create[A, P],
+      CR: Create[Array[Pointer], ArrayPtr]
+  ): Resource[F, ArrayPtr] = {
+    val elemPtrs = vec.traverse(a => CA.create[F](a).map(_.ptr))
+    Resource.suspend(elemPtrs.map(_.toArray).map(from[Array[Pointer], ArrayPtr, F]))
+  }
 
 }
 
@@ -120,7 +133,8 @@ object ArrayPtrType extends PtrType {
   val id = 9
 }
 
-private[metacall] final class MapPtr(val ptr: Pointer) extends Ptr[Array[(Pointer, Pointer)]] {
+private[metacall] final class MapPtr(val ptr: Pointer)
+    extends Ptr[Array[(Pointer, Pointer)]] {
   val ptrType = MapPtrType
 }
 object MapPtrType extends PtrType {
