@@ -5,15 +5,16 @@ import com.sun.jna._
 import cats._, cats.implicits._, cats.effect._
 
 /** Type class for creating pointers to MetaCall values */
-trait Create[A, P <: Ptr[A]] {
-  def create[F[_]](value: A)(implicit FE: ApplicativeError[F, Throwable]): F[P]
+trait Create[A] {
+  def create[F[_]](value: A)(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[A]]
 }
 
-trait Get[A, P <: Ptr[A]] {
-  def get[F[_]](ptr: P)(implicit FE: ApplicativeError[F, Throwable]): F[A]
+/** Gets the value of a [[Ptr]] in its primitive representation [[A]]. */
+trait Get[A] {
+  def get[F[_]](ptr: Ptr[A])(implicit FE: ApplicativeError[F, Throwable]): F[A]
 }
 
-/** Represents a native pointer */
+/** Represents a native pointer. */
 sealed trait Ptr[A] {
   val ptr: Pointer
   val ptrType: PtrType
@@ -21,11 +22,11 @@ sealed trait Ptr[A] {
 object Ptr {
 
   /** Create a managed pointer to a MetaCall value */
-  def from[A, P <: Ptr[A], F[_]](value: A)(implicit
+  def from[A, F[_]](value: A)(implicit
       FE: ApplicativeError[F, Throwable],
       FD: Defer[F],
-      C: Create[A, P]
-  ): Resource[F, P] =
+      C: Create[A]
+  ): Resource[F, Ptr[A]] =
     Resource.make(C.create[F](value)) { v =>
       FD.defer {
         try FE.pure(Bindings.instance.metacall_value_destroy(v.ptr))
@@ -36,14 +37,14 @@ object Ptr {
       }
     }
 
-  def fromVector[A, P <: Ptr[A], F[_]](vec: Vector[A])(implicit
+  def fromVector[A, F[_]](vec: Vector[A])(implicit
       FE: ApplicativeError[F, Throwable],
       FD: Defer[F],
-      CA: Create[A, P],
-      CR: Create[Array[Pointer], ArrayPtr]
-  ): Resource[F, ArrayPtr] = {
+      CA: Create[A],
+      CR: Create[Array[Pointer]]
+  ): Resource[F, Ptr[Array[Pointer]]] = {
     val elemPtrs = vec.traverse(a => CA.create[F](a).map(_.ptr))
-    Resource.suspend(elemPtrs.map(_.toArray).map(from[Array[Pointer], ArrayPtr, F]))
+    Resource.suspend(elemPtrs.map(_.toArray).map(from[Array[Pointer], F]))
   }
 
 }

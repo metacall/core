@@ -123,8 +123,8 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "Int pointer creator/getter" should "work with IO" in {
-    val intPtr = Ptr.from[Int, IntPtr, IO](22)
-    val intGetter = implicitly[Get[Int, IntPtr]]
+    val intPtr = Ptr.from[Int, IO](22)
+    val intGetter = implicitly[Get[Int]]
     intPtr
       .evalMap(iptr => intGetter.get[IO](iptr))
       .use { v =>
@@ -135,8 +135,8 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "Array pointer creator/getter" should "work" in {
     val elems = Vector("Hello", "from", "MetaCall!")
-    val arrPtr = Ptr.fromVector[String, StringPtr, IO](elems)
-    val arrayGetter = implicitly[Get[Array[Pointer], ArrayPtr]]
+    val arrPtr = Ptr.fromVector[String, IO](elems)
+    val arrayGetter = implicitly[Get[Array[Pointer]]]
 
     arrPtr
       .evalMap(arrayGetter.get[IO])

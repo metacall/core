@@ -7,10 +7,10 @@ import metacall.util._
 object instances {
 
   implicit val sizeCreate =
-    new Create[SizeT, SizePtr] {
+    new Create[SizeT] {
       def create[F[_]](
           value: SizeT
-      )(implicit FE: ApplicativeError[F, Throwable]): F[SizePtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[SizeT]] = {
         val ptr = Bindings.instance.metacall_value_create_long(value.longValue())
 
         if (isNull(ptr))
@@ -20,219 +20,227 @@ object instances {
               Some("Pointer to value was null")
             )
           )
-        else new SizePtr(ptr).pure[F]
+        else new SizePtr(ptr).pure[F].widen[Ptr[SizeT]]
       }
     }
 
-  implicit val sizeGet = new Get[SizeT, SizePtr] {
-    def get[F[_]](ptr: SizePtr)(implicit FE: ApplicativeError[F, Throwable]): F[SizeT] =
+  implicit val sizeGet = new Get[SizeT] {
+    def get[F[_]](ptr: Ptr[SizeT])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[SizeT] =
       SizeT(Bindings.instance.metacall_value_to_long(ptr.ptr)).pure[F]
   }
 
   implicit val nullCreate =
-    new Create[Null, NullPtr] {
+    new Create[Null] {
       def create[F[_]](
           value: Null
-      )(implicit FE: ApplicativeError[F, Throwable]): F[NullPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Null]] = {
         val ptr = Bindings.instance.metacall_value_create_null()
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(None, Some("Pointer to value was null"))
           )
-        else new NullPtr(ptr).pure[F]
+        else new NullPtr(ptr).pure[F].widen[Ptr[Null]]
       }
     }
 
-  implicit val nullGet = new Get[SizeT, SizePtr] {
-    def get[F[_]](ptr: SizePtr)(implicit FE: ApplicativeError[F, Throwable]): F[SizeT] =
+  implicit val nullGet = new Get[Null] {
+    def get[F[_]](ptr: Ptr[Null])(implicit FE: ApplicativeError[F, Throwable]): F[Null] =
       Applicative[F].pure(Bindings.instance.metacall_value_to_null(ptr.ptr))
   }
 
   implicit val intCreate =
-    new Create[Int, IntPtr] {
+    new Create[Int] {
       def create[F[_]](
           @specialized value: Int
-      )(implicit FE: ApplicativeError[F, Throwable]): F[IntPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Int]] = {
         val ptr = Bindings.instance.metacall_value_create_int(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new IntPtr(ptr).pure[F]
+        else new IntPtr(ptr).pure[F].widen[Ptr[Int]]
       }
     }
 
-  implicit val intGet = new Get[Int, IntPtr] {
-    def get[F[_]](ptr: IntPtr)(implicit FE: ApplicativeError[F, Throwable]): F[Int] =
+  implicit val intGet = new Get[Int] {
+    def get[F[_]](ptr: Ptr[Int])(implicit FE: ApplicativeError[F, Throwable]): F[Int] =
       Bindings.instance.metacall_value_to_int(ptr.ptr).pure[F]
   }
 
   implicit val longCreate =
-    new Create[Long, LongPtr] {
+    new Create[Long] {
       def create[F[_]](
           value: Long
-      )(implicit FE: ApplicativeError[F, Throwable]): F[LongPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Long]] = {
         val ptr = Bindings.instance.metacall_value_create_long(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new LongPtr(ptr).pure[F]
+        else new LongPtr(ptr).pure[F].widen[Ptr[Long]]
       }
     }
 
-  implicit val longGet = new Get[Long, LongPtr] {
-    def get[F[_]](ptr: LongPtr)(implicit FE: ApplicativeError[F, Throwable]): F[Long] =
+  implicit val longGet = new Get[Long] {
+    def get[F[_]](ptr: Ptr[Long])(implicit FE: ApplicativeError[F, Throwable]): F[Long] =
       Bindings.instance.metacall_value_to_long(ptr.ptr).pure[F]
   }
 
   implicit val shortCreate =
-    new Create[Short, ShortPtr] {
+    new Create[Short] {
       def create[F[_]](
           value: Short
-      )(implicit FE: ApplicativeError[F, Throwable]): F[ShortPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Short]] = {
         val ptr = Bindings.instance.metacall_value_create_short(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new ShortPtr(ptr).pure[F]
+        else new ShortPtr(ptr).pure[F].widen[Ptr[Short]]
       }
     }
 
-  implicit val shortGet = new Get[Short, ShortPtr] {
-    def get[F[_]](ptr: ShortPtr)(implicit FE: ApplicativeError[F, Throwable]): F[Short] =
+  implicit val shortGet = new Get[Short] {
+    def get[F[_]](ptr: Ptr[Short])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Short] =
       Bindings.instance.metacall_value_to_short(ptr.ptr).pure[F]
   }
 
   implicit val floatCreate =
-    new Create[Float, FloatPtr] {
+    new Create[Float] {
       def create[F[_]](
           value: Float
-      )(implicit FE: ApplicativeError[F, Throwable]): F[FloatPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Float]] = {
         val ptr = Bindings.instance.metacall_value_create_float(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new FloatPtr(ptr).pure[F]
+        else new FloatPtr(ptr).pure[F].widen[Ptr[Float]]
       }
     }
 
-  implicit val floatGet = new Get[Float, FloatPtr] {
-    def get[F[_]](ptr: FloatPtr)(implicit FE: ApplicativeError[F, Throwable]): F[Float] =
+  implicit val floatGet = new Get[Float] {
+    def get[F[_]](ptr: Ptr[Float])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Float] =
       Bindings.instance.metacall_value_to_float(ptr.ptr).pure[F]
   }
 
   implicit val doubleCreate =
-    new Create[Double, DoublePtr] {
+    new Create[Double] {
       def create[F[_]](
           value: Double
-      )(implicit FE: ApplicativeError[F, Throwable]): F[DoublePtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Double]] = {
         val ptr = Bindings.instance.metacall_value_create_double(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new DoublePtr(ptr).pure[F]
+        else new DoublePtr(ptr).pure[F].widen[Ptr[Double]]
       }
     }
 
-  implicit val doubleGet = new Get[Double, DoublePtr] {
-    def get[F[_]](ptr: DoublePtr)(implicit
+  implicit val doubleGet = new Get[Double] {
+    def get[F[_]](ptr: Ptr[Double])(implicit
         FE: ApplicativeError[F, Throwable]
     ): F[Double] =
       Bindings.instance.metacall_value_to_double(ptr.ptr).pure[F]
   }
 
   implicit val boolCreate =
-    new Create[Boolean, BoolPtr] {
+    new Create[Boolean] {
       def create[F[_]](
           value: Boolean
-      )(implicit FE: ApplicativeError[F, Throwable]): F[BoolPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Boolean]] = {
         val ptr = Bindings.instance.metacall_value_create_bool(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new BoolPtr(ptr).pure[F]
+        else new BoolPtr(ptr).pure[F].widen[Ptr[Boolean]]
       }
     }
 
-  implicit val boolGet = new Get[Boolean, BoolPtr] {
-    def get[F[_]](ptr: BoolPtr)(implicit FE: ApplicativeError[F, Throwable]): F[Boolean] =
+  implicit val boolGet = new Get[Boolean] {
+    def get[F[_]](ptr: Ptr[Boolean])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Boolean] =
       Bindings.instance.metacall_value_to_bool(ptr.ptr).pure[F]
   }
 
   implicit val charCreate =
-    new Create[Char, CharPtr] {
+    new Create[Char] {
       def create[F[_]](
           value: Char
-      )(implicit FE: ApplicativeError[F, Throwable]): F[CharPtr] = {
+      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Char]] = {
         val ptr = Bindings.instance.metacall_value_create_char(value)
 
         if (isNull(ptr))
           FE.raiseError(
             new AllocationError(Some(value), Some("Pointer to value was null"))
           )
-        else new CharPtr(ptr).pure[F]
+        else new CharPtr(ptr).pure[F].widen[Ptr[Char]]
       }
     }
 
-  implicit val charGet = new Get[Char, CharPtr] {
-    def get[F[_]](ptr: CharPtr)(implicit FE: ApplicativeError[F, Throwable]): F[Char] =
+  implicit val charGet = new Get[Char] {
+    def get[F[_]](ptr: Ptr[Char])(implicit FE: ApplicativeError[F, Throwable]): F[Char] =
       Bindings.instance.metacall_value_to_char(ptr.ptr).pure[F]
   }
 
-  implicit val stringCreate = new Create[String, StringPtr] {
+  implicit val stringCreate = new Create[String] {
     def create[F[_]](
         value: String
-    )(implicit FE: ApplicativeError[F, Throwable]): F[StringPtr] =
+    )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[String]] =
       new StringPtr(
         Bindings.instance.metacall_value_create_string(
           value,
           SizeT(value.getBytes().length.toLong)
         )
-      ).pure[F]
+      ).pure[F].widen[Ptr[String]]
   }
 
-  implicit val stringGet = new Get[String, StringPtr] {
+  implicit val stringGet = new Get[String] {
     def get[F[_]](
-        ptr: StringPtr
+        ptr: Ptr[String]
     )(implicit FE: ApplicativeError[F, Throwable]): F[String] =
       Bindings.instance.metacall_value_to_string(ptr.ptr).pure[F]
   }
 
-  implicit val arrayCreate = new Create[Array[Pointer], ArrayPtr] {
+  implicit val arrayCreate = new Create[Array[Pointer]] {
     def create[F[_]](
         value: Array[Pointer]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[ArrayPtr] =
+    )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Array[Pointer]]] =
       new ArrayPtr(
         Bindings.instance
           .metacall_value_create_array(value, SizeT(value.length.toLong))
-      ).pure[F]
+      ).pure[F].widen[Ptr[Array[Pointer]]]
   }
 
-  implicit val arrayGet = new Get[Array[Pointer], ArrayPtr] {
+  implicit val arrayGet = new Get[Array[Pointer]] {
     def get[F[_]](
-        ptr: ArrayPtr
+        ptr: Ptr[Array[Pointer]]
     )(implicit FE: ApplicativeError[F, Throwable]): F[Array[Pointer]] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
       Bindings.instance.metacall_value_to_array(ptr.ptr).take(dataSize.intValue()).pure[F]
     }
   }
 
-  implicit val mapCreate = new Create[Array[(Pointer, Pointer)], MapPtr] {
+  implicit val mapCreate = new Create[Array[(Pointer, Pointer)]] {
     def create[F[_]](
         value: Array[(Pointer, Pointer)]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[MapPtr] =
+    )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Array[(Pointer, Pointer)]]] =
       new MapPtr(
         Bindings.instance
           .metacall_value_create_map(
@@ -242,12 +250,12 @@ object instances {
             },
             SizeT(value.length.toLong)
           )
-      ).pure[F]
+      ).pure[F].widen[Ptr[Array[(Pointer, Pointer)]]]
   }
 
-  implicit val mapGet = new Get[Array[(Pointer, Pointer)], MapPtr] {
+  implicit val mapGet = new Get[Array[(Pointer, Pointer)]] {
     def get[F[_]](
-        ptr: MapPtr
+        ptr: Ptr[Array[(Pointer, Pointer)]]
     )(implicit FE: ApplicativeError[F, Throwable]): F[Array[(Pointer, Pointer)]] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
       val tuplePtrs =
