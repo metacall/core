@@ -4,14 +4,26 @@ import metacall.util._
 import com.sun.jna._
 import cats._, cats.implicits._, cats.effect._
 
-/** Type class for creating pointers to MetaCall values */
+/** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {
   def create[F[_]](value: A)(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[A]]
 }
+object Create {
+  def apply[A](implicit C: Create[A]) = C
+}
 
-/** Gets the value of a [[Ptr]] in its primitive representation [[A]]. */
+/** Gets the value of a [[Ptr]]. */
 trait Get[A] {
-  def get[F[_]](ptr: Ptr[A])(implicit FE: ApplicativeError[F, Throwable]): F[A]
+
+  /** Get the primitive representation of the pointer's value */
+  def primitive[F[_]](ptr: Ptr[A])(implicit FE: ApplicativeError[F, Throwable]): F[A]
+
+  /** Get the pointer's high-level [[metacall.Value]] representation */
+  def value[F[_]](ptr: Ptr[A])(implicit FE: ApplicativeError[F, Throwable]): F[Value]
+
+}
+object Get {
+  def apply[A](implicit G: Get[A]) = G
 }
 
 /** Represents a native pointer. */
@@ -37,6 +49,7 @@ object Ptr {
       }
     }
 
+  /** Create a managed pointer to an array containing the values */
   def fromVector[A, F[_]](vec: Vector[A])(implicit
       FE: ApplicativeError[F, Throwable],
       FD: Defer[F],
@@ -45,6 +58,49 @@ object Ptr {
   ): Resource[F, Ptr[Array[Pointer]]] = {
     val elemPtrs = vec.traverse(a => CA.create[F](a).map(_.ptr))
     Resource.suspend(elemPtrs.map(_.toArray).map(from[Array[Pointer], F]))
+  }
+
+  import metacall.instances._
+
+  private[metacall] def fromValueUnsafe[F[_]](v: Value)(implicit
+      FE: MonadError[F, Throwable]
+  ): F[Ptr[_]] = v match {
+    case CharValue(value)    => Create[Char].create[F](value).widen[Ptr[_]]
+    case StringValue(value)  => Create[String].create[F](value).widen[Ptr[_]]
+    case ShortValue(value)   => Create[Short].create[F](value).widen[Ptr[_]]
+    case IntValue(value)     => Create[Int].create[F](value).widen[Ptr[_]]
+    case LongValue(value)    => Create[Long].create[F](value).widen[Ptr[_]]
+    case FloatValue(value)   => Create[Float].create[F](value).widen[Ptr[_]]
+    case DoubleValue(value)  => Create[Double].create[F](value).widen[Ptr[_]]
+    case SizeTValue(value)   => Create[SizeT].create[F](SizeT(value)).widen[Ptr[_]]
+    case BooleanValue(value) => Create[Boolean].create[F](value).widen[Ptr[_]]
+    case ArrayValue(value) => {
+      val elemPtrs = value.traverse(fromValueUnsafe[F](_).map(_.ptr)).map(_.toArray)
+      elemPtrs.flatMap(Create[Array[Pointer]].create[F](_)(FE).widen[Ptr[_]])
+    }
+    case MapValue(value) => {
+      val tuplePtrs = value.toVector
+        .traverse { case (k, v) =>
+          (fromValueUnsafe[F](k) product fromValueUnsafe[F](v))
+            .map { case (p1, p2) => p1.ptr -> p2.ptr }
+        }
+        .map(_.toArray)
+      tuplePtrs.flatMap(Create[Array[(Pointer, Pointer)]].create[F]).widen[Ptr[_]]
+    }
+    case NullValue => Create[Null].create[F](null).widen[Ptr[_]]
+  }
+
+  def fromValue[F[_]](v: Value)(implicit
+      FE: MonadError[F, Throwable],
+      FD: Defer[F]
+  ): Resource[F, Ptr[_]] = Resource.make(fromValueUnsafe[F](v)) { v =>
+    FD.defer {
+      try FE.pure(Bindings.instance.metacall_value_destroy(v.ptr))
+      catch {
+        case e: Throwable =>
+          FE.raiseError(new DestructionError(v.ptr, Some(e.getMessage())))
+      }
+    }
   }
 
 }
@@ -69,6 +125,26 @@ object Ptr {
   */
 sealed trait PtrType {
   val id: Int
+}
+object PtrType {
+  def of(ptr: Pointer): PtrType =
+    if (isNull(ptr)) InvalidPtrType
+    else
+      Bindings.instance.metacall_value_id(ptr) match {
+        case 0  => BoolPtrType
+        case 1  => CharPtrType
+        case 2  => ShortPtrType
+        case 3  => IntPtrType
+        case 4  => LongPtrType
+        case 5  => FloatPtrType
+        case 6  => DoublePtrType
+        case 7  => StringPtrType
+        case 9  => ArrayPtrType
+        case 10 => MapPtrType
+        case 14 => NullPtrType
+        case 17 => SizePtrType
+        case _  => InvalidPtrType
+      }
 }
 
 private[metacall] final class BoolPtr(val ptr: Pointer) extends Ptr[Boolean] {

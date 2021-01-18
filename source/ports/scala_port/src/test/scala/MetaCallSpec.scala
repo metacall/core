@@ -126,7 +126,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val intPtr = Ptr.from[Int, IO](22)
     val intGetter = implicitly[Get[Int]]
     intPtr
-      .evalMap(iptr => intGetter.get[IO](iptr))
+      .evalMap(iptr => intGetter.primitive[IO](iptr))
       .use { v =>
         IO(assert(v == 22))
       }
@@ -139,7 +139,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val arrayGetter = implicitly[Get[Array[Pointer]]]
 
     arrPtr
-      .evalMap(arrayGetter.get[IO])
+      .evalMap(arrayGetter.primitive[IO])
       .use { arr =>
         val newElems = arr.map(metacall.metacall_value_to_string).toVector
         IO(assert(newElems == elems))

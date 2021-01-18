@@ -25,10 +25,14 @@ object instances {
     }
 
   implicit val sizeGet = new Get[SizeT] {
-    def get[F[_]](ptr: Ptr[SizeT])(implicit
+    def primitive[F[_]](ptr: Ptr[SizeT])(implicit
         FE: ApplicativeError[F, Throwable]
     ): F[SizeT] =
       SizeT(Bindings.instance.metacall_value_to_long(ptr.ptr)).pure[F]
+
+    def value[F[_]](ptr: Ptr[SizeT])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(p => SizeTValue(p.longValue()))
   }
 
   implicit val nullCreate =
@@ -47,8 +51,14 @@ object instances {
     }
 
   implicit val nullGet = new Get[Null] {
-    def get[F[_]](ptr: Ptr[Null])(implicit FE: ApplicativeError[F, Throwable]): F[Null] =
+    def primitive[F[_]](ptr: Ptr[Null])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Null] =
       Applicative[F].pure(Bindings.instance.metacall_value_to_null(ptr.ptr))
+
+    def value[F[_]](ptr: Ptr[Null])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = NullValue.pure[F].widen[Value]
   }
 
   implicit val intCreate =
@@ -67,8 +77,14 @@ object instances {
     }
 
   implicit val intGet = new Get[Int] {
-    def get[F[_]](ptr: Ptr[Int])(implicit FE: ApplicativeError[F, Throwable]): F[Int] =
+    def primitive[F[_]](ptr: Ptr[Int])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Int] =
       Bindings.instance.metacall_value_to_int(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Int])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(IntValue.apply)
   }
 
   implicit val longCreate =
@@ -87,8 +103,14 @@ object instances {
     }
 
   implicit val longGet = new Get[Long] {
-    def get[F[_]](ptr: Ptr[Long])(implicit FE: ApplicativeError[F, Throwable]): F[Long] =
+    def primitive[F[_]](ptr: Ptr[Long])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Long] =
       Bindings.instance.metacall_value_to_long(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Long])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(LongValue.apply)
   }
 
   implicit val shortCreate =
@@ -107,10 +129,14 @@ object instances {
     }
 
   implicit val shortGet = new Get[Short] {
-    def get[F[_]](ptr: Ptr[Short])(implicit
+    def primitive[F[_]](ptr: Ptr[Short])(implicit
         FE: ApplicativeError[F, Throwable]
     ): F[Short] =
       Bindings.instance.metacall_value_to_short(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Short])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(ShortValue.apply)
   }
 
   implicit val floatCreate =
@@ -129,10 +155,14 @@ object instances {
     }
 
   implicit val floatGet = new Get[Float] {
-    def get[F[_]](ptr: Ptr[Float])(implicit
+    def primitive[F[_]](ptr: Ptr[Float])(implicit
         FE: ApplicativeError[F, Throwable]
     ): F[Float] =
       Bindings.instance.metacall_value_to_float(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Float])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(FloatValue.apply)
   }
 
   implicit val doubleCreate =
@@ -151,10 +181,14 @@ object instances {
     }
 
   implicit val doubleGet = new Get[Double] {
-    def get[F[_]](ptr: Ptr[Double])(implicit
+    def primitive[F[_]](ptr: Ptr[Double])(implicit
         FE: ApplicativeError[F, Throwable]
     ): F[Double] =
       Bindings.instance.metacall_value_to_double(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Double])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(DoubleValue.apply)
   }
 
   implicit val boolCreate =
@@ -173,10 +207,14 @@ object instances {
     }
 
   implicit val boolGet = new Get[Boolean] {
-    def get[F[_]](ptr: Ptr[Boolean])(implicit
+    def primitive[F[_]](ptr: Ptr[Boolean])(implicit
         FE: ApplicativeError[F, Throwable]
     ): F[Boolean] =
       Bindings.instance.metacall_value_to_bool(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Boolean])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(BooleanValue.apply)
   }
 
   implicit val charCreate =
@@ -195,8 +233,14 @@ object instances {
     }
 
   implicit val charGet = new Get[Char] {
-    def get[F[_]](ptr: Ptr[Char])(implicit FE: ApplicativeError[F, Throwable]): F[Char] =
+    def primitive[F[_]](ptr: Ptr[Char])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Char] =
       Bindings.instance.metacall_value_to_char(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[Char])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(CharValue.apply)
   }
 
   implicit val stringCreate = new Create[String] {
@@ -212,10 +256,14 @@ object instances {
   }
 
   implicit val stringGet = new Get[String] {
-    def get[F[_]](
+    def primitive[F[_]](
         ptr: Ptr[String]
     )(implicit FE: ApplicativeError[F, Throwable]): F[String] =
       Bindings.instance.metacall_value_to_string(ptr.ptr).pure[F]
+
+    def value[F[_]](ptr: Ptr[String])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = primitive[F](ptr).map(StringValue.apply)
   }
 
   implicit val arrayCreate = new Create[Array[Pointer]] {
@@ -229,12 +277,16 @@ object instances {
   }
 
   implicit val arrayGet = new Get[Array[Pointer]] {
-    def get[F[_]](
+    def primitive[F[_]](
         ptr: Ptr[Array[Pointer]]
     )(implicit FE: ApplicativeError[F, Throwable]): F[Array[Pointer]] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
       Bindings.instance.metacall_value_to_array(ptr.ptr).take(dataSize.intValue()).pure[F]
     }
+
+    def value[F[_]](ptr: Ptr[Array[Pointer]])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = ???
   }
 
   implicit val mapCreate = new Create[Array[(Pointer, Pointer)]] {
@@ -254,7 +306,7 @@ object instances {
   }
 
   implicit val mapGet = new Get[Array[(Pointer, Pointer)]] {
-    def get[F[_]](
+    def primitive[F[_]](
         ptr: Ptr[Array[(Pointer, Pointer)]]
     )(implicit FE: ApplicativeError[F, Throwable]): F[Array[(Pointer, Pointer)]] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
@@ -269,6 +321,10 @@ object instances {
         }
         .map(_.toArray)
     }
+
+    def value[F[_]](ptr: Ptr[Array[(Pointer, Pointer)]])(implicit
+        FE: ApplicativeError[F, Throwable]
+    ): F[Value] = ???
   }
 
 }
