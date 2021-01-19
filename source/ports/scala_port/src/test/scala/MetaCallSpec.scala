@@ -148,30 +148,40 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "Pointers" should "be created/retrieved correctly from Values" in {
-    val valuePtrs = List(
-      Ptr.fromValue[IO](IntValue(567)),
-      Ptr.fromValue[IO](IntValue(Int.MaxValue)),
-      Ptr.fromValue[IO](IntValue(Int.MinValue)),
-      Ptr.fromValue[IO](FloatValue(11.22f)),
-      Ptr.fromValue[IO](DoubleValue(1234.5678)),
-      Ptr.fromValue[IO](DoubleValue(Double.MaxValue)),
-      Ptr.fromValue[IO](DoubleValue(Double.MinValue)),
-      Ptr.fromValue[IO](LongValue(1234567890)),
-      Ptr.fromValue[IO](LongValue(Long.MaxValue)),
-      Ptr.fromValue[IO](LongValue(Long.MinValue)),
-      Ptr.fromValue[IO](StringValue("Helloooo")),
-      Ptr.fromValue[IO](CharValue('j')),
-      Ptr.fromValue[IO](StringValue("😍 🔥 ⚡")),
-      Ptr.fromValue[IO](BooleanValue(true)),
-      Ptr.fromValue[IO](NullValue),
-      // Ptr.fromValue[IO](ArrayValue(Vector(IntValue(1), StringValue("Hi"))))
-    ).sequence
+    val values: List[Value] = List(
+      IntValue(567),
+      IntValue(Int.MaxValue),
+      IntValue(Int.MinValue),
+      FloatValue(11.22f),
+      DoubleValue(1234.5678),
+      DoubleValue(Double.MaxValue),
+      DoubleValue(Double.MinValue),
+      LongValue(1234567890),
+      LongValue(Long.MaxValue),
+      LongValue(Long.MinValue),
+      StringValue("Helloooo"),
+      CharValue('j'),
+      StringValue("😍 🔥 ⚡"),
+      BooleanValue(true),
+      NullValue,
+      ArrayValue(Vector(IntValue(1), StringValue("Hi"))),
+      MapValue(
+        Map(
+          StringValue("1") -> IntValue(1),
+          StringValue("2") -> IntValue(2),
+          StringValue("3") -> IntValue(3)
+        )
+      )
+    )
 
-    val values = valuePtrs.evalMap(_.traverse(Ptr.toValue[IO]))
+    val valuePtrs = values.traverse(Ptr.fromValue[IO])
 
-    values
+    val parsedValues = valuePtrs.evalMap(_.traverse(Ptr.toValue[IO]))
+
+    parsedValues
       .use { vs =>
-        IO(pprint.pprintln(vs))
+        assert(values == vs)
+        IO.unit
       }
       .unsafeRunSync()
   }

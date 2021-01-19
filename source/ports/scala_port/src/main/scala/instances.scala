@@ -287,14 +287,12 @@ object instances {
     def value[F[_]](ptr: Ptr[Array[Pointer]])(implicit
         FE: MonadError[F, Throwable]
     ): F[Value] = {
-      val elements = primitive[F](ptr).map { arr =>
-        arr.toVector.map(Ptr.fromPrimitive[F])
-      }
-      // if value_create never fails, make create return a Ptr not in F
-      // The alternative (keeping Ptrs in F) requires F to have MonadError
-      // so that you can flatMap it to get a Vector[Ptr[_]]
+      val elements = primitive[F](ptr)
+        .flatMap(_.toVector.traverse(Ptr.fromPrimitive[F]))
+        .flatMap(_.traverse(ptr => Ptr.toValue(ptr)(FE)))
+        .map(ArrayValue.apply)
+        .widen[Value]
       elements
-      ???
     }
   }
 
@@ -323,6 +321,7 @@ object instances {
         Bindings.instance.metacall_value_to_map(ptr.ptr).take(dataSize.intValue())
       tuplePtrs.toVector
         .map(Bindings.instance.metacall_value_to_array)
+        .map(_.take(2))
         .traverse {
           case Array(k, v) => (k, v).pure[F]
           case _ =>
@@ -333,7 +332,23 @@ object instances {
 
     def value[F[_]](ptr: Ptr[Array[(Pointer, Pointer)]])(implicit
         FE: MonadError[F, Throwable]
-    ): F[Value] = ???
+    ): F[Value] = {
+      val elements = primitive[F](ptr)
+        .flatMap(_.toVector.traverse { case (kPtr, vPtr) =>
+          Ptr
+            .fromPrimitive[F](kPtr)
+            .flatMap(kPtr => Ptr.fromPrimitive[F](vPtr).map(vPtr => kPtr -> vPtr))
+        })
+        .flatMap {
+          _.traverse { case (kPtr, vPtr) =>
+            Ptr.toValue(kPtr)(FE).flatMap(k => Ptr.toValue(vPtr)(FE).map(v => k -> v))
+          }
+        }
+        .map(_.toMap)
+        .map(MapValue.apply)
+        .widen[Value]
+      elements
+    }
   }
 
 }
