@@ -286,7 +286,16 @@ object instances {
 
     def value[F[_]](ptr: Ptr[Array[Pointer]])(implicit
         FE: ApplicativeError[F, Throwable]
-    ): F[Value] = ???
+    ): F[Value] = {
+      val elements = primitive[F](ptr).map { arr =>
+        arr.toVector.map(Ptr.fromPrimitive[F])
+      }
+      // if value_create never fails, make create return a Ptr not in F
+      // The alternative (keeping Ptrs in F) requires F to have MonadError
+      // so that you can flatMap it to get a Vector[Ptr[_]]
+      elements
+      ???
+    }
   }
 
   implicit val mapCreate = new Create[Array[(Pointer, Pointer)]] {

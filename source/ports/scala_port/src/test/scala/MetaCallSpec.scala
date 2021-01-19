@@ -147,6 +147,35 @@ class MetaCallSpec extends AnyFlatSpec {
       .unsafeRunSync()
   }
 
+  "Pointers" should "be created/retrieved correctly from Values" in {
+    val valuePtrs = List(
+      Ptr.fromValue[IO](IntValue(567)),
+      Ptr.fromValue[IO](IntValue(Int.MaxValue)),
+      Ptr.fromValue[IO](IntValue(Int.MinValue)),
+      Ptr.fromValue[IO](FloatValue(11.22f)),
+      Ptr.fromValue[IO](DoubleValue(1234.5678)),
+      Ptr.fromValue[IO](DoubleValue(Double.MaxValue)),
+      Ptr.fromValue[IO](DoubleValue(Double.MinValue)),
+      Ptr.fromValue[IO](LongValue(1234567890)),
+      Ptr.fromValue[IO](LongValue(Long.MaxValue)),
+      Ptr.fromValue[IO](LongValue(Long.MinValue)),
+      Ptr.fromValue[IO](StringValue("Helloooo")),
+      Ptr.fromValue[IO](CharValue('j')),
+      Ptr.fromValue[IO](StringValue("😍 🔥 ⚡")),
+      Ptr.fromValue[IO](BooleanValue(true)),
+      Ptr.fromValue[IO](NullValue),
+      // Ptr.fromValue[IO](ArrayValue(Vector(IntValue(1), StringValue("Hi"))))
+    ).sequence
+
+    val values = valuePtrs.evalMap(_.traverse(Ptr.toValue[IO]))
+
+    values
+      .use { vs =>
+        IO(pprint.pprintln(vs))
+      }
+      .unsafeRunSync()
+  }
+
   "MetaCall" should "be destroyed successfully" in {
     require(
       metacall.metacall_destroy() == 0,

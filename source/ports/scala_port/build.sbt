@@ -21,7 +21,8 @@ lazy val root = (project in file("."))
     libraryDependencies ++= Seq(
       "net.java.dev.jna" % "jna" % "5.6.0",
       "org.typelevel" %% "cats-effect" % "2.3.1",
-      "org.scalatest" %% "scalatest" % "3.2.2" % Test
+      "org.scalatest" %% "scalatest" % "3.2.2" % Test,
+      "com.lihaoyi" %% "pprint" % "0.5.6" % Test
     ),
     fork in (Test / run) := true
   )

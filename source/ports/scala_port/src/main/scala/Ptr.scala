@@ -39,12 +39,12 @@ object Ptr {
       FD: Defer[F],
       C: Create[A]
   ): Resource[F, Ptr[A]] =
-    Resource.make(C.create[F](value)) { v =>
+    Resource.make(C.create[F](value)) { vPtr =>
       FD.defer {
-        try FE.pure(Bindings.instance.metacall_value_destroy(v.ptr))
+        try FE.pure(Bindings.instance.metacall_value_destroy(vPtr.ptr))
         catch {
           case e: Throwable =>
-            FE.raiseError(new DestructionError(v.ptr, Some(e.getMessage())))
+            FE.raiseError(new DestructionError(vPtr.ptr, Some(e.getMessage())))
         }
       }
     }
@@ -93,14 +93,52 @@ object Ptr {
   def fromValue[F[_]](v: Value)(implicit
       FE: MonadError[F, Throwable],
       FD: Defer[F]
-  ): Resource[F, Ptr[_]] = Resource.make(fromValueUnsafe[F](v)) { v =>
+  ): Resource[F, Ptr[_]] = Resource.make(fromValueUnsafe[F](v)) { vPtr =>
     FD.defer {
-      try FE.pure(Bindings.instance.metacall_value_destroy(v.ptr))
+      try FE.pure(Bindings.instance.metacall_value_destroy(vPtr.ptr))
       catch {
         case e: Throwable =>
-          FE.raiseError(new DestructionError(v.ptr, Some(e.getMessage())))
+          FE.raiseError(new DestructionError(vPtr.ptr, Some(e.getMessage())))
       }
     }
+  }
+
+  private[metacall] def fromPrimitive[F[_]](ptr: Pointer)(implicit
+      FE: ApplicativeError[F, Throwable]
+  ): F[Ptr[_]] = PtrType.of(ptr) match {
+    case BoolPtrType   => new BoolPtr(ptr).pure[F].widen[Ptr[_]]
+    case CharPtrType   => new CharPtr(ptr).pure[F].widen[Ptr[_]]
+    case ShortPtrType  => new ShortPtr(ptr).pure[F].widen[Ptr[_]]
+    case IntPtrType    => new IntPtr(ptr).pure[F].widen[Ptr[_]]
+    case LongPtrType   => new LongPtr(ptr).pure[F].widen[Ptr[_]]
+    case FloatPtrType  => new FloatPtr(ptr).pure[F].widen[Ptr[_]]
+    case DoublePtrType => new DoublePtr(ptr).pure[F].widen[Ptr[_]]
+    case StringPtrType => new StringPtr(ptr).pure[F].widen[Ptr[_]]
+    case ArrayPtrType  => new ArrayPtr(ptr).pure[F].widen[Ptr[_]]
+    case MapPtrType    => new MapPtr(ptr).pure[F].widen[Ptr[_]]
+    case NullPtrType   => new NullPtr(ptr).pure[F].widen[Ptr[_]]
+    case SizePtrType   => new SizePtr(ptr).pure[F].widen[Ptr[_]]
+    case InvalidPtrType =>
+      FE.raiseError[Ptr[_]] {
+        new Exception("Invalid native pointer being converted to MetaCall pointer")
+      }
+  }
+
+  def toValue[F[_]](ptr: Ptr[_])(implicit
+      FE: ApplicativeError[F, Throwable]
+  ): F[Value] = ptr match {
+    case p: BoolPtr   => Get[Boolean].value[F](p)
+    case p: CharPtr   => Get[Char].value[F](p)
+    case p: ShortPtr  => Get[Short].value[F](p)
+    case p: IntPtr    => Get[Int].value[F](p)
+    case p: LongPtr   => Get[Long].value[F](p)
+    case p: FloatPtr  => Get[Float].value[F](p)
+    case p: DoublePtr => Get[Double].value[F](p)
+    case p: StringPtr => Get[String].value[F](p)
+    case p: ArrayPtr  => Get[Array[Pointer]].value[F](p)
+    case p: MapPtr    => Get[Array[(Pointer, Pointer)]].value[F](p)
+    case p: NullPtr   => Get[Null].value[F](p)
+    case p: SizePtr   => Get[SizeT].value[F](p)
   }
 
 }
