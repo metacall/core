@@ -10,7 +10,7 @@ object instances {
     new Create[SizeT] {
       def create[F[_]](
           value: SizeT
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[SizeT]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[SizeT]] = {
         val ptr = Bindings.instance.metacall_value_create_long(value.longValue())
 
         if (isNull(ptr))
@@ -26,12 +26,12 @@ object instances {
 
   implicit val sizeGet = new Get[SizeT] {
     def primitive[F[_]](ptr: Ptr[SizeT])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[SizeT] =
       SizeT(Bindings.instance.metacall_value_to_long(ptr.ptr)).pure[F]
 
     def value[F[_]](ptr: Ptr[SizeT])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(p => SizeTValue(p.longValue()))
   }
 
@@ -39,7 +39,7 @@ object instances {
     new Create[Null] {
       def create[F[_]](
           value: Null
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Null]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Null]] = {
         val ptr = Bindings.instance.metacall_value_create_null()
 
         if (isNull(ptr))
@@ -52,12 +52,12 @@ object instances {
 
   implicit val nullGet = new Get[Null] {
     def primitive[F[_]](ptr: Ptr[Null])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Null] =
       Applicative[F].pure(Bindings.instance.metacall_value_to_null(ptr.ptr))
 
     def value[F[_]](ptr: Ptr[Null])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = NullValue.pure[F].widen[Value]
   }
 
@@ -65,7 +65,7 @@ object instances {
     new Create[Int] {
       def create[F[_]](
           @specialized value: Int
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Int]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Int]] = {
         val ptr = Bindings.instance.metacall_value_create_int(value)
 
         if (isNull(ptr))
@@ -78,12 +78,12 @@ object instances {
 
   implicit val intGet = new Get[Int] {
     def primitive[F[_]](ptr: Ptr[Int])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Int] =
       Bindings.instance.metacall_value_to_int(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Int])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(IntValue.apply)
   }
 
@@ -91,7 +91,7 @@ object instances {
     new Create[Long] {
       def create[F[_]](
           value: Long
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Long]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Long]] = {
         val ptr = Bindings.instance.metacall_value_create_long(value)
 
         if (isNull(ptr))
@@ -104,12 +104,12 @@ object instances {
 
   implicit val longGet = new Get[Long] {
     def primitive[F[_]](ptr: Ptr[Long])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Long] =
       Bindings.instance.metacall_value_to_long(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Long])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(LongValue.apply)
   }
 
@@ -117,7 +117,7 @@ object instances {
     new Create[Short] {
       def create[F[_]](
           value: Short
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Short]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Short]] = {
         val ptr = Bindings.instance.metacall_value_create_short(value)
 
         if (isNull(ptr))
@@ -130,12 +130,12 @@ object instances {
 
   implicit val shortGet = new Get[Short] {
     def primitive[F[_]](ptr: Ptr[Short])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Short] =
       Bindings.instance.metacall_value_to_short(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Short])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(ShortValue.apply)
   }
 
@@ -143,7 +143,7 @@ object instances {
     new Create[Float] {
       def create[F[_]](
           value: Float
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Float]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Float]] = {
         val ptr = Bindings.instance.metacall_value_create_float(value)
 
         if (isNull(ptr))
@@ -156,12 +156,12 @@ object instances {
 
   implicit val floatGet = new Get[Float] {
     def primitive[F[_]](ptr: Ptr[Float])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Float] =
       Bindings.instance.metacall_value_to_float(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Float])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(FloatValue.apply)
   }
 
@@ -169,7 +169,7 @@ object instances {
     new Create[Double] {
       def create[F[_]](
           value: Double
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Double]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Double]] = {
         val ptr = Bindings.instance.metacall_value_create_double(value)
 
         if (isNull(ptr))
@@ -182,12 +182,12 @@ object instances {
 
   implicit val doubleGet = new Get[Double] {
     def primitive[F[_]](ptr: Ptr[Double])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Double] =
       Bindings.instance.metacall_value_to_double(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Double])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(DoubleValue.apply)
   }
 
@@ -195,7 +195,7 @@ object instances {
     new Create[Boolean] {
       def create[F[_]](
           value: Boolean
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Boolean]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Boolean]] = {
         val ptr = Bindings.instance.metacall_value_create_bool(value)
 
         if (isNull(ptr))
@@ -208,12 +208,12 @@ object instances {
 
   implicit val boolGet = new Get[Boolean] {
     def primitive[F[_]](ptr: Ptr[Boolean])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Boolean] =
       Bindings.instance.metacall_value_to_bool(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Boolean])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(BooleanValue.apply)
   }
 
@@ -221,7 +221,7 @@ object instances {
     new Create[Char] {
       def create[F[_]](
           value: Char
-      )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Char]] = {
+      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Char]] = {
         val ptr = Bindings.instance.metacall_value_create_char(value)
 
         if (isNull(ptr))
@@ -234,19 +234,19 @@ object instances {
 
   implicit val charGet = new Get[Char] {
     def primitive[F[_]](ptr: Ptr[Char])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Char] =
       Bindings.instance.metacall_value_to_char(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[Char])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(CharValue.apply)
   }
 
   implicit val stringCreate = new Create[String] {
     def create[F[_]](
         value: String
-    )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[String]] =
+    )(implicit FE: MonadError[F, Throwable]): F[Ptr[String]] =
       new StringPtr(
         Bindings.instance.metacall_value_create_string(
           value,
@@ -258,18 +258,18 @@ object instances {
   implicit val stringGet = new Get[String] {
     def primitive[F[_]](
         ptr: Ptr[String]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[String] =
+    )(implicit FE: MonadError[F, Throwable]): F[String] =
       Bindings.instance.metacall_value_to_string(ptr.ptr).pure[F]
 
     def value[F[_]](ptr: Ptr[String])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = primitive[F](ptr).map(StringValue.apply)
   }
 
   implicit val arrayCreate = new Create[Array[Pointer]] {
     def create[F[_]](
         value: Array[Pointer]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Array[Pointer]]] =
+    )(implicit FE: MonadError[F, Throwable]): F[Ptr[Array[Pointer]]] =
       new ArrayPtr(
         Bindings.instance
           .metacall_value_create_array(value, SizeT(value.length.toLong))
@@ -279,13 +279,13 @@ object instances {
   implicit val arrayGet = new Get[Array[Pointer]] {
     def primitive[F[_]](
         ptr: Ptr[Array[Pointer]]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[Array[Pointer]] = {
+    )(implicit FE: MonadError[F, Throwable]): F[Array[Pointer]] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
       Bindings.instance.metacall_value_to_array(ptr.ptr).take(dataSize.intValue()).pure[F]
     }
 
     def value[F[_]](ptr: Ptr[Array[Pointer]])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = {
       val elements = primitive[F](ptr).map { arr =>
         arr.toVector.map(Ptr.fromPrimitive[F])
@@ -301,7 +301,7 @@ object instances {
   implicit val mapCreate = new Create[Array[(Pointer, Pointer)]] {
     def create[F[_]](
         value: Array[(Pointer, Pointer)]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[Array[(Pointer, Pointer)]]] =
+    )(implicit FE: MonadError[F, Throwable]): F[Ptr[Array[(Pointer, Pointer)]]] =
       new MapPtr(
         Bindings.instance
           .metacall_value_create_map(
@@ -317,7 +317,7 @@ object instances {
   implicit val mapGet = new Get[Array[(Pointer, Pointer)]] {
     def primitive[F[_]](
         ptr: Ptr[Array[(Pointer, Pointer)]]
-    )(implicit FE: ApplicativeError[F, Throwable]): F[Array[(Pointer, Pointer)]] = {
+    )(implicit FE: MonadError[F, Throwable]): F[Array[(Pointer, Pointer)]] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
       val tuplePtrs =
         Bindings.instance.metacall_value_to_map(ptr.ptr).take(dataSize.intValue())
@@ -332,7 +332,7 @@ object instances {
     }
 
     def value[F[_]](ptr: Ptr[Array[(Pointer, Pointer)]])(implicit
-        FE: ApplicativeError[F, Throwable]
+        FE: MonadError[F, Throwable]
     ): F[Value] = ???
   }
 

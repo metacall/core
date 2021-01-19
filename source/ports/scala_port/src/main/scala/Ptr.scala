@@ -6,7 +6,7 @@ import cats._, cats.implicits._, cats.effect._
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {
-  def create[F[_]](value: A)(implicit FE: ApplicativeError[F, Throwable]): F[Ptr[A]]
+  def create[F[_]](value: A)(implicit FE: MonadError[F, Throwable]): F[Ptr[A]]
 }
 object Create {
   def apply[A](implicit C: Create[A]) = C
@@ -16,10 +16,10 @@ object Create {
 trait Get[A] {
 
   /** Get the primitive representation of the pointer's value */
-  def primitive[F[_]](ptr: Ptr[A])(implicit FE: ApplicativeError[F, Throwable]): F[A]
+  def primitive[F[_]](ptr: Ptr[A])(implicit FE: MonadError[F, Throwable]): F[A]
 
   /** Get the pointer's high-level [[metacall.Value]] representation */
-  def value[F[_]](ptr: Ptr[A])(implicit FE: ApplicativeError[F, Throwable]): F[Value]
+  def value[F[_]](ptr: Ptr[A])(implicit FE: MonadError[F, Throwable]): F[Value]
 
 }
 object Get {
@@ -35,7 +35,7 @@ object Ptr {
 
   /** Create a managed pointer to a MetaCall value */
   def from[A, F[_]](value: A)(implicit
-      FE: ApplicativeError[F, Throwable],
+      FE: MonadError[F, Throwable],
       FD: Defer[F],
       C: Create[A]
   ): Resource[F, Ptr[A]] =
@@ -51,7 +51,7 @@ object Ptr {
 
   /** Create a managed pointer to an array containing the values */
   def fromVector[A, F[_]](vec: Vector[A])(implicit
-      FE: ApplicativeError[F, Throwable],
+      FE: MonadError[F, Throwable],
       FD: Defer[F],
       CA: Create[A],
       CR: Create[Array[Pointer]]
@@ -104,7 +104,7 @@ object Ptr {
   }
 
   private[metacall] def fromPrimitive[F[_]](ptr: Pointer)(implicit
-      FE: ApplicativeError[F, Throwable]
+      FE: MonadError[F, Throwable]
   ): F[Ptr[_]] = PtrType.of(ptr) match {
     case BoolPtrType   => new BoolPtr(ptr).pure[F].widen[Ptr[_]]
     case CharPtrType   => new CharPtr(ptr).pure[F].widen[Ptr[_]]
@@ -125,7 +125,7 @@ object Ptr {
   }
 
   def toValue[F[_]](ptr: Ptr[_])(implicit
-      FE: ApplicativeError[F, Throwable]
+      FE: MonadError[F, Throwable]
   ): F[Value] = ptr match {
     case p: BoolPtr   => Get[Boolean].value[F](p)
     case p: CharPtr   => Get[Char].value[F](p)
