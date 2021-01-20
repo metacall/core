@@ -160,6 +160,15 @@ mod.prototype.require = function (name) {
 		/* Probably in the future we can differenciate between them, but it is not trivial */
 	};
 
+	/* Try to load it with NodeJS first */
+	try {
+		return node_require.apply(this, [ name ]);
+	} catch (e) {
+		if (e.code !== 'MODULE_NOT_FOUND') {
+			throw e;
+		}
+	}
+
 	const index = name.lastIndexOf('.');
 
 	if (index !== -1) {
@@ -204,8 +213,7 @@ mod.prototype.require = function (name) {
 };
 
 /* Debug logs */
-if (process.env['NODE_ENV'] === 'debug' && addon !== undefined)
-{
+if (process.env['NODE_ENV'] === 'debug' && addon !== undefined) {
 	addon.metacall_logs();
 }
 
