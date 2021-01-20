@@ -191,17 +191,23 @@ This environment variables are optional, in case that you want to modify default
 
 ### 4.3 Examples
 
+- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**METACALL** CLI](/source/examples/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
+
+- [Higher Order Functions with Python & NodeJS](https://github.com/metacall/fn.py-javascript-example): An example of using [Fn.py](https://github.com/kachayev/fn.py) (Python) from JavaScript (NodeJS).
+
 - [Embedding NodeJS](https://github.com/metacall/embedding-nodejs-example): Example application for embedding NodeJS code into C/C++ using CMake as a build system.
 
 - [Embedding Python](https://github.com/metacall/embedding-python-example): Example application for embedding Python code into C/C++ using CMake as a build system.
 
+- [Embedding Ruby](https://github.com/metacall/embedding-python-example): Example application for embedding Ruby code into C/C++ using CMake as a build system.
+
+- [Mixing Go and TypeScript](https://github.com/metacall/golang-typescript-example): This example shows how to embed TypeScript into Go using MetaCall. In other words, calling TypeScript functions from Go.
+
 - [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **METACALL** by compining it by hand.
 
-- [**METACALL** CLI](/source/examples/metacallcli): Example of a Command Language Interpreter based on **METACALL** where you can load, unload scripts and call their functions.
+- [Polyglot Redis Module](https://github.com/metacall/redis-module): Extend Redis DataBase modules with TypeScript, JavaScript, Python, C#, Ruby...
 
 - [Rotulin](https://github.com/metacall/rotulin): Example of a multi-language application built with **METACALL**. This application embeds a Django server with a Ruby DataBase and C# business layer based on ImageMagick.
-
-- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**METACALL** CLI](/source/examples/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
 
 ## 5. Architecture
 
