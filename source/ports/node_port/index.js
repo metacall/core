@@ -101,9 +101,9 @@ const metacall_require = (tag, name) => {
 	// TODO: Inspect only the handle instead of the whole metacall namespace
 	/* return */ addon.metacall_load_from_file(tag, [ name ]);
 
-
 	const inspect = metacall_inspect();
-	const script = inspect[tag].find(s => s.name === name);
+	const script = inspect[tag].find(s => s.name === path.basename(name));
+
 	const obj = {};
 
 	for (const func of script.scope.funcs) {
