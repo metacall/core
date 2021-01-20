@@ -5,9 +5,7 @@
   <a href="https://github.com/metacall/core/blob/master/README.md#install">Install</a> |
   <a href="https://github.com/metacall/core/blob/master/docs/README.md">Docs</a>
 </div>
-<div align="center">
-  <a href="#badges"></a>
-
+<div id="badges" align="center">
   <a href="https://t.me/joinchat/BMSVbBatp0Vi4s5l4VgUgg" alt="Discord">
     <img src="https://img.shields.io/static/v1?label=metacall&message=join&color=blue&logo=telegram&style=flat" /></a>
 
@@ -57,4 +55,4 @@ For more information about other install methodologies and platforms or Docker, 
 
 ## Examples
 
-You can find a complete [list of examples in the documentation](https://github.com/metacall/core/blob/master/docs/README.md#43-examples). If you are interested in submitting new examples, please [contact us in our chats](#badges).
+You can find a complete [list of examples in the documentation](https://github.com/metacall/core/blob/master/docs/README.md#43-examples). If you are interested in submitting new examples, please [contact us in our chats](https://github.com/metacall/core/blob/master/README.md#badges).
