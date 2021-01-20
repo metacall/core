@@ -191,7 +191,7 @@ This environment variables are optional, in case that you want to modify default
 
 ### 4.3 Examples
 
-- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**METACALL** CLI](/source/examples/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
+- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**METACALL** CLI](/source/cli/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
 
 - [Higher Order Functions with Python & NodeJS](https://github.com/metacall/fn.py-javascript-example): An example of using [Fn.py](https://github.com/kachayev/fn.py) (Python) from JavaScript (NodeJS).
 
