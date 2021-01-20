@@ -1,11 +1,13 @@
 <div align="center">
-  <a href="https://metacall.io" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/logo.png" alt="METACALL" style="max-width:100%; margin: 0 auto;" width="80" height="80">
-  <h1><b>MetaCall Polyglot Runtime</b></h1></a>
+  <a href="https://metacall.io" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/logo.png" alt="METACALL" style="max-width:100%; margin: 0 auto;" width="80" height="80"></a>
+  <h1><b>MetaCall Polyglot Runtime</b></h1>
   <a href="https://metacall.io">MetaCall.io</a> |
-  <a href="https://github.com/metacall/install">Install</a> |
+  <a href="https://github.com/metacall/core/blob/master/README.md#install">Install</a> |
   <a href="https://github.com/metacall/core/blob/master/docs/README.md">Docs</a>
 </div>
 <div align="center">
+  <a href="#badges"></a>
+
   <a href="https://t.me/joinchat/BMSVbBatp0Vi4s5l4VgUgg" alt="Discord">
     <img src="https://img.shields.io/static/v1?label=metacall&message=join&color=blue&logo=telegram&style=flat" /></a>
 
@@ -31,7 +33,7 @@ def sum(a, b):
 
 `main.js`
 ``` javascript
-const { sum } = require('sum.py');
+const { sum } = require('./sum.py');
 
 sum(3, 4); // 7
 ```
@@ -41,5 +43,18 @@ sum(3, 4); // 7
 metacall main.js
 ```
 
-**MetaCall** is an extensible, embeddable and interoperable polyglot runtime. It supports NodeJS, Vanilla JavaScript, TypeScript, Python, Ruby, C#, Go, C, C++, Rust, D, Cobol [and more](https://github.com/metacall/core/blob/master/docs/README.md#2-language-support). Use the [installer](https://github.com/metacall/install) and try [some examples](https://github.com/metacall/beautifulsoup-express-example).
+**MetaCall** is a extensible, embeddable and interoperable cross-platform polyglot runtime. It supports NodeJS, Vanilla JavaScript, TypeScript, Python, Ruby, C#, Go, C, C++, Rust, D, Cobol [and more](https://github.com/metacall/core/blob/master/docs/README.md#2-language-support).
 
+## Install
+
+The easiest way to install **METACALL** is the following:
+
+``` sh
+curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
+```
+
+For more information about other install methodologies and platforms or Docker, check the [install documentation](https://github.com/metacall/core/blob/master/docs/README.md#41-installation).
+
+## Examples
+
+You can find a complete [list of examples in the documentation](https://github.com/metacall/core/blob/master/docs/README.md#43-examples). If you are interested in submitting new examples, please [contact us in our chats](#badges).
