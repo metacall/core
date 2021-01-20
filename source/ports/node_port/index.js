@@ -27,10 +27,42 @@ const addon = (() => {
 	try {
 		/* This forces metacall port to be run always by metacall cli */
 		return process.binding('node_loader_port_module');
-	} catch (e) {
-		console.error('MetaCall failed to load, probably you are importing this file from NodeJS directly.');
-		console.error('You should use MetaCall CLI instead. Install it from: https://github.com/metacall/install');
-		throw e;
+	} catch (_) {
+		const write = (data, cb) => {
+			if (!process.stdout.write(data)) {
+				process.stdout.once('drain', cb);
+			} else {
+				process.nextTick(cb);
+			}
+		};
+
+		/* Notify synchronously that we are launching MetaCall */
+		write('NodeJS detected, launching MetaCall...\n', () => {
+			try {
+				const { spawnSync } = require('child_process');
+				const args = [...process.argv];
+
+				args.shift();
+
+				const result = spawnSync('metacall', args, {});
+
+				if (result.error && result.error.code === 'ENOENT') {
+					write('MetaCall not found. Please install MetaCall from: https://github.com/metacall/install and run it again.\n', () => {
+						process.exit(1);
+					});
+				}
+
+				process.exit(result.status !== null ? result.status : 1);
+			} catch (e) {
+				const message = 'MetaCall failed to load, probably you are importing this file from NodeJS directly.\n'
+					+ e.message + '\n'
+					+ 'Install MetaCall from: https://github.com/metacall/install and run it again.\n';
+
+				write(message, () => {
+					throw e;
+				});
+			}
+		});
 	}
 })();
 
