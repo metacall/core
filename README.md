@@ -45,7 +45,7 @@ metacall main.js
 
 ## Install
 
-The easiest way to install **METACALL** is the following:
+The easiest way to install **MetaCall** is the following:
 
 ``` sh
 curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
