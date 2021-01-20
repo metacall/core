@@ -167,9 +167,9 @@ class MetaCallSpec extends AnyFlatSpec {
       ArrayValue(Vector(IntValue(1), StringValue("Hi"))),
       MapValue(
         Map(
-          StringValue("1") -> IntValue(1),
-          StringValue("2") -> IntValue(2),
-          StringValue("3") -> IntValue(3)
+          IntValue(1) -> IntValue(1),
+          CharValue('2') -> FloatValue(2.0f),
+          StringValue("3") -> LongValue(3L)
         )
       )
     )
