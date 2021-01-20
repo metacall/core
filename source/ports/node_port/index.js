@@ -162,7 +162,7 @@ mod.prototype.require = function (name) {
 
 	/* Try to load it with NodeJS first */
 	try {
-		return node_require.apply(this, [ name ]);
+		return node_require.apply(this, [ require.resolve(name) ]);
 	} catch (e) {
 		if (e.code !== 'MODULE_NOT_FOUND') {
 			throw e;
@@ -184,12 +184,15 @@ mod.prototype.require = function (name) {
 
 	/* If there is no extension or the extension is not supported or it is 'node', load it with NodeJS require */
 	try {
-		/* Cache the port */
-		if (require.resolve(name) === path.resolve(__filename)) {
+		const filename = require.resolve(name);
+
+		/* Cache the port (detect if this file is being loaded) */
+		if (filename === path.resolve(__filename)) {
 			return module_exports;
 		}
+
 		/* Call to real NodeJS require */
-		return node_require.apply(this, [ name ]);
+		return node_require.apply(this, [ filename ]);
 	} catch (e) {
 		/* If it is not a NodeJS module, try to guess the runtime */
 		const loaders = new Set(Object.values(tags));
