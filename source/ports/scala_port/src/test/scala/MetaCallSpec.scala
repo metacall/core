@@ -61,6 +61,28 @@ class MetaCallSpec extends AnyFlatSpec {
     metacall.metacall_value_destroy(retPtr)
   }
 
+  "MetaCall" should "call functions from transitively imported scripts" in {
+    val argPtr = metacall.metacall_value_create_int(42)
+    val retPtr = metacall.metacallv_s("imported_fn", Array(argPtr), SizeT(1))
+    val retValue = Ptr.fromPrimitive[IO](retPtr).flatMap(Ptr.toValue[IO]).unsafeRunSync()
+
+    assert(retValue == StringValue("Imported fn arg: 42"))
+
+    metacall.metacall_value_destroy(argPtr)
+    metacall.metacall_value_destroy(retPtr)
+  }
+
+  "Caller" should "call functions and clean up arguments and returned pointers" in {
+    val ret = Caller
+      .call[IO](
+        "hello_scala_from_python",
+        Vector(StringValue("Hello "), StringValue("Scala!"))
+      )
+      .unsafeRunSync()
+
+    assert(ret == StringValue("Hello Scala!"))
+  }
+
   "MetaCall" should "construct/parse maps correctly" in {
     val scalaMap = Map("one" -> 1, "two" -> 2, "three" -> 3)
     val mcTuples = scalaMap.toArray.map { case (k, v) =>
