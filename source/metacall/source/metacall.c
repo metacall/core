@@ -275,8 +275,8 @@ void * metacallv(const char * name, void * args[])
 void * metacallv_s(const char * name, void * args[], size_t size)
 {
 	value f_val = loader_get(name);
-
 	function f = NULL;
+
 	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);

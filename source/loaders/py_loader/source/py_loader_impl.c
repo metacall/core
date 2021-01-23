@@ -1058,8 +1058,26 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	}
 	else if (id == TYPE_MAP)
 	{
-		/* TODO */
-		log_write("metacall", LOG_LEVEL_ERROR, "TODO: Python map not implemented yet for arguments");
+		value * map_value = value_to_map(v);
+
+		Py_ssize_t iterator, map_size = (Py_ssize_t)value_type_count(v);
+
+		PyObject * dict = PyDict_New();
+
+		for (iterator = 0; iterator < map_size; ++iterator)
+		{
+			value * pair_value = value_to_array(map_value[iterator]);
+
+			PyObject * key = py_loader_impl_value_to_capi(impl, value_type_id((value)pair_value[0]), (value)pair_value[0]);
+			PyObject * item = py_loader_impl_value_to_capi(impl, value_type_id((value)pair_value[1]), (value)pair_value[1]);
+
+			if (PyDict_SetItem(dict, key, item) != 0)
+			{
+				/* TODO: Report error */
+			}
+		}
+
+		return dict;
 	}
 	else if (id == TYPE_PTR)
 	{
