@@ -208,6 +208,17 @@ class MetaCallSpec extends AnyFlatSpec {
       .unsafeRunSync()
   }
 
+  "`FunctionPointer`s" should "be created/retrieved correctly" in {
+    val myFunction = new metacall.FunctionPointer {
+      override def callback(input: Pointer): Pointer = input
+    }
+
+    val fnPtr = metacall.metacall_value_create_function(myFunction)
+    val resPtr = metacall.metacall_value_to_function(fnPtr).callback(metacall.metacall_value_create_string("hellooo", SizeT(7L)))
+    val res = metacall.metacall_value_to_string(resPtr)
+    assert(res == "hellooo")
+  }
+
   "MetaCall" should "be destroyed successfully" in {
     require(
       metacall.metacall_destroy() == 0,

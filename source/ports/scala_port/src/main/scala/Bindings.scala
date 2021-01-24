@@ -29,6 +29,10 @@ import util._
   * - https://github.com/metacall/core/blob/develop/source/metacall/include/metacall/metacall_value.h
   */
 protected[metacall] trait Bindings extends Library {
+  trait FunctionPointer extends Callback {
+    def callback(input: Pointer): Pointer
+  }
+
   // metacall.h
   def metacall_initialize(): Int
 
@@ -59,6 +63,8 @@ protected[metacall] trait Bindings extends Library {
   def metacall_value_create_float(v: Float): Pointer
 
   def metacall_value_create_bool(v: Boolean): Pointer
+
+  def metacall_value_create_function(v: FunctionPointer): Pointer
 
   def metacall_value_create_array(
       values: Array[Pointer],
@@ -92,6 +98,7 @@ protected[metacall] trait Bindings extends Library {
   def metacall_value_create_null(): Pointer
 
   def metacall_value_to_null(v: Pointer): Null
+  def metacall_value_to_function(f: Pointer): FunctionPointer
 
   def metacall_value_from_string(
       v: Pointer,

@@ -1,7 +1,6 @@
 package metacall
 
 import com.sun.jna._
-import scala.annotation.varargs
 
 object util {
   private[metacall] class SizeT(value: Long)
@@ -10,10 +9,6 @@ object util {
   }
   private[metacall] object SizeT {
     def apply(value: Long) = new SizeT(value)
-  }
-
-  private[metacall] trait FunctionPointer extends Callback {
-    @varargs def invoke(params: Pointer*): Pointer
   }
 
   sealed class MetaCallException(message: String, val cause: Option[String])
