@@ -6,7 +6,7 @@ import cats._, cats.implicits._, cats.effect._
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {
-  def create[F[_]](value: A)(implicit FE: MonadError[F, Throwable]): F[Ptr[A]]
+  def create(value: A): Ptr[A]
 }
 object Create {
   def apply[A](implicit C: Create[A]) = C
@@ -16,10 +16,10 @@ object Create {
 trait Get[A] {
 
   /** Get the primitive representation of the pointer's value */
-  def primitive[F[_]](ptr: Ptr[A])(implicit FE: MonadError[F, Throwable]): F[A]
+  def primitive(ptr: Ptr[A]): A
 
   /** Get the pointer's high-level [[metacall.Value]] representation */
-  def value[F[_]](ptr: Ptr[A])(implicit FE: MonadError[F, Throwable]): F[Value]
+  def value(ptr: Ptr[A]): Value
 
 }
 object Get {
@@ -39,7 +39,7 @@ object Ptr {
       FD: Defer[F],
       C: Create[A]
   ): Resource[F, Ptr[A]] =
-    Resource.make(C.create[F](value)) { vPtr =>
+    Resource.make(C.create(value).pure[F]) { vPtr =>
       FD.defer {
         try FE.pure(Bindings.instance.metacall_value_destroy(vPtr.ptr))
         catch {
@@ -56,44 +56,50 @@ object Ptr {
       CA: Create[A],
       CR: Create[Array[Pointer]]
   ): Resource[F, Ptr[Array[Pointer]]] = {
-    val elemPtrs = vec.traverse(a => CA.create[F](a).map(_.ptr))
-    Resource.suspend(elemPtrs.map(_.toArray).map(from[Array[Pointer], F]))
+    val elemPtrs = vec.map(a => CA.create(a).ptr)
+
+    Resource.suspend(from[Array[Pointer], F](elemPtrs.toArray).pure[F])
   }
 
   import metacall.instances._
 
-  private[metacall] def fromValueUnsafe[F[_]](v: Value)(implicit
-      FE: MonadError[F, Throwable]
-  ): F[Ptr[_]] = v match {
-    case CharValue(value)    => Create[Char].create[F](value).widen[Ptr[_]]
-    case StringValue(value)  => Create[String].create[F](value).widen[Ptr[_]]
-    case ShortValue(value)   => Create[Short].create[F](value).widen[Ptr[_]]
-    case IntValue(value)     => Create[Int].create[F](value).widen[Ptr[_]]
-    case LongValue(value)    => Create[Long].create[F](value).widen[Ptr[_]]
-    case FloatValue(value)   => Create[Float].create[F](value).widen[Ptr[_]]
-    case DoubleValue(value)  => Create[Double].create[F](value).widen[Ptr[_]]
-    case SizeTValue(value)   => Create[SizeT].create[F](SizeT(value)).widen[Ptr[_]]
-    case BooleanValue(value) => Create[Boolean].create[F](value).widen[Ptr[_]]
+  /** Returns an unmanaged pointer to the creted value. */
+  private[metacall] def fromValueUnsafe(v: Value): Ptr[_] = v match {
+    case CharValue(value)    => Create[Char].create(value)
+    case StringValue(value)  => Create[String].create(value)
+    case ShortValue(value)   => Create[Short].create(value)
+    case IntValue(value)     => Create[Int].create(value)
+    case LongValue(value)    => Create[Long].create(value)
+    case FloatValue(value)   => Create[Float].create(value)
+    case DoubleValue(value)  => Create[Double].create(value)
+    case SizeTValue(value)   => Create[SizeT].create(SizeT(value))
+    case BooleanValue(value) => Create[Boolean].create(value)
+    case InvalidValue        => Create[Unit].create(())
     case ArrayValue(value) => {
-      val elemPtrs = value.traverse(fromValueUnsafe[F](_).map(_.ptr)).map(_.toArray)
-      elemPtrs.flatMap(Create[Array[Pointer]].create[F](_)(FE).widen[Ptr[_]])
+      val elemPtrs = value.map(fromValueUnsafe(_).ptr).toArray
+      Create[Array[Pointer]].create(elemPtrs)
     }
     case MapValue(value) => {
-      val tuplePtrs = value.toVector
-        .traverse { case (k, v) =>
-          (fromValueUnsafe[F](k) product fromValueUnsafe[F](v))
-            .map { case (p1, p2) => p1.ptr -> p2.ptr }
-        }
-        .map(_.toArray)
-      tuplePtrs.flatMap(Create[Array[(Pointer, Pointer)]].create[F]).widen[Ptr[_]]
+      val tuplePtrs = value.toArray.map { case (k, v) =>
+        fromValueUnsafe(k).ptr -> fromValueUnsafe(v).ptr
+      }
+
+      Create[Array[(Pointer, Pointer)]].create(tuplePtrs)
     }
-    case NullValue => Create[Null].create[F](null).widen[Ptr[_]]
+    case FunctionValue(fn) =>
+      Create[FunctionPointer].create {
+        new FunctionPointer {
+          def callback(input: Pointer): Pointer =
+            Ptr.fromValueUnsafe(fn(Ptr.toValue(Ptr.fromPrimitiveUnsafe(input)))).ptr
+        }
+      }
+    case NullValue => Create[Null].create(null)
   }
 
   def fromValue[F[_]](v: Value)(implicit
       FE: MonadError[F, Throwable],
       FD: Defer[F]
-  ): Resource[F, Ptr[_]] = Resource.make(fromValueUnsafe[F](v)) { vPtr =>
+  ): Resource[F, Ptr[_]] = Resource.make(fromValueUnsafe(v).pure[F]) { vPtr =>
     FD.defer {
       try FE.pure(Bindings.instance.metacall_value_destroy(vPtr.ptr))
       catch {
@@ -103,42 +109,51 @@ object Ptr {
     }
   }
 
-  private[metacall] def fromPrimitive[F[_]](ptr: Pointer)(implicit
-      FE: MonadError[F, Throwable]
-  ): F[Ptr[_]] = PtrType.of(ptr) match {
-    case BoolPtrType   => new BoolPtr(ptr).pure[F].widen[Ptr[_]]
-    case CharPtrType   => new CharPtr(ptr).pure[F].widen[Ptr[_]]
-    case ShortPtrType  => new ShortPtr(ptr).pure[F].widen[Ptr[_]]
-    case IntPtrType    => new IntPtr(ptr).pure[F].widen[Ptr[_]]
-    case LongPtrType   => new LongPtr(ptr).pure[F].widen[Ptr[_]]
-    case FloatPtrType  => new FloatPtr(ptr).pure[F].widen[Ptr[_]]
-    case DoublePtrType => new DoublePtr(ptr).pure[F].widen[Ptr[_]]
-    case StringPtrType => new StringPtr(ptr).pure[F].widen[Ptr[_]]
-    case ArrayPtrType  => new ArrayPtr(ptr).pure[F].widen[Ptr[_]]
-    case MapPtrType    => new MapPtr(ptr).pure[F].widen[Ptr[_]]
-    case NullPtrType   => new NullPtr(ptr).pure[F].widen[Ptr[_]]
-    case SizePtrType   => new SizePtr(ptr).pure[F].widen[Ptr[_]]
-    case InvalidPtrType =>
-      FE.raiseError[Ptr[_]] {
-        new Exception("Invalid native pointer being converted to MetaCall pointer")
-      }
-  }
+  /** Returns an unmanaged pointer that you need to destroy yourself,
+    * or make sure it's destroyed down the line
+    */
+  private[metacall] def fromPrimitiveUnsafe(pointer: Pointer): Ptr[_] =
+    PtrType.of(pointer) match {
+      case BoolPtrType     => new BoolPtr(pointer)
+      case CharPtrType     => new CharPtr(pointer)
+      case ShortPtrType    => new ShortPtr(pointer)
+      case IntPtrType      => new IntPtr(pointer)
+      case LongPtrType     => new LongPtr(pointer)
+      case FloatPtrType    => new FloatPtr(pointer)
+      case DoublePtrType   => new DoublePtr(pointer)
+      case StringPtrType   => new StringPtr(pointer)
+      case ArrayPtrType    => new ArrayPtr(pointer)
+      case MapPtrType      => new MapPtr(pointer)
+      case NullPtrType     => new NullPtr(pointer)
+      case SizePtrType     => new SizePtr(pointer)
+      case FunctionPtrType => new FunctionPtr(pointer)
+      case InvalidPtrType  => InvalidPtr
+    }
 
-  def toValue[F[_]](ptr: Ptr[_])(implicit
-      FE: MonadError[F, Throwable]
-  ): F[Value] = ptr match {
-    case p: BoolPtr   => Get[Boolean].value[F](p)
-    case p: CharPtr   => Get[Char].value[F](p)
-    case p: ShortPtr  => Get[Short].value[F](p)
-    case p: IntPtr    => Get[Int].value[F](p)
-    case p: LongPtr   => Get[Long].value[F](p)
-    case p: FloatPtr  => Get[Float].value[F](p)
-    case p: DoublePtr => Get[Double].value[F](p)
-    case p: StringPtr => Get[String].value[F](p)
-    case p: ArrayPtr  => Get[Array[Pointer]].value[F](p)
-    case p: MapPtr    => Get[Array[(Pointer, Pointer)]].value[F](p)
-    case p: NullPtr   => Get[Null].value[F](p)
-    case p: SizePtr   => Get[SizeT].value[F](p)
+  private[metacall] def fromPrimitive[F[_]](pointer: Pointer)(implicit
+      FE: MonadError[F, Throwable],
+      FD: Defer[F]
+  ): Resource[F, Ptr[_]] =
+    Resource
+      .make(fromPrimitiveUnsafe(pointer).pure[F].widen[Ptr[_]]) { p =>
+        FD.defer(FE.pure(Bindings.instance.metacall_value_count(p.ptr)))
+      }
+
+  def toValue(ptr: Ptr[_]): Value = ptr match {
+    case p: BoolPtr     => Get[Boolean].value(p)
+    case p: CharPtr     => Get[Char].value(p)
+    case p: ShortPtr    => Get[Short].value(p)
+    case p: IntPtr      => Get[Int].value(p)
+    case p: LongPtr     => Get[Long].value(p)
+    case p: FloatPtr    => Get[Float].value(p)
+    case p: DoublePtr   => Get[Double].value(p)
+    case p: StringPtr   => Get[String].value(p)
+    case p: ArrayPtr    => Get[Array[Pointer]].value(p)
+    case p: MapPtr      => Get[Array[(Pointer, Pointer)]].value(p)
+    case p: NullPtr     => Get[Null].value(p)
+    case p: SizePtr     => Get[SizeT].value(p)
+    case p: FunctionPtr => Get[FunctionPointer].value(p)
+    case InvalidPtr     => InvalidValue
   }
 
 }
@@ -153,7 +168,6 @@ object Ptr {
   *  ...
   *   METACALL_PTR		= 11,
   *   METACALL_FUTURE	 = 12,
-  *   METACALL_FUNCTION	= 13,
   *   ...
   *   METACALL_CLASS	  = 15,
   *   METACALL_OBJECT	  = 16,
@@ -256,6 +270,13 @@ object MapPtrType extends PtrType {
   val id = 10
 }
 
+private[metacall] final class FunctionPtr(val ptr: Pointer) extends Ptr[FunctionPointer] {
+  val ptrType: PtrType = FunctionPtrType
+}
+object FunctionPtrType extends PtrType {
+  val id = 13
+}
+
 private[metacall] final class NullPtr(val ptr: Pointer) extends Ptr[Null] {
   val ptrType = NullPtrType
 }
@@ -270,6 +291,10 @@ object SizePtrType extends PtrType {
   val id = 17
 }
 
+case object InvalidPtr extends Ptr[Unit] {
+  val ptr = null
+  val ptrType = InvalidPtrType
+}
 object InvalidPtrType extends PtrType {
   val id = 18
 }

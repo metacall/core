@@ -11,6 +11,10 @@ object util {
     def apply(value: Long) = new SizeT(value)
   }
 
+  private[metacall] trait FunctionPointer extends Callback {
+    def callback(input: Pointer): Pointer
+  }
+
   sealed class MetaCallException(message: String, val cause: Option[String])
       extends Exception(message + cause.map(" Cause: " + _).getOrElse(""))
   class AllocationError[A](value: Option[A], cause: Option[String])

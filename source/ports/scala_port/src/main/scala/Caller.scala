@@ -11,18 +11,16 @@ object Caller {
       BF: BracketThrow[F]
   ): F[Value] = {
     val argPtrArray = args.traverse(Ptr.fromValue[F]).map(_.map(_.ptr).toArray)
-    argPtrArray
-      .evalMap { args =>
-        val retPtr = Ptr.fromPrimitive[F] {
+
+    val retPtr = argPtrArray
+      .flatMap { args =>
+        Ptr.fromPrimitive[F] {
           Bindings.instance.metacallv_s(fnName, args, SizeT(args.length.toLong))
         }
-
-        retPtr.flatMap { retPtr =>
-          Ptr.toValue[F](retPtr) <*
-            FD.defer(FE.pure(Bindings.instance.metacall_value_destroy(retPtr.ptr)))
-        }
       }
-      .use(FE.pure)
+      .map(Ptr.toValue)
+
+    retPtr.use(FE.pure)
   }
 
 }

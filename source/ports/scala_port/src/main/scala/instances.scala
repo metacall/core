@@ -1,6 +1,6 @@
 package metacall
 
-import cats._, cats.implicits._
+import cats.implicits._
 import com.sun.jna._
 import metacall.util._
 
@@ -8,298 +8,180 @@ object instances {
 
   implicit val sizeCreate =
     new Create[SizeT] {
-      def create[F[_]](
-          value: SizeT
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[SizeT]] = {
+      def create(value: SizeT): Ptr[SizeT] = {
         val ptr = Bindings.instance.metacall_value_create_long(value.longValue())
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(
-              Some(value.longValue()),
-              Some("Pointer to value was null")
-            )
-          )
-        else new SizePtr(ptr).pure[F].widen[Ptr[SizeT]]
+        new SizePtr(ptr)
       }
     }
 
   implicit val sizeGet = new Get[SizeT] {
-    def primitive[F[_]](ptr: Ptr[SizeT])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[SizeT] =
-      SizeT(Bindings.instance.metacall_value_to_long(ptr.ptr)).pure[F]
+    def primitive(ptr: Ptr[SizeT]): SizeT =
+      SizeT(Bindings.instance.metacall_value_to_long(ptr.ptr))
 
-    def value[F[_]](ptr: Ptr[SizeT])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(p => SizeTValue(p.longValue()))
+    def value(ptr: Ptr[SizeT]): Value =
+      SizeTValue(primitive(ptr).longValue())
   }
 
   implicit val nullCreate =
     new Create[Null] {
-      def create[F[_]](
-          value: Null
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Null]] = {
+      def create(value: Null): Ptr[Null] = {
         val ptr = Bindings.instance.metacall_value_create_null()
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(None, Some("Pointer to value was null"))
-          )
-        else new NullPtr(ptr).pure[F].widen[Ptr[Null]]
+        new NullPtr(ptr)
       }
     }
 
   implicit val nullGet = new Get[Null] {
-    def primitive[F[_]](ptr: Ptr[Null])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Null] =
-      Applicative[F].pure(Bindings.instance.metacall_value_to_null(ptr.ptr))
+    def primitive(ptr: Ptr[Null]): Null =
+      Bindings.instance.metacall_value_to_null(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Null])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = NullValue.pure[F].widen[Value]
+    def value(ptr: Ptr[Null]): Value = NullValue
   }
 
   implicit val intCreate =
     new Create[Int] {
-      def create[F[_]](
-          @specialized value: Int
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Int]] = {
+      def create(value: Int): Ptr[Int] = {
         val ptr = Bindings.instance.metacall_value_create_int(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new IntPtr(ptr).pure[F].widen[Ptr[Int]]
+        new IntPtr(ptr)
       }
     }
 
   implicit val intGet = new Get[Int] {
-    def primitive[F[_]](ptr: Ptr[Int])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Int] =
-      Bindings.instance.metacall_value_to_int(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Int]): Int =
+      Bindings.instance.metacall_value_to_int(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Int])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(IntValue.apply)
+    def value(ptr: Ptr[Int]): Value = IntValue(primitive(ptr))
   }
 
   implicit val longCreate =
     new Create[Long] {
-      def create[F[_]](
-          value: Long
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Long]] = {
+      def create(value: Long): Ptr[Long] = {
         val ptr = Bindings.instance.metacall_value_create_long(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new LongPtr(ptr).pure[F].widen[Ptr[Long]]
+        new LongPtr(ptr)
       }
     }
 
   implicit val longGet = new Get[Long] {
-    def primitive[F[_]](ptr: Ptr[Long])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Long] =
-      Bindings.instance.metacall_value_to_long(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Long]): Long =
+      Bindings.instance.metacall_value_to_long(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Long])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(LongValue.apply)
+    def value(ptr: Ptr[Long]): Value = LongValue(primitive(ptr))
   }
 
   implicit val shortCreate =
     new Create[Short] {
-      def create[F[_]](
-          value: Short
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Short]] = {
+      def create(value: Short): Ptr[Short] = {
         val ptr = Bindings.instance.metacall_value_create_short(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new ShortPtr(ptr).pure[F].widen[Ptr[Short]]
+        new ShortPtr(ptr)
       }
     }
 
   implicit val shortGet = new Get[Short] {
-    def primitive[F[_]](ptr: Ptr[Short])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Short] =
-      Bindings.instance.metacall_value_to_short(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Short]): Short =
+      Bindings.instance.metacall_value_to_short(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Short])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(ShortValue.apply)
+    def value(ptr: Ptr[Short]): Value = ShortValue(primitive(ptr))
   }
 
   implicit val floatCreate =
     new Create[Float] {
-      def create[F[_]](
-          value: Float
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Float]] = {
+      def create(value: Float): Ptr[Float] = {
         val ptr = Bindings.instance.metacall_value_create_float(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new FloatPtr(ptr).pure[F].widen[Ptr[Float]]
+        new FloatPtr(ptr)
       }
     }
 
   implicit val floatGet = new Get[Float] {
-    def primitive[F[_]](ptr: Ptr[Float])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Float] =
-      Bindings.instance.metacall_value_to_float(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Float]): Float =
+      Bindings.instance.metacall_value_to_float(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Float])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(FloatValue.apply)
+    def value(ptr: Ptr[Float]): Value = FloatValue(primitive(ptr))
   }
 
   implicit val doubleCreate =
     new Create[Double] {
-      def create[F[_]](
-          value: Double
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Double]] = {
+      def create(value: Double): Ptr[Double] = {
         val ptr = Bindings.instance.metacall_value_create_double(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new DoublePtr(ptr).pure[F].widen[Ptr[Double]]
+        new DoublePtr(ptr)
       }
     }
 
   implicit val doubleGet = new Get[Double] {
-    def primitive[F[_]](ptr: Ptr[Double])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Double] =
-      Bindings.instance.metacall_value_to_double(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Double]): Double =
+      Bindings.instance.metacall_value_to_double(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Double])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(DoubleValue.apply)
+    def value(ptr: Ptr[Double]): Value = DoubleValue(primitive(ptr))
   }
 
   implicit val boolCreate =
     new Create[Boolean] {
-      def create[F[_]](
-          value: Boolean
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Boolean]] = {
+      def create(value: Boolean): Ptr[Boolean] = {
         val ptr = Bindings.instance.metacall_value_create_bool(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new BoolPtr(ptr).pure[F].widen[Ptr[Boolean]]
+        new BoolPtr(ptr)
       }
     }
 
   implicit val boolGet = new Get[Boolean] {
-    def primitive[F[_]](ptr: Ptr[Boolean])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Boolean] =
-      Bindings.instance.metacall_value_to_bool(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Boolean]): Boolean =
+      Bindings.instance.metacall_value_to_bool(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Boolean])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(BooleanValue.apply)
+    def value(ptr: Ptr[Boolean]): Value = BooleanValue(primitive(ptr))
   }
 
   implicit val charCreate =
     new Create[Char] {
-      def create[F[_]](
-          value: Char
-      )(implicit FE: MonadError[F, Throwable]): F[Ptr[Char]] = {
+      def create(value: Char): Ptr[Char] = {
         val ptr = Bindings.instance.metacall_value_create_char(value)
-
-        if (isNull(ptr))
-          FE.raiseError(
-            new AllocationError(Some(value), Some("Pointer to value was null"))
-          )
-        else new CharPtr(ptr).pure[F].widen[Ptr[Char]]
+        new CharPtr(ptr)
       }
     }
 
   implicit val charGet = new Get[Char] {
-    def primitive[F[_]](ptr: Ptr[Char])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Char] =
-      Bindings.instance.metacall_value_to_char(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[Char]): Char =
+      Bindings.instance.metacall_value_to_char(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[Char])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(CharValue.apply)
+    def value(ptr: Ptr[Char]): Value = CharValue(primitive(ptr))
   }
 
   implicit val stringCreate = new Create[String] {
-    def create[F[_]](
-        value: String
-    )(implicit FE: MonadError[F, Throwable]): F[Ptr[String]] =
+    def create(value: String): Ptr[String] =
       new StringPtr(
         Bindings.instance.metacall_value_create_string(
           value,
           SizeT(value.getBytes().length.toLong)
         )
-      ).pure[F].widen[Ptr[String]]
+      )
   }
 
   implicit val stringGet = new Get[String] {
-    def primitive[F[_]](
-        ptr: Ptr[String]
-    )(implicit FE: MonadError[F, Throwable]): F[String] =
-      Bindings.instance.metacall_value_to_string(ptr.ptr).pure[F]
+    def primitive(ptr: Ptr[String]): String =
+      Bindings.instance.metacall_value_to_string(ptr.ptr)
 
-    def value[F[_]](ptr: Ptr[String])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = primitive[F](ptr).map(StringValue.apply)
+    def value(ptr: Ptr[String]): Value = StringValue(primitive(ptr))
   }
 
   implicit val arrayCreate = new Create[Array[Pointer]] {
-    def create[F[_]](
-        value: Array[Pointer]
-    )(implicit FE: MonadError[F, Throwable]): F[Ptr[Array[Pointer]]] =
+    def create(value: Array[Pointer]): Ptr[Array[Pointer]] =
       new ArrayPtr(
         Bindings.instance
           .metacall_value_create_array(value, SizeT(value.length.toLong))
-      ).pure[F].widen[Ptr[Array[Pointer]]]
+      )
   }
 
   implicit val arrayGet = new Get[Array[Pointer]] {
-    def primitive[F[_]](
-        ptr: Ptr[Array[Pointer]]
-    )(implicit FE: MonadError[F, Throwable]): F[Array[Pointer]] = {
+    def primitive(ptr: Ptr[Array[Pointer]]): Array[Pointer] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
-      Bindings.instance.metacall_value_to_array(ptr.ptr).take(dataSize.intValue()).pure[F]
+      Bindings.instance.metacall_value_to_array(ptr.ptr).take(dataSize.intValue())
     }
 
-    def value[F[_]](ptr: Ptr[Array[Pointer]])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = {
-      val elements = primitive[F](ptr)
-        .flatMap(_.toVector.traverse(Ptr.fromPrimitive[F]))
-        .flatMap(_.traverse(ptr => Ptr.toValue(ptr)(FE)))
-        .map(ArrayValue.apply)
-        .widen[Value]
-      elements
+    def value(ptr: Ptr[Array[Pointer]]): Value = {
+      val elems = primitive(ptr).map(p => Ptr.toValue(Ptr.fromPrimitiveUnsafe(p)))
+      ArrayValue(elems.toVector)
     }
+
   }
 
   implicit val mapCreate = new Create[Array[(Pointer, Pointer)]] {
-    def create[F[_]](
-        value: Array[(Pointer, Pointer)]
-    )(implicit FE: MonadError[F, Throwable]): F[Ptr[Array[(Pointer, Pointer)]]] =
+    def create(value: Array[(Pointer, Pointer)]): Ptr[Array[(Pointer, Pointer)]] =
       new MapPtr(
         Bindings.instance
           .metacall_value_create_map(
@@ -309,46 +191,63 @@ object instances {
             },
             SizeT(value.length.toLong)
           )
-      ).pure[F].widen[Ptr[Array[(Pointer, Pointer)]]]
+      )
   }
 
   implicit val mapGet = new Get[Array[(Pointer, Pointer)]] {
-    def primitive[F[_]](
-        ptr: Ptr[Array[(Pointer, Pointer)]]
-    )(implicit FE: MonadError[F, Throwable]): F[Array[(Pointer, Pointer)]] = {
+    def primitive(ptr: Ptr[Array[(Pointer, Pointer)]]): Array[(Pointer, Pointer)] = {
       val dataSize = Bindings.instance.metacall_value_count(ptr.ptr)
       val tuplePtrs =
         Bindings.instance.metacall_value_to_map(ptr.ptr).take(dataSize.intValue())
-      tuplePtrs.toVector
+      tuplePtrs
         .map(Bindings.instance.metacall_value_to_array)
         .map(_.take(2))
-        .traverse {
-          case Array(k, v) => (k, v).pure[F]
+        .map {
+          case Array(k, v) => (k, v)
           case _ =>
-            FE.raiseError[(Pointer, Pointer)](new Exception("Tuple size wasn't two"))
+            throw new Exception(
+              "Map element is not an array of two elements. This is likey a bug, please report it."
+            )
         }
-        .map(_.toArray)
     }
 
-    def value[F[_]](ptr: Ptr[Array[(Pointer, Pointer)]])(implicit
-        FE: MonadError[F, Throwable]
-    ): F[Value] = {
-      val elements = primitive[F](ptr)
-        .flatMap(_.toVector.traverse { case (kPtr, vPtr) =>
-          Ptr
-            .fromPrimitive[F](kPtr)
-            .flatMap(kPtr => Ptr.fromPrimitive[F](vPtr).map(vPtr => kPtr -> vPtr))
-        })
-        .flatMap {
-          _.traverse { case (kPtr, vPtr) =>
-            Ptr.toValue(kPtr)(FE).flatMap(k => Ptr.toValue(vPtr)(FE).map(v => k -> v))
-          }
-        }
-        .map(_.toMap)
-        .map(MapValue.apply)
-        .widen[Value]
-      elements
+    def value(ptr: Ptr[Array[(Pointer, Pointer)]]): Value =
+      MapValue {
+        primitive(ptr).map { case (kPtr, vPtr) =>
+          Ptr.toValue(Ptr.fromPrimitiveUnsafe(kPtr)) ->
+            Ptr.toValue(Ptr.fromPrimitiveUnsafe(vPtr))
+        }.toMap
+      }
+  }
+
+  implicit val functionCreate = new Create[FunctionPointer] {
+    def create(value: FunctionPointer): Ptr[FunctionPointer] =
+      new FunctionPtr(Bindings.instance.metacall_value_create_function(value))
+  }
+
+  implicit val functionGet = new Get[FunctionPointer] {
+    def primitive(ptr: Ptr[FunctionPointer]): FunctionPointer =
+      Bindings.instance.metacall_value_to_function(ptr.ptr)
+
+    def value(ptr: Ptr[FunctionPointer]): Value = {
+      val valueFn = (v: Value) => {
+        val argPtr = Ptr.fromValueUnsafe(v)
+        val callbackRet = primitive(ptr).callback(argPtr.ptr)
+        val retPtr = Ptr.fromPrimitiveUnsafe(callbackRet)
+        val retValue = Ptr.toValue(retPtr)
+
+        Bindings.instance.metacall_value_destroy(callbackRet)
+        Bindings.instance.metacall_value_destroy(argPtr.ptr)
+
+        retValue
+      }
+
+      FunctionValue(valueFn)
     }
+  }
+
+  implicit val invalidCreate = new Create[Unit] {
+    def create(value: Unit): Ptr[Unit] = InvalidPtr
   }
 
 }
