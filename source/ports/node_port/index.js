@@ -27,7 +27,13 @@ const addon = (() => {
 	try {
 		/* This forces metacall port to be run always by metacall cli */
 		return process.binding('node_loader_port_module');
-	} catch (_) {
+	} catch (e) {
+		console.error('MetaCall failed to load, probably you are importing this file from NodeJS directly.');
+		console.error('You should use MetaCall CLI instead. Install it from: https://github.com/metacall/install');
+		throw e;
+
+		/* TODO: Until we find a better way to do this, we should disable it */
+		/*
 		const write = (data, cb) => {
 			if (!process.stdout.write(data)) {
 				process.stdout.once('drain', cb);
@@ -36,7 +42,7 @@ const addon = (() => {
 			}
 		};
 
-		/* Notify synchronously that we are launching MetaCall */
+		// Notify synchronously that we are launching MetaCall
 		write('NodeJS detected, launching MetaCall...\n', () => {
 			try {
 				const { spawnSync } = require('child_process');
@@ -63,6 +69,7 @@ const addon = (() => {
 				});
 			}
 		});
+		*/
 	}
 })();
 

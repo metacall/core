@@ -107,6 +107,9 @@ test_environment_variables(${target}
 	${TESTS_ENVIRONMENT_VARIABLES_COB}
 )
 
+# TODO: Until we find a better way to do this, we should disable it
+return()
+
 # Detect exec with MetaCall CLI when this is being run with node
 set(NODEJS_EXECUTABLE_ONLY ON)
 
