@@ -216,14 +216,22 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "`FunctionPointer`s" should "be created/retrieved correctly" in {
     val myFunction = new FunctionPointer {
-      override def callback(input: Pointer): Pointer = input
+      override def callback(
+          argsSize: SizeT,
+          args: Array[Pointer],
+          data: Pointer
+      ): Pointer = args.head
     }
 
     val fnPtr = metacall.metacall_value_create_function(myFunction)
 
     val resPtr = metacall
       .metacall_value_to_function(fnPtr)
-      .callback(metacall.metacall_value_create_string("hellooo", SizeT(7L)))
+      .callback(
+        SizeT(1),
+        Array(metacall.metacall_value_create_string("hellooo", SizeT(7L))),
+        Pointer.NULL
+      )
 
     val res = metacall.metacall_value_to_string(resPtr)
 
@@ -237,8 +245,12 @@ class MetaCallSpec extends AnyFlatSpec {
     // }
 
     val fnPointer = new FunctionPointer {
-      final override def callback(input: Pointer): Pointer =
-        Ptr.toValue(Ptr.fromPrimitiveUnsafe(input)) match {
+      final override def callback(
+          argsSize: SizeT,
+          args: Array[Pointer],
+          data: Pointer
+      ): Pointer =
+        Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.head)) match {
           case IntValue(i) => Ptr.fromValueUnsafe(IntValue(i + 1)).ptr
           case _           => Ptr.fromValueUnsafe(NullValue).ptr
         }

@@ -232,7 +232,8 @@ object instances {
     def value(ptr: Ptr[FunctionPointer]): Value = {
       val valueFn = (v: Value) => {
         val argPtr = Ptr.fromValueUnsafe(v)
-        val callbackRet = primitive(ptr).callback(argPtr.ptr)
+        val callbackRet =
+          primitive(ptr).callback(SizeT(1), Array(argPtr.ptr), Pointer.NULL)
         val retPtr = Ptr.fromPrimitiveUnsafe(callbackRet)
         val retValue = Ptr.toValue(retPtr)
 

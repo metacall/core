@@ -89,8 +89,8 @@ object Ptr {
     case FunctionValue(fn) =>
       Create[FunctionPointer].create {
         new FunctionPointer {
-          def callback(input: Pointer): Pointer =
-            Ptr.fromValueUnsafe(fn(Ptr.toValue(Ptr.fromPrimitiveUnsafe(input)))).ptr
+          def callback(argsSize: SizeT, args: Array[Pointer], data: Pointer): Pointer =
+            Ptr.fromValueUnsafe(fn(Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.head)))).ptr
         }
       }
     case NullValue => Create[Null].create(null)
