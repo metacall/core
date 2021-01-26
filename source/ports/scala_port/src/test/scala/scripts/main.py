@@ -6,6 +6,10 @@ def hello_scala_from_python(a, b):
 def fail():
     raise Exception('Failed!')
 
+def apply_fn_to_str(fn):
+    print('Executed from apply_fn_to_str', fn)
+    return fn('hellooo')
+
 def apply_fn_to_one(fn):
     return fn(1)
 

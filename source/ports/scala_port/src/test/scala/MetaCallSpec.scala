@@ -5,9 +5,7 @@ import java.nio.file.Paths
 import org.scalatest.flatspec.AnyFlatSpec
 import cats.implicits._, cats.effect._
 import metacall.util._, metacall.instances._
-
-// TODO: Uncomment this
-// import com.sun.jna.ptr._
+import com.sun.jna.ptr.PointerByReference
 
 class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
@@ -217,52 +215,61 @@ class MetaCallSpec extends AnyFlatSpec {
       .unsafeRunSync()
   }
 
-  // TODO
-  /*
   "`FunctionPointer`s" should "be created/retrieved correctly" in {
-    val myFunction = new FunctionPointer {
+    // TODO: args should be Array[Pointer], or converted to it at least
+    // in the body of the callback. args.getValue() returns the first element
+    // of the array, but we should not use this to handle the args (or we can,
+    // but we should do pointer arithmetic manually to access it)
+    val cb = new FunctionPointer {
       override def callback(
           argc: SizeT,
-          args: Array[Pointer],
+          args: PointerByReference,
           data: Pointer
-      ): Pointer = args.head
+      ): Pointer = metacall.metacall_value_copy(args.getValue())
     }
 
-    val fnPtr = metacall.metacall_value_create_function(myFunction)
+    val fnRef = new PointerByReference()
 
-    val resPtr = metacall
-      .metacall_value_to_function(fnPtr)
-      .callback(
-        SizeT(1),
-        Array(metacall.metacall_value_create_string("hellooo", SizeT(7L))),
-        Pointer.NULL
-      )
+    metacall.metacall_registerv(null, cb, fnRef, StringPtrType.id, SizeT(1), Array(StringPtrType.id))
 
-    val res = metacall.metacall_value_to_string(resPtr)
+    val f = metacall.metacall_value_create_function(fnRef.getValue())
+
+    val ret = metacall.metacallv_s(
+      "apply_fn_to_str",
+      Array(f),
+      SizeT(1)
+    )
+
+    metacall.metacall_value_destroy(f)
+
+    val res = metacall.metacall_value_to_string(ret)
 
     assert(res == "hellooo")
-  }
-  */
 
-  // TODO: This fails with when calling metacall_registerv with:
-  //       java.lang.IllegalArgumentException: Callback argument class com.sun.jna.Pointer; requires custom type conversion
-  /*
+    metacall.metacall_value_destroy(ret)
+  }
+
   "Function values" should "be constructed, passed, used, and destroyed correctly" in {
     // val fn = FunctionValue {
     //   case IntValue(i) => IntValue(i + 1)
     //   case _           => NullValue
     // }
 
+    // TODO: This suffers from the same problem as the previous callback.
+    // A higher syntax sugar should hide all those details (probably with generics).
     val fnCallback = new FunctionPointer {
       final override def callback(
           argc: SizeT,
-          args: Array[Pointer],
+          args: PointerByReference,
           data: Pointer
-      ): Pointer =
-        Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.head)) match {
+      ): Pointer = {
+        Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.getValue())) match {
           case IntValue(i) => Ptr.fromValueUnsafe(IntValue(i + 1)).ptr
           case _           => Ptr.fromValueUnsafe(NullValue).ptr
         }
+
+        return metacall.metacall_value_create_long(34)
+      }
     }
 
     val fnRef = new PointerByReference()
@@ -277,14 +284,19 @@ class MetaCallSpec extends AnyFlatSpec {
       SizeT(1)
     )
 
-    pprint.pprintln(Ptr.toValue(Ptr.fromPrimitiveUnsafe(ret)))
+    val res = metacall.metacall_value_to_long(ret)
+
+    assert(res == 34)
+
+    metacall.metacall_value_destroy(ret)
+
+    // pprint.pprintln(Ptr.toValue(Ptr.fromPrimitiveUnsafe(ret)))
 
     // val ret = Caller.call[IO]("apply_fn_to_one", Vector(fn)).unsafeRunSync()
 
     // println("Return: ")
     // pprint.pprintln(ret)
   }
-  */
 
   "Function by parameters" should "retrieve the function, construct the value, call it and destroy it" in {
     val f = metacall.metacall_function("get_function_test")
@@ -297,8 +309,8 @@ class MetaCallSpec extends AnyFlatSpec {
 
     assert(metacall.metacall_value_to_long(ret) == 1)
 
-    metacall.metacall_value_destroy(ret);
-    metacall.metacall_value_destroy(v);
+    metacall.metacall_value_destroy(ret)
+    metacall.metacall_value_destroy(v)
   }
 
   "MetaCall" should "be destroyed successfully" in {
@@ -307,5 +319,4 @@ class MetaCallSpec extends AnyFlatSpec {
       "MetaCall was not successfully destroyed"
     )
   }
-
 }

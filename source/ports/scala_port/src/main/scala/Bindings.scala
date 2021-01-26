@@ -97,6 +97,8 @@ protected[metacall] trait Bindings extends Library {
     */
   def metacall_value_count(v: Pointer): SizeT
 
+  def metacall_value_copy(v: Pointer): Pointer
+
   def metacall_value_destroy(v: Pointer): Unit
 
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
