@@ -558,6 +558,33 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(size_t, v
 
 /**
 *  @brief
+*    Register a function by name @name and arguments @types
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] invoke
+*    Pointer to function invoke interface (argc, argv, data)
+*
+*  @param[out] func
+*    Will set the pointer to the function if the parameter is not null
+*
+*  @param[in] return_type
+*    Type of return value
+*
+*  @param[in] size
+*    Number of function arguments
+*
+*  @param[in] types
+*    List of parameter types
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API int metacall_registerv(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
+
+/**
+*  @brief
 *    Executes an asynchronous call to the function and registers a callback to be executed when a future is resolved (it does block)
 *
 *  @param[in] name

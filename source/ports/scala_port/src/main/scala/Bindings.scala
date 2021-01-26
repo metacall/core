@@ -21,6 +21,7 @@
 package metacall
 
 import com.sun.jna._
+import com.sun.jna.ptr._
 import util._
 
 /** Interface mirroring the MetaCall library using JNA. See:
@@ -39,65 +40,45 @@ protected[metacall] trait Bindings extends Library {
       handle: Pointer
   ): Int
 
-  def metacallv(name: String, args: Array[Pointer]): Pointer
-
   def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
+
+  def metacall_registerv(name: String, invoke: FunctionPointer, func: PointerByReference, ret: Int, size: SizeT, types: Array[Int]): Int
+
+  def metacall_function(name: String): Pointer
 
   def metacall_destroy(): Int
 
   // metacall_value.h
   def metacall_value_create_int(i: Int): Pointer
-
-  def metacall_value_create_long(i: Long): Pointer
-
-  def metacall_value_create_short(i: Short): Pointer
-
+  def metacall_value_create_long(l: Long): Pointer
+  def metacall_value_create_short(s: Short): Pointer
   def metacall_value_create_string(str: String, length: SizeT): Pointer
-
-  def metacall_value_create_char(v: Char): Pointer
-
-  def metacall_value_create_double(v: Double): Pointer
-
-  def metacall_value_create_float(v: Float): Pointer
-
-  def metacall_value_create_bool(v: Boolean): Pointer
-
-  def metacall_value_create_function(v: FunctionPointer): Pointer
-
+  def metacall_value_create_char(c: Char): Pointer
+  def metacall_value_create_double(d: Double): Pointer
+  def metacall_value_create_float(f: Float): Pointer
+  def metacall_value_create_bool(b: Boolean): Pointer
+  def metacall_value_create_function(f: Pointer): Pointer
   def metacall_value_create_array(
       values: Array[Pointer],
-      valuesSize: SizeT
+      size: SizeT
   ): Pointer
-
   def metacall_value_create_map(tuples: Array[Pointer], size: SizeT): Pointer
+  def metacall_value_create_null(): Pointer
 
   def metacall_value_to_int(v: Pointer): Int
-
   def metacall_value_to_long(v: Pointer): Long
-
   def metacall_value_to_short(v: Pointer): Short
-
   def metacall_value_to_float(v: Pointer): Float
-
   def metacall_value_to_double(v: Pointer): Double
-
   def metacall_value_to_bool(v: Pointer): Boolean
-
   def metacall_value_to_char(v: Pointer): Char
-
   def metacall_value_to_string(v: Pointer): String
-
   def metacall_value_to_array(v: Pointer): Array[Pointer]
-
+  def metacall_value_to_null(v: Pointer): Null
+  def metacall_value_to_function(v: Pointer): Pointer
   def metacall_value_to_map(v: Pointer): Array[Pointer]
 
   def metacall_value_from_int(v: Pointer, i: Int): Pointer
-
-  def metacall_value_create_null(): Pointer
-
-  def metacall_value_to_null(v: Pointer): Null
-  def metacall_value_to_function(f: Pointer): FunctionPointer
-
   def metacall_value_from_string(
       v: Pointer,
       str: String,

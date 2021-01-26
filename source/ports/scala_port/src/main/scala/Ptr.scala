@@ -72,7 +72,6 @@ object Ptr {
     case LongValue(value)    => Create[Long].create(value)
     case FloatValue(value)   => Create[Float].create(value)
     case DoubleValue(value)  => Create[Double].create(value)
-    case SizeTValue(value)   => Create[SizeT].create(SizeT(value))
     case BooleanValue(value) => Create[Boolean].create(value)
     case InvalidValue        => Create[Unit].create(())
     case ArrayValue(value) => {
@@ -86,13 +85,16 @@ object Ptr {
 
       Create[Array[(Pointer, Pointer)]].create(tuplePtrs)
     }
+    // TODO: Implement this properly
+    /*
     case FunctionValue(fn) =>
       Create[FunctionPointer].create {
         new FunctionPointer {
-          def callback(argsSize: SizeT, args: Array[Pointer], data: Pointer): Pointer =
+          def callback(argc: SizeT, args: Array[Pointer], data: Pointer): Pointer =
             Ptr.fromValueUnsafe(fn(Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.head)))).ptr
         }
       }
+    */
     case NullValue => Create[Null].create(null)
   }
 
@@ -125,7 +127,6 @@ object Ptr {
       case ArrayPtrType    => new ArrayPtr(pointer)
       case MapPtrType      => new MapPtr(pointer)
       case NullPtrType     => new NullPtr(pointer)
-      case SizePtrType     => new SizePtr(pointer)
       case FunctionPtrType => new FunctionPtr(pointer)
       case InvalidPtrType  => InvalidPtr
     }
@@ -151,8 +152,8 @@ object Ptr {
     case p: ArrayPtr    => Get[Array[Pointer]].value(p)
     case p: MapPtr      => Get[Array[(Pointer, Pointer)]].value(p)
     case p: NullPtr     => Get[Null].value(p)
-    case p: SizePtr     => Get[SizeT].value(p)
-    case p: FunctionPtr => Get[FunctionPointer].value(p)
+    // TODO: Implement this properly
+    // case p: FunctionPtr => Get[FunctionPointer].value(p)
     case InvalidPtr     => InvalidValue
   }
 
@@ -194,7 +195,6 @@ object PtrType {
         case 9  => ArrayPtrType
         case 10 => MapPtrType
         case 14 => NullPtrType
-        case 17 => SizePtrType
         case _  => InvalidPtrType
       }
 }
@@ -282,13 +282,6 @@ private[metacall] final class NullPtr(val ptr: Pointer) extends Ptr[Null] {
 }
 object NullPtrType extends PtrType {
   val id = 14
-}
-
-private[metacall] final class SizePtr(val ptr: Pointer) extends Ptr[SizeT] {
-  val ptrType = SizePtrType
-}
-object SizePtrType extends PtrType {
-  val id = 17
 }
 
 case object InvalidPtr extends Ptr[Unit] {

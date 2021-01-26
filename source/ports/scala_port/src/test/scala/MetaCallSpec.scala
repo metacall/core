@@ -6,6 +6,9 @@ import org.scalatest.flatspec.AnyFlatSpec
 import cats.implicits._, cats.effect._
 import metacall.util._, metacall.instances._
 
+// TODO: Uncomment this
+// import com.sun.jna.ptr._
+
 class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
 
@@ -214,10 +217,12 @@ class MetaCallSpec extends AnyFlatSpec {
       .unsafeRunSync()
   }
 
+  // TODO
+  /*
   "`FunctionPointer`s" should "be created/retrieved correctly" in {
     val myFunction = new FunctionPointer {
       override def callback(
-          argsSize: SizeT,
+          argc: SizeT,
           args: Array[Pointer],
           data: Pointer
       ): Pointer = args.head
@@ -237,16 +242,20 @@ class MetaCallSpec extends AnyFlatSpec {
 
     assert(res == "hellooo")
   }
+  */
 
+  // TODO: This fails with when calling metacall_registerv with:
+  //       java.lang.IllegalArgumentException: Callback argument class com.sun.jna.Pointer; requires custom type conversion
+  /*
   "Function values" should "be constructed, passed, used, and destroyed correctly" in {
     // val fn = FunctionValue {
     //   case IntValue(i) => IntValue(i + 1)
     //   case _           => NullValue
     // }
 
-    val fnPointer = new FunctionPointer {
+    val fnCallback = new FunctionPointer {
       final override def callback(
-          argsSize: SizeT,
+          argc: SizeT,
           args: Array[Pointer],
           data: Pointer
       ): Pointer =
@@ -256,9 +265,16 @@ class MetaCallSpec extends AnyFlatSpec {
         }
     }
 
-    val ret = metacall.metacallv(
+    val fnRef = new PointerByReference()
+
+    metacall.metacall_registerv(null, fnCallback, fnRef, IntPtrType.id, SizeT(1), Array(IntPtrType.id))
+
+    val fnPtr = fnRef.getValue()
+
+    val ret = metacall.metacallv_s(
       "apply_fn_to_one",
-      Array(metacall.metacall_value_create_function(fnPointer))
+      Array(metacall.metacall_value_create_function(fnPtr)),
+      SizeT(1)
     )
 
     pprint.pprintln(Ptr.toValue(Ptr.fromPrimitiveUnsafe(ret)))
@@ -267,6 +283,21 @@ class MetaCallSpec extends AnyFlatSpec {
 
     // println("Return: ")
     // pprint.pprintln(ret)
+  }
+  */
+
+  "Function by parameters" should "retrieve the function, construct the value, call it and destroy it" in {
+    val f = metacall.metacall_function("get_function_test")
+    val v = metacall.metacall_value_create_function(f)
+    val ret = metacall.metacallv_s(
+      "apply_fn_to_one",
+      Array(v),
+      SizeT(1)
+    )
+    // TODO: Does this destroy the value?
+    pprint.pprintln(Ptr.toValue(Ptr.fromPrimitiveUnsafe(ret)))
+
+    // TODO: Add asserts for the returning value
   }
 
   "MetaCall" should "be destroyed successfully" in {

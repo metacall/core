@@ -1,7 +1,7 @@
 package metacall
 
 import metacall.util._
-import cats._, cats.implicits._
+import cats._
 import java.nio.file.Paths
 
 /** Loads scripts into MetaCall
@@ -9,24 +9,25 @@ import java.nio.file.Paths
   */
 object Loader {
 
-  def loadFile[F[_]](runtime: Runtime, filePath: String)(implicit
+  def loadFiles[F[_]](runtime: Runtime, filePaths: Vector[String])(implicit
       FE: ApplicativeError[F, Throwable]
   ): F[Unit] = {
-    val absolutePath = Paths.get(filePath).toAbsolutePath().toString()
+    // TODO: Not sure if this is recommendable, we must follow Scala (JVM) import method or let MetaCall handle it
+    val absolutePaths = filePaths.map(filePath => Paths.get(filePath).toAbsolutePath().toString())
     val code = Bindings.instance.metacall_load_from_file(
       runtime.toString(),
-      Array(absolutePath),
-      SizeT(1),
+      absolutePaths.toArray,
+      SizeT(absolutePaths.size.asInstanceOf[Long]),
       null
     )
 
-    if (code != 0) FE.raiseError(new Exception("Failed to load script " + absolutePath))
+    if (code != 0) FE.raiseError(new Exception("Failed to load scripts: " + filePaths.mkString(" ")))
     else FE.unit
   }
 
-  def loadFiles[F[_]](runtime: Runtime, filePaths: Vector[String])(implicit
+  def loadFile[F[_]](runtime: Runtime, filePath: String)(implicit
       FE: ApplicativeError[F, Throwable]
-  ) = filePaths.traverse(loadFile[F](runtime, _))
+  ) = loadFiles[F](runtime, Vector(filePath))
 
 }
 

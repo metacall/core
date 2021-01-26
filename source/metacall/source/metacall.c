@@ -1139,6 +1139,11 @@ int metacall_register(const char * name, void * (*invoke)(size_t, void * [], voi
 	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types);
 }
 
+int metacall_registerv(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[])
+{
+	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types);
+}
+
 void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
 	value f_val = loader_get(name);

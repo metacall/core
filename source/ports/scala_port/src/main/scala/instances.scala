@@ -6,22 +6,6 @@ import metacall.util._
 
 object instances {
 
-  implicit val sizeCreate =
-    new Create[SizeT] {
-      def create(value: SizeT): Ptr[SizeT] = {
-        val ptr = Bindings.instance.metacall_value_create_long(value.longValue())
-        new SizePtr(ptr)
-      }
-    }
-
-  implicit val sizeGet = new Get[SizeT] {
-    def primitive(ptr: Ptr[SizeT]): SizeT =
-      SizeT(Bindings.instance.metacall_value_to_long(ptr.ptr))
-
-    def value(ptr: Ptr[SizeT]): Value =
-      SizeTValue(primitive(ptr).longValue())
-  }
-
   implicit val nullCreate =
     new Create[Null] {
       def create(value: Null): Ptr[Null] = {
@@ -220,6 +204,8 @@ object instances {
       }
   }
 
+  // TODO: Implement this properly
+  /*
   implicit val functionCreate = new Create[FunctionPointer] {
     def create(value: FunctionPointer): Ptr[FunctionPointer] =
       new FunctionPtr(Bindings.instance.metacall_value_create_function(value))
@@ -246,6 +232,7 @@ object instances {
       FunctionValue(valueFn)
     }
   }
+  */
 
   implicit val invalidCreate = new Create[Unit] {
     def create(value: Unit): Ptr[Unit] = InvalidPtr

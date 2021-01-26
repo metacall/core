@@ -12,7 +12,7 @@ object util {
   }
 
   private[metacall] trait FunctionPointer extends Callback {
-    def callback(argsSize: SizeT, args: Array[Pointer], data: Pointer): Pointer
+    def callback(argc: SizeT, args: Array[Pointer], data: Pointer): Pointer
   }
 
   sealed class MetaCallException(message: String, val cause: Option[String])
