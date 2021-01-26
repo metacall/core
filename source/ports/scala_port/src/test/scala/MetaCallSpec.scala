@@ -294,10 +294,11 @@ class MetaCallSpec extends AnyFlatSpec {
       Array(v),
       SizeT(1)
     )
-    // TODO: Does this destroy the value?
-    pprint.pprintln(Ptr.toValue(Ptr.fromPrimitiveUnsafe(ret)))
 
-    // TODO: Add asserts for the returning value
+    assert(metacall.metacall_value_to_long(ret) == 1)
+
+    metacall.metacall_value_destroy(ret);
+    metacall.metacall_value_destroy(v);
   }
 
   "MetaCall" should "be destroyed successfully" in {
