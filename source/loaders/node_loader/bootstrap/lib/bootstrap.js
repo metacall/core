@@ -7,9 +7,17 @@ const util = require('util');
 
 const cherow = require('./node_modules/cherow');
 
-// eslint-disable-next-line no-empty-function
 function node_loader_trampoline_initialize() {
-	// Nothing to initialize yet
+	try {
+		// Preload MetaCall Monkey Patch
+		require('metacall');
+	} catch (e) {
+		if (e.code === 'MODULE_NOT_FOUND') {
+			// console.log('NodeJS Warning: MetaCall could not be preloaded');
+		} else {
+			console.log(`NodeJS Error (while preloading MetaCall): ${e.message}`);
+		}
+	}
 }
 
 function node_loader_trampoline_is_callable(value) {

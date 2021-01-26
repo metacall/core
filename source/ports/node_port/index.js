@@ -31,6 +31,45 @@ const addon = (() => {
 		console.error('MetaCall failed to load, probably you are importing this file from NodeJS directly.');
 		console.error('You should use MetaCall CLI instead. Install it from: https://github.com/metacall/install');
 		throw e;
+
+		/* TODO: Until we find a better way to do this, we should disable it */
+		/*
+		const write = (data, cb) => {
+			if (!process.stdout.write(data)) {
+				process.stdout.once('drain', cb);
+			} else {
+				process.nextTick(cb);
+			}
+		};
+
+		// Notify synchronously that we are launching MetaCall
+		write('NodeJS detected, launching MetaCall...\n', () => {
+			try {
+				const { spawnSync } = require('child_process');
+				const args = [...process.argv];
+
+				args.shift();
+
+				const result = spawnSync('metacall', args, {});
+
+				if (result.error && result.error.code === 'ENOENT') {
+					write('MetaCall not found. Please install MetaCall from: https://github.com/metacall/install and run it again.\n', () => {
+						process.exit(1);
+					});
+				}
+
+				process.exit(result.status !== null ? result.status : 1);
+			} catch (e) {
+				const message = 'MetaCall failed to load, probably you are importing this file from NodeJS directly.\n'
+					+ e.message + '\n'
+					+ 'Install MetaCall from: https://github.com/metacall/install and run it again.\n';
+
+				write(message, () => {
+					throw e;
+				});
+			}
+		});
+		*/
 	}
 })();
 
@@ -101,9 +140,9 @@ const metacall_require = (tag, name) => {
 	// TODO: Inspect only the handle instead of the whole metacall namespace
 	/* return */ addon.metacall_load_from_file(tag, [ name ]);
 
-
 	const inspect = metacall_inspect();
-	const script = inspect[tag].find(s => s.name === name);
+	const script = inspect[tag].find(s => s.name === path.basename(name));
+
 	const obj = {};
 
 	for (const func of script.scope.funcs) {
@@ -160,6 +199,15 @@ mod.prototype.require = function (name) {
 		/* Probably in the future we can differenciate between them, but it is not trivial */
 	};
 
+	/* Try to load it with NodeJS first */
+	try {
+		return node_require.apply(this, [ require.resolve(name) ]);
+	} catch (e) {
+		if (e.code !== 'MODULE_NOT_FOUND') {
+			throw e;
+		}
+	}
+
 	const index = name.lastIndexOf('.');
 
 	if (index !== -1) {
@@ -175,12 +223,15 @@ mod.prototype.require = function (name) {
 
 	/* If there is no extension or the extension is not supported or it is 'node', load it with NodeJS require */
 	try {
-		/* Cache the port */
-		if (require.resolve(name) === path.resolve(__filename)) {
+		const filename = require.resolve(name);
+
+		/* Cache the port (detect if this file is being loaded) */
+		if (filename === path.resolve(__filename)) {
 			return module_exports;
 		}
+
 		/* Call to real NodeJS require */
-		return node_require.apply(this, [ name ]);
+		return node_require.apply(this, [ filename ]);
 	} catch (e) {
 		/* If it is not a NodeJS module, try to guess the runtime */
 		const loaders = new Set(Object.values(tags));
@@ -204,8 +255,7 @@ mod.prototype.require = function (name) {
 };
 
 /* Debug logs */
-if (process.env['NODE_ENV'] === 'debug' && addon !== undefined)
-{
+if (process.env['NODE_ENV'] === 'debug' && addon !== undefined) {
 	addon.metacall_logs();
 }
 

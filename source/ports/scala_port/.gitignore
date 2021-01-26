@@ -3,6 +3,25 @@ target/
 .vscode/
 .bsp/
 .metals/
+
+*.class
 *.log
-*__pycache__/
+
+# sbt specific
+.cache/
+.history/
+.lib/
+dist/*
+target/
+lib_managed/
+src_managed/
+project/boot/
+project/plugins/project/
+
+# Scala-IDE specific
+.scala_dependencies
+.worksheet
+.idea
+
+# Disable from parent gitignore
 !build.sbt

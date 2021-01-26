@@ -74,7 +74,9 @@ describe('metacall', () => {
 			});
 		}
 		it('require (mock)', () => {
-			const asd = require('asd.mock');
+			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
+			// const asd = require('asd.mock');
+			const asd = require('./asd.mock');
 			assert.notStrictEqual(asd, undefined);
 			assert.strictEqual(asd.my_empty_func(), 1234);
 			assert.strictEqual(asd.my_empty_func_str(), 'Hello World');
@@ -86,7 +88,9 @@ describe('metacall', () => {
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
 		});
 		it('require (py)', () => {
-			const example = require('example.py');
+			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
+			// const example = require('example.py');
+			const example = require('./example.py');
 			assert.notStrictEqual(example, undefined);
 			assert.strictEqual(example.multiply(2, 2), 4);
 			assert.strictEqual(example.divide(4.0, 2.0), 2.0);
@@ -108,7 +112,9 @@ describe('metacall', () => {
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
 		it('require (rb)', () => {
-			const cache = require('cache.rb');
+			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
+			// const cache = require('cache.rb');
+			const cache = require('./cache.rb');
 			assert.notStrictEqual(cache, undefined);
 			assert.strictEqual(cache.cache_set('asd', 'efg'), undefined);
 			assert.strictEqual(cache.cache_get('asd'), 'efg');
