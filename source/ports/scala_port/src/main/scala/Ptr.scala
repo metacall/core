@@ -1,7 +1,7 @@
 package metacall
 
 import metacall.util._
-import com.sun.jna._, ptr.PointerByReference
+import com.sun.jna._
 import cats._, cats.implicits._, cats.effect._
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
@@ -88,11 +88,13 @@ object Ptr {
     case FunctionValue(fn) =>
       Create[FunctionPointer].create {
         new FunctionPointer {
-          def callback(argc: SizeT, arg: PointerByReference, data: Pointer): Pointer = {
-            val argValue =
-              Ptr.toValue(Ptr.fromPrimitiveUnsafe(arg.getValue()))
+          def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer = {
+            val argsList = args
+              .getPointerArray(0)
+              .map(ptr => Ptr.toValue(Ptr.fromPrimitiveUnsafe(ptr)))
+              .toList
 
-            Ptr.fromValueUnsafe(fn(argValue)).ptr
+            Ptr.fromValueUnsafe(fn(argsList)).ptr
           }
         }
       }
@@ -273,13 +275,6 @@ object MapPtrType extends PtrType {
 
 private[metacall] final class FunctionPtr(val ptr: Pointer) extends Ptr[FunctionPointer] {
   val ptrType: PtrType = FunctionPtrType
-
-  /** This reference is here just to keep the function ref from being garbage collected */
-  private var ref: PointerByReference = null
-
-  /** Don't forget to use this method when creating a new instance. */
-  private[metacall] def setRef(ref: PointerByReference): Unit =
-    if (this.ref == null) this.ref = ref
 }
 object FunctionPtrType extends PtrType {
   val id = 13

@@ -209,21 +209,22 @@ object instances {
     def create(value: FunctionPointer): Ptr[FunctionPointer] = {
       val ref = new PointerByReference()
 
-      Bindings.instance.metacall_register(
-        null,
-        value,
-        ref,
-        InvalidPtrType.id,
-        SizeT(1),
-        Array(InvalidPtrType.id)
-      )
+      if (
+        Bindings.instance.metacall_registerv(
+          null,
+          value,
+          ref,
+          InvalidPtrType.id,
+          SizeT(0),
+          Array()
+        ) != 0
+      ) {
+        throw new Exception(
+          "Invalid function value creation."
+        )
+      }
 
-      val jnaPointer = Bindings.instance.metacall_value_create_function(ref.getValue())
-      val ptr = new FunctionPtr(jnaPointer)
-
-      ptr.setRef(ref)
-
-      ptr
+      new FunctionPtr(Bindings.instance.metacall_value_create_function(ref.getValue()))
     }
   }
 
@@ -232,32 +233,38 @@ object instances {
       new FunctionPointer {
         def callback(
             argc: util.SizeT,
-            args: PointerByReference,
+            args: Pointer,
             data: Pointer
         ): Pointer = {
           val fnPointer = Bindings.instance.metacall_value_to_function(ptr.ptr)
-          val argsArray = args.getValue().getPointerArray(0)
 
           Bindings.instance.metacallfv_s(
             fnPointer,
-            argsArray,
-            SizeT(argsArray.length.toLong)
+            args.getPointerArray(0),
+            argc
           )
         }
       }
     }
 
     def value(ptr: Ptr[FunctionPointer]): Value = {
-      val valueFn = (arg: Value) => {
-        val argPtr = Ptr.fromValueUnsafe(arg)
+      val valueFn = (args: List[Value]) => {
+        val argPtrArray = args.map(arg => Ptr.fromValueUnsafe(arg).ptr).toArray
         val fnPointer = Bindings.instance.metacall_value_to_function(ptr.ptr)
         val callbackRet =
-          Bindings.instance.metacallfv_s(fnPointer, Array(argPtr.ptr), SizeT(1))
+          Bindings.instance.metacallfv_s(
+            fnPointer,
+            argPtrArray,
+            SizeT(argPtrArray.size.asInstanceOf[Long])
+          )
         val retPtr = Ptr.fromPrimitiveUnsafe(callbackRet)
         val retValue = Ptr.toValue(retPtr)
 
         Bindings.instance.metacall_value_destroy(callbackRet)
-        Bindings.instance.metacall_value_destroy(argPtr.ptr)
+
+        for (argPtr <- argPtrArray) {
+          Bindings.instance.metacall_value_destroy(argPtr)
+        }
 
         retValue
       }
@@ -269,5 +276,4 @@ object instances {
   implicit val invalidCreate = new Create[Unit] {
     def create(value: Unit): Ptr[Unit] = InvalidPtr
   }
-
 }
