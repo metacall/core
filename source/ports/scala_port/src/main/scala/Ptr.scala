@@ -2,7 +2,11 @@ package metacall
 
 import metacall.util._
 import com.sun.jna._
+<<<<<<< HEAD
 import cats.implicits._
+=======
+import cats._, cats.implicits._, cats.effect._
+>>>>>>> Solving some Scala port bugs and trying to implement support for multiple arguments.
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {
@@ -61,10 +65,14 @@ object Ptr {
       Create[FunctionPointer].create {
         new FunctionPointer {
           def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer = {
+<<<<<<< HEAD
             val argsList = args
               .getPointerArray(0, argc.intValue())
               .map(ptr => Ptr.toValue(Ptr.fromPrimitiveUnsafe(ptr)))
               .toList
+=======
+            val argsList = args.getPointerArray(0).map(ptr => Ptr.toValue(Ptr.fromPrimitiveUnsafe(ptr))).toList
+>>>>>>> Solving some Scala port bugs and trying to implement support for multiple arguments.
 
             Ptr.fromValueUnsafe(fn(argsList)).ptr
           }
