@@ -21,7 +21,7 @@
 package metacall
 
 import com.sun.jna._
-import com.sun.jna.ptr._
+import com.sun.jna.ptr.PointerByReference
 import util._
 
 /** Interface mirroring the MetaCall library using JNA. See:
@@ -41,6 +41,7 @@ protected[metacall] trait Bindings extends Library {
   ): Int
 
   def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
+  def metacallfv_s(func: Pointer, args: Array[Pointer], size: SizeT): Pointer
 
   def metacall_registerv(
       name: String,
@@ -52,8 +53,6 @@ protected[metacall] trait Bindings extends Library {
   ): Int
 
   def metacall_function(name: String): Pointer
-
-  def metacallfv(fn: Pointer, args: Array[Pointer]): Pointer
 
   def metacall_function_size(func: Pointer): SizeT
 

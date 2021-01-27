@@ -1,7 +1,6 @@
 package metacall
 
 import com.sun.jna._
-import com.sun.jna.ptr.PointerByReference
 
 object util {
   private[metacall] class SizeT(value: Long)
@@ -13,7 +12,7 @@ object util {
   }
 
   private[metacall] trait FunctionPointer extends Callback {
-    def callback(argc: SizeT, args: PointerByReference, data: Pointer): Pointer
+    def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer
   }
 
   sealed class MetaCallException(message: String, val cause: Option[String])
