@@ -255,8 +255,9 @@ object instances {
           Bindings.instance.metacallfv_s(
             fnPointer,
             argPtrArray,
-            SizeT(argPtrArray.size.asInstanceOf[Long])
+            SizeT(argPtrArray.size.toLong)
           )
+
         val retPtr = Ptr.fromPrimitiveUnsafe(callbackRet)
         val retValue = Ptr.toValue(retPtr)
 

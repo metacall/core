@@ -317,8 +317,31 @@ class MetaCallSpec extends AnyFlatSpec {
     metacall.metacall_value_destroy(v)
   }
 
-  //Todo
-  /*
+  "Function Create instance" should "create valid function pointers" in {
+    val fnPtr = functionCreate.create {
+      new FunctionPointer {
+        def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer = {
+          val argPtrs =
+            args.getPointerArray(0, argc.intValue()).map(Ptr.fromPrimitiveUnsafe)
+          println("Getting arg values")
+          val argValues = argPtrs.map(Ptr.toValue).toList
+
+          argValues match {
+            case StringValue(s) :: Nil =>
+              Ptr.fromValueUnsafe(StringValue("Hello, " + s)).ptr
+            case _ => Bindings.instance.metacall_value_create_null()
+          }
+        }
+      }
+    }
+
+    val fnValue = functionGet.value(fnPtr).asInstanceOf[FunctionValue]
+
+    val ret = fnValue.value(StringValue("World!") :: Nil)
+
+    assert(ret == StringValue("Hello, World!"))
+  }
+
   "FunctionValues" should "be constructed and passed to foreign functions" in {
     val fnVal = FunctionValue {
       case LongValue(l) :: Nil => LongValue(l + 1L)
@@ -330,7 +353,6 @@ class MetaCallSpec extends AnyFlatSpec {
 
     assert(ret == LongValue(2L))
   }
-   */
 
   "MetaCall" should "be destroyed successfully" in {
     require(
