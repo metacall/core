@@ -1,7 +1,7 @@
 package metacall
 
 import metacall.util._
-import com.sun.jna._
+import com.sun.jna._, ptr.PointerByReference
 import cats._, cats.implicits._, cats.effect._
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
@@ -85,16 +85,17 @@ object Ptr {
 
       Create[Array[(Pointer, Pointer)]].create(tuplePtrs)
     }
-    // TODO: Implement this properly
-    /*
     case FunctionValue(fn) =>
       Create[FunctionPointer].create {
         new FunctionPointer {
-          def callback(argc: SizeT, args: Array[Pointer], data: Pointer): Pointer =
-            Ptr.fromValueUnsafe(fn(Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.head)))).ptr
+          def callback(argc: SizeT, arg: PointerByReference, data: Pointer): Pointer = {
+            val argValue =
+              Ptr.toValue(Ptr.fromPrimitiveUnsafe(arg.getValue()))
+
+            Ptr.fromValueUnsafe(fn(argValue)).ptr
+          }
         }
       }
-    */
     case NullValue => Create[Null].create(null)
   }
 
@@ -152,8 +153,7 @@ object Ptr {
     case p: ArrayPtr    => Get[Array[Pointer]].value(p)
     case p: MapPtr      => Get[Array[(Pointer, Pointer)]].value(p)
     case p: NullPtr     => Get[Null].value(p)
-    // TODO: Implement this properly
-    // case p: FunctionPtr => Get[FunctionPointer].value(p)
+    case p: FunctionPtr => Get[FunctionPointer].value(p)
     case InvalidPtr     => InvalidValue
   }
 
@@ -194,6 +194,7 @@ object PtrType {
         case 7  => StringPtrType
         case 9  => ArrayPtrType
         case 10 => MapPtrType
+        case 13 => FunctionPtrType
         case 14 => NullPtrType
         case _  => InvalidPtrType
       }
@@ -272,6 +273,13 @@ object MapPtrType extends PtrType {
 
 private[metacall] final class FunctionPtr(val ptr: Pointer) extends Ptr[FunctionPointer] {
   val ptrType: PtrType = FunctionPtrType
+
+  /** This reference is here just to keep the function ref from being garbage collected */
+  private var ref: PointerByReference = null
+
+  /** Don't forget to use this method when creating a new instance. */
+  private[metacall] def setRef(ref: PointerByReference): Unit =
+    if (this.ref == null) this.ref = ref
 }
 object FunctionPtrType extends PtrType {
   val id = 13

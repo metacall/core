@@ -3,6 +3,7 @@ package metacall
 import cats.implicits._
 import com.sun.jna._
 import metacall.util._
+import com.sun.jna.ptr.PointerByReference
 
 object instances {
 
@@ -204,22 +205,52 @@ object instances {
       }
   }
 
-  // TODO: Implement this properly
-  /*
   implicit val functionCreate = new Create[FunctionPointer] {
-    def create(value: FunctionPointer): Ptr[FunctionPointer] =
-      new FunctionPtr(Bindings.instance.metacall_value_create_function(value))
+    def create(value: FunctionPointer): Ptr[FunctionPointer] = {
+      val ref = new PointerByReference()
+
+      Bindings.instance.metacall_registerv(
+        null,
+        value,
+        ref,
+        InvalidPtrType.id,
+        SizeT(1),
+        Array(InvalidPtrType.id)
+      )
+
+      val jnaPointer = Bindings.instance.metacall_value_create_function(ref.getValue())
+      val ptr = new FunctionPtr(jnaPointer)
+
+      ptr.setRef(ref)
+
+      ptr
+    }
   }
 
   implicit val functionGet = new Get[FunctionPointer] {
-    def primitive(ptr: Ptr[FunctionPointer]): FunctionPointer =
-      Bindings.instance.metacall_value_to_function(ptr.ptr)
+    def primitive(ptr: Ptr[FunctionPointer]): FunctionPointer = {
+      new FunctionPointer {
+        def callback(
+            argc: util.SizeT,
+            args: PointerByReference,
+            data: Pointer
+        ): Pointer = {
+          val fnPointer = Bindings.instance.metacall_value_to_function(ptr.ptr)
+
+          Bindings.instance.metacallfv(
+            fnPointer,
+            args.getValue().getPointerArray(0)
+          )
+        }
+      }
+    }
 
     def value(ptr: Ptr[FunctionPointer]): Value = {
-      val valueFn = (v: Value) => {
-        val argPtr = Ptr.fromValueUnsafe(v)
+      val valueFn = (arg: Value) => {
+        val argPtr = Ptr.fromValueUnsafe(arg)
+        val fnPointer = Bindings.instance.metacall_value_to_function(ptr.ptr)
         val callbackRet =
-          primitive(ptr).callback(SizeT(1), Array(argPtr.ptr), Pointer.NULL)
+          Bindings.instance.metacallfv(fnPointer, Array(argPtr.ptr))
         val retPtr = Ptr.fromPrimitiveUnsafe(callbackRet)
         val retValue = Ptr.toValue(retPtr)
 
@@ -232,7 +263,6 @@ object instances {
       FunctionValue(valueFn)
     }
   }
-  */
 
   implicit val invalidCreate = new Create[Unit] {
     def create(value: Unit): Ptr[Unit] = InvalidPtr

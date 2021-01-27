@@ -230,7 +230,14 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val fnRef = new PointerByReference()
 
-    metacall.metacall_registerv(null, cb, fnRef, StringPtrType.id, SizeT(1), Array(StringPtrType.id))
+    metacall.metacall_registerv(
+      null,
+      cb,
+      fnRef,
+      StringPtrType.id,
+      SizeT(1),
+      Array(StringPtrType.id)
+    )
 
     val f = metacall.metacall_value_create_function(fnRef.getValue())
 
@@ -249,32 +256,29 @@ class MetaCallSpec extends AnyFlatSpec {
     metacall.metacall_value_destroy(ret)
   }
 
-  "Function values" should "be constructed, passed, used, and destroyed correctly" in {
-    // val fn = FunctionValue {
-    //   case IntValue(i) => IntValue(i + 1)
-    //   case _           => NullValue
-    // }
-
-    // TODO: This suffers from the same problem as the previous callback.
-    // A higher syntax sugar should hide all those details (probably with generics).
+  "Function pointers" should "be constructed, passed, used, and destroyed correctly" in {
     val fnCallback = new FunctionPointer {
       final override def callback(
           argc: SizeT,
           args: PointerByReference,
           data: Pointer
-      ): Pointer = {
+      ): Pointer =
         Ptr.toValue(Ptr.fromPrimitiveUnsafe(args.getValue())) match {
-          case IntValue(i) => Ptr.fromValueUnsafe(IntValue(i + 1)).ptr
-          case _           => Ptr.fromValueUnsafe(NullValue).ptr
+          case LongValue(l) => Ptr.fromValueUnsafe(LongValue(l + 1)).ptr
+          case _            => Ptr.fromValueUnsafe(NullValue).ptr
         }
-
-        return metacall.metacall_value_create_long(34)
-      }
     }
 
     val fnRef = new PointerByReference()
 
-    metacall.metacall_registerv(null, fnCallback, fnRef, IntPtrType.id, SizeT(1), Array(IntPtrType.id))
+    metacall.metacall_registerv(
+      null,
+      fnCallback,
+      fnRef,
+      IntPtrType.id,
+      SizeT(1),
+      Array(IntPtrType.id)
+    )
 
     val fnPtr = fnRef.getValue()
 
@@ -286,16 +290,9 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val res = metacall.metacall_value_to_long(ret)
 
-    assert(res == 34)
+    assert(res == 2)
 
     metacall.metacall_value_destroy(ret)
-
-    // pprint.pprintln(Ptr.toValue(Ptr.fromPrimitiveUnsafe(ret)))
-
-    // val ret = Caller.call[IO]("apply_fn_to_one", Vector(fn)).unsafeRunSync()
-
-    // println("Return: ")
-    // pprint.pprintln(ret)
   }
 
   "Function by parameters" should "retrieve the function, construct the value, call it and destroy it" in {
@@ -311,6 +308,17 @@ class MetaCallSpec extends AnyFlatSpec {
 
     metacall.metacall_value_destroy(ret)
     metacall.metacall_value_destroy(v)
+  }
+
+  "FunctionValues" should "be constructed and passed to foreign functions" in {
+    val fnVal = FunctionValue {
+      case LongValue(l) => LongValue(l + 1)
+      case _            => NullValue
+    }
+
+    val ret = Caller.call[IO]("apply_fn_to_one", Vector(fnVal)).unsafeRunSync()
+
+    assert(ret == LongValue(2L))
   }
 
   "MetaCall" should "be destroyed successfully" in {

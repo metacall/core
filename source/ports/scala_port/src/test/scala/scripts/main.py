@@ -7,12 +7,10 @@ def fail():
     raise Exception('Failed!')
 
 def apply_fn_to_str(fn):
-    print('Executed from apply_fn_to_str', fn)
     return fn('hellooo')
 
 def apply_fn_to_one(fn):
     return fn(1)
 
 def get_function_test(a):
-    print('Executed from get_function_test', a)
     return a
