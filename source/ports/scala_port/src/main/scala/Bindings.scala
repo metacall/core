@@ -42,7 +42,7 @@ protected[metacall] trait Bindings extends Library {
 
   def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
 
-  def metacall_registerv(
+  def metacall_register(
       name: String,
       invoke: FunctionPointer,
       func: PointerByReference,
@@ -53,7 +53,7 @@ protected[metacall] trait Bindings extends Library {
 
   def metacall_function(name: String): Pointer
 
-  def metacallfv(fn: Pointer, args: Array[Pointer]): Pointer
+  def metacallfv_s(fn: Pointer, args: Array[Pointer], size: SizeT): Pointer
 
   def metacall_function_size(func: Pointer): SizeT
 

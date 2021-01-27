@@ -230,7 +230,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val fnRef = new PointerByReference()
 
-    metacall.metacall_registerv(
+    metacall.metacall_register(
       null,
       cb,
       fnRef,
@@ -271,7 +271,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val fnRef = new PointerByReference()
 
-    metacall.metacall_registerv(
+    metacall.metacall_register(
       null,
       fnCallback,
       fnRef,
