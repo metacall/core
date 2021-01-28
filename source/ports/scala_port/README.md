@@ -19,3 +19,25 @@ PORT_LIBRARY_PATH
 ```
 
 > Note: You'll find the bindings and the code that runs on `sbt test` in `src/main/scala/MetaCall.scala`.
+
+## Debugging
+
+Uncomment this line in `build.sbt`:
+```
+"-Djava.compiler=NONE",
+```
+
+Build the project:
+```
+sbt compile
+```
+
+For runing valgrind with the correct classpath, run:
+```
+sbt "export test:fullClasspath"
+```
+
+Then copy the classpath into the valgrind command:
+```
+valgrind --tool=memcheck --trace-children=yes --error-limit=no scala -Djava.compiler=NONE -cp <classpath> src/test/scala/MetaCallSpecMain.scala
+```
