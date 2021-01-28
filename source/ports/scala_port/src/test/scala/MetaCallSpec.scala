@@ -437,5 +437,4 @@ class MetaCallSpec extends AnyFlatSpec {
       "MetaCall was not successfully destroyed"
     )
   }
-
 }
