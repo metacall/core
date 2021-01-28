@@ -378,7 +378,7 @@ class MetaCallSpec extends AnyFlatSpec {
         def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer = {
           val argPtrs =
             args.getPointerArray(0, argc.intValue()).map(Ptr.fromPrimitiveUnsafe)
-          println("Getting arg values")
+
           val argValues = argPtrs.map(Ptr.toValue).toList
 
           argValues match {
@@ -397,17 +397,16 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(ret == StringValue("Hello, World!"))
   }
 
-  // TODO: Causes a segmentation fault
-  // "FunctionValues" should "be constructed and passed to foreign functions" in {
-  //   val fnVal = FunctionValue {
-  //     case LongValue(l) :: Nil => LongValue(l + 1L)
-  //     case _                   => NullValue
-  //   }
+  "FunctionValues" should "be constructed and passed to foreign functions" in {
+    val fnVal = FunctionValue {
+      case LongValue(l) :: Nil => LongValue(l + 1L)
+      case _                   => NullValue
+    }
 
-  //   val ret = Caller.call("apply_fn_to_one", Vector(fnVal))
+    val ret = Caller.call("apply_fn_to_one", Vector(fnVal))
 
-  //   assert(ret == LongValue(2L))
-  // }
+    assert(ret == LongValue(2L))
+  }
 
   "MetaCall" should "be destroyed successfully" in {
     require(

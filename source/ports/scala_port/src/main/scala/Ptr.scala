@@ -62,7 +62,7 @@ object Ptr {
         new FunctionPointer {
           def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer = {
             val argsList = args
-              .getPointerArray(0)
+              .getPointerArray(0, argc.intValue())
               .map(ptr => Ptr.toValue(Ptr.fromPrimitiveUnsafe(ptr)))
               .toList
 
