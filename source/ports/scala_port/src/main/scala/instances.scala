@@ -209,14 +209,16 @@ object instances {
     def create(value: FunctionPointer): Ptr[FunctionPointer] = {
       val ref = new PointerByReference()
 
-      if (Bindings.instance.metacall_registerv(
-        null,
-        value,
-        ref,
-        InvalidPtrType.id,
-        SizeT(0),
-        Array()
-      ) != 0) {
+      if (
+        Bindings.instance.metacall_registerv(
+          null,
+          value,
+          ref,
+          InvalidPtrType.id,
+          SizeT(0),
+          Array()
+        ) != 0
+      ) {
         throw new Exception(
           "Invalid function value creation."
         )
@@ -250,7 +252,12 @@ object instances {
         val argPtrArray = args.map(arg => Ptr.fromValueUnsafe(arg).ptr).toArray
         val fnPointer = Bindings.instance.metacall_value_to_function(ptr.ptr)
         val callbackRet =
-          Bindings.instance.metacallfv_s(fnPointer, argPtrArray, SizeT(argPtrArray.size.asInstanceOf[Long]))
+          Bindings.instance.metacallfv_s(
+            fnPointer,
+            argPtrArray,
+            SizeT(argPtrArray.size.toLong)
+          )
+
         val retPtr = Ptr.fromPrimitiveUnsafe(callbackRet)
         val retValue = Ptr.toValue(retPtr)
 

@@ -12,5 +12,8 @@ def apply_fn_to_str(fn):
 def apply_fn_to_one(fn):
     return fn(1)
 
+def apply_fn_to_two(fn):
+    return fn(1, 3)
+
 def get_function_test(a):
     return a

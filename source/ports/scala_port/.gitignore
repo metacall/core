@@ -1,6 +1,7 @@
 target/
 .bloop/
 .vscode/
+.vsls.json
 .bsp/
 .metals/
 

@@ -2,7 +2,7 @@ package metacall
 
 import metacall.util._
 import com.sun.jna._
-import cats._, cats.implicits._, cats.effect._
+import cats.implicits._
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {
@@ -33,34 +33,6 @@ sealed trait Ptr[A] {
 }
 object Ptr {
 
-  /** Create a managed pointer to a MetaCall value */
-  def from[A, F[_]](value: A)(implicit
-      FE: MonadError[F, Throwable],
-      FD: Defer[F],
-      C: Create[A]
-  ): Resource[F, Ptr[A]] =
-    Resource.make(C.create(value).pure[F]) { vPtr =>
-      FD.defer {
-        try FE.pure(Bindings.instance.metacall_value_destroy(vPtr.ptr))
-        catch {
-          case e: Throwable =>
-            FE.raiseError(new DestructionError(vPtr.ptr, Some(e.getMessage())))
-        }
-      }
-    }
-
-  /** Create a managed pointer to an array containing the values */
-  def fromVector[A, F[_]](vec: Vector[A])(implicit
-      FE: MonadError[F, Throwable],
-      FD: Defer[F],
-      CA: Create[A],
-      CR: Create[Array[Pointer]]
-  ): Resource[F, Ptr[Array[Pointer]]] = {
-    val elemPtrs = vec.map(a => CA.create(a).ptr)
-
-    Resource.suspend(from[Array[Pointer], F](elemPtrs.toArray).pure[F])
-  }
-
   import metacall.instances._
 
   /** Returns an unmanaged pointer to the creted value. */
@@ -89,26 +61,16 @@ object Ptr {
       Create[FunctionPointer].create {
         new FunctionPointer {
           def callback(argc: SizeT, args: Pointer, data: Pointer): Pointer = {
-            val argsList = args.getPointerArray(0).map(ptr => Ptr.toValue(Ptr.fromPrimitiveUnsafe(ptr))).toList
+            val argsList = args
+              .getPointerArray(0, argc.intValue())
+              .map(ptr => Ptr.toValue(Ptr.fromPrimitiveUnsafe(ptr)))
+              .toList
 
             Ptr.fromValueUnsafe(fn(argsList)).ptr
           }
         }
       }
     case NullValue => Create[Null].create(null)
-  }
-
-  def fromValue[F[_]](v: Value)(implicit
-      FE: MonadError[F, Throwable],
-      FD: Defer[F]
-  ): Resource[F, Ptr[_]] = Resource.make(fromValueUnsafe(v).pure[F]) { vPtr =>
-    FD.defer {
-      try FE.pure(Bindings.instance.metacall_value_destroy(vPtr.ptr))
-      catch {
-        case e: Throwable =>
-          FE.raiseError(new DestructionError(vPtr.ptr, Some(e.getMessage())))
-      }
-    }
   }
 
   /** Returns an unmanaged pointer that you need to destroy yourself,
@@ -130,15 +92,6 @@ object Ptr {
       case FunctionPtrType => new FunctionPtr(pointer)
       case InvalidPtrType  => InvalidPtr
     }
-
-  private[metacall] def fromPrimitive[F[_]](pointer: Pointer)(implicit
-      FE: MonadError[F, Throwable],
-      FD: Defer[F]
-  ): Resource[F, Ptr[_]] =
-    Resource
-      .make(fromPrimitiveUnsafe(pointer).pure[F].widen[Ptr[_]]) { p =>
-        FD.defer(FE.pure(Bindings.instance.metacall_value_count(p.ptr)))
-      }
 
   def toValue(ptr: Ptr[_]): Value = ptr match {
     case p: BoolPtr     => Get[Boolean].value(p)
