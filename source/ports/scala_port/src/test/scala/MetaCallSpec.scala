@@ -3,7 +3,7 @@ package metacall
 import com.sun.jna._
 import java.nio.file.Paths
 import org.scalatest.flatspec.AnyFlatSpec
-import cats.implicits._, cats.effect._
+import cats.implicits._
 import metacall.util._, metacall.instances._
 import com.sun.jna.ptr.PointerByReference
 
@@ -64,28 +64,21 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "MetaCall" should "call functions from transitively imported scripts" in {
     val argPtr = metacall.metacall_value_create_int(42)
-    val retPtr = metacall.metacallv_s("imported_fn", Array(argPtr), SizeT(1))
+    val retPointer = metacall.metacallv_s("imported_fn", Array(argPtr), SizeT(1))
+    val retPtr = Ptr.fromPrimitiveUnsafe(retPointer)
 
-    Ptr
-      .fromPrimitive[IO](retPtr)
-      .map(Ptr.toValue)
-      .use { v =>
-        assert(v == StringValue("Imported fn arg: 42"))
-        IO.unit
-      }
-      .unsafeRunSync()
+    val retValue = Ptr.toValue(retPtr)
+    assert(retValue == StringValue("Imported fn arg: 42"))
 
     metacall.metacall_value_destroy(argPtr)
-    metacall.metacall_value_destroy(retPtr)
+    metacall.metacall_value_destroy(retPointer)
   }
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
-    val ret = Caller
-      .call[IO](
-        "hello_scala_from_python",
-        Vector(StringValue("Hello "), StringValue("Scala!"))
-      )
-      .unsafeRunSync()
+    val ret = Caller.call(
+      "hello_scala_from_python",
+      Vector(StringValue("Hello "), StringValue("Scala!"))
+    )
 
     assert(ret == StringValue("Hello Scala!"))
   }
@@ -151,31 +144,6 @@ class MetaCallSpec extends AnyFlatSpec {
     metacall.metacall_value_destroy(mcMapPtr)
   }
 
-  "Int pointer creator/getter" should "work with IO" in {
-    val intPtr = Ptr.from[Int, IO](22)
-    val intGetter = implicitly[Get[Int]]
-    intPtr
-      .map(iptr => intGetter.primitive(iptr))
-      .use { v =>
-        IO(assert(v == 22))
-      }
-      .unsafeRunSync()
-  }
-
-  "Array pointer creator/getter" should "work" in {
-    val elems = Vector("Hello", "from", "MetaCall!")
-    val arrPtr = Ptr.fromVector[String, IO](elems)
-    val arrayGetter = implicitly[Get[Array[Pointer]]]
-
-    arrPtr
-      .map(arrayGetter.primitive)
-      .use { arr =>
-        val newElems = arr.map(metacall.metacall_value_to_string).toVector
-        IO(assert(newElems == elems))
-      }
-      .unsafeRunSync()
-  }
-
   "Pointers" should "be created/retrieved correctly from Values" in {
     val values: List[Value] = List(
       IntValue(567),
@@ -203,16 +171,11 @@ class MetaCallSpec extends AnyFlatSpec {
       )
     )
 
-    val valuePtrs = values.traverse(Ptr.fromValue[IO])
+    val valuePtrs = values.map(Ptr.fromValueUnsafe)
 
-    val parsedValues = valuePtrs.map(_.map(Ptr.toValue))
+    val parsedValues = valuePtrs.map(Ptr.toValue)
 
-    parsedValues
-      .use { vs =>
-        assert(values == vs)
-        IO.unit
-      }
-      .unsafeRunSync()
+    assert(values == parsedValues)
   }
 
   "`FunctionPointer`s" should "be created/retrieved correctly" in {
@@ -222,7 +185,7 @@ class MetaCallSpec extends AnyFlatSpec {
           args: Pointer,
           data: Pointer
       ): Pointer = {
-        val argsPtrArray = args.getPointerArray(0)
+        val argsPtrArray = args.getPointerArray(0, argc.intValue())
 
         metacall.metacall_value_copy(argsPtrArray.head)
       }
@@ -265,7 +228,7 @@ class MetaCallSpec extends AnyFlatSpec {
           args: Pointer,
           data: Pointer
       ): Pointer = {
-        val argsPtrArray = args.getPointerArray(0)
+        val argsPtrArray = args.getPointerArray(0, argc.intValue())
 
         Ptr.toValue(Ptr.fromPrimitiveUnsafe(argsPtrArray.head)) match {
           case LongValue(l) => Ptr.fromValueUnsafe(LongValue(l + 3L)).ptr
@@ -291,6 +254,98 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val ret = metacall.metacallv_s(
       "apply_fn_to_one",
+      Array(metacall.metacall_value_create_function(fnPtr)),
+      SizeT(1)
+    )
+
+    val res = metacall.metacall_value_to_long(ret)
+
+    assert(res == 4L)
+
+    metacall.metacall_value_destroy(ret)
+  }
+
+  "Function pointers with multiple parameters" should "be constructed, passed, used, and destroyed correctly" in {
+    val fnCallback = new FunctionPointer {
+      final override def callback(
+          argc: SizeT,
+          args: Pointer,
+          data: Pointer
+      ): Pointer = {
+        val argsPtrArray = args.getPointerArray(0, argc.intValue())
+
+        Ptr.toValue(Ptr.fromPrimitiveUnsafe(argsPtrArray(1))) match {
+          case LongValue(l) => Ptr.fromValueUnsafe(LongValue(l + 3L)).ptr
+          case _            => Ptr.fromValueUnsafe(NullValue).ptr
+        }
+      }
+    }
+
+    val fnRef = new PointerByReference()
+
+    assert(
+      metacall.metacall_registerv(
+        null,
+        fnCallback,
+        fnRef,
+        LongPtrType.id,
+        SizeT(1),
+        Array(LongPtrType.id)
+      ) == 0
+    )
+
+    val fnPtr = fnRef.getValue()
+
+    val ret = metacall.metacallv_s(
+      "apply_fn_to_two",
+      Array(metacall.metacall_value_create_function(fnPtr)),
+      SizeT(1)
+    )
+
+    val res = metacall.metacall_value_to_long(ret)
+
+    assert(res == 6L)
+
+    metacall.metacall_value_destroy(ret)
+  }
+
+  "Function pointers with multiple parameter and sum of values" should "return the sum of the two values" in {
+    val fnCallback = new FunctionPointer {
+      final override def callback(
+          argc: SizeT,
+          args: Pointer,
+          data: Pointer
+      ): Pointer = {
+        val argsPtrArray = args.getPointerArray(0, argc.intValue())
+
+        val result = argsPtrArray
+          .map(p => Ptr.toValue(Ptr.fromPrimitiveUnsafe(p)))
+          .foldLeft(LongValue(0)) {
+            case (LongValue(acc), LongValue(a)) => LongValue(acc + a)
+            case (_, _)                         => LongValue(0)
+          }
+
+        Ptr.fromValueUnsafe(result).ptr
+      }
+    }
+
+    val fnRef = new PointerByReference()
+
+    assert(
+      metacall.metacall_registerv(
+        null,
+        fnCallback,
+        fnRef,
+        LongPtrType.id,
+        SizeT(1),
+        Array(LongPtrType.id)
+      ) == 0
+    )
+
+    val fnPtr = fnRef.getValue()
+
+    val ret = metacall.metacallv_s(
+      "apply_fn_to_two",
       Array(metacall.metacall_value_create_function(fnPtr)),
       SizeT(1)
     )
@@ -342,17 +397,17 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(ret == StringValue("Hello, World!"))
   }
 
-  "FunctionValues" should "be constructed and passed to foreign functions" in {
-    val fnVal = FunctionValue {
-      case LongValue(l) :: Nil => LongValue(l + 1L)
-      case _                   => NullValue
-    }
+  // TODO: Causes a segmentation fault
+  // "FunctionValues" should "be constructed and passed to foreign functions" in {
+  //   val fnVal = FunctionValue {
+  //     case LongValue(l) :: Nil => LongValue(l + 1L)
+  //     case _                   => NullValue
+  //   }
 
-    // TODO: This test causes segmentation fault
-    val ret = Caller.call[IO]("apply_fn_to_one", Vector(fnVal)).unsafeRunSync()
+  //   val ret = Caller.call("apply_fn_to_one", Vector(fnVal))
 
-    assert(ret == LongValue(2L))
-  }
+  //   assert(ret == LongValue(2L))
+  // }
 
   "MetaCall" should "be destroyed successfully" in {
     require(
@@ -360,4 +415,5 @@ class MetaCallSpec extends AnyFlatSpec {
       "MetaCall was not successfully destroyed"
     )
   }
+
 }

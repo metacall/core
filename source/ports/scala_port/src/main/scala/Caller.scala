@@ -1,26 +1,21 @@
 package metacall
 
 import metacall.util._
-import cats._, cats.implicits._, cats.effect._
 
 object Caller {
 
-  def call[F[_]](fnName: String, args: Vector[Value])(implicit
-      FE: MonadError[F, Throwable],
-      FD: Defer[F],
-      BF: BracketThrow[F]
-  ): F[Value] = {
-    val argPtrArray = args.traverse(Ptr.fromValue[F]).map(_.map(_.ptr).toArray)
+  def call(fnName: String, args: Vector[Value]): Value = {
+    val argPtrArray = args.map(Ptr.fromValueUnsafe(_).ptr).toArray
 
-    val retPtr = argPtrArray
-      .flatMap { args =>
-        Ptr.fromPrimitive[F] {
-          Bindings.instance.metacallv_s(fnName, args, SizeT(args.length.toLong))
-        }
-      }
-      .map(Ptr.toValue)
+    val retPointer =
+      Bindings.instance.metacallv_s(fnName, argPtrArray, SizeT(argPtrArray.length.toLong))
 
-    retPtr.use(FE.pure)
+    val retValue = Ptr.toValue(Ptr.fromPrimitiveUnsafe(retPointer))
+
+    Bindings.instance.metacall_value_destroy(retPointer)
+    argPtrArray.foreach(Bindings.instance.metacall_value_destroy)
+
+    retValue
   }
 
 }
