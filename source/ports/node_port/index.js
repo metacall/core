@@ -201,6 +201,14 @@ mod.prototype.require = function (name) {
 
 	/* Try to load it with NodeJS first */
 	try {
+		return node_require.apply(this, [ name ]);
+	} catch (e) {
+		if (e.code !== 'MODULE_NOT_FOUND') {
+			throw e;
+		}
+	}
+
+	try {
 		return node_require.apply(this, [ require.resolve(name) ]);
 	} catch (e) {
 		if (e.code !== 'MODULE_NOT_FOUND') {
