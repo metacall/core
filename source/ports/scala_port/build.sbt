@@ -28,5 +28,6 @@ lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
     name := "metacall",
-    fork in (Test / run) := true
+    fork in (Test / run) := true,
+    parallelExecution in Test := false
   )

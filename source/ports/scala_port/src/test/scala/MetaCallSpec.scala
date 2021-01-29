@@ -14,22 +14,17 @@ class MetaCallSpec extends AnyFlatSpec {
     Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString()
   )
 
-  "MetaCall" should "initialize correctly" in {
-    require(
-      metacall.metacall_initialize() == 0,
-      "MetaCall could not initialize"
-    )
-  }
-
   "MetaCall" should "load script successsfully" in {
+    val retCode = metacall.metacall_load_from_file(
+      "py",
+      scriptPaths,
+      SizeT(scriptPaths.length.toLong),
+      null
+    )
+
     require(
-      metacall.metacall_load_from_file(
-        "py",
-        scriptPaths,
-        SizeT(scriptPaths.length.toLong),
-        null
-      ) == 0,
-      "MetaCall failed to load the script"
+      retCode == 0,
+      s"MetaCall failed to load the script with code $retCode"
     )
   }
 
@@ -431,10 +426,4 @@ class MetaCallSpec extends AnyFlatSpec {
     println("REsult: " + Await.result(resSum, 10.seconds))
   }*/
 
-  "MetaCall" should "be destroyed successfully" in {
-    require(
-      metacall.metacall_destroy() == 0,
-      "MetaCall was not successfully destroyed"
-    )
-  }
 }
