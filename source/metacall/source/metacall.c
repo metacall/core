@@ -612,6 +612,43 @@ void * metacall_function(const char * name)
 	return f;
 }
 
+int metacall_function_parameter_type(void * func, size_t parameter, enum metacall_value_id * id)
+{
+	if (func != NULL)
+	{
+		function f = (function)func;
+		signature s = function_signature(f);
+
+		if (parameter < signature_count(s))
+		{
+			*id = type_index(signature_get_type(s, parameter));
+
+			return 0;
+		}
+	}
+
+	*id = METACALL_INVALID;
+
+	return 1;
+}
+
+int metacall_function_return_type(void * func, enum metacall_value_id * id)
+{
+	if (func != NULL)
+	{
+		function f = (function)func;
+		signature s = function_signature(f);
+
+		*id = type_index(signature_get_return(s));
+
+		return 0;
+	}
+
+	*id = METACALL_INVALID;
+
+	return 1;
+}
+
 size_t metacall_function_size(void * func)
 {
 	function f = (function)func;
