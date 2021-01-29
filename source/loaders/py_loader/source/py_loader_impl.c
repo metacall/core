@@ -1969,14 +1969,29 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation)
+type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const char * func_name, const char * parameter_name)
 {
 	type t = NULL;
 
 	if (annotation != NULL)
 	{
-		PyObject *annotation_qualname = PyObject_GetAttrString(annotation, "__qualname__");
+		static const char qualname[] = "__qualname__";
 
+		if (PyObject_HasAttrString(annotation, qualname) == 0)
+		{
+			if (parameter_name != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_WARNING, "Invalid annotation type in the parameter '%s' of the function %s", parameter_name, func_name);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_WARNING, "Invalid annotation type in the return type of the function %s", func_name);
+			}
+
+			return NULL;
+		}
+
+		PyObject *annotation_qualname = PyObject_GetAttrString(annotation, qualname);
 		const char *annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
 		if (strcmp(annotation_name, "_empty") != 0)
@@ -1984,9 +1999,9 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation)
 			t = loader_impl_type(impl, annotation_name);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
-
-			Py_DECREF(annotation_qualname);
 		}
+
+		Py_DECREF(annotation_qualname);
 	}
 
 	return t;
@@ -2074,6 +2089,8 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	{
 		signature s = function_signature(f);
 
+		const char * func_name = function_name(f);
+
 		PyObject *parameters = PyObject_GetAttrString(result, "parameters");
 
 		PyObject *return_annotation = PyObject_GetAttrString(result, "return_annotation");
@@ -2111,7 +2128,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 
 						PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
 
-						type t = py_loader_impl_discover_type(impl, annotation);
+						type t = py_loader_impl_discover_type(impl, annotation, func_name, parameter_name);
 
 						signature_set(s, iterator, parameter_name, t);
 					}
@@ -2119,7 +2136,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 			}
 		}
 
-		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation));
+		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
 
 		return 0;
 	}

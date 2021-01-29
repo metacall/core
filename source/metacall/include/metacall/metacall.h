@@ -375,6 +375,40 @@ METACALL_API void * metacall_function(const char * name);
 
 /**
 *  @brief
+*    Get the function parameter type id
+*
+*  @param[in] func
+*    The pointer to the function obtained from metacall_function
+*
+*  @param[in] parameter
+*    The index of the parameter to be retrieved
+*
+*  @param[out] id
+*    The parameter type id that will be returned
+*
+*  @return
+*    Return 0 if the @parameter index exists and @func is valid, 1 otherwhise
+*/
+METACALL_API int metacall_function_parameter_type(void * func, size_t parameter, enum metacall_value_id * id);
+
+/**
+*  @brief
+*    Get the function return type id
+*
+*  @param[in] func
+*    The pointer to the function obtained from metacall_function
+*
+*
+*  @param[out] id
+*    The value id of the return type of the function @func
+*
+*  @return
+*    Return 0 if the @func is valid, 1 otherwhise
+*/
+METACALL_API int metacall_function_return_type(void * func, enum metacall_value_id * id);
+
+/**
+*  @brief
 *    Get minimun mumber of arguments accepted by function @func
 *
 *  @param[in] func
