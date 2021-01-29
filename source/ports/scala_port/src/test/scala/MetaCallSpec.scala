@@ -408,6 +408,29 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(ret == LongValue(2L))
   }
 
+  /* TODO: Parallelism doesn't work
+  "Parallel function calls" should "not fail" in {
+    val ranges: List[Vector[Int]] =
+      List.range(1, 1000).map(n => Vector.range(1, n))
+
+    val rangeValues: List[ArrayValue] =
+      ranges.map(range => ArrayValue(range map IntValue.apply))
+
+    import scala.concurrent._, duration._
+    import ExecutionContext.Implicits.global
+
+    val resSum = rangeValues
+      .traverse { range =>
+        Future(Caller.call("sumList", Vector(range))) map {
+          case n: NumericValue[_] => n.long.value
+          case _                  => fail("Returned value should be a number")
+        }
+      }
+      .map(_.sum)
+
+    println("REsult: " + Await.result(resSum, 10.seconds))
+  }*/
+
   "MetaCall" should "be destroyed successfully" in {
     require(
       metacall.metacall_destroy() == 0,
