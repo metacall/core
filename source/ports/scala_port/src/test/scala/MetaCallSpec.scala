@@ -70,7 +70,7 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
-    val ret = Caller.call(
+    val ret = Caller.callV(
       "hello_scala_from_python",
       List(StringValue("Hello "), StringValue("Scala!"))
     )
