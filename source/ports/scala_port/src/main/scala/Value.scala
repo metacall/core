@@ -5,6 +5,8 @@ sealed trait Value
 sealed abstract class NumericValue[N](implicit n: Numeric[N]) extends Value {
   val value: N
 
+  // TODO: Review this (https://www.scala-lang.org/files/archive/spec/2.11/12-the-scala-standard-library.html#numeric-value-types)
+  // def short = ShortValue(n.toShort(value))
   def int = IntValue(n.toInt(value))
   def long = LongValue(n.toLong(value))
   def float = FloatValue(n.toFloat(value))

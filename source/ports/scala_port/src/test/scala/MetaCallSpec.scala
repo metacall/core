@@ -7,6 +7,12 @@ import cats.implicits._
 import metacall.util._, metacall.instances._
 import com.sun.jna.ptr.PointerByReference
 
+class MetaCallSpecRunner {
+  def run() = {
+    (new MetaCallSpec()).execute()
+  }
+}
+
 class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
 
@@ -432,9 +438,12 @@ class MetaCallSpec extends AnyFlatSpec {
   }*/
 
   "MetaCall" should "be destroyed successfully" in {
-    require(
-      metacall.metacall_destroy() == 0,
-      "MetaCall was not successfully destroyed"
-    )
+    // TODO: Remove this if we drop support for executing Scala outside of MetaCall
+    if (System.getProperty("java.polyglot.name") != "metacall") {
+      require(
+        metacall.metacall_destroy() == 0,
+        "MetaCall was not successfully destroyed"
+      )
+    }
   }
 }
