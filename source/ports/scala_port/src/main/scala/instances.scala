@@ -4,8 +4,28 @@ import cats.implicits._
 import com.sun.jna._
 import metacall.util._
 import com.sun.jna.ptr.PointerByReference
+import shapeless._
+import scala.annotation.implicitNotFound
 
 object instances {
+
+  implicit def hnilArgs = new Args[HNil] {
+    def from(product: HNil): List[Value] = Nil
+  }
+
+  implicit def hlistArgs[H, T <: HList](implicit AH: Args[H], AT: Args[T]) =
+    new Args[H :: T] {
+      def from(product: H :: T): List[Value] =
+        AH.from(product.head) ::: AT.from(product.tail)
+    }
+
+  @implicitNotFound(
+    "Could not find an instance of Args for one or more of the supplied arguments"
+  )
+  implicit def genArgs[A, R](implicit GA: Generic[A] { type Repr = R }, AR: Args[R]) =
+    new Args[A] {
+      def from(product: A): List[Value] = AR.from(GA.to(product))
+    }
 
   implicit val nullCreate =
     new Create[Null] {
@@ -20,6 +40,10 @@ object instances {
       Bindings.instance.metacall_value_to_null(ptr.ptr)
 
     def value(ptr: Ptr[Null]): Value = NullValue
+  }
+
+  implicit val nullArgs = new Args[Null] {
+    def from(v: Null): List[Value] = NullValue :: Nil
   }
 
   implicit val intCreate =
@@ -37,6 +61,10 @@ object instances {
     def value(ptr: Ptr[Int]): Value = IntValue(primitive(ptr))
   }
 
+  implicit val intArgs = new Args[Int] {
+    def from(v: Int): List[Value] = IntValue(v) :: Nil
+  }
+
   implicit val longCreate =
     new Create[Long] {
       def create(value: Long): Ptr[Long] = {
@@ -50,6 +78,10 @@ object instances {
       Bindings.instance.metacall_value_to_long(ptr.ptr)
 
     def value(ptr: Ptr[Long]): Value = LongValue(primitive(ptr))
+  }
+
+  implicit val longArgs = new Args[Long] {
+    def from(v: Long): List[Value] = LongValue(v) :: Nil
   }
 
   implicit val shortCreate =
@@ -67,6 +99,10 @@ object instances {
     def value(ptr: Ptr[Short]): Value = ShortValue(primitive(ptr))
   }
 
+  implicit val shortArgs = new Args[Short] {
+    def from(v: Short): List[Value] = ShortValue(v) :: Nil
+  }
+
   implicit val floatCreate =
     new Create[Float] {
       def create(value: Float): Ptr[Float] = {
@@ -80,6 +116,10 @@ object instances {
       Bindings.instance.metacall_value_to_float(ptr.ptr)
 
     def value(ptr: Ptr[Float]): Value = FloatValue(primitive(ptr))
+  }
+
+  implicit val floatArgs = new Args[Float] {
+    def from(v: Float): List[Value] = FloatValue(v) :: Nil
   }
 
   implicit val doubleCreate =
@@ -97,6 +137,10 @@ object instances {
     def value(ptr: Ptr[Double]): Value = DoubleValue(primitive(ptr))
   }
 
+  implicit val doubleArgs = new Args[Double] {
+    def from(v: Double): List[Value] = DoubleValue(v) :: Nil
+  }
+
   implicit val boolCreate =
     new Create[Boolean] {
       def create(value: Boolean): Ptr[Boolean] = {
@@ -110,6 +154,10 @@ object instances {
       Bindings.instance.metacall_value_to_bool(ptr.ptr)
 
     def value(ptr: Ptr[Boolean]): Value = BooleanValue(primitive(ptr))
+  }
+
+  implicit val boolArgs = new Args[Boolean] {
+    def from(v: Boolean): List[Value] = BooleanValue(v) :: Nil
   }
 
   implicit val charCreate =
@@ -127,6 +175,10 @@ object instances {
     def value(ptr: Ptr[Char]): Value = CharValue(primitive(ptr))
   }
 
+  implicit val charArgs = new Args[Char] {
+    def from(v: Char): List[Value] = CharValue(v) :: Nil
+  }
+
   implicit val stringCreate = new Create[String] {
     def create(value: String): Ptr[String] =
       new StringPtr(
@@ -142,6 +194,10 @@ object instances {
       Bindings.instance.metacall_value_to_string(ptr.ptr)
 
     def value(ptr: Ptr[String]): Value = StringValue(primitive(ptr))
+  }
+
+  implicit val stringArgs = new Args[String] {
+    def from(s: String): List[Value] = StringValue(s) :: Nil
   }
 
   implicit val arrayCreate = new Create[Array[Pointer]] {
@@ -163,6 +219,10 @@ object instances {
       ArrayValue(elems.toVector)
     }
 
+  }
+
+  implicit def arrayArgs[A](implicit AA: Args[A]) = new Args[List[A]] {
+    def from(v: List[A]): List[Value] = ArrayValue(v.flatMap(AA.from).toVector) :: Nil
   }
 
   implicit val mapCreate = new Create[Array[(Pointer, Pointer)]] {

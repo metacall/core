@@ -72,7 +72,7 @@ class MetaCallSpec extends AnyFlatSpec {
   "Caller" should "call functions and clean up arguments and returned pointers" in {
     val ret = Caller.call(
       "hello_scala_from_python",
-      Vector(StringValue("Hello "), StringValue("Scala!"))
+      List(StringValue("Hello "), StringValue("Scala!"))
     )
 
     assert(ret == StringValue("Hello Scala!"))
@@ -398,7 +398,7 @@ class MetaCallSpec extends AnyFlatSpec {
       case _                   => NullValue
     }
 
-    val ret = Caller.call("apply_fn_to_one", Vector(fnVal))
+    val ret = Caller.callV("apply_fn_to_one", fnVal :: Nil)
 
     assert(ret == LongValue(2L))
   }
@@ -425,5 +425,21 @@ class MetaCallSpec extends AnyFlatSpec {
 
     println("REsult: " + Await.result(resSum, 10.seconds))
   }*/
+
+  "Generic API" should "operate on primitive Scala values" in {
+    //  with tuples
+    val ret = Caller.call("big_fn", (1, "hello", 2.2))
+    assert(ret == DoubleValue(8.2))
+
+    // with single-element products (i.e. the List)
+    val ret2 = Caller.call("sumList", List(1, 2, 3))
+    assert(ret2 == LongValue(6))
+
+    // with HLists
+    import shapeless._
+
+    val ret3 = Caller.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
+    assert(ret3 == DoubleValue(8.2))
+  }
 
 }
