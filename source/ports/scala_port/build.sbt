@@ -20,7 +20,8 @@ lazy val commonSettings = Seq(
   libraryDependencies ++= Seq(
     "net.java.dev.jna" % "jna" % "5.6.0",
     "org.typelevel" %% "cats-core" % "2.3.1",
-    "org.scalatest" %% "scalatest" % "3.2.2" % Test,
+    "com.chuusai" %% "shapeless" % "2.3.3",
+    "org.scalatest" %% "scalatest" % "3.2.2" % Test
   )
 )
 
@@ -28,5 +29,6 @@ lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
     name := "metacall",
-    fork in (Test / run) := true
+    fork in (Test / run) := true,
+    parallelExecution in Test := false
   )

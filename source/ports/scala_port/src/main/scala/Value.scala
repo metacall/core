@@ -2,6 +2,10 @@ package metacall
 
 sealed trait Value
 
+trait Args[A] {
+  def from(product: A): List[Value]
+}
+
 sealed abstract class NumericValue[N](implicit n: Numeric[N]) extends Value {
   val value: N
 

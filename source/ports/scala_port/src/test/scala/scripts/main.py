@@ -27,3 +27,7 @@ def get_function_test(a):
 
 def sumList(list: list):
     return sum(list)
+
+
+def big_fn(i: int, s: str, f: float):
+    return i + len(s) + f
