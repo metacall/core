@@ -30,6 +30,7 @@ option(OPTION_BUILD_LOADERS_CR "Build Crystal 0.33.0 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 2.2.8 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_DART "Build Dart VM 2.8.4 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_FILE "Build File System loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_JAVA "Build Java Virtual Machine loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JSM "Build JavaScript SpiderMonkey 4.8 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JS "Build JavaScript V8 5.1+ loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_LUA "Build LuaJIT2 v2.1 (OpenResty fork) loader plugin." OFF)
@@ -48,6 +49,7 @@ add_subdirectory(cr_loader) # Crystal 0.33.0 Runtime
 add_subdirectory(dart_loader) # Dart VM 2.8.4 Runtime
 add_subdirectory(cs_loader) # CoreCLR 2.2.8 Runtime
 add_subdirectory(file_loader) # File System
+add_subdirectory(java_loader) # Java Virtual Machine
 add_subdirectory(jsm_loader) # Mozilla's SpiderMonkey 4.8 JavaScript Engine
 add_subdirectory(js_loader) # Google's V8 5.1 JavaScript Engine
 add_subdirectory(lua_loader) # LuaJIT2 v2.1 (OpenResty fork) Runtime

@@ -7,12 +7,29 @@ import cats.implicits._
 import metacall.util._, metacall.instances._
 import com.sun.jna.ptr.PointerByReference
 
+class MetaCallSpecRunner {
+  def run() = {
+    (new MetaCallSpec()).execute()
+  }
+}
+
 class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
 
   val scriptPaths = Array(
     Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString()
   )
+
+  "MetaCall" should "initialize successfully" in {
+    // TODO: Remove this if we drop support for executing Scala outside of MetaCall
+    // TODO: Create a destroy method wrapping this functionality
+    if (System.getProperty("java.polyglot.name") != "metacall") {
+      assert(
+        metacall.metacall_initialize() == 0,
+        "MetaCall was not successfully initialized"
+      )
+    }
+  }
 
   "MetaCall" should "load script successsfully" in {
     val retCode = metacall.metacall_load_from_file(
@@ -442,4 +459,14 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(ret3 == DoubleValue(8.2))
   }
 
+  "MetaCall" should "be destroyed successfully" in {
+    // TODO: Remove this if we drop support for executing Scala outside of MetaCall
+    // TODO: Create a destroy method wrapping this functionality
+    if (System.getProperty("java.polyglot.name") != "metacall") {
+      assert(
+        metacall.metacall_destroy() == 0,
+        "MetaCall was not successfully destroyed"
+      )
+    }
+  }
 }
