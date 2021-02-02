@@ -270,7 +270,7 @@ object instances {
       val ref = new PointerByReference()
 
       if (
-        Bindings.instance.metacall_registerv(
+        Bindings.instance.metacall_register(
           null,
           value,
           ref,

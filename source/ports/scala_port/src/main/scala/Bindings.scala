@@ -52,14 +52,6 @@ protected[metacall] trait Bindings extends Library {
       types: Array[Int]
   ): Int
 
-  def metacall_registerv(
-      name: String,
-      invoke: FunctionPointer,
-      func: PointerByReference,
-      returnType: Int,
-      argc: SizeT,
-      argTypes: Array[Int]
-  ): Int
 
   def metacall_function(name: String): Pointer
 
