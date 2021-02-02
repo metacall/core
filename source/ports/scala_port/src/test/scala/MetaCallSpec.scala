@@ -9,16 +9,13 @@ import com.sun.jna.ptr.PointerByReference
 
 class MetaCallSpecRunner {
   def run() = {
+    println("Executing MetaCallSpec Tests")
     (new MetaCallSpec()).execute()
   }
 }
 
 class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
-
-  val scriptPaths = Array(
-    Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString()
-  )
 
   "MetaCall" should "initialize successfully" in {
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
@@ -31,7 +28,29 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  "MetaCall" should "load script successsfully" in {
+  /*
+  "MetaCall" should "load node script successsfully" in {
+    val scriptPaths = Array(
+      Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
+    )
+    val retCode = metacall.metacall_load_from_file(
+      "node",
+      scriptPaths,
+      SizeT(scriptPaths.length.toLong),
+      null
+    )
+
+    require(
+      retCode == 0,
+      s"MetaCall failed to load the script with code $retCode"
+    )
+  }
+  */
+
+  "MetaCall" should "load python script successsfully" in {
+    val scriptPaths = Array(
+      Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString()
+    )
     val retCode = metacall.metacall_load_from_file(
       "py",
       scriptPaths,
@@ -420,28 +439,124 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(ret == LongValue(2L))
   }
 
-  /* TODO: Parallelism doesn't work
   "Parallel function calls" should "not fail" in {
+    import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
+    import java.util.concurrent.atomic.AtomicBoolean
+    import java.util.concurrent.Executors
+    import java.lang.{Runtime, Runnable}
+
+    // TODO: Move this to Threading, from here >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+    abstract class AbstractConsumer[T](queue: BlockingQueue[T]) extends Runnable {
+      private[this] val closed = new AtomicBoolean(false)
+
+      def run(): Unit = {
+        while (!closed.get) {
+          println("Waiting for call...")
+          val item = queue.take()
+          println("Item found")
+          if (item != null) {
+            println("Invoke consume")
+            consume(item)
+            println("Consume done")
+          }
+        }
+      }
+
+      def close() = {
+        closed.set(true)
+      }
+
+      // TODO: Return value not implemented yet
+      def consume(x: T): Unit
+    }
+
+    class SerializedCall(fnName: String, args: List[Value]) {
+      def invoke() = {
+        if (fnName != "") {
+          // TODO: Return value not implemented yet
+          println(Caller.callV(fnName, args))
+        }
+      }
+    }
+
+    class CallConsumer(queue: BlockingQueue[SerializedCall]) extends AbstractConsumer[SerializedCall](queue) {
+      // TODO: Return value not implemented yet
+      def consume(x: SerializedCall) = x.invoke()
+    }
+
+    abstract class AbstractCallProducer(queue: BlockingQueue[SerializedCall]) extends Runnable {
+      def run(): Unit
+      // TODO: Return value not implemented yet
+      def invoke(fnName: String, args: List[Value]) = queue.put(new SerializedCall(fnName, args))
+    }
+
+    class CallProducerRange(range: ArrayValue, queue: BlockingQueue[SerializedCall]) extends AbstractCallProducer(queue) {
+      def run(): Unit = {
+        println("Invoke sumList...")
+        this.invoke("sumList", List(range))
+      }
+    }
+
+    class CallProducerNull(queue: BlockingQueue[SerializedCall]) extends AbstractCallProducer(queue) {
+      def run(): Unit = {
+        println("Invoke Null...")
+        this.invoke("", List())
+      }
+    }
+    // TODO: To here >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+    val cores = 8 // Runtime.getRuntime().availableProcessors()
+
+    println(s"Running parallel test with ${cores} cores")
+
     val ranges: List[Vector[Int]] =
-      List.range(1, 1000).map(n => Vector.range(1, n))
+      List.range(1, cores).map(n => Vector.range(1, n))
 
     val rangeValues: List[ArrayValue] =
       ranges.map(range => ArrayValue(range map IntValue.apply))
 
+    val queue = new LinkedBlockingQueue[SerializedCall]()
+    val pool = Executors.newFixedThreadPool(cores)
+
+    // Submit one producer per core
+    for (range <- rangeValues) {
+      println("Sumbit new producer")
+      pool.submit(new CallProducerRange(range, queue))
+    }
+
+    val consumer = new CallConsumer(queue)
+
+    // Submit the close operation
+    pool.submit(new Runnable() {
+      def run(): Unit = {
+        println("Cancellation thread sleep...")
+        Thread.sleep(3000L);
+        println("Close consumer...")
+        consumer.close()
+        println("Send null argument...")
+        (new CallProducerNull(queue)).run()
+      }
+    })
+
+    // This must be run in the current thread (or where metacall was initialized and scripts loaded)
+    consumer.run()
+
+    /*
     import scala.concurrent._, duration._
     import ExecutionContext.Implicits.global
 
     val resSum = rangeValues
       .traverse { range =>
-        Future(Caller.call("sumList", Vector(range))) map {
+        Future(Caller.callV("sumListJs", range :: Nil)) map {
           case n: NumericValue[_] => n.long.value
           case _                  => fail("Returned value should be a number")
         }
       }
       .map(_.sum)
 
-    println("REsult: " + Await.result(resSum, 10.seconds))
-  }*/
+    println("Result: " + Await.result(resSum, 10.seconds))
+    */
+  }
 
   "Generic API" should "operate on primitive Scala values" in {
     //  with tuples

@@ -13,4 +13,8 @@ function env() {
     console.log(process.env);
 }
 
-module.exports = { hello, env, increment }
+function sumListJs(arr) {
+    return arr.reduce((acc, val) => acc + val, 0);
+}
+
+module.exports = { hello, env, increment, sumListJs };
