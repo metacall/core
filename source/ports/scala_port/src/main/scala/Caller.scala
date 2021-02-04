@@ -10,7 +10,7 @@ object Caller {
   private val closed = new AtomicBoolean(false)
   private val callsQueue = new LinkedBlockingQueue[UniqueCall]()
   private val returns = new Observable[(UniqueCall, Value)]()
-  private val callCounts = MutMap.empty[Call, Int]
+  private val callCounts = MutMap.empty[Call, Int].withDefaultValue(0)
 
   def init(): Unit = {
     while (!closed.get) {
