@@ -1,34 +1,58 @@
 package metacall
 
 import metacall.util._
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicBoolean
-import scala.collection.mutable.{Map => MutMap}
+import java.util.concurrent.{LinkedBlockingQueue, ConcurrentHashMap}
+import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
 
-object Caller {
+class Caller(scripts: List[Script]) {
+  private case class Call(fnName: String, args: List[Value])
 
-  private val closed = new AtomicBoolean(false)
-  private val callsQueue = new LinkedBlockingQueue[UniqueCall]()
-  private val returns = new Observable[(UniqueCall, Value)]()
-  private val callCounts = MutMap.empty[Call, Int].withDefaultValue(0)
+  private case class UniqueCall(call: Call, id: Int)
 
-  def init(): Unit = {
+  private val callerThread = new Thread(() => {
+    Bindings.instance.metacall_initialize()
+
+    val loadResults = scripts.map { script =>
+      script.filePath -> Bindings.instance.metacall_load_from_file(
+        script.runtime.toString(),
+        Array(script.filePath),
+        SizeT(1),
+        null
+      )
+    }
+
+    loadResults.foreach { case (path, resultCode) =>
+      if (resultCode != 0)
+        throw new Exception("Failed to load script " + path)
+    }
+
     while (!closed.get) {
-      val uniqueCall = callsQueue.take()
-      if (uniqueCall != null) {
-        returns.emit((uniqueCall, uniqueCall.call.invoke))
+      if (!callQueue.isEmpty()) {
+        val uniqueCall = callQueue.take()
+        val result = callUnsafe(uniqueCall.call.fnName, uniqueCall.call.args)
+        callResultMap.put(uniqueCall.id, result)
       }
     }
-  }
+
+    Bindings.instance.metacall_destroy()
+  })
+
+  private val closed = new AtomicBoolean(false)
+  private val callQueue = new LinkedBlockingQueue[UniqueCall]()
+  private val callResultMap = new ConcurrentHashMap[Int, Value]()
+  private val callCounter = new AtomicInteger(0)
+
+  def start(): Unit = callerThread.start()
 
   def destroy(): Unit = closed.set(true)
 
-  /** Calls a loaded function
+  /** Calls a loaded function.
+    * WARNING: Should only be used from within the caller thread.
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
     * @return The function's return value, or `InvalidValue` in case of an error
     */
-  private[metacall] def callV(fnName: String, args: List[Value]): Value = {
+  private def callUnsafe(fnName: String, args: List[Value]): Value = {
     val argPtrArray = args.map(Ptr.fromValueUnsafe(_).ptr).toArray
 
     val retPointer =
@@ -42,35 +66,40 @@ object Caller {
     retValue
   }
 
+  /** Calls a loaded function.
+    * @param fnName The name of the function to call
+    * @param args A list of `Value`s to be passed as arguments to the function
+    * @return The function's return value, or `InvalidValue` in case of an error
+    */
+  def callV(fnName: String, args: List[Value]): Value = {
+    val call = Call(fnName, args)
+    val callId = callCounter.get + 1
+
+    if (callId == Int.MaxValue)
+      callCounter.set(0)
+    else
+      callCounter.set(callId)
+
+    val uniqueCall = UniqueCall(call, callId)
+
+    callQueue.put(uniqueCall)
+
+    var result: Value = null
+
+    while (result == null)
+      result = callResultMap.get(callId)
+
+    callResultMap.remove(callId)
+
+    result
+  }
+
   /** Calls a loaded function
     * @param fnName The name of the function to call
     * @param args A product (tuple, case class, single value) to be passed as arguments to the function
     * @return The function's return value, or `InvalidValue` in case of an error
     */
-  def call[A](fnName: String, args: A)(implicit AA: Args[A]): Value = {
-
-    val call = Call(fnName, AA.from(args))
-    val callCount = callCounts(call) + 1
-    callCounts.update(call, callCount) // update call count
-    val uniqueCall = UniqueCall(call, callCount)
-
-    callsQueue.put(uniqueCall)
-
-    var result: Value = null
-
-    returns.observe { case (c, v) =>
-      if (c == uniqueCall) result = v
-    }
-
-    while (result == null) {} // TODO: Take a timeout in milliseconds and if this time
-
-    return result
-  }
+  def call[A](fnName: String, args: A)(implicit AA: Args[A]): Value =
+    callV(fnName, AA.from(args))
 
 }
-
-case class Call(fnName: String, args: List[Value]) {
-  def invoke = Caller.callV(fnName, args)
-}
-
-case class UniqueCall(call: Call, callCounter: Int)

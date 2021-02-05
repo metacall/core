@@ -3,6 +3,8 @@ package metacall
 import com.sun.jna._
 
 object util {
+  case class Script(filePath: String, runtime: Runtime)
+
   private[metacall] class SizeT(value: Long)
       extends IntegerType(Native.SIZE_T_SIZE, value) {
     def this() = this(0)

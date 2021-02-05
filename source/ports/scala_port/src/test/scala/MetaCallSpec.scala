@@ -45,7 +45,7 @@ class MetaCallSpec extends AnyFlatSpec {
       s"MetaCall failed to load the script with code $retCode"
     )
   }
-  */
+   */
 
   "MetaCall" should "load python script successsfully" in {
     val scriptPaths = Array(
@@ -103,15 +103,6 @@ class MetaCallSpec extends AnyFlatSpec {
 
     metacall.metacall_value_destroy(argPtr)
     metacall.metacall_value_destroy(retPointer)
-  }
-
-  "Caller" should "call functions and clean up arguments and returned pointers" in {
-    val ret = Caller.callV(
-      "hello_scala_from_python",
-      List(StringValue("Hello "), StringValue("Scala!"))
-    )
-
-    assert(ret == StringValue("Hello Scala!"))
   }
 
   "MetaCall" should "construct/parse maps correctly" in {
@@ -428,138 +419,6 @@ class MetaCallSpec extends AnyFlatSpec {
     assert(ret == StringValue("Hello, World!"))
   }
 
-  "FunctionValues" should "be constructed and passed to foreign functions" in {
-    val fnVal = FunctionValue {
-      case LongValue(l) :: Nil => LongValue(l + 1L)
-      case _                   => NullValue
-    }
-
-    val ret = Caller.callV("apply_fn_to_one", fnVal :: Nil)
-
-    assert(ret == LongValue(2L))
-  }
-
-  "Parallel function calls" should "not fail" in {
-    import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
-    import java.util.concurrent.atomic.AtomicBoolean
-    import java.util.concurrent.Executors
-    import java.lang.Runnable
-
-    // TODO: Move this to Threading, from here >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    abstract class AbstractConsumer[T](queue: BlockingQueue[T]) extends Runnable {
-      private[this] val closed = new AtomicBoolean(false)
-
-      def run(): Unit = {
-        while (!closed.get) {
-          println("Waiting for call...")
-          val item = queue.take()
-          println("Item found")
-          if (item != null) {
-            println("Invoke consume")
-            consume(item)
-            println("Consume done")
-          }
-        }
-      }
-
-      def close() = {
-        closed.set(true)
-      }
-
-      // TODO: Return value not implemented yet
-      def consume(x: T): Unit
-    }
-
-    class SerializedCall(fnName: String, args: List[Value]) {
-      def invoke() = {
-        if (fnName != "") {
-          // TODO: Return value not implemented yet
-          println(Caller.callV(fnName, args))
-        }
-      }
-    }
-
-    class CallConsumer(queue: BlockingQueue[SerializedCall]) extends AbstractConsumer[SerializedCall](queue) {
-      // TODO: Return value not implemented yet
-      def consume(x: SerializedCall) = x.invoke()
-    }
-
-    abstract class AbstractCallProducer(queue: BlockingQueue[SerializedCall]) extends Runnable {
-      def run(): Unit
-      // TODO: Return value not implemented yet
-      def invoke(fnName: String, args: List[Value]) = queue.put(new SerializedCall(fnName, args))
-    }
-
-    class CallProducerRange(range: ArrayValue, queue: BlockingQueue[SerializedCall]) extends AbstractCallProducer(queue) {
-      def run(): Unit = {
-        println("Invoke sumList...")
-        this.invoke("sumList", List(range))
-      }
-    }
-    // TODO: To here >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-    val cores = java.lang.Runtime.getRuntime().availableProcessors()
-
-    println(s"Running parallel test with ${cores} cores")
-
-    val ranges: List[Vector[Int]] =
-      List.range(1, cores).map(n => Vector.range(1, n))
-
-    val rangeValues: List[ArrayValue] =
-      ranges.map(range => ArrayValue(range map IntValue.apply))
-
-    val queue = new LinkedBlockingQueue[SerializedCall]()
-    val pool = Executors.newFixedThreadPool(cores)
-
-    // Submit one producer per core
-    for (range <- rangeValues) {
-      println("Sumbit new producer")
-      pool.submit(new CallProducerRange(range, queue))
-    }
-
-    val consumer = new CallConsumer(queue)
-
-    // Submit the close operation
-    pool.submit(new Runnable() {
-      def run(): Unit = consumer.close()
-    })
-
-    // This must be run in the current thread (or where metacall was initialized and scripts loaded)
-    consumer.run()
-
-    /*
-    import scala.concurrent._, duration._
-    import ExecutionContext.Implicits.global
-
-    val resSum = rangeValues
-      .traverse { range =>
-        Future(Caller.callV("sumListJs", range :: Nil)) map {
-          case n: NumericValue[_] => n.long.value
-          case _                  => fail("Returned value should be a number")
-        }
-      }
-      .map(_.sum)
-
-    println("Result: " + Await.result(resSum, 10.seconds))
-    */
-  }
-
-  "Generic API" should "operate on primitive Scala values" in {
-    //  with tuples
-    val ret = Caller.call("big_fn", (1, "hello", 2.2))
-    assert(ret == DoubleValue(8.2))
-
-    // with single-element products (i.e. the List)
-    val ret2 = Caller.call("sumList", List(1, 2, 3))
-    assert(ret2 == LongValue(6))
-
-    // with HLists
-    import shapeless._
-
-    val ret3 = Caller.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
-    assert(ret3 == DoubleValue(8.2))
-  }
-
   "MetaCall" should "be destroyed successfully" in {
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
@@ -569,5 +428,79 @@ class MetaCallSpec extends AnyFlatSpec {
         "MetaCall was not successfully destroyed"
       )
     }
+  }
+
+  val caller = new Caller(
+    List(
+      Script(
+        Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString(),
+        Runtime.Python
+      )
+    )
+  )
+
+  "Caller" should "start successfully" in {
+    caller.start()
+  }
+
+  "Caller" should "call functions and clean up arguments and returned pointers" in {
+    val ret = caller.callV(
+      "hello_scala_from_python",
+      List(StringValue("Hello "), StringValue("Scala!"))
+    )
+
+    assert(ret == StringValue("Hello Scala!"))
+  }
+
+  "FunctionValues" should "be constructed and passed to foreign functions" in {
+    val fnVal = FunctionValue {
+      case LongValue(l) :: Nil => LongValue(l + 1L)
+      case _                   => NullValue
+    }
+
+    val ret = caller.callV("apply_fn_to_one", fnVal :: Nil)
+
+    assert(ret == LongValue(2L))
+  }
+
+  "Generic API" should "operate on primitive Scala values" in {
+    //  with tuples
+    val ret = caller.call("big_fn", (1, "hello", 2.2))
+    assert(ret == DoubleValue(8.2))
+
+    // with single-element products (i.e. the List)
+    val ret2 = caller.call("sumList", List(1, 2, 3))
+    assert(ret2 == LongValue(6))
+
+    // with HLists
+    import shapeless._
+
+    val ret3 = caller.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
+    assert(ret3 == DoubleValue(8.2))
+  }
+
+  "Using `Caller` from multiple threads" should "work" in {
+    import scala.concurrent._, duration._
+    import ExecutionContext.Implicits.global
+
+    val rangeValues: List[ArrayValue] =
+      List.range(1, 50).map(n => ArrayValue(Vector.range(1, n).map(IntValue)))
+
+    val resSum = rangeValues
+      .traverse { range =>
+        Future(caller.callV("sumList", range :: Nil)) map {
+          case n: NumericValue[_] => n.long.value
+          case other              => fail("Returned value should be a number, but got " + other)
+        }
+      }
+      .map(_.sum)
+
+    val result = Await.result(resSum, 10.seconds)
+
+    assert(result == 19600)
+  }
+
+  "Caller" should "be destroyed correctly" in {
+    caller.destroy()
   }
 }
