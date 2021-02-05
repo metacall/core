@@ -225,7 +225,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val fnRef = new PointerByReference()
 
     assert(
-      metacall.metacall_registerv(
+      metacall.metacall_register(
         null,
         cb,
         fnRef,
@@ -271,7 +271,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val fnRef = new PointerByReference()
 
     assert(
-      metacall.metacall_registerv(
+      metacall.metacall_register(
         null,
         fnCallback,
         fnRef,
@@ -315,7 +315,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val fnRef = new PointerByReference()
 
     assert(
-      metacall.metacall_registerv(
+      metacall.metacall_register(
         null,
         fnCallback,
         fnRef,
@@ -363,7 +363,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val fnRef = new PointerByReference()
 
     assert(
-      metacall.metacall_registerv(
+      metacall.metacall_register(
         null,
         fnCallback,
         fnRef,
@@ -443,7 +443,7 @@ class MetaCallSpec extends AnyFlatSpec {
     import java.util.concurrent.{BlockingQueue, LinkedBlockingQueue}
     import java.util.concurrent.atomic.AtomicBoolean
     import java.util.concurrent.Executors
-    import java.lang.{Runtime, Runnable}
+    import java.lang.Runnable
 
     // TODO: Move this to Threading, from here >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     abstract class AbstractConsumer[T](queue: BlockingQueue[T]) extends Runnable {
@@ -496,16 +496,9 @@ class MetaCallSpec extends AnyFlatSpec {
         this.invoke("sumList", List(range))
       }
     }
-
-    class CallProducerNull(queue: BlockingQueue[SerializedCall]) extends AbstractCallProducer(queue) {
-      def run(): Unit = {
-        println("Invoke Null...")
-        this.invoke("", List())
-      }
-    }
     // TODO: To here >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
-    val cores = 8 // Runtime.getRuntime().availableProcessors()
+    val cores = java.lang.Runtime.getRuntime().availableProcessors()
 
     println(s"Running parallel test with ${cores} cores")
 
@@ -528,14 +521,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     // Submit the close operation
     pool.submit(new Runnable() {
-      def run(): Unit = {
-        println("Cancellation thread sleep...")
-        Thread.sleep(3000L);
-        println("Close consumer...")
-        consumer.close()
-        println("Send null argument...")
-        (new CallProducerNull(queue)).run()
-      }
+      def run(): Unit = consumer.close()
     })
 
     // This must be run in the current thread (or where metacall was initialized and scripts loaded)
