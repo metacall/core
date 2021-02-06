@@ -28,8 +28,9 @@ object Caller {
 
   private case class UniqueCall(call: Call, id: Int)
 
-  private val callerThread = new Thread(() => {
-    Bindings.instance.metacall_initialize()
+  private def callLoop() = {
+    if (System.getProperty("java.polyglot.name") != "metacall")
+      Bindings.instance.metacall_initialize()
 
     while (!closed.get) {
       if (!scriptsQueue.isEmpty()) {
@@ -42,8 +43,9 @@ object Caller {
       } else ()
     }
 
-    Bindings.instance.metacall_destroy()
-  })
+    if (System.getProperty("java.polyglot.name") != "metacall")
+      Bindings.instance.metacall_destroy()
+  }
 
   private val closed = new AtomicBoolean(false)
   private val callQueue = new LinkedBlockingQueue[UniqueCall]()
@@ -54,7 +56,12 @@ object Caller {
   def loadFile(runtime: Runtime, filePath: String): Unit =
     scriptsQueue.put(Script(filePath, runtime))
 
-  def start(): Unit = callerThread.start()
+  def start(): Unit = {
+    if (System.getProperty("java.polyglot.name") != "metacall")
+      new Thread(() => callLoop()).start()
+    else
+      callLoop()
+  }
 
   def destroy(): Unit = closed.set(true)
 
