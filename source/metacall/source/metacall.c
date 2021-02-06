@@ -296,6 +296,18 @@ void * metacallhv(void * handle, const char * name, void * args[])
 	return NULL;
 }
 
+void * metacallhv_s(void * handle, const char * name, void * args[], size_t size)
+{
+	(void)handle;
+	(void)name;
+	(void)args;
+	(void)size;
+
+	/* TODO */
+
+	return NULL;
+}
+
 void * metacall(const char * name, ...)
 {
 	value f_val = loader_get(name);

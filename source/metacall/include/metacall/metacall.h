@@ -309,6 +309,29 @@ METACALL_API void * metacallhv(void * handle, const char * name, void * args[]);
 
 /**
 *  @brief
+*    Call a function anonymously by handle @handle value array @args
+*    This function allows to avoid name collisions when calling functions by name
+*    Includes @size in order to allow variadic arguments or safe calls
+*
+*  @param[in] handle
+*    Handle where the function belongs
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of the call
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void * metacallhv_s(void * handle, const char * name, void * args[], size_t size);
+
+/**
+*  @brief
 *    Call a function anonymously by variable arguments @va_args
 *
 *  @param[in] name
