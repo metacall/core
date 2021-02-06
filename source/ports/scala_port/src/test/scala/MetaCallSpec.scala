@@ -1,11 +1,13 @@
 package metacall
 
-import com.sun.jna._
 import java.nio.file.Paths
-import org.scalatest.flatspec.AnyFlatSpec
+
 import cats.implicits._
-import metacall.util._, metacall.instances._
+import com.sun.jna._
 import com.sun.jna.ptr.PointerByReference
+import metacall.instances._
+import metacall.util._
+import org.scalatest.flatspec.AnyFlatSpec
 
 class MetaCallSpecRunner {
   def run() = {
@@ -430,21 +432,16 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  val caller = new Caller(
-    List(
-      Script(
-        Paths.get("./src/test/scala/scripts/main.py").toAbsolutePath.toString(),
-        Runtime.Python
-      )
-    )
-  )
+  "Caller" should "load scripts successfully" in {
+    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
+  }
 
   "Caller" should "start successfully" in {
-    caller.start()
+    Caller.start()
   }
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
-    val ret = caller.callV(
+    val ret = Caller.callV(
       "hello_scala_from_python",
       List(StringValue("Hello "), StringValue("Scala!"))
     )
@@ -458,24 +455,24 @@ class MetaCallSpec extends AnyFlatSpec {
       case _                   => NullValue
     }
 
-    val ret = caller.callV("apply_fn_to_one", fnVal :: Nil)
+    val ret = Caller.callV("apply_fn_to_one", fnVal :: Nil)
 
     assert(ret == LongValue(2L))
   }
 
   "Generic API" should "operate on primitive Scala values" in {
     //  with tuples
-    val ret = caller.call("big_fn", (1, "hello", 2.2))
+    val ret = Caller.call("big_fn", (1, "hello", 2.2))
     assert(ret == DoubleValue(8.2))
 
     // with single-element products (i.e. the List)
-    val ret2 = caller.call("sumList", List(1, 2, 3))
+    val ret2 = Caller.call("sumList", List(1, 2, 3))
     assert(ret2 == LongValue(6))
 
     // with HLists
     import shapeless._
 
-    val ret3 = caller.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
+    val ret3 = Caller.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
     assert(ret3 == DoubleValue(8.2))
   }
 
@@ -488,7 +485,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val resSum = rangeValues
       .traverse { range =>
-        Future(caller.callV("sumList", range :: Nil)) map {
+        Future(Caller.callV("sumList", range :: Nil)) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
         }
@@ -501,6 +498,6 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "Caller" should "be destroyed correctly" in {
-    caller.destroy()
+    Caller.destroy()
   }
 }

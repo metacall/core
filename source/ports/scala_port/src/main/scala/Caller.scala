@@ -1,10 +1,29 @@
 package metacall
 
-import metacall.util._
-import java.util.concurrent.{LinkedBlockingQueue, ConcurrentHashMap}
-import java.util.concurrent.atomic.{AtomicInteger, AtomicBoolean}
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
 
-class Caller(scripts: List[Script]) {
+import metacall.util._
+
+/** `Caller` creates a new thread on which:
+  *   - a MetaCall instance is initialized (`Caller.start`)
+  *   - Scripts are loaded (`Caller.loadFile`)
+  *   - MetaCall functions are invoked (`Caller.call`)
+  *
+  *  You must always call `Caller.destroy` after you're done with it. This destroys
+  *  the MetaCall instance.
+  *
+  *  Usage:
+  *  ```scala
+  *  Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
+  *  Caller.start()
+  *  val ret = Caller.call("big_fn", (1, "hello", 2.2))
+  *  assert(ret == DoubleValue(8.2))
+  *  ```
+  */
+object Caller {
   private case class Call(fnName: String, args: List[Value])
 
   private case class UniqueCall(call: Call, id: Int)
@@ -12,26 +31,15 @@ class Caller(scripts: List[Script]) {
   private val callerThread = new Thread(() => {
     Bindings.instance.metacall_initialize()
 
-    val loadResults = scripts.map { script =>
-      script.filePath -> Bindings.instance.metacall_load_from_file(
-        script.runtime.toString(),
-        Array(script.filePath),
-        SizeT(1),
-        null
-      )
-    }
-
-    loadResults.foreach { case (path, resultCode) =>
-      if (resultCode != 0)
-        throw new Exception("Failed to load script " + path)
-    }
-
     while (!closed.get) {
-      if (!callQueue.isEmpty()) {
+      if (!scriptsQueue.isEmpty()) {
+        val script = scriptsQueue.take()
+        Loader.loadFileUnsafe(script.runtime, script.filePath)
+      } else if (!callQueue.isEmpty()) {
         val uniqueCall = callQueue.take()
         val result = callUnsafe(uniqueCall.call.fnName, uniqueCall.call.args)
         callResultMap.put(uniqueCall.id, result)
-      }
+      } else ()
     }
 
     Bindings.instance.metacall_destroy()
@@ -41,6 +49,10 @@ class Caller(scripts: List[Script]) {
   private val callQueue = new LinkedBlockingQueue[UniqueCall]()
   private val callResultMap = new ConcurrentHashMap[Int, Value]()
   private val callCounter = new AtomicInteger(0)
+  private val scriptsQueue = new LinkedBlockingQueue[Script]()
+
+  def loadFile(runtime: Runtime, filePath: String): Unit =
+    scriptsQueue.put(Script(filePath, runtime))
 
   def start(): Unit = callerThread.start()
 
