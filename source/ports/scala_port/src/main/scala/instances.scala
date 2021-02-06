@@ -1,11 +1,12 @@
 package metacall
 
+import scala.annotation.implicitNotFound
+
 import cats.implicits._
 import com.sun.jna._
-import metacall.util._
 import com.sun.jna.ptr.PointerByReference
+import metacall.util._
 import shapeless._
-import scala.annotation.implicitNotFound
 
 object instances {
 

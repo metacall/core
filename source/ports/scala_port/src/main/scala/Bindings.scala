@@ -22,6 +22,7 @@ package metacall
 
 import com.sun.jna._
 import com.sun.jna.ptr.PointerByReference
+
 import util._
 
 /** Interface mirroring the MetaCall library using JNA. See:
