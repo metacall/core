@@ -145,7 +145,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 		jint rc = JNI_CreateJavaVM(&java_impl->jvm, (void**)&java_impl->env, &vm_args);
 
-		delete options;
+		delete[] options;
 
 		if (rc != JNI_OK)
 		{
@@ -178,7 +178,6 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	{
 		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
-		/*
 		jint rc = java_impl->jvm->AttachCurrentThread((void**)&java_impl->env, NULL);
 
 		if (rc != JNI_OK)
@@ -186,7 +185,6 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 			// TODO: Handle error
 			std::cout << "ffffffffffffffffffffffffffff" << std::endl;
 		}
-		*/
 
 		jclass cls2 = java_impl->env->FindClass("metacall/MetaCallSpecRunner");
 
@@ -218,6 +216,15 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 				return NULL;
 			}
 			else java_impl->env->CallVoidMethod(myo, show);
+		}
+
+		// TODO: Implement a scope like V8 for attaching and detaching automatically
+		rc = java_impl->jvm->DetachCurrentThread();
+
+		if (rc != JNI_OK)
+		{
+			// TODO: Handle error
+			std::cout << "333333ffffffffffffffffffffffffffff" << std::endl;
 		}
 
 		return static_cast<loader_handle>(java_handle);
