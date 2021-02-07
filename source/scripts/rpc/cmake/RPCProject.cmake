@@ -38,7 +38,10 @@ get_filename_component(RPC_PROJECT_CONFIG_PATH ${CMAKE_CURRENT_LIST_FILE} PATH)
 
 function(rpc_project target version)
 
+# Configuration
+	set(PACKAGE_NAME ${target})
+
 	# Create project file
-	script_project(${target} RPC ${NODEJS_PROJECT_CONFIG_PATH}/RPCProject.cmake.in)
+	script_project(${target} RPC ${RPC_PROJECT_CONFIG_PATH}/RPCProject.cmake.in)
 
 endfunction()
