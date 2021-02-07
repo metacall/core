@@ -62,7 +62,7 @@ serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator,
 	return (serial_impl_handle)document;
 }
 
-void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v /*, RapidJSONSerialDocument::AllocatorType & allocator */)
+void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 {
 	type_id id = value_type_id(v);
 
