@@ -9,11 +9,6 @@ endif()
 
 find_package(PythonLibs 3 REQUIRED)
 
-if(NOT PYTHONLIBS_FOUND)
-	message(STATUS "Python libraries not found")
-	return()
-endif()
-
 #
 # Plugin name and options
 #

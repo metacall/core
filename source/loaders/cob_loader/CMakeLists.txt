@@ -9,11 +9,6 @@ endif()
 
 find_package(Cobol REQUIRED)
 
-if(NOT COBOL_FOUND)
-	message(STATUS "Cobol not found")
-	return()
-endif()
-
 #
 # Plugin name and options
 #

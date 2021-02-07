@@ -12,17 +12,7 @@ endif()
 
 # find_package(LuaJIT2 REQUIRED)
 
-# if(NOT LUAJIT2_FOUND)
-# 	message(STATUS "LuaJIT2 libraries not found")
-# 	return()
-# endif()
-
 find_package(Lua REQUIRED)
-
-if(NOT LUA_FOUND)
-	message(STATUS "Lua libraries not found")
-	return()
-endif()
 
 #
 # Plugin name and options
