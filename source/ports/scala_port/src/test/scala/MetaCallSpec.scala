@@ -463,17 +463,17 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "Generic API" should "operate on primitive Scala values" in {
     //  with tuples
-    val ret = Caller.call("big_fn", (1, "hello", 2.2))
+    val ret = Caller.blocking.call("big_fn", (1, "hello", 2.2))
     assert(ret == DoubleValue(8.2))
 
     // with single-element products (i.e. the List)
-    val ret2 = Caller.call("sumList", List(1, 2, 3))
+    val ret2 = Caller.blocking.call("sumList", List(1, 2, 3))
     assert(ret2 == LongValue(6))
 
     // with HLists
     import shapeless._
 
-    val ret3 = Caller.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
+    val ret3 = Caller.blocking.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
     assert(ret3 == DoubleValue(8.2))
   }
 

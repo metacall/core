@@ -6,6 +6,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 import metacall.util._
+import scala.concurrent.Future
+import scala.concurrent.ExecutionContext
 
 /** `Caller` creates a new thread on which:
   *   - a MetaCall instance is initialized (`Caller.start`)
@@ -123,20 +125,41 @@ object Caller {
     result
   }
 
-  /** Calls a loaded function
-    * @param fnName The name of the function to call
-    * @param args A product (tuple, case class, single value) to be passed as arguments to the function
-    * @return The function's return value, or `InvalidValue` in case of an error
-    */
   def call[A](namespace: Option[String], fnName: String, args: A)(implicit
-      AA: Args[A]
-  ): Value =
-    callV(namespace, fnName, AA.from(args))
+      AA: Args[A],
+      ec: ExecutionContext
+  ): Future[Value] =
+    Future { blocking.call[A](namespace, fnName, args) }
 
-  def call[A](fnName: String, args: A)(implicit AA: Args[A]): Value =
+  def call[A](fnName: String, args: A)(implicit
+      AA: Args[A],
+      ec: ExecutionContext
+  ): Future[Value] =
     call[A](None, fnName, args)
 
-  def call[A](namespace: String, fnName: String, args: A)(implicit AA: Args[A]): Value =
+  def call[A](namespace: String, fnName: String, args: A)(implicit
+      AA: Args[A],
+      ec: ExecutionContext
+  ): Future[Value] =
     call[A](Some(namespace), fnName, args)
+  object blocking {
+
+    /** Calls a loaded function
+      * @param fnName The name of the function to call
+      * @param args A product (tuple, case class, single value) to be passed as arguments to the function
+      * @return The function's return value, or `InvalidValue` in case of an error
+      */
+    def call[A](namespace: Option[String], fnName: String, args: A)(implicit
+        AA: Args[A]
+    ): Value =
+      callV(namespace, fnName, AA.from(args))
+
+    def call[A](fnName: String, args: A)(implicit AA: Args[A]): Value =
+      call[A](None, fnName, args)
+
+    def call[A](namespace: String, fnName: String, args: A)(implicit AA: Args[A]): Value =
+      call[A](Some(namespace), fnName, args)
+
+  }
 
 }
