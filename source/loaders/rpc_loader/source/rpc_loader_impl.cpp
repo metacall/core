@@ -38,6 +38,8 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <fstream>
+#include <algorithm>
 
 typedef struct loader_impl_rpc_write_data_type
 {
@@ -155,7 +157,7 @@ void function_rpc_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_rpc_function rpc_func = static_cast<loader_impl_rpc_function>(impl);
 
-	(void)impl;
+	(void)func;
 
 	delete rpc_func;
 }
@@ -282,6 +284,47 @@ int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 	return 0;
 }
 
+int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+{
+	std::fstream file;
+
+	file.open(path, std::ios::in);
+
+	if (!file.is_open())
+	{
+		return 1;
+	}
+
+	std::string url;
+
+	while (std::getline(file, url))
+	{
+		/* Remove white spaces */
+		url.erase(std::remove_if(url.begin(), url.end(), [](char & c) {
+			return std::isspace<char>(c, std::locale::classic());
+		}),
+		url.end());
+
+		/* Skip empty lines */
+		if (url.length() == 0)
+		{
+			continue;
+		}
+
+		/* URL must come without URL encoded parameters */
+		if (url[url.length() - 1] != '/')
+		{
+			url.append("/");
+		}
+
+		rpc_handle->urls.push_back(url);
+	}
+
+	file.close();
+
+	return 0;
+}
+
 loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
@@ -295,21 +338,20 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		std::string url(paths[iterator]);
-
-		/* URL must come without URL encoded parameters */
-		if (url[url.length() - 1] != '/')
+		if (rpc_loader_impl_load_from_file_handle(paths[iterator]) != 0)
 		{
-			url.append("/");
-		}
+			log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", paths[iterator]);
 
-		rpc_handle->urls.push_back(url);
+			delete rpc_handle;
+
+			return NULL;
+		}
 	}
 
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
 	/* TODO */
 

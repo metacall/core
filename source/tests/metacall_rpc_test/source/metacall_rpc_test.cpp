@@ -43,7 +43,9 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 			"remote.url"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rpc", rpc_scripts, sizeof(rpc_scripts) / sizeof(rpc_scripts[0]), NULL));
+		void * handle = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rpc", rpc_scripts, sizeof(rpc_scripts) / sizeof(rpc_scripts[0]), &handle));
 
 		/*
 		const enum metacall_value_id hello_boy_double_ids[] =
@@ -59,6 +61,13 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 		*/
+
+		EXPECT_EQ((int) 0, (int) metacall_clear(handle));
+
+		static const char buffer[] = "http://localhost:6094/viferga/example/v1";
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("rpc", buffer, sizeof(buffer), &handle));
+
 	}
 	#endif /* OPTION_BUILD_LOADERS_RPC */
 
