@@ -56,7 +56,7 @@ set(headers
 
 set(sources
 	${source_path}/rpc_loader.c
-	${source_path}/rpc_loader_impl.c
+	${source_path}/rpc_loader_impl.cpp
 )
 
 # Group source files
