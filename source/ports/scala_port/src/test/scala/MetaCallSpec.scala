@@ -442,6 +442,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
     val ret = Caller.callV(
+      None,
       "hello_scala_from_python",
       List(StringValue("Hello "), StringValue("Scala!"))
     )
@@ -455,7 +456,7 @@ class MetaCallSpec extends AnyFlatSpec {
       case _                   => NullValue
     }
 
-    val ret = Caller.callV("apply_fn_to_one", fnVal :: Nil)
+    val ret = Caller.callV(None, "apply_fn_to_one", fnVal :: Nil)
 
     assert(ret == LongValue(2L))
   }
@@ -485,7 +486,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val resSum = rangeValues
       .traverse { range =>
-        Future(Caller.callV("sumList", range :: Nil)) map {
+        Future(Caller.callV(None, "sumList", range :: Nil)) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
         }
