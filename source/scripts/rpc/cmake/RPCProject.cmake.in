@@ -1,6 +1,6 @@
 #
-#	NodeJS project generator by Parra Studios
-#	Generates a NodeJS project embedded into CMake.
+#	RPC project generator by Parra Studios
+#	Generates a RPC project embedded into CMake.
 #
 #	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
@@ -18,7 +18,7 @@
 #
 
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_NODE)
+if(NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_RPC)
     return()
 endif()
 
@@ -26,24 +26,8 @@ endif()
 # External dependencies
 #
 
-# TODO
-
-#find_package(NodeJS)
-
 # Target name
 set(target @PACKAGE_NAME@)
 
 # Exit here if required dependencies are not met
 message(STATUS "Script ${target}")
-
-# Custom nodejs section
-if(NODEJS_FOUND)
-
-	# TODO
-
-	# Set custom setup command
-	#add_custom_command(OUTPUT "@PACKAGE_OUTPUT@"
-	#					COMMAND "${NODEJS_EXECUTABLE}" "@PACKAGE_SETUP_NODEJS@" build
-	#					COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
-	#					DEPENDS "@PACKAGE_DEPS@")
-endif()
