@@ -185,9 +185,9 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 
 			rapidjson::Value json_inner_value;
 
-			rapid_json_serial_impl_serialize_value(current_value, &json_inner_value/*, allocator*/);
+			rapid_json_serial_impl_serialize_value(current_value, &json_inner_value);
 
-			json_array.PushBack(json_inner_value, rapid_json_allocator/*allocator*/);
+			json_array.PushBack(json_inner_value, rapid_json_allocator);
 		}
 	}
 	else if (id == TYPE_MAP)
@@ -206,11 +206,11 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 
 			rapidjson::Value json_member, json_inner_value;
 
-			rapid_json_serial_impl_serialize_value(tupla_array[0], &json_member/*, allocator*/);
+			rapid_json_serial_impl_serialize_value(tupla_array[0], &json_member);
 
-			rapid_json_serial_impl_serialize_value(tupla_array[1], &json_inner_value/*, allocator*/);
+			rapid_json_serial_impl_serialize_value(tupla_array[1], &json_inner_value);
 
-			json_map.AddMember(json_member, json_inner_value, rapid_json_allocator/*, allocator*/);
+			json_map.AddMember(json_member, json_inner_value, rapid_json_allocator);
 		}
 	}
 	else if (id == TYPE_FUTURE)
