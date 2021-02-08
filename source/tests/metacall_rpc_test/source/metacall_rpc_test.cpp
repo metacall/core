@@ -72,20 +72,19 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 			metacall_allocator_destroy(allocator);
 		}
 
-/*
 		const enum metacall_value_id divide_ids[] =
 		{
-			METACALL_DOUBLE, METACALL_DOUBLE
+			METACALL_FLOAT, METACALL_FLOAT
 		};
 
-		void * ret = metacallt("divide", divide_ids, 50.0, 10.0);
+		void * ret = metacallt("divide", divide_ids, 50.0f, 10.0f);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 5.0);
+		EXPECT_EQ((float) metacall_value_to_float(ret), (float) 5.0f);
 
 		metacall_value_destroy(ret);
-*/
+
 		EXPECT_EQ((int) 0, (int) metacall_clear(handle));
 
 		static const char buffer[] = "http://localhost:6094/viferga/example/v1";

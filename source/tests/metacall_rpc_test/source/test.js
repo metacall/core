@@ -83,19 +83,4 @@ process.on('uncaughtException', killTest);
 		}
 		process.exit(0);
 	});
-
-	/*
-	execFile(process.argv[3], (error, stdout, stderr) => {
-		if (stdout) {
-			console.log(stdout);
-		}
-		if (stderr) {
-			console.error(stderr);
-		}
-		if (error) {
-			killTest(error);
-		}
-		process.exit(0);
-	});
-	*/
 })();
