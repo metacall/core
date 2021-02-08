@@ -21,11 +21,18 @@
 
 /* -- Type Definitions -- */
 
+typedef struct rapid_json_document_type
+{
+	rapidjson::Document impl;
+	memory_allocator allocator;
+
+} * rapid_json_document;
+
 /* -- Private Methods -- */
 
 static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v);
 
-static char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size);
+static char * rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t * size);
 
 static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v);
 
@@ -45,19 +52,16 @@ const char * rapid_json_serial_impl_extension()
 
 serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator, serial_host host)
 {
-	rapidjson::Document * document;
-
-	// Aparently, using your own memory allocator generates a heap buffer overflow
-	(void)allocator;
+	rapid_json_document document = new rapid_json_document_type();
 
 	log_copy(host->log);
-
-	document = new rapidjson::Document();
 
 	if (document == nullptr)
 	{
 		return NULL;
 	}
+
+	document->allocator = allocator;
 
 	return (serial_impl_handle)document;
 }
@@ -269,14 +273,14 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 	}
 }
 
-char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document, size_t * size)
+char * rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t * size)
 {
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-	document->Accept(writer);
+	document->impl.Accept(writer);
 	size_t buffer_size = buffer.GetSize();
 	size_t buffer_str_size = buffer_size + 1;
-	char * buffer_str = static_cast<char *>(malloc(sizeof(char) * buffer_str_size));
+	char * buffer_str = static_cast<char *>(memory_allocator_allocate(document->allocator, sizeof(char) * buffer_str_size));
 
 	if (buffer_str == NULL)
 	{
@@ -295,7 +299,7 @@ char * rapid_json_serial_impl_document_stringify(rapidjson::Document * document,
 
 char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
 {
-	rapidjson::Document * document = (rapidjson::Document *)handle;
+	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
 	if (handle == NULL || v == NULL || size == NULL)
 	{
@@ -304,7 +308,7 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 		return NULL;
 	}
 
-	rapid_json_serial_impl_serialize_value(v, document);
+	rapid_json_serial_impl_serialize_value(v, &document->impl);
 
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
@@ -435,7 +439,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size)
 {
-	rapidjson::Document *  document = (rapidjson::Document *)handle;
+	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
 	if (handle == NULL || buffer == NULL || size == 0)
 	{
@@ -444,7 +448,7 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 		return NULL;
 	}
 
-	rapidjson::ParseResult parse_result = document->Parse(buffer, size - 1);
+	rapidjson::ParseResult parse_result = document->impl.Parse(buffer, size - 1);
 
 	if (parse_result.IsError() == true)
 	{
@@ -456,14 +460,14 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 		return NULL;
 	}
 
-	return rapid_json_serial_impl_deserialize_value(document);
+	return rapid_json_serial_impl_deserialize_value(&document->impl);
 }
 
 int rapid_json_serial_impl_destroy(serial_impl_handle handle)
 {
-	rapidjson::Document * document = (rapidjson::Document *)handle;
+	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
-	if (document != nullptr)
+	if (document != NULL)
 	{
 		delete document;
 	}
