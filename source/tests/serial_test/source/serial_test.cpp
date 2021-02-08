@@ -126,6 +126,8 @@ TEST_F(serial_test, DefaultConstructor)
 		static const char json_string[] = "\"Hello World\"";
 		static const char json_string_value[] = "Hello World";
 
+		static const char json_empty_array[] = "[]";
+
 		size_t serialize_size = 0;
 
 		serial s = serial_create(rapid_json_name());
@@ -174,6 +176,22 @@ TEST_F(serial_test, DefaultConstructor)
 
 			value_destroy(v_map[iterator]);
 		}
+
+		value_destroy(v);
+
+		memory_allocator_deallocate(allocator, buffer);
+
+		// Create an empty array
+		v = value_create_array(NULL, 0);
+
+		EXPECT_NE((value) NULL, (value) v);
+
+		// Serialize empty array into buffer
+		buffer = serial_serialize(s, v, &serialize_size, allocator);
+
+		EXPECT_EQ((size_t) sizeof(json_empty_array), (size_t) serialize_size);
+		EXPECT_NE((value) NULL, (value) v);
+		EXPECT_EQ((int) 0, (int) strcmp(buffer, json_empty_array));
 
 		value_destroy(v);
 
