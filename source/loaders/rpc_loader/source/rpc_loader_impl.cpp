@@ -40,6 +40,7 @@
 #include <map>
 #include <fstream>
 #include <algorithm>
+#include <sstream>
 
 typedef struct loader_impl_rpc_write_data_type
 {
@@ -74,16 +75,15 @@ static int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rp
 size_t rpc_loader_impl_write_data(void * buffer, size_t size, size_t nmemb, void * userp)
 {
 	loader_impl_rpc_write_data write_data = static_cast<loader_impl_rpc_write_data>(userp);
-
-	const size_t old_len = write_data->buffer.length();
 	const size_t data_len = size * nmemb;
-	const size_t new_len = old_len + data_len;
-
-	write_data->buffer.resize(new_len + 1);
-
-	write_data->buffer.insert(old_len, static_cast<char *>(buffer), data_len);
-	write_data->buffer.insert(new_len, "\0", 1);
-
+	try
+	{
+		write_data->buffer.append(static_cast<char *>(buffer), data_len);
+	}
+	catch(std::bad_alloc &e)
+	{
+		return 0;
+	}
 	return data_len;
 }
 
@@ -266,7 +266,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 	/* Set up curl general options */
     curl_easy_setopt(rpc_impl->curl, CURLOPT_VERBOSE, 0L);
-    curl_easy_setopt(rpc_impl->curl, CURLOPT_HEADER, 1L);
+    curl_easy_setopt(rpc_impl->curl, CURLOPT_HEADER, 0L);
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -284,20 +284,11 @@ int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 	return 0;
 }
 
-int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, std::istream & stream)
 {
-	std::fstream file;
-
-	file.open(path, std::ios::in);
-
-	if (!file.is_open())
-	{
-		return 1;
-	}
-
 	std::string url;
 
-	while (std::getline(file, url))
+	while (std::getline(stream, url))
 	{
 		/* Remove white spaces */
 		url.erase(std::remove_if(url.begin(), url.end(), [](char & c) {
@@ -320,9 +311,38 @@ int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, con
 		rpc_handle->urls.push_back(url);
 	}
 
+	return 0;
+}
+
+int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+{
+	std::fstream file;
+
+	file.open(path, std::ios::in);
+
+	if (!file.is_open())
+	{
+		return 1;
+	}
+
+	int result = rpc_loader_impl_load_from_stream_handle(rpc_handle, file);
+
 	file.close();
 
-	return 0;
+	return result;
+}
+
+int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, const char * buffer, size_t size)
+{
+	if (size == 0)
+	{
+		return 1;
+	}
+
+	std::string str(buffer, size - 1);
+	std::stringstream stream(str);
+
+	return rpc_loader_impl_load_from_stream_handle(rpc_handle, stream);
 }
 
 loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
@@ -338,7 +358,7 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		if (rpc_loader_impl_load_from_file_handle(paths[iterator]) != 0)
+		if (rpc_loader_impl_load_from_file_handle(rpc_handle, paths[iterator]) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", paths[iterator]);
 
@@ -353,14 +373,26 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 
 loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
-	/* TODO */
+	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
 	(void)impl;
 	(void)name;
-	(void)buffer;
-	(void)size;
 
-	return NULL;
+	if (rpc_handle == nullptr)
+	{
+		return NULL;
+	}
+
+	if (rpc_loader_impl_load_from_memory_handle(rpc_handle, buffer, size) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", buffer);
+
+		delete rpc_handle;
+
+		return NULL;
+	}
+
+	return static_cast<loader_handle>(rpc_handle);
 }
 
 loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
@@ -479,7 +511,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 	{
 		loader_impl_rpc_write_data_type write_data;
 
-		std::string inspect_url = rpc_handle->urls[iterator] + "/inspect";
+		std::string inspect_url = rpc_handle->urls[iterator] + "inspect";
 
 		curl_easy_setopt(rpc_impl->curl, CURLOPT_URL, inspect_url.c_str());
 		curl_easy_setopt(rpc_impl->curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);

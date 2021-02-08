@@ -47,50 +47,52 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rpc", rpc_scripts, sizeof(rpc_scripts) / sizeof(rpc_scripts[0]), &handle));
 
-		/*
-		const enum metacall_value_id hello_boy_double_ids[] =
+		/* Print inspect information */
+		{
+			size_t size = 0;
+
+			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+			void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+			char * inspect_str = metacall_inspect(&size, allocator);
+
+			EXPECT_NE((char *) NULL, (char *) inspect_str);
+
+			EXPECT_GT((size_t) size, (size_t) 0);
+
+			static const char inspect_data[] = "{\"__metacall_host__\":[],\"rpc\":[{\"name\":\"remote.url\",\"scope\":{\"name\":\"global_namespace\",\"funcs\":[{\"name\":\"say_null\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[]},\"async\":false},{\"name\":\"get_second_untyped\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"first\",\"type\":{\"name\":\"\",\"id\":18}},{\"name\":\"second\",\"type\":{\"name\":\"\",\"id\":18}}]},\"async\":false},{\"name\":\"hello\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[]},\"async\":false},{\"name\":\"two_doubles\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Double\",\"id\":6}},\"args\":[{\"name\":\"first_parameter\",\"type\":{\"name\":\"Double\",\"id\":6}},{\"name\":\"second_parameter\",\"type\":{\"name\":\"Double\",\"id\":6}}]},\"async\":false},{\"name\":\"say_sum_ducktyped\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"\",\"id\":18}},{\"name\":\"right\",\"type\":{\"name\":\"\",\"id\":18}}]},\"async\":false},{\"name\":\"my_empty_func_str\",\"signature\":{\"ret\":{\"type\":{\"name\":\"String\",\"id\":7}},\"args\":[]},\"async\":false},{\"name\":\"get_second\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"first\",\"type\":{\"name\":\"Integer\",\"id\":3}},{\"name\":\"second\",\"type\":{\"name\":\"Integer\",\"id\":3}}]},\"async\":false},{\"name\":\"dont_load_this_function\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"\",\"id\":18}},{\"name\":\"right\",\"type\":{\"name\":\"\",\"id\":18}}]},\"async\":false},{\"name\":\"divide\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Double\",\"id\":6}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"Double\",\"id\":6}},{\"name\":\"right\",\"type\":{\"name\":\"Double\",\"id\":6}}]},\"async\":false},{\"name\":\"bytebuff\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Buffer\",\"id\":8}},\"args\":[{\"name\":\"input\",\"type\":{\"name\":\"Buffer\",\"id\":8}}]},\"async\":false},{\"name\":\"return_array\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[]},\"async\":false},{\"name\":\"Concat\",\"signature\":{\"ret\":{\"type\":{\"name\":\"String\",\"id\":7}},\"args\":[{\"name\":\"a\",\"type\":{\"name\":\"String\",\"id\":7}},{\"name\":\"b\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"say_hello\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"value\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"say_multiply_ducktyped\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"\",\"id\":18}},{\"name\":\"right\",\"type\":{\"name\":\"\",\"id\":18}}]},\"async\":false},{\"name\":\"mixed_args\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Char\",\"id\":1}},\"args\":[{\"name\":\"a_char\",\"type\":{\"name\":\"Char\",\"id\":1}},{\"name\":\"b_int\",\"type\":{\"name\":\"Integer\",\"id\":3}},{\"name\":\"c_long\",\"type\":{\"name\":\"Long\",\"id\":4}},{\"name\":\"d_double\",\"type\":{\"name\":\"Double\",\"id\":6}},{\"name\":\"e_ptr\",\"type\":{\"name\":\"Ptr\",\"id\":11}}]},\"async\":false},{\"name\":\"sum\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Long\",\"id\":4}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"Long\",\"id\":4}},{\"name\":\"right\",\"type\":{\"name\":\"Long\",\"id\":4}}]},\"async\":false},{\"name\":\"Sum\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Integer\",\"id\":3}},\"args\":[{\"name\":\"a\",\"type\":{\"name\":\"Integer\",\"id\":3}},{\"name\":\"b\",\"type\":{\"name\":\"Integer\",\"id\":3}}]},\"async\":false},{\"name\":\"my_empty_func_int\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Integer\",\"id\":3}},\"args\":[]},\"async\":false},{\"name\":\"strcat\",\"signature\":{\"ret\":{\"type\":{\"name\":\"String\",\"id\":7}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"String\",\"id\":7}},{\"name\":\"right\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"Say\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"text\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"backwardsPrime\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"start\",\"type\":{\"name\":\"\",\"id\":18}},{\"name\":\"stop\",\"type\":{\"name\":\"\",\"id\":18}}]},\"async\":false},{\"name\":\"return_same_array\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"arr\",\"type\":{\"name\":\"\",\"id\":18}}]},\"async\":false},{\"name\":\"two_str\",\"signature\":{\"ret\":{\"type\":{\"name\":\"String\",\"id\":7}},\"args\":[{\"name\":\"a_str\",\"type\":{\"name\":\"String\",\"id\":7}},{\"name\":\"b_str\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"SayHello\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[]},\"async\":false},{\"name\":\"say_string_without_spaces\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"value\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"say_multiply\",\"signature\":{\"ret\":{\"type\":{\"name\":\"\",\"id\":18}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"Integer\",\"id\":3}},{\"name\":\"right\",\"type\":{\"name\":\"Integer\",\"id\":3}}]},\"async\":false},{\"name\":\"multiply\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Long\",\"id\":4}},\"args\":[{\"name\":\"left\",\"type\":{\"name\":\"Long\",\"id\":4}},{\"name\":\"right\",\"type\":{\"name\":\"Long\",\"id\":4}}]},\"async\":false},{\"name\":\"new_args\",\"signature\":{\"ret\":{\"type\":{\"name\":\"String\",\"id\":7}},\"args\":[{\"name\":\"a_str\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false},{\"name\":\"my_empty_func\",\"signature\":{\"ret\":{\"type\":{\"name\":\"Integer\",\"id\":3}},\"args\":[]},\"async\":false},{\"name\":\"three_str\",\"signature\":{\"ret\":{\"type\":{\"name\":\"String\",\"id\":7}},\"args\":[{\"name\":\"a_str\",\"type\":{\"name\":\"String\",\"id\":7}},{\"name\":\"b_str\",\"type\":{\"name\":\"String\",\"id\":7}},{\"name\":\"c_str\",\"type\":{\"name\":\"String\",\"id\":7}}]},\"async\":false}],\"classes\":[],\"objects\":[]}}]}";
+
+			EXPECT_EQ((int) 0, (int) strcmp(inspect_str, inspect_data));
+
+			std::cout << inspect_str << std::endl;
+
+			metacall_allocator_free(allocator, inspect_str);
+
+			metacall_allocator_destroy(allocator);
+		}
+
+/*
+		const enum metacall_value_id divide_ids[] =
 		{
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
-		void * ret = metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
+		void * ret = metacallt("divide", divide_ids, 50.0, 10.0);
 
 		EXPECT_NE((void *) NULL, (void *) ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 5.0);
 
 		metacall_value_destroy(ret);
-		*/
-
+*/
 		EXPECT_EQ((int) 0, (int) metacall_clear(handle));
 
 		static const char buffer[] = "http://localhost:6094/viferga/example/v1";
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("rpc", buffer, sizeof(buffer), &handle));
-
+		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("rpc", buffer, sizeof(buffer), NULL));
 	}
 	#endif /* OPTION_BUILD_LOADERS_RPC */
-
-	/* Print inspect information */
-	{
-		size_t size = 0;
-
-		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-		char * inspect_str = metacall_inspect(&size, allocator);
-
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
-
-		EXPECT_GT((size_t) size, (size_t) 0);
-
-		std::cout << inspect_str << std::endl;
-
-		metacall_allocator_free(allocator, inspect_str);
-
-		metacall_allocator_destroy(allocator);
-	}
 
 	EXPECT_EQ((int) 0, (int) metacall_destroy());
 }
