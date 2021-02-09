@@ -96,6 +96,10 @@ sub_nodejs(){
 # TypeScript
 sub_typescript(){
 	echo "clean typescript"
+
+	# Clear React dependencies of tests
+	npm uninstall -g react@latest
+	npm uninstall -g react-dom@latest
 }
 
 # File

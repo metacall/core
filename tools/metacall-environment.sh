@@ -275,7 +275,11 @@ sub_nodejs(){
 
 # TypeScript
 sub_typescript(){
-	echo "configure typesecript"
+	echo "configure typescript"
+
+	# Install React dependencies in order to run the tests
+	npm i react@latest -g
+	npm i react-dom@latest -g
 }
 
 # File

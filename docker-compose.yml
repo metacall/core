@@ -56,6 +56,7 @@ services:
       SERIAL_LIBRARY_PATH: $METACALL_PATH/build
       DETOUR_LIBRARY_PATH: $METACALL_PATH/build
       PORT_LIBRARY_PATH: $METACALL_PATH/build
+      NODE_PATH: /usr/lib/node_modules
     depends_on:
       - deps
 
