@@ -30,6 +30,7 @@ BUILD_V8=0
 BUILD_NODEJS=0
 BUILD_TYPESCRIPT=0
 BUILD_FILE=0
+BUILD_RPC=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_DISTRIBUTABLE=0
@@ -89,6 +90,10 @@ sub_options() {
 		if [ "$option" = 'file' ]; then
 			echo "Build with file support"
 			BUILD_FILE=1
+		fi
+		if [ "$option" = 'rpc' ]; then
+			echo "Build with rpc support"
+			BUILD_RPC=1
 		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
@@ -239,6 +244,15 @@ sub_configure() {
 		fi
 	fi
 
+	# RPC
+	if [ $BUILD_RPC = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RPC=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RPC=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -301,6 +315,7 @@ sub_help() {
 	echo "	nodejs: build with nodejs support"
 	echo "	typescript: build with typescript support"
 	echo "	file: build with file support"
+	echo "	rpc: build with rpc support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	distributable: build distributable libraries"

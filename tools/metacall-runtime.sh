@@ -32,6 +32,7 @@ INSTALL_V8=0
 INSTALL_NODEJS=0
 INSTALL_TYPESCRIPT=0
 INSTALL_FILE=0
+INSTALL_RPC=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
@@ -143,6 +144,13 @@ sub_file(){
 	# Nothing needed
 }
 
+# RPC
+sub_rpc(){
+	echo "configure rpc"
+
+	sub_apt_install_hold libcurl4
+}
+
 # Ports
 sub_ports(){
 	echo "configure ports"
@@ -181,6 +189,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_FILE = 1 ]; then
 		sub_file
+	fi
+	if [ $INSTALL_RPC = 1 ]; then
+		sub_rpc
 	fi
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
@@ -244,6 +255,10 @@ sub_options(){
 			echo "file selected"
 			INSTALL_FILE=1
 		fi
+		if [ "$var" = 'rpc' ]; then
+			echo "rpc selected"
+			INSTALL_RPC=1
+		fi
 		if [ "$var" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
@@ -269,6 +284,7 @@ sub_help() {
 	echo "	nodejs"
 	echo "	typescript"
 	echo "	file"
+	echo "	rpc"
 	echo "	ports"
 	echo "	clean"
 	echo ""
