@@ -33,53 +33,53 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
 
 - [Abstract](#abstract)
 - [Table Of Contents](#table-of-contents)
-    - [1. Motivation](#1-motivation)
-    - [2. Language Support](#2-language-support)
-        - [2.1 Loaders (Backends)](#21-loaders-backends)
-        - [2.2 Ports (Frontends)](#22-ports-frontends)
-    - [3. Use Cases](#3-use-cases)
-        - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
-    - [4. Usage](#4-usage)
-        - [4.1 Installation](#41-installation)
-        - [4.2 Environment Variables](#42-environment-variables)
-        - [4.3 Examples](#43-examples)
-    - [5. Architecture](#5-architecture)
-        - [5.1 Overview](#51-overview)
-            - [5.1.1 Design Decisions](#511-design-decisions)
-            - [5.1.2 Modules](#512-modules)
-        - [5.2 Reflect](#52-reflect)
-            - [5.2.1 Type System](#521-type-system)
-            - [5.2.2 Values](#522-values)
-            - [5.2.3 Functions](#523-functions)
-        - [5.3 Plugins](#53-plugins)
-            - [5.3.1 Loaders](#531-loaders)
-                - [5.3.1.1 Python](#5311-python)
-                - [5.3.1.2 NodeJS](#5312-nodejs)
-                - [5.3.1.3 JavaScript](#5313-javascript)
-                - [5.3.1.4 C#](#5314-c)
-                - [5.3.1.5 Ruby](#5315-ruby)
-                - [5.3.1.6 Mock](#5316-mock)
-                - [5.3.1.7 File](#5317-file)
-            - [5.3.2 Serials](#532-serials)
-                - [5.3.2.1 MetaCall](#5321-metacall)
-                - [5.3.2.2 RapidJSON](#5322-rapidjson)
-            - [5.3.3 Detours](#533-detours)
-                - [5.3.3.1 FuncHook](#5331-funchook)
-        - [5.4 Ports](#54-ports)
-        - [5.5 Serialization](#55-serialization)
-        - [5.6 Memory Layout](#56-memory-layout)
-        - [5.7 Fork Model](#57-fork-model)
-        - [5.8 Threading Model](#58-threading-model)
-    - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
-    - [6. Build System](#6-build-system)
-        - [6.1 Build Options](#61-build-options)
-        - [6.2 Coverage](#62-coverage)
-        - [6.3 Debugging](#63-debugging)
-    - [7. Platform Support](#7-platform-support)
-        - [7.1 Docker Support](#71-docker-support)
-        - [7.1.1 Docker Development](#711-docker-development)
-        - [7.1.2 Docker Testing](#712-docker-testing)
-    - [8. License](#8-license)
+  - [1. Motivation](#1-motivation)
+  - [2. Language Support](#2-language-support)
+    - [2.1 Loaders (Backends)](#21-loaders-backends)
+    - [2.2 Ports (Frontends)](#22-ports-frontends)
+  - [3. Use Cases](#3-use-cases)
+  - [3.1 Known Projects Using MetaCall](#31-known-projects-using-metacall)
+  - [4. Usage](#4-usage)
+  - [4.1 Installation](#41-installation)
+    - [4.2 Environment Variables](#42-environment-variables)
+    - [4.3 Examples](#43-examples)
+  - [5. Architecture](#5-architecture)
+    - [5.1 Overview](#51-overview)
+      - [5.1.1 Design Decisions](#511-design-decisions)
+      - [5.1.2 Modules](#512-modules)
+    - [5.2 Reflect](#52-reflect)
+      - [5.2.1 Type System](#521-type-system)
+      - [5.2.2 Values](#522-values)
+      - [5.2.3 Functions](#523-functions)
+    - [5.3 Plugins](#53-plugins)
+      - [5.3.1 Loaders](#531-loaders)
+        - [5.3.1.1 Python](#5311-python)
+        - [5.3.1.2 NodeJS](#5312-nodejs)
+        - [5.3.1.3 JavaScript](#5313-javascript)
+        - [5.3.1.4 C#](#5314-c)
+        - [5.3.1.5 Ruby](#5315-ruby)
+        - [5.3.1.6 Mock](#5316-mock)
+        - [5.3.1.7 File](#5317-file)
+      - [5.3.2 Serials](#532-serials)
+        - [5.3.2.1 MetaCall](#5321-metacall)
+        - [5.3.2.2 RapidJSON](#5322-rapidjson)
+      - [5.3.3 Detours](#533-detours)
+        - [5.3.3.1 FuncHook](#5331-funchook)
+    - [5.4 Ports](#54-ports)
+    - [5.5 Serialization](#55-serialization)
+    - [5.6 Memory Layout](#56-memory-layout)
+    - [5.7 Fork Model](#57-fork-model)
+    - [5.8 Threading Model](#58-threading-model)
+  - [5. Application Programming Interface (API)](#5-application-programming-interface-api)
+  - [6. Build System](#6-build-system)
+    - [6.1 Build Options](#61-build-options)
+    - [6.2 Coverage](#62-coverage)
+    - [6.3 Debugging](#63-debugging)
+  - [7. Platform Support](#7-platform-support)
+    - [7.1 Docker Support](#71-docker-support)
+    - [7.1.1 Docker Development](#711-docker-development)
+    - [7.1.2 Docker Testing](#712-docker-testing)
+  - [8. License](#8-license)
 
 <!-- /TOC -->
 
@@ -97,33 +97,34 @@ This section describes all programming languages that **METACALL** allows to loa
 
 - Currently supported languages and run-times:
 
-| Language                                                           | Runtime                                                                                                        |            Version             | Tag  |
-|--------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|:------------------------------:|:----:|
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.8**        |  py  |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |          **10.22.0**           | node |
-| [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **3.9.7**            |  ts  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js  |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 2.2.8** |  cs  |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                      |       **>= 2.1 <= 2.5**        |  rb  |
-| [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                               |          **>= 1.1.0**          | cob  |
-| [File](/source/loaders/file_loader)                                | **∅**                                                                                                          |           **0.1.0**            | file |
-| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                                          |           **0.1.0**            | mock |
+| Language                                                           | Runtime                                                                                                        |            Version             |  Tag  |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | :----------------------------: | :---: |
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.8**        |  py   |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |          **10.22.0**           | node  |
+| [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **3.9.7**            |  ts   |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js   |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 2.2.8** |  cs   |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                      |       **>= 2.1 <= 2.5**        |  rb   |
+| [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                               |          **>= 1.1.0**          |  cob  |
+| [File](/source/loaders/file_loader)                                | **∅**                                                                                                          |           **0.1.0**            | file  |
+| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                                          |           **0.1.0**            | mock  |
+| [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                                  |          **>=7.64.0**          |  rpc  |
+
 
 - Languages and run-times under construction:
 
-| Language                                                           | Runtime                                                                                                | Tag  |
-|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|:----:|
-| [WebAssembly](https://webassembly.org/)                            | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm |
-| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |  c   |
-| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java |
-| [PHP](https://php.net/)                                            | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       | php  |
-| [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go  |
-| [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
-| [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
-| [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                          | rpc  |
-| [Dart](https://dart.dev/)                                          | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
-| [LuaJIT](https://luajit.org/)                                      | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
+| Language                                                           | Runtime                                                                                                |  Tag  |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | :---: |
+| [WebAssembly](https://webassembly.org/)                            | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm  |
+| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |   c   |
+| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java  |
+| [PHP](https://php.net/)                                            | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       |  php  |
+| [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go   |
+| [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs   |
+| [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr   |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) |  jsm  |
+| [Dart](https://dart.dev/)                                          | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart  |
+| [LuaJIT](https://luajit.org/)                                      | [LuaJIT2](https://github.com/openresty/luajit2)                                                        |  lua  |
 
 ### 2.2 Ports (Frontends)
 
@@ -132,7 +133,7 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 - Currently supported languages and run-times:
 
 | Language                                                           | Runtime                                                    |        Version        |
-|--------------------------------------------------------------------|------------------------------------------------------------|:---------------------:|
+| ------------------------------------------------------------------ | ---------------------------------------------------------- | :-------------------: |
 | [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html) |        **3.x**        |
 | [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                 |     **>= 8.11.1**     |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [D8 (V8)](https://v8.dev/docs/d8)                          |      **5.1.117**      |
@@ -181,7 +182,7 @@ Prior to try any example, you must have **METACALL** installed in your system. T
 This environment variables are optional, in case that you want to modify default paths of **METACALL**.
 
 |           Name            | Description                                                      |          Default Value           |
-|:-------------------------:|------------------------------------------------------------------|:--------------------------------:|
+| :-----------------------: | ---------------------------------------------------------------- | :------------------------------: |
 | **`DETOUR_LIBRARY_PATH`** | Directory where detour plugins to be loaded are located          |          **`detours`**           |
 | **`SERIAL_LIBRARY_PATH`** | Directory where serial plugins to be loaded are located          |          **`serials`**           |
 | **`CONFIGURATION_PATH`**  | File path where the **METACALL** global configuration is located | **`configurations/global.json`** |
@@ -290,7 +291,7 @@ The module that holds the representation of types, values and functions is calle
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
 |  Type   | Value                                                              |
-|:-------:|--------------------------------------------------------------------|
+| :-----: | ------------------------------------------------------------------ |
 | Boolean | `true` or `false`                                                  |
 |  Char   | `-128` to `127`                                                    |
 |  Short  | `-32,768` to `32,767`                                              |
@@ -336,7 +337,7 @@ Each created value must be destroyed manually. Otherwise it will lead to a memor
 The value memory layout is described in the following form.
 
 | Memory Offset | `0` to `sizeof(data) - 1` | `sizeof(data)` to `sizeof(data) + sizeof(type_id) - 1` |
-|:-------------:|:-------------------------:|:------------------------------------------------------:|
+| :-----------: | :-----------------------: | :----------------------------------------------------: |
 |  **Content**  |         **DATA**          |                      **TYPE ID**                       |
 
 This layout is used by the following reasons.
@@ -623,7 +624,7 @@ cmake -DOPTION_BUILD_LOADERS_PY=On -DOPTION_BUILD_LOADERS_RB=On ..
 Available build options are the following ones.
 
 |        Build Option         | Description                                            | Default Value |
-|:---------------------------:|--------------------------------------------------------|:-------------:|
+| :-------------------------: | ------------------------------------------------------ | :-----------: |
 |    **BUILD_SHARED_LIBS**    | Build shared instead of static libraries.              |      ON       |
 | **OPTION_BUILD_DIST_LIBS**  | Build all libraries into a single compilation unit.    |      ON       |
 |  **OPTION_SELF_CONTAINED**  | Create a self-contained install with all dependencies. |      OFF      |
@@ -644,7 +645,7 @@ Available build options are the following ones.
 It is possible to enable or disable concrete loaders, script, ports, serials or detours. For building use the following options.
 
 |    Build Option Prefix    | Build Option Suffix                                                   |
-|:-------------------------:|-----------------------------------------------------------------------|
+| :-----------------------: | --------------------------------------------------------------------- |
 | **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE`              |
 | **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
 | **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                               |
@@ -679,10 +680,10 @@ make <target>-genhtml
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
-|         Build Option         | Description                                            | Default Value |
-|:----------------------------:|--------------------------------------------------------|:-------------:|
-|  **OPTION_TEST_MEMORYCHECK** | Enable Valgrind with memcheck tool for the tests.      |      OFF      |
-|  **OPTION_BUILD_SANITIZER**  | Build with AddressSanitizer family (GCC and Clang).    |      OFF      |
+|        Build Option         | Description                                         | Default Value |
+| :-------------------------: | --------------------------------------------------- | :-----------: |
+| **OPTION_TEST_MEMORYCHECK** | Enable Valgrind with memcheck tool for the tests.   |      OFF      |
+| **OPTION_BUILD_SANITIZER**  | Build with AddressSanitizer family (GCC and Clang). |      OFF      |
 
 Both options are mutually exclusive. Valgrind is not compatible with AddressSanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
 
@@ -711,7 +712,7 @@ For running other Valgrind's tools like helgrind or similar, I recommend running
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
 |     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
-|:------------------------:|:-------------------:|:---------------:|:------------------------------------------------------------------------------------------------------:|
+| :----------------------: | :-----------------: | :-------------: | :----------------------------------------------------------------------------------------------------: |
 |   **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
