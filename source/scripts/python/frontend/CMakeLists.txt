@@ -41,7 +41,8 @@ set(target python-frontend-migrate)
 
 # Build frontend
 add_custom_target(${target} ALL
-	COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${CMAKE_CURRENT_BINARY_DIR};$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} ${LOADER_SCRIPT_PATH}/manage.py migrate
+	COMMAND ${CMAKE_COMMAND} -E env PYTHONPATH="${CMAKE_CURRENT_BINARY_DIR};$ENV{PYTHONPATH}" ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/source/manage.py migrate
+	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}
 	DEPENDS python-frontend
 )
 

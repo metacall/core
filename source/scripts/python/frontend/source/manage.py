@@ -24,7 +24,11 @@ def frontend_execute(args):
 	execute_from_command_line(sys.argv)
 
 def frontend_initialize(port: int) -> int:
-	frontend_execute([os.path.abspath(__file__), 'runserver', str(port), '--noreload'])
+	try:
+		frontend_execute([os.path.abspath(__file__), 'runserver', str(port), '--noreload'])
+	except SystemExit as e:
+		print('Exit code:', e.code)
+		return e.code
 	return 0
 
 if __name__ == "__main__":

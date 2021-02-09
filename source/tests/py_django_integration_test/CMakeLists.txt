@@ -22,7 +22,7 @@ execute_process(
 )
 
 if("${PYTHON_DJANGO_FOUND}" EQUAL "1")
-	message(WARNING "Python Django not found, skipping the python djangi integration test project")
+	message(WARNING "Python Django not found, skipping the python django integration test")
 	return()
 endif()
 
