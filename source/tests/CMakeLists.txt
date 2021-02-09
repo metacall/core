@@ -128,7 +128,7 @@ add_subdirectory(metacall_handle_export_test)
 add_subdirectory(metacall_test)
 add_subdirectory(metacall_node_test)
 add_subdirectory(metacall_node_event_loop_test)
-#add_subdirectory(metacall_node_default_export_test) # TODO: Default exporter in bootstrap.js
+#add_subdirectory(metacall_node_default_export_test) # TODO: This is a feature in order to export by default all functions if there is no module.exports (bootstrap.js)
 add_subdirectory(metacall_node_call_test)
 add_subdirectory(metacall_node_inline_test)
 add_subdirectory(metacall_node_async_test)
