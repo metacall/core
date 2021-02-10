@@ -104,12 +104,11 @@ object Caller {
     */
   def callV(namespace: Option[String], fnName: String, args: List[Value]): Value = {
     val call = Call(namespace, fnName, args)
-    val callId = callCounter.get + 1
+    val callId = callCounter.getAndIncrement()
 
     if (callId == Int.MaxValue)
       callCounter.set(0)
-    else
-      callCounter.set(callId)
+    else ()
 
     val uniqueCall = UniqueCall(call, callId)
 
