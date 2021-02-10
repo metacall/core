@@ -743,6 +743,20 @@ value loader_handle_export(void * handle)
 	return loader_impl_handle_export(handle);
 }
 
+loader_data loader_handle_get(void * handle, const char * name)
+{
+	if (handle != NULL)
+	{
+		context ctx = loader_impl_handle_context(handle);
+
+		scope sp = context_scope(ctx);
+
+		return scope_get(sp, name);
+	}
+
+	return NULL;
+}
+
 value loader_metadata_impl(loader_impl impl)
 {
 	loader_naming_tag * tag_ptr = loader_impl_tag(impl);

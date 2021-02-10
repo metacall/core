@@ -140,7 +140,7 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 		void * func = metacall_function("call_test");
 
-		ASSERT_NE((void *)NULL, (void *)func);
+		ASSERT_NE((void *) NULL, (void *) func);
 
 		void * ret = metacallt("call_test", double_ids, 10.0, 2.0);
 
