@@ -4,12 +4,6 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_MOCK)
 endif()
 
 #
-# External dependencies
-#
-
-# find_package(THIRDPARTY REQUIRED)
-
-#
 # Plugin name and options
 #
 

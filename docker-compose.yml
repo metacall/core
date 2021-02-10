@@ -30,7 +30,7 @@ services:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_INSTALL_OPTIONS: root base python ruby netcore2 nodejs typescript file rapidjson funchook swig pack # v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: root base python ruby netcore2 nodejs typescript file rpc rapidjson funchook swig pack # v8rep51 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -45,7 +45,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: root python ruby netcore2 nodejs typescript file examples distributable tests benchmarks scripts ports dynamic install pack # v8 coverage
+        METACALL_BUILD_OPTIONS: root python ruby netcore2 nodejs typescript file rpc examples distributable tests benchmarks scripts ports dynamic install pack # v8 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -56,6 +56,7 @@ services:
       SERIAL_LIBRARY_PATH: $METACALL_PATH/build
       DETOUR_LIBRARY_PATH: $METACALL_PATH/build
       PORT_LIBRARY_PATH: $METACALL_PATH/build
+      NODE_PATH: /usr/lib/node_modules
     depends_on:
       - deps
 
@@ -68,7 +69,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_RUNTIME_OPTIONS: root base python ruby netcore2 nodejs typescript file ports clean # v8
+        METACALL_RUNTIME_OPTIONS: root base python ruby netcore2 nodejs typescript file rpc ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

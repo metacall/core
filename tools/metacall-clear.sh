@@ -33,6 +33,7 @@ CLEAR_V8=0
 CLEAR_NODEJS=0
 CLEAR_TYPESCRIPT=0
 CLEAR_FILE=0
+CLEAR_RPC=0
 CLEAR_SWIG=0
 CLEAR_PACK=0
 CLEAR_COVERAGE=0
@@ -95,11 +96,20 @@ sub_nodejs(){
 # TypeScript
 sub_typescript(){
 	echo "clean typescript"
+
+	# Clear React dependencies of tests
+	npm uninstall -g react@latest
+	npm uninstall -g react-dom@latest
 }
 
 # File
 sub_file(){
 	echo "clean file"
+}
+
+# RPC
+sub_rpc(){
+	echo "clean rpc"
 }
 
 # SWIG
@@ -165,6 +175,9 @@ sub_clear(){
 	fi
 	if [ $CLEAR_FILE = 1 ]; then
 		sub_file
+	fi
+	if [ $CLEAR_RPC = 1 ]; then
+		sub_rpc
 	fi
 	if [ $CLEAR_SWIG = 1 ]; then
 		sub_swig
@@ -237,6 +250,10 @@ sub_options(){
 			echo "file selected"
 			CLEAR_FILE=1
 		fi
+		if [ "$var" = 'rpc' ]; then
+			echo "rpc selected"
+			CLEAR_RPC=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			CLEAR_SWIG=1
@@ -267,6 +284,7 @@ sub_help() {
 	echo "	nodejs"
 	echo "	typescript"
 	echo "	file"
+	echo "	rpc"
 	echo "	swig"
 	echo "	pack"
 	echo "	coverage"

@@ -16,7 +16,6 @@ import subprocess
 def sigint_handler(signal, frame):
 	print('Server: SIGINT signal from client to server (Ctrl-C)');
 
-
 class py_django_integration_test(unittest.TestCase):
 
 	def test_py_django_server(self):

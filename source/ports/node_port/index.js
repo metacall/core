@@ -22,6 +22,7 @@
 
 const mod = require('module');
 const path = require('path');
+const { URL } = require('url');
 
 const addon = (() => {
 	try {
@@ -103,6 +104,8 @@ const metacall_load_from_memory = (tag, code) => {
 	}
 
 	return addon.metacall_load_from_memory(tag, code);
+
+	// TODO: Implement here the inspect of the memory module by handle
 };
 
 const metacall_inspect = () => {
@@ -140,11 +143,13 @@ const metacall_require = (tag, name) => {
 	// TODO: Inspect only the handle instead of the whole metacall namespace
 	/* return */ addon.metacall_load_from_file(tag, [ name ]);
 
+	/* TODO: Replace metacall_inspect by retrieving the handle and metacall_export */
 	const inspect = metacall_inspect();
 	const script = inspect[tag].find(s => s.name === path.basename(name));
 
 	const obj = {};
 
+	/* TODO: Support async functions */
 	for (const func of script.scope.funcs) {
 		obj[func.name] = (...args) => addon.metacall(func.name, ...args);
 	}
@@ -198,6 +203,16 @@ mod.prototype.require = function (name) {
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */
 	};
+
+	// TODO:
+	// /* Check if the module is an URL */
+	// try {
+	// 	const { origin, pathname } = new URL(name);
+
+	// 	return metacall_load_from_memory('rpc', origin + pathname); // TODO: Load from memory with RPC loader and get the exports from the handle
+	// } catch (e) {
+	// 	/* Continue loading */
+	// }
 
 	/* Try to load it with NodeJS first */
 	try {

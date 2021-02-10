@@ -11,11 +11,6 @@ set(Python_ADDITIONAL_VERSIONS 3.7)
 
 find_package(PythonInterp REQUIRED)
 
-if(NOT PYTHONINTERP_FOUND)
-	message(STATUS "Python interpreter not found")
-	return()
-endif()
-
 #
 # Port name and options
 #

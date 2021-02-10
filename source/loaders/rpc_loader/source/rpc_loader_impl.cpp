@@ -38,18 +38,18 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <fstream>
+#include <algorithm>
+#include <sstream>
 
-typedef struct loader_impl_rpc_write_data_type
+typedef struct loader_impl_rpc_type
 {
-	std::string buffer;
+	CURL * discover_curl;
+	CURL * invoke_curl;
+	void * allocator;
+	std::map<type_id, type> types;
 
-} * loader_impl_rpc_write_data;
-
-typedef struct loader_impl_rpc_function_type
-{
-	std::string url;
-
-} * loader_impl_rpc_function;
+} * loader_impl_rpc;
 
 typedef struct loader_impl_rpc_handle_type
 {
@@ -57,13 +57,18 @@ typedef struct loader_impl_rpc_handle_type
 
 } * loader_impl_rpc_handle;
 
-typedef struct loader_impl_rpc_type
+typedef struct loader_impl_rpc_function_type
 {
-	CURL * curl;
-	void * allocator;
-	std::map<type_id, type> types;
+	loader_impl_rpc rpc_impl;
+	std::string url;
 
-} * loader_impl_rpc;
+} * loader_impl_rpc_function;
+
+typedef struct loader_impl_rpc_write_data_type
+{
+	std::string buffer;
+
+} * loader_impl_rpc_write_data;
 
 static size_t rpc_loader_impl_write_data(void * buffer, size_t size, size_t nmemb, void * userp);
 static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string & url, value v, context ctx);
@@ -72,16 +77,15 @@ static int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rp
 size_t rpc_loader_impl_write_data(void * buffer, size_t size, size_t nmemb, void * userp)
 {
 	loader_impl_rpc_write_data write_data = static_cast<loader_impl_rpc_write_data>(userp);
-
-	const size_t old_len = write_data->buffer.length();
 	const size_t data_len = size * nmemb;
-	const size_t new_len = old_len + data_len;
-
-	write_data->buffer.resize(new_len + 1);
-
-	write_data->buffer.insert(old_len, static_cast<char *>(buffer), data_len);
-	write_data->buffer.insert(new_len, "\0", 1);
-
+	try
+	{
+		write_data->buffer.append(static_cast<char *>(buffer), data_len);
+	}
+	catch(std::bad_alloc &e)
+	{
+		return 0;
+	}
 	return data_len;
 }
 
@@ -126,14 +130,64 @@ int function_rpc_interface_create(function func, function_impl impl)
 
 function_return function_rpc_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
-	/* TODO */
+	loader_impl_rpc_function rpc_function = static_cast<loader_impl_rpc_function>(impl);
+	loader_impl_rpc rpc_impl = rpc_function->rpc_impl;
+	value v = metacall_value_create_array(NULL, size);
+	size_t body_request_size = 0;
 
 	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
 
-	return NULL;
+	if (size > 0)
+	{
+		void ** v_array = metacall_value_to_array(v);
+
+		for (size_t arg = 0; arg < size; ++arg)
+		{
+			v_array[arg] = args[arg];
+		}
+	}
+
+	char * buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+
+	/* Destroy the value without destroying the contents of the array */
+	value_destroy(v);
+
+	if (body_request_size == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serialization of the values to the endpoint %s", rpc_function->url.c_str());
+		return NULL;
+	}
+
+	/* Execute a POST to the endpoint */
+	loader_impl_rpc_write_data_type write_data;
+
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_URL, rpc_function->url.c_str());
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_POSTFIELDS, buffer);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_POSTFIELDSIZE, body_request_size - 1);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+
+	CURLcode res = curl_easy_perform(rpc_impl->invoke_curl);
+
+	/* Clear the request buffer */
+	metacall_allocator_free(rpc_function->rpc_impl->allocator, buffer);
+
+	if (res != CURLE_OK)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not call to the API endpoint %s [%]", rpc_function->url.c_str(), curl_easy_strerror(res));
+		return NULL;
+	}
+
+	/* Deserialize the call result data */
+	const size_t write_data_size = write_data.buffer.length() + 1;
+
+	void * result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, rpc_impl->allocator);
+
+	if (result_value == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not deserialize the call result from API endpoint %s", rpc_function->url.c_str());
+	}
+
+	return result_value;
 }
 
 function_return function_rpc_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
@@ -155,7 +209,7 @@ void function_rpc_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_rpc_function rpc_func = static_cast<loader_impl_rpc_function>(impl);
 
-	(void)impl;
+	(void)func;
 
 	delete rpc_func;
 }
@@ -249,11 +303,12 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 	curl_global_init(CURL_GLOBAL_ALL);
 
-	rpc_impl->curl = curl_easy_init();
+	/* Initialize discover CURL object */
+	rpc_impl->discover_curl = curl_easy_init();
 
-	if (!(rpc_impl->curl != NULL && rpc_loader_impl_initialize_types(impl, rpc_impl) == 0))
+	if (rpc_impl->discover_curl == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL object");
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL inspect object");
 
 		metacall_allocator_destroy(rpc_impl->allocator);
 
@@ -262,9 +317,56 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	/* Set up curl general options */
-    curl_easy_setopt(rpc_impl->curl, CURLOPT_VERBOSE, 0L);
-    curl_easy_setopt(rpc_impl->curl, CURLOPT_HEADER, 1L);
+	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_VERBOSE, 0L);
+	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_HEADER, 0L);
+	curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
+
+	/* Initialize invoke CURL object */
+	rpc_impl->invoke_curl = curl_easy_init();
+
+	if (rpc_impl->invoke_curl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL invoke object");
+
+		curl_easy_cleanup(rpc_impl->discover_curl);
+
+		metacall_allocator_destroy(rpc_impl->allocator);
+
+		delete rpc_impl;
+
+		return NULL;
+	}
+
+	static struct curl_slist * headers = NULL;
+
+	if (headers == NULL)
+	{
+		headers = curl_slist_append(headers, "Accept: application/json");
+		headers = curl_slist_append(headers, "Content-Type: application/json");
+		headers = curl_slist_append(headers, "charset: utf-8");
+	}
+
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_VERBOSE, 0L);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HEADER, 0L);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_CUSTOMREQUEST, "POST");
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_HTTPHEADER, headers);
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_USERAGENT, "librpc_loader/0.1");
+	curl_easy_setopt(rpc_impl->invoke_curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
+
+	if (rpc_loader_impl_initialize_types(impl, rpc_impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not create CURL object");
+
+		curl_easy_cleanup(rpc_impl->discover_curl);
+
+		curl_easy_cleanup(rpc_impl->invoke_curl);
+
+		metacall_allocator_destroy(rpc_impl->allocator);
+
+		delete rpc_impl;
+
+		return NULL;
+	}
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -282,6 +384,67 @@ int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 	return 0;
 }
 
+int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, std::istream & stream)
+{
+	std::string url;
+
+	while (std::getline(stream, url))
+	{
+		/* Remove white spaces */
+		url.erase(std::remove_if(url.begin(), url.end(), [](char & c) {
+			return std::isspace<char>(c, std::locale::classic());
+		}),
+		url.end());
+
+		/* Skip empty lines */
+		if (url.length() == 0)
+		{
+			continue;
+		}
+
+		/* URL must come without URL encoded parameters */
+		if (url[url.length() - 1] != '/')
+		{
+			url.append("/");
+		}
+
+		rpc_handle->urls.push_back(url);
+	}
+
+	return 0;
+}
+
+int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+{
+	std::fstream file;
+
+	file.open(path, std::ios::in);
+
+	if (!file.is_open())
+	{
+		return 1;
+	}
+
+	int result = rpc_loader_impl_load_from_stream_handle(rpc_handle, file);
+
+	file.close();
+
+	return result;
+}
+
+int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, const char * buffer, size_t size)
+{
+	if (size == 0)
+	{
+		return 1;
+	}
+
+	std::string str(buffer, size - 1);
+	std::stringstream stream(str);
+
+	return rpc_loader_impl_load_from_stream_handle(rpc_handle, stream);
+}
+
 loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
@@ -295,30 +458,41 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		std::string url(paths[iterator]);
-
-		/* URL must come without URL encoded parameters */
-		if (url[url.length() - 1] != '/')
+		if (rpc_loader_impl_load_from_file_handle(rpc_handle, paths[iterator]) != 0)
 		{
-			url.append("/");
-		}
+			log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", paths[iterator]);
 
-		rpc_handle->urls.push_back(url);
+			delete rpc_handle;
+
+			return NULL;
+		}
 	}
 
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
-	/* TODO */
+	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
 	(void)impl;
 	(void)name;
-	(void)buffer;
-	(void)size;
 
-	return NULL;
+	if (rpc_handle == nullptr)
+	{
+		return NULL;
+	}
+
+	if (rpc_loader_impl_load_from_memory_handle(rpc_handle, buffer, size) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", buffer);
+
+		delete rpc_handle;
+
+		return NULL;
+	}
+
+	return static_cast<loader_handle>(rpc_handle);
 }
 
 loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
@@ -388,6 +562,7 @@ int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string & url, 
 				loader_impl_rpc_function rpc_func = new loader_impl_rpc_function_type();
 
 				rpc_func->url = url + (is_async ? "await/" : "call/") + func_name;
+				rpc_func->rpc_impl = rpc_impl;
 
 				function f = function_create(func_name, args_count, rpc_func, &function_rpc_singleton);
 
@@ -437,17 +612,16 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 	{
 		loader_impl_rpc_write_data_type write_data;
 
-		std::string inspect_url = rpc_handle->urls[iterator] + "/inspect";
+		std::string inspect_url = rpc_handle->urls[iterator] + "inspect";
 
-		curl_easy_setopt(rpc_impl->curl, CURLOPT_URL, inspect_url.c_str());
-		curl_easy_setopt(rpc_impl->curl, CURLOPT_WRITEFUNCTION, rpc_loader_impl_write_data);
-		curl_easy_setopt(rpc_impl->curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
+		curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_URL, inspect_url.c_str());
+		curl_easy_setopt(rpc_impl->discover_curl, CURLOPT_WRITEDATA, static_cast<loader_impl_rpc_write_data>(&write_data));
 
-		CURLcode res = curl_easy_perform(rpc_impl->curl);
+		CURLcode res = curl_easy_perform(rpc_impl->discover_curl);
 
 		if (res != CURLE_OK)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Could not access the API endpoint %s", rpc_handle->urls[iterator].c_str());
+			log_write("metacall", LOG_LEVEL_ERROR, "Could not access the API endpoint %s [%s]", rpc_handle->urls[iterator].c_str(), curl_easy_strerror(res));
 			return 1;
 		}
 
@@ -482,7 +656,9 @@ int rpc_loader_impl_destroy(loader_impl impl)
 
 	metacall_allocator_destroy(rpc_impl->allocator);
 
-	curl_easy_cleanup(rpc_impl->curl);
+	curl_easy_cleanup(rpc_impl->discover_curl);
+
+	curl_easy_cleanup(rpc_impl->invoke_curl);
 
 	curl_global_cleanup();
 

@@ -9,19 +9,9 @@ endif()
 
 find_package(PythonLibs 3 REQUIRED)
 
-if(NOT PYTHONLIBS_FOUND)
-	message(STATUS "Python libraries not found")
-	return()
-endif()
-
 set(Python_ADDITIONAL_VERSIONS 3.7)
 
 find_package(PythonInterp REQUIRED)
-
-if(NOT PYTHONINTERP_FOUND)
-	message(STATUS "Python interpreter not found")
-	return()
-endif()
 
 # Detect if Django is available
 execute_process(
@@ -32,7 +22,7 @@ execute_process(
 )
 
 if("${PYTHON_DJANGO_FOUND}" EQUAL "1")
-	message(WARNING "Python Django not found, skipping the python djangi integration test project")
+	message(WARNING "Python Django not found, skipping the python django integration test")
 	return()
 endif()
 

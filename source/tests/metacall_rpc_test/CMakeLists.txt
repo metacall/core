@@ -116,19 +116,32 @@ target_link_libraries(${target}
 )
 
 #
-# Define test
-#
-
-add_test(NAME ${target}
-	COMMAND $<TARGET_FILE:${target}>
-)
-
-#
 # Define dependencies
 #
 
 add_dependencies(${target}
 	rpc_loader
+)
+
+# TODO: Launch server.js and the rpc-test
+# Check if NodeJS is available in order to run the test
+
+
+#
+# Define test
+#
+
+set(NODEJS_EXECUTABLE_ONLY ON)
+
+find_package(NodeJS 10.22.0)
+
+if(NOT NODEJS_FOUND)
+	message(STATUS "NodeJS executable not found, skipping RPC loader test")
+	return()
+endif()
+
+add_test(NAME ${target}
+	COMMAND ${NODEJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/source/test.js ${CMAKE_CURRENT_SOURCE_DIR}/source/server.js $<TARGET_FILE:${target}>
 )
 
 #

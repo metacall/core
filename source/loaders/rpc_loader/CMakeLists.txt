@@ -9,11 +9,6 @@ endif()
 
 find_package(CURL REQUIRED)
 
-if(NOT CURL_FOUND)
-	message(STATUS "cURL libraries not found")
-	return()
-endif()
-
 #
 # Plugin name and options
 #

@@ -11,11 +11,6 @@ endif()
 
 # find_package(WAVM REQUIRED)
 
-# if(NOT WAVM_FOUND)
-# 	message(STATUS "WAVM libraries not found")
-# 	return()
-# endif()
-
 #
 # Plugin name and options
 #

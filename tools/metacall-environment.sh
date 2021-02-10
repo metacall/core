@@ -42,6 +42,7 @@ INSTALL_V8REPO51=0
 INSTALL_NODEJS=0
 INSTALL_TYPESCRIPT=0
 INSTALL_FILE=0
+INSTALL_RPC=0
 INSTALL_WASM=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
@@ -274,12 +275,25 @@ sub_nodejs(){
 
 # TypeScript
 sub_typescript(){
-	echo "configure typesecript"
+	echo "configure typescript"
+
+	# Install React dependencies in order to run the tests
+	npm i react@latest -g
+	npm i react-dom@latest -g
 }
 
 # File
 sub_file(){
 	echo "configure file"
+}
+
+# RPC
+sub_rpc(){
+	echo "cofingure rpc"
+	cd $ROOT_DIR
+
+	# Install development files and documentation for libcurl (OpenSSL flavour)
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libcurl4-openssl-dev
 }
 
 # WebAssembly
@@ -374,6 +388,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_FILE = 1 ]; then
 		sub_file
+	fi
+	if [ $INSTALL_RPC = 1 ]; then
+		sub_rpc
 	fi
 	if [ $INSTALL_WASM = 1 ]; then
 		sub_wasm
@@ -471,6 +488,10 @@ sub_options(){
 			echo "file selected"
 			INSTALL_FILE=1
 		fi
+		if [ "$var" = 'rpc' ]; then
+			echo "rpc selected"
+			INSTALL_RPC=1
+		fi
 		if [ "$var" = 'wasm' ]; then
 			echo "wasm selected"
 			INSTALL_WASM=1
@@ -515,6 +536,7 @@ sub_help() {
 	echo "	nodejs"
 	echo "	typescript"
 	echo "	file"
+	echo "	rpc"
 	echo "	wasm"
 	echo "	swig"
 	echo "	metacall"

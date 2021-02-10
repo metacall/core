@@ -31,6 +31,10 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
+#include <stdint.h>
+
 /* -- Forward Declarations -- */
 
 struct memory_allocator_nginx_ctx_type;
@@ -41,7 +45,7 @@ typedef void * (*memory_allocator_nginx_impl_palloc)(void *, size_t);
 
 typedef void * (*memory_allocator_nginx_impl_pcopy)(void *, const void *, size_t);
 
-typedef int (*memory_allocator_nginx_impl_pfree)(void *, void *);
+typedef intptr_t (*memory_allocator_nginx_impl_pfree)(void *, void *);
 
 typedef struct memory_allocator_nginx_ctx_type * memory_allocator_nginx_ctx;
 
