@@ -42,7 +42,7 @@ object Caller {
         val UniqueCall(Call(namespace, fnName, args), id) = callQueue.take()
         val result = callUnsafe(namespace, fnName, args)
         callResultMap.put(id, result)
-      } else ()
+      }
     }
 
     if (System.getProperty("java.polyglot.name") != "metacall")
@@ -75,6 +75,7 @@ object Caller {
 
   /** Calls a loaded function.
     * WARNING: Should only be used from within the caller thread.
+    * @param namespace The script/module file where the function is defined
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
     * @return The function's return value, or `InvalidValue` in case of an error
@@ -98,37 +99,21 @@ object Caller {
   }
 
   /** Calls a loaded function.
+    * @param namespace The script/module file where the function is defined
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
     * @return The function's return value, or `InvalidValue` in case of an error
     */
-  def callV(namespace: Option[String], fnName: String, args: List[Value]): Value = {
-    val call = Call(namespace, fnName, args)
-    val callId = callCounter.getAndIncrement()
-
-    if (callId == Int.MaxValue)
-      callCounter.set(0)
-    else ()
-
-    val uniqueCall = UniqueCall(call, callId)
-
-    callQueue.put(uniqueCall)
-
-    var result: Value = null
-
-    while (result == null)
-      result = callResultMap.get(callId)
-
-    callResultMap.remove(callId)
-
-    result
-  }
+  def callV(namespace: Option[String], fnName: String, args: List[Value])(implicit
+      ec: ExecutionContext
+  ): Future[Value] =
+    Future(blocking.callV(namespace, fnName, args))
 
   def call[A](namespace: Option[String], fnName: String, args: A)(implicit
       AA: Args[A],
       ec: ExecutionContext
   ): Future[Value] =
-    Future { blocking.call[A](namespace, fnName, args) }
+    Future(blocking.call[A](namespace, fnName, args))
 
   def call[A](fnName: String, args: A)(implicit
       AA: Args[A],
@@ -141,21 +126,64 @@ object Caller {
       ec: ExecutionContext
   ): Future[Value] =
     call[A](Some(namespace), fnName, args)
+
+  /** Blocking versions of the methods on [[Caller]]. Do not use them if you don't *need* to. */
   object blocking {
 
+    /** Calls a loaded function.
+      * @param namespace The script/module file where the function is defined
+      * @param fnName The name of the function to call
+      * @param args A list of `Value`s to be passed as arguments to the function
+      * @return The function's return value, or `InvalidValue` in case of an error
+      */
+    def callV(namespace: Option[String], fnName: String, args: List[Value]): Value = {
+      val call = Call(namespace, fnName, args)
+      val callId = callCounter.getAndIncrement()
+
+      if (callId == Int.MaxValue)
+        callCounter.set(0)
+
+      val uniqueCall = UniqueCall(call, callId)
+
+      callQueue.put(uniqueCall)
+
+      var result: Value = null
+
+      while (result == null)
+        result = callResultMap.get(callId)
+
+      callResultMap.remove(callId)
+
+      result
+    }
+
     /** Calls a loaded function
+      * @param namespace The script/module file where the function is defined
       * @param fnName The name of the function to call
       * @param args A product (tuple, case class, single value) to be passed as arguments to the function
       * @return The function's return value, or `InvalidValue` in case of an error
       */
-    def call[A](namespace: Option[String], fnName: String, args: A)(implicit
-        AA: Args[A]
-    ): Value =
+    def call[A](
+        namespace: Option[String],
+        fnName: String,
+        args: A
+    )(implicit AA: Args[A]): Value =
       callV(namespace, fnName, AA.from(args))
 
+    /** Calls a loaded function.
+      * @param fnName The name of the function to call
+      * @param args A product (tuple, case class, single value) to be passed as arguments to the function
+      * @return The function's return value, or `InvalidValue` in case of an error
+      */
     def call[A](fnName: String, args: A)(implicit AA: Args[A]): Value =
       call[A](None, fnName, args)
 
+    /** Calls a loaded function.
+      * @param namespace The script/module file where the function is defined
+      * @param fnName The name of the function to call
+      * @param args A product (tuple, case class, single value) to be passed as arguments to the function
+      * @return The function's return value, or `InvalidValue` in case of an error
+      */
     def call[A](namespace: String, fnName: String, args: A)(implicit AA: Args[A]): Value =
       call[A](Some(namespace), fnName, args)
 

@@ -441,7 +441,7 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
-    val ret = Caller.callV(
+    val ret = Caller.blocking.callV(
       None,
       "hello_scala_from_python",
       List(StringValue("Hello "), StringValue("Scala!"))
@@ -456,7 +456,7 @@ class MetaCallSpec extends AnyFlatSpec {
       case _                   => NullValue
     }
 
-    val ret = Caller.callV(None, "apply_fn_to_one", fnVal :: Nil)
+    val ret = Caller.blocking.callV(None, "apply_fn_to_one", fnVal :: Nil)
 
     assert(ret == LongValue(2L))
   }
@@ -486,7 +486,28 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val resSum = rangeValues
       .traverse { range =>
-        Future(Caller.callV(None, "sumList", range :: Nil)) map {
+        Future(Caller.blocking.callV(None, "sumList", range :: Nil)) map {
+          case n: NumericValue[_] => n.long.value
+          case other              => fail("Returned value should be a number, but got " + other)
+        }
+      }
+      .map(_.sum)
+
+    val result = Await.result(resSum, 10.seconds)
+
+    assert(result == 19600)
+  }
+
+  "Calling functions many times in parallel" should "work" in {
+    import scala.concurrent._, duration._
+    import ExecutionContext.Implicits.global
+
+    val rangeValues: List[ArrayValue] =
+      List.range(1, 50).map(n => ArrayValue(Vector.range(1, n).map(IntValue)))
+
+    val resSum = rangeValues
+      .traverse { range =>
+        Caller.callV(None, "sumList", range :: Nil) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
         }
