@@ -94,6 +94,8 @@ LOADER_API const char * loader_handle_id(void * handle);
 
 LOADER_API void * loader_handle_export(void * handle);
 
+LOADER_API loader_data loader_handle_get(void * handle, const char * name);
+
 LOADER_API value loader_metadata(void);
 
 LOADER_API int loader_clear(void * handle);

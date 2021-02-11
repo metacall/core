@@ -889,6 +889,13 @@ value loader_impl_handle_export(void * handle)
 	return scope_export(context_scope(handle_impl->ctx));
 }
 
+context loader_impl_handle_context(void * handle)
+{
+	loader_handle_impl handle_impl = handle;
+
+	return handle_impl->ctx;
+}
+
 value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)
 {
 	static const char name[] = "name";

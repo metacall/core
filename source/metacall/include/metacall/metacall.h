@@ -398,6 +398,21 @@ METACALL_API void * metacall_function(const char * name);
 
 /**
 *  @brief
+*    Get the function by @name from @handle
+*
+*  @param[in] handle
+*    Pointer to the handle returned by metacall_load_from_{file, memory, package}
+*
+*  @param[in] name
+*    Name of the function
+*
+*  @return
+*    Function reference, null if the function does not exist
+*/
+METACALL_API void * metacall_handle_function(void * handle, const char * name);
+
+/**
+*  @brief
 *    Get the function parameter type id
 *
 *  @param[in] func

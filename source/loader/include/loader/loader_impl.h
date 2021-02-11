@@ -70,6 +70,8 @@ LOADER_API const char * loader_impl_handle_id(void * handle);
 
 LOADER_API value loader_impl_handle_export(void * handle);
 
+LOADER_API context loader_impl_handle_context(void * handle);
+
 LOADER_API value loader_impl_metadata(loader_impl impl);
 
 LOADER_API int loader_impl_clear(void * handle);
