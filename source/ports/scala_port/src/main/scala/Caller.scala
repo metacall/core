@@ -1,13 +1,12 @@
 package metacall
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.LinkedBlockingQueue
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-
 import metacall.util._
 import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
+
+import com.sun.jna._, ptr.PointerByReference
+import java.util.concurrent.{LinkedBlockingQueue, ConcurrentHashMap}
+import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 /** `Caller` creates a new thread on which:
   *   - a MetaCall instance is initialized (`Caller.start`)
@@ -34,14 +33,33 @@ object Caller {
     if (System.getProperty("java.polyglot.name") != "metacall")
       Bindings.instance.metacall_initialize()
 
-    while (!closed.get) {
+    while (!closed.get) try {
       if (!scriptsQueue.isEmpty()) {
-        val script = scriptsQueue.take()
-        Loader.loadFileUnsafe(script.runtime, script.filePath)
-      } else if (!callQueue.isEmpty()) {
+        val Script(filePath, runtime, namespace) = scriptsQueue.take()
+        val handleRef = namespace.map(_ => new PointerByReference())
+
+        Loader.loadFileUnsafe(runtime, filePath, handleRef)
+        println("Handle by ref: " + handleRef)
+
+        handleRef.zip(namespace) match {
+          case Some((handleRef, namespace)) =>
+            namespaceHandles.put(
+              namespace,
+              handleRef
+            )
+          case None => ()
+        }
+      }
+
+      if (!callQueue.isEmpty() && scriptsQueue.isEmpty()) {
         val UniqueCall(Call(namespace, fnName, args), id) = callQueue.take()
         val result = callUnsafe(namespace, fnName, args)
         callResultMap.put(id, result)
+      }
+    } catch {
+      case e: Throwable => {
+        Console.err.println(e)
+        // TODO: Add a `setOnError` method and call it here
       }
     }
 
@@ -54,15 +72,22 @@ object Caller {
   private val callResultMap = new ConcurrentHashMap[Int, Value]()
   private val callCounter = new AtomicInteger(0)
   private val scriptsQueue = new LinkedBlockingQueue[Script]()
+  private val namespaceHandles =
+    new ConcurrentHashMap[String, PointerByReference]()
 
-  def loadFile(runtime: Runtime, filePath: String, namespace: Option[String]): Unit =
+  def loadFile(runtime: Runtime, filePath: String, namespace: Option[String]): Unit = {
+    if (closed.get())
+      throw new Exception(s"Trying to load script $filePath while the caller is closed")
+
     scriptsQueue.put(Script(filePath, runtime, namespace))
-
-  def loadFile(runtime: Runtime, filePath: String): Unit =
-    loadFile(runtime, filePath, None)
+    while (!scriptsQueue.isEmpty()) ()
+  }
 
   def loadFile(runtime: Runtime, filePath: String, namespace: String): Unit =
     loadFile(runtime, filePath, Some(namespace))
+
+  def loadFile(runtime: Runtime, filePath: String): Unit =
+    loadFile(runtime, filePath, None)
 
   def start(): Unit = {
     if (System.getProperty("java.polyglot.name") != "metacall")
@@ -88,7 +113,30 @@ object Caller {
     val argPtrArray = args.map(Ptr.fromValueUnsafe(_).ptr).toArray
 
     val retPointer =
-      Bindings.instance.metacallv_s(fnName, argPtrArray, SizeT(argPtrArray.length.toLong))
+      namespace match {
+        case Some(value) => {
+          val namespaceHandle = namespaceHandles.get(value)
+
+          if (namespaceHandle == null)
+            throw new Exception(
+              s"Namespace `$value` does not contain any functions (no scripts were loaded in it)"
+            )
+
+          Bindings.instance.metacallhv_s(
+            namespaceHandle.getPointer(),
+            fnName,
+            argPtrArray,
+            SizeT(argPtrArray.length.toLong)
+          )
+        }
+        case None => {
+          Bindings.instance.metacallv_s(
+            fnName,
+            argPtrArray,
+            SizeT(argPtrArray.length.toLong)
+          )
+        }
+      }
 
     val retValue = Ptr.toValue(Ptr.fromPrimitiveUnsafe(retPointer))
 
