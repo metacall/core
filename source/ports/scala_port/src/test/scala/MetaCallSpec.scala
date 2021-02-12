@@ -442,7 +442,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "Caller" should "load scripts into namespaces" in {
     Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s1.py", Some("s1"))
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", Some("s2"))
+    // Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", Some("s2"))
 
     assert(
       Caller.blocking.call(Some("s1"), "fn_in_s1", ()) == StringValue("Hello from s1")

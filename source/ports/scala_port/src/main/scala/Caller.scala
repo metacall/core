@@ -39,7 +39,6 @@ object Caller {
         val handleRef = namespace.map(_ => new PointerByReference())
 
         Loader.loadFileUnsafe(runtime, filePath, handleRef)
-        println("Handle by ref: " + handleRef)
 
         handleRef.zip(namespace) match {
           case Some((handleRef, namespace)) =>
