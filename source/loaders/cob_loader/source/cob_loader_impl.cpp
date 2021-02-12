@@ -34,6 +34,7 @@
 
 #include <libcob.h>
 
+#include <string>
 #include <map>
 
 typedef struct loader_impl_cob_handle_type
@@ -123,7 +124,7 @@ loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration conf
 	(void)impl;
 	(void)config;
 
-	loader_copy(host->log);
+	loader_copy(host);
 
 	// Copy environment variables in order to resolve properly the scripts
 	const char * scripts_path = getenv("LOADER_SCRIPT_PATH");
@@ -156,16 +157,14 @@ int cob_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 
 loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
-	loader_impl_cob_handle cob_handle = static_cast<loader_impl_cob_handle>(malloc(sizeof(struct loader_impl_cob_handle_type)));
+	loader_impl_cob_handle cob_handle = new loader_impl_cob_handle_type();
 
 	(void)impl;
 
-	if (cob_handle == NULL)
+	if (cob_handle == nullptr)
 	{
 		return NULL;
 	}
-
-	cob_handle->funcs = std::map<std::string, void *>();
 
 	for (size_t path_count = 0; path_count < size; ++path_count)
 	{
@@ -188,14 +187,14 @@ loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_nami
 			}
 			else
 			{
-				cob_handle->funcs[module_name] = func;
+				cob_handle->funcs.insert(std::pair<std::string, void *>(std::string(module_name), func));
 			}
 		}
 	}
 
 	if (cob_handle->funcs.size() == 0)
 	{
-		free(cob_handle);
+		delete cob_handle;
 		return NULL;
 	}
 
@@ -230,9 +229,11 @@ int cob_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	(void)impl;
 
-	if (cob_handle != NULL)
+	if (cob_handle != nullptr)
 	{
-		free(cob_handle);
+		// TODO: Is there any cob_resolve inverse function?
+
+		delete cob_handle;
 	}
 
 	return 0;
@@ -246,9 +247,9 @@ int cob_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 	(void)impl;
 
-	for (std::pair<std::string, void *> func : cob_handle->funcs)
+	for (const auto & func : cob_handle->funcs)
 	{
-		function f = function_create(func.first.c_str(), 0, NULL, &function_cob_singleton);
+		function f = function_create(func.first.c_str(), 0, func.second, &function_cob_singleton);
 
 		scope_define(sp, function_name(f), value_create_function(f));
 	}

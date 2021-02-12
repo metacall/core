@@ -48,9 +48,11 @@ TEST_F(metacall_cobol_test, DefaultConstructor)
 			METACALL_STRING, METACALL_STRING
 		};
 
+		static const char tag[] = "cob";
+
 		void * ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_file("cob", cob_scripts, sizeof(cob_scripts) / sizeof(cob_scripts[0]), NULL));
+		ASSERT_EQ((int) 0, (int) metacall_load_from_file(tag, cob_scripts, sizeof(cob_scripts) / sizeof(cob_scripts[0]), NULL));
 
 		ret = metacallt_s("say", hello_string_ids, 2, "hello", "world");
 
@@ -59,6 +61,16 @@ TEST_F(metacall_cobol_test, DefaultConstructor)
 		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 0);
 
 		metacall_value_destroy(ret);
+
+		/* This is a Python script on purpose, in order to test Cobol when it fails */
+		static const char buffer[] =
+			"#!/usr/bin/env python3\n"
+			"def multmem(left: int, right: int) -> int:\n"
+			"\tresult = left * right;\n"
+			"\tprint(left, ' * ', right, ' = ', result);\n"
+			"\treturn result;";
+
+		EXPECT_EQ((int) 1, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 	}
 	#endif /* OPTION_BUILD_LOADERS_COB */
 
