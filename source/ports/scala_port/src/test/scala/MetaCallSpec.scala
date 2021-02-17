@@ -66,6 +66,39 @@ class MetaCallSpec extends AnyFlatSpec {
     )
   }
 
+  "MetaCall" should "load python script with reference to the handle properly" in {
+    val scriptPaths = Array(
+      Paths.get("./src/test/scala/scripts/s1.py").toAbsolutePath.toString()
+    )
+    val handleRef = new PointerByReference()
+
+    val retCode = metacall.metacall_load_from_file(
+      "py",
+      scriptPaths,
+      SizeT(scriptPaths.length.toLong),
+      handleRef
+    )
+
+    require(
+      retCode == 0,
+      s"MetaCall failed to load the script with code $retCode"
+    )
+
+    val ret = Bindings.instance.metacallhv_s(
+      handleRef.getValue(),
+      "fn_in_s1",
+      Array(),
+      SizeT(0)
+    )
+
+    require(
+      metacall.metacall_value_to_string(ret) == "Hello from s1",
+      "MetaCall failed to call into fn_in_s1 with metacallhv_s"
+    )
+
+    metacall.metacall_value_destroy(ret)
+  }
+
   "MetaCall" should "successfully call function from loaded script and return correct value" in {
     // Create array of parameters
     val args = Array(
@@ -432,6 +465,9 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
+  // TODO: This won't work with NodeJS, it is not tolerant a reinitialization.
+  //       Probably we should split this into two tests, one for the caller (event loop based),
+  //       and another for MetaCall without event loop. So each test suite runs in a different process.
   "Caller" should "start successfully" in {
     Caller.start()
   }
@@ -442,7 +478,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
   "Caller" should "load scripts into namespaces" in {
     Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s1.py", Some("s1"))
-    // Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", Some("s2"))
+    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", Some("s2"))
 
     assert(
       Caller.blocking.call(Some("s1"), "fn_in_s1", ()) == StringValue("Hello from s1")

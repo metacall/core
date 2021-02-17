@@ -122,7 +122,7 @@ object Caller {
             )
 
           Bindings.instance.metacallhv_s(
-            namespaceHandle.getPointer(),
+            namespaceHandle.getValue(),
             fnName,
             argPtrArray,
             SizeT(argPtrArray.length.toLong)
@@ -185,6 +185,10 @@ object Caller {
       */
     def callV(namespace: Option[String], fnName: String, args: List[Value]): Value = {
       val call = Call(namespace, fnName, args)
+
+      // TODO: This trick works but it may overflow, we should do a test
+      // executing calls to a function without parameters nor return, with a size
+      // greater of sizeof(int), for example Integer.MAX_VALUE + 15, in order to see what happens
       val callId = callCounter.getAndIncrement()
 
       if (callId == Int.MaxValue)
