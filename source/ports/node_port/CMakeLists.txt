@@ -31,19 +31,36 @@ set(source_group "Source Files")
 source_group_by_path(${source_path}  "\\\\.js$"
 	${source_group} ${sources})
 
+if(MSVC)
+	set(NODE_PORT_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(NODE_PORT_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
+endif()
+
 if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target} ALL
 		COMMAND npm install --ignore-scripts
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/index.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package.json
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package-lock.json
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		SOURCES ${sources}
 	)
-
-	set_target_properties(${target}
-		PROPERTIES
-		${DEFAULT_PROJECT_OPTIONS}
-		FOLDER "${IDE_FOLDER}"
+else()
+	add_custom_target(${target} ALL
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/index.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package.json
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package-lock.json
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+		SOURCES ${sources}
 	)
 endif()
+
+set_target_properties(${target}
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
+)
 
 #
 # Install command

@@ -8,16 +8,26 @@ const util = require('util');
 const cherow = require('./node_modules/cherow');
 
 function node_loader_trampoline_initialize() {
-	try {
-		// Preload MetaCall Monkey Patch
-		require('metacall');
-	} catch (e) {
-		if (e.code === 'MODULE_NOT_FOUND') {
-			// console.log('NodeJS Warning: MetaCall could not be preloaded');
-		} else {
-			console.log(`NodeJS Error (while preloading MetaCall): ${e.message}`);
+	const global_path = process.env['LOADER_LIBRARY_PATH'];
+
+	const paths = [
+		/* Local version of MetaCall NodeJS Port */
+		'metacall',
+		/* Optionally, use loader library path for global installed NodeJS Port */
+		...global_path ? [ path.join(global_path, 'node_modules', 'metacall', 'index.js') ] : [],
+	];
+
+	for (const r of paths) {
+		try {
+				return require(r);
+		} catch (e) {
+			if (e.code !== 'MODULE_NOT_FOUND') {
+				console.log(`NodeJS Error (while preloading MetaCall): ${e.message}`);
+			}
 		}
 	}
+
+	console.log('NodeJS Warning: MetaCall could not be preloaded');
 }
 
 function node_loader_trampoline_is_callable(value) {
@@ -47,39 +57,39 @@ function node_loader_trampoline_execution_path() {
 }
 
 function node_loader_trampoline_load_from_file_require(p) {
-	/* First try to load the absolute path */
-	try {
-		return require(p);
-	} catch (e) {
-		if (e.code !== 'MODULE_NOT_FOUND') {
-			throw e;
-		}
-	}
-
-	/* Then try to load without the path */
 	const basename = path.basename(p);
-
-	try {
-		return require(basename);
-	} catch (e) {
-		if (e.code !== 'MODULE_NOT_FOUND') {
-			throw e;
-		}
-	}
-
-	/* Try to load without the path and extension */
 	const { name } = path.parse(basename);
 
-	try {
-		return require(name);
-	} catch (e) {
-		if (e.code !== 'MODULE_NOT_FOUND') {
-			throw e;
+	const paths = [
+		/* Absolute path or module name */
+		p,
+		/* Without base path */
+		path.basename(p),
+		/* Without base path and extension */
+		name,
+		/* Without extension and with node modules */
+		path.join(path.dirname(p), 'node_modules', name),
+	];
+
+	for (const r of paths) {
+		let resolved = null;
+
+		try {
+			resolved = require.resolve(r);
+		} catch (e) {
+			if (e.code !== 'MODULE_NOT_FOUND') {
+				throw e;
+			}
+		}
+
+		if (resolved != null) {
+			return require(resolved);
 		}
 	}
 
-	/* Try to load base path without extension and with node modules */
-	return require(path.join(path.dirname(p), 'node_modules', name));
+	const e = new Error(`Cannot find module '${p}'`);
+	e.code = 'MODULE_NOT_FOUND';
+	throw e;
 }
 
 function node_loader_trampoline_load_from_file(paths) {
@@ -99,7 +109,7 @@ function node_loader_trampoline_load_from_file(paths) {
 
 		return handle;
 	} catch (ex) {
-		console.log('Exception in node_loader_trampoline_load_from_file', ex);
+		console.log('Exception in node_loader_trampoline_load_from_file while loading:', paths, ex);
 	}
 
 	return null;
@@ -133,7 +143,7 @@ function node_loader_trampoline_load_from_memory(name, buffer, opts) {
 		// eslint-disable-next-line no-underscore-dangle
 		m._compile(buffer, name);
 	} catch (ex) {
-		console.log('Exception in node_loader_trampoline_load_from_memory', ex);
+		console.log('Exception in node_loader_trampoline_load_from_memory while loading:', buffer, ex);
 		return null;
 	}
 
