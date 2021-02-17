@@ -93,6 +93,56 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 
+	/* Python */
+	#if defined(OPTION_BUILD_LOADERS_PY)
+	{
+		const char * py_scripts_s1[] =
+		{
+			"s1.py"
+		};
+
+		void * handle = NULL;
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts_s1, sizeof(py_scripts_s1) / sizeof(py_scripts_s1[0]), &handle));
+
+		ASSERT_NE((void *) NULL, (void *) handle);
+
+		void * func = metacall_handle_function(handle, "fn_in_s1" /* TODO: shared_in_s1_and_s2 */);
+
+		ASSERT_NE((void *) NULL, (void *) func);
+
+		void * ret = metacallhv_s(handle, "fn_in_s1" /* TODO: shared_in_s1_and_s2 */, metacall_null_args, 0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello from s1"));
+
+		metacall_value_destroy(ret);
+
+		const char * py_scripts_s2[] =
+		{
+			"s2.py"
+		};
+
+		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts_s2, sizeof(py_scripts_s2) / sizeof(py_scripts_s2[0]), &handle));
+
+		ASSERT_NE((void *) NULL, (void *) handle);
+
+		func = metacall_handle_function(handle, "fn_in_s2" /* TODO: shared_in_s1_and_s2 */);
+
+		ASSERT_NE((void *) NULL, (void *) func);
+
+		ret = metacallhv_s(handle, "fn_in_s2" /* TODO: shared_in_s1_and_s2 */, metacall_null_args, 0);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello from s2"));
+
+		metacall_value_destroy(ret);
+
+	}
+	#endif /* OPTION_BUILD_LOADERS_PY */
+
 	/* Print inspect information */
 	{
 		size_t size = 0;
