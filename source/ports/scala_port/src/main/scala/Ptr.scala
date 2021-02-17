@@ -1,8 +1,8 @@
 package metacall
 
-import metacall.util._
-import com.sun.jna._
 import cats.implicits._
+import com.sun.jna._
+import metacall.util._
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {

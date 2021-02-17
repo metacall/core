@@ -1,4 +1,5 @@
 lazy val commonSettings = Seq(
+  name := "metacall",
   scalaVersion := "2.13.4",
   version := "0.1.0-SNAPSHOT",
   organization := "com.metacall",
