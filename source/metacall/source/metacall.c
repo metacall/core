@@ -1662,14 +1662,17 @@ int metacall_clear(void * handle)
 
 int metacall_destroy()
 {
-	if (loader_unload() != 0)
+	if (metacall_initialize_flag == 0)
 	{
-		return 1;
+		if (loader_unload() != 0)
+		{
+			return 1;
+		}
+
+		configuration_destroy();
+
+		metacall_initialize_flag = 1;
 	}
-
-	configuration_destroy();
-
-	metacall_initialize_flag = 1;
 
 	return 0;
 }
