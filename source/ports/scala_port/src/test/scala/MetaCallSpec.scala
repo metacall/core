@@ -481,13 +481,12 @@ class MetaCallSpec extends AnyFlatSpec {
     Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", Some("s2"))
 
     assert(
-      Caller.blocking.call(Some("s1"), "fn_in_s1", ()) == StringValue("Hello from s1")
+      Caller.blocking.call("fn_in_s1", (), Some("s1")) == StringValue("Hello from s1")
     )
   }
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
     val ret = Caller.blocking.callV(
-      None,
       "hello_scala_from_python",
       List(StringValue("Hello "), StringValue("Scala!"))
     )
@@ -501,7 +500,7 @@ class MetaCallSpec extends AnyFlatSpec {
       case _                   => NullValue
     }
 
-    val ret = Caller.blocking.callV(None, "apply_fn_to_one", fnVal :: Nil)
+    val ret = Caller.blocking.callV("apply_fn_to_one", fnVal :: Nil)
 
     assert(ret == LongValue(2L))
   }
@@ -531,7 +530,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val resSum = rangeValues
       .traverse { range =>
-        Future(Caller.blocking.callV(None, "sumList", range :: Nil)) map {
+        Future(Caller.blocking.callV("sumList", range :: Nil)) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
         }
@@ -552,7 +551,7 @@ class MetaCallSpec extends AnyFlatSpec {
 
     val resSum = rangeValues
       .traverse { range =>
-        Caller.callV(None, "sumList", range :: Nil) map {
+        Caller.callV("sumList", range :: Nil) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
         }

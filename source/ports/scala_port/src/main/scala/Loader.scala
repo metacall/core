@@ -32,14 +32,6 @@ private[metacall] object Loader {
     if (code != 0)
       throw new Exception("Failed to load scripts: " + filePaths.mkString(" "))
   }
-
-  def loadFileUnsafe(
-      runtime: Runtime,
-      filePath: String,
-      handleRef: Option[PointerByReference]
-  ) =
-    loadFilesUnsafe(runtime, Vector(filePath), handleRef)
-
 }
 
 sealed trait Runtime

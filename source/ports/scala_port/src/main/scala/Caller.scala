@@ -5,7 +5,7 @@ import scala.concurrent.Future
 import scala.concurrent.ExecutionContext
 
 import com.sun.jna._, ptr.PointerByReference
-import java.util.concurrent.{LinkedBlockingQueue, ConcurrentHashMap}
+import java.util.concurrent.{ConcurrentLinkedQueue, ConcurrentHashMap}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 /** `Caller` creates a new thread on which:
@@ -29,17 +29,23 @@ object Caller {
 
   private case class UniqueCall(call: Call, id: Int)
 
+  private case class LoadCommand(
+      namespace: Option[String],
+      runtime: Runtime,
+      filePaths: Vector[String]
+  )
+
+  private val runningInMetacall = System.getProperty("java.polyglot.name") == "metacall"
+
   private def callLoop() = {
-    if (System.getProperty("java.polyglot.name") != "metacall")
+    if (!runningInMetacall)
       Bindings.instance.metacall_initialize()
 
     while (!closed.get) try {
       if (!scriptsQueue.isEmpty()) {
-        val Script(filePath, runtime, namespace) = scriptsQueue.take()
+        val LoadCommand(namespace, runtime, paths) = scriptsQueue.poll()
         val handleRef = namespace.map(_ => new PointerByReference())
-
-        Loader.loadFileUnsafe(runtime, filePath, handleRef)
-
+        Loader.loadFilesUnsafe(runtime, paths, handleRef)
         handleRef.zip(namespace) match {
           case Some((handleRef, namespace)) =>
             namespaceHandles.put(
@@ -48,39 +54,50 @@ object Caller {
             )
           case None => ()
         }
-      }
-
-      if (!callQueue.isEmpty() && scriptsQueue.isEmpty()) {
-        val UniqueCall(Call(namespace, fnName, args), id) = callQueue.take()
+      } else if (!callQueue.isEmpty()) {
+        val UniqueCall(Call(namespace, fnName, args), id) = callQueue.poll()
         val result = callUnsafe(namespace, fnName, args)
         callResultMap.put(id, result)
       }
     } catch {
-      case e: Throwable => {
-        Console.err.println(e)
-        // TODO: Add a `setOnError` method and call it here
-      }
+      case e: Throwable => Console.err.println(e)
     }
 
-    if (System.getProperty("java.polyglot.name") != "metacall")
+    if (!runningInMetacall)
       Bindings.instance.metacall_destroy()
   }
 
   private val closed = new AtomicBoolean(false)
-  private val callQueue = new LinkedBlockingQueue[UniqueCall]()
+  private val callQueue = new ConcurrentLinkedQueue[UniqueCall]()
   private val callResultMap = new ConcurrentHashMap[Int, Value]()
   private val callCounter = new AtomicInteger(0)
-  private val scriptsQueue = new LinkedBlockingQueue[Script]()
+  private val scriptsQueue = new ConcurrentLinkedQueue[LoadCommand]()
   private val namespaceHandles =
     new ConcurrentHashMap[String, PointerByReference]()
 
-  def loadFile(runtime: Runtime, filePath: String, namespace: Option[String]): Unit = {
-    if (closed.get())
-      throw new Exception(s"Trying to load script $filePath while the caller is closed")
+  def loadFiles(
+      runtime: Runtime,
+      filePaths: Vector[String],
+      namespace: Option[String] = None
+  ): Unit = {
+    if (closed.get()) {
+      val scriptsStr =
+        if (filePaths.length == 1) "script " + filePaths.head
+        else "scripts " + filePaths.mkString(", ")
+      throw new Exception(
+        s"Trying to load scripts $scriptsStr while the caller is closed"
+      )
+    }
 
-    scriptsQueue.put(Script(filePath, runtime, namespace))
+    scriptsQueue.add(LoadCommand(namespace, runtime, filePaths))
     while (!scriptsQueue.isEmpty()) ()
   }
+
+  def loadFile(
+      runtime: Runtime,
+      filePath: String,
+      namespace: Option[String] = None
+  ): Unit = loadFiles(runtime, Vector(filePath), namespace)
 
   def loadFile(runtime: Runtime, filePath: String, namespace: String): Unit =
     loadFile(runtime, filePath, Some(namespace))
@@ -89,7 +106,7 @@ object Caller {
     loadFile(runtime, filePath, None)
 
   def start(): Unit = {
-    if (System.getProperty("java.polyglot.name") != "metacall")
+    if (!runningInMetacall)
       new Thread(() => callLoop()).start()
     else
       callLoop()
@@ -99,9 +116,9 @@ object Caller {
 
   /** Calls a loaded function.
     * WARNING: Should only be used from within the caller thread.
-    * @param namespace The script/module file where the function is defined
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
+    * @param namespace The script/module file where the function is defined
     * @return The function's return value, or `InvalidValue` in case of an error
     */
   private def callUnsafe(
@@ -146,57 +163,51 @@ object Caller {
   }
 
   /** Calls a loaded function.
-    * @param namespace The script/module file where the function is defined
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
+    * @param namespace The script/module file where the function is defined
     * @return The function's return value, or `InvalidValue` in case of an error
     */
-  def callV(namespace: Option[String], fnName: String, args: List[Value])(implicit
+  def callV(fnName: String, args: List[Value], namespace: Option[String] = None)(implicit
       ec: ExecutionContext
   ): Future[Value] =
-    Future(blocking.callV(namespace, fnName, args))
+    Future(blocking.callV(fnName, args, namespace))
 
-  def call[A](namespace: Option[String], fnName: String, args: A)(implicit
+  def call[A](fnName: String, args: A, namespace: Option[String] = None)(implicit
       AA: Args[A],
       ec: ExecutionContext
   ): Future[Value] =
-    Future(blocking.call[A](namespace, fnName, args))
-
-  def call[A](fnName: String, args: A)(implicit
-      AA: Args[A],
-      ec: ExecutionContext
-  ): Future[Value] =
-    call[A](None, fnName, args)
+    callV(fnName, AA.from(args), namespace)
 
   def call[A](namespace: String, fnName: String, args: A)(implicit
       AA: Args[A],
       ec: ExecutionContext
-  ): Future[Value] =
-    call[A](Some(namespace), fnName, args)
+  ): Future[Value] = call[A](fnName, args, Some(namespace))
 
   /** Blocking versions of the methods on [[Caller]]. Do not use them if you don't *need* to. */
   object blocking {
 
     /** Calls a loaded function.
-      * @param namespace The script/module file where the function is defined
       * @param fnName The name of the function to call
       * @param args A list of `Value`s to be passed as arguments to the function
+      * @param namespace The script/module file where the function is defined
       * @return The function's return value, or `InvalidValue` in case of an error
       */
-    def callV(namespace: Option[String], fnName: String, args: List[Value]): Value = {
+    def callV(
+        fnName: String,
+        args: List[Value],
+        namespace: Option[String] = None
+    ): Value = {
       val call = Call(namespace, fnName, args)
 
-      // TODO: This trick works but it may overflow, we should do a test
-      // executing calls to a function without parameters nor return, with a size
-      // greater of sizeof(int), for example Integer.MAX_VALUE + 15, in order to see what happens
       val callId = callCounter.getAndIncrement()
 
-      if (callId == Int.MaxValue)
+      if (callId == Int.MaxValue - 1)
         callCounter.set(0)
 
       val uniqueCall = UniqueCall(call, callId)
 
-      callQueue.put(uniqueCall)
+      callQueue.add(uniqueCall)
 
       var result: Value = null
 
@@ -209,34 +220,17 @@ object Caller {
     }
 
     /** Calls a loaded function
-      * @param namespace The script/module file where the function is defined
       * @param fnName The name of the function to call
       * @param args A product (tuple, case class, single value) to be passed as arguments to the function
+      * @param namespace The script/module file where the function is defined
       * @return The function's return value, or `InvalidValue` in case of an error
       */
     def call[A](
-        namespace: Option[String],
         fnName: String,
-        args: A
+        args: A,
+        namespace: Option[String] = None
     )(implicit AA: Args[A]): Value =
-      callV(namespace, fnName, AA.from(args))
-
-    /** Calls a loaded function.
-      * @param fnName The name of the function to call
-      * @param args A product (tuple, case class, single value) to be passed as arguments to the function
-      * @return The function's return value, or `InvalidValue` in case of an error
-      */
-    def call[A](fnName: String, args: A)(implicit AA: Args[A]): Value =
-      call[A](None, fnName, args)
-
-    /** Calls a loaded function.
-      * @param namespace The script/module file where the function is defined
-      * @param fnName The name of the function to call
-      * @param args A product (tuple, case class, single value) to be passed as arguments to the function
-      * @return The function's return value, or `InvalidValue` in case of an error
-      */
-    def call[A](namespace: String, fnName: String, args: A)(implicit AA: Args[A]): Value =
-      call[A](Some(namespace), fnName, args)
+      blocking.callV(fnName, AA.from(args), namespace)
 
   }
 
