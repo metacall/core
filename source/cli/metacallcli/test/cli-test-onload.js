@@ -1,4 +1,4 @@
-const { metacall_load_from_memory, metacall } = require('../../source/ports/node_port/index.js');
+const { metacall_load_from_memory, metacall } = require('metacall');
 
 metacall_load_from_memory('py', 'def sum(a, b):\n\treturn a + b');
 metacall_load_from_memory('rb', 'def mult(a, b)\n\ta * b\nend');
