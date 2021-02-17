@@ -2,7 +2,6 @@ package metacall
 
 import java.nio.file.Paths
 
-import cats.implicits._
 import com.sun.jna._
 import com.sun.jna.ptr.PointerByReference
 import metacall.instances._

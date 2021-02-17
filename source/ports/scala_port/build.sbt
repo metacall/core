@@ -20,7 +20,6 @@ lazy val commonSettings = Seq(
   scalacOptions in (Compile, console) := Seq.empty,
   libraryDependencies ++= Seq(
     "net.java.dev.jna" % "jna" % "5.6.0",
-    "org.typelevel" %% "cats-core" % "2.3.1",
     "com.chuusai" %% "shapeless" % "2.3.3",
     "org.scalatest" %% "scalatest" % "3.2.2" % Test
   )

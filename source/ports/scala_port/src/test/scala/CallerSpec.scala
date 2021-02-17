@@ -1,6 +1,5 @@
 package metacall
 
-import cats.implicits._
 import metacall.instances._
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -68,8 +67,8 @@ class CallerSpec extends AnyFlatSpec {
     val rangeValues: List[ArrayValue] =
       List.range(1, 50).map(n => ArrayValue(Vector.range(1, n).map(IntValue)))
 
-    val resSum = rangeValues
-      .traverse { range =>
+    val resSum = Future
+      .traverse(rangeValues) { range =>
         Future(Caller.blocking.callV("sumList", range :: Nil)) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
@@ -89,8 +88,8 @@ class CallerSpec extends AnyFlatSpec {
     val rangeValues: List[ArrayValue] =
       List.range(1, 50).map(n => ArrayValue(Vector.range(1, n).map(IntValue)))
 
-    val resSum = rangeValues
-      .traverse { range =>
+    val resSum = Future
+      .traverse(rangeValues) { range =>
         Caller.callV("sumList", range :: Nil) map {
           case n: NumericValue[_] => n.long.value
           case other              => fail("Returned value should be a number, but got " + other)
