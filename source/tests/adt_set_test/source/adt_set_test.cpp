@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <adt/adt_set.h>
 

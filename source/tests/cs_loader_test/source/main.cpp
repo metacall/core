@@ -18,12 +18,12 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 #include <cs-loader-test/environment.hpp>
 
 int main(int argc, char * argv[])
 {
-	::testing::InitGoogleMock(&argc, argv);
+	::testing::InitGoogleTest(&argc, argv);
 	::testing::AddGlobalTestEnvironment(new environment());
 	return RUN_ALL_TESTS();
 }

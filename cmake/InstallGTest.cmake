@@ -39,7 +39,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 	ExternalProject_Add(google-test-depends
 		GIT_REPOSITORY https://github.com/google/googletest.git
 		GIT_TAG release-${GTEST_VERSION}
-		CMAKE_ARGS -Dgmock_build_tests=OFF
+		CMAKE_ARGS
 			-Dgtest_build_samples=OFF
 			-Dgtest_build_tests=OFF
 			-Dgtest_disable_pthreads=${GTEST_DISABLE_PTHREADS}
@@ -47,6 +47,7 @@ if(NOT GTEST_FOUND OR USE_BUNDLED_GTEST)
 			-Dgtest_hide_internal_symbols=OFF
 			-DINSTALL_GTEST=OFF
 			-DBUILD_GMOCK=ON
+			-Dgmock_build_tests=OFF
 		PREFIX "${CMAKE_CURRENT_BINARY_DIR}"
 		UPDATE_COMMAND ""
 		INSTALL_COMMAND ""

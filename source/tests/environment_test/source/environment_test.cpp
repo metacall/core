@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <environment/environment.h>
 

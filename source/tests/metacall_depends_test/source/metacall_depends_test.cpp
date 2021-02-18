@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
