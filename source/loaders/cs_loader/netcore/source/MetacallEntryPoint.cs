@@ -18,12 +18,10 @@ namespace CSLoader
     public static class MetacallEntryPoint
     {
         private static LoaderBase loader = null;
+        private static ConsoleLog log = new ConsoleLog();
 
         static MetacallEntryPoint()
         {
-
-            var log = new ConsoleLog();
-
             log.Info("CSLoader static initialization");
 
             #if NETCOREAPP1_0 || NETCOREAPP1_1 || NETCOREAPP1_2
@@ -45,7 +43,13 @@ namespace CSLoader
 
         public static bool Load(string[] files)
         {
-            return loader.LoadFromSourceFunctions(files.Select(x => System.IO.File.ReadAllText(x)).ToArray());
+            try {
+                return loader.LoadFromSourceFunctions(files.Select(x => System.IO.File.ReadAllText(x)).ToArray());
+            } catch (FileNotFoundException ex) {
+                // TODO: Implement error handling
+                log.Info(ex.Message);
+                return false;
+            }
         }
 
         public static ReflectFunction[] GetFunctionsInternal()

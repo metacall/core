@@ -42,6 +42,12 @@ describe('metacall', () => {
 		});
 	});
 
+	describe('fail', () => {
+		it('require', () => {
+			assert.strictEqual(require('./asd.invalid'), undefined);
+		});
+	});
+
 	describe('load', () => {
 		it('metacall_load_from_file (py)', () => {
 			assert.strictEqual(metacall_load_from_file('py', [ 'helloworld.py' ] ), undefined);

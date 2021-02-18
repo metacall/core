@@ -195,10 +195,15 @@ mod.prototype.require = function (name) {
 		/* NodeJS Loader */
 		js: 'node',
 		node: 'node',
+
+		/* TODO: TypeScript Loader is not supported to run with NodeJS Loader at the same time yet */
+
 		/* TypeScript Loader */
+		/*
 		ts: 'ts',
 		jsx: 'ts',
 		tsx: 'ts',
+		*/
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */
