@@ -21,7 +21,7 @@ class MetaCallSpec extends AnyFlatSpec {
   "MetaCall" should "initialize successfully" in {
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
-    if (System.getProperty("java.polyglot.name") != "metacall") {
+    if (System.getProperty("metacall.polyglot.name") != "core") {
       assert(
         metacall.metacall_initialize() == 0,
         "MetaCall was not successfully initialized"
@@ -29,8 +29,13 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  /*
   "MetaCall" should "load node script successsfully" in {
+    // NodeJS requires to set the library path environment variable
+    assert(
+      sys.env("LOADER_LIBRARY_PATH") != "",
+      "For running NodeJS tests you must define the loader library path"
+    )
+
     val scriptPaths = Array(
       Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
     )
@@ -46,7 +51,6 @@ class MetaCallSpec extends AnyFlatSpec {
       s"MetaCall failed to load the script with code $retCode"
     )
   }
-   */
 
   "MetaCall" should "load python script successsfully" in {
     val scriptPaths = Array(
@@ -83,7 +87,7 @@ class MetaCallSpec extends AnyFlatSpec {
       s"MetaCall failed to load the script with code $retCode"
     )
 
-    val ret = Bindings.instance.metacallhv_s(
+    val ret = metacall.metacallhv_s(
       handleRef.getValue(),
       "fn_in_s1",
       Array(),
@@ -440,7 +444,7 @@ class MetaCallSpec extends AnyFlatSpec {
           argValues match {
             case StringValue(s) :: Nil =>
               Ptr.fromValueUnsafe(StringValue("Hello, " + s)).ptr
-            case _ => Bindings.instance.metacall_value_create_null()
+            case _ => metacall.metacall_value_create_null()
           }
         }
       }
@@ -456,7 +460,7 @@ class MetaCallSpec extends AnyFlatSpec {
   "MetaCall" should "be destroyed successfully" in {
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
-    if (System.getProperty("java.polyglot.name") != "metacall") {
+    if (System.getProperty("metacall.polyglot.name") != "core") {
       assert(
         metacall.metacall_destroy() == 0,
         "MetaCall was not successfully destroyed"

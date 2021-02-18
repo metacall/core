@@ -126,8 +126,11 @@ target_link_libraries(${target}
 #
 
 add_test(NAME ${target}
-	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+	# WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 	COMMAND $<TARGET_FILE:${target}>
+
+	# TODO: Remove this
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/source/ports/scala_port
 )
 
 #

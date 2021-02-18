@@ -6,6 +6,7 @@ import scala.concurrent.ExecutionContext
 
 import com.sun.jna._, ptr.PointerByReference
 import java.util.concurrent.{ConcurrentLinkedQueue, ConcurrentHashMap}
+import java.util.concurrent.locks.{ReentrantLock}
 import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 
 /** `Caller` creates a new thread on which:
@@ -41,32 +42,46 @@ object Caller {
     if (!runningInMetacall)
       Bindings.instance.metacall_initialize()
 
-    while (!closed.get) try {
+    while (!closed.get) {
       if (!scriptsQueue.isEmpty()) {
-        val LoadCommand(namespace, runtime, paths) = scriptsQueue.poll()
-        val handleRef = namespace.map(_ => new PointerByReference())
-        Loader.loadFilesUnsafe(runtime, paths, handleRef)
-        handleRef.zip(namespace) match {
-          case Some((handleRef, namespace)) =>
-            namespaceHandles.put(
-              namespace,
-              handleRef
-            )
-          case None => ()
+        try {
+          scriptsLock.lock()
+          val LoadCommand(namespace, runtime, paths) = scriptsQueue.poll()
+          val handleRef = namespace.map(_ => new PointerByReference())
+          Loader.loadFilesUnsafe(runtime, paths, handleRef)
+          handleRef.zip(namespace) match {
+            case Some((handleRef, namespace)) =>
+              namespaceHandles.put(
+                namespace,
+                handleRef
+              )
+            case None => ()
+          }
+          // TODO: We may need to set up the result or the error in a monad
+        } catch {
+          // TODO: We may need to set up the result or the error in a monad
+          case e: Throwable => Console.err.println(e)
+        } finally {
+          scriptsReady.signal()
+          scriptsLock.unlock()
         }
       } else if (!callQueue.isEmpty()) {
-        val UniqueCall(Call(namespace, fnName, args), id) = callQueue.poll()
-        val result = callUnsafe(namespace, fnName, args)
-        callResultMap.put(id, result)
+        try {
+          val UniqueCall(Call(namespace, fnName, args), id) = callQueue.poll()
+          val result = callUnsafe(namespace, fnName, args)
+          callResultMap.put(id, result)
+        } catch {
+          case e: Throwable => Console.err.println(e)
+        }
       }
-    } catch {
-      case e: Throwable => Console.err.println(e)
     }
 
     if (!runningInMetacall)
       Bindings.instance.metacall_destroy()
   }
 
+  private val scriptsLock = new ReentrantLock()
+  private val scriptsReady = scriptsLock.newCondition()
   private val closed = new AtomicBoolean(false)
   private val callQueue = new ConcurrentLinkedQueue[UniqueCall]()
   private val callResultMap = new ConcurrentHashMap[Int, Value]()
@@ -90,7 +105,13 @@ object Caller {
     }
 
     scriptsQueue.add(LoadCommand(namespace, runtime, filePaths))
-    while (!scriptsQueue.isEmpty()) ()
+
+    scriptsLock.lock()
+
+    while (!scriptsQueue.isEmpty())
+      scriptsReady.await()
+
+    scriptsLock.unlock()
   }
 
   def loadFile(
@@ -106,10 +127,7 @@ object Caller {
     loadFile(runtime, filePath, None)
 
   def start(): Unit = {
-    if (!runningInMetacall)
-      new Thread(() => callLoop()).start()
-    else
-      callLoop()
+    new Thread(() => callLoop()).start()
   }
 
   def destroy(): Unit = closed.set(true)

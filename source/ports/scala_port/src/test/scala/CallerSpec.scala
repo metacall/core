@@ -3,10 +3,14 @@ package metacall
 import metacall.instances._
 import org.scalatest.flatspec.AnyFlatSpec
 
+class CallerSpecRunner {
+  def run() = {
+    println("Executing CallerSpec Tests")
+    (new CallerSpec()).execute()
+  }
+}
+
 class CallerSpec extends AnyFlatSpec {
-  // TODO: This won't work with NodeJS, it is not tolerant a reinitialization.
-  //       Probably we should split this into two tests, one for the caller (event loop based),
-  //       and another for MetaCall without event loop. So each test suite runs in a different process.
   "Caller" should "start successfully" in {
     Caller.start()
   }
