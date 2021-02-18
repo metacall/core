@@ -35,7 +35,7 @@ object Caller {
       filePaths: Vector[String]
   )
 
-  private val runningInMetacall = System.getProperty("java.polyglot.name") == "metacall"
+  private val runningInMetacall = System.getProperty("metacall.polyglot.name") == "core"
 
   private def callLoop() = {
     if (!runningInMetacall)
