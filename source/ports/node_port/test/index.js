@@ -44,7 +44,7 @@ describe('metacall', () => {
 
 	describe('fail', () => {
 		it('require', () => {
-			assert.strictEqual(require('./asd.invalid'), undefined);
+			assert.throws(() => { require('./asd.invalid') }, new Error('Cannot find module \'./asd.invalid\''));
 		});
 	});
 
