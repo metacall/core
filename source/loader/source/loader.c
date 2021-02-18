@@ -172,8 +172,6 @@ void loader_initialize_proxy()
 					log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
 
 					loader_impl_destroy(proxy);
-
-					free(host);
 				}
 
 				/* Insert into destruction list */
@@ -353,15 +351,19 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 	if (impl != NULL)
 	{
-		if (set_insert(l->impl_map, (set_key)loader_impl_tag(impl), impl) == 0)
+		if (set_insert(l->impl_map, (set_key)loader_impl_tag(impl), impl) != 0)
 		{
-			return impl;
+			log_write("metacall", LOG_LEVEL_ERROR, "Loader implementation insertion error (%s)", tag);
+
+			loader_impl_destroy(impl);
+
+			return NULL;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Loader implementation insertion error (%s)", tag);
-
-		loader_impl_destroy(impl);
+		return impl;
 	}
+
+	free(host);
 
 	return NULL;
 }
