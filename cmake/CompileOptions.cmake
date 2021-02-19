@@ -13,6 +13,7 @@ string(TOUPPER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_UPPER)
 
 # Determine architecture (32/64 bit)
 set(X64 OFF)
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(X64 ON)
 endif()
@@ -160,9 +161,8 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 		add_compile_options(-Wreturn-stack-address)
 	endif()
 
-	if(PROJECT_OS_LINUX)
-		# Enable threads in linux
-		add_compile_options(-pthread)
+	if(PROJECT_OS_HAIKU)
+		add_compile_options(-fPIC)
 	endif()
 
 	# All warnings that are not explicitly disabled are reported as errors
@@ -201,9 +201,13 @@ endif()
 
 set(DEFAULT_LINKER_OPTIONS)
 
-# Use pthreads on mingw and linux
-if(("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR "${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+if(APPLE OR PROJECT_OS_LINUX OR MINGW)
+	# Enable threads in linux, macos and mingw
 	set(DEFAULT_LINKER_OPTIONS
 		-pthread
+	)
+elseif(PROJECT_OS_HAIKU)
+	set(DEFAULT_LINKER_OPTIONS
+		-lpthread
 	)
 endif()

@@ -29,49 +29,24 @@
 extern "C" {
 #endif
 
-/* -- Forward Declarations -- */
+/* -- Headers -- */
 
-struct thread_id_type;
+#include <stdint.h>
 
-/* -- Type Definitions -- */
+/* -- Definitions -- */
 
-typedef struct thread_id_type * thread_id;
+#define THREAD_ID_INVALID UINT64_MAX
 
 /* -- Macros -- */
 
 /**
 *  @brief
-*    Return a new pointer to the id of the current thread (must be freed)
+*    Return the current thread id depending on the platform
 *
 *  @return
-*    Returns pointer to thread id implementation on correct creation, null otherwise
+*    Curent thread id casted to an uint64_t
 */
-THREADING_API thread_id thread_id_get_current(void);
-
-/**
-*  @brief
-*    Compare if two thread ids are equal
-*
-*  @param[in] left
-*    The left operand of the thread id comparison
-*
-*  @param[in] right
-*    The right operand of the thread id comparison
-*
-*  @return
-*    Returns 0 if they are equal, 1 if they are different
-*/
-THREADING_API int thread_id_compare(thread_id left, thread_id right);
-
-/**
-*  @brief
-*    Cleans up memory associated to the thread id
-*
-*  @param[in] id
-*    The thread id pointer to be destroyed
-*/
-THREADING_API void thread_id_destroy(thread_id id);
-
+THREADING_API uint64_t thread_id_get_current(void);
 
 #ifdef __cplusplus
 }

@@ -17,7 +17,6 @@
  *	limitations under the License.
  *
  */
-
 /* -- Headers -- */
 
 #include <dynlink/dynlink.h>
@@ -28,18 +27,18 @@
 
 #include <string.h>
 
-#include <dlfcn.h>
+#include <be/kernel/image.h>
 
 /* -- Methods -- */
 
-const char * dynlink_impl_interface_extension_unix(void)
+const char * dynlink_impl_interface_extension_beos(void)
 {
-	static const char extension_unix[0x03] = "so";
+	static const char extension_beos[0x03] = "so";
 
-	return extension_unix;
+	return extension_beos;
 }
 
-void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t length)
+void dynlink_impl_interface_get_name_beos(dynlink handle, dynlink_name_impl name_impl, size_t length)
 {
 	strncpy(name_impl, "lib", length);
 
@@ -50,60 +49,48 @@ void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name
 	strncat(name_impl, dynlink_impl_extension(), length);
 }
 
-dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
+dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 {
 	dynlink_flags flags = dynlink_get_flags(handle);
 
 	int flags_impl;
 
-	void * impl;
+	image_id impl;
 
 	DYNLINK_FLAGS_SET(flags_impl, 0);
 
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_NOW))
-	{
-		DYNLINK_FLAGS_ADD(flags_impl, RTLD_NOW);
-	}
+	impl = load_add_on(dynlink_get_name_impl(handle));
 
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LAZY))
-	{
-		DYNLINK_FLAGS_ADD(flags_impl, RTLD_LAZY);
-	}
-
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_LOCAL))
-	{
-		DYNLINK_FLAGS_ADD(flags_impl, RTLD_LOCAL);
-	}
-
-	if (DYNLINK_FLAGS_CHECK(flags, DYNLINK_FLAGS_BIND_GLOBAL))
-	{
-		DYNLINK_FLAGS_ADD(flags_impl, RTLD_GLOBAL);
-	}
-
-	impl = dlopen(dynlink_get_name_impl(handle), flags_impl);
-
-	if (impl != NULL)
+	if (impl < B_NO_ERROR)
 	{
 		return (dynlink_impl)impl;
 	}
 
-	log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: %s", dlerror());
+	log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku image add-on");
 
 	return NULL;
 }
 
-int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
+int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
 {
-	void * symbol = dlsym(impl, name);
+	void * symbol = NULL;
+
+	int err = get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
 
 	(void)handle;
+
+	if (err != B_OK)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku symbol %s", name);
+		return 1;
+	}
 
 	*addr = (dynlink_symbol_addr)symbol;
 
 	return (*addr == NULL);
 }
 
-int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
+int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 {
 	(void)handle;
 
@@ -112,20 +99,20 @@ int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 		(void)impl;
 		return 0;
 	#else
-		return dlclose(impl);
+		return ((image_id)impl > 0) && (unload_add_on((image_id)impl) < B_NO_ERROR);
 	#endif
 }
 
-dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
+dynlink_impl_interface dynlink_impl_interface_singleton_beos(void)
 {
-	static struct dynlink_impl_interface_type impl_interface_unix =
+	static struct dynlink_impl_interface_type impl_interface_beos =
 	{
-		&dynlink_impl_interface_extension_unix,
-		&dynlink_impl_interface_get_name_unix,
-		&dynlink_impl_interface_load_unix,
-		&dynlink_impl_interface_symbol_unix,
-		&dynlink_impl_interface_unload_unix
+		&dynlink_impl_interface_extension_beos,
+		&dynlink_impl_interface_get_name_beos,
+		&dynlink_impl_interface_load_beos,
+		&dynlink_impl_interface_symbol_beos,
+		&dynlink_impl_interface_unload_beos
 	};
 
-	return &impl_interface_unix;
+	return &impl_interface_beos;
 }
