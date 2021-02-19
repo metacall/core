@@ -28,7 +28,7 @@
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__) || \
 	((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) || \
-	defined(__unix__)
+	defined(__unix__) || defined(__HAIKU__) || defined(__BEOS)
 #	define THREADING_POSIX 1 /* Uses POSIX */
 #	include <pthread.h>
 #elif defined(WIN32) || defined(_WIN32)
@@ -40,7 +40,7 @@
 
 /* -- Member Data -- */
 
-struct thread_id_type
+struct thread_os_id_type
 {
 #if defined(THREADING_POSIX)
 	pthread_t id;
@@ -51,9 +51,9 @@ struct thread_id_type
 
 /* -- Methods -- */
 
-thread_id thread_id_get_current()
+thread_os_id thread_id_get_current()
 {
-	thread_id current = malloc(sizeof(struct thread_id_type));
+	thread_os_id current = malloc(sizeof(struct thread_os_id_type));
 
 	if (current == NULL)
 	{
@@ -69,7 +69,7 @@ thread_id thread_id_get_current()
 	return current;
 }
 
-int thread_id_compare(thread_id left, thread_id right)
+int thread_id_compare(thread_os_id left, thread_os_id right)
 {
 	#if defined(THREADING_POSIX)
 		return pthread_equal(left->id, right->id) == 0 ? 1 : 0;
@@ -78,7 +78,7 @@ int thread_id_compare(thread_id left, thread_id right)
 	#endif
 }
 
-void thread_id_destroy(thread_id id)
+void thread_id_destroy(thread_os_id id)
 {
 	if (id != NULL)
 	{

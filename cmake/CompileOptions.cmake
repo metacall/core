@@ -13,6 +13,7 @@ string(TOUPPER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_UPPER)
 
 # Determine architecture (32/64 bit)
 set(X64 OFF)
+
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
 	set(X64 ON)
 endif()
@@ -165,6 +166,10 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 		add_compile_options(-pthread)
 	endif()
 
+	if(PROJECT_OS_HAIKU)
+		add_compile_options(-lpthread)
+	endif()
+
 	# All warnings that are not explicitly disabled are reported as errors
 	#add_compile_options(-Werror)
 	add_compile_options(-Wall)
@@ -195,6 +200,12 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 	endif()
 endif()
 
+if(PROJECT_OS_FAMILY MATCHES "beos")
+	if(PROJECT_OS_HAIKU)
+		add_compile_options(-fPIC)
+	endif()
+endif()
+
 #
 # Linker options
 #
@@ -202,8 +213,10 @@ endif()
 set(DEFAULT_LINKER_OPTIONS)
 
 # Use pthreads on mingw and linux
-if(("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR "${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+# if(("${CMAKE_C_COMPILER_ID}" MATCHES "GNU" AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR "${CMAKE_SYSTEM_NAME}" MATCHES "Linux")
+if(MINGW)
 	set(DEFAULT_LINKER_OPTIONS
 		-pthread
 	)
+	message(STATUS "-pthread enabled as compile flag")
 endif()
