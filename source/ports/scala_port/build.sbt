@@ -25,9 +25,58 @@ lazy val commonSettings = Seq(
   )
 )
 
+lazy val dockerTest = taskKey[Unit]("Run tests in metacall/core:dev")
+dockerTest := {
+  import scala.sys.process._
+  import java.nio.file.Paths
+  import sbt.Keys.streams
+
+  val logger = streams.value.log
+  logger.info(
+    "NOTE: Run `./docker-compose.sh build` in the root of metacall/core first to get the latest metacall/core:dev image"
+  )
+
+  try s"docker run -v ${Paths.get("").toAbsolutePath().toString()}:/tests metacall-scala-tests" !
+  catch {
+    case e: Throwable => {
+      val msg =
+        e.getMessage() + "\nTIP: Run `sbt build` if the image `metacall-scala-tests` doesn't exist"
+
+      logger.err(msg)
+
+      throw new Exception(msg)
+    }
+  }
+}
+
 lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
     name := "metacall",
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    dockerfile in docker := new Dockerfile {
+      from("metacall/core:dev")
+
+      // Set up Scala and SBT using Coursier
+      workDir("/")
+      run("curl", "-fLo", "cs", "https://git.io/coursier-cli-linux")
+      run("chmod", "+x", "cs")
+      run("./cs", "setup", "--env", "--jvm", "11", "--apps", "sbt-launcher")
+      env(
+        "JAVA_HOME" -> "/root/.cache/coursier/jvm/adopt@1.11.0-9",
+        "PATH" -> "/root/.cache/coursier/jvm/adopt@1.11.0-9/bin:/root/.local/share/coursier/bin:$PATH"
+      )
+      // To set up dependencies and SBT
+      import java.nio.file.Paths
+      copy(Paths.get("").toAbsolutePath().toFile(), new File("/_tests"))
+      workDir("/_tests")
+      run("sbt", "compile")
+
+      // The SBT project root
+      volume("/tests")
+      workDir("/tests/")
+      entryPoint("sbt", "test")
+    },
+    imageNames in docker := Seq(ImageName("metacall-scala-tests"))
   )
+  .enablePlugins(DockerPlugin)

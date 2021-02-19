@@ -18,7 +18,7 @@ DETOUR_LIBRARY_PATH
 PORT_LIBRARY_PATH
 ```
 
-> Note: You'll find the bindings and the code that runs on `sbt test` in `src/main/scala/MetaCall.scala`.
+To run the tests in Docker, run `sbt docker` to build the image, and then `sbt dockerTest` to run it. Note that you should build the `metacall/core:dev` image locally since the published one might not be up to date by running `./docker-compose.sh build` in `metacall/core`'s root. Pay attention to SBT's error messages.
 
 ## Debugging
 
