@@ -29,28 +29,28 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  "MetaCall" should "load node script successsfully" in {
-    // NodeJS requires to set the library path environment variable
-    assert(
-      sys.env("LOADER_LIBRARY_PATH") != "",
-      "For running NodeJS tests you must define the loader library path"
-    )
+  // "MetaCall" should "load node script successsfully" in {
+  //   // NodeJS requires to set the library path environment variable
+  //   assert(
+  //     sys.env.get("LOADER_LIBRARY_PATH").map(_ != "").getOrElse(false),
+  //     "For running NodeJS tests you must define the loader library path"
+  //   )
 
-    val scriptPaths = Array(
-      Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
-    )
-    val retCode = metacall.metacall_load_from_file(
-      "node",
-      scriptPaths,
-      SizeT(scriptPaths.length.toLong),
-      null
-    )
+  //   val scriptPaths = Array(
+  //     Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
+  //   )
+  //   val retCode = metacall.metacall_load_from_file(
+  //     "node",
+  //     scriptPaths,
+  //     SizeT(scriptPaths.length.toLong),
+  //     null
+  //   )
 
-    require(
-      retCode == 0,
-      s"MetaCall failed to load the script with code $retCode"
-    )
-  }
+  //   require(
+  //     retCode == 0,
+  //     s"MetaCall failed to load the script with code $retCode"
+  //   )
+  // }
 
   "MetaCall" should "load python script successsfully" in {
     val scriptPaths = Array(
@@ -218,7 +218,6 @@ class MetaCallSpec extends AnyFlatSpec {
       LongValue(Long.MinValue),
       StringValue("Helloooo"),
       CharValue('j'),
-      StringValue("😍 🔥 ⚡"),
       BooleanValue(true),
       NullValue,
       ArrayValue(Vector(IntValue(1), StringValue("Hi"))),
