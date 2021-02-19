@@ -13,6 +13,7 @@ set(SERIAL_MODULE_NAMES
 	preprocessor
 	environment
 	format
+	threading
 	log
 	memory
 	portability

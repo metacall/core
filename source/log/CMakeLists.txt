@@ -39,7 +39,6 @@ set(headers
 	${include_path}/log_valid_size.h
 	${include_path}/log_map.h
 	${include_path}/log_level.h
-	${include_path}/log_thread_id.h
 	${include_path}/log_record.h
 	${include_path}/log_handle.h
 	${include_path}/log_policy.h
@@ -79,7 +78,6 @@ set(sources
 	${source_path}/log_valid_size.c
 	${source_path}/log_map.c
 	${source_path}/log_level.c
-	${source_path}/log_thread_id.c
 	${source_path}/log_record.c
 	${source_path}/log_handle.c
 	${source_path}/log_policy.c
@@ -205,6 +203,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::threading
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

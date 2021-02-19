@@ -29,7 +29,6 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(WriterCompilerDetectionHeaderFound NOTFOUND)
 
-include(GenerateExportHeader)
 include(ExternalProject)
 
 # This module is only available with CMake >=3.1, so check whether it could be found
@@ -121,6 +120,7 @@ file(WRITE "${PROJECT_BINARY_DIR}/VERSION" "${META_NAME_VERSION}")
 #
 
 include(Portability)
+include(GenerateExportHeader)
 
 #
 # Compiler settings and options

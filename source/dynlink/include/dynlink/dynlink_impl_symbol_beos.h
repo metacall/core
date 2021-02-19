@@ -18,14 +18,12 @@
  *
  */
 
-#ifndef DYNLINK_IMPL_SYMBOL_WIN32_H
-#define DYNLINK_IMPL_SYMBOL_WIN32_H 1
+#ifndef DYNLINK_IMPL_SYMBOL_BEOS_H
+#define DYNLINK_IMPL_SYMBOL_BEOS_H 1
 
 /* -- Headers -- */
 
 #include <dynlink/dynlink_api.h>
-
-#include <preprocessor/preprocessor_concatenation.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,26 +31,33 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define DYNLINK_SYMBOL_PREFIX
+#define DYNLINK_SYMBOL_PREFIX \
+	dynlink_symbol_
 
 /* -- Macros -- */
 
 #define DYNLINK_SYMBOL_EXPORT(name) \
-	DYNLINK_NO_EXPORT struct \
+	DYNLINK_API struct dynlink_symbol_addr_beos_type DYNLINK_SYMBOL_NAME(name) = \
 	{ \
-		char name; \
-	} PREPROCESSOR_CONCAT(dynlink_no_export_, name)
+		(dynlink_symbol_addr_beos_impl)&name \
+	}
 
-#define DYNLINK_SYMBOL_GET(name) name
+#define DYNLINK_SYMBOL_GET(name) \
+	((dynlink_symbol_addr_beos)(name))->symbol
 
 /* -- Type definitions -- */
 
-typedef void (*dynlink_symbol_addr_win32)(void);
+typedef void (*dynlink_symbol_addr_beos_impl)(void);
 
-typedef dynlink_symbol_addr_win32 dynlink_symbol_addr;
+typedef struct dynlink_symbol_addr_beos_type
+{
+	dynlink_symbol_addr_beos_impl symbol;
+} * dynlink_symbol_addr_beos;
+
+typedef dynlink_symbol_addr_beos dynlink_symbol_addr;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DYNLINK_IMPL_SYMBOL_WIN32_H */
+#endif /* DYNLINK_IMPL_SYMBOL_BEOS_H */

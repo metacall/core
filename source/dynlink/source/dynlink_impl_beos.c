@@ -1,11 +1,22 @@
 /*
  *	Dynamic Link Library by Parra Studios
- *	Copyright (C) 2009 - 2016 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
- *
  *	A library for dynamic loading and linking shared objects at run-time.
  *
+ *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
+ *
  */
-
 /* -- Headers -- */
 
 #include <dynlink/dynlink.h>
@@ -44,13 +55,13 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 
 	int flags_impl;
 
-	void* impl;
+	image_id impl;
 
 	DYNLINK_FLAGS_SET(flags_impl, 0);
 
-	impl = (void*)load_add_on(dynlink_get_name_impl(handle));
+	impl = load_add_on(dynlink_get_name_impl(handle));
 
-	if (impl != NULL || impl == B_OK)
+	if (impl < B_NO_ERROR)
 	{
 		return (dynlink_impl)impl;
 	}
@@ -63,9 +74,16 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
 {
 	void * symbol = NULL;
-	get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_TEXT, &symbol);
+
+	int err = get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
 
 	(void)handle;
+
+	if (err != B_OK)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "DynLink error: failed to load BeOS/Haiku symbol %s", name);
+		return 1;
+	}
 
 	*addr = (dynlink_symbol_addr)symbol;
 
@@ -81,7 +99,7 @@ int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 		(void)impl;
 		return 0;
 	#else
-		return unload_add_on((image_id)impl);
+		return ((image_id)impl > 0) && (unload_add_on((image_id)impl) < B_NO_ERROR);
 	#endif
 }
 

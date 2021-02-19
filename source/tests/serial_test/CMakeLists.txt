@@ -1,3 +1,8 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_METACALL OR NOT OPTION_BUILD_SERIALS_RAPID_JSON)
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -84,6 +89,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::environment
 	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::threading
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::memory
 	${META_PROJECT_NAME}::portability
@@ -128,6 +134,14 @@ add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
 
+#
+# Define dependencies
+#
+
+add_dependencies(${target}
+	metacall_serial
+	rapid_json_serial
+)
 #
 # Define test labels
 #

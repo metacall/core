@@ -63,6 +63,11 @@ if(PROJECT_OS_HAIKU)
 	set(PROJECT_OS_NAME "Haiku")
 	set(PROJECT_OS_FAMILY beos)
 	add_compile_definitions(__HAIKU__)
+
+	# Workaround to enable Haiku with export headers
+	set(WIN32 1)
+	include(GenerateExportHeader)
+	unset(WIN32)
 endif()
 
 # Check Windows
