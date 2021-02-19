@@ -54,6 +54,17 @@ if(PROJECT_OS_SOLARIS)
 	set(PROJECT_OS_FAMILY unix)
 endif()
 
+# Check Haiku
+string(REGEX MATCH "Haiku" PROJECT_OS_HAIKU ${CMAKE_SYSTEM_NAME})
+
+if(PROJECT_OS_HAIKU)
+	set(HAIKU 1)
+	set(PROJECT_OS_HAIKU TRUE BOOL INTERNAL)
+	set(PROJECT_OS_NAME "Haiku")
+	set(PROJECT_OS_FAMILY beos)
+	add_compile_definitions(__HAIKU__)
+endif()
+
 # Check Windows
 if(WIN32)
 	set(PROJECT_OS_WIN TRUE BOOL INTERNAL)

@@ -36,6 +36,8 @@
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 #	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR(chr) (chr == '/')
+#elif defined(__HAIKU__) || defined(__BEOS__)
+#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR(chr) (chr == '/')
 #else
 #	error "Unknown environment variable path separator"
 #endif

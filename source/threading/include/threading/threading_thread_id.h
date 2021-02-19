@@ -31,11 +31,11 @@ extern "C" {
 
 /* -- Forward Declarations -- */
 
-struct thread_id_type;
+struct thread_os_id_type;
 
 /* -- Type Definitions -- */
 
-typedef struct thread_id_type * thread_id;
+typedef struct thread_os_id_type * thread_os_id;
 
 /* -- Macros -- */
 
@@ -46,7 +46,7 @@ typedef struct thread_id_type * thread_id;
 *  @return
 *    Returns pointer to thread id implementation on correct creation, null otherwise
 */
-THREADING_API thread_id thread_id_get_current(void);
+THREADING_API thread_os_id thread_id_get_current(void);
 
 /**
 *  @brief
@@ -61,7 +61,7 @@ THREADING_API thread_id thread_id_get_current(void);
 *  @return
 *    Returns 0 if they are equal, 1 if they are different
 */
-THREADING_API int thread_id_compare(thread_id left, thread_id right);
+THREADING_API int thread_id_compare(thread_os_id left, thread_os_id right);
 
 /**
 *  @brief
@@ -70,7 +70,7 @@ THREADING_API int thread_id_compare(thread_id left, thread_id right);
 *  @param[in] id
 *    The thread id pointer to be destroyed
 */
-THREADING_API void thread_id_destroy(thread_id id);
+THREADING_API void thread_id_destroy(thread_os_id id);
 
 
 #ifdef __cplusplus
