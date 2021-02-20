@@ -54,6 +54,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "metacall",
     parallelExecution in Test := false,
+    fork in (Test / run) := true,
     dockerfile in docker := new Dockerfile {
       from("metacall/core:dev")
 
