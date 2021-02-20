@@ -22,11 +22,13 @@ class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
 
   "MetaCall" should "initialize successfully" in {
-    println(s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------")
+    println(
+      s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------"
+    )
 
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
-    if (System.getProperty("metacall.polyglot.name") != "core") {
+    if (!Bindings.runningInMetacall) {
       assert(
         metacall.metacall_initialize() == 0,
         "MetaCall was not successfully initialized"
@@ -44,6 +46,7 @@ class MetaCallSpec extends AnyFlatSpec {
     val scriptPaths = Array(
       Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
     )
+
     val retCode = metacall.metacall_load_from_file(
       "node",
       scriptPaths,
@@ -55,7 +58,9 @@ class MetaCallSpec extends AnyFlatSpec {
       retCode == 0,
       s"MetaCall failed to load the script with code $retCode"
     )
+  }
 
+  "MetaCall" should "call NodeJS async functions" in {
     val awaitLock = new ReentrantLock()
     val awaitCond = awaitLock.newCondition()
     val resolved = new AtomicBoolean(false)
@@ -511,7 +516,7 @@ class MetaCallSpec extends AnyFlatSpec {
   "MetaCall" should "be destroyed successfully" in {
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
-    if (System.getProperty("metacall.polyglot.name") != "core") {
+    if (!Bindings.runningInMetacall) {
       assert(
         metacall.metacall_destroy() == 0,
         "MetaCall was not successfully destroyed"

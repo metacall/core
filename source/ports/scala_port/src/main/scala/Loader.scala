@@ -3,6 +3,7 @@ package metacall
 import metacall.util._
 import java.nio.file.Paths
 import com.sun.jna._, ptr.PointerByReference
+import scala.util._
 
 /** Loads scripts into MetaCall
   * NOTE: Assumes MetaCall is initialized
@@ -11,11 +12,12 @@ import com.sun.jna._, ptr.PointerByReference
   */
 private[metacall] object Loader {
 
+  /** NOTE: Should only be called from the MetaCall thread */
   private[metacall] def loadFilesUnsafe(
       runtime: Runtime,
       filePaths: Vector[String],
       handleRef: Option[PointerByReference]
-  ): Unit = {
+  ): Try[Unit] = {
     val absolutePaths =
       filePaths.map(filePath => Paths.get(filePath).toAbsolutePath().toString())
 
@@ -30,7 +32,9 @@ private[metacall] object Loader {
     )
 
     if (code != 0)
-      throw new Exception("Failed to load scripts: " + filePaths.mkString(" "))
+      Failure(new Exception("Failed to load scripts: " + filePaths.mkString(" ")))
+    else
+      Success(())
   }
 }
 

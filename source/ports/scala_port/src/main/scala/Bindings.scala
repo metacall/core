@@ -52,7 +52,14 @@ protected[metacall] trait Bindings extends Library {
     def invoke(error: Pointer, data: Pointer): Pointer
   }
 
-  def metacall_await_s(name: String, args: Array[Pointer], size: SizeT, resolve: ResolveCallback, reject: RejectCallback, data: Pointer): Pointer
+  def metacall_await_s(
+      name: String,
+      args: Array[Pointer],
+      size: SizeT,
+      resolve: ResolveCallback,
+      reject: RejectCallback,
+      data: Pointer
+  ): Pointer
 
   def metacallhv_s(
       handle: Pointer,
@@ -133,4 +140,6 @@ protected[metacall] trait Bindings extends Library {
 }
 private[metacall] object Bindings {
   val instance = Native.load("metacall", classOf[Bindings])
+
+  val runningInMetacall = System.getProperty("metacall.polyglot.name") == "core"
 }
