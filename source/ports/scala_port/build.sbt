@@ -1,3 +1,5 @@
+import Tests._
+
 lazy val commonSettings = Seq(
   name := "metacall",
   scalaVersion := "2.13.4",
@@ -53,8 +55,10 @@ lazy val root = (project in file("."))
   .settings(commonSettings: _*)
   .settings(
     name := "metacall",
-    parallelExecution in Test := false,
-    fork in (Test / run) := true,
+    fork in Test := true,
+    testGrouping in Test := (testGrouping in Test).value.flatMap { group =>
+      group.tests map (test => Group(test.name, Seq(test), SubProcess(ForkOptions())))
+    },
     dockerfile in docker := new Dockerfile {
       from("metacall/core:dev")
 

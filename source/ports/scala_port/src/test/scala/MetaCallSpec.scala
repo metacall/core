@@ -19,6 +19,8 @@ class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
 
   "MetaCall" should "initialize successfully" in {
+    println(s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------")
+
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
     if (System.getProperty("metacall.polyglot.name") != "core") {

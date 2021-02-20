@@ -12,6 +12,7 @@ class CallerSpecRunner {
 
 class CallerSpec extends AnyFlatSpec {
   "Caller" should "start successfully" in {
+    println(s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------")
     Caller.start()
   }
 
