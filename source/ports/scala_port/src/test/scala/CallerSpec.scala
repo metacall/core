@@ -2,6 +2,7 @@ package metacall
 
 import metacall.instances._
 import org.scalatest.flatspec.AnyFlatSpec
+import scala.util._
 
 class CallerSpecRunner {
   def run() = {
@@ -12,20 +13,27 @@ class CallerSpecRunner {
 
 class CallerSpec extends AnyFlatSpec {
   "Caller" should "start successfully" in {
-    println(s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------")
+    println(
+      s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------"
+    )
     Caller.start()
   }
 
   "Caller" should "load scripts into global scope successfully" in {
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py", None)
+    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
   }
 
-  "Caller" should "load scripts into namespaces" in {
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s1.py", Some("s1"))
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", Some("s2"))
+  "Caller" should "load scripts into namespaces and call them" in {
+    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s1.py", "s1")
+    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", "s2")
 
     assert(
-      Caller.blocking.call("fn_in_s1", (), Some("s1")) == StringValue("Hello from s1")
+      Caller.blocking.call("fn_in_s1", (), Some("s1")) ==
+        Success(StringValue("Hello from s1"))
+    )
+    assert(
+      Caller.blocking.call("fn_in_s2", (), Some("s2")) ==
+        Success(StringValue("Hello from s2"))
     )
   }
 
@@ -35,7 +43,7 @@ class CallerSpec extends AnyFlatSpec {
       List(StringValue("Hello "), StringValue("Scala!"))
     )
 
-    assert(ret == StringValue("Hello Scala!"))
+    assert(ret == Success(StringValue("Hello Scala!")))
   }
 
   "FunctionValues" should "be constructed and passed to foreign functions" in {
@@ -44,24 +52,24 @@ class CallerSpec extends AnyFlatSpec {
       case _                   => NullValue
     }
 
-    val ret = Caller.blocking.callV("apply_fn_to_one", fnVal :: Nil)
+    val ret = Caller.blocking.callV("apply_fn_to_one", fnVal :: Nil).get
 
     assert(ret == LongValue(2L))
   }
 
   "Generic API" should "operate on primitive Scala values" in {
     //  with tuples
-    val ret = Caller.blocking.call("big_fn", (1, "hello", 2.2))
+    val ret = Caller.blocking.call("big_fn", (1, "hello", 2.2)).get
     assert(ret == DoubleValue(8.2))
 
     // with single-element products (i.e. the List)
-    val ret2 = Caller.blocking.call("sumList", List(1, 2, 3))
+    val ret2 = Caller.blocking.call("sumList", List(1, 2, 3)).get
     assert(ret2 == LongValue(6))
 
     // with HLists
     import shapeless._
 
-    val ret3 = Caller.blocking.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
+    val ret3 = Caller.blocking.call("big_fn", 1 :: "hello" :: 2.2 :: HNil).get
     assert(ret3 == DoubleValue(8.2))
   }
 
@@ -75,8 +83,8 @@ class CallerSpec extends AnyFlatSpec {
     val resSum = Future
       .traverse(rangeValues) { range =>
         Future(Caller.blocking.callV("sumList", range :: Nil)) map {
-          case n: NumericValue[_] => n.long.value
-          case other              => fail("Returned value should be a number, but got " + other)
+          case Success(n: NumericValue[_]) => n.long.value
+          case other                       => fail("Returned value should be a number, but got " + other)
         }
       }
       .map(_.sum)
