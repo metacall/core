@@ -17,4 +17,10 @@ function sumListJs(arr) {
     return arr.reduce((acc, val) => acc + val, 0);
 }
 
-module.exports = { hello, env, increment, sumListJs };
+async function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
+module.exports = { hello, env, increment, sumListJs, sleep };

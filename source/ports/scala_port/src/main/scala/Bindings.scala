@@ -44,6 +44,16 @@ protected[metacall] trait Bindings extends Library {
   def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
   def metacallfv_s(func: Pointer, args: Array[Pointer], size: SizeT): Pointer
 
+  trait ResolveCallback extends Callback {
+    def invoke(result: Pointer, data: Pointer): Pointer
+  }
+
+  trait RejectCallback extends Callback {
+    def invoke(error: Pointer, data: Pointer): Pointer
+  }
+
+  def metacall_await_s(name: String, args: Array[Pointer], size: SizeT, resolve: ResolveCallback, reject: RejectCallback, data: Pointer): Pointer
+
   def metacallhv_s(
       handle: Pointer,
       name: String,

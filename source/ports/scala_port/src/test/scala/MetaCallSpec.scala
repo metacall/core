@@ -8,6 +8,9 @@ import metacall.instances._
 import metacall.util._
 import org.scalatest.flatspec.AnyFlatSpec
 
+import java.util.concurrent.locks.{ReentrantLock}
+import java.util.concurrent.atomic.{AtomicBoolean}
+
 class MetaCallSpecRunner {
   def run() = {
     println("Executing MetaCallSpec Tests")
@@ -31,28 +34,75 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  // "MetaCall" should "load node script successsfully" in {
-  //   // NodeJS requires to set the library path environment variable
-  //   assert(
-  //     sys.env.get("LOADER_LIBRARY_PATH").map(_ != "").getOrElse(false),
-  //     "For running NodeJS tests you must define the loader library path"
-  //   )
+  "MetaCall" should "load node script successsfully" in {
+    // NodeJS requires to set the library path environment variable
+    assert(
+      sys.env.get("LOADER_LIBRARY_PATH").map(_ != "").getOrElse(false),
+      "For running NodeJS tests you must define the loader library path"
+    )
 
-  //   val scriptPaths = Array(
-  //     Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
-  //   )
-  //   val retCode = metacall.metacall_load_from_file(
-  //     "node",
-  //     scriptPaths,
-  //     SizeT(scriptPaths.length.toLong),
-  //     null
-  //   )
+    val scriptPaths = Array(
+      Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
+    )
+    val retCode = metacall.metacall_load_from_file(
+      "node",
+      scriptPaths,
+      SizeT(scriptPaths.length.toLong),
+      null
+    )
 
-  //   require(
-  //     retCode == 0,
-  //     s"MetaCall failed to load the script with code $retCode"
-  //   )
-  // }
+    require(
+      retCode == 0,
+      s"MetaCall failed to load the script with code $retCode"
+    )
+
+    val awaitLock = new ReentrantLock()
+    val awaitCond = awaitLock.newCondition()
+    val resolved = new AtomicBoolean(false)
+
+    awaitLock.lock()
+
+    val argPtr = metacall.metacall_value_create_int(1000)
+    val ret = metacall.metacall_await_s(
+      "sleep",
+      Array(argPtr),
+      SizeT(1),
+      new metacall.ResolveCallback() {
+        def invoke(result: Pointer, data: Pointer): Pointer = {
+          awaitLock.lock()
+          resolved.set(true)
+          awaitCond.signal()
+          awaitLock.unlock()
+          null
+        }
+      },
+      new metacall.RejectCallback() {
+        def invoke(result: Pointer, data: Pointer): Pointer = {
+          awaitLock.lock()
+          resolved.set(false)
+          awaitCond.signal()
+          awaitLock.unlock()
+          null
+        }
+      },
+      null
+    )
+
+    awaitCond.await()
+    awaitLock.unlock()
+
+    require(
+      resolved.get() == true,
+      "Await was not resolved succesfully"
+    )
+
+    require(
+      metacall.metacall_value_id(ret) == 12, // METACALL_FUTURE
+      "Invalid return value from metacall await"
+    )
+
+    metacall.metacall_value_destroy(ret)
+  }
 
   "MetaCall" should "load python script successsfully" in {
     val scriptPaths = Array(

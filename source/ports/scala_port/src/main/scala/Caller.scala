@@ -19,8 +19,8 @@ import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
   *
   *  Usage:
   *  ```scala
-  *  Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
   *  Caller.start()
+  *  Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
   *  val ret = Caller.call("big_fn", (1, "hello", 2.2))
   *  assert(ret == DoubleValue(8.2))
   *  ```
