@@ -688,6 +688,40 @@ METACALL_API void * metacall_await(const char * name, void * args[], void * (*re
 
 /**
 *  @brief
+*    Executes an asynchronous call to the function and registers a callback to be executed when a future is resolved (it does block)
+*
+*  @param[in] name
+*    The name of the function to be called asynchronously
+*
+*  @param[in] args
+*    Array of pointers to the values to be passed to the function
+*
+*  @param[in] size
+*    Number of elements of the array @args
+*
+*  @param[in] resolve_callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] reject_callback
+*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void * metacall_await_s(const char * name, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+
+/**
+*  @brief
 *    Call an asynchronous function anonymously by value array @args and function @func
 *
 *  @param[in] func
@@ -716,6 +750,111 @@ METACALL_API void * metacall_await(const char * name, void * args[], void * (*re
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
 METACALL_API void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+
+/**
+*  @brief
+*    Call an asynchronous function anonymously by value array @args and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] args
+*    Array of pointers to values
+*
+*  @param[in] size
+*    Number of elements of the array @args
+*
+*  @param[in] resolve_callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] reject_callback
+*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void * metacallfv_await_s(void * func, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+
+/**
+*  @brief
+*    Call an asynchronous function anonymously by value map (@keys -> @values) and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] keys
+*    Array of values representing argument keys
+*
+*  @param[in] values
+*    Array of values representing argument values data
+*
+*  @param[in] size
+*    Number of elements of the arrays @keys and @values
+*
+*  @param[in] resolve_callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] reject_callback
+*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+
+/**
+*  @brief
+*    Call an asynchronous function anonymously by value map (@keys -> @values) and function @func
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] keys
+*    Array of values representing argument keys
+*
+*  @param[in] values
+*    Array of values representing argument values data
+*
+*  @param[in] resolve_callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] reject_callback
+*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void * metacallfmv_await_s(void * func, void * keys[], void * values[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
 
 /**
 *  @brief
@@ -753,40 +892,6 @@ METACALL_API void * metacallfv_await(void * func, void * args[], void * (*resolv
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
 METACALL_API void * metacallfs_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
-
-/**
-*  @brief
-*    Call an asynchronous function anonymously by value map (@keys -> @values) and function @func
-*
-*  @param[in] func
-*    Reference to function to be called
-*
-*  @param[in] keys
-*    Array of values representing argument keys
-*
-*  @param[in] values
-*    Array of values representing argument values data
-*
-*  @param[in] resolve_callback
-*    Pointer to function that will be executed when task completion
-*      @param[in] void *
-*        Value representing the result of the future resolution
-*      @param[in] void *
-*        A reference to @data that will be used as a closure for the chain
-*      @return
-*        Value containing the result of the operation,
-*        it will be wrapped into a future later on to be returned by the function
-*
-*  @param[in] reject_callback
-*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
-*
-*  @param[in] data
-*    Pointer to a context that will act as a closure for the chain
-*
-*  @return
-*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
-*/
-METACALL_API void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
 
 /**
 *  @brief

@@ -1211,8 +1211,8 @@ int metacall_registerv(const char * name, void * (*invoke)(size_t, void * [], vo
 void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
 	value f_val = loader_get(name);
-
 	function f = NULL;
+
 	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
@@ -1223,6 +1223,19 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	return function_await(f, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
+void * metacall_await_s(const char * name, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	value f_val = loader_get(name);
+	function f = NULL;
+
+	if (value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
+
+	return function_await(f, args, size, resolve_callback, reject_callback, data);
+}
+
 void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
 	function f = (function)func;
@@ -1230,6 +1243,127 @@ void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(v
 	signature s = function_signature(f);
 
 	return function_await(func, args, signature_count(s), resolve_callback, reject_callback, data);
+}
+
+void * metacallfv_await_s(void * func, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	return function_await(func, args, size, resolve_callback, reject_callback, data);
+}
+
+void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		signature s = function_signature(f);
+
+		return metacallfmv_await_s(func, keys, values, signature_count(s), resolve_callback, reject_callback, data);
+	}
+
+	// TODO: Error handling
+	return NULL;
+}
+
+/* TODO: Unify code between metacallfmv and metacallfmv_await_s */
+void * metacallfmv_await_s(void * func, void * keys[], void * values[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		void * args[METACALL_ARGS_SIZE];
+
+		signature s = function_signature(f);
+
+		size_t iterator;
+
+		value ret;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			type_id key_id = value_type_id((value)keys[iterator]);
+
+			size_t index = METACALL_ARGS_SIZE;
+
+			/* Obtain signature index */
+			if (type_id_string(key_id) == 0)
+			{
+				const char * key = value_to_string(keys[iterator]);
+
+				index = signature_get_index(s, key);
+			}
+			else if (type_id_integer(key_id) == 0)
+			{
+				value cast_key = value_type_cast((value)keys[iterator], TYPE_INT);
+
+				int key_index;
+
+				if (cast_key != NULL)
+				{
+					keys[iterator] = cast_key;
+				}
+
+				key_index = value_to_int((value)keys[iterator]);
+
+				if (key_index >= 0 && key_index < METACALL_ARGS_SIZE)
+				{
+					index = (size_t)key_index;
+				}
+			}
+
+			/* If index is valid, cast values and build arguments */
+			if (index < METACALL_ARGS_SIZE)
+			{
+				type t = signature_get_type(s, iterator);
+
+				if (t != NULL)
+				{
+					type_id id = type_index(t);
+
+					if (id != value_type_id((value)values[iterator]))
+					{
+						value cast_arg = value_type_cast((value)values[iterator], id);
+
+						if (cast_arg != NULL)
+						{
+							values[iterator] = cast_arg;
+						}
+					}
+				}
+
+				args[index] = values[iterator];
+			}
+			else
+			{
+				/* TODO: Handle properly exceptions */
+				return NULL;
+			}
+		}
+
+		ret = function_await(f, args, size, resolve_callback, reject_callback, data);
+
+		if (ret != NULL)
+		{
+			type t = signature_get_return(s);
+
+			if (t != NULL)
+			{
+				type_id id = type_index(t);
+
+				if (id != value_type_id(ret))
+				{
+					value cast_ret = value_type_cast(ret, id);
+
+					return (cast_ret == NULL) ? ret : cast_ret;
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	return NULL;
 }
 
 void * metacallfs_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
@@ -1323,107 +1457,6 @@ void * metacallfs_await(void * func, const char * buffer, size_t size, void * al
 
 			return ret;
 		}
-	}
-
-	return NULL;
-}
-
-/* TODO: Unify code between metacallfmv and metacallfmv_await */
-void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
-{
-	function f = (function)func;
-
-	if (f != NULL)
-	{
-		void * args[METACALL_ARGS_SIZE];
-
-		signature s = function_signature(f);
-
-		size_t iterator, args_count = signature_count(s);
-
-		value ret;
-
-		for (iterator = 0; iterator < args_count; ++iterator)
-		{
-			type_id key_id = value_type_id((value)keys[iterator]);
-
-			size_t index = METACALL_ARGS_SIZE;
-
-			/* Obtain signature index */
-			if (type_id_string(key_id) == 0)
-			{
-				const char * key = value_to_string(keys[iterator]);
-
-				index = signature_get_index(s, key);
-			}
-			else if (type_id_integer(key_id) == 0)
-			{
-				value cast_key = value_type_cast((value)keys[iterator], TYPE_INT);
-
-				int key_index;
-
-				if (cast_key != NULL)
-				{
-					keys[iterator] = cast_key;
-				}
-
-				key_index = value_to_int((value)keys[iterator]);
-
-				if (key_index >= 0 && key_index < METACALL_ARGS_SIZE)
-				{
-					index = (size_t)key_index;
-				}
-			}
-
-			/* If index is valid, cast values and build arguments */
-			if (index < METACALL_ARGS_SIZE)
-			{
-				type t = signature_get_type(s, iterator);
-
-				if (t != NULL)
-				{
-					type_id id = type_index(t);
-
-					if (id != value_type_id((value)values[iterator]))
-					{
-						value cast_arg = value_type_cast((value)values[iterator], id);
-
-						if (cast_arg != NULL)
-						{
-							values[iterator] = cast_arg;
-						}
-					}
-				}
-
-				args[index] = values[iterator];
-			}
-			else
-			{
-				/* TODO: Handle properly exceptions */
-				return NULL;
-			}
-		}
-
-		ret = function_await(f, args, args_count, resolve_callback, reject_callback, data);
-
-		if (ret != NULL)
-		{
-			type t = signature_get_return(s);
-
-			if (t != NULL)
-			{
-				type_id id = type_index(t);
-
-				if (id != value_type_id(ret))
-				{
-					value cast_ret = value_type_cast(ret, id);
-
-					return (cast_ret == NULL) ? ret : cast_ret;
-				}
-			}
-		}
-
-		return ret;
 	}
 
 	return NULL;
