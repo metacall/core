@@ -16,7 +16,8 @@ class CallerSpec extends AnyFlatSpec {
     println(
       s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------"
     )
-    Caller.start()
+
+    Caller.start(concurrent.ExecutionContext.global)
   }
 
   "Caller" should "load scripts into global scope successfully" in {

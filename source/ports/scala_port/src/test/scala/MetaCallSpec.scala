@@ -76,6 +76,9 @@ class MetaCallSpec extends AnyFlatSpec {
         def invoke(result: Pointer, data: Pointer): Pointer = {
           awaitLock.lock()
           resolved.set(true)
+
+          assert(metacall.metacall_value_to_string(result) == "Slept 1000 milliseconds!")
+
           awaitCond.signal()
           awaitLock.unlock()
           null
@@ -87,7 +90,8 @@ class MetaCallSpec extends AnyFlatSpec {
           resolved.set(false)
           awaitCond.signal()
           awaitLock.unlock()
-          null
+
+          fail("Promise should not have been refected")
         }
       },
       null
