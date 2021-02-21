@@ -27,14 +27,15 @@ import scala.util._
   *  ```
   */
 object Caller {
-  private case class Call(
+
+  private final case class Call(
       id: Int,
       namespace: Option[String],
       fnName: String,
       args: List[Value]
   )
 
-  private case class LoadCommand(
+  private final case class LoadCommand(
       id: Int,
       namespace: Option[String],
       runtime: Runtime,
@@ -144,8 +145,10 @@ object Caller {
 
   /** Starts the MetaCall instance.
     * WARNING: Should only be called once.
+    * @param ec The `ExecutionContext` in which all (non-blocking) function calls are executed.
     */
-  def start(): Unit = new Thread(() => callLoop()).start()
+  def start(ec: ExecutionContext): Unit =
+    ec.execute(() => concurrent.blocking(callLoop()))
 
   /** Destroys MetaCall.
     * WARNING: Should only be called once during the life of the application.
@@ -216,7 +219,9 @@ object Caller {
       ec: ExecutionContext
   ): Future[Value] =
     Future {
-      blocking.callV(fnName, args, namespace).get
+      concurrent.blocking {
+        blocking.callV(fnName, args, namespace).get
+      }
     }
 
   def call[A](fnName: String, args: A, namespace: Option[String] = None)(implicit

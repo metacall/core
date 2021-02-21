@@ -18,7 +18,7 @@ import metacall._, instances._
 import java.nio.file.Paths
 
 object Main extends App {
-  Caller.start()
+  Caller.start(concurrent.ExecutionContext.global)
 
   Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
 
