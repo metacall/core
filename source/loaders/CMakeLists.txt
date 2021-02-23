@@ -36,7 +36,7 @@ option(OPTION_BUILD_LOADERS_JSM "Build JavaScript SpiderMonkey 4.8 loader plugin
 option(OPTION_BUILD_LOADERS_JS "Build JavaScript V8 5.1+ loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_LUA "Build LuaJIT2 v2.1 (OpenResty fork) loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_MOCK "Build mock loader loader plugin." ON)
-option(OPTION_BUILD_LOADERS_NODE "Build NodeJS 10.22.0 JavaScript Runtime loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_NODE "Build NodeJS 10.23.1 JavaScript Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_PY "Build Python 3.7 C API loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_RB "Build Ruby 2.5 C API loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_RPC "Build cURL Remote Procedure Call loader plugin." OFF)
@@ -55,7 +55,7 @@ add_subdirectory(jsm_loader) # Mozilla's SpiderMonkey 4.8 JavaScript Engine
 add_subdirectory(js_loader) # Google's V8 5.1 JavaScript Engine
 add_subdirectory(lua_loader) # LuaJIT2 v2.1 (OpenResty fork) Runtime
 add_subdirectory(mock_loader) # Mock loader plugin without dependencies (core testing)
-add_subdirectory(node_loader) # NodeJS 10.22.0 JavaScript Runtime
+add_subdirectory(node_loader) # NodeJS 10.23.1 JavaScript Runtime
 add_subdirectory(py_loader) # Python 3.7 C API
 add_subdirectory(rb_loader) # Ruby 2.5 C API
 add_subdirectory(rpc_loader) # cURL Remote Procedure Call

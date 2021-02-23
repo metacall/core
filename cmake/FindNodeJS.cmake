@@ -230,7 +230,7 @@ if(NOT NODEJS_INCLUDE_DIR OR NOT NODEJS_V8_INCLUDE_DIR OR NOT NODEJS_UV_INCLUDE_
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
 		message(STATUS "Downloading NodeJS headers")
-		file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE})
+		file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE} SHOW_PROGRESS)
 	endif()
 
 	# Decompress node if needed
@@ -325,7 +325,7 @@ if(NODEJS_MODULE_VERSION AND NOT NODEJS_BUILD_FROM_SOURCE)
 		set(NODEJS_LIBRARY_PATH "/usr/local/lib")
 	endif()
 
-	set(NODEJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu") # TODO: Add others
+	set(NODEJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu" "/usr/lib/x86_64-linux-gnu") # TODO: Add others
 
 	# Find library
 	find_library(NODEJS_LIBRARY
@@ -333,10 +333,16 @@ if(NODEJS_MODULE_VERSION AND NOT NODEJS_BUILD_FROM_SOURCE)
 		PATHS ${NODEJS_COMPILE_PATH} ${NODEJS_LIBRARY_PATH} ${NODEJS_SYSTEM_LIBRARY_PATH}
 		DOC "NodeJS JavaScript Runtime Library"
 	)
+
+	if(NODEJS_LIBRARY)
+		message(STATUS "NodeJS Library Found")
+	endif()
 endif()
 
 # Install NodeJS library in case it is not distributed
 if(NOT NODEJS_LIBRARY)
+	message(STATUS "NodeJS library not found, trying to build it from source")
+
 	# NodeJS download and output path (workaround to compile node as a shared library)
 	set(NODEJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NODEJS_VERSION}/node-v${NODEJS_VERSION}.tar.gz")
 	set(NODEJS_BASE_PATH "${CMAKE_CURRENT_BINARY_DIR}/sources")
@@ -346,7 +352,7 @@ if(NOT NODEJS_LIBRARY)
 	# Download node if needed
 	if(NOT EXISTS "${NODEJS_DOWNLOAD_FILE}")
 		message(STATUS "Downloading NodeJS distribution v${NODEJS_VERSION}")
-		file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE})
+		file(DOWNLOAD ${NODEJS_DOWNLOAD_URL} ${NODEJS_DOWNLOAD_FILE} SHOW_PROGRESS)
 	endif()
 
 	# Decompress node if needed
@@ -391,7 +397,7 @@ if(NOT NODEJS_LIBRARY)
 				message(STATUS "Install NodeJS shared library")
 
 				# TODO: Implement install command
-				#execute_process(COMMAND msiexec /a "node-v${NODEJS_VERSION}-${NODEJS_COMPILE_ARCH}.msi" WORKING_DIRECTORY "${NODEJS_COMPILE_PATH}" OUTPUT_QUIET)
+				#execute_process(COMMAND msiexec /a "node-v${NODEJS_VERSION}-${NODEJS_COMPILE_ARCH}.msi" WORKING_DIRECTORY "${NODEJS_COMPILE_PATH}")
 			endif()
 
 			# TODO: Delete this workaround after implementing the install command
@@ -421,14 +427,14 @@ if(NOT NODEJS_LIBRARY)
 			ProcessorCount(N)
 
 			if(NOT N EQUAL 0)
-				execute_process(COMMAND sh -c "alias python=`which python2.7`; make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+				execute_process(COMMAND sh -c "alias python=`which python2.7`; make -j${N} -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			else()
-				execute_process(COMMAND sh -c "alias python=`which python2.7`; make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+				execute_process(COMMAND sh -c "alias python=`which python2.7`; make -C out BUILDTYPE=${CMAKE_BUILD_TYPE} V=1" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 			endif()
 
 			message(STATUS "Install NodeJS shared library")
 
-			execute_process(COMMAND sh -c "make install" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}" OUTPUT_QUIET)
+			execute_process(COMMAND sh -c "make install" WORKING_DIRECTORY "${NODEJS_OUTPUT_PATH}")
 		endif()
 	endif()
 
@@ -447,6 +453,10 @@ if(NOT NODEJS_LIBRARY)
 			PATHS ${NODEJS_LIBRARY_PATH}
 			DOC "NodeJS JavaScript Runtime Library"
 		)
+	endif()
+
+	if(NOT NODEJS_LIBRARY)
+		message(SEND_ERROR "NodeJS library not found and it could not be built from source")
 	endif()
 endif()
 
