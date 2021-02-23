@@ -8,9 +8,6 @@ import metacall.instances._
 import metacall.util._
 import org.scalatest.flatspec.AnyFlatSpec
 
-import java.util.concurrent.locks.{ReentrantLock}
-import java.util.concurrent.atomic.{AtomicBoolean}
-
 class MetaCallSpecRunner {
   def run() = {
     println("Executing MetaCallSpec Tests")
@@ -61,13 +58,19 @@ class MetaCallSpec extends AnyFlatSpec {
   }
 
   "MetaCall" should "call NodeJS async functions" in {
+    import java.util.concurrent.locks.{ReentrantLock}
+
+    import concurrent.{Promise, Await}
+    import concurrent.duration._
+
     val awaitLock = new ReentrantLock()
-    val awaitCond = awaitLock.newCondition()
-    val resolved = new AtomicBoolean(false)
 
     awaitLock.lock()
 
+    val promise = Promise[Value]()
+
     val argPtr = metacall.metacall_value_create_int(1000)
+
     val ret = metacall.metacall_await_s(
       "sleep",
       Array(argPtr),
@@ -75,42 +78,29 @@ class MetaCallSpec extends AnyFlatSpec {
       new metacall.ResolveCallback() {
         def invoke(result: Pointer, data: Pointer): Pointer = {
           awaitLock.lock()
-          resolved.set(true)
 
-          assert(metacall.metacall_value_to_string(result) == "Slept 1000 milliseconds!")
+          promise.success(Ptr.toValue(Ptr.fromPrimitiveUnsafe(result)))
 
-          awaitCond.signal()
           awaitLock.unlock()
           null
         }
       },
       new metacall.RejectCallback() {
         def invoke(result: Pointer, data: Pointer): Pointer = {
-          awaitLock.lock()
-          resolved.set(false)
-          awaitCond.signal()
-          awaitLock.unlock()
-
           fail("Promise should not have been refected")
         }
       },
       null
     )
 
-    awaitCond.await()
     awaitLock.unlock()
 
-    require(
-      resolved.get() == true,
-      "Await was not resolved succesfully"
-    )
+    val result = Await.result(promise.future, 2.seconds)
 
-    require(
-      metacall.metacall_value_id(ret) == 12, // METACALL_FUTURE
-      "Invalid return value from metacall await"
-    )
+    assert(result == StringValue("Slept 1000 milliseconds!"))
 
     metacall.metacall_value_destroy(ret)
+    metacall.metacall_value_destroy(argPtr)
   }
 
   "MetaCall" should "load python script successsfully" in {
