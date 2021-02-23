@@ -75,6 +75,8 @@ REFLECT_API int function_decrement_reference(function func);
 
 REFLECT_API void function_async(function func, enum function_async_id async);
 
+REFLECT_API enum function_async_id function_async_id(function func);
+
 REFLECT_API void function_bind(function func, void * data);
 
 REFLECT_API void * function_closure(function func);

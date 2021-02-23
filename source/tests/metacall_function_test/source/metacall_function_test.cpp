@@ -109,6 +109,16 @@ TEST_F(metacall_function_test, DefaultConstructor)
 	ASSERT_NE((void *) NULL, (void *) c_callback_factorial_impl_value);
 	ASSERT_NE((void *) NULL, (void *) c_callback_factorial_value);
 
+	/* Test function data */
+	EXPECT_EQ((int) 0, (int) metacall_function_async(metacall_function("c_callback")));
+	EXPECT_EQ((size_t) 0, (size_t) metacall_function_size(metacall_function("c_callback")));
+	EXPECT_EQ((int) 0, (int) metacall_function_async(metacall_function("c_callback_with_args")));
+	EXPECT_EQ((size_t) 2, (size_t) metacall_function_size(metacall_function("c_callback_with_args")));
+	EXPECT_EQ((int) 0, (int) metacall_function_async(metacall_function("c_callback_factorial_impl")));
+	EXPECT_EQ((size_t) 1, (size_t) metacall_function_size(metacall_function("c_callback_factorial_impl")));
+	EXPECT_EQ((int) 0, (int) metacall_function_async(metacall_function("c_callback_factorial")));
+	EXPECT_EQ((size_t) 1, (size_t) metacall_function_size(metacall_function("c_callback_factorial")));
+
 	/* Python */
 	#if defined(OPTION_BUILD_LOADERS_PY)
 	{

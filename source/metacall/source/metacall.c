@@ -690,6 +690,18 @@ size_t metacall_function_size(void * func)
 	return 0;
 }
 
+int metacall_function_async(void * func)
+{
+	function f = (function)func;
+
+	if (f != NULL)
+	{
+		return function_async_id(f);
+	}
+
+	return -1;
+}
+
 void * metacall_handle(const char * tag, const char * name)
 {
 	return (void *)loader_get_handle(tag, name);
