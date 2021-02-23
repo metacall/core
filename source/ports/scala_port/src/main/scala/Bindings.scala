@@ -136,6 +136,7 @@ protected[metacall] trait Bindings extends Library {
 
   def metacall_value_destroy(v: Pointer): Unit
 
+  // TODO: Enhance return value using http://technofovea.com/blog/archives/815
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
 }
 private[metacall] object Bindings {
