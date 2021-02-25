@@ -459,6 +459,18 @@ METACALL_API size_t metacall_function_size(void * func);
 
 /**
 *  @brief
+*    Check if the function @func is asynchronous or synchronous
+*
+*  @param[in] func
+*    Function reference
+*
+*  @return
+*    Return 0 if it is syncrhonous, 1 if it is asynchronous and -1 if the function is NULL
+*/
+METACALL_API int metacall_function_async(void * func);
+
+/**
+*  @brief
 *    Get the handle by @name
 *
 *  @param[in] tag
