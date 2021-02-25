@@ -1,7 +1,7 @@
 package metacall
 
 import metacall.util._
-import scala.concurrent.Future
+import scala.concurrent.{Future, Promise}
 import scala.concurrent.ExecutionContext
 
 import com.sun.jna._, ptr.PointerByReference
@@ -29,10 +29,10 @@ import scala.util._
 object Caller {
 
   private final case class Call(
-      id: Int,
       namespace: Option[String],
       fnName: String,
-      args: List[Value]
+      args: List[Value],
+      resultPromise: Promise[Value]
   )
 
   private final case class LoadCommand(
@@ -76,9 +76,8 @@ object Caller {
           scriptsLock.unlock()
         }
       } else if (!callQueue.isEmpty()) {
-        val Call(id, namespace, fnName, args) = callQueue.poll()
-        val result = callUnsafe(namespace, fnName, args)
-        callResultMap.put(id, result)
+        val Call(namespace, fnName, args, resultPromise) = callQueue.poll()
+        resultPromise.tryComplete(callUnsafe(namespace, fnName, args))
       }
     }
 
@@ -90,8 +89,6 @@ object Caller {
   private val scriptsReady = scriptsLock.newCondition()
   private val closed = new AtomicBoolean(false)
   private val callQueue = new ConcurrentLinkedQueue[Call]()
-  private val callResultMap = new ConcurrentHashMap[Int, Try[Value]]()
-  private val callCounter = new AtomicInteger(0)
   private val scriptsQueue = new ConcurrentLinkedQueue[LoadCommand]()
   private val scriptLoadResults = new ConcurrentHashMap[Int, Try[Unit]]()
   private val scriptLoadCounter = new AtomicInteger(0)
@@ -209,76 +206,43 @@ object Caller {
     retValue
   }
 
-  /** Calls a loaded function.
+  /** Calls a loaded function with a list of `metacall.Value` arguments.
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
     * @param namespace The script/module file where the function is defined
     * @return The function's return value, or `InvalidValue` in case of an error
     */
-  def callV(fnName: String, args: List[Value], namespace: Option[String] = None)(implicit
-      ec: ExecutionContext
-  ): Future[Value] =
-    Future {
-      concurrent.blocking {
-        blocking.callV(fnName, args, namespace).get
-      }
-    }
+  def callV(
+      fnName: String,
+      args: List[Value],
+      namespace: Option[String] = None
+  ): Future[Value] = {
+    val result = Promise[Value]()
 
+    callQueue.add(Call(namespace, fnName, args, result))
+
+    result.future
+  }
+
+  /** Calls a loaded function with a product value as the arguments.
+    * @param fnName The name of the function to call
+    * @param args A product (tuple, case class, single value) to be passed as arguments to the function
+    * @param namespace The script/module file where the function is defined
+    * @return The function's return value
+    */
   def call[A](fnName: String, args: A, namespace: Option[String] = None)(implicit
-      AA: Args[A],
-      ec: ExecutionContext
+      AA: Args[A]
   ): Future[Value] =
     callV(fnName, AA.from(args), namespace)
 
+  /** Calls a loaded function with a product value as the arguments.
+    * @param namespace The namespace where the function is loaded
+    * @param fnName The name of the function to call
+    * @param args A product (tuple, case class, single value) to be passed as arguments to the function
+    * @return The function's return value
+    */
   def call[A](namespace: String, fnName: String, args: A)(implicit
-      AA: Args[A],
-      ec: ExecutionContext
+      AA: Args[A]
   ): Future[Value] = call[A](fnName, args, Some(namespace))
-
-  /** Blocking versions of the methods on [[Caller]]. Do not use them if you don't *need* to. */
-  object blocking {
-
-    /** Calls a loaded function.
-      * @param fnName The name of the function to call
-      * @param args A list of `Value`s to be passed as arguments to the function
-      * @param namespace The script/module file where the function is defined
-      * @return The function's return value, or `InvalidValue` in case of an error
-      */
-    def callV(
-        fnName: String,
-        args: List[Value],
-        namespace: Option[String] = None
-    ): Try[Value] = {
-      val callId = callCounter.getAndIncrement()
-
-      if (callId == Int.MaxValue - 1)
-        callCounter.set(0)
-
-      callQueue.add(Call(callId, namespace, fnName, args))
-
-      var result: Try[Value] = null
-
-      while (result == null)
-        result = callResultMap.get(callId)
-
-      callResultMap.remove(callId)
-
-      result
-    }
-
-    /** Calls a loaded function
-      * @param fnName The name of the function to call
-      * @param args A product (tuple, case class, single value) to be passed as arguments to the function
-      * @param namespace The script/module file where the function is defined
-      * @return The function's return value
-      */
-    def call[A](
-        fnName: String,
-        args: A,
-        namespace: Option[String] = None
-    )(implicit AA: Args[A]): Try[Value] =
-      blocking.callV(fnName, AA.from(args), namespace)
-
-  }
 
 }

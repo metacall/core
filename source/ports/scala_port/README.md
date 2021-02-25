@@ -16,14 +16,18 @@ module.exports = { hello }
 
 import metacall._, instances._
 import java.nio.file.Paths
+import scala.concurrent.{Future, Await}
+import scala.concurrent.duration._
 
 object Main extends App {
   Caller.start(concurrent.ExecutionContext.global)
 
   Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
 
-  println(Caller.blocking.call("hello", "World!")) 
-  // scala.util.Success(metacall.StringValue("Hello, World!"))
+  val future: Future[Value] = Caller.call("hello", "World!")
+
+  println(Await.result(future, 1.second))
+  // metacall.StringValue("Hello, World!")
 
   Caller.destroy()
 }
