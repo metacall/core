@@ -16,11 +16,11 @@ module.exports = { hello }
 
 import metacall._, instances._
 import java.nio.file.Paths
-import scala.concurrent.{Future, Await}
+import scala.concurrent.{Future, Await, ExecutionContext}
 import scala.concurrent.duration._
 
 object Main extends App {
-  Caller.start(concurrent.ExecutionContext.global)
+  Caller.start(ExecutionContext.global)
 
   Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
 

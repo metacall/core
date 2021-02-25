@@ -34,6 +34,9 @@ protected[metacall] trait Bindings extends Library {
   // metacall.h
   def metacall_initialize(): Int
 
+  /** Should be called before `metacall_initialize` */
+  def metacall_log_null(): Unit
+
   def metacall_load_from_file(
       tag: String,
       paths: Array[String],
