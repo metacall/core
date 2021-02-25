@@ -6,8 +6,6 @@ import scala.concurrent.ExecutionContext
 
 import com.sun.jna._, ptr.PointerByReference
 import java.util.concurrent.{ConcurrentLinkedQueue, ConcurrentHashMap}
-import java.util.concurrent.locks.{ReentrantLock}
-import java.util.concurrent.atomic.{AtomicBoolean, AtomicInteger}
 import scala.util._
 
 /** `Caller` creates a new thread on which:
@@ -17,14 +15,6 @@ import scala.util._
   *
   *  You must always call `Caller.destroy` after you're done with it. This destroys
   *  the MetaCall instance.
-  *
-  *  Usage:
-  *  ```scala
-  *  Caller.start()
-  *  Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
-  *  val ret = Caller.call("big_fn", (1, "hello", 2.2))
-  *  assert(ret == DoubleValue(8.2))
-  *  ```
   */
 object Caller {
 
@@ -35,45 +25,36 @@ object Caller {
       resultPromise: Promise[Value]
   )
 
-  private final case class LoadCommand(
-      id: Int,
+  private final case class Load(
       namespace: Option[String],
       runtime: Runtime,
-      filePaths: Vector[String]
+      filePaths: Vector[String],
+      resultPromise: Promise[Unit]
   )
 
   private def callLoop() = {
     if (!Bindings.runningInMetacall)
       Bindings.instance.metacall_initialize()
 
-    while (!closed.get) {
+    while (!closed) {
       if (!scriptsQueue.isEmpty()) {
-        val LoadCommand(id, namespace, runtime, paths) =
-          scriptsQueue.poll()
-        try {
-          scriptsLock.lock()
-          val handleRef = namespace.map(_ => new PointerByReference())
-          val loadResult = Loader.loadFilesUnsafe(runtime, paths, handleRef)
+        val Load(namespace, runtime, paths, resPromise) = scriptsQueue.poll()
+        val handleRef = namespace.map(_ => new PointerByReference())
+        val loadResult = Loader.loadFilesUnsafe(runtime, paths, handleRef)
 
-          loadResult match {
-            case Success(()) => {
-              handleRef zip namespace match {
-                case Some((handleRef, namespace)) =>
-                  namespaceHandles.put(
-                    namespace,
-                    handleRef
-                  )
-                case None => ()
-              }
-              scriptLoadResults.put(id, Success(()))
+        loadResult match {
+          case Success(()) => {
+            handleRef zip namespace match {
+              case Some((handleRef, namespace)) =>
+                namespaceHandles.put(
+                  namespace,
+                  handleRef
+                )
+              case None => ()
             }
-            case Failure(e) => scriptLoadResults.put(id, Failure(e))
+            resPromise.success(())
           }
-        } catch {
-          case e: Throwable => scriptLoadResults.put(id, Failure(e))
-        } finally {
-          scriptsReady.signal()
-          scriptsLock.unlock()
+          case Failure(e) => resPromise.failure(e)
         }
       } else if (!callQueue.isEmpty()) {
         val Call(namespace, fnName, args, resultPromise) = callQueue.poll()
@@ -85,13 +66,10 @@ object Caller {
       Bindings.instance.metacall_destroy()
   }
 
-  private val scriptsLock = new ReentrantLock()
-  private val scriptsReady = scriptsLock.newCondition()
-  private val closed = new AtomicBoolean(false)
+  private var closed = true
+  private var startedOnce = false
   private val callQueue = new ConcurrentLinkedQueue[Call]()
-  private val scriptsQueue = new ConcurrentLinkedQueue[LoadCommand]()
-  private val scriptLoadResults = new ConcurrentHashMap[Int, Try[Unit]]()
-  private val scriptLoadCounter = new AtomicInteger(0)
+  private val scriptsQueue = new ConcurrentLinkedQueue[Load]()
   private val namespaceHandles =
     new ConcurrentHashMap[String, PointerByReference]()
 
@@ -99,59 +77,58 @@ object Caller {
       runtime: Runtime,
       filePaths: Vector[String],
       namespace: Option[String] = None
-  ): Try[Unit] = {
-    if (closed.get()) {
+  ): Future[Unit] = {
+    if (closed) {
       val scriptsStr =
         if (filePaths.length == 1) "script " + filePaths.head
         else "scripts " + filePaths.mkString(", ")
-      return Failure {
+      return Future.failed {
         new Exception(
           s"Trying to load scripts $scriptsStr while the caller is closed"
         )
       }
     }
 
-    val loadId = scriptLoadCounter.getAndIncrement()
+    val resPromise = Promise[Unit]()
 
-    if (loadId == Int.MaxValue - 1)
-      scriptLoadCounter.set(0)
+    scriptsQueue.add(Load(namespace, runtime, filePaths, resPromise))
 
-    scriptsQueue.add(LoadCommand(loadId, namespace, runtime, filePaths))
-
-    scriptsLock.lock()
-
-    while (!scriptsQueue.isEmpty())
-      scriptsReady.await()
-
-    scriptsLock.unlock()
-
-    scriptLoadResults.get(loadId)
+    resPromise.future
   }
 
   def loadFile(
       runtime: Runtime,
       filePath: String,
       namespace: Option[String] = None
-  ): Try[Unit] = loadFiles(runtime, Vector(filePath), namespace)
+  ): Future[Unit] = loadFiles(runtime, Vector(filePath), namespace)
 
-  def loadFile(runtime: Runtime, filePath: String, namespace: String): Try[Unit] =
+  def loadFile(runtime: Runtime, filePath: String, namespace: String): Future[Unit] =
     loadFile(runtime, filePath, Some(namespace))
 
-  def loadFile(runtime: Runtime, filePath: String): Try[Unit] =
+  def loadFile(runtime: Runtime, filePath: String): Future[Unit] =
     loadFile(runtime, filePath, None)
 
   /** Starts the MetaCall instance.
     * WARNING: Should only be called once.
     * @param ec The `ExecutionContext` in which all (non-blocking) function calls are executed.
     */
-  def start(ec: ExecutionContext): Unit =
-    ec.execute(() => concurrent.blocking(callLoop()))
+  def start(ec: ExecutionContext): Try[Unit] =
+    if (startedOnce) Failure(new Exception("Caller has already been started once before"))
+    else
+      Success {
+        synchronized {
+          startedOnce = true
+          closed = false
+        }
+
+        ec.execute(() => concurrent.blocking(callLoop()))
+      }
 
   /** Destroys MetaCall.
     * WARNING: Should only be called once during the life of the application.
     * Destroying and restarting may result in unexpected runtime failure.
     */
-  def destroy(): Unit = closed.set(true)
+  def destroy(): Unit = synchronized { closed = true }
 
   /** Calls a loaded function.
     * WARNING: Should only be used from within the caller thread.

@@ -14,7 +14,7 @@ class CallerSpecRunner {
 
 class CallerSpec extends AnyFlatSpec {
 
-  def await(f: Future[Value]): Value =
+  private def await[A](f: Future[A]): A =
     Await.result(f, 2.seconds)
 
   "Caller" should "start successfully" in {
@@ -26,17 +26,18 @@ class CallerSpec extends AnyFlatSpec {
   }
 
   "Caller" should "load scripts into global scope successfully" in {
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
+    await(Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py"))
   }
 
   "Caller" should "load scripts into namespaces and call them" in {
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s1.py", "s1")
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", "s2")
+    await(Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s1.py", "s1"))
+    await(Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/s2.py", "s2"))
 
     assert(
       await(Caller.call("fn_in_s1", (), Some("s1"))) ==
         StringValue("Hello from s1")
     )
+
     assert(
       await(Caller.call("fn_in_s2", (), Some("s2"))) ==
         StringValue("Hello from s2")
