@@ -32,9 +32,13 @@ object Caller {
       resultPromise: Promise[Unit]
   )
 
-  private def callLoop() = {
-    if (!Bindings.runningInMetacall)
+  private def callLoop(disableLogging: Boolean) = {
+    if (!Bindings.runningInMetacall) {
+      if (disableLogging)
+        Bindings.instance.metacall_log_null()
+
       Bindings.instance.metacall_initialize()
+    }
 
     while (!closed) {
       if (!scriptsQueue.isEmpty()) {
@@ -112,7 +116,7 @@ object Caller {
     * WARNING: Should only be called once.
     * @param ec The `ExecutionContext` in which all (non-blocking) function calls are executed.
     */
-  def start(ec: ExecutionContext): Try[Unit] =
+  def start(ec: ExecutionContext, disableLogging: Boolean = true): Try[Unit] =
     if (startedOnce) Failure(new Exception("Caller has already been started once before"))
     else
       Success {
@@ -121,7 +125,7 @@ object Caller {
           closed = false
         }
 
-        ec.execute(() => concurrent.blocking(callLoop()))
+        ec.execute(() => concurrent.blocking(callLoop(disableLogging)))
       }
 
   /** Destroys MetaCall.
