@@ -1235,6 +1235,18 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	return function_await(f, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
+void * metacall_await_future(void * f, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+{
+	if (f != NULL)
+	{
+		return future_await((future)f, resolve_callback, reject_callback, data);
+	}
+
+	// TODO: Error handling
+	return NULL;
+}
+
+
 void * metacall_await_s(const char * name, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
 {
 	value f_val = loader_get(name);

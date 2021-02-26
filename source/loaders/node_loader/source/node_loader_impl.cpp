@@ -170,6 +170,9 @@ typedef struct loader_impl_async_func_await_safe_type * loader_impl_async_func_a
 struct loader_impl_async_func_destroy_safe_type;
 typedef struct loader_impl_async_func_destroy_safe_type * loader_impl_async_func_destroy_safe;
 
+struct loader_impl_async_future_await_safe_type;
+typedef struct loader_impl_async_future_await_safe_type * loader_impl_async_future_await_safe;
+
 struct loader_impl_async_future_delete_safe_type;
 typedef struct loader_impl_async_future_delete_safe_type * loader_impl_async_future_delete_safe;
 
@@ -214,6 +217,10 @@ struct loader_impl_node_type
 	napi_value func_destroy_safe_ptr;
 	loader_impl_async_func_destroy_safe func_destroy_safe;
 	napi_threadsafe_function threadsafe_func_destroy;
+
+	napi_value future_await_safe_ptr;
+	loader_impl_async_future_await_safe future_await_safe;
+	napi_threadsafe_function threadsafe_future_await;
 
 	napi_value future_delete_safe_ptr;
 	loader_impl_async_future_delete_safe future_delete_safe;
@@ -330,6 +337,18 @@ struct loader_impl_async_func_await_safe_type
 	function_return ret;
 };
 
+struct loader_impl_async_future_await_safe_type
+{
+	loader_impl_node node_impl;
+	future f;
+	loader_impl_node_future node_future;
+	function_resolve_callback resolve_callback;
+	function_reject_callback reject_callback;
+	void * context;
+	napi_value recv;
+	future_return ret;
+};
+
 typedef napi_value (*function_resolve_trampoline)(loader_impl_node, napi_env, function_resolve_callback, napi_value, napi_value, void *);
 typedef napi_value (*function_reject_trampoline)(loader_impl_node, napi_env, function_reject_callback, napi_value, napi_value, void *);
 
@@ -395,6 +414,8 @@ static function_interface function_node_singleton(void);
 /* Future */
 static int future_node_interface_create(future f, future_impl impl);
 
+static future_return future_node_interface_await(future f, future_impl impl, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * context);
+
 static void future_node_interface_destroy(future f, future_impl impl);
 
 static future_interface future_node_singleton(void);
@@ -415,6 +436,10 @@ static napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_call
 static void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_destroy_safe func_destroy_safe);
 
 static napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe future_await_safe);
+
+static napi_value node_loader_impl_async_future_await_safe(napi_env env, napi_callback_info info);
 
 static void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_delete_safe future_delete_safe);
 
@@ -1353,6 +1378,86 @@ int future_node_interface_create(future f, future_impl impl)
 	return 0;
 }
 
+future_return future_node_interface_await(future f, future_impl impl, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * context)
+{
+	loader_impl_node_future node_future = (loader_impl_node_future)impl;
+
+	if (node_future != NULL)
+	{
+		loader_impl_node node_impl = node_future->node_impl;
+		function_return ret = NULL;
+		napi_status status;
+
+		/* Set up await safe arguments */
+		node_impl->future_await_safe->node_impl = node_impl;
+		node_impl->future_await_safe->f = f;
+		node_impl->future_await_safe->node_future = node_future;
+		node_impl->future_await_safe->resolve_callback = resolve_callback;
+		node_impl->future_await_safe->reject_callback = reject_callback;
+		node_impl->future_await_safe->context = context;
+		node_impl->future_await_safe->recv = NULL;
+		node_impl->future_await_safe->ret = NULL;
+
+		/* Check if we are in the JavaScript thread */
+		if (node_impl->js_thread_id == std::this_thread::get_id())
+		{
+			/* We are already in the V8 thread, we can call safely */
+			node_loader_impl_future_await_safe(node_impl->env, node_impl->future_await_safe);
+
+			/* Set up return of the function call */
+			ret = node_impl->future_await_safe->ret;
+		}
+		/* Lock the mutex and set the parameters */
+		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+		{
+			node_impl->locked.store(true);
+
+			/* Acquire the thread safe function in order to do the call */
+			status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_await);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function await future in NodeJS loader");
+			}
+
+			/* Execute the thread safe call in a nonblocking manner */
+			status = napi_call_threadsafe_function(node_impl->threadsafe_future_await, nullptr, napi_tsfn_nonblocking);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function await future in NodeJS loader");
+			}
+
+			/* Release call safe function */
+			status = napi_release_threadsafe_function(node_impl->threadsafe_future_await, napi_tsfn_release);
+
+			if (status != napi_ok)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function await future in NodeJS loader");
+			}
+
+			/* Wait for the execution of the safe call */
+			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+			/* Set up return of the function call */
+			ret = node_impl->future_await_safe->ret;
+
+			node_impl->locked.store(false);
+
+			/* Unlock call safe mutex */
+			uv_mutex_unlock(&node_impl->mutex);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in future_node_interface_await, the call has not been executed in order to avoid the deadlock");
+		}
+
+		return ret;
+	}
+
+	return NULL;
+}
+
 void future_node_interface_destroy(future f, future_impl impl)
 {
 	loader_impl_node_future node_future = (loader_impl_node_future)impl;
@@ -1425,6 +1530,7 @@ future_interface future_node_singleton()
 	static struct future_interface_type node_future_interface =
 	{
 		&future_node_interface_create,
+		&future_node_interface_await,
 		&future_node_interface_destroy
 	};
 
@@ -1716,7 +1822,7 @@ napi_value node_loader_impl_async_func_reject(loader_impl_node node_impl, napi_e
 
 void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await_safe func_await_safe)
 {
-	static const char await_str[] = "await";
+	static const char await_str[] = "await_function";
 	napi_value await_str_value;
 	napi_value function_table_object;
 	napi_value function_await;
@@ -1948,6 +2054,142 @@ napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_
 	uv_cond_signal(&func_destroy_safe->node_impl->cond);
 
 	uv_mutex_unlock(&func_destroy_safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_await_safe future_await_safe)
+{
+	static const char await_str[] = "await_future";
+	napi_value await_str_value;
+	napi_value function_table_object;
+	napi_value future_await;
+	bool result = false;
+	napi_value argv[2];
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, future_await_safe->node_impl->function_table_object_ref, &function_table_object);
+
+	node_loader_impl_exception(env, status);
+
+	/* Retrieve resolve function from object table */
+	status = napi_create_string_utf8(env, await_str, sizeof(await_str) - 1, &await_str_value);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_has_own_property(env, function_table_object, await_str_value, &result);
+
+	node_loader_impl_exception(env, status);
+
+	if (result == true)
+	{
+		napi_valuetype valuetype;
+
+		status = napi_get_named_property(env, function_table_object, await_str, &future_await);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_typeof(env, future_await, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function await_future in function table object");
+		}
+		else
+		{
+			/* Allocate trampoline object */
+			loader_impl_async_func_await_trampoline trampoline = static_cast<loader_impl_async_func_await_trampoline>(malloc(sizeof(struct loader_impl_async_func_await_trampoline_type)));
+
+			if (trampoline != NULL)
+			{
+				napi_ref trampoline_ref;
+
+				/* Get function reference */
+				status = napi_get_reference_value(env, future_await_safe->node_future->promise_ref, &argv[0]);
+
+				node_loader_impl_exception(env, status);
+
+				/* Set trampoline object values */
+				trampoline->node_loader = future_await_safe->node_impl;
+				trampoline->resolve_trampoline = &node_loader_impl_async_func_resolve;
+				trampoline->reject_trampoline = &node_loader_impl_async_func_reject;
+				trampoline->resolve_callback = future_await_safe->resolve_callback;
+				trampoline->reject_callback = future_await_safe->reject_callback;
+				trampoline->context = future_await_safe->context;
+
+				/* Set the C trampoline object as JS wrapped object */
+				status = napi_create_object(env, &argv[1]);
+
+				node_loader_impl_exception(env, status);
+
+				status = napi_wrap(env, argv[1], static_cast<void *>(trampoline), &node_loader_impl_async_func_await_finalize, NULL, &trampoline_ref);
+
+				node_loader_impl_exception(env, status);
+
+				/* Call to function */
+				napi_value global, await_return;
+
+				status = napi_get_reference_value(env, future_await_safe->node_impl->global_ref, &global);
+
+				node_loader_impl_exception(env, status);
+
+				status = napi_call_function(env, global, future_await, 2, argv, &await_return);
+
+				node_loader_impl_exception(env, status);
+
+				/* Delete references references to wrapped objects */
+				status = napi_delete_reference(env, trampoline_ref);
+
+				node_loader_impl_exception(env, status);
+
+				/* Proccess the await return */
+				future_await_safe->ret = node_loader_impl_napi_to_value(future_await_safe->node_impl, env, future_await_safe->recv, await_return);
+			}
+		}
+	}
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_future_await_safe(napi_env env, napi_callback_info info)
+{
+	napi_value recv;
+	loader_impl_async_future_await_safe future_await_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void**)&future_await_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&future_await_safe->node_impl->mutex);
+
+	/* Store function recv for reentrant calls */
+	future_await_safe->recv = recv;
+
+	/* Store environment for reentrant calls */
+	future_await_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_future_await_safe(env, future_await_safe);
+
+	/* Clear environment */
+	// future_await_safe->node_impl->env = NULL;
+
+	/* Signal function await condition */
+	uv_cond_signal(&future_await_safe->node_impl->cond);
+
+	uv_mutex_unlock(&future_await_safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -3280,6 +3522,19 @@ void * node_loader_impl_register(void * node_impl_ptr, void * env_ptr, void * fu
 				&node_impl->threadsafe_func_destroy);
 		}
 
+		/* Safe future await */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_future_await_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_future_await_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_future_await_safe,
+				(loader_impl_async_future_await_safe_type **)(&node_impl->future_await_safe),
+				&node_impl->future_await_safe_ptr,
+				&node_impl->threadsafe_future_await);
+		}
+
 		/* Safe future delete */
 		{
 			static const char threadsafe_func_name_str[] = "node_loader_impl_async_future_delete_safe";
@@ -4348,6 +4603,14 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 				env,
 				(loader_impl_async_func_destroy_safe_type **)(&node_impl->func_destroy_safe),
 				&node_impl->threadsafe_func_destroy);
+		}
+
+		/* Safe future await */
+		{
+			node_loader_impl_thread_safe_function_destroy<loader_impl_async_future_await_safe_type>(
+				env,
+				(loader_impl_async_future_await_safe_type **)(&node_impl->future_await_safe),
+				&node_impl->threadsafe_future_await);
 		}
 
 		/* Safe future delete */

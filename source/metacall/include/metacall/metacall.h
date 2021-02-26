@@ -700,6 +700,34 @@ METACALL_API void * metacall_await(const char * name, void * args[], void * (*re
 
 /**
 *  @brief
+*    Awaits for a promise and registers a callback to be executed when a future is resolved
+*
+*  @param[in] f
+*    The pointer to the future
+*
+*  @param[in] resolve_callback
+*    Pointer to function that will be executed when task completion
+*      @param[in] void *
+*        Value representing the result of the future resolution
+*      @param[in] void *
+*        A reference to @data that will be used as a closure for the chain
+*      @return
+*        Value containing the result of the operation,
+*        it will be wrapped into a future later on to be returned by the function
+*
+*  @param[in] reject_callback
+*    Pointer to function that will be executed when task error (signature is identical as resolve_callback)
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void * metacall_await_future(void * f, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+
+/**
+*  @brief
 *    Executes an asynchronous call to the function and registers a callback to be executed when a future is resolved (it does block)
 *
 *  @param[in] name

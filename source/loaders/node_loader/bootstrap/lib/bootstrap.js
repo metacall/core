@@ -288,7 +288,7 @@ function node_loader_trampoline_test(obj) {
 	}
 }
 
-function node_loader_trampoline_await(trampoline) {
+function node_loader_trampoline_await_function(trampoline) {
 	if (!trampoline) {
 		return function node_loader_trampoline_await_impl(func, args, trampoline_ptr) {
 			console.error('NodeJS Loader await error, trampoline could not be found, await calls are disabled.');
@@ -311,9 +311,39 @@ function node_loader_trampoline_await(trampoline) {
 		return new Promise((resolve, reject) =>
 			func(...args).then(
 				x => resolve(trampoline.resolve(trampoline_ptr, x)),
-				x => reject(trampoline.reject(trampoline_ptr, x)),
+				x => reject(trampoline.reject(trampoline_ptr, x))
 			).catch(
-				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`),
+				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
+			)
+		);
+	};
+}
+
+function node_loader_trampoline_await_future(trampoline) {
+	if (!trampoline) {
+		return function node_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+			console.error('NodeJS Loader await error, trampoline could not be found, await calls are disabled.');
+		};
+	}
+
+	return function node_loader_trampoline_await_impl(future, trampoline_ptr) {
+		// This apparently does not work for native promises, let it uncommented until we find a proper way of detecting the type
+		/*
+		if (!!future && typeof future.then === 'function') {
+			throw new Error('Await only accepts a thenable promise, not ' + typeof future);
+		}
+		*/
+
+		if (typeof trampoline_ptr !== 'object') {
+			throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
+		}
+
+		return new Promise((resolve, reject) =>
+			future.then(
+				x => resolve(trampoline.resolve(trampoline_ptr, x)),
+				x => reject(trampoline.reject(trampoline_ptr, x))
+			).catch(
+				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
 			)
 		);
 	};
@@ -360,7 +390,8 @@ module.exports = ((impl, ptr) => {
 			'discover': node_loader_trampoline_discover,
 			'discover_function': node_loader_trampoline_discover_function,
 			'test': node_loader_trampoline_test,
-			'await': node_loader_trampoline_await(trampoline),
+			'await_function': node_loader_trampoline_await_function(trampoline),
+			'await_future': node_loader_trampoline_await_future(trampoline),
 			'destroy': node_loader_trampoline_destroy,
 		});
 	} catch (ex) {
