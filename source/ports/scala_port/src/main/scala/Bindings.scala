@@ -44,6 +44,8 @@ protected[metacall] trait Bindings extends Library {
       handle: PointerByReference
   ): Int
 
+  def metacall_handle_export(handle: Pointer): Pointer
+
   def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
   def metacallfv_s(func: Pointer, args: Array[Pointer], size: SizeT): Pointer
 
@@ -83,6 +85,8 @@ protected[metacall] trait Bindings extends Library {
   def metacall_function(name: String): Pointer
 
   def metacall_function_size(func: Pointer): SizeT
+
+  def metacall_function_async(func: Pointer): Int
 
   def metacall_destroy(): Int
 
