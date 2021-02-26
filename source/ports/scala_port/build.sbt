@@ -38,7 +38,7 @@ dockerTest := {
     "NOTE: Run `./docker-compose.sh build` in the root of metacall/core first to get the latest metacall/core:dev image"
   )
 
-  try s"docker run -v ${Paths.get("").toAbsolutePath().toString()}:/tests metacall-scala-tests" !
+  try s"docker run --rm -v ${Paths.get("").toAbsolutePath().toString()}:/tests metacall-scala-tests" !
   catch {
     case e: Throwable => {
       val msg =
