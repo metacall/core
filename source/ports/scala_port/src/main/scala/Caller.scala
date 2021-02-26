@@ -72,16 +72,13 @@ object Caller {
                       }
                   }
                   .map { pairs =>
-                    println(
-                      s"============== Pairs length of ${namespaceName}: ${pairs.length} ==================="
-                    )
                     pairs.map { case (fnNamePointer, fnPointer) =>
-                      Bindings.instance.metacall_value_to_string(fnNamePointer) -> {
-                        val isAsync =
-                          Bindings.instance.metacall_function_async(fnPointer) == 1
-
-                        FunctionMetadata(isAsync)
-                      }
+                      Bindings.instance.metacall_value_to_string(fnNamePointer) ->
+                        FunctionMetadata(
+                          Bindings.instance
+                            .metacall_function_async(fnPointer)
+                            .intValue() == 1
+                        )
                     }.toMap
                   }
 
