@@ -32,6 +32,13 @@ object Caller {
       resultPromise: Promise[Unit]
   )
 
+  private final case class Namespace(
+      handle: PointerByReference,
+      definitions: Map[String, FunctionMetadata]
+  )
+
+  final case class FunctionMetadata(isAsync: Boolean)
+
   private def callLoop(disableLogging: Boolean) = {
     if (!Bindings.runningInMetacall) {
       if (disableLogging)
@@ -49,14 +56,51 @@ object Caller {
         loadResult match {
           case Success(()) => {
             handleRef zip namespace match {
-              case Some((handleRef, namespace)) =>
-                namespaceHandles.put(
-                  namespace,
-                  handleRef
-                )
-              case None => ()
+              case Some((handleRef, namespaceName)) => {
+                val mapPtr = Ptr.fromPrimitiveUnsafe {
+                  Bindings.instance.metacall_handle_export(handleRef.getValue())
+                }
+
+                val definitions = Try(mapPtr)
+                  .flatMap {
+                    case p: MapPtr => Success(instances.mapGet.primitive(p))
+                    case _ =>
+                      Failure {
+                        new Exception(
+                          s"Unable to get metadata from namespace `$namespaceName` (metadata must be a map)"
+                        )
+                      }
+                  }
+                  .map { pairs =>
+                    println(
+                      s"============== Pairs length of ${namespaceName}: ${pairs.length} ==================="
+                    )
+                    pairs.map { case (fnNamePointer, fnPointer) =>
+                      Bindings.instance.metacall_value_to_string(fnNamePointer) -> {
+                        val isAsync =
+                          Bindings.instance.metacall_function_async(fnPointer) == 1
+
+                        FunctionMetadata(isAsync)
+                      }
+                    }.toMap
+                  }
+
+                Bindings.instance.metacall_value_destroy(mapPtr.ptr)
+
+                definitions match {
+                  case Success(defs) => {
+                    namespaces.put(
+                      namespaceName,
+                      Namespace(handleRef, defs)
+                    )
+
+                    resPromise.success(())
+                  }
+                  case Failure(e) => resPromise.failure(e)
+                }
+              }
+              case None => resPromise.success(())
             }
-            resPromise.success(())
           }
           case Failure(e) => resPromise.failure(e)
         }
@@ -74,8 +118,7 @@ object Caller {
   private var startedOnce = false
   private val callQueue = new ConcurrentLinkedQueue[Call]()
   private val scriptsQueue = new ConcurrentLinkedQueue[Load]()
-  private val namespaceHandles =
-    new ConcurrentHashMap[String, PointerByReference]()
+  private val namespaces = new ConcurrentHashMap[String, Namespace]()
 
   def loadFiles(
       runtime: Runtime,
@@ -111,6 +154,10 @@ object Caller {
 
   def loadFile(runtime: Runtime, filePath: String): Future[Unit] =
     loadFile(runtime, filePath, None)
+
+  /** @return functions defined in `namespace` */
+  def definitions(namespace: String): Option[Map[String, FunctionMetadata]] =
+    Option(namespaces.get(namespace)).map(_.definitions)
 
   /** Starts the MetaCall instance.
     * WARNING: Should only be called once.
@@ -150,19 +197,25 @@ object Caller {
 
     val retPointer =
       namespace match {
-        case Some(value) => {
-          val namespaceHandle = namespaceHandles.get(value)
+        case Some(namespaceName) => {
+          val namespace = namespaces.get(namespaceName)
 
-          if (namespaceHandle == null)
+          if (namespace == null)
             Failure {
               new Exception(
-                s"Namespace `$value` does not contain any functions (no scripts were loaded in it)"
+                s"Namespace `$namespaceName` is not defined (no scripts were loaded in it)"
+              )
+            }
+          else if (!namespace.definitions.contains(fnName))
+            Failure {
+              new Exception(
+                s"Function `$fnName` is not defined in `$namespaceName`"
               )
             }
           else
             Success {
               Bindings.instance.metacallhv_s(
-                namespaceHandle.getValue(),
+                namespace.handle.getValue(),
                 fnName,
                 argPtrArray,
                 SizeT(argPtrArray.length.toLong)
