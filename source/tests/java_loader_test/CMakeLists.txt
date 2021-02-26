@@ -88,6 +88,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::threading
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::reflect
 	${META_PROJECT_NAME}::loader
@@ -126,8 +127,11 @@ target_link_libraries(${target}
 #
 
 add_test(NAME ${target}
-	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+	# WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 	COMMAND $<TARGET_FILE:${target}>
+
+	# TODO: Remove this
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/source/ports/scala_port
 )
 
 #

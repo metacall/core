@@ -10,7 +10,7 @@ endif()
 
 set(NODEJS_EXECUTABLE_ONLY ON)
 
-find_package(NodeJS 10.22.0)
+find_package(NodeJS 10.23.1)
 
 if(NOT NODEJS_FOUND)
 	message(STATUS "NodeJS executable not found")

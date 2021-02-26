@@ -6,7 +6,7 @@
 *
 */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <loader/loader_path.h>
 

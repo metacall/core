@@ -20,7 +20,7 @@
 
 #include <metacall_load_configuration_relative_test/metacall_load_configuration_relative_test.h>
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>

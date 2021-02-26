@@ -54,7 +54,7 @@ typedef struct loader_metadata_cb_iterator_type * loader_metadata_cb_iterator;
 
 struct loader_initialization_order_type
 {
-	thread_id id;
+	uint64_t id;
 	loader_impl impl;
 	int being_deleted;
 };
@@ -63,7 +63,7 @@ struct loader_type
 {
 	set impl_map;					/* Maps the loader implementations by tag */
 	vector initialization_order;	/* Stores the loader implementations by order of initialization (used for destruction) */
-	thread_id init_thread_id;		/* Stores the thread id of the thread that initialized metacall */
+	uint64_t init_thread_id;		/* Stores the thread id of the thread that initialized metacall */
 };
 
 struct loader_metadata_cb_iterator_type
@@ -108,7 +108,7 @@ static int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_
 
 static struct loader_type loader_instance_default =
 {
-	NULL, NULL, NULL
+	NULL, NULL, THREAD_ID_INVALID
 };
 
 static loader loader_instance_ptr = &loader_instance_default;
@@ -172,8 +172,6 @@ void loader_initialize_proxy()
 					log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
 
 					loader_impl_destroy(proxy);
-
-					free(host);
 				}
 
 				/* Insert into destruction list */
@@ -199,7 +197,7 @@ void loader_initialize()
 	loader_env_initialize();
 
 	/* Initialize current thread id */
-	if (l->init_thread_id == NULL)
+	if (l->init_thread_id == THREAD_ID_INVALID)
 	{
 		l->init_thread_id = thread_id_get_current();
 	}
@@ -353,15 +351,19 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 	if (impl != NULL)
 	{
-		if (set_insert(l->impl_map, (set_key)loader_impl_tag(impl), impl) == 0)
+		if (set_insert(l->impl_map, (set_key)loader_impl_tag(impl), impl) != 0)
 		{
-			return impl;
+			log_write("metacall", LOG_LEVEL_ERROR, "Loader implementation insertion error (%s)", tag);
+
+			loader_impl_destroy(impl);
+
+			return NULL;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, "Loader implementation insertion error (%s)", tag);
-
-		loader_impl_destroy(impl);
+		return impl;
 	}
+
+	free(host);
 
 	return NULL;
 }
@@ -844,7 +846,7 @@ int loader_clear(void * handle)
 void loader_unload_children()
 {
 	loader l = loader_singleton();
-	thread_id current = thread_id_get_current();
+	uint64_t current = thread_id_get_current();
 	size_t iterator, size = vector_size(l->initialization_order);
 	vector queue = vector_create_type(loader_initialization_order);
 
@@ -853,7 +855,7 @@ void loader_unload_children()
 	{
 		loader_initialization_order order = vector_at(l->initialization_order, iterator);
 
-		if (order->being_deleted == 1 && order->impl != NULL && thread_id_compare(current, order->id) == 0)
+		if (order->being_deleted == 1 && order->impl != NULL && current == order->id)
 		{
 			/* Mark for deletion */
 			vector_push_back(queue, &order);
@@ -873,19 +875,15 @@ void loader_unload_children()
 		/* Call recursively for deletion of children */
 		loader_impl_destroy(order->impl);
 
-		/* Destroy thread id of the order */
-		thread_id_destroy(order->id);
-
 		/* Clear current order */
 		order->being_deleted = 1;
 		order->impl = NULL;
-		order->id = NULL;
+		order->id = THREAD_ID_INVALID;
 
 		vector_pop_front(queue);
 	}
 
 	vector_destroy(queue);
-	thread_id_destroy(current);
 }
 
 int loader_unload()
@@ -897,9 +895,9 @@ int loader_unload()
 	/* Delete loaders in inverse order */
 	if (l->initialization_order != NULL)
 	{
-		thread_id current = thread_id_get_current();
+		uint64_t current = thread_id_get_current();
 
-		if (thread_id_compare(l->init_thread_id, current) != 0)
+		if (l->init_thread_id != current)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Destruction of the loaders is being executed "
 				"from different thread of where MetaCall was initialized, "
@@ -908,8 +906,6 @@ int loader_unload()
 
 			/* TODO: How to deal with this? */
 		}
-
-		thread_id_destroy(current);
 
 		loader_unload_children();
 	}
@@ -948,12 +944,7 @@ void loader_destroy()
 		l->impl_map = NULL;
 	}
 
-	if (l->init_thread_id != NULL)
-	{
-		thread_id_destroy(l->init_thread_id);
-
-		l->init_thread_id = NULL;
-	}
+	l->init_thread_id = THREAD_ID_INVALID;
 
 	loader_env_destroy();
 }

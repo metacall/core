@@ -60,37 +60,29 @@ void simple_netcore_destroy(netcore_handle handle)
 	delete core;
 }
 
-void simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size)
+int simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size)
 {
 	netcore * core = (netcore*)handle;
 
-	if (core->load_files(files, size))
-	{
-
-	}
+	return core->load_files(files, size) == true ? 0 : 1;
 }
 
-void simple_netcore_load_script_from_assembly(netcore_handle handle, char * file)
+int simple_netcore_load_script_from_assembly(netcore_handle handle, char * file)
 {
 	netcore * core = (netcore*)handle;
 
-	if (core->load_assembly(file))
-	{
-
-	}
+	return core->load_assembly(file) == true ? 0 : 1;
 }
 
-void simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size)
+int simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size)
 {
 	netcore * core = (netcore*)handle;
 
 	(void)size;
 
-	if (core->load_source((char*)buffer))
-	{
-
-	}
+	return core->load_source((char*)buffer) == true ? 0 : 1;
 }
+
 execution_result * simple_netcore_invoke(netcore_handle handle, const char * func)
 {
 	netcore * core = (netcore*)handle;

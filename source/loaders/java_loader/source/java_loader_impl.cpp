@@ -129,12 +129,12 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 	if (java_impl != nullptr)
 	{
 		#define TEST_CLASS_PATH \
-			"ADD HERE YOUR CLASSPATH"
+			"$(sbt 'export test:fullClasspath')"
 
 		static const size_t options_size = 2;
 
 		JavaVMOption * options = new JavaVMOption[options_size]; // JVM invocation options
-		options[0].optionString = "-Djava.polyglot.name=metacall";
+		options[0].optionString = "-Dmetacall.polyglot.name=core";
 		options[1].optionString = "-Djava.class.path=" TEST_CLASS_PATH;
 
 		JavaVMInitArgs vm_args;
@@ -186,7 +186,8 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 			std::cout << "ffffffffffffffffffffffffffff" << std::endl;
 		}
 
-		jclass cls2 = java_impl->env->FindClass("metacall/MetaCallSpecRunner");
+		// jclass cls2 = java_impl->env->FindClass("metacall/MetaCallSpecRunner");
+		jclass cls2 = java_impl->env->FindClass("metacall/CallerSpecRunner");
 
 		if (cls2 == nullptr)
 		{

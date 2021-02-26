@@ -144,6 +144,7 @@ namespace CSLoader.Providers
                 catch (Exception exName)
                 {
                     this.log.Error(exName.Message, exName);
+                    return false;
                 }
             }
 

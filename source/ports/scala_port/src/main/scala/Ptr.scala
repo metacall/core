@@ -1,6 +1,5 @@
 package metacall
 
-import cats.implicits._
 import com.sun.jna._
 import metacall.util._
 

@@ -135,6 +135,7 @@ if(OPTION_BUILD_LOADERS_COB)
 endif()
 
 add_dependencies(${target}
+	node_port
 	node_loader
 	mock_loader
 	py_loader

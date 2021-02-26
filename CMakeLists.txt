@@ -29,7 +29,6 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(WriterCompilerDetectionHeaderFound NOTFOUND)
 
-include(GenerateExportHeader)
 include(ExternalProject)
 
 # This module is only available with CMake >=3.1, so check whether it could be found
@@ -121,6 +120,23 @@ file(WRITE "${PROJECT_BINARY_DIR}/VERSION" "${META_NAME_VERSION}")
 #
 
 include(Portability)
+
+#
+# Define Export Headers
+#
+
+include(GenerateExportHeader)
+
+# Workaround to enable Haiku with export headers
+# This can be removed once export headers support Haiku
+if(PROJECT_OS_HAIKU)
+	function(GENERATE_EXPORT_HEADER)
+		set(WIN32 1)
+		# When the function is redefined, the old function can be accessed through underscore
+		_GENERATE_EXPORT_HEADER(${ARGN})
+		unset(WIN32)
+	endfunction()
+endif()
 
 #
 # Compiler settings and options

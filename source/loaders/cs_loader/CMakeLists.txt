@@ -130,6 +130,7 @@ add_library(${target} MODULE
 # Add target dependencies
 add_dependencies(${target}
 	${LOADER_MODULE_NAMES}
+	cs_loader_impl
 )
 
 # Create namespaced alias

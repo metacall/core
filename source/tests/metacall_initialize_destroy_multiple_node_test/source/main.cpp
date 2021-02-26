@@ -1,6 +1,6 @@
 /*
- *	Logger Library by Parra Studios
- *	A generic logger library providing application execution reports.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,27 +18,11 @@
  *
  */
 
-#ifndef LOG_THREAD_ID_H
-#define LOG_THREAD_ID_H 1
+#include <gtest/gtest.h>
 
-/* -- Headers -- */
+int main(int argc, char * argv[])
+{
+	::testing::InitGoogleTest(&argc, argv);
 
-#include <log/log_api.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* -- Headers -- */
-
-#include <stdlib.h>
-
-/* -- Methods -- */
-
-size_t log_thread_id(void);
-
-#ifdef __cplusplus
+	return RUN_ALL_TESTS();
 }
-#endif
-
-#endif /* LOG_THREAD_ID_H */

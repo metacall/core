@@ -237,6 +237,17 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			""
 			${TESTS_ENVIRONMENT_VARIABLES}
 		)
+
+		if(OPTION_BUILD_LOADERS_RB)
+			add_test(NAME ${target}-node-port-py-rb
+			COMMAND ${TEST_COMMAND} "echo 'load node cli-test-onload.js\ninspect\nexit' | $<TARGET_FILE:${target}>"
+				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			)
+			test_environment_variables(${target}-node-port-py-rb
+				""
+				${TESTS_ENVIRONMENT_VARIABLES}
+			)
+		endif()
 	endif()
 
 	add_test(NAME ${target}-node-null

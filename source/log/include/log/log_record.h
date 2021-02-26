@@ -15,6 +15,8 @@
 
 #include <log/log_level.h>
 
+#include <threading/threading_thread_id.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -93,7 +95,7 @@ LOG_API log_record log_record_initialize(log_record record, const log_record_cto
 
 LOG_API const time_t * log_record_time(log_record record);
 
-LOG_API size_t log_record_thread_id(log_record record);
+LOG_API uint64_t log_record_thread_id(log_record record);
 
 LOG_API size_t log_record_line(log_record record);
 

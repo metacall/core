@@ -42,6 +42,19 @@ describe('metacall', () => {
 		});
 	});
 
+	describe('fail', () => {
+		it('require', () => {
+			assert.throws(() => { require('./asd.invalid') }, new Error('Cannot find module \'./asd.invalid\''));
+			// TODO: Improve error messages
+			assert.throws(() => { require('./asd.py') }, new Error('MetaCall could not load from file'));
+			assert.throws(() => { require('./asd.rb') }, new Error('MetaCall could not load from file'));
+			assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
+			// TODO: Implement TS with NodeJS compatibility
+			assert.throws(() => { require('./asd.ts') }, new Error('Cannot find module \'./asd.ts\''));
+			assert.throws(() => { require('./asd.tsx') }, new Error('Cannot find module \'./asd.tsx\''));
+		});
+	});
+
 	describe('load', () => {
 		it('metacall_load_from_file (py)', () => {
 			assert.strictEqual(metacall_load_from_file('py', [ 'helloworld.py' ] ), undefined);

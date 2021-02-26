@@ -146,6 +146,11 @@ void function_async(function func, enum function_async_id async)
 	func->async = async;
 }
 
+enum function_async_id function_async_id(function func)
+{
+	return func->async;
+}
+
 void function_bind(function func, void * data)
 {
 	func->data = data;

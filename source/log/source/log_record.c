@@ -8,14 +8,13 @@
 
 #include <log/log_record.h>
 #include <log/log_level.h>
-#include <log/log_thread_id.h>
 
 /* -- Member Data -- */
 
 struct log_record_type
 {
 	time_t time;
-	size_t thread_id;
+	uint64_t id;
 	size_t line;
 	const char * func;
 	const char * file;
@@ -64,7 +63,7 @@ log_record log_record_initialize(log_record record, const log_record_ctor record
 	if (record != NULL && record_ctor != NULL)
 	{
 		record->time = time(NULL);
-		record->thread_id = log_thread_id();
+		record->id = thread_id_get_current();
 		record->line = record_ctor->line;
 		record->func = record_ctor->func;
 		record->file = record_ctor->file;
@@ -85,7 +84,7 @@ const time_t * log_record_time(log_record record)
 
 size_t log_record_thread_id(log_record record)
 {
-	return record->thread_id;
+	return record->id;
 }
 
 size_t log_record_line(log_record record)

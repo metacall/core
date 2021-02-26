@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>

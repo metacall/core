@@ -6,7 +6,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <rb_loader/rb_loader_impl_parser.h>
 

@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
 
@@ -84,4 +84,17 @@ TEST_F(cs_loader_test, Concat)
 	EXPECT_EQ((int) 0, (int) strcmp((const char *)metacall_value_to_string(ret), "Hello World"));
 
 	metacall_value_destroy(ret);
+}
+
+TEST_F(cs_loader_test, Fail)
+{
+	/* This is a Python script on purpose, in order to test C# when it fails */
+	static const char buffer[] =
+		"#!/usr/bin/env python3\n"
+		"def multmem(left: int, right: int) -> int:\n"
+		"\tresult = left * right;\n"
+		"\tprint(left, ' * ', right, ' = ', result);\n"
+		"\treturn result;";
+
+	EXPECT_EQ((int) 1, (int) metacall_load_from_memory("cs", buffer, sizeof(buffer), NULL));
 }

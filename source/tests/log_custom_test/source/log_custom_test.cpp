@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <format/format.h>
 #include <log/log.h>
@@ -32,7 +32,7 @@ class log_custom_test : public testing::Test
   public:
 };
 
-size_t format_size(void * context, const char * time, size_t thread_id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
+size_t format_size(void * context, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
 {
 	size_t length = 0;
 
@@ -53,12 +53,12 @@ size_t format_size(void * context, const char * time, size_t thread_id, size_t l
 		length = strlen(message);
 	}
 
-	return snprintf(NULL, 0, format, time, thread_id, file, line, func, level) + length + 1;
+	return snprintf(NULL, 0, format, time, id, file, line, func, level) + length + 1;
 }
 
-size_t format_serialize(void * context, void * buffer, const size_t size, const char * time, size_t thread_id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
+size_t format_serialize(void * context, void * buffer, const size_t size, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
 {
-	size_t length = snprintf((char *)buffer, size, format, time, thread_id, file, line, func, level);
+	size_t length = snprintf((char *)buffer, size, format, time, id, file, line, func, level);
 	char * body = &(((char *)buffer)[length]);
 
 	(void)context;
@@ -81,13 +81,13 @@ size_t format_serialize(void * context, void * buffer, const size_t size, const 
 	return length + 1;
 }
 
-size_t format_deserialize(void * context, const void * buffer, const size_t size, const char * time, size_t thread_id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
+size_t format_deserialize(void * context, const void * buffer, const size_t size, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
 {
 	/* TODO */
 	(void)context;
 	(void)buffer;
 	(void)time;
-	(void)thread_id;
+	(void)id;
 	(void)line;
 	(void)func;
 	(void)file;

@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <reflect/reflect_value_type.h>
 #include <reflect/reflect_value_type_cast.h>

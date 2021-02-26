@@ -1,10 +1,44 @@
 # MetaCall Scala Port
 
-## Setup
+A library for calling NodeJS, Python, and Ruby functions from Scala.
+
+```js
+// myfunctions.js
+
+function hello(x) {
+    return 'Hello, ' + x
+}
+
+module.exports = { hello }
+```
+```scala
+// Main.scala
+
+import metacall._, instances._
+import java.nio.file.Paths
+import scala.concurrent.{Future, Await, ExecutionContext}
+import scala.concurrent.duration._
+
+object Main extends App {
+  Caller.start(ExecutionContext.global)
+
+  Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
+
+  val future: Future[Value] = Caller.call("hello", "World!")
+
+  println(Await.result(future, 1.second))
+  // metacall.StringValue("Hello, World!")
+
+  Caller.destroy()
+}
+```
+
+## Development
+### Setup
 
 To set up Scala & SBT, use [Coursier](https://get-coursier.io/docs/cli-installation). After getting the `cs` executable, run `cs setup` and follow the prompt.
 
-## Testing
+### Testing
 
 To run the tests, run `sbt test` in this README's directory.
 
@@ -18,9 +52,9 @@ DETOUR_LIBRARY_PATH
 PORT_LIBRARY_PATH
 ```
 
-> Note: You'll find the bindings and the code that runs on `sbt test` in `src/main/scala/MetaCall.scala`.
+To run the tests in Docker, run `sbt` then `docker` to build the image (must run `docker` from within the SBT session), and then `sbt dockerTest` to run it. Note that you should build the `metacall/core:dev` image locally since the published one might not be up to date by running `./docker-compose.sh build` in `metacall/core`'s root. Pay attention to SBT's error messages.
 
-## Debugging
+### Debugging
 
 Uncomment this line in `build.sbt`:
 ```

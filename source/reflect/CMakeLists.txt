@@ -163,6 +163,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
 	${META_PROJECT_NAME}::format
+	${META_PROJECT_NAME}::threading
 	${META_PROJECT_NAME}::log
 	${META_PROJECT_NAME}::memory
 	${META_PROJECT_NAME}::portability

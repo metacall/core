@@ -34,15 +34,44 @@ protected[metacall] trait Bindings extends Library {
   // metacall.h
   def metacall_initialize(): Int
 
+  /** Should be called before `metacall_initialize` */
+  def metacall_log_null(): Unit
+
   def metacall_load_from_file(
       tag: String,
       paths: Array[String],
       size: SizeT,
-      handle: Pointer
+      handle: PointerByReference
   ): Int
+
+  def metacall_handle_export(handle: Pointer): Pointer
 
   def metacallv_s(name: String, args: Array[Pointer], size: SizeT): Pointer
   def metacallfv_s(func: Pointer, args: Array[Pointer], size: SizeT): Pointer
+
+  trait ResolveCallback extends Callback {
+    def invoke(result: Pointer, data: Pointer): Pointer
+  }
+
+  trait RejectCallback extends Callback {
+    def invoke(error: Pointer, data: Pointer): Pointer
+  }
+
+  def metacall_await_s(
+      name: String,
+      args: Array[Pointer],
+      size: SizeT,
+      resolve: ResolveCallback,
+      reject: RejectCallback,
+      data: Pointer
+  ): Pointer
+
+  def metacallhv_s(
+      handle: Pointer,
+      name: String,
+      args: Array[Pointer],
+      size: SizeT
+  ): Pointer
 
   def metacall_register(
       name: String,
@@ -53,10 +82,11 @@ protected[metacall] trait Bindings extends Library {
       types: Array[Int]
   ): Int
 
-
   def metacall_function(name: String): Pointer
 
   def metacall_function_size(func: Pointer): SizeT
+
+  def metacall_function_async(func: Pointer): Int
 
   def metacall_destroy(): Int
 
@@ -113,8 +143,11 @@ protected[metacall] trait Bindings extends Library {
 
   def metacall_value_destroy(v: Pointer): Unit
 
+  // TODO: Enhance return value using http://technofovea.com/blog/archives/815
   def metacall_value_id(v: Pointer): Int /* enum metacall_value_id */
 }
 private[metacall] object Bindings {
   val instance = Native.load("metacall", classOf[Bindings])
+
+  val runningInMetacall = System.getProperty("metacall.polyglot.name") == "core"
 }

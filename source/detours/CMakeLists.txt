@@ -12,6 +12,7 @@ set(DETOUR_MODULE_NAMES
 	preprocessor
 	environment
 	format
+	threading
 	log
 	memory
 	portability

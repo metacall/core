@@ -18,7 +18,7 @@
  *
  */
 
-#include <gmock/gmock.h>
+#include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
@@ -41,6 +41,7 @@ TEST_F(metacall_python_fail_test, DefaultConstructor)
 			"def sumList(list: [int]):\n"
 			"	return sum(list)\n";
 
+		// Apparently this loads the function but it does not understand the type
 		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
 		enum metacall_value_id id;
@@ -49,6 +50,20 @@ TEST_F(metacall_python_fail_test, DefaultConstructor)
 
 		// The type of list must be invalid once it loads
 		EXPECT_EQ((enum metacall_value_id) METACALL_INVALID, (enum metacall_value_id) id);
+
+		const char * py_scripts[] =
+		{
+			"this_does_not_exists_yeet.py"
+		};
+
+		EXPECT_EQ((int) 1, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+
+		const char buffer_fail[] =
+			"def sdf: as asf return";
+
+		// This must fail
+		EXPECT_EQ((int) 1, (int) metacall_load_from_memory("py", buffer_fail, sizeof(buffer_fail), NULL));
+
 	}
 	#endif /* OPTION_BUILD_LOADERS_PY */
 

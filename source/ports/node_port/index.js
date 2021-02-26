@@ -195,10 +195,15 @@ mod.prototype.require = function (name) {
 		/* NodeJS Loader */
 		js: 'node',
 		node: 'node',
+
+		/* TODO: TypeScript Loader is not supported to run with NodeJS Loader at the same time yet */
+
 		/* TypeScript Loader */
+		/*
 		ts: 'ts',
 		jsx: 'ts',
 		tsx: 'ts',
+		*/
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */
@@ -214,34 +219,25 @@ mod.prototype.require = function (name) {
 	// 	/* Continue loading */
 	// }
 
-	/* Try to load it with NodeJS first */
-	try {
-		return node_require.apply(this, [ name ]);
-	} catch (e) {
-		if (e.code !== 'MODULE_NOT_FOUND') {
-			throw e;
-		}
-	}
-
-	try {
-		return node_require.apply(this, [ require.resolve(name) ]);
-	} catch (e) {
-		if (e.code !== 'MODULE_NOT_FOUND') {
-			throw e;
-		}
-	}
-
 	const index = name.lastIndexOf('.');
 
 	if (index !== -1) {
-		/* If there is extension, load the module depending on the tag */
-		const extension = name.substr(index + 1);
-		const tag = tags[extension];
+			/* If there is extension, load the module depending on the tag */
+			const extension = name.substr(index + 1);
+			const tag = tags[extension];
 
-		if (tag && tag !== 'node') {
-			/* Load with MetaCall if we found a tag and it is not NodeJS */
-			return metacall_require(tag, name);
-		}
+			if (tag && tag !== 'node') {
+					/* Load with MetaCall if we found a tag and it is not NodeJS */
+					return metacall_require(tag, name);
+			}
+	}
+
+	try {
+			return node_require.apply(this, [ name ]);
+	} catch (e) {
+			if (e.code !== 'MODULE_NOT_FOUND') {
+					throw e;
+			}
 	}
 
 	/* If there is no extension or the extension is not supported or it is 'node', load it with NodeJS require */

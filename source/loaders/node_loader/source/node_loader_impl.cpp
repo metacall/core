@@ -223,7 +223,7 @@ struct loader_impl_node_type
 	loader_impl_async_destroy_safe destroy_safe;
 	napi_threadsafe_function threadsafe_destroy;
 
-	uv_thread_t thread_id;
+	uv_thread_t thread;
 	uv_loop_t * thread_loop;
 
 	uv_mutex_t mutex;
@@ -3807,7 +3807,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	};
 
 	/* Create NodeJS thread */
-	if (uv_thread_create(&node_impl->thread_id, node_loader_impl_thread, &thread_data) != 0)
+	if (uv_thread_create(&node_impl->thread, node_loader_impl_thread, &thread_data) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid NodeJS Thread creation");
 
@@ -4549,7 +4549,7 @@ int node_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Wait for node thread to finish */
-	uv_thread_join(&node_impl->thread_id);
+	uv_thread_join(&node_impl->thread);
 
 	/* Clear condition syncronization object */
 	uv_cond_destroy(&node_impl->cond);

@@ -2,7 +2,6 @@ package metacall
 
 import java.nio.file.Paths
 
-import cats.implicits._
 import com.sun.jna._
 import com.sun.jna.ptr.PointerByReference
 import metacall.instances._
@@ -20,9 +19,13 @@ class MetaCallSpec extends AnyFlatSpec {
   val metacall = Bindings.instance
 
   "MetaCall" should "initialize successfully" in {
+    println(
+      s"----------------------- MetaCall started in ${ProcessHandle.current().pid()} -----------------------"
+    )
+
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
-    if (System.getProperty("java.polyglot.name") != "metacall") {
+    if (!Bindings.runningInMetacall) {
       assert(
         metacall.metacall_initialize() == 0,
         "MetaCall was not successfully initialized"
@@ -30,11 +33,17 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  /*
   "MetaCall" should "load node script successsfully" in {
+    // NodeJS requires to set the library path environment variable
+    assert(
+      sys.env.get("LOADER_LIBRARY_PATH").map(_ != "").getOrElse(false),
+      "For running NodeJS tests you must define the loader library path"
+    )
+
     val scriptPaths = Array(
       Paths.get("./src/test/scala/scripts/main.js").toAbsolutePath.toString()
     )
+
     val retCode = metacall.metacall_load_from_file(
       "node",
       scriptPaths,
@@ -47,7 +56,52 @@ class MetaCallSpec extends AnyFlatSpec {
       s"MetaCall failed to load the script with code $retCode"
     )
   }
-   */
+
+  "MetaCall" should "call NodeJS async functions" in {
+    import java.util.concurrent.locks.{ReentrantLock}
+
+    import concurrent.{Promise, Await}
+    import concurrent.duration._
+
+    val awaitLock = new ReentrantLock()
+
+    awaitLock.lock()
+
+    val promise = Promise[Value]()
+
+    val argPtr = metacall.metacall_value_create_int(1000)
+
+    val ret = metacall.metacall_await_s(
+      "sleep",
+      Array(argPtr),
+      SizeT(1),
+      new metacall.ResolveCallback() {
+        def invoke(result: Pointer, data: Pointer): Pointer = {
+          awaitLock.lock()
+
+          promise.success(Ptr.toValue(Ptr.fromPrimitiveUnsafe(result)))
+
+          awaitLock.unlock()
+          null
+        }
+      },
+      new metacall.RejectCallback() {
+        def invoke(result: Pointer, data: Pointer): Pointer = {
+          fail("Promise should not have been refected")
+        }
+      },
+      null
+    )
+
+    awaitLock.unlock()
+
+    val result = Await.result(promise.future, 2.seconds)
+
+    assert(result == StringValue("Slept 1000 milliseconds!"))
+
+    metacall.metacall_value_destroy(ret)
+    metacall.metacall_value_destroy(argPtr)
+  }
 
   "MetaCall" should "load python script successsfully" in {
     val scriptPaths = Array(
@@ -64,6 +118,39 @@ class MetaCallSpec extends AnyFlatSpec {
       retCode == 0,
       s"MetaCall failed to load the script with code $retCode"
     )
+  }
+
+  "MetaCall" should "load python script with reference to the handle properly" in {
+    val scriptPaths = Array(
+      Paths.get("./src/test/scala/scripts/s1.py").toAbsolutePath.toString()
+    )
+    val handleRef = new PointerByReference()
+
+    val retCode = metacall.metacall_load_from_file(
+      "py",
+      scriptPaths,
+      SizeT(scriptPaths.length.toLong),
+      handleRef
+    )
+
+    require(
+      retCode == 0,
+      s"MetaCall failed to load the script with code $retCode"
+    )
+
+    val ret = metacall.metacallhv_s(
+      handleRef.getValue(),
+      "fn_in_s1",
+      Array(),
+      SizeT(0)
+    )
+
+    require(
+      metacall.metacall_value_to_string(ret) == "Hello from s1",
+      "MetaCall failed to call into fn_in_s1 with metacallhv_s"
+    )
+
+    metacall.metacall_value_destroy(ret)
   }
 
   "MetaCall" should "successfully call function from loaded script and return correct value" in {
@@ -182,7 +269,6 @@ class MetaCallSpec extends AnyFlatSpec {
       LongValue(Long.MinValue),
       StringValue("Helloooo"),
       CharValue('j'),
-      StringValue("😍 🔥 ⚡"),
       BooleanValue(true),
       NullValue,
       ArrayValue(Vector(IntValue(1), StringValue("Hi"))),
@@ -408,7 +494,7 @@ class MetaCallSpec extends AnyFlatSpec {
           argValues match {
             case StringValue(s) :: Nil =>
               Ptr.fromValueUnsafe(StringValue("Hello, " + s)).ptr
-            case _ => Bindings.instance.metacall_value_create_null()
+            case _ => metacall.metacall_value_create_null()
           }
         }
       }
@@ -424,7 +510,7 @@ class MetaCallSpec extends AnyFlatSpec {
   "MetaCall" should "be destroyed successfully" in {
     // TODO: Remove this if we drop support for executing Scala outside of MetaCall
     // TODO: Create a destroy method wrapping this functionality
-    if (System.getProperty("java.polyglot.name") != "metacall") {
+    if (!Bindings.runningInMetacall) {
       assert(
         metacall.metacall_destroy() == 0,
         "MetaCall was not successfully destroyed"
@@ -432,94 +518,4 @@ class MetaCallSpec extends AnyFlatSpec {
     }
   }
 
-  "Caller" should "load scripts successfully" in {
-    Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py")
-  }
-
-  "Caller" should "start successfully" in {
-    Caller.start()
-  }
-
-  "Caller" should "call functions and clean up arguments and returned pointers" in {
-    val ret = Caller.blocking.callV(
-      None,
-      "hello_scala_from_python",
-      List(StringValue("Hello "), StringValue("Scala!"))
-    )
-
-    assert(ret == StringValue("Hello Scala!"))
-  }
-
-  "FunctionValues" should "be constructed and passed to foreign functions" in {
-    val fnVal = FunctionValue {
-      case LongValue(l) :: Nil => LongValue(l + 1L)
-      case _                   => NullValue
-    }
-
-    val ret = Caller.blocking.callV(None, "apply_fn_to_one", fnVal :: Nil)
-
-    assert(ret == LongValue(2L))
-  }
-
-  "Generic API" should "operate on primitive Scala values" in {
-    //  with tuples
-    val ret = Caller.blocking.call("big_fn", (1, "hello", 2.2))
-    assert(ret == DoubleValue(8.2))
-
-    // with single-element products (i.e. the List)
-    val ret2 = Caller.blocking.call("sumList", List(1, 2, 3))
-    assert(ret2 == LongValue(6))
-
-    // with HLists
-    import shapeless._
-
-    val ret3 = Caller.blocking.call("big_fn", 1 :: "hello" :: 2.2 :: HNil)
-    assert(ret3 == DoubleValue(8.2))
-  }
-
-  "Using `Caller` from multiple threads" should "work" in {
-    import scala.concurrent._, duration._
-    import ExecutionContext.Implicits.global
-
-    val rangeValues: List[ArrayValue] =
-      List.range(1, 50).map(n => ArrayValue(Vector.range(1, n).map(IntValue)))
-
-    val resSum = rangeValues
-      .traverse { range =>
-        Future(Caller.blocking.callV(None, "sumList", range :: Nil)) map {
-          case n: NumericValue[_] => n.long.value
-          case other              => fail("Returned value should be a number, but got " + other)
-        }
-      }
-      .map(_.sum)
-
-    val result = Await.result(resSum, 10.seconds)
-
-    assert(result == 19600)
-  }
-
-  "Calling functions many times in parallel" should "work" in {
-    import scala.concurrent._, duration._
-    import ExecutionContext.Implicits.global
-
-    val rangeValues: List[ArrayValue] =
-      List.range(1, 50).map(n => ArrayValue(Vector.range(1, n).map(IntValue)))
-
-    val resSum = rangeValues
-      .traverse { range =>
-        Caller.callV(None, "sumList", range :: Nil) map {
-          case n: NumericValue[_] => n.long.value
-          case other              => fail("Returned value should be a number, but got " + other)
-        }
-      }
-      .map(_.sum)
-
-    val result = Await.result(resSum, 10.seconds)
-
-    assert(result == 19600)
-  }
-
-  "Caller" should "be destroyed correctly" in {
-    Caller.destroy()
-  }
 }
