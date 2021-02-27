@@ -449,12 +449,9 @@ function ts_loader_trampoline_await_future(trampoline) {
 	}
 
 	return function ts_loader_trampoline_await_impl(future, trampoline_ptr) {
-		// This apparently does not work for native promises, let it uncommented until we find a proper way of detecting the type
-		/*
-		if (!!future && typeof future.then === 'function') {
+		if (!(!!future && typeof future.then === 'function')) {
 			throw new Error('Await only accepts a thenable promise, not ' + typeof future);
 		}
-		*/
 
 		if (typeof trampoline_ptr !== 'object') {
 			throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
