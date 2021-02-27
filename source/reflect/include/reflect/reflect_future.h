@@ -33,13 +33,22 @@ typedef void * future_impl;
 
 typedef struct future_type * future;
 
+typedef value future_return;
+
+typedef value (*future_resolve_callback)(value, void *);
+
+typedef value (*future_reject_callback)(value, void *);
+
 typedef int (*future_impl_interface_create)(future, future_impl);
+
+typedef future_return (*future_impl_interface_await)(future, future_impl, future_resolve_callback, future_reject_callback, void *);
 
 typedef void (*future_impl_interface_destroy)(future, future_impl);
 
 typedef struct future_interface_type
 {
 	future_impl_interface_create create;
+	future_impl_interface_await await;
 	future_impl_interface_destroy destroy;
 
 } * future_interface;
@@ -47,6 +56,8 @@ typedef struct future_interface_type
 typedef future_interface (*future_impl_interface_singleton)(void);
 
 REFLECT_API future future_create(future_impl impl, future_impl_interface_singleton singleton);
+
+REFLECT_API future_return future_await(future f, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * context);
 
 REFLECT_API void future_destroy(future f);
 

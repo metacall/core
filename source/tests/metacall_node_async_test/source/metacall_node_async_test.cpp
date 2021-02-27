@@ -46,7 +46,10 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 			"function g(x) {\n"
 			"\treturn new Promise((_, r) => console.log(`Promise g executed: ${util.inspect(r)} -> ${x}`) || r(x));\n"
 			"}\n"
-			"module.exports = { f, g };\n";
+			"function h() {\n"
+			"\treturn new Promise((resolve) => resolve(34));\n"
+			"}\n"
+			"module.exports = { f, g, h };\n";
 
 		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
@@ -129,6 +132,56 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 		metacall_value_destroy(future);
 
 		metacall_value_destroy(args[0]);
+
+		/* Test future */
+		future = metacall("h");
+
+		EXPECT_NE((void *) NULL, (void *) future);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
+
+		void * ret = metacall_await_future(metacall_value_to_future(future), [](void * result, void *) -> void * {
+			EXPECT_NE((void *) NULL, (void *) result);
+
+			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+
+			EXPECT_EQ((double) 34.0, (double) metacall_value_to_double(result));
+
+			return metacall_value_create_double(155.0);
+			return NULL;
+		}, [](void *, void *) -> void * {
+			int this_should_never_be_executed = 0;
+
+			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+
+			return NULL;
+		}, NULL);
+
+		metacall_value_destroy(future);
+
+		EXPECT_NE((void *) NULL, (void *) ret);
+
+		EXPECT_EQ((enum metacall_value_id) metacall_value_id(ret), (enum metacall_value_id) METACALL_FUTURE);
+
+		void * last = metacall_await_future(metacall_value_to_future(ret), [](void * result, void *) -> void * {
+			EXPECT_NE((void *) NULL, (void *) result);
+
+			EXPECT_EQ((enum metacall_value_id) metacall_value_id(result), (enum metacall_value_id) METACALL_DOUBLE);
+
+			EXPECT_EQ((double) 155.0, (double) metacall_value_to_double(result));
+
+			return NULL;
+		}, [](void *, void *) -> void * {
+			int this_should_never_be_executed = 0;
+
+			EXPECT_EQ((int) 1, (int) this_should_never_be_executed);
+
+			return NULL;
+		}, NULL);
+
+		metacall_value_destroy(last);
+
+		metacall_value_destroy(ret);
 	}
 	#endif /* OPTION_BUILD_LOADERS_NODE */
 

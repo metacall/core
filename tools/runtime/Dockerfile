@@ -80,7 +80,7 @@ RUN mkdir -p /usr/local/scripts \
 	&& rm -rf $METACALL_PATH/metacall-runtime.sh
 
 # Copy libraries from builder
-COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.node /usr/local/lib/
+COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.ts /usr/local/lib/*.node /usr/local/lib/
 
 # Copy node dependencies (and port) from builder
 COPY --from=builder /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
