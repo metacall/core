@@ -41,8 +41,6 @@ REFLECT_API int exception_code(exception ex);
 
 REFLECT_API const char * exception_stacktrace(exception ex);
 
-REFLECT_API int exception_thrown(exception ex);
-
 REFLECT_API void exception_destroy(exception ex);
 
 #ifdef __cplusplus

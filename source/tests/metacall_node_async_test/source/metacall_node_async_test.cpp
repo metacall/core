@@ -148,7 +148,6 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 			EXPECT_EQ((double) 34.0, (double) metacall_value_to_double(result));
 
 			return metacall_value_create_double(155.0);
-			return NULL;
 		}, [](void *, void *) -> void * {
 			int this_should_never_be_executed = 0;
 
