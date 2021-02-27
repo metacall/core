@@ -92,16 +92,6 @@ const char * exception_stacktrace(exception ex)
 	return ex->stacktrace;
 }
 
-int exception_thrown(exception ex)
-{
-	if (ex == NULL)
-	{
-		return 1;
-	}
-
-	return ex->thrown;
-}
-
 void exception_destroy(exception ex)
 {
 	if (ex != NULL)
