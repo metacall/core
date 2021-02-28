@@ -37,7 +37,7 @@ object Caller {
       definitions: Map[String, FunctionMetadata]
   )
 
-  final case class FunctionMetadata(isAsync: Boolean)
+  final case class FunctionMetadata(isAsync: Boolean, paramCount: Int)
 
   private def callLoop(disableLogging: Boolean) = {
     if (!Bindings.runningInMetacall) {
@@ -72,12 +72,15 @@ object Caller {
                       }
                   }
                   .map { pairs =>
-                    pairs.map { case (fnNamePointer, fnPointer) =>
+                    pairs.map { case (fnNamePointer, fnValuePointer) =>
+                      val fnPointer =
+                        Bindings.instance.metacall_value_to_function(fnValuePointer)
                       Bindings.instance.metacall_value_to_string(fnNamePointer) ->
                         FunctionMetadata(
                           Bindings.instance
                             .metacall_function_async(fnPointer)
-                            .intValue() == 1
+                            .intValue() == 1,
+                          Bindings.instance.metacall_function_size(fnPointer).intValue()
                         )
                     }.toMap
                   }

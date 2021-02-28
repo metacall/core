@@ -48,13 +48,13 @@ class CallerSpec extends AnyFlatSpec {
     val s1 = Caller.definitions("s1").get
     assert(
       s1 === Map(
-        "fn_in_s1" -> Caller.FunctionMetadata(false),
-        "other_fn_in_s1" -> Caller.FunctionMetadata(false)
+        "fn_in_s1" -> Caller.FunctionMetadata(false, 0),
+        "other_fn_in_s1" -> Caller.FunctionMetadata(false, 2)
       )
     )
 
     val s2 = Caller.definitions("s2").get
-    assert(s2 === Map("fn_in_s2" -> Caller.FunctionMetadata(false)))
+    assert(s2 === Map("fn_in_s2" -> Caller.FunctionMetadata(false, 0)))
   }
 
   "Caller" should "call functions and clean up arguments and returned pointers" in {
