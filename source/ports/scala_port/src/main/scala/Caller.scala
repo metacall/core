@@ -161,7 +161,7 @@ object Caller {
 
   /** Starts the MetaCall instance.
     * WARNING: Should only be called once.
-    * @param ec The `ExecutionContext` in which all (non-blocking) function calls are executed.
+    * @param ec The `ExecutionContext` in which all function calls are executed.
     */
   def start(ec: ExecutionContext, disableLogging: Boolean = true): Try[Unit] =
     if (startedOnce) Failure(new Exception("Caller has already been started once before"))

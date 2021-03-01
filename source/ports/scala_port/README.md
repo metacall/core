@@ -18,13 +18,15 @@ import metacall._, instances._
 import java.nio.file.Paths
 import scala.concurrent.{Future, Await, ExecutionContext}
 import scala.concurrent.duration._
+import ExecutionContext.Implicits.global
 
 object Main extends App {
   Caller.start(ExecutionContext.global)
 
-  Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
-
-  val future: Future[Value] = Caller.call("hello", "World!")
+  val future: Future[Value] = for {
+    _      <- Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
+    result <- Caller.call("hello", "World!")
+  } yield result
 
   println(Await.result(future, 1.second))
   // metacall.StringValue("Hello, World!")
