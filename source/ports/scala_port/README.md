@@ -35,6 +35,53 @@ object Main extends App {
 }
 ```
 
+## Usage
+
+To import most of MetaCall's functionality, use:
+```scala
+import metacall._, instances._
+```
+This imports the important types and type class instances. There are a few important types to note:
+- `Value`: A coproduct representing the types of values that can be passed as arguments to and returned from foreign functions.
+- `Args[A]`: A type class that allows product types (e.g. `case class`es, tuples, `shapeless.HList`s) to be passed as arguments to foreign functions. Instances for this type class are defined in `metacall.instances`.
+
+The `Caller` object defines methods for calling the foreigh functions, such as `call`, and `callV`. **Before doing anything, remember that you need to call `Caller.start()`; you should also call `Caller.destroy()` when you're done using the `Caller`. This should be done only once during the life of the application.**
+```scala
+Caller.start(concurrent.ExecutionContext.global)
+// scala.util.Try[Unit]
+
+// Takes a product as arguments (A: Args)
+Caller.call("fnName", ("arg1", "arg2"))
+// scala.concurrent.Future[metacall.Value]
+
+// Takes a List[Value] as arguments
+Caller.callV("fnName", List(StringValue("arg1"), StringValue("arg2")))
+// scala.concurrent.Future[metacall.Value]
+
+Caller.destroy()
+// scala.util.Try[Unit]
+```
+
+> Calling foreign functions always returns a `Future`, even if the foreign function isn't `async`. If the function is `async`, or it returns a promise, its return value would be flattened into a `Future[Value]`.
+
+Functions need to be loaded before they are called; for that, we have the `loadFile` and `loadFiles` methods.
+```scala
+Caller.loadFile(Runtime.Node, Paths.get("./myfunctions.js").toAbsolutePath.toString)
+// scala.concurrent.Future[Unit]
+```
+Optionally, you can specify a namespace where you want the functions to be loaded.
+```scala
+import java.nio.file.Paths
+
+Caller.loadFile(
+  Runtime.Node, 
+  Paths.get("./myfunctions.js").toAbsolutePath.toString,
+  Some("myNamespace")
+)
+// scala.concurrent.Future[Unit]
+```
+Then you can pass the namespace to `call` or `callV` to call functions from it. You can also see all the definitions in a namespace using the `definitions` method.
+
 ## Development
 ### Setup
 
