@@ -1,11 +1,11 @@
 import Tests._
 
 lazy val commonSettings = Seq(
-  name := "metacall",
+  name := "metacall-scala",
   scalaVersion := "2.13.4",
-  version := "0.1.0-SNAPSHOT",
-  organization := "com.metacall",
-  organizationName := "metacall",
+  version := "0.1.0",
+  organization := "io.metacall",
+  organizationName := "MetaCall",
   scalacOptions ++= Seq(
     // Only for debugging purposes
     // "-Djava.compiler=NONE",
@@ -58,6 +58,12 @@ lazy val root = (project in file("."))
     testGrouping in Test := (testGrouping in Test).value.flatMap { group =>
       group.tests map (test => Group(test.name, Seq(test), SubProcess(ForkOptions())))
     },
+    githubSuppressPublicationWarning := true,
+    githubOwner := "metacall",
+    githubRepository := "core",
+    githubTokenSource :=
+      TokenSource.Environment("GITHUB_TOKEN") ||
+        TokenSource.GitConfig("github.token"),
     dockerfile in docker := new Dockerfile {
       from("metacall/core:dev")
 

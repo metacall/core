@@ -40,6 +40,8 @@ object Main extends App {
 
 To set up Scala & SBT, use [Coursier](https://get-coursier.io/docs/cli-installation). After getting the `cs` executable, run `cs setup` and follow the prompt.
 
+Compiling requires setting either the `GITHUB_TOKEN` environment variable, or a `github.token` Git configuration. Use `export GITHUB_TOKEN=<token>` or `git config --global github.token <token>`, where `<token>` can be generated in your GitHub account's [settings](https://github.com/settings/tokens).
+
 ### Testing
 
 To run the tests, run `sbt test` in this README's directory.
@@ -62,7 +64,7 @@ cmake .. # Use loader flags as specified in https://github.com/metacall/core/blo
 sudo make install
 ```
 
-> You need to set `LOADER_LIBRARY_PATH` to the build directory created in the script above
+> You need to set `LOADER_LIBRARY_PATH` to the build directory created in the script above before running `sbt`, i.e. `LOADER_LIBRARY_PATH=path/to/core/build sbt`
 
 To run the tests in Docker, run `sbt` then `docker` to build the image (must run `docker` from within the SBT session), and then `sbt dockerTest` to run it. Note that you should build the `metacall/core:dev` image locally since the published one might not be up to date by running `./docker-compose.sh build` in `metacall/core`'s root. Pay attention to SBT's error messages.
 
@@ -87,3 +89,7 @@ Then copy the classpath into the valgrind command:
 ```
 valgrind --tool=memcheck --trace-children=yes --error-limit=no scala -Djava.compiler=NONE -cp <classpath> src/test/scala/MetaCallSpecMain.scala
 ```
+
+# Publishing
+
+Use `sbt publish` to publish to GitHub Packages using [sbt-github-packages](https://github.com/djspiewak/sbt-github-packages). Make sure your GitHub token is set correctly according to [Setup](#setup).

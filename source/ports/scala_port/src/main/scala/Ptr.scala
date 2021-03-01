@@ -4,7 +4,7 @@ import com.sun.jna._
 import metacall.util._
 import concurrent.Future
 
-/** Create a [[Ptr]] to MetaCall value of type [[A]] */
+/** Create a [[Ptr]] to MetaCall value of type `A` */
 trait Create[A] {
   def create(value: A): Ptr[A]
 }
