@@ -66,6 +66,13 @@ protected[metacall] trait Bindings extends Library {
       data: Pointer
   ): Pointer
 
+  def metacall_await_future(
+      future: Pointer,
+      reslove: ResolveCallback,
+      reject: RejectCallback,
+      data: Pointer
+  ): Pointer
+
   def metacallhv_s(
       handle: Pointer,
       name: String,

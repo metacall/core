@@ -27,6 +27,7 @@ class CallerSpec extends AnyFlatSpec {
 
   "Caller" should "load scripts into global scope successfully" in {
     await(Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py"))
+    await(Caller.loadFile(Runtime.Node, "./src/test/scala/scripts/main.js"))
   }
 
   "Caller" should "load scripts into namespaces and call them" in {
@@ -66,6 +67,14 @@ class CallerSpec extends AnyFlatSpec {
     }
 
     assert(ret == StringValue("Hello Scala!"))
+  }
+
+  "Caller" should "call async functions correctly" in {
+    // TODO: metacall_future_await failing with a segmentation fault
+    assert(
+      await(Caller.call("sleep", 100)) ==
+        StringValue("Slept 100 milliseconds!")
+    )
   }
 
   "FunctionValues" should "be constructed and passed to foreign functions" in {

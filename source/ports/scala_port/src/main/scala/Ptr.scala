@@ -2,6 +2,7 @@ package metacall
 
 import com.sun.jna._
 import metacall.util._
+import concurrent.Future
 
 /** Create a [[Ptr]] to MetaCall value of type [[A]] */
 trait Create[A] {
@@ -89,23 +90,24 @@ object Ptr {
       case MapPtrType      => new MapPtr(pointer)
       case NullPtrType     => new NullPtr(pointer)
       case FunctionPtrType => new FunctionPtr(pointer)
+      case FuturePtrType   => new FuturePtr(pointer)
       case InvalidPtrType  => InvalidPtr
     }
 
   def toValue(ptr: Ptr[_]): Value = ptr match {
-    case p: BoolPtr     => Get[Boolean].value(p)
-    case p: CharPtr     => Get[Char].value(p)
-    case p: ShortPtr    => Get[Short].value(p)
-    case p: IntPtr      => Get[Int].value(p)
-    case p: LongPtr     => Get[Long].value(p)
-    case p: FloatPtr    => Get[Float].value(p)
-    case p: DoublePtr   => Get[Double].value(p)
-    case p: StringPtr   => Get[String].value(p)
-    case p: ArrayPtr    => Get[Array[Pointer]].value(p)
-    case p: MapPtr      => Get[Array[(Pointer, Pointer)]].value(p)
-    case p: NullPtr     => Get[Null].value(p)
-    case p: FunctionPtr => Get[FunctionPointer].value(p)
-    case InvalidPtr     => InvalidValue
+    case p: BoolPtr                => Get[Boolean].value(p)
+    case p: CharPtr                => Get[Char].value(p)
+    case p: ShortPtr               => Get[Short].value(p)
+    case p: IntPtr                 => Get[Int].value(p)
+    case p: LongPtr                => Get[Long].value(p)
+    case p: FloatPtr               => Get[Float].value(p)
+    case p: DoublePtr              => Get[Double].value(p)
+    case p: StringPtr              => Get[String].value(p)
+    case p: ArrayPtr               => Get[Array[Pointer]].value(p)
+    case p: MapPtr                 => Get[Array[(Pointer, Pointer)]].value(p)
+    case p: NullPtr                => Get[Null].value(p)
+    case p: FunctionPtr            => Get[FunctionPointer].value(p)
+    case InvalidPtr | _: FuturePtr => InvalidValue
   }
 
 }
@@ -119,7 +121,6 @@ object Ptr {
   *   METACALL_BUFFER = 8,
   *  ...
   *   METACALL_PTR		= 11,
-  *   METACALL_FUTURE	 = 12,
   *   ...
   *   METACALL_CLASS	  = 15,
   *   METACALL_OBJECT	  = 16,
@@ -145,6 +146,7 @@ object PtrType {
         case 7  => StringPtrType
         case 9  => ArrayPtrType
         case 10 => MapPtrType
+        case 12 => FuturePtrType
         case 13 => FunctionPtrType
         case 14 => NullPtrType
         case _  => InvalidPtrType
@@ -220,6 +222,13 @@ private[metacall] final class MapPtr(val ptr: Pointer)
 }
 object MapPtrType extends PtrType {
   val id = 10
+}
+
+private[metacall] final class FuturePtr(val ptr: Pointer) extends Ptr[Future[Ptr[_]]] {
+  val ptrType = CharPtrType
+}
+object FuturePtrType extends PtrType {
+  val id = 12
 }
 
 private[metacall] final class FunctionPtr(val ptr: Pointer) extends Ptr[FunctionPointer] {

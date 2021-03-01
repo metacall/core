@@ -106,7 +106,7 @@ object Caller {
         }
       } else if (!callQueue.isEmpty()) {
         val Call(namespace, fnName, args, resultPromise) = callQueue.poll()
-        resultPromise.tryComplete(callUnsafe(namespace, fnName, args))
+        callUnsafe(namespace, fnName, args, resultPromise)
       }
     }
 
@@ -186,58 +186,90 @@ object Caller {
     * @param fnName The name of the function to call
     * @param args A list of `Value`s to be passed as arguments to the function
     * @param namespace The script/module file where the function is defined
-    * @return The function's return value, or `InvalidValue` in case of an error
+    * @param returnPromise The promise to the call's return value
     */
   private def callUnsafe(
       namespace: Option[String],
       fnName: String,
-      args: List[Value]
-  ): Try[Value] = {
+      args: List[Value],
+      returnPromise: Promise[Value]
+  ): Unit = {
     val argPtrArray = args.map(Ptr.fromValueUnsafe(_).ptr).toArray
 
-    val retPointer =
-      namespace match {
-        case Some(namespaceName) => {
-          val namespace = namespaces.get(namespaceName)
+    val retPointer = namespace match {
+      case Some(namespaceName) => {
+        val namespace = namespaces.get(namespaceName)
 
-          if (namespace == null)
-            Failure {
-              new Exception(
-                s"Namespace `$namespaceName` is not defined (no scripts were loaded in it)"
-              )
-            }
-          else if (!namespace.definitions.contains(fnName))
-            Failure {
-              new Exception(
-                s"Function `$fnName` is not defined in `$namespaceName`"
-              )
-            }
-          else
-            Success {
-              Bindings.instance.metacallhv_s(
-                namespace.handle.getValue(),
-                fnName,
-                argPtrArray,
-                SizeT(argPtrArray.length.toLong)
-              )
-            }
-        }
-        case None =>
+        if (namespace == null)
+          Failure {
+            new Exception(
+              s"Namespace `$namespaceName` is not defined (no scripts were loaded in it)"
+            )
+          }
+        else if (!namespace.definitions.contains(fnName))
+          Failure {
+            new Exception(
+              s"Function `$fnName` is not defined in `$namespaceName`"
+            )
+          }
+        else
           Success {
-            Bindings.instance.metacallv_s(
+            Bindings.instance.metacallhv_s(
+              namespace.handle.getValue(),
               fnName,
               argPtrArray,
               SizeT(argPtrArray.length.toLong)
             )
           }
       }
+      case None =>
+        Success {
+          Bindings.instance.metacallv_s(
+            fnName,
+            argPtrArray,
+            SizeT(argPtrArray.length.toLong)
+          )
+        }
+    }
 
-    val retValue = retPointer.map(retp => Ptr.toValue(Ptr.fromPrimitiveUnsafe(retp)))
+    retPointer match {
+      case Success(retp) => {
+        if (PtrType.of(retp) == FuturePtrType) {
+          Bindings.instance.metacall_await_future(
+            retp,
+            new Bindings.instance.ResolveCallback {
+              override def invoke(result: Pointer, data: Pointer) = {
+                returnPromise.success(Ptr.toValue(Ptr.fromPrimitiveUnsafe(result)))
 
-    retPointer.foreach(Bindings.instance.metacall_value_destroy)
-    argPtrArray.foreach(Bindings.instance.metacall_value_destroy)
+                Bindings.instance.metacall_value_destroy(retp)
+                null
+              }
+            },
+            new Bindings.instance.RejectCallback {
+              override def invoke(error: Pointer, data: Pointer) = {
+                returnPromise.failure(
+                  new Exception(s"Rejected future returned by $fnName")
+                )
 
-    retValue
+                argPtrArray.foreach(Bindings.instance.metacall_value_destroy)
+                null
+              }
+            },
+            null
+          )
+        } else {
+          returnPromise.success(Ptr.toValue(Ptr.fromPrimitiveUnsafe(retp)))
+
+          Bindings.instance.metacall_value_destroy(retp)
+          argPtrArray.foreach(Bindings.instance.metacall_value_destroy)
+        }
+      }
+      case Failure(err) => {
+        returnPromise.failure(err)
+
+        argPtrArray.foreach(Bindings.instance.metacall_value_destroy)
+      }
+    }
   }
 
   /** Calls a loaded function with a list of `metacall.Value` arguments.
