@@ -236,7 +236,7 @@ object Caller {
       case Success(retp) => {
         if (PtrType.of(retp) == FuturePtrType) {
           Bindings.instance.metacall_await_future(
-            retp,
+            Bindings.instance.metacall_value_to_future(retp),
             new Bindings.instance.ResolveCallback {
               override def invoke(result: Pointer, data: Pointer) = {
                 returnPromise.success(Ptr.toValue(Ptr.fromPrimitiveUnsafe(result)))

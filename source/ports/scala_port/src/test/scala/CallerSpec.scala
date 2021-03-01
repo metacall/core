@@ -70,9 +70,13 @@ class CallerSpec extends AnyFlatSpec {
   }
 
   "Caller" should "call async functions correctly" in {
-    // TODO: metacall_future_await failing with a segmentation fault
     assert(
       await(Caller.call("sleep", 100)) ==
+        StringValue("Slept 100 milliseconds!")
+    )
+
+    assert(
+      await(Caller.call("sleepReturningPromise", 100)) ==
         StringValue("Slept 100 milliseconds!")
     )
   }
