@@ -22,7 +22,11 @@ async function sleep(ms) {
         setTimeout(resolve, ms);
     });
 
-    return `Slept ${ms} milliseconds!`
+    return `Slept ${ms} milliseconds!`;
 }
 
-module.exports = { hello, env, increment, sumListJs, sleep };
+const sleepReturningPromise = ms =>
+    new Promise(resolve => setTimeout(resolve, ms))
+        .then(() => `Slept ${ms} milliseconds!`);
+
+module.exports = { hello, env, increment, sumListJs, sleep, sleepReturningPromise };

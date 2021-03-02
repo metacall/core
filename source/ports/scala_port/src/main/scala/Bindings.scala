@@ -66,6 +66,13 @@ protected[metacall] trait Bindings extends Library {
       data: Pointer
   ): Pointer
 
+  def metacall_await_future(
+      future: Pointer,
+      reslove: ResolveCallback,
+      reject: RejectCallback,
+      data: Pointer
+  ): Pointer
+
   def metacallhv_s(
       handle: Pointer,
       name: String,
@@ -119,6 +126,7 @@ protected[metacall] trait Bindings extends Library {
   def metacall_value_to_null(v: Pointer): Null
   def metacall_value_to_function(v: Pointer): Pointer
   def metacall_value_to_map(v: Pointer): Array[Pointer]
+  def metacall_value_to_future(v: Pointer): Pointer
 
   def metacall_value_from_int(v: Pointer, i: Int): Pointer
   def metacall_value_from_string(

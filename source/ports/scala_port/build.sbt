@@ -1,11 +1,11 @@
 import Tests._
 
 lazy val commonSettings = Seq(
-  name := "metacall",
+  name := "metacall-scala",
   scalaVersion := "2.13.4",
-  version := "0.1.0-SNAPSHOT",
-  organization := "com.metacall",
-  organizationName := "metacall",
+  version := "0.1.0",
+  organization := "io.metacall",
+  organizationName := "MetaCall",
   scalacOptions ++= Seq(
     // Only for debugging purposes
     // "-Djava.compiler=NONE",
@@ -35,19 +35,18 @@ dockerTest := {
 
   val logger = streams.value.log
   logger.info(
-    "NOTE: Run `./docker-compose.sh build` in the root of metacall/core first to get the latest metacall/core:dev image"
+    "Run `./docker-compose.sh build` in the root of metacall/core first to get the latest metacall/core:dev image"
   )
 
-  try s"docker run --rm -v ${Paths.get("").toAbsolutePath().toString()}:/tests metacall-scala-tests" !
-  catch {
-    case e: Throwable => {
-      val msg =
-        e.getMessage() + "\nTIP: Run `sbt build` if the image `metacall-scala-tests` doesn't exist"
+  if (
+    s"""docker run --rm --mount type=bind,source=${Paths
+      .get("")
+      .toAbsolutePath()
+      .toString()},target=/tests metacall-scala-tests""".! != 0
+  ) {
+    logger.err("TIP: Run `sbt build` if the image `metacall-scala-tests` doesn't exist")
 
-      logger.err(msg)
-
-      throw new Exception(msg)
-    }
+    throw new Exception("Failed to run tests in docker. Check printed errors for clews")
   }
 }
 
@@ -59,6 +58,12 @@ lazy val root = (project in file("."))
     testGrouping in Test := (testGrouping in Test).value.flatMap { group =>
       group.tests map (test => Group(test.name, Seq(test), SubProcess(ForkOptions())))
     },
+    githubSuppressPublicationWarning := true,
+    githubOwner := "metacall",
+    githubRepository := "core",
+    githubTokenSource :=
+      TokenSource.Environment("GITHUB_TOKEN") ||
+        TokenSource.GitConfig("github.token"),
     dockerfile in docker := new Dockerfile {
       from("metacall/core:dev")
 

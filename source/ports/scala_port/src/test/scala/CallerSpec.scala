@@ -27,6 +27,7 @@ class CallerSpec extends AnyFlatSpec {
 
   "Caller" should "load scripts into global scope successfully" in {
     await(Caller.loadFile(Runtime.Python, "./src/test/scala/scripts/main.py"))
+    await(Caller.loadFile(Runtime.Node, "./src/test/scala/scripts/main.js"))
   }
 
   "Caller" should "load scripts into namespaces and call them" in {
@@ -44,6 +45,19 @@ class CallerSpec extends AnyFlatSpec {
     )
   }
 
+  "Caller#definitions" should "retrieve functions correctly" in {
+    val s1 = Caller.definitions("s1").get
+    assert(
+      s1 === Map(
+        "fn_in_s1" -> Caller.FunctionMetadata(false, 0),
+        "other_fn_in_s1" -> Caller.FunctionMetadata(false, 2)
+      )
+    )
+
+    val s2 = Caller.definitions("s2").get
+    assert(s2 === Map("fn_in_s2" -> Caller.FunctionMetadata(false, 0)))
+  }
+
   "Caller" should "call functions and clean up arguments and returned pointers" in {
     val ret = await {
       Caller.callV(
@@ -53,6 +67,18 @@ class CallerSpec extends AnyFlatSpec {
     }
 
     assert(ret == StringValue("Hello Scala!"))
+  }
+
+  "Caller" should "call async functions correctly" in {
+    assert(
+      await(Caller.call("sleep", 100)) ==
+        StringValue("Slept 100 milliseconds!")
+    )
+
+    assert(
+      await(Caller.call("sleepReturningPromise", 100)) ==
+        StringValue("Slept 100 milliseconds!")
+    )
   }
 
   "FunctionValues" should "be constructed and passed to foreign functions" in {
