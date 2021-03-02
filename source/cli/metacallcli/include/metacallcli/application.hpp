@@ -294,7 +294,6 @@ class application
 	arg_list arguments;					/**< Vector containing a list of arguments */
 	script_list scripts;				/**< Vector containing a list of script names */
 	command_table commands;				/**< Hash table from command strings to command handlers */
-	std::string log_path;				/**< Path where logs are located */
 	std::mutex await_mutex;				/**< Mutex for blocking the REPL until await is resolved */
 	std::condition_variable await_cond;	/**< Condition to be fired once await method is resolved or rejected */
 };
