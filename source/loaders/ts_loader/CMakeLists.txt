@@ -1,16 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_TS)
-	return()
-endif()
-
-#
-# External dependencies
-#
-
-find_package(NodeJS 10.23.1)
-
-if(NOT NODEJS_FOUND)
-	message(STATUS "NodeJS libraries not found")
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_PORTS_NODE OR NOT OPTION_BUILD_LOADERS_TS)
 	return()
 endif()
 
@@ -74,25 +63,17 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(ts_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${ts_loader_unity_build}
-	${LOADER_MODULE_NAMES}
-)
-
 # Build library
-add_library(${target} SHARED
-	${ts_loader_unity_build}
+add_library(${target} MODULE
 	${sources}
 	${headers}
 )
 
 # Add target dependencies
 add_dependencies(${target}
-	${LOADER_MODULE_NAMES}
+	node_loader
+	node_port
+	ts_loader_bootstrap
 )
 
 # Create namespaced alias
@@ -143,13 +124,17 @@ set_target_properties(${target}
 # Include directories
 #
 
+# Get headers from NodeJS Loader
+get_target_property(NODE_LOADER_INCLUDES node_loader INCLUDE_DIRECTORIES)
+
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${NODEJS_INCLUDE_DIRS} # NodeJS includes
+	${NODE_LOADER_INCLUDES} # Node Loader includes
+	${LOADER_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -166,7 +151,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::node_loader # Node Loader
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

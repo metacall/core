@@ -14,7 +14,25 @@ const path = require('path');
 const util = require('util');
 const fs = require('fs');
 
-const ts = require('./node_modules/typescript');
+const metacall_require = Module.prototype.require;
+const node_require = Module.prototype.node_require;
+
+/* If node_require is not defined, then
+ * the metacall_require points to NodeJS unpatched require,
+ * otherwise it points to the MetaCall patched version */
+const unpatched_require = node_require || metacall_require;
+
+/* Unpatch in order to load TypeScript */
+if (node_require) {
+	Module.prototype.require = node_require;
+}
+
+const ts = unpatched_require(path.join(__dirname, 'node_modules', 'typescript'));
+
+/* Patch again */
+if (node_require) {
+	Module.prototype.require = metacall_require;
+}
 
 /**
  * Note: This variables should be stored into a object
@@ -246,15 +264,11 @@ function ts_loader_trampoline_load_from_memory(name, buffer, opts) {
 		throw new Error('Load from memory buffer must be a string, not ' + typeof buffer);
 	}
 
-	if (typeof opts !== 'object') {
-		throw new Error('Load from memory opts must be an object, not ' + typeof opts);
-	}
-
 	const handle = {};
 
 	// TODO: Implement this with service host instead of transpile, it wont work with discovery
 	// Review this implementation: https://github.com/AlCalzone/virtual-tsc
-	handle[name] = ts_loader_trampoline_load_inline(name, ts.transpile(buffer), opts);
+	handle[name] = ts_loader_trampoline_load_inline(name, ts.transpile(buffer), opts || {});
 
 	return handle;
 }
@@ -273,8 +287,8 @@ function ts_loader_trampoline_clear(handle) {
 			const absolute = path.resolve(__dirname, p);
 
 			// Clear file from NodeJS require cache
-			if (require.cache[absolute]) {
-				delete require.cache[absolute];
+			if (node_require.cache[absolute]) {
+				delete node_require.cache[absolute];
 			}
 
 			// Clear file from TypeScript service host
@@ -498,15 +512,11 @@ function ts_loader_trampoline_destroy() {
 	}
 }
 
-module.exports = ((impl, ptr) => {
+module.exports = (() => {
 	try {
-		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
-			throw 'Process arguments (process.argv[2], process.argv[3]) not defined.';
-		}
-
 		const trampoline = process.binding('node_loader_trampoline_module');
 
-		return trampoline.register(impl, ptr, {
+		return {
 			'initialize': ts_loader_trampoline_initialize,
 			'execution_path': ts_loader_trampoline_execution_path,
 			'load_from_file': ts_loader_trampoline_load_from_file,
@@ -518,33 +528,8 @@ module.exports = ((impl, ptr) => {
 			'await_function': ts_loader_trampoline_await_function(trampoline),
 			'await_future': ts_loader_trampoline_await_future(trampoline),
 			'destroy': ts_loader_trampoline_destroy,
-		});
+		};
 	} catch (ex) {
 		console.log('Exception in bootstrap.ts trampoline initialization:', ex);
 	}
-})(process.argv[2], process.argv[3]);
-
-/* If the arguments are not defined, probably
- * we are running this script directly with NodeJS executable
- * instead of TypeScript Loader. Then we run some tests.
-*/
-if (typeof process.argv[2] === 'undefined' && typeof process.argv[3] === 'undefined') {
-	// Tests
-	ts_loader_trampoline_initialize();
-
-	const inspect = (handle) => {
-		const discover = ts_loader_trampoline_discover(handle);
-		console.log(discover);
-		ts_loader_trampoline_clear(handle);
-	};
-
-	inspect(ts_loader_trampoline_load_from_memory('memory_module', `
-	export function mem_sum(left: number, rigth: number): number {
-		return left + rigth;
-	}
-	`, {}));
-
-	inspect(ts_loader_trampoline_load_from_file(['./test.ts']));
-
-	ts_loader_trampoline_destroy();
-}
+})();

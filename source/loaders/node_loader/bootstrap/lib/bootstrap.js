@@ -5,7 +5,14 @@ const Module = require('module');
 const path = require('path');
 const util = require('util');
 
-const cherow = require('./node_modules/cherow');
+const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
+
+const node_require = Module.prototype.require;
+const node_resolve = require.resolve;
+
+/* Store in the module prototype the original functions for future use in derived loaders like TypeScript */
+Module.prototype.node_require = node_require;
+Module.prototype.node_resolve = node_resolve;
 
 function node_loader_trampoline_initialize() {
 	const global_path = process.env['LOADER_LIBRARY_PATH'];
@@ -19,13 +26,15 @@ function node_loader_trampoline_initialize() {
 
 	for (const r of paths) {
 		try {
-				return require(r);
+				return node_require(r);
 		} catch (e) {
 			if (e.code !== 'MODULE_NOT_FOUND') {
 				console.log(`NodeJS Error (while preloading MetaCall): ${e.message}`);
 			}
 		}
 	}
+
+	process.env.NODE_PATH += global_path;
 
 	console.log('NodeJS Warning: MetaCall could not be preloaded');
 }
@@ -75,7 +84,7 @@ function node_loader_trampoline_load_from_file_require(p) {
 		let resolved = null;
 
 		try {
-			resolved = require.resolve(r);
+			resolved = node_resolve(r);
 		} catch (e) {
 			if (e.code !== 'MODULE_NOT_FOUND') {
 				throw e;
@@ -83,7 +92,7 @@ function node_loader_trampoline_load_from_file_require(p) {
 		}
 
 		if (resolved != null) {
-			return require(resolved);
+			return node_require(resolved);
 		}
 	}
 
@@ -171,8 +180,8 @@ function node_loader_trampoline_clear(handle) {
 			const p = names[i];
 			const absolute = path.resolve(__dirname, p);
 
-			if (require.cache[absolute]) {
-				delete require.cache[absolute];
+			if (node_require.cache[absolute]) {
+				delete node_require.cache[absolute];
 			}
 		}
 	} catch (ex) {

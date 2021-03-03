@@ -24,6 +24,13 @@ set(LOADER_MODULE_NAMES
 	metacall
 )
 
+set(LOADER_MODULE_INCLUDES)
+
+foreach(LOADER_MODULE ${LOADER_MODULE_NAMES})
+	get_target_property(INCLUDES ${LOADER_MODULE} INCLUDE_DIRECTORIES)
+	list(APPEND LOADER_MODULE_INCLUDES ${INCLUDES})
+endforeach()
+
 # Plugins options
 option(OPTION_BUILD_LOADERS_C "Build C Foreign Function Interface library loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_COB "Build GNU/COBOL 2.2 loader plugin." OFF)

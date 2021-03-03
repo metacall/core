@@ -23,6 +23,13 @@ set(SERIAL_MODULE_NAMES
 	serial
 )
 
+set(SERIAL_MODULE_INCLUDES)
+
+foreach(SERIAL_MODULE ${SERIAL_MODULE_NAMES})
+	get_target_property(INCLUDES ${SERIAL_MODULE} INCLUDE_DIRECTORIES)
+	list(APPEND SERIAL_MODULE_INCLUDES ${INCLUDES})
+endforeach()
+
 # Serial packages
 add_subdirectory(metacall_serial) # MetaCall Native Format library
 add_subdirectory(rapid_json_serial) # RapidJSON library

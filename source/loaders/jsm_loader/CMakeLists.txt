@@ -71,18 +71,8 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(jsm_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${jsm_loader_unity_build}
-	${LOADER_MODULE_NAMES}
-)
-
 # Build library
 add_library(${target} MODULE
-	${jsm_loader_unity_build}
 	${sources}
 	${headers}
 )
@@ -142,6 +132,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${SPIDERMONKEY_INCLUDE_DIR} # SpiderMonkey includes
+	${LOADER_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

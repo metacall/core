@@ -41,8 +41,6 @@ TEST_F(metacall_node_fail_test, DefaultConstructor)
 			"const { metacall_load_from_memory } = require('metacall');\n"
 			"metacall_load_from_memory('node', 'throw new Error(\"fail\")');\n";
 
-		void * handle = NULL;
-
 		EXPECT_EQ((int) 1, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
 		void * ret = metacall("hey");

@@ -4,7 +4,7 @@
   "description": "",
   "main": "bootstrap.ts",
   "scripts": {
-    "test": "echo \"TODO: Test not implemented\" && exit 0"
+    "test": "metacall test.js"
   },
   "keywords": [],
   "author": "",

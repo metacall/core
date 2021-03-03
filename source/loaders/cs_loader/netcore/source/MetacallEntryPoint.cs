@@ -33,19 +33,31 @@ namespace CSLoader
 
         public unsafe static bool LoadFromPointer(string[] source)
         {
-            return loader.LoadFromSourceFunctions(source);
+            try {
+                return loader.LoadFromSourceFunctions(source);
+            } catch (Exception ex) {
+                // TODO: Implement error handling
+                log.Info(ex.Message);
+                return false;
+            }
         }
 
         public static bool Load(string source)
         {
-            return loader.LoadFromSourceFunctions(new string[] { source });
+            try {
+                return loader.LoadFromSourceFunctions(new string[] { source });
+            } catch (Exception ex) {
+                // TODO: Implement error handling
+                log.Info(ex.Message);
+                return false;
+            }
         }
 
         public static bool Load(string[] files)
         {
             try {
                 return loader.LoadFromSourceFunctions(files.Select(x => System.IO.File.ReadAllText(x)).ToArray());
-            } catch (FileNotFoundException ex) {
+            } catch (Exception ex) {
                 // TODO: Implement error handling
                 log.Info(ex.Message);
                 return false;

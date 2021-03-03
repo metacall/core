@@ -78,18 +78,8 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(rapid_json_serial_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${rapid_json_serial_unity_build}
-	${SERIAL_MODULE_NAMES}
-)
-
 # Build library
 add_library(${target} MODULE
-	${rapid_json_serial_unity_build}
 	${sources}
 	${headers}
 )
@@ -108,7 +98,6 @@ endif()
 
 # Add target dependencies
 add_dependencies(${target}
-	${SERIAL_MODULE_NAMES}
 	RapidJSON
 )
 
@@ -168,6 +157,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${RAPIDJSON_INCLUDE_DIRS} # RapidJSON includes
+	${SERIAL_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

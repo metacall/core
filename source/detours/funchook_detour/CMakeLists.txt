@@ -121,25 +121,14 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(funchook_detour_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${funchook_detour_unity_build}
-	${DETOUR_MODULE_NAMES}
-)
-
 # Build library
 add_library(${target} MODULE
-	${funchook_detour_unity_build}
 	${sources}
 	${headers}
 )
 
 # Add target dependencies
 add_dependencies(${target}
-	${DETOUR_MODULE_NAMES}
 	${target_depends}
 )
 
@@ -198,6 +187,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${FUNCHOOK_INCLUDE_DIR} # FuncHook includes
+	${DETOUR_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

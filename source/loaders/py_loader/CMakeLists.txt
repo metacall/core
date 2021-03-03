@@ -68,20 +68,10 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Include headers
-distributable_include(${LOADER_MODULE_NAMES})
-
 # Build library
 add_library(${target} MODULE
 	${sources}
 	${headers}
-)
-
-# Add target dependencies
-add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall_distributable
 )
 
 # Create namespaced alias
@@ -139,6 +129,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${PYTHON_INCLUDE_DIRS} # Python includes
+	${LOADER_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -156,7 +147,6 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${PYTHON_LIBRARIES} # Python libraries
-	${META_PROJECT_NAME}::metacall_distributable
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -21,5 +21,12 @@ set(DETOUR_MODULE_NAMES
 	detour
 )
 
+set(DETOUR_MODULE_INCLUDES)
+
+foreach(DETOUR_MODULE ${DETOUR_MODULE_NAMES})
+	get_target_property(INCLUDES ${DETOUR_MODULE} INCLUDE_DIRECTORIES)
+	list(APPEND DETOUR_MODULE_INCLUDES ${INCLUDES})
+endforeach()
+
 # Detour packages
 add_subdirectory(funchook_detour) # FuncHook library

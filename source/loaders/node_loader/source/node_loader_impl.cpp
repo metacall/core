@@ -46,6 +46,7 @@
 #include <node_loader/node_loader_impl.h>
 #include <node_loader/node_loader_port.h>
 #include <node_loader/node_loader_trampoline.h>
+#include <node_loader/node_loader_bootstrap.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -3628,14 +3629,8 @@ void node_loader_impl_thread(void * data)
 
 	/* TODO: Reimplement from here to ... */
 
-	/* TODO: Make this trick more portable... */
-	#if defined(WIN32) || defined(_WIN32)
-		const size_t path_max_length = MAX_PATH;
-	#else
-		const size_t path_max_length = PATH_MAX;
-	#endif
-
-	char exe_path_str[path_max_length] = { 0 };
+	const size_t path_max_length = NODE_LOADER_IMPL_PATH_SIZE;
+	node_impl_path exe_path_str = { 0 };
 	size_t exe_path_str_size = 0, exe_path_str_offset = 0;
 
 	#if defined(WIN32) || defined(_WIN32)
@@ -3679,12 +3674,10 @@ void node_loader_impl_thread(void * data)
 
 	/* Get the boostrap path */
 	static const char bootstrap_file_str[] = "bootstrap.js";
-	char bootstrap_path_str[path_max_length] = { 0 };
+	node_impl_path bootstrap_path_str = { 0 };
 	size_t bootstrap_path_str_size = 0;
-	const char * load_library_path_env = getenv("LOADER_LIBRARY_PATH");
-	size_t load_library_path_length = 0;
 
-	if (load_library_path_env == NULL)
+	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
 		/* Report error (TODO: Implement it with thread safe logs) */
 		node_impl->error_message = "LOADER_LIBRARY_PATH not defined, bootstrap.js cannot be found";
@@ -3696,46 +3689,6 @@ void node_loader_impl_thread(void * data)
 		uv_mutex_unlock(&node_impl->mutex);
 
 		return;
-	}
-
-	load_library_path_length = strlen(load_library_path_env);
-
-	strncpy(bootstrap_path_str, load_library_path_env, load_library_path_length);
-
-	if (bootstrap_path_str[load_library_path_length - 1] != '/' && bootstrap_path_str[load_library_path_length - 1] != '\\')
-	{
-		#if defined(WIN32) || defined(_WIN32)
-			bootstrap_path_str[load_library_path_length] = '\\';
-		#else
-			bootstrap_path_str[load_library_path_length] = '/';
-		#endif
-
-		++load_library_path_length;
-	}
-
-	/* Detect if another bootstrap script has been defined in the configuration */
-	value bootstrap_value = configuration_value(config, "bootstrap_script");
-
-	if (bootstrap_value != NULL)
-	{
-		/* Load bootstrap script defined in the configuration */
-		const char * bootstrap_script = value_to_string(bootstrap_value);
-		size_t bootstrap_script_length = strlen(bootstrap_script);
-
-		strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_script, bootstrap_script_length);
-
-		bootstrap_path_str_size = load_library_path_length + bootstrap_script_length + 1;
-
-		bootstrap_path_str[bootstrap_path_str_size - 1] = '\0';
-	}
-	else
-	{
-		/* Load default script name */
-		strncpy(&bootstrap_path_str[load_library_path_length], bootstrap_file_str, sizeof(bootstrap_file_str) - 1);
-
-		bootstrap_path_str_size = load_library_path_length + sizeof(bootstrap_file_str);
-
-		bootstrap_path_str[bootstrap_path_str_size - 1] = '\0';
 	}
 
 	/* Get node impl pointer */

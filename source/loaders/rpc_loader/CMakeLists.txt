@@ -66,25 +66,10 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
-include(Distributable)
-
-# Create unity build library
-set(rpc_loader_unity_build "${CMAKE_CURRENT_BINARY_DIR}/${target}_unity_build.c")
-
-distributable_generate(${target} ${rpc_loader_unity_build}
-	${LOADER_MODULE_NAMES}
-)
-
 # Build library
 add_library(${target} MODULE
-	${rpc_loader_unity_build}
 	${sources}
 	${headers}
-)
-
-# Add target dependencies
-add_dependencies(${target}
-	${LOADER_MODULE_NAMES}
 )
 
 # Create namespaced alias
@@ -142,6 +127,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${CURL_INCLUDE_DIRS} # cURL includes
+	${LOADER_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}

@@ -19,7 +19,7 @@
  */
 
 #include <ts_loader/ts_loader_impl.h>
-#include <node_loader/node_loader_impl.h>
+#include <node_loader/node_loader_bootstrap.h>
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
@@ -31,6 +31,10 @@
 #include <reflect/reflect_context.h>
 
 #include <log/log.h>
+
+#include <metacall/metacall.h>
+
+#include <string.h>
 
 int ts_loader_impl_initialize_types(loader_impl impl)
 {
@@ -72,95 +76,18 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 
 loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
 {
-	loader_impl_data node_loader_impl;
+	static const char bootstrap_file_str[] = "bootstrap.ts";
+	node_impl_path bootstrap_path_str = { 0 };
+	size_t bootstrap_path_str_size = 0;
+	const char * paths[1];
+	void * ts_impl = NULL;
 
-	/* Detect if bootstrap script has been defined */
-	static const char bootstrap_script_key[] = "bootstrap_script";
-	value bootstrap_value = NULL;
-	configuration ts_config = NULL;
+	loader_copy(host);
 
-	if (config == NULL)
+	/* Get the boostrap path */
+	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
-		ts_config = configuration_create("ts_loader", NULL, NULL, NULL);
-
-		if (ts_config == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to create the configuration");
-
-			return NULL;
-		}
-		else
-		{
-			config = ts_config;
-		}
-	}
-
-	if (configuration_value(config, bootstrap_script_key) == NULL)
-	{
-		/* Define a default bootstrap script file name */
-		static const char bootstrap_script[] = "bootstrap.ts";
-
-		bootstrap_value = value_create_string(bootstrap_script, sizeof(bootstrap_script) - 1);
-
-		if (bootstrap_value == NULL)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to allocate the bootstrap value");
-
-			return NULL;
-		}
-
-		if (configuration_define(config, bootstrap_script_key, bootstrap_value) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to define the bootstrap value in the configuration");
-
-			value_type_destroy(bootstrap_value);
-
-			return NULL;
-		}
-	}
-
-	/* Initialize the Node Loader */
-	node_loader_impl = node_loader_impl_initialize(impl, config, host);
-
-	/* Clear the bootstrap default value */
-	if (bootstrap_value != NULL)
-	{
-		value_type_destroy(bootstrap_value);
-
-		if (configuration_undefine(config, bootstrap_script_key) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to undefine the bootstrap value from the configuration");
-
-			if (node_loader_impl_destroy(impl) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to destroy Node Loader");
-			}
-
-			/* Clear the configuration if any */
-			if (ts_config != NULL)
-			{
-				if (configuration_clear(ts_config) != 0)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed clear the configuration");
-				}
-			}
-
-			return NULL;
-		}
-	}
-
-	/* Clear the configuration if any */
-	if (ts_config != NULL)
-	{
-		if (configuration_clear(ts_config) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed clear the configuration");
-		}
-	}
-
-	if (node_loader_impl == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to initialize Node Loader");
+		log_write("metacall", LOG_LEVEL_ERROR, "LOADER_LIBRARY_PATH not defined, bootstrap.ts cannot be found");
 
 		return NULL;
 	}
@@ -170,51 +97,157 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to initialize the types");
 
-		if (node_loader_impl_destroy(impl) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to destroy Node Loader");
-		}
+		return NULL;
+	}
+
+	/* Load TypeScript bootstrap */
+	paths[0] = bootstrap_path_str;
+
+	if (metacall_load_from_file("node", paths, 1, &ts_impl) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript bootstrap.ts cannot be loaded");
 
 		return NULL;
 	}
 
-	return node_loader_impl;
+	/* Initialize bootstrap */
+	void * ret = metacallhv_s(ts_impl, "initialize", metacall_null_args, 0);
+
+	// TODO: Do something with the value like error handling?
+
+	metacall_value_destroy(ret);
+
+	return (loader_impl_data)ts_impl;
 }
 
 int ts_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	return node_loader_impl_execution_path(impl, path);
+	void * ts_impl = (void *)loader_impl_get(impl);
+	void * args[1];
+
+	args[0] = metacall_value_create_string(path, strlen(path));
+
+	void * ret = metacallhv_s(ts_impl, "execution_path", args, 1);
+
+	metacall_value_destroy(args[0]);
+
+	// TODO: Do something with the value like error handling?
+
+	metacall_value_destroy(ret);
+
+	return 0;
 }
 
 loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
-	return node_loader_impl_load_from_file(impl, paths, size);
+	void * ts_impl = (void *)loader_impl_get(impl);
+	void * args[1] = { metacall_value_create_array(NULL, size) };
+	size_t iterator;
+
+	if (args[0] == NULL)
+	{
+		// TODO: Error handling
+		return NULL;
+	}
+
+	void ** args_array = metacall_value_to_array(args[0]);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		args_array[iterator] = metacall_value_create_string(paths[iterator], strlen(paths[iterator]));
+	}
+
+	void * ret = metacallhv_s(ts_impl, "load_from_file", args, 1);
+
+	metacall_value_destroy(args[0]);
+
+	return (loader_handle)ret;
 }
 
 loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
 {
-	return node_loader_impl_load_from_memory(impl, name, buffer, size);
+	void * ts_impl = (void *)loader_impl_get(impl);
+	void * args[2];
+
+	args[0] = metacall_value_create_string(name, strlen(name));
+	args[1] = metacall_value_create_string(buffer, size - 1);
+
+	void * ret = metacallhv_s(ts_impl, "load_from_memory", args, 2);
+
+	metacall_value_destroy(args[0]);
+
+	return (loader_handle)ret;
 }
 
 loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
 {
-	return node_loader_impl_load_from_package(impl, path);
+	void * ts_impl = (void *)loader_impl_get(impl);
+
+	void * args[1];
+
+	args[0] = metacall_value_create_string(path, strlen(path));
+
+	void * ret = metacallhv_s(ts_impl, "load_from_package", args, 1);
+
+	metacall_value_destroy(args[0]);
+
+	return (loader_handle)ret;
 }
 
 int ts_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
-	return node_loader_impl_clear(impl, handle);
+	void * ts_impl = (void *)loader_impl_get(impl);
+
+	void * args[1];
+
+	args[0] = (void *)handle;
+
+	void * ret = metacallhv_s(ts_impl, "clear", args, 1);
+
+	// TODO: Do something with the value like error handling?
+
+	metacall_value_destroy(ret);
+
+	metacall_value_destroy((void *)handle);
+
+	return 0;
 }
 
 int ts_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	return node_loader_impl_discover(impl, handle, ctx);
+	void * ts_impl = (void *)loader_impl_get(impl);
+
+	void * args[1];
+
+	args[0] = (void *)handle;
+
+	void * ret = metacallhv_s(ts_impl, "discover", args, 1);
+
+	// TODO: Implement introspection
+	(void)ctx;
+
+
+
+
+
+
+
+	metacall_value_destroy(ret);
+
+	return 0;
 }
 
 int ts_loader_impl_destroy(loader_impl impl)
 {
+	void * ts_impl = (void *)loader_impl_get(impl);
+
+	if (ts_impl == NULL)
+	{
+		return 1;
+	}
+
 	/* Destroy children loaders */
 	loader_unload_children();
 
-	return node_loader_impl_destroy(impl);
+	return metacall_clear(ts_impl);
 }
