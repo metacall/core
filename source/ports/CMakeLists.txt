@@ -43,26 +43,6 @@ option(OPTION_BUILD_PORTS_RB	"Build Ruby port."				ON)
 option(OPTION_BUILD_PORTS_RS	"Build Rust port."				OFF)
 
 #
-# Project module names
-#
-
-set(MODULE_NAMES
-	cs_port
-	cxx_port
-	d_port
-	go_port
-	java_port
-	js_port
-	lua_port
-	node_port
-	php_port
-	pl_port
-	py_port
-	r_port
-	rb_port
-)
-
-#
 # Port languages (Standalone)
 #
 
@@ -75,7 +55,7 @@ add_subdirectory(rs_port)
 # External dependencies
 #
 
-# SWIG
+# SWIG (TODO: Remove SWIG)
 find_package(SWIG)
 
 if(NOT SWIG_FOUND)

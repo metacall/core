@@ -55,7 +55,7 @@ extern "C" {
 
 /* -- Member Data -- */
 
-struct ${META_PROJECT_NAME}_version_type
+struct ${META_PROJECT_NAME_LOWER}_version_type
 {
 	unsigned int major;
 	unsigned int minor;

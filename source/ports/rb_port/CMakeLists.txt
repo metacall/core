@@ -110,9 +110,8 @@ endif()
 # Dependecies
 #
 
-# Add metacall distributable dependency
 add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 # Create namespaced alias
@@ -186,7 +185,7 @@ swig_link_libraries(${target}
 	PRIVATE
 	${RUBY_LIBRARY} # Ruby libraries
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -227,7 +226,7 @@ target_compile_options(${SWIG_MODULE_${target}_REAL_NAME}
 
 target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}

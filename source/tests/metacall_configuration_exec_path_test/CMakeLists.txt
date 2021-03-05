@@ -1,9 +1,5 @@
-#
-# Setup distributable environment
-#
-
-# Check if distributable libs are enabled
-if(NOT OPTION_BUILD_DIST_LIBS OR NOT OPTION_BUILD_LOADERS_PY)
+# Check if python loader is enabled
+if(NOT OPTION_BUILD_LOADERS_PY)
 	return()
 endif()
 
@@ -63,9 +59,8 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 # Dependecies
 #
 
-# Add metacall distributable dependency
 add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -98,7 +93,7 @@ target_link_libraries(${target}
 
 	GTest
 	${CMAKE_DL_LIBS}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

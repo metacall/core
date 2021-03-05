@@ -23,12 +23,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_distributable_test : public testing::Test
+class metacall_configuration_exec_path_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_distributable_test, DefaultConstructor)
+TEST_F(metacall_configuration_exec_path_test, DefaultConstructor)
 {
 	metacall_print_info();
 

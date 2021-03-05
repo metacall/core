@@ -63,7 +63,7 @@ sub_options() {
 
 sub_build() {
 
-	# Make without distributable
+	# Build the project
 	make -k -j$(getconf _NPROCESSORS_ONLN)
 
 	# Tests (coverage needs to run the tests)

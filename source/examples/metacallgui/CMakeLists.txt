@@ -100,7 +100,7 @@ target_link_libraries(${target}
 	Qt5::Gui
 	Qt5::Widgets
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

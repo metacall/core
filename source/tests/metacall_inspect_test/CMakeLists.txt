@@ -1,13 +1,4 @@
 #
-# Setup distributable environment
-#
-
-# Check if distributable libs are enabled
-if(NOT OPTION_BUILD_DIST_LIBS)
-	return()
-endif()
-
-#
 # Executable name and options
 #
 
@@ -63,9 +54,8 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 # Dependecies
 #
 
-# Add metacall distributable dependency
 add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -100,7 +90,7 @@ target_link_libraries(${target}
 
 	${CMAKE_DL_LIBS}
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

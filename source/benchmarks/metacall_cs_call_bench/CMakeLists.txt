@@ -84,7 +84,7 @@ target_link_libraries(${target}
 
 	GBench
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

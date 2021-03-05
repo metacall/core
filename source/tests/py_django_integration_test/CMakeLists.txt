@@ -1,5 +1,5 @@
-# Check if python loader and distributable libs are enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_DIST_LIBS)
+# Check if python loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY)
 	return()
 endif()
 
@@ -82,9 +82,8 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 # Dependecies
 #
 
-# Add metacall distributable dependency
 add_dependencies(${target}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -119,7 +118,7 @@ target_link_libraries(${target}
 
 	${CMAKE_DL_LIBS}
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

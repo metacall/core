@@ -112,7 +112,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

@@ -34,7 +34,61 @@
 
 #include <metacall/metacall.h>
 
-#include <string.h>
+#include <vector>
+#include <map>
+
+typedef struct ts_loader_impl_function_type
+{
+	std::string name;
+	std::map<std::string, void *> data;
+} * ts_loader_impl_function;
+
+
+int function_ts_interface_create(function func, function_impl impl)
+{
+	(void)func;
+	(void)impl;
+
+	return 0;
+}
+
+function_return function_ts_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+{
+	function f = static_cast<function>(metacall_value_to_function(impl));
+
+	(void)func;
+
+	return function_call(f, args, size);
+}
+
+function_return function_ts_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * ctx)
+{
+	function f = static_cast<function>(metacall_value_to_function(impl));
+
+	(void)func;
+
+	return function_await(f, args, size, resolve_callback, reject_callback, ctx);
+}
+
+void function_ts_interface_destroy(function func, function_impl impl)
+{
+	(void)func;
+
+	metacall_value_destroy(impl);
+}
+
+function_interface function_ts_singleton(void)
+{
+	static struct function_interface_type ts_function_interface =
+	{
+		&function_ts_interface_create,
+		&function_ts_interface_invoke,
+		&function_ts_interface_await,
+		&function_ts_interface_destroy
+	};
+
+	return &ts_function_interface;
+}
 
 int ts_loader_impl_initialize_types(loader_impl impl)
 {
@@ -213,28 +267,73 @@ int ts_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 0;
 }
 
+void ts_loader_impl_discover_function(const char * func_name, void * discover_data, ts_loader_impl_function_type & ts_func)
+{
+	size_t size = metacall_value_count(discover_data);
+	void ** discover_data_map = metacall_value_to_map(discover_data);
+
+	ts_func.name = func_name;
+
+	for (size_t iterator = 0; iterator < size; ++iterator)
+	{
+		void ** map_pair = metacall_value_to_array(discover_data_map[0]);
+		const char * key = metacall_value_to_string(map_pair[0]);
+		
+		ts_func.data[key] = map_pair[1];
+	}
+}
+
+int ts_loader_impl_discover_value(context ctx, void * discover)
+{
+	void ** discover_map = metacall_value_to_map(discover);
+	size_t size = metacall_value_count(discover);
+	std::vector<ts_loader_impl_function_type> discover_vec;
+
+	for (size_t iterator = 0; iterator < size; ++iterator)
+	{
+		void ** map_pair = metacall_value_to_array(discover_map[0]);
+		ts_loader_impl_function_type ts_func;
+
+		ts_loader_impl_discover_function(metacall_value_to_string(map_pair[0]), map_pair[1], ts_func);
+
+		discover_vec.push_back(ts_func);
+	}
+
+	for (auto & ts_func : discover_vec)
+	{
+		const char * func_name = ts_func.name.c_str();
+		void * node_func = metacall_value_copy(ts_func.data["ptr"]);
+		size_t args_count = metacall_value_count(ts_func.data["signature"]);
+		//boolean is_async = metacall_value_to_bool(ts_func.data["isAsync"]);
+
+		function f = function_create(func_name, args_count, node_func, &function_ts_singleton);
+		// signature s = function_signature(f);
+
+		// TODO: types + signature
+
+		//function_async(f, is_async == 1L ? FUNCTION_ASYNC : FUNCTION_SYNC);
+
+		scope sp = context_scope(ctx);
+
+		scope_define(sp, function_name(f), value_create_function(f));
+	}
+
+	return 0;
+}
+
 int ts_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	void * ts_impl = (void *)loader_impl_get(impl);
 
-	void * args[1];
-
-	args[0] = (void *)handle;
+	void * args[1] = { (void *)handle };
 
 	void * ret = metacallhv_s(ts_impl, "discover", args, 1);
 
-	// TODO: Implement introspection
-	(void)ctx;
-
-
-
-
-
-
+	int result = ts_loader_impl_discover_value(ctx, ret);
 
 	metacall_value_destroy(ret);
 
-	return 0;
+	return result;
 }
 
 int ts_loader_impl_destroy(loader_impl impl)

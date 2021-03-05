@@ -131,8 +131,8 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 	${LUA_INCLUDE_DIR} # Lua includes (lua.h)
-	${LOADER_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -149,6 +149,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
+	${META_PROJECT_NAME}::metacall # MetaCall library
 	${LUA_LIBRARIES} # Lua libraries (both lua and lualib)
 
 	PUBLIC

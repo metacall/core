@@ -83,6 +83,7 @@ class TypeScriptLanguageServiceHost {
 		const options = {
 			esModuleInterop: true,
 			jsx: 2, /* React */
+			skipLibCheck: true,
 		};
 
 		return options; /* ts.getDefaultCompilerOptions() */

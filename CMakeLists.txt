@@ -22,7 +22,7 @@
 #
 
 # CMake version
-cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
 
 # Include cmake modules
 
@@ -70,7 +70,6 @@ set(META_NAME_VERSION			"${META_PROJECT_NAME} v${META_VERSION} (${META_VERSION_R
 
 # Project options
 option(BUILD_SHARED_LIBS		"Build shared instead of static libraries."					ON)
-option(OPTION_BUILD_DIST_LIBS	"Build all libraries into a single compilation unit."		ON)
 option(OPTION_SELF_CONTAINED	"Create a self-contained install with all dependencies."	OFF)
 option(OPTION_BUILD_TESTS		"Build tests."												ON)
 option(OPTION_BUILD_BENCHMARKS	"Build benchmarks."											OFF)
@@ -116,27 +115,28 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 file(WRITE "${PROJECT_BINARY_DIR}/VERSION" "${META_NAME_VERSION}")
 
 #
-# Portability
-#
-
-include(Portability)
-
-#
 # Define Export Headers
 #
 
 include(GenerateExportHeader)
 
-# Workaround to enable Haiku with export headers
-# This can be removed once export headers support Haiku
-if(PROJECT_OS_HAIKU)
-	function(GENERATE_EXPORT_HEADER)
-		set(WIN32 1)
-		# When the function is redefined, the old function can be accessed through underscore
-		_GENERATE_EXPORT_HEADER(${ARGN})
-		unset(WIN32)
-	endfunction()
-endif()
+# Patch export headers in order to produce "${target_upper}_EXPORTS" in API definition
+function(GENERATE_EXPORT_HEADER)
+	# This function is patched again in Portability, due to Haiku workaround, review it if this func gets removed
+	set(target ${ARGV0})
+	string(TOUPPER ${target} target_upper)
+	set_target_properties(${target}
+		PROPERTIES DEFINE_SYMBOL "${target_upper}_EXPORTS"
+	)
+	# When the function is redefined, the old function can be accessed through underscore
+	_GENERATE_EXPORT_HEADER(${ARGN})
+endfunction()
+
+#
+# Portability
+#
+
+include(Portability)
 
 #
 # Compiler settings and options
@@ -226,42 +226,6 @@ if(OPTION_BUILD_TESTS)
 endif()
 
 #
-# Project module names
-#
-
-set(MODULE_NAMES
-	version
-	preprocessor
-	environment
-	format
-	log
-	memory
-	portability
-	adt
-	reflect
-	dynlink
-	detour
-	serial
-	configuration
-	loader
-	metacall
-)
-
-#
-# Project export module names
-#
-
-if(NOT OPTION_BUILD_DIST_LIBS)
-	set(EXPORT_MODULE_NAMES
-		${MODULE_NAMES}
-	)
-else()
-	set(EXPORT_MODULE_NAMES
-		metacall
-	)
-endif()
-
-#
 # Project module includes
 #
 
@@ -280,6 +244,26 @@ endif()
 #
 # Project configuration generation
 #
+
+set(EXPORT_MODULE_NAMES
+	version
+	preprocessor
+	environment
+	format
+	threading
+	log
+	memory
+	portability
+	adt
+	filesystem
+	reflect
+	dynlink
+	detour
+	serial
+	configuration
+	loader
+	metacall
+)
 
 set(PROJECT_CONFIGURATION "metacall-config.cmake")
 set(PROJECT_CONFIGURATION_VERSION "metacall-config-version.cmake")

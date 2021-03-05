@@ -142,10 +142,6 @@ add_subdirectory(serials)
 set(IDE_FOLDER "Detours")
 add_subdirectory(detours)
 
-# Distributable
-set(IDE_FOLDER "Distributable")
-add_subdirectory(distributable)
-
 # Ports
 set(IDE_FOLDER "Ports")
 add_subdirectory(ports)

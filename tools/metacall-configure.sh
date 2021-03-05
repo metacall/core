@@ -33,7 +33,6 @@ BUILD_FILE=0
 BUILD_RPC=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
-BUILD_DISTRIBUTABLE=0
 BUILD_TESTS=0
 BUILD_BENCHMARKS=0
 BUILD_PORTS=0
@@ -102,10 +101,6 @@ sub_options() {
 		if [ "$option" = 'examples' ]; then
 			echo "Build all examples"
 			BUILD_EXAMPLES=1
-		fi
-		if [ "$option" = 'distributable' ]; then
-			echo "Build distributable libraries"
-			BUILD_DISTRIBUTABLE=1
 		fi
 		if [ "$option" = 'tests' ]; then
 			echo "Build all tests"
@@ -260,13 +255,6 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=Off"
 	fi
 
-	# Distributable
-	if [ $BUILD_DISTRIBUTABLE = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_DIST_LIBS=On"
-	else
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_DIST_LIBS=Off"
-	fi
-
 	# Tests
 	if [ $BUILD_TESTS = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_TESTS=On"
@@ -318,7 +306,6 @@ sub_help() {
 	echo "	rpc: build with rpc support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
-	echo "	distributable: build distributable libraries"
 	echo "	tests: build and run all tests"
 	echo "	benchmarks: build and run all benchmarks"
 	echo "	install: install all libraries"

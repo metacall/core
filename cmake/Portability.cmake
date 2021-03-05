@@ -63,6 +63,18 @@ if(PROJECT_OS_HAIKU)
 	set(PROJECT_OS_NAME "Haiku")
 	set(PROJECT_OS_FAMILY beos)
 	add_compile_definitions(__HAIKU__)
+
+	# Workaround to enable Haiku with export headers
+	# This can be removed once export headers support Haiku
+	if(PROJECT_OS_HAIKU)
+		# As the function is already patched, repatch it again
+		function(_GENERATE_EXPORT_HEADER)
+			set(WIN32 1)
+			# When the function is redefined, the old function can be accessed through underscore
+			__GENERATE_EXPORT_HEADER(${ARGN})
+			unset(WIN32)
+		endfunction()
+	endif()
 endif()
 
 # Check Windows

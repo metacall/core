@@ -63,6 +63,7 @@ extern "C" {
 
 /* -- Methods -- */
 
+
 FORMAT_API int snprintf_impl_c89(char * s, size_t n, const char * format, ...);
 
 FORMAT_API int vsnprintf_impl_c89(char * s, size_t n, const char * format, va_list arg);

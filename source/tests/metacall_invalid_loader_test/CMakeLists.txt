@@ -1,8 +1,3 @@
-# Check if this loader is enabled
-if(NOT OPTION_BUILD_DIST_LIBS)
-	return()
-endif()
-
 #
 # Executable name and options
 #
@@ -85,7 +80,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 #

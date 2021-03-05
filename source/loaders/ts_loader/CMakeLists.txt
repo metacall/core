@@ -48,7 +48,7 @@ set(headers
 
 set(sources
 	${source_path}/ts_loader.c
-	${source_path}/ts_loader_impl.c
+	${source_path}/ts_loader_impl.cpp
 )
 
 # Group source files
@@ -124,17 +124,14 @@ set_target_properties(${target}
 # Include directories
 #
 
-# Get headers from NodeJS Loader
-get_target_property(NODE_LOADER_INCLUDES node_loader INCLUDE_DIRECTORIES)
-
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${NODE_LOADER_INCLUDES} # Node Loader includes
-	${LOADER_MODULE_INCLUDES} # MetaCall includes
+	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
+	$<TARGET_PROPERTY:${META_PROJECT_NAME}::node_loader,INCLUDE_DIRECTORIES> # Node Loader includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -151,6 +148,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
+	${META_PROJECT_NAME}::metacall # MetaCall library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

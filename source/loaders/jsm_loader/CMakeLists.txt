@@ -131,8 +131,8 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 	${SPIDERMONKEY_INCLUDE_DIR} # SpiderMonkey includes
-	${LOADER_MODULE_INCLUDES} # MetaCall includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -149,15 +149,7 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::threading
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::loader
-
+	${META_PROJECT_NAME}::metacall # MetaCall library
 	${SPIDERMONKEY_LIBRARY} # SpiderMonkey library
 
 	PUBLIC

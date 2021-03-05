@@ -120,9 +120,8 @@ set_property(TARGET ${target} PROPERTY SWIG_USE_LIBRARY_INCLUDE_DIRECTORIES TRUE
 # Dependecies
 #
 
-# Add metacall distributable dependency
 add_dependencies(${SWIG_MODULE_${target}_REAL_NAME}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 # Create namespaced alias
@@ -196,7 +195,7 @@ swig_link_libraries(${target}
 	PRIVATE
 	${V8_LIBRARIES} # V8 libraries
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -239,7 +238,7 @@ target_link_libraries(${SWIG_MODULE_${target}_REAL_NAME}
 	PRIVATE
 	${V8_LIBRARIES} # V8 libraries
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
@@ -320,9 +319,8 @@ add_executable(${js_port_test}
 # Dependecies
 #
 
-# Add metacall distributable dependency
 add_dependencies(${js_port_test}
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 )
 
 # Export library for downstream projects
@@ -369,7 +367,7 @@ target_link_libraries(${js_port_test}
 
 	${CMAKE_DL_LIBS}
 
-	${META_PROJECT_NAME}::metacall_distributable
+	${META_PROJECT_NAME}::metacall
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
