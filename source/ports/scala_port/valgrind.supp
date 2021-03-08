@@ -1,6 +1,0 @@
-{
-   ignore_jvm
-   Memcheck:Leak
-   ...
-   obj:*/libjvm.so*
-}
