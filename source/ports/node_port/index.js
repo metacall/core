@@ -22,7 +22,7 @@
 
 const mod = require('module');
 const path = require('path');
-const { URL } = require('url');
+const { URL } = require('url'); /* TODO: RPC Loader */
 
 const addon = (() => {
 	try {

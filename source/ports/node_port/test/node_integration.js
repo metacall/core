@@ -18,6 +18,10 @@
  *
  */
 
+/* TODO: This test is in order to integrate MetaCall with NodeJS executable.
+ * So when you run node script.js, it forks and launches metacall script.js.
+ * It is just an experiment, not implemented yet properly, check addon in ../index.js
+ */
 require('../index.js');
 
 console.log('NodeJS Integration Test Passed');

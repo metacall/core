@@ -49,9 +49,8 @@ describe('metacall', () => {
 			assert.throws(() => { require('./asd.py') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.rb') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.cs') }, new Error('MetaCall could not load from file'));
-			// TODO: Implement TS with NodeJS compatibility
-			assert.throws(() => { require('./asd.ts') }, new Error('Cannot find module \'./asd.ts\''));
-			assert.throws(() => { require('./asd.tsx') }, new Error('Cannot find module \'./asd.tsx\''));
+			assert.throws(() => { require('./asd.ts') }, new Error('MetaCall could not load from file'));
+			assert.throws(() => { require('./asd.tsx') }, new Error('MetaCall could not load from file'));
 		});
 	});
 

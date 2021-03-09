@@ -213,6 +213,13 @@ loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	metacall_value_destroy(args[0]);
 
+	if (metacall_value_id(ret) == METACALL_NULL)
+	{
+		// TODO: Error handling
+		metacall_value_destroy(ret);
+		return NULL;
+	}
+
 	return (loader_handle)ret;
 }
 
@@ -228,6 +235,13 @@ loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 
 	metacall_value_destroy(args[0]);
 
+	if (metacall_value_id(ret) == METACALL_NULL)
+	{
+		// TODO: Error handling
+		metacall_value_destroy(ret);
+		return NULL;
+	}
+
 	return (loader_handle)ret;
 }
 
@@ -242,6 +256,13 @@ loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_na
 	void * ret = metacallhv_s(ts_impl, "load_from_package", args, 1);
 
 	metacall_value_destroy(args[0]);
+
+	if (metacall_value_id(ret) == METACALL_NULL)
+	{
+		// TODO: Error handling
+		metacall_value_destroy(ret);
+		return NULL;
+	}
 
 	return (loader_handle)ret;
 }

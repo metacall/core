@@ -486,23 +486,6 @@ function ts_loader_trampoline_await_future(trampoline) {
 
 function ts_loader_trampoline_destroy() {
 	try {
-		// eslint-disable-next-line no-underscore-dangle
-		const handles = process._getActiveHandles();
-
-		for (let i = 0; i < handles.length; ++i) {
-			const h = handles[i];
-
-			// eslint-disable-next-line no-param-reassign, no-empty-function
-			h.write = function () {};
-			// eslint-disable-next-line max-len
-			// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
-			h._destroy = function () {};
-
-			if (h.end) {
-				h.end();
-			}
-		}
-
 		// Clear TypeScript Service API
 		servicesHost.dispose();
 		services.dispose();
