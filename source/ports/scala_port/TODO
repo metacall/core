@@ -1,1 +1,2 @@
-Repo has been moved to: https://github.com/metacall/scala-port. Should we link it?
+Repo has been moved to: https://github.com/metacall/scala-port.
+Move it back to this folder once Java/Scala loaders have been implemented.
