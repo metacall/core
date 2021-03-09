@@ -38,7 +38,7 @@ extern "C" {
 
 LOADER_API int loader_impl_is_initialized(loader_impl impl);
 
-LOADER_API loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, loader_host host);
+LOADER_API loader_impl loader_impl_create(const char * path, const loader_naming_tag tag);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
 
@@ -78,7 +78,7 @@ LOADER_API int loader_impl_clear(void * handle);
 
 LOADER_API void loader_impl_destroy(loader_impl impl);
 
-LOADER_API loader_impl loader_impl_create_proxy(loader_host host);
+LOADER_API loader_impl loader_impl_create_proxy(void);
 
 #ifdef __cplusplus
 }

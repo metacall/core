@@ -806,7 +806,7 @@ int rb_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	static struct rb_loader_impl_type
 	{
@@ -820,8 +820,6 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	/* Initialize Ruby */
 	{

@@ -27,7 +27,6 @@
 
 #include <loader/loader_naming.h>
 #include <loader/loader_impl_interface.h>
-#include <loader/loader_host.h>
 #include <loader/loader_impl.h>
 
 #ifdef __cplusplus
@@ -37,10 +36,6 @@ extern "C" {
 /* -- Headers -- */
 
 #include <stdlib.h>
-
-/* -- Definitions -- */
-
-#define LOADER_LOAD_FROM_FILES_SIZE 0x0400
 
 /* -- Forward Declarations -- */
 
@@ -57,8 +52,6 @@ typedef struct loader_type * loader;
 /* -- Methods  -- */
 
 LOADER_API loader loader_singleton(void);
-
-LOADER_API void loader_copy(loader_host host);
 
 LOADER_API void loader_initialization_register(loader_impl impl);
 

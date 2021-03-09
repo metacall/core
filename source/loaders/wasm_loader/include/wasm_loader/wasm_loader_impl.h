@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-WASM_LOADER_API loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
+WASM_LOADER_API loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config);
 
 WASM_LOADER_API int wasm_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

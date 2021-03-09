@@ -189,14 +189,12 @@ int file_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_file file_impl;
 
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	file_impl = malloc(sizeof(struct loader_impl_file_type));
 

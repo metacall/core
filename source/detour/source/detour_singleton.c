@@ -72,11 +72,6 @@ detour_singleton detour_singleton_instance()
 	return detour_singleton_ptr;
 }
 
-void detour_singleton_copy(detour_singleton singleton)
-{
-	detour_singleton_ptr = singleton;
-}
-
 int detour_singleton_initialize()
 {
 	detour_singleton singleton = detour_singleton_instance();

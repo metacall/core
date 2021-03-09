@@ -1648,7 +1648,7 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 #endif
 }
 
-loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_py py_impl;
 
@@ -1656,8 +1656,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	py_impl = malloc(sizeof(struct loader_impl_py_type));
 

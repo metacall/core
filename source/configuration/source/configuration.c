@@ -123,16 +123,6 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 	return 0;
 }
 
-void configuration_copy(void * instance)
-{
-	configuration_singleton_copy((configuration_singleton)instance);
-}
-
-void * configuration_instance()
-{
-	return configuration_singleton_instance();
-}
-
 configuration configuration_create(const char * scope, const char * path, const char * parent, void * allocator)
 {
 	configuration config = configuration_singleton_get(scope);

@@ -136,10 +136,8 @@ function_interface function_wasm_singleton(void)
 	return &wasm_function_interface;
 }
 
-loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config)
 {
-	loader_copy(host);
-
 	/* TODO */
 
 	(void)impl;

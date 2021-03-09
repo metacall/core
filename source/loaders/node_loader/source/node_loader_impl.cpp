@@ -3892,13 +3892,11 @@ void node_loader_impl_thread_log(void * data)
 }
 #endif
 
-loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_node node_impl;
 
 	(void)impl;
-
-	loader_copy(host);
 
 	/* Initialize Node Loader Trampoline */
 	{

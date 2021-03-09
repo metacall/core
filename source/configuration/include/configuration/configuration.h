@@ -48,26 +48,6 @@ CONFIGURATION_API int configuration_initialize(const char * reader, const char *
 
 /**
 *  @brief
-*    Copy configuration singleton (used for providing a configuration subsystem copy of the host to the plugin)
-*
-*  @param[in] instance
-*    Pointer to the configuration singleton instance
-*
-*/
-CONFIGURATION_API void configuration_copy(void * instance);
-
-/**
-*  @brief
-*    Get configuration singleton (used for providing a configuration subsystem copy of the host to the plugin)
-*
-*  @return
-*    Pointer to the configuration singleton instance
-*
-*/
-CONFIGURATION_API void * configuration_instance();
-
-/**
-*  @brief
 *    Create configuration from @path with name @name
 *
 *  @param[in] scope

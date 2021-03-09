@@ -35,13 +35,6 @@ void * log_instance()
 	return log_singleton_instance();
 }
 
-void log_copy(void * instance)
-{
-	log_singleton * singleton_ptr = instance;
-
-	log_singleton_initialize(*singleton_ptr);
-}
-
 size_t log_size()
 {
 	return log_singleton_size();

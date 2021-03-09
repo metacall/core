@@ -48,16 +48,6 @@ int detour_initialize()
 	return 0;
 }
 
-void detour_copy(void * instance)
-{
-	detour_singleton_copy((detour_singleton)instance);
-}
-
-void * detour_instance()
-{
-	return detour_singleton_instance();
-}
-
 detour detour_create(const char * name)
 {
 	detour d;

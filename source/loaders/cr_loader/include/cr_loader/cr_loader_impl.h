@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-CR_LOADER_API loader_impl_data cr_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
+CR_LOADER_API loader_impl_data cr_loader_impl_initialize(loader_impl impl, configuration config);
 
 CR_LOADER_API int cr_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-TS_LOADER_API loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
+TS_LOADER_API loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config);
 
 TS_LOADER_API int ts_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

@@ -16,6 +16,7 @@ const fs = require('fs');
 
 const metacall_require = Module.prototype.require;
 const node_require = Module.prototype.node_require;
+const node_cache = Module.prototype.node_cache || require.cache;
 
 /* If node_require is not defined, then
  * the metacall_require points to NodeJS unpatched require,
@@ -288,8 +289,8 @@ function ts_loader_trampoline_clear(handle) {
 			const absolute = path.resolve(__dirname, p);
 
 			// Clear file from NodeJS require cache
-			if (node_require.cache[absolute]) {
-				delete node_require.cache[absolute];
+			if (node_cache[absolute]) {
+				delete node_cache[absolute];
 			}
 
 			// Clear file from TypeScript service host

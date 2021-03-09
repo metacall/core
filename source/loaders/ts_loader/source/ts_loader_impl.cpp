@@ -128,15 +128,13 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	static const char bootstrap_file_str[] = "bootstrap.ts";
 	node_impl_path bootstrap_path_str = { 0 };
 	size_t bootstrap_path_str_size = 0;
 	const char * paths[1];
 	void * ts_impl = NULL;
-
-	loader_copy(host);
 
 	/* Get the boostrap path */
 	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
@@ -274,16 +272,17 @@ void ts_loader_impl_discover_function(const char * func_name, void * discover_da
 
 	ts_func.name = func_name;
 
+	// TODO: Move this to the C++ Port
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		void ** map_pair = metacall_value_to_array(discover_data_map[0]);
+		void ** map_pair = metacall_value_to_array(discover_data_map[iterator]);
 		const char * key = metacall_value_to_string(map_pair[0]);
-		
+
 		ts_func.data[key] = map_pair[1];
 	}
 }
 
-int ts_loader_impl_discover_value(context ctx, void * discover)
+int ts_loader_impl_discover_value(loader_impl impl, context ctx, void * discover)
 {
 	void ** discover_map = metacall_value_to_map(discover);
 	size_t size = metacall_value_count(discover);
@@ -291,7 +290,7 @@ int ts_loader_impl_discover_value(context ctx, void * discover)
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		void ** map_pair = metacall_value_to_array(discover_map[0]);
+		void ** map_pair = metacall_value_to_array(discover_map[iterator]);
 		ts_loader_impl_function_type ts_func;
 
 		ts_loader_impl_discover_function(metacall_value_to_string(map_pair[0]), map_pair[1], ts_func);
@@ -303,15 +302,27 @@ int ts_loader_impl_discover_value(context ctx, void * discover)
 	{
 		const char * func_name = ts_func.name.c_str();
 		void * node_func = metacall_value_copy(ts_func.data["ptr"]);
-		size_t args_count = metacall_value_count(ts_func.data["signature"]);
-		//boolean is_async = metacall_value_to_bool(ts_func.data["isAsync"]);
+		void * signature_data = ts_func.data["signature"];
+		void ** signature_array = metacall_value_to_array(signature_data);
+		size_t args_count = metacall_value_count(signature_data);
+		void * types_data = ts_func.data["types"];
+		void ** types_array = metacall_value_to_array(types_data);
+		boolean is_async = metacall_value_to_bool(ts_func.data["async"]);
 
 		function f = function_create(func_name, args_count, node_func, &function_ts_singleton);
-		// signature s = function_signature(f);
+		signature s = function_signature(f);
 
-		// TODO: types + signature
+		for (size_t iterator = 0; iterator < args_count; ++iterator)
+		{
+			const char * type_name = metacall_value_to_string(types_array[iterator]);
+			const char * parameter_name = metacall_value_to_string(signature_array[iterator]);
+			type t = loader_impl_type(impl, type_name);
+			signature_set(s, iterator, parameter_name, t);
+		}
 
-		//function_async(f, is_async == 1L ? FUNCTION_ASYNC : FUNCTION_SYNC);
+		signature_set_return(s, loader_impl_type(impl, metacall_value_to_string(ts_func.data["ret"])));
+
+		function_async(f, is_async == 1L ? FUNCTION_ASYNC : FUNCTION_SYNC);
 
 		scope sp = context_scope(ctx);
 
@@ -329,7 +340,7 @@ int ts_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	void * ret = metacallhv_s(ts_impl, "discover", args, 1);
 
-	int result = ts_loader_impl_discover_value(ctx, ret);
+	int result = ts_loader_impl_discover_value(impl, ctx, ret);
 
 	metacall_value_destroy(ret);
 

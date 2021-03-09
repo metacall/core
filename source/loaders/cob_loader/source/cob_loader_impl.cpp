@@ -119,12 +119,10 @@ function_interface function_cob_singleton(void)
 	return &cob_interface;
 }
 
-loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	// Copy environment variables in order to resolve properly the scripts
 	const char * scripts_path = getenv("LOADER_SCRIPT_PATH");

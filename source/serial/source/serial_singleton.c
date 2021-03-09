@@ -72,11 +72,6 @@ serial_singleton serial_singleton_instance()
 	return serial_singleton_ptr;
 }
 
-void serial_singleton_copy(serial_singleton singleton)
-{
-	serial_singleton_ptr = singleton;
-}
-
 int serial_singleton_initialize()
 {
 	serial_singleton singleton = serial_singleton_instance();

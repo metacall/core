@@ -50,11 +50,9 @@ const char * rapid_json_serial_impl_extension()
 	return extension;
 }
 
-serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator, serial_host host)
+serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 {
 	rapid_json_document document = new rapid_json_document_type();
-
-	log_copy(host->log);
 
 	if (document == nullptr)
 	{

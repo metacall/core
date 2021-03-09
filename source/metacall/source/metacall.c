@@ -232,9 +232,20 @@ int metacall_execution_path_s(const char * tag, size_t tag_length, const char * 
 
 int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle)
 {
-	loader_naming_path path_impl[LOADER_LOAD_FROM_FILES_SIZE];
-
+	loader_naming_path * path_impl;
 	size_t iterator;
+
+	if (size == 0)
+	{
+		return 1;
+	}
+
+	path_impl = (loader_naming_path *)malloc(sizeof(loader_naming_path) * size);
+
+	if (path_impl == NULL)
+	{
+		return 1;
+	}
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
@@ -314,8 +325,8 @@ void * metacallhv_s(void * handle, const char * name, void * args[], size_t size
 void * metacall(const char * name, ...)
 {
 	value f_val = loader_get(name);
-
 	function f = NULL;
+
 	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
@@ -420,8 +431,8 @@ void * metacall(const char * name, ...)
 void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 {
 	value f_val = loader_get(name);
-
 	function f = NULL;
+
 	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);
@@ -518,8 +529,8 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t size, ...)
 {
 	value f_val = loader_get(name);
-
 	function f = NULL;
+
 	if (value_type_id(f_val) == TYPE_FUNCTION)
 	{
 		f = value_to_function(f_val);

@@ -319,13 +319,11 @@ int lua_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data lua_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data lua_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_lua lua_impl;
 
 	(void)config;
-
-	loader_copy(host);
 
 	lua_impl = malloc(sizeof(struct loader_impl_lua_type));
 

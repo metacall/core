@@ -24,11 +24,9 @@ struct CrystalLoaderImpl
 	# TODO
 end
 
-fun cr_loader_impl_initialize(impl : Void*, config : Void*, host : LibMetaCall::loader_host*) : Void*
+fun cr_loader_impl_initialize(impl : Void*, config : Void*) : Void*
 	# TODO: Review this, check NodeJS implementation for obtaining process name
 	crystal_library_init(1, 'metacall')
-
-	LibMetaCall.loader_copy(host)
 
 	cr_impl = CrystalLoaderImpl.new
 

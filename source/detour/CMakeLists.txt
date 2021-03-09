@@ -39,7 +39,6 @@ set(headers
 	${include_path}/detour_impl_handle.h
 	${include_path}/detour_interface.h
 	${include_path}/detour_singleton.h
-	${include_path}/detour_host.h
 )
 
 set(sources

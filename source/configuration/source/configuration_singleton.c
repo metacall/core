@@ -48,11 +48,6 @@ configuration_singleton configuration_singleton_instance()
 	return configuration_singleton_ptr;
 }
 
-void configuration_singleton_copy(configuration_singleton singleton)
-{
-	configuration_singleton_ptr = singleton;
-}
-
 int configuration_singleton_initialize(configuration global)
 {
 	configuration_singleton singleton = configuration_singleton_instance();

@@ -40,18 +40,6 @@ int serial_initialize()
 	return 0;
 }
 
-void serial_copy(void * instance)
-{
-	serial_singleton singleton_ptr = instance;
-
-	serial_singleton_copy(singleton_ptr);
-}
-
-void * serial_instance()
-{
-	return serial_singleton_instance();
-}
-
 serial serial_create(const char * name)
 {
 	serial s;

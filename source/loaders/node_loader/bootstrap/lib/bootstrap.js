@@ -9,10 +9,12 @@ const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
 
 const node_require = Module.prototype.require;
 const node_resolve = require.resolve;
+const node_cache = require.cache;
 
 /* Store in the module prototype the original functions for future use in derived loaders like TypeScript */
 Module.prototype.node_require = node_require;
 Module.prototype.node_resolve = node_resolve;
+Module.prototype.node_cache = node_cache;
 
 function node_loader_trampoline_initialize() {
 	const global_path = process.env['LOADER_LIBRARY_PATH'];
@@ -180,8 +182,8 @@ function node_loader_trampoline_clear(handle) {
 			const p = names[i];
 			const absolute = path.resolve(__dirname, p);
 
-			if (node_require.cache[absolute]) {
-				delete node_require.cache[absolute];
+			if (node_cache[absolute]) {
+				delete node_cache[absolute];
 			}
 		}
 	} catch (ex) {

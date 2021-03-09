@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-RPC_LOADER_API loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
+RPC_LOADER_API loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration config);
 
 RPC_LOADER_API int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

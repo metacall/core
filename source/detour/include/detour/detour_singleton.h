@@ -51,16 +51,6 @@ DETOUR_API detour_singleton detour_singleton_instance(void);
 
 /**
 *  @brief
-*    Get detour singleton (used for providing a detour subsystem copy of the host to the plugin)
-*
-*  @return
-*    Pointer to the detour singleton instance
-*
-*/
-DETOUR_API void detour_singleton_copy(detour_singleton singleton);
-
-/**
-*  @brief
 *    Register detour into detours map
 *
 *  @param[in] d

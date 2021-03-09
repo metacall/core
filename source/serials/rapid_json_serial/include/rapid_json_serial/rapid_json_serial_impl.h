@@ -51,7 +51,7 @@ RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_extension(void);
 *    Returns pointer to serial document implementation on success, null pointer otherwise
 *
 */
-RAPID_JSON_SERIAL_API serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator, serial_host host);
+RAPID_JSON_SERIAL_API serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator);
 
 /**
 *  @brief

@@ -36,7 +36,7 @@ extern "C" {
 struct loader_impl_py_type;
 typedef struct loader_impl_py_type * loader_impl_py;
 
-PY_LOADER_API loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
+PY_LOADER_API loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config);
 
 PY_LOADER_API int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

@@ -131,14 +131,12 @@ function_interface function_c_singleton()
 	return &c_interface;
 }
 
-loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_c c_impl;
 
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	c_impl = new loader_impl_c_type();
 

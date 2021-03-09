@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-RB_LOADER_API loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config, loader_host host);
+RB_LOADER_API loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration config);
 
 RB_LOADER_API int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
 

@@ -137,12 +137,10 @@ void jsm_report_error(JSContext * cx, const char * msg, JSErrorReport * report)
 	log_write("metacall", LOG_LEVEL_ERROR, "%s:%u:\n%s", file_name, (unsigned int) report->lineno, msg);
 }
 
-loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	if (JS_Init() == true)
 	{

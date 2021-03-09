@@ -120,15 +120,6 @@ loader loader_singleton()
 	return loader_instance_ptr;
 }
 
-void loader_copy(loader_host host)
-{
-	loader_instance_ptr = host->loader;
-	configuration_copy(host->config);
-	log_copy(host->log);
-	serial_copy(host->s);
-	detour_copy(host->detour);
-}
-
 void loader_initialization_register(loader_impl impl)
 {
 	loader l = loader_singleton();
@@ -151,40 +142,27 @@ void loader_initialize_proxy()
 
 	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
-		loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
+		loader_impl proxy;
 
-		if (host != NULL)
+		proxy = loader_impl_create_proxy();
+
+		if (proxy != NULL)
 		{
-			loader_impl proxy;
-
-			host->loader = l;
-			host->config = configuration_instance();
-			host->log = log_instance();
-			host->s = serial_instance();
-			host->detour = detour_instance();
-
-			proxy = loader_impl_create_proxy(host);
-
-			if (proxy != NULL)
+			if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
 			{
-				if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
-				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
+				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
 
-					loader_impl_destroy(proxy);
-				}
-
-				/* Insert into destruction list */
-				loader_initialization_register(proxy);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loader proxy initialized");
+				loader_impl_destroy(proxy);
 			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy initialization");
 
-				free(host);
-			}
+			/* Insert into destruction list */
+			loader_initialization_register(proxy);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader proxy initialized");
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy initialization");
 		}
 	}
 }
@@ -337,17 +315,7 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 {
 	loader l = loader_singleton();
 
-	loader_impl impl;
-
-	loader_host host = (loader_host)malloc(sizeof(struct loader_host_type));
-
-	host->loader = l;
-	host->config = configuration_instance();
-	host->log = log_instance();
-	host->s = serial_instance();
-	host->detour = detour_instance();
-
-	impl = loader_impl_create(loader_env_library_path(), tag, host);
+	loader_impl impl = loader_impl_create(loader_env_library_path(), tag);
 
 	if (impl != NULL)
 	{
@@ -362,8 +330,6 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 
 		return impl;
 	}
-
-	free(host);
 
 	return NULL;
 }
@@ -430,7 +396,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 
 	loader_initialize();
 
-	if (l->impl_map != NULL && size > 0 && size < LOADER_LOAD_FROM_FILES_SIZE)
+	if (l->impl_map != NULL)
 	{
 		if (tag != NULL)
 		{
@@ -590,9 +556,9 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	size = value_type_count(scripts);
 
-	if (size > LOADER_LOAD_FROM_FILES_SIZE)
+	if (size == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration too many files (%" PRIuS ")", size);
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration cannot load zero scripts");
 
 		configuration_clear(config);
 

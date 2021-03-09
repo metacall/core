@@ -51,16 +51,6 @@ SERIAL_API serial_singleton serial_singleton_instance(void);
 
 /**
 *  @brief
-*    Get serial singleton (used for providing a serial subsystem copy of the host to the plugin)
-*
-*  @return
-*    Pointer to the serial singleton instance
-*
-*/
-SERIAL_API void serial_singleton_copy(serial_singleton singleton);
-
-/**
-*  @brief
 *    Register serial into serials map
 *
 *  @param[in] s

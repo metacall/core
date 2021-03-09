@@ -10,7 +10,6 @@
 
 #include <serial/serial_impl.h>
 #include <serial/serial_interface.h>
-#include <serial/serial_host.h>
 
 #include <dynlink/dynlink.h>
 
@@ -29,7 +28,6 @@ struct serial_impl_type
 {
 	dynlink handle;
 	serial_interface iface;
-	serial_host host;
 };
 
 /* -- Private Methods -- */
@@ -101,19 +99,6 @@ serial_impl serial_impl_create()
 		return NULL;
 	}
 
-	impl->host = (serial_host)malloc(sizeof(struct serial_host_type));
-
-	if (impl->host == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation host allocation");
-
-		free(impl);
-
-		return NULL;
-	}
-
-	impl->host->log = log_instance();
-
 	impl->handle = NULL;
 	impl->iface = NULL;
 
@@ -171,7 +156,7 @@ int serial_impl_load(serial_impl impl, const char * path, const char * name)
 
 char * serial_impl_serialize(serial_impl impl, value v, size_t * size, memory_allocator allocator)
 {
-	serial_impl_handle handle = impl->iface->initialize(allocator, impl->host);
+	serial_impl_handle handle = impl->iface->initialize(allocator);
 
 	char * buffer;
 
@@ -199,7 +184,7 @@ char * serial_impl_serialize(serial_impl impl, value v, size_t * size, memory_al
 
 value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size, memory_allocator allocator)
 {
-	serial_impl_handle handle = impl->iface->initialize(allocator, impl->host);
+	serial_impl_handle handle = impl->iface->initialize(allocator);
 
 	value v;
 
@@ -249,11 +234,6 @@ int serial_impl_destroy(serial_impl impl)
 		if (impl->handle != NULL)
 		{
 			dynlink_unload(impl->handle);
-		}
-
-		if (impl->host != NULL)
-		{
-			free(impl->host);
 		}
 
 		free(impl);

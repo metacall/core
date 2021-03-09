@@ -19,12 +19,7 @@
 
 lib LibMetaCall
 	# Loader
-	struct loader_host
-		log : Void*
-	end
-
 	fun loader_impl_get(impl : Void*) : Void*
-	fun loader_copy(instance : struct loader_host*) : Void
 	fun loader_initialization_register(impl : Void*) : Void
 	fun loader_unload_children() : Void
 

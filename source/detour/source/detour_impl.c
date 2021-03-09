@@ -10,7 +10,6 @@
 
 #include <detour/detour_impl.h>
 #include <detour/detour_interface.h>
-#include <detour/detour_host.h>
 
 #include <dynlink/dynlink.h>
 
@@ -31,7 +30,6 @@ struct detour_impl_type
 {
 	dynlink handle;
 	detour_interface iface;
-	detour_host host;
 };
 
 /* -- Private Methods -- */
@@ -103,19 +101,6 @@ detour_impl detour_impl_create()
 		return NULL;
 	}
 
-	impl->host = (detour_host)malloc(sizeof(struct detour_host_type));
-
-	if (impl->host == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation host allocation");
-
-		free(impl);
-
-		return NULL;
-	}
-
-	impl->host->log = log_instance();
-
 	impl->handle = NULL;
 	impl->iface = NULL;
 
@@ -168,7 +153,7 @@ int detour_impl_load(detour_impl impl, const char * path, const char * name)
 
 detour_impl_handle detour_impl_install(detour_impl impl, void(**target)(void), void(*hook)(void))
 {
-	detour_impl_handle handle = impl->iface->initialize(impl->host);
+	detour_impl_handle handle = impl->iface->initialize();
 
 	if (handle == NULL)
 	{
@@ -229,13 +214,6 @@ int detour_impl_destroy(detour_impl impl)
 		{
 			dynlink_unload(impl->handle);
 		}
-
-		if (impl->host != NULL)
-		{
-			free(impl->host);
-		}
-
-		free(impl);
 	}
 
 	return 0;

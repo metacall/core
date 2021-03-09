@@ -292,14 +292,12 @@ int dart_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
-loader_impl_data dart_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data dart_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_dart dart_impl;
 
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	dart_impl = new loader_impl_dart_type();
 

@@ -58,7 +58,6 @@ struct loader_impl_type
 	loader_impl_data data;
 	context ctx;
 	set type_info_map;
-	loader_host host;
 	void * options;
 	set exec_path_map;
 };
@@ -188,14 +187,13 @@ int loader_impl_create_singleton(loader_impl impl, const char * path, const load
 	return 1;
 }
 
-loader_impl loader_impl_create_proxy(loader_host host)
+loader_impl loader_impl_create_proxy()
 {
 	loader_impl impl = malloc(sizeof(struct loader_impl_type));
 
 	memset(impl, 0, sizeof(struct loader_impl_type));
 
 	impl->init = 0; /* Do not call singleton initialize */
-	impl->host = host;
 	impl->options = NULL;
 
 	if (impl != NULL)
@@ -284,7 +282,7 @@ int loader_impl_initialize(loader_impl impl)
 
 	config = configuration_scope(configuration_key);
 
-	impl->data = impl->singleton()->initialize(impl, config, impl->host);
+	impl->data = impl->singleton()->initialize(impl, config);
 
 	if (impl->data == NULL)
 	{
@@ -336,7 +334,7 @@ int loader_impl_is_initialized(loader_impl impl)
 	return impl->init;
 }
 
-loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, loader_host host)
+loader_impl loader_impl_create(const char * path, const loader_naming_tag tag)
 {
 	if (tag != NULL)
 	{
@@ -348,7 +346,6 @@ loader_impl loader_impl_create(const char * path, const loader_naming_tag tag, l
 		}
 
 		impl->init = 1;
-		impl->host = host;
 		impl->options = NULL;
 
 		if (loader_impl_create_singleton(impl, path, tag) == 0)
@@ -1135,8 +1132,6 @@ void loader_impl_destroy(loader_impl impl)
 		context_destroy(impl->ctx);
 
 		loader_impl_dynlink_destroy(impl);
-
-		free(impl->host);
 
 		free(impl);
 	}

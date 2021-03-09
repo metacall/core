@@ -39,7 +39,6 @@ set(headers
 	${include_path}/serial_impl_handle.h
 	${include_path}/serial_interface.h
 	${include_path}/serial_singleton.h
-	${include_path}/serial_host.h
 )
 
 set(sources

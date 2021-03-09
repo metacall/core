@@ -274,7 +274,7 @@ int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl)
 	return 0;
 }
 
-loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_rpc rpc_impl = new loader_impl_rpc_type();
 
@@ -285,8 +285,6 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	{
 		return NULL;
 	}
-
-	loader_copy(host);
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
