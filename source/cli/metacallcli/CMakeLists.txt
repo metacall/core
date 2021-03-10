@@ -311,6 +311,17 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 	)
 endif()
 
+if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
+	add_test(NAME ${target}-py-inspect
+		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> cli-test-inspect.py | ${GREP_COMMAND} \"12\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-py-inspect
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+endif()
+
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)
 	add_test(NAME ${target}-ts
 		COMMAND ${TEST_COMMAND} "echo 'load ts typedfunc.ts\ninspect\ncall typed_sum(4, 5)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"9.0\""
