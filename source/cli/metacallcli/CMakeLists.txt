@@ -309,14 +309,22 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
+	add_test(NAME ${target}-file-fail
+		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> this-does-not-exist | ${GREP_COMMAND} \"Script (this-does-not-exist) load error in loader (file)\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	test_environment_variables(${target}-file-fail
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
 endif()
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
-	add_test(NAME ${target}-py-inspect
-		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> cli-test-inspect.py | ${GREP_COMMAND} \"12\""
+	add_test(NAME ${target}-py-naming
+		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> test.py | ${GREP_COMMAND} \"Test: 66673332\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
-	test_environment_variables(${target}-py-inspect
+	test_environment_variables(${target}-py-naming
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)

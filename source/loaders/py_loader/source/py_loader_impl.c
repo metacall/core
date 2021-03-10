@@ -1740,7 +1740,8 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 
 		current_path = PyUnicode_DecodeFSDefault(path);
 
-		PyList_Append(system_path, current_path);
+		/* Put the local paths in front of global paths */
+		PyList_Insert(system_path, 0, current_path);
 
 		py_loader_impl_sys_path_print(system_path);
 
