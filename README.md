@@ -12,6 +12,9 @@
   <a href="https://discord.gg/upwP4mwJWa" alt="Discord">
     <img src="https://img.shields.io/discord/781987805974757426?label=discord&style=flat" /></a>
 
+  <a href="https://travis-ci.com/metacall/core" alt="Travis-CI">
+    <img src="https://travis-ci.org/metacall/core.svg?branch=develop" /></a>
+
   <a href="https://matrix.to/#/#metacall:matrix.org" alt="Matrix">
     <img src="https://img.shields.io/matrix/metacall:matrix.org?label=matrix&style=flat" /></a>
 
