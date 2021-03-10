@@ -271,6 +271,17 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 			}
 		}
 
+		if (vector_size(handle->paths) == 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Files not found");
+
+			vector_destroy(handle->paths);
+
+			free(handle);
+
+			return NULL;
+		}
+
 		return (loader_handle)handle;
 	}
 

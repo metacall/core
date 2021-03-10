@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_FILE)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-python-fail-inspect-test)
+set(target metacall-file-fail-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_python_fail_inspect_test.cpp
+	${source_path}/metacall_file_fail_test.cpp
 )
 
 # Group source files
@@ -128,7 +128,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	py_loader
+	file_loader
 )
 
 #

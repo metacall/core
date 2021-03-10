@@ -21,32 +21,33 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
+#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_python_fail_inspect_test : public testing::Test
+class metacall_file_fail_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_python_fail_inspect_test, DefaultConstructor)
+TEST_F(metacall_file_fail_test, DefaultConstructor)
 {
 	metacall_print_info();
 
 	ASSERT_EQ((int) 0, (int) metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+	/* File */
+	#if defined(OPTION_BUILD_LOADERS_FILE)
 	{
-		const char buffer[] =
-			"def multiply_type(a: int, b: int) -> int:\n"
-			"  return a * b\n"
-			"print(multiply_type(3, 4))\n";
+		const char * scripts[] =
+		{
+			"this-file-does-not-exists.yeet"
+		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
+		const size_t size = sizeof(scripts) / sizeof(scripts[0]);
 
-		EXPECT_NE((void *) NULL, (void *) metacall_function("multiply_type"));
+		EXPECT_NE((int) 0, (int) metacall_load_from_file("file", scripts, size, NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+	#endif /* OPTION_BUILD_LOADERS_FILE */
 
 	/* Print inspect information */
 	{
