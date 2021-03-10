@@ -16,16 +16,6 @@
 #include <iostream>
 #include <functional>
 
-/* Includes for home path */
-#if defined(unix) || defined(__unix__) || defined(__unix) || \
-	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-#	include <unistd.h>
-#	include <sys/types.h>
-#	include <pwd.h>
-#endif
-
 /* TODO: Windows special characters not working properly */
 /* Set UTF-16 mode for stdout in Windows for the lambda character */
 /*
