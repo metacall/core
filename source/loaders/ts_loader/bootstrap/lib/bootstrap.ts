@@ -81,8 +81,18 @@ class TypeScriptLanguageServiceHost {
 
 	getCompilationSettings(currentDirectory) {
 		if (currentDirectory) {
-			const tsconfig = path.join(currentDirectory, 'tsconfig.json');
-			return node_require(tsconfig);
+			const configFileName = ts.findConfigFile(
+				currentDirectory,
+				ts.sys.fileExists,
+				'tsconfig.json'
+			  );
+			  const configFile = ts.readConfigFile(configFileName, ts.sys.readFile);
+			  const compilerOptions = ts.parseJsonConfigFileContent(
+				configFile.config,
+				ts.sys,
+				'./'
+			  );
+			  return compilerOptions.raw;
 		}
 
 		const options = {
