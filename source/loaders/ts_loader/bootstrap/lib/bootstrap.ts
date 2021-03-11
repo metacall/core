@@ -79,8 +79,22 @@ class TypeScriptLanguageServiceHost {
 		console.log(message);
 	}
 
-	getCompilationSettings() {
-		// TODO: Make it able to load tsconfig.json files
+	getCompilationSettings(currentDirectory) {
+		if (currentDirectory) {
+			const configFileName = ts.findConfigFile(
+				currentDirectory,
+				ts.sys.fileExists,
+				'tsconfig.json'
+			  );
+			  const configFile = ts.readConfigFile(configFileName, ts.sys.readFile);
+			  const compilerOptions = ts.parseJsonConfigFileContent(
+				configFile.config,
+				ts.sys,
+				currentDirectory
+			  );
+			  return compilerOptions.raw;
+		}
+
 		const options = {
 			esModuleInterop: true,
 			jsx: 2, /* React */
@@ -167,7 +181,8 @@ function ts_loader_trampoline_initialize() {
 	registry = ts.createDocumentRegistry();
 	servicesHost = new TypeScriptLanguageServiceHost();
 	services = ts.createLanguageService(servicesHost, registry);
-	const lib = path.dirname(servicesHost.getDefaultLibFileName(servicesHost.getCompilationSettings()));
+	const currentDirectory = servicesHost.getCurrentDirectory()
+	const lib = path.dirname(servicesHost.getDefaultLibFileName(servicesHost.getCompilationSettings(currentDirectory)));
 
 	// Load TypeScript Runtime
 	fs.readdirSync(lib).map(file => {
