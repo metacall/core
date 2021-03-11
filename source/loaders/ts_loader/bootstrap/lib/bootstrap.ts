@@ -90,7 +90,7 @@ class TypeScriptLanguageServiceHost {
 			  const compilerOptions = ts.parseJsonConfigFileContent(
 				configFile.config,
 				ts.sys,
-				'./'
+				currentDirectory
 			  );
 			  return compilerOptions.raw;
 		}
