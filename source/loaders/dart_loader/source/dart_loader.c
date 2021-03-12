@@ -26,31 +26,30 @@
 loader_impl_interface dart_loader_impl_interface_singleton()
 {
 	static struct loader_impl_interface_type loader_impl_interface_dart =
-	{
-		&dart_loader_impl_initialize,
-		&dart_loader_impl_execution_path,
-		&dart_loader_impl_load_from_file,
-		&dart_loader_impl_load_from_memory,
-		&dart_loader_impl_load_from_package,
-		&dart_loader_impl_clear,
-		&dart_loader_impl_discover,
-		&dart_loader_impl_destroy
-	};
+		{
+			&dart_loader_impl_initialize,
+			&dart_loader_impl_execution_path,
+			&dart_loader_impl_load_from_file,
+			&dart_loader_impl_load_from_memory,
+			&dart_loader_impl_load_from_package,
+			&dart_loader_impl_clear,
+			&dart_loader_impl_discover,
+			&dart_loader_impl_destroy};
 
 	return &loader_impl_interface_dart;
 }
 
-const char * dart_loader_print_info()
+const char *dart_loader_print_info()
 {
 	static const char dart_loader_info[] =
 		"Dart Loader Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef DART_LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef DART_LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

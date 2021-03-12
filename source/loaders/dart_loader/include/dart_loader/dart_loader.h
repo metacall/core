@@ -28,16 +28,17 @@
 #include <dynlink/dynlink.h>
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-DART_LOADER_API loader_impl_interface dart_loader_impl_interface_singleton(void);
+    DART_LOADER_API loader_impl_interface dart_loader_impl_interface_singleton(void);
 
-DYNLINK_SYMBOL_EXPORT(dart_loader_impl_interface_singleton);
+    DYNLINK_SYMBOL_EXPORT(dart_loader_impl_interface_singleton);
 
-DART_LOADER_API const char * dart_loader_print_info(void);
+    DART_LOADER_API const char *dart_loader_print_info(void);
 
-DYNLINK_SYMBOL_EXPORT(dart_loader_print_info);
+    DYNLINK_SYMBOL_EXPORT(dart_loader_print_info);
 
 #ifdef __cplusplus
 }
