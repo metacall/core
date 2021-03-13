@@ -127,7 +127,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${DARTVM_INCLUDE_DIR} # Dart includes
+	${DARTVM_INCLUDE_DIR} # Dart includes (dart_api.h)
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
