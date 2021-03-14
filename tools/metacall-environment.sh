@@ -48,6 +48,7 @@ INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
+INSTALL_CLANGFORMAT=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -345,6 +346,20 @@ sub_coverage(){
 	$SUDO_CMD apt-get install -y --no-install-recommends lcov
 }
 
+# Clang format
+sub_clangformat(){
+	echo "configure clangformat"
+	cd $ROOT_DIR
+
+	LLVM_VERSION_STRING=11
+
+	$SUDO_CMD wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key| $SUDO_CMD apt-key add -
+	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get install -y --no-install-recommends clang-format-$LLVM_VERSION_STRING
+}
+
 # Install
 sub_install(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -407,7 +422,9 @@ sub_install(){
 	if [ $INSTALL_COVERAGE = 1 ]; then
 		sub_coverage
 	fi
-
+	if [ $INSTALL_CLANGFORMAT = 1 ]; then
+		sub_clangformat
+	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
 
@@ -512,6 +529,10 @@ sub_options(){
 			echo "coverage selected"
 			INSTALL_COVERAGE=1
 		fi
+		if [ "$var" = 'clangformat' ]; then
+			echo "clangformat selected"
+			INSTALL_CLANGFORMAT=1
+		fi
 	done
 }
 
@@ -542,6 +563,7 @@ sub_help() {
 	echo "	metacall"
 	echo "	pack"
 	echo "	coverage"
+	echo "	clangformat"
 	echo ""
 }
 
