@@ -6,7 +6,7 @@
 
 # Abstract
 
-**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call a Python function from NodeJS.
+**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from/to any programming language, e.g. by calling a Python function from NodeJS:
 
 `sum.py`
 ``` python
@@ -21,18 +21,18 @@ const { sum } = require('sum.py');
 sum(3, 4); // 7
 ```
 
-Use the [installer](https://github.com/metacall/install) and try [some examples](https://github.com/metacall/beautifulsoup-express-example).
+Use the [installer](https://github.com/metacall/install) and try [some examples](#43-examples).
 
 <div align="center">
   <a href="https://medium.com/@metacall/call-functions-methods-or-procedures-between-programming-languages-with-metacall-58cfece35d7" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/overview.png" alt="M E T A C A L L" style="max-width:100%; margin: 0 auto;" width="350" height="auto"></a>
 </div>
 
-# Table Of Contents
+# Table of Contents
 
 <!-- TOC -->
 
 - [Abstract](#abstract)
-- [Table Of Contents](#table-of-contents)
+- [Table of Contents](#table-of-contents)
   - [1. Motivation](#1-motivation)
   - [2. Language Support](#2-language-support)
     - [2.1 Loaders (Backends)](#21-loaders-backends)
@@ -85,11 +85,11 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
 
 ## 1. Motivation
 
-The **METACALL** project started time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers to extend the Game Engine easily. By that time, I was finishing the university so I decided to do my [Final Thesis](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-paper.pdf) and [Presentation](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-presentation.pdf) based on the plug-in system for my Game Engine. The Plugin Architecture designed for the Game Engine has similarities with **METACALL** although the architecture has been redefined and the code has been rewritten from scratch. After some refination of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on this technique to provide high scalability of the functions among multiple cores and **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern, a new technique I have developed to interconnect transparently functions in a distributed system based on this library.
+The **METACALL** project started a long time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers to extend the Game Engine easily. By that time, I was finishing university so I decided to do my [Final Thesis](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-paper.pdf) and [Presentation](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-presentation.pdf) based on the plug-in system for my Game Engine. The Plugin Architecture designed for the Game Engine has similarities with **METACALL** although the architecture has been redefined and the code has been rewritten from scratch. After some refinement of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on this technique to provide high scalability of the functions among multiple cores and **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern, a new technique I have developed to transparently interconnect functions in a distributed system based on this library.
 
 ## 2. Language Support
 
-This section describes all programming languages that **METACALL** supports. **METACALL** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) which **METACALL** loads and they have a common interface. They usually implement JITs, VMs or Interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **METACALL** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **METACALL** via pip and use it to call other languages from Python. The combination of both virtually provides full support to call from / to any language.
+This section describes all programming languages that **METACALL** supports. **METACALL** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) which **METACALL** loads and they have a common interface. They usually implement JITs, VMs or interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **METACALL** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **METACALL** via `pip` and use it to call other languages from Python. The combination of both provides the opportunity for complete interoperability between virtually any two languages.
 
 ### 2.1 Loaders (Backends)
 
@@ -148,15 +148,15 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 
 **METACALL** can be used in the following cases:
 
-- Interconnect different technologies in the same project. It allows to have heterogeneous teams of developers working over same project in an isolated way and using different programming languages at the same time.
+- Interconnect different technologies in the same project. It allows heterogeneous teams of developers to work on the same project in an isolated way and using different programming languages at the same time.
 
-- Embedding programming languages to existing softwares. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
+- Embedding programming languages in existing software. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
 
 - Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern and high performance function scalability thanks to this library.
 
-- Source code migrations. **METACALL** can wrap large and legacy code-bases, and provide an agnostic way to work with the codebase into a new programming language. Eventually the code can be migrated by parts, without need of creating a new project or stopping the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
+- Source code migrations. **METACALL** can wrap large and legacy codebases, and provide an agnostic way to work with the codebase in a new programming language. Eventually the code can be migrated in parts, without needing to create a new project or stop the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
 
-- Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call directly low level libraries from your high level languages without making a wrapper in C or C++ for it.
+- Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call low level libraries directly from your high level languages without making a wrapper in C or C++ for it.
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
@@ -168,7 +168,7 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 ## 4.1 Installation
 
-Prior to try any example, you must have **METACALL** installed in your system. To install **METACALL** you have the following options.
+Prior to trying any of the examples, you must have **METACALL** installed in your system. To install **METACALL** you have the following options:
 
 - [Install precompiled tarball via shell script (downloads the tarball generated by Guix)](https://github.com/metacall/install).
 - [Download precompiled tarball (.tar.gz) or Debian (.deb) / RPM (.rpm) installers via Core Releases Assets](https://github.com/metacall/core/releases).
@@ -179,7 +179,7 @@ Prior to try any example, you must have **METACALL** installed in your system. T
 
 ### 4.2 Environment Variables
 
-This environment variables are optional, in case that you want to modify default paths of **METACALL**.
+The environment variables are optional, in case you want to modify default paths of **METACALL**.
 
 |           Name            | Description                                                      |          Default Value           |
 | :-----------------------: | ---------------------------------------------------------------- | :------------------------------: |
@@ -201,9 +201,9 @@ This environment variables are optional, in case that you want to modify default
 
 - [Embedding Python](https://github.com/metacall/embedding-python-example): Example application for embedding Python code into C/C++ using CMake as a build system.
 
-- [Embedding Ruby](https://github.com/metacall/embedding-python-example): Example application for embedding Ruby code into C/C++ using CMake as a build system.
+- [Embedding Ruby](https://github.com/metacall/embedding-ruby-example): Example application for embedding Ruby code into C/C++ using CMake as a build system.
 
-- [Mixing Go and TypeScript](https://github.com/metacall/golang-typescript-example): This example shows how to embed TypeScript into Go using MetaCall. In other words, calling TypeScript functions from Go.
+- [Mixing Go and TypeScript](https://github.com/metacall/golang-typescript-example): This example shows how to embed TypeScript into Go using METACALL. In other words, calling TypeScript functions from Go.
 
 - [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **METACALL** by compining it by hand.
 
@@ -229,7 +229,7 @@ This environment variables are optional, in case that you want to modify default
 
 - All external code used into **METACALL** must be introduced by inversion of control in the plugin system, so that the core must not remain aware from what software is using.
 
-- All code developed in **METACALL** must be implemented in standalone libraries that can work by itself in an isolated way (aka modules).
+- All code developed in **METACALL** must be implemented in standalone libraries that can work by themselves in an isolated way (aka modules).
 
 #### 5.1.2 Modules
 
