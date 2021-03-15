@@ -32,7 +32,7 @@
 #include <log/log.h>
 
 #include <stdlib.h>
-
+#include <string.h>
 typedef struct loader_impl_dart_type
 {
 	void * impl_dart_data;
@@ -313,8 +313,9 @@ loader_impl_data dart_loader_impl_initialize(loader_impl impl, configuration con
 
 		return NULL;
 	}
-
-	dart_impl->impl_dart_data = nullptr;
+	
+	/* Initialize Dart VM */
+	dart_impl->impl_dart_data = NULL ;
 
 	/* Register initialization */
 	loader_initialization_register(impl);
