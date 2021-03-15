@@ -712,7 +712,7 @@ The following platforms and architectures have been tested an work correctly wit
 
 |     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
 | :----------------------: | :-----------------: | :-------------: | :----------------------------------------------------------------------------------------------------: |
-|   **`ubuntu:xenial`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
+|   **`ubuntu:focal`**     |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
 |      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
