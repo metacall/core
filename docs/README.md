@@ -6,7 +6,7 @@
 
 # Abstract
 
-**METACALL** is a library that allows calling functions, methods or procedures between programming languages. With **METACALL** you can transparently execute code from / to any programming language, for example, call a Python function from NodeJS.
+**MetaCall** is a library that allows calling functions, methods or procedures between programming languages. With **MetaCall** you can transparently execute code from/to any programming language, e.g. by calling a Python function from NodeJS:
 
 `sum.py`
 ``` python
@@ -21,18 +21,18 @@ const { sum } = require('sum.py');
 sum(3, 4); // 7
 ```
 
-Use the [installer](https://github.com/metacall/install) and try [some examples](https://github.com/metacall/beautifulsoup-express-example).
+Use the [installer](https://github.com/metacall/install) and try [some examples](#43-examples).
 
 <div align="center">
   <a href="https://medium.com/@metacall/call-functions-methods-or-procedures-between-programming-languages-with-metacall-58cfece35d7" target="_blank"><img src="https://raw.githubusercontent.com/metacall/core/master/deploy/images/overview.png" alt="M E T A C A L L" style="max-width:100%; margin: 0 auto;" width="350" height="auto"></a>
 </div>
 
-# Table Of Contents
+# Table of Contents
 
 <!-- TOC -->
 
 - [Abstract](#abstract)
-- [Table Of Contents](#table-of-contents)
+- [Table of Contents](#table-of-contents)
   - [1. Motivation](#1-motivation)
   - [2. Language Support](#2-language-support)
     - [2.1 Loaders (Backends)](#21-loaders-backends)
@@ -85,15 +85,15 @@ Use the [installer](https://github.com/metacall/install) and try [some examples]
 
 ## 1. Motivation
 
-The **METACALL** project started time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers to extend the Game Engine easily. By that time, I was finishing the university so I decided to do my [Final Thesis](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-paper.pdf) and [Presentation](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-presentation.pdf) based on the plug-in system for my Game Engine. The Plugin Architecture designed for the Game Engine has similarities with **METACALL** although the architecture has been redefined and the code has been rewritten from scratch. After some refination of the system, I came up with **METACALL** and other use cases for the tool. Currently we are using **METACALL** to build a cutting edge FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on this technique to provide high scalability of the functions among multiple cores and **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern, a new technique I have developed to interconnect transparently functions in a distributed system based on this library.
+The **MetaCall** project started a long time ago when I was coding a [Game Engine for an MMORPG](https://bitbucket.org/parrastudios/argentum-online-c). My idea was to provide an interface to allow other programmers to extend the Game Engine easily. By that time, I was finishing university so I decided to do my [Final Thesis](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-paper.pdf) and [Presentation](https://bitbucket.org/parrastudios/argentum-online-c/raw/e6e78fef80c6adc541640d68d422721ef735184f/common/doc/Plugin/plugin-framework-presentation.pdf) based on the plug-in system for my Game Engine. The Plugin Architecture designed for the Game Engine has similarities with **MetaCall** although the architecture has been redefined and the code has been rewritten from scratch. After some refinement of the system, I came up with **MetaCall** and other use cases for the tool. Currently we are using **MetaCall** to build a cutting edge FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on this technique to provide high scalability of the functions among multiple cores and **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern, a new technique I have developed to transparently interconnect functions in a distributed system based on this library.
 
 ## 2. Language Support
 
-This section describes all programming languages that **METACALL** supports. **METACALL** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) which **METACALL** loads and they have a common interface. They usually implement JITs, VMs or Interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **METACALL** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **METACALL** via pip and use it to call other languages from Python. The combination of both virtually provides full support to call from / to any language.
+This section describes all programming languages that **MetaCall** supports. **MetaCall** is offered through a C API. This means you can use it as a library to embed different runtimes into C. The **[Loaders](#21-loaders-backends)** are the ones that allow to call different functions from C. They are plugins (libraries) which **MetaCall** loads and they have a common interface. They usually implement JITs, VMs or interpreters. On the other hand we have the **[Ports](#22-ports-frontends)** which are wrappers to the **MetaCall** C API that expose the API to other languages. With the Python Loader we can execute calls to Python from C. With the Python Port we can install **MetaCall** via `pip` and use it to call other languages from Python. The combination of both provides the opportunity for complete interoperability between virtually any two languages.
 
 ### 2.1 Loaders (Backends)
 
-This section describes all programming languages that **METACALL** allows to load and invoke from C language, in other words all languages that **METACALL** can embed. If you are interested in design and implementation details of the loaders, please go to [loaders section](#531-loaders).
+This section describes all programming languages that **MetaCall** allows to load and invoke from C language, in other words all languages that **MetaCall** can embed. If you are interested in design and implementation details of the loaders, please go to [loaders section](#531-loaders).
 
 - Currently supported languages and run-times:
 
@@ -128,7 +128,7 @@ This section describes all programming languages that **METACALL** allows to loa
 
 ### 2.2 Ports (Frontends)
 
-Ports are the frontends to the **METACALL C API** from other languages. They allow to use **METACALL** from different languages. If you are interested in design and implementation details of the ports, please go to [ports section](#54-ports).
+Ports are the frontends to the **MetaCall C API** from other languages. They allow to use **MetaCall** from different languages. If you are interested in design and implementation details of the ports, please go to [ports section](#54-ports).
 
 - Currently supported languages and run-times:
 
@@ -146,29 +146,29 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 
 ## 3. Use Cases
 
-**METACALL** can be used in the following cases:
+**MetaCall** can be used in the following cases:
 
-- Interconnect different technologies in the same project. It allows to have heterogeneous teams of developers working over same project in an isolated way and using different programming languages at the same time.
+- Interconnect different technologies in the same project. It allows heterogeneous teams of developers to work on the same project in an isolated way and using different programming languages at the same time.
 
-- Embedding programming languages to existing softwares. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
+- Embedding programming languages in existing software. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **MetaCall** and extend the core functionality with higher level programming languages (aka scripting).
 
-- Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern and high performance function scalability thanks to this library.
+- Function as a Service. **MetaCall** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern and high performance function scalability thanks to this library.
 
-- Source code migrations. **METACALL** can wrap large and legacy code-bases, and provide an agnostic way to work with the codebase into a new programming language. Eventually the code can be migrated by parts, without need of creating a new project or stopping the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
+- Source code migrations. **MetaCall** can wrap large and legacy codebases, and provide an agnostic way to work with the codebase in a new programming language. Eventually the code can be migrated in parts, without needing to create a new project or stop the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
 
-- Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call directly low level libraries from your high level languages without making a wrapper in C or C++ for it.
+- Porting low level libraries to high level languages transparently. With **MetaCall** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call low level libraries directly from your high level languages without making a wrapper in C or C++ for it.
 
-As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
+As you can see, there are plenty of uses. **MetaCall** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
 ## 3.1 Known Projects Using MetaCall
 
-- **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art by means of OpenCV. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
+- **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art by means of OpenCV. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **MetaCall** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
 
 ## 4. Usage
 
 ## 4.1 Installation
 
-Prior to try any example, you must have **METACALL** installed in your system. To install **METACALL** you have the following options.
+Prior to trying any of the examples, you must have **MetaCall** installed in your system. To install **MetaCall** you have the following options:
 
 - [Install precompiled tarball via shell script (downloads the tarball generated by Guix)](https://github.com/metacall/install).
 - [Download precompiled tarball (.tar.gz) or Debian (.deb) / RPM (.rpm) installers via Core Releases Assets](https://github.com/metacall/core/releases).
@@ -179,13 +179,13 @@ Prior to try any example, you must have **METACALL** installed in your system. T
 
 ### 4.2 Environment Variables
 
-This environment variables are optional, in case that you want to modify default paths of **METACALL**.
+The environment variables are optional, in case you want to modify default paths of **MetaCall**.
 
 |           Name            | Description                                                      |          Default Value           |
 | :-----------------------: | ---------------------------------------------------------------- | :------------------------------: |
 | **`DETOUR_LIBRARY_PATH`** | Directory where detour plugins to be loaded are located          |          **`detours`**           |
 | **`SERIAL_LIBRARY_PATH`** | Directory where serial plugins to be loaded are located          |          **`serials`**           |
-| **`CONFIGURATION_PATH`**  | File path where the **METACALL** global configuration is located | **`configurations/global.json`** |
+| **`CONFIGURATION_PATH`**  | File path where the **MetaCall** global configuration is located | **`configurations/global.json`** |
 | **`LOADER_LIBRARY_PATH`** | Directory where loader plugins to be loaded are located          |          **`loaders`**           |
 | **`LOADER_SCRIPT_PATH`**  | Directory where scripts to be loaded are located                 | **`${execution_path}`** &#x00B9; |
 
@@ -193,7 +193,7 @@ This environment variables are optional, in case that you want to modify default
 
 ### 4.3 Examples
 
-- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**METACALL** CLI](/source/cli/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
+- [BeautifulSoup from Express](https://github.com/metacall/beautifulsoup-express-example): This example shows how to use [**MetaCall** CLI](/source/cli/metacallcli) for building a **Polyglot Scraping API** that mixes NodeJS with Python.
 
 - [Higher Order Functions with Python & NodeJS](https://github.com/metacall/fn.py-javascript-example): An example of using [Fn.py](https://github.com/kachayev/fn.py) (Python) from JavaScript (NodeJS).
 
@@ -201,15 +201,15 @@ This environment variables are optional, in case that you want to modify default
 
 - [Embedding Python](https://github.com/metacall/embedding-python-example): Example application for embedding Python code into C/C++ using CMake as a build system.
 
-- [Embedding Ruby](https://github.com/metacall/embedding-python-example): Example application for embedding Ruby code into C/C++ using CMake as a build system.
+- [Embedding Ruby](https://github.com/metacall/embedding-ruby-example): Example application for embedding Ruby code into C/C++ using CMake as a build system.
 
 - [Mixing Go and TypeScript](https://github.com/metacall/golang-typescript-example): This example shows how to embed TypeScript into Go using MetaCall. In other words, calling TypeScript functions from Go.
 
-- [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **METACALL** by compining it by hand.
+- [Using `matplotlib` from C/C++](https://github.com/metacall/embedding-matplotlib-example): Example application for using Python `matplotlib` library into C/C++ using `gcc` for compiling it and installing **MetaCall** by compining it by hand.
 
 - [Polyglot Redis Module](https://github.com/metacall/redis-module): Extend Redis DataBase modules with TypeScript, JavaScript, Python, C#, Ruby...
 
-- [Rotulin](https://github.com/metacall/rotulin): Example of a multi-language application built with **METACALL**. This application embeds a Django server with a Ruby DataBase and C# business layer based on ImageMagick.
+- [Rotulin](https://github.com/metacall/rotulin): Example of a multi-language application built with **MetaCall**. This application embeds a Django server with a Ruby DataBase and C# business layer based on ImageMagick.
 
 ## 5. Architecture
 
@@ -223,28 +223,28 @@ This environment variables are optional, in case that you want to modify default
 
 - To be as cross-platform as possible.
 
-- To avoid to modify run-times directly or use the code inside **METACALL** in order to avoid maintaining them, or propagating security flaws or licenses into **METACALL**.
+- To avoid to modify run-times directly or use the code inside **MetaCall** in order to avoid maintaining them, or propagating security flaws or licenses into **MetaCall**.
 
-- To provide support for any embeddable programming language and to provide support for **METACALL** to be used form any programming language.
+- To provide support for any embeddable programming language and to provide support for **MetaCall** to be used form any programming language.
 
-- All external code used into **METACALL** must be introduced by inversion of control in the plugin system, so that the core must not remain aware from what software is using.
+- All external code used into **MetaCall** must be introduced by inversion of control in the plugin system, so that the core must not remain aware from what software is using.
 
-- All code developed in **METACALL** must be implemented in standalone libraries that can work by itself in an isolated way (aka modules).
+- All code developed in **MetaCall** must be implemented in standalone libraries that can work by themselves in an isolated way (aka modules).
 
 #### 5.1.2 Modules
 
-- [`adt`](/source/adt) provides a base for Abstract Data Types and algorithms used in **METACALL**. Implementation must be done in an efficient and generic way. Some of the data structures implemented are vector, set, hash, comparable or trie.
+- [`adt`](/source/adt) provides a base for Abstract Data Types and algorithms used in **MetaCall**. Implementation must be done in an efficient and generic way. Some of the data structures implemented are vector, set, hash, comparable or trie.
 
 - [`detour`](/source/detour) provides an interface to hook into functions. Detours are used by the [fork model](#57-fork-model) to intercept fork calls.
 
 - [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
   - [`funchook_detour`](/source/detours/funchook_detour) implemented by means of FuncHook library.
 
-- [`distributable`](/source/distributable) defines the compilation of **METACALL** that generates an unique library with all core libraries bundled into it. As the **METACALL** architecture is divided by modules, in order to distribute **METACALL** is needed to build all of them into a single library. This module implements this compilation by means of CMake.
+- [`distributable`](/source/distributable) defines the compilation of **MetaCall** that generates an unique library with all core libraries bundled into it. As the **MetaCall** architecture is divided by modules, in order to distribute **MetaCall** is needed to build all of them into a single library. This module implements this compilation by means of CMake.
 
-- [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
+- [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **MetaCall**.
 
-- [`environment`](/source/environment) implements an standard way to deal with environment variables. **METACALL** uses environment variables to define custom paths for plugins and scripts.
+- [`environment`](/source/environment) implements an standard way to deal with environment variables. **MetaCall** uses environment variables to define custom paths for plugins and scripts.
 
 - [`examples`](/source/examples) ...
 
@@ -280,15 +280,15 @@ This environment variables are optional, in case that you want to modify default
 
 ### 5.2 Reflect
 
-The module that holds the representation of types, values and functions is called [`reflect`](/source/reflect) and it handles the abstraction of code loaded into **METACALL**.
+The module that holds the representation of types, values and functions is called [`reflect`](/source/reflect) and it handles the abstraction of code loaded into **MetaCall**.
 
-**METACALL** uses reflection and introspection techniques to inspect the code loaded by the [`loaders`](/source/loaders) in order to interpret it and provide an higher abstraction of it. With this higher abstraction **METACALL** can easily inter-operate between languages transparently.
+**MetaCall** uses reflection and introspection techniques to inspect the code loaded by the [`loaders`](/source/loaders) in order to interpret it and provide an higher abstraction of it. With this higher abstraction **MetaCall** can easily inter-operate between languages transparently.
 
 #### 5.2.1 Type System
 
-**METACALL** implements an abstract type system which is a binary representation of the types supported by it. This means that **METACALL** can convert any type of a language to its own type system and back. Each loader is responsible of doing this conversions.
+**MetaCall** implements an abstract type system which is a binary representation of the types supported by it. This means that **MetaCall** can convert any type of a language to its own type system and back. Each loader is responsible of doing this conversions.
 
-**METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
+**MetaCall** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
 |  Type   | Value                                                              |
 | :-----: | ------------------------------------------------------------------ |
@@ -318,21 +318,21 @@ The module that holds the representation of types, values and functions is calle
 
 - Map implements an associative key value pair container. A map is implemented with an array of two sized elements array. Each element of the map is an array of size two, where the first element of it is always an String and the second element is a value of any type.
 
-- Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
+- Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others not. This type is opaque because **MetaCall** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
 
 - Null type implements a null value. This type has only been implemented in order to support null value from multiple run-times. It represents a null value and it does not have data size on the value allocated.
 
 #### 5.2.2 Values
 
-Values represent the instances of the **METACALL** type system.
+Values represent the instances of the **MetaCall** type system.
 
 The memory layout guarantees to fit at least the same size of the types into memory. This means if a boolean type can be represented with one bit inside a value of one byte size, maybe this value is stored in a bigger memory block and this fact is architecture and platform dependant.
 
-When converting values between different types, if any potential number overflow or invalid conversion between types is done, **METACALL** will warn about it. If any conversion of types can be handled by **METACALL**, it will automatically cast or transform the values into the target type automatically in order to avoid errors in the call.
+When converting values between different types, if any potential number overflow or invalid conversion between types is done, **MetaCall** will warn about it. If any conversion of types can be handled by **MetaCall**, it will automatically cast or transform the values into the target type automatically in order to avoid errors in the call.
 
-The value model is implemented by means of object pool. Each value is a reference to a memory block allocated from a memory pool (which can be injected into **METACALL**). The references can be passed by value, this means **METACALL** copies the reference value instead of the data which this reference is pointing to, like most run-times do when managing their own values.
+The value model is implemented by means of object pool. Each value is a reference to a memory block allocated from a memory pool (which can be injected into **MetaCall**). The references can be passed by value, this means **MetaCall** copies the reference value instead of the data which this reference is pointing to, like most run-times do when managing their own values.
 
-Each created value must be destroyed manually. Otherwise it will lead to a memory leak. This fact only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
+Each created value must be destroyed manually. Otherwise it will lead to a memory leak. This fact only occurs when dealing with **MetaCall** at C level. If **MetaCall** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
 
 The value memory layout is described in the following form.
 
@@ -342,7 +342,7 @@ The value memory layout is described in the following form.
 
 This layout is used by the following reasons.
 
-- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to threat **METACALL** values as a normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
+- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to threat **MetaCall** values as a normal C values. Therefore you can use **MetaCall** with normal pointers to existing variables, literal values as shown in the previous examples or **MetaCall** values.
 
 - Data can be accessed faster as it is located at first position of the memory block. There is not extra calculation of an offset when trying to access the pointer.
 
@@ -352,7 +352,7 @@ This layout is used by the following reasons.
 
 Functions are an abstract callable representation of functions, methods or procedures loaded by [`loaders`](/source/loaders). The functions are like a template who is linked to a loader run-time and allows to do a foreign function call.
 
-A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time.
+A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **MetaCall** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time.
 
 The function interface must be implemented by the [`loaders`](/source/loaders) and it has the following form.
 
@@ -379,16 +379,16 @@ def multiply_type(a: int, b: int) -> int:
   return a * b
 ```
 
-If this code is loaded, **METACALL** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments if any, and the return type if any.
+If this code is loaded, **MetaCall** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments if any, and the return type if any.
 
-It may be possible that the function loaded into **METACALL** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
+It may be possible that the function loaded into **MetaCall** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
 
 ``` python
 def multiply_duck(a, b):
   return a * b
 ```
 
-At low level **METACALL** must always know the types to do the call. This types can be inferred statically or dynamically and this has implications over the call model.
+At low level **MetaCall** must always know the types to do the call. This types can be inferred statically or dynamically and this has implications over the call model.
 
 In the first example, we can simply call the function without specifying the types.
 
@@ -396,9 +396,9 @@ In the first example, we can simply call the function without specifying the typ
 metacall("multiply_type", 3, 4); // 12
 ```
 
-As the signature is already know the literal values `3` and `4` can be converted into **METACALL** values automatically. Note that in this case, as literal values are provided, if we pass a double floating point, the memory representation of the value will be corrupted as there is no possible way to detect input values and cast them to the correct target values.
+As the signature is already know the literal values `3` and `4` can be converted into **MetaCall** values automatically. Note that in this case, as literal values are provided, if we pass a double floating point, the memory representation of the value will be corrupted as there is no possible way to detect input values and cast them to the correct target values.
 
-In the second example, the values are not know. If we use the same API to call the function, **METACALL** will not be able to call correctly the function as its types are not know. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
+In the second example, the values are not know. If we use the same API to call the function, **MetaCall** will not be able to call correctly the function as its types are not know. To allow calls to duck typed functions the developer must specify the value types he is passing to the function.
 
 ``` c
 const enum metacall_value_id multiply_types[] =
@@ -422,7 +422,7 @@ metacallt("multiply_duck", multiply_types, 3.0, 4.0); // 12.0
 
 ### 5.3 Plugins
 
-**METACALL** has a plugin architecture implemented at multiple levels.
+**MetaCall** has a plugin architecture implemented at multiple levels.
 
 - Loaders implement a layer of plugins related to the run-times.
 
@@ -430,11 +430,11 @@ metacallt("multiply_duck", multiply_types, 3.0, 4.0); // 12.0
 
 - Detours is another layer of plugins focused on low level function interception (hooks).
 
-Each plugin is a piece of software that can be dynamically loaded into the **METACALL** core, used and unloaded when it is not needed anymore.
+Each plugin is a piece of software that can be dynamically loaded into the **MetaCall** core, used and unloaded when it is not needed anymore.
 
 #### 5.3.1 Loaders
 
-Loaders are responsible for embedding run-times into **METACALL**. Each loader has the following interface.
+Loaders are responsible for embedding run-times into **MetaCall**. Each loader has the following interface.
 
 ``` c
 typedef struct loader_impl_interface_type
@@ -494,21 +494,21 @@ A loader must implement it to be considered a valid loader.
 
 ### 5.7 Fork Model
 
-**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, the process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
+**MetaCall** implements a fork safe model. This means if **MetaCall** is running in any program instance, the process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **MetaCall** architecture tries to remove all responsibility from the developer and make this transparent.
 
-To understand the **METACALL** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
+To understand the **MetaCall** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
 
 The main difference between fork-one and fork-all is that in fork-one only the thread which called the fork is preserved after the fork (i.e. gets cloned). In fork-all model, all threads are preserved after cloning. POSIX uses fork-one model, meanwhile Oracle Solaris use the fork-all model.
 
 Because of fork-one model, forking a running run-time like NodeJS (which has a thread pool) implies that in the child process the thread pool will be almost dead except the thread which did the fork call. So NodeJS run-time cannot continue the execution anymore and the event-loop enters into a deadlock state.
 
-When a fork is done, the status of the execution is lost by the moment. **METACALL** is not able to preserve the state when a fork is done. Some run-times do not allow to preserve the internal state. For example, the bad design<sup>[[0]](https://github.com/nodejs/node/issues/23265)[[1]](https://github.com/nodejs/node/issues/23265#issuecomment-452690239)[[2]](https://github.com/nodejs/node/issues/23265#issuecomment-496873739)[[3]](https://github.com/nodejs/node/issues/23265#issuecomment-496878712)[[4]](https://github.com/nodejs/node/issues/23265#issuecomment-496910654)[[5]](https://github.com/nodejs/node/issues/23265#issuecomment-496918901)</sup> of NodeJS does not allow to manage the thread pool from outside, so it cannot be preserved after a fork.
+When a fork is done, the status of the execution is lost by the moment. **MetaCall** is not able to preserve the state when a fork is done. Some run-times do not allow to preserve the internal state. For example, the bad design<sup>[[0]](https://github.com/nodejs/node/issues/23265)[[1]](https://github.com/nodejs/node/issues/23265#issuecomment-452690239)[[2]](https://github.com/nodejs/node/issues/23265#issuecomment-496873739)[[3]](https://github.com/nodejs/node/issues/23265#issuecomment-496878712)[[4]](https://github.com/nodejs/node/issues/23265#issuecomment-496910654)[[5]](https://github.com/nodejs/node/issues/23265#issuecomment-496918901)</sup> of NodeJS does not allow to manage the thread pool from outside, so it cannot be preserved after a fork.
 
-Because of these restrictions, **METACALL** cannot preserve the status of the run-times. In the future this model will be improved to maintain consistency and preserve the execution state of the run-times making **METACALL** more robust.
+Because of these restrictions, **MetaCall** cannot preserve the status of the run-times. In the future this model will be improved to maintain consistency and preserve the execution state of the run-times making **MetaCall** more robust.
 
-Although the state is not preserved, fork safety is. The mechanism **METACALL** uses to allow fork safety is described in the following enumeration.
+Although the state is not preserved, fork safety is. The mechanism **MetaCall** uses to allow fork safety is described in the following enumeration.
 
-1) Intercept fork call done by the program where **METACALL** is running.
+1) Intercept fork call done by the program where **MetaCall** is running.
 
 2) Shutdown all run-times by means of unloading all loaders.
 
@@ -518,16 +518,16 @@ Although the state is not preserved, fork safety is. The mechanism **METACALL** 
 
 5) Execute user defined fork callback if any.
 
-To achieve this, **METACALL** hooks fork primitives depending on the platform.
+To achieve this, **MetaCall** hooks fork primitives depending on the platform.
 
 - `fork` on POSIX systems.
 - `RtlCloneUserProcess` on Windows systems.
 
-If you use `clone` instead of `fork` to spawn a new process in a POSIX system, **METACALL** won't catch it.
+If you use `clone` instead of `fork` to spawn a new process in a POSIX system, **MetaCall** won't catch it.
 
-Whenever you call a to a cloning primitive **METACALL** intercepts it by means of [**`detour`**](/source/detour). Detours is a way to intercept functions at low level by editing the memory and introducing a jump over your own function preserving the address of the old one. **METACALL** uses this method instead of POSIX `pthread_atfork` for three main reasons.
+Whenever you call a to a cloning primitive **MetaCall** intercepts it by means of [**`detour`**](/source/detour). Detours is a way to intercept functions at low level by editing the memory and introducing a jump over your own function preserving the address of the old one. **MetaCall** uses this method instead of POSIX `pthread_atfork` for three main reasons.
 
-- The first one is that `pthread_atfork` is only supported by POSIX systems. So it is not a good solution because of the philosophy of **METACALL** is to be as cross-platform as possible.
+- The first one is that `pthread_atfork` is only supported by POSIX systems. So it is not a good solution because of the philosophy of **MetaCall** is to be as cross-platform as possible.
 
 - The second is that `pthread_atfork` has a [bug in the design of the standard](https://stackoverflow.com/a/6605487). It was designed to solve a problem which cannot be solved with `pthread_atfork` itself. This means that even having the control of NodeJS thread pool, it will not be possible to restore the [mutexes](https://github.com/nodejs/node/blob/v8.x/src/node_platform.cc) in the child process. The only possibility is to re-implement the thread pool of NodeJS with async safe primitives like a semaphore. Async safe primitives will be able to work in the child process handler. But this is not possible as it enters in conflict with the design decision of to not modify the run-times.
 
@@ -536,7 +536,7 @@ Whenever you call a to a cloning primitive **METACALL** intercepts it by means o
 
 Detours model is not safe. It is platform dependant and implies that the program modifies the memory of itself during the execution which is not safe at all and can induce bugs or security flaws if it is not done correctly. But because of limitations of run-times, there is not another alternative to solve the problem of fork safety.
 
-Usually the developer is the same who does the fork, but it may be possible that **METACALL** is embedded into a larger application and the developer is in the middle between the application code and **METACALL** so it is impossible to control when a fork is done. Because of this the developer can register a callback by means of [**`metacall_fork`**](/source/metacall/include/metacall/metacall_fork.h) to know when a fork is executed to do the actions needed after the fork, for example, re-loading all previous code and restore the state of the run-times. This gives a partial solution to the problem of losing the state when doing a fork.
+Usually the developer is the same who does the fork, but it may be possible that **MetaCall** is embedded into a larger application and the developer is in the middle between the application code and **MetaCall** so it is impossible to control when a fork is done. Because of this the developer can register a callback by means of [**`metacall_fork`**](/source/metacall/include/metacall/metacall_fork.h) to know when a fork is executed to do the actions needed after the fork, for example, re-loading all previous code and restore the state of the run-times. This gives a partial solution to the problem of losing the state when doing a fork.
 
 ### 5.8 Threading Model
 
@@ -546,11 +546,11 @@ The Node Loader is designed in a way in which the V8 instance is created in a ne
 
 To overcome the blocking nature of `node::Start`, the event loop is launched in a separated thread, and all calls to the loader are executed via submission to the event loop in that thread. In the first implementation, it was done using `uv_async_t`, but in the current implementation (since NodeJS 10.x), with thread safe mechanisms that allow you to enqueue safely into the event loop thanks to the new additions to the N-API. The current thread where the call is done waits with a condition `uv_cond_t` upon termination of the submission and resolution of the call.
 
-This solution of waiting to the call with the condition, introduces new problems. For completely async calls, there is no problem at all, but for synchronous calls, it can deadlock. For example, when calling recursively to the same synchronous function via **METACALL**, in the second call it will try to block twice and deadlock the thread. So in order to solve this an atomic variable was added in addition to a variable storing the thread id of the V8 thread. With this, recursive calls can be detected, and instead of blocking and enqueueing them, it is possible to call directly and safely to the function because we are already in the V8 thread when the second iteration is done.
+This solution of waiting to the call with the condition, introduces new problems. For completely async calls, there is no problem at all, but for synchronous calls, it can deadlock. For example, when calling recursively to the same synchronous function via **MetaCall**, in the second call it will try to block twice and deadlock the thread. So in order to solve this an atomic variable was added in addition to a variable storing the thread id of the V8 thread. With this, recursive calls can be detected, and instead of blocking and enqueueing them, it is possible to call directly and safely to the function because we are already in the V8 thread when the second iteration is done.
 
-This solves all (known) issues related to NodeJS threading model __if and only if__ you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
+This solves all (known) issues related to NodeJS threading model __if and only if__ you use **MetaCall** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
 
-If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low level API), and you want to load scripts from other languages, you have to use **METACALL** through `Ports`. Ports provide a high abstraction of the low level API and allow you to load and call functions of other languages. Here is where the fun begins.
+If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low level API), and you want to load scripts from other languages, you have to use **MetaCall** through `Ports`. Ports provide a high abstraction of the low level API and allow you to load and call functions of other languages. Here is where the fun begins.
 
 There are few considerations we must take into account. In order to explain this we are going to use a simple example first, using Python and NodeJS. Depending on the runtime, there are different mechanisms to handle threads and thread safety:
 
@@ -561,7 +561,7 @@ There are few considerations we must take into account. In order to explain this
 
   - NodeJS:
     1) NodeJS uses a submission queue and does not suffer from a global mutex like Python.
-    2) NodeJS V8 thread is coupled to the event loop (at least with the current version used in **METACALL**, and it is difficult to have control over it).
+    2) NodeJS V8 thread is coupled to the event loop (at least with the current version used in **MetaCall**, and it is difficult to have control over it).
     3) NodeJS can execute multiple V8 threads with the multi-isolate library from the latest versions of V8 (not implemented yet).
 
 Once these concerns are clear, now we can go further and inspect some cases where we can find deadlocks or problems related to them:
@@ -604,7 +604,7 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 ## 6. Build System
 
-Follow these steps to build and install **METACALL** manually.
+Follow these steps to build and install **MetaCall** manually.
 
 ``` sh
 git clone --recursive https://github.com/metacall/core.git
@@ -708,7 +708,7 @@ For running other Valgrind's tools like helgrind or similar, I recommend running
 
 ## 7. Platform Support
 
-The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
+The following platforms and architectures have been tested an work correctly with all plugins of **MetaCall**.
 
 |     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
 | :----------------------: | :-----------------: | :-------------: | :----------------------------------------------------------------------------------------------------: |
@@ -719,9 +719,9 @@ The following platforms and architectures have been tested an work correctly wit
 
 ### 7.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:buster-slim` for `amd64` architecture.
+To provide a reproducible environment **MetaCall** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:buster-slim` for `amd64` architecture.
 
-For pulling the **METACALL** `latest` image containing the runtime, use:
+For pulling the **MetaCall** `latest` image containing the runtime, use:
 
 ``` sh
 docker pull metacall/core
@@ -729,25 +729,25 @@ docker pull metacall/core
 
 For pulling a specific image depending on the tag, use:
 
-- **METACALL** `deps` image. Includes all dependencies for development:
+- **MetaCall** `deps` image. Includes all dependencies for development:
 
 ``` sh
 docker pull metacall/core:deps
 ```
 
-- **METACALL** `dev` image. Includes all dependencies, headers and libraries for development:
+- **MetaCall** `dev` image. Includes all dependencies, headers and libraries for development:
 
 ``` sh
 docker pull metacall/core:dev
 ```
 
-- **METACALL** `runtime` image. Includes all dependencies and libraries for runtime:
+- **MetaCall** `runtime` image. Includes all dependencies and libraries for runtime:
 
 ``` sh
 docker pull metacall/core:runtime
 ```
 
-- **METACALL** `cli` image. Includes all dependencies and libraries for runtime and the CLI as entry point (equivalent to `latest`):
+- **MetaCall** `cli` image. Includes all dependencies and libraries for runtime and the CLI as entry point (equivalent to `latest`):
 
 ``` sh
 docker pull metacall/core:cli
@@ -755,9 +755,9 @@ docker pull metacall/core:cli
 
 ### 7.1.1 Docker Development
 
-It is possible to develop **METACALL** itself or applications using **METACALL** as standalone library with Docker. The `dev` image can be used for development. It contains all dependencies with all run-times installed with the code, allowing debugging too.
+It is possible to develop **MetaCall** itself or applications using **MetaCall** as standalone library with Docker. The `dev` image can be used for development. It contains all dependencies with all run-times installed with the code, allowing debugging too.
 
-Use the following commands to start developing with **METACALL**:
+Use the following commands to start developing with **MetaCall**:
 
 ``` sh
 mkdir -p $HOME/metacall
@@ -777,7 +777,7 @@ Inside docker terminal you can run `python` or `ruby` command to test what you a
 
 An alternative for testing is to use a reduced image that includes the runtime and also the CLI. This alternative allows fast prototyping and CLI management in order to test and inspect your own scripts.
 
-Use the following commands to start testing with **METACALL**:
+Use the following commands to start testing with **MetaCall**:
 
 ``` sh
 mkdir -p $HOME/metacall
@@ -824,7 +824,7 @@ Where `script.js` is a script contained in host folder `$HOME/metacall` that wil
 
 ## 8. License
 
-**METACALL** is licensed under **[Apache License Version 2.0](/LICENSE)**.
+**MetaCall** is licensed under **[Apache License Version 2.0](/LICENSE)**.
 
 >Copyright (C) 2016 - 2020 Vicente Eduardo Ferrer Garcia <<vic798@gmail.com>>
 >
