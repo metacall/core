@@ -18,7 +18,7 @@
  *
  */
 
-#include <dart_loader/dart_api.h>
+#include <dart_api.h>
 #include <dart_loader/dart_loader_impl.h>
 
 #include <loader/loader.h>
@@ -313,9 +313,20 @@ loader_impl_data dart_loader_impl_initialize(loader_impl impl, configuration con
 
 		return NULL;
 	}
+
+	char* error = nullptr;
+	Dart_InitializeParams init_params;
+  	memset(&init_params, 0, sizeof(init_params));
+ 	init_params.version = DART_INITIALIZE_PARAMS_CURRENT_VERSION;
+ 	error = Dart_Initialize(&init_params);
+
+  	if (error != nullptr) {
+    free(error);
+    abort();
+  }
 	
 	/* Initialize Dart VM */
-	dart_impl->impl_dart_data = NULL ;
+	dart_impl->impl_dart_data = error ;
 
 	/* Register initialization */
 	loader_initialization_register(impl);
