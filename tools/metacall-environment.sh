@@ -353,7 +353,7 @@ sub_clangformat(){
 
 	LLVM_VERSION_STRING=11
 
-	$SUDO_CMD wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key| $SUDO_CMD apt-key add -
+	$SUDO_CMD wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
 	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
 	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
 	$SUDO_CMD apt-get update
