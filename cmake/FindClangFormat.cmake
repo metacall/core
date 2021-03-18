@@ -22,13 +22,11 @@
 # ${CLANG_FORMAT_VERSION}") endif()
 
 find_program(CLANG_FORMAT_EXECUTABLE
-             NAMES clang-format
-                   clang-format-7
-                   clang-format-8
-                   clang-format-9
+             NAMES clang-format-11
+                   clang-format
                    clang-format-10
-                   clang-format-11
                    clang-format-12
+                   clang-format-9
              DOC "clang-format executable")
 mark_as_advanced(CLANG_FORMAT_EXECUTABLE)
 

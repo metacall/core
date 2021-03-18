@@ -1,10 +1,13 @@
 BasedOnStyle:  LLVM
+AccessModifierOffset: -4
 AlignAfterOpenBracket: DontAlign
 # AlignConsecutiveAssignments: false
+AlignConsecutiveBitFields: true
 # AlignConsecutiveDeclarations: false
+AlignConsecutiveMacros: true
 # AlignEscapedNewlines: Right
 # AlignOperands:   true
-AlignTrailingComments: false
+AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: false
 # AllowShortBlocksOnASingleLine: false
 # AllowShortCaseLabelsOnASingleLine: false
@@ -96,11 +99,12 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 # SpaceBeforeAssignmentOperators: true
 # SpaceBeforeParens: ControlStatements
 # SpaceInEmptyParentheses: false
-# SpacesBeforeTrailingComments: 1
+SpacesBeforeTrailingComments: 1
 # SpacesInAngles:  false
 # SpacesInContainerLiterals: true
 # SpacesInCStyleCastParentheses: false
 # SpacesInParentheses: false
 # SpacesInSquareBrackets: false
 TabWidth:        4
+UseCRLF:         true
 UseTab:          Always

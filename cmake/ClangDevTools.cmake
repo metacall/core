@@ -2,7 +2,7 @@
 # Variables of interest on this file: ${CLANG_FORMAT_VERSION} and ${CLANG_FORMAT_EXECUTABLE}
 
 # Get only C/C++ files for now
-file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.hpp *.h *.c)
+file(GLOB_RECURSE ALL_SOURCE_FILES *.cpp *.hpp *.h *.c *.cc *.hh *.cxx)
 
 # clang-tidy not implemented yet
 #add_custom_target(
