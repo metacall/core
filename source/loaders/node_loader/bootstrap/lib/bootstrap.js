@@ -376,7 +376,8 @@ module.exports = ((impl, ptr) => {
 		Atomics.store(asyncCounter, 0, 0);
 		asyncHook.enable();
 
-		const trampoline = process.binding('node_loader_trampoline_module');
+		/* Get trampoline from list of linked bindings */
+		const trampoline = process._linkedBinding('node_loader_trampoline_module');
 
 		function node_loader_trampoline_async_hook_init() {
 			Atomics.add(asyncCounter, 0, 1);
