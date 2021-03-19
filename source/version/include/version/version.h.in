@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef ${ META_PROJECT_NAME_UPPER } _VERSION_H
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_H 1
+#ifndef ${META_PROJECT_NAME_UPPER}_VERSION_H
+#define ${META_PROJECT_NAME_UPPER}_VERSION_H 1
 
 /* -- Headers -- */
 
@@ -35,37 +35,34 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define $ { META_PROJECT_NAME_UPPER } _PROJECT_NAME "@META_PROJECT_NAME@"
-#define $ { META_PROJECT_NAME_UPPER } _PROJECT_DESCRIPTION "@META_PROJECT_DESCRIPTION@"
+#define ${META_PROJECT_NAME_UPPER}_PROJECT_NAME            "@META_PROJECT_NAME@"
+#define ${META_PROJECT_NAME_UPPER}_PROJECT_DESCRIPTION     "@META_PROJECT_DESCRIPTION@"
 
-#define $ { META_PROJECT_NAME_UPPER } _AUTHOR_ORGANIZATION "@META_AUTHOR_ORGANIZATION@"
-#define $ { META_PROJECT_NAME_UPPER } _AUTHOR_DOMAIN "@META_AUTHOR_DOMAIN@"
-#define $ { META_PROJECT_NAME_UPPER } _AUTHOR_MAINTAINER "@META_AUTHOR_MAINTAINER@"
+#define ${META_PROJECT_NAME_UPPER}_AUTHOR_ORGANIZATION     "@META_AUTHOR_ORGANIZATION@"
+#define ${META_PROJECT_NAME_UPPER}_AUTHOR_DOMAIN           "@META_AUTHOR_DOMAIN@"
+#define ${META_PROJECT_NAME_UPPER}_AUTHOR_MAINTAINER       "@META_AUTHOR_MAINTAINER@"
 
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_MAJOR "@META_VERSION_MAJOR@"
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_MAJOR_ID @META_VERSION_MAJOR @
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_MINOR "@META_VERSION_MINOR@"
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_MINOR_ID @META_VERSION_MINOR @
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_PATCH "@META_VERSION_PATCH@"
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_PATCH_ID @META_VERSION_PATCH @
-#define $ { META_PROJECT_NAME_UPPER } _VERSION_REVISION "@META_VERSION_REVISION@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MAJOR           "@META_VERSION_MAJOR@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MAJOR_ID         @META_VERSION_MAJOR@
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MINOR           "@META_VERSION_MINOR@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_MINOR_ID         @META_VERSION_MINOR@
+#define ${META_PROJECT_NAME_UPPER}_VERSION_PATCH           "@META_VERSION_PATCH@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION_PATCH_ID         @META_VERSION_PATCH@
+#define ${META_PROJECT_NAME_UPPER}_VERSION_REVISION        "@META_VERSION_REVISION@"
 
-#define $ { META_PROJECT_NAME_UPPER } _VERSION "@META_VERSION@"
-#define $ { META_PROJECT_NAME_UPPER } _NAME_VERSION "@META_NAME_VERSION@"
+#define ${META_PROJECT_NAME_UPPER}_VERSION                 "@META_VERSION@"
+#define ${META_PROJECT_NAME_UPPER}_NAME_VERSION            "@META_NAME_VERSION@"
 
 /* -- Member Data -- */
 
-struct $
-{
-	META_PROJECT_NAME_LOWER
-} _version_type
+struct ${META_PROJECT_NAME_LOWER}_version_type
 {
 	unsigned int major;
 	unsigned int minor;
 	unsigned int patch;
-	const char *revision;
-	const char *str;
-	const char *name;
+	const char * revision;
+	const char * str;
+	const char * name;
 };
 
 /* -- Methods -- */
@@ -77,7 +74,7 @@ struct $
 *  @return
 *    Static struct containing unpacked version
 */
-VERSION_API const void *${ META_PROJECT_NAME } _version(void);
+VERSION_API const void * ${META_PROJECT_NAME}_version(void);
 
 /**
 *  @brief
@@ -97,7 +94,7 @@ VERSION_API const void *${ META_PROJECT_NAME } _version(void);
 *  @return
 *    Hexadecimal integer containing packed version
 */
-VERSION_API uint32_t ${ META_PROJECT_NAME } _version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
+VERSION_API uint32_t ${META_PROJECT_NAME}_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
 
 /**
 *  @brief
@@ -108,7 +105,7 @@ VERSION_API uint32_t ${ META_PROJECT_NAME } _version_hex_make(unsigned int major
 *  @return
 *    Hexadecimal integer containing packed version
 */
-VERSION_API uint32_t ${ META_PROJECT_NAME } _version_hex(void);
+VERSION_API uint32_t ${META_PROJECT_NAME}_version_hex(void);
 
 /**
 *  @brief
@@ -117,7 +114,7 @@ VERSION_API uint32_t ${ META_PROJECT_NAME } _version_hex(void);
 *  @return
 *    Static string containing module version
 */
-VERSION_API const char *${ META_PROJECT_NAME } _version_str(void);
+VERSION_API const char * ${META_PROJECT_NAME}_version_str(void);
 
 /**
 *  @brief
@@ -126,7 +123,7 @@ VERSION_API const char *${ META_PROJECT_NAME } _version_str(void);
 *  @return
 *    Static string containing module version revision
 */
-VERSION_API const char *${ META_PROJECT_NAME } _version_revision(void);
+VERSION_API const char * ${META_PROJECT_NAME}_version_revision(void);
 
 /**
 *  @brief
@@ -135,7 +132,7 @@ VERSION_API const char *${ META_PROJECT_NAME } _version_revision(void);
 *  @return
 *    Static string containing module version name
 */
-VERSION_API const char *${ META_PROJECT_NAME } _version_name(void);
+VERSION_API const char * ${META_PROJECT_NAME}_version_name(void);
 
 #ifdef __cplusplus
 }

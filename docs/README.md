@@ -650,10 +650,12 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 |  **OPTION_BUILD_PORTS_**  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
 
-To format the code before creating a pull request please use:
+To format the entire C/C++ codebase use:
 ``` sh
-cmake --build core/build --target clang-format
+cmake --build build --target clang-format
 ```
+Be aware that this target won't exist if clang-format was not installed when cmake was last run.
+
 
 ### 6.2 Coverage
 

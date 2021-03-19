@@ -14,8 +14,6 @@ file(GLOB_RECURSE
 	${CMAKE_SOURCE_DIR}/source/**/*.hh
 	${CMAKE_SOURCE_DIR}/source/**/*.cxx
 	${CMAKE_SOURCE_DIR}/source/**/*.inl
-	${CMAKE_SOURCE_DIR}/source/**/*.h.in
-	${CMAKE_SOURCE_DIR}/source/**/*.c.in
 )
 
 # clang-tidy not implemented yet

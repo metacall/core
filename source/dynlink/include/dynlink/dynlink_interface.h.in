@@ -25,13 +25,13 @@
 
 #include <dynlink/dynlink_api.h>
 
-#include <dynlink/dynlink_impl.h>
-#include <dynlink/dynlink_impl_@DYNLINK_IMPL_INTERFACE_NAME@.h>
-#include <dynlink/dynlink_impl_symbol_@DYNLINK_IMPL_INTERFACE_NAME@.h>
 #include <dynlink/dynlink_impl_type.h>
+#include <dynlink/dynlink_impl_symbol_@DYNLINK_IMPL_INTERFACE_NAME@.h>
+#include <dynlink/dynlink_impl_@DYNLINK_IMPL_INTERFACE_NAME@.h>
+#include <dynlink/dynlink_impl.h>
 
-#include <preprocessor/preprocessor_concatenation.h>
 #include <preprocessor/preprocessor_stringify.h>
+#include <preprocessor/preprocessor_concatenation.h>
 
 #include <stdlib.h>
 
@@ -51,14 +51,13 @@ extern "C" {
 	PREPROCESSOR_STRINGIFY(DYNLINK_SYMBOL_NAME(name))
 
 #define DYNLINK_SYMBOL_STR(name) \
-	DYNLINK_SYMBOL_PREFIX_STR()  \
-	name
+	DYNLINK_SYMBOL_PREFIX_STR() name
 
 /* -- Type definitions -- */
 
-typedef dynlink_symbol_addr *dynlink_symbol_addr_ptr;
+typedef dynlink_symbol_addr * dynlink_symbol_addr_ptr;
 
-typedef const char *(*dynlink_impl_interface_extension)(void);
+typedef const char * (*dynlink_impl_interface_extension)(void);
 typedef void (*dynlink_impl_interface_get_name)(dynlink, dynlink_name_impl, size_t);
 typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
 typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr_ptr);
@@ -71,6 +70,7 @@ struct dynlink_impl_interface_type
 	dynlink_impl_interface_load load;
 	dynlink_impl_interface_symbol symbol;
 	dynlink_impl_interface_unload unload;
+
 };
 
 typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);

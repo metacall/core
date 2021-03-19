@@ -21,14 +21,16 @@
 #ifndef DYNLINK_IMPL_H
 #define DYNLINK_IMPL_H 1
 
+// clang-format off
+
 /* -- Headers -- */
 
 #include <dynlink/dynlink_api.h>
 
+#include <dynlink/dynlink_type.h>
 #include <dynlink/dynlink_impl_name.h>
 #include <dynlink/dynlink_impl_type.h>
 #include <dynlink/dynlink_interface.h>
-#include <dynlink/dynlink_type.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -47,7 +49,7 @@ extern "C" {
 *  @return
 *    A const string reference to the extension depending on the OS implementation
 */
-DYNLINK_API const char *dynlink_impl_extension(void);
+DYNLINK_API const char * dynlink_impl_extension(void);
 
 /**
 *  @brief
@@ -92,7 +94,7 @@ DYNLINK_API dynlink_impl dynlink_impl_load(dynlink handle);
 *  @return
 *    Returns zero on correct dynamic linking, distinct from zero otherwise
 */
-DYNLINK_API int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address);
+DYNLINK_API int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name symbol_name, dynlink_symbol_addr * symbol_address);
 
 /**
 *  @brief
@@ -109,5 +111,7 @@ DYNLINK_API void dynlink_impl_unload(dynlink handle, dynlink_impl impl);
 #ifdef __cplusplus
 }
 #endif
+
+// clang-format on
 
 #endif /* DYNLINK_IMPL_H */
