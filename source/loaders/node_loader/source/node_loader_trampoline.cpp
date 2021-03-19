@@ -8,26 +8,28 @@
 
 #include <node_loader/node_loader_trampoline.h>
 
-#include <stdio.h>
 #include <assert.h> /* TODO: Improve error handling */
+#include <stdio.h>
 
 #define NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD(name, func) \
-	{ name, 0, func, 0, 0, 0, napi_default, 0 }
+	{                                                          \
+		name, 0, func, 0, 0, 0, napi_default, 0                \
+	}
 
-typedef void * (*future_resolve_callback)(void *, void *);
-typedef void * (*future_reject_callback)(void *, void *);
+typedef void *(*future_resolve_callback)(void *, void *);
+typedef void *(*future_reject_callback)(void *, void *);
 
 typedef napi_value (*future_resolve_trampoline)(void *, napi_env, future_resolve_callback, napi_value, napi_value, void *);
 typedef napi_value (*future_reject_trampoline)(void *, napi_env, future_reject_callback, napi_value, napi_value, void *);
 
 typedef struct loader_impl_async_future_await_trampoline_type
 {
-	void * node_loader;
+	void *node_loader;
 	future_resolve_trampoline resolve_trampoline;
 	future_reject_trampoline reject_trampoline;
 	future_resolve_callback resolve_callback;
 	future_resolve_callback reject_callback;
-	void * context;
+	void *context;
 
 } * loader_impl_async_future_await_trampoline;
 
@@ -77,8 +79,8 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	const size_t ptr_str_size = 16 + 1;
 	size_t ptr_str_size_copied = 0;
 	char ptr_str[ptr_str_size];
-	void * ptr = NULL;
-	void * node_impl_ptr;
+	void *ptr = NULL;
+	void *node_impl_ptr;
 	node_loader_trampoline_register_ptr register_ptr = NULL;
 
 	/* Get node impl pointer */
@@ -163,7 +165,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 	}
 
 	/* Unwrap trampoline pointer */
-	void * result;
+	void *result;
 
 	status = napi_unwrap(env, args[0], &result);
 
@@ -220,7 +222,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 	}
 
 	/* Unwrap trampoline pointer */
-	void * result;
+	void *result;
 
 	status = napi_unwrap(env, args[0], &result);
 
@@ -242,8 +244,7 @@ napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)
 	napi_status status;
 
 	/* Declare register function */
-	napi_property_descriptor desc[] =
-	{
+	napi_property_descriptor desc[] = {
 		NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("register", node_loader_trampoline_register),
 		NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("resolve", node_loader_trampoline_resolve),
 		NODE_LOADER_TRAMPOLINE_DECLARE_NAPI_METHOD("reject", node_loader_trampoline_reject)

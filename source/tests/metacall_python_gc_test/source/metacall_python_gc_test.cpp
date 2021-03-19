@@ -32,37 +32,36 @@ TEST_F(metacall_python_gc_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"garbage.py"
 		};
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		void * ret = metacall("set_debug");
+		void *ret = metacall("set_debug");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("garbage");
 
-		ASSERT_NE((void *) NULL, (void *) ret);
+		ASSERT_NE((void *)NULL, (void *)ret);
 
 		std::cout << metacall_value_to_string(ret) << std::endl;
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

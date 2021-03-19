@@ -55,7 +55,7 @@ DYNLINK_SYMBOL_EXPORT(rapid_json_serial_impl_interface_singleton);
 *    Static string containing module information
 *
 */
-RAPID_JSON_SERIAL_API const char * rapid_json_serial_print_info(void);
+RAPID_JSON_SERIAL_API const char *rapid_json_serial_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(rapid_json_serial_print_info);
 

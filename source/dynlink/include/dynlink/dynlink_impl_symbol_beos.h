@@ -36,10 +36,9 @@ extern "C" {
 
 /* -- Macros -- */
 
-#define DYNLINK_SYMBOL_EXPORT(name) \
-	DYNLINK_API struct dynlink_symbol_addr_beos_type DYNLINK_SYMBOL_NAME(name) = \
-	{ \
-		(dynlink_symbol_addr_beos_impl)&name \
+#define DYNLINK_SYMBOL_EXPORT(name)                                                \
+	DYNLINK_API struct dynlink_symbol_addr_beos_type DYNLINK_SYMBOL_NAME(name) = { \
+		(dynlink_symbol_addr_beos_impl)&name                                       \
 	}
 
 #define DYNLINK_SYMBOL_GET(name) \

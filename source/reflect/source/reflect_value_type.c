@@ -28,7 +28,7 @@
 
 /* -- Methods -- */
 
-value value_type_create(const void * data, size_t bytes, type_id id)
+value value_type_create(const void *data, size_t bytes, type_id id)
 {
 	value v = value_alloc(bytes + sizeof(type_id));
 
@@ -58,9 +58,9 @@ value value_type_copy(value v)
 
 			value new_v = value_create_array(NULL, size);
 
-			value * new_v_array = value_to_array(new_v);
+			value *new_v_array = value_to_array(new_v);
 
-			value * v_array = value_to_array(v);
+			value *v_array = value_to_array(v);
 
 			for (index = 0; index < size; ++index)
 			{
@@ -73,9 +73,9 @@ value value_type_copy(value v)
 
 			value new_v = value_create_map(NULL, size);
 
-			value * new_v_map = value_to_map(new_v);
+			value *new_v_map = value_to_map(new_v);
 
-			value * v_map = value_to_map(v);
+			value *v_map = value_to_map(v);
 
 			for (index = 0; index < size; ++index)
 			{
@@ -138,7 +138,7 @@ size_t value_type_size(value v)
 	return size - sizeof(type_id);
 }
 
-size_t value_type_count(void * v)
+size_t value_type_count(void *v)
 {
 	const type_id id = value_type_id(v);
 
@@ -208,12 +208,12 @@ value value_create_double(double d)
 	return value_type_create(&d, sizeof(double), TYPE_DOUBLE);
 }
 
-value value_create_string(const char * str, size_t length)
+value value_create_string(const char *str, size_t length)
 {
 	return value_type_create(str, length + 1, TYPE_STRING);
 }
 
-value value_create_buffer(const void * buffer, size_t size)
+value value_create_buffer(const void *buffer, size_t size)
 {
 	if (buffer == NULL || size == 0)
 	{
@@ -223,17 +223,17 @@ value value_create_buffer(const void * buffer, size_t size)
 	return value_type_create(buffer, sizeof(char) * size, TYPE_BUFFER);
 }
 
-value value_create_array(const value * values, size_t size)
+value value_create_array(const value *values, size_t size)
 {
 	return value_type_create(values, sizeof(const value) * size, TYPE_ARRAY);
 }
 
-value value_create_map(const value * tuples, size_t size)
+value value_create_map(const value *tuples, size_t size)
 {
 	return value_type_create(tuples, sizeof(const value) * size, TYPE_MAP);
 }
 
-value value_create_ptr(const void * ptr)
+value value_create_ptr(const void *ptr)
 {
 	return value_type_create(&ptr, sizeof(const void *), TYPE_PTR);
 }
@@ -255,7 +255,7 @@ value value_create_function(function f)
 	return v;
 }
 
-value value_create_function_closure(function f, void * c)
+value value_create_function_closure(function f, void *c)
 {
 	// TODO: Review this for the lock-free implementation!!
 	// The functions should be immutable, maybe the binding should be a new type
@@ -364,48 +364,48 @@ double value_to_double(value v)
 	return d;
 }
 
-char * value_to_string(value v)
+char *value_to_string(value v)
 {
 	return value_data(v);
 }
 
-void * value_to_buffer(value v)
+void *value_to_buffer(value v)
 {
 	return value_data(v);
 }
 
-value * value_to_array(value v)
+value *value_to_array(value v)
 {
 	return value_data(v);
 }
 
-value * value_to_map(value v)
+value *value_to_map(value v)
 {
 	return value_data(v);
 }
 
-void * value_to_ptr(value v)
+void *value_to_ptr(value v)
 {
-	uintptr_t * uint_ptr = value_data(v);
+	uintptr_t *uint_ptr = value_data(v);
 
 	return (void *)(*uint_ptr);
 }
 
 future value_to_future(value v)
 {
-	uintptr_t * uint_future = value_data(v);
+	uintptr_t *uint_future = value_data(v);
 
 	return (future)(*uint_future);
 }
 
 function value_to_function(value v)
 {
-	uintptr_t * uint_function = value_data(v);
+	uintptr_t *uint_function = value_data(v);
 
 	return (function)(*uint_function);
 }
 
-void * value_to_null(value v)
+void *value_to_null(value v)
 {
 	(void)v;
 
@@ -414,14 +414,14 @@ void * value_to_null(value v)
 
 klass value_to_class(value v)
 {
-	uintptr_t * uint_class = value_data(v);
+	uintptr_t *uint_class = value_data(v);
 
 	return (klass)(*uint_class);
 }
 
 object value_to_object(value v)
 {
-	uintptr_t * uint_object = value_data(v);
+	uintptr_t *uint_object = value_data(v);
 
 	return (object)(*uint_object);
 }
@@ -461,7 +461,7 @@ value value_from_double(value v, double d)
 	return value_from(v, &d, sizeof(double));
 }
 
-value value_from_string(value v, const char * str, size_t length)
+value value_from_string(value v, const char *str, size_t length)
 {
 	if (v != NULL && str != NULL && length > 0)
 	{
@@ -477,7 +477,7 @@ value value_from_string(value v, const char * str, size_t length)
 	return v;
 }
 
-value value_from_buffer(value v, const void * buffer, size_t size)
+value value_from_buffer(value v, const void *buffer, size_t size)
 {
 	if (v != NULL && buffer != NULL && size > 0)
 	{
@@ -491,7 +491,7 @@ value value_from_buffer(value v, const void * buffer, size_t size)
 	return v;
 }
 
-value value_from_array(value v, const value * values, size_t size)
+value value_from_array(value v, const value *values, size_t size)
 {
 	if (v != NULL && values != NULL && size > 0)
 	{
@@ -505,7 +505,7 @@ value value_from_array(value v, const value * values, size_t size)
 	return v;
 }
 
-value value_from_map(value v, const value * tuples, size_t size)
+value value_from_map(value v, const value *tuples, size_t size)
 {
 	if (v != NULL && tuples != NULL && size > 0)
 	{
@@ -519,7 +519,7 @@ value value_from_map(value v, const value * tuples, size_t size)
 	return v;
 }
 
-value value_from_ptr(value v, const void * ptr)
+value value_from_ptr(value v, const void *ptr)
 {
 	return value_from(v, &ptr, sizeof(const void *));
 }
@@ -559,7 +559,7 @@ void value_type_destroy(value v)
 		{
 			size_t index, size = value_type_count(v);
 
-			value * v_array = value_to_array(v);
+			value *v_array = value_to_array(v);
 
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy array value <%p> of size %u", (void *)v, size); */
 
@@ -572,7 +572,7 @@ void value_type_destroy(value v)
 		{
 			size_t index, size = value_type_count(v);
 
-			value * v_map = value_to_map(v);
+			value *v_map = value_to_map(v);
 
 			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy map value <%p> of size %u", (void *)v, size); */
 
@@ -592,7 +592,7 @@ void value_type_destroy(value v)
 		else if (type_id_function(id) == 0)
 		{
 			function f = value_to_function(v);
-			const char * name = function_name(f);
+			const char *name = function_name(f);
 
 			if (name == NULL)
 			{
@@ -608,7 +608,7 @@ void value_type_destroy(value v)
 		else if (type_id_class(id) == 0)
 		{
 			klass c = value_to_class(v);
-			const char * name = class_name(c);
+			const char *name = class_name(c);
 
 			if (name == NULL)
 			{
@@ -624,7 +624,7 @@ void value_type_destroy(value v)
 		else if (type_id_object(id) == 0)
 		{
 			object o = value_to_object(v);
-			const char * name = object_name(o);
+			const char *name = object_name(o);
 			int delete_return;
 
 			if (name == NULL)

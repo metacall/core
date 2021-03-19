@@ -30,42 +30,36 @@ public:
 
 TEST_F(metacall_initialize_ex_test, DefaultConstructor)
 {
-	#if defined(OPTION_BUILD_LOADERS_MOCK)
-		static char loader_name[] = "mock";
-	#endif /* OPTION_BUILD_LOADERS_MOCK */
+#if defined(OPTION_BUILD_LOADERS_MOCK)
+	static char loader_name[] = "mock";
+#endif /* OPTION_BUILD_LOADERS_MOCK */
 
-	static struct metacall_initialize_configuration_type initialize_config[] =
-	{
-		#if defined(OPTION_BUILD_LOADERS_MOCK)
-		{
-			loader_name, NULL
-		},
-		#endif /* OPTION_BUILD_LOADERS_MOCK */
+	static struct metacall_initialize_configuration_type initialize_config[] = {
+#if defined(OPTION_BUILD_LOADERS_MOCK)
+		{ loader_name, NULL },
+#endif /* OPTION_BUILD_LOADERS_MOCK */
 
-		{
-			NULL, NULL
-		}
+		{ NULL, NULL }
 	};
 
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize_ex(initialize_config));
+	ASSERT_EQ((int)0, (int)metacall_initialize_ex(initialize_config));
 
-	/* Mock */
-	#if defined(OPTION_BUILD_LOADERS_MOCK)
+/* Mock */
+#if defined(OPTION_BUILD_LOADERS_MOCK)
 	{
-		const char * mock_scripts[] =
-		{
+		const char *mock_scripts[] = {
 			"empty.mock"
 		};
 
-		ASSERT_EQ((int) 1, (int) metacall_is_initialized(loader_name));
+		ASSERT_EQ((int)1, (int)metacall_is_initialized(loader_name));
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file(loader_name, mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file(loader_name, mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
 
-		ASSERT_EQ((int) 0, (int) metacall_is_initialized(loader_name));
+		ASSERT_EQ((int)0, (int)metacall_is_initialized(loader_name));
 	}
-	#endif /* OPTION_BUILD_LOADERS_MOCK */
+#endif /* OPTION_BUILD_LOADERS_MOCK */
 
-	ASSERT_EQ((int) 0, (int) metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 }

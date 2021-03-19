@@ -25,7 +25,7 @@ struct log_policy_storage_batch_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_storage_batch_ctor_type * log_policy_storage_batch_ctor;
+typedef struct log_policy_storage_batch_ctor_type *log_policy_storage_batch_ctor;
 
 /* -- Member Data -- */
 

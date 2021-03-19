@@ -25,13 +25,13 @@
 
 #include <metacall/metacall_api.h>
 
+#include <metacall/metacall_allocator.h>
 #include <metacall/metacall_def.h>
 #include <metacall/metacall_log.h>
-#include <metacall/metacall_allocator.h>
 #include <metacall/metacall_value.h>
 
 #ifdef METACALL_FORK_SAFE
-#	include <metacall/metacall_fork.h>
+	#include <metacall/metacall_fork.h>
 #endif /* METACALL_FORK_SAFE */
 
 #ifdef __cplusplus
@@ -40,8 +40,8 @@ extern "C" {
 
 /* -- Headers -- */
 
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 /* -- Definitions -- */
 
@@ -55,13 +55,13 @@ struct metacall_initialize_configuration_type;
 
 struct metacall_initialize_configuration_type
 {
-	char * tag;
-	void * options;
+	char *tag;
+	void *options;
 };
 
 /* -- Global Variables -- */
 
-METACALL_API extern void * metacall_null_args[1];
+METACALL_API extern void *metacall_null_args[1];
 
 /* -- Methods -- */
 
@@ -72,7 +72,7 @@ METACALL_API extern void * metacall_null_args[1];
 *  @return
 *    Name of the serializer to be used with serialization methods
 */
-METACALL_API const char * metacall_serial(void);
+METACALL_API const char *metacall_serial(void);
 
 /**
 *  @brief
@@ -124,7 +124,7 @@ METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration
 *  @return
 *    Zero if context is initialized, different from zero otherwise
 */
-METACALL_API int metacall_is_initialized(const char * tag);
+METACALL_API int metacall_is_initialized(const char *tag);
 
 /**
 *  @brief
@@ -148,7 +148,7 @@ METACALL_API size_t metacall_args_size(void);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_execution_path(const char * tag, const char * path);
+METACALL_API int metacall_execution_path(const char *tag, const char *path);
 
 /**
 *  @brief
@@ -169,7 +169,7 @@ METACALL_API int metacall_execution_path(const char * tag, const char * path);
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_execution_path_s(const char * tag, size_t tag_length, const char * path, size_t path_length);
+METACALL_API int metacall_execution_path_s(const char *tag, size_t tag_length, const char *path, size_t path_length);
 
 /**
 *  @brief
@@ -190,7 +190,7 @@ METACALL_API int metacall_execution_path_s(const char * tag, size_t tag_length, 
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle);
+METACALL_API int metacall_load_from_file(const char *tag, const char *paths[], size_t size, void **handle);
 
 /**
 *  @brief
@@ -211,7 +211,7 @@ METACALL_API int metacall_load_from_file(const char * tag, const char * paths[],
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_memory(const char * tag, const char * buffer, size_t size, void ** handle);
+METACALL_API int metacall_load_from_memory(const char *tag, const char *buffer, size_t size, void **handle);
 
 /**
 *  @brief
@@ -229,7 +229,7 @@ METACALL_API int metacall_load_from_memory(const char * tag, const char * buffer
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_package(const char * tag, const char * path, void ** handle);
+METACALL_API int metacall_load_from_package(const char *tag, const char *path, void **handle);
 
 /**
 *  @brief
@@ -253,7 +253,7 @@ METACALL_API int metacall_load_from_package(const char * tag, const char * path,
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_load_from_configuration(const char * path, void ** handle, void * allocator);
+METACALL_API int metacall_load_from_configuration(const char *path, void **handle, void *allocator);
 
 /**
 *  @brief
@@ -268,7 +268,7 @@ METACALL_API int metacall_load_from_configuration(const char * path, void ** han
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallv(const char * name, void * args[]);
+METACALL_API void *metacallv(const char *name, void *args[]);
 
 /**
 *  @brief
@@ -286,7 +286,7 @@ METACALL_API void * metacallv(const char * name, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallv_s(const char * name, void * args[], size_t size);
+METACALL_API void *metacallv_s(const char *name, void *args[], size_t size);
 
 /**
 *  @brief
@@ -305,7 +305,7 @@ METACALL_API void * metacallv_s(const char * name, void * args[], size_t size);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallhv(void * handle, const char * name, void * args[]);
+METACALL_API void *metacallhv(void *handle, const char *name, void *args[]);
 
 /**
 *  @brief
@@ -328,7 +328,7 @@ METACALL_API void * metacallhv(void * handle, const char * name, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallhv_s(void * handle, const char * name, void * args[], size_t size);
+METACALL_API void *metacallhv_s(void *handle, const char *name, void *args[], size_t size);
 
 /**
 *  @brief
@@ -343,7 +343,7 @@ METACALL_API void * metacallhv_s(void * handle, const char * name, void * args[]
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacall(const char * name, ...);
+METACALL_API void *metacall(const char *name, ...);
 
 /**
 *  @brief
@@ -361,7 +361,7 @@ METACALL_API void * metacall(const char * name, ...);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallt(const char * name, const enum metacall_value_id ids[], ...);
+METACALL_API void *metacallt(const char *name, const enum metacall_value_id ids[], ...);
 
 /**
 *  @brief
@@ -382,7 +382,7 @@ METACALL_API void * metacallt(const char * name, const enum metacall_value_id id
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t size, ...);
+METACALL_API void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t size, ...);
 
 /**
 *  @brief
@@ -394,7 +394,7 @@ METACALL_API void * metacallt_s(const char * name, const enum metacall_value_id 
 *  @return
 *    Function reference, null if the function does not exist
 */
-METACALL_API void * metacall_function(const char * name);
+METACALL_API void *metacall_function(const char *name);
 
 /**
 *  @brief
@@ -409,7 +409,7 @@ METACALL_API void * metacall_function(const char * name);
 *  @return
 *    Function reference, null if the function does not exist
 */
-METACALL_API void * metacall_handle_function(void * handle, const char * name);
+METACALL_API void *metacall_handle_function(void *handle, const char *name);
 
 /**
 *  @brief
@@ -427,7 +427,7 @@ METACALL_API void * metacall_handle_function(void * handle, const char * name);
 *  @return
 *    Return 0 if the @parameter index exists and @func is valid, 1 otherwhise
 */
-METACALL_API int metacall_function_parameter_type(void * func, size_t parameter, enum metacall_value_id * id);
+METACALL_API int metacall_function_parameter_type(void *func, size_t parameter, enum metacall_value_id *id);
 
 /**
 *  @brief
@@ -443,7 +443,7 @@ METACALL_API int metacall_function_parameter_type(void * func, size_t parameter,
 *  @return
 *    Return 0 if the @func is valid, 1 otherwhise
 */
-METACALL_API int metacall_function_return_type(void * func, enum metacall_value_id * id);
+METACALL_API int metacall_function_return_type(void *func, enum metacall_value_id *id);
 
 /**
 *  @brief
@@ -455,7 +455,7 @@ METACALL_API int metacall_function_return_type(void * func, enum metacall_value_
 *  @return
 *    Return mumber of arguments
 */
-METACALL_API size_t metacall_function_size(void * func);
+METACALL_API size_t metacall_function_size(void *func);
 
 /**
 *  @brief
@@ -467,7 +467,7 @@ METACALL_API size_t metacall_function_size(void * func);
 *  @return
 *    Return 0 if it is syncrhonous, 1 if it is asynchronous and -1 if the function is NULL
 */
-METACALL_API int metacall_function_async(void * func);
+METACALL_API int metacall_function_async(void *func);
 
 /**
 *  @brief
@@ -482,7 +482,7 @@ METACALL_API int metacall_function_async(void * func);
 *  @return
 *    Handle reference, null if the function does not exist
 */
-METACALL_API void * metacall_handle(const char * tag, const char * name);
+METACALL_API void *metacall_handle(const char *tag, const char *name);
 
 /**
 *  @brief
@@ -494,7 +494,7 @@ METACALL_API void * metacall_handle(const char * tag, const char * name);
 *  @return
 *    String that references the handle
 */
-METACALL_API const char * metacall_handle_id(void * handle);
+METACALL_API const char *metacall_handle_id(void *handle);
 
 /**
 *  @brief
@@ -506,7 +506,7 @@ METACALL_API const char * metacall_handle_id(void * handle);
 *  @return
 *    A value of type map on success, null otherwise
 */
-METACALL_API void * metacall_handle_export(void * handle);
+METACALL_API void *metacall_handle_export(void *handle);
 
 /**
 *  @brief
@@ -521,7 +521,7 @@ METACALL_API void * metacall_handle_export(void * handle);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallfv(void * func, void * args[]);
+METACALL_API void *metacallfv(void *func, void *args[]);
 
 /**
 *  @brief
@@ -539,7 +539,7 @@ METACALL_API void * metacallfv(void * func, void * args[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallfv_s(void * func, void * args[], size_t size);
+METACALL_API void *metacallfv_s(void *func, void *args[], size_t size);
 
 /**
 *  @brief
@@ -551,7 +551,7 @@ METACALL_API void * metacallfv_s(void * func, void * args[], size_t size);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallf(void * func, ...);
+METACALL_API void *metacallf(void *func, ...);
 
 /**
 *  @brief
@@ -572,7 +572,7 @@ METACALL_API void * metacallf(void * func, ...);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallfs(void * func, const char * buffer, size_t size, void * allocator);
+METACALL_API void *metacallfs(void *func, const char *buffer, size_t size, void *allocator);
 
 /**
 *  @brief
@@ -590,7 +590,7 @@ METACALL_API void * metacallfs(void * func, const char * buffer, size_t size, vo
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallfmv(void * func, void * keys[], void * values[]);
+METACALL_API void *metacallfmv(void *func, void *keys[], void *values[]);
 
 /**
 *  @brief
@@ -611,7 +611,7 @@ METACALL_API void * metacallfmv(void * func, void * keys[], void * values[]);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, void * allocator);
+METACALL_API void *metacallfms(void *func, const char *buffer, size_t size, void *allocator);
 
 /**
 *  @brief
@@ -638,7 +638,7 @@ METACALL_API void * metacallfms(void * func, const char * buffer, size_t size, v
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, ...);
+METACALL_API int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, ...);
 
 /**
 *  @brief
@@ -665,7 +665,7 @@ METACALL_API int metacall_register(const char * name, void * (*invoke)(size_t, v
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API int metacall_registerv(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
+METACALL_API int metacall_registerv(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[]);
 
 /**
 *  @brief
@@ -696,7 +696,7 @@ METACALL_API int metacall_registerv(const char * name, void * (*invoke)(size_t, 
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacall_await(const char *name, void *args[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -724,7 +724,7 @@ METACALL_API void * metacall_await(const char * name, void * args[], void * (*re
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacall_await_future(void * f, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacall_await_future(void *f, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -758,7 +758,7 @@ METACALL_API void * metacall_await_future(void * f, void * (*resolve_callback)(v
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacall_await_s(const char * name, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacall_await_s(const char *name, void *args[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -789,7 +789,7 @@ METACALL_API void * metacall_await_s(const char * name, void * args[], size_t si
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacallfv_await(void *func, void *args[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -823,7 +823,7 @@ METACALL_API void * metacallfv_await(void * func, void * args[], void * (*resolv
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacallfv_await_s(void * func, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacallfv_await_s(void *func, void *args[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -860,7 +860,7 @@ METACALL_API void * metacallfv_await_s(void * func, void * args[], size_t size, 
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacallfmv_await(void *func, void *keys[], void *values[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -894,7 +894,7 @@ METACALL_API void * metacallfmv_await(void * func, void * keys[], void * values[
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacallfmv_await_s(void * func, void * keys[], void * values[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -931,7 +931,7 @@ METACALL_API void * metacallfmv_await_s(void * func, void * keys[], void * value
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacallfs_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacallfs_await(void *func, const char *buffer, size_t size, void *allocator, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -968,7 +968,7 @@ METACALL_API void * metacallfs_await(void * func, const char * buffer, size_t si
 *  @return
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
-METACALL_API void * metacallfms_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data);
+METACALL_API void *metacallfms_await(void *func, const char *buffer, size_t size, void *allocator, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
 
 /**
 *  @brief
@@ -980,7 +980,7 @@ METACALL_API void * metacallfms_await(void * func, const char * buffer, size_t s
 *  @return
 *    Class reference, null if the class does not exist
 */
-METACALL_API void * metacall_class(const char * name);
+METACALL_API void *metacall_class(const char *name);
 
 /**
 *  @brief
@@ -1001,7 +1001,7 @@ METACALL_API void * metacall_class(const char * name);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallv_class(void * cls, const char * name, void * args[], size_t argc);
+METACALL_API void *metacallv_class(void *cls, const char *name, void *args[], size_t argc);
 
 /**
 *  @brief
@@ -1022,7 +1022,7 @@ METACALL_API void * metacallv_class(void * cls, const char * name, void * args[]
 *  @return
 *    Pointer to the new object value instance
 */
-METACALL_API void * metacall_class_new(void * cls, const char * name, void * args[], size_t argc);
+METACALL_API void *metacall_class_new(void *cls, const char *name, void *args[], size_t argc);
 
 /**
 *  @brief
@@ -1037,7 +1037,7 @@ METACALL_API void * metacall_class_new(void * cls, const char * name, void * arg
 *  @return
 *    Pointer to the class attribute value or NULL if an error occurred
 */
-METACALL_API void * metacall_class_static_get(void * cls, const char * key);
+METACALL_API void *metacall_class_static_get(void *cls, const char *key);
 
 /**
 *  @brief
@@ -1055,7 +1055,7 @@ METACALL_API void * metacall_class_static_get(void * cls, const char * key);
 *  @return
 *    Non-zero integer if an error ocurred
 */
-METACALL_API int metacall_class_static_set(void * cls, const char * key, void * v);
+METACALL_API int metacall_class_static_set(void *cls, const char *key, void *v);
 
 /**
 *  @brief
@@ -1076,7 +1076,7 @@ METACALL_API int metacall_class_static_set(void * cls, const char * key, void * 
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void * metacallv_object(void * obj, const char * name, void * args[], size_t argc);
+METACALL_API void *metacallv_object(void *obj, const char *name, void *args[], size_t argc);
 
 /**
 *  @brief
@@ -1091,7 +1091,7 @@ METACALL_API void * metacallv_object(void * obj, const char * name, void * args[
 *  @return
 *    Pointer to the object attribute value or NULL if an error occurred
 */
-METACALL_API void * metacall_object_get(void * obj, const char * key);
+METACALL_API void *metacall_object_get(void *obj, const char *key);
 
 /**
 *  @brief
@@ -1109,7 +1109,7 @@ METACALL_API void * metacall_object_get(void * obj, const char * key);
 *  @return
 *    Non-zero integer if an error ocurred
 */
-METACALL_API int metacall_object_set(void * obj, const char * key, void * v);
+METACALL_API int metacall_object_set(void *obj, const char *key, void *v);
 
 /**
 *  @brief
@@ -1124,7 +1124,7 @@ METACALL_API int metacall_object_set(void * obj, const char * key, void * v);
 *  @return
 *    String containing introspection information
 */
-METACALL_API char * metacall_inspect(size_t * size, void * allocator);
+METACALL_API char *metacall_inspect(size_t *size, void *allocator);
 
 /**
 *  @brief
@@ -1145,7 +1145,7 @@ METACALL_API char * metacall_inspect(size_t * size, void * allocator);
 *  @return
 *    New allocated string containing stringified value
 */
-METACALL_API char * metacall_serialize(const char * name, void * v, size_t * size, void * allocator);
+METACALL_API char *metacall_serialize(const char *name, void *v, size_t *size, void *allocator);
 
 /**
 *  @brief
@@ -1166,7 +1166,7 @@ METACALL_API char * metacall_serialize(const char * name, void * v, size_t * siz
 *  @return
 *    New allocated value representing the string (must be freed)
 */
-METACALL_API void * metacall_deserialize(const char * name, const char * buffer, size_t size, void * allocator);
+METACALL_API void *metacall_deserialize(const char *name, const char *buffer, size_t size, void *allocator);
 
 /**
 *  @brief
@@ -1178,7 +1178,7 @@ METACALL_API void * metacall_deserialize(const char * name, const char * buffer,
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_clear(void * handle);
+METACALL_API int metacall_clear(void *handle);
 
 /**
 *  @brief
@@ -1196,7 +1196,7 @@ METACALL_API int metacall_destroy(void);
 *  @return
 *    Static string containing module information
 */
-METACALL_API const char * metacall_print_info(void);
+METACALL_API const char *metacall_print_info(void);
 
 #ifdef __cplusplus
 }

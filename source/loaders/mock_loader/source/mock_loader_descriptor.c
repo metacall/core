@@ -12,8 +12,7 @@ loader_descriptor mock_loader_impl_descriptor_instance(void);
 
 loader_impl_descriptor mock_loader_impl_descriptor_singleton()
 {
-	static struct loader_impl_descriptor_type loader_impl_descriptor_mock =
-	{
+	static struct loader_impl_descriptor_type loader_impl_descriptor_mock = {
 		&mock_loader_impl_descriptor_instance
 	};
 
@@ -23,58 +22,43 @@ loader_impl_descriptor mock_loader_impl_descriptor_singleton()
 loader_descriptor mock_loader_impl_descriptor_instance()
 {
 	/* Copyright */
-	static struct loader_descriptor_copyright_type loader_descriptor_copyright_mock =
-	{
+	static struct loader_descriptor_copyright_type loader_descriptor_copyright_mock = {
 		"Vicente Eduardo Ferrer Garcia <vic798@gmail.com>",
 		"Vicente Eduardo Ferrer Garcia <vic798@gmail.com>",
 		"http://parrastudios.com",
-		{
-			11, "June", 2016
-		},
+		{ 11, "June", 2016 },
 		"Parra Studios",
 		"Vicente Eduardo Ferrer Garcia <vic798@gmail.com>",
-		{
-			0x00000001,
-			"0.0.1"
-		},
+		{ 0x00000001,
+			"0.0.1" },
 		"Propietary"
 	};
 
 	/* Language */
-	static struct loader_descriptor_language_type loader_descriptor_language_mock =
-	{
+	static struct loader_descriptor_language_type loader_descriptor_language_mock = {
 		"Mocked Language",
-		{
-			0x00000000,
-			"0.0.0"
-		}
+		{ 0x00000000,
+			"0.0.0" }
 	};
 
 	/* Default extensions */
-	static const char * mock_default_extensions[] =
-	{
+	static const char *mock_default_extensions[] = {
 		"mock"
 	};
 
 	/* Technology */
-	static struct loader_descriptor_technology_type loader_descriptor_technology_mock =
-	{
+	static struct loader_descriptor_technology_type loader_descriptor_technology_mock = {
 		"Mock Technology",
 		"Mocked Vendor",
 		"http://mock",
-		{
-			0x00000000,
-			"0.0.0"
-		},
-		{
-			mock_default_extensions,
-			(uint32_t)(sizeof(mock_default_extensions) / sizeof(mock_default_extensions[0]))
-		}
+		{ 0x00000000,
+			"0.0.0" },
+		{ mock_default_extensions,
+			(uint32_t)(sizeof(mock_default_extensions) / sizeof(mock_default_extensions[0])) }
 	};
 
 	/* Platform */
-	static struct loader_descriptor_platform_type loader_descriptor_platform_mock =
-	{
+	static struct loader_descriptor_platform_type loader_descriptor_platform_mock = {
 		/* TODO */
 
 		"todo-architecture",
@@ -84,8 +68,7 @@ loader_descriptor mock_loader_impl_descriptor_instance()
 	};
 
 	/* Main loader information */
-	static struct loader_descriptor_type loader_descriptor_mock =
-	{
+	static struct loader_descriptor_type loader_descriptor_mock = {
 		"Mock Loader Plugin",
 		"mock",
 		"Mock loader in order to test MetaCall core functionalities without "

@@ -43,15 +43,15 @@ struct memory_allocator_iface_type;
 
 typedef memory_allocator_impl (*memory_allocator_create_ptr)(void *);
 
-typedef void * (*memory_allocator_allocate_ptr)(memory_allocator_impl, size_t);
+typedef void *(*memory_allocator_allocate_ptr)(memory_allocator_impl, size_t);
 
-typedef void * (*memory_allocator_reallocate_ptr)(memory_allocator_impl, void *, size_t, size_t);
+typedef void *(*memory_allocator_reallocate_ptr)(memory_allocator_impl, void *, size_t, size_t);
 
 typedef void (*memory_allocator_deallocate_ptr)(memory_allocator_impl, void *);
 
 typedef void (*memory_allocator_destroy_ptr)(memory_allocator_impl);
 
-typedef struct memory_allocator_iface_type * memory_allocator_iface;
+typedef struct memory_allocator_iface_type *memory_allocator_iface;
 
 /* -- Member Data -- */
 

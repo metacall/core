@@ -34,7 +34,7 @@
 
 /* -- Methods -- */
 
-const char * dynlink_impl_interface_extension_macos(void)
+const char *dynlink_impl_interface_extension_macos(void)
 {
 	static const char extension_macos[0x07] = "bundle";
 
@@ -60,18 +60,18 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 
 	NSModule impl;
 
-	const char * name = dynlink_get_name_impl(handle);
+	const char *name = dynlink_get_name_impl(handle);
 
 	NSObjectFileImageReturnCode ret = NSCreateObjectFileImageFromFile(name, &image);
 
 	if (ret != NSObjectFileImageSuccess)
 	{
-		char * error;
+		char *error;
 
 		switch (ret)
 		{
 			case NSObjectFileImageAccess:
-				if (access (name, F_OK) == 0)
+				if (access(name, F_OK) == 0)
 				{
 					error = "DynLink error: %s permission denied";
 				}
@@ -118,7 +118,7 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 
 		int number;
 
-		const char * file, * error;
+		const char *file, *error;
 
 		NSLinkEditError(&link_edit_errors, &number, &file, &error);
 
@@ -130,7 +130,7 @@ dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
+int dynlink_impl_interface_symbol_macos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
 {
 	NSSymbol symbol = NSLookupSymbolInModule(impl, name);
 
@@ -150,8 +150,7 @@ int dynlink_impl_interface_unload_macos(dynlink handle, dynlink_impl impl)
 
 dynlink_impl_interface dynlink_impl_interface_singleton_macos(void)
 {
-	static struct dynlink_impl_interface_type impl_interface_macos =
-	{
+	static struct dynlink_impl_interface_type impl_interface_macos = {
 		&dynlink_impl_interface_extension_macos,
 		&dynlink_impl_interface_get_name_macos,
 		&dynlink_impl_interface_load_macos,

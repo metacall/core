@@ -24,43 +24,42 @@
 
 #include <log/log.h>
 
-#include <string.h>
 #include <ctype.h>
+#include <string.h>
 
 /* -- Private Methods -- */
 
-static int metacall_serial_impl_deserialize_bool(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_bool(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_char(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_char(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_short(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_short(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_int(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_int(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_long(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_long(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_float(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_float(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_double(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_double(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_string(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_string(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_buffer(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_buffer(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_array(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_array(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_map(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_map(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_ptr(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_ptr(value *v, const char *src, size_t length);
 
-static int metacall_serial_impl_deserialize_null(value * v, const char * src, size_t length);
+static int metacall_serial_impl_deserialize_null(value *v, const char *src, size_t length);
 
 /* -- Methods -- */
 
 metacall_deserialize_impl_ptr metacall_serial_impl_deserialize_func(type_id id)
 {
-	static metacall_deserialize_impl_ptr deserialize_func[TYPE_SIZE] =
-	{
+	static metacall_deserialize_impl_ptr deserialize_func[TYPE_SIZE] = {
 		&metacall_serial_impl_deserialize_bool,
 		&metacall_serial_impl_deserialize_char,
 		&metacall_serial_impl_deserialize_short,
@@ -79,7 +78,7 @@ metacall_deserialize_impl_ptr metacall_serial_impl_deserialize_func(type_id id)
 	return deserialize_func[id];
 }
 
-int metacall_serial_impl_deserialize_bool(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_bool(value *v, const char *src, size_t length)
 {
 	static const char true_str[] = "true";
 
@@ -91,7 +90,7 @@ int metacall_serial_impl_deserialize_bool(value * v, const char * src, size_t le
 
 		return (*v == NULL);
 	}
-	
+
 	if (strncmp(src, false_str, length) == 0)
 	{
 		*v = value_create_bool((boolean)0L);
@@ -102,7 +101,7 @@ int metacall_serial_impl_deserialize_bool(value * v, const char * src, size_t le
 	return 1;
 }
 
-int metacall_serial_impl_deserialize_char(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_char(value *v, const char *src, size_t length)
 {
 	long l = 0;
 
@@ -125,7 +124,7 @@ int metacall_serial_impl_deserialize_char(value * v, const char * src, size_t le
 	return (*v == NULL);
 }
 
-int metacall_serial_impl_deserialize_short(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_short(value *v, const char *src, size_t length)
 {
 	/* TODO */
 	(void)v;
@@ -135,7 +134,7 @@ int metacall_serial_impl_deserialize_short(value * v, const char * src, size_t l
 	return 1;
 }
 
-int metacall_serial_impl_deserialize_int(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_int(value *v, const char *src, size_t length)
 {
 	size_t iterator;
 
@@ -157,13 +156,13 @@ int metacall_serial_impl_deserialize_int(value * v, const char * src, size_t len
 	return (*v == NULL);
 }
 
-int metacall_serial_impl_deserialize_long(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_long(value *v, const char *src, size_t length)
 {
 	char buffer[24];
 
 	const size_t last = length - 1;
 
-	char * end = (char *)&src[last];
+	char *end = (char *)&src[last];
 
 	size_t iterator;
 
@@ -194,7 +193,7 @@ int metacall_serial_impl_deserialize_long(value * v, const char * src, size_t le
 	return (*v == NULL);
 }
 
-int metacall_serial_impl_deserialize_float(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_float(value *v, const char *src, size_t length)
 {
 	size_t iterator, is_digit;
 
@@ -228,7 +227,7 @@ int metacall_serial_impl_deserialize_float(value * v, const char * src, size_t l
 	return (*v == NULL);
 }
 
-int metacall_serial_impl_deserialize_double(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_double(value *v, const char *src, size_t length)
 {
 	size_t iterator, is_digit;
 
@@ -260,7 +259,7 @@ int metacall_serial_impl_deserialize_double(value * v, const char * src, size_t 
 	return (*v == NULL);
 }
 
-int metacall_serial_impl_deserialize_string(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_string(value *v, const char *src, size_t length)
 {
 	size_t iterator;
 
@@ -277,7 +276,7 @@ int metacall_serial_impl_deserialize_string(value * v, const char * src, size_t 
 	return (*v == NULL);
 }
 
-int metacall_serial_impl_deserialize_buffer(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_buffer(value *v, const char *src, size_t length)
 {
 	/* TODO */
 	(void)v;
@@ -287,7 +286,7 @@ int metacall_serial_impl_deserialize_buffer(value * v, const char * src, size_t 
 	return 1;
 }
 
-int metacall_serial_impl_deserialize_array(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_array(value *v, const char *src, size_t length)
 {
 	/* TODO */
 	(void)v;
@@ -297,7 +296,7 @@ int metacall_serial_impl_deserialize_array(value * v, const char * src, size_t l
 	return 1;
 }
 
-int metacall_serial_impl_deserialize_map(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_map(value *v, const char *src, size_t length)
 {
 	/* TODO */
 	(void)v;
@@ -307,7 +306,7 @@ int metacall_serial_impl_deserialize_map(value * v, const char * src, size_t len
 	return 1;
 }
 
-int metacall_serial_impl_deserialize_ptr(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_ptr(value *v, const char *src, size_t length)
 {
 	/* TODO */
 	(void)v;
@@ -317,7 +316,7 @@ int metacall_serial_impl_deserialize_ptr(value * v, const char * src, size_t len
 	return 1;
 }
 
-int metacall_serial_impl_deserialize_null(value * v, const char * src, size_t length)
+int metacall_serial_impl_deserialize_null(value *v, const char *src, size_t length)
 {
 	static const char null_str[] = "(null)";
 

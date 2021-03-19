@@ -22,18 +22,18 @@
 
 #include <cs_loader/netcore.h>
 #if defined(__linux) | defined(linux)
-#	include <cs_loader/netcore_linux.h>
+	#include <cs_loader/netcore_linux.h>
 #else
-#	include <cs_loader/netcore_win.h>
+	#include <cs_loader/netcore_win.h>
 #endif
 
-netcore_handle simple_netcore_create(char * dotnet_root, char * dotnet_loader_assembly_path)
+netcore_handle simple_netcore_create(char *dotnet_root, char *dotnet_loader_assembly_path)
 {
-	#if defined(__linux) | defined(linux)
-		netcore_linux * netcore_impl = new netcore_linux(dotnet_root, dotnet_loader_assembly_path);
-	#else
-		netcore_win * netcore_impl = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
-	#endif
+#if defined(__linux) | defined(linux)
+	netcore_linux *netcore_impl = new netcore_linux(dotnet_root, dotnet_loader_assembly_path);
+#else
+	netcore_win *netcore_impl = new netcore_win(dotnet_root, dotnet_loader_assembly_path);
+#endif
 
 	bool result = netcore_impl->start();
 
@@ -47,59 +47,59 @@ netcore_handle simple_netcore_create(char * dotnet_root, char * dotnet_loader_as
 	return (netcore_handle)netcore_impl;
 }
 
-reflect_function * simple_netcore_get_functions(netcore_handle handle, int * count)
+reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
 	return core->get_functions(count);
 }
 
 void simple_netcore_destroy(netcore_handle handle)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 	delete core;
 }
 
-int simple_netcore_load_script_from_files(netcore_handle handle, char * files[MAX_FILES], size_t size)
+int simple_netcore_load_script_from_files(netcore_handle handle, char *files[MAX_FILES], size_t size)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
 	return core->load_files(files, size) == true ? 0 : 1;
 }
 
-int simple_netcore_load_script_from_assembly(netcore_handle handle, char * file)
+int simple_netcore_load_script_from_assembly(netcore_handle handle, char *file)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
 	return core->load_assembly(file) == true ? 0 : 1;
 }
 
-int simple_netcore_load_script_from_memory(netcore_handle handle, const char * buffer, size_t size)
+int simple_netcore_load_script_from_memory(netcore_handle handle, const char *buffer, size_t size)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
 	(void)size;
 
-	return core->load_source((char*)buffer) == true ? 0 : 1;
+	return core->load_source((char *)buffer) == true ? 0 : 1;
 }
 
-execution_result * simple_netcore_invoke(netcore_handle handle, const char * func)
+execution_result *simple_netcore_invoke(netcore_handle handle, const char *func)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
-	return core->execute((char*)func);
+	return core->execute((char *)func);
 }
 
-execution_result * simple_netcore_invoke_with_params(netcore_handle handle, const char * func, parameters * params)
+execution_result *simple_netcore_invoke_with_params(netcore_handle handle, const char *func, parameters *params)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
-	return core->execute_with_params((char*)func, params);
+	return core->execute_with_params((char *)func, params);
 }
 
-void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result * er)
+void simple_netcore_destroy_execution_result(netcore_handle handle, execution_result *er)
 {
-	netcore * core = (netcore*)handle;
+	netcore *core = (netcore *)handle;
 
 	core->destroy_execution_result(er);
 }

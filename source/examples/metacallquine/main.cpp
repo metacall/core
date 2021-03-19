@@ -24,7 +24,7 @@
 
 /* -- Methods -- */
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
 	const char python_script[] =
 		"#!/usr/bin/env python3\n"
@@ -35,7 +35,7 @@ int main(int argc, char * argv[])
 		"	print('Python:', script);\n"
 		"	return 4;\n";
 
-	void * result;
+	void *result;
 
 	(void)argc;
 	(void)argv;

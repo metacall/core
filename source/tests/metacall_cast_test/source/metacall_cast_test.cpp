@@ -34,15 +34,14 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 	metacall_log_stdio_type log_stdio = { stdout };
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"example.py"
 		};
 
@@ -50,18 +49,18 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		int iterator;
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		void * args[2];
+		void *args[2];
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		args[0] = metacall_value_create_long(5L);
 		args[1] = metacall_value_create_long(15L);
 
 		ret = metacallv("multiply", args);
 
-		EXPECT_EQ((int) 75L, (int) metacall_value_to_long(ret));
+		EXPECT_EQ((int)75L, (int)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
@@ -73,9 +72,9 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 			ret = metacallv("multiply", args);
 
-			EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((int) (7 * iterator), (int) metacall_value_cast_int(&ret));
+			EXPECT_EQ((int)(7 * iterator), (int)metacall_value_cast_int(&ret));
 
 			metacall_value_destroy(ret);
 		}
@@ -85,9 +84,9 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		ret = metacallv("divide", args);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((float) 32.0f, (float) metacall_value_cast_float(&ret));
+		EXPECT_EQ((float)32.0f, (float)metacall_value_cast_float(&ret));
 
 		metacall_value_destroy(ret);
 
@@ -96,16 +95,16 @@ TEST_F(metacall_cast_test, DefaultConstructor)
 
 		ret = metacallv("sum", args);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 4500, (int) metacall_value_cast_int(&ret));
+		EXPECT_EQ((int)4500, (int)metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 
 		metacall_value_destroy(args[0]);
 		metacall_value_destroy(args[1]);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

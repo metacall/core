@@ -20,8 +20,8 @@
 
 #include <adt/adt_set.h>
 
-#include <reflect/reflect_value_type.h>
 #include <reflect/reflect_object.h>
+#include <reflect/reflect_value_type.h>
 
 #include <log/log.h>
 
@@ -30,7 +30,7 @@
 
 struct object_type
 {
-	char * name;
+	char *name;
 	object_impl impl;
 	object_interface interface;
 	size_t ref_count;
@@ -40,7 +40,7 @@ struct object_type
 
 static value object_metadata_name(object obj);
 
-object object_create(const char * name, object_impl impl, object_impl_interface_singleton singleton, klass cls)
+object object_create(const char *name, object_impl impl, object_impl_interface_singleton singleton, klass cls)
 {
 	object obj = malloc(sizeof(struct object_type));
 
@@ -132,7 +132,7 @@ REFLECT_API object_impl object_impl_get(object obj)
 	return obj->impl;
 }
 
-const char * object_name(object obj)
+const char *object_name(object obj)
 {
 	if (obj != NULL)
 	{
@@ -148,7 +148,7 @@ value object_metadata_name(object obj)
 
 	value name = value_create_array(NULL, 2);
 
-	value * name_array;
+	value *name_array;
 
 	if (name == NULL)
 	{
@@ -182,7 +182,7 @@ value object_metadata(object obj)
 {
 	value name, f;
 
-	value * f_map;
+	value *f_map;
 
 	/* Create object name array */
 	name = object_metadata_name(obj);
@@ -205,11 +205,11 @@ value object_metadata(object obj)
 	f_map = value_to_map(f);
 
 	f_map[0] = name;
-	
+
 	return f;
 }
 
-value object_get(object obj, const char * key)
+value object_get(object obj, const char *key)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->get != NULL)
 	{
@@ -228,7 +228,7 @@ value object_get(object obj, const char * key)
 	return NULL;
 }
 
-int object_set(object obj, const char * key, value v)
+int object_set(object obj, const char *key, value v)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->set != NULL)
 	{
@@ -245,7 +245,7 @@ int object_set(object obj, const char * key, value v)
 	return 1;
 }
 
-value object_call(object obj, const char * name, object_args args, size_t argc)
+value object_call(object obj, const char *name, object_args args, size_t argc)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->method_invoke != NULL)
 	{
@@ -264,7 +264,7 @@ value object_call(object obj, const char * name, object_args args, size_t argc)
 	return NULL;
 }
 
-value object_await(object obj, const char * name, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void * context)
+value object_await(object obj, const char *name, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void *context)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->method_await != NULL)
 	{
@@ -301,7 +301,6 @@ int object_delete(object obj)
 
 	return 1;
 }
-
 
 void object_destroy(object obj)
 {

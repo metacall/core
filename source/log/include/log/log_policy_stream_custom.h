@@ -29,13 +29,13 @@ struct log_policy_stream_custom_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_custom_ctor_type * log_policy_stream_custom_ctor;
+typedef struct log_policy_stream_custom_ctor_type *log_policy_stream_custom_ctor;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_custom_ctor_type
 {
-	void * context;
+	void *context;
 	int (*stream_write)(void *, const char *, const size_t);
 	int (*stream_flush)(void *);
 };

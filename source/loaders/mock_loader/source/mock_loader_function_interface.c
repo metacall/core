@@ -20,9 +20,9 @@
 
 #include <mock_loader/mock_loader_function_interface.h>
 
-#include <reflect/type.h>
-#include <reflect/scope.h>
 #include <reflect/context.h>
+#include <reflect/scope.h>
+#include <reflect/type.h>
 
 #include <log/log.h>
 
@@ -32,7 +32,7 @@ int function_mock_interface_create(function func, function_impl impl);
 
 function_return function_mock_interface_invoke(function func, function_impl impl, function_args args, size_t size);
 
-void function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
+void function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context);
 
 void function_mock_interface_destroy(function func, function_impl impl);
 
@@ -43,8 +43,7 @@ function_impl_interface_singleton mock_loader_impl_function_interface()
 
 function_interface function_mock_singleton()
 {
-	static struct function_interface_type mock_interface =
-	{
+	static struct function_interface_type mock_interface = {
 		&function_mock_interface_create,
 		&function_mock_interface_invoke,
 		&function_mock_interface_await,
@@ -86,49 +85,49 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 
 			if (id == TYPE_BOOL)
 			{
-				boolean * b = (boolean *)(args[args_count]);
+				boolean *b = (boolean *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Boolean value: %d", *b);
 			}
 			else if (id == TYPE_CHAR)
 			{
-				char * value_ptr = (char *)(args[args_count]);
+				char *value_ptr = (char *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Char value: %c", *value_ptr);
 			}
 			else if (id == TYPE_INT)
 			{
-				int * value_ptr = (int *)(args[args_count]);
+				int *value_ptr = (int *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Int value: %d", *value_ptr);
 			}
 			else if (id == TYPE_LONG)
 			{
-				long * value_ptr = (long *)(args[args_count]);
+				long *value_ptr = (long *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Long value: %ld", *value_ptr);
 			}
 			else if (id == TYPE_FLOAT)
 			{
-				float * value_ptr = (float *)(args[args_count]);
+				float *value_ptr = (float *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Float value: %f", *value_ptr);
 			}
 			else if (id == TYPE_DOUBLE)
 			{
-				double * value_ptr = (double *)(args[args_count]);
+				double *value_ptr = (double *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Double value: %f", *value_ptr);
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * value_ptr = (const char *)(args[args_count]);
+				const char *value_ptr = (const char *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "String value: %s", value_ptr);
 			}
 			else if (id == TYPE_PTR)
 			{
-				void * value_ptr = (void *)(args[args_count]);
+				void *value_ptr = (void *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Pointer value: %p", value_ptr);
 			}
@@ -196,7 +195,7 @@ function_return function_mock_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
-function_return function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_mock_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 

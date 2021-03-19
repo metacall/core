@@ -31,7 +31,7 @@ extern "C" {
 
 typedef unsigned int hash;
 
-typedef void * hash_key;
+typedef void *hash_key;
 
 typedef hash (*hash_callback)(const hash_key);
 

@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_stream_file.h>
 #include <log/log_policy_stream.h>
+#include <log/log_policy_stream_file.h>
 
 /* -- Forward Declarations -- */
 
@@ -17,20 +17,20 @@ struct log_policy_stream_file_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_file_data_type * log_policy_stream_file_data;
+typedef struct log_policy_stream_file_data_type *log_policy_stream_file_data;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_file_data_type
 {
-	FILE * file;
+	FILE *file;
 };
 
 /* -- Private Methods -- */
 
 static int log_policy_stream_file_create(log_policy policy, const log_policy_ctor ctor);
 
-static int log_policy_stream_file_write(log_policy policy, const void * buffer, const size_t size);
+static int log_policy_stream_file_write(log_policy policy, const void *buffer, const size_t size);
 
 static int log_policy_stream_file_flush(log_policy policy);
 
@@ -40,14 +40,12 @@ static int log_policy_stream_file_destroy(log_policy policy);
 
 log_policy_interface log_policy_stream_file_interface()
 {
-	static struct log_policy_stream_impl_type log_policy_stream_file_impl_obj =
-	{
+	static struct log_policy_stream_impl_type log_policy_stream_file_impl_obj = {
 		&log_policy_stream_file_write,
 		&log_policy_stream_file_flush
 	};
 
-	static struct log_policy_interface_type policy_interface_stream =
-	{
+	static struct log_policy_interface_type policy_interface_stream = {
 		&log_policy_stream_file_create,
 		&log_policy_stream_file_impl_obj,
 		&log_policy_stream_file_destroy
@@ -74,7 +72,7 @@ static int log_policy_stream_file_create(log_policy policy, const log_policy_cto
 	return 0;
 }
 
-static int log_policy_stream_file_write(log_policy policy, const void * buffer, const size_t size)
+static int log_policy_stream_file_write(log_policy policy, const void *buffer, const size_t size)
 {
 	log_policy_stream_file_data file_data = log_policy_instance(policy);
 

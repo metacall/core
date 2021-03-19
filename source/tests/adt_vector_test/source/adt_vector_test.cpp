@@ -24,7 +24,7 @@
 
 class adt_vector_test : public testing::Test
 {
-  public:
+public:
 };
 
 TEST_F(adt_vector_test, DefaultConstructor)
@@ -33,21 +33,21 @@ TEST_F(adt_vector_test, DefaultConstructor)
 
 	vector v = vector_create_reserve_type(size_t, capacity);
 
-	ASSERT_EQ((size_t) vector_type_size(v), (size_t) sizeof(size_t));
-	ASSERT_EQ((size_t) vector_size(v), (size_t) 0);
+	ASSERT_EQ((size_t)vector_type_size(v), (size_t)sizeof(size_t));
+	ASSERT_EQ((size_t)vector_size(v), (size_t)0);
 
 	for (size_t i = 0; i < capacity; ++i)
 	{
 		vector_push_back_var(v, i);
 	}
 
-	ASSERT_EQ((size_t) vector_size(v), (size_t) capacity);
+	ASSERT_EQ((size_t)vector_size(v), (size_t)capacity);
 
 	for (size_t i = 0; i < capacity; ++i)
 	{
 		size_t current = vector_at_type(v, i, size_t);
 
-		ASSERT_EQ((size_t) current, (size_t) i);
+		ASSERT_EQ((size_t)current, (size_t)i);
 	}
 
 	vector_destroy(v);

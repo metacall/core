@@ -23,40 +23,39 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/type.h>
+#include <reflect/context.h>
 #include <reflect/function.h>
 #include <reflect/scope.h>
-#include <reflect/context.h>
+#include <reflect/type.h>
 
 #include <stdlib.h>
 
 #include <js/Initialization.h>
 #include <js/RootingAPI.h>
 
-
 /* Assume we can't use more than 5e5 bytes of C stack by default */
-#if (defined(DEBUG) && defined(__SUNPRO_CC))  || defined(JS_CPU_SPARC)
-	/*
+#if (defined(DEBUG) && defined(__SUNPRO_CC)) || defined(JS_CPU_SPARC)
+/*
 	 * Sun compiler uses a larger stack space for js::Interpret() with
 	 * debug (use a bigger gMaxStackSize to make "make check" happy)
 	*/
-#	define JSM_STACK_MAX_SIZE size_t(5000000)
+	#define JSM_STACK_MAX_SIZE size_t(5000000)
 #else
-#	define JSM_STACK_MAX_SIZE size_t(500000)
+	#define JSM_STACK_MAX_SIZE size_t(500000)
 #endif
 
 /*using namespace JS;*/
 
 typedef struct loader_impl_jsm_type
 {
-	JSRuntime * runtime;
-	JSContext * cx;
+	JSRuntime *runtime;
+	JSContext *cx;
 
 } * loader_impl_jsm;
 
 typedef struct loader_impl_jsm_handle_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_jsm_handle;
 
@@ -80,7 +79,7 @@ function_return function_jsm_interface_invoke(function func, function_impl impl,
 	return NULL;
 }
 
-function_return function_jsm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_jsm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -103,8 +102,7 @@ void function_jsm_interface_destroy(function func, function_impl impl)
 
 function_interface function_jsm_singleton()
 {
-	static struct function_interface_type jsm_interface =
-	{
+	static struct function_interface_type jsm_interface = {
 		&function_jsm_interface_create,
 		&function_jsm_interface_invoke,
 		&function_jsm_interface_await,
@@ -114,10 +112,9 @@ function_interface function_jsm_singleton()
 	return &jsm_interface;
 }
 
-const JSClass * jsm_global_class(void)
+const JSClass *jsm_global_class(void)
 {
-	static const JSClass global_class =
-	{
+	static const JSClass global_class = {
 		"global", JSCLASS_GLOBAL_FLAGS,
 		NULL, NULL, NULL, NULL,
 		NULL, NULL, NULL, NULL,
@@ -128,13 +125,13 @@ const JSClass * jsm_global_class(void)
 	return &global_class;
 }
 
-void jsm_report_error(JSContext * cx, const char * msg, JSErrorReport * report)
+void jsm_report_error(JSContext *cx, const char *msg, JSErrorReport *report)
 {
-	const char * file_name = (report->filename != NULL) ? report->filename : "[no filename]";
+	const char *file_name = (report->filename != NULL) ? report->filename : "[no filename]";
 
 	(void)cx;
 
-	log_write("metacall", LOG_LEVEL_ERROR, "%s:%u:\n%s", file_name, (unsigned int) report->lineno, msg);
+	log_write("metacall", LOG_LEVEL_ERROR, "%s:%u:\n%s", file_name, (unsigned int)report->lineno, msg);
 }
 
 loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration config)

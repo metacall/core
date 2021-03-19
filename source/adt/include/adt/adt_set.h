@@ -13,8 +13,8 @@
 
 #include <adt/adt_api.h>
 
-#include <adt/adt_hash.h>
 #include <adt/adt_comparable.h>
+#include <adt/adt_hash.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,15 +32,15 @@ struct set_iterator_type;
 
 /* -- Type Definitions -- */
 
-typedef struct set_type * set;
+typedef struct set_type *set;
 
 typedef hash set_hash;
 
 typedef comparable set_key;
 
-typedef void * set_value;
+typedef void *set_value;
 
-typedef void * set_cb_iterate_args;
+typedef void *set_cb_iterate_args;
 
 typedef hash_callback set_cb_hash;
 
@@ -48,7 +48,7 @@ typedef comparable_callback set_cb_compare;
 
 typedef int (*set_cb_iterate)(set, set_key, set_value, set_cb_iterate_args);
 
-typedef struct set_iterator_type * set_iterator;
+typedef struct set_iterator_type *set_iterator;
 
 /* -- Methods -- */
 
@@ -86,7 +86,7 @@ ADT_API set_value set_iterator_get_value(set_iterator it);
 
 ADT_API void set_iterator_next(set_iterator it);
 
-ADT_API int set_iterator_end(set_iterator * it);
+ADT_API int set_iterator_end(set_iterator *it);
 
 #ifdef __cplusplus
 }

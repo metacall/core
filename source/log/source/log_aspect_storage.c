@@ -36,14 +36,12 @@ static int log_aspect_storage_destroy(log_aspect aspect);
 
 log_aspect_interface log_aspect_storage_interface()
 {
-	static struct log_aspect_storage_impl_type log_aspect_storage_impl_obj =
-	{
+	static struct log_aspect_storage_impl_type log_aspect_storage_impl_obj = {
 		&log_aspect_storage_impl_append,
 		&log_aspect_storage_impl_flush
 	};
 
-	static struct log_aspect_interface_type aspect_interface_storage =
-	{
+	static struct log_aspect_interface_type aspect_interface_storage = {
 		&log_aspect_storage_create,
 		&log_aspect_storage_impl_obj,
 		&log_aspect_storage_destroy
@@ -63,7 +61,7 @@ static log_aspect_data log_aspect_storage_create(log_aspect aspect, const log_as
 
 static int log_aspect_storage_impl_append_cb(log_aspect aspect, log_policy policy, log_aspect_notify_data notify_data)
 {
-	struct log_aspect_storage_append_type * append_args = notify_data;
+	struct log_aspect_storage_append_type *append_args = notify_data;
 
 	log_policy_storage_impl storage_impl = log_policy_derived(policy);
 

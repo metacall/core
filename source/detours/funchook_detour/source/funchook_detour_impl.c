@@ -18,7 +18,7 @@
 
 typedef struct detour_impl_funchook_type
 {
-	funchook_t * funchook;
+	funchook_t *funchook;
 
 } * detour_impl_funchook;
 
@@ -47,13 +47,13 @@ detour_impl_handle funchook_detour_impl_initialize()
 	return (detour_impl_handle)detour_impl;
 }
 
-int funchook_detour_impl_install(detour_impl_handle handle, void(**target)(void), void(*hook)(void))
+int funchook_detour_impl_install(detour_impl_handle handle, void (**target)(void), void (*hook)(void))
 {
 	detour_impl_funchook handle_impl = handle;
 
 	if (handle_impl != NULL && handle_impl->funchook != NULL && target != NULL && hook != NULL)
 	{
-		void ** hook_ptr = (void **)&hook;
+		void **hook_ptr = (void **)&hook;
 
 		if (funchook_prepare(handle_impl->funchook, (void **)target, (void *)*hook_ptr) != FUNCHOOK_ERROR_SUCCESS)
 		{

@@ -27,7 +27,7 @@ struct serial_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct serial_impl_type * serial_impl;
+typedef struct serial_impl_type *serial_impl;
 
 /* -- Methods -- */
 
@@ -52,7 +52,7 @@ SERIAL_API serial_impl serial_impl_create(void);
 *    Returns constant string representing serial extension
 *
 */
-SERIAL_API const char * serial_impl_extension(serial_impl impl);
+SERIAL_API const char *serial_impl_extension(serial_impl impl);
 
 /**
 *  @brief
@@ -71,7 +71,7 @@ SERIAL_API const char * serial_impl_extension(serial_impl impl);
 *    Returns zero on correct loading, distinct from zero otherwise
 *
 */
-SERIAL_API int serial_impl_load(serial_impl impl, const char * path, const char * name);
+SERIAL_API int serial_impl_load(serial_impl impl, const char *path, const char *name);
 
 /**
 *  @brief
@@ -93,7 +93,7 @@ SERIAL_API int serial_impl_load(serial_impl impl, const char * path, const char 
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-SERIAL_API char * serial_impl_serialize(serial_impl impl, value v, size_t * size, memory_allocator allocator);
+SERIAL_API char *serial_impl_serialize(serial_impl impl, value v, size_t *size, memory_allocator allocator);
 
 /**
 *  @brief
@@ -115,7 +115,7 @@ SERIAL_API char * serial_impl_serialize(serial_impl impl, value v, size_t * size
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-SERIAL_API value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size, memory_allocator allocator);
+SERIAL_API value serial_impl_deserialize(serial_impl impl, const char *buffer, size_t size, memory_allocator allocator);
 
 /**
 *  @brief

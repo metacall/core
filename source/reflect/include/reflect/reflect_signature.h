@@ -32,7 +32,7 @@ extern "C" {
 
 struct signature_type;
 
-typedef struct signature_type * signature;
+typedef struct signature_type *signature;
 
 REFLECT_API signature signature_create(size_t count);
 
@@ -40,15 +40,15 @@ REFLECT_API signature signature_resize(signature s, size_t count);
 
 REFLECT_API size_t signature_count(signature s);
 
-REFLECT_API size_t signature_get_index(signature s, const char * name);
+REFLECT_API size_t signature_get_index(signature s, const char *name);
 
-REFLECT_API const char * signature_get_name(signature s, size_t index);
+REFLECT_API const char *signature_get_name(signature s, size_t index);
 
 REFLECT_API type signature_get_type(signature s, size_t index);
 
 REFLECT_API type signature_get_return(signature s);
 
-REFLECT_API void signature_set(signature s, size_t index, const char * name, type t);
+REFLECT_API void signature_set(signature s, size_t index, const char *name, type t);
 
 REFLECT_API void signature_set_return(signature s, type t);
 

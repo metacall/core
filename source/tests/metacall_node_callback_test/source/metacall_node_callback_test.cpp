@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_node_callback_test : public testing::Test
 {
@@ -35,37 +35,36 @@ TEST_F(metacall_node_callback_test, DefaultConstructor)
 
 	metacall_log_stdio_type log_stdio = { stdout };
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const char * node_scripts[] =
-		{
+		const char *node_scripts[] = {
 			"host.js"
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
 
 		ret = metacall("a");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 3.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)3.0);
 
 		metacall_value_destroy(ret);
 
-		void * handle = metacall_handle("node", "host.js");
+		void *handle = metacall_handle("node", "host.js");
 
-		EXPECT_NE((void *) NULL, (void *) handle);
+		EXPECT_NE((void *)NULL, (void *)handle);
 
-		EXPECT_EQ((int) 0, (int) metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle));
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

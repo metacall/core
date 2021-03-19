@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_storage_sequential.h>
 #include <log/log_policy_storage.h>
+#include <log/log_policy_storage_sequential.h>
 
 /* -- Private Methods -- */
 
@@ -25,14 +25,12 @@ static int log_policy_storage_sequential_destroy(log_policy policy);
 
 log_policy_interface log_policy_storage_sequential_interface()
 {
-	static struct log_policy_storage_impl_type log_policy_storage_sequential_impl_obj =
-	{
+	static struct log_policy_storage_impl_type log_policy_storage_sequential_impl_obj = {
 		&log_policy_storage_sequential_append,
 		&log_policy_storage_sequential_flush
 	};
 
-	static struct log_policy_interface_type policy_interface_storage =
-	{
+	static struct log_policy_interface_type policy_interface_storage = {
 		&log_policy_storage_sequential_create,
 		&log_policy_storage_sequential_impl_obj,
 		&log_policy_storage_sequential_destroy

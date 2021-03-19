@@ -35,20 +35,20 @@ extern "C" {
 
 enum log_level_id
 {
-	LOG_LEVEL_DEBUG		= 0x00,
-	LOG_LEVEL_INFO		= 0x01,
-	LOG_LEVEL_WARNING	= 0x02,
-	LOG_LEVEL_ERROR		= 0x03,
-	LOG_LEVEL_CRITICAL	= 0x04,
+	LOG_LEVEL_DEBUG = 0x00,
+	LOG_LEVEL_INFO = 0x01,
+	LOG_LEVEL_WARNING = 0x02,
+	LOG_LEVEL_ERROR = 0x03,
+	LOG_LEVEL_CRITICAL = 0x04,
 
 	LOG_LEVEL_SIZE
 };
 
 /* -- Methods -- */
 
-LOG_API const char * log_level_to_string(enum log_level_id level);
+LOG_API const char *log_level_to_string(enum log_level_id level);
 
-LOG_API enum log_level_id log_level_to_enum(const char * level, size_t length);
+LOG_API enum log_level_id log_level_to_enum(const char *level, size_t length);
 
 #ifdef __cplusplus
 }

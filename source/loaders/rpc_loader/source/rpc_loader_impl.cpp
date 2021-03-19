@@ -23,30 +23,30 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
+#include <metacall/metacall.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 #include <serial/serial.h>
-#include <metacall/metacall.h>
 
 #include <log/log.h>
 
 #include <curl/curl.h>
 
 #include <stdlib.h>
-#include <vector>
-#include <string>
-#include <map>
-#include <fstream>
 #include <algorithm>
+#include <fstream>
+#include <map>
 #include <sstream>
+#include <string>
+#include <vector>
 
 typedef struct loader_impl_rpc_type
 {
-	CURL * discover_curl;
-	CURL * invoke_curl;
-	void * allocator;
+	CURL *discover_curl;
+	CURL *invoke_curl;
+	void *allocator;
 	std::map<type_id, type> types;
 
 } * loader_impl_rpc;
@@ -70,11 +70,11 @@ typedef struct loader_impl_rpc_write_data_type
 
 } * loader_impl_rpc_write_data;
 
-static size_t rpc_loader_impl_write_data(void * buffer, size_t size, size_t nmemb, void * userp);
-static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string & url, value v, context ctx);
+static size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp);
+static int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, value v, context ctx);
 static int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl);
 
-size_t rpc_loader_impl_write_data(void * buffer, size_t size, size_t nmemb, void * userp)
+size_t rpc_loader_impl_write_data(void *buffer, size_t size, size_t nmemb, void *userp)
 {
 	loader_impl_rpc_write_data write_data = static_cast<loader_impl_rpc_write_data>(userp);
 	const size_t data_len = size * nmemb;
@@ -82,7 +82,7 @@ size_t rpc_loader_impl_write_data(void * buffer, size_t size, size_t nmemb, void
 	{
 		write_data->buffer.append(static_cast<char *>(buffer), data_len);
 	}
-	catch(std::bad_alloc &e)
+	catch (std::bad_alloc &e)
 	{
 		return 0;
 	}
@@ -109,8 +109,7 @@ void type_rpc_interface_destroy(type t, type_impl impl)
 
 type_interface type_rpc_singleton(void)
 {
-	static struct type_interface_type rpc_type_interface =
-	{
+	static struct type_interface_type rpc_type_interface = {
 		&type_rpc_interface_create,
 		&type_rpc_interface_destroy
 	};
@@ -139,7 +138,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 
 	if (size > 0)
 	{
-		void ** v_array = metacall_value_to_array(v);
+		void **v_array = metacall_value_to_array(v);
 
 		for (size_t arg = 0; arg < size; ++arg)
 		{
@@ -147,7 +146,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 		}
 	}
 
-	char * buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
+	char *buffer = metacall_serialize(metacall_serial(), v, &body_request_size, rpc_impl->allocator);
 
 	/* Destroy the value without destroying the contents of the array */
 	value_destroy(v);
@@ -180,7 +179,7 @@ function_return function_rpc_interface_invoke(function func, function_impl impl,
 	/* Deserialize the call result data */
 	const size_t write_data_size = write_data.buffer.length() + 1;
 
-	void * result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, rpc_impl->allocator);
+	void *result_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), write_data_size, rpc_impl->allocator);
 
 	if (result_value == NULL)
 	{
@@ -216,8 +215,7 @@ void function_rpc_interface_destroy(function func, function_impl impl)
 
 function_interface function_rpc_singleton(void)
 {
-	static struct function_interface_type rpc_function_interface =
-	{
+	static struct function_interface_type rpc_function_interface = {
 		&function_rpc_interface_create,
 		&function_rpc_interface_invoke,
 		&function_rpc_interface_await,
@@ -234,22 +232,20 @@ int rpc_loader_impl_initialize_types(loader_impl impl, loader_impl_rpc rpc_impl)
 	static struct
 	{
 		type_id id;
-		const char * name;
-	}
-	type_id_name_pair[] =
-	{
-		{ TYPE_BOOL,	"Boolean"	},
-		{ TYPE_CHAR,	"Char"		},
-		{ TYPE_SHORT,	"Short"		},
-		{ TYPE_INT,		"Integer"	},
-		{ TYPE_LONG,	"Long"		},
-		{ TYPE_FLOAT,	"Float"		},
-		{ TYPE_DOUBLE,	"Double"	},
-		{ TYPE_STRING,	"String"	},
-		{ TYPE_BUFFER,	"Buffer"	},
-		{ TYPE_ARRAY,	"Array"		},
-		{ TYPE_MAP,		"Map"		},
-		{ TYPE_PTR,		"Ptr"		}
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "Boolean" },
+		{ TYPE_CHAR, "Char" },
+		{ TYPE_SHORT, "Short" },
+		{ TYPE_INT, "Integer" },
+		{ TYPE_LONG, "Long" },
+		{ TYPE_FLOAT, "Float" },
+		{ TYPE_DOUBLE, "Double" },
+		{ TYPE_STRING, "String" },
+		{ TYPE_BUFFER, "Buffer" },
+		{ TYPE_ARRAY, "Array" },
+		{ TYPE_MAP, "Map" },
+		{ TYPE_PTR, "Ptr" }
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -335,7 +331,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 		return NULL;
 	}
 
-	static struct curl_slist * headers = NULL;
+	static struct curl_slist *headers = NULL;
 
 	if (headers == NULL)
 	{
@@ -382,17 +378,17 @@ int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 	return 0;
 }
 
-int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, std::istream & stream)
+int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, std::istream &stream)
 {
 	std::string url;
 
 	while (std::getline(stream, url))
 	{
 		/* Remove white spaces */
-		url.erase(std::remove_if(url.begin(), url.end(), [](char & c) {
+		url.erase(std::remove_if(url.begin(), url.end(), [](char &c) {
 			return std::isspace<char>(c, std::locale::classic());
 		}),
-		url.end());
+			url.end());
 
 		/* Skip empty lines */
 		if (url.length() == 0)
@@ -430,7 +426,7 @@ int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, con
 	return result;
 }
 
-int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, const char * buffer, size_t size)
+int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, const char *buffer, size_t size)
 {
 	if (size == 0)
 	{
@@ -469,7 +465,7 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
@@ -517,45 +513,45 @@ int rpc_loader_impl_clear(loader_impl impl, loader_handle handle)
 }
 
 // TODO: Move this to the C++ Port
-static std::map<std::string, void *> rpc_loader_impl_value_to_map(void * v)
+static std::map<std::string, void *> rpc_loader_impl_value_to_map(void *v)
 {
-	void ** v_map = metacall_value_to_map(v);
+	void **v_map = metacall_value_to_map(v);
 	std::map<std::string, void *> m;
 
 	for (size_t iterator = 0; iterator < metacall_value_count(v); ++iterator)
 	{
-		void ** map_pair = metacall_value_to_array(v_map[iterator]);
-		const char * key = metacall_value_to_string(map_pair[0]);
+		void **map_pair = metacall_value_to_array(v_map[iterator]);
+		const char *key = metacall_value_to_string(map_pair[0]);
 		m[key] = map_pair[1];
 	}
 
 	return m;
 }
 
-int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string & url, void * v, context ctx)
+int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, void *v, context ctx)
 {
-	void ** lang_map = metacall_value_to_map(v);
+	void **lang_map = metacall_value_to_map(v);
 
 	for (size_t lang = 0; lang < metacall_value_count(v); ++lang)
 	{
-		void ** lang_pair = metacall_value_to_array(lang_map[lang]);
-		void ** script_array = metacall_value_to_array(lang_pair[1]);
+		void **lang_pair = metacall_value_to_array(lang_map[lang]);
+		void **script_array = metacall_value_to_array(lang_pair[1]);
 
 		for (size_t script = 0; script < metacall_value_count(lang_pair[1]); ++script)
 		{
 			std::map<std::string, void *> script_map = rpc_loader_impl_value_to_map(script_array[script]);
 			std::map<std::string, void *> scope_map = rpc_loader_impl_value_to_map(script_map["scope"]);
-			void * funcs = scope_map["funcs"];
-			void ** funcs_array = metacall_value_to_array(funcs);
+			void *funcs = scope_map["funcs"];
+			void **funcs_array = metacall_value_to_array(funcs);
 
 			for (size_t func = 0; func < metacall_value_count(funcs); ++func)
 			{
 				std::map<std::string, void *> func_map = rpc_loader_impl_value_to_map(funcs_array[func]);
-				const char * func_name = metacall_value_to_string(func_map["name"]);
+				const char *func_name = metacall_value_to_string(func_map["name"]);
 				bool is_async = metacall_value_to_bool(func_map["async"]) == 0L ? false : true;
 				std::map<std::string, void *> signature_map = rpc_loader_impl_value_to_map(func_map["signature"]);
-				void * args = signature_map["args"];
-				void ** args_array = metacall_value_to_array(args);
+				void *args = signature_map["args"];
+				void **args_array = metacall_value_to_array(args);
 				const size_t args_count = metacall_value_count(args);
 				loader_impl_rpc_function rpc_func = new loader_impl_rpc_function_type();
 
@@ -572,7 +568,7 @@ int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string & url, 
 				{
 					std::map<std::string, void *> arg_map = rpc_loader_impl_value_to_map(args_array[arg]);
 					std::map<std::string, void *> type_map = rpc_loader_impl_value_to_map(arg_map["type"]);
-					void * id_v = metacall_value_copy(type_map["id"]);
+					void *id_v = metacall_value_copy(type_map["id"]);
 					type_id id = metacall_value_cast_int(&id_v);
 
 					metacall_value_destroy(id_v);
@@ -582,7 +578,7 @@ int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string & url, 
 
 				std::map<std::string, void *> ret_map = rpc_loader_impl_value_to_map(signature_map["ret"]);
 				std::map<std::string, void *> type_map = rpc_loader_impl_value_to_map(ret_map["type"]);
-				void * id_v = metacall_value_copy(type_map["id"]);
+				void *id_v = metacall_value_copy(type_map["id"]);
 				type_id id = metacall_value_cast_int(&id_v);
 
 				metacall_value_destroy(id_v);
@@ -626,7 +622,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 		/* Deserialize the inspect data */
 		const size_t size = write_data.buffer.length() + 1;
 
-		void * inspect_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), size, rpc_impl->allocator);
+		void *inspect_value = metacall_deserialize(metacall_serial(), write_data.buffer.c_str(), size, rpc_impl->allocator);
 
 		if (inspect_value == NULL)
 		{

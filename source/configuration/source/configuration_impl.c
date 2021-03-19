@@ -11,8 +11,8 @@
 #include <configuration/configuration_impl.h>
 #include <configuration/configuration_singleton.h>
 
-#include <adt/adt_vector.h>
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #include <log/log.h>
 
@@ -26,7 +26,7 @@ struct configuration_impl_singleton_type;
 
 /* -- Type Definitions -- */
 
-typedef struct configuration_impl_singleton_type * configuration_impl_singleton;
+typedef struct configuration_impl_singleton_type *configuration_impl_singleton;
 
 /* -- Member Data -- */
 
@@ -43,22 +43,21 @@ static configuration_impl_singleton configuration_impl_singleton_instance(void);
 
 configuration_impl_singleton configuration_impl_singleton_instance()
 {
-	static struct configuration_impl_singleton_type instance =
-	{
+	static struct configuration_impl_singleton_type instance = {
 		NULL,
 	};
 
 	return &instance;
 }
 
-const char * configuration_impl_extension()
+const char *configuration_impl_extension()
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
 	return serial_extension(singleton->s);
 }
 
-int configuration_impl_initialize(const char * name)
+int configuration_impl_initialize(const char *name)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
@@ -67,7 +66,7 @@ int configuration_impl_initialize(const char * name)
 	return !(singleton->s != NULL);
 }
 
-int configuration_impl_load(configuration config, void * allocator)
+int configuration_impl_load(configuration config, void *allocator)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
@@ -114,7 +113,7 @@ int configuration_impl_load(configuration config, void * allocator)
 	{
 		configuration current = *((configuration *)vector_front(queue));
 
-		const char * source = configuration_object_source(current);
+		const char *source = configuration_object_source(current);
 
 		value v;
 

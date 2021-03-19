@@ -27,8 +27,8 @@
 
 #include <configuration/configuration_object_handle.h>
 
-#include <adt/adt_vector.h>
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #include <reflect/reflect_value_type.h>
 
@@ -55,7 +55,7 @@ extern "C" {
 *    Returns pointer to new configuration on correct configuration initialization, null otherwise
 *
 */
-CONFIGURATION_API configuration configuration_object_initialize(const char * name, const char * path, configuration parent);
+CONFIGURATION_API configuration configuration_object_initialize(const char *name, const char *path, configuration parent);
 
 /**
 *  @brief
@@ -100,7 +100,7 @@ CONFIGURATION_API void configuration_object_instantiate(configuration config, va
 *    Returns name of configuration object @config
 *
 */
-CONFIGURATION_API const char * configuration_object_name(configuration config);
+CONFIGURATION_API const char *configuration_object_name(configuration config);
 
 /**
 *  @brief
@@ -113,7 +113,7 @@ CONFIGURATION_API const char * configuration_object_name(configuration config);
 *    Returns path of configuration object @config
 *
 */
-CONFIGURATION_API const char * configuration_object_path(configuration config);
+CONFIGURATION_API const char *configuration_object_path(configuration config);
 
 /**
 *  @brief
@@ -139,7 +139,7 @@ CONFIGURATION_API configuration configuration_object_parent(configuration config
 *    Returns source of configuration object @config
 *
 */
-CONFIGURATION_API const char * configuration_object_source(configuration config);
+CONFIGURATION_API const char *configuration_object_source(configuration config);
 
 /**
 *  @brief
@@ -171,7 +171,7 @@ CONFIGURATION_API value configuration_object_value(configuration config);
 *    Returns zero on correct configuration set, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_object_set(configuration config, const char * key, value v);
+CONFIGURATION_API int configuration_object_set(configuration config, const char *key, value v);
 
 /**
 *  @brief
@@ -187,7 +187,7 @@ CONFIGURATION_API int configuration_object_set(configuration config, const char 
 *    Returns pointer to value if exists, null otherwise
 *
 */
-CONFIGURATION_API value configuration_object_get(configuration config, const char * key);
+CONFIGURATION_API value configuration_object_get(configuration config, const char *key);
 
 /**
 *  @brief
@@ -203,7 +203,7 @@ CONFIGURATION_API value configuration_object_get(configuration config, const cha
 *    Returns zero on correct configuration removed, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_object_remove(configuration config, const char * key);
+CONFIGURATION_API int configuration_object_remove(configuration config, const char *key);
 
 /**
 *  @brief

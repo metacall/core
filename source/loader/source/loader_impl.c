@@ -6,13 +6,13 @@
  *
  */
 
- /* -- Headers -- */
+/* -- Headers -- */
 
-#include <loader/loader_impl.h>
 #include <loader/loader_env.h>
+#include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
 #include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <adt/adt_hash.h>
 #include <adt/adt_set.h>
@@ -42,9 +42,9 @@ struct loader_impl_metadata_cb_iterator_type;
 
 /* -- Type Definitions -- */
 
-typedef struct loader_handle_impl_type * loader_handle_impl;
+typedef struct loader_handle_impl_type *loader_handle_impl;
 
-typedef struct loader_impl_metadata_cb_iterator_type * loader_impl_metadata_cb_iterator;
+typedef struct loader_impl_metadata_cb_iterator_type *loader_impl_metadata_cb_iterator;
 
 /* -- Member Data -- */
 
@@ -58,7 +58,7 @@ struct loader_impl_type
 	loader_impl_data data;
 	context ctx;
 	set type_info_map;
-	void * options;
+	void *options;
 	set exec_path_map;
 };
 
@@ -73,20 +73,20 @@ struct loader_handle_impl_type
 struct loader_impl_metadata_cb_iterator_type
 {
 	size_t iterator;
-	value * values;
+	value *values;
 };
 
 /* -- Private Methods -- */
 
 static int loader_impl_initialize(loader_impl impl);
 
-static dynlink loader_impl_dynlink_load(const char * path, const loader_naming_tag tag);
+static dynlink loader_impl_dynlink_load(const char *path, const loader_naming_tag tag);
 
-static int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr);
+static int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dynlink_symbol_addr *singleton_addr_ptr);
 
 static void loader_impl_dynlink_destroy(loader_impl impl);
 
-static int loader_impl_create_singleton(loader_impl impl, const char * path, const loader_naming_tag tag);
+static int loader_impl_create_singleton(loader_impl impl, const char *path, const loader_naming_tag tag);
 
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name);
 
@@ -108,16 +108,16 @@ static int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_val
 
 /* -- Methods -- */
 
-dynlink loader_impl_dynlink_load(const char * path, const loader_naming_tag tag)
+dynlink loader_impl_dynlink_load(const char *path, const loader_naming_tag tag)
 {
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char loader_dynlink_suffix[] = "_loaderd";
-	#else
-		const char loader_dynlink_suffix[] = "_loader";
-	#endif
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	const char loader_dynlink_suffix[] = "_loaderd";
+#else
+	const char loader_dynlink_suffix[] = "_loader";
+#endif
 
-	#define LOADER_DYNLINK_NAME_SIZE \
-		(sizeof(loader_dynlink_suffix) + LOADER_NAMING_TAG_SIZE)
+#define LOADER_DYNLINK_NAME_SIZE \
+	(sizeof(loader_dynlink_suffix) + LOADER_NAMING_TAG_SIZE)
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
 
@@ -126,20 +126,20 @@ dynlink loader_impl_dynlink_load(const char * path, const loader_naming_tag tag)
 	strncat(loader_dynlink_name, loader_dynlink_suffix,
 		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
 
-	#undef LOADER_DYNLINK_NAME_SIZE
+#undef LOADER_DYNLINK_NAME_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader: %s", loader_dynlink_name);
 
 	return dynlink_load(path, loader_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dynlink_symbol_addr * singleton_addr_ptr)
+int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dynlink_symbol_addr *singleton_addr_ptr)
 {
 	const char loader_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char loader_dynlink_symbol_suffix[] = "_loader_impl_interface_singleton";
 
-	#define LOADER_DYNLINK_SYMBOL_SIZE \
-		(sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_TAG_SIZE + sizeof(loader_dynlink_symbol_suffix))
+#define LOADER_DYNLINK_SYMBOL_SIZE \
+	(sizeof(loader_dynlink_symbol_prefix) + LOADER_NAMING_TAG_SIZE + sizeof(loader_dynlink_symbol_suffix))
 
 	char loader_dynlink_symbol[LOADER_DYNLINK_SYMBOL_SIZE];
 
@@ -151,7 +151,7 @@ int loader_impl_dynlink_symbol(loader_impl impl, const loader_naming_tag tag, dy
 	strncat(loader_dynlink_symbol, loader_dynlink_symbol_suffix,
 		LOADER_DYNLINK_SYMBOL_SIZE - strnlen(loader_dynlink_symbol, LOADER_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-	#undef LOADER_DYNLINK_SYMBOL_SIZE
+#undef LOADER_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loader symbol: %s", loader_dynlink_symbol);
 
@@ -163,7 +163,7 @@ void loader_impl_dynlink_destroy(loader_impl impl)
 	dynlink_unload(impl->handle);
 }
 
-int loader_impl_create_singleton(loader_impl impl, const char * path, const loader_naming_tag tag)
+int loader_impl_create_singleton(loader_impl impl, const char *path, const loader_naming_tag tag)
 {
 	impl->handle = loader_impl_dynlink_load(path, tag);
 
@@ -235,7 +235,7 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 
 	if (execution_paths_value != NULL)
 	{
-		value * execution_paths_array = value_to_array(execution_paths_value);
+		value *execution_paths_array = value_to_array(execution_paths_value);
 
 		if (execution_paths_array != NULL)
 		{
@@ -245,7 +245,7 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 			{
 				if (execution_paths_array[iterator] != NULL)
 				{
-					const char * str = value_to_string(execution_paths_array[iterator]);
+					const char *str = value_to_string(execution_paths_array[iterator]);
 
 					if (str != NULL)
 					{
@@ -267,7 +267,7 @@ int loader_impl_initialize(loader_impl impl)
 
 	configuration config;
 
-	const char * script_path = NULL;
+	const char *script_path = NULL;
 
 	vector paths;
 
@@ -317,7 +317,7 @@ int loader_impl_initialize(loader_impl impl)
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			char * path = vector_at(paths, iterator);
+			char *path = vector_at(paths, iterator);
 
 			if (loader_impl_execution_path(impl, path) != 0)
 			{
@@ -334,7 +334,7 @@ int loader_impl_is_initialized(loader_impl impl)
 	return impl->init;
 }
 
-loader_impl loader_impl_create(const char * path, const loader_naming_tag tag)
+loader_impl loader_impl_create(const char *path, const loader_naming_tag tag)
 {
 	if (tag != NULL)
 	{
@@ -407,7 +407,7 @@ loader_impl_interface loader_impl_symbol(loader_impl impl)
 	return NULL;
 }
 
-loader_naming_tag * loader_impl_tag(loader_impl impl)
+loader_naming_tag *loader_impl_tag(loader_impl impl)
 {
 	if (impl != NULL)
 	{
@@ -427,7 +427,7 @@ context loader_impl_context(loader_impl impl)
 	return NULL;
 }
 
-type loader_impl_type(loader_impl impl, const char * name)
+type loader_impl_type(loader_impl impl, const char *name)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
@@ -437,7 +437,7 @@ type loader_impl_type(loader_impl impl, const char * name)
 	return NULL;
 }
 
-int loader_impl_type_define(loader_impl impl, const char * name, type t)
+int loader_impl_type_define(loader_impl impl, const char *name, type t)
 {
 	if (impl != NULL && impl->type_info_map != NULL && name != NULL)
 	{
@@ -564,7 +564,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 
 	if (func_init != NULL)
 	{
-		void * null_args[1] = { NULL };
+		void *null_args[1] = { NULL };
 
 		function_return ret = function_call(func_init, null_args, 0);
 
@@ -581,7 +581,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 	return 0;
 }
 
-int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size, void ** handle_ptr)
+int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size, void **handle_ptr)
 {
 	if (impl != NULL)
 	{
@@ -665,7 +665,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 	return 1;
 }
 
-int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name, const char * buffer, size_t size)
+int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name, const char *buffer, size_t size)
 {
 	/* TODO: Improve name with time or uuid */
 	static const char format[] = "%p-%p-%" PRIuS "-%u";
@@ -687,7 +687,7 @@ int loader_impl_load_from_memory_name(loader_impl impl, loader_naming_name name,
 	return 1;
 }
 
-int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t size, void ** handle_ptr)
+int loader_impl_load_from_memory(loader_impl impl, const char *buffer, size_t size, void **handle_ptr)
 {
 	if (impl != NULL && buffer != NULL && size > 0)
 	{
@@ -770,7 +770,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char * buffer, size_t s
 	return 1;
 }
 
-int loader_impl_load_from_package(loader_impl impl, const loader_naming_path path, void ** handle_ptr)
+int loader_impl_load_from_package(loader_impl impl, const loader_naming_path path, void **handle_ptr)
 {
 	if (impl != NULL)
 	{
@@ -844,7 +844,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 	return 1;
 }
 
-void * loader_impl_get_handle(loader_impl impl, const char * name)
+void *loader_impl_get_handle(loader_impl impl, const char *name)
 {
 	if (impl != NULL && name != NULL)
 	{
@@ -854,7 +854,7 @@ void * loader_impl_get_handle(loader_impl impl, const char * name)
 	return NULL;
 }
 
-void loader_impl_set_options(loader_impl impl, void * options)
+void loader_impl_set_options(loader_impl impl, void *options)
 {
 	if (impl != NULL && options != NULL)
 	{
@@ -862,7 +862,7 @@ void loader_impl_set_options(loader_impl impl, void * options)
 	}
 }
 
-void * loader_impl_get_options(loader_impl impl)
+void *loader_impl_get_options(loader_impl impl)
 {
 	if (impl != NULL)
 	{
@@ -872,21 +872,21 @@ void * loader_impl_get_options(loader_impl impl)
 	return NULL;
 }
 
-const char * loader_impl_handle_id(void * handle)
+const char *loader_impl_handle_id(void *handle)
 {
 	loader_handle_impl handle_impl = handle;
 
 	return handle_impl->name;
 }
 
-value loader_impl_handle_export(void * handle)
+value loader_impl_handle_export(void *handle)
 {
 	loader_handle_impl handle_impl = handle;
 
 	return scope_export(context_scope(handle_impl->ctx));
 }
 
-context loader_impl_handle_context(void * handle)
+context loader_impl_handle_context(void *handle)
 {
 	loader_handle_impl handle_impl = handle;
 
@@ -897,7 +897,7 @@ value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)
 {
 	static const char name[] = "name";
 
-	value * v_ptr, v = value_create_array(NULL, 2);
+	value *v_ptr, v = value_create_array(NULL, 2);
 
 	if (v == NULL)
 	{
@@ -931,7 +931,7 @@ value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
 {
 	static const char name[] = "scope";
 
-	value * v_ptr, v = value_create_array(NULL, 2);
+	value *v_ptr, v = value_create_array(NULL, 2);
 
 	if (v == NULL)
 	{
@@ -963,7 +963,7 @@ value loader_impl_metadata_handle_context(loader_handle_impl handle_impl)
 
 value loader_impl_metadata_handle(loader_handle_impl handle_impl)
 {
-	value * v_ptr, v = value_create_map(NULL, 2);
+	value *v_ptr, v = value_create_map(NULL, 2);
 
 	if (v == NULL)
 	{
@@ -1029,7 +1029,7 @@ value loader_impl_metadata(loader_impl impl)
 	return v;
 }
 
-int loader_impl_clear(void * handle)
+int loader_impl_clear(void *handle)
 {
 	if (handle != NULL)
 	{

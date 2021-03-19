@@ -20,15 +20,18 @@
 
 #include <cs_loader/host_environment.h>
 
-host_environment::host_environment(char * dotnet_root) : clr_runtime_host(nullptr)
+host_environment::host_environment(char *dotnet_root) :
+	clr_runtime_host(nullptr)
 {
 	// Discover the path to this exe's module. All other files are expected to be in the same directory.
 	DWORD thisModuleLength = ::GetModuleFileNameW(::GetModuleHandleW(nullptr), this->host_path, MAX_LONGPATH);
 
 	// Search for the last backslash in the host path.
 	int lastBackslashIndex;
-	for (lastBackslashIndex = thisModuleLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--) {
-		if (this->host_path[lastBackslashIndex] == W('\\')) {
+	for (lastBackslashIndex = thisModuleLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--)
+	{
+		if (this->host_path[lastBackslashIndex] == W('\\'))
+		{
 			break;
 		}
 	}
@@ -55,8 +58,8 @@ host_environment::host_environment(char * dotnet_root) : clr_runtime_host(nullpt
 		else
 		{
 			log_write("metacall", LOG_LEVEL_WARNING, "CORE_ROOT not set; skipping\n"
-				"You can set the environment variable CORE_ROOT to point to the path\n"
-				"where CoreCLR.dll lives to help this executable find it.");
+													 "You can set the environment variable CORE_ROOT to point to the path\n"
+													 "where CoreCLR.dll lives to help this executable find it.");
 		}
 	}
 	else
@@ -66,30 +69,33 @@ host_environment::host_environment(char * dotnet_root) : clr_runtime_host(nullpt
 
 	wchar_t last_character = coreRoot[lstrlenW(coreRoot) - 1];
 
-	if (last_character != '\\') {
+	if (last_character != '\\')
+	{
 		wcscat_s(coreRoot, MAX_LONGPATH, W("\\"));
 	}
 
 	this->core_clr_module = this->try_load_core_clr(coreRoot);
 
 	// Try to load CoreCLR from the directory that this exexutable is in
-	if (!this->core_clr_module) {
+	if (!this->core_clr_module)
+	{
 		this->core_clr_module = this->try_load_core_clr(this->host_directory_path);
 	}
 
-	if (this->core_clr_module) {
-
+	if (this->core_clr_module)
+	{
 		// Save the directory that CoreCLR was found in
 		DWORD modulePathLength = ::GetModuleFileNameW(this->core_clr_module, this->core_clr_directory_path, MAX_LONGPATH);
 
 		// Search for the last backslash and terminate it there to keep just the directory path with trailing slash
-		for (lastBackslashIndex = modulePathLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--) {
-			if (this->core_clr_directory_path[lastBackslashIndex] == W('\\')) {
+		for (lastBackslashIndex = modulePathLength - 1; lastBackslashIndex >= 0; lastBackslashIndex--)
+		{
+			if (this->core_clr_directory_path[lastBackslashIndex] == W('\\'))
+			{
 				this->core_clr_directory_path[lastBackslashIndex + 1] = W('\0');
 				break;
 			}
 		}
-
 	}
 	else
 	{
@@ -97,16 +103,15 @@ host_environment::host_environment(char * dotnet_root) : clr_runtime_host(nullpt
 	}
 }
 
-
 host_environment::host_environment()
 {
 }
 
-
 host_environment::~host_environment()
 {
-	if (this->core_clr_module) {
-		// Free the module. This is done for completeness, but in fact CoreCLR.dll 
+	if (this->core_clr_module)
+	{
+		// Free the module. This is done for completeness, but in fact CoreCLR.dll
 		// was pinned earlier so this call won't actually free it. The pinning is
 		// done because CoreCLR does not support unloading.
 		::FreeLibrary(this->core_clr_module);
@@ -116,8 +121,8 @@ host_environment::~host_environment()
 // Attempts to load CoreCLR.dll from the given directory.
 // On success pins the dll, sets m_coreCLRDirectoryPath and returns the HMODULE.
 // On failure returns nullptr.
-HMODULE host_environment::try_load_core_clr(const wchar_t* directory_path) {
-
+HMODULE host_environment::try_load_core_clr(const wchar_t *directory_path)
+{
 	wchar_t coreCLRPath[MAX_LONGPATH];
 
 	wcscpy_s(coreCLRPath, directory_path);
@@ -151,7 +156,7 @@ HMODULE host_environment::try_load_core_clr(const wchar_t* directory_path) {
 	return result;
 }
 
-bool host_environment::tpa_list_contains_file(_In_z_ wchar_t* fileNameWithoutExtension, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions)
+bool host_environment::tpa_list_contains_file(_In_z_ wchar_t *fileNameWithoutExtension, _In_reads_(countExtensions) wchar_t **rgTPAExtensions, int countExtensions)
 {
 	if (!this->tpa_list.c_str())
 	{
@@ -176,10 +181,10 @@ bool host_environment::tpa_list_contains_file(_In_z_ wchar_t* fileNameWithoutExt
 	return false;
 }
 
-void host_environment::remove_extension_and_ni(_In_z_ wchar_t * fileName)
+void host_environment::remove_extension_and_ni(_In_z_ wchar_t *fileName)
 {
 	// Remove extension, if it exists
-	wchar_t* extension = wcsrchr(fileName, W('.'));
+	wchar_t *extension = wcsrchr(fileName, W('.'));
 
 	if (extension != NULL)
 	{
@@ -197,7 +202,7 @@ void host_environment::remove_extension_and_ni(_In_z_ wchar_t * fileName)
 	}
 }
 
-void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targetPath, _In_reads_(countExtensions) wchar_t** rgTPAExtensions, int countExtensions)
+void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t *targetPath, _In_reads_(countExtensions) wchar_t **rgTPAExtensions, int countExtensions)
 {
 	wchar_t assemblyPath[MAX_LONGPATH];
 
@@ -208,22 +213,25 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targ
 		wcscpy_s(assemblyPath, MAX_LONGPATH, targetPath);
 
 		const size_t dirLength = wcslen(targetPath);
-		wchar_t* const fileNameBuffer = assemblyPath + dirLength;
+		wchar_t *const fileNameBuffer = assemblyPath + dirLength;
 		const size_t fileNameBufferSize = MAX_LONGPATH - dirLength;
 
 		wcscat_s(assemblyPath, rgTPAExtensions[iExtension]);
 		WIN32_FIND_DATA data;
 		HANDLE findHandle = FindFirstFile(assemblyPath, &data);
 
-		if (findHandle != INVALID_HANDLE_VALUE) {
-			do {
-				if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+		if (findHandle != INVALID_HANDLE_VALUE)
+		{
+			do
+			{
+				if (!(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+				{
 					// It seems that CoreCLR doesn't always use the first instance of an assembly on the TPA list (ni's may be preferred
 					// over il, even if they appear later). So, only include the first instance of a simple assembly name to allow
 					// users the opportunity to override Framework assemblies by placing dlls in %CORE_LIBRARIES%
 
 					// ToLower for case-insensitive comparisons
-					wchar_t* fileNameChar = data.cFileName;
+					wchar_t *fileNameChar = data.cFileName;
 					while (*fileNameChar)
 					{
 						*fileNameChar = towlower(*fileNameChar);
@@ -248,7 +256,8 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targ
 					else
 					{
 						log_write("metacall", LOG_LEVEL_ERROR, "Not adding %s%s to the TPA list because "
-							"another file with the same name is already present on the list", targetPath, data.cFileName);
+															   "another file with the same name is already present on the list",
+							targetPath, data.cFileName);
 					}
 				}
 			} while (0 != FindNextFile(findHandle, &data));
@@ -260,13 +269,12 @@ void host_environment::add_files_from_directory_to_tpa_list(_In_z_ wchar_t* targ
 
 // Returns the semicolon-separated list of paths to runtime dlls that are considered trusted.
 // On first call, scans the coreclr directory for dlls and adds them all to the list.
-const wchar_t * host_environment::get_tpa_list()
+const wchar_t *host_environment::get_tpa_list()
 {
 	if (!this->tpa_list.c_str())
 	{
-		wchar_t *rgTPAExtensions[] =
-		{
-			W("*.ni.dll"),		// Probe for .ni.dll first so that it's preferred if ni and il coexist in the same dir
+		wchar_t *rgTPAExtensions[] = {
+			W("*.ni.dll"), // Probe for .ni.dll first so that it's preferred if ni and il coexist in the same dir
 			W("*.dll"),
 			W("*.ni.exe"),
 			W("*.exe"),
@@ -284,8 +292,8 @@ const wchar_t * host_environment::get_tpa_list()
 		else
 		{
 			log_write("metacall", LOG_LEVEL_WARNING, "CORE_LIBRARIES not set; skipping\n"
-				"You can set the environment variable CORE_LIBRARIES to point to a\n"
-				"path containing additional platform assemblies");
+													 "You can set the environment variable CORE_LIBRARIES to point to a\n"
+													 "path containing additional platform assemblies");
 		}
 
 		this->add_files_from_directory_to_tpa_list(this->core_clr_directory_path, rgTPAExtensions, _countof(rgTPAExtensions));
@@ -295,19 +303,19 @@ const wchar_t * host_environment::get_tpa_list()
 }
 
 // Returns the path to the host module
-const wchar_t * host_environment::get_host_path() const
+const wchar_t *host_environment::get_host_path() const
 {
 	return this->host_path;
 }
 
 // Returns the path to the host module
-const wchar_t * host_environment::get_host_exe_name() const
+const wchar_t *host_environment::get_host_exe_name() const
 {
 	return this->host_exe_name;
 }
 
 // Returns the ICLRRuntimeHost2 instance, loading it from CoreCLR.dll if necessary, or nullptr on failure.
-ICLRRuntimeHost2 * host_environment::get_clr_runtime_host()
+ICLRRuntimeHost2 *host_environment::get_clr_runtime_host()
 {
 	if (!this->clr_runtime_host)
 	{
@@ -330,7 +338,7 @@ ICLRRuntimeHost2 * host_environment::get_clr_runtime_host()
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Calling GetCLRRuntimeHost");
 
-		HRESULT hr = pfnGetCLRRuntimeHost(IID_ICLRRuntimeHost2, (IUnknown**)&this->clr_runtime_host);
+		HRESULT hr = pfnGetCLRRuntimeHost(IID_ICLRRuntimeHost2, (IUnknown **)&this->clr_runtime_host);
 
 		if (FAILED(hr))
 		{

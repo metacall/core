@@ -37,7 +37,7 @@ TS_LOADER_API int ts_loader_impl_execution_path(loader_impl impl, const loader_n
 
 TS_LOADER_API loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
 
-TS_LOADER_API loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size);
+TS_LOADER_API loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size);
 
 TS_LOADER_API loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
 

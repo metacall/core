@@ -31,11 +31,11 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define DYNLINK_NAME_IMPL_SIZE			0xFF					/**< Dynamically linked shared object name size */
+#define DYNLINK_NAME_IMPL_SIZE 0xFF /**< Dynamically linked shared object name size */
 
 /* -- Type definitions -- */
 
-typedef char dynlink_name_impl[DYNLINK_NAME_IMPL_SIZE];			/**< Allocated copy of dynamically linked shared object name */
+typedef char dynlink_name_impl[DYNLINK_NAME_IMPL_SIZE]; /**< Allocated copy of dynamically linked shared object name */
 
 #ifdef __cplusplus
 }

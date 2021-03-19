@@ -18,7 +18,7 @@
  *
  */
 
- /* -- Headers -- */
+/* -- Headers -- */
 
 #include <metacall/metacall_log.h>
 
@@ -26,12 +26,11 @@
 
 /* -- Methods -- */
 
-int metacall_log(enum metacall_log_id log_id, void * ctx)
+int metacall_log(enum metacall_log_id log_id, void *ctx)
 {
 	switch (log_id)
 	{
-		case METACALL_LOG_STDIO :
-		{
+		case METACALL_LOG_STDIO: {
 			metacall_log_stdio stdio_ctx = (metacall_log_stdio)ctx;
 
 			return log_configure("metacall",
@@ -41,8 +40,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 				log_policy_stream_stdio(stdio_ctx->stream));
 		}
 
-		case METACALL_LOG_FILE :
-		{
+		case METACALL_LOG_FILE: {
 			metacall_log_file file_ctx = (metacall_log_file)ctx;
 
 			return log_configure("metacall",
@@ -52,8 +50,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 				log_policy_stream_file(file_ctx->file_name, file_ctx->mode));
 		}
 
-		case METACALL_LOG_SOCKET :
-		{
+		case METACALL_LOG_SOCKET: {
 			metacall_log_socket socket_ctx = (metacall_log_socket)ctx;
 
 			return log_configure("metacall",
@@ -63,8 +60,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 				log_policy_stream_socket(socket_ctx->ip, socket_ctx->port));
 		}
 
-		case METACALL_LOG_SYSLOG :
-		{
+		case METACALL_LOG_SYSLOG: {
 			metacall_log_syslog syslog_ctx = (metacall_log_syslog)ctx;
 
 			return log_configure("metacall",
@@ -74,8 +70,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 				log_policy_stream_syslog(syslog_ctx->name));
 		}
 
-		case METACALL_LOG_NGINX :
-		{
+		case METACALL_LOG_NGINX: {
 			metacall_log_nginx nginx_ctx = (metacall_log_nginx)ctx;
 
 			return log_configure("metacall",
@@ -85,8 +80,7 @@ int metacall_log(enum metacall_log_id log_id, void * ctx)
 				log_policy_stream_nginx(nginx_ctx->log, nginx_ctx->log_error, nginx_ctx->log_level));
 		}
 
-		case METACALL_LOG_CUSTOM :
-		{
+		case METACALL_LOG_CUSTOM: {
 			metacall_log_custom custom_ctx = (metacall_log_custom)ctx;
 
 			return log_configure("metacall",

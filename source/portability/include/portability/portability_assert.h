@@ -38,21 +38,21 @@ extern "C" {
 /* -- Macros -- */
 
 #ifndef static_assert
-#	define static_assert_impl_expr(predicate, expr) \
-		typedef char expr[2 * !!(predicate) - 1]
+	#define static_assert_impl_expr(predicate, expr) \
+		typedef char expr[2 * !!(predicate)-1]
 
-#	if defined(__COUNTER__)
-#		define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __COUNTER__))
-#	elif defined(__LINE__)
+	#if defined(__COUNTER__)
+		#define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __COUNTER__))
+	#elif defined(__LINE__)
 		/* WARNING: It can collide if it's used in header files */
-#		define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __LINE__))
-#	else
-#		define static_assert_impl_line(macro, predicate, expr) macro((predicate), expr)
-#	endif
+		#define static_assert_impl_line(macro, predicate, expr) macro((predicate), PREPROCESSOR_CONCAT(expr, __LINE__))
+	#else
+		#define static_assert_impl_line(macro, predicate, expr) macro((predicate), expr)
+	#endif
 
-#	define static_assert_impl(macro, predicate) static_assert_impl_line(macro, predicate, static_assert_)
+	#define static_assert_impl(macro, predicate) static_assert_impl_line(macro, predicate, static_assert_)
 
-#	define static_assert(predicate, message) static_assert_impl(static_assert_impl_expr, predicate)
+	#define static_assert(predicate, message) static_assert_impl(static_assert_impl_expr, predicate)
 #endif
 
 #ifdef __cplusplus

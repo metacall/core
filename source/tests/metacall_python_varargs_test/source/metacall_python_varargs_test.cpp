@@ -32,10 +32,10 @@ TEST_F(metacall_python_varargs_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char python_script[] =
 			"#!/usr/bin/env python3\n"
@@ -47,30 +47,28 @@ TEST_F(metacall_python_varargs_test, DefaultConstructor)
 			"			return 324;\n"
 			"	return 20;\n";
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("py", python_script, sizeof(python_script), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", python_script, sizeof(python_script), NULL));
 
-		void * args2[] =
-		{
+		void *args2[] = {
 			metacall_value_create_long(10),
 			metacall_value_create_long(20)
 		};
 
-		void * args3[] =
-		{
+		void *args3[] = {
 			metacall_value_create_long(10),
 			metacall_value_create_long(20),
 			metacall_value_create_long(30)
 		};
 
-		void * ret = metacallv_s("varargs", args2, 2);
+		void *ret = metacallv_s("varargs", args2, 2);
 
-		ASSERT_EQ((long) 20, (long) metacall_value_to_long(ret));
+		ASSERT_EQ((long)20, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacallv_s("varargs", args3, 3);
 
-		ASSERT_EQ((long) 20, (long) metacall_value_to_long(ret));
+		ASSERT_EQ((long)20, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
@@ -81,7 +79,7 @@ TEST_F(metacall_python_varargs_test, DefaultConstructor)
 		metacall_value_destroy(args3[1]);
 		metacall_value_destroy(args3[2]);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Print inspect information */
 	{
@@ -89,13 +87,13 @@ TEST_F(metacall_python_varargs_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -104,5 +102,5 @@ TEST_F(metacall_python_varargs_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

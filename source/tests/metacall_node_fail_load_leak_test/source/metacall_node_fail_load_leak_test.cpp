@@ -32,22 +32,22 @@ TEST_F(metacall_node_fail_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		const char buffer[] =
 			"const { metacall_load_from_memory } = require('metacall');\n"
 			"metacall_load_from_memory('node', 'throw new Error(\"fail\")');\n";
 
-		EXPECT_EQ((int) 1, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+		EXPECT_EQ((int)1, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
-		void * ret = metacall("hey");
+		void *ret = metacall("hey");
 
-		EXPECT_EQ((void *) NULL, (void *) ret);
+		EXPECT_EQ((void *)NULL, (void *)ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{
@@ -55,13 +55,13 @@ TEST_F(metacall_node_fail_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -70,5 +70,5 @@ TEST_F(metacall_node_fail_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

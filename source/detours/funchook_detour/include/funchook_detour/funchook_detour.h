@@ -55,7 +55,7 @@ DYNLINK_SYMBOL_EXPORT(funchook_detour_impl_interface_singleton);
 *    Static string containing module information
 *
 */
-FUNCHOOK_DETOUR_API const char * funchook_detour_print_info(void);
+FUNCHOOK_DETOUR_API const char *funchook_detour_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(funchook_detour_print_info);
 

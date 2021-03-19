@@ -31,8 +31,8 @@ extern "C" {
 
 /* -- Headers -- */
 
-#include <stdlib.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 /* -- Enumerations -- */
 
@@ -48,26 +48,26 @@ struct ngx_pool_s;
 
 /* -- Type Definitions -- */
 
-typedef struct metacall_allocator_std_type * metacall_allocator_std;
+typedef struct metacall_allocator_std_type *metacall_allocator_std;
 
 typedef struct ngx_pool_s ngx_pool_t;
 
-typedef struct metacall_allocator_nginx_type * metacall_allocator_nginx;
+typedef struct metacall_allocator_nginx_type *metacall_allocator_nginx;
 
 /* -- Member Data -- */
 
 struct metacall_allocator_std_type
 {
-	void * (*malloc)(size_t);
-	void * (*realloc)(void *, size_t);
+	void *(*malloc)(size_t);
+	void *(*realloc)(void *, size_t);
 	void (*free)(void *);
 };
 
 struct metacall_allocator_nginx_type
 {
-	ngx_pool_t * pool;
-	void * (*palloc)(ngx_pool_t *, size_t);
-	void * (*pcopy)(void *, const void *, size_t);
+	ngx_pool_t *pool;
+	void *(*palloc)(ngx_pool_t *, size_t);
+	void *(*pcopy)(void *, const void *, size_t);
 	intptr_t (*pfree)(ngx_pool_t *, void *);
 };
 
@@ -86,7 +86,7 @@ struct metacall_allocator_nginx_type
 *  @return
 *    Pointer to allocator if success, null otherwise
 */
-METACALL_API void * metacall_allocator_create(enum metacall_allocator_id allocator_id, void * ctx);
+METACALL_API void *metacall_allocator_create(enum metacall_allocator_id allocator_id, void *ctx);
 
 /**
 *  @brief
@@ -101,7 +101,7 @@ METACALL_API void * metacall_allocator_create(enum metacall_allocator_id allocat
 *  @return
 *    Pointer to allocated data on success, null otherwise
 */
-METACALL_API void * metacall_allocator_alloc(void * allocator, size_t size);
+METACALL_API void *metacall_allocator_alloc(void *allocator, size_t size);
 
 /**
 *  @brief
@@ -122,7 +122,7 @@ METACALL_API void * metacall_allocator_alloc(void * allocator, size_t size);
 *  @return
 *    Pointer to new reallocated data on success, null otherwise
 */
-METACALL_API void * metacall_allocator_realloc(void * allocator, void * data, size_t size, size_t new_size);
+METACALL_API void *metacall_allocator_realloc(void *allocator, void *data, size_t size, size_t new_size);
 
 /**
 *  @brief
@@ -134,7 +134,7 @@ METACALL_API void * metacall_allocator_realloc(void * allocator, void * data, si
 *  @param[in] data
 *    Pointer to data to be freed
 */
-METACALL_API void metacall_allocator_free(void * allocator, void * data);
+METACALL_API void metacall_allocator_free(void *allocator, void *data);
 
 /**
 *  @brief
@@ -143,10 +143,10 @@ METACALL_API void metacall_allocator_free(void * allocator, void * data);
 *  @param[in] allocator
 *    Pointer to allocator instance
 */
-METACALL_API void metacall_allocator_destroy(void * allocator);
+METACALL_API void metacall_allocator_destroy(void *allocator);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* METACALL_ALLOCATOR_H */
+#endif /* METACALL_ALLOCATOR_H */

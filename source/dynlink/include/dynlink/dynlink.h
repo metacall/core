@@ -26,9 +26,9 @@
 #include <dynlink/dynlink_api.h>
 
 #include <dynlink/dynlink_flags.h>
-#include <dynlink/dynlink_type.h>
 #include <dynlink/dynlink_interface.h>
 #include <dynlink/dynlink_symbol.h>
+#include <dynlink/dynlink_type.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,7 +43,7 @@ extern "C" {
 *  @return
 *    A constant string pointer to the platform extension
 */
-DYNLINK_API const char * dynlink_extension(void);
+DYNLINK_API const char *dynlink_extension(void);
 
 /**
 *  @brief
@@ -115,7 +115,7 @@ DYNLINK_API dynlink_flags dynlink_get_flags(dynlink handle);
 *  @return
 *    Returns zero on correct dynamic linking, distinct from zero otherwise
 */
-DYNLINK_API int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr * symbol_address);
+DYNLINK_API int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address);
 
 /**
 *  @brief
@@ -134,7 +134,7 @@ DYNLINK_API void dynlink_unload(dynlink handle);
 *    Static string containing module information
 *
 */
-DYNLINK_API const char * dynlink_print_info(void);
+DYNLINK_API const char *dynlink_print_info(void);
 
 #ifdef __cplusplus
 }

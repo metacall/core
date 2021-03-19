@@ -28,21 +28,21 @@ class metacall_node_call_bench : public benchmark::Fixture
 public:
 };
 
-BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)
+(benchmark::State &state)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
-	const enum metacall_value_id int_mem_type_ids[] =
-	{
+	const enum metacall_value_id int_mem_type_ids[] = {
 		METACALL_DOUBLE, METACALL_DOUBLE
 	};
 
 	for (auto _ : state)
 	{
-		/* NodeJS */
-		#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 		{
-			void * ret;
+			void *ret;
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
@@ -65,7 +65,7 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)(benchmark::State & st
 				state.ResumeTiming();
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 	}
 
 	state.SetLabel("MetaCall NodeJS Call Benchmark - Variadic Argument Call");
@@ -79,22 +79,22 @@ BENCHMARK_REGISTER_F(metacall_node_call_bench, call_va_args)
 	->Iterations(1)
 	->Repetitions(3);
 
-BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
+(benchmark::State &state)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
 
 	for (auto _ : state)
 	{
-		/* NodeJS */
-		#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 		{
-			void * ret;
+			void *ret;
 
 			state.PauseTiming();
 
-			void * args[2] =
-			{
+			void *args[2] = {
 				metacall_value_create_double(0.0),
 				metacall_value_create_double(0.0)
 			};
@@ -131,7 +131,7 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)(benchmark::State &
 
 			state.ResumeTiming();
 		}
-		#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 	}
 
 	state.SetLabel("MetaCall NodeJS Call Benchmark - Array Argument Call");
@@ -145,22 +145,22 @@ BENCHMARK_REGISTER_F(metacall_node_call_bench, call_array_args)
 	->Iterations(1)
 	->Repetitions(3);
 
-BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
+(benchmark::State &state)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
 
 	for (auto _ : state)
 	{
-		/* NodeJS */
-		#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 		{
-			void * ret;
+			void *ret;
 
 			state.PauseTiming();
 
-			void * args[2] =
-			{
+			void *args[2] = {
 				metacall_value_create_double(0.0),
 				metacall_value_create_double(0.0)
 			};
@@ -169,18 +169,20 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)(benchmark::State & stat
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacall_await("int_mem_async_type", args, [](void * result, void * data) -> void * {
-					benchmark::State * state = static_cast<benchmark::State *>(data);
+				benchmark::DoNotOptimize(ret = metacall_await(
+											 "int_mem_async_type", args, [](void *result, void *data) -> void * {
+												 benchmark::State *state = static_cast<benchmark::State *>(data);
 
-					if (metacall_value_to_double(result) != 0.0)
-					{
-						state->SkipWithError("Invalid return value from int_mem_async_type");
-					}
+												 if (metacall_value_to_double(result) != 0.0)
+												 {
+													 state->SkipWithError("Invalid return value from int_mem_async_type");
+												 }
 
-					state->PauseTiming();
+												 state->PauseTiming();
 
-					return NULL;
-				}, NULL, static_cast<void *>(&state)));
+												 return NULL;
+											 },
+											 NULL, static_cast<void *>(&state)));
 
 				if (ret == NULL)
 				{
@@ -206,7 +208,7 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)(benchmark::State & stat
 
 			state.ResumeTiming();
 		}
-		#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 	}
 
 	state.SetLabel("MetaCall NodeJS Call Benchmark - Async Call");
@@ -223,7 +225,7 @@ BENCHMARK_REGISTER_F(metacall_node_call_bench, call_async)
 /* TODO: NodeJS re-initialization */
 /* BENCHMARK_MAIN(); */
 
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
 	::benchmark::Initialize(&argc, argv);
 
@@ -245,8 +247,8 @@ int main(int argc, char ** argv)
 		return 1;
 	}
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		static const char tag[] = "node";
 
@@ -263,7 +265,7 @@ int main(int argc, char ** argv)
 			return 1;
 		}
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	::benchmark::RunSpecifiedBenchmarks();
 

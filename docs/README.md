@@ -649,6 +649,12 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 | **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                            |
 |  **OPTION_BUILD_PORTS_**  | `CS` `CXX` `D` `GO` `JAVA` `JS` `LUA` `NODE` `PHP` `PL` `PY` `R` `RB` |
 
+
+To format the code before creating a pull request please use:
+``` sh
+cmake --build core/build --target clang-format
+```
+
 ### 6.2 Coverage
 
 In order to run code coverage and obtain html reports use the following commands. Note, test must be run before executing code coverage.

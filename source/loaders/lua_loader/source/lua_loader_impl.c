@@ -23,10 +23,10 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
@@ -41,7 +41,7 @@
 
 typedef struct loader_impl_lua_type
 {
-	lua_State * vm;
+	lua_State *vm;
 
 } * loader_impl_lua;
 
@@ -51,7 +51,7 @@ typedef struct loader_impl_lua_handle_type
 		descriptor for the handles (aka scripts), all of them are loaded
 		into global scope and they do not have references
 	*/
-	void * handle_lua_data;
+	void *handle_lua_data;
 
 } * loader_impl_lua_handle;
 
@@ -59,7 +59,7 @@ typedef struct loader_impl_lua_function_type
 {
 	/* TODO */
 	loader_impl_lua_handle lua_handle;
-	void * function_lua_data;
+	void *function_lua_data;
 
 } * loader_impl_lua_function;
 
@@ -77,7 +77,7 @@ function_return function_lua_interface_invoke(function func, function_impl impl,
 
 	signature s = function_signature(func);
 
-	const char * name = function_name(func);
+	const char *name = function_name(func);
 
 	type ret_type = signature_get_return(s);
 
@@ -110,55 +110,55 @@ function_return function_lua_interface_invoke(function func, function_impl impl,
 
 			if (id == TYPE_BOOL)
 			{
-				boolean * value_ptr = (boolean *)(args[args_count]);
+				boolean *value_ptr = (boolean *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Boolean value: %d", *value_ptr);
 			}
 			else if (id == TYPE_CHAR)
 			{
-				char * value_ptr = (char *)(args[args_count]);
+				char *value_ptr = (char *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Char value: %c", *value_ptr);
 			}
 			else if (id == TYPE_SHORT)
 			{
-				short * value_ptr = (short *)(args[args_count]);
+				short *value_ptr = (short *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Short value: %d", *value_ptr);
 			}
 			else if (id == TYPE_INT)
 			{
-				int * value_ptr = (int *)(args[args_count]);
+				int *value_ptr = (int *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Int value: %d", *value_ptr);
 			}
 			else if (id == TYPE_LONG)
 			{
-				long * value_ptr = (long *)(args[args_count]);
+				long *value_ptr = (long *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Long value: %ld", *value_ptr);
 			}
 			else if (id == TYPE_FLOAT)
 			{
-				float * value_ptr = (float *)(args[args_count]);
+				float *value_ptr = (float *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Float value: %f", *value_ptr);
 			}
 			else if (id == TYPE_DOUBLE)
 			{
-				double * value_ptr = (double *)(args[args_count]);
+				double *value_ptr = (double *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Double value: %f", *value_ptr);
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * value_ptr = (const char *)(args[args_count]);
+				const char *value_ptr = (const char *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "String value: %s", value_ptr);
 			}
 			else if (id == TYPE_PTR)
 			{
-				void * value_ptr = (void *)(args[args_count]);
+				void *value_ptr = (void *)(args[args_count]);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Pointer value: %p", value_ptr);
 			}
@@ -235,7 +235,7 @@ function_return function_lua_interface_invoke(function func, function_impl impl,
 	return NULL;
 }
 
-function_return function_lua_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_lua_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -264,8 +264,7 @@ void function_lua_interface_destroy(function func, function_impl impl)
 
 function_interface function_lua_singleton(void)
 {
-	static struct function_interface_type lua_interface =
-	{
+	static struct function_interface_type lua_interface = {
 		&function_lua_interface_create,
 		&function_lua_interface_invoke,
 		&function_lua_interface_await,
@@ -280,22 +279,20 @@ int lua_loader_impl_initialize_types(loader_impl impl)
 	static struct
 	{
 		type_id id;
-		const char * name;
-	}
-	type_id_name_pair[] =
-	{
-		{ TYPE_BOOL,		"boolean"	},
-		{ TYPE_CHAR,		"string"	},
-		{ TYPE_SHORT,		"number"	},
-		{ TYPE_INT,			"number"	},
-		{ TYPE_LONG,		"number"	},
-		{ TYPE_FLOAT,		"number"	},
-		{ TYPE_DOUBLE,		"number"	},
-		{ TYPE_STRING,		"string"	},
-		{ TYPE_PTR,			"userdata"	},
-		{ TYPE_NULL,		"nil"		},
-		{ TYPE_FUNCTION,	"function"	},
-		{ TYPE_MAP,			"table"		}
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "boolean" },
+		{ TYPE_CHAR, "string" },
+		{ TYPE_SHORT, "number" },
+		{ TYPE_INT, "number" },
+		{ TYPE_LONG, "number" },
+		{ TYPE_FLOAT, "number" },
+		{ TYPE_DOUBLE, "number" },
+		{ TYPE_STRING, "string" },
+		{ TYPE_PTR, "userdata" },
+		{ TYPE_NULL, "nil" },
+		{ TYPE_FUNCTION, "function" },
+		{ TYPE_MAP, "table" }
 		/* TODO: thread */
 	};
 
@@ -392,7 +389,7 @@ loader_handle lua_loader_impl_load_from_file(loader_impl impl, const loader_nami
 	return NULL;
 }
 
-loader_handle lua_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle lua_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	loader_impl_lua lua_impl = loader_impl_get(impl);
 	loader_impl_lua_handle handle = malloc(sizeof(struct loader_impl_lua_handle_type));

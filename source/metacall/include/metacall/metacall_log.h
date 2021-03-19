@@ -31,9 +31,9 @@ extern "C" {
 
 /* -- Headers -- */
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdarg.h>
 
 /* -- Enumerations -- */
 
@@ -65,47 +65,47 @@ struct metacall_log_custom_type;
 
 /* -- Type Definitions -- */
 
-typedef struct metacall_log_stdio_type * metacall_log_stdio;
+typedef struct metacall_log_stdio_type *metacall_log_stdio;
 
-typedef struct metacall_log_file_type * metacall_log_file;
+typedef struct metacall_log_file_type *metacall_log_file;
 
-typedef struct metacall_log_socket_type * metacall_log_socket;
+typedef struct metacall_log_socket_type *metacall_log_socket;
 
-typedef struct metacall_log_syslog_type * metacall_log_syslog;
+typedef struct metacall_log_syslog_type *metacall_log_syslog;
 
-typedef struct metacall_log_nginx_type * metacall_log_nginx;
+typedef struct metacall_log_nginx_type *metacall_log_nginx;
 
-typedef struct metacall_log_custom_va_list_type * metacall_log_custom_va_list;
+typedef struct metacall_log_custom_va_list_type *metacall_log_custom_va_list;
 
-typedef struct metacall_log_custom_type * metacall_log_custom;
+typedef struct metacall_log_custom_type *metacall_log_custom;
 
 /* -- Member Data -- */
 
 struct metacall_log_stdio_type
 {
-	FILE * stream;
+	FILE *stream;
 };
 
 struct metacall_log_file_type
 {
-	const char * file_name;
-	const char * mode;
+	const char *file_name;
+	const char *mode;
 };
 
 struct metacall_log_socket_type
 {
-	const char * ip;
+	const char *ip;
 	uint16_t port;
 };
 
 struct metacall_log_syslog_type
 {
-	const char * name;
+	const char *name;
 };
 
 struct metacall_log_nginx_type
 {
-	void * log;
+	void *log;
 	void (*log_error)(void);
 	uint16_t log_level;
 };
@@ -117,7 +117,7 @@ struct metacall_log_custom_va_list_type
 
 struct metacall_log_custom_type
 {
-	void * context;
+	void *context;
 	size_t (*format_size)(void *, const char *, size_t, size_t, const char *, const char *, const char *, const char *, metacall_log_custom_va_list);
 	size_t (*format_serialize)(void *, void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, metacall_log_custom_va_list);
 	size_t (*format_deserialize)(void *, const void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, metacall_log_custom_va_list);
@@ -140,10 +140,10 @@ struct metacall_log_custom_type
 *  @return
 *    Zero if success, different from zero otherwise
 */
-METACALL_API int metacall_log(enum metacall_log_id log_id, void * ctx);
+METACALL_API int metacall_log(enum metacall_log_id log_id, void *ctx);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* METACALL_LOG_H */
+#endif /* METACALL_LOG_H */

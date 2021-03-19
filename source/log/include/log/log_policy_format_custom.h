@@ -28,8 +28,8 @@ struct log_policy_format_custom_va_list_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_format_custom_ctor_type * log_policy_format_custom_ctor;
-typedef struct log_policy_format_custom_va_list_type * log_policy_format_custom_va_list;
+typedef struct log_policy_format_custom_ctor_type *log_policy_format_custom_ctor;
+typedef struct log_policy_format_custom_va_list_type *log_policy_format_custom_va_list;
 
 typedef size_t (*log_policy_format_custom_size_ptr)(void *, const char *, size_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
 typedef size_t (*log_policy_format_custom_serialize_ptr)(void *, void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
@@ -44,7 +44,7 @@ struct log_policy_format_custom_va_list_type
 
 struct log_policy_format_custom_ctor_type
 {
-	void * context;
+	void *context;
 	log_policy_format_custom_size_ptr format_size;
 	log_policy_format_custom_serialize_ptr format_serialize;
 	log_policy_format_custom_deserialize_ptr format_deserialize;

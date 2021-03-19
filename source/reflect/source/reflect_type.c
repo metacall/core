@@ -27,15 +27,14 @@
 struct type_type
 {
 	type_id id;
-	char * name;
+	char *name;
 	type_impl impl;
 	type_interface interface;
-
 };
 
 static value type_metadata_impl(type t);
 
-type type_create(type_id id, const char * name, type_impl impl, type_impl_interface_singleton singleton)
+type type_create(type_id id, const char *name, type_impl impl, type_impl_interface_singleton singleton)
 {
 	if (type_id_invalid(id) != 0 && name != NULL)
 	{
@@ -100,7 +99,7 @@ type_id type_index(type t)
 	return TYPE_INVALID;
 }
 
-const char * type_name(type t)
+const char *type_name(type t)
 {
 	if (t != NULL)
 	{
@@ -126,9 +125,9 @@ value type_metadata_impl(type t)
 	static const char id_str[] = "id";
 
 	value v, name, id;
-	value * v_map, * name_array, * id_array;
+	value *v_map, *name_array, *id_array;
 
-	const char * type_name_str = t != NULL ? t->name : "";
+	const char *type_name_str = t != NULL ? t->name : "";
 
 	name = value_create_array(NULL, 2);
 
@@ -215,7 +214,7 @@ value type_metadata(type t)
 {
 	static const char type_str[] = "type";
 
-	value * v_array, v = value_create_array(NULL, 2);
+	value *v_array, v = value_create_array(NULL, 2);
 
 	if (v == NULL)
 	{

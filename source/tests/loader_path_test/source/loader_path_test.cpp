@@ -14,7 +14,7 @@
 
 class loader_path_test : public testing::Test
 {
-  public:
+public:
 };
 
 TEST_F(loader_path_test, loader_path_test_path_get_module_name)
@@ -26,9 +26,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_module_name)
 
 	size_t size = loader_path_get_module_name(base, name, "txt");
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_module_name_without_extension)
@@ -40,9 +40,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_module_name_without_extension
 
 	size_t size = loader_path_get_module_name(base, name, "txt");
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_module_name_with_random_extension)
@@ -54,9 +54,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_module_name_with_random_exten
 
 	size_t size = loader_path_get_module_name(base, name, "txt");
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name)
@@ -68,9 +68,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_end_dot)
@@ -82,9 +82,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_end_dot)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_without_dot)
@@ -96,9 +96,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_without_dot)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_only_dot)
@@ -110,9 +110,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_only_dot)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_two_dots)
@@ -124,9 +124,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_two_dots)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_three_dots)
@@ -138,9 +138,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_three_dots)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_only_extension)
@@ -152,9 +152,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_only_extension)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_double_extension)
@@ -166,9 +166,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_double_extension)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_path_get_name_triple_extension)
@@ -180,9 +180,9 @@ TEST_F(loader_path_test, loader_path_test_path_get_name_triple_extension)
 
 	size_t size = loader_path_get_name(base, name);
 
-	EXPECT_EQ((int) 0, (int) strcmp(name, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(name, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_get_path_of_path)
@@ -194,9 +194,9 @@ TEST_F(loader_path_test, loader_path_test_get_path_of_path)
 
 	size_t size = loader_path_get_path(base, sizeof(base), path);
 
-	EXPECT_EQ((int) 0, (int) strcmp(path, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(path, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_get_path_of_filepath)
@@ -208,9 +208,9 @@ TEST_F(loader_path_test, loader_path_test_get_path_of_filepath)
 
 	size_t size = loader_path_get_path(base, sizeof(base), path);
 
-	EXPECT_EQ((int) 0, (int) strcmp(path, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(path, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_get_relative)
@@ -223,9 +223,9 @@ TEST_F(loader_path_test, loader_path_test_get_relative)
 
 	size_t size = loader_path_get_relative(base, path, relative);
 
-	EXPECT_EQ((int) 0, (int) strcmp(relative, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(relative, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_get_relative_fail)
@@ -238,9 +238,9 @@ TEST_F(loader_path_test, loader_path_test_get_relative_fail)
 
 	size_t size = loader_path_get_relative(base, path, relative);
 
-	EXPECT_EQ((int) 0, (int) strcmp(relative, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(relative, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_none_slash)
@@ -253,9 +253,9 @@ TEST_F(loader_path_test, loader_path_test_join_none_slash)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_left_slash)
@@ -268,9 +268,9 @@ TEST_F(loader_path_test, loader_path_test_join_left_slash)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_right_slash)
@@ -283,9 +283,9 @@ TEST_F(loader_path_test, loader_path_test_join_right_slash)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_both_slash)
@@ -298,9 +298,9 @@ TEST_F(loader_path_test, loader_path_test_join_both_slash)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_left_empty)
@@ -313,9 +313,9 @@ TEST_F(loader_path_test, loader_path_test_join_left_empty)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_right_empty)
@@ -328,9 +328,9 @@ TEST_F(loader_path_test, loader_path_test_join_right_empty)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_right_empty_non_slash)
@@ -343,9 +343,9 @@ TEST_F(loader_path_test, loader_path_test_join_right_empty_non_slash)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_join_both_empty)
@@ -358,9 +358,9 @@ TEST_F(loader_path_test, loader_path_test_join_both_empty)
 
 	size_t size = loader_path_join(left, sizeof(left), right, sizeof(right), join);
 
-	EXPECT_EQ((int) 0, (int) strcmp(join, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(join, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_dot)
@@ -372,9 +372,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_double_dot)
@@ -386,9 +386,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_double_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_many_dot)
@@ -400,9 +400,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_many_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_many_double_dot)
@@ -414,9 +414,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_many_double_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_dot_non_slash)
@@ -428,9 +428,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_dot_non_slash)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_many_dot_non_slash)
@@ -442,9 +442,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_many_dot_non_slash)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_begin_invalid)
@@ -456,9 +456,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_begin_invalid)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_middle_double_dot)
@@ -470,9 +470,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_middle_double_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_middle_double_dot_all)
@@ -484,9 +484,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_middle_double_dot_all)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_middle_double_dot_break)
@@ -498,9 +498,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_middle_double_dot_break)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_middle_dot)
@@ -512,9 +512,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_middle_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_middle_mixed_dot)
@@ -526,9 +526,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_middle_mixed_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_end_dot)
@@ -540,9 +540,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_end_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_end_double_dot)
@@ -554,9 +554,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_end_double_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_end_mixed_dot)
@@ -568,9 +568,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_end_mixed_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_absolute_end_mixed_dot)
@@ -582,9 +582,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_absolute_end_mixed_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_absolute_end_dot)
@@ -596,9 +596,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_absolute_end_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_relative_begin_end_dot)
@@ -610,9 +610,9 @@ TEST_F(loader_path_test, loader_path_test_canonical_relative_begin_end_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
 
 TEST_F(loader_path_test, loader_path_test_canonical_absolute_end_many_dot)
@@ -624,7 +624,7 @@ TEST_F(loader_path_test, loader_path_test_canonical_absolute_end_many_dot)
 
 	size_t size = loader_path_canonical(path, sizeof(path), canonical);
 
-	EXPECT_EQ((int) 0, (int) strcmp(canonical, result));
-	EXPECT_EQ((size_t) size, (size_t) sizeof(result));
-	EXPECT_EQ((char) '\0', (char) result[size - 1]);
+	EXPECT_EQ((int)0, (int)strcmp(canonical, result));
+	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
+	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }

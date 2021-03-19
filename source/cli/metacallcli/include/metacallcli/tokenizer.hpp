@@ -13,14 +13,14 @@
 
 #include <metacall/metacall_api.h>
 
-#include <string>
 #include <iterator>
+#include <string>
 #include <vector>
 
 /* -- Namespace -- */
 
-namespace metacallcli {
-
+namespace metacallcli
+{
 /* -- Forward Declarations -- */
 
 class tokenizer;
@@ -33,8 +33,7 @@ class tokenizer;
 */
 class tokenizer
 {
-  public:
-
+public:
 	/* -- Public Methods -- */
 
 	/**
@@ -44,7 +43,7 @@ class tokenizer
 	*  @param[in] str
 	*    String to be tokenized
 	*/
-	tokenizer(const std::string & str);
+	tokenizer(const std::string &str);
 
 	/**
 	*  @brief
@@ -56,7 +55,7 @@ class tokenizer
 	*  @param[in] delimiters
 	*    Delimiters will be used to tokenize the string @str
 	*/
-	tokenizer(const std::string & str, const std::string & delimiters);
+	tokenizer(const std::string &str, const std::string &delimiters);
 
 	/**
 	*  @brief
@@ -71,7 +70,7 @@ class tokenizer
 	*  @param[in] del
 	*    Delimiters will be used to tokenize the string
 	*/
-	void delimit(const std::string & del);
+	void delimit(const std::string &del);
 
 	/* -- Public Class Definition -- */
 
@@ -80,14 +79,13 @@ class tokenizer
 	*    String tokenizer iterator
 	*/
 	class iterator : public std::iterator<
-				std::input_iterator_tag,
-				size_t,
-				size_t,
-				const size_t *,
-				const std::string &>
+						 std::input_iterator_tag,
+						 size_t,
+						 size_t,
+						 const size_t *,
+						 const std::string &>
 	{
-	  public:
-
+	public:
 		/* -- Public Methods -- */
 
 		/**
@@ -100,7 +98,7 @@ class tokenizer
 		*  @param[in] begin
 		*    Initial iterator position
 		*/
-		explicit iterator(const tokenizer & t, size_t begin = 0);
+		explicit iterator(const tokenizer &t, size_t begin = 0);
 
 		/**
 		*  @brief
@@ -109,7 +107,7 @@ class tokenizer
 		*  @return
 		*    Return a reference to itself
 		*/
-		iterator & operator++(void);
+		iterator &operator++(void);
 
 		/**
 		*  @brief
@@ -172,7 +170,7 @@ class tokenizer
 		*  @return
 		*    Return a constant string reference to the current token
 		*/
-		reference escape(const std::string & characters);
+		reference escape(const std::string &characters);
 
 		/**
 		*  @brief
@@ -181,17 +179,16 @@ class tokenizer
 		*  @return
 		*    Returns a reference to itself
 		*/
-		iterator & operator=(const iterator &) = delete;
+		iterator &operator=(const iterator &) = delete;
 
-	  private:
-
+	private:
 		/* -- Private Member Data -- */
 
-		const tokenizer & t;		/**< Reference to tokenizer */
+		const tokenizer &t; /**< Reference to tokenizer */
 
-		size_t offset;				/**< Current position over iteration */
+		size_t offset; /**< Current position over iteration */
 
-		std::string token;			/**< Current token */
+		std::string token; /**< Current token */
 	};
 
 	/**
@@ -219,21 +216,19 @@ class tokenizer
 	*  @return
 	*    Returns a reference to itself
 	*/
-	tokenizer & operator=(const tokenizer &) = delete;
+	tokenizer &operator=(const tokenizer &) = delete;
 
-  protected:
-
+protected:
 	/* -- Protected Definitions -- */
 
 	static const std::string default_delimiters;
 
-  private:
-
+private:
 	/* -- Private Member Data -- */
 
-	const std::string str;		/**< String to be tokenized */
+	const std::string str; /**< String to be tokenized */
 
-	std::string delimiters;		/**< Current string token delimiters */
+	std::string delimiters; /**< Current string token delimiters */
 };
 
 } /* namespace metacallcli */

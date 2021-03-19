@@ -27,11 +27,11 @@
 
 /* -- Methods -- */
 
-char * environment_variable_create(const char * name, const char * default_value)
+char *environment_variable_create(const char *name, const char *default_value)
 {
-	const char * variable_ptr = getenv(name);
+	const char *variable_ptr = getenv(name);
 
-	char * variable;
+	char *variable;
 
 	size_t length;
 
@@ -63,9 +63,9 @@ char * environment_variable_create(const char * name, const char * default_value
 	return variable;
 }
 
-const char * environment_variable_get(const char * name, const char * default_value)
+const char *environment_variable_get(const char *name, const char *default_value)
 {
-	const char * variable = getenv(name);
+	const char *variable = getenv(name);
 
 	if (variable != NULL)
 	{
@@ -75,7 +75,7 @@ const char * environment_variable_get(const char * name, const char * default_va
 	return default_value;
 }
 
-void environment_variable_destroy(char * variable)
+void environment_variable_destroy(char *variable)
 {
 	if (variable != NULL)
 	{

@@ -33,9 +33,7 @@ value value_type_demotion_boolean(value v, type_id id)
 		char b[8];
 		float f;
 		double d;
-	}
-	buffer =
-	{
+	} buffer = {
 		{ 0 }
 	};
 

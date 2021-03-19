@@ -29,13 +29,13 @@ struct log_policy_stream_stdio_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_stdio_ctor_type * log_policy_stream_stdio_ctor;
+typedef struct log_policy_stream_stdio_ctor_type *log_policy_stream_stdio_ctor;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_stdio_ctor_type
 {
-	FILE * stream;
+	FILE *stream;
 };
 
 /* -- Methods -- */

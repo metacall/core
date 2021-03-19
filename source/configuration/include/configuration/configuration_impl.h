@@ -41,7 +41,7 @@ extern "C" {
 *    Returns constant string representing configuration extension
 *
 */
-CONFIGURATION_API const char * configuration_impl_extension(void);
+CONFIGURATION_API const char *configuration_impl_extension(void);
 
 /**
 *  @brief
@@ -54,7 +54,7 @@ CONFIGURATION_API const char * configuration_impl_extension(void);
 *    Returns zero on correct initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_impl_initialize(const char * name);
+CONFIGURATION_API int configuration_impl_initialize(const char *name);
 
 /**
 *  @brief
@@ -70,7 +70,7 @@ CONFIGURATION_API int configuration_impl_initialize(const char * name);
 *    Returns zero on correct loading, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_impl_load(configuration config, void * allocator);
+CONFIGURATION_API int configuration_impl_load(configuration config, void *allocator);
 
 /**
 *  @brief

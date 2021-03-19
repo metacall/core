@@ -33,17 +33,17 @@ extern "C" {
 
 /* -- Forward Declarations -- */
 
-	struct memory_allocator_std_ctx_type;
+struct memory_allocator_std_ctx_type;
 
 /* -- Type Definitions -- */
 
-typedef void * (*memory_allocator_std_impl_malloc)(size_t);
+typedef void *(*memory_allocator_std_impl_malloc)(size_t);
 
-typedef void * (*memory_allocator_std_impl_realloc)(void *, size_t);
+typedef void *(*memory_allocator_std_impl_realloc)(void *, size_t);
 
 typedef void (*memory_allocator_std_impl_free)(void *);
 
-typedef struct memory_allocator_std_ctx_type * memory_allocator_std_ctx;
+typedef struct memory_allocator_std_ctx_type *memory_allocator_std_ctx;
 
 /* -- Member Data -- */
 

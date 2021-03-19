@@ -21,8 +21,8 @@
 /* -- Headers -- */
 
 #include <reflect/reflect_value_type.h>
-#include <reflect/reflect_value_type_promotion.h>
 #include <reflect/reflect_value_type_id_size.h>
+#include <reflect/reflect_value_type_promotion.h>
 
 /* -- Methods -- */
 
@@ -64,9 +64,7 @@ value value_type_promotion_decimal(value v, type_id id)
 	{
 		float f;
 		double d;
-	}
-	decimal_promotion =
-	{
+	} decimal_promotion = {
 		0.0f, 0.0
 	};
 

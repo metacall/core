@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_file_fail_test : public testing::Test
 {
@@ -33,21 +33,20 @@ TEST_F(metacall_file_fail_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* File */
-	#if defined(OPTION_BUILD_LOADERS_FILE)
+/* File */
+#if defined(OPTION_BUILD_LOADERS_FILE)
 	{
-		const char * scripts[] =
-		{
+		const char *scripts[] = {
 			"this-file-does-not-exists.yeet"
 		};
 
 		const size_t size = sizeof(scripts) / sizeof(scripts[0]);
 
-		EXPECT_NE((int) 0, (int) metacall_load_from_file("file", scripts, size, NULL));
+		EXPECT_NE((int)0, (int)metacall_load_from_file("file", scripts, size, NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_FILE */
+#endif /* OPTION_BUILD_LOADERS_FILE */
 
 	/* Print inspect information */
 	{
@@ -55,13 +54,13 @@ TEST_F(metacall_file_fail_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -70,5 +69,5 @@ TEST_F(metacall_file_fail_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

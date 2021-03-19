@@ -26,7 +26,7 @@ struct log_aspect_storage_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_aspect_storage_impl_type * log_aspect_storage_impl;
+typedef struct log_aspect_storage_impl_type *log_aspect_storage_impl;
 
 typedef int (*log_aspect_storage_append)(log_aspect, const log_record);
 typedef int (*log_aspect_storage_flush)(log_aspect);

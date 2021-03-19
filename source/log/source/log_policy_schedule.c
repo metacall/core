@@ -9,15 +9,14 @@
 /* -- Headers -- */
 
 #include <log/log_policy_schedule.h>
-#include <log/log_policy_schedule_sync.h>
 #include <log/log_policy_schedule_async.h>
+#include <log/log_policy_schedule_sync.h>
 
 /* -- Methods -- */
 
 log_policy_interface log_policy_schedule(const log_policy_id policy_schedule_id)
 {
-	static const log_policy_singleton policy_schedule_singleton[LOG_POLICY_SCHEDULE_SIZE] =
-	{
+	static const log_policy_singleton policy_schedule_singleton[LOG_POLICY_SCHEDULE_SIZE] = {
 		&log_policy_schedule_async_interface,
 		&log_policy_schedule_sync_interface
 	};

@@ -31,53 +31,52 @@
 /* -- Definitions -- */
 
 #if defined(_WIN32) && defined(_MSC_VER)
-#	define METACALL_SERIALIZE_VALUE_FORMAT_PTR "0x%p"
+	#define METACALL_SERIALIZE_VALUE_FORMAT_PTR "0x%p"
 #elif defined(__linux) || defined(__linux__)
-#	define METACALL_SERIALIZE_VALUE_FORMAT_PTR "%p"
+	#define METACALL_SERIALIZE_VALUE_FORMAT_PTR "%p"
 #else
-#	define METACALL_SERIALIZE_VALUE_FORMAT_PTR "%p"
+	#define METACALL_SERIALIZE_VALUE_FORMAT_PTR "%p"
 #endif
 
 /* -- Private Methods -- */
 
-static void metacall_serial_impl_serialize_bool(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_bool(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_char(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_char(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_short(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_short(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_int(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_int(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_long(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_long(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_float(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_float(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_double(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_double(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_string(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_string(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_buffer(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_buffer(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_array(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_map(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_map(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_ptr(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_ptr(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_future(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_future(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_function(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_function(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_null(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_class(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_class(value v, char *dest, size_t size, const char *format, size_t *length);
 
-static void metacall_serial_impl_serialize_object(value v, char * dest, size_t size, const char * format, size_t * length);
+static void metacall_serial_impl_serialize_object(value v, char *dest, size_t size, const char *format, size_t *length);
 
 /* -- Definitions -- */
 
-static const char * metacall_serialize_format[] =
-{
+static const char *metacall_serialize_format[] = {
 	"%s",
 	"%c",
 	"%d",
@@ -94,14 +93,13 @@ static const char * metacall_serialize_format[] =
 	NULL, /* TODO: Function */
 	"%s",
 	NULL, /* TODO: Class */
-	NULL /* TODO: Object */
+	NULL  /* TODO: Object */
 };
 
-static_assert((size_t) TYPE_SIZE == (size_t) sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
+static_assert((size_t)TYPE_SIZE == (size_t)sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
 	"MetaCall serializer format does not match MetaCall type size");
 
-static metacall_serialize_impl_ptr serialize_func[] =
-{
+static metacall_serialize_impl_ptr serialize_func[] = {
 	&metacall_serial_impl_serialize_bool,
 	&metacall_serial_impl_serialize_char,
 	&metacall_serial_impl_serialize_short,
@@ -121,12 +119,12 @@ static metacall_serialize_impl_ptr serialize_func[] =
 	&metacall_serial_impl_serialize_object
 };
 
-static_assert((size_t) TYPE_SIZE == (size_t) sizeof(serialize_func) / sizeof(serialize_func[0]),
+static_assert((size_t)TYPE_SIZE == (size_t)sizeof(serialize_func) / sizeof(serialize_func[0]),
 	"MetaCall serializer function does not match MetaCall type size");
 
 /* -- Methods -- */
 
-const char * metacall_serial_impl_serialize_format(type_id id)
+const char *metacall_serial_impl_serialize_format(type_id id)
 {
 	return metacall_serialize_format[id];
 }
@@ -136,7 +134,7 @@ metacall_serialize_impl_ptr metacall_serial_impl_serialize_func(type_id id)
 	return serialize_func[id];
 }
 
-void metacall_serial_impl_serialize_bool(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_bool(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	static const char value_boolean_str[] = "false\0true";
 
@@ -150,42 +148,42 @@ void metacall_serial_impl_serialize_bool(value v, char * dest, size_t size, cons
 	*length = snprintf(dest, size, format, (const char *)(&value_boolean_str[offset]));
 }
 
-void metacall_serial_impl_serialize_char(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_char(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_char(v));
 }
 
-void metacall_serial_impl_serialize_short(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_short(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_short(v));
 }
 
-void metacall_serial_impl_serialize_int(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_int(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_int(v));
 }
 
-void metacall_serial_impl_serialize_long(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_long(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_long(v));
 }
 
-void metacall_serial_impl_serialize_float(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_float(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_float(v));
 }
 
-void metacall_serial_impl_serialize_double(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_double(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_double(v));
 }
 
-void metacall_serial_impl_serialize_string(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_string(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_string(v));
 }
 
-void metacall_serial_impl_serialize_buffer(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_buffer(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	if (dest == NULL && size == 0)
 	{
@@ -194,7 +192,7 @@ void metacall_serial_impl_serialize_buffer(value v, char * dest, size_t size, co
 	}
 	else
 	{
-		const char * buffer = (const char *)value_to_buffer(v);
+		const char *buffer = (const char *)value_to_buffer(v);
 
 		size_t dest_iterator, iterator, buffer_length = 0, buffer_size = value_type_size(v);
 
@@ -207,11 +205,11 @@ void metacall_serial_impl_serialize_buffer(value v, char * dest, size_t size, co
 	}
 }
 
-void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_array(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	size_t iterator, array_value_length = 0, array_size = value_type_count(v);
 
-	value * array_value = value_to_array(v);
+	value *array_value = value_to_array(v);
 
 	(void)format;
 
@@ -222,7 +220,7 @@ void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, con
 
 		type_id id = value_type_id(current_value);
 
-		const char * fmt = metacall_serial_impl_serialize_format(id);
+		const char *fmt = metacall_serial_impl_serialize_format(id);
 
 		metacall_serialize_impl_ptr serialize_ptr = metacall_serial_impl_serialize_func(id);
 
@@ -263,7 +261,7 @@ void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, con
 
 			type_id id = value_type_id(current_value);
 
-			const char * fmt = metacall_serial_impl_serialize_format(id);
+			const char *fmt = metacall_serial_impl_serialize_format(id);
 
 			metacall_serialize_impl_ptr serialize_ptr = metacall_serial_impl_serialize_func(id);
 
@@ -292,19 +290,19 @@ void metacall_serial_impl_serialize_array(value v, char * dest, size_t size, con
 	}
 }
 
-void metacall_serial_impl_serialize_map(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_map(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement map iteration like array stringify */
 
 	*length = snprintf(dest, size, format, value_to_map(v));
 }
 
-void metacall_serial_impl_serialize_ptr(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_ptr(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	*length = snprintf(dest, size, format, value_to_ptr(v));
 }
 
-void metacall_serial_impl_serialize_future(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_future(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement future serialization */
 	(void)v;
@@ -315,7 +313,7 @@ void metacall_serial_impl_serialize_future(value v, char * dest, size_t size, co
 	*length = 0;
 }
 
-void metacall_serial_impl_serialize_function(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_function(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement function serialization */
 	(void)v;
@@ -326,7 +324,7 @@ void metacall_serial_impl_serialize_function(value v, char * dest, size_t size, 
 	*length = 0;
 }
 
-void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_null(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	static const char value_null_str[] = "(null)";
 
@@ -335,8 +333,7 @@ void metacall_serial_impl_serialize_null(value v, char * dest, size_t size, cons
 	*length = snprintf(dest, size, format, value_null_str);
 }
 
-
-void metacall_serial_impl_serialize_class(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_class(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement class serialization */
 	(void)v;
@@ -347,7 +344,7 @@ void metacall_serial_impl_serialize_class(value v, char * dest, size_t size, con
 	*length = 0;
 }
 
-void metacall_serial_impl_serialize_object(value v, char * dest, size_t size, const char * format, size_t * length)
+void metacall_serial_impl_serialize_object(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement object serialization */
 	(void)v;

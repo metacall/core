@@ -32,10 +32,10 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/env python3\n"
@@ -46,23 +46,23 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 
 		static const char tag[] = "py";
 
-		void * handle = NULL;
+		void *handle = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), &handle));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), &handle));
 
-		void * ret = metacall("multmem", 5, 15);
+		void *ret = metacall("multmem", 5, 15);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) 75, (long) metacall_value_to_long(ret));
+		EXPECT_EQ((long)75, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int) 0, (int) metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall_function("multmem"));
+		EXPECT_EQ((void *)NULL, (void *)metacall_function("multmem"));
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -20,8 +20,8 @@
 
 /* -- Headers -- */
 
-#include <dynlink/dynlink_symbol.h>
 #include <dynlink/dynlink_interface.h>
+#include <dynlink/dynlink_symbol.h>
 
 #include <string.h>
 

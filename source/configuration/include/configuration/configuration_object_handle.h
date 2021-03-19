@@ -35,7 +35,7 @@ struct configuration_type;
 
 /* -- Type Definitions -- */
 
-typedef struct configuration_type * configuration;
+typedef struct configuration_type *configuration;
 
 #ifdef __cplusplus
 }

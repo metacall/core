@@ -29,7 +29,7 @@ extern "C" {
 *    Returns constant string representing serial extension
 *
 */
-METACALL_SERIAL_API const char * metacall_serial_impl_extension(void);
+METACALL_SERIAL_API const char *metacall_serial_impl_extension(void);
 
 /**
 *  @brief
@@ -58,7 +58,7 @@ METACALL_SERIAL_API serial_impl_handle metacall_serial_impl_initialize(memory_al
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-METACALL_SERIAL_API char * metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size);
+METACALL_SERIAL_API char *metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t *size);
 
 /**
 *  @brief
@@ -77,7 +77,7 @@ METACALL_SERIAL_API char * metacall_serial_impl_serialize(serial_impl_handle han
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-METACALL_SERIAL_API value metacall_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size);
+METACALL_SERIAL_API value metacall_serial_impl_deserialize(serial_impl_handle handle, const char *buffer, size_t size);
 
 /**
 *  @brief

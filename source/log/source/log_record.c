@@ -6,8 +6,8 @@
  *
  */
 
-#include <log/log_record.h>
 #include <log/log_level.h>
+#include <log/log_record.h>
 
 /* -- Member Data -- */
 
@@ -16,22 +16,22 @@ struct log_record_type
 	time_t time;
 	uint64_t id;
 	size_t line;
-	const char * func;
-	const char * file;
+	const char *func;
+	const char *file;
 	enum log_level_id level;
-	const char * message;
-	struct log_record_va_list_type * variable_args;
+	const char *message;
+	struct log_record_va_list_type *variable_args;
 };
 
 /* -- Private Methods -- */
 
 #if defined(LOG_RECORD_FUNCTION_UNKNOWN_IMPL)
-	const char * __log_record_unknown_function__()
-	{
-		static const char __log_record_unknown_function_impl__[] = "unknown_function";
+const char *__log_record_unknown_function__()
+{
+	static const char __log_record_unknown_function_impl__[] = "unknown_function";
 
-		return __log_record_unknown_function_impl__;
-	}
+	return __log_record_unknown_function_impl__;
+}
 #endif
 
 /* -- Protected Methods -- */
@@ -77,7 +77,7 @@ log_record log_record_initialize(log_record record, const log_record_ctor record
 	return NULL;
 }
 
-const time_t * log_record_time(log_record record)
+const time_t *log_record_time(log_record record)
 {
 	return &record->time;
 }
@@ -92,12 +92,12 @@ size_t log_record_line(log_record record)
 	return record->line;
 }
 
-const char * log_record_func(log_record record)
+const char *log_record_func(log_record record)
 {
 	return record->func;
 }
 
-const char * log_record_file(log_record record)
+const char *log_record_file(log_record record)
 {
 	return record->file;
 }
@@ -107,12 +107,12 @@ enum log_level_id log_record_level(log_record record)
 	return record->level;
 }
 
-const char * log_record_message(log_record record)
+const char *log_record_message(log_record record)
 {
 	return record->message;
 }
 
-struct log_record_va_list_type * log_record_variable_args(log_record record)
+struct log_record_va_list_type *log_record_variable_args(log_record record)
 {
 	return record->variable_args;
 }

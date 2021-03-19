@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-typedef void * comparable;
+typedef void *comparable;
 
 typedef int (*comparable_callback)(const comparable, const comparable);
 

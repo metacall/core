@@ -37,7 +37,7 @@ struct dynlink_impl_interface_type;
 
 /* -- Type definitions -- */
 
-typedef struct dynlink_impl_interface_type * dynlink_impl_interface;
+typedef struct dynlink_impl_interface_type *dynlink_impl_interface;
 
 /* -- Methods -- */
 

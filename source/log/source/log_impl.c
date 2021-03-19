@@ -33,7 +33,7 @@
 
 struct log_impl_type
 {
-	const char * name;
+	const char *name;
 	log_handle handle;
 	log_aspect aspects[LOG_ASPECT_SIZE];
 	enum log_level_id level;
@@ -43,8 +43,7 @@ struct log_impl_type
 
 log_aspect_interface log_impl_aspect_interface(enum log_aspect_id aspect_id)
 {
-	static log_aspect_singleton aspect_impl[LOG_ASPECT_SIZE] =
-	{
+	static log_aspect_singleton aspect_impl[LOG_ASPECT_SIZE] = {
 		&log_aspect_format_interface,
 		&log_aspect_schedule_interface,
 		&log_aspect_storage_interface,
@@ -54,7 +53,7 @@ log_aspect_interface log_impl_aspect_interface(enum log_aspect_id aspect_id)
 	return aspect_impl[aspect_id]();
 }
 
-log_impl log_impl_create(const char * name)
+log_impl log_impl_create(const char *name)
 {
 	log_impl impl = malloc(sizeof(struct log_impl_type));
 
@@ -65,11 +64,11 @@ log_impl log_impl_create(const char * name)
 		impl->name = name;
 		impl->handle = log_handle_create();
 
-		#if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)
-			impl->level = LOG_LEVEL_DEBUG;
-		#else
-			impl->level = LOG_LEVEL_INFO;
-		#endif
+#if !defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__)
+		impl->level = LOG_LEVEL_DEBUG;
+#else
+		impl->level = LOG_LEVEL_INFO;
+#endif
 
 		for (iterator = 0; iterator < LOG_ASPECT_SIZE; ++iterator)
 		{
@@ -85,7 +84,7 @@ void log_impl_define(log_impl impl, log_aspect aspect, enum log_aspect_id aspect
 	impl->aspects[aspect_id] = aspect;
 }
 
-const char * log_impl_name(log_impl impl)
+const char *log_impl_name(log_impl impl)
 {
 	return impl->name;
 }

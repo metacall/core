@@ -6,9 +6,9 @@
  *
  */
 
+#include <log/log_impl.h>
 #include <log/log_map.h>
 #include <log/log_valid_size.h>
-#include <log/log_impl.h>
 
 #include <string.h>
 
@@ -22,14 +22,14 @@ struct log_map_bucket_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_map_bucket_type * log_map_bucket;
+typedef struct log_map_bucket_type *log_map_bucket;
 
 /* -- Member Data -- */
 
 struct log_map_bucket_type
 {
-	const char * key;
-	const void * value;
+	const char *key;
+	const void *value;
 	log_map_bucket next;
 };
 
@@ -37,17 +37,17 @@ struct log_map_type
 {
 	struct log_map_table_type
 	{
-		log_map_bucket data;	/**< Hash table pointer */
-		size_t count;			/**< Number of unique key-value pairs introduced */
-		size_t size;			/**< Fixed capacity of the hash table */
+		log_map_bucket data; /**< Hash table pointer */
+		size_t count;		 /**< Number of unique key-value pairs introduced */
+		size_t size;		 /**< Fixed capacity of the hash table */
 	} table;
 
 	struct log_map_block_type
 	{
-		log_map_bucket * data;	/**< Block storage holding arrays of buckets */
-		size_t count;			/**< Number of blocks used in the storage */
-		size_t size;			/**< Fixed capacity of the storage */
-		size_t position;		/**< Current block bucket iterator */
+		log_map_bucket *data; /**< Block storage holding arrays of buckets */
+		size_t count;		  /**< Number of blocks used in the storage */
+		size_t size;		  /**< Fixed capacity of the storage */
+		size_t position;	  /**< Current block bucket iterator */
 	} block;
 };
 
@@ -61,11 +61,11 @@ struct log_map_iterator_type
 
 /* -- Private Methods -- */
 
-static size_t log_map_hash_fnv1(const char * key)
+static size_t log_map_hash_fnv1(const char *key)
 {
 	size_t hash = ((size_t)0x811C9DC5);
 
-	const char * iterator = key;
+	const char *iterator = key;
 
 	while (*iterator != '\0')
 	{
@@ -157,7 +157,7 @@ size_t log_map_collisions(log_map map)
 	return map->block.count;
 }
 
-int log_map_insert(log_map map, const char * key, const void * value)
+int log_map_insert(log_map map, const char *key, const void *value)
 {
 	size_t hash = log_map_hash_fnv1(key) & (map->table.size - 1);
 
@@ -227,7 +227,7 @@ int log_map_insert(log_map map, const char * key, const void * value)
 	return 0;
 }
 
-const void * log_map_get(log_map map, const char * key)
+const void *log_map_get(log_map map, const char *key)
 {
 	size_t hash = log_map_hash_fnv1(key) & (map->table.size - 1);
 
@@ -250,7 +250,7 @@ const void * log_map_get(log_map map, const char * key)
 	return NULL;
 }
 
-const void * log_map_remove(log_map map, const char * key)
+const void *log_map_remove(log_map map, const char *key)
 {
 	/* TODO: remove log impl from map and clear bucket */
 	(void)map;
@@ -371,7 +371,7 @@ log_map_iterator log_map_iterator_begin(log_map map)
 	return iterator;
 }
 
-const char * log_map_iterator_key(log_map_iterator iterator)
+const char *log_map_iterator_key(log_map_iterator iterator)
 {
 	if (iterator == NULL)
 	{
@@ -381,7 +381,7 @@ const char * log_map_iterator_key(log_map_iterator iterator)
 	return iterator->bucket->key;
 }
 
-const void * log_map_iterator_value(log_map_iterator iterator)
+const void *log_map_iterator_value(log_map_iterator iterator)
 {
 	if (iterator == NULL)
 	{

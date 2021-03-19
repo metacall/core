@@ -24,7 +24,7 @@
 
 hash hash_callback_str(const hash_key key)
 {
-	const char * str = (const char *)key;
+	const char *str = (const char *)key;
 
 	hash h = 0x1505;
 

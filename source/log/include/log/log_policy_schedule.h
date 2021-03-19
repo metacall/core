@@ -23,8 +23,8 @@ extern "C" {
 
 enum log_policy_schedule_id
 {
-	LOG_POLICY_SCHEDULE_ASYNC	= 0x00,
-	LOG_POLICY_SCHEDULE_SYNC	= 0x01,
+	LOG_POLICY_SCHEDULE_ASYNC = 0x00,
+	LOG_POLICY_SCHEDULE_SYNC = 0x01,
 
 	LOG_POLICY_SCHEDULE_SIZE
 };
@@ -35,9 +35,9 @@ struct log_policy_schedule_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef void * log_policy_schedule_data;
+typedef void *log_policy_schedule_data;
 
-typedef struct log_policy_schedule_impl_type * log_policy_schedule_impl;
+typedef struct log_policy_schedule_impl_type *log_policy_schedule_impl;
 
 typedef int (*log_policy_schedule_execute_cb)(log_policy, log_policy_schedule_data);
 

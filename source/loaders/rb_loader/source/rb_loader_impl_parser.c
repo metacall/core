@@ -50,7 +50,7 @@ static int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, 
 
 /* -- Methods -- */
 
-int rb_loader_impl_key_parse(const char * source, set function_map)
+int rb_loader_impl_key_parse(const char *source, set function_map)
 {
 	static const char func_def_name[] = "def", func_do_name[] = "do", func_end_name[] = "end";
 	static const char comment_begin[] = "begin\n", comment_end[] = "end\n";
@@ -87,8 +87,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 
 		switch (comment)
 		{
-			case rb_loader_impl_comment_state_none :
-			{
+			case rb_loader_impl_comment_state_none: {
 				if (character == '#')
 				{
 					comment = rb_loader_impl_comment_state_line;
@@ -112,8 +111,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 				break;
 			}
 
-			case rb_loader_impl_comment_state_line :
-			{
+			case rb_loader_impl_comment_state_line: {
 				if (character == '\n')
 				{
 					comment = rb_loader_impl_comment_state_none;
@@ -122,8 +120,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 				break;
 			}
 
-			case rb_loader_impl_comment_state_multi_line :
-			{
+			case rb_loader_impl_comment_state_multi_line: {
 				if (character == comment_begin[comment_begin_index])
 				{
 					++comment_begin_index;
@@ -147,8 +144,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 				break;
 			}
 
-			case rb_loader_impl_comment_state_multi_line_end :
-			{
+			case rb_loader_impl_comment_state_multi_line_end: {
 				if (character == comment_end[comment_end_index])
 				{
 					++comment_end_index;
@@ -175,13 +171,12 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 
 		if ((comment == rb_loader_impl_comment_state_none && comment_multi_line == 1) &&
 			((character != ' ') && (character != '\t') &&
-			(character != '\n' || (character == '\n' && state == rb_loader_impl_parser_state_function_name)) &&
-			(character != '\r')))
+				(character != '\n' || (character == '\n' && state == rb_loader_impl_parser_state_function_name)) &&
+				(character != '\r')))
 		{
 			switch (state)
 			{
-				case rb_loader_impl_parser_state_function :
-				{
+				case rb_loader_impl_parser_state_function: {
 					if (character == func_def_name[func_def_index])
 					{
 						++func_def_index;
@@ -201,8 +196,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 					break;
 				}
 
-				case rb_loader_impl_parser_state_function_name :
-				{
+				case rb_loader_impl_parser_state_function_name: {
 					if (character == '(')
 					{
 						if (function_index == 0)
@@ -252,8 +246,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 					break;
 				}
 
-				case rb_loader_impl_parser_state_params :
-				{
+				case rb_loader_impl_parser_state_params: {
 					if (character == ')')
 					{
 						rb_function_parser function;
@@ -338,8 +331,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 					break;
 				}
 
-				case rb_loader_impl_parser_state_reset :
-				{
+				case rb_loader_impl_parser_state_reset: {
 					if (character == func_do_name[func_do_index])
 					{
 						++func_do_index;
@@ -387,8 +379,7 @@ int rb_loader_impl_key_parse(const char * source, set function_map)
 					break;
 				}
 
-				default :
-				{
+				default: {
 					return 1;
 				}
 			}

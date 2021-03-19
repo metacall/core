@@ -28,14 +28,13 @@
 
 /* -- Definitions -- */
 
-#define SET_BUCKET_PAIRS_DEFAULT	((size_t)0x04)
+#define SET_BUCKET_PAIRS_DEFAULT ((size_t)0x04)
 
 /* -- Methods -- */
 
 size_t set_bucket_capacity(size_t prime)
 {
-	static const size_t capacity_primes[] =
-	{
+	static const size_t capacity_primes[] = {
 		5UL,
 		11UL,
 		23UL,
@@ -67,40 +66,40 @@ size_t set_bucket_capacity(size_t prime)
 		2364114217UL,
 		4294967291UL,
 
-		#if (SIZE_MAX > 0xFFFFFFFF)
-			(size_t)8589934583ULL,
-			(size_t)17179869143ULL,
-			(size_t)34359738337ULL,
-			(size_t)68719476731ULL,
-			(size_t)137438953447ULL,
-			(size_t)274877906899ULL,
-			(size_t)549755813881ULL,
-			(size_t)1099511627689ULL,
-			(size_t)2199023255531ULL,
-			(size_t)4398046511093ULL,
-			(size_t)8796093022151ULL,
-			(size_t)17592186044399ULL,
-			(size_t)35184372088777ULL,
-			(size_t)70368744177643ULL,
-			(size_t)140737488355213ULL,
-			(size_t)281474976710597ULL,
-			(size_t)562949953421231ULL,
-			(size_t)1125899906842597ULL,
-			(size_t)2251799813685119ULL,
-			(size_t)4503599627370449ULL,
-			(size_t)9007199254740881ULL,
-			(size_t)18014398509481951ULL,
-			(size_t)36028797018963913ULL,
-			(size_t)72057594037927931ULL,
-			(size_t)144115188075855859ULL,
-			(size_t)288230376151711717ULL,
-			(size_t)576460752303423433ULL,
-			(size_t)1152921504606846883ULL,
-			(size_t)2305843009213693951ULL,
-			(size_t)4611686018427387847ULL,
-			(size_t)9223372036854775783ULL,
-			(size_t)18446744073709551557ULL
-		#endif
+#if (SIZE_MAX > 0xFFFFFFFF)
+		(size_t)8589934583ULL,
+		(size_t)17179869143ULL,
+		(size_t)34359738337ULL,
+		(size_t)68719476731ULL,
+		(size_t)137438953447ULL,
+		(size_t)274877906899ULL,
+		(size_t)549755813881ULL,
+		(size_t)1099511627689ULL,
+		(size_t)2199023255531ULL,
+		(size_t)4398046511093ULL,
+		(size_t)8796093022151ULL,
+		(size_t)17592186044399ULL,
+		(size_t)35184372088777ULL,
+		(size_t)70368744177643ULL,
+		(size_t)140737488355213ULL,
+		(size_t)281474976710597ULL,
+		(size_t)562949953421231ULL,
+		(size_t)1125899906842597ULL,
+		(size_t)2251799813685119ULL,
+		(size_t)4503599627370449ULL,
+		(size_t)9007199254740881ULL,
+		(size_t)18014398509481951ULL,
+		(size_t)36028797018963913ULL,
+		(size_t)72057594037927931ULL,
+		(size_t)144115188075855859ULL,
+		(size_t)288230376151711717ULL,
+		(size_t)576460752303423433ULL,
+		(size_t)1152921504606846883ULL,
+		(size_t)2305843009213693951ULL,
+		(size_t)4611686018427387847ULL,
+		(size_t)9223372036854775783ULL,
+		(size_t)18446744073709551557ULL
+#endif
 	};
 
 	static const size_t capacity_primes_size = sizeof(capacity_primes) / sizeof(capacity_primes[0]);
@@ -193,7 +192,7 @@ int set_bucket_realloc_pairs(set_bucket bucket, size_t new_capacity)
 	return 0;
 }
 
-set_pair set_bucket_get_pair(set_bucket bucket, comparable_callback compare_cb, void * key)
+set_pair set_bucket_get_pair(set_bucket bucket, comparable_callback compare_cb, void *key)
 {
 	size_t iterator;
 
@@ -215,7 +214,7 @@ set_pair set_bucket_get_pair(set_bucket bucket, comparable_callback compare_cb, 
 	return NULL;
 }
 
-int set_bucket_insert(set_bucket bucket, void * key, void * value)
+int set_bucket_insert(set_bucket bucket, void *key, void *value)
 {
 	set_pair pair;
 
@@ -238,7 +237,7 @@ int set_bucket_insert(set_bucket bucket, void * key, void * value)
 		if (set_bucket_realloc_pairs(bucket, bucket->capacity << 1) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insertion pairs reallocation");
-	
+
 			return 1;
 		}
 	}
@@ -253,7 +252,7 @@ int set_bucket_insert(set_bucket bucket, void * key, void * value)
 	return 0;
 }
 
-int set_bucket_remove(set_bucket bucket, comparable_callback compare_cb, void * key, void ** value)
+int set_bucket_remove(set_bucket bucket, comparable_callback compare_cb, void *key, void **value)
 {
 	size_t iterator;
 
@@ -277,7 +276,7 @@ int set_bucket_remove(set_bucket bucket, comparable_callback compare_cb, void * 
 
 		if (compare_cb(key, pair->key) == 0)
 		{
-			void * deleted_value = pair->value;
+			void *deleted_value = pair->value;
 
 			size_t next = iterator + 1;
 
@@ -288,11 +287,11 @@ int set_bucket_remove(set_bucket bucket, comparable_callback compare_cb, void * 
 			--bucket->count;
 
 			if (bucket->count <= new_capacity && new_capacity > SET_BUCKET_PAIRS_DEFAULT)
-			{	
+			{
 				if (set_bucket_realloc_pairs(bucket, new_capacity) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove pairs reallocation");
-			
+
 					return 1;
 				}
 			}

@@ -34,7 +34,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-ENVIRONMENT_API const char * environment_print_info(void);
+ENVIRONMENT_API const char *environment_print_info(void);
 
 #ifdef __cplusplus
 }

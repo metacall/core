@@ -21,12 +21,12 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
-void * c_function(void * args[])
+void *c_function(void *args[])
 {
-	printf("%s\n", (char*)args[0]);
+	printf("%s\n", (char *)args[0]);
 
 	return metacall_value_create_int(1);
 }
@@ -42,12 +42,12 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 
 	metacall_log_stdio_type log_stdio = { stdout };
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/env python3\n"
@@ -62,23 +62,23 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		void * ret = NULL;
+		void *ret = NULL;
 
 		size_t size = 0;
 
-		char * value_str = NULL;
+		char *value_str = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
 		ret = metacall("monad", 1);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_STRING, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((int) 0, (int) strcmp("asd", metacall_value_to_string(ret)));
+		EXPECT_EQ((int)0, (int)strcmp("asd", metacall_value_to_string(ret)));
 
 		value_str = metacall_serialize(metacall_serial(), ret, &size, allocator);
 
@@ -90,11 +90,11 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 
 		ret = metacall("monad", 0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_BUFFER, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_BUFFER, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((int) 0, (int) memcmp(metacall_value_to_buffer(ret), "asd", metacall_value_size(ret)));
+		EXPECT_EQ((int)0, (int)memcmp(metacall_value_to_buffer(ret), "asd", metacall_value_size(ret)));
 
 		value_str = metacall_serialize(metacall_serial(), ret, &size, allocator);
 
@@ -106,7 +106,7 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 
 		metacall_allocator_destroy(allocator);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Print inspect information */
 	{
@@ -114,13 +114,13 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -129,5 +129,5 @@ TEST_F(metacall_return_monad_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

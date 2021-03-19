@@ -25,13 +25,13 @@
 
 #include <reflect/reflect_api.h>
 
+#include <reflect/reflect_class.h>
+#include <reflect/reflect_function.h>
+#include <reflect/reflect_future.h>
+#include <reflect/reflect_object.h>
+#include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type_cast.h>
-#include <reflect/reflect_type_id.h>
-#include <reflect/reflect_future.h>
-#include <reflect/reflect_function.h>
-#include <reflect/reflect_class.h>
-#include <reflect/reflect_object.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,7 +55,7 @@ extern "C" {
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_type_create(const void * data, size_t bytes, type_id id);
+REFLECT_API value value_type_create(const void *data, size_t bytes, type_id id);
 
 /**
 *  @brief
@@ -91,7 +91,7 @@ REFLECT_API size_t value_type_size(value v);
 *  @return
 *    Number of values @v represents
 */
-REFLECT_API size_t value_type_count(void * v);
+REFLECT_API size_t value_type_count(void *v);
 
 /**
 *  @brief
@@ -202,7 +202,7 @@ REFLECT_API value value_create_double(double d);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_string(const char * str, size_t length);
+REFLECT_API value value_create_string(const char *str, size_t length);
 
 /**
 *  @brief
@@ -217,7 +217,7 @@ REFLECT_API value value_create_string(const char * str, size_t length);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_buffer(const void * buffer, size_t size);
+REFLECT_API value value_create_buffer(const void *buffer, size_t size);
 
 /**
 *  @brief
@@ -232,7 +232,7 @@ REFLECT_API value value_create_buffer(const void * buffer, size_t size);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_array(const value * values, size_t size);
+REFLECT_API value value_create_array(const value *values, size_t size);
 
 /**
 *  @brief
@@ -247,7 +247,7 @@ REFLECT_API value value_create_array(const value * values, size_t size);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_map(const value * tuples, size_t size);
+REFLECT_API value value_create_map(const value *tuples, size_t size);
 
 /**
 *  @brief
@@ -259,7 +259,7 @@ REFLECT_API value value_create_map(const value * tuples, size_t size);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_ptr(const void * ptr);
+REFLECT_API value value_create_ptr(const void *ptr);
 
 /**
 *  @brief
@@ -298,7 +298,7 @@ REFLECT_API value value_create_function(function f);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create_function_closure(function f, void * c);
+REFLECT_API value value_create_function_closure(function f, void *c);
 
 /**
 *  @brief
@@ -427,7 +427,7 @@ REFLECT_API double value_to_double(value v);
 *  @return
 *    Value converted to a C string (null terminated)
 */
-REFLECT_API char * value_to_string(value v);
+REFLECT_API char *value_to_string(value v);
 
 /**
 *  @brief
@@ -439,7 +439,7 @@ REFLECT_API char * value_to_string(value v);
 *  @return
 *    Value converted to memory block
 */
-REFLECT_API void * value_to_buffer(value v);
+REFLECT_API void *value_to_buffer(value v);
 
 /**
 *  @brief
@@ -451,7 +451,7 @@ REFLECT_API void * value_to_buffer(value v);
 *  @return
 *    Value converted to array of values
 */
-REFLECT_API value * value_to_array(value v);
+REFLECT_API value *value_to_array(value v);
 
 /**
 *  @brief
@@ -463,7 +463,7 @@ REFLECT_API value * value_to_array(value v);
 *  @return
 *    Value converted to map (array of tuples (array of values))
 */
-REFLECT_API value * value_to_map(value v);
+REFLECT_API value *value_to_map(value v);
 
 /**
 *  @brief
@@ -475,7 +475,7 @@ REFLECT_API value * value_to_map(value v);
 *  @return
 *    Value converted to pointer
 */
-REFLECT_API void * value_to_ptr(value v);
+REFLECT_API void *value_to_ptr(value v);
 
 /**
 *  @brief
@@ -511,7 +511,7 @@ REFLECT_API function value_to_function(value v);
 *  @return
 *    Value converted to null
 */
-REFLECT_API void * value_to_null(value v);
+REFLECT_API void *value_to_null(value v);
 
 /**
 *  @brief
@@ -659,7 +659,7 @@ REFLECT_API value value_from_double(value v, double d);
 *  @return
 *    Value with string @str assigned to it
 */
-REFLECT_API value value_from_string(value v, const char * str, size_t length);
+REFLECT_API value value_from_string(value v, const char *str, size_t length);
 
 /**
 *  @brief
@@ -677,7 +677,7 @@ REFLECT_API value value_from_string(value v, const char * str, size_t length);
 *  @return
 *    Value with array @buffer assigned to it
 */
-REFLECT_API value value_from_buffer(value v, const void * buffer, size_t size);
+REFLECT_API value value_from_buffer(value v, const void *buffer, size_t size);
 
 /**
 *  @brief
@@ -695,7 +695,7 @@ REFLECT_API value value_from_buffer(value v, const void * buffer, size_t size);
 *  @return
 *    Value with array of values @values assigned to it
 */
-REFLECT_API value value_from_array(value v, const value * values, size_t size);
+REFLECT_API value value_from_array(value v, const value *values, size_t size);
 
 /**
 *  @brief
@@ -713,7 +713,7 @@ REFLECT_API value value_from_array(value v, const value * values, size_t size);
 *  @return
 *    Value with array of tuples @tuples assigned to it
 */
-REFLECT_API value value_from_map(value v, const value * tuples, size_t size);
+REFLECT_API value value_from_map(value v, const value *tuples, size_t size);
 
 /**
 *  @brief
@@ -728,7 +728,7 @@ REFLECT_API value value_from_map(value v, const value * tuples, size_t size);
 *  @return
 *    Value with pointer @ptr assigned to it
 */
-REFLECT_API value value_from_ptr(value v, const void * ptr);
+REFLECT_API value value_from_ptr(value v, const void *ptr);
 
 /**
 *  @brief

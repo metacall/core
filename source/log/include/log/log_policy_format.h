@@ -28,9 +28,9 @@ extern "C" {
 
 enum log_policy_format_id
 {
-	LOG_POLICY_FORMAT_BINARY	= 0x00,
-	LOG_POLICY_FORMAT_TEXT		= 0x01,
-	LOG_POLICY_FORMAT_CUSTOM	= 0x02,
+	LOG_POLICY_FORMAT_BINARY = 0x00,
+	LOG_POLICY_FORMAT_TEXT = 0x01,
+	LOG_POLICY_FORMAT_CUSTOM = 0x02,
 
 	LOG_POLICY_FORMAT_SIZE
 };
@@ -41,7 +41,7 @@ struct log_policy_format_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_format_impl_type * log_policy_format_impl;
+typedef struct log_policy_format_impl_type *log_policy_format_impl;
 
 typedef size_t (*log_policy_format_size)(log_policy, const log_record);
 typedef size_t (*log_policy_format_serialize)(log_policy, const log_record, void *, const size_t);
@@ -66,7 +66,7 @@ LOG_API log_policy log_policy_format_text(void);
 
 LOG_API log_policy log_policy_format_text_flags(unsigned int flags);
 
-LOG_API log_policy log_policy_format_custom(void * context, log_policy_format_custom_size_ptr format_size, log_policy_format_custom_serialize_ptr format_serialize, log_policy_format_custom_deserialize_ptr format_deserialize);
+LOG_API log_policy log_policy_format_custom(void *context, log_policy_format_custom_size_ptr format_size, log_policy_format_custom_serialize_ptr format_serialize, log_policy_format_custom_deserialize_ptr format_deserialize);
 
 #ifdef __cplusplus
 }

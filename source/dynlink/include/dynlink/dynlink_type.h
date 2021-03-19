@@ -35,10 +35,10 @@ struct dynlink_type;
 
 /* -- Type definitions -- */
 
-typedef struct dynlink_type *	dynlink;				/**< Dynamically linked shared object handle */
-typedef const char *			dynlink_path;			/**< Dynamically linked shared object name */
-typedef const char *			dynlink_name;			/**< Dynamically linked shared object name */
-typedef const char *			dynlink_symbol_name;	/**< Dynamically linked shared object symbol name */
+typedef struct dynlink_type *dynlink;	 /**< Dynamically linked shared object handle */
+typedef const char *dynlink_path;		 /**< Dynamically linked shared object name */
+typedef const char *dynlink_name;		 /**< Dynamically linked shared object name */
+typedef const char *dynlink_symbol_name; /**< Dynamically linked shared object symbol name */
 
 #ifdef __cplusplus
 }

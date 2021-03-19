@@ -33,7 +33,7 @@
 typedef struct signature_node_type
 {
 	size_t index;
-	char * name;
+	char *name;
 	type t;
 
 } * signature_node;
@@ -51,7 +51,7 @@ static signature_node signature_at(signature s, size_t index);
 
 static value signature_metadata_return(signature s);
 
-static value signature_metadata_args_map_name(const char * name);
+static value signature_metadata_args_map_name(const char *name);
 
 static value signature_metadata_args_map(signature s);
 
@@ -164,7 +164,7 @@ size_t signature_count(signature s)
 	return 0;
 }
 
-size_t signature_get_index(signature s, const char * name)
+size_t signature_get_index(signature s, const char *name)
 {
 	if (s != NULL && name != NULL)
 	{
@@ -179,7 +179,7 @@ size_t signature_get_index(signature s, const char * name)
 	return REFLECT_SIGNATURE_INVALID_INDEX;
 }
 
-const char * signature_get_name(signature s, size_t index)
+const char *signature_get_name(signature s, size_t index)
 {
 	if (s != NULL && index < s->count)
 	{
@@ -213,7 +213,7 @@ type signature_get_return(signature s)
 	return NULL;
 }
 
-void signature_set(signature s, size_t index, const char * name, type t)
+void signature_set(signature s, size_t index, const char *name, type t)
 {
 	if (s != NULL && index < s->count && name != NULL)
 	{
@@ -221,7 +221,7 @@ void signature_set(signature s, size_t index, const char * name, type t)
 
 		size_t name_size = strlen(name) + 1;
 
-		char * name_node = malloc(sizeof(char) * name_size);
+		char *name_node = malloc(sizeof(char) * name_size);
 
 		if (name_node == NULL)
 		{
@@ -270,7 +270,7 @@ value signature_metadata_return(signature s)
 
 	value ret = value_create_array(NULL, 2);
 
-	value * ret_array, * ret_map;
+	value *ret_array, *ret_map;
 
 	if (ret == NULL)
 	{
@@ -311,11 +311,11 @@ value signature_metadata_return(signature s)
 	return ret;
 }
 
-value signature_metadata_args_map_name(const char * name)
+value signature_metadata_args_map_name(const char *name)
 {
 	static const char name_str[] = "name";
 
-	value * v_array, v = value_create_array(NULL, 2);
+	value *v_array, v = value_create_array(NULL, 2);
 
 	if (v == NULL)
 	{
@@ -356,7 +356,7 @@ value signature_metadata_args_map(signature s)
 
 	if (s->count > 0)
 	{
-		value * args_array = value_to_array(args);
+		value *args_array = value_to_array(args);
 
 		size_t index;
 
@@ -364,7 +364,7 @@ value signature_metadata_args_map(signature s)
 		{
 			signature_node node = signature_at(s, index);
 
-			value * args_map_ptr;
+			value *args_map_ptr;
 
 			args_array[index] = value_create_map(NULL, 2);
 
@@ -410,7 +410,7 @@ value signature_metadata_args(signature s)
 	{
 		value args = value_create_array(NULL, 2);
 
-		value * args_array;
+		value *args_array;
 
 		if (args == NULL)
 		{
@@ -442,7 +442,7 @@ value signature_metadata(signature s)
 {
 	value ret, args, sig;
 
-	value * sig_map;
+	value *sig_map;
 
 	/* Create return array */
 	ret = signature_metadata_return(s);

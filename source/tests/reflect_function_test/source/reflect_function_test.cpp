@@ -41,9 +41,9 @@ typedef struct function_impl_example_type
 
 } * function_impl_example;
 
-void function_example(char c, int i, void * p)
+void function_example(char c, int i, void *p)
 {
-	struct example_arg_type * e = (struct example_arg_type *)p;
+	struct example_arg_type *e = (struct example_arg_type *)p;
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "char: %c; int: %d; ptr: %p", c, i, p);
 
@@ -78,7 +78,7 @@ function_return function_example_interface_invoke(function func, function_impl f
 	return NULL;
 }
 
-function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -102,8 +102,7 @@ void function_example_interface_destroy(function func, function_impl func_impl)
 
 function_interface function_example_singleton()
 {
-	static struct function_interface_type example_interface =
-	{
+	static struct function_interface_type example_interface = {
 		&function_example_interface_create,
 		&function_example_interface_invoke,
 		&function_example_interface_await,
@@ -115,24 +114,24 @@ function_interface function_example_singleton()
 
 class reflect_function_test : public testing::Test
 {
-  public:
+public:
 };
 
 TEST_F(reflect_function_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
 	type char_type = type_create(TYPE_CHAR, "char", NULL, NULL);
 	type int_type = type_create(TYPE_INT, "int", NULL, NULL);
 	type ptr_type = type_create(TYPE_PTR, "ptr", NULL, NULL);
 
-	EXPECT_NE((type) char_type, (type) NULL);
-	EXPECT_NE((type) int_type, (type) NULL);
-	EXPECT_NE((type) ptr_type, (type) NULL);
+	EXPECT_NE((type)char_type, (type)NULL);
+	EXPECT_NE((type)int_type, (type)NULL);
+	EXPECT_NE((type)ptr_type, (type)NULL);
 
 	if (char_type != NULL && int_type != NULL && ptr_type != NULL)
 	{
@@ -142,11 +141,11 @@ TEST_F(reflect_function_test, DefaultConstructor)
 
 		f = function_create("example", 3, example_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f, (function) NULL);
+		EXPECT_NE((function)f, (function)NULL);
 
 		if (f != NULL)
 		{
-			EXPECT_EQ((int) function_increment_reference(f), (int) 0);
+			EXPECT_EQ((int)function_increment_reference(f), (int)0);
 
 			signature_set(function_signature(f), 0, "c", char_type);
 			signature_set(function_signature(f), 1, "i", int_type);

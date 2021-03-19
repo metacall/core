@@ -29,8 +29,7 @@ int mock_loader_impl_function_destroy(loader_impl impl, loader_handle handle, lo
 
 loader_impl_function mock_loader_impl_function_singleton()
 {
-	static struct loader_impl_function_type loder_impl_function_mock =
-	{
+	static struct loader_impl_function_type loder_impl_function_mock = {
 		&mock_loader_impl_function_create,
 		&mock_loader_impl_function_interface,
 		&mock_loader_impl_function_destroy

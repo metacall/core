@@ -20,14 +20,14 @@
 
 /* -- Headers -- */
 
-#include <adt/adt_trie.h>
 #include <adt/adt_set.h>
+#include <adt/adt_trie.h>
 
 #include <log/log.h>
 
 /* -- Definitions -- */
 
-#define TRIE_CAPACITY_MIN	((size_t)0x10)
+#define TRIE_CAPACITY_MIN ((size_t)0x10)
 
 /* -- Forward Declarations -- */
 
@@ -45,71 +45,71 @@ struct trie_node_suffixes_iterator_args_type;
 
 /* -- Type Definitions -- */
 
-typedef struct trie_node_ref_type * trie_node_ref;
+typedef struct trie_node_ref_type *trie_node_ref;
 
-typedef struct trie_node_free_type * trie_node_free;
+typedef struct trie_node_free_type *trie_node_free;
 
-typedef struct trie_node_type * trie_node;
+typedef struct trie_node_type *trie_node;
 
-typedef struct trie_node_set_iterator_args_type * trie_node_set_iterator_args;
+typedef struct trie_node_set_iterator_args_type *trie_node_set_iterator_args;
 
-typedef struct trie_node_append_iterator_args_type * trie_node_append_iterator_args;
+typedef struct trie_node_append_iterator_args_type *trie_node_append_iterator_args;
 
-typedef struct trie_node_suffixes_iterator_args_type * trie_node_suffixes_iterator_args;
+typedef struct trie_node_suffixes_iterator_args_type *trie_node_suffixes_iterator_args;
 
 /* -- Member Data -- */
 
 struct trie_node_ref_type
 {
-	trie_key	key;		/**< Pointer to the key of the node */
-	size_t		index;		/**< Reference to node in trie set */
+	trie_key key; /**< Pointer to the key of the node */
+	size_t index; /**< Reference to node in trie set */
 };
 
 struct trie_node_free_type
 {
-	trie_node_free	next;		/**< Reference to the next node in the list */
-	size_t		index;		/**< Reference to node in trie set */
+	trie_node_free next; /**< Reference to the next node in the list */
+	size_t index;		 /**< Reference to node in trie set */
 };
 
 struct trie_node_type
 {
-	size_t	parent_index;		/**< Reference to parent trie node */
-	size_t	self_index;		/**< Reference to itself inside trie node list */
-	trie_key	key;		/**< Pointer to key of the node */
-	trie_value	value;		/**< Pointer to data of the node */
-	set		childs;		/**< Set with references to child trie nodes (trie_key -> trie_node_ref) */
+	size_t parent_index; /**< Reference to parent trie node */
+	size_t self_index;	 /**< Reference to itself inside trie node list */
+	trie_key key;		 /**< Pointer to key of the node */
+	trie_value value;	 /**< Pointer to data of the node */
+	set childs;			 /**< Set with references to child trie nodes (trie_key -> trie_node_ref) */
 };
 
 struct trie_type
 {
-	trie_node	root;		/**< Trie root node */
-	trie_node	node_list;	/**< Array of trie nodes */
-	size_t		size;		/**< Size of current nodes inside node list */
-	size_t		capacity;	/**< Size of allocated nodes in memory */
-	trie_node_free	free_node_list;	/**< List of free nodes in array (size_t) */
-	size_t		key_limit;	/**< Maximum number of childs per trie node (0 == disabled) */
-	size_t		depth_limit;	/**< Maximum number of depth levels in a trie (0 == disabled) */
-	trie_cb_hash	hash_cb;	/**< Hash callback for node insertion */
-	trie_cb_compare	compare_cb;	/**< Compare callback for value comparison */
+	trie_node root;				   /**< Trie root node */
+	trie_node node_list;		   /**< Array of trie nodes */
+	size_t size;				   /**< Size of current nodes inside node list */
+	size_t capacity;			   /**< Size of allocated nodes in memory */
+	trie_node_free free_node_list; /**< List of free nodes in array (size_t) */
+	size_t key_limit;			   /**< Maximum number of childs per trie node (0 == disabled) */
+	size_t depth_limit;			   /**< Maximum number of depth levels in a trie (0 == disabled) */
+	trie_cb_hash hash_cb;		   /**< Hash callback for node insertion */
+	trie_cb_compare compare_cb;	   /**< Compare callback for value comparison */
 };
 
 struct trie_node_set_iterator_args_type
 {
-	trie t;				/**< Pointer to trie */
-	trie_cb_iterate iterate_cb;	/**< Pointer to iterator callback */
+	trie t;						/**< Pointer to trie */
+	trie_cb_iterate iterate_cb; /**< Pointer to iterator callback */
 	trie_cb_iterate_args args;	/**< Pointer to iterator arguments */
 };
 
 struct trie_node_append_iterator_args_type
 {
-	trie dest;			/**< Pointer to destination trie */
-	vector prefixes;		/**< Vector containing prefixes for each iteration */
+	trie dest;		 /**< Pointer to destination trie */
+	vector prefixes; /**< Vector containing prefixes for each iteration */
 };
 
 struct trie_node_suffixes_iterator_args_type
 {
-	trie suffix_trie;		/**< Pointer to new suffix trie */
-	vector prefixes;		/**< Vector containing prefixes for each iteration */
+	trie suffix_trie; /**< Pointer to new suffix trie */
+	vector prefixes;  /**< Vector containing prefixes for each iteration */
 };
 
 /* -- Private Methods -- */
@@ -272,7 +272,7 @@ trie_node trie_node_insert(trie t, trie_node parent, trie_key key, trie_value va
 	{
 		if ((t->size + 1) >= t->capacity)
 		{
-			register void * node_list;
+			register void *node_list;
 
 			size_t capacity = t->capacity << 1;
 
@@ -349,7 +349,7 @@ int trie_insert(trie t, vector keys, trie_value value)
 
 		for (iterator = 0; current_node != NULL && iterator < size; ++iterator)
 		{
-			trie_key * key_ptr = vector_at(keys, iterator);
+			trie_key *key_ptr = vector_at(keys, iterator);
 
 			trie_node next_node = NULL;
 
@@ -401,7 +401,7 @@ trie_node trie_node_get(trie t, vector keys)
 
 		for (iterator = 0; current_node != NULL && iterator < size; ++iterator)
 		{
-			trie_key * key_ptr = vector_at(keys, iterator);
+			trie_key *key_ptr = vector_at(keys, iterator);
 
 			trie_node next_node = NULL;
 
@@ -514,7 +514,7 @@ void trie_node_iterate(trie t, trie_node n, trie_cb_iterate iterate_cb, trie_cb_
 
 		while (vector_size(node_stack) > 0)
 		{
-			trie_node * back_ptr = vector_back(node_stack);
+			trie_node *back_ptr = vector_back(node_stack);
 
 			vector_pop_back(node_stack);
 
@@ -597,7 +597,7 @@ int trie_node_clear(trie t, trie_node n)
 
 		while (vector_size(node_stack) > 0)
 		{
-			trie_node * back_ptr = vector_back(node_stack);
+			trie_node *back_ptr = vector_back(node_stack);
 
 			vector_pop_back(node_stack);
 
@@ -674,7 +674,7 @@ trie_node trie_node_find(trie t, trie_key key)
 
 		while (vector_size(node_stack) > 0)
 		{
-			trie_node * back_ptr = vector_back(node_stack);
+			trie_node *back_ptr = vector_back(node_stack);
 
 			vector_pop_back(node_stack);
 

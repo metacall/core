@@ -29,8 +29,8 @@ typedef class ICLRRuntimeHost2;
 class netcore_win : public netcore
 {
 private:
-	host_environment * core_environment;
-	ICLRRuntimeHost2 * host;
+	host_environment *core_environment;
+	ICLRRuntimeHost2 *host;
 	wchar_t managedAssemblyFullName[MAX_LONGPATH] = W("");
 	wchar_t appPath[MAX_LONGPATH] = W("");
 	wchar_t appNiPath[MAX_LONGPATH * 2] = W("");
@@ -41,18 +41,17 @@ private:
 
 	bool create_host();
 
-	bool create_delegate(const wchar_t * delegate_name, void** func);
+	bool create_delegate(const wchar_t *delegate_name, void **func);
 
 	bool load_main();
 
 public:
-	netcore_win(char * dotnet_root,char * dotnet_loader_assembly_path);
+	netcore_win(char *dotnet_root, char *dotnet_loader_assembly_path);
 	~netcore_win();
 
 	bool start();
 
 	void stop();
 };
-
 
 #endif

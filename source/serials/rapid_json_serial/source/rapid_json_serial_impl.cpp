@@ -13,9 +13,9 @@
 #include <log/log.h>
 
 #include <rapidjson/document.h>
+#include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
-#include <rapidjson/error/en.h>
 
 #include <sstream>
 
@@ -30,11 +30,11 @@ typedef struct rapid_json_document_type
 
 /* -- Private Methods -- */
 
-static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v);
+static void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v);
 
-static char * rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t * size);
+static char *rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t *size);
 
-static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v);
+static value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v);
 
 /* -- Classes -- */
 
@@ -43,7 +43,7 @@ rapidjson::MemoryPoolAllocator<> rapid_json_allocator;
 
 /* -- Methods -- */
 
-const char * rapid_json_serial_impl_extension()
+const char *rapid_json_serial_impl_extension()
 {
 	static const char extension[] = "json";
 
@@ -64,7 +64,7 @@ serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 	return (serial_impl_handle)document;
 }
 
-void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
+void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 {
 	type_id id = value_type_id(v);
 
@@ -120,7 +120,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 	}
 	else if (id == TYPE_STRING)
 	{
-		const char * str = value_to_string(v);
+		const char *str = value_to_string(v);
 
 		size_t size = value_type_size(v);
 
@@ -130,17 +130,17 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 	}
 	else if (id == TYPE_BUFFER)
 	{
-		rapidjson::Value & json_map = json_v->SetObject();
+		rapidjson::Value &json_map = json_v->SetObject();
 
 		rapidjson::Value json_array(rapidjson::kArrayType);
 
-		void * buffer = value_to_buffer(v);
+		void *buffer = value_to_buffer(v);
 
 		size_t size = value_type_size(v);
 
 		for (size_t iterator = 0; iterator < size; ++iterator)
 		{
-			const char * data = (const char *)(((uintptr_t)buffer) + iterator);
+			const char *data = (const char *)(((uintptr_t)buffer) + iterator);
 
 			rapidjson::Value json_inner_value;
 
@@ -171,9 +171,9 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 	}
 	else if (id == TYPE_ARRAY)
 	{
-		rapidjson::Value & json_array = json_v->SetArray();
+		rapidjson::Value &json_array = json_v->SetArray();
 
-		value * value_array = value_to_array(v);
+		value *value_array = value_to_array(v);
 
 		size_t array_size = value_type_count(v);
 
@@ -190,9 +190,9 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 	}
 	else if (id == TYPE_MAP)
 	{
-		rapidjson::Value & json_map = json_v->SetObject();
+		rapidjson::Value &json_map = json_v->SetObject();
 
-		value * value_map = value_to_map(v);
+		value *value_map = value_to_map(v);
 
 		size_t map_size = value_type_count(v);
 
@@ -200,7 +200,7 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 		{
 			value tupla = value_map[iterator];
 
-			value * tupla_array = value_to_array(tupla);
+			value *tupla_array = value_to_array(tupla);
 
 			rapidjson::Value json_member, json_inner_value;
 
@@ -271,14 +271,14 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value * json_v)
 	}
 }
 
-char * rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t * size)
+char *rapid_json_serial_impl_document_stringify(rapid_json_document document, size_t *size)
 {
 	rapidjson::StringBuffer buffer;
 	rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
 	document->impl.Accept(writer);
 	size_t buffer_size = buffer.GetSize();
 	size_t buffer_str_size = buffer_size + 1;
-	char * buffer_str = static_cast<char *>(memory_allocator_allocate(document->allocator, sizeof(char) * buffer_str_size));
+	char *buffer_str = static_cast<char *>(memory_allocator_allocate(document->allocator, sizeof(char) * buffer_str_size));
 
 	if (buffer_str == NULL)
 	{
@@ -295,7 +295,7 @@ char * rapid_json_serial_impl_document_stringify(rapid_json_document document, s
 	return buffer_str;
 }
 
-char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size)
+char *rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t *size)
 {
 	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
@@ -311,7 +311,7 @@ char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size
 	return rapid_json_serial_impl_document_stringify(document, size);
 }
 
-value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
+value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 {
 	if (v->IsNull())
 	{
@@ -371,7 +371,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	{
 		rapidjson::SizeType length = v->GetStringLength();
 
-		const char * str = v->GetString();
+		const char *str = v->GetString();
 
 		return value_create_string(str, (size_t)length);
 	}
@@ -381,7 +381,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 		value v_array = value_create_array(NULL, size);
 
-		value * values;
+		value *values;
 
 		size_t index = 0;
 
@@ -405,7 +405,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 		value v_map = value_create_map(NULL, size);
 
-		value * tuples;
+		value *tuples;
 
 		size_t index = 0;
 
@@ -418,8 +418,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 
 		for (rapidjson::Value::ConstMemberIterator it = v->MemberBegin(); it != v->MemberEnd(); ++it)
 		{
-			const value tupla[] =
-			{
+			const value tupla[] = {
 				rapid_json_serial_impl_deserialize_value(&it->name),
 				rapid_json_serial_impl_deserialize_value(&it->value)
 			};
@@ -435,7 +434,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value * v)
 	return NULL;
 }
 
-value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size)
+value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *buffer, size_t size)
 {
 	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
@@ -450,7 +449,7 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 
 	if (parse_result.IsError() == true)
 	{
-		const RAPIDJSON_ERROR_CHARTYPE * error_message = rapidjson::GetParseError_En(parse_result.Code());
+		const RAPIDJSON_ERROR_CHARTYPE *error_message = rapidjson::GetParseError_En(parse_result.Code());
 
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid parsing of document (%s) in RapidJSON implementation: %s at %" PRIuS,
 			buffer, error_message, parse_result.Offset());

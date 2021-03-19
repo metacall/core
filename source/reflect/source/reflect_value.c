@@ -31,7 +31,7 @@ struct value_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct value_impl_type * value_impl;
+typedef struct value_impl_type *value_impl;
 
 /* -- Member Data -- */
 
@@ -40,7 +40,7 @@ struct value_impl_type
 	size_t bytes;
 	size_t ref_count;
 	value_finalizer_cb finalizer;
-	void * finalizer_data;
+	void *finalizer_data;
 };
 
 /* -- Private Methods -- */
@@ -86,7 +86,7 @@ value value_alloc(size_t bytes)
 	return (value)(((uintptr_t)impl) + sizeof(struct value_impl_type));
 }
 
-value value_create(const void * data, size_t bytes)
+value value_create(const void *data, size_t bytes)
 {
 	value v = value_alloc(bytes);
 
@@ -168,7 +168,7 @@ void value_ref_dec(value v)
 	}
 }
 
-void value_finalizer(value v, value_finalizer_cb finalizer, void * finalizer_data)
+void value_finalizer(value v, value_finalizer_cb finalizer, void *finalizer_data)
 {
 	value_impl impl = value_descriptor(v);
 
@@ -179,7 +179,7 @@ void value_finalizer(value v, value_finalizer_cb finalizer, void * finalizer_dat
 	}
 }
 
-void * value_data(value v)
+void *value_data(value v)
 {
 	if (v == NULL)
 	{
@@ -189,9 +189,9 @@ void * value_data(value v)
 	return v;
 }
 
-void value_to(value v, void * data, size_t bytes)
+void value_to(value v, void *data, size_t bytes)
 {
-	void * src = value_data(v);
+	void *src = value_data(v);
 
 	if (src != NULL && data != NULL && bytes > 0)
 	{
@@ -199,9 +199,9 @@ void value_to(value v, void * data, size_t bytes)
 	}
 }
 
-value value_from(value v, const void * data, size_t bytes)
+value value_from(value v, const void *data, size_t bytes)
 {
-	void * dest = value_data(v);
+	void *dest = value_data(v);
 
 	if (dest != NULL && bytes > 0)
 	{

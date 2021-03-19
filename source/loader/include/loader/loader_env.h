@@ -31,9 +31,9 @@ extern "C" {
 
 LOADER_API void loader_env_initialize(void);
 
-LOADER_API const char * loader_env_script_path(void);
+LOADER_API const char *loader_env_script_path(void);
 
-LOADER_API const char * loader_env_library_path(void);
+LOADER_API const char *loader_env_library_path(void);
 
 LOADER_API void loader_env_destroy(void);
 

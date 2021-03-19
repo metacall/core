@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_python_port_test : public testing::Test
 {
@@ -35,25 +35,24 @@ TEST_F(metacall_python_port_test, DefaultConstructor)
 
 	metacall_log_null();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		static const char * py_scripts[] =
-		{
+		static const char *py_scripts[] = {
 			METACALL_PYTHON_PORT_TEST_PATH
 		};
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		void * ret = metacallv("main", metacall_null_args);
+		void *ret = metacallv("main", metacall_null_args);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Tests passed without errors"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Tests passed without errors"));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

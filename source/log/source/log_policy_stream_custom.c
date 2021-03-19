@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_stream_custom.h>
 #include <log/log_policy_stream.h>
+#include <log/log_policy_stream_custom.h>
 
 /* -- Forward Declarations -- */
 
@@ -17,13 +17,13 @@ struct log_policy_stream_custom_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_custom_data_type * log_policy_stream_custom_data;
+typedef struct log_policy_stream_custom_data_type *log_policy_stream_custom_data;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_custom_data_type
 {
-	void * context;
+	void *context;
 	int (*stream_write)(void *, const char *, const size_t);
 	int (*stream_flush)(void *);
 };
@@ -32,7 +32,7 @@ struct log_policy_stream_custom_data_type
 
 static int log_policy_stream_custom_create(log_policy policy, const log_policy_ctor ctor);
 
-static int log_policy_stream_custom_write(log_policy policy, const void * buffer, const size_t size);
+static int log_policy_stream_custom_write(log_policy policy, const void *buffer, const size_t size);
 
 static int log_policy_stream_custom_flush(log_policy policy);
 
@@ -42,14 +42,12 @@ static int log_policy_stream_custom_destroy(log_policy policy);
 
 log_policy_interface log_policy_stream_custom_interface()
 {
-	static struct log_policy_stream_impl_type log_policy_stream_custom_impl_obj =
-	{
+	static struct log_policy_stream_impl_type log_policy_stream_custom_impl_obj = {
 		&log_policy_stream_custom_write,
 		&log_policy_stream_custom_flush
 	};
 
-	static struct log_policy_interface_type policy_interface_stream =
-	{
+	static struct log_policy_interface_type policy_interface_stream = {
 		&log_policy_stream_custom_create,
 		&log_policy_stream_custom_impl_obj,
 		&log_policy_stream_custom_destroy
@@ -85,7 +83,7 @@ static int log_policy_stream_custom_create(log_policy policy, const log_policy_c
 	return 0;
 }
 
-static int log_policy_stream_custom_write(log_policy policy, const void * buffer, const size_t size)
+static int log_policy_stream_custom_write(log_policy policy, const void *buffer, const size_t size)
 {
 	log_policy_stream_custom_data custom_data = log_policy_instance(policy);
 

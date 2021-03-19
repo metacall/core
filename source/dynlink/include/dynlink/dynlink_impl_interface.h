@@ -25,8 +25,8 @@
 
 #include <dynlink/dynlink_api.h>
 
-#include <dynlink/dynlink_interface.h>
 #include <dynlink/dynlink_impl.h>
+#include <dynlink/dynlink_interface.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +34,7 @@ extern "C" {
 
 /* -- Type definitions -- */
 
-typedef const char * (*dynlink_impl_interface_extension)(void);
+typedef const char *(*dynlink_impl_interface_extension)(void);
 typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
 typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr *);
 typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);

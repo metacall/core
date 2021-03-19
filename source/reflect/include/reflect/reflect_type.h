@@ -34,9 +34,9 @@ extern "C" {
 
 struct type_type;
 
-typedef struct type_type * type;
+typedef struct type_type *type;
 
-typedef void * type_impl;
+typedef void *type_impl;
 
 typedef int (*type_impl_interface_create)(type, type_impl);
 
@@ -51,11 +51,11 @@ typedef struct type_interface_type
 
 typedef type_interface (*type_impl_interface_singleton)(void);
 
-REFLECT_API type type_create(type_id id, const char * name, type_impl impl, type_impl_interface_singleton singleton);
+REFLECT_API type type_create(type_id id, const char *name, type_impl impl, type_impl_interface_singleton singleton);
 
 REFLECT_API type_id type_index(type t);
 
-REFLECT_API const char * type_name(type t);
+REFLECT_API const char *type_name(type t);
 
 REFLECT_API type_impl type_derived(type t);
 

@@ -32,33 +32,32 @@ TEST_F(rb_rails_integration_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
-		const char * rb_scripts[] =
-		{
+		const char *rb_scripts[] = {
 			"blog.rb"
 		};
 
 		const char func_run[] = "run_and_kill_server";
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
-		EXPECT_NE((void *) NULL, (void *) metacall_function(func_run));
+		EXPECT_NE((void *)NULL, (void *)metacall_function(func_run));
 
 		ret = metacall(func_run);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 0, (int) metacall_value_to_int(ret));
+		EXPECT_EQ((int)0, (int)metacall_value_to_int(ret));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

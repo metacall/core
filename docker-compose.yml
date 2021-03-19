@@ -30,7 +30,7 @@ services:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_INSTALL_OPTIONS: root base python ruby netcore2 nodejs typescript file rpc rapidjson funchook swig pack # v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: root base python ruby netcore2 nodejs typescript file rpc rapidjson funchook swig pack clangformat # v8rep51 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

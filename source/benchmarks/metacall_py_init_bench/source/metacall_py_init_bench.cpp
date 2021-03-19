@@ -33,7 +33,7 @@ public:
 		metacall_log_null();
 	}
 
-	void TearDown(benchmark::State & state)
+	void TearDown(benchmark::State &state)
 	{
 		if (metacall_destroy() != 0)
 		{
@@ -42,19 +42,20 @@ public:
 	}
 };
 
-BENCHMARK_DEFINE_F(metacall_py_init_bench, init)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_init_bench, init)
+(benchmark::State &state)
 {
 	for (auto _ : state)
 	{
-		/* Python */
-		#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 		{
 			if (metacall_initialize() != 0)
 			{
 				state.SkipWithError("Error initializing MetaCall");
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
 	state.SetLabel("MetaCall Python Init Benchmark - Init");
@@ -66,12 +67,13 @@ BENCHMARK_REGISTER_F(metacall_py_init_bench, init)
 	->Iterations(1)
 	->Repetitions(1);
 
-BENCHMARK_DEFINE_F(metacall_py_init_bench, load)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_init_bench, load)
+(benchmark::State &state)
 {
 	for (auto _ : state)
 	{
-		/* Python */
-		#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 		{
 			static const char tag[] = "py";
 
@@ -94,7 +96,7 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load)(benchmark::State & state)
 				state.SkipWithError("Error loading int_mem_type function");
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
 	state.SetLabel("MetaCall Python Init Benchmark - Load Runtime");
@@ -106,12 +108,13 @@ BENCHMARK_REGISTER_F(metacall_py_init_bench, load)
 	->Iterations(1)
 	->Repetitions(1);
 
-BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)
+(benchmark::State &state)
 {
 	for (auto _ : state)
 	{
-		/* Python */
-		#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 		{
 			static const char tag[] = "py";
 
@@ -143,7 +146,7 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)(benchmark::State & state)
 				state.SkipWithError("Error loading int_b_type function");
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
 	state.SetLabel("MetaCall Python Init Benchmark - Load Warm");

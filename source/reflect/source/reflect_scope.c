@@ -18,9 +18,9 @@
  *
  */
 
+#include <reflect/reflect_class.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_value_type.h>
-#include <reflect/reflect_class.h>
 
 #include <adt/adt_set.h>
 #include <adt/adt_vector.h>
@@ -34,23 +34,22 @@ struct scope_metadata_array_cb_iterator_type;
 
 struct scope_export_cb_iterator_type;
 
-typedef struct scope_metadata_array_cb_iterator_type * scope_metadata_array_cb_iterator;
+typedef struct scope_metadata_array_cb_iterator_type *scope_metadata_array_cb_iterator;
 
-typedef struct scope_export_cb_iterator_type * scope_export_cb_iterator;
+typedef struct scope_export_cb_iterator_type *scope_export_cb_iterator;
 
 struct scope_type
 {
-	char * name;			/**< Scope name */
-	set objects;			/**< Map of scope objects indexed by name string */
-	vector call_stack;		/**< Scope call stack */
-
+	char *name;		   /**< Scope name */
+	set objects;	   /**< Map of scope objects indexed by name string */
+	vector call_stack; /**< Scope call stack */
 };
 
 struct scope_metadata_array_cb_iterator_type
 {
-	value * functions;
-	value * classes;
-	value * objects;
+	value *functions;
+	value *classes;
+	value *objects;
 
 	size_t functions_size;
 	size_t classes_size;
@@ -60,7 +59,7 @@ struct scope_metadata_array_cb_iterator_type
 struct scope_export_cb_iterator_type
 {
 	size_t iterator;
-	value * values;
+	value *values;
 };
 
 static int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
@@ -73,7 +72,7 @@ static value scope_metadata_name(scope sp);
 
 static int scope_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-scope scope_create(const char * name)
+scope scope_create(const char *name)
 {
 	if (name != NULL)
 	{
@@ -83,7 +82,7 @@ scope scope_create(const char * name)
 		{
 			size_t sp_name_size = strlen(name) + 1;
 
-			size_t * call_stack_head = NULL;
+			size_t *call_stack_head = NULL;
 
 			sp->name = malloc(sizeof(char) * sp_name_size);
 
@@ -177,7 +176,7 @@ size_t scope_size(scope sp)
 	return 0;
 }
 
-int scope_define(scope sp, const char * key, value val)
+int scope_define(scope sp, const char *key, value val)
 {
 	if (sp != NULL && key != NULL && val != NULL)
 	{
@@ -195,7 +194,7 @@ int scope_metadata_array_cb_iterate(set s, set_key key, set_value val, set_cb_it
 	(void)key;
 
 	int type_id = value_type_id(val);
-	
+
 	if (type_id == TYPE_FUNCTION)
 	{
 		metadata_iterator->functions[metadata_iterator->functions_size++] = function_metadata(value_to_function(val));
@@ -239,8 +238,7 @@ int scope_metadata_array_cb_iterate_counter(set s, set_key key, set_value val, s
 
 int scope_metadata_array(scope sp, value v_array[3])
 {
-	struct scope_metadata_array_cb_iterator_type metadata_iterator =
-	{
+	struct scope_metadata_array_cb_iterator_type metadata_iterator = {
 		NULL, NULL, NULL, 0, 0, 0
 	};
 
@@ -294,7 +292,7 @@ value scope_metadata_name(scope sp)
 {
 	static const char name[] = "name";
 
-	value * v_ptr, v = value_create_array(NULL, 2);
+	value *v_ptr, v = value_create_array(NULL, 2);
 
 	if (v == NULL)
 	{
@@ -322,7 +320,7 @@ value scope_metadata_name(scope sp)
 
 value scope_metadata(scope sp)
 {
-	value * v_map, v = value_create_map(NULL, 4);
+	value *v_map, v = value_create_map(NULL, 4);
 	value v_array[3] = { NULL, NULL, NULL }; // 0: funcs, 1: cls, 2: obj
 
 	if (v == NULL)
@@ -349,7 +347,7 @@ value scope_metadata(scope sp)
 
 	/* Functions */
 	static const char funcs[] = "funcs";
-	value * v_funcs_ptr, v_funcs = value_create_array(NULL, 2);
+	value *v_funcs_ptr, v_funcs = value_create_array(NULL, 2);
 	v_funcs_ptr = value_to_array(v_funcs);
 	v_funcs_ptr[0] = value_create_string(funcs, sizeof(funcs) - 1);
 	v_funcs_ptr[1] = v_array[0];
@@ -357,7 +355,7 @@ value scope_metadata(scope sp)
 
 	/* Classes */
 	static const char classes[] = "classes";
-	value * v_classes_ptr, v_classes = value_create_array(NULL, 2);
+	value *v_classes_ptr, v_classes = value_create_array(NULL, 2);
 	v_classes_ptr = value_to_array(v_classes);
 	v_classes_ptr[0] = value_create_string(classes, sizeof(classes) - 1);
 	v_classes_ptr[1] = v_array[1];
@@ -365,7 +363,7 @@ value scope_metadata(scope sp)
 
 	/* Objects */
 	static const char objects[] = "objects";
-	value * v_objects_ptr, v_objects = value_create_array(NULL, 2);
+	value *v_objects_ptr, v_objects = value_create_array(NULL, 2);
 	v_objects_ptr = value_to_array(v_objects);
 	v_objects_ptr[0] = value_create_string(objects, sizeof(objects) - 1);
 	v_objects_ptr[1] = v_array[2];
@@ -378,9 +376,9 @@ int scope_export_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_ar
 {
 	scope_export_cb_iterator export_iterator = (scope_export_cb_iterator)args;
 
-	const char * key_str = (const char *)key;
+	const char *key_str = (const char *)key;
 
-	value * v_array, v = value_create_array(NULL, 2);
+	value *v_array, v = value_create_array(NULL, 2);
 
 	(void)s;
 
@@ -434,7 +432,7 @@ value scope_export(scope sp)
 	return export;
 }
 
-value scope_get(scope sp, const char * key)
+value scope_get(scope sp, const char *key)
 {
 	if (sp != NULL && key != NULL)
 	{
@@ -444,7 +442,7 @@ value scope_get(scope sp, const char * key)
 	return NULL;
 }
 
-value scope_undef(scope sp, const char * key)
+value scope_undef(scope sp, const char *key)
 {
 	if (sp != NULL && key != NULL)
 	{
@@ -472,7 +470,7 @@ int scope_remove(scope dest, scope src)
 	return set_disjoint(dest->objects, src->objects);
 }
 
-size_t * scope_stack_return(scope sp)
+size_t *scope_stack_return(scope sp)
 {
 	if (sp != NULL && sp->call_stack != NULL)
 	{
@@ -482,11 +480,11 @@ size_t * scope_stack_return(scope sp)
 		{
 			size_t return_position = call_stack_size - 1 - sizeof(size_t);
 
-			void ** return_ptr = vector_at(sp->call_stack, return_position);
+			void **return_ptr = vector_at(sp->call_stack, return_position);
 
 			if (return_ptr != NULL && *return_ptr != NULL)
 			{
-				size_t * size_return_ptr = *return_ptr;
+				size_t *size_return_ptr = *return_ptr;
 
 				return size_return_ptr;
 			}
@@ -510,7 +508,7 @@ scope_stack_ptr scope_stack_push(scope sp, size_t bytes)
 {
 	if (sp != NULL && sp->call_stack != NULL && bytes > 0)
 	{
-		scope_stack_ptr * return_ptr = NULL;
+		scope_stack_ptr *return_ptr = NULL;
 
 		scope_stack_ptr prev_size = vector_size(sp->call_stack);
 
@@ -527,7 +525,7 @@ scope_stack_ptr scope_stack_push(scope sp, size_t bytes)
 
 		if (return_ptr != NULL)
 		{
-			void ** prev_ptr = vector_at(sp->call_stack, prev_size);
+			void **prev_ptr = vector_at(sp->call_stack, prev_size);
 
 			if (prev_ptr != NULL && *prev_ptr != NULL)
 			{
@@ -554,11 +552,11 @@ scope_stack_ptr scope_stack_push(scope sp, size_t bytes)
 	return 1;
 }
 
-void * scope_stack_get(scope sp, scope_stack_ptr stack_ptr)
+void *scope_stack_get(scope sp, scope_stack_ptr stack_ptr)
 {
 	if (sp != NULL)
 	{
-		void ** ref_ptr = vector_at(sp->call_stack, stack_ptr);
+		void **ref_ptr = vector_at(sp->call_stack, stack_ptr);
 
 		if (ref_ptr != NULL && *ref_ptr != NULL)
 		{
@@ -573,7 +571,7 @@ int scope_stack_pop(scope sp)
 {
 	if (sp != NULL)
 	{
-		scope_stack_ptr * return_ptr = scope_stack_return(sp);
+		scope_stack_ptr *return_ptr = scope_stack_return(sp);
 
 		if (vector_resize(sp->call_stack, *return_ptr) != 0)
 		{

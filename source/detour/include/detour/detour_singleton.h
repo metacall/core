@@ -25,7 +25,7 @@ struct detour_singleton_type;
 
 /* -- Type Definitions -- */
 
-typedef struct detour_singleton_type * detour_singleton;
+typedef struct detour_singleton_type *detour_singleton;
 
 /* -- Methods -- */
 
@@ -73,7 +73,7 @@ DETOUR_API int detour_singleton_register(detour d);
 *    Returns pointer to detour if exists, null otherwise
 *
 */
-DETOUR_API detour detour_singleton_get(const char * name);
+DETOUR_API detour detour_singleton_get(const char *name);
 
 /**
 *  @brief
@@ -83,7 +83,7 @@ DETOUR_API detour detour_singleton_get(const char * name);
 *    Returns constant string representing detours library path
 *
 */
-DETOUR_API const char * detour_singleton_path(void);
+DETOUR_API const char *detour_singleton_path(void);
 
 /**
 *  @brief

@@ -29,14 +29,14 @@
 
 struct exception_type
 {
-	char * message;
-	char * label;
+	char *message;
+	char *label;
 	int code;
-	char * stacktrace;
+	char *stacktrace;
 	uint64_t id;
 };
 
-exception exception_create(const char * message, const char * label, int code, const char * stacktrace)
+exception exception_create(const char *message, const char *label, int code, const char *stacktrace)
 {
 	exception ex = malloc(sizeof(struct exception_type));
 
@@ -52,7 +52,7 @@ exception exception_create(const char * message, const char * label, int code, c
 	return ex;
 }
 
-const char * exception_message(exception ex)
+const char *exception_message(exception ex)
 {
 	if (ex == NULL)
 	{
@@ -62,7 +62,7 @@ const char * exception_message(exception ex)
 	return ex->message;
 }
 
-const char * exception_label(exception ex)
+const char *exception_label(exception ex)
 {
 	if (ex == NULL)
 	{
@@ -82,7 +82,7 @@ int exception_code(exception ex)
 	return ex->code;
 }
 
-const char * exception_stacktrace(exception ex)
+const char *exception_stacktrace(exception ex)
 {
 	if (ex == NULL)
 	{
