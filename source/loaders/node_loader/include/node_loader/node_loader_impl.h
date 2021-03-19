@@ -61,6 +61,10 @@ NODE_LOADER_NO_EXPORT napi_value node_loader_impl_value_to_napi(loader_impl_node
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_env(loader_impl_node node_impl, napi_env env);
 
+NODE_LOADER_NO_EXPORT void node_loader_impl_destroy_safe(loader_impl_node node_impl, napi_env env);
+
+NODE_LOADER_NO_EXPORT bool node_loader_impl_requested_destroy(loader_impl_node node_impl);
+
 #ifdef __cplusplus
 }
 #endif

@@ -4697,6 +4697,18 @@ void node_loader_impl_walk(uv_handle_t * handle, void * arg)
 	*/
 }
 
+//////////// TODO:
+
+void node_loader_impl_destroy_safe(loader_impl_node node_impl, napi_env env)
+{
+	
+}
+
+bool node_loader_impl_requested_destroy(loader_impl_node node_impl)
+{
+
+}
+
 int node_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
