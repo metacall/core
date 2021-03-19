@@ -25,7 +25,7 @@ struct serial_singleton_type;
 
 /* -- Type Definitions -- */
 
-typedef struct serial_singleton_type * serial_singleton;
+typedef struct serial_singleton_type *serial_singleton;
 
 /* -- Methods -- */
 
@@ -73,7 +73,7 @@ SERIAL_API int serial_singleton_register(serial s);
 *    Returns pointer to serial if exists, null otherwise
 *
 */
-SERIAL_API serial serial_singleton_get(const char * name);
+SERIAL_API serial serial_singleton_get(const char *name);
 
 /**
 *  @brief
@@ -83,7 +83,7 @@ SERIAL_API serial serial_singleton_get(const char * name);
 *    Returns constant string representing serials library path
 *
 */
-SERIAL_API const char * serial_singleton_path(void);
+SERIAL_API const char *serial_singleton_path(void);
 
 /**
 *  @brief

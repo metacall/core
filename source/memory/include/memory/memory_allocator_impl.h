@@ -31,7 +31,7 @@ extern "C" {
 
 /* -- Type Definitions -- */
 
-typedef void * memory_allocator_impl;
+typedef void *memory_allocator_impl;
 
 #ifdef __cplusplus
 }

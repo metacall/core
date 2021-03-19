@@ -14,8 +14,7 @@
 
 loader_impl_export mock_loader_impl_export_singleton()
 {
-	static struct loader_impl_export_type mock_loader_impl_export =
-	{
+	static struct loader_impl_export_type mock_loader_impl_export = {
 		&mock_loader_impl_descriptor_singleton,
 		&mock_loader_impl_interface_singleton,
 		&mock_loader_impl_print_singleton

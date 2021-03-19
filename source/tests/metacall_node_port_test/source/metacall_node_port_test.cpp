@@ -21,11 +21,11 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
 
 class metacall_node_port_test : public testing::Test
 {
@@ -38,17 +38,16 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 
 	metacall_log_null();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const char * node_scripts[] =
-		{
+		const char *node_scripts[] = {
 			METACALL_NODE_PORT_TEST_PATH
 		};
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
 
 		struct await_data_type
 		{
@@ -58,31 +57,30 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 
 		std::unique_lock<std::mutex> lock(await_data.m);
 
-		void * future = metacall_await("main", metacall_null_args, [](void * v, void * data) -> void * {
+		void *future = metacall_await(
+			"main", metacall_null_args, [](void *v, void *data) -> void * {
 			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
 			const char * str = metacall_value_to_string(v);
 			EXPECT_EQ((int) 0, (int) strcmp(str, "Tests passed without errors"));
 			await_data->c.notify_one();
-			return NULL;
-		}, [](void *, void * data) -> void * {
+			return NULL; }, [](void *, void *data) -> void * {
 			static const int promise_rejected = 0;
 			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
 			EXPECT_EQ((int) 1, (int) promise_rejected); // This should never happen
 			await_data->c.notify_one();
-			return NULL;
-		}, static_cast<void *>(&await_data));
+			return NULL; }, static_cast<void *>(&await_data));
 
 		await_data.c.wait(lock);
 
-		EXPECT_NE((void *) NULL, (void *) future);
+		EXPECT_NE((void *)NULL, (void *)future);
 
-		EXPECT_EQ((enum metacall_value_id) metacall_value_id(future), (enum metacall_value_id) METACALL_FUTURE);
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
 
 		metacall_value_destroy(future);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

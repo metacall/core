@@ -18,11 +18,11 @@
  *
  */
 
- /* -- Headers -- */
+/* -- Headers -- */
 
-#include <metacall/metacall_version.h>
-#include <metacall/metacall_loaders.h>
 #include <metacall/metacall.h>
+#include <metacall/metacall_loaders.h>
+#include <metacall/metacall_version.h>
 
 #include <loader/loader.h>
 
@@ -39,12 +39,12 @@
 
 /* -- Definitions -- */
 
-#define METACALL_ARGS_SIZE	0x10
-#define METACALL_SERIAL		"rapid_json"
+#define METACALL_ARGS_SIZE 0x10
+#define METACALL_SERIAL	   "rapid_json"
 
 /* -- Global Variables -- */
 
-void * metacall_null_args[1];
+void *metacall_null_args[1];
 
 /* -- Private Variables -- */
 
@@ -54,7 +54,7 @@ static int metacall_config_flags = 0;
 
 /* -- Methods -- */
 
-const char * metacall_serial()
+const char *metacall_serial()
 {
 	static const char metacall_serial_str[] = METACALL_SERIAL;
 
@@ -103,17 +103,17 @@ int metacall_initialize()
 
 	metacall_null_args[0] = NULL;
 
-	#ifdef METACALL_FORK_SAFE
-		if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+#ifdef METACALL_FORK_SAFE
+	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
+	{
+		if (metacall_fork_initialize() != 0)
 		{
-			if (metacall_fork_initialize() != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
-			}
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid MetaCall fork initialization");
 		}
-	#endif /* METACALL_FORK_SAFE */
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall fork initialized");
+	}
+#endif /* METACALL_FORK_SAFE */
 
 	allocator = memory_allocator_std(&malloc, &realloc, &free);
 
@@ -134,11 +134,11 @@ int metacall_initialize()
 
 		if (config != NULL)
 		{
-			value * level = configuration_value(config, "log_level");
+			value *level = configuration_value(config, "log_level");
 
 			if (level != NULL)
 			{
-				const char * level_str = (const char *)value_to_string(level);
+				const char *level_str = (const char *)value_to_string(level);
 
 				if (log_level("metacall", level_str, value_type_size(level) - 1) != 0)
 				{
@@ -185,7 +185,7 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 	return 0;
 }
 
-int metacall_is_initialized(const char * tag)
+int metacall_is_initialized(const char *tag)
 {
 	return loader_is_initialized(tag);
 }
@@ -197,7 +197,7 @@ size_t metacall_args_size()
 	return args_size;
 }
 
-int metacall_execution_path(const char * tag, const char * path)
+int metacall_execution_path(const char *tag, const char *path)
 {
 	loader_naming_path path_impl;
 
@@ -211,7 +211,7 @@ int metacall_execution_path(const char * tag, const char * path)
 	return loader_execution_path(tag, path_impl);
 }
 
-int metacall_execution_path_s(const char * tag, size_t tag_length, const char * path, size_t path_length)
+int metacall_execution_path_s(const char *tag, size_t tag_length, const char *path, size_t path_length)
 {
 	loader_naming_path path_impl;
 	loader_naming_tag tag_impl;
@@ -230,9 +230,9 @@ int metacall_execution_path_s(const char * tag, size_t tag_length, const char * 
 	return loader_execution_path(tag_impl, path_impl);
 }
 
-int metacall_load_from_file(const char * tag, const char * paths[], size_t size, void ** handle)
+int metacall_load_from_file(const char *tag, const char *paths[], size_t size, void **handle)
 {
-	loader_naming_path * path_impl;
+	loader_naming_path *path_impl;
 	size_t iterator;
 
 	if (size == 0)
@@ -255,22 +255,22 @@ int metacall_load_from_file(const char * tag, const char * paths[], size_t size,
 	return loader_load_from_file(tag, (const loader_naming_path *)path_impl, size, handle);
 }
 
-int metacall_load_from_memory(const char * tag, const char * buffer, size_t size, void ** handle)
+int metacall_load_from_memory(const char *tag, const char *buffer, size_t size, void **handle)
 {
 	return loader_load_from_memory(tag, buffer, size, handle);
 }
 
-int metacall_load_from_package(const char * tag, const char * path, void ** handle)
+int metacall_load_from_package(const char *tag, const char *path, void **handle)
 {
 	return loader_load_from_package(tag, path, handle);
 }
 
-int metacall_load_from_configuration(const char * path, void ** handle, void * allocator)
+int metacall_load_from_configuration(const char *path, void **handle, void *allocator)
 {
 	return loader_load_from_configuration(path, handle, allocator);
 }
 
-void * metacallv(const char * name, void * args[])
+void *metacallv(const char *name, void *args[])
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -283,7 +283,7 @@ void * metacallv(const char * name, void * args[])
 	return metacallfv(f, args);
 }
 
-void * metacallv_s(const char * name, void * args[], size_t size)
+void *metacallv_s(const char *name, void *args[], size_t size)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -296,7 +296,7 @@ void * metacallv_s(const char * name, void * args[], size_t size)
 	return metacallfv_s(f, args, size);
 }
 
-void * metacallhv(void * handle, const char * name, void * args[])
+void *metacallhv(void *handle, const char *name, void *args[])
 {
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
@@ -309,7 +309,7 @@ void * metacallhv(void * handle, const char * name, void * args[])
 	return metacallfv(f, args);
 }
 
-void * metacallhv_s(void * handle, const char * name, void * args[], size_t size)
+void *metacallhv_s(void *handle, const char *name, void *args[], size_t size)
 {
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
@@ -322,7 +322,7 @@ void * metacallhv_s(void * handle, const char * name, void * args[], size_t size
 	return metacallfv_s(f, args, size);
 }
 
-void * metacall(const char * name, ...)
+void *metacall(const char *name, ...)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -334,7 +334,7 @@ void * metacall(const char * name, ...)
 
 	if (f != NULL)
 	{
-		void * args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE];
 
 		value ret = NULL;
 
@@ -382,7 +382,7 @@ void * metacall(const char * name, ...)
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * str = va_arg(va, const char *);
+				const char *str = va_arg(va, const char *);
 
 				args[iterator] = value_create_string(str, strlen(str));
 			}
@@ -428,7 +428,7 @@ void * metacall(const char * name, ...)
 	return NULL;
 }
 
-void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
+void *metacallt(const char *name, const enum metacall_value_id ids[], ...)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -440,7 +440,7 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 
 	if (f != NULL)
 	{
-		void * args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE];
 
 		value ret = NULL;
 
@@ -497,7 +497,7 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * str = va_arg(va, const char *);
+				const char *str = va_arg(va, const char *);
 
 				args[iterator] = value_create_string(str, strlen(str));
 			}
@@ -526,7 +526,7 @@ void * metacallt(const char * name, const enum metacall_value_id ids[], ...)
 	return NULL;
 }
 
-void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t size, ...)
+void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t size, ...)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -538,7 +538,7 @@ void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t
 
 	if (f != NULL)
 	{
-		void * args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE];
 
 		value ret = NULL;
 
@@ -595,7 +595,7 @@ void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * str = va_arg(va, const char *);
+				const char *str = va_arg(va, const char *);
 
 				args[iterator] = value_create_string(str, strlen(str));
 			}
@@ -624,7 +624,7 @@ void * metacallt_s(const char * name, const enum metacall_value_id ids[], size_t
 	return NULL;
 }
 
-void * metacall_function(const char * name)
+void *metacall_function(const char *name)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -637,7 +637,7 @@ void * metacall_function(const char * name)
 	return f;
 }
 
-void * metacall_handle_function(void * handle, const char * name)
+void *metacall_handle_function(void *handle, const char *name)
 {
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
@@ -650,7 +650,7 @@ void * metacall_handle_function(void * handle, const char * name)
 	return f;
 }
 
-int metacall_function_parameter_type(void * func, size_t parameter, enum metacall_value_id * id)
+int metacall_function_parameter_type(void *func, size_t parameter, enum metacall_value_id *id)
 {
 	if (func != NULL)
 	{
@@ -670,7 +670,7 @@ int metacall_function_parameter_type(void * func, size_t parameter, enum metacal
 	return 1;
 }
 
-int metacall_function_return_type(void * func, enum metacall_value_id * id)
+int metacall_function_return_type(void *func, enum metacall_value_id *id)
 {
 	if (func != NULL)
 	{
@@ -687,7 +687,7 @@ int metacall_function_return_type(void * func, enum metacall_value_id * id)
 	return 1;
 }
 
-size_t metacall_function_size(void * func)
+size_t metacall_function_size(void *func)
 {
 	function f = (function)func;
 
@@ -701,7 +701,7 @@ size_t metacall_function_size(void * func)
 	return 0;
 }
 
-int metacall_function_async(void * func)
+int metacall_function_async(void *func)
 {
 	function f = (function)func;
 
@@ -713,12 +713,12 @@ int metacall_function_async(void * func)
 	return -1;
 }
 
-void * metacall_handle(const char * tag, const char * name)
+void *metacall_handle(const char *tag, const char *name)
 {
 	return (void *)loader_get_handle(tag, name);
 }
 
-const char * metacall_handle_id(void * handle)
+const char *metacall_handle_id(void *handle)
 {
 	if (handle == NULL)
 	{
@@ -728,7 +728,7 @@ const char * metacall_handle_id(void * handle)
 	return loader_handle_id(handle);
 }
 
-void * metacall_handle_export(void * handle)
+void *metacall_handle_export(void *handle)
 {
 	if (handle == NULL)
 	{
@@ -738,7 +738,7 @@ void * metacall_handle_export(void * handle)
 	return loader_handle_export(handle);
 }
 
-void * metacallfv(void * func, void * args[])
+void *metacallfv(void *func, void *args[])
 {
 	function f = (function)func;
 
@@ -752,7 +752,7 @@ void * metacallfv(void * func, void * args[])
 	return NULL;
 }
 
-void * metacallfv_s(void * func, void * args[], size_t size)
+void *metacallfv_s(void *func, void *args[], size_t size)
 {
 	function f = (function)func;
 
@@ -809,13 +809,13 @@ void * metacallfv_s(void * func, void * args[], size_t size)
 	return NULL;
 }
 
-void * metacallf(void * func, ...)
+void *metacallf(void *func, ...)
 {
 	function f = (function)func;
 
 	if (f != NULL)
 	{
-		void * args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE];
 
 		value ret = NULL;
 
@@ -863,7 +863,7 @@ void * metacallf(void * func, ...)
 			}
 			else if (id == TYPE_STRING)
 			{
-				const char * str = va_arg(va, const char *);
+				const char *str = va_arg(va, const char *);
 
 				args[iterator] = value_create_string(str, strlen(str));
 			}
@@ -892,7 +892,7 @@ void * metacallf(void * func, ...)
 	return NULL;
 }
 
-void * metacallfs(void * func, const char * buffer, size_t size, void * allocator)
+void *metacallfs(void *func, const char *buffer, size_t size, void *allocator)
 {
 	function f = (function)func;
 
@@ -930,9 +930,9 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 		}
 		else
 		{
-			void * args[METACALL_ARGS_SIZE];
+			void *args[METACALL_ARGS_SIZE];
 
-			value * v_array, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
+			value *v_array, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
 
 			size_t iterator, args_count;
 
@@ -988,13 +988,13 @@ void * metacallfs(void * func, const char * buffer, size_t size, void * allocato
 	return NULL;
 }
 
-void * metacallfmv(void * func, void * keys[], void * values[])
+void *metacallfmv(void *func, void *keys[], void *values[])
 {
 	function f = (function)func;
 
 	if (f != NULL)
 	{
-		void * args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE];
 
 		signature s = function_signature(f);
 
@@ -1011,7 +1011,7 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 			/* Obtain signature index */
 			if (type_id_string(key_id) == 0)
 			{
-				const char * key = value_to_string(keys[iterator]);
+				const char *key = value_to_string(keys[iterator]);
 
 				index = signature_get_index(s, key);
 			}
@@ -1088,7 +1088,7 @@ void * metacallfmv(void * func, void * keys[], void * values[])
 	return NULL;
 }
 
-void * metacallfms(void * func, const char * buffer, size_t size, void * allocator)
+void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 {
 	function f = (function)func;
 
@@ -1126,10 +1126,10 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 		}
 		else
 		{
-			void * keys[METACALL_ARGS_SIZE];
-			void * values[METACALL_ARGS_SIZE];
+			void *keys[METACALL_ARGS_SIZE];
+			void *values[METACALL_ARGS_SIZE];
 
-			value * v_map, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
+			value *v_map, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
 
 			size_t iterator, args_count;
 
@@ -1161,7 +1161,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 			{
 				value element = v_map[iterator];
 
-				value * v_element = value_to_array(element);
+				value *v_element = value_to_array(element);
 
 				keys[iterator] = v_element[0];
 				values[iterator] = v_element[1];
@@ -1206,7 +1206,7 @@ void * metacallfms(void * func, const char * buffer, size_t size, void * allocat
 	return NULL;
 }
 
-int metacall_register(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, ...)
+int metacall_register(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, ...)
 {
 	type_id types[METACALL_ARGS_SIZE];
 
@@ -1226,12 +1226,12 @@ int metacall_register(const char * name, void * (*invoke)(size_t, void * [], voi
 	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types);
 }
 
-int metacall_registerv(const char * name, void * (*invoke)(size_t, void * [], void *), void ** func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[])
+int metacall_registerv(const char *name, void *(*invoke)(size_t, void *[], void *), void **func, enum metacall_value_id return_type, size_t size, enum metacall_value_id types[])
 {
 	return loader_register(name, (loader_register_invoke)invoke, (function *)func, (type_id)return_type, size, (type_id *)types);
 }
 
-void * metacall_await(const char * name, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacall_await(const char *name, void *args[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -1246,7 +1246,7 @@ void * metacall_await(const char * name, void * args[], void * (*resolve_callbac
 	return function_await(f, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
-void * metacall_await_future(void * f, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacall_await_future(void *f, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	if (f != NULL)
 	{
@@ -1257,8 +1257,7 @@ void * metacall_await_future(void * f, void * (*resolve_callback)(void *, void *
 	return NULL;
 }
 
-
-void * metacall_await_s(const char * name, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacall_await_s(const char *name, void *args[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	value f_val = loader_get(name);
 	function f = NULL;
@@ -1271,7 +1270,7 @@ void * metacall_await_s(const char * name, void * args[], size_t size, void * (*
 	return function_await(f, args, size, resolve_callback, reject_callback, data);
 }
 
-void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacallfv_await(void *func, void *args[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	function f = (function)func;
 
@@ -1280,12 +1279,12 @@ void * metacallfv_await(void * func, void * args[], void * (*resolve_callback)(v
 	return function_await(func, args, signature_count(s), resolve_callback, reject_callback, data);
 }
 
-void * metacallfv_await_s(void * func, void * args[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacallfv_await_s(void *func, void *args[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	return function_await(func, args, size, resolve_callback, reject_callback, data);
 }
 
-void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacallfmv_await(void *func, void *keys[], void *values[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	function f = (function)func;
 
@@ -1301,13 +1300,13 @@ void * metacallfmv_await(void * func, void * keys[], void * values[], void * (*r
 }
 
 /* TODO: Unify code between metacallfmv and metacallfmv_await_s */
-void * metacallfmv_await_s(void * func, void * keys[], void * values[], size_t size, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	function f = (function)func;
 
 	if (f != NULL)
 	{
-		void * args[METACALL_ARGS_SIZE];
+		void *args[METACALL_ARGS_SIZE];
 
 		signature s = function_signature(f);
 
@@ -1324,7 +1323,7 @@ void * metacallfmv_await_s(void * func, void * keys[], void * values[], size_t s
 			/* Obtain signature index */
 			if (type_id_string(key_id) == 0)
 			{
-				const char * key = value_to_string(keys[iterator]);
+				const char *key = value_to_string(keys[iterator]);
 
 				index = signature_get_index(s, key);
 			}
@@ -1401,7 +1400,7 @@ void * metacallfmv_await_s(void * func, void * keys[], void * values[], size_t s
 	return NULL;
 }
 
-void * metacallfs_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacallfs_await(void *func, const char *buffer, size_t size, void *allocator, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	function f = (function)func;
 
@@ -1439,9 +1438,9 @@ void * metacallfs_await(void * func, const char * buffer, size_t size, void * al
 		}
 		else
 		{
-			void * args[METACALL_ARGS_SIZE];
+			void *args[METACALL_ARGS_SIZE];
 
-			value * v_array, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
+			value *v_array, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
 
 			size_t iterator, args_count;
 
@@ -1498,7 +1497,7 @@ void * metacallfs_await(void * func, const char * buffer, size_t size, void * al
 }
 
 /* TODO: Unify code between metacallfms and metacallfms_await */
-void * metacallfms_await(void * func, const char * buffer, size_t size, void * allocator, void * (*resolve_callback)(void *, void *), void * (*reject_callback)(void *, void *), void * data)
+void *metacallfms_await(void *func, const char *buffer, size_t size, void *allocator, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	function f = (function)func;
 
@@ -1536,10 +1535,10 @@ void * metacallfms_await(void * func, const char * buffer, size_t size, void * a
 		}
 		else
 		{
-			void * keys[METACALL_ARGS_SIZE];
-			void * values[METACALL_ARGS_SIZE];
+			void *keys[METACALL_ARGS_SIZE];
+			void *values[METACALL_ARGS_SIZE];
 
-			value * v_map, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
+			value *v_map, ret, v = (value)metacall_deserialize(metacall_serial(), buffer, size, allocator);
 
 			size_t iterator, args_count;
 
@@ -1571,7 +1570,7 @@ void * metacallfms_await(void * func, const char * buffer, size_t size, void * a
 			{
 				value element = v_map[iterator];
 
-				value * v_element = value_to_array(element);
+				value *v_element = value_to_array(element);
 
 				keys[iterator] = v_element[0];
 				values[iterator] = v_element[1];
@@ -1616,7 +1615,7 @@ void * metacallfms_await(void * func, const char * buffer, size_t size, void * a
 	return NULL;
 }
 
-void * metacall_class(const char * name)
+void *metacall_class(const char *name)
 {
 	value c_val = loader_get(name);
 
@@ -1629,7 +1628,7 @@ void * metacall_class(const char * name)
 	return c;
 }
 
-void * metacall_class_new(void * cls, const char * name, void * args[], size_t argc)
+void *metacall_class_new(void *cls, const char *name, void *args[], size_t argc)
 {
 	object o = class_new(cls, name, args, argc);
 
@@ -1650,43 +1649,43 @@ void * metacall_class_new(void * cls, const char * name, void * args[], size_t a
 	return v;
 }
 
-void * metacall_class_static_get(void * cls, const char * key)
+void *metacall_class_static_get(void *cls, const char *key)
 {
 	return class_static_get(cls, key);
 }
 
-int metacall_class_static_set(void * cls, const char * key, void * v)
+int metacall_class_static_set(void *cls, const char *key, void *v)
 {
 	return class_static_set(cls, key, v);
 }
 
-void * metacallv_class(void * cls, const char * name, void * args[], size_t argc)
+void *metacallv_class(void *cls, const char *name, void *args[], size_t argc)
 {
 	return class_static_call(cls, name, args, argc);
 }
 
-void * metacallv_object(void * obj, const char * name, void * args[], size_t argc)
+void *metacallv_object(void *obj, const char *name, void *args[], size_t argc)
 {
 	return object_call(obj, name, args, argc);
 }
 
-void * metacall_object_get(void * obj, const char * key)
+void *metacall_object_get(void *obj, const char *key)
 {
 	return object_get(obj, key);
 }
 
-int metacall_object_set(void * obj, const char * key, void * v)
+int metacall_object_set(void *obj, const char *key, void *v)
 {
 	return object_set(obj, key, v);
 }
 
-char * metacall_inspect(size_t * size, void * allocator)
+char *metacall_inspect(size_t *size, void *allocator)
 {
 	serial s;
 
 	value v = loader_metadata();
 
-	char * str;
+	char *str;
 
 	if (v == NULL)
 	{
@@ -1709,21 +1708,21 @@ char * metacall_inspect(size_t * size, void * allocator)
 	return str;
 }
 
-char * metacall_serialize(const char * name, void * v, size_t * size, void * allocator)
+char *metacall_serialize(const char *name, void *v, size_t *size, void *allocator)
 {
 	serial s = serial_create(name);
 
 	return serial_serialize(s, (value)v, size, (memory_allocator)allocator);
 }
 
-void * metacall_deserialize(const char * name, const char * buffer, size_t size, void * allocator)
+void *metacall_deserialize(const char *name, const char *buffer, size_t size, void *allocator)
 {
 	serial s = serial_create(name);
 
 	return (void *)serial_deserialize(s, buffer, size, (memory_allocator)allocator);
 }
 
-int metacall_clear(void * handle)
+int metacall_clear(void *handle)
 {
 	return loader_clear(handle);
 }
@@ -1745,17 +1744,17 @@ int metacall_destroy()
 	return 0;
 }
 
-const char * metacall_print_info()
+const char *metacall_print_info()
 {
 	static const char metacall_info[] =
 		"MetaCall Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef METACALL_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef METACALL_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

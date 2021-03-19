@@ -6,7 +6,7 @@
  *
  */
 
- /* -- Headers -- */
+/* -- Headers -- */
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_fork.h>
@@ -17,34 +17,36 @@
 
 #include <stdlib.h>
 
-#if defined(WIN32) || defined(_WIN32) || \
+#if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
- /* -- Headers -- */
+/* -- Headers -- */
 
-#ifndef _WIN32_WINNT
-#	define _WIN32_WINNT 0x0600
-#endif
-#ifndef WIN32_LEAN_AND_MEAN
-#	define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
+	#ifndef _WIN32_WINNT
+		#define _WIN32_WINNT 0x0600
+	#endif
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+	#include <windows.h>
 
 /* -- Definitions -- */
 
-#define metacall_fork_pid _getpid
+	#define metacall_fork_pid _getpid
 
 /* -- Type Definitions -- */
 
 typedef long NTSTATUS;
 
-typedef struct _CLIENT_ID {
+typedef struct _CLIENT_ID
+{
 	PVOID UniqueProcess;
 	PVOID UniqueThread;
 } CLIENT_ID, *PCLIENT_ID;
 
-typedef struct _SECTION_IMAGE_INFORMATION {
+typedef struct _SECTION_IMAGE_INFORMATION
+{
 	PVOID EntryPoint;
 	ULONG StackZeroBits;
 	ULONG StackReserved;
@@ -58,7 +60,8 @@ typedef struct _SECTION_IMAGE_INFORMATION {
 	ULONG Unknown2[3];
 } SECTION_IMAGE_INFORMATION, *PSECTION_IMAGE_INFORMATION;
 
-typedef struct _RTL_USER_PROCESS_INFORMATION {
+typedef struct _RTL_USER_PROCESS_INFORMATION
+{
 	ULONG Size;
 	HANDLE Process;
 	HANDLE Thread;
@@ -66,7 +69,7 @@ typedef struct _RTL_USER_PROCESS_INFORMATION {
 	SECTION_IMAGE_INFORMATION ImageInformation;
 } RTL_USER_PROCESS_INFORMATION, *PRTL_USER_PROCESS_INFORMATION;
 
-typedef NTSTATUS (NTAPI * RtlCloneUserProcessPtr)(ULONG ProcessFlags,
+typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -82,19 +85,19 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	HANDLE DebugPort,
 	PRTL_USER_PROCESS_INFORMATION ProcessInformation);
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
- /* -- Methods -- */
+/* -- Methods -- */
 
 void (*metacall_fork_func(void))(void);
 
 pid_t metacall_fork_hook(void);
 
 #else
-#	error "Unknown metacall fork safety platform"
+	#error "Unknown metacall fork safety platform"
 #endif
 
 /* -- Private Variables -- */
@@ -112,7 +115,7 @@ static int metacall_fork_flag = 1;
 
 /* -- Methods -- */
 
-#if defined(WIN32) || defined(_WIN32) || \
+#if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
@@ -130,7 +133,7 @@ void (*metacall_fork_func(void))(void)
 
 	clone_ptr = (RtlCloneUserProcessPtr)GetProcAddress(module, "RtlCloneUserProcess");
 
-	return (void(*)(void))clone_ptr;
+	return (void (*)(void))clone_ptr;
 }
 
 NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
@@ -202,14 +205,14 @@ NTSTATUS NTAPI metacall_fork_hook(ULONG ProcessFlags,
 	return result;
 }
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
 void (*metacall_fork_func(void))(void)
 {
-	return (void(*)(void))&fork;
+	return (void (*)(void)) & fork;
 }
 
 pid_t metacall_fork_hook()
@@ -273,7 +276,7 @@ pid_t metacall_fork_hook()
 }
 
 #else
-#	error "Unknown metacall fork safety platform"
+	#error "Unknown metacall fork safety platform"
 #endif
 
 static void metacall_fork_exit(void)
@@ -322,7 +325,7 @@ int metacall_fork_initialize()
 
 	if (metacall_detour_handle == NULL)
 	{
-		metacall_detour_handle = detour_install(metacall_detour, (void(*)(void))fork_func, (void(*)(void))&metacall_fork_hook);
+		metacall_detour_handle = detour_install(metacall_detour, (void (*)(void))fork_func, (void (*)(void)) & metacall_fork_hook);
 
 		if (metacall_detour_handle == NULL)
 		{

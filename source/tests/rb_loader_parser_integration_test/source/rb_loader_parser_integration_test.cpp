@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class rb_loader_parser_integration_test : public testing::Test
 {
@@ -33,53 +33,52 @@ TEST_F(rb_loader_parser_integration_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
-		const char * rb_scripts[] =
-		{
+		const char *rb_scripts[] = {
 			"cache.rb"
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
 		ret = metacall("cache_initialize");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("cache_set", "meta", "call");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
 		metacall_value_destroy(ret);
 
-		ret = metacall("cache_has_key","meta");
+		ret = metacall("cache_has_key", "meta");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_NE((int) 0, (int) metacall_value_to_bool(ret));
+		EXPECT_NE((int)0, (int)metacall_value_to_bool(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("cache_get", "meta");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "call"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "call"));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

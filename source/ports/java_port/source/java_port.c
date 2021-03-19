@@ -21,4 +21,3 @@
 #include <java_port/java_port.h>
 
 /* ... */
-

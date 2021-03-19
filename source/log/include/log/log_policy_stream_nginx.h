@@ -33,13 +33,13 @@ struct log_policy_stream_nginx_ctor_type;
 
 typedef struct ngx_log_s ngx_log_t;
 
-typedef struct log_policy_stream_nginx_ctor_type * log_policy_stream_nginx_ctor;
+typedef struct log_policy_stream_nginx_ctor_type *log_policy_stream_nginx_ctor;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_nginx_ctor_type
 {
-	ngx_log_t * ngx_log_ptr;
+	ngx_log_t *ngx_log_ptr;
 	void (*ngx_error_ptr)();
 	uint16_t ngx_log_level;
 };

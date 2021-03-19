@@ -32,10 +32,10 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		/* This is the equivalent code of this test in NodeJS */
 		/*
@@ -45,34 +45,33 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 			assert.strictEqual(py_py_factorial(5), 120);
 		*/
 
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"function.py"
 		};
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		void * py_function_factorial = metacall_function("py_function_factorial");
-		ASSERT_NE((void *) NULL, (void *) py_function_factorial);
+		void *py_function_factorial = metacall_function("py_function_factorial");
+		ASSERT_NE((void *)NULL, (void *)py_function_factorial);
 
-		void * v_py_function_factorial = metacall_value_create_function(py_function_factorial);
-		ASSERT_NE((void *) NULL, (void *) v_py_function_factorial);
+		void *v_py_function_factorial = metacall_value_create_function(py_function_factorial);
+		ASSERT_NE((void *)NULL, (void *)v_py_function_factorial);
 
-		void * args[] = { v_py_function_factorial };
-		void * py_py_factorial = metacallv("function_chain", args);
-		ASSERT_NE((void *) NULL, (void *) py_py_factorial);
+		void *args[] = { v_py_function_factorial };
+		void *py_py_factorial = metacallv("function_chain", args);
+		ASSERT_NE((void *)NULL, (void *)py_py_factorial);
 
-		void * args_fact[] = { metacall_value_create_long(5L) };
-		void * ret = metacallfv(metacall_value_to_function(py_py_factorial), args_fact);
-		ASSERT_NE((void *) NULL, (void *) ret);
-		ASSERT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(ret));
-		EXPECT_EQ((long) 120L, (long) metacall_value_to_long(ret));
+		void *args_fact[] = { metacall_value_create_long(5L) };
+		void *ret = metacallfv(metacall_value_to_function(py_py_factorial), args_fact);
+		ASSERT_NE((void *)NULL, (void *)ret);
+		ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((long)120L, (long)metacall_value_to_long(ret));
 		metacall_value_destroy(ret);
 
 		ret = metacallfv(metacall_value_to_function(py_py_factorial), args_fact);
-		ASSERT_NE((void *) NULL, (void *) ret);
-		ASSERT_EQ((enum metacall_value_id) METACALL_LONG, (enum metacall_value_id) metacall_value_id(ret));
-		EXPECT_EQ((long) 120L, (long) metacall_value_to_long(ret));
+		ASSERT_NE((void *)NULL, (void *)ret);
+		ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((long)120L, (long)metacall_value_to_long(ret));
 		metacall_value_destroy(ret);
 
 		metacall_value_destroy(args_fact[0]);
@@ -80,10 +79,10 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 		metacall_value_destroy(v_py_function_factorial);
 		metacall_value_destroy(py_py_factorial);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		/* This is the equivalent code of this test in NodeJS */
 		/*
@@ -93,36 +92,35 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 			assert.strictEqual(js_js_factorial(5), 120);
 		*/
 
-		const char * node_scripts[] =
-		{
+		const char *node_scripts[] = {
 			"factcallback.js"
 		};
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
 
-		void * js_function_factorial = metacall_function("js_function_factorial");
-		ASSERT_NE((void *) NULL, (void *) js_function_factorial);
+		void *js_function_factorial = metacall_function("js_function_factorial");
+		ASSERT_NE((void *)NULL, (void *)js_function_factorial);
 
-		void * v_js_function_factorial = metacall_value_create_function(js_function_factorial);
-		ASSERT_NE((void *) NULL, (void *) v_js_function_factorial);
-		EXPECT_EQ((enum metacall_value_id) METACALL_FUNCTION, (enum metacall_value_id) metacall_value_id(v_js_function_factorial));
+		void *v_js_function_factorial = metacall_value_create_function(js_function_factorial);
+		ASSERT_NE((void *)NULL, (void *)v_js_function_factorial);
+		EXPECT_EQ((enum metacall_value_id)METACALL_FUNCTION, (enum metacall_value_id)metacall_value_id(v_js_function_factorial));
 
-		void * args[] = { v_js_function_factorial };
-		void * js_js_factorial = metacallv("js_function_chain", args);
-		ASSERT_NE((void *) NULL, (void *) js_js_factorial);
-		EXPECT_EQ((enum metacall_value_id) METACALL_FUNCTION, (enum metacall_value_id) metacall_value_id(js_js_factorial));
+		void *args[] = { v_js_function_factorial };
+		void *js_js_factorial = metacallv("js_function_chain", args);
+		ASSERT_NE((void *)NULL, (void *)js_js_factorial);
+		EXPECT_EQ((enum metacall_value_id)METACALL_FUNCTION, (enum metacall_value_id)metacall_value_id(js_js_factorial));
 
-		void * args_fact[] = { metacall_value_create_long(5L) };
-		void * ret = metacallfv(metacall_value_to_function(js_js_factorial), args_fact);
-		ASSERT_NE((void *) NULL, (void *) ret);
-		ASSERT_EQ((enum metacall_value_id) METACALL_DOUBLE, (enum metacall_value_id) metacall_value_id(ret));
-		EXPECT_EQ((double) 120.0, (double) metacall_value_to_double(ret));
+		void *args_fact[] = { metacall_value_create_long(5L) };
+		void *ret = metacallfv(metacall_value_to_function(js_js_factorial), args_fact);
+		ASSERT_NE((void *)NULL, (void *)ret);
+		ASSERT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((double)120.0, (double)metacall_value_to_double(ret));
 		metacall_value_destroy(ret);
 
 		ret = metacallfv(metacall_value_to_function(js_js_factorial), args_fact);
-		ASSERT_NE((void *) NULL, (void *) ret);
-		ASSERT_EQ((enum metacall_value_id) METACALL_DOUBLE, (enum metacall_value_id) metacall_value_id(ret));
-		EXPECT_EQ((double) 120.0, (double) metacall_value_to_double(ret));
+		ASSERT_NE((void *)NULL, (void *)ret);
+		ASSERT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((double)120.0, (double)metacall_value_to_double(ret));
 		metacall_value_destroy(ret);
 
 		metacall_value_destroy(args_fact[0]);
@@ -130,7 +128,7 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 		metacall_value_destroy(v_js_function_factorial);
 		metacall_value_destroy(js_js_factorial);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{
@@ -138,13 +136,13 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -153,5 +151,5 @@ TEST_F(metacall_callback_complex_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_schedule_async.h>
 #include <log/log_policy_schedule.h>
+#include <log/log_policy_schedule_async.h>
 
 /* -- Forward Declarations -- */
 
@@ -17,14 +17,14 @@ struct log_policy_schedule_async_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_schedule_async_data_type * log_policy_schedule_async_data;
+typedef struct log_policy_schedule_async_data_type *log_policy_schedule_async_data;
 
 /* -- Member Data -- */
 
 struct log_policy_schedule_async_data_type
 {
 	/* TODO: this must be implemented with free-lock */
-	void * mutex;
+	void *mutex;
 };
 
 /* -- Private Methods -- */
@@ -43,15 +43,13 @@ static int log_policy_schedule_async_destroy(log_policy policy);
 
 log_policy_interface log_policy_schedule_async_interface()
 {
-	static struct log_policy_schedule_impl_type log_policy_schedule_async_impl_obj =
-	{
+	static struct log_policy_schedule_impl_type log_policy_schedule_async_impl_obj = {
 		&log_policy_schedule_async_lock,
 		&log_policy_schedule_async_execute,
 		&log_policy_schedule_async_unlock
 	};
 
-	static struct log_policy_interface_type policy_interface_schedule =
-	{
+	static struct log_policy_interface_type policy_interface_schedule = {
 		&log_policy_schedule_async_create,
 		&log_policy_schedule_async_impl_obj,
 		&log_policy_schedule_async_destroy
@@ -68,7 +66,6 @@ static int log_policy_schedule_async_create(log_policy policy, const log_policy_
 
 	if (async_data == NULL)
 	{
-
 		return 1;
 	}
 

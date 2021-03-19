@@ -36,30 +36,30 @@ extern "C" {
 /* -- Definitions -- */
 
 #ifndef boolean
-#	define boolean unsigned char
+	#define boolean unsigned char
 #endif
 
 /* -- Enumerations -- */
 
 enum metacall_value_id
 {
-	METACALL_BOOL		= 0,
-	METACALL_CHAR		= 1,
-	METACALL_SHORT		= 2,
-	METACALL_INT		= 3,
-	METACALL_LONG		= 4,
-	METACALL_FLOAT		= 5,
-	METACALL_DOUBLE		= 6,
-	METACALL_STRING		= 7,
-	METACALL_BUFFER		= 8,
-	METACALL_ARRAY		= 9,
-	METACALL_MAP		= 10,
-	METACALL_PTR		= 11,
-	METACALL_FUTURE		= 12,
-	METACALL_FUNCTION	= 13,
-	METACALL_NULL		= 14,
-	METACALL_CLASS		= 15,
-	METACALL_OBJECT		= 16,
+	METACALL_BOOL = 0,
+	METACALL_CHAR = 1,
+	METACALL_SHORT = 2,
+	METACALL_INT = 3,
+	METACALL_LONG = 4,
+	METACALL_FLOAT = 5,
+	METACALL_DOUBLE = 6,
+	METACALL_STRING = 7,
+	METACALL_BUFFER = 8,
+	METACALL_ARRAY = 9,
+	METACALL_MAP = 10,
+	METACALL_PTR = 11,
+	METACALL_FUTURE = 12,
+	METACALL_FUNCTION = 13,
+	METACALL_NULL = 14,
+	METACALL_CLASS = 15,
+	METACALL_OBJECT = 16,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -77,7 +77,7 @@ enum metacall_value_id
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_bool(boolean b);
+METACALL_API void *metacall_value_create_bool(boolean b);
 
 /**
 *  @brief
@@ -89,7 +89,7 @@ METACALL_API void * metacall_value_create_bool(boolean b);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_char(char c);
+METACALL_API void *metacall_value_create_char(char c);
 
 /**
 *  @brief
@@ -101,7 +101,7 @@ METACALL_API void * metacall_value_create_char(char c);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_short(short s);
+METACALL_API void *metacall_value_create_short(short s);
 
 /**
 *  @brief
@@ -113,7 +113,7 @@ METACALL_API void * metacall_value_create_short(short s);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_int(int i);
+METACALL_API void *metacall_value_create_int(int i);
 
 /**
 *  @brief
@@ -125,7 +125,7 @@ METACALL_API void * metacall_value_create_int(int i);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_long(long l);
+METACALL_API void *metacall_value_create_long(long l);
 
 /**
 *  @brief
@@ -137,7 +137,7 @@ METACALL_API void * metacall_value_create_long(long l);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_float(float f);
+METACALL_API void *metacall_value_create_float(float f);
 
 /**
 *  @brief
@@ -149,7 +149,7 @@ METACALL_API void * metacall_value_create_float(float f);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_double(double d);
+METACALL_API void *metacall_value_create_double(double d);
 
 /**
 *  @brief
@@ -164,7 +164,7 @@ METACALL_API void * metacall_value_create_double(double d);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_string(const char * str, size_t length);
+METACALL_API void *metacall_value_create_string(const char *str, size_t length);
 
 /**
 *  @brief
@@ -179,7 +179,7 @@ METACALL_API void * metacall_value_create_string(const char * str, size_t length
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_buffer(const void * buffer, size_t size);
+METACALL_API void *metacall_value_create_buffer(const void *buffer, size_t size);
 
 /**
 *  @brief
@@ -194,7 +194,7 @@ METACALL_API void * metacall_value_create_buffer(const void * buffer, size_t siz
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_array(const void * values[], size_t size);
+METACALL_API void *metacall_value_create_array(const void *values[], size_t size);
 
 /**
 *  @brief
@@ -209,7 +209,7 @@ METACALL_API void * metacall_value_create_array(const void * values[], size_t si
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_map(const void * tuples[], size_t size);
+METACALL_API void *metacall_value_create_map(const void *tuples[], size_t size);
 
 /**
 *  @brief
@@ -221,7 +221,7 @@ METACALL_API void * metacall_value_create_map(const void * tuples[], size_t size
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_ptr(const void * ptr);
+METACALL_API void *metacall_value_create_ptr(const void *ptr);
 
 /**
 *  @brief
@@ -233,7 +233,7 @@ METACALL_API void * metacall_value_create_ptr(const void * ptr);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_future(void * f);
+METACALL_API void *metacall_value_create_future(void *f);
 
 /**
 *  @brief
@@ -245,7 +245,7 @@ METACALL_API void * metacall_value_create_future(void * f);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_function(void * f);
+METACALL_API void *metacall_value_create_function(void *f);
 
 /**
 *  @brief
@@ -260,7 +260,7 @@ METACALL_API void * metacall_value_create_function(void * f);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_function_closure(void * f, void * c);
+METACALL_API void *metacall_value_create_function_closure(void *f, void *c);
 
 /**
 *  @brief
@@ -269,7 +269,7 @@ METACALL_API void * metacall_value_create_function_closure(void * f, void * c);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_null(void);
+METACALL_API void *metacall_value_create_null(void);
 
 /**
 *  @brief
@@ -281,7 +281,7 @@ METACALL_API void * metacall_value_create_null(void);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_class(void * c);
+METACALL_API void *metacall_value_create_class(void *c);
 
 /**
 *  @brief
@@ -293,7 +293,7 @@ METACALL_API void * metacall_value_create_class(void * c);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-METACALL_API void * metacall_value_create_object(void * o);
+METACALL_API void *metacall_value_create_object(void *o);
 
 /**
 *  @brief
@@ -305,7 +305,7 @@ METACALL_API void * metacall_value_create_object(void * o);
 *  @return
 *    Size in bytes of the value
 */
-METACALL_API size_t metacall_value_size(void * v);
+METACALL_API size_t metacall_value_size(void *v);
 
 /**
 *  @brief
@@ -317,7 +317,7 @@ METACALL_API size_t metacall_value_size(void * v);
 *  @return
 *    Number of values @v represents
 */
-METACALL_API size_t metacall_value_count(void * v);
+METACALL_API size_t metacall_value_count(void *v);
 
 /**
 *  @brief
@@ -329,7 +329,7 @@ METACALL_API size_t metacall_value_count(void * v);
 *  @return
 *    Return type id assigned to value
 */
-METACALL_API enum metacall_value_id metacall_value_id(void * v);
+METACALL_API enum metacall_value_id metacall_value_id(void *v);
 
 /**
 *  @brief
@@ -342,7 +342,7 @@ METACALL_API enum metacall_value_id metacall_value_id(void * v);
 *  @return
 *    Copy of the value @v on success, null otherwhise
 */
-METACALL_API void * metacall_value_copy(void * v);
+METACALL_API void *metacall_value_copy(void *v);
 
 /**
 *  @brief
@@ -355,7 +355,7 @@ METACALL_API void * metacall_value_copy(void * v);
 *  @param[in] dst
 *    Destination value which will recieve the ownership
 */
-METACALL_API void metacall_value_move(void * src, void * dest);
+METACALL_API void metacall_value_move(void *src, void *dest);
 
 /**
 *  @brief
@@ -367,7 +367,7 @@ METACALL_API void metacall_value_move(void * src, void * dest);
 *  @return
 *    Value converted to boolean
 */
-METACALL_API boolean metacall_value_to_bool(void * v);
+METACALL_API boolean metacall_value_to_bool(void *v);
 
 /**
 *  @brief
@@ -379,7 +379,7 @@ METACALL_API boolean metacall_value_to_bool(void * v);
 *  @return
 *    Value converted to char
 */
-METACALL_API char metacall_value_to_char(void * v);
+METACALL_API char metacall_value_to_char(void *v);
 
 /**
 *  @brief
@@ -391,7 +391,7 @@ METACALL_API char metacall_value_to_char(void * v);
 *  @return
 *    Value converted to short
 */
-METACALL_API short metacall_value_to_short(void * v);
+METACALL_API short metacall_value_to_short(void *v);
 
 /**
 *  @brief
@@ -403,7 +403,7 @@ METACALL_API short metacall_value_to_short(void * v);
 *  @return
 *    Value converted to integer
 */
-METACALL_API int metacall_value_to_int(void * v);
+METACALL_API int metacall_value_to_int(void *v);
 
 /**
 *  @brief
@@ -415,7 +415,7 @@ METACALL_API int metacall_value_to_int(void * v);
 *  @return
 *    Value converted to long integer
 */
-METACALL_API long metacall_value_to_long(void * v);
+METACALL_API long metacall_value_to_long(void *v);
 
 /**
 *  @brief
@@ -427,7 +427,7 @@ METACALL_API long metacall_value_to_long(void * v);
 *  @return
 *    Value converted to float
 */
-METACALL_API float metacall_value_to_float(void * v);
+METACALL_API float metacall_value_to_float(void *v);
 
 /**
 *  @brief
@@ -439,7 +439,7 @@ METACALL_API float metacall_value_to_float(void * v);
 *  @return
 *    Value converted to dobule
 */
-METACALL_API double metacall_value_to_double(void * v);
+METACALL_API double metacall_value_to_double(void *v);
 
 /**
 *  @brief
@@ -451,7 +451,7 @@ METACALL_API double metacall_value_to_double(void * v);
 *  @return
 *    Value converted to C string (null terminated)
 */
-METACALL_API char * metacall_value_to_string(void * v);
+METACALL_API char *metacall_value_to_string(void *v);
 
 /**
 *  @brief
@@ -463,7 +463,7 @@ METACALL_API char * metacall_value_to_string(void * v);
 *  @return
 *    Value converted to memory block
 */
-METACALL_API void * metacall_value_to_buffer(void * v);
+METACALL_API void *metacall_value_to_buffer(void *v);
 
 /**
 *  @brief
@@ -475,7 +475,7 @@ METACALL_API void * metacall_value_to_buffer(void * v);
 *  @return
 *    Value converted to array of values
 */
-METACALL_API void ** metacall_value_to_array(void * v);
+METACALL_API void **metacall_value_to_array(void *v);
 
 /**
 *  @brief
@@ -487,7 +487,7 @@ METACALL_API void ** metacall_value_to_array(void * v);
 *  @return
 *    Value converted to map (array of tuples (array of values))
 */
-METACALL_API void ** metacall_value_to_map(void * v);
+METACALL_API void **metacall_value_to_map(void *v);
 
 /**
 *  @brief
@@ -499,7 +499,7 @@ METACALL_API void ** metacall_value_to_map(void * v);
 *  @return
 *    Value converted to pointer
 */
-METACALL_API void * metacall_value_to_ptr(void * v);
+METACALL_API void *metacall_value_to_ptr(void *v);
 
 /**
 *  @brief
@@ -511,7 +511,7 @@ METACALL_API void * metacall_value_to_ptr(void * v);
 *  @return
 *    Value converted to future
 */
-METACALL_API void * metacall_value_to_future(void * v);
+METACALL_API void *metacall_value_to_future(void *v);
 
 /**
 *  @brief
@@ -523,7 +523,7 @@ METACALL_API void * metacall_value_to_future(void * v);
 *  @return
 *    Value converted to function
 */
-METACALL_API void * metacall_value_to_function(void * v);
+METACALL_API void *metacall_value_to_function(void *v);
 
 /**
 *  @brief
@@ -535,7 +535,7 @@ METACALL_API void * metacall_value_to_function(void * v);
 *  @return
 *    Value converted to null
 */
-METACALL_API void * metacall_value_to_null(void * v);
+METACALL_API void *metacall_value_to_null(void *v);
 
 /**
 *  @brief
@@ -547,7 +547,7 @@ METACALL_API void * metacall_value_to_null(void * v);
 *  @return
 *    Value converted to class
 */
-METACALL_API void * metacall_value_to_class(void * v);
+METACALL_API void *metacall_value_to_class(void *v);
 
 /**
 *  @brief
@@ -559,7 +559,7 @@ METACALL_API void * metacall_value_to_class(void * v);
 *  @return
 *    Value converted to object
 */
-METACALL_API void * metacall_value_to_object(void * v);
+METACALL_API void *metacall_value_to_object(void *v);
 
 /**
 *  @brief
@@ -574,7 +574,7 @@ METACALL_API void * metacall_value_to_object(void * v);
 *  @return
 *    Value with boolean @b assigned to it
 */
-METACALL_API void * metacall_value_from_bool(void * v, boolean b);
+METACALL_API void *metacall_value_from_bool(void *v, boolean b);
 
 /**
 *  @brief
@@ -589,7 +589,7 @@ METACALL_API void * metacall_value_from_bool(void * v, boolean b);
 *  @return
 *    Value with char @c assigned to it
 */
-METACALL_API void * metacall_value_from_char(void * v, char c);
+METACALL_API void *metacall_value_from_char(void *v, char c);
 
 /**
 *  @brief
@@ -604,7 +604,7 @@ METACALL_API void * metacall_value_from_char(void * v, char c);
 *  @return
 *    Value with short @s assigned to it
 */
-METACALL_API void * metacall_value_from_short(void * v, short s);
+METACALL_API void *metacall_value_from_short(void *v, short s);
 
 /**
 *  @brief
@@ -619,7 +619,7 @@ METACALL_API void * metacall_value_from_short(void * v, short s);
 *  @return
 *    Value with integer @i assigned to it
 */
-METACALL_API void * metacall_value_from_int(void * v, int i);
+METACALL_API void *metacall_value_from_int(void *v, int i);
 
 /**
 *  @brief
@@ -634,7 +634,7 @@ METACALL_API void * metacall_value_from_int(void * v, int i);
 *  @return
 *    Value with long @l assigned to it
 */
-METACALL_API void * metacall_value_from_long(void * v, long l);
+METACALL_API void *metacall_value_from_long(void *v, long l);
 
 /**
 *  @brief
@@ -649,7 +649,7 @@ METACALL_API void * metacall_value_from_long(void * v, long l);
 *  @return
 *    Value with float @f assigned to it
 */
-METACALL_API void * metacall_value_from_float(void * v, float f);
+METACALL_API void *metacall_value_from_float(void *v, float f);
 
 /**
 *  @brief
@@ -664,7 +664,7 @@ METACALL_API void * metacall_value_from_float(void * v, float f);
 *  @return
 *    Value with double @d assigned to it
 */
-METACALL_API void * metacall_value_from_double(void * v, double d);
+METACALL_API void *metacall_value_from_double(void *v, double d);
 
 /**
 *  @brief
@@ -683,7 +683,7 @@ METACALL_API void * metacall_value_from_double(void * v, double d);
 *  @return
 *    Value with string @str assigned to it
 */
-METACALL_API void * metacall_value_from_string(void * v, const char * str, size_t length);
+METACALL_API void *metacall_value_from_string(void *v, const char *str, size_t length);
 
 /**
 *  @brief
@@ -701,7 +701,7 @@ METACALL_API void * metacall_value_from_string(void * v, const char * str, size_
 *  @return
 *    Value with array @buffer assigned to it
 */
-METACALL_API void * metacall_value_from_buffer(void * v, const void * buffer, size_t size);
+METACALL_API void *metacall_value_from_buffer(void *v, const void *buffer, size_t size);
 
 /**
 *  @brief
@@ -719,7 +719,7 @@ METACALL_API void * metacall_value_from_buffer(void * v, const void * buffer, si
 *  @return
 *    Value with array of values @values assigned to it
 */
-METACALL_API void * metacall_value_from_array(void * v, const void * values[], size_t size);
+METACALL_API void *metacall_value_from_array(void *v, const void *values[], size_t size);
 
 /**
 *  @brief
@@ -737,7 +737,7 @@ METACALL_API void * metacall_value_from_array(void * v, const void * values[], s
 *  @return
 *    Value with array of tuples @tuples assigned to it
 */
-METACALL_API void * metacall_value_from_map(void * v, const void * tuples[], size_t size);
+METACALL_API void *metacall_value_from_map(void *v, const void *tuples[], size_t size);
 
 /**
 *  @brief
@@ -752,7 +752,7 @@ METACALL_API void * metacall_value_from_map(void * v, const void * tuples[], siz
 *  @return
 *    Value with pointer @ptr assigned to it
 */
-METACALL_API void * metacall_value_from_ptr(void * v, const void * ptr);
+METACALL_API void *metacall_value_from_ptr(void *v, const void *ptr);
 
 /**
 *  @brief
@@ -767,7 +767,7 @@ METACALL_API void * metacall_value_from_ptr(void * v, const void * ptr);
 *  @return
 *    Value with future @f assigned to it
 */
-METACALL_API void * metacall_value_from_future(void * v, void * f);
+METACALL_API void *metacall_value_from_future(void *v, void *f);
 
 /**
 *  @brief
@@ -782,7 +782,7 @@ METACALL_API void * metacall_value_from_future(void * v, void * f);
 *  @return
 *    Value with function @f assigned to it
 */
-METACALL_API void * metacall_value_from_function(void * v, void * f);
+METACALL_API void *metacall_value_from_function(void *v, void *f);
 
 /**
 *  @brief
@@ -794,7 +794,7 @@ METACALL_API void * metacall_value_from_function(void * v, void * f);
 *  @return
 *    Value with null assigned to it
 */
-METACALL_API void * metacall_value_from_null(void * v);
+METACALL_API void *metacall_value_from_null(void *v);
 
 /**
 *  @brief
@@ -809,7 +809,7 @@ METACALL_API void * metacall_value_from_null(void * v);
 *  @return
 *    Value with class @c assigned to it
 */
-METACALL_API void * metacall_value_from_class(void * v, void * c);
+METACALL_API void *metacall_value_from_class(void *v, void *c);
 
 /**
 *  @brief
@@ -824,7 +824,7 @@ METACALL_API void * metacall_value_from_class(void * v, void * c);
 *  @return
 *    Value with object @c assigned to it
 */
-METACALL_API void * metacall_value_from_object(void * v, void * o);
+METACALL_API void *metacall_value_from_object(void *v, void *o);
 
 /**
 *  @brief
@@ -839,7 +839,7 @@ METACALL_API void * metacall_value_from_object(void * v, void * o);
 *  @return
 *    Casted value or reference to @v if casting is between equivalent types
 */
-METACALL_API void * metacall_value_cast(void * v, enum metacall_value_id id);
+METACALL_API void *metacall_value_cast(void *v, enum metacall_value_id id);
 
 /**
 *  @brief
@@ -851,7 +851,7 @@ METACALL_API void * metacall_value_cast(void * v, enum metacall_value_id id);
 *  @return
 *    Value converted to boolean
 */
-METACALL_API boolean metacall_value_cast_bool(void ** v);
+METACALL_API boolean metacall_value_cast_bool(void **v);
 
 /**
 *  @brief
@@ -863,7 +863,7 @@ METACALL_API boolean metacall_value_cast_bool(void ** v);
 *  @return
 *    Value converted to char
 */
-METACALL_API char metacall_value_cast_char(void ** v);
+METACALL_API char metacall_value_cast_char(void **v);
 
 /**
 *  @brief
@@ -875,7 +875,7 @@ METACALL_API char metacall_value_cast_char(void ** v);
 *  @return
 *    Value converted to short
 */
-METACALL_API short metacall_value_cast_short(void ** v);
+METACALL_API short metacall_value_cast_short(void **v);
 
 /**
 *  @brief
@@ -887,7 +887,7 @@ METACALL_API short metacall_value_cast_short(void ** v);
 *  @return
 *    Value converted to int
 */
-METACALL_API int metacall_value_cast_int(void ** v);
+METACALL_API int metacall_value_cast_int(void **v);
 
 /**
 *  @brief
@@ -899,7 +899,7 @@ METACALL_API int metacall_value_cast_int(void ** v);
 *  @return
 *    Value converted to long
 */
-METACALL_API long metacall_value_cast_long(void ** v);
+METACALL_API long metacall_value_cast_long(void **v);
 
 /**
 *  @brief
@@ -911,7 +911,7 @@ METACALL_API long metacall_value_cast_long(void ** v);
 *  @return
 *    Value converted to float
 */
-METACALL_API float metacall_value_cast_float(void ** v);
+METACALL_API float metacall_value_cast_float(void **v);
 
 /**
 *  @brief
@@ -923,7 +923,7 @@ METACALL_API float metacall_value_cast_float(void ** v);
 *  @return
 *    Value converted to double
 */
-METACALL_API double metacall_value_cast_double(void ** v);
+METACALL_API double metacall_value_cast_double(void **v);
 
 /**
 *  @brief
@@ -935,7 +935,7 @@ METACALL_API double metacall_value_cast_double(void ** v);
 *  @return
 *    Value converted to a C string (null terminated)
 */
-METACALL_API char * metacall_value_cast_string(void ** v);
+METACALL_API char *metacall_value_cast_string(void **v);
 
 /**
 *  @brief
@@ -947,7 +947,7 @@ METACALL_API char * metacall_value_cast_string(void ** v);
 *  @return
 *    Value converted to buffer
 */
-METACALL_API void * metacall_value_cast_buffer(void ** v);
+METACALL_API void *metacall_value_cast_buffer(void **v);
 
 /**
 *  @brief
@@ -959,7 +959,7 @@ METACALL_API void * metacall_value_cast_buffer(void ** v);
 *  @return
 *    Value converted to array of values
 */
-METACALL_API void ** metacall_value_cast_array(void ** v);
+METACALL_API void **metacall_value_cast_array(void **v);
 
 /**
 *  @brief
@@ -971,7 +971,7 @@ METACALL_API void ** metacall_value_cast_array(void ** v);
 *  @return
 *    Value converted to map
 */
-METACALL_API void * metacall_value_cast_map(void ** v);
+METACALL_API void *metacall_value_cast_map(void **v);
 
 /**
 *  @brief
@@ -983,7 +983,7 @@ METACALL_API void * metacall_value_cast_map(void ** v);
 *  @return
 *    Value converted to ptr
 */
-METACALL_API void * metacall_value_cast_ptr(void ** v);
+METACALL_API void *metacall_value_cast_ptr(void **v);
 
 /**
 *  @brief
@@ -995,7 +995,7 @@ METACALL_API void * metacall_value_cast_ptr(void ** v);
 *  @return
 *    Value converted to future
 */
-METACALL_API void * metacall_value_cast_future(void ** v);
+METACALL_API void *metacall_value_cast_future(void **v);
 
 /**
 *  @brief
@@ -1007,7 +1007,7 @@ METACALL_API void * metacall_value_cast_future(void ** v);
 *  @return
 *    Value converted to function
 */
-METACALL_API void * metacall_value_cast_function(void ** v);
+METACALL_API void *metacall_value_cast_function(void **v);
 
 /**
 *  @brief
@@ -1019,7 +1019,7 @@ METACALL_API void * metacall_value_cast_function(void ** v);
 *  @return
 *    Value converted to null
 */
-METACALL_API void * metacall_value_cast_null(void ** v);
+METACALL_API void *metacall_value_cast_null(void **v);
 
 /**
 *  @brief
@@ -1031,7 +1031,7 @@ METACALL_API void * metacall_value_cast_null(void ** v);
 *  @return
 *    Value converted to class
 */
-METACALL_API void * metacall_value_cast_class(void ** v);
+METACALL_API void *metacall_value_cast_class(void **v);
 
 /**
 *  @brief
@@ -1043,7 +1043,7 @@ METACALL_API void * metacall_value_cast_class(void ** v);
 *  @return
 *    Value converted to object
 */
-METACALL_API void * metacall_value_cast_object(void ** v);
+METACALL_API void *metacall_value_cast_object(void **v);
 
 /**
 *  @brief
@@ -1052,7 +1052,7 @@ METACALL_API void * metacall_value_cast_object(void ** v);
 *  @param[in] v
 *    Reference to the value
 */
-METACALL_API void metacall_value_destroy(void * v);
+METACALL_API void metacall_value_destroy(void *v);
 
 #ifdef __cplusplus
 }

@@ -25,8 +25,8 @@
 
 #include <format/format_api.h>
 
-#include <format/format_specifier.h>
 #include <format/format_print.h>
+#include <format/format_specifier.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +34,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-FORMAT_API const char * format_print_info(void);
+FORMAT_API const char *format_print_info(void);
 
 #ifdef __cplusplus
 }

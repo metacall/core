@@ -22,17 +22,17 @@
 
 #include <format/format.h>
 #include <log/log.h>
-#include <log/log_level.h>
 #include <log/log_handle.h>
+#include <log/log_level.h>
 
 static const char format[] = "%.19s #%" PRIuS " %s:%" PRIuS " %s @%s ";
 
 class log_custom_test : public testing::Test
 {
-  public:
+public:
 };
 
-size_t format_size(void * context, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
+size_t format_size(void *context, const char *time, uint64_t id, size_t line, const char *func, const char *file, const char *level, const char *message, log_policy_format_custom_va_list args)
 {
 	size_t length = 0;
 
@@ -56,10 +56,10 @@ size_t format_size(void * context, const char * time, uint64_t id, size_t line, 
 	return snprintf(NULL, 0, format, time, id, file, line, func, level) + length + 1;
 }
 
-size_t format_serialize(void * context, void * buffer, const size_t size, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
+size_t format_serialize(void *context, void *buffer, const size_t size, const char *time, uint64_t id, size_t line, const char *func, const char *file, const char *level, const char *message, log_policy_format_custom_va_list args)
 {
 	size_t length = snprintf((char *)buffer, size, format, time, id, file, line, func, level);
-	char * body = &(((char *)buffer)[length]);
+	char *body = &(((char *)buffer)[length]);
 
 	(void)context;
 
@@ -81,7 +81,7 @@ size_t format_serialize(void * context, void * buffer, const size_t size, const 
 	return length + 1;
 }
 
-size_t format_deserialize(void * context, const void * buffer, const size_t size, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, log_policy_format_custom_va_list args)
+size_t format_deserialize(void *context, const void *buffer, const size_t size, const char *time, uint64_t id, size_t line, const char *func, const char *file, const char *level, const char *message, log_policy_format_custom_va_list args)
 {
 	/* TODO */
 	(void)context;
@@ -98,7 +98,7 @@ size_t format_deserialize(void * context, const void * buffer, const size_t size
 	return size;
 }
 
-int stream_flush(void * context)
+int stream_flush(void *context)
 {
 	(void)context;
 
@@ -107,7 +107,7 @@ int stream_flush(void * context)
 	return 0;
 }
 
-int stream_write(void * context, const char * buffer, const size_t size)
+int stream_write(void *context, const char *buffer, const size_t size)
 {
 	(void)context;
 	(void)size;
@@ -122,21 +122,21 @@ TEST_F(log_custom_test, DefaultConstructor)
 	const char name[] = "custom_log";
 
 	/* Create logs */
-	EXPECT_EQ((int) 0, (int) log_create(name));
+	EXPECT_EQ((int)0, (int)log_create(name));
 
 	/* Set policies */
-	EXPECT_EQ((int) 0, (int) log_configure(name,
-		log_policy_format_custom(NULL, &format_size, &format_serialize, &format_deserialize),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_custom(NULL, &stream_write, &stream_flush)));
+	EXPECT_EQ((int)0, (int)log_configure(name,
+						  log_policy_format_custom(NULL, &format_size, &format_serialize, &format_deserialize),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_custom(NULL, &stream_write, &stream_flush)));
 
 	/* Write simple logs */
-	EXPECT_EQ((int) 0, (int) log_write(name, LOG_LEVEL_INFO, "hello world"));
+	EXPECT_EQ((int)0, (int)log_write(name, LOG_LEVEL_INFO, "hello world"));
 
 	/* Write varidic log */
-	EXPECT_EQ((int) 0, (int) log_write(name, LOG_LEVEL_INFO, "hello world from log %d", 20));
+	EXPECT_EQ((int)0, (int)log_write(name, LOG_LEVEL_INFO, "hello world from log %d", 20));
 
 	/* Clear log */
-	EXPECT_EQ((int) 0, (int) log_clear(name));
+	EXPECT_EQ((int)0, (int)log_clear(name));
 }

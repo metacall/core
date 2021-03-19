@@ -32,33 +32,32 @@ TEST_F(metacall_initialize_destroy_multiple_node_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		static const char buffer[] =
-		{
+		static const char buffer[] = {
 			"console.log('a')"
 		};
 
 		static const char tag[] = "node";
 
-		ASSERT_EQ((int) 1, (int) metacall_is_initialized(tag));
+		ASSERT_EQ((int)1, (int)metacall_is_initialized(tag));
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
-		ASSERT_EQ((int) 0, (int) metacall_is_initialized(tag));
+		ASSERT_EQ((int)0, (int)metacall_is_initialized(tag));
 
-		ASSERT_EQ((int) 0, (int) metacall_destroy());
+		ASSERT_EQ((int)0, (int)metacall_destroy());
 
-		ASSERT_EQ((int) 1, (int) metacall_is_initialized(tag));
+		ASSERT_EQ((int)1, (int)metacall_is_initialized(tag));
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
-	ASSERT_EQ((int) 0, (int) metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 
-	ASSERT_EQ((int) 0, (int) metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 }

@@ -32,30 +32,30 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	void * config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	void *config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	ASSERT_NE((void *) NULL, (void *) config_allocator);
+	ASSERT_NE((void *)NULL, (void *)config_allocator);
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const long seven_multiples_limit = 10;
 
 		long iterator;
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_a.json", NULL, config_allocator));
+		ASSERT_EQ((int)0, (int)metacall_load_from_configuration("metacall_load_from_configuration_py_test_a.json", NULL, config_allocator));
 
 		ret = metacall("multiply", 5, 15);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)75);
 
 		metacall_value_destroy(ret);
 
@@ -63,56 +63,56 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 		{
 			ret = metacall("multiply", 7, iterator);
 
-			EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
+			EXPECT_EQ((long)metacall_value_to_long(ret), (long)(7 * iterator));
 
 			metacall_value_destroy(ret);
 		}
 
 		ret = metacall("divide", 64.0, 2.0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 32.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)32.0);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("sum", 1000, 3500);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 4500);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)4500);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("sum", 3, 4);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 7);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("hello");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("strcat", "Hello ", "Universe");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello Universe"));
 
 		metacall_value_destroy(ret);
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_py_test_b.json", NULL, config_allocator));
+		ASSERT_EQ((int)0, (int)metacall_load_from_configuration("metacall_load_from_configuration_py_test_b.json", NULL, config_allocator));
 
 		/* Print inspect information */
 		{
@@ -120,13 +120,13 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 			struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-			void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+			void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-			char * inspect_str = metacall_inspect(&size, allocator);
+			char *inspect_str = metacall_inspect(&size, allocator);
 
-			EXPECT_NE((char *) NULL, (char *) inspect_str);
+			EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-			EXPECT_GT((size_t) size, (size_t) 0);
+			EXPECT_GT((size_t)size, (size_t)0);
 
 			std::cout << inspect_str << std::endl;
 
@@ -137,9 +137,9 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 
 		ret = metacall("s_multiply", 5, 15);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)75);
 
 		metacall_value_destroy(ret);
 
@@ -147,113 +147,112 @@ TEST_F(metacall_load_configuration_test, DefaultConstructor)
 		{
 			ret = metacall("s_multiply", 7, iterator);
 
-			EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
+			EXPECT_EQ((long)metacall_value_to_long(ret), (long)(7 * iterator));
 
 			metacall_value_destroy(ret);
 		}
 
 		ret = metacall("s_divide", 64.0, 2.0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 32.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)32.0);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("s_sum", 1000, 3500);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 4500);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)4500);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("s_sum", 3, 4);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 7);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("s_hello");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *) NULL, (void *) metacall_value_to_null(ret));
+		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("s_strcat", "Hello ", "Universe");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello Universe"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello Universe"));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
-		void * ret = NULL;
+		void *ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL, config_allocator));
+		ASSERT_EQ((int)0, (int)metacall_load_from_configuration("metacall_load_from_configuration_rb_test.json", NULL, config_allocator));
 
 		ret = metacall("say_multiply", 5, 7);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 35);
+		EXPECT_EQ((int)metacall_value_to_int(ret), (int)35);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("say_null");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("say_hello", "meta-programmer");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_to_string(ret), "Hello meta-programmer!"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "Hello meta-programmer!"));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const enum metacall_value_id hello_boy_double_ids[] =
-		{
+		const enum metacall_value_id hello_boy_double_ids[] = {
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration("metacall_load_from_configuration_node_test.json", NULL, config_allocator));
+		ASSERT_EQ((int)0, (int)metacall_load_from_configuration("metacall_load_from_configuration_node_test.json", NULL, config_allocator));
 
 		ret = metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)7.0);
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	metacall_allocator_destroy(config_allocator);
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -26,14 +26,14 @@
 #include <filesystem/filesystem_api.h>
 
 /*
-#include <filesystem/filesystem_file.h>
 #include <filesystem/filesystem_directory.h>
-#include <filesystem/filesystem_watcher.h>
+#include <filesystem/filesystem_file.h>
 #include <filesystem/filesystem_interface.h>
+#include <filesystem/filesystem_watcher.h>
 */
 
-#include <adt/adt_vector.h>
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,11 +43,11 @@ extern "C" {
 
 typedef enum filesystem_flags_enumeration
 {
-	FILESYSTEM_FLAGS_NONE			= 0x00,
-	FILESYSTEM_FLAGS_LOAD_LAZY		= 0x01 << 0x00,
-	FILESYSTEM_FLAGS_WATCH_SYNC		= 0x01 << 0x01,
-	FILESYSTEM_FLAGS_READABLE		= 0x01 << 0x02,
-	FILESYSTEM_FLAGS_WRITEABLE		= 0x01 << 0x03
+	FILESYSTEM_FLAGS_NONE = 0x00,
+	FILESYSTEM_FLAGS_LOAD_LAZY = 0x01 << 0x00,
+	FILESYSTEM_FLAGS_WATCH_SYNC = 0x01 << 0x01,
+	FILESYSTEM_FLAGS_READABLE = 0x01 << 0x02,
+	FILESYSTEM_FLAGS_WRITEABLE = 0x01 << 0x03
 
 } filesystem_flags;
 
@@ -61,11 +61,11 @@ struct filesystem_type;
 
 /* -- Type Definitions -- */
 
-typedef struct file_type * file;
+typedef struct file_type *file;
 
-typedef struct directory_type * directory;
+typedef struct directory_type *directory;
 
-typedef struct filesystem_type * filesystem;
+typedef struct filesystem_type *filesystem;
 
 /* -- Methods -- */
 
@@ -79,7 +79,7 @@ typedef struct filesystem_type * filesystem;
 *  @return
 *    A handle to file system if success, null otherwhise
 */
-FILESYSTEM_API filesystem filesystem_create(const char * root, filesystem_flags flags);
+FILESYSTEM_API filesystem filesystem_create(const char *root, filesystem_flags flags);
 
 /**
 *  @brief
@@ -94,7 +94,7 @@ FILESYSTEM_API filesystem filesystem_create(const char * root, filesystem_flags 
 *  @return
 *    Returns zero on success, different from zero otherwhise
 */
-FILESYSTEM_API int filesystem_add_file(filesystem fs, const char * file_path);
+FILESYSTEM_API int filesystem_add_file(filesystem fs, const char *file_path);
 
 /**
 *  @brief
@@ -109,7 +109,7 @@ FILESYSTEM_API int filesystem_add_file(filesystem fs, const char * file_path);
 *  @return
 *    Returns zero on success, different from zero otherwhise
 */
-FILESYSTEM_API int filesystem_add_directory(filesystem fs, const char * directory_path);
+FILESYSTEM_API int filesystem_add_directory(filesystem fs, const char *directory_path);
 
 /**
 *  @brief
@@ -124,7 +124,7 @@ FILESYSTEM_API int filesystem_add_directory(filesystem fs, const char * director
 *  @return
 *    Returns zero on success, different from zero otherwhise
 */
-FILESYSTEM_API int filesystem_remove_file(filesystem fs, const char * file_path);
+FILESYSTEM_API int filesystem_remove_file(filesystem fs, const char *file_path);
 
 /**
 *  @brief
@@ -139,7 +139,7 @@ FILESYSTEM_API int filesystem_remove_file(filesystem fs, const char * file_path)
 *  @return
 *    Returns zero on success, different from zero otherwhise
 */
-FILESYSTEM_API int filesystem_remove_directory(filesystem fs, const char * directory_path);
+FILESYSTEM_API int filesystem_remove_directory(filesystem fs, const char *directory_path);
 
 /**
 *  @brief
@@ -222,15 +222,7 @@ FILESYSTEM_API int filesystem_cannonical_path_from_file(filesystem fs, file f, v
 */
 FILESYSTEM_API int filesystem_cannonical_path_from_directory(filesystem fs, directory d, vector path);
 
-
-
-
-
 /* TODO: filesystem_cannonical_path_to_string */
-
-
-
-
 
 /**
 *  @brief
@@ -249,7 +241,7 @@ FILESYSTEM_API void filesystem_destroy(filesystem fs);
 *    Static string containing module information
 *
 */
-FILESYSTEM_API const char * filesystem_print_info(void);
+FILESYSTEM_API const char *filesystem_print_info(void);
 
 #ifdef __cplusplus
 }

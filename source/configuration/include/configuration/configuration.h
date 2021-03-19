@@ -44,7 +44,7 @@ extern "C" {
 *    Returns zero on correct configuration initialization, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_initialize(const char * reader, const char * path, void * allocator);
+CONFIGURATION_API int configuration_initialize(const char *reader, const char *path, void *allocator);
 
 /**
 *  @brief
@@ -66,7 +66,7 @@ CONFIGURATION_API int configuration_initialize(const char * reader, const char *
 *    Returns object containing all configuration data
 *
 */
-CONFIGURATION_API configuration configuration_create(const char * scope, const char * path, const char * parent, void * allocator);
+CONFIGURATION_API configuration configuration_create(const char *scope, const char *path, const char *parent, void *allocator);
 
 /**
 *  @brief
@@ -79,7 +79,7 @@ CONFIGURATION_API configuration configuration_create(const char * scope, const c
 *    Returns object containing all configuration data
 *
 */
-CONFIGURATION_API configuration configuration_scope(const char * scope);
+CONFIGURATION_API configuration configuration_scope(const char *scope);
 
 /**
 *  @brief
@@ -95,7 +95,7 @@ CONFIGURATION_API configuration configuration_scope(const char * scope);
 *    Returns value containing data related to @key or null if value or type @id are invalid
 *
 */
-CONFIGURATION_API value configuration_value(configuration config, const char * key);
+CONFIGURATION_API value configuration_value(configuration config, const char *key);
 
 /**
 *  @brief
@@ -116,7 +116,7 @@ CONFIGURATION_API value configuration_value(configuration config, const char * k
 *    Returns zero on correct configuration define, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_define(configuration config, const char * key, value v);
+CONFIGURATION_API int configuration_define(configuration config, const char *key, value v);
 
 /**
 *  @brief
@@ -133,7 +133,7 @@ CONFIGURATION_API int configuration_define(configuration config, const char * ke
 *    Returns zero on correct configuration undefine, distinct from zero otherwise
 *
 */
-CONFIGURATION_API int configuration_undefine(configuration config, const char * key);
+CONFIGURATION_API int configuration_undefine(configuration config, const char *key);
 
 /**
 *  @brief
@@ -163,7 +163,7 @@ CONFIGURATION_API void configuration_destroy(void);
 *    Static string containing module information
 *
 */
-CONFIGURATION_API const char * configuration_print_info(void);
+CONFIGURATION_API const char *configuration_print_info(void);
 
 #ifdef __cplusplus
 }

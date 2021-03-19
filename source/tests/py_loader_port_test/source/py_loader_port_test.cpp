@@ -28,16 +28,16 @@ class py_loader_port_test : public testing::Test
 public:
 };
 
-void * callback_host(size_t argc, void * args[], void * data)
+void *callback_host(size_t argc, void *args[], void *data)
 {
-	const char * str = metacall_value_cast_string(&args[0]);
+	const char *str = metacall_value_cast_string(&args[0]);
 
 	(void)argc;
 	(void)data;
 
 	printf("Host callback: %s\n", str);
 
-	EXPECT_EQ((int) 0, (int) strcmp(str, "some text"));
+	EXPECT_EQ((int)0, (int)strcmp(str, "some text"));
 
 	return metacall_value_create_int(25);
 }
@@ -46,90 +46,88 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	/* Native register */
 	{
 		metacall_register("callback_host_impl", callback_host, NULL, METACALL_INT, 1, METACALL_STRING);
 
-		EXPECT_NE((void *) NULL, (void *) metacall_function("callback_host_impl"));
+		EXPECT_NE((void *)NULL, (void *)metacall_function("callback_host_impl"));
 	}
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
-		const char * rb_scripts[] =
-		{
+		const char *rb_scripts[] = {
 			"hello.rb", "second.rb"
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
 		ret = metacall("say_multiply", 5, 7);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 35, (int) metacall_value_cast_int(&ret));
+		EXPECT_EQ((int)35, (int)metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("say_null");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_NULL, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("say_hello", "meta-programmer");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 0, (int) strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "Hello meta-programmer!"));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("get_second", 5, 12);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 12, (int) metacall_value_cast_int(&ret));
+		EXPECT_EQ((int)12, (int)metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"callback.py"
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		ret = metacall("hello_world", "some text");
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 25, (int) metacall_value_cast_int(&ret));
+		EXPECT_EQ((int)25, (int)metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("hello_ruby", 12, 4);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) 48, (int) metacall_value_cast_int(&ret));
+		EXPECT_EQ((int)48, (int)metacall_value_cast_int(&ret));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

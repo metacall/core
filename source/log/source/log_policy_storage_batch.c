@@ -8,13 +8,13 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_storage_batch.h>
 #include <log/log_policy_storage.h>
+#include <log/log_policy_storage_batch.h>
 
 /* -- Definitions -- */
 
-#define LOG_POLICY_STORAGE_BATCH_MIN_SIZE	((size_t)0x00000200)
-#define LOG_POLICY_STORAGE_BATCH_MAX_SIZE	((size_t)0x00010000)
+#define LOG_POLICY_STORAGE_BATCH_MIN_SIZE ((size_t)0x00000200)
+#define LOG_POLICY_STORAGE_BATCH_MAX_SIZE ((size_t)0x00010000)
 
 /* -- Forward Declarations -- */
 
@@ -22,13 +22,13 @@ struct log_policy_storage_batch_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_storage_batch_data_type * log_policy_storage_batch_data;
+typedef struct log_policy_storage_batch_data_type *log_policy_storage_batch_data;
 
 /* -- Member Data -- */
 
 struct log_policy_storage_batch_data_type
 {
-	void * buffer;
+	void *buffer;
 	size_t count;
 	size_t size;
 };
@@ -47,14 +47,12 @@ static int log_policy_storage_batch_destroy(log_policy policy);
 
 log_policy_interface log_policy_storage_batch_interface()
 {
-	static struct log_policy_storage_impl_type log_policy_storage_batch_impl_obj =
-	{
+	static struct log_policy_storage_impl_type log_policy_storage_batch_impl_obj = {
 		&log_policy_storage_batch_append,
 		&log_policy_storage_batch_flush
 	};
 
-	static struct log_policy_interface_type policy_interface_storage =
-	{
+	static struct log_policy_interface_type policy_interface_storage = {
 		&log_policy_storage_batch_create,
 		&log_policy_storage_batch_impl_obj,
 		&log_policy_storage_batch_destroy

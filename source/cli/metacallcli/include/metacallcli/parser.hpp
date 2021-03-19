@@ -19,8 +19,8 @@
 
 /* -- Namespace -- */
 
-namespace metacallcli {
-
+namespace metacallcli
+{
 /* -- Forward Declarations -- */
 
 class tokenizer;
@@ -35,8 +35,7 @@ class parser;
 */
 class parser
 {
-  public:
-
+public:
 	/* -- Public Methods -- */
 
 	/**
@@ -46,7 +45,7 @@ class parser
 	*  @param[in] it
 	*    Tokenizer iterator reference
 	*/
-	parser(const tokenizer::iterator & it);
+	parser(const tokenizer::iterator &it);
 
 	/**
 	*  @brief
@@ -85,13 +84,12 @@ class parser
 	*  @return
 	*    Returns a reference to itself
 	*/
-	parser & operator=(const parser &) = delete;
+	parser &operator=(const parser &) = delete;
 
-  protected:
-
+protected:
 	/* -- Private Member Data -- */
 
-	const tokenizer::iterator & it;	/**< Tokenizer iterator reference */
+	const tokenizer::iterator &it; /**< Tokenizer iterator reference */
 };
 
 /**
@@ -100,8 +98,7 @@ class parser
 */
 class parser_parameter : public parser
 {
-  public:
-
+public:
 	/* -- Public Methods -- */
 
 	/**
@@ -111,7 +108,7 @@ class parser_parameter : public parser
 	*  @param[in] it
 	*    Tokenizer iterator reference
 	*/
-	parser_parameter(const tokenizer::iterator & it);
+	parser_parameter(const tokenizer::iterator &it);
 
 	/**
 	*  @brief
@@ -150,7 +147,7 @@ class parser_parameter : public parser
 	*  @return
 	*    Returns a reference to itself
 	*/
-	parser_parameter & operator=(const parser_parameter &) = delete;
+	parser_parameter &operator=(const parser_parameter &) = delete;
 };
 
 /**

@@ -21,14 +21,14 @@
 /* -- Definitions -- */
 
 #define DETOUR_LIBRARY_PATH			"DETOUR_LIBRARY_PATH"
-#define DETOUR_LIBRARY_DEFAULT_PATH	"detours"
+#define DETOUR_LIBRARY_DEFAULT_PATH "detours"
 
 /* -- Member Data -- */
 
 struct detour_singleton_type
 {
 	set detours;
-	char * library_path;
+	char *library_path;
 };
 
 /* -- Private Methods -- */
@@ -57,8 +57,7 @@ static int detour_singleton_destroy_cb_iterate(set s, set_key key, set_value val
 
 /* -- Member Data -- */
 
-static struct detour_singleton_type detour_singleton_default =
-{
+static struct detour_singleton_type detour_singleton_default = {
 	NULL,
 	NULL
 };
@@ -94,11 +93,11 @@ int detour_singleton_initialize()
 	{
 		static const char detour_library_path[] = DETOUR_LIBRARY_PATH;
 
-		#if defined(DETOUR_LIBRARY_INSTALL_PATH)
-			static const char detour_library_default_path[] = DETOUR_LIBRARY_INSTALL_PATH;
-		#else
-			static const char detour_library_default_path[] = DETOUR_LIBRARY_DEFAULT_PATH;
-		#endif /* DETOUR_LIBRARY_INSTALL_PATH */
+#if defined(DETOUR_LIBRARY_INSTALL_PATH)
+		static const char detour_library_default_path[] = DETOUR_LIBRARY_INSTALL_PATH;
+#else
+		static const char detour_library_default_path[] = DETOUR_LIBRARY_DEFAULT_PATH;
+#endif /* DETOUR_LIBRARY_INSTALL_PATH */
 
 		singleton->library_path = environment_variable_path_create(detour_library_path, detour_library_default_path);
 
@@ -119,7 +118,7 @@ int detour_singleton_register(detour s)
 {
 	detour_singleton singleton = detour_singleton_instance();
 
-	const char * name = detour_name(s);
+	const char *name = detour_name(s);
 
 	if (set_get(singleton->detours, (set_key)name) != NULL)
 	{
@@ -129,14 +128,14 @@ int detour_singleton_register(detour s)
 	return set_insert(singleton->detours, (set_key)name, s);
 }
 
-detour detour_singleton_get(const char * name)
+detour detour_singleton_get(const char *name)
 {
 	detour_singleton singleton = detour_singleton_instance();
 
 	return set_get(singleton->detours, (set_key)name);
 }
 
-const char * detour_singleton_path()
+const char *detour_singleton_path()
 {
 	detour_singleton singleton = detour_singleton_instance();
 
@@ -147,7 +146,7 @@ int detour_singleton_clear(detour s)
 {
 	detour_singleton singleton = detour_singleton_instance();
 
-	const char * name = detour_name(s);
+	const char *name = detour_name(s);
 
 	if (set_get(singleton->detours, (set_key)name) == NULL)
 	{

@@ -9,15 +9,14 @@
 /* -- Headers -- */
 
 #include <log/log_policy_storage.h>
-#include <log/log_policy_storage_sequential.h>
 #include <log/log_policy_storage_batch.h>
+#include <log/log_policy_storage_sequential.h>
 
 /* -- Methods -- */
 
 log_policy_interface log_policy_storage(const log_policy_id policy_storage_id)
 {
-	static const log_policy_singleton policy_storage_singleton[LOG_POLICY_STORAGE_SIZE] =
-	{
+	static const log_policy_singleton policy_storage_singleton[LOG_POLICY_STORAGE_SIZE] = {
 		&log_policy_storage_batch_interface,
 		&log_policy_storage_sequential_interface
 	};

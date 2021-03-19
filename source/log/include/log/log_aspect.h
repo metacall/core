@@ -37,10 +37,10 @@ extern "C" {
 
 enum log_aspect_id
 {
-	LOG_ASPECT_FORMAT	= 0x00,
+	LOG_ASPECT_FORMAT = 0x00,
 	LOG_ASPECT_SCHEDULE = 0x01,
-	LOG_ASPECT_STORAGE	= 0x02,
-	LOG_ASPECT_STREAM	= 0x03,
+	LOG_ASPECT_STORAGE = 0x02,
+	LOG_ASPECT_STREAM = 0x03,
 
 	LOG_ASPECT_SIZE
 };
@@ -57,21 +57,21 @@ struct log_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_type * log_policy;
+typedef struct log_policy_type *log_policy;
 
-typedef void * log_aspect_impl;
+typedef void *log_aspect_impl;
 
-typedef void * log_aspect_data;
+typedef void *log_aspect_data;
 
-typedef void * log_aspect_ctor;
+typedef void *log_aspect_ctor;
 
-typedef struct log_aspect_type * log_aspect;
+typedef struct log_aspect_type *log_aspect;
 
-typedef void * log_aspect_notify_data;
+typedef void *log_aspect_notify_data;
 
-typedef struct log_impl_type * log_impl;
+typedef struct log_impl_type *log_impl;
 
-typedef struct log_aspect_interface_type * log_aspect_interface;
+typedef struct log_aspect_interface_type *log_aspect_interface;
 
 typedef int (*log_aspect_restrict_cb)(log_aspect, log_policy);
 

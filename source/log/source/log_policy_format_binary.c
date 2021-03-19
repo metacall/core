@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_format_binary.h>
 #include <log/log_policy_format.h>
+#include <log/log_policy_format_binary.h>
 
 /* -- Forward Declarations -- */
 
@@ -17,13 +17,13 @@ struct log_policy_format_binary_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_format_binary_data_type * log_policy_format_binary_data;
+typedef struct log_policy_format_binary_data_type *log_policy_format_binary_data;
 
 /* -- Member Data -- */
 
 struct log_policy_format_binary_data_type
 {
-	void * todo;
+	void *todo;
 };
 
 /* -- Private Methods -- */
@@ -32,9 +32,9 @@ static int log_policy_format_binary_create(log_policy policy, const log_policy_c
 
 static size_t log_policy_format_binary_size(log_policy policy, const log_record record);
 
-static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void *buffer, const size_t size);
 
-static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void *buffer, const size_t size);
 
 static int log_policy_format_binary_destroy(log_policy policy);
 
@@ -42,15 +42,13 @@ static int log_policy_format_binary_destroy(log_policy policy);
 
 log_policy_interface log_policy_format_binary_interface()
 {
-	static struct log_policy_format_impl_type log_policy_format_binary_impl_obj =
-	{
+	static struct log_policy_format_impl_type log_policy_format_binary_impl_obj = {
 		&log_policy_format_binary_size,
 		&log_policy_format_binary_serialize,
 		&log_policy_format_binary_deserialize
 	};
 
-	static struct log_policy_interface_type policy_interface_format =
-	{
+	static struct log_policy_interface_type policy_interface_format = {
 		&log_policy_format_binary_create,
 		&log_policy_format_binary_impl_obj,
 		&log_policy_format_binary_destroy
@@ -86,7 +84,7 @@ static size_t log_policy_format_binary_size(log_policy policy, const log_record 
 	return mock_binary_size;
 }
 
-static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
+static size_t log_policy_format_binary_serialize(log_policy policy, const log_record record, void *buffer, const size_t size)
 {
 	log_policy_format_binary_data binary_data = log_policy_instance(policy);
 
@@ -100,7 +98,7 @@ static size_t log_policy_format_binary_serialize(log_policy policy, const log_re
 	return size;
 }
 
-static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size)
+static size_t log_policy_format_binary_deserialize(log_policy policy, log_record record, const void *buffer, const size_t size)
 {
 	log_policy_format_binary_data binary_data = log_policy_instance(policy);
 

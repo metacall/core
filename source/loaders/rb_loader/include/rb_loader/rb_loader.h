@@ -35,7 +35,7 @@ RB_LOADER_API loader_impl_interface rb_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(rb_loader_impl_interface_singleton);
 
-RB_LOADER_API const char * rb_loader_print_info(void);
+RB_LOADER_API const char *rb_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(rb_loader_print_info);
 

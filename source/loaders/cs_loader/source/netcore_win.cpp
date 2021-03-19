@@ -1,20 +1,19 @@
 
 #include <log/log.h>
 
-#include <cs_loader/netcore_win.h>
 #include <cs_loader/host_environment.h>
+#include <cs_loader/netcore_win.h>
 
-#include <pal/prebuilt/inc/mscoree.h>
 #include <inc/palclr.h>
+#include <pal/prebuilt/inc/mscoree.h>
 
 #include <functional>
 #include <memory>
 
-netcore_win::netcore_win(char * dotnet_root, char * dotnet_loader_assembly_path) : netcore(dotnet_root, dotnet_loader_assembly_path), domain_id(0)
+netcore_win::netcore_win(char *dotnet_root, char *dotnet_loader_assembly_path) :
+	netcore(dotnet_root, dotnet_loader_assembly_path), domain_id(0)
 {
-
 }
-
 
 netcore_win::~netcore_win()
 {
@@ -93,7 +92,7 @@ bool netcore_win::config_assembly_name()
 		return false;
 	}
 
-	if(this->dotnet_loader_assembly_path==NULL)
+	if (this->dotnet_loader_assembly_path == NULL)
 	{
 		wcscpy_s(managedAssemblyFullName, appPath);
 	}
@@ -140,10 +139,9 @@ bool netcore_win::create_host()
 	log_write("metacall", LOG_LEVEL_DEBUG, "Setting ICLRRuntimeHost2 startup flags");
 
 	// Default startup flags
-	hr = host->SetStartupFlags((STARTUP_FLAGS)
-		(STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
-			STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
-			STARTUP_FLAGS::STARTUP_CONCURRENT_GC));
+	hr = host->SetStartupFlags((STARTUP_FLAGS)(STARTUP_FLAGS::STARTUP_LOADER_OPTIMIZATION_SINGLE_DOMAIN |
+											   STARTUP_FLAGS::STARTUP_SINGLE_APPDOMAIN |
+											   STARTUP_FLAGS::STARTUP_CONCURRENT_GC));
 
 	if (FAILED(hr))
 	{
@@ -191,8 +189,7 @@ bool netcore_win::create_host()
 		// NATIVE_DLL_SEARCH_DIRECTORIES
 		// - The list of paths that will be probed for native DLLs called by PInvoke
 		//
-		const wchar_t * property_keys[] =
-		{
+		const wchar_t *property_keys[] = {
 			W("TRUSTED_PLATFORM_ASSEMBLIES"),
 			W("APP_PATHS"),
 			W("APP_NI_PATHS"),
@@ -200,7 +197,7 @@ bool netcore_win::create_host()
 			W("AppDomainCompatSwitch")
 		};
 
-		const wchar_t * property_values[] = {
+		const wchar_t *property_values[] = {
 			// TRUSTED_PLATFORM_ASSEMBLIES
 			this->core_environment->get_tpa_list(),
 			// APP_PATHS
@@ -216,30 +213,30 @@ bool netcore_win::create_host()
 		log_write("metacall", LOG_LEVEL_DEBUG, "Creating an AppDomain");
 
 		hr = host->CreateAppDomainWithManager(
-			this->core_environment->get_host_exe_name(),   // The friendly name of the AppDomain
-												 // Flags:
-												 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
-												 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
-												 //   assemblies marked as platform specific, include this flag
-												 //
-												 // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
-												 // - Allows sandboxed applications to make P/Invoke calls and use COM interop
-												 //
-												 // APPDOMAIN_SECURITY_SANDBOXED
-												 // - Enables sandboxing. If not set, the app is considered full trust
-												 //
-												 // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
-												 // - Prevents the application from being torn down if a managed exception is unhandled
-												 //
+			this->core_environment->get_host_exe_name(), // The friendly name of the AppDomain
+														 // Flags:
+														 // APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS
+														 // - By default CoreCLR only allows platform neutral assembly to be run. To allow
+														 //   assemblies marked as platform specific, include this flag
+														 //
+														 // APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP
+														 // - Allows sandboxed applications to make P/Invoke calls and use COM interop
+														 //
+														 // APPDOMAIN_SECURITY_SANDBOXED
+														 // - Enables sandboxing. If not set, the app is considered full trust
+														 //
+														 // APPDOMAIN_IGNORE_UNHANDLED_EXCEPTION
+														 // - Prevents the application from being torn down if a managed exception is unhandled
+														 //
 			APPDOMAIN_ENABLE_PLATFORM_SPECIFIC_APPS |
-			APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
-			APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
-			NULL,                // Name of the assembly that contains the AppDomainManager implementation
-			NULL,                    // The AppDomainManager implementation type name
-			sizeof(property_keys) / sizeof(wchar_t*),  // The number of properties
+				APPDOMAIN_ENABLE_PINVOKE_AND_CLASSIC_COMINTEROP |
+				APPDOMAIN_DISABLE_TRANSPARENCY_ENFORCEMENT,
+			NULL,									   // Name of the assembly that contains the AppDomainManager implementation
+			NULL,									   // The AppDomainManager implementation type name
+			sizeof(property_keys) / sizeof(wchar_t *), // The number of properties
 			property_keys,
 			property_values,
-			(DWORD*)&this->domain_id);
+			(DWORD *)&this->domain_id);
 
 		if (FAILED(hr))
 		{
@@ -266,7 +263,7 @@ bool netcore_win::load_main()
 	return true;
 }
 
-bool netcore_win::create_delegate(const wchar_t * delegateName, void ** func)
+bool netcore_win::create_delegate(const wchar_t *delegateName, void **func)
 {
 	HRESULT hr;
 

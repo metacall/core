@@ -32,35 +32,35 @@ typedef void (*mock_loader_print_func)(void);
 
 class dynlink_test : public testing::Test
 {
-  protected:
+protected:
 };
 
 TEST_F(dynlink_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
 	dynlink_print_info();
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object extension: %s", dynlink_extension());
 
 	{
-		#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-			const char library_name[] = "mock_loaderd";
-		#else
-			const char library_name[] = "mock_loader";
-		#endif
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		const char library_name[] = "mock_loaderd";
+#else
+		const char library_name[] = "mock_loader";
+#endif
 
-		char * path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL);
+		char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL);
 
 		dynlink handle = dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		environment_variable_path_destroy(path);
 
-		EXPECT_NE(handle, (dynlink) NULL);
+		EXPECT_NE(handle, (dynlink)NULL);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Dynamic linked shared object file: %s", dynlink_get_name_impl(handle));
 
@@ -68,7 +68,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 		{
 			static dynlink_symbol_addr mock_loader_print_info_addr;
 
-			EXPECT_EQ((int) 0, dynlink_symbol(handle, DYNLINK_SYMBOL_STR("mock_loader_print_info"), &mock_loader_print_info_addr));
+			EXPECT_EQ((int)0, dynlink_symbol(handle, DYNLINK_SYMBOL_STR("mock_loader_print_info"), &mock_loader_print_info_addr));
 
 			if (mock_loader_print_info_addr != NULL)
 			{

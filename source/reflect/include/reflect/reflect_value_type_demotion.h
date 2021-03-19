@@ -25,8 +25,8 @@
 
 #include <reflect/reflect_api.h>
 
-#include <reflect/reflect_value.h>
 #include <reflect/reflect_type_id.h>
+#include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
 extern "C" {

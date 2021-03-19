@@ -33,8 +33,8 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define FILE_DESCRIPTOR_NAME_SIZE			0x0100
-#define FILE_DESCRIPTOR_EXTENSION_SIZE		0x0012
+#define FILE_DESCRIPTOR_NAME_SIZE	   0x0100
+#define FILE_DESCRIPTOR_EXTENSION_SIZE 0x0012
 
 /* -- Forward Declarations -- */
 
@@ -42,7 +42,7 @@ struct file_descriptor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct file_descriptor_type * file_descriptor;
+typedef struct file_descriptor_type *file_descriptor;
 
 /* -- Methods -- */
 
@@ -59,7 +59,7 @@ typedef struct file_descriptor_type * file_descriptor;
 *  @return
 *    A pointer to the file descriptor if success, null pointer otherwhise
 */
-FILESYSTEM_API file_descriptor file_descriptor_create(directory_descriptor owner, const char * name);
+FILESYSTEM_API file_descriptor file_descriptor_create(directory_descriptor owner, const char *name);
 
 /**
 *  @brief
@@ -83,7 +83,7 @@ FILESYSTEM_API directory_descriptor file_descriptor_owner(file_descriptor f);
 *  @return
 *    A constant string pointer to the name of @f
 */
-FILESYSTEM_API const char * file_descriptor_name(file_descriptor f);
+FILESYSTEM_API const char *file_descriptor_name(file_descriptor f);
 
 /**
 *  @brief
@@ -95,7 +95,7 @@ FILESYSTEM_API const char * file_descriptor_name(file_descriptor f);
 *  @return
 *    A constant string pointer to the extension of @f
 */
-FILESYSTEM_API const char * file_descriptor_extension(file_descriptor f);
+FILESYSTEM_API const char *file_descriptor_extension(file_descriptor f);
 
 /**
 *  @brief

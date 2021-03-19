@@ -28,34 +28,33 @@
 
 class file_loader_test : public testing::Test
 {
-  protected:
+protected:
 };
 
 TEST_F(file_loader_test, DefaultConstructor)
 {
 	const loader_naming_tag tag = "file";
 
-	const loader_naming_path scripts[] =
-	{
+	const loader_naming_path scripts[] = {
 		"favicon.ico",
 		"a/a.txt"
 	};
 
 	const size_t size = sizeof(scripts) / sizeof(scripts[0]);
 
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
-	EXPECT_EQ((int) 0, (int) loader_load_from_file(tag, scripts, size, NULL));
+	EXPECT_EQ((int)0, (int)loader_load_from_file(tag, scripts, size, NULL));
 
-	void * handle = loader_get_handle(tag, scripts[0]);
+	void *handle = loader_get_handle(tag, scripts[0]);
 
-	EXPECT_NE((void *) NULL, (void *) handle);
+	EXPECT_NE((void *)NULL, (void *)handle);
 
-	EXPECT_EQ((int) 0, (int) loader_clear(handle));
+	EXPECT_EQ((int)0, (int)loader_clear(handle));
 
-	EXPECT_EQ((int) 0, (int) loader_unload());
+	EXPECT_EQ((int)0, (int)loader_unload());
 }

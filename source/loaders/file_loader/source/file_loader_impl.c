@@ -24,10 +24,10 @@
 #include <loader/loader_impl.h>
 #include <loader/loader_path.h>
 
-#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <adt/adt_vector.h>
 
@@ -38,36 +38,36 @@
 #include <sys/stat.h>
 
 #if defined(WIN32) || defined(_WIN32)
-#	ifndef NOMINMAX
-#		define NOMINMAX
-#	endif
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 
-#	ifndef WIN32_LEAN_AND_MEAN
-#		define WIN32_LEAN_AND_MEAN
-#	endif
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
 
-#	include <windows.h>
+	#include <windows.h>
 
-#	define LOADER_IMPL_FILE_SIZE MAX_PATH
+	#define LOADER_IMPL_FILE_SIZE MAX_PATH
 
-	typedef struct _stat file_stat_type;
+typedef struct _stat file_stat_type;
 
-#	define file_stat _stat
+	#define file_stat _stat
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	defined(__MINGW32__) || defined(__MINGW64__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-#	include <limits.h>
-#	include <unistd.h>
+	#include <limits.h>
+	#include <unistd.h>
 
-#	define LOADER_IMPL_FILE_SIZE PATH_MAX
+	#define LOADER_IMPL_FILE_SIZE PATH_MAX
 
-	typedef struct stat file_stat_type;
+typedef struct stat file_stat_type;
 
-#	define file_stat stat
+	#define file_stat stat
 
 #endif
 
@@ -82,7 +82,7 @@ typedef struct loader_impl_file_descriptor_type
 
 typedef struct loader_impl_file_type
 {
-	void * nil;
+	void *nil;
 
 } * loader_impl_file;
 
@@ -117,7 +117,7 @@ function_return function_file_interface_invoke(function func, function_impl impl
 	return value_create_string(file_function->descriptor->path, file_function->descriptor->length);
 }
 
-function_return function_file_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_file_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -146,8 +146,7 @@ void function_file_interface_destroy(function func, function_impl impl)
 
 function_interface function_file_singleton(void)
 {
-	static struct function_interface_type file_interface =
-	{
+	static struct function_interface_type file_interface = {
 		&function_file_interface_create,
 		&function_file_interface_invoke,
 		&function_file_interface_await,
@@ -162,11 +161,9 @@ int file_loader_impl_initialize_types(loader_impl impl)
 	static struct
 	{
 		type_id id;
-		const char * name;
-	}
-	type_id_name_pair[] =
-	{
-		{ TYPE_STRING,	"File"	},
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_STRING, "File" },
 	};
 
 	size_t index, size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -286,7 +283,7 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
 
@@ -403,7 +400,7 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		if (file_function != NULL)
 		{
-			const char * script_path = getenv("LOADER_SCRIPT_PATH");
+			const char *script_path = getenv("LOADER_SCRIPT_PATH");
 
 			function f;
 

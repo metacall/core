@@ -35,7 +35,7 @@ JAVA_LOADER_API loader_impl_interface java_loader_impl_interface_singleton(void)
 
 DYNLINK_SYMBOL_EXPORT(java_loader_impl_interface_singleton);
 
-JAVA_LOADER_API const char * java_loader_print_info(void);
+JAVA_LOADER_API const char *java_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(java_loader_print_info);
 

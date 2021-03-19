@@ -7,14 +7,14 @@
 
 #include "ui_main_window.h"
 
-main_window::main_window() : impl(new Ui::main_window)
+main_window::main_window() :
+	impl(new Ui::main_window)
 {
 	impl->setupUi(this);
 }
 
 main_window::~main_window()
 {
-
 }
 
 void main_window::on_editNumber_valueChanged(int value)

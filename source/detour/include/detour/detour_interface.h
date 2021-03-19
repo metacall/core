@@ -39,13 +39,13 @@ struct detour_interface_type;
 
 typedef detour_impl_handle (*detour_interface_initialize)(void);
 
-typedef int (*detour_interface_install)(detour_impl_handle, void(**)(void), void(*)(void));
+typedef int (*detour_interface_install)(detour_impl_handle, void (**)(void), void (*)(void));
 
 typedef int (*detour_interface_uninstall)(detour_impl_handle);
 
 typedef int (*detour_interface_destroy)(detour_impl_handle);
 
-typedef struct detour_interface_type * detour_interface;
+typedef struct detour_interface_type *detour_interface;
 
 typedef detour_interface (*detour_interface_singleton)(void);
 

@@ -26,8 +26,7 @@
 
 /* -- Private Variables -- */
 
-static const char * level_name_list[LOG_LEVEL_SIZE] =
-{
+static const char *level_name_list[LOG_LEVEL_SIZE] = {
 	"Debug",
 	"Information",
 	"Warning",
@@ -37,12 +36,12 @@ static const char * level_name_list[LOG_LEVEL_SIZE] =
 
 /* -- Methods -- */
 
-const char * log_level_to_string(enum log_level_id level)
+const char *log_level_to_string(enum log_level_id level)
 {
 	return level_name_list[level];
 }
 
-enum log_level_id log_level_to_enum(const char * level, size_t length)
+enum log_level_id log_level_to_enum(const char *level, size_t length)
 {
 	size_t iterator, size = sizeof(level_name_list) / sizeof(level_name_list[0]);
 

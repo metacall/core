@@ -22,14 +22,14 @@
 
 struct filesystem_type
 {
-	filesystem_flags	flags;			/**< File system configuration flags */
-	const char *		root;			/**< Root path where file system will be mounted */
-	trie				storage;		/**< Trie containing whole file system directories and files */
+	filesystem_flags flags; /**< File system configuration flags */
+	const char *root;		/**< Root path where file system will be mounted */
+	trie storage;			/**< Trie containing whole file system directories and files */
 };
 
 /* -- Methods -- */
 
-filesystem filesystem_create(const char * root, filesystem_flags flags)
+filesystem filesystem_create(const char *root, filesystem_flags flags)
 {
 	if (root != NULL)
 	{
@@ -63,7 +63,7 @@ filesystem filesystem_create(const char * root, filesystem_flags flags)
 	return NULL;
 }
 
-int filesystem_add_file(filesystem fs, const char * file_path)
+int filesystem_add_file(filesystem fs, const char *file_path)
 {
 	(void)fs;
 	(void)file_path;
@@ -71,7 +71,7 @@ int filesystem_add_file(filesystem fs, const char * file_path)
 	return 1;
 }
 
-int filesystem_add_directory(filesystem fs, const char * directory_path)
+int filesystem_add_directory(filesystem fs, const char *directory_path)
 {
 	(void)fs;
 	(void)directory_path;
@@ -79,7 +79,7 @@ int filesystem_add_directory(filesystem fs, const char * directory_path)
 	return 1;
 }
 
-int filesystem_remove_file(filesystem fs, const char * file_path)
+int filesystem_remove_file(filesystem fs, const char *file_path)
 {
 	(void)fs;
 	(void)file_path;
@@ -87,7 +87,7 @@ int filesystem_remove_file(filesystem fs, const char * file_path)
 	return 1;
 }
 
-int filesystem_remove_directory(filesystem fs, const char * directory_path)
+int filesystem_remove_directory(filesystem fs, const char *directory_path)
 {
 	(void)fs;
 	(void)directory_path;
@@ -150,17 +150,17 @@ void filesystem_destroy(filesystem fs)
 	}
 }
 
-const char * filesystem_print_info()
+const char *filesystem_print_info()
 {
 	static const char filesystem_info[] =
 		"File System Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef FILESYSTEM_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef FILESYSTEM_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

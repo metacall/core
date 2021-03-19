@@ -34,7 +34,7 @@ extern "C" {
 #endif
 
 struct loader_impl_py_type;
-typedef struct loader_impl_py_type * loader_impl_py;
+typedef struct loader_impl_py_type *loader_impl_py;
 
 PY_LOADER_API loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config);
 
@@ -42,7 +42,7 @@ PY_LOADER_API int py_loader_impl_execution_path(loader_impl impl, const loader_n
 
 PY_LOADER_API loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
 
-PY_LOADER_API loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size);
+PY_LOADER_API loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size);
 
 PY_LOADER_API loader_handle py_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
 
@@ -52,11 +52,11 @@ PY_LOADER_API int py_loader_impl_discover(loader_impl impl, loader_handle handle
 
 PY_LOADER_API int py_loader_impl_destroy(loader_impl impl);
 
-PY_LOADER_NO_EXPORT type_id py_loader_impl_capi_to_value_type(PyObject * obj);
+PY_LOADER_NO_EXPORT type_id py_loader_impl_capi_to_value_type(PyObject *obj);
 
-PY_LOADER_NO_EXPORT value py_loader_impl_capi_to_value(loader_impl impl, PyObject * obj, type_id id);
+PY_LOADER_NO_EXPORT value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id);
 
-PY_LOADER_NO_EXPORT PyObject * py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v);
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v);
 
 #ifdef __cplusplus
 }

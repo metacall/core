@@ -25,9 +25,9 @@
 
 #include <log/log_api.h>
 
-#include <log/log_record.h>
 #include <log/log_aspect.h>
 #include <log/log_handle.h>
+#include <log/log_record.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,11 +37,11 @@ extern "C" {
 
 LOG_API log_aspect_interface log_impl_aspect_interface(enum log_aspect_id aspect_id);
 
-LOG_API log_impl log_impl_create(const char * name);
+LOG_API log_impl log_impl_create(const char *name);
 
 LOG_API void log_impl_define(log_impl impl, log_aspect aspect, enum log_aspect_id aspect_id);
 
-LOG_API const char * log_impl_name(log_impl impl);
+LOG_API const char *log_impl_name(log_impl impl);
 
 LOG_API log_handle log_impl_handle(log_impl impl);
 

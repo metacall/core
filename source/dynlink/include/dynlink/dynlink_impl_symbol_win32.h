@@ -38,9 +38,9 @@ extern "C" {
 /* -- Macros -- */
 
 #define DYNLINK_SYMBOL_EXPORT(name) \
-	DYNLINK_NO_EXPORT struct \
-	{ \
-		char name; \
+	DYNLINK_NO_EXPORT struct        \
+	{                               \
+		char name;                  \
 	} PREPROCESSOR_CONCAT(dynlink_no_export_, name)
 
 #define DYNLINK_SYMBOL_GET(name) name

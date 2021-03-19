@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-THREADING_API const char * threading_print_info(void);
+THREADING_API const char *threading_print_info(void);
 
 #ifdef __cplusplus
 }

@@ -23,8 +23,8 @@
 
 #include <reflect/reflect_api.h>
 
-#include <reflect/reflect_type.h>
 #include <reflect/reflect_function.h>
+#include <reflect/reflect_type.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,31 +34,31 @@ struct scope_type;
 
 typedef size_t scope_stack_ptr;
 
-typedef struct scope_type * scope;
+typedef struct scope_type *scope;
 
-REFLECT_API scope scope_create(const char * name);
+REFLECT_API scope scope_create(const char *name);
 
 REFLECT_API size_t scope_size(scope sp);
 
-REFLECT_API int scope_define(scope sp, const char * key, value obj);
+REFLECT_API int scope_define(scope sp, const char *key, value obj);
 
 REFLECT_API value scope_metadata(scope sp);
 
 REFLECT_API value scope_export(scope sp);
 
-REFLECT_API value scope_get(scope sp, const char * key);
+REFLECT_API value scope_get(scope sp, const char *key);
 
-REFLECT_API value scope_undef(scope sp, const char * key);
+REFLECT_API value scope_undef(scope sp, const char *key);
 
 REFLECT_API int scope_append(scope dest, scope src);
 
 REFLECT_API int scope_remove(scope dest, scope src);
 
-REFLECT_API size_t * scope_stack_return(scope sp);
+REFLECT_API size_t *scope_stack_return(scope sp);
 
 REFLECT_API scope_stack_ptr scope_stack_push(scope sp, size_t bytes);
 
-REFLECT_API void * scope_stack_get(scope sp, scope_stack_ptr stack_ptr);
+REFLECT_API void *scope_stack_get(scope sp, scope_stack_ptr stack_ptr);
 
 REFLECT_API int scope_stack_pop(scope sp);
 

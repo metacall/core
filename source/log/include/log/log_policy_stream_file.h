@@ -25,14 +25,14 @@ struct log_policy_stream_file_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_file_ctor_type * log_policy_stream_file_ctor;
+typedef struct log_policy_stream_file_ctor_type *log_policy_stream_file_ctor;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_file_ctor_type
 {
-	const char * file_name;
-	const char * mode;
+	const char *file_name;
+	const char *mode;
 };
 
 /* -- Methods -- */

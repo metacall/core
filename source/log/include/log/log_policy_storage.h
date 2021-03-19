@@ -24,8 +24,8 @@ extern "C" {
 
 enum log_policy_storage_id
 {
-	LOG_POLICY_STORAGE_BATCH		= 0x00,
-	LOG_POLICY_STORAGE_SEQUENTIAL	= 0x01,
+	LOG_POLICY_STORAGE_BATCH = 0x00,
+	LOG_POLICY_STORAGE_SEQUENTIAL = 0x01,
 
 	LOG_POLICY_STORAGE_SIZE
 };
@@ -36,7 +36,7 @@ struct log_policy_storage_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_storage_impl_type * log_policy_storage_impl;
+typedef struct log_policy_storage_impl_type *log_policy_storage_impl;
 
 typedef int (*log_policy_storage_append)(log_policy, const log_record);
 typedef int (*log_policy_storage_flush)(log_policy);

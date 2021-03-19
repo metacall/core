@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_map_test : public testing::Test
 {
@@ -33,17 +33,16 @@ TEST_F(metacall_map_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"example.py"
 		};
 
@@ -51,21 +50,19 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 		long iterator;
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		static const char left[] = "left";
 		static const char right[] = "right";
 
-		void * keys[] =
-		{
+		void *keys[] = {
 			metacall_value_create_string(left, sizeof(left) - 1),
 			metacall_value_create_string(right, sizeof(right) - 1)
 		};
 
-		void * values[] =
-		{
+		void *values[] = {
 			metacall_value_create_long(7),
 			metacall_value_create_long(0)
 		};
@@ -73,9 +70,9 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		static const char args_map[] = "{\"left\":10,\"right\":2}";
 		static const char args_array[] = "[10, 2]";
 
-		void * func = metacall_function("multiply");
+		void *func = metacall_function("multiply");
 
-		ASSERT_NE((void *) NULL, (void *) func);
+		ASSERT_NE((void *)NULL, (void *)func);
 
 		/* Call by map using arrays */
 		for (iterator = 0; iterator <= seven_multiples_limit; ++iterator)
@@ -84,9 +81,9 @@ TEST_F(metacall_map_test, DefaultConstructor)
 
 			ret = metacallfmv(func, keys, values);
 
-			EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (7 * iterator));
+			EXPECT_EQ((long)metacall_value_to_long(ret), (long)(7 * iterator));
 
 			metacall_value_destroy(ret);
 		}
@@ -100,34 +97,31 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		/* Call by map using serial */
 		ret = metacallfms(func, args_map, sizeof(args_map), allocator);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 20);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)20);
 
 		metacall_value_destroy(ret);
 
 		/* Call by array using serial */
 		ret = metacallfs(func, args_array, sizeof(args_array), allocator);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 20);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)20);
 
 		metacall_value_destroy(ret);
-
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const char * node_scripts[] =
-		{
+		const char *node_scripts[] = {
 			"nod.js"
 		};
 
-		const enum metacall_value_id double_ids[] =
-		{
+		const enum metacall_value_id double_ids[] = {
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
@@ -136,51 +130,51 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		static const char args_array[] = "[10, 2]";
 		static const char args_bad_array[] = "[10 2";
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), NULL));
 
-		void * func = metacall_function("call_test");
+		void *func = metacall_function("call_test");
 
-		ASSERT_NE((void *) NULL, (void *) func);
+		ASSERT_NE((void *)NULL, (void *)func);
 
-		void * ret = metacallt("call_test", double_ids, 10.0, 2.0);
+		void *ret = metacallt("call_test", double_ids, 10.0, 2.0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 20.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)20.0);
 
 		metacall_value_destroy(ret);
 
 		/* Call by map using serial */
 		ret = metacallfms(func, args_map, sizeof(args_map), allocator);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 20.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)20.0);
 
 		metacall_value_destroy(ret);
 
 		/* Bad call by map using serial */
 		ret = metacallfms(func, args_bad_map, sizeof(args_bad_map), allocator);
 
-		EXPECT_EQ((void *) NULL, (void *) ret);
+		EXPECT_EQ((void *)NULL, (void *)ret);
 
 		/* Call by array using serial */
 		ret = metacallfs(func, args_array, sizeof(args_array), allocator);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 20.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)20.0);
 
 		metacall_value_destroy(ret);
 
 		/* Bad call by array using serial */
 		ret = metacallfs(func, args_bad_array, sizeof(args_bad_array), allocator);
 
-		EXPECT_EQ((void *) NULL, (void *) ret);
+		EXPECT_EQ((void *)NULL, (void *)ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	metacall_allocator_destroy(allocator);
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

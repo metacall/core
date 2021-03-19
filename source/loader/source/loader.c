@@ -6,15 +6,15 @@
  *
  */
 
- /* -- Headers -- */
+/* -- Headers -- */
 
 #include <metacall/metacall_version.h>
 
 #include <loader/loader.h>
 #include <loader/loader_env.h>
 
-#include <reflect/reflect_scope.h>
 #include <reflect/reflect_context.h>
+#include <reflect/reflect_scope.h>
 
 #include <adt/adt_set.h>
 #include <adt/adt_vector.h>
@@ -42,13 +42,13 @@ struct loader_metadata_cb_iterator_type;
 
 /* -- Type Definitions -- */
 
-typedef struct loader_initialization_order_type * loader_initialization_order;
+typedef struct loader_initialization_order_type *loader_initialization_order;
 
-typedef struct loader_get_iterator_args_type * loader_get_iterator_args;
+typedef struct loader_get_iterator_args_type *loader_get_iterator_args;
 
-typedef struct loader_host_invoke_type * loader_host_invoke;
+typedef struct loader_host_invoke_type *loader_host_invoke;
 
-typedef struct loader_metadata_cb_iterator_type * loader_metadata_cb_iterator;
+typedef struct loader_metadata_cb_iterator_type *loader_metadata_cb_iterator;
 
 /* -- Member Data -- */
 
@@ -61,20 +61,20 @@ struct loader_initialization_order_type
 
 struct loader_type
 {
-	set impl_map;					/* Maps the loader implementations by tag */
-	vector initialization_order;	/* Stores the loader implementations by order of initialization (used for destruction) */
-	uint64_t init_thread_id;		/* Stores the thread id of the thread that initialized metacall */
+	set impl_map;				 /* Maps the loader implementations by tag */
+	vector initialization_order; /* Stores the loader implementations by order of initialization (used for destruction) */
+	uint64_t init_thread_id;	 /* Stores the thread id of the thread that initialized metacall */
 };
 
 struct loader_metadata_cb_iterator_type
 {
 	size_t iterator;
-	value * values;
+	value *values;
 };
 
 struct loader_get_iterator_args_type
 {
-	const char * name;
+	const char *name;
 	value obj; // scope_object
 };
 
@@ -91,7 +91,7 @@ static function_interface loader_register_interface_proxy(void);
 
 static value loader_register_invoke_proxy(function func, function_impl func_impl, function_args args, size_t size);
 
-static function_return loader_register_await_proxy(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
+static function_return loader_register_await_proxy(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context);
 
 static void loader_register_destroy_proxy(function func, function_impl func_impl);
 
@@ -105,9 +105,7 @@ static int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_
 
 /* -- Member Data -- */
 
-
-static struct loader_type loader_instance_default =
-{
+static struct loader_type loader_instance_default = {
 	NULL, NULL, THREAD_ID_INVALID
 };
 
@@ -150,7 +148,7 @@ void loader_initialize_proxy()
 		{
 			if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *) proxy);
+				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *)proxy);
 
 				loader_impl_destroy(proxy);
 			}
@@ -214,12 +212,12 @@ function_return loader_register_invoke_proxy(function func, function_impl func_i
 {
 	loader_host_invoke host_invoke = (loader_host_invoke)func_impl;
 
-	void * data = function_closure(func);
+	void *data = function_closure(func);
 
 	return host_invoke->invoke(size, args, data);
 }
 
-function_return loader_register_await_proxy(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return loader_register_await_proxy(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -246,8 +244,7 @@ void loader_register_destroy_proxy(function func, function_impl func_impl)
 
 function_interface loader_register_interface_proxy(void)
 {
-	static struct function_interface_type interface =
-	{
+	static struct function_interface_type interface = {
 		NULL,
 		&loader_register_invoke_proxy,
 		&loader_register_await_proxy,
@@ -257,7 +254,7 @@ function_interface loader_register_interface_proxy(void)
 	return &interface;
 }
 
-int loader_register(const char * name, loader_register_invoke invoke, function * func, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])
 {
 	static const char register_holder_str[] = "__metacall_register__";
 
@@ -390,7 +387,7 @@ int loader_execution_path(const loader_naming_tag tag, const loader_naming_path 
 	return 1;
 }
 
-int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void ** handle)
+int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void **handle)
 {
 	loader l = loader_singleton();
 
@@ -406,11 +403,11 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 
 			if (impl != NULL)
 			{
-				const char * script_path = loader_env_script_path();
+				const char *script_path = loader_env_script_path();
 
 				if (script_path != NULL)
 				{
-					loader_naming_path * absolute_paths = malloc(sizeof(loader_naming_path) * size);
+					loader_naming_path *absolute_paths = malloc(sizeof(loader_naming_path) * size);
 
 					size_t iterator;
 
@@ -452,7 +449,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 	return 1;
 }
 
-int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, size_t size, void ** handle)
+int loader_load_from_memory(const loader_naming_tag tag, const char *buffer, size_t size, void **handle)
 {
 	loader l = loader_singleton();
 
@@ -475,7 +472,7 @@ int loader_load_from_memory(const loader_naming_tag tag, const char * buffer, si
 	return 1;
 }
 
-int loader_load_from_package(const loader_naming_tag extension, const loader_naming_path path, void ** handle)
+int loader_load_from_package(const loader_naming_tag extension, const loader_naming_path path, void **handle)
 {
 	loader l = loader_singleton();
 
@@ -498,7 +495,7 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 	return 1;
 }
 
-int loader_load_from_configuration(const loader_naming_path path, void ** handle, void * allocator)
+int loader_load_from_configuration(const loader_naming_path path, void **handle, void *allocator)
 {
 	loader_naming_name config_name;
 
@@ -506,9 +503,9 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	value tag, scripts, context_path;
 
-	value * scripts_array;
+	value *scripts_array;
 
-	loader_naming_path * paths;
+	loader_naming_path *paths;
 
 	loader_naming_path context_path_str;
 
@@ -580,7 +577,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 
 	if (context_path != NULL)
 	{
-		const char * str = value_to_string(context_path);
+		const char *str = value_to_string(context_path);
 
 		size_t str_size = value_type_size(context_path);
 
@@ -599,7 +596,7 @@ int loader_load_from_configuration(const loader_naming_path path, void ** handle
 	{
 		if (scripts_array[iterator] != NULL)
 		{
-			const char * str = value_to_string(scripts_array[iterator]);
+			const char *str = value_to_string(scripts_array[iterator]);
 
 			size_t str_size = value_type_size(scripts_array[iterator]);
 
@@ -664,7 +661,7 @@ int loader_get_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args
 	return 0;
 }
 
-loader_data loader_get(const char * name)
+loader_data loader_get(const char *name)
 {
 	loader l = loader_singleton();
 
@@ -686,32 +683,32 @@ loader_data loader_get(const char * name)
 	return NULL;
 }
 
-void * loader_get_handle(const loader_naming_tag tag, const char * name)
+void *loader_get_handle(const loader_naming_tag tag, const char *name)
 {
 	return loader_impl_get_handle(loader_get_impl(tag), name);
 }
 
-void loader_set_options(const loader_naming_tag tag, void * options)
+void loader_set_options(const loader_naming_tag tag, void *options)
 {
 	loader_impl_set_options(loader_get_impl(tag), options);
 }
 
-void * loader_get_options(const loader_naming_tag tag)
+void *loader_get_options(const loader_naming_tag tag)
 {
 	return loader_impl_get_options(loader_get_impl(tag));
 }
 
-const char * loader_handle_id(void * handle)
+const char *loader_handle_id(void *handle)
 {
 	return loader_impl_handle_id(handle);
 }
 
-value loader_handle_export(void * handle)
+value loader_handle_export(void *handle)
 {
 	return loader_impl_handle_export(handle);
 }
 
-loader_data loader_handle_get(void * handle, const char * name)
+loader_data loader_handle_get(void *handle, const char *name)
 {
 	if (handle != NULL)
 	{
@@ -727,9 +724,9 @@ loader_data loader_handle_get(void * handle, const char * name)
 
 value loader_metadata_impl(loader_impl impl)
 {
-	loader_naming_tag * tag_ptr = loader_impl_tag(impl);
+	loader_naming_tag *tag_ptr = loader_impl_tag(impl);
 
-	value * v_ptr, v = value_create_array(NULL, 2);
+	value *v_ptr, v = value_create_array(NULL, 2);
 
 	if (v == NULL)
 	{
@@ -804,7 +801,7 @@ value loader_metadata()
 	return v;
 }
 
-int loader_clear(void * handle)
+int loader_clear(void *handle)
 {
 	return loader_impl_clear(handle);
 }
@@ -866,9 +863,9 @@ int loader_unload()
 		if (l->init_thread_id != current)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Destruction of the loaders is being executed "
-				"from different thread of where MetaCall was initialized, "
-				"this is very dangerous and it can generate memory leaks and deadlocks, "
-				"I hope you know what are you doing...");
+												   "from different thread of where MetaCall was initialized, "
+												   "this is very dangerous and it can generate memory leaks and deadlocks, "
+												   "I hope you know what are you doing...");
 
 			/* TODO: How to deal with this? */
 		}
@@ -915,17 +912,17 @@ void loader_destroy()
 	loader_env_destroy();
 }
 
-const char * loader_print_info()
+const char *loader_print_info()
 {
 	static const char loader_info[] =
 		"Loader Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

@@ -26,7 +26,7 @@ struct log_aspect_format_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_aspect_format_impl_type * log_aspect_format_impl;
+typedef struct log_aspect_format_impl_type *log_aspect_format_impl;
 
 typedef size_t (*log_aspect_format_size)(log_aspect, log_record);
 typedef int (*log_aspect_format_serialize)(log_aspect, log_record, void *, const size_t);

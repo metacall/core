@@ -23,10 +23,10 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
@@ -36,20 +36,20 @@
 
 typedef struct loader_impl_java_type
 {
-	JavaVM * jvm; // Pointer to the JVM (Java Virtual Machine)
-	JNIEnv * env; // Pointer to native interface
+	JavaVM *jvm; // Pointer to the JVM (Java Virtual Machine)
+	JNIEnv *env; // Pointer to native interface
 
 } * loader_impl_java;
 
 typedef struct loader_impl_java_handle_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_java_handle;
 
 typedef struct loader_impl_java_function_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_java_function;
 
@@ -75,7 +75,7 @@ function_return function_java_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
-function_return function_java_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_java_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -104,8 +104,7 @@ void function_java_interface_destroy(function func, function_impl impl)
 
 function_interface function_java_singleton()
 {
-	static struct function_interface_type java_interface =
-	{
+	static struct function_interface_type java_interface = {
 		&function_java_interface_create,
 		&function_java_interface_invoke,
 		&function_java_interface_await,
@@ -128,12 +127,12 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 	if (java_impl != nullptr)
 	{
-		#define TEST_CLASS_PATH \
-			"$(sbt 'export test:fullClasspath')"
+#define TEST_CLASS_PATH \
+	"$(sbt 'export test:fullClasspath')"
 
 		static const size_t options_size = 2;
 
-		JavaVMOption * options = new JavaVMOption[options_size]; // JVM invocation options
+		JavaVMOption *options = new JavaVMOption[options_size]; // JVM invocation options
 		options[0].optionString = "-Dmetacall.polyglot.name=core";
 		options[1].optionString = "-Djava.class.path=" TEST_CLASS_PATH;
 
@@ -143,7 +142,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 		vm_args.options = options;
 		vm_args.ignoreUnrecognized = false; // Invalid options make the JVM init fail
 
-		jint rc = JNI_CreateJavaVM(&java_impl->jvm, (void**)&java_impl->env, &vm_args);
+		jint rc = JNI_CreateJavaVM(&java_impl->jvm, (void **)&java_impl->env, &vm_args);
 
 		delete[] options;
 
@@ -178,7 +177,7 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	{
 		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
-		jint rc = java_impl->jvm->AttachCurrentThread((void**)&java_impl->env, NULL);
+		jint rc = java_impl->jvm->AttachCurrentThread((void **)&java_impl->env, NULL);
 
 		if (rc != JNI_OK)
 		{
@@ -210,13 +209,14 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		if (myo)
 		{
 			jmethodID show = java_impl->env->GetMethodID(cls2, "run", "()V");
-			if(show == nullptr)
+			if (show == nullptr)
 			{
 				// TODO: Error handling
 				delete java_handle;
 				return NULL;
 			}
-			else java_impl->env->CallVoidMethod(myo, show);
+			else
+				java_impl->env->CallVoidMethod(myo, show);
 		}
 
 		// TODO: Implement a scope like V8 for attaching and detaching automatically
@@ -234,7 +234,7 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	(void)impl;
 	(void)name;
@@ -287,8 +287,6 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 	if (java_handle != NULL)
 	{
-
-
 		return 0;
 	}
 
@@ -301,7 +299,7 @@ int java_loader_impl_destroy(loader_impl impl)
 
 	if (java_impl != NULL)
 	{
-		jint rc = java_impl->jvm->AttachCurrentThread((void**)&java_impl->env, NULL);
+		jint rc = java_impl->jvm->AttachCurrentThread((void **)&java_impl->env, NULL);
 
 		if (rc != JNI_OK)
 		{

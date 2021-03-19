@@ -23,23 +23,23 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
 #include <configuration/configuration.h>
 
-#include <stdlib.h>
 #include <cs_loader/simple_netcore.h>
+#include <stdlib.h>
 
-typedef struct {
+typedef struct
+{
 	netcore_handle handle;
-	reflect_function * func;
+	reflect_function *func;
 } cs_function;
-
 
 int function_cs_interface_create(function func, function_impl impl)
 {
@@ -54,8 +54,8 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	(void)func;
 	(void)size; /* TODO: Assert size and param_count are equal, varidic not allowed in C# yet */
 
-	cs_function * cs_f = (cs_function*)impl;
-	execution_result * result;
+	cs_function *cs_f = (cs_function *)impl;
+	execution_result *result;
 
 	if (cs_f->func->param_count == 0)
 	{
@@ -80,50 +80,42 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	{
 		switch (cs_f->func->return_type)
 		{
-			case TYPE_BOOL:
-			{
-				v = value_create_bool(*(boolean*)result->ptr);
+			case TYPE_BOOL: {
+				v = value_create_bool(*(boolean *)result->ptr);
 				break;
 			}
 
-			case TYPE_CHAR:
-			{
+			case TYPE_CHAR: {
 				v = value_create_bool(*(char *)result->ptr);
 				break;
 			}
 
-			case TYPE_SHORT:
-			{
+			case TYPE_SHORT: {
 				v = value_create_short(*(short *)result->ptr);
 				break;
 			}
 
-			case TYPE_INT:
-			{
+			case TYPE_INT: {
 				v = value_create_int(*(int *)result->ptr);
 				break;
 			}
 
-			case TYPE_LONG:
-			{
+			case TYPE_LONG: {
 				v = value_create_long(*(long *)result->ptr);
 				break;
 			}
 
-			case TYPE_FLOAT:
-			{
+			case TYPE_FLOAT: {
 				v = value_create_float(*(float *)result->ptr);
 				break;
 			}
 
-			case TYPE_DOUBLE:
-			{
+			case TYPE_DOUBLE: {
 				v = value_create_double(*(double *)result->ptr);
 				break;
 			}
 
-			case TYPE_STRING:
-			{
+			case TYPE_STRING: {
 				v = value_create_string((const char *)result->ptr, strlen((const char *)result->ptr));
 				break;
 			}
@@ -135,7 +127,7 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	return v;
 }
 
-function_return function_cs_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_cs_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -158,8 +150,7 @@ void function_cs_interface_destroy(function func, function_impl impl)
 
 function_interface function_cs_singleton(void)
 {
-	static struct function_interface_type cs_interface =
-	{
+	static struct function_interface_type cs_interface = {
 		&function_cs_interface_create,
 		&function_cs_interface_invoke,
 		&function_cs_interface_await,
@@ -176,10 +167,8 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 	static struct
 	{
 		type_id id;
-		const char * name;
-	}
-	type_id_name_pair[] =
-	{
+		const char *name;
+	} type_id_name_pair[] = {
 		{ TYPE_BOOL, "bool" },
 		{ TYPE_CHAR, "char" },
 		{ TYPE_SHORT, "short" },
@@ -212,8 +201,8 @@ int cs_loader_impl_initialize_types(loader_impl impl)
 
 loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration config)
 {
-	char * dotnet_root = NULL;
-	char * dotnet_loader_assembly_path = NULL;
+	char *dotnet_root = NULL;
+	char *dotnet_loader_assembly_path = NULL;
 	value dotnet_root_value = NULL;
 	value dotnet_loader_assembly_path_value = NULL;
 	netcore_handle nhandle = NULL;
@@ -263,13 +252,13 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 {
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
-	char * files[MAX_FILES];
+	char *files[MAX_FILES];
 
 	size_t i;
 
 	for (i = 0; i < size; ++i)
 	{
-		files[i] = (char*)paths[i];
+		files[i] = (char *)paths[i];
 	}
 
 	if (simple_netcore_load_script_from_files(nhandle, files, size) != 0)
@@ -280,7 +269,8 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return (loader_handle)impl;
 }
 
-loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path) {
+loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
 	if (simple_netcore_load_script_from_assembly(nhandle, (char *)path) != 0)
@@ -291,7 +281,7 @@ loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_na
 	return (loader_handle)impl;
 }
 
-loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle cs_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	(void)name;
 
@@ -315,7 +305,7 @@ int cs_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 0;
 }
 
-static const char * cs_loader_impl_discover_type(short id)
+static const char *cs_loader_impl_discover_type(short id)
 {
 	/* TODO:
 		This function is needed because of a bad implementation
@@ -329,10 +319,8 @@ static const char * cs_loader_impl_discover_type(short id)
 	static struct
 	{
 		short id;
-		const char * name;
-	}
-	type_id_name_pair[] =
-	{
+		const char *name;
+	} type_id_name_pair[] = {
 		{ TYPE_BOOL, "bool" },
 		{ TYPE_CHAR, "char" },
 		{ TYPE_INT, "int" },
@@ -368,7 +356,7 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 	scope sp = context_scope(ctx);
 
 	int function_count = 0;
-	reflect_function * functions;
+	reflect_function *functions;
 
 	functions = simple_netcore_get_functions(nhandle, &function_count);
 
@@ -376,7 +364,7 @@ int cs_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	for (int i = 0; i < function_count; ++i)
 	{
-		cs_function * cs_f = (cs_function*)malloc(sizeof(cs_function));
+		cs_function *cs_f = (cs_function *)malloc(sizeof(cs_function));
 
 		cs_f->func = &functions[i];
 		cs_f->handle = nhandle;

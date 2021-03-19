@@ -28,20 +28,20 @@
 
 struct function_type
 {
-	char * name;
+	char *name;
 	signature s;
 	function_impl impl;
 	function_interface interface;
 	size_t ref_count;
 	int async;
-	void * data;
+	void *data;
 };
 
 static value function_metadata_name(function func);
 
 static value function_metadata_signature(function func);
 
-function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
+function function_create(const char *name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton)
 {
 	function func = malloc(sizeof(struct function_type));
 
@@ -151,12 +151,12 @@ enum function_async_id function_async_id(function func)
 	return func->async;
 }
 
-void function_bind(function func, void * data)
+void function_bind(function func, void *data)
 {
 	func->data = data;
 }
 
-void * function_closure(function func)
+void *function_closure(function func)
 {
 	if (func != NULL)
 	{
@@ -166,7 +166,7 @@ void * function_closure(function func)
 	return NULL;
 }
 
-const char * function_name(function func)
+const char *function_name(function func)
 {
 	if (func != NULL)
 	{
@@ -192,7 +192,7 @@ value function_metadata_name(function func)
 
 	value name = value_create_array(NULL, 2);
 
-	value * name_array;
+	value *name_array;
 
 	if (name == NULL)
 	{
@@ -228,7 +228,7 @@ value function_metadata_async(function func)
 
 	value async = value_create_array(NULL, 2);
 
-	value * async_array;
+	value *async_array;
 
 	if (async == NULL)
 	{
@@ -264,7 +264,7 @@ value function_metadata_signature(function func)
 
 	value sig = value_create_array(NULL, 2);
 
-	value * sig_array;
+	value *sig_array;
 
 	if (sig == NULL)
 	{
@@ -298,7 +298,7 @@ value function_metadata(function func)
 {
 	value name, sig, async, f;
 
-	value * f_map;
+	value *f_map;
 
 	/* Create function name array */
 	name = function_metadata_name(func);
@@ -596,7 +596,7 @@ function_return function_call(function func, function_args args, size_t size)
 	return func->interface->invoke(func, func->impl, args, size);
 }
 
-function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	if (func != NULL && args != NULL)
 	{

@@ -31,7 +31,7 @@
 
 /* -- Methods -- */
 
-const char * dynlink_impl_interface_extension_beos(void)
+const char *dynlink_impl_interface_extension_beos(void)
 {
 	static const char extension_beos[0x03] = "so";
 
@@ -71,9 +71,9 @@ dynlink_impl dynlink_impl_interface_load_beos(dynlink handle)
 	return NULL;
 }
 
-int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
+int dynlink_impl_interface_symbol_beos(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
 {
-	void * symbol = NULL;
+	void *symbol = NULL;
 
 	int err = get_image_symbol((image_id)impl, name, B_SYMBOL_TYPE_ANY, &symbol);
 
@@ -94,19 +94,18 @@ int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 {
 	(void)handle;
 
-	#if defined(__ADDRESS_SANITIZER__)
-		/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
-		(void)impl;
-		return 0;
-	#else
-		return ((image_id)impl > 0) && (unload_add_on((image_id)impl) < B_NO_ERROR);
-	#endif
+#if defined(__ADDRESS_SANITIZER__)
+	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+	(void)impl;
+	return 0;
+#else
+	return ((image_id)impl > 0) && (unload_add_on((image_id)impl) < B_NO_ERROR);
+#endif
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton_beos(void)
 {
-	static struct dynlink_impl_interface_type impl_interface_beos =
-	{
+	static struct dynlink_impl_interface_type impl_interface_beos = {
 		&dynlink_impl_interface_extension_beos,
 		&dynlink_impl_interface_get_name_beos,
 		&dynlink_impl_interface_load_beos,

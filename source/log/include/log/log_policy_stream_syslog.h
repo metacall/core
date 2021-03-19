@@ -25,13 +25,13 @@ struct log_policy_stream_syslog_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_syslog_ctor_type * log_policy_stream_syslog_ctor;
+typedef struct log_policy_stream_syslog_ctor_type *log_policy_stream_syslog_ctor;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_syslog_ctor_type
 {
-	const char * name;
+	const char *name;
 };
 
 /* -- Methods -- */

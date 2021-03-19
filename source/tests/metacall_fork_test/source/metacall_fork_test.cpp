@@ -20,29 +20,31 @@ public:
 static int pre_callback_fired = 0;
 static int post_callback_fired = 0;
 
-#if defined(WIN32) || defined(_WIN32) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		defined(__MINGW32__) || defined(__MINGW64__)
+#if defined(WIN32) || defined(_WIN32) ||            \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
 
-#define _WIN32_WINNT 0x0600
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+	#define _WIN32_WINNT 0x0600
+	#define WIN32_LEAN_AND_MEAN
+	#include <windows.h>
 
-#define RTL_CLONE_PROCESS_FLAGS_CREATE_SUSPENDED 0x00000001
-#define RTL_CLONE_PROCESS_FLAGS_INHERIT_HANDLES 0x00000002
-#define RTL_CLONE_PROCESS_FLAGS_NO_SYNCHRONIZE 0x00000004
+	#define RTL_CLONE_PROCESS_FLAGS_CREATE_SUSPENDED 0x00000001
+	#define RTL_CLONE_PROCESS_FLAGS_INHERIT_HANDLES	 0x00000002
+	#define RTL_CLONE_PROCESS_FLAGS_NO_SYNCHRONIZE	 0x00000004
 
-#define RTL_CLONE_PARENT 0
-#define RTL_CLONE_CHILD 297
+	#define RTL_CLONE_PARENT 0
+	#define RTL_CLONE_CHILD	 297
 
 typedef long NTSTATUS;
 
-typedef struct _CLIENT_ID {
+typedef struct _CLIENT_ID
+{
 	PVOID UniqueProcess;
 	PVOID UniqueThread;
 } CLIENT_ID, *PCLIENT_ID;
 
-typedef struct _SECTION_IMAGE_INFORMATION {
+typedef struct _SECTION_IMAGE_INFORMATION
+{
 	PVOID EntryPoint;
 	ULONG StackZeroBits;
 	ULONG StackReserved;
@@ -56,7 +58,8 @@ typedef struct _SECTION_IMAGE_INFORMATION {
 	ULONG Unknown2[3];
 } SECTION_IMAGE_INFORMATION, *PSECTION_IMAGE_INFORMATION;
 
-typedef struct _RTL_USER_PROCESS_INFORMATION {
+typedef struct _RTL_USER_PROCESS_INFORMATION
+{
 	ULONG Size;
 	HANDLE Process;
 	HANDLE Thread;
@@ -64,7 +67,7 @@ typedef struct _RTL_USER_PROCESS_INFORMATION {
 	SECTION_IMAGE_INFORMATION ImageInformation;
 } RTL_USER_PROCESS_INFORMATION, *PRTL_USER_PROCESS_INFORMATION;
 
-typedef NTSTATUS(NTAPI * RtlCloneUserProcessPtr)(ULONG ProcessFlags,
+typedef NTSTATUS(NTAPI *RtlCloneUserProcessPtr)(ULONG ProcessFlags,
 	PSECURITY_DESCRIPTOR ProcessSecurityDescriptor,
 	PSECURITY_DESCRIPTOR ThreadSecurityDescriptor,
 	HANDLE DebugPort,
@@ -122,7 +125,7 @@ pid_t fork()
 
 #endif
 
-int pre_callback_test(void * ctx)
+int pre_callback_test(void *ctx)
 {
 	(void)ctx;
 
@@ -133,7 +136,7 @@ int pre_callback_test(void * ctx)
 	return 0;
 }
 
-int post_callback_test(metacall_pid pid, void * ctx)
+int post_callback_test(metacall_pid pid, void *ctx)
 {
 	(void)ctx;
 
@@ -150,21 +153,21 @@ TEST_F(metacall_fork_test, DefaultConstructor)
 
 	metacall_flags(METACALL_FLAGS_FORK_SAFE);
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	metacall_fork(&pre_callback_test, &post_callback_test);
 
 	if (fork() == 0)
 	{
-		std::cout << "MetaCall fork child"<< std::endl;
+		std::cout << "MetaCall fork child" << std::endl;
 	}
 	else
 	{
-		std::cout << "MetaCall fork parent"<< std::endl;
+		std::cout << "MetaCall fork parent" << std::endl;
 	}
 
-	EXPECT_EQ((int) 1, (int) pre_callback_fired);
-	EXPECT_EQ((int) 1, (int) post_callback_fired);
+	EXPECT_EQ((int)1, (int)pre_callback_fired);
+	EXPECT_EQ((int)1, (int)post_callback_fired);
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

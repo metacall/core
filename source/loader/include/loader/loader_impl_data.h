@@ -29,7 +29,7 @@ extern "C" {
 *  @brief
 *    Generic handle for implementation data of a loader
 */
-typedef void * loader_impl_data;
+typedef void *loader_impl_data;
 
 #ifdef __cplusplus
 }

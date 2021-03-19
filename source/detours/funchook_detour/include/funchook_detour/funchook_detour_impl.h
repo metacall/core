@@ -60,7 +60,7 @@ FUNCHOOK_DETOUR_API detour_impl_handle funchook_detour_impl_initialize(void);
 *    Return zero on success, different from zero otherwise
 *
 */
-FUNCHOOK_DETOUR_API int funchook_detour_impl_install(detour_impl_handle handle, void(**target)(void), void(*hook)(void));
+FUNCHOOK_DETOUR_API int funchook_detour_impl_install(detour_impl_handle handle, void (**target)(void), void (*hook)(void));
 
 /**
 *  @brief

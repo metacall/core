@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <configuration/configuration_object.h>
 #include <configuration/configuration_impl.h>
+#include <configuration/configuration_object.h>
 
 #include <log/log.h>
 
@@ -21,7 +21,7 @@ struct configuration_childs_cb_iterator_type;
 
 /* -- Type Definitions -- */
 
-typedef struct configuration_childs_cb_iterator_type * configuration_childs_cb_iterator;
+typedef struct configuration_childs_cb_iterator_type *configuration_childs_cb_iterator;
 
 /* -- Member Data -- */
 
@@ -35,11 +35,11 @@ struct configuration_childs_cb_iterator_type
 
 struct configuration_type
 {
-	char * name;
-	char * path;
+	char *name;
+	char *path;
 	set map;
 	configuration parent;
-	char * source;
+	char *source;
 	value v;
 };
 
@@ -47,7 +47,7 @@ struct configuration_type
 
 static int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static char * configuration_object_read(const char * path);
+static char *configuration_object_read(const char *path);
 
 static int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
@@ -67,13 +67,13 @@ int configuration_object_initialize_cb_iterate(set s, set_key key, set_value val
 	return 0;
 }
 
-char * configuration_object_read(const char * path)
+char *configuration_object_read(const char *path)
 {
-	FILE * file = fopen(path, "rb");
+	FILE *file = fopen(path, "rb");
 
 	size_t size, size_read;
 
-	char * buffer;
+	char *buffer;
 
 	if (file == NULL)
 	{
@@ -117,7 +117,7 @@ char * configuration_object_read(const char * path)
 	return buffer;
 }
 
-configuration configuration_object_initialize(const char * name, const char * path, configuration parent)
+configuration configuration_object_initialize(const char *name, const char *path, configuration parent)
 {
 	configuration config = malloc(sizeof(struct configuration_type));
 
@@ -227,15 +227,15 @@ int configuration_object_childs_cb_iterate_valid(set_key key, set_value val)
 	{
 		size_t config_size = value_type_size(v);
 
-		const char * config_extension = configuration_impl_extension();
+		const char *config_extension = configuration_impl_extension();
 
 		size_t config_length = strlen(config_extension);
 
 		if (config_size > config_length + 1)
 		{
-			const char * path = value_to_string(v);
+			const char *path = value_to_string(v);
 
-			const char * extension_last = &path[config_size - config_length - 1];
+			const char *extension_last = &path[config_size - config_length - 1];
 
 			if (strncmp(extension_last, config_extension, config_length) == 0)
 			{
@@ -259,7 +259,7 @@ int configuration_object_childs_cb_iterate(set s, set_key key, set_value val, se
 		{
 			value v = val;
 
-			const char * path = value_to_string(v);
+			const char *path = value_to_string(v);
 
 			configuration child = configuration_object_initialize(key, path, iterator->parent);
 
@@ -295,15 +295,15 @@ void configuration_object_instantiate(configuration config, value v)
 {
 	size_t index, size = value_type_count(v);
 
-	value * v_map = value_to_map(v);
+	value *v_map = value_to_map(v);
 
 	for (index = 0; index < size; ++index)
 	{
 		value iterator = v_map[index];
 
-		value * tupla = value_to_array(iterator);
+		value *tupla = value_to_array(iterator);
 
-		const char * key = value_to_string(tupla[0]);
+		const char *key = value_to_string(tupla[0]);
 
 		configuration_object_set(config, key, tupla[1]);
 	}
@@ -311,12 +311,12 @@ void configuration_object_instantiate(configuration config, value v)
 	config->v = v;
 }
 
-const char * configuration_object_name(configuration config)
+const char *configuration_object_name(configuration config)
 {
 	return config->name;
 }
 
-const char * configuration_object_path(configuration config)
+const char *configuration_object_path(configuration config)
 {
 	return config->path;
 }
@@ -326,7 +326,7 @@ configuration configuration_object_parent(configuration config)
 	return config->parent;
 }
 
-const char * configuration_object_source(configuration config)
+const char *configuration_object_source(configuration config)
 {
 	return config->source;
 }
@@ -336,17 +336,17 @@ value configuration_object_value(configuration config)
 	return config->v;
 }
 
-int configuration_object_set(configuration config, const char * key, value v)
+int configuration_object_set(configuration config, const char *key, value v)
 {
 	return set_insert(config->map, (set_key)key, v);
 }
 
-value configuration_object_get(configuration config, const char * key)
+value configuration_object_get(configuration config, const char *key)
 {
 	return set_get(config->map, (set_key)key);
 }
 
-int configuration_object_remove(configuration config, const char * key)
+int configuration_object_remove(configuration config, const char *key)
 {
 	return set_remove(config->map, (set_key)key) == NULL;
 }

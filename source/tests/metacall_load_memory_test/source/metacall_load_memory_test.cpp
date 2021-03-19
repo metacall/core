@@ -34,10 +34,10 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 	metacall_log_stdio_type log_stdio = { stdout };
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/env python3\n"
@@ -52,15 +52,15 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		long iterator;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
-		void * ret = NULL;
+		void *ret = NULL;
 
 		ret = metacall("multmem", 5, 15);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75);
+		EXPECT_EQ((long)metacall_value_to_long(ret), (long)75);
 
 		metacall_value_destroy(ret);
 
@@ -68,17 +68,17 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 		{
 			ret = metacall("multmem", 5, iterator);
 
-			EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((long) metacall_value_to_long(ret), (long) (5 * iterator));
+			EXPECT_EQ((long)metacall_value_to_long(ret), (long)(5 * iterator));
 
 			metacall_value_destroy(ret);
 		}
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/ruby\n"
@@ -100,30 +100,30 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		static const char extension[] = "rb";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
 
-		void * ret = NULL;
+		void *ret = NULL;
 
 		ret = metacall("mem_multiply", 5, 5);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int) metacall_value_to_int(ret), (int) 25);
+		EXPECT_EQ((int)metacall_value_to_int(ret), (int)25);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("comment_line", 15);
 
-		EXPECT_EQ((void *) NULL, (void *) ret);
+		EXPECT_EQ((void *)NULL, (void *)ret);
 
 		ret = metacall("comment_multi_line", 25);
 
-		EXPECT_EQ((void *) NULL, (void *) ret);
+		EXPECT_EQ((void *)NULL, (void *)ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	/* JavaScript V8 */
-	#if defined(OPTION_BUILD_LOADERS_JS)
+/* JavaScript V8 */
+#if defined(OPTION_BUILD_LOADERS_JS)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/env sh\n"
@@ -137,23 +137,23 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 		static const char extension[] = "js";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory(extension, buffer, sizeof(buffer), NULL));
 
-		void * ret = NULL;
+		void *ret = NULL;
 
 		ret = metacall("mem_divide", 10.0, 5.0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 2.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)2.0);
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("mem_comment", 10.0);
 
-		EXPECT_EQ((void *) NULL, (void *) ret);
+		EXPECT_EQ((void *)NULL, (void *)ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_JS */
+#endif /* OPTION_BUILD_LOADERS_JS */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

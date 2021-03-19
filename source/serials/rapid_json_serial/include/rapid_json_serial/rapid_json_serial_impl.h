@@ -41,7 +41,7 @@ extern "C" {
 *    Returns constant string representing serial extension
 *
 */
-RAPID_JSON_SERIAL_API const char * rapid_json_serial_impl_extension(void);
+RAPID_JSON_SERIAL_API const char *rapid_json_serial_impl_extension(void);
 
 /**
 *  @brief
@@ -70,7 +70,7 @@ RAPID_JSON_SERIAL_API serial_impl_handle rapid_json_serial_impl_initialize(memor
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-RAPID_JSON_SERIAL_API char * rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t * size);
+RAPID_JSON_SERIAL_API char *rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t *size);
 
 /**
 *  @brief
@@ -89,7 +89,7 @@ RAPID_JSON_SERIAL_API char * rapid_json_serial_impl_serialize(serial_impl_handle
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-RAPID_JSON_SERIAL_API value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char * buffer, size_t size);
+RAPID_JSON_SERIAL_API value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *buffer, size_t size);
 
 /**
 *  @brief

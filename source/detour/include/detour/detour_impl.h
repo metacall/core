@@ -37,7 +37,7 @@ struct detour_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef struct detour_impl_type * detour_impl;
+typedef struct detour_impl_type *detour_impl;
 
 /* -- Methods -- */
 
@@ -68,7 +68,7 @@ DETOUR_API detour_impl detour_impl_create(void);
 *    Returns zero on correct loading, distinct from zero otherwise
 *
 */
-DETOUR_API int detour_impl_load(detour_impl impl, const char * path, const char * name);
+DETOUR_API int detour_impl_load(detour_impl impl, const char *path, const char *name);
 
 /**
 *  @brief
@@ -87,7 +87,7 @@ DETOUR_API int detour_impl_load(detour_impl impl, const char * path, const char 
 *    Return pointer to the detour handle on success, null otherwise
 *
 */
-DETOUR_API detour_impl_handle detour_impl_install(detour_impl impl, void(**target)(void), void(*hook)(void));
+DETOUR_API detour_impl_handle detour_impl_install(detour_impl impl, void (**target)(void), void (*hook)(void));
 
 /**
 *  @brief

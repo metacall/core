@@ -36,12 +36,12 @@ extern "C" {
 /* -- Definitions -- */
 
 #if !defined(boolean)
-#	define boolean unsigned char
+	#define boolean unsigned char
 #endif
 
 /* -- Type Definitions -- */
 
-typedef void * value;
+typedef void *value;
 
 typedef void (*value_finalizer_cb)(value, void *);
 
@@ -72,7 +72,7 @@ REFLECT_API value value_alloc(size_t bytes);
 *  @return
 *    Pointer to value if success, null otherwhise
 */
-REFLECT_API value value_create(const void * data, size_t bytes);
+REFLECT_API value value_create(const void *data, size_t bytes);
 
 /**
 *  @brief
@@ -143,7 +143,7 @@ REFLECT_API void value_ref_dec(value v);
 *  @param[in] finalizer_data
 *    Reference to additional data to be passed when the finalizer is called
 */
-REFLECT_API void value_finalizer(value v, value_finalizer_cb finalizer, void * finalizer_data);
+REFLECT_API void value_finalizer(value v, value_finalizer_cb finalizer, void *finalizer_data);
 
 /**
 *  @brief
@@ -155,7 +155,7 @@ REFLECT_API void value_finalizer(value v, value_finalizer_cb finalizer, void * f
 *  @return
 *    Pointer to writeable memory block of value @v
 */
-REFLECT_API void * value_data(value v);
+REFLECT_API void *value_data(value v);
 
 /**
 *  @brief
@@ -170,7 +170,7 @@ REFLECT_API void * value_data(value v);
 *  @param[in] bytes
 *    Size in bytes of the memory block @data
 */
-REFLECT_API void value_to(value v, void * data, size_t bytes);
+REFLECT_API void value_to(value v, void *data, size_t bytes);
 
 /**
 *  @brief
@@ -188,7 +188,7 @@ REFLECT_API void value_to(value v, void * data, size_t bytes);
 *  @return
 *    Value with @data of size @bytes assigned to it
 */
-REFLECT_API value value_from(value v, const void * data, size_t bytes);
+REFLECT_API value value_from(value v, const void *data, size_t bytes);
 
 /**
 *  @brief

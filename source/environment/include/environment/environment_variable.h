@@ -31,11 +31,11 @@ extern "C" {
 
 /* -- Methods -- */
 
-ENVIRONMENT_API char * environment_variable_create(const char * name, const char * default_value);
+ENVIRONMENT_API char *environment_variable_create(const char *name, const char *default_value);
 
-ENVIRONMENT_API const char * environment_variable_get(const char * name, const char * default_value);
+ENVIRONMENT_API const char *environment_variable_get(const char *name, const char *default_value);
 
-ENVIRONMENT_API void environment_variable_destroy(char * variable);
+ENVIRONMENT_API void environment_variable_destroy(char *variable);
 
 #ifdef __cplusplus
 }

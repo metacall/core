@@ -13,8 +13,8 @@
 
 #include <preprocessor/preprocessor_api.h>
 
-#include <preprocessor/preprocessor_concatenation.h>
 #include <preprocessor/preprocessor_arguments.h>
+#include <preprocessor/preprocessor_concatenation.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,7 +34,7 @@ extern "C" {
 	PREPROCESSOR_DETECT(PREPROCESSOR_DETECT_PARENTHESIS_IMPL expr)
 
 #define PREPROCESSOR_DETECT_COMPARABLE(expr) \
-	PREPROCESSOR_DETECT_PARENTHESIS(PREPROCESSOR_CONCAT(PREPROCESSOR_COMPARE_, expr) (()) )
+	PREPROCESSOR_DETECT_PARENTHESIS(PREPROCESSOR_CONCAT(PREPROCESSOR_COMPARE_, expr)(()))
 
 #ifdef __cplusplus
 }

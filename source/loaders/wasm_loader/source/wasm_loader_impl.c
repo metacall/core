@@ -22,10 +22,10 @@
 
 #include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
@@ -33,19 +33,19 @@
 
 typedef struct loader_impl_wasm_function_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_wasm_function;
 
 typedef struct loader_impl_wasm_handle_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_wasm_handle;
 
 typedef struct loader_impl_wasm_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_wasm;
 
@@ -69,8 +69,7 @@ void type_wasm_interface_destroy(type t, type_impl impl)
 
 type_interface type_wasm_singleton(void)
 {
-	static struct type_interface_type wasm_type_interface =
-	{
+	static struct type_interface_type wasm_type_interface = {
 		&type_wasm_interface_create,
 		&type_wasm_interface_destroy
 	};
@@ -100,7 +99,7 @@ function_return function_wasm_interface_invoke(function func, function_impl impl
 	return NULL;
 }
 
-function_return function_wasm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_wasm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -125,8 +124,7 @@ void function_wasm_interface_destroy(function func, function_impl impl)
 
 function_interface function_wasm_singleton(void)
 {
-	static struct function_interface_type wasm_function_interface =
-	{
+	static struct function_interface_type wasm_function_interface = {
 		&function_wasm_interface_create,
 		&function_wasm_interface_invoke,
 		&function_wasm_interface_await,
@@ -170,7 +168,7 @@ loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return (loader_handle)NULL;
 }
 
-loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	/* TODO */
 

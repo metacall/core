@@ -25,8 +25,7 @@
 
 loader_impl_interface mock_loader_impl_interface_singleton()
 {
-	static struct loader_impl_interface_type loader_impl_interface_mock =
-	{
+	static struct loader_impl_interface_type loader_impl_interface_mock = {
 		&mock_loader_impl_initialize,
 		&mock_loader_impl_execution_path,
 		&mock_loader_impl_load_from_file,
@@ -40,17 +39,17 @@ loader_impl_interface mock_loader_impl_interface_singleton()
 	return &loader_impl_interface_mock;
 }
 
-const char * mock_loader_print_info()
+const char *mock_loader_print_info()
 {
 	static const char mock_loader_info[] =
 		"Mock Loader Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef MOCK_LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef MOCK_LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

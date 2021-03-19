@@ -30,7 +30,7 @@
 #include <v8.h> /* version: 5.1.117 */
 
 #ifdef ENABLE_DEBUGGER_SUPPORT
-#	include <v8-debug.h>
+	#include <v8-debug.h>
 #endif /* ENALBLE_DEBUGGER_SUPPORT */
 
 #include <map>
@@ -38,20 +38,20 @@
 /* -- Definitions -- */
 
 #if defined(_WIN32)
-#	define JS_PORT_TEST_WIN 1
+	#define JS_PORT_TEST_WIN 1
 #elif defined(unix) || defined(__unix__) || defined(__unix) || \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
-#	define JS_PORT_TEST_UNIX 1
+	#define JS_PORT_TEST_UNIX 1
 #else
-#	error "Unsuported dynamic library link type"
+	#error "Unsuported dynamic library link type"
 #endif
 
 /* -- Headers -- */
 
 #if defined(JS_PORT_TEST_WIN)
-#	include <windows.h>
+	#include <windows.h>
 #elif defined(JS_PORT_TEST_UNIX)
-#	include <dlfcn.h>
+	#include <dlfcn.h>
 #endif
 
 /* -- Namespaces -- */
@@ -61,39 +61,39 @@ using namespace v8;
 /* -- Type Definitions -- */
 
 #if (NODE_MODULE_VERSION < 0x000C)
-	typedef void (*module_initialize)(Handle<Object>);
+typedef void (*module_initialize)(Handle<Object>);
 #else
-	typedef void (*module_initialize)(Handle<Object>, Handle<Object>);
+typedef void (*module_initialize)(Handle<Object>, Handle<Object>);
 #endif
 
 #if defined(JS_PORT_TEST_WIN)
-	typedef FARPROC module_handle_symbol;
-	typedef HMODULE module_handle;
+typedef FARPROC module_handle_symbol;
+typedef HMODULE module_handle;
 #elif defined(JS_PORT_TEST_UNIX)
-	typedef void * module_handle_symbol;
-	typedef void * module_handle;
+typedef void *module_handle_symbol;
+typedef void *module_handle;
 #endif
 
 typedef std::map<std::string, module_handle> module_map;
 
 /* -- Methods -- */
 
-Local<Context> CreateShellContext(Isolate* isolate);
-void RunShell(Local<Context> context, Platform* platform);
-int RunMain(Isolate* isolate, Platform* platform, int argc, char * argv[]);
-bool ExecuteString(Isolate* isolate, Local<String> source, Local<Value> name, bool print_result, bool report_exceptions);
-void Print(const FunctionCallbackInfo<Value>& args);
-void Read(const FunctionCallbackInfo<Value>& args);
-int StrEndsWith(const char * const str, const char * const suffix);
+Local<Context> CreateShellContext(Isolate *isolate);
+void RunShell(Local<Context> context, Platform *platform);
+int RunMain(Isolate *isolate, Platform *platform, int argc, char *argv[]);
+bool ExecuteString(Isolate *isolate, Local<String> source, Local<Value> name, bool print_result, bool report_exceptions);
+void Print(const FunctionCallbackInfo<Value> &args);
+void Read(const FunctionCallbackInfo<Value> &args);
+int StrEndsWith(const char *const str, const char *const suffix);
 void ModulesClear(void);
-void Load(const FunctionCallbackInfo<Value>& args);
-void Quit(const FunctionCallbackInfo<Value>& args);
-void Version(const FunctionCallbackInfo<Value>& args);
-void AssertEq(const FunctionCallbackInfo<Value>& args);
-void AssertNe(const FunctionCallbackInfo<Value>& args);
-void SetEnv(const FunctionCallbackInfo<Value>& args);
-MaybeLocal<String> ReadFile(Isolate* isolate, const char * name);
-void ReportException(Isolate* isolate, TryCatch* handler);
+void Load(const FunctionCallbackInfo<Value> &args);
+void Quit(const FunctionCallbackInfo<Value> &args);
+void Version(const FunctionCallbackInfo<Value> &args);
+void AssertEq(const FunctionCallbackInfo<Value> &args);
+void AssertNe(const FunctionCallbackInfo<Value> &args);
+void SetEnv(const FunctionCallbackInfo<Value> &args);
+MaybeLocal<String> ReadFile(Isolate *isolate, const char *name);
+void ReportException(Isolate *isolate, TryCatch *handler);
 
 /* -- Member Data -- */
 
@@ -104,17 +104,17 @@ static bool run_shell;
 
 class ShellArrayBufferAllocator : public ArrayBuffer::Allocator
 {
-  public:
-	virtual void * Allocate(size_t length)
+public:
+	virtual void *Allocate(size_t length)
 	{
-		void * data = AllocateUninitialized(length);
+		void *data = AllocateUninitialized(length);
 		return data == NULL ? data : memset(data, 0, length);
 	}
-	virtual void * AllocateUninitialized(size_t length)
+	virtual void *AllocateUninitialized(size_t length)
 	{
 		return malloc(length);
 	}
-	virtual void Free(void * data, size_t)
+	virtual void Free(void *data, size_t)
 	{
 		free(data);
 	}
@@ -122,13 +122,13 @@ class ShellArrayBufferAllocator : public ArrayBuffer::Allocator
 
 /* -- Entry Point -- */
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
 	V8::InitializeICU();
 
 	V8::InitializeExternalStartupData(argv[0]);
 
-	Platform * platform = platform::CreateDefaultPlatform();
+	Platform *platform = platform::CreateDefaultPlatform();
 
 	V8::InitializePlatform(platform);
 
@@ -142,7 +142,7 @@ int main(int argc, char * argv[])
 
 	create_params.array_buffer_allocator = &array_buffer_allocator;
 
-	Isolate * isolate = Isolate::New(create_params);
+	Isolate *isolate = Isolate::New(create_params);
 
 	run_shell = (argc == 1);
 
@@ -184,53 +184,56 @@ int main(int argc, char * argv[])
 /* -- Methods -- */
 
 // Extracts a C string from a V8 Utf8Value.
-const char * ToCString(const String::Utf8Value& value)
+const char *ToCString(const String::Utf8Value &value)
 {
 	return *value ? *value : "<string conversion failed>";
 }
 
 // Creates a new execution environment containing the built-in
 // functions.
-Local<Context> CreateShellContext(Isolate* isolate)
+Local<Context> CreateShellContext(Isolate *isolate)
 {
 	// Create a template for the global object.
 	Local<ObjectTemplate> global = ObjectTemplate::New(isolate);
 	// Bind the global 'print' function to the C++ Print callback.
 	global->Set(
 		String::NewFromUtf8(isolate, "print", NewStringType::kNormal)
-		.ToLocalChecked(),
+			.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Print));
 	// Bind the global 'read' function to the C++ Read callback.
 	global->Set(String::NewFromUtf8(
-		isolate, "read", NewStringType::kNormal).ToLocalChecked(),
+					isolate, "read", NewStringType::kNormal)
+					.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Read));
 	// Bind the global 'load' function to the C++ Load callback.
 	global->Set(String::NewFromUtf8(
-		isolate, "load", NewStringType::kNormal).ToLocalChecked(),
+					isolate, "load", NewStringType::kNormal)
+					.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Load));
 	// Bind the 'quit' function
 	global->Set(String::NewFromUtf8(
-		isolate, "quit", NewStringType::kNormal).ToLocalChecked(),
+					isolate, "quit", NewStringType::kNormal)
+					.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Quit));
 	// Bind the 'version' function
 	global->Set(
 		String::NewFromUtf8(isolate, "version", NewStringType::kNormal)
-		.ToLocalChecked(),
+			.ToLocalChecked(),
 		FunctionTemplate::New(isolate, Version));
 	// Bind the global 'assert_eq' function to the C++ AssertEq callback.
 	global->Set(
 		String::NewFromUtf8(isolate, "assert_eq", NewStringType::kNormal)
-		.ToLocalChecked(),
+			.ToLocalChecked(),
 		FunctionTemplate::New(isolate, AssertEq));
 	// Bind the global 'assert_ne' function to the C++ AssertNe callback.
 	global->Set(
 		String::NewFromUtf8(isolate, "assert_ne", NewStringType::kNormal)
-		.ToLocalChecked(),
+			.ToLocalChecked(),
 		FunctionTemplate::New(isolate, AssertNe));
 	// Bind the global 'setenv' function to the C++ SetEnv callback.
 	global->Set(
 		String::NewFromUtf8(isolate, "setenv", NewStringType::kNormal)
-		.ToLocalChecked(),
+			.ToLocalChecked(),
 		FunctionTemplate::New(isolate, SetEnv));
 
 	return Context::New(isolate, NULL, global);
@@ -239,7 +242,7 @@ Local<Context> CreateShellContext(Isolate* isolate)
 // The callback that is invoked by v8 whenever the JavaScript 'print'
 // function is called.	Prints its arguments on stdout separated by
 // spaces and ending with a newline.
-void Print(const FunctionCallbackInfo<Value>& args)
+void Print(const FunctionCallbackInfo<Value> &args)
 {
 	bool first = true;
 	for (int i = 0; i < args.Length(); i++)
@@ -254,7 +257,7 @@ void Print(const FunctionCallbackInfo<Value>& args)
 			printf(" ");
 		}
 		String::Utf8Value str(args[i]);
-		const char * cstr = ToCString(str);
+		const char *cstr = ToCString(str);
 		printf("%s", cstr);
 	}
 	printf("\n");
@@ -264,13 +267,14 @@ void Print(const FunctionCallbackInfo<Value>& args)
 // The callback that is invoked by v8 whenever the JavaScript 'read'
 // function is called.	This function loads the content of the file named in
 // the argument into a JavaScript string.
-void Read(const FunctionCallbackInfo<Value>& args)
+void Read(const FunctionCallbackInfo<Value> &args)
 {
 	if (args.Length() != 1)
 	{
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), "Bad parameters",
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 		return;
 	}
 	String::Utf8Value file(args[0]);
@@ -278,7 +282,8 @@ void Read(const FunctionCallbackInfo<Value>& args)
 	{
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), "Error loading file",
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 		return;
 	}
 	Local<String> source;
@@ -286,13 +291,14 @@ void Read(const FunctionCallbackInfo<Value>& args)
 	{
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), "Error loading file",
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 		return;
 	}
 	args.GetReturnValue().Set(source);
 }
 
-int StrEndsWith(const char * const str, const char * const suffix)
+int StrEndsWith(const char *const str, const char *const suffix)
 {
 	if (str == NULL || suffix == NULL)
 	{
@@ -311,44 +317,44 @@ int StrEndsWith(const char * const str, const char * const suffix)
 void ModulesClear()
 {
 	for (module_map::iterator it = modules.begin();
-			it != modules.end(); ++it)
+		 it != modules.end(); ++it)
 	{
-		#if defined(JS_PORT_TEST_WIN)
-			FreeLibrary(it->second);
-		#elif defined(JS_PORT_TEST_UNIX)
-			/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
-			#if !defined(__ADDRESS_SANITIZER__)
-				dlclose(it->second);
-			#endif
-		#endif
+#if defined(JS_PORT_TEST_WIN)
+		FreeLibrary(it->second);
+#elif defined(JS_PORT_TEST_UNIX)
+	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+	#if !defined(__ADDRESS_SANITIZER__)
+		dlclose(it->second);
+	#endif
+#endif
 	}
 }
 
-module_handle LoadLibraryImpl(const char * lib_str)
+module_handle LoadLibraryImpl(const char *lib_str)
 {
-	#if defined(JS_PORT_TEST_WIN)
-		std::string lib_name(lib_str);
+#if defined(JS_PORT_TEST_WIN)
+	std::string lib_name(lib_str);
 
-		lib_name += ".dll";
+	lib_name += ".dll";
 
-		return LoadLibrary(lib_name.c_str());
+	return LoadLibrary(lib_name.c_str());
 
-	#elif defined(JS_PORT_TEST_UNIX)
-		std::string lib_name(lib_str);
+#elif defined(JS_PORT_TEST_UNIX)
+	std::string lib_name(lib_str);
 
-		lib_name += ".so";
+	lib_name += ".so";
 
-		module_handle lib = dlopen(lib_name.c_str(), RTLD_NOW | RTLD_GLOBAL);
+	module_handle lib = dlopen(lib_name.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
-		if (lib == NULL)
-		{
-			lib_name = "lib" + lib_name;
+	if (lib == NULL)
+	{
+		lib_name = "lib" + lib_name;
 
-			lib = dlopen(lib_name.c_str(), RTLD_NOW | RTLD_GLOBAL);
-		}
+		lib = dlopen(lib_name.c_str(), RTLD_NOW | RTLD_GLOBAL);
+	}
 
-		return lib;
-	#endif
+	return lib;
+#endif
 
 	return NULL;
 }
@@ -356,7 +362,7 @@ module_handle LoadLibraryImpl(const char * lib_str)
 // The callback that is invoked by v8 whenever the JavaScript 'load'
 // function is called.	Loads, compiles and executes its argument
 // JavaScript file.
-void Load(const FunctionCallbackInfo<Value>& args)
+void Load(const FunctionCallbackInfo<Value> &args)
 {
 	for (int i = 0; i < args.Length(); i++)
 	{
@@ -368,11 +374,12 @@ void Load(const FunctionCallbackInfo<Value>& args)
 		{
 			args.GetIsolate()->ThrowException(
 				String::NewFromUtf8(args.GetIsolate(), "Error loading file",
-				NewStringType::kNormal).ToLocalChecked());
+					NewStringType::kNormal)
+					.ToLocalChecked());
 			return;
 		}
 
-		const char * file_str = ToCString(file);
+		const char *file_str = ToCString(file);
 
 		if (StrEndsWith(file_str, ".js") != 0)
 		{
@@ -382,19 +389,20 @@ void Load(const FunctionCallbackInfo<Value>& args)
 			{
 				std::string err_str = "Error loading library";
 
-				#if defined(JS_PORT_TEST_WIN)
-					/* TODO */
-				#elif defined(JS_PORT_TEST_UNIX)
-					err_str += " (";
+#if defined(JS_PORT_TEST_WIN)
+				/* TODO */
+#elif defined(JS_PORT_TEST_UNIX)
+				err_str += " (";
 
-					err_str += dlerror();
+				err_str += dlerror();
 
-					err_str += ")";
-				#endif
+				err_str += ")";
+#endif
 
 				args.GetIsolate()->ThrowException(
 					String::NewFromUtf8(args.GetIsolate(), err_str.c_str(),
-					NewStringType::kNormal).ToLocalChecked());
+						NewStringType::kNormal)
+						.ToLocalChecked());
 
 				return;
 			}
@@ -408,12 +416,11 @@ void Load(const FunctionCallbackInfo<Value>& args)
 			symbol_str += symbol_suffix;
 
 			module_initialize_addr =
-				#if defined(JS_PORT_TEST_WIN)
-					GetProcAddress(lib, symbol_str.c_str());
-				#elif defined(JS_PORT_TEST_UNIX)
-					dlsym(lib, symbol_str.c_str());
-				#endif
-
+#if defined(JS_PORT_TEST_WIN)
+				GetProcAddress(lib, symbol_str.c_str());
+#elif defined(JS_PORT_TEST_UNIX)
+				dlsym(lib, symbol_str.c_str());
+#endif
 
 			if (module_initialize_addr == NULL)
 			{
@@ -423,7 +430,8 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 				args.GetIsolate()->ThrowException(
 					String::NewFromUtf8(args.GetIsolate(), err_str.c_str(),
-					NewStringType::kNormal).ToLocalChecked());
+						NewStringType::kNormal)
+						.ToLocalChecked());
 				return;
 			}
 
@@ -435,11 +443,11 @@ void Load(const FunctionCallbackInfo<Value>& args)
 			Local<Context> context(args.GetIsolate()->GetCurrentContext());
 			Local<Object> global(context->Global());
 
-			#if (NODE_MODULE_VERSION < 0x000C)
-				module_init(global);
-			#else
-				module_init(global, NULL);
-			#endif
+#if (NODE_MODULE_VERSION < 0x000C)
+			module_init(global);
+#else
+			module_init(global, NULL);
+#endif
 
 			modules[file_str] = lib;
 		}
@@ -451,7 +459,8 @@ void Load(const FunctionCallbackInfo<Value>& args)
 			{
 				args.GetIsolate()->ThrowException(
 					String::NewFromUtf8(args.GetIsolate(), "Error loading file",
-					NewStringType::kNormal).ToLocalChecked());
+						NewStringType::kNormal)
+						.ToLocalChecked());
 				return;
 			}
 
@@ -459,7 +468,8 @@ void Load(const FunctionCallbackInfo<Value>& args)
 			{
 				args.GetIsolate()->ThrowException(
 					String::NewFromUtf8(args.GetIsolate(), "Error executing file",
-					NewStringType::kNormal).ToLocalChecked());
+						NewStringType::kNormal)
+						.ToLocalChecked());
 				return;
 			}
 		}
@@ -468,7 +478,7 @@ void Load(const FunctionCallbackInfo<Value>& args)
 
 // The callback that is invoked by v8 whenever the JavaScript 'quit'
 // function is called.	Quits.
-void Quit(const FunctionCallbackInfo<Value>& args)
+void Quit(const FunctionCallbackInfo<Value> &args)
 {
 	// If not arguments are given args[0] will yield undefined which
 	// converts to the integer value 0.
@@ -482,14 +492,15 @@ void Quit(const FunctionCallbackInfo<Value>& args)
 	exit(exit_code);
 }
 
-void Version(const FunctionCallbackInfo<Value>& args)
+void Version(const FunctionCallbackInfo<Value> &args)
 {
 	args.GetReturnValue().Set(
 		String::NewFromUtf8(args.GetIsolate(), V8::GetVersion(),
-		NewStringType::kNormal).ToLocalChecked());
+			NewStringType::kNormal)
+			.ToLocalChecked());
 }
 
-void AssertEq(const FunctionCallbackInfo<Value>& args)
+void AssertEq(const FunctionCallbackInfo<Value> &args)
 {
 	const bool result = args[0]->Equals(args[1]);
 
@@ -510,13 +521,14 @@ void AssertEq(const FunctionCallbackInfo<Value>& args)
 
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), assert_msg.c_str(),
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 	}
 
 	args.GetReturnValue().Set(result);
 }
 
-void AssertNe(const FunctionCallbackInfo<Value>& args)
+void AssertNe(const FunctionCallbackInfo<Value> &args)
 {
 	const bool result = !args[0]->Equals(args[1]);
 
@@ -537,19 +549,21 @@ void AssertNe(const FunctionCallbackInfo<Value>& args)
 
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), assert_msg.c_str(),
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 	}
 
 	args.GetReturnValue().Set(result);
 }
 
-void SetEnv(const FunctionCallbackInfo<Value>& args)
+void SetEnv(const FunctionCallbackInfo<Value> &args)
 {
 	if (args.Length() != 2)
 	{
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), "setenv() invalid number of arguments",
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 
 		return;
 	}
@@ -561,7 +575,8 @@ void SetEnv(const FunctionCallbackInfo<Value>& args)
 	{
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), "setenv() invalid environment variable name",
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 
 		return;
 	}
@@ -570,29 +585,31 @@ void SetEnv(const FunctionCallbackInfo<Value>& args)
 	{
 		args.GetIsolate()->ThrowException(
 			String::NewFromUtf8(args.GetIsolate(), "setenv() invalid environment variable value",
-			NewStringType::kNormal).ToLocalChecked());
+				NewStringType::kNormal)
+				.ToLocalChecked());
 
 		return;
 	}
 
-	#ifdef V8_OS_WIN
-		_putenv_s(*env_str, *value_str);
-	#else
-		setenv(*env_str, *value_str, 1);
-	#endif
+#ifdef V8_OS_WIN
+	_putenv_s(*env_str, *value_str);
+#else
+	setenv(*env_str, *value_str, 1);
+#endif
 }
 
 // Reads a file into a v8 string.
-MaybeLocal<String> ReadFile(Isolate* isolate, const char * name)
+MaybeLocal<String> ReadFile(Isolate *isolate, const char *name)
 {
-	FILE* file = fopen(name, "rb");
-	if (file == NULL) return MaybeLocal<String>();
+	FILE *file = fopen(name, "rb");
+	if (file == NULL)
+		return MaybeLocal<String>();
 
 	fseek(file, 0, SEEK_END);
 	size_t size = ftell(file);
 	rewind(file);
 
-	char * chars = new char[size + 1];
+	char *chars = new char[size + 1];
 	chars[size] = '\0';
 	for (size_t i = 0; i < size;)
 	{
@@ -618,12 +635,12 @@ MaybeLocal<String> ReadFile(Isolate* isolate, const char * name)
 }
 
 // Process remaining command line arguments and execute files
-int RunMain(Isolate* isolate, Platform* platform, int argc,
-	char * argv[])
+int RunMain(Isolate *isolate, Platform *platform, int argc,
+	char *argv[])
 {
 	for (int i = 1; i < argc; i++)
 	{
-		const char * str = argv[i];
+		const char *str = argv[i];
 		if (strcmp(str, "--shell") == 0)
 		{
 			run_shell = true;
@@ -644,24 +661,27 @@ int RunMain(Isolate* isolate, Platform* platform, int argc,
 			// Execute argument given to -e option directly.
 			Local<String> file_name =
 				String::NewFromUtf8(isolate, "unnamed",
-				NewStringType::kNormal).ToLocalChecked();
+					NewStringType::kNormal)
+					.ToLocalChecked();
 			Local<String> source;
 			if (!String::NewFromUtf8(isolate, argv[++i],
-				NewStringType::kNormal)
-				.ToLocal(&source))
+					NewStringType::kNormal)
+					 .ToLocal(&source))
 			{
 				return 1;
 			}
 			bool success = ExecuteString(isolate, source, file_name, false, true);
-			while (platform::PumpMessageLoop(platform, isolate)) continue;
-			if (!success) return 1;
+			while (platform::PumpMessageLoop(platform, isolate))
+				continue;
+			if (!success)
+				return 1;
 		}
 		else
 		{
 			// Use all other arguments as names of files to load and run.
 			Local<String> file_name =
 				String::NewFromUtf8(isolate, str, NewStringType::kNormal)
-				.ToLocalChecked();
+					.ToLocalChecked();
 			Local<String> source;
 			if (!ReadFile(isolate, str).ToLocal(&source))
 			{
@@ -669,15 +689,17 @@ int RunMain(Isolate* isolate, Platform* platform, int argc,
 				continue;
 			}
 			bool success = ExecuteString(isolate, source, file_name, false, true);
-			while (platform::PumpMessageLoop(platform, isolate)) continue;
-			if (!success) return 1;
+			while (platform::PumpMessageLoop(platform, isolate))
+				continue;
+			if (!success)
+				return 1;
 		}
 	}
 	return 0;
 }
 
 // The read-eval-execute loop of the shell.
-void RunShell(Local<Context> context, Platform* platform)
+void RunShell(Local<Context> context, Platform *platform)
 {
 	fprintf(stderr, "V8 version %s [sample shell]\n", V8::GetVersion());
 	static const int kBufferSize = 256;
@@ -685,18 +707,21 @@ void RunShell(Local<Context> context, Platform* platform)
 	Context::Scope context_scope(context);
 	Local<String> name(
 		String::NewFromUtf8(context->GetIsolate(), "(shell)",
-		NewStringType::kNormal).ToLocalChecked());
+			NewStringType::kNormal)
+			.ToLocalChecked());
 	while (true)
 	{
 		char buffer[kBufferSize];
 		fprintf(stderr, "> ");
-		char * str = fgets(buffer, kBufferSize, stdin);
-		if (str == NULL) break;
+		char *str = fgets(buffer, kBufferSize, stdin);
+		if (str == NULL)
+			break;
 		HandleScope handle_scope(context->GetIsolate());
 		ExecuteString(
 			context->GetIsolate(),
 			String::NewFromUtf8(context->GetIsolate(), str,
-			NewStringType::kNormal).ToLocalChecked(),
+				NewStringType::kNormal)
+				.ToLocalChecked(),
 			name, true, true);
 		while (platform::PumpMessageLoop(platform, context->GetIsolate()))
 			continue;
@@ -705,7 +730,7 @@ void RunShell(Local<Context> context, Platform* platform)
 }
 
 // Executes a string within the current v8 context.
-bool ExecuteString(Isolate* isolate, Local<String> source,
+bool ExecuteString(Isolate *isolate, Local<String> source,
 	Local<Value> name, bool print_result,
 	bool report_exceptions)
 {
@@ -740,7 +765,7 @@ bool ExecuteString(Isolate* isolate, Local<String> source,
 				// If all went well and the result wasn't undefined then print
 				// the returned value.
 				String::Utf8Value str(result);
-				const char * cstr = ToCString(str);
+				const char *cstr = ToCString(str);
 				printf("%s\n", cstr);
 			}
 			return true;
@@ -748,13 +773,13 @@ bool ExecuteString(Isolate* isolate, Local<String> source,
 	}
 }
 
-void ReportException(Isolate* isolate, TryCatch* try_catch)
+void ReportException(Isolate *isolate, TryCatch *try_catch)
 {
 	HandleScope handle_scope(isolate);
 
 	String::Utf8Value exception(try_catch->Exception());
 
-	const char * exception_string = ToCString(exception);
+	const char *exception_string = ToCString(exception);
 
 	Local<Message> message = try_catch->Message();
 
@@ -770,7 +795,7 @@ void ReportException(Isolate* isolate, TryCatch* try_catch)
 
 	Local<Context> context(isolate->GetCurrentContext());
 
-	const char * filename_string = ToCString(filename);
+	const char *filename_string = ToCString(filename);
 
 	int linenum = message->GetLineNumber(context).FromJust();
 
@@ -780,7 +805,7 @@ void ReportException(Isolate* isolate, TryCatch* try_catch)
 	String::Utf8Value sourceline(
 		message->GetSourceLine(context).ToLocalChecked());
 
-	const char * sourceline_string = ToCString(sourceline);
+	const char *sourceline_string = ToCString(sourceline);
 
 	fprintf(stderr, "%s\n", sourceline_string);
 
@@ -809,7 +834,7 @@ void ReportException(Isolate* isolate, TryCatch* try_catch)
 	{
 		String::Utf8Value stack_trace(stack_trace_string);
 
-		const char * stack_trace_string = ToCString(stack_trace);
+		const char *stack_trace_string = ToCString(stack_trace);
 
 		fprintf(stderr, "%s\n", stack_trace_string);
 	}

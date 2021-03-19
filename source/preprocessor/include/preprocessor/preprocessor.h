@@ -25,8 +25,8 @@
 
 #include <preprocessor/preprocessor_api.h>
 
-#include <preprocessor/preprocessor_arithmetic.h>
 #include <preprocessor/preprocessor_arguments.h>
+#include <preprocessor/preprocessor_arithmetic.h>
 #include <preprocessor/preprocessor_bit.h>
 #include <preprocessor/preprocessor_boolean.h>
 #include <preprocessor/preprocessor_comma.h>
@@ -47,7 +47,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-PREPROCESSOR_API const char * preprocessor_print_info(void);
+PREPROCESSOR_API const char *preprocessor_print_info(void);
 
 #ifdef __cplusplus
 }

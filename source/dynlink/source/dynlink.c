@@ -32,16 +32,15 @@
 
 struct dynlink_type
 {
-	dynlink_name_impl	name;		/**< Dynamically linked shared object name */
-	dynlink_name_impl	name_impl;	/**< Dynamically linked shared object file name */
-	dynlink_flags		flags;		/**< Dynamically linked shared object flags */
-	dynlink_impl		impl;		/**< Dynamically linked shared object loader implementation */
-
+	dynlink_name_impl name;		 /**< Dynamically linked shared object name */
+	dynlink_name_impl name_impl; /**< Dynamically linked shared object file name */
+	dynlink_flags flags;		 /**< Dynamically linked shared object flags */
+	dynlink_impl impl;			 /**< Dynamically linked shared object loader implementation */
 };
 
 /* -- Methods -- */
 
-const char * dynlink_extension()
+const char *dynlink_extension()
 {
 	return dynlink_impl_extension();
 }
@@ -113,7 +112,7 @@ dynlink_flags dynlink_get_flags(dynlink handle)
 	return 0;
 }
 
-int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr * symbol_address)
+int dynlink_symbol(dynlink handle, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address)
 {
 	if (handle != NULL && handle->impl != NULL && symbol_name != NULL && symbol_address != NULL)
 	{
@@ -133,17 +132,17 @@ void dynlink_unload(dynlink handle)
 	}
 }
 
-const char * dynlink_print_info()
+const char *dynlink_print_info()
 {
 	static const char dynlink_info[] =
 		"Dynamic Link Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef DYNLINK_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef DYNLINK_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

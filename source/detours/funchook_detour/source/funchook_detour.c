@@ -17,8 +17,7 @@
 
 detour_interface funchook_detour_impl_interface_singleton()
 {
-	static struct detour_interface_type interface_instance_funchook =
-	{
+	static struct detour_interface_type interface_instance_funchook = {
 		&funchook_detour_impl_initialize,
 		&funchook_detour_impl_install,
 		&funchook_detour_impl_uninstall,
@@ -28,17 +27,17 @@ detour_interface funchook_detour_impl_interface_singleton()
 	return &interface_instance_funchook;
 }
 
-const char * funchook_detour_print_info()
+const char *funchook_detour_print_info()
 {
 	static const char funchook_detour_info[] =
 		"FuncHook Detour Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef FUNCHOOK_DETOUR_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef FUNCHOOK_DETOUR_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

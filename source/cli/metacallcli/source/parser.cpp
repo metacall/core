@@ -18,29 +18,27 @@ using namespace metacallcli;
 
 /* -- Methods -- */
 
-parser::parser(const tokenizer::iterator & it) : it(it)
+parser::parser(const tokenizer::iterator &it) :
+	it(it)
 {
-
 }
 
 parser::~parser()
 {
-
 }
 
-parser_parameter::parser_parameter(const tokenizer::iterator & it) : parser(it)
+parser_parameter::parser_parameter(const tokenizer::iterator &it) :
+	parser(it)
 {
-
 }
 
 parser_parameter::~parser_parameter()
 {
-
 }
 
 template <> bool parser_parameter::is<char>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t len = str.length();
 
@@ -53,7 +51,7 @@ template <> bool parser_parameter::is<char>()
 
 template <> bool parser_parameter::is<long>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length();
 
@@ -75,7 +73,7 @@ template <> bool parser_parameter::is<long>()
 
 template <> bool parser_parameter::is<float>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length();
 
@@ -97,7 +95,7 @@ template <> bool parser_parameter::is<float>()
 
 template <> bool parser_parameter::is<std::string>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length();
 
@@ -110,7 +108,7 @@ template <> bool parser_parameter::is<std::string>()
 
 template <> char parser_parameter::to<char>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length();
 
@@ -127,17 +125,24 @@ template <> char parser_parameter::to<char>()
 
 		switch (special)
 		{
-			case 't' : return '\t';
-			case 'n' : return '\n';
-			case 'r' : return '\r';
-			case 'v' : return '\v';
-			case 'f' : return '\f';
-			case '0' : return '\0';
-			case '\\' : return '\\';
-			case '\'' : return '\'';
+			case 't':
+				return '\t';
+			case 'n':
+				return '\n';
+			case 'r':
+				return '\r';
+			case 'v':
+				return '\v';
+			case 'f':
+				return '\f';
+			case '0':
+				return '\0';
+			case '\\':
+				return '\\';
+			case '\'':
+				return '\'';
 
-			default:
-			{
+			default: {
 				std::cout << "Invalid character (" << special << ")" << std::endl;
 
 				return special;
@@ -150,7 +155,7 @@ template <> char parser_parameter::to<char>()
 
 template <> long parser_parameter::to<long>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length();
 
@@ -174,7 +179,7 @@ template <> long parser_parameter::to<long>()
 
 template <> float parser_parameter::to<float>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length();
 
@@ -198,7 +203,7 @@ template <> float parser_parameter::to<float>()
 
 template <> std::string parser_parameter::to<std::string>()
 {
-	const std::string & str = *it;
+	const std::string &str = *it;
 
 	size_t length = str.length() - 2;
 

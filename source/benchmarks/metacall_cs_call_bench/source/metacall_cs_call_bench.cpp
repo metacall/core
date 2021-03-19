@@ -28,17 +28,18 @@ class metacall_cs_call_bench : public benchmark::Fixture
 public:
 };
 
-BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_va_args)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_va_args)
+(benchmark::State &state)
 {
 	const int64_t call_count = 500000;
 	const int64_t call_size = sizeof(int) * 3; // (int, int) -> int
 
 	for (auto _ : state)
 	{
-		/* CSharp */
-		#if defined(OPTION_BUILD_LOADERS_CS)
+/* CSharp */
+#if defined(OPTION_BUILD_LOADERS_CS)
 		{
-			void * ret;
+			void *ret;
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
@@ -61,7 +62,7 @@ BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_va_args)(benchmark::State & stat
 				state.ResumeTiming();
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_CS */
+#endif /* OPTION_BUILD_LOADERS_CS */
 	}
 
 	state.SetLabel("MetaCall CSharp Call Benchmark - Variadic Argument Call");
@@ -75,22 +76,22 @@ BENCHMARK_REGISTER_F(metacall_cs_call_bench, call_va_args)
 	->Iterations(1)
 	->Repetitions(5);
 
-BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_array_args)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_array_args)
+(benchmark::State &state)
 {
 	const int64_t call_count = 500000;
 	const int64_t call_size = sizeof(int) * 3; // (int, int) -> int
 
 	for (auto _ : state)
 	{
-		/* CSharp */
-		#if defined(OPTION_BUILD_LOADERS_CS)
+/* CSharp */
+#if defined(OPTION_BUILD_LOADERS_CS)
 		{
-			void * ret;
+			void *ret;
 
 			state.PauseTiming();
 
-			void * args[2] =
-			{
+			void *args[2] = {
 				metacall_value_create_int(0),
 				metacall_value_create_int(0)
 			};
@@ -127,7 +128,7 @@ BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_array_args)(benchmark::State & s
 
 			state.ResumeTiming();
 		}
-		#endif /* OPTION_BUILD_LOADERS_CS */
+#endif /* OPTION_BUILD_LOADERS_CS */
 	}
 
 	state.SetLabel("MetaCall CSharp Call Benchmark - Array Argument Call");
@@ -144,7 +145,7 @@ BENCHMARK_REGISTER_F(metacall_cs_call_bench, call_array_args)
 /* TODO: NetCore re-initialization */
 /* BENCHMARK_MAIN(); */
 
-int main(int argc, char ** argv)
+int main(int argc, char **argv)
 {
 	::benchmark::Initialize(&argc, argv);
 
@@ -166,8 +167,8 @@ int main(int argc, char ** argv)
 		return 1;
 	}
 
-	/* CSharp */
-	#if defined(OPTION_BUILD_LOADERS_CS)
+/* CSharp */
+#if defined(OPTION_BUILD_LOADERS_CS)
 	{
 		static const char tag[] = "cs";
 
@@ -187,7 +188,7 @@ int main(int argc, char ** argv)
 			return 1;
 		}
 	}
-	#endif /* OPTION_BUILD_LOADERS_CS */
+#endif /* OPTION_BUILD_LOADERS_CS */
 
 	::benchmark::RunSpecifiedBenchmarks();
 

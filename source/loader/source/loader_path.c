@@ -10,23 +10,23 @@
 
 #include <string.h>
 
-#if defined(WIN32) || defined(_WIN32) || \
+#if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
-#	define LOADER_PATH_SEPARATOR(chr) (chr == '\\' || chr == '/')
-#	define LOADER_PATH_SEPARATOR_C '/'
+	#define LOADER_PATH_SEPARATOR(chr) (chr == '\\' || chr == '/')
+	#define LOADER_PATH_SEPARATOR_C	   '/'
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) ||                 \
 	defined(__HAIKU__) || defined(__BEOS__)
-#	define LOADER_PATH_SEPARATOR(chr) (chr == '/')
-#	define LOADER_PATH_SEPARATOR_C '/'
+	#define LOADER_PATH_SEPARATOR(chr) (chr == '/')
+	#define LOADER_PATH_SEPARATOR_C	   '/'
 
 #else
-#	error "Unknown loader path separator"
+	#error "Unknown loader path separator"
 #endif
 
 size_t loader_path_get_name(const loader_naming_path path, loader_naming_name name)
@@ -34,7 +34,8 @@ size_t loader_path_get_name(const loader_naming_path path, loader_naming_name na
 	size_t i, count, last;
 
 	for (i = 0, count = 0, last = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE; ++i)
+									 i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE;
+		 ++i)
 	{
 		name[count++] = path[i];
 
@@ -78,7 +79,8 @@ size_t loader_path_get_fullname(const loader_naming_path path, loader_naming_nam
 	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE; ++i)
+						   i < LOADER_NAMING_PATH_SIZE && count < LOADER_NAMING_NAME_SIZE;
+		 ++i)
 	{
 		name[count++] = path[i];
 
@@ -98,7 +100,8 @@ size_t loader_path_get_extension(const loader_naming_path path, loader_naming_ta
 	size_t i, count;
 
 	for (i = 0, count = 0; path[i] != '\0' &&
-		i < LOADER_NAMING_PATH_SIZE; ++i)
+						   i < LOADER_NAMING_PATH_SIZE;
+		 ++i)
 	{
 		extension[count++] = path[i];
 
@@ -153,7 +156,8 @@ size_t loader_path_get_relative(const loader_naming_path base, const loader_nami
 {
 	size_t i, length = 0;
 
-	for (i = 0; base[i] == path[i] && (base[i] != '\0' || path[i] != '\0') && i < LOADER_NAMING_PATH_SIZE; ++i);
+	for (i = 0; base[i] == path[i] && (base[i] != '\0' || path[i] != '\0') && i < LOADER_NAMING_PATH_SIZE; ++i)
+		;
 
 	if (LOADER_PATH_SEPARATOR(path[i]))
 	{
@@ -172,19 +176,19 @@ size_t loader_path_get_relative(const loader_naming_path base, const loader_nami
 
 int loader_path_is_absolute(const loader_naming_path path)
 {
-	#if defined(WIN32) || defined(_WIN32)
-		return !((path[0] != '\0' && (path[0] >= 'A' && path[0] <= 'Z')) &&
-			(path[1] != '\0' && path[1] == ':') &&
-			(path[2] != '\0' && LOADER_PATH_SEPARATOR(path[2])));
-	#elif defined(unix) || defined(__unix__) || defined(__unix) || \
-		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-		defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
-		defined(__HAIKU__) || defined(__BEOS__)
-		return !(path[0] != '\0' && LOADER_PATH_SEPARATOR(path[0]));
-	#else
-	#	error "Unknown loader path separator"
-	#endif
+#if defined(WIN32) || defined(_WIN32)
+	return !((path[0] != '\0' && (path[0] >= 'A' && path[0] <= 'Z')) &&
+			 (path[1] != '\0' && path[1] == ':') &&
+			 (path[2] != '\0' && LOADER_PATH_SEPARATOR(path[2])));
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) ||                 \
+	defined(__HAIKU__) || defined(__BEOS__)
+	return !(path[0] != '\0' && LOADER_PATH_SEPARATOR(path[0]));
+#else
+	#error "Unknown loader path separator"
+#endif
 }
 
 size_t loader_path_join(const loader_naming_path left_path, size_t left_path_size, const loader_naming_path right_path, size_t right_path_size, loader_naming_path join_path)

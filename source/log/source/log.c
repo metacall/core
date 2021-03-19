@@ -30,7 +30,7 @@
 
 /* -- Methods -- */
 
-void * log_instance()
+void *log_instance()
 {
 	return log_singleton_instance();
 }
@@ -40,7 +40,7 @@ size_t log_size()
 	return log_singleton_size();
 }
 
-int log_create(const char * name)
+int log_create(const char *name)
 {
 	log_impl impl = log_impl_create(name);
 
@@ -59,7 +59,7 @@ int log_create(const char * name)
 	return 0;
 }
 
-int log_define(const char * name, log_policy policy)
+int log_define(const char *name, log_policy policy)
 {
 	log_impl impl = log_singleton_get(name);
 
@@ -91,7 +91,7 @@ int log_define(const char * name, log_policy policy)
 	return 0;
 }
 
-int log_configure_impl(const char * name, size_t size, ...)
+int log_configure_impl(const char *name, size_t size, ...)
 {
 	log_impl impl = log_singleton_get(name);
 
@@ -126,7 +126,7 @@ int log_configure_impl(const char * name, size_t size, ...)
 	return 0;
 }
 
-int log_level(const char * name, const char * level, size_t length)
+int log_level(const char *name, const char *level, size_t length)
 {
 	enum log_level_id id = log_level_to_enum(level, length);
 
@@ -145,7 +145,7 @@ int log_level(const char * name, const char * level, size_t length)
 	return 1;
 }
 
-int log_write_impl(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message)
+int log_write_impl(const char *name, const size_t line, const char *func, const char *file, const enum log_level_id level, const char *message)
 {
 	log_impl impl = log_singleton_get(name);
 
@@ -175,7 +175,7 @@ int log_write_impl(const char * name, const size_t line, const char * func, cons
 	return log_impl_write(impl, &record_ctor);
 }
 
-int log_write_impl_va(const char * name, const size_t line, const char * func, const char * file, const enum log_level_id level, const char * message, ...)
+int log_write_impl_va(const char *name, const size_t line, const char *func, const char *file, const enum log_level_id level, const char *message, ...)
 {
 	log_impl impl = log_singleton_get(name);
 
@@ -220,7 +220,7 @@ int log_write_impl_va(const char * name, const size_t line, const char * func, c
 	return result;
 }
 
-int log_clear(const char * name)
+int log_clear(const char *name)
 {
 	log_impl impl = log_singleton_get(name);
 
@@ -232,7 +232,7 @@ int log_clear(const char * name)
 	return log_impl_clear(impl);
 }
 
-int log_delete(const char * name)
+int log_delete(const char *name)
 {
 	log_impl impl = log_singleton_remove(name);
 
@@ -244,17 +244,17 @@ int log_delete(const char * name)
 	return log_impl_destroy(impl);
 }
 
-const char * log_print_info()
+const char *log_print_info()
 {
 	static const char log_info[] =
 		"Logger Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef LOG_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef LOG_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

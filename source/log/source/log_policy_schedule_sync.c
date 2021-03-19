@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_schedule_sync.h>
 #include <log/log_policy_schedule.h>
+#include <log/log_policy_schedule_sync.h>
 
 /* -- Private Methods -- */
 
@@ -27,15 +27,13 @@ static int log_policy_schedule_sync_destroy(log_policy policy);
 
 log_policy_interface log_policy_schedule_sync_interface()
 {
-	static struct log_policy_schedule_impl_type log_policy_schedule_sync_impl_obj =
-	{
+	static struct log_policy_schedule_impl_type log_policy_schedule_sync_impl_obj = {
 		&log_policy_schedule_sync_lock,
 		&log_policy_schedule_sync_execute,
 		&log_policy_schedule_sync_unlock
 	};
 
-	static struct log_policy_interface_type policy_interface_schedule =
-	{
+	static struct log_policy_interface_type policy_interface_schedule = {
 		&log_policy_schedule_sync_create,
 		&log_policy_schedule_sync_impl_obj,
 		&log_policy_schedule_sync_destroy

@@ -47,7 +47,7 @@ typedef void (*metacall_serialize_impl_ptr)(value, char *, size_t, const char *,
 *  @return
 *    Print format assigned to type id @id
 */
-METACALL_SERIAL_API const char * metacall_serial_impl_serialize_format(type_id id);
+METACALL_SERIAL_API const char *metacall_serial_impl_serialize_format(type_id id);
 
 /**
 *  @brief

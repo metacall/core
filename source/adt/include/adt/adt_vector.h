@@ -27,7 +27,7 @@ struct vector_type;
 
 /* -- Type Definitions -- */
 
-typedef struct vector_type * vector;
+typedef struct vector_type *vector;
 
 /* -- Macros -- */
 
@@ -74,7 +74,7 @@ typedef struct vector_type * vector;
 *    Pointer to the first element
 */
 #define vector_front_type(v, type_name) \
-	(*((type_name*)vector_front(v)))
+	(*((type_name *)vector_front(v)))
 
 /**
 *  @brief
@@ -90,7 +90,7 @@ typedef struct vector_type * vector;
 *    Pointer to the last element
 */
 #define vector_back_type(v, type_name) \
-	(*((type_name*)vector_back(v)))
+	(*((type_name *)vector_back(v)))
 
 /**
 *  @brief
@@ -205,15 +205,14 @@ typedef struct vector_type * vector;
 *  @param[in] type_name
 *    Type of element to be modified
 */
-#define vector_set_const(v, position, constant, type_name) \
-	do \
-	{ \
-		type_name macro_vector_type_const_to_var = constant; \
-		\
+#define vector_set_const(v, position, constant, type_name)        \
+	do                                                            \
+	{                                                             \
+		type_name macro_vector_type_const_to_var = constant;      \
+                                                                  \
 		vector_set(v, position, &macro_vector_type_const_to_var); \
-		\
+                                                                  \
 	} while (0)
-
 
 /**
 *  @brief
@@ -229,13 +228,13 @@ typedef struct vector_type * vector;
 *  @param[in] type_name
 *    Type of element to be inserted
 */
-#define vector_push_back_const(v, constant, type_name) \
-	do \
-	{ \
-		type_name macro_vector_type_const_to_var = constant; \
-		\
+#define vector_push_back_const(v, constant, type_name)        \
+	do                                                        \
+	{                                                         \
+		type_name macro_vector_type_const_to_var = constant;  \
+                                                              \
 		vector_push_back(v, &macro_vector_type_const_to_var); \
-		\
+                                                              \
 	} while (0)
 
 /**
@@ -252,13 +251,13 @@ typedef struct vector_type * vector;
 *  @param[in] type_name
 *    Type of element to be inserted
 */
-#define vector_push_front_const(v, constant, type_name) \
-	do \
-	{ \
-		type_name macro_vector_type_const_to_var = constant; \
-		\
+#define vector_push_front_const(v, constant, type_name)        \
+	do                                                         \
+	{                                                          \
+		type_name macro_vector_type_const_to_var = constant;   \
+                                                               \
 		vector_push_front(v, &macro_vector_type_const_to_var); \
-		\
+                                                               \
 	} while (0)
 
 /**
@@ -280,13 +279,13 @@ typedef struct vector_type * vector;
 *  @param[in] type_name
 *    Type of element to be inserted
 */
-#define vector_insert_const(v, position, constant, type_name) \
-	do \
-	{ \
-		type_name macro_vector_type_const_to_var = constant; \
-		\
+#define vector_insert_const(v, position, constant, type_name)        \
+	do                                                               \
+	{                                                                \
+		type_name macro_vector_type_const_to_var = constant;         \
+                                                                     \
 		vector_insert(v, position, &macro_vector_type_const_to_var); \
-		\
+                                                                     \
 	} while (0)
 
 /* -- Methods -- */
@@ -407,7 +406,7 @@ ADT_API size_t vector_type_size(vector v);
 *  @return
 *    Pointer to the first element
 */
-ADT_API void * vector_front(vector v);
+ADT_API void *vector_front(vector v);
 
 /**
 *  @brief
@@ -419,7 +418,7 @@ ADT_API void * vector_front(vector v);
 *  @return
 *    Pointer to the last element
 */
-ADT_API void * vector_back(vector v);
+ADT_API void *vector_back(vector v);
 
 /**
 *  @brief
@@ -435,7 +434,7 @@ ADT_API void * vector_back(vector v);
 *  @return
 *    Pointer to the element at @position
 */
-ADT_API void * vector_at(vector v, size_t position);
+ADT_API void *vector_at(vector v, size_t position);
 
 /**
 *  @brief
@@ -451,7 +450,7 @@ ADT_API void * vector_at(vector v, size_t position);
 *  @param[in] element
 *    Element to be copied at @position
 */
-ADT_API void vector_set(vector v, size_t position, void * element);
+ADT_API void vector_set(vector v, size_t position, void *element);
 
 /**
 *  @brief
@@ -475,7 +474,7 @@ ADT_API void vector_push_back_empty(vector v);
 *  @param[in] element
 *    Element to be inserted
 */
-ADT_API void vector_push_back(vector v, void * element);
+ADT_API void vector_push_back(vector v, void *element);
 
 /**
 *  @brief
@@ -509,7 +508,7 @@ ADT_API void vector_push_front_empty(vector v);
 *  @param[in] element
 *    Element to be inserted
 */
-ADT_API void vector_push_front(vector v, void * element);
+ADT_API void vector_push_front(vector v, void *element);
 
 /**
 *  @brief
@@ -554,7 +553,7 @@ ADT_API void vector_insert_empty(vector v, size_t position);
 *  @param[in] element
 *    Reference to the element to be inserted
 */
-ADT_API void vector_insert(vector v, size_t position, void * element);
+ADT_API void vector_insert(vector v, size_t position, void *element);
 
 /**
 *  @brief

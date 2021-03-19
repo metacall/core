@@ -22,22 +22,30 @@
 
 enum js_parser_state
 {
-	Function, FunctionName, Params, Return, Reset
+	Function,
+	FunctionName,
+	Params,
+	Return,
+	Reset
 };
 
 enum js_parser_comment_state
 {
-	None, Slash, Line, MultiLine, MultiLineSlash
+	None,
+	Slash,
+	Line,
+	MultiLine,
+	MultiLineSlash
 };
 
-std::string & function_name()
+std::string &function_name()
 {
 	static std::string func("function");
 
 	return func;
 }
 
-bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_function *> & result, std::string & output)
+bool js_loader_impl_guard_parse(std::string &source, std::map<std::string, js_function *> &result, std::string &output)
 {
 	js_parser_state state = js_parser_state::Function;
 
@@ -47,7 +55,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 
 	bool reading_type = false;
 
-	js_function * current_function;
+	js_function *current_function;
 
 	parameter_list parameters;
 
@@ -71,8 +79,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 
 		switch (comment)
 		{
-			case None :
-			{
+			case None: {
 				if (iterator == '/')
 				{
 					comment = js_parser_comment_state::Slash;
@@ -81,8 +88,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 				break;
 			}
 
-			case Slash :
-			{
+			case Slash: {
 				if (iterator == '/')
 				{
 					comment = js_parser_comment_state::Line;
@@ -99,8 +105,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 				break;
 			}
 
-			case Line :
-			{
+			case Line: {
 				if (iterator == '\n')
 				{
 					comment = js_parser_comment_state::None;
@@ -109,8 +114,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 				break;
 			}
 
-			case MultiLine :
-			{
+			case MultiLine: {
 				if (iterator == '*')
 				{
 					comment = js_parser_comment_state::MultiLineSlash;
@@ -119,8 +123,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 				break;
 			}
 
-			case MultiLineSlash :
-			{
+			case MultiLineSlash: {
 				if (iterator == '/')
 				{
 					comment = js_parser_comment_state::None;
@@ -142,9 +145,8 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 		{
 			switch (state)
 			{
-				case Function :
-				{
-					std::string & func_name = function_name();
+				case Function: {
+					std::string &func_name = function_name();
 
 					if (iterator == func_name[function_index])
 					{
@@ -167,8 +169,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 					break;
 				}
 
-				case FunctionName :
-				{
+				case FunctionName: {
 					if (iterator == '(')
 					{
 						if (name.empty())
@@ -196,8 +197,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 					break;
 				}
 
-				case Params :
-				{
+				case Params: {
 					if (iterator == ')')
 					{
 						parameters.push_back(parameter);
@@ -259,8 +259,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 					break;
 				}
 
-				case Return :
-				{
+				case Return: {
 					if (iterator == '{')
 					{
 						reading_type = false;
@@ -281,8 +280,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 						result.insert(
 							std::pair<std::string, js_function *>(
 								current_function->name,
-								current_function)
-						);
+								current_function));
 
 						parameters = parameter_list();
 
@@ -303,8 +301,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 					break;
 				}
 
-				case Reset :
-				{
+				case Reset: {
 					if (iterator == '{')
 					{
 						++depth;
@@ -323,8 +320,7 @@ bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_f
 					break;
 				}
 
-				default :
-				{
+				default: {
 					return false;
 				}
 			}

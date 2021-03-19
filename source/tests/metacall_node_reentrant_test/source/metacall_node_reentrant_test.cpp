@@ -21,11 +21,11 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 #ifndef METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH
-#	error "The path to the NodeJS port is not defined"
+	#error "The path to the NodeJS port is not defined"
 #endif
 
 class metacall_node_reentrant_test : public testing::Test
@@ -37,10 +37,10 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		/* List of loads (1 level) */
 		{
@@ -55,7 +55,7 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 
 			static const char tag[] = "node";
 
-			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+			ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 		}
 
 		/* Reentrant */
@@ -65,13 +65,13 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 				"metacall_load_from_memory('node', 'module.exports = { node_memory_reentrant: () => 4 };');\n"
 				"console.log('Reentrant node_memory_reentrant result (main):', metacall('node_memory_reentrant'));\n"
 				"metacall_load_from_memory('node', '"
-					"const { metacall } = require(\"" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "\");"
-					"console.log(\"Reentrant node_memory_reentrant result (reentrant):\", metacall(\"node_memory_reentrant\"));"
+				"const { metacall } = require(\"" METACALL_NODE_REENTRANT_TEST_NODE_PORT_PATH "\");"
+				"console.log(\"Reentrant node_memory_reentrant result (reentrant):\", metacall(\"node_memory_reentrant\"));"
 				"');\n";
 
 			static const char tag[] = "node";
 
-			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+			ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 		}
 
 		/* Recursion */
@@ -83,21 +83,20 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 
 			static const char tag[] = "node";
 
-			ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+			ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 
-			const enum metacall_value_id node_memory_recursive_ids[] =
-			{
+			const enum metacall_value_id node_memory_recursive_ids[] = {
 				METACALL_INT
 			};
 
-			void * ret = metacallt("node_memory_recursive", node_memory_recursive_ids, 1);
+			void *ret = metacallt("node_memory_recursive", node_memory_recursive_ids, 1);
 
-			EXPECT_NE((void *) NULL, (void *) ret);
+			EXPECT_NE((void *)NULL, (void *)ret);
 
-			EXPECT_EQ((double) 137438953472.0, (double) metacall_value_to_double(ret));
+			EXPECT_EQ((double)137438953472.0, (double)metacall_value_to_double(ret));
 		}
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{
@@ -105,13 +104,13 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -120,5 +119,5 @@ TEST_F(metacall_node_reentrant_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -31,10 +31,10 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define DYNLINK_FLAGS_BIND_NOW		(0x01 << 0x00)			/**< Inmediate loading bind flag */
-#define DYNLINK_FLAGS_BIND_LAZY		(0x01 << 0x01)			/**< Lazy loading bind flag */
-#define DYNLINK_FLAGS_BIND_LOCAL	(0x01 << 0x02)			/**< Private visibility bind flag */
-#define DYNLINK_FLAGS_BIND_GLOBAL	(0x01 << 0x03)			/**< Public visibility bind flag */
+#define DYNLINK_FLAGS_BIND_NOW	  (0x01 << 0x00) /**< Inmediate loading bind flag */
+#define DYNLINK_FLAGS_BIND_LAZY	  (0x01 << 0x01) /**< Lazy loading bind flag */
+#define DYNLINK_FLAGS_BIND_LOCAL  (0x01 << 0x02) /**< Private visibility bind flag */
+#define DYNLINK_FLAGS_BIND_GLOBAL (0x01 << 0x03) /**< Public visibility bind flag */
 
 /* -- Macros -- */
 
@@ -58,11 +58,10 @@ extern "C" {
 *
 */
 #define DYNLINK_FLAGS_SET(flags, flag) \
-	do \
-	{ \
-		flags = (flag); \
-	} \
-	while (0)
+	do                                 \
+	{                                  \
+		flags = (flag);                \
+	} while (0)
 
 /**
 *  @brief
@@ -84,11 +83,10 @@ extern "C" {
 *
 */
 #define DYNLINK_FLAGS_ADD(flags, flag) \
-	do \
-	{ \
-		flags |= (flag); \
-	} \
-	while (0)
+	do                                 \
+	{                                  \
+		flags |= (flag);               \
+	} while (0)
 
 /**
 *  @brief
@@ -117,11 +115,11 @@ extern "C" {
 *
 */
 #define DYNLINK_FLAGS_CHECK(flags, flag) \
-		(((flags) & (flag)) != 0)
+	(((flags) & (flag)) != 0)
 
 /* -- Type definitions -- */
 
-typedef int							dynlink_flags;			/**< Dynamically linked shared object flags */
+typedef int dynlink_flags; /**< Dynamically linked shared object flags */
 
 #ifdef __cplusplus
 }

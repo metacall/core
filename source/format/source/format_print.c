@@ -24,7 +24,7 @@
 
 /* -- Methods -- */
 
-int snprintf_impl_c89(char * s, size_t n, const char * format, ...)
+int snprintf_impl_c89(char *s, size_t n, const char *format, ...)
 {
 	va_list args;
 
@@ -42,7 +42,7 @@ int snprintf_impl_c89(char * s, size_t n, const char * format, ...)
 	return result;
 }
 
-int vsnprintf_impl_c89(char * s, size_t n, const char * format, va_list arg)
+int vsnprintf_impl_c89(char *s, size_t n, const char *format, va_list arg)
 {
 	/* TODO: Implement stack smashing prevention */
 	(void)n;

@@ -11,8 +11,8 @@
 #include <metacall/metacall_version.h>
 
 #include <detour/detour.h>
-#include <detour/detour_singleton.h>
 #include <detour/detour_impl.h>
+#include <detour/detour_singleton.h>
 
 #include <log/log.h>
 
@@ -24,13 +24,13 @@
 
 struct detour_type
 {
-	char * name;
+	char *name;
 	detour_impl impl;
 };
 
 struct detour_handle_type
 {
-	void(*target)(void);
+	void (*target)(void);
 	detour_impl_handle impl;
 };
 
@@ -48,7 +48,7 @@ int detour_initialize()
 	return 0;
 }
 
-detour detour_create(const char * name)
+detour detour_create(const char *name)
 {
 	detour d;
 
@@ -145,7 +145,7 @@ detour detour_create(const char * name)
 	return d;
 }
 
-const char * detour_name(detour d)
+const char *detour_name(detour d)
 {
 	return d->name;
 }
@@ -155,11 +155,11 @@ void (*detour_trampoline(detour_handle handle))(void)
 	return handle->target;
 }
 
-detour_handle detour_install(detour d, void(*target)(void), void(*hook)(void))
+detour_handle detour_install(detour d, void (*target)(void), void (*hook)(void))
 {
 	detour_handle handle;
 
-	void(**target_ptr)(void);
+	void (**target_ptr)(void);
 
 	if (d == NULL || target == NULL || hook == NULL)
 	{
@@ -266,17 +266,17 @@ void detour_destroy()
 	detour_singleton_destroy();
 }
 
-const char * detour_print_info()
+const char *detour_print_info()
 {
 	static const char detour_info[] =
 		"Detour Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef DETOUR_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef DETOUR_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

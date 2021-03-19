@@ -32,7 +32,7 @@
 
 /* -- Methods -- */
 
-const char * dynlink_impl_interface_extension_unix(void)
+const char *dynlink_impl_interface_extension_unix(void)
 {
 	static const char extension_unix[0x03] = "so";
 
@@ -56,7 +56,7 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 
 	int flags_impl;
 
-	void * impl;
+	void *impl;
 
 	DYNLINK_FLAGS_SET(flags_impl, 0);
 
@@ -92,9 +92,9 @@ dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
 	return NULL;
 }
 
-int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
+int dynlink_impl_interface_symbol_unix(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
 {
-	void * symbol = dlsym(impl, name);
+	void *symbol = dlsym(impl, name);
 
 	(void)handle;
 
@@ -107,19 +107,18 @@ int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 {
 	(void)handle;
 
-	#if defined(__ADDRESS_SANITIZER__)
-		/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
-		(void)impl;
-		return 0;
-	#else
-		return dlclose(impl);
-	#endif
+#if defined(__ADDRESS_SANITIZER__)
+	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
+	(void)impl;
+	return 0;
+#else
+	return dlclose(impl);
+#endif
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
 {
-	static struct dynlink_impl_interface_type impl_interface_unix =
-	{
+	static struct dynlink_impl_interface_type impl_interface_unix = {
 		&dynlink_impl_interface_extension_unix,
 		&dynlink_impl_interface_get_name_unix,
 		&dynlink_impl_interface_load_unix,

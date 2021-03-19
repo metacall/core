@@ -8,41 +8,41 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_format_text.h>
-#include <log/log_policy_format.h>
-#include <log/log_level.h>
 #include <log/log_impl.h> /* TODO: Remove by custom log_policy_format_text_data_type instead of impl->level */
+#include <log/log_level.h>
+#include <log/log_policy_format.h>
+#include <log/log_policy_format_text.h>
 
 #include <format/format_print.h>
 
-#include <time.h>
 #include <stdarg.h>
+#include <time.h>
 
 /* -- Definitions -- */
 
-#define LOG_POLICY_FORMAT_TEXT_STR_DEBUG "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
+#define LOG_POLICY_FORMAT_TEXT_STR_DEBUG   "[%.19s] #%" PRIuS " [ %" PRIuS " | %s | %s ] @%s : "
 #define LOG_POLICY_FORMAT_TEXT_STR_RELEASE "[%.19s] #%" PRIuS " @%s : "
-#define LOG_POLICY_FORMAT_TEXT_STR_PRETTY "\x1b[32m%s\x1b[0m: "
+#define LOG_POLICY_FORMAT_TEXT_STR_PRETTY  "\x1b[32m%s\x1b[0m: "
 
 /* -- Macros -- */
 
 #ifndef va_copy
-#	if defined(__va_copy)
-		/* GCC and others define this for older standards compatibility (C89) */
-#		define va_copy(dest, src)	__va_copy((dest), (src))
-#	elif defined(__builtin_va_copy)
-#		define va_copy(dest, src)	__builtin_va_copy((dest), (src))
-#	elif defined(_WIN32) || defined(_WIN64) || \
-		defined(_ARCH_PPC) || defined(_POWER) || defined(powerpc) || defined(__powerpc) || \
+	#if defined(__va_copy)
+	/* GCC and others define this for older standards compatibility (C89) */
+		#define va_copy(dest, src) __va_copy((dest), (src))
+	#elif defined(__builtin_va_copy)
+		#define va_copy(dest, src) __builtin_va_copy((dest), (src))
+	#elif defined(_WIN32) || defined(_WIN64) ||                                                 \
+		defined(_ARCH_PPC) || defined(_POWER) || defined(powerpc) || defined(__powerpc) ||      \
 		defined(__powerpc__) || defined(__PowerPC__) || defined(__POWERPC__) || defined(PPC) || \
-		defined(__ppc__) || defined(__PPC) || defined(__PPC__) || \
+		defined(__ppc__) || defined(__PPC) || defined(__PPC__) ||                               \
 		defined(_ARCH_PPC64) || defined(__powerpc64__) || defined(__ppc64) || defined(__ppc64__) || defined(__PPC64__)
-		/* Works for Microsoft x86, x64 and PowerPC-based platforms */
-#		define va_copy(dest, src)	((void)memcpy(&(dest), &(src), sizeof(va_list)))
-#	else
-#		warning "va_copy may be not supported for this architecture, assuming va_list can be copied as a normal pointer"
-#		define va_copy(dest, src)	((dest) = (src))
-#	endif
+	/* Works for Microsoft x86, x64 and PowerPC-based platforms */
+		#define va_copy(dest, src) ((void)memcpy(&(dest), &(src), sizeof(va_list)))
+	#else
+		#warning "va_copy may be not supported for this architecture, assuming va_list can be copied as a normal pointer"
+		#define va_copy(dest, src) ((dest) = (src))
+	#endif
 #endif
 
 /* -- Forward Declarations -- */
@@ -51,7 +51,7 @@ struct log_policy_format_text_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_format_text_data_type * log_policy_format_text_data;
+typedef struct log_policy_format_text_data_type *log_policy_format_text_data;
 
 /* -- Member Data -- */
 
@@ -66,13 +66,13 @@ static int log_policy_format_text_create(log_policy policy, const log_policy_cto
 
 static size_t log_policy_format_text_size(log_policy policy, const log_record record);
 
-static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void *buffer, const size_t size);
 
-static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void *buffer, const size_t size);
 
-static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void *buffer, const size_t size);
 
-static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void *buffer, const size_t size);
 
 static int log_policy_format_text_destroy(log_policy policy);
 
@@ -80,15 +80,13 @@ static int log_policy_format_text_destroy(log_policy policy);
 
 log_policy_interface log_policy_format_text_interface()
 {
-	static struct log_policy_format_impl_type log_policy_format_text_impl_obj =
-	{
+	static struct log_policy_format_impl_type log_policy_format_text_impl_obj = {
 		&log_policy_format_text_size,
 		&log_policy_format_text_serialize,
 		&log_policy_format_text_deserialize
 	};
 
-	static struct log_policy_interface_type policy_interface_format =
-	{
+	static struct log_policy_interface_type policy_interface_format = {
 		&log_policy_format_text_create,
 		&log_policy_format_text_impl_obj,
 		&log_policy_format_text_destroy
@@ -129,9 +127,9 @@ static size_t log_policy_format_text_size(log_policy policy, const log_record re
 	return log_policy_format_text_serialize(policy, record, NULL, 0);
 }
 
-static const char * log_policy_format_text_serialize_impl_format(enum log_level_id log_level, unsigned int flags)
+static const char *log_policy_format_text_serialize_impl_format(enum log_level_id log_level, unsigned int flags)
 {
-	#if (LOG_POLICY_FORMAT_PRETTY == 1)
+#if (LOG_POLICY_FORMAT_PRETTY == 1)
 	{
 		(void)log_level;
 
@@ -148,7 +146,7 @@ static const char * log_policy_format_text_serialize_impl_format(enum log_level_
 			return format_debug;
 		}
 	}
-	#else
+#else
 	{
 		if (log_level == LOG_LEVEL_DEBUG)
 		{
@@ -181,10 +179,10 @@ static const char * log_policy_format_text_serialize_impl_format(enum log_level_
 			}
 		}
 	}
-	#endif
+#endif
 }
 
-static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void * buffer, const size_t size)
+static size_t log_policy_format_text_serialize_impl(log_policy policy, const log_record record, void *buffer, const size_t size)
 {
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 
@@ -194,15 +192,15 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 
 	int length;
 
-	const char * format = log_policy_format_text_serialize_impl_format(log_impl_level(impl), text_data->flags);
+	const char *format = log_policy_format_text_serialize_impl_format(log_impl_level(impl), text_data->flags);
 
-	#if (LOG_POLICY_FORMAT_PRETTY == 1)
+#if (LOG_POLICY_FORMAT_PRETTY == 1)
 	{
 		length = snprintf(buffer, size, format,
 			log_level_to_string(log_record_level(record)),
 			log_record_message(record));
 	}
-	#else
+#else
 	{
 		if (log_impl_level(impl) == LOG_LEVEL_DEBUG)
 		{
@@ -224,7 +222,7 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 				log_record_message(record));
 		}
 	}
-	#endif
+#endif
 
 	if (length <= 0)
 	{
@@ -234,24 +232,24 @@ static size_t log_policy_format_text_serialize_impl(log_policy policy, const log
 	return (size_t)length + 1;
 }
 
-static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void * buffer, const size_t size)
+static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const log_record record, void *buffer, const size_t size)
 {
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 
 	int header_length = 0, body_length = 0;
 
-	void * buffer_body = NULL;
+	void *buffer_body = NULL;
 
-	struct log_record_va_list_type * variable_args;
+	struct log_record_va_list_type *variable_args;
 
-	#if (LOG_POLICY_FORMAT_PRETTY == 1)
+#if (LOG_POLICY_FORMAT_PRETTY == 1)
 	{
 		static const char header_format[] = LOG_POLICY_FORMAT_TEXT_STR_PRETTY;
 
 		header_length = snprintf(buffer, size, header_format,
 			log_level_to_string(log_record_level(record)));
 	}
-	#else
+#else
 	{
 		log_aspect aspect = log_policy_aspect(policy);
 
@@ -279,7 +277,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 				log_level_to_string(log_record_level(record)));
 		}
 	}
-	#endif
+#endif
 
 	if (header_length <= 0)
 	{
@@ -313,7 +311,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 	{
 		if (buffer_body != NULL)
 		{
-			char * buffer_body_str = (char *)buffer_body;
+			char *buffer_body_str = (char *)buffer_body;
 
 			buffer_body_str[body_length] = '\n';
 			buffer_body_str[body_length + 1] = '\0';
@@ -325,7 +323,7 @@ static size_t log_policy_format_text_serialize_impl_va(log_policy policy, const 
 	return (size_t)(header_length + body_length + 1);
 }
 
-static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
+static size_t log_policy_format_text_serialize(log_policy policy, const log_record record, void *buffer, const size_t size)
 {
 	if (log_record_variable_args(record) == NULL)
 	{
@@ -337,7 +335,7 @@ static size_t log_policy_format_text_serialize(log_policy policy, const log_reco
 	}
 }
 
-static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size)
+static size_t log_policy_format_text_deserialize(log_policy policy, log_record record, const void *buffer, const size_t size)
 {
 	log_policy_format_text_data text_data = log_policy_instance(policy);
 

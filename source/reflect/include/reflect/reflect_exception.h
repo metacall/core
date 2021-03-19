@@ -29,17 +29,17 @@ extern "C" {
 
 struct exception_type;
 
-typedef struct exception_type * exception;
+typedef struct exception_type *exception;
 
-REFLECT_API exception exception_create(const char * message, const char * label, int code, const char * stacktrace);
+REFLECT_API exception exception_create(const char *message, const char *label, int code, const char *stacktrace);
 
-REFLECT_API const char * exception_message(exception ex);
+REFLECT_API const char *exception_message(exception ex);
 
-REFLECT_API const char * exception_label(exception ex);
+REFLECT_API const char *exception_label(exception ex);
 
 REFLECT_API int exception_code(exception ex);
 
-REFLECT_API const char * exception_stacktrace(exception ex);
+REFLECT_API const char *exception_stacktrace(exception ex);
 
 REFLECT_API void exception_destroy(exception ex);
 

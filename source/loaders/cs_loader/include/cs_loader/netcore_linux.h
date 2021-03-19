@@ -34,33 +34,33 @@
 #define MAX_LONGPATH 255
 
 // Prototype of the coreclr_initialize function from the libcoreclr.so
-typedef int (coreclrInitializeFunction)(
-	const char* exePath,
-	const char* appDomainFriendlyName,
+typedef int(coreclrInitializeFunction)(
+	const char *exePath,
+	const char *appDomainFriendlyName,
 	int propertyCount,
-	const char** propertyKeys,
-	const char** propertyValues,
-	void** hostHandle,
-	unsigned int* domainId);
+	const char **propertyKeys,
+	const char **propertyValues,
+	void **hostHandle,
+	unsigned int *domainId);
 
 // Prototype of the coreclr_shutdown function from the libcoreclr.so
-typedef int (coreclrShutdownFunction)(
-	void* hostHandle,
+typedef int(coreclrShutdownFunction)(
+	void *hostHandle,
 	unsigned int domainId);
 
 // Prototype of the coreclr_execute_assembly function from the libcoreclr.so
-typedef int (coreclrCreateDelegateFunction)(
-	void* hostHandle,
+typedef int(coreclrCreateDelegateFunction)(
+	void *hostHandle,
 	unsigned int domainId,
-	const char* entryPointAssemblyName,
-	const char* entryPointTypeName,
-	const char* entryPointMethodName,
-	void** delegatea);
+	const char *entryPointAssemblyName,
+	const char *entryPointTypeName,
+	const char *entryPointMethodName,
+	void **delegatea);
 
 using namespace std;
 
 #ifdef W
-#	undef W
+	#undef W
 #endif
 
 #define W(x) x
@@ -68,7 +68,7 @@ using namespace std;
 class netcore_linux : public netcore
 {
 private:
-	void* hostHandle = NULL;
+	void *hostHandle = NULL;
 	std::string managedAssemblyFullName;
 	char appPath[MAX_LONGPATH] = "";
 	std::string runtimePath;
@@ -80,9 +80,9 @@ private:
 
 	std::string absoluteLibPath;
 
-	coreclrInitializeFunction * coreclr_initialize;
-	coreclrShutdownFunction * coreclr_shutdown;
-	coreclrCreateDelegateFunction * coreclr_create_delegate;
+	coreclrInitializeFunction *coreclr_initialize;
+	coreclrShutdownFunction *coreclr_shutdown;
+	coreclrCreateDelegateFunction *coreclr_create_delegate;
 
 	std::string tpaList;
 
@@ -90,24 +90,25 @@ private:
 
 	bool CreateHost();
 
-	bool create_delegate(const CHARSTRING * delegateName, void** func);
+	bool create_delegate(const CHARSTRING *delegateName, void **func);
 
 	bool LoadMain();
 
-	void AddFilesFromDirectoryToTpaList(std::string directory, std::string & tpaList) {
-
-		for (auto& dirent : std::experimental::filesystem::directory_iterator(directory)) {
+	void AddFilesFromDirectoryToTpaList(std::string directory, std::string &tpaList)
+	{
+		for (auto &dirent : std::experimental::filesystem::directory_iterator(directory))
+		{
 			std::string path = dirent.path();
 
-			if (!path.compare(path.length() - 4, 4, ".dll")) {
+			if (!path.compare(path.length() - 4, 4, ".dll"))
+			{
 				tpaList.append(path + ":");
 			}
 		}
-
 	}
 
 public:
-	netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path);
+	netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_path);
 
 	~netcore_linux();
 

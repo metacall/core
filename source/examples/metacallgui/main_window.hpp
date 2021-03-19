@@ -4,11 +4,10 @@
 #include <QMainWindow>
 #include <QScopedPointer>
 
-
-namespace Ui {
-    class main_window;
+namespace Ui
+{
+class main_window;
 }
-
 
 /**
 *  @brief
@@ -16,29 +15,27 @@ namespace Ui {
 */
 class main_window : public QMainWindow
 {
-    Q_OBJECT
+	Q_OBJECT
 
 public:
-    /**
+	/**
     *  @brief
     *    Constructor
     */
-    main_window();
+	main_window();
 
-    /**
+	/**
     *  @brief
     *    Destructor
     */
-    virtual ~main_window();
-
+	virtual ~main_window();
 
 protected slots:
-    void on_editNumber_valueChanged(int value);
-    void on_about();
-
+	void on_editNumber_valueChanged(int value);
+	void on_about();
 
 protected:
-    const QScopedPointer<Ui::main_window> impl;
+	const QScopedPointer<Ui::main_window> impl;
 };
 
 #endif // METACALL_GUI_MAIN_WINDOW_HPP

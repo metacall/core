@@ -31,7 +31,7 @@ extern "C" {
 
 /* -- Type definitions -- */
 
-typedef void * dynlink_impl;	/**< Dynamically linked shared object implementation */
+typedef void *dynlink_impl; /**< Dynamically linked shared object implementation */
 
 #ifdef __cplusplus
 }

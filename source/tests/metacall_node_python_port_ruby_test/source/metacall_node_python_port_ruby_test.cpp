@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_node_python_port_ruby_test : public testing::Test
 {
@@ -35,31 +35,31 @@ TEST_F(metacall_node_python_port_ruby_test, DefaultConstructor)
 
 	metacall_log_null();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* NodeJS & Python & Ruby */
-	#if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_PY) && defined(OPTION_BUILD_LOADERS_RB)
+/* NodeJS & Python & Ruby */
+#if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_PY) && defined(OPTION_BUILD_LOADERS_RB)
 	{
 		static const char buffer[] =
 			/* NodeJS */
 			"const { metacall, metacall_load_from_memory } = require('" METACALL_NODE_PORT_PATH "');\n"
 			"metacall_load_from_memory('py', `"
-				/* Python */
-				"import sys\n"
-				"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
-				"import metacall\n"
-				/* Ruby: */
-				"from hello.rb import say_sum_ducktyped, say_multiply_ducktyped\n"
-				"def py_func(js_func):\n"
-				"	return js_func(lambda x, y: say_multiply_ducktyped(x, y) - say_sum_ducktyped(x, y))\n"
+			/* Python */
+			"import sys\n"
+			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import metacall\n"
+			/* Ruby: */
+			"from hello.rb import say_sum_ducktyped, say_multiply_ducktyped\n"
+			"def py_func(js_func):\n"
+			"	return js_func(lambda x, y: say_multiply_ducktyped(x, y) - say_sum_ducktyped(x, y))\n"
 			"`);\n"
 			"const result = metacall('py_func', (py_lambda) => py_lambda(3, 4));\n"
 			"console.log('Result:', result);\n"
 			"if (result !== 5.0) process.exit(1);\n"; // (3 * 4) - (3 + 4) = 5
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE && OPTION_BUILD_LOADERS_PY && OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_NODE && OPTION_BUILD_LOADERS_PY && OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

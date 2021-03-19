@@ -28,9 +28,9 @@
 extern "C++" {
 #endif
 
+#include <map>
 #include <string>
 #include <vector>
-#include <map>
 
 struct js_parameter;
 
@@ -50,7 +50,7 @@ struct js_function
 	parameter_list parameters;
 };
 
-JS_LOADER_API bool js_loader_impl_guard_parse(std::string & source, std::map<std::string, js_function *> & result, std::string & output);
+JS_LOADER_API bool js_loader_impl_guard_parse(std::string &source, std::map<std::string, js_function *> &result, std::string &output);
 
 #ifndef __cplusplus
 }
