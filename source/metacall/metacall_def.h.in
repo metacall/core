@@ -21,7 +21,7 @@
 #ifndef METACALL_DEF_H
 #define METACALL_DEF_H 1
 
-#cmakedefine METACALL_FORK_SAFE		1
-#cmakedefine METACALL_THREAD_SAFE	1
+#cmakedefine METACALL_FORK_SAFE 1
+#cmakedefine METACALL_THREAD_SAFE 1
 
 #endif /* METACALL_DEF_H */

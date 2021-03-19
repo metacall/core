@@ -145,13 +145,10 @@ include(Portability)
 find_package(ClangFormat)
 
 if(CLANG_FORMAT_FOUND)
-        message("clang-format executable: ${CLANG_FORMAT_EXECUTABLE}")
-        message("clang-format version: ${CLANG_FORMAT_VERSION}")
+	include(ClangDevTools)
 else()
-        message(WARNING "clang-format executable not found")
+    message(WARNING "clang-format executable not found")
 endif()
-
-include(cmake/ClangDevTools.cmake)
 
 #
 # Compiler settings and options

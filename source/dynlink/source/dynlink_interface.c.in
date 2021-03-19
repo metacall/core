@@ -26,5 +26,5 @@
 
 dynlink_impl_interface_singleton dynlink_interface(void)
 {
-	return &dynlink_impl_interface_singleton_@DYNLINK_IMPL_INTERFACE_NAME@;
+	return &dynlink_impl_interface_singleton_ @DYNLINK_IMPL_INTERFACE_NAME @;
 }

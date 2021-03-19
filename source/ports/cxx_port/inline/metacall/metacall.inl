@@ -29,7 +29,6 @@
 
 namespace metacall
 {
-
 template <typename... Ts>
 METACALL_API int metacall(std::string name, Ts... ts)
 {

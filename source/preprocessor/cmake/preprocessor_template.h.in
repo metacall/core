@@ -18,20 +18,21 @@
  *
  */
 
-#ifndef @PREPROCESSOR_TEMPLATE_NAME_HEADER@
-#define @PREPROCESSOR_TEMPLATE_NAME_HEADER@ 1
+#ifndef @PREPROCESSOR_TEMPLATE_NAME_HEADER @
+	#define @PREPROCESSOR_TEMPLATE_NAME_HEADER @1
 
 /* -- Headers -- */
 
-#include <preprocessor/preprocessor_api.h>
-@PREPROCESSOR_TEMPLATE_HEADERS@
-#ifdef __cplusplus
-extern "C" {
-#endif
+	#include <preprocessor/preprocessor_api.h>
+@PREPROCESSOR_TEMPLATE_HEADERS @
+	#ifdef __cplusplus
+	extern "C"
+{
+	#endif
 
-@PREPROCESSOR_TEMPLATE_BODY@
-#ifdef __cplusplus
+	@PREPROCESSOR_TEMPLATE_BODY @
+	#ifdef __cplusplus
 }
-#endif
+	#endif
 
 #endif /* @PREPROCESSOR_TEMPLATE_NAME_HEADER@ */

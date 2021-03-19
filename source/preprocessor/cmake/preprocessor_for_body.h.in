@@ -1,6 +1,6 @@
 /* -- Definitions -- */
 
-#cmakedefine PREPROCESSOR_FOR_SIZE @PREPROCESSOR_FOR_SIZE@
+#cmakedefine PREPROCESSOR_FOR_SIZE @PREPROCESSOR_FOR_SIZE @
 
 /* -- Macros -- */
 
@@ -10,26 +10,26 @@
 #define PREPROCESSOR_FOR_EACH_IMPL_1(expr, element, ...) expr(element)
 #if (defined(__cplusplus) && (__cplusplus >= 201103L)) || \
 	(defined(__STDC__) && defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 199901L))
-#	define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
-	expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__, ~))
+	#define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
+		expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__, ~))
 #else
-#	define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
-	expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__))
+	#define PREPROCESSOR_FOR_EACH_IMPL_2(expr, element, ...) \
+		expr(element) PREPROCESSOR_FOR_EACH_EVAL(PREPROCESSOR_FOR_EACH_IMPL_1(expr, __VA_ARGS__))
 #endif
-@PREPROCESSOR_FOR_EACH_IMPL_BODY@
+@PREPROCESSOR_FOR_EACH_IMPL_BODY @
 #if defined(__GNUC__)
-#	define PREPROCESSOR_FOR_EACH(expr, ...) \
-		PREPROCESSOR_ARGS_N_IMPL(__VA_ARGS__, \
-		@PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY@\
-		PREPROCESSOR_FOR_EACH_IMPL_0)(expr, __VA_ARGS__)
+	#define PREPROCESSOR_FOR_EACH(expr, ...)                                     \
+		PREPROCESSOR_ARGS_N_IMPL(__VA_ARGS__,                                    \
+			@PREPROCESSOR_FOR_EACH_IMPL_GNUC_BODY @PREPROCESSOR_FOR_EACH_IMPL_0) \
+		(expr, __VA_ARGS__)
 #elif defined(_MSC_VER)
-#	define PREPROCESSOR_FOR_EACH_IMPL_COUNT(count) \
+	#define PREPROCESSOR_FOR_EACH_IMPL_COUNT(count) \
 		PREPROCESSOR_CONCAT(PREPROCESSOR_FOR_EACH_IMPL_, count)
-#	define PREPROCESSOR_FOR_EACH_IMPL_EXPR(...) \
+	#define PREPROCESSOR_FOR_EACH_IMPL_EXPR(...) \
 		PREPROCESSOR_FOR_EACH_IMPL_COUNT(PREPROCESSOR_ARGS_COUNT(__VA_ARGS__))
-#	define PREPROCESSOR_FOR_EACH_EXPAND(expr, args) expr ## args
-#	define PREPROCESSOR_FOR_EACH(expr, ...) \
+	#define PREPROCESSOR_FOR_EACH_EXPAND(expr, args) expr##args
+	#define PREPROCESSOR_FOR_EACH(expr, ...) \
 		PREPROCESSOR_FOR_EACH_EXPAND(PREPROCESSOR_FOR_EACH_IMPL_EXPR(__VA_ARGS__), (expr, __VA_ARGS__))
 #else
-#	error "Unkwnown preprocessor implementation for foreach."
+	#error "Unkwnown preprocessor implementation for foreach."
 #endif

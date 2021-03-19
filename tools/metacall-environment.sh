@@ -353,11 +353,12 @@ sub_clangformat(){
 
 	LLVM_VERSION_STRING=11
 
-	$SUDO_CMD wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
+	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
 	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
 	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
 	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get install -y --no-install-recommends clang-format-$LLVM_VERSION_STRING
+	$SUDO_CMD ln -s /usr/bin/clang-format-$LLVM_VERSION_STRING /usr/bin/clang-format
 }
 
 # Install
