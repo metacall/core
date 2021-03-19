@@ -240,8 +240,6 @@ The environment variables are optional, in case you want to modify default paths
 - [`detours`](/source/detours) implement the [`detour`](/source/detour) interface by using a plugin architecture. The current list of available detour plugins is the following one.
   - [`funchook_detour`](/source/detours/funchook_detour) implemented by means of FuncHook library.
 
-- [`distributable`](/source/distributable) defines the compilation of **METACALL** that generates an unique library with all core libraries bundled into it. As the **METACALL** architecture is divided by modules, in order to distribute **METACALL** is needed to build all of them into a single library. This module implements this compilation by means of CMake.
-
 - [`dynlink`](/source/dynlink) implements a cross-platform method to dynamically load libraries. It is used to dynamically load plugins into **METACALL**.
 
 - [`environment`](/source/environment) implements an standard way to deal with environment variables. **METACALL** uses environment variables to define custom paths for plugins and scripts.
