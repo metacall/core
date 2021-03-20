@@ -360,31 +360,6 @@ function node_loader_trampoline_await_future(trampoline) {
 	};
 }
 
-function node_loader_trampoline_destroy() {
-	/*
-	try {
-		// eslint-disable-next-line no-underscore-dangle
-		const handles = process._getActiveHandles();
-
-		for (let i = 0; i < handles.length; ++i) {
-			const h = handles[i];
-
-			// eslint-disable-next-line no-param-reassign, no-empty-function
-			h.write = function () {};
-			// eslint-disable-next-line max-len
-			// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
-			h._destroy = function () {};
-
-			if (h.end) {
-				h.end();
-			}
-		}
-	} catch (ex) {
-		console.log('Exception in node_loader_trampoline_destroy', ex);
-	}
-	*/
-}
-
 module.exports = ((impl, ptr) => {
 	try {
 		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
@@ -425,6 +400,10 @@ module.exports = ((impl, ptr) => {
 			}
 		}
 
+		function node_loader_trampoline_async_count() {
+			return Atomics.load(asyncCounter, 0);
+		}
+
 		return trampoline.register(impl, ptr, {
 			'initialize': node_loader_trampoline_initialize,
 			'execution_path': node_loader_trampoline_execution_path,
@@ -437,7 +416,7 @@ module.exports = ((impl, ptr) => {
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
-			'destroy': node_loader_trampoline_destroy,
+			'async_count': node_loader_trampoline_async_count,
 		});
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);

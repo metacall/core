@@ -237,7 +237,7 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 {
 	(void)info;
 
-	node_loader_impl_destroy_safe(*node_impl_ptr, env);
+	node_loader_impl_destroy_safe_impl(*node_impl_ptr, env);
 
 	return nullptr;
 }
