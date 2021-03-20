@@ -251,6 +251,8 @@ struct loader_impl_node_type
 
 	/* TODO: This implementation won't work for multi-isolate environments. We should test it. */
 	std::thread::id js_thread_id;
+
+	std::atomic_bool requested_destroy;
 };
 
 typedef struct loader_impl_node_function_type
@@ -3393,6 +3395,10 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	/* Retrieve the js thread id */
 	node_impl->js_thread_id = std::this_thread::get_id();
 
+	/* Initialize request for destroying */
+	node_impl->requested_destroy.store(false);
+
+	/* Obtain environment and function table */
 	env = static_cast<napi_env>(env_ptr);
 	function_table_object = static_cast<napi_value>(function_table_object_ptr);
 
@@ -4413,24 +4419,20 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe)
 {
-	uint32_t ref_count = 0;
 	napi_status status;
 	napi_handle_scope handle_scope;
 
 	loader_impl_node node_impl = destroy_safe->node_impl;
-
-	/* Destroy children loaders (any loader initialized in the current V8 thread should be deleted first) */
-	loader_unload_children();
 
 	/* Create scope */
 	status = napi_open_handle_scope(env, &handle_scope);
 
 	node_loader_impl_exception(env, status);
 
-	/* Call destroy function */
+	/* Retrieve the number of async resources in the event loop */
 	{
-		static const char destroy_str[] = "destroy";
-		napi_value destroy_str_value;
+		static const char async_count_str[] = "async_count";
+		napi_value async_count_str_value;
 		napi_value function_table_object;
 		bool result = false;
 
@@ -4439,45 +4441,125 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 
 		node_loader_impl_exception(env, status);
 
-		/* Retrieve destroy function from object table */
-		status = napi_create_string_utf8(env, destroy_str, sizeof(destroy_str) - 1, &destroy_str_value);
+		/* Retrieve async count function from object table */
+		status = napi_create_string_utf8(env, async_count_str, sizeof(async_count_str) - 1, &async_count_str_value);
 
 		node_loader_impl_exception(env, status);
 
-		status = napi_has_own_property(env, function_table_object, destroy_str_value, &result);
+		status = napi_has_own_property(env, function_table_object, async_count_str_value, &result);
 
 		node_loader_impl_exception(env, status);
 
 		if (result == true)
 		{
-			napi_value function_trampoline_destroy;
+			napi_value function_trampoline_async_count;
 			napi_valuetype valuetype;
 
-			status = napi_get_named_property(env, function_table_object, destroy_str, &function_trampoline_destroy);
+			status = napi_get_named_property(env, function_table_object, async_count_str, &function_trampoline_async_count);
 
 			node_loader_impl_exception(env, status);
 
-			status = napi_typeof(env, function_trampoline_destroy, &valuetype);
+			status = napi_typeof(env, function_trampoline_async_count, &valuetype);
 
 			node_loader_impl_exception(env, status);
 
 			if (valuetype != napi_function)
 			{
-				napi_throw_type_error(env, nullptr, "Invalid function destroy in function table object");
+				napi_throw_type_error(env, nullptr, "Invalid function async_count in function table object");
 			}
 
-			/* Call to destroy function */
+			/* Call to async count function */
 			napi_value global, return_value;
 
 			status = napi_get_global(env, &global);
 
 			node_loader_impl_exception(env, status);
 
-			status = napi_call_function(env, global, function_trampoline_destroy, 0, nullptr, &return_value);
+			status = napi_call_function(env, global, function_trampoline_async_count, 0, nullptr, &return_value);
 
 			node_loader_impl_exception(env, status);
+
+			/* If there is no async resources, we can destroy directly, otherwise request for destroy */
+			uint32_t async_count = 0;
+
+			status = napi_get_value_uint32(env, return_value, &async_count);
+
+			node_loader_impl_exception(env, status);
+
+			if (async_count == 0)
+			{
+				node_loader_impl_destroy_safe_impl(node_impl, env);
+			}
+			else
+			{
+				node_impl->requested_destroy.store(true);
+			}
 		}
 	}
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_node node_impl;
+	loader_impl_async_destroy_safe destroy_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&destroy_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&destroy_safe->node_impl->mutex);
+
+	/* Store node impl reference because destroy_safe gets deteled after calling node_loader_impl_destroy_safe */
+	node_impl = destroy_safe->node_impl;
+
+	/* Store environment for reentrant calls */
+	node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_destroy_safe(env, destroy_safe);
+
+	/* Clear environment */
+	// node_impl->env = NULL;
+
+	/* Signal destroy condition */
+	uv_cond_signal(&node_impl->cond);
+
+	uv_mutex_unlock(&node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_walk(uv_handle_t * handle, void * arg)
+{
+	(void)arg;
+
+	/* TODO: This method also deletes the handle flush_tasks_ inside the NodePlatform class. */
+	/* So, now I don't know how to identify this pointer in order to avoid closing it... */
+	/* By this way, I prefer to make valgrind angry instead of closing it with an abort or an exception */
+
+	(void)handle;
+
+	/*
+	if (!uv_is_closing(handle))
+	{
+		uv_close(handle, NULL);
+	}
+	*/
+}
+
+void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env)
+{
+	uint32_t ref_count = 0;
+	napi_status status;
+
+	/* Destroy children loaders (any loader initialized in the current V8 thread should be deleted first) */
+	loader_unload_children();
 
 	/* Clear thread safe functions */
 	{
@@ -4630,61 +4712,11 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 		}
 #endif
 	}
-
-	/* Close scope */
-	status = napi_close_handle_scope(env, handle_scope);
-
-	node_loader_impl_exception(env, status);
 }
 
-napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
+bool node_loader_impl_requested_destroy(loader_impl_node node_impl)
 {
-	loader_impl_node node_impl;
-	loader_impl_async_destroy_safe destroy_safe = NULL;
-
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&destroy_safe);
-
-	node_loader_impl_exception(env, status);
-
-	/* Lock the call safe mutex and get the parameters */
-	uv_mutex_lock(&destroy_safe->node_impl->mutex);
-
-	/* Store node impl reference because destroy_safe gets deteled after calling node_loader_impl_destroy_safe */
-	node_impl = destroy_safe->node_impl;
-
-	/* Store environment for reentrant calls */
-	node_impl->env = env;
-
-	/* Call to the implementation function */
-	node_loader_impl_destroy_safe(env, destroy_safe);
-
-	/* Clear environment */
-	// node_impl->env = NULL;
-
-	/* Signal destroy condition */
-	uv_cond_signal(&node_impl->cond);
-
-	uv_mutex_unlock(&node_impl->mutex);
-
-	return nullptr;
-}
-
-void node_loader_impl_walk(uv_handle_t *handle, void *arg)
-{
-	(void)arg;
-
-	/* TODO: This method also deletes the handle flush_tasks_ inside the NodePlatform class. */
-	/* So, now I don't know how to identify this pointer in order to avoid closing it... */
-	/* By this way, I prefer to make valgrind angry instead of closing it with an abort or an exception */
-
-	(void)handle;
-
-	/*
-	if (!uv_is_closing(handle))
-	{
-		uv_close(handle, NULL);
-	}
-	*/
+	return node_impl->requested_destroy.load();
 }
 
 int node_loader_impl_destroy(loader_impl impl)

@@ -4,7 +4,10 @@
 const Module = require('module');
 const path = require('path');
 const util = require('util');
+const fs = require('fs');
+const async_hooks = require('async_hooks');
 
+/* Require the JavaScript parser */
 const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
 
 const node_require = Module.prototype.require;
@@ -357,36 +360,49 @@ function node_loader_trampoline_await_future(trampoline) {
 	};
 }
 
-function node_loader_trampoline_destroy() {
-	try {
-		// eslint-disable-next-line no-underscore-dangle
-		const handles = process._getActiveHandles();
-
-		for (let i = 0; i < handles.length; ++i) {
-			const h = handles[i];
-
-			// eslint-disable-next-line no-param-reassign, no-empty-function
-			h.write = function () {};
-			// eslint-disable-next-line max-len
-			// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
-			h._destroy = function () {};
-
-			if (h.end) {
-				h.end();
-			}
-		}
-	} catch (ex) {
-		console.log('Exception in node_loader_trampoline_destroy', ex);
-	}
-}
-
 module.exports = ((impl, ptr) => {
 	try {
 		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
-			throw 'Process arguments (process.argv[2], process.argv[3]) not defined.';
+			throw new Error('Process arguments (process.argv[2], process.argv[3]) not defined.');
 		}
 
+		/* Initialize async hooks for keeping track the amount of async handles that are in the event queue */
+		const asyncHook = async_hooks.createHook({ node_loader_trampoline_async_hook_init, node_loader_trampoline_async_hook_destroy });
+
+		const asyncCounterBuffer = new SharedArrayBuffer(Uint32Array.BYTES_PER_ELEMENT);
+		const asyncCounter = new Uint32Array(asyncCounterBuffer);
+
+		/* Enable async hook with the counter started to 0 */
+		Atomics.store(asyncCounter, 0, 0);
+		asyncHook.enable();
+
 		const trampoline = process.binding('node_loader_trampoline_module');
+
+		function node_loader_trampoline_async_hook_init() {
+			Atomics.add(asyncCounter, 0, 1);
+		}
+
+		function node_loader_trampoline_async_hook_destroy(asyncId) {
+			if (Atomics.load(asyncCounter, 0) == 0) {
+				/* All operations must be synchronous here, or in other words, they cannot trigger any async resource into the event loop */
+				fs.writeSync(process.stdout.fd, `Exception in node_loader_trampoline_async_hook_destroy: The async id ${asyncId} has not been counted properly\n`);
+				// TODO: Properly notify the error to the core
+			} else {
+				const old = Atomics.sub(asyncCounter, 0, 1);
+				/* At this point we have reached an "empty" event loop, it
+				 * only contains the async resources that the Node Loader has populated,
+				 * but it does not contain any user defined async resource */
+				if (old === 1 && trampoline.requested_destroy() === true) {
+					/* Disable Hooks and destroy the Node Loader */
+					asyncHook.disable();
+					trampoline.destroy();
+				}
+			}
+		}
+
+		function node_loader_trampoline_async_count() {
+			return Atomics.load(asyncCounter, 0);
+		}
 
 		return trampoline.register(impl, ptr, {
 			'initialize': node_loader_trampoline_initialize,
@@ -400,7 +416,7 @@ module.exports = ((impl, ptr) => {
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
-			'destroy': node_loader_trampoline_destroy,
+			'async_count': node_loader_trampoline_async_count,
 		});
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);
