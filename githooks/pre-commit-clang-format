@@ -24,7 +24,7 @@
 RECOMMENDED_CLANG_FORMAT_MAJOR="11"
 
 CLANG_FORMAT=`which clang-format-$RECOMMENDED_CLANG_FORMAT_MAJOR 2>/dev/null`
-if [ -z "${CLANG_FORMAT+x}" ]; then
+if [ -z "$CLANG_FORMAT" ]; then
   CLANG_FORMAT=`which clang-format 2>/dev/null`
 fi
 
