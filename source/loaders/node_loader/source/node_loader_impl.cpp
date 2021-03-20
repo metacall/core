@@ -4508,7 +4508,7 @@ napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info 
 	loader_impl_node node_impl;
 	loader_impl_async_destroy_safe destroy_safe = NULL;
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void**)&destroy_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&destroy_safe);
 
 	node_loader_impl_exception(env, status);
 
@@ -4535,7 +4535,7 @@ napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info 
 	return nullptr;
 }
 
-void node_loader_impl_walk(uv_handle_t * handle, void * arg)
+void node_loader_impl_walk(uv_handle_t *handle, void *arg)
 {
 	(void)arg;
 

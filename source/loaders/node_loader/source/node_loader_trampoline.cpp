@@ -116,7 +116,7 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	(void)register_ptr(node_impl, static_cast<void *>(env), static_cast<void *>(function_table_object));
 
 	/* Store the node impl reference into a pointer so we can use it later on in the destroy mechanism */
-	*node_impl_ptr = node_impl;
+	node_impl_ptr = &node_impl;
 
 	return nullptr;
 }

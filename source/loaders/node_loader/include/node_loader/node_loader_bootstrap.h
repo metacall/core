@@ -21,6 +21,9 @@
 #ifndef NODE_LOADER_BOOTSTRAP_H
 #define NODE_LOADER_BOOTSTRAP_H 1
 
+#include <configuration/configuration.h>
+#include <reflect/reflect_value_type.h>
+
 #if defined(WIN32) || defined(_WIN32)
 	#ifndef NOMINMAX
 		#define NOMINMAX
@@ -50,6 +53,7 @@
 extern "C" {
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 
 typedef char node_impl_path[NODE_LOADER_IMPL_PATH_SIZE];
