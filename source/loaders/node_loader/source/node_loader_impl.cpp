@@ -3900,7 +3900,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		static napi_module node_loader_trampoline_module = {
 			NAPI_MODULE_VERSION,
+#if NODE_MAJOR_VERSION >= 14
 			node::ModuleFlags::kLinked,
+#else
+			0x02, /* NM_F_LINKED */
+#endif
 			__FILE__,
 			node_loader_trampoline_initialize,
 			"node_loader_trampoline_module",
@@ -3915,7 +3919,11 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	{
 		static napi_module node_loader_port_module = {
 			NAPI_MODULE_VERSION,
+#if NODE_MAJOR_VERSION >= 14
 			node::ModuleFlags::kLinked,
+#else
+			0x02, /* NM_F_LINKED */
+#endif
 			__FILE__,
 			node_loader_port_initialize,
 			"node_loader_port_module",
