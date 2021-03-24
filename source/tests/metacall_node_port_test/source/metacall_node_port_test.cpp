@@ -57,20 +57,25 @@ TEST_F(metacall_node_port_test, DefaultConstructor)
 
 		std::unique_lock<std::mutex> lock(await_data.m);
 
-		void *future = metacall_await(
-			"main", metacall_null_args, [](void *v, void *data) -> void * {
-			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
+		auto accept = [](void *v, void *data) -> void * {
+			struct await_data_type *await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
-			const char * str = metacall_value_to_string(v);
-			EXPECT_EQ((int) 0, (int) strcmp(str, "Tests passed without errors"));
+			const char *str = metacall_value_to_string(v);
+			EXPECT_EQ((int)0, (int)strcmp(str, "Tests passed without errors"));
 			await_data->c.notify_one();
-			return NULL; }, [](void *, void *data) -> void * {
+			return NULL;
+		};
+
+		auto reject = [](void *, void *data) -> void * {
 			static const int promise_rejected = 0;
-			struct await_data_type * await_data = static_cast<struct await_data_type *>(data);
+			struct await_data_type *await_data = static_cast<struct await_data_type *>(data);
 			std::unique_lock<std::mutex> lock(await_data->m);
-			EXPECT_EQ((int) 1, (int) promise_rejected); // This should never happen
+			EXPECT_EQ((int)1, (int)promise_rejected); // This should never happen
 			await_data->c.notify_one();
-			return NULL; }, static_cast<void *>(&await_data));
+			return NULL;
+		};
+
+		void *future = metacall_await("main", metacall_null_args, accept, reject, static_cast<void *>(&await_data));
 
 		await_data.c.wait(lock);
 
