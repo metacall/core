@@ -99,8 +99,8 @@ This section describes all programming languages that **METACALL** allows to loa
 
 | Language                                                           | Runtime                                                                                                        |            Version             |  Tag  |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | :----------------------------: | :---: |
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.8**        |  py   |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |          **10.22.0**           | node  |
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.9**        |  py   |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |   **>= 10.22.0 <= 15.20.0**    | node  |
 | [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **3.9.7**            |  ts   |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js   |
 | [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 2.2.8** |  cs   |
@@ -718,7 +718,7 @@ The following platforms and architectures have been tested an work correctly wit
 
 |     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
 | :----------------------: | :-----------------: | :-------------: | :----------------------------------------------------------------------------------------------------: |
-|   **`ubuntu:focal`**     |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
+|    **`ubuntu:focal`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
 |      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
