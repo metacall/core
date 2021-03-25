@@ -305,7 +305,7 @@ The module that holds the representation of types, values and functions is calle
 |   Map   | List of elements formed by a key (String) value (Any) pair (Array)            |
 | Pointer | Low level representation of a memory reference                                |
 |  Null   | Representation of NULL value type                                             |
-| Future  |                                                                               |
+| Future  | Promise in Node Loader, and any other type equivalent in other languages.     |
 | Function| Block of code that takes inputs (Arguments) and produces output (Return value)|
 |  Class  | Defines properties and methods that are common to all objects                 |
 |  Object | An instance of Class                                                          |
