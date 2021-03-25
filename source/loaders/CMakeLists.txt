@@ -21,6 +21,7 @@ option(OPTION_BUILD_LOADERS_RB "Build Ruby 2.5 C API loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_RPC "Build cURL Remote Procedure Call loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_TS "Build TypeScript 3.9.7 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_LLVM "Build LLVM loader plugin." OFF)
 
 # Plugin packages
 add_subdirectory(c_loader) # Foreign Function Interface library
@@ -40,3 +41,4 @@ add_subdirectory(rb_loader) # Ruby 2.5 C API
 add_subdirectory(rpc_loader) # cURL Remote Procedure Call
 add_subdirectory(ts_loader) # TypeScript 3.9.7
 add_subdirectory(wasm_loader) # WebAssembly Virtual Machine
+add_subdirectory(llvm_loader) # LLVM Runtime
