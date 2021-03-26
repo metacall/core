@@ -48,9 +48,10 @@ TEST_F(metacall_node_python_async_after_destroy_test, DefaultConstructor)
 			"def sum(a, b):\n"
 			"  return a + b\n"
 			"`);\n"
-			"setTimeout(() => { metacall('sum', 3, 4) === 7 || process.exit(1) }, 1000);\n"
-			"setTimeout(() => { metacall('sum', 3, 4) === 7 || process.exit(1) }, 2000);\n"
-			"setTimeout(() => { metacall('sum', 3, 4) === 7 || process.exit(1) }, 3000);\n";
+			"function log(x) { console.log(x); return x; }\n"
+			"setTimeout(() => { log(metacall('sum', 3, 4)) === 7 || process.exit(1) }, 2000);\n"
+			"setTimeout(() => { log(metacall('sum', 3, 4)) === 7 || process.exit(1) }, 4000);\n"
+			"setTimeout(() => { log(metacall('sum', 3, 4)) === 7 || process.exit(1) }, 6000);\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 	}
@@ -59,6 +60,9 @@ TEST_F(metacall_node_python_async_after_destroy_test, DefaultConstructor)
 	/* This should be called before the setTimeout ends, so we can test if the node loader waits
 	* to be destroyed until the event loop is completely cleaned, so we can call safely to python
 	* even if the destroy was already emmited, for more info:
+	* https://github.com/metacall/core/commit/4b61c2f3b22065472828dc7b718defbfc4ac3884
+	* https://github.com/metacall/core/commit/e963515cf68e04c91ba0612227d5ef586c08aab6
+	* https://github.com/metacall/core/commit/df701d779af0d2a7cb1f27e33aacf5f17ae20f4b
 	* https://github.com/metacall/core/commit/1fc9c9244d7a5553861a458813d2cf1488ebe08c
 	* https://github.com/metacall/core/commit/9b64ee533079fa0d543fc346fb7149d1086451f0
 	* https://github.com/metacall/core/commit/22bd999c281f23aac04cea7df435a836631706da

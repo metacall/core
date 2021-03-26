@@ -271,7 +271,7 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 	/* Get the node impl pointer */
 	loader_impl_node node_impl;
 
-	status = napi_get_value_external(env, args[0], (void**)&node_impl);
+	status = napi_get_value_external(env, args[0], (void **)&node_impl);
 
 	node_loader_impl_exception(env, status);
 
@@ -324,7 +324,7 @@ napi_value node_loader_trampoline_requested_destroy(napi_env env, napi_callback_
 	/* Get the node impl pointer */
 	loader_impl_node node_impl;
 
-	status = napi_get_value_external(env, args[0], (void**)&node_impl);
+	status = napi_get_value_external(env, args[0], (void **)&node_impl);
 
 	node_loader_impl_exception(env, status);
 
