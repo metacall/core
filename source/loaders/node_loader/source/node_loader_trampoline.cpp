@@ -33,11 +33,6 @@ typedef struct loader_impl_async_future_await_trampoline_type
 
 } * loader_impl_async_future_await_trampoline;
 
-/* This is for holding the node loader reference for later
- * on passing it to the destroy and requested_destroy methods
- */
-static loader_impl_node *node_impl_ptr = NULL;
-
 /* TODO: This is a trick, probably with the current architecture we can
  * pass the pointer through the trampoline itself as a wrapped reference
  */
@@ -116,9 +111,13 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	(void)register_ptr(node_impl, static_cast<void *>(env), static_cast<void *>(function_table_object));
 
 	/* Store the node impl reference into a pointer so we can use it later on in the destroy mechanism */
-	node_impl_ptr = &node_impl;
+	napi_value return_external;
 
-	return nullptr;
+	status = napi_create_external(env, node_impl, nullptr, nullptr, &return_external);
+
+	node_loader_impl_exception(env, status);
+
+	return return_external;
 }
 
 napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
@@ -237,22 +236,115 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 {
-	(void)info;
+	napi_status status;
 
-	node_loader_impl_destroy_safe_impl(*node_impl_ptr, env);
+	const size_t args_size = 1;
+	size_t argc = args_size;
+	napi_value recv;
+	napi_value args[args_size];
+	napi_valuetype valuetype[args_size];
+
+	/* Parse arguments */
+	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
+
+	node_loader_impl_exception(env, status);
+
+	if (argc != args_size)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
+
+		return nullptr;
+	}
+
+	/* Parse argument value type */
+	status = napi_typeof(env, args[0], &valuetype[0]);
+
+	node_loader_impl_exception(env, status);
+
+	if (valuetype[0] != napi_external)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong arguments type");
+
+		return nullptr;
+	}
+
+	/* Get the node impl pointer */
+	loader_impl_node node_impl;
+
+	status = napi_get_value_external(env, args[0], (void**)&node_impl);
+
+	node_loader_impl_exception(env, status);
+
+	if (node_impl == nullptr)
+	{
+		napi_throw_type_error(env, nullptr, "Invalid node loader pointer");
+
+		return nullptr;
+	}
+
+	node_loader_impl_destroy_safe_impl(node_impl, env);
 
 	return nullptr;
 }
 
 napi_value node_loader_trampoline_requested_destroy(napi_env env, napi_callback_info info)
 {
-	(void)info;
+	napi_status status;
 
-	napi_value v = nullptr;
-	bool requested_destroy = node_loader_impl_requested_destroy(*node_impl_ptr);
-	napi_status status = napi_get_boolean(env, requested_destroy, &v);
+	const size_t args_size = 1;
+	size_t argc = args_size;
+	napi_value recv;
+	napi_value args[args_size];
+	napi_valuetype valuetype[args_size];
+
+	/* Parse arguments */
+	status = napi_get_cb_info(env, info, &argc, args, &recv, nullptr);
+
 	node_loader_impl_exception(env, status);
-	return v;
+
+	if (argc != args_size)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong number of arguments");
+
+		return nullptr;
+	}
+
+	/* Parse argument value type */
+	status = napi_typeof(env, args[0], &valuetype[0]);
+
+	node_loader_impl_exception(env, status);
+
+	if (valuetype[0] != napi_external)
+	{
+		napi_throw_type_error(env, nullptr, "Wrong arguments type");
+
+		return nullptr;
+	}
+
+	/* Get the node impl pointer */
+	loader_impl_node node_impl;
+
+	status = napi_get_value_external(env, args[0], (void**)&node_impl);
+
+	node_loader_impl_exception(env, status);
+
+	if (node_impl == nullptr)
+	{
+		napi_throw_type_error(env, nullptr, "Invalid node loader pointer");
+
+		return nullptr;
+	}
+
+	bool requested_destroy = node_loader_impl_requested_destroy(node_impl);
+
+	/* Create the boolean return value */
+	napi_value result;
+
+	status = napi_get_boolean(env, requested_destroy, &result);
+
+	node_loader_impl_exception(env, status);
+
+	return result;
 }
 
 napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports)
