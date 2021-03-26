@@ -811,7 +811,7 @@ void loader_unload_children()
 	loader l = loader_singleton();
 	uint64_t current = thread_id_get_current();
 	size_t iterator, size = vector_size(l->initialization_order);
-	vector queue = vector_create_type(loader_initialization_order);
+	vector stack = vector_create_type(loader_initialization_order);
 
 	/* Get all loaders that have been initialized in the current thread */
 	for (iterator = 0; iterator < size; ++iterator)
@@ -821,7 +821,7 @@ void loader_unload_children()
 		if (order->being_deleted == 1 && order->impl != NULL && current == order->id)
 		{
 			/* Mark for deletion */
-			vector_push_back(queue, &order);
+			vector_push_back(stack, &order);
 
 			/* Start to delete the current loader */
 			order->being_deleted = 0;
@@ -829,9 +829,9 @@ void loader_unload_children()
 	}
 
 	/* Free all loaders of the current thread and with BFS, look for children */
-	while (vector_size(queue) != 0)
+	while (vector_size(stack) != 0)
 	{
-		loader_initialization_order order = vector_front_type(queue, loader_initialization_order);
+		loader_initialization_order order = vector_back_type(stack, loader_initialization_order);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s)", loader_impl_tag(order->impl));
 
@@ -843,10 +843,10 @@ void loader_unload_children()
 		order->impl = NULL;
 		order->id = THREAD_ID_INVALID;
 
-		vector_pop_front(queue);
+		vector_pop_back(stack);
 	}
 
-	vector_destroy(queue);
+	vector_destroy(stack);
 }
 
 int loader_unload()
