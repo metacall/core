@@ -8,7 +8,6 @@
 
 /* -- Headers -- */
 
-#include <iterator>
 #include <metacallcli/application.hpp>
 #include <metacallcli/parser.hpp>
 #include <metacallcli/tokenizer.hpp>
@@ -770,6 +769,8 @@ void application::execute(tokenizer &t)
 
 		command_debug(*it, t);
 
+		std::cout << "See `help` for list of available commands" << std::endl;
+
 		return;
 	}
 
@@ -778,6 +779,8 @@ void application::execute(tokenizer &t)
 		std::cout << "[WARNING]: Invalid command execution" << std::endl;
 
 		command_debug(*it, t);
+
+		std::cout << "See `help` for correct usage" << std::endl;
 
 		return;
 	}
