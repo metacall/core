@@ -14,18 +14,18 @@ Fixes #(issue_no)
 - [ ] New feature (non-breaking change which adds functionality)
 - [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
 - [ ] This change requires a documentation update
-- [ ] Documentation Update
+- [ ] Documentation update
 
 # Checklist:
 
-- [ ] My code follows the style guidelines (Clean Code) of this project.
+- [ ] My code follows the style guidelines (clang-format) of this project.
 - [ ] I have performed a self-review of my own code.
 - [ ] I have commented my code, particularly in hard-to-understand areas.
 - [ ] I have made corresponding changes to the documentation.
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests/screenshots (if any) that prove my fix is effective or that my feature works.
 - [ ] I have tested my code with `OPTION_BUILD_SANITIZER` and `OPTION_TEST_MEMORYCHECK`. 
-- [ ] I have tested with `Helgrind` in case my code works with threading. 
+- [ ] I have tested with `Helgrind` in case my code works with threading.
 
 If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/blob/develop/docs/README.md#63-debugging) 
 
