@@ -8,6 +8,7 @@
 
 /* -- Headers -- */
 
+#include <iterator>
 #include <metacallcli/application.hpp>
 #include <metacallcli/parser.hpp>
 #include <metacallcli/tokenizer.hpp>
@@ -375,6 +376,16 @@ bool command_cb_load(application &app, tokenizer &t)
 	if (p.is<std::string>())
 	{
 		loader_tag = *it;
+	}
+
+	std::string loaders[] = {
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file"
+	};
+
+	// check if invalid loader tag
+	if (std::find(std::begin(loaders), std::end(loaders), loader_tag) == std::end(loaders))
+	{
+		return false;
 	}
 
 	do
