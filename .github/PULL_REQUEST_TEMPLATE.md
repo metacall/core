@@ -24,6 +24,7 @@ Fixes #(issue_no)
 - [ ] I have made corresponding changes to the documentation.
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests/screenshots (if any) that prove my fix is effective or that my feature works.
+- [ ] I have tested the tests implicated (if any) by my own code and they pass (`make test` or `ctest -VV -R <test-name>`).
 - [ ] I have tested my code with `OPTION_BUILD_SANITIZER` and `OPTION_TEST_MEMORYCHECK`. 
 - [ ] I have tested with `Helgrind` in case my code works with threading.
 
