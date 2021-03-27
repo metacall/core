@@ -288,21 +288,25 @@ The module that holds the representation of types, values and functions is calle
 
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
-|  Type   | Value                                                              |
-| :-----: | ------------------------------------------------------------------ |
-| Boolean | `true` or `false`                                                  |
-|  Char   | `-128` to `127`                                                    |
-|  Short  | `-32,768` to `32,767`                                              |
-|   Int   | `-2,147,483,648` to `2,147,483,647`                                |
-|  Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`        |
-|  Float  | `1.2E-38` to `3.4E+38`                                             |
-| Double  | `2.3E-308` to `1.7E+308`                                           |
-| String  | NULL terminated list of characters                                 |
-| Buffer  | Blob of memory representing a binary data                          |
-|  Array  | Arrangement of values of any type                                  |
-|   Map   | List of elements formed by a key (String) value (Any) pair (Array) |
-| Pointer | Low level representation of a memory reference                     |
-|  Null   | Representation of NULL value type                                  |
+|  Type   | Value                                                                         |
+| :-----: | ----------------------------------------------------------------------------- |
+| Boolean | `true` or `false`                                                             |
+|  Char   | `-128` to `127`                                                               |  
+|  Short  | `-32,768` to `32,767`                                                         |
+|   Int   | `-2,147,483,648` to `2,147,483,647`                                           |
+|  Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`                   |
+|  Float  | `1.2E-38` to `3.4E+38`                                                        |
+| Double  | `2.3E-308` to `1.7E+308`                                                      |
+| String  | NULL terminated list of characters                                            |
+| Buffer  | Blob of memory representing a binary data                                     |
+|  Array  | Arrangement of values of any type                                             |
+|   Map   | List of elements formed by a key (String) value (Any) pair (Array)            |
+| Pointer | Low level representation of a memory reference                                |
+|  Null   | Representation of NULL value type                                             |
+| Future  | Promise in Node Loader, and any other type equivalent in other languages.     |
+| Function| Block of code that takes inputs (Arguments) and produces output (Return value)|
+|  Class  | Defines properties and methods that are common to all objects                 |
+|  Object | An instance of Class                                                          |
 
 - Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
 
