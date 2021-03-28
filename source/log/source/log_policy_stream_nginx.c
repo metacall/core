@@ -8,27 +8,27 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_stream_nginx.h>
 #include <log/log_policy_stream.h>
+#include <log/log_policy_stream_nginx.h>
 
 #if defined(_WIN32)
-#	ifndef NOMINMAX
-#		define NOMINMAX
-#	endif
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 
-#	ifndef WIN32_LEAN_AND_MEAN
-#		define WIN32_LEAN_AND_MEAN
-#	endif
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
 
-#	include <windows.h>
+	#include <windows.h>
 #endif
 
 /* -- Forward Declarations -- */
 
 #if defined(_WIN32)
-	typedef DWORD ngx_err_t;
+typedef DWORD ngx_err_t;
 #else
-	typedef int ngx_err_t;
+typedef int ngx_err_t;
 #endif
 
 struct log_policy_stream_nginx_data_type;
@@ -37,13 +37,13 @@ struct log_policy_stream_nginx_data_type;
 
 typedef void (*log_policy_stream_nginx_error)(uintptr_t, ngx_log_t *, ngx_err_t, const char *, ...);
 
-typedef struct log_policy_stream_nginx_data_type * log_policy_stream_nginx_data;
+typedef struct log_policy_stream_nginx_data_type *log_policy_stream_nginx_data;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_nginx_data_type
 {
-	ngx_log_t * ngx_log_ptr;
+	ngx_log_t *ngx_log_ptr;
 	log_policy_stream_nginx_error ngx_error_ptr;
 	uint16_t ngx_log_level;
 };
@@ -52,7 +52,7 @@ struct log_policy_stream_nginx_data_type
 
 static int log_policy_stream_nginx_create(log_policy policy, const log_policy_ctor ctor);
 
-static int log_policy_stream_nginx_write(log_policy policy, const void * buffer, const size_t size);
+static int log_policy_stream_nginx_write(log_policy policy, const void *buffer, const size_t size);
 
 static int log_policy_stream_nginx_flush(log_policy policy);
 
@@ -62,14 +62,12 @@ static int log_policy_stream_nginx_destroy(log_policy policy);
 
 log_policy_interface log_policy_stream_nginx_interface()
 {
-	static struct log_policy_stream_impl_type log_policy_stream_nginx_impl_obj =
-	{
+	static struct log_policy_stream_impl_type log_policy_stream_nginx_impl_obj = {
 		&log_policy_stream_nginx_write,
 		&log_policy_stream_nginx_flush
 	};
 
-	static struct log_policy_interface_type policy_interface_stream =
-	{
+	static struct log_policy_interface_type policy_interface_stream = {
 		&log_policy_stream_nginx_create,
 		&log_policy_stream_nginx_impl_obj,
 		&log_policy_stream_nginx_destroy
@@ -107,7 +105,7 @@ static int log_policy_stream_nginx_create(log_policy policy, const log_policy_ct
 	return 0;
 }
 
-static int log_policy_stream_nginx_write(log_policy policy, const void * buffer, const size_t size)
+static int log_policy_stream_nginx_write(log_policy policy, const void *buffer, const size_t size)
 {
 	log_policy_stream_nginx_data nginx_data = log_policy_instance(policy);
 

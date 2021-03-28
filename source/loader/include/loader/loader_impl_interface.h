@@ -24,8 +24,8 @@
 #include <loader/loader_api.h>
 
 #include <loader/loader_handle.h>
-#include <loader/loader_naming.h>
 #include <loader/loader_impl_data.h>
+#include <loader/loader_naming.h>
 
 #include <reflect/reflect_context.h>
 
@@ -39,7 +39,7 @@ extern "C" {
 
 struct loader_impl_type;
 
-typedef struct loader_impl_type * loader_impl;
+typedef struct loader_impl_type *loader_impl;
 
 typedef loader_impl_data (*loader_impl_interface_initialize)(loader_impl, configuration);
 

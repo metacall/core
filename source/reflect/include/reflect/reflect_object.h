@@ -29,13 +29,13 @@ extern "C" {
 
 struct object_type;
 
-typedef void * object_impl;
+typedef void *object_impl;
 
-typedef struct object_type * object;
+typedef struct object_type *object;
 
 #include <reflect/reflect_class.h>
 
-typedef void * object_args[];
+typedef void *object_args[];
 
 typedef value (*object_resolve_callback)(value, void *);
 
@@ -57,19 +57,19 @@ typedef void (*object_impl_interface_destroy)(object, object_impl);
 
 typedef struct object_interface_type
 {
-    object_impl_interface_create create;
+	object_impl_interface_create create;
 	object_impl_interface_get get;
 	object_impl_interface_set set;
 	object_impl_interface_method_invoke method_invoke;
 	object_impl_interface_method_await method_await;
-    object_impl_interface_destructor destructor;
-    object_impl_interface_destroy destroy;
+	object_impl_interface_destructor destructor;
+	object_impl_interface_destroy destroy;
 
 } * object_interface;
 
 typedef object_interface (*object_impl_interface_singleton)(void);
 
-REFLECT_API object object_create(const char * name, object_impl impl, object_impl_interface_singleton singleton, klass cls);
+REFLECT_API object object_create(const char *name, object_impl impl, object_impl_interface_singleton singleton, klass cls);
 
 REFLECT_API int object_increment_reference(object obj);
 
@@ -77,15 +77,15 @@ REFLECT_API int object_decrement_reference(object obj);
 
 REFLECT_API object_impl object_impl_get(object obj);
 
-REFLECT_API int object_set(object obj, const char * key, value v);
+REFLECT_API int object_set(object obj, const char *key, value v);
 
-REFLECT_API value object_get(object obj, const char * key);
+REFLECT_API value object_get(object obj, const char *key);
 
-REFLECT_API value object_call(object obj, const char * name, object_args args, size_t size);
+REFLECT_API value object_call(object obj, const char *name, object_args args, size_t size);
 
-REFLECT_API value object_await(object obj, const char * name, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void * context);
+REFLECT_API value object_await(object obj, const char *name, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void *context);
 
-REFLECT_API const char * object_name(object obj);
+REFLECT_API const char *object_name(object obj);
 
 REFLECT_API value object_metadata(object obj);
 

@@ -32,23 +32,21 @@ TEST_F(metacall_invalid_loader_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	static const char * invalid_scripts[] =
-	{
+	static const char *invalid_scripts[] = {
 		"a.invalid"
 	};
 
-	EXPECT_EQ((int) 1, (int) metacall_load_from_file("invalid", invalid_scripts, sizeof(invalid_scripts) / sizeof(invalid_scripts[0]), NULL));
+	EXPECT_EQ((int)1, (int)metacall_load_from_file("invalid", invalid_scripts, sizeof(invalid_scripts) / sizeof(invalid_scripts[0]), NULL));
 
-	static const char invalid_buffer[] =
-	{
+	static const char invalid_buffer[] = {
 		"invalid"
 	};
 
-	EXPECT_EQ((int) 1, (int) metacall_load_from_memory("invalid", invalid_buffer, sizeof(invalid_buffer), NULL));
+	EXPECT_EQ((int)1, (int)metacall_load_from_memory("invalid", invalid_buffer, sizeof(invalid_buffer), NULL));
 
-	ASSERT_EQ((int) 1, (int) metacall_is_initialized("invalid"));
+	ASSERT_EQ((int)1, (int)metacall_is_initialized("invalid"));
 
-	ASSERT_EQ((int) 0, (int) metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 }

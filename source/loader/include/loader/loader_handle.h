@@ -29,7 +29,7 @@ extern "C" {
 *  @brief
 *    Generic handle for run-time loaded code
 */
-typedef void * loader_handle;
+typedef void *loader_handle;
 
 #ifdef __cplusplus
 }

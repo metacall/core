@@ -39,26 +39,26 @@ TEST_F(metacall_integration_test, CsSayAny)
 
 TEST_F(metacall_integration_test, PyMultiply)
 {
-	void * ret = NULL;
+	void *ret = NULL;
 
 	ret = metacall("multiply", 5, 15);
 
-	EXPECT_NE((void *) NULL, (void *) ret);
+	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((long) metacall_value_to_long(ret), (long) 75L);
+	EXPECT_EQ((long)metacall_value_to_long(ret), (long)75L);
 
 	metacall_value_destroy(ret);
 }
 
 TEST_F(metacall_integration_test, Sum)
 {
-	void * ret = NULL;
+	void *ret = NULL;
 
 	ret = metacall("Sum", 5, 10);
 
-	EXPECT_NE((void *) NULL, (void *) ret);
+	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((int) metacall_value_to_int(ret), (int) 15);
+	EXPECT_EQ((int)metacall_value_to_int(ret), (int)15);
 
 	metacall_value_destroy(ret);
 }

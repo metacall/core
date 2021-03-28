@@ -27,8 +27,8 @@
 
 /* -- Definitions -- */
 
-#define SET_BUCKET_RATIO_MIN		0.1f
-#define SET_BUCKET_RATIO_MAX		0.77f
+#define SET_BUCKET_RATIO_MIN 0.1f
+#define SET_BUCKET_RATIO_MAX 0.77f
 
 /* -- Member Data -- */
 
@@ -55,7 +55,7 @@ struct set_contains_any_cb_iterator_type
 	int result;
 };
 
-typedef struct set_contains_any_cb_iterator_type * set_contains_any_cb_iterator;
+typedef struct set_contains_any_cb_iterator_type *set_contains_any_cb_iterator;
 
 /* -- Methods -- */
 
@@ -542,13 +542,13 @@ void set_iterator_next(set_iterator it)
 {
 	if (it != NULL)
 	{
-		for ( ; it->bucket < it->s->capacity; ++it->bucket)
+		for (; it->bucket < it->s->capacity; ++it->bucket)
 		{
 			set_bucket bucket = &it->s->buckets[it->bucket];
 
 			if (bucket->pairs != NULL && bucket->count > 0)
 			{
-				for ( ; it->pair < bucket->count; ++it->pair)
+				for (; it->pair < bucket->count; ++it->pair)
 				{
 					set_pair pair = &bucket->pairs[it->pair];
 
@@ -564,7 +564,7 @@ void set_iterator_next(set_iterator it)
 	}
 }
 
-int set_iterator_end(set_iterator * it)
+int set_iterator_end(set_iterator *it)
 {
 	if (it != NULL && *it != NULL)
 	{

@@ -20,8 +20,8 @@
 
 #include <gtest/gtest.h>
 
-#include <adt/adt_vector.h>
 #include <adt/adt_trie.h>
+#include <adt/adt_vector.h>
 
 #include <log/log.h>
 
@@ -29,7 +29,7 @@
 
 class adt_trie_test : public testing::Test
 {
-  public:
+public:
 };
 
 int trie_iterator_cb_print(trie t, trie_key key, trie_value value, trie_cb_iterate_args args)
@@ -38,8 +38,8 @@ int trie_iterator_cb_print(trie t, trie_key key, trie_value value, trie_cb_itera
 
 	if (t != NULL && key != NULL && value != NULL)
 	{
-		const char * key_str = reinterpret_cast<const char *>(key);
-		const char * value_str = reinterpret_cast<const char *>(value);
+		const char *key_str = reinterpret_cast<const char *>(key);
+		const char *value_str = reinterpret_cast<const char *>(value);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "%s : %s", key_str, value_str);
 
@@ -67,21 +67,19 @@ int trie_iterator_cb_clear(trie t, trie_key key, trie_value value, trie_cb_itera
 
 TEST_F(adt_trie_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
 	size_t iterator;
 
-	static const char * keys_str[] =
-	{
+	static const char *keys_str[] = {
 		"this", "is", "a", "path"
 	};
 
-	static const char * values_str[] =
-	{
+	static const char *values_str[] = {
 		"these", "are", "the", "values"
 	};
 
@@ -95,7 +93,7 @@ TEST_F(adt_trie_test, DefaultConstructor)
 
 	trie suffix_trie = NULL;
 
-	trie_key * last_prefix;
+	trie_key *last_prefix;
 
 	size_t keys_size = sizeof(keys_str) / sizeof(keys_str[0]);
 
@@ -112,7 +110,7 @@ TEST_F(adt_trie_test, DefaultConstructor)
 
 		vector_push_back(keys, &key);
 
-		EXPECT_EQ((int) 0, (int) trie_insert(t, keys, value));
+		EXPECT_EQ((int)0, (int)trie_insert(t, keys, value));
 	}
 
 	keys_copy = vector_copy(keys);
@@ -121,11 +119,11 @@ TEST_F(adt_trie_test, DefaultConstructor)
 	{
 		trie_value value = trie_get(t, keys_copy);
 
-		const char * value_str = reinterpret_cast<const char *>(value);
+		const char *value_str = reinterpret_cast<const char *>(value);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "%" PRIuS " -> %s", iterator, value_str);
 
-		EXPECT_EQ((int) 0, (int) strcmp(values_str[keys_size - iterator - 1], value_str));
+		EXPECT_EQ((int)0, (int)strcmp(values_str[keys_size - iterator - 1], value_str));
 
 		vector_pop_back(keys_copy);
 	}
@@ -134,19 +132,19 @@ TEST_F(adt_trie_test, DefaultConstructor)
 
 	last_prefix = reinterpret_cast<trie_key *>(vector_back(keys));
 
-	EXPECT_EQ((int) 0, (int) trie_prefixes(t, *last_prefix, prefixes));
+	EXPECT_EQ((int)0, (int)trie_prefixes(t, *last_prefix, prefixes));
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "cannonical path: ");
 
 	for (iterator = 0; iterator < vector_size(prefixes); ++iterator)
 	{
-		trie_key * key = reinterpret_cast<trie_key *>(vector_at(prefixes, iterator));
+		trie_key *key = reinterpret_cast<trie_key *>(vector_at(prefixes, iterator));
 
-		const char * key_str = reinterpret_cast<const char *>(*key);
+		const char *key_str = reinterpret_cast<const char *>(*key);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "%s/", key_str);
 
-		EXPECT_EQ((int) 0, (int) strcmp(keys_str[iterator], key_str));
+		EXPECT_EQ((int)0, (int)strcmp(keys_str[iterator], key_str));
 	}
 
 	vector_pop_back(keys);

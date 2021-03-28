@@ -29,9 +29,9 @@
 static FARPROC WINAPI node_loader_win32_delay_load(unsigned dliNotify, PDelayLoadInfo pdli);
 
 #if (defined(DELAYLOAD_VERSION) && DELAYLOAD_VERSION >= 0x0200) || (defined(_DELAY_IMP_VER) && (_DELAY_IMP_VER >= 2))
-	extern PfnDliHook __pfnDliFailureHook2 = node_loader_win32_delay_load;
+extern PfnDliHook __pfnDliFailureHook2 = node_loader_win32_delay_load;
 #else
-	extern PfnDliHook __pfnDliFailureHook = node_loader_win32_delay_load;
+extern PfnDliHook __pfnDliFailureHook = node_loader_win32_delay_load;
 #endif
 
 FARPROC WINAPI node_loader_win32_delay_load(unsigned dliNotify, PDelayLoadInfo pdli)

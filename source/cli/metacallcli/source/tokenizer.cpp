@@ -20,34 +20,32 @@ const std::string tokenizer::default_delimiters(" \n\t\r\v\f");
 
 /* -- Methods -- */
 
-tokenizer::tokenizer(const std::string & str) : str(str), delimiters(default_delimiters)
+tokenizer::tokenizer(const std::string &str) :
+	str(str), delimiters(default_delimiters)
 {
-
 }
 
-tokenizer::tokenizer(const std::string & str, const std::string & delimiters) :
+tokenizer::tokenizer(const std::string &str, const std::string &delimiters) :
 	str(str), delimiters(delimiters)
 {
-
 }
 
 tokenizer::~tokenizer()
 {
-
 }
 
-tokenizer::iterator::iterator(const tokenizer & t, size_t begin) :
+tokenizer::iterator::iterator(const tokenizer &t, size_t begin) :
 	t(t), offset(begin), token("")
 {
 	++(*this);
 }
 
-void tokenizer::delimit(const std::string & del)
+void tokenizer::delimit(const std::string &del)
 {
 	delimiters = del;
 }
 
-tokenizer::iterator & tokenizer::iterator::operator++()
+tokenizer::iterator &tokenizer::iterator::operator++()
 {
 	size_t token_position = t.str.find_first_not_of(t.delimiters, offset);
 
@@ -107,7 +105,7 @@ size_t tokenizer::iterator::position() const
 	return offset;
 }
 
-tokenizer::iterator::reference tokenizer::iterator::escape(const std::string & characters)
+tokenizer::iterator::reference tokenizer::iterator::escape(const std::string &characters)
 {
 	token.erase(0, token.find_first_not_of(characters));
 

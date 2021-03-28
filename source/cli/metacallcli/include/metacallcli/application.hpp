@@ -13,16 +13,16 @@
 
 #include <metacall/metacall.h>
 
-#include <string>
-#include <vector>
-#include <unordered_map>
-#include <mutex>
 #include <condition_variable>
+#include <mutex>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 /* -- Namespace -- */
 
-namespace metacallcli {
-
+namespace metacallcli
+{
 /* -- Forward Declarations -- */
 
 class tokenizer;
@@ -40,8 +40,7 @@ class application;
 */
 class application
 {
-  public:
-
+public:
 	/* -- Public Type Definitions -- */
 
 	typedef bool (*command_callback)(application &, tokenizer &);
@@ -58,7 +57,7 @@ class application
 	*  @param[in] argv
 	*    Array of strings from program parameters
 	*/
-	application(int argc, char * argv[]);
+	application(int argc, char *argv[]);
 
 	/**
 	*  @brief
@@ -79,7 +78,7 @@ class application
 	*  @return
 	*    Return true on success, false otherwhise
 	*/
-	bool load(const std::string & tag, const std::string & script);
+	bool load(const std::string &tag, const std::string &script);
 
 	/**
 	*  @brief
@@ -94,7 +93,7 @@ class application
 	*  @return
 	*    Return true on success, false otherwhise
 	*/
-	bool clear(const std::string & tag, const std::string & script);
+	bool clear(const std::string &tag, const std::string &script);
 
 	/**
 	*  @brief
@@ -118,7 +117,7 @@ class application
 	*  @param[in] t
 	*    Tokenizer wrapper of input command
 	*/
-	void command_debug(const std::string & key, const tokenizer & t);
+	void command_debug(const std::string &key, const tokenizer &t);
 
 	/**
 	*  @brief
@@ -136,7 +135,7 @@ class application
 	*  @param[in] allocator
 	*    Pointer to the allocator to be used in deserialization
 	*/
-	void command_inspect(const char * str, size_t size, void * allocator);
+	void command_inspect(const char *str, size_t size, void *allocator);
 
 	/**
 	*  @brief
@@ -148,7 +147,7 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct
 	*/
-	void * argument_parse(parser_parameter & p);
+	void *argument_parse(parser_parameter &p);
 
 	/**
 	*  @brief
@@ -163,7 +162,7 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct with the result of the call
 	*/
-	void * metacallv_adaptor(const std::string & name, const std::vector<void *> & args);
+	void *metacallv_adaptor(const std::string &name, const std::vector<void *> &args);
 
 	/**
 	*  @brief
@@ -181,7 +180,7 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct with the result of the call
 	*/
-	void * metacallfs_adaptor(const std::string & name, const std::string & args, void * allocator);
+	void *metacallfs_adaptor(const std::string &name, const std::string &args, void *allocator);
 
 	/**
 	*  @brief
@@ -199,10 +198,9 @@ class application
 	*  @return
 	*    Return a new value instanced if argument was correct with the result of the call
 	*/
-	void * metacallfs_await_adaptor(const std::string & name, const std::string & args, void * allocator);
+	void *metacallfs_await_adaptor(const std::string &name, const std::string &args, void *allocator);
 
-  protected:
-
+protected:
 	/* -- Protected Definitions -- */
 
 	static const size_t arguments_str_size;
@@ -216,7 +214,7 @@ class application
 	*  @param[in out] t
 	*    Tokenizer wrapper of input command
 	*/
-	void execute(tokenizer & t);
+	void execute(tokenizer &t);
 
 	/**
 	*  @brief
@@ -228,10 +226,9 @@ class application
 	*  @param[in] command_cb
 	*    Handler will be raised on @key command entered
 	*/
-	void define(const char * key, command_callback command_cb);
+	void define(const char *key, command_callback command_cb);
 
-  private:
-
+private:
 	/* -- Private Type Definitions -- */
 
 	typedef std::vector<std::string> arg_list;
@@ -244,8 +241,7 @@ class application
 
 	class parameter_iterator
 	{
-	  public:
-
+	public:
 		/* -- Public Methods -- */
 
 		/**
@@ -255,7 +251,7 @@ class application
 		*  @param[in] app
 		*    Reference to the application
 		*/
-		parameter_iterator(application & app);
+		parameter_iterator(application &app);
 
 		/**
 		*  @brief
@@ -270,7 +266,7 @@ class application
 		*  @param[in] parameter
 		*    Current parameter being iterated
 		*/
-		void operator()(const char * parameter);
+		void operator()(const char *parameter);
 
 		/**
 		*  @brief
@@ -279,13 +275,12 @@ class application
 		*  @return
 		*    Returns a reference to itself
 		*/
-		parameter_iterator & operator=(const parameter_iterator &) = delete;
+		parameter_iterator &operator=(const parameter_iterator &) = delete;
 
-	  private:
-
+	private:
 		/* -- Private Member Data -- */
 
-		application & app;			/**< Reference to the application */
+		application &app; /**< Reference to the application */
 	};
 
 	/* -- Private Member Data -- */
@@ -295,7 +290,7 @@ class application
 	script_list scripts;				/**< Vector containing a list of script names */
 	command_table commands;				/**< Hash table from command strings to command handlers */
 	std::mutex await_mutex;				/**< Mutex for blocking the REPL until await is resolved */
-	std::condition_variable await_cond;	/**< Condition to be fired once await method is resolved or rejected */
+	std::condition_variable await_cond; /**< Condition to be fired once await method is resolved or rejected */
 };
 
 } /* namespace metacallcli */

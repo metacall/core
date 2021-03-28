@@ -32,89 +32,87 @@ TEST_F(metacall_handle_export_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"example.py"
 		};
 
-		void * v, * handle = NULL;
+		void *v, *handle = NULL;
 
-		char * value_str = NULL;
+		char *value_str = NULL;
 
 		size_t size = 0;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), &handle));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), &handle));
 
-		ASSERT_NE((void *) NULL, (void *) handle);
+		ASSERT_NE((void *)NULL, (void *)handle);
 
 		v = metacall_handle_export(handle);
 
-		EXPECT_NE((void *) NULL, (void *) v);
+		EXPECT_NE((void *)NULL, (void *)v);
 
 		value_str = metacall_serialize(metacall_serial(), v, &size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) value_str);
+		EXPECT_NE((char *)NULL, (char *)value_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << value_str << std::endl;
 
 		metacall_value_destroy(v);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const char * node_scripts[] =
-		{
+		const char *node_scripts[] = {
 			"nod.js"
 		};
 
-		void * v, * handle = NULL;
+		void *v, *handle = NULL;
 
-		char * value_str = NULL;
+		char *value_str = NULL;
 
 		size_t size = 0;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), &handle));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts, sizeof(node_scripts) / sizeof(node_scripts[0]), &handle));
 
-		ASSERT_NE((void *) NULL, (void *) handle);
+		ASSERT_NE((void *)NULL, (void *)handle);
 
 		v = metacall_handle_export(handle);
 
-		EXPECT_NE((void *) NULL, (void *) v);
+		EXPECT_NE((void *)NULL, (void *)v);
 
 		value_str = metacall_serialize(metacall_serial(), v, &size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) value_str);
+		EXPECT_NE((char *)NULL, (char *)value_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << value_str << std::endl;
 
 		metacall_value_destroy(v);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{
 		size_t size = 0;
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -123,5 +121,5 @@ TEST_F(metacall_handle_export_test, DefaultConstructor)
 
 	metacall_allocator_destroy(allocator);
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -22,10 +22,11 @@
 
 #include <log/log.h>
 
-#include <string.h>
 #include <limits.h>
+#include <string.h>
 
-netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_path) : netcore(dotnet_root, dotnet_loader_assembly_path), domainId(0)
+netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_path) :
+	netcore(dotnet_root, dotnet_loader_assembly_path), domainId(0)
 {
 	if (dotnet_root == NULL)
 	{
@@ -46,7 +47,7 @@ netcore_linux::netcore_linux(char * dotnet_root, char * dotnet_loader_assembly_p
 		}
 	}
 
-	if(getcwd(this->appPath, MAX_LONGPATH) == NULL)
+	if (getcwd(this->appPath, MAX_LONGPATH) == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "getcwd error");
 	}
@@ -61,7 +62,7 @@ bool netcore_linux::ConfigAssemblyName()
 {
 	std::string::size_type pos = std::string(this->dotnet_loader_assembly_path).find_last_of("\\/");
 
-    std::string dotnet_loader_assembly_directory = std::string(this->dotnet_loader_assembly_path).substr(0, pos);
+	std::string dotnet_loader_assembly_directory = std::string(this->dotnet_loader_assembly_path).substr(0, pos);
 
 	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
 
@@ -83,12 +84,11 @@ bool netcore_linux::ConfigAssemblyName()
 			this->managedAssemblyFullName.append(this->appPath);
 			this->managedAssemblyFullName.append("/");
 
-			if(this->dotnet_loader_assembly_path[0] == '.')
+			if (this->dotnet_loader_assembly_path[0] == '.')
 			{
 				string simpleName;
-				simpleName.append(this->dotnet_loader_assembly_path+2);
+				simpleName.append(this->dotnet_loader_assembly_path + 2);
 				this->managedAssemblyFullName.append(simpleName);
-
 			}
 			else
 			{
@@ -118,7 +118,8 @@ bool netcore_linux::CreateHost()
 {
 	dynlink handle = dynlink_load(this->runtimePath.c_str(), this->coreClrLibName.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
-	if (handle == NULL) {
+	if (handle == NULL)
+	{
 		return false;
 	}
 
@@ -141,9 +142,9 @@ bool netcore_linux::CreateHost()
 	//auto coreclr_shutdown = dl->getFunction<coreclrShutdownFunction>("coreclr_shutdown");
 	//auto coreclr_create_delegate = dl->getFunction<coreclrCreateDelegateFunction>("coreclr_create_delegate");
 
-	this->coreclr_initialize = (coreclrInitializeFunction*)dynlink_coreclr_initialize;
-	this->coreclr_shutdown = (coreclrShutdownFunction*)dynlink_coreclr_shutdown;
-	this->coreclr_create_delegate = (coreclrCreateDelegateFunction*)dynlink_coreclr_create_delegate;
+	this->coreclr_initialize = (coreclrInitializeFunction *)dynlink_coreclr_initialize;
+	this->coreclr_shutdown = (coreclrShutdownFunction *)dynlink_coreclr_shutdown;
+	this->coreclr_create_delegate = (coreclrCreateDelegateFunction *)dynlink_coreclr_create_delegate;
 
 	if (this->coreclr_initialize == NULL)
 	{
@@ -171,10 +172,10 @@ bool netcore_linux::CreateHost()
 
 	int status = -1;
 
-    /* TODO: Make this trick more portable... */
+	/* TODO: Make this trick more portable... */
 	std::string exe_path_str;
 
-	const char * exe_path = getenv("_");
+	const char *exe_path = getenv("_");
 
 	if (exe_path != NULL)
 	{
@@ -205,15 +206,13 @@ bool netcore_linux::CreateHost()
 		propertyKeys,
 		propertyValues,
 		&hostHandle,
-		&domainId
-	);
+		&domainId);
 
 	if (status < 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize status (0x%08x)", status);
 		return false;
 	}
-
 
 	if (!this->create_delegates())
 	{
@@ -228,7 +227,7 @@ bool netcore_linux::LoadMain()
 	return true;
 }
 
-bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void ** funcs)
+bool netcore_linux::create_delegate(const CHARSTRING *delegateName, void **funcs)
 {
 	int status = -1;
 
@@ -245,7 +244,7 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void ** fun
 			delegateName,
 			funcs);
 	}
-	catch (std::exception & ex)
+	catch (std::exception &ex)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "CreateDelegate exception (%s)", ex.what());
 	}
@@ -261,8 +260,8 @@ bool netcore_linux::create_delegate(const CHARSTRING * delegateName, void ** fun
 
 bool netcore_linux::start()
 {
-    if (!ConfigAssemblyName())
-    {
+	if (!ConfigAssemblyName())
+	{
 		return false;
 	}
 

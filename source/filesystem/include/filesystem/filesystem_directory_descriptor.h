@@ -33,7 +33,7 @@ extern "C" {
 
 /* -- Definitions -- */
 
-#define DIRECTORY_DESCRIPTOR_PATH_SIZE		0x0200
+#define DIRECTORY_DESCRIPTOR_PATH_SIZE 0x0200
 
 /* -- Forward Declarations -- */
 
@@ -41,7 +41,7 @@ struct directory_descriptor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct directory_descriptor_type * directory_descriptor;
+typedef struct directory_descriptor_type *directory_descriptor;
 
 /* -- Methods -- */
 
@@ -58,7 +58,7 @@ typedef struct directory_descriptor_type * directory_descriptor;
 *  @return
 *    A pointer to the directory descriptor if success, null pointer otherwhise
 */
-FILESYSTEM_API directory_descriptor directory_descriptor_create(directory_descriptor parent, const char * path);
+FILESYSTEM_API directory_descriptor directory_descriptor_create(directory_descriptor parent, const char *path);
 
 /**
 *  @brief
@@ -82,7 +82,7 @@ FILESYSTEM_API directory_descriptor directory_descriptor_parent(directory_descri
 *  @return
 *    A constant string pointer to the path of @d
 */
-FILESYSTEM_API const char * directory_descriptor_path(directory_descriptor d);
+FILESYSTEM_API const char *directory_descriptor_path(directory_descriptor d);
 
 /**
 *  @brief

@@ -24,16 +24,16 @@
 
 int comparable_callback_str(const comparable a, const comparable b)
 {
-	const char * str_a = a;
-	const char * str_b = b;
+	const char *str_a = a;
+	const char *str_b = b;
 
 	return strcmp(str_a, str_b);
 }
 
 int comparable_callback_int(const comparable a, const comparable b)
 {
-	const int * int_ptr_a = a;
-	const int * int_ptr_b = b;
+	const int *int_ptr_a = a;
+	const int *int_ptr_b = b;
 
 	const int int_var_a = *int_ptr_a;
 	const int int_var_b = *int_ptr_b;
@@ -54,8 +54,8 @@ int comparable_callback_int(const comparable a, const comparable b)
 
 int comparable_callback_ptr(const comparable a, const comparable b)
 {
-	const void * void_ptr_a = a;
-	const void * void_ptr_b = b;
+	const void *void_ptr_a = a;
+	const void *void_ptr_b = b;
 
 	if (void_ptr_a < void_ptr_b)
 	{

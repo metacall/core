@@ -25,8 +25,7 @@
 
 loader_impl_interface node_loader_impl_interface_singleton(void)
 {
-	static struct loader_impl_interface_type loader_impl_interface_node =
-	{
+	static struct loader_impl_interface_type loader_impl_interface_node = {
 		&node_loader_impl_initialize,
 		&node_loader_impl_execution_path,
 		&node_loader_impl_load_from_file,
@@ -40,17 +39,17 @@ loader_impl_interface node_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_node;
 }
 
-const char * node_loader_print_info()
+const char *node_loader_print_info()
 {
 	static const char node_loader_info[] =
 		"Javascript Loader Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef JS_LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef JS_LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

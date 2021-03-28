@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <metacall-integration-test/environment.hpp>
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
 	::testing::InitGoogleTest(&argc, argv);
 	::testing::AddGlobalTestEnvironment(new environment());

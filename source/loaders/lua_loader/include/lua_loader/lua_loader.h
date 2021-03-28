@@ -35,7 +35,7 @@ LUA_LOADER_API loader_impl_interface lua_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(lua_loader_impl_interface_singleton);
 
-LUA_LOADER_API const char * lua_loader_print_info(void);
+LUA_LOADER_API const char *lua_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(lua_loader_print_info);
 

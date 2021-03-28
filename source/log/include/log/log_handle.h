@@ -41,7 +41,7 @@ struct log_handle_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_handle_type * log_handle;
+typedef struct log_handle_type *log_handle;
 
 /* -- Methods -- */
 

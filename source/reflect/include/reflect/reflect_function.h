@@ -30,11 +30,11 @@ extern "C" {
 
 struct function_type;
 
-typedef void * function_impl;
+typedef void *function_impl;
 
-typedef struct function_type * function;
+typedef struct function_type *function;
 
-typedef void * function_args[];
+typedef void *function_args[];
 
 typedef value function_return;
 
@@ -67,7 +67,7 @@ enum function_async_id
 
 typedef function_interface (*function_impl_interface_singleton)(void);
 
-REFLECT_API function function_create(const char * name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
+REFLECT_API function function_create(const char *name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
 
 REFLECT_API int function_increment_reference(function func);
 
@@ -77,11 +77,11 @@ REFLECT_API void function_async(function func, enum function_async_id async);
 
 REFLECT_API enum function_async_id function_async_id(function func);
 
-REFLECT_API void function_bind(function func, void * data);
+REFLECT_API void function_bind(function func, void *data);
 
-REFLECT_API void * function_closure(function func);
+REFLECT_API void *function_closure(function func);
 
-REFLECT_API const char * function_name(function func);
+REFLECT_API const char *function_name(function func);
 
 REFLECT_API signature function_signature(function func);
 
@@ -89,7 +89,7 @@ REFLECT_API value function_metadata(function func);
 
 REFLECT_API function_return function_call(function func, function_args args, size_t size);
 
-REFLECT_API function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context);
+REFLECT_API function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context);
 
 REFLECT_API void function_destroy(function func);
 

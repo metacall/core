@@ -13,8 +13,8 @@
 
 #include <adt/adt_api.h>
 
-#include <adt/adt_hash.h>
 #include <adt/adt_comparable.h>
+#include <adt/adt_hash.h>
 #include <adt/adt_vector.h>
 
 #ifdef __cplusplus
@@ -31,15 +31,15 @@ struct trie_type;
 
 /* -- Type Definitions -- */
 
-typedef struct trie_type * trie;
+typedef struct trie_type *trie;
 
 typedef hash trie_hash;
 
 typedef comparable trie_key;
 
-typedef void * trie_value;
+typedef void *trie_value;
 
-typedef void * trie_cb_iterate_args;
+typedef void *trie_cb_iterate_args;
 
 typedef hash_callback trie_cb_hash;
 

@@ -20,8 +20,8 @@
 
 #include <adt/adt_set.h>
 
-#include <reflect/reflect_value_type.h>
 #include <reflect/reflect_class.h>
+#include <reflect/reflect_value_type.h>
 
 #include <log/log.h>
 
@@ -30,7 +30,7 @@
 
 struct class_type
 {
-	char * name;
+	char *name;
 	class_impl impl;
 	class_interface interface;
 	size_t ref_count;
@@ -38,7 +38,7 @@ struct class_type
 
 static value class_metadata_name(klass cls);
 
-klass class_create(const char * name, class_impl impl, class_impl_interface_singleton singleton)
+klass class_create(const char *name, class_impl impl, class_impl_interface_singleton singleton)
 {
 	klass cls = malloc(sizeof(struct class_type));
 
@@ -128,7 +128,7 @@ REFLECT_API class_impl class_impl_get(klass cls)
 	return cls->impl;
 }
 
-const char * class_name(klass cls)
+const char *class_name(klass cls)
 {
 	if (cls != NULL)
 	{
@@ -144,7 +144,7 @@ value class_metadata_name(klass cls)
 
 	value name = value_create_array(NULL, 2);
 
-	value * name_array;
+	value *name_array;
 
 	if (name == NULL)
 	{
@@ -180,7 +180,7 @@ value class_metadata(klass cls)
 
 	value name, c;
 
-	value * c_map;
+	value *c_map;
 
 	/* Create class name array */
 	name = class_metadata_name(cls);
@@ -203,11 +203,11 @@ value class_metadata(klass cls)
 	c_map = value_to_map(c);
 
 	c_map[0] = name;
-	
+
 	return c;
 }
 
-object class_new(klass cls, const char * name, class_args args, size_t argc)
+object class_new(klass cls, const char *name, class_args args, size_t argc)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->constructor != NULL)
 	{
@@ -226,7 +226,7 @@ object class_new(klass cls, const char * name, class_args args, size_t argc)
 	return NULL;
 }
 
-value class_static_get(klass cls, const char * key)
+value class_static_get(klass cls, const char *key)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_get != NULL)
 	{
@@ -245,7 +245,7 @@ value class_static_get(klass cls, const char * key)
 	return NULL;
 }
 
-int class_static_set(klass cls, const char * key, value v)
+int class_static_set(klass cls, const char *key, value v)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_set != NULL)
 	{
@@ -262,7 +262,7 @@ int class_static_set(klass cls, const char * key, value v)
 	return 1;
 }
 
-value class_static_call(klass cls, const char * name, class_args args, size_t argc)
+value class_static_call(klass cls, const char *name, class_args args, size_t argc)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL)
 	{
@@ -281,7 +281,7 @@ value class_static_call(klass cls, const char * name, class_args args, size_t ar
 	return NULL;
 }
 
-value class_static_await(klass cls, const char * name, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void * context)
+value class_static_await(klass cls, const char *name, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL)
 	{

@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_ruby_fail_test : public testing::Test
 {
@@ -35,21 +35,20 @@ TEST_F(metacall_ruby_fail_test, DefaultConstructor)
 
 	metacall_log_stdio_type log_stdio = { stdout };
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
-		const char * rb_scripts[] =
-		{
+		const char *rb_scripts[] = {
 			"invalid.rb"
 		};
 
-		EXPECT_EQ((int) 1, (int) metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
+		EXPECT_EQ((int)1, (int)metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

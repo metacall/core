@@ -32,26 +32,26 @@
 
 class configuration_test : public testing::Test
 {
-  public:
+public:
 };
 
 TEST_F(configuration_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
 	const char key_value[] = "value";
 
-	char * configuration_path = environment_variable_create(CONFIGURATION_PATH, NULL);
+	char *configuration_path = environment_variable_create(CONFIGURATION_PATH, NULL);
 
 	memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
 
-	ASSERT_NE((memory_allocator) NULL, (memory_allocator) allocator);
+	ASSERT_NE((memory_allocator)NULL, (memory_allocator)allocator);
 
-	ASSERT_EQ((int) 0, (int) configuration_initialize("rapid_json", configuration_path, allocator));
+	ASSERT_EQ((int)0, (int)configuration_initialize("rapid_json", configuration_path, allocator));
 
 	environment_variable_destroy(configuration_path);
 
@@ -62,19 +62,19 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		configuration global = configuration_scope(name);
 
-		ASSERT_NE((configuration) NULL, (configuration) global);
+		ASSERT_NE((configuration)NULL, (configuration)global);
 
 		value v = configuration_value(global, key_value);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 12345, (int) value_to_int(v));
+		EXPECT_EQ((int)12345, (int)value_to_int(v));
 
 		v = configuration_value(global, key_value_local);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 321321, (int) value_to_int(v));
+		EXPECT_EQ((int)321321, (int)value_to_int(v));
 	}
 
 	/* Child A */
@@ -84,19 +84,19 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		configuration child_a = configuration_scope(name);
 
-		ASSERT_NE((configuration) NULL, (configuration) child_a);
+		ASSERT_NE((configuration)NULL, (configuration)child_a);
 
 		value v = configuration_value(child_a, key_value);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 65432345, (int) value_to_int(v));
+		EXPECT_EQ((int)65432345, (int)value_to_int(v));
 
 		v = configuration_value(child_a, key_value_local);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 555, (int) value_to_int(v));
+		EXPECT_EQ((int)555, (int)value_to_int(v));
 	}
 
 	/* Child B */
@@ -106,19 +106,19 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		configuration child_b = configuration_scope(name);
 
-		ASSERT_NE((configuration) NULL, (configuration) child_b);
+		ASSERT_NE((configuration)NULL, (configuration)child_b);
 
 		value v = configuration_value(child_b, key_value);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 54321, (int) value_to_int(v));
+		EXPECT_EQ((int)54321, (int)value_to_int(v));
 
 		v = configuration_value(child_b, key_value_local);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 333, (int) value_to_int(v));
+		EXPECT_EQ((int)333, (int)value_to_int(v));
 	}
 
 	/* Child C */
@@ -128,19 +128,19 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		configuration child_c = configuration_scope(name);
 
-		ASSERT_NE((configuration) NULL, (configuration) child_c);
+		ASSERT_NE((configuration)NULL, (configuration)child_c);
 
 		value v = configuration_value(child_c, key_value);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 1111, (int) value_to_int(v));
+		EXPECT_EQ((int)1111, (int)value_to_int(v));
 
 		v = configuration_value(child_c, key_value_local);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 8080, (int) value_to_int(v));
+		EXPECT_EQ((int)8080, (int)value_to_int(v));
 	}
 
 	/* Child D */
@@ -150,19 +150,19 @@ TEST_F(configuration_test, DefaultConstructor)
 
 		configuration child_d = configuration_scope(name);
 
-		ASSERT_NE((configuration) NULL, (configuration) child_d);
+		ASSERT_NE((configuration)NULL, (configuration)child_d);
 
 		value v = configuration_value(child_d, key_value);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 22222, (int) value_to_int(v));
+		EXPECT_EQ((int)22222, (int)value_to_int(v));
 
 		v = configuration_value(child_d, key_value_local);
 
-		ASSERT_NE((value) NULL, (value) v);
+		ASSERT_NE((value)NULL, (value)v);
 
-		EXPECT_EQ((int) 999999, (int) value_to_int(v));
+		EXPECT_EQ((int)999999, (int)value_to_int(v));
 	}
 
 	configuration_destroy();

@@ -55,7 +55,7 @@ DYNLINK_SYMBOL_EXPORT(metacall_serial_impl_interface_singleton);
 *    Static string containing module information
 *
 */
-METACALL_SERIAL_API const char * metacall_serial_print_info(void);
+METACALL_SERIAL_API const char *metacall_serial_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(metacall_serial_print_info);
 

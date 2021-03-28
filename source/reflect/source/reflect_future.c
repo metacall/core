@@ -66,7 +66,7 @@ future future_create(future_impl impl, future_impl_interface_singleton singleton
 	return f;
 }
 
-future_return future_await(future f, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void * context)
+future_return future_await(future f, future_resolve_callback resolve_callback, future_reject_callback reject_callback, void *context)
 {
 	if (f != NULL)
 	{

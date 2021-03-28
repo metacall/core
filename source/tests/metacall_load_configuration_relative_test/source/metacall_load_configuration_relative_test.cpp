@@ -34,37 +34,36 @@ TEST_F(metacall_load_configuration_relative_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	void * config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	void *config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	ASSERT_NE((void *) NULL, (void *) config_allocator);
+	ASSERT_NE((void *)NULL, (void *)config_allocator);
 
-	/* NodeJS */
-	#if defined(OPTION_BUILD_LOADERS_NODE)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const enum metacall_value_id hello_boy_double_ids[] =
-		{
+		const enum metacall_value_id hello_boy_double_ids[] = {
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_configuration(RELATIVE_CONFIGURATION_PATH "metacall_load_from_configuration_relative_node_test.json", NULL, config_allocator));
+		ASSERT_EQ((int)0, (int)metacall_load_from_configuration(RELATIVE_CONFIGURATION_PATH "metacall_load_from_configuration_relative_node_test.json", NULL, config_allocator));
 
 		ret = metacallt("hello_boy", hello_boy_double_ids, 3.0, 4.0);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double) metacall_value_to_double(ret), (double) 7.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)7.0);
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_NODE */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	metacall_allocator_destroy(config_allocator);
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -22,17 +22,17 @@
 
 #include <portability/portability.h>
 
-const char * portability_print_info()
+const char *portability_print_info()
 {
 	static const char portability_info[] =
 		"Portability Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef PORTABILITY_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef PORTABILITY_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

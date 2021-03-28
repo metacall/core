@@ -32,28 +32,26 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Ruby */
-	#if defined(OPTION_BUILD_LOADERS_RB)
+/* Ruby */
+#if defined(OPTION_BUILD_LOADERS_RB)
 	{
-		const char * rb_ducktype_scripts[] =
-		{
+		const char *rb_ducktype_scripts[] = {
 			"ducktype.rb"
 		};
 
-		const char * rb_second_scripts[] =
-		{
+		const char *rb_second_scripts[] = {
 			"second.rb"
 		};
 
 		/* Both scripts have get_second function which should fail when trying to load */
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("rb", rb_ducktype_scripts, sizeof(rb_ducktype_scripts) / sizeof(rb_ducktype_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_ducktype_scripts, sizeof(rb_ducktype_scripts) / sizeof(rb_ducktype_scripts[0]), NULL));
 
-		EXPECT_NE((int) 0, (int) metacall_load_from_file("rb", rb_second_scripts, sizeof(rb_second_scripts) / sizeof(rb_second_scripts[0]), NULL));
+		EXPECT_NE((int)0, (int)metacall_load_from_file("rb", rb_second_scripts, sizeof(rb_second_scripts) / sizeof(rb_second_scripts[0]), NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_RB */
+#endif /* OPTION_BUILD_LOADERS_RB */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

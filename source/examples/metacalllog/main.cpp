@@ -31,7 +31,7 @@ static const char format[] = "%.19s #%d %s:%d %s @%s ";
 
 /* -- Private Methods -- */
 
-static size_t format_size(void * context, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, metacall_log_custom_va_list args)
+static size_t format_size(void *context, const char *time, uint64_t id, size_t line, const char *func, const char *file, const char *level, const char *message, metacall_log_custom_va_list args)
 {
 	size_t length = 0;
 
@@ -40,11 +40,11 @@ static size_t format_size(void * context, const char * time, uint64_t id, size_t
 	if (args != NULL)
 	{
 		va_list va;
-		
+
 		va_copy(va, args->va);
 
 		length = vsnprintf(NULL, 0, message, va);
-		
+
 		va_end(va);
 	}
 	else
@@ -55,17 +55,17 @@ static size_t format_size(void * context, const char * time, uint64_t id, size_t
 	return snprintf(NULL, 0, format, time, (int)id, file, (int)line, func, level) + length + 1;
 }
 
-static size_t format_serialize(void * context, void * buffer, const size_t size, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, metacall_log_custom_va_list args)
+static size_t format_serialize(void *context, void *buffer, const size_t size, const char *time, uint64_t id, size_t line, const char *func, const char *file, const char *level, const char *message, metacall_log_custom_va_list args)
 {
 	size_t length = snprintf((char *)buffer, size, format, time, (int)id, file, (int)line, func, level);
-	char * body = &(((char *)buffer)[length]);
+	char *body = &(((char *)buffer)[length]);
 
 	(void)context;
 
 	if (args != NULL)
 	{
 		va_list va;
-		
+
 		va_copy(va, args->va);
 
 		length += vsnprintf(body, size - length, message, va);
@@ -80,7 +80,7 @@ static size_t format_serialize(void * context, void * buffer, const size_t size,
 	return length + 1;
 }
 
-static size_t format_deserialize(void * context, const void * buffer, const size_t size, const char * time, uint64_t id, size_t line, const char * func, const char * file, const char * level, const char * message, metacall_log_custom_va_list args)
+static size_t format_deserialize(void *context, const void *buffer, const size_t size, const char *time, uint64_t id, size_t line, const char *func, const char *file, const char *level, const char *message, metacall_log_custom_va_list args)
 {
 	/* TODO */
 
@@ -98,7 +98,7 @@ static size_t format_deserialize(void * context, const void * buffer, const size
 	return size;
 }
 
-static int stream_flush(void * context)
+static int stream_flush(void *context)
 {
 	(void)context;
 
@@ -107,7 +107,7 @@ static int stream_flush(void * context)
 	return 0;
 }
 
-static int stream_write(void * context, const char * buffer, const size_t size)
+static int stream_write(void *context, const char *buffer, const size_t size)
 {
 	(void)size;
 
@@ -116,15 +116,13 @@ static int stream_write(void * context, const char * buffer, const size_t size)
 	return 0;
 }
 
-
 /* -- Methods -- */
 
-int main(int, char * [])
+int main(int, char *[])
 {
 	static const char context[] = "custom log";
 
-	struct metacall_log_custom_type custom_log =
-	{
+	struct metacall_log_custom_type custom_log = {
 		(void *)context,
 		&format_size,
 		&format_serialize,

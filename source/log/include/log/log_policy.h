@@ -45,17 +45,17 @@ struct log_policy_interface_type;
 
 typedef size_t log_policy_id;
 
-typedef void * log_policy_impl;
+typedef void *log_policy_impl;
 
-typedef void * log_policy_data;
+typedef void *log_policy_data;
 
-typedef void * log_policy_ctor;
+typedef void *log_policy_ctor;
 
 typedef int (*log_policy_interface_create)(log_policy, const log_policy_ctor);
 
 typedef int (*log_policy_interface_destroy)(log_policy);
 
-typedef struct log_policy_interface_type * log_policy_interface;
+typedef struct log_policy_interface_type *log_policy_interface;
 
 typedef log_policy_interface (*log_policy_singleton)(void);
 

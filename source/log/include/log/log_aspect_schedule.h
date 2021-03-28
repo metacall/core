@@ -25,9 +25,9 @@ struct log_aspect_schedule_impl_type;
 
 /* -- Type Definitions -- */
 
-typedef void * log_aspect_schedule_data;
+typedef void *log_aspect_schedule_data;
 
-typedef struct log_aspect_schedule_impl_type * log_aspect_schedule_impl;
+typedef struct log_aspect_schedule_impl_type *log_aspect_schedule_impl;
 
 typedef int (*log_aspect_schedule_execute_cb)(log_policy, log_aspect_schedule_data);
 

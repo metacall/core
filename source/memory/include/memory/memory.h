@@ -26,8 +26,8 @@
 #include <memory/memory_api.h>
 
 #include <memory/memory_allocator.h>
-#include <memory/memory_allocator_std.h>
 #include <memory/memory_allocator_nginx.h>
+#include <memory/memory_allocator_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,7 +35,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-MEMORY_API const char * memory_print_info(void);
+MEMORY_API const char *memory_print_info(void);
 
 #ifdef __cplusplus
 }

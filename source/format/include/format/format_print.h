@@ -33,40 +33,39 @@ extern "C" {
 
 /* -- Headers -- */
 
-#include <stdio.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 /* -- Macros -- */
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER < 1900)
-#	ifndef snprintf
-#		define snprintf _snprintf
-#	endif
-#	ifndef vsnprintf
-#		define vsnprintf _vsnprintf
-#	endif
-#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) || \
-	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) || \
+	#ifndef snprintf
+		#define snprintf _snprintf
+	#endif
+	#ifndef vsnprintf
+		#define vsnprintf _vsnprintf
+	#endif
+#elif (defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1900)) ||                      \
+	defined(_BSD_SOURCE) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 500) ||            \
 	defined(_ISOC99_SOURCE) || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) || \
 	defined(__HAIKU__) || defined(__BEOS__)
 
 	/* Supported */
 
 #else
-#	ifndef snprintf
-#		define snprintf snprintf_impl_c89
-#	endif
-#	ifndef vsnprintf
-#		define vsnprintf vsnprintf_impl_c89
-#	endif
+	#ifndef snprintf
+		#define snprintf snprintf_impl_c89
+	#endif
+	#ifndef vsnprintf
+		#define vsnprintf vsnprintf_impl_c89
+	#endif
 #endif
 
 /* -- Methods -- */
 
+FORMAT_API int snprintf_impl_c89(char *s, size_t n, const char *format, ...);
 
-FORMAT_API int snprintf_impl_c89(char * s, size_t n, const char * format, ...);
-
-FORMAT_API int vsnprintf_impl_c89(char * s, size_t n, const char * format, va_list arg);
+FORMAT_API int vsnprintf_impl_c89(char *s, size_t n, const char *format, va_list arg);
 
 #ifdef __cplusplus
 }

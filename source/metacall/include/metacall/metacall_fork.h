@@ -29,34 +29,34 @@
 extern "C" {
 #endif
 
-#if defined(WIN32) || defined(_WIN32) || \
+#if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
 
-/* -- Headers -- */
+	/* -- Headers -- */
 
-#include <process.h>
+	#include <process.h>
 
 /* -- Type Definitions -- */
 
 typedef int metacall_pid;
 
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-/* -- Headers -- */
+	/* -- Headers -- */
 
-#include <sys/types.h>
-#include <unistd.h>
+	#include <sys/types.h>
+	#include <unistd.h>
 
 /* -- Type Definitions -- */
 
 typedef pid_t metacall_pid;
 
 #else
-#	error "Unknown metacall fork safety platform"
+	#error "Unknown metacall fork safety platform"
 #endif
 
 typedef int (*metacall_pre_fork_callback_ptr)(void *);
@@ -98,4 +98,4 @@ METACALL_API int metacall_fork_destroy(void);
 }
 #endif
 
-#endif  /* METACALL_FORK_H */
+#endif /* METACALL_FORK_H */

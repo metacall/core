@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+if git log --pretty="%ae%n%ce" | sort | uniq | grep -q "$(git config user.email)"; then
+    exit 0
+else
+    if git log --pretty="%an%n%cn" | sort | uniq | grep -q "$(git config user.name)"; then
+        exit 0
+    else
+        printf "Please add yourself (copy the next line) to the CONTRIBUTORS.md file.\n";
+        printf '%s <%s>\n\n' "$(git config user.name)" "$(git config user.email)";
+        exit 1
+    fi
+fi

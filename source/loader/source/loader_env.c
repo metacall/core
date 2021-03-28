@@ -15,15 +15,15 @@
 /* -- Definitions -- */
 
 #define LOADER_LIBRARY_PATH			"LOADER_LIBRARY_PATH"
-#define LOADER_LIBRARY_DEFAULT_PATH	"loaders"
+#define LOADER_LIBRARY_DEFAULT_PATH "loaders"
 
-#define LOADER_SCRIPT_PATH			"LOADER_SCRIPT_PATH"
-#define LOADER_SCRIPT_DEFAULT_PATH	"."
+#define LOADER_SCRIPT_PATH		   "LOADER_SCRIPT_PATH"
+#define LOADER_SCRIPT_DEFAULT_PATH "."
 
 /* -- Private Data -- */
 
-static char * script_path = NULL;
-static char * library_path = NULL;
+static char *script_path = NULL;
+static char *library_path = NULL;
 
 /* -- Methods -- */
 
@@ -31,11 +31,11 @@ void loader_env_initialize()
 {
 	if (library_path == NULL)
 	{
-		#if defined(LOADER_LIBRARY_INSTALL_PATH)
-			static const char loader_library_default_path[] = LOADER_LIBRARY_INSTALL_PATH;
-		#else
-			static const char loader_library_default_path[] = LOADER_LIBRARY_DEFAULT_PATH;
-		#endif /* LOADER_LIBRARY_INSTALL_PATH */
+#if defined(LOADER_LIBRARY_INSTALL_PATH)
+		static const char loader_library_default_path[] = LOADER_LIBRARY_INSTALL_PATH;
+#else
+		static const char loader_library_default_path[] = LOADER_LIBRARY_DEFAULT_PATH;
+#endif /* LOADER_LIBRARY_INSTALL_PATH */
 
 		library_path = environment_variable_path_create(LOADER_LIBRARY_PATH, loader_library_default_path);
 
@@ -52,12 +52,12 @@ void loader_env_initialize()
 	}
 }
 
-const char * loader_env_script_path()
+const char *loader_env_script_path()
 {
 	return script_path;
 }
 
-const char * loader_env_library_path()
+const char *loader_env_library_path()
 {
 	return library_path;
 }

@@ -27,7 +27,7 @@ struct serial_type;
 
 /* -- Type Definitions -- */
 
-typedef struct serial_type * serial;
+typedef struct serial_type *serial;
 
 /* -- Methods -- */
 
@@ -52,7 +52,7 @@ SERIAL_API int serial_initialize(void);
 *    Pointer to serial on correct initialization, null otherwise
 *
 */
-SERIAL_API serial serial_create(const char * name);
+SERIAL_API serial serial_create(const char *name);
 
 /**
 *  @brief
@@ -65,7 +65,7 @@ SERIAL_API serial serial_create(const char * name);
 *    Static const string with serial extension
 *
 */
-SERIAL_API const char * serial_extension(serial s);
+SERIAL_API const char *serial_extension(serial s);
 
 /**
 *  @brief
@@ -78,7 +78,7 @@ SERIAL_API const char * serial_extension(serial s);
 *    Static const string with serial name
 *
 */
-SERIAL_API const char * serial_name(serial s);
+SERIAL_API const char *serial_name(serial s);
 
 /**
 *  @brief
@@ -103,7 +103,7 @@ SERIAL_API const char * serial_name(serial s);
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-SERIAL_API char * serial_serialize(serial s, value v, size_t * size, memory_allocator allocator);
+SERIAL_API char *serial_serialize(serial s, value v, size_t *size, memory_allocator allocator);
 
 /**
 *  @brief
@@ -125,7 +125,7 @@ SERIAL_API char * serial_serialize(serial s, value v, size_t * size, memory_allo
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-SERIAL_API value serial_deserialize(serial s, const char * buffer, size_t size, memory_allocator allocator);
+SERIAL_API value serial_deserialize(serial s, const char *buffer, size_t size, memory_allocator allocator);
 
 /**
 *  @brief
@@ -149,7 +149,7 @@ SERIAL_API void serial_destroy(void);
 *    Static string containing module information
 *
 */
-SERIAL_API const char * serial_print_info(void);
+SERIAL_API const char *serial_print_info(void);
 
 #ifdef __cplusplus
 }

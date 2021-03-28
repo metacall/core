@@ -8,8 +8,8 @@
 
 /* -- Headers -- */
 
-#include <log/log_policy_format_custom.h>
 #include <log/log_policy_format.h>
+#include <log/log_policy_format_custom.h>
 
 /* -- Forward Declarations -- */
 
@@ -17,13 +17,13 @@ struct log_policy_format_custom_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_format_custom_data_type * log_policy_format_custom_data;
+typedef struct log_policy_format_custom_data_type *log_policy_format_custom_data;
 
 /* -- Member Data -- */
 
 struct log_policy_format_custom_data_type
 {
-	void * context;
+	void *context;
 	log_policy_format_custom_size_ptr format_size;
 	log_policy_format_custom_serialize_ptr format_serialize;
 	log_policy_format_custom_deserialize_ptr format_deserialize;
@@ -35,9 +35,9 @@ static int log_policy_format_custom_create(log_policy policy, const log_policy_c
 
 static size_t log_policy_format_custom_size(log_policy policy, const log_record record);
 
-static size_t log_policy_format_custom_serialize(log_policy policy, const log_record record, void * buffer, const size_t size);
+static size_t log_policy_format_custom_serialize(log_policy policy, const log_record record, void *buffer, const size_t size);
 
-static size_t log_policy_format_custom_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size);
+static size_t log_policy_format_custom_deserialize(log_policy policy, log_record record, const void *buffer, const size_t size);
 
 static int log_policy_format_custom_destroy(log_policy policy);
 
@@ -45,15 +45,13 @@ static int log_policy_format_custom_destroy(log_policy policy);
 
 log_policy_interface log_policy_format_custom_interface()
 {
-	static struct log_policy_format_impl_type log_policy_format_custom_impl_obj =
-	{
+	static struct log_policy_format_impl_type log_policy_format_custom_impl_obj = {
 		&log_policy_format_custom_size,
 		&log_policy_format_custom_serialize,
 		&log_policy_format_custom_deserialize
 	};
 
-	static struct log_policy_interface_type policy_interface_format =
-	{
+	static struct log_policy_interface_type policy_interface_format = {
 		&log_policy_format_custom_create,
 		&log_policy_format_custom_impl_obj,
 		&log_policy_format_custom_destroy
@@ -105,7 +103,7 @@ static size_t log_policy_format_custom_size(log_policy policy, const log_record 
 		(log_policy_format_custom_va_list)log_record_variable_args(record));
 }
 
-static size_t log_policy_format_custom_serialize(log_policy policy, const log_record record, void * buffer, const size_t size)
+static size_t log_policy_format_custom_serialize(log_policy policy, const log_record record, void *buffer, const size_t size)
 {
 	log_policy_format_custom_data custom_data = log_policy_instance(policy);
 
@@ -120,7 +118,7 @@ static size_t log_policy_format_custom_serialize(log_policy policy, const log_re
 		(log_policy_format_custom_va_list)log_record_variable_args(record));
 }
 
-static size_t log_policy_format_custom_deserialize(log_policy policy, log_record record, const void * buffer, const size_t size)
+static size_t log_policy_format_custom_deserialize(log_policy policy, log_record record, const void *buffer, const size_t size)
 {
 	log_policy_format_custom_data custom_data = log_policy_instance(policy);
 

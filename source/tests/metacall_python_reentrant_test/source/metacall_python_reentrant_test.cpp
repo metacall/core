@@ -21,11 +21,11 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 #ifndef METACALL_PYTHON_REENTRANT_TEST_PY_PORT_PATH
-#	error "The path to the Python port is not defined"
+	#error "The path to the Python port is not defined"
 #endif
 
 class metacall_python_reentrant_test : public testing::Test
@@ -37,10 +37,10 @@ TEST_F(metacall_python_reentrant_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
 			"import sys\n"
@@ -51,9 +51,9 @@ TEST_F(metacall_python_reentrant_test, DefaultConstructor)
 
 		static const char tag[] = "py";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Print inspect information */
 	{
@@ -61,13 +61,13 @@ TEST_F(metacall_python_reentrant_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -76,5 +76,5 @@ TEST_F(metacall_python_reentrant_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

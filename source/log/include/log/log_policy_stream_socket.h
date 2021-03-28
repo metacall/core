@@ -29,13 +29,13 @@ struct log_policy_stream_socket_ctor_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_policy_stream_socket_ctor_type * log_policy_stream_socket_ctor;
+typedef struct log_policy_stream_socket_ctor_type *log_policy_stream_socket_ctor;
 
 /* -- Member Data -- */
 
 struct log_policy_stream_socket_ctor_type
 {
-	const char * ip;
+	const char *ip;
 	uint16_t port;
 };
 

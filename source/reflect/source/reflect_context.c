@@ -26,12 +26,11 @@
 
 struct context_type
 {
-	char * name;
+	char *name;
 	scope sp;
-
 };
 
-context context_create(const char * name)
+context context_create(const char *name)
 {
 	if (name != NULL)
 	{
@@ -63,7 +62,7 @@ context context_create(const char * name)
 	return NULL;
 }
 
-const char * context_name(context ctx)
+const char *context_name(context ctx)
 {
 	if (ctx != NULL)
 	{

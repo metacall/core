@@ -6,15 +6,14 @@
 *
 */
 
-#include <mock_loader/mock_loader_interface.h>
 #include <mock_loader/mock_loader_impl.h>
+#include <mock_loader/mock_loader_interface.h>
 
 #include <loader/loader_impl_interface.h>
 
 loader_impl_interface mock_loader_impl_interface_singleton()
 {
-	static struct loader_impl_interface_type loader_impl_interface_mock =
-	{
+	static struct loader_impl_interface_type loader_impl_interface_mock = {
 		&mock_loader_impl_initialize,
 		&mock_loader_impl_execution_path,
 		&mock_loader_impl_load,

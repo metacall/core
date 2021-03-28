@@ -28,18 +28,18 @@
 
 /* -- Definitions -- */
 
-#define VECTOR_CAPACITY_INCREMENT	2	/**< Capacity increment */
-#define VECTOR_CAPACITY_MIN		16	/**< Minimum capacity */
-#define VECTOR_CAPACITY_MIN_USED	8	/**< Max unused capacity since free memory */
+#define VECTOR_CAPACITY_INCREMENT 2	 /**< Capacity increment */
+#define VECTOR_CAPACITY_MIN		  16 /**< Minimum capacity */
+#define VECTOR_CAPACITY_MIN_USED  8	 /**< Max unused capacity since free memory */
 
 /* -- Member Data -- */
 
 struct vector_type
 {
-	size_t	type_size;	/**< Size of element type */
-	size_t	capacity;	/**< Allocated capacity of the vector */
-	size_t	size;		/**< Amount of actual elements cointained in vector */
-	void *	data;		/**< Pointer to memory block */
+	size_t type_size; /**< Size of element type */
+	size_t capacity;  /**< Allocated capacity of the vector */
+	size_t size;	  /**< Amount of actual elements cointained in vector */
+	void *data;		  /**< Pointer to memory block */
 };
 
 /* -- Private Methods -- */
@@ -57,15 +57,15 @@ struct vector_type
 *  @return
 *    A pointer to data vector memory block with offset @bytes
 */
-static void * vector_data_offset_bytes(vector v, size_t bytes);
+static void *vector_data_offset_bytes(vector v, size_t bytes);
 
 /* -- Methods -- */
 
-void * vector_data_offset_bytes(vector v, size_t bytes)
+void *vector_data_offset_bytes(vector v, size_t bytes)
 {
 	if (v != NULL && v->data != NULL && bytes < v->capacity * v->type_size)
 	{
-		return ((void*)(((char*)v->data) + (bytes)));
+		return ((void *)(((char *)v->data) + (bytes)));
 	}
 
 	return NULL;
@@ -151,7 +151,7 @@ int vector_reserve(vector v, size_t capacity)
 {
 	if (v != NULL && capacity != v->capacity)
 	{
-		register void * data;
+		register void *data;
 
 		if (capacity < VECTOR_CAPACITY_MIN)
 		{
@@ -239,7 +239,7 @@ size_t vector_type_size(vector v)
 	return 0;
 }
 
-void * vector_front(vector v)
+void *vector_front(vector v)
 {
 	if (v != NULL)
 	{
@@ -249,7 +249,7 @@ void * vector_front(vector v)
 	return NULL;
 }
 
-void * vector_back(vector v)
+void *vector_back(vector v)
 {
 	if (v != NULL)
 	{
@@ -259,7 +259,7 @@ void * vector_back(vector v)
 	return NULL;
 }
 
-void * vector_at(vector v, size_t position)
+void *vector_at(vector v, size_t position)
 {
 	if (v != NULL)
 	{
@@ -269,7 +269,7 @@ void * vector_at(vector v, size_t position)
 	return NULL;
 }
 
-void vector_set(vector v, size_t position, void * element)
+void vector_set(vector v, size_t position, void *element)
 {
 	if (v != NULL && position < v->capacity && element != NULL)
 	{
@@ -295,7 +295,7 @@ void vector_push_back_empty(vector v)
 	}
 }
 
-void vector_push_back(vector v, void * element)
+void vector_push_back(vector v, void *element)
 {
 	if (v != NULL)
 	{
@@ -349,7 +349,7 @@ void vector_push_front_empty(vector v)
 	}
 }
 
-void vector_push_front(vector v, void * element)
+void vector_push_front(vector v, void *element)
 {
 	if (v != NULL && element != NULL)
 	{
@@ -410,7 +410,7 @@ void vector_insert_empty(vector v, size_t position)
 	}
 }
 
-void vector_insert(vector v, size_t position, void * element)
+void vector_insert(vector v, size_t position, void *element)
 {
 	if (v != NULL)
 	{

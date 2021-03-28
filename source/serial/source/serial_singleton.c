@@ -21,14 +21,14 @@
 /* -- Definitions -- */
 
 #define SERIAL_LIBRARY_PATH			"SERIAL_LIBRARY_PATH"
-#define SERIAL_LIBRARY_DEFAULT_PATH	"serials"
+#define SERIAL_LIBRARY_DEFAULT_PATH "serials"
 
 /* -- Member Data -- */
 
 struct serial_singleton_type
 {
 	set serials;
-	char * library_path;
+	char *library_path;
 };
 
 /* -- Private Methods -- */
@@ -57,8 +57,7 @@ static int serial_singleton_destroy_cb_iterate(set s, set_key key, set_value val
 
 /* -- Member Data -- */
 
-static struct serial_singleton_type serial_singleton_default =
-{
+static struct serial_singleton_type serial_singleton_default = {
 	NULL,
 	NULL
 };
@@ -94,11 +93,11 @@ int serial_singleton_initialize()
 	{
 		static const char serial_library_path[] = SERIAL_LIBRARY_PATH;
 
-		#if defined(SERIAL_LIBRARY_INSTALL_PATH)
-			static const char serial_library_default_path[] = SERIAL_LIBRARY_INSTALL_PATH;
-		#else
-			static const char serial_library_default_path[] = SERIAL_LIBRARY_DEFAULT_PATH;
-		#endif /* SERIAL_LIBRARY_INSTALL_PATH */
+#if defined(SERIAL_LIBRARY_INSTALL_PATH)
+		static const char serial_library_default_path[] = SERIAL_LIBRARY_INSTALL_PATH;
+#else
+		static const char serial_library_default_path[] = SERIAL_LIBRARY_DEFAULT_PATH;
+#endif /* SERIAL_LIBRARY_INSTALL_PATH */
 
 		singleton->library_path = environment_variable_path_create(serial_library_path, serial_library_default_path);
 
@@ -119,7 +118,7 @@ int serial_singleton_register(serial s)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
-	const char * name = serial_name(s);
+	const char *name = serial_name(s);
 
 	if (set_get(singleton->serials, (set_key)name) != NULL)
 	{
@@ -129,14 +128,14 @@ int serial_singleton_register(serial s)
 	return set_insert(singleton->serials, (set_key)name, s);
 }
 
-serial serial_singleton_get(const char * name)
+serial serial_singleton_get(const char *name)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
 	return set_get(singleton->serials, (set_key)name);
 }
 
-const char * serial_singleton_path()
+const char *serial_singleton_path()
 {
 	serial_singleton singleton = serial_singleton_instance();
 
@@ -147,7 +146,7 @@ int serial_singleton_clear(serial s)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
-	const char * name = serial_name(s);
+	const char *name = serial_name(s);
 
 	if (set_get(singleton->serials, (set_key)name) == NULL)
 	{

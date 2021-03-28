@@ -21,12 +21,12 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
-void * c_function(void * args[])
+void *c_function(void *args[])
 {
-	printf("%s\n", (char*)args[0]);
+	printf("%s\n", (char *)args[0]);
 
 	return metacall_value_create_int(1);
 }
@@ -44,24 +44,23 @@ TEST_F(metacall_reinitialize_test, DefaultConstructor)
 
 	const size_t initialize_count = 10;
 
-	ASSERT_EQ((int) 0, (int) metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
+	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
 	for (size_t iterator = 0; iterator < initialize_count; ++iterator)
 	{
-		ASSERT_EQ((int) 0, (int) metacall_initialize());
+		ASSERT_EQ((int)0, (int)metacall_initialize());
 
-		/* Mock */
-		#if defined(OPTION_BUILD_LOADERS_MOCK)
+/* Mock */
+#if defined(OPTION_BUILD_LOADERS_MOCK)
 		{
-			const char * mock_scripts[] =
-			{
+			const char *mock_scripts[] = {
 				"empty.mock"
 			};
 
-			EXPECT_EQ((int) 0, (int) metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
+			EXPECT_EQ((int)0, (int)metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
 		}
-		#endif /* OPTION_BUILD_LOADERS_MOCK */
+#endif /* OPTION_BUILD_LOADERS_MOCK */
 
-		EXPECT_EQ((int) 0, (int) metacall_destroy());
+		EXPECT_EQ((int)0, (int)metacall_destroy());
 	}
 }

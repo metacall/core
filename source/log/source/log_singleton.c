@@ -6,14 +6,14 @@
  *
  */
 
-#include <log/log_singleton.h>
 #include <log/log_map.h>
+#include <log/log_singleton.h>
 
 #include <stdlib.h>
 
 /* -- Definitions -- */
 
-#define LOG_SINGLETON_MAP_SIZE	((size_t)0x0200)
+#define LOG_SINGLETON_MAP_SIZE ((size_t)0x0200)
 
 /* -- Member Data -- */
 
@@ -62,7 +62,7 @@ log_singleton log_singleton_create()
 
 int log_singleton_destroy()
 {
-	log_singleton * s = log_singleton_instance();
+	log_singleton *s = log_singleton_instance();
 
 	if (*s == NULL)
 	{
@@ -87,7 +87,7 @@ int log_singleton_destroy()
 
 log_singleton log_singleton_instance_impl()
 {
-	log_singleton * singleton_ptr = log_singleton_instance();
+	log_singleton *singleton_ptr = log_singleton_instance();
 
 	if (*singleton_ptr == NULL)
 	{
@@ -112,7 +112,7 @@ log_singleton log_singleton_instance_impl()
 	return *singleton_ptr;
 }
 
-log_singleton * log_singleton_instance()
+log_singleton *log_singleton_instance()
 {
 	static log_singleton s = NULL;
 
@@ -121,7 +121,7 @@ log_singleton * log_singleton_instance()
 
 void log_singleton_initialize(log_singleton singleton)
 {
-	log_singleton * s = log_singleton_instance();
+	log_singleton *s = log_singleton_instance();
 
 	if (*s == NULL)
 	{
@@ -136,21 +136,21 @@ size_t log_singleton_size()
 	return log_map_size(s->map);
 }
 
-int log_singleton_insert(const char * name, log_impl impl)
+int log_singleton_insert(const char *name, log_impl impl)
 {
 	log_singleton s = log_singleton_instance_impl();
 
 	return log_map_insert(s->map, name, impl);
 }
 
-log_impl log_singleton_get(const char * name)
+log_impl log_singleton_get(const char *name)
 {
 	log_singleton s = log_singleton_instance_impl();
 
 	return (log_impl)log_map_get(s->map, name);
 }
 
-log_impl log_singleton_remove(const char * name)
+log_impl log_singleton_remove(const char *name)
 {
 	log_singleton s = log_singleton_instance_impl();
 

@@ -29,7 +29,7 @@ extern "C" {
 *  @brief
 *    Generic loader function reference
 */
-typedef void * loader_function;
+typedef void *loader_function;
 
 #ifdef __cplusplus
 }

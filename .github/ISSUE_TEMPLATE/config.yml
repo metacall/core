@@ -1,0 +1,7 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Discussions
+    url: https://github.com/metacall/core/discussions
+    about: This is where long discussions could take place outside of the chat platforms.
+
+

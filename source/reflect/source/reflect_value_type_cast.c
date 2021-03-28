@@ -10,9 +10,9 @@
 
 #include <reflect/reflect_value_type.h>
 #include <reflect/reflect_value_type_cast.h>
+#include <reflect/reflect_value_type_demotion.h>
 #include <reflect/reflect_value_type_id_size.h>
 #include <reflect/reflect_value_type_promotion.h>
-#include <reflect/reflect_value_type_demotion.h>
 
 #include <stdint.h>
 
@@ -130,7 +130,7 @@ value value_type_cast(value v, type_id id)
 	/* Convert array of size 1 to a single type */
 	if (type_id_array(src_id) == 0 && id < TYPE_BUFFER && value_type_size(v) == sizeof(value))
 	{
-		value * values = value_data(v);
+		value *values = value_data(v);
 
 		value dest = values[0];
 

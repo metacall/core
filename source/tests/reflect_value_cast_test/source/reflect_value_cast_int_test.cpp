@@ -25,7 +25,7 @@
 
 class reflect_value_cast_int_test : public testing::Test
 {
-  public:
+public:
 };
 
 TEST_F(reflect_value_cast_int_test, int_to_bool_cast)
@@ -36,7 +36,7 @@ TEST_F(reflect_value_cast_int_test, int_to_bool_cast)
 
 	v = value_type_cast(v, TYPE_BOOL);
 
-	EXPECT_EQ((boolean) b, (boolean) value_to_bool(v));
+	EXPECT_EQ((boolean)b, (boolean)value_to_bool(v));
 
 	value_destroy(v);
 }
@@ -49,7 +49,7 @@ TEST_F(reflect_value_cast_int_test, int_to_char_cast)
 
 	v = value_type_cast(v, TYPE_CHAR);
 
-	EXPECT_EQ((char) i, (char) value_to_char(v));
+	EXPECT_EQ((char)i, (char)value_to_char(v));
 
 	value_destroy(v);
 }
@@ -62,7 +62,7 @@ TEST_F(reflect_value_cast_int_test, int_to_short_cast)
 
 	v = value_type_cast(v, TYPE_SHORT);
 
-	EXPECT_EQ((short) i, (short) value_to_short(v));
+	EXPECT_EQ((short)i, (short)value_to_short(v));
 
 	value_destroy(v);
 }
@@ -75,7 +75,7 @@ TEST_F(reflect_value_cast_int_test, int_to_int_cast)
 
 	v = value_type_cast(v, TYPE_INT);
 
-	EXPECT_EQ((int) i, (int) value_to_int(v));
+	EXPECT_EQ((int)i, (int)value_to_int(v));
 
 	value_destroy(v);
 }
@@ -88,7 +88,7 @@ TEST_F(reflect_value_cast_int_test, int_to_long_cast)
 
 	v = value_type_cast(v, TYPE_LONG);
 
-	EXPECT_EQ((long) i, (long) value_to_long(v));
+	EXPECT_EQ((long)i, (long)value_to_long(v));
 
 	value_destroy(v);
 }
@@ -101,7 +101,7 @@ TEST_F(reflect_value_cast_int_test, int_to_float_cast)
 
 	v = value_type_cast(v, TYPE_FLOAT);
 
-	EXPECT_EQ((float) i, (float) value_to_float(v));
+	EXPECT_EQ((float)i, (float)value_to_float(v));
 
 	value_destroy(v);
 }
@@ -114,7 +114,7 @@ TEST_F(reflect_value_cast_int_test, int_to_double_cast)
 
 	v = value_type_cast(v, TYPE_DOUBLE);
 
-	EXPECT_EQ((double) i, (double) value_to_double(v));
+	EXPECT_EQ((double)i, (double)value_to_double(v));
 
 	value_destroy(v);
 }

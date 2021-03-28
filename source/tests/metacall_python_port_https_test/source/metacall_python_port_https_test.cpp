@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_python_port_https_test : public testing::Test
 {
@@ -33,10 +33,10 @@ TEST_F(metacall_python_port_https_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		// Test import bug (__metacall_import__() missing 1 required positional argument: 'name')
 		static const char buffer[] =
@@ -57,19 +57,19 @@ TEST_F(metacall_python_port_https_test, DefaultConstructor)
 			"		sys.stdout.flush()\n"
 			"		return b'<!doctype invalid>'\n";
 
-		ASSERT_EQ((int) 0, (int) metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
-		void * ret = metacall("fetch_http_py", "www.google.com");
+		void *ret = metacall("fetch_http_py", "www.google.com");
 
 		static const char prefix[] = "<!doctype html>";
 
-		ASSERT_EQ((enum metacall_value_id) METACALL_BUFFER, (enum metacall_value_id) metacall_value_id(ret));
+		ASSERT_EQ((enum metacall_value_id)METACALL_BUFFER, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((int) 0, (int) strncmp((const char *)metacall_value_to_buffer(ret), prefix, sizeof(prefix) - 1));
+		EXPECT_EQ((int)0, (int)strncmp((const char *)metacall_value_to_buffer(ret), prefix, sizeof(prefix) - 1));
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

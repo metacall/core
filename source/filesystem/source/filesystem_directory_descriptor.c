@@ -39,13 +39,13 @@ typedef char directory_descriptor_path_str[DIRECTORY_DESCRIPTOR_PATH_SIZE];
 struct directory_descriptor_type
 {
 	directory_descriptor parent;		/**< Pointer to parent directory */
-	directory_descriptor_path_str path;	/**< Path of current descriptor */
+	directory_descriptor_path_str path; /**< Path of current descriptor */
 	vector files;						/**< String vector of files contained in current directory */
 };
 
 /* -- Methods -- */
 
-directory_descriptor directory_descriptor_create(directory_descriptor parent, const char * path)
+directory_descriptor directory_descriptor_create(directory_descriptor parent, const char *path)
 {
 	directory_descriptor d = malloc(sizeof(struct directory_descriptor_type));
 
@@ -82,7 +82,7 @@ directory_descriptor directory_descriptor_parent(directory_descriptor d)
 	return NULL;
 }
 
-const char * directory_descriptor_path(directory_descriptor d)
+const char *directory_descriptor_path(directory_descriptor d)
 {
 	if (d != NULL)
 	{

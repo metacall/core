@@ -25,7 +25,7 @@ struct configuration_singleton_type;
 
 /* -- Type Definitions -- */
 
-typedef struct configuration_singleton_type * configuration_singleton;
+typedef struct configuration_singleton_type *configuration_singleton;
 
 /* -- Methods -- */
 
@@ -76,7 +76,7 @@ CONFIGURATION_API int configuration_singleton_register(configuration config);
 *    Returns pointer to configuration object if exists, null otherwise
 *
 */
-CONFIGURATION_API configuration configuration_singleton_get(const char * name);
+CONFIGURATION_API configuration configuration_singleton_get(const char *name);
 
 /**
 *  @brief

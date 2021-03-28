@@ -8,13 +8,13 @@
 
 /* -- Headers -- */
 
-#include <string>
 #include <sstream>
+#include <string>
 
 /* -- Namespace -- */
 
-namespace metacallcli {
-
+namespace metacallcli
+{
 /* -- Methods -- */
 
 template <typename T> bool parser::is()

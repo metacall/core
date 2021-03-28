@@ -23,8 +23,8 @@
 
 #include <node_loader/node_loader_api.h>
 
-#include <loader/loader_impl_interface.h>
 #include <configuration/configuration.h>
+#include <loader/loader_impl_interface.h>
 
 #include <node_api.h>
 
@@ -33,7 +33,7 @@ extern "C" {
 #endif
 
 struct loader_impl_node_type;
-typedef struct loader_impl_node_type * loader_impl_node;
+typedef struct loader_impl_node_type *loader_impl_node;
 
 NODE_LOADER_API loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration config);
 
@@ -41,7 +41,7 @@ NODE_LOADER_API int node_loader_impl_execution_path(loader_impl impl, const load
 
 NODE_LOADER_API loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
 
-NODE_LOADER_API loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size);
+NODE_LOADER_API loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size);
 
 NODE_LOADER_API loader_handle node_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
 
@@ -53,13 +53,17 @@ NODE_LOADER_API int node_loader_impl_destroy(loader_impl impl);
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_exception(napi_env env, napi_status status);
 
-NODE_LOADER_NO_EXPORT void node_loader_impl_finalizer(napi_env env, napi_value v, void * data);
+NODE_LOADER_NO_EXPORT void node_loader_impl_finalizer(napi_env env, napi_value v, void *data);
 
 NODE_LOADER_NO_EXPORT value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v);
 
 NODE_LOADER_NO_EXPORT napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg);
 
 NODE_LOADER_NO_EXPORT void node_loader_impl_env(loader_impl_node node_impl, napi_env env);
+
+NODE_LOADER_NO_EXPORT void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env);
+
+NODE_LOADER_NO_EXPORT bool node_loader_impl_requested_destroy(loader_impl_node node_impl);
 
 #ifdef __cplusplus
 }

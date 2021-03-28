@@ -10,17 +10,17 @@
 
 #include <metacall/metacall_version.h>
 
-const char * mock_loader_print_info()
+const char *mock_loader_print_info()
 {
 	static const char mock_loader_info[] =
 		"Mock Loader Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef MOCK_LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef MOCK_LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

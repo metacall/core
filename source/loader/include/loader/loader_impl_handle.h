@@ -21,8 +21,8 @@
 #ifndef LOADER_IMPL_HANDLE_H
 #define LOADER_IMPL_HANDLE_H 1
 
-#include <loader/loader_impl.h>
 #include <loader/loader_handle.h>
+#include <loader/loader_impl.h>
 
 #ifdef __cplusplus
 extern "C" {

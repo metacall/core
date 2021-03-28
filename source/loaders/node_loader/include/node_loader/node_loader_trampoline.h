@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-typedef void * (*node_loader_trampoline_register_ptr)(void *, void *, void *);
+typedef void *(*node_loader_trampoline_register_ptr)(void *, void *, void *);
 
 NODE_LOADER_NO_EXPORT napi_value node_loader_trampoline_initialize(napi_env env, napi_value exports);
 

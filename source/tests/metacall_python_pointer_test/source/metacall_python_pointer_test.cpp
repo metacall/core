@@ -34,9 +34,9 @@ struct test_type
 	unsigned char r, g, b;
 };
 
-void * native_set_value(size_t argc, void * args[], void * data)
+void *native_set_value(size_t argc, void *args[], void *data)
 {
-	struct test_type * t  = (struct test_type *)metacall_value_to_ptr(args[0]);
+	struct test_type *t = (struct test_type *)metacall_value_to_ptr(args[0]);
 	long value = metacall_value_to_long(args[1]);
 
 	(void)argc;
@@ -54,12 +54,11 @@ void * native_set_value(size_t argc, void * args[], void * data)
 	return metacall_value_create_ptr((void *)t);
 }
 
-void * native_get_value(size_t argc, void * args[], void * data)
+void *native_get_value(size_t argc, void *args[], void *data)
 {
-	struct test_type * t  = (struct test_type *)metacall_value_to_ptr(args[0]);
+	struct test_type *t = (struct test_type *)metacall_value_to_ptr(args[0]);
 
-	const void * array[] =
-	{
+	const void *array[] = {
 		metacall_value_create_char(t->r),
 		metacall_value_create_char(t->g),
 		metacall_value_create_char(t->b)
@@ -79,58 +78,56 @@ TEST_F(metacall_python_pointer_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	/* Native register */
 	{
 		metacall_register("native_set_value", native_set_value, NULL, METACALL_PTR, 2, METACALL_PTR, METACALL_LONG);
 
-		EXPECT_NE((void *) NULL, (void *) metacall_function("native_set_value"));
+		EXPECT_NE((void *)NULL, (void *)metacall_function("native_set_value"));
 
 		metacall_register("native_get_value", native_get_value, NULL, METACALL_ARRAY, 1, METACALL_PTR);
 
-		EXPECT_NE((void *) NULL, (void *) metacall_function("native_get_value"));
+		EXPECT_NE((void *)NULL, (void *)metacall_function("native_get_value"));
 	}
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"pointer.py"
 		};
 
-		void * ret = NULL;
+		void *ret = NULL;
 
 		struct test_type t = { 0L, 0U, 0U, 0U };
 
-		void * t_ptr = (void *)&t;
+		void *t_ptr = (void *)&t;
 
 		long value = 3000L;
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		const enum metacall_value_id ids[] =
-		{
+		const enum metacall_value_id ids[] = {
 			METACALL_PTR, METACALL_LONG
 		};
 
 		ret = metacallt("python_set_value", ids, t_ptr, value);
 
-		EXPECT_NE((void *) NULL, (void *) ret);
+		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id) METACALL_PTR, (enum metacall_value_id) metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_PTR, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *) t_ptr, (void *) metacall_value_to_ptr(ret));
+		EXPECT_EQ((void *)t_ptr, (void *)metacall_value_to_ptr(ret));
 
-		EXPECT_EQ((long) value, (long) t.value);
-		EXPECT_EQ((unsigned char) 10U, (unsigned char) t.r);
-		EXPECT_EQ((unsigned char) 50U, (unsigned char) t.g);
-		EXPECT_EQ((unsigned char) 70U, (unsigned char) t.b);
+		EXPECT_EQ((long)value, (long)t.value);
+		EXPECT_EQ((unsigned char)10U, (unsigned char)t.r);
+		EXPECT_EQ((unsigned char)50U, (unsigned char)t.g);
+		EXPECT_EQ((unsigned char)70U, (unsigned char)t.b);
 
 		metacall_value_destroy(ret);
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

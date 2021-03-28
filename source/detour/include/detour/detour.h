@@ -27,9 +27,9 @@ struct detour_handle_type;
 
 /* -- Type Definitions -- */
 
-typedef struct detour_type * detour;
+typedef struct detour_type *detour;
 
-typedef struct detour_handle_type * detour_handle;
+typedef struct detour_handle_type *detour_handle;
 
 /**
 *  @brief
@@ -52,7 +52,7 @@ DETOUR_API int detour_initialize(void);
 *    Pointer to detour on correct initialization, null otherwise
 *
 */
-DETOUR_API detour detour_create(const char * name);
+DETOUR_API detour detour_create(const char *name);
 
 /**
 *  @brief
@@ -65,7 +65,7 @@ DETOUR_API detour detour_create(const char * name);
 *    Static const string with detour name
 *
 */
-DETOUR_API const char * detour_name(detour d);
+DETOUR_API const char *detour_name(detour d);
 
 /**
 *  @brief
@@ -97,7 +97,7 @@ DETOUR_API void (*detour_trampoline(detour_handle handle))(void);
 *    Pointer to the detour handle
 *
 */
-DETOUR_API detour_handle detour_install(detour d, void(*target)(void), void(*hook)(void));
+DETOUR_API detour_handle detour_install(detour d, void (*target)(void), void (*hook)(void));
 
 /**
 *  @brief
@@ -143,7 +143,7 @@ DETOUR_API void detour_destroy(void);
 *    Static string containing module information
 *
 */
-DETOUR_API const char * detour_print_info(void);
+DETOUR_API const char *detour_print_info(void);
 
 #ifdef __cplusplus
 }

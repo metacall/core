@@ -29,59 +29,59 @@ protected:
 
 TEST_F(cs_loader_test, SayHello)
 {
-	ASSERT_NE((void *) NULL, (void *) metacall_function("SayHello"));
+	ASSERT_NE((void *)NULL, (void *)metacall_function("SayHello"));
 
 	metacall("SayHello");
 }
 
 TEST_F(cs_loader_test, SayAny)
 {
-	ASSERT_NE((void *) NULL, (void *) metacall_function("Say"));
+	ASSERT_NE((void *)NULL, (void *)metacall_function("Say"));
 
 	metacall("Say", "Any");
 }
 
 TEST_F(cs_loader_test, Jump)
 {
-	void * ret = NULL;
+	void *ret = NULL;
 
-	ASSERT_NE((void *) NULL, (void *) metacall_function("SuperJump"));
+	ASSERT_NE((void *)NULL, (void *)metacall_function("SuperJump"));
 
 	ret = metacall("SuperJump");
 
-	EXPECT_NE((void *) NULL, (void *) ret);
+	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((int) 2, (int) metacall_value_to_int(ret));
+	EXPECT_EQ((int)2, (int)metacall_value_to_int(ret));
 
 	metacall_value_destroy(ret);
 }
 
 TEST_F(cs_loader_test, Sum)
 {
-	void * ret = NULL;
+	void *ret = NULL;
 
-	ASSERT_NE((void *) NULL, (void *) metacall_function("Sum"));
+	ASSERT_NE((void *)NULL, (void *)metacall_function("Sum"));
 
 	ret = metacall("Sum", 5, 10);
 
-	EXPECT_NE((void *) NULL, (void *) ret);
+	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((int) 15, (int) metacall_value_to_int(ret));
+	EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
 
 	metacall_value_destroy(ret);
 }
 
 TEST_F(cs_loader_test, Concat)
 {
-	void * ret = NULL;
+	void *ret = NULL;
 
-	ASSERT_NE((void *) NULL, (void *) metacall_function("Concat"));
+	ASSERT_NE((void *)NULL, (void *)metacall_function("Concat"));
 
 	ret = metacall("Concat", "Hello ", "World");
 
-	EXPECT_NE((void *) NULL, (void *) ret);
+	EXPECT_NE((void *)NULL, (void *)ret);
 
-	EXPECT_EQ((int) 0, (int) strcmp((const char *)metacall_value_to_string(ret), "Hello World"));
+	EXPECT_EQ((int)0, (int)strcmp((const char *)metacall_value_to_string(ret), "Hello World"));
 
 	metacall_value_destroy(ret);
 }
@@ -96,5 +96,5 @@ TEST_F(cs_loader_test, Fail)
 		"\tprint(left, ' * ', right, ' = ', result);\n"
 		"\treturn result;";
 
-	EXPECT_EQ((int) 1, (int) metacall_load_from_memory("cs", buffer, sizeof(buffer), NULL));
+	EXPECT_EQ((int)1, (int)metacall_load_from_memory("cs", buffer, sizeof(buffer), NULL));
 }

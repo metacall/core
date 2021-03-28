@@ -23,10 +23,10 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/type.h>
+#include <reflect/context.h>
 #include <reflect/function.h>
 #include <reflect/scope.h>
-#include <reflect/context.h>
+#include <reflect/type.h>
 
 #include <log/log.h>
 
@@ -34,40 +34,39 @@
 
 #include <ffi.h>
 
-#include <clang/Driver/Options.h>
 #include <clang/AST/AST.h>
-#include <clang/AST/ASTContext.h>
 #include <clang/AST/ASTConsumer.h>
+#include <clang/AST/ASTContext.h>
 #include <clang/AST/RecursiveASTVisitor.h>
+#include <clang/Driver/Options.h>
 #include <clang/Frontend/ASTConsumers.h>
-#include <clang/Frontend/FrontendActions.h>
 #include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/FrontendActions.h>
+#include <clang/Rewrite/Core/Rewriter.h>
 #include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Tooling.h>
-#include <clang/Rewrite/Core/Rewriter.h>
 
-
-#define C_LOADER_FILE_MAX_SIZE	((size_t)(2 * 1024 * 1024)) /* 2 MB */
+#define C_LOADER_FILE_MAX_SIZE ((size_t)(2 * 1024 * 1024)) /* 2 MB */
 
 typedef struct loader_impl_c_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_c;
 
 typedef struct loader_impl_c_handle_type
 {
-/*
+	/*
 	char * buffer;
 	size_t buffer_size;
 */
-	void * todo;
+	void *todo;
 
 } * loader_impl_c_handle;
 
 typedef struct loader_impl_c_function_type
 {
-	void * todo;
+	void *todo;
 
 } * loader_impl_c_function;
 
@@ -91,7 +90,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	return NULL;
 }
 
-function_return function_c_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_c_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -120,8 +119,7 @@ void function_c_interface_destroy(function func, function_impl impl)
 
 function_interface function_c_singleton()
 {
-	static struct function_interface_type c_interface =
-	{
+	static struct function_interface_type c_interface = {
 		&function_c_interface_create,
 		&function_c_interface_invoke,
 		&function_c_interface_await,
@@ -144,12 +142,12 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	{
 		int argc = 1;
 
-		const char * argv[] = { "c_loader" };
+		const char *argv[] = { "c_loader" };
 
 		llvm::cl::OptionCategory category(argv[0]);
 
 		clang::tooling::CommonOptionsParser op(argc, argv, category);
-/*
+		/*
 		clang::tooling::ClangTool tooling(op.getCompilations(), op.getSourcePathList());
 */
 		/* Register initialization */
@@ -278,8 +276,6 @@ int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	if (c_handle != NULL)
 	{
-
-
 		return 0;
 	}
 
@@ -395,4 +391,3 @@ int main(int argc, const char **argv) {
     return result;
 }
 */
-

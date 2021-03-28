@@ -21,17 +21,17 @@
 /* -- Headers -- */
 
 #include <log/log_aspect.h>
+#include <log/log_impl.h>
 #include <log/log_policy.h>
 #include <log/log_valid_size.h>
-#include <log/log_impl.h>
 
 #include <string.h>
 
 /* -- Definitions -- */
 
-#define LOG_ASPECT_POLICIES_MIN_SIZE		((size_t)0x00000001)
-#define LOG_ASPECT_POLICIES_DEFAULT_SIZE	((size_t)0x00000004)
-#define LOG_ASPECT_POLICIES_MAX_SIZE		((size_t)0x00000100)
+#define LOG_ASPECT_POLICIES_MIN_SIZE	 ((size_t)0x00000001)
+#define LOG_ASPECT_POLICIES_DEFAULT_SIZE ((size_t)0x00000004)
+#define LOG_ASPECT_POLICIES_MAX_SIZE	 ((size_t)0x00000100)
 
 /* -- Member Data -- */
 
@@ -39,7 +39,7 @@ struct log_aspect_type
 {
 	log_impl impl;
 	log_aspect_restrict_cb restrict_cb;
-	log_policy * policies;
+	log_policy *policies;
 	size_t count;
 	size_t size;
 	log_aspect_data data;
@@ -151,7 +151,7 @@ int log_aspect_attach(log_aspect aspect, log_policy policy)
 
 	if ((aspect->count + 1) >= aspect->size)
 	{
-		register void * data;
+		register void *data;
 
 		size_t size = 0;
 

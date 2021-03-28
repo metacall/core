@@ -20,18 +20,18 @@ extern "C" {
 /* -- Macros -- */
 
 #if defined(_MSC_VER)
-#	define PREPROCESSOR_CONCAT_IMPL_II(token, expr) expr
-#	define PREPROCESSOR_CONCAT_IMPL_I(left, right) PREPROCESSOR_CONCAT_IMPL_II(~, left ## right)
-#	define PREPROCESSOR_CONCAT_IMPL(left, right) PREPROCESSOR_CONCAT_IMPL_I(left, right)
+	#define PREPROCESSOR_CONCAT_IMPL_II(token, expr) expr
+	#define PREPROCESSOR_CONCAT_IMPL_I(left, right)	 PREPROCESSOR_CONCAT_IMPL_II(~, left##right)
+	#define PREPROCESSOR_CONCAT_IMPL(left, right)	 PREPROCESSOR_CONCAT_IMPL_I(left, right)
 #else
-#	define PREPROCESSOR_CONCAT_IMPL(left, right) left ## right
+	#define PREPROCESSOR_CONCAT_IMPL(left, right) left##right
 #endif
 
 #if defined(__MWERKS__)
-#	define PREPROCESSOR_CONCAT_IMPL_TOKEN(token) PREPROCESSOR_CONCAT_IMPL ## token
-#	define PREPROCESSOR_CONCAT(left, right) PREPROCESSOR_CONCAT_IMPL_TOKEN((left, right))
+	#define PREPROCESSOR_CONCAT_IMPL_TOKEN(token) PREPROCESSOR_CONCAT_IMPL##token
+	#define PREPROCESSOR_CONCAT(left, right)	  PREPROCESSOR_CONCAT_IMPL_TOKEN((left, right))
 #else
-#	define PREPROCESSOR_CONCAT(left, right) PREPROCESSOR_CONCAT_IMPL(left, right)
+	#define PREPROCESSOR_CONCAT(left, right) PREPROCESSOR_CONCAT_IMPL(left, right)
 #endif
 
 #ifdef __cplusplus

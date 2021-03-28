@@ -21,6 +21,8 @@
 #ifndef DYNLINK_IMPL_H
 #define DYNLINK_IMPL_H 1
 
+// clang-format off
+
 /* -- Headers -- */
 
 #include <dynlink/dynlink_api.h>
@@ -109,5 +111,7 @@ DYNLINK_API void dynlink_impl_unload(dynlink handle, dynlink_impl impl);
 #ifdef __cplusplus
 }
 #endif
+
+// clang-format on
 
 #endif /* DYNLINK_IMPL_H */

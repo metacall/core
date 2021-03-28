@@ -20,8 +20,8 @@
 
 /* -- Headers -- */
 
-#include <filesystem/filesystem_file_descriptor.h>
 #include <filesystem/filesystem_directory_descriptor.h>
+#include <filesystem/filesystem_file_descriptor.h>
 
 #include <stdlib.h>
 
@@ -34,14 +34,14 @@ typedef char file_descriptor_extension_str[FILE_DESCRIPTOR_EXTENSION_SIZE];
 
 struct file_descriptor_type
 {
-	directory_descriptor owner;					/**< Directory descriptor which file belongs to */
-	file_descriptor_name_str name;				/**< File name string */
-	file_descriptor_extension_str extension;	/**< File extension string */
+	directory_descriptor owner;				 /**< Directory descriptor which file belongs to */
+	file_descriptor_name_str name;			 /**< File name string */
+	file_descriptor_extension_str extension; /**< File extension string */
 };
 
 /* -- Methods -- */
 
-file_descriptor file_descriptor_create(directory_descriptor owner, const char * name)
+file_descriptor file_descriptor_create(directory_descriptor owner, const char *name)
 {
 	file_descriptor f = malloc(sizeof(struct file_descriptor_type));
 
@@ -69,7 +69,7 @@ directory_descriptor file_descriptor_owner(file_descriptor f)
 	return NULL;
 }
 
-const char * file_descriptor_name(file_descriptor f)
+const char *file_descriptor_name(file_descriptor f)
 {
 	if (f != NULL)
 	{
@@ -79,7 +79,7 @@ const char * file_descriptor_name(file_descriptor f)
 	return NULL;
 }
 
-const char * file_descriptor_extension(file_descriptor f)
+const char *file_descriptor_extension(file_descriptor f)
 {
 	if (f != NULL)
 	{

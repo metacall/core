@@ -35,7 +35,7 @@ COB_LOADER_API loader_impl_interface cob_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(cob_loader_impl_interface_singleton);
 
-COB_LOADER_API const char * cob_loader_print_info(void);
+COB_LOADER_API const char *cob_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(cob_loader_print_info);
 

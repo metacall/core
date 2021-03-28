@@ -17,8 +17,7 @@
 
 serial_interface rapid_json_serial_impl_interface_singleton()
 {
-	static struct serial_interface_type interface_instance_rapid_json =
-	{
+	static struct serial_interface_type interface_instance_rapid_json = {
 		&rapid_json_serial_impl_extension,
 		&rapid_json_serial_impl_initialize,
 		&rapid_json_serial_impl_serialize,
@@ -29,17 +28,17 @@ serial_interface rapid_json_serial_impl_interface_singleton()
 	return &interface_instance_rapid_json;
 }
 
-const char * rapid_json_serial_print_info()
+const char *rapid_json_serial_print_info()
 {
 	static const char rapid_json_serial_info[] =
 		"Rapid JSON Serial Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef RAPID_JSON_SERIAL_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef RAPID_JSON_SERIAL_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

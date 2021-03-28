@@ -32,40 +32,38 @@ TEST_F(metacall_python_fail_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Python */
-	#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char buffer[] =
 			"def sumList(list: [int]):\n"
 			"	return sum(list)\n";
 
 		// Apparently this loads the function but it does not understand the type
-		EXPECT_EQ((int) 0, (int) metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
 		enum metacall_value_id id;
 
-		EXPECT_EQ((int) 0, (int) metacall_function_parameter_type(metacall_function("sumList"), 0, &id));
+		EXPECT_EQ((int)0, (int)metacall_function_parameter_type(metacall_function("sumList"), 0, &id));
 
 		// The type of list must be invalid once it loads
-		EXPECT_EQ((enum metacall_value_id) METACALL_INVALID, (enum metacall_value_id) id);
+		EXPECT_EQ((enum metacall_value_id)METACALL_INVALID, (enum metacall_value_id)id);
 
-		const char * py_scripts[] =
-		{
+		const char *py_scripts[] = {
 			"this_does_not_exists_yeet.py"
 		};
 
-		EXPECT_EQ((int) 1, (int) metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		EXPECT_EQ((int)1, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
 		const char buffer_fail[] =
 			"def sdf: as asf return";
 
 		// This must fail
-		EXPECT_EQ((int) 1, (int) metacall_load_from_memory("py", buffer_fail, sizeof(buffer_fail), NULL));
-
+		EXPECT_EQ((int)1, (int)metacall_load_from_memory("py", buffer_fail, sizeof(buffer_fail), NULL));
 	}
-	#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Print inspect information */
 	{
@@ -73,13 +71,13 @@ TEST_F(metacall_python_fail_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -88,5 +86,5 @@ TEST_F(metacall_python_fail_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

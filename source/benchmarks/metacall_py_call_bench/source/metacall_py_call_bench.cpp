@@ -26,7 +26,7 @@
 class metacall_py_call_bench : public benchmark::Fixture
 {
 public:
-	void SetUp(benchmark::State & state)
+	void SetUp(benchmark::State &state)
 	{
 		metacall_print_info();
 
@@ -37,8 +37,8 @@ public:
 			state.SkipWithError("Error initializing MetaCall");
 		}
 
-		/* Python */
-		#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 		{
 			static const char tag[] = "py";
 
@@ -52,10 +52,10 @@ public:
 				state.SkipWithError("Error loading int_mem_type function");
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
-	void TearDown(benchmark::State & state)
+	void TearDown(benchmark::State &state)
 	{
 		if (metacall_destroy() != 0)
 		{
@@ -64,17 +64,18 @@ public:
 	}
 };
 
-BENCHMARK_DEFINE_F(metacall_py_call_bench, call_va_args)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_call_bench, call_va_args)
+(benchmark::State &state)
 {
 	const int64_t call_count = 1000000;
 	const int64_t call_size = sizeof(long) * 3; // (long, long) -> long
 
 	for (auto _ : state)
 	{
-		/* Python */
-		#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 		{
-			void * ret;
+			void *ret;
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
@@ -97,7 +98,7 @@ BENCHMARK_DEFINE_F(metacall_py_call_bench, call_va_args)(benchmark::State & stat
 				state.ResumeTiming();
 			}
 		}
-		#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
 	state.SetLabel("MetaCall Python Call Benchmark - Variadic Argument Call");
@@ -111,22 +112,22 @@ BENCHMARK_REGISTER_F(metacall_py_call_bench, call_va_args)
 	->Iterations(1)
 	->Repetitions(5);
 
-BENCHMARK_DEFINE_F(metacall_py_call_bench, call_array_args)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_call_bench, call_array_args)
+(benchmark::State &state)
 {
 	const int64_t call_count = 1000000;
 	const int64_t call_size = sizeof(long) * 3; // (long, long) -> long
 
 	for (auto _ : state)
 	{
-		/* Python */
-		#if defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 		{
-			void * ret;
+			void *ret;
 
 			state.PauseTiming();
 
-			void * args[2] =
-			{
+			void *args[2] = {
 				metacall_value_create_long(0L),
 				metacall_value_create_long(0L)
 			};
@@ -163,7 +164,7 @@ BENCHMARK_DEFINE_F(metacall_py_call_bench, call_array_args)(benchmark::State & s
 
 			state.ResumeTiming();
 		}
-		#endif /* OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 	}
 
 	state.SetLabel("MetaCall Python Call Benchmark - Array Argument Call");

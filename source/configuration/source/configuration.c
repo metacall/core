@@ -11,8 +11,8 @@
 #include <metacall/metacall_version.h>
 
 #include <configuration/configuration.h>
-#include <configuration/configuration_singleton.h>
 #include <configuration/configuration_impl.h>
+#include <configuration/configuration_singleton.h>
 
 #include <environment/environment_variable.h>
 #include <environment/environment_variable_path.h>
@@ -23,12 +23,12 @@
 
 /* -- Definitions -- */
 
-#define CONFIGURATION_PATH			"CONFIGURATION_PATH"
-#define CONFIGURATION_DEFAULT_PATH	"configurations" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR CONFIGURATION_GLOBAL_SCOPE ".json"
+#define CONFIGURATION_PATH		   "CONFIGURATION_PATH"
+#define CONFIGURATION_DEFAULT_PATH "configurations" ENVIRONMENT_VARIABLE_PATH_SEPARATOR_STR CONFIGURATION_GLOBAL_SCOPE ".json"
 
 /* -- Methods -- */
 
-int configuration_initialize(const char * reader, const char * path, void * allocator)
+int configuration_initialize(const char *reader, const char *path, void *allocator)
 {
 	configuration global = NULL;
 
@@ -43,7 +43,7 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 	{
 		static const char configuration_path[] = CONFIGURATION_PATH;
 
-		const char * env_path = environment_variable_get(configuration_path, NULL);
+		const char *env_path = environment_variable_get(configuration_path, NULL);
 
 		if (env_path != NULL)
 		{
@@ -61,16 +61,16 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 			path = configuration_default_path;
 		}
 
-		#if defined(CONFIGURATION_INSTALL_PATH)
-			if (global == NULL)
-			{
-				static const char configuration_install_path[] = CONFIGURATION_INSTALL_PATH;
+#if defined(CONFIGURATION_INSTALL_PATH)
+		if (global == NULL)
+		{
+			static const char configuration_install_path[] = CONFIGURATION_INSTALL_PATH;
 
-				global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, configuration_install_path, NULL);
+			global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, configuration_install_path, NULL);
 
-				path = configuration_install_path;
-			}
-		#endif /* CONFIGURATION_INSTALL_PATH */
+			path = configuration_install_path;
+		}
+#endif /* CONFIGURATION_INSTALL_PATH */
 
 		if (global != NULL && path != NULL)
 		{
@@ -123,7 +123,7 @@ int configuration_initialize(const char * reader, const char * path, void * allo
 	return 0;
 }
 
-configuration configuration_create(const char * scope, const char * path, const char * parent, void * allocator)
+configuration configuration_create(const char *scope, const char *path, const char *parent, void *allocator)
 {
 	configuration config = configuration_singleton_get(scope);
 
@@ -153,12 +153,12 @@ configuration configuration_create(const char * scope, const char * path, const 
 	return config;
 }
 
-configuration configuration_scope(const char * name)
+configuration configuration_scope(const char *name)
 {
 	return configuration_singleton_get(name);
 }
 
-value configuration_value(configuration config, const char * key)
+value configuration_value(configuration config, const char *key)
 {
 	if (config == NULL)
 	{
@@ -168,12 +168,12 @@ value configuration_value(configuration config, const char * key)
 	return configuration_object_get(config, key);
 }
 
-int configuration_define(configuration config, const char * key, value v)
+int configuration_define(configuration config, const char *key, value v)
 {
 	return configuration_object_set(config, key, v);
 }
 
-int configuration_undefine(configuration config, const char * key)
+int configuration_undefine(configuration config, const char *key)
 {
 	return configuration_object_remove(config, key);
 }
@@ -196,17 +196,17 @@ void configuration_destroy()
 	serial_destroy();
 }
 
-const char * configuration_print_info()
+const char *configuration_print_info()
 {
 	static const char configuration_info[] =
 		"Configuration Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef CONFIGURATION_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef CONFIGURATION_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

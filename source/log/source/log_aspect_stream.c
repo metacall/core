@@ -17,8 +17,8 @@
 #include <log/log_aspect_format.h>
 #include <log/log_policy_format.h>
 
-#include <log/log_record.h>
 #include <log/log_impl.h>
+#include <log/log_record.h>
 
 /* -- Forward Declarations -- */
 
@@ -28,9 +28,9 @@ struct log_aspect_stream_write_cb_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_aspect_stream_execute_cb_data_type * log_aspect_stream_execute_cb_data;
+typedef struct log_aspect_stream_execute_cb_data_type *log_aspect_stream_execute_cb_data;
 
-typedef struct log_aspect_stream_write_cb_data_type * log_aspect_stream_write_cb_data;
+typedef struct log_aspect_stream_write_cb_data_type *log_aspect_stream_write_cb_data;
 
 /* -- Member Data -- */
 
@@ -65,14 +65,12 @@ static int log_aspect_stream_destroy(log_aspect aspect);
 
 log_aspect_interface log_aspect_stream_interface()
 {
-	static struct log_aspect_stream_impl_type log_aspect_stream_impl_obj =
-	{
+	static struct log_aspect_stream_impl_type log_aspect_stream_impl_obj = {
 		&log_aspect_stream_impl_write,
 		&log_aspect_stream_impl_flush
 	};
 
-	static struct log_aspect_interface_type aspect_interface_stream =
-	{
+	static struct log_aspect_interface_type aspect_interface_stream = {
 		&log_aspect_stream_create,
 		&log_aspect_stream_impl_obj,
 		&log_aspect_stream_destroy
@@ -111,7 +109,7 @@ static int log_aspect_stream_impl_write_cb(log_aspect aspect, log_policy policy,
 
 	/* TODO: remove this, use storage policy instead */
 	{
-		void * buffer = malloc(size);
+		void *buffer = malloc(size);
 
 		int result = 1;
 

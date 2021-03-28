@@ -23,5 +23,3 @@
 #include <metacall/metacall.hpp>
 
 /* -- Methods -- */
-
-

@@ -11,8 +11,8 @@
 #include <metacall/metacall_version.h>
 
 #include <serial/serial.h>
-#include <serial/serial_singleton.h>
 #include <serial/serial_impl.h>
+#include <serial/serial_singleton.h>
 
 #include <log/log.h>
 
@@ -22,7 +22,7 @@
 
 struct serial_type
 {
-	char * name;
+	char *name;
 	serial_impl impl;
 };
 
@@ -40,7 +40,7 @@ int serial_initialize()
 	return 0;
 }
 
-serial serial_create(const char * name)
+serial serial_create(const char *name)
 {
 	serial s;
 
@@ -137,17 +137,17 @@ serial serial_create(const char * name)
 	return s;
 }
 
-const char * serial_extension(serial s)
+const char *serial_extension(serial s)
 {
 	return serial_impl_extension(s->impl);
 }
 
-const char * serial_name(serial s)
+const char *serial_name(serial s)
 {
 	return s->name;
 }
 
-char * serial_serialize(serial s, value v, size_t * size, memory_allocator allocator)
+char *serial_serialize(serial s, value v, size_t *size, memory_allocator allocator)
 {
 	if (s == NULL || v == NULL || size == NULL)
 	{
@@ -159,7 +159,7 @@ char * serial_serialize(serial s, value v, size_t * size, memory_allocator alloc
 	return serial_impl_serialize(s->impl, v, size, allocator);
 }
 
-value serial_deserialize(serial s, const char * buffer, size_t size, memory_allocator allocator)
+value serial_deserialize(serial s, const char *buffer, size_t size, memory_allocator allocator)
 {
 	if (s == NULL || buffer == NULL || size == 0)
 	{
@@ -219,17 +219,17 @@ void serial_destroy()
 	serial_singleton_destroy();
 }
 
-const char * serial_print_info()
+const char *serial_print_info()
 {
 	static const char serial_info[] =
 		"Serial Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef SERIAL_STATIC_DEFINE
-			"Compiled as static library type"
-		#else
-			"Compiled as shared library type"
-		#endif
+#ifdef SERIAL_STATIC_DEFINE
+		"Compiled as static library type"
+#else
+		"Compiled as shared library type"
+#endif
 
 		"\n";
 

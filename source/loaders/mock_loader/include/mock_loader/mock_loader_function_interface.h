@@ -31,15 +31,11 @@
 extern "C" {
 #endif
 
-struct loader_impl_mock_function_type;
-
-typedef struct loader_impl_mock_function_type * loader_impl_mock_function;
-
-struct loader_impl_mock_function_type
+typedef struct loader_impl_mock_function_type
 {
 	loader_handle handle;
-	void * function_mock_data;
-};
+	void *function_mock_data;
+} * loader_impl_mock_function;
 
 MOCK_LOADER_API function_impl_interface_singleton mock_loader_impl_function_interface(void);
 

@@ -35,7 +35,7 @@ MOCK_LOADER_API loader_impl_interface mock_loader_impl_interface_singleton(void)
 
 DYNLINK_SYMBOL_EXPORT(mock_loader_impl_interface_singleton);
 
-MOCK_LOADER_API const char * mock_loader_print_info(void);
+MOCK_LOADER_API const char *mock_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(mock_loader_print_info);
 

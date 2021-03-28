@@ -25,16 +25,16 @@
 class metacall_py_c_api_bench : public benchmark::Fixture
 {
 public:
-	void SetUp(benchmark::State & state)
+	void SetUp(benchmark::State &state)
 	{
 		static const char buffer[] =
 			"#!/usr/bin/env python3\n"
 			"def int_mem_type(left: int, right: int) -> int:\n"
 			"\treturn 0;";
-		
+
 		static const char name[] = "int_mem_type";
 
-		PyObject * dict;
+		PyObject *dict;
 
 		if (Py_IsInitialized() == 0)
 		{
@@ -62,7 +62,7 @@ public:
 		Py_DECREF(dict);
 	}
 
-	void TearDown(benchmark::State & state)
+	void TearDown(benchmark::State &state)
 	{
 		Py_DECREF(compiled);
 		Py_DECREF(instance);
@@ -80,26 +80,26 @@ public:
 	}
 
 protected:
-	PyObject * compiled;
-	PyObject * instance;
-	PyObject * func;
+	PyObject *compiled;
+	PyObject *instance;
+	PyObject *func;
 };
 
-BENCHMARK_DEFINE_F(metacall_py_c_api_bench, call_object)(benchmark::State & state)
+BENCHMARK_DEFINE_F(metacall_py_c_api_bench, call_object)
+(benchmark::State &state)
 {
 	const int64_t call_count = 1000000;
 	const int64_t call_size = sizeof(long) * 3; // (long, long) -> long
 
 	for (auto _ : state)
 	{
-		PyObject * ret;
+		PyObject *ret;
 
 		state.PauseTiming();
 
-		PyObject * tuple_args = PyTuple_New(2);
+		PyObject *tuple_args = PyTuple_New(2);
 
-		PyObject * args[2] =
-		{
+		PyObject *args[2] = {
 			PyLong_FromLong(0L),
 			PyLong_FromLong(0L)
 		};

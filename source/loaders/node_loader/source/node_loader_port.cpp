@@ -45,8 +45,8 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 		return nullptr;
 	}
 
-	napi_value * argv = new napi_value[argc];
-	void ** args = new void *[argc - 1];
+	napi_value *argv = new napi_value[argc];
+	void **args = new void *[argc - 1];
 	napi_value recv;
 
 	napi_get_cb_info(env, info, &argc, argv, &recv, NULL);
@@ -55,7 +55,7 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 
 	napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &name_length);
 
-	char * name = new char[name_length + 1];
+	char *name = new char[name_length + 1];
 
 	if (name == nullptr)
 	{
@@ -83,14 +83,14 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	}
 
 	/* Call to the function */
-	void * ret = metacallv_s(name, args, argc - 1);
+	void *ret = metacallv_s(name, args, argc - 1);
 
 	napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
 
 	/* Release current reference of the environment */
 	// node_loader_impl_env(node_impl, NULL);
 
-	for (size_t args_count = 0; args_count < argc -1; ++args_count)
+	for (size_t args_count = 0; args_count < argc - 1; ++args_count)
 	{
 		metacall_value_destroy(args[args_count]);
 	}
@@ -112,7 +112,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 	size_t argc = args_size, tag_length;
 	napi_value argv[args_size];
 	uint32_t paths_size, path_index = 0;
-	char * tag;
+	char *tag;
 
 	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
 
@@ -132,7 +132,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 
 	napi_get_array_length(env, argv[1], &paths_size);
 
-	char ** paths = new char*[paths_size];
+	char **paths = new char *[paths_size];
 
 	for (uint32_t i = 0; i < paths_size; ++i)
 	{
@@ -209,7 +209,7 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 	size_t argc = args_size, tag_length, script_length, script_size;
 	napi_value argv[args_size];
 	napi_status status;
-	char * tag, * script;
+	char *tag, *script;
 
 	// Get arguments
 	status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
@@ -289,9 +289,9 @@ napi_value node_loader_port_inspect(napi_env env, napi_callback_info)
 
 	struct metacall_allocator_std_type std_ctx = { &malloc, &realloc, &free };
 
-	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	char * inspect_str = metacall_inspect(&size, allocator);
+	char *inspect_str = metacall_inspect(&size, allocator);
 
 	napi_status status;
 
@@ -353,8 +353,8 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 /* This function is called by NodeJs when the module is required */
 napi_value node_loader_port_initialize(napi_env env, napi_value exports)
 {
-	/* Note: This should not be necessary because we do not allow to use ports outside MetaCall */
-	#if 0
+/* Note: This should not be necessary because we do not allow to use ports outside MetaCall */
+#if 0
 	if (metacall_initialize() != 0)
 	{
 		/* TODO: Show error message (when error handling is properly implemented in the core lib) */
@@ -362,7 +362,7 @@ napi_value node_loader_port_initialize(napi_env env, napi_value exports)
 
 		return NULL;
 	}
-	#endif
+#endif
 
 	node_loader_port_exports(env, exports);
 

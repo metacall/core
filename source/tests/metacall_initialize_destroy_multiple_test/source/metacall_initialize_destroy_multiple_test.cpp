@@ -32,33 +32,32 @@ TEST_F(metacall_initialize_destroy_multiple_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* Mock */
-	#if defined(OPTION_BUILD_LOADERS_MOCK)
+/* Mock */
+#if defined(OPTION_BUILD_LOADERS_MOCK)
 	{
-		static const char * mock_scripts[] =
-		{
+		static const char *mock_scripts[] = {
 			"empty.mock"
 		};
 
 		static const char tag[] = "mock";
 
-		ASSERT_EQ((int) 1, (int) metacall_is_initialized(tag));
+		ASSERT_EQ((int)1, (int)metacall_is_initialized(tag));
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file(tag, mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file(tag, mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
 
-		ASSERT_EQ((int) 0, (int) metacall_is_initialized(tag));
+		ASSERT_EQ((int)0, (int)metacall_is_initialized(tag));
 
-		ASSERT_EQ((int) 0, (int) metacall_destroy());
+		ASSERT_EQ((int)0, (int)metacall_destroy());
 
-		ASSERT_EQ((int) 1, (int) metacall_is_initialized(tag));
+		ASSERT_EQ((int)1, (int)metacall_is_initialized(tag));
 	}
-	#endif /* OPTION_BUILD_LOADERS_MOCK */
+#endif /* OPTION_BUILD_LOADERS_MOCK */
 
-	ASSERT_EQ((int) 0, (int) metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 
-	ASSERT_EQ((int) 0, (int) metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 }

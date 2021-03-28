@@ -17,7 +17,7 @@ struct log_aspect_schedule_notify_data_type;
 
 /* -- Type Definitions -- */
 
-typedef struct log_aspect_schedule_notify_data_type * log_aspect_schedule_notify_data;
+typedef struct log_aspect_schedule_notify_data_type *log_aspect_schedule_notify_data;
 
 /* -- Member Data -- */
 
@@ -41,13 +41,11 @@ static int log_aspect_schedule_destroy(log_aspect aspect);
 
 log_aspect_interface log_aspect_schedule_interface()
 {
-	static struct log_aspect_schedule_impl_type log_aspect_schedule_impl_obj =
-	{
+	static struct log_aspect_schedule_impl_type log_aspect_schedule_impl_obj = {
 		&log_aspect_schedule_impl_execute
 	};
 
-	static struct log_aspect_interface_type aspect_interface_schedule =
-	{
+	static struct log_aspect_interface_type aspect_interface_schedule = {
 		&log_aspect_schedule_create,
 		&log_aspect_schedule_impl_obj,
 		&log_aspect_schedule_destroy

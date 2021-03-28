@@ -23,10 +23,10 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/reflect_type.h>
+#include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
-#include <reflect/reflect_context.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
@@ -34,8 +34,8 @@
 
 #include <libcob.h>
 
-#include <string>
 #include <map>
+#include <string>
 
 typedef struct loader_impl_cob_handle_type
 {
@@ -43,7 +43,7 @@ typedef struct loader_impl_cob_handle_type
 
 } * loader_impl_cob_handle;
 
-static void * loader_impl_cob_ptr = NULL;
+static void *loader_impl_cob_ptr = NULL;
 
 int function_cob_interface_create(function func, function_impl impl)
 {
@@ -55,7 +55,7 @@ int function_cob_interface_create(function func, function_impl impl)
 
 function_return function_cob_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
-	const char * name = function_name(func);
+	const char *name = function_name(func);
 
 	(void)impl;
 
@@ -65,7 +65,7 @@ function_return function_cob_interface_invoke(function func, function_impl impl,
 	}
 	else
 	{
-		void ** cob_args = static_cast<void**>(malloc(sizeof(void *) * size));
+		void **cob_args = static_cast<void **>(malloc(sizeof(void *) * size));
 
 		if (cob_args == NULL)
 		{
@@ -85,7 +85,7 @@ function_return function_cob_interface_invoke(function func, function_impl impl,
 	}
 }
 
-function_return function_cob_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_cob_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -108,8 +108,7 @@ void function_cob_interface_destroy(function func, function_impl impl)
 
 function_interface function_cob_singleton(void)
 {
-	static struct function_interface_type cob_interface =
-	{
+	static struct function_interface_type cob_interface = {
 		&function_cob_interface_create,
 		&function_cob_interface_invoke,
 		&function_cob_interface_await,
@@ -125,7 +124,7 @@ loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration conf
 	(void)config;
 
 	// Copy environment variables in order to resolve properly the scripts
-	const char * scripts_path = getenv("LOADER_SCRIPT_PATH");
+	const char *scripts_path = getenv("LOADER_SCRIPT_PATH");
 
 	if (scripts_path != NULL)
 	{
@@ -170,11 +169,11 @@ loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_nami
 
 		if (loader_path_get_name(paths[path_count], module_name) > 1)
 		{
-			void * func = cob_resolve(module_name);
+			void *func = cob_resolve(module_name);
 
 			if (func == NULL)
 			{
-				const char * error = cob_resolve_error();
+				const char *error = cob_resolve_error();
 
 				if (error == NULL)
 				{
@@ -199,7 +198,7 @@ loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_nami
 	return cob_handle;
 }
 
-loader_handle cob_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char * buffer, size_t size)
+loader_handle cob_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	(void)impl;
 	(void)name;
@@ -245,7 +244,7 @@ int cob_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 	(void)impl;
 
-	for (const auto & func : cob_handle->funcs)
+	for (const auto &func : cob_handle->funcs)
 	{
 		function f = function_create(func.first.c_str(), 0, func.second, &function_cob_singleton);
 

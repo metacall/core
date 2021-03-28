@@ -21,8 +21,8 @@
 
 /* -- Definitions -- */
 
-#define DETOUR_DYNLINK_NAME_SIZE		0x40
-#define DETOUR_DYNLINK_SUFFIX			"_detour"
+#define DETOUR_DYNLINK_NAME_SIZE 0x40
+#define DETOUR_DYNLINK_SUFFIX	 "_detour"
 
 /* -- Member Data -- */
 
@@ -34,22 +34,22 @@ struct detour_impl_type
 
 /* -- Private Methods -- */
 
-static dynlink detour_impl_load_dynlink(const char * path, const char * name);
+static dynlink detour_impl_load_dynlink(const char *path, const char *name);
 
-static int detour_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr);
+static int detour_impl_load_symbol(dynlink handle, const char *name, dynlink_symbol_addr *singleton_addr_ptr);
 
 /* -- Methods -- */
 
-dynlink detour_impl_load_dynlink(const char * path, const char * name)
+dynlink detour_impl_load_dynlink(const char *path, const char *name)
 {
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char detour_dynlink_suffix[] = DETOUR_DYNLINK_SUFFIX "d";
-	#else
-		const char detour_dynlink_suffix[] = DETOUR_DYNLINK_SUFFIX;
-	#endif
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	const char detour_dynlink_suffix[] = DETOUR_DYNLINK_SUFFIX "d";
+#else
+	const char detour_dynlink_suffix[] = DETOUR_DYNLINK_SUFFIX;
+#endif
 
-	#define DETOUR_DYNLINK_NAME_FULL_SIZE \
-		(sizeof(detour_dynlink_suffix) + DETOUR_DYNLINK_NAME_SIZE)
+#define DETOUR_DYNLINK_NAME_FULL_SIZE \
+	(sizeof(detour_dynlink_suffix) + DETOUR_DYNLINK_NAME_SIZE)
 
 	char detour_dynlink_name[DETOUR_DYNLINK_NAME_FULL_SIZE];
 
@@ -58,20 +58,20 @@ dynlink detour_impl_load_dynlink(const char * path, const char * name)
 	strncat(detour_dynlink_name, detour_dynlink_suffix,
 		DETOUR_DYNLINK_NAME_FULL_SIZE - strnlen(detour_dynlink_name, DETOUR_DYNLINK_NAME_FULL_SIZE - 1) - 1);
 
-	#undef DETOUR_DYNLINK_NAME_FULL_SIZE
+#undef DETOUR_DYNLINK_NAME_FULL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading detour plugin: %s", detour_dynlink_name);
 
 	return dynlink_load(path, detour_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-int detour_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr)
+int detour_impl_load_symbol(dynlink handle, const char *name, dynlink_symbol_addr *singleton_addr_ptr)
 {
 	const char detour_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char detour_dynlink_symbol_suffix[] = "_detour_impl_interface_singleton";
 
-	#define DETOUR_DYNLINK_SYMBOL_SIZE \
-		(sizeof(detour_dynlink_symbol_prefix) + DETOUR_DYNLINK_NAME_SIZE + sizeof(detour_dynlink_symbol_suffix))
+#define DETOUR_DYNLINK_SYMBOL_SIZE \
+	(sizeof(detour_dynlink_symbol_prefix) + DETOUR_DYNLINK_NAME_SIZE + sizeof(detour_dynlink_symbol_suffix))
 
 	char detour_dynlink_symbol[DETOUR_DYNLINK_SYMBOL_SIZE];
 
@@ -83,7 +83,7 @@ int detour_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_ad
 	strncat(detour_dynlink_symbol, detour_dynlink_symbol_suffix,
 		DETOUR_DYNLINK_SYMBOL_SIZE - strnlen(detour_dynlink_symbol, DETOUR_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-	#undef DETOUR_DYNLINK_SYMBOL_SIZE
+#undef DETOUR_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading detour symbol: %s", detour_dynlink_symbol);
 
@@ -107,7 +107,7 @@ detour_impl detour_impl_create()
 	return impl;
 }
 
-int detour_impl_load(detour_impl impl, const char * path, const char * name)
+int detour_impl_load(detour_impl impl, const char *path, const char *name)
 {
 	dynlink_symbol_addr singleton_addr;
 
@@ -151,7 +151,7 @@ int detour_impl_load(detour_impl impl, const char * path, const char * name)
 	return 0;
 }
 
-detour_impl_handle detour_impl_install(detour_impl impl, void(**target)(void), void(*hook)(void))
+detour_impl_handle detour_impl_install(detour_impl impl, void (**target)(void), void (*hook)(void))
 {
 	detour_impl_handle handle = impl->iface->initialize();
 

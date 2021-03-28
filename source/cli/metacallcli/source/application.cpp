@@ -9,12 +9,12 @@
 /* -- Headers -- */
 
 #include <metacallcli/application.hpp>
-#include <metacallcli/tokenizer.hpp>
 #include <metacallcli/parser.hpp>
+#include <metacallcli/tokenizer.hpp>
 
 #include <algorithm>
-#include <iostream>
 #include <functional>
+#include <iostream>
 
 /* TODO: Windows special characters not working properly */
 /* Set UTF-16 mode for stdout in Windows for the lambda character */
@@ -38,10 +38,13 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 {
 	std::cout << "MetaCall Command Line Interface by Parra Studios" << std::endl;
 	std::cout << "Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl;
-	std::cout << std::endl << "A command line interface for MetaCall Core" << std::endl;
+	std::cout << std::endl
+			  << "A command line interface for MetaCall Core" << std::endl;
 
 	/* Command list */
-	std::cout << std::endl << "Command list:" << std::endl << std::endl;
+	std::cout << std::endl
+			  << "Command list:" << std::endl
+			  << std::endl;
 
 	/* Load command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -69,7 +72,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
 	std::cout << "\t│ Script (concat.js) loaded correctly                                                    │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	/* Inspect command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -87,7 +91,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│         function concat(left, right)                                                   │" << std::endl;
 	std::cout << "\t│     }                                                                                  │" << std::endl;
 	std::cout << "\t│ }                                                                                      │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	/* Call command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -109,7 +114,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
 	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	/* Await command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -131,7 +137,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
 	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	/* Clear command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -157,7 +164,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│                                                                                        │" << std::endl;
 	std::cout << "\t│ Result:                                                                                │" << std::endl;
 	std::cout << "\t│ Script (concat) removed correctly                                                      │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	/* Exit command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -165,7 +173,8 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
 	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
 	std::cout << "\t│ exit                                                                                   │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	/* Help command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
@@ -173,12 +182,13 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
 	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
 	std::cout << "\t│ help                                                                                   │" << std::endl;
-	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
 
 	return true;
 }
 
-bool command_cb_debug(application & app, tokenizer & t)
+bool command_cb_debug(application &app, tokenizer &t)
 {
 	std::cout << "[DEBUG]" << std::endl;
 
@@ -187,15 +197,15 @@ bool command_cb_debug(application & app, tokenizer & t)
 	return true;
 }
 
-bool command_cb_inspect(application & app, tokenizer &)
+bool command_cb_inspect(application &app, tokenizer &)
 {
 	size_t size = 0;
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-	void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-	char * inspect_str = metacall_inspect(&size, allocator);
+	char *inspect_str = metacall_inspect(&size, allocator);
 
 	if (inspect_str == NULL || size == 0)
 	{
@@ -216,7 +226,7 @@ bool command_cb_inspect(application & app, tokenizer &)
 	return true;
 }
 
-bool command_cb_call(application & app, tokenizer & t)
+bool command_cb_call(application &app, tokenizer &t)
 {
 	const std::string func_delimiters(" \n\t\r\v\f(,)");
 
@@ -233,7 +243,7 @@ bool command_cb_call(application & app, tokenizer & t)
 	{
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 		std::string func_name(*it);
 
@@ -257,13 +267,13 @@ bool command_cb_call(application & app, tokenizer & t)
 		void * result = app.metacallv_adaptor(func_name, args);
 		*/
 
-		void * result = app.metacallfs_adaptor(func_name, args, allocator);
+		void *result = app.metacallfs_adaptor(func_name, args, allocator);
 
 		if (result != NULL)
 		{
 			size_t size = 0;
 
-			char * value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
+			char *value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
 
 			std::cout << value_str << std::endl;
 
@@ -284,7 +294,7 @@ bool command_cb_call(application & app, tokenizer & t)
 	return false;
 }
 
-bool command_cb_await(application & app, tokenizer & t)
+bool command_cb_await(application &app, tokenizer &t)
 {
 	const std::string func_delimiters(" \n\t\r\v\f(,)");
 
@@ -301,7 +311,7 @@ bool command_cb_await(application & app, tokenizer & t)
 	{
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 		std::string func_name(*it);
 
@@ -325,13 +335,13 @@ bool command_cb_await(application & app, tokenizer & t)
 		void * result = app.metacallfv_await_adaptor(func_name, args);
 		*/
 
-		void * result = app.metacallfs_await_adaptor(func_name, args, allocator);
+		void *result = app.metacallfs_await_adaptor(func_name, args, allocator);
 
 		if (result != NULL)
 		{
 			size_t size = 0;
 
-			char * value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
+			char *value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
 
 			std::cout << value_str << std::endl;
 
@@ -352,7 +362,7 @@ bool command_cb_await(application & app, tokenizer & t)
 	return false;
 }
 
-bool command_cb_load(application & app, tokenizer & t)
+bool command_cb_load(application &app, tokenizer &t)
 {
 	tokenizer::iterator it = t.begin();
 
@@ -376,7 +386,7 @@ bool command_cb_load(application & app, tokenizer & t)
 	return true;
 }
 
-bool command_cb_clear(application & app, tokenizer & t)
+bool command_cb_clear(application &app, tokenizer &t)
 {
 	tokenizer::iterator it = t.begin();
 
@@ -400,7 +410,7 @@ bool command_cb_clear(application & app, tokenizer & t)
 	return true;
 }
 
-bool command_cb_exit(application & app, tokenizer & /*t*/)
+bool command_cb_exit(application &app, tokenizer & /*t*/)
 {
 	std::cout << "Exiting ..." << std::endl;
 
@@ -411,24 +421,21 @@ bool command_cb_exit(application & app, tokenizer & /*t*/)
 
 /* -- Methods -- */
 
-application::parameter_iterator::parameter_iterator(application & app) :
+application::parameter_iterator::parameter_iterator(application &app) :
 	app(app)
 {
-
 }
 
 application::parameter_iterator::~parameter_iterator()
 {
-
 }
 
-void application::parameter_iterator::operator()(const char * parameter)
+void application::parameter_iterator::operator()(const char *parameter)
 {
 	std::string script(parameter);
 
 	/* List of file extensions mapped into loader tags */
-	static std::unordered_map<std::string, std::string> extension_to_tag =
-	{
+	static std::unordered_map<std::string, std::string> extension_to_tag = {
 		/* Mock Loader */
 		{ "mock", "mock" },
 		/* Python Loader */
@@ -462,10 +469,9 @@ void application::parameter_iterator::operator()(const char * parameter)
 	app.shutdown();
 }
 
-bool application::load(const std::string & tag, const std::string & script)
+bool application::load(const std::string &tag, const std::string &script)
 {
-	const char * load_scripts[] =
-	{
+	const char *load_scripts[] = {
 		script.c_str()
 	};
 
@@ -483,9 +489,9 @@ bool application::load(const std::string & tag, const std::string & script)
 	return true;
 }
 
-bool application::clear(const std::string & tag, const std::string & script)
+bool application::clear(const std::string &tag, const std::string &script)
 {
-	void * handle = metacall_handle(tag.c_str(), script.c_str());
+	void *handle = metacall_handle(tag.c_str(), script.c_str());
 
 	if (handle == NULL)
 	{
@@ -513,7 +519,8 @@ bool application::clear(const std::string & tag, const std::string & script)
 	return true;
 }
 
-application::application(int argc, char * argv[]) : exit_condition(false)
+application::application(int argc, char *argv[]) :
+	exit_condition(false)
 {
 	/* Set locale */
 	setlocale(LC_CTYPE, "C");
@@ -524,10 +531,12 @@ application::application(int argc, char * argv[]) : exit_condition(false)
 	{
 		// SetConsoleOutputCP(CP_UTF16);
 
-		*//* Set UTF-16 mode for stdout in Windows for the lambda character *//*
+		*/
+	/* Set UTF-16 mode for stdout in Windows for the lambda character */		/*
 		_setmode(_fileno(stdout), _O_U16TEXT);
 
-		*//* Enable buffering to prevent VS from chopping up UTF-16 byte sequences *//*
+		*/
+	/* Enable buffering to prevent VS from chopping up UTF-16 byte sequences */ /*
 		setvbuf(stdout, nullptr, _IOFBF, 1000);
 	}
 	#endif
@@ -590,14 +599,14 @@ void application::run()
 	{
 		std::string input;
 
-		/* Show prompt line */
-		#if defined(WIN32) || defined(_WIN32)
-			/* TODO: Windows special characters not working properly */
-			/* std::cout << L'\u03BB' << ' '; */
-			std::cout << "> ";
-		#else
-			std::cout << "\u03BB ";
-		#endif
+/* Show prompt line */
+#if defined(WIN32) || defined(_WIN32)
+		/* TODO: Windows special characters not working properly */
+		/* std::cout << L'\u03BB' << ' '; */
+		std::cout << "> ";
+#else
+		std::cout << "\u03BB ";
+#endif
 
 		/* Get whole line */
 		std::getline(std::cin, input);
@@ -625,11 +634,11 @@ void application::shutdown()
 	exit_condition = true;
 }
 
-void application::command_debug(const std::string & key, const tokenizer & t)
+void application::command_debug(const std::string &key, const tokenizer &t)
 {
 	std::cout << "{" << std::endl
-		<< "\tkey : " << key << "," << std::endl
-		<< "\targuments :" << std::endl;
+			  << "\tkey : " << key << "," << std::endl
+			  << "\targuments :" << std::endl;
 
 	for (tokenizer::iterator it = t.begin(); it != t.end(); ++it)
 	{
@@ -639,29 +648,28 @@ void application::command_debug(const std::string & key, const tokenizer & t)
 	std::cout << "}" << std::endl;
 }
 
-void value_array_for_each(void * v, const std::function<void(void *)> & lambda)
+void value_array_for_each(void *v, const std::function<void(void *)> &lambda)
 {
-	void ** v_array = static_cast<void **>(metacall_value_to_array(v));
+	void **v_array = static_cast<void **>(metacall_value_to_array(v));
 	size_t count = metacall_value_count(v);
 
 	std::for_each(v_array, v_array + count, lambda);
 }
 
-void value_map_for_each(void * v, const std::function<void(const char *, void *)> & lambda)
+void value_map_for_each(void *v, const std::function<void(const char *, void *)> &lambda)
 {
-	void ** v_map = static_cast<void **>(metacall_value_to_map(v));
+	void **v_map = static_cast<void **>(metacall_value_to_map(v));
 	size_t count = metacall_value_count(v);
 
-	std::for_each(v_map, v_map + count, [&lambda](void * element)
-	{
-		void ** v_element = metacall_value_to_array(element);
+	std::for_each(v_map, v_map + count, [&lambda](void *element) {
+		void **v_element = metacall_value_to_array(element);
 		lambda(metacall_value_to_string(v_element[0]), v_element[1]);
 	});
 }
 
-void application::command_inspect(const char * str, size_t size, void * allocator)
+void application::command_inspect(const char *str, size_t size, void *allocator)
 {
-	void * v = metacall_deserialize(metacall_serial(), str, size, allocator);
+	void *v = metacall_deserialize(metacall_serial(), str, size, allocator);
 
 	if (v == NULL)
 	{
@@ -671,8 +679,7 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 	}
 
 	/* Print run-times */
-	value_map_for_each(v, [](const char * key, void * modules)
-	{
+	value_map_for_each(v, [](const char *key, void *modules) {
 		std::cout << "runtime " << key;
 
 		if (metacall_value_count(modules) == 0)
@@ -684,43 +691,40 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 		std::cout << " {" << std::endl;
 
 		/* Print scripts */
-		value_array_for_each(modules, [](void * module)
-		{
+		value_array_for_each(modules, [](void *module) {
 			/* Get module name */
-			void ** v_module_map = static_cast<void **>(metacall_value_to_map(module));
-			void ** v_module_name_tuple = metacall_value_to_array(v_module_map[0]);
-			const char * name = metacall_value_to_string(v_module_name_tuple[1]);
+			void **v_module_map = static_cast<void **>(metacall_value_to_map(module));
+			void **v_module_name_tuple = metacall_value_to_array(v_module_map[0]);
+			const char *name = metacall_value_to_string(v_module_name_tuple[1]);
 
 			std::cout << "\tmodule " << name << " { " << std::endl;
 
 			/* Get module functions */
-			void ** v_module_scope_tuple = metacall_value_to_array(v_module_map[1]);
-			void ** v_scope_map = metacall_value_to_map(v_module_scope_tuple[1]);
-			void ** v_scope_funcs_tuple = metacall_value_to_array(v_scope_map[1]);
+			void **v_module_scope_tuple = metacall_value_to_array(v_module_map[1]);
+			void **v_scope_map = metacall_value_to_map(v_module_scope_tuple[1]);
+			void **v_scope_funcs_tuple = metacall_value_to_array(v_scope_map[1]);
 
 			if (metacall_value_count(v_scope_funcs_tuple[1]) != 0)
 			{
-				value_array_for_each(v_scope_funcs_tuple[1], [](void * func)
-				{
+				value_array_for_each(v_scope_funcs_tuple[1], [](void *func) {
 					/* Get function name */
-					void ** v_func_map = static_cast<void **>(metacall_value_to_map(func));
-					void ** v_func_tuple = metacall_value_to_array(v_func_map[0]);
-					const char * func_name = metacall_value_to_string(v_func_tuple[1]);
+					void **v_func_map = static_cast<void **>(metacall_value_to_map(func));
+					void **v_func_tuple = metacall_value_to_array(v_func_map[0]);
+					const char *func_name = metacall_value_to_string(v_func_tuple[1]);
 
 					std::cout << "\t\tfunction " << func_name << "(";
 
 					/* Get function signature */
-					void ** v_signature_tuple = metacall_value_to_array(v_func_map[1]);
-					void ** v_args_map = metacall_value_to_map(v_signature_tuple[1]);
-					void ** v_args_tuple = metacall_value_to_array(v_args_map[1]);
-					void ** v_args_array = metacall_value_to_array(v_args_tuple[1]);
+					void **v_signature_tuple = metacall_value_to_array(v_func_map[1]);
+					void **v_args_map = metacall_value_to_map(v_signature_tuple[1]);
+					void **v_args_tuple = metacall_value_to_array(v_args_map[1]);
+					void **v_args_array = metacall_value_to_array(v_args_tuple[1]);
 
 					size_t iterator = 0, count = metacall_value_count(v_args_tuple[1]);
 
-					value_array_for_each(v_args_array, [&iterator, &count](void * arg)
-					{
-						void ** v_arg_map = metacall_value_to_map(arg);
-						void ** v_arg_name_tupla = metacall_value_to_array(v_arg_map[0]);
+					value_array_for_each(v_args_array, [&iterator, &count](void *arg) {
+						void **v_arg_map = metacall_value_to_map(arg);
+						void **v_arg_name_tupla = metacall_value_to_array(v_arg_map[0]);
 
 						std::cout << metacall_value_to_string(v_arg_name_tupla[1]);
 
@@ -743,7 +747,7 @@ void application::command_inspect(const char * str, size_t size, void * allocato
 	});
 }
 
-void application::execute(tokenizer & t)
+void application::execute(tokenizer &t)
 {
 	tokenizer::iterator it = t.begin();
 
@@ -768,14 +772,14 @@ void application::execute(tokenizer & t)
 	}
 }
 
-void application::define(const char * key, application::command_callback command_cb)
+void application::define(const char *key, application::command_callback command_cb)
 {
 	std::string cmd(key);
 
 	commands[cmd] = command_cb;
 }
 
-void * application::argument_parse(parser_parameter & p)
+void *application::argument_parse(parser_parameter &p)
 {
 	if (p.is<bool>())
 	{
@@ -817,7 +821,7 @@ void * application::argument_parse(parser_parameter & p)
 	}
 	else if (p.is<void *>())
 	{
-		void * ptr = p.to<void *>();
+		void *ptr = p.to<void *>();
 
 		return metacall_value_create_ptr(ptr);
 	}
@@ -831,18 +835,17 @@ void * application::argument_parse(parser_parameter & p)
 	return NULL;
 }
 
-void * application::metacallv_adaptor(const std::string & name, const std::vector<void *> & args)
+void *application::metacallv_adaptor(const std::string &name, const std::vector<void *> &args)
 {
-	void ** args_ptr = new void * [args.size()];
+	void **args_ptr = new void *[args.size()];
 
-	void * result = NULL;
+	void *result = NULL;
 
 	if (args_ptr != nullptr)
 	{
 		size_t iterator = 0;
 
-		std::for_each(args.begin(), args.end(), [&iterator, args_ptr](void * v)
-		{
+		std::for_each(args.begin(), args.end(), [&iterator, args_ptr](void *v) {
 			args_ptr[iterator] = v;
 
 			++iterator;
@@ -856,47 +859,49 @@ void * application::metacallv_adaptor(const std::string & name, const std::vecto
 	return result;
 }
 
-void * application::metacallfs_adaptor(const std::string & name, const std::string & args, void * allocator)
+void *application::metacallfs_adaptor(const std::string &name, const std::string &args, void *allocator)
 {
-	void * func = metacall_function(name.c_str());
+	void *func = metacall_function(name.c_str());
 
 	return metacallfs(func, args.c_str(), args.length() + 1, allocator);
 }
 
-void * application::metacallfs_await_adaptor(const std::string & name, const std::string & args, void * allocator)
+void *application::metacallfs_await_adaptor(const std::string &name, const std::string &args, void *allocator)
 {
-	void * func = metacall_function(name.c_str());
-	#if 0
+	void *func = metacall_function(name.c_str());
+#if 0
 	return metacallfs_await(func, args.c_str(), args.length() + 1, allocator, NULL, NULL, NULL);
-	#endif
+#endif
 
 	std::unique_lock<std::mutex> lock(this->await_mutex);
 
 	struct await_data_type
 	{
-		void * v;
-		application * app;
+		void *v;
+		application *app;
 	};
 
 	struct await_data_type data = { NULL, this };
 
-	void * future = metacallfs_await(func, args.c_str(), args.length() + 1, allocator,
-		[](void * result, void * ctx) -> void * {
-			struct await_data_type * await_data = static_cast<struct await_data_type *>(ctx);
+	void *future = metacallfs_await(
+		func, args.c_str(), args.length() + 1, allocator,
+		[](void *result, void *ctx) -> void * {
+			struct await_data_type *await_data = static_cast<struct await_data_type *>(ctx);
 			std::unique_lock<std::mutex> lock(await_data->app->await_mutex);
 			/* Value must be always copied, it gets deteled after the scope */
 			await_data->v = metacall_value_copy(result);
 			await_data->app->await_cond.notify_one();
 			return NULL;
 		},
-		[](void * result, void * ctx) -> void * {
-			struct await_data_type * await_data = static_cast<struct await_data_type *>(ctx);
+		[](void *result, void *ctx) -> void * {
+			struct await_data_type *await_data = static_cast<struct await_data_type *>(ctx);
 			std::unique_lock<std::mutex> lock(await_data->app->await_mutex);
 			/* Value must be always copied, it gets deteled after the scope */
 			await_data->v = metacall_value_copy(result);
 			await_data->app->await_cond.notify_one();
 			return NULL;
-		}, static_cast<void *>(&data));
+		},
+		static_cast<void *>(&data));
 
 	this->await_cond.wait(lock);
 

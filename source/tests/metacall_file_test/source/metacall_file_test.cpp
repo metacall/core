@@ -21,8 +21,8 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
 class metacall_file_test : public testing::Test
 {
@@ -33,29 +33,28 @@ TEST_F(metacall_file_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	ASSERT_EQ((int) 0, (int) metacall_initialize());
+	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	/* File */
-	#if defined(OPTION_BUILD_LOADERS_FILE)
+/* File */
+#if defined(OPTION_BUILD_LOADERS_FILE)
 	{
-		const char * scripts[] =
-		{
+		const char *scripts[] = {
 			"favicon.ico",
 			"a/a.txt"
 		};
 
 		const size_t size = sizeof(scripts) / sizeof(scripts[0]);
 
-		EXPECT_EQ((int) 0, (int) metacall_load_from_file("file", scripts, size, NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("file", scripts, size, NULL));
 
 		for (size_t i = 0; i < size; ++i)
 		{
-			void * f = metacall_function(scripts[i]);
+			void *f = metacall_function(scripts[i]);
 
-			EXPECT_NE((void *) NULL, (void *) f);
+			EXPECT_NE((void *)NULL, (void *)f);
 		}
 	}
-	#endif /* OPTION_BUILD_LOADERS_FILE */
+#endif /* OPTION_BUILD_LOADERS_FILE */
 
 	/* Print inspect information */
 	{
@@ -63,13 +62,13 @@ TEST_F(metacall_file_test, DefaultConstructor)
 
 		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 
-		void * allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
-		char * inspect_str = metacall_inspect(&size, allocator);
+		char *inspect_str = metacall_inspect(&size, allocator);
 
-		EXPECT_NE((char *) NULL, (char *) inspect_str);
+		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
-		EXPECT_GT((size_t) size, (size_t) 0);
+		EXPECT_GT((size_t)size, (size_t)0);
 
 		std::cout << inspect_str << std::endl;
 
@@ -78,5 +77,5 @@ TEST_F(metacall_file_test, DefaultConstructor)
 		metacall_allocator_destroy(allocator);
 	}
 
-	EXPECT_EQ((int) 0, (int) metacall_destroy());
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

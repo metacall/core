@@ -27,27 +27,27 @@
 
 /* -- Definitions -- */
 
-#if defined(WIN32) || defined(_WIN32) || \
+#if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
-#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR(chr) (chr == '/' || chr == '\\')
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	#define ENVIRONMENT_VARIABLE_PATH_SEPARATOR(chr) (chr == '/' || chr == '\\')
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) ||                 \
 	defined(__HAIKU__) || defined(__BEOS__)
-#	define ENVIRONMENT_VARIABLE_PATH_SEPARATOR(chr) (chr == '/')
+	#define ENVIRONMENT_VARIABLE_PATH_SEPARATOR(chr) (chr == '/')
 #else
-#	error "Unknown environment variable path separator"
+	#error "Unknown environment variable path separator"
 #endif
 
 /* -- Methods -- */
 
-char * environment_variable_path_create(const char * name, const char * default_path)
+char *environment_variable_path_create(const char *name, const char *default_path)
 {
-	const char * path_ptr = getenv(name);
+	const char *path_ptr = getenv(name);
 
-	char * path;
+	char *path;
 
 	size_t length, size, last, end;
 
@@ -94,7 +94,7 @@ char * environment_variable_path_create(const char * name, const char * default_
 	return path;
 }
 
-void environment_variable_path_destroy(char * variable_path)
+void environment_variable_path_destroy(char *variable_path)
 {
 	if (variable_path)
 	{

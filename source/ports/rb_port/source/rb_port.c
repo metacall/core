@@ -21,4 +21,3 @@
 #include <rb_port/rb_port.h>
 
 /* ... */
-

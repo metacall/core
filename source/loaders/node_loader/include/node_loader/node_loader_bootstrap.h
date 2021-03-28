@@ -21,43 +21,47 @@
 #ifndef NODE_LOADER_BOOTSTRAP_H
 #define NODE_LOADER_BOOTSTRAP_H 1
 
+#include <configuration/configuration.h>
+#include <reflect/reflect_value_type.h>
+
 #if defined(WIN32) || defined(_WIN32)
-#	ifndef NOMINMAX
-#		define NOMINMAX
-#	endif
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 
-#	ifndef WIN32_LEAN_AND_MEAN
-#		define WIN32_LEAN_AND_MEAN
-#	endif
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
 
-#	include <windows.h>
-#	define NODE_LOADER_IMPL_PATH_SIZE MAX_PATH
-#elif defined(unix) || defined(__unix__) || defined(__unix) || \
+	#include <windows.h>
+	#define NODE_LOADER_IMPL_PATH_SIZE MAX_PATH
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
-	defined(__MINGW32__) || defined(__MINGW64__) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-#	include <limits.h>
-#	include <unistd.h>
+	#include <limits.h>
+	#include <unistd.h>
 
-#	define NODE_LOADER_IMPL_PATH_SIZE PATH_MAX
+	#define NODE_LOADER_IMPL_PATH_SIZE PATH_MAX
 #else
-#	define NODE_LOADER_IMPL_PATH_SIZE 4096
+	#define NODE_LOADER_IMPL_PATH_SIZE 4096
 #endif
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 
 typedef char node_impl_path[NODE_LOADER_IMPL_PATH_SIZE];
 
-inline int node_loader_impl_bootstrap_path(const char file[], configuration config, node_impl_path path, size_t * size)
+inline int node_loader_impl_bootstrap_path(const char file[], configuration config, node_impl_path path, size_t *size)
 {
 	size_t path_size = 0;
-	const char * load_library_path_env = getenv("LOADER_LIBRARY_PATH");
+	const char *load_library_path_env = getenv("LOADER_LIBRARY_PATH");
 	size_t load_library_path_length = 0;
 
 	if (load_library_path_env == NULL)
@@ -72,11 +76,11 @@ inline int node_loader_impl_bootstrap_path(const char file[], configuration conf
 
 	if (path[load_library_path_length - 1] != '/' && path[load_library_path_length - 1] != '\\')
 	{
-		#if defined(WIN32) || defined(_WIN32)
-			path[load_library_path_length] = '\\';
-		#else
-			path[load_library_path_length] = '/';
-		#endif
+#if defined(WIN32) || defined(_WIN32)
+		path[load_library_path_length] = '\\';
+#else
+		path[load_library_path_length] = '/';
+#endif
 
 		++load_library_path_length;
 	}
@@ -87,7 +91,7 @@ inline int node_loader_impl_bootstrap_path(const char file[], configuration conf
 	if (bootstrap_value != NULL)
 	{
 		/* Load bootstrap script defined in the configuration */
-		const char * bootstrap_script = value_to_string(bootstrap_value);
+		const char *bootstrap_script = value_to_string(bootstrap_value);
 		size_t bootstrap_script_length = strlen(bootstrap_script);
 
 		strncpy(&path[load_library_path_length], bootstrap_script, bootstrap_script_length);

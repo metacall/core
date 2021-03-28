@@ -34,23 +34,23 @@ extern "C" {
 #define LOADER_IMPL_EXPORT_TAG \
 	__loader_impl_export_tag
 
-#define LOADER_IMPL_EXPORT_INTERFACE(api) \
+#define LOADER_IMPL_EXPORT_INTERFACE(api)                \
 	api loader_impl_export LOADER_IMPL_EXPORT_TAG(void); \
 	DYNLINK_SYMBOL_EXPORT(LOADER_IMPL_EXPORT_TAG)
 
-#define	LOADER_IMPL_EXPORT(export_singleton) \
-	loader_impl_export LOADER_IMPL_EXPORT_TAG() \
-	{ \
+#define LOADER_IMPL_EXPORT(export_singleton)         \
+	loader_impl_export LOADER_IMPL_EXPORT_TAG()      \
+	{                                                \
 		loader_impl_export exp = export_singleton(); \
-		\
-		return exp; \
+                                                     \
+		return exp;                                  \
 	}
 
 typedef struct loader_impl_export_type
 {
-	loader_impl_descriptor_singleton descriptor;		/**< Loader descriptor reference */
-	loader_impl_interface_singleton interface;			/**< Loader interface reference */
-	loader_impl_print_singleton print;					/**< Loader print information callback */
+	loader_impl_descriptor_singleton descriptor; /**< Loader descriptor reference */
+	loader_impl_interface_singleton interface;	 /**< Loader interface reference */
+	loader_impl_print_singleton print;			 /**< Loader print information callback */
 
 } * loader_impl_export;
 

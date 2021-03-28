@@ -25,70 +25,70 @@
 #include <stdlib.h>
 
 #if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-#	include <AvailabilityMacros.h>
+	#include <AvailabilityMacros.h>
 #endif
 
 #if defined(_WIN32)
-#	ifndef NOMINMAX
-#		define NOMINMAX
-#	endif
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
 
-#	ifndef WIN32_LEAN_AND_MEAN
-#		define WIN32_LEAN_AND_MEAN
-#	endif
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
 
-#	include <windows.h>
+	#include <windows.h>
 
-#	if defined(__MINGW32__) || defined(__MINGW64__)
-#		include <share.h>
-#	endif
+	#if defined(__MINGW32__) || defined(__MINGW64__)
+		#include <share.h>
+	#endif
 #elif defined(__linux__) || \
 	((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) && (!defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12))
-#	define _GNU_SOURCE
-#	include <unistd.h>
-#	include <sys/syscall.h>
-#	include <sys/types.h>
+	#define _GNU_SOURCE
+	#include <unistd.h>
+	#include <sys/syscall.h>
+	#include <sys/types.h>
 #elif ((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12)
-#	include <pthread.h>
+	#include <pthread.h>
 #elif defined(__FreeBSD__)
-#	include <sys/thr.h>
+	#include <sys/thr.h>
 #elif defined(__HAIKU__) || defined(__BEOS__)
-#	include <be/kernel/OS.h>
+	#include <be/kernel/OS.h>
 #else
-#	error "Unsupported platform thread id"
+	#error "Unsupported platform thread id"
 #endif
 
 /* -- Methods -- */
 
 uint64_t thread_id_get_current()
 {
-	#if defined(_WIN32)
-		return (uint64_t)GetCurrentThreadId();
-	#elif defined(__linux__)
-	#	if defined(__ANDROID__) && defined(__ANDROID_API__) && (__ANDROID_API__ < 21)
-			return (uint64_t)syscall(__NR_gettid);
-	#	else
-			return (uint64_t)syscall(SYS_gettid);
-	#	endif
-	#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-		#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
-			uint64_t thread_id;
-
-			pthread_threadid_np(NULL, &thread_id);
-
-			return (uint64_t)thread_id;
-		#else
-			return (uint64_t)syscall(SYS_thread_selfid);
-		#endif
-	#elif defined(__FreeBSD__)
-		long thread_id = 0;
-
-		thr_self(&thread_id);
-
-		return (thread_id < 0) ? 0 : (uint64_t)thread_id;
-	#elif defined(__HAIKU__) || defined(__BEOS__)
-		return (uint64_t)thread_get_current_thread_id();
+#if defined(_WIN32)
+	return (uint64_t)GetCurrentThreadId();
+#elif defined(__linux__)
+	#if defined(__ANDROID__) && defined(__ANDROID_API__) && (__ANDROID_API__ < 21)
+	return (uint64_t)syscall(__NR_gettid);
 	#else
-		return THREAD_ID_INVALID;
+	return (uint64_t)syscall(SYS_gettid);
 	#endif
+#elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	#if defined(MAC_OS_X_VERSION_10_12) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_12
+	uint64_t thread_id;
+
+	pthread_threadid_np(NULL, &thread_id);
+
+	return (uint64_t)thread_id;
+	#else
+	return (uint64_t)syscall(SYS_thread_selfid);
+	#endif
+#elif defined(__FreeBSD__)
+	long thread_id = 0;
+
+	thr_self(&thread_id);
+
+	return (thread_id < 0) ? 0 : (uint64_t)thread_id;
+#elif defined(__HAIKU__) || defined(__BEOS__)
+	return (uint64_t)thread_get_current_thread_id();
+#else
+	return THREAD_ID_INVALID;
+#endif
 }

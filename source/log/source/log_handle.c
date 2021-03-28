@@ -28,7 +28,7 @@
 /* -- Definitions -- */
 
 #define LOG_HANDLE_RECORD_SIZE_DEFAULT UINTMAX_C(0x0100)
-#define LOG_HANDLE_RECORD_SIZE_FULL UINTMAX_C(0x8000)
+#define LOG_HANDLE_RECORD_SIZE_FULL	   UINTMAX_C(0x8000)
 
 /* -- Member Data -- */
 
@@ -80,7 +80,7 @@ log_record log_handle_get(log_handle handle, const size_t record_id)
 {
 	if (record_id < handle->count)
 	{
-		void * const ptr = (unsigned char *)(handle->buffer) + (record_id * log_record_size());
+		void *const ptr = (unsigned char *)(handle->buffer) + (record_id * log_record_size());
 
 		return ptr;
 	}
@@ -92,7 +92,7 @@ log_record log_handle_set(log_handle handle, const size_t record_id, const log_r
 {
 	if (record_id < handle->count)
 	{
-		void * const ptr = (unsigned char *)(handle->buffer) + (record_id * log_record_size());
+		void *const ptr = (unsigned char *)(handle->buffer) + (record_id * log_record_size());
 
 		return log_record_initialize(ptr, record_ctor);
 	}
@@ -106,7 +106,7 @@ log_record log_handle_push(log_handle handle, const log_record_ctor record_ctor)
 	{
 		const size_t new_size = handle->size << 0x01;
 
-		register void * buffer = realloc(handle->buffer, new_size);
+		register void *buffer = realloc(handle->buffer, new_size);
 
 		if (buffer == NULL)
 		{
@@ -120,7 +120,7 @@ log_record log_handle_push(log_handle handle, const log_record_ctor record_ctor)
 
 	if (handle->count > 0)
 	{
-		void * dest = (unsigned char *)(handle->buffer) + log_record_size();
+		void *dest = (unsigned char *)(handle->buffer) + log_record_size();
 
 		memmove(dest, handle->buffer, log_record_size() * handle->count);
 	}
@@ -140,7 +140,7 @@ log_record log_handle_pop(log_handle handle)
 
 		if (new_size >= LOG_HANDLE_RECORD_SIZE_DEFAULT && handle->count < new_size)
 		{
-			register void * buffer = realloc(handle->buffer, new_size);
+			register void *buffer = realloc(handle->buffer, new_size);
 
 			if (buffer == NULL)
 			{
@@ -152,7 +152,7 @@ log_record log_handle_pop(log_handle handle)
 			handle->size = new_size;
 		}
 
-		return (void * const)((unsigned char *)(handle->buffer) + (handle->count * log_record_size()));
+		return (void *const)((unsigned char *)(handle->buffer) + (handle->count * log_record_size()));
 	}
 
 	return NULL;
@@ -176,7 +176,7 @@ int log_handle_clear(log_handle handle)
 	{
 		const size_t default_size = LOG_HANDLE_RECORD_SIZE_DEFAULT;
 
-		register void * buffer = realloc(handle->buffer, default_size);
+		register void *buffer = realloc(handle->buffer, default_size);
 
 		if (buffer == NULL)
 		{

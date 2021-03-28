@@ -18,15 +18,15 @@
  *
  */
 
-#include <mock_loader/mock_loader_handle.h>
 #include <mock_loader/mock_loader_function.h>
+#include <mock_loader/mock_loader_handle.h>
 
 #include <loader/loader_impl.h>
 
-#include <reflect/type.h>
+#include <reflect/context.h>
 #include <reflect/function.h>
 #include <reflect/scope.h>
-#include <reflect/context.h>
+#include <reflect/type.h>
 
 #include <log/log.h>
 
@@ -34,12 +34,11 @@
 
 struct loader_impl_mock_handle_type;
 
-typedef struct loader_impl_mock_handle_type * loader_impl_mock_handle;
+typedef struct loader_impl_mock_handle_type *loader_impl_mock_handle;
 
 struct loader_impl_mock_handle_type
 {
-	void * handle_mock_data;
-
+	void *handle_mock_data;
 };
 
 loader_handle mock_loader_impl_handle_create(loader_impl impl, const loader_naming_path path, const loader_naming_name name);
@@ -50,8 +49,7 @@ int mock_loader_impl_handle_destroy(loader_impl impl, loader_handle handle);
 
 loader_impl_handle mock_loader_impl_handle_singleton()
 {
-	static struct loader_impl_handle_type loader_impl_handle_mock =
-	{
+	static struct loader_impl_handle_type loader_impl_handle_mock = {
 		&mock_loader_impl_handle_create,
 		&mock_loader_impl_handle_discover,
 		&mock_loader_impl_handle_destroy

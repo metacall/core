@@ -4,7 +4,10 @@
 const Module = require('module');
 const path = require('path');
 const util = require('util');
+const fs = require('fs');
+const async_hooks = require('async_hooks');
 
+/* Require the JavaScript parser */
 const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
 
 const node_require = Module.prototype.require;
@@ -292,10 +295,9 @@ function node_loader_trampoline_discover(handle) {
 }
 
 function node_loader_trampoline_test(obj) {
-	console.log('NodeJS Loader Bootstrap Test');
-
+	/* Imporant: never trigger an async resource in this function */
 	if (obj !== undefined) {
-		console.log(util.inspect(obj, false, null, true));
+		fs.writeSync(process.stdout.fd, `${util.inspect(obj, false, null, true)}\n`);
 	}
 }
 
@@ -357,38 +359,42 @@ function node_loader_trampoline_await_future(trampoline) {
 	};
 }
 
-function node_loader_trampoline_destroy() {
-	try {
-		// eslint-disable-next-line no-underscore-dangle
-		const handles = process._getActiveHandles();
-
-		for (let i = 0; i < handles.length; ++i) {
-			const h = handles[i];
-
-			// eslint-disable-next-line no-param-reassign, no-empty-function
-			h.write = function () {};
-			// eslint-disable-next-line max-len
-			// eslint-disable-next-line no-param-reassign, no-underscore-dangle, no-empty-function
-			h._destroy = function () {};
-
-			if (h.end) {
-				h.end();
-			}
-		}
-	} catch (ex) {
-		console.log('Exception in node_loader_trampoline_destroy', ex);
-	}
-}
-
 module.exports = ((impl, ptr) => {
 	try {
 		if (typeof impl === 'undefined' || typeof ptr === 'undefined') {
-			throw 'Process arguments (process.argv[2], process.argv[3]) not defined.';
+			throw new Error('Process arguments (process.argv[2], process.argv[3]) not defined.');
 		}
 
-		const trampoline = process.binding('node_loader_trampoline_module');
+		/* Initialize async hooks for keeping track the amount of async handles that are in the event queue */
+		const asyncHook = async_hooks.createHook({
+			init: node_loader_trampoline_async_hook_init,
+			destroy: node_loader_trampoline_async_hook_destroy,
+		});
 
-		return trampoline.register(impl, ptr, {
+		/* Map for tracking all the async references */
+		const asyncMap = new Map();
+
+		/* Get trampoline from list of linked bindings */
+		const trampoline = process._linkedBinding('node_loader_trampoline_module');
+
+		function node_loader_trampoline_async_count(cleanHooks) {
+			/* Count the number of active resources, taking into account the reference timeouts */
+			const activeResources = [...asyncMap.values()].filter(
+				(asyncRes) =>
+					!(asyncRes.type === 'Timeout'
+					&& typeof asyncRes.resource.hasRef === 'function'
+					&& !asyncRes.resource.hasRef())
+			);
+
+			if (cleanHooks === true && activeResources.length === 0) {
+				/* Disable Hooks */
+				asyncHook.disable();
+			}
+
+			return activeResources.length;
+		}
+
+		const node_loader_ptr = trampoline.register(impl, ptr, {
 			'initialize': node_loader_trampoline_initialize,
 			'execution_path': node_loader_trampoline_execution_path,
 			'load_from_file': node_loader_trampoline_load_from_file,
@@ -400,8 +406,35 @@ module.exports = ((impl, ptr) => {
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
-			'destroy': node_loader_trampoline_destroy,
+			'async_count': () => node_loader_trampoline_async_count(true),
 		});
+
+		/* Enable async hook with the counter started to 0 */
+		asyncHook.enable();
+
+		function node_loader_trampoline_async_hook_init(asyncId, type, triggerAsyncId, resource) {
+			/* For some reason I do not know, NodeJS does not count this handles as async handles
+			* for closing the event loop, so we must avoid them */
+			if (type !== 'TIMERWRAP' && type !== 'PROMISE') {
+				asyncMap.set(asyncId, {type, triggerAsyncId, resource});
+			}
+		}
+
+		function node_loader_trampoline_async_hook_destroy(asyncId) {
+			if (asyncMap.has(asyncId)) {
+				/* Clean up async resource from the map */
+				asyncMap.delete(asyncId);
+
+				/* At this point we may have reached an "empty" event loop, it
+				* only contains the async resources that the Node Loader has populated,
+				* but it does not contain any user defined async resource */
+				if (node_loader_trampoline_async_count(false) === 0 && trampoline.requested_destroy(node_loader_ptr) === true) {
+					/* Disable Hooks and destroy the Node Loader */
+					asyncHook.disable();
+					trampoline.destroy(node_loader_ptr);
+				}
+			}
+		}
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);
 	}

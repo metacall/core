@@ -2,14 +2,13 @@
 
 #include <QApplication>
 
-
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
-    QApplication application(argc, argv);
+	QApplication application(argc, argv);
 
-    main_window mw;
+	main_window mw;
 
-    mw.show();
+	mw.show();
 
-    return application.exec();
+	return application.exec();
 }

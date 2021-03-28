@@ -26,38 +26,37 @@
 
 class node_loader_test : public testing::Test
 {
-  protected:
+protected:
 };
 
 TEST_F(node_loader_test, DefaultConstructor)
 {
 	const loader_naming_tag tag = "node";
 
-	const loader_naming_path names[] =
-	{
+	const loader_naming_path names[] = {
 		"nod.js"
 	};
 
 	const size_t size = sizeof(names) / sizeof(names[0]);
 
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
-	EXPECT_EQ((int) 0, (int) loader_load_from_file(tag, names, size, NULL));
+	EXPECT_EQ((int)0, (int)loader_load_from_file(tag, names, size, NULL));
 
 	/* TODO: Test load from memory */
 
 	for (size_t index = 0; index < size; ++index)
 	{
-		void * handle = loader_get_handle(tag, names[index]);
+		void *handle = loader_get_handle(tag, names[index]);
 
-		EXPECT_NE((void *) NULL, (void *) handle);
+		EXPECT_NE((void *)NULL, (void *)handle);
 
-		EXPECT_EQ((int) 0, (int) loader_clear(handle));
+		EXPECT_EQ((int)0, (int)loader_clear(handle));
 	}
 
-	EXPECT_EQ((int) 0, (int) loader_unload());
+	EXPECT_EQ((int)0, (int)loader_unload());
 }

@@ -45,9 +45,9 @@ typedef struct function_impl_example_type
 
 } * function_impl_example;
 
-void function_example(char c, int i, void * p)
+void function_example(char c, int i, void *p)
 {
-	struct example_arg_type * e = (struct example_arg_type *)p;
+	struct example_arg_type *e = (struct example_arg_type *)p;
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "char: %c; int: %d; ptr: %p", c, i, p);
 
@@ -82,7 +82,7 @@ function_return function_example_interface_invoke(function func, function_impl f
 	return NULL;
 }
 
-function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void * context)
+function_return function_example_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
 {
 	/* TODO */
 
@@ -106,8 +106,7 @@ void function_example_interface_destroy(function func, function_impl func_impl)
 
 function_interface function_example_singleton()
 {
-	static struct function_interface_type example_interface =
-	{
+	static struct function_interface_type example_interface = {
 		&function_example_interface_create,
 		&function_example_interface_invoke,
 		&function_example_interface_await,
@@ -119,34 +118,34 @@ function_interface function_example_singleton()
 
 class reflect_scope_test : public testing::Test
 {
-  public:
+public:
 };
 
 TEST_F(reflect_scope_test, DefaultConstructor)
 {
-	EXPECT_EQ((int) 0, (int) log_configure("metacall",
-		log_policy_format_text(),
-		log_policy_schedule_sync(),
-		log_policy_storage_sequential(),
-		log_policy_stream_stdio(stdout)));
+	EXPECT_EQ((int)0, (int)log_configure("metacall",
+						  log_policy_format_text(),
+						  log_policy_schedule_sync(),
+						  log_policy_storage_sequential(),
+						  log_policy_stream_stdio(stdout)));
 
 	// Initialize serial
-	EXPECT_EQ((int) 0, (int) serial_initialize());
+	EXPECT_EQ((int)0, (int)serial_initialize());
 
 	// Create serial
 	serial s = serial_create("rapid_json");
 
 	scope sp = scope_create("test");
 
-	EXPECT_NE((scope) sp, (scope) NULL);
+	EXPECT_NE((scope)sp, (scope)NULL);
 
 	type char_type = type_create(TYPE_CHAR, "char", NULL, NULL);
 	type int_type = type_create(TYPE_INT, "int", NULL, NULL);
 	type ptr_type = type_create(TYPE_PTR, "ptr", NULL, NULL);
 
-	EXPECT_NE((type) char_type, (type) NULL);
-	EXPECT_NE((type) int_type, (type) NULL);
-	EXPECT_NE((type) ptr_type, (type) NULL);
+	EXPECT_NE((type)char_type, (type)NULL);
+	EXPECT_NE((type)int_type, (type)NULL);
+	EXPECT_NE((type)ptr_type, (type)NULL);
 
 	if (sp && char_type != NULL && int_type != NULL && ptr_type != NULL)
 	{
@@ -156,7 +155,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 		f1 = function_create("example", 3, example_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f1, (function) NULL);
+		EXPECT_NE((function)f1, (function)NULL);
 
 		if (f1 != NULL)
 		{
@@ -164,14 +163,14 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f1), 1, "i", int_type);
 			signature_set(function_signature(f1), 2, "p", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f1), value_create_function(f1)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f1), value_create_function(f1)), (int)0);
 		}
 
 		function_impl_example example_asd_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f2 = function_create("example_asd", 3, example_asd_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f2, (function) NULL);
+		EXPECT_NE((function)f2, (function)NULL);
 
 		if (f2 != NULL)
 		{
@@ -179,14 +178,14 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f2), 1, "o", int_type);
 			signature_set(function_signature(f2), 2, "u", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f2), value_create_function(f2)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f2), value_create_function(f2)), (int)0);
 		}
 
 		function_impl_example example_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f3 = function_create("example_ret", 3, example_ret_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f3, (function) NULL);
+		EXPECT_NE((function)f3, (function)NULL);
 
 		if (f3 != NULL)
 		{
@@ -195,14 +194,14 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f3), 1, "o", int_type);
 			signature_set(function_signature(f3), 2, "u", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f3), value_create_function(f3)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f3), value_create_function(f3)), (int)0);
 		}
 
 		function_impl_example example_duck_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f4 = function_create("example_duck", 3, example_duck_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f4, (function) NULL);
+		EXPECT_NE((function)f4, (function)NULL);
 
 		if (f4 != NULL)
 		{
@@ -210,14 +209,14 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f4), 1, "o", NULL);
 			signature_set(function_signature(f4), 2, "u", NULL);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f4), value_create_function(f4)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f4), value_create_function(f4)), (int)0);
 		}
 
 		function_impl_example example_duck_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f5 = function_create("example_duck_ret", 3, example_duck_ret_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f5, (function) NULL);
+		EXPECT_NE((function)f5, (function)NULL);
 
 		if (f5 != NULL)
 		{
@@ -226,14 +225,14 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f5), 1, "do", NULL);
 			signature_set(function_signature(f5), 2, "dafu", NULL);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f5), value_create_function(f5)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f5), value_create_function(f5)), (int)0);
 		}
 
 		function_impl_example example_duck_mix_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f6 = function_create("example_duck_mix", 4, example_duck_mix_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f6, (function) NULL);
+		EXPECT_NE((function)f6, (function)NULL);
 
 		if (f6 != NULL)
 		{
@@ -242,14 +241,14 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f6), 2, "dafu", NULL);
 			signature_set(function_signature(f6), 3, "dafu", ptr_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f6), value_create_function(f6)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f6), value_create_function(f6)), (int)0);
 		}
 
 		function_impl_example example_duck_mix_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f7 = function_create("example_duck_mix_ret", 4, example_duck_mix_ret_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f7, (function) NULL);
+		EXPECT_NE((function)f7, (function)NULL);
 
 		if (f7 != NULL)
 		{
@@ -259,31 +258,31 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 			signature_set(function_signature(f7), 2, "dafu", ptr_type);
 			signature_set(function_signature(f7), 3, "dafufs", NULL);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f7), value_create_function(f7)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f7), value_create_function(f7)), (int)0);
 		}
 
 		function_impl_example example_empty_ret_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f8 = function_create("example_empty_ret", 0, example_empty_ret_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f8, (function) NULL);
+		EXPECT_NE((function)f8, (function)NULL);
 
 		if (f8 != NULL)
 		{
 			signature_set_return(function_signature(f8), int_type);
 
-			EXPECT_EQ((int) scope_define(sp, function_name(f8), value_create_function(f8)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f8), value_create_function(f8)), (int)0);
 		}
 
 		function_impl_example example_empty_impl = (function_impl_example)malloc(sizeof(struct function_impl_example_type));
 
 		f9 = function_create("example_empty", 0, example_empty_impl, &function_example_singleton);
 
-		EXPECT_NE((function) f9, (function) NULL);
+		EXPECT_NE((function)f9, (function)NULL);
 
 		if (f9 != NULL)
 		{
-			EXPECT_EQ((int) scope_define(sp, function_name(f9), value_create_function(f9)), (int) 0);
+			EXPECT_EQ((int)scope_define(sp, function_name(f9), value_create_function(f9)), (int)0);
 		}
 
 		{
@@ -291,11 +290,11 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 
 			value v = scope_metadata(sp);
 
-			EXPECT_NE((value) NULL, (value) v);
+			EXPECT_NE((value)NULL, (value)v);
 
 			memory_allocator allocator = memory_allocator_std(&std::malloc, &std::realloc, &std::free);
 
-			char * str = serial_serialize(s, v, &size, allocator);
+			char *str = serial_serialize(s, v, &size, allocator);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Scope serialization info: %s", str);
 
@@ -314,7 +313,7 @@ TEST_F(reflect_scope_test, DefaultConstructor)
 	}
 
 	// Clear serial
-	EXPECT_EQ((int) 0, (int) serial_clear(s));
+	EXPECT_EQ((int)0, (int)serial_clear(s));
 
 	// Destroy serial
 	serial_destroy();

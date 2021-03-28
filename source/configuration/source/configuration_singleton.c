@@ -8,9 +8,9 @@
 
 /* -- Headers -- */
 
-#include <configuration/configuration_singleton.h>
-#include <configuration/configuration_object.h>
 #include <configuration/configuration_impl.h>
+#include <configuration/configuration_object.h>
+#include <configuration/configuration_singleton.h>
 
 #include <adt/adt_set.h>
 #include <adt/adt_vector.h>
@@ -33,8 +33,7 @@ static int configuration_singleton_destroy_cb_iterate(set s, set_key key, set_va
 
 /* -- Member Data -- */
 
-static struct configuration_singleton_type configuration_singleton_default =
-{
+static struct configuration_singleton_type configuration_singleton_default = {
 	NULL,
 	NULL
 };
@@ -94,7 +93,7 @@ int configuration_singleton_register(configuration config)
 	return set_insert(singleton->scopes, (const set_key)configuration_object_name(config), config);
 }
 
-configuration configuration_singleton_get(const char * name)
+configuration configuration_singleton_get(const char *name)
 {
 	configuration_singleton singleton = configuration_singleton_instance();
 

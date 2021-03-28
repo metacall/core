@@ -33,9 +33,9 @@ extern "C" {
 
 typedef struct loader_impl_export_type
 {
-	loader_impl_descriptor_singleton descriptor;		/**< Loader descriptor reference */
-	loader_impl_interface_singleton interface;			/**< Loader interface reference */
-	loader_impl_print_singleton print;					/**< Loader print information callback */
+	loader_impl_descriptor_singleton descriptor; /**< Loader descriptor reference */
+	loader_impl_interface_singleton interface;	 /**< Loader interface reference */
+	loader_impl_print_singleton print;			 /**< Loader print information callback */
 
 } * loader_impl_export;
 

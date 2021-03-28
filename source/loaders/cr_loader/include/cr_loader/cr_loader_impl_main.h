@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-CR_LOADER_API void crystal_library_init(int argc, char * argv[]);
+CR_LOADER_API void crystal_library_init(int argc, char *argv[]);
 
 #ifdef __cplusplus
 }

@@ -31,7 +31,7 @@ extern "C" {
 
 /* -- Type Definitions -- */
 
-typedef void * detour_impl_handle;
+typedef void *detour_impl_handle;
 
 #ifdef __cplusplus
 }

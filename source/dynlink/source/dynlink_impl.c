@@ -26,7 +26,7 @@
 
 /* -- Methods -- */
 
-const char * dynlink_impl_extension(void)
+const char *dynlink_impl_extension(void)
 {
 	dynlink_impl_interface_singleton singleton = dynlink_interface();
 
@@ -50,7 +50,7 @@ dynlink_impl dynlink_impl_load(dynlink handle)
 	return singleton()->load(handle);
 }
 
-int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name symbol_name, dynlink_symbol_addr * symbol_address)
+int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_symbol_name symbol_name, dynlink_symbol_addr *symbol_address)
 {
 	if (impl != NULL)
 	{

@@ -18,7 +18,7 @@
  *
  */
 
- /* -- Headers -- */
+/* -- Headers -- */
 
 #include <dynlink/dynlink.h>
 
@@ -33,7 +33,7 @@
 
 /* -- Methods -- */
 
-const char * dynlink_impl_interface_extension_win32(void)
+const char *dynlink_impl_interface_extension_win32(void)
 {
 	static const char extension_win32[0x04] = "dll";
 
@@ -71,7 +71,7 @@ dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)
 	return (dynlink_impl)impl;
 }
 
-int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr * addr)
+int dynlink_impl_interface_symbol_win32(dynlink handle, dynlink_impl impl, dynlink_symbol_name name, dynlink_symbol_addr *addr)
 {
 	FARPROC proc_addr = GetProcAddress(impl, name);
 
@@ -91,8 +91,7 @@ int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 
 dynlink_impl_interface dynlink_impl_interface_singleton_win32(void)
 {
-	static struct dynlink_impl_interface_type impl_interface_win32 =
-	{
+	static struct dynlink_impl_interface_type impl_interface_win32 = {
 		&dynlink_impl_interface_extension_win32,
 		&dynlink_impl_interface_get_name_win32,
 		&dynlink_impl_interface_load_win32,

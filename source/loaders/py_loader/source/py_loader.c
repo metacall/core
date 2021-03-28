@@ -25,8 +25,7 @@
 
 loader_impl_interface py_loader_impl_interface_singleton(void)
 {
-	static struct loader_impl_interface_type loader_impl_interface_py =
-	{
+	static struct loader_impl_interface_type loader_impl_interface_py = {
 		&py_loader_impl_initialize,
 		&py_loader_impl_execution_path,
 		&py_loader_impl_load_from_file,
@@ -40,17 +39,17 @@ loader_impl_interface py_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_py;
 }
 
-const char * py_loader_print_info()
+const char *py_loader_print_info()
 {
 	static const char py_loader_info[] =
 		"Python Loader Plugin " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-		#ifdef PY_LOADER_STATIC_DEFINE
-			"Compiled as static library type\n"
-		#else
-			"Compiled as shared library type\n"
-		#endif
+#ifdef PY_LOADER_STATIC_DEFINE
+		"Compiled as static library type\n"
+#else
+		"Compiled as shared library type\n"
+#endif
 
 		"\n";
 

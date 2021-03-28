@@ -59,10 +59,9 @@ if(OPTION_TEST_MEMORYCHECK AND NOT OPTION_BUILD_SANITIZER)
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --track-origins=yes")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --num-callers=50")
 	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --smc-check=all-non-file") # for JITs
-
-	set(MEMORYCHECK_SUPPRESSIONS_FILE "${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind.supp")
-	set(MEMORYCHECK_SUPPRESSIONS_FILE "${MEMORYCHECK_SUPPRESSIONS_FILE};${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-python.supp")
-	set(MEMORYCHECK_SUPPRESSIONS_FILE "${MEMORYCHECK_SUPPRESSIONS_FILE};${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-node.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-python.supp")
+	set(MEMORYCHECK_COMMAND_OPTIONS "${MEMORYCHECK_COMMAND_OPTIONS} --suppressions=${CMAKE_CURRENT_SOURCE_DIR}/memcheck/valgrind-node.supp")
 
 	# TODO: Memory check does not work properly with CoreCLR
 	#
@@ -143,6 +142,7 @@ add_subdirectory(metacall_node_fail_test)
 add_subdirectory(metacall_node_fail_env_var_test)
 add_subdirectory(metacall_node_fail_load_leak_test)
 add_subdirectory(metacall_node_typescript_test)
+add_subdirectory(metacall_node_python_async_after_destroy_test)
 add_subdirectory(metacall_distributable_test)
 add_subdirectory(metacall_cast_test)
 add_subdirectory(metacall_init_fini_test)

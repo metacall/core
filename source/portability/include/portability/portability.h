@@ -33,7 +33,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-PORTABILITY_API const char * portability_print_info(void);
+PORTABILITY_API const char *portability_print_info(void);
 
 #ifdef __cplusplus
 }

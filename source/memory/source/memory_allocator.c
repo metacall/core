@@ -41,7 +41,7 @@ struct memory_allocator_type
 
 /* -- Methods -- */
 
-memory_allocator memory_allocator_create(memory_allocator_iface iface, void * ctx)
+memory_allocator memory_allocator_create(memory_allocator_iface iface, void *ctx)
 {
 	memory_allocator allocator;
 
@@ -73,9 +73,9 @@ memory_allocator memory_allocator_create(memory_allocator_iface iface, void * ct
 	return allocator;
 }
 
-void * memory_allocator_allocate(memory_allocator allocator, size_t size)
+void *memory_allocator_allocate(memory_allocator allocator, size_t size)
 {
-	void * data = allocator->iface->allocate(allocator->impl, size);
+	void *data = allocator->iface->allocate(allocator->impl, size);
 
 	if (data == NULL)
 	{
@@ -89,9 +89,9 @@ void * memory_allocator_allocate(memory_allocator allocator, size_t size)
 	return data;
 }
 
-void * memory_allocator_reallocate(memory_allocator allocator, void * data, size_t size, size_t new_size)
+void *memory_allocator_reallocate(memory_allocator allocator, void *data, size_t size, size_t new_size)
 {
-	void * new_data = allocator->iface->reallocate(allocator->impl, data, size, new_size);
+	void *new_data = allocator->iface->reallocate(allocator->impl, data, size, new_size);
 
 	if (new_data == NULL)
 	{
@@ -105,7 +105,7 @@ void * memory_allocator_reallocate(memory_allocator allocator, void * data, size
 	return new_data;
 }
 
-void memory_allocator_deallocate(memory_allocator allocator, void * data)
+void memory_allocator_deallocate(memory_allocator allocator, void *data)
 {
 	allocator->iface->deallocate(allocator->impl, data);
 

@@ -35,7 +35,7 @@ C_LOADER_API loader_impl_interface c_loader_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(c_loader_impl_interface_singleton);
 
-C_LOADER_API const char * c_loader_print_info(void);
+C_LOADER_API const char *c_loader_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(c_loader_print_info);
 

@@ -19,8 +19,8 @@
 
 /* -- Definitions -- */
 
-#define SERIAL_DYNLINK_NAME_SIZE		0x40
-#define SERIAL_DYNLINK_SUFFIX			"_serial"
+#define SERIAL_DYNLINK_NAME_SIZE 0x40
+#define SERIAL_DYNLINK_SUFFIX	 "_serial"
 
 /* -- Member Data -- */
 
@@ -32,22 +32,22 @@ struct serial_impl_type
 
 /* -- Private Methods -- */
 
-static dynlink serial_impl_load_dynlink(const char * path, const char * name);
+static dynlink serial_impl_load_dynlink(const char *path, const char *name);
 
-static int serial_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr);
+static int serial_impl_load_symbol(dynlink handle, const char *name, dynlink_symbol_addr *singleton_addr_ptr);
 
 /* -- Methods -- */
 
-dynlink serial_impl_load_dynlink(const char * path, const char * name)
+dynlink serial_impl_load_dynlink(const char *path, const char *name)
 {
-	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		const char serial_dynlink_suffix[] = SERIAL_DYNLINK_SUFFIX "d";
-	#else
-		const char serial_dynlink_suffix[] = SERIAL_DYNLINK_SUFFIX;
-	#endif
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	const char serial_dynlink_suffix[] = SERIAL_DYNLINK_SUFFIX "d";
+#else
+	const char serial_dynlink_suffix[] = SERIAL_DYNLINK_SUFFIX;
+#endif
 
-	#define SERIAL_DYNLINK_NAME_FULL_SIZE \
-		(sizeof(serial_dynlink_suffix) + SERIAL_DYNLINK_NAME_SIZE)
+#define SERIAL_DYNLINK_NAME_FULL_SIZE \
+	(sizeof(serial_dynlink_suffix) + SERIAL_DYNLINK_NAME_SIZE)
 
 	char serial_dynlink_name[SERIAL_DYNLINK_NAME_FULL_SIZE];
 
@@ -56,20 +56,20 @@ dynlink serial_impl_load_dynlink(const char * path, const char * name)
 	strncat(serial_dynlink_name, serial_dynlink_suffix,
 		SERIAL_DYNLINK_NAME_FULL_SIZE - strnlen(serial_dynlink_name, SERIAL_DYNLINK_NAME_FULL_SIZE - 1) - 1);
 
-	#undef SERIAL_DYNLINK_NAME_FULL_SIZE
+#undef SERIAL_DYNLINK_NAME_FULL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading serial plugin: %s", serial_dynlink_name);
 
 	return dynlink_load(path, serial_dynlink_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 }
 
-int serial_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_addr * singleton_addr_ptr)
+int serial_impl_load_symbol(dynlink handle, const char *name, dynlink_symbol_addr *singleton_addr_ptr)
 {
 	const char serial_dynlink_symbol_prefix[] = DYNLINK_SYMBOL_STR("");
 	const char serial_dynlink_symbol_suffix[] = "_serial_impl_interface_singleton";
 
-	#define SERIAL_DYNLINK_SYMBOL_SIZE \
-		(sizeof(serial_dynlink_symbol_prefix) + SERIAL_DYNLINK_NAME_SIZE + sizeof(serial_dynlink_symbol_suffix))
+#define SERIAL_DYNLINK_SYMBOL_SIZE \
+	(sizeof(serial_dynlink_symbol_prefix) + SERIAL_DYNLINK_NAME_SIZE + sizeof(serial_dynlink_symbol_suffix))
 
 	char serial_dynlink_symbol[SERIAL_DYNLINK_SYMBOL_SIZE];
 
@@ -81,7 +81,7 @@ int serial_impl_load_symbol(dynlink handle, const char * name, dynlink_symbol_ad
 	strncat(serial_dynlink_symbol, serial_dynlink_symbol_suffix,
 		SERIAL_DYNLINK_SYMBOL_SIZE - strnlen(serial_dynlink_symbol, SERIAL_DYNLINK_SYMBOL_SIZE - 1) - 1);
 
-	#undef SERIAL_DYNLINK_SYMBOL_SIZE
+#undef SERIAL_DYNLINK_SYMBOL_SIZE
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading serial symbol: %s", serial_dynlink_symbol);
 
@@ -105,12 +105,12 @@ serial_impl serial_impl_create()
 	return impl;
 }
 
-const char * serial_impl_extension(serial_impl impl)
+const char *serial_impl_extension(serial_impl impl)
 {
 	return impl->iface->extension();
 }
 
-int serial_impl_load(serial_impl impl, const char * path, const char * name)
+int serial_impl_load(serial_impl impl, const char *path, const char *name)
 {
 	dynlink_symbol_addr singleton_addr;
 
@@ -154,11 +154,11 @@ int serial_impl_load(serial_impl impl, const char * path, const char * name)
 	return 0;
 }
 
-char * serial_impl_serialize(serial_impl impl, value v, size_t * size, memory_allocator allocator)
+char *serial_impl_serialize(serial_impl impl, value v, size_t *size, memory_allocator allocator)
 {
 	serial_impl_handle handle = impl->iface->initialize(allocator);
 
-	char * buffer;
+	char *buffer;
 
 	if (handle == NULL)
 	{
@@ -182,7 +182,7 @@ char * serial_impl_serialize(serial_impl impl, value v, size_t * size, memory_al
 	return buffer;
 }
 
-value serial_impl_deserialize(serial_impl impl, const char * buffer, size_t size, memory_allocator allocator)
+value serial_impl_deserialize(serial_impl impl, const char *buffer, size_t size, memory_allocator allocator)
 {
 	serial_impl_handle handle = impl->iface->initialize(allocator);
 
