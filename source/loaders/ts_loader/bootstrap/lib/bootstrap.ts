@@ -48,6 +48,7 @@ let servicesHost = null;
 let services = null;
 
 class TypeScriptLanguageServiceHost {
+	files: {};
 	constructor() {
 		this.files = {};
 	}
@@ -64,22 +65,22 @@ class TypeScriptLanguageServiceHost {
 		return ts.sys.readDirectory(...arguments);
 	}
 
-	log(message) {
+	log(message: any) {
 		// TODO: Improve this
 		console.log(message);
 	}
 
-	trace(message) {
+	trace(message: any) {
 		// TODO: Improve this
 		console.log(message);
 	}
 
-	error(message) {
+	error(message: any) {
 		// TODO: Improve this
 		console.log(message);
 	}
 
-	getCompilationSettings(currentDirectory) {
+	getCompilationSettings(currentDirectory: any) {
 		if (currentDirectory) {
 			const configFileName = ts.findConfigFile(
 				currentDirectory,
@@ -109,15 +110,15 @@ class TypeScriptLanguageServiceHost {
 		return process.cwd();
 	}
 
-	getDefaultLibFileName(options) {
+	getDefaultLibFileName(options: any) {
 		return ts.getDefaultLibFilePath(options);
 	}
 
-	getScriptVersion(name) {
+	getScriptVersion(name: string | number) {
 		return this.files[name] && this.files[name].version.toString();
 	}
 
-	getScriptSnapshot(name) {
+	getScriptSnapshot(name: string | number) {
 		return this.files[name] && this.files[name].snapshot;
 	}
 
@@ -131,12 +132,12 @@ class TypeScriptLanguageServiceHost {
 		return names;
 	}
 
-	addFile(name) {
+	addFile(name: string | number) {
 		const resolve = path.resolve(__dirname, name);
 		const body = fs.readFileSync(resolve).toString();
 		const snapshot = ts.ScriptSnapshot.fromString(body);
 
-		snapshot.getChangeRange = _ => undefined;
+		snapshot.getChangeRange = (_: any) => undefined;
 
 		const file = this.files[name];
 
@@ -151,11 +152,11 @@ class TypeScriptLanguageServiceHost {
 		}
 	}
 
-	getFile(name) {
+	getFile(name: string | number) {
 		return this.files[name];
 	}
 
-	clearFile(name) {
+	clearFile(name: string) {
 		const file = this.files[name];
 		if (file) {
 			// Dispose the snapshot if method is available
@@ -185,7 +186,7 @@ function ts_loader_trampoline_initialize() {
 	const lib = path.dirname(servicesHost.getDefaultLibFileName(servicesHost.getCompilationSettings(currentDirectory)));
 
 	// Load TypeScript Runtime
-	fs.readdirSync(lib).map(file => {
+	fs.readdirSync(lib).map((file: string) => {
 		const filename = path.join(lib, file);
 		const stat = fs.lstatSync(filename);
 		if (!stat.isDirectory() && file.startsWith('lib') && file.endsWith('.d.ts')) {
@@ -194,16 +195,16 @@ function ts_loader_trampoline_initialize() {
 	});
 }
 
-function ts_loader_trampoline_is_callable(value) {
+function ts_loader_trampoline_is_callable(value: any) {
 	return typeof value === 'function';
 }
 
-function ts_loader_trampoline_is_valid_symbol(node) {
+function ts_loader_trampoline_is_valid_symbol(node: { valueDeclaration: any; }) {
 	// TODO: Enable more function types
 	return ts.isFunctionDeclaration(node.valueDeclaration);
 }
 
-function ts_loader_trampoline_module(m) {
+function ts_loader_trampoline_module(m: { name: string | number; }) {
 	if (ts_loader_trampoline_is_callable(m)) {
 		const wrapper = {};
 
@@ -215,9 +216,9 @@ function ts_loader_trampoline_module(m) {
 	return m;
 }
 
-function ts_loader_trampoline_load_inline(name, buffer, opts) {
+function ts_loader_trampoline_load_inline(name: string, buffer: any, opts: { prepend_paths?: any; append_paths?: any; }) {
 	const paths = Module._nodeModulePaths(path.dirname(name));
-	const parent = module.parent;
+	const parent = Module.parent;
 	const m = new Module(name, parent);
 
 	m.filename = name;
@@ -247,7 +248,7 @@ function ts_loader_trampoline_execution_path() {
 	// TODO
 }
 
-function ts_loader_trampoline_load_from_file(paths) {
+function ts_loader_trampoline_load_from_file(paths: string | any[]) {
 	if (!Array.isArray(paths)) {
 		throw new Error('Load from file paths must be an array, not ' + typeof paths);
 	}
@@ -272,7 +273,7 @@ function ts_loader_trampoline_load_from_file(paths) {
 	return null;
 }
 
-function ts_loader_trampoline_load_from_memory(name, buffer, opts) {
+function ts_loader_trampoline_load_from_memory(name: string | number, buffer: any, opts: any) {
 	if (typeof name !== 'string') {
 		throw new Error('Load from memory name must be a string, not ' + typeof name);
 	}
@@ -295,7 +296,7 @@ function ts_loader_trampoline_load_from_package() {
 	// TODO
 }
 
-function ts_loader_trampoline_clear(handle) {
+function ts_loader_trampoline_clear(handle: any) {
 	try {
 		const names = Object.getOwnPropertyNames(handle);
 
@@ -316,7 +317,7 @@ function ts_loader_trampoline_clear(handle) {
 	}
 }
 
-function ts_loader_trampoline_discover_arguments_generate(args, index) {
+function ts_loader_trampoline_discover_arguments_generate(args: string | any[], index: number) {
 	let name = `_arg${index}`;
 
 	while (args.includes(name)) {
@@ -326,7 +327,7 @@ function ts_loader_trampoline_discover_arguments_generate(args, index) {
 	return name;
 }
 
-function ts_loader_trampoline_discover_type(type) {
+function ts_loader_trampoline_discover_type(type: { symbol: { name: string; }; aliasSymbol: { escapedName: string; }; intrinsicName: any; }) {
 	// Detect Array type
 	if (type.symbol && type.symbol.name && type.symbol.name === 'Array') {
 		return 'any[]';
@@ -347,7 +348,7 @@ function ts_loader_trampoline_discover_type(type) {
 	return type.intrinsicName || 'any';
 }
 
-function ts_loader_trampoline_discover_signature(checker, node) {
+function ts_loader_trampoline_discover_signature(checker: { getSignatureFromDeclaration: (arg0: any) => any; getTypeAtLocation: (arg0: any) => any; }, node: { valueDeclaration: any; }) {
 	const declaration = node.valueDeclaration;
 	const signature = checker.getSignatureFromDeclaration(declaration);
 	const params = declaration.parameters;
@@ -379,10 +380,10 @@ function ts_loader_trampoline_discover_signature(checker, node) {
 	};
 }
 
-function ts_loader_trampoline_discover(handle) {
+function ts_loader_trampoline_discover(handle: { [x: string]: any; }) {
 	const discover = {};
 
-	function getExportList(node, checker) {
+	function getExportList(node: any, checker: { getSymbolAtLocation: (arg0: any) => any; getExportsOfModule: (arg0: any) => any; }) {
 		const symbol = checker.getSymbolAtLocation(node);
 		return symbol ? checker.getExportsOfModule(symbol) : [];
 	}
@@ -392,14 +393,14 @@ function ts_loader_trampoline_discover(handle) {
 		const checker = program.getTypeChecker();
 		const names = Object.getOwnPropertyNames(handle);
 		const sources = program.getSourceFiles();
-		const sourcesMap = sources.reduce((srcs, s) => Object.assign(srcs, { [s.fileName]: s }), {});
+		const sourcesMap = sources.reduce((srcs: any, s: { fileName: any; }) => Object.assign(srcs, { [s.fileName]: s }), {});
 		const tsHandle = names.reduce((srcs, name) => Object.assign(srcs, { [name]: sourcesMap[name] }), {});
 
 		for (let i = 0; i < names.length; ++i) {
 			const name = names[i];
 			const exports = handle[name];
 			const tsFile = tsHandle[name]
-			const tsExports = getExportList(tsFile, checker).reduce((ex, e) => Object.assign(ex, { [e.name]: e }), {});
+			const tsExports = getExportList(tsFile, checker).reduce((ex: any, e: { name: any; }) => Object.assign(ex, { [e.name]: e }), {});
 			const keys = Object.getOwnPropertyNames(tsExports);
 
 			for (let j = 0; j < keys.length; ++j) {
@@ -433,7 +434,7 @@ function ts_loader_trampoline_discover(handle) {
 	return discover;
 }
 
-function ts_loader_trampoline_test(obj) {
+function ts_loader_trampoline_test(obj: any) {
 	console.log('TypeScript Loader Bootstrap Test');
 
 	if (obj !== undefined) {
@@ -441,14 +442,14 @@ function ts_loader_trampoline_test(obj) {
 	}
 }
 
-function ts_loader_trampoline_await_function(trampoline) {
+function ts_loader_trampoline_await_function(trampoline: { resolve: (arg0: any, arg1: any) => unknown; reject: (arg0: any, arg1: any) => any; }) {
 	if (!trampoline) {
-		return function ts_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+		return function ts_loader_trampoline_await_impl(func: any, args: any, trampoline_ptr: any) {
 			console.error('TypeScript Loader await error, trampoline could not be found, await calls are disabled.');
 		};
 	}
 
-	return function ts_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+	return function ts_loader_trampoline_await_impl(func: (arg0: any) => Promise<any>, args: any, trampoline_ptr: any) {
 		if (typeof func !== 'function') {
 			throw new Error('Await only accepts a callable function func, not ' + typeof func);
 		}
@@ -463,23 +464,23 @@ function ts_loader_trampoline_await_function(trampoline) {
 
 		return new Promise((resolve, reject) =>
 			func(...args).then(
-				x => resolve(trampoline.resolve(trampoline_ptr, x)),
-				x => reject(trampoline.reject(trampoline_ptr, x))
+				(				x: any) => resolve(trampoline.resolve(trampoline_ptr, x)),
+				(				x: any) => reject(trampoline.reject(trampoline_ptr, x))
 			).catch(
-				x => console.error(`TypeScript await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
+				(				x: { message: any; }) => console.error(`TypeScript await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
 			)
 		);
 	};
 }
 
-function ts_loader_trampoline_await_future(trampoline) {
+function ts_loader_trampoline_await_future(trampoline: { resolve: (arg0: any, arg1: any) => unknown; reject: (arg0: any, arg1: any) => any; }) {
 	if (!trampoline) {
-		return function ts_loader_trampoline_await_impl(func, args, trampoline_ptr) {
+		return function ts_loader_trampoline_await_impl(func: any, args: any, trampoline_ptr: any) {
 			console.error('TypeScript Loader await error, trampoline could not be found, await calls are disabled.');
 		};
 	}
 
-	return function ts_loader_trampoline_await_impl(future, trampoline_ptr) {
+	return function ts_loader_trampoline_await_impl(future: Promise<any>, trampoline_ptr: any) {
 		if (!(!!future && typeof future.then === 'function')) {
 			throw new Error('Await only accepts a thenable promise, not ' + typeof future);
 		}
@@ -490,10 +491,10 @@ function ts_loader_trampoline_await_future(trampoline) {
 
 		return new Promise((resolve, reject) =>
 			future.then(
-				x => resolve(trampoline.resolve(trampoline_ptr, x)),
-				x => reject(trampoline.reject(trampoline_ptr, x))
+				(				x: any) => resolve(trampoline.resolve(trampoline_ptr, x)),
+				(				x: any) => reject(trampoline.reject(trampoline_ptr, x))
 			).catch(
-				x => console.error(`TypeScript await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
+				(				x: { message: any; }) => console.error(`TypeScript await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
 			)
 		);
 	};
@@ -512,7 +513,7 @@ function ts_loader_trampoline_destroy() {
 	}
 }
 
-module.exports = (() => {
+Module.exports = (() => {
 	try {
 		const trampoline = process.binding('node_loader_trampoline_module');
 
@@ -533,3 +534,6 @@ module.exports = (() => {
 		console.log('Exception in bootstrap.ts trampoline initialization:', ex);
 	}
 })();
+function __dirname(__dirname: any, arg1: string, arg2: string): any {
+	throw new Error("Function not implemented.");
+}
