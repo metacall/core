@@ -3562,6 +3562,26 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		}
 	}
 
+	/* Set up the process exit handler */
+#if NODE_MAJOR_VERSION >= 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 13)
+	{
+		v8::Isolate *isolate = v8::Isolate::GetCurrent();
+		v8::Local<v8::Context> context = isolate->GetCurrentContext();
+		node::Environment *nodeEnv = node::GetCurrentEnvironment(context);
+		auto handler = [&](node::Environment *nodeEnv, int exit_code) {
+			nodeEnv->set_can_call_into_js(false);
+			nodeEnv->stop_sub_worker_contexts();
+			v8::DisposePlatform();
+			uv_library_shutdown();
+			if (exit_code != 0)
+			{
+				exit(exit_code); // Not sure about this anyway
+			}
+		};
+		node::SetProcessExitHandler(nodeEnv, handler);
+	}
+#endif
+
 /* Run test function, this one can be called without thread safe mechanism */
 /* because it is run already in the correct V8 thread */
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
