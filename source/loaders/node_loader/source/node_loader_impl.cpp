@@ -3569,13 +3569,11 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		v8::Local<v8::Context> context = isolate->GetCurrentContext();
 		node::Environment *nodeEnv = node::GetCurrentEnvironment(context);
 		auto handler = [&](node::Environment *nodeEnv, int exit_code) {
-			nodeEnv->set_can_call_into_js(false);
-			nodeEnv->stop_sub_worker_contexts();
-			v8::DisposePlatform();
-			uv_library_shutdown();
+			(void)node::Stop(nodeEnv);
+			/* uv_library_shutdown(); */ // Does not allow reinitialization
 			if (exit_code != 0)
 			{
-				exit(exit_code); // Not sure about this anyway
+				exit(exit_code);
 			}
 		};
 		node::SetProcessExitHandler(nodeEnv, handler);
