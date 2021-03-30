@@ -9,7 +9,7 @@ export function test_implicit_object({ a }) {
 	return a;
 }
 
-export function test_record(a: Record<string, int>): Record<string, int> {
+export function test_record(a: Record<string, number>): Record<string, number> {
 	return a;
 }
 

@@ -8,7 +8,7 @@ const {
 	load_from_memory,
 	load_from_file,
 	destroy,
-} = require('./bootstrap.ts');
+} = require('../build/bootstrap.js');
 
 // Tests
 initialize();
@@ -23,7 +23,12 @@ inspect(load_from_memory('memory_module', `
 export function mem_sum(left: number, rigth: number): number {
 	return left + rigth;
 }
+export async function mem_sum_async(left: number, rigth: number): number {
+	return left + rigth;
+}
 `, {}));
+
+inspect(load_from_memory('memory_module_empty', `console.log('A')`, {}));
 
 inspect(load_from_file(['./script.ts']));
 
