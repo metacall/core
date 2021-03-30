@@ -320,7 +320,7 @@ The module that holds the representation of types, values and functions is calle
 
 - Map implements an associative key value pair container. A map is implemented with an array of two sized elements array. Each element of the map is an array of size two, where the first element of it is always an String and the second element is a value of any type.
 
-- Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
+- Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others do not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
 
 - Null type implements a null value. This type has only been implemented in order to support null value from multiple run-times. It represents a null value and it does not have data size on the value allocated.
 
@@ -334,7 +334,7 @@ When converting values between different types, if any potential number overflow
 
 The value model is implemented by means of object pool. Each value is a reference to a memory block allocated from a memory pool (which can be injected into **METACALL**). The references can be passed by value, this means **METACALL** copies the reference value instead of the data which this reference is pointing to, like most run-times do when managing their own values.
 
-Each created value must be destroyed manually. Otherwise it will lead to a memory leak. This fact only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
+Each created value must be destroyed manually, otherwise it will lead to a memory leak. This only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
 
 The value memory layout is described in the following form.
 
@@ -342,19 +342,19 @@ The value memory layout is described in the following form.
 | :-----------: | :-----------------------: | :----------------------------------------------------: |
 |  **Content**  |         **DATA**          |                      **TYPE ID**                       |
 
-This layout is used by the following reasons.
+This layout is used for the following reasons:
 
-- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to threat **METACALL** values as a normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
+- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to treat **METACALL** values as normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
 
 - Data can be accessed faster as it is located at first position of the memory block. There is not extra calculation of an offset when trying to access the pointer.
 
-- Data and type id are contiguously allocated in order to threat it as the same memory block so it can be freed with one operation.
+- Data and type id are contiguously allocated in order to treat it as the same memory block so it can be freed with one operation.
 
 #### 5.2.3 Functions
 
-Functions are an abstract callable representation of functions, methods or procedures loaded by [`loaders`](/source/loaders). The functions are like a template who is linked to a loader run-time and allows to do a foreign function call.
+Functions are abstract callable representations of functions, methods or procedures loaded by [`loaders`](/source/loaders). A function is like a template which is linked to a loader run-time and allows to do a foreign function call.
 
-A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time.
+A function is composed of a name and a signature. The signature defines the arguments names, types, and return type, if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types, if any. It stores the arguments names and sizes and also a concrete type that will be used later by the loader to implement the call to the run-time.
 
 The function interface must be implemented by the [`loaders`](/source/loaders) and it has the following form.
 
@@ -381,7 +381,7 @@ def multiply_type(a: int, b: int) -> int:
   return a * b
 ```
 
-If this code is loaded, **METACALL** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments if any, and the return type if any.
+If this code is loaded, **METACALL** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments, if any, and the return type, if any.
 
 It may be possible that the function loaded into **METACALL** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
 
@@ -496,7 +496,7 @@ A loader must implement it to be considered a valid loader.
 
 ### 5.7 Fork Model
 
-**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, the process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
+**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, the process which is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use levels. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
 
 To understand the **METACALL** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
 
