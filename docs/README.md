@@ -288,25 +288,25 @@ The module that holds the representation of types, values and functions is calle
 
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
-|  Type   | Value                                                                         |
-| :-----: | ----------------------------------------------------------------------------- |
-| Boolean | `true` or `false`                                                             |
-|  Char   | `-128` to `127`                                                               |  
-|  Short  | `-32,768` to `32,767`                                                         |
-|   Int   | `-2,147,483,648` to `2,147,483,647`                                           |
-|  Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`                   |
-|  Float  | `1.2E-38` to `3.4E+38`                                                        |
-| Double  | `2.3E-308` to `1.7E+308`                                                      |
-| String  | NULL terminated list of characters                                            |
-| Buffer  | Blob of memory representing a binary data                                     |
-|  Array  | Arrangement of values of any type                                             |
-|   Map   | List of elements formed by a key (String) value (Any) pair (Array)            |
-| Pointer | Low level representation of a memory reference                                |
-|  Null   | Representation of NULL value type                                             |
-| Future  | Promise in Node Loader, and any other type equivalent in other languages.     |
-| Function| Block of code that takes inputs (Arguments) and produces output (Return value)|
-|  Class  | Defines properties and methods that are common to all objects                 |
-|  Object | An instance of Class                                                          |
+|   Type   | Value                                                                          |
+| :------: | ------------------------------------------------------------------------------ |
+| Boolean  | `true` or `false`                                                              |
+|   Char   | `-128` to `127`                                                                |
+|  Short   | `-32,768` to `32,767`                                                          |
+|   Int    | `-2,147,483,648` to `2,147,483,647`                                            |
+|   Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`                    |
+|  Float   | `1.2E-38` to `3.4E+38`                                                         |
+|  Double  | `2.3E-308` to `1.7E+308`                                                       |
+|  String  | NULL terminated list of characters                                             |
+|  Buffer  | Blob of memory representing a binary data                                      |
+|  Array   | Arrangement of values of any type                                              |
+|   Map    | List of elements formed by a key (String) value (Any) pair (Array)             |
+| Pointer  | Low level representation of a memory reference                                 |
+|   Null   | Representation of NULL value type                                              |
+|  Future  | Promise in Node Loader, and any other type equivalent in other languages.      |
+| Function | Block of code that takes inputs (Arguments) and produces output (Return value) |
+|  Class   | Defines properties and methods that are common to all objects                  |
+|  Object  | An instance of Class                                                           |
 
 - Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
 
@@ -689,12 +689,13 @@ make <target>-genhtml
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
-|        Build Option         | Description                                         | Default Value |
-| :-------------------------: | --------------------------------------------------- | :-----------: |
-| **OPTION_TEST_MEMORYCHECK** | Enable Valgrind with memcheck tool for the tests.   |      OFF      |
-| **OPTION_BUILD_SANITIZER**  | Build with AddressSanitizer family (GCC and Clang). |      OFF      |
+|           Build Option            | Description                                         | Default Value |
+| :-------------------------------: | --------------------------------------------------- | :-----------: |
+|    **OPTION_TEST_MEMORYCHECK**    | Enable Valgrind with memcheck tool for the tests.   |      OFF      |
+|    **OPTION_BUILD_SANITIZER**     | Build with AddressSanitizer family (GCC and Clang). |      OFF      |
+| **OPTION_BUILD_THREAD_SANITIZER** | Build with ThreadSanitizer family (GCC and Clang).  |      OFF      |
 
-Both options are mutually exclusive. Valgrind is not compatible with AddressSanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
+The three options are mutually exclusive. Valgrind is not compatible with AddressSanitizer and AddressSanitizer is not compatible with ThreadSanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
 
 For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag and then run:
 
@@ -702,7 +703,7 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
-For runing a test (or all) with AddressSanitizer, enable the `OPTION_BUILD_SANITIZER` flag and then run:
+For runing a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
 # Run one test
