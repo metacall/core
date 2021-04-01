@@ -3563,25 +3563,6 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		}
 	}
 
-	/* Set up the process exit handler */
-#if NODE_MAJOR_VERSION >= 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 13)
-	// TODO: Review this
-	{
-		v8::Isolate *isolate = v8::Isolate::GetCurrent();
-		v8::Local<v8::Context> context = isolate->GetCurrentContext();
-		node::Environment *nodeEnv = node::GetCurrentEnvironment(context);
-		auto handler = [&](node::Environment *nodeEnv, int exit_code) {
-			(void)node::Stop(nodeEnv);
-			/* uv_library_shutdown(); */ // Does not allow reinitialization
-			if (exit_code != 0)
-			{
-				exit(exit_code);
-			}
-		};
-		node::SetProcessExitHandler(nodeEnv, handler);
-	}
-#endif
-
 /* Run test function, this one can be called without thread safe mechanism */
 /* because it is run already in the correct V8 thread */
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
