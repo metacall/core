@@ -252,7 +252,7 @@ struct loader_impl_node_type
 	/* TODO: This implementation won't work for multi-isolate environments. We should test it. */
 	std::thread::id js_thread_id;
 
-	std::atomic_bool requested_destroy;
+	int64_t base_active_handles;
 };
 
 typedef struct loader_impl_node_function_type
@@ -479,6 +479,10 @@ static void node_loader_impl_thread_log(void *data);
 #endif
 
 static void node_loader_impl_walk(uv_handle_t *handle, void *data);
+
+static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg);
+
+static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 /* -- Methods -- */
 
@@ -3395,9 +3399,6 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	/* Retrieve the js thread id */
 	node_impl->js_thread_id = std::this_thread::get_id();
 
-	/* Initialize request for destroying */
-	node_impl->requested_destroy.store(false);
-
 	/* Obtain environment and function table */
 	env = static_cast<napi_env>(env_ptr);
 	function_table_object = static_cast<napi_value>(function_table_object_ptr);
@@ -3564,6 +3565,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 	/* Set up the process exit handler */
 #if NODE_MAJOR_VERSION >= 12 || (NODE_MAJOR_VERSION == 12 && NODE_MINOR_VERSION >= 13)
+	// TODO: Review this
 	{
 		v8::Isolate *isolate = v8::Isolate::GetCurrent();
 		v8::Local<v8::Context> context = isolate->GetCurrentContext();
@@ -3625,6 +3627,10 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 		}
 	}
 #endif
+
+	/* Store the amount of async handles that we have for the node loader,
+	* so we can count the user defined async handles */
+	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
 
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);
@@ -4455,10 +4461,15 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 
 	node_loader_impl_exception(env, status);
 
-	/* Retrieve the number of async resources in the event loop */
+	/* Check if there are async handles, destroy if the queue is empty, otherwise request the destroy */
+	if (node_loader_impl_user_async_handles_count(node_impl) <= 0)
 	{
-		static const char async_count_str[] = "async_count";
-		napi_value async_count_str_value;
+		node_loader_impl_destroy_safe_impl(node_impl, env);
+	}
+	else
+	{
+		static const char destroy_str[] = "destroy";
+		napi_value destroy_str_value;
 		napi_value function_table_object;
 		bool result = false;
 
@@ -4468,58 +4479,42 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 		node_loader_impl_exception(env, status);
 
 		/* Retrieve async count function from object table */
-		status = napi_create_string_utf8(env, async_count_str, sizeof(async_count_str) - 1, &async_count_str_value);
+		status = napi_create_string_utf8(env, destroy_str, sizeof(destroy_str) - 1, &destroy_str_value);
 
 		node_loader_impl_exception(env, status);
 
-		status = napi_has_own_property(env, function_table_object, async_count_str_value, &result);
+		status = napi_has_own_property(env, function_table_object, destroy_str_value, &result);
 
 		node_loader_impl_exception(env, status);
 
 		if (result == true)
 		{
-			napi_value function_trampoline_async_count;
+			napi_value function_trampoline_destroy;
 			napi_valuetype valuetype;
 
-			status = napi_get_named_property(env, function_table_object, async_count_str, &function_trampoline_async_count);
+			status = napi_get_named_property(env, function_table_object, destroy_str, &function_trampoline_destroy);
 
 			node_loader_impl_exception(env, status);
 
-			status = napi_typeof(env, function_trampoline_async_count, &valuetype);
+			status = napi_typeof(env, function_trampoline_destroy, &valuetype);
 
 			node_loader_impl_exception(env, status);
 
 			if (valuetype != napi_function)
 			{
-				napi_throw_type_error(env, nullptr, "Invalid function async_count in function table object");
+				napi_throw_type_error(env, nullptr, "Invalid function destroy in function table object");
 			}
 
 			/* Call to async count function */
-			napi_value global, return_value;
+			napi_value global;
 
 			status = napi_get_global(env, &global);
 
 			node_loader_impl_exception(env, status);
 
-			status = napi_call_function(env, global, function_trampoline_async_count, 0, nullptr, &return_value);
+			status = napi_call_function(env, global, function_trampoline_destroy, 0, nullptr, nullptr);
 
 			node_loader_impl_exception(env, status);
-
-			/* If there is no async resources, we can destroy directly, otherwise request for destroy */
-			uint32_t async_count = 0;
-
-			status = napi_get_value_uint32(env, return_value, &async_count);
-
-			node_loader_impl_exception(env, status);
-
-			if (async_count == 0)
-			{
-				node_loader_impl_destroy_safe_impl(node_impl, env);
-			}
-			else
-			{
-				node_impl->requested_destroy.store(true);
-			}
 		}
 	}
 
@@ -4527,6 +4522,35 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	status = napi_close_handle_scope(env, handle_scope);
 
 	node_loader_impl_exception(env, status);
+}
+
+void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
+{
+	int64_t *async_count = static_cast<int64_t *>(arg);
+
+	if (uv_is_active(handle) != 0)
+	{
+		(*async_count)++;
+	}
+}
+
+int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
+{
+	int64_t active_handles = 0;
+	uv_walk(node_impl->thread_loop, node_loader_impl_walk_async_handles_count, (void *)&active_handles);
+	return active_handles;
+}
+
+int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
+{
+	return node_loader_impl_async_handles_count(node_impl) - node_impl->base_active_handles;
+}
+
+void node_loader_impl_print_handles(loader_impl_node node_impl)
+{
+	printf("Number of active handles: %" PRIuS "\n", node_loader_impl_async_handles_count(node_impl));
+	uv_print_active_handles(node_impl->thread_loop, stdout);
+	fflush(stdout);
 }
 
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
@@ -4738,11 +4762,6 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 		}
 #endif
 	}
-}
-
-bool node_loader_impl_requested_destroy(loader_impl_node node_impl)
-{
-	return node_impl->requested_destroy.load();
 }
 
 int node_loader_impl_destroy(loader_impl impl)
