@@ -42,14 +42,84 @@ exception exception_create(const char *message, const char *label, int code, con
 
 	if (ex == NULL)
 	{
-		return NULL;
+		goto exception_bad_alloc;
 	}
 
-	// TODO: Copy
+	if (message != NULL)
+	{
+		size_t message_size = strlen(message) + 1;
+
+		ex->message = malloc(sizeof(char) * message_size);
+
+		if (ex->message == NULL)
+		{
+			goto message_bad_alloc;
+		}
+
+		memcpy(ex->message, message, message_size);
+	}
+	else
+	{
+		ex->message = NULL;
+	}
+
+	if (label != NULL)
+	{
+		size_t label_size = strlen(label) + 1;
+
+		ex->label = malloc(sizeof(char) * label_size);
+
+		if (ex->label == NULL)
+		{
+			goto label_bad_alloc;
+		}
+
+		memcpy(ex->label, label, label_size);
+	}
+	else
+	{
+		ex->label = NULL;
+	}
+
+	if (stacktrace != NULL)
+	{
+		size_t stacktrace_size = strlen(stacktrace) + 1;
+
+		ex->stacktrace = malloc(sizeof(char) * stacktrace_size);
+
+		if (ex->stacktrace == NULL)
+		{
+			goto stacktrace_bad_alloc;
+		}
+
+		memcpy(ex->stacktrace, stacktrace, stacktrace_size);
+	}
+	else
+	{
+		ex->stacktrace = NULL;
+	}
+
+	ex->code = code;
 
 	ex->id = thread_id_get_current();
 
 	return ex;
+
+stacktrace_bad_alloc:
+
+	free(ex->label);
+
+label_bad_alloc:
+
+	free(ex->message);
+
+message_bad_alloc:
+
+	free(ex);
+
+exception_bad_alloc:
+
+	return NULL;
 }
 
 const char *exception_message(exception ex)
