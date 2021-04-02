@@ -4496,6 +4496,22 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 			status = napi_call_function(env, global, function_trampoline_destroy, 0, nullptr, nullptr);
 
 			node_loader_impl_exception(env, status);
+
+			/* Tell to V8 to do a garbage collection, this method probably won't work,
+			* and maybe not all async resources get destroyed properly, meaning that
+			* not all destroy hooks will be triggered, keeping the event loop alive.
+			* I do not know many workarounds to this, maybe we can register a timer in
+			* the event loop polling the amount of async resources the as an alternative,
+			* meanwhile let's use this. Remove it whenever it is finished */
+			/*
+			{
+				v8::Isolate *isolate = v8::Isolate::GetCurrent();
+				if (isolate != nullptr)
+				{
+					isolate->LowMemoryNotification();
+				}
+			}
+			*/
 		}
 	}
 
