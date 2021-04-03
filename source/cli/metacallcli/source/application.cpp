@@ -487,7 +487,7 @@ bool application::load(const std::string &tag, const std::string &script)
 
 	if (metacall_load_from_file(tag.c_str(), load_scripts, sizeof(load_scripts) / sizeof(load_scripts[0]), NULL) != 0)
 	{
-		std::cout << "Script (" << script << ") load error in loader (" << tag << ")" << std::endl;
+		std::cout << "Script (" << script << ") loading error occurs in loader (" << tag << ")" << std::endl;
 
 		return false;
 	}
