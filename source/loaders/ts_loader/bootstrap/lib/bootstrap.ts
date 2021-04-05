@@ -152,8 +152,9 @@ export const load_from_file = safe(function load_from_file(paths: string[]) {
 			result[fileName] = wrappedExports;
 		});
 	});
-	return result;
-}, {});
+
+	return Object.keys(result).length !== 0 ? result : null;
+}, null);
 
 /** Loads a TypeScript file from memory */
 export const load_from_memory = safe(
@@ -205,7 +206,7 @@ export const load_from_memory = safe(
 		discoverTypes.set(name, exportTypes);
 		return result;
 	},
-	{},
+	null,
 );
 
 /** Unloads a TypeScript file using handle returned from load_from_file / load_from_memory */

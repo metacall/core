@@ -52,6 +52,8 @@ if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target} ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND npm run build
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
 		SOURCES ${sources}
 	)
 
