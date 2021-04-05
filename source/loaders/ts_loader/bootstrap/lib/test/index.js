@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+const path = require('path');
+
 const {
 	initialize,
 	discover,
@@ -30,6 +32,6 @@ export async function mem_sum_async(left: number, rigth: number): number {
 
 inspect(load_from_memory('memory_module_empty', `console.log('A')`, {}));
 
-inspect(load_from_file(['./script.ts']));
+inspect(load_from_file([path.join(__dirname, 'script.ts')]));
 
 destroy();

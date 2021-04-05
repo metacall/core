@@ -34,21 +34,12 @@ else()
 	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 endif()
 
-add_custom_target(${target} ALL
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND ${CMAKE_COMMAND} -E  make_directory ${BOOTSTRAP_OUTPUT_PATH}
-	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.ts ${BOOTSTRAP_OUTPUT_PATH}
-	SOURCES ${sources}
-)
-
 if(NOT OPTION_BUILD_GUIX)
-	add_custom_target(${target}_depends ALL
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/typescript ${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
-		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_BINARY_DIR}/node_modules to ${BOOTSTRAP_OUTPUT_PATH}/node_modules"
+	# Dependencies
+	add_custom_target(${target}_depends
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+		COMMAND npm install
+		SOURCES ${sources}
 	)
 
 	set_target_properties(${target}_depends
@@ -57,14 +48,47 @@ if(NOT OPTION_BUILD_GUIX)
 		FOLDER "${IDE_FOLDER}"
 	)
 
+	# Build Bootstrap
+	add_custom_target(${target} ALL
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+		COMMAND npm run build
+		SOURCES ${sources}
+	)
+
+	set_target_properties(${target}
+		PROPERTIES
+		${DEFAULT_PROJECT_OPTIONS}
+		FOLDER "${IDE_FOLDER}"
+	)
+
 	add_dependencies(${target} ${target}_depends)
 
+	# Test
+	add_test(NAME ${target}
+		COMMAND npm test
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+	)
+
+	set_property(TEST ${target}
+		PROPERTY LABELS ${target}
+	)
+
+	# Install TypeScript
 	install(DIRECTORY
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules/typescript
+		${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
+
+	# Install Bootstrap (use ts extension even if it is transpiled js to avoid conflicts with node loader bootstrap)
+	install(FILES
+		${CMAKE_CURRENT_SOURCE_DIR}/build/bootstrap.js
+		DESTINATION ${INSTALL_LIB}/bootstrap.ts
+		COMPONENT runtime
+	)
 else()
+	# TODO: Copy ts to current dir, build skipping errors, and copy the js => ts file
+
 	# Guix stores typescript dependency previously to the build in the output directory
 	install(DIRECTORY
 		${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
@@ -72,24 +96,3 @@ else()
 		COMPONENT runtime
 	)
 endif()
-
-#
-# Project options
-#
-
-set_target_properties(${target}
-	PROPERTIES
-	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
-)
-
-#
-# Deployment
-#
-
-# Library
-install(FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.ts
-	DESTINATION ${INSTALL_LIB}
-	COMPONENT runtime
-)
