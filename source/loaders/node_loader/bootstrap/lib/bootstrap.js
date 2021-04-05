@@ -5,6 +5,7 @@ const Module = require('module');
 const path = require('path');
 const util = require('util');
 const fs = require('fs');
+const async_hooks = require('async_hooks');
 
 /* Require the JavaScript parser */
 const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
@@ -382,51 +383,32 @@ module.exports = ((impl, ptr) => {
 			'destroy': node_loader_trampoline_destroy,
 		});
 
-		const activeTimers = new Map();
-
-		/* Timers are not included after Node.js 10 */
-		const NODE_VERSION = process.version.slice(1).split('.').map((v) => parseInt(v, 10));
-
-		const disableHooks = (NODE_VERSION[0] > 10) ? (() => {
-			/* Track them with the hooks */
-			const hook = asyncHooks.createHook({
-				init (asyncId, type, triggerAsyncId, resource) {
-					/* Track only timers */
-					if (type === 'Timeout') {
-						activeTimers.set(asyncId, {type, triggerAsyncId, resource});
-					}
-				},
-				destroy (asyncId) {
-					activeTimers.delete(asyncId);
-				},
+		function node_loader_trampoline_destroy() {
+			/* Initialize async hooks for keeping track the amount of async handles that are in the event queue */
+			const asyncHook = async_hooks.createHook({
+				destroy: node_loader_trampoline_async_hook_destroy,
 			});
 
-			hook.enable();
+			/* We need to use this cleanup variable because asyncHook.disable() seems not to work */
+			const cleanupBuffer = new SharedArrayBuffer(Uint32Array.BYTES_PER_ELEMENT);
+			const cleanup = new Uint32Array(cleanupBuffer);
 
-			return () => { hook.disable() };
-		})() : () => {};
+			Atomics.store(cleanup, 0, 0);
 
-		function node_loader_trampoline_destroy() {
-			/* Initialize a timer for keeping track the amount of async handles that are in the event queue,
-			* before this async hooks have been used, but due to V8 GC, some destroy events were never triggered
-			* leaving the event loop always open, the only alternative I have found is this one, or refactoring
-			* the node loader, dropping support for Node 10 and 12, and implementing ourselves the event loop
-			* instead of using node::Start. This solution is dirty but at least works, lets keep it until
-			* we found something better, at least it makes the node loader stable */
-			const handle = setInterval(() => {
+			/* Enable async hooks for tracking all destroyed (and garbage collected) async resources */
+			asyncHook.enable();
+
+			function node_loader_trampoline_async_hook_destroy() {
 				/* At this point we may have reached an "empty" event loop, it
 				* only contains the async resources that the Node Loader has populated,
-				* including this timer (1 for active_handles, 3 for _getActiveHandles() which includes
-				* stdin, stdout and the timer), but it does not contain any user defined async resource */
-				const timers = [...activeTimers.values()].filter(timer => !(typeof timer.resource.hasRef === 'function' && !timer.resource.hasRef()));
-
-				if (trampoline.active_handles(node_loader_ptr) <= 1 && process._getActiveHandles().length + timers.length <= 3 && process._getActiveRequests().length === 0) {
-					/* Clear the timer, disable hooks and destroy the Node Loader */
-					clearInterval(handle);
-					disableHooks();
+				* but it does not contain any user defined async resource */
+				if (trampoline.active_handles(node_loader_ptr) <= 0 && Atomics.load(cleanup, 0) === 0) {
+					/* Disable Hooks and destroy the Node Loader */
+					Atomics.store(cleanup, 0, 1);
+					asyncHook.disable();
 					trampoline.destroy(node_loader_ptr);
 				}
-			}, 1000);
+			}
 		}
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);
