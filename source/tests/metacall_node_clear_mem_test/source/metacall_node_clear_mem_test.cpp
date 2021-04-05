@@ -47,7 +47,7 @@ TEST_F(metacall_node_clear_mem_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", bufferA, sizeof(bufferA), &handleA));
 
-		EXPECT_NE((void*)NULL, (void*)handleA);
+		EXPECT_NE((void *)NULL, (void *)handleA);
 
 		EXPECT_EQ((int)0, (int)metacall_clear(handleA));
 
@@ -58,7 +58,7 @@ TEST_F(metacall_node_clear_mem_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", bufferB, sizeof(bufferB), &handleB));
 
-		EXPECT_NE((void*)NULL, (void*)handleB);
+		EXPECT_NE((void *)NULL, (void *)handleB);
 
 		EXPECT_EQ((int)0, (int)metacall_clear(handleB));
 	}
