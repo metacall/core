@@ -62,31 +62,57 @@ const wrapFunctionExport = (e: unknown) =>
 const defaultCompilerOptions = {
 	target: ts.ScriptTarget.ES2017,
 	module: ts.ModuleKind.CommonJS,
-	lib: ['lib.es2017'],
+	lib: ['lib.es2017.d.ts'],
 };
 
-const getCompilerOptions = () => {
+/** Generate diagnostics if any, the return value true means there was an error, false otherwise */
+const generateDiagnostics = (program: ts.Program, diagnostics: readonly ts.Diagnostic[], errors: readonly ts.Diagnostic[]) => {
+	const allDiagnostics = ts.getPreEmitDiagnostics(program).concat(diagnostics, errors);
+
+	if (allDiagnostics.length) {
+		const formatHost: ts.FormatDiagnosticsHost = {
+			getCanonicalFileName: (path) => path,
+			getCurrentDirectory: ts.sys.getCurrentDirectory,
+			getNewLine: () => ts.sys.newLine,
+		};
+		const message = ts.formatDiagnosticsWithColorAndContext(allDiagnostics, formatHost);
+		console.log(message);
+	}
+};
+
+const getProgramOptions = (paths: string[] = []) => {
+	const defaultOptions = { options: defaultCompilerOptions, rootNames: paths, configFileParsingDiagnostics: [] };
 	const configFile = ts.findConfigFile(
 		process.cwd(),
 		ts.sys.fileExists,
 		'tsconfig.json',
 	);
 	if (!configFile) {
-		return defaultCompilerOptions;
+		return defaultOptions;
 	}
 	const { config, error } = ts.readConfigFile(configFile, ts.sys.readFile);
 	if (error) {
-		return defaultCompilerOptions;
+		return { ...defaultOptions, configFileParsingDiagnostics: [error] };
 	}
-	const { errors, options } = ts.convertCompilerOptionsFromJson(
+	const { options, fileNames, errors } = ts.parseJsonConfigFileContent(
 		config,
+		ts.sys,
 		process.cwd(),
-		configFile,
 	);
-	if (errors.length > 0) {
-		return defaultCompilerOptions;
-	}
-	return options;
+	return { options: errors.length > 0 ? defaultCompilerOptions : options, rootNames: fileNames || paths, configFileParsingDiagnostics: errors };
+};
+
+const getTranspileOptions = (moduleName: string, path: string) => {
+	const programOptions = getProgramOptions([path]);
+	return {
+		programOptions,
+		transpileOptions: {
+			compilerOptions: programOptions.options,
+			fileName: path,
+			reportDiagnostics: true,
+			moduleName,
+		},
+	};
 };
 
 const getMetacallExportTypes = (
@@ -98,6 +124,7 @@ const getMetacallExportTypes = (
 	const sourceFiles = p.getRootFileNames().map((name) =>
 		[name, p.getSourceFile(name)] as const
 	);
+	let fileCount = 0;
 	for (const [fileName, sourceFile] of sourceFiles) {
 		if (!sourceFile) {
 			// TODO: Implement better exception handling
@@ -129,16 +156,19 @@ const getMetacallExportTypes = (
 			}
 		}
 		cb(sourceFile, exportTypes);
+		fileCount++;
 	}
-	return exportTypes;
+	return fileCount === 0 ? null : exportTypes;
 };
 
 /** Loads a TypeScript file from disk */
 export const load_from_file = safe(function load_from_file(paths: string[]) {
 	const result: MetacallHandle = {};
-	const p = ts.createProgram(paths, getCompilerOptions());
-	getMetacallExportTypes(p, (sourceFile, exportTypes) => {
-		p.emit(sourceFile, (fileName, data) => {
+	const options = getProgramOptions(paths.map(p => path.resolve(p)));
+	const p = ts.createProgram(options);
+	// TODO: Handle the emitSkipped?
+	const exportTypes = getMetacallExportTypes(p, (sourceFile, exportTypes) => {
+		const { diagnostics /*, emitSkipped */ } = p.emit(sourceFile, (fileName, data) => {
 			const m = new Module(fileName);
 			(m as any)._compile(data, fileName);
 			const wrappedExports = wrapFunctionExport(m.exports);
@@ -151,19 +181,21 @@ export const load_from_file = safe(function load_from_file(paths: string[]) {
 			});
 			result[fileName] = wrappedExports;
 		});
+
+		generateDiagnostics(p, diagnostics, options.configFileParsingDiagnostics);
 	});
 
-	return Object.keys(result).length !== 0 ? result : null;
+	return Object.keys(result).length === 0 || exportTypes === null ? null : result;
 }, null);
 
 /** Loads a TypeScript file from memory */
 export const load_from_memory = safe(
 	function load_from_memory(name: string, data: string) {
-		const compilerOptions = getCompilerOptions();
-		const transpileOutput = ts.transpileModule(data, { compilerOptions });
 		const extName = `${name}.ts`;
-		const target = compilerOptions.target ?? defaultCompilerOptions.target;
-		const p = ts.createProgram([extName], getCompilerOptions(), {
+		const { programOptions, transpileOptions } = getTranspileOptions(name, extName);
+		const transpileOutput = ts.transpileModule(data, transpileOptions);
+		const target = programOptions.options.target ?? defaultCompilerOptions.target;
+		const p = ts.createProgram([extName], programOptions.options, {
 			fileExists: (fileName) => fileName === extName,
 			getCanonicalFileName: (fileName) => fileName,
 			getCurrentDirectory: ts.sys.getCurrentDirectory,
@@ -195,6 +227,10 @@ export const load_from_memory = safe(
 			writeFile: () => { },
 		});
 		const exportTypes = getMetacallExportTypes(p);
+		if (exportTypes === null) {
+			// TODO: Improve error handling
+			return null;
+		}
 		const m = new Module(name);
 		(m as any)._compile(transpileOutput.outputText, name);
 		const result: MetacallHandle = {
