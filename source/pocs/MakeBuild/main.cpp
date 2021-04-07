@@ -2,12 +2,16 @@
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 //#include "/usr/include/llvm-11/llvm/ExecutionEngine/ExecutionEngine.h"
+//#include "/usr/include/llvm-c-11/llvm-c/ExecutionEngine.h"
+#include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IRReader/IRReader.h"
+#include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 
 // Optimizations
@@ -16,17 +20,32 @@
 
 using namespace llvm;
 
-llvm::Function *createSumFunction(Module *module)
+using std::cout;
+using std::endl;
+using std::unique_ptr;
+
+using llvm::ArrayRef;
+using llvm::EngineBuilder;
+using llvm::ExecutionEngine;
+using llvm::Function;
+using llvm::GenericValue;
+using llvm::LLVMContext;
+using llvm::Module;
+using llvm::parseIRFile;
+using llvm::SMDiagnostic;
+using llvm::StringRef;
+
+/*llvm::Function *createSumFunction(Module *module)
 {
-	/* Builds the following function:
+	// Builds the following function:
     
-    int sum(int a, int b) {
-        int sum1 = 1 + 1;
-        int sum2 = sum1 + a;
-        int result = sum2 + b;
-        return result;
-    }
-    */
+    //int sum(int a, int b) {
+        //int sum1 = 1 + 1;
+        //int sum2 = sum1 + a;
+        //int result = sum2 + b;
+        //return result;
+    //}
+    
 
 	LLVMContext &context = module->getContext();
 	IRBuilder<> builder(context);
@@ -62,12 +81,12 @@ llvm::Function *createSumFunction(Module *module)
 	// Verify at the end
 	verifyFunction(*fooFunc);
 	return fooFunc;
-};
+};*/
 
 int main(int argc, char *argv[])
 {
 	// Initilaze native target
-	llvm::TargetOptions Opts;
+	/*llvm::TargetOptions Opts;
 	InitializeNativeTarget();
 	InitializeNativeTargetAsmPrinter();
 
@@ -110,5 +129,26 @@ int main(int argc, char *argv[])
 	int result = func_ptr(arg1, arg2);
 	std::cout << arg1 << " + " << arg2 << " + 1 + 1 = " << result << std::endl;
 
-	return 0;
+	return 0;*/
+
+	LLVMContext context;
+	SMDiagnostic error;
+
+	unique_ptr<Module> mod = parseIRFile(StringRef("input.ll"), error, context);
+
+	ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
+
+	for (auto curFref = mod->getFunctionList().begin(), endFref = mod->getFunctionList().end(); curFref != endFref; ++curFref)
+	{
+		errs() << "found function: " << curFref->getName() << "\n";
+	}
+
+	/*Function *add = executionEngine->FindFunctionNamed(StringRef("adder"));
+	GenericValue param1, param2;
+	param1.IntVal = 5;
+	param2.IntVal = 2;
+	GenericValue params[] = { param1, param2 };
+	ArrayRef<GenericValue> args = ArrayRef<GenericValue>(params, 2);
+	GenericValue result = executionEngine->runFunction(add, args);
+	std::cout << param1.IntVal << " + " << param2.IntVal << " = " << result.IntVal << endl;*/
 }
