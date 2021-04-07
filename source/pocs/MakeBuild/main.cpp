@@ -138,9 +138,24 @@ int main(int argc, char *argv[])
 
 	ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
 
-	for (auto curFref = mod->getFunctionList().begin(), endFref = mod->getFunctionList().end(); curFref != endFref; ++curFref)
+	/*for (auto curFref = mod->getFunctionList().begin(), endFref = mod->getFunctionList().end(); curFref != endFref; ++curFref)
 	{
-		errs() << "found function: " << curFref->getName() << "\n";
+		outs() << "found function: " << curFref->getName() << "\n";
+	}*/
+
+	for (Module::const_iterator i = mod->getFunctionList().begin(), e = mod->getFunctionList().end(); i != e; ++i)
+	{
+		if (!i->isDeclaration())
+		{
+			for (auto arg = i->arg_begin(); arg != i->arg_end(); ++arg)
+			{
+				if (auto *ci = dyn_cast<ConstantInt>(arg))
+					errs() << ci->getValue() << "\n";
+
+				errs() << *arg << "\n";
+			}
+			//outs() << i->getName() << " has " << i->size() << " basicblock(s).\n";
+		}
 	}
 
 	/*Function *add = executionEngine->FindFunctionNamed(StringRef("adder"));
@@ -150,5 +165,5 @@ int main(int argc, char *argv[])
 	GenericValue params[] = { param1, param2 };
 	ArrayRef<GenericValue> args = ArrayRef<GenericValue>(params, 2);
 	GenericValue result = executionEngine->runFunction(add, args);
-	std::cout << param1.IntVal << " + " << param2.IntVal << " = " << result.IntVal << endl;*/
+	outs() << param1.IntVal << " + " << param2.IntVal << " = " << result.IntVal;*/
 }
