@@ -5,6 +5,7 @@
 	"main": "bootstrap.ts",
 	"scripts": {
 		"build": "tsc",
+		"build-guix": "node compile.js",
 		"test": "node test/index.js"
 	},
 	"keywords": [],

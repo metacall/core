@@ -81,15 +81,29 @@ if(NOT OPTION_BUILD_GUIX)
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
-
-	# Install Bootstrap (use ts extension even if it is transpiled js to avoid conflicts with node loader bootstrap)
-	install(FILES
-		${CMAKE_CURRENT_SOURCE_DIR}/build/bootstrap.js
-		DESTINATION ${INSTALL_LIB}/bootstrap.ts
-		COMPONENT runtime
-	)
 else()
-	# TODO: Copy ts to current dir, build skipping errors, and copy the js => ts file
+	set(NODEJS_EXECUTABLE_ONLY ON)
+
+	find_package(NodeJS)
+
+	if(NOT NODEJS_FOUND)
+		message(STATUS "NodeJS executable not found, skipping ts loader bootstrap build")
+		return()
+	endif()
+
+	# Build Bootstrap (without typechecking)
+	add_custom_target(${target} ALL
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
+		COMMAND ${NODEJS_EXECUTABLE} compile.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
+		SOURCES ${sources}
+	)
+
+	set_target_properties(${target}
+		PROPERTIES
+		${DEFAULT_PROJECT_OPTIONS}
+		FOLDER "${IDE_FOLDER}"
+	)
 
 	# Guix stores typescript dependency previously to the build in the output directory
 	install(DIRECTORY
@@ -98,3 +112,10 @@ else()
 		COMPONENT runtime
 	)
 endif()
+
+# Install Bootstrap (use ts extension even if it is transpiled js to avoid conflicts with node loader bootstrap)
+install(FILES
+	${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js
+	DESTINATION ${INSTALL_LIB}/bootstrap.ts
+	COMPONENT runtime
+)
