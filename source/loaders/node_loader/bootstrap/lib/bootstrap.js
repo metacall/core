@@ -5,7 +5,6 @@ const Module = require('module');
 const path = require('path');
 const util = require('util');
 const fs = require('fs');
-const async_hooks = require('async_hooks');
 
 /* Require the JavaScript parser */
 const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
@@ -380,36 +379,7 @@ module.exports = ((impl, ptr) => {
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
-			'destroy': node_loader_trampoline_destroy,
 		});
-
-		function node_loader_trampoline_destroy() {
-			/* Initialize async hooks for keeping track the amount of async handles that are in the event queue */
-			const asyncHook = async_hooks.createHook({
-				destroy: node_loader_trampoline_async_hook_destroy,
-			});
-
-			/* We need to use this cleanup variable because asyncHook.disable() seems not to work */
-			const cleanupBuffer = new SharedArrayBuffer(Uint32Array.BYTES_PER_ELEMENT);
-			const cleanup = new Uint32Array(cleanupBuffer);
-
-			Atomics.store(cleanup, 0, 0);
-
-			/* Enable async hooks for tracking all destroyed (and garbage collected) async resources */
-			asyncHook.enable();
-
-			function node_loader_trampoline_async_hook_destroy() {
-				/* At this point we may have reached an "empty" event loop, it
-				* only contains the async resources that the Node Loader has populated,
-				* but it does not contain any user defined async resource */
-				if (trampoline.active_handles(node_loader_ptr) <= 0 && Atomics.load(cleanup, 0) === 0) {
-					/* Disable Hooks and destroy the Node Loader */
-					Atomics.store(cleanup, 0, 1);
-					asyncHook.disable();
-					trampoline.destroy(node_loader_ptr);
-				}
-			}
-		}
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);
 	}

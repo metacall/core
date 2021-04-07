@@ -253,6 +253,8 @@ struct loader_impl_node_type
 	std::thread::id js_thread_id;
 
 	int64_t base_active_handles;
+	int64_t extra_active_handles;
+	uv_check_t destroy_check;
 };
 
 typedef struct loader_impl_node_function_type
@@ -483,6 +485,8 @@ static void node_loader_impl_walk(uv_handle_t *handle, void *data);
 static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg);
 
 static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
+
+static void node_loader_impl_try_destroy(loader_impl_node node_impl);
 
 /* -- Methods -- */
 
@@ -3612,6 +3616,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	/* Store the amount of async handles that we have for the node loader,
 	* so we can count the user defined async handles */
 	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
+	node_impl->extra_active_handles = 0;
 
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);
@@ -4430,6 +4435,27 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	return 0;
 }
 
+#define container_of(ptr, type, member) \
+	(type *)((char *)(ptr) - (char *) &((type *)0)->member)
+
+static void node_loader_impl_destroy_check_close_cb(uv_handle_t *handle)
+{
+	uv_check_t *check = (uv_check_t *)handle;
+	loader_impl_node node_impl = container_of(check, struct loader_impl_node_type, destroy_check);
+	node_loader_impl_try_destroy(node_impl);
+}
+
+static void node_loader_impl_destroy_check_cb(uv_check_t *handle)
+{
+	loader_impl_node node_impl = container_of(handle, struct loader_impl_node_type, destroy_check);
+
+	if (node_loader_impl_user_async_handles_count(node_impl) <= 0)
+	{
+		uv_check_stop(handle);
+		uv_close((uv_handle_t *)handle, &node_loader_impl_destroy_check_close_cb);
+	}
+}
+
 void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe)
 {
 	napi_status status;
@@ -4449,70 +4475,9 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	}
 	else
 	{
-		static const char destroy_str[] = "destroy";
-		napi_value destroy_str_value;
-		napi_value function_table_object;
-		bool result = false;
-
-		/* Get function table object from reference */
-		status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
-
-		node_loader_impl_exception(env, status);
-
-		/* Retrieve async count function from object table */
-		status = napi_create_string_utf8(env, destroy_str, sizeof(destroy_str) - 1, &destroy_str_value);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_has_own_property(env, function_table_object, destroy_str_value, &result);
-
-		node_loader_impl_exception(env, status);
-
-		if (result == true)
-		{
-			napi_value function_trampoline_destroy;
-			napi_valuetype valuetype;
-
-			status = napi_get_named_property(env, function_table_object, destroy_str, &function_trampoline_destroy);
-
-			node_loader_impl_exception(env, status);
-
-			status = napi_typeof(env, function_trampoline_destroy, &valuetype);
-
-			node_loader_impl_exception(env, status);
-
-			if (valuetype != napi_function)
-			{
-				napi_throw_type_error(env, nullptr, "Invalid function destroy in function table object");
-			}
-
-			/* Call to async count function */
-			napi_value global;
-
-			status = napi_get_global(env, &global);
-
-			node_loader_impl_exception(env, status);
-
-			status = napi_call_function(env, global, function_trampoline_destroy, 0, nullptr, nullptr);
-
-			node_loader_impl_exception(env, status);
-
-			/* Tell to V8 to do a garbage collection, this method probably won't work,
-			* and maybe not all async resources get destroyed properly, meaning that
-			* not all destroy hooks will be triggered, keeping the event loop alive.
-			* I do not know many workarounds to this, maybe we can register a timer in
-			* the event loop polling the amount of async resources the as an alternative,
-			* meanwhile let's use this. Remove it whenever it is finished */
-			/*
-			{
-				v8::Isolate *isolate = v8::Isolate::GetCurrent();
-				if (isolate != nullptr)
-				{
-					isolate->LowMemoryNotification();
-				}
-			}
-			*/
-		}
+		node_impl->extra_active_handles = 2;
+		uv_check_init(node_impl->thread_loop, &node_impl->destroy_check);
+		uv_check_start(&node_impl->destroy_check, &node_loader_impl_destroy_check_cb);
 	}
 
 	/* Close scope */
@@ -4540,7 +4505,7 @@ int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 
 int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
-	return node_loader_impl_async_handles_count(node_impl) - node_impl->base_active_handles;
+	return node_loader_impl_async_handles_count(node_impl) - node_impl->base_active_handles - node_impl->extra_active_handles;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
@@ -4761,6 +4726,62 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	}
 }
 
+void node_loader_impl_try_destroy(loader_impl_node node_impl)
+{
+	napi_status status;
+
+	/* Set up destroy safe arguments */
+	node_impl->destroy_safe->node_impl = node_impl;
+
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_destroy_safe(node_impl->env, node_impl->destroy_safe);
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+	{
+		node_impl->locked.store(true);
+
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_impl->threadsafe_destroy);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe destroy function in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_impl->threadsafe_destroy, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe destroy function in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe destroy function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		node_impl->locked.store(false);
+
+		/* Unlock call safe mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_destroy, the call has not been executed in order to avoid the deadlock");
+	}
+}
+
 int node_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
@@ -4771,60 +4792,7 @@ int node_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Call destroy function with thread safe */
-	{
-		napi_status status;
-
-		/* Set up destroy safe arguments */
-		node_impl->destroy_safe->node_impl = node_impl;
-
-		/* Check if we are in the JavaScript thread */
-		if (node_impl->js_thread_id == std::this_thread::get_id())
-		{
-			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_destroy_safe(node_impl->env, node_impl->destroy_safe);
-		}
-		/* Lock the mutex and set the parameters */
-		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-		{
-			node_impl->locked.store(true);
-
-			/* Acquire the thread safe function in order to do the call */
-			status = napi_acquire_threadsafe_function(node_impl->threadsafe_destroy);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe destroy function in NodeJS loader");
-			}
-
-			/* Execute the thread safe call in a nonblocking manner */
-			status = napi_call_threadsafe_function(node_impl->threadsafe_destroy, nullptr, napi_tsfn_nonblocking);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe destroy function in NodeJS loader");
-			}
-
-			/* Release call safe function */
-			status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_release);
-
-			if (status != napi_ok)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe destroy function in NodeJS loader");
-			}
-
-			/* Wait for the execution of the safe call */
-			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-			node_impl->locked.store(false);
-
-			/* Unlock call safe mutex */
-			uv_mutex_unlock(&node_impl->mutex);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_destroy, the call has not been executed in order to avoid the deadlock");
-		}
-	}
+	node_loader_impl_try_destroy(node_impl);
 
 	/* Wait for node thread to finish */
 	uv_thread_join(&node_impl->thread);
