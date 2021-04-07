@@ -4,7 +4,7 @@ export function typed_sum(left: number, rigth: number): number {
 	return left + rigth;
 }
 
-export async function typed_sum_async(left: number, rigth: number): number {
+export async function typed_sum_async(left: number, rigth: number): Promise<number> {
 	return left + rigth;
 }
 
