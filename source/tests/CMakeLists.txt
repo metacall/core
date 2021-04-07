@@ -184,6 +184,6 @@ add_subdirectory(metacall_file_test)
 add_subdirectory(metacall_file_fail_test)
 add_subdirectory(metacall_typescript_test)
 add_subdirectory(metacall_typescript_node_test)
-add_subdirectory(metacall_typescript_tsx_test)
+#add_subdirectory(metacall_typescript_tsx_test) # TODO: Download react dependencies locally instead of globally
 add_subdirectory(metacall_lua_test)
 add_subdirectory(metacall_rpc_test)

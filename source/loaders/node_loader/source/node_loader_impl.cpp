@@ -254,7 +254,7 @@ struct loader_impl_node_type
 
 	int64_t base_active_handles;
 	int64_t extra_active_handles;
-	uv_check_t destroy_check;
+	uv_prepare_t destroy_prepare;
 };
 
 typedef struct loader_impl_node_function_type
@@ -4436,23 +4436,23 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 }
 
 #define container_of(ptr, type, member) \
-	(type *)((char *)(ptr) - (char *) &((type *)0)->member)
+	(type *)((char *)(ptr) - (char *)&((type *)0)->member)
 
-static void node_loader_impl_destroy_check_close_cb(uv_handle_t *handle)
+static void node_loader_impl_destroy_prepare_close_cb(uv_handle_t *handle)
 {
-	uv_check_t *check = (uv_check_t *)handle;
-	loader_impl_node node_impl = container_of(check, struct loader_impl_node_type, destroy_check);
+	uv_prepare_t *check = (uv_prepare_t *)handle;
+	loader_impl_node node_impl = container_of(check, struct loader_impl_node_type, destroy_prepare);
 	node_loader_impl_try_destroy(node_impl);
 }
 
-static void node_loader_impl_destroy_check_cb(uv_check_t *handle)
+static void node_loader_impl_destroy_prepare_cb(uv_prepare_t *handle)
 {
-	loader_impl_node node_impl = container_of(handle, struct loader_impl_node_type, destroy_check);
+	loader_impl_node node_impl = container_of(handle, struct loader_impl_node_type, destroy_prepare);
 
 	if (node_loader_impl_user_async_handles_count(node_impl) <= 0)
 	{
-		uv_check_stop(handle);
-		uv_close((uv_handle_t *)handle, &node_loader_impl_destroy_check_close_cb);
+		uv_prepare_stop(handle);
+		uv_close((uv_handle_t *)handle, &node_loader_impl_destroy_prepare_close_cb);
 	}
 }
 
@@ -4475,9 +4475,9 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	}
 	else
 	{
-		node_impl->extra_active_handles = 2;
-		uv_check_init(node_impl->thread_loop, &node_impl->destroy_check);
-		uv_check_start(&node_impl->destroy_check, &node_loader_impl_destroy_check_cb);
+		node_impl->extra_active_handles = 1;
+		uv_prepare_init(node_impl->thread_loop, &node_impl->destroy_prepare);
+		uv_prepare_start(&node_impl->destroy_prepare, &node_loader_impl_destroy_prepare_cb);
 	}
 
 	/* Close scope */
