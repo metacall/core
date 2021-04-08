@@ -1,9 +1,9 @@
-int adder(int a, int b)
+float adder(float a, float b)
 {
 	return (a + b);
 }
 
-int subtract(int a, int b)
+float subtract(float a, float b)
 {
 	return (a - b);
 }

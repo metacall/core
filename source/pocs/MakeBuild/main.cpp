@@ -128,31 +128,37 @@ int main(int argc, char *argv[])
 
 	return 0;*/
 
+	// Get the LLVMContext and SMDiagnostic objects.
 	LLVMContext context;
 	SMDiagnostic error;
 
+	// Get a pointer to a LLVM module by loading a .ll file. A .bc file may also be used here.
 	unique_ptr<Module> mod = parseIRFile(StringRef("input.ll"), error, context);
-	//ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
 
+	// Check if the module if loaded properly.
 	if (mod)
 	{
-		cout << "Module is loaded!";
+		cout << "\nModule is loaded!";
 		//mod->dump();
 	}
 	else
 	{
-		cout << "Error loading module!";
+		cout << "\nError loading module!";
 	}
 
+	// Iterate through the function list.
 	for (Module::const_iterator i = mod->getFunctionList().begin(), e = mod->getFunctionList().end(); i != e; ++i)
 	{
+		// Check if it is a valid declaration.
 		if (!i->isDeclaration())
 		{
+			// Print the function details.
 			cout << "\n\nFunction Found!\n\n";
 			//outs() << i->getName() << " has " << i->size() << " basicblocks.\n";
 			outs() << "Name\n"
 				   << i->getName();
 
+			// Iterate through the paramters for each function and print them.
 			cout << "\n\nParameter List\n";
 			for (auto arg = i->arg_begin(); arg != i->arg_end(); ++arg)
 			{
@@ -164,14 +170,19 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	/*Function *add = executionEngine->FindFunctionNamed(StringRef("adder"));
+	// Dynamically calling the function.
+	ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
+
+	Function *add = executionEngine->FindFunctionNamed(StringRef("adder"));
 	GenericValue param1, param2;
-	param1.IntVal = 5;
-	param2.IntVal = 2;
+	param1.FloatVal = 5.0;
+	param2.FloatVal = 2.0;
 	GenericValue params[] = { param1, param2 };
 	ArrayRef<GenericValue> args = ArrayRef<GenericValue>(params, 2);
 	GenericValue result = executionEngine->runFunction(add, args);
-	outs() << param1.IntVal << " + " << param2.IntVal << " = " << result.IntVal;*/
+
+	cout << "\n\nOutput of a dynamic function call to adder.\n";
+	outs() << param1.FloatVal << " + " << param2.FloatVal << " = " << result.FloatVal << "\n\n";
 
 	return 0;
 }
