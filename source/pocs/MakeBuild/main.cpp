@@ -131,12 +131,28 @@ int main(int argc, char *argv[])
 
 	return 0;*/
 
+	//LLVMContext &context = getGlobalContext();
 	LLVMContext context;
 	SMDiagnostic error;
 
 	unique_ptr<Module> mod = parseIRFile(StringRef("input.ll"), error, context);
+	//ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
 
-	ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
+	/*Module *mod = ParseIR("input.ll", error, context);
+	
+	if (!mod) 
+	{
+		error.print("input.ll", errs());
+		return 1;
+	}*/
+
+	if (mod)
+	{
+		cout << "Module is loaded" << endl;
+		//mod->dump();
+	}
+
+	//outs() << *mod;
 
 	/*for (auto curFref = mod->getFunctionList().begin(), endFref = mod->getFunctionList().end(); curFref != endFref; ++curFref)
 	{
@@ -147,14 +163,15 @@ int main(int argc, char *argv[])
 	{
 		if (!i->isDeclaration())
 		{
-			for (auto arg = i->arg_begin(); arg != i->arg_end(); ++arg)
+			/*for (auto arg = i->arg_begin(); arg != i->arg_end(); ++arg)
 			{
 				if (auto *ci = dyn_cast<ConstantInt>(arg))
 					errs() << ci->getValue() << "\n";
 
 				errs() << *arg << "\n";
-			}
-			//outs() << i->getName() << " has " << i->size() << " basicblock(s).\n";
+			}*/
+
+			outs() << i->getName() << " has " << i->size() << " basicblock(s).\n";
 		}
 	}
 
@@ -166,4 +183,6 @@ int main(int argc, char *argv[])
 	ArrayRef<GenericValue> args = ArrayRef<GenericValue>(params, 2);
 	GenericValue result = executionEngine->runFunction(add, args);
 	outs() << param1.IntVal << " + " << param2.IntVal << " = " << result.IntVal;*/
+
+	return 0;
 }
