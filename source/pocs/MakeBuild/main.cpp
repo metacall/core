@@ -1,8 +1,6 @@
 #include <iostream>
 
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-//#include "/usr/include/llvm-11/llvm/ExecutionEngine/ExecutionEngine.h"
-//#include "/usr/include/llvm-c-11/llvm-c/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm/ExecutionEngine/Orc/CompileUtils.h"
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
@@ -20,10 +18,6 @@
 
 using namespace llvm;
 
-using std::cout;
-using std::endl;
-using std::unique_ptr;
-
 using llvm::ArrayRef;
 using llvm::EngineBuilder;
 using llvm::ExecutionEngine;
@@ -34,6 +28,9 @@ using llvm::Module;
 using llvm::parseIRFile;
 using llvm::SMDiagnostic;
 using llvm::StringRef;
+using std::cout;
+using std::endl;
+using std::unique_ptr;
 
 /*llvm::Function *createSumFunction(Module *module)
 {
@@ -131,47 +128,39 @@ int main(int argc, char *argv[])
 
 	return 0;*/
 
-	//LLVMContext &context = getGlobalContext();
 	LLVMContext context;
 	SMDiagnostic error;
 
 	unique_ptr<Module> mod = parseIRFile(StringRef("input.ll"), error, context);
 	//ExecutionEngine *executionEngine = EngineBuilder(std::move(mod)).setEngineKind(llvm::EngineKind::Interpreter).create();
 
-	/*Module *mod = ParseIR("input.ll", error, context);
-	
-	if (!mod) 
-	{
-		error.print("input.ll", errs());
-		return 1;
-	}*/
-
 	if (mod)
 	{
-		cout << "Module is loaded" << endl;
+		cout << "Module is loaded!";
 		//mod->dump();
 	}
-
-	//outs() << *mod;
-
-	/*for (auto curFref = mod->getFunctionList().begin(), endFref = mod->getFunctionList().end(); curFref != endFref; ++curFref)
+	else
 	{
-		outs() << "found function: " << curFref->getName() << "\n";
-	}*/
+		cout << "Error loading module!";
+	}
 
 	for (Module::const_iterator i = mod->getFunctionList().begin(), e = mod->getFunctionList().end(); i != e; ++i)
 	{
 		if (!i->isDeclaration())
 		{
-			/*for (auto arg = i->arg_begin(); arg != i->arg_end(); ++arg)
+			cout << "\n\nFunction Found!\n\n";
+			//outs() << i->getName() << " has " << i->size() << " basicblocks.\n";
+			outs() << "Name\n"
+				   << i->getName();
+
+			cout << "\n\nParameter List\n";
+			for (auto arg = i->arg_begin(); arg != i->arg_end(); ++arg)
 			{
 				if (auto *ci = dyn_cast<ConstantInt>(arg))
 					errs() << ci->getValue() << "\n";
 
 				errs() << *arg << "\n";
-			}*/
-
-			outs() << i->getName() << " has " << i->size() << " basicblock(s).\n";
+			}
 		}
 	}
 
