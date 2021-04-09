@@ -114,14 +114,12 @@ function_interface function_java_singleton()
 	return &java_interface;
 }
 
-loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration config, loader_host host)
+loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_java java_impl;
 
 	(void)impl;
 	(void)config;
-
-	loader_copy(host);
 
 	java_impl = new loader_impl_java_type();
 
