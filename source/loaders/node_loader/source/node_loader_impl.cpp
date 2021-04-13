@@ -4498,13 +4498,6 @@ void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
 	{
 		(*async_count)++;
 	}
-
-	if (handle->type == UV_SIGNAL)
-	{
-		// TODO: Remove this. Debug signals in ^14.x for destroying properly.
-		uv_signal_t *signal = (uv_signal_t *)handle;
-		printf("DEBUG SIGNAL: %d\n", signal->signum);
-	}
 }
 
 int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
