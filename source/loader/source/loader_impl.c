@@ -629,9 +629,12 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							// TODO: Check if is contained in the context
-							// if (context_contains(impl->ctx, handle_impl->ctx) == 0 && context_append...)
-							if (context_append(impl->ctx, handle_impl->ctx) == 0)
+							if (context_contains(impl->ctx, handle_impl->ctx) == 0)
+							{
+								/* TODO: This still does not protect duplicated names between different loaders global scope */
+								log_write("metacall", LOG_LEVEL_ERROR, "There are duplicated symbols already loaded in the global scope conflicting with handle: %s", module_name);
+							}
+							else if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
 
@@ -734,9 +737,12 @@ int loader_impl_load_from_memory(loader_impl impl, const char *buffer, size_t si
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							// TODO: Check if is contained in the context
-							// if (context_contains(impl->ctx, handle_impl->ctx) == 0 && context_append...)
-							if (context_append(impl->ctx, handle_impl->ctx) == 0)
+							if (context_contains(impl->ctx, handle_impl->ctx) == 0)
+							{
+								/* TODO: This still does not protect duplicated names between different loaders global scope */
+								log_write("metacall", LOG_LEVEL_ERROR, "There are duplicated symbols already loaded in the global scope conflicting with handle: %s", name);
+							}
+							else if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
 
@@ -808,9 +814,12 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							// TODO: Check if is contained in the context
-							// if (context_contains(impl->ctx, handle_impl->ctx) == 0 && context_append...)
-							if (context_append(impl->ctx, handle_impl->ctx) == 0)
+							if (context_contains(impl->ctx, handle_impl->ctx) == 0)
+							{
+								/* TODO: This still does not protect duplicated names between different loaders global scope */
+								log_write("metacall", LOG_LEVEL_ERROR, "There are duplicated symbols already loaded in the global scope conflicting with handle: %s", package_name);
+							}
+							else if (context_append(impl->ctx, handle_impl->ctx) == 0)
 							{
 								static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
 

@@ -454,15 +454,12 @@ value scope_undef(scope sp, const char *key)
 
 int scope_append(scope dest, scope src)
 {
-	/* TODO: ¿Implement name mangling and/or scope of functions per handle and remove this? */
-	if (set_contains_any(dest->objects, src->objects) == 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "One or more objects are already defined in the scope");
-
-		return 1;
-	}
-
 	return set_append(dest->objects, src->objects);
+}
+
+int scope_contains(scope dest, scope src)
+{
+	return set_contains_any(dest->objects, src->objects);
 }
 
 int scope_remove(scope dest, scope src)

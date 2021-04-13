@@ -34,6 +34,29 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
+	{
+		static const char bufferA[] =
+			"#!/usr/bin/env python3\n"
+			"def multmem(left: int, right: int) -> int:\n"
+			"\tresult = left * right;\n"
+			"\tprint(left, ' * ', right, ' = ', result);\n"
+			"\treturn result;";
+
+		static const char bufferB[] =
+			"#!/usr/bin/env python3\n"
+			"def multmem(left: int, right: int) -> int:\n"
+			"\tresult = left * right;\n"
+			"\tprint(left, ' * ', right, ' = ', result);\n"
+			"\treturn result;";
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", bufferA, sizeof(bufferA), NULL));
+
+		EXPECT_EQ((int)1, (int)metacall_load_from_memory("py", bufferB, sizeof(bufferB), NULL));
+	}
+#endif /* OPTION_BUILD_LOADERS_PY */
+
 /* Ruby */
 #if defined(OPTION_BUILD_LOADERS_RB)
 	{
@@ -49,7 +72,7 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_ducktype_scripts, sizeof(rb_ducktype_scripts) / sizeof(rb_ducktype_scripts[0]), NULL));
 
-		EXPECT_NE((int)0, (int)metacall_load_from_file("rb", rb_second_scripts, sizeof(rb_second_scripts) / sizeof(rb_second_scripts[0]), NULL));
+		EXPECT_EQ((int)1, (int)metacall_load_from_file("rb", rb_second_scripts, sizeof(rb_second_scripts) / sizeof(rb_second_scripts[0]), NULL));
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 

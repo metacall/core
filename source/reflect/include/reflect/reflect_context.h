@@ -41,6 +41,8 @@ REFLECT_API scope context_scope(context ctx);
 
 REFLECT_API int context_append(context dest, context src);
 
+REFLECT_API int context_contains(context dest, context src);
+
 REFLECT_API int context_remove(context dest, context src);
 
 REFLECT_API void context_destroy(context ctx);

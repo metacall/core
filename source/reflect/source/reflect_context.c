@@ -87,6 +87,11 @@ int context_append(context dest, context src)
 	return scope_append(dest->sp, src->sp);
 }
 
+int context_contains(context dest, context src)
+{
+	return scope_contains(dest->sp, src->sp);
+}
+
 int context_remove(context dest, context src)
 {
 	return scope_remove(dest->sp, src->sp);
