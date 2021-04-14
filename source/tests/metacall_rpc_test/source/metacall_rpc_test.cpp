@@ -75,7 +75,7 @@ TEST_F(metacall_rpc_test, DefaultConstructor)
 			METACALL_FLOAT, METACALL_FLOAT
 		};
 
-		void *ret = metacallt("divide", divide_ids, 50.0f, 10.0f);
+		void *ret = metacallht_s(handle, "divide", divide_ids, 2, 50.0f, 10.0f);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 

@@ -50,13 +50,25 @@ TEST_F(metacall_clear_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), &handle));
 
-		void *ret = metacall("multmem", 5, 15);
+		void *args[2] = {
+			metacall_value_create_long(5),
+			metacall_value_create_long(15)
+		};
+
+		void *ret = metacallhv(handle, "multmem", args);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
 		EXPECT_EQ((long)75, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
+
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
+
+		EXPECT_EQ((void *)NULL, (void *)metacall_function("multmem"));
+
+		EXPECT_NE((void *)NULL, (void *)metacall_handle_function(handle, "multmem"));
 
 		EXPECT_EQ((int)0, (int)metacall_clear(handle));
 

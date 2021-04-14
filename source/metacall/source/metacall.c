@@ -624,6 +624,104 @@ void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t s
 	return NULL;
 }
 
+void *metacallht_s(void *handle, const char *name, const enum metacall_value_id ids[], size_t size, ...)
+{
+	value f_val = loader_handle_get(handle, name);
+	function f = NULL;
+
+	if (value_type_id(f_val) == TYPE_FUNCTION)
+	{
+		f = value_to_function(f_val);
+	}
+
+	if (f != NULL)
+	{
+		void *args[METACALL_ARGS_SIZE];
+
+		value ret = NULL;
+
+		signature s = function_signature(f);
+
+		size_t iterator;
+
+		va_list va;
+
+		va_start(va, size);
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			type t = signature_get_type(s, iterator);
+
+			type_id id = type_index(t);
+
+			if (t != NULL)
+			{
+				id = type_index(t);
+			}
+			else
+			{
+				id = ids[iterator];
+			}
+
+			if (id == TYPE_BOOL)
+			{
+				args[iterator] = value_create_bool((boolean)va_arg(va, unsigned int));
+			}
+			if (id == TYPE_CHAR)
+			{
+				args[iterator] = value_create_char((char)va_arg(va, int));
+			}
+			else if (id == TYPE_SHORT)
+			{
+				args[iterator] = value_create_short((short)va_arg(va, int));
+			}
+			else if (id == TYPE_INT)
+			{
+				args[iterator] = value_create_int(va_arg(va, int));
+			}
+			else if (id == TYPE_LONG)
+			{
+				args[iterator] = value_create_long(va_arg(va, long));
+			}
+			else if (id == TYPE_FLOAT)
+			{
+				args[iterator] = value_create_float((float)va_arg(va, double));
+			}
+			else if (id == TYPE_DOUBLE)
+			{
+				args[iterator] = value_create_double(va_arg(va, double));
+			}
+			else if (id == TYPE_STRING)
+			{
+				const char *str = va_arg(va, const char *);
+
+				args[iterator] = value_create_string(str, strlen(str));
+			}
+			else if (id == TYPE_PTR)
+			{
+				args[iterator] = value_create_ptr(va_arg(va, const void *));
+			}
+			else
+			{
+				args[iterator] = NULL;
+			}
+		}
+
+		va_end(va);
+
+		ret = function_call(f, args, size);
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			value_destroy(args[iterator]);
+		}
+
+		return ret;
+	}
+
+	return NULL;
+}
+
 void *metacall_function(const char *name)
 {
 	value f_val = loader_get(name);
