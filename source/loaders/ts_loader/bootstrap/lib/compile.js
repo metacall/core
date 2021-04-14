@@ -1,11 +1,18 @@
 const path = require('path');
 const fs = require('fs');
 const ts = require('typescript');
+
+const buildPath = path.join(__dirname, 'build');
+if (!fs.existsSync(buildPath)) {
+	fs.mkdirSync(buildPath);
+}
+
 const { config, error } = ts.readConfigFile(path.join(path.resolve(__dirname), 'tsconfig.json'), ts.sys.readFile);
 if (error) {
 	console.error(error);
 	process.exit(1);
 }
+
 const { options, fileNames, errors } = ts.parseJsonConfigFileContent(
 	config,
 	ts.sys,
