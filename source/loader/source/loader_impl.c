@@ -91,9 +91,9 @@ static int loader_impl_create_singleton(loader_impl impl, const char *path, cons
 
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name);
 
-static int loader_impl_handle_init(loader_impl impl, char * name, loader_handle_impl handle_impl, void **handle_ptr, int populated);
+static int loader_impl_handle_init(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr, int populated);
 
-static int loader_impl_handle_register(loader_impl impl, char * name, loader_handle_impl handle_impl, void **handle_ptr);
+static int loader_impl_handle_register(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr);
 
 static int loader_impl_function_hook_call(context ctx, const char func_name[]);
 
@@ -586,7 +586,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 	return 0;
 }
 
-int loader_impl_handle_init(loader_impl impl, char * name, loader_handle_impl handle_impl, void **handle_ptr, int populated)
+int loader_impl_handle_init(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr, int populated)
 {
 	static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
 
@@ -607,7 +607,7 @@ int loader_impl_handle_init(loader_impl impl, char * name, loader_handle_impl ha
 	return result;
 }
 
-int loader_impl_handle_register(loader_impl impl, char * name, loader_handle_impl handle_impl, void **handle_ptr)
+int loader_impl_handle_register(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr)
 {
 	if (handle_ptr == NULL)
 	{
