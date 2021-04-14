@@ -29,6 +29,11 @@ message(STATUS "Plugin ${target} implementation")
 # Create target
 #
 
+# Apparently solves NetCore "error : Unable to load the service index for source https://api.nuget.org/v3/index.json." bug
+# https://github.com/NuGet/Home/issues/5358
+# https://stackoverflow.com/a/57894492
+set(DOTNET_ENV_VAR ${CMAKE_COMMAND} -E env DOTNET_SYSTEM_NET_HTTP_USESOCKETSHTTPHANDLER=0)
+
 if(OPTION_BUILD_GUIX)
 	if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
 		execute_process(
@@ -51,20 +56,20 @@ if(OPTION_BUILD_GUIX)
 else()
 	if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
 		add_custom_target(${target} ALL
-			COMMAND ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj
-			COMMAND ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj -o ${CMAKE_BINARY_DIR}
+			COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj
+			COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj -o ${CMAKE_BINARY_DIR}
 		)
 	else()
 		if(DOTNET_MIGRATE)
 			add_custom_target(${target} ALL
-				COMMAND ${DOTNET_COMMAND} migrate ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
-				COMMAND ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
-				COMMAND ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${CMAKE_BINARY_DIR}
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} migrate ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${CMAKE_BINARY_DIR}
 			)
 		else()
 			add_custom_target(${target} ALL
-				COMMAND ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
-				COMMAND ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${CMAKE_BINARY_DIR}
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${CMAKE_BINARY_DIR}
 			)
 		endif()
 	endif()
