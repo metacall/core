@@ -115,7 +115,7 @@ endif()
 
 # Install Bootstrap (use ts extension even if it is transpiled js to avoid conflicts with node loader bootstrap)
 install(FILES
-	${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js
-	DESTINATION ${INSTALL_LIB}/bootstrap.ts
+	${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
+	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
