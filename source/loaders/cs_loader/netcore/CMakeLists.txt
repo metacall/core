@@ -89,12 +89,18 @@ set_target_properties(${target}
 # Deployment
 #
 
-if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
+if(DOTNET_VERSION VERSION_EQUAL "5.0" OR DOTNET_VERSION VERSION_GREATER "5.0")
+	set(DOTNET_INSTALL_DEPENDENCIES
+		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.dll
+		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.CSharp.dll
+	)
+elseif(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
 	set(DOTNET_INSTALL_DEPENDENCIES
 		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.dll
 		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.CSharp.dll
 		${CMAKE_BINARY_DIR}/System.Runtime.CompilerServices.Unsafe.dll
-		${CMAKE_BINARY_DIR}/System.Text.Encoding.CodePages.dll)
+		${CMAKE_BINARY_DIR}/System.Text.Encoding.CodePages.dll
+	)
 else()
 	set(DOTNET_INSTALL_DEPENDENCIES ${CMAKE_BINARY_DIR}/System.Runtime.Loader.dll)
 endif()

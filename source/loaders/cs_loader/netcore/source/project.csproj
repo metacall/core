@@ -4,9 +4,9 @@
     <AssemblyName>CSLoader</AssemblyName>
     <PackageId>CSLoader</PackageId>
     <VersionPrefix>1.0.0</VersionPrefix>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <!-- <TargetFramework>netcoreapp2.2</TargetFramework> -->
+    <TargetFramework>netcoreapp5.0</TargetFramework>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  
   </PropertyGroup>
 
   <ItemGroup>
