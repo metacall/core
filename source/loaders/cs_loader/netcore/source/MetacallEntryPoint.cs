@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using System.IO;
 using Microsoft.CodeAnalysis.Emit;
 using System.Runtime.Loader;
@@ -22,11 +22,14 @@ namespace CSLoader
 
         static MetacallEntryPoint()
         {
-            log.Info("CSLoader static initialization");
+            log.Info("CSLoader Initialization - Runtime Version: "
+                + RuntimeEnvironment.GetSystemVersion()
+                + " - Language Version: "
+                + LanguageVersionFacts.ToDisplayString(LanguageVersionFacts.MapSpecifiedToEffectiveVersion(LanguageVersion.Latest)));
 
             #if NETCOREAPP1_0 || NETCOREAPP1_1 || NETCOREAPP1_2
                 loader = new Providers.LoaderV1(log);
-            #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2 || NET5_0
+            #elif NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2 || NET5_0 // TODO: Implement or test support for 3
                 loader = new Providers.LoaderV2(log);
             #else
             #   error "NET Core platform not supported"

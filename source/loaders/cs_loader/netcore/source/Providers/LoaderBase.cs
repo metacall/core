@@ -39,7 +39,9 @@ namespace CSLoader.Providers
         {
             Assembly assembly = null;
 
-            SyntaxTree[] syntaxTrees = source.Select(x => CSharpSyntaxTree.ParseText(x)).ToArray();
+            CSharpParseOptions parseOptions = new CSharpParseOptions(kind: SourceCodeKind.Regular, languageVersion: LanguageVersion.Latest);
+
+            SyntaxTree[] syntaxTrees = source.Select(x => CSharpSyntaxTree.ParseText(x, parseOptions)).ToArray();
 
             string assemblyName = Path.GetRandomFileName();
 
@@ -58,13 +60,16 @@ namespace CSLoader.Providers
 
             references = assemblyFiles.Select(x => MetadataReference.CreateFromFile(x)).ToArray();
 
-            this.log.Info("CSLoader compiling from memory stream");
-
             CSharpCompilation compilation = CSharpCompilation.Create(
                 assemblyName,
                 syntaxTrees: syntaxTrees,
                 references: references,
-                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+                options: new CSharpCompilationOptions(
+                    OutputKind.DynamicallyLinkedLibrary,
+                    optimizationLevel: OptimizationLevel.Release,
+                    concurrentBuild: true
+                )
+            );
 
             using (var ms = new MemoryStream())
             {
@@ -77,7 +82,7 @@ namespace CSLoader.Providers
 
                     foreach (Diagnostic diagnostic in failures)
                     {
-                        this.log.Error("CSLoader compilation error: " + diagnostic.GetMessage());
+                        this.log.Error("CSLoader compilation error: " + diagnostic.ToString());
                     }
 
                     return false;

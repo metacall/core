@@ -12,8 +12,6 @@ namespace CSLoader.Providers
     {
         public LoaderV2(ILog log) : base(log)
         {
-            log.Info("CSLoader static initialization");
-
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
         }
