@@ -46,9 +46,9 @@ describe('metacall', () => {
 		});
 	});
 
-    // TODO: This fails in NodeJS 15.x because the error message is slightly different
+	// TODO: This fails in NodeJS 15.x because the error message is slightly different
 	/*
-    describe('fail', () => {
+	describe('fail', () => {
 		it('require', () => {
 			assert.throws(() => { require('./asd.invalid') }, new Error('Cannot find module \'./asd.invalid\''));
 			// TODO: Improve error messages
@@ -59,7 +59,7 @@ describe('metacall', () => {
 			assert.throws(() => { require('./asd.tsx') }, new Error('MetaCall could not load from file'));
 		});
 	});
-    */
+	*/
 
 	describe('load', () => {
 		it('metacall_load_from_file (py)', () => {
@@ -68,6 +68,14 @@ describe('metacall', () => {
 			const script = metacall_handle('py', 'helloworld.py');
 			assert.notStrictEqual(script, undefined);
 			assert.strictEqual(script.name, 'helloworld.py');
+		});
+		it('metacall_load_from_file_export (py)', () => {
+			const handle = metacall_load_from_file_export('py', [ 'ducktype.py' ] );
+			assert.notStrictEqual(handle, undefined);
+			assert.strictEqual(handle.sum(1, 2), 3);
+
+			// TODO: Need a way to test the symbol is not globally defined.
+			//assert.strictEqual(metacall('sum'), undefined);
 		});
 		it('metacall_load_from_file (rb)', () => {
 			assert.strictEqual(metacall_load_from_file('rb', [ 'ducktype.rb' ]), undefined);
@@ -79,6 +87,14 @@ describe('metacall', () => {
 		it('metacall_load_from_memory (py)', () => {
 			assert.strictEqual(metacall_load_from_memory('py', 'def py_memory():\n\treturn 4;\n'), undefined);
 			assert.strictEqual(metacall('py_memory'), 4.0);
+		});
+		it('metacall_load_from_memory_export (py)', () => {
+			const handle = metacall_load_from_memory_export('py', 'def py_memory_export():\n\treturn 6;\n');
+			assert.notStrictEqual(handle, undefined);
+			assert.strictEqual(handle.py_memory_export(), 6.0);
+
+			// TODO: Need a way to test the symbol is not globally defined.
+			//assert.strictEqual(metacall('py_memory_export'), undefined);
 		});
 		// Cobol tests are conditional (in order to pass CI/CD)
 		if (process.env['OPTION_BUILD_LOADERS_COB']) {
@@ -124,15 +140,15 @@ describe('metacall', () => {
 			assert.notStrictEqual(escape, undefined);
 			assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
 		});
-        // TODO: This fails, not sure why
-        /*
+		// TODO: This fails, not sure why
+		/*
 		it('require (py submodule)', () => {
 			// This code loads directly a module without extension from Python
 			const { py_encode_basestring_ascii } = require('json.encoder');
 			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
-        */
+		*/
 		it('require (rb)', () => {
 			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
 			// const cache = require('cache.rb');
@@ -160,8 +176,8 @@ describe('metacall', () => {
 		});
 	});
 
-    // TODO: This fails because classes are not implemented in the NodeJS loader
-    /*
+	// TODO: This fails because classes are not implemented in the NodeJS loader
+	/*
 	describe('callback', () => {
 		it('callback (py)', () => {
 			const py_f = require('function.py');
@@ -209,7 +225,7 @@ describe('metacall', () => {
 			assert.strictEqual(py_f.function_myclass_cb((klass) => py_f.function_myclass_method(klass)), 'hello world');
 			assert.strictEqual(py_f.function_myclass_cb((klass) => py_f.function_myclass_method(klass)), 'hello world'); // Check for function lifetime
 			*/
-    /*
+	/*
 
 			// Double recursion
 			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
@@ -279,5 +295,5 @@ describe('metacall', () => {
 			assert.strictEqual(py_factorial(5), 120);
 		});
 	});
-    */
+	*/
 });
