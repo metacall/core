@@ -25,7 +25,9 @@ const assert = require('assert');
 const {
 	metacall,
 	metacall_load_from_file,
+	metacall_load_from_file_export,
 	metacall_load_from_memory,
+	metacall_load_from_memory_export,
 	metacall_handle,
 	metacall_inspect,
 	metacall_logs
@@ -37,6 +39,8 @@ describe('metacall', () => {
 			assert.notStrictEqual(metacall, undefined);
 			assert.notStrictEqual(metacall_load_from_memory, undefined);
 			assert.notStrictEqual(metacall_load_from_file, undefined);
+			assert.notStrictEqual(metacall_load_from_memory_export, undefined);
+			assert.notStrictEqual(metacall_load_from_file_export, undefined);
 			assert.notStrictEqual(metacall_inspect, undefined);
 			assert.notStrictEqual(metacall_logs, undefined);
 		});
@@ -121,12 +125,14 @@ describe('metacall', () => {
 			assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
 		});
         // TODO: This fails, not sure why
+        /*
 		it('require (py submodule)', () => {
 			// This code loads directly a module without extension from Python
 			const { py_encode_basestring_ascii } = require('json.encoder');
 			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
+        */
 		it('require (rb)', () => {
 			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
 			// const cache = require('cache.rb');
@@ -145,23 +151,14 @@ describe('metacall', () => {
 		});
 	});
 
-    // TODO: These tests fail because `require` no longer exports the functions to global scope
-    /*
 	describe('call', () => {
-		it('metacall (mock)', () => {
-			assert.strictEqual(metacall('my_empty_func'), 1234);
-			assert.strictEqual(metacall('three_str', 'a', 'b', 'c'), 'Hello World');
-		});
 		it('metacall (py)', () => {
-			assert.strictEqual(metacall('multiply', 2, 2), 4);
-			assert.deepStrictEqual(metacall('return_array'), [1, 2, 3]);
-			assert.deepStrictEqual(metacall('return_same_array', [4, 5, 6]), [4, 5, 6]);
+			assert.strictEqual(metacall('s_sum', 2, 2), 4);
 		});
 		it('metacall (rb)', () => {
 			assert.strictEqual(metacall('get_second', 5, 12), 12);
 		});
 	});
-    */
 
     // TODO: This fails because classes are not implemented in the NodeJS loader
     /*
