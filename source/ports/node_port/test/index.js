@@ -140,15 +140,17 @@ describe('metacall', () => {
 			assert.notStrictEqual(escape, undefined);
 			assert.strictEqual(escape('<html></html>'), '&lt;html&gt;&lt;/html&gt;');
 		});
-		// TODO: This fails, not sure why
-		/*
 		it('require (py submodule)', () => {
 			// This code loads directly a module without extension from Python
-			const { py_encode_basestring_ascii } = require('json.encoder');
-			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
-			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
+			const { find_library } = require('ctypes.util');
+			assert.notStrictEqual(find_library, undefined);
+
+			// TODO: This fails because the submodule imports a class, which
+			//	   is not yet supported by the NodeJS loader
+			//const { py_encode_basestring_ascii } = require('json.encoder');
+			//assert.notStrictEqual(py_encode_basestring_ascii, undefined);
+			//assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
-		*/
 		it('require (rb)', () => {
 			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
 			// const cache = require('cache.rb');
