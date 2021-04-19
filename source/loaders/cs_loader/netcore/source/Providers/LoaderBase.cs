@@ -47,7 +47,7 @@ namespace CSLoader.Providers
 
             MetadataReference[] references;
 
-            var mainPath = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location) + "/";
+            var mainPath = Path.GetDirectoryName(typeof(object).GetTypeInfo().Assembly.Location) + Path.DirectorySeparatorChar;
             var assemblyFiles = System.IO.Directory.GetFiles(mainPath, "*.dll");
 
             assemblyFiles = assemblyFiles.Concat(this.AdditionalLibs()).Distinct().ToArray();

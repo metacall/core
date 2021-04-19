@@ -24,7 +24,7 @@ namespace CSLoader.Providers
 
                 try
                 {
-                    asm = context.LoadFromAssemblyPath(path + "\\" + name.Name + ".dll");
+                    asm = context.LoadFromAssemblyPath(Path.Combine(path, args.Name + ".dll"));
 
                     if (asm != null)
                     {
