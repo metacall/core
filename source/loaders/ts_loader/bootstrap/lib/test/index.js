@@ -28,11 +28,11 @@ const inspect = (handle, equal = assert.notDeepStrictEqual) => {
 
 // Test load from memory
 inspect(load_from_memory('memory_module', `
-export function mem_sum(left: number, rigth: number): number {
-	return left + rigth;
+export function mem_sum(left: number, right: number): number {
+	return left + right;
 }
-export async function mem_sum_async(left: number, rigth: number): number {
-	return left + rigth;
+export async function mem_sum_async(left: number, right: number): number {
+	return left + right;
 }
 `, {}));
 
