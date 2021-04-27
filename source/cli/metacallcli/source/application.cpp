@@ -246,49 +246,63 @@ bool command_cb_call(application &app, tokenizer &t)
 		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 		std::string func_name(*it);
+		char *validate_name = const_cast<char *>(func_name.c_str());
 
-		const std::string param_delimiters("()");
-
-		/* Convert arguments into an array */
-		std::string args = "[";
-
-		t.delimit(param_delimiters);
-
-		++it;
-
-		if (it != t.end())
+		/* Check if function is loaded */
+		if (metacall_function(validate_name) != NULL)
 		{
-			args += *it;
+			const std::string param_delimiters("()");
+
+			/* Convert arguments into an array */
+			std::string args = "[";
+
+			t.delimit(param_delimiters);
+
+			++it;
+
+			if (it != t.end())
+			{
+				args += *it;
+			}
+
+			args += "]";
+
+			/*
+         void * result = app.metacallv_adaptor(func_name, args);
+         */
+
+			void *result = app.metacallfs_adaptor(func_name, args, allocator);
+
+			if (result != NULL)
+			{
+				size_t size = 0;
+
+				char *value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
+
+				std::cout << value_str << std::endl;
+
+				metacall_allocator_free(allocator, value_str);
+
+				metacall_value_destroy(result);
+			}
+			else
+			{
+				std::cout << "(null)" << std::endl;
+			}
+
+			metacall_allocator_destroy(allocator);
+			return true;
 		}
 
-		args += "]";
-
-		/*
-		void * result = app.metacallv_adaptor(func_name, args);
-		*/
-
-		void *result = app.metacallfs_adaptor(func_name, args, allocator);
-
-		if (result != NULL)
-		{
-			size_t size = 0;
-
-			char *value_str = metacall_serialize(metacall_serial(), result, &size, allocator);
-
-			std::cout << value_str << std::endl;
-
-			metacall_allocator_free(allocator, value_str);
-
-			metacall_value_destroy(result);
-		}
 		else
 		{
-			std::cout << "(null)" << std::endl;
+			std::cout << "\nCould not find function `" << func_name << "`" << std::endl;
+			std::cout << "Make sure it is loaded\n"
+					  << std::endl;
+
+			metacall_allocator_destroy(allocator);
+			return false;
 		}
-
-		metacall_allocator_destroy(allocator);
-
-		return true;
 	}
 
 	return false;
