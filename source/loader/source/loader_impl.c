@@ -487,6 +487,8 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 
 		if (handle_impl->impl->init == 0)
 		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroying handle %s", handle_impl->name);
+
 			if (loader_impl_function_hook_call(handle_impl->ctx, func_fini_name) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Error when calling destructor from handle impl: %p (%s)", (void *)handle_impl, func_fini_name);
@@ -1111,12 +1113,6 @@ void loader_impl_destroy(loader_impl impl)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", impl->tag);
 
-		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
-
-		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
-
-		set_destroy(impl->type_info_map);
-
 		if (impl->init == 0)
 		{
 			loader_impl_interface interface_impl = loader_impl_symbol(impl);
@@ -1129,11 +1125,17 @@ void loader_impl_destroy(loader_impl impl)
 			impl->init = 1;
 		}
 
+		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
+
+		set_destroy(impl->handle_impl_map);
+
+		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
+
+		set_destroy(impl->type_info_map);
+
 		set_iterate(impl->exec_path_map, &loader_impl_destroy_exec_path_map_cb_iterate, NULL);
 
 		set_destroy(impl->exec_path_map);
-
-		set_destroy(impl->handle_impl_map);
 
 		context_destroy(impl->ctx);
 

@@ -42,7 +42,7 @@ TEST_F(metacall_node_python_async_after_destroy_test, DefaultConstructor)
 	{
 		static const char buffer[] =
 			/* NodeJS */
-			"const { metacall, metacall_load_from_memory } = require('" METACALL_NODE_PORT_PATH "');\n"
+			"const { metacall, metacall_load_from_memory, metacall_inspect } = require('" METACALL_NODE_PORT_PATH "');\n"
 			"metacall_load_from_memory('py', `"
 			/* Python */
 			"def sum(a, b):\n"
@@ -50,7 +50,7 @@ TEST_F(metacall_node_python_async_after_destroy_test, DefaultConstructor)
 			"`);\n"
 			"function log(x) { console.log(x); return x; }\n"
 			"setTimeout(() => { log(metacall('sum', 3, 4)) === 7 || process.exit(1) }, 2000);\n"
-			"setTimeout(() => { log(metacall('sum', 3, 4)) === 7 || process.exit(1) }, 4000);\n"
+			"setTimeout(() => { log(metacall_inspect()) || process.exit(1) }, 4000);\n"
 			"setTimeout(() => { log(metacall('sum', 3, 4)) === 7 || process.exit(1) }, 6000);\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
