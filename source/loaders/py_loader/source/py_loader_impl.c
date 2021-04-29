@@ -2288,7 +2288,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Destroy children loaders */
-	loader_unload_children();
+	loader_unload_children(impl);
 
 	Py_DECREF(py_impl->inspect_signature);
 	Py_DECREF(py_impl->inspect_module);

@@ -256,6 +256,7 @@ struct loader_impl_node_type
 	int64_t extra_active_handles;
 	uv_prepare_t destroy_prepare;
 	std::atomic_bool event_loop_empty;
+	loader_impl impl;
 };
 
 typedef struct loader_impl_node_function_type
@@ -4006,6 +4007,9 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	node_impl->result = 1;
 	node_impl->error_message = NULL;
 
+	/* Initialize the reference to the loader so we can use it on the destruction */
+	node_impl->impl = impl;
+
 /* Create NodeJS logging thread */
 #ifdef __ANDROID__
 	{
@@ -4576,7 +4580,7 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	napi_status status;
 
 	/* Destroy children loaders (any loader initialized in the current V8 thread should be deleted first) */
-	loader_unload_children();
+	loader_unload_children(node_impl->impl);
 
 	/* Clear thread safe functions */
 	{

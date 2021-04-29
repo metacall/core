@@ -214,7 +214,7 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 int wasm_loader_impl_destroy(loader_impl impl)
 {
 	/* Destroy children loaders */
-	loader_unload_children();
+	loader_unload_children(impl);
 
 	/* TODO */
 

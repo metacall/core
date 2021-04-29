@@ -806,7 +806,7 @@ int loader_clear(void *handle)
 	return loader_impl_clear(handle);
 }
 
-void loader_unload_children()
+void loader_unload_children(loader_impl impl)
 {
 	loader l = loader_singleton();
 	uint64_t current = thread_id_get_current();
@@ -847,6 +847,12 @@ void loader_unload_children()
 	}
 
 	vector_destroy(stack);
+
+	/* Clear all objects and types related to the loader once all childs have been destroyed */
+	if (impl != NULL)
+	{
+		loader_impl_destroy_objects(impl);
+	}
 }
 
 int loader_unload()
@@ -870,7 +876,7 @@ int loader_unload()
 			/* TODO: How to deal with this? */
 		}
 
-		loader_unload_children();
+		loader_unload_children(NULL);
 	}
 
 	/* Clear the implementation tag map */
