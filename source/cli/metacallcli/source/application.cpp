@@ -296,8 +296,9 @@ bool command_cb_call(application &app, tokenizer &t)
 
 		else
 		{
-			std::cout << "\nCould not find function `" << func_name << "`" << std::endl;
-			std::cout << "Make sure it is loaded\n"
+			std::cout << std::endl
+					  << "Could not find function `" << func_name << "`" << std::endl;
+			std::cout << "Make sure it is loaded" << std::endl
 					  << std::endl;
 
 			metacall_allocator_destroy(allocator);
