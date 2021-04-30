@@ -261,9 +261,13 @@ mod.prototype.require = function (name) {
 		/* If it is not a NodeJS module, try to guess the runtime */
 		const loaders = new Set(Object.values(tags));
 
-		/* Mock and node loaders are not included */
+		/* Mock, node and ts loaders are not included, Mock will always load
+		* so it's not an option, Node and TypeScript will enter in a endless loop
+		* in some cases, because it will hit the monkey patched require again
+		* and also you usually do not publish ts packages without the js into npm */
 		loaders.delete('mock');
 		loaders.delete('node');
+		loaders.delete('ts');
 
 		for (let it = loaders.values(), tag = null; tag = it.next().value; ) {
 			try {

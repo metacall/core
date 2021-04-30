@@ -15,3 +15,4 @@ include(TypeScriptProject)
 
 add_subdirectory(typedfunc)
 add_subdirectory(templating)
+add_subdirectory(loopfail)

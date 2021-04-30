@@ -9,7 +9,7 @@ endif()
 #
 
 # Target name
-set(target metacall-node-typescript-test)
+set(target metacall-typescript-tsx-loop-fail-test)
 message(STATUS "Test ${target}")
 
 #
@@ -33,7 +33,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_node_typescript_test.cpp
+	${source_path}/metacall_typescript_tsx_loop_fail_test.cpp
 )
 
 # Group source files
@@ -122,6 +122,7 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/source/scripts/typescript/templating/source
 )
 
 #
@@ -139,7 +140,6 @@ add_dependencies(${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
-	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 )
 
 include(TestEnvironmentVariables)

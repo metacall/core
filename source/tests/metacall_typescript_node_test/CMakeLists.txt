@@ -139,6 +139,7 @@ add_dependencies(${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
+	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 )
 
 include(TestEnvironmentVariables)
