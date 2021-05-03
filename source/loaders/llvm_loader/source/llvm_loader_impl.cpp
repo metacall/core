@@ -20,7 +20,9 @@
 
 #include <llvm_loader/llvm_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
+#include <loader/loader_path.h>
 
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
@@ -43,7 +45,7 @@
 #include <llvm/Support/TargetSelect.h>
 
 // Optimizations
-#include <llvm/Analysis/BasicAliasAnalysis.h>
+//#include <llvm/Analysis/BasicAliasAnalysis.h>
 #include <llvm/Transforms/Scalar.h>
 
 typedef struct loader_impl_llvm_function_type
