@@ -2,7 +2,12 @@
 # Compile options configuration
 #
 
-option(OPTION_BUILD_SANITIZER	"Build with sanitizer compiler options."		OFF)
+option(OPTION_BUILD_SANITIZER			"Build with sanitizer compiler options."			OFF)
+option(OPTION_BUILD_THREAD_SANITIZER	"Build with thread sanitizer compiler options."		OFF)
+
+if(OPTION_BUILD_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER)
+	message(FATAL_ERROR "OPTION_BUILD_SANITIZER and OPTION_BUILD_THREAD_SANITIZER are mutually exclusive, choose one of them")
+endif()
 
 #
 # Platform and architecture setup
@@ -53,7 +58,12 @@ set(DEFAULT_INCLUDE_DIRECTORIES)
 # Libraries
 #
 
-if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+# ThreadSanitizer is incompatible with AddressSanitizer and LeakSanitizer
+if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+	set(DEFAULT_LIBRARIES -ltsan)
+	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
+	set(SANITIZER_COMPILE_DEFINITIONS)
+elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(DEFAULT_LIBRARIES -lasan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
@@ -177,7 +187,12 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 	endif()
 
 	# Sanitizers
-	if(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(-fuse-ld=gold)
+		add_compile_options(-fno-omit-frame-pointer)
+		add_compile_options(-fno-optimize-sibling-calls)
+		add_compile_options(-fsanitize=thread)
+	elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(-fuse-ld=gold)
 		add_compile_options(-fno-omit-frame-pointer)
 		add_compile_options(-fno-optimize-sibling-calls)
@@ -185,8 +200,6 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 		add_compile_options(-fsanitize=address)
 		add_compile_options(-fsanitize=leak)
 		add_compile_options(-fsanitize-address-use-after-scope)
-		# TODO:
-		#add_compile_options(-fsanitize=thread)
 
 		if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 			add_compile_options(-fsanitize=memory)

@@ -94,6 +94,18 @@ const metacall_load_from_file = (tag, paths) => {
 	return addon.metacall_load_from_file(tag, paths);
 };
 
+const metacall_load_from_file_export = (tag, paths) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (!(paths instanceof Array)) {
+		throw Error('Paths should be an array with file names and paths to be loaded by the loader.');
+	}
+
+	return addon.metacall_load_from_file_export(tag, paths);
+};
+
 const metacall_load_from_memory = (tag, code) => {
 	if (Object.prototype.toString.call(tag) !== '[object String]') {
 		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
@@ -104,8 +116,18 @@ const metacall_load_from_memory = (tag, code) => {
 	}
 
 	return addon.metacall_load_from_memory(tag, code);
+};
 
-	// TODO: Implement here the inspect of the memory module by handle
+const metacall_load_from_memory_export = (tag, code) => {
+	if (Object.prototype.toString.call(tag) !== '[object String]') {
+		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
+	}
+
+	if (Object.prototype.toString.call(code) !== '[object String]') {
+		throw Error('Code should be a string with the inline code to be loaded.');
+	}
+
+	return addon.metacall_load_from_memory_export(tag, code);
 };
 
 const metacall_inspect = () => {
@@ -140,21 +162,7 @@ const metacall_handle = (tag, name) => {
 };
 
 const metacall_require = (tag, name) => {
-	// TODO: Inspect only the handle instead of the whole metacall namespace
-	/* return */ addon.metacall_load_from_file(tag, [ name ]);
-
-	/* TODO: Replace metacall_inspect by retrieving the handle and metacall_export */
-	const inspect = metacall_inspect();
-	const script = inspect[tag].find(s => s.name === path.basename(name));
-
-	const obj = {};
-
-	/* TODO: Support async functions */
-	for (const func of script.scope.funcs) {
-		obj[func.name] = (...args) => addon.metacall(func.name, ...args);
-	}
-
-	return obj;
+	return addon.metacall_load_from_file_export(tag, [ name ]);
 };
 
 /* Module exports */
@@ -162,7 +170,9 @@ const module_exports = {
 	metacall,
 	metacall_inspect,
 	metacall_load_from_file,
+	metacall_load_from_file_export,
 	metacall_load_from_memory,
+	metacall_load_from_memory_export,
 	metacall_handle,
 
 	/* TODO: Remove this from user or provide better ways of configuring logs */

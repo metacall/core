@@ -1,0 +1,9 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"target": "ES2015",
+		"module": "CommonJS",
+		"lib": ["ES2019.Object"]
+	},
+	"include": ["lib.ts"]
+}

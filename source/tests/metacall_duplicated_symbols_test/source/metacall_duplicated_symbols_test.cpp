@@ -34,6 +34,29 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
+	{
+		static const char bufferA[] =
+			"#!/usr/bin/env python3\n"
+			"def multmem(left: int, right: int) -> int:\n"
+			"\tresult = left * right;\n"
+			"\tprint(left, ' * ', right, ' = ', result);\n"
+			"\treturn result;";
+
+		static const char bufferB[] =
+			"#!/usr/bin/env python3\n"
+			"def multmem(left: int, right: int) -> int:\n"
+			"\tresult = left * right;\n"
+			"\tprint(left, ' * ', right, ' = ', result);\n"
+			"\treturn result;";
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", bufferA, sizeof(bufferA), NULL));
+
+		EXPECT_EQ((int)1, (int)metacall_load_from_memory("py", bufferB, sizeof(bufferB), NULL));
+	}
+#endif /* OPTION_BUILD_LOADERS_PY */
+
 /* Ruby */
 #if defined(OPTION_BUILD_LOADERS_RB)
 	{
@@ -49,7 +72,63 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_ducktype_scripts, sizeof(rb_ducktype_scripts) / sizeof(rb_ducktype_scripts[0]), NULL));
 
-		EXPECT_NE((int)0, (int)metacall_load_from_file("rb", rb_second_scripts, sizeof(rb_second_scripts) / sizeof(rb_second_scripts[0]), NULL));
+		EXPECT_EQ((int)1, (int)metacall_load_from_file("rb", rb_second_scripts, sizeof(rb_second_scripts) / sizeof(rb_second_scripts[0]), NULL));
+
+		void *handleA = NULL;
+
+		static const char bufferA[] =
+			"def get_second(first, second)\n"
+			"	puts('Second value is', second)\n"
+			"	return 4\n"
+			"end\n";
+
+		void *handleB = NULL;
+
+		static const char bufferB[] =
+			"def get_second(first, second)\n"
+			"	puts('Second value is', second)\n"
+			"	return 6\n"
+			"end\n";
+
+		const enum metacall_value_id say_multiply_int_ids[] = {
+			METACALL_INT, METACALL_INT
+		};
+
+		/* Test global scope get_second which belongs to ducktype.rb */
+
+		void *ret = metacallt("get_second", say_multiply_int_ids, 5, 7);
+
+		EXPECT_EQ((int)7, (int)metacall_value_to_int(ret));
+
+		metacall_value_destroy(ret);
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", bufferA, sizeof(bufferA), &handleA));
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", bufferB, sizeof(bufferB), &handleB));
+
+		void *args[2] = {
+			metacall_value_create_int(234),
+			metacall_value_create_int(432)
+		};
+
+		/* Test handleA get_second which belongs to bufferA */
+
+		ret = metacallhv_s(handleA, "get_second", args, 2);
+
+		EXPECT_EQ((int)4, (int)metacall_value_to_int(ret));
+
+		metacall_value_destroy(ret);
+
+		/* Test handleB get_second which belongs to bufferB */
+
+		ret = metacallhv_s(handleB, "get_second", args, 2);
+
+		EXPECT_EQ((int)6, (int)metacall_value_to_int(ret));
+
+		metacall_value_destroy(ret);
+
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 

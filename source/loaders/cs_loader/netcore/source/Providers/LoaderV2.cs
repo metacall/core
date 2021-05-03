@@ -1,4 +1,4 @@
-#if NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2
+#if NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2 || NET5_0
 
 using System;
 using System.Collections.Generic;
@@ -12,8 +12,6 @@ namespace CSLoader.Providers
     {
         public LoaderV2(ILog log) : base(log)
         {
-            log.Info("CSLoader static initialization");
-
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
         }
@@ -21,23 +19,19 @@ namespace CSLoader.Providers
         private Assembly AssemblyResolveEventHandler(object sender, ResolveEventArgs args)
         {
             Assembly asm = null;
-
-            this.log.Info("CSLoader resolving assembly " + args.Name);
+            AssemblyName assemName = args.RequestingAssembly.GetName();
 
             foreach (var path in paths)
             {
-                this.log.Info("CSLoader resolving path " + path);
-
                 try
                 {
-                    var fullPath = path + "\\" + args.Name + ".dll";
-
-                    this.log.Info(fullPath);
+                    var fullPath = Path.Combine(path, assemName.Name + ".dll");
 
                     asm = Assembly.LoadFile(fullPath);
 
                     if (asm != null)
                     {
+                        log.Info("Assembly loaded: " + fullPath);
                         return asm;
                     }
                     else
@@ -47,7 +41,7 @@ namespace CSLoader.Providers
                 }
                 catch (Exception ex)
                 {
-                    log.Error(string.Format("Exception when loading the Assembly {0}: {1}", args.Name, ex.Message), ex);
+                    log.Error(string.Format("Exception when loading the Assembly {0}: {1}", assemName.Name, ex.Message), ex);
                 }
             }
 
@@ -56,6 +50,16 @@ namespace CSLoader.Providers
 
         protected override IEnumerable<string> AdditionalLibs()
         {
+            /*
+            IEnumerable<string> libs = System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll");
+
+            foreach (var path in paths)
+            {
+                libs = libs.Concat(System.IO.Directory.GetFiles(path, "*.dll"));
+            }
+
+            return libs; // TODO: Unique
+            */
             return System.IO.Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll");
         }
 

@@ -23,7 +23,7 @@
 source ../../hooks/env
 
 # Base arguments
-METACALL_INSTALL_OPTIONS="root base python ruby netcore2 nodejs typescript file rapidjson funchook swig clangformat" # v8rep51 pack and coverage not needed in DockerHub
+METACALL_INSTALL_OPTIONS="root base python ruby netcore5 nodejs typescript file rapidjson funchook swig clangformat" # v8rep51 pack and coverage not needed in DockerHub
 
 # Base environment variables
 DEBIAN_FRONTEND=noninteractive

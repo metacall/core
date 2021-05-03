@@ -1,0 +1,10 @@
+{
+	"include": [
+		"templating.tsx"
+	],
+	"compilerOptions": {
+		"target": "es5",
+		"jsx": "react",
+		"lib": ["es2015", "dom"]
+	}
+}

@@ -1,11 +1,11 @@
 'use strict';
 
-export function typed_sum(left: number, rigth: number): number {
-	return left + rigth;
+export function typed_sum(left: number, right: number): number {
+	return left + right;
 }
 
-export async function typed_sum_async(left: number, rigth: number): number {
-	return left + rigth;
+export async function typed_sum_async(left: number, right: number): Promise<number> {
+	return left + right;
 }
 
 export function build_name(first: string, last = 'Smith') {

@@ -148,6 +148,7 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/source/scripts/typescript/templating/source
 )
 
 #

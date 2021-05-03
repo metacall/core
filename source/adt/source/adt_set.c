@@ -308,7 +308,8 @@ static int set_contains_any_cb_iterate(set s, set_key key, set_value value, set_
 
 	iterator->result = set_contains(iterator->s, key);
 
-	return iterator->result;
+	/* Stop iteration if we found an element */
+	return !iterator->result;
 }
 
 int set_contains_any(set dest, set src)
@@ -348,7 +349,7 @@ set_value set_remove(set s, set_key key)
 
 	if (set_bucket_remove(bucket, s->compare_cb, key, &value) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove: %p", key);
 
 		return NULL;
 	}

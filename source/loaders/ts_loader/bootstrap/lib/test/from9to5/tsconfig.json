@@ -1,0 +1,8 @@
+{
+	"compilerOptions": {
+		"strict": true,
+		"target": "ES2015",
+		"module": "CommonJS"
+	},
+	"include": ["from9to5.ts"]
+}

@@ -186,8 +186,97 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 
 	delete[] paths;
 
-	/* TODO */
 	return NULL;
+}
+
+napi_value node_loader_port_load_from_file_export(napi_env env, napi_callback_info info)
+{
+	/* TODO: Detect if input argument types are valid */
+
+	const size_t args_size = 2;
+	size_t argc = args_size, tag_length;
+	napi_value argv[args_size];
+	uint32_t paths_size, path_index = 0;
+	char *tag;
+
+	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	napi_get_value_string_utf8(env, argv[0], NULL, 0, &tag_length);
+
+	if (tag_length == 0)
+	{
+		napi_throw_error(env, NULL, "Invalid MetaCall tag");
+		return NULL;
+	}
+
+	tag = new char[tag_length + 1];
+
+	napi_get_value_string_utf8(env, argv[0], tag, tag_length + 1, &tag_length);
+
+	tag[tag_length] = '\0';
+
+	napi_get_array_length(env, argv[1], &paths_size);
+
+	char **paths = new char *[paths_size];
+
+	for (uint32_t i = 0; i < paths_size; ++i)
+	{
+		napi_value path;
+		size_t path_length;
+
+		napi_get_element(env, argv[1], i, &path);
+
+		napi_get_value_string_utf8(env, path, NULL, 0, &path_length);
+
+		if (path_length != 0)
+		{
+			paths[path_index] = new char[path_length + 1];
+
+			napi_get_value_string_utf8(env, path, paths[path_index], path_length + 1, &path_length);
+
+			paths[path_index][path_length] = '\0';
+
+			++path_index;
+		}
+	}
+
+	loader_impl_node node_impl = NULL;
+	void *handle = NULL;
+
+	if (path_index == paths_size)
+	{
+		/* Obtain NodeJS loader implementation */
+		loader_impl impl = loader_get_impl("node");
+		node_impl = (loader_impl_node)loader_impl_get(impl);
+
+		/* Store current reference of the environment */
+		node_loader_impl_env(node_impl, env);
+
+		if (metacall_load_from_file(tag, (const char **)paths, paths_size, &handle) != 0)
+		{
+			napi_throw_error(env, NULL, "MetaCall could not load from file");
+		}
+
+		/* Release current reference of the environment */
+		// node_loader_impl_env(node_impl, NULL);
+	}
+	else
+	{
+		napi_throw_error(env, NULL, "Invalid input paths");
+	}
+
+	delete[] tag;
+
+	for (uint32_t i = 0; i < path_index; ++i)
+	{
+		delete[] paths[i];
+	}
+
+	delete[] paths;
+
+	void *exports = metacall_handle_export(handle);
+
+	return node_loader_impl_value_to_napi(node_impl, env, exports);
 }
 
 /**
@@ -280,6 +369,86 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 	return NULL;
 }
 
+napi_value node_loader_port_load_from_memory_export(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 2;
+	size_t argc = args_size, tag_length, script_length, script_size;
+	napi_value argv[args_size];
+	napi_status status;
+	char *tag, *script;
+
+	// Get arguments
+	status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	node_loader_impl_exception(env, status);
+
+	// Get tag length
+	status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &tag_length);
+
+	node_loader_impl_exception(env, status);
+
+	// Allocate tag
+	tag = static_cast<char *>(malloc(sizeof(char) * (tag_length + 1)));
+
+	if (tag == NULL)
+	{
+		napi_throw_error(env, NULL, "MetaCall could not load from memory, tag allocation failed");
+		return NULL;
+	}
+
+	// Get tag
+	status = napi_get_value_string_utf8(env, argv[0], tag, tag_length + 1, &tag_length);
+
+	node_loader_impl_exception(env, status);
+
+	// Get script length
+	status = napi_get_value_string_utf8(env, argv[1], NULL, 0, &script_length);
+
+	node_loader_impl_exception(env, status);
+
+	script_size = script_length + 1;
+
+	// Allocate script
+	script = static_cast<char *>(malloc(sizeof(char) * script_size));
+
+	if (script == NULL)
+	{
+		free(tag);
+		napi_throw_error(env, NULL, "MetaCall could not load from memory, script allocation failed");
+		return NULL;
+	}
+
+	// Get script
+	status = napi_get_value_string_utf8(env, argv[1], script, script_size, &script_length);
+
+	node_loader_impl_exception(env, status);
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl("node");
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	void *handle = NULL;
+
+	// Load script from memory
+	if (metacall_load_from_memory(tag, script, script_size, &handle) != 0)
+	{
+		napi_throw_error(env, NULL, "MetaCall could not load from memory");
+	}
+
+	/* Release current reference of the environment */
+	// node_loader_impl_env(node_impl, NULL);
+
+	free(tag);
+	free(script);
+
+	void *exports = metacall_handle_export(handle);
+
+	return node_loader_impl_value_to_napi(node_impl, env, exports);
+}
+
 /* TODO: Add documentation */
 napi_value node_loader_port_inspect(napi_env env, napi_callback_info)
 {
@@ -330,21 +499,27 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 {
 	const char function_metacall_str[] = "metacall";
 	const char function_load_from_file_str[] = "metacall_load_from_file";
+	const char function_load_from_file_export_str[] = "metacall_load_from_file_export";
 	const char function_load_from_memory_str[] = "metacall_load_from_memory";
+	const char function_load_from_memory_export_str[] = "metacall_load_from_memory_export";
 	const char function_inspect_str[] = "metacall_inspect";
 	const char function_logs_str[] = "metacall_logs";
 
-	napi_value function_metacall, function_load_from_file, function_load_from_memory, function_inspect, function_logs;
+	napi_value function_metacall, function_load_from_file, function_load_from_file_export, function_load_from_memory, function_load_from_memory_export, function_inspect, function_logs;
 
 	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, node_loader_port_call, NULL, &function_metacall);
 	napi_create_function(env, function_load_from_file_str, sizeof(function_load_from_file_str) - 1, node_loader_port_load_from_file, NULL, &function_load_from_file);
+	napi_create_function(env, function_load_from_file_export_str, sizeof(function_load_from_file_export_str) - 1, node_loader_port_load_from_file_export, NULL, &function_load_from_file_export);
 	napi_create_function(env, function_load_from_memory_str, sizeof(function_load_from_memory_str) - 1, node_loader_port_load_from_memory, NULL, &function_load_from_memory);
+	napi_create_function(env, function_load_from_memory_export_str, sizeof(function_load_from_memory_export_str) - 1, node_loader_port_load_from_memory_export, NULL, &function_load_from_memory_export);
 	napi_create_function(env, function_inspect_str, sizeof(function_inspect_str) - 1, node_loader_port_inspect, NULL, &function_inspect);
 	napi_create_function(env, function_logs_str, sizeof(function_logs_str) - 1, node_loader_port_logs, NULL, &function_logs);
 
 	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
 	napi_set_named_property(env, exports, function_load_from_file_str, function_load_from_file);
+	napi_set_named_property(env, exports, function_load_from_file_export_str, function_load_from_file_export);
 	napi_set_named_property(env, exports, function_load_from_memory_str, function_load_from_memory);
+	napi_set_named_property(env, exports, function_load_from_memory_export_str, function_load_from_memory_export);
 	napi_set_named_property(env, exports, function_inspect_str, function_inspect);
 	napi_set_named_property(env, exports, function_logs_str, function_logs);
 }

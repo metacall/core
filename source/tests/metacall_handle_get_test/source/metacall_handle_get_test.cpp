@@ -59,7 +59,7 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 			METACALL_DOUBLE, METACALL_DOUBLE
 		};
 
-		void *ret = metacallt("call_test", double_ids, 10.0, 2.0);
+		void *ret = metacallht_s(handle, "call_test", double_ids, 2, 10.0, 2.0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -103,11 +103,11 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 
 		ASSERT_NE((void *)NULL, (void *)handle);
 
-		void *func = metacall_handle_function(handle, "fn_in_s1" /* TODO: shared_in_s1_and_s2 */);
+		void *func = metacall_handle_function(handle, "shared_in_s1_and_s2");
 
 		ASSERT_NE((void *)NULL, (void *)func);
 
-		void *ret = metacallhv_s(handle, "fn_in_s1" /* TODO: shared_in_s1_and_s2 */, metacall_null_args, 0);
+		void *ret = metacallhv_s(handle, "shared_in_s1_and_s2", metacall_null_args, 0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -123,11 +123,11 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 
 		ASSERT_NE((void *)NULL, (void *)handle);
 
-		func = metacall_handle_function(handle, "fn_in_s2" /* TODO: shared_in_s1_and_s2 */);
+		func = metacall_handle_function(handle, "shared_in_s1_and_s2");
 
 		ASSERT_NE((void *)NULL, (void *)func);
 
-		ret = metacallhv_s(handle, "fn_in_s2" /* TODO: shared_in_s1_and_s2 */, metacall_null_args, 0);
+		ret = metacallhv_s(handle, "shared_in_s1_and_s2", metacall_null_args, 0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 

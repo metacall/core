@@ -32,6 +32,7 @@ INSTALL_RAPIDJSON=0
 INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
+INSTALL_NETCORE5=0
 INSTALL_V8=0
 INSTALL_V8REPO=0
 INSTALL_V8REPO58=0
@@ -193,6 +194,23 @@ sub_netcore2(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-2.2
 }
 
+# NetCore 5
+sub_netcore5(){
+	echo "configure netcore 5"
+	cd $ROOT_DIR
+
+	# Set up repository
+	wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+	rm packages-microsoft-prod.deb
+
+	# Install .NET Core Sdk
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-5.0
+}
+
 # V8 Repository
 sub_v8repo(){
 	echo "configure v8 from repository"
@@ -319,6 +337,8 @@ sub_metacall(){
 		NETCORE_VERSION=1.1.10
 	elif [ INSTALL_NETCORE2 = 1 ]; then
 		NETCORE_VERSION=2.2.8
+	elif [ INSTALL_NETCORE5 = 1 ]; then
+		NETCORE_VERSION=5.0.5
 	else
 		NETCORE_VERSION=0
 	fi
@@ -390,6 +410,9 @@ sub_install(){
 	if [ $INSTALL_NETCORE2 = 1 ]; then
 		sub_netcore2
 	fi
+	if [ $INSTALL_NETCORE5 = 1 ]; then
+		sub_netcore5
+	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
 	fi
@@ -460,6 +483,10 @@ sub_options(){
 		if [ "$var" = 'netcore2' ]; then
 			echo "netcore 2 selected"
 			INSTALL_NETCORE2=1
+		fi
+		if [ "$var" = 'netcore5' ]; then
+			echo "netcore 5 selected"
+			INSTALL_NETCORE5=1
 		fi
 		if [ "$var" = 'rapidjson' ]; then
 			echo "rapidjson selected"
@@ -548,6 +575,7 @@ sub_help() {
 	echo "	ruby"
 	echo "	netcore"
 	echo "	netcore2"
+	echo "	netcore5"
 	echo "	rapidjson"
 	echo "	funchook"
 	echo "	v8"

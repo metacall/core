@@ -138,7 +138,7 @@ if(NOT NODEJS_FOUND)
 endif()
 
 add_test(NAME ${target}_node_binary
-COMMAND ${TEST_COMMAND} "${NODEJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/node_integration.js | ${GREP_COMMAND} \"NodeJS Integration Test Passed\""
+	COMMAND ${TEST_COMMAND} "${NODEJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/node_integration.js | ${GREP_COMMAND} \"NodeJS Integration Test Passed\""
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 test_environment_variables(${target}_node_binary

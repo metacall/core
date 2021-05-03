@@ -5,7 +5,6 @@ const Module = require('module');
 const path = require('path');
 const util = require('util');
 const fs = require('fs');
-const async_hooks = require('async_hooks');
 
 /* Require the JavaScript parser */
 const cherow = require(path.join(__dirname, 'node_modules', 'cherow'));
@@ -295,10 +294,9 @@ function node_loader_trampoline_discover(handle) {
 }
 
 function node_loader_trampoline_test(obj) {
-	console.log('NodeJS Loader Bootstrap Test');
-
+	/* Imporant: never trigger an async resource in this function */
 	if (obj !== undefined) {
-		console.log(util.inspect(obj, false, null, true));
+		fs.writeSync(process.stdout.fd, `${util.inspect(obj, false, null, true)}\n`);
 	}
 }
 
@@ -366,46 +364,10 @@ module.exports = ((impl, ptr) => {
 			throw new Error('Process arguments (process.argv[2], process.argv[3]) not defined.');
 		}
 
-		/* Initialize async hooks for keeping track the amount of async handles that are in the event queue */
-		const asyncHook = async_hooks.createHook({ node_loader_trampoline_async_hook_init, node_loader_trampoline_async_hook_destroy });
-
-		const asyncCounterBuffer = new SharedArrayBuffer(Uint32Array.BYTES_PER_ELEMENT);
-		const asyncCounter = new Uint32Array(asyncCounterBuffer);
-
-		/* Enable async hook with the counter started to 0 */
-		Atomics.store(asyncCounter, 0, 0);
-		asyncHook.enable();
-
 		/* Get trampoline from list of linked bindings */
 		const trampoline = process._linkedBinding('node_loader_trampoline_module');
 
-		function node_loader_trampoline_async_hook_init() {
-			Atomics.add(asyncCounter, 0, 1);
-		}
-
-		function node_loader_trampoline_async_hook_destroy(asyncId) {
-			if (Atomics.load(asyncCounter, 0) == 0) {
-				/* All operations must be synchronous here, or in other words, they cannot trigger any async resource into the event loop */
-				fs.writeSync(process.stdout.fd, `Exception in node_loader_trampoline_async_hook_destroy: The async id ${asyncId} has not been counted properly\n`);
-				// TODO: Properly notify the error to the core
-			} else {
-				const old = Atomics.sub(asyncCounter, 0, 1);
-				/* At this point we have reached an "empty" event loop, it
-				 * only contains the async resources that the Node Loader has populated,
-				 * but it does not contain any user defined async resource */
-				if (old === 1 && trampoline.requested_destroy() === true) {
-					/* Disable Hooks and destroy the Node Loader */
-					asyncHook.disable();
-					trampoline.destroy();
-				}
-			}
-		}
-
-		function node_loader_trampoline_async_count() {
-			return Atomics.load(asyncCounter, 0);
-		}
-
-		return trampoline.register(impl, ptr, {
+		const node_loader_ptr = trampoline.register(impl, ptr, {
 			'initialize': node_loader_trampoline_initialize,
 			'execution_path': node_loader_trampoline_execution_path,
 			'load_from_file': node_loader_trampoline_load_from_file,
@@ -417,7 +379,6 @@ module.exports = ((impl, ptr) => {
 			'test': node_loader_trampoline_test,
 			'await_function': node_loader_trampoline_await_function(trampoline),
 			'await_future': node_loader_trampoline_await_future(trampoline),
-			'async_count': node_loader_trampoline_async_count,
 		});
 	} catch (ex) {
 		console.log('Exception in bootstrap.js trampoline initialization:', ex);

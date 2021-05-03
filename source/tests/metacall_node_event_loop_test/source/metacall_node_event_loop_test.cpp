@@ -35,20 +35,6 @@ TEST_F(metacall_node_event_loop_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-/* TODO: This works, the only problem is that it seems stdout gets bugged and it is not printing the messages: */
-/*
-		###################################
-		Server up
-		###################################
-		###################################
-		Closing server...
-		###################################
-		###################################
-		Server closed
-		###################################
-	*/
-/* This must be reviewed */
-
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 	{

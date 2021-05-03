@@ -28,6 +28,7 @@ INSTALL_PYTHON=0
 INSTALL_RUBY=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
+INSTALL_NETCORE5=0
 INSTALL_V8=0
 INSTALL_NODEJS=0
 INSTALL_TYPESCRIPT=0
@@ -116,6 +117,20 @@ sub_netcore2(){
 	sub_apt_install_hold dotnet-runtime-2.2=2.2.8-1
 }
 
+# NetCore 5
+sub_netcore5(){
+	echo "configure netcore 5"
+	cd $ROOT_DIR
+
+	# Install NET Core Runtime 5.x
+	wget https://packages.microsoft.com/config/debian/10/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+	rm packages-microsoft-prod.deb
+
+	$SUDO_CMD apt-get update
+	sub_apt_install_hold dotnet-runtime-5.0=5.0.5-1
+}
+
 # V8
 sub_v8(){
 	echo "configure v8"
@@ -178,6 +193,9 @@ sub_install(){
 	if [ $INSTALL_NETCORE2 = 1 ]; then
 		sub_netcore2
 	fi
+	if [ $INSTALL_NETCORE5 = 1 ]; then
+		sub_netcore5
+	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
 	fi
@@ -238,6 +256,10 @@ sub_options(){
 		if [ "$var" = 'netcore2' ]; then
 			echo "netcore 2 selected"
 			INSTALL_NETCORE2=1
+		fi
+		if [ "$var" = 'netcore5' ]; then
+			echo "netcore 5 selected"
+			INSTALL_NETCORE5=1
 		fi
 		if [ "$var" = 'v8' ]; then
 			echo "v8 selected"

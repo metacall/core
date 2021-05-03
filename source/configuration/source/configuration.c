@@ -74,14 +74,14 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 
 		if (global != NULL && path != NULL)
 		{
-			log_write("metacall", LOG_LEVEL_INFO, "Global configuration loaded from %s", path);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Global configuration loaded from %s", path);
 		}
 	}
 	else
 	{
 		global = configuration_object_initialize(CONFIGURATION_GLOBAL_SCOPE, path, NULL);
 
-		log_write("metacall", LOG_LEVEL_INFO, "Global configuration loaded from %s", path);
+		log_write("metacall", LOG_LEVEL_DEBUG, "Global configuration loaded from %s", path);
 	}
 
 	if (global == NULL)

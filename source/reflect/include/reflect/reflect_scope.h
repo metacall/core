@@ -52,6 +52,8 @@ REFLECT_API value scope_undef(scope sp, const char *key);
 
 REFLECT_API int scope_append(scope dest, scope src);
 
+REFLECT_API int scope_contains(scope dest, scope src);
+
 REFLECT_API int scope_remove(scope dest, scope src);
 
 REFLECT_API size_t *scope_stack_return(scope sp);

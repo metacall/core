@@ -377,6 +377,16 @@ bool command_cb_load(application &app, tokenizer &t)
 		loader_tag = *it;
 	}
 
+	std::string loaders[] = {
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file"
+	};
+
+	// check if invalid loader tag
+	if (std::find(std::begin(loaders), std::end(loaders), loader_tag) == std::end(loaders))
+	{
+		return false;
+	}
+
 	do
 	{
 		++it;
@@ -759,6 +769,8 @@ void application::execute(tokenizer &t)
 
 		command_debug(*it, t);
 
+		std::cout << "See `help` for list of available commands" << std::endl;
+
 		return;
 	}
 
@@ -767,6 +779,8 @@ void application::execute(tokenizer &t)
 		std::cout << "[WARNING]: Invalid command execution" << std::endl;
 
 		command_debug(*it, t);
+
+		std::cout << "See `help` for correct usage" << std::endl;
 
 		return;
 	}

@@ -50,9 +50,14 @@ TEST_F(metacall_node_python_port_mock_test, DefaultConstructor)
 			"import metacall\n"
 			/* Mock */
 			"from asd.mock import two_doubles\n"
-			"def py_func(js_func):\n"
-			"	return js_func(two_doubles)\n"
+			"print('........................................................')\n"
+			"print(two_doubles(3.0, 6.0))\n" // This works
+			"print('........................................................')\n"
+			"def py_func(cb):\n"
+			"	return cb(two_doubles)\n"
+			"print(py_func(lambda f: f(3, 4)))\n" // This works too
 			"`);\n"
+			// This does not, probably the error is when converting mock_func from metacall value to napi:
 			"const result = metacall('py_func', (mock_func) => mock_func(3, 4));\n"
 			"console.log('Result:', result);\n"
 			"if (result !== 3.1416) process.exit(1);\n";

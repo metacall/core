@@ -99,11 +99,11 @@ This section describes all programming languages that **METACALL** allows to loa
 
 | Language                                                           | Runtime                                                                                                        |            Version             |  Tag  |
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | :----------------------------: | :---: |
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.8**        |  py   |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |          **10.22.0**           | node  |
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.9**        |  py   |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |   **>= 10.22.0 <= 15.20.0**    | node  |
 | [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **3.9.7**            |  ts   |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js   |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 2.2.8** |  cs   |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 5.0.4** |  cs   |
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                      |       **>= 2.1 <= 2.5**        |  rb   |
 | [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                               |          **>= 1.1.0**          |  cob  |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                                          |           **0.1.0**            | file  |
@@ -288,21 +288,25 @@ The module that holds the representation of types, values and functions is calle
 
 **METACALL** maintains most of the types of the languages but not all are supported. If new types are added they have to be implemented in the [`reflect`](/source/reflect) module and also in the [`loaders`](/source/loaders) and [`serials`](/source/serials) to fully support it.
 
-|  Type   | Value                                                              |
-| :-----: | ------------------------------------------------------------------ |
-| Boolean | `true` or `false`                                                  |
-|  Char   | `-128` to `127`                                                    |
-|  Short  | `-32,768` to `32,767`                                              |
-|   Int   | `-2,147,483,648` to `2,147,483,647`                                |
-|  Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`        |
-|  Float  | `1.2E-38` to `3.4E+38`                                             |
-| Double  | `2.3E-308` to `1.7E+308`                                           |
-| String  | NULL terminated list of characters                                 |
-| Buffer  | Blob of memory representing a binary data                          |
-|  Array  | Arrangement of values of any type                                  |
-|   Map   | List of elements formed by a key (String) value (Any) pair (Array) |
-| Pointer | Low level representation of a memory reference                     |
-|  Null   | Representation of NULL value type                                  |
+|   Type   | Value                                                                          |
+| :------: | ------------------------------------------------------------------------------ |
+| Boolean  | `true` or `false`                                                              |
+|   Char   | `-128` to `127`                                                                |
+|  Short   | `-32,768` to `32,767`                                                          |
+|   Int    | `-2,147,483,648` to `2,147,483,647`                                            |
+|   Long   | `–9,223,372,036,854,775,808` to `9,223,372,036,854,775,807`                    |
+|  Float   | `1.2E-38` to `3.4E+38`                                                         |
+|  Double  | `2.3E-308` to `1.7E+308`                                                       |
+|  String  | NULL terminated list of characters                                             |
+|  Buffer  | Blob of memory representing a binary data                                      |
+|  Array   | Arrangement of values of any type                                              |
+|   Map    | List of elements formed by a key (String) value (Any) pair (Array)             |
+| Pointer  | Low level representation of a memory reference                                 |
+|   Null   | Representation of NULL value type                                              |
+|  Future  | Promise in Node Loader, and any other type equivalent in other languages.      |
+| Function | Block of code that takes inputs (Arguments) and produces output (Return value) |
+|  Class   | Defines properties and methods that are common to all objects                  |
+|  Object  | An instance of Class                                                           |
 
 - Boolean is mostly represented by an integer value. There are languages that does not support it so it gets converted to a integer value in the memory layout.
 
@@ -316,7 +320,7 @@ The module that holds the representation of types, values and functions is calle
 
 - Map implements an associative key value pair container. A map is implemented with an array of two sized elements array. Each element of the map is an array of size two, where the first element of it is always an String and the second element is a value of any type.
 
-- Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
+- Pointer is an opaque value representing a raw reference to a memory block. Some languages allow to use references to memory and some others do not. This type is opaque because **METACALL** does not know what kind of concrete value represents it. The representation may be a complex type handled by the developer source code inside the run-time.
 
 - Null type implements a null value. This type has only been implemented in order to support null value from multiple run-times. It represents a null value and it does not have data size on the value allocated.
 
@@ -330,7 +334,7 @@ When converting values between different types, if any potential number overflow
 
 The value model is implemented by means of object pool. Each value is a reference to a memory block allocated from a memory pool (which can be injected into **METACALL**). The references can be passed by value, this means **METACALL** copies the reference value instead of the data which this reference is pointing to, like most run-times do when managing their own values.
 
-Each created value must be destroyed manually. Otherwise it will lead to a memory leak. This fact only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
+Each created value must be destroyed manually, otherwise it will lead to a memory leak. This only occurs when dealing with **METACALL** at C level. If **METACALL** is being used in an higher language through [`ports`](/source/ports), the developer does not have to care about memory management.
 
 The value memory layout is described in the following form.
 
@@ -338,19 +342,19 @@ The value memory layout is described in the following form.
 | :-----------: | :-----------------------: | :----------------------------------------------------: |
 |  **Content**  |         **DATA**          |                      **TYPE ID**                       |
 
-This layout is used by the following reasons.
+This layout is used for the following reasons:
 
-- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to threat **METACALL** values as a normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
+- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to treat **METACALL** values as normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
 
 - Data can be accessed faster as it is located at first position of the memory block. There is not extra calculation of an offset when trying to access the pointer.
 
-- Data and type id are contiguously allocated in order to threat it as the same memory block so it can be freed with one operation.
+- Data and type id are contiguously allocated in order to treat it as the same memory block so it can be freed with one operation.
 
 #### 5.2.3 Functions
 
-Functions are an abstract callable representation of functions, methods or procedures loaded by [`loaders`](/source/loaders). The functions are like a template who is linked to a loader run-time and allows to do a foreign function call.
+Functions are abstract callable representations of functions, methods or procedures loaded by [`loaders`](/source/loaders). A function is like a template which is linked to a loader run-time and allows to do a foreign function call.
 
-A function is composed by a name and a signature. The signature defines the arguments name, type, and return type if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types if any. It stores the arguments name and size and also a concrete type that will be used later by the loader to implement the call to the run-time.
+A function is composed of a name and a signature. The signature defines the arguments names, types, and return type, if any. When a function is loaded, **METACALL** tries to inspect the signature and records the types, if any. It stores the arguments names and sizes and also a concrete type that will be used later by the loader to implement the call to the run-time.
 
 The function interface must be implemented by the [`loaders`](/source/loaders) and it has the following form.
 
@@ -377,7 +381,7 @@ def multiply_type(a: int, b: int) -> int:
   return a * b
 ```
 
-If this code is loaded, **METACALL** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments if any, and the return type if any.
+If this code is loaded, **METACALL** will be able to inspect the types and define the signature. Signature includes the names of the arguments, the types of those arguments, if any, and the return type, if any.
 
 It may be possible that the function loaded into **METACALL** is duck typed. This means it does not have information about what types it supports and therefore they cannot be inspected statically.
 
@@ -492,7 +496,7 @@ A loader must implement it to be considered a valid loader.
 
 ### 5.7 Fork Model
 
-**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, the process where is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use level. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
+**METACALL** implements a fork safe model. This means if **METACALL** is running in any program instance, the process which is running can be forked safely at any moment of the execution. This fact has many implications at design, implementation and use levels. But the whole **METACALL** architecture tries to remove all responsibility from the developer and make this transparent.
 
 To understand the **METACALL** fork model, first of all we have to understand the implications of the forking model in operative systems and the difference between [fork-one and fork-all models](https://docs.oracle.com/cd/E37838_01/html/E61057/gen-1.html).
 
@@ -685,12 +689,13 @@ make <target>-genhtml
 
 For debugging memory leaks, undefined behaviors and other related problems, the following compile options are provided:
 
-|        Build Option         | Description                                         | Default Value |
-| :-------------------------: | --------------------------------------------------- | :-----------: |
-| **OPTION_TEST_MEMORYCHECK** | Enable Valgrind with memcheck tool for the tests.   |      OFF      |
-| **OPTION_BUILD_SANITIZER**  | Build with AddressSanitizer family (GCC and Clang). |      OFF      |
+|           Build Option            | Description                                         | Default Value |
+| :-------------------------------: | --------------------------------------------------- | :-----------: |
+|    **OPTION_TEST_MEMORYCHECK**    | Enable Valgrind with memcheck tool for the tests.   |      OFF      |
+|    **OPTION_BUILD_SANITIZER**     | Build with AddressSanitizer family (GCC and Clang). |      OFF      |
+| **OPTION_BUILD_THREAD_SANITIZER** | Build with ThreadSanitizer family (GCC and Clang).  |      OFF      |
 
-Both options are mutually exclusive. Valgrind is not compatible with AddressSanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
+The three options are mutually exclusive. Valgrind is not compatible with AddressSanitizer and AddressSanitizer is not compatible with ThreadSanitizer. The current implementation does not support MSVC compiler (yet). Some run-times may fail if they are not compiled with AddressSanitizer too, for example NetCore. Due to this, tests implying may fail with signal 11. The same problem happens with Valgrind, due to that, some tests are excluded of the memcheck target.
 
 For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag and then run:
 
@@ -698,7 +703,7 @@ For running all tests with Valgrind, enable the `OPTION_TEST_MEMORYCHECK` flag a
 make memcheck
 ```
 
-For runing a test (or all) with AddressSanitizer, enable the `OPTION_BUILD_SANITIZER` flag and then run:
+For runing a test (or all) with AddressSanitizer or ThreadSanitizer, enable the `OPTION_BUILD_SANITIZER` or `OPTION_BUILD_THREAD_SANITIZER` flags respectively and then run:
 
 ```sh
 # Run one test
@@ -718,7 +723,7 @@ The following platforms and architectures have been tested an work correctly wit
 
 |     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
 | :----------------------: | :-----------------: | :-------------: | :----------------------------------------------------------------------------------------------------: |
-|   **`ubuntu:focal`**     |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
+|    **`ubuntu:focal`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/build.svg)](https://gitlab.com/metacall/core) |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
 |      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
