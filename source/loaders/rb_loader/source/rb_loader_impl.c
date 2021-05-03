@@ -1441,7 +1441,7 @@ int rb_loader_impl_destroy(loader_impl impl)
 	(void)impl;
 
 	/* Destroy children loaders */
-	loader_unload_children();
+	loader_unload_children(impl);
 
 	return ruby_cleanup(0);
 }

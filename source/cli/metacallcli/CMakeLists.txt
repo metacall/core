@@ -333,9 +333,17 @@ endif()
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)
 	add_test(NAME ${target}-ts
 		COMMAND ${TEST_COMMAND} "echo 'load ts typedfunc.ts\ninspect\ncall typed_sum(4, 5)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"9.0\""
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 	)
 	test_environment_variables(${target}-ts
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
+	add_test(NAME ${target}-tsx-loop-fail
+		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> loopfail.tsx | ${GREP_COMMAND} \"Error: Cannot find module 'yeet-oof/whatever'\""
+		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/loopfail
+	)
+	test_environment_variables(${target}-tsx-loop-fail
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)

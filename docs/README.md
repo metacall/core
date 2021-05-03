@@ -164,6 +164,8 @@ As you can see, there are plenty of uses. **METACALL** introduces a new model of
 
 - **[Acid Cam](https://www.facebook.com/AcidCam/)**: A software for video manipulation that distorts videos for generating art by means of OpenCV. [Acid Cam CLI](https://github.com/lostjared/acidcam-cli) uses **METACALL** to allow custom filters written in Python and easily embed Python programming language into its plugin system.
 
+- **[Pragma](https://pragmalang.com/)**: Pragma is a language for building beautiful and extensible GraphQL APIs in no time. Within a single file, you can define your data models and authorization rules (roles and permissions), and import serverless functions for data validation, transformation, authorization, or any custom logic. [Pragma](https://github.com/pragmalang/pragma) uses **METACALL** to import and execute functions into the language so it can be extended with other programming languages.
+
 ## 4. Usage
 
 ## 4.1 Installation

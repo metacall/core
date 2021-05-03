@@ -394,7 +394,21 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 
 		for (rapidjson::Value::ConstValueIterator it = v->Begin(); it != v->End(); ++it)
 		{
-			values[index++] = rapid_json_serial_impl_deserialize_value(it);
+			values[index] = rapid_json_serial_impl_deserialize_value(it);
+
+			if (values[index] == NULL)
+			{
+				for (size_t iterator = 0; iterator < index; ++iterator)
+				{
+					value_type_destroy(values[iterator]);
+				}
+
+				value_destroy(v_array);
+
+				return NULL;
+			}
+
+			++index;
 		}
 
 		return v_array;
@@ -422,6 +436,23 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 				rapid_json_serial_impl_deserialize_value(&it->name),
 				rapid_json_serial_impl_deserialize_value(&it->value)
 			};
+
+			if (tupla[0] == NULL || tupla[1] == NULL)
+			{
+				if (tupla[0] != NULL)
+				{
+					value_type_destroy(tupla[0]);
+				}
+
+				if (tupla[1] != NULL)
+				{
+					value_type_destroy(tupla[1]);
+				}
+
+				value_type_destroy(v_map);
+
+				return NULL;
+			}
 
 			tuples[index++] = value_create_array(tupla, sizeof(tupla) / sizeof(tupla[0]));
 		}

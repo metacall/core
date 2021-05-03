@@ -646,7 +646,7 @@ int rpc_loader_impl_destroy(loader_impl impl)
 	loader_impl_rpc rpc_impl = (loader_impl_rpc)loader_impl_get(impl);
 
 	/* Destroy children loaders */
-	loader_unload_children();
+	loader_unload_children(impl);
 
 	metacall_allocator_destroy(rpc_impl->allocator);
 

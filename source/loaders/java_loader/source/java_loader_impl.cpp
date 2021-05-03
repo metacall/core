@@ -307,7 +307,7 @@ int java_loader_impl_destroy(loader_impl impl)
 		std::cout << "1ffffffffffffffffffffffffffff" << std::endl;
 
 		/* Destroy children loaders */
-		loader_unload_children();
+		loader_unload_children(impl);
 		std::cout << "2ffffffffffffffffffffffffffff" << std::endl;
 
 		java_impl->jvm->DestroyJavaVM();

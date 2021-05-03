@@ -1107,6 +1107,27 @@ int loader_impl_destroy_exec_path_map_cb_iterate(set s, set_key key, set_value v
 	return 0;
 }
 
+void loader_impl_destroy_objects(loader_impl impl)
+{
+	/* This iterates through all functions, classes objects and types,
+	* it is necessary to be executed on demand because those can have
+	* implementations in the loader implementation which need to be GCed
+	* or freed properly before the runtime goes down but after the
+	* destroy has been issued, so while it is destroying, we can still
+	* retrieve the data for introspection or for whatever we need
+	*/
+	if (impl != NULL)
+	{
+		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
+
+		set_destroy(impl->handle_impl_map);
+
+		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
+
+		set_destroy(impl->type_info_map);
+	}
+}
+
 void loader_impl_destroy(loader_impl impl)
 {
 	if (impl != NULL)
@@ -1124,14 +1145,6 @@ void loader_impl_destroy(loader_impl impl)
 
 			impl->init = 1;
 		}
-
-		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
-
-		set_destroy(impl->handle_impl_map);
-
-		set_iterate(impl->type_info_map, &loader_impl_destroy_type_map_cb_iterate, NULL);
-
-		set_destroy(impl->type_info_map);
 
 		set_iterate(impl->exec_path_map, &loader_impl_destroy_exec_path_map_cb_iterate, NULL);
 
