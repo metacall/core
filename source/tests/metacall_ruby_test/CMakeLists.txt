@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target rb-loader-test)
+set(target metacall-ruby-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/rb_loader_test.cpp
+	${source_path}/metacall_ruby_test.cpp
 )
 
 # Group source files
@@ -85,22 +85,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::threading
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::portability
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::filesystem
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::detour
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::serial
-	${META_PROJECT_NAME}::configuration
-	${META_PROJECT_NAME}::loader
+	${META_PROJECT_NAME}::metacall
 )
 
 #

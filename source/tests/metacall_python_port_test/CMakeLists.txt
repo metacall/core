@@ -131,6 +131,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
+	mock_loader
 	py_loader
 	rb_loader
 	node_loader

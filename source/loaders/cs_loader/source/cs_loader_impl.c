@@ -240,12 +240,9 @@ loader_impl_data cs_loader_impl_initialize(loader_impl impl, configuration confi
 
 int cs_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	/* TODO: Insert a path into the runtime */
+	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
-	(void)impl;
-	(void)path;
-
-	return 0;
+	return simple_netcore_execution_path(nhandle, (char *)path);
 }
 
 loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
@@ -261,7 +258,7 @@ loader_handle cs_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		files[i] = (char *)paths[i];
 	}
 
-	if (simple_netcore_load_script_from_files(nhandle, files, size) != 0)
+	if (simple_netcore_load_script_from_files(nhandle, (const char **)files, size) != 0)
 	{
 		return NULL;
 	}
@@ -273,7 +270,7 @@ loader_handle cs_loader_impl_load_from_package(loader_impl impl, const loader_na
 {
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
-	if (simple_netcore_load_script_from_assembly(nhandle, (char *)path) != 0)
+	if (simple_netcore_load_script_from_assembly(nhandle, path) != 0)
 	{
 		return NULL;
 	}

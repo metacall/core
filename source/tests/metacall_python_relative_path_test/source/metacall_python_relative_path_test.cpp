@@ -22,49 +22,42 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
-#include <metacall/metacall_value.h>
 
-class metacall_typescript_call_map_test : public testing::Test
+class metacall_python_dict_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_typescript_call_map_test, DefaultConstructor)
+TEST_F(metacall_python_dict_test, DefaultConstructor)
 {
 	metacall_print_info();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
-
-	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
-
-/* TypeScript */
-#if defined(OPTION_BUILD_LOADERS_TS)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		const char *ts_scripts[] = {
-			"typedfunc/typedfunc.ts"
+		const char *py_scripts[] = {
+			"./s2.py"
 		};
 
-		/* Load scripts */
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("ts", ts_scripts, sizeof(ts_scripts) / sizeof(ts_scripts[0]), NULL));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		/* Test typed sum */
-		static const char args_map[] = "{\"left\":10,\"right\":2}";
+		const char *py_scripts_fail[] = {
+			"./yeet/fail/this-script-is-impossible-that-exists.py"
+		};
 
-		void *ret = metacallfms(metacall_function("typed_sum"), args_map, sizeof(args_map), allocator);
-
-		EXPECT_NE((void *)NULL, (void *)ret);
-
-		EXPECT_EQ((double)metacall_value_to_double(ret), (double)12.0);
-
-		metacall_value_destroy(ret);
+		EXPECT_EQ((int)1, (int)metacall_load_from_file("py", py_scripts_fail, sizeof(py_scripts_fail) / sizeof(py_scripts_fail[0]), NULL));
 	}
-#endif /* OPTION_BUILD_LOADERS_TS */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
 	/* Print inspect information */
 	{
 		size_t size = 0;
+
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 		char *inspect_str = metacall_inspect(&size, allocator);
 
@@ -75,9 +68,9 @@ TEST_F(metacall_typescript_call_map_test, DefaultConstructor)
 		std::cout << inspect_str << std::endl;
 
 		metacall_allocator_free(allocator, inspect_str);
-	}
 
-	metacall_allocator_destroy(allocator);
+		metacall_allocator_destroy(allocator);
+	}
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

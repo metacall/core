@@ -896,8 +896,6 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 
 	VALUE module_path = rb_str_new_cstr(path);
 
-	VALUE separator = rb_str_new_cstr("/");
-
 	int index, size = FIX2INT(load_path_array_size);
 
 	VALUE module = rb_loader_impl_load_data_absolute(module_path);
@@ -913,9 +911,7 @@ VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
 	{
 		VALUE load_path_entry = rb_ary_entry(load_path_array, index);
 
-		VALUE load_path = rb_str_append(load_path_entry, separator);
-
-		VALUE module_absolute_path = rb_str_append(load_path, module_path);
+		VALUE module_absolute_path = rb_funcall(rb_cFile, rb_intern("join"), 2, load_path_entry, module_path);
 
 		module = rb_loader_impl_load_data_absolute(module_absolute_path);
 

@@ -21,6 +21,18 @@ namespace CSLoader.Providers
             this.log = log;
         }
 
+        public bool ExecutionPath(string path)
+        {
+            if (!paths.Contains(path))
+            {
+                log.Info("Loading execution path: " + path);
+                paths.Add(path);
+                return true;
+            }
+
+            return false;
+        }
+
         public ReflectFunction[] Functions()
         {
             return this.functions.Select(x => x.Value.GetReflectFunction()).ToArray();
@@ -34,6 +46,65 @@ namespace CSLoader.Providers
         }
 
         protected abstract Assembly MakeAssembly(MemoryStream stream);
+
+        private static bool IsFullPath(string path)
+        {
+            // https://stackoverflow.com/a/47569899
+            if (string.IsNullOrWhiteSpace(path) || path.IndexOfAny(Path.GetInvalidPathChars()) != -1 || !Path.IsPathRooted(path))
+                return false;
+
+            string pathRoot = Path.GetPathRoot(path);
+            if (pathRoot.Length <= 2 && pathRoot != "/") // Accepts X:\ and \\UNC\PATH, rejects empty string, \ and X:, but accepts / to support Linux
+                return false;
+
+            if (pathRoot[0] != '\\' || pathRoot[1] != '\\')
+                return true; // Rooted and not a UNC path
+
+            return pathRoot.Trim('\\').IndexOf('\\') != -1; // A UNC server name without a share name (e.g "\\NAME" or "\\NAME\") is invalid
+        }
+
+        private string LoadFromFileFunctionsRelative(string file)
+        {
+            foreach (var path in paths)
+            {
+                try
+                {
+                    return System.IO.File.ReadAllText(Path.Combine(path, file));
+                }
+                catch (Exception ex)
+                {
+                    continue;
+                }
+            }
+
+            throw new Exception("File " + file + " not found");
+        }
+
+        public bool LoadFromFileFunctions(string[] files)
+        {
+            List<string> sources = new List<string>();
+
+            foreach (var file in files)
+            {
+                try
+                {
+                    sources.Add(IsFullPath(file) ? System.IO.File.ReadAllText(file) : LoadFromFileFunctionsRelative(file));
+                }
+                catch (Exception ex)
+                {
+                    this.log.Error("CSLoader loading error: " + ex.Message);
+                    return false;
+                }
+            }
+
+            if (files.Length != sources.Count)
+            {
+                this.log.Error("Not all files could be loaded (" + sources.Count + "/" + files.Length + ")");
+                return false;
+            }
+
+            return LoadFromSourceFunctions(sources.ToArray());
+        }
 
         public bool LoadFromSourceFunctions(string[] source)
         {
@@ -102,8 +173,6 @@ namespace CSLoader.Providers
 
         public void LoadFunctions(Assembly assembly)
         {
-            this.log.Info("CSLoader load functions");
-
             foreach (var item in assembly.DefinedTypes.SelectMany(x => x.GetMethods()).Where(x => x.IsStatic))
             {
                 var con = new FunctionContainer(item);

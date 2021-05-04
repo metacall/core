@@ -39,7 +39,7 @@ TEST_F(metacall_tsx_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_TS)
 	{
 		const char *tsx_scripts[] = {
-			"templating.tsx"
+			"templating/templating.tsx"
 		};
 
 		void *ret = NULL;

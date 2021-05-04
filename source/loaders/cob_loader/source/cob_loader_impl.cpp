@@ -123,6 +123,10 @@ loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration conf
 	(void)impl;
 	(void)config;
 
+	// TODO: The enviroment path trick wont be needed if
+	// we implement cob_loader_impl_execution_path properly.
+	// Remove this once we implement this properly (if needed)
+
 	// Copy environment variables in order to resolve properly the scripts
 	const char *scripts_path = getenv("LOADER_SCRIPT_PATH");
 

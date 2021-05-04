@@ -34,21 +34,23 @@ else()
 	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
 endif()
 
-add_custom_target(${target} ALL
+add_custom_target(${target}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E  make_directory ${BOOTSTRAP_OUTPUT_PATH}
 	COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}
 	SOURCES ${sources}
+	DEPENDS ${sources}
 )
 
 if(NOT OPTION_BUILD_GUIX)
-	add_custom_target(${target}_depends ALL
+	add_custom_target(${target}_depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/cherow ${BOOTSTRAP_OUTPUT_PATH}/node_modules/cherow
 		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_BINARY_DIR}/node_modules to ${BOOTSTRAP_OUTPUT_PATH}/node_modules"
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
 
 	set_target_properties(${target}_depends

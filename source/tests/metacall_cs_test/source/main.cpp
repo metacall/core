@@ -19,7 +19,7 @@
  */
 
 #include <gtest/gtest.h>
-#include <cs-loader-test/environment.hpp>
+#include <metacall-cs-test/environment.hpp>
 
 int main(int argc, char *argv[])
 {

@@ -45,6 +45,16 @@ reflect_function *netcore::get_functions(int *count)
 
 bool netcore::create_delegates()
 {
+	if (!this->create_delegate(this->delegate_execution_path_w, (void **)&this->core_execution_path_w))
+	{
+		return false;
+	}
+
+	if (!this->create_delegate(this->delegate_execution_path_c, (void **)&this->core_execution_path_c))
+	{
+		return false;
+	}
+
 	if (!this->create_delegate(this->delegate_get_functions, (void **)&this->core_get_functions))
 	{
 		return false;
@@ -108,7 +118,35 @@ bool netcore::create_delegates()
 	return true;
 }
 
-bool netcore::load_source(wchar_t *source)
+bool netcore::execution_path(const wchar_t *path)
+{
+	try
+	{
+		return this->core_execution_path_w(path) > 0 ? true : false;
+	}
+	catch (const std::exception &ex)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
+	}
+
+	return false;
+}
+
+bool netcore::execution_path(const char *path)
+{
+	try
+	{
+		return this->core_execution_path_c(path) > 0 ? true : false;
+	}
+	catch (const std::exception &ex)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Exception caught: %s", ex.what());
+	}
+
+	return false;
+}
+
+bool netcore::load_source(const wchar_t *source)
 {
 	try
 	{
@@ -122,7 +160,7 @@ bool netcore::load_source(wchar_t *source)
 	return false;
 }
 
-bool netcore::load_source(char *source)
+bool netcore::load_source(const char *source)
 {
 	try
 	{
@@ -136,7 +174,7 @@ bool netcore::load_source(char *source)
 	return false;
 }
 
-bool netcore::load_files(wchar_t **source, size_t size)
+bool netcore::load_files(const wchar_t **source, size_t size)
 {
 	try
 	{
@@ -150,7 +188,7 @@ bool netcore::load_files(wchar_t **source, size_t size)
 	return false;
 }
 
-bool netcore::load_files(char **source, size_t size)
+bool netcore::load_files(const char **source, size_t size)
 {
 	try
 	{
@@ -164,7 +202,7 @@ bool netcore::load_files(char **source, size_t size)
 	return false;
 }
 
-bool netcore::load_assembly(wchar_t *source)
+bool netcore::load_assembly(const wchar_t *source)
 {
 	try
 	{
@@ -178,7 +216,7 @@ bool netcore::load_assembly(wchar_t *source)
 	return false;
 }
 
-bool netcore::load_assembly(char *source)
+bool netcore::load_assembly(const char *source)
 {
 	try
 	{
@@ -192,7 +230,7 @@ bool netcore::load_assembly(char *source)
 	return false;
 }
 
-execution_result *netcore::execute(char *function)
+execution_result *netcore::execute(const char *function)
 {
 	try
 	{
@@ -205,7 +243,7 @@ execution_result *netcore::execute(char *function)
 
 	return NULL;
 }
-execution_result *netcore::execute(wchar_t *function)
+execution_result *netcore::execute(const wchar_t *function)
 {
 	try
 	{
@@ -218,7 +256,7 @@ execution_result *netcore::execute(wchar_t *function)
 
 	return NULL;
 }
-execution_result *netcore::execute_with_params(char *function, parameters *params)
+execution_result *netcore::execute_with_params(const char *function, parameters *params)
 {
 	try
 	{
@@ -232,7 +270,7 @@ execution_result *netcore::execute_with_params(char *function, parameters *param
 	return NULL;
 }
 
-execution_result *netcore::execute_with_params(wchar_t *function, parameters *params)
+execution_result *netcore::execute_with_params(const wchar_t *function, parameters *params)
 {
 	try
 	{

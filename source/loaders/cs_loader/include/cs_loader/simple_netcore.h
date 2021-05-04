@@ -36,17 +36,19 @@ typedef char source_file[512];
 
 netcore_handle simple_netcore_create(char *dotnet_root, char *dotnet_loader_assembly_path);
 
-reflect_function *simple_netcore_get_functions(netcore_handle, int *);
+reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count);
 
-int simple_netcore_load_script_from_files(netcore_handle handle, char *files[MAX_FILES], size_t size);
+int simple_netcore_load_script_from_files(netcore_handle handle, const char *files[MAX_FILES], size_t size);
 
-int simple_netcore_load_script_from_assembly(netcore_handle handle, char *file);
+int simple_netcore_execution_path(netcore_handle handle, const char *path);
+
+int simple_netcore_load_script_from_assembly(netcore_handle handle, const char *file);
 
 int simple_netcore_load_script_from_memory(netcore_handle handle, const char *buffer, size_t size);
 
-execution_result *simple_netcore_invoke(netcore_handle, const char *);
+execution_result *simple_netcore_invoke(netcore_handle handle, const char *func);
 
-void simple_netcore_destroy(netcore_handle);
+void simple_netcore_destroy(netcore_handle handle);
 
 execution_result *simple_netcore_invoke_with_params(netcore_handle handle, const char *func, parameters *params);
 

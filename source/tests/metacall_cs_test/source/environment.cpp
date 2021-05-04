@@ -17,7 +17,7 @@
  *	limitations under the License.
  *
  */
-#include <cs-loader-test/environment.hpp>
+#include <metacall-cs-test/environment.hpp>
 
 #include <gtest/gtest.h>
 

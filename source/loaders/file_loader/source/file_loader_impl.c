@@ -82,7 +82,7 @@ typedef struct loader_impl_file_descriptor_type
 
 typedef struct loader_impl_file_type
 {
-	void *nil;
+	vector execution_paths;
 
 } * loader_impl_file;
 
@@ -97,6 +97,9 @@ typedef struct loader_impl_file_function_type
 	loader_impl_file_descriptor descriptor;
 
 } * loader_impl_file_function;
+
+static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_naming_name path);
+static void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_naming_name path);
 
 int function_file_interface_create(function func, function_impl impl)
 {
@@ -207,7 +210,14 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
-	file_impl->nil = NULL;
+	file_impl->execution_paths = vector_create(sizeof(loader_naming_path));
+
+	if (file_impl->execution_paths == NULL)
+	{
+		free(file_impl);
+
+		return NULL;
+	}
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -217,19 +227,76 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 
 int file_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	(void)impl;
-	(void)path;
+	loader_impl_file file_impl = loader_impl_get(impl);
+	loader_naming_name *execution_path;
 
-	/* TODO ? */
+	vector_push_back_empty(file_impl->execution_paths);
+
+	execution_path = vector_back(file_impl->execution_paths);
+
+	strncpy(*execution_path, path, LOADER_NAMING_PATH_SIZE);
 
 	return 0;
 }
 
+int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_naming_name path)
+{
+	file_stat_type fs;
+
+	if (file_stat(path, &fs) == 0)
+	{
+		loader_impl_file_descriptor descriptor = NULL;
+
+		vector_insert_empty(handle->paths, vector_size(handle->paths));
+
+		descriptor = vector_back(handle->paths);
+
+		strncpy(descriptor->path, path, LOADER_IMPL_FILE_SIZE);
+
+		descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "File %s loaded from file", path);
+
+		return 0;
+	}
+
+	return 1;
+}
+
+void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_naming_name path)
+{
+	size_t size = vector_size(file_impl->execution_paths);
+
+	if (file_loader_impl_load_path(handle, path) != 0 && size > 0)
+	{
+		size_t iterator;
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			loader_naming_name *execution_path = vector_at(file_impl->execution_paths, iterator);
+			loader_naming_name absolute_path;
+
+			(void)loader_path_join(*execution_path, strlen(*execution_path) + 1, path, strlen(path) + 1, absolute_path);
+
+			if (file_loader_impl_load_path(handle, absolute_path) == 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "File %s not found", absolute_path);
+				return;
+			}
+		}
+	}
+}
+
 loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
-	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
+	loader_impl_file file_impl = loader_impl_get(impl);
 
-	(void)impl;
+	if (file_impl == NULL)
+	{
+		return NULL;
+	}
+
+	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
 
 	if (handle != NULL)
 	{
@@ -246,26 +313,7 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			file_stat_type s;
-
-			if (file_stat(paths[iterator], &s) == 0)
-			{
-				loader_impl_file_descriptor descriptor = NULL;
-
-				vector_insert_empty(handle->paths, vector_size(handle->paths));
-
-				descriptor = vector_back(handle->paths);
-
-				strncpy(descriptor->path, paths[iterator], LOADER_IMPL_FILE_SIZE);
-
-				descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from file", paths[iterator]);
-			}
-			else
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "File %s not found", paths[iterator]);
-			}
+			file_loader_impl_load_execution_path(file_impl, handle, paths[iterator]);
 		}
 
 		if (vector_size(handle->paths) == 0)
@@ -285,11 +333,17 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
-	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
-
 	(void)impl;
+	(void)name;
 	(void)buffer;
 	(void)size;
+
+	// TODO: In theory this should load the buffer, not the name... no?
+	// Although this loader does not take care of the file itself, only the paths;
+	// so probably this make or neither makes sense to be used or it should handle more than the paths
+
+	/*
+	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
 
 	if (handle != NULL)
 	{
@@ -316,20 +370,24 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 		return (loader_handle)handle;
 	}
+	*/
 
 	return NULL;
 }
 
 loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
 {
-	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
+	loader_impl_file file_impl = loader_impl_get(impl);
 
-	(void)impl;
+	if (file_impl == NULL)
+	{
+		return NULL;
+	}
+
+	loader_impl_file_handle handle = malloc(sizeof(struct loader_impl_file_handle_type));
 
 	if (handle != NULL)
 	{
-		file_stat_type s;
-
 		handle->paths = vector_create(sizeof(struct loader_impl_file_descriptor_type));
 
 		if (handle->paths == NULL)
@@ -339,19 +397,15 @@ loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_
 			return NULL;
 		}
 
-		if (file_stat(path, &s) == 0)
+		file_loader_impl_load_execution_path(file_impl, handle, path);
+
+		if (vector_size(handle->paths) == 0)
 		{
-			loader_impl_file_descriptor descriptor = NULL;
+			vector_destroy(handle->paths);
 
-			vector_insert_empty(handle->paths, 0);
+			free(handle);
 
-			descriptor = vector_back(handle->paths);
-
-			strncpy(descriptor->path, path, LOADER_IMPL_FILE_SIZE);
-
-			descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from package", path);
+			return NULL;
 		}
 
 		return (loader_handle)handle;
@@ -440,6 +494,11 @@ int file_loader_impl_destroy(loader_impl impl)
 	{
 		/* Destroy children loaders */
 		loader_unload_children(impl);
+
+		if (file_impl->execution_paths != NULL)
+		{
+			vector_destroy(file_impl->execution_paths);
+		}
 
 		free(file_impl);
 

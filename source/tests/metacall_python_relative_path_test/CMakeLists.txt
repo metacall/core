@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_FILE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_SCRIPTS_PY)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target file-loader-test)
+set(target metacall-python-relative-path-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/file_loader_test.cpp
+	${source_path}/metacall_python_relative_path_test.cpp
 )
 
 # Group source files
@@ -85,22 +85,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::threading
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::portability
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::filesystem
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::detour
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::serial
-	${META_PROJECT_NAME}::configuration
-	${META_PROJECT_NAME}::loader
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -135,7 +120,6 @@ target_link_libraries(${target}
 #
 
 add_test(NAME ${target}
-	WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
 	COMMAND $<TARGET_FILE:${target}>
 )
 
@@ -144,7 +128,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	file_loader
+	py_loader
 )
 
 #

@@ -34,10 +34,13 @@
 
 #include <curl/curl.h>
 
-#include <stdlib.h>
+#include <cstdlib>
+#include <cstring>
+
 #include <algorithm>
 #include <fstream>
 #include <map>
+#include <set>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -48,6 +51,7 @@ typedef struct loader_impl_rpc_type
 	CURL *invoke_curl;
 	void *allocator;
 	std::map<type_id, type> types;
+	std::set<std::string> execution_paths;
 
 } * loader_impl_rpc;
 
@@ -370,12 +374,11 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 
 int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	/* TODO */
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
 
-	(void)impl;
-	(void)path;
+	auto pair = rpc_impl->execution_paths.insert(path);
 
-	return 0;
+	return pair.second == true ? 0 : 1;
 }
 
 int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, std::istream &stream)
@@ -426,6 +429,31 @@ int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, con
 	return result;
 }
 
+int rpc_loader_impl_load_from_file_execution_paths(loader_impl_rpc rpc_impl, loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+{
+	if (rpc_loader_impl_load_from_file_handle(rpc_handle, path) == 0)
+	{
+		return 0;
+	}
+
+	if (rpc_impl->execution_paths.size() > 0)
+	{
+		for (auto it : rpc_impl->execution_paths)
+		{
+			loader_naming_path absolute_path;
+
+			(void)loader_path_join(it.c_str(), it.size(), path, strlen(path) + 1, absolute_path);
+
+			if (rpc_loader_impl_load_from_file_handle(rpc_handle, absolute_path) == 0)
+			{
+				return 0;
+			}
+		}
+	}
+
+	return 1;
+}
+
 int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, const char *buffer, size_t size)
 {
 	if (size == 0)
@@ -443,16 +471,16 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
-	(void)impl;
-
 	if (rpc_handle == nullptr)
 	{
 		return NULL;
 	}
 
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
+
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
-		if (rpc_loader_impl_load_from_file_handle(rpc_handle, paths[iterator]) != 0)
+		if (rpc_loader_impl_load_from_file_execution_paths(rpc_impl, rpc_handle, paths[iterator]) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Could not load the URL file descriptor %s", paths[iterator]);
 
@@ -643,7 +671,7 @@ int rpc_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 int rpc_loader_impl_destroy(loader_impl impl)
 {
-	loader_impl_rpc rpc_impl = (loader_impl_rpc)loader_impl_get(impl);
+	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
 
 	/* Destroy children loaders */
 	loader_unload_children(impl);

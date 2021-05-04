@@ -20,9 +20,22 @@
 
 #include <gtest/gtest.h>
 
-int main(int argc, char *argv[])
-{
-	::testing::InitGoogleTest(&argc, argv);
+#include <metacall/metacall.h>
 
-	return RUN_ALL_TESTS();
+class metacall_ruby_test : public testing::Test
+{
+protected:
+};
+
+TEST_F(metacall_ruby_test, DefaultConstructor)
+{
+	const char *rb_scripts[] = {
+		"hello.rb"
+	};
+
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+	EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
+
+	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

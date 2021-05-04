@@ -3,7 +3,7 @@
 #
 
 # Export output script directory
-set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts/" CACHE PATH "MetaCall scripts path")
+set(LOADER_SCRIPT_PATH "${PROJECT_BINARY_DIR}/scripts" CACHE PATH "MetaCall scripts path")
 
 # Export output loader plugin directory
 set(LOADER_LIBRARY_PATH "@OUTPUT_DIRECTORY_DIR@" CACHE PATH "MetaCall loaders path")

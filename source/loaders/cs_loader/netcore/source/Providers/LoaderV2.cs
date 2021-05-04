@@ -12,6 +12,7 @@ namespace CSLoader.Providers
     {
         public LoaderV2(ILog log) : base(log)
         {
+            //This handler is called only when the common language runtime tries to bind to the assembly and fails
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
         }
@@ -39,11 +40,17 @@ namespace CSLoader.Providers
                         log.Error("Invalid Assembly.LoadFile: " + fullPath);
                     }
                 }
+                catch (FileNotFoundException)
+                {
+                    continue;
+                }
                 catch (Exception ex)
                 {
                     log.Error(string.Format("Exception when loading the Assembly {0}: {1}", assemName.Name, ex.Message), ex);
                 }
             }
+
+            log.Error("Assembly not found: " + assemName.Name);
 
             return asm;
         }

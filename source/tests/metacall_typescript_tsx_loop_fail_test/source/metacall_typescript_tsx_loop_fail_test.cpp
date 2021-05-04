@@ -39,7 +39,7 @@ TEST_F(metacall_tsx_loop_fail_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_TS)
 	{
 		const char *tsx_scripts[] = {
-			"loopfail.tsx"
+			"loopfail/loopfail.tsx"
 		};
 
 		/* Load scripts */

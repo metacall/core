@@ -146,6 +146,9 @@ extern bool linux_at_secure;
 struct loader_impl_async_initialize_safe_type;
 typedef struct loader_impl_async_initialize_safe_type *loader_impl_async_initialize_safe;
 
+struct loader_impl_async_execution_path_safe_type;
+typedef struct loader_impl_async_execution_path_safe_type *loader_impl_async_execution_path_safe;
+
 struct loader_impl_async_load_from_file_safe_type;
 typedef struct loader_impl_async_load_from_file_safe_type *loader_impl_async_load_from_file_safe;
 
@@ -189,6 +192,10 @@ struct loader_impl_node_type
 	napi_value initialize_safe_ptr;
 	loader_impl_async_initialize_safe initialize_safe;
 	napi_threadsafe_function threadsafe_initialize;
+
+	napi_value execution_path_safe_ptr;
+	loader_impl_async_execution_path_safe execution_path_safe;
+	napi_threadsafe_function threadsafe_execution_path;
 
 	napi_value load_from_file_safe_ptr;
 	loader_impl_async_load_from_file_safe load_from_file_safe;
@@ -280,6 +287,12 @@ struct loader_impl_async_initialize_safe_type
 	int result;
 };
 
+struct loader_impl_async_execution_path_safe_type
+{
+	loader_impl_node node_impl;
+	char *path;
+};
+
 struct loader_impl_async_load_from_file_safe_type
 {
 	loader_impl_node node_impl;
@@ -305,14 +318,12 @@ struct loader_impl_async_clear_safe_type
 
 struct loader_impl_async_discover_function_safe_type
 {
-	loader_impl impl;
 	loader_impl_node node_impl;
 	napi_value func;
 };
 
 struct loader_impl_async_discover_safe_type
 {
-	loader_impl impl;
 	loader_impl_node node_impl;
 	napi_ref handle_ref;
 	context ctx;
@@ -430,6 +441,10 @@ static future_interface future_node_singleton(void);
 static void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe);
 
 static napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe execution_path_safe);
+
+static napi_value node_loader_impl_async_execution_path_safe(napi_env env, napi_callback_info info);
 
 static void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_safe func_call_safe);
 
@@ -846,9 +861,6 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	else if (valuetype == napi_function)
 	{
 		struct loader_impl_async_discover_function_safe_type discover_function_safe = {
-			/* TODO: */
-			NULL,
-			/* impl, */
 			node_impl,
 			v
 		};
@@ -1632,6 +1644,105 @@ napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_in
 	uv_cond_signal(&initialize_safe->node_impl->cond);
 
 	uv_mutex_unlock(&initialize_safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execution_path_safe execution_path_safe)
+{
+	static const char execution_path_str[] = "execution_path";
+	napi_value function_table_object;
+	napi_value execution_path_str_value;
+	bool result = false;
+	napi_handle_scope handle_scope;
+	loader_impl_node node_impl = execution_path_safe->node_impl;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, node_impl->function_table_object_ref, &function_table_object);
+
+	node_loader_impl_exception(env, status);
+
+	/* Create function string */
+	status = napi_create_string_utf8(env, execution_path_str, sizeof(execution_path_str) - 1, &execution_path_str_value);
+
+	node_loader_impl_exception(env, status);
+
+	/* Check if exists in the table */
+	status = napi_has_own_property(env, function_table_object, execution_path_str_value, &result);
+
+	node_loader_impl_exception(env, status);
+
+	if (result == true)
+	{
+		napi_value function_trampoline_execution_path;
+		napi_valuetype valuetype;
+		napi_value argv[1];
+
+		status = napi_get_named_property(env, function_table_object, execution_path_str, &function_trampoline_execution_path);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_typeof(env, function_trampoline_execution_path, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function execution_path in function table object");
+		}
+
+		/* Create parameters */
+		status = napi_create_string_utf8(env, execution_path_safe->path, strlen(execution_path_safe->path), &argv[0]);
+
+		node_loader_impl_exception(env, status);
+
+		/* Call to load from file function */
+		napi_value global, return_value;
+
+		status = napi_get_reference_value(env, node_impl->global_ref, &global);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_call_function(env, global, function_trampoline_execution_path, 1, argv, &return_value);
+
+		node_loader_impl_exception(env, status);
+	}
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_execution_path_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_execution_path_safe execution_path_safe = NULL;
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&execution_path_safe);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&execution_path_safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	execution_path_safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_execution_path_safe(env, execution_path_safe);
+
+	/* Clear environment */
+	// execution_path_safe->node_impl->env = NULL;
+
+	/* Signal start condition */
+	uv_cond_signal(&execution_path_safe->node_impl->cond);
+
+	uv_mutex_unlock(&execution_path_safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -3219,7 +3330,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							node_loader_impl_exception(env, status);
 
-							signature_set_return(s, loader_impl_type(discover_safe->impl, return_type_str));
+							signature_set_return(s, loader_impl_type(discover_safe->node_impl->impl, return_type_str));
 
 							free(return_type_str);
 						}
@@ -3279,7 +3390,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 							node_loader_impl_exception(env, status);
 
-							signature_set(s, (size_t)arg_index, parameter_name_str, loader_impl_type(discover_safe->impl, parameter_type_str));
+							signature_set(s, (size_t)arg_index, parameter_name_str, loader_impl_type(discover_safe->node_impl->impl, parameter_type_str));
 
 							if (parameter_type_str != NULL)
 							{
@@ -3436,6 +3547,19 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 				(loader_impl_async_initialize_safe_type **)(&node_impl->initialize_safe),
 				&node_impl->initialize_safe_ptr,
 				&node_impl->threadsafe_initialize);
+		}
+
+		/* Safe execution path */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_execution_path_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_execution_path_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_execution_path_safe,
+				(loader_impl_async_execution_path_safe_type **)(&node_impl->execution_path_safe),
+				&node_impl->execution_path_safe_ptr,
+				&node_impl->threadsafe_execution_path);
 		}
 
 		/* Safe load from file */
@@ -4140,10 +4264,65 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 int node_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	/* TODO */
+	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
+	napi_status status;
 
-	(void)impl;
-	(void)path;
+	if (node_impl == NULL)
+	{
+		return 1;
+	}
+
+	/* Set up load from file safe arguments */
+	node_impl->execution_path_safe->node_impl = node_impl;
+	node_impl->execution_path_safe->path = (char *)path;
+
+	/* Check if we are in the JavaScript thread */
+	if (node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_execution_path_safe(node_impl->env, node_impl->execution_path_safe);
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+	{
+		node_impl->locked.store(true);
+
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_impl->threadsafe_execution_path);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe load from file function in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_impl->threadsafe_execution_path, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe load from file function in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_impl->threadsafe_execution_path, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe load from file function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+		node_impl->locked.store(false);
+
+		/* Unlock call safe mutex */
+		uv_mutex_unlock(&node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_execution_path, the call has not been executed in order to avoid the deadlock");
+	}
 
 	return 0;
 }
@@ -4385,7 +4564,6 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	}
 
 	/* Set up discover safe arguments */
-	node_impl->discover_safe->impl = impl;
 	node_impl->discover_safe->node_impl = node_impl;
 	node_impl->discover_safe->handle_ref = handle_ref;
 	node_impl->discover_safe->ctx = ctx;
@@ -4590,6 +4768,14 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 				env,
 				(loader_impl_async_initialize_safe_type **)(&node_impl->initialize_safe),
 				&node_impl->threadsafe_initialize);
+		}
+
+		/* Safe execution path */
+		{
+			node_loader_impl_thread_safe_function_destroy<loader_impl_async_execution_path_safe_type>(
+				env,
+				(loader_impl_async_execution_path_safe_type **)(&node_impl->execution_path_safe),
+				&node_impl->threadsafe_execution_path);
 		}
 
 		/* Safe load from file */

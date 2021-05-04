@@ -52,22 +52,23 @@ typedef struct
 	reflect_param pars[10];
 } reflect_function;
 
-typedef void(void_func)(void);
+typedef char(execution_path_w)(const wchar_t *source);
+typedef char(execution_path_c)(const char *source);
 
-typedef char(load_from_source_w)(wchar_t *source);
+typedef char(load_from_source_w)(const wchar_t *source);
 typedef char(load_from_source_c)(const char *source);
 
-typedef char(load_from_files_w)(wchar_t **source, size_t size);
-typedef char(load_from_files_c)(char **source, size_t size);
+typedef char(load_from_files_w)(const wchar_t **source, size_t size);
+typedef char(load_from_files_c)(const char **source, size_t size);
 
-typedef char(load_from_assembly_w)(wchar_t *source);
+typedef char(load_from_assembly_w)(const wchar_t *source);
 typedef char(load_from_assembly_c)(const char *source);
 
 typedef void(corefunction_destroy_execution_result)(execution_result *er);
-typedef execution_result *(execute_function_c)(char *function);
-typedef execution_result *(execute_function_w)(wchar_t *function);
-typedef execution_result *(execute_function_with_params_w)(wchar_t *function, parameters *);
-typedef execution_result *(execute_function_with_params_c)(char *function, parameters *);
+typedef execution_result *(execute_function_c)(const char *function);
+typedef execution_result *(execute_function_w)(const wchar_t *function);
+typedef execution_result *(execute_function_with_params_w)(const wchar_t *function, parameters *);
+typedef execution_result *(execute_function_with_params_c)(const char *function, parameters *);
 typedef void(get_loaded_functions)(int *, reflect_function *);
 
 #if defined(__linux) | defined(linux)

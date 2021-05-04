@@ -39,7 +39,7 @@ if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target}_depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND npm install
-		SOURCES ${sources}
+		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
 
 	set_target_properties(${target}_depends
@@ -49,12 +49,13 @@ if(NOT OPTION_BUILD_GUIX)
 	)
 
 	# Build Bootstrap
-	add_custom_target(${target} ALL
+	add_custom_target(${target}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND npm run build
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
 		SOURCES ${sources}
+		DEPENDS ${sources}
 	)
 
 	set_target_properties(${target}
@@ -97,6 +98,7 @@ else()
 		COMMAND ${NODEJS_EXECUTABLE} compile.js
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
 		SOURCES ${sources}
+		DEPENDS ${sources}
 	)
 
 	set_target_properties(${target}

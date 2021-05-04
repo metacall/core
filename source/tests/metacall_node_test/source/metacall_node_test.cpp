@@ -57,6 +57,17 @@ TEST_F(metacall_node_test, DefaultConstructor)
 		EXPECT_EQ((double)metacall_value_to_double(ret), (double)7.0);
 
 		metacall_value_destroy(ret);
+
+		// Test execution path
+		EXPECT_EQ((int)0, (int)metacall_execution_path("node", METACALL_NODE_TEST_EXECUTION_PATH));
+
+		const char *node_execution_path_scripts[] = {
+			"inline.js"
+		};
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_execution_path_scripts, sizeof(node_execution_path_scripts) / sizeof(node_execution_path_scripts[0]), NULL));
+
+		EXPECT_NE((void *)NULL, (void *)metacall_function("inline"));
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 

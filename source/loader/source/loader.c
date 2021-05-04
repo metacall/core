@@ -403,45 +403,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 
 			if (impl != NULL)
 			{
-				const char *script_path = loader_env_script_path();
-
-				if (script_path != NULL)
-				{
-					loader_naming_path *absolute_paths = malloc(sizeof(loader_naming_path) * size);
-
-					size_t iterator;
-
-					int result;
-
-					if (absolute_paths == NULL)
-					{
-						log_write("metacall", LOG_LEVEL_ERROR, "Loader load from file invalid absolute paths allocation");
-
-						return 1;
-					}
-
-					for (iterator = 0; iterator < size; ++iterator)
-					{
-						if (loader_path_is_absolute(paths[iterator]) != 0)
-						{
-							(void)loader_path_join(script_path, strlen(script_path) + 1, paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1) + 1, absolute_paths[iterator]);
-						}
-						else
-						{
-							strncpy(absolute_paths[iterator], paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE - 1) + 1);
-						}
-					}
-
-					result = loader_impl_load_from_file(impl, (const loader_naming_path *)absolute_paths, size, handle);
-
-					free(absolute_paths);
-
-					return result;
-				}
-				else
-				{
-					return loader_impl_load_from_file(impl, paths, size, handle);
-				}
+				return loader_impl_load_from_file(impl, paths, size, handle);
 			}
 		}
 	}

@@ -90,6 +90,8 @@ TEST_F(py_loader_port_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+		EXPECT_NE((void *)NULL, (void *)metacall_function("get_second"));
+
 		ret = metacall("get_second", 5, 12);
 
 		EXPECT_NE((void *)NULL, (void *)ret);

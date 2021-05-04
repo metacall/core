@@ -33,6 +33,9 @@ protected:
 	char *dotnet_loader_assembly_path;
 
 public:
+	execution_path_w *core_execution_path_w;
+	execution_path_c *core_execution_path_c;
+
 	load_from_source_w *core_load_from_source_w;
 	load_from_source_c *core_load_from_source_c;
 
@@ -52,6 +55,9 @@ public:
 	const CHARSTRING *loader_dll = W("CSLoader.dll");
 	const CHARSTRING *class_name = W("CSLoader.MetacallEntryPoint");
 	const CHARSTRING *assembly_name = W("CSLoader");
+
+	const CHARSTRING *delegate_execution_path_w = W("ExecutionPathW");
+	const CHARSTRING *delegate_execution_path_c = W("ExecutionPathW");
 
 	const CHARSTRING *delegate_load_source_w = W("LoadSourceW");
 	const CHARSTRING *delegate_load_source_c = W("LoadSourceC");
@@ -75,20 +81,23 @@ public:
 	virtual bool start() = 0;
 	virtual void stop() = 0;
 
-	bool load_source(wchar_t *source);
-	bool load_source(char *source);
+	bool execution_path(const wchar_t *path);
+	bool execution_path(const char *path);
 
-	bool load_files(wchar_t **source, size_t size);
-	bool load_files(char **source, size_t size);
+	bool load_source(const wchar_t *source);
+	bool load_source(const char *source);
 
-	bool load_assembly(wchar_t *source);
-	bool load_assembly(char *source);
+	bool load_files(const wchar_t **source, size_t size);
+	bool load_files(const char **source, size_t size);
 
-	execution_result *execute(char *function);
-	execution_result *execute(wchar_t *function);
+	bool load_assembly(const wchar_t *source);
+	bool load_assembly(const char *source);
 
-	execution_result *execute_with_params(char *function, parameters *params);
-	execution_result *execute_with_params(wchar_t *function, parameters *params);
+	execution_result *execute(const char *function);
+	execution_result *execute(const wchar_t *function);
+
+	execution_result *execute_with_params(const char *function, parameters *params);
+	execution_result *execute_with_params(const wchar_t *function, parameters *params);
 
 	bool create_delegates();
 

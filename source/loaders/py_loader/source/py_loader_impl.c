@@ -88,6 +88,8 @@ struct loader_impl_py_type
 	PyObject *builtins_module;
 	PyObject *traceback_module;
 	PyObject *traceback_format_exception;
+	PyObject *import_module;
+	PyObject *import_function;
 
 #if DEBUG_ENABLED
 	PyObject *gc_module;
@@ -132,6 +134,10 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_d
 static void py_loader_impl_value_invoke_state_finalize(value v, void *data);
 
 static void py_loader_impl_value_ptr_finalize(value v, void *data);
+
+static int py_loader_impl_finalize(loader_impl_py py_impl);
+
+static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_naming_name name, const char *buffer);
 
 static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
 	{ PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC,
@@ -1388,7 +1394,7 @@ int py_loader_impl_import_module(loader_impl_py py_impl, PyObject **loc, const c
 
 int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_impl)
 {
-	if (py_loader_impl_import_module(py_impl, &(py_impl->builtins_module), "builtins") != 0)
+	if (py_loader_impl_import_module(py_impl, &py_impl->builtins_module, "builtins") != 0)
 	{
 		goto error_import_module;
 	}
@@ -1525,6 +1531,9 @@ int py_loader_impl_initialize_gc(loader_impl_py py_impl)
 		return 0;
 	}
 
+	Py_XDECREF(py_impl->gc_debug_leak);
+	Py_XDECREF(py_impl->gc_debug_stats);
+
 error_callable_check:
 	Py_XDECREF(py_impl->gc_set_debug);
 error_set_debug:
@@ -1540,12 +1549,78 @@ error_import_module:
 #endif
 }
 
+int py_loader_impl_initialize_import(loader_impl_py py_impl)
+{
+	static const char import_module_str[] =
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 5
+		// TODO: Implement better error handling
+		"import importlib.util\n"
+		"import importlib\n"
+		"def load_from_path(module_name, path = None):\n"
+		"	try:\n"
+		"		if path == None:\n"
+		"			return importlib.import_module(module_name)\n"
+		"		else:\n"
+		"			spec = importlib.util.spec_from_file_location(module_name, path)\n"
+		"			m = importlib.util.module_from_spec(spec)\n"
+		"			spec.loader.exec_module(m)\n"
+		"			return m\n"
+		"	except Exception as e:\n"
+		"		return e\n"
+#elif PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 3
+		// TODO: Not tested
+		// TODO: Implement load from module (optional path)
+		// TODO: Catch exceptions and implement better error handling
+		"from importlib.machinery import SourceFileLoader\n"
+		"def load_from_path(module_name, path):\n"
+		"	return SourceFileLoader(module_name, path).load_module()\n"
+#elif PY_MAJOR_VERSION == 2
+		// TODO: Not tested
+		// TODO: Implement load from module (optional path)
+		// TODO: Catch exceptions and implement better error handling
+		"import imp\n"
+		"def load_from_path(module_name, path):\n"
+		"	return imp.load_source(module_name, path)\n"
+#else
+	#error "Import module not supported in this Python version"
+#endif
+		;
+
+	py_impl->import_module = py_loader_impl_load_from_memory_compile(py_impl, "py_loader_impl_load_from_file_path", import_module_str);
+
+	if (py_impl->import_module == NULL)
+	{
+		goto error_import_compile;
+	}
+
+	py_impl->import_function = PyObject_GetAttrString(py_impl->import_module, "load_from_path");
+
+	if (py_impl->import_function == NULL || !PyCallable_Check(py_impl->import_function))
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			goto error_import_function;
+		}
+	}
+
+	return 0;
+error_import_function:
+	Py_DECREF(py_impl->import_module);
+error_import_compile:
+	py_loader_impl_error_print(py_impl);
+	return 1;
+}
+
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
 	(void)config;
 
 	loader_impl_py py_impl = malloc(sizeof(struct loader_impl_py_type));
+	int traceback_initialized = 1;
+#if DEBUG_ENABLED
+	int gc_initialized = 1;
+#endif
 
 	if (py_impl == NULL)
 	{
@@ -1570,12 +1645,17 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid traceback module creation");
 	}
+	else
+	{
+		traceback_initialized = 0;
+	}
 
 #if DEBUG_ENABLED
 	{
 		if (py_loader_impl_initialize_gc(py_impl) != 0)
 		{
 			PyObject_CallMethodObjArgs(py_impl->gc_module, py_impl->gc_set_debug, py_impl->gc_debug_leak /* py_impl->gc_debug_stats */);
+			gc_initialized = 0;
 		}
 		else
 		{
@@ -1586,12 +1666,17 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	if (py_loader_impl_initialize_inspect(impl, py_impl) != 0)
 	{
-		goto error_after_init;
+		goto error_after_traceback_and_gc;
+	}
+
+	if (py_loader_impl_initialize_import(py_impl) != 0)
+	{
+		goto error_after_inspect;
 	}
 
 	if (PY_LOADER_PORT_NAME_FUNC() == NULL)
 	{
-		goto error_after_init;
+		goto error_after_import;
 	}
 
 	PyGILState_Release(gstate);
@@ -1603,8 +1688,30 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	return py_impl;
 
-error_after_init:
+error_after_import:
+	Py_DECREF(py_impl->import_module);
+	Py_DECREF(py_impl->import_function);
+error_after_inspect:
+	Py_DECREF(py_impl->inspect_signature);
+	Py_DECREF(py_impl->inspect_module);
+	Py_DECREF(py_impl->builtins_module);
+error_after_traceback_and_gc:
+	if (traceback_initialized == 0)
+	{
+		Py_DECREF(py_impl->traceback_format_exception);
+		Py_DECREF(py_impl->traceback_module);
+	}
+#if DEBUG_ENABLED
+	if (gc_initialized == 0)
+	{
+		Py_DECREF(py_impl->gc_set_debug);
+		Py_DECREF(py_impl->gc_debug_leak);
+		Py_DECREF(py_impl->gc_debug_stats);
+		Py_DECREF(py_impl->gc_module);
+	}
+#endif
 	PyGILState_Release(gstate);
+	(void)py_loader_impl_finalize(py_impl);
 error_init_py:
 	free(py_impl);
 error_alloc_py_impl:
@@ -1620,20 +1727,37 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 		return 1;
 	}
 
+	int result = 0;
 	PyGILState_STATE gstate = PyGILState_Ensure();
-	PyObject *system_path = PySys_GetObject("path");
+	PyObject *system_paths = PySys_GetObject("path");
 	PyObject *current_path = PyUnicode_DecodeFSDefault(path);
 
+	for (Py_ssize_t index = 0; index < PyList_Size(system_paths); ++index)
+	{
+		PyObject *elem = PyList_GetItem(system_paths, index);
+
+		if (PyObject_RichCompareBool(elem, current_path, Py_EQ) == 1)
+		{
+			goto clear_current_path;
+		}
+	}
+
 	/* Put the local paths in front of global paths */
-	PyList_Insert(system_path, 0, current_path);
+	if (PyList_Insert(system_paths, 0, current_path) != 0)
+	{
+		result = 1;
+		py_loader_impl_error_print(py_impl);
+		goto clear_current_path;
+	}
 
-	py_loader_impl_sys_path_print(system_path);
+#if DEBUG_ENABLED
+	py_loader_impl_sys_path_print(system_paths);
+#endif
 
+clear_current_path:
 	Py_DECREF(current_path);
-
 	PyGILState_Release(gstate);
-
-	return 0;
+	return result;
 }
 
 loader_impl_py_handle py_loader_impl_handle_create(size_t size)
@@ -1667,26 +1791,31 @@ error_alloc_handle:
 	return NULL;
 }
 
+void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
+{
+	PyObject *system_modules = PySys_GetObject("modules");
+
+	if (module->name != NULL)
+	{
+		PyObject_DelItem(system_modules, module->name);
+		Py_XDECREF(module->name);
+		module->name = NULL;
+	}
+
+	if (module->instance != NULL)
+	{
+		Py_XDECREF(module->instance);
+		module->instance = NULL;
+	}
+}
+
 void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 {
 	PyGILState_STATE gstate = PyGILState_Ensure();
-	PyObject *system_modules = PySys_GetObject("modules");
 
 	for (size_t iterator = 0; iterator < py_handle->size; ++iterator)
 	{
-		/* This causes an error, since we also decrease the ref count of the
-		 * instance later, potentially causing a double free (depends on when
-		 * the GC runs). 
-		 * It has been left here for documentation purposes: */
-		/* PyObject_Del(py_handle->modules[iterator].instance); */
-
-		if (py_handle->modules[iterator].name != NULL)
-		{
-			PyObject_DelItem(system_modules, py_handle->modules[iterator].name);
-		}
-
-		Py_XDECREF(py_handle->modules[iterator].instance);
-		Py_XDECREF(py_handle->modules[iterator].name);
+		py_loader_impl_module_destroy(&py_handle->modules[iterator]);
 	}
 
 	PyGILState_Release(gstate);
@@ -1694,8 +1823,138 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	free(py_handle);
 }
 
+int py_loader_impl_load_from_file_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+{
+	loader_naming_name name;
+	size_t size = loader_path_get_fullname(path, name);
+
+	if (size <= 1)
+	{
+		goto error_name_create;
+	}
+
+	module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
+
+	if (module->name == NULL)
+	{
+		goto error_name_create;
+	}
+
+	PyObject *args_tuple = PyTuple_New(1);
+
+	if (args_tuple == NULL)
+	{
+		goto error_tuple_create;
+	}
+
+	PyTuple_SetItem(args_tuple, 0, module->name);
+
+	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
+
+	if (!(module->instance != NULL && PyModule_Check(module->instance)))
+	{
+		goto error_module_instance;
+	}
+
+	Py_DECREF(args_tuple);
+
+	return 0;
+
+error_module_instance:
+	Py_DECREF(args_tuple);
+error_tuple_create:
+	Py_XDECREF(module->name);
+	module->name = NULL;
+error_name_create:
+	return 1;
+}
+
+int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+{
+	loader_naming_name name;
+	size_t size = loader_path_get_fullname(path, name);
+
+	if (size <= 1)
+	{
+		goto error_name_create;
+	}
+
+	module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
+
+	if (module->name == NULL)
+	{
+		goto error_name_create;
+	}
+
+	PyObject *py_path = PyUnicode_DecodeFSDefault(path);
+
+	if (py_path == NULL)
+	{
+		goto error_path_create;
+	}
+
+	PyObject *args_tuple = PyTuple_New(2);
+
+	if (args_tuple == NULL)
+	{
+		goto error_tuple_create;
+	}
+
+	PyTuple_SetItem(args_tuple, 0, module->name);
+	PyTuple_SetItem(args_tuple, 1, py_path);
+
+	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
+
+	if (!(module->instance != NULL && PyModule_Check(module->instance)))
+	{
+		goto error_module_instance;
+	}
+
+	Py_DECREF(args_tuple);
+	Py_DECREF(py_path);
+
+	return 0;
+
+error_module_instance:
+	Py_DECREF(args_tuple);
+error_tuple_create:
+	Py_DECREF(py_path);
+error_path_create:
+	Py_XDECREF(module->name);
+	module->name = NULL;
+error_name_create:
+	return 1;
+}
+
+int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+{
+	PyObject *system_paths = PySys_GetObject("path");
+
+	for (Py_ssize_t index = 0; index < PyList_Size(system_paths); ++index)
+	{
+		PyObject *elem = PyList_GetItem(system_paths, index);
+		Py_ssize_t length = 0;
+		const char *system_path_str = PyUnicode_AsUTF8AndSize(elem, &length);
+		loader_naming_path join_path, canonical_path;
+		size_t join_path_size = loader_path_join(system_path_str, length + 1, path, strlen(path) + 1, join_path);
+		loader_path_canonical(join_path, join_path_size, canonical_path);
+
+		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path) == 0)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Python Loader relative module loaded at %s", canonical_path);
+
+			return 0;
+		}
+
+		PyErr_Clear();
+	}
+
+	return 1;
+}
+
 loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
+	loader_impl_py py_impl = loader_impl_get(impl);
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(size);
 
 	if (py_handle == NULL)
@@ -1704,50 +1963,79 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	}
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
+	size_t iterator;
 
-	for (size_t iterator = 0; iterator < size; ++iterator)
+	/* Possibly a recursive call */
+	if (Py_EnterRecursiveCall(" while loading a module from file in Python Loader") != 0)
 	{
-		loader_naming_name module_name;
+		goto error_recursive_call;
+	}
 
-		loader_path_get_module_name(paths[iterator], module_name, "py");
-
-		py_handle->modules[iterator].name = PyUnicode_DecodeFSDefault(module_name);
-
-		/* TODO: Implement a map in the core to hold all directories by each loader impl */
-
-		/* if (loader_impl_has_execution_path(location_path) != 0) */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		/* Try to load the module as it is */
+		if (py_loader_impl_load_from_file_module(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
 		{
-			loader_naming_path location_path;
-
-			loader_path_get_path(paths[iterator], strlen(paths[iterator]) + 1, location_path);
-
-			if (py_loader_impl_execution_path(impl, location_path) != 0)
+			/* Otherwise, we assume it is a path so we load from path */
+			if (loader_path_is_absolute(paths[iterator]) == 0)
 			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Python loader invalid execution path: %s", location_path);
-				goto error_import_module;
+				/* Load as absolute path */
+				if (py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
+				{
+					goto error_import_module;
+				}
+			}
+			else
+			{
+				/* Try to load it as a path relative to all execution paths */
+				if (py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
+				{
+					goto error_import_module;
+				}
 			}
 		}
-
-		py_handle->modules[iterator].instance = PyImport_Import(py_handle->modules[iterator].name);
-
-		if (py_handle->modules[iterator].instance == NULL)
-		{
-			loader_impl_py py_impl = loader_impl_get(impl);
-
-			py_loader_impl_error_print(py_impl);
-			goto error_import_module;
-		}
 	}
+
+	if (PyErr_Occurred() != NULL)
+	{
+		PyErr_Clear();
+	}
+
+	/* End of recursive call */
+	Py_LeaveRecursiveCall();
 
 	PyGILState_Release(gstate);
 
 	return (loader_handle)py_handle;
 
 error_import_module:
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		PyErr_Clear();
+	}
+error_recursive_call:
 	PyGILState_Release(gstate);
 	py_loader_impl_handle_destroy(py_handle);
 error_create_handle:
 	return NULL;
+}
+
+PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_naming_name name, const char *buffer)
+{
+	PyObject *compiled = Py_CompileString(buffer, name, Py_file_input);
+
+	if (compiled == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return NULL;
+	}
+
+	PyObject *instance = PyImport_ExecCodeModule(name, compiled);
+
+	Py_DECREF(compiled);
+
+	return instance;
 }
 
 loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
@@ -1762,16 +2050,16 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	}
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
-	PyObject *compiled = Py_CompileString(buffer, name, Py_file_input);
-	loader_impl_py py_impl = loader_impl_get(impl);
 
-	if (compiled == NULL)
+	/* Possibly a recursive call */
+	if (Py_EnterRecursiveCall(" while loading a module from memory in Python Loader") != 0)
 	{
-		py_loader_impl_error_print(py_impl);
 		goto error_import_module;
 	}
 
-	py_handle->modules[0].instance = PyImport_ExecCodeModule(name, compiled);
+	loader_impl_py py_impl = loader_impl_get(impl);
+
+	py_handle->modules[0].instance = py_loader_impl_load_from_memory_compile(py_impl, name, buffer);
 
 	if (py_handle->modules[0].instance == NULL)
 	{
@@ -1780,6 +2068,9 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	}
 
 	py_handle->modules[0].name = PyUnicode_DecodeFSDefault(name);
+
+	/* End of recursive call */
+	Py_LeaveRecursiveCall();
 
 	PyGILState_Release(gstate);
 
@@ -2278,6 +2569,33 @@ void py_loader_impl_sys_path_print(PyObject *sys_path_list)
 	Py_XDECREF(separator);
 }
 
+int py_loader_impl_finalize(loader_impl_py py_impl)
+{
+	if (Py_IsInitialized() != 0)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+		}
+
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
+		{
+			if (Py_FinalizeEx() != 0)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Error when executing Py_FinalizeEx");
+				return 1;
+			}
+		}
+#else
+		{
+			Py_Finalize();
+		}
+#endif
+	}
+
+	return 0;
+}
+
 int py_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
@@ -2295,6 +2613,8 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DECREF(py_impl->builtins_module);
 	Py_DECREF(py_impl->traceback_format_exception);
 	Py_DECREF(py_impl->traceback_module);
+	Py_DECREF(py_impl->import_module);
+	Py_DECREF(py_impl->import_function);
 
 #if DEBUG_ENABLED
 	{
@@ -2306,28 +2626,9 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 #endif
 
-	if (Py_IsInitialized() != 0)
-	{
-		if (PyErr_Occurred() != NULL)
-		{
-			py_loader_impl_error_print(py_impl);
-		}
-
-#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 6
-		{
-			if (Py_FinalizeEx() != 0)
-			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Error when executing Py_FinalizeEx");
-			}
-		}
-#else
-		{
-			Py_Finalize();
-		}
-#endif
-	}
+	int result = py_loader_impl_finalize(py_impl);
 
 	free(py_impl);
 
-	return 0;
+	return result;
 }

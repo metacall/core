@@ -109,6 +109,7 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+	PY_LOADER_TEST_SCRIPT_ABSOLUTE_PATH="${LOADER_SCRIPT_PATH}/dicty.py"
 )
 
 #

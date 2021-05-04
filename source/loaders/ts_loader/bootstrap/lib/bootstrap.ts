@@ -7,6 +7,7 @@ import * as path from 'path';
 const metacall_require = (Module.prototype as any).require;
 const node_require = (Module.prototype as any).node_require;
 const node_cache = (Module.prototype as any).node_cache || require.cache;
+const node_resolve = (Module.prototype as any).node_resolve || require.resolve;
 
 /** Unpatch in order to load TypeScript */
 if (node_require) {
@@ -161,10 +162,35 @@ const getMetacallExportTypes = (
 	return fileCount === 0 ? null : exportTypes;
 };
 
+const fileResolve = (p: string): string => {
+    try {
+        return node_resolve(p);
+    } catch (ex) {
+        if (ex.code !== 'MODULE_NOT_FOUND') {
+            throw ex;
+        }
+
+        // Try global paths
+        const paths = (process.env['NODE_PATH'] || '').split(path.delimiter).filter((e) => e.length !== 0);
+
+        for (const r of paths) {
+            try {
+                return node_resolve(path.join(r, p));
+            } catch (e) {
+                if (e.code !== 'MODULE_NOT_FOUND') {
+                    throw e;
+                }
+            }
+        }
+    }
+
+    throw Object.assign(Error(`Cannot find module '${p}'`), { code: 'MODULE_NOT_FOUND' });
+};
+
 /** Loads a TypeScript file from disk */
 export const load_from_file = safe(function load_from_file(paths: string[]) {
 	const result: MetacallHandle = {};
-	const options = getProgramOptions(paths.map(p => path.resolve(p)));
+	const options = getProgramOptions(paths.map(p => fileResolve(p)));
 	const p = ts.createProgram(options);
 	// TODO: Handle the emitSkipped?
 	const exportTypes = getMetacallExportTypes(p, (sourceFile, exportTypes) => {
@@ -207,7 +233,7 @@ export const load_from_memory = safe(
 				}
 				if (fileName.endsWith('.d.ts')) {
 					try {
-						const tsPath = path.join(path.dirname(require.resolve('typescript')), fileName);
+						const tsPath = path.join(path.dirname(node_resolve('typescript')), fileName);
 						return ts.createSourceFile(
 							fileName,
 							readFileSync(tsPath, 'utf8'),
@@ -251,13 +277,16 @@ export const clear = safe(function clear(handle: Record<string, string>) {
 
 	for (let i = 0; i < names.length; ++i) {
 		const p = names[i];
-		const absolute = path.resolve(__dirname, p);
 
 		discoverTypes.delete(p);
 
-		if (node_cache[absolute]) {
-			delete node_cache[absolute];
-		}
+		try {
+			const absolute = fileResolve(p);
+
+			if (node_cache[absolute]) {
+				delete node_cache[absolute];
+			}
+		} catch (_) {}
 	}
 }, undefined as void);
 
@@ -272,11 +301,7 @@ export const discover = safe(function discover(handle: Record<string, any>) {
 }, {});
 
 /** Unimplemented */
-export const execution_path = noop;
-/** Unimplemented */
 export const load_from_package = noop;
-/** Unimplemented */
-export const test = noop;
 /** Unimplemented */
 export const initialize = noop;
 /** Unimplemented */

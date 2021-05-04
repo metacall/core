@@ -47,6 +47,16 @@ namespace CSLoader
             }
         }
 
+        public static bool ExecutionPathC([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPWStr)]string path)
+        {
+            return loader.ExecutionPath(path);
+        }
+
+        public static bool ExecutionPathW([System.Runtime.InteropServices.MarshalAs(System.Runtime.InteropServices.UnmanagedType.LPStr)]string path)
+        {
+            return loader.ExecutionPath(path);
+        }
+
         public static bool Load(string source)
         {
             try {
@@ -61,7 +71,7 @@ namespace CSLoader
         public static bool Load(string[] files)
         {
             try {
-                return loader.LoadFromSourceFunctions(files.Select(x => System.IO.File.ReadAllText(x)).ToArray());
+                return loader.LoadFromFileFunctions(files);
             } catch (Exception ex) {
                 // TODO: Implement error handling
                 log.Error(ex.Message, ex);

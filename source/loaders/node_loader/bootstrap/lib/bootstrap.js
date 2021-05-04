@@ -19,6 +19,10 @@ Module.prototype.node_resolve = node_resolve;
 Module.prototype.node_cache = node_cache;
 
 function node_loader_trampoline_initialize() {
+	// Add current execution directory to the execution paths
+	node_loader_trampoline_execution_path(process.cwd());
+
+	// Preload Port (here the library path is not inserted in the execution paths yet, so it must be retrieved manually)
 	const global_path = process.env['LOADER_LIBRARY_PATH'];
 
 	const paths = [
@@ -30,15 +34,13 @@ function node_loader_trampoline_initialize() {
 
 	for (const r of paths) {
 		try {
-				return node_require(r);
+			return node_require(r);
 		} catch (e) {
 			if (e.code !== 'MODULE_NOT_FOUND') {
 				console.log(`NodeJS Error (while preloading MetaCall): ${e.message}`);
 			}
 		}
 	}
-
-	process.env.NODE_PATH += global_path;
 
 	console.log('NodeJS Warning: MetaCall could not be preloaded');
 }
@@ -64,43 +66,48 @@ function node_loader_trampoline_module(m) {
 	return m;
 };
 
-// eslint-disable-next-line no-empty-function
-function node_loader_trampoline_execution_path() {
-	// TODO
+function node_loader_trampoline_node_path() {
+	// Retrieve NODE_PATH enviroment variable and convert it to array of strings
+	return (process.env['NODE_PATH'] || '').split(path.delimiter).filter((e) => e.length !== 0);
 }
 
-function node_loader_trampoline_load_from_file_require(p) {
-	const basename = path.basename(p);
-	const { name } = path.parse(basename);
+function node_loader_trampoline_execution_path(p) {
+	if (p) {
+		const paths = node_loader_trampoline_node_path();
 
-	const paths = [
-		/* Absolute path or module name */
-		p,
-		/* Without base path */
-		path.basename(p),
-		/* Without base path and extension */
-		name,
-		/* Without extension and with node modules */
-		path.join(path.dirname(p), 'node_modules', name),
-	];
+		if (!paths.includes(p)) {
+			// Insert execution path
+			paths.push(p);
 
-	for (const r of paths) {
-		let resolved = null;
+			// Set the NODE_PATH environment variable again
+			process.env['NODE_PATH'] = paths.join(path.delimiter);
+		}
+	}
+}
 
-		try {
-			resolved = node_resolve(r);
-		} catch (e) {
-			if (e.code !== 'MODULE_NOT_FOUND') {
-				throw e;
-			}
+function node_loader_trampoline_import(method, p) {
+	try {
+		return method(p);
+	} catch (ex) {
+		if (ex.code !== 'MODULE_NOT_FOUND') {
+			throw ex;
 		}
 
-		if (resolved != null) {
-			return node_require(resolved);
+		// Try global paths
+		const paths = node_loader_trampoline_node_path();
+
+		for (const r of paths) {
+			try {
+				return method(path.join(r, p));
+			} catch (e) {
+				if (e.code !== 'MODULE_NOT_FOUND') {
+					throw e;
+				}
+			}
 		}
 	}
 
-	const e = new Error(`Cannot find module '${p}'`);
+	const e = Error(`Cannot find module '${p}'`);
 	e.code = 'MODULE_NOT_FOUND';
 	throw e;
 }
@@ -115,7 +122,7 @@ function node_loader_trampoline_load_from_file(paths) {
 
 		for (let i = 0; i < paths.length; ++i) {
 			const p = paths[i];
-			const m = node_loader_trampoline_load_from_file_require(path.resolve(__dirname, p));
+			const m = node_loader_trampoline_import(node_require, p);
 
 			handle[p] = node_loader_trampoline_module(m);
 		}
@@ -182,11 +189,13 @@ function node_loader_trampoline_clear(handle) {
 
 		for (let i = 0; i < names.length; ++i) {
 			const p = names[i];
-			const absolute = path.resolve(__dirname, p);
+			try {
+				const absolute = node_loader_trampoline_import(node_resolve, p);
 
-			if (node_cache[absolute]) {
-				delete node_cache[absolute];
-			}
+				if (node_cache[absolute]) {
+					delete node_cache[absolute];
+				}
+			} catch (_) {}
 		}
 	} catch (ex) {
 		console.log('Exception in node_loader_trampoline_clear', ex);

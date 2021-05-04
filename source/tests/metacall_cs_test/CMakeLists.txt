@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target cs-loader-test)
+set(target metacall-cs-test)
 message(STATUS "Test ${target}")
 
 #
@@ -37,7 +37,7 @@ set(headers
 set(sources
 	${source_path}/main.cpp
 	${source_path}/environment.cpp
-	${source_path}/cs_loader_test.cpp
+	${source_path}/metacall_cs_test.cpp
 )
 
 # Group source files

@@ -226,6 +226,19 @@ size_t loader_path_join(const loader_naming_path left_path, size_t left_path_siz
 size_t loader_path_canonical(const loader_naming_path path, size_t size, loader_naming_path canonical)
 {
 	size_t iterator, canonical_size = 0;
+	int separator_found = 1;
+	char separator;
+
+	/* Standarize the separators */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		if (LOADER_PATH_SEPARATOR(path[iterator]))
+		{
+			separator_found = 0;
+			separator = path[iterator];
+			break;
+		}
+	}
 
 	/* Remove first dots */
 	for (iterator = 0; path[iterator] == '.'; ++iterator)
@@ -310,7 +323,8 @@ size_t loader_path_canonical(const loader_naming_path path, size_t size, loader_
 			}
 		}
 
-		canonical[canonical_size++] = path[iterator];
+		/* Store the correct separator */
+		canonical[canonical_size++] = LOADER_PATH_SEPARATOR(path[iterator]) && separator_found == 0 ? separator : path[iterator];
 	}
 
 	return canonical_size;

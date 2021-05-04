@@ -32,7 +32,12 @@ protected:
 TEST_F(py_loader_test, DefaultConstructor)
 {
 	const loader_naming_path names[] = {
-		"example.py"
+		"example.py",						 // Classic load
+		"helloworld.py",					 // Classic load
+		"json",								 // Module load
+		"os.path",							 // Submodule load
+		PY_LOADER_TEST_SCRIPT_ABSOLUTE_PATH, // Absolute load
+		"./s2.py"							 // Relative load
 	};
 
 	EXPECT_EQ((int)0, (int)log_configure("metacall",

@@ -95,6 +95,8 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+	# For execution path test
+	METACALL_NODE_TEST_EXECUTION_PATH="${CMAKE_SOURCE_DIR}/source/scripts/node/inline/source"
 )
 
 #

@@ -22,26 +22,26 @@
 
 #include <metacall/metacall.h>
 
-class cs_loader_test : public testing::Test
+class metacall_cs_test : public testing::Test
 {
 protected:
 };
 
-TEST_F(cs_loader_test, SayHello)
+TEST_F(metacall_cs_test, SayHello)
 {
 	ASSERT_NE((void *)NULL, (void *)metacall_function("SayHello"));
 
 	metacall("SayHello");
 }
 
-TEST_F(cs_loader_test, SayAny)
+TEST_F(metacall_cs_test, SayAny)
 {
 	ASSERT_NE((void *)NULL, (void *)metacall_function("Say"));
 
 	metacall("Say", "Any");
 }
 
-TEST_F(cs_loader_test, Jump)
+TEST_F(metacall_cs_test, Jump)
 {
 	void *ret = NULL;
 
@@ -56,7 +56,7 @@ TEST_F(cs_loader_test, Jump)
 	metacall_value_destroy(ret);
 }
 
-TEST_F(cs_loader_test, Sum)
+TEST_F(metacall_cs_test, Sum)
 {
 	void *ret = NULL;
 
@@ -71,7 +71,7 @@ TEST_F(cs_loader_test, Sum)
 	metacall_value_destroy(ret);
 }
 
-TEST_F(cs_loader_test, Concat)
+TEST_F(metacall_cs_test, Concat)
 {
 	void *ret = NULL;
 
@@ -86,7 +86,7 @@ TEST_F(cs_loader_test, Concat)
 	metacall_value_destroy(ret);
 }
 
-TEST_F(cs_loader_test, Fail)
+TEST_F(metacall_cs_test, Fail)
 {
 	/* This is a Python script on purpose, in order to test C# when it fails */
 	static const char buffer[] =

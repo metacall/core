@@ -273,6 +273,7 @@ int loader_impl_initialize(loader_impl impl)
 	configuration config;
 
 	const char *script_path = NULL;
+	const char *library_path = NULL;
 
 	vector paths;
 
@@ -301,6 +302,16 @@ int loader_impl_initialize(loader_impl impl)
 	if (config != NULL)
 	{
 		loader_impl_configuration(impl, config);
+	}
+
+	library_path = loader_env_library_path();
+
+	if (library_path != NULL)
+	{
+		if (loader_impl_execution_path(impl, library_path) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", library_path);
+		}
 	}
 
 	script_path = loader_env_script_path();
@@ -665,7 +676,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 			handle = interface_impl->load_from_file(impl, paths, size);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p; Loader handle: %p", (void *)interface_impl, (void *)handle);
 
 			if (handle != NULL)
 			{

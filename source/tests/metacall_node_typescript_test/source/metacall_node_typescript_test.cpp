@@ -51,7 +51,7 @@ TEST_F(metacall_node_typescript_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_TS)
 	{
 		const char *ts_scripts[] = {
-			"typedfunc.ts"
+			"typedfunc/typedfunc.ts"
 		};
 
 		void *ret = NULL;

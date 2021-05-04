@@ -170,20 +170,9 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 
 int ts_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	void *ts_impl = (void *)loader_impl_get(impl);
-	void *args[1];
+	(void)impl;
 
-	args[0] = metacall_value_create_string(path, strlen(path));
-
-	void *ret = metacallhv_s(ts_impl, "execution_path", args, 1);
-
-	metacall_value_destroy(args[0]);
-
-	// TODO: Do something with the value like error handling?
-
-	metacall_value_destroy(ret);
-
-	return 0;
+	return metacall_execution_path("node", path);
 }
 
 loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
