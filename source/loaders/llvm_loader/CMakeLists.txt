@@ -7,9 +7,7 @@ endif()
 # External dependencies
 #
 
-# TODO: Find here how to specify that we only support version 11
-# https://llvm.org/docs/CMake.html#embedding-llvm-in-your-project
-find_package(LLVM REQUIRED)
+find_package(LLVM 11.0.1 REQUIRED)
 
 #
 # Plugin name and options
@@ -117,6 +115,9 @@ set_target_properties(${target}
 	FOLDER "${IDE_FOLDER}"
 	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 )
+
+# Setting C++ 17 Standard.
+set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
 
 #
 # Include directories
