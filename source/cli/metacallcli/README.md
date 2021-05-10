@@ -1,5 +1,10 @@
 # MetaCall CLI
 
+## About
+The MetaCall CLI is the Command Line Interface to MetaCall. It supports all MetaCall functionalities such as loading, calling, awaiting scripts etc.
+
+Use the `metacall` command in your shell after [installing](https://github.com/metacall/install) MetaCall to launch the CLI.
+
 ## Currently Available Commands
 
 **Use the `help` command to see the usage of a particular command.**
