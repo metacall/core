@@ -123,16 +123,33 @@ describe('metacall', () => {
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
 		});
 		it('require (py)', () => {
-			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
-			// const example = require('example.py');
-			const example = require('./example.py');
-			assert.notStrictEqual(example, undefined);
-			assert.strictEqual(example.multiply(2, 2), 4);
-			assert.strictEqual(example.divide(4.0, 2.0), 2.0);
-			assert.strictEqual(example.sum(2, 2), 4);
-			assert.strictEqual(example.strcat('2', '2'), '22');
-			assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
-			assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
+			const verify = (example) => {
+				assert.notStrictEqual(example, undefined);
+				assert.strictEqual(example.multiply(2, 2), 4);
+				assert.strictEqual(example.divide(4.0, 2.0), 2.0);
+				assert.strictEqual(example.sum(2, 2), 4);
+				assert.strictEqual(example.strcat('2', '2'), '22');
+				assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
+				assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
+			};
+
+			verify(require('./example.py'));
+
+			// TODO: Should we enable this format? I think it should work right now but it does not, we must review it
+			// verify(require('example.py'));
+		});
+		it('require (py class)', () => {
+			const classname = require('./classname.py');
+			assert.notStrictEqual(classname.function_returns_object_new_local_variable, undefined);
+			assert.notStrictEqual(classname.return_bound_method_param, undefined);
+			assert.notStrictEqual(classname.return_object_function, undefined);
+			assert.notStrictEqual(classname.return_itself, undefined);
+			assert.notStrictEqual(classname.return_object_bound_method_call, undefined);
+			assert.notStrictEqual(classname.return_class_function, undefined);
+			assert.notStrictEqual(classname.return_object_bound_method_new_object, undefined);
+
+			// TODO: Implement classes
+			// assert.notStrictEqual(classname.MyClass, undefined);
 		});
 		it('require (py module)', () => {
 			// This code loads directly a module without extension from Python
@@ -145,11 +162,9 @@ describe('metacall', () => {
 			const { find_library } = require('ctypes.util');
 			assert.notStrictEqual(find_library, undefined);
 
-			// TODO: This fails because the submodule imports a class, which
-			//	   is not yet supported by the NodeJS loader
-			//const { py_encode_basestring_ascii } = require('json.encoder');
-			//assert.notStrictEqual(py_encode_basestring_ascii, undefined);
-			//assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
+			const { py_encode_basestring_ascii } = require('json.encoder');
+			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
+			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
 		it('require (rb)', () => {
 			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?

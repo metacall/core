@@ -1100,7 +1100,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	else if (id == TYPE_CLASS)
 	{
 		/* TODO */
-		napi_throw_error(env, NULL, "NodeJS Loader class is not implemented");
+		/* napi_throw_error(env, NULL, "NodeJS Loader class is not implemented"); */
 
 		/*
 		klass cls = value_to_class(arg_value);
