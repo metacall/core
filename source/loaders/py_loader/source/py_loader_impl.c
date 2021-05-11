@@ -1793,10 +1793,9 @@ error_alloc_handle:
 
 void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 {
-	PyObject *system_modules = PySys_GetObject("modules");
-
 	if (module->name != NULL)
 	{
+		PyObject *system_modules = PySys_GetObject("modules");
 		PyObject_DelItem(system_modules, module->name);
 		Py_XDECREF(module->name);
 		module->name = NULL;
@@ -1853,6 +1852,12 @@ int py_loader_impl_load_from_file_module(loader_impl_py py_impl, loader_impl_py_
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
+		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
+		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
+		{
+			module->instance = NULL;
+		}
+
 		goto error_module_instance;
 	}
 
@@ -1907,6 +1912,12 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
+		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
+		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
+		{
+			module->instance = NULL;
+		}
+
 		goto error_module_instance;
 	}
 
