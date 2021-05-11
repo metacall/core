@@ -46,11 +46,11 @@ describe('metacall', () => {
 		});
 	});
 
-	// TODO: This fails in NodeJS 15.x because the error message is slightly different
-	/*
 	describe('fail', () => {
+		// TODO: This fails in NodeJS 15.x because the error message is slightly different
 		it('require', () => {
-			assert.throws(() => { require('./asd.invalid') }, new Error('Cannot find module \'./asd.invalid\''));
+			// TODO: This generates a segfault in C# Loader
+			// assert.throws(() => { require('./asd.invalid') }, new Error('Cannot find module \'./asd.invalid\''));
 			// TODO: Improve error messages
 			assert.throws(() => { require('./asd.py') }, new Error('MetaCall could not load from file'));
 			assert.throws(() => { require('./asd.rb') }, new Error('MetaCall could not load from file'));
@@ -59,7 +59,6 @@ describe('metacall', () => {
 			assert.throws(() => { require('./asd.tsx') }, new Error('MetaCall could not load from file'));
 		});
 	});
-	*/
 
 	describe('load', () => {
 		it('metacall_load_from_file (py)', () => {
@@ -109,8 +108,6 @@ describe('metacall', () => {
 			});
 		}
 		it('require (mock)', () => {
-			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
-			// const asd = require('asd.mock');
 			const asd = require('./asd.mock');
 			assert.notStrictEqual(asd, undefined);
 			assert.strictEqual(asd.my_empty_func(), 1234);
@@ -123,20 +120,14 @@ describe('metacall', () => {
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
 		});
 		it('require (py)', () => {
-			const verify = (example) => {
-				assert.notStrictEqual(example, undefined);
-				assert.strictEqual(example.multiply(2, 2), 4);
-				assert.strictEqual(example.divide(4.0, 2.0), 2.0);
-				assert.strictEqual(example.sum(2, 2), 4);
-				assert.strictEqual(example.strcat('2', '2'), '22');
-				assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
-				assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
-			};
-
-			verify(require('./example.py'));
-
-			// TODO: Should we enable this format? I think it should work right now but it does not, we must review it
-			// verify(require('example.py'));
+			const example = require('./example.py');
+			assert.notStrictEqual(example, undefined);
+			assert.strictEqual(example.multiply(2, 2), 4);
+			assert.strictEqual(example.divide(4.0, 2.0), 2.0);
+			assert.strictEqual(example.sum(2, 2), 4);
+			assert.strictEqual(example.strcat('2', '2'), '22');
+			assert.deepStrictEqual(example.return_array(), [1, 2, 3]);
+			assert.deepStrictEqual(example.return_same_array([1, 2, 3]), [1, 2, 3]);
 		});
 		it('require (py class)', () => {
 			const classname = require('./classname.py');
@@ -167,8 +158,6 @@ describe('metacall', () => {
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
 		it('require (rb)', () => {
-			// TODO: Both methods work, should we disable the commented out style to be NodeJS compilant?
-			// const cache = require('cache.rb');
 			const cache = require('./cache.rb');
 			assert.notStrictEqual(cache, undefined);
 			assert.strictEqual(cache.cache_set('asd', 'efg'), undefined);
@@ -193,8 +182,6 @@ describe('metacall', () => {
 		});
 	});
 
-	// TODO: This fails because classes are not implemented in the NodeJS loader
-	/*
 	describe('callback', () => {
 		it('callback (py)', () => {
 			const py_f = require('function.py');
@@ -227,6 +214,8 @@ describe('metacall', () => {
 			// Receiving undefined from a function that returns nothing in Python
 			assert.strictEqual(py_f.function_pass(), undefined);
 
+			/* TODO: This fails because classes are not implemented in the NodeJS loader */
+
 			/* TODO: After the refactor of class/object support the following tests do not pass */
 			/* Now the class returned by Python is threated as a TYPE_CLASS instead of a TYPE_PTR */
 			/* Refactor this when there is support for class in NodeJS Loader */
@@ -242,7 +231,6 @@ describe('metacall', () => {
 			assert.strictEqual(py_f.function_myclass_cb((klass) => py_f.function_myclass_method(klass)), 'hello world');
 			assert.strictEqual(py_f.function_myclass_cb((klass) => py_f.function_myclass_method(klass)), 'hello world'); // Check for function lifetime
 			*/
-	/*
 
 			// Double recursion
 			const sum = (value, f) => value <= 0 ? 0 : value + f(value - 1, sum);
@@ -312,5 +300,4 @@ describe('metacall', () => {
 			assert.strictEqual(py_factorial(5), 120);
 		});
 	});
-	*/
 });
