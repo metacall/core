@@ -21,6 +21,11 @@ namespace CSLoader.Providers
             this.log = log;
         }
 
+        ~LoaderBase()
+        {
+            paths.Clear();
+        }
+
         public bool ExecutionPath(string path)
         {
             if (!paths.Contains(path))
@@ -71,7 +76,7 @@ namespace CSLoader.Providers
                 {
                     return System.IO.File.ReadAllText(Path.Combine(path, file));
                 }
-                catch (Exception ex)
+                catch
                 {
                     continue;
                 }

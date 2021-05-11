@@ -35,6 +35,8 @@
 #include <cs_loader/simple_netcore.h>
 #include <stdlib.h>
 
+// TODO: This design has to change, it needs an AppDomain per list of functions (https://github.com/metacall/core/issues/123)
+
 typedef struct
 {
 	netcore_handle handle;
@@ -63,6 +65,7 @@ function_return function_cs_interface_invoke(function func, function_impl impl, 
 	}
 	else
 	{
+		// TODO: Do not hardcode this, take the information from the function and (probably) preload the list of arguments
 		parameters params[10];
 
 		for (int i = 0; i < cs_f->func->param_count; ++i)

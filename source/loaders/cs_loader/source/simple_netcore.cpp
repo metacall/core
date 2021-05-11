@@ -54,12 +54,6 @@ reflect_function *simple_netcore_get_functions(netcore_handle handle, int *count
 	return core->get_functions(count);
 }
 
-void simple_netcore_destroy(netcore_handle handle)
-{
-	netcore *core = (netcore *)handle;
-	delete core;
-}
-
 int simple_netcore_load_script_from_files(netcore_handle handle, const char *files[MAX_FILES], size_t size)
 {
 	netcore *core = (netcore *)handle;
@@ -109,4 +103,15 @@ void simple_netcore_destroy_execution_result(netcore_handle handle, execution_re
 	netcore *core = (netcore *)handle;
 
 	core->destroy_execution_result(er);
+}
+
+void simple_netcore_destroy(netcore_handle handle)
+{
+#if defined(__linux) | defined(linux)
+	netcore_linux *netcore_impl = (netcore_linux *)handle;
+#else
+	netcore_win *netcore_impl = (netcore_win *)handle;
+#endif
+
+	delete netcore_impl;
 }

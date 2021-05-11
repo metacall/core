@@ -59,9 +59,12 @@ namespace CSLoader
 
         public static bool Load(string source)
         {
-            try {
+            try
+            {
                 return loader.LoadFromSourceFunctions(new string[] { source });
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 // TODO: Implement error handling
                 log.Error(ex.Message, ex);
                 return false;
@@ -70,9 +73,12 @@ namespace CSLoader
 
         public static bool Load(string[] files)
         {
-            try {
+            try
+            {
                 return loader.LoadFromFileFunctions(files);
-            } catch (Exception ex) {
+            }
+            catch (Exception ex)
+            {
                 // TODO: Implement error handling
                 log.Error(ex.Message, ex);
                 return false;
@@ -176,5 +182,16 @@ namespace CSLoader
         {
             return LoadFromAssembly(assemblyFile);
         }
+
+        // TODO: Is this needed?
+        /*
+        public static void Destroy()
+        {
+            loader = null;
+            log = null;
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+        }
+        */
     }
 }

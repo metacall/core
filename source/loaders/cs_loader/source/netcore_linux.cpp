@@ -55,7 +55,7 @@ netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_pat
 
 netcore_linux::~netcore_linux()
 {
-	//this->stop();
+	this->stop();
 }
 
 bool netcore_linux::ConfigAssemblyName()
@@ -280,11 +280,9 @@ bool netcore_linux::start()
 
 void netcore_linux::stop()
 {
-	int status = -1;
+	int status = (*this->coreclr_shutdown)(this->hostHandle, this->domainId);
 
-	status = (*this->coreclr_shutdown)(this->hostHandle, this->domainId);
-
-	if (status < 0)
+	if (status != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Stop status (0x%08x)", status);
 	}

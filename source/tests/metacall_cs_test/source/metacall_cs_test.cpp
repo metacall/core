@@ -98,3 +98,14 @@ TEST_F(metacall_cs_test, Fail)
 
 	EXPECT_EQ((int)1, (int)metacall_load_from_memory("cs", buffer, sizeof(buffer), NULL));
 }
+
+TEST_F(metacall_cs_test, FailRelativePath)
+{
+	/* TODO: Review source/ports/node_port/test/index.js in the fail/require section for more information */
+	/* This test is not reproducing the same bug (segmentation fault), we should investigate why */
+	static const char *scripts[] = {
+		"./asd.invalid"
+	};
+
+	EXPECT_EQ((int)1, (int)metacall_load_from_file("cs", scripts, sizeof(scripts) / sizeof(scripts[0]), NULL));
+}
