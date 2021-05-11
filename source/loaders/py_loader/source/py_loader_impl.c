@@ -1796,14 +1796,21 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 	if (module->name != NULL)
 	{
 		PyObject *system_modules = PySys_GetObject("modules");
-		PyObject_DelItem(system_modules, module->name);
-		Py_XDECREF(module->name);
+		PyObject *item = PyObject_GetItem(system_modules, module->name);
+
+		if (item != NULL)
+		{
+			Py_DECREF(item);
+			PyObject_DelItem(system_modules, module->name);
+		}
+
+		Py_DECREF(module->name);
 		module->name = NULL;
 	}
 
 	if (module->instance != NULL)
 	{
-		Py_XDECREF(module->instance);
+		Py_DECREF(module->instance);
 		module->instance = NULL;
 	}
 }
