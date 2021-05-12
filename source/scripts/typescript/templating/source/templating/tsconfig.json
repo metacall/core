@@ -3,8 +3,9 @@
 		"templating.tsx"
 	],
 	"compilerOptions": {
-		"target": "es5",
+		"target": "es6",
+		"module": "commonjs",
 		"jsx": "react",
-		"lib": ["es2015", "dom"]
+		"lib": ["es2016", "dom"]
 	}
 }

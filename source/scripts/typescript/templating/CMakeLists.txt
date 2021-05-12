@@ -11,22 +11,23 @@ if(NOT NODEJS_FOUND)
 	return()
 endif()
 
-# Detect if React is available
-execute_process(
-	COMMAND ${NODEJS_EXECUTABLE} -e "require('react'); require('react-dom')"
-	RESULT_VARIABLE NODEJS_REACT_FOUND
-	ERROR_QUIET
-	OUTPUT_QUIET
+# Dependencies
+add_custom_target(typescript-templating-depends
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/source/templating
+	COMMAND npm install
+	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/templating/package.json ${CMAKE_CURRENT_SOURCE_DIR}/source/templating/package-lock.json
 )
 
-if("${NODEJS_REACT_FOUND}" EQUAL "1")
-	message(WARNING "NodeJS React not found, skipping the TypeScript templating script project")
-	return()
-endif()
-
+set_target_properties(typescript-templating-depends
+	PROPERTIES
+	${DEFAULT_PROJECT_OPTIONS}
+	FOLDER "${IDE_FOLDER}"
+)
 
 #
 # Configure typescript project
 #
 
 ts_project(templating 0.1.0)
+
+add_dependencies(typescript-templating typescript-templating-depends)
