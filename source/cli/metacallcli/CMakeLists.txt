@@ -340,7 +340,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
 	add_test(NAME ${target}-tsx
-		COMMAND ${TEST_COMMAND} "echo 'load ts templating.tsx\ninspect\ncall hello(\"metaprogrammer\")\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} '<h1 data-reactroot=\"\">Hello $<!-- -->metaprogrammer</h1>'"
+		COMMAND ${TEST_COMMAND} "echo 'load ts templating.tsx\ninspect\ncall hello(\"metaprogrammer\")\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} '<h1 data-reactroot=\\\"\\\">Hello metaprogrammer</h1>'"
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
 	)
 	test_environment_variables(${target}-tsx

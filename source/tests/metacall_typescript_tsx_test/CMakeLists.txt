@@ -122,6 +122,8 @@ target_link_libraries(${target}
 
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
+	# The test must run where the tsconfig is
+	WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
 )
 
 #

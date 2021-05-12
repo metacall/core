@@ -39,7 +39,7 @@ TEST_F(metacall_tsx_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_TS)
 	{
 		const char *tsx_scripts[] = {
-			"templating/templating.tsx"
+			"templating.tsx"
 		};
 
 		void *ret = NULL;
@@ -52,7 +52,7 @@ TEST_F(metacall_tsx_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "<h1 data-reactroot=\"\">Hello $<!-- -->metaprogrammer</h1>"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "<h1 data-reactroot=\"\">Hello metaprogrammer</h1>"));
 
 		metacall_value_destroy(ret);
 	}

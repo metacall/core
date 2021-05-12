@@ -5,6 +5,7 @@
 	"compilerOptions": {
 		"target": "es6",
 		"module": "commonjs",
+		"esModuleInterop": true,
 		"jsx": "react",
 		"lib": ["es2016", "dom"]
 	}
