@@ -86,7 +86,7 @@ private:
 
 	std::string tpaList;
 
- 	dynlink libHandle;
+	dynlink libHandle;
 
 	bool ConfigAssemblyName();
 

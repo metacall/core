@@ -153,7 +153,7 @@ int jl_loader_impl_register_types(loader_impl impl)
 	} type_id_name_pair[] = {
 		// TODO: Boolean
 		// TODO: Char
-		// TODO: We don't support unsigned / signed differenciation (yet?) 
+		// TODO: We don't support unsigned / signed differenciation (yet?)
 		{ TYPE_CHAR, "Int8" },
 		{ TYPE_CHAR, "UInt8" },
 		{ TYPE_SHORT, "Int16" },
@@ -162,12 +162,11 @@ int jl_loader_impl_register_types(loader_impl impl)
 		{ TYPE_INT, "UInt32" },
 		{ TYPE_LONG, "Int64" },
 		{ TYPE_LONG, "UInt64" },
-		// TODO: We don't support 128 bits types (yet?) 
+		// TODO: We don't support 128 bits types (yet?)
 		// { TYPE_LONG_LONG, "Int128" },
 		// { TYPE_LONG_LONG, "UInt128" },
 		// TODO: We don't support 16 bits floating point (yet?)
-		{ TYPE_FLOAT, "Float32" }
-		{ TYPE_DOUBLE, "Float64" }
+		{ TYPE_FLOAT, "Float32" } { TYPE_DOUBLE, "Float64" }
 		// TODO: String
 
 	};

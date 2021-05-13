@@ -56,8 +56,9 @@ netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_pat
 netcore_linux::~netcore_linux()
 {
 	this->stop();
-	
-	if(this->libHandle){
+
+	if (this->libHandle)
+	{
 		dynlink_unload(this->libHandle);
 	}
 }
