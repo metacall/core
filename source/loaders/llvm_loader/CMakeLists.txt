@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(LLVM 11.0.1 REQUIRED)
+find_package(LLVM 11 REQUIRED)
 
 #
 # Plugin name and options
