@@ -86,6 +86,8 @@ private:
 
 	std::string tpaList;
 
+ 	dynlink libHandle;
+
 	bool ConfigAssemblyName();
 
 	bool CreateHost();
