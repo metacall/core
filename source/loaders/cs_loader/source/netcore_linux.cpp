@@ -56,6 +56,10 @@ netcore_linux::netcore_linux(char *dotnet_root, char *dotnet_loader_assembly_pat
 netcore_linux::~netcore_linux()
 {
 	this->stop();
+	
+	if(this->libHandle){
+		dynlink_unload(this->libHandle);
+	}
 }
 
 bool netcore_linux::ConfigAssemblyName()
@@ -116,9 +120,9 @@ bool netcore_linux::ConfigAssemblyName()
 
 bool netcore_linux::CreateHost()
 {
-	dynlink handle = dynlink_load(this->runtimePath.c_str(), this->coreClrLibName.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
+	this->libHandle = dynlink_load(this->runtimePath.c_str(), this->coreClrLibName.c_str(), DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 
-	if (handle == NULL)
+	if (this->libHandle == NULL)
 	{
 		return false;
 	}
@@ -127,20 +131,15 @@ bool netcore_linux::CreateHost()
 	dynlink_symbol_addr dynlink_coreclr_shutdown;
 	dynlink_symbol_addr dynlink_coreclr_create_delegate;
 
-	dynlink_symbol(handle, "coreclr_initialize", &dynlink_coreclr_initialize);
-	dynlink_symbol(handle, "coreclr_shutdown", &dynlink_coreclr_shutdown);
-	dynlink_symbol(handle, "coreclr_create_delegate", &dynlink_coreclr_create_delegate);
+	dynlink_symbol(this->libHandle, "coreclr_initialize", &dynlink_coreclr_initialize);
+	dynlink_symbol(this->libHandle, "coreclr_shutdown", &dynlink_coreclr_shutdown);
+	dynlink_symbol(this->libHandle, "coreclr_create_delegate", &dynlink_coreclr_create_delegate);
 
 	if (dynlink_coreclr_initialize == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize pointer not found");
 		return false;
 	}
-
-	//this->dl = dynamicLinker::dynamicLinker::make_new(this->absoluteLibPath);
-	//auto coreclr_initialize = dl->getFunction<coreclrInitializeFunction>("coreclr_initialize");
-	//auto coreclr_shutdown = dl->getFunction<coreclrShutdownFunction>("coreclr_shutdown");
-	//auto coreclr_create_delegate = dl->getFunction<coreclrCreateDelegateFunction>("coreclr_create_delegate");
 
 	this->coreclr_initialize = (coreclrInitializeFunction *)dynlink_coreclr_initialize;
 	this->coreclr_shutdown = (coreclrShutdownFunction *)dynlink_coreclr_shutdown;
