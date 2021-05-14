@@ -65,22 +65,22 @@
 	#pragma GCC diagnostic pop
 #endif
 
-using namespace llvm;
-using namespace std;
+// using namespace llvm;
+// using namespace std;
 
-using llvm::ArrayRef;
-using llvm::EngineBuilder;
-using llvm::ExecutionEngine;
-using llvm::Function;
-using llvm::GenericValue;
-using llvm::LLVMContext;
-using llvm::Module;
-using llvm::parseIRFile;
-using llvm::SMDiagnostic;
-using llvm::StringRef;
-using std::cout;
-using std::endl;
-using std::unique_ptr;
+// using llvm::ArrayRef;
+// using llvm::EngineBuilder;
+// using llvm::ExecutionEngine;
+// using llvm::Function;
+// using llvm::GenericValue;
+// using llvm::LLVMContext;
+// using llvm::Module;
+// using llvm::parseIRFile;
+// using llvm::SMDiagnostic;
+// using llvm::StringRef;
+// using std::cout;
+// using std::endl;
+// using std::unique_ptr;
 
 typedef struct loader_impl_llvm_function_type
 {
@@ -100,8 +100,8 @@ typedef struct loader_impl_llvm_handle_type
 typedef struct loader_impl_llvm_type
 {
 	// TODO: The reference to LLVM interpreter must be stored here (Is this correct?)
-	LLVMContext context;
-	SMDiagnostic error;
+	llvm::LLVMContext context;
+	llvm::SMDiagnostic error;
 
 } * loader_impl_llvm;
 
@@ -344,7 +344,7 @@ loader_handle llvm_loader_impl_load_from_package(loader_impl impl, const loader_
 	/* TODO */
 	// The same as load_from_file but this should load from binary format instead of readable format (input.ll)
 
-	(void)impl;
+	(void)llvm_impl;
 	(void)path;
 
 	// TODO: Return here the pointer to loader_impl_llvm_handle_type
