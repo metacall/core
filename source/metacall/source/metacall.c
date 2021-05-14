@@ -252,7 +252,11 @@ int metacall_load_from_file(const char *tag, const char *paths[], size_t size, v
 		strncpy(path_impl[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE);
 	}
 
-	return loader_load_from_file(tag, (const loader_naming_path *)path_impl, size, handle);
+	int result = loader_load_from_file(tag, (const loader_naming_path *)path_impl, size, handle);
+
+	free(path_impl);
+
+	return result;
 }
 
 int metacall_load_from_memory(const char *tag, const char *buffer, size_t size, void **handle)
