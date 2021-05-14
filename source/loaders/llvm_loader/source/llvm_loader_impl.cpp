@@ -65,23 +65,6 @@
 	#pragma GCC diagnostic pop
 #endif
 
-// using namespace llvm;
-// using namespace std;
-
-// using llvm::ArrayRef;
-// using llvm::EngineBuilder;
-// using llvm::ExecutionEngine;
-// using llvm::Function;
-// using llvm::GenericValue;
-// using llvm::LLVMContext;
-// using llvm::Module;
-// using llvm::parseIRFile;
-// using llvm::SMDiagnostic;
-// using llvm::StringRef;
-// using std::cout;
-// using std::endl;
-// using std::unique_ptr;
-
 typedef struct loader_impl_llvm_function_type
 {
 	// TODO: The reference to LLVM function must be stored here
@@ -197,19 +180,18 @@ int llvm_loader_impl_register_types(loader_impl impl)
 		type_id id;
 		const char *name;
 	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "i1" },
+		{ TYPE_CHAR, "i8" },
+		{ TYPE_SHORT, "i16" },
+		{ TYPE_INT, "i32" },
+		{ TYPE_LONG, "i64" },
+		{ TYPE_FLOAT, "float" },
+		{ TYPE_DOUBLE, "double" },
+		{ TYPE_STRING, "i8*" },
 
-		{ TYPE_SHORT, "i16" },	   //D
-		{ TYPE_INT, "i32" },	   // D
-		{ TYPE_LONG, "i64" },	   // D
-		{ TYPE_FLOAT, "float" },   // D
-		{ TYPE_DOUBLE, "double" }, // D
-		{ TYPE_BOOL, "i1" },	   // D
-		{ TYPE_CHAR, "i8" },	   // D
-		{ TYPE_STRING, "i8**" },   // D
-
-		{ TYPE_BUFFER, "Buffer" }, // Left
-		{ TYPE_PTR, "Ptr" }		   // Left
-								   // TODO: Implement the rest of the types (Buffer and pointer remaining)
+		// TODO: Implement the rest of the types (Buffer and pointer remaining)
+		{ TYPE_BUFFER, "Buffer" }, // TODO
+		{ TYPE_PTR, "Ptr" }		   // TODO
 
 	};
 
