@@ -101,7 +101,7 @@ This section describes all programming languages that **METACALL** allows to loa
 | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | :----------------------------: | :---: |
 | [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.9**        |  py   |
 | [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |   **>= 10.22.0 <= 15.20.0**    | node  |
-| [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **3.9.7**            |  ts   |
+| [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **4.2.3**            |  ts   |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js   |
 | [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 5.0.4** |  cs   |
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                      |       **>= 2.1 <= 2.5**        |  rb   |
@@ -113,18 +113,22 @@ This section describes all programming languages that **METACALL** allows to loa
 
 - Languages and run-times under construction:
 
-| Language                                                           | Runtime                                                                                                |  Tag  |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------ | :---: |
-| [WebAssembly](https://webassembly.org/)                            | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm  |
-| [C/C++](http://www.cplusplus.com/)                                 | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |   c   |
-| [Java](https://www.java.com/)                                      | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java  |
-| [PHP](https://php.net/)                                            | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       |  php  |
-| [Go](https://golang.org/)                                          | Go Runtime                                                                                             |  go   |
-| [Haskell](https://www.haskell.org/)                                | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs   |
-| [Crystal](https://crystal-lang.org/)                               | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr   |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) |  jsm  |
-| [Dart](https://dart.dev/)                                          | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart  |
-| [LuaJIT](https://luajit.org/)                                      | [LuaJIT2](https://github.com/openresty/luajit2)                                                        |  lua  |
+| Language                                                                      | Runtime                                                                                                |  Tag  |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | :---: |
+| [WebAssembly](https://webassembly.org/)                                       | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm  |
+| [C/C++](http://www.cplusplus.com/)                                            | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |   c   |
+| [Java](https://www.java.com/)                                                 | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java  |
+| [PHP](https://php.net/)                                                       | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       |  php  |
+| [Go](https://golang.org/)                                                     | Go Runtime                                                                                             |  go   |
+| [Haskell](https://www.haskell.org/)                                           | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs   |
+| [Crystal](https://crystal-lang.org/)                                          | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr   |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) |  jsm  |
+| [Dart](https://dart.dev/)                                                     | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart  |
+| [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        |  lua  |
+| [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm  |
+| [Java](https://www.java.com)                                                  | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                              | java  |
+| [Julia](https://julialang.org/)                                               | [Julia Runtime](https://docs.julialang.org/en/v1/devdocs/init/)                                        |  jl   |
+
 
 ### 2.2 Ports (Frontends)
 
