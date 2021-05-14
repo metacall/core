@@ -61,6 +61,7 @@ struct loader_initialization_order_type
 
 struct loader_type
 {
+	loader_impl proxy;			 /* Points to the internal proxy loader */
 	set impl_map;				 /* Maps the loader implementations by tag */
 	vector initialization_order; /* Stores the loader implementations by order of initialization (used for destruction) */
 	uint64_t init_thread_id;	 /* Stores the thread id of the thread that initialized metacall */
@@ -106,7 +107,7 @@ static int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_
 /* -- Member Data -- */
 
 static struct loader_type loader_instance_default = {
-	NULL, NULL, THREAD_ID_INVALID
+	NULL, NULL, NULL, THREAD_ID_INVALID
 };
 
 static loader loader_instance_ptr = &loader_instance_default;
@@ -140,21 +141,19 @@ void loader_initialize_proxy()
 
 	if (set_get(l->impl_map, (set_key)LOADER_HOST_PROXY_NAME) == NULL)
 	{
-		loader_impl proxy;
+		l->proxy = loader_impl_create_proxy();
 
-		proxy = loader_impl_create_proxy();
-
-		if (proxy != NULL)
+		if (l->proxy != NULL)
 		{
-			if (set_insert(l->impl_map, (set_key)loader_impl_tag(proxy), proxy) != 0)
+			if (set_insert(l->impl_map, (set_key)loader_impl_tag(l->proxy), l->proxy) != 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *)proxy);
+				log_write("metacall", LOG_LEVEL_ERROR, "Loader invalid proxy insertion <%p>", (void *)l->proxy);
 
-				loader_impl_destroy(proxy);
+				loader_impl_destroy(l->proxy);
 			}
 
 			/* Insert into destruction list */
-			loader_initialization_register(proxy);
+			loader_initialization_register(l->proxy);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loader proxy initialized");
 		}
@@ -798,7 +797,10 @@ void loader_unload_children(loader_impl impl)
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s)", loader_impl_tag(order->impl));
 
 		/* Call recursively for deletion of children */
-		loader_impl_destroy(order->impl);
+		if (order->impl != l->proxy)
+		{
+			loader_impl_destroy(order->impl);
+		}
 
 		/* Clear current order */
 		order->being_deleted = 1;
@@ -839,6 +841,14 @@ int loader_unload()
 		}
 
 		loader_unload_children(NULL);
+
+		/* The proxy is the first loader, it must be destroyed at the end */
+		if (l->proxy != NULL)
+		{
+			loader_impl_destroy_objects(l->proxy);
+			loader_impl_destroy(l->proxy);
+			l->proxy = NULL;
+		}
 	}
 
 	/* Clear the implementation tag map */
