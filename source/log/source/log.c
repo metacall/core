@@ -145,9 +145,41 @@ int log_level(const char *name, const char *level, size_t length)
 	return 1;
 }
 
-int log_write_impl(const char *name, const size_t line, const char *func, const char *file, const enum log_level_id level, const char *message, ...)
+int log_write_impl(const char *name, const size_t line, const char *func, const char *file, const enum log_level_id level, const char *message)
 {
 	log_impl impl = log_singleton_get(name);
+
+	struct log_record_ctor_type record_ctor;
+
+	enum log_level_id impl_level;
+
+	if (impl == NULL)
+	{
+		return 0;
+	}
+
+	impl_level = log_impl_level(impl);
+
+	if (level < impl_level)
+	{
+		return 0;
+	}
+
+	record_ctor.line = line;
+	record_ctor.func = func;
+	record_ctor.file = file;
+	record_ctor.level = level;
+	record_ctor.message = message;
+	record_ctor.variable_args = NULL;
+
+	return log_impl_write(impl, &record_ctor);
+}
+
+int log_write_impl_va(const char *name, const size_t line, const char *func, const char *file, const enum log_level_id level, const char *message, ...)
+{
+	log_impl impl = log_singleton_get(name);
+
+	struct log_record_ctor_type record_ctor;
 
 	int result;
 
@@ -174,13 +206,14 @@ int log_write_impl(const char *name, const size_t line, const char *func, const 
 
 	va_start(variable_args.data, message);
 
-	result = log_impl_write(impl, &(struct log_record_ctor_type){
-									  .line = line,
-									  .func = func,
-									  .file = file,
-									  .level = level,
-									  .variable_args = &variable_args,
-								  });
+	record_ctor.line = line;
+	record_ctor.func = func;
+	record_ctor.file = file;
+	record_ctor.level = level;
+	record_ctor.message = message;
+	record_ctor.variable_args = &variable_args;
+
+	result = log_impl_write(impl, &record_ctor);
 
 	va_end(variable_args.data);
 
