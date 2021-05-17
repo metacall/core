@@ -21,14 +21,20 @@
 # executable found: ${CLANG_FORMAT_EXECUTABLE}\n" "version:
 # ${CLANG_FORMAT_VERSION}") endif()
 
-find_program(CLANG_FORMAT_EXECUTABLE
-	NAMES clang-format-11
-	clang-format-12
-	clang-format-10
-	clang-format
+if(CLANG_FORMAT_FOUND)
+	set(CLANG_FORMAT_FIND_QUIETLY TRUE)
+endif()
 
-	DOC "clang-format executable")
-mark_as_advanced(CLANG_FORMAT_EXECUTABLE)
+set(CLANG_FORMAT_NAMES
+	clang-format-11
+	clang-format-12
+	clang-format
+)
+
+find_program(CLANG_FORMAT_EXECUTABLE
+	NAMES ${CLANG_FORMAT_NAMES}
+	DOC "clang-format executable"
+)
 
 # Extract version from command "clang-format -version"
 if(CLANG_FORMAT_EXECUTABLE)
@@ -68,10 +74,18 @@ if(CLANG_FORMAT_EXECUTABLE)
 	unset(clang_format_version)
 endif()
 
-if(CLANG_FORMAT_EXECUTABLE)
+if(CLANG_FORMAT_EXECUTABLE AND CLANG_FORMAT_VERSION)
 	set(CLANG_FORMAT_FOUND TRUE)
-	message(STATUS "clang-format executable: ${CLANG_FORMAT_EXECUTABLE}")
-	message(STATUS "clang-format version: ${CLANG_FORMAT_VERSION}")
+
+	include(FindPackageHandleStandardArgs)
+
+	# Set standard args
+	find_package_handle_standard_args(CLANG_FORMAT
+		REQUIRED_VARS CLANG_FORMAT_EXECUTABLE
+		VERSION_VAR CLANG_FORMAT_VERSION
+	)
+
+	mark_as_advanced(CLANG_FORMAT_EXECUTABLE)
 else()
 	set(CLANG_FORMAT_FOUND FALSE)
 endif()
