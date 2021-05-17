@@ -204,7 +204,7 @@ if(DEPENDENCIES)
 endif()
 
 #
-# Define test labels
+# Define tests
 #
 
 set_property(TEST ${target}
@@ -223,15 +223,20 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${TEST_COMMAND} "echo 'load node nod.js\ninspect\ncall hello_boy(300, 400)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"700.0\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
+	set_property(TEST ${target}-node
+		PROPERTY LABELS ${target}-node
+	)
 	test_environment_variables(${target}-node
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
-
 	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_NODE AND OPTION_BUILD_LOADERS_PY)
 		add_test(NAME ${target}-node-port-py
 		COMMAND ${TEST_COMMAND} "echo 'load node cli-test.js\ninspect\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"ABCDEFGHIJKLMNOPQRSTUVWXYZ\""
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
+		set_property(TEST ${target}-node-port-py
+			PROPERTY LABELS ${target}-node-port-py
 		)
 		test_environment_variables(${target}-node-port-py
 			""
@@ -242,6 +247,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			add_test(NAME ${target}-node-port-py-rb
 			COMMAND ${TEST_COMMAND} "echo 'load node cli-test-onload.js\ninspect\nexit' | $<TARGET_FILE:${target}>"
 				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			)
+			set_property(TEST ${target}-node-port-py-rb
+				PROPERTY LABELS ${target}-node-port-py-rb
 			)
 			test_environment_variables(${target}-node-port-py-rb
 				""
@@ -254,6 +262,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined(null)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello 342521512461246!\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
+	set_property(TEST ${target}-node-null
+		PROPERTY LABELS ${target}-node-null
+	)
 	test_environment_variables(${target}-node-null
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
@@ -263,6 +274,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello 342521512461246!\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
+	set_property(TEST ${target}-node-null-empty
+		PROPERTY LABELS ${target}-node-null-empty
+	)
 	test_environment_variables(${target}-node-null-empty
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
@@ -271,6 +285,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 	add_test(NAME ${target}-node-null-undefined
 	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined(undefined)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"(null)\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	set_property(TEST ${target}-node-null-undefined
+		PROPERTY LABELS ${target}-node-null-undefined
 	)
 	test_environment_variables(${target}-node-null-undefined
 		""
@@ -282,6 +299,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			COMMAND ${TEST_COMMAND} "echo 'load py cli-test.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"1234\""
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		)
+		set_property(TEST ${target}-py-port
+			PROPERTY LABELS ${target}-py-port
+		)
 		test_environment_variables(${target}-py-port
 			""
 			${TESTS_ENVIRONMENT_VARIABLES}
@@ -292,6 +312,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		add_test(NAME ${target}-py-port-rb
 			COMMAND ${TEST_COMMAND} "echo 'load py cli-test-rb.py\ninspect\ncall test()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"0123456789ABCDEFasd\""
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		)
+		set_property(TEST ${target}-py-port-rb
+			PROPERTY LABELS ${target}-py-port-rb
 		)
 		test_environment_variables(${target}-py-port-rb
 			""
@@ -305,6 +328,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 		COMMAND ${TEST_COMMAND} "echo 'load file template.html\ninspect\ncall template.html()\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"${LOADER_SCRIPT_PATH}/template.html\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
+	set_property(TEST ${target}-file
+		PROPERTY LABELS ${target}-file
+	)
 	test_environment_variables(${target}-file
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
@@ -312,6 +338,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_FILE AND OPTION_BUILD_SCRIPTS A
 	add_test(NAME ${target}-file-fail
 		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> this-does-not-exist | ${GREP_COMMAND} \"Script (this-does-not-exist) load error in loader (file)\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	set_property(TEST ${target}-file-fail
+		PROPERTY LABELS ${target}-file-fail
 	)
 	test_environment_variables(${target}-file-fail
 		""
@@ -324,6 +353,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> test.py | ${GREP_COMMAND} \"Test: 66673332\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
+	set_property(TEST ${target}-py-naming
+		PROPERTY LABELS ${target}-py-naming
+	)
 	test_environment_variables(${target}-py-naming
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
@@ -335,15 +367,21 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		COMMAND ${TEST_COMMAND} "echo 'load ts typedfunc.ts\ninspect\ncall typed_sum(4, 5)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"9.0\""
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 	)
+	set_property(TEST ${target}-ts
+		PROPERTY LABELS ${target}-ts
+	)
 	test_environment_variables(${target}-ts
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
-	add_test(NAME ${target}-tsx
-		COMMAND ${TEST_COMMAND} "echo 'load ts templating.tsx\ninspect\ncall hello(\"metaprogrammer\")\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} '<h1 data-reactroot=\\\"\\\">Hello metaprogrammer</h1>'"
+	add_test(NAME ${target}-tsx-templating
+		COMMAND ${TEST_COMMAND} "echo 'load ts templating.tsx\ninspect\ncall hello(\"metaprogrammer\")\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello metaprogrammer\""
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
 	)
-	test_environment_variables(${target}-tsx
+	set_property(TEST ${target}-tsx-templating
+		PROPERTY LABELS ${target}-tsx-templating
+	)
+	test_environment_variables(${target}-tsx-templating
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
@@ -351,8 +389,26 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> loopfail.tsx | ${GREP_COMMAND} \"Error: Cannot find module 'yeet-oof/whatever'\""
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/loopfail
 	)
+	set_property(TEST ${target}-tsx-loop-fail
+		PROPERTY LABELS ${target}-tsx-loop-fail
+	)
 	test_environment_variables(${target}-tsx-loop-fail
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
+
+	if(OPTION_BUILD_LOADERS_PY)
+		add_test(NAME ${target}-py-tsx
+			COMMAND ${TEST_COMMAND} "echo 'load py cli-test-tsx.py\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello metaprogrammer\""
+			WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
+		)
+		set_property(TEST ${target}-py-tsx
+			PROPERTY LABELS ${target}-py-tsx
+		)
+		test_environment_variables(${target}-py-tsx
+			""
+			${TESTS_ENVIRONMENT_VARIABLES}
+			PROJECT_METACALL_PORTS_DIRECTORY=${CMAKE_SOURCE_DIR}/source/ports/py_port
+		)
+	endif()
 endif()
