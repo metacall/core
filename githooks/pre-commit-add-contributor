@@ -6,8 +6,16 @@ else
     if git log --pretty="%an%n%cn" | sort | uniq | grep -q "$(git config user.name)"; then
         exit 0
     else
-        printf "Please add yourself (copy the next line) to the CONTRIBUTORS.md file.\n";
-        printf '%s <%s>\n\n' "$(git config user.name)" "$(git config user.email)";
-        exit 1
+        
+        expected=$(printf '%s <%s>' "$(git config user.name)" "$(git config user.email)");
+
+        if grep -q "$expected" CONTRIBUTORS; then
+            exit 0 # Already in the file but first time commit in the git history
+        else
+            echo "Please add yourself (copy the next line) to the CONTRIBUTORS.md file.";
+            echo $expected
+            exit 1
+        fi 
+
     fi
 fi
