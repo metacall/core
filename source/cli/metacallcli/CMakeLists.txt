@@ -409,6 +409,9 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 			""
 			${TESTS_ENVIRONMENT_VARIABLES}
 			PROJECT_METACALL_PORTS_DIRECTORY=${CMAKE_SOURCE_DIR}/source/ports/py_port
+			# Note: Here we have to set up the LOADER_SCRIPT_PATH to the CWD as a difference to ${target}-tsx-templating test
+			# which does not require this apparently (due to NodeJS resolve system), probably this has to be reviewed
+			LOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH}/templating
 		)
 	endif()
 endif()
