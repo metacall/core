@@ -399,7 +399,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND
 
 	if(OPTION_BUILD_LOADERS_PY)
 		add_test(NAME ${target}-py-tsx
-			COMMAND ${TEST_COMMAND} "echo 'load py cli-test-tsx.py\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello metaprogrammer\""
+			COMMAND ${TEST_COMMAND} "echo 'load py cli-test-tsx.py\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"Hello World\""
 			WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/templating
 		)
 		set_property(TEST ${target}-py-tsx
