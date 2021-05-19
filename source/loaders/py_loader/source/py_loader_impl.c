@@ -1565,7 +1565,11 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 		"			m = importlib.util.module_from_spec(spec)\n"
 		"			spec.loader.exec_module(m)\n"
 		"			return m\n"
+		"	except ImportError as e:\n"
+		"		return e\n"
 		"	except Exception as e:\n"
+		"		import traceback\n"
+		"		print(traceback.format_exc())\n"
 		"		return e\n"
 #elif PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 3
 		// TODO: Not tested
