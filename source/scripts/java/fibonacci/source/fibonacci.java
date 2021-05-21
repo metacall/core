@@ -1,7 +1,7 @@
 
 public class Fibonacci
 {
-	public static long fib_impl(int n)
+	public static int fib_impl(int n)
 	{
 		if (n <= 2)
 		{
