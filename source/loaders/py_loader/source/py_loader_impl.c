@@ -1562,6 +1562,8 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 		"			return importlib.import_module(module_name)\n"
 		"		else:\n"
 		"			spec = importlib.util.spec_from_file_location(module_name, path)\n"
+		"			if spec is None:\n"
+		"				raise ModuleNotFoundError('File ' + path + ' could not be found')\n"
 		"			m = importlib.util.module_from_spec(spec)\n"
 		"			spec.loader.exec_module(m)\n"
 		"			return m\n"
