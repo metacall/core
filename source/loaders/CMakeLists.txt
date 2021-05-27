@@ -7,7 +7,7 @@ endif()
 option(OPTION_BUILD_LOADERS_C "Build C Foreign Function Interface library loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_COB "Build GNU/COBOL 2.2 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CR "Build Crystal 0.33.0 loader plugin." OFF)
-option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 5.0.5 Runtime loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 5.0.6 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_DART "Build Dart VM 2.8.4 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_FILE "Build File System loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JAVA "Build Java Virtual Machine loader plugin." OFF)
@@ -29,7 +29,7 @@ add_subdirectory(c_loader) # Foreign Function Interface library
 add_subdirectory(cob_loader) # GNU/Cobol 2.2 Runtime
 add_subdirectory(cr_loader) # Crystal 0.33.0 Runtime
 add_subdirectory(dart_loader) # Dart VM 2.8.4 Runtime
-add_subdirectory(cs_loader) # CoreCLR 5.0.5 Runtime
+add_subdirectory(cs_loader) # CoreCLR 5.0.6 Runtime
 add_subdirectory(file_loader) # File System
 add_subdirectory(java_loader) # Java Virtual Machine
 add_subdirectory(jl_loader) # Julia Runtime
