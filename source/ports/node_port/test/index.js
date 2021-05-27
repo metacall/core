@@ -157,6 +157,12 @@ describe('metacall', () => {
 			assert.notStrictEqual(py_encode_basestring_ascii, undefined);
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
+		it('require (py submodule dependency)', () => {
+			// Require the 'op' submodule from 'fn' Python package
+			const { foldr, call } = require('fn.op');
+
+			assert.strictEqual(foldr(call, 10)([s => s * s, k => k + 10]), 400);
+		});
 		it('require (rb)', () => {
 			const cache = require('./cache.rb');
 			assert.notStrictEqual(cache, undefined);

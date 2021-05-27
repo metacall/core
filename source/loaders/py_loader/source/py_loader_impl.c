@@ -1810,6 +1810,15 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 			PyObject_DelItem(system_modules, module->name);
 		}
 
+		// TODO: Sometimes this fails, seems that sys.modules does not contain the item.
+		// Probably is because of the new import system which is using importlib, but
+		// it does not seem something problematic although it will be interesting
+		// to check it out so we are sure there's no leaked memory
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Clear();
+		}
+
 		Py_DECREF(module->name);
 		module->name = NULL;
 	}
@@ -1833,58 +1842,6 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	PyGILState_Release(gstate);
 	free(py_handle->modules);
 	free(py_handle);
-}
-
-int py_loader_impl_load_from_file_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
-{
-	loader_naming_name name;
-	size_t size = loader_path_get_fullname(path, name);
-
-	if (size <= 1)
-	{
-		goto error_name_create;
-	}
-
-	module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
-
-	if (module->name == NULL)
-	{
-		goto error_name_create;
-	}
-
-	PyObject *args_tuple = PyTuple_New(1);
-
-	if (args_tuple == NULL)
-	{
-		goto error_tuple_create;
-	}
-
-	PyTuple_SetItem(args_tuple, 0, module->name);
-
-	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
-
-	if (!(module->instance != NULL && PyModule_Check(module->instance)))
-	{
-		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
-		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
-		{
-			module->instance = NULL;
-		}
-
-		goto error_module_instance;
-	}
-
-	Py_DECREF(args_tuple);
-
-	return 0;
-
-error_module_instance:
-	Py_DECREF(args_tuple);
-error_tuple_create:
-	Py_XDECREF(module->name);
-	module->name = NULL;
-error_name_create:
-	return 1;
 }
 
 int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
@@ -1950,6 +1907,60 @@ error_name_create:
 	return 1;
 }
 
+int py_loader_impl_load_from_module(loader_impl_py_handle_module module, const loader_naming_path path)
+{
+	size_t length = strlen(path);
+
+	if (length == 0)
+	{
+		// TODO: Handle exception
+		return 1;
+	}
+
+	module->name = PyUnicode_DecodeFSDefaultAndSize(path, (Py_ssize_t)length);
+
+	if (module->name == NULL)
+	{
+		// TODO: Handle exception
+		return 1;
+	}
+
+	/* TODO: Trying to reimplement the PyImport_Import,
+	* check the TODO in monkey patch method in the port for more information
+	*/
+	/*
+	PyObject * globals = PyEval_GetGlobals();
+
+	if (globals != NULL)
+	{
+		Py_INCREF(globals);
+	}
+
+    module->instance = PyImport_ImportModuleLevelObject(module->name, globals, NULL, NULL, 0);
+
+	Py_XDECREF(globals);
+	*/
+
+	module->instance = PyImport_Import(module->name);
+
+	if (!(module->instance != NULL && PyModule_Check(module->instance)))
+	{
+		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
+		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
+		{
+			module->instance = NULL;
+		}
+
+		goto error_import;
+	}
+
+	return 0;
+error_import:
+	Py_DECREF(module->name);
+	module->name = NULL;
+	return 1;
+}
+
 int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
 {
 	PyObject *system_paths = PySys_GetObject("path");
@@ -1998,8 +2009,13 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		/* Try to load the module as it is */
-		if (py_loader_impl_load_from_file_module(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
+		if (py_loader_impl_load_from_module(&py_handle->modules[iterator], paths[iterator]) != 0)
 		{
+			if (PyErr_Occurred() != NULL)
+			{
+				PyErr_Clear();
+			}
+
 			/* Otherwise, we assume it is a path so we load from path */
 			if (loader_path_is_absolute(paths[iterator]) == 0)
 			{

@@ -20,6 +20,7 @@
 import os
 import sys
 import json
+import inspect # TODO: Remove this, check the monkey patching
 
 if sys.platform == 'win32':
 	from metacall.module_win32 import metacall_module_load
@@ -167,6 +168,21 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		if handle != None:
 			# Generate the module from cached handle
 			return generate_module(handle_name, handle)
+
+		# This breaks a recursion loop when trying to load py files
+		# The problem is basically that PyImport_Import in the loader tries to
+		# load as module first, so it jumps to this method again. Probably
+		# we should find a more efficient solution, for example reimplementing
+		# PyImport_Import (which I failed) or checking if the port is present
+		# and the import is monkey patched, so in this case we should populate
+		# the real python __import__ from the port into the loader, so we can
+		# avoid jumping always to the patched import, this is a workaround
+		# that must be removed because it is dirty and slow (TODO)
+		if extension == 'py':
+			current_frame = inspect.currentframe()
+			call_frame = inspect.getouterframes(current_frame, 2)
+			if call_frame[1][3] == 'metacall_load_from_file' or call_frame[1][3] == 'metacall_load_from_memory':
+				return ImportError('MetaCall could not import:', name)
 
 		if metacall_load_from_file(extensions_to_tag[extension], [name]):
 			handle = find_handle(name)
