@@ -195,7 +195,12 @@ export const load_from_file = safe(function load_from_file(paths: string[]) {
 	// TODO: Handle the emitSkipped?
 	const exportTypes = getMetacallExportTypes(p, (sourceFile, exportTypes) => {
 		const { diagnostics /*, emitSkipped */ } = p.emit(sourceFile, (fileName, data) => {
-			const m = new Module(fileName);
+			// @ts-ignore
+			const nodeModulePaths = Module._nodeModulePaths(path.dirname(fileName));
+			const parent = module.parent;
+			const m = new Module(fileName, parent || undefined);
+			m.filename = fileName;
+			m.paths = nodeModulePaths;
 			(m as any)._compile(data, fileName);
 			const wrappedExports = wrapFunctionExport(m.exports);
 			for (const [name, handle] of Object.entries(exportTypes)) {
