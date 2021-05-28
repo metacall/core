@@ -75,12 +75,14 @@ function node_loader_trampoline_execution_path(p) {
 	if (p) {
 		const paths = node_loader_trampoline_node_path();
 
-		if (!paths.includes(p)) {
+		// Check if the path exists in its cannonical form (/a/b and /a/b/ are the same path)
+		if (!paths.some(cur => path.relative(cur, p) === '')) {
 			// Insert execution path
 			paths.push(p);
 
 			// Set the NODE_PATH environment variable again
 			process.env['NODE_PATH'] = paths.join(path.delimiter);
+			Module._initPaths();
 		}
 	}
 }
