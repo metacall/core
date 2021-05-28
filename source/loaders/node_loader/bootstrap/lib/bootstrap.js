@@ -75,6 +75,17 @@ function node_loader_trampoline_execution_path(p) {
 	if (p) {
 		const paths = node_loader_trampoline_node_path();
 
+		// TODO: Should we use Module._nodeModulePaths(p) ?
+		// The current behavior does not look for node_modules inside p
+		// when you add a new execution path, by using this API we can
+		// generate all the node module paths and allow loading modules
+		// from the execution path folders. But this makes an asumption
+		// and it is less explicit, maybe you want to add an execution path
+		// but not the node_modules path which it contains, and doing this
+		// will affect those cases
+
+		// const modulePaths = Module._nodeModulePaths(p);
+
 		// Check if the path exists in its cannonical form (/a/b and /a/b/ are the same path)
 		if (!paths.some(cur => path.relative(cur, p) === '')) {
 			// Insert execution path
