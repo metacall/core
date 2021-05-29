@@ -20,6 +20,7 @@
 
 #include <wasm_loader/wasm_loader_impl.h>
 
+#include <loader/loader.h>
 #include <loader/loader_impl.h>
 
 #include <reflect/reflect_context.h>
@@ -30,6 +31,8 @@
 #include <log/log.h>
 
 #include <stdlib.h>
+
+#include <wasm.h>
 
 typedef struct loader_impl_wasm_function_type
 {
@@ -45,8 +48,8 @@ typedef struct loader_impl_wasm_handle_type
 
 typedef struct loader_impl_wasm_type
 {
-	void *todo;
-
+	wasm_engine_t *engine;
+	wasm_store_t *store;
 } * loader_impl_wasm;
 
 int type_wasm_interface_create(type t, type_impl impl)
@@ -136,14 +139,45 @@ function_interface function_wasm_singleton(void)
 
 loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config)
 {
-	/* TODO */
-
-	(void)impl;
 	(void)config;
+
+	loader_impl_wasm wasm_impl = malloc(sizeof(struct loader_impl_wasm_type));
+
+	if (wasm_impl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate memory for loader implementation");
+		goto error_impl_alloc;
+	}
+
+	// TODO: Use wasm_engine_new_with_config function for passing in config?
+	wasm_impl->engine = wasm_engine_new();
+
+	if (wasm_impl->engine == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create engine");
+		goto error_engine_creation;
+	}
+
+	wasm_impl->store = wasm_store_new(wasm_impl->engine);
+
+	if (wasm_impl->store == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create store");
+		goto error_store_creation;
+	}
 
 	/* Register initialization */
 	loader_initialization_register(impl);
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader initialized correctly");
+
+	return wasm_impl;
+
+error_store_creation:
+	wasm_engine_delete(wasm_impl->engine);
+error_engine_creation:
+	free(wasm_impl);
+error_impl_alloc:
 	return NULL;
 }
 
@@ -213,12 +247,20 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 int wasm_loader_impl_destroy(loader_impl impl)
 {
-	/* Destroy children loaders */
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
+
+	if (wasm_impl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid loader implementation passed to destroy");
+		return 1;
+	}
+
 	loader_unload_children(impl);
+	wasm_store_delete(wasm_impl->store);
+	wasm_engine_delete(wasm_impl->engine);
+	free(wasm_impl);
 
-	/* TODO */
-
-	(void)impl;
+	log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader destroyed");
 
 	return 0;
 }
