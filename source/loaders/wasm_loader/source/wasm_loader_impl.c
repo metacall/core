@@ -42,8 +42,7 @@ typedef struct loader_impl_wasm_function_type
 
 typedef struct loader_impl_wasm_handle_type
 {
-	void *todo;
-
+	wasm_module_t *module;
 } * loader_impl_wasm_handle;
 
 typedef struct loader_impl_wasm_type
@@ -204,13 +203,48 @@ loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
-	/* TODO */
-
-	(void)impl;
 	(void)name;
-	(void)buffer;
-	(void)size;
 
+	loader_impl_wasm_handle handle = malloc(sizeof(struct loader_impl_wasm_handle_type));
+
+	if (handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate memory for handle");
+		goto error_handle_alloc;
+	}
+
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
+
+	if (wasm_impl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid loader implementation");
+		goto error_impl_get;
+	}
+
+	// There is sadly no way to check whether `wasm_byte_vec_new_unitialized`
+	// fails, so we just have to hope for the best here.
+	wasm_byte_vec_t binary;
+	wasm_byte_vec_new(&binary, size, buffer);
+	handle->module = wasm_module_new(wasm_impl->store, &binary);
+	wasm_byte_vec_delete(&binary);
+
+	// TODO: `wasm_module_new` can fail for a multitude of reasons.
+	//       Consider using the Wasmtime-specific `wasmtime_module_new`,
+	//       which provides richer error messages. This could be done
+	//       conditionally using the preprocessor to maintain compatibility
+	//       with other runtimes.
+	if (handle->module == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create module");
+		goto error_module_creation;
+	}
+
+	return handle;
+
+error_module_creation:
+	free(handle);
+error_impl_get:
+error_handle_alloc:
 	return NULL;
 }
 
@@ -226,10 +260,13 @@ loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_
 
 int wasm_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
-	/* TODO */
-
 	(void)impl;
-	(void)handle;
+
+	loader_impl_wasm_handle wasm_handle = (loader_impl_wasm_handle)handle;
+
+	wasm_module_delete(wasm_handle->module);
+
+	free(wasm_handle);
 
 	return 0;
 }
