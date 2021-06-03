@@ -2,7 +2,11 @@
 # External dependencies
 #
 
-find_package(PythonLibs 3 REQUIRED)
+find_package(PythonLibs 3)
+
+if(NOT PYTHONLIBS_FOUND)
+	return()
+endif()
 
 #
 # Executable name and options
