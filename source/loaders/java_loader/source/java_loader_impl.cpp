@@ -131,8 +131,10 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 		static const size_t options_size = 2;
 
 		JavaVMOption *options = new JavaVMOption[options_size]; // JVM invocation options
-		options[0].optionString = "-Dmetacall.polyglot.name=core";
-		options[1].optionString = "-Djava.class.path=" TEST_CLASS_PATH;
+		options[0].optionString = (char *)"-Dmetacall.polyglot.name=core";
+		options[1].optionString = (char *)"-Djava.class.path=" TEST_CLASS_PATH;
+
+		log_write("metacall", LOG_LEVEL_ERROR, "Test Log");
 
 		JavaVMInitArgs vm_args;
 		vm_args.version = JNI_VERSION_1_6; // Minimum Java version
@@ -150,6 +152,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			return NULL;
 		}
 
+		log_write("metacall", LOG_LEVEL_ERROR, "JAVA INITIALIZER successful");
 		/* Register initialization */
 		loader_initialization_register(impl);
 
@@ -174,56 +177,31 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	if (java_handle != nullptr)
 	{
 		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
+		log_write("metacall", LOG_LEVEL_ERROR, "Load From File");
 
-		jint rc = java_impl->jvm->AttachCurrentThread((void **)&java_impl->env, NULL);
+		jobjectArray arr = java_impl->env->NewObjectArray(size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
-		if (rc != JNI_OK)
+		for (size_t i = 0; i < size; i++)
 		{
-			// TODO: Handle error
-			std::cout << "ffffffffffffffffffffffffffff" << std::endl;
+			java_impl->env->SetObjectArrayElement(arr, i, java_impl->env->NewStringUTF(paths[i]));
 		}
 
-		// jclass cls2 = java_impl->env->FindClass("metacall/MetaCallSpecRunner");
-		jclass cls2 = java_impl->env->FindClass("metacall/CallerSpecRunner");
-
-		if (cls2 == nullptr)
+		jclass classPtr = java_impl->env->FindClass("bootstrap");
+		if (classPtr == nullptr)
 		{
-			// TODO: Error handling
-			delete java_handle;
 			return NULL;
 		}
-
-		jmethodID ctor = java_impl->env->GetMethodID(cls2, "<init>", "()V");
-
-		if (cls2 == nullptr)
+		else
 		{
-			// TODO: Error handling
-			delete java_handle;
-			return NULL;
-		}
-
-		jobject myo = java_impl->env->NewObject(cls2, ctor);
-
-		if (myo)
-		{
-			jmethodID show = java_impl->env->GetMethodID(cls2, "run", "()V");
-			if (show == nullptr)
+			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/String;");
+			if (mid == nullptr)
 			{
-				// TODO: Error handling
-				delete java_handle;
 				return NULL;
 			}
 			else
-				java_impl->env->CallVoidMethod(myo, show);
-		}
-
-		// TODO: Implement a scope like V8 for attaching and detaching automatically
-		rc = java_impl->jvm->DetachCurrentThread();
-
-		if (rc != JNI_OK)
-		{
-			// TODO: Handle error
-			std::cout << "333333ffffffffffffffffffffffffffff" << std::endl;
+			{
+				jobject result = java_impl->env->CallObjectMethod(classPtr, mid, arr);
+			}
 		}
 
 		return static_cast<loader_handle>(java_handle);
