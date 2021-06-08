@@ -21,6 +21,9 @@ endif()
 # Target name
 set(target java_loader)
 
+# Add java loader bootstrap
+add_subdirectory(bootstrap)
+
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 
@@ -75,6 +78,11 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 add_library(${target} MODULE
 	${sources}
 	${headers}
+)
+
+# Add target dependencies
+add_dependencies(${target}
+	java_loader_bootstrap
 )
 
 # Create namespaced alias

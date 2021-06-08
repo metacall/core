@@ -31,6 +31,29 @@ class Handle {
 }
 
 public class bootstrap {
+
+  // TODO: The "Global Handle Class" is wrong, we cannot have a global handle array.
+  // The relationship is like this:
+
+  //    for each call to load_from_{file, memory, package}, we return one handle,
+  //    internally it must hold the classes separately to each other handle
+  //    the handle can hold the classes with an array, hashmap or whatever
+
+  //    for each class instantiation or method call, we can hold a pointer to the
+  //    handle that owns this class, so we can instantiate it properly (we can do this in C++)
+
+  //    for each clear call, we receive a handle, so we iterate
+  //    the classes of the handle and clear them, including each resource attached to it
+
+  // This approach is more interesting because in this way we have isolated classes,
+  // avoiding name collisions (for example, we can load two different java classes with the same
+  // name in different load_from_{file, memory, package}, also we can use things for sandboxing
+  // like this: https://docs.oracle.com/javase/7/docs/api/java/security/ProtectionDomain.html
+
+  // The handle array will be implicitly managed by metacall core if we do this correctly,
+  // we can store the pointer to the handle in the struct loader_impl_java_handle_type directly
+  // and return it in the load_from_{file, memory, package} in the C++ side
+
   private static Handle handleArray = new Handle(); // Global Handle Class to store classes and names
 
   public static void callFunction(String classname, String functionName) {
@@ -54,6 +77,8 @@ public class bootstrap {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
         StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
+        // TODO: This hardcoded path should be avoided, if it can be in memory it would be cool, otherwise
+        // we can do this in a temporary path
         Iterable<String> classOutputPath = Arrays
             .asList(new String[] { "-d", "/home/ketangupta34/Desktop/core/source/scripts/java/fibonacci/source" });
 
