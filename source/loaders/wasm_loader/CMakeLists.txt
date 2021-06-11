@@ -7,9 +7,7 @@ endif()
 # External dependencies
 #
 
-# TODO: https://github.com/WinBuilds/ethvm-hera/blob/master/cmake/ProjectWAVM.cmake
-
-# find_package(WAVM REQUIRED)
+# TODO: Add Wasmtime as required dependency using find_package
 
 #
 # Plugin name and options
@@ -129,7 +127,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${WAVM_INCLUDE_DIRS} # WAVM includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -147,7 +144,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${WAVM_LIBRARIES} # WAVM libraries
+    wasmtime
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
