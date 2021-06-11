@@ -68,7 +68,7 @@ public class bootstrap {
 
   private static Handle handleArray = new Handle(); // Global Handle Class to store classes and names
 
-  private static String executionPath;
+  private static Set<String> executionPath = new HashSet<String>();
 
   public static void callFunction(String classname, String functionName) {
     Class<?> c = handleArray.getClassFromName(classname);
@@ -84,7 +84,7 @@ public class bootstrap {
 
   public static int java_bootstrap_execution_path(String path) {
     System.out.println("bootstraping Execution path = " + path);
-    executionPath = path;
+    executionPath.add(path);
     return 0;
   }
 
@@ -100,7 +100,7 @@ public class bootstrap {
         // TODO: This hardcoded path should be avoided, if it can be in memory it would
         // be cool, otherwise
         // we can do this in a temporary path
-        Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", executionPath });
+        Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", System.getenv("LOADER_SCRIPT_PATH") });
 
         File pathFile = new File(paths[i]);
         Iterable<? extends JavaFileObject> sources = mgr.getJavaFileObjectsFromFiles(Arrays.asList(pathFile));
@@ -113,15 +113,21 @@ public class bootstrap {
           Path path = Paths.get(pathFile.getCanonicalPath());
           String classname = path.getFileName().toString().split(".java")[0];
 
-          File execPathFile = new File(executionPath);
-          URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
+          for (String curExecPath : executionPath) {
+            try {
+              File execPathFile = new File(curExecPath);
+              URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
 
-          handleArray.addClass(classname, clsLoader.loadClass(classname));
-          clsLoader.close();
+              handleArray.addClass(classname, clsLoader.loadClass(classname));
+              clsLoader.close();
 
-          // handleArray.addClass(classname, Class.forName(classname));
-          System.out.println("Class Loading Successful");
+              // handleArray.addClass(classname, Class.forName(classname));
+              System.out.println("Class Loading Successful");
+              break;
 
+            } catch (Exception e) {
+            }
+          }
         } else {
           System.out.println("Compilation Failed");
         }

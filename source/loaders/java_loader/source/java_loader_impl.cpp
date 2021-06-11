@@ -200,38 +200,26 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 		jobjectArray arr = java_impl->env->NewObjectArray(size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
-		for (size_t i = 0; i < size; i++)
+		for (size_t i = 0; i < size; i++) // Create JNI compatible array of paths
 		{
 			std::cout << "PATH = " << paths[i] << std::endl;
 			java_impl->env->SetObjectArrayElement(arr, i, java_impl->env->NewStringUTF(paths[i]));
 		}
-		log_write("metacall", LOG_LEVEL_ERROR, "jArray Made");
 
 		jclass classPtr = java_impl->env->FindClass("bootstrap");
-		if (classPtr == nullptr)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Error Here");
-
-			return NULL;
-		}
-		else
+		if (classPtr != nullptr)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Bootstrap Found");
 
 			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/String;");
-			if (mid == nullptr)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Error Here 2");
-
-				return NULL;
-			}
-			else
+			if (mid != nullptr)
 			{
 				jobject result = java_impl->env->CallObjectMethod(classPtr, mid, arr);
+				java_handle->handle = &result;
+
+				return static_cast<loader_handle>(java_handle);
 			}
 		}
-
-		return static_cast<loader_handle>(java_handle);
 	}
 
 	return NULL;
