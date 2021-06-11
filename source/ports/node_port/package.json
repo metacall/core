@@ -24,6 +24,7 @@
 	"publishConfig": {
 		"access": "public"
 	},
+	"types": "./types/metacall.d.ts",
 	"dependencies": {},
 	"devDependencies": {
 		"mocha": "^8.1.3"
