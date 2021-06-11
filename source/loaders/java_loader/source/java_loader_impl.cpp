@@ -43,7 +43,7 @@ typedef struct loader_impl_java_type
 
 typedef struct loader_impl_java_handle_type
 {
-	void *todo;
+	jobject *handle; // Pointer to the handle JNI object
 
 } * loader_impl_java_handle;
 
@@ -125,14 +125,17 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 	if (java_impl != nullptr)
 	{
-#define TEST_CLASS_PATH \
-	"$(sbt 'export test:fullClasspath')"
+		// #define TEST_CLASS_PATH
+		// 	"$(sbt 'export test:fullClasspath')"
+
+		std::string st = (std::string) "-Djava.class.path=" + getenv("LOADER_LIBRARY_PATH");
+		char *javaClassPath = &st[0];
 
 		static const size_t options_size = 2;
 
 		JavaVMOption *options = new JavaVMOption[options_size]; // JVM invocation options
 		options[0].optionString = (char *)"-Dmetacall.polyglot.name=core";
-		options[1].optionString = (char *)"-Djava.class.path=" TEST_CLASS_PATH;
+		options[1].optionString = javaClassPath;
 
 		log_write("metacall", LOG_LEVEL_ERROR, "Test Log");
 
@@ -164,10 +167,26 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 int java_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	(void)impl;
-	(void)path;
+	// (void)impl;
+	// (void)path;
 
-	return 0;
+	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
+	if (java_impl != NULL)
+	{
+		jclass classPtr = java_impl->env->FindClass("bootstrap");
+		if (classPtr != nullptr)
+		{
+			jmethodID execPathCall = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_execution_path", "(Ljava/lang/String;)I");
+			if (execPathCall != nullptr)
+			{
+				jobject result = java_impl->env->CallObjectMethod(classPtr, execPathCall, java_impl->env->NewStringUTF(path));
+
+				return 0;
+			}
+		}
+	}
+
+	return 1;
 }
 
 loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
@@ -183,19 +202,27 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 		for (size_t i = 0; i < size; i++)
 		{
+			std::cout << "PATH = " << paths[i] << std::endl;
 			java_impl->env->SetObjectArrayElement(arr, i, java_impl->env->NewStringUTF(paths[i]));
 		}
+		log_write("metacall", LOG_LEVEL_ERROR, "jArray Made");
 
 		jclass classPtr = java_impl->env->FindClass("bootstrap");
 		if (classPtr == nullptr)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error Here");
+
 			return NULL;
 		}
 		else
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Bootstrap Found");
+
 			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/String;");
 			if (mid == nullptr)
 			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Error Here 2");
+
 				return NULL;
 			}
 			else
