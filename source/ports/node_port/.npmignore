@@ -1,3 +1,7 @@
-CMakeLists.txt
-upload.sh
-
+**
+!types
+!scripts
+!index.js
+!LICENSE
+!package.json
+!README.md
