@@ -43,7 +43,7 @@ typedef struct loader_impl_java_type
 
 typedef struct loader_impl_java_handle_type
 {
-	jobject *handle; // Pointer to the handle JNI object
+	jobject handle; // Pointer to the handle JNI object
 
 } * loader_impl_java_handle;
 
@@ -215,7 +215,7 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 			if (mid != nullptr)
 			{
 				jobject result = java_impl->env->CallObjectMethod(classPtr, mid, arr);
-				java_handle->handle = &result;
+				java_handle->handle = result;
 
 				return static_cast<loader_handle>(java_handle);
 			}
