@@ -89,6 +89,8 @@ public class bootstrap {
   }
 
   public static String[] loadFromFile(String[] paths) {
+    Handle handleObject = new Handle(); // Handle Class to store classes and names
+
     // load all scripts and store them into a Handle class, then return it
     for (int i = 0; i < paths.length; i++) {
       System.out.println("Path provided " + paths[i]);
@@ -118,7 +120,7 @@ public class bootstrap {
               File execPathFile = new File(curExecPath);
               URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
 
-              handleArray.addClass(classname, clsLoader.loadClass(classname));
+              handleObject.addClass(classname, clsLoader.loadClass(classname));
               clsLoader.close();
 
               // handleArray.addClass(classname, Class.forName(classname));
@@ -145,7 +147,9 @@ public class bootstrap {
       }
     }
 
-    return handleArray.getStringArray();
+    System.out.println(handleObject.getStringArray());
+
+    return handleObject.getStringArray();
   }
 
   public static void DiscoverData(String classname) {
