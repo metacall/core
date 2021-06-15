@@ -1998,7 +1998,7 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		else
 		{
 			/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */
-			if (!py_loader_impl_import_exception(*exception))
+			if (*exception != NULL && !py_loader_impl_import_exception(*exception))
 			{
 				return 1;
 			}
@@ -2050,13 +2050,9 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		}
 
 		/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */
-		if (!py_loader_impl_import_exception(exception))
+		if (exception != NULL && !py_loader_impl_import_exception(exception))
 		{
 			goto error_import_module;
-		}
-		else
-		{
-			exception = NULL;
 		}
 
 		if (PyErr_Occurred() != NULL)
@@ -2068,9 +2064,14 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		if (result != 0 && py_loader_impl_load_from_module(py_impl, &py_handle->modules[iterator], paths[iterator], &exception) != 0)
 		{
 			/* Show error message if the module was not found */
-			if (py_loader_impl_import_exception(exception))
+			if (exception != NULL && py_loader_impl_import_exception(exception))
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Module '%s' not found", paths[iterator]);
+			}
+			else
+			{
+				/* TODO: Print the error message of the exception */
+				log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s' [%s]", paths[iterator], Py_TYPE(exception)->tp_name);
 			}
 
 			goto error_import_module;
