@@ -20,33 +20,9 @@
 
 #include <gtest/gtest.h>
 
-#include <loader/loader.h>
-
-#include <log/log.h>
-
-class py_loader_test : public testing::Test
+int main(int argc, char *argv[])
 {
-protected:
-};
+	::testing::InitGoogleTest(&argc, argv);
 
-TEST_F(py_loader_test, DefaultConstructor)
-{
-	const loader_naming_path names[] = {
-		"example.py",						 // Classic load
-		"helloworld.py",					 // Classic load
-		"json",								 // Module load
-		"os.path",							 // Submodule load
-		PY_LOADER_TEST_SCRIPT_ABSOLUTE_PATH, // Absolute load
-		"./s2.py"							 // Relative load
-	};
-
-	EXPECT_EQ((int)0, (int)log_configure("metacall",
-						  log_policy_format_text(),
-						  log_policy_schedule_sync(),
-						  log_policy_storage_sequential(),
-						  log_policy_stream_stdio(stdout)));
-
-	EXPECT_EQ((int)0, loader_load_from_file("py", names, sizeof(names) / sizeof(names[0]), NULL));
-
-	EXPECT_EQ((int)0, loader_unload());
+	return RUN_ALL_TESTS();
 }

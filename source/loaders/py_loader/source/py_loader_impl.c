@@ -866,13 +866,8 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 				return NULL;
 			}
 
-			/* TODO: Why two refs? Understand what is happening */
 			Py_INCREF(obj);
-
-			Py_INCREF(obj);
-
 			py_func->func = obj;
-
 			py_func->impl = impl;
 
 			f = function_create(NULL, args_count, py_func, &function_py_singleton);
@@ -1557,7 +1552,7 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 		"import sys\n"
 		"import importlib.util\n"
 		"import importlib\n"
-		"def load_from_spec(spec):\n"
+		"def load_from_spec(module_name, spec):\n"
 		"	m = importlib.util.module_from_spec(spec)\n"
 		"	sys.modules[module_name] = m\n"
 		"	spec.loader.exec_module(m)\n"
@@ -1572,12 +1567,12 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 		"				spec = importlib.util.find_spec(module_name)\n"
 		"				if spec is None:\n"
 		"					raise ImportError('Module ' + module_name + ' could not be found')\n"
-		"				return load_from_spec(spec)\n"
+		"				return load_from_spec(module_name, spec)\n"
 		"		else:\n"
 		"			spec = importlib.util.spec_from_file_location(module_name, path)\n"
 		"			if spec is None:\n"
 		"				raise ImportError('File ' + path + ' could not be found')\n"
-		"			return load_from_spec(spec)\n"
+		"			return load_from_spec(module_name, spec)\n"
 		"	except ImportError as e:\n"
 		"		return e\n"
 		"	except Exception as e:\n"
@@ -1888,6 +1883,8 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	PyTuple_SetItem(args_tuple, 0, module->name);
 	PyTuple_SetItem(args_tuple, 1, py_path);
+	Py_INCREF(module->name);
+	Py_INCREF(py_path);
 
 	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
 
@@ -1918,61 +1915,6 @@ error_name_create:
 	return 1;
 }
 
-#if 0
-int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
-{
-	size_t length = strlen(path);
-
-	if (length == 0)
-	{
-		// TODO: Handle exception
-		return 1;
-	}
-
-	module->name = PyUnicode_DecodeFSDefaultAndSize(path, (Py_ssize_t)length);
-
-	if (module->name == NULL)
-	{
-		// TODO: Handle exception
-		return 1;
-	}
-
-	/* TODO: Trying to reimplement the PyImport_Import,
-	* check the TODO in monkey patch method in the port for more information
-	*/
-	/*
-	PyObject * globals = PyEval_GetGlobals();
-
-	if (globals != NULL)
-	{
-		Py_INCREF(globals);
-	}
-
-    module->instance = PyImport_ImportModuleLevelObject(module->name, globals, NULL, NULL, 0);
-
-	Py_XDECREF(globals);
-	*/
-
-	module->instance = PyImport_Import(module->name);
-
-	if (!(module->instance != NULL && PyModule_Check(module->instance)))
-	{
-		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
-		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
-		{
-			module->instance = NULL;
-		}
-
-		goto error_import;
-	}
-
-	return 0;
-error_import:
-	Py_DECREF(module->name);
-	module->name = NULL;
-	return 1;
-}
-#else
 int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
 {
 	size_t length = strlen(path);
@@ -2012,6 +1954,7 @@ int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handl
 		goto error_module_instance;
 	}
 
+	Py_INCREF(module->instance);
 	Py_DECREF(args_tuple);
 
 	return 0;
@@ -2024,7 +1967,6 @@ error_tuple_create:
 error_name_create:
 	return 1;
 }
-#endif
 
 int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
 {
@@ -2313,7 +2255,6 @@ int py_loader_impl_discover_func_args_count(PyObject *func)
 int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
-
 	PyObject *args = PyTuple_New(1);
 
 	if (args == NULL)
@@ -2322,10 +2263,10 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 		return 1;
 	}
 
-	// PyTuple_SetItem can't fail in this case, so no need to check the return
-	// value
 	PyTuple_SetItem(args, 0, func);
+	Py_INCREF(func);
 	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
+	Py_DECREF(args);
 
 	if (result != NULL)
 	{
@@ -2489,10 +2430,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 					goto cleanup;
 				}
 
-				/* TODO: Why two refs? Understand what is happening */
 				Py_INCREF(module_dict_val);
-				Py_INCREF(module_dict_val);
-
 				py_func->func = module_dict_val;
 				py_func->impl = impl;
 

@@ -1,6 +1,6 @@
 /*
- *	MetaCall Library by Parra Studios
- *	A library for providing a foreign function interface calls.
+ *	Loader Library by Parra Studios
+ *	A plugin for loading python code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -23,12 +23,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_python_without_functions_test : public testing::Test
+class metacall_python_test : public testing::Test
 {
-public:
+protected:
 };
 
-TEST_F(metacall_python_without_functions_test, DefaultConstructor)
+TEST_F(metacall_python_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -38,7 +38,12 @@ TEST_F(metacall_python_without_functions_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char *py_scripts[] = {
-			"withoutfunctions.py"
+			"example.py",						 // Classic load
+			"helloworld.py",					 // Classic load
+			"json",								 // Module load
+			"os.path",							 // Submodule load
+			PY_LOADER_TEST_SCRIPT_ABSOLUTE_PATH, // Absolute load
+			"./s2.py"							 // Relative load
 		};
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
