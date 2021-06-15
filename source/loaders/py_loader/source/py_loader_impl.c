@@ -1554,19 +1554,30 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 	static const char import_module_str[] =
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 5
 		// TODO: Implement better error handling
+		"import sys\n"
 		"import importlib.util\n"
 		"import importlib\n"
+		"def load_from_spec(spec):\n"
+		"	m = importlib.util.module_from_spec(spec)\n"
+		"	sys.modules[module_name] = m\n"
+		"	spec.loader.exec_module(m)\n"
+		"	return m\n"
+		"\n"
 		"def load_from_path(module_name, path = None):\n"
 		"	try:\n"
 		"		if path == None:\n"
-		"			return importlib.import_module(module_name)\n"
+		"			if module_name in sys.modules:\n"
+		"				return sys.modules[module_name]\n"
+		"			else:\n"
+		"				spec = importlib.util.find_spec(module_name)\n"
+		"				if spec is None:\n"
+		"					raise ImportError('Module ' + module_name + ' could not be found')\n"
+		"				return load_from_spec(spec)\n"
 		"		else:\n"
 		"			spec = importlib.util.spec_from_file_location(module_name, path)\n"
 		"			if spec is None:\n"
-		"				raise ModuleNotFoundError('File ' + path + ' could not be found')\n"
-		"			m = importlib.util.module_from_spec(spec)\n"
-		"			spec.loader.exec_module(m)\n"
-		"			return m\n"
+		"				raise ImportError('File ' + path + ' could not be found')\n"
+		"			return load_from_spec(spec)\n"
 		"	except ImportError as e:\n"
 		"		return e\n"
 		"	except Exception as e:\n"
@@ -1907,7 +1918,8 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_module(loader_impl_py_handle_module module, const loader_naming_path path)
+#if 0
+int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
 {
 	size_t length = strlen(path);
 
@@ -1960,6 +1972,59 @@ error_import:
 	module->name = NULL;
 	return 1;
 }
+#else
+int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+{
+	size_t length = strlen(path);
+
+	if (length == 0)
+	{
+		goto error_name_create;
+	}
+
+	module->name = PyUnicode_DecodeFSDefaultAndSize(path, (Py_ssize_t)length);
+
+	if (module->name == NULL)
+	{
+		goto error_name_create;
+	}
+
+	PyObject *args_tuple = PyTuple_New(1);
+
+	if (args_tuple == NULL)
+	{
+		goto error_tuple_create;
+	}
+
+	PyTuple_SetItem(args_tuple, 0, module->name);
+	Py_INCREF(module->name);
+
+	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
+
+	if (!(module->instance != NULL && PyModule_Check(module->instance)))
+	{
+		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
+		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
+		{
+			module->instance = NULL;
+		}
+
+		goto error_module_instance;
+	}
+
+	Py_DECREF(args_tuple);
+
+	return 0;
+
+error_module_instance:
+	Py_DECREF(args_tuple);
+error_tuple_create:
+	Py_XDECREF(module->name);
+	module->name = NULL;
+error_name_create:
+	return 1;
+}
+#endif
 
 int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
 {
@@ -2008,31 +2073,29 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		/* Try to load the module as it is */
-		if (py_loader_impl_load_from_module(&py_handle->modules[iterator], paths[iterator]) != 0)
-		{
-			if (PyErr_Occurred() != NULL)
-			{
-				PyErr_Clear();
-			}
+		int result = 1;
 
-			/* Otherwise, we assume it is a path so we load from path */
-			if (loader_path_is_absolute(paths[iterator]) == 0)
-			{
-				/* Load as absolute path */
-				if (py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
-				{
-					goto error_import_module;
-				}
-			}
-			else
-			{
-				/* Try to load it as a path relative to all execution paths */
-				if (py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
-				{
-					goto error_import_module;
-				}
-			}
+		/* We assume it is a path so we load from path */
+		if (loader_path_is_absolute(paths[iterator]) == 0)
+		{
+			/* Load as absolute path */
+			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator]);
+		}
+		else
+		{
+			/* Try to load it as a path relative to all execution paths */
+			result = py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator]);
+		}
+
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Clear();
+		}
+
+		/* Try to load the module as it is */
+		if (result != 0 && py_loader_impl_load_from_module(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
+		{
+			goto error_import_module;
 		}
 	}
 
