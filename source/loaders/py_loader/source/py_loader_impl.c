@@ -1548,14 +1548,13 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 {
 	static const char import_module_str[] =
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 5
-		// TODO: Implement better error handling
 		"import sys\n"
 		"import importlib.util\n"
 		"import importlib\n"
 		"def load_from_spec(module_name, spec):\n"
 		"	m = importlib.util.module_from_spec(spec)\n"
-		"	sys.modules[module_name] = m\n"
 		"	spec.loader.exec_module(m)\n"
+		"	sys.modules[module_name] = m\n"
 		"	return m\n"
 		"\n"
 		"def load_from_path(module_name, path = None):\n"
@@ -1566,18 +1565,18 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 		"			else:\n"
 		"				spec = importlib.util.find_spec(module_name)\n"
 		"				if spec is None:\n"
-		"					raise ImportError('Module ' + module_name + ' could not be found')\n"
+		"					return ImportError('Module ' + module_name + ' could not be found')\n"
 		"				return load_from_spec(module_name, spec)\n"
 		"		else:\n"
 		"			spec = importlib.util.spec_from_file_location(module_name, path)\n"
 		"			if spec is None:\n"
-		"				raise ImportError('File ' + path + ' could not be found')\n"
+		"				return ImportError('File ' + path + ' could not be found')\n"
 		"			return load_from_spec(module_name, spec)\n"
-		"	except ImportError as e:\n"
-		"		return e\n"
-		"	except Exception as e:\n"
+		"	except SyntaxError as e:\n"
 		"		import traceback\n"
 		"		print(traceback.format_exc())\n"
+		"		return e\n"
+		"	except Exception as e:\n"
 		"		return e\n"
 #elif PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 3
 		// TODO: Not tested
@@ -1850,10 +1849,12 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	free(py_handle);
 }
 
-int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
 {
 	loader_naming_name name;
 	size_t size = loader_path_get_fullname(path, name);
+
+	*exception = NULL;
 
 	if (size <= 1)
 	{
@@ -1890,9 +1891,9 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
 		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
 		{
+			*exception = module->instance;
 			module->instance = NULL;
 		}
 
@@ -1915,9 +1916,11 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
 {
 	size_t length = strlen(path);
+
+	*exception = NULL;
 
 	if (length == 0)
 	{
@@ -1945,9 +1948,9 @@ int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handl
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
 		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
 		{
+			*exception = module->instance;
 			module->instance = NULL;
 		}
 
@@ -1968,7 +1971,12 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+int py_loader_impl_import_exception(PyObject *exception)
+{
+	return PyErr_GivenExceptionMatches(exception, PyExc_ImportError) || PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundError);
+}
+
+int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
 {
 	PyObject *system_paths = PySys_GetObject("path");
 
@@ -1981,14 +1989,25 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		size_t join_path_size = loader_path_join(system_path_str, length + 1, path, strlen(path) + 1, join_path);
 		loader_path_canonical(join_path, join_path_size, canonical_path);
 
-		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path) == 0)
+		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path, exception) == 0)
 		{
 			log_write("metacall", LOG_LEVEL_DEBUG, "Python Loader relative module loaded at %s", canonical_path);
 
 			return 0;
 		}
+		else
+		{
+			/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */
+			if (!py_loader_impl_import_exception(*exception))
+			{
+				return 1;
+			}
+		}
 
-		PyErr_Clear();
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Clear();
+		}
 	}
 
 	return 1;
@@ -2016,17 +2035,28 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	for (iterator = 0; iterator < size; ++iterator)
 	{
 		int result = 1;
+		PyObject *exception = NULL;
 
 		/* We assume it is a path so we load from path */
 		if (loader_path_is_absolute(paths[iterator]) == 0)
 		{
 			/* Load as absolute path */
-			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator]);
+			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator], &exception);
 		}
 		else
 		{
 			/* Try to load it as a path relative to all execution paths */
-			result = py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator]);
+			result = py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator], &exception);
+		}
+
+		/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */
+		if (!py_loader_impl_import_exception(exception))
+		{
+			goto error_import_module;
+		}
+		else
+		{
+			exception = NULL;
 		}
 
 		if (PyErr_Occurred() != NULL)
@@ -2035,8 +2065,14 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		}
 
 		/* Try to load the module as it is */
-		if (result != 0 && py_loader_impl_load_from_module(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
+		if (result != 0 && py_loader_impl_load_from_module(py_impl, &py_handle->modules[iterator], paths[iterator], &exception) != 0)
 		{
+			/* Show error message if the module was not found */
+			if (py_loader_impl_import_exception(exception))
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Module '%s' not found", paths[iterator]);
+			}
+
 			goto error_import_module;
 		}
 	}
