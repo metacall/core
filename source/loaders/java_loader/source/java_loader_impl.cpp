@@ -47,71 +47,154 @@ typedef struct loader_impl_java_handle_type
 
 } * loader_impl_java_handle;
 
-typedef struct loader_impl_java_function_type
+typedef struct loader_impl_java_class_type
 {
-	void *todo;
+	// void *todo;
+	jclass cls;
+} * loader_impl_java_class;
 
-} * loader_impl_java_function;
-
-//static void java_loader_impl_exception()
-
-int function_java_interface_create(function func, function_impl impl)
+int java_object_interface_create(object obj, object_impl impl)
 {
-	(void)func;
+	(void)obj;
+
+	return 0;
+}
+
+value java_object_interface_get(object obj, object_impl impl, const char *key)
+{
+	(void)obj;
+
+	return NULL
+}
+
+int java_object_interface_set(object obj, object_impl impl, const char *key, value v)
+{
+	(void)obj;
+
+	return 0;
+}
+
+value java_object_interface_method_invoke(object obj, object_impl impl, const char *method_name, object_args args, size_t argc)
+{
+	(void)obj;
+
+	return NULL;
+}
+
+value java_object_interface_method_await(object obj, object_impl impl, const char *key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+{
+	// TODO
+	(void)obj;
+	(void)impl;
+	(void)key;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+int java_object_interface_destructor(object obj, object_impl impl)
+{
+	(void)obj;
 	(void)impl;
 
 	return 0;
 }
 
-function_return function_java_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+void java_object_interface_destroy(object obj, object_impl impl)
 {
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-
-	return NULL;
+	(void)obj;
 }
 
-function_return function_java_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
+object_interface java_object_interface_singleton(void)
 {
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)context;
-
-	return NULL;
-}
-
-void function_java_interface_destroy(function func, function_impl impl)
-{
-	loader_impl_java_function java_function = static_cast<loader_impl_java_function>(impl);
-
-	(void)func;
-
-	if (java_function != NULL)
-	{
-		delete java_function;
-	}
-}
-
-function_interface function_java_singleton()
-{
-	static struct function_interface_type java_interface = {
-		&function_java_interface_create,
-		&function_java_interface_invoke,
-		&function_java_interface_await,
-		&function_java_interface_destroy
+	static struct object_interface_type java_object_interface = {
+		&java_object_interface_create,
+		&java_object_interface_get,
+		&java_object_interface_set,
+		&java_object_interface_method_invoke,
+		&java_object_interface_method_await,
+		&java_object_interface_destructor,
+		&java_object_interface_destroy
 	};
 
-	return &java_interface;
+	return &java_object_interface;
+}
+
+int java_class_interface_create(klass cls, class_impl impl)
+{
+	(void)cls;
+
+	return 0;
+}
+
+object java_class_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t argc)
+{
+	(void)cls;
+
+	return NULL;
+}
+
+value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
+{
+	(void)cls;
+
+	return NULL
+}
+
+int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
+{
+	(void)cls;
+
+	return 0;
+}
+
+value java_class_interface_static_invoke(klass cls, class_impl impl, const char *static_method_name, class_args args, size_t argc)
+{
+	// TODO
+	(void)cls;
+	(void)impl;
+	(void)args;
+
+	return NULL;
+}
+
+value java_class_interface_static_await(klass cls, class_impl impl, const char *key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+{
+	// TODO
+	(void)cls;
+	(void)impl;
+	(void)key;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+void java_class_interface_destroy(klass cls, class_impl impl)
+{
+	(void)cls;
+}
+
+class_interface java_class_interface_singleton(void)
+{
+	static struct class_interface_type java_class_interface = {
+		&java_class_interface_create,
+		&java_class_interface_constructor,
+		&java_class_interface_static_get,
+		&java_class_interface_static_set,
+		&java_class_interface_static_invoke,
+		&java_class_interface_static_await,
+		&java_class_interface_destroy
+	};
+
+	return &java_class_interface;
 }
 
 loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration config)
@@ -272,16 +355,14 @@ int java_loader_impl_discover_func(loader_impl impl, loader_handle handle, conte
 int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);
+	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
-	(void)impl;
-	(void)ctx;
-
-	if (java_handle != NULL)
+	if (java_handle == NULL || java_impl == NULL || ctx == NULL)
 	{
-		return 0;
+		return 1;
 	}
 
-	return 1;
+	return 0;
 }
 
 int java_loader_impl_destroy(loader_impl impl)
