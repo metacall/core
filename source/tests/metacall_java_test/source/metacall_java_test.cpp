@@ -39,7 +39,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_JAVA)
 	{
 		const char *java_scripts[] = {
-			"Fibonacci.java"
+			"Fibonacci.java", "Test.java"
 		};
 
 		const enum metacall_value_id fib_int_ids[] = {

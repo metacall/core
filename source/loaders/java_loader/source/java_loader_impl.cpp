@@ -43,7 +43,8 @@ typedef struct loader_impl_java_type
 
 typedef struct loader_impl_java_handle_type
 {
-	jobject handle; // Pointer to the handle JNI object
+	jobjectArray handle; // Pointer to the handle JNI object
+	size_t size;
 
 } * loader_impl_java_handle;
 
@@ -64,7 +65,7 @@ value java_object_interface_get(object obj, object_impl impl, const char *key)
 {
 	(void)obj;
 
-	return NULL
+	return NULL;
 }
 
 int java_object_interface_set(object obj, object_impl impl, const char *key, value v)
@@ -142,7 +143,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 {
 	(void)cls;
 
-	return NULL
+	return NULL;
 }
 
 int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
@@ -294,11 +295,25 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Bootstrap Found");
 
-			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/String;");
+			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)LHandle;");
 			if (mid != nullptr)
 			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Function Found");
+
 				jobject result = java_impl->env->CallObjectMethod(classPtr, mid, arr);
-				java_handle->handle = result;
+				jobjectArray resultArray = java_impl->env->NewObjectArray(size, java_impl->env->FindClass("Handle"), result);
+
+				java_handle->handle = resultArray;
+				java_handle->size = size;
+
+				// for (size_t i = 0; i < size + 1; i++)
+				// {
+				// 	jobject r = java_impl->env->GetObjectArrayElement(rrr, i);
+				// 	if (r != nullptr)
+				// 		std::cout << "Got it " << i << r << std::endl;
+				// }
+
+				java_impl->env->DeleteLocalRef(arr); // Remove the jObjectArray from memory
 
 				return static_cast<loader_handle>(java_handle);
 			}
@@ -354,6 +369,8 @@ int java_loader_impl_discover_func(loader_impl impl, loader_handle handle, conte
 
 int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
+	log_write("metacall", LOG_LEVEL_ERROR, "Discover");
+
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
@@ -361,6 +378,16 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	{
 		return 1;
 	}
+
+	for (size_t i = 0; i < java_handle->size; i++)
+	{
+		jobject r = java_impl->env->GetObjectArrayElement(java_handle->handle, i);
+		if (r != nullptr)
+			std::cout << "Got it " << i << r << std::endl;
+	}
+
+	// In functions where handle is passed, we can call it using
+	// jobject handle = passes_handle
 
 	return 0;
 }
@@ -378,7 +405,7 @@ int java_loader_impl_destroy(loader_impl impl)
 			// TODO: Handle error
 			std::cout << "ffffffffffffffffffffffffffff" << std::endl;
 		}
-		std::cout << "1ffffffffffffffffffffffffffff" << std::endl;
+		std::cout << "\n1ffffffffffffffffffffffffffff" << std::endl;
 
 		/* Destroy children loaders */
 		loader_unload_children(impl);
