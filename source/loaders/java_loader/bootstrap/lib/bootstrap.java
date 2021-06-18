@@ -88,7 +88,7 @@ public class bootstrap {
     return 0;
   }
 
-  public static String[] loadFromFile(String[] paths) {
+  public static Handle loadFromFile(String[] paths) {
     Handle handleObject = new Handle(); // Handle Class to store classes and names
 
     // load all scripts and store them into a Handle class, then return it
@@ -99,9 +99,7 @@ public class bootstrap {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
         StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
-        // TODO: This hardcoded path should be avoided, if it can be in memory it would
-        // be cool, otherwise
-        // we can do this in a temporary path
+
         Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", System.getenv("LOADER_SCRIPT_PATH") });
 
         File pathFile = new File(paths[i]);
@@ -147,9 +145,7 @@ public class bootstrap {
       }
     }
 
-    System.out.println(handleObject.getStringArray());
-
-    return handleObject.getStringArray();
+    return handleObject;
   }
 
   public static void DiscoverData(String classname) {
