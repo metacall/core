@@ -38,11 +38,41 @@
 #include <Python.h>
 
 #define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
+
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define DEBUG_ENABLED 1
 #else
 	#define DEBUG_ENABLED 0
 #endif
+
+// TODO: This code is duplicated among NodeJS, Python and C# Loaders (review py_loader_impl_initialize_sys_executable)
+#if defined(WIN32) || defined(_WIN32)
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+
+	#include <windows.h>
+	#define PY_LOADER_IMPL_PATH_SIZE MAX_PATH
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+
+	#include <limits.h>
+	#include <unistd.h>
+
+	#define PY_LOADER_IMPL_PATH_SIZE PATH_MAX
+#else
+	#define PY_LOADER_IMPL_PATH_SIZE 4096
+#endif
+
+typedef char py_impl_path[PY_LOADER_IMPL_PATH_SIZE];
+// END-TODO
 
 typedef struct loader_impl_py_function_type
 {
@@ -1622,6 +1652,51 @@ error_import_compile:
 	return 1;
 }
 
+int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
+{
+	// TODO: This code is duplicated among NodeJS, Python and C# Loaders
+	const size_t path_max_length = PY_LOADER_IMPL_PATH_SIZE;
+	py_impl_path exe_path_str = { 0 };
+
+#if defined(WIN32) || defined(_WIN32)
+	unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
+#else
+	ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
+#endif
+
+	if (length == -1 || length == path_max_length)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid working directory path");
+
+		return 1;
+	}
+	// END-TODO
+
+	PyObject *exe_path_obj = PyUnicode_DecodeFSDefaultAndSize(exe_path_str, (Py_ssize_t)length);
+
+	if (exe_path_obj == NULL)
+	{
+		return 1;
+	}
+
+	int result = PySys_SetObject("executable", exe_path_obj);
+
+	Py_DECREF(exe_path_obj);
+
+	if (result == -1)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+			PyErr_Clear();
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
@@ -1651,6 +1726,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
+	{
+		goto error_after_sys_executable;
+	}
 
 	if (py_loader_impl_initialize_traceback(impl, py_impl) != 0)
 	{
@@ -1721,6 +1801,7 @@ error_after_traceback_and_gc:
 		Py_DECREF(py_impl->gc_module);
 	}
 #endif
+error_after_sys_executable:
 	PyGILState_Release(gstate);
 	(void)py_loader_impl_finalize(py_impl);
 error_init_py:
