@@ -80,6 +80,12 @@ import functools
 # Save the original Python import
 __python_import__ = builtins.__import__
 
+# Define proper import exception depending on Python support
+if 'ModuleNotFoundError' in locals() or 'ModuleNotFoundError' in globals():
+	ImportException = ModuleNotFoundError
+else:
+	ImportException = ImportError
+
 def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 	def find_handle(handle_name):
 		metadata = metacall_inspect()
@@ -182,7 +188,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 			current_frame = inspect.currentframe()
 			call_frame = inspect.getouterframes(current_frame, 2)
 			if call_frame[1][3] == 'metacall_load_from_file' or call_frame[1][3] == 'metacall_load_from_memory':
-				return ImportError('MetaCall could not import:', name)
+				return ImportException('MetaCall could not import:', name)
 
 		if metacall_load_from_file(extensions_to_tag[extension], [name]):
 			handle = find_handle(name)
@@ -212,7 +218,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 					# Generate the module from cached handle
 					return generate_module(name, handle)
 
-	raise ImportError('MetaCall could not import:', name)
+	raise ImportException('MetaCall could not import:', name)
 
 # Override Python import
 builtins.__import__ = __metacall_import__
