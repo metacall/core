@@ -81,9 +81,14 @@ import functools
 __python_import__ = builtins.__import__
 
 # Define proper import exception depending on Python support
-if 'ModuleNotFoundError' in locals() or 'ModuleNotFoundError' in globals():
-	ImportException = ModuleNotFoundError
-else:
+ImportException = ImportError
+
+try:
+	try:
+		raise ModuleNotFoundError()
+	except ModuleNotFoundError as e:
+		ImportException = ModuleNotFoundError
+except NameError as e:
 	ImportException = ImportError
 
 def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
