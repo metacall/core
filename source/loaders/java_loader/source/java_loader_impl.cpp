@@ -44,14 +44,13 @@ typedef struct loader_impl_java_type
 typedef struct loader_impl_java_handle_type
 {
 	jobjectArray handle; // Pointer to the handle JNI object
-	size_t size;
+	size_t size;		 // Size of the jobject array
 
 } * loader_impl_java_handle;
 
 typedef struct loader_impl_java_class_type
 {
-	// void *todo;
-	jclass cls;
+	jobject cls;
 } * loader_impl_java_class;
 
 int java_object_interface_create(object obj, object_impl impl)
@@ -295,23 +294,15 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Bootstrap Found");
 
-			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)LHandle;");
+			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/Class;");
 			if (mid != nullptr)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Function Found");
 
-				jobject result = java_impl->env->CallObjectMethod(classPtr, mid, arr);
-				jobjectArray resultArray = java_impl->env->NewObjectArray(size, java_impl->env->FindClass("Handle"), result);
+				jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, mid, arr);
 
-				java_handle->handle = resultArray;
-				java_handle->size = size;
-
-				// for (size_t i = 0; i < size + 1; i++)
-				// {
-				// 	jobject r = java_impl->env->GetObjectArrayElement(rrr, i);
-				// 	if (r != nullptr)
-				// 		std::cout << "Got it " << i << r << std::endl;
-				// }
+				java_handle->handle = result;
+				java_handle->size = java_impl->env->GetArrayLength(result);
 
 				java_impl->env->DeleteLocalRef(arr); // Remove the jObjectArray from memory
 
@@ -379,15 +370,48 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		return 1;
 	}
 
-	for (size_t i = 0; i < java_handle->size; i++)
-	{
-		jobject r = java_impl->env->GetObjectArrayElement(java_handle->handle, i);
-		if (r != nullptr)
-			std::cout << "Got it " << i << r << std::endl;
-	}
+	jclass classPtr = java_impl->env->FindClass("bootstrap");
 
-	// In functions where handle is passed, we can call it using
-	// jobject handle = passes_handle
+	if (classPtr != nullptr)
+	{
+		jmethodID cls_name_bootstrap = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_class_name", "(Ljava/lang/Class;)Ljava/lang/String;");
+
+		if (cls_name_bootstrap != nullptr)
+		{
+			size_t handleSize = (size_t)java_impl->env->GetArrayLength(java_handle->handle);
+
+			for (size_t i = 0; i < handleSize; i++)
+			{
+				jobject r = java_impl->env->GetObjectArrayElement(java_handle->handle, i);
+
+				if (r != nullptr)
+				{
+					jstring result = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_name_bootstrap, r);
+					const char *cls_name = java_impl->env->GetStringUTFChars(result, NULL);
+
+					loader_impl_java_class java_cls = new loader_impl_java_class_type();
+					java_cls->cls = r;
+
+					klass c = class_create(cls_name, java_cls, &java_class_interface_singleton);
+
+					// if (py_loader_impl_discover_class(impl, module_dict_val, c) == 0)
+					// {
+					scope sp = context_scope(ctx);
+					scope_define(sp, cls_name, value_create_class(c));
+
+					std::cout << cls_name << " Class Registered!" << std::endl;
+
+					// }
+					// else
+					// {
+					// 	class_destroy(c);
+					// }
+				}
+
+				java_impl->env->DeleteLocalRef(r); // Remove the jObjectArray element from memory
+			}
+		}
+	}
 
 	return 0;
 }
