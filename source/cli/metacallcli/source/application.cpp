@@ -551,21 +551,19 @@ application::application(int argc, char *argv[]) :
 	setlocale(LC_CTYPE, "C");
 
 	/* TODO: Windows special characters not working properly */
-	/*
+	#if 0
 	#if defined(WIN32) || defined(_WIN32)
 	{
 		// SetConsoleOutputCP(CP_UTF16);
 
-		*/
-	/* Set UTF-16 mode for stdout in Windows for the lambda character */		/*
+		/* Set UTF-16 mode for stdout in Windows for the lambda character */
 		_setmode(_fileno(stdout), _O_U16TEXT);
 
-		*/
-	/* Enable buffering to prevent VS from chopping up UTF-16 byte sequences */ /*
+		/* Enable buffering to prevent VS from chopping up UTF-16 byte sequences */
 		setvbuf(stdout, nullptr, _IOFBF, 1000);
 	}
 	#endif
-	*/
+	#endif
 
 	/* Initialize MetaCall */
 	if (metacall_initialize() != 0)
@@ -574,16 +572,23 @@ application::application(int argc, char *argv[]) :
 		shutdown();
 	}
 
+	/* Initialize MetaCall arguments */
+	metacall_initialize_args(argc, argv);
+
 	/* Print MetaCall information */
 	metacall_print_info();
 
+	/* TODO: This has been updated, review it: */
 	/* Parse program arguments if any (e.g metacall (0) a.py (1) b.js (2) c.rb (3)) */
 	if (argc > 1)
 	{
 		parameter_iterator param_it(*this);
 
+		/* TODO: This has been refactored in order to pass the arguments to the runtimes */
+		/* Using argv + 2 by now, but this should be deleted in a near future or review the implementation */
+
 		/* Parse program parameters */
-		std::for_each(&argv[1], argv + argc, param_it);
+		std::for_each(&argv[1], argv + /*argc*/ 2, param_it);
 	}
 
 	/* Define available commands */

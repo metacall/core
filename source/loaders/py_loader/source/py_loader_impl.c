@@ -32,6 +32,8 @@
 
 #include <log/log.h>
 
+#include <metacall/metacall.h>
+
 #include <stdbool.h>
 #include <stdlib.h>
 
@@ -176,6 +178,10 @@ static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
 		PyDoc_STR("Implements a trampoline for functions as values in the type system.") },
 	{ NULL, NULL, 0, NULL }
 };
+
+/* Implements: if __name__ == "__main__": */
+static int py_loader_impl_run_main = 1;
+static char *py_loader_impl_main_module = NULL;
 
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 {
@@ -1697,6 +1703,44 @@ int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 	return 0;
 }
 
+int py_loader_impl_initialize_argv(loader_impl_py py_impl, int argc, char **argv)
+{
+	Py_ssize_t iterator, array_size = (Py_ssize_t)(argc - 1);
+	PyObject *list = PyList_New(array_size);
+
+	for (iterator = 0; iterator < array_size; ++iterator)
+	{
+		const char *arg = argv[iterator + 1];
+		PyObject *item = PyUnicode_DecodeFSDefaultAndSize(arg, (Py_ssize_t)strlen(arg));
+
+		if (!(item != NULL && PyList_SetItem(list, iterator, item) == 0))
+		{
+			goto error_set_item;
+		}
+	}
+
+	int result = PySys_SetObject("argv", list);
+
+	Py_DECREF(list);
+
+	if (result == -1)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+			PyErr_Clear();
+		}
+
+		return 1;
+	}
+
+	return 0;
+
+error_set_item:
+	Py_DECREF(list);
+	return 1;
+}
+
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
@@ -1730,6 +1774,20 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
 	{
 		goto error_after_sys_executable;
+	}
+
+	char **argv = metacall_argv();
+	int argc = metacall_argc();
+
+	if (argv != NULL && argc > 1)
+	{
+		if (py_loader_impl_initialize_argv(py_impl, argc, argv) != 0)
+		{
+			goto error_after_argv;
+		}
+
+		py_loader_impl_main_module = argv[1];
+		py_loader_impl_run_main = 0;
 	}
 
 	if (py_loader_impl_initialize_traceback(impl, py_impl) != 0)
@@ -1801,6 +1859,7 @@ error_after_traceback_and_gc:
 		Py_DECREF(py_impl->gc_module);
 	}
 #endif
+error_after_argv:
 error_after_sys_executable:
 	PyGILState_Release(gstate);
 	(void)py_loader_impl_finalize(py_impl);
@@ -2112,6 +2171,12 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	{
 		goto error_recursive_call;
 	}
+
+	/* TODO: Implement "__main__" */
+	/*
+	py_loader_impl_main_module;
+	py_loader_impl_run_main;
+	*/
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{

@@ -51,6 +51,8 @@ void *metacall_null_args[1];
 static int metacall_initialize_flag = 1;
 static int metacall_log_null_flag = 1;
 static int metacall_config_flags = 0;
+static int metacall_initialize_argc = 0;
+static char **metacall_initialize_argv = NULL;
 
 /* -- Methods -- */
 
@@ -183,6 +185,22 @@ int metacall_initialize_ex(struct metacall_initialize_configuration_type initial
 	}
 
 	return 0;
+}
+
+void metacall_initialize_args(int argc, char *argv[])
+{
+	metacall_initialize_argc = argc;
+	metacall_initialize_argv = argv;
+}
+
+char **metacall_argv()
+{
+	return metacall_initialize_argv;
+}
+
+int metacall_argc()
+{
+	return metacall_initialize_argc;
 }
 
 int metacall_is_initialized(const char *tag)

@@ -360,6 +360,17 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
+	add_test(NAME ${target}-py-argv
+		COMMAND ${TEST_COMMAND} "$<TARGET_FILE:${target}> cli-test-argv.py | ${GREP_COMMAND} \"Test: cli-test-argv.py\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	set_property(TEST ${target}-py-argv
+		PROPERTY LABELS ${target}-py-argv
+	)
+	test_environment_variables(${target}-py-argv
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
 endif()
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)

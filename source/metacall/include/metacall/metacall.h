@@ -56,7 +56,9 @@ struct metacall_initialize_configuration_type;
 struct metacall_initialize_configuration_type
 {
 	char *tag;
-	void *options;
+	void *options;	// TODO: We should use a MetaCall value MAP here and merge it with the configuration.
+					// By this way loaders will be able to access this information in the backend and we
+					// can use a weak API in order to implement this successfully
 };
 
 /* -- Global Variables -- */
@@ -113,6 +115,36 @@ METACALL_API int metacall_initialize(void);
 *    Zero if success, different from zero otherwise
 */
 METACALL_API int metacall_initialize_ex(struct metacall_initialize_configuration_type initialize_config[]);
+
+/**
+*  @brief
+*    Initialize MetaCall application arguments
+*
+*  @param[in] argc
+*    Number of additional parameters to be passed to the runtime when initializing
+*
+*  @param[in] argv
+*    Additional parameters to be passed to the runtime when initializing (when using MetaCall as an application)
+*/
+METACALL_API void metacall_initialize_args(int argc, char *argv[]);
+
+/**
+*  @brief
+*    Get the number of arguments in which MetaCall was initialized
+*
+*  @return
+*    An integer equal or greater than zero
+*/
+METACALL_API int metacall_argc();
+
+/**
+*  @brief
+*    Get the arguments in which MetaCall was initialized
+*
+*  @return
+*    A pointer to an array of strings with the additional arguments
+*/
+METACALL_API char **metacall_argv(void);
 
 /**
 *  @brief
