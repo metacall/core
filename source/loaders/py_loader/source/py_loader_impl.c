@@ -1989,19 +1989,27 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	free(py_handle);
 }
 
-int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
+int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception, int run_main)
 {
-	loader_naming_name name;
-	size_t size = loader_path_get_fullname(path, name);
-
-	*exception = NULL;
-
-	if (size <= 1)
+	if (run_main == 0)
 	{
-		goto error_name_create;
+		static const char name[] = "__main__";
+		module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)(sizeof(name) - 1));
 	}
+	else
+	{
+		loader_naming_name name;
+		size_t size = loader_path_get_fullname(path, name);
 
-	module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
+		*exception = NULL;
+
+		if (size <= 1)
+		{
+			goto error_name_create;
+		}
+
+		module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
+	}
 
 	if (module->name == NULL)
 	{
@@ -2116,7 +2124,7 @@ int py_loader_impl_import_exception(PyObject *exception)
 	return /*PyErr_GivenExceptionMatches(exception, PyExc_ImportError) ||*/ PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundError);
 }
 
-int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
+int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception, int run_main)
 {
 	PyObject *system_paths = PySys_GetObject("path");
 
@@ -2129,7 +2137,7 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		size_t join_path_size = loader_path_join(system_path_str, length + 1, path, strlen(path) + 1, join_path);
 		loader_path_canonical(join_path, join_path_size, canonical_path);
 
-		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path, exception) == 0)
+		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path, exception, run_main) == 0)
 		{
 			log_write("metacall", LOG_LEVEL_DEBUG, "Python Loader relative module loaded at %s", canonical_path);
 
@@ -2157,6 +2165,8 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(size);
+	int run_main = 1;
+	size_t iterator;
 
 	if (py_handle == NULL)
 	{
@@ -2164,7 +2174,6 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	}
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
-	size_t iterator;
 
 	/* Possibly a recursive call */
 	if (Py_EnterRecursiveCall(" while loading a module from file in Python Loader") != 0)
@@ -2172,11 +2181,14 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		goto error_recursive_call;
 	}
 
-	/* TODO: Implement "__main__" */
-	/*
-	py_loader_impl_main_module;
-	py_loader_impl_run_main;
-	*/
+	/* If we loaded one script and this script is the same as the one we passed to argv,
+	then we should set up this as a main script, only if only we set up the argv in MetaCall.
+	This should run only once, the first time after the initialization */
+	if (py_loader_impl_run_main == 0 && size == 1 && strcmp(paths[0], py_loader_impl_main_module) == 0)
+	{
+		run_main = 0;
+		py_loader_impl_run_main = 1;
+	}
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
@@ -2187,12 +2199,12 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		if (loader_path_is_absolute(paths[iterator]) == 0)
 		{
 			/* Load as absolute path */
-			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator], &exception);
+			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator], &exception, run_main);
 		}
 		else
 		{
 			/* Try to load it as a path relative to all execution paths */
-			result = py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator], &exception);
+			result = py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator], &exception, run_main);
 		}
 
 		/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */

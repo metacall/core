@@ -56,9 +56,9 @@ struct metacall_initialize_configuration_type;
 struct metacall_initialize_configuration_type
 {
 	char *tag;
-	void *options;	// TODO: We should use a MetaCall value MAP here and merge it with the configuration.
-					// By this way loaders will be able to access this information in the backend and we
-					// can use a weak API in order to implement this successfully
+	void *options; // TODO: We should use a MetaCall value MAP here and merge it with the configuration.
+				   // By this way loaders will be able to access this information in the backend and we
+				   // can use a weak API in order to implement this successfully
 };
 
 /* -- Global Variables -- */

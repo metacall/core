@@ -550,8 +550,8 @@ application::application(int argc, char *argv[]) :
 	/* Set locale */
 	setlocale(LC_CTYPE, "C");
 
-	/* TODO: Windows special characters not working properly */
-	#if 0
+/* TODO: Windows special characters not working properly */
+#if 0
 	#if defined(WIN32) || defined(_WIN32)
 	{
 		// SetConsoleOutputCP(CP_UTF16);
@@ -563,7 +563,7 @@ application::application(int argc, char *argv[]) :
 		setvbuf(stdout, nullptr, _IOFBF, 1000);
 	}
 	#endif
-	#endif
+#endif
 
 	/* Initialize MetaCall */
 	if (metacall_initialize() != 0)
