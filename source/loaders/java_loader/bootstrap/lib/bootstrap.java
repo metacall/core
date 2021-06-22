@@ -88,8 +88,10 @@ public class bootstrap {
     return 0;
   }
 
-  public static String[] loadFromFile(String[] paths) {
-    Handle handleObject = new Handle(); // Handle Class to store classes and names
+  public static Class<?>[] loadFromFile(String[] paths) {
+    // Handle handleObject = new Handle(); // Handle Class to store classes
+
+    Class<?>[] handleObject = new Class<?>[paths.length];
 
     // load all scripts and store them into a Handle class, then return it
     for (int i = 0; i < paths.length; i++) {
@@ -99,9 +101,7 @@ public class bootstrap {
         JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
         DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
         StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
-        // TODO: This hardcoded path should be avoided, if it can be in memory it would
-        // be cool, otherwise
-        // we can do this in a temporary path
+
         Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", System.getenv("LOADER_SCRIPT_PATH") });
 
         File pathFile = new File(paths[i]);
@@ -120,8 +120,11 @@ public class bootstrap {
               File execPathFile = new File(curExecPath);
               URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
 
-              handleObject.addClass(classname, clsLoader.loadClass(classname));
+              // handleObject.addClass(classname, clsLoader.loadClass(classname));
+              handleObject[i] = clsLoader.loadClass(classname);
               clsLoader.close();
+
+              System.out.println(i + " -> " + classname + " loaded");
 
               // handleArray.addClass(classname, Class.forName(classname));
               System.out.println("Class Loading Successful");
@@ -147,9 +150,18 @@ public class bootstrap {
       }
     }
 
-    System.out.println(handleObject.getStringArray());
+    return handleObject;
+  }
 
-    return handleObject.getStringArray();
+  public static String java_bootstrap_get_class_name(Class<?> cls) {
+
+    //Working test for getting function name and details
+    // Method[] methods = cls.getDeclaredMethods();
+    // for (Method method : methods) {
+    //   System.out.println("Name of the method: " + method.getName());
+    // }
+
+    return cls.getName();
   }
 
   public static void DiscoverData(String classname) {
