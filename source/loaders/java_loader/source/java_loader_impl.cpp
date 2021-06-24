@@ -51,7 +51,14 @@ typedef struct loader_impl_java_handle_type
 typedef struct loader_impl_java_class_type
 {
 	jobject cls;
+	loader_impl_java impl;
 } * loader_impl_java_class;
+
+typedef struct loader_impl_java_object_type
+{
+	jobject cls;
+	loader_impl_java impl;
+} * loader_impl_java_object;
 
 int java_object_interface_create(object obj, object_impl impl)
 {
@@ -127,6 +134,9 @@ object_interface java_object_interface_singleton(void)
 int java_class_interface_create(klass cls, class_impl impl)
 {
 	(void)cls;
+	std::cout << "Create" << std::endl;
+	loader_impl_java_class java_cls = (loader_impl_java_class)impl;
+	java_cls->cls = NULL;
 
 	return 0;
 }
@@ -135,12 +145,54 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 {
 	(void)cls;
 
-	return NULL;
+	std::cout << "Constructor " << argc << std::endl;
+
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+
+	loader_impl_java_object java_obj = new loader_impl_java_object_type();
+
+	object obj = object_create(name, java_obj, &java_object_interface_singleton, cls);
+
+	if (obj == NULL)
+		return NULL;
+
+	java_obj->impl = java_cls->impl;
+
+	jobject clsObj = (jobject)java_cls->cls;
+
+	if (java_cls->impl->env != NULL)
+	{
+		std::cout << "Fine 1" << std::endl;
+
+		jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+
+		if (classPtr != nullptr)
+		{
+			std::cout << "Fine 2" << std::endl;
+
+			jmethodID cls_call_constructor = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_call_constructor", "(Ljava/lang/Class;)Ljava/lang/String;");
+
+			if (cls_call_constructor != nullptr)
+			{
+				if (clsObj == nullptr)
+					std::cout << "CLS EMPTY" << std::endl;
+
+				// jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethod(classPtr, cls_call_constructor, clsObj);
+				// const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
+
+				std::cout << "Constructor->" << std::endl;
+			}
+		}
+	}
+
+	return obj;
 }
 
 value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
 {
 	(void)cls;
+
+	std::cout << "Get" << std::endl;
 
 	return NULL;
 }
@@ -148,6 +200,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
 {
 	(void)cls;
+	std::cout << "Set" << std::endl;
 
 	return 0;
 }
@@ -158,6 +211,8 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, const char 
 	(void)cls;
 	(void)impl;
 	(void)args;
+
+	std::cout << "invoke" << std::endl;
 
 	return NULL;
 }
@@ -180,6 +235,7 @@ value java_class_interface_static_await(klass cls, class_impl impl, const char *
 void java_class_interface_destroy(klass cls, class_impl impl)
 {
 	(void)cls;
+	std::cout << "Destroy" << std::endl;
 }
 
 class_interface java_class_interface_singleton(void)
@@ -390,7 +446,8 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					const char *cls_name = java_impl->env->GetStringUTFChars(result, NULL);
 
 					loader_impl_java_class java_cls = new loader_impl_java_class_type();
-					java_cls->cls = r;
+					java_cls->cls = (jobject)r;
+					java_cls->impl = (loader_impl_java)java_impl;
 
 					klass c = class_create(cls_name, java_cls, &java_class_interface_singleton);
 
@@ -399,7 +456,8 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					scope sp = context_scope(ctx);
 					scope_define(sp, cls_name, value_create_class(c));
 
-					std::cout << cls_name << " Class Registered!" << std::endl;
+					std::cout << cls_name << " Class Registered!\n"
+							  << std::endl;
 
 					// }
 					// else
@@ -408,7 +466,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					// }
 				}
 
-				java_impl->env->DeleteLocalRef(r); // Remove the jObjectArray element from memory
+				// java_impl->env->DeleteLocalRef(r); // Remove the jObjectArray element from memory
 			}
 		}
 	}

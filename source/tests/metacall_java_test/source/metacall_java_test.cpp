@@ -52,6 +52,41 @@ TEST_F(metacall_java_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_file(tag, java_scripts, sizeof(java_scripts) / sizeof(java_scripts[0]), NULL));
 
+		void *myclass = metacall_class("Test");
+		// ASSERT_EQ((enum metacall_value_id)METACALL_CLASS, (enum metacall_value_id)metacall_value_id(myclass_value));
+		// void *myclass = metacall_value_to_class(myclass_value);
+
+		// void *myclass_value = metacall_class("Test");
+		// ASSERT_EQ((enum metacall_value_id)METACALL_CLASS, (enum metacall_value_id)metacall_value_id(myclass_value));
+		// void *myclass = metacall_value_to_class(myclass_value);
+
+		// metacall_value_create_string(john, sizeof(john) - 1), // param1
+		// // metacall_value_create_int(10) // param2
+		void *constructor_params[] = {
+			metacall_value_create_int(10),
+			metacall_value_create_int(20)
+		};
+
+		void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
+		// void *new_object = metacall_value_to_object(new_object_v);
+
+		// void *param2 = metacall_object_get(new_object, "v");
+		// ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(param2));
+		// ASSERT_EQ((long)10, (long)metacall_value_to_long(param2));
+
+		// metacall_value_destroy(param2);
+
+		// int retcode = metacall_object_set(new_object, "v", metacall_value_create_long(20));
+		// ASSERT_EQ((int)0, int(retcode));
+
+		// param2 = metacall_object_get(new_object, "v");
+		// ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(param2));
+		// ASSERT_EQ((long)20, (long)metacall_value_to_long(param2));
+
+		// metacall_value_destroy(param2);
+
+		// metacall_value_destroy(new_object_v);
+
 		/* TODO: Uncomment this when calls are implemented */
 		/*
 		void *ret = metacallt_s("fib_impl", fib_int_ids, args_size, 6);
@@ -61,7 +96,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 		EXPECT_EQ((int)metacall_value_to_int(ret), (int)8);
 
 		metacall_value_destroy(ret);
-		*/
+		 */
 
 		/* TODO: Test load from memory */
 		/*

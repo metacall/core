@@ -5,7 +5,9 @@ import java.util.*;
 
 import java.net.URL;
 import java.net.URLClassLoader;
-
+import java.lang.reflect.Array;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.Object;
 
@@ -153,13 +155,48 @@ public class bootstrap {
     return handleObject;
   }
 
-  public static String java_bootstrap_get_class_name(Class<?> cls) {
+  public static String getSignature(Method m) {
+    String sig;
+    try {
+      Field gSig = Method.class.getDeclaredField("signature");
+      gSig.setAccessible(true);
+      sig = (String) gSig.get(m);
+      if (sig != null)
+        return sig;
+    } catch (IllegalAccessException | NoSuchFieldException e) {
+      e.printStackTrace();
+    }
 
-    //Working test for getting function name and details
-    // Method[] methods = cls.getDeclaredMethods();
-    // for (Method method : methods) {
-    //   System.out.println("Name of the method: " + method.getName());
-    // }
+    StringBuilder sb = new StringBuilder("(");
+
+    for (Class<?> c : m.getParameterTypes())
+      sb.append((sig = Array.newInstance(c, 0).toString()).substring(1, sig.indexOf('@')));
+
+    return sb.append(')').append(m.getReturnType() == void.class ? "V"
+        : (sig = Array.newInstance(m.getReturnType(), 0).toString()).substring(1, sig.indexOf('@'))).toString();
+  }
+
+  public static String java_bootstrap_call_constructor(Class<?> cls) {
+    Constructor<?>[] constructors = cls.getDeclaredConstructors();
+    System.out.println(constructors[0].getName());
+    return constructors[0].getName();
+
+  }
+
+  public static String java_bootstrap_get_class_name(Class<?> cls) {
+    // Working test for getting function name and details
+
+    Constructor<?>[] constructors = cls.getDeclaredConstructors();
+    for (Constructor<?> cnstr : constructors) {
+      System.out.println("Name of the constructor: " + cnstr.getName());
+    }
+
+    Method[] methods = cls.getDeclaredMethods();
+    for (Method method : methods) {
+      System.out.println("Name of the method: " + method.getName());
+      System.out.println("Signature " + getSignature(method));
+
+    }
 
     return cls.getName();
   }
