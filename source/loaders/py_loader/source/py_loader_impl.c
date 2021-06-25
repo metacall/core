@@ -1881,32 +1881,44 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	int result = 0;
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	PyObject *system_paths = PySys_GetObject("path");
-	PyObject *current_path = PyUnicode_DecodeFSDefault(path);
 
-	for (Py_ssize_t index = 0; index < PyList_Size(system_paths); ++index)
+	loader_naming_path path_copy;
+	strncpy(path_copy, path, LOADER_NAMING_PATH_SIZE);
+
+	// Split multiple paths
+	char *split_path = strtok(path_copy, ":");
+
+	while (split_path != NULL)
 	{
-		PyObject *elem = PyList_GetItem(system_paths, index);
+		PyObject *current_path = PyUnicode_DecodeFSDefault(split_path);
 
-		if (PyObject_RichCompareBool(elem, current_path, Py_EQ) == 1)
+		for (Py_ssize_t index = 0; index < PyList_Size(system_paths); ++index)
 		{
-			goto clear_current_path;
-		}
-	}
+			PyObject *elem = PyList_GetItem(system_paths, index);
 
-	/* Put the local paths in front of global paths */
-	if (PyList_Insert(system_paths, 0, current_path) != 0)
-	{
-		result = 1;
-		py_loader_impl_error_print(py_impl);
-		goto clear_current_path;
+			if (PyObject_RichCompareBool(elem, current_path, Py_EQ) == 1)
+			{
+				goto continue_loop;
+			}
+		}
+
+		/* Put the local paths in front of global paths */
+		if (PyList_Insert(system_paths, 0, current_path) != 0)
+		{
+			result = 1;
+			py_loader_impl_error_print(py_impl);
+		}
+
+	continue_loop:
+		Py_DECREF(current_path);
+		// the function continues scanning where a previous successful call to the function ended
+		split_path = strtok(NULL, ":");
 	}
 
 #if DEBUG_ENABLED
 	py_loader_impl_sys_path_print(system_paths);
 #endif
 
-clear_current_path:
-	Py_DECREF(current_path);
 	PyGILState_Release(gstate);
 	return result;
 }
