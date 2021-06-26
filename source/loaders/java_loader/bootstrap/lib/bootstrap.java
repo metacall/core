@@ -176,9 +176,10 @@ public class bootstrap {
         : (sig = Array.newInstance(m.getReturnType(), 0).toString()).substring(1, sig.indexOf('@'))).toString();
   }
 
-  public static String java_bootstrap_call_constructor(Class<?> cls) {
+  public static String java_bootstrap_call_constructor(Class<?> cls, int a, int b) {
     Constructor<?>[] constructors = cls.getDeclaredConstructors();
-    System.out.println(constructors[0].getName());
+    System.out.println("Java constructor of " + constructors[0].getName() + " " + a + " " + b);
+
     return constructors[0].getName();
 
   }

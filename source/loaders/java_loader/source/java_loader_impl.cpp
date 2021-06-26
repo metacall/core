@@ -50,6 +50,7 @@ typedef struct loader_impl_java_handle_type
 
 typedef struct loader_impl_java_class_type
 {
+	const char *name;
 	jobject cls;
 	loader_impl_java impl;
 } * loader_impl_java_class;
@@ -136,7 +137,7 @@ int java_class_interface_create(klass cls, class_impl impl)
 	(void)cls;
 	std::cout << "Create" << std::endl;
 	loader_impl_java_class java_cls = (loader_impl_java_class)impl;
-	java_cls->cls = NULL;
+	// java_cls->cls = NULL;
 
 	return 0;
 }
@@ -158,29 +159,29 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 
 	java_obj->impl = java_cls->impl;
 
-	jobject clsObj = (jobject)java_cls->cls;
-
-	if (java_cls->impl->env != NULL)
+	jvalue constructorArgs[argc];
+	for (int i = 0; i < argc; i++)
 	{
-		std::cout << "Fine 1" << std::endl;
+		constructorArgs[i].i = value_to_int(args[i]);
+		std::cout << constructorArgs[i].i << std::endl;
+	}
 
+	if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
+	{
 		jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
 
 		if (classPtr != nullptr)
 		{
-			std::cout << "Fine 2" << std::endl;
-
 			jmethodID cls_call_constructor = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_call_constructor", "(Ljava/lang/Class;)Ljava/lang/String;");
 
 			if (cls_call_constructor != nullptr)
 			{
-				if (clsObj == nullptr)
-					std::cout << "CLS EMPTY" << std::endl;
+				jobject clsObj = java_cls->cls;
 
-				// jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethod(classPtr, cls_call_constructor, clsObj);
-				// const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
+				jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethod(classPtr, cls_call_constructor, clsObj, constructorArgs);
+				const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
 
-				std::cout << "Constructor->" << std::endl;
+				std::cout << "Constructor -> " << cls_name << std::endl;
 			}
 		}
 	}
@@ -446,7 +447,9 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					const char *cls_name = java_impl->env->GetStringUTFChars(result, NULL);
 
 					loader_impl_java_class java_cls = new loader_impl_java_class_type();
-					java_cls->cls = (jobject)r;
+
+					java_cls->name = cls_name;
+					java_cls->cls = r;
 					java_cls->impl = (loader_impl_java)java_impl;
 
 					klass c = class_create(cls_name, java_cls, &java_class_interface_singleton);

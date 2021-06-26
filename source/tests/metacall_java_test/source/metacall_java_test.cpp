@@ -69,6 +69,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 
 		void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
 		// void *new_object = metacall_value_to_object(new_object_v);
+		
 
 		// void *param2 = metacall_object_get(new_object, "v");
 		// ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(param2));
