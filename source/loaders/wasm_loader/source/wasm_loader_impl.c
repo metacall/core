@@ -47,6 +47,7 @@ typedef struct loader_impl_wasm_function_type
 typedef struct loader_impl_wasm_handle_type
 {
 	wasm_module_t **modules;
+	wasm_instance_t **instances;
 	size_t num_modules;
 } * loader_impl_wasm_handle;
 
@@ -310,10 +311,20 @@ loader_impl_wasm_handle wasm_loader_impl_create_handle(size_t num_modules)
 		goto error_modules_alloc;
 	}
 
+	handle->instances = malloc(num_modules * sizeof(wasm_instance_t *));
+
+	if (handle->instances == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate memory for instances");
+		goto error_instances_alloc;
+	}
+
 	handle->num_modules = 0;
 
 	return handle;
 
+error_instances_alloc:
+	free(handle->modules);
 error_modules_alloc:
 	free(handle);
 error_handle_alloc:
@@ -322,8 +333,11 @@ error_handle_alloc:
 
 int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const char *buffer, size_t size)
 {
-	loader_impl_wasm wasm_impl = loader_impl_get(impl);
+	// TODO: Do we need to save the module, or can we get away with just saving
+	//       the instance? `wasm_instance_exports` is offered for getting the
+	//       exports of an instance.
 
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	// There is sadly no way to check whether `wasm_byte_vec_new`
 	// fails, so we just have to hope for the best here.
 	wasm_byte_vec_t binary;
@@ -342,6 +356,14 @@ int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle
 		wasm_loader_impl_clear(impl, handle);
 		return 1;
 	}
+
+	// TODO: Add support for imports. This currently results in undefined
+	//       behavior if the module expects imports.
+
+	// No way to check whether `wasm_instance_new` fails, so hope for the best
+	// here too.
+	wasm_extern_vec_t imports = WASM_EMPTY_VEC;
+	handle->instances[handle->num_modules] = wasm_instance_new(wasm_impl->store, handle->modules[handle->num_modules], &imports, NULL);
 
 	handle->num_modules++;
 	return 0;
@@ -444,9 +466,11 @@ int wasm_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	for (size_t idx = 0; idx < wasm_handle->num_modules; idx++)
 	{
+		wasm_instance_delete(wasm_handle->instances[idx]);
 		wasm_module_delete(wasm_handle->modules[idx]);
 	}
 
+	free(wasm_handle->instances);
 	free(wasm_handle->modules);
 	free(wasm_handle);
 
