@@ -30,6 +30,8 @@
 
 #include <log/log.h>
 
+#include <adt/adt_vector.h>
+
 #include <stdlib.h>
 
 #include <wasm.h>
@@ -52,6 +54,7 @@ typedef struct loader_impl_wasm_type
 {
 	wasm_engine_t *engine;
 	wasm_store_t *store;
+	vector paths;
 } * loader_impl_wasm;
 
 int type_wasm_interface_create(type t, type_impl impl)
@@ -200,11 +203,21 @@ loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration con
 		goto error_store_creation;
 	}
 
+	wasm_impl->paths = vector_create(sizeof(loader_naming_path));
+
+	if (wasm_impl->paths == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create paths vector");
+		goto error_paths_creation;
+	}
+
 	loader_initialization_register(impl);
 	log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader initialized correctly");
 
 	return wasm_impl;
 
+error_paths_creation:
+	wasm_store_delete(wasm_impl->store);
 error_store_creation:
 	wasm_engine_delete(wasm_impl->engine);
 error_engine_creation:
@@ -216,20 +229,19 @@ error_impl_alloc:
 
 int wasm_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	/* TODO */
-
-	(void)impl;
-	(void)path;
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
+	vector_push_back_empty(wasm_impl->paths);
+	loader_naming_path *back_ptr = vector_back(wasm_impl->paths);
+	strncpy(*back_ptr, path, sizeof(loader_naming_path));
 
 	return 0;
 }
 
-FILE *wasm_loader_impl_open_file(const char *path, size_t *file_size)
+FILE *wasm_loader_impl_open_file_absolute(const char *path, size_t *file_size)
 {
 	FILE *file = fopen(path, "rb");
 	if (file == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to open file");
 		goto error_open_file;
 	}
 
@@ -252,6 +264,31 @@ FILE *wasm_loader_impl_open_file(const char *path, size_t *file_size)
 error_seek_file:
 	fclose(file);
 error_open_file:
+	return NULL;
+}
+
+FILE *wasm_loader_impl_open_file_relative(loader_impl_wasm impl, const char *path, size_t *file_size)
+{
+	for (size_t i = 0; i < vector_size(impl->paths); i++)
+	{
+		loader_naming_path *exec_path = vector_at(impl->paths, i);
+
+		// FIXME: This could fail if the resulting path is longer than sizeof(loader_naming_path)
+		loader_naming_path abs_path;
+		(void)loader_path_join(*exec_path, strlen(*exec_path) + 1, path, strlen(path) + 1, abs_path);
+
+		FILE *file = wasm_loader_impl_open_file_absolute(abs_path, file_size);
+
+		if (file == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader: Could not open file %s", abs_path);
+			continue;
+		}
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader: Opened file %s", abs_path);
+		return file;
+	}
+
 	return NULL;
 }
 
@@ -283,13 +320,15 @@ error_handle_alloc:
 	return NULL;
 }
 
-int wasm_loader_impl_handle_add_module(loader_impl_wasm impl, loader_impl_wasm_handle handle, const char *buffer, size_t size)
+int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const char *buffer, size_t size)
 {
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
+
 	// There is sadly no way to check whether `wasm_byte_vec_new`
 	// fails, so we just have to hope for the best here.
 	wasm_byte_vec_t binary;
 	wasm_byte_vec_new(&binary, size, buffer);
-	handle->modules[handle->num_modules] = wasm_module_new(impl->store, &binary);
+	handle->modules[handle->num_modules] = wasm_module_new(wasm_impl->store, &binary);
 	wasm_byte_vec_delete(&binary);
 
 	// TODO: `wasm_module_new` can fail for a multitude of reasons.
@@ -308,14 +347,18 @@ int wasm_loader_impl_handle_add_module(loader_impl_wasm impl, loader_impl_wasm_h
 	return 0;
 }
 
-int wasm_loader_impl_load_module_from_file(loader_impl_wasm impl, loader_impl_wasm_handle handle, const char *path)
+int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
 {
 	int ret = 1;
+
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
+
 	size_t file_size;
-	FILE *file = wasm_loader_impl_open_file(path, &file_size);
+	FILE *file = wasm_loader_impl_open_file_relative(wasm_impl, path, &file_size);
 
 	if (file == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to open file %s", path);
 		goto error_open_file;
 	}
 
@@ -335,7 +378,6 @@ int wasm_loader_impl_load_module_from_file(loader_impl_wasm impl, loader_impl_wa
 
 	if (wasm_loader_impl_handle_add_module(impl, handle, buffer, file_size) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create module");
 		goto error_add_module;
 	}
 
@@ -352,7 +394,6 @@ error_open_file:
 
 loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
-	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_impl_wasm_handle handle = wasm_loader_impl_create_handle(size);
 
 	if (handle == NULL)
@@ -362,7 +403,7 @@ loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 	while (handle->num_modules < size)
 	{
-		if (wasm_loader_impl_load_module_from_file(wasm_impl, handle, paths[handle->num_modules]) != 0)
+		if (wasm_loader_impl_load_module_from_file(impl, handle, paths[handle->num_modules]) != 0)
 		{
 			return NULL;
 		}
@@ -375,10 +416,9 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 {
 	(void)name;
 
-	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_impl_wasm_handle handle = wasm_loader_impl_create_handle(1);
 
-	if (handle == NULL || wasm_loader_impl_handle_add_module(wasm_impl, handle, buffer, size) != 0)
+	if (handle == NULL || wasm_loader_impl_handle_add_module(impl, handle, buffer, size) != 0)
 	{
 		return NULL;
 	}
@@ -539,6 +579,7 @@ int wasm_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_unload_children(impl);
+	vector_destroy(wasm_impl->paths);
 	wasm_store_delete(wasm_impl->store);
 	wasm_engine_delete(wasm_impl->engine);
 	free(wasm_impl);

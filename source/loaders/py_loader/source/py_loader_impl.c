@@ -32,17 +32,49 @@
 
 #include <log/log.h>
 
+#include <metacall/metacall.h>
+
 #include <stdbool.h>
 #include <stdlib.h>
 
 #include <Python.h>
 
 #define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
+
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define DEBUG_ENABLED 1
 #else
 	#define DEBUG_ENABLED 0
 #endif
+
+// TODO: This code is duplicated among NodeJS, Python and C# Loaders (review py_loader_impl_initialize_sys_executable)
+#if defined(WIN32) || defined(_WIN32)
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+
+	#include <windows.h>
+	#define PY_LOADER_IMPL_PATH_SIZE MAX_PATH
+#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
+	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+
+	#include <limits.h>
+	#include <unistd.h>
+
+	#define PY_LOADER_IMPL_PATH_SIZE PATH_MAX
+#else
+	#define PY_LOADER_IMPL_PATH_SIZE 4096
+#endif
+
+typedef char py_impl_path[PY_LOADER_IMPL_PATH_SIZE];
+// END-TODO
 
 typedef struct loader_impl_py_function_type
 {
@@ -146,6 +178,10 @@ static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
 		PyDoc_STR("Implements a trampoline for functions as values in the type system.") },
 	{ NULL, NULL, 0, NULL }
 };
+
+/* Implements: if __name__ == "__main__": */
+static int py_loader_impl_run_main = 1;
+static char *py_loader_impl_main_module = NULL;
 
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 {
@@ -866,13 +902,8 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 				return NULL;
 			}
 
-			/* TODO: Why two refs? Understand what is happening */
 			Py_INCREF(obj);
-
-			Py_INCREF(obj);
-
 			py_func->func = obj;
-
 			py_func->impl = impl;
 
 			f = function_create(NULL, args_count, py_func, &function_py_singleton);
@@ -1553,21 +1584,31 @@ int py_loader_impl_initialize_import(loader_impl_py py_impl)
 {
 	static const char import_module_str[] =
 #if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION >= 5
-		// TODO: Implement better error handling
+		"import sys\n"
 		"import importlib.util\n"
 		"import importlib\n"
+		"def load_from_spec(module_name, spec):\n"
+		"	m = importlib.util.module_from_spec(spec)\n"
+		"	spec.loader.exec_module(m)\n"
+		"	sys.modules[module_name] = m\n"
+		"	return m\n"
+		"\n"
 		"def load_from_path(module_name, path = None):\n"
 		"	try:\n"
 		"		if path == None:\n"
-		"			return importlib.import_module(module_name)\n"
+		"			if module_name in sys.modules:\n"
+		"				return sys.modules[module_name]\n"
+		"			else:\n"
+		"				spec = importlib.util.find_spec(module_name)\n"
+		"				if spec is None:\n"
+		"					return FileNotFoundError('Module ' + module_name + ' could not be found')\n"
+		"				return load_from_spec(module_name, spec)\n"
 		"		else:\n"
 		"			spec = importlib.util.spec_from_file_location(module_name, path)\n"
 		"			if spec is None:\n"
-		"				raise ModuleNotFoundError('File ' + path + ' could not be found')\n"
-		"			m = importlib.util.module_from_spec(spec)\n"
-		"			spec.loader.exec_module(m)\n"
-		"			return m\n"
-		"	except ImportError as e:\n"
+		"				return FileNotFoundError('File ' + path + ' could not be found')\n"
+		"			return load_from_spec(module_name, spec)\n"
+		"	except FileNotFoundError as e:\n"
 		"		return e\n"
 		"	except Exception as e:\n"
 		"		import traceback\n"
@@ -1617,6 +1658,89 @@ error_import_compile:
 	return 1;
 }
 
+int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
+{
+	// TODO: This code is duplicated among NodeJS, Python and C# Loaders
+	const size_t path_max_length = PY_LOADER_IMPL_PATH_SIZE;
+	py_impl_path exe_path_str = { 0 };
+
+#if defined(WIN32) || defined(_WIN32)
+	unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
+#else
+	ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
+#endif
+
+	if (length == -1 || length == path_max_length)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid working directory path");
+
+		return 1;
+	}
+	// END-TODO
+
+	PyObject *exe_path_obj = PyUnicode_DecodeFSDefaultAndSize(exe_path_str, (Py_ssize_t)length);
+
+	if (exe_path_obj == NULL)
+	{
+		return 1;
+	}
+
+	int result = PySys_SetObject("executable", exe_path_obj);
+
+	Py_DECREF(exe_path_obj);
+
+	if (result == -1)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+			PyErr_Clear();
+		}
+
+		return 1;
+	}
+
+	return 0;
+}
+
+int py_loader_impl_initialize_argv(loader_impl_py py_impl, int argc, char **argv)
+{
+	Py_ssize_t iterator, array_size = (Py_ssize_t)(argc - 1);
+	PyObject *list = PyList_New(array_size);
+
+	for (iterator = 0; iterator < array_size; ++iterator)
+	{
+		const char *arg = argv[iterator + 1];
+		PyObject *item = PyUnicode_DecodeFSDefaultAndSize(arg, (Py_ssize_t)strlen(arg));
+
+		if (!(item != NULL && PyList_SetItem(list, iterator, item) == 0))
+		{
+			goto error_set_item;
+		}
+	}
+
+	int result = PySys_SetObject("argv", list);
+
+	Py_DECREF(list);
+
+	if (result == -1)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+			PyErr_Clear();
+		}
+
+		return 1;
+	}
+
+	return 0;
+
+error_set_item:
+	Py_DECREF(list);
+	return 1;
+}
+
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
@@ -1646,6 +1770,25 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
+	{
+		goto error_after_sys_executable;
+	}
+
+	char **argv = metacall_argv();
+	int argc = metacall_argc();
+
+	if (argv != NULL && argc > 1)
+	{
+		if (py_loader_impl_initialize_argv(py_impl, argc, argv) != 0)
+		{
+			goto error_after_argv;
+		}
+
+		py_loader_impl_main_module = argv[1];
+		py_loader_impl_run_main = 0;
+	}
 
 	if (py_loader_impl_initialize_traceback(impl, py_impl) != 0)
 	{
@@ -1716,6 +1859,8 @@ error_after_traceback_and_gc:
 		Py_DECREF(py_impl->gc_module);
 	}
 #endif
+error_after_argv:
+error_after_sys_executable:
 	PyGILState_Release(gstate);
 	(void)py_loader_impl_finalize(py_impl);
 error_init_py:
@@ -1844,17 +1989,27 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	free(py_handle);
 }
 
-int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception, int run_main)
 {
-	loader_naming_name name;
-	size_t size = loader_path_get_fullname(path, name);
-
-	if (size <= 1)
+	if (run_main == 0)
 	{
-		goto error_name_create;
+		static const char name[] = "__main__";
+		module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)(sizeof(name) - 1));
 	}
+	else
+	{
+		loader_naming_name name;
+		size_t size = loader_path_get_fullname(path, name);
 
-	module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
+		*exception = NULL;
+
+		if (size <= 1)
+		{
+			goto error_name_create;
+		}
+
+		module->name = PyUnicode_DecodeFSDefaultAndSize(name, (Py_ssize_t)size - 1);
+	}
 
 	if (module->name == NULL)
 	{
@@ -1877,14 +2032,16 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 
 	PyTuple_SetItem(args_tuple, 0, module->name);
 	PyTuple_SetItem(args_tuple, 1, py_path);
+	Py_INCREF(module->name);
+	Py_INCREF(py_path);
 
 	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
 		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
 		{
+			*exception = module->instance;
 			module->instance = NULL;
 		}
 
@@ -1907,61 +2064,67 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_module(loader_impl_py_handle_module module, const loader_naming_path path)
+int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
 {
 	size_t length = strlen(path);
 
+	*exception = NULL;
+
 	if (length == 0)
 	{
-		// TODO: Handle exception
-		return 1;
+		goto error_name_create;
 	}
 
 	module->name = PyUnicode_DecodeFSDefaultAndSize(path, (Py_ssize_t)length);
 
 	if (module->name == NULL)
 	{
-		// TODO: Handle exception
-		return 1;
+		goto error_name_create;
 	}
 
-	/* TODO: Trying to reimplement the PyImport_Import,
-	* check the TODO in monkey patch method in the port for more information
-	*/
-	/*
-	PyObject * globals = PyEval_GetGlobals();
+	PyObject *args_tuple = PyTuple_New(1);
 
-	if (globals != NULL)
+	if (args_tuple == NULL)
 	{
-		Py_INCREF(globals);
+		goto error_tuple_create;
 	}
 
-    module->instance = PyImport_ImportModuleLevelObject(module->name, globals, NULL, NULL, 0);
+	PyTuple_SetItem(args_tuple, 0, module->name);
+	Py_INCREF(module->name);
 
-	Py_XDECREF(globals);
-	*/
-
-	module->instance = PyImport_Import(module->name);
+	module->instance = PyObject_Call(py_impl->import_function, args_tuple, NULL);
 
 	if (!(module->instance != NULL && PyModule_Check(module->instance)))
 	{
-		// TODO: Improve error handling with PyExc_ModuleNotFoundError, PyExc_ImportError, PyExc_SyntaxError
 		if (module->instance != NULL && PyErr_GivenExceptionMatches(module->instance, PyExc_Exception))
 		{
+			*exception = module->instance;
 			module->instance = NULL;
 		}
 
-		goto error_import;
+		goto error_module_instance;
 	}
 
+	Py_INCREF(module->instance);
+	Py_DECREF(args_tuple);
+
 	return 0;
-error_import:
-	Py_DECREF(module->name);
+
+error_module_instance:
+	Py_DECREF(args_tuple);
+error_tuple_create:
+	Py_XDECREF(module->name);
 	module->name = NULL;
+error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path)
+int py_loader_impl_import_exception(PyObject *exception)
+{
+	return /*PyErr_GivenExceptionMatches(exception, PyExc_ImportError) ||*/ PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundError);
+}
+
+int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception, int run_main)
 {
 	PyObject *system_paths = PySys_GetObject("path");
 
@@ -1974,14 +2137,25 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		size_t join_path_size = loader_path_join(system_path_str, length + 1, path, strlen(path) + 1, join_path);
 		loader_path_canonical(join_path, join_path_size, canonical_path);
 
-		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path) == 0)
+		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path, exception, run_main) == 0)
 		{
 			log_write("metacall", LOG_LEVEL_DEBUG, "Python Loader relative module loaded at %s", canonical_path);
 
 			return 0;
 		}
+		else
+		{
+			/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */
+			if (*exception != NULL && !py_loader_impl_import_exception(*exception))
+			{
+				return 1;
+			}
+		}
 
-		PyErr_Clear();
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Clear();
+		}
 	}
 
 	return 1;
@@ -1991,6 +2165,8 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(size);
+	int run_main = 1;
+	size_t iterator;
 
 	if (py_handle == NULL)
 	{
@@ -1998,7 +2174,6 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	}
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
-	size_t iterator;
 
 	/* Possibly a recursive call */
 	if (Py_EnterRecursiveCall(" while loading a module from file in Python Loader") != 0)
@@ -2006,33 +2181,71 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		goto error_recursive_call;
 	}
 
+	/* If we loaded one script and this script is the same as the one we passed to argv,
+	then we should set up this as a main script, only if only we set up the argv in MetaCall.
+	This should run only once, the first time after the initialization */
+	if (py_loader_impl_run_main == 0 && size == 1 && strcmp(paths[0], py_loader_impl_main_module) == 0)
+	{
+		run_main = 0;
+		py_loader_impl_run_main = 1;
+	}
+
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		/* Try to load the module as it is */
-		if (py_loader_impl_load_from_module(&py_handle->modules[iterator], paths[iterator]) != 0)
-		{
-			if (PyErr_Occurred() != NULL)
-			{
-				PyErr_Clear();
-			}
+		int result = 1;
+		PyObject *exception = NULL;
 
-			/* Otherwise, we assume it is a path so we load from path */
-			if (loader_path_is_absolute(paths[iterator]) == 0)
+		/* We assume it is a path so we load from path */
+		if (loader_path_is_absolute(paths[iterator]) == 0)
+		{
+			/* Load as absolute path */
+			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator], &exception, run_main);
+		}
+		else
+		{
+			/* Try to load it as a path relative to all execution paths */
+			result = py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator], &exception, run_main);
+		}
+
+		/* Stop loading if we found an exception like SyntaxError, continue if the file is not found */
+		if (result == 1)
+		{
+			if (exception != NULL && !py_loader_impl_import_exception(exception))
 			{
-				/* Load as absolute path */
-				if (py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
+				/* TODO: Print the error message of the exception */
+				log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s' [%s]", paths[iterator], Py_TYPE(exception)->tp_name);
+
+				goto error_import_module;
+			}
+		}
+
+		if (PyErr_Occurred() != NULL)
+		{
+			PyErr_Clear();
+		}
+
+		/* Try to load the module as it is */
+		if (result != 0 && py_loader_impl_load_from_module(py_impl, &py_handle->modules[iterator], paths[iterator], &exception) != 0)
+		{
+			/* Show error message if the module was not found */
+			if (exception != NULL)
+			{
+				if (py_loader_impl_import_exception(exception))
 				{
-					goto error_import_module;
+					log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Module '%s' not found", paths[iterator]);
+				}
+				else
+				{
+					/* TODO: Print the error message of the exception */
+					log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s' [%s]", paths[iterator], Py_TYPE(exception)->tp_name);
 				}
 			}
 			else
 			{
-				/* Try to load it as a path relative to all execution paths */
-				if (py_loader_impl_load_from_file_relative(py_impl, &py_handle->modules[iterator], paths[iterator]) != 0)
-				{
-					goto error_import_module;
-				}
+				log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Module '%s' failed to load without any exception thrown", paths[iterator]);
 			}
+
+			goto error_import_module;
 		}
 	}
 
@@ -2250,7 +2463,6 @@ int py_loader_impl_discover_func_args_count(PyObject *func)
 int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
-
 	PyObject *args = PyTuple_New(1);
 
 	if (args == NULL)
@@ -2259,10 +2471,10 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 		return 1;
 	}
 
-	// PyTuple_SetItem can't fail in this case, so no need to check the return
-	// value
 	PyTuple_SetItem(args, 0, func);
+	Py_INCREF(func);
 	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
+	Py_DECREF(args);
 
 	if (result != NULL)
 	{
@@ -2426,10 +2638,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 					goto cleanup;
 				}
 
-				/* TODO: Why two refs? Understand what is happening */
 				Py_INCREF(module_dict_val);
-				Py_INCREF(module_dict_val);
-
 				py_func->func = module_dict_val;
 				py_func->impl = impl;
 

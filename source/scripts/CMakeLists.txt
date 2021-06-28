@@ -25,6 +25,7 @@ option(OPTION_BUILD_SCRIPTS_PY "Build Python scripts." ON)
 option(OPTION_BUILD_SCRIPTS_RB "Build Ruby scripts." ON)
 option(OPTION_BUILD_SCRIPTS_RPC "Build RPC scripts." ON)
 option(OPTION_BUILD_SCRIPTS_TS "Build TypeScript scripts." ON)
+option(OPTION_BUILD_SCRIPTS_WASM "Build WebAssembly scripts." ON)
 
 # Script directory packages
 add_subdirectory(c)
@@ -40,3 +41,4 @@ add_subdirectory(python)
 add_subdirectory(ruby)
 add_subdirectory(rpc)
 add_subdirectory(typescript)
+add_subdirectory(wasm)

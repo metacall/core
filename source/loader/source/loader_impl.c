@@ -34,6 +34,16 @@
 #define LOADER_IMPL_FUNCTION_INIT "__metacall_initialize__"
 #define LOADER_IMPL_FUNCTION_FINI "__metacall_finalize__"
 
+#if defined(WIN32) || defined(_WIN32) ||            \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+
+	#define LOADER_PATH_DELIMITER ';'
+
+#else
+	#define LOADER_PATH_DELIMITER ':'
+#endif
+
 /* -- Forward Declarations -- */
 
 struct loader_handle_impl_type;
@@ -316,12 +326,28 @@ int loader_impl_initialize(loader_impl impl)
 
 	script_path = loader_env_script_path();
 
-	if (script_path != NULL)
+	/* Split multiple paths */
+	char path_copy[LOADER_NAMING_PATH_SIZE + 1];
+	strncpy(path_copy, script_path, LOADER_NAMING_PATH_SIZE);
+
+	char *split_path = strrchr(path_copy, LOADER_PATH_DELIMITER);
+	while (split_path != NULL)
 	{
-		if (loader_impl_execution_path(impl, script_path) != 0)
+		*split_path = '\0'; /* Replace the delimiter with a terminator */
+		split_path++;		/* Move a char to the right to avoid the delimiter */
+
+		if (loader_impl_execution_path(impl, split_path) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", script_path);
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", split_path);
 		}
+
+		split_path = strrchr(path_copy, LOADER_PATH_DELIMITER);
+	}
+
+	/* Add the path without delimiter */
+	if (loader_impl_execution_path(impl, path_copy) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", path_copy);
 	}
 
 	paths = set_get(impl->exec_path_map, (const set_key)impl->tag);
