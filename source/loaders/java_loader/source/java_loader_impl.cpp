@@ -30,6 +30,7 @@
 
 #include <log/log.h>
 
+#include <string.h>
 #include <iostream>
 
 #include <jni.h>
@@ -132,6 +133,29 @@ object_interface java_object_interface_singleton(void)
 	return &java_object_interface;
 }
 
+value java_loader_capi_to_value(const char *val, const char *type)
+{
+	std::cout << val << " " << type << std::endl;
+
+	value v = NULL;
+
+	if (!strcmp(type, "int"))
+	{
+		std::cout << "INT" << std::endl;
+		int intVal = std::stoi(val);
+
+		v = value_create_int(intVal);
+	}
+	else if (!strcmp(type, "java.lang.String"))
+	{
+		std::cout << "STRING" << std::endl;
+
+		v = value_create_string(val, (size_t)strlen(val));
+	}
+
+	return v;
+}
+
 int java_class_interface_create(klass cls, class_impl impl)
 {
 	(void)cls;
@@ -158,33 +182,33 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 		return NULL;
 
 	java_obj->impl = java_cls->impl;
+	jobject clsObj = java_cls->cls;
 
 	jvalue constructorArgs[argc];
+
 	for (int i = 0; i < argc; i++)
 	{
 		constructorArgs[i].i = value_to_int(args[i]);
 		std::cout << constructorArgs[i].i << std::endl;
 	}
 
-	if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
-	{
-		jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+	// if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
+	// {
+	// 	jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
 
-		if (classPtr != nullptr)
-		{
-			jmethodID cls_call_constructor = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_call_constructor", "(Ljava/lang/Class;)Ljava/lang/String;");
+	// 	if (classPtr != nullptr)
+	// 	{
+	// 		jmethodID cls_call_constructor = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_call_constructor", "([Ljava/lang/Class;)Ljava/lang/String;");
 
-			if (cls_call_constructor != nullptr)
-			{
-				jobject clsObj = java_cls->cls;
+	// 		if (cls_call_constructor != nullptr)
+	// 		{
+	// 			jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethodA(classPtr, cls_call_constructor, jvalue * constructorArgs);
+	// 			const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
 
-				jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethod(classPtr, cls_call_constructor, clsObj, constructorArgs);
-				const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
-
-				std::cout << "Constructor -> " << cls_name << std::endl;
-			}
-		}
-	}
+	// 			std::cout << "Constructor -> " << cls_name << std::endl;
+	// 		}
+	// 	}
+	// }
 
 	return obj;
 }
@@ -192,8 +216,33 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
 {
 	(void)cls;
+	std::cout << "Get -> " << key << std::endl;
 
-	std::cout << "Get" << std::endl;
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+	loader_impl_java java_impl = java_cls->impl;
+
+	jobject clsObj = java_cls->cls;
+	jstring getKey = java_cls->impl->env->NewStringUTF(key);
+
+	jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+
+	if (classPtr != nullptr)
+	{
+		jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_value", "(Ljava/lang/Class;Ljava/lang/String;)[Ljava/lang/String;");
+
+		if (cls_get_val != nullptr)
+		{
+			jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_val, clsObj, getKey);
+
+			jstring gVal = (jstring)java_impl->env->GetObjectArrayElement(result, 0);
+			const char *gotVal = java_impl->env->GetStringUTFChars(gVal, NULL);
+
+			jstring gType = (jstring)java_impl->env->GetObjectArrayElement(result, 1);
+			const char *gotType = java_impl->env->GetStringUTFChars(gType, NULL);
+
+			return java_loader_capi_to_value(gotVal, gotType);
+		}
+	}
 
 	return NULL;
 }

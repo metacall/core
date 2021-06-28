@@ -176,11 +176,28 @@ public class bootstrap {
         : (sig = Array.newInstance(m.getReturnType(), 0).toString()).substring(1, sig.indexOf('@'))).toString();
   }
 
-  public static String java_bootstrap_call_constructor(Class<?> cls, int a, int b) {
-    Constructor<?>[] constructors = cls.getDeclaredConstructors();
-    System.out.println("Java constructor of " + constructors[0].getName() + " " + a + " " + b);
+  public static String[] java_bootstrap_get_value(Class<?> cls, String key) {
+    String val = "", valType = "";
 
-    return constructors[0].getName();
+    try {
+      Field f = cls.getField(key);
+      val = f.get(null).toString();
+      valType = f.getType().getName();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    String[] s = { val, valType };
+    return s;
+  }
+
+  public static String java_bootstrap_call_constructor(Class<?>[] cls) {
+    System.out.println("GOt it");
+    // Constructor<?>[] constructors = cls.getDeclaredConstructors();
+    // System.out.println("Java constructor of " + constructors[0].getName());
+
+    // return constructors[0].getName();
+    return "hello";
 
   }
 
