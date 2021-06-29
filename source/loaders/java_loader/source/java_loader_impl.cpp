@@ -194,7 +194,7 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 
 	// if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
 	// {
-	// 	jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+	// 	jclass classPtr = java_cls->impl->env->FindClass("Test");
 
 	// 	if (classPtr != nullptr)
 	// 	{
@@ -204,13 +204,11 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	// 		{
 	// 			jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethodA(classPtr, cls_call_constructor, jvalue * constructorArgs);
 	// 			const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
-
-	// 			std::cout << "Constructor -> " << cls_name << std::endl;
 	// 		}
-	// 	}
 	// }
+}
 
-	return obj;
+return obj;
 }
 
 value java_class_interface_static_get(klass cls, class_impl impl, const char *key)

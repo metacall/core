@@ -68,15 +68,14 @@ TEST_F(metacall_java_test, DefaultConstructor)
 		};
 
 		void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
-		// void *new_object = metacall_value_to_object(new_object_v);
 
 		void *param1 = metacall_class_static_get(myclass, "INT_TEST");
 		ASSERT_EQ((int)30, (int)metacall_value_to_int(param1));
 		metacall_value_destroy(param1);
 
-		void *param2 = metacall_class_static_get(myclass, "STRING_TEST");
-		ASSERT_EQ((std::string) "Hello", (std::string)metacall_value_to_string(param2));
-		metacall_value_destroy(param2);
+		// void *param2 = metacall_class_static_get(myclass, "STRING_TEST");
+		// ASSERT_EQ((std::string) "Hello", (std::string)metacall_value_to_string(param2));
+		// metacall_value_destroy(param2);
 
 		// int retcode = metacall_object_set(new_object, "v", metacall_value_create_long(20));
 		// ASSERT_EQ((int)0, int(retcode));
