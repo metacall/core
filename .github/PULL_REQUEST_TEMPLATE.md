@@ -18,19 +18,15 @@ Fixes #(issue_no)
 
 # Checklist:
 
-- [ ] My code follows the style guidelines (clang-format) of this project.
 - [ ] I have performed a self-review of my own code.
 - [ ] I have commented my code, particularly in hard-to-understand areas.
 - [ ] I have made corresponding changes to the documentation.
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests/screenshots (if any) that prove my fix is effective or that my feature works.
 - [ ] I have tested the tests implicated (if any) by my own code and they pass (`make test` or `ctest -VV -R <test-name>`).
-- [ ] If my change is significant or breaking, I have passed all tests with `./docker-compose.sh &> output` and attached the output.
+- [ ] If my change is significant or breaking, I have passed all tests with `./docker-compose.sh build &> output` and attached the output.
 - [ ] I have tested my code with `OPTION_BUILD_SANITIZER` and `OPTION_TEST_MEMORYCHECK`. 
 - [ ] I have tested with `Helgrind` in case my code works with threading.
-- [ ] I have tested with `Helgrind` in case my code works with threading.
-- [ ] I have run `make clang-format` in order to format my code.
+- [ ] I have run `make clang-format` in order to format my code and my code follows the style guidelines.
 
-If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/blob/develop/docs/README.md#63-debugging) 
-
-
+If you are unclear about any of the above checks, have a look at our documentation [here](https://github.com/metacall/core/blob/develop/docs/README.md#63-debugging).
