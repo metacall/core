@@ -40,15 +40,19 @@
 
 typedef struct loader_impl_wasm_function_type
 {
-	void *todo;
-
+	const wasm_func_t *func;
 } * loader_impl_wasm_function;
+
+typedef struct loader_impl_wasm_module_type
+{
+	wasm_module_t *module;
+	wasm_instance_t *instance;
+	wasm_extern_vec_t exports;
+} loader_impl_wasm_module;
 
 typedef struct loader_impl_wasm_handle_type
 {
-	wasm_module_t **modules;
-	wasm_instance_t **instances;
-	size_t num_modules;
+	vector modules;
 } * loader_impl_wasm_handle;
 
 typedef struct loader_impl_wasm_type
@@ -125,10 +129,9 @@ function_return function_wasm_interface_await(function func, function_impl impl,
 
 void function_wasm_interface_destroy(function func, function_impl impl)
 {
-	/* TODO */
-
 	(void)func;
-	(void)impl;
+
+	free((loader_impl_wasm_function)impl);
 }
 
 function_interface function_wasm_singleton(void)
@@ -204,7 +207,7 @@ loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration con
 		goto error_store_creation;
 	}
 
-	wasm_impl->paths = vector_create(sizeof(loader_naming_path));
+	wasm_impl->paths = vector_create_type(loader_naming_path);
 
 	if (wasm_impl->paths == NULL)
 	{
@@ -303,7 +306,7 @@ loader_impl_wasm_handle wasm_loader_impl_create_handle(size_t num_modules)
 		goto error_handle_alloc;
 	}
 
-	handle->modules = malloc(num_modules * sizeof(wasm_module_t *));
+	handle->modules = vector_create_reserve_type(loader_impl_wasm_module, num_modules);
 
 	if (handle->modules == NULL)
 	{
@@ -311,20 +314,8 @@ loader_impl_wasm_handle wasm_loader_impl_create_handle(size_t num_modules)
 		goto error_modules_alloc;
 	}
 
-	handle->instances = malloc(num_modules * sizeof(wasm_instance_t *));
-
-	if (handle->instances == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate memory for instances");
-		goto error_instances_alloc;
-	}
-
-	handle->num_modules = 0;
-
 	return handle;
 
-error_instances_alloc:
-	free(handle->modules);
 error_modules_alloc:
 	free(handle);
 error_handle_alloc:
@@ -333,16 +324,16 @@ error_handle_alloc:
 
 int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const char *buffer, size_t size)
 {
-	// TODO: Do we need to save the module, or can we get away with just saving
-	//       the instance? `wasm_instance_exports` is offered for getting the
-	//       exports of an instance.
-
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	// There is sadly no way to check whether `wasm_byte_vec_new`
 	// fails, so we just have to hope for the best here.
 	wasm_byte_vec_t binary;
 	wasm_byte_vec_new(&binary, size, buffer);
-	handle->modules[handle->num_modules] = wasm_module_new(wasm_impl->store, &binary);
+
+	// TODO: Maybe create module in-place in vector instead
+	loader_impl_wasm_module module;
+	module.module = wasm_module_new(wasm_impl->store, &binary);
+
 	wasm_byte_vec_delete(&binary);
 
 	// TODO: `wasm_module_new` can fail for a multitude of reasons.
@@ -350,7 +341,7 @@ int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle
 	//       which provides richer error messages. This could be done
 	//       conditionally using the preprocessor to maintain compatibility
 	//       with other runtimes.
-	if (handle->modules[handle->num_modules] == NULL)
+	if (module.module == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create module");
 		wasm_loader_impl_clear(impl, handle);
@@ -363,9 +354,11 @@ int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle
 	// No way to check whether `wasm_instance_new` fails, so hope for the best
 	// here too.
 	wasm_extern_vec_t imports = WASM_EMPTY_VEC;
-	handle->instances[handle->num_modules] = wasm_instance_new(wasm_impl->store, handle->modules[handle->num_modules], &imports, NULL);
+	module.instance = wasm_instance_new(wasm_impl->store, module.module, &imports, NULL);
+	wasm_instance_exports(module.instance, &module.exports);
 
-	handle->num_modules++;
+	vector_push_back_var(handle->modules, module);
+
 	return 0;
 }
 
@@ -423,9 +416,9 @@ loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		return NULL;
 	}
 
-	while (handle->num_modules < size)
+	for (size_t idx = 0; idx < size; idx++)
 	{
-		if (wasm_loader_impl_load_module_from_file(impl, handle, paths[handle->num_modules]) != 0)
+		if (wasm_loader_impl_load_module_from_file(impl, handle, paths[idx]) != 0)
 		{
 			return NULL;
 		}
@@ -464,14 +457,16 @@ int wasm_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	loader_impl_wasm_handle wasm_handle = (loader_impl_wasm_handle)handle;
 
-	for (size_t idx = 0; idx < wasm_handle->num_modules; idx++)
+	// TODO: Refactor into separate function
+	for (size_t idx = 0; idx < vector_size(wasm_handle->modules); idx++)
 	{
-		wasm_instance_delete(wasm_handle->instances[idx]);
-		wasm_module_delete(wasm_handle->modules[idx]);
+		loader_impl_wasm_module *module = vector_at(wasm_handle->modules, idx);
+		wasm_extern_vec_delete(&module->exports);
+		wasm_instance_delete(module->instance);
+		wasm_module_delete(module->module);
 	}
 
-	free(wasm_handle->instances);
-	free(wasm_handle->modules);
+	vector_destroy(wasm_handle->modules);
 	free(wasm_handle);
 
 	return 0;
@@ -511,15 +506,23 @@ char *wasm_loader_impl_get_export_type_name(const wasm_exporttype_t *export_type
 	return null_terminated_name;
 }
 
-int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_externtype_t *extern_type, const char *name)
+int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_externtype_t *extern_type, const char *name, const wasm_extern_t *extern_val)
 {
 	const wasm_functype_t *func_type =
 		wasm_externtype_as_functype_const(extern_type);
 	const wasm_valtype_vec_t *params = wasm_functype_params(func_type);
 	const wasm_valtype_vec_t *results = wasm_functype_results(func_type);
 
-	// TODO: Add function implementation
-	function func = function_create(name, params->size, NULL, &function_wasm_singleton);
+	loader_impl_wasm_function func_impl = malloc(sizeof(struct loader_impl_wasm_function_type));
+	if (func_impl == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate memory for function handle");
+		return 1;
+	}
+
+	func_impl->func = wasm_extern_as_func_const(extern_val);
+
+	function func = function_create(name, params->size, func_impl, &function_wasm_singleton);
 	signature sig = function_signature(func);
 
 	if (results->size > 0)
@@ -548,14 +551,15 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 	return 0;
 }
 
-int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const wasm_module_t *module)
+//int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const wasm_module_t *module, const wasm_instance_t *instance)
+int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const loader_impl_wasm_module *module)
 {
 	int ret = 0;
 
 	// There is no way to check whether `wasm_module_exports` fails, so just
 	// hope for the best.
 	wasm_exporttype_vec_t export_types;
-	wasm_module_exports(module, &export_types);
+	wasm_module_exports(module->module, &export_types);
 
 	for (size_t export_idx = 0; export_idx < export_types.size; export_idx++)
 	{
@@ -575,7 +579,9 @@ int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const wasm_mod
 		// TODO: Do we need to implement the other types as well?
 		if (kind == WASM_EXTERN_FUNC)
 		{
-			wasm_loader_impl_discover_function(impl, scp, extern_type, export_name);
+			// There is a 1-to-1 correspondence between between the instance
+			// exports and the module exports, so we can reuse the index.
+			wasm_loader_impl_discover_function(impl, scp, extern_type, export_name, module->exports.data[export_idx]);
 		}
 
 		free(export_name);
@@ -591,9 +597,9 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	loader_impl_wasm_handle wasm_handle = (loader_impl_wasm_handle)handle;
 	scope scp = context_scope(ctx);
 
-	for (size_t idx = 0; idx < wasm_handle->num_modules; idx++)
+	for (size_t idx = 0; idx < vector_size(wasm_handle->modules); idx++)
 	{
-		wasm_loader_impl_discover_module(impl, scp, wasm_handle->modules[idx]);
+		wasm_loader_impl_discover_module(impl, scp, vector_at(wasm_handle->modules, idx));
 	}
 
 	return 0;
