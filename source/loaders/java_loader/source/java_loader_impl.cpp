@@ -206,9 +206,9 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	// 			const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
 	// 		}
 	// }
-}
+	// }
 
-return obj;
+	return obj;
 }
 
 value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
