@@ -1,0 +1,35 @@
+{
+    Ignore memory leaked from wasm_engine_new.
+    Memcheck:Leak
+    ...
+    fun:wasm_engine_new
+    ...
+}
+
+{
+    Ignore memory leaked by dlopen when using dynlink_load.
+    Memcheck:Leak
+    ...
+    fun:dlopen
+    ...
+    fun:dynlink_load
+    ...
+}
+
+{
+    Ignore memory leaked by dlclose when using dynlink_unload.
+    Memcheck:Leak
+    ...
+    fun:dlclose
+    ...
+    fun:dynlink_unload
+    ...
+}
+
+{
+    Ignore memory leaked by dl_open_worker.
+    Memcheck:Leak
+    ...
+    fun:dl_open_worker
+    ...
+}
