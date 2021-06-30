@@ -92,7 +92,7 @@ type_interface type_wasm_singleton(void)
 
 int function_wasm_interface_create(function func, function_impl impl)
 {
-	/* TODO */
+	// TODO: Probably won't be needing this
 
 	(void)func;
 	(void)impl;
@@ -100,16 +100,111 @@ int function_wasm_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_wasm_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+wasm_val_t wasm_loader_impl_reflect_to_wasm_type(value val)
 {
-	/* TODO */
+	type_id val_type = value_type_id(val);
+	if (val_type == TYPE_INT)
+	{
+		return (wasm_val_t)WASM_I32_VAL(value_to_int(val));
+	}
+	else if (val_type == TYPE_LONG)
+	{
+		return (wasm_val_t)WASM_I64_VAL(value_to_long(val));
+	}
+	else if (val_type == TYPE_FLOAT)
+	{
+		return (wasm_val_t)WASM_F32_VAL(value_to_float(val));
+	}
+	else if (val_type == TYPE_DOUBLE)
+	{
+		return (wasm_val_t)WASM_F64_VAL(value_to_double(val));
+	}
+	else
+	{
+		// TODO: Error, probably use return type for error instead
+	}
+}
 
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
+value wasm_loader_impl_wasm_to_reflect_type(wasm_val_t val)
+{
+	if (val.kind == WASM_I32)
+	{
+		return value_create_int(val.of.i32);
+	}
+	else if (val.kind == WASM_I64)
+	{
+		return value_create_long(val.of.i64);
+	}
+	else if (val.kind == WASM_F32)
+	{
+		return value_create_float(val.of.f32);
+	}
+	else if (val.kind == WASM_F64)
+	{
+		return value_create_double(val.of.f64);
+	}
+	else
+	{
+		// TODO: Error?
+		return NULL;
+	}
+}
 
-	return NULL;
+function_return function_wasm_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
+{
+	// TODO: Error if args_size does not match function
+	loader_impl_wasm_function wasm_func = (loader_impl_wasm_function)impl;
+	signature sig = function_signature(func);
+
+	// TODO: How lenient should we be with types? For now, we just assume
+	//       arguments are the exact types required
+	wasm_val_t wasm_args[args_size];
+	for (size_t idx = 0; idx < args_size; idx++)
+	{
+#if 0
+		type_id param_type = value_type_id(signature_get_type(sig, idx));
+		type_id arg_type = value_type_id(args[idx]);
+
+		if (param_type != arg_type)
+		{
+			// TODO: Error
+		}
+#endif
+
+		wasm_args[idx] = wasm_loader_impl_reflect_to_wasm_type(args[idx]);
+	}
+
+	// Then call function
+	const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+
+	wasm_val_vec_t results;
+	wasm_val_vec_new_uninitialized(&results, wasm_func_result_arity(wasm_func->func));
+
+	wasm_trap_t *trap = wasm_func_call(wasm_func->func, &args_vec, &results);
+	if (trap != NULL)
+	{
+		// TODO: Error, trap
+		wasm_byte_vec_t message;
+		wasm_trap_message(trap, &message);
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: ERROR TRAP %s", message.data);
+		wasm_byte_vec_delete(&message);
+		wasm_val_vec_delete(&results);
+		wasm_trap_delete(trap);
+		return NULL;
+	}
+
+	if (signature_get_return(sig) == NULL)
+	{
+		wasm_val_vec_delete(&results);
+		return NULL;
+	}
+	else
+	{
+		// TODO: Add support for multiple returns
+		wasm_val_t ret = results.data[0];
+		wasm_val_vec_delete(&results);
+		return wasm_loader_impl_wasm_to_reflect_type(ret);
+	}
 }
 
 function_return function_wasm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
