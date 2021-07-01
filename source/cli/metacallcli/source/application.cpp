@@ -94,6 +94,33 @@ bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
 			  << std::endl;
 
+	/* Eval command */
+	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
+	std::cout << "\t│ Evaluate a code snippet with the specified runtime tag                                 │" << std::endl;
+	std::cout << "\t│────────────────────────────────────────────────────────────────────────────────────────│" << std::endl;
+	std::cout << "\t│ Usage:                                                                                 │" << std::endl;
+	std::cout << "\t│ eval <runtime tag> <script>                                                            │" << std::endl;
+	std::cout << "\t│    <runtime tag> : identifier to the type of script                                    │" << std::endl;
+	std::cout << "\t│                  options :                                                             │" << std::endl;
+	std::cout << "\t│                            mock - Mock (for testing purposes)                          │" << std::endl;
+	std::cout << "\t│                            py   - Python                                               │" << std::endl;
+	std::cout << "\t│                            node - NodeJS                                               │" << std::endl;
+	std::cout << "\t│                            rb   - Ruby                                                 │" << std::endl;
+	std::cout << "\t│                            cs   - C# NetCore                                           │" << std::endl;
+	std::cout << "\t│                            cob  - Cobol                                                │" << std::endl;
+	std::cout << "\t│                            ts   - TypeScript                                           │" << std::endl;
+	std::cout << "\t│                            js   - V8 JavaScript Engine                                 │" << std::endl;
+	std::cout << "\t│                            file - Files (for handling file systems)                    │" << std::endl;
+	std::cout << "\t│    <script> : textual code to execute                                                  │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Example:                                                                               │" << std::endl;
+	std::cout << "\t│ eval node console.log(\"hello world\")                                                   │" << std::endl;
+	std::cout << "\t│                                                                                        │" << std::endl;
+	std::cout << "\t│ Result:                                                                                │" << std::endl;
+	std::cout << "\t│ \"hello world\"                                                                          │" << std::endl;
+	std::cout << "\t└────────────────────────────────────────────────────────────────────────────────────────┘" << std::endl
+			  << std::endl;
+
 	/* Call command */
 	std::cout << "\t┌────────────────────────────────────────────────────────────────────────────────────────┐" << std::endl;
 	std::cout << "\t│ Call a function previously loaded in MetaCall                                          │" << std::endl;
@@ -222,6 +249,43 @@ bool command_cb_inspect(application &app, tokenizer &)
 	}
 
 	metacall_allocator_destroy(allocator);
+
+	return true;
+}
+
+bool command_cb_eval(application &app, tokenizer &t)
+{
+	tokenizer::iterator it = t.begin();
+
+	parser p(it);
+
+	std::string loader_tag;
+
+	++it;
+
+	if (p.is<std::string>())
+	{
+		loader_tag = *it;
+	}
+
+	std::string loaders[] = {
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file"
+	};
+
+	// check if invalid loader tag
+	if (std::find(std::begin(loaders), std::end(loaders), loader_tag) == std::end(loaders))
+	{
+		return false;
+	}
+
+	++it;
+
+	if (!p.is<std::string>())
+	{
+		return false;
+	}
+
+	app.load_from_memory(loader_tag, *it);
 
 	return true;
 }
@@ -514,6 +578,20 @@ bool application::load(const std::string &tag, const std::string &script)
 	return true;
 }
 
+bool application::load_from_memory(const std::string &tag, const std::string &script)
+{
+	if (metacall_load_from_memory(tag.c_str(), script.c_str(), script.size() * sizeof(std::string::value_type), NULL) != 0)
+	{
+		std::cout << "Script '" << script << "' eval error in loader (" << tag << ")" << std::endl;
+
+		return false;
+	}
+
+	std::cout << "Script '" << script << "' evaluated correctly" << std::endl;
+
+	return true;
+}
+
 bool application::clear(const std::string &tag, const std::string &script)
 {
 	void *handle = metacall_handle(tag.c_str(), script.c_str());
@@ -597,6 +675,8 @@ application::application(int argc, char *argv[]) :
 	define("debug", &command_cb_debug);
 
 	define("inspect", &command_cb_inspect);
+
+	define("eval", &command_cb_eval);
 
 	define("call", &command_cb_call);
 

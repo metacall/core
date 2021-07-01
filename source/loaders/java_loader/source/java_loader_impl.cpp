@@ -217,7 +217,6 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 	(void)cls;
 	std::cout << "\nGet -> " << key << std::endl;
 
-
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 	loader_impl_java java_impl = java_cls->impl;
 
@@ -314,7 +313,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, const char *key,
 			}
 		}
 	}
-  
+
 	return 0;
 }
 

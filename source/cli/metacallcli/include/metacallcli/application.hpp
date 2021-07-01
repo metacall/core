@@ -82,6 +82,21 @@ public:
 
 	/**
 	*  @brief
+	*    Application script loader from memory
+	*
+	*  @param[in] tag
+	*    Loader tag reference
+	*
+	*  @param[in] script
+	*    Script code
+	*
+	*  @return
+	*    Return true on success, false otherwhise
+	*/
+	bool load_from_memory(const std::string &tag, const std::string &script);
+
+	/**
+	*  @brief
 	*    Application script clearer
 	*
 	*  @param[in] tag
