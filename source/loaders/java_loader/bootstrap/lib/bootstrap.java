@@ -176,19 +176,93 @@ public class bootstrap {
         : (sig = Array.newInstance(m.getReturnType(), 0).toString()).substring(1, sig.indexOf('@'))).toString();
   }
 
-  public static String[] java_bootstrap_get_value(Class<?> cls, String key) {
-    String val = "", valType = "";
+  public static String get_Field_Type(Class<?> cls, String key) {
+    String valType = "";
 
     try {
       Field f = cls.getField(key);
-      val = f.get(null).toString();
       valType = f.getType().getName();
     } catch (Exception e) {
       e.printStackTrace();
     }
 
-    String[] s = { val, valType };
-    return s;
+    return valType;
+  }
+
+  public static int java_bootstrap_get_int_value(Class<?> cls, String key) {
+    Object val = null;
+
+    try {
+      Field f = cls.getField(key);
+      val = f.get(null);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    int retnVal = (int) val;
+
+    return retnVal;
+  }
+
+  public static char java_bootstrap_get_char_value(Class<?> cls, String key) {
+    Object val = null;
+
+    try {
+      Field f = cls.getField(key);
+      val = f.get(null);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    char retnVal = (char) val;
+
+    return retnVal;
+  }
+
+  public static String java_bootstrap_get_string_value(Class<?> cls, String key) {
+    Object val = null;
+
+    try {
+      Field f = cls.getField(key);
+      val = f.get(null);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    String retnVal = (String) val;
+
+    return retnVal;
+  }
+
+  // public static <T> T java_bootstrap_get_temp_value(Class<?> cls, String key) {
+  // Object val = null;
+
+  // try {
+  // Field f = cls.getField(key);
+  // val = f.get(null);
+  // } catch (Exception e) {
+  // e.printStackTrace();
+  // }
+
+  // T retnVal = (T) val;
+  // System.out.println(val);
+  // return retnVal;
+  // }
+
+  public static int java_bootstrap_set_int_value(Class<?> cls, String key, int val) {
+
+    try {
+      Field f = cls.getDeclaredField(key);
+      f.setAccessible(true);
+      f.set(null, val);
+      if ((int) f.get(null) == val)
+        return 0;
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    return 1;
+
   }
 
   public static String java_bootstrap_call_constructor(Class<?>[] cls) {
