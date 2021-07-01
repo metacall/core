@@ -262,6 +262,7 @@ public class bootstrap {
     }
 
     return 1;
+
   }
 
   public static String java_bootstrap_call_constructor(Class<?>[] cls) {
