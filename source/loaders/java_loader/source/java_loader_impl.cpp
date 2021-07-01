@@ -1,4 +1,5 @@
 /*
+make metacall-java-test && make java_loader && ctest -VV -R metacall-java-test
  *	Loader Library by Parra Studios
  *	A plugin for loading java code at run-time into a process.
  *
@@ -214,7 +215,7 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
 {
 	(void)cls;
-	std::cout << "Get -> " << key << std::endl;
+	std::cout << "\nGet -> " << key << std::endl;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 	loader_impl_java java_impl = java_cls->impl;
@@ -226,19 +227,57 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 
 	if (classPtr != nullptr)
 	{
-		jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_value", "(Ljava/lang/Class;Ljava/lang/String;)[Ljava/lang/String;");
+		jmethodID cls_get_field_type = java_cls->impl->env->GetStaticMethodID(classPtr, "get_Field_Type", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;");
 
-		if (cls_get_val != nullptr)
+		if (cls_get_field_type != nullptr)
 		{
-			jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_val, clsObj, getKey);
+			jstring result = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_field_type, clsObj, getKey);
+			const char *gotType = java_impl->env->GetStringUTFChars(result, NULL);
+			std::cout << "GOT Field Type = " << gotType << std::endl;
 
-			jstring gVal = (jstring)java_impl->env->GetObjectArrayElement(result, 0);
-			const char *gotVal = java_impl->env->GetStringUTFChars(gVal, NULL);
+			//Test function for using templates
+			// if (!strcmp(gotType, "int"))
+			// {
+			// 	jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_temp_value", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Object;");
+			// 	if (cls_get_val != nullptr)
+			// 	{
+			// 		jint intResult = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_get_val, clsObj, getKey);
+			// 		std::cout << "GOT Int = " << intResult << std::endl;
+			// 		return value_create_int(30);
+			// 	}
+			// }
 
-			jstring gType = (jstring)java_impl->env->GetObjectArrayElement(result, 1);
-			const char *gotType = java_impl->env->GetStringUTFChars(gType, NULL);
-
-			return java_loader_capi_to_value(gotVal, gotType);
+			if (!strcmp(gotType, "int"))
+			{
+				jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_int_value", "(Ljava/lang/Class;Ljava/lang/String;)I");
+				if (cls_get_val != nullptr)
+				{
+					jint intResult = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_get_val, clsObj, getKey);
+					std::cout << "GOT Int = " << intResult << std::endl;
+					return value_create_int(intResult);
+				}
+			}
+			else if (!strcmp(gotType, "char"))
+			{
+				jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_char_value", "(Ljava/lang/Class;Ljava/lang/String;)C");
+				if (cls_get_val != nullptr)
+				{
+					jchar charResult = (jchar)java_impl->env->CallStaticCharMethod(classPtr, cls_get_val, clsObj, getKey);
+					std::cout << "GOT Char = " << charResult << std::endl;
+					return value_create_char(charResult);
+				}
+			}
+			else if (!strcmp(gotType, "java.lang.String"))
+			{
+				jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_string_value", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;");
+				if (cls_get_val != nullptr)
+				{
+					jstring stringResult = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_val, clsObj, getKey);
+					const char *stringR = java_impl->env->GetStringUTFChars(stringResult, NULL);
+					std::cout << "GOT String = " << stringR << std::endl;
+					return value_create_string(stringR, (size_t)strlen(stringR));
+				}
+			}
 		}
 	}
 
@@ -248,7 +287,32 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
 {
 	(void)cls;
-	std::cout << "Set" << std::endl;
+	std::cout << "\nSet = " << key << std::endl;
+
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+	loader_impl_java java_impl = java_cls->impl;
+
+	jobject clsObj = java_cls->cls;
+	jstring setKey = java_cls->impl->env->NewStringUTF(key);
+
+	jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+
+	if (classPtr != nullptr)
+	{
+		type_id id = value_type_id(v);
+
+		if (id == TYPE_INT)
+		{
+			int i = value_to_int(v);
+
+			jmethodID cls_set_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_set_int_value", "(Ljava/lang/Class;Ljava/lang/String;I)I");
+			if (cls_set_val != nullptr)
+			{
+				jint intResult = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_set_val, clsObj, setKey, i);
+				return intResult;
+			}
+		}
+	}
 
 	return 0;
 }
