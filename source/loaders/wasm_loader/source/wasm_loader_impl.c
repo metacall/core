@@ -90,39 +90,31 @@ type_interface type_wasm_singleton(void)
 	return &wasm_type_interface;
 }
 
-int function_wasm_interface_create(function func, function_impl impl)
-{
-	// TODO: Probably won't be needing this
-
-	(void)func;
-	(void)impl;
-
-	return 0;
-}
-
-wasm_val_t wasm_loader_impl_reflect_to_wasm_type(value val)
+int wasm_loader_impl_reflect_to_wasm_type(value val, wasm_val_t *ret)
 {
 	type_id val_type = value_type_id(val);
 	if (val_type == TYPE_INT)
 	{
-		return (wasm_val_t)WASM_I32_VAL(value_to_int(val));
+		*ret = (wasm_val_t)WASM_I32_VAL(value_to_int(val));
 	}
 	else if (val_type == TYPE_LONG)
 	{
-		return (wasm_val_t)WASM_I64_VAL(value_to_long(val));
+		*ret = (wasm_val_t)WASM_I64_VAL(value_to_long(val));
 	}
 	else if (val_type == TYPE_FLOAT)
 	{
-		return (wasm_val_t)WASM_F32_VAL(value_to_float(val));
+		*ret = (wasm_val_t)WASM_F32_VAL(value_to_float(val));
 	}
 	else if (val_type == TYPE_DOUBLE)
 	{
-		return (wasm_val_t)WASM_F64_VAL(value_to_double(val));
+		*ret = (wasm_val_t)WASM_F64_VAL(value_to_double(val));
 	}
 	else
 	{
-		// TODO: Error, probably use return type for error instead
+		return 1;
 	}
+
+	return 0;
 }
 
 value wasm_loader_impl_wasm_to_reflect_type(wasm_val_t val)
@@ -145,66 +137,90 @@ value wasm_loader_impl_wasm_to_reflect_type(wasm_val_t val)
 	}
 	else
 	{
-		// TODO: Error?
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Unrecognized Wasm value kind (kind %d)", val.kind);
 		return NULL;
 	}
 }
 
+void wasm_loader_impl_log_trap(const wasm_trap_t *trap)
+{
+	wasm_byte_vec_t message;
+	wasm_trap_message(trap, &message);
+	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Executed trap with message \"%s\"", message.data);
+	wasm_byte_vec_delete(&message);
+}
+
+value wasm_loader_impl_call_func(const signature sig, const wasm_func_t *func, const wasm_val_vec_t args)
+{
+	// No way to check if vector allocation fails
+	wasm_val_vec_t results;
+	wasm_val_vec_new_uninitialized(&results, wasm_func_result_arity(func));
+
+	wasm_trap_t *trap = wasm_func_call(func, &args, &results);
+
+	value ret = NULL;
+	if (trap != NULL)
+	{
+		// BEWARE: Wasmtime executes an undefined instruction in order to
+		// transfer control to its trap handlers, which can cause Valgrind and
+		// other debuggers to act out. In Valgrind, this can be suppressed
+		// using the `--sigill-diagnostics=no` flag. Other debuggers support
+		// similar behavior.
+		// See https://github.com/bytecodealliance/wasmtime/issues/3061 for
+		// more information
+		wasm_loader_impl_log_trap(trap);
+		wasm_trap_delete(trap);
+	}
+	else if (signature_get_return(sig) != NULL)
+	{
+		// TODO: Add support for multiple returns
+		wasm_val_t wasm_ret = results.data[0];
+		ret = wasm_loader_impl_wasm_to_reflect_type(wasm_ret);
+	}
+
+	wasm_val_vec_delete(&results);
+	return ret;
+}
+
 function_return function_wasm_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
 {
-	// TODO: Error if args_size does not match function
 	loader_impl_wasm_function wasm_func = (loader_impl_wasm_function)impl;
 	signature sig = function_signature(func);
+
+	if (args_size != signature_count(sig))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid number of arguments (%d expected, %d given)", args_size, signature_count(sig));
+		return NULL;
+	}
 
 	// TODO: How lenient should we be with types? For now, we just assume
 	//       arguments are the exact types required
 	wasm_val_t wasm_args[args_size];
 	for (size_t idx = 0; idx < args_size; idx++)
 	{
+		// TODO: This causes an invalid read for some reason
 #if 0
-		type_id param_type = value_type_id(signature_get_type(sig, idx));
-		type_id arg_type = value_type_id(args[idx]);
+		type param_type = signature_get_type(sig, idx);
+		type_id param_type_id = value_type_id(param_type);
+		type_id arg_type_id = value_type_id(args[idx]);
 
-		if (param_type != arg_type)
+		if (param_type_id != arg_type_id)
 		{
-			// TODO: Error
+            log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid type for argument %d", idx);
+			return NULL;
 		}
 #endif
 
-		wasm_args[idx] = wasm_loader_impl_reflect_to_wasm_type(args[idx]);
+		if (wasm_loader_impl_reflect_to_wasm_type(args[idx], &wasm_args[idx]) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid type for argument %d", idx);
+			return NULL;
+		}
 	}
 
-	// Then call function
 	const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
 
-	wasm_val_vec_t results;
-	wasm_val_vec_new_uninitialized(&results, wasm_func_result_arity(wasm_func->func));
-
-	wasm_trap_t *trap = wasm_func_call(wasm_func->func, &args_vec, &results);
-	if (trap != NULL)
-	{
-		// TODO: Error, trap
-		wasm_byte_vec_t message;
-		wasm_trap_message(trap, &message);
-		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: ERROR TRAP %s", message.data);
-		wasm_byte_vec_delete(&message);
-		wasm_val_vec_delete(&results);
-		wasm_trap_delete(trap);
-		return NULL;
-	}
-
-	if (signature_get_return(sig) == NULL)
-	{
-		wasm_val_vec_delete(&results);
-		return NULL;
-	}
-	else
-	{
-		// TODO: Add support for multiple returns
-		wasm_val_t ret = results.data[0];
-		wasm_val_vec_delete(&results);
-		return wasm_loader_impl_wasm_to_reflect_type(ret);
-	}
+	return wasm_loader_impl_call_func(sig, wasm_func->func, args_vec);
 }
 
 function_return function_wasm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
@@ -232,7 +248,7 @@ void function_wasm_interface_destroy(function func, function_impl impl)
 function_interface function_wasm_singleton(void)
 {
 	static struct function_interface_type wasm_function_interface = {
-		&function_wasm_interface_create,
+		NULL,
 		&function_wasm_interface_invoke,
 		&function_wasm_interface_await,
 		&function_wasm_interface_destroy

@@ -14,4 +14,5 @@
         f32.const 2
         i64.const 3
         f64.const 4)
+  (func (export "trap") (unreachable))
 )

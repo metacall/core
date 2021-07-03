@@ -123,16 +123,30 @@ TEST_F(wasm_loader_test, CallFunctions)
 
 	void *ret = metacall("none_ret_none");
 	ASSERT_EQ(NULL, ret);
-	metacall_value_destroy(ret);
+
+	ret = metacall("i32_ret_none", 0);
+	ASSERT_EQ(NULL, ret);
+
+	ret = metacall("i32_f32_i64_f64_ret_none", 0, 0, 0, 0);
+	ASSERT_EQ(NULL, ret);
 
 	ret = metacall("none_ret_i32");
 	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
 	ASSERT_EQ(1, metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
 
-	ret = metacall("i32_ret_none", 0);
-	ASSERT_EQ(NULL, ret);
+	// TODO: Add support for multiple return values
+	ret = metacall("none_ret_i32_f32_i64_f64");
+	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
+	ASSERT_EQ(1, metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
 
-	// TODO: Test trap
+	ret = metacall("i32_f32_i64_f64_ret_i32_f32_i64_f64", 0, 0, 0, 0);
+	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
+	ASSERT_EQ(1, metacall_value_to_int(ret));
+	metacall_value_destroy(ret);
+
+	// The return value should be NULL when a trap is reached
+	ret = metacall("trap");
+	ASSERT_EQ(NULL, ret);
 }
