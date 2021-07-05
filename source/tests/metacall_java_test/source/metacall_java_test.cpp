@@ -111,16 +111,70 @@ TEST_F(metacall_java_test, DefaultConstructor)
 		// void *param2 = metacall_class_static_get(myclass, "INT_TEST");
 		// ASSERT_EQ((int)20, (int)metacall_value_to_int(param2));
 		// metacall_value_destroy(param2);
-		// void *param2 = metacall_class_static_get(myclass, "CHAR_TEST");
-		// ASSERT_EQ((char)'H', (int)metacall_value_to_char(param2));
+
+		// param2 = metacall_class_static_get(myclass, "CHAR_TEST");
+		// ASSERT_EQ((char)'A', (char)metacall_value_to_char(param2));
 		// metacall_value_destroy(param2);
 
 		// void *param3 = metacall_class_static_get(myclass, "STRING_TEST");
 		// ASSERT_EQ((std::string) "Hello", (std::string)metacall_value_to_string(param3));
 		// metacall_value_destroy(param3);
 
-		// int retcode = metacall_class_static_set(myclass, "INT_TEST", metacall_value_create_int(40));
-		// ASSERT_EQ((int)0, int(retcode));
+		int boolset = metacall_class_static_set(myclass, "BOOL_TEST", metacall_value_create_bool(true));
+		ASSERT_EQ((int)0, int(boolset));
+
+		param1 = metacall_class_static_get(myclass, "BOOL_TEST");
+		ASSERT_EQ((bool)true, (bool)metacall_value_to_bool(param1));
+		metacall_value_destroy(param1);
+
+		int charset = metacall_class_static_set(myclass, "CHAR_TEST", metacall_value_create_char('z'));
+		ASSERT_EQ((int)0, int(charset));
+
+		param1 = metacall_class_static_get(myclass, "CHAR_TEST");
+		ASSERT_EQ((char)'z', (char)metacall_value_to_char(param1));
+		metacall_value_destroy(param1);
+
+		int shortSet = metacall_class_static_set(myclass, "SHORT_TEST", metacall_value_create_short(200));
+		ASSERT_EQ((int)0, int(shortSet));
+
+		param1 = metacall_class_static_get(myclass, "SHORT_TEST");
+		ASSERT_EQ((short)200, (short)metacall_value_to_short(param1));
+		metacall_value_destroy(param1);
+
+		int intSet = metacall_class_static_set(myclass, "INT_TEST", metacall_value_create_int(100));
+		ASSERT_EQ((int)0, int(intSet));
+
+		param1 = metacall_class_static_get(myclass, "INT_TEST");
+		ASSERT_EQ((int)100, (int)metacall_value_to_int(param1));
+		metacall_value_destroy(param1);
+
+		int longSet = metacall_class_static_set(myclass, "LONG_TEST", metacall_value_create_long(2354363575));
+		ASSERT_EQ((int)0, int(longSet));
+
+		param1 = metacall_class_static_get(myclass, "LONG_TEST");
+		ASSERT_EQ((long)2354363575, (long)metacall_value_to_long(param1));
+		metacall_value_destroy(param1);
+
+		int floatSet = metacall_class_static_set(myclass, "FLOAT_TEST", metacall_value_create_float(34.12));
+		ASSERT_EQ((int)0, int(floatSet));
+
+		param1 = metacall_class_static_get(myclass, "FLOAT_TEST");
+		ASSERT_EQ((float)34.12, (float)metacall_value_to_float(param1));
+		metacall_value_destroy(param1);
+
+		int doubleSet = metacall_class_static_set(myclass, "DOUBLE_TEST", metacall_value_create_double(20012.13235245));
+		ASSERT_EQ((int)0, int(doubleSet));
+
+		param1 = metacall_class_static_get(myclass, "DOUBLE_TEST");
+		ASSERT_EQ((double)20012.13235245, (double)metacall_value_to_double(param1));
+		metacall_value_destroy(param1);
+
+		int stringSet = metacall_class_static_set(myclass, "STRING_TEST", metacall_value_create_string("KETAN", 5));
+		ASSERT_EQ((int)0, int(stringSet));
+
+		param1 = metacall_class_static_get(myclass, "STRING_TEST");
+		ASSERT_EQ((std::string) "KETAN", (std::string)metacall_value_to_string(param1));
+		metacall_value_destroy(param1);
 
 		// param1 = metacall_class_static_get(myclass, "INT_TEST");
 		// ASSERT_EQ((int)40, (int)metacall_value_to_int(param1));

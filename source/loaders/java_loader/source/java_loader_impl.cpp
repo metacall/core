@@ -387,6 +387,28 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 	return NULL;
 }
 
+std::string get_val_sig(type_id type)
+{
+	if (type == TYPE_BOOL)
+		return "Z";
+	if (type == TYPE_CHAR)
+		return "C";
+	if (type == TYPE_SHORT)
+		return "S";
+	if (type == TYPE_INT)
+		return "I";
+	if (type == TYPE_LONG)
+		return "J";
+	if (type == TYPE_FLOAT)
+		return "F";
+	if (type == TYPE_DOUBLE)
+		return "D";
+	if (type == TYPE_STRING)
+		return "Ljava/lang/String;";
+
+	return "V";
+}
+
 int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
 {
 	(void)cls;
@@ -396,28 +418,68 @@ int java_class_interface_static_set(klass cls, class_impl impl, const char *key,
 	loader_impl_java java_impl = java_cls->impl;
 
 	jobject clsObj = java_cls->cls;
-	jstring setKey = java_cls->impl->env->NewStringUTF(key);
 
-	jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
-
-	if (classPtr != nullptr)
+	jclass clscls = java_cls->concls;
+	if (clscls != nullptr)
 	{
 		type_id id = value_type_id(v);
+		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, get_val_sig(id).c_str());
 
-		if (id == TYPE_INT)
+		if (fID != nullptr)
 		{
-			int i = value_to_int(v);
-
-			jmethodID cls_set_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_set_int_value", "(Ljava/lang/Class;Ljava/lang/String;I)I");
-			if (cls_set_val != nullptr)
+			if (id == TYPE_BOOL)
 			{
-				jint intResult = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_set_val, clsObj, setKey, i);
-				return intResult;
+				jboolean val = (jboolean)value_to_bool(v);
+				java_impl->env->SetStaticBooleanField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_CHAR)
+			{
+				jchar val = (jchar)value_to_char(v);
+				java_impl->env->SetStaticCharField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_SHORT)
+			{
+				jshort val = (jshort)value_to_short(v);
+				java_impl->env->SetStaticShortField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_INT)
+			{
+				jint val = (jint)value_to_int(v);
+				java_impl->env->SetStaticIntField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_LONG)
+			{
+				jlong val = (jlong)value_to_long(v);
+				java_impl->env->SetStaticLongField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_FLOAT)
+			{
+				jfloat val = (jfloat)value_to_float(v);
+				java_impl->env->SetStaticFloatField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_DOUBLE)
+			{
+				jdouble val = (jdouble)value_to_double(v);
+				java_impl->env->SetStaticDoubleField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_STRING)
+			{
+				const char *strV = value_to_string(v);
+				jstring val = java_impl->env->NewStringUTF(strV);
+				java_impl->env->SetStaticObjectField(clscls, fID, val);
+				return 0;
 			}
 		}
 	}
 
-	return 0;
+	return 1;
 }
 
 value java_class_interface_static_invoke(klass cls, class_impl impl, const char *static_method_name, class_args args, size_t argc)
