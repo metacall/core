@@ -54,6 +54,7 @@ typedef struct loader_impl_java_class_type
 {
 	const char *name;
 	jobject cls;
+	jclass concls;
 	loader_impl_java impl;
 } * loader_impl_java_class;
 
@@ -134,27 +135,96 @@ object_interface java_object_interface_singleton(void)
 	return &java_object_interface;
 }
 
-value java_loader_capi_to_value(const char *val, const char *type)
+std::string getJNISignature(class_args args, size_t argc, const char *returnType)
 {
-	std::cout << val << " " << type << std::endl;
+	std::string sig = "(";
 
-	value v = NULL;
-
-	if (!strcmp(type, "int"))
+	for (int i = 0; i < argc; i++)
 	{
-		std::cout << "INT" << std::endl;
-		int intVal = std::stoi(val);
+		type_id id = value_type_id(args[i]);
 
-		v = value_create_int(intVal);
+		if (id == TYPE_BOOL)
+			sig += "Z";
+
+		if (id == TYPE_CHAR)
+			sig += "C";
+
+		if (id == TYPE_SHORT)
+			sig += "S";
+
+		if (id == TYPE_INT)
+			sig += "I";
+
+		if (id == TYPE_LONG)
+			sig += "J";
+
+		if (id == TYPE_FLOAT)
+			sig += "F";
+
+		if (id == TYPE_DOUBLE)
+			sig += "D";
+
+		if (id == TYPE_STRING)
+			sig += "Ljava/lang/String;";
 	}
-	else if (!strcmp(type, "java.lang.String"))
+
+	sig += ")";
+
+	if (!strcmp(returnType, "void"))
+		sig += "V";
+
+	return sig;
+}
+
+void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv *env)
+{
+	for (int i = 0; i < argc; i++)
 	{
-		std::cout << "STRING" << std::endl;
+		type_id id = value_type_id(args[i]);
 
-		v = value_create_string(val, (size_t)strlen(val));
+		if (id == TYPE_BOOL)
+		{
+			constructorArgs[i].z = value_to_bool(args[i]);
+			std::string ss = constructorArgs[i].z ? "1" : "0";
+			std::cout << "BOOL = " << ss << std::endl;
+		}
+		else if (id == TYPE_CHAR)
+		{
+			constructorArgs[i].c = value_to_char(args[i]);
+			std::cout << "CHAR = " << constructorArgs[i].c << std::endl;
+		}
+		else if (id == TYPE_SHORT)
+		{
+			constructorArgs[i].s = value_to_short(args[i]);
+			std::cout << "SHORT = " << constructorArgs[i].s << std::endl;
+		}
+		else if (id == TYPE_INT)
+		{
+			constructorArgs[i].i = value_to_int(args[i]);
+			std::cout << "INT = " << constructorArgs[i].i << std::endl;
+		}
+		else if (id == TYPE_LONG)
+		{
+			constructorArgs[i].j = value_to_long(args[i]);
+			std::cout << "LONG = " << constructorArgs[i].j << std::endl;
+		}
+		else if (id == TYPE_FLOAT)
+		{
+			constructorArgs[i].f = value_to_float(args[i]);
+			std::cout << "FLOAT = " << constructorArgs[i].f << std::endl;
+		}
+		else if (id == TYPE_DOUBLE)
+		{
+			constructorArgs[i].d = value_to_double(args[i]);
+			std::cout << "DOUBLE = " << constructorArgs[i].d << std::endl;
+		}
+		else if (id == TYPE_STRING)
+		{
+			const char *strV = value_to_string(args[i]);
+			jstring str = env->NewStringUTF(strV);
+			constructorArgs[i].l = str;
+		}
 	}
-
-	return v;
 }
 
 int java_class_interface_create(klass cls, class_impl impl)
@@ -162,7 +232,6 @@ int java_class_interface_create(klass cls, class_impl impl)
 	(void)cls;
 	std::cout << "Create" << std::endl;
 	loader_impl_java_class java_cls = (loader_impl_java_class)impl;
-	// java_cls->cls = NULL;
 
 	return 0;
 }
@@ -170,11 +239,9 @@ int java_class_interface_create(klass cls, class_impl impl)
 object java_class_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t argc)
 {
 	(void)cls;
-
-	std::cout << "Constructor " << argc << std::endl;
+	std::cout << "Constructor" << std::endl;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-
 	loader_impl_java_object java_obj = new loader_impl_java_object_type();
 
 	object obj = object_create(name, java_obj, &java_object_interface_singleton, cls);
@@ -183,33 +250,62 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 		return NULL;
 
 	java_obj->impl = java_cls->impl;
-	jobject clsObj = java_cls->cls;
 
 	jvalue constructorArgs[argc];
+	getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
 
-	for (int i = 0; i < argc; i++)
+	if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
 	{
-		constructorArgs[i].i = value_to_int(args[i]);
-		std::cout << constructorArgs[i].i << std::endl;
+		jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+
+		if (classPtr != nullptr)
+		{
+			jmethodID findCls = java_cls->impl->env->GetStaticMethodID(classPtr, "FindClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+			if (findCls != nullptr)
+			{
+				jclass clscls = (jclass)java_cls->impl->env->CallStaticObjectMethod(classPtr, findCls, java_cls->impl->env->NewStringUTF(name));
+				if (clscls != nullptr)
+				{
+					std::string sig = getJNISignature(args, argc, "void");
+
+					jmethodID constMID = java_cls->impl->env->GetMethodID(clscls, "<init>", sig.c_str());
+					if (constMID != nullptr)
+					{
+						jobject newCls = java_cls->impl->env->NewObjectA(clscls, constMID, constructorArgs);
+						if (newCls != nullptr)
+						{
+							std::cout << "Class Constructor successful\n\n";
+							java_cls->concls = clscls;
+						}
+					}
+				}
+			}
+		}
 	}
 
-	// if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
-	// {
-	// 	jclass classPtr = java_cls->impl->env->FindClass("Test");
-
-	// 	if (classPtr != nullptr)
-	// 	{
-	// 		jmethodID cls_call_constructor = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_call_constructor", "([Ljava/lang/Class;)Ljava/lang/String;");
-
-	// 		if (cls_call_constructor != nullptr)
-	// 		{
-	// 			jstring result = (jstring)java_cls->impl->env->CallStaticObjectMethodA(classPtr, cls_call_constructor, jvalue * constructorArgs);
-	// 			const char *cls_name = java_cls->impl->env->GetStringUTFChars(result, NULL);
-	// 		}
-	// }
-	// }
-
 	return obj;
+}
+
+std::string get_val_sig(const char *type)
+{
+	if (!strcmp(type, "boolean"))
+		return "Z";
+	if (!strcmp(type, "char"))
+		return "C";
+	if (!strcmp(type, "short"))
+		return "S";
+	if (!strcmp(type, "int"))
+		return "I";
+	if (!strcmp(type, "long"))
+		return "J";
+	if (!strcmp(type, "float"))
+		return "F";
+	if (!strcmp(type, "double"))
+		return "D";
+	if (!strcmp(type, "java.lang.String"))
+		return "Ljava/lang/String;";
+
+	return "V";
 }
 
 value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
@@ -232,50 +328,57 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 		if (cls_get_field_type != nullptr)
 		{
 			jstring result = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_field_type, clsObj, getKey);
-			const char *gotType = java_impl->env->GetStringUTFChars(result, NULL);
+			const char *gotType = java_impl->env->GetStringUTFChars(result, NULL); // Field Type for get key
 			std::cout << "GOT Field Type = " << gotType << std::endl;
 
-			//Test function for using templates
-			// if (!strcmp(gotType, "int"))
-			// {
-			// 	jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_temp_value", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Object;");
-			// 	if (cls_get_val != nullptr)
-			// 	{
-			// 		jint intResult = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_get_val, clsObj, getKey);
-			// 		std::cout << "GOT Int = " << intResult << std::endl;
-			// 		return value_create_int(30);
-			// 	}
-			// }
+			jclass clscls = java_cls->concls;
+			if (clscls != nullptr)
+			{
+				jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, get_val_sig(gotType).c_str());
 
-			if (!strcmp(gotType, "int"))
-			{
-				jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_int_value", "(Ljava/lang/Class;Ljava/lang/String;)I");
-				if (cls_get_val != nullptr)
+				if (fID != nullptr)
 				{
-					jint intResult = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_get_val, clsObj, getKey);
-					std::cout << "GOT Int = " << intResult << std::endl;
-					return value_create_int(intResult);
-				}
-			}
-			else if (!strcmp(gotType, "char"))
-			{
-				jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_char_value", "(Ljava/lang/Class;Ljava/lang/String;)C");
-				if (cls_get_val != nullptr)
-				{
-					jchar charResult = (jchar)java_impl->env->CallStaticCharMethod(classPtr, cls_get_val, clsObj, getKey);
-					std::cout << "GOT Char = " << charResult << std::endl;
-					return value_create_char(charResult);
-				}
-			}
-			else if (!strcmp(gotType, "java.lang.String"))
-			{
-				jmethodID cls_get_val = java_cls->impl->env->GetStaticMethodID(classPtr, "java_bootstrap_get_string_value", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;");
-				if (cls_get_val != nullptr)
-				{
-					jstring stringResult = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_val, clsObj, getKey);
-					const char *stringR = java_impl->env->GetStringUTFChars(stringResult, NULL);
-					std::cout << "GOT String = " << stringR << std::endl;
-					return value_create_string(stringR, (size_t)strlen(stringR));
+					if (!strcmp(gotType, "boolean"))
+					{
+						jboolean gotVal = (jboolean)java_cls->impl->env->GetStaticBooleanField(clscls, fID);
+						return value_create_bool(gotVal);
+					}
+					if (!strcmp(gotType, "char"))
+					{
+						jchar gotVal = (jchar)java_cls->impl->env->GetStaticCharField(clscls, fID);
+						return value_create_char(gotVal);
+					}
+					if (!strcmp(gotType, "short"))
+					{
+						jshort gotVal = (jshort)java_cls->impl->env->GetStaticShortField(clscls, fID);
+						return value_create_short(gotVal);
+					}
+					if (!strcmp(gotType, "int"))
+					{
+						jint gotVal = (jint)java_cls->impl->env->GetStaticIntField(clscls, fID);
+						return value_create_int(gotVal);
+					}
+					if (!strcmp(gotType, "long"))
+					{
+						jlong gotVal = (jlong)java_cls->impl->env->GetStaticLongField(clscls, fID);
+						return value_create_long(gotVal);
+					}
+					if (!strcmp(gotType, "float"))
+					{
+						jfloat gotVal = (jfloat)java_cls->impl->env->GetStaticFloatField(clscls, fID);
+						return value_create_float(gotVal);
+					}
+					if (!strcmp(gotType, "double"))
+					{
+						jdouble gotVal = (jdouble)java_cls->impl->env->GetStaticDoubleField(clscls, fID);
+						return value_create_double(gotVal);
+					}
+					if (!strcmp(gotType, "java.lang.String"))
+					{
+						jstring gotVal = (jstring)java_cls->impl->env->GetStaticObjectField(clscls, fID);
+						const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
+						return value_create_string(gotValConv, strlen(gotValConv));
+					}
 				}
 			}
 		}
@@ -325,6 +428,23 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, const char 
 	(void)args;
 
 	std::cout << "invoke" << std::endl;
+
+	// jmethodID findCls = java_impl->env->GetStaticMethodID(classPtr, "FindClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+	// if (findCls != nullptr)
+	// {
+	// 	jclass clscls = (jclass)java_impl->env->CallStaticObjectMethod(classPtr, findCls, java_impl->env->NewStringUTF("Test"));
+	// 	if (clscls != nullptr)
+	// 	{
+	// 		jmethodID testFunct = java_impl->env->GetStaticMethodID(clscls, "testFunct", "(Ljava/lang/String;)I");
+	// 		if (testFunct != nullptr)
+	// 		{
+	// 			std::cout << "Got " << std::endl;
+
+	// 			jint clsrtn = (jint)java_impl->env->CallStaticIntMethod(clscls, testFunct, java_impl->env->NewStringUTF("Mr. stark"));
+	// 			std::cout << "We won mr. stark " << clsrtn << std::endl;
+	// 		}
+	// 	}
+	// }
 
 	return NULL;
 }
@@ -376,9 +496,6 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 	if (java_impl != nullptr)
 	{
-		// #define TEST_CLASS_PATH
-		// 	"$(sbt 'export test:fullClasspath')"
-
 		std::string st = (std::string) "-Djava.class.path=" + getenv("LOADER_LIBRARY_PATH");
 		char *javaClassPath = &st[0];
 
@@ -387,8 +504,6 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 		JavaVMOption *options = new JavaVMOption[options_size]; // JVM invocation options
 		options[0].optionString = (char *)"-Dmetacall.polyglot.name=core";
 		options[1].optionString = javaClassPath;
-
-		log_write("metacall", LOG_LEVEL_ERROR, "Test Log");
 
 		JavaVMInitArgs vm_args;
 		vm_args.version = JNI_VERSION_1_6; // Minimum Java version
@@ -406,7 +521,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			return NULL;
 		}
 
-		log_write("metacall", LOG_LEVEL_ERROR, "JAVA INITIALIZER successful");
+		std::cout << "\nJAVA INITIALIZER successful\n";
 		/* Register initialization */
 		loader_initialization_register(impl);
 
@@ -418,9 +533,6 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 int java_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	// (void)impl;
-	// (void)path;
-
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 	if (java_impl != NULL)
 	{
@@ -430,9 +542,8 @@ int java_loader_impl_execution_path(loader_impl impl, const loader_naming_path p
 			jmethodID execPathCall = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_execution_path", "(Ljava/lang/String;)I");
 			if (execPathCall != nullptr)
 			{
-				jobject result = java_impl->env->CallObjectMethod(classPtr, execPathCall, java_impl->env->NewStringUTF(path));
-
-				return 0;
+				jint result = (jint)java_impl->env->CallStaticIntMethod(classPtr, execPathCall, java_impl->env->NewStringUTF(path));
+				return result;
 			}
 		}
 	}

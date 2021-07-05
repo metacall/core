@@ -14,80 +14,63 @@ import java.lang.Object;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-class Handle {
-  HashMap<String, Class<?>> handleMap = new HashMap<String, Class<?>>();
-
-  public void addClass(String name, Class<?> classObj) {
-    handleMap.put(name, classObj);
-  }
-
-  public Class<?> getClassFromName(String name) {
-    return handleMap.get(name);
-  }
-
-  public String[] getStringArray() {
-    String[] strArr = new String[handleMap.size()];
-    int i = 0;
-    for (Map.Entry<String, Class<?>> handle : handleMap.entrySet()) {
-      strArr[i++] = handle.getKey();
-    }
-
-    return strArr;
-  }
-}
-
 public class bootstrap {
-
-  // TODO: The "Global Handle Class" is wrong, we cannot have a global handle
-  // array.
-  // The relationship is like this:
-
-  // for each call to load_from_{file, memory, package}, we return one handle,
-  // internally it must hold the classes separately to each other handle
-  // the handle can hold the classes with an array, hashmap or whatever
-
-  // for each class instantiation or method call, we can hold a pointer to the
-  // handle that owns this class, so we can instantiate it properly (we can do
-  // this in C++)
-
-  // for each clear call, we receive a handle, so we iterate the classes of the
-  // handle and clear them, including each resource attached to it
-
-  // This approach is more interesting because in this way we have isolated
-  // classes,
-  // avoiding name collisions (for example, we can load two different java classes
-  // with the same
-  // name in different load_from_{file, memory, package}, also we can use things
-  // for sandboxing
-  // like this:
-  // https://docs.oracle.com/javase/7/docs/api/java/security/ProtectionDomain.html
-
-  // The handle array will be implicitly managed by metacall core if we do this
-  // correctly,
-  // we can store the pointer to the handle in the struct
-  // loader_impl_java_handle_type directly
-  // and return it in the load_from_{file, memory, package} in the C++ side
-
-  private static Handle handleArray = new Handle(); // Global Handle Class to store classes and names
 
   private static Set<String> executionPath = new HashSet<String>();
 
-  public static void callFunction(String classname, String functionName) {
-    Class<?> c = handleArray.getClassFromName(classname);
+  // public static void callFunction(String classname, String functionName) {
+  // Class<?> c = new Class();
 
+  // try {
+  // Method m = c.getDeclaredMethod(functionName, new Class[] { String[].class });
+  // m.invoke(null, new Object[] { null });
+
+  // } catch (Exception e) {
+  // System.err.println("CallFunction" + e);
+  // }
+  // }
+
+  // System.out.println(System.getProperty("java.class.path"));
+  // ClassLoader sysloader = URLClassLoader.getSystemClassLoader();
+  // Class<?> sysclass = URLClassLoader.class;
+
+  // Method method = sysclass.getDeclaredMethod("addURL", URL.class);
+  // method.setAccessible(true);
+  // method.invoke(sysloader, execPathFile);
+
+  public static Class<?> FindClass(String name) {
     try {
-      Method m = c.getDeclaredMethod(functionName, new Class[] { String[].class });
-      m.invoke(null, new Object[] { null });
+      URL[] urlArr = new URL[executionPath.size()];
+      int i = 0;
+      for (String x : executionPath)
+        urlArr[i++] = new File(x).toURI().toURL();
+
+      Class<?> cls = Class.forName(name, true, new URLClassLoader(urlArr));
+      return cls;
 
     } catch (Exception e) {
-      System.err.println("CallFunction" + e);
+      System.out.println("Find Class Error");
+      return null;
     }
   }
 
   public static int java_bootstrap_execution_path(String path) {
     System.out.println("bootstraping Execution path = " + path);
     executionPath.add(path);
-    return 0;
+
+    try {
+      URL execPathFile = new File(path).toURI().toURL();
+
+      String classpath = System.getProperty("java.class.path");
+      classpath = classpath + System.getProperty("path.separator") + execPathFile.toString();
+      System.setProperty("java.class.path", classpath);
+
+      return 0;
+    } catch (Exception e) {
+      System.out.println("Exec Error = " + e);
+    }
+
+    return 1;
   }
 
   public static Class<?>[] loadFromFile(String[] paths) {
@@ -262,7 +245,6 @@ public class bootstrap {
     }
 
     return 1;
-
   }
 
   public static String java_bootstrap_call_constructor(Class<?>[] cls) {
@@ -293,26 +275,23 @@ public class bootstrap {
     return cls.getName();
   }
 
-  public static void DiscoverData(String classname) {
-    // for each loaded .java file in the Handle list, get the DiscoverData, which is
-    // another class with the list of classes and methods etc
-    Class<?> hClass = handleArray.getClassFromName(classname);
+  // public static void DiscoverData(String classname) {
 
-    System.out.println("ClassName: " + hClass.getName());
+  // System.out.println("ClassName: " + hClass.getName());
 
-    Method[] methods = hClass.getDeclaredMethods();
+  // Method[] methods = hClass.getDeclaredMethods();
 
-    for (Method method : methods) {
-      System.out.println("Name of the method: " + method.getName());
+  // for (Method method : methods) {
+  // System.out.println("Name of the method: " + method.getName());
 
-      Class<?>[] parameters = method.getParameterTypes();
-      if (parameters.length == 0)
-        System.out.println("\tparameter: none");
-      for (Class<?> parameter : parameters) {
-        System.out.println("\tparameter: " + parameter.getSimpleName());
-      }
-      System.out.println("\tReturn Type: " + method.getReturnType() + "\n");
+  // Class<?>[] parameters = method.getParameterTypes();
+  // if (parameters.length == 0)
+  // System.out.println("\tparameter: none");
+  // for (Class<?> parameter : parameters) {
+  // System.out.println("\tparameter: " + parameter.getSimpleName());
+  // }
+  // System.out.println("\tReturn Type: " + method.getReturnType() + "\n");
 
-    }
-  }
+  // }
+  // }
 }
