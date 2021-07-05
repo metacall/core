@@ -53,40 +53,78 @@ TEST_F(metacall_java_test, DefaultConstructor)
 		ASSERT_EQ((int)0, (int)metacall_load_from_file(tag, java_scripts, sizeof(java_scripts) / sizeof(java_scripts[0]), NULL));
 
 		void *myclass = metacall_class("Test");
-		// ASSERT_EQ((enum metacall_value_id)METACALL_CLASS, (enum metacall_value_id)metacall_value_id(myclass_value));
-		// void *myclass = metacall_value_to_class(myclass_value);
 
-		// void *myclass_value = metacall_class("Test");
-		// ASSERT_EQ((enum metacall_value_id)METACALL_CLASS, (enum metacall_value_id)metacall_value_id(myclass_value));
-		// void *myclass = metacall_value_to_class(myclass_value);
-
-		// metacall_value_create_string(john, sizeof(john) - 1), // param1
-		// // metacall_value_create_int(10) // param2
 		void *constructor_params[] = {
+			metacall_value_create_bool(false),
+			metacall_value_create_char('H'),
+			metacall_value_create_short(200),
 			metacall_value_create_int(10),
-			metacall_value_create_int(20)
+			metacall_value_create_long(20000007),
+			metacall_value_create_float(20.321),
+			metacall_value_create_double(200.123456789),
+			metacall_value_create_string("World", 5)
+
 		};
 
 		void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
 
-		void *param1 = metacall_class_static_get(myclass, "INT_TEST");
-		ASSERT_EQ((int)30, (int)metacall_value_to_int(param1));
+		void *param1 = metacall_class_static_get(myclass, "BOOL_TEST");
+		ASSERT_EQ((bool)false, (bool)metacall_value_to_bool(param1));
 		metacall_value_destroy(param1);
 
-		void *param2 = metacall_class_static_get(myclass, "CHAR_TEST");
-		ASSERT_EQ((char)'H', (int)metacall_value_to_char(param2));
-		metacall_value_destroy(param2);
+		param1 = metacall_class_static_get(myclass, "CHAR_TEST");
+		ASSERT_EQ((char)'H', (char)metacall_value_to_char(param1));
+		metacall_value_destroy(param1);
 
-		void *param3 = metacall_class_static_get(myclass, "STRING_TEST");
-		ASSERT_EQ((std::string) "Hello", (std::string)metacall_value_to_string(param3));
-		metacall_value_destroy(param3);
-
-		int retcode = metacall_class_static_set(myclass, "INT_TEST", metacall_value_create_int(40));
-		ASSERT_EQ((int)0, int(retcode));
+		param1 = metacall_class_static_get(myclass, "SHORT_TEST");
+		ASSERT_EQ((short)200, (short)metacall_value_to_short(param1));
+		metacall_value_destroy(param1);
 
 		param1 = metacall_class_static_get(myclass, "INT_TEST");
-		ASSERT_EQ((int)40, (int)metacall_value_to_int(param1));
+		ASSERT_EQ((int)10, (int)metacall_value_to_int(param1));
 		metacall_value_destroy(param1);
+
+		param1 = metacall_class_static_get(myclass, "LONG_TEST");
+		ASSERT_EQ((long)20000007, (long)metacall_value_to_long(param1));
+		metacall_value_destroy(param1);
+
+		param1 = metacall_class_static_get(myclass, "FLOAT_TEST");
+		ASSERT_EQ((float)20.321, (float)metacall_value_to_float(param1));
+		metacall_value_destroy(param1);
+
+		param1 = metacall_class_static_get(myclass, "DOUBLE_TEST");
+		ASSERT_EQ((double)200.123456789, (double)metacall_value_to_double(param1));
+		metacall_value_destroy(param1);
+
+		param1 = metacall_class_static_get(myclass, "STRING_TEST");
+		ASSERT_EQ((std::string) "World", (std::string)metacall_value_to_string(param1));
+		metacall_value_destroy(param1);
+
+		// void *constructor_params2[] = {
+		// 	metacall_value_create_int(20),
+		// 	metacall_value_create_int(30)
+		// };
+
+		// void *new_object_v2 = metacall_class_new(myclass, "Test", constructor_params2, sizeof(constructor_params2) / sizeof(constructor_params2[0]));
+		// void *new_object = metacall_value_to_object(new_object_v);
+
+		// void *param2 = metacall_class_static_get(myclass, "INT_TEST");
+		// ASSERT_EQ((int)20, (int)metacall_value_to_int(param2));
+		// metacall_value_destroy(param2);
+		// void *param2 = metacall_class_static_get(myclass, "CHAR_TEST");
+		// ASSERT_EQ((char)'H', (int)metacall_value_to_char(param2));
+		// metacall_value_destroy(param2);
+
+		// void *param3 = metacall_class_static_get(myclass, "STRING_TEST");
+		// ASSERT_EQ((std::string) "Hello", (std::string)metacall_value_to_string(param3));
+		// metacall_value_destroy(param3);
+
+		// int retcode = metacall_class_static_set(myclass, "INT_TEST", metacall_value_create_int(40));
+		// ASSERT_EQ((int)0, int(retcode));
+
+		// param1 = metacall_class_static_get(myclass, "INT_TEST");
+		// ASSERT_EQ((int)40, (int)metacall_value_to_int(param1));
+		// metacall_value_destroy(param1);
 
 		// int retcode = metacall_object_set(new_object, "v", metacall_value_create_long(20));
 		// ASSERT_EQ((int)0, int(retcode));
