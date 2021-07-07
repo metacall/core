@@ -88,6 +88,28 @@ std::string get_val_sig(const char *type)
 	return "V";
 }
 
+std::string get_val_sig(type_id type)
+{
+	if (type == TYPE_BOOL)
+		return "Z";
+	if (type == TYPE_CHAR)
+		return "C";
+	if (type == TYPE_SHORT)
+		return "S";
+	if (type == TYPE_INT)
+		return "I";
+	if (type == TYPE_LONG)
+		return "J";
+	if (type == TYPE_FLOAT)
+		return "F";
+	if (type == TYPE_DOUBLE)
+		return "D";
+	if (type == TYPE_STRING)
+		return "Ljava/lang/String;";
+
+	return "V";
+}
+
 int java_object_interface_create(object obj, object_impl impl)
 {
 	(void)obj;
@@ -179,8 +201,74 @@ value java_object_interface_get(object obj, object_impl impl, const char *key)
 int java_object_interface_set(object obj, object_impl impl, const char *key, value v)
 {
 	(void)obj;
+	std::cout << "\nObj Set = " << key << std::endl;
 
-	return 0;
+	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
+	loader_impl_java java_impl = java_obj->impl;
+
+	jobject conobj = java_obj->conObj;
+	jclass concls = java_obj->concls;
+
+	if (concls != nullptr && conobj != nullptr)
+	{
+		type_id id = value_type_id(v);
+		jfieldID fID = java_impl->env->GetFieldID(concls, key, get_val_sig(id).c_str());
+
+		if (fID != nullptr)
+		{
+			if (id == TYPE_BOOL)
+			{
+				jboolean val = (jboolean)value_to_bool(v);
+				java_impl->env->SetBooleanField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_CHAR)
+			{
+				jchar val = (jchar)value_to_char(v);
+				java_impl->env->SetCharField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_SHORT)
+			{
+				jshort val = (jshort)value_to_short(v);
+				java_impl->env->SetShortField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_INT)
+			{
+				jint val = (jint)value_to_int(v);
+				java_impl->env->SetIntField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_LONG)
+			{
+				jlong val = (jlong)value_to_long(v);
+				java_impl->env->SetLongField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_FLOAT)
+			{
+				jfloat val = (jfloat)value_to_float(v);
+				java_impl->env->SetFloatField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_DOUBLE)
+			{
+				jdouble val = (jdouble)value_to_double(v);
+				java_impl->env->SetDoubleField(conobj, fID, val);
+				return 0;
+			}
+			if (id == TYPE_STRING)
+			{
+				const char *strV = value_to_string(v);
+				jstring val = java_impl->env->NewStringUTF(strV);
+				java_impl->env->SetObjectField(conobj, fID, val);
+				return 0;
+			}
+		}
+	}
+
+	return 1;
 }
 
 value java_object_interface_method_invoke(object obj, object_impl impl, const char *method_name, object_args args, size_t argc)
@@ -464,28 +552,6 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 	}
 
 	return NULL;
-}
-
-std::string get_val_sig(type_id type)
-{
-	if (type == TYPE_BOOL)
-		return "Z";
-	if (type == TYPE_CHAR)
-		return "C";
-	if (type == TYPE_SHORT)
-		return "S";
-	if (type == TYPE_INT)
-		return "I";
-	if (type == TYPE_LONG)
-		return "J";
-	if (type == TYPE_FLOAT)
-		return "F";
-	if (type == TYPE_DOUBLE)
-		return "D";
-	if (type == TYPE_STRING)
-		return "Ljava/lang/String;";
-
-	return "V";
 }
 
 int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
