@@ -18,18 +18,6 @@ public class bootstrap {
 
   private static Set<String> executionPath = new HashSet<String>();
 
-  // public static void callFunction(String classname, String functionName) {
-  // Class<?> c = new Class();
-
-  // try {
-  // Method m = c.getDeclaredMethod(functionName, new Class[] { String[].class });
-  // m.invoke(null, new Object[] { null });
-
-  // } catch (Exception e) {
-  // System.err.println("CallFunction" + e);
-  // }
-  // }
-
   // System.out.println(System.getProperty("java.class.path"));
   // ClassLoader sysloader = URLClassLoader.getSystemClassLoader();
   // Class<?> sysclass = URLClassLoader.class;
@@ -74,11 +62,8 @@ public class bootstrap {
   }
 
   public static Class<?>[] loadFromFile(String[] paths) {
-    // Handle handleObject = new Handle(); // Handle Class to store classes
-
     Class<?>[] handleObject = new Class<?>[paths.length];
 
-    // load all scripts and store them into a Handle class, then return it
     for (int i = 0; i < paths.length; i++) {
       System.out.println("Path provided " + paths[i]);
 
@@ -172,89 +157,29 @@ public class bootstrap {
     return valType;
   }
 
-  public static int java_bootstrap_get_int_value(Class<?> cls, String key) {
-    Object val = null;
+  public static String get_static_invoke_return_type(Class<?> cls, String key) {
+    String rtnType = "";
 
     try {
-      Field f = cls.getField(key);
-      val = f.get(null);
+      System.out.println("ClassName: " + cls.getName() + " " + key);
+
+      Method[] methods = cls.getDeclaredMethods();
+
+      for (Method method : methods) {
+        System.out.println("Name of the method: " + method.getName());
+      }
+
+      Class<?>[] cArg = new Class[1];
+      cArg[0] = String.class;
+
+      Method m = cls.getDeclaredMethod(key, cArg);
+      System.out.println("OUR: " + m.getReturnType().getName());
+
     } catch (Exception e) {
       e.printStackTrace();
     }
 
-    int retnVal = (int) val;
-
-    return retnVal;
-  }
-
-  public static char java_bootstrap_get_char_value(Class<?> cls, String key) {
-    Object val = null;
-
-    try {
-      Field f = cls.getField(key);
-      val = f.get(null);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    char retnVal = (char) val;
-
-    return retnVal;
-  }
-
-  public static String java_bootstrap_get_string_value(Class<?> cls, String key) {
-    Object val = null;
-
-    try {
-      Field f = cls.getField(key);
-      val = f.get(null);
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    String retnVal = (String) val;
-
-    return retnVal;
-  }
-
-  // public static <T> T java_bootstrap_get_temp_value(Class<?> cls, String key) {
-  // Object val = null;
-
-  // try {
-  // Field f = cls.getField(key);
-  // val = f.get(null);
-  // } catch (Exception e) {
-  // e.printStackTrace();
-  // }
-
-  // T retnVal = (T) val;
-  // System.out.println(val);
-  // return retnVal;
-  // }
-
-  public static int java_bootstrap_set_int_value(Class<?> cls, String key, int val) {
-
-    try {
-      Field f = cls.getDeclaredField(key);
-      f.setAccessible(true);
-      f.set(null, val);
-      if ((int) f.get(null) == val)
-        return 0;
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
-
-    return 1;
-  }
-
-  public static String java_bootstrap_call_constructor(Class<?>[] cls) {
-    System.out.println("GOt it");
-    // Constructor<?>[] constructors = cls.getDeclaredConstructors();
-    // System.out.println("Java constructor of " + constructors[0].getName());
-
-    // return constructors[0].getName();
-    return "hello";
-
+    return rtnType;
   }
 
   public static String java_bootstrap_get_class_name(Class<?> cls) {
@@ -276,8 +201,6 @@ public class bootstrap {
   }
 
   // public static void DiscoverData(String classname) {
-
-  // System.out.println("ClassName: " + hClass.getName());
 
   // Method[] methods = hClass.getDeclaredMethods();
 
