@@ -455,7 +455,6 @@ int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle
 	if (module.module == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create module");
-		wasm_loader_impl_clear(impl, handle);
 		return 1;
 	}
 
@@ -524,18 +523,23 @@ loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_nam
 
 	if (handle == NULL)
 	{
-		return NULL;
+		goto error_alloc_handle;
 	}
 
 	for (size_t idx = 0; idx < size; idx++)
 	{
 		if (wasm_loader_impl_load_module_from_file(impl, handle, paths[idx]) != 0)
 		{
-			return NULL;
+			goto error_load_module;
 		}
 	}
 
 	return handle;
+
+error_load_module:
+	wasm_loader_impl_clear(impl, handle);
+error_alloc_handle:
+	return NULL;
 }
 
 loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
@@ -544,12 +548,22 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 	loader_impl_wasm_handle handle = wasm_loader_impl_create_handle(1);
 
-	if (handle == NULL || wasm_loader_impl_handle_add_module(impl, handle, buffer, size) != 0)
+	if (handle == NULL)
 	{
-		return NULL;
+		goto error_alloc_handle;
+	}
+
+	if (wasm_loader_impl_handle_add_module(impl, handle, buffer, size) != 0)
+	{
+		goto error_load_module;
 	}
 
 	return handle;
+
+error_load_module:
+	wasm_loader_impl_clear(impl, handle);
+error_alloc_handle:
+	return NULL;
 }
 
 loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
