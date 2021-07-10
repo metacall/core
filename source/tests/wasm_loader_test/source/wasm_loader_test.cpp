@@ -110,9 +110,8 @@ TEST_F(wasm_loader_test, DiscoverFunctions)
 	TestFunction(handle, "i32_f32_i64_f64_ret_none", { METACALL_INT, METACALL_FLOAT, METACALL_LONG, METACALL_DOUBLE }, METACALL_INVALID);
 	TestFunction(handle, "none_ret_i32", {}, METACALL_INT);
 
-	// TODO: Add support for multiple return values
-	TestFunction(handle, "none_ret_i32_f32_i64_f64", {}, METACALL_INT);
-	TestFunction(handle, "i32_f32_i64_f64_ret_i32_f32_i64_f64", { METACALL_INT, METACALL_FLOAT, METACALL_LONG, METACALL_DOUBLE }, METACALL_INT);
+	TestFunction(handle, "none_ret_i32_f32_i64_f64", {}, METACALL_ARRAY);
+	TestFunction(handle, "i32_f32_i64_f64_ret_i32_f32_i64_f64", { METACALL_INT, METACALL_FLOAT, METACALL_LONG, METACALL_DOUBLE }, METACALL_ARRAY);
 }
 
 TEST_F(wasm_loader_test, CallFunctions)
@@ -135,15 +134,32 @@ TEST_F(wasm_loader_test, CallFunctions)
 	ASSERT_EQ(1, metacall_value_to_int(ret));
 	metacall_value_destroy(ret);
 
-	// TODO: Add support for multiple return values
 	ret = metacall("none_ret_i32_f32_i64_f64");
-	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
-	ASSERT_EQ(1, metacall_value_to_int(ret));
+	ASSERT_EQ(METACALL_ARRAY, metacall_value_id(ret));
+
+	void **values = metacall_value_to_array(ret);
+	ASSERT_EQ(METACALL_INT, metacall_value_id(values[0]));
+	ASSERT_EQ(METACALL_FLOAT, metacall_value_id(values[1]));
+	ASSERT_EQ(METACALL_LONG, metacall_value_id(values[2]));
+	ASSERT_EQ(METACALL_DOUBLE, metacall_value_id(values[3]));
+	ASSERT_EQ(1, metacall_value_to_int(values[0]));
+	ASSERT_EQ(2, metacall_value_to_float(values[1]));
+	ASSERT_EQ(3, metacall_value_to_long(values[2]));
+	ASSERT_EQ(4, metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
 	ret = metacall("i32_f32_i64_f64_ret_i32_f32_i64_f64", 0, 0, 0, 0);
-	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
-	ASSERT_EQ(1, metacall_value_to_int(ret));
+	ASSERT_EQ(METACALL_ARRAY, metacall_value_id(ret));
+
+	values = metacall_value_to_array(ret);
+	ASSERT_EQ(METACALL_INT, metacall_value_id(values[0]));
+	ASSERT_EQ(METACALL_FLOAT, metacall_value_id(values[1]));
+	ASSERT_EQ(METACALL_LONG, metacall_value_id(values[2]));
+	ASSERT_EQ(METACALL_DOUBLE, metacall_value_id(values[3]));
+	ASSERT_EQ(1, metacall_value_to_int(values[0]));
+	ASSERT_EQ(2, metacall_value_to_float(values[1]));
+	ASSERT_EQ(3, metacall_value_to_long(values[2]));
+	ASSERT_EQ(4, metacall_value_to_double(values[3]));
 	metacall_value_destroy(ret);
 
 	// The return value should be NULL when a trap is reached
