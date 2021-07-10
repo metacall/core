@@ -142,6 +142,24 @@ value wasm_loader_impl_wasm_to_reflect_type(wasm_val_t val)
 	}
 }
 
+value wasm_loader_impl_wasm_results_to_reflect_type(const wasm_val_vec_t *results)
+{
+	if (results->size == 1)
+	{
+		return wasm_loader_impl_wasm_to_reflect_type(results->data[0]);
+	}
+	else
+	{
+		value values[results->size];
+		for (size_t idx = 0; idx < results->size; idx++)
+		{
+			values[idx] = wasm_loader_impl_wasm_to_reflect_type(results->data[idx]);
+		}
+
+		return value_create_array(values, results->size);
+	}
+}
+
 void wasm_loader_impl_log_trap(const wasm_trap_t *trap)
 {
 	wasm_byte_vec_t message;
@@ -173,9 +191,7 @@ value wasm_loader_impl_call_func(const signature sig, const wasm_func_t *func, c
 	}
 	else if (signature_get_return(sig) != NULL)
 	{
-		// TODO: Add support for multiple returns
-		wasm_val_t wasm_ret = results.data[0];
-		ret = wasm_loader_impl_wasm_to_reflect_type(wasm_ret);
+		ret = wasm_loader_impl_wasm_results_to_reflect_type(&results);
 	}
 
 	wasm_val_vec_delete(&results);
@@ -269,6 +285,7 @@ int wasm_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_LONG, "i64" },
 		{ TYPE_FLOAT, "f32" },
 		{ TYPE_DOUBLE, "f64" },
+		{ TYPE_ARRAY, "array" },
 	};
 
 	const size_t size = COUNT_OF(type_names);
@@ -652,14 +669,8 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 
 	if (results->size > 0)
 	{
-		// TODO: Add support for multiple return values
-		if (results->size > 1)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "WebAssembly loader does not support multiple return values yet, using first return value");
-		}
-
-		signature_set_return(sig,
-			wasm_loader_impl_val_kind_to_type(impl, wasm_valtype_kind(results->data[0])));
+		type ret_type = results->size == 1 ? wasm_loader_impl_val_kind_to_type(impl, wasm_valtype_kind(results->data[0])) : loader_impl_type(impl, "array");
+		signature_set_return(sig, ret_type);
 	}
 
 	for (size_t param_idx = 0; param_idx < params->size; param_idx++)
