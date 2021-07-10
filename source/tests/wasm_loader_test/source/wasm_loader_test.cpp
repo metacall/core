@@ -20,6 +20,7 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
+#include <metacall/metacall_value.h>
 
 class wasm_loader_test : public testing::Test
 {
@@ -113,4 +114,39 @@ TEST_F(wasm_loader_test, DiscoverFunctions)
 	TestFunction(handle, "none_ret_i32_f32_i64_f64", {}, METACALL_INT);
 	TestFunction(handle, "i32_f32_i64_f64_ret_i32_f32_i64_f64", { METACALL_INT, METACALL_FLOAT, METACALL_LONG, METACALL_DOUBLE }, METACALL_INT);
 }
-//#endif
+
+TEST_F(wasm_loader_test, CallFunctions)
+{
+	const char *functions_module_filename = "functions.wasm";
+
+	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, NULL));
+
+	void *ret = metacall("none_ret_none");
+	ASSERT_EQ(NULL, ret);
+
+	ret = metacall("i32_ret_none", 0);
+	ASSERT_EQ(NULL, ret);
+
+	ret = metacall("i32_f32_i64_f64_ret_none", 0, 0, 0, 0);
+	ASSERT_EQ(NULL, ret);
+
+	ret = metacall("none_ret_i32");
+	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
+	ASSERT_EQ(1, metacall_value_to_int(ret));
+	metacall_value_destroy(ret);
+
+	// TODO: Add support for multiple return values
+	ret = metacall("none_ret_i32_f32_i64_f64");
+	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
+	ASSERT_EQ(1, metacall_value_to_int(ret));
+	metacall_value_destroy(ret);
+
+	ret = metacall("i32_f32_i64_f64_ret_i32_f32_i64_f64", 0, 0, 0, 0);
+	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
+	ASSERT_EQ(1, metacall_value_to_int(ret));
+	metacall_value_destroy(ret);
+
+	// The return value should be NULL when a trap is reached
+	ret = metacall("trap");
+	ASSERT_EQ(NULL, ret);
+}
