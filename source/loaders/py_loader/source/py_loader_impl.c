@@ -2282,7 +2282,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_import;
 	}
 
-#if EXPERIMENTAL_ASYNC_ENABLED
+#if EXPERIMENTAL_ASYNC_ENABLED == 1
 	if (py_loader_impl_initialize_threading_module(impl, py_impl) != 0)
 	{
 		goto error_after_import;
@@ -2292,6 +2292,15 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		goto error_after_threading_module;
 	}
+#else
+	py_impl->asyncio_module = NULL;
+	py_impl->asyncio_isfuture = NULL;
+	py_impl->asyncio_iscoroutinefunction = NULL;
+	py_impl->asyncio_run_coroutine_threadsafe = NULL;
+	py_impl->asyncio_wrap_future = NULL;
+	py_impl->asyncio_loop = NULL;
+	py_impl->py_task_callback_handler = NULL;
+	py_impl->threading_module = NULL;
 #endif
 
 	PyGILState_Release(gstate);
@@ -2303,7 +2312,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	return py_impl;
 
-#if EXPERIMENTAL_ASYNC_ENABLED
+#if EXPERIMENTAL_ASYNC_ENABLED == 1
 error_after_threading_module:
 	Py_DECREF(py_impl->threading_module);
 #endif
@@ -2989,14 +2998,12 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 			}
 		}
 
-#if EXPERIMENTAL_ASYNC_ENABLED == 1
 		if (py_impl->asyncio_iscoroutinefunction &&
 			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
 		{
 			function_async(f, FUNCTION_ASYNC);
 		}
 		else
-#endif
 		{
 			function_async(f, FUNCTION_SYNC);
 		}
@@ -3347,16 +3354,14 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DECREF(py_impl->import_module);
 	Py_DECREF(py_impl->import_function);
 
-#if EXPERIMENTAL_ASYNC_ENABLED == 1
-	Py_DECREF(py_impl->asyncio_module);
-	Py_DECREF(py_impl->asyncio_isfuture);
-	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
-	Py_DECREF(py_impl->asyncio_run_coroutine_threadsafe);
-	Py_DECREF(py_impl->asyncio_wrap_future);
-	Py_DECREF(py_impl->asyncio_loop);
-	Py_DECREF(py_impl->py_task_callback_handler);
-	Py_DECREF(py_impl->threading_module);
-#endif
+	Py_XDECREF(py_impl->asyncio_module);
+	Py_XDECREF(py_impl->asyncio_isfuture);
+	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
+	Py_XDECREF(py_impl->asyncio_run_coroutine_threadsafe);
+	Py_XDECREF(py_impl->asyncio_wrap_future);
+	Py_XDECREF(py_impl->asyncio_loop);
+	Py_XDECREF(py_impl->py_task_callback_handler);
+	Py_XDECREF(py_impl->threading_module);
 
 #if DEBUG_ENABLED
 	{
