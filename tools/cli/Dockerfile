@@ -39,7 +39,8 @@ ENV LOADER_LIBRARY_PATH=/usr/local/lib \
 	DETOUR_LIBRARY_PATH=/usr/local/lib \
 	PORT_LIBRARY_PATH=/usr/local/lib \
 	DEBIAN_FRONTEND=noninteractive \
-	NODE_PATH=/usr/local/lib/node_modules
+	NODE_PATH=/usr/local/lib/node_modules \
+	DOTNET_CLI_TELEMETRY_OPTOUT=true
 
 # Define working directory
 WORKDIR $LOADER_SCRIPT_PATH

@@ -36,16 +36,10 @@ ARG METACALL_PATH
 ARG METACALL_TOOLS_PATH
 
 # Environment variables
-ENV DEBIAN_FRONTEND=noninteractive
-
-# Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a
-# fix (https://github.com/docker/docker/issues/20818). This workaround allows
-# the container to be run with the default seccomp Docker settings by avoiding
-# the restart_syscall made by LTTng which causes a failed assertion.
-ENV LTTNG_UST_REGISTER_TIMEOUT=0
-
-# Trigger the population of the local NuGet package cache
-ENV NUGET_XMLDOC_MODE=skip
+ENV DEBIAN_FRONTEND=noninteractive \
+	LTTNG_UST_REGISTER_TIMEOUT=0 \
+	NUGET_XMLDOC_MODE=skip \
+	DOTNET_CLI_TELEMETRY_OPTOUT=true
 
 # Define working directory
 WORKDIR $METACALL_PATH
