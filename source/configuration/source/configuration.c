@@ -155,6 +155,11 @@ configuration configuration_create(const char *scope, const char *path, const ch
 
 configuration configuration_scope(const char *name)
 {
+	if (name == NULL)
+	{
+		return NULL;
+	}
+
 	configuration config = configuration_singleton_get(name);
 
 	if (config != NULL)
