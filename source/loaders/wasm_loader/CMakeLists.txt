@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-# TODO: Add Wasmtime as required dependency using find_package
+find_package(Wasmtime 0.28.0 REQUIRED)
 
 #
 # Plugin name and options
@@ -127,6 +127,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
+	${WASMTIME_INCLUDE_DIR}
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -144,7 +145,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-    wasmtime
+	${WASMTIME_LIBRARY}
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -203,3 +204,7 @@ install(TARGETS ${target}
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
 	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
+
+
+# Runtime
+install(FILES ${WASMTIME_LIBRARY} DESTINATION ${INSTALL_LIB} COMPONENT runtime)
