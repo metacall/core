@@ -155,7 +155,28 @@ configuration configuration_create(const char *scope, const char *path, const ch
 
 configuration configuration_scope(const char *name)
 {
-	return configuration_singleton_get(name);
+	configuration config = configuration_singleton_get(name);
+
+	if (config != NULL)
+	{
+		return config;
+	}
+
+	/* Insert a default configuration in this scope */
+	config = configuration_object_initialize(name, NULL, configuration_singleton_get(CONFIGURATION_GLOBAL_SCOPE));
+
+	if (config == NULL)
+	{
+		return NULL;
+	}
+
+	if (configuration_singleton_register(config) != 0)
+	{
+		configuration_object_destroy(config);
+		return NULL;
+	}
+
+	return config;
 }
 
 value configuration_value(configuration config, const char *key)

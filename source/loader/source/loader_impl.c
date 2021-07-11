@@ -278,13 +278,12 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 
 int loader_impl_initialize(loader_impl impl)
 {
+	static const char loader_library_path[] = "loader_library_path";
 	char configuration_key[0xFF];
-
 	configuration config;
-
+	value loader_library_path_value = NULL;
 	const char *script_path = NULL;
 	const char *library_path = NULL;
-
 	vector paths;
 
 	if (impl->init == 0)
@@ -298,7 +297,24 @@ int loader_impl_initialize(loader_impl impl)
 
 	config = configuration_scope(configuration_key);
 
+	library_path = loader_env_library_path();
+
+	/* Check if the configuration has a custom loader_library_path, otherwise set it up */
+	if (config != NULL && configuration_value(config, loader_library_path) == NULL)
+	{
+		loader_library_path_value = value_create_string(library_path, strlen(library_path));
+		configuration_define(config, loader_library_path, loader_library_path_value);
+	}
+
+	/* Call to the loader initialize method */
 	impl->data = impl->singleton()->initialize(impl, config);
+
+	/* Undefine the library path field from config */
+	if (config != NULL && loader_library_path_value != NULL)
+	{
+		configuration_undefine(config, loader_library_path);
+		value_type_destroy(loader_library_path_value);
+	}
 
 	if (impl->data == NULL)
 	{
@@ -314,8 +330,7 @@ int loader_impl_initialize(loader_impl impl)
 		loader_impl_configuration(impl, config);
 	}
 
-	library_path = loader_env_library_path();
-
+	/* Load the library path as execution path */
 	if (library_path != NULL)
 	{
 		if (loader_impl_execution_path(impl, library_path) != 0)

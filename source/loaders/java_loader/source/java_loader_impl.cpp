@@ -718,9 +718,11 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 
 	java_impl = new loader_impl_java_type();
 
+	const char *loader_library_path = value_to_string(configuration_value(config, "loader_library_path"));
+
 	if (java_impl != nullptr)
 	{
-		std::string st = (std::string) "-Djava.class.path=" + getenv("LOADER_LIBRARY_PATH");
+		std::string st = (std::string) "-Djava.class.path=" + loader_library_path;
 		char *javaClassPath = &st[0];
 
 		static const size_t options_size = 2;

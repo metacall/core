@@ -135,7 +135,7 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	/* Get the boostrap path */
 	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "LOADER_LIBRARY_PATH not defined, bootstrap.ts cannot be found");
+		log_write("metacall", LOG_LEVEL_ERROR, "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.ts cannot be found");
 
 		return NULL;
 	}

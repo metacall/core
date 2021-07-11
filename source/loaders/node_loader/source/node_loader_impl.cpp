@@ -284,6 +284,7 @@ typedef struct loader_impl_node_future_type
 struct loader_impl_async_initialize_safe_type
 {
 	loader_impl_node node_impl;
+	char *loader_library_path;
 	int result;
 };
 
@@ -1588,6 +1589,7 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 	{
 		napi_value function_trampoline_initialize;
 		napi_valuetype valuetype;
+		napi_value argv[1];
 
 		status = napi_get_named_property(env, function_table_object, initialize_str, &function_trampoline_initialize);
 
@@ -1602,6 +1604,11 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 			napi_throw_type_error(env, nullptr, "Invalid function initialize in function table object");
 		}
 
+		/* Create parameters */
+		status = napi_create_string_utf8(env, initialize_safe->loader_library_path, strlen(initialize_safe->loader_library_path), &argv[0]);
+
+		node_loader_impl_exception(env, status);
+
 		/* Call to load from file function */
 		napi_value global, return_value;
 
@@ -1609,7 +1616,7 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 
 		node_loader_impl_exception(env, status);
 
-		status = napi_call_function(env, global, function_trampoline_initialize, 0, nullptr, &return_value);
+		status = napi_call_function(env, global, function_trampoline_initialize, 1, argv, &return_value);
 
 		node_loader_impl_exception(env, status);
 	}
@@ -3816,7 +3823,7 @@ void node_loader_impl_thread(void *data)
 	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
 		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "LOADER_LIBRARY_PATH not defined, bootstrap.js cannot be found";
+		node_impl->error_message = "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.js cannot be found";
 
 		/* Signal start condition */
 		uv_cond_signal(&node_impl->cond);
@@ -4191,6 +4198,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 
 		/* Set up initialize safe arguments */
 		node_impl->initialize_safe->node_impl = node_impl;
+		node_impl->initialize_safe->loader_library_path = value_to_string(configuration_value(config, "loader_library_path"));
 		node_impl->initialize_safe->result = 0;
 
 		/* Check if we are in the JavaScript thread */

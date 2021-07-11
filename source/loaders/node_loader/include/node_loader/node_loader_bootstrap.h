@@ -61,18 +61,18 @@ typedef char node_impl_path[NODE_LOADER_IMPL_PATH_SIZE];
 inline int node_loader_impl_bootstrap_path(const char file[], configuration config, node_impl_path path, size_t *size)
 {
 	size_t path_size = 0;
-	const char *load_library_path_env = getenv("LOADER_LIBRARY_PATH");
+	const char *load_library_path = value_to_string(configuration_value(config, "loader_library_path"));
 	size_t load_library_path_length = 0;
 
-	if (load_library_path_env == NULL)
+	if (load_library_path == NULL)
 	{
 		*size = 0;
 		return 1;
 	}
 
-	load_library_path_length = strlen(load_library_path_env);
+	load_library_path_length = strlen(load_library_path);
 
-	strncpy(path, load_library_path_env, load_library_path_length);
+	strncpy(path, load_library_path, load_library_path_length);
 
 	if (path[load_library_path_length - 1] != '/' && path[load_library_path_length - 1] != '\\')
 	{

@@ -459,19 +459,12 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 int loader_load_from_configuration(const loader_naming_path path, void **handle, void *allocator)
 {
 	loader_naming_name config_name;
-
 	configuration config;
-
 	value tag, scripts, context_path;
-
 	value *scripts_array;
-
 	loader_naming_path *paths;
-
 	loader_naming_path context_path_str;
-
 	size_t context_path_size = 0;
-
 	size_t iterator, size;
 
 	if (loader_path_get_name(path, config_name) == 0)

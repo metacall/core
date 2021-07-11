@@ -18,18 +18,15 @@ Module.prototype.node_require = node_require;
 Module.prototype.node_resolve = node_resolve;
 Module.prototype.node_cache = node_cache;
 
-function node_loader_trampoline_initialize() {
+function node_loader_trampoline_initialize(loader_library_path) {
 	// Add current execution directory to the execution paths
 	node_loader_trampoline_execution_path(process.cwd());
-
-	// Preload Port (here the library path is not inserted in the execution paths yet, so it must be retrieved manually)
-	const global_path = process.env['LOADER_LIBRARY_PATH'];
 
 	const paths = [
 		/* Local version of MetaCall NodeJS Port */
 		'metacall',
 		/* Optionally, use loader library path for global installed NodeJS Port */
-		...global_path ? [ path.join(global_path, 'node_modules', 'metacall', 'index.js') ] : [],
+		...loader_library_path ? [ path.join(loader_library_path, 'node_modules', 'metacall', 'index.js') ] : [],
 	];
 
 	for (const r of paths) {
