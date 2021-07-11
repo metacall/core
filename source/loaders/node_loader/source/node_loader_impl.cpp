@@ -87,7 +87,6 @@ extern char **environ;
 #include <node.h>
 #include <node_api.h>
 
-#include <libplatform/libplatform.h>
 #include <v8.h> /* version: 6.2.414.50 */
 
 #ifdef ENABLE_DEBUGGER_SUPPORT

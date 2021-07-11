@@ -406,7 +406,9 @@ if(NOT NODEJS_LIBRARY)
 			message(STATUS "Configure NodeJS shared library")
 
 			# Select the ICU library depending on the NodeJS version
-			if("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "15")
+			if("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "16")
+				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-69-1/icu4c-69_1-src.zip")
+			elseif("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "15")
 				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-67-1/icu4c-67_1-src.zip")
 			elseif("${NODEJS_VERSION_MAJOR}" GREATER_EQUAL "14")
 				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-66-1/icu4c-66_1-src.zip")
