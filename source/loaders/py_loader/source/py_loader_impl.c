@@ -322,7 +322,7 @@ void future_py_interface_destroy(future f, future_impl impl)
 	}
 }
 
-future_interface future_py_singleton()
+future_interface future_py_singleton(void)
 {
 	static struct future_interface_type py_future_interface = {
 		&future_py_interface_create,
@@ -2989,12 +2989,14 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 			}
 		}
 
+#if EXPERIMENTAL_ASYNC_ENABLED == 1
 		if (py_impl->asyncio_iscoroutinefunction &&
 			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
 		{
 			function_async(f, FUNCTION_ASYNC);
 		}
 		else
+#endif
 		{
 			function_async(f, FUNCTION_SYNC);
 		}
@@ -3345,15 +3347,16 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DECREF(py_impl->import_module);
 	Py_DECREF(py_impl->import_function);
 
-	/* DECREF conditionally just in case some import coudln't be loaded */
-	Py_XDECREF(py_impl->asyncio_module);
-	Py_XDECREF(py_impl->asyncio_isfuture);
-	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
-	Py_XDECREF(py_impl->asyncio_run_coroutine_threadsafe);
-	Py_XDECREF(py_impl->asyncio_wrap_future);
-	Py_XDECREF(py_impl->asyncio_loop);
-	Py_XDECREF(py_impl->py_task_callback_handler);
-	Py_XDECREF(py_impl->threading_module);
+#if EXPERIMENTAL_ASYNC_ENABLED == 1
+	Py_DECREF(py_impl->asyncio_module);
+	Py_DECREF(py_impl->asyncio_isfuture);
+	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
+	Py_DECREF(py_impl->asyncio_run_coroutine_threadsafe);
+	Py_DECREF(py_impl->asyncio_wrap_future);
+	Py_DECREF(py_impl->asyncio_loop);
+	Py_DECREF(py_impl->py_task_callback_handler);
+	Py_DECREF(py_impl->threading_module);
+#endif
 
 #if DEBUG_ENABLED
 	{
