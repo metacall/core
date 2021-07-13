@@ -79,3 +79,12 @@ def py_function_factorial(x):
 
 def function_factorial(x):
 	return lambda n: 1 if n <= 0 else n * x(x)(n - 1)
+
+def func_equality_impl():
+	return 3
+
+def func_equality():
+	return func_equality_impl
+
+def func_equality_compare(f1, f2):
+	return f1 == f2

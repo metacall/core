@@ -306,4 +306,19 @@ describe('metacall', () => {
 			assert.strictEqual(py_factorial(5), 120);
 		});
 	});
+
+	// TODO: Requiring function.py twice fails
+	/*
+	describe('equality', () => {
+		it('function (py)', () => {
+			const { func_equality, func_equality_compare } = require('function.py');
+			const f1 = func_equality();
+			const f2 = func_equality();
+
+			// This test is for documenting that all functions are passed by value, not reference
+			assert.strictEqual(f1 === f2, false);
+			assert.strictEqual(func_equality_compare(f1, f2), false);
+		});
+	});
+	*/
 });
