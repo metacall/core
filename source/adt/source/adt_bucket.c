@@ -20,7 +20,7 @@
 
 /* -- Headers -- */
 
-#include <adt/adt_set_bucket.h>
+#include <adt/adt_bucket.h>
 
 #include <log/log.h>
 
@@ -28,11 +28,11 @@
 
 /* -- Definitions -- */
 
-#define SET_BUCKET_PAIRS_DEFAULT ((size_t)0x04)
+#define BUCKET_PAIRS_DEFAULT ((size_t)0x04)
 
 /* -- Methods -- */
 
-size_t set_bucket_capacity(size_t prime)
+size_t bucket_capacity(size_t prime)
 {
 	static const size_t capacity_primes[] = {
 		5UL,
@@ -112,25 +112,23 @@ size_t set_bucket_capacity(size_t prime)
 	return 0;
 }
 
-set_bucket set_bucket_create(size_t size)
+bucket bucket_create(size_t size)
 {
-	set_bucket buckets;
+	bucket buckets;
 
 	size_t iterator;
 
 	if (size == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket size: %" PRIuS, size);
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket size: %" PRIuS, size);
 		return NULL;
 	}
 
-	buckets = malloc(sizeof(struct set_bucket_type) * size);
+	buckets = malloc(sizeof(struct bucket_type) * size);
 
 	if (buckets == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for set bucket");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad allocation for bucket");
 		return NULL;
 	}
 
@@ -144,159 +142,177 @@ set_bucket set_bucket_create(size_t size)
 	return buckets;
 }
 
-int set_bucket_alloc_pairs(set_bucket bucket, size_t capacity)
+int bucket_alloc_pairs(bucket b, size_t capacity)
 {
-	if (bucket == NULL)
+	if (b == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket");
 		return 1;
 	}
 
-	if (bucket->pairs != NULL)
+	if (b->pairs != NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Set bucket pairs already allocated");
-
 		return 1;
 	}
 
-	bucket->pairs = malloc(sizeof(struct set_pair_type) * capacity);
+	b->pairs = malloc(sizeof(struct pair_type) * capacity);
 
-	if (bucket->pairs == NULL)
+	if (b->pairs == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Bad set pairs allocation");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad pairs allocation");
 		return 1;
 	}
 
-	bucket->count = 0;
-	bucket->capacity = capacity;
+	b->count = 0;
+	b->capacity = capacity;
 
 	return 0;
 }
 
-int set_bucket_realloc_pairs(set_bucket bucket, size_t new_capacity)
+int bucket_realloc_pairs(bucket b, size_t new_capacity)
 {
-	set_pair pairs = realloc(bucket->pairs, sizeof(struct set_pair_type) * new_capacity);
+	pair pairs = realloc(b->pairs, sizeof(struct pair_type) * new_capacity);
 
 	if (pairs == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Bad set pairs reallocation");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Bad pairs reallocation");
 		return 1;
 	}
 
-	bucket->pairs = pairs;
-	bucket->capacity = new_capacity;
+	b->pairs = pairs;
+	b->capacity = new_capacity;
 
 	return 0;
 }
 
-set_pair set_bucket_get_pair(set_bucket bucket, comparable_callback compare_cb, void *key)
+pair bucket_get_pair(bucket b, comparable_callback compare_cb, void *key)
 {
 	size_t iterator;
 
-	if (bucket->pairs == NULL || bucket->count == 0)
+	if (b->pairs == NULL || b->count == 0)
 	{
 		return NULL;
 	}
 
-	for (iterator = 0; iterator < bucket->count; ++iterator)
+	for (iterator = 0; iterator < b->count; ++iterator)
 	{
-		set_pair pair = &bucket->pairs[iterator];
+		pair p = &b->pairs[iterator];
 
-		if (compare_cb(key, pair->key) == 0)
+		if (compare_cb(key, p->key) == 0)
 		{
-			return pair;
+			return p;
 		}
 	}
 
 	return NULL;
 }
 
-int set_bucket_insert(set_bucket bucket, void *key, void *value)
+vector bucket_get_pairs_value(bucket b, comparable_callback compare_cb, void *key)
 {
-	set_pair pair;
+	size_t iterator;
+	vector v;
 
-	if (bucket == NULL || key == NULL || value == NULL)
+	if (b->pairs == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insert parameters");
-
-		return 1;
+		return NULL;
 	}
 
-	if (bucket->pairs == NULL && set_bucket_alloc_pairs(bucket, SET_BUCKET_PAIRS_DEFAULT) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insertion pairs allocation");
+	v = vector_create(sizeof(void *));
 
-		return 1;
-	}
-
-	if ((bucket->count + 1) >= bucket->capacity)
+	for (iterator = 0; iterator < b->count; ++iterator)
 	{
-		if (set_bucket_realloc_pairs(bucket, bucket->capacity << 1) != 0)
+		pair p = &b->pairs[iterator];
+
+		if (compare_cb(key, p->key) == 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket insertion pairs reallocation");
+			vector_push_back(v, p->value);
+		}
+	}
 
+	return v;
+}
+
+int bucket_insert(bucket b, void *key, void *value)
+{
+	pair p;
+
+	if (b == NULL || key == NULL || value == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket insert parameters");
+		return 1;
+	}
+
+	if (b->pairs == NULL && bucket_alloc_pairs(b, BUCKET_PAIRS_DEFAULT) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket insertion pairs allocation");
+		return 1;
+	}
+
+	if ((b->count + 1) >= b->capacity)
+	{
+		if (bucket_realloc_pairs(b, b->capacity << 1) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket insertion pairs reallocation");
 			return 1;
 		}
 	}
 
-	pair = &bucket->pairs[bucket->count];
+	p = &b->pairs[b->count];
 
-	pair->key = key;
-	pair->value = value;
+	p->key = key;
+	p->value = value;
 
-	++bucket->count;
+	++b->count;
 
 	return 0;
 }
 
-int set_bucket_remove(set_bucket bucket, comparable_callback compare_cb, void *key, void **value)
+int bucket_remove(bucket b, comparable_callback compare_cb, void *key, void **value)
 {
 	size_t iterator;
 
-	if (bucket == NULL || compare_cb == NULL || key == NULL)
+	if (b == NULL || compare_cb == NULL || key == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove parameters");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket remove parameters");
 		return 1;
 	}
 
-	if (bucket->pairs == NULL || bucket->count == 0)
+	if (b->pairs == NULL || b->count == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove pairs");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket remove pairs");
 		return 1;
 	}
 
-	for (iterator = 0; iterator < bucket->count; ++iterator)
+	for (iterator = 0; iterator < b->count; ++iterator)
 	{
-		set_pair pair = &bucket->pairs[iterator];
+		pair p = &b->pairs[iterator];
 
-		if (compare_cb(key, pair->key) == 0)
+		if (compare_cb(key, p->key) == 0)
 		{
-			void *deleted_value = pair->value;
+			void *deleted_value = p->value;
 
 			size_t next = iterator + 1;
 
-			size_t new_capacity = bucket->capacity >> 1;
+			size_t new_capacity = b->capacity >> 1;
 
-			memmove(pair, &bucket->pairs[next], sizeof(struct set_pair_type) * (bucket->count - next));
+			memmove(p, &b->pairs[next], sizeof(struct pair_type) * (b->count - next));
 
-			--bucket->count;
+			--b->count;
 
-			if (bucket->count <= new_capacity && new_capacity > SET_BUCKET_PAIRS_DEFAULT)
+			if (b->count <= new_capacity && new_capacity > BUCKET_PAIRS_DEFAULT)
 			{
-				if (set_bucket_realloc_pairs(bucket, new_capacity) != 0)
+				if (bucket_realloc_pairs(b, new_capacity) != 0)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Invalid set bucket remove pairs reallocation");
-
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid bucket remove pairs reallocation");
 					return 1;
 				}
 			}
 
-			*value = deleted_value;
+			if (value != NULL)
+			{
+				*value = deleted_value;
+			}
 
 			return 0;
 		}
