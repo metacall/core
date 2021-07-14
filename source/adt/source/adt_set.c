@@ -20,8 +20,8 @@
 
 /* -- Headers -- */
 
-#include <adt/adt_set.h>
 #include <adt/adt_bucket.h>
+#include <adt/adt_set.h>
 
 #include <log/log.h>
 

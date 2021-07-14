@@ -20,8 +20,8 @@
 
 /* -- Headers -- */
 
-#include <adt/adt_map.h>
 #include <adt/adt_bucket.h>
+#include <adt/adt_map.h>
 
 #include <log/log.h>
 
