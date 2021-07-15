@@ -33,7 +33,7 @@ struct function_type
 	function_impl impl;
 	function_interface interface;
 	size_t ref_count;
-	int async;
+	enum function_async_id async;
 	void *data;
 };
 

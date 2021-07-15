@@ -21,6 +21,7 @@
 #ifndef REFLECT_OBJECT_H
 #define REFLECT_OBJECT_H 1
 
+#include <reflect/reflect_class_decl.h>
 #include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
@@ -32,8 +33,6 @@ struct object_type;
 typedef void *object_impl;
 
 typedef struct object_type *object;
-
-#include <reflect/reflect_class.h>
 
 typedef void *object_args[];
 

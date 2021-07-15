@@ -1,0 +1,111 @@
+/*
+ *	Reflect Library by Parra Studios
+ *	A library for provide reflection and metadata representation.
+ *
+ *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	Licensed under the Apache License, Version 2.0 (the "License");
+ *	you may not use this file except in compliance with the License.
+ *	You may obtain a copy of the License at
+ *
+ *		http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *	Unless required by applicable law or agreed to in writing, software
+ *	distributed under the License is distributed on an "AS IS" BASIS,
+ *	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *	See the License for the specific language governing permissions and
+ *	limitations under the License.
+ *
+ */
+
+#include <reflect/reflect_method.h>
+
+#include <stdlib.h>
+#include <string.h>
+
+struct method_type
+{
+	klass cls;
+	char *name;
+	signature s;
+	method_impl impl;
+	enum class_visibility_id visibility;
+	enum class_method_async_id async;
+};
+
+method method_create(klass cls, const char *name, signature s, method_impl impl, enum class_visibility_id visibility, enum class_method_async_id async)
+{
+	method m = malloc(sizeof(struct method_type));
+
+	if (m == NULL)
+	{
+		return NULL;
+	}
+
+	if (name != NULL)
+	{
+		size_t size = strlen(name) + 1;
+
+		m->name = malloc(sizeof(char) * size);
+
+		if (m->name != NULL)
+		{
+			memcpy(m->name, name, size);
+		}
+	}
+	else
+	{
+		m->name = NULL;
+	}
+
+	m->cls = cls;
+	m->s = s;
+	m->impl = impl;
+	m->visibility = visibility;
+	m->async = async;
+
+	return m;
+}
+
+klass method_class(method m)
+{
+	return m->cls;
+}
+
+char *method_name(method m)
+{
+	return m->name;
+}
+
+signature method_signature(method m)
+{
+	return m->s;
+}
+
+method_impl method_data(method m)
+{
+	return m->impl;
+}
+
+enum class_visibility_id method_visibility(method m)
+{
+	return m->visibility;
+}
+
+enum class_method_async_id method_async(method m)
+{
+	return m->async;
+}
+
+void method_destroy(method m)
+{
+	if (m)
+	{
+		if (m->name)
+		{
+			free(m->name);
+		}
+
+		free(m);
+	}
+}
