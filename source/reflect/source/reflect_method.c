@@ -18,6 +18,8 @@
  *
  */
 
+#include <log/log.h>
+
 #include <reflect/reflect_method.h>
 
 #include <stdlib.h>
@@ -33,7 +35,7 @@ struct method_type
 	enum class_method_async_id async;
 };
 
-method method_create(klass cls, const char *name, signature s, method_impl impl, enum class_visibility_id visibility, enum class_method_async_id async)
+method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum class_method_async_id async)
 {
 	method m = malloc(sizeof(struct method_type));
 
@@ -58,8 +60,23 @@ method method_create(klass cls, const char *name, signature s, method_impl impl,
 		m->name = NULL;
 	}
 
+	m->s = signature_create(args_count);
+
+	if (m->s == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid method signature allocation");
+
+		if (m->name)
+		{
+			free(m->name);
+		}
+
+		free(m);
+
+		return NULL;
+	}
+
 	m->cls = cls;
-	m->s = s;
 	m->impl = impl;
 	m->visibility = visibility;
 	m->async = async;

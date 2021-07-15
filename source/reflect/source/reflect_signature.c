@@ -264,6 +264,38 @@ void signature_set_return(signature s, type t)
 	}
 }
 
+int signature_compare(signature s, type_id ret, type_id args[], size_t size)
+{
+	size_t iterator;
+
+	if (s == NULL)
+	{
+		return 1;
+	}
+
+	if (s->count != size)
+	{
+		return 1;
+	}
+
+	if (type_index(s->ret) != ret)
+	{
+		return 1;
+	}
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		type t = signature_get_type(s, iterator);
+
+		if (args[iterator] != type_index(t))
+		{
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 value signature_metadata_return(signature s)
 {
 	static const char ret_str[] = "ret";

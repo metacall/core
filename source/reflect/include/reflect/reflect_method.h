@@ -44,7 +44,7 @@ typedef void *method_impl;
 
 typedef struct method_type *method;
 
-REFLECT_API method method_create(klass cls, const char *name, signature s, method_impl impl, enum class_visibility_id visibility, enum class_method_async_id async);
+REFLECT_API method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum class_method_async_id async);
 
 REFLECT_API klass method_class(method m);
 

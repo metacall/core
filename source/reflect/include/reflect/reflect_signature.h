@@ -52,6 +52,8 @@ REFLECT_API void signature_set(signature s, size_t index, const char *name, type
 
 REFLECT_API void signature_set_return(signature s, type t);
 
+REFLECT_API int signature_compare(signature s, type_id ret, type_id args[], size_t size);
+
 REFLECT_API value signature_metadata(signature s);
 
 REFLECT_API void signature_destroy(signature s);

@@ -21,19 +21,19 @@
 #ifndef REFLECT_CLASS_H
 #define REFLECT_CLASS_H 1
 
+#include <adt/adt_vector.h>
+
+#include <reflect/reflect_attribute.h>
+#include <reflect/reflect_class_decl.h>
+#include <reflect/reflect_class_visibility.h>
+#include <reflect/reflect_method.h>
+#include <reflect/reflect_object.h>
+#include <reflect/reflect_signature.h>
 #include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct class_type;
-
-typedef void *class_impl;
-
-typedef struct class_type *klass;
-
-#include <reflect/reflect_object.h>
 
 typedef void *class_args[];
 
@@ -83,9 +83,29 @@ REFLECT_API value class_static_get(klass cls, const char *key);
 
 REFLECT_API int class_static_set(klass cls, const char *key, value v);
 
-REFLECT_API value class_static_call(klass cls, const char *name, class_args args, size_t size);
+REFLECT_API vector class_static_methods(klass cls, const char *key);
 
-REFLECT_API value class_static_await(klass cls, const char *name, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context);
+REFLECT_API vector class_methods(klass cls, const char *key);
+
+REFLECT_API method class_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
+
+REFLECT_API method class_method(klass cls, const char *key, type_id ret, type_id args[], size_t size);
+
+REFLECT_API attribute class_static_attribute(klass cls, const char *key);
+
+REFLECT_API attribute class_attribute(klass cls, const char *key);
+
+REFLECT_API int class_register_static_method(klass cls, method m);
+
+REFLECT_API int class_register_method(klass cls, method m);
+
+REFLECT_API int class_register_static_attribute(klass cls, attribute attr);
+
+REFLECT_API int class_register_attribute(klass cls, attribute attr);
+
+REFLECT_API value class_static_call(klass cls, const char *name /* TODO:, type_id ret*/, class_args args, size_t size);
+
+REFLECT_API value class_static_await(klass cls, const char *name /* TODO:, type_id ret*/, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context);
 
 REFLECT_API const char *class_name(klass cls);
 

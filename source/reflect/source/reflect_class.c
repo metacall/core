@@ -18,6 +18,7 @@
  *
  */
 
+#include <adt/adt_map.h>
 #include <adt/adt_set.h>
 
 #include <reflect/reflect_class.h>
@@ -34,6 +35,10 @@ struct class_type
 	class_impl impl;
 	class_interface interface;
 	size_t ref_count;
+	set static_attributes;
+	set attributes;
+	map static_methods;
+	map methods;
 };
 
 static value class_metadata_name(klass cls);
@@ -72,6 +77,10 @@ klass class_create(const char *name, class_impl impl, class_impl_interface_singl
 	cls->impl = impl;
 	cls->ref_count = 0;
 	cls->interface = singleton ? singleton() : NULL;
+	cls->methods = map_create(&hash_callback_str, &comparable_callback_str);
+	cls->static_methods = map_create(&hash_callback_str, &comparable_callback_str);
+	cls->attributes = set_create(&hash_callback_str, &comparable_callback_str);
+	cls->static_attributes = set_create(&hash_callback_str, &comparable_callback_str);
 
 	if (cls->interface != NULL && cls->interface->create != NULL)
 	{
@@ -80,6 +89,10 @@ klass class_create(const char *name, class_impl impl, class_impl_interface_singl
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) create callback <%p>", cls->name, cls->interface->create);
 
 			free(cls->name);
+			map_destroy(cls->methods);
+			map_destroy(cls->static_methods);
+			set_destroy(cls->attributes);
+			set_destroy(cls->static_attributes);
 			free(cls);
 
 			return NULL;
@@ -123,7 +136,7 @@ int class_decrement_reference(klass cls)
 	return 0;
 }
 
-REFLECT_API class_impl class_impl_get(klass cls)
+class_impl class_impl_get(klass cls)
 {
 	return cls->impl;
 }
@@ -176,6 +189,7 @@ value class_metadata_name(klass cls)
 
 value class_metadata(klass cls)
 {
+	// TODO: Implement inspect of (non-)static methods / attributes
 	(void)cls;
 
 	value name, c;
@@ -262,6 +276,136 @@ int class_static_set(klass cls, const char *key, value v)
 	return 1;
 }
 
+vector class_static_methods(klass cls, const char *key)
+{
+	if (cls == NULL || key == NULL)
+	{
+		return NULL;
+	}
+
+	return map_get(cls->static_methods, (map_key)key);
+}
+
+vector class_methods(klass cls, const char *key)
+{
+	if (cls == NULL || key == NULL)
+	{
+		return NULL;
+	}
+
+	return map_get(cls->methods, (map_key)key);
+}
+
+method class_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
+{
+	vector v = class_static_methods(cls, key);
+
+	if (v != NULL)
+	{
+		size_t iterator, method_size = vector_size(v);
+
+		for (iterator = 0; iterator < method_size; ++iterator)
+		{
+			method m = vector_at_type(v, iterator, method);
+
+			if (signature_compare(method_signature(m), ret, args, size) == 0)
+			{
+				vector_destroy(v);
+				return m;
+			}
+		}
+
+		vector_destroy(v);
+	}
+
+	return NULL;
+}
+
+method class_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
+{
+	vector v = class_methods(cls, key);
+
+	if (v != NULL)
+	{
+		size_t iterator, method_size = vector_size(v);
+
+		for (iterator = 0; iterator < method_size; ++iterator)
+		{
+			method m = vector_at_type(v, iterator, method);
+
+			if (signature_compare(method_signature(m), ret, args, size) == 0)
+			{
+				vector_destroy(v);
+				return m;
+			}
+		}
+
+		vector_destroy(v);
+	}
+
+	return NULL;
+}
+
+attribute class_static_attribute(klass cls, const char *key)
+{
+	if (cls == NULL || key == NULL)
+	{
+		return NULL;
+	}
+
+	return set_get(cls->static_attributes, (set_key)key);
+}
+
+attribute class_attribute(klass cls, const char *key)
+{
+	if (cls == NULL || key == NULL)
+	{
+		return NULL;
+	}
+
+	return set_get(cls->attributes, (set_key)key);
+}
+
+int class_register_static_method(klass cls, method m)
+{
+	if (cls == NULL || m == NULL)
+	{
+		return 1;
+	}
+
+	return map_insert(cls->static_methods, (map_key)method_name(m), m);
+}
+
+int class_register_method(klass cls, method m)
+{
+	if (cls == NULL || m == NULL)
+	{
+		return 1;
+	}
+
+	return map_insert(cls->methods, (map_key)method_name(m), m);
+}
+
+int class_register_static_attribute(klass cls, attribute attr)
+{
+	if (cls == NULL || attr == NULL)
+	{
+		return 1;
+	}
+
+	return set_insert(cls->static_attributes, (set_key)attribute_name(attr), attr);
+}
+
+int class_register_attribute(klass cls, attribute attr)
+{
+	if (cls == NULL || attr == NULL)
+	{
+		return 1;
+	}
+
+	return set_insert(cls->attributes, (set_key)attribute_name(attr), attr);
+}
+
 value class_static_call(klass cls, const char *name, class_args args, size_t argc)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL)
@@ -328,6 +472,26 @@ void class_destroy(klass cls)
 			if (cls->name != NULL)
 			{
 				free(cls->name);
+			}
+
+			if (cls->methods != NULL)
+			{
+				map_destroy(cls->methods);
+			}
+
+			if (cls->static_methods != NULL)
+			{
+				map_destroy(cls->static_methods);
+			}
+
+			if (cls->attributes != NULL)
+			{
+				set_destroy(cls->attributes);
+			}
+
+			if (cls->static_attributes != NULL)
+			{
+				set_destroy(cls->static_attributes);
 			}
 
 			free(cls);
