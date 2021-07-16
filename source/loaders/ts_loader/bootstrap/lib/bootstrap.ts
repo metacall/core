@@ -4,8 +4,9 @@ import * as Module from 'module';
 import { EOL } from 'os';
 import * as path from 'path';
 
-const metacall_require = (Module.prototype as any).require;
+const monkey_patch_require = (Module.prototype as any).require;
 const node_require = (Module.prototype as any).node_require;
+const metacall_require = (Module.prototype as any).metacall_require;
 const node_cache = (Module.prototype as any).node_cache || require.cache;
 const node_resolve = (Module.prototype as any).node_resolve || require.resolve;
 
@@ -17,9 +18,16 @@ if (node_require) {
 /** Native node require */
 import * as ts from 'typescript';
 
+/** Define the extensions for requiring with TypeScript */
+if (metacall_require) {
+	['ts', 'tsx', 'jsx'].forEach(ext => {
+		require.extensions[`.${ext}`] = module => metacall_require('ts', module.filename);
+	});
+}
+
 /** Patch again */
 if (node_require) {
-	(Module.prototype as any).require = metacall_require;
+	(Module.prototype as any).require = monkey_patch_require;
 }
 
 type anyF = (...args: any[]) => any;
