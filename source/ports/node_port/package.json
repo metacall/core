@@ -1,14 +1,11 @@
 {
 	"name": "metacall",
-	"version": "0.4.2",
+	"version": "0.4.3",
 	"description": "Call Python, C#, Ruby... functions from NodeJS (a NodeJS Port for MetaCall)",
 	"repository": "github:metacall/core",
 	"bugs": "https://github.com/metacall/core/issues",
 	"homepage": "https://metacall.io",
 	"main": "index.js",
-	"scripts": {
-		"preinstall": "node scripts/preinstall.js"
-	},
 	"author": "Vicente Eduardo Ferrer Garcia <vic798@gmail.com> (https://metacall.io)",
 	"contributors": [
 		"Declan Nnadozie <zedonbiz@gmail.com>"
