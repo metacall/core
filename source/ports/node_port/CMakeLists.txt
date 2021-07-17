@@ -20,7 +20,6 @@ message(STATUS "Port ${target}")
 set(source_path "${CMAKE_CURRENT_SOURCE_DIR}")
 
 set(sources
-	${source_path}/scripts/preinstall.js
 	${source_path}/test/index.js
 	${source_path}/index.js
 	${source_path}/test.js
