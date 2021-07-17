@@ -57,6 +57,7 @@ attribute attribute_create(klass cls, const char *name, type t, attribute_impl i
 		attr->name = NULL;
 	}
 
+	attr->cls = cls;
 	attr->t = t;
 	attr->impl = impl;
 	attr->visibility = visibility;
