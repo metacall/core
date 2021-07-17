@@ -288,8 +288,5 @@ if (process.env['NODE_ENV'] === 'debug' && addon !== undefined) {
 	addon.metacall_logs();
 }
 
-/* Store in the module prototype the original functions for future use in derived loaders like TypeScript */
-mod.prototype.metacall_require = metacall_require;
-
 /* Export the API */
 module.exports = module_exports;

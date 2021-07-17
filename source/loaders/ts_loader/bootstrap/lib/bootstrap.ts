@@ -6,7 +6,6 @@ import * as path from 'path';
 
 const monkey_patch_require = (Module.prototype as any).require;
 const node_require = (Module.prototype as any).node_require;
-const metacall_require = (Module.prototype as any).metacall_require;
 const node_cache = (Module.prototype as any).node_cache || require.cache;
 const node_resolve = (Module.prototype as any).node_resolve || require.resolve;
 
@@ -19,11 +18,15 @@ if (node_require) {
 import * as ts from 'typescript';
 
 /** Define the extensions for requiring with TypeScript */
-if (metacall_require) {
-	['ts', 'tsx', 'jsx'].forEach(ext => {
-		require.extensions[`.${ext}`] = module => metacall_require('ts', module.filename);
-	});
-}
+['ts', 'tsx', 'jsx'].forEach(ext => {
+	/* If we require a TypeScript file from NodeJS, probably we do not need introspection data */
+	(Module as any)._extensions[`.${ext}`] = (module: Module) => {
+		const exp = load_from_file([module.filename], false);
+		if (exp !== null) {
+			module.exports = exp[Object.keys(exp)[0]];
+		}
+	}
+});
 
 /** Patch again */
 if (node_require) {
@@ -208,7 +211,7 @@ const fileResolveNoThrow = (p: string): string => {
 };
 
 /** Loads a TypeScript file from disk */
-export const load_from_file = safe(function load_from_file(paths: string[]) {
+export const load_from_file = safe(function load_from_file(paths: string[], discover = true) {
 	const result: MetacallHandle = {};
 	const options = getProgramOptions(paths.map(p => fileResolve(p)));
 	const p = ts.createProgram(options);
@@ -226,10 +229,12 @@ export const load_from_file = safe(function load_from_file(paths: string[]) {
 			for (const [name, handle] of Object.entries(exportTypes)) {
 				handle.ptr = wrappedExports[name] as anyF;
 			}
-			discoverTypes.set(fileName, {
-				...(discoverTypes.get(fileName) ?? {}),
-				...exportTypes,
-			});
+			if (discover) {
+				discoverTypes.set(fileName, {
+					...(discoverTypes.get(fileName) ?? {}),
+					...exportTypes,
+				});
+			}
 			result[fileName] = wrappedExports;
 		});
 
