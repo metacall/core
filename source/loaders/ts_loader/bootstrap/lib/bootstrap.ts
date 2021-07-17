@@ -126,11 +126,15 @@ const getTranspileOptions = (moduleName: string, path: string) => {
 
 const getMetacallExportTypes = (
 	p: ts.Program,
+	paths: string[] = [],
 	cb: (sourceFile: ts.SourceFile, metacallType: MetacallExports) => void =
 		() => { },
 ) => {
 	const exportTypes: MetacallExports = {};
-	const sourceFiles = p.getRootFileNames().map((name) =>
+	const files = paths.length === 0 ?
+		p.getRootFileNames() :
+		paths.map(fileResolveNoThrow).filter(file => p.getRootFileNames().includes(file));
+	const sourceFiles = files.map((name) =>
 		[name, p.getSourceFile(name)] as const
 	);
 	let fileCount = 0;
@@ -195,13 +199,21 @@ const fileResolve = (p: string): string => {
     throw Object.assign(Error(`Cannot find module '${p}'`), { code: 'MODULE_NOT_FOUND' });
 };
 
+const fileResolveNoThrow = (p: string): string => {
+	try {
+		return fileResolve(p);
+	} catch (_) {
+		return p;
+	}
+};
+
 /** Loads a TypeScript file from disk */
 export const load_from_file = safe(function load_from_file(paths: string[]) {
 	const result: MetacallHandle = {};
 	const options = getProgramOptions(paths.map(p => fileResolve(p)));
 	const p = ts.createProgram(options);
 	// TODO: Handle the emitSkipped?
-	const exportTypes = getMetacallExportTypes(p, (sourceFile, exportTypes) => {
+	const exportTypes = getMetacallExportTypes(p, paths, (sourceFile, exportTypes) => {
 		const { diagnostics /*, emitSkipped */ } = p.emit(sourceFile, (fileName, data) => {
 			// @ts-ignore
 			const nodeModulePaths = Module._nodeModulePaths(path.dirname(fileName));
