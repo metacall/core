@@ -4,7 +4,7 @@
 
 set(NODEJS_EXECUTABLE_ONLY ON)
 
-find_package(NodeJS 10.23.1)
+find_package(NodeJS)
 
 if(NOT NODEJS_FOUND)
 	message(STATUS "NodeJS executable not found")

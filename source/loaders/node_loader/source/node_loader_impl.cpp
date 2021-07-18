@@ -4698,7 +4698,15 @@ int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 
 int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
-	return node_loader_impl_async_handles_count(node_impl) - node_impl->base_active_handles - node_impl->extra_active_handles;
+	int64_t closing =
+#if defined(WIN32) || defined(_WIN32)
+		(node_impl->thread_loop->endgame_handles != NULL)
+#else
+		(node_impl->thread_loop->closing_handles != NULL)
+#endif
+		;
+
+	return node_loader_impl_async_handles_count(node_impl) - node_impl->base_active_handles - node_impl->extra_active_handles + node_impl->thread_loop->active_reqs.count + closing;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
