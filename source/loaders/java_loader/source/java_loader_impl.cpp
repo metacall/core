@@ -834,6 +834,28 @@ loader_handle java_loader_impl_load_from_package(loader_impl impl, const loader_
 	(void)impl;
 	(void)path;
 
+	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
+
+	if (java_handle != nullptr)
+	{
+		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
+
+		jclass classPtr = java_impl->env->FindClass("bootstrap");
+		if (classPtr != nullptr)
+		{
+			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "load_from_package", "(Ljava/lang/String;)[Ljava/lang/Class;");
+			if (mid != nullptr)
+			{
+				jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, mid, java_impl->env->NewStringUTF(path));
+
+				java_handle->handle = result;
+				java_handle->size = java_impl->env->GetArrayLength(result);
+
+				return static_cast<loader_handle>(java_handle);
+			}
+		}
+	}
+
 	return NULL;
 }
 
@@ -884,6 +906,12 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		if (cls_name_bootstrap != nullptr)
 		{
 			size_t handleSize = (size_t)java_impl->env->GetArrayLength(java_handle->handle);
+
+			if (handleSize == 0)
+			{
+				std::cout << "saved it" << std::endl;
+				return 1;
+			}
 
 			for (size_t i = 0; i < handleSize; i++)
 			{

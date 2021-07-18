@@ -52,6 +52,19 @@ TEST_F(metacall_java_test, DefaultConstructor)
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_file(tag, java_scripts, sizeof(java_scripts) / sizeof(java_scripts[0]), NULL));
 
+		static const char packageCls[] = "JarTest.jar";
+		ASSERT_EQ((int)0, (int)metacall_load_from_package(tag, packageCls, NULL));
+
+		void *myclass2 = metacall_class("src.JarTest.TestJar");
+
+		// void *constructor_params2[] = {};
+
+		void *new_object_v2 = metacall_class_new(myclass2, "src.JarTest.TestJar", {}, 0); // Gives Class not found exeption
+
+		// void *param2 = metacall_class_static_get(myclass2, "jarTestString");
+		// ASSERT_EQ((std::string) "This is a static Jar String", (std::string)metacall_value_to_string(param2));
+		// metacall_value_destroy(param2);
+
 		void *myclass = metacall_class("Test");
 
 		void *constructor_params[] = {
