@@ -22,8 +22,8 @@ import * as ts from 'typescript';
 	/* If we require a TypeScript file from NodeJS, probably we do not need introspection data */
 	(Module as any)._extensions[`.${ext}`] = (module: Module) => {
 		const exp = load_from_file([module.filename], false);
-		if (exp !== null) {
-			module.exports = exp[Object.keys(exp)[0]];
+		if (exp !== null && exp.length === 1) {
+			module.exports = Object.values(exp)[0];
 		}
 	}
 });
