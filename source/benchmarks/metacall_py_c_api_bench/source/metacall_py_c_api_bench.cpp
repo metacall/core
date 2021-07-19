@@ -41,10 +41,12 @@ public:
 			Py_InitializeEx(0);
 		}
 
+#if !(PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 9)
 		if (PyEval_ThreadsInitialized() == 0)
 		{
 			PyEval_InitThreads();
 		}
+#endif
 
 		compiled = Py_CompileString(buffer, name, Py_file_input);
 

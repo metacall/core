@@ -35,6 +35,7 @@
 #include <metacall/metacall.h>
 
 #include <map>
+#include <string>
 #include <vector>
 
 typedef struct ts_loader_impl_function_type

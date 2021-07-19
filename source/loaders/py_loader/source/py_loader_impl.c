@@ -2218,10 +2218,12 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_init_py;
 	}
 
+#if !(PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 9)
 	if (PyEval_ThreadsInitialized() == 0)
 	{
 		PyEval_InitThreads();
 	}
+#endif
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
