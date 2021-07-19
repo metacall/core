@@ -259,8 +259,9 @@ struct loader_impl_node_type
 	std::thread::id js_thread_id;
 
 	int64_t base_active_handles;
-	int64_t extra_active_handles;
+	std::atomic_int64_t extra_active_handles;
 	uv_prepare_t destroy_prepare;
+	uv_check_t destroy_check;
 	std::atomic_bool event_loop_empty;
 	loader_impl impl;
 };
@@ -3748,7 +3749,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	/* Store the amount of async handles that we have for the node loader,
 	* so we can count the user defined async handles */
 	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
-	node_impl->extra_active_handles = 0;
+	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
 
 	/* Signal start condition */
@@ -4633,20 +4634,52 @@ static void node_loader_impl_destroy_prepare_close_cb(uv_handle_t *handle)
 {
 	uv_prepare_t *prepare = (uv_prepare_t *)handle;
 	loader_impl_node node_impl = container_of(prepare, struct loader_impl_node_type, destroy_prepare);
-	node_loader_impl_try_destroy(node_impl);
+
+	if (--node_impl->extra_active_handles == 0)
+	{
+		node_loader_impl_try_destroy(node_impl);
+	}
+}
+
+static void node_loader_impl_destroy_check_close_cb(uv_handle_t *handle)
+{
+	uv_check_t *check = (uv_check_t *)handle;
+	loader_impl_node node_impl = container_of(check, struct loader_impl_node_type, destroy_check);
+
+	if (--node_impl->extra_active_handles == 0)
+	{
+		node_loader_impl_try_destroy(node_impl);
+	}
+}
+
+static void node_loader_impl_destroy_cb(loader_impl_node node_impl)
+{
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	node_loader_impl_print_handles(node_impl);
+#endif
+
+	if (node_impl->event_loop_empty.load() == false && node_loader_impl_user_async_handles_count(node_impl) <= 0)
+	{
+		node_impl->event_loop_empty.store(true);
+		uv_prepare_stop(&node_impl->destroy_prepare);
+		uv_check_stop(&node_impl->destroy_check);
+		uv_close((uv_handle_t *)&node_impl->destroy_prepare, &node_loader_impl_destroy_prepare_close_cb);
+		uv_close((uv_handle_t *)&node_impl->destroy_check, &node_loader_impl_destroy_check_close_cb);
+	}
 }
 
 static void node_loader_impl_destroy_prepare_cb(uv_prepare_t *handle)
 {
 	loader_impl_node node_impl = container_of(handle, struct loader_impl_node_type, destroy_prepare);
 
-	if (node_loader_impl_user_async_handles_count(node_impl) <= 0)
-	{
-		node_impl->event_loop_empty.store(true);
-		node_impl->extra_active_handles = 0;
-		uv_prepare_stop(handle);
-		uv_close((uv_handle_t *)handle, &node_loader_impl_destroy_prepare_close_cb);
-	}
+	node_loader_impl_destroy_cb(node_impl);
+}
+
+static void node_loader_impl_destroy_check_cb(uv_check_t *handle)
+{
+	loader_impl_node node_impl = container_of(handle, struct loader_impl_node_type, destroy_check);
+
+	node_loader_impl_destroy_cb(node_impl);
 }
 
 void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe destroy_safe)
@@ -4668,9 +4701,11 @@ void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destroy_safe 
 	}
 	else
 	{
-		node_impl->extra_active_handles = 1;
+		node_impl->extra_active_handles.store(2);
 		uv_prepare_init(node_impl->thread_loop, &node_impl->destroy_prepare);
+		uv_check_init(node_impl->thread_loop, &node_impl->destroy_check);
 		uv_prepare_start(&node_impl->destroy_prepare, &node_loader_impl_destroy_prepare_cb);
+		uv_check_start(&node_impl->destroy_check, &node_loader_impl_destroy_check_cb);
 	}
 
 	/* Close scope */
@@ -4683,9 +4718,13 @@ void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
 {
 	int64_t *async_count = static_cast<int64_t *>(arg);
 
-	if (uv_is_active(handle) != 0)
+	if (uv_is_active(handle) && !uv_is_closing(handle))
 	{
-		(*async_count)++;
+		// TODO: Improve counter for timers and timeouts, in order to close the event loop properly
+		if (!(handle->type == UV_TIMER && !uv_has_ref(handle)))
+		{
+			(*async_count)++;
+		}
 	}
 }
 
@@ -4706,7 +4745,17 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 #endif
 		;
 
-	return node_loader_impl_async_handles_count(node_impl) - node_impl->base_active_handles - node_impl->extra_active_handles + node_impl->thread_loop->active_reqs.count + closing;
+	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
+	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +       %" PRId64 "       +     %" PRId64 "\n",
+		active_handles,
+		node_impl->base_active_handles,
+		node_impl->extra_active_handles.load(),
+		(int64_t)node_impl->thread_loop->active_reqs.count,
+		closing);
+#endif
+	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) + closing;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
