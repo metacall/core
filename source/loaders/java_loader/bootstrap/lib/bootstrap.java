@@ -125,8 +125,8 @@ public class bootstrap {
       for (String curExecPath : executionPath) {
         try {
           File pathFile = new File(path);
-          Path path2 = Paths.get(pathFile.getCanonicalPath());
-          String classname = path2.getFileName().toString().split(".class")[0];
+          Path canonical = Paths.get(pathFile.getCanonicalPath());
+          String classname = canonical.getFileName().toString().split(".class")[0];
 
           File execPathFile = new File(curExecPath);
           URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
@@ -147,10 +147,13 @@ public class bootstrap {
         for (String curExecPath : executionPath) {
           ArrayList<Class<?>> handleList = new ArrayList<Class<?>>();
 
-          JarFile jarFile = new JarFile(curExecPath + path);
+          Path curJarPath = Paths.get(curExecPath, path);
+          JarFile jarFile = new JarFile(curJarPath.toString());
           Enumeration<JarEntry> e = jarFile.entries();
 
-          String jarPath = "jar:file:" + curExecPath + path + "!/";
+          Path jpath = Paths.get("jar:file:", curExecPath, path);
+          String jarPath = jpath.toString() + "!/";
+
           executionPath.add(jarPath); // Trying to add jar path to exec path so that FindClass can find it
 
           URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
@@ -161,7 +164,7 @@ public class bootstrap {
             if (je.getName().endsWith(".class")) {
 
               String className = je.getName().substring(0, je.getName().length() - 6);
-              className = className.replace('/', '.');
+              className = className.replace(File.separatorChar, '.');
               try {
                 Class<?> c = clsLoader.loadClass(className);
 
@@ -258,6 +261,11 @@ public class bootstrap {
     Constructor<?>[] constructors = cls.getDeclaredConstructors();
     for (Constructor<?> cnstr : constructors) {
       System.out.println("Name of the constructor: " + cnstr.getName());
+    }
+
+    Field[] fields = cls.getFields();
+    for (Field f : fields) {
+      System.out.println("Name of the fiekd: " + f.getName());
     }
 
     Method[] methods = cls.getDeclaredMethods();
