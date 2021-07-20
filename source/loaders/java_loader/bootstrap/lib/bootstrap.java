@@ -154,7 +154,8 @@ public class bootstrap {
           Path jpath = Paths.get("jar:file:", curExecPath, path);
           String jarPath = jpath.toString() + "!/";
 
-          executionPath.add(jarPath); // Trying to add jar path to exec path so that FindClass can find it
+          Path epath = Paths.get(curExecPath, path);
+          executionPath.add(epath.toString());
 
           URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
 
@@ -218,13 +219,14 @@ public class bootstrap {
   }
 
   public static String get_Field_Type(Class<?> cls, String key) {
+    System.out.println("Getting field type bootstrap for " + key);
     String valType = "";
 
     try {
       Field f = cls.getField(key);
       valType = f.getType().getName();
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println("Finding field error" + e);
     }
 
     return valType;
