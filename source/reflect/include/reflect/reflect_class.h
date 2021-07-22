@@ -45,13 +45,13 @@ typedef int (*class_impl_interface_create)(klass, class_impl);
 
 typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *name, class_args, size_t);
 
-typedef value (*class_impl_interface_static_get)(klass, class_impl, const char *);
+typedef value (*class_impl_interface_static_get)(klass, class_impl, attribute);
 
-typedef int (*class_impl_interface_static_set)(klass, class_impl, const char *, value);
+typedef int (*class_impl_interface_static_set)(klass, class_impl, attribute, value);
 
-typedef value (*class_impl_interface_static_invoke)(klass, class_impl, const char *, class_args, size_t);
+typedef value (*class_impl_interface_static_invoke)(klass, class_impl, method, class_args, size_t);
 
-typedef value (*class_impl_interface_static_await)(klass, class_impl, const char *, class_args, size_t, class_resolve_callback, class_reject_callback, void *);
+typedef value (*class_impl_interface_static_await)(klass, class_impl, method, class_args, size_t, class_resolve_callback, class_reject_callback, void *);
 
 typedef void (*class_impl_interface_destroy)(klass, class_impl);
 
@@ -103,9 +103,9 @@ REFLECT_API int class_register_static_attribute(klass cls, attribute attr);
 
 REFLECT_API int class_register_attribute(klass cls, attribute attr);
 
-REFLECT_API value class_static_call(klass cls, const char *name /* TODO:, type_id ret*/, class_args args, size_t size);
+REFLECT_API value class_static_call(klass cls, method m, class_args args, size_t size);
 
-REFLECT_API value class_static_await(klass cls, const char *name /* TODO:, type_id ret*/, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context);
+REFLECT_API value class_static_await(klass cls, method m, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context);
 
 REFLECT_API const char *class_name(klass cls);
 

@@ -627,7 +627,7 @@ object rb_class_interface_constructor(klass cls, class_impl impl, const char *na
 	return obj;
 }
 
-value rb_class_interface_static_get(klass cls, class_impl impl, const char *key)
+value rb_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	(void)cls;
 
@@ -654,7 +654,7 @@ value rb_class_interface_static_get(klass cls, class_impl impl, const char *key)
 	return result;
 }
 
-int rb_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
+int rb_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
 {
 	(void)cls;
 
@@ -678,7 +678,7 @@ int rb_class_interface_static_set(klass cls, class_impl impl, const char *key, v
 	return 0;
 }
 
-value rb_class_interface_static_invoke(klass cls, class_impl impl, const char *static_method_name, class_args args, size_t argc)
+value rb_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	// TODO
 	(void)cls;
@@ -713,7 +713,7 @@ value rb_class_interface_static_invoke(klass cls, class_impl impl, const char *s
 	return result;
 }
 
-value rb_class_interface_static_await(klass cls, class_impl impl, const char *key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+value rb_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;

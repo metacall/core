@@ -242,15 +242,21 @@ object class_new(klass cls, const char *name, class_args args, size_t argc)
 
 value class_static_get(klass cls, const char *key)
 {
-	if (cls != NULL && cls->interface != NULL && cls->interface->static_get != NULL)
+	if (cls != NULL && cls->interface != NULL && cls->interface->static_get != NULL && key != NULL)
 	{
-		value v = cls->interface->static_get(cls, cls->impl, key);
+		attribute attr = set_get(cls->static_attributes, (set_key)key);
+
+		if (attr != NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in class %s is not defined", key, cls->name);
+			return NULL;
+		}
+
+		value v = cls->interface->static_get(cls, cls->impl, attr);
 
 		if (v == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_get callback <%p>", cls->name, cls->interface->static_get);
-
-			return NULL;
 		}
 
 		return v;
@@ -261,12 +267,19 @@ value class_static_get(klass cls, const char *key)
 
 int class_static_set(klass cls, const char *key, value v)
 {
-	if (cls != NULL && cls->interface != NULL && cls->interface->static_set != NULL)
+	if (cls != NULL && cls->interface != NULL && cls->interface->static_set != NULL && key != NULL && v != NULL)
 	{
-		if (cls->interface->static_set(cls, cls->impl, key, v) != 0)
+		attribute attr = set_get(cls->static_attributes, (set_key)key);
+
+		if (attr != NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in class %s is not defined", key, cls->name);
+			return 3;
+		}
+
+		if (cls->interface->static_set(cls, cls->impl, attr, v) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_set callback <%p>", cls->name, cls->interface->static_set);
-
 			return 2;
 		}
 
@@ -406,15 +419,15 @@ int class_register_attribute(klass cls, attribute attr)
 	return set_insert(cls->attributes, (set_key)attribute_name(attr), attr);
 }
 
-value class_static_call(klass cls, const char *name, class_args args, size_t argc)
+value class_static_call(klass cls, method m, class_args args, size_t argc)
 {
-	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL)
+	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL && m != NULL)
 	{
-		value v = cls->interface->static_invoke(cls, cls->impl, name, args, argc);
+		value v = cls->interface->static_invoke(cls, cls->impl, m, args, argc);
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_invoke callback <%p>", cls->name, cls->interface->static_invoke);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_invoke callback (%s) <%p>", cls->name, method_name(m), cls->interface->static_invoke);
 
 			return NULL;
 		}
@@ -425,15 +438,15 @@ value class_static_call(klass cls, const char *name, class_args args, size_t arg
 	return NULL;
 }
 
-value class_static_await(klass cls, const char *name, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context)
+value class_static_await(klass cls, method m, class_args args, size_t size, class_resolve_callback resolve_callback, class_reject_callback reject_callback, void *context)
 {
-	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL)
+	if (cls != NULL && cls->interface != NULL && cls->interface->static_invoke != NULL && m != NULL)
 	{
-		value v = cls->interface->static_await(cls, cls->impl, name, args, size, resolve_callback, reject_callback, context);
+		value v = cls->interface->static_await(cls, cls->impl, m, args, size, resolve_callback, reject_callback, context);
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_await callback <%p>", cls->name, cls->interface->static_await);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_await callback (%s) <%p>", cls->name, method_name(m), cls->interface->static_await);
 
 			return NULL;
 		}

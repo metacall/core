@@ -476,7 +476,7 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	return obj;
 }
 
-value java_class_interface_static_get(klass cls, class_impl impl, const char *key)
+value java_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	(void)cls;
 	std::cout << "\nGet -> " << key << std::endl;
@@ -554,7 +554,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, const char *ke
 	return NULL;
 }
 
-int java_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
+int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
 {
 	(void)cls;
 	std::cout << "\nSet = " << key << std::endl;
@@ -627,7 +627,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, const char *key,
 	return 1;
 }
 
-value java_class_interface_static_invoke(klass cls, class_impl impl, const char *static_method_name, class_args args, size_t argc)
+value java_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	// IN PROGRESS
 	(void)cls;
@@ -673,7 +673,7 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, const char 
 	return NULL;
 }
 
-value java_class_interface_static_await(klass cls, class_impl impl, const char *key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+value java_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;
@@ -887,6 +887,10 @@ int java_loader_impl_discover_func(loader_impl impl, loader_handle handle, conte
 
 int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
+	// TODO: Implement here the discover of methods and attributes of the class
+	// Use attribute_create with class_register_static_attribute and class_register_attribute
+	// Use method_create with class_register_static_method, class_register_method
+
 	log_write("metacall", LOG_LEVEL_ERROR, "Discover");
 
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);

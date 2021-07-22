@@ -536,7 +536,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 	return obj;
 }
 
-value py_class_interface_static_get(klass cls, class_impl impl, const char *key)
+value py_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	(void)cls;
 
@@ -551,7 +551,7 @@ value py_class_interface_static_get(klass cls, class_impl impl, const char *key)
 	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_class->impl, generic_attr));
 }
 
-int py_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
+int py_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
 {
 	(void)cls;
 
@@ -570,7 +570,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, const char *key, v
 	return retval;
 }
 
-value py_class_interface_static_invoke(klass cls, class_impl impl, const char *static_method_name, class_args args, size_t argc)
+value py_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	// TODO
 	(void)cls;
@@ -616,7 +616,7 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char *s
 	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(cls_impl->impl, python_object));
 }
 
-value py_class_interface_static_await(klass cls, class_impl impl, const char *key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+value py_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;
@@ -3067,6 +3067,8 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s",
 				PyUnicode_AsUTF8(tuple_key),
 				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)));
+
+			// TODO: Register here the class methods and attributes, and their static versions
 		}
 	}
 
