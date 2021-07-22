@@ -142,7 +142,7 @@ sub_nodejs(){
 	echo "configure node"
 
 	# Install NodeJS library
-	sub_apt_install_hold libnode64
+	sub_apt_install_hold libnode83
 }
 
 # TypeScript
