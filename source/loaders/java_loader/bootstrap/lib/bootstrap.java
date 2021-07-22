@@ -2,31 +2,24 @@ import java.io.File;
 
 import javax.tools.*;
 import java.util.*;
-
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.lang.Object;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class bootstrap {
-
   private static Set<String> executionPath = new HashSet<String>();
 
-  // System.out.println(System.getProperty("java.class.path"));
-  // ClassLoader sysloader = URLClassLoader.getSystemClassLoader();
-  // Class<?> sysclass = URLClassLoader.class;
-
-  // Method method = sysclass.getDeclaredMethod("addURL", URL.class);
-  // method.setAccessible(true);
-  // method.invoke(sysloader, execPathFile);
-
   public static Class<?> FindClass(String name) {
+    System.out.println("Finding Class " + name);
+
     try {
       URL[] urlArr = new URL[executionPath.size()];
       int i = 0;
@@ -37,9 +30,9 @@ public class bootstrap {
       return cls;
 
     } catch (Exception e) {
-      System.out.println("Find Class Error");
-      return null;
+      System.out.println("Find Class Error" + e);
     }
+    return null;
   }
 
   public static int java_bootstrap_execution_path(String path) {
@@ -123,6 +116,87 @@ public class bootstrap {
     return handleObject;
   }
 
+  public static Class<?>[] load_from_package(String path) {
+
+    if (path.endsWith(".class")) {
+      Class<?>[] handleObject = new Class<?>[1];
+      System.out.println("bootstrap load from package " + path);
+
+      for (String curExecPath : executionPath) {
+        try {
+          File pathFile = new File(path);
+          Path canonical = Paths.get(pathFile.getCanonicalPath());
+          String classname = canonical.getFileName().toString().split(".class")[0];
+
+          File execPathFile = new File(curExecPath);
+          URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
+          Class<?> c = clsLoader.loadClass(classname);
+
+          handleObject[0] = c;
+          clsLoader.close();
+          break;
+        } catch (Exception e) {
+          System.out.println("EXEPTION " + e);
+        }
+      }
+
+      return handleObject;
+    } else if (path.endsWith(".jar")) {
+
+      try {
+        for (String curExecPath : executionPath) {
+          ArrayList<Class<?>> handleList = new ArrayList<Class<?>>();
+
+          Path curJarPath = Paths.get(curExecPath, path);
+          JarFile jarFile = new JarFile(curJarPath.toString());
+          Enumeration<JarEntry> e = jarFile.entries();
+
+          Path jpath = Paths.get("jar:file:", curExecPath, path);
+          String jarPath = jpath.toString() + "!/";
+
+          Path epath = Paths.get(curExecPath, path);
+          executionPath.add(epath.toString());
+
+          URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
+
+          while (e.hasMoreElements()) {
+
+            JarEntry je = e.nextElement();
+            if (je.getName().endsWith(".class")) {
+
+              String className = je.getName().substring(0, je.getName().length() - 6);
+              className = className.replace(File.separatorChar, '.');
+              try {
+                Class<?> c = clsLoader.loadClass(className);
+
+                if (c != null) {
+                  System.out.println("Got CLass " + c.getName());
+                  handleList.add(c);
+
+                }
+              } catch (Exception ex) {
+                System.out.println(ex);
+              }
+
+            }
+          }
+
+          clsLoader.close();
+
+          Class<?>[] rtnClsArr = new Class<?>[handleList.size()];
+          rtnClsArr = handleList.toArray(rtnClsArr);
+          jarFile.close();
+
+          return rtnClsArr;
+        }
+      } catch (Exception e) {
+        System.out.println("EXCEPTION " + e);
+      }
+    }
+
+    return null;
+  }
+
   public static String getSignature(Method m) {
     String sig;
     try {
@@ -145,13 +219,14 @@ public class bootstrap {
   }
 
   public static String get_Field_Type(Class<?> cls, String key) {
+    System.out.println("Getting field type bootstrap for " + key);
     String valType = "";
 
     try {
       Field f = cls.getField(key);
       valType = f.getType().getName();
     } catch (Exception e) {
-      e.printStackTrace();
+      System.out.println("Finding field error" + e);
     }
 
     return valType;
@@ -188,6 +263,11 @@ public class bootstrap {
     Constructor<?>[] constructors = cls.getDeclaredConstructors();
     for (Constructor<?> cnstr : constructors) {
       System.out.println("Name of the constructor: " + cnstr.getName());
+    }
+
+    Field[] fields = cls.getFields();
+    for (Field f : fields) {
+      System.out.println("Name of the fiekd: " + f.getName());
     }
 
     Method[] methods = cls.getDeclaredMethods();
