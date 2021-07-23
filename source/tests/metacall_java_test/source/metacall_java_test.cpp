@@ -185,15 +185,14 @@ TEST_F(metacall_java_test, DefaultConstructor)
 			}
 		}
 
-		/* TODO: Test load from memory */
-		/*
-		static const char buffer[] =
-			"...\n"
-			"...\n"
-			"...\n";
+		{ /* TODO: Test load from memory */
+			static const char buffer[] =
+				"public class memoryTest{"
+				"public static String memoryString = \"Memory test string\";"
+				"}";
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory(tag, buffer, sizeof(buffer), NULL));
-		*/
+			EXPECT_EQ((int)0, (int)metacall_load_from_memory("java", buffer, sizeof(buffer), NULL));
+		}
 
 		/* TODO: Call to the functions of the load from memory script */
 
