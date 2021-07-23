@@ -126,6 +126,7 @@ struct loader_impl_py_type
 {
 	PyObject *inspect_module;
 	PyObject *inspect_signature;
+	PyObject *inspect_getattr_static;
 	PyObject *builtins_module;
 	PyObject *traceback_module;
 	PyObject *traceback_format_exception;
@@ -544,7 +545,13 @@ value py_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 
 	PyObject *pyobject_class = py_class->class;
 
-	PyObject *key_py_str = PyUnicode_FromString(key);
+	char *attr_name = attribute_name(attr);
+	if (attr_name == NULL)
+	{
+		return NULL;
+	}
+
+	PyObject *key_py_str = PyUnicode_FromString(attr_name);
 	PyObject *generic_attr = PyObject_GenericGetAttr(pyobject_class, key_py_str);
 	Py_DECREF(key_py_str);
 
@@ -561,7 +568,13 @@ int py_class_interface_static_set(klass cls, class_impl impl, attribute attr, va
 
 	PyObject *pyvalue = py_loader_impl_value_to_capi(py_class->impl, value_type_id(v), v);
 
-	PyObject *key_py_str = PyUnicode_FromString(key);
+	char *attr_name = attribute_name(attr);
+	if (attr_name == NULL)
+	{
+		return 1;
+	}
+
+	PyObject *key_py_str = PyUnicode_FromString(attr_name);
 
 	int retval = PyObject_GenericSetAttr(pyobject_class, key_py_str, pyvalue);
 
@@ -583,6 +596,8 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 	{
 		return NULL;
 	}
+
+	char *static_method_name = method_name(m);
 
 	PyObject *method = PyObject_GetAttrString(cls_impl->class, static_method_name);
 
@@ -621,7 +636,7 @@ value py_class_interface_static_await(klass cls, class_impl impl, method m, clas
 	// TODO
 	(void)cls;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -1755,11 +1770,20 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 		goto error_inspect_signature;
 	}
 
+	py_impl->inspect_getattr_static = PyObject_GetAttrString(py_impl->inspect_module, "getattr_static");
+
+	if (py_impl->inspect_getattr_static == NULL)
+	{
+		goto error_inspect_getattr_static;
+	}
+
 	if (PyCallable_Check(py_impl->inspect_signature) && py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
 	{
 		return 0;
 	}
 
+	Py_XDECREF(py_impl->inspect_getattr_static);
+error_inspect_getattr_static:
 	Py_XDECREF(py_impl->inspect_signature);
 error_inspect_signature:
 	Py_DECREF(py_impl->inspect_module);
@@ -3032,8 +3056,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass c)
 {
-	(void)impl;
-	(void)c;
+	loader_impl_py py_impl = loader_impl_get(impl);
 
 	if (PyObject_HasAttrString(obj, "__dict__"))
 	{
@@ -3061,14 +3084,68 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 			if (!PyUnicode_CompareWithASCIIString(tuple_key, "__dict__") || !PyUnicode_CompareWithASCIIString(tuple_key, "__weakref__"))
 				continue;
 
-			// value key = py_loader_impl_capi_to_value(impl, tuple_key, py_loader_impl_capi_to_value_type(tuple_key));
-			// value val = py_loader_impl_capi_to_value(impl, tuple_val, py_loader_impl_capi_to_value_type(tuple_val));
+			type_id memberType = py_loader_impl_capi_to_value_type(impl, tuple_val);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s",
+			// Skip None types
+			if (memberType == TYPE_NULL)
+			{
+				continue;
+			}
+
+			PyObject *args = PyTuple_New(2);
+			if (args == NULL)
+			{
+				py_loader_impl_error_print(py_impl);
+				continue;
+			}
+
+			PyTuple_SetItem(args, 0, obj);		 // class
+			PyTuple_SetItem(args, 1, tuple_key); // method
+			PyObject *methodstatic = PyObject_CallObject(py_impl->inspect_getattr_static, args);
+			Py_DECREF(args);
+			bool isStaticMethod = PyObject_TypeCheck(methodstatic, &PyStaticMethod_Type);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
 				PyUnicode_AsUTF8(tuple_key),
-				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)));
+				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)),
+				isStaticMethod);
 
-			// TODO: Register here the class methods and attributes, and their static versions
+			Py_INCREF(obj);
+
+			if (memberType == TYPE_FUNCTION || isStaticMethod)
+			{
+				int args_count = py_loader_impl_discover_func_args_count(tuple_val);
+				if (args_count == -1)
+				{
+					continue; // error counting args, TODO improve: py_loader_impl_discover_func_args_count
+				}
+
+				method m = method_create(c,
+					PyUnicode_AsUTF8(tuple_key),
+					args_count,
+					tuple_val,
+					VISIBILITY_PUBLIC,
+					METHOD_SYNC); // TODO: Add async/sync check
+
+				if (isStaticMethod)
+				{
+					class_register_static_method(c, m);
+					log_write("metacall", LOG_LEVEL_DEBUG, "STATIC class member %s", PyUnicode_AsUTF8(tuple_key));
+				}
+				else
+				{
+					class_register_method(c, m);
+					log_write("metacall", LOG_LEVEL_DEBUG, "NON STATIC class member %s", PyUnicode_AsUTF8(tuple_key));
+				}
+			}
+			else
+			{
+				type t = type_create(py_loader_impl_capi_to_value_type(impl, tuple_val), type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)), NULL, NULL);
+				attribute attr = attribute_create(c, PyUnicode_AsUTF8(tuple_key), t, tuple_val, VISIBILITY_PUBLIC);
+
+				class_register_static_attribute(c, attr);
+				//class_register_attribute(c, attr);
+			}
 		}
 	}
 
