@@ -285,7 +285,7 @@ public class bootstrap {
 
     Field[] fields = cls.getFields();
     for (Field f : fields) {
-      System.out.println("Name of the fiekd: " + f.getName());
+      System.out.println("Name of the field: " + f.getName());
     }
 
     Method[] methods = cls.getDeclaredMethods();

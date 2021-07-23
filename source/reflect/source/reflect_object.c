@@ -34,7 +34,6 @@ struct object_type
 	object_impl impl;
 	object_interface interface;
 	size_t ref_count;
-
 	klass cls;
 };
 
