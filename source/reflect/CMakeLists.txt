@@ -64,6 +64,7 @@ set(sources
 	${source_path}/reflect_function.c
 	${source_path}/reflect_attribute.c
 	${source_path}/reflect_method.c
+	${source_path}/reflect_class_visibility.c
 	${source_path}/reflect_class.c
 	${source_path}/reflect_object.c
 	${source_path}/reflect_future.c

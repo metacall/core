@@ -189,7 +189,20 @@ value class_metadata_name(klass cls)
 
 value class_metadata(klass cls)
 {
-	// TODO: Implement inspect of (non-)static methods / attributes
+	/* The structure of the metadata is:
+	* {
+	*	name: "ClassName",
+	*	methods: [{}],
+	*	static_methods: [{}],
+	*	attributes: {
+	*		"attr1": {}
+	*	},
+	*	static_attributes: {
+	*		"static_attr1": {}
+	*	}
+	* }
+	*/
+
 	(void)cls;
 
 	value name, c;

@@ -32,6 +32,9 @@ struct attribute_type
 	enum class_visibility_id visibility;
 };
 
+static value attribute_metadata_name(attribute attr);
+static value attribute_metadata_visibility(attribute attr);
+
 attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility)
 {
 	attribute attr = malloc(sizeof(struct attribute_type));
@@ -88,6 +91,111 @@ attribute_impl attribute_data(attribute attr)
 enum class_visibility_id attribute_visibility(attribute attr)
 {
 	return attr->visibility;
+}
+
+value attribute_metadata_name(attribute attr)
+{
+	static const char name_str[] = "name";
+	value *name_array, name = value_create_array(NULL, 2);
+
+	if (name == NULL)
+	{
+		return NULL;
+	}
+
+	name_array = value_to_array(name);
+	name_array[0] = value_create_string(name_str, sizeof(name_str) - 1);
+
+	if (name_array[0] == NULL)
+	{
+		value_type_destroy(name);
+		return NULL;
+	}
+
+	name_array[1] = value_create_string(attr->name, strlen(attr->name));
+
+	if (name_array[1] == NULL)
+	{
+		value_type_destroy(name);
+		return NULL;
+	}
+
+	return name;
+}
+
+value attribute_metadata_visibility(attribute attr)
+{
+	static const char visibility_str[] = "visibility";
+	value *visibility_array, visibility = value_create_array(NULL, 2);
+
+	if (visibility == NULL)
+	{
+		return NULL;
+	}
+
+	visibility_array = value_to_array(visibility);
+	visibility_array[0] = value_create_string(visibility_str, sizeof(visibility_str) - 1);
+
+	if (visibility_array[0] == NULL)
+	{
+		value_type_destroy(visibility);
+		return NULL;
+	}
+
+	visibility_array[1] = class_visibility_value(attr->visibility);
+
+	if (visibility_array[1] == NULL)
+	{
+		value_type_destroy(visibility);
+		return NULL;
+	}
+
+	return visibility;
+}
+
+value attribute_metadata(attribute attr)
+{
+	/* The structure of the attribute is:
+	* {
+	*	"name": "attr1",
+	*	"type": { "name": "", "id": 18 },
+	*	"visibility": "public"
+	* }
+	*/
+	value *v_map, v = value_create_map(NULL, 3);
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_map = value_to_map(v);
+
+	v_map[0] = attribute_metadata_name(attr);
+
+	if (v_map[0] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	v_map[1] = type_metadata(attr->t);
+
+	if (v_map[1] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	v_map[2] = attribute_metadata_visibility(attr->t);
+
+	if (v_map[2] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	return v;
 }
 
 void attribute_destroy(attribute attr)

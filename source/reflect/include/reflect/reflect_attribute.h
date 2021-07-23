@@ -50,6 +50,8 @@ REFLECT_API attribute_impl attribute_data(attribute attr);
 
 REFLECT_API enum class_visibility_id attribute_visibility(attribute attr);
 
+REFLECT_API value attribute_metadata(attribute attr);
+
 REFLECT_API void attribute_destroy(attribute attr);
 
 #ifdef __cplusplus
