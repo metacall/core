@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileWriter;
 
 import javax.tools.*;
 import java.util.*;
@@ -195,6 +196,23 @@ public class bootstrap {
     }
 
     return null;
+  }
+
+  public static Class<?>[] load_from_memory(String name, String buffer) {
+    System.out.println("BOOTSTRAP " + buffer);
+
+    try {
+      Path tempFile = Paths.get(System.getenv("LOADER_SCRIPT_PATH"), "memoryTest.java");
+
+      FileWriter myWriter = new FileWriter(tempFile.toString());
+      myWriter.write(buffer);
+      myWriter.close();
+
+      return loadFromFile(new String[] { tempFile.toString() });
+    } catch (Exception e) {
+      System.err.println("Creating File error " + e);
+    }
+    return new Class<?>[] {};
   }
 
   public static String getSignature(Method m) {

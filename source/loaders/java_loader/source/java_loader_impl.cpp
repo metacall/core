@@ -822,9 +822,28 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
 	(void)impl;
-	(void)name;
-	(void)buffer;
-	(void)size;
+
+	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
+
+	if (java_handle != nullptr)
+	{
+		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
+
+		jclass classPtr = java_impl->env->FindClass("bootstrap");
+		if (classPtr != nullptr)
+		{
+			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "load_from_memory", "(Ljava/lang/String;Ljava/lang/String;)[Ljava/lang/Class;");
+			if (mid != nullptr)
+			{
+				jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, mid, java_impl->env->NewStringUTF(name), java_impl->env->NewStringUTF(buffer));
+
+				java_handle->handle = result;
+				java_handle->size = java_impl->env->GetArrayLength(result);
+
+				return static_cast<loader_handle>(java_handle);
+			}
+		}
+	}
 
 	return NULL;
 }
