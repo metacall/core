@@ -953,6 +953,13 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 					klass c = class_create(cls_name, java_cls, &java_class_interface_singleton);
 
+					// 1) Get all fields from bootstrap.java
+					// 1.1) Iterate through all fields and store them into the class c
+					//		attribute attr = attribute_create(c, field[iterator].name, field[iterator].t, field, field[iterator].visibility);
+					//		if (field[iterator].static) { class_register_static_attribute(c, attr) } else { class_register_attribute(c, attr) }
+					// 2) Get all methods from bootstrap.java
+					// 2.1) Iterate through all methods and store them into the class c
+
 					// if (py_loader_impl_discover_class(impl, module_dict_val, c) == 0)
 					// {
 					scope sp = context_scope(ctx);
