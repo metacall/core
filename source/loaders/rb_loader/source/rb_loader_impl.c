@@ -633,15 +633,22 @@ value rb_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
 
+	char *attrname = attribute_name(attr);
+
+	if (attrname == NULL)
+	{
+		return NULL;
+	}
+
 	VALUE rb_val_class = rb_class->class;
 
-	VALUE got = rb_cv_get(rb_val_class, key);
+	VALUE got = rb_cv_get(rb_val_class, attrname);
 
 	VALUE exception = rb_errinfo();
 
 	if (exception != Qnil)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error getting class '%s' member '%s'", class_name(cls), key);
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting class '%s' member '%s'", class_name(cls), attrname);
 
 		rb_set_errinfo(Qnil);
 
@@ -660,15 +667,22 @@ int rb_class_interface_static_set(klass cls, class_impl impl, attribute attr, va
 
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
 
+	char *attrname = attribute_name(attr);
+
+	if (attrname == NULL)
+	{
+		return 1;
+	}
+
 	VALUE rb_val_class = rb_class->class;
 
-	rb_cv_set(rb_val_class, key, rb_type_serialize(v));
+	rb_cv_set(rb_val_class, attrname, rb_type_serialize(v));
 
 	VALUE exception = rb_errinfo();
 
 	if (exception != Qnil)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error setting class '%s' member '%s'", class_name(cls), key);
+		log_write("metacall", LOG_LEVEL_ERROR, "Error setting class '%s' member '%s'", class_name(cls), attrname);
 
 		rb_set_errinfo(Qnil);
 
@@ -692,13 +706,20 @@ value rb_class_interface_static_invoke(klass cls, class_impl impl, method m, cla
 		return NULL;
 	}
 
+	char *methodname = method_name(m);
+
+	if (methodname == NULL)
+	{
+		return NULL;
+	}
+
 	VALUE *argv = malloc(sizeof(VALUE) * argc);
 	for (size_t i = 0; i < argc; i++)
 	{
 		argv[i] = rb_type_serialize(args[i]);
 	}
 
-	VALUE rb_retval = rb_funcallv(cls_impl->class, rb_intern(static_method_name), argc, argv);
+	VALUE rb_retval = rb_funcallv(cls_impl->class, rb_intern(methodname), argc, argv);
 
 	free(argv);
 
@@ -718,7 +739,7 @@ value rb_class_interface_static_await(klass cls, class_impl impl, method m, clas
 	// TODO
 	(void)cls;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -1378,6 +1399,9 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				log_write("metacall", LOG_LEVEL_DEBUG, "Class name %s", class_name_str);
 
 				VALUE class = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
+
+				// rb_obj_private_methods, rb_obj_protected_methods, rb_obj_public_methods and
+				// rb_obj_singleton_methods, can be used instead of rb_class_instance_methods
 
 				/*
 				VALUE argv[1] = { Qtrue }; // include_superclasses ? Qtrue : Qfalse;
