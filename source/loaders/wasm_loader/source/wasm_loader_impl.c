@@ -46,9 +46,12 @@ typedef struct loader_impl_wasm_function_type
 
 typedef struct loader_impl_wasm_module_type
 {
+	loader_naming_name name;
 	wasm_module_t *module;
 	wasm_instance_t *instance;
 	wasm_extern_vec_t exports;
+	wasm_exporttype_vec_t export_types;
+	wasm_extern_vec_t imports;
 } loader_impl_wasm_module;
 
 typedef struct loader_impl_wasm_handle_type
@@ -451,36 +454,186 @@ error_handle_alloc:
 	return NULL;
 }
 
-int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const wasm_byte_vec_t *binary)
+bool wasm_loader_impl_is_same_valtype(const wasm_valtype_t *a, const wasm_valtype_t *b)
+{
+	return wasm_valtype_kind(a) == wasm_valtype_kind(b);
+}
+
+bool wasm_loader_impl_is_same_valtype_vec(const wasm_valtype_vec_t *a, const wasm_valtype_vec_t *b)
+{
+	if (a->size != b->size)
+	{
+		return false;
+	}
+
+	for (size_t i = 0; i < a->size; i++)
+	{
+		if (!wasm_loader_impl_is_same_valtype(a->data[i], b->data[i]))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
+bool wasm_loader_impl_is_suitable_limit(const wasm_limits_t *import, const wasm_limits_t *export)
+{
+	return import->min <= export->min && import->max <= export->max;
+}
+
+bool wasm_loader_impl_matches_memory_import(const wasm_memorytype_t *import, const wasm_memorytype_t *export)
+{
+	return wasm_loader_impl_is_suitable_limit(wasm_memorytype_limits(import), wasm_memorytype_limits(export));
+}
+
+bool wasm_loader_impl_matches_func_import(const wasm_functype_t *import, const wasm_functype_t *export)
+{
+	return wasm_loader_impl_is_same_valtype_vec(wasm_functype_params(import), wasm_functype_params(export)) &&
+		   wasm_loader_impl_is_same_valtype_vec(wasm_functype_results(import), wasm_functype_results(export));
+}
+
+bool wasm_loader_impl_matches_table_import(const wasm_tabletype_t *import, const wasm_tabletype_t *export)
+{
+	return wasm_loader_impl_is_same_valtype(wasm_tabletype_element(import), wasm_tabletype_element(export)) && wasm_loader_impl_is_suitable_limit(wasm_tabletype_limits(import), wasm_tabletype_limits(export));
+}
+
+bool wasm_loader_impl_matches_global_import(const wasm_globaltype_t *import, const wasm_globaltype_t *export)
+{
+	return wasm_loader_impl_is_same_valtype(wasm_globaltype_content(import), wasm_globaltype_content(export)) && wasm_globaltype_mutability(import) == wasm_globaltype_mutability(export);
+}
+
+bool wasm_loader_impl_matches_import(const wasm_externtype_t *import, const wasm_externtype_t *export)
+{
+	const wasm_externkind_t import_kind = wasm_externtype_kind(import);
+	const wasm_externkind_t export_kind = wasm_externtype_kind(export);
+
+	if (import_kind != export_kind)
+	{
+		return false;
+	}
+
+	if (import_kind == WASM_EXTERN_FUNC)
+	{
+		return wasm_loader_impl_matches_func_import(wasm_externtype_as_functype_const(import), wasm_externtype_as_functype_const(export));
+	}
+	else if (import_kind == WASM_EXTERN_MEMORY)
+	{
+		return wasm_loader_impl_matches_memory_import(wasm_externtype_as_memorytype_const(import), wasm_externtype_as_memorytype_const(export));
+	}
+	else if (import_kind == WASM_EXTERN_TABLE)
+	{
+		return wasm_loader_impl_matches_table_import(wasm_externtype_as_tabletype_const(import), wasm_externtype_as_tabletype_const(export));
+	}
+	else if (import_kind == WASM_EXTERN_GLOBAL)
+	{
+		return wasm_loader_impl_matches_global_import(wasm_externtype_as_globaltype_const(import), wasm_externtype_as_globaltype_const(export));
+	}
+	else
+	{
+		return false;
+	}
+}
+
+const wasm_extern_t *wasm_loader_impl_find_export(loader_impl_wasm_handle handle, const wasm_importtype_t *import_type)
+{
+	// TODO: What about shadowing?
+	const wasm_name_t *module_name = wasm_importtype_module(import_type);
+	const wasm_name_t *name = wasm_importtype_name(import_type);
+	const wasm_externtype_t *type = wasm_importtype_type(import_type);
+
+	for (size_t module_idx = 0; module_idx < vector_size(handle->modules); module_idx++)
+	{
+		loader_impl_wasm_module *module = vector_at(handle->modules, module_idx);
+
+		// module->name is null-terminated, so no need to compare sizes first
+		if (strncmp(module->name, module_name->data, module_name->size) != 0)
+		{
+			continue;
+		}
+
+		for (size_t export_idx = 0; export_idx < module->exports.size; export_idx++)
+		{
+			const wasm_name_t *export_name = wasm_exporttype_name(module->export_types.data[export_idx]);
+			wasm_externtype_t *export_type = wasm_extern_type(module->exports.data[export_idx]);
+
+			if (export_name->size == name->size && strncmp(export_name->data, name->data, name->size) == 0 &&
+				wasm_loader_impl_matches_import(type, export_type))
+			{
+				wasm_externtype_delete(export_type);
+				return module->exports.data[export_idx];
+			}
+
+			wasm_externtype_delete(export_type);
+		}
+	}
+
+	return NULL;
+}
+
+int wasm_loader_impl_module_initialize_imports(loader_impl_wasm_handle handle, loader_impl_wasm_module *module)
+{
+	wasm_importtype_vec_t import_types;
+	wasm_module_imports(module->module, &import_types);
+	wasm_extern_vec_new_uninitialized(&module->imports, import_types.size);
+
+	for (size_t i = 0; i < import_types.size; i++)
+	{
+		const wasm_extern_t *import = wasm_loader_impl_find_export(handle, import_types.data[i]);
+
+		if (import == NULL)
+		{
+			goto error_find_import;
+		}
+
+		module->imports.data[i] = wasm_extern_copy(import);
+	}
+
+	wasm_importtype_vec_delete(&import_types);
+	return 0;
+
+error_find_import:
+	wasm_extern_vec_delete(&module->imports);
+	wasm_importtype_vec_delete(&import_types);
+	return 1;
+}
+
+int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const loader_naming_name name, const wasm_byte_vec_t *binary)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 
 	loader_impl_wasm_module module;
 	module.module = wasm_module_new(wasm_impl->store, binary);
 
-	// TODO: `wasm_module_new` can fail for a multitude of reasons.
-	//       Consider using the Wasmtime-specific `wasmtime_module_new`,
-	//       which provides richer error messages. This could be done
-	//       conditionally using the preprocessor to maintain compatibility
-	//       with other runtimes.
 	if (module.module == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to create module");
-		return 1;
+		goto error_module_new;
 	}
 
-	// TODO: Add support for imports. This currently results in undefined
-	//       behavior if the module expects imports.
+	if (wasm_loader_impl_module_initialize_imports(handle, &module) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Could not satisfy all imports required by module");
+		goto error_initialize_imports;
+	}
 
-	// No way to check whether `wasm_instance_new` fails, so hope for the best
-	// here too.
-	wasm_extern_vec_t imports = WASM_EMPTY_VEC;
-	module.instance = wasm_instance_new(wasm_impl->store, module.module, &imports, NULL);
+	strncpy(module.name, name, sizeof(module.name));
+
+	// There is no way to check whether `wasm_module_exports` or
+	// `wasm_instance_new` fail, so just hope for the best.
+	wasm_module_exports(module.module, &module.export_types);
+
+	module.instance = wasm_instance_new(wasm_impl->store, module.module, &module.imports, NULL);
 	wasm_instance_exports(module.instance, &module.exports);
 
 	vector_push_back_var(handle->modules, module);
 
 	return 0;
+
+error_initialize_imports:
+	wasm_module_delete(module.module);
+error_module_new:
+	return 1;
 }
 
 void wasm_loader_impl_handle_wasmtime_error(wasmtime_error_t *error)
@@ -546,6 +699,8 @@ int wasm_loader_impl_try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec
 
 int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
 {
+	static const loader_naming_tag TEXT_EXTENSION = "wat";
+
 	int ret = 1;
 
 	size_t size;
@@ -562,7 +717,9 @@ int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_ha
 		goto error_convert_buffer;
 	}
 
-	if (wasm_loader_impl_handle_add_module(impl, handle, &binary) != 0)
+	loader_naming_name module_name;
+	loader_path_get_module_name(path, module_name, TEXT_EXTENSION);
+	if (wasm_loader_impl_handle_add_module(impl, handle, module_name, &binary) != 0)
 	{
 		goto error_add_module;
 	}
@@ -604,8 +761,6 @@ error_alloc_handle:
 
 loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
 {
-	(void)name;
-
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_impl_wasm_handle handle = wasm_loader_impl_create_handle(1);
 
@@ -620,6 +775,7 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	wasm_byte_vec_new(&binary, size, buffer);
 	if (!wasm_module_validate(wasm_impl->store, &binary))
 	{
+		// TODO: Make this conditional
 		log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader: Buffer is not valid binary module, trying wat2wasm");
 
 		wasm_byte_vec_delete(&binary);
@@ -629,7 +785,7 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 		}
 	}
 
-	if (wasm_loader_impl_handle_add_module(impl, handle, &binary) != 0)
+	if (wasm_loader_impl_handle_add_module(impl, handle, name, &binary) != 0)
 	{
 		goto error_load_module;
 	}
@@ -661,7 +817,9 @@ int wasm_loader_impl_load_module_from_package(loader_impl impl, loader_impl_wasm
 	wasm_byte_vec_t binary;
 	wasm_byte_vec_new(&binary, size, buffer);
 
-	if (wasm_loader_impl_handle_add_module(impl, handle, &binary) != 0)
+	loader_naming_name module_name;
+	loader_path_get_name(path, module_name);
+	if (wasm_loader_impl_handle_add_module(impl, handle, module_name, &binary) != 0)
 	{
 		goto error_add_module;
 	}
@@ -707,8 +865,10 @@ int wasm_loader_impl_clear(loader_impl impl, loader_handle handle)
 	for (size_t idx = 0; idx < vector_size(wasm_handle->modules); idx++)
 	{
 		loader_impl_wasm_module *module = vector_at(wasm_handle->modules, idx);
+		wasm_exporttype_vec_delete(&module->export_types);
 		wasm_extern_vec_delete(&module->exports);
 		wasm_instance_delete(module->instance);
+		wasm_extern_vec_delete(&module->imports);
 		wasm_module_delete(module->module);
 	}
 
@@ -791,29 +951,20 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 	return 0;
 }
 
-//int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const wasm_module_t *module, const wasm_instance_t *instance)
 int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const loader_impl_wasm_module *module)
 {
-	int ret = 0;
-
-	// There is no way to check whether `wasm_module_exports` fails, so just
-	// hope for the best.
-	wasm_exporttype_vec_t export_types;
-	wasm_module_exports(module->module, &export_types);
-
-	for (size_t export_idx = 0; export_idx < export_types.size; export_idx++)
+	for (size_t export_idx = 0; export_idx < module->export_types.size; export_idx++)
 	{
 		// All of the `wasm_*` calls in this loop return pointers to memory
 		// owned by `export_types`, so no need to do any error checking or
 		// cleanup.
-		const wasm_externtype_t *extern_type = wasm_exporttype_type(export_types.data[export_idx]);
+		const wasm_externtype_t *extern_type = wasm_exporttype_type(module->export_types.data[export_idx]);
 		const wasm_externkind_t kind = wasm_externtype_kind(extern_type);
-		char *export_name = wasm_loader_impl_get_export_type_name(export_types.data[export_idx]);
+		char *export_name = wasm_loader_impl_get_export_type_name(module->export_types.data[export_idx]);
 
 		if (export_name == NULL)
 		{
-			ret = 1;
-			goto cleanup;
+			return 1;
 		}
 
 		// TODO: Do we need to implement the other types as well?
@@ -827,9 +978,7 @@ int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const loader_i
 		free(export_name);
 	}
 
-cleanup:
-	wasm_exporttype_vec_delete(&export_types);
-	return ret;
+	return 0;
 }
 
 int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
