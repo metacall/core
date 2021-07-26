@@ -7,6 +7,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -296,6 +297,37 @@ public class bootstrap {
     }
 
     return cls.getName();
+  }
+
+  public static String getModifierType(int mod) {
+    if (Modifier.isPublic(mod))
+      return "public";
+    if (Modifier.isPrivate(mod))
+      return "private";
+    if (Modifier.isProtected(mod))
+      return "protected";
+
+    return "";
+  }
+
+  public static Field[] java_bootstrap_discover_fields(Class<?> cls) {
+    System.out.println("FIELD DISCOVER " + cls.getName());
+
+    Field[] fields = cls.getFields();
+    return fields;
+  }
+
+  public static String[] java_bootstrap_discover_fields_details(Field f) {
+    String fName = f.getName();
+    String fType = f.getType().getName();
+    int fModifier = f.getModifiers();
+    String fVisibility = getModifierType(fModifier);
+    String fStatic = Modifier.isStatic(fModifier) ? "static" : "nonstatic";
+
+    // System.out.println("Field " + fVisibility + " " + fStatic + " " + fType + " "
+    // + fName);
+
+    return new String[] { fName, fType, fVisibility, fStatic };
   }
 
   // public static void DiscoverData(String classname) {
