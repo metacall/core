@@ -514,75 +514,70 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 value java_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	(void)cls;
-	std::cout << "GET GET " << attr << std::endl;
 
 	const char *key = (const char *)attribute_name(attr);
-	std::cout << "GET GET " << key << std::endl;
-
 	type fieldType = (type)attribute_type(attr);
-	std::cout << "GET GET" << std::endl;
 
-	// loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-	// loader_impl_java java_impl = java_cls->impl;
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+	loader_impl_java java_impl = java_cls->impl;
 
-	// jobject clsObj = java_cls->cls;
-	// jclass clscls = java_cls->concls;
+	jobject clsObj = java_cls->cls;
+	jclass clscls = java_cls->concls;
 
-	// jstring getKey = java_impl->env->NewStringUTF(key);
+	jstring getKey = java_impl->env->NewStringUTF(key);
 
-	// if (clscls != nullptr)
-	// {
-	// 	const char *fType = (const char *)type_derived(fieldType);
-	// 	jfieldID fID = java_impl->env->GetStaticFieldID(clscls, key, fType);
+	if (clscls != nullptr)
+	{
+		const char *fType = (const char *)type_derived(fieldType);
+		jfieldID fID = java_impl->env->GetStaticFieldID(clscls, key, fType);
 
-	// 	if (fID != nullptr)
-	// 	{
-	// 		std::cout << "GOT HERE PARTY" << std::endl;
-	// 		const char *gotType = type_name(fieldType);
+		if (fID != nullptr)
+		{
+			const char *gotType = type_name(fieldType);
 
-	// 		if (!strcmp(gotType, "boolean"))
-	// 		{
-	// 			jboolean gotVal = (jboolean)java_impl->env->GetStaticBooleanField(clscls, fID);
-	// 			return value_create_bool(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "char"))
-	// 		{
-	// 			jchar gotVal = (jchar)java_impl->env->GetStaticCharField(clscls, fID);
-	// 			return value_create_char(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "short"))
-	// 		{
-	// 			jshort gotVal = (jshort)java_impl->env->GetStaticShortField(clscls, fID);
-	// 			return value_create_short(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "int"))
-	// 		{
-	// 			jint gotVal = (jint)java_impl->env->GetStaticIntField(clscls, fID);
-	// 			return value_create_int(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "long"))
-	// 		{
-	// 			jlong gotVal = (jlong)java_impl->env->GetStaticLongField(clscls, fID);
-	// 			return value_create_long(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "float"))
-	// 		{
-	// 			jfloat gotVal = (jfloat)java_impl->env->GetStaticFloatField(clscls, fID);
-	// 			return value_create_float(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "double"))
-	// 		{
-	// 			jdouble gotVal = (jdouble)java_impl->env->GetStaticDoubleField(clscls, fID);
-	// 			return value_create_double(gotVal);
-	// 		}
-	// 		if (!strcmp(gotType, "java.lang.String"))
-	// 		{
-	// 			jstring gotVal = (jstring)java_impl->env->GetStaticObjectField(clscls, fID);
-	// 			const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
-	// 			return value_create_string(gotValConv, strlen(gotValConv));
-	// 		}
-	// }
-	// }
+			if (!strcmp(gotType, "boolean"))
+			{
+				jboolean gotVal = (jboolean)java_impl->env->GetStaticBooleanField(clscls, fID);
+				return value_create_bool(gotVal);
+			}
+			if (!strcmp(gotType, "char"))
+			{
+				jchar gotVal = (jchar)java_impl->env->GetStaticCharField(clscls, fID);
+				return value_create_char(gotVal);
+			}
+			if (!strcmp(gotType, "short"))
+			{
+				jshort gotVal = (jshort)java_impl->env->GetStaticShortField(clscls, fID);
+				return value_create_short(gotVal);
+			}
+			if (!strcmp(gotType, "int"))
+			{
+				jint gotVal = (jint)java_impl->env->GetStaticIntField(clscls, fID);
+				return value_create_int(gotVal);
+			}
+			if (!strcmp(gotType, "long"))
+			{
+				jlong gotVal = (jlong)java_impl->env->GetStaticLongField(clscls, fID);
+				return value_create_long(gotVal);
+			}
+			if (!strcmp(gotType, "float"))
+			{
+				jfloat gotVal = (jfloat)java_impl->env->GetStaticFloatField(clscls, fID);
+				return value_create_float(gotVal);
+			}
+			if (!strcmp(gotType, "double"))
+			{
+				jdouble gotVal = (jdouble)java_impl->env->GetStaticDoubleField(clscls, fID);
+				return value_create_double(gotVal);
+			}
+			if (!strcmp(gotType, "java.lang.String"))
+			{
+				jstring gotVal = (jstring)java_impl->env->GetStaticObjectField(clscls, fID);
+				const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
+				return value_create_string(gotValConv, strlen(gotValConv));
+			}
+		}
+	}
 
 	return NULL;
 }
@@ -590,72 +585,77 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
 {
 	(void)cls;
-	// std::cout << "\nSet = " << key << std::endl;
 
-	// loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-	// loader_impl_java java_impl = java_cls->impl;
+	const char *key = (const char *)attribute_name(attr);
+	type fieldType = (type)attribute_type(attr);
 
-	// jobject clsObj = java_cls->cls;
+	std::cout << "\nSet = " << key << std::endl;
 
-	// jclass clscls = java_cls->concls;
-	// if (clscls != nullptr)
-	// {
-	// 	type_id id = value_type_id(v);
-	// 	jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, get_val_sig(id).c_str());
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+	loader_impl_java java_impl = java_cls->impl;
 
-	// 	if (fID != nullptr)
-	// 	{
-	// 		if (id == TYPE_BOOL)
-	// 		{
-	// 			jboolean val = (jboolean)value_to_bool(v);
-	// 			java_impl->env->SetStaticBooleanField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_CHAR)
-	// 		{
-	// 			jchar val = (jchar)value_to_char(v);
-	// 			java_impl->env->SetStaticCharField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_SHORT)
-	// 		{
-	// 			jshort val = (jshort)value_to_short(v);
-	// 			java_impl->env->SetStaticShortField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_INT)
-	// 		{
-	// 			jint val = (jint)value_to_int(v);
-	// 			java_impl->env->SetStaticIntField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_LONG)
-	// 		{
-	// 			jlong val = (jlong)value_to_long(v);
-	// 			java_impl->env->SetStaticLongField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_FLOAT)
-	// 		{
-	// 			jfloat val = (jfloat)value_to_float(v);
-	// 			java_impl->env->SetStaticFloatField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_DOUBLE)
-	// 		{
-	// 			jdouble val = (jdouble)value_to_double(v);
-	// 			java_impl->env->SetStaticDoubleField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 		if (id == TYPE_STRING)
-	// 		{
-	// 			const char *strV = value_to_string(v);
-	// 			jstring val = java_impl->env->NewStringUTF(strV);
-	// 			java_impl->env->SetStaticObjectField(clscls, fID, val);
-	// 			return 0;
-	// 		}
-	// 	}
-	// }
+	jobject clsObj = java_cls->cls;
+	jclass clscls = java_cls->concls;
+
+	if (clscls != nullptr)
+	{
+		const char *fType = (const char *)type_derived(fieldType);
+		type_id id = (type_id)type_index(fieldType);
+		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, fType);
+
+		if (fID != nullptr)
+		{
+			if (id == TYPE_BOOL)
+			{
+				jboolean val = (jboolean)value_to_bool(v);
+				java_impl->env->SetStaticBooleanField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_CHAR)
+			{
+				jchar val = (jchar)value_to_char(v);
+				java_impl->env->SetStaticCharField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_SHORT)
+			{
+				jshort val = (jshort)value_to_short(v);
+				java_impl->env->SetStaticShortField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_INT)
+			{
+				jint val = (jint)value_to_int(v);
+				java_impl->env->SetStaticIntField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_LONG)
+			{
+				jlong val = (jlong)value_to_long(v);
+				java_impl->env->SetStaticLongField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_FLOAT)
+			{
+				jfloat val = (jfloat)value_to_float(v);
+				java_impl->env->SetStaticFloatField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_DOUBLE)
+			{
+				jdouble val = (jdouble)value_to_double(v);
+				java_impl->env->SetStaticDoubleField(clscls, fID, val);
+				return 0;
+			}
+			if (id == TYPE_STRING)
+			{
+				const char *strV = value_to_string(v);
+				jstring val = java_impl->env->NewStringUTF(strV);
+				java_impl->env->SetStaticObjectField(clscls, fID, val);
+				return 0;
+			}
+		}
+	}
 
 	return 1;
 }
@@ -1085,7 +1085,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							type t = loader_impl_type(impl, field_type);
 							attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
 
-							if (strcmp(field_static, "static") == 0)
+							if (!strcmp(field_static, "static"))
 								class_register_static_attribute(c, attr);
 							else
 								class_register_attribute(c, attr);
