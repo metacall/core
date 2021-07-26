@@ -35,6 +35,7 @@
 #include <stdlib.h>
 
 #include <wasm.h>
+#include <wasmtime.h>
 
 #define COUNT_OF(array) (sizeof(array) / sizeof(array[0]))
 
@@ -450,19 +451,12 @@ error_handle_alloc:
 	return NULL;
 }
 
-int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const char *buffer, size_t size)
+int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle handle, const wasm_byte_vec_t *binary)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
-	// There is sadly no way to check whether `wasm_byte_vec_new`
-	// fails, so we just have to hope for the best here.
-	wasm_byte_vec_t binary;
-	wasm_byte_vec_new(&binary, size, buffer);
 
-	// TODO: Maybe create module in-place in vector instead
 	loader_impl_wasm_module module;
-	module.module = wasm_module_new(wasm_impl->store, &binary);
-
-	wasm_byte_vec_delete(&binary);
+	module.module = wasm_module_new(wasm_impl->store, binary);
 
 	// TODO: `wasm_module_new` can fail for a multitude of reasons.
 	//       Consider using the Wasmtime-specific `wasmtime_module_new`,
@@ -489,14 +483,22 @@ int wasm_loader_impl_handle_add_module(loader_impl impl, loader_impl_wasm_handle
 	return 0;
 }
 
-int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
+void wasm_loader_impl_handle_wasmtime_error(wasmtime_error_t *error)
 {
-	int ret = 1;
+	wasm_name_t message;
+	wasmtime_error_message(error, &message);
 
+	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Encountered Wasmtime error\n%.*s", message.size, message.data);
+
+	wasmtime_error_delete(error);
+	wasm_byte_vec_delete(&message);
+}
+
+char *wasm_loader_impl_read_buffer_from_file(loader_impl impl, const char *path, size_t *file_size)
+{
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 
-	size_t file_size;
-	FILE *file = wasm_loader_impl_open_file_relative(wasm_impl, path, &file_size);
+	FILE *file = wasm_loader_impl_open_file_relative(wasm_impl, path, file_size);
 
 	if (file == NULL)
 	{
@@ -504,21 +506,63 @@ int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_ha
 		goto error_open_file;
 	}
 
-	char *buffer = malloc(file_size);
+	char *buffer = malloc(*file_size);
 	if (buffer == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to allocate file buffer");
 		goto error_buffer_alloc;
 	}
 
-	size_t bytes_read = fread(buffer, 1, file_size, file);
-	if (bytes_read != file_size)
+	size_t bytes_read = fread(buffer, 1, *file_size, file);
+	if (bytes_read != *file_size)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to read file (read %zu of %zu bytes)", bytes_read, file_size);
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Failed to read file (read %zu of %zu bytes)", bytes_read, *file_size);
 		goto error_read_file;
 	}
 
-	if (wasm_loader_impl_handle_add_module(impl, handle, buffer, file_size) != 0)
+	fclose(file);
+	return buffer;
+
+error_read_file:
+	free(buffer);
+error_buffer_alloc:
+	fclose(file);
+error_open_file:
+	return NULL;
+}
+
+int wasm_loader_impl_try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec_t *binary)
+{
+	wasmtime_error_t *error = wasmtime_wat2wasm(buffer, size, binary);
+
+	if (error != NULL)
+	{
+		wasm_loader_impl_handle_wasmtime_error(error);
+		return 1;
+	}
+
+	return 0;
+}
+
+int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
+{
+	int ret = 1;
+
+	size_t size;
+	char *buffer = wasm_loader_impl_read_buffer_from_file(impl, path, &size);
+
+	if (buffer == NULL)
+	{
+		goto error_read_file;
+	}
+
+	wasm_byte_vec_t binary;
+	if (wasm_loader_impl_try_wat2wasm(buffer, size, &binary) != 0)
+	{
+		goto error_convert_buffer;
+	}
+
+	if (wasm_loader_impl_handle_add_module(impl, handle, &binary) != 0)
 	{
 		goto error_add_module;
 	}
@@ -526,11 +570,10 @@ int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_ha
 	ret = 0;
 
 error_add_module:
+	wasm_byte_vec_delete(&binary);
+error_convert_buffer:
 error_read_file:
 	free(buffer);
-error_buffer_alloc:
-	fclose(file);
-error_open_file:
 	return ret;
 }
 
@@ -563,6 +606,7 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 {
 	(void)name;
 
+	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_impl_wasm_handle handle = wasm_loader_impl_create_handle(1);
 
 	if (handle == NULL)
@@ -570,7 +614,77 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 		goto error_alloc_handle;
 	}
 
-	if (wasm_loader_impl_handle_add_module(impl, handle, buffer, size) != 0)
+	wasm_byte_vec_t binary;
+	// There is sadly no way to check whether `wasm_byte_vec_new`
+	// fails, so we just have to hope for the best here.
+	wasm_byte_vec_new(&binary, size, buffer);
+	if (!wasm_module_validate(wasm_impl->store, &binary))
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader: Buffer is not valid binary module, trying wat2wasm");
+
+		wasm_byte_vec_delete(&binary);
+		if (wasm_loader_impl_try_wat2wasm(buffer, size, &binary) != 0)
+		{
+			goto error_convert_buffer;
+		}
+	}
+
+	if (wasm_loader_impl_handle_add_module(impl, handle, &binary) != 0)
+	{
+		goto error_load_module;
+	}
+
+	wasm_byte_vec_delete(&binary);
+
+	return handle;
+
+error_load_module:
+	wasm_byte_vec_delete(&binary);
+error_convert_buffer:
+	wasm_loader_impl_clear(impl, handle);
+error_alloc_handle:
+	return NULL;
+}
+
+int wasm_loader_impl_load_module_from_package(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
+{
+	int ret = 1;
+
+	size_t size;
+	char *buffer = wasm_loader_impl_read_buffer_from_file(impl, path, &size);
+
+	if (buffer == NULL)
+	{
+		goto error_read_file;
+	}
+
+	wasm_byte_vec_t binary;
+	wasm_byte_vec_new(&binary, size, buffer);
+
+	if (wasm_loader_impl_handle_add_module(impl, handle, &binary) != 0)
+	{
+		goto error_add_module;
+	}
+
+	ret = 0;
+
+error_add_module:
+	wasm_byte_vec_delete(&binary);
+error_read_file:
+	free(buffer);
+	return ret;
+}
+
+loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	loader_impl_wasm_handle handle = wasm_loader_impl_create_handle(1);
+
+	if (handle == NULL)
+	{
+		goto error_alloc_handle;
+	}
+
+	if (wasm_loader_impl_load_module_from_package(impl, handle, path) != 0)
 	{
 		goto error_load_module;
 	}
@@ -580,16 +694,6 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 error_load_module:
 	wasm_loader_impl_clear(impl, handle);
 error_alloc_handle:
-	return NULL;
-}
-
-loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
-{
-	/* TODO */
-
-	(void)impl;
-	(void)path;
-
 	return NULL;
 }
 
