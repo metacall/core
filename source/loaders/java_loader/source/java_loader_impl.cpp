@@ -73,22 +73,10 @@ typedef struct loader_impl_java_field_type
 	jobject fieldObj;
 } * loader_impl_java_field;
 
-static struct
-{
-	type_id id;
-	const char *name;
-} type_id_name_pair[] = {
-	{ TYPE_BOOL, "bool" },
-	{ TYPE_LONG, "int" },
-	{ TYPE_DOUBLE, "float" },
-	{ TYPE_STRING, "str" },
-	{ TYPE_BUFFER, "bytes" },
-	{ TYPE_ARRAY, "list" },
-	{ TYPE_MAP, "dict" }
-};
-
 std::string get_val_sig(const char *type)
 {
+	// TODO: Remove this (this will be not necessary because it will be handled with type_impl)
+
 	if (!strcmp(type, "boolean"))
 		return "Z";
 	if (!strcmp(type, "char"))
@@ -111,6 +99,8 @@ std::string get_val_sig(const char *type)
 
 std::string get_val_sig(type_id type)
 {
+	// TODO: Remove this (this will be not necessary because it will be handled with type_impl)
+
 	if (type == TYPE_BOOL)
 		return "Z";
 	if (type == TYPE_CHAR)
@@ -370,7 +360,7 @@ std::string getJNISignature(class_args args, size_t argc, const char *returnType
 {
 	std::string sig = "(";
 
-	for (int i = 0; i < argc; i++)
+	for (size_t i = 0; i < argc; i++)
 	{
 		type_id id = value_type_id(args[i]);
 
@@ -409,7 +399,7 @@ std::string getJNISignature(class_args args, size_t argc, const char *returnType
 
 void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv *env)
 {
-	for (int i = 0; i < argc; i++)
+	for (size_t i = 0; i < argc; i++)
 	{
 		type_id id = value_type_id(args[i]);
 
@@ -524,10 +514,10 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 value java_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	(void)cls;
-	std::cout << "GET GET" << std::endl;
+	std::cout << "GET GET " << attr << std::endl;
 
 	const char *key = (const char *)attribute_name(attr);
-	std::cout << "GET GET" << std::endl;
+	std::cout << "GET GET " << key << std::endl;
 
 	type fieldType = (type)attribute_type(attr);
 	std::cout << "GET GET" << std::endl;
@@ -591,7 +581,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 	// 			const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
 	// 			return value_create_string(gotValConv, strlen(gotValConv));
 	// 		}
-		// }
+	// }
 	// }
 
 	return NULL;
@@ -794,22 +784,27 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			type_id id;
 			const char *name;
 			const char *jni_signature;
-		} type_id_name_pair[] = {
-			{ TYPE_BOOL, "bool", "Z" },
+		} type_id_name_sig[] = {
+			{ TYPE_BOOL, "boolean", "Z" },
 			{ TYPE_CHAR, "char", "C" },
 			{ TYPE_SHORT, "short", "S" },
 			{ TYPE_INT, "int", "I" },
 			{ TYPE_LONG, "long", "J" },
 			{ TYPE_FLOAT, "float", "F" },
 			{ TYPE_DOUBLE, "double", "D" },
-			{ TYPE_STRING, "str", "Ljava/lang/String;" },
+			{ TYPE_STRING, "java.lang.String", "Ljava/lang/String;" },
 		};
 
-		size_t size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+		size_t size = sizeof(type_id_name_sig) / sizeof(type_id_name_sig[0]);
 
 		for (size_t i = 0; i < size; i++)
 		{
-			type builtin_type = type_create(type_id_name_pair[i].id, type_id_name_pair[i].name, (type_impl)type_id_name_pair[i].jni_signature, &type_java_singleton);
+			type t = type_create(type_id_name_sig[i].id, type_id_name_sig[i].name, (type_impl)type_id_name_sig[i].jni_signature, &type_java_singleton);
+
+			if (!(t != NULL && loader_impl_type_define(impl, type_name(t), t) == 0))
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to define type '%s' in Java Loader", type_id_name_sig[i].name);
+			}
 		}
 
 		std::cout << "\nJAVA INITIALIZER successful\n";
@@ -849,7 +844,7 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	if (java_handle != nullptr)
 	{
 		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
-		log_write("metacall", LOG_LEVEL_ERROR, "Load From File");
+		log_write("metacall", LOG_LEVEL_DEBUG, "Load From File");
 
 		jobjectArray arr = java_impl->env->NewObjectArray(size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
@@ -862,12 +857,12 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		jclass classPtr = java_impl->env->FindClass("bootstrap");
 		if (classPtr != nullptr)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Bootstrap Found");
+			log_write("metacall", LOG_LEVEL_DEBUG, "Bootstrap Found");
 
 			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/Class;");
 			if (mid != nullptr)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Function Found");
+				log_write("metacall", LOG_LEVEL_DEBUG, "Function Found");
 
 				jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, mid, arr);
 
@@ -875,6 +870,14 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 				java_handle->size = java_impl->env->GetArrayLength(result);
 
 				java_impl->env->DeleteLocalRef(arr); // Remove the jObjectArray from memory
+
+				// Check for errors
+				if (java_handle->size != size)
+				{
+					java_impl->env->DeleteLocalRef(result);
+					delete java_handle;
+					return NULL;
+				}
 
 				return static_cast<loader_handle>(java_handle);
 			}
@@ -1005,7 +1008,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	// Use attribute_create with class_register_static_attribute and class_register_attribute
 	// Use method_create with class_register_static_method, class_register_method
 
-	log_write("metacall", LOG_LEVEL_ERROR, "Discover");
+	log_write("metacall", LOG_LEVEL_DEBUG, "Discover");
 
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
@@ -1082,7 +1085,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							type t = loader_impl_type(impl, field_type);
 							attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
 
-							if (strcmp(field_static, "static"))
+							if (strcmp(field_static, "static") == 0)
 								class_register_static_attribute(c, attr);
 							else
 								class_register_attribute(c, attr);

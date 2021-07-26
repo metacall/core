@@ -20,6 +20,8 @@
 
 #include <reflect/reflect_attribute.h>
 
+#include <reflect/reflect_value_type.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -187,7 +189,7 @@ value attribute_metadata(attribute attr)
 		return NULL;
 	}
 
-	v_map[2] = attribute_metadata_visibility(attr->t);
+	v_map[2] = attribute_metadata_visibility(attr);
 
 	if (v_map[2] == NULL)
 	{

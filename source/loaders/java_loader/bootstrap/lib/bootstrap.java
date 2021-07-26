@@ -60,56 +60,48 @@ public class bootstrap {
     Class<?>[] handleObject = new Class<?>[paths.length];
 
     for (int i = 0; i < paths.length; i++) {
-      System.out.println("Path provided " + paths[i]);
-
       try {
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
-        StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
+        for (String curExecPath : executionPath) {
+          JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+          DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
+          StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
 
-        Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", System.getenv("LOADER_SCRIPT_PATH") });
+          Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", curExecPath });
 
-        File pathFile = new File(paths[i]);
-        Iterable<? extends JavaFileObject> sources = mgr.getJavaFileObjectsFromFiles(Arrays.asList(pathFile));
-        JavaCompiler.CompilationTask task = compiler.getTask(null, mgr, ds, classOutputPath, null, sources);
-        Boolean call = task.call(); // main method to compile the file into class
+          File pathFile = new File(curExecPath, paths[i]);
+          Iterable<? extends JavaFileObject> sources = mgr.getJavaFileObjectsFromFiles(Arrays.asList(pathFile));
+          JavaCompiler.CompilationTask task = compiler.getTask(null, mgr, ds, classOutputPath, null, sources);
+          Boolean call = task.call(); // main method to compile the file into class
 
-        if (call) {
-          System.out.println("Compilation Successful");
+          if (call) {
+            System.out.println("Compilation Successful");
 
-          Path path = Paths.get(pathFile.getCanonicalPath());
-          String classname = path.getFileName().toString().split(".java")[0];
+            Path path = Paths.get(pathFile.getCanonicalPath());
+            String classname = path.getFileName().toString().split(".java")[0];
 
-          for (String curExecPath : executionPath) {
-            try {
-              File execPathFile = new File(curExecPath);
-              URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
+            File execPathFile = new File(curExecPath);
+            URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
 
-              // handleObject.addClass(classname, clsLoader.loadClass(classname));
-              handleObject[i] = clsLoader.loadClass(classname);
-              clsLoader.close();
+            // handleObject.addClass(classname, clsLoader.loadClass(classname));
+            handleObject[i] = clsLoader.loadClass(classname);
+            clsLoader.close();
 
-              System.out.println(i + " -> " + classname + " loaded");
+            System.out.println(i + " -> " + classname + " loaded");
 
-              // handleArray.addClass(classname, Class.forName(classname));
-              System.out.println("Class Loading Successful");
-              break;
-
-            } catch (Exception e) {
-            }
+            // handleArray.addClass(classname, Class.forName(classname));
+            System.out.println("Class Loading Successful");
+            break;
+          } else {
+            System.out.println("Compilation Failed");
           }
-        } else {
-          System.out.println("Compilation Failed");
+
+          for (Diagnostic<? extends JavaFileObject> d : ds.getDiagnostics()) { // diagnostic error printing
+            System.out.format("DIAGNOSTIC Line: %d, %s in %s\n", d.getLineNumber(), d.getMessage(null),
+                d.getSource().getName());
+          }
+
+          mgr.close();
         }
-
-        for (Diagnostic<? extends JavaFileObject> d : ds.getDiagnostics()) { // diagnostic error printing
-          System.out.format("DIAGNOSTIC Line: %d, %s in %s", d.getLineNumber(), d.getMessage(null),
-              d.getSource().getName());
-        }
-
-        mgr.close();
-        System.out.print("\n");
-
       } catch (Exception e) {
         System.err.println("Load Function" + e);
       }

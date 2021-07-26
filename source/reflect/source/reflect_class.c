@@ -259,7 +259,7 @@ value class_static_get(klass cls, const char *key)
 	{
 		attribute attr = set_get(cls->static_attributes, (set_key)key);
 
-		if (attr != NULL)
+		if (attr == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in class %s is not defined", key, cls->name);
 			return NULL;
@@ -284,7 +284,7 @@ int class_static_set(klass cls, const char *key, value v)
 	{
 		attribute attr = set_get(cls->static_attributes, (set_key)key);
 
-		if (attr != NULL)
+		if (attr == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in class %s is not defined", key, cls->name);
 			return 3;
