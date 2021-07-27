@@ -1047,13 +1047,12 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		py_cls->impl = impl;
 		py_cls->class = obj;
 
-		/*
 		if (py_loader_impl_discover_class(impl, obj, c) != 0)
 		{
 			class_destroy(c);
 			return NULL;
 		}
-		*/
+
 		v = value_create_class(c);
 	}
 	else if (id == TYPE_OBJECT)
@@ -2910,6 +2909,9 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 
 int py_loader_impl_discover_func_args_count(PyObject *func)
 {
+	// TODO: https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
+	// Use the above docs to support all types of functions
+
 	int args_count = -1;
 
 	if (PyObject_HasAttrString(func, "__call__"))
@@ -2960,6 +2962,10 @@ int py_loader_impl_discover_func_args_count(PyObject *func)
 				args_count = -1;
 			}
 		}
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "@staticmethod args count is still not implemented");
 	}
 
 	return args_count;
@@ -3027,11 +3033,11 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 		if (py_impl->asyncio_iscoroutinefunction &&
 			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
 		{
-			function_async(f, FUNCTION_ASYNC);
+			function_async(f, ASYNC_ASYNC);
 		}
 		else
 		{
-			function_async(f, FUNCTION_SYNC);
+			function_async(f, ASYNC_SYNC);
 		}
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
@@ -3054,14 +3060,14 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	return 1;
 }
 
-static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass c)
+static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
-	if (PyObject_HasAttrString(obj, "__dict__"))
+	if (PyObject_HasAttrString(py_class, "__dict__"))
 	{
 		PyObject *nameobj = PyUnicode_FromString("__dict__");
-		PyObject *read_only_dict = PyObject_GenericGetAttr((PyObject *)obj, nameobj);
+		PyObject *read_only_dict = PyObject_GenericGetAttr((PyObject *)py_class, nameobj);
 		Py_DECREF(nameobj);
 
 		/* Turns out __dict__ is not a PyDict but PyMapping */
@@ -3099,7 +3105,7 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 				continue;
 			}
 
-			PyTuple_SetItem(args, 0, obj);		 // class
+			PyTuple_SetItem(args, 0, py_class);	 // class
 			PyTuple_SetItem(args, 1, tuple_key); // method
 			PyObject *methodstatic = PyObject_CallObject(py_impl->inspect_getattr_static, args);
 			Py_DECREF(args);
@@ -3110,7 +3116,7 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)),
 				isStaticMethod);
 
-			Py_INCREF(obj);
+			Py_INCREF(py_class);
 
 			if (memberType == TYPE_FUNCTION || isStaticMethod)
 			{
@@ -3120,22 +3126,28 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 					continue; // error counting args, TODO improve: py_loader_impl_discover_func_args_count
 				}
 
+				enum async_id func_synchronicity = ASYNC_SYNC;
+
+				if (py_impl->asyncio_iscoroutinefunction &&
+					PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, tuple_val, NULL))
+				{
+					func_synchronicity = ASYNC_ASYNC;
+				}
+
 				method m = method_create(c,
 					PyUnicode_AsUTF8(tuple_key),
 					args_count,
 					tuple_val,
-					VISIBILITY_PUBLIC,
-					METHOD_SYNC); // TODO: Add async/sync check
+					VISIBILITY_PUBLIC, // check @property decorator for protected access?
+					func_synchronicity);
 
 				if (isStaticMethod)
 				{
 					class_register_static_method(c, m);
-					log_write("metacall", LOG_LEVEL_DEBUG, "STATIC class member %s", PyUnicode_AsUTF8(tuple_key));
 				}
 				else
 				{
 					class_register_method(c, m);
-					log_write("metacall", LOG_LEVEL_DEBUG, "NON STATIC class member %s", PyUnicode_AsUTF8(tuple_key));
 				}
 			}
 			else

@@ -32,10 +32,10 @@ struct method_type
 	signature s;
 	method_impl impl;
 	enum class_visibility_id visibility;
-	enum class_method_async_id async;
+	enum async_id async;
 };
 
-method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum class_method_async_id async)
+method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum async_id async)
 {
 	method m = malloc(sizeof(struct method_type));
 
@@ -109,7 +109,7 @@ enum class_visibility_id method_visibility(method m)
 	return m->visibility;
 }
 
-enum class_method_async_id method_async(method m)
+enum async_id method_async(method m)
 {
 	return m->async;
 }
