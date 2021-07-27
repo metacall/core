@@ -18,45 +18,23 @@
  *
  */
 
-#ifndef REFLECT_METHOD_H
-#define REFLECT_METHOD_H 1
+#ifndef REFLECT_ASYNC_H
+#define REFLECT_ASYNC_H 1
 
 #include <reflect/reflect_api.h>
-
-#include <reflect/reflect_class_decl.h>
-#include <reflect/reflect_class_visibility.h>
-
-#include <reflect/reflect_async.h>
-#include <reflect/reflect_signature.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct method_type;
-
-typedef void *method_impl;
-
-typedef struct method_type *method;
-
-REFLECT_API method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum async_id async);
-
-REFLECT_API klass method_class(method m);
-
-REFLECT_API char *method_name(method m);
-
-REFLECT_API signature method_signature(method m);
-
-REFLECT_API method_impl method_data(method m);
-
-REFLECT_API enum class_visibility_id method_visibility(method m);
-
-REFLECT_API enum async_id method_async(method m);
-
-REFLECT_API void method_destroy(method m);
+enum async_id
+{
+	ASYNC_SYNC = 0,
+	ASYNC_ASYNC = 1
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* REFLECT_METHOD_H */
+#endif /* REFLECT_ASYNC_H */

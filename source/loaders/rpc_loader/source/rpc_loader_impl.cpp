@@ -590,7 +590,7 @@ int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, v
 
 				signature s = function_signature(f);
 
-				function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
+				function_async(f, is_async == true ? ASYNC_ASYNC : ASYNC_SYNC);
 
 				for (size_t arg = 0; arg < args_count; ++arg)
 				{

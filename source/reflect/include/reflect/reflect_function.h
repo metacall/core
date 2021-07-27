@@ -21,6 +21,7 @@
 #ifndef REFLECT_FUNCTION_H
 #define REFLECT_FUNCTION_H 1
 
+#include <reflect/reflect_async.h>
 #include <reflect/reflect_signature.h>
 #include <reflect/reflect_value.h>
 
@@ -59,12 +60,6 @@ typedef struct function_interface_type
 
 } * function_interface;
 
-enum function_async_id
-{
-	FUNCTION_SYNC = 0,
-	FUNCTION_ASYNC = 1
-};
-
 typedef function_interface (*function_impl_interface_singleton)(void);
 
 REFLECT_API function function_create(const char *name, size_t args_count, function_impl impl, function_impl_interface_singleton singleton);
@@ -73,9 +68,9 @@ REFLECT_API int function_increment_reference(function func);
 
 REFLECT_API int function_decrement_reference(function func);
 
-REFLECT_API void function_async(function func, enum function_async_id async);
+REFLECT_API void function_async(function func, enum async_id async);
 
-REFLECT_API enum function_async_id function_async_id(function func);
+REFLECT_API enum async_id function_async_id(function func);
 
 REFLECT_API void function_bind(function func, void *data);
 

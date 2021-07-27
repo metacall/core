@@ -33,7 +33,7 @@ struct function_type
 	function_impl impl;
 	function_interface interface;
 	size_t ref_count;
-	enum function_async_id async;
+	enum async_id async;
 	void *data;
 };
 
@@ -74,7 +74,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 
 	func->impl = impl;
 	func->ref_count = 0;
-	func->async = FUNCTION_SYNC;
+	func->async = ASYNC_SYNC;
 	func->data = NULL;
 
 	func->s = signature_create(args_count);
@@ -141,12 +141,12 @@ int function_decrement_reference(function func)
 	return 0;
 }
 
-void function_async(function func, enum function_async_id async)
+void function_async(function func, enum async_id async)
 {
 	func->async = async;
 }
 
-enum function_async_id function_async_id(function func)
+enum async_id function_async_id(function func)
 {
 	return func->async;
 }
@@ -246,7 +246,7 @@ value function_metadata_async(function func)
 		return NULL;
 	}
 
-	async_array[1] = value_create_bool(func->async == FUNCTION_SYNC ? 0L : 1L);
+	async_array[1] = value_create_bool(func->async == ASYNC_SYNC ? 0L : 1L);
 
 	if (async_array[1] == NULL)
 	{
