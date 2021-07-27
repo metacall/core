@@ -1150,7 +1150,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							java_method->methodObj = curMethod;
 							java_method->methodSignature = method_signature;
 
-							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), METHOD_SYNC);
+							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), ASYNC_SYNC);
 
 							if (!strcmp(method_static, "static"))
 								class_register_static_method(c, m);
