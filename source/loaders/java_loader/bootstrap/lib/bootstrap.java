@@ -322,6 +322,31 @@ public class bootstrap {
     return new String[] { fName, fType, fVisibility, fStatic };
   }
 
+  public static Method[] java_bootstrap_discover_methods(Class<?> cls) {
+    System.out.println("METHOD DISCOVER " + cls.getName());
+
+    Method[] methods = cls.getMethods();
+    return methods;
+  }
+
+  public static String[] java_bootstrap_discover_method_details(Method m) {
+    String mName = m.getName();
+    String mReturnType = m.getReturnType().getName();
+    int mModifier = m.getModifiers();
+    String mVisibility = getModifierType(mModifier);
+    String mStatic = Modifier.isStatic(mModifier) ? "static" : "nonstatic";
+    String signature = getSignature(m);
+
+    // System.out.println("METHOD " + mVisibility + " " + mStatic + " " +
+    // mReturnType + " " + mName + " " + signature);
+
+    return new String[] { mName, mReturnType, mVisibility, mStatic, signature };
+  }
+
+  public static int java_bootstrap_discover_method_args_size(Method m) {
+    return m.getParameterCount();
+  }
+
   // public static void DiscoverData(String classname) {
 
   // Method[] methods = hClass.getDeclaredMethods();

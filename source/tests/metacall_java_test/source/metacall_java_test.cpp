@@ -108,97 +108,104 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				ASSERT_EQ((std::string) "ketangupta34", (std::string)metacall_value_to_string(param1));
 				metacall_value_destroy(param1);
 			}
-		}
-
-		{ /* TEST NON STATIC GET AND SET FROM CLASS OBJECT */
-			void *myclass = metacall_class("Test");
-
-			void *constructor_params[] = {
-				metacall_value_create_int(10),
-				metacall_value_create_int(20)
-			};
-
-			void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
-
-			void *new_object = metacall_value_to_object(new_object_v);
 
 			{
-				void *param1 = metacall_object_get(new_object, "INT_NS");
-				ASSERT_EQ((int)123433, (int)metacall_value_to_int(param1));
-				metacall_value_destroy(param1);
-
-				int intobjset = metacall_object_set(new_object, "INT_NS", metacall_value_create_int(4321));
-				ASSERT_EQ((int)0, int(intobjset));
-
-				param1 = metacall_object_get(new_object, "INT_NS");
-				ASSERT_EQ((int)4321, (int)metacall_value_to_int(param1));
-				metacall_value_destroy(param1);
-			}
-
-			{
-				void *param1 = metacall_object_get(new_object, "CHAR_NS");
-				ASSERT_EQ((char)'Z', (char)metacall_value_to_char(param1));
-				metacall_value_destroy(param1);
-
-				int charobjset = metacall_object_set(new_object, "CHAR_NS", metacall_value_create_char('Y'));
-				ASSERT_EQ((int)0, int(charobjset));
-
-				param1 = metacall_object_get(new_object, "CHAR_NS");
-				ASSERT_EQ((char)'Y', (char)metacall_value_to_char(param1));
-				metacall_value_destroy(param1);
-			}
-
-			{
-				void *param1 = metacall_object_get(new_object, "STRING_NS");
-				ASSERT_EQ((std::string) "NS string", (std::string)metacall_value_to_string(param1));
-				metacall_value_destroy(param1);
-
-				int strobjset = metacall_object_set(new_object, "STRING_NS", metacall_value_create_string("UPDATED", 7));
-				ASSERT_EQ((int)0, int(strobjset));
-
-				param1 = metacall_object_get(new_object, "STRING_NS");
-				ASSERT_EQ((std::string) "UPDATED", (std::string)metacall_value_to_string(param1));
-				metacall_value_destroy(param1);
-			}
-
-			metacall_value_destroy(new_object_v);
-		}
-
-		{ /* TEST LOAD FROM PACKAGE */
-			ASSERT_EQ((int)0, (int)metacall_load_from_package("java", "JarTest.jar", NULL));
-
-			void *myclass = metacall_class("src.JarTest.TestJar");
-
-			void *new_object_v = metacall_class_new(myclass, "src.JarTest.TestJar", {}, 0);
-
-			{
-				void *param = metacall_class_static_get(myclass, "jarTestString");
-				ASSERT_EQ((std::string) "This is a static Jar String", (std::string)metacall_value_to_string(param));
-				metacall_value_destroy(param);
-
-				int stringSet = metacall_class_static_set(myclass, "jarTestString", metacall_value_create_string("ketangupta34", 12));
-				ASSERT_EQ((int)0, int(stringSet));
-
-				param = metacall_class_static_get(myclass, "jarTestString");
-				ASSERT_EQ((std::string) "ketangupta34", (std::string)metacall_value_to_string(param));
-				metacall_value_destroy(param);
+				void *args[] = {
+					metacall_value_create_string("Metacall", 8)
+				};
+				void *ret = metacallv_class(myclass, "testFunct", args, 1); //this can all the function but not able to excess the method m
+				// void *ret2 = metacallt_class(myclass, "testFunct", METACALL_INT, args, 1); // no function with the signature error
 			}
 		}
 
-		{ /* TODO: Test load from memory */
-			static const char buffer[] =
-				"public class memoryTest{"
-				"public static String memoryString = \"Memory test string\";"
-				"}";
+		// { /* TEST NON STATIC GET AND SET FROM CLASS OBJECT */
+		// 	void *myclass = metacall_class("Test");
 
-			EXPECT_EQ((int)0, (int)metacall_load_from_memory("java", buffer, sizeof(buffer), NULL));
-		}
+		// 	void *constructor_params[] = {
+		// 		metacall_value_create_int(10),
+		// 		metacall_value_create_int(20)
+		// 	};
+
+		// 	void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
+
+		// 	void *new_object = metacall_value_to_object(new_object_v);
+
+		// 	{
+		// 		void *param1 = metacall_object_get(new_object, "INT_NS");
+		// 		ASSERT_EQ((int)123433, (int)metacall_value_to_int(param1));
+		// 		metacall_value_destroy(param1);
+
+		// 		int intobjset = metacall_object_set(new_object, "INT_NS", metacall_value_create_int(4321));
+		// 		ASSERT_EQ((int)0, int(intobjset));
+
+		// 		param1 = metacall_object_get(new_object, "INT_NS");
+		// 		ASSERT_EQ((int)4321, (int)metacall_value_to_int(param1));
+		// 		metacall_value_destroy(param1);
+		// 	}
+
+		// 	{
+		// 		void *param1 = metacall_object_get(new_object, "CHAR_NS");
+		// 		ASSERT_EQ((char)'Z', (char)metacall_value_to_char(param1));
+		// 		metacall_value_destroy(param1);
+
+		// 		int charobjset = metacall_object_set(new_object, "CHAR_NS", metacall_value_create_char('Y'));
+		// 		ASSERT_EQ((int)0, int(charobjset));
+
+		// 		param1 = metacall_object_get(new_object, "CHAR_NS");
+		// 		ASSERT_EQ((char)'Y', (char)metacall_value_to_char(param1));
+		// 		metacall_value_destroy(param1);
+		// 	}
+
+		// 	{
+		// 		void *param1 = metacall_object_get(new_object, "STRING_NS");
+		// 		ASSERT_EQ((std::string) "NS string", (std::string)metacall_value_to_string(param1));
+		// 		metacall_value_destroy(param1);
+
+		// 		int strobjset = metacall_object_set(new_object, "STRING_NS", metacall_value_create_string("UPDATED", 7));
+		// 		ASSERT_EQ((int)0, int(strobjset));
+
+		// 		param1 = metacall_object_get(new_object, "STRING_NS");
+		// 		ASSERT_EQ((std::string) "UPDATED", (std::string)metacall_value_to_string(param1));
+		// 		metacall_value_destroy(param1);
+		// 	}
+
+		// 	metacall_value_destroy(new_object_v);
+		// }
+
+		// { /* TEST LOAD FROM PACKAGE */
+		// 	ASSERT_EQ((int)0, (int)metacall_load_from_package("java", "JarTest.jar", NULL));
+
+		// 	void *myclass = metacall_class("src.JarTest.TestJar");
+
+		// 	void *new_object_v = metacall_class_new(myclass, "src.JarTest.TestJar", {}, 0);
+
+		// {
+		// 	void *param = metacall_class_static_get(myclass, "jarTestString");
+		// 	ASSERT_EQ((std::string) "This is a static Jar String", (std::string)metacall_value_to_string(param));
+		// 	metacall_value_destroy(param);
+
+		// 	int stringSet = metacall_class_static_set(myclass, "jarTestString", metacall_value_create_string("ketangupta34", 12));
+		// 	ASSERT_EQ((int)0, int(stringSet));
+
+		// 	param = metacall_class_static_get(myclass, "jarTestString");
+		// 	ASSERT_EQ((std::string) "ketangupta34", (std::string)metacall_value_to_string(param));
+		// 	metacall_value_destroy(param);
+		// }
+		// }
+
+		// { /* TODO: Test load from memory */
+		// 	static const char buffer[] =
+		// 		"public class memoryTest{"
+		// 		"public static String memoryString = \"Memory test string\";"
+		// 		"}";
+
+		// 	EXPECT_EQ((int)0, (int)metacall_load_from_memory("java", buffer, sizeof(buffer), NULL));
+		// }
 
 		/* TODO: Call to the functions of the load from memory script */
 
 		/* TODO: Uncomment this when calls are implemented */
 		/*
-		void *ret = metacallt_s("fib_impl", fib_int_ids, args_size, 6);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 

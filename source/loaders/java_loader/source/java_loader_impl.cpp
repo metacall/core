@@ -73,6 +73,13 @@ typedef struct loader_impl_java_field_type
 	jobject fieldObj;
 } * loader_impl_java_field;
 
+typedef struct loader_impl_java_method_type
+{
+	const char *methodName;
+	jobject methodObj;
+	const char *methodSignature;
+} * loader_impl_java_method;
+
 std::string get_val_sig(const char *type)
 {
 	// TODO: Remove this (this will be not necessary because it will be handled with type_impl)
@@ -664,12 +671,18 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, method m, c
 {
 	// IN PROGRESS
 	(void)cls;
-	// std::cout << "invoke" << std::endl;
+	std::cout << "invoke" << std::endl;
 
-	// loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 
-	// loader_impl_java java_impl = java_cls->impl;
-	// jclass clscls = java_cls->concls;
+	char *key = (char *)method_name(m);
+	std::cout << "KEY = " << key << std::endl;
+
+	// loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
+	// std::cout << "NAME = " << java_method->methodName << std::endl;
+
+	loader_impl_java java_impl = java_cls->impl;
+	jclass clscls = java_cls->concls;
 
 	// jobject clsObj = java_cls->cls;
 	// jstring getKey = java_cls->impl->env->NewStringUTF(static_method_name);
@@ -1098,6 +1111,53 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					//		if (field[iterator].static) { class_register_static_attribute(c, attr) } else { class_register_attribute(c, attr) }
 					// 2) Get all methods from bootstrap.java
 					// 2.1) Iterate through all methods and store them into the class c
+
+					jmethodID cls_method_array = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_methods", "(Ljava/lang/Class;)[Ljava/lang/reflect/Method;");
+					if (cls_method_array != nullptr)
+					{
+						jobjectArray methodArray = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_array, r);
+						int methodArraySize = java_impl->env->GetArrayLength(methodArray);
+
+						jmethodID cls_method_details = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_details", "(Ljava/lang/reflect/Method;)[Ljava/lang/String;");
+
+						for (int i = 0; i < methodArraySize; i++)
+						{
+							jobject curMethod = java_impl->env->GetObjectArrayElement(methodArray, i);
+							jobjectArray methodDetails = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_details, curMethod);
+
+							jstring mname = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 0);
+							const char *method_name = java_impl->env->GetStringUTFChars(mname, NULL);
+
+							jstring mReturnType = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 1);
+							const char *method_return_type = java_impl->env->GetStringUTFChars(mReturnType, NULL);
+
+							jstring mVisibility = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 2);
+							const char *method_visibility = java_impl->env->GetStringUTFChars(mVisibility, NULL);
+
+							jstring mStatic = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 3);
+							const char *method_static = java_impl->env->GetStringUTFChars(mStatic, NULL);
+
+							jstring mSignature = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 4);
+							const char *method_signature = java_impl->env->GetStringUTFChars(mSignature, NULL);
+
+							jmethodID cls_method_args_size = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_args_size", "(Ljava/lang/reflect/Method;)I");
+							jint args_count = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_method_args_size, curMethod);
+
+							std::cout << method_visibility << " " << method_static << " " << method_return_type << " " << method_name << " " << method_signature << std::endl;
+
+							loader_impl_java_method java_method = new loader_impl_java_method_type();
+							java_method->methodName = method_name;
+							java_method->methodObj = curMethod;
+							java_method->methodSignature = method_signature;
+
+							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), METHOD_SYNC);
+
+							if (!strcmp(method_static, "static"))
+								class_register_static_method(c, m);
+							else
+								class_register_method(c, m);
+						}
+					}
 
 					scope sp = context_scope(ctx);
 					scope_define(sp, cls_name, value_create_class(c));
