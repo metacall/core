@@ -882,9 +882,9 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 		jobjectArray arr = java_impl->env->NewObjectArray((jsize)size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
-		for (jsize i = 0; i < size; i++) // Create JNI compatible array of paths
+		for (size_t i = 0; i < size; i++) // Create JNI compatible array of paths
 		{
-			java_impl->env->SetObjectArrayElement(arr, i, java_impl->env->NewStringUTF(paths[i]));
+			java_impl->env->SetObjectArrayElement(arr, (jsize)i, java_impl->env->NewStringUTF(paths[i]));
 		}
 
 		jclass classPtr = java_impl->env->FindClass("bootstrap");
@@ -1033,7 +1033,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		if (cls_name_bootstrap != nullptr)
 		{
-			size_t handleSize = (size_t)java_impl->env->GetArrayLength(java_handle->handle);
+			jsize handleSize = java_impl->env->GetArrayLength(java_handle->handle);
 
 			if (handleSize == 0)
 			{
@@ -1090,6 +1090,11 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							java_field->fieldObj = curField;
 
 							type t = loader_impl_type(impl, field_type);
+
+							// TODO: We should check if the type t is not known here (t == NULL), and if it is a new class
+							// that has not been registered yet, we should register it dynamically using
+							// loader_impl_type_define, and inspecting that class so we know the type
+
 							attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
 
 							if (!strcmp(field_static, "static"))
@@ -1137,6 +1142,24 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							java_method->methodSignature = method_signature;
 
 							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS);
+
+							// TODO: Register the method signature here (the TODOs are in inverse order of what you will do when coding it):
+							signature s = method_signature(s);
+
+							// TODO: Use these functions for registering the argument types and return type:
+							/*
+								void signature_set(signature s, size_t index, const char *name, type t);
+								void signature_set_return(signature s, type t);
+							*/
+
+							// TODO: For obtaining the types, use this:
+							/*
+								type t = loader_impl_type(impl, field_type);
+
+								// TODO: We should check if the type t is not known here (t == NULL), and if it is a new class
+								// that has not been registered yet, we should register it dynamically using
+								// loader_impl_type_define, and inspecting that class so we know the type
+							*/
 
 							if (!strcmp(method_static, "static"))
 								class_register_static_method(c, m);

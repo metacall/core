@@ -112,7 +112,10 @@ TEST_F(metacall_java_test, DefaultConstructor)
 					metacall_value_create_string("Metacall", 8)
 				};
 				void *ret = metacallv_class(myclass, "testFunct", args, 1); //this can all the function but not able to excess the method m
-				//void *ret2 = metacallt_class(myclass, "testFunct", METACALL_INT, args, 1); // no function with the signature error
+				// metacall_value_destroy(ret);
+
+				// void *ret2 = metacallt_class(myclass, "testFunct", METACALL_INT, args, 1); // no function with the signature error
+				// metacall_value_destroy(ret2);
 
 				metacall_value_destroy(args[0]);
 			}
