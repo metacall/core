@@ -35,6 +35,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/reflect.h
+	${include_path}/reflect_async.h
 	${include_path}/reflect_type.h
 	${include_path}/reflect_type_id.h
 	${include_path}/reflect_signature.h

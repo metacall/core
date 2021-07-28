@@ -1859,14 +1859,24 @@ void *metacallv_class(void *cls, const char *name, void *args[], size_t size)
 
 void *metacallt_class(void *cls, const char *name, const enum metacall_value_id ret, void *args[], size_t size)
 {
-	type_id ids[size];
+	type_id *ids = NULL;
 
-	for (size_t iterator = 0; iterator < size; ++iterator)
+	if (size > 0)
 	{
-		ids[iterator] = metacall_value_id(args[iterator]);
+		ids = (type_id *)malloc(sizeof(type_id) * size);
+
+		for (size_t iterator = 0; iterator < size; ++iterator)
+		{
+			ids[iterator] = metacall_value_id(args[iterator]);
+		}
 	}
 
 	method m = class_static_method(cls, name, ret, ids, size);
+
+	if (ids != NULL)
+	{
+		free(ids);
+	}
 
 	if (m == NULL)
 	{

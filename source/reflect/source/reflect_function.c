@@ -74,7 +74,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 
 	func->impl = impl;
 	func->ref_count = 0;
-	func->async = ASYNC_SYNC;
+	func->async = SYNCHRONOUS;
 	func->data = NULL;
 
 	func->s = signature_create(args_count);
@@ -246,7 +246,7 @@ value function_metadata_async(function func)
 		return NULL;
 	}
 
-	async_array[1] = value_create_bool(func->async == ASYNC_SYNC ? 0L : 1L);
+	async_array[1] = value_create_bool(func->async == SYNCHRONOUS ? 0L : 1L);
 
 	if (async_array[1] == NULL)
 	{

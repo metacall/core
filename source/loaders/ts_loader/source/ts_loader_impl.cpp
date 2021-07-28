@@ -329,7 +329,7 @@ int ts_loader_impl_discover_value(loader_impl impl, context ctx, void *discover)
 
 		signature_set_return(s, loader_impl_type(impl, metacall_value_to_string(ts_func.data["ret"])));
 
-		function_async(f, is_async == 1L ? ASYNC_ASYNC : ASYNC_SYNC);
+		function_async(f, is_async == 1L ? ASYNCHRONOUS : SYNCHRONOUS);
 
 		scope sp = context_scope(ctx);
 

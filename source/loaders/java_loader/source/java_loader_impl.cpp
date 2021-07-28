@@ -1,5 +1,4 @@
 /*
-make metacall-java-test && make java_loader && ctest -VV -R metacall-java-test
  *	Loader Library by Parra Studios
  *	A plugin for loading java code at run-time into a process.
  *
@@ -75,7 +74,6 @@ typedef struct loader_impl_java_field_type
 
 typedef struct loader_impl_java_method_type
 {
-	const char *methodName;
 	jobject methodObj;
 	const char *methodSignature;
 } * loader_impl_java_method;
@@ -187,44 +185,46 @@ value java_object_interface_get(object obj, object_impl impl, const char *key)
 
 			if (concls != nullptr && conobj != nullptr)
 			{
+				// TODO: Remove get_val_sig
 				jfieldID fID = java_impl->env->GetFieldID(concls, key, get_val_sig(gotType).c_str());
 
 				if (fID != nullptr)
 				{
+					// TODO: Convert this to switch with type_id
 					if (!strcmp(gotType, "boolean"))
 					{
-						jboolean gotVal = (jboolean)java_impl->env->GetBooleanField(conobj, fID);
-						return value_create_bool(gotVal);
+						jboolean gotVal = java_impl->env->GetBooleanField(conobj, fID);
+						return value_create_bool((boolean)gotVal);
 					}
 					if (!strcmp(gotType, "char"))
 					{
-						jchar gotVal = (jchar)java_impl->env->GetCharField(conobj, fID);
-						return value_create_char(gotVal);
+						jchar gotVal = java_impl->env->GetCharField(conobj, fID);
+						return value_create_char((char)gotVal);
 					}
 					if (!strcmp(gotType, "short"))
 					{
-						jshort gotVal = (jshort)java_impl->env->GetShortField(conobj, fID);
-						return value_create_short(gotVal);
+						jshort gotVal = java_impl->env->GetShortField(conobj, fID);
+						return value_create_short((short)gotVal);
 					}
 					if (!strcmp(gotType, "int"))
 					{
-						jint gotVal = (jint)java_impl->env->GetIntField(conobj, fID);
-						return value_create_int(gotVal);
+						jint gotVal = java_impl->env->GetIntField(conobj, fID);
+						return value_create_int((int)gotVal);
 					}
 					if (!strcmp(gotType, "long"))
 					{
-						jlong gotVal = (jlong)java_impl->env->GetLongField(conobj, fID);
-						return value_create_long(gotVal);
+						jlong gotVal = java_impl->env->GetLongField(conobj, fID);
+						return value_create_long((long)gotVal);
 					}
 					if (!strcmp(gotType, "float"))
 					{
-						jfloat gotVal = (jfloat)java_impl->env->GetFloatField(conobj, fID);
-						return value_create_float(gotVal);
+						jfloat gotVal = java_impl->env->GetFloatField(conobj, fID);
+						return value_create_float((float)gotVal);
 					}
 					if (!strcmp(gotType, "double"))
 					{
-						jdouble gotVal = (jdouble)java_impl->env->GetDoubleField(conobj, fID);
-						return value_create_double(gotVal);
+						jdouble gotVal = java_impl->env->GetDoubleField(conobj, fID);
+						return value_create_double((double)gotVal);
 					}
 					if (!strcmp(gotType, "java.lang.String"))
 					{
@@ -254,6 +254,7 @@ int java_object_interface_set(object obj, object_impl impl, const char *key, val
 	if (concls != nullptr && conobj != nullptr)
 	{
 		type_id id = value_type_id(v);
+		// TODO: Remove get_val_sig
 		jfieldID fID = java_impl->env->GetFieldID(concls, key, get_val_sig(id).c_str());
 
 		if (fID != nullptr)
@@ -414,7 +415,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 		{
 			constructorArgs[i].z = value_to_bool(args[i]);
 			std::string ss = constructorArgs[i].z ? "1" : "0";
-			std::cout << "BOOL = " << ss << std::endl;
+			std::cout << "BOOL = " << ss.c_str() << std::endl;
 		}
 		else if (id == TYPE_CHAR)
 		{
@@ -479,8 +480,13 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 
 	java_obj->impl = java_cls->impl;
 
-	jvalue constructorArgs[argc];
-	getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
+	jvalue *constructorArgs = nullptr;
+
+	if (argc > 0)
+	{
+		constructorArgs = new jvalue[argc];
+		getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
+	}
 
 	if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
 	{
@@ -515,6 +521,11 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 		}
 	}
 
+	if (constructorArgs != nullptr)
+	{
+		delete[] constructorArgs;
+	}
+
 	return obj;
 }
 
@@ -540,48 +551,64 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 
 		if (fID != nullptr)
 		{
-			const char *gotType = type_name(fieldType);
+			type_id id = type_index(fieldType);
 
-			if (!strcmp(gotType, "boolean"))
+			switch (id)
 			{
-				jboolean gotVal = (jboolean)java_impl->env->GetStaticBooleanField(clscls, fID);
-				return value_create_bool(gotVal);
-			}
-			if (!strcmp(gotType, "char"))
-			{
-				jchar gotVal = (jchar)java_impl->env->GetStaticCharField(clscls, fID);
-				return value_create_char(gotVal);
-			}
-			if (!strcmp(gotType, "short"))
-			{
-				jshort gotVal = (jshort)java_impl->env->GetStaticShortField(clscls, fID);
-				return value_create_short(gotVal);
-			}
-			if (!strcmp(gotType, "int"))
-			{
-				jint gotVal = (jint)java_impl->env->GetStaticIntField(clscls, fID);
-				return value_create_int(gotVal);
-			}
-			if (!strcmp(gotType, "long"))
-			{
-				jlong gotVal = (jlong)java_impl->env->GetStaticLongField(clscls, fID);
-				return value_create_long(gotVal);
-			}
-			if (!strcmp(gotType, "float"))
-			{
-				jfloat gotVal = (jfloat)java_impl->env->GetStaticFloatField(clscls, fID);
-				return value_create_float(gotVal);
-			}
-			if (!strcmp(gotType, "double"))
-			{
-				jdouble gotVal = (jdouble)java_impl->env->GetStaticDoubleField(clscls, fID);
-				return value_create_double(gotVal);
-			}
-			if (!strcmp(gotType, "java.lang.String"))
-			{
-				jstring gotVal = (jstring)java_impl->env->GetStaticObjectField(clscls, fID);
-				const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
-				return value_create_string(gotValConv, strlen(gotValConv));
+				case TYPE_BOOL :
+				{
+					jboolean gotVal = java_impl->env->GetStaticBooleanField(clscls, fID);
+					return value_create_bool((boolean)gotVal);
+				}
+
+				case TYPE_CHAR :
+				{
+					jchar gotVal = java_impl->env->GetStaticCharField(clscls, fID);
+					return value_create_char((char)gotVal);
+				}
+
+				case TYPE_SHORT :
+				{
+					jshort gotVal = java_impl->env->GetStaticShortField(clscls, fID);
+					return value_create_short((short)gotVal);
+				}
+
+				case TYPE_INT :
+				{
+					jint gotVal = java_impl->env->GetStaticIntField(clscls, fID);
+					return value_create_int((int)gotVal);
+				}
+
+				case TYPE_LONG :
+				{
+					jlong gotVal = java_impl->env->GetStaticLongField(clscls, fID);
+					return value_create_long((long)gotVal);
+				}
+
+				case TYPE_FLOAT :
+				{
+					jfloat gotVal = java_impl->env->GetStaticFloatField(clscls, fID);
+					return value_create_float((float)gotVal);
+				}
+
+				case TYPE_DOUBLE :
+				{
+					jdouble gotVal = java_impl->env->GetStaticDoubleField(clscls, fID);
+					return value_create_double((double)gotVal);
+				}
+
+				case TYPE_STRING :
+				{
+					jstring gotVal = (jstring)java_impl->env->GetStaticObjectField(clscls, fID);
+					const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
+					return value_create_string(gotValConv, strlen(gotValConv));
+				}
+
+				default :
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from Java to MetaCall value", type_name(fieldType));
+					return NULL;
+				}
 			}
 		}
 	}
@@ -596,8 +623,6 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 
-	std::cout << "\nSet = " << key << std::endl;
-
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 	loader_impl_java java_impl = java_cls->impl;
 
@@ -607,59 +632,76 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 	if (clscls != nullptr)
 	{
 		const char *fType = (const char *)type_derived(fieldType);
-		type_id id = (type_id)type_index(fieldType);
 		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
 		{
-			if (id == TYPE_BOOL)
+			type_id id = type_index(fieldType);
+
+			switch (id)
 			{
-				jboolean val = (jboolean)value_to_bool(v);
-				java_impl->env->SetStaticBooleanField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_CHAR)
-			{
-				jchar val = (jchar)value_to_char(v);
-				java_impl->env->SetStaticCharField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_SHORT)
-			{
-				jshort val = (jshort)value_to_short(v);
-				java_impl->env->SetStaticShortField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_INT)
-			{
-				jint val = (jint)value_to_int(v);
-				java_impl->env->SetStaticIntField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_LONG)
-			{
-				jlong val = (jlong)value_to_long(v);
-				java_impl->env->SetStaticLongField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_FLOAT)
-			{
-				jfloat val = (jfloat)value_to_float(v);
-				java_impl->env->SetStaticFloatField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_DOUBLE)
-			{
-				jdouble val = (jdouble)value_to_double(v);
-				java_impl->env->SetStaticDoubleField(clscls, fID, val);
-				return 0;
-			}
-			if (id == TYPE_STRING)
-			{
-				const char *strV = value_to_string(v);
-				jstring val = java_impl->env->NewStringUTF(strV);
-				java_impl->env->SetStaticObjectField(clscls, fID, val);
-				return 0;
+				case TYPE_BOOL :
+				{
+					jboolean val = (jboolean)value_to_bool(v);
+					java_impl->env->SetStaticBooleanField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_CHAR :
+				{
+					jchar val = (jchar)value_to_char(v);
+					java_impl->env->SetStaticCharField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_SHORT :
+				{
+					jshort val = (jshort)value_to_short(v);
+					java_impl->env->SetStaticShortField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_INT :
+				{
+					jint val = (jint)value_to_int(v);
+					java_impl->env->SetStaticIntField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_LONG :
+				{
+					jlong val = (jlong)value_to_long(v);
+					java_impl->env->SetStaticLongField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_FLOAT :
+				{
+					jfloat val = (jfloat)value_to_float(v);
+					java_impl->env->SetStaticFloatField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_DOUBLE :
+				{
+					jdouble val = (jdouble)value_to_double(v);
+					java_impl->env->SetStaticDoubleField(clscls, fID, val);
+					return 0;
+				}
+
+				case TYPE_STRING :
+				{
+					const char *strV = value_to_string(v);
+					jstring val = java_impl->env->NewStringUTF(strV);
+					java_impl->env->SetStaticObjectField(clscls, fID, val);
+					return 0;
+				}
+
+				default :
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from MetaCall value to Java", type_name(fieldType));
+					return NULL;
+				}
 			}
 		}
 	}
@@ -736,7 +778,7 @@ value java_class_interface_static_await(klass cls, class_impl impl, method m, cl
 void java_class_interface_destroy(klass cls, class_impl impl)
 {
 	(void)cls;
-	std::cout << "Destroy" << std::endl;
+	(void)impl;
 }
 
 class_interface java_class_interface_singleton(void)
@@ -820,7 +862,6 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			}
 		}
 
-		std::cout << "\nJAVA INITIALIZER successful\n";
 		/* Register initialization */
 		loader_initialization_register(impl);
 
@@ -857,21 +898,16 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	if (java_handle != nullptr)
 	{
 		loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
-		log_write("metacall", LOG_LEVEL_DEBUG, "Load From File");
+		jobjectArray arr = java_impl->env->NewObjectArray((jsize)size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
-		jobjectArray arr = java_impl->env->NewObjectArray(size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
-
-		for (size_t i = 0; i < size; i++) // Create JNI compatible array of paths
+		for (jsize i = 0; i < size; i++) // Create JNI compatible array of paths
 		{
-			std::cout << "PATH = " << paths[i] << std::endl;
 			java_impl->env->SetObjectArrayElement(arr, i, java_impl->env->NewStringUTF(paths[i]));
 		}
 
 		jclass classPtr = java_impl->env->FindClass("bootstrap");
 		if (classPtr != nullptr)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Bootstrap Found");
-
 			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/Class;");
 			if (mid != nullptr)
 			{
@@ -985,26 +1021,6 @@ int java_loader_impl_discover_func(loader_impl impl, loader_handle handle, conte
 	return 0;
 }
 
-// type getFieldType(const char *s)
-// {
-// 	if (!strcmp(s, "boolean"))
-// 		return;
-// 	if (!strcmp(s, "char"))
-// 		return TYPE_CHAR;
-// 	if (!strcmp(s, "short"))
-// 		return TYPE_SHORT;
-// 	if (!strcmp(s, "int"))
-// 		return TYPE_INT;
-// 	if (!strcmp(s, "long"))
-// 		return TYPE_LONG;
-// 	if (!strcmp(s, "float"))
-// 		return TYPE_FLOAT;
-// 	if (!strcmp(s, "double"))
-// 		return TYPE_DOUBLE;
-// 	if (!strcmp(s, "java.lang.String"))
-// 		return TYPE_STRING;
-// }
-
 class_visibility_id getFieldVisibility(const char *v)
 {
 	if (!strcmp(v, "public"))
@@ -1013,16 +1029,12 @@ class_visibility_id getFieldVisibility(const char *v)
 		return VISIBILITY_PRIVATE;
 	if (!strcmp(v, "protected"))
 		return VISIBILITY_PROTECTED;
+
+	return VISIBILITY_PUBLIC; // Public by default
 }
 
 int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	// TODO: Implement here the discover of methods and attributes of the class
-	// Use attribute_create with class_register_static_attribute and class_register_attribute
-	// Use method_create with class_register_static_method, class_register_method
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Discover");
-
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
@@ -1047,9 +1059,9 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 				return 1;
 			}
 
-			for (size_t i = 0; i < handleSize; i++)
+			for (jsize handle_index = 0; handle_index < handleSize; ++handle_index)
 			{
-				jobject r = java_impl->env->GetObjectArrayElement(java_handle->handle, i);
+				jobject r = java_impl->env->GetObjectArrayElement(java_handle->handle, handle_index);
 
 				if (r != nullptr)
 				{
@@ -1068,13 +1080,13 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					if (cls_field_array != nullptr)
 					{
 						jobjectArray fieldArray = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_field_array, r);
-						int fieldArraySize = java_impl->env->GetArrayLength(fieldArray);
+						jsize fieldArraySize = java_impl->env->GetArrayLength(fieldArray);
 
 						jmethodID cls_field_details = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_fields_details", "(Ljava/lang/reflect/Field;)[Ljava/lang/String;");
 
-						for (int i = 0; i < fieldArraySize; i++)
+						for (jsize field_index = 0; field_index < fieldArraySize; ++field_index)
 						{
-							jobject curField = java_impl->env->GetObjectArrayElement(fieldArray, i);
+							jobject curField = java_impl->env->GetObjectArrayElement(fieldArray, field_index);
 							jobjectArray fieldDetails = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_field_details, curField);
 
 							jstring fname = (jstring)java_impl->env->GetObjectArrayElement(fieldDetails, 0);
@@ -1105,24 +1117,17 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 						}
 					}
 
-					// 1) Get all fields from bootstrap.java
-					// 1.1) Iterate through all fields and store them into the class c
-					//		attribute attr = attribute_create(c, field[iterator].name, field[iterator].t, field, field[iterator].visibility);
-					//		if (field[iterator].static) { class_register_static_attribute(c, attr) } else { class_register_attribute(c, attr) }
-					// 2) Get all methods from bootstrap.java
-					// 2.1) Iterate through all methods and store them into the class c
-
 					jmethodID cls_method_array = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_methods", "(Ljava/lang/Class;)[Ljava/lang/reflect/Method;");
 					if (cls_method_array != nullptr)
 					{
 						jobjectArray methodArray = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_array, r);
-						int methodArraySize = java_impl->env->GetArrayLength(methodArray);
+						jsize methodArraySize = java_impl->env->GetArrayLength(methodArray);
 
 						jmethodID cls_method_details = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_details", "(Ljava/lang/reflect/Method;)[Ljava/lang/String;");
 
-						for (int i = 0; i < methodArraySize; i++)
+						for (jsize method_index = 0; method_index < methodArraySize; ++method_index)
 						{
-							jobject curMethod = java_impl->env->GetObjectArrayElement(methodArray, i);
+							jobject curMethod = java_impl->env->GetObjectArrayElement(methodArray, method_index);
 							jobjectArray methodDetails = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_details, curMethod);
 
 							jstring mname = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 0);
@@ -1146,11 +1151,10 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							std::cout << method_visibility << " " << method_static << " " << method_return_type << " " << method_name << " " << method_signature << std::endl;
 
 							loader_impl_java_method java_method = new loader_impl_java_method_type();
-							java_method->methodName = method_name;
 							java_method->methodObj = curMethod;
 							java_method->methodSignature = method_signature;
 
-							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), ASYNC_SYNC);
+							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS);
 
 							if (!strcmp(method_static, "static"))
 								class_register_static_method(c, m);
@@ -1185,17 +1189,13 @@ int java_loader_impl_destroy(loader_impl impl)
 		if (rc != JNI_OK)
 		{
 			// TODO: Handle error
-			std::cout << "ffffffffffffffffffffffffffff" << std::endl;
+			std::cout << "JNI ERROR" << std::endl;
 		}
-		std::cout << "\n1ffffffffffffffffffffffffffff" << std::endl;
 
 		/* Destroy children loaders */
 		loader_unload_children(impl);
-		std::cout << "2ffffffffffffffffffffffffffff" << std::endl;
 
 		java_impl->jvm->DestroyJavaVM();
-
-		std::cout << "3ffffffffffffffffffffffffffff" << std::endl;
 
 		delete java_impl;
 

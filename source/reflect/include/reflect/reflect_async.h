@@ -29,8 +29,8 @@ extern "C" {
 
 enum async_id
 {
-	ASYNC_SYNC = 0,
-	ASYNC_ASYNC = 1
+	SYNCHRONOUS = 0,
+	ASYNCHRONOUS = 1
 };
 
 #ifdef __cplusplus
