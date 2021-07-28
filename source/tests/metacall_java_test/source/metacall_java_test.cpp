@@ -43,12 +43,6 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				"Fibonacci.java", "Test.java"
 			};
 
-			const enum metacall_value_id fib_int_ids[] = {
-				METACALL_INT
-			};
-
-			const size_t args_size = sizeof(fib_int_ids) / sizeof(fib_int_ids[0]);
-
 			static const char tag[] = "java";
 
 			ASSERT_EQ((int)0, (int)metacall_load_from_file(tag, java_scripts, sizeof(java_scripts) / sizeof(java_scripts[0]), NULL));
@@ -69,6 +63,10 @@ TEST_F(metacall_java_test, DefaultConstructor)
 			};
 
 			void *new_object_v = metacall_class_new(myclass, "Test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
+
+			ASSERT_NE((void *)NULL, (void *)new_object_v);
+
+			metacall_value_destroy(new_object_v);
 
 			{
 				void *param1 = metacall_class_static_get(myclass, "BOOL_TEST");
@@ -114,7 +112,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 					metacall_value_create_string("Metacall", 8)
 				};
 				void *ret = metacallv_class(myclass, "testFunct", args, 1); //this can all the function but not able to excess the method m
-				// void *ret2 = metacallt_class(myclass, "testFunct", METACALL_INT, args, 1); // no function with the signature error
+				//void *ret2 = metacallt_class(myclass, "testFunct", METACALL_INT, args, 1); // no function with the signature error
 
 				metacall_value_destroy(args[0]);
 			}

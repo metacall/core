@@ -555,57 +555,48 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 
 			switch (id)
 			{
-				case TYPE_BOOL :
-				{
+				case TYPE_BOOL: {
 					jboolean gotVal = java_impl->env->GetStaticBooleanField(clscls, fID);
 					return value_create_bool((boolean)gotVal);
 				}
 
-				case TYPE_CHAR :
-				{
+				case TYPE_CHAR: {
 					jchar gotVal = java_impl->env->GetStaticCharField(clscls, fID);
 					return value_create_char((char)gotVal);
 				}
 
-				case TYPE_SHORT :
-				{
+				case TYPE_SHORT: {
 					jshort gotVal = java_impl->env->GetStaticShortField(clscls, fID);
 					return value_create_short((short)gotVal);
 				}
 
-				case TYPE_INT :
-				{
+				case TYPE_INT: {
 					jint gotVal = java_impl->env->GetStaticIntField(clscls, fID);
 					return value_create_int((int)gotVal);
 				}
 
-				case TYPE_LONG :
-				{
+				case TYPE_LONG: {
 					jlong gotVal = java_impl->env->GetStaticLongField(clscls, fID);
 					return value_create_long((long)gotVal);
 				}
 
-				case TYPE_FLOAT :
-				{
+				case TYPE_FLOAT: {
 					jfloat gotVal = java_impl->env->GetStaticFloatField(clscls, fID);
 					return value_create_float((float)gotVal);
 				}
 
-				case TYPE_DOUBLE :
-				{
+				case TYPE_DOUBLE: {
 					jdouble gotVal = java_impl->env->GetStaticDoubleField(clscls, fID);
 					return value_create_double((double)gotVal);
 				}
 
-				case TYPE_STRING :
-				{
+				case TYPE_STRING: {
 					jstring gotVal = (jstring)java_impl->env->GetStaticObjectField(clscls, fID);
 					const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
 					return value_create_string(gotValConv, strlen(gotValConv));
 				}
 
-				default :
-				{
+				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from Java to MetaCall value", type_name(fieldType));
 					return NULL;
 				}
@@ -640,65 +631,56 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 
 			switch (id)
 			{
-				case TYPE_BOOL :
-				{
+				case TYPE_BOOL: {
 					jboolean val = (jboolean)value_to_bool(v);
 					java_impl->env->SetStaticBooleanField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_CHAR :
-				{
+				case TYPE_CHAR: {
 					jchar val = (jchar)value_to_char(v);
 					java_impl->env->SetStaticCharField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_SHORT :
-				{
+				case TYPE_SHORT: {
 					jshort val = (jshort)value_to_short(v);
 					java_impl->env->SetStaticShortField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_INT :
-				{
+				case TYPE_INT: {
 					jint val = (jint)value_to_int(v);
 					java_impl->env->SetStaticIntField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_LONG :
-				{
+				case TYPE_LONG: {
 					jlong val = (jlong)value_to_long(v);
 					java_impl->env->SetStaticLongField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_FLOAT :
-				{
+				case TYPE_FLOAT: {
 					jfloat val = (jfloat)value_to_float(v);
 					java_impl->env->SetStaticFloatField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_DOUBLE :
-				{
+				case TYPE_DOUBLE: {
 					jdouble val = (jdouble)value_to_double(v);
 					java_impl->env->SetStaticDoubleField(clscls, fID, val);
 					return 0;
 				}
 
-				case TYPE_STRING :
-				{
+				case TYPE_STRING: {
 					const char *strV = value_to_string(v);
 					jstring val = java_impl->env->NewStringUTF(strV);
 					java_impl->env->SetStaticObjectField(clscls, fID, val);
 					return 0;
 				}
 
-				default :
-				{
+				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from MetaCall value to Java", type_name(fieldType));
 					return NULL;
 				}
