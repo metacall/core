@@ -57,9 +57,9 @@ find_library(WASMTIME_LIBRARY
 )
 
 find_path(WASMTIME_INCLUDE_DIR
-	NAMES wasm.h
+	NAMES wasm.h wasmtime.h
 	PATHS ${WASMTIME_DOWNLOAD_INCLUDE_DIR}
-	DOC "Wasm C API header"
+	DOC "Wasmtime C API headers"
 )
 
 if(WASMTIME_LIBRARY AND WASMTIME_INCLUDE_DIR)
@@ -103,9 +103,9 @@ else()
 	)
 
 	find_path(WASMTIME_INCLUDE_DIR
-		NAMES wasm.h
+		NAMES wasm.h wasmtime.h
 		PATHS ${WASMTIME_DOWNLOAD_INCLUDE_DIR}
 		NO_DEFAULT_PATH
-		DOC "Wasm C API header"
+		DOC "Wasmtime C API headers"
 	)
 endif()

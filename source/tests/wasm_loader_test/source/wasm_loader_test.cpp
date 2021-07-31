@@ -72,9 +72,9 @@ TEST_F(wasm_loader_test, InitializeAndDestroy)
 	ASSERT_EQ(0, metacall_destroy());
 }
 
-TEST_F(wasm_loader_test, LoadFromMemory)
+TEST_F(wasm_loader_test, LoadBinaryFromMemory)
 {
-	// See https://webassembly.github.io/spec/core/binary/modules.html#binary-magic
+	// See https://webassembly.github.io/spec/core/binary/modules.html#binary-module
 	const char empty_module[] = {
 		0x00, 0x61, 0x73, 0x6d, // Magic bytes
 		0x01, 0x00, 0x00, 0x00	// Version
@@ -85,20 +85,35 @@ TEST_F(wasm_loader_test, LoadFromMemory)
 	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, sizeof(invalid_module), NULL));
 }
 
+TEST_F(wasm_loader_test, LoadTextFromMemory)
+{
+	const char *empty_module = "(module)";
+	ASSERT_EQ(0, metacall_load_from_memory("wasm", empty_module, strlen(empty_module), NULL));
+
+	const char *invalid_module = "(invalid)";
+	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, strlen(invalid_module), NULL));
+}
+
 // TODO: Make this conditional
 //#if defined(OPTION_BUILD_SCRIPTS) && defined(OPTION_BUILD_SCRIPTS_WASM)
 TEST_F(wasm_loader_test, LoadFromFile)
 {
-	const char *empty_module_filename = "empty_module.wasm";
-	const char *invalid_module_filename = "invalid_module.wasm";
+	const char *empty_module_filename = "empty_module.wat";
+	const char *invalid_module_filename = "invalid_module.wat";
 
 	ASSERT_EQ(0, metacall_load_from_file("wasm", &empty_module_filename, 1, NULL));
 	ASSERT_NE(0, metacall_load_from_file("wasm", &invalid_module_filename, 1, NULL));
 }
 
+TEST_F(wasm_loader_test, LoadFromPackage)
+{
+	ASSERT_EQ(0, metacall_load_from_package("wasm", "empty_module.wasm", NULL));
+	ASSERT_NE(0, metacall_load_from_package("wasm", "invalid_module.wasm", NULL));
+}
+
 TEST_F(wasm_loader_test, DiscoverFunctions)
 {
-	const char *functions_module_filename = "functions.wasm";
+	const char *functions_module_filename = "functions.wat";
 	void *handle;
 
 	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, &handle));
@@ -116,7 +131,7 @@ TEST_F(wasm_loader_test, DiscoverFunctions)
 
 TEST_F(wasm_loader_test, CallFunctions)
 {
-	const char *functions_module_filename = "functions.wasm";
+	const char *functions_module_filename = "functions.wat";
 
 	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, NULL));
 
