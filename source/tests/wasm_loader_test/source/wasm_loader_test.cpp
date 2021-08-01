@@ -190,7 +190,6 @@ TEST_F(wasm_loader_test, LinkModules)
 		"imports.wat"
 	};
 
-	// FIXME: Duplicate symbols cause memory leak from `reflect`
 	ASSERT_EQ(0, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
 
 	void *ret = metacall("duplicate_func_i32");

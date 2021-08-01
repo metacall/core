@@ -537,7 +537,6 @@ bool wasm_loader_impl_matches_import(const wasm_externtype_t *import, const wasm
 
 const wasm_extern_t *wasm_loader_impl_find_export(loader_impl_wasm_handle handle, const wasm_importtype_t *import_type)
 {
-	// TODO: What about shadowing?
 	const wasm_name_t *module_name = wasm_importtype_module(import_type);
 	const wasm_name_t *name = wasm_importtype_name(import_type);
 	const wasm_externtype_t *type = wasm_importtype_type(import_type);
@@ -914,6 +913,12 @@ char *wasm_loader_impl_get_export_type_name(const wasm_exporttype_t *export_type
 
 int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_externtype_t *extern_type, const char *name, const wasm_extern_t *extern_val)
 {
+	if (scope_get(scp, name) != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "WebAssembly loader: A function named \"%s\" is already defined, skipping redefinition", name);
+		return 0;
+	}
+
 	const wasm_functype_t *func_type =
 		wasm_externtype_as_functype_const(extern_type);
 	const wasm_valtype_vec_t *params = wasm_functype_params(func_type);
@@ -951,31 +956,50 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 	return 0;
 }
 
+int wasm_loader_impl_discover_export(loader_impl impl, scope scp, const wasm_exporttype_t *export_type, const wasm_extern_t *export)
+{
+	int ret = 1;
+
+	// All of the `wasm_*` calls here return pointers to memory owned by
+	// `export_types`, so no need to do any error checking or cleanup.
+	const wasm_externtype_t *extern_type = wasm_exporttype_type(export_type);
+	const wasm_externkind_t kind = wasm_externtype_kind(extern_type);
+	char *export_name = wasm_loader_impl_get_export_type_name(export_type);
+
+	if (export_name == NULL)
+	{
+		goto error_export_name_alloc;
+	}
+
+	if (kind == WASM_EXTERN_FUNC)
+	{
+		if (wasm_loader_impl_discover_function(impl, scp, extern_type, export_name, export) != 0)
+		{
+			goto error_discover_function;
+		}
+	}
+
+	ret = 0;
+
+error_discover_function:
+	free(export_name);
+error_export_name_alloc:
+	return ret;
+}
+
 int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const loader_impl_wasm_module *module)
 {
-	for (size_t export_idx = 0; export_idx < module->export_types.size; export_idx++)
+	for (size_t i = 0; i < module->export_types.size; i++)
 	{
-		// All of the `wasm_*` calls in this loop return pointers to memory
-		// owned by `export_types`, so no need to do any error checking or
-		// cleanup.
-		const wasm_externtype_t *extern_type = wasm_exporttype_type(module->export_types.data[export_idx]);
-		const wasm_externkind_t kind = wasm_externtype_kind(extern_type);
-		char *export_name = wasm_loader_impl_get_export_type_name(module->export_types.data[export_idx]);
-
-		if (export_name == NULL)
+		// There is a 1-to-1 correspondence between between the instance
+		// exports and the module exports, so we can use the same index.
+		const wasm_exporttype_t *export_type = module->export_types.data[i];
+		const wasm_extern_t *export = module->exports.data[i];
+		if (wasm_loader_impl_discover_export(impl, scp, export_type, export) != 0)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Module discovery failed");
 			return 1;
 		}
-
-		// TODO: Do we need to implement the other types as well?
-		if (kind == WASM_EXTERN_FUNC)
-		{
-			// There is a 1-to-1 correspondence between between the instance
-			// exports and the module exports, so we can reuse the index.
-			wasm_loader_impl_discover_function(impl, scp, extern_type, export_name, module->exports.data[export_idx]);
-		}
-
-		free(export_name);
 	}
 
 	return 0;
@@ -988,7 +1012,11 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 	for (size_t idx = 0; idx < vector_size(wasm_handle->modules); idx++)
 	{
-		wasm_loader_impl_discover_module(impl, scp, vector_at(wasm_handle->modules, idx));
+		if (wasm_loader_impl_discover_module(impl, scp, vector_at(wasm_handle->modules, idx)) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Handle discovery failed");
+			return 1;
+		}
 	}
 
 	return 0;
