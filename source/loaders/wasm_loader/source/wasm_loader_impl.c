@@ -905,10 +905,7 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 
 	for (size_t param_idx = 0; param_idx < params->size; param_idx++)
 	{
-		// TODO: We supply an empty string as the parameter name, since
-		//       `signature_set' doesn't allow `NULL'. Consider changing
-		//       the implementation of `signature_set` to allow this.
-		signature_set(sig, param_idx, "",
+		signature_set(sig, param_idx, "unnamed",
 			wasm_loader_impl_val_kind_to_type(impl, wasm_valtype_kind(params->data[param_idx])));
 	}
 
