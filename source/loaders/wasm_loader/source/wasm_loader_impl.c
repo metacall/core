@@ -66,34 +66,6 @@ typedef struct loader_impl_wasm_type
 	vector paths;
 } * loader_impl_wasm;
 
-int type_wasm_interface_create(type t, type_impl impl)
-{
-	/* TODO */
-
-	(void)t;
-	(void)impl;
-
-	return 0;
-}
-
-void type_wasm_interface_destroy(type t, type_impl impl)
-{
-	/* TODO */
-
-	(void)t;
-	(void)impl;
-}
-
-type_interface type_wasm_singleton(void)
-{
-	static struct type_interface_type wasm_type_interface = {
-		&type_wasm_interface_create,
-		&type_wasm_interface_destroy
-	};
-
-	return &wasm_type_interface;
-}
-
 int wasm_loader_impl_reflect_to_wasm_type(value val, wasm_val_t *ret)
 {
 	type_id val_type = value_type_id(val);
@@ -243,21 +215,6 @@ function_return function_wasm_interface_invoke(function func, function_impl impl
 	return wasm_loader_impl_call_func(sig, wasm_func->func, args_vec);
 }
 
-function_return function_wasm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
-{
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)context;
-
-	return NULL;
-}
-
 void function_wasm_interface_destroy(function func, function_impl impl)
 {
 	(void)func;
@@ -270,7 +227,11 @@ function_interface function_wasm_singleton(void)
 	static struct function_interface_type wasm_function_interface = {
 		NULL,
 		&function_wasm_interface_invoke,
-		&function_wasm_interface_await,
+		// Threads are only in Phase 2 of the standardization process
+		// (see https://github.com/WebAssembly/proposals) and are currently
+		// not fully implemented in Wasmtime
+		// (see https://docs.wasmtime.dev/stability-wasm-proposals-support.html)
+		NULL,
 		&function_wasm_interface_destroy
 	};
 
