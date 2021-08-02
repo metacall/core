@@ -322,6 +322,10 @@ public class bootstrap {
     return new String[] { fName, fType, fVisibility, fStatic };
   }
 
+  public static int java_bootstrap_discover_method_args_size(Method m) {
+    return m.getParameterCount();
+  }
+
   public static Method[] java_bootstrap_discover_methods(Class<?> cls) {
     System.out.println("METHOD DISCOVER " + cls.getName());
 
@@ -335,7 +339,8 @@ public class bootstrap {
     int mModifier = m.getModifiers();
     String mVisibility = getModifierType(mModifier);
     String mStatic = Modifier.isStatic(mModifier) ? "static" : "nonstatic";
-    String signature = getSignature(m);
+    String sig = getSignature(m);
+    String signature = sig.replace(".", "/");
 
     // System.out.println("METHOD " + mVisibility + " " + mStatic + " " +
     // mReturnType + " " + mName + " " + signature);
@@ -343,8 +348,16 @@ public class bootstrap {
     return new String[] { mName, mReturnType, mVisibility, mStatic, signature };
   }
 
-  public static int java_bootstrap_discover_method_args_size(Method m) {
-    return m.getParameterCount();
+  public static String[] java_bootstrap_discover_method_parameters(Method m) {
+    String[] parameterList = new String[java_bootstrap_discover_method_args_size(m)];
+    Class<?>[] parameters = m.getParameterTypes();
+
+    int i = 0;
+    for (Class<?> parameter : parameters) {
+      parameterList[i++] = parameter.getName();
+    }
+
+    return parameterList;
   }
 
   // public static void DiscoverData(String classname) {

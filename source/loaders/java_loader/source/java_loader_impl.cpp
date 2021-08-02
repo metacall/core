@@ -693,52 +693,81 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 
 value java_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
-	// IN PROGRESS
 	(void)cls;
 	std::cout << "invoke" << std::endl;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-
-	char *key = (char *)method_name(m);
-	std::cout << "KEY = " << key << std::endl;
-
-	// loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
-	// std::cout << "NAME = " << java_method->methodName << std::endl;
-
 	loader_impl_java java_impl = java_cls->impl;
 	jclass clscls = java_cls->concls;
 
-	// jobject clsObj = java_cls->cls;
-	// jstring getKey = java_cls->impl->env->NewStringUTF(static_method_name);
+	loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
+	const char *methodSignature = java_method->methodSignature;
 
-	// jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
-	// if (classPtr != nullptr)
-	// {
-	// 	jmethodID cls_static_return_type = java_cls->impl->env->GetStaticMethodID(classPtr, "get_static_invoke_return_type", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;");
-	// 	if (cls_static_return_type != nullptr)
-	// 	{
-	// 		jstring result = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_static_return_type, clsObj, getKey);
-	// 		const char *rtnType = java_impl->env->GetStringUTFChars(result, NULL);
-	// 		std::cout << "Static Return type = " << rtnType << std::endl;
-	// 	}
-	// }
+	char *methodName = (char *)method_name(m);
 
-	// jmethodID findCls = java_impl->env->GetStaticMethodID(classPtr, "FindClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-	// if (findCls != nullptr)
-	// {
-	// 	jclass clscls = (jclass)java_impl->env->CallStaticObjectMethod(classPtr, findCls, java_impl->env->NewStringUTF("Test"));
-	// 	if (clscls != nullptr)
-	// 	{
-	// 		jmethodID testFunct = java_impl->env->GetStaticMethodID(clscls, "testFunct", "(Ljava/lang/String;)I");
-	// 		if (testFunct != nullptr)
-	// 		{
-	// 			std::cout << "Got " << std::endl;
+	signature sg = method_signature(m);
+	type t = signature_get_return(sg);
 
-	// 			jint clsrtn = (jint)java_impl->env->CallStaticIntMethod(clscls, testFunct, java_impl->env->NewStringUTF("Mr. stark"));
-	// 			std::cout << "We won mr. stark " << clsrtn << std::endl;
-	// 		}
-	// 	}
-	// }
+	jvalue *constructorArgs = nullptr;
+	if (argc > 0)
+	{
+		constructorArgs = new jvalue[argc];
+		getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
+	}
+
+	jmethodID function_invoke_id = java_impl->env->GetStaticMethodID(clscls, methodName, methodSignature);
+
+	if (function_invoke_id != nullptr)
+	{
+		switch (type_index(t))
+		{
+			case TYPE_NULL: {
+				java_impl->env->CallStaticVoidMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_null();
+			}
+			
+			case TYPE_BOOL: {
+				jboolean returnVal = (jboolean)java_impl->env->CallStaticBooleanMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_bool(returnVal);
+			}
+
+			case TYPE_CHAR: {
+				jchar returnVal = (jchar)java_impl->env->CallStaticCharMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_char(returnVal);
+			}
+
+			case TYPE_SHORT: {
+				jshort returnVal = (jshort)java_impl->env->CallStaticShortMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_short(returnVal);
+			}
+
+			case TYPE_INT: {
+				jint returnVal = (jint)java_impl->env->CallStaticIntMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_int(returnVal);
+			}
+
+			case TYPE_LONG: {
+				jlong returnVal = (jlong)java_impl->env->CallStaticLongMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_long(returnVal);
+			}
+
+			case TYPE_FLOAT: {
+				jfloat returnVal = (jfloat)java_impl->env->CallStaticFloatMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_float(returnVal);
+			}
+
+			case TYPE_DOUBLE: {
+				jdouble returnVal = (jdouble)java_impl->env->CallStaticDoubleMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_double(returnVal);
+			}
+
+			case TYPE_STRING: {
+				jstring returnVal = (jstring)java_impl->env->CallStaticObjectMethodA(clscls, function_invoke_id, constructorArgs);
+				const char *returnString = java_impl->env->GetStringUTFChars(returnVal, NULL);
+				return value_create_string(returnString, strlen(returnString));
+			}
+		}
+	}
 
 	return NULL;
 }
@@ -822,6 +851,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			const char *name;
 			const char *jni_signature;
 		} type_id_name_sig[] = {
+			{ TYPE_NULL, "void", "V" },
 			{ TYPE_BOOL, "boolean", "Z" },
 			{ TYPE_CHAR, "char", "C" },
 			{ TYPE_SHORT, "short", "S" },
@@ -1130,37 +1160,46 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							const char *method_static = java_impl->env->GetStringUTFChars(mStatic, NULL);
 
 							jstring mSignature = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 4);
-							const char *method_signature = java_impl->env->GetStringUTFChars(mSignature, NULL);
+							const char *method_sig = java_impl->env->GetStringUTFChars(mSignature, NULL);
 
 							jmethodID cls_method_args_size = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_args_size", "(Ljava/lang/reflect/Method;)I");
 							jint args_count = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_method_args_size, curMethod);
 
-							std::cout << method_visibility << " " << method_static << " " << method_return_type << " " << method_name << " " << method_signature << std::endl;
-
 							loader_impl_java_method java_method = new loader_impl_java_method_type();
 							java_method->methodObj = curMethod;
-							java_method->methodSignature = method_signature;
+							java_method->methodSignature = method_sig;
 
+							// CREATING A NEW METHOD
 							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS);
 
-							// TODO: Register the method signature here (the TODOs are in inverse order of what you will do when coding it):
-							signature s = method_signature(s);
+							// REGISTERING THE METHOD PARAMETER WITH INDEX
+							signature s = method_signature(m);
 
-							// TODO: Use these functions for registering the argument types and return type:
-							/*
-								void signature_set(signature s, size_t index, const char *name, type t);
-								void signature_set_return(signature s, type t);
-							*/
+							jmethodID cls_method_parameter_list = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_parameters", "(Ljava/lang/reflect/Method;)[Ljava/lang/String;");
+							jobjectArray methodParameterList = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_parameter_list, curMethod);
 
-							// TODO: For obtaining the types, use this:
-							/*
-								type t = loader_impl_type(impl, field_type);
+							if (methodParameterList)
+							{
+								jsize parameterLength = java_impl->env->GetArrayLength(methodParameterList);
 
-								// TODO: We should check if the type t is not known here (t == NULL), and if it is a new class
-								// that has not been registered yet, we should register it dynamically using
-								// loader_impl_type_define, and inspecting that class so we know the type
-							*/
+								for (jsize pIndex = 0; pIndex < parameterLength; pIndex++)
+								{
+									jstring cparameter = (jstring)java_impl->env->GetObjectArrayElement(methodParameterList, pIndex);
+									const char *parameter = java_impl->env->GetStringUTFChars(cparameter, NULL);
 
+									type pt = loader_impl_type(impl, parameter);
+									if (pt != NULL)
+									{
+										signature_set(s, (size_t)pIndex, parameter, pt);
+									}
+								}
+							}
+
+							// REGISTERING THE METHOD RETURN PARAMETER
+							type rt = loader_impl_type(impl, method_return_type);
+							signature_set_return(s, rt);
+
+							// METHOD REGISTERATION
 							if (!strcmp(method_static, "static"))
 								class_register_static_method(c, m);
 							else
