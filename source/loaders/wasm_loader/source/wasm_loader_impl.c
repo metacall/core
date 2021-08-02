@@ -35,7 +35,10 @@
 #include <stdlib.h>
 
 #include <wasm.h>
-#include <wasmtime.h>
+
+#ifdef WASMTIME
+	#include <wasmtime.h>
+#endif
 
 #define COUNT_OF(array) (sizeof(array) / sizeof(array[0]))
 
@@ -65,34 +68,6 @@ typedef struct loader_impl_wasm_type
 	wasm_store_t *store;
 	vector paths;
 } * loader_impl_wasm;
-
-int type_wasm_interface_create(type t, type_impl impl)
-{
-	/* TODO */
-
-	(void)t;
-	(void)impl;
-
-	return 0;
-}
-
-void type_wasm_interface_destroy(type t, type_impl impl)
-{
-	/* TODO */
-
-	(void)t;
-	(void)impl;
-}
-
-type_interface type_wasm_singleton(void)
-{
-	static struct type_interface_type wasm_type_interface = {
-		&type_wasm_interface_create,
-		&type_wasm_interface_destroy
-	};
-
-	return &wasm_type_interface;
-}
 
 int wasm_loader_impl_reflect_to_wasm_type(value val, wasm_val_t *ret)
 {
@@ -243,21 +218,6 @@ function_return function_wasm_interface_invoke(function func, function_impl impl
 	return wasm_loader_impl_call_func(sig, wasm_func->func, args_vec);
 }
 
-function_return function_wasm_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
-{
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)context;
-
-	return NULL;
-}
-
 void function_wasm_interface_destroy(function func, function_impl impl)
 {
 	(void)func;
@@ -270,7 +230,11 @@ function_interface function_wasm_singleton(void)
 	static struct function_interface_type wasm_function_interface = {
 		NULL,
 		&function_wasm_interface_invoke,
-		&function_wasm_interface_await,
+		// Threads are only in Phase 2 of the standardization process
+		// (see https://github.com/WebAssembly/proposals) and are currently
+		// not fully implemented in Wasmtime
+		// (see https://docs.wasmtime.dev/stability-wasm-proposals-support.html)
+		NULL,
 		&function_wasm_interface_destroy
 	};
 
@@ -537,7 +501,6 @@ bool wasm_loader_impl_matches_import(const wasm_externtype_t *import, const wasm
 
 const wasm_extern_t *wasm_loader_impl_find_export(loader_impl_wasm_handle handle, const wasm_importtype_t *import_type)
 {
-	// TODO: What about shadowing?
 	const wasm_name_t *module_name = wasm_importtype_module(import_type);
 	const wasm_name_t *name = wasm_importtype_name(import_type);
 	const wasm_externtype_t *type = wasm_importtype_type(import_type);
@@ -636,17 +599,6 @@ error_module_new:
 	return 1;
 }
 
-void wasm_loader_impl_handle_wasmtime_error(wasmtime_error_t *error)
-{
-	wasm_name_t message;
-	wasmtime_error_message(error, &message);
-
-	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Encountered Wasmtime error\n%.*s", message.size, message.data);
-
-	wasmtime_error_delete(error);
-	wasm_byte_vec_delete(&message);
-}
-
 char *wasm_loader_impl_read_buffer_from_file(loader_impl impl, const char *path, size_t *file_size)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
@@ -684,8 +636,22 @@ error_open_file:
 	return NULL;
 }
 
+#ifdef WASMTIME
+void wasm_loader_impl_handle_wasmtime_error(wasmtime_error_t *error)
+{
+	wasm_name_t message;
+	wasmtime_error_message(error, &message);
+
+	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Encountered Wasmtime error\n%.*s", message.size, message.data);
+
+	wasmtime_error_delete(error);
+	wasm_byte_vec_delete(&message);
+}
+#endif
+
 int wasm_loader_impl_try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec_t *binary)
 {
+#ifdef WASMTIME
 	wasmtime_error_t *error = wasmtime_wat2wasm(buffer, size, binary);
 
 	if (error != NULL)
@@ -695,6 +661,10 @@ int wasm_loader_impl_try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec
 	}
 
 	return 0;
+#else
+	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Current WebAssembly runtime does not support conversion from text format to binary format");
+	return 1;
+#endif
 }
 
 int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
@@ -775,7 +745,6 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	wasm_byte_vec_new(&binary, size, buffer);
 	if (!wasm_module_validate(wasm_impl->store, &binary))
 	{
-		// TODO: Make this conditional
 		log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader: Buffer is not valid binary module, trying wat2wasm");
 
 		wasm_byte_vec_delete(&binary);
@@ -914,6 +883,12 @@ char *wasm_loader_impl_get_export_type_name(const wasm_exporttype_t *export_type
 
 int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_externtype_t *extern_type, const char *name, const wasm_extern_t *extern_val)
 {
+	if (scope_get(scp, name) != NULL)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "WebAssembly loader: A function named \"%s\" is already defined, skipping redefinition", name);
+		return 0;
+	}
+
 	const wasm_functype_t *func_type =
 		wasm_externtype_as_functype_const(extern_type);
 	const wasm_valtype_vec_t *params = wasm_functype_params(func_type);
@@ -939,10 +914,7 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 
 	for (size_t param_idx = 0; param_idx < params->size; param_idx++)
 	{
-		// TODO: We supply an empty string as the parameter name, since
-		//       `signature_set' doesn't allow `NULL'. Consider changing
-		//       the implementation of `signature_set` to allow this.
-		signature_set(sig, param_idx, "",
+		signature_set(sig, param_idx, "unnamed",
 			wasm_loader_impl_val_kind_to_type(impl, wasm_valtype_kind(params->data[param_idx])));
 	}
 
@@ -951,31 +923,50 @@ int wasm_loader_impl_discover_function(loader_impl impl, scope scp, const wasm_e
 	return 0;
 }
 
+int wasm_loader_impl_discover_export(loader_impl impl, scope scp, const wasm_exporttype_t *export_type, const wasm_extern_t *export)
+{
+	int ret = 1;
+
+	// All of the `wasm_*` calls here return pointers to memory owned by
+	// `export_types`, so no need to do any error checking or cleanup.
+	const wasm_externtype_t *extern_type = wasm_exporttype_type(export_type);
+	const wasm_externkind_t kind = wasm_externtype_kind(extern_type);
+	char *export_name = wasm_loader_impl_get_export_type_name(export_type);
+
+	if (export_name == NULL)
+	{
+		goto error_export_name_alloc;
+	}
+
+	if (kind == WASM_EXTERN_FUNC)
+	{
+		if (wasm_loader_impl_discover_function(impl, scp, extern_type, export_name, export) != 0)
+		{
+			goto error_discover_function;
+		}
+	}
+
+	ret = 0;
+
+error_discover_function:
+	free(export_name);
+error_export_name_alloc:
+	return ret;
+}
+
 int wasm_loader_impl_discover_module(loader_impl impl, scope scp, const loader_impl_wasm_module *module)
 {
-	for (size_t export_idx = 0; export_idx < module->export_types.size; export_idx++)
+	for (size_t i = 0; i < module->export_types.size; i++)
 	{
-		// All of the `wasm_*` calls in this loop return pointers to memory
-		// owned by `export_types`, so no need to do any error checking or
-		// cleanup.
-		const wasm_externtype_t *extern_type = wasm_exporttype_type(module->export_types.data[export_idx]);
-		const wasm_externkind_t kind = wasm_externtype_kind(extern_type);
-		char *export_name = wasm_loader_impl_get_export_type_name(module->export_types.data[export_idx]);
-
-		if (export_name == NULL)
+		// There is a 1-to-1 correspondence between between the instance
+		// exports and the module exports, so we can use the same index.
+		const wasm_exporttype_t *export_type = module->export_types.data[i];
+		const wasm_extern_t *export = module->exports.data[i];
+		if (wasm_loader_impl_discover_export(impl, scp, export_type, export) != 0)
 		{
+			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Module discovery failed");
 			return 1;
 		}
-
-		// TODO: Do we need to implement the other types as well?
-		if (kind == WASM_EXTERN_FUNC)
-		{
-			// There is a 1-to-1 correspondence between between the instance
-			// exports and the module exports, so we can reuse the index.
-			wasm_loader_impl_discover_function(impl, scp, extern_type, export_name, module->exports.data[export_idx]);
-		}
-
-		free(export_name);
 	}
 
 	return 0;
@@ -988,7 +979,11 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 	for (size_t idx = 0; idx < vector_size(wasm_handle->modules); idx++)
 	{
-		wasm_loader_impl_discover_module(impl, scp, vector_at(wasm_handle->modules, idx));
+		if (wasm_loader_impl_discover_module(impl, scp, vector_at(wasm_handle->modules, idx)) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Handle discovery failed");
+			return 1;
+		}
 	}
 
 	return 0;

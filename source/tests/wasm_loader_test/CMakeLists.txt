@@ -97,6 +97,13 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
+if(OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_WASM)
+	target_compile_definitions(${target}
+		PRIVATE
+		BUILD_SCRIPT_TESTS
+	)
+endif()
+
 #
 # Compile options
 #

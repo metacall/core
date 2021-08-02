@@ -94,8 +94,7 @@ TEST_F(wasm_loader_test, LoadTextFromMemory)
 	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, strlen(invalid_module), NULL));
 }
 
-// TODO: Make this conditional
-//#if defined(OPTION_BUILD_SCRIPTS) && defined(OPTION_BUILD_SCRIPTS_WASM)
+#if defined(BUILD_SCRIPT_TESTS)
 TEST_F(wasm_loader_test, LoadFromFile)
 {
 	const char *empty_module_filename = "empty_module.wat";
@@ -190,7 +189,6 @@ TEST_F(wasm_loader_test, LinkModules)
 		"imports.wat"
 	};
 
-	// FIXME: Duplicate symbols cause memory leak from `reflect`
 	ASSERT_EQ(0, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
 
 	void *ret = metacall("duplicate_func_i32");
@@ -213,3 +211,4 @@ TEST_F(wasm_loader_test, InvalidLinkModules)
 
 	ASSERT_EQ(1, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
 }
+#endif

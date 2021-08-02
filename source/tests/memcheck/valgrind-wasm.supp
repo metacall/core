@@ -7,6 +7,32 @@
 }
 
 {
+    Ignore memory leaked by wasm_instance_new.
+    Memcheck:Leak
+    ...
+    fun:*wasmtime*module*registry*ModuleRegistry*register*
+    ...
+    fun:wasm_instance_new
+    ...
+}
+
+{
+    Ignore memory leaked by wasm_store_delete.
+    Memcheck:Leak
+    ...
+    fun:wasm_store_delete
+    ...
+}
+
+{
+    Ignore memory leaked by Wasmtime trap handlers.
+    Memcheck:Leak
+    ...
+    fun:*wasmtime_runtime*traphandlers*trap_handler*
+    ...
+}
+
+{
     Ignore memory leaked by dlopen when using dynlink_load.
     Memcheck:Leak
     ...
