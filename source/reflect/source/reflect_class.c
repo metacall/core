@@ -35,13 +35,14 @@ struct class_type
 	class_impl impl;
 	class_interface interface;
 	size_t ref_count;
-	set static_attributes;
-	set attributes;
-	map static_methods;
 	map methods;
+	map static_methods;
+	set attributes;
+	set static_attributes;
 };
 
 static value class_metadata_name(klass cls);
+static method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t size);
 
 klass class_create(const char *name, class_impl impl, class_impl_interface_singleton singleton)
 {
@@ -322,10 +323,8 @@ vector class_methods(klass cls, const char *key)
 	return map_get(cls->methods, (map_key)key);
 }
 
-method class_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
+method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t size)
 {
-	vector v = class_static_methods(cls, key);
-
 	if (v != NULL)
 	{
 		size_t iterator, method_size = vector_size(v);
@@ -347,29 +346,14 @@ method class_static_method(klass cls, const char *key, type_id ret, type_id args
 	return NULL;
 }
 
+method class_static_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
+{
+	return class_get_method_type_safe(class_static_methods(cls, key), ret, args, size);
+}
+
 method class_method(klass cls, const char *key, type_id ret, type_id args[], size_t size)
 {
-	vector v = class_methods(cls, key);
-
-	if (v != NULL)
-	{
-		size_t iterator, method_size = vector_size(v);
-
-		for (iterator = 0; iterator < method_size; ++iterator)
-		{
-			method m = vector_at_type(v, iterator, method);
-
-			if (signature_compare(method_signature(m), ret, args, size) == 0)
-			{
-				vector_destroy(v);
-				return m;
-			}
-		}
-
-		vector_destroy(v);
-	}
-
-	return NULL;
+	return class_get_method_type_safe(class_methods(cls, key), ret, args, size);
 }
 
 attribute class_static_attribute(klass cls, const char *key)
