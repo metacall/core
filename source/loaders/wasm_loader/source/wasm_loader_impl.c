@@ -35,7 +35,10 @@
 #include <stdlib.h>
 
 #include <wasm.h>
-#include <wasmtime.h>
+
+#ifdef WASMTIME
+	#include <wasmtime.h>
+#endif
 
 #define COUNT_OF(array) (sizeof(array) / sizeof(array[0]))
 
@@ -596,17 +599,6 @@ error_module_new:
 	return 1;
 }
 
-void wasm_loader_impl_handle_wasmtime_error(wasmtime_error_t *error)
-{
-	wasm_name_t message;
-	wasmtime_error_message(error, &message);
-
-	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Encountered Wasmtime error\n%.*s", message.size, message.data);
-
-	wasmtime_error_delete(error);
-	wasm_byte_vec_delete(&message);
-}
-
 char *wasm_loader_impl_read_buffer_from_file(loader_impl impl, const char *path, size_t *file_size)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
@@ -644,8 +636,22 @@ error_open_file:
 	return NULL;
 }
 
+#ifdef WASMTIME
+void wasm_loader_impl_handle_wasmtime_error(wasmtime_error_t *error)
+{
+	wasm_name_t message;
+	wasmtime_error_message(error, &message);
+
+	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Encountered Wasmtime error\n%.*s", message.size, message.data);
+
+	wasmtime_error_delete(error);
+	wasm_byte_vec_delete(&message);
+}
+#endif
+
 int wasm_loader_impl_try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec_t *binary)
 {
+#ifdef WASMTIME
 	wasmtime_error_t *error = wasmtime_wat2wasm(buffer, size, binary);
 
 	if (error != NULL)
@@ -655,6 +661,10 @@ int wasm_loader_impl_try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec
 	}
 
 	return 0;
+#else
+	log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Current WebAssembly runtime does not support conversion from text format to binary format");
+	return 1;
+#endif
 }
 
 int wasm_loader_impl_load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
@@ -735,7 +745,6 @@ loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	wasm_byte_vec_new(&binary, size, buffer);
 	if (!wasm_module_validate(wasm_impl->store, &binary))
 	{
-		// TODO: Make this conditional
 		log_write("metacall", LOG_LEVEL_DEBUG, "WebAssembly loader: Buffer is not valid binary module, trying wat2wasm");
 
 		wasm_byte_vec_delete(&binary);
