@@ -41,17 +41,30 @@ if(OPTION_BUILD_GUIX)
 			OUTPUT_VARIABLE DOTNET_SOURCE
 			OUTPUT_STRIP_TRAILING_WHITESPACE
 		)
+		set(DOTNET_SOURCE --source ${DOTNET_SOURCE})
 	else()
 		set(DOTNET_SOURCE)
-		message(FATAL_ERROR ".NET Core support not implemented in Guix build for versions less than 2.0.")
+		message(WARNING ".NET Core support not implemented in Guix build for versions less than 2.0.")
 	endif()
 
-	message(STATUS "Using DotNet source ${DOTNET_SOURCE} for Guix build.")
+	set(DOTNET_ADDITIONAL_PACKAGES "" CACHE PATH "Define a folder for additional packages in NetCore.")
+
+	if(DOTNET_ADDITIONAL_PACKAGES)
+		set(DOTNET_ADDITIONAL_PACKAGES_SOURCE --source ${DOTNET_ADDITIONAL_PACKAGES})
+	else()
+		set(DOTNET_ADDITIONAL_PACKAGES_SOURCE)
+	endif()
+
+	if(DOTNET_CORE_PATH)
+		set(DOTNET_CORE_PATH_SOURCE --source ${DOTNET_CORE_PATH})
+	else()
+		set(DOTNET_CORE_PATH_SOURCE)
+	endif()
 
 	# Build without internet access
 	add_custom_target(${target} ALL
-		COMMAND ${DOTNET_COMMAND} restore --source ${DOTNET_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj
-		COMMAND ${DOTNET_COMMAND} publish --source ${DOTNET_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj -o ${CMAKE_BINARY_DIR}
+		COMMAND ${DOTNET_COMMAND} restore ${DOTNET_CORE_PATH_SOURCE} ${DOTNET_ADDITIONAL_PACKAGES_SOURCE} ${DOTNET_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj
+		COMMAND ${DOTNET_COMMAND} publish ${DOTNET_CORE_PATH_SOURCE} ${DOTNET_ADDITIONAL_PACKAGES_SOURCE} ${DOTNET_SOURCE} ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj -o ${CMAKE_BINARY_DIR}
 	)
 else()
 	if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
