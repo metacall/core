@@ -94,8 +94,7 @@ TEST_F(wasm_loader_test, LoadTextFromMemory)
 	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, strlen(invalid_module), NULL));
 }
 
-// TODO: Make this conditional
-//#if defined(OPTION_BUILD_SCRIPTS) && defined(OPTION_BUILD_SCRIPTS_WASM)
+#if defined(BUILD_SCRIPT_TESTS)
 TEST_F(wasm_loader_test, LoadFromFile)
 {
 	const char *empty_module_filename = "empty_module.wat";
@@ -181,3 +180,35 @@ TEST_F(wasm_loader_test, CallFunctions)
 	ret = metacall("trap");
 	ASSERT_EQ(NULL, ret);
 }
+
+TEST_F(wasm_loader_test, LinkModules)
+{
+	const char *modules[] = {
+		"exports1.wat",
+		"exports2.wat",
+		"imports.wat"
+	};
+
+	ASSERT_EQ(0, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
+
+	void *ret = metacall("duplicate_func_i32");
+	ASSERT_EQ(METACALL_INT, metacall_value_id(ret));
+	ASSERT_EQ(1, metacall_value_to_int(ret));
+	metacall_value_destroy(ret);
+
+	ret = metacall("duplicate_func_i64");
+	ASSERT_EQ(METACALL_LONG, metacall_value_id(ret));
+	ASSERT_EQ(2, metacall_value_to_long(ret));
+	metacall_value_destroy(ret);
+}
+
+TEST_F(wasm_loader_test, InvalidLinkModules)
+{
+	const char *modules[] = {
+		"exports1.wat",
+		"imports.wat"
+	};
+
+	ASSERT_EQ(1, metacall_load_from_file("wasm", modules, sizeof(modules) / sizeof(modules[0]), NULL));
+}
+#endif

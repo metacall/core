@@ -16,6 +16,7 @@ find_package(Wasmtime 0.28.0 REQUIRED)
 # Target name
 set(target wasm_loader)
 
+
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
 
@@ -159,7 +160,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-
+	WASMTIME
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
