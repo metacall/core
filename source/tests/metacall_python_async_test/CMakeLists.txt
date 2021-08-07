@@ -7,6 +7,8 @@ endif()
 # Executable name and options
 #
 
+find_package(GTest REQUIRED)
+
 # Target name
 set(target metacall-python-async-test)
 message(STATUS "Test ${target}")
@@ -83,7 +85,10 @@ target_link_libraries(${target}
 	PRIVATE
 	${DEFAULT_LIBRARIES}
 
-	GTest
+	GTest::gtest
+	GTest::gtest_main
+	GTest::gmock
+	GTest::gmock_main
 
 	${META_PROJECT_NAME}::version
 	${META_PROJECT_NAME}::preprocessor
