@@ -147,6 +147,8 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		# NodeJS Loader
 		'node': 'node',
 		'js': 'node',
+		# WebAssembly Loader
+		'wat': 'wasm',
 		# TypeScript Loader
 		'ts': 'ts',
 		'jsx': 'ts',
