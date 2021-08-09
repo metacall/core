@@ -395,6 +395,9 @@ std::string getJNISignature(class_args args, size_t argc, const char *returnType
 
 		if (id == TYPE_STRING)
 			sig += "Ljava/lang/String;";
+
+		if (id == TYPE_ARRAY)
+			sig += "[Ljava/lang/String;"; //TODO: support other types in constructor
 	}
 
 	sig += ")";
@@ -452,6 +455,114 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 			const char *strV = value_to_string(args[i]);
 			jstring str = env->NewStringUTF(strV);
 			constructorArgs[i].l = str;
+		}
+		else if (id == TYPE_ARRAY)
+		{
+			value *array_value = value_to_array(args[i]);
+			size_t array_size = (size_t)value_type_count(args[i]);
+
+			if (array_size == 0)
+			{
+				jobjectArray arr = env->NewObjectArray((jsize)0, env->FindClass("java/lang/String"), env->NewStringUTF(""));
+				constructorArgs[i].l = arr;
+				return;
+			}
+
+			type_id tt = value_type_id(array_value[0]);
+			switch (tt)
+			{
+				case TYPE_BOOL: {
+					jbooleanArray setArr = env->NewBooleanArray((jsize)array_size);
+
+					jboolean fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jboolean)value_to_bool(array_value[i]);
+
+					env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_CHAR: {
+					jcharArray setArr = env->NewCharArray((jsize)array_size);
+
+					jchar fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jchar)value_to_char(array_value[i]);
+
+					env->SetCharArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_SHORT: {
+					jshortArray setArr = env->NewShortArray((jsize)array_size);
+
+					jshort fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jshort)value_to_short(array_value[i]);
+
+					env->SetShortArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+
+				case TYPE_INT: {
+					jintArray setArr = env->NewIntArray((jsize)array_size);
+
+					jint fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jint)value_to_int(array_value[i]);
+
+					env->SetIntArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_LONG: {
+					jlongArray setArr = env->NewLongArray((jsize)array_size);
+
+					jlong fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jlong)value_to_long(array_value[i]);
+
+					env->SetLongArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_FLOAT: {
+					jfloatArray setArr = env->NewFloatArray((jsize)array_size);
+
+					jfloat fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jfloat)value_to_float(array_value[i]);
+
+					env->SetFloatArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_DOUBLE: {
+					jdoubleArray setArr = env->NewDoubleArray((jsize)array_size);
+
+					jdouble fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jdouble)value_to_double(array_value[i]);
+
+					env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+
+				case TYPE_STRING: {
+					jobjectArray arr = env->NewObjectArray((jsize)array_size, env->FindClass("java/lang/String"), env->NewStringUTF(""));
+
+					for (size_t i = 0; i < array_size; i++)
+						env->SetObjectArrayElement(arr, (jsize)i, env->NewStringUTF(value_to_string(array_value[i])));
+
+					constructorArgs[i].l = arr;
+					break;
+				}
+
+				default:
+					break;
+			}
 		}
 	}
 }
@@ -596,6 +707,124 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 					return value_create_string(gotValConv, strlen(gotValConv));
 				}
 
+				case TYPE_ARRAY: {
+					if (!strcmp(fType, "[Z"))
+					{
+						jbooleanArray gotVal = (jbooleanArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jboolean *body = java_impl->env->GetBooleanArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_bool(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[C"))
+					{
+						jcharArray gotVal = (jcharArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jchar *body = java_impl->env->GetCharArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_char(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[S"))
+					{
+						jshortArray gotVal = (jshortArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jshort *body = java_impl->env->GetShortArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_short(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[I"))
+					{
+						jintArray gotVal = (jintArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jint *body = java_impl->env->GetIntArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_int(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[J"))
+					{
+						jlongArray gotVal = (jlongArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jlong *body = java_impl->env->GetLongArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_long(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[F"))
+					{
+						jfloatArray gotVal = (jfloatArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jfloat *body = java_impl->env->GetFloatArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_float(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[D"))
+					{
+						jdoubleArray gotVal = (jdoubleArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jdouble *body = java_impl->env->GetDoubleArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_double(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					{
+						jobjectArray gotVal = (jobjectArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						for (size_t i = 0; i < array_size; i++)
+						{
+							jstring cur_ele = (jstring)java_impl->env->GetObjectArrayElement(gotVal, i);
+							const char *cur_element = java_impl->env->GetStringUTFChars(cur_ele, NULL);
+							array_value[i] = value_create_string(cur_element, strlen(cur_element));
+						}
+
+						return v;
+					}
+				}
+
 				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from Java to MetaCall value", type_name(fieldType));
 					return NULL;
@@ -623,6 +852,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 	if (clscls != nullptr)
 	{
 		const char *fType = (const char *)type_derived(fieldType);
+		std::cout << fType << std::endl;
 		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
@@ -680,6 +910,101 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 					return 0;
 				}
 
+				case TYPE_ARRAY: {
+					value *array_value = value_to_array(v);
+					size_t array_size = (size_t)value_type_count(v);
+
+					if (!strcmp(fType, "[Z"))
+					{
+						jbooleanArray setArr = java_impl->env->NewBooleanArray((jsize)array_size);
+
+						jboolean fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jboolean)value_to_bool(array_value[i]);
+
+						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[C"))
+					{
+						jcharArray setArr = java_impl->env->NewCharArray((jsize)array_size);
+
+						jchar fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jchar)value_to_char(array_value[i]);
+
+						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[S"))
+					{
+						jshortArray setArr = java_impl->env->NewShortArray((jsize)array_size);
+
+						jshort fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jshort)value_to_short(array_value[i]);
+
+						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[I"))
+					{
+						jintArray setArr = java_impl->env->NewIntArray((jsize)array_size);
+
+						jint fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jint)value_to_int(array_value[i]);
+
+						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[J"))
+					{
+						jlongArray setArr = java_impl->env->NewLongArray((jsize)array_size);
+
+						jlong fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jlong)value_to_long(array_value[i]);
+
+						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[F"))
+					{
+						jfloatArray setArr = java_impl->env->NewFloatArray((jsize)array_size);
+
+						jfloat fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jfloat)value_to_float(array_value[i]);
+
+						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[D"))
+					{
+						jdoubleArray setArr = java_impl->env->NewDoubleArray((jsize)array_size);
+
+						jdouble fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jdouble)value_to_double(array_value[i]);
+
+						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					{
+						std::cout << "STRING ARR SET" << std::endl;
+						jobjectArray arr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
+
+						for (size_t i = 0; i < array_size; i++)
+							java_impl->env->SetObjectArrayElement(arr, (jsize)i, java_impl->env->NewStringUTF(value_to_string(array_value[i])));
+
+						java_impl->env->SetStaticObjectField(clscls, fID, arr);
+					}
+
+					return 0;
+				}
+
 				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from MetaCall value to Java", type_name(fieldType));
 					return NULL;
@@ -725,7 +1050,7 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, method m, c
 				java_impl->env->CallStaticVoidMethodA(clscls, function_invoke_id, constructorArgs);
 				return value_create_null();
 			}
-			
+
 			case TYPE_BOOL: {
 				jboolean returnVal = (jboolean)java_impl->env->CallStaticBooleanMethodA(clscls, function_invoke_id, constructorArgs);
 				return value_create_bool(returnVal);
@@ -1113,6 +1438,9 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							jstring fstatic = (jstring)java_impl->env->GetObjectArrayElement(fieldDetails, 3);
 							const char *field_static = java_impl->env->GetStringUTFChars(fstatic, NULL);
 
+							jstring fSignature = (jstring)java_impl->env->GetObjectArrayElement(fieldDetails, 4);
+							const char *field_signature = java_impl->env->GetStringUTFChars(fSignature, NULL);
+
 							std::cout << field_visibility << " " << field_static << " " << field_type << " " << field_name << std::endl;
 
 							loader_impl_java_field java_field = new loader_impl_java_field_type();
@@ -1121,16 +1449,22 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 							type t = loader_impl_type(impl, field_type);
 
-							// TODO: We should check if the type t is not known here (t == NULL), and if it is a new class
-							// that has not been registered yet, we should register it dynamically using
-							// loader_impl_type_define, and inspecting that class so we know the type
+							if (t == NULL)
+							{
+								t = type_create(TYPE_ARRAY, field_type, (type_impl)field_signature, &type_java_singleton);
+								loader_impl_type_define(impl, field_type, t);
+							}
 
-							attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
+							if (t != NULL)
+							{
+								std::cout << "Registered" << std::endl;
+								attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
 
-							if (!strcmp(field_static, "static"))
-								class_register_static_attribute(c, attr);
-							else
-								class_register_attribute(c, attr);
+								if (!strcmp(field_static, "static"))
+									class_register_static_attribute(c, attr);
+								else
+									class_register_attribute(c, attr);
+							}
 						}
 					}
 

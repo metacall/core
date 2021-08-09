@@ -312,14 +312,14 @@ public class bootstrap {
   public static String[] java_bootstrap_discover_fields_details(Field f) {
     String fName = f.getName();
     String fType = f.getType().getName();
+    String fSignature = fType.replace(".", "/");
     int fModifier = f.getModifiers();
     String fVisibility = getModifierType(fModifier);
     String fStatic = Modifier.isStatic(fModifier) ? "static" : "nonstatic";
 
-    // System.out.println("Field " + fVisibility + " " + fStatic + " " + fType + " "
-    // + fName);
+    System.out.println("Field " + fVisibility + " " + fStatic + " " + fType + " " + fName);
 
-    return new String[] { fName, fType, fVisibility, fStatic };
+    return new String[] { fName, fType, fVisibility, fStatic, fSignature };
   }
 
   public static int java_bootstrap_discover_method_args_size(Method m) {
