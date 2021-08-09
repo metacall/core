@@ -395,6 +395,9 @@ std::string getJNISignature(class_args args, size_t argc, const char *returnType
 
 		if (id == TYPE_STRING)
 			sig += "Ljava/lang/String;";
+
+		if (id == TYPE_ARRAY)
+			sig += "[Ljava/lang/String;"; //TODO: support other types in constructor
 	}
 
 	sig += ")";
@@ -452,6 +455,114 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 			const char *strV = value_to_string(args[i]);
 			jstring str = env->NewStringUTF(strV);
 			constructorArgs[i].l = str;
+		}
+		else if (id == TYPE_ARRAY)
+		{
+			value *array_value = value_to_array(args[i]);
+			size_t array_size = (size_t)value_type_count(args[i]);
+
+			if (array_size == 0)
+			{
+				jobjectArray arr = env->NewObjectArray((jsize)0, env->FindClass("java/lang/String"), env->NewStringUTF(""));
+				constructorArgs[i].l = arr;
+				return;
+			}
+
+			type_id tt = value_type_id(array_value[0]);
+			switch (tt)
+			{
+				case TYPE_BOOL: {
+					jbooleanArray setArr = env->NewBooleanArray((jsize)array_size);
+
+					jboolean fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jboolean)value_to_bool(array_value[i]);
+
+					env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_CHAR: {
+					jcharArray setArr = env->NewCharArray((jsize)array_size);
+
+					jchar fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jchar)value_to_char(array_value[i]);
+
+					env->SetCharArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_SHORT: {
+					jshortArray setArr = env->NewShortArray((jsize)array_size);
+
+					jshort fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jshort)value_to_short(array_value[i]);
+
+					env->SetShortArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+
+				case TYPE_INT: {
+					jintArray setArr = env->NewIntArray((jsize)array_size);
+
+					jint fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jint)value_to_int(array_value[i]);
+
+					env->SetIntArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_LONG: {
+					jlongArray setArr = env->NewLongArray((jsize)array_size);
+
+					jlong fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jlong)value_to_long(array_value[i]);
+
+					env->SetLongArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_FLOAT: {
+					jfloatArray setArr = env->NewFloatArray((jsize)array_size);
+
+					jfloat fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jfloat)value_to_float(array_value[i]);
+
+					env->SetFloatArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+				case TYPE_DOUBLE: {
+					jdoubleArray setArr = env->NewDoubleArray((jsize)array_size);
+
+					jdouble fill[array_size];
+					for (size_t i = 0; i < array_size; i++)
+						fill[i] = (jdouble)value_to_double(array_value[i]);
+
+					env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
+					constructorArgs[i].l = setArr;
+					break;
+				}
+
+				case TYPE_STRING: {
+					jobjectArray arr = env->NewObjectArray((jsize)array_size, env->FindClass("java/lang/String"), env->NewStringUTF(""));
+
+					for (size_t i = 0; i < array_size; i++)
+						env->SetObjectArrayElement(arr, (jsize)i, env->NewStringUTF(value_to_string(array_value[i])));
+
+					constructorArgs[i].l = arr;
+					break;
+				}
+
+				default:
+					break;
+			}
 		}
 	}
 }
@@ -596,6 +707,124 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 					return value_create_string(gotValConv, strlen(gotValConv));
 				}
 
+				case TYPE_ARRAY: {
+					if (!strcmp(fType, "[Z"))
+					{
+						jbooleanArray gotVal = (jbooleanArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jboolean *body = java_impl->env->GetBooleanArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_bool(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[C"))
+					{
+						jcharArray gotVal = (jcharArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jchar *body = java_impl->env->GetCharArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_char(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[S"))
+					{
+						jshortArray gotVal = (jshortArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jshort *body = java_impl->env->GetShortArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_short(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[I"))
+					{
+						jintArray gotVal = (jintArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jint *body = java_impl->env->GetIntArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_int(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[J"))
+					{
+						jlongArray gotVal = (jlongArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jlong *body = java_impl->env->GetLongArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_long(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[F"))
+					{
+						jfloatArray gotVal = (jfloatArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jfloat *body = java_impl->env->GetFloatArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_float(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[D"))
+					{
+						jdoubleArray gotVal = (jdoubleArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jdouble *body = java_impl->env->GetDoubleArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_double(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					{
+						jobjectArray gotVal = (jobjectArray)java_impl->env->GetStaticObjectField(clscls, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						for (size_t i = 0; i < array_size; i++)
+						{
+							jstring cur_ele = (jstring)java_impl->env->GetObjectArrayElement(gotVal, i);
+							const char *cur_element = java_impl->env->GetStringUTFChars(cur_ele, NULL);
+							array_value[i] = value_create_string(cur_element, strlen(cur_element));
+						}
+
+						return v;
+					}
+				}
+
 				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from Java to MetaCall value", type_name(fieldType));
 					return NULL;
@@ -623,6 +852,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 	if (clscls != nullptr)
 	{
 		const char *fType = (const char *)type_derived(fieldType);
+		std::cout << fType << std::endl;
 		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
@@ -680,6 +910,101 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 					return 0;
 				}
 
+				case TYPE_ARRAY: {
+					value *array_value = value_to_array(v);
+					size_t array_size = (size_t)value_type_count(v);
+
+					if (!strcmp(fType, "[Z"))
+					{
+						jbooleanArray setArr = java_impl->env->NewBooleanArray((jsize)array_size);
+
+						jboolean fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jboolean)value_to_bool(array_value[i]);
+
+						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[C"))
+					{
+						jcharArray setArr = java_impl->env->NewCharArray((jsize)array_size);
+
+						jchar fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jchar)value_to_char(array_value[i]);
+
+						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[S"))
+					{
+						jshortArray setArr = java_impl->env->NewShortArray((jsize)array_size);
+
+						jshort fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jshort)value_to_short(array_value[i]);
+
+						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[I"))
+					{
+						jintArray setArr = java_impl->env->NewIntArray((jsize)array_size);
+
+						jint fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jint)value_to_int(array_value[i]);
+
+						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[J"))
+					{
+						jlongArray setArr = java_impl->env->NewLongArray((jsize)array_size);
+
+						jlong fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jlong)value_to_long(array_value[i]);
+
+						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[F"))
+					{
+						jfloatArray setArr = java_impl->env->NewFloatArray((jsize)array_size);
+
+						jfloat fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jfloat)value_to_float(array_value[i]);
+
+						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[D"))
+					{
+						jdoubleArray setArr = java_impl->env->NewDoubleArray((jsize)array_size);
+
+						jdouble fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jdouble)value_to_double(array_value[i]);
+
+						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+					}
+					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					{
+						std::cout << "STRING ARR SET" << std::endl;
+						jobjectArray arr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
+
+						for (size_t i = 0; i < array_size; i++)
+							java_impl->env->SetObjectArrayElement(arr, (jsize)i, java_impl->env->NewStringUTF(value_to_string(array_value[i])));
+
+						java_impl->env->SetStaticObjectField(clscls, fID, arr);
+					}
+
+					return 0;
+				}
+
 				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from MetaCall value to Java", type_name(fieldType));
 					return NULL;
@@ -693,52 +1018,81 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 
 value java_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
-	// IN PROGRESS
 	(void)cls;
 	std::cout << "invoke" << std::endl;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-
-	char *key = (char *)method_name(m);
-	std::cout << "KEY = " << key << std::endl;
-
-	// loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
-	// std::cout << "NAME = " << java_method->methodName << std::endl;
-
 	loader_impl_java java_impl = java_cls->impl;
 	jclass clscls = java_cls->concls;
 
-	// jobject clsObj = java_cls->cls;
-	// jstring getKey = java_cls->impl->env->NewStringUTF(static_method_name);
+	loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
+	const char *methodSignature = java_method->methodSignature;
 
-	// jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
-	// if (classPtr != nullptr)
-	// {
-	// 	jmethodID cls_static_return_type = java_cls->impl->env->GetStaticMethodID(classPtr, "get_static_invoke_return_type", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;");
-	// 	if (cls_static_return_type != nullptr)
-	// 	{
-	// 		jstring result = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_static_return_type, clsObj, getKey);
-	// 		const char *rtnType = java_impl->env->GetStringUTFChars(result, NULL);
-	// 		std::cout << "Static Return type = " << rtnType << std::endl;
-	// 	}
-	// }
+	char *methodName = (char *)method_name(m);
 
-	// jmethodID findCls = java_impl->env->GetStaticMethodID(classPtr, "FindClass", "(Ljava/lang/String;)Ljava/lang/Class;");
-	// if (findCls != nullptr)
-	// {
-	// 	jclass clscls = (jclass)java_impl->env->CallStaticObjectMethod(classPtr, findCls, java_impl->env->NewStringUTF("Test"));
-	// 	if (clscls != nullptr)
-	// 	{
-	// 		jmethodID testFunct = java_impl->env->GetStaticMethodID(clscls, "testFunct", "(Ljava/lang/String;)I");
-	// 		if (testFunct != nullptr)
-	// 		{
-	// 			std::cout << "Got " << std::endl;
+	signature sg = method_signature(m);
+	type t = signature_get_return(sg);
 
-	// 			jint clsrtn = (jint)java_impl->env->CallStaticIntMethod(clscls, testFunct, java_impl->env->NewStringUTF("Mr. stark"));
-	// 			std::cout << "We won mr. stark " << clsrtn << std::endl;
-	// 		}
-	// 	}
-	// }
+	jvalue *constructorArgs = nullptr;
+	if (argc > 0)
+	{
+		constructorArgs = new jvalue[argc];
+		getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
+	}
+
+	jmethodID function_invoke_id = java_impl->env->GetStaticMethodID(clscls, methodName, methodSignature);
+
+	if (function_invoke_id != nullptr)
+	{
+		switch (type_index(t))
+		{
+			case TYPE_NULL: {
+				java_impl->env->CallStaticVoidMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_null();
+			}
+
+			case TYPE_BOOL: {
+				jboolean returnVal = (jboolean)java_impl->env->CallStaticBooleanMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_bool(returnVal);
+			}
+
+			case TYPE_CHAR: {
+				jchar returnVal = (jchar)java_impl->env->CallStaticCharMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_char(returnVal);
+			}
+
+			case TYPE_SHORT: {
+				jshort returnVal = (jshort)java_impl->env->CallStaticShortMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_short(returnVal);
+			}
+
+			case TYPE_INT: {
+				jint returnVal = (jint)java_impl->env->CallStaticIntMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_int(returnVal);
+			}
+
+			case TYPE_LONG: {
+				jlong returnVal = (jlong)java_impl->env->CallStaticLongMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_long(returnVal);
+			}
+
+			case TYPE_FLOAT: {
+				jfloat returnVal = (jfloat)java_impl->env->CallStaticFloatMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_float(returnVal);
+			}
+
+			case TYPE_DOUBLE: {
+				jdouble returnVal = (jdouble)java_impl->env->CallStaticDoubleMethodA(clscls, function_invoke_id, constructorArgs);
+				return value_create_double(returnVal);
+			}
+
+			case TYPE_STRING: {
+				jstring returnVal = (jstring)java_impl->env->CallStaticObjectMethodA(clscls, function_invoke_id, constructorArgs);
+				const char *returnString = java_impl->env->GetStringUTFChars(returnVal, NULL);
+				return value_create_string(returnString, strlen(returnString));
+			}
+		}
+	}
 
 	return NULL;
 }
@@ -822,6 +1176,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			const char *name;
 			const char *jni_signature;
 		} type_id_name_sig[] = {
+			{ TYPE_NULL, "void", "V" },
 			{ TYPE_BOOL, "boolean", "Z" },
 			{ TYPE_CHAR, "char", "C" },
 			{ TYPE_SHORT, "short", "S" },
@@ -1083,6 +1438,9 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							jstring fstatic = (jstring)java_impl->env->GetObjectArrayElement(fieldDetails, 3);
 							const char *field_static = java_impl->env->GetStringUTFChars(fstatic, NULL);
 
+							jstring fSignature = (jstring)java_impl->env->GetObjectArrayElement(fieldDetails, 4);
+							const char *field_signature = java_impl->env->GetStringUTFChars(fSignature, NULL);
+
 							std::cout << field_visibility << " " << field_static << " " << field_type << " " << field_name << std::endl;
 
 							loader_impl_java_field java_field = new loader_impl_java_field_type();
@@ -1091,16 +1449,22 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 							type t = loader_impl_type(impl, field_type);
 
-							// TODO: We should check if the type t is not known here (t == NULL), and if it is a new class
-							// that has not been registered yet, we should register it dynamically using
-							// loader_impl_type_define, and inspecting that class so we know the type
+							if (t == NULL)
+							{
+								t = type_create(TYPE_ARRAY, field_type, (type_impl)field_signature, &type_java_singleton);
+								loader_impl_type_define(impl, field_type, t);
+							}
 
-							attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
+							if (t != NULL)
+							{
+								std::cout << "Registered" << std::endl;
+								attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
 
-							if (!strcmp(field_static, "static"))
-								class_register_static_attribute(c, attr);
-							else
-								class_register_attribute(c, attr);
+								if (!strcmp(field_static, "static"))
+									class_register_static_attribute(c, attr);
+								else
+									class_register_attribute(c, attr);
+							}
 						}
 					}
 
@@ -1130,37 +1494,46 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							const char *method_static = java_impl->env->GetStringUTFChars(mStatic, NULL);
 
 							jstring mSignature = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 4);
-							const char *method_signature = java_impl->env->GetStringUTFChars(mSignature, NULL);
+							const char *method_sig = java_impl->env->GetStringUTFChars(mSignature, NULL);
 
 							jmethodID cls_method_args_size = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_args_size", "(Ljava/lang/reflect/Method;)I");
 							jint args_count = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_method_args_size, curMethod);
 
-							std::cout << method_visibility << " " << method_static << " " << method_return_type << " " << method_name << " " << method_signature << std::endl;
-
 							loader_impl_java_method java_method = new loader_impl_java_method_type();
 							java_method->methodObj = curMethod;
-							java_method->methodSignature = method_signature;
+							java_method->methodSignature = method_sig;
 
+							// CREATING A NEW METHOD
 							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS);
 
-							// TODO: Register the method signature here (the TODOs are in inverse order of what you will do when coding it):
-							signature s = method_signature(s);
+							// REGISTERING THE METHOD PARAMETER WITH INDEX
+							signature s = method_signature(m);
 
-							// TODO: Use these functions for registering the argument types and return type:
-							/*
-								void signature_set(signature s, size_t index, const char *name, type t);
-								void signature_set_return(signature s, type t);
-							*/
+							jmethodID cls_method_parameter_list = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_parameters", "(Ljava/lang/reflect/Method;)[Ljava/lang/String;");
+							jobjectArray methodParameterList = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_parameter_list, curMethod);
 
-							// TODO: For obtaining the types, use this:
-							/*
-								type t = loader_impl_type(impl, field_type);
+							if (methodParameterList)
+							{
+								jsize parameterLength = java_impl->env->GetArrayLength(methodParameterList);
 
-								// TODO: We should check if the type t is not known here (t == NULL), and if it is a new class
-								// that has not been registered yet, we should register it dynamically using
-								// loader_impl_type_define, and inspecting that class so we know the type
-							*/
+								for (jsize pIndex = 0; pIndex < parameterLength; pIndex++)
+								{
+									jstring cparameter = (jstring)java_impl->env->GetObjectArrayElement(methodParameterList, pIndex);
+									const char *parameter = java_impl->env->GetStringUTFChars(cparameter, NULL);
 
+									type pt = loader_impl_type(impl, parameter);
+									if (pt != NULL)
+									{
+										signature_set(s, (size_t)pIndex, parameter, pt);
+									}
+								}
+							}
+
+							// REGISTERING THE METHOD RETURN PARAMETER
+							type rt = loader_impl_type(impl, method_return_type);
+							signature_set_return(s, rt);
+
+							// METHOD REGISTERATION
 							if (!strcmp(method_static, "static"))
 								class_register_static_method(c, m);
 							else
