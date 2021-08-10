@@ -43,7 +43,7 @@ typedef value (*class_reject_callback)(value, void *);
 
 typedef int (*class_impl_interface_create)(klass, class_impl);
 
-typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *name, class_args, size_t);
+typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *, class_args, size_t);
 
 typedef value (*class_impl_interface_static_get)(klass, class_impl, attribute);
 

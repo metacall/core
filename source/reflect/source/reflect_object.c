@@ -232,13 +232,19 @@ value object_get(object obj, const char *key)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->get != NULL)
 	{
-		value v = obj->interface->get(obj, obj->impl, key);
+		attribute attr = class_attribute(obj->cls, key);
+
+		if (attr == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in object %s is not defined", key, obj->name);
+			return NULL;
+		}
+
+		value v = obj->interface->get(obj, obj->impl, attr);
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object (%s) get callback <%p>", obj->name, obj->interface->get);
-
-			return NULL;
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object %s get of attribute %s", obj->name, key);
 		}
 
 		return v;
@@ -251,11 +257,18 @@ int object_set(object obj, const char *key, value v)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->set != NULL)
 	{
-		if (obj->interface->set(obj, obj->impl, key, v) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object (%s) set callback <%p>", obj->name, obj->interface->set);
+		attribute attr = class_attribute(obj->cls, key);
 
-			return 1;
+		if (attr == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in object %s is not defined", key, obj->name);
+			return 3;
+		}
+
+		if (obj->interface->set(obj, obj->impl, attr, v) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s set of static attribute %s", obj->name, key);
+			return 2;
 		}
 
 		return 0;
@@ -272,8 +285,7 @@ value object_call(object obj, method m, object_args args, size_t argc)
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object (%s) method_invoke callback <%p>", obj->name, obj->interface->method_invoke);
-
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object %s invoke of method %s", obj->name, method_name(m));
 			return NULL;
 		}
 
@@ -291,7 +303,7 @@ value object_await(object obj, method m, object_args args, size_t size, object_r
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object (%s) method_await callback <%p>", obj->name, obj->interface->method_await);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object %s await of method %s", obj->name, method_name(m));
 
 			return NULL;
 		}
@@ -310,7 +322,7 @@ int object_delete(object obj)
 
 		if (error != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object (%s) destructor <%p>", obj->name, obj->interface->set);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid object %s destructor", obj->name);
 
 			return 2;
 		}

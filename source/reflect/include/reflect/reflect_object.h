@@ -21,6 +21,7 @@
 #ifndef REFLECT_OBJECT_H
 #define REFLECT_OBJECT_H 1
 
+#include <reflect/reflect_attribute.h>
 #include <reflect/reflect_class_decl.h>
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_method.h>
@@ -45,9 +46,9 @@ typedef value (*object_reject_callback)(value, void *);
 
 typedef int (*object_impl_interface_create)(object, object_impl);
 
-typedef value (*object_impl_interface_get)(object, object_impl, const char *);
+typedef value (*object_impl_interface_get)(object, object_impl, attribute);
 
-typedef int (*object_impl_interface_set)(object, object_impl, const char *, value);
+typedef int (*object_impl_interface_set)(object, object_impl, attribute, value);
 
 typedef value (*object_impl_interface_method_invoke)(object, object_impl, method, object_args, size_t);
 

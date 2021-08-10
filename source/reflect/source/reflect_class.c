@@ -264,7 +264,7 @@ value class_static_get(klass cls, const char *key)
 
 		if (attr == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in class %s is not defined", key, cls->name);
+			log_write("metacall", LOG_LEVEL_ERROR, "Static attribute %s in class %s is not defined", key, cls->name);
 			return NULL;
 		}
 
@@ -272,7 +272,7 @@ value class_static_get(klass cls, const char *key)
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_get callback <%p>", cls->name, cls->interface->static_get);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s get of static attribute %s", cls->name, key);
 		}
 
 		return v;
@@ -289,13 +289,13 @@ int class_static_set(klass cls, const char *key, value v)
 
 		if (attr == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in class %s is not defined", key, cls->name);
+			log_write("metacall", LOG_LEVEL_ERROR, "Static attribute %s in class %s is not defined", key, cls->name);
 			return 3;
 		}
 
 		if (cls->interface->static_set(cls, cls->impl, attr, v) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_set callback <%p>", cls->name, cls->interface->static_set);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s set of static attribute %s", cls->name, key);
 			return 2;
 		}
 
@@ -426,7 +426,7 @@ value class_static_call(klass cls, method m, class_args args, size_t argc)
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_invoke callback (%s) <%p>", cls->name, method_name(m), cls->interface->static_invoke);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s invoke of static method %s", cls->name, method_name(m));
 
 			return NULL;
 		}
@@ -445,7 +445,7 @@ value class_static_await(klass cls, method m, class_args args, size_t size, clas
 
 		if (v == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) static_await callback (%s) <%p>", cls->name, method_name(m), cls->interface->static_await);
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s await of method %s", cls->name, method_name(m));
 
 			return NULL;
 		}

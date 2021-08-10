@@ -159,8 +159,9 @@ int java_object_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value java_object_interface_get(object obj, object_impl impl, const char *key)
+value java_object_interface_get(object obj, object_impl impl, attribute attr)
 {
+	const char *key = attribute_name(attr);
 	(void)obj;
 	std::cout << "Obj Get = " << key << std::endl;
 
@@ -240,8 +241,9 @@ value java_object_interface_get(object obj, object_impl impl, const char *key)
 	return NULL;
 }
 
-int java_object_interface_set(object obj, object_impl impl, const char *key, value v)
+int java_object_interface_set(object obj, object_impl impl, attribute attr, value v)
 {
+	const char *key = attribute_name(attr);
 	(void)obj;
 	std::cout << "\nObj Set = " << key << std::endl;
 
