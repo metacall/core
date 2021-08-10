@@ -39,7 +39,17 @@ typedef void *method_impl;
 
 typedef struct method_type *method;
 
-REFLECT_API method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum async_id async);
+typedef void (*method_impl_interface_destroy)(method, method_impl);
+
+typedef struct method_interface_type
+{
+	method_impl_interface_destroy destroy;
+
+} * method_interface;
+
+typedef method_interface (*method_impl_interface_singleton)(void);
+
+REFLECT_API method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum async_id async, method_impl_interface_singleton singleton);
 
 REFLECT_API klass method_class(method m);
 

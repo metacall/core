@@ -43,6 +43,8 @@ struct class_type
 
 static value class_metadata_name(klass cls);
 static method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t size);
+static int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+static int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
 
 klass class_create(const char *name, class_impl impl, class_impl_interface_singleton singleton)
 {
@@ -454,6 +456,33 @@ value class_static_await(klass cls, method m, class_args args, size_t size, clas
 	return NULL;
 }
 
+int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	(void)s;
+	(void)key;
+	(void)args;
+
+	if (val != NULL)
+	{
+		attribute attr = val;
+
+		attribute_destroy(attr);
+	}
+
+	return 0;
+}
+
+int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args)
+{
+	(void)m;
+	(void)key;
+	(void)args;
+
+	method_destroy((method)val);
+
+	return 0;
+}
+
 void class_destroy(klass cls)
 {
 	if (cls != NULL)
@@ -473,6 +502,12 @@ void class_destroy(klass cls)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p>", cls->name, (void *)cls);
 			}
+
+			set_iterate(cls->attributes, &class_attributes_destroy_cb_iterate, NULL);
+			set_iterate(cls->static_attributes, &class_attributes_destroy_cb_iterate, NULL);
+
+			map_iterate(cls->methods, &class_methods_destroy_cb_iterate, NULL);
+			map_iterate(cls->static_methods, &class_methods_destroy_cb_iterate, NULL);
 
 			if (cls->interface != NULL && cls->interface->destroy != NULL)
 			{

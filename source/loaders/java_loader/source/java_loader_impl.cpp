@@ -314,14 +314,14 @@ int java_object_interface_set(object obj, object_impl impl, const char *key, val
 	return 1;
 }
 
-value java_object_interface_method_invoke(object obj, object_impl impl, const char *method_name, object_args args, size_t argc)
+value java_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
 
 	return NULL;
 }
 
-value java_object_interface_method_await(object obj, object_impl impl, const char *key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+value java_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
@@ -1458,7 +1458,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							if (t != NULL)
 							{
 								std::cout << "Registered" << std::endl;
-								attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility));
+								attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility), NULL);
 
 								if (!strcmp(field_static, "static"))
 									class_register_static_attribute(c, attr);
@@ -1504,7 +1504,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							java_method->methodSignature = method_sig;
 
 							// CREATING A NEW METHOD
-							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS);
+							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS, NULL);
 
 							// REGISTERING THE METHOD PARAMETER WITH INDEX
 							signature s = method_signature(m);

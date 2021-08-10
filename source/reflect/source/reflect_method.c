@@ -33,9 +33,10 @@ struct method_type
 	method_impl impl;
 	enum class_visibility_id visibility;
 	enum async_id async;
+	method_interface iface;
 };
 
-method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum async_id async)
+method method_create(klass cls, const char *name, size_t args_count, method_impl impl, enum class_visibility_id visibility, enum async_id async, method_impl_interface_singleton singleton)
 {
 	method m = malloc(sizeof(struct method_type));
 
@@ -80,6 +81,7 @@ method method_create(klass cls, const char *name, size_t args_count, method_impl
 	m->impl = impl;
 	m->visibility = visibility;
 	m->async = async;
+	m->iface = singleton ? singleton() : NULL;
 
 	return m;
 }
@@ -118,6 +120,11 @@ void method_destroy(method m)
 {
 	if (m)
 	{
+		if (m->iface && m->iface->destroy)
+		{
+			m->iface->destroy(m, m->impl);
+		}
+
 		if (m->name)
 		{
 			free(m->name);

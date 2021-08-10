@@ -32,12 +32,13 @@ struct attribute_type
 	type t;
 	attribute_impl impl;
 	enum class_visibility_id visibility;
+	attribute_interface iface;
 };
 
 static value attribute_metadata_name(attribute attr);
 static value attribute_metadata_visibility(attribute attr);
 
-attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility)
+attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility, attribute_impl_interface_singleton singleton)
 {
 	attribute attr = malloc(sizeof(struct attribute_type));
 
@@ -66,6 +67,7 @@ attribute attribute_create(klass cls, const char *name, type t, attribute_impl i
 	attr->t = t;
 	attr->impl = impl;
 	attr->visibility = visibility;
+	attr->iface = singleton ? singleton() : NULL;
 
 	return attr;
 }
@@ -204,6 +206,11 @@ void attribute_destroy(attribute attr)
 {
 	if (attr)
 	{
+		if (attr->iface && attr->iface->destroy)
+		{
+			attr->iface->destroy(attr, attr->impl);
+		}
+
 		if (attr->name)
 		{
 			free(attr->name);
