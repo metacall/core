@@ -25,26 +25,17 @@
 
 #include <loader/loader_impl_interface.h>
 
-#include <configuration/configuration.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 WASM_LOADER_API loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config);
-
 WASM_LOADER_API int wasm_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
-
 WASM_LOADER_API loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
-
 WASM_LOADER_API loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size);
-
 WASM_LOADER_API loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
-
 WASM_LOADER_API int wasm_loader_impl_clear(loader_impl impl, loader_handle handle);
-
 WASM_LOADER_API int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx);
-
 WASM_LOADER_API int wasm_loader_impl_destroy(loader_impl impl);
 
 #ifdef __cplusplus
