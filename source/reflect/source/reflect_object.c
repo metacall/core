@@ -126,9 +126,29 @@ int object_decrement_reference(object obj)
 	return 0;
 }
 
-REFLECT_API object_impl object_impl_get(object obj)
+object_impl object_impl_get(object obj)
 {
 	return obj->impl;
+}
+
+vector object_methods(object obj, const char *key)
+{
+	if (obj == NULL || key == NULL)
+	{
+		return NULL;
+	}
+
+	return class_methods(obj->cls, key);
+}
+
+method object_method(object obj, const char *key, type_id ret, type_id args[], size_t size)
+{
+	if (obj == NULL || key == NULL)
+	{
+		return NULL;
+	}
+
+	return class_method(obj->cls, key, ret, args, size);
 }
 
 const char *object_name(object obj)
@@ -244,11 +264,11 @@ int object_set(object obj, const char *key, value v)
 	return 1;
 }
 
-value object_call(object obj, const char *name, object_args args, size_t argc)
+value object_call(object obj, method m, object_args args, size_t argc)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->method_invoke != NULL)
 	{
-		value v = obj->interface->method_invoke(obj, obj->impl, name, args, argc);
+		value v = obj->interface->method_invoke(obj, obj->impl, m, args, argc);
 
 		if (v == NULL)
 		{
@@ -263,11 +283,11 @@ value object_call(object obj, const char *name, object_args args, size_t argc)
 	return NULL;
 }
 
-value object_await(object obj, const char *name, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void *context)
+value object_await(object obj, method m, object_args args, size_t size, object_resolve_callback resolve_callback, object_reject_callback reject_callback, void *context)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->method_await != NULL)
 	{
-		value v = obj->interface->method_await(obj, obj->impl, name, args, size, resolve_callback, reject_callback, context);
+		value v = obj->interface->method_await(obj, obj->impl, m, args, size, resolve_callback, reject_callback, context);
 
 		if (v == NULL)
 		{

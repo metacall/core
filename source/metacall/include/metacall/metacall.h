@@ -1160,6 +1160,30 @@ METACALL_API void *metacallv_object(void *obj, const char *name, void *args[], s
 
 /**
 *  @brief
+*    Call a object method anonymously by value array @args and return value type @ret (helps to resolve overloading methods)
+*
+*  @param[in] obj
+*    Pointer to the object
+*
+*  @param[in] name
+*    Name of the method
+*
+*  @param[in] ret
+*    Type of the return value of the method
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of args array
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void *metacallt_object(void *obj, const char *name, const enum metacall_value_id ret, void *args[], size_t size);
+
+/**
+*  @brief
 *    Get an attribute from @obj by @key name
 *
 *  @param[in] obj

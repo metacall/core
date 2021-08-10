@@ -381,7 +381,7 @@ int py_object_interface_set(object obj, object_impl impl, const char *key, value
 	return retval;
 }
 
-value py_object_interface_method_invoke(object obj, object_impl impl, const char *method_name, object_args args, size_t argc)
+value py_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
 
@@ -392,9 +392,9 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 		return NULL;
 	}
 
-	PyObject *method = PyObject_GetAttrString(obj_impl->object, method_name);
+	PyObject *m_impl = method_data(m);
 
-	if (method == NULL)
+	if (m_impl == NULL)
 	{
 		return NULL;
 	}
@@ -411,10 +411,9 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(obj_impl->impl, value_type_id(args[i]), args[i]));
 	}
 
-	PyObject *python_object = PyObject_Call(method, args_tuple, NULL);
+	PyObject *python_object = PyObject_Call(m_impl, args_tuple, NULL);
 
 	Py_DECREF(args_tuple);
-	Py_DECREF(method);
 
 	if (python_object == NULL)
 	{
@@ -424,12 +423,12 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(obj_impl->impl, python_object));
 }
 
-value py_object_interface_method_await(object obj, object_impl impl, const char *key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+value py_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -654,8 +653,9 @@ void py_class_interface_destroy(klass cls, class_impl impl)
 
 	if (py_class != NULL)
 	{
-		Py_XDECREF(py_class->class);
+		// TODO: Iterate here over all methods and static methods and execute Py_DECREF(m_impl); on the method impl
 
+		Py_XDECREF(py_class->class);
 		free(py_class);
 	}
 }
@@ -2142,7 +2142,7 @@ int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 	py_impl_path exe_path_str = { 0 };
 
 #if defined(WIN32) || defined(_WIN32)
-	unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
+	unsigned int length = GetModuleFileName(NULL, exe_path_str, (DWORD)path_max_length);
 #else
 	ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
 #endif
@@ -3033,11 +3033,11 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 		if (py_impl->asyncio_iscoroutinefunction &&
 			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
 		{
-			function_async(f, ASYNC_ASYNC);
+			function_async(f, ASYNCHRONOUS);
 		}
 		else
 		{
-			function_async(f, ASYNC_SYNC);
+			function_async(f, SYNCHRONOUS);
 		}
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
@@ -3126,12 +3126,12 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, k
 					continue; // error counting args, TODO improve: py_loader_impl_discover_func_args_count
 				}
 
-				enum async_id func_synchronicity = ASYNC_SYNC;
+				enum async_id func_synchronicity = SYNCHRONOUS;
 
 				if (py_impl->asyncio_iscoroutinefunction &&
 					PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, tuple_val, NULL))
 				{
-					func_synchronicity = ASYNC_ASYNC;
+					func_synchronicity = ASYNCHRONOUS;
 				}
 
 				method m = method_create(c,
