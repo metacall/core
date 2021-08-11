@@ -134,8 +134,6 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			void *myclass = metacall_class("MyClass");
 			ASSERT_NE((void *)NULL, (void *)myclass);
 
-			/* TODO: Static arg count is not implemented yet */
-			/*
 			static const char works[] = "It works!";
 
 			void *static_method_args[] = {
@@ -146,7 +144,6 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret_value));
 			metacall_value_destroy(static_method_args[0]);
 			metacall_value_destroy(ret_value);
-			*/
 		}
 
 		{

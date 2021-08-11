@@ -44,7 +44,7 @@
 
 /* -- Type Definitions -- */
 
-typedef value (*method_invoke_ptr)(void*, method, void *[], size_t);
+typedef value (*method_invoke_ptr)(void *, method, void *[], size_t);
 
 /* -- Global Variables -- */
 

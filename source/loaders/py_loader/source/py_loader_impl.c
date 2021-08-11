@@ -127,6 +127,8 @@ struct loader_impl_py_type
 	PyObject *inspect_module;
 	PyObject *inspect_signature;
 	PyObject *inspect_getattr_static;
+	PyObject *inspect_getfullargspec;
+	PyObject *inspect_ismethod;
 	PyObject *builtins_module;
 	PyObject *traceback_module;
 	PyObject *traceback_format_exception;
@@ -191,7 +193,7 @@ static class_interface py_class_interface_singleton(void);
 
 static method_interface py_method_interface_singleton(void);
 
-static int py_loader_impl_discover_func_args_count(PyObject *func);
+static size_t py_loader_impl_discover_func_args_count(loader_impl_py py_impl, PyObject *callable);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
 
@@ -984,8 +986,6 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		int discover_args_count;
-
 		/* Check if we are passing our own hook to the callback */
 		if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
 		{
@@ -1003,36 +1003,30 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 			return callback;
 		}
 
-		discover_args_count = py_loader_impl_discover_func_args_count(obj);
+		loader_impl_py py_impl = loader_impl_get(impl);
+		size_t args_count = py_loader_impl_discover_func_args_count(py_impl, obj);
+		loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+		function f = NULL;
 
-		if (discover_args_count >= 0)
+		if (py_func == NULL)
 		{
-			size_t args_count = (size_t)discover_args_count;
-
-			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
-
-			function f = NULL;
-
-			if (py_func == NULL)
-			{
-				return NULL;
-			}
-
-			Py_INCREF(obj);
-			py_func->func = obj;
-			py_func->impl = impl;
-
-			f = function_create(NULL, args_count, py_func, &function_py_singleton);
-
-			if (py_loader_impl_discover_func(impl, obj, f) != 0)
-			{
-				function_destroy(f);
-
-				return NULL;
-			}
-
-			return value_create_function(f);
+			return NULL;
 		}
+
+		Py_INCREF(obj);
+		py_func->func = obj;
+		py_func->impl = impl;
+
+		f = function_create(NULL, args_count, py_func, &function_py_singleton);
+
+		if (py_loader_impl_discover_func(impl, obj, f) != 0)
+		{
+			function_destroy(f);
+
+			return NULL;
+		}
+
+		return value_create_function(f);
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -1807,14 +1801,32 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 		goto error_inspect_getattr_static;
 	}
 
+	py_impl->inspect_getfullargspec = PyObject_GetAttrString(py_impl->inspect_module, "getfullargspec");
+
+	if (py_impl->inspect_getfullargspec == NULL)
+	{
+		goto error_inspect_getfullargspec;
+	}
+
+	py_impl->inspect_ismethod = PyObject_GetAttrString(py_impl->inspect_module, "ismethod");
+
+	if (py_impl->inspect_ismethod == NULL)
+	{
+		goto error_inspect_ismethod;
+	}
+
 	if (PyCallable_Check(py_impl->inspect_signature) && py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
 	{
 		return 0;
 	}
 
-	Py_XDECREF(py_impl->inspect_getattr_static);
+	Py_DECREF(py_impl->inspect_ismethod);
+error_inspect_ismethod:
+	Py_DECREF(py_impl->inspect_getfullargspec);
+error_inspect_getfullargspec:
+	Py_DECREF(py_impl->inspect_getattr_static);
 error_inspect_getattr_static:
-	Py_XDECREF(py_impl->inspect_signature);
+	Py_DECREF(py_impl->inspect_signature);
 error_inspect_signature:
 	Py_DECREF(py_impl->inspect_module);
 error_import_module:
@@ -2938,67 +2950,48 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 	return t;
 }
 
-int py_loader_impl_discover_func_args_count(PyObject *func)
+size_t py_loader_impl_discover_func_args_count(loader_impl_py py_impl, PyObject *callable)
 {
-	// TODO: https://docs.python.org/3/library/inspect.html#inspect.getfullargspec
-	// Use the above docs to support all types of functions
+	/* TODO: Improve this in the future, adding positional arguments, variable arguments and others */
+	size_t args_count = 0;
+	PyObject *spec = PyObject_CallFunction(py_impl->inspect_getfullargspec, "O", callable);
 
-	int args_count = -1;
-
-	if (PyObject_HasAttrString(func, "__call__"))
+	if (spec == NULL)
 	{
-		PyObject *func_code = NULL;
-
-		if (PyObject_HasAttrString(func, "__code__"))
-		{
-			func_code = PyObject_GetAttrString(func, "__code__");
-		}
-		else
-		{
-			PyObject *func_call = PyObject_GetAttrString(func, "__call__");
-
-			if (func_call != NULL && PyObject_HasAttrString(func_call, "__code__"))
-			{
-				func_code = PyObject_GetAttrString(func_call, "__code__");
-			}
-
-			Py_XDECREF(func_call);
-		}
-
-		if (func_code != NULL)
-		{
-			PyObject *func_code_args_count = PyObject_GetAttrString(func_code, "co_argcount");
-
-			if (func_code_args_count != NULL)
-			{
-				args_count = PyLong_AsLong(func_code_args_count);
-
-				Py_DECREF(func_code_args_count);
-			}
-
-			Py_DECREF(func_code);
-		}
-		else if (PyCFunction_Check(func))
-		{
-			int flags = PyCFunction_GetFlags(func);
-
-			if (flags & METH_NOARGS)
-			{
-				args_count = 0;
-			}
-			else if (flags & METH_VARARGS)
-			{
-				/* TODO: Varidic arguments are not supported */
-				log_write("metacall", LOG_LEVEL_ERROR, "Builtins (C Python Functions) with varidic arguments are not supported");
-				args_count = -1;
-			}
-		}
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "@staticmethod args count is still not implemented");
+		/* This means we have a PyCFunction which cannot be introspected, we let varargs to do the calls */
+		/* TODO: In the future we should check if this is a callback from metacall because then we can obtain the function signature */
+		PyErr_Clear();
+		goto unsupported_callable;
 	}
 
+	PyObject *args = PyTuple_GetItem(spec, 0);
+
+	if (args == NULL)
+	{
+		/* If there's no arguments, let's Python deal with this as variable arguments */
+		goto clear_spec;
+	}
+
+	/* Get the number of arguments */
+	args_count = (size_t)PyObject_Size(args);
+
+	PyObject *is_method = PyObject_CallFunction(py_impl->inspect_ismethod, "O", callable);
+
+	if (is_method == NULL)
+	{
+		goto clear_spec;
+	}
+
+	/* Do not count self parameter */
+	if (is_method == Py_True)
+	{
+		args_count--;
+	}
+
+	Py_DECREF(is_method);
+clear_spec:
+	Py_DECREF(spec); /* The elements from the tuple (args) are cleaned here */
+unsupported_callable:
 	return args_count;
 }
 
@@ -3198,13 +3191,7 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, k
 
 			if (memberType == TYPE_FUNCTION || is_static_method)
 			{
-				int args_count = py_loader_impl_discover_func_args_count(tuple_val);
-
-				if (args_count == -1)
-				{
-					continue; // error counting args, TODO improve: py_loader_impl_discover_func_args_count
-				}
-
+				size_t args_count = py_loader_impl_discover_func_args_count(py_impl, tuple_val);
 				enum async_id func_synchronicity = SYNCHRONOUS;
 
 				if (py_impl->asyncio_iscoroutinefunction &&
@@ -3293,48 +3280,14 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 	// This should never fail since `module` is a valid module object
 	PyObject *module_dict = PyModule_GetDict(module);
 	Py_ssize_t position = 0;
-
 	PyObject *module_dict_key, *module_dict_val;
+	loader_impl_py py_impl = loader_impl_get(impl);
 
 	while (PyDict_Next(module_dict, &position, &module_dict_key, &module_dict_val))
 	{
-		if (PyCallable_Check(module_dict_val))
-		{
-			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
-			int discover_args_count = py_loader_impl_discover_func_args_count(module_dict_val);
-
-			if (discover_args_count >= 0)
-			{
-				loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
-
-				if (py_func == NULL)
-				{
-					goto cleanup;
-				}
-
-				Py_INCREF(module_dict_val);
-				py_func->func = module_dict_val;
-				py_func->impl = impl;
-
-				function f = function_create(func_name, discover_args_count, py_func, &function_py_singleton);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %d", func_name, discover_args_count);
-
-				if (py_loader_impl_discover_func(impl, module_dict_val, f) == 0)
-				{
-					scope sp = context_scope(ctx);
-					scope_define(sp, func_name, value_create_function(f));
-				}
-				else
-				{
-					function_destroy(f);
-				}
-			}
-		}
-
-		// class is also PyCallable
-		// PyObject_IsSubclass(module_dict_val, (PyObject *)&PyType_Type) == 0
+		// Class is also PyCallable, so test for class first
 		if (PyObject_TypeCheck(module_dict_val, &PyType_Type))
+		// PyObject_IsSubclass(module_dict_val, (PyObject *)&PyType_Type) == 0
 		{
 			const char *cls_name = PyUnicode_AsUTF8(module_dict_key);
 
@@ -3357,6 +3310,35 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			else
 			{
 				class_destroy(c);
+			}
+		}
+		else if (PyCallable_Check(module_dict_val))
+		{
+			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
+			size_t discover_args_count = py_loader_impl_discover_func_args_count(py_impl, module_dict_val);
+			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+
+			if (py_func == NULL)
+			{
+				goto cleanup;
+			}
+
+			Py_INCREF(module_dict_val);
+			py_func->func = module_dict_val;
+			py_func->impl = impl;
+
+			function f = function_create(func_name, discover_args_count, py_func, &function_py_singleton);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %" PRIuS, func_name, discover_args_count);
+
+			if (py_loader_impl_discover_func(impl, module_dict_val, f) == 0)
+			{
+				scope sp = context_scope(ctx);
+				scope_define(sp, func_name, value_create_function(f));
+			}
+			else
+			{
+				function_destroy(f);
 			}
 		}
 	}
@@ -3532,19 +3514,22 @@ int py_loader_impl_destroy(loader_impl impl)
 	loader_unload_children(impl);
 
 	Py_DECREF(py_impl->inspect_signature);
+	Py_DECREF(py_impl->inspect_getattr_static);
+	Py_DECREF(py_impl->inspect_getfullargspec);
+	Py_DECREF(py_impl->inspect_ismethod);
 	Py_DECREF(py_impl->inspect_module);
 	Py_DECREF(py_impl->builtins_module);
 	Py_DECREF(py_impl->traceback_format_exception);
 	Py_DECREF(py_impl->traceback_module);
-	Py_DECREF(py_impl->import_module);
 	Py_DECREF(py_impl->import_function);
+	Py_DECREF(py_impl->import_module);
 
-	Py_XDECREF(py_impl->asyncio_module);
 	Py_XDECREF(py_impl->asyncio_isfuture);
 	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
 	Py_XDECREF(py_impl->asyncio_run_coroutine_threadsafe);
 	Py_XDECREF(py_impl->asyncio_wrap_future);
 	Py_XDECREF(py_impl->asyncio_loop);
+	Py_XDECREF(py_impl->asyncio_module);
 	Py_XDECREF(py_impl->py_task_callback_handler);
 	Py_XDECREF(py_impl->threading_module);
 

@@ -23,8 +23,8 @@
 
 #include <reflect/reflect_attribute.h>
 #include <reflect/reflect_class_decl.h>
-#include <reflect/reflect_value.h>
 #include <reflect/reflect_method.h>
+#include <reflect/reflect_value.h>
 
 #include <adt/adt_vector.h>
 
