@@ -193,9 +193,13 @@ static class_interface py_class_interface_singleton(void);
 
 static method_interface py_method_interface_singleton(void);
 
-static size_t py_loader_impl_discover_func_args_count(loader_impl_py py_impl, PyObject *callable);
+static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
+
+static int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m);
+
+static type py_loader_impl_get_type(loader_impl impl, PyObject *obj);
 
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_dict, klass c);
 
@@ -1004,7 +1008,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		}
 
 		loader_impl_py py_impl = loader_impl_get(impl);
-		size_t args_count = py_loader_impl_discover_func_args_count(py_impl, obj);
+		size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, obj);
 		loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
 		function f = NULL;
 
@@ -2950,7 +2954,7 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 	return t;
 }
 
-size_t py_loader_impl_discover_func_args_count(loader_impl_py py_impl, PyObject *callable)
+size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable)
 {
 	/* TODO: Improve this in the future, adding positional arguments, variable arguments and others */
 	size_t args_count = 0;
@@ -3030,7 +3034,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 				if ((size_t)parameter_list_size != args_count)
 				{
 					/* TODO: Implement properly variable arguments with inspection of the names */
-					/* co_argcount in py_loader_impl_discover_func_args_count returns the number */
+					/* co_argcount in py_loader_impl_discover_callable_args_count returns the number */
 					/* of arguments (not including keyword only arguments, * or ** args), so they */
 					/* won't be inspected but the variable call can be done with metacall*_s API */
 					parameter_list_size = (Py_ssize_t)args_count;
@@ -3070,7 +3074,6 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	}
 	else
 	{
-		/* TODO: Implement builtins with varidic arguments */
 		if (PyCFunction_Check(func))
 		{
 			signature s = function_signature(f);
@@ -3084,7 +3087,85 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	return 1;
 }
 
-static type py_loader_impl_get_type(loader_impl impl, PyObject *obj)
+int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m)
+{
+	loader_impl_py py_impl = loader_impl_get(impl);
+	PyObject *args = PyTuple_New(1);
+
+	if (args == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return 1;
+	}
+
+	PyTuple_SetItem(args, 0, callable);
+	Py_INCREF(callable);
+	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
+	Py_DECREF(args);
+
+	if (result != NULL)
+	{
+		signature s = method_signature(m);
+		const char *m_name = method_name(m);
+		PyObject *parameters = PyObject_GetAttrString(result, "parameters");
+		PyObject *return_annotation = PyObject_GetAttrString(result, "return_annotation");
+
+		if (parameters != NULL && PyMapping_Check(parameters))
+		{
+			PyObject *parameter_list = PyMapping_Values(parameters);
+
+			if (parameter_list != NULL && PyList_Check(parameter_list))
+			{
+				Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
+				size_t args_count = signature_count(s);
+
+				if ((size_t)parameter_list_size != args_count)
+				{
+					/* TODO: Implement properly variable arguments with inspection of the names */
+					/* co_argcount in py_loader_impl_discover_callable_args_count returns the number */
+					/* of arguments (not including keyword only arguments, * or ** args), so they */
+					/* won't be inspected but the variable call can be done with metacall*_s API */
+					parameter_list_size = (Py_ssize_t)args_count;
+				}
+
+				for (Py_ssize_t iterator = 0; iterator < parameter_list_size; ++iterator)
+				{
+					PyObject *parameter = PyList_GetItem(parameter_list, iterator);
+
+					if (parameter == NULL)
+					{
+						continue;
+					}
+
+					PyObject *name = PyObject_GetAttrString(parameter, "name");
+					const char *parameter_name = PyUnicode_AsUTF8(name);
+					PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
+					type t = py_loader_impl_discover_type(impl, annotation, m_name, parameter_name);
+					signature_set(s, iterator, parameter_name, t);
+				}
+			}
+		}
+
+		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, m_name, NULL));
+
+		return 0;
+	}
+	else
+	{
+		if (PyCFunction_Check(callable))
+		{
+			signature s = method_signature(m);
+
+			signature_set_return(s, NULL);
+
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+type py_loader_impl_get_type(loader_impl impl, PyObject *obj)
 {
 	type t = NULL;
 	PyObject *builtin = PyObject_Type(obj); /* Increments reference count of the type */
@@ -3130,7 +3211,7 @@ builtin_error:
 	return t;
 }
 
-static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
+int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
@@ -3160,10 +3241,10 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, k
 			if (!PyUnicode_CompareWithASCIIString(tuple_key, "__dict__") || !PyUnicode_CompareWithASCIIString(tuple_key, "__weakref__"))
 				continue;
 
-			type_id memberType = py_loader_impl_capi_to_value_type(impl, tuple_val);
+			type_id member_type = py_loader_impl_capi_to_value_type(impl, tuple_val);
 
 			// Skip None types
-			if (memberType == TYPE_NULL)
+			if (member_type == TYPE_NULL)
 			{
 				continue;
 			}
@@ -3189,9 +3270,9 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, k
 
 			Py_INCREF(py_class);
 
-			if (memberType == TYPE_FUNCTION || is_static_method)
+			if (member_type == TYPE_FUNCTION || is_static_method)
 			{
-				size_t args_count = py_loader_impl_discover_func_args_count(py_impl, tuple_val);
+				size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, tuple_val);
 				enum async_id func_synchronicity = SYNCHRONOUS;
 
 				if (py_impl->asyncio_iscoroutinefunction &&
@@ -3216,6 +3297,13 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, k
 				{
 					class_register_method(c, m);
 				}
+
+				if (py_loader_impl_discover_method(impl, tuple_val, m) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to discover method %s from class %s",
+						PyUnicode_AsUTF8(tuple_key),
+						class_name(c));
+				}
 			}
 			else
 			{
@@ -3230,8 +3318,6 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, k
 
 				attribute static_attr = attribute_create(c, name, t, NULL, VISIBILITY_PUBLIC, NULL);
 				attribute attr = attribute_create(c, name, t, NULL, VISIBILITY_PUBLIC, NULL);
-
-				Py_XDECREF(tuple_val);
 
 				/* In Python all attributes can work as static or non-static, so we register both */
 				class_register_static_attribute(c, static_attr);
@@ -3315,7 +3401,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 		else if (PyCallable_Check(module_dict_val))
 		{
 			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
-			size_t discover_args_count = py_loader_impl_discover_func_args_count(py_impl, module_dict_val);
+			size_t discover_args_count = py_loader_impl_discover_callable_args_count(py_impl, module_dict_val);
 			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
 
 			if (py_func == NULL)
