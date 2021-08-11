@@ -78,294 +78,6 @@ typedef struct loader_impl_java_method_type
 	const char *methodSignature;
 } * loader_impl_java_method;
 
-std::string get_val_sig(const char *type)
-{
-	// TODO: Remove this (this will be not necessary because it will be handled with type_impl)
-
-	if (!strcmp(type, "boolean"))
-		return "Z";
-	if (!strcmp(type, "char"))
-		return "C";
-	if (!strcmp(type, "short"))
-		return "S";
-	if (!strcmp(type, "int"))
-		return "I";
-	if (!strcmp(type, "long"))
-		return "J";
-	if (!strcmp(type, "float"))
-		return "F";
-	if (!strcmp(type, "double"))
-		return "D";
-	if (!strcmp(type, "java.lang.String"))
-		return "Ljava/lang/String;";
-
-	return "V";
-}
-
-std::string get_val_sig(type_id type)
-{
-	// TODO: Remove this (this will be not necessary because it will be handled with type_impl)
-
-	if (type == TYPE_BOOL)
-		return "Z";
-	if (type == TYPE_CHAR)
-		return "C";
-	if (type == TYPE_SHORT)
-		return "S";
-	if (type == TYPE_INT)
-		return "I";
-	if (type == TYPE_LONG)
-		return "J";
-	if (type == TYPE_FLOAT)
-		return "F";
-	if (type == TYPE_DOUBLE)
-		return "D";
-	if (type == TYPE_STRING)
-		return "Ljava/lang/String;";
-
-	return "V";
-}
-
-int type_java_interface_create(type t, type_impl impl)
-{
-	(void)t;
-	(void)impl;
-
-	return 0;
-}
-
-void type_java_interface_destroy(type t, type_impl impl)
-{
-	(void)t;
-	(void)impl;
-}
-
-type_interface type_java_singleton(void)
-{
-	static struct type_interface_type java_type_interface = {
-		&type_java_interface_create,
-		&type_java_interface_destroy
-	};
-
-	return &java_type_interface;
-}
-
-int java_object_interface_create(object obj, object_impl impl)
-{
-	(void)obj;
-	std::cout << "Obj Create" << std::endl;
-	loader_impl_java_object java_obj = (loader_impl_java_object)impl;
-
-	return 0;
-}
-
-value java_object_interface_get(object obj, object_impl impl, attribute attr)
-{
-	const char *key = attribute_name(attr);
-	(void)obj;
-	std::cout << "Obj Get = " << key << std::endl;
-
-	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
-	loader_impl_java java_impl = java_obj->impl;
-
-	jstring getKey = java_impl->env->NewStringUTF(key);
-
-	jobject conobj = java_obj->conObj;
-	jclass concls = java_obj->concls;
-
-	jclass classPtr = java_impl->env->FindClass("bootstrap");
-	if (classPtr != nullptr)
-	{
-		jmethodID cls_get_field_type = java_impl->env->GetStaticMethodID(classPtr, "get_Field_Type", "(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/String;");
-
-		if (cls_get_field_type != nullptr)
-		{
-			jstring result = (jstring)java_impl->env->CallStaticObjectMethod(classPtr, cls_get_field_type, concls, getKey);
-			const char *gotType = java_impl->env->GetStringUTFChars(result, NULL); // Field Type for get key
-			std::cout << "GOT Obj Field Type = " << gotType << std::endl;
-
-			if (concls != nullptr && conobj != nullptr)
-			{
-				// TODO: Remove get_val_sig
-				jfieldID fID = java_impl->env->GetFieldID(concls, key, get_val_sig(gotType).c_str());
-
-				if (fID != nullptr)
-				{
-					// TODO: Convert this to switch with type_id
-					if (!strcmp(gotType, "boolean"))
-					{
-						jboolean gotVal = java_impl->env->GetBooleanField(conobj, fID);
-						return value_create_bool((boolean)gotVal);
-					}
-					if (!strcmp(gotType, "char"))
-					{
-						jchar gotVal = java_impl->env->GetCharField(conobj, fID);
-						return value_create_char((char)gotVal);
-					}
-					if (!strcmp(gotType, "short"))
-					{
-						jshort gotVal = java_impl->env->GetShortField(conobj, fID);
-						return value_create_short((short)gotVal);
-					}
-					if (!strcmp(gotType, "int"))
-					{
-						jint gotVal = java_impl->env->GetIntField(conobj, fID);
-						return value_create_int((int)gotVal);
-					}
-					if (!strcmp(gotType, "long"))
-					{
-						jlong gotVal = java_impl->env->GetLongField(conobj, fID);
-						return value_create_long((long)gotVal);
-					}
-					if (!strcmp(gotType, "float"))
-					{
-						jfloat gotVal = java_impl->env->GetFloatField(conobj, fID);
-						return value_create_float((float)gotVal);
-					}
-					if (!strcmp(gotType, "double"))
-					{
-						jdouble gotVal = java_impl->env->GetDoubleField(conobj, fID);
-						return value_create_double((double)gotVal);
-					}
-					if (!strcmp(gotType, "java.lang.String"))
-					{
-						jstring gotVal = (jstring)java_impl->env->GetObjectField(conobj, fID);
-						const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
-						return value_create_string(gotValConv, strlen(gotValConv));
-					}
-				}
-			}
-		}
-	}
-
-	return NULL;
-}
-
-int java_object_interface_set(object obj, object_impl impl, attribute attr, value v)
-{
-	const char *key = attribute_name(attr);
-	(void)obj;
-	std::cout << "\nObj Set = " << key << std::endl;
-
-	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
-	loader_impl_java java_impl = java_obj->impl;
-
-	jobject conobj = java_obj->conObj;
-	jclass concls = java_obj->concls;
-
-	if (concls != nullptr && conobj != nullptr)
-	{
-		type_id id = value_type_id(v);
-		// TODO: Remove get_val_sig
-		jfieldID fID = java_impl->env->GetFieldID(concls, key, get_val_sig(id).c_str());
-
-		if (fID != nullptr)
-		{
-			if (id == TYPE_BOOL)
-			{
-				jboolean val = (jboolean)value_to_bool(v);
-				java_impl->env->SetBooleanField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_CHAR)
-			{
-				jchar val = (jchar)value_to_char(v);
-				java_impl->env->SetCharField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_SHORT)
-			{
-				jshort val = (jshort)value_to_short(v);
-				java_impl->env->SetShortField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_INT)
-			{
-				jint val = (jint)value_to_int(v);
-				java_impl->env->SetIntField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_LONG)
-			{
-				jlong val = (jlong)value_to_long(v);
-				java_impl->env->SetLongField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_FLOAT)
-			{
-				jfloat val = (jfloat)value_to_float(v);
-				java_impl->env->SetFloatField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_DOUBLE)
-			{
-				jdouble val = (jdouble)value_to_double(v);
-				java_impl->env->SetDoubleField(conobj, fID, val);
-				return 0;
-			}
-			if (id == TYPE_STRING)
-			{
-				const char *strV = value_to_string(v);
-				jstring val = java_impl->env->NewStringUTF(strV);
-				java_impl->env->SetObjectField(conobj, fID, val);
-				return 0;
-			}
-		}
-	}
-
-	return 1;
-}
-
-value java_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
-{
-	(void)obj;
-
-	return NULL;
-}
-
-value java_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
-{
-	// TODO
-	(void)obj;
-	(void)impl;
-	(void)key;
-	(void)args;
-	(void)size;
-	(void)resolve;
-	(void)reject;
-	(void)ctx;
-
-	return NULL;
-}
-
-int java_object_interface_destructor(object obj, object_impl impl)
-{
-	(void)obj;
-	(void)impl;
-
-	return 0;
-}
-
-void java_object_interface_destroy(object obj, object_impl impl)
-{
-	(void)obj;
-}
-
-object_interface java_object_interface_singleton(void)
-{
-	static struct object_interface_type java_object_interface = {
-		&java_object_interface_create,
-		&java_object_interface_get,
-		&java_object_interface_set,
-		&java_object_interface_method_invoke,
-		&java_object_interface_method_await,
-		&java_object_interface_destructor,
-		&java_object_interface_destroy
-	};
-
-	return &java_object_interface;
-}
-
 std::string getJNISignature(class_args args, size_t argc, const char *returnType)
 {
 	std::string sig = "(";
@@ -567,6 +279,541 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 			}
 		}
 	}
+}
+
+int type_java_interface_create(type t, type_impl impl)
+{
+	(void)t;
+	(void)impl;
+
+	return 0;
+}
+
+void type_java_interface_destroy(type t, type_impl impl)
+{
+	(void)t;
+	(void)impl;
+}
+
+type_interface type_java_singleton(void)
+{
+	static struct type_interface_type java_type_interface = {
+		&type_java_interface_create,
+		&type_java_interface_destroy
+	};
+
+	return &java_type_interface;
+}
+
+int java_object_interface_create(object obj, object_impl impl)
+{
+	(void)obj;
+	std::cout << "Obj Create" << std::endl;
+	loader_impl_java_object java_obj = (loader_impl_java_object)impl;
+
+	return 0;
+}
+
+value java_object_interface_get(object obj, object_impl impl, attribute attr)
+{
+	(void)obj;
+	std::cout << "Obj Get" << std::endl;
+
+	const char *key = (const char *)attribute_name(attr);
+	type fieldType = (type)attribute_type(attr);
+
+	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
+	loader_impl_java java_impl = java_obj->impl;
+
+	jobject clsObj = java_obj->conObj;
+	jclass clscls = java_obj->concls;
+
+	jstring getKey = java_impl->env->NewStringUTF(key);
+
+	if (clscls != nullptr)
+	{
+		const char *fType = (const char *)type_derived(fieldType);
+		jfieldID fID = java_impl->env->GetFieldID(clscls, key, fType);
+
+		if (fID != nullptr)
+		{
+			type_id id = type_index(fieldType);
+
+			switch (id)
+			{
+				case TYPE_BOOL: {
+					jboolean gotVal = java_impl->env->GetBooleanField(clsObj, fID);
+					return value_create_bool((boolean)gotVal);
+				}
+
+				case TYPE_CHAR: {
+					jchar gotVal = java_impl->env->GetCharField(clsObj, fID);
+					return value_create_char((char)gotVal);
+				}
+
+				case TYPE_SHORT: {
+					jshort gotVal = java_impl->env->GetShortField(clsObj, fID);
+					return value_create_short((short)gotVal);
+				}
+
+				case TYPE_INT: {
+					jint gotVal = java_impl->env->GetIntField(clsObj, fID);
+					return value_create_int((int)gotVal);
+				}
+
+				case TYPE_LONG: {
+					jlong gotVal = java_impl->env->GetLongField(clsObj, fID);
+					return value_create_long((long)gotVal);
+				}
+
+				case TYPE_FLOAT: {
+					jfloat gotVal = java_impl->env->GetFloatField(clsObj, fID);
+					return value_create_float((float)gotVal);
+				}
+
+				case TYPE_DOUBLE: {
+					jdouble gotVal = java_impl->env->GetDoubleField(clsObj, fID);
+					return value_create_double((double)gotVal);
+				}
+
+				case TYPE_STRING: {
+					jstring gotVal = (jstring)java_impl->env->GetObjectField(clsObj, fID);
+					const char *gotValConv = java_impl->env->GetStringUTFChars(gotVal, NULL);
+					return value_create_string(gotValConv, strlen(gotValConv));
+				}
+
+				case TYPE_ARRAY: {
+					if (!strcmp(fType, "[Z"))
+					{
+						jbooleanArray gotVal = (jbooleanArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jboolean *body = java_impl->env->GetBooleanArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_bool(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[C"))
+					{
+						jcharArray gotVal = (jcharArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jchar *body = java_impl->env->GetCharArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_char(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[S"))
+					{
+						jshortArray gotVal = (jshortArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jshort *body = java_impl->env->GetShortArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_short(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[I"))
+					{
+						jintArray gotVal = (jintArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jint *body = java_impl->env->GetIntArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_int(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[J"))
+					{
+						jlongArray gotVal = (jlongArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jlong *body = java_impl->env->GetLongArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_long(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[F"))
+					{
+						jfloatArray gotVal = (jfloatArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jfloat *body = java_impl->env->GetFloatArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_float(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[D"))
+					{
+						jdoubleArray gotVal = (jdoubleArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						jdouble *body = java_impl->env->GetDoubleArrayElements(gotVal, 0);
+						for (size_t i = 0; i < array_size; i++)
+							array_value[i] = value_create_double(body[i]);
+
+						return v;
+					}
+					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					{
+						jobjectArray gotVal = (jobjectArray)java_impl->env->GetObjectField(clsObj, fID);
+						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+
+						void *v = value_create_array(NULL, (size_t)array_size);
+						value *array_value = value_to_array(v);
+
+						for (size_t i = 0; i < array_size; i++)
+						{
+							jstring cur_ele = (jstring)java_impl->env->GetObjectArrayElement(gotVal, i);
+							const char *cur_element = java_impl->env->GetStringUTFChars(cur_ele, NULL);
+							array_value[i] = value_create_string(cur_element, strlen(cur_element));
+						}
+
+						return v;
+					}
+				}
+
+				default: {
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from Java to MetaCall value", type_name(fieldType));
+					return NULL;
+				}
+			}
+		}
+	}
+
+	return NULL;
+}
+
+int java_object_interface_set(object obj, object_impl impl, attribute attr, value v)
+{
+	(void)obj;
+	std::cout << "Obj Set" << std::endl;
+
+	const char *key = (const char *)attribute_name(attr);
+	type fieldType = (type)attribute_type(attr);
+
+	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
+	loader_impl_java java_impl = java_obj->impl;
+
+	jobject conObj = java_obj->conObj;
+	jclass clscls = java_obj->concls;
+
+	if (clscls != nullptr)
+	{
+		const char *fType = (const char *)type_derived(fieldType);
+		std::cout << fType << std::endl;
+		jfieldID fID = java_impl->env->GetFieldID(clscls, key, fType);
+
+		if (fID != nullptr)
+		{
+			type_id id = type_index(fieldType);
+
+			switch (id)
+			{
+				case TYPE_BOOL: {
+					jboolean val = (jboolean)value_to_bool(v);
+					java_impl->env->SetBooleanField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_CHAR: {
+					jchar val = (jchar)value_to_char(v);
+					java_impl->env->SetCharField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_SHORT: {
+					jshort val = (jshort)value_to_short(v);
+					java_impl->env->SetShortField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_INT: {
+					jint val = (jint)value_to_int(v);
+					java_impl->env->SetIntField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_LONG: {
+					jlong val = (jlong)value_to_long(v);
+					java_impl->env->SetLongField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_FLOAT: {
+					jfloat val = (jfloat)value_to_float(v);
+					java_impl->env->SetFloatField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_DOUBLE: {
+					jdouble val = (jdouble)value_to_double(v);
+					java_impl->env->SetDoubleField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_STRING: {
+					const char *strV = value_to_string(v);
+					jstring val = java_impl->env->NewStringUTF(strV);
+					java_impl->env->SetObjectField(conObj, fID, val);
+					return 0;
+				}
+
+				case TYPE_ARRAY: {
+					value *array_value = value_to_array(v);
+					size_t array_size = (size_t)value_type_count(v);
+
+					if (!strcmp(fType, "[Z"))
+					{
+						jbooleanArray setArr = java_impl->env->NewBooleanArray((jsize)array_size);
+
+						jboolean fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jboolean)value_to_bool(array_value[i]);
+
+						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[C"))
+					{
+						jcharArray setArr = java_impl->env->NewCharArray((jsize)array_size);
+
+						jchar fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jchar)value_to_char(array_value[i]);
+
+						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[S"))
+					{
+						jshortArray setArr = java_impl->env->NewShortArray((jsize)array_size);
+
+						jshort fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jshort)value_to_short(array_value[i]);
+
+						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[I"))
+					{
+						jintArray setArr = java_impl->env->NewIntArray((jsize)array_size);
+
+						jint fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jint)value_to_int(array_value[i]);
+
+						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[J"))
+					{
+						jlongArray setArr = java_impl->env->NewLongArray((jsize)array_size);
+
+						jlong fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jlong)value_to_long(array_value[i]);
+
+						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[F"))
+					{
+						jfloatArray setArr = java_impl->env->NewFloatArray((jsize)array_size);
+
+						jfloat fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jfloat)value_to_float(array_value[i]);
+
+						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[D"))
+					{
+						jdoubleArray setArr = java_impl->env->NewDoubleArray((jsize)array_size);
+
+						jdouble fill[array_size];
+						for (size_t i = 0; i < array_size; i++)
+							fill[i] = (jdouble)value_to_double(array_value[i]);
+
+						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					{
+						std::cout << "STRING ARR SET" << std::endl;
+						jobjectArray setArr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
+
+						for (size_t i = 0; i < array_size; i++)
+							java_impl->env->SetObjectArrayElement(setArr, (jsize)i, java_impl->env->NewStringUTF(value_to_string(array_value[i])));
+
+						java_impl->env->SetObjectField(conObj, fID, setArr);
+					}
+
+					return 0;
+				}
+
+				default: {
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from MetaCall value to Java", type_name(fieldType));
+					return 1;
+				}
+			}
+		}
+	}
+
+	return 1;
+}
+
+value java_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
+{
+	(void)obj;
+	std::cout << "OBJ invoke" << std::endl;
+
+	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
+	loader_impl_java java_impl = java_obj->impl;
+	jobject clsObj = java_obj->conObj;
+	jclass clscls = java_obj->concls;
+
+	loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
+	const char *methodSignature = java_method->methodSignature;
+
+	char *methodName = (char *)method_name(m);
+
+	signature sg = method_signature(m);
+	type t = signature_get_return(sg);
+
+	jvalue *constructorArgs = nullptr;
+	if (argc > 0)
+	{
+		constructorArgs = new jvalue[argc];
+		getJValArray(constructorArgs, args, argc, java_impl->env); // Create a jvalue array that can be passed to JNI
+	}
+
+	jmethodID function_invoke_id = java_impl->env->GetMethodID(clscls, methodName, methodSignature);
+
+	if (function_invoke_id != nullptr)
+	{
+		switch (type_index(t))
+		{
+			case TYPE_NULL: {
+				java_impl->env->CallVoidMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_null();
+			}
+
+			case TYPE_BOOL: {
+				jboolean returnVal = (jboolean)java_impl->env->CallBooleanMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_bool(returnVal);
+			}
+
+			case TYPE_CHAR: {
+				jchar returnVal = (jchar)java_impl->env->CallCharMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_char(returnVal);
+			}
+
+			case TYPE_SHORT: {
+				jshort returnVal = (jshort)java_impl->env->CallShortMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_short(returnVal);
+			}
+
+			case TYPE_INT: {
+				jint returnVal = (jint)java_impl->env->CallIntMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_int(returnVal);
+			}
+
+			case TYPE_LONG: {
+				jlong returnVal = (jlong)java_impl->env->CallLongMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_long(returnVal);
+			}
+
+			case TYPE_FLOAT: {
+				jfloat returnVal = (jfloat)java_impl->env->CallFloatMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_float(returnVal);
+			}
+
+			case TYPE_DOUBLE: {
+				jdouble returnVal = (jdouble)java_impl->env->CallDoubleMethodA(clsObj, function_invoke_id, constructorArgs);
+				return value_create_double(returnVal);
+			}
+
+			case TYPE_STRING: {
+				jstring returnVal = (jstring)java_impl->env->CallObjectMethodA(clsObj, function_invoke_id, constructorArgs);
+				const char *returnString = java_impl->env->GetStringUTFChars(returnVal, NULL);
+				return value_create_string(returnString, strlen(returnString));
+			}
+		}
+	}
+
+	return NULL;
+}
+
+value java_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+{
+	// TODO
+	(void)obj;
+	(void)impl;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+int java_object_interface_destructor(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+
+	return 0;
+}
+
+void java_object_interface_destroy(object obj, object_impl impl)
+{
+	(void)obj;
+}
+
+object_interface java_object_interface_singleton(void)
+{
+	static struct object_interface_type java_object_interface = {
+		&java_object_interface_create,
+		&java_object_interface_get,
+		&java_object_interface_set,
+		&java_object_interface_method_invoke,
+		&java_object_interface_method_await,
+		&java_object_interface_destructor,
+		&java_object_interface_destroy
+	};
+
+	return &java_object_interface;
 }
 
 int java_class_interface_create(klass cls, class_impl impl)
@@ -1009,7 +1256,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 
 				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from MetaCall value to Java", type_name(fieldType));
-					return NULL;
+					return 1;
 				}
 			}
 		}
