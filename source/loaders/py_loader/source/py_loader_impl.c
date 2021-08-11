@@ -197,7 +197,7 @@ static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
 
-static int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m);
+static int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m, bool is_static);
 
 static type py_loader_impl_get_type(loader_impl impl, PyObject *obj);
 
@@ -2918,6 +2918,7 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const char *func_name, const char *parameter_name)
 {
 	type t = NULL;
+
 	if (annotation == NULL)
 	{
 		return NULL;
@@ -2942,14 +2943,17 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 	PyObject *annotation_qualname = PyObject_GetAttrString(annotation, qualname);
 	const char *annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
-	if (strcmp(annotation_name, "_empty") != 0)
+	if (annotation_qualname != NULL)
 	{
-		t = loader_impl_type(impl, annotation_name);
+		if (strcmp(annotation_name, "_empty") != 0)
+		{
+			t = loader_impl_type(impl, annotation_name);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+		}
+
+		Py_DECREF(annotation_qualname);
 	}
-
-	Py_DECREF(annotation_qualname);
 
 	return t;
 }
@@ -3054,8 +3058,14 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 					PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
 					type t = py_loader_impl_discover_type(impl, annotation, func_name, parameter_name);
 					signature_set(s, iterator, parameter_name, t);
+					Py_XDECREF(name);
+					Py_XDECREF(annotation);
 				}
+
+				Py_DECREF(parameter_list);
 			}
+
+			Py_DECREF(parameters);
 		}
 
 		if (py_impl->asyncio_iscoroutinefunction &&
@@ -3070,10 +3080,15 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
 
+		Py_DECREF(return_annotation);
+
 		return 0;
 	}
 	else
 	{
+		/* We are trying to inspect a non callable object or inspect.signature does not support the type */
+		PyErr_Clear();
+
 		if (PyCFunction_Check(func))
 		{
 			signature s = function_signature(f);
@@ -3087,7 +3102,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	return 1;
 }
 
-int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m)
+int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m, bool is_static)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 	PyObject *args = PyTuple_New(1);
@@ -3098,8 +3113,16 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 		return 1;
 	}
 
-	PyTuple_SetItem(args, 0, callable);
-	Py_INCREF(callable);
+	if (is_static)
+	{
+		PyObject *func = PyObject_GetAttrString(callable, "__func__");
+		PyTuple_SetItem(args, 0, func);
+	}
+	else
+	{
+		PyTuple_SetItem(args, 0, callable);
+		Py_INCREF(callable);
+	}
 	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
 	Py_DECREF(args);
 
@@ -3142,16 +3165,27 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 					PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
 					type t = py_loader_impl_discover_type(impl, annotation, m_name, parameter_name);
 					signature_set(s, iterator, parameter_name, t);
+					Py_XDECREF(name);
+					Py_XDECREF(annotation);
 				}
+
+				Py_DECREF(parameter_list);
 			}
+
+			Py_DECREF(parameters);
 		}
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, m_name, NULL));
+
+		Py_DECREF(return_annotation);
 
 		return 0;
 	}
 	else
 	{
+		/* We are trying to inspect a non callable object or inspect.signature does not support the type */
+		PyErr_Clear();
+
 		if (PyCFunction_Check(callable))
 		{
 			signature s = method_signature(m);
@@ -3259,9 +3293,9 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 
 			PyTuple_SetItem(args, 0, py_class);	 // class
 			PyTuple_SetItem(args, 1, tuple_key); // method
-			PyObject *methodstatic = PyObject_CallObject(py_impl->inspect_getattr_static, args);
+			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
 			Py_DECREF(args);
-			bool is_static_method = PyObject_TypeCheck(methodstatic, &PyStaticMethod_Type);
+			bool is_static_method = PyObject_TypeCheck(method_static, &PyStaticMethod_Type);
 
 			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
 				PyUnicode_AsUTF8(tuple_key),
@@ -3272,8 +3306,19 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 
 			if (member_type == TYPE_FUNCTION || is_static_method)
 			{
-				size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, tuple_val);
 				enum async_id func_synchronicity = SYNCHRONOUS;
+				size_t args_count;
+
+				if (is_static_method)
+				{
+					PyObject *func = PyObject_GetAttrString(tuple_val, "__func__");
+					args_count = py_loader_impl_discover_callable_args_count(py_impl, func);
+					Py_DECREF(func);
+				}
+				else
+				{
+					args_count = py_loader_impl_discover_callable_args_count(py_impl, tuple_val);
+				}
 
 				if (py_impl->asyncio_iscoroutinefunction &&
 					PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, tuple_val, NULL))
@@ -3298,7 +3343,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 					class_register_method(c, m);
 				}
 
-				if (py_loader_impl_discover_method(impl, tuple_val, m) != 0)
+				if (py_loader_impl_discover_method(impl, tuple_val, m, is_static_method) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to discover method %s from class %s",
 						PyUnicode_AsUTF8(tuple_key),
