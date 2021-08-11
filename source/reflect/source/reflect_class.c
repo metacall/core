@@ -41,7 +41,23 @@ struct class_type
 	set static_attributes;
 };
 
+struct class_metadata_iterator_args_type
+{
+	value v;
+	size_t count;
+};
+
+typedef struct class_metadata_iterator_args_type *class_metadata_iterator_args;
+
 static value class_metadata_name(klass cls);
+static int class_metadata_methods_impl_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
+static value class_metadata_methods_impl(const char name[], size_t size, map methods);
+static value class_metadata_methods(klass cls);
+static value class_metadata_static_methods(klass cls);
+static int class_metadata_attributes_impl_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+static value class_metadata_attributes_impl(const char name[], size_t size, set attributes);
+static value class_metadata_attributes(klass cls);
+static value class_metadata_static_attributes(klass cls);
 static method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t size);
 static int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 static int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
@@ -157,9 +173,7 @@ const char *class_name(klass cls)
 value class_metadata_name(klass cls)
 {
 	static const char class_str[] = "name";
-
 	value name = value_create_array(NULL, 2);
-
 	value *name_array;
 
 	if (name == NULL)
@@ -190,6 +204,132 @@ value class_metadata_name(klass cls)
 	return name;
 }
 
+int class_metadata_methods_impl_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args)
+{
+	class_metadata_iterator_args iterator = (class_metadata_iterator_args)args;
+	value *v_array = value_to_array(iterator->v);
+
+	(void)m;
+	(void)key;
+
+	v_array[iterator->count++] = method_metadata((method)val);
+
+	return 0;
+}
+
+value class_metadata_methods_impl(const char name[], size_t size, map methods)
+{
+	value v = value_create_array(NULL, 2);
+	value *v_array;
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_array = value_to_array(v);
+	v_array[0] = value_create_string(name, size - 1);
+
+	if (v_array[0] == NULL)
+	{
+		goto error_value;
+	}
+
+	v_array[1] = value_create_array(NULL, map_size(methods));
+
+	if (v_array[1] == NULL)
+	{
+		goto error_value;
+	}
+
+	struct class_metadata_iterator_args_type iterator;
+
+	iterator.v = v_array[1];
+	iterator.count = 0;
+
+	map_iterate(methods, &class_metadata_methods_impl_cb_iterate, &iterator);
+
+	return v;
+error_value:
+	value_type_destroy(v);
+	return NULL;
+}
+
+value class_metadata_methods(klass cls)
+{
+	static const char name[] = "methods";
+	return class_metadata_methods_impl(name, sizeof(name), cls->methods);
+}
+
+value class_metadata_static_methods(klass cls)
+{
+	static const char name[] = "static_methods";
+	return class_metadata_methods_impl(name, sizeof(name), cls->static_methods);
+}
+
+int class_metadata_attributes_impl_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
+{
+	class_metadata_iterator_args iterator = (class_metadata_iterator_args)args;
+	value *v_array = value_to_array(iterator->v);
+
+	(void)s;
+	(void)key;
+
+	v_array[iterator->count++] = attribute_metadata((attribute)val);
+
+	return 0;
+}
+
+value class_metadata_attributes_impl(const char name[], size_t size, set attributes)
+{
+	value v = value_create_array(NULL, 2);
+	value *v_array;
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_array = value_to_array(v);
+	v_array[0] = value_create_string(name, size - 1);
+
+	if (v_array[0] == NULL)
+	{
+		goto error_value;
+	}
+
+	v_array[1] = value_create_array(NULL, set_size(attributes));
+
+	if (v_array[1] == NULL)
+	{
+		goto error_value;
+	}
+
+	struct class_metadata_iterator_args_type iterator;
+
+	iterator.v = v_array[1];
+	iterator.count = 0;
+
+	set_iterate(attributes, &class_metadata_attributes_impl_cb_iterate, &iterator);
+
+	return v;
+error_value:
+	value_type_destroy(v);
+	return NULL;
+}
+
+value class_metadata_attributes(klass cls)
+{
+	static const char name[] = "attributes";
+	return class_metadata_attributes_impl(name, sizeof(name), cls->attributes);
+}
+
+value class_metadata_static_attributes(klass cls)
+{
+	static const char name[] = "static_attributes";
+	return class_metadata_attributes_impl(name, sizeof(name), cls->static_attributes);
+}
+
 value class_metadata(klass cls)
 {
 	/* The structure of the metadata is:
@@ -205,10 +345,7 @@ value class_metadata(klass cls)
 	*	}
 	* }
 	*/
-
-	(void)cls;
-
-	value name, c;
+	value name, methods, static_methods, attributes, static_attributes, c;
 
 	value *c_map;
 
@@ -217,24 +354,71 @@ value class_metadata(klass cls)
 
 	if (name == NULL)
 	{
-		return NULL;
+		goto error_name;
 	}
 
-	/* Create class map (name) */
-	c = value_create_map(NULL, 1);
+	/* Create class methods array */
+	methods = class_metadata_methods(cls);
+
+	if (methods == NULL)
+	{
+		goto error_methods;
+	}
+
+	/* Create class static_methods array */
+	static_methods = class_metadata_static_methods(cls);
+
+	if (static_methods == NULL)
+	{
+		goto error_static_methods;
+	}
+
+	/* Create class attributes array */
+	attributes = class_metadata_attributes(cls);
+
+	if (attributes == NULL)
+	{
+		goto error_attributes;
+	}
+
+	/* Create class static_attributes array */
+	static_attributes = class_metadata_static_attributes(cls);
+
+	if (static_attributes == NULL)
+	{
+		goto error_static_attributes;
+	}
+
+	/* Create class map (name + methods + static_methods + attributes + static_attributes) */
+	c = value_create_map(NULL, 5);
 
 	if (c == NULL)
 	{
-		value_type_destroy(name);
-
-		return NULL;
+		goto error_class;
 	}
 
 	c_map = value_to_map(c);
 
 	c_map[0] = name;
+	c_map[1] = methods;
+	c_map[2] = static_methods;
+	c_map[3] = attributes;
+	c_map[4] = static_attributes;
 
 	return c;
+
+error_class:
+	value_type_destroy(static_attributes);
+error_static_attributes:
+	value_type_destroy(attributes);
+error_attributes:
+	value_type_destroy(static_methods);
+error_static_methods:
+	value_type_destroy(methods);
+error_methods:
+	value_type_destroy(name);
+error_name:
+	return NULL;
 }
 
 object class_new(klass cls, const char *name, class_args args, size_t argc)

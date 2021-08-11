@@ -63,6 +63,8 @@ REFLECT_API enum class_visibility_id method_visibility(method m);
 
 REFLECT_API enum async_id method_async(method m);
 
+REFLECT_API value method_metadata(method m);
+
 REFLECT_API void method_destroy(method m);
 
 #ifdef __cplusplus
