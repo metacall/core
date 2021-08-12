@@ -51,6 +51,10 @@ if module == None:
 def metacall_load_from_file(tag, paths):
 	return module.metacall_load_from_file(tag, paths)
 
+# Load from package
+def metacall_load_from_package(tag, path):
+	return module.metacall_load_from_package(tag, path)
+
 # Load from memory
 def metacall_load_from_memory(tag, buffer):
 	return module.metacall_load_from_memory(tag, buffer)
@@ -129,7 +133,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		return mod
 
 	# Map file extension to tags
-	extensions_to_tag = {
+	file_extensions_to_tag = {
 		# Mock Loader
 		'mock': 'mock',
 		# Python Loader
@@ -139,7 +143,6 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		# C# Loader
 		'cs': 'cs',
 		'vb': 'cs',
-		'dll': 'cs',
 		# Cobol Loader
 		'cob': 'cob',
 		'cbl': 'cob',
@@ -153,9 +156,15 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'ts': 'ts',
 		'jsx': 'ts',
 		'tsx': 'ts',
-
 		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
 		# Probably in the future we can differenciate between them, but it is not trivial
+	}
+
+	package_extensions_to_tag = {
+		# C# Loader
+		'dll': 'cs',
+		# WebAssembly Loader
+		'wasm': 'wasm',
 	}
 
 	# Try to load it as a Python module
@@ -171,7 +180,10 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 	extension = None if name.count('.') == 0 else name.split('.')[-1]
 
 	# Load by extension if there is any (import puppeteer.js)
-	if extension and extension in extensions_to_tag.keys():
+	if (
+		extension in file_extensions_to_tag.keys()
+		or extension in package_extensions_to_tag.keys()
+	):
 		# Get handle name without extension
 		handle_name = name.split('.')[-2]
 
@@ -194,10 +206,24 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		if extension == 'py':
 			current_frame = inspect.currentframe()
 			call_frame = inspect.getouterframes(current_frame, 2)
-			if call_frame[1][3] == 'metacall_load_from_file' or call_frame[1][3] == 'metacall_load_from_memory':
+			if (
+				call_frame[1][3] == 'metacall_load_from_file'
+				or call_frame[1][3] == 'metacall_load_from_package'
+				or call_frame[1][3] == 'metacall_load_from_memory'
+			):
 				return ImportException('MetaCall could not import:', name)
 
-		if metacall_load_from_file(extensions_to_tag[extension], [name]):
+		if (
+			extension in file_extensions_to_tag.keys()
+			and metacall_load_from_file(
+				file_extensions_to_tag[extension], [name]
+			)
+		) or (
+			extension in package_extensions_to_tag.keys()
+			and metacall_load_from_package(
+				package_extensions_to_tag[extension], name
+			)
+		):
 			handle = find_handle(name)
 			if handle != None:
 				# Generate the module from cached handle
@@ -211,7 +237,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 			return generate_module(name, handle)
 
 		# Otherwhise, try to load it by guessing the loader
-		tags = set(extensions_to_tag.values())
+		tags = set(file_extensions_to_tag.values())
 
 		# Remove mock and py in order to avoid mock to automatically load
 		# or python to enter into an endless loop
