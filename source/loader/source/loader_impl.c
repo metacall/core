@@ -852,7 +852,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 		loader_naming_name package_name;
 
-		if (interface_impl != NULL && loader_path_get_name(path, package_name) > 1)
+		if (interface_impl != NULL && loader_path_get_fullname(path, package_name) > 1)
 		{
 			loader_handle handle;
 

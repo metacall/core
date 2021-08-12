@@ -193,6 +193,98 @@ clear:
 	return result;
 }
 
+static PyObject *py_loader_port_load_from_package(PyObject *self, PyObject *args)
+{
+	static const char format[] = "OO:metacall_load_from_package";
+	PyObject *tag, *path;
+	char *tag_str, *path_str;
+	Py_ssize_t tag_length = 0;
+
+	(void)self;
+
+	/* Parse arguments */
+	if (!PyArg_ParseTuple(args, (char *)format, &tag, &path))
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_file('node', ['script.js']);");
+		return py_loader_port_false();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	if (!PyString_Check(tag))
+#elif PY_MAJOR_VERSION == 3
+	if (!PyUnicode_Check(tag))
+#endif
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in first argument (a string indicating the tag of the loader must be used: 'node', 'rb', 'ts', 'cs', 'js', 'cob'...)");
+		return py_loader_port_false();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	if (!PyString_Check(path))
+#elif PY_MAJOR_VERSION == 3
+	if (!PyUnicode_Check(path))
+#endif
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid parameter type in second argument (a string indicating the path must be used)");
+		return py_loader_port_false();
+	}
+
+/* Convert tag from unicode into a string */
+#if PY_MAJOR_VERSION == 2
+	{
+		if (PyString_AsStringAndSize(tag, &tag_str, &tag_length) == -1)
+		{
+			tag_str = NULL;
+		}
+	}
+#elif PY_MAJOR_VERSION == 3
+	{
+		tag_str = (char *)PyUnicode_AsUTF8AndSize(tag, &tag_length);
+	}
+#endif
+
+	if (tag_str == NULL)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid tag string conversion");
+		return py_loader_port_false();
+	}
+
+#if PY_MAJOR_VERSION == 2
+	PyString_Check(path);
+#elif PY_MAJOR_VERSION == 3
+	PyUnicode_Check(path);
+#endif
+
+	Py_ssize_t length = 0;
+#if PY_MAJOR_VERSION == 2
+	{
+		if (PyString_AsStringAndSize(path, &path_str, &length) == -1)
+		{
+			path_str = NULL;
+		}
+	}
+#elif PY_MAJOR_VERSION == 3
+	{
+		path_str = (char *)PyUnicode_AsUTF8AndSize(path, &length);
+	}
+#endif
+
+	if (path_str == NULL)
+	{
+		PyErr_SetString(PyExc_TypeError, "Invalid path string conversion");
+		return py_loader_port_false();
+	}
+
+	/* Execute the load from file call */
+	PyThreadState *thread_state = PyEval_SaveThread();
+
+	int ret = metacall_load_from_package(tag_str, path_str, NULL);
+
+	PyEval_RestoreThread(thread_state);
+
+	return ret == 0 ? py_loader_port_true() : py_loader_port_false();
+}
+
 static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
 {
 	static const char format[] = "OO:metacall_load_from_memory";
@@ -452,6 +544,8 @@ static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 static PyMethodDef metacall_methods[] = {
 	{ "metacall_load_from_file", py_loader_port_load_from_file, METH_VARARGS,
 		"Loads a script from file." },
+	{ "metacall_load_from_package", py_loader_port_load_from_package, METH_VARARGS,
+		"Loads a script from a package." },
 	{ "metacall_load_from_memory", py_loader_port_load_from_memory, METH_VARARGS,
 		"Loads a script from a string." },
 	{ "metacall_inspect", py_loader_port_inspect, METH_NOARGS,
