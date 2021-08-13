@@ -451,13 +451,15 @@ int rb_object_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value rb_object_interface_get(object obj, object_impl impl, const char *key)
+value rb_object_interface_get(object obj, object_impl impl, attribute attr)
 {
 	(void)obj;
 
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 
 	VALUE rb_val_object = rb_object->object;
+
+	const char *key = attribute_name(attr);
 
 	VALUE got = rb_iv_get(rb_val_object, key);
 
@@ -478,13 +480,15 @@ value rb_object_interface_get(object obj, object_impl impl, const char *key)
 	return result;
 }
 
-int rb_object_interface_set(object obj, object_impl impl, const char *key, value v)
+int rb_object_interface_set(object obj, object_impl impl, attribute attr, value v)
 {
 	(void)obj;
 
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 
 	VALUE rb_val_object = rb_object->object;
+
+	const char *key = attribute_name(attr);
 
 	rb_iv_set(rb_val_object, key, rb_type_serialize(v));
 
@@ -502,7 +506,7 @@ int rb_object_interface_set(object obj, object_impl impl, const char *key, value
 	return 0;
 }
 
-value rb_object_interface_method_invoke(object obj, object_impl impl, const char *method_name, object_args args, size_t argc)
+value rb_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
 
@@ -519,7 +523,7 @@ value rb_object_interface_method_invoke(object obj, object_impl impl, const char
 		argv[i] = rb_type_serialize(args[i]);
 	}
 
-	VALUE rb_retval = rb_funcallv(obj_impl->object, rb_intern(method_name), argc, argv);
+	VALUE rb_retval = rb_funcallv(obj_impl->object, rb_intern(method_name(m)), argc, argv);
 
 	free(argv);
 
@@ -534,12 +538,12 @@ value rb_object_interface_method_invoke(object obj, object_impl impl, const char
 	return result;
 }
 
-value rb_object_interface_method_await(object obj, object_impl impl, const char *key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+value rb_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -1421,36 +1425,63 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 			{
 				VALUE class_name = rb_funcall(constant, rb_intern("id2name"), 0);
 				const char *class_name_str = RSTRING_PTR(class_name);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Class name %s", class_name_str);
-
 				VALUE class = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
+				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
+				klass c = class_create(class_name_str, rb_cls, &rb_class_interface_singleton);
 
+				rb_cls->impl = impl;
+				rb_cls->class = class;
+
+				// TODO:
 				// rb_obj_private_methods, rb_obj_protected_methods, rb_obj_public_methods and
 				// rb_obj_singleton_methods, can be used instead of rb_class_instance_methods
 
-				/*
-				VALUE argv[1] = { Qtrue }; // include_superclasses ? Qtrue : Qfalse;
-   				VALUE methods = rb_class_instance_methods(1, argv, class); // argc, argv, class
+				VALUE argv[1] = { Qtrue };								   // include_superclasses ? Qtrue : Qfalse;
+				VALUE methods = rb_class_instance_methods(1, argv, class); // argc, argv, class
 				VALUE load_path_array_size = rb_funcall(methods, rb_intern("size"), 0);
 				int method_index, methods_size = FIX2INT(load_path_array_size);
 
 				for (method_index = 0; method_index < methods_size; method_index++)
 				{
-					VALUE method = rb_ary_entry(methods, method_index);
-					VALUE method_name = rb_funcall(method, rb_intern("id2name"), 0);
-					const char * method_name_str = RSTRING_PTR(method_name);
+					VALUE rb_method = rb_ary_entry(methods, method_index);
+					VALUE name = rb_funcall(rb_method, rb_intern("id2name"), 0);
+					const char *method_name_str = RSTRING_PTR(name);
 
 					log_write("metacall", LOG_LEVEL_DEBUG, "Method inside '%s' %s", class_name_str, method_name_str);
+
+					/* TODO */
+					/*
+					method m = method_create(c,
+						method_name_str,
+						args_count, // TODO: method(:foo).parameters.length
+						rb_method,
+						VISIBILITY_PUBLIC, // TODO: Check line 1434 of this file
+						SYNCHRONOUS, // There is not async functions in Ruby
+						NULL);
+
+					signature s = method_signature(m);
+
+					// TODO: Iterate through each parameter (method(:foo).parameters),
+					// get each pair second element and store the name, the arguments of the methods
+					// can be without types, so there's no need to use the parser
+
+					// Another alternative (for maintaining types), which is not used in the current implementation,
+					// but it can simplify the parser, it's the following:
+					//
+					//   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
+					//   - For plain functions: origin_file, definition_line = method(:foo).source_location
+					//
+					// Then:
+					// method_signature = IO.readlines(origin_file)[definition_line.pred]
+					//
+					// Now we have only the method signature, this is going to be less problematic than parsing
+					// the whole file as we are doing now (although for multi-line signatures it's going to be
+					// a little bit more complicated...)
+					//
+					// We can switch to completely duck typed approach (refactoring the tests) or we can use this
+					// simplified parsing approach and maintain types
+					*/
 				}
-				*/
-
-				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
-
-				klass c = class_create(class_name_str, rb_cls, &rb_class_interface_singleton);
-
-				rb_cls->impl = impl;
-				rb_cls->class = class;
 
 				scope sp = context_scope(ctx);
 				scope_define(sp, class_name_str, value_create_class(c));
