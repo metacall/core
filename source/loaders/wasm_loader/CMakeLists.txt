@@ -48,11 +48,15 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/wasm_loader.h
 	${include_path}/wasm_loader_impl.h
+	${include_path}/wasm_loader_function.h
+	${include_path}/wasm_loader_handle.h
 )
 
 set(sources
 	${source_path}/wasm_loader.c
 	${source_path}/wasm_loader_impl.c
+	${source_path}/wasm_loader_function.c
+	${source_path}/wasm_loader_handle.c
 )
 
 # Group source files
