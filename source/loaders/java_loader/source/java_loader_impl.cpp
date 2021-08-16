@@ -334,8 +334,6 @@ value java_object_interface_get(object obj, object_impl impl, attribute attr)
 	jobject clsObj = java_obj->conObj;
 	jclass clscls = java_obj->concls;
 
-	jstring getKey = java_impl->env->NewStringUTF(key);
-
 	if (clscls != nullptr)
 	{
 		const char *fType = static_cast<std::string *>(type_derived(fieldType))->c_str();
@@ -783,7 +781,7 @@ value java_object_interface_method_invoke(object obj, object_impl impl, method m
 
 value java_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
-	// TODO
+	// Java doesnt support await
 	(void)obj;
 	(void)impl;
 	(void)args;
@@ -806,6 +804,9 @@ int java_object_interface_destructor(object obj, object_impl impl)
 void java_object_interface_destroy(object obj, object_impl impl)
 {
 	(void)obj;
+
+	if (impl != nullptr)
+		delete impl;
 }
 
 object_interface java_object_interface_singleton(void)
@@ -910,6 +911,8 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 	jclass clscls = java_cls->concls;
 
 	jstring getKey = java_impl->env->NewStringUTF(key);
+
+	std::cout << "GETTING static " << key << std::endl;
 
 	if (clscls != nullptr)
 	{
@@ -1356,7 +1359,7 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, method m, c
 
 value java_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
-	// TODO
+	// Java doesnt support await so skip this
 	(void)cls;
 	(void)impl;
 	(void)args;
@@ -1371,7 +1374,9 @@ value java_class_interface_static_await(klass cls, class_impl impl, method m, cl
 void java_class_interface_destroy(klass cls, class_impl impl)
 {
 	(void)cls;
-	(void)impl;
+
+	if (impl != nullptr)
+		delete impl;
 }
 
 class_interface java_class_interface_singleton(void)
@@ -1873,6 +1878,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 int java_loader_impl_destroy(loader_impl impl)
 {
+	std::cout << "Destroy" << std::endl;
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
 	if (java_impl != NULL)
@@ -1882,7 +1888,7 @@ int java_loader_impl_destroy(loader_impl impl)
 		if (rc != JNI_OK)
 		{
 			// TODO: Handle error
-			log_write("metacall", LOG_LEVEL_ERROR, "JNI failed to attach to the current thread")
+			log_write("metacall", LOG_LEVEL_ERROR, "JNI failed to attach to the current thread");
 		}
 
 		/* Destroy children loaders */

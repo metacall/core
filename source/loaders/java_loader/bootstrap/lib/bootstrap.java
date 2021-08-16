@@ -20,8 +20,6 @@ public class bootstrap {
   private static Set<String> executionPath = new HashSet<String>();
 
   public static Class<?> FindClass(String name) {
-    System.out.println("Finding Class " + name);
-
     try {
       URL[] urlArr = new URL[executionPath.size()];
       int i = 0;
@@ -38,7 +36,6 @@ public class bootstrap {
   }
 
   public static int java_bootstrap_execution_path(String path) {
-    System.out.println("bootstraping Execution path = " + path);
     executionPath.add(path);
 
     try {
@@ -82,14 +79,10 @@ public class bootstrap {
             File execPathFile = new File(curExecPath);
             URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
 
-            // handleObject.addClass(classname, clsLoader.loadClass(classname));
             handleObject[i] = clsLoader.loadClass(classname);
             clsLoader.close();
 
-            System.out.println(i + " -> " + classname + " loaded");
-
-            // handleArray.addClass(classname, Class.forName(classname));
-            System.out.println("Class Loading Successful");
+            System.out.println(classname + " Class Loading Successful");
             break;
           } else {
             System.out.println("Compilation Failed");
@@ -208,13 +201,12 @@ public class bootstrap {
     return new Class<?>[] {};
   }
 
-  private static String[] getTypeSignature(Class<?> t)
-  {
+  private static String[] getTypeSignature(Class<?> t) {
     String name = t.getName();
     boolean primitive = t.isPrimitive();
     String signature = name.replace(".", "/");
 
-    return new String[]{ name, !primitive ? "L" + signature + ";" : signature };
+    return new String[] { name, primitive ? "L" + signature + ";" : signature };
   }
 
   public static String getSignature(Method m) {
@@ -279,7 +271,6 @@ public class bootstrap {
 
   public static String java_bootstrap_get_class_name(Class<?> cls) {
     // Working test for getting function name and details
-
     Constructor<?>[] constructors = cls.getDeclaredConstructors();
     for (Constructor<?> cnstr : constructors) {
       System.out.println("Name of the constructor: " + cnstr.getName());
@@ -312,8 +303,6 @@ public class bootstrap {
   }
 
   public static Field[] java_bootstrap_discover_fields(Class<?> cls) {
-    // System.out.println("FIELD DISCOVER " + cls.getName());
-
     Field[] fields = cls.getFields();
     return fields;
   }
@@ -327,8 +316,6 @@ public class bootstrap {
     String fVisibility = getModifierType(fModifier);
     String fStatic = Modifier.isStatic(fModifier) ? "static" : "nonstatic";
 
-    // System.out.println("Field " + fVisibility + " " + fStatic + " " + fTypeName + " " + fSignature + " " + fName);
-
     return new String[] { fName, fTypeName, fVisibility, fStatic, fSignature };
   }
 
@@ -337,8 +324,6 @@ public class bootstrap {
   }
 
   public static Method[] java_bootstrap_discover_methods(Class<?> cls) {
-    // System.out.println("METHOD DISCOVER " + cls.getName());
-
     Method[] methods = cls.getMethods();
     return methods;
   }
@@ -352,9 +337,6 @@ public class bootstrap {
     String mVisibility = getModifierType(mModifier);
     String mStatic = Modifier.isStatic(mModifier) ? "static" : "nonstatic";
     String mSignature = getSignature(m).replace(".", "/");
-
-    // System.out.println("METHOD " + mVisibility + " " + mStatic + " " +
-    // mRetTypeName + " " + mName + " " + mSignature);
 
     return new String[] { mName, mRetTypeName, mRetTypeSig, mVisibility, mStatic, mSignature };
   }
@@ -370,22 +352,4 @@ public class bootstrap {
 
     return parameterList;
   }
-
-  // public static void DiscoverData(String classname) {
-
-  // Method[] methods = hClass.getDeclaredMethods();
-
-  // for (Method method : methods) {
-  // System.out.println("Name of the method: " + method.getName());
-
-  // Class<?>[] parameters = method.getParameterTypes();
-  // if (parameters.length == 0)
-  // System.out.println("\tparameter: none");
-  // for (Class<?> parameter : parameters) {
-  // System.out.println("\tparameter: " + parameter.getSimpleName());
-  // }
-  // System.out.println("\tReturn Type: " + method.getReturnType() + "\n");
-
-  // }
-  // }
 }
