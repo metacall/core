@@ -208,6 +208,15 @@ public class bootstrap {
     return new Class<?>[] {};
   }
 
+  private static String[] getTypeSignature(Class<?> t)
+  {
+    String name = t.getName();
+    boolean primitive = t.isPrimitive();
+    String signature = name.replace(".", "/");
+
+    return new String[]{ name, !primitive ? "L" + signature + ";" : signature };
+  }
+
   public static String getSignature(Method m) {
     String sig;
     try {
@@ -303,7 +312,7 @@ public class bootstrap {
   }
 
   public static Field[] java_bootstrap_discover_fields(Class<?> cls) {
-    System.out.println("FIELD DISCOVER " + cls.getName());
+    // System.out.println("FIELD DISCOVER " + cls.getName());
 
     Field[] fields = cls.getFields();
     return fields;
@@ -311,15 +320,16 @@ public class bootstrap {
 
   public static String[] java_bootstrap_discover_fields_details(Field f) {
     String fName = f.getName();
-    String fType = f.getType().getName();
-    String fSignature = fType.replace(".", "/");
+    String[] fTypeNameSig = getTypeSignature(f.getType());
+    String fTypeName = fTypeNameSig[0];
+    String fSignature = fTypeNameSig[1];
     int fModifier = f.getModifiers();
     String fVisibility = getModifierType(fModifier);
     String fStatic = Modifier.isStatic(fModifier) ? "static" : "nonstatic";
 
-    System.out.println("Field " + fVisibility + " " + fStatic + " " + fType + " " + fName);
+    // System.out.println("Field " + fVisibility + " " + fStatic + " " + fTypeName + " " + fSignature + " " + fName);
 
-    return new String[] { fName, fType, fVisibility, fStatic, fSignature };
+    return new String[] { fName, fTypeName, fVisibility, fStatic, fSignature };
   }
 
   public static int java_bootstrap_discover_method_args_size(Method m) {
@@ -327,7 +337,7 @@ public class bootstrap {
   }
 
   public static Method[] java_bootstrap_discover_methods(Class<?> cls) {
-    System.out.println("METHOD DISCOVER " + cls.getName());
+    // System.out.println("METHOD DISCOVER " + cls.getName());
 
     Method[] methods = cls.getMethods();
     return methods;
@@ -335,26 +345,27 @@ public class bootstrap {
 
   public static String[] java_bootstrap_discover_method_details(Method m) {
     String mName = m.getName();
-    String mReturnType = m.getReturnType().getName();
+    String[] mRetTypeNameSig = getTypeSignature(m.getReturnType());
+    String mRetTypeName = mRetTypeNameSig[0];
+    String mRetTypeSig = mRetTypeNameSig[1];
     int mModifier = m.getModifiers();
     String mVisibility = getModifierType(mModifier);
     String mStatic = Modifier.isStatic(mModifier) ? "static" : "nonstatic";
-    String sig = getSignature(m);
-    String signature = sig.replace(".", "/");
+    String mSignature = getSignature(m).replace(".", "/");
 
     // System.out.println("METHOD " + mVisibility + " " + mStatic + " " +
-    // mReturnType + " " + mName + " " + signature);
+    // mRetTypeName + " " + mName + " " + mSignature);
 
-    return new String[] { mName, mReturnType, mVisibility, mStatic, signature };
+    return new String[] { mName, mRetTypeName, mRetTypeSig, mVisibility, mStatic, mSignature };
   }
 
-  public static String[] java_bootstrap_discover_method_parameters(Method m) {
-    String[] parameterList = new String[java_bootstrap_discover_method_args_size(m)];
+  public static String[][] java_bootstrap_discover_method_parameters(Method m) {
+    String[][] parameterList = new String[java_bootstrap_discover_method_args_size(m)][2];
     Class<?>[] parameters = m.getParameterTypes();
 
     int i = 0;
     for (Class<?> parameter : parameters) {
-      parameterList[i++] = parameter.getName();
+      parameterList[i++] = getTypeSignature(parameter);
     }
 
     return parameterList;

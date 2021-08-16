@@ -12,6 +12,11 @@ public class Test {
   public static double DOUBLE_TEST = 10.21324434;
   public static String STRING_TEST = "Hello";
 
+  // TODO: Add test for this
+  public static String[] STRING_ARRAY_TEST = new String[]{"String 1", "String 2", "String 3"};
+  public static String[][] STRING_ARRAY_ARRAY_TEST = new String[]{new String[]{"String 1"}, new String[]{"String 2"}, new String[]{"String 3"}};
+  public static Object OBJECT_TEST = new Object();
+
   public Test(int val, int s) {
     System.err.println("Test const Called with " + val + ", " + s);
     INT_TEST = val;
@@ -33,9 +38,21 @@ public class Test {
     System.out.println("hello Mr bean");
   }
 
+  public static String[] testFunctNew2() {
+    return new String[]{ "hello", "Mr", "bean" };
+  }
+
+  public static String[][] testFunctNew3() {
+    return new String[][]{ new String[]{ "hello" },  new String[]{ "Mr" },  new String[]{ "bean" } };
+  }
+
   public static int testFunct(String s) {
     System.out.println("hello " + s);
     return 0;
+  }
+
+  public static void yeet(String[] asd) {
+    System.out.println("yeet");
   }
 
   public static void main(String[] args) {

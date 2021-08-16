@@ -111,7 +111,7 @@ std::string getJNISignature(class_args args, size_t argc, const char *returnType
 			sig += "Ljava/lang/String;";
 
 		if (id == TYPE_ARRAY)
-			sig += "[Ljava/lang/String;"; //TODO: support other types in constructor
+			sig += "[Ljava/lang/String;"; //TODO: support other types in constructor (make it recursive)
 	}
 
 	sig += ")";
@@ -291,8 +291,14 @@ int type_java_interface_create(type t, type_impl impl)
 
 void type_java_interface_destroy(type t, type_impl impl)
 {
+	std::string *sig = static_cast<std::string *>(impl);
+
 	(void)t;
-	(void)impl;
+
+	if (sig != nullptr)
+	{
+		delete sig;
+	}
 }
 
 type_interface type_java_singleton(void)
@@ -332,7 +338,7 @@ value java_object_interface_get(object obj, object_impl impl, attribute attr)
 
 	if (clscls != nullptr)
 	{
-		const char *fType = (const char *)type_derived(fieldType);
+		const char *fType = static_cast<std::string *>(type_derived(fieldType))->c_str();
 		jfieldID fID = java_impl->env->GetFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
@@ -483,6 +489,7 @@ value java_object_interface_get(object obj, object_impl impl, attribute attr)
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
+						// TODO: Make this generic and recursive for any kind of array
 						jobjectArray gotVal = (jobjectArray)java_impl->env->GetObjectField(clsObj, fID);
 						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
 
@@ -527,8 +534,7 @@ int java_object_interface_set(object obj, object_impl impl, attribute attr, valu
 
 	if (clscls != nullptr)
 	{
-		const char *fType = (const char *)type_derived(fieldType);
-		std::cout << fType << std::endl;
+		const char *fType = static_cast<std::string *>(type_derived(fieldType))->c_str();
 		jfieldID fID = java_impl->env->GetFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
@@ -669,6 +675,7 @@ int java_object_interface_set(object obj, object_impl impl, attribute attr, valu
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
+						// TODO: This should be more generic and include other types of objects, not only string
 						std::cout << "STRING ARR SET" << std::endl;
 						jobjectArray setArr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
@@ -906,7 +913,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 
 	if (clscls != nullptr)
 	{
-		const char *fType = (const char *)type_derived(fieldType);
+		const char *fType = static_cast<std::string *>(type_derived(fieldType))->c_str();
 		jfieldID fID = java_impl->env->GetStaticFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
@@ -1057,6 +1064,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
+						// TODO: Make this generic and recursive for any kind of array
 						jobjectArray gotVal = (jobjectArray)java_impl->env->GetStaticObjectField(clscls, fID);
 						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
 
@@ -1100,8 +1108,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 
 	if (clscls != nullptr)
 	{
-		const char *fType = (const char *)type_derived(fieldType);
-		std::cout << fType << std::endl;
+		const char *fType = static_cast<std::string *>(type_derived(fieldType))->c_str();
 		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
@@ -1242,6 +1249,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
+						// TODO: Implement this for any kind of object, make it recursive
 						std::cout << "STRING ARR SET" << std::endl;
 						jobjectArray arr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
@@ -1434,13 +1442,15 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 			{ TYPE_FLOAT, "float", "F" },
 			{ TYPE_DOUBLE, "double", "D" },
 			{ TYPE_STRING, "java.lang.String", "Ljava/lang/String;" },
+			{ TYPE_OBJECT, "java.lang.Object", "Ljava/lang/Object;" },
+			{ TYPE_CLASS, "java.lang.Class", "Ljava/lang/Class;" }
 		};
 
 		size_t size = sizeof(type_id_name_sig) / sizeof(type_id_name_sig[0]);
 
 		for (size_t i = 0; i < size; i++)
 		{
-			type t = type_create(type_id_name_sig[i].id, type_id_name_sig[i].name, (type_impl)type_id_name_sig[i].jni_signature, &type_java_singleton);
+			type t = type_create(type_id_name_sig[i].id, type_id_name_sig[i].name, (type_impl) new std::string(type_id_name_sig[i].jni_signature), &type_java_singleton);
 
 			if (!(t != NULL && loader_impl_type_define(impl, type_name(t), t) == 0))
 			{
@@ -1495,10 +1505,9 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 		if (classPtr != nullptr)
 		{
 			jmethodID mid = java_impl->env->GetStaticMethodID(classPtr, "loadFromFile", "([Ljava/lang/String;)[Ljava/lang/Class;");
+
 			if (mid != nullptr)
 			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Function Found");
-
 				jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, mid, arr);
 
 				java_handle->handle = result;
@@ -1619,6 +1628,49 @@ class_visibility_id getFieldVisibility(const char *v)
 	return VISIBILITY_PUBLIC; // Public by default
 }
 
+static type java_loader_impl_type(loader_impl impl, const char *type_str, const char *type_signature)
+{
+	type t = loader_impl_type(impl, type_str);
+
+	if (t != NULL)
+	{
+		return t;
+	}
+
+	type_id id;
+
+	if (type_str[0] == '[')
+	{
+		id = TYPE_ARRAY;
+	}
+	else if (type_str[0] == 'L')
+	{
+		id = TYPE_OBJECT;
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Type %s is an unknown type, go to 'java_loader_impl_type' and implement it", type_str);
+		return NULL;
+	}
+
+	t = type_create(id, type_str, new std::string(type_signature), &type_java_singleton);
+
+	if (t == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid type allocation when discovering the type %s", type_str);
+		return NULL;
+	}
+
+	if (loader_impl_type_define(impl, type_name(t), t) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Type %s could not be registered", type_str);
+		type_destroy(t);
+		return NULL;
+	}
+
+	return t;
+}
+
 int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);
@@ -1641,7 +1693,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 			if (handleSize == 0)
 			{
-				std::cout << "saved it" << std::endl;
+				log_write("metacall", LOG_LEVEL_ERROR, "Trying to discover a handle without any class");
 				return 1;
 			}
 
@@ -1690,29 +1742,24 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							jstring fSignature = (jstring)java_impl->env->GetObjectArrayElement(fieldDetails, 4);
 							const char *field_signature = java_impl->env->GetStringUTFChars(fSignature, NULL);
 
-							std::cout << field_visibility << " " << field_static << " " << field_type << " " << field_name << std::endl;
-
 							loader_impl_java_field java_field = new loader_impl_java_field_type();
 							java_field->fieldName = field_name;
 							java_field->fieldObj = curField;
 
-							type t = loader_impl_type(impl, field_type);
-
-							if (t == NULL)
-							{
-								t = type_create(TYPE_ARRAY, field_type, (type_impl)field_signature, &type_java_singleton);
-								loader_impl_type_define(impl, field_type, t);
-							}
+							type t = java_loader_impl_type(impl, field_type, field_signature);
 
 							if (t != NULL)
 							{
-								std::cout << "Registered" << std::endl;
 								attribute attr = attribute_create(c, field_name, t, java_field, getFieldVisibility(field_visibility), NULL);
 
 								if (!strcmp(field_static, "static"))
 									class_register_static_attribute(c, attr);
 								else
 									class_register_attribute(c, attr);
+							}
+							else
+							{
+								log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s could not be discovered, the type is not supported", field_name);
 							}
 						}
 					}
@@ -1730,35 +1777,38 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							jobject curMethod = java_impl->env->GetObjectArrayElement(methodArray, method_index);
 							jobjectArray methodDetails = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_details, curMethod);
 
-							jstring mname = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 0);
-							const char *method_name = java_impl->env->GetStringUTFChars(mname, NULL);
+							jstring mName = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 0);
+							const char *m_name = java_impl->env->GetStringUTFChars(mName, NULL);
 
 							jstring mReturnType = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 1);
-							const char *method_return_type = java_impl->env->GetStringUTFChars(mReturnType, NULL);
+							const char *m_return_type = java_impl->env->GetStringUTFChars(mReturnType, NULL);
 
-							jstring mVisibility = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 2);
-							const char *method_visibility = java_impl->env->GetStringUTFChars(mVisibility, NULL);
+							jstring mReturnTypeSig = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 2);
+							const char *m_return_type_sig = java_impl->env->GetStringUTFChars(mReturnTypeSig, NULL);
 
-							jstring mStatic = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 3);
-							const char *method_static = java_impl->env->GetStringUTFChars(mStatic, NULL);
+							jstring mVisibility = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 3);
+							const char *m_visibility = java_impl->env->GetStringUTFChars(mVisibility, NULL);
 
-							jstring mSignature = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 4);
-							const char *method_sig = java_impl->env->GetStringUTFChars(mSignature, NULL);
+							jstring mStatic = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 4);
+							const char *m_static = java_impl->env->GetStringUTFChars(mStatic, NULL);
+
+							jstring mSignature = (jstring)java_impl->env->GetObjectArrayElement(methodDetails, 5);
+							const char *m_sig = java_impl->env->GetStringUTFChars(mSignature, NULL);
 
 							jmethodID cls_method_args_size = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_args_size", "(Ljava/lang/reflect/Method;)I");
 							jint args_count = (jint)java_impl->env->CallStaticIntMethod(classPtr, cls_method_args_size, curMethod);
 
 							loader_impl_java_method java_method = new loader_impl_java_method_type();
 							java_method->methodObj = curMethod;
-							java_method->methodSignature = method_sig;
+							java_method->methodSignature = m_sig;
 
 							// CREATING A NEW METHOD
-							method m = method_create(c, method_name, (size_t)args_count, java_method, getFieldVisibility(method_visibility), SYNCHRONOUS, NULL);
+							method m = method_create(c, m_name, (size_t)args_count, java_method, getFieldVisibility(m_visibility), SYNCHRONOUS, NULL);
 
 							// REGISTERING THE METHOD PARAMETER WITH INDEX
 							signature s = method_signature(m);
 
-							jmethodID cls_method_parameter_list = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_parameters", "(Ljava/lang/reflect/Method;)[Ljava/lang/String;");
+							jmethodID cls_method_parameter_list = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_method_parameters", "(Ljava/lang/reflect/Method;)[[Ljava/lang/String;");
 							jobjectArray methodParameterList = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_parameter_list, curMethod);
 
 							if (methodParameterList)
@@ -1767,23 +1817,42 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 								for (jsize pIndex = 0; pIndex < parameterLength; pIndex++)
 								{
-									jstring cparameter = (jstring)java_impl->env->GetObjectArrayElement(methodParameterList, pIndex);
-									const char *parameter = java_impl->env->GetStringUTFChars(cparameter, NULL);
+									jobjectArray cparameter = (jobjectArray)java_impl->env->GetObjectArrayElement(methodParameterList, pIndex);
 
-									type pt = loader_impl_type(impl, parameter);
+									jstring pName = (jstring)java_impl->env->GetObjectArrayElement(cparameter, 0);
+									const char *p_name = java_impl->env->GetStringUTFChars(pName, NULL);
+
+									jstring pSig = (jstring)java_impl->env->GetObjectArrayElement(cparameter, 1);
+									const char *p_sig = java_impl->env->GetStringUTFChars(pSig, NULL);
+
+									type pt = java_loader_impl_type(impl, p_name, p_sig);
+
 									if (pt != NULL)
 									{
-										signature_set(s, (size_t)pIndex, parameter, pt);
+										// Parameter names cannot be inspected with Reflection in Java (https://stackoverflow.com/questions/2237803/can-i-obtain-method-parameter-name-using-java-reflection)
+										signature_set(s, (size_t)pIndex, "", pt);
+									}
+									else
+									{
+										log_write("metacall", LOG_LEVEL_ERROR, "The parameter type %s in method %s could not be registered, the type is not supported", p_name, m_name);
 									}
 								}
 							}
 
 							// REGISTERING THE METHOD RETURN PARAMETER
-							type rt = loader_impl_type(impl, method_return_type);
-							signature_set_return(s, rt);
+							type rt = java_loader_impl_type(impl, m_return_type, m_return_type_sig);
+
+							if (rt != NULL)
+							{
+								signature_set_return(s, rt);
+							}
+							else
+							{
+								log_write("metacall", LOG_LEVEL_ERROR, "The return type %s in method %s could not be registered, the type is not supported", m_return_type, m_name);
+							}
 
 							// METHOD REGISTERATION
-							if (!strcmp(method_static, "static"))
+							if (!strcmp(m_static, "static"))
 								class_register_static_method(c, m);
 							else
 								class_register_method(c, m);
@@ -1792,9 +1861,6 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 					scope sp = context_scope(ctx);
 					scope_define(sp, cls_name, value_create_class(c));
-
-					std::cout << cls_name << " Class Registered!\n"
-							  << std::endl;
 				}
 
 				// java_impl->env->DeleteLocalRef(r); // Remove the jObjectArray element from memory
@@ -1816,7 +1882,7 @@ int java_loader_impl_destroy(loader_impl impl)
 		if (rc != JNI_OK)
 		{
 			// TODO: Handle error
-			std::cout << "JNI ERROR" << std::endl;
+			log_write("metacall", LOG_LEVEL_ERROR, "JNI failed to attach to the current thread")
 		}
 
 		/* Destroy children loaders */
