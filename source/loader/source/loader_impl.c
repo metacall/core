@@ -246,10 +246,9 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 {
 	value execution_paths_value = configuration_value(config, "execution_paths");
 
-	size_t size = value_type_count(execution_paths_value);
-
 	if (execution_paths_value != NULL)
 	{
+		size_t size = value_type_count(execution_paths_value);
 		value *execution_paths_array = value_to_array(execution_paths_value);
 
 		if (execution_paths_array != NULL)
