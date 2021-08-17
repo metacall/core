@@ -147,6 +147,7 @@ static void getJNISignatureArgs(std::string &sig, class_args args, size_t argc)
 	// TODO: I think that inspected constructors must be done, and we should avoid this
 	// Maybe this does not fit properly with dynamic languages but at least, we must
 	// allow this to be optional for strong typed languages
+
 	for (size_t i = 0; i < argc; i++)
 	{
 		type_id id = value_type_id(args[i]);
@@ -178,7 +179,36 @@ static void getJNISignatureArgs(std::string &sig, class_args args, size_t argc)
 		if (id == TYPE_ARRAY)
 		{
 			sig += "[";
-			getJNISignatureArgs(sig, value_to_array(args[i]), value_type_count(args[i]));
+
+			// Only arrays of same type of elements are supported
+			void *v = args[i];
+			size_t size = value_type_count(v);
+
+			if (size == 0)
+			{
+				// TODO: This will be deleted once we implement constructors, because we won't need to inspect
+				// on the fly based on the caller arguments
+				log_write("metacall", LOG_LEVEL_ERROR, "Arrays of size 0 are not supported in constructors");
+				sig += "Ljava/lang/Object;"; // Using this as workaround
+				continue;
+			}
+
+			void **arr = value_to_array(v);
+			type_id arr_id = value_type_id(arr[0]);
+
+			for (size_t arr_it = 1; arr_it < size; ++arr_it)
+			{
+				if (arr_id != value_type_id(arr[arr_it]))
+				{
+					log_write("metacall", LOG_LEVEL_ERROR,
+						"Trying to pass an array of different subtypes to a constructor, this is not supported by Java, "
+						"the element %" PRIuS " of the array is of type %" PRIuS " meanwhile the first element "
+						"is of type %" PRIuS,
+						arr_it, value_type_id(arr[arr_it]), arr_id);
+				}
+			}
+
+			getJNISignatureArgs(sig, &arr[0], 1);
 		}
 
 		if (id == TYPE_OBJECT)
@@ -1722,6 +1752,12 @@ loader_handle java_loader_impl_load_from_package(loader_impl impl, const loader_
 			if (mid != nullptr)
 			{
 				jobjectArray result = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, mid, java_impl->env->NewStringUTF(path));
+
+				if (result == NULL)
+				{
+					delete java_handle;
+					return NULL;
+				}
 
 				java_handle->handle = result;
 				java_handle->size = java_impl->env->GetArrayLength(result);

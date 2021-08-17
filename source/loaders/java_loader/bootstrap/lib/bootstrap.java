@@ -107,7 +107,6 @@ public class bootstrap {
 
     if (path.endsWith(".class")) {
       Class<?>[] handleObject = new Class<?>[1];
-      System.out.println("bootstrap load from package " + path);
 
       for (String curExecPath : executionPath) {
         try {
@@ -123,6 +122,7 @@ public class bootstrap {
           clsLoader.close();
           break;
         } catch (Exception e) {
+          // TODO: Implement better error handling
           System.out.println("EXEPTION " + e);
         }
       }
@@ -135,48 +135,52 @@ public class bootstrap {
           ArrayList<Class<?>> handleList = new ArrayList<Class<?>>();
 
           Path curJarPath = Paths.get(curExecPath, path);
-          JarFile jarFile = new JarFile(curJarPath.toString());
-          Enumeration<JarEntry> e = jarFile.entries();
+          File f = new File(curJarPath.toString());
 
-          Path jpath = Paths.get("jar:file:", curExecPath, path);
-          String jarPath = jpath.toString() + "!/";
+          if (f.exists() && !f.isDirectory()) {
+            JarFile jarFile = new JarFile(curJarPath.toString());
+            Enumeration<JarEntry> e = jarFile.entries();
 
-          Path epath = Paths.get(curExecPath, path);
-          executionPath.add(epath.toString());
+            Path jpath = Paths.get("jar:file:", curExecPath, path);
+            String jarPath = jpath.toString() + "!/";
 
-          URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
+            Path epath = Paths.get(curExecPath, path);
+            executionPath.add(epath.toString());
 
-          while (e.hasMoreElements()) {
+            URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
 
-            JarEntry je = e.nextElement();
-            if (je.getName().endsWith(".class")) {
+            while (e.hasMoreElements()) {
 
-              String className = je.getName().substring(0, je.getName().length() - 6);
-              className = className.replace(File.separatorChar, '.');
-              try {
-                Class<?> c = clsLoader.loadClass(className);
+              JarEntry je = e.nextElement();
+              if (je.getName().endsWith(".class")) {
 
-                if (c != null) {
-                  System.out.println("Got CLass " + c.getName());
-                  handleList.add(c);
+                String className = je.getName().substring(0, je.getName().length() - 6);
+                className = className.replace(File.separatorChar, '.');
+                try {
+                  Class<?> c = clsLoader.loadClass(className);
 
+                  if (c != null) {
+                    handleList.add(c);
+                  }
+                } catch (Exception ex) {
+                  // TODO: Implement better error handling
+                  System.out.println(ex);
                 }
-              } catch (Exception ex) {
-                System.out.println(ex);
+
               }
-
             }
+
+            clsLoader.close();
+
+            Class<?>[] rtnClsArr = new Class<?>[handleList.size()];
+            rtnClsArr = handleList.toArray(rtnClsArr);
+            jarFile.close();
+
+            return rtnClsArr;
           }
-
-          clsLoader.close();
-
-          Class<?>[] rtnClsArr = new Class<?>[handleList.size()];
-          rtnClsArr = handleList.toArray(rtnClsArr);
-          jarFile.close();
-
-          return rtnClsArr;
         }
       } catch (Exception e) {
+        // TODO: Implement better error handling
         System.out.println("EXCEPTION " + e);
       }
     }
@@ -185,8 +189,6 @@ public class bootstrap {
   }
 
   public static Class<?>[] load_from_memory(String name, String buffer) {
-    System.out.println("BOOTSTRAP " + buffer);
-
     try {
       Path tempFile = Paths.get(System.getenv("LOADER_SCRIPT_PATH"), "memoryTest.java");
 
