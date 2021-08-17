@@ -93,6 +93,25 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				metacall_value_destroy(param1);
 			}
 
+			{ //GET CLASS
+				void *class_test = metacall_class_static_get(myclass, "CLASS_TEST");
+				ASSERT_EQ((void *)metacall_class("Test"), (void *)metacall_value_to_class(class_test));
+				metacall_value_destroy(class_test);
+			}
+
+			{ //GET ARRAYS
+				void *str_test = metacall_class_static_get(myclass, "STRING_TEST_Arr");
+				void **str_test_arr = metacall_value_to_array(str_test);
+				ASSERT_EQ((int)0, (int)strcmp(metacall_value_to_string(str_test_arr[0]), "Hello"));
+				ASSERT_EQ((int)0, (int)strcmp(metacall_value_to_string(str_test_arr[1]), "world"));
+				metacall_value_destroy(str_test);
+
+				void *class_test = metacall_class_static_get(myclass, "CLASS_TEST_Arr");
+				void **class_test_arr = metacall_value_to_array(class_test);
+				ASSERT_EQ((void *)metacall_class("Test"), (void *)metacall_value_to_class(class_test_arr[0]));
+				metacall_value_destroy(class_test);
+			}
+
 			{ //Invoke
 				void *args[] = {
 					metacall_value_create_string("Metacall", 8),
@@ -383,6 +402,8 @@ TEST_F(metacall_java_test, DefaultConstructor)
 		EXPECT_NE((char *)NULL, (char *)inspect_str);
 
 		EXPECT_GT((size_t)size, (size_t)0);
+
+		std::cout << inspect_str << std::endl;
 
 		metacall_allocator_free(allocator, inspect_str);
 

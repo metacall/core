@@ -31,8 +31,10 @@
 
 #include <log/log.h>
 
-#include <string.h>
+#include <algorithm>
+#include <cstring>
 #include <iostream>
+#include <string>
 
 #include <jni.h>
 
@@ -55,7 +57,8 @@ typedef struct loader_impl_java_class_type
 	const char *name;
 	jobject cls;
 	jclass concls;
-	loader_impl_java impl;
+	loader_impl impl;
+	loader_impl_java java_impl;
 } * loader_impl_java_class;
 
 typedef struct loader_impl_java_object_type
@@ -63,7 +66,7 @@ typedef struct loader_impl_java_object_type
 	const char *name;
 	jobject conObj;
 	jclass concls;
-	loader_impl_java impl;
+	loader_impl_java java_impl;
 } * loader_impl_java_object;
 
 typedef struct loader_impl_java_field_type
@@ -78,10 +81,72 @@ typedef struct loader_impl_java_method_type
 	const char *methodSignature;
 } * loader_impl_java_method;
 
-std::string getJNISignature(class_args args, size_t argc, const char *returnType)
-{
-	std::string sig = "(";
+static type_interface type_java_singleton(void);
 
+static type java_loader_impl_type(loader_impl impl, const char *type_str, const char *type_signature)
+{
+	type t = loader_impl_type(impl, type_str);
+
+	if (t != NULL)
+	{
+		return t;
+	}
+
+	type_id id;
+
+	if (type_str[0] == '[')
+	{
+		id = TYPE_ARRAY;
+	}
+	else if (type_str[0] == 'L')
+	{
+		id = TYPE_OBJECT;
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Type %s is an unknown type, go to 'java_loader_impl_type' and implement it", type_str);
+		return NULL;
+	}
+
+	t = type_create(id, type_str, new std::string(type_signature), &type_java_singleton);
+
+	if (t == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid type allocation when discovering the type %s", type_str);
+		return NULL;
+	}
+
+	if (loader_impl_type_define(impl, type_name(t), t) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Type %s could not be registered", type_str);
+		type_destroy(t);
+		return NULL;
+	}
+
+	return t;
+}
+
+static std::string array_get_subtype(const char *array_signature)
+{
+	size_t dimensions = 0;
+
+	// Count number of first N occurrences of '['
+	while (array_signature[dimensions++] == '[')
+		;
+
+	std::string subtype(&array_signature[dimensions]);
+
+	subtype.pop_back();										// Remove ';
+	std::replace(subtype.begin(), subtype.end(), '/', '.'); // Replace '/' by '.'
+
+	return subtype;
+}
+
+static void getJNISignatureArgs(std::string &sig, class_args args, size_t argc)
+{
+	// TODO: I think that inspected constructors must be done, and we should avoid this
+	// Maybe this does not fit properly with dynamic languages but at least, we must
+	// allow this to be optional for strong typed languages
 	for (size_t i = 0; i < argc; i++)
 	{
 		type_id id = value_type_id(args[i]);
@@ -111,8 +176,27 @@ std::string getJNISignature(class_args args, size_t argc, const char *returnType
 			sig += "Ljava/lang/String;";
 
 		if (id == TYPE_ARRAY)
-			sig += "[Ljava/lang/String;"; //TODO: support other types in constructor (make it recursive)
+		{
+			sig += "[";
+			getJNISignatureArgs(sig, value_to_array(args[i]), value_type_count(args[i]));
+		}
+
+		if (id == TYPE_OBJECT)
+			sig += "Ljava/lang/Object;";
+
+		if (id == TYPE_CLASS)
+			sig += "Ljava/lang/Class;";
 	}
+}
+
+static std::string getJNISignature(class_args args, size_t argc, const char *returnType)
+{
+	// TODO: I think that inspected constructors must be done, and we should avoid this
+	// Maybe this does not fit properly with dynamic languages but at least, we must
+	// allow this to be optional for strong typed languages
+	std::string sig = "(";
+
+	getJNISignatureArgs(sig, args, argc);
 
 	sig += ")";
 
@@ -314,8 +398,7 @@ type_interface type_java_singleton(void)
 int java_object_interface_create(object obj, object_impl impl)
 {
 	(void)obj;
-	std::cout << "Obj Create" << std::endl;
-	loader_impl_java_object java_obj = (loader_impl_java_object)impl;
+	(void)impl;
 
 	return 0;
 }
@@ -323,13 +406,12 @@ int java_object_interface_create(object obj, object_impl impl)
 value java_object_interface_get(object obj, object_impl impl, attribute attr)
 {
 	(void)obj;
-	std::cout << "Obj Get" << std::endl;
 
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 
 	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
-	loader_impl_java java_impl = java_obj->impl;
+	loader_impl_java java_impl = java_obj->java_impl;
 
 	jobject clsObj = java_obj->conObj;
 	jclass clscls = java_obj->concls;
@@ -525,7 +607,7 @@ int java_object_interface_set(object obj, object_impl impl, attribute attr, valu
 	type fieldType = (type)attribute_type(attr);
 
 	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
-	loader_impl_java java_impl = java_obj->impl;
+	loader_impl_java java_impl = java_obj->java_impl;
 
 	jobject conObj = java_obj->conObj;
 	jclass clscls = java_obj->concls;
@@ -703,7 +785,7 @@ value java_object_interface_method_invoke(object obj, object_impl impl, method m
 	std::cout << "OBJ invoke" << std::endl;
 
 	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
-	loader_impl_java java_impl = java_obj->impl;
+	loader_impl_java java_impl = java_obj->java_impl;
 	jobject clsObj = java_obj->conObj;
 	jclass clscls = java_obj->concls;
 
@@ -784,6 +866,7 @@ value java_object_interface_method_await(object obj, object_impl impl, method m,
 	// Java doesnt support await
 	(void)obj;
 	(void)impl;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -803,10 +886,12 @@ int java_object_interface_destructor(object obj, object_impl impl)
 
 void java_object_interface_destroy(object obj, object_impl impl)
 {
+	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
+
 	(void)obj;
 
-	if (impl != nullptr)
-		delete impl;
+	if (java_obj != nullptr)
+		delete java_obj;
 }
 
 object_interface java_object_interface_singleton(void)
@@ -827,8 +912,7 @@ object_interface java_object_interface_singleton(void)
 int java_class_interface_create(klass cls, class_impl impl)
 {
 	(void)cls;
-	std::cout << "Create" << std::endl;
-	loader_impl_java_class java_cls = (loader_impl_java_class)impl;
+	(void)impl;
 
 	return 0;
 }
@@ -846,39 +930,37 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	if (obj == NULL)
 		return NULL;
 
-	java_obj->impl = java_cls->impl;
+	java_obj->java_impl = java_cls->java_impl;
 
 	jvalue *constructorArgs = nullptr;
 
 	if (argc > 0)
 	{
 		constructorArgs = new jvalue[argc];
-		getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
+		getJValArray(constructorArgs, args, argc, java_cls->java_impl->env); // Create a jvalue array that can be passed to JNI
 	}
 
-	if (java_cls->impl->env != nullptr && java_cls->cls != nullptr)
+	if (java_cls->java_impl->env != nullptr && java_cls->cls != nullptr)
 	{
-		jclass classPtr = java_cls->impl->env->FindClass("bootstrap");
+		jclass classPtr = java_cls->java_impl->env->FindClass("bootstrap");
 
 		if (classPtr != nullptr)
 		{
-			jmethodID findCls = java_cls->impl->env->GetStaticMethodID(classPtr, "FindClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+			jmethodID findCls = java_cls->java_impl->env->GetStaticMethodID(classPtr, "FindClass", "(Ljava/lang/String;)Ljava/lang/Class;");
 			if (findCls != nullptr)
 			{
-				jclass clscls = (jclass)java_cls->impl->env->CallStaticObjectMethod(classPtr, findCls, java_cls->impl->env->NewStringUTF(name));
+				jclass clscls = (jclass)java_cls->java_impl->env->CallStaticObjectMethod(classPtr, findCls, java_cls->java_impl->env->NewStringUTF(name));
 				if (clscls != nullptr)
 				{
 					std::string sig = getJNISignature(args, argc, "void");
 
-					jmethodID constMID = java_cls->impl->env->GetMethodID(clscls, "<init>", sig.c_str());
+					jmethodID constMID = java_cls->java_impl->env->GetMethodID(clscls, "<init>", sig.c_str());
 					if (constMID != nullptr)
 					{
-						jobject newCls = java_cls->impl->env->NewObjectA(clscls, constMID, constructorArgs);
+						jobject newCls = java_cls->java_impl->env->NewObjectA(clscls, constMID, constructorArgs);
 						if (newCls != nullptr)
 						{
-							std::cout << "Class Constructor successful\n\n";
 							java_cls->concls = clscls;
-
 							java_obj->concls = clscls;
 							java_obj->conObj = newCls;
 							java_obj->name = name;
@@ -903,16 +985,9 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
-
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-	loader_impl_java java_impl = java_cls->impl;
-
-	jobject clsObj = java_cls->cls;
+	loader_impl_java java_impl = java_cls->java_impl;
 	jclass clscls = java_cls->concls;
-
-	jstring getKey = java_impl->env->NewStringUTF(key);
-
-	std::cout << "GETTING static " << key << std::endl;
 
 	if (clscls != nullptr)
 	{
@@ -966,7 +1041,32 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 					return value_create_string(gotValConv, strlen(gotValConv));
 				}
 
+				case TYPE_OBJECT: {
+					jobject gotVal = java_impl->env->GetStaticObjectField(clscls, fID);
+					jclass cls = (jclass)java_impl->env->GetObjectClass(gotVal);
+					jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+					jstring name = (jstring)java_impl->env->CallObjectMethod(cls, mid_getName);
+					const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+					/* TODO */
+					// object obj = object_create()
+					return value_create_object(NULL /* obj */);
+				}
+
+				case TYPE_CLASS: {
+					jobject gotVal = java_impl->env->GetStaticObjectField(clscls, fID);
+					jclass cls = (jclass)java_impl->env->GetObjectClass(gotVal);
+					jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+					jstring name = (jstring)java_impl->env->CallObjectMethod(gotVal, mid_getName);
+					const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+					context ctx = loader_impl_context(java_cls->impl);
+					scope sp = context_scope(ctx);
+					value cls_val = (klass)scope_get(sp, cls_name);
+					return value_type_copy(cls_val);
+				}
+
 				case TYPE_ARRAY: {
+					// TODO: Support N dimensional arrays
+
 					if (!strcmp(fType, "[Z"))
 					{
 						jbooleanArray gotVal = (jbooleanArray)java_impl->env->GetStaticObjectField(clscls, fID);
@@ -1065,20 +1165,59 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 
 						return v;
 					}
-					else if (!strcmp(fType, "[Ljava/lang/String;"))
+					else if (fType[0] == '[' && fType[1] == 'L')
 					{
-						// TODO: Make this generic and recursive for any kind of array
 						jobjectArray gotVal = (jobjectArray)java_impl->env->GetStaticObjectField(clscls, fID);
 						size_t array_size = (size_t)java_impl->env->GetArrayLength(gotVal);
+						std::string subtype_str = array_get_subtype(fType);
+						type subtype = java_loader_impl_type(java_cls->impl, subtype_str.c_str(), fType);
 
 						void *v = value_create_array(NULL, (size_t)array_size);
 						value *array_value = value_to_array(v);
 
-						for (size_t i = 0; i < array_size; i++)
+						switch (type_index(subtype))
 						{
-							jstring cur_ele = (jstring)java_impl->env->GetObjectArrayElement(gotVal, i);
-							const char *cur_element = java_impl->env->GetStringUTFChars(cur_ele, NULL);
-							array_value[i] = value_create_string(cur_element, strlen(cur_element));
+							case TYPE_STRING: {
+								for (size_t i = 0; i < array_size; i++)
+								{
+									jstring cur_ele = (jstring)java_impl->env->GetObjectArrayElement(gotVal, i);
+									const char *cur_element = java_impl->env->GetStringUTFChars(cur_ele, NULL);
+									array_value[i] = value_create_string(cur_element, strlen(cur_element));
+								}
+
+								break;
+							}
+							case TYPE_OBJECT: {
+								for (size_t i = 0; i < array_size; i++)
+								{
+									jobject cur_ele = (jobject)java_impl->env->GetObjectArrayElement(gotVal, i);
+									jclass cls = (jclass)java_impl->env->GetObjectClass(cur_ele);
+									jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+									jstring name = (jstring)java_impl->env->CallObjectMethod(cls, mid_getName);
+									const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+									/* TODO */
+									// object obj = object_create()
+									array_value[i] = value_create_object(NULL /* obj */);
+								}
+
+								break;
+							}
+							case TYPE_CLASS: {
+								for (size_t i = 0; i < array_size; i++)
+								{
+									jobject cur_ele = java_impl->env->GetObjectArrayElement(gotVal, i);
+									jclass cls = (jclass)java_impl->env->GetObjectClass(cur_ele);
+									jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
+									jstring name = (jstring)java_impl->env->CallObjectMethod(cur_ele, mid_getName);
+									const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
+									context ctx = loader_impl_context(java_cls->impl);
+									scope sp = context_scope(ctx);
+									value cls_val = (klass)scope_get(sp, cls_name);
+									array_value[i] = value_type_copy(cls_val);
+								}
+
+								break;
+							}
 						}
 
 						return v;
@@ -1087,7 +1226,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 
 				default: {
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to convert type %s from Java to MetaCall value", type_name(fieldType));
-					return NULL;
+					break;
 				}
 			}
 		}
@@ -1102,17 +1241,14 @@ int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, 
 
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
-
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-	loader_impl_java java_impl = java_cls->impl;
-
-	jobject clsObj = java_cls->cls;
+	loader_impl_java java_impl = java_cls->java_impl;
 	jclass clscls = java_cls->concls;
 
 	if (clscls != nullptr)
 	{
 		const char *fType = static_cast<std::string *>(type_derived(fieldType))->c_str();
-		jfieldID fID = java_cls->impl->env->GetStaticFieldID(clscls, key, fType);
+		jfieldID fID = java_cls->java_impl->env->GetStaticFieldID(clscls, key, fType);
 
 		if (fID != nullptr)
 		{
@@ -1282,7 +1418,7 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, method m, c
 	std::cout << "invoke" << std::endl;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
-	loader_impl_java java_impl = java_cls->impl;
+	loader_impl_java java_impl = java_cls->java_impl;
 	jclass clscls = java_cls->concls;
 
 	loader_impl_java_method java_method = (loader_impl_java_method)method_data(m);
@@ -1297,7 +1433,7 @@ value java_class_interface_static_invoke(klass cls, class_impl impl, method m, c
 	if (argc > 0)
 	{
 		constructorArgs = new jvalue[argc];
-		getJValArray(constructorArgs, args, argc, java_cls->impl->env); // Create a jvalue array that can be passed to JNI
+		getJValArray(constructorArgs, args, argc, java_cls->java_impl->env); // Create a jvalue array that can be passed to JNI
 	}
 
 	jmethodID function_invoke_id = java_impl->env->GetStaticMethodID(clscls, methodName, methodSignature);
@@ -1362,6 +1498,7 @@ value java_class_interface_static_await(klass cls, class_impl impl, method m, cl
 	// Java doesnt support await so skip this
 	(void)cls;
 	(void)impl;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -1373,10 +1510,12 @@ value java_class_interface_static_await(klass cls, class_impl impl, method m, cl
 
 void java_class_interface_destroy(klass cls, class_impl impl)
 {
+	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
+
 	(void)cls;
 
-	if (impl != nullptr)
-		delete impl;
+	if (java_cls != nullptr)
+		delete java_cls;
 }
 
 class_interface java_class_interface_singleton(void)
@@ -1633,49 +1772,6 @@ class_visibility_id getFieldVisibility(const char *v)
 	return VISIBILITY_PUBLIC; // Public by default
 }
 
-static type java_loader_impl_type(loader_impl impl, const char *type_str, const char *type_signature)
-{
-	type t = loader_impl_type(impl, type_str);
-
-	if (t != NULL)
-	{
-		return t;
-	}
-
-	type_id id;
-
-	if (type_str[0] == '[')
-	{
-		id = TYPE_ARRAY;
-	}
-	else if (type_str[0] == 'L')
-	{
-		id = TYPE_OBJECT;
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Type %s is an unknown type, go to 'java_loader_impl_type' and implement it", type_str);
-		return NULL;
-	}
-
-	t = type_create(id, type_str, new std::string(type_signature), &type_java_singleton);
-
-	if (t == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid type allocation when discovering the type %s", type_str);
-		return NULL;
-	}
-
-	if (loader_impl_type_define(impl, type_name(t), t) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Type %s could not be registered", type_str);
-		type_destroy(t);
-		return NULL;
-	}
-
-	return t;
-}
-
 int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	loader_impl_java_handle java_handle = static_cast<loader_impl_java_handle>(handle);
@@ -1715,7 +1811,8 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 					java_cls->name = cls_name;
 					java_cls->cls = r;
-					java_cls->impl = (loader_impl_java)java_impl;
+					java_cls->impl = impl;
+					java_cls->java_impl = java_impl;
 
 					klass c = class_create(cls_name, java_cls, &java_class_interface_singleton);
 

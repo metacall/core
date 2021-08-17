@@ -1746,8 +1746,8 @@ void *metacallfms_await(void *func, const char *buffer, size_t size, void *alloc
 void *metacall_class(const char *name)
 {
 	value c_val = loader_get(name);
-
 	klass c = NULL;
+
 	if (value_type_id(c_val) == TYPE_CLASS)
 	{
 		c = value_to_class(c_val);

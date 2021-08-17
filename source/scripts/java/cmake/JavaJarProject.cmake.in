@@ -39,9 +39,9 @@ set(target @PACKAGE_NAME@)
 # Exit here if required dependencies are not met
 message(STATUS "Script ${target}")
 
-# Build Jar (TODO)
-add_custom_command(TARGET @PACKAGE_NAME@ POST_BUILD
-	COMMAND ${Java_JAR_EXECUTABLE} -cvfm @PACKAGE_NAME@.jar
-	${CMAKE_CURRENT_SOURCE_DIR}/source/manifest.txt -C ${LOADER_SCRIPT_PATH}
-	${CMAKE_CURRENT_SOURCE_DIR}/source ${LOADER_SCRIPT_PATH}
-)
+# Build Jar (TODO: Build the Jar properly)
+#add_custom_command(TARGET @PACKAGE_NAME@ POST_BUILD
+#	COMMAND ${Java_JAR_EXECUTABLE} -cvfm @PACKAGE_NAME@.jar
+#	${CMAKE_CURRENT_SOURCE_DIR}/source/manifest.txt -C ${LOADER_SCRIPT_PATH}
+#	${CMAKE_CURRENT_SOURCE_DIR}/source ${LOADER_SCRIPT_PATH}
+#)
