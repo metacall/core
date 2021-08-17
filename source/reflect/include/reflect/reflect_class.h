@@ -26,6 +26,7 @@
 #include <reflect/reflect_attribute.h>
 #include <reflect/reflect_class_decl.h>
 #include <reflect/reflect_class_visibility.h>
+#include <reflect/reflect_constructor.h>
 #include <reflect/reflect_method.h>
 #include <reflect/reflect_object.h>
 #include <reflect/reflect_signature.h>
@@ -43,7 +44,7 @@ typedef value (*class_reject_callback)(value, void *);
 
 typedef int (*class_impl_interface_create)(klass, class_impl);
 
-typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *, class_args, size_t);
+typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *, constructor, class_args, size_t);
 
 typedef value (*class_impl_interface_static_get)(klass, class_impl, attribute);
 
@@ -77,11 +78,17 @@ REFLECT_API int class_decrement_reference(klass cls);
 
 REFLECT_API class_impl class_impl_get(klass cls);
 
-REFLECT_API object class_new(klass cls, const char *name, class_args args, size_t argc);
+REFLECT_API object class_new(klass cls, const char *name, constructor ctor, class_args args, size_t argc);
 
 REFLECT_API value class_static_get(klass cls, const char *key);
 
 REFLECT_API int class_static_set(klass cls, const char *key, value v);
+
+REFLECT_API vector class_constructors(klass cls);
+
+REFLECT_API constructor class_default_constructor(klass cls);
+
+REFLECT_API constructor class_constructor(klass cls, type_id args[], size_t size);
 
 REFLECT_API vector class_static_methods(klass cls, const char *key);
 
@@ -94,6 +101,8 @@ REFLECT_API method class_method(klass cls, const char *key, type_id ret, type_id
 REFLECT_API attribute class_static_attribute(klass cls, const char *key);
 
 REFLECT_API attribute class_attribute(klass cls, const char *key);
+
+REFLECT_API int class_register_constructor(klass cls, constructor ctor);
 
 REFLECT_API int class_register_static_method(klass cls, method m);
 

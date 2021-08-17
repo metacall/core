@@ -61,6 +61,7 @@ static char **metacall_initialize_argv = NULL;
 /* -- Private Methods -- */
 
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
+static type_id *metacall_type_ids(void *args[], size_t size);
 
 /* -- Methods -- */
 
@@ -1758,7 +1759,16 @@ void *metacall_class(const char *name)
 
 void *metacall_class_new(void *cls, const char *name, void *args[], size_t size)
 {
-	object o = class_new(cls, name, args, size);
+	type_id *ids = metacall_type_ids(args, size);
+
+	constructor ctor = class_constructor(cls, ids, size);
+
+	object o = class_new(cls, name, ctor, args, size);
+
+	if (ids != NULL)
+	{
+		free(ids);
+	}
 
 	if (o == NULL)
 	{
@@ -1872,7 +1882,7 @@ void *metacallv_class(void *cls, const char *name, void *args[], size_t size)
 	return metacallv_method(cls, name, (method_invoke_ptr)&class_static_call, class_static_methods(cls, name), args, size);
 }
 
-void *metacallt_class(void *cls, const char *name, const enum metacall_value_id ret, void *args[], size_t size)
+type_id *metacall_type_ids(void *args[], size_t size)
 {
 	type_id *ids = NULL;
 
@@ -1885,6 +1895,13 @@ void *metacallt_class(void *cls, const char *name, const enum metacall_value_id 
 			ids[iterator] = metacall_value_id(args[iterator]);
 		}
 	}
+
+	return ids;
+}
+
+void *metacallt_class(void *cls, const char *name, const enum metacall_value_id ret, void *args[], size_t size)
+{
+	type_id *ids = metacall_type_ids(args, size);
 
 	method m = class_static_method(cls, name, ret, ids, size);
 

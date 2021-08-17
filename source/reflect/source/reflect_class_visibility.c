@@ -46,3 +46,34 @@ value class_visibility_value(enum class_visibility_id visibility)
 {
 	return value_create_string(visibility_array[visibility].str, visibility_array[visibility].length);
 }
+
+value class_visibility_value_pair(enum class_visibility_id visibility)
+{
+	static const char visibility_str[] = "visibility";
+	value v = value_create_array(NULL, 2);
+	value *v_array;
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_array = value_to_array(v);
+	v_array[0] = value_create_string(visibility_str, sizeof(visibility_str) - 1);
+
+	if (v_array[0] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	v_array[1] = class_visibility_value(visibility);
+
+	if (v_array[1] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	return v;
+}

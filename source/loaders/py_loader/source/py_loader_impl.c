@@ -502,9 +502,10 @@ int py_class_interface_create(klass cls, class_impl impl)
 	return 0;
 }
 
-object py_class_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t argc)
+object py_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	(void)cls;
+	(void)ctor;
 
 	loader_impl_py_class py_cls = impl;
 
@@ -3248,6 +3249,33 @@ builtin_error:
 int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
+
+	/* Inspect the constructor */
+	if (PyObject_HasAttrString(py_class, "__init__"))
+	{
+		PyObject *name_init = PyUnicode_FromString("__init__");
+		PyObject *init_method = PyObject_GenericGetAttr(py_class, name_init);
+		Py_DECREF(name_init);
+
+		/*
+		>>> class Super:
+		...     def __init__(self, name: int, kwarg='default'):
+		...         print('instantiated')
+		...         self.name = name
+		... 
+		>>> import inspect
+		>>> inspect.signature(Super.__init__)
+		<Signature (self, name: int, kwarg='default')>
+		>>> inspect.signature(Super.__init__).parameters
+		mappingproxy(OrderedDict([('self', <Parameter "self">), ('name', <Parameter "name: int">), ('kwarg', <Parameter "kwarg='default'">)]))
+		>>> inspect.signature(Super.__init__).parameters['name']
+		<Parameter "name: int">
+		>>> inspect.signature(Super.__init__).parameters['name'].name
+		'name'
+		>>> inspect.signature(Super.__init__).parameters['name'].annotation
+		<class 'int'>
+		*/
+	}
 
 	if (PyObject_HasAttrString(py_class, "__dict__"))
 	{

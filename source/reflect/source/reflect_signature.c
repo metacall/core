@@ -473,7 +473,6 @@ value signature_metadata_args(signature s)
 value signature_metadata(signature s)
 {
 	value ret, args, sig;
-
 	value *sig_map;
 
 	/* Create return array */
@@ -500,7 +499,6 @@ value signature_metadata(signature s)
 	if (sig == NULL)
 	{
 		value_type_destroy(ret);
-
 		value_type_destroy(args);
 
 		return NULL;
@@ -509,7 +507,6 @@ value signature_metadata(signature s)
 	sig_map = value_to_map(sig);
 
 	sig_map[0] = ret;
-
 	sig_map[1] = args;
 
 	return sig;

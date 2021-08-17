@@ -232,36 +232,7 @@ value method_metadata_signature(method m)
 
 value method_metadata_visibility(method m)
 {
-	static const char visibility_str[] = "visibility";
-
-	value visibility = value_create_array(NULL, 2);
-
-	value *visibility_array;
-
-	if (visibility == NULL)
-	{
-		return NULL;
-	}
-
-	visibility_array = value_to_array(visibility);
-
-	visibility_array[0] = value_create_string(visibility_str, sizeof(visibility_str) - 1);
-
-	if (visibility_array[0] == NULL)
-	{
-		value_type_destroy(visibility);
-		return NULL;
-	}
-
-	visibility_array[1] = class_visibility_value(m->visibility);
-
-	if (visibility_array[1] == NULL)
-	{
-		value_type_destroy(visibility);
-		return NULL;
-	}
-
-	return visibility;
+	return class_visibility_value_pair(m->visibility);
 }
 
 value method_metadata(method m)

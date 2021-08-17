@@ -20,6 +20,7 @@
 
 #include <adt/adt_map.h>
 #include <adt/adt_set.h>
+#include <adt/adt_vector.h>
 
 #include <reflect/reflect_class.h>
 #include <reflect/reflect_value_type.h>
@@ -35,6 +36,7 @@ struct class_type
 	class_impl impl;
 	class_interface interface;
 	size_t ref_count;
+	vector constructors;
 	map methods;
 	map static_methods;
 	set attributes;
@@ -50,6 +52,7 @@ struct class_metadata_iterator_args_type
 typedef struct class_metadata_iterator_args_type *class_metadata_iterator_args;
 
 static value class_metadata_name(klass cls);
+static value class_metadata_constructors(klass cls);
 static int class_metadata_methods_impl_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
 static value class_metadata_methods_impl(const char name[], size_t size, map methods);
 static value class_metadata_methods(klass cls);
@@ -61,6 +64,7 @@ static value class_metadata_static_attributes(klass cls);
 static method class_get_method_type_safe(vector v, type_id ret, type_id args[], size_t size);
 static int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 static int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
+static void class_constructors_destroy(klass cls);
 
 klass class_create(const char *name, class_impl impl, class_impl_interface_singleton singleton)
 {
@@ -96,6 +100,7 @@ klass class_create(const char *name, class_impl impl, class_impl_interface_singl
 	cls->impl = impl;
 	cls->ref_count = 0;
 	cls->interface = singleton ? singleton() : NULL;
+	cls->constructors = vector_create_type(constructor);
 	cls->methods = map_create(&hash_callback_str, &comparable_callback_str);
 	cls->static_methods = map_create(&hash_callback_str, &comparable_callback_str);
 	cls->attributes = set_create(&hash_callback_str, &comparable_callback_str);
@@ -108,6 +113,7 @@ klass class_create(const char *name, class_impl impl, class_impl_interface_singl
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class (%s) create callback <%p>", cls->name, cls->interface->create);
 
 			free(cls->name);
+			vector_destroy(cls->constructors);
 			map_destroy(cls->methods);
 			map_destroy(cls->static_methods);
 			set_destroy(cls->attributes);
@@ -202,6 +208,45 @@ value class_metadata_name(klass cls)
 	}
 
 	return name;
+}
+
+value class_metadata_constructors(klass cls)
+{
+	static const char constructors_str[] = "constructors";
+	size_t iterator, size = vector_size(cls->constructors);
+	value *v_array, v = value_create_array(NULL, 2);
+	value *ctors_array;
+
+	if (v == NULL)
+	{
+		return NULL;
+	}
+
+	v_array = value_to_array(v);
+	v_array[0] = value_create_string(constructors_str, sizeof(constructors_str) - 1);
+
+	if (v_array[0] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	v_array[1] = value_create_array(NULL, size);
+
+	if (v_array[1] == NULL)
+	{
+		value_type_destroy(v);
+		return NULL;
+	}
+
+	ctors_array = value_to_array(v_array[1]);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		ctors_array[iterator] = constructor_metadata(vector_at_type(cls->constructors, iterator, constructor));
+	}
+
+	return v;
 }
 
 int class_metadata_methods_impl_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args)
@@ -335,6 +380,7 @@ value class_metadata(klass cls)
 	/* The structure of the metadata is:
 	* {
 	*	name: "ClassName",
+	*	constructors: [{}],
 	*	methods: [{}],
 	*	static_methods: [{}],
 	*	attributes: {
@@ -345,87 +391,77 @@ value class_metadata(klass cls)
 	*	}
 	* }
 	*/
-	value name, methods, static_methods, attributes, static_attributes, c;
 
-	value *c_map;
-
-	/* Create class name array */
-	name = class_metadata_name(cls);
-
-	if (name == NULL)
-	{
-		goto error_name;
-	}
-
-	/* Create class methods array */
-	methods = class_metadata_methods(cls);
-
-	if (methods == NULL)
-	{
-		goto error_methods;
-	}
-
-	/* Create class static_methods array */
-	static_methods = class_metadata_static_methods(cls);
-
-	if (static_methods == NULL)
-	{
-		goto error_static_methods;
-	}
-
-	/* Create class attributes array */
-	attributes = class_metadata_attributes(cls);
-
-	if (attributes == NULL)
-	{
-		goto error_attributes;
-	}
-
-	/* Create class static_attributes array */
-	static_attributes = class_metadata_static_attributes(cls);
-
-	if (static_attributes == NULL)
-	{
-		goto error_static_attributes;
-	}
-
-	/* Create class map (name + methods + static_methods + attributes + static_attributes) */
-	c = value_create_map(NULL, 5);
+	/* Create class map (name + constructors + methods + static_methods + attributes + static_attributes) */
+	value *c_map, c = value_create_map(NULL, 6);
 
 	if (c == NULL)
 	{
-		goto error_class;
+		return NULL;
 	}
 
 	c_map = value_to_map(c);
 
-	c_map[0] = name;
-	c_map[1] = methods;
-	c_map[2] = static_methods;
-	c_map[3] = attributes;
-	c_map[4] = static_attributes;
+	/* Create class name array */
+	c_map[0] = class_metadata_name(cls);
+
+	if (c_map[0] == NULL)
+	{
+		goto error_value;
+	}
+
+	/* Create constructors array */
+	c_map[1] = class_metadata_constructors(cls);
+
+	if (c_map[1] == NULL)
+	{
+		goto error_value;
+	}
+
+	/* Create class methods array */
+	c_map[2] = class_metadata_methods(cls);
+
+	if (c_map[2] == NULL)
+	{
+		goto error_value;
+	}
+
+	/* Create class static_methods array */
+	c_map[3] = class_metadata_static_methods(cls);
+
+	if (c_map[3] == NULL)
+	{
+		goto error_value;
+	}
+
+	/* Create class attributes array */
+	c_map[4] = class_metadata_attributes(cls);
+
+	if (c_map[4] == NULL)
+	{
+		goto error_value;
+	}
+
+	/* Create class static_attributes array */
+	c_map[5] = class_metadata_static_attributes(cls);
+
+	if (c_map[5] == NULL)
+	{
+		goto error_value;
+	}
 
 	return c;
 
-error_class:
-	value_type_destroy(static_attributes);
-error_static_attributes:
-	value_type_destroy(attributes);
-error_attributes:
-	value_type_destroy(static_methods);
-error_static_methods:
-	value_type_destroy(methods);
-error_methods:
-	value_type_destroy(name);
-error_name:
+error_value:
+	value_type_destroy(c);
 	return NULL;
 }
 
-object class_new(klass cls, const char *name, class_args args, size_t argc)
+object class_new(klass cls, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->constructor != NULL)
 	{
-		object obj = cls->interface->constructor(cls, cls->impl, name, args, argc);
+		object obj = cls->interface->constructor(cls, cls->impl, name, ctor, args, argc);
 
 		if (obj == NULL)
 		{
@@ -487,6 +523,62 @@ int class_static_set(klass cls, const char *key, value v)
 	}
 
 	return 1;
+}
+
+vector class_constructors(klass cls)
+{
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	return cls->constructors;
+}
+
+constructor class_default_constructor(klass cls)
+{
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	return (constructor)vector_at(cls->constructors, 0);
+}
+
+constructor class_constructor(klass cls, type_id args[], size_t size)
+{
+	/* This method tries to find a valid constructor with correct types,
+	* if this cannot be achieved, we return the default constructor and
+	* we let the loader handle the new invokation with variadic arguments */
+	if (cls == NULL)
+	{
+		return NULL;
+	}
+
+	size_t iterator, constructor_size = vector_size(cls->constructors);
+
+	if (constructor_size == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Class %s does not have any constructor");
+		return NULL;
+	}
+	else if (constructor_size == 1)
+	{
+		return vector_at_type(cls->constructors, 0, constructor);
+	}
+
+	for (iterator = 0; iterator < constructor_size; ++iterator)
+	{
+		constructor ctor = vector_at_type(cls->constructors, iterator, constructor);
+
+		if (constructor_compare(ctor, args, size) == 0)
+		{
+			return ctor;
+		}
+	}
+
+	/* Return default constructor if there is not a match */
+	return vector_at_type(cls->constructors, 0, constructor);
 }
 
 vector class_static_methods(klass cls, const char *key)
@@ -560,6 +652,18 @@ attribute class_attribute(klass cls, const char *key)
 	}
 
 	return set_get(cls->attributes, (set_key)key);
+}
+
+int class_register_constructor(klass cls, constructor ctor)
+{
+	if (cls == NULL || ctor == NULL)
+	{
+		return 1;
+	}
+
+	vector_push_back(cls->constructors, &ctor);
+
+	return 0;
 }
 
 int class_register_static_method(klass cls, method m)
@@ -667,6 +771,18 @@ int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_i
 	return 0;
 }
 
+void class_constructors_destroy(klass cls)
+{
+	size_t iterator, size = vector_size(cls->constructors);
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		constructor ctor = vector_at(cls->constructors, iterator);
+
+		constructor_destroy(ctor);
+	}
+}
+
 void class_destroy(klass cls)
 {
 	if (cls != NULL)
@@ -687,6 +803,8 @@ void class_destroy(klass cls)
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p>", cls->name, (void *)cls);
 			}
 
+			class_constructors_destroy(cls);
+
 			set_iterate(cls->attributes, &class_attributes_destroy_cb_iterate, NULL);
 			set_iterate(cls->static_attributes, &class_attributes_destroy_cb_iterate, NULL);
 
@@ -701,6 +819,11 @@ void class_destroy(klass cls)
 			if (cls->name != NULL)
 			{
 				free(cls->name);
+			}
+
+			if (cls->constructors != NULL)
+			{
+				vector_destroy(cls->constructors);
 			}
 
 			if (cls->methods != NULL)

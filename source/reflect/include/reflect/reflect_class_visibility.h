@@ -48,6 +48,8 @@ REFLECT_API const char *class_visibility_string(enum class_visibility_id visibil
 
 REFLECT_API value class_visibility_value(enum class_visibility_id visibility);
 
+REFLECT_API value class_visibility_value_pair(enum class_visibility_id visibility);
+
 #ifdef __cplusplus
 }
 #endif

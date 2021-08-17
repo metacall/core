@@ -603,9 +603,10 @@ int rb_class_interface_create(klass cls, class_impl impl)
 	return 0;
 }
 
-object rb_class_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t argc)
+object rb_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	(void)cls;
+	(void)ctor;
 
 	loader_impl_rb_class rb_cls = impl;
 
@@ -1481,6 +1482,22 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 					// We can switch to completely duck typed approach (refactoring the tests) or we can use this
 					// simplified parsing approach and maintain types
 					*/
+				}
+
+				/* Define default constructor. Ruby only supports one constructor, a
+				* method called 'initialize'. It can have arguments but when inspected via
+				* reflection, the signature is variadic arguments and cannot be inspected:
+				*
+				* MyClass.methods(:initialize).parameters = [[:rest]] # variadic args notation in Ruby
+				*
+				* Due to this, we will always register only one default constructor without arguments
+				* which will take all the arguments when invoking 'new' and apply them as variadic.
+				*/
+				constructor ctor = constructor_create(0, VISIBILITY_PUBLIC);
+
+				if (class_register_constructor(c, ctor) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register default constructor in class %s", class_name_str);
 				}
 
 				scope sp = context_scope(ctx);

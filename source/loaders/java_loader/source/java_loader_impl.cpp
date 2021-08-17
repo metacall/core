@@ -947,10 +947,10 @@ int java_class_interface_create(klass cls, class_impl impl)
 	return 0;
 }
 
-object java_class_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t argc)
+object java_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	(void)cls;
-	std::cout << "Constructor" << std::endl;
+	(void)ctor;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 	loader_impl_java_object java_obj = new loader_impl_java_object_type();
