@@ -559,7 +559,7 @@ constructor class_constructor(klass cls, type_id args[], size_t size)
 
 	if (constructor_size == 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Class %s does not have any constructor");
+		log_write("metacall", LOG_LEVEL_ERROR, "Class %s does not have any constructor", cls->name);
 		return NULL;
 	}
 	else if (constructor_size == 1)

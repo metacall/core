@@ -1786,16 +1786,6 @@ int java_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-int java_loader_impl_discover_func(loader_impl impl, loader_handle handle, context ctx, function f)
-{
-	(void)impl;
-	(void)handle;
-	(void)ctx;
-	(void)f;
-
-	return 0;
-}
-
 class_visibility_id getFieldVisibility(const char *v)
 {
 	if (!strcmp(v, "public"))
@@ -1903,6 +1893,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					}
 
 					jmethodID cls_method_array = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_methods", "(Ljava/lang/Class;)[Ljava/lang/reflect/Method;");
+
 					if (cls_method_array != nullptr)
 					{
 						jobjectArray methodArray = (jobjectArray)java_impl->env->CallStaticObjectMethod(classPtr, cls_method_array, r);
@@ -1995,6 +1986,14 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 							else
 								class_register_method(c, m);
 						}
+					}
+
+
+					jmethodID cls_constructor_array = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_constructors", "(Ljava/lang/Class;)[Ljava/lang/reflect/Constructor;");
+
+					if (cls_constructor_array != nullptr)
+					{
+						// TODO: Implement constructors
 					}
 
 					scope sp = context_scope(ctx);

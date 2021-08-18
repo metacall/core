@@ -275,6 +275,7 @@ public class bootstrap {
 
   public static String java_bootstrap_get_class_name(Class<?> cls) {
     // Working test for getting function name and details
+    /*
     Constructor<?>[] constructors = cls.getDeclaredConstructors();
     for (Constructor<?> cnstr : constructors) {
       System.out.println("Name of the constructor: " + cnstr.getName());
@@ -291,6 +292,7 @@ public class bootstrap {
       System.out.println("Signature " + getSignature(method));
 
     }
+    */
 
     return cls.getName();
   }
@@ -330,6 +332,11 @@ public class bootstrap {
   public static Method[] java_bootstrap_discover_methods(Class<?> cls) {
     Method[] methods = cls.getMethods();
     return methods;
+  }
+
+  public static Constructor<?>[] java_bootstrap_discover_constructors(Class<?> cls) {
+    Constructor<?>[] constructors = cls.getDeclaredConstructors();
+    return constructors;
   }
 
   public static String[] java_bootstrap_discover_method_details(Method m) {
