@@ -201,6 +201,8 @@ static int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, 
 
 static type py_loader_impl_get_type(loader_impl impl, PyObject *obj);
 
+static int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, klass c);
+
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_dict, klass c);
 
 static void py_loader_impl_value_invoke_state_finalize(value v, void *data);
@@ -498,6 +500,7 @@ int py_class_interface_create(klass cls, class_impl impl)
 	loader_impl_py_class py_cls = impl;
 
 	py_cls->cls = NULL;
+	py_cls->impl = NULL;
 
 	return 0;
 }
@@ -1071,6 +1074,9 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		py_cls->impl = impl;
 		py_cls->cls = obj;
+
+		// TODO: We should register the class during the discover as a type, so here we would
+		// be able to retrieve the the class instance by using loader_impl_type
 
 		if (py_loader_impl_discover_class(impl, obj, c) != 0)
 		{
@@ -3062,12 +3068,12 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 					Py_XDECREF(name);
 					Py_XDECREF(annotation);
 				}
-
-				Py_DECREF(parameter_list);
 			}
 
-			Py_DECREF(parameters);
+			Py_XDECREF(parameter_list);
 		}
+
+		Py_XDECREF(parameters);
 
 		if (py_impl->asyncio_iscoroutinefunction &&
 			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
@@ -3169,12 +3175,12 @@ int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method 
 					Py_XDECREF(name);
 					Py_XDECREF(annotation);
 				}
-
-				Py_DECREF(parameter_list);
 			}
 
-			Py_DECREF(parameters);
+			Py_XDECREF(parameter_list);
 		}
+
+		Py_XDECREF(parameters);
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, m_name, NULL));
 
@@ -3246,35 +3252,100 @@ builtin_error:
 	return t;
 }
 
+int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, klass c)
+{
+	int ret = 0;
+
+	/* Inspect the constructor */
+	if (!PyObject_HasAttrString(py_class, "__init__"))
+	{
+		return 1;
+	}
+
+	loader_impl_py py_impl = loader_impl_get(impl);
+	PyObject *args = PyTuple_New(1);
+
+	if (args == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return 1;
+	}
+
+	PyObject *name_init = PyUnicode_FromString("__init__");
+	PyObject *init_method = PyObject_GenericGetAttr(py_class, name_init);
+	Py_DECREF(name_init);
+
+	PyTuple_SetItem(args, 0, init_method);
+
+	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
+	Py_DECREF(args); /* Clears init_method reference */
+
+	if (result == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return 1;
+	}
+
+	PyObject *parameters = PyObject_GetAttrString(result, "parameters");
+
+	if (parameters != NULL)
+	{
+		PyObject *parameter_list = PyMapping_Values(parameters);
+
+		if (parameter_list != NULL && PyList_Check(parameter_list))
+		{
+			Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
+			constructor ctor = constructor_create(parameter_list_size > 0 ? (size_t)parameter_list_size - 1 : 0, VISIBILITY_PUBLIC);
+			size_t parameter_count = 0;
+
+			/* Start at 1 because we do not count the 'self' parameter */
+			for (Py_ssize_t iterator = 1; iterator < parameter_list_size; ++iterator)
+			{
+				PyObject *parameter = PyList_GetItem(parameter_list, iterator);
+
+				if (parameter == NULL)
+				{
+					continue;
+				}
+
+				PyObject *name = PyObject_GetAttrString(parameter, "name");
+				const char *parameter_name = PyUnicode_AsUTF8(name);
+				PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
+				type t = py_loader_impl_discover_type(impl, annotation, "__init__", parameter_name);
+				constructor_set(ctor, parameter_count++, parameter_name, t);
+				Py_XDECREF(name);
+				Py_XDECREF(annotation);
+			}
+
+			ret = class_register_constructor(c, ctor);
+
+			if (ret != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to register constructor in class %s", class_name(c));
+			}
+		}
+
+		Py_XDECREF(parameter_list);
+	}
+
+	Py_XDECREF(parameters);
+
+	return ret;
+}
+
 int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
 	/* Inspect the constructor */
-	if (PyObject_HasAttrString(py_class, "__init__"))
+	if (py_loader_impl_discover_constructor(impl, py_class, c) != 0)
 	{
-		PyObject *name_init = PyUnicode_FromString("__init__");
-		PyObject *init_method = PyObject_GenericGetAttr(py_class, name_init);
-		Py_DECREF(name_init);
+		constructor ctor = constructor_create(0, VISIBILITY_PUBLIC);
 
-		/*
-		>>> class Super:
-		...     def __init__(self, name: int, kwarg='default'):
-		...         print('instantiated')
-		...         self.name = name
-		... 
-		>>> import inspect
-		>>> inspect.signature(Super.__init__)
-		<Signature (self, name: int, kwarg='default')>
-		>>> inspect.signature(Super.__init__).parameters
-		mappingproxy(OrderedDict([('self', <Parameter "self">), ('name', <Parameter "name: int">), ('kwarg', <Parameter "kwarg='default'">)]))
-		>>> inspect.signature(Super.__init__).parameters['name']
-		<Parameter "name: int">
-		>>> inspect.signature(Super.__init__).parameters['name'].name
-		'name'
-		>>> inspect.signature(Super.__init__).parameters['name'].annotation
-		<class 'int'>
-		*/
+		if (class_register_constructor(c, ctor) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register default constructor in class %s", class_name(c));
+		}
 	}
 
 	if (PyObject_HasAttrString(py_class, "__dict__"))
@@ -3286,6 +3357,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 		/* Turns out __dict__ is not a PyDict but PyMapping */
 		if (!PyObject_TypeCheck(read_only_dict, &PyDictProxy_Type))
 		{
+			Py_XDECREF(read_only_dict);
 			return 1;
 		}
 
@@ -3319,8 +3391,10 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 				continue;
 			}
 
-			PyTuple_SetItem(args, 0, py_class);	 // class
+			PyTuple_SetItem(args, 0, py_class); // class
+			Py_INCREF(py_class);
 			PyTuple_SetItem(args, 1, tuple_key); // method
+			Py_INCREF(tuple_key);
 			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
 			Py_DECREF(args);
 			bool is_static_method = PyObject_TypeCheck(method_static, &PyStaticMethod_Type);
@@ -3329,8 +3403,6 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 				PyUnicode_AsUTF8(tuple_key),
 				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)),
 				is_static_method);
-
-			Py_INCREF(py_class);
 
 			if (member_type == TYPE_FUNCTION || is_static_method)
 			{
@@ -3397,6 +3469,9 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 				class_register_attribute(c, attr);
 			}
 		}
+
+		Py_XDECREF(dict_items);
+		Py_XDECREF(read_only_dict);
 	}
 
 	return 0;

@@ -777,7 +777,7 @@ void class_constructors_destroy(klass cls)
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		constructor ctor = vector_at(cls->constructors, iterator);
+		constructor ctor = vector_at_type(cls->constructors, iterator, constructor);
 
 		constructor_destroy(ctor);
 	}
