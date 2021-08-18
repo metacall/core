@@ -59,6 +59,9 @@ REFLECT_API const char *type_name(type t);
 
 REFLECT_API type_impl type_derived(type t);
 
+// TODO: Subtyping (for handling typed containers like arrays, maps or templates)
+// REFLECT_API vector type_subtype(type t);
+
 REFLECT_API value type_metadata(type t);
 
 REFLECT_API void type_destroy(type t);
