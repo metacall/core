@@ -58,7 +58,7 @@ sub_apt(){
 	echo "configure apt"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install build-essential git cmake wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 }
 
 # Swig
@@ -339,7 +339,7 @@ sub_metacall(){
 	elif [ INSTALL_NETCORE2 = 1 ]; then
 		NETCORE_VERSION=2.2.8
 	elif [ INSTALL_NETCORE5 = 1 ]; then
-		NETCORE_VERSION=5.0.8
+		NETCORE_VERSION=5.0.9
 	else
 		NETCORE_VERSION=0
 	fi
