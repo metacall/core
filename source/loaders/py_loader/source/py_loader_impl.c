@@ -1001,7 +1001,8 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		/* Check if we are passing our own hook to the callback */
+/* Check if we are passing our own hook to the callback */
+#if 0 /* TODO: This optimization does not work properly (check metacall-node-port-test for implementing it) */
 		if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
 		{
 			PyObject *invoke_state_capsule = PyCFunction_GET_SELF(obj);
@@ -1017,6 +1018,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 			return callback;
 		}
+#endif
 
 		loader_impl_py py_impl = loader_impl_get(impl);
 		size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, obj);
