@@ -1,4 +1,5 @@
 import java.io.File;
+import java.io.FileWriter;
 
 import javax.tools.*;
 import java.util.*;
@@ -6,6 +7,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Array;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -14,12 +16,12 @@ import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+// TODO: Review this: https://www.codeproject.com/Tips/1129615/JNI-Signature-for-Java-Method
+
 public class bootstrap {
   private static Set<String> executionPath = new HashSet<String>();
 
   public static Class<?> FindClass(String name) {
-    System.out.println("Finding Class " + name);
-
     try {
       URL[] urlArr = new URL[executionPath.size()];
       int i = 0;
@@ -36,7 +38,6 @@ public class bootstrap {
   }
 
   public static int java_bootstrap_execution_path(String path) {
-    System.out.println("bootstraping Execution path = " + path);
     executionPath.add(path);
 
     try {
@@ -58,56 +59,44 @@ public class bootstrap {
     Class<?>[] handleObject = new Class<?>[paths.length];
 
     for (int i = 0; i < paths.length; i++) {
-      System.out.println("Path provided " + paths[i]);
-
       try {
-        JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
-        DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
-        StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
+        for (String curExecPath : executionPath) {
+          JavaCompiler compiler = ToolProvider.getSystemJavaCompiler();
+          DiagnosticCollector<JavaFileObject> ds = new DiagnosticCollector<>();
+          StandardJavaFileManager mgr = compiler.getStandardFileManager(ds, null, null);
 
-        Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", System.getenv("LOADER_SCRIPT_PATH") });
+          Iterable<String> classOutputPath = Arrays.asList(new String[] { "-d", curExecPath });
 
-        File pathFile = new File(paths[i]);
-        Iterable<? extends JavaFileObject> sources = mgr.getJavaFileObjectsFromFiles(Arrays.asList(pathFile));
-        JavaCompiler.CompilationTask task = compiler.getTask(null, mgr, ds, classOutputPath, null, sources);
-        Boolean call = task.call(); // main method to compile the file into class
+          File pathFile = new File(curExecPath, paths[i]);
+          Iterable<? extends JavaFileObject> sources = mgr.getJavaFileObjectsFromFiles(Arrays.asList(pathFile));
+          JavaCompiler.CompilationTask task = compiler.getTask(null, mgr, ds, classOutputPath, null, sources);
+          Boolean call = task.call(); // main method to compile the file into class
 
-        if (call) {
-          System.out.println("Compilation Successful");
+          if (call) {
+            System.out.println("Compilation Successful");
 
-          Path path = Paths.get(pathFile.getCanonicalPath());
-          String classname = path.getFileName().toString().split(".java")[0];
+            Path path = Paths.get(pathFile.getCanonicalPath());
+            String classname = path.getFileName().toString().split(".java")[0];
 
-          for (String curExecPath : executionPath) {
-            try {
-              File execPathFile = new File(curExecPath);
-              URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
+            File execPathFile = new File(curExecPath);
+            URLClassLoader clsLoader = new URLClassLoader(new URL[] { execPathFile.toURI().toURL() });
 
-              // handleObject.addClass(classname, clsLoader.loadClass(classname));
-              handleObject[i] = clsLoader.loadClass(classname);
-              clsLoader.close();
+            handleObject[i] = clsLoader.loadClass(classname);
+            clsLoader.close();
 
-              System.out.println(i + " -> " + classname + " loaded");
-
-              // handleArray.addClass(classname, Class.forName(classname));
-              System.out.println("Class Loading Successful");
-              break;
-
-            } catch (Exception e) {
-            }
+            System.out.println(classname + " Class Loading Successful");
+            break;
+          } else {
+            System.out.println("Compilation Failed");
           }
-        } else {
-          System.out.println("Compilation Failed");
+
+          for (Diagnostic<? extends JavaFileObject> d : ds.getDiagnostics()) { // diagnostic error printing
+            System.out.format("DIAGNOSTIC Line: %d, %s in %s\n", d.getLineNumber(), d.getMessage(null),
+                d.getSource().getName());
+          }
+
+          mgr.close();
         }
-
-        for (Diagnostic<? extends JavaFileObject> d : ds.getDiagnostics()) { // diagnostic error printing
-          System.out.format("DIAGNOSTIC Line: %d, %s in %s", d.getLineNumber(), d.getMessage(null),
-              d.getSource().getName());
-        }
-
-        mgr.close();
-        System.out.print("\n");
-
       } catch (Exception e) {
         System.err.println("Load Function" + e);
       }
@@ -120,7 +109,6 @@ public class bootstrap {
 
     if (path.endsWith(".class")) {
       Class<?>[] handleObject = new Class<?>[1];
-      System.out.println("bootstrap load from package " + path);
 
       for (String curExecPath : executionPath) {
         try {
@@ -136,6 +124,7 @@ public class bootstrap {
           clsLoader.close();
           break;
         } catch (Exception e) {
+          // TODO: Implement better error handling
           System.out.println("EXEPTION " + e);
         }
       }
@@ -148,53 +137,80 @@ public class bootstrap {
           ArrayList<Class<?>> handleList = new ArrayList<Class<?>>();
 
           Path curJarPath = Paths.get(curExecPath, path);
-          JarFile jarFile = new JarFile(curJarPath.toString());
-          Enumeration<JarEntry> e = jarFile.entries();
+          File f = new File(curJarPath.toString());
 
-          Path jpath = Paths.get("jar:file:", curExecPath, path);
-          String jarPath = jpath.toString() + "!/";
+          if (f.exists() && !f.isDirectory()) {
+            JarFile jarFile = new JarFile(curJarPath.toString());
+            Enumeration<JarEntry> e = jarFile.entries();
 
-          Path epath = Paths.get(curExecPath, path);
-          executionPath.add(epath.toString());
+            Path jpath = Paths.get("jar:file:", curExecPath, path);
+            String jarPath = jpath.toString() + "!/";
 
-          URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
+            Path epath = Paths.get(curExecPath, path);
+            executionPath.add(epath.toString());
 
-          while (e.hasMoreElements()) {
+            URLClassLoader clsLoader = new URLClassLoader(new URL[] { new URL(jarPath) });
 
-            JarEntry je = e.nextElement();
-            if (je.getName().endsWith(".class")) {
+            while (e.hasMoreElements()) {
 
-              String className = je.getName().substring(0, je.getName().length() - 6);
-              className = className.replace(File.separatorChar, '.');
-              try {
-                Class<?> c = clsLoader.loadClass(className);
+              JarEntry je = e.nextElement();
+              if (je.getName().endsWith(".class")) {
 
-                if (c != null) {
-                  System.out.println("Got CLass " + c.getName());
-                  handleList.add(c);
+                String className = je.getName().substring(0, je.getName().length() - 6);
+                className = className.replace(File.separatorChar, '.');
+                try {
+                  Class<?> c = clsLoader.loadClass(className);
 
+                  if (c != null) {
+                    handleList.add(c);
+                  }
+                } catch (Exception ex) {
+                  // TODO: Implement better error handling
+                  System.out.println(ex);
                 }
-              } catch (Exception ex) {
-                System.out.println(ex);
+
               }
-
             }
+
+            clsLoader.close();
+
+            Class<?>[] rtnClsArr = new Class<?>[handleList.size()];
+            rtnClsArr = handleList.toArray(rtnClsArr);
+            jarFile.close();
+
+            return rtnClsArr;
           }
-
-          clsLoader.close();
-
-          Class<?>[] rtnClsArr = new Class<?>[handleList.size()];
-          rtnClsArr = handleList.toArray(rtnClsArr);
-          jarFile.close();
-
-          return rtnClsArr;
         }
       } catch (Exception e) {
+        // TODO: Implement better error handling
         System.out.println("EXCEPTION " + e);
       }
     }
 
     return null;
+  }
+
+  public static Class<?>[] load_from_memory(String name, String buffer) {
+    try {
+      Path tempFile = Paths.get(System.getenv("LOADER_SCRIPT_PATH"), "memoryTest.java");
+
+      FileWriter myWriter = new FileWriter(tempFile.toString());
+      myWriter.write(buffer);
+      myWriter.close();
+
+      return loadFromFile(new String[] { tempFile.toString() });
+    } catch (Exception e) {
+      System.err.println("Creating File error " + e);
+    }
+    return new Class<?>[] {};
+  }
+
+  private static String[] getTypeSignature(Class<?> t) {
+    String name = t.getName();
+    boolean primitive = t.isPrimitive();
+    String signature = name.replace(".", "/");
+
+    return new String[] { name, primitive ? "L" + signature + ";" : signature };
   }
 
   public static String getSignature(Method m) {
@@ -259,7 +275,7 @@ public class bootstrap {
 
   public static String java_bootstrap_get_class_name(Class<?> cls) {
     // Working test for getting function name and details
-
+    /*
     Constructor<?>[] constructors = cls.getDeclaredConstructors();
     for (Constructor<?> cnstr : constructors) {
       System.out.println("Name of the constructor: " + cnstr.getName());
@@ -267,7 +283,7 @@ public class bootstrap {
 
     Field[] fields = cls.getFields();
     for (Field f : fields) {
-      System.out.println("Name of the fiekd: " + f.getName());
+      System.out.println("Name of the field: " + f.getName());
     }
 
     Method[] methods = cls.getDeclaredMethods();
@@ -276,25 +292,75 @@ public class bootstrap {
       System.out.println("Signature " + getSignature(method));
 
     }
+    */
 
     return cls.getName();
   }
 
-  // public static void DiscoverData(String classname) {
+  public static String getModifierType(int mod) {
+    if (Modifier.isPublic(mod))
+      return "public";
+    if (Modifier.isPrivate(mod))
+      return "private";
+    if (Modifier.isProtected(mod))
+      return "protected";
 
-  // Method[] methods = hClass.getDeclaredMethods();
+    return "";
+  }
 
-  // for (Method method : methods) {
-  // System.out.println("Name of the method: " + method.getName());
+  public static Field[] java_bootstrap_discover_fields(Class<?> cls) {
+    Field[] fields = cls.getFields();
+    return fields;
+  }
 
-  // Class<?>[] parameters = method.getParameterTypes();
-  // if (parameters.length == 0)
-  // System.out.println("\tparameter: none");
-  // for (Class<?> parameter : parameters) {
-  // System.out.println("\tparameter: " + parameter.getSimpleName());
-  // }
-  // System.out.println("\tReturn Type: " + method.getReturnType() + "\n");
+  public static String[] java_bootstrap_discover_fields_details(Field f) {
+    String fName = f.getName();
+    String[] fTypeNameSig = getTypeSignature(f.getType());
+    String fTypeName = fTypeNameSig[0];
+    String fSignature = fTypeNameSig[1];
+    int fModifier = f.getModifiers();
+    String fVisibility = getModifierType(fModifier);
+    String fStatic = Modifier.isStatic(fModifier) ? "static" : "nonstatic";
 
-  // }
-  // }
+    return new String[] { fName, fTypeName, fVisibility, fStatic, fSignature };
+  }
+
+  public static int java_bootstrap_discover_method_args_size(Method m) {
+    return m.getParameterCount();
+  }
+
+  public static Method[] java_bootstrap_discover_methods(Class<?> cls) {
+    Method[] methods = cls.getMethods();
+    return methods;
+  }
+
+  public static Constructor<?>[] java_bootstrap_discover_constructors(Class<?> cls) {
+    Constructor<?>[] constructors = cls.getDeclaredConstructors();
+    return constructors;
+  }
+
+  public static String[] java_bootstrap_discover_method_details(Method m) {
+    String mName = m.getName();
+    String[] mRetTypeNameSig = getTypeSignature(m.getReturnType());
+    String mRetTypeName = mRetTypeNameSig[0];
+    String mRetTypeSig = mRetTypeNameSig[1];
+    int mModifier = m.getModifiers();
+    String mVisibility = getModifierType(mModifier);
+    String mStatic = Modifier.isStatic(mModifier) ? "static" : "nonstatic";
+    String mSignature = getSignature(m).replace(".", "/");
+
+    return new String[] { mName, mRetTypeName, mRetTypeSig, mVisibility, mStatic, mSignature };
+  }
+
+  public static String[][] java_bootstrap_discover_method_parameters(Method m) {
+    String[][] parameterList = new String[java_bootstrap_discover_method_args_size(m)][2];
+    Class<?>[] parameters = m.getParameterTypes();
+
+    int i = 0;
+    for (Class<?> parameter : parameters) {
+      parameterList[i++] = getTypeSignature(parameter);
+    }
+
+    return parameterList;
+  }
 }

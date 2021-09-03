@@ -47,7 +47,7 @@ class adt_map_test : public testing::Test
 public:
 };
 
-TEST_F(adt_map_test, DefaultConstructor)
+TEST_F(adt_map_test, map_int)
 {
 	EXPECT_EQ((int)0, (int)log_configure("metacall",
 						  log_policy_format_text(),
@@ -115,15 +115,15 @@ TEST_F(adt_map_test, DefaultConstructor)
 
 		EXPECT_EQ((size_t)vector_size(v), (size_t)2);
 
-		int value0 = vector_at_type(v, 0, int);
+		int *value0 = vector_at_type(v, 0, int *);
 
-		EXPECT_EQ((int)(value_array[i] == value0 || value_array[value_array_size - 1 - i] == value0), (int)1);
+		EXPECT_EQ((int)(value_array[i] == *value0 || value_array[value_array_size - 1 - i] == *value0), (int)1);
 
-		int value1 = vector_at_type(v, 1, int);
+		int *value1 = vector_at_type(v, 1, int *);
 
-		EXPECT_EQ((int)(value_array[i] == value1 || value_array[value_array_size - 1 - i] == value1), (int)1);
+		EXPECT_EQ((int)(value_array[i] == *value1 || value_array[value_array_size - 1 - i] == *value1), (int)1);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "%s -> %d | %d", key_array[i], value0, value1);
+		log_write("metacall", LOG_LEVEL_DEBUG, "%s -> %d | %d", key_array[i], *value0, *value1);
 
 		vector_destroy(v);
 	}
@@ -152,19 +152,70 @@ TEST_F(adt_map_test, DefaultConstructor)
 
 	EXPECT_EQ((size_t)5, (size_t)vector_size(v));
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", vector_at_type(v, 0, int));
-	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", vector_at_type(v, 1, int));
-	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", vector_at_type(v, 2, int));
-	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", vector_at_type(v, 3, int));
-	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", vector_at_type(v, 4, int));
+	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", *(vector_at_type(v, 0, int *)));
+	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", *(vector_at_type(v, 1, int *)));
+	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", *(vector_at_type(v, 2, int *)));
+	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", *(vector_at_type(v, 3, int *)));
+	log_write("metacall", LOG_LEVEL_DEBUG, "Deleted %d", *(vector_at_type(v, 4, int *)));
 
 	vector_destroy(v);
 
+	log_write("metacall", LOG_LEVEL_DEBUG, "vvvvvvvvvvvvvvvv - This invalid message is correct, we are testing for a invalid remove");
 	v = map_remove_all(m, key_array[0]);
+	log_write("metacall", LOG_LEVEL_DEBUG, "^^^^^^^^^^^^^^^^ - This invalid message is correct, we are testing for a invalid remove");
 
 	EXPECT_EQ((vector)NULL, (vector)v);
 
 	EXPECT_EQ((size_t)key_array_size - 1, (size_t)map_size(m));
 
 	map_destroy(m);
+}
+
+TEST_F(adt_map_test, map_structs)
+{
+	typedef struct stru_type
+	{
+		const char *str;
+		int a;
+	} * stru;
+
+	static const char k[] = "random";
+
+	stru a = new stru_type();
+	a->str = k;
+	a->a = 123;
+
+	stru b = new stru_type();
+	b->str = k;
+	b->a = 321;
+
+	map m = map_create(&hash_callback_str, &comparable_callback_str);
+
+	EXPECT_EQ((int)0, (int)map_insert(m, (map_key)a->str, a));
+	EXPECT_EQ((int)0, (int)map_insert(m, (map_key)b->str, b));
+
+	vector v = map_get(m, (map_key)k);
+
+	EXPECT_EQ((size_t)vector_size(v), (size_t)2);
+
+	stru value0 = vector_at_type(v, 0, stru);
+
+	EXPECT_EQ((int)(123 == value0->a || 321 == value0->a), (int)1);
+
+	stru value1 = vector_at_type(v, 1, stru);
+
+	EXPECT_EQ((int)(123 == value1->a || 321 == value1->a), (int)1);
+
+	EXPECT_EQ((int)(a == value0 || a == value1), (int)1);
+	EXPECT_EQ((int)(b == value0 || b == value1), (int)1);
+
+	log_write("metacall", LOG_LEVEL_DEBUG, "A-B %p | %p", a, b);
+	log_write("metacall", LOG_LEVEL_DEBUG, "val %p | %p", value0, value1);
+
+	vector_destroy(v);
+
+	map_destroy(m);
+
+	delete a;
+	delete b;
 }

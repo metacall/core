@@ -227,7 +227,7 @@ size_t loader_path_canonical(const loader_naming_path path, size_t size, loader_
 {
 	size_t iterator, canonical_size = 0;
 	int separator_found = 1;
-	char separator;
+	char separator = LOADER_PATH_SEPARATOR_C; /* Use current platform style as default */
 
 	/* Standarize the separators */
 	for (iterator = 0; iterator < size; ++iterator)

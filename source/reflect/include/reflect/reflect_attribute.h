@@ -38,7 +38,17 @@ typedef void *attribute_impl;
 
 typedef struct attribute_type *attribute;
 
-REFLECT_API attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility);
+typedef void (*attribute_impl_interface_destroy)(attribute, attribute_impl);
+
+typedef struct attribute_interface_type
+{
+	attribute_impl_interface_destroy destroy;
+
+} * attribute_interface;
+
+typedef attribute_interface (*attribute_impl_interface_singleton)(void);
+
+REFLECT_API attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility, attribute_impl_interface_singleton singleton);
 
 REFLECT_API klass attribute_class(attribute attr);
 
@@ -49,6 +59,8 @@ REFLECT_API type attribute_type(attribute attr);
 REFLECT_API attribute_impl attribute_data(attribute attr);
 
 REFLECT_API enum class_visibility_id attribute_visibility(attribute attr);
+
+REFLECT_API value attribute_metadata(attribute attr);
 
 REFLECT_API void attribute_destroy(attribute attr);
 

@@ -212,6 +212,11 @@ value type_metadata_impl(type t)
 
 value type_metadata(type t)
 {
+	/* The structure of the type is an array (tuple), but it can be used as a pair (key, data) of a map:
+	* ["type", {"name":"","id":18}]
+	* {"type":{"name":"","id":18}}
+	*/
+
 	static const char type_str[] = "type";
 
 	value *v_array, v = value_create_array(NULL, 2);

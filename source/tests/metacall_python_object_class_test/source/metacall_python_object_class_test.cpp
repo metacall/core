@@ -85,6 +85,8 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 				metacall_value_create_int(999999)					  // param2
 			};
 			void *new_object_v = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
+			metacall_value_destroy(constructor_params[0]);
+			metacall_value_destroy(constructor_params[1]);
 			void *new_object = metacall_value_to_object(new_object_v);
 
 			void *param2 = metacall_object_get(new_object, "b");
@@ -140,6 +142,7 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			void *ret_value = metacallv_class(myclass, "static", static_method_args, sizeof(static_method_args) / sizeof(static_method_args[0]));
 
 			ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret_value));
+			metacall_value_destroy(static_method_args[0]);
 			metacall_value_destroy(ret_value);
 		}
 
@@ -154,9 +157,21 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 				metacall_value_create_string(john, sizeof(john) - 1)
 			};
 			void *ret = metacallv_object(obj, "return_bye", return_bye_args, sizeof(return_bye_args) / sizeof(return_bye_args[0]));
-
+			metacall_value_destroy(return_bye_args[0]);
 			ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
 			metacall_value_destroy(ret);
+
+			void *return_check_args[] = {
+				metacall_value_create_long(4L),
+				metacall_value_create_long(7L)
+			};
+			ret = metacallv_object(obj, "check_args", return_check_args, sizeof(return_check_args) / sizeof(return_check_args[0]));
+			metacall_value_destroy(return_check_args[0]);
+			metacall_value_destroy(return_check_args[1]);
+			ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
+			ASSERT_EQ((long)15L, (long)metacall_value_to_long(ret));
+			metacall_value_destroy(ret);
+
 			metacall_value_destroy(obj_value);
 		}
 	}

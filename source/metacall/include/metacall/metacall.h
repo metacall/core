@@ -1040,13 +1040,13 @@ METACALL_API void *metacall_class(const char *name);
 
 /**
 *  @brief
-*    Call a class method anonymously by value array @args
-*
-*  @param[in] name
-*    Name of the method
+*    Call a class method anonymously by value array @args (this procedure assumes there's no overloaded methods and does type conversion on values)
 *
 *  @param[in] cls
 *    Pointer to the class
+*
+*  @param[in] name
+*    Name of the method
 *
 *  @param[in] args
 *    Array of pointers to data
@@ -1057,7 +1057,31 @@ METACALL_API void *metacall_class(const char *name);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void *metacallv_class(void *cls, const char *name, void *args[], size_t argc);
+METACALL_API void *metacallv_class(void *cls, const char *name, void *args[], size_t size);
+
+/**
+*  @brief
+*    Call a class method anonymously by value array @args and return value type @ret (helps to resolve overloading methods)
+*
+*  @param[in] cls
+*    Pointer to the class
+*
+*  @param[in] name
+*    Name of the method
+*
+*  @param[in] ret
+*    Type of the return value of the method
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of args array
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void *metacallt_class(void *cls, const char *name, const enum metacall_value_id ret, void *args[], size_t size);
 
 /**
 *  @brief
@@ -1078,7 +1102,7 @@ METACALL_API void *metacallv_class(void *cls, const char *name, void *args[], si
 *  @return
 *    Pointer to the new object value instance
 */
-METACALL_API void *metacall_class_new(void *cls, const char *name, void *args[], size_t argc);
+METACALL_API void *metacall_class_new(void *cls, const char *name, void *args[], size_t size);
 
 /**
 *  @brief
@@ -1132,7 +1156,31 @@ METACALL_API int metacall_class_static_set(void *cls, const char *key, void *v);
 *  @return
 *    Pointer to value containing the result of the call
 */
-METACALL_API void *metacallv_object(void *obj, const char *name, void *args[], size_t argc);
+METACALL_API void *metacallv_object(void *obj, const char *name, void *args[], size_t size);
+
+/**
+*  @brief
+*    Call a object method anonymously by value array @args and return value type @ret (helps to resolve overloading methods)
+*
+*  @param[in] obj
+*    Pointer to the object
+*
+*  @param[in] name
+*    Name of the method
+*
+*  @param[in] ret
+*    Type of the return value of the method
+*
+*  @param[in] args
+*    Array of pointers to data
+*
+*  @param[in] size
+*    Number of elements of args array
+*
+*  @return
+*    Pointer to value containing the result of the call
+*/
+METACALL_API void *metacallt_object(void *obj, const char *name, const enum metacall_value_id ret, void *args[], size_t size);
 
 /**
 *  @brief

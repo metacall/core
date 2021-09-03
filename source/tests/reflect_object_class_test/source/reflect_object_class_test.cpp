@@ -204,11 +204,18 @@ object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, 
 	return obj;
 }
 
-value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, const char *key)
+value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	hello_world_class hello_world = (hello_world_class)impl;
 
 	(void)cls;
+
+	char *key = attribute_name(attr);
+
+	if (key == NULL)
+	{
+		return NULL;
+	}
 
 	// Horrible but it is just a ilustrative example
 	if (strcmp(key, "a") == 0)
@@ -227,13 +234,20 @@ value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, co
 	return NULL;
 }
 
-int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, const char *key, value v)
+int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
 {
 	hello_world_class hello_world = (hello_world_class)impl;
 
 	EXPECT_NE((void *)NULL, (void *)hello_world);
 
 	(void)cls;
+
+	char *key = attribute_name(attr);
+
+	if (key == NULL)
+	{
+		return 1;
+	}
 
 	// Horrible but it is just a ilustrative example
 	if (strcmp(key, "a") == 0)
@@ -252,24 +266,24 @@ int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, cons
 	return 0;
 }
 
-value hello_world_class_impl_interface_static_invoke(klass cls, class_impl impl, const char *key, class_args args, size_t size)
+value hello_world_class_impl_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	// TODO
 	(void)cls;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
-	(void)size;
+	(void)argc;
 
 	return NULL;
 }
 
-value hello_world_class_impl_interface_static_await(klass cls, class_impl impl, const char *key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+value hello_world_class_impl_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -325,6 +339,8 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 	klass cls = class_create("HelloWorld", hellow_world_cls, &hello_world_class_impl_interface_singleton);
 
 	EXPECT_EQ((int)class_increment_reference(cls), (int)0);
+
+	// TODO: Fix class_static_get and set params
 
 	// Get and set static attributes from the class
 	{

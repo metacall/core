@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 class MyClass():
     # String __doc__ inside MyClass.__dict__
     "This is a class"
@@ -14,11 +13,27 @@ class MyClass():
     def hello(self):
         print(self.helloString)
         return 0
+
     def return_bye(self, name):
         return "bye " + name
+
+    def check_args(self, a, b):
+        print(a, b)
+        if a == 4 and b == 7:
+            return 15
+        else:
+            return 3
+
+    @classmethod
+    def class_method(return_val):
+        return return_val
+
     @staticmethod
     def static(return_val):
         return return_val
+    
+    async def asynk(return_val):
+        return "synk"
 
 """
 >>> return_function_bound_method_param(MyClass())

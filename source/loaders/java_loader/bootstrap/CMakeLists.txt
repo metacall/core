@@ -70,7 +70,6 @@ set_target_properties(${target}
 # Library
 install(FILES
 	${BOOTSTRAP_OUTPUT_PATH}/bootstrap.class
-	${BOOTSTRAP_OUTPUT_PATH}/Handle.class
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

@@ -95,16 +95,16 @@ typedef struct loader_impl_py_future_type
 
 typedef struct loader_impl_py_class_type
 {
-	PyObject *class;
+	PyObject *cls;
 	loader_impl impl;
 
 } * loader_impl_py_class;
 
 typedef struct loader_impl_py_object_type
 {
-	PyObject *object;
-	PyTypeObject *object_class;
+	PyObject *obj;
 	loader_impl impl;
+	value obj_class;
 
 } * loader_impl_py_object;
 
@@ -126,6 +126,9 @@ struct loader_impl_py_type
 {
 	PyObject *inspect_module;
 	PyObject *inspect_signature;
+	PyObject *inspect_getattr_static;
+	PyObject *inspect_getfullargspec;
+	PyObject *inspect_ismethod;
 	PyObject *builtins_module;
 	PyObject *traceback_module;
 	PyObject *traceback_format_exception;
@@ -188,9 +191,17 @@ static object_interface py_object_interface_singleton(void);
 
 static class_interface py_class_interface_singleton(void);
 
-static int py_loader_impl_discover_func_args_count(PyObject *func);
+static method_interface py_method_interface_singleton(void);
+
+static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
+
+static int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m, bool is_static);
+
+static type py_loader_impl_get_type(loader_impl impl, PyObject *obj);
+
+static int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, klass c);
 
 static int py_loader_impl_discover_class(loader_impl impl, PyObject *read_only_dict, klass c);
 
@@ -339,37 +350,41 @@ int py_object_interface_create(object obj, object_impl impl)
 
 	loader_impl_py_object py_obj = impl;
 
-	py_obj->object = NULL;
-	py_obj->object_class = NULL;
+	py_obj->impl = NULL;
+	py_obj->obj = NULL;
+	py_obj->obj_class = NULL;
 
 	return 0;
 }
 
 /* TODO: get and set is actually the same as static_get and static_set but applied to an object instead of a class */
-value py_object_interface_get(object obj, object_impl impl, const char *key)
+value py_object_interface_get(object obj, object_impl impl, attribute attr)
 {
 	(void)obj;
 
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
 
-	PyObject *pyobject_object = py_object->object;
+	PyObject *pyobject_object = py_object->obj;
 
-	PyObject *key_py_str = PyUnicode_FromString(key);
+	PyObject *key_py_str = PyUnicode_FromString(attribute_name(attr));
 	PyObject *generic_attr = PyObject_GenericGetAttr(pyobject_object, key_py_str);
-	Py_DECREF(key_py_str);
+	Py_XDECREF(key_py_str);
 
-	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_object->impl, generic_attr));
+	value v = py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_object->impl, generic_attr));
+	Py_XDECREF(generic_attr);
+
+	return v;
 }
 
-int py_object_interface_set(object obj, object_impl impl, const char *key, value v)
+int py_object_interface_set(object obj, object_impl impl, attribute attr, value v)
 {
 	(void)obj;
 
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
 
-	PyObject *pyobject_object = py_object->object;
+	PyObject *pyobject_object = py_object->obj;
 
-	PyObject *key_py_str = PyUnicode_FromString(key);
+	PyObject *key_py_str = PyUnicode_FromString(attribute_name(attr));
 
 	PyObject *pyvalue = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
 
@@ -380,20 +395,13 @@ int py_object_interface_set(object obj, object_impl impl, const char *key, value
 	return retval;
 }
 
-value py_object_interface_method_invoke(object obj, object_impl impl, const char *method_name, object_args args, size_t argc)
+value py_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
 
 	loader_impl_py_object obj_impl = (loader_impl_py_object)impl;
 
-	if (obj_impl == NULL || obj_impl->object == NULL)
-	{
-		return NULL;
-	}
-
-	PyObject *method = PyObject_GetAttrString(obj_impl->object, method_name);
-
-	if (method == NULL)
+	if (obj_impl == NULL || obj_impl->obj == NULL)
 	{
 		return NULL;
 	}
@@ -410,25 +418,28 @@ value py_object_interface_method_invoke(object obj, object_impl impl, const char
 		PyTuple_SET_ITEM(args_tuple, i, py_loader_impl_value_to_capi(obj_impl->impl, value_type_id(args[i]), args[i]));
 	}
 
-	PyObject *python_object = PyObject_Call(method, args_tuple, NULL);
+	PyObject *python_object = PyObject_CallMethod(obj_impl->obj, method_name(m), "O", args_tuple, NULL);
 
 	Py_DECREF(args_tuple);
-	Py_DECREF(method);
 
 	if (python_object == NULL)
 	{
 		return NULL;
 	}
 
-	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(obj_impl->impl, python_object));
+	value ret = py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(obj_impl->impl, python_object));
+
+	Py_XDECREF(python_object);
+
+	return ret;
 }
 
-value py_object_interface_method_await(object obj, object_impl impl, const char *key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+value py_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -456,9 +467,12 @@ void py_object_interface_destroy(object obj, object_impl impl)
 
 	if (py_object != NULL)
 	{
-		Py_XDECREF(py_object->object);
+		Py_XDECREF(py_object->obj);
 
-		Py_XDECREF(py_object->object_class);
+		if (py_object->obj_class != NULL)
+		{
+			value_type_destroy(py_object->obj_class);
+		}
 
 		free(py_object);
 	}
@@ -485,14 +499,16 @@ int py_class_interface_create(klass cls, class_impl impl)
 
 	loader_impl_py_class py_cls = impl;
 
-	py_cls->class = NULL;
+	py_cls->cls = NULL;
+	py_cls->impl = NULL;
 
 	return 0;
 }
 
-object py_class_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t argc)
+object py_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
 {
 	(void)cls;
+	(void)ctor;
 
 	loader_impl_py_class py_cls = impl;
 
@@ -507,6 +523,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 
 	/* Get loader implementation from class */
 	py_obj->impl = py_cls->impl;
+	py_obj->obj_class = NULL;
 
 	PyObject *args_tuple = PyTuple_New(argc);
 
@@ -519,7 +536,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 	}
 
 	/* Calling the class will create an instance (object) */
-	PyObject *python_object = PyObject_CallObject(py_cls->class, args_tuple);
+	PyObject *python_object = PyObject_CallObject(py_cls->cls, args_tuple);
 
 	Py_DECREF(args_tuple);
 
@@ -529,39 +546,53 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 		return NULL;
 	}
 
-	Py_INCREF(py_cls->class);
-	py_obj->object = python_object;
-	py_obj->object_class = Py_TYPE(py_cls->class);
+	Py_INCREF(py_cls->cls);
+	py_obj->obj = python_object;
 
 	return obj;
 }
 
-value py_class_interface_static_get(klass cls, class_impl impl, const char *key)
+value py_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 {
 	(void)cls;
 
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
 
-	PyObject *pyobject_class = py_class->class;
+	PyObject *pyobject_class = py_class->cls;
 
-	PyObject *key_py_str = PyUnicode_FromString(key);
+	char *attr_name = attribute_name(attr);
+	if (attr_name == NULL)
+	{
+		return NULL;
+	}
+
+	PyObject *key_py_str = PyUnicode_FromString(attr_name);
 	PyObject *generic_attr = PyObject_GenericGetAttr(pyobject_class, key_py_str);
-	Py_DECREF(key_py_str);
+	Py_XDECREF(key_py_str);
 
-	return py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_class->impl, generic_attr));
+	value v = py_loader_impl_capi_to_value(impl, generic_attr, py_loader_impl_capi_to_value_type(py_class->impl, generic_attr));
+	Py_XDECREF(generic_attr);
+
+	return v;
 }
 
-int py_class_interface_static_set(klass cls, class_impl impl, const char *key, value v)
+int py_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
 {
 	(void)cls;
 
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
 
-	PyObject *pyobject_class = py_class->class;
+	PyObject *pyobject_class = py_class->cls;
 
 	PyObject *pyvalue = py_loader_impl_value_to_capi(py_class->impl, value_type_id(v), v);
 
-	PyObject *key_py_str = PyUnicode_FromString(key);
+	char *attr_name = attribute_name(attr);
+	if (attr_name == NULL)
+	{
+		return 1;
+	}
+
+	PyObject *key_py_str = PyUnicode_FromString(attr_name);
 
 	int retval = PyObject_GenericSetAttr(pyobject_class, key_py_str, pyvalue);
 
@@ -570,7 +601,7 @@ int py_class_interface_static_set(klass cls, class_impl impl, const char *key, v
 	return retval;
 }
 
-value py_class_interface_static_invoke(klass cls, class_impl impl, const char *static_method_name, class_args args, size_t argc)
+value py_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	// TODO
 	(void)cls;
@@ -579,12 +610,14 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char *s
 
 	loader_impl_py_class cls_impl = (loader_impl_py_class)impl;
 
-	if (cls_impl == NULL || cls_impl->class == NULL)
+	if (cls_impl == NULL || cls_impl->cls == NULL)
 	{
 		return NULL;
 	}
 
-	PyObject *method = PyObject_GetAttrString(cls_impl->class, static_method_name);
+	char *static_method_name = method_name(m);
+
+	PyObject *method = PyObject_GetAttrString(cls_impl->cls, static_method_name);
 
 	if (method == NULL)
 	{
@@ -616,12 +649,12 @@ value py_class_interface_static_invoke(klass cls, class_impl impl, const char *s
 	return py_loader_impl_capi_to_value(impl, python_object, py_loader_impl_capi_to_value_type(cls_impl->impl, python_object));
 }
 
-value py_class_interface_static_await(klass cls, class_impl impl, const char *key, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+value py_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)cls;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -639,8 +672,7 @@ void py_class_interface_destroy(klass cls, class_impl impl)
 
 	if (py_class != NULL)
 	{
-		Py_XDECREF(py_class->class);
-
+		Py_XDECREF(py_class->cls);
 		free(py_class);
 	}
 }
@@ -658,6 +690,23 @@ class_interface py_class_interface_singleton(void)
 	};
 
 	return &py_class_interface;
+}
+
+void py_method_interface_destroy(method m, method_impl impl)
+{
+	(void)m;
+
+	PyObject *m_impl = (PyObject *)impl;
+	Py_XDECREF(m_impl);
+}
+
+method_interface py_method_interface_singleton(void)
+{
+	static struct method_interface_type py_method_interface = {
+		&py_method_interface_destroy
+	};
+
+	return &py_method_interface;
 }
 
 type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
@@ -945,8 +994,6 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_FUNCTION)
 	{
-		int discover_args_count;
-
 		/* Check if we are passing our own hook to the callback */
 		if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
 		{
@@ -964,36 +1011,30 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 			return callback;
 		}
 
-		discover_args_count = py_loader_impl_discover_func_args_count(obj);
+		loader_impl_py py_impl = loader_impl_get(impl);
+		size_t args_count = py_loader_impl_discover_callable_args_count(py_impl, obj);
+		loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+		function f = NULL;
 
-		if (discover_args_count >= 0)
+		if (py_func == NULL)
 		{
-			size_t args_count = (size_t)discover_args_count;
-
-			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
-
-			function f = NULL;
-
-			if (py_func == NULL)
-			{
-				return NULL;
-			}
-
-			Py_INCREF(obj);
-			py_func->func = obj;
-			py_func->impl = impl;
-
-			f = function_create(NULL, args_count, py_func, &function_py_singleton);
-
-			if (py_loader_impl_discover_func(impl, obj, f) != 0)
-			{
-				function_destroy(f);
-
-				return NULL;
-			}
-
-			return value_create_function(f);
+			return NULL;
 		}
+
+		Py_INCREF(obj);
+		py_func->func = obj;
+		py_func->impl = impl;
+
+		f = function_create(NULL, args_count, py_func, &function_py_singleton);
+
+		if (py_loader_impl_discover_func(impl, obj, f) != 0)
+		{
+			function_destroy(f);
+
+			return NULL;
+		}
+
+		return value_create_function(f);
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -1027,18 +1068,22 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		Py_INCREF(obj);
 
-		klass c = class_create(PyUnicode_AsUTF8(PyObject_Repr(obj)), py_cls, &py_class_interface_singleton);
+		PyObject *qualname = PyObject_GetAttrString(obj, "__qualname__");
+		klass c = class_create(PyUnicode_AsUTF8(qualname), py_cls, &py_class_interface_singleton);
+		Py_XDECREF(qualname);
 
 		py_cls->impl = impl;
-		py_cls->class = obj;
+		py_cls->cls = obj;
 
-		/*
+		// TODO: We should register the class during the discover as a type, so here we would
+		// be able to retrieve the the class instance by using loader_impl_type
+
 		if (py_loader_impl_discover_class(impl, obj, c) != 0)
 		{
 			class_destroy(c);
 			return NULL;
 		}
-		*/
+
 		v = value_create_class(c);
 	}
 	else if (id == TYPE_OBJECT)
@@ -1047,19 +1092,19 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		Py_INCREF(obj);
 
-		PyTypeObject *object_class = Py_TYPE(obj);
-		Py_INCREF(object_class);
+		PyObject *object_class = PyObject_Type(obj); /* Increments the class reference count */
 
-		/* TODO: Will capi_to_value recognize and be able to parse a PyTypeObject ? */
-		value obj_cls = py_loader_impl_capi_to_value(impl, (PyObject *)object_class, py_loader_impl_capi_to_value_type(impl, (PyObject *)object_class));
+		value obj_cls = py_loader_impl_capi_to_value(impl, object_class, py_loader_impl_capi_to_value_type(impl, object_class));
 
 		/* Not using class_new() here because the object is already instantiated in the runtime */
 		/* So we must avoid calling it's constructor again */
-		object o = object_create(PyUnicode_AsUTF8(PyObject_Repr(obj)), py_obj, &py_object_interface_singleton, value_to_class(obj_cls));
+		PyObject *repr = PyObject_Repr(obj);
+		object o = object_create(PyUnicode_AsUTF8(repr), py_obj, &py_object_interface_singleton, value_to_class(obj_cls));
+		Py_XDECREF(repr);
 
 		py_obj->impl = impl;
-		py_obj->object = obj;
-		py_obj->object_class = object_class;
+		py_obj->obj = obj;
+		py_obj->obj_class = obj_cls;
 
 		/*
 		if (py_loader_impl_validate_object(impl, obj, o) != 0)
@@ -1260,7 +1305,9 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	{
 		klass obj = value_to_class(v);
 
+		/* TODO: This is completely wrong and it needs a refactor */
 		/* TODO: The return value of class_impl_get may not be a loader_impl_py_class, it can be a loader_impl_node_class too */
+		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the class dynamically */
 		loader_impl_py_class obj_impl = class_impl_get(obj);
 
 		if (obj_impl == NULL)
@@ -1269,14 +1316,17 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			return NULL;
 		}
 
-		return obj_impl->class;
+		return obj_impl->cls;
 	}
 	else if (id == TYPE_OBJECT)
 	{
 		object obj = value_to_object(v);
 
+		/* TODO: This is completely wrong and it needs a refactor */
 		/* TODO: The return value of object_impl_get may not be a loader_impl_py_object, it can be a loader_impl_node_node too */
+		/* TODO: We must detect if it comes from python and use this method, otherwise we must create the object dynamically */
 		loader_impl_py_object obj_impl = object_impl_get(obj);
+		Py_INCREF(obj_impl->obj);
 
 		if (obj_impl == NULL)
 		{
@@ -1284,7 +1334,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 			return NULL;
 		}
 
-		return obj_impl->object;
+		return obj_impl->obj;
 	}
 	else
 	{
@@ -1755,12 +1805,39 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 		goto error_inspect_signature;
 	}
 
+	py_impl->inspect_getattr_static = PyObject_GetAttrString(py_impl->inspect_module, "getattr_static");
+
+	if (py_impl->inspect_getattr_static == NULL)
+	{
+		goto error_inspect_getattr_static;
+	}
+
+	py_impl->inspect_getfullargspec = PyObject_GetAttrString(py_impl->inspect_module, "getfullargspec");
+
+	if (py_impl->inspect_getfullargspec == NULL)
+	{
+		goto error_inspect_getfullargspec;
+	}
+
+	py_impl->inspect_ismethod = PyObject_GetAttrString(py_impl->inspect_module, "ismethod");
+
+	if (py_impl->inspect_ismethod == NULL)
+	{
+		goto error_inspect_ismethod;
+	}
+
 	if (PyCallable_Check(py_impl->inspect_signature) && py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
 	{
 		return 0;
 	}
 
-	Py_XDECREF(py_impl->inspect_signature);
+	Py_DECREF(py_impl->inspect_ismethod);
+error_inspect_ismethod:
+	Py_DECREF(py_impl->inspect_getfullargspec);
+error_inspect_getfullargspec:
+	Py_DECREF(py_impl->inspect_getattr_static);
+error_inspect_getattr_static:
+	Py_DECREF(py_impl->inspect_signature);
 error_inspect_signature:
 	Py_DECREF(py_impl->inspect_module);
 error_import_module:
@@ -2119,7 +2196,7 @@ int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 	py_impl_path exe_path_str = { 0 };
 
 #if defined(WIN32) || defined(_WIN32)
-	unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
+	unsigned int length = GetModuleFileName(NULL, exe_path_str, (DWORD)path_max_length);
 #else
 	ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
 #endif
@@ -2848,6 +2925,7 @@ int py_loader_impl_clear(loader_impl impl, loader_handle handle)
 type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const char *func_name, const char *parameter_name)
 {
 	type t = NULL;
+
 	if (annotation == NULL)
 	{
 		return NULL;
@@ -2872,72 +2950,63 @@ type py_loader_impl_discover_type(loader_impl impl, PyObject *annotation, const 
 	PyObject *annotation_qualname = PyObject_GetAttrString(annotation, qualname);
 	const char *annotation_name = PyUnicode_AsUTF8(annotation_qualname);
 
-	if (strcmp(annotation_name, "_empty") != 0)
+	if (annotation_qualname != NULL)
 	{
-		t = loader_impl_type(impl, annotation_name);
+		if (strcmp(annotation_name, "_empty") != 0)
+		{
+			t = loader_impl_type(impl, annotation_name);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Discover type (%p) (%p): %s", (void *)annotation, (void *)type_derived(t), annotation_name);
+		}
+
+		Py_DECREF(annotation_qualname);
 	}
-
-	Py_DECREF(annotation_qualname);
 
 	return t;
 }
 
-int py_loader_impl_discover_func_args_count(PyObject *func)
+size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable)
 {
-	int args_count = -1;
+	/* TODO: Improve this in the future, adding positional arguments, variable arguments and others */
+	size_t args_count = 0;
+	PyObject *spec = PyObject_CallFunction(py_impl->inspect_getfullargspec, "O", callable);
 
-	if (PyObject_HasAttrString(func, "__call__"))
+	if (spec == NULL)
 	{
-		PyObject *func_code = NULL;
-
-		if (PyObject_HasAttrString(func, "__code__"))
-		{
-			func_code = PyObject_GetAttrString(func, "__code__");
-		}
-		else
-		{
-			PyObject *func_call = PyObject_GetAttrString(func, "__call__");
-
-			if (func_call != NULL && PyObject_HasAttrString(func_call, "__code__"))
-			{
-				func_code = PyObject_GetAttrString(func_call, "__code__");
-			}
-
-			Py_XDECREF(func_call);
-		}
-
-		if (func_code != NULL)
-		{
-			PyObject *func_code_args_count = PyObject_GetAttrString(func_code, "co_argcount");
-
-			if (func_code_args_count != NULL)
-			{
-				args_count = PyLong_AsLong(func_code_args_count);
-
-				Py_DECREF(func_code_args_count);
-			}
-
-			Py_DECREF(func_code);
-		}
-		else if (PyCFunction_Check(func))
-		{
-			int flags = PyCFunction_GetFlags(func);
-
-			if (flags & METH_NOARGS)
-			{
-				args_count = 0;
-			}
-			else if (flags & METH_VARARGS)
-			{
-				/* TODO: Varidic arguments are not supported */
-				log_write("metacall", LOG_LEVEL_ERROR, "Builtins (C Python Functions) with varidic arguments are not supported");
-				args_count = -1;
-			}
-		}
+		/* This means we have a PyCFunction which cannot be introspected, we let varargs to do the calls */
+		/* TODO: In the future we should check if this is a callback from metacall because then we can obtain the function signature */
+		PyErr_Clear();
+		goto unsupported_callable;
 	}
 
+	PyObject *args = PyTuple_GetItem(spec, 0);
+
+	if (args == NULL)
+	{
+		/* If there's no arguments, let's Python deal with this as variable arguments */
+		goto clear_spec;
+	}
+
+	/* Get the number of arguments */
+	args_count = (size_t)PyObject_Size(args);
+
+	PyObject *is_method = PyObject_CallFunction(py_impl->inspect_ismethod, "O", callable);
+
+	if (is_method == NULL)
+	{
+		goto clear_spec;
+	}
+
+	/* Do not count self parameter */
+	if (is_method == Py_True)
+	{
+		args_count--;
+	}
+
+	Py_DECREF(is_method);
+clear_spec:
+	Py_DECREF(spec); /* The elements from the tuple (args) are cleaned here */
+unsupported_callable:
 	return args_count;
 }
 
@@ -2976,7 +3045,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 				if ((size_t)parameter_list_size != args_count)
 				{
 					/* TODO: Implement properly variable arguments with inspection of the names */
-					/* co_argcount in py_loader_impl_discover_func_args_count returns the number */
+					/* co_argcount in py_loader_impl_discover_callable_args_count returns the number */
 					/* of arguments (not including keyword only arguments, * or ** args), so they */
 					/* won't be inspected but the variable call can be done with metacall*_s API */
 					parameter_list_size = (Py_ssize_t)args_count;
@@ -2996,27 +3065,37 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 					PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
 					type t = py_loader_impl_discover_type(impl, annotation, func_name, parameter_name);
 					signature_set(s, iterator, parameter_name, t);
+					Py_XDECREF(name);
+					Py_XDECREF(annotation);
 				}
 			}
+
+			Py_XDECREF(parameter_list);
 		}
+
+		Py_XDECREF(parameters);
 
 		if (py_impl->asyncio_iscoroutinefunction &&
 			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
 		{
-			function_async(f, FUNCTION_ASYNC);
+			function_async(f, ASYNCHRONOUS);
 		}
 		else
 		{
-			function_async(f, FUNCTION_SYNC);
+			function_async(f, SYNCHRONOUS);
 		}
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
+
+		Py_DECREF(return_annotation);
 
 		return 0;
 	}
 	else
 	{
-		/* TODO: Implement builtins with varidic arguments */
+		/* We are trying to inspect a non callable object or inspect.signature does not support the type */
+		PyErr_Clear();
+
 		if (PyCFunction_Check(func))
 		{
 			signature s = function_signature(f);
@@ -3030,20 +3109,255 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 	return 1;
 }
 
-static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass c)
+int py_loader_impl_discover_method(loader_impl impl, PyObject *callable, method m, bool is_static)
 {
-	(void)impl;
-	(void)c;
+	loader_impl_py py_impl = loader_impl_get(impl);
+	PyObject *args = PyTuple_New(1);
 
-	if (PyObject_HasAttrString(obj, "__dict__"))
+	if (args == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return 1;
+	}
+
+	if (is_static)
+	{
+		PyObject *func = PyObject_GetAttrString(callable, "__func__");
+		PyTuple_SetItem(args, 0, func);
+	}
+	else
+	{
+		PyTuple_SetItem(args, 0, callable);
+		Py_INCREF(callable);
+	}
+	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
+	Py_DECREF(args);
+
+	if (result != NULL)
+	{
+		signature s = method_signature(m);
+		const char *m_name = method_name(m);
+		PyObject *parameters = PyObject_GetAttrString(result, "parameters");
+		PyObject *return_annotation = PyObject_GetAttrString(result, "return_annotation");
+
+		if (parameters != NULL && PyMapping_Check(parameters))
+		{
+			PyObject *parameter_list = PyMapping_Values(parameters);
+
+			if (parameter_list != NULL && PyList_Check(parameter_list))
+			{
+				Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
+				size_t args_count = signature_count(s);
+
+				if ((size_t)parameter_list_size != args_count)
+				{
+					/* TODO: Implement properly variable arguments with inspection of the names */
+					/* co_argcount in py_loader_impl_discover_callable_args_count returns the number */
+					/* of arguments (not including keyword only arguments, * or ** args), so they */
+					/* won't be inspected but the variable call can be done with metacall*_s API */
+					parameter_list_size = (Py_ssize_t)args_count;
+				}
+
+				for (Py_ssize_t iterator = 0; iterator < parameter_list_size; ++iterator)
+				{
+					PyObject *parameter = PyList_GetItem(parameter_list, iterator);
+
+					if (parameter == NULL)
+					{
+						continue;
+					}
+
+					PyObject *name = PyObject_GetAttrString(parameter, "name");
+					const char *parameter_name = PyUnicode_AsUTF8(name);
+					PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
+					type t = py_loader_impl_discover_type(impl, annotation, m_name, parameter_name);
+					signature_set(s, iterator, parameter_name, t);
+					Py_XDECREF(name);
+					Py_XDECREF(annotation);
+				}
+			}
+
+			Py_XDECREF(parameter_list);
+		}
+
+		Py_XDECREF(parameters);
+
+		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, m_name, NULL));
+
+		Py_DECREF(return_annotation);
+
+		return 0;
+	}
+	else
+	{
+		/* We are trying to inspect a non callable object or inspect.signature does not support the type */
+		PyErr_Clear();
+
+		if (PyCFunction_Check(callable))
+		{
+			signature s = method_signature(m);
+
+			signature_set_return(s, NULL);
+
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+type py_loader_impl_get_type(loader_impl impl, PyObject *obj)
+{
+	type t = NULL;
+	PyObject *builtin = PyObject_Type(obj); /* Increments reference count of the type */
+
+	if (!(builtin != NULL && PyType_Check(builtin)))
+	{
+		goto builtin_error;
+	}
+
+	PyObject *t_name = PyObject_GetAttrString(builtin, "__name__");
+
+	if (!(t_name != NULL && PyUnicode_Check(t_name)))
+	{
+		goto type_name_error;
+	}
+
+	char *name = PyUnicode_AsUTF8(t_name);
+	t = loader_impl_type(impl, name);
+
+	if (t == NULL)
+	{
+		t = type_create(py_loader_impl_capi_to_value_type(impl, obj), name, builtin, &type_py_singleton);
+
+		if (t == NULL)
+		{
+			goto type_name_error;
+		}
+
+		if (loader_impl_type_define(impl, type_name(t), t) != 0)
+		{
+			type_destroy(t); // This already clears the builtin reference in the destroy of the signleton
+			t = NULL;
+		}
+
+		Py_DECREF(t_name);
+		return t;
+	}
+
+type_name_error:
+	Py_XDECREF(t_name);
+builtin_error:
+	Py_XDECREF(builtin);
+	return t;
+}
+
+int py_loader_impl_discover_constructor(loader_impl impl, PyObject *py_class, klass c)
+{
+	int ret = 0;
+
+	/* Inspect the constructor */
+	if (!PyObject_HasAttrString(py_class, "__init__"))
+	{
+		return 1;
+	}
+
+	loader_impl_py py_impl = loader_impl_get(impl);
+	PyObject *args = PyTuple_New(1);
+
+	if (args == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return 1;
+	}
+
+	PyObject *name_init = PyUnicode_FromString("__init__");
+	PyObject *init_method = PyObject_GenericGetAttr(py_class, name_init);
+	Py_DECREF(name_init);
+
+	PyTuple_SetItem(args, 0, init_method);
+
+	PyObject *result = PyObject_CallObject(py_impl->inspect_signature, args);
+	Py_DECREF(args); /* Clears init_method reference */
+
+	if (result == NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+		return 1;
+	}
+
+	PyObject *parameters = PyObject_GetAttrString(result, "parameters");
+
+	if (parameters != NULL)
+	{
+		PyObject *parameter_list = PyMapping_Values(parameters);
+
+		if (parameter_list != NULL && PyList_Check(parameter_list))
+		{
+			Py_ssize_t parameter_list_size = PyMapping_Size(parameters);
+			constructor ctor = constructor_create(parameter_list_size > 0 ? (size_t)parameter_list_size - 1 : 0, VISIBILITY_PUBLIC);
+			size_t parameter_count = 0;
+
+			/* Start at 1 because we do not count the 'self' parameter */
+			for (Py_ssize_t iterator = 1; iterator < parameter_list_size; ++iterator)
+			{
+				PyObject *parameter = PyList_GetItem(parameter_list, iterator);
+
+				if (parameter == NULL)
+				{
+					continue;
+				}
+
+				PyObject *name = PyObject_GetAttrString(parameter, "name");
+				const char *parameter_name = PyUnicode_AsUTF8(name);
+				PyObject *annotation = PyObject_GetAttrString(parameter, "annotation");
+				type t = py_loader_impl_discover_type(impl, annotation, "__init__", parameter_name);
+				constructor_set(ctor, parameter_count++, parameter_name, t);
+				Py_XDECREF(name);
+				Py_XDECREF(annotation);
+			}
+
+			ret = class_register_constructor(c, ctor);
+
+			if (ret != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to register constructor in class %s", class_name(c));
+			}
+		}
+
+		Py_XDECREF(parameter_list);
+	}
+
+	Py_XDECREF(parameters);
+
+	return ret;
+}
+
+int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
+{
+	loader_impl_py py_impl = loader_impl_get(impl);
+
+	/* Inspect the constructor */
+	if (py_loader_impl_discover_constructor(impl, py_class, c) != 0)
+	{
+		constructor ctor = constructor_create(0, VISIBILITY_PUBLIC);
+
+		if (class_register_constructor(c, ctor) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register default constructor in class %s", class_name(c));
+		}
+	}
+
+	if (PyObject_HasAttrString(py_class, "__dict__"))
 	{
 		PyObject *nameobj = PyUnicode_FromString("__dict__");
-		PyObject *read_only_dict = PyObject_GenericGetAttr((PyObject *)obj, nameobj);
+		PyObject *read_only_dict = PyObject_GenericGetAttr((PyObject *)py_class, nameobj);
 		Py_DECREF(nameobj);
 
 		/* Turns out __dict__ is not a PyDict but PyMapping */
 		if (!PyObject_TypeCheck(read_only_dict, &PyDictProxy_Type))
 		{
+			Py_XDECREF(read_only_dict);
 			return 1;
 		}
 
@@ -3061,13 +3375,103 @@ static int py_loader_impl_discover_class(loader_impl impl, PyObject *obj, klass 
 			if (!PyUnicode_CompareWithASCIIString(tuple_key, "__dict__") || !PyUnicode_CompareWithASCIIString(tuple_key, "__weakref__"))
 				continue;
 
-			// value key = py_loader_impl_capi_to_value(impl, tuple_key, py_loader_impl_capi_to_value_type(tuple_key));
-			// value val = py_loader_impl_capi_to_value(impl, tuple_val, py_loader_impl_capi_to_value_type(tuple_val));
+			type_id member_type = py_loader_impl_capi_to_value_type(impl, tuple_val);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s",
+			// Skip None types
+			if (member_type == TYPE_NULL)
+			{
+				continue;
+			}
+
+			PyObject *args = PyTuple_New(2);
+
+			if (args == NULL)
+			{
+				py_loader_impl_error_print(py_impl);
+				continue;
+			}
+
+			PyTuple_SetItem(args, 0, py_class); // class
+			Py_INCREF(py_class);
+			PyTuple_SetItem(args, 1, tuple_key); // method
+			Py_INCREF(tuple_key);
+			PyObject *method_static = PyObject_CallObject(py_impl->inspect_getattr_static, args);
+			Py_DECREF(args);
+			bool is_static_method = PyObject_TypeCheck(method_static, &PyStaticMethod_Type);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: class member %s, type %s, static method: %d",
 				PyUnicode_AsUTF8(tuple_key),
-				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)));
+				type_id_name(py_loader_impl_capi_to_value_type(impl, tuple_val)),
+				is_static_method);
+
+			if (member_type == TYPE_FUNCTION || is_static_method)
+			{
+				enum async_id func_synchronicity = SYNCHRONOUS;
+				size_t args_count;
+
+				if (is_static_method)
+				{
+					PyObject *func = PyObject_GetAttrString(tuple_val, "__func__");
+					args_count = py_loader_impl_discover_callable_args_count(py_impl, func);
+					Py_DECREF(func);
+				}
+				else
+				{
+					args_count = py_loader_impl_discover_callable_args_count(py_impl, tuple_val);
+				}
+
+				if (py_impl->asyncio_iscoroutinefunction &&
+					PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, tuple_val, NULL))
+				{
+					func_synchronicity = ASYNCHRONOUS;
+				}
+
+				method m = method_create(c,
+					PyUnicode_AsUTF8(tuple_key),
+					args_count,
+					tuple_val,
+					VISIBILITY_PUBLIC, // check @property decorator for protected access?
+					func_synchronicity,
+					&py_method_interface_singleton);
+
+				if (is_static_method)
+				{
+					class_register_static_method(c, m);
+				}
+				else
+				{
+					class_register_method(c, m);
+				}
+
+				if (py_loader_impl_discover_method(impl, tuple_val, m, is_static_method) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to discover method %s from class %s",
+						PyUnicode_AsUTF8(tuple_key),
+						class_name(c));
+				}
+			}
+			else
+			{
+				char *name = PyUnicode_AsUTF8(tuple_key);
+				type t = py_loader_impl_get_type(impl, tuple_val);
+
+				if (t == NULL)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid type discovering in class method: %s", name);
+					continue;
+				}
+
+				attribute static_attr = attribute_create(c, name, t, NULL, VISIBILITY_PUBLIC, NULL);
+				attribute attr = attribute_create(c, name, t, NULL, VISIBILITY_PUBLIC, NULL);
+
+				/* In Python all attributes can work as static or non-static, so we register both */
+				class_register_static_attribute(c, static_attr);
+				class_register_attribute(c, attr);
+			}
 		}
+
+		Py_XDECREF(dict_items);
+		Py_XDECREF(read_only_dict);
 	}
 
 	return 0;
@@ -3110,48 +3514,14 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 	// This should never fail since `module` is a valid module object
 	PyObject *module_dict = PyModule_GetDict(module);
 	Py_ssize_t position = 0;
-
 	PyObject *module_dict_key, *module_dict_val;
+	loader_impl_py py_impl = loader_impl_get(impl);
 
 	while (PyDict_Next(module_dict, &position, &module_dict_key, &module_dict_val))
 	{
-		if (PyCallable_Check(module_dict_val))
-		{
-			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
-			int discover_args_count = py_loader_impl_discover_func_args_count(module_dict_val);
-
-			if (discover_args_count >= 0)
-			{
-				loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
-
-				if (py_func == NULL)
-				{
-					goto cleanup;
-				}
-
-				Py_INCREF(module_dict_val);
-				py_func->func = module_dict_val;
-				py_func->impl = impl;
-
-				function f = function_create(func_name, discover_args_count, py_func, &function_py_singleton);
-
-				log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %d", func_name, discover_args_count);
-
-				if (py_loader_impl_discover_func(impl, module_dict_val, f) == 0)
-				{
-					scope sp = context_scope(ctx);
-					scope_define(sp, func_name, value_create_function(f));
-				}
-				else
-				{
-					function_destroy(f);
-				}
-			}
-		}
-
-		// class is also PyCallable
-		// PyObject_IsSubclass(module_dict_val, (PyObject *)&PyType_Type) == 0
+		// Class is also PyCallable, so test for class first
 		if (PyObject_TypeCheck(module_dict_val, &PyType_Type))
+		// PyObject_IsSubclass(module_dict_val, (PyObject *)&PyType_Type) == 0
 		{
 			const char *cls_name = PyUnicode_AsUTF8(module_dict_key);
 
@@ -3164,7 +3534,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			klass c = class_create(cls_name, py_cls, &py_class_interface_singleton);
 
 			py_cls->impl = impl;
-			py_cls->class = module_dict_val;
+			py_cls->cls = module_dict_val;
 
 			if (py_loader_impl_discover_class(impl, module_dict_val, c) == 0)
 			{
@@ -3174,6 +3544,35 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			else
 			{
 				class_destroy(c);
+			}
+		}
+		else if (PyCallable_Check(module_dict_val))
+		{
+			const char *func_name = PyUnicode_AsUTF8(module_dict_key);
+			size_t discover_args_count = py_loader_impl_discover_callable_args_count(py_impl, module_dict_val);
+			loader_impl_py_function py_func = malloc(sizeof(struct loader_impl_py_function_type));
+
+			if (py_func == NULL)
+			{
+				goto cleanup;
+			}
+
+			Py_INCREF(module_dict_val);
+			py_func->func = module_dict_val;
+			py_func->impl = impl;
+
+			function f = function_create(func_name, discover_args_count, py_func, &function_py_singleton);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Introspection: function %s, args count %" PRIuS, func_name, discover_args_count);
+
+			if (py_loader_impl_discover_func(impl, module_dict_val, f) == 0)
+			{
+				scope sp = context_scope(ctx);
+				scope_define(sp, func_name, value_create_function(f));
+			}
+			else
+			{
+				function_destroy(f);
 			}
 		}
 	}
@@ -3349,19 +3748,22 @@ int py_loader_impl_destroy(loader_impl impl)
 	loader_unload_children(impl);
 
 	Py_DECREF(py_impl->inspect_signature);
+	Py_DECREF(py_impl->inspect_getattr_static);
+	Py_DECREF(py_impl->inspect_getfullargspec);
+	Py_DECREF(py_impl->inspect_ismethod);
 	Py_DECREF(py_impl->inspect_module);
 	Py_DECREF(py_impl->builtins_module);
 	Py_DECREF(py_impl->traceback_format_exception);
 	Py_DECREF(py_impl->traceback_module);
-	Py_DECREF(py_impl->import_module);
 	Py_DECREF(py_impl->import_function);
+	Py_DECREF(py_impl->import_module);
 
-	Py_XDECREF(py_impl->asyncio_module);
 	Py_XDECREF(py_impl->asyncio_isfuture);
 	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
 	Py_XDECREF(py_impl->asyncio_run_coroutine_threadsafe);
 	Py_XDECREF(py_impl->asyncio_wrap_future);
 	Py_XDECREF(py_impl->asyncio_loop);
+	Py_XDECREF(py_impl->asyncio_module);
 	Py_XDECREF(py_impl->py_task_callback_handler);
 	Py_XDECREF(py_impl->threading_module);
 

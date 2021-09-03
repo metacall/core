@@ -2947,7 +2947,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 			node_loader_impl_exception(env, status);
 
-			function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
+			function_async(f, is_async == true ? ASYNCHRONOUS : SYNCHRONOUS);
 
 			/* Set return value if any */
 			if (has_ret)
@@ -3312,7 +3312,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 					node_loader_impl_exception(env, status);
 
-					function_async(f, is_async == true ? FUNCTION_ASYNC : FUNCTION_SYNC);
+					function_async(f, is_async == true ? ASYNCHRONOUS : SYNCHRONOUS);
 
 					/* Set return value if any */
 					if (has_ret)

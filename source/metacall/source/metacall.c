@@ -42,6 +42,10 @@
 #define METACALL_ARGS_SIZE 0x10
 #define METACALL_SERIAL	   "rapid_json"
 
+/* -- Type Definitions -- */
+
+typedef value (*method_invoke_ptr)(void *, method, void *[], size_t);
+
 /* -- Global Variables -- */
 
 void *metacall_null_args[1];
@@ -53,6 +57,11 @@ static int metacall_log_null_flag = 1;
 static int metacall_config_flags = 0;
 static int metacall_initialize_argc = 0;
 static char **metacall_initialize_argv = NULL;
+
+/* -- Private Methods -- */
+
+static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
+static type_id *metacall_type_ids(void *args[], size_t size);
 
 /* -- Methods -- */
 
@@ -1738,8 +1747,8 @@ void *metacallfms_await(void *func, const char *buffer, size_t size, void *alloc
 void *metacall_class(const char *name)
 {
 	value c_val = loader_get(name);
-
 	klass c = NULL;
+
 	if (value_type_id(c_val) == TYPE_CLASS)
 	{
 		c = value_to_class(c_val);
@@ -1748,18 +1757,25 @@ void *metacall_class(const char *name)
 	return c;
 }
 
-void *metacall_class_new(void *cls, const char *name, void *args[], size_t argc)
+void *metacall_class_new(void *cls, const char *name, void *args[], size_t size)
 {
-	object o = class_new(cls, name, args, argc);
+	type_id *ids = metacall_type_ids(args, size);
 
-	value v;
+	constructor ctor = class_constructor(cls, ids, size);
+
+	object o = class_new(cls, name, ctor, args, size);
+
+	if (ids != NULL)
+	{
+		free(ids);
+	}
 
 	if (o == NULL)
 	{
 		return NULL;
 	}
 
-	v = value_create_object(o);
+	value v = value_create_object(o);
 
 	if (v == NULL)
 	{
@@ -1779,14 +1795,163 @@ int metacall_class_static_set(void *cls, const char *key, void *v)
 	return class_static_set(cls, key, v);
 }
 
-void *metacallv_class(void *cls, const char *name, void *args[], size_t argc)
+void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size)
 {
-	return class_static_call(cls, name, args, argc);
+	if (v == NULL)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented", name, target);
+		return NULL;
+	}
+
+	if (vector_size(v) == 0)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented", name, target);
+		vector_destroy(v);
+		return NULL;
+	}
+
+	if (vector_size(v) > 1)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is overloaded, you should use 'metacallt_class' instead for disambiguate the call", name, target);
+		vector_destroy(v);
+		return NULL;
+	}
+
+	method m = vector_at_type(v, 0, method);
+
+	if (m == NULL)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is invalid (NULL)", name, target);
+		vector_destroy(v);
+		return NULL;
+	}
+
+	signature s = method_signature(m);
+	size_t iterator;
+
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		type t = signature_get_type(s, iterator);
+
+		if (t != NULL)
+		{
+			type_id id = type_index(t);
+
+			if (id != value_type_id((value)args[iterator]))
+			{
+				value cast_arg = value_type_cast((value)args[iterator], id);
+
+				if (cast_arg != NULL)
+				{
+					args[iterator] = cast_arg;
+				}
+			}
+		}
+	}
+
+	value ret = call(target, m, args, size);
+
+	vector_destroy(v);
+
+	if (ret != NULL)
+	{
+		type t = signature_get_return(s);
+
+		if (t != NULL)
+		{
+			type_id id = type_index(t);
+
+			if (id != value_type_id(ret))
+			{
+				value cast_ret = value_type_cast(ret, id);
+
+				return (cast_ret == NULL) ? ret : cast_ret;
+			}
+		}
+	}
+
+	return ret;
 }
 
-void *metacallv_object(void *obj, const char *name, void *args[], size_t argc)
+void *metacallv_class(void *cls, const char *name, void *args[], size_t size)
 {
-	return object_call(obj, name, args, argc);
+	return metacallv_method(cls, name, (method_invoke_ptr)&class_static_call, class_static_methods(cls, name), args, size);
+}
+
+type_id *metacall_type_ids(void *args[], size_t size)
+{
+	type_id *ids = NULL;
+
+	if (size > 0)
+	{
+		ids = (type_id *)malloc(sizeof(type_id) * size);
+
+		for (size_t iterator = 0; iterator < size; ++iterator)
+		{
+			ids[iterator] = metacall_value_id(args[iterator]);
+		}
+	}
+
+	return ids;
+}
+
+void *metacallt_class(void *cls, const char *name, const enum metacall_value_id ret, void *args[], size_t size)
+{
+	type_id *ids = metacall_type_ids(args, size);
+
+	method m = class_static_method(cls, name, ret, ids, size);
+
+	if (ids != NULL)
+	{
+		free(ids);
+	}
+
+	if (m == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in class <%p> is not implemented with the parameter types being received", name, cls);
+		return NULL;
+	}
+
+	return class_static_call(cls, m, args, size);
+}
+
+void *metacallv_object(void *obj, const char *name, void *args[], size_t size)
+{
+	return metacallv_method(obj, name, (method_invoke_ptr)&object_call, object_methods(obj, name), args, size);
+}
+
+void *metacallt_object(void *obj, const char *name, const enum metacall_value_id ret, void *args[], size_t size)
+{
+	type_id *ids = NULL;
+
+	if (size > 0)
+	{
+		ids = (type_id *)malloc(sizeof(type_id) * size);
+
+		for (size_t iterator = 0; iterator < size; ++iterator)
+		{
+			ids[iterator] = metacall_value_id(args[iterator]);
+		}
+	}
+
+	method m = object_method(obj, name, ret, ids, size);
+
+	if (ids != NULL)
+	{
+		free(ids);
+	}
+
+	if (m == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in object <%p> is not implemented with the parameter types being received", name, obj);
+		return NULL;
+	}
+
+	return object_call(obj, m, args, size);
 }
 
 void *metacall_object_get(void *obj, const char *key)

@@ -226,7 +226,7 @@ vector bucket_get_pairs_value(bucket b, comparable_callback compare_cb, void *ke
 
 		if (compare_cb(key, p->key) == 0)
 		{
-			vector_push_back(v, p->value);
+			vector_push_back(v, &p->value);
 		}
 	}
 

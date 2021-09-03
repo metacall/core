@@ -103,7 +103,7 @@ set(DEFAULT_COMPILE_DEFINITIONS
 )
 
 # MSVC compiler options
-if(WIN32)
+if(WIN32 AND MSVC)
 	set(DEFAULT_COMPILE_DEFINITIONS ${DEFAULT_COMPILE_DEFINITIONS}
 		_SCL_SECURE_NO_WARNINGS	# Calling any one of the potentially unsafe methods in the Standard C++ Library
 		_CRT_SECURE_NO_WARNINGS	# Calling any one of the potentially unsafe methods in the CRT Library
@@ -129,7 +129,24 @@ endif()
 # They are empty by default
 set(DEFAULT_COMPILE_OPTIONS)
 
-if(WIN32)
+if(WIN32 AND MSVC)
+	# Build runtime as multithreaded shared library
+	# if(${CMAKE_VERSION} VERSION_LESS "3.15")
+	# 	set(COMPILER_FLAGS_ID
+	# 		CMAKE_CXX_FLAGS
+	# 		CMAKE_CXX_FLAGS_DEBUG
+	# 		CMAKE_CXX_FLAGS_RELEASE
+	# 		CMAKE_C_FLAGS
+	# 		CMAKE_C_FLAGS_DEBUG
+	# 		CMAKE_C_FLAGS_RELEASE
+	# 	)
+	# 	foreach(FLAG_ID ${COMPILER_FLAGS_ID})
+	# 		string(REPLACE "/MD" "/MT" ${FLAG_ID} "${${FLAG_ID}}")
+	# 	endforeach()
+	# else()
+	# 	set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
+	# endif()
+
 	add_compile_options(/nologo) # Suppress Startup Banner
 	add_compile_options(/W4) # Set warning level to 4
 	add_compile_options(/WX-) # Do not treat warnings as errors
