@@ -50,7 +50,7 @@ macro(cmake_expand_generator_expressions output)
 		"${GENERATOR_EXPRESSION_TEMP_PATH}/CMakeLists.txt"
 		${contents}
 	)
-	execute_process(COMMAND ${CMAKE_COMMAND} -Wno-dev ${GENERATOR_EXPRESSION_TEMP_PATH}
+	execute_process(COMMAND ${CMAKE_COMMAND} -G ${CMAKE_GENERATOR} -Wno-dev ${GENERATOR_EXPRESSION_TEMP_PATH}
 		WORKING_DIRECTORY ${GENERATOR_EXPRESSION_TEMP_PATH}
 		OUTPUT_VARIABLE discard
 	)
