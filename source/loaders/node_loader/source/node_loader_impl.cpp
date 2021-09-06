@@ -3496,19 +3496,6 @@ void node_loader_impl_thread_safe_function_initialize(napi_env env,
 	node_loader_impl_exception(env, status);
 }
 
-template <typename T>
-void node_loader_impl_thread_safe_function_destroy(napi_env env,
-	T **data, napi_threadsafe_function *threadsafe_function)
-{
-	/* Release aborting the thread safe function */
-	napi_status status = napi_release_threadsafe_function(*threadsafe_function, napi_tsfn_abort);
-
-	node_loader_impl_exception(env, status);
-
-	/* Clear safe arguments */
-	delete *data;
-}
-
 void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
@@ -4828,98 +4815,86 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	{
 		/* Safe initialize */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_initialize_safe_type>(
-				env,
-				(loader_impl_async_initialize_safe_type **)(&node_impl->initialize_safe),
-				&node_impl->threadsafe_initialize);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe execution path */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_execution_path_safe_type>(
-				env,
-				(loader_impl_async_execution_path_safe_type **)(&node_impl->execution_path_safe),
-				&node_impl->threadsafe_execution_path);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_execution_path, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe load from file */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_load_from_file_safe_type>(
-				env,
-				(loader_impl_async_load_from_file_safe_type **)(&node_impl->load_from_file_safe),
-				&node_impl->threadsafe_load_from_file);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe load from memory */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_load_from_memory_safe_type>(
-				env,
-				(loader_impl_async_load_from_memory_safe_type **)(&node_impl->load_from_memory_safe),
-				&node_impl->threadsafe_load_from_memory);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe clear */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_clear_safe_type>(
-				env,
-				(loader_impl_async_clear_safe_type **)(&node_impl->clear_safe),
-				&node_impl->threadsafe_clear);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe discover */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_discover_safe_type>(
-				env,
-				(loader_impl_async_discover_safe_type **)(&node_impl->discover_safe),
-				&node_impl->threadsafe_discover);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe function call */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_func_call_safe_type>(
-				env,
-				(loader_impl_async_func_call_safe_type **)(&node_impl->func_call_safe),
-				&node_impl->threadsafe_func_call);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_func_call, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe function await */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_func_await_safe_type>(
-				env,
-				(loader_impl_async_func_await_safe_type **)(&node_impl->func_await_safe),
-				&node_impl->threadsafe_func_await);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe function destroy */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_func_destroy_safe_type>(
-				env,
-				(loader_impl_async_func_destroy_safe_type **)(&node_impl->func_destroy_safe),
-				&node_impl->threadsafe_func_destroy);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe future await */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_future_await_safe_type>(
-				env,
-				(loader_impl_async_future_await_safe_type **)(&node_impl->future_await_safe),
-				&node_impl->threadsafe_future_await);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_future_await, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe future delete */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_future_delete_safe_type>(
-				env,
-				(loader_impl_async_future_delete_safe_type **)(&node_impl->future_delete_safe),
-				&node_impl->threadsafe_future_delete);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe destroy */
 		{
-			node_loader_impl_thread_safe_function_destroy<loader_impl_async_destroy_safe_type>(
-				env,
-				(loader_impl_async_destroy_safe_type **)(&node_impl->destroy_safe),
-				&node_impl->threadsafe_destroy);
+			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
 		}
 	}
 
@@ -5061,6 +5036,20 @@ int node_loader_impl_destroy(loader_impl impl)
 
 	/* Clear mutex syncronization object */
 	uv_mutex_destroy(&node_impl->mutex);
+
+	/* Delete all safe pointers for the queues */
+	delete node_impl->initialize_safe;
+	delete node_impl->execution_path_safe;
+	delete node_impl->load_from_file_safe;
+	delete node_impl->load_from_memory_safe;
+	delete node_impl->clear_safe;
+	delete node_impl->discover_safe;
+	delete node_impl->func_call_safe;
+	delete node_impl->func_await_safe;
+	delete node_impl->func_destroy_safe;
+	delete node_impl->future_await_safe;
+	delete node_impl->future_delete_safe;
+	delete node_impl->destroy_safe;
 
 #ifdef __ANDROID__
 	/* Close file descriptors */

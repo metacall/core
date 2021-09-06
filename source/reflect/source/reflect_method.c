@@ -310,6 +310,11 @@ void method_destroy(method m)
 			m->iface->destroy(m, m->impl);
 		}
 
+		if (m->s)
+		{
+			signature_destroy(m->s);
+		}
+
 		if (m->name)
 		{
 			free(m->name);

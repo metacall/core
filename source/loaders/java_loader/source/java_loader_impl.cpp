@@ -1988,7 +1988,6 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 						}
 					}
 
-
 					jmethodID cls_constructor_array = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_constructors", "(Ljava/lang/Class;)[Ljava/lang/reflect/Constructor;");
 
 					if (cls_constructor_array != nullptr)

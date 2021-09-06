@@ -144,7 +144,7 @@ include(Portability)
 
 find_package(ClangFormat)
 
-if(CLANG_FORMAT_FOUND)
+if(ClangFormat_FOUND)
 	include(ClangDevTools)
 else()
     message(WARNING "clang-format executable not found")
@@ -310,7 +310,7 @@ install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 # Install githooks directory
 #
 
-message("Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR} with `git config --local core.hooksPath githooks`")
+message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR} with `git config --local core.hooksPath githooks`")
 execute_process(
     COMMAND git config --local core.hooksPath githooks
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}

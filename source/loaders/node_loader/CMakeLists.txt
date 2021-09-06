@@ -7,9 +7,9 @@ endif()
 # External dependencies
 #
 
-find_package(NodeJS 10.23.1)
+find_package(NodeJS 12)
 
-if(NOT NODEJS_FOUND)
+if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS libraries not found")
 	return()
 endif()
@@ -152,7 +152,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${NODEJS_INCLUDE_DIRS} # NodeJS includes
+	${NodeJS_INCLUDE_DIRS} # NodeJS includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -170,7 +170,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${NODEJS_LIBRARY} # NodeJS library
+	${NodeJS_LIBRARY} # NodeJS library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -232,7 +232,7 @@ install(TARGETS ${target}
 
 # Runtime (pack the runtime meanwhile NodeJS is not distributed as a library)
 install(FILES
-	${NODEJS_LIBRARY}
+	${NodeJS_LIBRARY}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

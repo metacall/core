@@ -37,13 +37,13 @@ set(target @PACKAGE_NAME@)
 message(STATUS "Script ${target}")
 
 # Custom nodejs section
-if(NODEJS_FOUND)
+if(NodeJS_FOUND)
 
 	# TODO
 
 	# Set custom setup command
 	#add_custom_command(OUTPUT "@PACKAGE_OUTPUT@"
-	#					COMMAND "${NODEJS_EXECUTABLE}" "@PACKAGE_SETUP_NODEJS@" build
+	#					COMMAND "${NodeJS_EXECUTABLE}" "@PACKAGE_SETUP_NODEJS@" build
 	#					COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
 	#					DEPENDS "@PACKAGE_DEPS@")
 endif()

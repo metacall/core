@@ -83,11 +83,11 @@ if(NOT OPTION_BUILD_GUIX)
 		COMPONENT runtime
 	)
 else()
-	set(NODEJS_EXECUTABLE_ONLY ON)
+	set(NodeJS_EXECUTABLE_ONLY ON)
 
 	find_package(NodeJS)
 
-	if(NOT NODEJS_FOUND)
+	if(NOT NodeJS_FOUND)
 		message(STATUS "NodeJS executable not found, skipping ts loader bootstrap build")
 		return()
 	endif()
@@ -95,7 +95,7 @@ else()
 	# Build Bootstrap (without typechecking)
 	add_custom_target(${target} ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
-		COMMAND ${NODEJS_EXECUTABLE} compile.js
+		COMMAND ${NodeJS_EXECUTABLE} compile.js
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
 		SOURCES ${sources}
 		DEPENDS ${sources}

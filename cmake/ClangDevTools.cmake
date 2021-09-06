@@ -1,5 +1,5 @@
 # See FindClangFormat.cmake
-# Variables of interest on this file: ${CLANG_FORMAT_VERSION} and ${CLANG_FORMAT_EXECUTABLE}
+# Variables of interest on this file: ${ClangFormat_VERSION} and ${ClangFormat_EXECUTABLE}
 
 # Get only C/C++ files for now
 file(GLOB_RECURSE
@@ -29,7 +29,7 @@ file(GLOB_RECURSE
 
 add_custom_target(
 	clang-format
-	COMMAND ${CLANG_FORMAT_EXECUTABLE}
+	COMMAND ${ClangFormat_EXECUTABLE}
 	--verbose
 	-style=file
 	-i

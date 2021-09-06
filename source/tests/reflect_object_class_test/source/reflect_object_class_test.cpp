@@ -58,9 +58,10 @@ int hello_world_object_impl_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value hello_world_object_impl_interface_get(object obj, object_impl impl, const char *key)
+value hello_world_object_impl_interface_get(object obj, object_impl impl, attribute attr)
 {
 	hello_world_object hello_world = (hello_world_object)impl;
+	const char *key = attribute_name(attr);
 
 	(void)obj;
 
@@ -77,9 +78,10 @@ value hello_world_object_impl_interface_get(object obj, object_impl impl, const 
 	return NULL;
 }
 
-int hello_world_object_impl_interface_set(object obj, object_impl impl, const char *key, value v)
+int hello_world_object_impl_interface_set(object obj, object_impl impl, attribute attr, value v)
 {
 	hello_world_object hello_world = (hello_world_object)impl;
+	const char *key = attribute_name(attr);
 
 	EXPECT_NE((void *)NULL, (void *)hello_world);
 
@@ -98,26 +100,26 @@ int hello_world_object_impl_interface_set(object obj, object_impl impl, const ch
 	return 0;
 }
 
-value hello_world_object_impl_interface_method_invoke(object obj, object_impl impl, const char *key, object_args args, size_t size)
+value hello_world_object_impl_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t size)
 {
 	// TODO: Maybe we can improve this with other methods and arguments like in reflect_function_test
 	static const char str[] = "Hello World";
 
 	(void)obj;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 
 	return value_create_string(str, sizeof(str) - 1);
 }
 
-value hello_world_object_impl_interface_method_await(object obj, object_impl impl, const char *key, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+value hello_world_object_impl_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
 {
 	// TODO
 	(void)obj;
 	(void)impl;
-	(void)key;
+	(void)m;
 	(void)args;
 	(void)size;
 	(void)resolve;
@@ -176,11 +178,12 @@ int hello_world_class_impl_interface_create(klass cls, class_impl impl)
 	return 0;
 }
 
-object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, const char *name, class_args args, size_t size)
+object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t size)
 {
 	hello_world_object hello_world_obj = new hello_world_object_type();
 
 	(void)impl;
+	(void)ctor;
 
 	object obj = object_create(name, hello_world_obj, &hello_world_object_impl_interface_singleton, cls);
 
@@ -340,7 +343,64 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 	EXPECT_EQ((int)class_increment_reference(cls), (int)0);
 
-	// TODO: Fix class_static_get and set params
+	// Register constructors
+	constructor default_ctor = constructor_create(0, VISIBILITY_PUBLIC);
+	constructor custom_ctor = constructor_create(2, VISIBILITY_PUBLIC);
+
+	ASSERT_NE((constructor)NULL, (constructor)default_ctor);
+	ASSERT_NE((constructor)NULL, (constructor)custom_ctor);
+
+	type char_type = type_create(TYPE_CHAR, "char", NULL, NULL);
+	type long_type = type_create(TYPE_LONG, "long", NULL, NULL);
+	type str_type = type_create(TYPE_STRING, "string", NULL, NULL);
+	type int_type = type_create(TYPE_INT, "int", NULL, NULL);
+	type float_type = type_create(TYPE_FLOAT, "float", NULL, NULL);
+
+	ASSERT_NE((type)NULL, (type)char_type);
+	ASSERT_NE((type)NULL, (type)long_type);
+	ASSERT_NE((type)NULL, (type)str_type);
+	ASSERT_NE((type)NULL, (type)int_type);
+	ASSERT_NE((type)NULL, (type)float_type);
+
+	constructor_set(custom_ctor, 0, "c", char_type);
+	constructor_set(custom_ctor, 1, "l", long_type);
+
+	EXPECT_EQ((int)0, (int)class_register_constructor(cls, default_ctor));
+	EXPECT_EQ((int)0, (int)class_register_constructor(cls, custom_ctor));
+
+	// Register methods
+	method test_func_method = method_create(cls, "test_func", 0, NULL, VISIBILITY_PUBLIC, SYNCHRONOUS, NULL);
+
+	ASSERT_NE((method)NULL, (method)test_func_method);
+
+	signature s = method_signature(test_func_method);
+
+	signature_set_return(s, str_type);
+
+	EXPECT_EQ((int)0, (int)class_register_method(cls, test_func_method));
+
+	// Register static attributes
+	attribute a_attr = attribute_create(cls, "a", int_type, NULL, VISIBILITY_PUBLIC, NULL);
+	attribute b_attr = attribute_create(cls, "b", float_type, NULL, VISIBILITY_PUBLIC, NULL);
+	attribute c_attr = attribute_create(cls, "c", str_type, NULL, VISIBILITY_PUBLIC, NULL);
+
+	ASSERT_NE((attribute)NULL, (attribute)a_attr);
+	ASSERT_NE((attribute)NULL, (attribute)b_attr);
+	ASSERT_NE((attribute)NULL, (attribute)c_attr);
+
+	EXPECT_EQ((int)0, (int)class_register_static_attribute(cls, a_attr));
+	EXPECT_EQ((int)0, (int)class_register_static_attribute(cls, b_attr));
+	EXPECT_EQ((int)0, (int)class_register_static_attribute(cls, c_attr));
+
+	// Register attributes
+	attribute d_attr = attribute_create(cls, "d", char_type, NULL, VISIBILITY_PUBLIC, NULL);
+	attribute e_attr = attribute_create(cls, "e", long_type, NULL, VISIBILITY_PUBLIC, NULL);
+
+	ASSERT_NE((attribute)NULL, (attribute)d_attr);
+	ASSERT_NE((attribute)NULL, (attribute)e_attr);
+
+	EXPECT_EQ((int)0, (int)class_register_attribute(cls, d_attr));
+	EXPECT_EQ((int)0, (int)class_register_attribute(cls, e_attr));
 
 	// Get and set static attributes from the class
 	{
@@ -384,7 +444,15 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			NULL
 		};
 
-		object obj = class_new(cls, "helloWorldObj", args, 0);
+		type_id ctor_ids[] = {
+			TYPE_INVALID
+		};
+
+		constructor ctor = class_constructor(cls, ctor_ids, 0);
+
+		ASSERT_EQ((constructor)ctor, (constructor)default_ctor);
+
+		object obj = class_new(cls, "helloWorldObj", ctor, args, 0);
 		ASSERT_NE((object)NULL, (object)obj);
 
 		// Get & set attributes from object
@@ -417,9 +485,20 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 		}
 
 		// Test object call
-		value ret = object_call(obj, "test_func", args, 0);
+		type_id method_ids[] = {
+			TYPE_INVALID
+		};
+
+		method m = class_method(cls, "test_func", TYPE_STRING, method_ids, 0);
+
+		ASSERT_EQ((method)m, (method)test_func_method);
+
+		value ret = object_call(obj, m, args, 0);
+
 		ASSERT_NE((value)NULL, (value)ret);
+
 		ASSERT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+
 		value_type_destroy(ret);
 
 		// TODO: Test object await
@@ -434,7 +513,16 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 			value_create_long(3435L)
 		};
 
-		object obj = class_new(cls, "helloWorldObj", args, 2);
+		type_id ctor_ids[] = {
+			TYPE_CHAR,
+			TYPE_LONG
+		};
+
+		constructor ctor = class_constructor(cls, ctor_ids, 2);
+
+		ASSERT_EQ((constructor)ctor, (constructor)custom_ctor);
+
+		object obj = class_new(cls, "helloWorldObj", ctor, args, 2);
 		ASSERT_NE((object)NULL, (object)obj);
 
 		value_type_destroy(args[0]);
@@ -454,15 +542,32 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 		}
 
 		// Test object call
-		value ret = object_call(obj, "test_func", args, 0);
+		type_id method_ids[] = {
+			TYPE_INVALID
+		};
+
+		method m = class_method(cls, "test_func", TYPE_STRING, method_ids, 0);
+
+		ASSERT_EQ((method)m, (method)test_func_method);
+
+		value ret = object_call(obj, m, args, 0);
+
 		ASSERT_NE((value)NULL, (value)ret);
+
 		ASSERT_EQ((int)0, (int)strcmp(value_to_string(ret), "Hello World"));
+
 		value_type_destroy(ret);
 
 		// TODO: Test object await
 
 		object_destroy(obj);
 	}
+
+	type_destroy(char_type);
+	type_destroy(long_type);
+	type_destroy(str_type);
+	type_destroy(int_type);
+	type_destroy(float_type);
 
 	class_destroy(cls);
 }

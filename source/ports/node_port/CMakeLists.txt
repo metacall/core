@@ -127,17 +127,17 @@ test_environment_variables(${target}
 return()
 
 # Detect exec with MetaCall CLI when this is being run with node
-set(NODEJS_EXECUTABLE_ONLY ON)
+set(NodeJS_EXECUTABLE_ONLY ON)
 
-find_package(NodeJS 10.23.1)
+find_package(NodeJS 12)
 
-if(NOT NODEJS_FOUND)
+if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS libraries not found")
 	return()
 endif()
 
 add_test(NAME ${target}_node_binary
-	COMMAND ${TEST_COMMAND} "${NODEJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/node_integration.js | ${GREP_COMMAND} \"NodeJS Integration Test Passed\""
+	COMMAND ${TEST_COMMAND} "${NodeJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/node_integration.js | ${GREP_COMMAND} \"NodeJS Integration Test Passed\""
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 test_environment_variables(${target}_node_binary

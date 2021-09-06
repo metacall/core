@@ -131,17 +131,17 @@ add_dependencies(${target}
 # Define test
 #
 
-set(NODEJS_EXECUTABLE_ONLY ON)
+set(NodeJS_EXECUTABLE_ONLY ON)
 
-find_package(NodeJS 10.23.1)
+find_package(NodeJS 12)
 
-if(NOT NODEJS_FOUND)
+if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS executable not found, skipping RPC loader test")
 	return()
 endif()
 
 add_test(NAME ${target}
-	COMMAND ${NODEJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/source/test.js ${CMAKE_CURRENT_SOURCE_DIR}/source/server.js $<TARGET_FILE:${target}>
+	COMMAND ${NodeJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/source/test.js ${CMAKE_CURRENT_SOURCE_DIR}/source/server.js $<TARGET_FILE:${target}>
 )
 
 #

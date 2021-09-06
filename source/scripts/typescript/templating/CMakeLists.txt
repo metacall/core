@@ -2,11 +2,11 @@
 # External dependencies
 #
 
-set(NODEJS_EXECUTABLE_ONLY ON)
+set(NodeJS_EXECUTABLE_ONLY ON)
 
 find_package(NodeJS)
 
-if(NOT NODEJS_FOUND)
+if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS executable not found")
 	return()
 endif()
