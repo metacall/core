@@ -128,7 +128,7 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	file_loader
+	rb_loader
 )
 
 #

@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target rb-loader-parser-integration-test)
+set(target metacall-ruby-parser-integration-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/rb_loader_parser_integration_test.cpp
+	${source_path}/metacall_ruby_parser_integration_test.cpp
 )
 
 # Group source files

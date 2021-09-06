@@ -9,7 +9,7 @@ endif()
 
 find_package(Ruby)
 
-if(NOT RUBY_FOUND)
+if(NOT Ruby_FOUND)
 	message(STATUS "Ruby libraries not found")
 	return()
 endif()
@@ -134,7 +134,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${RUBY_INCLUDE_DIRS} # Ruby includes
+	${Ruby_INCLUDE_DIRS} # Ruby includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -153,7 +153,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 
-	${RUBY_LIBRARY} # Ruby library
+	${Ruby_LIBRARY} # Ruby library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

@@ -9,7 +9,7 @@ endif()
 
 find_package(Ruby)
 
-if(NOT RUBY_FOUND)
+if(NOT Ruby_FOUND)
 	message(STATUS "Ruby libraries not found")
 	return()
 endif()
@@ -166,7 +166,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
-	${RUBY_INCLUDE_DIRS} # Ruby includes
+	${Ruby_INCLUDE_DIRS} # Ruby includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -183,7 +183,7 @@ target_include_directories(${SWIG_MODULE_${target}_REAL_NAME}
 
 swig_link_libraries(${target}
 	PRIVATE
-	${RUBY_LIBRARY} # Ruby libraries
+	${Ruby_LIBRARY} # Ruby libraries
 
 	${META_PROJECT_NAME}::metacall
 
@@ -298,7 +298,7 @@ configure_file(test/run.rb.in ${rb_port_test_path})
 #
 
 add_test(NAME ${target}
-	COMMAND ${RUBY_EXECUTABLE} ${rb_port_test_path}
+	COMMAND ${Ruby_EXECUTABLE} ${rb_port_test_path}
 )
 
 #

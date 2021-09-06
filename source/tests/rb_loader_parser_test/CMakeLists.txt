@@ -94,13 +94,6 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::memory
 	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::filesystem
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::detour
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::serial
-	${META_PROJECT_NAME}::configuration
-	${META_PROJECT_NAME}::loader
 	${META_PROJECT_NAME}::rb_loader
 )
 

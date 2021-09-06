@@ -35,13 +35,13 @@ set(target @PACKAGE_NAME@)
 message(STATUS "Script ${target}")
 
 # Custom ruby section
-if(RUBY_FOUND)
+if(Ruby_FOUND)
 
 	# TODO
 
 	# Set custom setup command
 	#add_custom_command(OUTPUT "@PACKAGE_OUTPUT@"
-	#					COMMAND "${RUBY_EXECUTABLE}" "@PACKAGE_SETUP_RB@" build
+	#					COMMAND "${Ruby_EXECUTABLE}" "@PACKAGE_SETUP_RB@" build
 	#					COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
 	#					DEPENDS "@PACKAGE_DEPS@")
 endif()

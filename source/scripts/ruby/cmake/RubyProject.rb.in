@@ -21,7 +21,7 @@
 
 # TODO
 
-ruby '@RUBY_VERSION@'
+ruby '@Ruby_VERSION@'
 
 #gem name '@PACKAGE_NAME@'
 #gem version '@PACKAGE_VERSION@'

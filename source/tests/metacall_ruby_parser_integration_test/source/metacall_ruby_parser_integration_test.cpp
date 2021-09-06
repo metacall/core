@@ -22,13 +22,14 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
+#include <metacall/metacall_value.h>
 
-class rb_rails_integration_test : public testing::Test
+class metacall_ruby_parser_integration_test : public testing::Test
 {
 public:
 };
 
-TEST_F(rb_rails_integration_test, DefaultConstructor)
+TEST_F(metacall_ruby_parser_integration_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -38,22 +39,42 @@ TEST_F(rb_rails_integration_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_RB)
 	{
 		const char *rb_scripts[] = {
-			"blog.rb"
+			"cache.rb"
 		};
-
-		const char func_run[] = "run_and_kill_server";
 
 		void *ret = NULL;
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_file("rb", rb_scripts, sizeof(rb_scripts) / sizeof(rb_scripts[0]), NULL));
 
-		EXPECT_NE((void *)NULL, (void *)metacall_function(func_run));
-
-		ret = metacall(func_run);
+		ret = metacall("cache_initialize");
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((int)0, (int)metacall_value_to_int(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("cache_set", "meta", "call");
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("cache_has_key", "meta");
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_NE((int)0, (int)metacall_value_to_bool(ret));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("cache_get", "meta");
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "call"));
 
 		metacall_value_destroy(ret);
 	}

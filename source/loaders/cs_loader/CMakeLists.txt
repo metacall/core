@@ -3,6 +3,7 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_CS)
 	return()
 endif()
 
+# TODO: Make this part of FindCoreCLR.cmake (automatically detect it)
 set(DOTNET_CORE_PATH "" CACHE PATH "Dotnet runtime path")
 
 #
