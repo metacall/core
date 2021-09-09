@@ -1,5 +1,7 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_WASM)
+if(NOT (OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_WASM AND OPTION_BUILD_LOADERS_PY
+    AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_WASM AND OPTION_BUILD_SCRIPTS_PY
+    AND OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY))
 	return()
 endif()
 
@@ -8,7 +10,7 @@ endif()
 #
 
 # Target name
-set(target wasm-loader-test)
+set(target metacall-wasm-python-port-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +34,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/wasm_loader_test.cpp
+	${source_path}/metacall_wasm_python_port_test.cpp
 )
 
 # Group source files
@@ -97,13 +99,6 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 )
 
-if(OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_WASM)
-	target_compile_definitions(${target}
-		PRIVATE
-		BUILD_SCRIPT_TESTS
-	)
-endif()
-
 #
 # Compile options
 #
@@ -136,6 +131,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	wasm_loader
+	py_loader
 )
 
 #

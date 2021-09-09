@@ -1,5 +1,6 @@
 /*
- *	WebAssembly Loader Tests by Parra Studios
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -19,27 +20,9 @@
 
 #include <gtest/gtest.h>
 
-#include <metacall/metacall.h>
-#include <metacall/metacall_value.h>
-
-class wasm_python_port_test : public testing::Test
+int main(int argc, char *argv[])
 {
-protected:
-	void SetUp() override
-	{
-		metacall_initialize();
-	}
+	::testing::InitGoogleTest(&argc, argv);
 
-	void TearDown() override
-	{
-		metacall_destroy();
-	}
-};
-
-TEST_F(wasm_python_port_test, CallWasmFromPython)
-{
-	const char *script = "wasm_test.py";
-
-	ASSERT_EQ(0, metacall_load_from_file("py", &script, 1, NULL));
-	ASSERT_EQ(0, metacall_destroy());
+	return RUN_ALL_TESTS();
 }

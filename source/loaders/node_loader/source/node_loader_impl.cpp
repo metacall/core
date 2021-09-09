@@ -4707,8 +4707,11 @@ void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void *arg)
 
 	if (uv_is_active(handle) && !uv_is_closing(handle))
 	{
-		// TODO: Improve counter for timers and timeouts, in order to close the event loop properly
-		if (!(handle->type == UV_TIMER && !uv_has_ref(handle)))
+		// NOTE: I am not sure if this check for timers is correct, at least for versions
+		// previous from v11.0.0. Now the node loader seems to be working for versions >=v12.
+		// If there is any other error when closing, improve counter for timers and timeouts.
+		// Signals have been added because they do not prevent the event loop from closing.
+		if (/*(!(handle->type == UV_TIMER && !uv_has_ref(handle))) ||*/ handle->type != UV_SIGNAL)
 		{
 			(*async_count)++;
 		}

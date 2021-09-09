@@ -22,7 +22,7 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_value.h>
 
-class wasm_loader_test : public testing::Test
+class metacall_wasm_loader_test : public testing::Test
 {
 protected:
 	void SetUp() override
@@ -56,7 +56,7 @@ void TestFunction(void *handle, const char *name, const std::vector<enum metacal
 	ASSERT_EQ(expected_return_type, return_type);
 }
 
-TEST_F(wasm_loader_test, InitializeAndDestroy)
+TEST_F(metacall_wasm_loader_test, InitializeAndDestroy)
 {
 	// This is extremely hacky and causes an error when loading the buffer,
 	// since it is invalid. However, it is currently impossible to initialize a
@@ -72,7 +72,7 @@ TEST_F(wasm_loader_test, InitializeAndDestroy)
 	ASSERT_EQ(0, metacall_destroy());
 }
 
-TEST_F(wasm_loader_test, LoadBinaryFromMemory)
+TEST_F(metacall_wasm_loader_test, LoadBinaryFromMemory)
 {
 	// See https://webassembly.github.io/spec/core/binary/modules.html#binary-module
 	const char empty_module[] = {
@@ -85,7 +85,7 @@ TEST_F(wasm_loader_test, LoadBinaryFromMemory)
 	ASSERT_NE(0, metacall_load_from_memory("wasm", invalid_module, sizeof(invalid_module), NULL));
 }
 
-TEST_F(wasm_loader_test, LoadTextFromMemory)
+TEST_F(metacall_wasm_loader_test, LoadTextFromMemory)
 {
 	const char *empty_module = "(module)";
 	ASSERT_EQ(0, metacall_load_from_memory("wasm", empty_module, strlen(empty_module), NULL));
@@ -95,7 +95,7 @@ TEST_F(wasm_loader_test, LoadTextFromMemory)
 }
 
 #if defined(BUILD_SCRIPT_TESTS)
-TEST_F(wasm_loader_test, LoadFromFile)
+TEST_F(metacall_wasm_loader_test, LoadFromFile)
 {
 	const char *empty_module_filename = "empty_module.wat";
 	const char *invalid_module_filename = "invalid_module.wat";
@@ -104,13 +104,13 @@ TEST_F(wasm_loader_test, LoadFromFile)
 	ASSERT_NE(0, metacall_load_from_file("wasm", &invalid_module_filename, 1, NULL));
 }
 
-TEST_F(wasm_loader_test, LoadFromPackage)
+TEST_F(metacall_wasm_loader_test, LoadFromPackage)
 {
 	ASSERT_EQ(0, metacall_load_from_package("wasm", "empty_module.wasm", NULL));
 	ASSERT_NE(0, metacall_load_from_package("wasm", "invalid_module.wasm", NULL));
 }
 
-TEST_F(wasm_loader_test, DiscoverFunctions)
+TEST_F(metacall_wasm_loader_test, DiscoverFunctions)
 {
 	const char *functions_module_filename = "functions.wat";
 	void *handle;
@@ -128,7 +128,7 @@ TEST_F(wasm_loader_test, DiscoverFunctions)
 	TestFunction(handle, "i32_f32_i64_f64_ret_i32_f32_i64_f64", { METACALL_INT, METACALL_FLOAT, METACALL_LONG, METACALL_DOUBLE }, METACALL_ARRAY);
 }
 
-TEST_F(wasm_loader_test, CallFunctions)
+TEST_F(metacall_wasm_loader_test, CallFunctions)
 {
 	const char *functions_module_filename = "functions.wat";
 
@@ -181,7 +181,7 @@ TEST_F(wasm_loader_test, CallFunctions)
 	ASSERT_EQ(NULL, ret);
 }
 
-TEST_F(wasm_loader_test, LinkModules)
+TEST_F(metacall_wasm_loader_test, LinkModules)
 {
 	const char *modules[] = {
 		"exports1.wat",
@@ -202,7 +202,7 @@ TEST_F(wasm_loader_test, LinkModules)
 	metacall_value_destroy(ret);
 }
 
-TEST_F(wasm_loader_test, InvalidLinkModules)
+TEST_F(metacall_wasm_loader_test, InvalidLinkModules)
 {
 	const char *modules[] = {
 		"exports1.wat",
