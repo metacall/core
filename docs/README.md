@@ -97,37 +97,36 @@ This section describes all programming languages that **METACALL** allows to loa
 
 - Currently supported languages and run-times:
 
-| Language                                                           | Runtime                                                                                                        |            Version             |  Tag  |
-| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | :----------------------------: | :---: |
-| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.9**        |  py   |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |   **>= 10.22.0 <= 15.20.0**    | node  |
-| [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **4.2.3**            |  ts   |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js   |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 5.0.4** |  cs   |
-| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                      |       **>= 2.1 <= 2.5**        |  rb   |
-| [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                               |          **>= 1.1.0**          |  cob  |
-| [File](/source/loaders/file_loader)                                | **∅**                                                                                                          |           **0.1.0**            | file  |
-| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                                          |           **0.1.0**            | mock  |
-| [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                                  |          **>=7.64.0**          |  rpc  |
+| Language                                                           | Runtime                                                                                                        |            Version             | Tag  |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- | :----------------------------: | :--: |
+| [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                     |       **>= 3.2 <= 3.9**        |  py  |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                     |   **>= 10.22.0 <= 15.20.0**    | node |
+| [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API) |           **4.2.3**            |  ts  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                          |          **5.1.117**           |  js  |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                   | **>= 1.0.0-preview2 <= 5.0.9** |  cs  |
+| [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                      |       **>= 2.1 <= 2.7**        |  rb  |
+| [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                               |          **>= 1.1.0**          | cob  |
+| [File](/source/loaders/file_loader)                                | **∅**                                                                                                          |           **0.1.0**            | file |
+| [Mock](/source/loaders/mock_loader)                                | **∅**                                                                                                          |           **0.1.0**            | mock |
+| [RPC](https://en.wikipedia.org/wiki/Remote_procedure_call)         | [cURL](https://curl.haxx.se/)                                                                                  |          **>=7.64.0**          | rpc  |
+| [Java](https://www.java.com)                                       | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                                      |            **>=11**            | java |
+| [WebAssembly](https://webassembly.org/)                            | [Wasmtime](https://github.com/bytecodealliance/wasmtime)                                                       |          **>= 0.27**           | wasm |
 
 
 - Languages and run-times under construction:
 
-| Language                                                                      | Runtime                                                                                                |  Tag  |
-| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | :---: |
-| [WebAssembly](https://webassembly.org/)                                       | [WebAssembly Virtual Machine](https://github.com/WAVM/WAVM)                                            | wasm  |
-| [C/C++](http://www.cplusplus.com/)                                            | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |   c   |
-| [Java](https://www.java.com/)                                                 | [JNI](https://docs.oracle.com/javase/8/docs/technotes/guides/jni/)                                     | java  |
-| [PHP](https://php.net/)                                                       | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       |  php  |
-| [Go](https://golang.org/)                                                     | Go Runtime                                                                                             |  go   |
-| [Haskell](https://www.haskell.org/)                                           | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs   |
-| [Crystal](https://crystal-lang.org/)                                          | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr   |
-| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) |  jsm  |
-| [Dart](https://dart.dev/)                                                     | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart  |
-| [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        |  lua  |
-| [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm  |
-| [Java](https://www.java.com)                                                  | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)                                              | java  |
-| [Julia](https://julialang.org/)                                               | [Julia Runtime](https://docs.julialang.org/en/v1/devdocs/init/)                                        |  jl   |
+| Language                                                                      | Runtime                                                                                                | Tag  |
+| ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | :--: |
+| [C/C++](http://www.cplusplus.com/)                                            | [Clang](https://clang.llvm.org/) - [LLVM](https://llvm.org/) - [libffi](http://sourceware.org/libffi/) |  c   |
+| [PHP](https://php.net/)                                                       | [Zend](https://www.php.net/manual/en/internals2.ze1.zendapi.php)                                       | php  |
+| [Go](https://golang.org/)                                                     | Go Runtime                                                                                             |  go  |
+| [Haskell](https://www.haskell.org/)                                           | [Haskell FFI](https://wiki.haskell.org/GHC/Using_the_FFI)                                              |  hs  |
+| [Crystal](https://crystal-lang.org/)                                          | [Crystal Compiler Internals](https://github.com/crystal-lang/crystal/wiki/Compiler-internals)          |  cr  |
+| [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript)            | [SpiderMonkey](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/SpiderMonkey/JSAPI_reference) | jsm  |
+| [Dart](https://dart.dev/)                                                     | [Dart VM](https://dart.dev/tools/dart-vm)                                                              | dart |
+| [LuaJIT](https://luajit.org/)                                                 | [LuaJIT2](https://github.com/openresty/luajit2)                                                        | lua  |
+| [LLVM IR](https://www.llvm.org/devmtg/2017-06/1-Davis-Chisnall-LLVM-2017.pdf) | [LLVM](https://llvm.org/)                                                                              | llvm |
+| [Julia](https://julialang.org/)                                               | [Julia Runtime](https://docs.julialang.org/en/v1/devdocs/init/)                                        |  jl  |
 
 
 ### 2.2 Ports (Frontends)
@@ -727,12 +726,12 @@ For running other Valgrind's tools like helgrind or similar, I recommend running
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|     Operative System     |    Architecture     |    Compiler     |                                              Build Status                                              |
-| :----------------------: | :-----------------: | :-------------: | :----------------------------------------------------------------------------------------------------: |
-|    **`ubuntu:focal`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                        |
+|     Operative System     |    Architecture     |    Compiler     |                                               Build Status                                                |
+| :----------------------: | :-----------------: | :-------------: | :-------------------------------------------------------------------------------------------------------: |
+|    **`ubuntu:focal`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                           |
 | **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/pipeline.svg)](https://gitlab.com/metacall/core) |
-| **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                        |
-|      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                        |
+| **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                           |
+|      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                           |
 
 ### 7.1 Docker Support
 
