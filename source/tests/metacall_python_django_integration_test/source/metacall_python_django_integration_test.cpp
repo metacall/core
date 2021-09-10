@@ -23,12 +23,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-class py_django_integration_test : public testing::Test
+class metacall_python_django_integration_test : public testing::Test
 {
 public:
 };
 
-TEST_F(py_django_integration_test, DefaultConstructor)
+TEST_F(metacall_python_django_integration_test, DefaultConstructor)
 {
 	metacall_print_info();
 

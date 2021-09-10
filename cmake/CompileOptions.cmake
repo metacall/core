@@ -205,7 +205,7 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-g)
-		add_compile_options(-rdynamic)
+		add_link_options(-rdynamic)
 	endif()
 
 	# Optimizations

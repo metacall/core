@@ -38,8 +38,9 @@ protected:
 
 TEST_F(metacall_wasm_python_port_test, CallWasmFromPython)
 {
-	const char *script = "wasm_test.py";
+	const char *scripts[] = {
+		"wasm.py"
+	};
 
-	ASSERT_EQ(0, metacall_load_from_file("py", &script, 1, NULL));
-	ASSERT_EQ(0, metacall_destroy());
+	ASSERT_EQ(0, metacall_load_from_file("py", scripts, 1, NULL));
 }

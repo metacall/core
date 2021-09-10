@@ -23,7 +23,7 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-class py_loader_port_test : public testing::Test
+class metacall_python_loader_port_test : public testing::Test
 {
 public:
 };
@@ -42,7 +42,7 @@ void *callback_host(size_t argc, void *args[], void *data)
 	return metacall_value_create_int(25);
 }
 
-TEST_F(py_loader_port_test, DefaultConstructor)
+TEST_F(metacall_python_loader_port_test, DefaultConstructor)
 {
 	metacall_print_info();
 

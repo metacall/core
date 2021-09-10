@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/py_loader_port_test.cpp
+	${source_path}/metacall_python_loader_port_test.cpp
 )
 
 # Group source files

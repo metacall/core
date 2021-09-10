@@ -2,4 +2,4 @@
 # Configure python project
 #
 
-py_project(wasm_test 0.1.0)
+py_project(wasm 0.1.0)

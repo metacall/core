@@ -56,7 +56,7 @@ sub_apt(){
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	sub_apt_install_hold python3 libpython3.7
+	sub_apt_install_hold python3 libpython3.9
 }
 
 # Ruby

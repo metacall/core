@@ -9,7 +9,7 @@ endif()
 
 find_package(PythonLibs 3 REQUIRED)
 
-set(Python_ADDITIONAL_VERSIONS 3.7)
+set(Python_ADDITIONAL_VERSIONS 3)
 
 find_package(PythonInterp REQUIRED)
 
@@ -31,7 +31,7 @@ endif()
 #
 
 # Target name
-set(target py-django-integration-test)
+set(target metacall-python-django-integration-test)
 message(STATUS "Test ${target}")
 
 #
@@ -55,7 +55,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/py_django_integration_test.cpp
+	${source_path}/metacall_python_django_integration_test.cpp
 )
 
 # Group source files
