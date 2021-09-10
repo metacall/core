@@ -105,26 +105,13 @@ sub_ruby(){
 	echo "configure ruby"
 	cd $ROOT_DIR
 
-	# TODO: Remove this when using ruby2.5 (not available yet because it fails on loading a script with a malloc error)
-	$SUDO_CMD mv /etc/apt/sources.list /etc/apt/sources.list.backup
-	$SUDO_CMD sh -c "echo \"deb http://ftp.debian.org/debian/ stretch main\" > /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://ftp.debian.org/debian/ stretch main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb http://security.debian.org/debian-security stretch/updates main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://security.debian.org/debian-security stretch/updates main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb http://ftp.debian.org/debian/ stretch-updates main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://ftp.debian.org/debian/ stretch-updates main\" >> /etc/apt/sources.list"
-
 	$SUDO_CMD apt-get update
-	#$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-remove-essential install git-core curl zlib1g-dev build-essential libssl-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt1-dev libcurl4-openssl-dev software-properties-common libffi-dev ruby2.5 libruby2.5 ruby2.5-dev
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-remove-essential --allow-downgrades install libgmp10=2:6.1.2+dfsg-1 libgmp-dev libncurses5 libtinfo5 ruby2.3 libruby2.3 ruby2.3-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install ruby2.7 ruby2.7-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 	#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 	#$SUDO_CMD gem install rails
-
-	# TODO: Remove this when using ruby2.5 (not available yet because it fails on loading a script with a malloc error)
-	$SUDO_CMD mv /etc/apt/sources.list.backup /etc/apt/sources.list
 }
 
 # RapidJSON
