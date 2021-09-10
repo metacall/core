@@ -571,7 +571,7 @@ int dart_loader_impl_destroy(loader_impl impl)
 	if (dart_impl != nullptr)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl);
+		loader_unload_children(impl, 0);
 
 		delete dart_impl;
 

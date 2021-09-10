@@ -2024,6 +2024,12 @@ int metacall_destroy()
 		configuration_destroy();
 
 		metacall_initialize_flag = 1;
+
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		function_stats_debug();
+		class_stats_debug();
+		object_stats_debug();
+#endif
 	}
 
 	return 0;

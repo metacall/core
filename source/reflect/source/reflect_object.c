@@ -37,6 +37,14 @@ struct object_type
 	klass cls;
 };
 
+static struct
+{
+	uint64_t allocations;
+	uint64_t deallocations;
+	uint64_t increments;
+	uint64_t decrements;
+} object_stats = { 0, 0, 0, 0 };
+
 static value object_metadata_name(object obj);
 
 object object_create(const char *name, object_impl impl, object_impl_interface_singleton singleton, klass cls)
@@ -89,6 +97,8 @@ object object_create(const char *name, object_impl impl, object_impl_interface_s
 		}
 	}
 
+	++object_stats.allocations;
+
 	return obj;
 }
 
@@ -105,6 +115,7 @@ int object_increment_reference(object obj)
 	}
 
 	++obj->ref_count;
+	++object_stats.increments;
 
 	return 0;
 }
@@ -122,6 +133,7 @@ int object_decrement_reference(object obj)
 	}
 
 	--obj->ref_count;
+	++object_stats.decrements;
 
 	return 0;
 }
@@ -333,6 +345,16 @@ int object_delete(object obj)
 	return 1;
 }
 
+void object_stats_debug()
+{
+	printf("----------------- OBJECTS -----------------\n");
+	printf("Allocations: %" PRIuS "\n", object_stats.allocations);
+	printf("Deallocations: %" PRIuS "\n", object_stats.deallocations);
+	printf("Increments: %" PRIuS "\n", object_stats.increments);
+	printf("Decrements: %" PRIuS "\n", object_stats.decrements);
+	fflush(stdout);
+}
+
 void object_destroy(object obj)
 {
 	if (obj != NULL)
@@ -364,6 +386,8 @@ void object_destroy(object obj)
 			}
 
 			free(obj);
+
+			++object_stats.deallocations;
 		}
 	}
 }

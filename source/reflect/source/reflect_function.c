@@ -37,6 +37,14 @@ struct function_type
 	void *data;
 };
 
+static struct
+{
+	uint64_t allocations;
+	uint64_t deallocations;
+	uint64_t increments;
+	uint64_t decrements;
+} function_stats = { 0, 0, 0, 0 };
+
 static value function_metadata_name(function func);
 static value function_metadata_async(function func);
 static value function_metadata_signature(function func);
@@ -104,6 +112,8 @@ function function_create(const char *name, size_t args_count, function_impl impl
 		}
 	}
 
+	++function_stats.allocations;
+
 	return func;
 }
 
@@ -120,6 +130,7 @@ int function_increment_reference(function func)
 	}
 
 	++func->ref_count;
+	++function_stats.increments;
 
 	return 0;
 }
@@ -137,6 +148,7 @@ int function_decrement_reference(function func)
 	}
 
 	--func->ref_count;
+	++function_stats.decrements;
 
 	return 0;
 }
@@ -617,6 +629,16 @@ function_return function_await(function func, function_args args, size_t size, f
 	return NULL;
 }
 
+void function_stats_debug()
+{
+	printf("----------------- FUNCTIONS -----------------\n");
+	printf("Allocations: %" PRIuS "\n", function_stats.allocations);
+	printf("Deallocations: %" PRIuS "\n", function_stats.deallocations);
+	printf("Increments: %" PRIuS "\n", function_stats.increments);
+	printf("Decrements: %" PRIuS "\n", function_stats.decrements);
+	fflush(stdout);
+}
+
 void function_destroy(function func)
 {
 	if (func != NULL)
@@ -650,6 +672,8 @@ void function_destroy(function func)
 			}
 
 			free(func);
+
+			++function_stats.deallocations;
 		}
 	}
 }

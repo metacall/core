@@ -760,7 +760,7 @@ int loader_clear(void *handle)
 	return loader_impl_clear(handle);
 }
 
-void loader_unload_children(loader_impl impl)
+void loader_unload_children(loader_impl impl, int destroy_objects)
 {
 	loader l = loader_singleton();
 	uint64_t current = thread_id_get_current();
@@ -806,7 +806,7 @@ void loader_unload_children(loader_impl impl)
 	vector_destroy(stack);
 
 	/* Clear all objects and types related to the loader once all childs have been destroyed */
-	if (impl != NULL)
+	if (impl != NULL && destroy_objects == 0)
 	{
 		loader_impl_destroy_objects(impl);
 	}
@@ -833,7 +833,7 @@ int loader_unload()
 			/* TODO: How to deal with this? */
 		}
 
-		loader_unload_children(NULL);
+		loader_unload_children(NULL, 1);
 
 		/* The proxy is the first loader, it must be destroyed at the end */
 		if (l->proxy != NULL)

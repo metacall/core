@@ -396,7 +396,7 @@ int cs_loader_impl_destroy(loader_impl impl)
 	netcore_handle nhandle = (netcore_handle)loader_impl_get(impl);
 
 	/* Destroy children loaders */
-	loader_unload_children(impl);
+	loader_unload_children(impl, 0);
 
 	simple_netcore_destroy(nhandle);
 

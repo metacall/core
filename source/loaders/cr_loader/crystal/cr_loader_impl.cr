@@ -78,7 +78,7 @@ fun cr_loader_impl_destroy(impl : Void*) : LibC::Int
 	ptr = LibMetaCall.loader_impl_get(impl)
 
 	# Destroy children loaded by this loader
-	LibMetaCall.loader_unload_children()
+	LibMetaCall.loader_unload_children(impl, 0)
 
 	cr_impl = Box(CrystalLoaderImpl).unbox(ptr)
 

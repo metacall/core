@@ -1604,7 +1604,9 @@ void function_py_interface_destroy(function func, function_impl impl)
 			free(py_func->values);
 		}
 
+		PyGILState_STATE gstate = PyGILState_Ensure();
 		Py_DECREF(py_func->func);
+		PyGILState_Release(gstate);
 
 		free(py_func);
 	}
@@ -3745,7 +3747,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Destroy children loaders */
-	loader_unload_children(impl);
+	loader_unload_children(impl, 0);
 
 	Py_DECREF(py_impl->inspect_signature);
 	Py_DECREF(py_impl->inspect_getattr_static);

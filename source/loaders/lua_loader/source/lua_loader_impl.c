@@ -507,7 +507,7 @@ int lua_loader_impl_destroy(loader_impl impl)
 	if (lua_impl != NULL)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl);
+		loader_unload_children(impl, 0);
 
 		/* Destroy Lua VM */
 		lua_close(lua_impl->vm);

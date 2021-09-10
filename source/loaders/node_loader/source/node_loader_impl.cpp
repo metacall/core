@@ -1122,7 +1122,11 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else
 	{
-		napi_throw_error(env, NULL, "NodeJS Loader could not convert the value to N-API");
+		std::string error_str("NodeJS Loader could not convert the value of type '");
+		error_str += type_id_name(id);
+		error_str += "' to N-API";
+
+		napi_throw_error(env, NULL, error_str.c_str());
 	}
 
 	return v;
@@ -3989,6 +3993,9 @@ void node_loader_impl_thread(void *data)
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
 
+	/* Destroy children loaders */
+	loader_unload_children(node_impl->impl, 1);
+
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
 
@@ -4727,16 +4734,17 @@ int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 
 int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
+	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
+
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	int64_t closing =
-#if defined(WIN32) || defined(_WIN32)
+	#if defined(WIN32) || defined(_WIN32)
 		(node_impl->thread_loop->endgame_handles != NULL)
-#else
+	#else
 		(node_impl->thread_loop->closing_handles != NULL)
-#endif
+	#endif
 		;
 
-	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
 	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +       %" PRId64 "       +     %" PRId64 "\n",
 		active_handles,
@@ -4745,7 +4753,8 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 		(int64_t)node_impl->thread_loop->active_reqs.count,
 		closing);
 #endif
-	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) + closing;
+
+	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) /*+ closing*/;
 }
 
 void node_loader_impl_print_handles(loader_impl_node node_impl)
@@ -4811,8 +4820,8 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	uint32_t ref_count = 0;
 	napi_status status;
 
-	/* Destroy children loaders (any loader initialized in the current V8 thread should be deleted first) */
-	loader_unload_children(node_impl->impl);
+	/* Clear all the functions and classes loaded from node */
+	loader_impl_destroy_objects(node_impl->impl);
 
 	/* Clear thread safe functions */
 	{

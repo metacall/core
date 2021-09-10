@@ -120,6 +120,8 @@ REFLECT_API const char *class_name(klass cls);
 
 REFLECT_API value class_metadata(klass cls);
 
+REFLECT_API void class_stats_debug(void);
+
 REFLECT_API void class_destroy(klass cls);
 
 #ifdef __cplusplus

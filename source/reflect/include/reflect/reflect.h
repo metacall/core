@@ -23,9 +23,11 @@
 
 #include <reflect/reflect_api.h>
 
+#include <reflect/reflect_class.h>
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_future.h>
+#include <reflect/reflect_object.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_signature.h>
 #include <reflect/reflect_type.h>

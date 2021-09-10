@@ -98,6 +98,8 @@ REFLECT_API value object_metadata(object obj);
 
 REFLECT_API int object_delete(object obj);
 
+REFLECT_API void object_stats_debug(void);
+
 REFLECT_API void object_destroy(object obj);
 
 #ifdef __cplusplus

@@ -2023,7 +2023,7 @@ int java_loader_impl_destroy(loader_impl impl)
 		}
 
 		/* Destroy children loaders */
-		loader_unload_children(impl);
+		loader_unload_children(impl, 0);
 
 		java_impl->jvm->DestroyJavaVM();
 

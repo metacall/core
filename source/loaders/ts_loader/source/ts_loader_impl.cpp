@@ -364,7 +364,7 @@ int ts_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Destroy children loaders */
-	loader_unload_children(impl);
+	loader_unload_children(impl, 0);
 
 	return metacall_clear(ts_impl);
 }

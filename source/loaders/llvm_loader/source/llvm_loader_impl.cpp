@@ -369,7 +369,7 @@ int llvm_loader_impl_destroy(loader_impl impl)
 	loader_impl_llvm llvm_impl = static_cast<loader_impl_llvm>(loader_impl_get(impl));
 
 	/* Destroy children loaders */
-	loader_unload_children(impl);
+	loader_unload_children(impl, 0);
 
 	/* TODO */
 	// Clear here the resources, it must free all memory related to llvm_impl.

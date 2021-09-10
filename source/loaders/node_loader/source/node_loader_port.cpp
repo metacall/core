@@ -276,7 +276,11 @@ napi_value node_loader_port_load_from_file_export(napi_env env, napi_callback_in
 
 	void *exports = metacall_handle_export(handle);
 
-	return node_loader_impl_value_to_napi(node_impl, env, exports);
+	napi_value v_exports = node_loader_impl_value_to_napi(node_impl, env, exports);
+
+	node_loader_impl_finalizer(env, v_exports, exports);
+
+	return v_exports;
 }
 
 /**

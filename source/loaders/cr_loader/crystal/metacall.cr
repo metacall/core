@@ -21,7 +21,7 @@ lib LibMetaCall
 	# Loader
 	fun loader_impl_get(impl : Void*) : Void*
 	fun loader_initialization_register(impl : Void*) : Void
-	fun loader_unload_children() : Void
+	fun loader_unload_children(impl : Void*, destroy_children : int) : Void
 
 	# Log
 	# TODO: log_write is a macro that must be reimplemented properly (log_write_impl, log_write_impl_va)

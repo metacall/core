@@ -848,7 +848,7 @@ int js_loader_impl_destroy(loader_impl impl)
 	if (js_impl != nullptr)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl);
+		loader_unload_children(impl, 0);
 
 		/* Destroy V8 */
 		if (js_impl->isolate_scope != nullptr)

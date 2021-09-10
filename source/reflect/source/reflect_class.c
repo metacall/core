@@ -51,6 +51,14 @@ struct class_metadata_iterator_args_type
 
 typedef struct class_metadata_iterator_args_type *class_metadata_iterator_args;
 
+static struct
+{
+	uint64_t allocations;
+	uint64_t deallocations;
+	uint64_t increments;
+	uint64_t decrements;
+} class_stats = { 0, 0, 0, 0 };
+
 static value class_metadata_name(klass cls);
 static value class_metadata_constructors(klass cls);
 static int class_metadata_methods_impl_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
@@ -124,6 +132,8 @@ klass class_create(const char *name, class_impl impl, class_impl_interface_singl
 		}
 	}
 
+	++class_stats.allocations;
+
 	return cls;
 }
 
@@ -140,6 +150,7 @@ int class_increment_reference(klass cls)
 	}
 
 	++cls->ref_count;
+	++class_stats.increments;
 
 	return 0;
 }
@@ -157,6 +168,7 @@ int class_decrement_reference(klass cls)
 	}
 
 	--cls->ref_count;
+	++class_stats.decrements;
 
 	return 0;
 }
@@ -783,6 +795,16 @@ void class_constructors_destroy(klass cls)
 	}
 }
 
+void class_stats_debug()
+{
+	printf("----------------- CLASSES -----------------\n");
+	printf("Allocations: %" PRIuS "\n", class_stats.allocations);
+	printf("Deallocations: %" PRIuS "\n", class_stats.deallocations);
+	printf("Increments: %" PRIuS "\n", class_stats.increments);
+	printf("Decrements: %" PRIuS "\n", class_stats.decrements);
+	fflush(stdout);
+}
+
 void class_destroy(klass cls)
 {
 	if (cls != NULL)
@@ -847,6 +869,8 @@ void class_destroy(klass cls)
 			}
 
 			free(cls);
+
+			++class_stats.deallocations;
 		}
 	}
 }

@@ -86,6 +86,8 @@ REFLECT_API function_return function_call(function func, function_args args, siz
 
 REFLECT_API function_return function_await(function func, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context);
 
+REFLECT_API void function_stats_debug(void);
+
 REFLECT_API void function_destroy(function func);
 
 #ifdef __cplusplus

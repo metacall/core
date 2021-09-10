@@ -93,7 +93,7 @@ LOADER_API value loader_metadata(void);
 
 LOADER_API int loader_clear(void *handle);
 
-LOADER_API void loader_unload_children(loader_impl impl);
+LOADER_API void loader_unload_children(loader_impl impl, int destroy_objects);
 
 LOADER_API int loader_unload(void);
 
