@@ -110,7 +110,7 @@ if(WIN32 AND MSVC)
 	)
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR MAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 	set(DEFAULT_COMPILE_DEFINITIONS
 		${DEFAULT_COMPILE_DEFINITIONS}
 		DEBUG
@@ -156,7 +156,7 @@ if(WIN32 AND MSVC)
 	#add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
 	# Release
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		# Disable optimizations
 		add_compile_options(/Od)
 	else()
@@ -173,6 +173,11 @@ if(WIN32 AND MSVC)
 		add_compile_options(/O2)
 		add_compile_options(/Oi)
 		add_compile_options(/Oy)
+
+		if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+			# Enable debug symbols
+			add_compile_options(/Z7)
+		endif()
 	endif()
 endif()
 
@@ -197,9 +202,14 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 	add_compile_options(-Wall)
 	add_compile_options(-Wextra)
 
+	# Debug symbols
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-g)
-	else()
+		add_compile_options(-rdynamic)
+	endif()
+
+	# Optimizations
+	if(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 		add_compile_options(-O3)
 	endif()
 

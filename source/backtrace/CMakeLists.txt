@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target configuration)
+set(target backtrace)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -34,18 +34,20 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/configuration.h
-	${include_path}/configuration_object_handle.h
-	${include_path}/configuration_singleton.h
-	${include_path}/configuration_object.h
-	${include_path}/configuration_impl.h
+	${include_path}/backtrace.h
 )
 
+if(UNIX)
+	set(BACKTRACE_IMPL unix)
+elseif(WIN32)
+	set(BACKTRACE_IMPL win32)
+else()
+	message(ERROR "Backtrace library not supported in this platform")
+endif()
+
 set(sources
-	${source_path}/configuration.c
-	${source_path}/configuration_singleton.c
-	${source_path}/configuration_object.c
-	${source_path}/configuration_impl.c
+	${source_path}/backtrace.c
+	${source_path}/backtrace_${BACKTRACE_IMPL}.c
 )
 
 # Group source files
@@ -135,17 +137,6 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::threading
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::portability
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::serial
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -193,57 +184,6 @@ target_link_libraries(${target}
 
 	INTERFACE
 )
-
-#
-# Global configuration
-#
-
-function(configurations_write config_dir config_path)
-	set(CONFIGURATION_GLOBAL "{")
-
-	if(OPTION_BUILD_LOADERS)
-		set(CONFIGURATION_GLOBAL_LOADERS 0)
-
-		if(OPTION_BUILD_LOADERS_CS)
-			set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"cs_loader\":\"${config_dir}/cs_loader.json\",")
-			set(CONFIGURATION_GLOBAL_LOADERS 1)
-		endif()
-
-		#if(OPTION_BUILD_LOADERS_JS)
-		#	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"js_loader\":\"${config_dir}/js_loader.json\",")
-		#	set(CONFIGURATION_GLOBAL_LOADERS 1)
-		#endif()
-	endif()
-
-	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Debug\"")
-	elseif(CMAKE_BUILD_TYPE STREQUAL "Release" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\"")
-	else()
-		set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n\t\"log_level\":\"Error\"")
-	endif()
-
-	set(CONFIGURATION_GLOBAL "${CONFIGURATION_GLOBAL}\n}")
-
-	file(WRITE "${config_path}" "${CONFIGURATION_GLOBAL}")
-endfunction()
-
-#
-# Development Configuration
-#
-
-# Generate runtime configuration
-configurations_write(${CONFIGURATION_DIR} ${CONFIGURATION_PATH})
-
-#
-# Install Configuration
-#
-
-# Generate runtime configuration
-configurations_write(${CMAKE_INSTALL_PREFIX}/${INSTALL_DATA}/configurations ${CONFIGURATION_DIR}/install/configurations/global.json)
-
-# Install runtime configuration
-install(DIRECTORY ${CONFIGURATION_DIR}/install/configurations DESTINATION ${INSTALL_DATA} COMPONENT runtime)
 
 #
 # Deployment

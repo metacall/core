@@ -347,12 +347,17 @@ int object_delete(object obj)
 
 void object_stats_debug()
 {
-	printf("----------------- OBJECTS -----------------\n");
-	printf("Allocations: %" PRIuS "\n", object_stats.allocations);
-	printf("Deallocations: %" PRIuS "\n", object_stats.deallocations);
-	printf("Increments: %" PRIuS "\n", object_stats.increments);
-	printf("Decrements: %" PRIuS "\n", object_stats.decrements);
-	fflush(stdout);
+#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	if (object_stats.allocations != object_stats.deallocations || object_stats.increments != object_stats.decrements)
+#endif
+	{
+		printf("----------------- OBJECTS -----------------\n");
+		printf("Allocations: %" PRIuS "\n", object_stats.allocations);
+		printf("Deallocations: %" PRIuS "\n", object_stats.deallocations);
+		printf("Increments: %" PRIuS "\n", object_stats.increments);
+		printf("Decrements: %" PRIuS "\n", object_stats.decrements);
+		fflush(stdout);
+	}
 }
 
 void object_destroy(object obj)

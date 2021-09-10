@@ -34,6 +34,8 @@
 
 #include <serial/serial.h>
 
+#include <backtrace/backtrace.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -101,6 +103,12 @@ int metacall_initialize()
 		}
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall default logger to stdout initialized");
+	}
+
+	/* Initialize backtrace for catching segmentation faults */
+	if (backtrace_initialize() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be initialized");
 	}
 
 	if (metacall_initialize_flag == 0)
@@ -2025,11 +2033,16 @@ int metacall_destroy()
 
 		metacall_initialize_flag = 1;
 
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		/* Print stats from functions, classes and objects */
 		function_stats_debug();
 		class_stats_debug();
 		object_stats_debug();
-#endif
+
+		/* Unregister backtrace */
+		if (backtrace_destroy() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
+		}
 	}
 
 	return 0;

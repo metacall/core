@@ -631,12 +631,17 @@ function_return function_await(function func, function_args args, size_t size, f
 
 void function_stats_debug()
 {
-	printf("----------------- FUNCTIONS -----------------\n");
-	printf("Allocations: %" PRIuS "\n", function_stats.allocations);
-	printf("Deallocations: %" PRIuS "\n", function_stats.deallocations);
-	printf("Increments: %" PRIuS "\n", function_stats.increments);
-	printf("Decrements: %" PRIuS "\n", function_stats.decrements);
-	fflush(stdout);
+#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	if (function_stats.allocations != function_stats.deallocations || function_stats.increments != function_stats.decrements)
+#endif
+	{
+		printf("----------------- FUNCTIONS -----------------\n");
+		printf("Allocations: %" PRIuS "\n", function_stats.allocations);
+		printf("Deallocations: %" PRIuS "\n", function_stats.deallocations);
+		printf("Increments: %" PRIuS "\n", function_stats.increments);
+		printf("Decrements: %" PRIuS "\n", function_stats.decrements);
+		fflush(stdout);
+	}
 }
 
 void function_destroy(function func)
