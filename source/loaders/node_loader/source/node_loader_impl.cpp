@@ -923,9 +923,6 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	/* Set result finalizer */
 	node_loader_impl_finalizer(env, result, ret);
 
-	/* Set closure finalizer */
-	value_finalizer(closure->func, &node_loader_impl_napi_to_value_callback_finalizer, closure);
-
 	/* Reset environment */
 	// closure->node_impl->env = NULL;
 
@@ -1097,6 +1094,8 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		node_loader_impl_exception(env, status);
 
 		node_loader_impl_finalizer(env, v, closure->func);
+
+		value_finalizer(closure->func, &node_loader_impl_napi_to_value_callback_finalizer, closure);
 	}
 	else if (id == TYPE_CLASS)
 	{
