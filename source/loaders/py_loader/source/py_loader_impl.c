@@ -227,11 +227,15 @@ static char *py_loader_impl_main_module = NULL;
 
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 {
-	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)data;
+	PyObject *capsule = (PyObject *)data;
+
+	loader_impl_py_function_type_invoke_state invoke_state = (loader_impl_py_function_type_invoke_state)PyCapsule_GetPointer(capsule, NULL);
 
 	(void)v;
 
 	free(invoke_state);
+
+	Py_XDECREF(capsule);
 }
 
 void py_loader_impl_value_ptr_finalize(value v, void *data)
@@ -1286,14 +1290,18 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		invoke_state->impl = impl;
 		invoke_state->py_impl = loader_impl_get(impl);
-		invoke_state->callback = value_type_copy(v);
 
-		/* Set up finalizer in order to free the invoke state */
-		value_finalizer(invoke_state->callback, &py_loader_impl_value_invoke_state_finalize, invoke_state);
+		/* TODO: This line causes a memory leak because the function copy is never destroyed.
+		We should add a tp_finalizer field into the returned PyCFunction in order to execute
+		a callback where value_type_destroy is executed against invoke_state->callback */
+		invoke_state->callback = value_type_copy(v);
 
 		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
 
 		Py_XINCREF(invoke_state_capsule);
+
+		/* Set up finalizer in order to free the invoke state */
+		value_finalizer(invoke_state->callback, &py_loader_impl_value_invoke_state_finalize, invoke_state_capsule);
 
 		return PyCFunction_New(py_loader_impl_function_type_invoke_defs, invoke_state_capsule);
 	}
