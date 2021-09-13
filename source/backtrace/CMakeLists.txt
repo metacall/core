@@ -42,7 +42,7 @@ if(UNIX)
 elseif(WIN32)
 	set(BACKTRACE_IMPL win32)
 else()
-	message(ERROR "Backtrace library not supported in this platform")
+	message(FATAL_ERROR "Backtrace library not supported in this platform")
 endif()
 
 set(sources

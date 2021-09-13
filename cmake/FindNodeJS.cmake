@@ -373,11 +373,15 @@ if(NOT NodeJS_LIBRARY)
 					set(NodeJS_COMPILE_ARCH "x64")
 				endif()
 
-				# Check vs2017 or vs2015 (TODO: Add more versions if they are supported by NodeJS)
-				if(MSVC_VERSION EQUAL 1900)
-					set(NodeJS_MSVC_VER vs2015)
+				# Check for Visual Studio Version and configure the build command
+				if(MSVC_VERSION GREATER 1916)
+					set(NodeJS_MSVC_VER vs2019)
 				elseif(MSVC_VERSION GREATER 1900)
 					set(NodeJS_MSVC_VER vs2017)
+				elseif(MSVC_VERSION EQUAL 1900)
+					set(NodeJS_MSVC_VER vs2015)
+				else()
+					message(FATAL_ERROR "Version of Visual Studio too old, add other toolsets in FindNodeJS.cmake in order to support them")
 				endif()
 
 				if(CMAKE_BUILD_TYPE STREQUAL "Debug")
