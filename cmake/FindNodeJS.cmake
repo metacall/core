@@ -225,7 +225,7 @@ if(NOT NodeJS_INCLUDE_DIR OR NOT NodeJS_V8_INCLUDE_DIR OR NOT NodeJS_UV_INCLUDE_
 	set(NodeJS_DOWNLOAD_URL "https://nodejs.org/dist/v${NodeJS_VERSION}/node-v${NodeJS_VERSION}-headers.tar.gz")
 	set(NodeJS_BASE_PATH "${CMAKE_CURRENT_BINARY_DIR}/headers")
 	set(NodeJS_DOWNLOAD_FILE "${NodeJS_BASE_PATH}/node-v${NodeJS_VERSION}-headers.tar.gz")
-	set(NodeJS_OUTPUT_PATH "${NodeJS_BASE_PATH}/node-v${NodeJS_VERSION}")
+	set(NodeJS_HEADERS_OUTPUT_PATH "${NodeJS_BASE_PATH}/node-v${NodeJS_VERSION}")
 
 	# Download node if needed
 	if(NOT EXISTS "${NodeJS_DOWNLOAD_FILE}")
@@ -234,7 +234,7 @@ if(NOT NodeJS_INCLUDE_DIR OR NOT NodeJS_V8_INCLUDE_DIR OR NOT NodeJS_UV_INCLUDE_
 	endif()
 
 	# Decompress node if needed
-	if(NOT EXISTS "${NodeJS_OUTPUT_PATH}")
+	if(NOT EXISTS "${NodeJS_HEADERS_OUTPUT_PATH}")
 		message(STATUS "Extract NodeJS headers")
 		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NodeJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${NodeJS_BASE_PATH}" OUTPUT_QUIET)
 	endif()
@@ -242,7 +242,7 @@ if(NOT NodeJS_INCLUDE_DIR OR NOT NodeJS_V8_INCLUDE_DIR OR NOT NodeJS_UV_INCLUDE_
 	# Find NodeJS includes
 	find_path(NodeJS_INCLUDE_DIR
 		NAMES ${NodeJS_HEADERS}
-		PATHS ${NodeJS_OUTPUT_PATH}
+		PATHS ${NodeJS_HEADERS_OUTPUT_PATH}
 		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS JavaScript Runtime Headers"
 	)
@@ -302,40 +302,42 @@ if(NodeJS_V8_INCLUDE_DIR)
 endif()
 
 # Find NodeJS library from module version
-if(NodeJS_MODULE_VERSION AND NOT NodeJS_BUILD_FROM_SOURCE)
+if(NodeJS_MODULE_VERSION)
 	# NodeJS library names
 	set(NodeJS_LIBRARY_NAMES
 		libnode.so.${NodeJS_MODULE_VERSION}
+		libnode.so
 		libnode.${NodeJS_MODULE_VERSION}.dylib
-		libnode.${NodeJS_MODULE_VERSION}.dll
+		libnode.dylib
+		node.${NodeJS_MODULE_VERSION}.dll
+		node.dll
 		node.lib
+		libnode.${NodeJS_MODULE_VERSION}.dll
+		libnode.dll
+		libnode.lib
 	)
 
-	message(STATUS "Searching NodeJS library version ${NodeJS_MODULE_VERSION}")
+	if(NOT NodeJS_BUILD_FROM_SOURCE)
+		message(STATUS "Searching NodeJS library version ${NodeJS_MODULE_VERSION}")
 
-	if(WIN32)
-		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
-	else()
-		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
-	endif()
+		if(WIN32)
+			set(NodeJS_LIBRARY_PATH "C:/Program Files/nodejs")
+		else()
+			set(NodeJS_LIBRARY_PATH "/usr/local/lib")
+		endif()
 
-	if(WIN32)
-		set(NodeJS_LIBRARY_PATH "${NodeJS_COMPILE_PATH}") # TODO: Set a valid install path
-	else()
-		set(NodeJS_LIBRARY_PATH "/usr/local/lib")
-	endif()
+		set(NodeJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu" "/usr/lib/x86_64-linux-gnu") # TODO: Add others
 
-	set(NodeJS_SYSTEM_LIBRARY_PATH "/lib/x86_64-linux-gnu" "/usr/lib/x86_64-linux-gnu") # TODO: Add others
+		# Find library
+		find_library(NodeJS_LIBRARY
+			NAMES ${NodeJS_LIBRARY_NAMES}
+			PATHS ${NodeJS_LIBRARY_PATH} ${NodeJS_SYSTEM_LIBRARY_PATH}
+			DOC "NodeJS JavaScript Runtime Library"
+		)
 
-	# Find library
-	find_library(NodeJS_LIBRARY
-		NAMES ${NodeJS_LIBRARY_NAMES}
-		PATHS ${NodeJS_COMPILE_PATH} ${NodeJS_LIBRARY_PATH} ${NodeJS_SYSTEM_LIBRARY_PATH}
-		DOC "NodeJS JavaScript Runtime Library"
-	)
-
-	if(NodeJS_LIBRARY)
-		message(STATUS "NodeJS Library Found")
+		if(NodeJS_LIBRARY)
+			message(STATUS "NodeJS Library Found")
+		endif()
 	endif()
 endif()
 
@@ -361,10 +363,20 @@ if(NOT NodeJS_LIBRARY)
 		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NodeJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${NodeJS_BASE_PATH}" OUTPUT_QUIET)
 	endif()
 
+	if(WIN32)
+		if(NodeJS_VERSION_MAJOR LESS 14)
+			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
+		else()
+			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
+		endif()
+	else()
+		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out")
+	endif()
+
 	# Compile node as a shared library if needed
 	if(NOT EXISTS "${NodeJS_COMPILE_PATH}")
 		if(WIN32)
-			if(NOT EXISTS "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll")
+			if(NOT EXISTS "${NodeJS_COMPILE_PATH}/node.dll" AND NOT EXISTS "${NodeJS_COMPILE_PATH}/libnode.dll")
 				message(STATUS "Build NodeJS shared library")
 
 				if(${CMAKE_SYSTEM_PROCESSOR} STREQUAL "x86")
@@ -409,24 +421,21 @@ if(NOT NodeJS_LIBRARY)
 				execute_process(
 					COMMAND vcbuild.bat dll ${NodeJS_BUILD_TYPE} ${NodeJS_COMPILE_ARCH} ${NodeJS_MSVC_VER}
 					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
-					RESULT_VARIABLE NodeJS_BUILD_SCRIPT
 				)
 
-				if(NOT NodeJS_BUILD_SCRIPT EQUAL 0)
+				if(EXISTS "${NodeJS_COMPILE_PATH}/node.dll")
+					set(NodeJS_LIBRARY_NAME "node.dll")
+				elseif(EXISTS "${NodeJS_COMPILE_PATH}/libnode.dll")
+					set(NodeJS_LIBRARY_NAME "libnode.dll")
+				else()
 					message(FATAL_ERROR "FindNodeJS.cmake failed to build node library")
 				endif()
 
 				# Copy library to MetaCall output path
-				file(COPY ${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/node.dll DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll)
+				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${NodeJS_LIBRARY_NAME})
 
 				message(STATUS "Install NodeJS shared library")
-
-				# TODO: Implement install command
-				#execute_process(COMMAND msiexec /a "node-v${NodeJS_VERSION}-${NodeJS_COMPILE_ARCH}.msi" WORKING_DIRECTORY "${NodeJS_COMPILE_PATH}")
 			endif()
-
-			# TODO: Delete this workaround after implementing the install command
-			set(NodeJS_LIBRARY_PATH ${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE})
 		else()
 			message(STATUS "Configure NodeJS shared library")
 
@@ -467,22 +476,12 @@ if(NOT NodeJS_LIBRARY)
 		endif()
 	endif()
 
-	if(NodeJS_MODULE_VERSION)
-		# NodeJS library names
-		set(NodeJS_LIBRARY_NAMES
-			libnode.so.${NodeJS_MODULE_VERSION}
-			libnode.${NodeJS_MODULE_VERSION}.dylib
-			libnode.${NodeJS_MODULE_VERSION}.dll
-			node.lib
-		)
-
-		# Find library
-		find_library(NodeJS_LIBRARY
-			NAMES ${NodeJS_LIBRARY_NAMES}
-			PATHS ${NodeJS_LIBRARY_PATH}
-			DOC "NodeJS JavaScript Runtime Library"
-		)
-	endif()
+	# Find compiled library
+	find_library(NodeJS_LIBRARY
+		NAMES ${NodeJS_LIBRARY_NAMES}
+		PATHS ${NodeJS_COMPILE_PATH}
+		DOC "NodeJS JavaScript Runtime Library"
+	)
 
 	if(NOT NodeJS_LIBRARY)
 		message(SEND_ERROR "NodeJS library not found and it could not be built from source")

@@ -42,7 +42,13 @@ FARPROC WINAPI node_loader_win32_delay_load(unsigned dliNotify, PDelayLoadInfo p
 	{
 		LPCTSTR module_handle_lpctstr = "node.dll";
 
-		HMODULE module_handle = GetModuleHandle(module_handle_lpctstr);
+		HMODULE module_handle = ::GetModuleHandle(module_handle_lpctstr);
+
+		if (module_handle == NULL)
+		{
+			module_handle_lpctstr = "libnode.dll";
+			module_handle = ::GetModuleHandle(module_handle_lpctstr);
+		}
 
 		fp_module_register = ::GetProcAddress(module_handle, pdli->dlp.szProcName);
 	}
