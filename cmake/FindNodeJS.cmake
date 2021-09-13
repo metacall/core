@@ -390,10 +390,31 @@ if(NOT NodeJS_LIBRARY)
 					set(NodeJS_BUILD_TYPE release)
 				endif()
 
-				execute_process(COMMAND vcbuild.bat dll ${NodeJS_BUILD_TYPE} ${NodeJS_COMPILE_ARCH} ${NodeJS_MSVC_VER} WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+				# Building NodeJS 14 as library in Windows is broken (so we need to patch it)
+				if(WIN32 AND NodeJS_VERSION_MAJOR GREATER_EQUAL 14)
+					set(Python_ADDITIONAL_VERSIONS 3)
+					find_package(PythonInterp REQUIRED)
 
-				# TODO: Implement msi build
-				# execute_process(COMMAND vcbuild.bat dll ${NodeJS_BUILD_TYPE} ${NodeJS_COMPILE_ARCH} ${NodeJS_MSVC_VER} msi WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+					execute_process(
+						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/NodeJSGYPPatch.py ${NodeJS_OUTPUT_PATH}/node.gyp
+						WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
+						RESULT_VARIABLE NodeJS_PATCH_SCRIPT
+					)
+
+					if(NOT NodeJS_PATCH_SCRIPT EQUAL 0)
+						message(FATAL_ERROR "FindNodeJS.cmake failed to patch node.gyp project")
+					endif()
+				endif()
+
+				execute_process(
+					COMMAND vcbuild.bat dll ${NodeJS_BUILD_TYPE} ${NodeJS_COMPILE_ARCH} ${NodeJS_MSVC_VER}
+					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
+					RESULT_VARIABLE NodeJS_BUILD_SCRIPT
+				)
+
+				if(NOT NodeJS_BUILD_SCRIPT EQUAL 0)
+					message(FATAL_ERROR "FindNodeJS.cmake failed to build node library")
+				endif()
 
 				# Copy library to MetaCall output path
 				file(COPY ${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}/node.dll DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/node.dll)
