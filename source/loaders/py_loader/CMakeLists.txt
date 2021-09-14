@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(PythonLibs 3 REQUIRED)
+find_package(Python COMPONENTS Development REQUIRED)
 
 #
 # Plugin name and options
@@ -129,7 +129,7 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${PYTHON_INCLUDE_DIRS} # Python includes
+	${Python_INCLUDE_DIRS} # Python includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -147,7 +147,7 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${PYTHON_LIBRARIES} # Python libraries
+	${Python_LIBRARIES} # Python libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

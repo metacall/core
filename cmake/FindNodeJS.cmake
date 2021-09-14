@@ -309,13 +309,23 @@ if(NodeJS_MODULE_VERSION)
 		libnode.so
 		libnode.${NodeJS_MODULE_VERSION}.dylib
 		libnode.dylib
-		node.${NodeJS_MODULE_VERSION}.dll
-		node.dll
-		node.lib
-		libnode.${NodeJS_MODULE_VERSION}.dll
-		libnode.dll
-		libnode.lib
 	)
+
+	if(WIN32 AND NodeJS_VERSION_MAJOR GREATER_EQUAL 14)
+		set(NodeJS_LIBRARY_NAMES
+			${NodeJS_LIBRARY_NAMES}
+			libnode.${NodeJS_MODULE_VERSION}.dll
+			libnode.dll
+			libnode.lib
+		)
+	else()
+		set(NodeJS_LIBRARY_NAMES
+			${NodeJS_LIBRARY_NAMES}
+			node.${NodeJS_MODULE_VERSION}.dll
+			node.dll
+			node.lib
+		)
+	endif()
 
 	if(NOT NodeJS_BUILD_FROM_SOURCE)
 		message(STATUS "Searching NodeJS library version ${NodeJS_MODULE_VERSION}")
@@ -404,11 +414,10 @@ if(NOT NodeJS_LIBRARY)
 
 				# Building NodeJS 14 as library in Windows is broken (so we need to patch it)
 				if(WIN32 AND NodeJS_VERSION_MAJOR GREATER_EQUAL 14)
-					set(Python_ADDITIONAL_VERSIONS 3)
-					find_package(PythonInterp REQUIRED)
+					find_package(Python COMPONENTS Interpreter REQUIRED)
 
 					execute_process(
-						COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/NodeJSGYPPatch.py ${NodeJS_OUTPUT_PATH}/node.gyp
+						COMMAND ${Python_EXECUTABLE} ${CMAKE_SOURCE_DIR}/cmake/NodeJSGYPPatch.py ${NodeJS_OUTPUT_PATH}/node.gyp
 						WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
 						RESULT_VARIABLE NodeJS_PATCH_SCRIPT
 					)
@@ -432,7 +441,7 @@ if(NOT NodeJS_LIBRARY)
 				endif()
 
 				# Copy library to MetaCall output path
-				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/${NodeJS_LIBRARY_NAME})
+				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
 
 				message(STATUS "Install NodeJS shared library")
 			endif()
@@ -484,7 +493,7 @@ if(NOT NodeJS_LIBRARY)
 	)
 
 	if(NOT NodeJS_LIBRARY)
-		message(SEND_ERROR "NodeJS library not found and it could not be built from source")
+		message(FATAL_ERROR "NodeJS library not found and it could not be built from source")
 	endif()
 endif()
 

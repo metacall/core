@@ -6,9 +6,6 @@ endif()
 #
 # External dependencies
 #
-set(Python_ADDITIONAL_VERSIONS 3)
-
-find_package(PythonInterp REQUIRED)
 
 #
 # Port name and options
@@ -21,6 +18,7 @@ set(target py_port)
 message(STATUS "Port ${target}")
 
 if(NOT OPTION_BUILD_GUIX)
+	find_package(Python3 COMPONENTS Interpreter REQUIRED)
 	install(CODE "execute_process(COMMAND pip3 install ${CMAKE_CURRENT_SOURCE_DIR})")
 endif()
 

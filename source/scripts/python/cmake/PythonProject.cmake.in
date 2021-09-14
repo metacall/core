@@ -26,7 +26,7 @@ endif()
 # External dependencies
 #
 
-find_package(PythonInterp)
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 # Target name
 set(target @PACKAGE_NAME@)
@@ -35,10 +35,10 @@ set(target @PACKAGE_NAME@)
 message(STATUS "Script ${target}")
 
 # Custom python section
-if(PYTHONINTERP_FOUND)
+if(Python3_Interpreter_FOUND)
 	# Set custom setup command
 	add_custom_command(OUTPUT "@PACKAGE_OUTPUT@"
-						COMMAND "${PYTHON_EXECUTABLE}" "@PACKAGE_SETUP_PY@" build
+						COMMAND "${Python3_EXECUTABLE}" "@PACKAGE_SETUP_PY@" build
 						COMMAND "${CMAKE_COMMAND}" -E touch "@PACKAGE_OUTPUT@"
 						DEPENDS "@PACKAGE_DEPS@")
 endif()

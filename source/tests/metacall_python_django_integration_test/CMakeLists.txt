@@ -7,15 +7,11 @@ endif()
 # External dependencies
 #
 
-find_package(PythonLibs 3 REQUIRED)
-
-set(Python_ADDITIONAL_VERSIONS 3)
-
-find_package(PythonInterp REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development REQUIRED)
 
 # Detect if Django is available
 execute_process(
-	COMMAND ${PYTHON_EXECUTABLE} -c "import django"
+	COMMAND ${Python3_EXECUTABLE} -c "import django"
 	RESULT_VARIABLE PYTHON_DJANGO_FOUND
 	ERROR_QUIET
 	OUTPUT_QUIET
@@ -209,15 +205,8 @@ configure_file(${TEST_SCRIPT_LAUNCHER_CLIENT_NAME_IN} ${CMAKE_CURRENT_BINARY_DIR
 
 configure_file(${TEST_SCRIPT_LAUNCHER_FILE_NAME_IN} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_FILE_NAME} COPYONLY)
 
-if(NOT ${PYTHON_VERSION_MAJOR} EQUAL 3)
-	message(WARNING "Invalid Python executable version: ${PYTHON_VERSION_STRING}")
-	message(WARNING "Define a valid Python 3 executable in variable PYTHON_EXECUTABLE=${PYTHON_EXECUTABLE} or ${target} test won't be compiled")
-	message(WARNING "Use: \"sudo update-alternatives --install /usr/bin/python python /usr/bin/python3 10\" to modify default python executable")
-	return()
-endif()
-
 add_test(NAME ${target}
-	COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME}
+	COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/${TEST_SCRIPT_LAUNCHER_NAME}
 )
 
 #

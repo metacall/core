@@ -2,9 +2,9 @@
 # External dependencies
 #
 
-find_package(PythonLibs 3)
+find_package(Python COMPONENTS Development)
 
-if(NOT PYTHONLIBS_FOUND)
+if(NOT Python_Development_FOUND)
 	return()
 endif()
 
@@ -78,7 +78,7 @@ target_include_directories(${target}
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
 
-	${PYTHON_INCLUDE_DIRS} # Python includes
+	${Python_INCLUDE_DIRS} # Python includes
 )
 
 #
@@ -91,7 +91,7 @@ target_link_libraries(${target}
 
 	GBench
 
-	${PYTHON_LIBRARIES} # Python libraries
+	${Python_LIBRARIES} # Python libraries
 )
 
 #
