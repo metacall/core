@@ -225,6 +225,9 @@ static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
 static int py_loader_impl_run_main = 1;
 static char *py_loader_impl_main_module = NULL;
 
+/* Holds reference to the original PyCFunction.tp_dealloc method */
+static void (*py_loader_impl_pycfunction_dealloc)(PyObject *) = NULL;
+
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 {
 	PyObject *capsule = (PyObject *)data;
@@ -1290,10 +1293,6 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 
 		invoke_state->impl = impl;
 		invoke_state->py_impl = loader_impl_get(impl);
-
-		/* TODO: This line causes a memory leak because the function copy is never destroyed.
-		We should add a tp_finalizer field into the returned PyCFunction in order to execute
-		a callback where value_type_destroy is executed against invoke_state->callback */
 		invoke_state->callback = value_type_copy(v);
 
 		invoke_state_capsule = PyCapsule_New(invoke_state, NULL, NULL);
@@ -2282,6 +2281,31 @@ error_set_item:
 	return 1;
 }
 
+static void PyCFunction_dealloc(PyObject *obj)
+{
+	/* Check if we are passing our own hook to the callback */
+	if (PyCFunction_Check(obj) && PyCFunction_GET_FUNCTION(obj) == py_loader_impl_function_type_invoke)
+	{
+		PyObject *error_type, *error_value, *error_traceback;
+
+		/* Save the current exception if any */
+		PyErr_Fetch(&error_type, &error_value, &error_traceback);
+
+		PyObject *invoke_state_capsule = PyCFunction_GET_SELF(obj);
+
+		loader_impl_py_function_type_invoke_state invoke_state = PyCapsule_GetPointer(invoke_state_capsule, NULL);
+
+		value_type_destroy(invoke_state->callback);
+
+		Py_DECREF(invoke_state_capsule);
+
+		PyErr_Restore(error_type, error_value, error_traceback);
+	}
+
+	/* Call to the original meth_dealloc function */
+	py_loader_impl_pycfunction_dealloc(obj);
+}
+
 loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	(void)impl;
@@ -2297,6 +2321,10 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		goto error_alloc_py_impl;
 	}
+
+	/* Hook the deallocation of PyCFunction */
+	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
+	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
 
 	Py_InitializeEx(0);
 
