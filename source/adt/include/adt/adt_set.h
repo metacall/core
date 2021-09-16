@@ -66,6 +66,8 @@ ADT_API int set_contains(set s, set_key key);
 
 ADT_API int set_contains_any(set dest, set src);
 
+ADT_API int set_contains_which(set dest, set src, set_key *key);
+
 ADT_API set_value set_remove(set s, set_key key);
 
 ADT_API void set_iterate(set s, set_cb_iterate iterate_cb, set_cb_iterate_args args);

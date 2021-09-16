@@ -664,10 +664,12 @@ int loader_impl_handle_register(loader_impl impl, char *name, loader_handle_impl
 {
 	if (handle_ptr == NULL)
 	{
-		if (context_contains(impl->ctx, handle_impl->ctx) == 0)
+		char *duplicated_key = NULL;
+
+		if (context_contains(impl->ctx, handle_impl->ctx, &duplicated_key) == 0)
 		{
 			/* TODO: This still does not protect duplicated names between different loaders global scope */
-			log_write("metacall", LOG_LEVEL_ERROR, "There are duplicated symbols already loaded in the global scope conflicting with handle: %s", name);
+			log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, name);
 		}
 		else if (context_append(impl->ctx, handle_impl->ctx) == 0)
 		{

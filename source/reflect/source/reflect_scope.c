@@ -457,9 +457,9 @@ int scope_append(scope dest, scope src)
 	return set_append(dest->objects, src->objects);
 }
 
-int scope_contains(scope dest, scope src)
+int scope_contains(scope dest, scope src, char **duplicated)
 {
-	return set_contains_any(dest->objects, src->objects);
+	return set_contains_which(dest->objects, src->objects, (set_key*)duplicated);
 }
 
 int scope_remove(scope dest, scope src)
