@@ -81,7 +81,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Build library
-add_library(${target} OBJECT
+add_library(${target}
 	${sources}
 	${headers}
 )
@@ -165,7 +165,7 @@ target_link_libraries(${target}
 	PUBLIC
 	${DEFAULT_LIBRARIES}
 
-	${CMAKE_DL_LIBS} # Native dynamic load library
+	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
 
 	INTERFACE
 )

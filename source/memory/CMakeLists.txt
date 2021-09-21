@@ -66,7 +66,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Build library
-add_library(${target} OBJECT
+add_library(${target}
 	${sources}
 	${headers}
 )

@@ -365,8 +365,6 @@ target_link_libraries(${js_port_test}
 	PRIVATE
 	${V8_LIBRARIES} # V8 library
 
-	${CMAKE_DL_LIBS}
-
 	${META_PROJECT_NAME}::metacall
 
 	PUBLIC

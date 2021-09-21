@@ -86,8 +86,59 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 # Create library
 #
 
+# Include here any library which metacall depends on
+set(unity_build_depends
+	version
+	preprocessor
+	environment
+	format
+	backtrace
+	threading
+	log
+	memory
+	portability
+	adt
+	filesystem
+	dynlink
+	detour
+	reflect
+	serial
+	configuration
+	loader
+)
+
+set(unity_build_source_list)
+set(unity_build_definition_list)
+set(unity_build_include_list)
+
+foreach(tgt ${unity_build_depends})
+	# Get target source files
+	get_target_property(target_sources
+		${META_PROJECT_NAME}::${tgt}
+		SOURCES
+	)
+
+	set(unity_build_source_list
+		${unity_build_source_list}
+		${target_sources}
+	)
+
+	# Set target definitions
+	set(unity_build_definition_list
+		${unity_build_definition_list}
+		$<TARGET_PROPERTY:${META_PROJECT_NAME}::${tgt},COMPILE_DEFINITIONS>
+	)
+
+	# Set target include paths
+	set(unity_build_include_list
+		${unity_build_include_list}
+		$<TARGET_PROPERTY:${META_PROJECT_NAME}::${tgt},INCLUDE_DIRECTORIES>
+	)
+endforeach()
+
 # Build library
 add_library(${target}
+	${unity_build_source_list}
 	${sources}
 	${headers}
 )
@@ -141,6 +192,9 @@ set_target_properties(${target}
 
 target_include_directories(${target}
 	PRIVATE
+	# Dependencies Includes
+	${unity_build_include_list}
+
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
@@ -160,23 +214,6 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
 	PRIVATE
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::backtrace
-	${META_PROJECT_NAME}::threading
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::portability
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::filesystem
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::detour
-	${META_PROJECT_NAME}::reflect
-	${META_PROJECT_NAME}::serial
-	${META_PROJECT_NAME}::configuration
-	${META_PROJECT_NAME}::loader
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -191,23 +228,7 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	# Dependencies Export API
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::version,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::preprocessor,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::environment,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::format,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::backtrace,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::threading,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::log,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::memory,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::portability,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::adt,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::filesystem,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::dynlink,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::detour,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::reflect,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::serial,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::configuration,COMPILE_DEFINITIONS>
-	$<TARGET_PROPERTY:${META_PROJECT_NAME}::loader,COMPILE_DEFINITIONS>
+	${unity_build_definition_list}
 
 	# MetaCall Export API
 	${target_upper}_EXPORTS
@@ -244,6 +265,8 @@ target_link_libraries(${target}
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
+
+	$<$<BOOL:${BUILD_SHARED_LIBS}>:${CMAKE_DL_LIBS}> # Native dynamic load library
 
 	INTERFACE
 )

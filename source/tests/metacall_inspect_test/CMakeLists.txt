@@ -88,8 +88,6 @@ target_link_libraries(${target}
 
 	GTest
 
-	${CMAKE_DL_LIBS}
-
 	${META_PROJECT_NAME}::metacall
 )
 

@@ -69,8 +69,8 @@ set(META_NAME_VERSION			"${META_PROJECT_NAME} v${META_VERSION} (${META_VERSION_R
 #
 
 # Project options
-option(BUILD_SHARED_LIBS		"Build shared instead of static libraries."					ON)
-option(OPTION_SELF_CONTAINED	"Create a self-contained install with all dependencies."	OFF)
+option(BUILD_SHARED_LIBS		"Build shared instead of static libraries."					ON) # TODO: Static libraries build is not implemented yet
+option(OPTION_SELF_CONTAINED	"Create a self-contained install with all dependencies."	OFF) # TODO: Not implemented
 option(OPTION_BUILD_TESTS		"Build tests."												ON)
 option(OPTION_BUILD_BENCHMARKS	"Build benchmarks."											OFF)
 option(OPTION_BUILD_DOCS		"Build documentation."										OFF)
