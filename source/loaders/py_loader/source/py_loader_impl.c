@@ -365,15 +365,13 @@ int py_object_interface_create(object obj, object_impl impl)
 }
 
 /* TODO: get and set is actually the same as static_get and static_set but applied to an object instead of a class */
-value py_object_interface_get(object obj, object_impl impl, attribute attr)
+value py_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
 	(void)obj;
 
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
-
 	PyObject *pyobject_object = py_object->obj;
-
-	PyObject *key_py_str = PyUnicode_FromString(attribute_name(attr));
+	PyObject *key_py_str = PyUnicode_FromString(attribute_name(accessor->data.attr));
 	PyObject *generic_attr = PyObject_GenericGetAttr(pyobject_object, key_py_str);
 	Py_XDECREF(key_py_str);
 
@@ -383,18 +381,14 @@ value py_object_interface_get(object obj, object_impl impl, attribute attr)
 	return v;
 }
 
-int py_object_interface_set(object obj, object_impl impl, attribute attr, value v)
+int py_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
 	(void)obj;
 
 	loader_impl_py_object py_object = (loader_impl_py_object)impl;
-
 	PyObject *pyobject_object = py_object->obj;
-
-	PyObject *key_py_str = PyUnicode_FromString(attribute_name(attr));
-
+	PyObject *key_py_str = PyUnicode_FromString(attribute_name(accessor->data.attr));
 	PyObject *pyvalue = py_loader_impl_value_to_capi(py_object->impl, value_type_id(v), v);
-
 	int retval = PyObject_GenericSetAttr(pyobject_object, key_py_str, pyvalue);
 
 	Py_DECREF(key_py_str);
@@ -521,7 +515,7 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 
 	loader_impl_py_object py_obj = malloc(sizeof(struct loader_impl_py_object_type));
 
-	object obj = object_create(name, py_obj, &py_object_interface_singleton, cls);
+	object obj = object_create(name, ACCESSOR_TYPE_STATIC, py_obj, &py_object_interface_singleton, cls);
 
 	if (obj == NULL)
 	{
@@ -559,15 +553,14 @@ object py_class_interface_constructor(klass cls, class_impl impl, const char *na
 	return obj;
 }
 
-value py_class_interface_static_get(klass cls, class_impl impl, attribute attr)
+value py_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
 {
 	(void)cls;
 
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
-
 	PyObject *pyobject_class = py_class->cls;
+	char *attr_name = attribute_name(accessor->data.attr);
 
-	char *attr_name = attribute_name(attr);
 	if (attr_name == NULL)
 	{
 		return NULL;
@@ -583,24 +576,21 @@ value py_class_interface_static_get(klass cls, class_impl impl, attribute attr)
 	return v;
 }
 
-int py_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
+int py_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
 {
 	(void)cls;
 
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
-
 	PyObject *pyobject_class = py_class->cls;
-
 	PyObject *pyvalue = py_loader_impl_value_to_capi(py_class->impl, value_type_id(v), v);
+	char *attr_name = attribute_name(accessor->data.attr);
 
-	char *attr_name = attribute_name(attr);
 	if (attr_name == NULL)
 	{
 		return 1;
 	}
 
 	PyObject *key_py_str = PyUnicode_FromString(attr_name);
-
 	int retval = PyObject_GenericSetAttr(pyobject_class, key_py_str, pyvalue);
 
 	Py_DECREF(key_py_str);
@@ -1078,7 +1068,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		Py_INCREF(obj);
 
 		PyObject *qualname = PyObject_GetAttrString(obj, "__qualname__");
-		klass c = class_create(PyUnicode_AsUTF8(qualname), py_cls, &py_class_interface_singleton);
+		klass c = class_create(PyUnicode_AsUTF8(qualname), ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
 		Py_XDECREF(qualname);
 
 		py_cls->impl = impl;
@@ -1108,7 +1098,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		/* Not using class_new() here because the object is already instantiated in the runtime */
 		/* So we must avoid calling it's constructor again */
 		PyObject *repr = PyObject_Repr(obj);
-		object o = object_create(PyUnicode_AsUTF8(repr), py_obj, &py_object_interface_singleton, value_to_class(obj_cls));
+		object o = object_create(PyUnicode_AsUTF8(repr), ACCESSOR_TYPE_STATIC, py_obj, &py_object_interface_singleton, value_to_class(obj_cls));
 		Py_XDECREF(repr);
 
 		py_obj->impl = impl;
@@ -3571,7 +3561,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 
 			Py_INCREF(module_dict_val);
 
-			klass c = class_create(cls_name, py_cls, &py_class_interface_singleton);
+			klass c = class_create(cls_name, ACCESSOR_TYPE_STATIC, py_cls, &py_class_interface_singleton);
 
 			py_cls->impl = impl;
 			py_cls->cls = module_dict_val;
@@ -3823,4 +3813,3 @@ int py_loader_impl_destroy(loader_impl impl)
 
 	return result;
 }
-                                                                                                                                                                                                                                                                            
