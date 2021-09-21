@@ -7,19 +7,23 @@ package metacall
 import "C"
 
 import (
-	"unsafe"
 	"errors"
+	"unsafe"
 )
 
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
 func Initialize() error {
 	// TODO: Remove this once go loader is implemented
-	if (int(C.metacall_initialize()) != 0) {
+	if int(C.metacall_initialize()) != 0 {
 		return errors.New("MetaCall failed to initialize")
 	}
 
 	return nil
+}
+
+func InitializeSafe() error {
+	// TODO
 }
 
 func LoadFromFile(tag string, scripts []string) error {
@@ -32,7 +36,7 @@ func LoadFromFile(tag string, scripts []string) error {
 	defer C.free(unsafe.Pointer(cScripts))
 
 	// Convert cScripts to a Go Array so we can index it
-	goScripts := (*[1 << 30 - 1] * C.char)(cScripts)
+	goScripts := (*[1<<30 - 1]*C.char)(cScripts)
 
 	for index, script := range scripts {
 		goScripts[index] = C.CString(script)
@@ -62,7 +66,7 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	defer C.free(unsafe.Pointer(cArgs))
 
 	for index, arg := range args {
-		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index) * PtrSizeInBytes))
+		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
 
 		// Create int
 		if i, ok := arg.(int); ok {
@@ -89,9 +93,9 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 		// TODO: Other types ...
 	}
 
-	defer (func () {
+	defer (func() {
 		for index, _ := range args {
-			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index) * PtrSizeInBytes))
+			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
 			C.metacall_value_destroy(*cArg)
 		}
 	})()
@@ -101,20 +105,24 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
 
-		switch (C.metacall_value_id(unsafe.Pointer(ret))) {
-			case C.METACALL_INT: {
+		switch C.metacall_value_id(unsafe.Pointer(ret)) {
+		case C.METACALL_INT:
+			{
 				return int(C.metacall_value_to_int(unsafe.Pointer(ret))), nil
 			}
 
-			case C.METACALL_FLOAT: {
+		case C.METACALL_FLOAT:
+			{
 				return float32(C.metacall_value_to_float(unsafe.Pointer(ret))), nil
 			}
 
-			case C.METACALL_DOUBLE: {
+		case C.METACALL_DOUBLE:
+			{
 				return float64(C.metacall_value_to_double(unsafe.Pointer(ret))), nil
 			}
 
-			case C.METACALL_STRING: {
+		case C.METACALL_STRING:
+			{
 				return C.GoString(C.metacall_value_to_string(unsafe.Pointer(ret))), nil
 			}
 
