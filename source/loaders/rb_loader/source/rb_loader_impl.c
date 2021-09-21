@@ -94,8 +94,9 @@ typedef struct loader_impl_rb_module_eval_protect_type
 	VALUE module;
 } * loader_impl_rb_module_eval_protect;
 
-class_interface rb_class_interface_singleton();
-object_interface rb_object_interface_singleton();
+static class_interface rb_class_interface_singleton(void);
+static object_interface rb_object_interface_singleton(void);
+static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
 
 int function_rb_interface_create(function func, function_impl impl)
 {
@@ -1347,6 +1348,73 @@ loader_impl_rb_function rb_function_create(loader_impl_rb_module rb_module, ID i
 	return NULL;
 }
 
+void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, const char *method_type_str, VALUE methods, int (*register_method)(klass, method))
+{
+	VALUE methods_v_size = rb_funcall(methods, rb_intern("size"), 0);
+	int method_index, methods_size = FIX2INT(methods_v_size);
+
+	for (method_index = 0; method_index < methods_size; ++method_index)
+	{
+		VALUE rb_method = rb_ary_entry(methods, method_index);
+		VALUE name = rb_funcall(rb_method, rb_intern("id2name"), 0);
+		const char *method_name_str = RSTRING_PTR(name);
+
+		VALUE instance_method = rb_funcall(cls, rb_intern(method_type_str), 1, rb_method);
+		VALUE parameters = rb_funcall(instance_method, rb_intern("parameters"), 0);
+		size_t args_it, args_count = RARRAY_LEN(parameters);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Method '%s' inside '%s' of type %s with %" PRIuS " parameters", method_name_str, class_name_str, method_type_str, args_count);
+
+		/*
+		* TODO:
+		* Another alternative (for supporting types), which is not used in the current implementation,
+		* but it can simplify the parser, it's the following:
+		*
+		*   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
+		*   - For plain functions: origin_file, definition_line = method(:foo).source_location
+		*
+		* Then:
+		* method_signature = IO.readlines(origin_file)[definition_line.pred]
+		*
+		* Now we have only the method signature, this is going to be less problematic than parsing
+		* the whole file as we are doing now (although for multi-line signatures it's going to be
+		* a little bit more complicated...)
+		*
+		* We can switch to completely duck typed approach (refactoring the tests) or we can use this
+		* simplified parsing approach and maintain types
+		*/
+
+		method m = method_create(c,
+			method_name_str,
+			args_count,
+			(method_impl)instance_method,
+			VISIBILITY_PUBLIC, /* TODO: Check previous TODO inside this function */
+			SYNCHRONOUS,	   /* There is not async functions in Ruby */
+			NULL);
+
+		signature s = method_signature(m);
+
+		for (args_it = 0; args_it < args_count; ++args_it)
+		{
+			VALUE parameter_pair = rb_ary_entry(parameters, args_it);
+
+			if (RARRAY_LEN(parameter_pair) == 2)
+			{
+				VALUE parameter_name_id = rb_ary_entry(parameter_pair, 1);
+				VALUE parameter_name = rb_funcall(parameter_name_id, rb_intern("id2name"), 0);
+				const char *parameter_name_str = RSTRING_PTR(parameter_name);
+
+				signature_set(s, args_it, parameter_name_str, NULL);
+			}
+		}
+
+		if (register_method(c, m) == 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s'", method_name_str);
+		}
+	}
+}
+
 int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_module, context ctx)
 {
 	log_write("metacall", LOG_LEVEL_DEBUG, "Ruby loader discovering:");
@@ -1357,9 +1425,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 	}
 
 	VALUE instance_methods = rb_funcall(rb_module->module, rb_intern("instance_methods"), 0);
-
 	VALUE methods_size = rb_funcall(instance_methods, rb_intern("size"), 0);
-
 	int index, size = FIX2INT(methods_size);
 
 	for (index = 0; index < size; ++index)
@@ -1411,9 +1477,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 
 	/* Now discover classes */
 	VALUE constants = rb_funcall(rb_module->module, rb_intern("constants"), 0);
-
 	VALUE constants_size = rb_funcall(constants, rb_intern("size"), 0);
-
 	size = FIX2INT(constants_size);
 
 	for (index = 0; index < size; index++)
@@ -1426,63 +1490,24 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 			{
 				VALUE class_name = rb_funcall(constant, rb_intern("id2name"), 0);
 				const char *class_name_str = RSTRING_PTR(class_name);
-				VALUE class = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
+				VALUE cls = rb_const_get_from(rb_module->module, rb_intern(class_name_str));
 				loader_impl_rb_class rb_cls = malloc(sizeof(struct loader_impl_rb_class_type));
 				klass c = class_create(class_name_str, rb_cls, &rb_class_interface_singleton);
 
 				rb_cls->impl = impl;
-				rb_cls->class = class;
+				rb_cls->class = cls;
 
-				// TODO:
-				// rb_obj_private_methods, rb_obj_protected_methods, rb_obj_public_methods and
-				// rb_obj_singleton_methods, can be used instead of rb_class_instance_methods
+				/*
+				* TODO:
+				* rb_obj_private_methods, rb_obj_protected_methods, rb_obj_public_methods and
+				* rb_obj_singleton_methods, can be used instead of rb_class_instance_methods
+				*/
+				VALUE argv[1] = { Qtrue };								 /* include_superclasses ? Qtrue : Qfalse; */
+				VALUE methods = rb_class_instance_methods(1, argv, cls); /* argc, argv, class */
+				rb_loader_impl_discover_methods(c, cls, class_name_str, "instance_method", methods, &class_register_method);
 
-				VALUE argv[1] = { Qtrue };								   // include_superclasses ? Qtrue : Qfalse;
-				VALUE methods = rb_class_instance_methods(1, argv, class); // argc, argv, class
-				VALUE load_path_array_size = rb_funcall(methods, rb_intern("size"), 0);
-				int method_index, methods_size = FIX2INT(load_path_array_size);
-
-				for (method_index = 0; method_index < methods_size; method_index++)
-				{
-					VALUE rb_method = rb_ary_entry(methods, method_index);
-					VALUE name = rb_funcall(rb_method, rb_intern("id2name"), 0);
-					const char *method_name_str = RSTRING_PTR(name);
-
-					log_write("metacall", LOG_LEVEL_DEBUG, "Method inside '%s' %s", class_name_str, method_name_str);
-
-					/* TODO */
-					/*
-					method m = method_create(c,
-						method_name_str,
-						args_count, // TODO: method(:foo).parameters.length
-						rb_method,
-						VISIBILITY_PUBLIC, // TODO: Check line 1434 of this file
-						SYNCHRONOUS, // There is not async functions in Ruby
-						NULL);
-
-					signature s = method_signature(m);
-
-					// TODO: Iterate through each parameter (method(:foo).parameters),
-					// get each pair second element and store the name, the arguments of the methods
-					// can be without types, so there's no need to use the parser
-
-					// Another alternative (for maintaining types), which is not used in the current implementation,
-					// but it can simplify the parser, it's the following:
-					//
-					//   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
-					//   - For plain functions: origin_file, definition_line = method(:foo).source_location
-					//
-					// Then:
-					// method_signature = IO.readlines(origin_file)[definition_line.pred]
-					//
-					// Now we have only the method signature, this is going to be less problematic than parsing
-					// the whole file as we are doing now (although for multi-line signatures it's going to be
-					// a little bit more complicated...)
-					//
-					// We can switch to completely duck typed approach (refactoring the tests) or we can use this
-					// simplified parsing approach and maintain types
-					*/
-				}
+				methods = rb_obj_singleton_methods(1, argv, cls); /* argc, argv, class */
+				rb_loader_impl_discover_methods(c, cls, class_name_str, "singleton_method", methods, &class_register_static_method);
 
 				/* Define default constructor. Ruby only supports one constructor, a
 				* method called 'initialize'. It can have arguments but when inspected via

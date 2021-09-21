@@ -17,6 +17,10 @@ class MyClass
 		puts(result)
 		return result
 	end
+
+	def many_parameters(a, b, c, d, e, f, g, h)
+		puts(a, b, c, d, e, f, g, h)
+	end
 	
 	def self.static_hello(value)
 		result = 'Hello static ' + value + '!'
