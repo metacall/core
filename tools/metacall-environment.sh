@@ -326,7 +326,7 @@ sub_metacall(){
 	elif [ INSTALL_NETCORE2 = 1 ]; then
 		NETCORE_VERSION=2.2.8
 	elif [ INSTALL_NETCORE5 = 1 ]; then
-		NETCORE_VERSION=5.0.9
+		NETCORE_VERSION=5.0.10
 	else
 		NETCORE_VERSION=0
 	fi
@@ -359,11 +359,11 @@ sub_clangformat(){
 	echo "configure clangformat"
 	cd $ROOT_DIR
 
-	LLVM_VERSION_STRING=11
+	LLVM_VERSION_STRING=12
 
 	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
-	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/xenial/ llvm-toolchain-xenial-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
 	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get install -y --no-install-recommends clang-format-$LLVM_VERSION_STRING
 	$SUDO_CMD ln -s /usr/bin/clang-format-$LLVM_VERSION_STRING /usr/bin/clang-format
