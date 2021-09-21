@@ -96,7 +96,7 @@ typedef struct loader_impl_rb_module_eval_protect_type
 
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
-static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
+static void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method));
 
 int function_rb_interface_create(function func, function_impl impl)
 {
@@ -1348,7 +1348,7 @@ loader_impl_rb_function rb_function_create(loader_impl_rb_module rb_module, ID i
 	return NULL;
 }
 
-void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, const char *method_type_str, VALUE methods, int (*register_method)(klass, method))
+void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_str, enum class_visibility_id visibility, const char *method_type_str, VALUE methods, int (*register_method)(klass, method))
 {
 	VALUE methods_v_size = rb_funcall(methods, rb_intern("size"), 0);
 	int method_index, methods_size = FIX2INT(methods_v_size);
@@ -1388,8 +1388,8 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 			method_name_str,
 			args_count,
 			(method_impl)instance_method,
-			VISIBILITY_PUBLIC, /* TODO: Check previous TODO inside this function */
-			SYNCHRONOUS,	   /* There is not async functions in Ruby */
+			visibility,
+			SYNCHRONOUS, /* There is not async functions in Ruby */
 			NULL);
 
 		signature s = method_signature(m);
@@ -1408,7 +1408,7 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 			}
 		}
 
-		if (register_method(c, m) == 0)
+		if (register_method(c, m) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s'", method_name_str);
 		}
@@ -1497,17 +1497,30 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				rb_cls->impl = impl;
 				rb_cls->class = cls;
 
-				/*
-				* TODO:
-				* rb_obj_private_methods, rb_obj_protected_methods, rb_obj_public_methods and
-				* rb_obj_singleton_methods, can be used instead of rb_class_instance_methods
-				*/
-				VALUE argv[1] = { Qtrue };								 /* include_superclasses ? Qtrue : Qfalse; */
-				VALUE methods = rb_class_instance_methods(1, argv, cls); /* argc, argv, class */
-				rb_loader_impl_discover_methods(c, cls, class_name_str, "instance_method", methods, &class_register_method);
+				VALUE argv[1] = { Qtrue };										/* include_superclasses ? Qtrue : Qfalse; */
+				VALUE methods = rb_class_public_instance_methods(1, argv, cls); /* argc, argv, cls */
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "instance_method", methods, &class_register_method);
 
-				methods = rb_obj_singleton_methods(1, argv, cls); /* argc, argv, class */
-				rb_loader_impl_discover_methods(c, cls, class_name_str, "singleton_method", methods, &class_register_static_method);
+				methods = rb_class_protected_instance_methods(1, argv, cls);
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "instance_method", methods, &class_register_method);
+
+				methods = rb_class_private_instance_methods(1, argv, cls);
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "instance_method", methods, &class_register_method);
+
+#if RUBY_VERSION_MAJOR == 3 && RUBY_VERSION_MINOR >= 0
+				methods = rb_obj_public_methods(1, argv, cls);
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
+
+				methods = rb_obj_protected_methods(1, argv, cls);
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PROTECTED, "singleton_method", methods, &class_register_static_method);
+
+				methods = rb_obj_private_methods(1, argv, cls);
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PRIVATE, "singleton_method", methods, &class_register_static_method);
+#else
+				methods = rb_obj_singleton_methods(1, argv, cls);
+				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
+#endif
+				/* TODO: Implement attributes */
 
 				/* Define default constructor. Ruby only supports one constructor, a
 				* method called 'initialize'. It can have arguments but when inspected via
