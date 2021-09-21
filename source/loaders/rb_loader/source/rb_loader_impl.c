@@ -466,11 +466,11 @@ int rb_object_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value rb_object_interface_get(object obj, object_impl impl, union accessor_type *accessor)
+value rb_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 	VALUE rb_val_object = rb_object->object;
-	const char *key = accessor->key;
+	const char *key = accessor->id == ACCESSOR_TYPE_DYNAMIC ? accessor->data.key : attribute_name(accessor->data.attr);
 	VALUE got = rb_iv_get(rb_val_object, key);
 	VALUE exception = rb_errinfo();
 
@@ -491,11 +491,11 @@ value rb_object_interface_get(object obj, object_impl impl, union accessor_type 
 	return result;
 }
 
-int rb_object_interface_set(object obj, object_impl impl, union accessor_type *accessor, value v)
+int rb_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
 	loader_impl_rb_object rb_object = (loader_impl_rb_object)impl;
 	VALUE rb_val_object = rb_object->object;
-	const char *key = accessor->key;
+	const char *key = accessor->id == ACCESSOR_TYPE_DYNAMIC ? accessor->data.key : attribute_name(accessor->data.attr);
 	rb_iv_set(rb_val_object, key, rb_type_serialize(v));
 	VALUE exception = rb_errinfo();
 
@@ -637,10 +637,10 @@ object rb_class_interface_constructor(klass cls, class_impl impl, const char *na
 	return obj;
 }
 
-value rb_class_interface_static_get(klass cls, class_impl impl, union accessor_type *accessor)
+value rb_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
 {
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
-	const char *attr_name = accessor->key;
+	const char *attr_name = accessor->id == ACCESSOR_TYPE_DYNAMIC ? accessor->data.key : attribute_name(accessor->data.attr);
 	VALUE rb_val_class = rb_class->class;
 	VALUE got = rb_cv_get(rb_val_class, attr_name);
 	VALUE exception = rb_errinfo();
@@ -662,10 +662,10 @@ value rb_class_interface_static_get(klass cls, class_impl impl, union accessor_t
 	return result;
 }
 
-int rb_class_interface_static_set(klass cls, class_impl impl, union accessor_type *accessor, value v)
+int rb_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
 {
 	loader_impl_rb_class rb_class = (loader_impl_rb_class)impl;
-	const char *attr_name = accessor->key;
+	const char *attr_name = accessor->id == ACCESSOR_TYPE_DYNAMIC ? accessor->data.key : attribute_name(accessor->data.attr);
 	VALUE rb_val_class = rb_class->class;
 
 	(void)cls;
@@ -1398,7 +1398,29 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 
 		if (register_method(c, m) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s'", method_name_str);
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register method '%s' in class '%s'", method_name_str, class_name_str);
+		}
+	}
+}
+
+void rb_loader_impl_discover_attributes(klass c, const char *class_name_str, VALUE attributes, int (*register_attr)(klass, attribute))
+{
+	size_t attributes_index, attributes_size = RARRAY_LEN(attributes);
+
+	for (attributes_index = 0; attributes_index < attributes_size; ++attributes_index)
+	{
+		VALUE rb_attr = rb_ary_entry(attributes, attributes_index);
+		VALUE name = rb_funcall(rb_attr, rb_intern("id2name"), 0);
+		const char *attr_name_str = RSTRING_PTR(name);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Attribute '%s' inside '%s'", attr_name_str, class_name_str);
+
+		/* TODO: Visibility? */
+		attribute attr = attribute_create(c, attr_name_str, NULL, (attribute_impl)rb_attr, VISIBILITY_PUBLIC, NULL);
+
+		if (register_attr(c, attr) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Ruby failed to register attribute '%s' in class '%s'", attr_name_str, class_name_str);
 		}
 	}
 }
@@ -1485,6 +1507,7 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				rb_cls->class = cls;
 				rb_cls->impl = impl;
 
+				/* Discover methods */
 				VALUE argv[1] = { Qtrue };										/* include_superclasses ? Qtrue : Qfalse; */
 				VALUE methods = rb_class_public_instance_methods(1, argv, cls); /* argc, argv, cls */
 				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "instance_method", methods, &class_register_method);
@@ -1508,7 +1531,13 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				methods = rb_obj_singleton_methods(1, argv, cls);
 				rb_loader_impl_discover_methods(c, cls, class_name_str, VISIBILITY_PUBLIC, "singleton_method", methods, &class_register_static_method);
 #endif
-				/* TODO: Implement attributes */
+
+				/* Discover attributes */
+				VALUE static_attributes = rb_mod_class_variables(1, argv, cls);
+				rb_loader_impl_discover_attributes(c, class_name_str, static_attributes, &class_register_static_attribute);
+
+				VALUE instance_attributes = rb_obj_instance_variables(cls);
+				rb_loader_impl_discover_attributes(c, class_name_str, instance_attributes, &class_register_attribute);
 
 				/* Define default constructor. Ruby only supports one constructor, a
 				* method called 'initialize'. It can have arguments but when inspected via

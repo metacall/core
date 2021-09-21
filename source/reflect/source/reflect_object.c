@@ -248,7 +248,7 @@ value object_get(object obj, const char *key)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->get != NULL)
 	{
-		union accessor_type accessor;
+		struct accessor_type accessor;
 		attribute attr = class_attribute(obj->cls, key);
 
 		if (attr == NULL)
@@ -261,13 +261,16 @@ value object_get(object obj, const char *key)
 				}
 
 				case ACCESSOR_TYPE_DYNAMIC: {
-					accessor.key = key;
+					accessor.data.key = key;
 				}
 			}
+
+			accessor.id = ACCESSOR_TYPE_DYNAMIC;
 		}
 		else
 		{
-			accessor.attr = attr;
+			accessor.data.attr = attr;
+			accessor.id = ACCESSOR_TYPE_STATIC;
 		}
 
 		value v = obj->interface->get(obj, obj->impl, &accessor);
@@ -287,7 +290,7 @@ int object_set(object obj, const char *key, value v)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->set != NULL)
 	{
-		union accessor_type accessor;
+		struct accessor_type accessor;
 		attribute attr = class_attribute(obj->cls, key);
 
 		if (attr == NULL)
@@ -300,13 +303,16 @@ int object_set(object obj, const char *key, value v)
 				}
 
 				case ACCESSOR_TYPE_DYNAMIC: {
-					accessor.key = key;
+					accessor.data.key = key;
 				}
 			}
+
+			accessor.id = ACCESSOR_TYPE_DYNAMIC;
 		}
 		else
 		{
-			accessor.attr = attr;
+			accessor.data.attr = attr;
+			accessor.id = ACCESSOR_TYPE_STATIC;
 		}
 
 		if (obj->interface->set(obj, obj->impl, &accessor, v) != 0)

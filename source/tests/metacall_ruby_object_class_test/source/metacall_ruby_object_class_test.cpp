@@ -130,7 +130,6 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 
-#if 0 /* TODO: Delete this for showing a heap after free error */
 	/* Print inspect information */
 	{
 		size_t size = 0;
@@ -151,7 +150,6 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 
 		metacall_allocator_destroy(allocator);
 	}
-#endif
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

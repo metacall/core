@@ -47,9 +47,9 @@ typedef int (*class_impl_interface_create)(klass, class_impl);
 
 typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *, constructor, class_args, size_t);
 
-typedef value (*class_impl_interface_static_get)(klass, class_impl, union accessor_type *);
+typedef value (*class_impl_interface_static_get)(klass, class_impl, struct accessor_type *);
 
-typedef int (*class_impl_interface_static_set)(klass, class_impl, union accessor_type *, value);
+typedef int (*class_impl_interface_static_set)(klass, class_impl, struct accessor_type *, value);
 
 typedef value (*class_impl_interface_static_invoke)(klass, class_impl, method, class_args, size_t);
 

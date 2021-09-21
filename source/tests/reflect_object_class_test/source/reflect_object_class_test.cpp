@@ -58,10 +58,10 @@ int hello_world_object_impl_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value hello_world_object_impl_interface_get(object obj, object_impl impl, union accessor_type *accessor)
+value hello_world_object_impl_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
 	hello_world_object hello_world = (hello_world_object)impl;
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	const char *key = attribute_name(attr);
 
 	(void)obj;
@@ -79,10 +79,10 @@ value hello_world_object_impl_interface_get(object obj, object_impl impl, union 
 	return NULL;
 }
 
-int hello_world_object_impl_interface_set(object obj, object_impl impl, union accessor_type *accessor, value v)
+int hello_world_object_impl_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
 	hello_world_object hello_world = (hello_world_object)impl;
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	const char *key = attribute_name(attr);
 
 	EXPECT_NE((void *)NULL, (void *)hello_world);
@@ -209,10 +209,10 @@ object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, 
 	return obj;
 }
 
-value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, union accessor_type *accessor)
+value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
 {
 	hello_world_class hello_world = (hello_world_class)impl;
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	char *key = attribute_name(attr);
 
 	(void)cls;
@@ -239,10 +239,10 @@ value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, un
 	return NULL;
 }
 
-int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, union accessor_type *accessor, value v)
+int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
 {
 	hello_world_class hello_world = (hello_world_class)impl;
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 
 	EXPECT_NE((void *)NULL, (void *)hello_world);
 

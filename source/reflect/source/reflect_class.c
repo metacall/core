@@ -496,7 +496,7 @@ value class_static_get(klass cls, const char *key)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_get != NULL && key != NULL)
 	{
-		union accessor_type accessor;
+		struct accessor_type accessor;
 		attribute attr = set_get(cls->static_attributes, (set_key)key);
 
 		if (attr == NULL)
@@ -509,13 +509,16 @@ value class_static_get(klass cls, const char *key)
 				}
 
 				case ACCESSOR_TYPE_DYNAMIC: {
-					accessor.key = key;
+					accessor.data.key = key;
 				}
 			}
+
+			accessor.id = ACCESSOR_TYPE_DYNAMIC;
 		}
 		else
 		{
-			accessor.attr = attr;
+			accessor.data.attr = attr;
+			accessor.id = ACCESSOR_TYPE_STATIC;
 		}
 
 		value v = cls->interface->static_get(cls, cls->impl, &accessor);
@@ -535,7 +538,7 @@ int class_static_set(klass cls, const char *key, value v)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_set != NULL && key != NULL && v != NULL)
 	{
-		union accessor_type accessor;
+		struct accessor_type accessor;
 		attribute attr = set_get(cls->static_attributes, (set_key)key);
 
 		if (attr == NULL)
@@ -548,13 +551,16 @@ int class_static_set(klass cls, const char *key, value v)
 				}
 
 				case ACCESSOR_TYPE_DYNAMIC: {
-					accessor.key = key;
+					accessor.data.key = key;
 				}
 			}
+
+			accessor.id = ACCESSOR_TYPE_DYNAMIC;
 		}
 		else
 		{
-			accessor.attr = attr;
+			accessor.data.attr = attr;
+			accessor.id = ACCESSOR_TYPE_STATIC;
 		}
 
 		if (cls->interface->static_set(cls, cls->impl, &accessor, v) != 0)
@@ -641,9 +647,6 @@ vector class_methods(klass cls, const char *key)
 	{
 		return NULL;
 	}
-
-	/// TODO: DELETE
-	log_write("metacall", LOG_LEVEL_DEBUG, "The class %s.%s has %" PRIuS " methods: %p", cls->name, key, map_size(cls->methods), map_get(cls->methods, (map_key)key));
 
 	return map_get(cls->methods, (map_key)key);
 }

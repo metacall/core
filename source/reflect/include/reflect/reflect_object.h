@@ -47,9 +47,9 @@ typedef value (*object_reject_callback)(value, void *);
 
 typedef int (*object_impl_interface_create)(object, object_impl);
 
-typedef value (*object_impl_interface_get)(object, object_impl, union accessor_type *);
+typedef value (*object_impl_interface_get)(object, object_impl, struct accessor_type *);
 
-typedef int (*object_impl_interface_set)(object, object_impl, union accessor_type *, value);
+typedef int (*object_impl_interface_set)(object, object_impl, struct accessor_type *, value);
 
 typedef value (*object_impl_interface_method_invoke)(object, object_impl, method, object_args, size_t);
 

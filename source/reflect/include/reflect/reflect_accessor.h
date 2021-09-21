@@ -41,16 +41,21 @@ enum accessor_type_id
 	ACCESSOR_TYPE_DYNAMIC = 1
 };
 
-/*
-* Apart from attribute, there is constructor and method
-* also included for future uses
-*/
-union accessor_type
+struct accessor_type
 {
-	const char *key;
-	constructor ctor;
-	attribute attr;
-	method m;
+	enum accessor_type_id id;
+
+	/*
+	* In addition to attribute, there is constructor and method
+	* also included for future uses
+	*/
+	union
+	{
+		const char *key;
+		constructor ctor;
+		attribute attr;
+		method m;
+	} data;
 };
 
 #ifdef __cplusplus

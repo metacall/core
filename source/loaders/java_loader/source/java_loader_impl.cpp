@@ -433,11 +433,11 @@ int java_object_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value java_object_interface_get(object obj, object_impl impl, union accessor_type *accessor)
+value java_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
 	(void)obj;
 
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 
@@ -629,11 +629,11 @@ value java_object_interface_get(object obj, object_impl impl, union accessor_typ
 	return NULL;
 }
 
-int java_object_interface_set(object obj, object_impl impl, union accessor_type *accessor, value v)
+int java_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
 	(void)obj;
 
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 
@@ -1010,11 +1010,11 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	return obj;
 }
 
-value java_class_interface_static_get(klass cls, class_impl impl, union accessor_type *accessor)
+value java_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
 {
 	(void)cls;
 
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
@@ -1263,11 +1263,11 @@ value java_class_interface_static_get(klass cls, class_impl impl, union accessor
 	return NULL;
 }
 
-int java_class_interface_static_set(klass cls, class_impl impl, union accessor_type *accessor, value v)
+int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
 {
 	(void)cls;
 
-	attribute attr = accessor->attr;
+	attribute attr = accessor->data.attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
