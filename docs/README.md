@@ -726,16 +726,16 @@ For running other Valgrind's tools like helgrind or similar, I recommend running
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|     Operative System     |    Architecture     |    Compiler     |                                               Build Status                                                |
-| :----------------------: | :-----------------: | :-------------: | :-------------------------------------------------------------------------------------------------------: |
-|    **`ubuntu:focal`**    |     **`amd64`**     |    **`gcc`**    |                                                                                                           |
-| **`debian:buster-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/pipeline.svg)](https://gitlab.com/metacall/core) |
-| **`debian:buster-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                           |
-|      **`windows`**       | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                           |
+|      Operative System      |    Architecture     |    Compiler     |                                               Build Status                                                |
+| :------------------------: | :-----------------: | :-------------: | :-------------------------------------------------------------------------------------------------------: |
+|     **`ubuntu:focal`**     |     **`amd64`**     |    **`gcc`**    |                                                                                                           |
+| **`debian:bullseye-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/pipeline.svg)](https://gitlab.com/metacall/core) |
+| **`debian:bullseye-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                           |
+|       **`windows`**        | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                           |
 
 ### 7.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:buster-slim` for `amd64` architecture.
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bullseye-slim` for `amd64` architecture.
 
 For pulling the **METACALL** `latest` image containing the runtime, use:
 
