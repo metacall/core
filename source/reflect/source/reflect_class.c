@@ -25,6 +25,8 @@
 #include <reflect/reflect_class.h>
 #include <reflect/reflect_value_type.h>
 
+#include <reflect/reflect_accessor.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -33,6 +35,7 @@
 struct class_type
 {
 	char *name;
+	enum accessor_type_id accessor;
 	class_impl impl;
 	class_interface interface;
 	size_t ref_count;
@@ -74,7 +77,7 @@ static int class_attributes_destroy_cb_iterate(set s, set_key key, set_value val
 static int class_methods_destroy_cb_iterate(map m, map_key key, map_value val, map_cb_iterate_args args);
 static void class_constructors_destroy(klass cls);
 
-klass class_create(const char *name, class_impl impl, class_impl_interface_singleton singleton)
+klass class_create(const char *name, enum accessor_type_id accessor, class_impl impl, class_impl_interface_singleton singleton)
 {
 	klass cls = malloc(sizeof(struct class_type));
 
@@ -106,6 +109,7 @@ klass class_create(const char *name, class_impl impl, class_impl_interface_singl
 	}
 
 	cls->impl = impl;
+	cls->accessor = accessor;
 	cls->ref_count = 0;
 	cls->interface = singleton ? singleton() : NULL;
 	cls->constructors = vector_create_type(constructor);
@@ -492,15 +496,29 @@ value class_static_get(klass cls, const char *key)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_get != NULL && key != NULL)
 	{
+		union accessor_type accessor;
 		attribute attr = set_get(cls->static_attributes, (set_key)key);
 
 		if (attr == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Static attribute %s in class %s is not defined", key, cls->name);
-			return NULL;
+			switch (cls->accessor)
+			{
+				case ACCESSOR_TYPE_STATIC: {
+					log_write("metacall", LOG_LEVEL_ERROR, "Static attribute %s in class %s is not defined", key, cls->name);
+					return NULL;
+				}
+
+				case ACCESSOR_TYPE_DYNAMIC: {
+					accessor.key = key;
+				}
+			}
+		}
+		else
+		{
+			accessor.attr = attr;
 		}
 
-		value v = cls->interface->static_get(cls, cls->impl, attr);
+		value v = cls->interface->static_get(cls, cls->impl, &accessor);
 
 		if (v == NULL)
 		{
@@ -517,15 +535,29 @@ int class_static_set(klass cls, const char *key, value v)
 {
 	if (cls != NULL && cls->interface != NULL && cls->interface->static_set != NULL && key != NULL && v != NULL)
 	{
+		union accessor_type accessor;
 		attribute attr = set_get(cls->static_attributes, (set_key)key);
 
 		if (attr == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Static attribute %s in class %s is not defined", key, cls->name);
-			return 3;
+			switch (cls->accessor)
+			{
+				case ACCESSOR_TYPE_STATIC: {
+					log_write("metacall", LOG_LEVEL_ERROR, "Static attribute %s in class %s is not defined", key, cls->name);
+					return 3;
+				}
+
+				case ACCESSOR_TYPE_DYNAMIC: {
+					accessor.key = key;
+				}
+			}
+		}
+		else
+		{
+			accessor.attr = attr;
 		}
 
-		if (cls->interface->static_set(cls, cls->impl, attr, v) != 0)
+		if (cls->interface->static_set(cls, cls->impl, &accessor, v) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s set of static attribute %s", cls->name, key);
 			return 2;
@@ -609,6 +641,9 @@ vector class_methods(klass cls, const char *key)
 	{
 		return NULL;
 	}
+
+	/// TODO: DELETE
+	log_write("metacall", LOG_LEVEL_DEBUG, "The class %s.%s has %" PRIuS " methods: %p", cls->name, key, map_size(cls->methods), map_get(cls->methods, (map_key)key));
 
 	return map_get(cls->methods, (map_key)key);
 }

@@ -18,40 +18,43 @@
  *
  */
 
-#ifndef REFLECT_ATTRIBUTE_H
-#define REFLECT_ATTRIBUTE_H 1
-
-#include <reflect/reflect_api.h>
-
-#include <reflect/reflect_class_decl.h>
-#include <reflect/reflect_class_visibility.h>
-
-#include <reflect/reflect_type.h>
+#ifndef REFLECT_ACCESSOR_H
+#define REFLECT_ACCESSOR_H 1
 
 #include <reflect/reflect_attribute_decl.h>
+#include <reflect/reflect_constructor_decl.h>
+#include <reflect/reflect_method_decl.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-REFLECT_API attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility, attribute_impl_interface_singleton singleton);
+/*
+* Depending on the class or object accessor type,
+* if it is static, there will be an error when accessing
+* an attribute that was not registered, otherwise
+* it will allow setting or getting the attribute dynamically
+*/
+enum accessor_type_id
+{
+	ACCESSOR_TYPE_STATIC = 0,
+	ACCESSOR_TYPE_DYNAMIC = 1
+};
 
-REFLECT_API klass attribute_class(attribute attr);
-
-REFLECT_API char *attribute_name(attribute attr);
-
-REFLECT_API type attribute_type(attribute attr);
-
-REFLECT_API attribute_impl attribute_data(attribute attr);
-
-REFLECT_API enum class_visibility_id attribute_visibility(attribute attr);
-
-REFLECT_API value attribute_metadata(attribute attr);
-
-REFLECT_API void attribute_destroy(attribute attr);
+/*
+* Apart from attribute, there is constructor and method
+* also included for future uses
+*/
+union accessor_type
+{
+	const char *key;
+	constructor ctor;
+	attribute attr;
+	method m;
+};
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* REFLECT_ATTRIBUTE_H */
+#endif /* REFLECT_ACCESSOR_H */

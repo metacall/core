@@ -365,7 +365,7 @@ TEST_F(serial_test, DefaultConstructor)
 		*/
 
 		/* TODO: Implement class properly */
-		/* klass cls = class_create(NULL, NULL, NULL); */
+		/* klass cls = class_create(NULL, ACCESSOR_TYPE_STATIC, NULL, NULL); */
 
 		value value_array[] = {
 			value_create_bool(1),

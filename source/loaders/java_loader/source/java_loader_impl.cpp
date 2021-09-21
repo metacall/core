@@ -433,10 +433,11 @@ int java_object_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value java_object_interface_get(object obj, object_impl impl, attribute attr)
+value java_object_interface_get(object obj, object_impl impl, union accessor_type *accessor)
 {
 	(void)obj;
 
+	attribute attr = accessor->attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 
@@ -628,11 +629,11 @@ value java_object_interface_get(object obj, object_impl impl, attribute attr)
 	return NULL;
 }
 
-int java_object_interface_set(object obj, object_impl impl, attribute attr, value v)
+int java_object_interface_set(object obj, object_impl impl, union accessor_type *accessor, value v)
 {
 	(void)obj;
-	std::cout << "Obj Set" << std::endl;
 
+	attribute attr = accessor->attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 
@@ -955,7 +956,7 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 	loader_impl_java_object java_obj = new loader_impl_java_object_type();
 
-	object obj = object_create(name, java_obj, &java_object_interface_singleton, cls);
+	object obj = object_create(name, ACCESSOR_TYPE_STATIC, java_obj, &java_object_interface_singleton, cls);
 
 	if (obj == NULL)
 		return NULL;
@@ -1009,10 +1010,11 @@ object java_class_interface_constructor(klass cls, class_impl impl, const char *
 	return obj;
 }
 
-value java_class_interface_static_get(klass cls, class_impl impl, attribute attr)
+value java_class_interface_static_get(klass cls, class_impl impl, union accessor_type *accessor)
 {
 	(void)cls;
 
+	attribute attr = accessor->attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
@@ -1088,9 +1090,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 					jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
 					jstring name = (jstring)java_impl->env->CallObjectMethod(gotVal, mid_getName);
 					const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
-					context ctx = loader_impl_context(java_cls->impl);
-					scope sp = context_scope(ctx);
-					value cls_val = (klass)scope_get(sp, cls_name);
+					value cls_val = loader_impl_get_value(java_cls->impl, cls_name);
 					return value_type_copy(cls_val);
 				}
 
@@ -1240,9 +1240,7 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 									jmethodID mid_getName = java_impl->env->GetMethodID(cls, "getName", "()Ljava/lang/String;");
 									jstring name = (jstring)java_impl->env->CallObjectMethod(cur_ele, mid_getName);
 									const char *cls_name = java_impl->env->GetStringUTFChars(name, NULL);
-									context ctx = loader_impl_context(java_cls->impl);
-									scope sp = context_scope(ctx);
-									value cls_val = (klass)scope_get(sp, cls_name);
+									value cls_val = loader_impl_get_value(java_cls->impl, cls_name);
 									array_value[i] = value_type_copy(cls_val);
 								}
 
@@ -1265,10 +1263,11 @@ value java_class_interface_static_get(klass cls, class_impl impl, attribute attr
 	return NULL;
 }
 
-int java_class_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
+int java_class_interface_static_set(klass cls, class_impl impl, union accessor_type *accessor, value v)
 {
 	(void)cls;
 
+	attribute attr = accessor->attr;
 	const char *key = (const char *)attribute_name(attr);
 	type fieldType = (type)attribute_type(attr);
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
@@ -1840,7 +1839,7 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					java_cls->impl = impl;
 					java_cls->java_impl = java_impl;
 
-					klass c = class_create(cls_name, java_cls, &java_class_interface_singleton);
+					klass c = class_create(cls_name, ACCESSOR_TYPE_STATIC, java_cls, &java_class_interface_singleton);
 
 					jmethodID cls_field_array = java_impl->env->GetStaticMethodID(classPtr, "java_bootstrap_discover_fields", "(Ljava/lang/Class;)[Ljava/lang/reflect/Field;");
 					if (cls_field_array != nullptr)

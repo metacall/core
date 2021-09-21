@@ -58,9 +58,10 @@ int hello_world_object_impl_interface_create(object obj, object_impl impl)
 	return 0;
 }
 
-value hello_world_object_impl_interface_get(object obj, object_impl impl, attribute attr)
+value hello_world_object_impl_interface_get(object obj, object_impl impl, union accessor_type *accessor)
 {
 	hello_world_object hello_world = (hello_world_object)impl;
+	attribute attr = accessor->attr;
 	const char *key = attribute_name(attr);
 
 	(void)obj;
@@ -78,9 +79,10 @@ value hello_world_object_impl_interface_get(object obj, object_impl impl, attrib
 	return NULL;
 }
 
-int hello_world_object_impl_interface_set(object obj, object_impl impl, attribute attr, value v)
+int hello_world_object_impl_interface_set(object obj, object_impl impl, union accessor_type *accessor, value v)
 {
 	hello_world_object hello_world = (hello_world_object)impl;
+	attribute attr = accessor->attr;
 	const char *key = attribute_name(attr);
 
 	EXPECT_NE((void *)NULL, (void *)hello_world);
@@ -185,7 +187,7 @@ object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, 
 	(void)impl;
 	(void)ctor;
 
-	object obj = object_create(name, hello_world_obj, &hello_world_object_impl_interface_singleton, cls);
+	object obj = object_create(name, ACCESSOR_TYPE_STATIC, hello_world_obj, &hello_world_object_impl_interface_singleton, cls);
 
 	if (object_increment_reference(obj) != 0)
 	{
@@ -207,13 +209,13 @@ object hello_world_class_impl_interface_constructor(klass cls, class_impl impl, 
 	return obj;
 }
 
-value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, attribute attr)
+value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, union accessor_type *accessor)
 {
 	hello_world_class hello_world = (hello_world_class)impl;
+	attribute attr = accessor->attr;
+	char *key = attribute_name(attr);
 
 	(void)cls;
-
-	char *key = attribute_name(attr);
 
 	if (key == NULL)
 	{
@@ -237,9 +239,10 @@ value hello_world_class_impl_interface_static_get(klass cls, class_impl impl, at
 	return NULL;
 }
 
-int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, attribute attr, value v)
+int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, union accessor_type *accessor, value v)
 {
 	hello_world_class hello_world = (hello_world_class)impl;
+	attribute attr = accessor->attr;
 
 	EXPECT_NE((void *)NULL, (void *)hello_world);
 
@@ -339,7 +342,7 @@ TEST_F(reflect_object_class_test, DefaultConstructor)
 
 	EXPECT_NE((void *)NULL, (void *)hellow_world_cls);
 
-	klass cls = class_create("HelloWorld", hellow_world_cls, &hello_world_class_impl_interface_singleton);
+	klass cls = class_create("HelloWorld", ACCESSOR_TYPE_STATIC, hellow_world_cls, &hello_world_class_impl_interface_singleton);
 
 	EXPECT_EQ((int)class_increment_reference(cls), (int)0);
 

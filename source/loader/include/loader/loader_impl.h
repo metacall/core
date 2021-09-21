@@ -42,6 +42,8 @@ LOADER_API loader_impl loader_impl_create(const char *path, const loader_naming_
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
 
+LOADER_API value loader_impl_get_value(loader_impl impl, const char *name);
+
 LOADER_API loader_impl_interface loader_impl_symbol(loader_impl impl);
 
 LOADER_API loader_naming_tag *loader_impl_tag(loader_impl impl);
