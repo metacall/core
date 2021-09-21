@@ -1,9 +1,7 @@
 pub use std::ffi::c_void;
+pub use std::ffi::CStr;
 pub use std::os::raw::c_int;
 pub use std::os::raw::c_char;
-
-pub type PointerToCvoid = *mut c_void;
-pub type Path = *const *mut c_char;
 
 mod lifecycle;
 

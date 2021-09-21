@@ -1,5 +1,6 @@
-use crate::{Path, PointerToCvoid};
+use crate::{ c_void, c_char, c_int };
 
 #[no_mangle]
-// There's nothing necessary to do at this step yet
-pub extern "C" fn rs_loader_impl_load_from_memory(_loader_impl: PointerToCvoid, _paths: Path) {}
+pub extern "C" fn rs_loader_impl_load_from_memory(_loader_impl: *mut c_void, _name: *const c_char, _buffer: *const c_char, _size: usize) -> *mut c_void {
+	1 as c_int as *mut c_void
+}

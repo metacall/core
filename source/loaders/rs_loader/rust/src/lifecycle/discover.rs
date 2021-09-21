@@ -1,5 +1,6 @@
-use crate::{PointerToCvoid};
+use crate::{ c_void, c_int };
 
 #[no_mangle]
-// There's nothing necessary to do at this step yet
-pub extern "C" fn rs_loader_impl_discover(_loader_impl: PointerToCvoid) {}
+pub extern "C" fn rs_loader_impl_discover(_loader_impl: *mut c_void, _handle: *mut c_void, _ctx: *mut c_void) -> c_int {
+	0 as c_int
+}
