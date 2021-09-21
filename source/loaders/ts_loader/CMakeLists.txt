@@ -72,7 +72,6 @@ add_library(${target} MODULE
 # Add target dependencies
 add_dependencies(${target}
 	node_loader
-	node_port
 	ts_loader_bootstrap
 )
 
