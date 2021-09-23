@@ -1,37 +1,15 @@
 package metacall;
 
-import java.util.*;
-import java.io.*;
+import metacall.util.*;
+
+import javax.lang.model.type.NullType;
 
 import com.sun.jna.*;
+import com.sun.jna.ptr.PointerByReference;
 
-//import util.*;
 
-//size_t definition
-class SIZET extends IntegerType
+public interface Bindings extends Library
 {
-    public SIZET()
-    {
-      this(0);
-    }
-
-    public SIZET(SIZET value)
-    {
-      super(Native.SIZE_T_SIZE, value, true);
-    }
-}
-
-// TODO
-// FunctionPointer definition
-
-// default visibility of classes is package-private | Scala equivalent of protected[pkg]
-class Bindings extends Library
-{
-  // TODO
-  /*
-  * val instance = Native.load("metacall", classOf[Bindings])
-  * val runningInMetacall = System.getProperty("metacall.polyglot.name") == "core"
-  */
 
   int metacall_initialize();
 
@@ -44,19 +22,18 @@ class Bindings extends Library
   Pointer metacallv_s(String name, Pointer args[], SIZET size);
   Pointer metacallfv_s(Pointer func, Pointer args[], SIZET size);
 
-  // TODO
-  // metacall_await_s,  metacall_await_future
+  Pointer metacall_await_s(String name, Pointer[] args, SIZET size, ResolveCallback resolve, RejectCallback reject, Pointer data);
+  Pointer metacall_await_future(Pointer future, ResolveCallback resolve, RejectCallback reject, Pointer data);
 
   Pointer metacallhv_s(Pointer handle, String name, Pointer args[], SIZET size);
 
-  // TODO
-  // metacall_register
+  int metacall_register(String name, FunctionPointer invoke, PointerByReference func, int ret, SIZET size, int[] types);
 
   Pointer metacall_function(String name);
   SIZET metacall_function_size(Pointer func);
   int metacall_function_async(Pointer func);
-  int metacall_destroy();
 
+  int metacall_destroy();
 
   //metacall_value.h
   Pointer metacall_value_create_int(int i);
@@ -81,9 +58,7 @@ class Bindings extends Library
   char metacall_value_to_char(Pointer v);
   String metacall_value_to_string(Pointer v);
   Pointer[] metacall_value_to_array(Pointer v);
-  //TODO
-  //metacall_value_to_null
-  //  def metacall_value_to_null(v: Pointer): Null
+  NullType metacall_value_to_null(Pointer v);
 
   Pointer metacall_value_to_function(Pointer v);
   Pointer[] metacall_value_to_map(Pointer v);
@@ -97,4 +72,8 @@ class Bindings extends Library
   void metacal_value_destroy(Pointer v);
   int metacall_value_id(Pointer v);
 
+
+  // create instance of interface
+  Bindings INSTANCE = (Bindings)Native.load("metacall", Bindings.class);
+  boolean runningInMetacall = System.getProperty("metacall.polyglot.name") == "core";
 }
