@@ -47,7 +47,6 @@ class Bindings extends Library
   // TODO
   // metacall_await_s,  metacall_await_future
 
-
   Pointer metacallhv_s(Pointer handle, String name, Pointer args[], SIZET size);
 
   // TODO
@@ -61,7 +60,7 @@ class Bindings extends Library
 
   //metacall_value.h
   Pointer metacall_value_create_int(int i);
-  Pointer metacall_value_create_SIZET(SIZET l);
+  Pointer metacall_value_create_long(long l);
   Pointer metacall_value_create_short(short s);
   Pointer metacall_value_create_string(String str, SIZET length);
   Pointer metacall_value_create_char(char c);
@@ -74,7 +73,7 @@ class Bindings extends Library
   Pointer metacall_value_create_null();
 
   int metacall_value_to_int(Pointer v);
-  SIZET metacall_value_to_SIZET(Pointer v);
+  long metacall_value_to_long(Pointer v);
   short metacall_value_to_short(Pointer v);
   float metacall_value_to_float(Pointer v);
   double metacall_value_to_double(Pointer v);
