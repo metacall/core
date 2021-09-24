@@ -5,16 +5,16 @@ import com.sun.jna.*;
 class util
 {
 
-	public static class SIZET extends IntegerType
+	public static class SizeT extends IntegerType
 	{
 		private static final long serialVersionUID = 1L;
 
-		public SIZET()
+		public SizeT()
 	    {
 	      this(0);
 	    }
 
-	    public SIZET(long value)
+	    public SizeT(long value)
 	    {
 	      super(Native.SIZE_T_SIZE, value, true);
 	    }
@@ -22,7 +22,7 @@ class util
 
 	public static interface FunctionPointer extends Callback
 	{
-		Pointer callback(SIZET argc, Pointer args, Pointer data);
+		Pointer callback(SizeT argc, Pointer args, Pointer data);
 	}
 
 	public static interface ResolveCallback extends Callback
@@ -33,4 +33,15 @@ class util
 	{
 		Pointer invoke(Pointer error, Pointer data);
 	}
+
+	// TODO
+	//MetacallException
+	//AllocationError
+	//DestrucitonError
+
+	boolean isNull(Pointer ptr)
+	{
+		return (ptr == null || ptr == Pointer.NULL)? true:false;
+	}
+
 }
