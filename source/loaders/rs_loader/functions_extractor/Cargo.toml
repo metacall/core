@@ -1,0 +1,9 @@
+[package]
+name = "functions_extractor"
+version = "0.1.0"
+edition = "2018"
+
+[package.metadata.rust-analyzer]
+rustc_private = true
+
+[dependencies]
