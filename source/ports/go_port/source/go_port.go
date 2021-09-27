@@ -7,25 +7,41 @@ package metacall
 import "C"
 
 import (
-	"errors"
+	"fmt"
 	"runtime"
 	"sync"
 	"unsafe"
 )
 
+type loadFromFileSafeWork struct {
+	tag     string
+	scripts []string
+	err     chan error
+}
+
+type callReturnSafeWork struct {
+	value interface{}
+	err   error
+}
+
+type callSafeWork struct {
+	function string
+	size     int
+	args     []interface{}
+	ret      chan callReturnSafeWork
+}
+
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
-type Work interface{}
-
-var queue = make(chan Work, 1)
+var queue = make(chan interface{}, 1)
 var toggle chan struct{}
 var lock sync.Mutex
 var wg sync.WaitGroup
 
 func Initialize() error {
 	// TODO: Remove this once go loader is implemented
-	if int(C.metacall_initialize()) != 0 {
-		return errors.New("MetaCall failed to initialize")
+	if result := int(C.metacall_initialize()); result != 0 {
+		return fmt.Errorf("initializing MetaCall (error code %d)", result)
 	}
 
 	return nil
@@ -42,15 +58,19 @@ func InitializeSafe() error {
 	}
 
 	toggle = make(chan struct{}, 1)
+	initErr := make(chan error, 1)
 
-	go func(<-chan struct{}) {
+	go func(initErr chan error, toggle <-chan struct{}) {
 		// Bind this goroutine to its thread
 		runtime.LockOSThread()
 
 		// Initialize MetaCall
-		err := Initialize()
+		if err := Initialize(); err != nil {
+			initErr <- err
+			return
+		}
 
-		// TODO: Here I must pass err to the outside function
+		close(initErr)
 
 		for {
 			select {
@@ -64,9 +84,9 @@ func InitializeSafe() error {
 				wg.Done()
 			}
 		}
-	}(toggle)
+	}(initErr, toggle)
 
-	return nil // TODO: return err
+	return <-initErr
 }
 
 func LoadFromFile(tag string, scripts []string) error {
@@ -86,16 +106,23 @@ func LoadFromFile(tag string, scripts []string) error {
 	}
 
 	if int(C.metacall_load_from_file(cTag, (**C.char)(cScripts), (C.size_t)(size), nil)) != 0 {
-		return errors.New("MetaCall failed to load script")
+		return fmt.Errorf("%s loader failed to load a script from the list: %v", tag, scripts)
 	}
 
 	return nil
 }
 
 func LoadFromFileSafe(tag string, scripts []string) error {
-	w := Work{}
+	result := make(chan error, 1)
+	w := loadFromFileSafeWork{
+		tag,
+		scripts,
+		result,
+	}
 	wg.Add(1)
 	queue <- w
+
+	return <-result
 }
 
 func Call(function string, args ...interface{}) (interface{}, error) {
@@ -106,7 +133,7 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	cFunc := C.metacall_function(cFunction)
 
 	if cFunc == nil {
-		return nil, errors.New("Function not found")
+		return nil, fmt.Errorf("function %s not found", function)
 	}
 
 	size := len(args)
@@ -184,9 +211,17 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 
 // Call sends work and blocks until it's processed
 func CallSafe(function string, args ...interface{}) (interface{}, error) {
-	w := Work{}
+	ret := make(chan callReturnSafeWork, 1)
+	w := callSafeWork{
+		function: function,
+		size:     len(args),
+		args:     args,
+		ret:      ret,
+	}
 	wg.Add(1)
 	queue <- w
+
+	return nil, nil // TODO
 }
 
 func Destroy() {
@@ -194,7 +229,7 @@ func Destroy() {
 }
 
 // Shutdown disables the metacall adapter waiting for all calls to complete
-func DestorySafe() {
+func DestroySafe() {
 	lock.Lock()
 	close(toggle)
 	toggle = nil
@@ -203,33 +238,3 @@ func DestorySafe() {
 	// Wait for all work to complete
 	wg.Wait()
 }
-
-/*
-func main() {
-
-	if err := metacall.Initialize(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	defer metacall.Destroy()
-
-	scripts := []string{ "test.mock" }
-
-	if err := metacall.LoadFromFile("mock", scripts); err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	ret, err := metacall.Call("three_str", "e", "f", "g")
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	if str, ok := ret.(string); ok {
-		fmt.Println(str)
-	}
-}
-*/
