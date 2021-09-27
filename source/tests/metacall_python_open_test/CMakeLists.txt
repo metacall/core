@@ -60,6 +60,13 @@ add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
 #
 
 if(NOT OPTION_BUILD_GUIX)
+	find_package(NPM)
+
+	if(NOT NPM_FOUND)
+		message(STATUS "NPM not found")
+		return()
+	endif()
+
 	if(MSVC)
 		set(DEPENDS_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
 	else()
@@ -68,7 +75,7 @@ if(NOT OPTION_BUILD_GUIX)
 
 	add_custom_target(${target}-depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install jsonwebtoken
+		COMMAND ${NPM_EXECUTABLE} --prefix ${CMAKE_CURRENT_BINARY_DIR} install jsonwebtoken
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules ${DEPENDS_OUTPUT_PATH}/node_modules
 	)
 
