@@ -26,7 +26,6 @@ type callReturnSafeWork struct {
 
 type callSafeWork struct {
 	function string
-	size     int
 	args     []interface{}
 	ret      chan callReturnSafeWork
 }
@@ -38,7 +37,7 @@ var toggle chan struct{}
 var lock sync.Mutex
 var wg sync.WaitGroup
 
-func Initialize() error {
+func InitializeUnsafe() error {
 	// TODO: Remove this once go loader is implemented
 	if result := int(C.metacall_initialize()); result != 0 {
 		return fmt.Errorf("initializing MetaCall (error code %d)", result)
@@ -48,7 +47,7 @@ func Initialize() error {
 }
 
 // Start starts the metacall adapter
-func InitializeSafe() error {
+func Initialize() error {
 	lock.Lock()
 	defer lock.Unlock()
 
@@ -65,7 +64,7 @@ func InitializeSafe() error {
 		runtime.LockOSThread()
 
 		// Initialize MetaCall
-		if err := Initialize(); err != nil {
+		if err := InitializeUnsafe(); err != nil {
 			initErr <- err
 			return
 		}
@@ -76,11 +75,21 @@ func InitializeSafe() error {
 			select {
 			case <-toggle:
 				// Shutdown
-				Destroy()
+				DestroyUnsafe()
 				return
 			case w := <-queue:
-				// Send work
-				fmt.Printf("DEBUG: send work: %#v\n", w)
+				switch v := w.(type) {
+				case loadFromFileSafeWork:
+					{
+						err := LoadFromFileUnsafe(v.tag, v.scripts)
+						v.err <- err
+					}
+				case callSafeWork:
+					{
+						value, err := CallUnsafe(v.function, v.args...)
+						v.ret <- callReturnSafeWork{value, err}
+					}
+				}
 				wg.Done()
 			}
 		}
@@ -89,7 +98,7 @@ func InitializeSafe() error {
 	return <-initErr
 }
 
-func LoadFromFile(tag string, scripts []string) error {
+func LoadFromFileUnsafe(tag string, scripts []string) error {
 	size := len(scripts)
 
 	cTag := C.CString(tag)
@@ -112,7 +121,7 @@ func LoadFromFile(tag string, scripts []string) error {
 	return nil
 }
 
-func LoadFromFileSafe(tag string, scripts []string) error {
+func LoadFromFile(tag string, scripts []string) error {
 	result := make(chan error, 1)
 	w := loadFromFileSafeWork{
 		tag,
@@ -125,7 +134,7 @@ func LoadFromFileSafe(tag string, scripts []string) error {
 	return <-result
 }
 
-func Call(function string, args ...interface{}) (interface{}, error) {
+func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 
 	cFunction := C.CString(function)
 	defer C.free(unsafe.Pointer(cFunction))
@@ -210,26 +219,27 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 }
 
 // Call sends work and blocks until it's processed
-func CallSafe(function string, args ...interface{}) (interface{}, error) {
+func Call(function string, args ...interface{}) (interface{}, error) {
 	ret := make(chan callReturnSafeWork, 1)
 	w := callSafeWork{
 		function: function,
-		size:     len(args),
 		args:     args,
 		ret:      ret,
 	}
 	wg.Add(1)
 	queue <- w
 
-	return nil, nil // TODO
+	result := <-ret
+
+	return result.value, result.err
 }
 
-func Destroy() {
+func DestroyUnsafe() {
 	C.metacall_destroy()
 }
 
 // Shutdown disables the metacall adapter waiting for all calls to complete
-func DestroySafe() {
+func Destroy() {
 	lock.Lock()
 	close(toggle)
 	toggle = nil
