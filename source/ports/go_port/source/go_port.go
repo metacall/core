@@ -8,10 +8,19 @@ import "C"
 
 import (
 	"errors"
+	"runtime"
+	"sync"
 	"unsafe"
 )
 
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
+
+type Work interface{}
+
+var queue = make(chan Work, 1)
+var toggle chan struct{}
+var lock sync.Mutex
+var wg sync.WaitGroup
 
 func Initialize() error {
 	// TODO: Remove this once go loader is implemented
@@ -22,8 +31,42 @@ func Initialize() error {
 	return nil
 }
 
+// Start starts the metacall adapter
 func InitializeSafe() error {
-	// TODO
+	lock.Lock()
+	defer lock.Unlock()
+
+	if toggle != nil {
+		// Already running
+		return nil
+	}
+
+	toggle = make(chan struct{}, 1)
+
+	go func(<-chan struct{}) {
+		// Bind this goroutine to its thread
+		runtime.LockOSThread()
+
+		// Initialize MetaCall
+		err := Initialize()
+
+		// TODO: Here I must pass err to the outside function
+
+		for {
+			select {
+			case <-toggle:
+				// Shutdown
+				Destroy()
+				return
+			case w := <-queue:
+				// Send work
+				fmt.Printf("DEBUG: send work: %#v\n", w)
+				wg.Done()
+			}
+		}
+	}(toggle)
+
+	return nil // TODO: return err
 }
 
 func LoadFromFile(tag string, scripts []string) error {
@@ -47,6 +90,12 @@ func LoadFromFile(tag string, scripts []string) error {
 	}
 
 	return nil
+}
+
+func LoadFromFileSafe(tag string, scripts []string) error {
+	w := Work{}
+	wg.Add(1)
+	queue <- w
 }
 
 func Call(function string, args ...interface{}) (interface{}, error) {
@@ -133,8 +182,26 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	return nil, nil
 }
 
+// Call sends work and blocks until it's processed
+func CallSafe(function string, args ...interface{}) (interface{}, error) {
+	w := Work{}
+	wg.Add(1)
+	queue <- w
+}
+
 func Destroy() {
 	C.metacall_destroy()
+}
+
+// Shutdown disables the metacall adapter waiting for all calls to complete
+func DestorySafe() {
+	lock.Lock()
+	close(toggle)
+	toggle = nil
+	lock.Unlock()
+
+	// Wait for all work to complete
+	wg.Wait()
 }
 
 /*
