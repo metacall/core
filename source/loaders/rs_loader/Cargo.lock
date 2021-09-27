@@ -3,5 +3,9 @@
 version = 3
 
 [[package]]
-name = "compiler"
+name = "functions_extractor"
+version = "0.1.0"
+
+[[package]]
+name = "rs_loader"
 version = "0.1.0"
