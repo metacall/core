@@ -15,4 +15,4 @@ rustc_private = true
 opt-level = "z"
 
 [workspace]
-members = ["functions_extractor"]
+members = ["parser"]

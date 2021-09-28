@@ -32,7 +32,7 @@ pub struct ParsedRustFunction {
     arguments: Vec<ParsedRustFunctionArguments>,
 }
 
-pub fn functions_extractor(parse_source: Crate) -> Vec<ParsedRustFunction> {
+pub fn parse(parse_source: Crate) -> Vec<ParsedRustFunction> {
     let mut parsed_rust_functions: Vec<ParsedRustFunction> = Vec::new();
 
     for parsed_item in parse_source.items.iter() {

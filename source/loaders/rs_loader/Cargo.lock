@@ -3,7 +3,7 @@
 version = 3
 
 [[package]]
-name = "functions_extractor"
+name = "parser"
 version = "0.1.0"
 
 [[package]]
