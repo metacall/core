@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	A plugin for loading rust code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,24 +18,29 @@
  *
  */
 
-#include <gtest/gtest.h>
+#ifndef RS_LOADER_H
+#define RS_LOADER_H 1
 
-#include <metacall/metacall.h>
+#include <rs_loader/rs_loader_api.h>
 
-class metacall_rs_test : public testing::Test
-{
-protected:
-};
+#include <loader/loader_impl_interface.h>
 
-TEST_F(metacall_rs_test, DefaultConstructor)
-{
-	const char *rs_scripts[] = {
-		"basic.rs"
-	};
+#include <dynlink/dynlink.h>
 
-	ASSERT_EQ((int)0, (int)metacall_initialize());
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("rs", rs_scripts, sizeof(rs_scripts) / sizeof(rs_scripts[0]), NULL));
+RS_LOADER_API loader_impl_interface rs_loader_impl_interface_singleton(void);
 
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+DYNLINK_SYMBOL_EXPORT(rs_loader_impl_interface_singleton);
+
+RS_LOADER_API const char *rs_loader_print_info(void);
+
+DYNLINK_SYMBOL_EXPORT(rs_loader_print_info);
+
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* RS_LOADER_H */

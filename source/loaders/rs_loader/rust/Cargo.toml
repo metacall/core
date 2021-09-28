@@ -1,12 +1,11 @@
 [package]
-name = "rs_loader"
+name = "rs_loader_impl"
 version = "0.1.0"
 edition = "2018"
 
 [lib]
-name = "rs_loader"
-crate-type = ["cdylib"]      # Creates dynamic lib
-# crate-type = ["staticlib"] # Creates static lib
+name = "rs_loader_impl"
+crate-type = ["cdylib"]
 
 [package.metadata.rust-analyzer]
 rustc_private = true
