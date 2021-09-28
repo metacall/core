@@ -1,6 +1,6 @@
 #
-#	CMake Find NPM Package Manager by Parra Studios
-#	CMake script to find NPM Package Manager.
+#	CMake Find NPM by Parra Studios
+#	CMake script to find NodeJS Package Manager.
 #
 #	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
