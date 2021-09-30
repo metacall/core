@@ -6,12 +6,11 @@ extern "C" {
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_destroy(loader_impl: *mut c_void) -> c_int {
-    let loader_impl = unsafe { loader_impl_get(loader_impl) };
-
-    let loader_impl = loader_impl as *mut LoaderLifecycleState;
+    let loader_lifecycle_state =
+        unsafe { loader_impl_get(loader_impl) } as *mut LoaderLifecycleState;
 
     unsafe {
-        loader_impl.drop_in_place();
+        loader_lifecycle_state.drop_in_place();
     }
 
     0 as c_int
