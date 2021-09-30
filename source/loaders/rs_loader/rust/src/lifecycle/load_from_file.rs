@@ -8,9 +8,12 @@ pub extern "C" fn rs_loader_impl_load_from_file(
 ) -> *mut c_void {
     for i in 0..size {
         let path: *const c_char = paths.wrapping_offset(i as isize) as *const c_char;
+
         let c_path: &CStr = unsafe { CStr::from_ptr(path) };
+
         let path_slice: &str = c_path.to_str().unwrap();
-        println!("RUSTY: {}", path_slice);
+
+        println!("Path slice given from Rust: {}", path_slice);
     }
 
     1 as c_int as *mut c_void
