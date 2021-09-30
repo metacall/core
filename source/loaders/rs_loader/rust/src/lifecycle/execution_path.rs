@@ -1,5 +1,3 @@
-use std::path::Path;
-
 use crate::{c_char, c_int, c_void, CStr, LoaderLifecycleState, PathBuf};
 
 extern "C" {
