@@ -2,19 +2,17 @@
 # External dependencies
 #
 
-set(NodeJS_EXECUTABLE_ONLY ON)
+find_package(NPM)
 
-find_package(NodeJS)
-
-if(NOT NodeJS_FOUND)
-	message(STATUS "NodeJS executable not found")
+if(NOT NPM_FOUND)
+	message(STATUS "NPM not found")
 	return()
 endif()
 
 # Dependencies
 add_custom_target(nodejs-gram-depends
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/source/gram
-	COMMAND npm install
+	COMMAND ${NPM_EXECUTABLE} install
 	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/source/gram/package.json ${CMAKE_CURRENT_SOURCE_DIR}/source/gram/package-lock.json
 )
 

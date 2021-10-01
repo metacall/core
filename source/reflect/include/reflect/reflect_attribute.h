@@ -28,25 +28,11 @@
 
 #include <reflect/reflect_type.h>
 
+#include <reflect/reflect_attribute_decl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct attribute_type;
-
-typedef void *attribute_impl;
-
-typedef struct attribute_type *attribute;
-
-typedef void (*attribute_impl_interface_destroy)(attribute, attribute_impl);
-
-typedef struct attribute_interface_type
-{
-	attribute_impl_interface_destroy destroy;
-
-} * attribute_interface;
-
-typedef attribute_interface (*attribute_impl_interface_singleton)(void);
 
 REFLECT_API attribute attribute_create(klass cls, const char *name, type t, attribute_impl impl, enum class_visibility_id visibility, attribute_impl_interface_singleton singleton);
 

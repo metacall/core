@@ -35,13 +35,17 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/reflect.h
+	${include_path}/reflect_accessor.h
 	${include_path}/reflect_async.h
 	${include_path}/reflect_type.h
 	${include_path}/reflect_type_id.h
 	${include_path}/reflect_signature.h
 	${include_path}/reflect_function.h
+	${include_path}/reflect_attribute_decl.h
 	${include_path}/reflect_attribute.h
+	${include_path}/reflect_constructor_decl.h
 	${include_path}/reflect_constructor.h
+	${include_path}/reflect_method_decl.h
 	${include_path}/reflect_method.h
 	${include_path}/reflect_class_decl.h
 	${include_path}/reflect_class_visibility.h

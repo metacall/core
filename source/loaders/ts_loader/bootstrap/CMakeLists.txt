@@ -35,10 +35,17 @@ else()
 endif()
 
 if(NOT OPTION_BUILD_GUIX)
+	find_package(NPM)
+
+	if(NOT NPM_FOUND)
+		message(STATUS "NPM not found")
+		return()
+	endif()
+
 	# Dependencies
 	add_custom_target(${target}_depends
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
-		COMMAND npm install
+		COMMAND ${NPM_EXECUTABLE} install
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
 
@@ -51,7 +58,7 @@ if(NOT OPTION_BUILD_GUIX)
 	# Build Bootstrap
 	add_custom_target(${target}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
-		COMMAND npm run build
+		COMMAND ${NPM_EXECUTABLE} run build
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
 		SOURCES ${sources}
@@ -68,7 +75,7 @@ if(NOT OPTION_BUILD_GUIX)
 
 	# Test
 	add_test(NAME ${target}
-		COMMAND npm test
+		COMMAND ${NPM_EXECUTABLE} test
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 	)
 

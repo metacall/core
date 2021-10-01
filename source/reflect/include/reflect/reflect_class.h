@@ -23,6 +23,7 @@
 
 #include <adt/adt_vector.h>
 
+#include <reflect/reflect_accessor.h>
 #include <reflect/reflect_attribute.h>
 #include <reflect/reflect_class_decl.h>
 #include <reflect/reflect_class_visibility.h>
@@ -46,9 +47,9 @@ typedef int (*class_impl_interface_create)(klass, class_impl);
 
 typedef object (*class_impl_interface_constructor)(klass, class_impl, const char *, constructor, class_args, size_t);
 
-typedef value (*class_impl_interface_static_get)(klass, class_impl, attribute);
+typedef value (*class_impl_interface_static_get)(klass, class_impl, struct accessor_type *);
 
-typedef int (*class_impl_interface_static_set)(klass, class_impl, attribute, value);
+typedef int (*class_impl_interface_static_set)(klass, class_impl, struct accessor_type *, value);
 
 typedef value (*class_impl_interface_static_invoke)(klass, class_impl, method, class_args, size_t);
 
@@ -70,7 +71,7 @@ typedef struct class_interface_type
 
 typedef class_interface (*class_impl_interface_singleton)(void);
 
-REFLECT_API klass class_create(const char *name, class_impl impl, class_impl_interface_singleton singleton);
+REFLECT_API klass class_create(const char *name, enum accessor_type_id accessor, class_impl impl, class_impl_interface_singleton singleton);
 
 REFLECT_API int class_increment_reference(klass cls);
 

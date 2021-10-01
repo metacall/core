@@ -1,10 +1,9 @@
 [package]
-name = "compiler"
+name = "parser"
 version = "0.1.0"
 edition = "2018"
 
 [package.metadata.rust-analyzer]
 rustc_private = true
 
-[profile.release]
-opt-level="z"
+[dependencies]

@@ -7,22 +7,98 @@ package metacall
 import "C"
 
 import (
+	"fmt"
+	"runtime"
+	"sync"
 	"unsafe"
-	"errors"
 )
+
+type loadFromFileSafeWork struct {
+	tag     string
+	scripts []string
+	err     chan error
+}
+
+type callReturnSafeWork struct {
+	value interface{}
+	err   error
+}
+
+type callSafeWork struct {
+	function string
+	args     []interface{}
+	ret      chan callReturnSafeWork
+}
 
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
-func Initialize() error {
+var queue = make(chan interface{}, 1)
+var toggle chan struct{}
+var lock sync.Mutex
+var wg sync.WaitGroup
+
+func InitializeUnsafe() error {
 	// TODO: Remove this once go loader is implemented
-	if (int(C.metacall_initialize()) != 0) {
-		return errors.New("MetaCall failed to initialize")
+	if result := int(C.metacall_initialize()); result != 0 {
+		return fmt.Errorf("initializing MetaCall (error code %d)", result)
 	}
 
 	return nil
 }
 
-func LoadFromFile(tag string, scripts []string) error {
+// Start starts the metacall adapter
+func Initialize() error {
+	lock.Lock()
+	defer lock.Unlock()
+
+	if toggle != nil {
+		// Already running
+		return nil
+	}
+
+	toggle = make(chan struct{}, 1)
+	initErr := make(chan error, 1)
+
+	go func(initErr chan error, toggle <-chan struct{}) {
+		// Bind this goroutine to its thread
+		runtime.LockOSThread()
+
+		// Initialize MetaCall
+		if err := InitializeUnsafe(); err != nil {
+			initErr <- err
+			return
+		}
+
+		close(initErr)
+
+		for {
+			select {
+			case <-toggle:
+				// Shutdown
+				DestroyUnsafe()
+				return
+			case w := <-queue:
+				switch v := w.(type) {
+				case loadFromFileSafeWork:
+					{
+						err := LoadFromFileUnsafe(v.tag, v.scripts)
+						v.err <- err
+					}
+				case callSafeWork:
+					{
+						value, err := CallUnsafe(v.function, v.args...)
+						v.ret <- callReturnSafeWork{value, err}
+					}
+				}
+				wg.Done()
+			}
+		}
+	}(initErr, toggle)
+
+	return <-initErr
+}
+
+func LoadFromFileUnsafe(tag string, scripts []string) error {
 	size := len(scripts)
 
 	cTag := C.CString(tag)
@@ -32,20 +108,33 @@ func LoadFromFile(tag string, scripts []string) error {
 	defer C.free(unsafe.Pointer(cScripts))
 
 	// Convert cScripts to a Go Array so we can index it
-	goScripts := (*[1 << 30 - 1] * C.char)(cScripts)
+	goScripts := (*[1<<30 - 1]*C.char)(cScripts)
 
 	for index, script := range scripts {
 		goScripts[index] = C.CString(script)
 	}
 
 	if int(C.metacall_load_from_file(cTag, (**C.char)(cScripts), (C.size_t)(size), nil)) != 0 {
-		return errors.New("MetaCall failed to load script")
+		return fmt.Errorf("%s loader failed to load a script from the list: %v", tag, scripts)
 	}
 
 	return nil
 }
 
-func Call(function string, args ...interface{}) (interface{}, error) {
+func LoadFromFile(tag string, scripts []string) error {
+	result := make(chan error, 1)
+	w := loadFromFileSafeWork{
+		tag,
+		scripts,
+		result,
+	}
+	wg.Add(1)
+	queue <- w
+
+	return <-result
+}
+
+func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 
 	cFunction := C.CString(function)
 	defer C.free(unsafe.Pointer(cFunction))
@@ -53,7 +142,7 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	cFunc := C.metacall_function(cFunction)
 
 	if cFunc == nil {
-		return nil, errors.New("Function not found")
+		return nil, fmt.Errorf("function %s not found", function)
 	}
 
 	size := len(args)
@@ -62,7 +151,7 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	defer C.free(unsafe.Pointer(cArgs))
 
 	for index, arg := range args {
-		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index) * PtrSizeInBytes))
+		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
 
 		// Create int
 		if i, ok := arg.(int); ok {
@@ -89,9 +178,9 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 		// TODO: Other types ...
 	}
 
-	defer (func () {
+	defer (func() {
 		for index, _ := range args {
-			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index) * PtrSizeInBytes))
+			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
 			C.metacall_value_destroy(*cArg)
 		}
 	})()
@@ -101,20 +190,24 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
 
-		switch (C.metacall_value_id(unsafe.Pointer(ret))) {
-			case C.METACALL_INT: {
+		switch C.metacall_value_id(unsafe.Pointer(ret)) {
+		case C.METACALL_INT:
+			{
 				return int(C.metacall_value_to_int(unsafe.Pointer(ret))), nil
 			}
 
-			case C.METACALL_FLOAT: {
+		case C.METACALL_FLOAT:
+			{
 				return float32(C.metacall_value_to_float(unsafe.Pointer(ret))), nil
 			}
 
-			case C.METACALL_DOUBLE: {
+		case C.METACALL_DOUBLE:
+			{
 				return float64(C.metacall_value_to_double(unsafe.Pointer(ret))), nil
 			}
 
-			case C.METACALL_STRING: {
+		case C.METACALL_STRING:
+			{
 				return C.GoString(C.metacall_value_to_string(unsafe.Pointer(ret))), nil
 			}
 
@@ -125,36 +218,33 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-func Destroy() {
+// Call sends work and blocks until it's processed
+func Call(function string, args ...interface{}) (interface{}, error) {
+	ret := make(chan callReturnSafeWork, 1)
+	w := callSafeWork{
+		function: function,
+		args:     args,
+		ret:      ret,
+	}
+	wg.Add(1)
+	queue <- w
+
+	result := <-ret
+
+	return result.value, result.err
+}
+
+func DestroyUnsafe() {
 	C.metacall_destroy()
 }
 
-/*
-func main() {
+// Shutdown disables the metacall adapter waiting for all calls to complete
+func Destroy() {
+	lock.Lock()
+	close(toggle)
+	toggle = nil
+	lock.Unlock()
 
-	if err := metacall.Initialize(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	defer metacall.Destroy()
-
-	scripts := []string{ "test.mock" }
-
-	if err := metacall.LoadFromFile("mock", scripts); err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	ret, err := metacall.Call("three_str", "e", "f", "g")
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	if str, ok := ret.(string); ok {
-		fmt.Println(str)
-	}
+	// Wait for all work to complete
+	wg.Wait()
 }
-*/

@@ -1808,7 +1808,7 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 	if (v == NULL)
 	{
 		// TODO: Implement type error return a value
-		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented", name, target);
+		log_write("metacall", LOG_LEVEL_ERROR, "Method %s in %p is not implemented (bad allocation)", name, target);
 		return NULL;
 	}
 

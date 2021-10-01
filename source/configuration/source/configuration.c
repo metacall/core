@@ -86,7 +86,9 @@ int configuration_initialize(const char *reader, const char *path, void *allocat
 
 	if (global == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration global scope map creation");
+		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall could not find the global configuration, "
+											   "either use a relative path configuration '" CONFIGURATION_DEFAULT_PATH "' or define the environment "
+											   "variable '" CONFIGURATION_PATH "'");
 
 		configuration_destroy();
 

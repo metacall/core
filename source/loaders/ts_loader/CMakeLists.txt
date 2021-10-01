@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_PORTS_NODE OR NOT OPTION_BUILD_LOADERS_TS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_TS)
 	return()
 endif()
 
@@ -72,7 +72,6 @@ add_library(${target} MODULE
 # Add target dependencies
 add_dependencies(${target}
 	node_loader
-	node_port
 	ts_loader_bootstrap
 )
 

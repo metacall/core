@@ -598,11 +598,7 @@ int loader_get_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args
 
 		loader_get_iterator_args get_args = args;
 
-		context ctx = loader_impl_context(impl);
-
-		scope sp = context_scope(ctx);
-
-		get_args->obj = scope_get(sp, get_args->name);
+		get_args->obj = loader_impl_get_value(impl, get_args->name);
 
 		if (get_args->obj != NULL)
 		{

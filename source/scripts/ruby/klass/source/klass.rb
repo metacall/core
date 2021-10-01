@@ -3,6 +3,7 @@
 class MyClass 
 	
 	@@class_hierarchy_var = 555
+	@yeet = 3
 
 	def initialize(param1, param2)  
 	  # Instance variables  

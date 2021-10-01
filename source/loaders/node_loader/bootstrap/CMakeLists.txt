@@ -7,6 +7,15 @@ endif()
 # Plugin name and options
 #
 
+if(NOT OPTION_BUILD_GUIX)
+	find_package(NPM)
+
+	if(NOT NPM_FOUND)
+		message(STATUS "NPM not found")
+		return()
+	endif()
+endif()
+
 # Target name
 set(target node_loader_bootstrap)
 
@@ -47,7 +56,7 @@ if(NOT OPTION_BUILD_GUIX)
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND npm --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
+		COMMAND ${NPM_EXECUTABLE} --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${BOOTSTRAP_OUTPUT_PATH}/node_modules
 		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/cherow ${BOOTSTRAP_OUTPUT_PATH}/node_modules/cherow
 		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_BINARY_DIR}/node_modules to ${BOOTSTRAP_OUTPUT_PATH}/node_modules"

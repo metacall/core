@@ -7,7 +7,7 @@ endif()
 option(OPTION_BUILD_LOADERS_C "Build C Foreign Function Interface library loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_COB "Build GNU/COBOL 2.2 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CR "Build Crystal 0.33.0 loader plugin." OFF)
-option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 5.0.9 Runtime loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 5.0.10 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_DART "Build Dart VM 2.8.4 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_FILE "Build File System loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JAVA "Build Java Virtual Machine loader plugin." OFF)
@@ -20,6 +20,7 @@ option(OPTION_BUILD_LOADERS_MOCK "Build mock loader loader plugin." ON)
 option(OPTION_BUILD_LOADERS_NODE "Build NodeJS v12.21.0 JavaScript Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_PY "Build Python 3.9 C API loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_RB "Build Ruby 2.7 C API loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_RS "Build Rust 1.55.0 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_RPC "Build cURL Remote Procedure Call loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_TS "Build TypeScript 3.9.7 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugin." OFF)
@@ -29,7 +30,7 @@ add_subdirectory(c_loader) # Foreign Function Interface library
 add_subdirectory(cob_loader) # GNU/Cobol 2.2 Runtime
 add_subdirectory(cr_loader) # Crystal 0.33.0 Runtime
 add_subdirectory(dart_loader) # Dart VM 2.8.4 Runtime
-add_subdirectory(cs_loader) # CoreCLR 5.0.9 Runtime
+add_subdirectory(cs_loader) # CoreCLR 5.0.10 Runtime
 add_subdirectory(file_loader) # File System
 add_subdirectory(java_loader) # Java Virtual Machine
 add_subdirectory(jl_loader) # Julia Runtime
@@ -41,6 +42,7 @@ add_subdirectory(mock_loader) # Mock loader plugin without dependencies (core te
 add_subdirectory(node_loader) # NodeJS v12.21.0 JavaScript Runtime
 add_subdirectory(py_loader) # Python 3.9 C API
 add_subdirectory(rb_loader) # Ruby 2.7 C API
+add_subdirectory(rs_loader) # Rust 1.55.0
 add_subdirectory(rpc_loader) # cURL Remote Procedure Call
 add_subdirectory(ts_loader) # TypeScript 3.9.7
 add_subdirectory(wasm_loader) # WebAssembly Virtual Machine

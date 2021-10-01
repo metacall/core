@@ -365,7 +365,7 @@ value signature_metadata_args_map_name(const char *name)
 		return NULL;
 	}
 
-	v_array[1] = value_create_string(name, strlen(name));
+	v_array[1] = name ? value_create_string(name, strlen(name)) : value_create_string("", 0);
 
 	if (v_array[1] == NULL)
 	{

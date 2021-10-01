@@ -21,12 +21,13 @@
 #ifndef REFLECT_OBJECT_H
 #define REFLECT_OBJECT_H 1
 
+#include <adt/adt_vector.h>
+
+#include <reflect/reflect_accessor.h>
 #include <reflect/reflect_attribute.h>
 #include <reflect/reflect_class_decl.h>
 #include <reflect/reflect_method.h>
 #include <reflect/reflect_value.h>
-
-#include <adt/adt_vector.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,9 +47,9 @@ typedef value (*object_reject_callback)(value, void *);
 
 typedef int (*object_impl_interface_create)(object, object_impl);
 
-typedef value (*object_impl_interface_get)(object, object_impl, attribute);
+typedef value (*object_impl_interface_get)(object, object_impl, struct accessor_type *);
 
-typedef int (*object_impl_interface_set)(object, object_impl, attribute, value);
+typedef int (*object_impl_interface_set)(object, object_impl, struct accessor_type *, value);
 
 typedef value (*object_impl_interface_method_invoke)(object, object_impl, method, object_args, size_t);
 
@@ -72,7 +73,7 @@ typedef struct object_interface_type
 
 typedef object_interface (*object_impl_interface_singleton)(void);
 
-REFLECT_API object object_create(const char *name, object_impl impl, object_impl_interface_singleton singleton, klass cls);
+REFLECT_API object object_create(const char *name, enum accessor_type_id accessor, object_impl impl, object_impl_interface_singleton singleton, klass cls);
 
 REFLECT_API int object_increment_reference(object obj);
 

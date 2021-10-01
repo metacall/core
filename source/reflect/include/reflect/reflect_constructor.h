@@ -27,13 +27,11 @@
 #include <reflect/reflect_type.h>
 #include <reflect/reflect_value.h>
 
+#include <reflect/reflect_constructor_decl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-struct constructor_type;
-
-typedef struct constructor_type *constructor;
 
 REFLECT_API constructor constructor_create(size_t count, enum class_visibility_id visibility);
 

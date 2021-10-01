@@ -453,6 +453,13 @@ loader_impl_data loader_impl_get(loader_impl impl)
 	return NULL;
 }
 
+value loader_impl_get_value(loader_impl impl, const char *name)
+{
+	context ctx = loader_impl_context(impl);
+	scope sp = context_scope(ctx);
+	return scope_get(sp, name);
+}
+
 loader_impl_interface loader_impl_symbol(loader_impl impl)
 {
 	if (impl != NULL && impl->singleton != NULL)

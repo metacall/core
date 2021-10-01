@@ -1,0 +1,17 @@
+[package]
+name = "rs_loader_impl"
+version = "0.1.0"
+edition = "2018"
+
+[lib]
+name = "rs_loader_impl"
+crate-type = ["cdylib"]
+
+[package.metadata.rust-analyzer]
+rustc_private = true
+
+[profile.release]
+opt-level = "z"
+
+[workspace]
+members = ["parser"]

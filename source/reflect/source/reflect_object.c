@@ -23,6 +23,8 @@
 #include <reflect/reflect_object.h>
 #include <reflect/reflect_value_type.h>
 
+#include <reflect/reflect_accessor.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -31,6 +33,7 @@
 struct object_type
 {
 	char *name;
+	enum accessor_type_id accessor;
 	object_impl impl;
 	object_interface interface;
 	size_t ref_count;
@@ -47,7 +50,7 @@ static struct
 
 static value object_metadata_name(object obj);
 
-object object_create(const char *name, object_impl impl, object_impl_interface_singleton singleton, klass cls)
+object object_create(const char *name, enum accessor_type_id accessor, object_impl impl, object_impl_interface_singleton singleton, klass cls)
 {
 	object obj = malloc(sizeof(struct object_type));
 
@@ -79,6 +82,7 @@ object object_create(const char *name, object_impl impl, object_impl_interface_s
 	}
 
 	obj->impl = impl;
+	obj->accessor = accessor;
 	obj->ref_count = 0;
 	obj->interface = singleton ? singleton() : NULL;
 
@@ -244,15 +248,32 @@ value object_get(object obj, const char *key)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->get != NULL)
 	{
+		struct accessor_type accessor;
 		attribute attr = class_attribute(obj->cls, key);
 
 		if (attr == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in object %s is not defined", key, obj->name);
-			return NULL;
+			switch (obj->accessor)
+			{
+				case ACCESSOR_TYPE_STATIC: {
+					log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in object %s is not defined", key, obj->name);
+					return NULL;
+				}
+
+				case ACCESSOR_TYPE_DYNAMIC: {
+					accessor.data.key = key;
+				}
+			}
+
+			accessor.id = ACCESSOR_TYPE_DYNAMIC;
+		}
+		else
+		{
+			accessor.data.attr = attr;
+			accessor.id = ACCESSOR_TYPE_STATIC;
 		}
 
-		value v = obj->interface->get(obj, obj->impl, attr);
+		value v = obj->interface->get(obj, obj->impl, &accessor);
 
 		if (v == NULL)
 		{
@@ -269,15 +290,32 @@ int object_set(object obj, const char *key, value v)
 {
 	if (obj != NULL && obj->interface != NULL && obj->interface->set != NULL)
 	{
+		struct accessor_type accessor;
 		attribute attr = class_attribute(obj->cls, key);
 
 		if (attr == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in object %s is not defined", key, obj->name);
-			return 3;
+			switch (obj->accessor)
+			{
+				case ACCESSOR_TYPE_STATIC: {
+					log_write("metacall", LOG_LEVEL_ERROR, "Attribute %s in object %s is not defined", key, obj->name);
+					return 3;
+				}
+
+				case ACCESSOR_TYPE_DYNAMIC: {
+					accessor.data.key = key;
+				}
+			}
+
+			accessor.id = ACCESSOR_TYPE_DYNAMIC;
+		}
+		else
+		{
+			accessor.data.attr = attr;
+			accessor.id = ACCESSOR_TYPE_STATIC;
 		}
 
-		if (obj->interface->set(obj, obj->impl, attr, v) != 0)
+		if (obj->interface->set(obj, obj->impl, &accessor, v) != 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid class %s set of static attribute %s", obj->name, key);
 			return 2;

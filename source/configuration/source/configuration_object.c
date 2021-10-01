@@ -77,8 +77,6 @@ char *configuration_object_read(const char *path)
 
 	if (file == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file path (%s)", path);
-
 		return NULL;
 	}
 
@@ -136,8 +134,6 @@ configuration configuration_object_initialize(const char *name, const char *path
 
 		if (config->source == NULL)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid configuration file path (%s)", path);
-
 			free(config);
 
 			return NULL;
