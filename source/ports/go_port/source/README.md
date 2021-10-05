@@ -1,5 +1,7 @@
 # Go Port
 
+[![Go Report Card](https://goreportcard.com/badge/github.com/metacall/core)](https://goreportcard.com/report/github.com/metacall/core)
+
 This project implements a wrapper of MetaCall API for Go.
 
 ## Examples
