@@ -1,13 +1,8 @@
-use crate::{c_int, c_void, LoaderLifecycleState};
-
-extern "C" {
-    fn loader_impl_get(loader_impl: *mut c_void) -> *mut c_void;
-}
+use crate::{bridge_api, c_int, c_void};
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_destroy(loader_impl: *mut c_void) -> c_int {
-    let loader_lifecycle_state =
-        unsafe { loader_impl_get(loader_impl) } as *mut LoaderLifecycleState;
+    let loader_lifecycle_state = bridge_api::get_loader_lifecycle_state(loader_impl);
 
     unsafe {
         loader_lifecycle_state.drop_in_place();

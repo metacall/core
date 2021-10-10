@@ -4,6 +4,8 @@ pub use std::os::raw::c_char;
 pub use std::os::raw::c_int;
 pub use std::path::PathBuf;
 
+pub mod bridge_api;
+
 mod lifecycle;
 
 pub use lifecycle::rs_loader_impl_clear;
