@@ -34,6 +34,8 @@ type callSafeAsyncWork struct {
 	function string
 	args     []interface{}
 	ret      chan callReturnSafeWork
+	resolve	 func(unsafe.Pointer, unsafe.Pointer)
+	reject	 func(unsafe.Pointer, unsafe.Pointer)
 }
 
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
@@ -97,7 +99,7 @@ func Initialize() error {
 					}
 				case callSafeAsyncWork:
 					{
-						value, err := CallAwaitUnsafe(v.function, v.args...)
+						value, err := CallAwaitUnsafe(v.function, v.resolve, v.reject, v.args...)
 						v.ret <- callReturnSafeWork{value, err}
 					}
 				}
@@ -132,7 +134,7 @@ func LoadFromFileUnsafe(tag string, scripts []string) error {
 	return nil
 }
 
-func CallAwaitUnsafe(function string, args ...interface{}) (interface{}, error) {
+func CallAwaitUnsafe(function string, ResolveCallback, RejectCallBack func(unsafe.Pointer, unsafe.Pointer), args ...interface{}) (interface{}, error) {
 	cFunction := C.CString(function)
 	defer C.free(unsafe.Pointer(cFunction))
 	cFunc := C.metacall_function(cFunction)
@@ -149,7 +151,9 @@ func CallAwaitUnsafe(function string, args ...interface{}) (interface{}, error) 
 		}
 	})()
 
-	ret := C.metacallfv_await(cFunc, (*unsafe.Pointer)(cArgs)) // todo
+	var Context interface{} // undefined
+
+	ret := C.metacallfv_await(cFunc, (*unsafe.Pointer)(cArgs), *unsafe.Pointer(&ResolveCallback), *unsafe.Pointer(&RejectCallBack), &Context)
 
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
@@ -189,11 +193,13 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 // Call sends work and blocks until it's processed
 func Call(function string, args ...interface{}) (interface{}, error) {
 	ret := make(chan callReturnSafeWork, 1)
+
 	w := callSafeWork{
 		function: function,
 		args:     args,
 		ret:      ret,
 	}
+
 	wg.Add(1)
 	queue <- w
 
@@ -205,11 +211,25 @@ func Call(function string, args ...interface{}) (interface{}, error) {
 // Await sends asynchronous work and blocks until it's processed
 func Await(function string, args ...interface{}) (interface{}, error) {
 	ret := make(chan callReturnSafeWork, 1)
+
+	Resolve := func(pointer unsafe.Pointer, pointer2 unsafe.Pointer) {
+		// todo
+
+	}
+
+	Reject := func(pointer unsafe.Pointer, pointer2 unsafe.Pointer) {
+		// todo
+		
+	}
+
 	w := callSafeAsyncWork{
 		function: function,
 		args:     args,
 		ret:      ret,
+		resolve: Resolve,
+		reject: Reject,
 	}
+
 	wg.Add(1)
 	queue <- w
 
