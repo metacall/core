@@ -31,7 +31,7 @@ type callSafeWork struct {
 	ret      chan callReturnSafeWork
 }
 
-type callSafeAsyncWork struct {
+type callAsyncSafeWork struct {
 	function string
 	args     []interface{}
 	ret      chan callReturnSafeWork
@@ -98,7 +98,7 @@ func Initialize() error {
 						value, err := CallUnsafe(v.function, v.args...)
 						v.ret <- callReturnSafeWork{value, err}
 					}
-				case callSafeAsyncWork:
+				case callAsyncSafeWork:
 					{
 						value, err := CallAwaitUnsafe(v.function, v.resolve, v.reject, v.args...)
 						v.ret <- callReturnSafeWork{value, err}
@@ -223,7 +223,7 @@ func Await(function string, args ...interface{}) (interface{}, error) {
 
 	}
 
-	w := callSafeAsyncWork{
+	w := callAsyncSafeWork{
 		function: function,
 		args:     args,
 		ret:      ret,
