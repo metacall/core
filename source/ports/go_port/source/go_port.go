@@ -11,6 +11,7 @@ import (
 	"runtime"
 	"sync"
 	"unsafe"
+	"errors"
 )
 
 type loadFromFileSafeWork struct {
@@ -135,25 +136,25 @@ func LoadFromFileUnsafe(tag string, scripts []string) error {
 }
 
 func CallAwaitUnsafe(function string, ResolveCallback, RejectCallBack func(unsafe.Pointer, unsafe.Pointer), args ...interface{}) (interface{}, error) {
-	cFunction := C.CString(function)
-	defer C.free(unsafe.Pointer(cFunction))
-	cFunc := C.metacall_function(cFunction)
-	if cFunc == nil {
-		return nil, fmt.Errorf("function %s not found", function)
+	cFunc, err := StringToCFunc(function)
+	if err != nil {
+		return nil, err
 	}
 
-	cArgs := GoArgsToCAPI(args)
-	defer C.free(cArgs)
-	defer (func() {
+	cArgs := C.malloc(C.size_t(len(args)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	for index, arg := range args {
+		GoArgToCAPI(arg, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes)))
+	}
+	defer C.free(unsafe.Pointer(cArgs))
+	defer func(){
 		for index, _ := range args {
-			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(cArgs) + uintptr(index)*PtrSizeInBytes))
-			C.metacall_value_destroy(*cArg)
+			C.metacall_value_destroy(*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes)))
 		}
-	})()
+	}()
 
 	var Context interface{} // undefined
 
-	ret := C.metacallfv_await(cFunc, (*unsafe.Pointer)(cArgs), *unsafe.Pointer(&ResolveCallback), *unsafe.Pointer(&RejectCallBack), &Context)
+	ret := C.metacallfv_await(cFunc, (*unsafe.Pointer)(cArgs), unsafe.Pointer(&ResolveCallback), unsafe.Pointer(&RejectCallBack), unsafe.Pointer(&Context))
 
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
@@ -164,21 +165,21 @@ func CallAwaitUnsafe(function string, ResolveCallback, RejectCallBack func(unsaf
 }
 
 func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
-	cFunction := C.CString(function)
-	defer C.free(unsafe.Pointer(cFunction))
-	cFunc := C.metacall_function(cFunction)
-	if cFunc == nil {
-		return nil, fmt.Errorf("function %s not found", function)
+	cFunc, err := StringToCFunc(function)
+	if err != nil {
+		return nil, err
 	}
 
-	cArgs := GoArgsToCAPI(args)
-	defer C.free(cArgs)
-	defer (func() {
+	cArgs := C.malloc(C.size_t(len(args)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	for index, arg := range args {
+		GoArgToCAPI(arg, (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes)))
+	}
+	defer C.free(unsafe.Pointer(cArgs))
+	defer func(){
 		for index, _ := range args {
-			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(cArgs) + uintptr(index)*PtrSizeInBytes))
-			C.metacall_value_destroy(*cArg)
+			C.metacall_value_destroy(*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes)))
 		}
-	})()
+	}()
 
 	ret := C.metacallfv(cFunc, (*unsafe.Pointer)(cArgs))
 
@@ -219,7 +220,7 @@ func Await(function string, args ...interface{}) (interface{}, error) {
 
 	Reject := func(pointer unsafe.Pointer, pointer2 unsafe.Pointer) {
 		// todo
-		
+
 	}
 
 	w := callSafeAsyncWork{
@@ -238,29 +239,38 @@ func Await(function string, args ...interface{}) (interface{}, error) {
 	return result.value, result.err
 }
 
-func GoArgsToCAPI(Args ...interface{}) unsafe.Pointer {
-	size := len(Args)
-	cArgs := C.malloc(C.size_t(size) * C.size_t(unsafe.Sizeof(uintptr(0))))
-	for index, arg := range Args {
-		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
-		if i, ok := arg.(int); ok {
-			*cArg = C.metacall_value_create_int((C.int)(i))
-		}
-		if i, ok := arg.(float32); ok {
-			*cArg = C.metacall_value_create_float((C.float)(i))
-		}
-		if i, ok := arg.(float64); ok {
-			*cArg = C.metacall_value_create_double((C.double)(i))
-		}
-		if str, ok := arg.(string); ok {
-			cStr := C.CString(str)
-			defer C.free(unsafe.Pointer(cStr))
-			*cArg = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
-		}
-
-		// ...
+func StringToCFunc(FString string) (unsafe.Pointer, error) {
+	cFunction := C.CString(FString)
+	defer C.free(unsafe.Pointer(cFunction))
+	cFunc := C.metacall_function(cFunction)
+	if cFunc == nil {
+		return nil, errors.New("function %s not found: " + FString)
 	}
-	return cArgs
+	return cFunc, nil
+}
+
+func GoArgToCAPI(Arg interface{}, Ptr *unsafe.Pointer) {
+	// Create int
+	if i, ok := Arg.(int); ok {
+		*Ptr = C.metacall_value_create_int((C.int)(i))
+	}
+
+	// Create float32
+	if i, ok := Arg.(float32); ok {
+		*Ptr = C.metacall_value_create_float((C.float)(i))
+	}
+
+	// Create float64
+	if i, ok := Arg.(float64); ok {
+		*Ptr = C.metacall_value_create_double((C.double)(i))
+	}
+
+	// Create string
+	if str, ok := Arg.(string); ok {
+		cStr := C.CString(str)
+		defer C.free(unsafe.Pointer(cStr))
+		*Ptr = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
+	}
 }
 
 func CAPIValueToGo(value unsafe.Pointer) interface{} {
