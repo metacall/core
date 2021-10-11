@@ -134,6 +134,90 @@ func LoadFromFile(tag string, scripts []string) error {
 	return <-result
 }
 
+func CallAwaitUnsafe(function string, args ...interface{}) (interface{}, error) {
+
+	cFunction := C.CString(function)
+	defer C.free(unsafe.Pointer(cFunction))
+
+	cFunc := C.metacall_function(cFunction)
+
+	if cFunc == nil {
+		return nil, fmt.Errorf("function %s not found", function)
+	}
+
+	size := len(args)
+
+	cArgs := C.malloc(C.size_t(size) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	defer C.free(unsafe.Pointer(cArgs))
+
+	for index, arg := range args {
+		cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
+
+		// Create int
+		if i, ok := arg.(int); ok {
+			*cArg = C.metacall_value_create_int((C.int)(i))
+		}
+
+		// Create float32
+		if i, ok := arg.(float32); ok {
+			*cArg = C.metacall_value_create_float((C.float)(i))
+		}
+
+		// Create float64
+		if i, ok := arg.(float64); ok {
+			*cArg = C.metacall_value_create_double((C.double)(i))
+		}
+
+		// Create string
+		if str, ok := arg.(string); ok {
+			cStr := C.CString(str)
+			defer C.free(unsafe.Pointer(cStr))
+			*cArg = C.metacall_value_create_string(cStr, (C.size_t)(len(str)))
+		}
+
+		// TODO: Other types ...
+	}
+
+	defer (func() {
+		for index, _ := range args {
+			cArg := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArgs)) + uintptr(index)*PtrSizeInBytes))
+			C.metacall_value_destroy(*cArg)
+		}
+	})()
+
+	ret := C.metacallfv(cFunc, (*unsafe.Pointer)(cArgs))
+
+	if ret != nil {
+		defer C.metacall_value_destroy(ret)
+
+		switch C.metacall_value_id(unsafe.Pointer(ret)) {
+		case C.METACALL_INT:
+			{
+				return int(C.metacall_value_to_int(unsafe.Pointer(ret))), nil
+			}
+
+		case C.METACALL_FLOAT:
+			{
+				return float32(C.metacall_value_to_float(unsafe.Pointer(ret))), nil
+			}
+
+		case C.METACALL_DOUBLE:
+			{
+				return float64(C.metacall_value_to_double(unsafe.Pointer(ret))), nil
+			}
+
+		case C.METACALL_STRING:
+			{
+				return C.GoString(C.metacall_value_to_string(unsafe.Pointer(ret))), nil
+			}
+
+			// TODO: Other types ...
+		}
+	}
+
+	return nil, nil
+}
+
 func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 
 	cFunction := C.CString(function)
