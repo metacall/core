@@ -30,6 +30,12 @@ type callSafeWork struct {
 	ret      chan callReturnSafeWork
 }
 
+type callSafeAsyncWork struct {
+	function string
+	args     []interface{}
+	ret      chan callReturnSafeWork
+}
+
 const PtrSizeInBytes = (32 << uintptr(^uintptr(0)>>63)) >> 3
 
 var queue = make(chan interface{}, 1)
@@ -87,6 +93,11 @@ func Initialize() error {
 				case callSafeWork:
 					{
 						value, err := CallUnsafe(v.function, v.args...)
+						v.ret <- callReturnSafeWork{value, err}
+					}
+				case callSafeAsyncWork:
+					{
+						value, err := CallAwaitUnsafe(v.function, v.args...)
 						v.ret <- callReturnSafeWork{value, err}
 					}
 				}
@@ -185,7 +196,8 @@ func CallAwaitUnsafe(function string, args ...interface{}) (interface{}, error) 
 		}
 	})()
 
-	ret := C.metacallfv(cFunc, (*unsafe.Pointer)(cArgs))
+	//ret := C.metacallfv(cFunc, (*unsafe.Pointer)(cArgs))
+	ret := C.metacallfv_await(cFunc, (*unsafe.Pointer)(cArgs))
 
 	if ret != nil {
 		defer C.metacall_value_destroy(ret)
@@ -306,6 +318,22 @@ func CallUnsafe(function string, args ...interface{}) (interface{}, error) {
 func Call(function string, args ...interface{}) (interface{}, error) {
 	ret := make(chan callReturnSafeWork, 1)
 	w := callSafeWork{
+		function: function,
+		args:     args,
+		ret:      ret,
+	}
+	wg.Add(1)
+	queue <- w
+
+	result := <-ret
+
+	return result.value, result.err
+}
+
+// CallAsync sends asynchronous work and blocks until it's processed
+func CallAsync(function string, args ...interface{}) (interface{}, error) {
+	ret := make(chan callReturnSafeWork, 1)
+	w := callSafeAsyncWork{
 		function: function,
 		args:     args,
 		ret:      ret,
