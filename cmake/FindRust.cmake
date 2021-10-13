@@ -23,6 +23,8 @@
 # CARGO_HOME - Cargo home folder
 # CARGO_EXECUTABLE - Cargo package manager executable path
 # RUSTC_EXECUTABLE - Rust compiler executable path
+# RUSTC_SYSROOT - Rust compiler root location (includes binaries and libraries)
+# RUSTC_LIBRARIES - Rust compiler runtime library list
 # RUSTDOC_EXECUTABLE - Rust doc executable plath
 # RUSTUP_EXECUTABLE - Rustup executable path
 # RUST_GDB_EXECUTABLE - Rust GDB debugger executable path
@@ -41,6 +43,8 @@ if(NOT DEFINED CARGO_HOME)
 		set(CARGO_HOME "$ENV{CARGO_HOME}")
 	endif()
 endif()
+
+set(CARGO_HOME "${CARGO_HOME}" CACHE PATH "Rust Cargo Home")
 
 set(RUST_PATHS
 	/usr
@@ -78,21 +82,31 @@ find_program(RUST_LLDB_EXECUTABLE rust-lldb
 	PATH_SUFFIXES "bin"
 )
 
-if(CARGO_EXECUTABLE AND RUSTC_EXECUTABLE AND RUSTDOC_EXECUTABLE)
-	set(CARGO_HOME "${CARGO_HOME}" CACHE PATH "Rust Cargo Home")
+if(RUSTC_EXECUTABLE)
 	execute_process(
 		COMMAND ${RUSTC_EXECUTABLE} --version
 		OUTPUT_VARIABLE RUSTC_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 	string(REGEX REPLACE "rustc ([^ ]+) .*" "\\1" RUSTC_VERSION "${RUSTC_VERSION}")
+
+	execute_process(
+		COMMAND ${RUSTC_EXECUTABLE} --print sysroot
+		OUTPUT_VARIABLE RUSTC_SYSROOT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+
+	file(
+		GLOB RUSTC_LIBRARIES
+		${RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}
+	)
 endif()
 
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(Rust
 	FOUND_VAR RUST_FOUND
-	REQUIRED_VARS CARGO_EXECUTABLE RUSTC_EXECUTABLE
+	REQUIRED_VARS CARGO_EXECUTABLE RUSTC_EXECUTABLE RUSTC_LIBRARIES
 	VERSION_VAR RUSTC_VERSION
 )
 
@@ -100,6 +114,8 @@ mark_as_advanced(
 	RUST_FOUND
 	CARGO_EXECUTABLE
 	RUSTC_EXECUTABLE
+	RUSTC_SYSROOT
+	RUSTC_LIBRARIES
 	RUSTUP_EXECUTABLE
 	RUSTDOC_EXECUTABLE
 	RUST_GDB_EXECUTABLE

@@ -40,10 +40,15 @@ endif()
 
 set(TARGET_OUTPUT ${TARGET_OUTPUT_PATH}/${TARGET_OUTPUT_NAME})
 
+add_custom_target(${target}_runtime
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${RUSTC_LIBRARIES} ${TARGET_OUTPUT_PATH}
+)
+
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
-	COMMAND ${CMAKE_COMMAND} -E copy ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
+	DEPENDS ${target}_runtime
 )
 
 set_property(TARGET ${target}
@@ -54,9 +59,16 @@ set_property(TARGET ${target}
 # Deployment
 #
 
-# Files
+# Library
 install(FILES
 	${TARGET_OUTPUT}
+	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
+)
+
+# Rust Runtime (pack the runtime meanwhile Rust runtime is not distributed as a library)
+install(FILES
+	${RUSTC_LIBRARIES}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
