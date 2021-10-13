@@ -19,16 +19,17 @@
 
 # Find Rust executables and paths
 #
-# RUST_FOUND - True if rust was found
-# CARGO_HOME - Cargo home folder
-# CARGO_EXECUTABLE - Cargo package manager executable path
-# RUSTC_EXECUTABLE - Rust compiler executable path
-# RUSTC_SYSROOT - Rust compiler root location (includes binaries and libraries)
-# RUSTC_LIBRARIES - Rust compiler runtime library list
-# RUSTDOC_EXECUTABLE - Rust doc executable plath
-# RUSTUP_EXECUTABLE - Rustup executable path
-# RUST_GDB_EXECUTABLE - Rust GDB debugger executable path
-# RUST_LLDB_EXECUTABLE - Rust LLDB debugger executable path
+# Rust_FOUND - True if rust was found
+# Rust_CARGO_HOME - Cargo home folder
+# Rust_CARGO_EXECUTABLE - Cargo package manager executable path
+# Rust_RUSTC_EXECUTABLE - Rust compiler executable path
+# Rust_RUSTC_VERSION - Rust compiler vesion string
+# Rust_RUSTC_SYSROOT - Rust compiler root location (includes binaries and libraries)
+# Rust_RUSTC_LIBRARIES - Rust compiler runtime library list
+# Rust_RUSTDOC_EXECUTABLE - Rust doc executable plath
+# Rust_RUSTUP_EXECUTABLE - Rustup executable path
+# Rust_GDB_EXECUTABLE - Rust GDB debugger executable path
+# Rust_LLDB_EXECUTABLE - Rust LLDB debugger executable path
 
 if(WIN32)
 	set(USER_HOME "$ENV{USERPROFILE}")
@@ -36,88 +37,135 @@ else()
 	set(USER_HOME "$ENV{HOME}")
 endif()
 
-if(NOT DEFINED CARGO_HOME)
-	if("$ENV{CARGO_HOME}" STREQUAL "")
-		set(CARGO_HOME "${USER_HOME}/.cargo")
+if(NOT DEFINED Rust_CARGO_HOME)
+	if("$ENV{Rust_CARGO_HOME}" STREQUAL "")
+		set(Rust_CARGO_HOME "${USER_HOME}/.cargo")
 	else()
-		set(CARGO_HOME "$ENV{CARGO_HOME}")
+		set(Rust_CARGO_HOME "$ENV{Rust_CARGO_HOME}")
 	endif()
 endif()
 
-set(CARGO_HOME "${CARGO_HOME}" CACHE PATH "Rust Cargo Home")
+set(Rust_CARGO_HOME "${Rust_CARGO_HOME}" CACHE PATH "Rust Cargo Home")
 
-set(RUST_PATHS
+set(Rust_PATHS
 	/usr
 	/usr/local
-	${CARGO_HOME}
+	${Rust_CARGO_HOME}
 )
 
-find_program(CARGO_EXECUTABLE cargo
-	HINTS ${RUST_PATHS}
+find_program(Rust_RUSTUP_EXECUTABLE rustup
+	HINTS ${Rust_PATHS}
 	PATH_SUFFIXES "bin"
 )
 
-find_program(RUSTC_EXECUTABLE rustc
-	HINTS ${RUST_PATHS}
+if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
+	# Install the required toolchain (only one allowed by now)
+	list(GET Rust_FIND_COMPONENTS 0 Rust_TOOLCHAIN)
+
+	if(Rust_TOOLCHAIN)
+		execute_process(
+			COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --force
+		)
+		execute_process(
+			COMMAND ${Rust_RUSTUP_EXECUTABLE} default ${Rust_TOOLCHAIN}
+		)
+
+		# Obtain toolchain full name and triplet (not needed for now)
+		# execute_process(
+		# 	COMMAND ${Rust_RUSTUP_EXECUTABLE} default
+		# 	OUTPUT_VARIABLE Rust_TOOLCHAIN_FULL_NAME
+		# 	OUTPUT_STRIP_TRAILING_WHITESPACE
+		# )
+
+		# string(REPLACE " " ";" Rust_TOOLCHAIN_FULL_NAME ${Rust_TOOLCHAIN_FULL_NAME})
+		# list(GET Rust_TOOLCHAIN_FULL_NAME 0 Rust_TOOLCHAIN_FULL_NAME)
+		# string(REPLACE "${Rust_TOOLCHAIN}-" "" Rust_TOOLCHAIN_TRIPLET ${Rust_TOOLCHAIN_FULL_NAME})
+
+		set(Rust_TOOLCHAIN_COMPONENT_LIST
+			cargo
+			clippy
+			llvm-tools-preview
+			rls
+			rust-analysis
+			rust-analyzer-preview
+			rust-docs
+			rust-std
+			rustc
+			rustc-dev
+			rustfmt
+			rust-src
+		)
+
+		foreach(Rust_TOOLCHAIN_COMPONENT ${Rust_TOOLCHAIN_COMPONENT_LIST})
+			execute_process(
+				COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --component ${Rust_TOOLCHAIN_COMPONENT}
+			)
+		endforeach()
+	endif()
+
+endif()
+
+find_program(Rust_CARGO_EXECUTABLE cargo
+	HINTS ${Rust_PATHS}
 	PATH_SUFFIXES "bin"
 )
 
-find_program(RUSTDOC_EXECUTABLE rustdoc
-	HINTS ${RUST_PATHS}
+find_program(Rust_RUSTC_EXECUTABLE rustc
+	HINTS ${Rust_PATHS}
 	PATH_SUFFIXES "bin"
 )
 
-find_program(RUSTUP_EXECUTABLE rustup
-	HINTS ${RUST_PATHS}
+find_program(Rust_RUSTDOC_EXECUTABLE rustdoc
+	HINTS ${Rust_PATHS}
 	PATH_SUFFIXES "bin"
 )
 
-find_program(RUST_GDB_EXECUTABLE rust-gdb
-	HINTS ${RUST_PATHS}
+find_program(Rust_GDB_EXECUTABLE rust-gdb
+	HINTS ${Rust_PATHS}
 	PATH_SUFFIXES "bin"
 )
 
-find_program(RUST_LLDB_EXECUTABLE rust-lldb
-	HINTS ${RUST_PATHS}
+find_program(Rust_LLDB_EXECUTABLE rust-lldb
+	HINTS ${Rust_PATHS}
 	PATH_SUFFIXES "bin"
 )
 
-if(RUSTC_EXECUTABLE)
+if(Rust_RUSTC_EXECUTABLE)
 	execute_process(
-		COMMAND ${RUSTC_EXECUTABLE} --version
-		OUTPUT_VARIABLE RUSTC_VERSION
+		COMMAND ${Rust_RUSTC_EXECUTABLE} --version
+		OUTPUT_VARIABLE Rust_RUSTC_VERSION
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
-	string(REGEX REPLACE "rustc ([^ ]+) .*" "\\1" RUSTC_VERSION "${RUSTC_VERSION}")
+	string(REGEX REPLACE "rustc ([^ ]+) .*" "\\1" Rust_RUSTC_VERSION "${Rust_RUSTC_VERSION}")
 
 	execute_process(
-		COMMAND ${RUSTC_EXECUTABLE} --print sysroot
-		OUTPUT_VARIABLE RUSTC_SYSROOT
+		COMMAND ${Rust_RUSTC_EXECUTABLE} --print sysroot
+		OUTPUT_VARIABLE Rust_RUSTC_SYSROOT
 		OUTPUT_STRIP_TRAILING_WHITESPACE
 	)
 
 	file(
-		GLOB RUSTC_LIBRARIES
-		${RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}
+		GLOB Rust_RUSTC_LIBRARIES
+		${Rust_RUSTC_SYSROOT}/lib/*${CMAKE_SHARED_LIBRARY_SUFFIX}
 	)
 endif()
 
 include(FindPackageHandleStandardArgs)
 
 find_package_handle_standard_args(Rust
-	FOUND_VAR RUST_FOUND
-	REQUIRED_VARS CARGO_EXECUTABLE RUSTC_EXECUTABLE RUSTC_LIBRARIES
-	VERSION_VAR RUSTC_VERSION
+	FOUND_VAR Rust_FOUND
+	REQUIRED_VARS Rust_CARGO_EXECUTABLE Rust_RUSTC_EXECUTABLE Rust_RUSTC_LIBRARIES
+	VERSION_VAR Rust_RUSTC_VERSION
 )
 
 mark_as_advanced(
-	RUST_FOUND
-	CARGO_EXECUTABLE
-	RUSTC_EXECUTABLE
-	RUSTC_SYSROOT
-	RUSTC_LIBRARIES
-	RUSTUP_EXECUTABLE
-	RUSTDOC_EXECUTABLE
-	RUST_GDB_EXECUTABLE
-	RUST_LLDB_EXECUTABLE
+	Rust_FOUND
+	Rust_CARGO_EXECUTABLE
+	Rust_RUSTC_EXECUTABLE
+	Rust_RUSTC_SYSROOT
+	Rust_RUSTC_LIBRARIES
+	Rust_RUSTUP_EXECUTABLE
+	Rust_RUSTDOC_EXECUTABLE
+	Rust_GDB_EXECUTABLE
+	Rust_LLDB_EXECUTABLE
 )

@@ -7,13 +7,6 @@ endif()
 # External dependencies
 #
 
-find_package(Rust)
-
-if(NOT RUST_FOUND)
-	message(STATUS "Rust not found")
-	return()
-endif()
-
 add_subdirectory(rust)
 
 #

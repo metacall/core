@@ -144,4 +144,7 @@ include(TestEnvironmentVariables)
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+	# TODO: This mitigates a bug in the Rust runtime libraries at runtime link time
+	# Delete this line when we solve it, review: source/loaders/rs_loader/rust/CMakeLists.txt
+	LD_LIBRARY_PATH=${PROJECT_BINARY_DIR}
 )
