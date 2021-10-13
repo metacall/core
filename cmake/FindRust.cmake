@@ -65,10 +65,25 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 	if(Rust_TOOLCHAIN)
 		execute_process(
 			COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --force
+			OUTPUT_VARIABLE Rust_OUTPUT
+			ERROR_VARIABLE Rust_OUTPUT
+			RESULT_VARIABLE Rust_STATUS
 		)
+
+		if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+			message(FATAL_ERROR "${Rust_OUTPUT}")
+		endif()
+
 		execute_process(
 			COMMAND ${Rust_RUSTUP_EXECUTABLE} default ${Rust_TOOLCHAIN}
+			OUTPUT_VARIABLE Rust_OUTPUT
+			ERROR_VARIABLE Rust_OUTPUT
+			RESULT_VARIABLE Rust_STATUS
 		)
+
+		if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+			message(FATAL_ERROR "${Rust_OUTPUT}")
+		endif()
 
 		# Obtain toolchain full name and triplet (not needed for now)
 		# execute_process(
@@ -99,7 +114,14 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 		foreach(Rust_TOOLCHAIN_COMPONENT ${Rust_TOOLCHAIN_COMPONENT_LIST})
 			execute_process(
 				COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --component ${Rust_TOOLCHAIN_COMPONENT}
+				OUTPUT_VARIABLE Rust_OUTPUT
+				ERROR_VARIABLE Rust_OUTPUT
+				RESULT_VARIABLE Rust_STATUS
 			)
+
+			if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+				message(FATAL_ERROR "${Rust_OUTPUT}")
+			endif()
 		endforeach()
 	endif()
 
