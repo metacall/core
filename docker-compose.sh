@@ -19,6 +19,10 @@
 #	limitations under the License.
 #
 
+# Enable BuildKit whenever possible
+export DOCKER_BUILDKIT=1
+export BUILDKIT_PROGRESS=plain
+
 # Pull MetaCall Docker Compose
 sub_pull() {
 	if [ -z "$IMAGE_NAME" ]; then
