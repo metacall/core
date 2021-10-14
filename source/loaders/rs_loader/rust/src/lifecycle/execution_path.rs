@@ -1,7 +1,4 @@
 use crate::{bridge_api, c_char, c_int, c_void, CStr, PathBuf};
-use parser::{self, Source};
-
-use std::fs;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_execution_path(
@@ -19,12 +16,6 @@ pub extern "C" fn rs_loader_impl_execution_path(
             .paths
             .push(PathBuf::from(path_slice));
     }
-
-    parser::parse_functions(Source::new(
-        fs::read_to_string("/home/raymond/projects/side-projects/metacall/core/build/test.rs")
-            .unwrap(),
-        String::from("test.rs"),
-    ));
 
     0 as c_int
 }
