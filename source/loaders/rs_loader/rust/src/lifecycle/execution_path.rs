@@ -13,7 +13,7 @@ pub extern "C" fn rs_loader_impl_execution_path(
 
     unsafe {
         (*(loader_lifecycle_state))
-            .paths
+            .execution_paths
             .push(PathBuf::from(path_slice));
     }
 
