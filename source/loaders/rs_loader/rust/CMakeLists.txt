@@ -49,12 +49,12 @@ add_custom_target(${target}_runtime
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	# TODO: $ORIGIN does not work, but even using absolute path, the library librustc_driver depends on libstd and libLLVM
 	# but they have the rpath hardcoded to the rustup folder, for mitigating this, we are using LD_LIBRARY_PATH in the test
 	# although it may cause problems in the future in the distributable or docker builds, this must be reviewed
-	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,${TARGET_OUTPUT_PATH}' ${CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
-	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,\$ORIGIN' ${CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,${TARGET_OUTPUT_PATH}' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,\$ORIGIN' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
 	DEPENDS ${target}_runtime
 )
