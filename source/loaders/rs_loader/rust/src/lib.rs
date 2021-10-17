@@ -18,10 +18,10 @@ pub use lifecycle::rs_loader_impl_load_from_memory;
 pub use lifecycle::rs_loader_impl_load_from_package;
 
 pub struct LoaderLifecycleState {
-    paths: Vec<PathBuf>,
+    execution_paths: Vec<PathBuf>,
 }
 impl LoaderLifecycleState {
-    pub fn new(paths: Vec<PathBuf>) -> LoaderLifecycleState {
-        LoaderLifecycleState { paths }
+    pub fn new(execution_paths: Vec<PathBuf>) -> LoaderLifecycleState {
+        LoaderLifecycleState { execution_paths }
     }
 }
