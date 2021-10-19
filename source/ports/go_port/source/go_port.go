@@ -33,6 +33,8 @@ package metacall
 // their address to pass to clibrary; thus, they are moved to a separate Go
 // file.
 
+// Based on: https://eli.thegreenplace.net/2019/passing-callbacks-and-pointers-to-cgo/
+
 extern void *resolveCgo(void *, void *);
 extern void *rejectCgo(void *, void *);
 
@@ -354,7 +356,7 @@ func getFunction(function string) (unsafe.Pointer, error) {
 	defer C.free(unsafe.Pointer(cFunction))
 	cFunc := C.metacall_function(cFunction)
 	if cFunc == nil {
-		return nil, errors.New("function %s not found: " + function)
+		return nil, errors.New("function not found: " + function)
 	}
 	return cFunc, nil
 }

@@ -11,6 +11,16 @@ func TestMain(m *testing.M) {
 	if err := Initialize(); err != nil {
 		log.Fatal(err)
 	}
+
+	// if benchmark {
+		buffer := "module.exports = { benchmark: async x => x }"
+
+		if err := LoadFromMemory("node", buffer); err != nil {
+			log.Fatal(err)
+			return
+		}
+	// }
+
 	code := m.Run()
 	Destroy()
 	os.Exit(code)
@@ -71,4 +81,43 @@ func TestNodeJS(t *testing.T) {
 	}
 
 	wg.Wait()
+}
+
+func benchmarkNodeJS(b *testing.B, n int) {
+	var wg sync.WaitGroup
+
+	wg.Add(n)
+
+	for i := 0; i < n; i++ {
+		_, err := Await("benchmark",
+			func(interface{}, interface{}) interface{} {
+				wg.Done()
+				return nil
+			},
+			func(interface{}, interface{}) interface{} {
+				wg.Done()
+				return nil
+			},
+			nil,
+		)
+
+		if err != nil {
+			b.Fatal(err)
+			return
+		}
+	}
+
+	wg.Wait()
+}
+
+func BenchmarkNodeJSSequential(b *testing.B) {
+	benchmarkNodeJS(b, 5)
+}
+
+func BenchmarkNodeJSParallel(b *testing.B) {
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			benchmarkNodeJS(b, 5)
+		}
+	})
 }
