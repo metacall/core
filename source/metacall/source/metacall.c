@@ -1421,6 +1421,11 @@ void *metacallfv_await_s(void *func, void *args[], size_t size, void *(*resolve_
 	return function_await(func, args, size, resolve_callback, reject_callback, data);
 }
 
+void *metacallfv_await_struct_s(void *func, void *args[], size_t size, metacall_await_callbacks cb, void *data)
+{
+	return function_await(func, args, size, cb.resolve, cb.reject, data);
+}
+
 void *metacallfmv_await(void *func, void *keys[], void *values[], void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data)
 {
 	function f = (function)func;

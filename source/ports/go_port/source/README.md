@@ -6,7 +6,17 @@ This project implements a wrapper of MetaCall API for Go.
 
 ## Examples
 
+`test.ts`:
+```ts
+export function concat(left: string, right: string): string {
+        return left + right;
+}
+```
+
+`main.go`:
 ```go
+package main
+
 import (
 	metacall "github.com/metacall/core/source/ports/go_port/source"
 	"os"
@@ -21,14 +31,14 @@ func main() {
 
 	defer metacall.Destroy()
 
-	scripts := []string{ "test.mock" }
+	scripts := []string{ "test.ts" }
 
-	if err := metacall.LoadFromFile("mock", scripts); err != nil {
+	if err := metacall.LoadFromFile("ts", scripts); err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	ret, err := metacall.Call("three_str", "e", "f", "g")
+	ret, err := metacall.Call("concat", "hello", "world")
 
 	if err != nil {
 		fmt.Println(err)

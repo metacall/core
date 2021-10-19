@@ -61,6 +61,15 @@ struct metacall_initialize_configuration_type
 				   // can use a weak API in order to implement this successfully
 };
 
+typedef void *(*metacall_await_callback)(void *, void *);
+
+typedef struct metacall_await_callbacks_type
+{
+	metacall_await_callback resolve;
+	metacall_await_callback reject;
+
+} metacall_await_callbacks;
+
 /* -- Global Variables -- */
 
 METACALL_API extern void *metacall_null_args[1];
@@ -880,6 +889,30 @@ METACALL_API void *metacallfv_await(void *func, void *args[], void *(*resolve_ca
 *    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
 */
 METACALL_API void *metacallfv_await_s(void *func, void *args[], size_t size, void *(*resolve_callback)(void *, void *), void *(*reject_callback)(void *, void *), void *data);
+
+/**
+*  @brief
+*    Call an asynchronous function anonymously by value array @args and function @func (offered without function pointers for languages without support to function pointers)
+*
+*  @param[in] func
+*    Reference to function to be called
+*
+*  @param[in] args
+*    Array of pointers to values
+*
+*  @param[in] size
+*    Number of elements of the array @args
+*
+*  @param[in] cb
+*    Pointer to struct containing the function pointers to reject and resolve that will be executed when task completion or error
+*
+*  @param[in] data
+*    Pointer to a context that will act as a closure for the chain
+*
+*  @return
+*    Pointer to value containing the result of the call returned by @resolve_callback or @reject_callback wrapped in a future
+*/
+METACALL_API void *metacallfv_await_struct_s(void *func, void *args[], size_t size, metacall_await_callbacks cb, void *data);
 
 /**
 *  @brief
