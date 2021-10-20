@@ -59,18 +59,17 @@ func main() {
 go build
 ```
 
-In case of using precompiled binaries (in Linux), when running any application using MetaCall, you must set the environment variable `LD_LIBRARY_PATH` pointing to the MetaCall library (a part of setting any other required environment variable related to MetaCall if needed). For example:
+In case of using precompiled binaries (in Linux):
+ - When building, `go build` may require to set CGO environment variables pointing to MetaCall libraries in case of undefined C headers during compilation:
+	```sh
+	export CGO_CFLAGS="-I/gnu/store/`ls /gnu/store/ | grep metacall | head -n 1`/include"
+	export CGO_LDFLAGS="-L/gnu/store/`ls /gnu/store/ | grep metacall | head -n 1`/lib"
+	```
 
-```sh
-export LD_LIBRARY_PATH="/gnu/store/`ls /gnu/store/ | grep metacall | head -n 1`/lib"
-```
-
-`go build` may require to set CGO environment variables pointing to MetaCall libraries in case of undefined C headers during compilation :
-
-```sh
-export CGO_CFLAGS=-I"/gnu/store/`ls /gnu/store/ | grep metacall | head -n 1`/include"
-export CGO_LDFLAGS=-L"/gnu/store/`ls /gnu/store/ | grep metacall | head -n 1`/lib"
-```
+ - When running any application using MetaCall, you must set the environment variable `LD_LIBRARY_PATH` pointing to the MetaCall library (a part of setting any other required environment variable related to MetaCall if needed). For example:
+	```sh
+	export LD_LIBRARY_PATH="/gnu/store/`ls /gnu/store/ | grep metacall | head -n 1`/lib"
+	```
 
 ## Testing
 
@@ -82,7 +81,7 @@ go test
 
 ## Benchmarks
 
-For running tests:
+For running benchmarks:
 
 ```sh
 go test -bench=.
