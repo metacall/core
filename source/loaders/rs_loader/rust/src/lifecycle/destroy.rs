@@ -1,4 +1,5 @@
-use crate::{bridge_api, c_int, c_void};
+use super::bridge_api;
+use crate::{c_int, c_void};
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_destroy(loader_impl: *mut c_void) -> c_int {

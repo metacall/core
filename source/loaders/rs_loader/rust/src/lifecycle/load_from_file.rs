@@ -1,8 +1,5 @@
-use crate::{
-    c_char, c_void,
-    loader::{self, LoadingMethod},
-    PathBuf,
-};
+use super::loader::{self, LoadingMethod};
+use crate::{c_char, c_void, PathBuf};
 
 use metacall_registrator::file::FileRegistration;
 
