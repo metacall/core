@@ -1,4 +1,5 @@
-use crate::{bridge_api, c_char, c_int, c_void, CStr, PathBuf};
+use super::bridge_api;
+use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_execution_path(

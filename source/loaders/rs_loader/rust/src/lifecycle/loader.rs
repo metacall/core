@@ -1,8 +1,11 @@
 use metacall_registrator::{file::FileRegistration, package::PackageRegistration};
 
-use crate::{bridge_api, c_char, c_int, c_void, CStr, PathBuf};
+use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
 use std::fmt::Display;
+
+#[path = "bridge_api.rs"]
+mod bridge_api;
 
 pub enum LoadingMethod {
     File(FileRegistration),
