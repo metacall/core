@@ -1,7 +1,7 @@
 [package]
 name = "rs_loader_impl"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [lib]
 name = "rs_loader_impl"
@@ -17,5 +17,4 @@ opt-level = "z"
 members = ["parser", "metacall_registrator"]
 
 [dependencies]
-parser = { path = "./parser" }
 metacall_registrator = { path = "metacall_registrator" }
