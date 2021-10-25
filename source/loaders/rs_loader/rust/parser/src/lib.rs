@@ -16,6 +16,8 @@ use rustc_session::config::CrateType;
 use rustc_span::source_map;
 
 mod function_parser;
+use function_parser::ParsedRustFunction;
+pub type ParsedSource = Vec<ParsedRustFunction>;
 
 pub struct Source {
     code: String,
@@ -27,7 +29,7 @@ impl Source {
     }
 }
 
-pub fn parse_functions(source: Source) {
+pub fn parse_functions(source: Source) -> ParsedSource {
     let Source { code, filename } = source;
 
     let config = rustc_interface::Config {
@@ -79,5 +81,5 @@ pub fn parse_functions(source: Source) {
         })
     });
 
-    println!("Parsed: {:#?}", parsed_functions);
+    parsed_functions
 }
