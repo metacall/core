@@ -37,12 +37,16 @@ set(headers
 	${include_path}/backtrace.h
 )
 
-if(UNIX)
-	set(BACKTRACE_IMPL unix)
-elseif(WIN32)
-	set(BACKTRACE_IMPL win32)
+if(OPTION_BUILD_BACKTRACE)
+	if(UNIX)
+		set(BACKTRACE_IMPL unix)
+	elseif(WIN32)
+		set(BACKTRACE_IMPL win32)
+	else()
+		message(FATAL_ERROR "Backtrace library not supported in this platform")
+	endif()
 else()
-	message(FATAL_ERROR "Backtrace library not supported in this platform")
+	set(BACKTRACE_IMPL none)
 endif()
 
 set(sources
