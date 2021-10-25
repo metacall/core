@@ -31,6 +31,8 @@
 # Rust_GDB_EXECUTABLE - Rust GDB debugger executable path
 # Rust_LLDB_EXECUTABLE - Rust LLDB debugger executable path
 
+option(Rust_CMAKE_DEBUG "Show full output of the Rust related commands for debugging." OFF)
+
 if(WIN32)
 	set(USER_HOME "$ENV{USERPROFILE}")
 else()
@@ -70,8 +72,12 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 			RESULT_VARIABLE Rust_STATUS
 		)
 
-		if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
-			message(FATAL_ERROR "${Rust_OUTPUT}")
+		if(Rust_CMAKE_DEBUG)
+			message(STATUS "${Rust_OUTPUT}")
+		else()
+			if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+				message(FATAL_ERROR "${Rust_OUTPUT}")
+			endif()
 		endif()
 
 		execute_process(
@@ -81,20 +87,13 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 			RESULT_VARIABLE Rust_STATUS
 		)
 
-		if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
-			message(FATAL_ERROR "${Rust_OUTPUT}")
+		if(Rust_CMAKE_DEBUG)
+			message(STATUS "${Rust_OUTPUT}")
+		else()
+			if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+				message(FATAL_ERROR "${Rust_OUTPUT}")
+			endif()
 		endif()
-
-		# Obtain toolchain full name and triplet (not needed for now)
-		# execute_process(
-		# 	COMMAND ${Rust_RUSTUP_EXECUTABLE} default
-		# 	OUTPUT_VARIABLE Rust_TOOLCHAIN_FULL_NAME
-		# 	OUTPUT_STRIP_TRAILING_WHITESPACE
-		# )
-
-		# string(REPLACE " " ";" Rust_TOOLCHAIN_FULL_NAME ${Rust_TOOLCHAIN_FULL_NAME})
-		# list(GET Rust_TOOLCHAIN_FULL_NAME 0 Rust_TOOLCHAIN_FULL_NAME)
-		# string(REPLACE "${Rust_TOOLCHAIN}-" "" Rust_TOOLCHAIN_TRIPLET ${Rust_TOOLCHAIN_FULL_NAME})
 
 		set(Rust_TOOLCHAIN_COMPONENT_LIST
 			cargo
@@ -119,10 +118,29 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 				RESULT_VARIABLE Rust_STATUS
 			)
 
-			if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
-				message(FATAL_ERROR "${Rust_OUTPUT}")
+			if(Rust_CMAKE_DEBUG)
+				message(STATUS "${Rust_OUTPUT}")
+			else()
+				if(Rust_STATUS AND NOT Rust_STATUS EQUAL 0)
+					message(FATAL_ERROR "${Rust_OUTPUT}")
+				endif()
 			endif()
 		endforeach()
+
+		# Obtain toolchain full name and triplet (not needed for now, used only for debugging)
+		if(Rust_CMAKE_DEBUG)
+			execute_process(
+				COMMAND ${Rust_RUSTUP_EXECUTABLE} default
+				OUTPUT_VARIABLE Rust_TOOLCHAIN_FULL_NAME
+				OUTPUT_STRIP_TRAILING_WHITESPACE
+			)
+
+			string(REPLACE " " ";" Rust_TOOLCHAIN_FULL_NAME ${Rust_TOOLCHAIN_FULL_NAME})
+			list(GET Rust_TOOLCHAIN_FULL_NAME 0 Rust_TOOLCHAIN_FULL_NAME)
+			string(REPLACE "${Rust_TOOLCHAIN}-" "" Rust_TOOLCHAIN_TRIPLET ${Rust_TOOLCHAIN_FULL_NAME})
+
+			message(STATUS "Rust_TOOLCHAIN_TRIPLET: ${Rust_TOOLCHAIN_TRIPLET}")
+		endif()
 	endif()
 
 endif()
@@ -191,3 +209,13 @@ mark_as_advanced(
 	Rust_GDB_EXECUTABLE
 	Rust_LLDB_EXECUTABLE
 )
+
+if(Rust_CMAKE_DEBUG)
+	message(STATUS "Rust_CARGO_EXECUTABLE: ${Rust_CARGO_EXECUTABLE}")
+	message(STATUS "Rust_RUSTC_EXECUTABLE: ${Rust_RUSTC_EXECUTABLE}")
+	message(STATUS "Rust_RUSTC_SYSROOT: ${Rust_RUSTC_SYSROOT}")
+	message(STATUS "Rust_RUSTC_LIBRARIES: ${Rust_RUSTC_LIBRARIES}")
+	message(STATUS "Rust_RUSTUP_EXECUTABLE: ${Rust_RUSTUP_EXECUTABLE}")
+	message(STATUS "Rust_GDB_EXECUTABLE: ${Rust_GDB_EXECUTABLE}")
+	message(STATUS "Rust_LLDB_EXECUTABLE: ${Rust_LLDB_EXECUTABLE}")
+endif()
