@@ -69,7 +69,7 @@ where
                             execution_path =
                                 PathBuf::from(format!("{}{}", execution_path_as_str, "/"));
 
-                            //Reassign the execution_path_as_str since the execution_path got changed
+                            // Reassign the execution_path_as_str since the execution_path got changed
                             execution_path_as_str = execution_path.to_str().unwrap();
                         }
 
@@ -87,7 +87,7 @@ where
                     }
                     None => {
                         return load_on_error(format!(
-                        "Rs_loader was unable to find any suitable execution_path for the path: {}",
+                        "Rs_loader was unable to find '{}' in the list of execution_paths.",
                         original_path_buf.to_str().unwrap()
                     ))
                     }
@@ -98,9 +98,10 @@ where
                 }
             }
         }
+
         if !path_buf.exists() || !path_buf.is_file() {
             return load_on_error(format!(
-                "Not a valid absolute path to a file, {}",
+                "The file or path '{}' does not exist.",
                 path_buf.to_str().unwrap()
             ));
         }
