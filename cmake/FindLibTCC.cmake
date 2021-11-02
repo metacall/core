@@ -24,7 +24,7 @@
 # LIBTCC_LIBRARY - List of TCC libraries
 
 # Prevent vervosity if already included
-if(LIBTCC_INCLUDE_DIRS)
+if(LIBTCC_FOUND)
 	set(LIBTCC_FIND_QUITELY TRUE)
 endif()
 
@@ -58,10 +58,6 @@ find_path(LIBTCC_INCLUDE_DIR libtcc.h
 	PATHS /usr /usr/include /usr/local /opt/local
 	PATH_SUFFIXES ${LIBTCC_SUFFIXES}
 )
-
-if(NOT LIBTCC_LIBRARY OR NOT LIBTCC_INCLUDE_DIR)
-	# TODO: Manually download and build libtcc as shared library
-endif()
 
 # Define TCC cmake module
 find_package_handle_standard_args(LibTCC DEFAULT_MSG LIBTCC_LIBRARY LIBTCC_INCLUDE_DIR)

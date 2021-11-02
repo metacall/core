@@ -10,7 +10,7 @@ endif()
 find_package(LibFFI)
 
 if(NOT LIBFFI_FOUND)
-	message(STATUS "Foreing Function Interface libraries not found")
+	message(STATUS "Foreing Function Interface library not found")
 	return()
 endif()
 
@@ -18,8 +18,12 @@ endif()
 find_package(LibTCC)
 
 if(NOT LIBTCC_FOUND)
-	message(STATUS "TCC libraries not found")
-	return()
+	include(InstallLibTCC)
+
+	if(NOT LIBTCC_FOUND)
+		message(STATUS "TCC library not found")
+		return()
+	endif()
 endif()
 
 #
