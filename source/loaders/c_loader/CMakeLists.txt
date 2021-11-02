@@ -26,6 +26,13 @@ if(NOT LIBTCC_FOUND)
 	endif()
 endif()
 
+find_package(LibClang 12)
+
+if(NOT LibClang_FOUND)
+	message(STATUS "Clang C API library not found")
+	return()
+endif()
+
 #
 # Plugin name and options
 #
@@ -151,6 +158,7 @@ target_include_directories(${target}
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 	${LIBFFI_INCLUDE_DIR} # FFI includes
 	${LIBTCC_INCLUDE_DIR} # TCC includes
+	${LibClang_INCLUDE_DIR} # Clang C API includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -170,6 +178,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::metacall # MetaCall library
 	${LIBFFI_LIBRARY} # FFI library
 	${LIBTCC_LIBRARY} # TCC library
+	${LibClang_LIBRARY} # Clang C API library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
