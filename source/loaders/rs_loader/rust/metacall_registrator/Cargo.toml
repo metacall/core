@@ -4,5 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+dlopen = "0.1.8"
 cargo_toml = "0.8.1"
-parser = { path = "../parser" }
+bridge_abi = { path = "../bridge_abi" }
+syn = { version = "1.0.80", features = ["full", "extra-traits"] }

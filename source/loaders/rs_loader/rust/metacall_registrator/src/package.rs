@@ -1,60 +1,30 @@
-use std::{ffi::OsStr, path::PathBuf};
+use crate::{Parser, RegistrationError};
+
+use std::{
+    ffi::{c_void, OsStr},
+    path::PathBuf,
+};
 
 use cargo_toml::Manifest as CargoTomlMainfest;
 
+#[derive(Debug)]
 pub struct PackageRegistration {
-    path_buf_to_project_root_directory: PathBuf,
-    path_buf_to_librs: PathBuf,
+    parser: Parser,
+    path_to_librs: PathBuf,
+    path_to_cargotoml: PathBuf,
+    path_to_project_root: PathBuf,
 }
 impl PackageRegistration {
-    fn get_path_buf_to_project_root_directory_from_librs_path_buf(
-        path_buf_to_librs: PathBuf,
-    ) -> Result<PathBuf, String> {
-        let mut path_buf_to_project_root_directory = path_buf_to_librs;
-
-        path_buf_to_project_root_directory =
-            PathBuf::from(match path_buf_to_project_root_directory.parent() {
-                Some(path_buf_to_project_root_directory_parent1) => {
-                    match path_buf_to_project_root_directory_parent1.parent() {
-                        Some(path_buf_to_project_root_directory_parent2) => {
-                            path_buf_to_project_root_directory_parent2
-                        }
-                        None => return Err(String::from("Unable to find the root of the project")),
-                    }
-                }
-                None => return Err(String::from("Unable to find the root of the project")),
-            });
-
-        Ok(path_buf_to_project_root_directory)
-    }
-    fn get_path_buf_to_project_cargotoml_from_project_root_directory_path_buf(
-        path_buf_to_project_root_directory: PathBuf,
-    ) -> Result<PathBuf, String> {
-        let mut path_buf_to_project_cargotoml = path_buf_to_project_root_directory;
-
-        path_buf_to_project_cargotoml.push("Cargo");
-        path_buf_to_project_cargotoml.set_extension("toml");
-
-        if !path_buf_to_project_cargotoml.exists() || !path_buf_to_project_cargotoml.is_file() {
-            return Err(format!(
-                "Cargo.toml not found in the cargo project's root. No such file found: {}",
-                path_buf_to_project_cargotoml.to_str().unwrap()
-            ));
-        }
-
-        Ok(path_buf_to_project_cargotoml)
-    }
     fn validate_cargo_project_is_cdylib(
-        path_buf_to_project_root_directory: PathBuf,
-    ) -> Result<(), String> {
-        let path_buf_to_project_cargotoml = PackageRegistration::get_path_buf_to_project_cargotoml_from_project_root_directory_path_buf(path_buf_to_project_root_directory)?;
+        path_to_project_root: &PathBuf,
+        path_to_cargotoml: &PathBuf,
+    ) -> Result<PathBuf, String> {
         let invalid_cdylib_cargo_project_error_message = format!(
             "Not a cdylib cargo project: {}",
-            path_buf_to_project_cargotoml.to_str().unwrap()
+            path_to_cargotoml.to_str().unwrap()
         );
 
-        let cargo_toml_mainfest_from_pathresult =
-            CargoTomlMainfest::from_path(path_buf_to_project_cargotoml);
+        let cargo_toml_mainfest_from_pathresult = CargoTomlMainfest::from_path(path_to_cargotoml);
 
         match cargo_toml_mainfest_from_pathresult {
             Ok(cargo_toml_mainfest) => match cargo_toml_mainfest.lib {
@@ -63,7 +33,17 @@ impl PackageRegistration {
                         .crate_type
                         .contains(&String::from("cdylib"))
                     {
-                        return Ok(());
+                        let mut path_to_librs = path_to_project_root.clone();
+
+                        path_to_librs.push("src");
+                        path_to_librs.push("lib");
+                        path_to_librs.set_extension("rs");
+
+                        if path_to_librs.exists() && path_to_librs.is_file() {
+                            return Ok(path_to_librs);
+                        }
+
+                        return Err(format!("Couldn't find the path to src/lib.rs"));
                     }
 
                     return Err(invalid_cdylib_cargo_project_error_message);
@@ -73,38 +53,58 @@ impl PackageRegistration {
             Err(error) => return Err(error.to_string()),
         }
     }
+    fn validate_path_to_cargotoml(path_to_cargotoml: &PathBuf) -> Result<PathBuf, String> {
+        if path_to_cargotoml.exists()
+            && path_to_cargotoml.is_dir()
+            && path_to_cargotoml.file_name() == Some(OsStr::new("Cargo.toml"))
+        {
+            let mut path_to_project_root = path_to_cargotoml.clone();
 
-    fn validation(path_buf_to_librs: PathBuf) -> Result<(PathBuf, PathBuf), String> {
-        if path_buf_to_librs.file_name() == Some(OsStr::new("lib.rs")) {
-            let mut path_buf_to_project_root_directory =
-                PackageRegistration::get_path_buf_to_project_root_directory_from_librs_path_buf(
-                    path_buf_to_librs.clone(),
-                )?;
+            path_to_project_root.pop();
 
-            let path_buf_to_project_cargotoml =
-            PackageRegistration::get_path_buf_to_project_cargotoml_from_project_root_directory_path_buf(path_buf_to_project_root_directory.clone())?;
+            if path_to_cargotoml.is_dir() {
+                return Ok(path_to_project_root);
+            }
 
-            PackageRegistration::validate_cargo_project_is_cdylib(path_buf_to_project_cargotoml)?;
-
-            return Ok((path_buf_to_project_root_directory, path_buf_to_librs));
+            return Err(String::from("Couldn't locate project's root directory"));
         }
 
-        return Err(String::from("Not a path to a lib.rs file"));
+        return Err(String::from("Not the path to a Cargo.toml file"));
     }
 
-    pub fn new(path_buf_to_librs: PathBuf) -> Result<PackageRegistration, String> {
-        let (path_buf_to_project_root_directory, path_buf_to_librs) =
-            PackageRegistration::validation(path_buf_to_librs)?;
+    fn validation(path_to_cargotoml: PathBuf) -> Result<(PathBuf, PathBuf, PathBuf), String> {
+        let path_to_project_root =
+            PackageRegistration::validate_path_to_cargotoml(&path_to_cargotoml)?;
+
+        let path_to_librs = PackageRegistration::validate_cargo_project_is_cdylib(
+            &path_to_project_root,
+            &path_to_cargotoml,
+        )?;
+
+        return Ok((path_to_project_root, path_to_cargotoml, path_to_librs));
+    }
+
+    pub fn new(path_to_cargotoml: PathBuf) -> Result<PackageRegistration, RegistrationError> {
+        let (path_to_project_root, path_to_cargotoml, path_to_librs) =
+            match PackageRegistration::validation(path_to_cargotoml) {
+                Ok(instance) => instance,
+                Err(error) => return Err(RegistrationError::ValidationError(error)),
+            };
+
+        let parser = match Parser::new(&path_to_librs) {
+            Ok(instance) => instance,
+            Err(error) => return Err(RegistrationError::SynError(error)),
+        };
 
         Ok(PackageRegistration {
-            path_buf_to_project_root_directory,
-            path_buf_to_librs,
+            parser,
+            path_to_librs,
+            path_to_cargotoml,
+            path_to_project_root,
         })
     }
 
-    pub fn register_the_project_in_metacall(&self) -> Result<PackageRegistration, String> {
-        Err(String::from(
-            "Basic implementation from 'register_the_project_in_metacall'",
-        ))
+    pub fn register_in_metacall(&self, _ctx: *mut c_void) -> Result<(), String> {
+        Ok(())
     }
 }

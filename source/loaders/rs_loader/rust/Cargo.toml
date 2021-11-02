@@ -7,14 +7,12 @@ edition = "2021"
 name = "rs_loader_impl"
 crate-type = ["cdylib"]
 
-[package.metadata.rust-analyzer]
-rustc_private = true
-
 [profile.release]
 opt-level = "z"
 
 [workspace]
-members = ["parser", "metacall_registrator"]
+members = ["bridge_abi", "metacall_registrator"]
 
 [dependencies]
-metacall_registrator = { path = "metacall_registrator" }
+bridge_abi = { path = "./bridge_abi" }
+metacall_registrator = { path = "./metacall_registrator" }
