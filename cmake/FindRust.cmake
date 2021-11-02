@@ -31,6 +31,14 @@
 # Rust_GDB_EXECUTABLE - Rust GDB debugger executable path
 # Rust_LLDB_EXECUTABLE - Rust LLDB debugger executable path
 
+# Options
+#
+# Rust_CMAKE_DEBUG - Print the debug information and all constants values
+
+# Example for fixing the toolchain
+#
+# find_package(Rust COMPONENTS nightly-2021-10-09)
+
 option(Rust_CMAKE_DEBUG "Show full output of the Rust related commands for debugging." OFF)
 
 if(WIN32)
