@@ -53,7 +53,7 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 
 		if (handle != NULL)
 		{
-			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE);
+			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE - 1);
 
 			dynlink_impl_get_name(handle, handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
 

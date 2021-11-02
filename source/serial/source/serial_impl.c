@@ -51,7 +51,7 @@ dynlink serial_impl_load_dynlink(const char *path, const char *name)
 
 	char serial_dynlink_name[SERIAL_DYNLINK_NAME_FULL_SIZE];
 
-	strncpy(serial_dynlink_name, name, SERIAL_DYNLINK_NAME_FULL_SIZE);
+	strncpy(serial_dynlink_name, name, SERIAL_DYNLINK_NAME_FULL_SIZE - 1);
 
 	strncat(serial_dynlink_name, serial_dynlink_suffix,
 		SERIAL_DYNLINK_NAME_FULL_SIZE - strnlen(serial_dynlink_name, SERIAL_DYNLINK_NAME_FULL_SIZE - 1) - 1);

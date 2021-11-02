@@ -266,7 +266,7 @@ int hello_world_class_impl_interface_static_set(klass cls, class_impl impl, stru
 	}
 	else if (strcmp(key, "c") == 0)
 	{
-		strncpy(hello_world->c, value_to_string(v), 10);
+		strncpy(hello_world->c, value_to_string(v), 9);
 	}
 
 	return 0;

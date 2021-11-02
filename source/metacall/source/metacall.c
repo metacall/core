@@ -241,7 +241,7 @@ int metacall_execution_path(const char *tag, const char *path)
 		return 1;
 	}
 
-	strncpy(path_impl, path, LOADER_NAMING_PATH_SIZE);
+	strncpy(path_impl, path, LOADER_NAMING_PATH_SIZE - 1);
 
 	return loader_execution_path(tag, path_impl);
 }

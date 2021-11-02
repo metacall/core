@@ -64,7 +64,7 @@ directory_descriptor directory_descriptor_create(directory_descriptor parent, co
 
 		d->parent = parent;
 
-		strncpy(d->path, path, DIRECTORY_DESCRIPTOR_PATH_SIZE);
+		strncpy(d->path, path, DIRECTORY_DESCRIPTOR_PATH_SIZE - 1);
 
 		return d;
 	}

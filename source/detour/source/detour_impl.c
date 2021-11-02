@@ -53,7 +53,7 @@ dynlink detour_impl_load_dynlink(const char *path, const char *name)
 
 	char detour_dynlink_name[DETOUR_DYNLINK_NAME_FULL_SIZE];
 
-	strncpy(detour_dynlink_name, name, DETOUR_DYNLINK_NAME_FULL_SIZE);
+	strncpy(detour_dynlink_name, name, DETOUR_DYNLINK_NAME_FULL_SIZE - 1);
 
 	strncat(detour_dynlink_name, detour_dynlink_suffix,
 		DETOUR_DYNLINK_NAME_FULL_SIZE - strnlen(detour_dynlink_name, DETOUR_DYNLINK_NAME_FULL_SIZE - 1) - 1);
