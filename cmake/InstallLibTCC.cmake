@@ -20,6 +20,7 @@
 # The following variables are set:
 #
 # LIBTCC_FOUND - True if TCC library was found
+# LIBTCC_TARGET - Defines the TCC depends target (for using it as dependency on other targets)
 # LIBTCC_INCLUDE_DIR - TCC headers path
 # LIBTCC_LIBRARY - List of TCC libraries
 
@@ -27,54 +28,81 @@ if(LIBTCC_FOUND)
 	return()
 endif()
 
-include(ProcessorCount)
-ProcessorCount(N)
+include(Portability)
 
-include(Platform)
+set(LIBTCC_INSTALL_PREFIX "${PROJECT_OUTPUT_DIR}/libtcc")
+file(MAKE_DIRECTORY ${LIBTCC_INSTALL_PREFIX})
 
 # Configure
-if(PROJECT_OS_FAMILY EQUAL unix)
-	set(LIBTCC_CONFIGURE "./configure --disable-static --with-libgcc --with-selinux")
-elseif(PROJECT_OS_FAMILY EQUAL win32)
-	if(PROJECT_OS_NAME STREQUAL "MinGW")
-		set(LIBTCC_CONFIGURE "./configure --config-mingw32 --disable-static --with-libgcc --with-selinux")
+if(PROJECT_OS_FAMILY STREQUAL unix)
+	set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} --disable-static --with-libgcc --with-selinux)
+elseif(PROJECT_OS_FAMILY STREQUAL win32)
+	if(PROJECT_OS_NAME STREQUAL MinGW)
+		set(LIBTCC_CONFIGURE ./configure --prefix=${LIBTCC_INSTALL_PREFIX} --config-mingw32 --disable-static --with-libgcc --with-selinux)
 	else()
 		set(LIBTCC_CONFIGURE "")
 	endif()
 else()
-	message(FATAL_ERROR "TCC library not implemented in this platform")
+	message(FATAL_ERROR "TCC library install support not implemented in this platform")
 endif()
+
+include(ProcessorCount)
+ProcessorCount(N)
 
 # Build
 if(PROJECT_OS_BSD)
-	set(LIBTCC_BUILD "gmake -j${N}")
-elseif(PROJECT_OS_FAMILY EQUAL unix)
-	set(LIBTCC_BUILD "make -j${N}")
-elseif(PROJECT_OS_FAMILY EQUAL win32)
-	if(PROJECT_OS_NAME STREQUAL "MinGW")
-		set(LIBTCC_CONFIGURE "make -j${N}")
+	set(LIBTCC_BUILD gmake -j${N})
+elseif(PROJECT_OS_FAMILY STREQUAL unix)
+	set(LIBTCC_BUILD make -j${N})
+elseif(PROJECT_OS_FAMILY STREQUAL win32)
+	if(PROJECT_OS_NAME STREQUAL MinGW)
+		set(LIBTCC_BUILD make -j${N})
 	else()
-		set(LIBTCC_CONFIGURE "./win32/build-tcc.bat")
+		set(LIBTCC_BUILD ./win32/build-tcc.bat -i ${LIBTCC_INSTALL_PREFIX})
 	endif()
 else()
-	message(FATAL_ERROR "TCC library not implemented in this platform")
+	message(FATAL_ERROR "TCC library install support not implemented in this platform")
 endif()
 
-ExternalProject_Add(libtcc-depends
-	DOWNLOAD_NAME	tinycc.tar.gz
-	URL				https://repo.or.cz/tinycc.git/snapshot/da11cf651576f94486dbd043dbfcde469e497574.tar.gz
-	URL_MD5			cc0cde5f454fa3a8c068da95edaaea86
-	# TODO: Install prefix, configure and build commands
-	TEST_COMMAND	""
+# Install
+if(PROJECT_OS_BSD)
+	set(LIBTCC_INSTALL gmake install)
+elseif(PROJECT_OS_FAMILY STREQUAL win32 AND PROJECT_OS_NAME STREQUAL Windows)
+	set(LIBTCC_INSTALL "")
+else()
+	set(LIBTCC_INSTALL make install)
+endif()
+
+set(LIBTCC_TARGET libtcc-depends)
+set(LIBTCC_COMMIT_SHA "da11cf651576f94486dbd043dbfcde469e497574")
+set(LIBTTC_LIBRARY_NAME "${CMAKE_SHARED_LIBRARY_PREFIX}tcc${CMAKE_SHARED_LIBRARY_SUFFIX}")
+set(LIBTTC_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}/${LIBTTC_LIBRARY_NAME}")
+
+# LibTCC Proejct
+ExternalProject_Add(${LIBTCC_TARGET}
+	DOWNLOAD_NAME		tinycc.tar.gz
+	URL					https://repo.or.cz/tinycc.git/snapshot/${LIBTCC_COMMIT_SHA}.tar.gz
+	URL_MD5				cc0cde5f454fa3a8c068da95edaaea86
+	CONFIGURE_COMMAND	${LIBTCC_CONFIGURE}
+	BUILD_COMMAND		${LIBTCC_BUILD}
+	BUILD_IN_SOURCE		true
+	TEST_COMMAND		""
+	UPDATE_COMMAND		""
+	INSTALL_COMMAND		${LIBTCC_INSTALL}
+	COMMAND				${CMAKE_COMMAND} -E copy "${LIBTCC_INSTALL_PREFIX}/lib/${LIBTTC_LIBRARY_NAME}" "${LIBTTC_LIBRARY_PATH}"
 )
 
-# TODO
-ExternalProject_Get_Property(libtcc-json-depends INSTALL_DIR)
+# Install Library
+install(FILES
+${LIBTTC_LIBRARY_PATH}
+	DESTINATION ${INSTALL_LIB}
+	COMPONENT runtime
+)
 
-set(RAPIDJSON_ROOT_DIR		${INSTALL_DIR})
-set(RAPIDJSON_INCLUDE_DIRS	${RAPIDJSON_ROOT_DIR}/include)
-set(RAPIDJSON_FOUND			TRUE)
+set(LIBTCC_INCLUDE_DIR	"${LIBTCC_INSTALL_PREFIX}/include")
+set(LIBTCC_LIBRARY		"${LIBTTC_LIBRARY_PATH}")
+set(LIBTCC_FOUND		TRUE)
 
-mark_as_advanced(RAPIDJSON_INCLUDE_DIRS)
+mark_as_advanced(LIBTCC_INCLUDE_DIR LIBTCC_LIBRARY)
 
-message(STATUS "Installing RapidJSON v${RAPIDJSON_VERSION}")
+message(STATUS "Installing LibTCC ${LIBTCC_COMMIT_SHA}")

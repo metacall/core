@@ -89,6 +89,11 @@ add_library(${target} MODULE
 	${headers}
 )
 
+# If it has been installed by CMake, make LibTCC a dependency
+if(LIBTCC_TARGET)
+	add_dependencies(${target} ${LIBTCC_TARGET})
+endif()
+
 # Create namespaced alias
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
