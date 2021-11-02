@@ -725,7 +725,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 			handle = interface_impl->load_from_file(impl, paths, size);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p; Loader handle: %p", (void *)interface_impl, (void *)handle);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)interface_impl, (void *)handle);
 
 			if (handle != NULL)
 			{
@@ -818,7 +818,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char *buffer, size_t si
 
 			handle = interface_impl->load_from_memory(impl, name, buffer, size);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)interface_impl, (void *)handle);
 
 			if (handle != NULL)
 			{
@@ -878,7 +878,7 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 			handle = interface_impl->load_from_package(impl, path);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p\nLoader handle: %p", (void *)interface_impl, (void *)handle);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)interface_impl, (void *)handle);
 
 			if (handle != NULL)
 			{
