@@ -20,9 +20,8 @@
 # Find FFI library and include paths
 #
 # LIBFFI_FOUND - True if FFI library was found
-# LIBFFI_INCLUDE_DIRS - FFI headers path
-# LIBFFI_LIBRARIES - List of FFI libraries
-# LIBFFI_DEFINITIONS - FFI definitions
+# LIBFFI_INCLUDE_DIR - FFI headers path
+# LIBFFI_LIBRARY - List of FFI libraries
 
 # Prevent vervosity if already included
 if(LIBFFI_INCLUDE_DIRS)
@@ -31,22 +30,52 @@ endif()
 
 include(FindPackageHandleStandardArgs)
 
-# Find package configuration module
-find_package(PkgConfig)
+set(LIBFFI_SUFFIXES
+	ffi
+	x86_64-linux-gnu
+	aarch64-linux-gnu
+	arm-linux-gnueabi
+	arm-linux-gnueabihf
+	i386-linux-gnu
+	mips64el-linux-gnuabi64
+	mipsel-linux-gnu
+	powerpc64le-linux-gnu
+	s390x-linux-gnu
+)
 
-# Find module
-pkg_check_modules(PC_LIBFFI QUIET libffi)
+find_library(LIBFFI_LIBRARY
+	NAMES ffi libffi
+	PATHS /usr /usr/lib /usr/local /opt/local
+	PATH_SUFFIXES lib lib64 ${LIBFFI_SUFFIXES}
+)
 
-# Find include path
-find_path(LIBFFI_INCLUDE_DIR ffi.h HINTS ${PC_LIBFFI_INCLUDEDIR} ${PC_LIBFFI_INCLUDE_DIRS})
+if(APPLE)
+	execute_process(COMMAND brew --prefix libffi OUTPUT_VARIABLE LIBFFI_PREFIXES)
+else()
+	# TODO: Windows?
+	set(LIBFFI_PREFIXES)
+endif()
 
-# Find library
-find_library(LIBFFI_LIBRARY NAMES ffi HINTS ${PC_LIBFFI_LIBDIR} ${PC_LIBFFI_LIBRARY_DIRS})
+find_path(LIBFFI_INCLUDE_DIR ffi.h
+	PATHS /usr /usr/include /usr/local /opt/local /usr/include/ffi
+	PATH_SUFFIXES ${LIBFFI_SUFFIXES}
+	HINT LIBFFI_PREFIXES
+)
 
-# Define moudle variables
-set(LIBFFI_DEFINITIONS ${PC_LIBFFI_CFLAGS_OTHER})
-set(LIBFFI_LIBRARIES ${LIBFFI_LIBRARY})
-set(LIBFFI_INCLUDE_DIRS ${LIBFFI_INCLUDE_DIR})
+# Try to load by using PkgConfig
+if(NOT LIBFFI_LIBRARY OR NOT LIBFFI_INCLUDE_DIR)
+	# Find package configuration module
+	find_package(PkgConfig)
+
+	# Find module
+	pkg_check_modules(PC_LIBFFI QUIET libffi)
+
+	# Find include path
+	find_path(LIBFFI_INCLUDE_DIR ffi.h HINTS ${PC_LIBFFI_INCLUDEDIR} ${PC_LIBFFI_INCLUDE_DIRS})
+
+	# Find library
+	find_library(LIBFFI_LIBRARY NAMES ffi HINTS ${PC_LIBFFI_LIBDIR} ${PC_LIBFFI_LIBRARY_DIRS})
+endif()
 
 # Define FFI cmake module
 find_package_handle_standard_args(LibFFI DEFAULT_MSG LIBFFI_LIBRARY LIBFFI_INCLUDE_DIR)

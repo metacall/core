@@ -14,17 +14,10 @@ if(NOT LIBFFI_FOUND)
 	return()
 endif()
 
-find_package(LLVM)
+find_package(LibTCC)
 
-if(NOT LLVM_FOUND)
-	message(STATUS "LLVM libraries not found")
-	return()
-endif()
-
-find_package(Clang)
-
-if(NOT CLANG_FOUND)
-	message(STATUS "Clang libraries not found")
+if(NOT LIBTCC_FOUND)
+	message(STATUS "TCC libraries not found")
 	return()
 endif()
 
@@ -146,9 +139,8 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
-	${LIBFFI_INCLUDE_DIRS} # FFI includes
-	${LLVM_INCLUDE_DIRS} # LLVM includes
-	${CLANG_INCLUDE_DIRS} # Clang includes
+	${LIBFFI_INCLUDE_DIR} # FFI includes
+	${LIBTCC_INCLUDE_DIR} # TCC includes
 
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
@@ -167,8 +159,7 @@ target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
 	${LIBFFI_LIBRARIES} # FFI libraries
-	${LLVM_LIBRARIES} # LLVM libraries
-	${CLANG_LIBS} # Clang libraries
+	${LIBTCC_LIBRARIES} # TCC libraries
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
@@ -187,9 +178,6 @@ target_compile_definitions(${target}
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	${LIBFFI_DEFINITIONS} # FFI definitions
-	${LLVM_CPP_FLAGS} # LLVM definitions
-
 	INTERFACE
 )
 
@@ -203,8 +191,6 @@ target_compile_options(${target}
 	PUBLIC
 	${DEFAULT_COMPILE_OPTIONS}
 
-	${LLVM_CXX_FLAGS} # LLVM C++ compiler options
-
 	INTERFACE
 )
 
@@ -217,8 +203,6 @@ target_link_libraries(${target}
 
 	PUBLIC
 	${DEFAULT_LINKER_OPTIONS}
-
-	${LLVM_LD_FLAGS} # LLVM linker options
 
 	INTERFACE
 )
