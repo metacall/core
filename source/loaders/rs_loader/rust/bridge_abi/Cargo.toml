@@ -1,0 +1,8 @@
+[package]
+name = "bridge_abi"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+strum_macros = "0.22"
+strum = { version = "0.22", features = ["derive"] }

@@ -7,7 +7,6 @@ mod load_from_file;
 mod load_from_memory;
 mod load_from_package;
 
-pub mod bridge_api;
 pub mod loader;
 
 pub use clear::rs_loader_impl_clear;

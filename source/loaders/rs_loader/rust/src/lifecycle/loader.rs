@@ -1,12 +1,12 @@
-use metacall_registrator::{file::FileRegistration, package::PackageRegistration};
-
 use crate::{c_char, c_int, c_void, CStr, PathBuf};
+
+use bridge_abi;
+
+use metacall_registrator::{file::FileRegistration, package::PackageRegistration};
 
 use std::fmt::Display;
 
-#[path = "bridge_api.rs"]
-mod bridge_api;
-
+#[derive(Debug)]
 pub enum LoadingMethod {
     File(FileRegistration),
     Package(PackageRegistration),
@@ -40,10 +40,12 @@ pub fn load<T>(
 where
     T: OnPathBufClosure,
 {
-    let loader_lifecycle_state = bridge_api::get_loader_lifecycle_state(loader_impl);
+    let loader_lifecycle_state = bridge_abi::get_loader_lifecycle_state(loader_impl);
     let mut execution_paths_iterator = unsafe { (*loader_lifecycle_state).execution_paths.iter() };
 
     let mut path: *const c_char;
+
+    let mut handle_shared_object = Box::new(Vec::new());
 
     for i in 0..size {
         if path_is_vector {
@@ -87,9 +89,9 @@ where
                     }
                     None => {
                         return load_on_error(format!(
-                        "Rs_loader was unable to find '{}' in the list of execution_paths.",
-                        original_path_buf.to_str().unwrap()
-                    ))
+                            "Rs_loader was unable to find '{}' in the list of execution_paths.",
+                            original_path_buf.to_str().unwrap()
+                        ))
                     }
                 };
 
@@ -106,10 +108,11 @@ where
             ));
         }
 
-        if let Err(error) = on_path_buf(path_buf, load_on_error) {
-            return error;
-        }
+        match on_path_buf(path_buf, load_on_error) {
+            Ok(instance) => handle_shared_object.push(instance),
+            Err(error) => return error,
+        };
     }
 
-    1 as c_int as *mut c_void
+    Box::into_raw(handle_shared_object) as *mut c_void
 }
