@@ -28,7 +28,9 @@ loader_impl_interface c_loader_impl_interface_singleton(void)
 	static struct loader_impl_interface_type loader_impl_interface_c = {
 		&c_loader_impl_initialize,
 		&c_loader_impl_execution_path,
-		&c_loader_impl_load,
+		&c_loader_impl_load_from_file,
+		&c_loader_impl_load_from_memory,
+		&c_loader_impl_load_from_package,
 		&c_loader_impl_clear,
 		&c_loader_impl_discover,
 		&c_loader_impl_destroy

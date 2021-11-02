@@ -23,52 +23,98 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <reflect/context.h>
-#include <reflect/function.h>
-#include <reflect/scope.h>
-#include <reflect/type.h>
+#include <reflect/reflect_context.h>
+#include <reflect/reflect_function.h>
+#include <reflect/reflect_scope.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 
+#include <map>
 #include <new>
+#include <string>
+#include <vector>
 
 #include <ffi.h>
 
-#include <clang/AST/AST.h>
-#include <clang/AST/ASTConsumer.h>
-#include <clang/AST/ASTContext.h>
-#include <clang/AST/RecursiveASTVisitor.h>
-#include <clang/Driver/Options.h>
-#include <clang/Frontend/ASTConsumers.h>
-#include <clang/Frontend/CompilerInstance.h>
-#include <clang/Frontend/FrontendActions.h>
-#include <clang/Rewrite/Core/Rewriter.h>
-#include <clang/Tooling/CommonOptionsParser.h>
-#include <clang/Tooling/Tooling.h>
+#include <libtcc.h>
 
-#define C_LOADER_FILE_MAX_SIZE ((size_t)(2 * 1024 * 1024)) /* 2 MB */
+#include <cstring>
 
 typedef struct loader_impl_c_type
 {
-	void *todo;
+	std::vector<std::string> execution_paths;
 
 } * loader_impl_c;
 
 typedef struct loader_impl_c_handle_type
 {
-	/*
-	char * buffer;
-	size_t buffer_size;
-*/
-	void *todo;
+	TCCState *state;
+	std::map<std::string, const void *> symbols;
 
 } * loader_impl_c_handle;
 
 typedef struct loader_impl_c_function_type
 {
-	void *todo;
+	const void *address;
 
 } * loader_impl_c_function;
+
+static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
+{
+	loader_impl_c_handle c_handle = new loader_impl_c_handle_type();
+
+	if (c_handle == nullptr)
+	{
+		return nullptr;
+	}
+
+	c_handle->state = tcc_new();
+
+	if (c_handle->state == NULL)
+	{
+		delete c_handle;
+		return nullptr;
+	}
+
+	tcc_set_output_type(c_handle->state, TCC_OUTPUT_MEMORY);
+
+	/* TODO */
+	/*
+	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		tcc_enable_debug(c_handle->state);
+	#endif
+	*/
+
+	/* TODO: Add error handling */
+	/* tcc_set_error_func */
+
+	/* TODO: Add some warnings? */
+	/* tcc_set_warning */
+
+	/* TODO: Take the c_loader and add the execution paths for include (and library?) folders */
+	/* tcc_add_include_path, tcc_add_library_path */
+	(void)c_impl;
+
+	return c_handle;
+}
+
+static void c_loader_impl_handle_destroy(loader_impl_c_handle c_handle)
+{
+	tcc_delete(c_handle->state);
+	delete c_handle;
+}
+
+static bool c_loader_impl_file_exists(const std::string &filename)
+{
+	if (FILE *file = fopen(filename.c_str(), "r"))
+	{
+		fclose(file);
+		return true;
+	}
+
+	return false;
+}
 
 int function_c_interface_create(function func, function_impl impl)
 {
@@ -138,94 +184,137 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 
 	c_impl = new loader_impl_c_type();
 
-	if (c_impl != nullptr)
+	if (c_impl == nullptr)
 	{
-		int argc = 1;
-
-		const char *argv[] = { "c_loader" };
-
-		llvm::cl::OptionCategory category(argv[0]);
-
-		clang::tooling::CommonOptionsParser op(argc, argv, category);
-		/*
-		clang::tooling::ClangTool tooling(op.getCompilations(), op.getSourcePathList());
-*/
-		/* Register initialization */
-		loader_initialization_register(impl);
-
-		return static_cast<loader_impl_data>(c_impl);
+		return NULL;
 	}
 
-	return NULL;
+	/* Register initialization */
+	loader_initialization_register(impl);
+
+	return static_cast<loader_impl_data>(c_impl);
 }
 
 int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
 {
-	(void)impl;
-	(void)path;
+	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
+
+	c_impl->execution_paths.push_back(path);
 
 	return 0;
 }
 
-loader_handle c_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
-	loader_impl_c_handle c_handle = new loader_impl_c_handle_type();
+	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
+	loader_impl_c_handle c_handle = c_loader_impl_handle_create(c_impl);
+
+	if (c_handle == nullptr)
+	{
+		return NULL;
+	}
+
+	/* TODO: Load the files (.c and .h) with the parser while iterating after loading them with TCC */
+
+	for (size_t iterator = 0; iterator < size; ++iterator)
+	{
+		/* We assume it is a path so we load from path */
+		if (loader_path_is_absolute(paths[iterator]) == 0)
+		{
+			if (tcc_add_file(c_handle->state, paths[iterator]) == -1)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
+				c_loader_impl_handle_destroy(c_handle);
+				return NULL;
+			}
+		}
+		else
+		{
+			bool found = false;
+
+			/* Otherwise, check the execution paths */
+			for (auto exec_path : c_impl->execution_paths)
+			{
+				loader_naming_path path;
+				size_t path_size = loader_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strlen(paths[iterator]), path);
+				std::string filename(path, path_size);
+
+				if (c_loader_impl_file_exists(filename) == true && tcc_add_file(c_handle->state, path) != -1)
+				{
+					found = true;
+					break;
+				}
+			}
+
+			if (found == false)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to load file: %s", paths[iterator]);
+				c_loader_impl_handle_destroy(c_handle);
+				return NULL;
+			}
+		}
+	}
+
+	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
+		c_loader_impl_handle_destroy(c_handle);
+		return NULL;
+	}
+
+	return c_handle;
+}
+
+loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+{
+	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
+	loader_impl_c_handle c_handle = c_loader_impl_handle_create(c_impl);
+
+	/* Apparently TCC has an unsafe API for compiling strings */
+	(void)size;
+
+	if (c_handle == nullptr)
+	{
+		return NULL;
+	}
+
+	if (tcc_compile_string(c_handle->state, buffer) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to compile the buffer: %s", name);
+		c_loader_impl_handle_destroy(c_handle);
+		return NULL;
+	}
+
+	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
+		c_loader_impl_handle_destroy(c_handle);
+		return NULL;
+	}
+
+	/* TODO: Load the buffer with the parser while iterating after loading it with TCC */
+
+	return c_handle;
+}
+
+loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+{
+	/* TODO: Define what to do with this */
+	/*
+	loader_impl_c_handle c_handle = c_loader_impl_handle_create();
+
+	if (c_handle == nullptr)
+	{
+		return NULL;
+	}
 
 	(void)impl;
 
-	if (c_handle != nullptr)
-	{
-		return static_cast<loader_handle>(c_handle);
+	return c_handle;
+	*/
 
-		/*
-		FILE * file;
-
-		file = fopen(path, "r");
-
-		if (file != NULL)
-		{
-			size_t size = 0;
-
-			if (fseek(file, 0, SEEK_END) == 0)
-			{
-				long int tell_size = ftell(file);
-
-				if (tell_size > 0)
-				{
-					size = (size_t)tell_size;
-				}
-			}
-
-			if (size > 0 && size < C_LOADER_FILE_MAX_SIZE && fseek(file, 0, SEEK_SET) == 0)
-			{
-				char * buffer = malloc(sizeof(char) * size);
-
-				if (buffer != NULL)
-				{
-					size_t result = fread(buffer, sizeof(char), size, file);
-
-					if (result == size)
-					{
-						fclose(file);
-
-						c_handle->buffer = buffer;
-						c_handle->buffer_size = size;
-
-						log_write("metacall", LOG_LEVEL_DEBUG, "C module <%s> correctly loaded", name);
-
-						return (loader_handle)c_handle;
-					}
-
-					free(buffer);
-				}
-			}
-
-			fclose(file);
-		}
-
-		free(c_handle);
-		*/
-	}
+	(void)impl;
+	(void)path;
 
 	return NULL;
 }
@@ -238,18 +327,7 @@ int c_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (c_handle != NULL)
 	{
-		/*
-		if (c_handle->buffer != NULL)
-		{
-			free(c_handle->buffer);
-
-			c_handle->buffer = NULL;
-		}
-
-		c_handle->buffer_size = 0;
-		*/
-
-		delete c_handle;
+		c_loader_impl_handle_destroy(c_handle);
 
 		return 0;
 	}
@@ -257,14 +335,11 @@ int c_loader_impl_clear(loader_impl impl, loader_handle handle)
 	return 1;
 }
 
-int c_loader_impl_discover_func(loader_impl impl, loader_handle handle, context ctx, function f)
+static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr)
 {
-	(void)impl;
-	(void)handle;
-	(void)ctx;
-	(void)f;
+	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(ctx);
 
-	return 0;
+	c_handle->symbols.insert(std::pair<std::string, const void *>(name, addr));
 }
 
 int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
@@ -276,6 +351,11 @@ int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 	if (c_handle != NULL)
 	{
+		/* List all symbol addresses */
+		tcc_list_symbols(c_handle->state, static_cast<void *>(c_handle), &c_loader_impl_discover_symbols);
+
+		/* TODO: Iterate through the AST and obtain function declarations (and structs later on) */
+		/* Then, register them into MetaCall associating them to the addresses */
 		return 0;
 	}
 
@@ -298,96 +378,3 @@ int c_loader_impl_destroy(loader_impl impl)
 
 	return 1;
 }
-
-/*
-using namespace std;
-using namespace clang;
-using namespace clang::driver;
-using namespace clang::tooling;
-using namespace llvm;
-
-Rewriter rewriter;
-int numFunctions = 0;
-
-
-class ExampleVisitor : public RecursiveASTVisitor<ExampleVisitor> {
-private:
-    ASTContext *astContext; // used for getting additional AST info
-
-public:
-    explicit ExampleVisitor(CompilerInstance *CI) 
-      : astContext(&(CI->getASTContext())) // initialize private members
-    {
-        rewriter.setSourceMgr(astContext->getSourceManager(), astContext->getLangOpts());
-    }
-
-    virtual bool VisitFunctionDecl(FunctionDecl *func) {
-        numFunctions++;
-        string funcName = func->getNameInfo().getName().getAsString();
-        if (funcName == "do_math") {
-            rewriter.ReplaceText(func->getLocation(), funcName.length(), "add5");
-            errs() << "** Rewrote function def: " << funcName << "\n";
-        }    
-        return true;
-    }
-
-    virtual bool VisitStmt(Stmt *st) {
-        if (ReturnStmt *ret = dyn_cast<ReturnStmt>(st)) {
-            rewriter.ReplaceText(ret->getRetValue()->getLocStart(), 6, "val");
-            errs() << "** Rewrote ReturnStmt\n";
-        }        
-        if (CallExpr *call = dyn_cast<CallExpr>(st)) {
-            rewriter.ReplaceText(call->getLocStart(), 7, "add5");
-            errs() << "** Rewrote function call\n";
-        }
-        return true;
-    }
-};
-
-
-
-class ExampleASTConsumer : public ASTConsumer {
-private:
-    ExampleVisitor *visitor; // doesn't have to be private
-
-public:
-    // override the constructor in order to pass CI
-    explicit ExampleASTConsumer(CompilerInstance *CI)
-        : visitor(new ExampleVisitor(CI)) // initialize the visitor
-    { }
-
-    // override this to call our ExampleVisitor on the entire source file
-    virtual void HandleTranslationUnit(ASTContext &Context) {
-        // we can use ASTContext to get the TranslationUnitDecl, which is
-        //     a single Decl that collectively represents the entire source file 
-        visitor->TraverseDecl(Context.getTranslationUnitDecl());
-    }
-
-};
-
-
-
-class ExampleFrontendAction : public ASTFrontendAction {
-public:
-    virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI, StringRef file) {
-        return new ExampleASTConsumer(&CI); // pass CI pointer to ASTConsumer
-    }
-};
-
-
-
-int main(int argc, const char **argv) {
-    // parse the command-line args passed to your code
-    CommonOptionsParser op(argc, argv);        
-    // create a new Clang Tool instance (a LibTooling environment)
-    ClangTool Tool(op.getCompilations(), op.getSourcePathList());
-
-    // run the Clang Tool, creating a new FrontendAction (explained below)
-    int result = Tool.run(newFrontendActionFactory<ExampleFrontendAction>());
-
-    errs() << "\nFound " << numFunctions << " functions.\n\n";
-    // print out the rewritten source code ("rewriter" is a global var.)
-    rewriter.getEditBuffer(rewriter.getSourceMgr().getMainFileID()).write(errs());
-    return result;
-}
-*/

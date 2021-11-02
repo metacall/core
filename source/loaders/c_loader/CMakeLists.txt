@@ -14,6 +14,7 @@ if(NOT LIBFFI_FOUND)
 	return()
 endif()
 
+
 find_package(LibTCC)
 
 if(NOT LIBTCC_FOUND)
@@ -158,8 +159,8 @@ target_include_directories(${target}
 target_link_libraries(${target}
 	PRIVATE
 	${META_PROJECT_NAME}::metacall # MetaCall library
-	${LIBFFI_LIBRARIES} # FFI libraries
-	${LIBTCC_LIBRARIES} # TCC libraries
+	${LIBFFI_LIBRARY} # FFI library
+	${LIBTCC_LIBRARY} # TCC library
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
