@@ -11,8 +11,8 @@ crate-type = ["cdylib"]
 opt-level = "z"
 
 [workspace]
-members = ["bridge_abi", "metacall_registrator"]
+members = ["api", "compiler"]
 
 [dependencies]
-bridge_abi = { path = "./bridge_abi" }
-metacall_registrator = { path = "./metacall_registrator" }
+api = { path = "./api" }
+compiler = { path = "./compiler" }

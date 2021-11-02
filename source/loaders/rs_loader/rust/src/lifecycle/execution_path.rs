@@ -1,13 +1,13 @@
 use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
-use bridge_abi;
+use api;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_execution_path(
     loader_impl: *mut c_void,
     path: *const c_char,
 ) -> c_int {
-    let loader_lifecycle_state = bridge_abi::get_loader_lifecycle_state(loader_impl);
+    let loader_lifecycle_state = api::get_loader_lifecycle_state(loader_impl);
 
     let c_path: &CStr = unsafe { CStr::from_ptr(path) };
 

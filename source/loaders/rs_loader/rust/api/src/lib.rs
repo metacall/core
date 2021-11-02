@@ -146,7 +146,7 @@ pub struct FunctionRegisteration {
     pub function_input_signature: Vec<FunctionInputSignature>,
 }
 
-pub fn register_new_function(function_registeration: FunctionRegisteration) {
+pub fn register_function(function_registeration: FunctionRegisteration) {
     let sp = unsafe { context_scope(function_registeration.ctx) };
 
     let FunctionCreate {

@@ -2,8 +2,8 @@ use std::{ffi::c_void, os::raw::c_uint};
 
 use syn::{Attribute, File as SynFileAst, Item, Signature, Visibility};
 
-use bridge_abi::{
-    register_new_function, FunctionCreate, FunctionInputSignature, FunctionRegisteration,
+use api::{
+    register_function, FunctionCreate, FunctionInputSignature, FunctionRegisteration,
     PrimitiveMetacallImplTypes,
 };
 
@@ -101,7 +101,7 @@ pub fn register(ast: &SynFileAst, loader_impl: *mut c_void, ctx: *mut c_void) {
                     function_return_signature,
                 };
 
-                register_new_function(function_registration);
+                register_function(function_registration);
             }
             _ => continue,
         }

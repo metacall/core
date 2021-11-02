@@ -7,13 +7,10 @@ endif()
 # Plugin name and options
 #
 
-# TODO: Implement compilation by using Rust Compiler API
-# file(READ ${CMAKE_CURRENT_SOURCE_DIR}/rust-toolchain TARGET_TOOLCHAIN)
-# string(STRIP "${TARGET_TOOLCHAIN}" TARGET_TOOLCHAIN)
+file(READ ${CMAKE_CURRENT_SOURCE_DIR}/rust-toolchain TARGET_TOOLCHAIN)
+string(STRIP "${TARGET_TOOLCHAIN}" TARGET_TOOLCHAIN)
 
-# find_package(Rust COMPONENTS ${TARGET_TOOLCHAIN})
-
-find_package(Rust)
+find_package(Rust COMPONENTS ${TARGET_TOOLCHAIN})
 
 if(NOT Rust_FOUND)
 	message(STATUS "Rust not found")

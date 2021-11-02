@@ -1,7 +1,7 @@
 use super::loader::{self, LoadingMethod};
 use crate::{c_char, c_void, PathBuf};
 
-use metacall_registrator::{file::FileRegistration, RegistrationError};
+use compiler::{file::FileRegistration, RegistrationError};
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_load_from_file(

@@ -1,8 +1,8 @@
 use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
-use bridge_abi;
+use api;
 
-use metacall_registrator::{file::FileRegistration, package::PackageRegistration};
+use compiler::{file::FileRegistration, package::PackageRegistration};
 
 use std::fmt::Display;
 
@@ -40,7 +40,7 @@ pub fn load<T>(
 where
     T: OnPathBufClosure,
 {
-    let loader_lifecycle_state = bridge_abi::get_loader_lifecycle_state(loader_impl);
+    let loader_lifecycle_state = api::get_loader_lifecycle_state(loader_impl);
     let mut execution_paths_iterator = unsafe { (*loader_lifecycle_state).execution_paths.iter() };
 
     let mut path: *const c_char;
