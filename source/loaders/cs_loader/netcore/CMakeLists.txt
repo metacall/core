@@ -70,19 +70,19 @@ else()
 	if(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
 		add_custom_target(${target} ALL
 			COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj
-			COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj -o ${CMAKE_BINARY_DIR}
+			COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.csproj -o ${PROJECT_OUTPUT_DIR}
 		)
 	else()
 		if(DOTNET_MIGRATE)
 			add_custom_target(${target} ALL
 				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} migrate ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
 				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
-				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${CMAKE_BINARY_DIR}
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${PROJECT_OUTPUT_DIR}
 			)
 		else()
 			add_custom_target(${target} ALL
 				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} restore ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json
-				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${CMAKE_BINARY_DIR}
+				COMMAND ${DOTNET_ENV_VAR} ${DOTNET_COMMAND} publish ${CMAKE_CURRENT_SOURCE_DIR}/source/project.json -o ${PROJECT_OUTPUT_DIR}
 			)
 		endif()
 	endif()
@@ -104,23 +104,23 @@ set_target_properties(${target}
 
 if(DOTNET_VERSION VERSION_EQUAL "5.0" OR DOTNET_VERSION VERSION_GREATER "5.0")
 	set(DOTNET_INSTALL_DEPENDENCIES
-		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.dll
-		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.CSharp.dll
+		${PROJECT_OUTPUT_DIR}/Microsoft.CodeAnalysis.dll
+		${PROJECT_OUTPUT_DIR}/Microsoft.CodeAnalysis.CSharp.dll
 	)
 elseif(DOTNET_VERSION VERSION_EQUAL "2.0" OR DOTNET_VERSION VERSION_GREATER "2.0")
 	set(DOTNET_INSTALL_DEPENDENCIES
-		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.dll
-		${CMAKE_BINARY_DIR}/Microsoft.CodeAnalysis.CSharp.dll
-		${CMAKE_BINARY_DIR}/System.Runtime.CompilerServices.Unsafe.dll
-		${CMAKE_BINARY_DIR}/System.Text.Encoding.CodePages.dll
+		${PROJECT_OUTPUT_DIR}/Microsoft.CodeAnalysis.dll
+		${PROJECT_OUTPUT_DIR}/Microsoft.CodeAnalysis.CSharp.dll
+		${PROJECT_OUTPUT_DIR}/System.Runtime.CompilerServices.Unsafe.dll
+		${PROJECT_OUTPUT_DIR}/System.Text.Encoding.CodePages.dll
 	)
 else()
-	set(DOTNET_INSTALL_DEPENDENCIES ${CMAKE_BINARY_DIR}/System.Runtime.Loader.dll)
+	set(DOTNET_INSTALL_DEPENDENCIES ${PROJECT_OUTPUT_DIR}/System.Runtime.Loader.dll)
 endif()
 
 # Library
 install(FILES
-	${CMAKE_BINARY_DIR}/CSLoader.dll
+	${PROJECT_OUTPUT_DIR}/CSLoader.dll
 	${DOTNET_INSTALL_DEPENDENCIES}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime

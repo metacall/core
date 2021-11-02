@@ -294,7 +294,7 @@ string(TOUPPER ${js_port_test} js_port_test_upper)
 # Configure test scripts
 #
 
-set(js_port_test_path "${CMAKE_BINARY_DIR}/${js_port_test}.js")
+set(js_port_test_path "${PROJECT_OUTPUT_DIR}/${js_port_test}.js")
 
 # Require module name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

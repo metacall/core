@@ -8,12 +8,12 @@ endfunction(ExternalGoProject_Add)
 function(add_go_executable NAME)
 	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/.timestamp 
 		COMMAND env GOPATH=${GOPATH} ${CMAKE_Go_COMPILER} build
-		-o "${CMAKE_BINARY_DIR}/${NAME}"
+		-o "${PROJECT_OUTPUT_DIR}/${NAME}"
 		${CMAKE_GO_FLAGS} ${ARGN}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
 	add_custom_target(${NAME} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/.timestamp ${ARGN})
-	install(PROGRAMS ${CMAKE_BINARY_DIR}/${NAME} DESTINATION bin)
+	install(PROGRAMS ${PROJECT_OUTPUT_DIR}/${NAME} DESTINATION bin)
 endfunction(add_go_executable)
 
 function(add_go_library NAME BUILD_TYPE)
@@ -31,13 +31,13 @@ function(add_go_library NAME BUILD_TYPE)
 
 	add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/.timestamp
 		COMMAND env GOPATH=${GOPATH} ${CMAKE_Go_COMPILER} build ${BUILD_MODE}
-		-o "${CMAKE_BINARY_DIR}/${LIB_NAME}"
+		-o "${PROJECT_OUTPUT_DIR}/${LIB_NAME}"
 		${CMAKE_GO_FLAGS} ${ARGN}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR})
 
 	add_custom_target(${NAME} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/.timestamp ${ARGN})
 
 	if(NOT BUILD_TYPE STREQUAL "STATIC")
-		install(PROGRAMS ${CMAKE_BINARY_DIR}/${LIB_NAME} DESTINATION bin)
+		install(PROGRAMS ${PROJECT_OUTPUT_DIR}/${LIB_NAME} DESTINATION bin)
 	endif()
 endfunction(add_go_library)

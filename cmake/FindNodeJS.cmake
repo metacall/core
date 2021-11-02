@@ -441,7 +441,7 @@ if(NOT NodeJS_LIBRARY)
 				endif()
 
 				# Copy library to MetaCall output path
-				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE})
+				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
 
 				message(STATUS "Install NodeJS shared library")
 			endif()

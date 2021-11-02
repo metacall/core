@@ -49,4 +49,4 @@ if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 	mark_as_advanced(RAPIDJSON_INCLUDE_DIRS)
 
 	message(STATUS "Installing RapidJSON v${RAPIDJSON_VERSION}")
-endif ()
+endif()

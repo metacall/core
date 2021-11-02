@@ -139,10 +139,10 @@ endif()
 #
 
 if(MSVC)
-	configure_file(data/metacall_load_from_configuration_py_test_a.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_py_test_a.json)
-	configure_file(data/metacall_load_from_configuration_py_test_b.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_py_test_b.json)
-	configure_file(data/metacall_load_from_configuration_rb_test.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_rb_test.json)
-	configure_file(data/metacall_load_from_configuration_node_test.json.in ${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}/metacall_load_from_configuration_node_test.json)
+	configure_file(data/metacall_load_from_configuration_py_test_a.json.in ${PROJECT_OUTPUT_DIR}/metacall_load_from_configuration_py_test_a.json)
+	configure_file(data/metacall_load_from_configuration_py_test_b.json.in ${PROJECT_OUTPUT_DIR}/metacall_load_from_configuration_py_test_b.json)
+	configure_file(data/metacall_load_from_configuration_rb_test.json.in ${PROJECT_OUTPUT_DIR}/metacall_load_from_configuration_rb_test.json)
+	configure_file(data/metacall_load_from_configuration_node_test.json.in ${PROJECT_OUTPUT_DIR}/metacall_load_from_configuration_node_test.json)
 endif()
 
 configure_file(data/metacall_load_from_configuration_py_test_a.json.in ${CMAKE_CURRENT_BINARY_DIR}/metacall_load_from_configuration_py_test_a.json)

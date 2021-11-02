@@ -96,6 +96,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "RelWithDebInfo" "MinSizeRel")
 endif()
 
+# Binary directory
+if(MSVC)
+	set(PROJECT_OUTPUT_DIR "${CMAKE_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
+else()
+	set(PROJECT_OUTPUT_DIR "${CMAKE_BINARY_DIR}")
+endif()
+
 #
 # Declare project
 #

@@ -275,7 +275,7 @@ if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_L
 endif()
 
 set(rb_port_test "${target}_test")
-set(rb_port_test_path "${CMAKE_BINARY_DIR}/${rb_port_test}.rb")
+set(rb_port_test_path "${PROJECT_OUTPUT_DIR}/${rb_port_test}.rb")
 
 # Require module name
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")

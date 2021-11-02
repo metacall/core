@@ -293,7 +293,7 @@ message(STATUS "Port ${target}")
 # #
 
 # set(java_port_test "${target}_test")
-# set(java_port_test_path "${CMAKE_BINARY_DIR}/${java_port_test}.java")
+# set(java_port_test_path "${PROJECT_OUTPUT_DIR}/${java_port_test}.java")
 
 # # Require module name
 # if(CMAKE_BUILD_TYPE STREQUAL "Debug")
