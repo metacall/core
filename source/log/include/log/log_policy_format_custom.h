@@ -16,6 +16,7 @@
 #include <log/log_policy.h>
 
 #include <stdarg.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,9 +32,9 @@ struct log_policy_format_custom_va_list_type;
 typedef struct log_policy_format_custom_ctor_type *log_policy_format_custom_ctor;
 typedef struct log_policy_format_custom_va_list_type *log_policy_format_custom_va_list;
 
-typedef size_t (*log_policy_format_custom_size_ptr)(void *, const char *, size_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
-typedef size_t (*log_policy_format_custom_serialize_ptr)(void *, void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
-typedef size_t (*log_policy_format_custom_deserialize_ptr)(void *, const void *, const size_t, const char *, size_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
+typedef size_t (*log_policy_format_custom_size_ptr)(void *, const char *, uint64_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
+typedef size_t (*log_policy_format_custom_serialize_ptr)(void *, void *, const size_t, const char *, uint64_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
+typedef size_t (*log_policy_format_custom_deserialize_ptr)(void *, const void *, const size_t, const char *, uint64_t, size_t, const char *, const char *, const char *, const char *, log_policy_format_custom_va_list);
 
 /* -- Member Data -- */
 
