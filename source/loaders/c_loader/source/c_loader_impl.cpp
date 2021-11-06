@@ -31,6 +31,7 @@
 #include <log/log.h>
 
 #include <map>
+#include <iterator>
 #include <new>
 #include <string>
 #include <vector>
@@ -47,6 +48,15 @@
 #include <clang-c/CXString.h>
 #include <clang-c/Index.h>
 
+/* Info about given functions declaration */
+struct FunctionDictionary
+{
+	const void* symbol;
+	std::string return_type;
+	//name, data_type
+	map<std::string, std::string> arg_info;
+};
+
 typedef struct loader_impl_c_type
 {
 	std::vector<std::string> execution_paths;
@@ -56,7 +66,8 @@ typedef struct loader_impl_c_type
 typedef struct loader_impl_c_handle_type
 {
 	TCCState *state;
-	std::map<std::string, const void *> symbols;
+	//name, dictionary
+	std::map<std::string, FunctionDictionary> FMap;
 
 } * loader_impl_c_handle;
 
@@ -74,9 +85,10 @@ std::string Convert(const CXString &s)
 	clang_disposeString(s);
 	return result;
 }
-void print_function_prototype(CXCursor cursor)
+void print_function_prototype(CXCursor cursor, loader_impl_c_handle c_handle)
 {
-	// TODO : Print data!
+	FunctionDictionary fd;
+
 	auto type = clang_getCursorType(cursor);
 
 	auto function_name = Convert(clang_getCursorSpelling(cursor));
@@ -93,9 +105,13 @@ void print_function_prototype(CXCursor cursor)
 		}
 
 		auto arg_data_type = Convert(clang_getTypeSpelling(clang_getArgType(type, i)));
+		fd.arg_info.insert(pair<std::string,std::string>(arg_name,arg_data_type));
 	}
+
+	fd.return_type = return_type;
+	c_handle->FMap.insert(pair<std::string, FunctionDictionary>(function_name, fd));
 }
-CXChildVisitResult functionVisitor(CXCursor cursor, CXCursor /* parent */, CXClientData /* clientData */)
+CXChildVisitResult functionVisitor(CXCursor cursor, loader_impl_c_handle c_handle)
 {
 	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
 		return CXChildVisit_Continue;
@@ -104,7 +120,7 @@ CXChildVisitResult functionVisitor(CXCursor cursor, CXCursor /* parent */, CXCli
 	if ((kind == CXCursorKind::CXCursor_FunctionDecl || kind == CXCursorKind::CXCursor_CXXMethod || kind == CXCursorKind::CXCursor_FunctionTemplate ||
 			kind == CXCursorKind::CXCursor_Constructor))
 	{
-		print_function_prototype(cursor);
+		print_function_prototype(cursor, c_handle);
 	}
 
 	return CXChildVisit_Continue;
@@ -389,8 +405,9 @@ int c_loader_impl_clear(loader_impl impl, loader_handle handle)
 static void c_loader_impl_discover_symbols(void *ctx, const char *name, const void *addr)
 {
 	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(ctx);
-
-	c_handle->symbols.insert(std::pair<std::string, const void *>(name, addr));
+	FunctionDictionary fd;
+	fd.symbol = addr;
+	c_handle->FMap.insert(std::pair<std::string, FunctionDictionary>(name, fd));
 }
 
 int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
@@ -407,6 +424,16 @@ int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 		/* TODO: Iterate through the AST and obtain function declarations (and structs later on) */
 		/* Then, register them into MetaCall associating them to the addresses */
+
+		/*temp solution for the above*/
+		for(std::map<std::string, FunctionDictionary>::iterator it = c_handle->FMap.begin(); it != c_handle->FMap.end(); it++;)
+		{
+			 std::string symbol = it->second.symbol;
+			 map<std::string, std::string> arg_info = it->second.arg_info;
+			 int arg_c = arg_info.size();
+
+			 // register fucntions to MetaCall
+		}
 		return 0;
 	}
 
