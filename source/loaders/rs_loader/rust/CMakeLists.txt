@@ -58,7 +58,12 @@ set_property(TARGET ${target}
 )
 
 # Prepare the environment variable file for VSCode tests
-set(TEST_LIB_PATH "${PROJECT_OUTPUT_DIR}")
+include(Portability)
+
+project_library_path(TEST_LIB_PATH
+	${PROJECT_OUTPUT_DIR}
+)
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json.in ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json @ONLY)
 
 #

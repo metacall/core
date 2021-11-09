@@ -203,3 +203,37 @@ endif()
 
 #message(STATUS "Installing Libraries to ${CMAKE_INSTALL_PREFIX}/${PROJECT_LIB_DIR}")
 #message(STATUS "Installing Plugins to ${CMAKE_INSTALL_PREFIX}/${PROJECT_PLUGIN_DIR}")
+
+#
+# Define the library path environment variable name
+#
+
+if(PROJECT_OS_LINUX OR PROJECT_OS_BSD)
+	set(PROJECT_LIBRARY_PATH_NAME "LD_LIBRARY_PATH")
+elseif(PROJECT_OS_HAIKU)
+	set(PROJECT_LIBRARY_PATH_NAME "LIBRARY_PATH")
+elseif(PROJECT_OS_WIN OR PROJECT_OS_MINGW)
+	set(PROJECT_LIBRARY_PATH_NAME "PATH")
+elseif(PROJECT_OS_FAMILY STREQUAL "macos")
+	set(PROJECT_LIBRARY_PATH_NAME "DYLD_LIBRARY_PATH")
+else()
+	message(FATAL_ERROR "Unsupported Platform for PROJECT_LIBRARY_PATH_NAME in Portability")
+endif()
+
+#
+# Define a macro for getting the library path with previous contents from environment variable
+#
+
+macro(PROJECT_LIBRARY_PATH variable path)
+	set(LIBRARY_PATH_ENV_VAR "$ENV{${PROJECT_LIBRARY_PATH_NAME}}")
+	if("${LIBRARY_PATH_ENV_VAR}" STREQUAL "")
+		set(${variable}
+			"${path}"
+		)
+	else()
+		set(${variable}
+			"${path}"
+			"${LIBRARY_PATH_ENV_VAR}"
+		)
+	endif()
+endmacro()

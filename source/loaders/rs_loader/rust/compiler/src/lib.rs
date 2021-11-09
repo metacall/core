@@ -20,7 +20,7 @@ use rustc_interface::{Config, Queries, interface::Compiler};
 use rustc_ast::{visit, NodeId};
 use rustc_span::Span;
 
-use std::{error::Error, fs::File, io::Read, path::PathBuf};
+use std::{sync, error::Error, fs::File, io::Read, path::PathBuf};
 
 pub use syn::{self, File as SynFileAst};
 
@@ -34,8 +34,25 @@ pub enum RegistrationError {
     SynError(Box<dyn Error>),
 }
 
-struct SourceImpl {
-    input: config::Input,
+struct SourceInput(config::Input);
+
+impl Clone for SourceInput {
+    fn clone(&self) -> Self {
+        match &self.0 {
+            config::Input::File(path) => SourceInput(config::Input::File(path.clone())),
+            config::Input::Str {
+                name,
+                input,
+            } => SourceInput(config::Input::Str {
+                name: name.clone(),
+                input: input.clone(),
+            }),
+        }
+    }
+}
+
+pub struct SourceImpl {
+    input: SourceInput,
     input_path: PathBuf,
     output: PathBuf,
 }
@@ -52,7 +69,7 @@ pub enum Source {
 
 impl Source {
     pub fn new(source: Source) -> SourceImpl {
-        let library_name = |file_name: PathBuf| {
+        let library_name = |file_name: &PathBuf| {
             #[cfg(unix)]
             let lib_extension = "so";
             #[cfg(windows)]
@@ -66,14 +83,14 @@ impl Source {
             lib_name
         };
 
-        let input_path = |dir: PathBuf, name: PathBuf| {
+        let input_path = |dir: &PathBuf, name: &PathBuf| {
             let mut path = PathBuf::from(dir);
             path.push(name);
             path.clone()
         };
 
-        let output_path = |dir: PathBuf, name: PathBuf| {
-            input_path(dir, library_name(name))
+        let output_path = |dir: &PathBuf, name: &PathBuf| {
+            input_path(dir, &library_name(name))
         };
 
         match source {
@@ -81,26 +98,26 @@ impl Source {
                 let dir = PathBuf::from(path.clone().parent().unwrap());
                 let name = PathBuf::from(path.file_name().unwrap());
 
-                return SourceImpl {
-                    input: config::Input::File(path.clone()),
-                    input_path: input_path(dir, name),
-                    output: output_path(dir, name),
+                SourceImpl {
+                    input: SourceInput(config::Input::File(path.clone())),
+                    input_path: input_path(&dir, &name),
+                    output: output_path(&dir, &name),
                 }
             },
             Source::Memory { name, code } => {
                 let dir = PathBuf::from(std::env::temp_dir());
-                let name_path = PathBuf::from(name);
+                let name_path = PathBuf::from(name.clone());
 
-                return SourceImpl {
-                    input: config::Input::Str {
+                SourceImpl {
+                    input: SourceInput(config::Input::Str {
                         name: source_map::FileName::Custom(name.clone()),
                         input: code.clone(),
-                    },
-                    input_path: input_path(dir, name_path),
-                    output: output_path(dir, name_path),
+                    }),
+                    input_path: input_path(&dir, &name_path),
+                    output: output_path(&dir, &name_path),
                 }
             },
-        };
+        }
     }
 }
 
@@ -222,7 +239,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         config.output_file = Some(self.source.output.clone());
 
         // Set up inputs
-        config.input = self.source.input.clone();
+        config.input = self.source.input.clone().0;
         config.input_path = Some(self.source.input_path.clone());
 
         // Setting up default compiler flags
@@ -260,7 +277,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
 
 // Buffer diagnostics in a Vec<u8>
 #[derive(Clone)]
-struct DiagnosticSink(std::sync::Arc<std::sync::Mutex<Vec<u8>>>);
+struct DiagnosticSink(sync::Arc<sync::Mutex<Vec<u8>>>);
 
 impl std::io::Write for DiagnosticSink {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
@@ -326,10 +343,9 @@ pub fn initialize() {
 
 fn run_compiler(
     callbacks: &mut (dyn rustc_driver::Callbacks + Send),
+    diagnostics_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
+    errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
 ) -> Result<(), rustc_errors::ErrorReported> {
-
-    let diagnostics_buffer = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-    let errors_buffer = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
 
     let mut config = Config {
         // Command line options
@@ -371,7 +387,7 @@ fn run_compiler(
 
     callbacks.config(&mut config);
 
-    let result = rustc_interface::run_compiler(config, |compiler| {
+    rustc_interface::run_compiler(config, |compiler| {
         let sess = compiler.session();
 
         let linker = compiler.enter(|queries| {
@@ -411,17 +427,7 @@ fn run_compiler(
         }
 
         Ok(())
-    });
-
-    // Read buffered diagnostics
-    let diagnostics = String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
-    println!("{}", diagnostics);
-
-    // Read buffered errors
-    let errors = String::from_utf8(errors_buffer.lock().unwrap().clone()).unwrap();
-    println!("{}", errors);
-
-    result
+    })
 }
 
 pub fn compile(source: SourceImpl) -> Result<PathBuf, String> {
@@ -429,11 +435,28 @@ pub fn compile(source: SourceImpl) -> Result<PathBuf, String> {
         source,
     };
 
+    let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
+    let errors_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
+
     match rustc_driver::catch_fatal_errors(|| {
-        run_compiler(&mut callbacks)
+        run_compiler(
+            &mut callbacks,
+            &diagnostics_buffer,
+            &errors_buffer,
+        )
     }).and_then(|result| result) {
         Ok(()) => Ok(callbacks.source.output),
-        Err(err) => Err(format!("{:?}", err)),
+        Err(err) => {
+            // Read buffered diagnostics
+            let diagnostics = String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
+            eprintln!("{}", diagnostics);
+
+            // Read buffered errors
+            let errors = String::from_utf8(errors_buffer.lock().unwrap().clone()).unwrap();
+            eprintln!("{}", errors);
+
+            Err(format!("{:?}", err))
+        }
     }
 }
 
@@ -458,14 +481,26 @@ mod tests {
     }
 
     #[test]
-    fn test_compile() {
+    fn test_compile_memory() {
         run_test(|| {
             match compile(Source::new(Source::Memory {
                 name: String::from("test.rs"),
-                code: String::from("#[no_mangle]\npub extern \"C\" fn add(num_1: i32, num_2: i32) -> i32 { num_1 + num_2 }"),
+                code: String::from("#[no_mangle]\npub extern \"C\" fn add(a: i32, b: i32) -> i32 { a + b }"),
             })) {
-                Ok(_) => assert!(false, "compilation failed"),
-                Err(_) => assert!(true),
+                Err(err) => assert!(false, "compilation failed: {}", err),
+                Ok(output) => assert!(output.exists()),
+            }
+        })
+    }
+
+    #[test]
+    fn test_compile_file() {
+        run_test(|| {
+            match compile(Source::new(Source::File {
+                path: PathBuf::from(std::env::var("TEST_SOURCE_DIR").unwrap()),
+            })) {
+                Err(err) => assert!(false, "compilation failed: {}", err),
+                Ok(output) => assert!(output.exists()),
             }
         })
     }

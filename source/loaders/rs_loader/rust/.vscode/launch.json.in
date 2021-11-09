@@ -20,12 +20,10 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
+                "TEST_SOURCE_DIR": "${workspaceFolder}/test/file.rs",
                 "RUST_BACKTRACE": "1",
                 // Define library path (TODO: This maybe can be deleted with proper rpath setup)
-                "LD_LIBRARY_PATH": "@TEST_LIB_PATH@", // Linux
-                "PATH": "@TEST_LIB_PATH@", // Windows
-                "DYLD_LIBRARY_PATH": "@TEST_LIB_PATH@", // MacOs
-                "LIBRARY_PATH": "@TEST_LIB_PATH@" // Haiku
+                "@PROJECT_LIBRARY_PATH_NAME@": "@TEST_LIB_PATH@"
             }
         },
         {
@@ -47,12 +45,10 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
+                "TEST_SOURCE_DIR": "${workspaceFolder}/test/file.rs",
                 "RUST_BACKTRACE": "1",
                 // Define library path (TODO: This maybe can be deleted with proper rpath setup)
-                "LD_LIBRARY_PATH": "@TEST_LIB_PATH@", // Linux
-                "PATH": "@TEST_LIB_PATH@", // Windows
-                "DYLD_LIBRARY_PATH": "@TEST_LIB_PATH@", // MacOs
-                "LIBRARY_PATH": "@TEST_LIB_PATH@" // Haiku
+                "@PROJECT_LIBRARY_PATH_NAME@": "@TEST_LIB_PATH@"
             }
         }
     ]
