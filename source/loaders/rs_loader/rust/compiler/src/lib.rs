@@ -212,8 +212,8 @@ impl FunctionVisitor {
         }
     }
 
-    fn add_function(&mut self, name: String) {
-        self.functions.push(name)
+    fn add_function(&mut self, name: String, decl: &rustc_ast::ptr::P<rustc_ast::ast::FnDecl>) {
+        self.functions.push(name);
     }
 }
 
@@ -221,7 +221,7 @@ impl FunctionVisitor {
 impl<'a> visit::Visitor<'a> for FunctionVisitor {
     fn visit_fn(&mut self, fk: visit::FnKind, s: Span, _: NodeId) {
         match fk {
-            visit::FnKind::Fn(_, indent, ..) => self.add_function(indent.name.to_string()),
+            visit::FnKind::Fn(_, indent, sig, ..) => self.add_function(indent.name.to_string(), &sig.decl),
             _ => ()
         }
 
