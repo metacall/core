@@ -23,10 +23,29 @@
 # clang-format version as CI.
 RECOMMENDED_CLANG_FORMAT_MAJOR="11"
 
-CLANG_FORMAT=`which clang-format-$RECOMMENDED_CLANG_FORMAT_MAJOR 2>/dev/null`
-if [ -z "$CLANG_FORMAT" ]; then
-  CLANG_FORMAT=`which clang-format 2>/dev/null`
-fi
+function find_clang_format() {
+    for version in 11 12 13 14; do
+        program=`which clang-format-$version 2>/dev/null`
+        if [ ! -z "$program" ]; then
+            echo "$program"
+            return
+        fi
+    done
+
+    program=`which clang-format 2>/dev/null`
+
+    if [ ! -z "$program" ]; then
+        version="$($program --version | rev | cut -d' ' -f1 | rev)"
+        major="$(echo "$version" | cut -d'.' -f1)"
+
+        if [ "$major" -ge "$RECOMMENDED_CLANG_FORMAT_MAJOR" ]; then
+            echo "$program"
+            return
+        fi
+    fi
+}
+
+CLANG_FORMAT=$(find_clang_format)
 
 # Remove any older patches from previous commits. Set to true or false.
 DELETE_OLD_PATCHES=false
@@ -85,7 +104,7 @@ else
 fi
 
 if [ ! -x "$CLANG_FORMAT" ] ; then
-	message="Error: clang-format executable not found. Please install clang-format $RECOMMENDED_CLANG_FORMAT_MAJOR.x.x."
+	message="Error: clang-format executable not found. Please install clang-format $RECOMMENDED_CLANG_FORMAT_MAJOR.x.x. or superior"
 
     if [ ! -t 1 ] ; then
         if [ -x "$ZENITY" ] ; then
@@ -104,14 +123,6 @@ if [ ! -x "$CLANG_FORMAT" ] ; then
     printf "Set the correct path in $(canonicalize_filename "$0").\n"
     exit 1
 fi
-
-# CLANG_FORMAT_VERSION="$(clang-format --version | cut -d' ' -f3)"
-# CLANG_FORMAT_MAJOR="$(echo "$CLANG_FORMAT_VERSION" | cut -d'.' -f1)"
-
-# if [ "$CLANG_FORMAT_MAJOR" != "$RECOMMENDED_CLANG_FORMAT_MAJOR" ]; then
-#     echo "Warning: Your clang-format binary is the wrong version ($CLANG_FORMAT_VERSION, expected $RECOMMENDED_CLANG_FORMAT_MAJOR.x.x)."
-#     echo "         Consider upgrading or downgrading clang-format as formatting may not be applied correctly."
-# fi
 
 # create a random filename to store our generated patch
 prefix="pre-commit-clang-format"
