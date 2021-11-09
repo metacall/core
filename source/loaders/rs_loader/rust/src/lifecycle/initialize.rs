@@ -9,6 +9,8 @@ pub extern "C" fn rs_loader_impl_initialize(
 ) -> *mut c_void {
     let boxed_loader_lifecycle_state = Box::new(api::LoaderLifecycleState::new(Vec::new()));
 
+    compiler::initialize();
+
     api::define_type(
         loader_impl,
         "i8",

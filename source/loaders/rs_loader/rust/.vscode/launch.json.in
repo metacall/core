@@ -20,7 +20,6 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "TEST_DEST_DIR": "${workspaceFolder}/compiler/target",
                 "RUST_BACKTRACE": "1",
                 // Define library path (TODO: This maybe can be deleted with proper rpath setup)
                 "LD_LIBRARY_PATH": "@TEST_LIB_PATH@", // Linux
@@ -48,7 +47,6 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "env": {
-                "TEST_DEST_DIR": "${workspaceFolder}/compiler/target",
                 "RUST_BACKTRACE": "1",
                 // Define library path (TODO: This maybe can be deleted with proper rpath setup)
                 "LD_LIBRARY_PATH": "@TEST_LIB_PATH@", // Linux

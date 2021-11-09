@@ -3,7 +3,6 @@ use crate::{Source, compile, Parser, RegistrationError};
 use std::{
     ffi::c_void,
     path::PathBuf,
-    fs,
 };
 
 use dlopen;
@@ -75,11 +74,9 @@ pub struct FileRegistration {
 impl FileRegistration {
     fn compile_to_dll(path_to_file: &PathBuf) -> Result<PathBuf, String> {
         compile(
-            Source::new(
-                fs::read_to_string(path_to_file.clone()).unwrap(),
-                Some(PathBuf::from(path_to_file.clone().parent().unwrap())),
-                PathBuf::from(path_to_file.file_name().unwrap()),
-            ),
+            Source::new(Source::File {
+                path: PathBuf::from(path_to_file),
+            }),
         )
     }
 

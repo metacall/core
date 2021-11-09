@@ -17,7 +17,7 @@ use rustc_session::config;
 use rustc_session::config::CrateType;
 use rustc_span::source_map;
 use rustc_interface::{Config, Queries, interface::Compiler};
-use rustc_ast::{ast, visit, FnKind, Param, NodeId};
+use rustc_ast::{visit, NodeId};
 use rustc_span::Span;
 
 use std::{error::Error, fs::File, io::Read, path::PathBuf};
@@ -34,14 +34,73 @@ pub enum RegistrationError {
     SynError(Box<dyn Error>),
 }
 
-pub struct Source {
-    code: String,
-    dir: Option<PathBuf>,
-    filename: PathBuf,
+struct SourceImpl {
+    input: config::Input,
+    input_path: PathBuf,
+    output: PathBuf,
 }
+
+pub enum Source {
+    File {
+        path: PathBuf,
+    },
+    Memory {
+        name: String,
+        code: String,
+    },
+}
+
 impl Source {
-    pub fn new(code: String, dir: Option<PathBuf>, filename: PathBuf) -> Source {
-        Source { code, dir, filename }
+    pub fn new(source: Source) -> SourceImpl {
+        let library_name = |file_name: PathBuf| {
+            #[cfg(unix)]
+            let lib_extension = "so";
+            #[cfg(windows)]
+            let lib_extension = "dll";
+            #[cfg(macos)]
+            let lib_extension = "dylib";
+
+            let mut lib_name = file_name.clone();
+            lib_name.set_extension(lib_extension);
+
+            lib_name
+        };
+
+        let input_path = |dir: PathBuf, name: PathBuf| {
+            let mut path = PathBuf::from(dir);
+            path.push(name);
+            path.clone()
+        };
+
+        let output_path = |dir: PathBuf, name: PathBuf| {
+            input_path(dir, library_name(name))
+        };
+
+        match source {
+            Source::File { path } => {
+                let dir = PathBuf::from(path.clone().parent().unwrap());
+                let name = PathBuf::from(path.file_name().unwrap());
+
+                return SourceImpl {
+                    input: config::Input::File(path.clone()),
+                    input_path: input_path(dir, name),
+                    output: output_path(dir, name),
+                }
+            },
+            Source::Memory { name, code } => {
+                let dir = PathBuf::from(std::env::temp_dir());
+                let name_path = PathBuf::from(name);
+
+                return SourceImpl {
+                    input: config::Input::Str {
+                        name: source_map::FileName::Custom(name.clone()),
+                        input: code.clone(),
+                    },
+                    input_path: input_path(dir, name_path),
+                    output: output_path(dir, name_path),
+                }
+            },
+        };
     }
 }
 
@@ -154,54 +213,21 @@ impl<'a> visit::Visitor<'a> for FunctionVisitor {
 }
 
 struct CompilerCallbacks {
-    source: Source,
-    output_path: Option<PathBuf>,
+    source: SourceImpl,
 }
 
 impl rustc_driver::Callbacks for CompilerCallbacks {
     fn config(&mut self, config: &mut Config) {
+        // Set up output
+        config.output_file = Some(self.source.output.clone());
+
         // Set up inputs
-        let name_str = String::from(self.source.filename.clone().to_str().unwrap());
-
-        config.input = config::Input::Str {
-            name: source_map::FileName::Custom(name_str.clone()),
-            input: self.source.code.clone(),
-        };
-
-        config.input_path = Some(match self.source.dir.clone() {
-            Some(p) => {
-                let mut result = p.clone();
-                result.push(name_str.clone());
-                result
-            },
-            None => PathBuf::from(name_str.clone()),
-        });
-
-        // Set up outputs
-        #[cfg(unix)]
-        let lib_extension = "so";
-        #[cfg(windows)]
-        let lib_extension = "dll";
-        #[cfg(macos)]
-        let lib_extension = "dylib";
-
-        let mut lib_name = self.source.filename.clone();
-        lib_name.set_extension(lib_extension);
-
-        self.output_path = Some(match self.source.dir.clone() {
-            Some(p) => {
-                let mut result = p.clone();
-                result.push(lib_name.clone());
-                result
-            },
-            None => lib_name.clone(),
-        });
-
-        config.output_file = self.output_path.clone();
+        config.input = self.source.input.clone();
+        config.input_path = Some(self.source.input_path.clone());
 
         // Setting up default compiler flags
-        config.opts.output_types = rustc_session::config::OutputTypes::new(&[(rustc_session::config::OutputType::Exe, None)]);
-        config.opts.optimize = rustc_session::config::OptLevel::Default;
+        config.opts.output_types = config::OutputTypes::new(&[(config::OutputType::Exe, None)]);
+        config.opts.optimize = config::OptLevel::Default;
         config.opts.unstable_features = rustc_feature::UnstableFeatures::Allow;
         config.opts.real_rust_source_base_dir = compiler_source();
         config.opts.edition = rustc_span::edition::Edition::Edition2021;
@@ -270,8 +296,7 @@ fn report_ice(info: &std::panic::PanicInfo<'_>, bug_report_url: &str) {
     ));
     let handler = rustc_errors::Handler::with_emitter(true, None, emitter);
 
-    // a .span_bug or .bug call has already printed what
-    // it wants to print.
+    // a .span_bug or .bug call has already printed what it wants to print
     if !info.payload().is::<rustc_errors::ExplicitBug>() {
         let d = rustc_errors::Diagnostic::new(rustc_errors::Level::Bug, "unexpected panic");
         handler.emit_diagnostic(&d);
@@ -294,20 +319,17 @@ fn report_ice(info: &std::panic::PanicInfo<'_>, bug_report_url: &str) {
     rustc_interface::interface::try_print_query_stack(&handler, num_frames);
 }
 
+pub fn initialize() {
+    rustc_driver::init_rustc_env_logger();
+    std::lazy::SyncLazy::force(&ICE_HOOK);
+}
+
 fn run_compiler(
     callbacks: &mut (dyn rustc_driver::Callbacks + Send),
 ) -> Result<(), rustc_errors::ErrorReported> {
 
-    // TODO: This must be run only once
-    rustc_driver::init_rustc_env_logger();
-    std::lazy::SyncLazy::force(&ICE_HOOK);
-    // END-TODO
-
     let diagnostics_buffer = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
     let errors_buffer = std::sync::Arc::new(std::sync::Mutex::new(Vec::new()));
-
-    // TODO: Implement different input depending on file or memory:
-    // https://doc.rust-lang.org/beta/nightly-rustc/src/rustc_session/config.rs.html#534
 
     let mut config = Config {
         // Command line options
@@ -402,16 +424,15 @@ fn run_compiler(
     result
 }
 
-pub fn compile(source: Source) -> Result<PathBuf, String> {
+pub fn compile(source: SourceImpl) -> Result<PathBuf, String> {
     let mut callbacks = CompilerCallbacks {
         source,
-        output_path: None,
     };
 
     match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut callbacks)
     }).and_then(|result| result) {
-        Ok(()) => Ok(callbacks.output_path.unwrap()),
+        Ok(()) => Ok(callbacks.source.output),
         Err(err) => Err(format!("{:?}", err)),
     }
 }
@@ -419,17 +440,33 @@ pub fn compile(source: Source) -> Result<PathBuf, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
+    fn run_test<T>(test: T) -> ()
+        where T: FnOnce() -> () + std::panic::UnwindSafe
+    {
+        INIT.call_once(|| {
+            // Initialize the compiler
+            initialize();
+        });
+        let result = std::panic::catch_unwind(|| {
+            test()
+        });
+        assert!(result.is_ok())
+    }
 
     #[test]
     fn test_compile() {
-        let dir = PathBuf::from(std::env::var("TEST_DEST_DIR").unwrap());
-        match compile(Source {
-            code: String::from("#[no_mangle]\npub extern \"C\" fn add(num_1: i32, num_2: i32) -> i32 { num_1 + num_2 }"),
-            dir: Some(dir),
-            filename: PathBuf::from("test.rs"),
-        }) {
-            Ok(_) => assert!(false, "compilation failed"),
-            Err(_) => assert!(true),
-        }
+        run_test(|| {
+            match compile(Source::new(Source::Memory {
+                name: String::from("test.rs"),
+                code: String::from("#[no_mangle]\npub extern \"C\" fn add(num_1: i32, num_2: i32) -> i32 { num_1 + num_2 }"),
+            })) {
+                Ok(_) => assert!(false, "compilation failed"),
+                Err(_) => assert!(true),
+            }
+        })
     }
 }
