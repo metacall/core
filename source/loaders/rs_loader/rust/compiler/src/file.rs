@@ -1,10 +1,9 @@
-use crate::{Parser, RegistrationError};
+use crate::{Source, compile, Parser, RegistrationError};
 
 use std::{
     ffi::c_void,
-    io::{BufRead, BufReader},
     path::PathBuf,
-    process::{Command, Stdio},
+    fs,
 };
 
 use dlopen;
@@ -75,41 +74,13 @@ pub struct FileRegistration {
 }
 impl FileRegistration {
     fn compile_to_dll(path_to_file: &PathBuf) -> Result<PathBuf, String> {
-        let path_to_file_directory = PathBuf::from(path_to_file.clone().parent().unwrap());
-        let output_directory = format!("--out-dir={}", path_to_file_directory.to_str().unwrap());
-
-        let path_to_file_stem =
-            String::from(path_to_file.clone().file_stem().unwrap().to_str().unwrap());
-
-        let mut path_to_dll = path_to_file_directory.clone();
-        path_to_dll.push(format!("lib{}", path_to_file_stem));
-        path_to_dll.set_extension("so");
-
-        if !path_to_dll.exists() || !path_to_dll.is_file() {
-            return Err(String::from(
-                "Faild to compile the source file to a shared library object",
-            ));
-        }
-
-        let stdout = Command::new("rustc")
-            .arg(output_directory)
-            .arg("--crate-type=cdylib")
-            .arg(path_to_file.to_str().unwrap())
-            .stdout(Stdio::piped())
-            .spawn()
-            .unwrap()
-            .stdout
-            .ok_or_else(|| "Could not capture standard output.")
-            .unwrap();
-
-        let reader = BufReader::new(stdout);
-
-        reader
-            .lines()
-            .filter_map(|line| line.ok())
-            .for_each(|line| println!("Line is: {:#?}", line));
-
-        Ok(path_to_dll)
+        compile(
+            Source::new(
+                fs::read_to_string(path_to_file.clone()).unwrap(),
+                Some(PathBuf::from(path_to_file.clone().parent().unwrap())),
+                PathBuf::from(path_to_file.file_name().unwrap()),
+            ),
+        )
     }
 
     pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {

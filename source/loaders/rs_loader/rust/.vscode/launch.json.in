@@ -1,0 +1,61 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'api'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=api"
+                ],
+                "filter": {
+                    "name": "api",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "TEST_DEST_DIR": "${workspaceFolder}/compiler/target",
+                "RUST_BACKTRACE": "1",
+                // Define library path (TODO: This maybe can be deleted with proper rpath setup)
+                "LD_LIBRARY_PATH": "@TEST_LIB_PATH@", // Linux
+                "PATH": "@TEST_LIB_PATH@", // Windows
+                "DYLD_LIBRARY_PATH": "@TEST_LIB_PATH@", // MacOs
+                "LIBRARY_PATH": "@TEST_LIB_PATH@" // Haiku
+            }
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'compiler'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--lib",
+                    "--package=compiler"
+                ],
+                "filter": {
+                    "name": "compiler",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "TEST_DEST_DIR": "${workspaceFolder}/compiler/target",
+                "RUST_BACKTRACE": "1",
+                // Define library path (TODO: This maybe can be deleted with proper rpath setup)
+                "LD_LIBRARY_PATH": "@TEST_LIB_PATH@", // Linux
+                "PATH": "@TEST_LIB_PATH@", // Windows
+                "DYLD_LIBRARY_PATH": "@TEST_LIB_PATH@", // MacOs
+                "LIBRARY_PATH": "@TEST_LIB_PATH@" // Haiku
+            }
+        }
+    ]
+}

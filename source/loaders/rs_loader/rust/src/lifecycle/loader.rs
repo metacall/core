@@ -100,7 +100,6 @@ where
                 }
             }
         }
-
         if !path_buf.exists() || !path_buf.is_file() {
             return load_on_error(format!(
                 "The file or path '{}' does not exist.",

@@ -3,6 +3,9 @@ name = "compiler"
 version = "0.1.0"
 edition = "2021"
 
+[package.metadata.rust-analyzer]
+rustc_private = true
+
 [dependencies]
 dlopen = "0.1.8"
 cargo_toml = "0.8.1"

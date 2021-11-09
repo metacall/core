@@ -146,5 +146,12 @@ test_environment_variables(${target}
 	${TESTS_ENVIRONMENT_VARIABLES}
 	# TODO: This mitigates a bug in the Rust runtime libraries at runtime link time
 	# Delete this line when we solve it, review: source/loaders/rs_loader/rust/CMakeLists.txt
-	LD_LIBRARY_PATH=${PROJECT_BINARY_DIR}
+	LD_LIBRARY_PATH="${PROJECT_OUTPUT_DIR}" # Linux
+	PATH="${PROJECT_OUTPUT_DIR}" # Windows
+	DYLD_LIBRARY_PATH="${PROJECT_OUTPUT_DIR}" # MacOs
+	LIBRARY_PATH="${PROJECT_OUTPUT_DIR}" # Haiku
+
+	# Enable Rust backtrace and logs for better debugging
+	RUST_BACKTRACE=1
+	RUST_LOG=INFO
 )

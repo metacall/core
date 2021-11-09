@@ -35,16 +35,10 @@ else()
 	set(TARGET_OUTPUT_NAME "${CMAKE_SHARED_LIBRARY_PREFIX}${target}d${CMAKE_SHARED_LIBRARY_SUFFIX}")
 endif()
 
-if(MSVC)
-	set(TARGET_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(TARGET_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
-endif()
-
-set(TARGET_OUTPUT ${TARGET_OUTPUT_PATH}/${TARGET_OUTPUT_NAME})
+set(TARGET_OUTPUT ${PROJECT_OUTPUT_DIR}/${TARGET_OUTPUT_NAME})
 
 add_custom_target(${target}_runtime
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${TARGET_OUTPUT_PATH}
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
 add_custom_target(${target} ALL
@@ -53,7 +47,7 @@ add_custom_target(${target} ALL
 	# TODO: $ORIGIN does not work, but even using absolute path, the library librustc_driver depends on libstd and libLLVM
 	# but they have the rpath hardcoded to the rustup folder, for mitigating this, we are using LD_LIBRARY_PATH in the test
 	# although it may cause problems in the future in the distributable or docker builds, this must be reviewed
-	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,${TARGET_OUTPUT_PATH}' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,${PROJECT_OUTPUT_DIR}' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,\$ORIGIN' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
 	DEPENDS ${target}_runtime
@@ -62,6 +56,10 @@ add_custom_target(${target} ALL
 set_property(TARGET ${target}
 	PROPERTY OUTPUT_NAME ${TARGET_OUTPUT}
 )
+
+# Prepare the environment variable file for VSCode tests
+set(TEST_LIB_PATH "${PROJECT_OUTPUT_DIR}")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json.in ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json @ONLY)
 
 #
 # Deployment

@@ -7,6 +7,9 @@ edition = "2021"
 name = "rs_loader_impl"
 crate-type = ["cdylib"]
 
+[package.metadata.rust-analyzer]
+rustc_private = true
+
 [profile.release]
 opt-level = "z"
 
