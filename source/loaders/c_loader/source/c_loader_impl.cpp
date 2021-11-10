@@ -49,12 +49,12 @@
 #include <clang-c/Index.h>
 
 /* Info about given functions declaration */
-struct FunctionDictionary
+typedef struct FunctionDictionary
 {
 	const void* symbol;
 	std::string return_type;
 	//name, data_type
-	map<std::string, std::string> arg_info;
+	std::map<std::string, std::string> arg_info;
 };
 
 typedef struct loader_impl_c_type
@@ -79,52 +79,7 @@ typedef struct loader_impl_c_function_type
 
 // TODO: Remove this
 ////////////////////////////////////////////////////////////////////////////////////////
-std::string Convert(const CXString &s)
-{
-	std::string result = clang_getCString(s);
-	clang_disposeString(s);
-	return result;
-}
-void print_function_prototype(CXCursor cursor, loader_impl_c_handle c_handle)
-{
-	FunctionDictionary fd;
 
-	auto type = clang_getCursorType(cursor);
-
-	auto function_name = Convert(clang_getCursorSpelling(cursor));
-	auto return_type = Convert(clang_getTypeSpelling(clang_getResultType(type)));
-
-	int num_args = clang_Cursor_getNumArguments(cursor);
-	for (int i = 0; i < num_args; ++i)
-	{
-		auto arg_cursor = clang_Cursor_getArgument(cursor, i);
-		auto arg_name = Convert(clang_getCursorSpelling(arg_cursor));
-		if (arg_name.empty())
-		{
-			arg_name = "no name!";
-		}
-
-		auto arg_data_type = Convert(clang_getTypeSpelling(clang_getArgType(type, i)));
-		fd.arg_info.insert(pair<std::string,std::string>(arg_name,arg_data_type));
-	}
-
-	fd.return_type = return_type;
-	c_handle->FMap.insert(pair<std::string, FunctionDictionary>(function_name, fd));
-}
-CXChildVisitResult functionVisitor(CXCursor cursor, loader_impl_c_handle c_handle)
-{
-	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
-		return CXChildVisit_Continue;
-
-	CXCursorKind kind = clang_getCursorKind(cursor);
-	if ((kind == CXCursorKind::CXCursor_FunctionDecl || kind == CXCursorKind::CXCursor_CXXMethod || kind == CXCursorKind::CXCursor_FunctionTemplate ||
-			kind == CXCursorKind::CXCursor_Constructor))
-	{
-		print_function_prototype(cursor, c_handle);
-	}
-
-	return CXChildVisit_Continue;
-}
 ////////////////////////////////////////////////////////////////////////////////////////
 
 static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
@@ -410,29 +365,131 @@ static void c_loader_impl_discover_symbols(void *ctx, const char *name, const vo
 	c_handle->FMap.insert(std::pair<std::string, FunctionDictionary>(name, fd));
 }
 
+loader_impl_c_function c_function_create()
+{
+	loader_impl_c_function c_function;
+
+	if (c_function != NULL)
+	{
+		c_function->address = NULL;
+
+		return c_function;
+	}
+
+	return NULL;
+}
+
+std::string Convert(const CXString &s)
+{
+	std::string result = clang_getCString(s);
+	clang_disposeString(s);
+	return result;
+}
+
+void write_arg_data(CXCursor cursor, loader_impl_c_handle c_handle)
+{
+	FunctionDictionary fd;
+	std::map<std::string, FunctionDictionary>::iterator itr;
+
+	auto type = clang_getCursorType(cursor);
+
+	auto function_name = Convert(clang_getCursorSpelling(cursor));
+	auto return_type = Convert(clang_getTypeSpelling(clang_getResultType(type)));
+
+	itr = c_handle->FMap.find(function_name);
+
+	fd.symbol = itr->second.symbol;
+	fd.return_type = return_type;
+
+	int num_args = clang_Cursor_getNumArguments(cursor);
+	for (int i = 0; i < num_args; i++)
+	{
+		auto arg_cursor = clang_Cursor_getArgument(cursor, i);
+		auto arg_name = Convert(clang_getCursorSpelling(arg_cursor));
+		if (arg_name.empty())
+		{
+			arg_name = "no name!";
+		}
+
+		auto arg_data_type = Convert(clang_getTypeSpelling(clang_getArgType(type, i)));
+
+		fd.arg_info.insert(std::pair<std::string,std::string>(arg_name,arg_data_type));
+	}
+
+	itr->second = fd;
+}
+
+CXChildVisitResult functionVisitor(CXCursor cursor, loader_impl_c_handle c_handle)
+{
+	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
+		return CXChildVisit_Continue;
+
+	CXCursorKind kind = clang_getCursorKind(cursor);
+	if ((kind == CXCursorKind::CXCursor_FunctionDecl || kind == CXCursorKind::CXCursor_CXXMethod || kind == CXCursorKind::CXCursor_FunctionTemplate ||
+			kind == CXCursorKind::CXCursor_Constructor))
+	{
+		write_arg_data(cursor, c_handle);
+	}
+
+	return CXChildVisit_Continue;
+}
+
 int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
+	loader_impl_c c_impl = loader_impl_get(impl);
+
 	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(handle);
 
-	(void)impl;
-	(void)ctx;
+	scope sp = context_scope(ctx);
 
 	if (c_handle != NULL)
 	{
-		/* List all symbol addresses */
+		/* Get all symbols to FMap */
 		tcc_list_symbols(c_handle->state, static_cast<void *>(c_handle), &c_loader_impl_discover_symbols);
 
 		/* TODO: Iterate through the AST and obtain function declarations (and structs later on) */
 		/* Then, register them into MetaCall associating them to the addresses */
 
-		/*temp solution for the above*/
-		for(std::map<std::string, FunctionDictionary>::iterator it = c_handle->FMap.begin(); it != c_handle->FMap.end(); it++;)
-		{
-			 std::string symbol = it->second.symbol;
-			 map<std::string, std::string> arg_info = it->second.arg_info;
-			 int arg_c = arg_info.size();
+		/*write argument data and function_return_type to FMap*/
+		CXIndex index = clang_createIndex(0, 0);
+		CXTranslationUnit unit = clang_parseTranslationUnit(
+			index,
+			"path_to_code_file", nullptr, 0,
+			nullptr, 0,
+			CXTranslationUnit_None);
 
-			 // register fucntions to MetaCall
+		if (unit == nullptr)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit");
+			return -1;
+		}
+
+		CXCursor cursor  = clang_getTranslationUnitCursor(unit);
+		clang_visitChildren(cursor, functionVisitor, nullptr);
+
+		clang_disposeTranslationUnit(unit);
+		clang_disposeIndex(index);
+
+		/*Register functions*/
+		for(std::map<std::string, FunctionDictionary>::iterator it = c_handle->FMap.begin(); it != c_handle->FMap.end(); it++)
+		{
+			 std::map<std::string, std::string> arg_info = it->second.arg_info;
+			 int arg_c = arg_info.size()
+
+			 function f = function_create(it->first, arg_c, c_function, &function_c_singleton);
+
+			 signature s = function_signature(f);
+
+			 signature_set_return(s, loader_imp_type(impl, it->second.return_type));
+
+			 int count = 0;
+			 for(std::map<std::string, std::string>::iterator it = arg_info.begin(); it != arg_info.end(); it++)
+			 {
+				 signature_set(s, count, it->first, loader_impl_type(impl, it->second));
+				 count++;
+			 }
+
+			 scope_define(sp, function_name(f), value_create_function(f));
 		}
 		return 0;
 	}
