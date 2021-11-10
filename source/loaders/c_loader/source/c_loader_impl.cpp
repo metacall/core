@@ -49,7 +49,7 @@
 #include <clang-c/Index.h>
 
 /* Info about given functions declaration */
-typedef struct FunctionDictionary
+struct FunctionDictionary
 {
 	const void* symbol;
 	std::string return_type;
@@ -274,15 +274,22 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 				c_loader_impl_handle_destroy(c_handle);
 				return NULL;
 			}
+
+			if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
+				c_loader_impl_handle_destroy(c_handle);
+				return NULL;
+			}
+
+			//c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx);
+
 		}
 	}
 
-	if (tcc_relocate(c_handle->state, TCC_RELOCATE_AUTO) == -1)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "TCC failed to relocate");
-		c_loader_impl_handle_destroy(c_handle);
-		return NULL;
-	}
+
+
+
 
 	return c_handle;
 }
@@ -368,15 +375,7 @@ static void c_loader_impl_discover_symbols(void *ctx, const char *name, const vo
 loader_impl_c_function c_function_create()
 {
 	loader_impl_c_function c_function;
-
-	if (c_function != NULL)
-	{
-		c_function->address = NULL;
-
-		return c_function;
-	}
-
-	return NULL;
+	return c_function;
 }
 
 std::string Convert(const CXString &s)
@@ -388,7 +387,6 @@ std::string Convert(const CXString &s)
 
 void write_arg_data(CXCursor cursor, loader_impl_c_handle c_handle)
 {
-	FunctionDictionary fd;
 	std::map<std::string, FunctionDictionary>::iterator itr;
 
 	auto type = clang_getCursorType(cursor);
@@ -398,8 +396,7 @@ void write_arg_data(CXCursor cursor, loader_impl_c_handle c_handle)
 
 	itr = c_handle->FMap.find(function_name);
 
-	fd.symbol = itr->second.symbol;
-	fd.return_type = return_type;
+	itr->second.return_type = return_type;
 
 	int num_args = clang_Cursor_getNumArguments(cursor);
 	for (int i = 0; i < num_args; i++)
@@ -413,13 +410,11 @@ void write_arg_data(CXCursor cursor, loader_impl_c_handle c_handle)
 
 		auto arg_data_type = Convert(clang_getTypeSpelling(clang_getArgType(type, i)));
 
-		fd.arg_info.insert(std::pair<std::string,std::string>(arg_name,arg_data_type));
+		itr->second.arg_info.insert(std::pair<std::string,std::string>(arg_name,arg_data_type));
 	}
-
-	itr->second = fd;
 }
 
-CXChildVisitResult functionVisitor(CXCursor cursor, loader_impl_c_handle c_handle)
+CXChildVisitResult functionVisitor(CXCursor cursor, CXCursor /**/,void * c_handle)
 {
 	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
 		return CXChildVisit_Continue;
@@ -428,17 +423,43 @@ CXChildVisitResult functionVisitor(CXCursor cursor, loader_impl_c_handle c_handl
 	if ((kind == CXCursorKind::CXCursor_FunctionDecl || kind == CXCursorKind::CXCursor_CXXMethod || kind == CXCursorKind::CXCursor_FunctionTemplate ||
 			kind == CXCursorKind::CXCursor_Constructor))
 	{
-		write_arg_data(cursor, c_handle);
+		write_arg_data(cursor, static_cast<loader_impl_c_handle>(c_handle));
 	}
 
 	return CXChildVisit_Continue;
 }
 
+int AST_transverse()
+{
+	CXIndex index = clang_createIndex(0, 0);
+	CXTranslationUnit unit = clang_parseTranslationUnit(
+		index,
+		"path_to_code_file", nullptr, 0,
+		nullptr, 0,
+		CXTranslationUnit_None);
+
+	if (unit == nullptr)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit");
+		return -1;
+	}
+
+	CXCursor cursor  = clang_getTranslationUnitCursor(unit);
+	clang_visitChildren(cursor, functionVisitor, nullptr);
+
+	clang_disposeTranslationUnit(unit);
+	clang_disposeIndex(index);
+
+	return 0;
+}
+
 int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	loader_impl_c c_impl = loader_impl_get(impl);
+	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
 	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(handle);
+
+	loader_impl_c_function c_function = c_function_create();
 
 	scope sp = context_scope(ctx);
 
@@ -451,41 +472,24 @@ int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 		/* Then, register them into MetaCall associating them to the addresses */
 
 		/*write argument data and function_return_type to FMap*/
-		CXIndex index = clang_createIndex(0, 0);
-		CXTranslationUnit unit = clang_parseTranslationUnit(
-			index,
-			"path_to_code_file", nullptr, 0,
-			nullptr, 0,
-			CXTranslationUnit_None);
-
-		if (unit == nullptr)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit");
-			return -1;
-		}
-
-		CXCursor cursor  = clang_getTranslationUnitCursor(unit);
-		clang_visitChildren(cursor, functionVisitor, nullptr);
-
-		clang_disposeTranslationUnit(unit);
-		clang_disposeIndex(index);
+		AST_transverse();
 
 		/*Register functions*/
 		for(std::map<std::string, FunctionDictionary>::iterator it = c_handle->FMap.begin(); it != c_handle->FMap.end(); it++)
 		{
 			 std::map<std::string, std::string> arg_info = it->second.arg_info;
-			 int arg_c = arg_info.size()
+			 int arg_c = arg_info.size();
 
-			 function f = function_create(it->first, arg_c, c_function, &function_c_singleton);
+			 function f = function_create(it->first.c_str(), arg_c, c_function, &function_c_singleton);
 
 			 signature s = function_signature(f);
 
-			 signature_set_return(s, loader_imp_type(impl, it->second.return_type));
+			 signature_set_return(s, loader_impl_type(impl, it->second.return_type.c_str()));
 
 			 int count = 0;
 			 for(std::map<std::string, std::string>::iterator it = arg_info.begin(); it != arg_info.end(); it++)
 			 {
-				 signature_set(s, count, it->first, loader_impl_type(impl, it->second));
+				 signature_set(s, count, it->first.c_str(), loader_impl_type(impl, it->second.c_str()));
 				 count++;
 			 }
 
