@@ -30,6 +30,7 @@
 
 #include <log/log.h>
 
+#include <iterator>
 #include <map>
 #include <new>
 #include <string>
@@ -56,6 +57,7 @@ typedef struct loader_impl_c_type
 typedef struct loader_impl_c_handle_type
 {
 	TCCState *state;
+	std::vector<std::string> files;
 	std::map<std::string, const void *> symbols;
 
 } * loader_impl_c_handle;
@@ -66,50 +68,13 @@ typedef struct loader_impl_c_function_type
 
 } * loader_impl_c_function;
 
-// TODO: Remove this
-////////////////////////////////////////////////////////////////////////////////////////
-std::string Convert(const CXString &s)
+typedef struct c_loader_impl_discover_visitor_data_type
 {
-	std::string result = clang_getCString(s);
-	clang_disposeString(s);
-	return result;
-}
-void print_function_prototype(CXCursor cursor)
-{
-	// TODO : Print data!
-	auto type = clang_getCursorType(cursor);
+	loader_impl impl;
+	loader_impl_c_handle c_handle;
+	scope sp;
 
-	auto function_name = Convert(clang_getCursorSpelling(cursor));
-	auto return_type = Convert(clang_getTypeSpelling(clang_getResultType(type)));
-
-	int num_args = clang_Cursor_getNumArguments(cursor);
-	for (int i = 0; i < num_args; ++i)
-	{
-		auto arg_cursor = clang_Cursor_getArgument(cursor, i);
-		auto arg_name = Convert(clang_getCursorSpelling(arg_cursor));
-		if (arg_name.empty())
-		{
-			arg_name = "no name!";
-		}
-
-		auto arg_data_type = Convert(clang_getTypeSpelling(clang_getArgType(type, i)));
-	}
-}
-CXChildVisitResult functionVisitor(CXCursor cursor, CXCursor /* parent */, CXClientData /* clientData */)
-{
-	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
-		return CXChildVisit_Continue;
-
-	CXCursorKind kind = clang_getCursorKind(cursor);
-	if ((kind == CXCursorKind::CXCursor_FunctionDecl || kind == CXCursorKind::CXCursor_CXXMethod || kind == CXCursorKind::CXCursor_FunctionTemplate ||
-			kind == CXCursorKind::CXCursor_Constructor))
-	{
-		print_function_prototype(cursor);
-	}
-
-	return CXChildVisit_Continue;
-}
-////////////////////////////////////////////////////////////////////////////////////////
+} * c_loader_impl_discover_visitor_data;
 
 static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 {
@@ -226,6 +191,42 @@ function_interface function_c_singleton()
 	return &c_interface;
 }
 
+int c_loader_impl_initialize_types(loader_impl impl)
+{
+	static struct
+	{
+		type_id id;
+		const char *name;
+	} type_id_name_pair[] = {
+		{ TYPE_BOOL, "bool" },
+		{ TYPE_CHAR, "char" },
+		{ TYPE_SHORT, "short" },
+		{ TYPE_INT, "int" },
+		{ TYPE_LONG, "long" },
+		{ TYPE_FLOAT, "float" },
+		{ TYPE_DOUBLE, "double" },
+
+		// TODO: Do more types (and the unsigned versions too?)
+	};
+
+	size_t size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
+
+	for (size_t index = 0; index < size; ++index)
+	{
+		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
+
+		if (t != NULL)
+		{
+			if (loader_impl_type_define(impl, type_name(t), t) != 0)
+			{
+				return 1;
+			}
+		}
+	}
+
+	return 0;
+}
+
 loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	loader_impl_c c_impl;
@@ -240,6 +241,12 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 		return NULL;
 	}
 
+	if (c_loader_impl_initialize_types(impl) != 0)
+	{
+		delete c_impl;
+		return NULL;
+	}
+
 	/* Register initialization */
 	loader_initialization_register(impl);
 
@@ -251,6 +258,99 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
 	c_impl->execution_paths.push_back(path);
+
+	return 0;
+}
+
+static std::string c_loader_impl_cxstring_to_str(const CXString &s)
+{
+	std::string result = clang_getCString(s);
+	clang_disposeString(s);
+	return result;
+}
+
+static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_handle c_handle, scope sp, CXCursor cursor)
+{
+	auto cursor_type = clang_getCursorType(cursor);
+	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
+	auto return_type = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getResultType(cursor_type)));
+
+	if (c_handle->symbols.count(func_name) == 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Symbol '%s' not found, skipping the function", func_name.c_str());
+		return;
+	}
+
+	loader_impl_c_function c_func = new loader_impl_c_function_type();
+
+	c_func->address = c_handle->symbols[func_name];
+
+	int num_args = clang_Cursor_getNumArguments(cursor);
+	size_t args_count = num_args < 0 ? (size_t)0 : (size_t)num_args;
+
+	function f = function_create(func_name.c_str(), args_count, c_func, &function_c_singleton);
+	signature s = function_signature(f);
+
+	signature_set_return(s, loader_impl_type(impl, return_type.c_str()));
+
+	for (size_t arg = 0; arg < args_count; ++arg)
+	{
+		auto arg_cursor = clang_Cursor_getArgument(cursor, arg);
+		auto arg_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(arg_cursor));
+		auto arg_type = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getArgType(cursor_type, arg)));
+
+		signature_set(s, arg, arg_name.c_str(), loader_impl_type(impl, arg_type.c_str()));
+	}
+
+	scope_define(sp, function_name(f), value_create_function(f));
+}
+
+static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data)
+{
+	c_loader_impl_discover_visitor_data visitor_data = static_cast<c_loader_impl_discover_visitor_data>(data);
+
+	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
+		return CXChildVisit_Continue;
+
+	CXCursorKind kind = clang_getCursorKind(cursor);
+
+	if (kind == CXCursorKind::CXCursor_FunctionDecl)
+	{
+		c_loader_impl_discover_signature(visitor_data->impl, visitor_data->c_handle, visitor_data->sp, cursor);
+	}
+
+	return CXChildVisit_Continue;
+}
+
+static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_handle, context ctx)
+{
+	c_loader_impl_discover_visitor_data_type data = {
+		impl,
+		c_handle,
+		context_scope(ctx)
+	};
+
+	for (std::string file : c_handle->files)
+	{
+		CXIndex index = clang_createIndex(0, 0);
+		CXTranslationUnit unit = clang_parseTranslationUnit(
+			index,
+			file.c_str(), nullptr, 0,
+			nullptr, 0,
+			CXTranslationUnit_None);
+
+		if (unit == nullptr)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to parse translation unit of: %s", file.c_str());
+			return -1;
+		}
+
+		CXCursor cursor = clang_getTranslationUnitCursor(unit);
+		clang_visitChildren(cursor, c_loader_impl_discover_visitor, static_cast<void *>(&data));
+
+		clang_disposeTranslationUnit(unit);
+		clang_disposeIndex(index);
+	}
 
 	return 0;
 }
@@ -278,6 +378,9 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 				c_loader_impl_handle_destroy(c_handle);
 				return NULL;
 			}
+
+			std::string filename(paths[iterator]);
+			c_handle->files.push_back(filename);
 		}
 		else
 		{
@@ -292,6 +395,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 
 				if (c_loader_impl_file_exists(filename) == true && tcc_add_file(c_handle->state, path) != -1)
 				{
+					c_handle->files.push_back(filename);
 					found = true;
 					break;
 				}
@@ -397,20 +501,11 @@ int c_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
 	loader_impl_c_handle c_handle = static_cast<loader_impl_c_handle>(handle);
 
-	(void)impl;
-	(void)ctx;
+	/* Get all symbols */
+	tcc_list_symbols(c_handle->state, static_cast<void *>(c_handle), &c_loader_impl_discover_symbols);
 
-	if (c_handle != NULL)
-	{
-		/* List all symbol addresses */
-		tcc_list_symbols(c_handle->state, static_cast<void *>(c_handle), &c_loader_impl_discover_symbols);
-
-		/* TODO: Iterate through the AST and obtain function declarations (and structs later on) */
-		/* Then, register them into MetaCall associating them to the addresses */
-		return 0;
-	}
-
-	return 1;
+	/* Parse the AST and register functions */
+	return c_loader_impl_discover_ast(impl, c_handle, ctx);
 }
 
 int c_loader_impl_destroy(loader_impl impl)
