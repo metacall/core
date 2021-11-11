@@ -38,14 +38,13 @@ TEST_F(metacall_c_test, DefaultConstructor)
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 
-	// TODO
-	// void *ret = metacall("compiled_sum", 3, 4);
+	void *ret = metacall("compiled_sum", 3, 4);
 
-	// EXPECT_NE((void *)NULL, (void *)ret);
+	EXPECT_NE((void *)NULL, (void *)ret);
 
-	// EXPECT_EQ((long)metacall_value_to_long(ret), (long)0);
+	EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
 
-	// metacall_value_destroy(ret);
+	metacall_value_destroy(ret);
 
 	/* Memory */
 	const char c_buffer[] = {

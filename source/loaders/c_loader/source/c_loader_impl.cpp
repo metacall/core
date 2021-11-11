@@ -27,6 +27,7 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
+#include <reflect/reflect_value_type_id_size.h>
 
 #include <log/log.h>
 
@@ -67,6 +68,7 @@ typedef struct loader_impl_c_function_type
 	ffi_cif cif;
 	ffi_type *ret_type;
 	ffi_type **arg_types;
+	void **values;
 	const void *address;
 
 } * loader_impl_c_function;
@@ -143,7 +145,7 @@ int function_c_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-ffi_type *get_ffi_type(type_id id)
+static ffi_type *c_loader_impl_ffi_type(type_id id)
 {
 	switch (id)
 	{
@@ -152,6 +154,9 @@ ffi_type *get_ffi_type(type_id id)
 			break;
 		case TYPE_INT:
 			return &ffi_type_sint;
+			break;
+		case TYPE_LONG:
+			return &ffi_type_slong;
 			break;
 		case TYPE_FLOAT:
 			return &ffi_type_float;
@@ -165,35 +170,36 @@ ffi_type *get_ffi_type(type_id id)
 
 	return &ffi_type_void;
 }
+
 function_return function_c_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
 {
-	loader_impl_c_function c_function = (loader_impl_c_function)(impl);
-
 	signature s = function_signature(func);
 
-	type function_type = signature_get_return(s);
-	type_id ret_id = type_index(function_type);
-	c_function->ret_type = get_ffi_type(ret_id);
+	if (args_size != signature_count(s))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid number of arguments (canceling call in order to avoid a segfault)");
+		return NULL;
+	}
 
-	const size_t signature_args_size = signature_count(s);
+	loader_impl_c_function c_function = static_cast<loader_impl_c_function>(impl);
 
 	for (size_t args_count = 0; args_count < args_size; args_count++)
 	{
-		type t = args_count < signature_args_size ? signature_get_type(s, args_count) : NULL;
-		type_id id = t == NULL ? value_type_id((value)args[args_count]) : type_index(t);
-		c_function->arg_types[args_count] = get_ffi_type(id);
+		if (type_index(signature_get_type(s, args_count)) != value_type_id((value)args[args_count]))
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Type mismatch in call argument number %" PRIuS " (canceling call in order to avoid a segfault)", args_count);
+			return NULL;
+		}
+
+		c_function->values[args_count] = value_data((value)args[args_count]);
 	}
 
-	if (ffi_prep_cif(&c_function->cif, FFI_DEFAULT_ABI, args_size, c_function->ret_type, c_function->arg_types) == FFI_OK)
-	{
-		ffi_call(&c_function->cif, FFI_FN(c_function->address), c_function->ret_type, args);
-	}
-	else
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "FFI call interface prep failed");
-		return NULL;
-	}
-	return NULL;
+	type_id ret_id = type_index(signature_get_return(s));
+	void *ret = value_type_create(NULL, value_type_id_size(ret_id), ret_id);
+
+	ffi_call(&c_function->cif, FFI_FN(c_function->address), ret, args);
+
+	return ret;
 }
 
 function_return function_c_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
@@ -219,6 +225,8 @@ void function_c_interface_destroy(function func, function_impl impl)
 
 	if (c_function != NULL)
 	{
+		delete[] c_function->arg_types;
+		delete[] c_function->values;
 		delete c_function;
 	}
 }
@@ -317,7 +325,6 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
-	auto return_type = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getResultType(cursor_type)));
 
 	if (c_handle->symbols.count(func_name) == 0)
 	{
@@ -328,7 +335,6 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	loader_impl_c_function c_function = new loader_impl_c_function_type();
 
 	c_function->address = c_handle->symbols[func_name];
-	//get_ffi_type(return_type, c_function->ret_type);
 
 	int num_args = clang_Cursor_getNumArguments(cursor);
 	size_t args_count = num_args < 0 ? (size_t)0 : (size_t)num_args;
@@ -336,17 +342,30 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	function f = function_create(func_name.c_str(), args_count, c_function, &function_c_singleton);
 	signature s = function_signature(f);
 
-	signature_set_return(s, loader_impl_type(impl, return_type.c_str()));
+	auto ret_type_str = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getResultType(cursor_type)));
+	type ret_type = loader_impl_type(impl, ret_type_str.c_str());
+	signature_set_return(s, ret_type);
 
+	c_function->ret_type = c_loader_impl_ffi_type(type_index(ret_type));
 	c_function->arg_types = new ffi_type *[args_count];
+	c_function->values = new void *[args_count];
 
 	for (size_t arg = 0; arg < args_count; ++arg)
 	{
 		auto arg_cursor = clang_Cursor_getArgument(cursor, arg);
 		auto arg_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(arg_cursor));
 		auto arg_type = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getArgType(cursor_type, arg)));
+		type t = loader_impl_type(impl, arg_type.c_str());
 
-		signature_set(s, arg, arg_name.c_str(), loader_impl_type(impl, arg_type.c_str()));
+		signature_set(s, arg, arg_name.c_str(), t);
+		c_function->arg_types[arg] = c_loader_impl_ffi_type(type_index(t));
+	}
+
+	if (ffi_prep_cif(&c_function->cif, FFI_DEFAULT_ABI, args_count, c_function->ret_type, c_function->arg_types) != FFI_OK)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to create the FFI CIF in function '%s', skipping the function", func_name.c_str());
+		function_destroy(f);
+		return;
 	}
 
 	scope_define(sp, function_name(f), value_create_function(f));
