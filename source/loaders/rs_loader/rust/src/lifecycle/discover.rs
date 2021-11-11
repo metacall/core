@@ -20,15 +20,15 @@ pub extern "C" fn rs_loader_impl_discover(
     for handle_shared_object in handle_shared_objects.iter() {
         match handle_shared_object.clone() {
             LoadingMethod::File(file_registration) => {
-                if let Err(error) = file_registration.register_in_metacall(loader_impl, ctx) {
+                if let Err(error) = file_registration.discover(loader_impl, ctx) {
                     return discover_on_error(error);
                 }
             }
-            LoadingMethod::Package(package_registration) => {
-                if let Err(error) = package_registration.register_in_metacall(ctx) {
-                    return discover_on_error(error);
-                }
-            }
+            // LoadingMethod::Package(package_registration) => {
+            //     if let Err(error) = package_registration.discover(ctx) {
+            //         return discover_on_error(error);
+            //     }
+            // }
         }
     }
 

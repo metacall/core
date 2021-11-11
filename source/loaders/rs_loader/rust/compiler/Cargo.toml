@@ -10,4 +10,3 @@ rustc_private = true
 dlopen = "0.1.8"
 cargo_toml = "0.8.1"
 api = { path = "../api" }
-syn = { version = "1.0.80", features = ["full", "extra-traits"] }

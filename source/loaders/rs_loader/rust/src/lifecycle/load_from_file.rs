@@ -20,11 +20,8 @@ pub extern "C" fn rs_loader_impl_load_from_file(
             Ok(LoadingMethod::File(match FileRegistration::new(path_buf) {
                 Ok(instance) => instance,
                 Err(error) => match error {
-                    RegistrationError::SynError(syn_error) => {
-                        return Err(load_on_error(syn_error.to_string()))
-                    }
-                    RegistrationError::ValidationError(validation_error) => {
-                        return Err(load_on_error(validation_error))
+                    RegistrationError::CompilationError(analysis_error) => {
+                        return Err(load_on_error(analysis_error))
                     }
                     RegistrationError::DlopenError(dlopen_error) => {
                         return Err(load_on_error(dlopen_error))

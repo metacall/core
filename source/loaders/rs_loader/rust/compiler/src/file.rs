@@ -1,4 +1,4 @@
-use crate::{Source, compile, Parser, RegistrationError};
+use crate::{compile, Source, CompilerState, RegistrationError};
 
 use std::{
     ffi::c_void,
@@ -66,51 +66,44 @@ impl DlopenLibrary {
 
 #[derive(Debug)]
 pub struct FileRegistration {
-    parser: Parser,
-    path_to_dll: PathBuf,
     path_to_file: PathBuf,
+    state: CompilerState,
     dlopen: DlopenLibrary,
 }
 impl FileRegistration {
-    fn compile_to_dll(path_to_file: &PathBuf) -> Result<PathBuf, String> {
-        compile(
-            Source::new(Source::File {
-                path: PathBuf::from(path_to_file),
-            }),
-        )
-    }
-
     pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {
-        let path_to_file = path_to_file.clone();
-        let path_to_dll = match FileRegistration::compile_to_dll(&path_to_file) {
-            Ok(instance) => instance,
-            Err(error) => return Err(RegistrationError::ValidationError(error)),
+        let state = match compile(
+            Source::new(Source::File {
+                path: PathBuf::from(path_to_file.clone()),
+            }),
+        ) {
+            Ok(state) => state,
+            Err(error) => return Err(
+                RegistrationError::CompilationError(
+                    String::from(format!("{}\n{}\n{}", error.err, error.errors, error.diagnostics)),
+                )
+            ),
         };
-        let parser = match Parser::new(&path_to_file) {
-            Ok(instance) => instance,
-            Err(error) => return Err(RegistrationError::SynError(error)),
-        };
-        let dlopen = match DlopenLibrary::new(&path_to_dll) {
+        let dlopen = match DlopenLibrary::new(&state.output) {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DlopenError(error)),
         };
 
         Ok(FileRegistration {
-            dlopen,
-            parser,
-            path_to_dll,
             path_to_file,
+            state,
+            dlopen,
         })
     }
 
-    pub fn register_in_metacall(
+    pub fn discover(
         &self,
         loader_impl: *mut c_void,
         ctx: *mut c_void,
     ) -> Result<(), String> {
-        println!("Parser ast: {:#?}", self.parser.ast);
+        println!("Functions: {:#?}", self.state.functions); // TODO: Remove this
 
-        registrator::register(&self.parser.ast, loader_impl, ctx);
+        registrator::register(&self.state, loader_impl, ctx);
 
         Ok(())
     }

@@ -2,14 +2,14 @@ use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
 use api;
 
-use compiler::{file::FileRegistration, package::PackageRegistration};
+use compiler::{file::FileRegistration/*, package::PackageRegistration*/};
 
 use std::fmt::Display;
 
 #[derive(Debug)]
 pub enum LoadingMethod {
     File(FileRegistration),
-    Package(PackageRegistration),
+    /*Package(PackageRegistration),*/
 }
 
 // Trait aliasing

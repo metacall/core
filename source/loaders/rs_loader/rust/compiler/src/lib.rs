@@ -12,6 +12,7 @@ extern crate rustc_interface;
 extern crate rustc_session;
 extern crate rustc_span;
 extern crate rustc_feature;
+extern crate rustc_ast_pretty;
 
 use rustc_session::config;
 use rustc_session::config::CrateType;
@@ -20,18 +21,15 @@ use rustc_interface::{Config, Queries, interface::Compiler};
 use rustc_ast::{visit, NodeId};
 use rustc_span::Span;
 
-use std::{sync, error::Error, fs::File, io::Read, path::PathBuf};
-
-pub use syn::{self, File as SynFileAst};
+use std::{sync, path::PathBuf};
 
 pub mod file;
 pub mod package;
 pub(crate) mod registrator;
 
 pub enum RegistrationError {
+    CompilationError(String),
     DlopenError(String),
-    ValidationError(String),
-    SynError(Box<dyn Error>),
 }
 
 struct SourceInput(config::Input);
@@ -121,25 +119,6 @@ impl Source {
     }
 }
 
-#[derive(Debug)]
-pub struct Parser {
-    pub code: String,
-    pub ast: SynFileAst,
-}
-impl Parser {
-    pub fn new(path_to_code: &PathBuf) -> Result<Parser, Box<dyn Error>> {
-        let mut file = File::open(path_to_code)?;
-
-        let mut content = String::new();
-        file.read_to_string(&mut content)?;
-
-        let code = content.clone();
-        let ast: SynFileAst = syn::parse_file(&content)?;
-
-        Ok(Parser { ast, code })
-    }
-}
-
 fn toolchain_path(home: Option<String>, toolchain: Option<String>) -> Option<PathBuf> {
     home.and_then(|home| {
         toolchain.map(|toolchain| {
@@ -201,8 +180,49 @@ fn compiler_source() -> Option<PathBuf> {
     }
 }
 
+#[derive(Clone, Debug)]
+pub struct FunctionType {
+    name: String,
+    // ty: rustc_ast::ptr::P<rustc_ast::ast::Ty>,
+}
+
+impl FunctionType {
+    fn new(ty: &rustc_ast::ptr::P<rustc_ast::ast::Ty>) -> FunctionType {
+        FunctionType {
+            name: rustc_ast_pretty::pprust::ty_to_string(&ty),
+            // ty: ty.into_inner().clone(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct FunctionParameter {
+    name: String,
+    t: FunctionType,
+}
+
+#[derive(Clone, Debug)]
+pub struct Function {
+    name: String,
+    ret: Option<FunctionType>,
+    args: Vec<FunctionParameter>,
+}
+
+#[derive(Clone, Debug)]
+pub struct CompilerState {
+    output: PathBuf,
+    functions: Vec<Function>,
+}
+
+#[derive(Clone, Debug)]
+pub struct CompilerError {
+    diagnostics: String,
+    errors: String,
+    err: String,
+}
+
 struct FunctionVisitor {
-    functions: Vec<String>,
+    functions: Vec<Function>,
 }
 
 impl FunctionVisitor {
@@ -212,8 +232,20 @@ impl FunctionVisitor {
         }
     }
 
-    fn add_function(&mut self, name: String, decl: &rustc_ast::ptr::P<rustc_ast::ast::FnDecl>) {
-        self.functions.push(name);
+    fn register(&mut self, name: String, decl: &rustc_ast::ptr::P<rustc_ast::ast::FnDecl>) {
+        self.functions.push(Function {
+            name,
+            ret: match &decl.output {
+                rustc_ast::ast::FnRetTy::Default(_) => None,
+                rustc_ast::ast::FnRetTy::Ty(ty) => Some(FunctionType::new(&ty)),
+            },
+            args: decl.inputs.iter().map(|param| {
+                FunctionParameter {
+                    name: rustc_ast_pretty::pprust::pat_to_string(&param.pat.clone().into_inner()),
+                    t: FunctionType::new(&param.ty),
+                }
+            }).collect(),
+        });
     }
 }
 
@@ -221,7 +253,13 @@ impl FunctionVisitor {
 impl<'a> visit::Visitor<'a> for FunctionVisitor {
     fn visit_fn(&mut self, fk: visit::FnKind, s: Span, _: NodeId) {
         match fk {
-            visit::FnKind::Fn(_, indent, sig, ..) => self.add_function(indent.name.to_string(), &sig.decl),
+            visit::FnKind::Fn(_, indent, sig, visibility, ..) => {
+                // TODO: Implement temporary no_mangle
+                match visibility.kind {
+                    rustc_ast::ast::VisibilityKind::Public => self.register(indent.name.to_string(), &sig.decl),
+                    _ => ()
+                }
+            },
             _ => ()
         }
 
@@ -231,6 +269,7 @@ impl<'a> visit::Visitor<'a> for FunctionVisitor {
 
 struct CompilerCallbacks {
     source: SourceImpl,
+    functions: Vec<Function>,
 }
 
 impl rustc_driver::Callbacks for CompilerCallbacks {
@@ -256,20 +295,18 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         queries: &'tcx Queries<'tcx>,
     ) -> rustc_driver::Compilation {
         let krate = queries.parse().expect("no Result<Query<Crate>> found").take();
-        let crate_name = match rustc_attr::find_crate_name(compiler.session(), &krate.attrs) {
-            Some(name) => name.to_string(),
-            None => String::from("unknown_crate"),
-        };
-        println!("In crate: {},\n", crate_name);
+
+        // let crate_name = match rustc_attr::find_crate_name(compiler.session(), &krate.attrs) {
+        //     Some(name) => name.to_string(),
+        //     None => String::from("unknown_crate"),
+        // };
+        // println!("In crate: {},\n", crate_name);
 
         let mut fn_visitor = FunctionVisitor::new();
+
         visit::walk_crate(&mut fn_visitor, &krate);
 
-        println!("Found {} functions", fn_visitor.functions.len());
-
-        let functions = fn_visitor.functions.clone();
-
-        println!("{:?}", functions);
+        self.functions = fn_visitor.functions.clone();
 
         rustc_driver::Compilation::Continue
     }
@@ -430,9 +467,10 @@ fn run_compiler(
     })
 }
 
-pub fn compile(source: SourceImpl) -> Result<PathBuf, String> {
+pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let mut callbacks = CompilerCallbacks {
         source,
+        functions: vec![],
     };
 
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
@@ -445,7 +483,10 @@ pub fn compile(source: SourceImpl) -> Result<PathBuf, String> {
             &errors_buffer,
         )
     }).and_then(|result| result) {
-        Ok(()) => Ok(callbacks.source.output),
+        Ok(()) => Ok(CompilerState {
+            output: callbacks.source.output.clone(),
+            functions: callbacks.functions.clone(),
+        }),
         Err(err) => {
             // Read buffered diagnostics
             let diagnostics = String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
@@ -455,7 +496,11 @@ pub fn compile(source: SourceImpl) -> Result<PathBuf, String> {
             let errors = String::from_utf8(errors_buffer.lock().unwrap().clone()).unwrap();
             eprintln!("{}", errors);
 
-            Err(format!("{:?}", err))
+            Err(CompilerError {
+                diagnostics,
+                errors,
+                err: format!("{:?}", err),
+            })
         }
     }
 }
@@ -487,8 +532,8 @@ mod tests {
                 name: String::from("test.rs"),
                 code: String::from("#[no_mangle]\npub extern \"C\" fn add(a: i32, b: i32) -> i32 { a + b }"),
             })) {
-                Err(err) => assert!(false, "compilation failed: {}", err),
-                Ok(output) => assert!(output.exists()),
+                Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),
+                Ok(comp_state) => assert!(comp_state.output.exists()),
             }
         })
     }
@@ -499,8 +544,8 @@ mod tests {
             match compile(Source::new(Source::File {
                 path: PathBuf::from(std::env::var("TEST_SOURCE_DIR").unwrap()),
             })) {
-                Err(err) => assert!(false, "compilation failed: {}", err),
-                Ok(output) => assert!(output.exists()),
+                Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),
+                Ok(comp_state) => assert!(comp_state.output.exists()),
             }
         })
     }

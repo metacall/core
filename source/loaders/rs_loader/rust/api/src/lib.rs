@@ -97,14 +97,11 @@ pub fn define_type(
     loader_impl: *mut c_void,
     name: &str,
     type_id: PrimitiveMetacallProtocolTypes,
-    type_impl: c_int,
-    singleton: c_int,
+    type_impl: *mut c_void,
+    singleton: *mut c_void,
 ) {
     let type_name = construct_c_char(name);
-
     let type_id = type_id as c_int;
-    let type_impl = type_impl as c_int as *mut c_void;
-    let singleton = singleton as c_int as *mut c_void;
 
     unsafe {
         loader_impl_type_define(
@@ -115,18 +112,6 @@ pub fn define_type(
     };
 }
 
-#[derive(strum_macros::Display)]
-pub enum PrimitiveMetacallImplTypes {
-    Boolean,
-    Short,
-    Integer,
-    Float,
-    Double,
-    String,
-    Buffer,
-    Ptr,
-}
-
 pub struct FunctionCreate {
     pub name: String,
     pub args_count: usize,
@@ -134,16 +119,15 @@ pub struct FunctionCreate {
     pub function_impl: *mut c_void,
 }
 pub struct FunctionInputSignature {
-    pub index: usize,
     pub name: String,
-    pub t: PrimitiveMetacallImplTypes,
+    pub t: String,
 }
 pub struct FunctionRegisteration {
     pub ctx: *mut c_void,
     pub loader_impl: *mut c_void,
     pub function_create: FunctionCreate,
-    pub function_return_signature: PrimitiveMetacallImplTypes,
-    pub function_input_signature: Vec<FunctionInputSignature>,
+    pub ret: Option<String>,
+    pub input: Vec<FunctionInputSignature>,
 }
 
 pub fn register_function(function_registeration: FunctionRegisteration) {
@@ -160,18 +144,20 @@ pub fn register_function(function_registeration: FunctionRegisteration) {
 
     let s = unsafe { function_signature(f) };
 
-    unsafe {
-        signature_set_return(
-            s,
-            loader_impl_type(
-                function_registeration.loader_impl,
-                construct_c_char(function_registeration.function_return_signature.to_string()),
-            ),
-        );
-    };
+    if let Some(ret) = function_registeration.ret {
+        unsafe {
+            signature_set_return(
+                s,
+                loader_impl_type(
+                    function_registeration.loader_impl,
+                    construct_c_char(ret.to_string()),
+                ),
+            );
+        };
+    }
 
     for (index, function_input) in function_registeration
-        .function_input_signature
+        .input
         .iter()
         .enumerate()
     {

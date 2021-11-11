@@ -1,4 +1,5 @@
-use crate::{Parser, RegistrationError};
+/*
+use crate::{RegistrationError};
 
 use std::{
     ffi::{c_void, OsStr},
@@ -93,7 +94,7 @@ impl PackageRegistration {
 
         let parser = match Parser::new(&path_to_librs) {
             Ok(instance) => instance,
-            Err(error) => return Err(RegistrationError::SynError(error)),
+            Err(error) => return Err(RegistrationError::AnalysisError(error)),
         };
 
         Ok(PackageRegistration {
@@ -104,7 +105,8 @@ impl PackageRegistration {
         })
     }
 
-    pub fn register_in_metacall(&self, _ctx: *mut c_void) -> Result<(), String> {
+    pub fn discover(&self, _ctx: *mut c_void) -> Result<(), String> {
         Ok(())
     }
 }
+*/
