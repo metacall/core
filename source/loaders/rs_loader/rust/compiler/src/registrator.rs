@@ -12,8 +12,8 @@ pub fn register(state: &CompilerState, loader_impl: *mut c_void, ctx: *mut c_voi
         let function_create = FunctionCreate {
             name: func.name.clone(),
             args_count: func.args.len(),
-            singleton: 0 as c_uint as *mut c_void,
-            function_impl: 0 as c_uint as *mut c_void,
+            function_impl: 0 as c_uint as *mut c_void, // TODO: Store the function pointer address here from DlLibrary
+            singleton: 0 as c_uint as *mut c_void, // TODO: Create the singleton for handling the calls
         };
 
         let function_registration = FunctionRegisteration {

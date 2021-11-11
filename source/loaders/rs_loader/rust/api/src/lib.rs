@@ -29,6 +29,10 @@ extern "C" {
         singleton: *mut c_void,
     ) -> *mut c_void;
 
+    fn type_name(
+        t: *mut c_void,
+    ) -> *const c_char;
+
     fn function_create(
         name: *const c_char,
         args_count: usize,
@@ -92,14 +96,16 @@ pub fn define_type(
     type_impl: *mut c_void,
     singleton: *mut c_void,
 ) {
-    let type_name = CString::new(name).expect("Failed to convert type name to C string");
+    let name = CString::new(name).expect("Failed to convert type name to C string");
     let type_id = type_id as c_int;
 
     unsafe {
+        let t = type_create(type_id, name.as_ptr(), type_impl, singleton);
+
         loader_impl_type_define(
             loader_impl,
-            type_name.as_ptr(),
-            type_create(type_id, type_name.as_ptr(), type_impl, singleton),
+            type_name(t),
+            t,
         )
     };
 }

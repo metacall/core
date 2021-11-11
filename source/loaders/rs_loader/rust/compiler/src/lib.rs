@@ -254,7 +254,8 @@ impl<'a> visit::Visitor<'a> for FunctionVisitor {
     fn visit_fn(&mut self, fk: visit::FnKind, s: Span, _: NodeId) {
         match fk {
             visit::FnKind::Fn(_, indent, sig, visibility, ..) => {
-                // TODO: Implement temporary no_mangle
+                // TODO: https://docs.rs/rustc-ap-rustc_ast/677.0.0/rustc_ap_rustc_ast/ast/struct.FnHeader.html
+                // Asyncness, constness, extern "C"
                 match visibility.kind {
                     rustc_ast::ast::VisibilityKind::Public => self.register(indent.name.to_string(), &sig.decl),
                     _ => ()
