@@ -1,6 +1,5 @@
 use std::{
     ffi::{c_void, CString},
-    fmt::Display,
     os::raw::{c_char, c_int},
     path::PathBuf,
 };
@@ -14,31 +13,24 @@ impl LoaderLifecycleState {
     }
 }
 
-fn construct_c_char<T: Display>(str: T) -> *mut i8 {
-    CString::new(format!("{}", str))
-        .unwrap()
-        .as_bytes()
-        .as_ptr() as *mut i8
-}
-
 extern "C" {
     fn loader_impl_get(loader_impl: *mut c_void) -> *mut c_void;
 
     fn loader_impl_type_define(
         loader_impl: *mut c_void,
-        name: *mut c_char,
+        name: *const c_char,
         the_type: *mut c_void,
     ) -> c_int;
 
     fn type_create(
         type_id: c_int,
-        name: *mut c_char,
+        name: *const c_char,
         type_impl: *mut c_void,
         singleton: *mut c_void,
     ) -> *mut c_void;
 
     fn function_create(
-        name: *mut c_char,
+        name: *const c_char,
         args_count: usize,
         function_impl: *mut c_void,
         singleton: *mut c_void,
@@ -47,7 +39,7 @@ extern "C" {
     fn signature_set(
         signature: *mut c_void,
         index: usize,
-        name: *mut c_char,
+        name: *const c_char,
         t: *mut c_void,
     ) -> c_void;
 
@@ -61,7 +53,7 @@ extern "C" {
 
     fn signature_set_return(signature: *mut c_void, t: *mut c_void) -> c_void;
 
-    fn loader_impl_type(loader_impl: *mut c_void, name: *mut c_char) -> *mut c_void;
+    fn loader_impl_type(loader_impl: *mut c_void, name: *const c_char) -> *mut c_void;
 
     fn scope_define(scope: *mut c_void, key: *mut c_char, value: *mut c_void) -> c_int;
 }
@@ -100,14 +92,14 @@ pub fn define_type(
     type_impl: *mut c_void,
     singleton: *mut c_void,
 ) {
-    let type_name = construct_c_char(name);
+    let type_name = CString::new(name).expect("Failed to convert type name to C string");
     let type_id = type_id as c_int;
 
     unsafe {
         loader_impl_type_define(
             loader_impl,
-            type_name,
-            type_create(type_id, type_name, type_impl, singleton),
+            type_name.as_ptr(),
+            type_create(type_id, type_name.as_ptr(), type_impl, singleton),
         )
     };
 }
@@ -139,36 +131,41 @@ pub fn register_function(function_registeration: FunctionRegisteration) {
         function_impl,
         singleton,
     } = function_registeration.function_create;
-    let name = construct_c_char(name);
-    let f = unsafe { function_create(name, args_count, function_impl, singleton) };
+    let name = CString::new(name).expect("Failed to convert function name to C string");
+    let f = unsafe { function_create(name.as_ptr(), args_count, function_impl, singleton) };
 
     let s = unsafe { function_signature(f) };
 
     if let Some(ret) = function_registeration.ret {
+        let ret = CString::new(ret).expect("Failed to convert return type to C string");
+
         unsafe {
             signature_set_return(
                 s,
                 loader_impl_type(
                     function_registeration.loader_impl,
-                    construct_c_char(ret.to_string()),
+                    ret.as_ptr(),
                 ),
             );
         };
     }
 
-    for (index, function_input) in function_registeration
+    for (index, param) in function_registeration
         .input
         .iter()
         .enumerate()
     {
+        let name = CString::new(param.name.clone()).expect("Failed to convert function parameter name to C string");
+        let t = CString::new(param.t.clone()).expect("Failed to convert function parameter type to C string");
+
         unsafe {
             signature_set(
                 s,
                 index,
-                construct_c_char(function_input.name.to_owned()),
+                name.as_ptr(),
                 loader_impl_type(
                     function_registeration.loader_impl,
-                    construct_c_char(function_input.t.to_string()),
+                    t.as_ptr(),
                 ),
             )
         };
