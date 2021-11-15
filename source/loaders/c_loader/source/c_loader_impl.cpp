@@ -195,12 +195,13 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		c_function->values[args_count] = value_data((value)args[args_count]);
 	}
 
+	ffi_arg result;
+
+	ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, args);
+
 	type_id ret_id = type_index(signature_get_return(s));
-	void *ret = value_type_create(NULL, value_type_id_size(ret_id), ret_id);
 
-	ffi_call(&c_function->cif, FFI_FN(c_function->address), ret, args);
-
-	return ret;
+	return value_type_create(&result, value_type_id_size(ret_id), ret_id);
 }
 
 function_return function_c_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
