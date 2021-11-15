@@ -64,6 +64,9 @@ typedef struct loader_impl_c_handle_type
 
 typedef struct loader_impl_c_function_type
 {
+	ffi_cif cif;
+	ffi_type *ret_type;
+	ffi_type **arg_types;
 	const void *address;
 
 } * loader_impl_c_function;
@@ -140,15 +143,56 @@ int function_c_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-function_return function_c_interface_invoke(function func, function_impl impl, function_args args, size_t size)
+ffi_type *get_ffi_type(type_id id)
 {
-	/* TODO */
+	switch (id)
+	{
+		case TYPE_CHAR:
+			return &ffi_type_schar;
+			break;
+		case TYPE_INT:
+			return &ffi_type_sint;
+			break;
+		case TYPE_FLOAT:
+			return &ffi_type_float;
+			break;
+		case TYPE_DOUBLE:
+			return &ffi_type_double;
+			break;
 
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
+			/* TODO: Add more*/
+	}
 
+	return &ffi_type_void;
+}
+function_return function_c_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
+{
+	loader_impl_c_function c_function = (loader_impl_c_function)(impl);
+
+	signature s = function_signature(func);
+
+	type function_type = signature_get_return(s);
+	type_id ret_id = type_index(function_type);
+	c_function->ret_type = get_ffi_type(ret_id);
+
+	const size_t signature_args_size = signature_count(s);
+
+	for (size_t args_count = 0; args_count < args_size; args_count++)
+	{
+		type t = args_count < signature_args_size ? signature_get_type(s, args_count) : NULL;
+		type_id id = t == NULL ? value_type_id((value)args[args_count]) : type_index(t);
+		c_function->arg_types[args_count] = get_ffi_type(id);
+	}
+
+	if (ffi_prep_cif(&c_function->cif, FFI_DEFAULT_ABI, args_size, c_function->ret_type, c_function->arg_types) == FFI_OK)
+	{
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), c_function->ret_type, args);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "FFI call interface prep failed");
+		return NULL;
+	}
 	return NULL;
 }
 
@@ -281,17 +325,20 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 		return;
 	}
 
-	loader_impl_c_function c_func = new loader_impl_c_function_type();
+	loader_impl_c_function c_function = new loader_impl_c_function_type();
 
-	c_func->address = c_handle->symbols[func_name];
+	c_function->address = c_handle->symbols[func_name];
+	//get_ffi_type(return_type, c_function->ret_type);
 
 	int num_args = clang_Cursor_getNumArguments(cursor);
 	size_t args_count = num_args < 0 ? (size_t)0 : (size_t)num_args;
 
-	function f = function_create(func_name.c_str(), args_count, c_func, &function_c_singleton);
+	function f = function_create(func_name.c_str(), args_count, c_function, &function_c_singleton);
 	signature s = function_signature(f);
 
 	signature_set_return(s, loader_impl_type(impl, return_type.c_str()));
+
+	c_function->arg_types = new ffi_type *[args_count];
 
 	for (size_t arg = 0; arg < args_count; ++arg)
 	{
