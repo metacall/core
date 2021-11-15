@@ -126,9 +126,9 @@ static void c_loader_impl_handle_destroy(loader_impl_c_handle c_handle)
 	delete c_handle;
 }
 
-static bool c_loader_impl_file_exists(const std::string &filename)
+static bool c_loader_impl_file_exists(const loader_naming_path path)
 {
-	if (FILE *file = fopen(filename.c_str(), "r"))
+	if (FILE *file = fopen(path, "r"))
 	{
 		fclose(file);
 		return true;
@@ -149,23 +149,24 @@ static ffi_type *c_loader_impl_ffi_type(type_id id)
 {
 	switch (id)
 	{
+		case TYPE_BOOL:
+			return &ffi_type_uchar;
 		case TYPE_CHAR:
 			return &ffi_type_schar;
-			break;
+		case TYPE_SHORT:
+			return &ffi_type_sshort;
 		case TYPE_INT:
 			return &ffi_type_sint;
-			break;
 		case TYPE_LONG:
 			return &ffi_type_slong;
-			break;
 		case TYPE_FLOAT:
 			return &ffi_type_float;
-			break;
 		case TYPE_DOUBLE:
 			return &ffi_type_double;
-			break;
+		case TYPE_PTR:
+			return &ffi_type_pointer;
 
-			/* TODO: Add more*/
+			/* TODO: Add more */
 	}
 
 	return &ffi_type_void;
@@ -257,6 +258,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_LONG, "long" },
 		{ TYPE_FLOAT, "float" },
 		{ TYPE_DOUBLE, "double" },
+		{ TYPE_INVALID, "void" }
 
 		// TODO: Do more types (and the unsigned versions too?)
 	};
@@ -321,6 +323,94 @@ static std::string c_loader_impl_cxstring_to_str(const CXString &s)
 	return result;
 }
 
+static type_id c_loader_impl_clang_type(CXCursor cursor, CXType cx_type)
+{
+	switch (cx_type.kind)
+	{
+		/* We allow dynamically defining pointer types as opaque pointer type,
+		this can be improved in the future when structs and functions (as parameters)
+		are supported in order to fully support the types (AST),
+		we can use clang_getPointeeType to achieve this */
+		case CXType_Pointer: {
+			CXType pointee_type = clang_getPointeeType(cx_type);
+
+			/* Support for strings */
+			if (pointee_type.kind == CXType_Char_S || pointee_type.kind == CXType_SChar ||
+				pointee_type.kind == CXType_Char_U || pointee_type.kind == CXType_UChar)
+			{
+				return TYPE_STRING;
+			}
+
+			return TYPE_PTR;
+		}
+
+		case CXType_Char_U:
+		case CXType_UChar:
+		case CXType_Char_S:
+		case CXType_SChar:
+			return TYPE_CHAR;
+
+		case CXType_Bool:
+			return TYPE_BOOL;
+
+		case CXType_Int:
+			return TYPE_INT;
+
+		case CXType_Void:
+			return TYPE_INVALID;
+
+		case CXType_Enum: {
+			CXCursor referenced = clang_isReference(cursor.kind) ? clang_getCursorReferenced(cursor) : cursor;
+			CXType enum_type = referenced.kind == CXCursor_TypedefDecl ? clang_getTypedefDeclUnderlyingType(referenced) : clang_getEnumDeclIntegerType(referenced);
+
+			if (enum_type.kind == CXType_Invalid)
+			{
+				return TYPE_INVALID; /* TODO: Check this edge case */
+			}
+
+			return c_loader_impl_clang_type(referenced, enum_type);
+		}
+
+		/* Another possible problem may be type definitions, for example, we are expecting
+		the type 'bool' but instead we get the type 'yeet' which is defined as: 'typedef bool yeet;'
+		this would be of type CXType_Bool but it won't work because we check against string instead of Clang type.
+		In order to avoid problems with this, we must get the canonical type */
+		case CXType_Typedef:
+			return c_loader_impl_clang_type(cursor, clang_getCanonicalType(cx_type));
+
+			/* TODO: Add more types */
+
+		default:
+			return TYPE_INVALID;
+	}
+}
+
+static type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_type)
+{
+	auto type_str = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(cx_type));
+	type t = loader_impl_type(impl, type_str.c_str());
+
+	if (t != NULL)
+	{
+		return t;
+	}
+
+	t = type_create(c_loader_impl_clang_type(cursor, cx_type), type_str.c_str(), NULL, NULL);
+
+	if (t == NULL)
+	{
+		return NULL;
+	}
+
+	if (loader_impl_type_define(impl, type_name(t), t) != 0)
+	{
+		type_destroy(t);
+		return NULL;
+	}
+
+	return t;
+}
+
 static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_handle c_handle, scope sp, CXCursor cursor)
 {
 	auto cursor_type = clang_getCursorType(cursor);
@@ -342,8 +432,9 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	function f = function_create(func_name.c_str(), args_count, c_function, &function_c_singleton);
 	signature s = function_signature(f);
 
-	auto ret_type_str = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getResultType(cursor_type)));
-	type ret_type = loader_impl_type(impl, ret_type_str.c_str());
+	auto result_type = clang_getResultType(cursor_type);
+	type ret_type = c_loader_impl_discover_type(impl, cursor, result_type);
+
 	signature_set_return(s, ret_type);
 
 	c_function->ret_type = c_loader_impl_ffi_type(type_index(ret_type));
@@ -354,8 +445,8 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	{
 		auto arg_cursor = clang_Cursor_getArgument(cursor, arg);
 		auto arg_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(arg_cursor));
-		auto arg_type = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(clang_getArgType(cursor_type, arg)));
-		type t = loader_impl_type(impl, arg_type.c_str());
+		auto arg_type = clang_getArgType(cursor_type, arg);
+		type t = c_loader_impl_discover_type(impl, cursor, arg_type);
 
 		signature_set(s, arg, arg_name.c_str(), t);
 		c_function->arg_types[arg] = c_loader_impl_ffi_type(type_index(t));
@@ -421,6 +512,34 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_h
 	return 0;
 }
 
+static bool c_loader_impl_is_ld_script(const loader_naming_path path, size_t size)
+{
+	static const char extension[] = ".ld";
+
+	if (size > sizeof(extension))
+	{
+		for (size_t ext_it = 0, path_it = size - sizeof(extension); path_it < size - 1; ++ext_it, ++path_it)
+		{
+			if (path[path_it] != extension[ext_it])
+			{
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
+
+static void c_loader_impl_handle_add(loader_impl_c_handle c_handle, const loader_naming_path path, size_t size)
+{
+	if (c_loader_impl_is_ld_script(path, size) == false)
+	{
+		std::string filename(path, size);
+
+		c_handle->files.push_back(filename);
+	}
+}
+
 loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
@@ -430,8 +549,6 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 	{
 		return NULL;
 	}
-
-	/* TODO: Load the files (.c and .h) with the parser while iterating after loading them with TCC */
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
@@ -445,8 +562,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 				return NULL;
 			}
 
-			std::string filename(paths[iterator]);
-			c_handle->files.push_back(filename);
+			c_loader_impl_handle_add(c_handle, paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE) + 1);
 		}
 		else
 		{
@@ -456,12 +572,11 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 			for (auto exec_path : c_impl->execution_paths)
 			{
 				loader_naming_path path;
-				size_t path_size = loader_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strlen(paths[iterator]), path);
-				std::string filename(path, path_size);
+				size_t path_size = loader_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strlen(paths[iterator]) + 1, path);
 
-				if (c_loader_impl_file_exists(filename) == true && tcc_add_file(c_handle->state, path) != -1)
+				if (c_loader_impl_file_exists(path) == true && tcc_add_file(c_handle->state, path) != -1)
 				{
-					c_handle->files.push_back(filename);
+					c_loader_impl_handle_add(c_handle, path, path_size);
 					found = true;
 					break;
 				}

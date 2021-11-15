@@ -29,12 +29,12 @@ protected:
 
 TEST_F(metacall_c_test, DefaultConstructor)
 {
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
 	/* File */
 	const char *c_scripts[] = {
 		"compiled.c"
 	};
-
-	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_scripts, sizeof(c_scripts) / sizeof(c_scripts[0]), NULL));
 
@@ -46,12 +46,41 @@ TEST_F(metacall_c_test, DefaultConstructor)
 
 	metacall_value_destroy(ret);
 
-	/* Memory */
-	const char c_buffer[] = {
-		"int compiled_mult(int a, int b) { return a * b; }"
+	/* File with dependencies */
+	const char *c_dep_scripts[] = {
+		"ffi.c",
+		"ffi.ld"
 	};
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
+	EXPECT_EQ((int)0, (int)metacall_load_from_file("c", c_dep_scripts, sizeof(c_dep_scripts) / sizeof(c_dep_scripts[0]), NULL));
+
+	ret = metacall("call_fp_address");
+
+	EXPECT_NE((void *)NULL, (void *)ret);
+
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_PTR);
+
+	EXPECT_NE((void *)metacall_value_to_ptr(ret), (void *)NULL);
+
+	metacall_value_destroy(ret);
+
+	ret = metacall("int_type_renaming");
+
+	EXPECT_NE((void *)NULL, (void *)ret);
+
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
+
+	EXPECT_EQ((int)metacall_value_to_int(ret), (int)345);
+
+	metacall_value_destroy(ret);
+
+	/* Memory */
+	// TODO
+	// const char c_buffer[] = {
+	// 	"int compiled_mult(int a, int b) { return a * b; }"
+	// };
+
+	// EXPECT_EQ((int)0, (int)metacall_load_from_memory("c", c_buffer, sizeof(c_buffer), NULL));
 
 	// TODO
 	// void *ret = metacall("compiled_mult", 3, 4);

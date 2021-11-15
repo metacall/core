@@ -14,3 +14,4 @@ include(CProject)
 #
 
 add_subdirectory(compiled)
+add_subdirectory(ffi)
