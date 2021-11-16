@@ -82,6 +82,119 @@ typedef struct c_loader_impl_discover_visitor_data_type
 
 } * c_loader_impl_discover_visitor_data;
 
+/* Retrieve the equivalent FFI type from type id */
+static ffi_type *c_loader_impl_ffi_type(type_id id);
+
+/* Retrieve the type from the Clang type */
+static type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_type);
+
+/* Interface for implementing polymorphic C types */
+class c_loader_type_impl
+{
+public:
+	virtual ~c_loader_type_impl() = default;
+};
+
+class c_loader_closure_value;
+
+class c_loader_closure_type : public c_loader_type_impl
+{
+protected:
+	loader_impl impl;
+	ffi_type **args;
+	ffi_type *ret;
+	size_t args_size;
+
+	friend class c_loader_closure_value;
+
+public:
+	c_loader_closure_type(loader_impl impl) :
+		impl(impl), args(nullptr), ret(NULL), args_size(0) {}
+
+	int prepare(CXCursor cursor, CXType cx_type)
+	{
+		auto result_type = clang_getResultType(cx_type);
+		type ret_type = c_loader_impl_discover_type(impl, cursor, result_type);
+		ret = c_loader_impl_ffi_type(type_index(ret_type));
+
+		int num_args = clang_Cursor_getNumArguments(cursor);
+		args_size = num_args < 0 ? (size_t)0 : (size_t)num_args;
+		args = new ffi_type *[args_size];
+
+		if (args == nullptr)
+		{
+			return 1;
+		}
+
+		for (size_t arg = 0; arg < args_size; ++arg)
+		{
+			auto arg_type = clang_getArgType(cx_type, arg);
+			type t = c_loader_impl_discover_type(impl, cursor, arg_type);
+
+			args[arg] = c_loader_impl_ffi_type(type_index(t));
+		}
+
+		return 0;
+	}
+
+	~c_loader_closure_type()
+	{
+		if (args != nullptr)
+		{
+			delete[] args;
+		}
+	}
+};
+
+static void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void *user_data)
+{
+	function f = static_cast<function>(user_data);
+	//*(ffi_arg *)ret = fputs(*(char **)args[0], (FILE *)stream);
+
+	printf("TESTING FUNCTION CLOSURE\n");
+}
+
+class c_loader_closure_value
+{
+private:
+	ffi_cif cif;
+	ffi_closure *closure;
+	void *address;
+	c_loader_closure_type *closure_type;
+
+public:
+	c_loader_closure_value(c_loader_closure_type *closure_type) :
+		closure(NULL), address(NULL), closure_type(closure_type)
+	{
+		closure = static_cast<ffi_closure *>(ffi_closure_alloc(sizeof(ffi_closure), &address));
+	}
+
+	void *bind(function f)
+	{
+		if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, closure_type->args_size, closure_type->ret, closure_type->args) != FFI_OK)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid preparation of FFI CIF in callback (the pointer to the function be NULL, possibly producing a segfault)");
+			return NULL;
+		}
+
+		if (ffi_prep_closure_loc(closure, &cif, c_loader_impl_function_closure, f, address) != FFI_OK)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid preparation of FFI closure in callback (the pointer to the function will be NULL, possibly producing a segfault)");
+			return NULL;
+		}
+
+		return address;
+	}
+
+	~c_loader_closure_value()
+	{
+		if (closure != NULL)
+		{
+			ffi_closure_free(closure);
+		}
+	}
+};
+
 static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 {
 	loader_impl_c_handle c_handle = new loader_impl_c_handle_type();
@@ -150,8 +263,9 @@ int function_c_interface_create(function func, function_impl impl)
 	return 0;
 }
 
-static ffi_type *c_loader_impl_ffi_type(type_id id)
+ffi_type *c_loader_impl_ffi_type(type_id id)
 {
+	/* TODO: Add more types */
 	switch (id)
 	{
 		case TYPE_BOOL:
@@ -170,8 +284,8 @@ static ffi_type *c_loader_impl_ffi_type(type_id id)
 			return &ffi_type_double;
 		case TYPE_PTR:
 			return &ffi_type_pointer;
-
-			/* TODO: Add more */
+		case TYPE_FUNCTION:
+			return &ffi_type_pointer;
 	}
 
 	return &ffi_type_void;
@@ -183,26 +297,55 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 
 	if (args_size != signature_count(s))
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid number of arguments (canceling call in order to avoid a segfault)");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid number of arguments when calling %s (canceling call in order to avoid a segfault)", function_name(func));
 		return NULL;
 	}
 
 	loader_impl_c_function c_function = static_cast<loader_impl_c_function>(impl);
+	std::vector<c_loader_closure_value *> closures;
 
 	for (size_t args_count = 0; args_count < args_size; args_count++)
 	{
-		if (type_index(signature_get_type(s, args_count)) != value_type_id((value)args[args_count]))
+		type t = signature_get_type(s, args_count);
+		type_id id = type_index(t);
+		type_id value_id = value_type_id((value)args[args_count]);
+
+		if (id != value_id)
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Type mismatch in call argument number %" PRIuS " (canceling call in order to avoid a segfault)", args_count);
+			log_write("metacall", LOG_LEVEL_ERROR,
+				"Type mismatch in when calling %s in argument number %" PRIuS
+				" (expected %s and received %s)."
+				" Canceling call in order to avoid a segfault.",
+				function_name(func),
+				args_count,
+				type_name(t),
+				type_id_name(value_id));
 			return NULL;
 		}
 
-		c_function->values[args_count] = value_data((value)args[args_count]);
+		if (id == TYPE_FUNCTION)
+		{
+			c_loader_closure_value *closure = new c_loader_closure_value(static_cast<c_loader_closure_type *>(type_derived(t)));
+
+			c_function->values[args_count] = closure->bind(value_to_function((value)args[args_count]));
+
+			closures.push_back(closure);
+		}
+		else
+		{
+			c_function->values[args_count] = value_data((value)args[args_count]);
+		}
 	}
 
 	ffi_arg result;
 
-	ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, args);
+	ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, c_function->values);
+
+	/* Clear allocated closures if any */
+	for (c_loader_closure_value *closure : closures)
+	{
+		delete closure;
+	}
 
 	type_id ret_id = type_index(signature_get_return(s));
 
@@ -250,6 +393,36 @@ function_interface function_c_singleton()
 	return &c_interface;
 }
 
+int type_c_interface_create(type t, type_impl impl)
+{
+	(void)t;
+	(void)impl;
+
+	return 0;
+}
+
+void type_c_interface_destroy(type t, type_impl impl)
+{
+	(void)t;
+
+	if (impl != NULL)
+	{
+		c_loader_type_impl *type_impl = static_cast<c_loader_type_impl *>(impl);
+
+		delete type_impl;
+	}
+}
+
+type_interface type_c_singleton(void)
+{
+	static struct type_interface_type c_type_interface = {
+		&type_c_interface_create,
+		&type_c_interface_destroy
+	};
+
+	return &c_type_interface;
+}
+
 int c_loader_impl_initialize_types(loader_impl impl)
 {
 	static struct
@@ -273,7 +446,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 
 	for (size_t index = 0; index < size; ++index)
 	{
-		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, NULL);
+		type t = type_create(type_id_name_pair[index].id, type_id_name_pair[index].name, NULL, &type_c_singleton);
 
 		if (t != NULL)
 		{
@@ -333,7 +506,7 @@ static std::string c_loader_impl_cxstring_to_str(const CXString &s)
 	return result;
 }
 
-static type_id c_loader_impl_clang_type(CXCursor cursor, CXType cx_type)
+static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_type, c_loader_type_impl **impl_type)
 {
 	switch (cx_type.kind)
 	{
@@ -350,8 +523,35 @@ static type_id c_loader_impl_clang_type(CXCursor cursor, CXType cx_type)
 			{
 				return TYPE_STRING;
 			}
+			/* Support for function pointers */
+			else if (pointee_type.kind == CXType_FunctionProto)
+			{
+				return c_loader_impl_clang_type(impl, cursor, pointee_type, impl_type);
+			}
 
 			return TYPE_PTR;
+		}
+
+		case CXType_FunctionProto: {
+			c_loader_closure_type *closure_type = new c_loader_closure_type(impl);
+
+			if (closure_type != nullptr)
+			{
+				if (closure_type->prepare(cursor, cx_type) == 0)
+				{
+					*impl_type = static_cast<c_loader_closure_type *>(closure_type);
+					return TYPE_FUNCTION;
+				}
+				else
+				{
+					log_write("metacall", LOG_LEVEL_ERROR,
+						"Function closure from function '%s' has failed to be prepared",
+						c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor)).c_str());
+					delete closure_type;
+				}
+			}
+
+			return TYPE_INVALID;
 		}
 
 		case CXType_Char_U:
@@ -378,7 +578,7 @@ static type_id c_loader_impl_clang_type(CXCursor cursor, CXType cx_type)
 				return TYPE_INVALID; /* TODO: Check this edge case */
 			}
 
-			return c_loader_impl_clang_type(referenced, enum_type);
+			return c_loader_impl_clang_type(impl, referenced, enum_type, impl_type);
 		}
 
 		/* Another possible problem may be type definitions, for example, we are expecting
@@ -386,7 +586,7 @@ static type_id c_loader_impl_clang_type(CXCursor cursor, CXType cx_type)
 		this would be of type CXType_Bool but it won't work because we check against string instead of Clang type.
 		In order to avoid problems with this, we must get the canonical type */
 		case CXType_Typedef:
-			return c_loader_impl_clang_type(cursor, clang_getCanonicalType(cx_type));
+			return c_loader_impl_clang_type(impl, cursor, clang_getCanonicalType(cx_type), impl_type);
 
 			/* TODO: Add more types */
 
@@ -395,7 +595,7 @@ static type_id c_loader_impl_clang_type(CXCursor cursor, CXType cx_type)
 	}
 }
 
-static type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_type)
+type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_type)
 {
 	auto type_str = c_loader_impl_cxstring_to_str(clang_getTypeSpelling(cx_type));
 	type t = loader_impl_type(impl, type_str.c_str());
@@ -405,7 +605,10 @@ static type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXTy
 		return t;
 	}
 
-	t = type_create(c_loader_impl_clang_type(cursor, cx_type), type_str.c_str(), NULL, NULL);
+	c_loader_type_impl *impl_type = NULL;
+	type_id id = c_loader_impl_clang_type(impl, cursor, cx_type, &impl_type);
+
+	t = type_create(id, type_str.c_str(), impl_type, &type_c_singleton);
 
 	if (t == NULL)
 	{
@@ -437,9 +640,9 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	c_function->address = c_handle->symbols[func_name];
 
 	int num_args = clang_Cursor_getNumArguments(cursor);
-	size_t args_count = num_args < 0 ? (size_t)0 : (size_t)num_args;
+	size_t args_size = num_args < 0 ? (size_t)0 : (size_t)num_args;
 
-	function f = function_create(func_name.c_str(), args_count, c_function, &function_c_singleton);
+	function f = function_create(func_name.c_str(), args_size, c_function, &function_c_singleton);
 	signature s = function_signature(f);
 
 	auto result_type = clang_getResultType(cursor_type);
@@ -448,21 +651,21 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	signature_set_return(s, ret_type);
 
 	c_function->ret_type = c_loader_impl_ffi_type(type_index(ret_type));
-	c_function->arg_types = new ffi_type *[args_count];
-	c_function->values = new void *[args_count];
+	c_function->arg_types = new ffi_type *[args_size];
+	c_function->values = new void *[args_size];
 
-	for (size_t arg = 0; arg < args_count; ++arg)
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
-		auto arg_cursor = clang_Cursor_getArgument(cursor, arg);
+		auto arg_cursor = clang_Cursor_getArgument(cursor, args_count);
 		auto arg_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(arg_cursor));
-		auto arg_type = clang_getArgType(cursor_type, arg);
+		auto arg_type = clang_getArgType(cursor_type, args_count);
 		type t = c_loader_impl_discover_type(impl, cursor, arg_type);
 
-		signature_set(s, arg, arg_name.c_str(), t);
-		c_function->arg_types[arg] = c_loader_impl_ffi_type(type_index(t));
+		signature_set(s, args_count, arg_name.c_str(), t);
+		c_function->arg_types[args_count] = c_loader_impl_ffi_type(type_index(t));
 	}
 
-	if (ffi_prep_cif(&c_function->cif, FFI_DEFAULT_ABI, args_count, c_function->ret_type, c_function->arg_types) != FFI_OK)
+	if (ffi_prep_cif(&c_function->cif, FFI_DEFAULT_ABI, args_size, c_function->ret_type, c_function->arg_types) != FFI_OK)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to create the FFI CIF in function '%s', skipping the function", func_name.c_str());
 		function_destroy(f);

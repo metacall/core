@@ -27,6 +27,20 @@ class metacall_c_test : public testing::Test
 protected:
 };
 
+void *sum_callback(size_t argc, void *args[], void *data)
+{
+	int a = metacall_value_to_int(args[0]);
+	int b = metacall_value_to_int(args[1]);
+	int result = a + b;
+
+	(void)argc;
+	(void)data;
+
+	printf("sum(%d, %d) == %d\n", a, b, result);
+
+	return metacall_value_create_int(result);
+}
+
 TEST_F(metacall_c_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
@@ -73,6 +87,29 @@ TEST_F(metacall_c_test, DefaultConstructor)
 	EXPECT_EQ((int)metacall_value_to_int(ret), (int)345);
 
 	metacall_value_destroy(ret);
+
+	/* Native register */
+	metacall_register("sum_callback", sum_callback, NULL, METACALL_INT, 2, METACALL_INT, METACALL_INT);
+
+	void *func = metacall_function("sum_callback");
+
+	EXPECT_NE((void *)NULL, (void *)func);
+
+	void *args[] = {
+		metacall_value_create_function(func)
+	};
+
+	ret = metacallv_s("callback", args, 1);
+
+	EXPECT_NE((void *)NULL, (void *)ret);
+
+	EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_INT);
+
+	EXPECT_EQ((int)metacall_value_to_int(ret), (int)7);
+
+	metacall_value_destroy(ret);
+
+	metacall_value_destroy(args[0]);
 
 	/* Memory */
 	// TODO
