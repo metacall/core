@@ -65,6 +65,7 @@ project_library_path(TEST_LIB_PATH
 )
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json.in ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/launch.json @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings.json.in ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings.json @ONLY)
 
 #
 # Deployment
