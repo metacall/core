@@ -52,6 +52,7 @@
 typedef struct loader_impl_c_type
 {
 	std::vector<std::string> execution_paths;
+	std::string libtcc_runtime_path;
 
 } * loader_impl_c;
 
@@ -98,7 +99,11 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 		return nullptr;
 	}
 
+	/* JIT the code into memory */
 	tcc_set_output_type(c_handle->state, TCC_OUTPUT_MEMORY);
+
+	/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
+	tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
 
 	/* TODO */
 	/*
@@ -287,7 +292,6 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	loader_impl_c c_impl;
 
 	(void)impl;
-	(void)config;
 
 	c_impl = new loader_impl_c_type();
 
@@ -301,6 +305,11 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 		delete c_impl;
 		return NULL;
 	}
+
+	/* Store the configuration path for later use */
+	value path = configuration_value(config, "loader_library_path");
+
+	c_impl->libtcc_runtime_path = std::string(value_to_string(path), value_type_size(path));
 
 	/* Register initialization */
 	loader_initialization_register(impl);
