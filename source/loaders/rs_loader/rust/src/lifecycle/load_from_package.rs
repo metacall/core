@@ -1,12 +1,13 @@
-use super::loader::{self, LoadingMethod};
-use crate::{c_char, c_void, PathBuf};
+use crate::{c_char, c_void};
 
-use compiler::RegistrationError;
+// use super::loader::{self, LoadingMethod};
+// use crate::{c_char, c_void, PathBuf};
+// use compiler::RegistrationError;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_load_from_package(
-    loader_impl: *mut c_void,
-    path: *mut *const c_char,
+    _loader_impl: *mut c_void,
+    _path: *mut *const c_char,
 ) -> *mut c_void {
     0 as *mut c_void
     /*
