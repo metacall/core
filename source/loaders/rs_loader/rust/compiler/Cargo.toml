@@ -8,5 +8,5 @@ rustc_private = true
 
 [dependencies]
 dlopen = "0.1.8"
-cargo_toml = "0.8.1"
+cargo_toml = "0.10.1"
 api = { path = "../api" }
