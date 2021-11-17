@@ -1,7 +1,7 @@
 use super::loader::{self, LoadingMethod};
 use crate::{c_char, c_void, PathBuf};
 
-use compiler::{/*package::PackageRegistration,*/ RegistrationError};
+use compiler::RegistrationError;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_load_from_package(
@@ -32,5 +32,4 @@ pub extern "C" fn rs_loader_impl_load_from_package(
         },
     )
     */
-
 }

@@ -1,11 +1,8 @@
 use std::{ffi::c_void, os::raw::c_uint};
 
-use api::{
-    register_function, FunctionCreate, FunctionInputSignature, FunctionRegisteration,
-};
+use api::{register_function, FunctionCreate, FunctionInputSignature, FunctionRegisteration};
 
-use crate::{CompilerState};
-
+use crate::CompilerState;
 
 pub fn register(state: &CompilerState, loader_impl: *mut c_void, ctx: *mut c_void) {
     for func in state.functions.iter() {
@@ -24,12 +21,14 @@ pub fn register(state: &CompilerState, loader_impl: *mut c_void, ctx: *mut c_voi
                 Some(ret) => Some(ret.name.clone()),
                 _ => None,
             },
-            input: func.args.iter().map(|param| {
-                FunctionInputSignature {
+            input: func
+                .args
+                .iter()
+                .map(|param| FunctionInputSignature {
                     name: param.name.clone(),
                     t: param.t.name.clone(),
-                }
-            }).collect(),
+                })
+                .collect(),
         };
 
         register_function(function_registration);
