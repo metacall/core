@@ -617,7 +617,7 @@ Follow these steps to build and install **METACALL** manually.
 git clone --recursive https://github.com/metacall/core.git
 mkdir core/build && cd core/build
 cmake ..
-cmake --build . --target install
+sudo cmake --build . --target install
 ```
 
 ### 6.1 Build Options
