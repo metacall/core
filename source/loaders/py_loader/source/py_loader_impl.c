@@ -2749,6 +2749,25 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 	return 1;
 }
 
+static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, const loader_naming_path path, PyObject *exception)
+{
+	log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s'", path);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		PyErr_Clear();
+	}
+
+	PyErr_SetObject(Py_TYPE(exception), exception);
+
+	py_loader_impl_error_print(py_impl);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		PyErr_Clear();
+	}
+}
+
 loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
@@ -2800,8 +2819,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		{
 			if (exception != NULL && !py_loader_impl_import_exception(exception))
 			{
-				/* TODO: Print the error message of the exception */
-				log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s' [%s]", paths[iterator], Py_TYPE(exception)->tp_name);
+				py_loader_impl_load_from_file_exception(py_impl, paths[iterator], exception);
 
 				goto error_import_module;
 			}
@@ -2824,8 +2842,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 				}
 				else
 				{
-					/* TODO: Print the error message of the exception */
-					log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s' [%s]", paths[iterator], Py_TYPE(exception)->tp_name);
+					py_loader_impl_load_from_file_exception(py_impl, paths[iterator], exception);
 				}
 			}
 			else
@@ -2920,6 +2937,10 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return (loader_handle)py_handle;
 
 error_import_module:
+	if (PyErr_Occurred() != NULL)
+	{
+		PyErr_Clear();
+	}
 	PyGILState_Release(gstate);
 	py_loader_impl_handle_destroy(py_handle);
 error_create_handle:
@@ -3633,8 +3654,8 @@ int py_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 
 void py_loader_impl_error_print(loader_impl_py py_impl)
 {
-	static const char error_format_str[] = "Python Error [Type: %s]: %s\n{\n%s\n}";
-	static const char separator_str[] = "\n";
+	static const char error_format_str[] = "Python Error: [Type: %s]: %s\n%s";
+	static const char separator_str[] = "";
 	static const char traceback_not_found[] = "Traceback not available";
 
 	PyObject *type, *value, *traceback;

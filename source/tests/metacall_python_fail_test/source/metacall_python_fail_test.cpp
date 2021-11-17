@@ -62,6 +62,13 @@ TEST_F(metacall_python_fail_test, DefaultConstructor)
 
 		// This must fail
 		EXPECT_EQ((int)1, (int)metacall_load_from_memory("py", buffer_fail, sizeof(buffer_fail), NULL));
+
+		const char *py_scripts_non_installed[] = {
+			"badimport.py"
+		};
+
+		// Print traceback
+		EXPECT_EQ((int)1, (int)metacall_load_from_file("py", py_scripts_non_installed, sizeof(py_scripts_non_installed) / sizeof(py_scripts_non_installed[0]), NULL));
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
