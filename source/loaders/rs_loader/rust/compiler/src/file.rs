@@ -93,8 +93,6 @@ impl FileRegistration {
     }
 
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
-        println!("Functions: {:#?}", self.state.functions); // TODO: Remove this
-
         registrator::register(&self.state, loader_impl, ctx);
 
         Ok(())
