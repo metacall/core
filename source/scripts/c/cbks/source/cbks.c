@@ -7,3 +7,8 @@ void c_void_callback(void (*vd)())
 {
 	vd();
 }
+
+char *c_str_callback(char *(*cb)())
+{
+	return cb();
+}
