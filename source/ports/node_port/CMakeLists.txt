@@ -124,10 +124,16 @@ if(OPTION_BUILD_LOADERS_COB)
 	set(TESTS_ENVIRONMENT_VARIABLES_COB "OPTION_BUILD_LOADERS_COB=1")
 endif()
 
+# Enable c test if it is built
+if(OPTION_BUILD_LOADERS_C)
+	set(TESTS_ENVIRONMENT_VARIABLES_C "OPTION_BUILD_LOADERS_C=1")
+endif()
+
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
 	${TESTS_ENVIRONMENT_VARIABLES_COB}
+	${TESTS_ENVIRONMENT_VARIABLES_C}
 )
 
 # TODO: Until we find a better way to do this, we should disable it
@@ -136,7 +142,7 @@ return()
 # Detect exec with MetaCall CLI when this is being run with node
 set(NodeJS_EXECUTABLE_ONLY ON)
 
-find_package(NodeJS 12)
+find_package(NodeJS)
 
 if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS libraries not found")

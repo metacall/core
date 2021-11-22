@@ -107,6 +107,26 @@ describe('metacall', () => {
 				assert.strictEqual(metacall('say', 'Hello, ', 'world!'), 0);
 			});
 		}
+		// C tests are conditional (in order to pass CI/CD)
+		if (process.env['OPTION_BUILD_LOADERS_C']) {
+			// TODO: This is not working yet due to NodeJS nature, the signature
+			// of the callback is not known so it fails, review this
+			/*
+			it('metacall_load_from_file (c)', () => {
+				assert.strictEqual(metacall_load_from_file('c', [ 'ffi.c', 'ffi.ld' ]), undefined);
+
+				const script = metacall_handle('c', 'ffi.c');
+				assert.notStrictEqual(script, undefined);
+				assert.strictEqual(script.name, 'ffi.c');
+
+				assert.strictEqual(metacall('c_callback', (a, b) => {
+					assert.strictEqual(a, 3);
+					assert.strictEqual(b, 4);
+					return a + b;
+				}), 7);
+			});
+			*/
+		}
 		it('require (mock)', () => {
 			const asd = require('./asd.mock');
 			assert.notStrictEqual(asd, undefined);

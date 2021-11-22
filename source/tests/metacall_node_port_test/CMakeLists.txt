@@ -132,6 +132,12 @@ add_test(NAME ${target}
 
 if(OPTION_BUILD_LOADERS_COB)
 	set(COBOL_DEPENDENCY cob_loader)
+	set(TESTS_ENVIRONMENT_VARIABLES_COB "OPTION_BUILD_LOADERS_COB=1")
+endif()
+
+if(OPTION_BUILD_LOADERS_C)
+	set(C_DEPENDENCY c_loader)
+	set(TESTS_ENVIRONMENT_VARIABLES_C "OPTION_BUILD_LOADERS_C=1")
 endif()
 
 add_dependencies(${target}
@@ -141,6 +147,7 @@ add_dependencies(${target}
 	py_loader
 	rb_loader
 	${COBOL_DEPENDENCY}
+	${C_DEPENDENCY}
 )
 
 #
@@ -156,4 +163,6 @@ include(TestEnvironmentVariables)
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+	${TESTS_ENVIRONMENT_VARIABLES_COB}
+	${TESTS_ENVIRONMENT_VARIABLES_C}
 )

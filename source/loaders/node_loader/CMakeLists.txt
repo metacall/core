@@ -7,7 +7,7 @@ endif()
 # External dependencies
 #
 
-find_package(NodeJS 12)
+find_package(NodeJS)
 
 if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS libraries not found")

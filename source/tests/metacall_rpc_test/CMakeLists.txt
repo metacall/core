@@ -133,7 +133,7 @@ add_dependencies(${target}
 
 set(NodeJS_EXECUTABLE_ONLY ON)
 
-find_package(NodeJS 12)
+find_package(NodeJS)
 
 if(NOT NodeJS_FOUND)
 	message(STATUS "NodeJS executable not found, skipping RPC loader test")
