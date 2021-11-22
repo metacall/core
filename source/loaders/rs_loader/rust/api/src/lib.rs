@@ -29,9 +29,7 @@ extern "C" {
         singleton: *mut c_void,
     ) -> *mut c_void;
 
-    fn type_name(
-        t: *mut c_void,
-    ) -> *const c_char;
+    fn type_name(t: *mut c_void) -> *const c_char;
 
     fn function_create(
         name: *const c_char,
@@ -102,11 +100,7 @@ pub fn define_type(
     unsafe {
         let t = type_create(type_id, name.as_ptr(), type_impl, singleton);
 
-        loader_impl_type_define(
-            loader_impl,
-            type_name(t),
-            t,
-        )
+        loader_impl_type_define(loader_impl, type_name(t), t)
     };
 }
 
@@ -148,31 +142,23 @@ pub fn register_function(function_registeration: FunctionRegisteration) {
         unsafe {
             signature_set_return(
                 s,
-                loader_impl_type(
-                    function_registeration.loader_impl,
-                    ret.as_ptr(),
-                ),
+                loader_impl_type(function_registeration.loader_impl, ret.as_ptr()),
             );
         };
     }
 
-    for (index, param) in function_registeration
-        .input
-        .iter()
-        .enumerate()
-    {
-        let name = CString::new(param.name.clone()).expect("Failed to convert function parameter name to C string");
-        let t = CString::new(param.t.clone()).expect("Failed to convert function parameter type to C string");
+    for (index, param) in function_registeration.input.iter().enumerate() {
+        let name = CString::new(param.name.clone())
+            .expect("Failed to convert function parameter name to C string");
+        let t = CString::new(param.t.clone())
+            .expect("Failed to convert function parameter type to C string");
 
         unsafe {
             signature_set(
                 s,
                 index,
                 name.as_ptr(),
-                loader_impl_type(
-                    function_registeration.loader_impl,
-                    t.as_ptr(),
-                ),
+                loader_impl_type(function_registeration.loader_impl, t.as_ptr()),
             )
         };
     }

@@ -2,7 +2,7 @@ use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
 use api;
 
-use compiler::{file::FileRegistration/*, package::PackageRegistration*/};
+use compiler::file::FileRegistration;
 
 use std::fmt::Display;
 

@@ -23,12 +23,11 @@ pub extern "C" fn rs_loader_impl_discover(
                 if let Err(error) = file_registration.discover(loader_impl, ctx) {
                     return discover_on_error(error);
                 }
-            }
-            // LoadingMethod::Package(package_registration) => {
-            //     if let Err(error) = package_registration.discover(ctx) {
-            //         return discover_on_error(error);
-            //     }
-            // }
+            } // LoadingMethod::Package(package_registration) => {
+              //     if let Err(error) = package_registration.discover(ctx) {
+              //         return discover_on_error(error);
+              //     }
+              // }
         }
     }
 
