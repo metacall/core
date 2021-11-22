@@ -261,7 +261,7 @@ void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void 
 
 	if (ret_size <= sizeof(ffi_arg))
 	{
-		memcpy(ret, ret_val, ret_size);
+		memcpy(ret, value_data(ret_val), ret_size);
 	}
 	else
 	{
