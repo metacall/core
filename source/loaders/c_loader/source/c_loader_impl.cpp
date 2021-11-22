@@ -398,11 +398,12 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		{
 			log_write("metacall", LOG_LEVEL_ERROR,
 				"Type mismatch in when calling %s in argument number %" PRIuS
-				" (expected %s and received %s)."
+				" (expected %s of type %s and received %s)."
 				" Canceling call in order to avoid a segfault.",
 				function_name(func),
 				args_count,
 				type_name(t),
+				type_id_name(id),
 				type_id_name(value_id));
 			return NULL;
 		}
