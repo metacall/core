@@ -256,8 +256,20 @@ void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void 
 		values[args_count] = value_type_create(args[args_count], value_type_id_size(id), id);
 	}
 
-	/* TODO: Return value not working as expected */
-	*(void **)ret = metacallfv_s(f, values, args_size);
+	void *ret_val = metacallfv_s(f, values, args_size);
+	size_t ret_size = value_type_size(ret_val);
+
+	if (ret_size <= sizeof(ffi_arg))
+	{
+		memcpy(ret, ret_val, ret_size);
+	}
+	else
+	{
+		/* TODO: Not sure in the case that return size is greater than ffi_arg size */
+		ret = NULL;
+	}
+
+	value_type_destroy(ret_val);
 
 	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
@@ -409,9 +421,26 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		}
 	}
 
-	ffi_arg result;
+	type_id ret_id = type_index(signature_get_return(s));
+	size_t ret_size = value_type_id_size(ret_id);
+	void *ret = NULL;
 
-	ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, c_function->values);
+	/* TODO: This if is not correct because the sizes of strings, objects, etc are
+	relative to the pointer, not the value contents, we should review this */
+	if (ret_size <= sizeof(ffi_arg))
+	{
+		ffi_arg result;
+
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), &result, c_function->values);
+
+		ret = value_type_create(&result, ret_size, ret_id);
+	}
+	else
+	{
+		ret = value_type_create(NULL, ret_size, ret_id);
+
+		ffi_call(&c_function->cif, FFI_FN(c_function->address), value_data(ret), c_function->values);
+	}
 
 	/* Clear allocated closures if any */
 	for (c_loader_closure_value *closure : closures)
@@ -419,9 +448,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 		delete closure;
 	}
 
-	type_id ret_id = type_index(signature_get_return(s));
-
-	return value_type_create(&result, value_type_id_size(ret_id), ret_id);
+	return ret;
 }
 
 function_return function_c_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
