@@ -41,8 +41,6 @@
 
 #define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
 
-#define EXPERIMENTAL_ASYNC_ENABLED 0
-
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define DEBUG_ENABLED 1
 #else
@@ -137,7 +135,7 @@ struct loader_impl_py_type
 
 	/* Start asyncio required modules */
 	PyObject *asyncio_module;
-	PyObject *asyncio_isfuture;
+	PyObject *asyncio_future_type;
 	PyObject *asyncio_iscoroutinefunction;
 	PyObject *asyncio_run_coroutine_threadsafe;
 	PyObject *asyncio_wrap_future;
@@ -764,7 +762,7 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_NULL;
 	}
-	else if (py_impl->asyncio_isfuture && PyObject_CallFunctionObjArgs(py_impl->asyncio_isfuture, obj, NULL))
+	else if (PyObject_IsInstance(obj, py_impl->asyncio_future_type))
 	{
 		return TYPE_FUTURE;
 	}
@@ -1923,12 +1921,12 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 		return 2;
 	}
 
-	py_impl->asyncio_isfuture = PyObject_GetAttrString(py_impl->asyncio_module, "isfuture");
+	py_impl->asyncio_future_type = PyObject_GetAttrString(py_impl->asyncio_module, "Future");
 
-	if (py_impl->asyncio_isfuture == NULL)
+	if (py_impl->asyncio_future_type == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.isfuture(obj)");
-		goto error_after_asyncio_isfuture;
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.Future type");
+		goto error_after_asyncio_future_type;
 	}
 
 	py_impl->asyncio_iscoroutinefunction = PyObject_GetAttrString(py_impl->asyncio_module, "iscoroutinefunction");
@@ -1987,19 +1985,19 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 	PyObject *thread_name_str = PyUnicode_FromString("Metacall asyncio event loop");
 	PyObject *thread_object = PyObject_GetAttrString(py_impl->threading_module, "Thread");
 
-	PyObject *emptyArgs = PyTuple_New(0);
+	PyObject *empty_args = PyTuple_New(0);
 
 	PyObject *py_impl_capsule = PyCapsule_New(py_impl, NULL, NULL);
 
-	PyObject *customFuncArgsTuple = PyTuple_New(1);
-	PyTuple_SET_ITEM(customFuncArgsTuple, 0, py_impl_capsule);
+	PyObject *custom_func_args_tuple = PyTuple_New(1);
+	PyTuple_SET_ITEM(custom_func_args_tuple, 0, py_impl_capsule);
 
 	PyObject *kargs = PyDict_New();
 	PyDict_SetItemString(kargs, "target", pyobj_background_thread_create_event_loop);
 	PyDict_SetItemString(kargs, "name", thread_name_str);
-	PyDict_SetItemString(kargs, "args", customFuncArgsTuple);
+	PyDict_SetItemString(kargs, "args", custom_func_args_tuple);
 
-	PyObject *thread = PyObject_Call(thread_object, emptyArgs, kargs);
+	PyObject *thread = PyObject_Call(thread_object, empty_args, kargs);
 	if (PyErr_Occurred() != NULL)
 	{
 		py_loader_impl_error_print(py_impl);
@@ -2019,8 +2017,8 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 	}
 
 	Py_DECREF(kargs);
-	Py_DECREF(customFuncArgsTuple);
-	Py_DECREF(emptyArgs);
+	Py_DECREF(custom_func_args_tuple);
+	Py_DECREF(empty_args);
 	Py_DECREF(thread_name_str);
 
 error_after_asyncio_wrap_future:
@@ -2029,8 +2027,8 @@ error_after_asyncio_run_coroutine_threadsafe:
 	Py_DECREF(py_impl->asyncio_run_coroutine_threadsafe);
 error_after_asyncio_iscoroutinefunction:
 	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
-error_after_asyncio_isfuture:
-	Py_DECREF(py_impl->asyncio_isfuture);
+error_after_asyncio_future_type:
+	Py_DECREF(py_impl->asyncio_future_type);
 
 	return 0;
 }
@@ -2391,7 +2389,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_import;
 	}
 
-#if EXPERIMENTAL_ASYNC_ENABLED == 1
 	if (py_loader_impl_initialize_threading_module(impl, py_impl) != 0)
 	{
 		goto error_after_import;
@@ -2401,16 +2398,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	{
 		goto error_after_threading_module;
 	}
-#else
-	py_impl->asyncio_module = NULL;
-	py_impl->asyncio_isfuture = NULL;
-	py_impl->asyncio_iscoroutinefunction = NULL;
-	py_impl->asyncio_run_coroutine_threadsafe = NULL;
-	py_impl->asyncio_wrap_future = NULL;
-	py_impl->asyncio_loop = NULL;
-	py_impl->py_task_callback_handler = NULL;
-	py_impl->threading_module = NULL;
-#endif
 
 	PyGILState_Release(gstate);
 
@@ -2421,10 +2408,8 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	return py_impl;
 
-#if EXPERIMENTAL_ASYNC_ENABLED == 1
 error_after_threading_module:
 	Py_DECREF(py_impl->threading_module);
-#endif
 error_after_import:
 	Py_DECREF(py_impl->import_module);
 	Py_DECREF(py_impl->import_function);
@@ -3809,7 +3794,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DECREF(py_impl->import_function);
 	Py_DECREF(py_impl->import_module);
 
-	Py_XDECREF(py_impl->asyncio_isfuture);
+	Py_XDECREF(py_impl->asyncio_future_type);
 	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
 	Py_XDECREF(py_impl->asyncio_run_coroutine_threadsafe);
 	Py_XDECREF(py_impl->asyncio_wrap_future);
