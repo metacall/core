@@ -41,8 +41,11 @@ TEST_F(metacall_python_port_callback_test, DefaultConstructor)
 		"from metacall import metacall_load_from_file, metacall\n"
 		"def sum_cb(a: int, b: int) -> int:\n"
 		"	return a + b\n"
+		"def v_cb():\n"
+		"	print('hello world')\n"
 		"def test() -> int:\n"
 		"	metacall_load_from_file('c', ['cbks.c'])\n"
+		"	metacall('c_void_callback', v_cb)\n"
 		"	return metacall('c_long_callback', sum_cb)\n";
 
 	ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));

@@ -617,7 +617,7 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 				return TYPE_STRING;
 			}
 			/* Support for function pointers */
-			else if (pointee_type.kind == CXType_FunctionProto)
+			else if (pointee_type.kind == CXType_FunctionProto || pointee_type.kind == CXType_FunctionNoProto)
 			{
 				return c_loader_impl_clang_type(impl, cursor, pointee_type, impl_type);
 			}
@@ -625,7 +625,8 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 			return TYPE_PTR;
 		}
 
-		case CXType_FunctionProto: {
+		case CXType_FunctionProto:
+		case CXType_FunctionNoProto: {
 			c_loader_closure_type *closure_type = new c_loader_closure_type(impl);
 
 			if (closure_type != nullptr)
