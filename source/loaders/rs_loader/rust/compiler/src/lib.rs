@@ -2,26 +2,26 @@
 #![feature(once_cell)]
 
 extern crate rustc_ast;
+extern crate rustc_ast_pretty;
+extern crate rustc_attr;
 extern crate rustc_driver;
 extern crate rustc_error_codes;
 extern crate rustc_errors;
+extern crate rustc_feature;
 extern crate rustc_hash;
-extern crate rustc_attr;
 extern crate rustc_hir;
 extern crate rustc_interface;
 extern crate rustc_session;
 extern crate rustc_span;
-extern crate rustc_feature;
-extern crate rustc_ast_pretty;
 
+use rustc_ast::{visit, NodeId};
+use rustc_interface::{interface::Compiler, Config, Queries};
 use rustc_session::config;
 use rustc_session::config::CrateType;
 use rustc_span::source_map;
-use rustc_interface::{Config, Queries, interface::Compiler};
-use rustc_ast::{visit, NodeId};
 use rustc_span::Span;
 
-use std::{sync, path::PathBuf};
+use std::{path::PathBuf, sync};
 
 pub mod file;
 pub mod package;
@@ -38,10 +38,7 @@ impl Clone for SourceInput {
     fn clone(&self) -> Self {
         match &self.0 {
             config::Input::File(path) => SourceInput(config::Input::File(path.clone())),
-            config::Input::Str {
-                name,
-                input,
-            } => SourceInput(config::Input::Str {
+            config::Input::Str { name, input } => SourceInput(config::Input::Str {
                 name: name.clone(),
                 input: input.clone(),
             }),
@@ -56,13 +53,8 @@ pub struct SourceImpl {
 }
 
 pub enum Source {
-    File {
-        path: PathBuf,
-    },
-    Memory {
-        name: String,
-        code: String,
-    },
+    File { path: PathBuf },
+    Memory { name: String, code: String },
 }
 
 impl Source {
@@ -87,9 +79,7 @@ impl Source {
             path.clone()
         };
 
-        let output_path = |dir: &PathBuf, name: &PathBuf| {
-            input_path(dir, &library_name(name))
-        };
+        let output_path = |dir: &PathBuf, name: &PathBuf| input_path(dir, &library_name(name));
 
         match source {
             Source::File { path } => {
@@ -101,7 +91,7 @@ impl Source {
                     input_path: input_path(&dir, &name),
                     output: output_path(&dir, &name),
                 }
-            },
+            }
             Source::Memory { name, code } => {
                 let dir = PathBuf::from(std::env::temp_dir());
                 let name_path = PathBuf::from(name.clone());
@@ -114,7 +104,7 @@ impl Source {
                     input_path: input_path(&dir, &name_path),
                     output: output_path(&dir, &name_path),
                 }
-            },
+            }
         }
     }
 }
@@ -139,7 +129,9 @@ fn compiler_sys_root() -> Option<PathBuf> {
     // - compile-time environment
     //    - SYSROOT
     //    - RUSTUP_HOME, MULTIRUST_HOME, RUSTUP_TOOLCHAIN, MULTIRUST_TOOLCHAIN
-    std::env::var("SYSROOT").ok().map(PathBuf::from)
+    std::env::var("SYSROOT")
+        .ok()
+        .map(PathBuf::from)
         .or_else(|| {
             let home = std::env::var("RUSTUP_HOME")
                 .or_else(|_| std::env::var("MULTIRUST_HOME"))
@@ -175,7 +167,7 @@ fn compiler_source() -> Option<PathBuf> {
             } else {
                 return None;
             }
-        },
+        }
         _ => None,
     }
 }
@@ -227,9 +219,7 @@ struct FunctionVisitor {
 
 impl FunctionVisitor {
     fn new() -> FunctionVisitor {
-        FunctionVisitor {
-            functions: vec![],
-        }
+        FunctionVisitor { functions: vec![] }
     }
 
     fn register(&mut self, name: String, decl: &rustc_ast::ptr::P<rustc_ast::ast::FnDecl>) {
@@ -239,12 +229,14 @@ impl FunctionVisitor {
                 rustc_ast::ast::FnRetTy::Default(_) => None,
                 rustc_ast::ast::FnRetTy::Ty(ty) => Some(FunctionType::new(&ty)),
             },
-            args: decl.inputs.iter().map(|param| {
-                FunctionParameter {
+            args: decl
+                .inputs
+                .iter()
+                .map(|param| FunctionParameter {
                     name: rustc_ast_pretty::pprust::pat_to_string(&param.pat.clone().into_inner()),
                     t: FunctionType::new(&param.ty),
-                }
-            }).collect(),
+                })
+                .collect(),
         });
     }
 }
@@ -257,11 +249,13 @@ impl<'a> visit::Visitor<'a> for FunctionVisitor {
                 // TODO: https://docs.rs/rustc-ap-rustc_ast/677.0.0/rustc_ap_rustc_ast/ast/struct.FnHeader.html
                 // Asyncness, constness, extern "C"
                 match visibility.kind {
-                    rustc_ast::ast::VisibilityKind::Public => self.register(indent.name.to_string(), &sig.decl),
-                    _ => ()
+                    rustc_ast::ast::VisibilityKind::Public => {
+                        self.register(indent.name.to_string(), &sig.decl)
+                    }
+                    _ => (),
                 }
-            },
-            _ => ()
+            }
+            _ => (),
         }
 
         visit::walk_fn(self, fk, s)
@@ -292,10 +286,13 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
 
     fn after_analysis<'tcx>(
         &mut self,
-        compiler: &Compiler,
+        _compiler: &Compiler,
         queries: &'tcx Queries<'tcx>,
     ) -> rustc_driver::Compilation {
-        let krate = queries.parse().expect("no Result<Query<Crate>> found").take();
+        let krate = queries
+            .parse()
+            .expect("no Result<Query<Crate>> found")
+            .take();
 
         // let crate_name = match rustc_attr::find_crate_name(compiler.session(), &krate.attrs) {
         //     Some(name) => name.to_string(),
@@ -328,7 +325,9 @@ impl std::io::Write for DiagnosticSink {
 
 const BUG_REPORT_URL: &str = "https://github.com/metacall/core/issues/new";
 
-static ICE_HOOK: std::lazy::SyncLazy<Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>> = std::lazy::SyncLazy::new(|| {
+static ICE_HOOK: std::lazy::SyncLazy<
+    Box<dyn Fn(&std::panic::PanicInfo<'_>) + Sync + Send + 'static>,
+> = std::lazy::SyncLazy::new(|| {
     let hook = std::panic::take_hook();
     std::panic::set_hook(Box::new(|info| report_ice(info, BUG_REPORT_URL)));
     hook
@@ -384,7 +383,6 @@ fn run_compiler(
     diagnostics_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
     errors_buffer: &sync::Arc<sync::Mutex<Vec<u8>>>,
 ) -> Result<(), rustc_errors::ErrorReported> {
-
     let mut config = Config {
         // Command line options
         opts: config::Options {
@@ -403,7 +401,7 @@ fn run_compiler(
             diagnostics_buffer.clone(),
         ))),
         // Set to capture stderr output during compiler execution
-        stderr: Some(errors_buffer.clone()),                    // Option<Arc<Mutex<Vec<u8>>>>
+        stderr: Some(errors_buffer.clone()), // Option<Arc<Mutex<Vec<u8>>>>
         lint_caps: rustc_hash::FxHashMap::default(), // FxHashMap<lint::LintId, lint::Level>
         // This is a callback from the driver that is called when [`ParseSess`] is created.
         parse_sess_created: None, //Option<Box<dyn FnOnce(&mut ParseSess) + Send>>
@@ -446,9 +444,10 @@ fn run_compiler(
 
             queries.global_ctxt()?;
 
-            queries.global_ctxt()?.peek_mut().enter(|tcx| {
-                tcx.analysis(())
-            })?;
+            queries
+                .global_ctxt()?
+                .peek_mut()
+                .enter(|tcx| tcx.analysis(()))?;
 
             if callbacks.after_analysis(compiler, queries) == rustc_driver::Compilation::Stop {
                 return early_exit();
@@ -478,19 +477,18 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let errors_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
 
     match rustc_driver::catch_fatal_errors(|| {
-        run_compiler(
-            &mut callbacks,
-            &diagnostics_buffer,
-            &errors_buffer,
-        )
-    }).and_then(|result| result) {
+        run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
+    })
+    .and_then(|result| result)
+    {
         Ok(()) => Ok(CompilerState {
             output: callbacks.source.output.clone(),
             functions: callbacks.functions.clone(),
         }),
         Err(err) => {
             // Read buffered diagnostics
-            let diagnostics = String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
+            let diagnostics =
+                String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
             eprintln!("{}", diagnostics);
 
             // Read buffered errors
@@ -514,15 +512,14 @@ mod tests {
     static INIT: Once = Once::new();
 
     fn run_test<T>(test: T) -> ()
-        where T: FnOnce() -> () + std::panic::UnwindSafe
+    where
+        T: FnOnce() -> () + std::panic::UnwindSafe,
     {
         INIT.call_once(|| {
             // Initialize the compiler
             initialize();
         });
-        let result = std::panic::catch_unwind(|| {
-            test()
-        });
+        let result = std::panic::catch_unwind(|| test());
         assert!(result.is_ok())
     }
 
@@ -531,7 +528,9 @@ mod tests {
         run_test(|| {
             match compile(Source::new(Source::Memory {
                 name: String::from("test.rs"),
-                code: String::from("#[no_mangle]\npub extern \"C\" fn add(a: i32, b: i32) -> i32 { a + b }"),
+                code: String::from(
+                    "#[no_mangle]\npub extern \"C\" fn add(a: i32, b: i32) -> i32 { a + b }",
+                ),
             })) {
                 Err(comp_err) => assert!(false, "compilation failed: {}", comp_err.errors),
                 Ok(comp_state) => assert!(comp_state.output.exists()),
