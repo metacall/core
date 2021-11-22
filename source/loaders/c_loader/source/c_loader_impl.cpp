@@ -31,6 +31,8 @@
 
 #include <log/log.h>
 
+#include <metacall/metacall.h>
+
 #include <iterator>
 #include <map>
 #include <new>
@@ -88,6 +90,27 @@ static ffi_type *c_loader_impl_ffi_type(type_id id);
 /* Retrieve the type from the Clang type */
 static type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_type);
 
+/* Convert CXString to std::string */
+static std::string c_loader_impl_cxstring_to_str(const CXString &s);
+
+/* Obtain signature from parameters (function pointers) for the closures */
+static enum CXChildVisitResult c_loader_impl_visitor(CXCursor cursor, CXCursor parent, CXClientData client_data);
+
+/* Trampoline of FFI in order to call to the MetaCall function */
+static void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void *user_data);
+
+/* Iterator for the visitor function */
+class c_loader_closure_visitor
+{
+public:
+	loader_impl impl;
+	std::vector<type> args;
+
+	c_loader_closure_visitor(loader_impl impl) :
+		impl(impl) {}
+	~c_loader_closure_visitor() {}
+};
+
 /* Interface for implementing polymorphic C types */
 class c_loader_type_impl
 {
@@ -113,25 +136,22 @@ public:
 
 	int prepare(CXCursor cursor, CXType cx_type)
 	{
-		auto result_type = clang_getResultType(cx_type);
-		type ret_type = c_loader_impl_discover_type(impl, cursor, result_type);
-		ret = c_loader_impl_ffi_type(type_index(ret_type));
+		c_loader_closure_visitor closure_visitor(impl);
 
-		int num_args = clang_Cursor_getNumArguments(cursor);
-		args_size = num_args < 0 ? (size_t)0 : (size_t)num_args;
-		args = new ffi_type *[args_size];
-
-		if (args == nullptr)
+		if (clang_visitChildren(cursor, &c_loader_impl_visitor, static_cast<CXClientData>(&closure_visitor)) != 0)
 		{
 			return 1;
 		}
 
-		for (size_t arg = 0; arg < args_size; ++arg)
-		{
-			auto arg_type = clang_getArgType(cx_type, arg);
-			type t = c_loader_impl_discover_type(impl, cursor, arg_type);
+		auto result_type = clang_getResultType(cx_type);
+		type ret_type = c_loader_impl_discover_type(impl, cursor, result_type);
 
-			args[arg] = c_loader_impl_ffi_type(type_index(t));
+		ret = c_loader_impl_ffi_type(type_index(ret_type));
+		args = new ffi_type *[closure_visitor.args.size()];
+
+		for (type t : closure_visitor.args)
+		{
+			args[args_size++] = c_loader_impl_ffi_type(type_index(t));
 		}
 
 		return 0;
@@ -146,20 +166,14 @@ public:
 	}
 };
 
-static void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void *user_data)
-{
-	function f = static_cast<function>(user_data);
-	//*(ffi_arg *)ret = fputs(*(char **)args[0], (FILE *)stream);
-
-	printf("TESTING FUNCTION CLOSURE\n");
-}
-
+/* Instance of cle closure type */
 class c_loader_closure_value
 {
 private:
 	ffi_cif cif;
 	ffi_closure *closure;
 	void *address;
+	void **values;
 	c_loader_closure_type *closure_type;
 
 public:
@@ -183,7 +197,7 @@ public:
 			return NULL;
 		}
 
-		return address;
+		return static_cast<void *>(&address);
 	}
 
 	~c_loader_closure_value()
@@ -194,6 +208,64 @@ public:
 		}
 	}
 };
+
+std::string c_loader_impl_cxstring_to_str(const CXString &s)
+{
+	std::string result = clang_getCString(s);
+	clang_disposeString(s);
+	return result;
+}
+
+enum CXChildVisitResult c_loader_impl_visitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
+{
+	c_loader_closure_visitor *closure_visitor = static_cast<c_loader_closure_visitor *>(client_data);
+
+	CXCursorKind kind = clang_getCursorKind(cursor);
+	CXType arg_type = clang_getCursorType(cursor);
+
+	if (kind == CXCursor_ParmDecl)
+	{
+		type t = c_loader_impl_discover_type(closure_visitor->impl, cursor, arg_type);
+
+		if (t == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to parse type %s", clang_getCString(clang_getTypeSpelling(arg_type)));
+			return CXChildVisit_Break;
+		}
+
+		closure_visitor->args.push_back(t);
+	}
+
+	return CXChildVisit_Continue;
+}
+
+void c_loader_impl_function_closure(ffi_cif *cif, void *ret, void *args[], void *user_data)
+{
+	function f = static_cast<function>(user_data);
+	signature s = function_signature(f);
+	size_t args_size = signature_count(s);
+	void **values = new void *[args_size];
+
+	(void)cif;
+
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
+	{
+		type t = signature_get_type(s, args_count);
+		type_id id = type_index(t);
+
+		values[args_count] = value_type_create(args[args_count], value_type_id_size(id), id);
+	}
+
+	/* TODO: Return value not working as expected */
+	*(void **)ret = metacallfv_s(f, values, args_size);
+
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
+	{
+		value_type_destroy(values[args_count]);
+	}
+
+	delete[] values;
+}
 
 static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 {
@@ -304,7 +376,7 @@ function_return function_c_interface_invoke(function func, function_impl impl, f
 	loader_impl_c_function c_function = static_cast<loader_impl_c_function>(impl);
 	std::vector<c_loader_closure_value *> closures;
 
-	for (size_t args_count = 0; args_count < args_size; args_count++)
+	for (size_t args_count = 0; args_count < args_size; ++args_count)
 	{
 		type t = signature_get_type(s, args_count);
 		type_id id = type_index(t);
@@ -439,7 +511,7 @@ int c_loader_impl_initialize_types(loader_impl impl)
 		{ TYPE_DOUBLE, "double" },
 		{ TYPE_INVALID, "void" }
 
-		// TODO: Do more types (and the unsigned versions too?)
+		/* TODO: Do more types (and the unsigned versions too?) */
 	};
 
 	size_t size = sizeof(type_id_name_pair) / sizeof(type_id_name_pair[0]);
@@ -499,13 +571,6 @@ int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path
 	return 0;
 }
 
-static std::string c_loader_impl_cxstring_to_str(const CXString &s)
-{
-	std::string result = clang_getCString(s);
-	clang_disposeString(s);
-	return result;
-}
-
 static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXType cx_type, c_loader_type_impl **impl_type)
 {
 	switch (cx_type.kind)
@@ -545,7 +610,7 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 				else
 				{
 					log_write("metacall", LOG_LEVEL_ERROR,
-						"Function closure from function '%s' has failed to be prepared",
+						"Function closure from parameter '%s' has failed to be prepared",
 						c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor)).c_str());
 					delete closure_type;
 				}
@@ -588,8 +653,7 @@ static type_id c_loader_impl_clang_type(loader_impl impl, CXCursor cursor, CXTyp
 		case CXType_Typedef:
 			return c_loader_impl_clang_type(impl, cursor, clang_getCanonicalType(cx_type), impl_type);
 
-			/* TODO: Add more types */
-
+		/* TODO: Add more types */
 		default:
 			return TYPE_INVALID;
 	}
@@ -659,7 +723,7 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 		auto arg_cursor = clang_Cursor_getArgument(cursor, args_count);
 		auto arg_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(arg_cursor));
 		auto arg_type = clang_getArgType(cursor_type, args_count);
-		type t = c_loader_impl_discover_type(impl, cursor, arg_type);
+		type t = c_loader_impl_discover_type(impl, arg_cursor, arg_type);
 
 		signature_set(s, args_count, arg_name.c_str(), t);
 		c_function->arg_types[args_count] = c_loader_impl_ffi_type(type_index(t));
@@ -680,7 +744,9 @@ static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCurs
 	c_loader_impl_discover_visitor_data visitor_data = static_cast<c_loader_impl_discover_visitor_data>(data);
 
 	if (clang_Location_isFromMainFile(clang_getCursorLocation(cursor)) == 0)
+	{
 		return CXChildVisit_Continue;
+	}
 
 	CXCursorKind kind = clang_getCursorKind(cursor);
 
