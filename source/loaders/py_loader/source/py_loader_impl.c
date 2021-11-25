@@ -1396,35 +1396,37 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 
 	Py_DECREF(result);
 
+	value ret = NULL;
+
 	if (PyErr_Occurred() != NULL)
 	{
 		loader_impl_py py_impl = loader_impl_get(callback_state->impl);
 
 		py_loader_impl_error_print(py_impl);
 
-		/* TODO: Handle CancelledError or any exceptions raised by the user or propagate them up?? */
-
 		PyGILState_Release(gstate);
-		callback_state->reject_callback(v, callback_state->context);
+		ret = callback_state->reject_callback(v, callback_state->context);
 		gstate = PyGILState_Ensure();
-
-		Py_DECREF(callback_state->coroutine);
-		free(callback_state);
-
-		Py_RETURN_NONE;
 	}
 	else
 	{
 		PyGILState_Release(gstate);
-		value ret = callback_state->resolve_callback(v, callback_state->context);
+		ret = callback_state->resolve_callback(v, callback_state->context);
 		gstate = PyGILState_Ensure();
+	}
 
-		PyObject *ret_py = py_loader_impl_value_to_capi(callback_state->impl, value_type_id(ret), ret);
+	loader_impl impl = callback_state->impl;
 
-		Py_DECREF(callback_state->coroutine);
-		free(callback_state);
+	Py_DECREF(callback_state->coroutine);
+	free(callback_state);
 
-		return ret_py;
+	if (ret == NULL)
+	{
+		Py_RETURN_NONE;
+	}
+	else
+	{
+		return py_loader_impl_value_to_capi(impl, value_type_id(ret), ret);
 	}
 }
 
