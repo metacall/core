@@ -46,13 +46,14 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 		/* TODO: Create another test using Curio library? */
 		const char buffer[] =
 			"import asyncio\n"
+			"import threading\n"
 			"import sys\n"
 
-			"print('sync message')\n"
+			"print('sync message', threading.current_thread().ident)\n"
 			"sys.stdout.flush()\n"
 
 			"async def my_async_fn(n):\n"
-			"\tprint('inside my sleep async', n)\n"
+			"\tprint('inside my sleep async', threading.current_thread().ident, ':', n)\n"
 			"\tsys.stdout.flush()\n"
 			"\treturn 58\n";
 
