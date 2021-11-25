@@ -3799,6 +3799,8 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy children loaders */
 	loader_unload_children(impl, 0);
 
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
 	/* Stop event loop for async calls */
 	PyObject *args_tuple = PyTuple_New(0);
 	PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
@@ -3839,6 +3841,8 @@ int py_loader_impl_destroy(loader_impl impl)
 		Py_DECREF(py_impl->gc_module);
 	}
 #endif
+
+	PyGILState_Release(gstate);
 
 	int result = py_loader_impl_finalize(py_impl);
 
