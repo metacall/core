@@ -2146,6 +2146,7 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"	loop.run_forever()\n"
 		"	loop.run_until_complete(loop.shutdown_asyncgens())\n"
 		"	loop.stop()\n"
+		"	loop.close()\n"
 		"def start_background_loop():\n"
 		"	loop = asyncio.new_event_loop()\n"
 		"	t = Thread(target=background_loop, name='MetaCall asyncio event loop', args=(loop,), daemon=False)\n"
