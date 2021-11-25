@@ -135,9 +135,9 @@ struct loader_impl_py_type
 
 	/* Start asyncio required modules */
 	PyObject *asyncio_module;
-	PyObject *asyncio_future_type;
 	PyObject *asyncio_iscoroutinefunction;
 	PyObject *asyncio_loop;
+	PyObject *thread_background_future_check;
 	PyObject *thread_background_module;
 	PyObject *thread_background_start;
 	PyObject *thread_background_send;
@@ -163,7 +163,7 @@ typedef struct loader_impl_py_function_type_invoke_state_type
 
 typedef struct loader_impl_py_await_invoke_callback_state_type
 {
-	loader_impl_py py_impl;
+	loader_impl impl;
 	function_resolve_callback resolve_callback;
 	function_reject_callback reject_callback;
 	void *context;
@@ -699,6 +699,35 @@ method_interface py_method_interface_singleton(void)
 	return &py_method_interface;
 }
 
+int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
+{
+	PyObject *args_tuple = PyTuple_New(1);
+
+	Py_INCREF(obj);
+
+	PyTuple_SetItem(args_tuple, 0, obj);
+
+	PyObject *result = PyObject_Call(py_impl->thread_background_future_check, args_tuple, NULL);
+
+	Py_XDECREF(args_tuple);
+
+	if (result == NULL)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+		}
+
+		return 0;
+	}
+
+	int ret = PyObject_IsTrue(result);
+
+	Py_DECREF(result);
+
+	return ret;
+}
+
 type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
@@ -757,7 +786,7 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_NULL;
 	}
-	else if (PyObject_IsInstance(obj, py_impl->asyncio_future_type))
+	else if (py_loader_impl_check_future(py_impl, obj) == 1)
 	{
 		return TYPE_FUTURE;
 	}
@@ -1362,16 +1391,19 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 	PyObject *result = PyObject_CallMethodObjArgs(pyfuture, result_str, NULL);
 	Py_DECREF(result_str);
 
-	type_id id = py_loader_impl_capi_to_value_type((loader_impl)callback_state->py_impl, result);
-	value v = py_loader_impl_capi_to_value((loader_impl)callback_state->py_impl, result, id);
+	type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, result);
+	value v = py_loader_impl_capi_to_value(callback_state->impl, result, id);
 
 	Py_DECREF(result);
 
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(callback_state->py_impl);
+		loader_impl_py py_impl = loader_impl_get(callback_state->impl);
+
+		py_loader_impl_error_print(py_impl);
 
 		/* TODO: Handle CancelledError or any exceptions raised by the user or propagate them up?? */
+
 		PyGILState_Release(gstate);
 		callback_state->reject_callback(v, callback_state->context);
 		gstate = PyGILState_Ensure();
@@ -1387,7 +1419,7 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 		value ret = callback_state->resolve_callback(v, callback_state->context);
 		gstate = PyGILState_Ensure();
 
-		PyObject *ret_py = py_loader_impl_value_to_capi((loader_impl)callback_state->py_impl, value_type_id(ret), ret);
+		PyObject *ret_py = py_loader_impl_value_to_capi(callback_state->impl, value_type_id(ret), ret);
 
 		Py_DECREF(callback_state->coroutine);
 		free(callback_state);
@@ -1548,7 +1580,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 	callback_state->resolve_callback = resolve_callback;
 	callback_state->reject_callback = reject_callback;
-	callback_state->py_impl = py_impl;
+	callback_state->impl = impl;
 	callback_state->context = context;
 	callback_state->coroutine = coroutine;
 
@@ -1589,7 +1621,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 		if (ret_type == NULL)
 		{
-			id = py_loader_impl_capi_to_value_type((loader_impl)py_impl, pyfuture);
+			id = py_loader_impl_capi_to_value_type(py_func->impl, pyfuture);
 		}
 		else
 		{
@@ -1893,20 +1925,12 @@ int py_loader_impl_initialize_asyncio_module(loader_impl_py py_impl)
 		return 2;
 	}
 
-	py_impl->asyncio_future_type = PyObject_GetAttrString(py_impl->asyncio_module, "Future");
-
-	if (py_impl->asyncio_future_type == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.Future type");
-		goto error_after_asyncio_module;
-	}
-
 	py_impl->asyncio_iscoroutinefunction = PyObject_GetAttrString(py_impl->asyncio_module, "iscoroutinefunction");
 
-	if (py_impl->asyncio_iscoroutinefunction == NULL)
+	if (py_impl->asyncio_iscoroutinefunction == NULL || !PyCallable_Check(py_impl->asyncio_iscoroutinefunction))
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error getting asyncio.iscoroutinefunction(func)");
-		goto error_after_asyncio_future_type;
+		goto error_after_asyncio_module;
 	}
 
 	/* Wrap the C callback around a PyObject so that the interpreter knows how to call back as if it was python code */
@@ -1942,8 +1966,6 @@ error_after_py_task_callback_handler:
 	Py_DECREF(py_impl->py_task_callback_handler);
 error_after_asyncio_iscoroutinefunction:
 	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
-error_after_asyncio_future_type:
-	Py_DECREF(py_impl->asyncio_future_type);
 error_after_asyncio_module:
 	Py_DECREF(py_impl->asyncio_module);
 
@@ -2110,21 +2132,31 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 	static const char thread_background_module_str[] =
 		"import asyncio\n"
 		"from threading import Thread\n"
+		"from threading import Event\n"
+		"class ThreadLoop:\n"
+		"	def __init__(self, loop, t):\n"
+		"		self.loop = loop\n"
+		"		self.t = t\n"
+		"def future_check(f):\n"
+		"	return asyncio.isfuture(f)\n"
 		"def background_loop(loop):\n"
 		"	asyncio.set_event_loop(loop)\n"
 		"	loop.run_forever()\n"
+		"	loop.run_until_complete(loop.shutdown_asyncgens())\n"
+		"	loop.stop()\n"
 		"def start_background_loop():\n"
 		"	loop = asyncio.new_event_loop()\n"
 		"	t = Thread(target=background_loop, name='MetaCall asyncio event loop', args=(loop,), daemon=False)\n"
 		"	t.start()\n"
-		"	return loop\n"
-		"def send_background_loop(loop, coro, callback, capsule):\n"
-		"	task = asyncio.run_coroutine_threadsafe(coro, loop)\n"
+		"	return ThreadLoop(loop, t)\n"
+		"def send_background_loop(tl, coro, callback, capsule):\n"
+		"	task = asyncio.run_coroutine_threadsafe(coro, tl.loop)\n"
 		"	task.__metacall_capsule = capsule\n"
 		"	task.add_done_callback(callback)\n"
-		"	return asyncio.wrap_future(task, loop=loop)\n"
-		"def stop_background_loop(loop):\n"
-		"	loop.call_soon_threadsafe(loop.stop)\n";
+		"	return asyncio.wrap_future(task, loop=tl.loop)\n"
+		"def stop_background_loop(tl):\n"
+		"	tl.loop.call_soon_threadsafe(tl.loop.stop)\n"
+		"	tl.t.join()\n";
 
 	/* How to use the module: */
 	/*
@@ -2159,45 +2191,56 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		goto error_thread_background_compile;
 	}
 
+	py_impl->thread_background_future_check = PyObject_GetAttrString(py_impl->thread_background_module, "future_check");
+
+	if (py_impl->thread_background_future_check == NULL || !PyCallable_Check(py_impl->thread_background_future_check))
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting future_check function");
+		goto error_thread_background_future_check;
+	}
+
 	py_impl->thread_background_start = PyObject_GetAttrString(py_impl->thread_background_module, "start_background_loop");
 
 	if (py_impl->thread_background_start == NULL || !PyCallable_Check(py_impl->thread_background_start))
 	{
-		if (PyErr_Occurred() != NULL)
-		{
-			goto error_thread_background_start;
-		}
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting start_background_loop function");
+		goto error_thread_background_start;
 	}
 
 	py_impl->thread_background_send = PyObject_GetAttrString(py_impl->thread_background_module, "send_background_loop");
 
 	if (py_impl->thread_background_send == NULL || !PyCallable_Check(py_impl->thread_background_send))
 	{
-		if (PyErr_Occurred() != NULL)
-		{
-			goto error_thread_background_send;
-		}
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting send_background_loop function");
+		goto error_thread_background_send;
 	}
 
 	py_impl->thread_background_stop = PyObject_GetAttrString(py_impl->thread_background_module, "stop_background_loop");
 
 	if (py_impl->thread_background_stop == NULL || !PyCallable_Check(py_impl->thread_background_stop))
 	{
-		if (PyErr_Occurred() != NULL)
-		{
-			goto error_thread_background_stop;
-		}
+		log_write("metacall", LOG_LEVEL_ERROR, "Error getting stop_background_loop function");
+		goto error_thread_background_stop;
 	}
 
 	return 0;
+
 error_thread_background_stop:
-	Py_XDECREF(py_impl->thread_background_send);
+	Py_XDECREF(py_impl->thread_background_stop);
 error_thread_background_send:
-	Py_XDECREF(py_impl->thread_background_start);
+	Py_XDECREF(py_impl->thread_background_send);
 error_thread_background_start:
-	Py_XDECREF(py_impl->thread_background_module);
+	Py_XDECREF(py_impl->thread_background_start);
+error_thread_background_future_check:
+	Py_XDECREF(py_impl->thread_background_future_check);
 error_thread_background_compile:
-	py_loader_impl_error_print(py_impl);
+	Py_XDECREF(py_impl->thread_background_module);
+
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+	}
+
 	return 1;
 }
 
@@ -3802,7 +3845,9 @@ int py_loader_impl_destroy(loader_impl impl)
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	/* Stop event loop for async calls */
-	PyObject *args_tuple = PyTuple_New(0);
+	PyObject *args_tuple = PyTuple_New(1);
+	Py_INCREF(py_impl->asyncio_loop);
+	PyTuple_SetItem(args_tuple, 0, py_impl->asyncio_loop);
 	PyObject_Call(py_impl->thread_background_stop, args_tuple, NULL);
 	Py_XDECREF(args_tuple);
 
@@ -3822,10 +3867,10 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DECREF(py_impl->import_function);
 	Py_DECREF(py_impl->import_module);
 
-	Py_XDECREF(py_impl->asyncio_future_type);
 	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
 	Py_XDECREF(py_impl->asyncio_loop);
 	Py_XDECREF(py_impl->asyncio_module);
+	Py_XDECREF(py_impl->thread_background_future_check);
 	Py_XDECREF(py_impl->thread_background_module);
 	Py_XDECREF(py_impl->thread_background_start);
 	Py_XDECREF(py_impl->thread_background_send);
