@@ -1506,30 +1506,13 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	PyObject *coroutine = PyObject_CallObject(py_func->func, tuple_args);
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(py_impl);
-		PyGILState_Release(gstate);
-		return NULL;
+		goto error;
 	}
 
 	pyfuture = PyObject_CallFunctionObjArgs(py_impl->asyncio_run_coroutine_threadsafe, coroutine, py_impl->asyncio_loop, NULL);
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(py_impl);
-		PyGILState_Release(gstate);
-		return NULL;
-	}
-
-	/* When the future is done, automatically call the callback */
-	PyObject *add_done_callback_str = PyUnicode_FromString("add_done_callback");
-	PyObject_CallMethodObjArgs(pyfuture, add_done_callback_str, py_impl->py_task_callback_handler, NULL);
-	Py_DECREF(add_done_callback_str);
-
-	pyfuture = PyObject_CallFunctionObjArgs(py_impl->asyncio_wrap_future, pyfuture, NULL);
-	if (PyErr_Occurred() != NULL)
-	{
-		py_loader_impl_error_print(py_impl);
-		PyGILState_Release(gstate);
-		return NULL;
+		goto error;
 	}
 
 	loader_impl_py_await_invoke_callback_state callback_state = malloc(sizeof(struct loader_impl_py_await_invoke_callback_state_type));
@@ -1541,18 +1524,25 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	PyObject *callback_status = PyCapsule_New(callback_state, NULL, NULL);
 	if (callback_status != NULL && PyObject_SetAttrString(pyfuture, "__metacall__capsule", callback_status))
 	{
-		PyGILState_Release(gstate);
-		return NULL;
+		Py_XDECREF(callback_status);
+		goto error;
 	}
 
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(py_impl);
-		PyGILState_Release(gstate);
-		return NULL;
+		goto error;
 	}
 
-	Py_DECREF(tuple_args);
+	/* When the future is done, automatically call the callback */
+	PyObject *add_done_callback_str = PyUnicode_FromString("add_done_callback");
+	PyObject_CallMethodObjArgs(pyfuture, add_done_callback_str, py_impl->py_task_callback_handler, NULL);
+	Py_DECREF(add_done_callback_str);
+
+	pyfuture = PyObject_CallFunctionObjArgs(py_impl->asyncio_wrap_future, pyfuture, NULL);
+	if (PyErr_Occurred() != NULL)
+	{
+		goto error;
+	}
 
 	/* Variable arguments */
 	if (args_size > signature_args_size)
@@ -1578,11 +1568,21 @@ function_return function_py_interface_await(function func, function_impl impl, f
 		v = py_loader_impl_capi_to_value(py_func->impl, pyfuture, id);
 
 		Py_DECREF(pyfuture);
+		Py_DECREF(tuple_args);
 
 		PyGILState_Release(gstate);
 
 		return v;
 	}
+
+error:
+	if (PyErr_Occurred() != NULL)
+	{
+		py_loader_impl_error_print(py_impl);
+	}
+
+	Py_XDECREF(pyfuture);
+	Py_DECREF(tuple_args);
 
 	PyGILState_Release(gstate);
 
@@ -1873,6 +1873,9 @@ PyObject *py_background_thread_create_event_loop(PyObject *self, PyObject *py_im
 	(void)self;
 
 	loader_impl_py py_impl = PyCapsule_GetPointer(py_impl_capsule, NULL);
+
+	Py_DECREF(py_impl_capsule);
+
 	if (py_impl == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "NULL py_impl in background_thread_create_event_loop");
@@ -1953,7 +1956,7 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 	}
 
 	/* Wrap the C callback around a PyObject so that the interpreter knows how to call back as if it was python code */
-	PyMethodDef py_task_callback_handler_def = {
+	static PyMethodDef py_task_callback_handler_def = {
 		"metacall_task_callback_handler",
 		task_callback_handler_impl,
 		METH_O,
@@ -1974,7 +1977,7 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 	py_impl->asyncio_loop = loop;
 	Py_XDECREF(new_event_loop_func);
 
-	PyMethodDef py_background_thread_create_event_loop_def = {
+	static PyMethodDef py_background_thread_create_event_loop_def = {
 		"metacall_background_thread_create_event_loop",
 		py_background_thread_create_event_loop,
 		METH_O,
@@ -2007,8 +2010,6 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 	PyObject *start_thread_str = PyUnicode_FromString("start");
 	PyObject_CallMethodObjArgs(thread, start_thread_str, NULL);
 	Py_DECREF(start_thread_str);
-
-	Py_DECREF(py_impl_capsule);
 
 	if (PyErr_Occurred() != NULL)
 	{
@@ -2369,7 +2370,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid garbage collector module creation");
+			log_write("metacall", LOG_LEVEL_WARNING, "Invalid garbage collector module creation");
 		}
 	}
 #endif
