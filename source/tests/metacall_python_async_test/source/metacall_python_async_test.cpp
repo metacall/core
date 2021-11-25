@@ -25,9 +25,9 @@
 #include <metacall/metacall_value.h>
 
 #include <condition_variable>
+#include <iostream>
 #include <mutex>
 #include <thread>
-#include <iostream>
 
 class metacall_python_async_test : public testing::Test
 {
@@ -96,13 +96,13 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 
 		std::unique_lock<std::mutex> lock(await_data.m);
 
-	    std::thread::id this_id = std::this_thread::get_id();
-	    std::cout << "thread " << this_id << std::endl;
+		std::thread::id this_id = std::this_thread::get_id();
+		std::cout << "thread " << this_id << std::endl;
 
 		/* Test resolve */
 		auto resolve = [](void *result, void *data) -> void * {
-		    std::thread::id this_id = std::this_thread::get_id();
-		    std::cout << "thread " << this_id << std::endl;
+			std::thread::id this_id = std::this_thread::get_id();
+			std::cout << "thread " << this_id << std::endl;
 
 			printf("Got into C callback at least\n");
 			fflush(stdout);

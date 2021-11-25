@@ -1341,11 +1341,8 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	return NULL;
 }
 
-PyObject *task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
+PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject *pyfuture)
 {
-	/* self will always be NULL */
-	(void)self;
-
 	log_write("metacall", LOG_LEVEL_DEBUG, "pyfuture <%x>", pyfuture);
 
 	PyObject *capsule = PyObject_GetAttrString(pyfuture, "__metacall__capsule");
@@ -1375,12 +1372,15 @@ PyObject *task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 		py_loader_impl_error_print(callback_state->py_impl);
 
 		/* Handle CancelledError or any exceptions raised by the user or propagate them up?? */
-
+		PyGILState_Release(gstate);
 		callback_state->reject_callback(v, callback_state->context);
+		gstate = PyGILState_Ensure();
 	}
 	else
 	{
+		PyGILState_Release(gstate);
 		value ret = callback_state->resolve_callback(v, callback_state->context);
+		gstate = PyGILState_Ensure();
 
 		PyObject *ret_py = py_loader_impl_value_to_capi((loader_impl)callback_state->py_impl, value_type_id(ret), ret);
 
@@ -1392,6 +1392,20 @@ PyObject *task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 	free(callback_state);
 
 	Py_RETURN_NONE;
+}
+
+PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
+{
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	/* self will always be NULL */
+	(void)self;
+
+	PyObject *result = py_task_callback_handler_impl_unsafe(gstate, pyfuture);
+
+	PyGILState_Release(gstate);
+
+	return result;
 }
 
 function_return function_py_interface_invoke(function func, function_impl impl, function_args args, size_t args_size)
@@ -1868,10 +1882,8 @@ int py_loader_impl_initialize_threading_module(loader_impl impl, loader_impl_py 
 	return 0;
 }
 
-PyObject *py_background_thread_create_event_loop(PyObject *self, PyObject *py_impl_capsule)
+PyObject *py_background_thread_create_event_loop_unsafe(PyObject *py_impl_capsule)
 {
-	(void)self;
-
 	loader_impl_py py_impl = PyCapsule_GetPointer(py_impl_capsule, NULL);
 
 	Py_DECREF(py_impl_capsule);
@@ -1900,6 +1912,19 @@ PyObject *py_background_thread_create_event_loop(PyObject *self, PyObject *py_im
 	Py_DECREF(run_forever_str);
 
 	Py_RETURN_NONE;
+}
+
+PyObject *py_background_thread_create_event_loop(PyObject *self, PyObject *py_impl_capsule)
+{
+	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	(void)self;
+
+	PyObject *result = py_background_thread_create_event_loop_unsafe(py_impl_capsule);
+
+	PyGILState_Release(gstate);
+
+	return result;
 }
 
 int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py_impl)
@@ -1958,7 +1983,7 @@ int py_loader_impl_initialize_asyncio_module(loader_impl impl, loader_impl_py py
 	/* Wrap the C callback around a PyObject so that the interpreter knows how to call back as if it was python code */
 	static PyMethodDef py_task_callback_handler_def = {
 		"metacall_task_callback_handler",
-		task_callback_handler_impl,
+		py_task_callback_handler_impl,
 		METH_O,
 		"MetaCall async invoke callback"
 	};
@@ -2324,7 +2349,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_init_py;
 	}
 
-#if !(PY_MAJOR_VERSION >= 3 && PY_MINOR_VERSION >= 9)
+#if PY_MAJOR_VERSION == 3 && PY_MINOR_VERSION <= 6
 	if (PyEval_ThreadsInitialized() == 0)
 	{
 		PyEval_InitThreads();
