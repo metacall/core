@@ -7,7 +7,18 @@ endif()
 # External dependencies
 #
 
-find_package(Python COMPONENTS Development REQUIRED)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+	set(Python_FIND_ABI "ON" "ANY" "ANY")
+	find_package(Python COMPONENTS Development)
+
+	# Fallback to release if not found
+	if(NOT Python_Development_FOUND)
+		set(Python_FIND_ABI "ANY" "ANY" "ANY")
+		find_package(Python COMPONENTS Development REQUIRED)
+	endif()
+else()
+	find_package(Python COMPONENTS Development REQUIRED)
+endif()
 
 #
 # Plugin name and options
