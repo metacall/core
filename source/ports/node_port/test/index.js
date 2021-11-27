@@ -139,6 +139,11 @@ describe('metacall', () => {
 			assert.strictEqual(asd.three_str('a', 'b', 'c'), 'Hello World');
 			assert.strictEqual(asd.mixed_args('a', 3, 4, 3.4, 'NOT IMPLEMENTED'), 65);
 		});
+		it('require (ts)', () => {
+			const { isExported } = require('./badrequire');
+			assert.notStrictEqual(isExported, undefined);
+			assert.strictEqual(isExported(), true);
+		});
 		it('require (py)', () => {
 			const example = require('./example.py');
 			assert.notStrictEqual(example, undefined);

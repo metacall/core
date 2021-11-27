@@ -238,6 +238,7 @@ mod.prototype.require = function (name) {
 		}
 	}
 
+	/* Try NodeJS */
 	try {
 		return node_require.apply(this, [ name ]);
 	} catch (e) {

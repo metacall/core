@@ -197,6 +197,7 @@ cmake_expand_generator_expressions(DEPENDENCIES
 	$<$<BOOL:${OPTION_BUILD_LOADERS_MOCK}>:mock_loader>
 	$<$<BOOL:${OPTION_BUILD_LOADERS_C}>:c_loader>
 	$<$<BOOL:${OPTION_BUILD_LOADERS_FILE}>:file_loader>
+	$<$<BOOL:${OPTION_BUILD_LOADERS_TS}>:ts_loader>
 )
 
 if(DEPENDENCIES)
