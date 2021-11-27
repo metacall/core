@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+GIT_TAG_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c2-)
+FILE_VERSION=$(cat VERSION)
+
+if [ "${GIT_TAG_VERSION}" != "${FILE_VERSION}" ]; then
+    # Undo the last tag, update the version file and commit as the new tag
+    git tag -d v${GIT_TAG_VERSION}
+    printf "${GIT_TAG_VERSION}" &> VERSION
+    git add VERSION
+    git commit -m "Update version to v${GIT_TAG_VERSION}."
+    git tag v${GIT_TAG_VERSION}
+fi
