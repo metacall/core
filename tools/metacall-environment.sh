@@ -88,7 +88,6 @@ sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 python3-dev python3-pip
-	$SUDO_CMD pip3 install django
 	$SUDO_CMD pip3 install requests
 	$SUDO_CMD pip3 install setuptools
 	$SUDO_CMD pip3 install wheel
@@ -318,7 +317,7 @@ sub_metacall(){
 	# TODO: Update this or deprecate it
 	echo "configure metacall"
 	cd $ROOT_DIR
-	git clone --recursive https://github.com/metacall/core.git
+	git clone https://github.com/metacall/core.git
 	mkdir core/build && cd core/build
 
 	if [ $INSTALL_NETCORE = 1 ]; then

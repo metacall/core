@@ -21,18 +21,6 @@
 #ifndef ${META_PROJECT_NAME_UPPER}_VERSION_H
 #define ${META_PROJECT_NAME_UPPER}_VERSION_H 1
 
-/* -- Headers -- */
-
-#include <version/version_api.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* -- Headers -- */
-
-#include <stdint.h>
-
 /* -- Definitions -- */
 
 #define ${META_PROJECT_NAME_UPPER}_PROJECT_NAME            "@META_PROJECT_NAME@"
@@ -52,90 +40,5 @@ extern "C" {
 
 #define ${META_PROJECT_NAME_UPPER}_VERSION                 "@META_VERSION@"
 #define ${META_PROJECT_NAME_UPPER}_NAME_VERSION            "@META_NAME_VERSION@"
-
-/* -- Member Data -- */
-
-struct ${META_PROJECT_NAME_LOWER}_version_type
-{
-	unsigned int major;
-	unsigned int minor;
-	unsigned int patch;
-	const char * revision;
-	const char * str;
-	const char * name;
-};
-
-/* -- Methods -- */
-
-/**
-*  @brief
-*    Provide the module version struct
-*
-*  @return
-*    Static struct containing unpacked version
-*/
-VERSION_API const void * ${META_PROJECT_NAME}_version(void);
-
-/**
-*  @brief
-*    Provide the module version hexadecimal value
-*    with format 0xMMIIPPPP where M is @major,
-*    I is @minor and P is @patch
-*
-*  @param[in] major
-*    Unsigned integer representing major version
-*
-*  @param[in] minor
-*    Unsigned integer representing minor version
-*
-*  @param[in] patch
-*    Unsigned integer representing patch version
-*
-*  @return
-*    Hexadecimal integer containing packed version
-*/
-VERSION_API uint32_t ${META_PROJECT_NAME}_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
-
-/**
-*  @brief
-*    Provide the module version hexadecimal value
-*    with format 0xMMIIPPPP where M is major,
-*    I is minor and P is patch
-*
-*  @return
-*    Hexadecimal integer containing packed version
-*/
-VERSION_API uint32_t ${META_PROJECT_NAME}_version_hex(void);
-
-/**
-*  @brief
-*    Provide the module version string
-*
-*  @return
-*    Static string containing module version
-*/
-VERSION_API const char * ${META_PROJECT_NAME}_version_str(void);
-
-/**
-*  @brief
-*    Provide the module version revision string
-*
-*  @return
-*    Static string containing module version revision
-*/
-VERSION_API const char * ${META_PROJECT_NAME}_version_revision(void);
-
-/**
-*  @brief
-*    Provide the module version name
-*
-*  @return
-*    Static string containing module version name
-*/
-VERSION_API const char * ${META_PROJECT_NAME}_version_name(void);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* ${META_PROJECT_NAME_UPPER}_VERSION_H */

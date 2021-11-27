@@ -41,14 +41,9 @@ set(source_path  "${CMAKE_BINARY_DIR}/source/${META_PROJECT_NAME_LOWER}/source")
 
 # Generate version-header
 configure_file(${template_include_path}/version.h.in ${include_path}/${META_PROJECT_NAME_LOWER}_version.h)
-configure_file(${template_source_path}/version.c.in ${source_path}/${META_PROJECT_NAME_LOWER}_version.c)
 
 set(headers
 	${include_path}/${META_PROJECT_NAME_LOWER}_version.h
-)
-
-set(sources
-	${source_path}/${META_PROJECT_NAME_LOWER}_version.c
 )
 
 # Group source files
@@ -56,8 +51,6 @@ set(header_group "Header Files (API)")
 set(source_group "Source Files")
 source_group_by_path(${include_path} "\\\\.h$|\\\\.hpp$"
 	${header_group} ${headers})
-source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
-	${source_group} ${sources})
 
 #
 # Create library
@@ -65,7 +58,6 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 
 # Build library
 add_library(${target}
-	${sources}
 	${headers}
 )
 

@@ -29,6 +29,7 @@
 #include <metacall/metacall_def.h>
 #include <metacall/metacall_log.h>
 #include <metacall/metacall_value.h>
+#include <metacall/metacall_version.h>
 
 #ifdef METACALL_FORK_SAFE
 	#include <metacall/metacall_fork.h>
@@ -41,6 +42,7 @@ extern "C" {
 /* -- Headers -- */
 
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 /* -- Definitions -- */
@@ -69,6 +71,16 @@ typedef struct metacall_await_callbacks_type
 	metacall_await_callback reject;
 
 } metacall_await_callbacks;
+
+struct metacall_version_type
+{
+	unsigned int major;
+	unsigned int minor;
+	unsigned int patch;
+	const char *revision;
+	const char *str;
+	const char *name;
+};
 
 /* -- Global Variables -- */
 
@@ -1325,6 +1337,73 @@ METACALL_API int metacall_clear(void *handle);
 *    Zero if success, different from zero otherwise
 */
 METACALL_API int metacall_destroy(void);
+
+/**
+*  @brief
+*    Provide the module version struct
+*
+*  @return
+*    Static struct containing unpacked version
+*/
+METACALL_API const struct metacall_version_type *metacall_version(void);
+
+/**
+*  @brief
+*    Provide the module version hexadecimal value
+*    with format 0xMMIIPPPP where M is @major,
+*    I is @minor and P is @patch
+*
+*  @param[in] major
+*    Unsigned integer representing major version
+*
+*  @param[in] minor
+*    Unsigned integer representing minor version
+*
+*  @param[in] patch
+*    Unsigned integer representing patch version
+*
+*  @return
+*    Hexadecimal integer containing packed version
+*/
+METACALL_API uint32_t metacall_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch);
+
+/**
+*  @brief
+*    Provide the module version hexadecimal value
+*    with format 0xMMIIPPPP where M is major,
+*    I is minor and P is patch
+*
+*  @return
+*    Hexadecimal integer containing packed version
+*/
+METACALL_API uint32_t metacall_version_hex(void);
+
+/**
+*  @brief
+*    Provide the module version string
+*
+*  @return
+*    Static string containing module version
+*/
+METACALL_API const char *metacall_version_str(void);
+
+/**
+*  @brief
+*    Provide the module version revision string
+*
+*  @return
+*    Static string containing module version revision
+*/
+METACALL_API const char *metacall_version_revision(void);
+
+/**
+*  @brief
+*    Provide the module version name
+*
+*  @return
+*    Static string containing module version name
+*/
+METACALL_API const char *metacall_version_name(void);
 
 /**
 *  @brief

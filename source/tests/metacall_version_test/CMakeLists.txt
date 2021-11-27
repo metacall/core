@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target environment-test)
+set(target metacall-version-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/environment_test.cpp
+	${source_path}/metacall_version_test.cpp
 )
 
 # Group source files
@@ -80,9 +80,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -130,21 +128,7 @@ set_property(TEST ${target}
 
 include(TestEnvironmentVariables)
 
-#if(WIN32)
-#	set(ENVIRONMENT_TEST_VARIABLES
-#		"ENV_TEXT=abcd"
-#		"ENV_PATH=abcd"
-#		"ENV_SAN=abcd\\"
-#	)
-#else()
-	set(ENVIRONMENT_TEST_VARIABLES
-		"ENV_TEXT=abcd"
-		"ENV_PATH=abcd"
-		"ENV_SAN=abcd/"
-	)
-#endif()
-
 test_environment_variables(${target}
 	""
-	${ENVIRONMENT_TEST_VARIABLES}
+	${TESTS_ENVIRONMENT_VARIABLES}
 )

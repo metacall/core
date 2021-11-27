@@ -22,7 +22,6 @@
 
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
-#include <metacall/metacall_version.h>
 
 #include <loader/loader.h>
 
@@ -35,6 +34,8 @@
 #include <serial/serial.h>
 
 #include <backtrace/backtrace.h>
+
+#include <environment/environment_variable.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -105,12 +106,6 @@ int metacall_initialize()
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall default logger to stdout initialized");
 	}
 
-	/* Initialize backtrace for catching segmentation faults */
-	if (backtrace_initialize() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be initialized");
-	}
-
 	if (metacall_initialize_flag == 0)
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized <%p>", (void *)l);
@@ -121,6 +116,19 @@ int metacall_initialize()
 	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall <%p>", (void *)l);
 
 	metacall_null_args[0] = NULL;
+
+	/* Initialize backtrace for catching segmentation faults */
+	if (backtrace_initialize() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be initialized");
+	}
+
+	/* Initialize MetaCall version environment variable */
+	if (environment_variable_set_expand(METACALL_VERSION) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "MetaCall environment variables could not be initialized");
+		return 1;
+	}
 
 #ifdef METACALL_FORK_SAFE
 	if (metacall_config_flags & METACALL_FLAGS_FORK_SAFE)
@@ -2051,6 +2059,58 @@ int metacall_destroy()
 	}
 
 	return 0;
+}
+
+const struct metacall_version_type *metacall_version_data()
+{
+	static const struct metacall_version_type version = {
+		METACALL_VERSION_MAJOR_ID,
+		METACALL_VERSION_MINOR_ID,
+		METACALL_VERSION_PATCH_ID,
+		METACALL_VERSION_REVISION,
+		METACALL_VERSION,
+		METACALL_NAME_VERSION
+	};
+
+	return &version;
+}
+
+uint32_t metacall_version_hex_make(unsigned int major, unsigned int minor, unsigned int patch)
+{
+	const uint32_t version_hex = (major << 0x18) + (minor << 0x10) + patch;
+
+	return version_hex;
+}
+
+uint32_t metacall_version_hex()
+{
+	static const uint32_t version_hex =
+		(METACALL_VERSION_MAJOR_ID << 0x18) +
+		(METACALL_VERSION_MINOR_ID << 0x10) +
+		METACALL_VERSION_PATCH_ID;
+
+	return version_hex;
+}
+
+const char *metacall_version_str()
+{
+	static const char version_string[] = METACALL_VERSION;
+
+	return version_string;
+}
+
+const char *metacall_version_revision()
+{
+	static const char version_revision[] = METACALL_VERSION_REVISION;
+
+	return version_revision;
+}
+
+const char *metacall_version_name()
+{
+	static const char version_name[] = METACALL_NAME_VERSION;
+
+	return version_name;
 }
 
 const char *metacall_print_info()
