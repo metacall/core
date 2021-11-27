@@ -55,7 +55,12 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 			"async def my_async_fn(n):\n"
 			"\tprint('inside my sleep async', threading.current_thread().ident, ':', n)\n"
 			"\tsys.stdout.flush()\n"
-			"\treturn 58\n";
+			"\treturn 58\n"
+
+			"async def my_async_fail_fn(n):\n"
+			"\tprint('inside my sleep fail async', threading.current_thread().ident, ':', n)\n"
+			"\tsys.stdout.flush()\n"
+			"\traise Exception(15)\n";
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
@@ -67,45 +72,86 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 		std::cout << "thread " << this_id << std::endl;
 
 		/* Test resolve */
-		auto resolve = [](void *result, void *) -> void * {
-			std::thread::id this_id = std::this_thread::get_id();
-			std::cout << "thread " << this_id << std::endl;
+		{
+			auto resolve = [](void *result, void *) -> void * {
+				std::thread::id this_id = std::this_thread::get_id();
+				std::cout << "thread " << this_id << std::endl;
 
-			printf("Got into C callback at least\n");
-			fflush(stdout);
+				printf("Got into C callback at least\n");
+				fflush(stdout);
 
-			EXPECT_NE((void *)NULL, (void *)result);
+				EXPECT_NE((void *)NULL, (void *)result);
 
-			EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_LONG);
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_LONG);
 
-			EXPECT_EQ((long)metacall_value_to_long(result), (long)58L);
+				EXPECT_EQ((long)metacall_value_to_long(result), (long)58L);
 
-			printf("Resolve C Callback\n");
-			fflush(stdout);
+				printf("Resolve C Callback\n");
+				fflush(stdout);
 
-			return NULL;
-		};
+				return NULL;
+			};
 
-		auto reject = [](void *, void *) -> void * {
-			/* If we reach here, there's a serious bug in the C code that is called by python after the task is done */
-			int never_executed = 0;
-			EXPECT_EQ((int)1, (int)never_executed);
+			auto reject = [](void *, void *) -> void * {
+				/* If we reach here, there's a serious bug in the C code that is called by python after the task is done */
+				int never_executed = 0;
+				EXPECT_EQ((int)1, (int)never_executed);
 
-			printf("Reject C Callback\n");
-			fflush(stdout);
+				printf("Reject C Callback\n");
+				fflush(stdout);
 
-			return NULL;
-		};
+				return NULL;
+			};
 
-		void *future = metacall_await("my_async_fn", args, resolve, reject, NULL);
+			void *future = metacall_await("my_async_fn", args, resolve, reject, NULL);
 
-		EXPECT_NE((void *)NULL, (void *)future);
+			EXPECT_NE((void *)NULL, (void *)future);
 
-		EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
+			EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
 
-		metacall_value_destroy(future);
+			metacall_value_destroy(future);
+		}
 
-		/* TODO: Test reject */
+		/* Test reject */
+		{
+			auto resolve = [](void *, void *) -> void * {
+				/* If we reach here, there's a serious bug in the C code that is called by python after the task is done */
+				int never_executed = 0;
+				EXPECT_EQ((int)1, (int)never_executed);
+
+				printf("Reject C Callback\n");
+				fflush(stdout);
+
+				return NULL;
+			};
+
+			auto reject = [](void *result, void *) -> void * {
+				std::thread::id this_id = std::this_thread::get_id();
+				std::cout << "thread " << this_id << std::endl;
+
+				printf("Got into C callback at least\n");
+				fflush(stdout);
+
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_LONG);
+
+				EXPECT_EQ((long)metacall_value_to_long(result), (long)15L);
+
+				printf("Resolve C Callback\n");
+				fflush(stdout);
+
+				return NULL;
+			};
+
+			void *future = metacall_await("my_async_fail_fn", args, resolve, reject, NULL);
+
+			EXPECT_NE((void *)NULL, (void *)future);
+
+			EXPECT_EQ((enum metacall_value_id)metacall_value_id(future), (enum metacall_value_id)METACALL_FUTURE);
+
+			metacall_value_destroy(future);
+		}
 
 		metacall_value_destroy(args[0]);
 	}

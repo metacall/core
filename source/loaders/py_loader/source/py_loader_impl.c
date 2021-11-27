@@ -164,6 +164,7 @@ typedef struct loader_impl_py_function_type_invoke_state_type
 typedef struct loader_impl_py_await_invoke_callback_state_type
 {
 	loader_impl impl;
+	value func_val;
 	function_resolve_callback resolve_callback;
 	function_reject_callback reject_callback;
 	void *context;
@@ -1391,33 +1392,57 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 	PyObject *result = PyObject_CallMethodObjArgs(pyfuture, result_str, NULL);
 	Py_DECREF(result_str);
 
-	type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, result);
-	value v = py_loader_impl_capi_to_value(callback_state->impl, result, id);
+	value v = NULL, ret = NULL;
 
-	Py_DECREF(result);
-
-	value ret = NULL;
-
-	if (PyErr_Occurred() != NULL)
+	if (result != NULL)
 	{
-		loader_impl_py py_impl = loader_impl_get(callback_state->impl);
+		type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, result);
+		v = py_loader_impl_capi_to_value(callback_state->impl, result, id);
 
-		py_loader_impl_error_print(py_impl);
+		Py_DECREF(result);
+
+		PyGILState_Release(gstate);
+		ret = callback_state->resolve_callback(v, callback_state->context);
+		gstate = PyGILState_Ensure();
+	}
+	else
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			PyObject *error_type, *error_value, *error_traceback;
+
+			PyErr_Fetch(&error_type, &error_value, &error_traceback);
+
+			PyObject *args = PyObject_GetAttrString(error_value, "args");
+
+			/* Retrieve the contents of the exception (TODO: Pass the exception directly as value when we support the exception type?) */
+			if (args != NULL && PyTuple_Check(args))
+			{
+				PyObject *val = PyTuple_GetItem(args, 0);
+				type_id id = py_loader_impl_capi_to_value_type(callback_state->impl, val);
+				v = py_loader_impl_capi_to_value(callback_state->impl, val, id);
+			}
+
+			Py_XDECREF(args);
+
+			PyErr_Clear();
+		}
+
+		if (v == NULL)
+		{
+			v = value_create_null();
+		}
 
 		PyGILState_Release(gstate);
 		ret = callback_state->reject_callback(v, callback_state->context);
 		gstate = PyGILState_Ensure();
 	}
-	else
-	{
-		PyGILState_Release(gstate);
-		ret = callback_state->resolve_callback(v, callback_state->context);
-		gstate = PyGILState_Ensure();
-	}
 
 	loader_impl impl = callback_state->impl;
 
+	value_type_destroy(v);
 	Py_DECREF(callback_state->coroutine);
+	value_type_destroy(callback_state->func_val);
 	free(callback_state);
 
 	if (ret == NULL)
@@ -1595,6 +1620,9 @@ function_return function_py_interface_await(function func, function_impl impl, f
 		free(callback_state);
 		goto error;
 	}
+
+	/* Create a reference to the function so we avoid to delete it when destroying the event loop */
+	callback_state->func_val = value_create_function(func);
 
 	Py_INCREF(py_impl->asyncio_loop);
 	Py_INCREF(coroutine);
