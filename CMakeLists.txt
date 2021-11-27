@@ -89,6 +89,7 @@ option(OPTION_BUILD_PIC			"Build with position independent code."						ON)
 option(OPTION_BUILD_SECURITY	"Build with stack-smashing protection and source fortify."	ON)
 option(OPTION_BUILD_BACKTRACE	"Build with backtracing support."							ON)
 option(OPTION_BUILD_GUIX		"Disable all build system unreproductible operations."		OFF)
+option(OPTION_GIT_HOOKS			"Disable git hooks when running in CI/CD."					ON)
 option(OPTION_FORK_SAFE			"Enable fork safety."										ON)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
 option(OPTION_COVERAGE			"Enable coverage."											OFF)
@@ -321,8 +322,10 @@ install(FILES README.md	DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 # Install githooks directory
 #
 
-message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR} with `git config --local core.hooksPath githooks`")
-execute_process(
-    COMMAND git config --local core.hooksPath githooks
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-)
+if(OPTION_GIT_HOOKS)
+	message(STATUS "Installing git hooks at ${CMAKE_CURRENT_SOURCE_DIR}")
+	execute_process(
+		COMMAND git config --local core.hooksPath githooks
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+	)
+endif()
