@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Git pre-commit hook that runs multiple hooks specified in $HOOKS.
 # Make sure this script is executable. Bypass hooks with git commit --no-verify.
 
@@ -36,7 +36,7 @@ do
     # run hook if it exists
     # if it returns with nonzero exit with 1 and thus abort the commit
     if [ -f "$SCRIPTPATH/$hook" ]; then
-        "$SCRIPTPATH/$hook"
+        "$SCRIPTPATH/$hook" ${@:1:2}
         if [ $? != 0 ]; then
             exit 1
         fi
