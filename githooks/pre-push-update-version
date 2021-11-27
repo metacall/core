@@ -10,6 +10,6 @@ if [ "${GIT_TAG_VERSION}" != "${FILE_VERSION}" ]; then
     git add VERSION
     git commit -m "Update version to v${GIT_TAG_VERSION}."
     git tag v${GIT_TAG_VERSION}
-    echo "\033[0;31mYour push has been rejected in order to update VERSION.\033[0mPush again your tag."
+    printf "\033[0;31mYour push has been rejected in order to update VERSION.\033[0m Push again your tag.\n"
     exit 1
 fi
