@@ -887,10 +887,11 @@ int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 {
 	VALUE file_exists = rb_funcall(rb_cFile, rb_intern("exist?"), 1, module_absolute_path);
+	VALUE file_valid = rb_funcall(rb_cFile, rb_intern("file?"), 1, module_absolute_path);
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "RBPATH: %s", RSTRING_PTR(module_absolute_path));
 
-	if (file_exists == Qtrue)
+	if (file_exists == Qtrue && file_valid == Qtrue)
 	{
 		VALUE module_data = rb_funcall(rb_cIO, rb_intern("read"), 1, module_absolute_path);
 

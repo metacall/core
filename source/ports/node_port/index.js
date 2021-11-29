@@ -225,12 +225,11 @@ mod.prototype.require = function (name) {
 	// 	/* Continue loading */
 	// }
 
-	const index = name.lastIndexOf('.');
+	const extension = path.extname(name);
 
-	if (index !== -1) {
+	if (extension !== '') {
 		/* If there is extension, load the module depending on the tag */
-		const extension = name.substr(index + 1);
-		const tag = tags[extension];
+		const tag = tags[extension.substring(1)];
 
 		if (tag && tag !== 'node') {
 			/* Load with MetaCall if we found a tag and it is not NodeJS */
@@ -262,13 +261,10 @@ mod.prototype.require = function (name) {
 		/* If it is not a NodeJS module, try to guess the runtime */
 		const loaders = new Set(Object.values(tags));
 
-		/* Mock, node and ts loaders are not included, Mock will always load
-		* so it's not an option, Node and TypeScript will enter in a endless loop
-		* in some cases, because it will hit the monkey patched require again
-		* and also you usually do not publish ts packages without the js into npm */
+		/* Mock and node are not included, Mock will always load
+		* so it's not an option and NodeJS has been already tested */
 		loaders.delete('mock');
 		loaders.delete('node');
-		loaders.delete('ts');
 
 		for (let it = loaders.values(), tag = null; tag = it.next().value; ) {
 			try {
