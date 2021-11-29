@@ -82,7 +82,7 @@ const time_t *log_record_time(log_record record)
 	return &record->time;
 }
 
-size_t log_record_thread_id(log_record record)
+uint64_t log_record_thread_id(log_record record)
 {
 	return record->id;
 }
