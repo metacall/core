@@ -82,6 +82,14 @@ const metacall = (name, ...args) => {
 	return addon.metacall(name, ...args);
 };
 
+const metacall_await = (name, ...args) => {
+	if (Object.prototype.toString.call(name) !== '[object String]') {
+		throw Error('Function name should be of string type.');
+	}
+
+	return addon.metacall_await(name, ...args);
+};
+
 const metacall_load_from_file = (tag, paths) => {
 	if (Object.prototype.toString.call(tag) !== '[object String]') {
 		throw Error('Tag should be a string indicating the id of the loader to be used [py, rb, cs, js, node, mock...].');
@@ -168,6 +176,7 @@ const metacall_require = (tag, name) => {
 /* Module exports */
 const module_exports = {
 	metacall,
+	metacall_await,
 	metacall_inspect,
 	metacall_load_from_file,
 	metacall_load_from_file_export,

@@ -24,12 +24,12 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_node_python_await_test : public testing::Test
+class metacall_node_port_await_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_node_python_await_test, DefaultConstructor)
+TEST_F(metacall_node_port_await_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -43,12 +43,10 @@ TEST_F(metacall_node_python_await_test, DefaultConstructor)
 		static const char buffer[] =
 			/* NodeJS */
 			"const { metacall_await, metacall_load_from_memory, metacall_inspect } = require('" METACALL_NODE_PORT_PATH "');\n"
-			"metacall_load_from_memory('py', `"
-			/* Python */
-			"import asyncio\n"
-			"async def python_simple(n):\n"
-			"  await asyncio.sleep(1)\n"
-			"  return n\n"
+			"metacall_load_from_memory('node', `"
+			/* NodeJS */
+			"function sleep(n) { return new Promise(resolve => { setTimeout(() => resolve(n), 200); }); }\n"
+			"module.exports = { sleep };\n"
 			"`);\n"
 			/* NodeJS Check */
 			"let buffer = new SharedArrayBuffer(4);\n"
@@ -60,7 +58,7 @@ TEST_F(metacall_node_python_await_test, DefaultConstructor)
 			"	}\n"
 			"});\n"
 			/* NodeJS Promise */
-			"metacall_await('python_simple', 32).then(v => {\n"
+			"metacall_await('sleep', 32).then(v => {\n"
 			"	console.log('RESULT:', v);\n"
 			"	if (v !== 32) {\n"
 			"		process.exit(1);\n"

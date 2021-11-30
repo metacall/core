@@ -36,7 +36,6 @@ struct promise_context_type
 {
 	loader_impl_node node_impl;
 	napi_env env;
-	void *ret_future;
 	napi_deferred deferred;
 };
 
@@ -114,7 +113,6 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 
 napi_value node_loader_port_await(napi_env env, napi_callback_info info)
 {
-#if 0 // TODO
 	size_t argc = 0;
 
 	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
@@ -195,29 +193,32 @@ napi_value node_loader_port_await(napi_env env, napi_callback_info info)
 		napi_status status = napi_resolve_deferred(ctx->env, ctx->deferred, js_result);
 
 		if (status != napi_ok)
+		{
+			napi_throw_error(ctx->env, NULL, "Failed to resolve the promise");
+		}
 
-
+		delete ctx;
 
 		return NULL;
 	};
 
-	auto reject = [](void *result, void *ctx) -> void * {
+	auto reject = [](void *result, void *data) -> void * {
 		promise_context_type *ctx = static_cast<promise_context_type *>(data);
 		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
 		napi_status status = napi_reject_deferred(ctx->env, ctx->deferred, js_result);
 
+		if (status != napi_ok)
+		{
+			napi_throw_error(ctx->env, NULL, "Failed to reject the promise");
+		}
+
+		delete ctx;
 
 		return NULL;
 	};
 
 	/* Await to the function */
-	ctx->ret_future = metacall_await_s(name, args, argc - 1, resolve, reject, ctx);
-
-
-
-
-
-	napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+	void *ret = metacall_await_s(name, args, argc - 1, resolve, reject, ctx);
 
 	/* Release current reference of the environment */
 	// node_loader_impl_env(node_impl, NULL);
@@ -233,8 +234,7 @@ napi_value node_loader_port_await(napi_env env, napi_callback_info info)
 	delete[] args;
 	delete[] name;
 
-	return result;
-#endif
+	return promise;
 }
 
 napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info)
