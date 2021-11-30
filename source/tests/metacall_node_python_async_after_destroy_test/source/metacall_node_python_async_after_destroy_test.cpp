@@ -33,8 +33,6 @@ TEST_F(metacall_node_python_async_after_destroy_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	metacall_log_null();
-
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 /* NodeJS & Python & Mock */

@@ -228,7 +228,7 @@ napi_value node_loader_port_await(napi_env env, napi_callback_info info)
 		metacall_value_destroy(args[args_count]);
 	}
 
-	metacall_value_destroy(ret);
+	node_loader_impl_finalizer(env, promise, ret);
 
 	delete[] argv;
 	delete[] args;

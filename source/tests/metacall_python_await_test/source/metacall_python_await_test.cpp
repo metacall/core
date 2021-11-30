@@ -33,8 +33,6 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	metacall_log_null();
-
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 /* Python */
@@ -49,12 +47,22 @@ TEST_F(metacall_python_await_test, DefaultConstructor)
 			"async def yeet(n):\n"
 			"	return n\n"
 			"\"\"\"\n"
+			"result = 0"
+			"lock = threading.Lock()\n"
 			"metacall_load_from_memory('py', script)\n"
 			"async def test():\n"
 			"	result = await metacall_await('yeet', 1234)\n"
 			"	if result != 1234:\n"
 			"		sys.exit(1)\n"
-			"asyncio.run(test())\n";
+			"	else:\n"
+			"		lock.acquire()\n"
+			"		result = 1\n"
+			"		lock.release()\n"
+			"asyncio.run(test())\n"
+			"lock.acquire()\n"
+			"if result != 1:\n"
+			"	sys.exit(2)\n"
+			"lock.release()\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 	}

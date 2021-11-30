@@ -33,8 +33,6 @@ TEST_F(metacall_python_node_await_test, DefaultConstructor)
 {
 	metacall_print_info();
 
-	metacall_log_null();
-
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 /* NodeJS & Python */
@@ -43,6 +41,7 @@ TEST_F(metacall_python_node_await_test, DefaultConstructor)
 		static const char buffer[] =
 			"import sys\n"
 			"sys.path.insert(0, '" METACALL_PYTHON_PORT_PATH "')\n"
+			"import threading\n"
 			"import asyncio\n"
 			"from metacall import metacall_load_from_memory, metacall_await\n"
 			"script = \"\"\"\n"
@@ -51,12 +50,22 @@ TEST_F(metacall_python_node_await_test, DefaultConstructor)
 			"}\n"
 			"module.exports = { yeet }\n"
 			"\"\"\"\n"
+			"result = 0"
+			"lock = threading.Lock()\n"
 			"metacall_load_from_memory('node', script)\n"
 			"async def test():\n"
 			"	result = await metacall_await('yeet', 1234)\n"
 			"	if result != 1234:\n"
 			"		sys.exit(1)\n"
-			"asyncio.run(test())\n";
+			"	else:\n"
+			"		lock.acquire()\n"
+			"		result = 1\n"
+			"		lock.release()\n"
+			"asyncio.run(test())\n"
+			"lock.acquire()\n"
+			"if result != 1:\n"
+			"	sys.exit(2)\n"
+			"lock.release()\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 	}
