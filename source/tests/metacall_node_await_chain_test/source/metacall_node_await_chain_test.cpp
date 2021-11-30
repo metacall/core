@@ -24,7 +24,7 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-#define METACALL_CALL_TEST_SIZE 10000
+#include <atomic>
 
 class metacall_node_await_chain_test : public testing::Test
 {
@@ -38,6 +38,8 @@ TEST_F(metacall_node_await_chain_test, DefaultConstructor)
 	metacall_log_null();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
+
+	std::atomic<unsigned int> callbacks_executed(0);
 
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
@@ -55,32 +57,39 @@ TEST_F(metacall_node_await_chain_test, DefaultConstructor)
 			metacall_value_create_double(100)
 		};
 
-		auto resolve1 = [](void *result, void *) -> void * {
-			printf("RESOLVE 1\n");
-			fflush(stdout);
-			return metacall_value_create_double(metacall_value_to_double(result) * 2);
+		auto resolve1 = [](void *result, void *data) -> void * {
+			std::atomic<unsigned int> *callbacks_executed = static_cast<std::atomic<unsigned int> *>(data);
+			double v = metacall_value_to_double(result);
+			EXPECT_EQ((double)1.0, (double)v);
+			EXPECT_EQ((unsigned int)0, (unsigned int)*callbacks_executed);
+			++(*callbacks_executed);
+			return metacall_value_create_double(v * 2.0);
 		};
 
-		auto resolve2 = [](void *result, void *) -> void * {
-			printf("RESOLVE 2\n");
-			fflush(stdout);
-			return metacall_value_create_double(metacall_value_to_double(result) + 3);
+		auto resolve2 = [](void *result, void *data) -> void * {
+			std::atomic<unsigned int> *callbacks_executed = static_cast<std::atomic<unsigned int> *>(data);
+			double v = metacall_value_to_double(result);
+			EXPECT_EQ((double)2.0, (double)v);
+			EXPECT_EQ((unsigned int)1, (unsigned int)*callbacks_executed);
+			++(*callbacks_executed);
+			return metacall_value_create_double(v + 3.0);
 		};
 
-		auto resolve3 = [](void *result, void *) -> void * {
-			printf("RESOLVE 3\n");
-			fflush(stdout);
+		auto resolve3 = [](void *result, void *data) -> void * {
+			std::atomic<unsigned int> *callbacks_executed = static_cast<std::atomic<unsigned int> *>(data);
 			EXPECT_EQ((double)5.0, (double)metacall_value_to_double(result));
+			EXPECT_EQ((unsigned int)2, (unsigned int)*callbacks_executed);
+			++(*callbacks_executed);
 			return NULL;
 		};
 
-		void *f1 = metacall_await("sleep", args, resolve1, NULL, NULL);
+		void *f1 = metacall_await("sleep", args, resolve1, NULL, static_cast<void *>(&callbacks_executed));
 
 		metacall_value_destroy(args[0]);
 
-		void *f2 = metacall_await_future(metacall_value_to_future(f1), resolve2, NULL, NULL);
+		void *f2 = metacall_await_future(metacall_value_to_future(f1), resolve2, NULL, static_cast<void *>(&callbacks_executed));
 
-		void *f3 = metacall_await_future(metacall_value_to_future(f2), resolve3, NULL, NULL);
+		void *f3 = metacall_await_future(metacall_value_to_future(f2), resolve3, NULL, static_cast<void *>(&callbacks_executed));
 
 		metacall_value_destroy(f1);
 		metacall_value_destroy(f2);
@@ -89,4 +98,6 @@ TEST_F(metacall_node_await_chain_test, DefaultConstructor)
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
+
+	EXPECT_EQ((unsigned int)3, (unsigned int)callbacks_executed);
 }
