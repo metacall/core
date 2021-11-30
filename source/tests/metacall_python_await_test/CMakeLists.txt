@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-node-python-await-test)
+set(target metacall-python-await-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_node_python_await_test.cpp
+	${source_path}/metacall_python_await_test.cpp
 )
 
 # Group source files
@@ -96,8 +96,8 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	# NodeJS Port path
-	METACALL_NODE_PORT_PATH="${CMAKE_SOURCE_DIR}/source/ports/node_port/index.js"
+	# Python Port path
+	METACALL_PYTHON_PORT_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port"
 )
 
 #
@@ -131,7 +131,6 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	node_loader
 	py_loader
 )
 

@@ -37,7 +37,7 @@ TEST_F(metacall_node_python_await_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-/* NodeJS & Python & Mock */
+/* NodeJS & Python */
 #if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
