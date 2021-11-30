@@ -32,6 +32,14 @@
 
 #include <node_api.h>
 
+struct promise_context_type
+{
+	loader_impl_node node_impl;
+	napi_env env;
+	void *ret_future;
+	napi_deferred deferred;
+};
+
 napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
@@ -102,6 +110,131 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	delete[] name;
 
 	return result;
+}
+
+napi_value node_loader_port_await(napi_env env, napi_callback_info info)
+{
+#if 0 // TODO
+	size_t argc = 0;
+
+	napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
+
+	if (argc == 0)
+	{
+		napi_throw_error(env, NULL, "Invalid number of arguments");
+
+		return nullptr;
+	}
+
+	napi_value *argv = new napi_value[argc];
+	void **args = new void *[argc - 1];
+	napi_value recv;
+
+	napi_get_cb_info(env, info, &argc, argv, &recv, NULL);
+
+	size_t name_length;
+
+	napi_status status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &name_length);
+
+	char *name = new char[name_length + 1];
+
+	if (name == nullptr)
+	{
+		napi_throw_error(env, NULL, "Invalid function name allocation");
+
+		return nullptr;
+	}
+
+	status = napi_get_value_string_utf8(env, argv[0], name, name_length + 1, &name_length);
+
+	name[name_length] = '\0';
+
+	node_loader_impl_exception(env, status);
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl("node");
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	for (size_t args_count = 1; args_count < argc; ++args_count)
+	{
+		args[args_count - 1] = node_loader_impl_napi_to_value(node_impl, env, recv, argv[args_count]);
+	}
+
+	promise_context_type *ctx = new promise_context_type();
+
+	if (ctx == nullptr)
+	{
+		napi_throw_error(env, NULL, "Failed to allocate the promise context");
+
+		return nullptr;
+	}
+
+	napi_value promise;
+
+	/* Create the promise */
+	status = napi_create_promise(env, &ctx->deferred, &promise);
+
+	if (status != napi_ok)
+	{
+		napi_throw_error(env, NULL, "Failed to create the promise");
+
+		delete ctx;
+
+		return nullptr;
+	}
+
+	ctx->node_impl = node_impl;
+	ctx->env = env;
+
+	auto resolve = [](void *result, void *data) -> void * {
+		promise_context_type *ctx = static_cast<promise_context_type *>(data);
+		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
+		napi_status status = napi_resolve_deferred(ctx->env, ctx->deferred, js_result);
+
+		if (status != napi_ok)
+
+
+
+		return NULL;
+	};
+
+	auto reject = [](void *result, void *ctx) -> void * {
+		promise_context_type *ctx = static_cast<promise_context_type *>(data);
+		napi_value js_result = node_loader_impl_value_to_napi(ctx->node_impl, ctx->env, result);
+		napi_status status = napi_reject_deferred(ctx->env, ctx->deferred, js_result);
+
+
+		return NULL;
+	};
+
+	/* Await to the function */
+	ctx->ret_future = metacall_await_s(name, args, argc - 1, resolve, reject, ctx);
+
+
+
+
+
+	napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+	/* Release current reference of the environment */
+	// node_loader_impl_env(node_impl, NULL);
+
+	for (size_t args_count = 0; args_count < argc - 1; ++args_count)
+	{
+		metacall_value_destroy(args[args_count]);
+	}
+
+	metacall_value_destroy(ret);
+
+	delete[] argv;
+	delete[] args;
+	delete[] name;
+
+	return result;
+#endif
 }
 
 napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info)
@@ -506,6 +639,7 @@ napi_value node_loader_port_logs(napi_env env, napi_callback_info)
 void node_loader_port_exports(napi_env env, napi_value exports)
 {
 	const char function_metacall_str[] = "metacall";
+	const char function_metacall_await_str[] = "metacall_await";
 	const char function_load_from_file_str[] = "metacall_load_from_file";
 	const char function_load_from_file_export_str[] = "metacall_load_from_file_export";
 	const char function_load_from_memory_str[] = "metacall_load_from_memory";
@@ -513,9 +647,10 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	const char function_inspect_str[] = "metacall_inspect";
 	const char function_logs_str[] = "metacall_logs";
 
-	napi_value function_metacall, function_load_from_file, function_load_from_file_export, function_load_from_memory, function_load_from_memory_export, function_inspect, function_logs;
+	napi_value function_metacall, function_metacall_await, function_load_from_file, function_load_from_file_export, function_load_from_memory, function_load_from_memory_export, function_inspect, function_logs;
 
 	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, node_loader_port_call, NULL, &function_metacall);
+	napi_create_function(env, function_metacall_await_str, sizeof(function_metacall_await_str) - 1, node_loader_port_await, NULL, &function_metacall_await);
 	napi_create_function(env, function_load_from_file_str, sizeof(function_load_from_file_str) - 1, node_loader_port_load_from_file, NULL, &function_load_from_file);
 	napi_create_function(env, function_load_from_file_export_str, sizeof(function_load_from_file_export_str) - 1, node_loader_port_load_from_file_export, NULL, &function_load_from_file_export);
 	napi_create_function(env, function_load_from_memory_str, sizeof(function_load_from_memory_str) - 1, node_loader_port_load_from_memory, NULL, &function_load_from_memory);
@@ -524,6 +659,7 @@ void node_loader_port_exports(napi_env env, napi_value exports)
 	napi_create_function(env, function_logs_str, sizeof(function_logs_str) - 1, node_loader_port_logs, NULL, &function_logs);
 
 	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
+	napi_set_named_property(env, exports, function_metacall_await_str, function_metacall_await);
 	napi_set_named_property(env, exports, function_load_from_file_str, function_load_from_file);
 	napi_set_named_property(env, exports, function_load_from_file_export_str, function_load_from_file_export);
 	napi_set_named_property(env, exports, function_load_from_memory_str, function_load_from_memory);
