@@ -2833,7 +2833,11 @@ static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, cons
 		PyErr_Clear();
 	}
 
-	PyErr_SetObject(Py_TYPE(exception), exception);
+	PyObject *exception_type = PyObject_Type(exception);
+
+	PyErr_SetObject(exception_type, exception);
+
+	Py_DECREF(exception_type);
 
 	py_loader_impl_error_print(py_impl);
 
@@ -3124,7 +3128,7 @@ size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObj
 	}
 
 	/* Do not count self parameter */
-	if (is_method == Py_True)
+	if (PyObject_IsTrue(is_method) == 1)
 	{
 		args_count--;
 	}
@@ -3349,7 +3353,7 @@ type py_loader_impl_get_type(loader_impl impl, PyObject *obj)
 		goto type_name_error;
 	}
 
-	char *name = PyUnicode_AsUTF8(t_name);
+	const char *name = PyUnicode_AsUTF8(t_name);
 	t = loader_impl_type(impl, name);
 
 	if (t == NULL)
@@ -3578,7 +3582,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 			}
 			else
 			{
-				char *name = PyUnicode_AsUTF8(tuple_key);
+				const char *name = PyUnicode_AsUTF8(tuple_key);
 				type t = py_loader_impl_get_type(impl, tuple_val);
 
 				if (t == NULL)
