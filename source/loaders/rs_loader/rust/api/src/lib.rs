@@ -43,7 +43,7 @@ extern "C" {
         index: usize,
         name: *const c_char,
         t: *mut c_void,
-    ) -> c_void;
+    );
 
     fn context_scope(ctx: *mut c_void) -> *mut c_void;
 
@@ -53,11 +53,63 @@ extern "C" {
 
     fn value_create_function(function: *mut c_void) -> *mut c_void;
 
-    fn signature_set_return(signature: *mut c_void, t: *mut c_void) -> c_void;
+    fn signature_set_return(signature: *mut c_void, t: *mut c_void);
 
     fn loader_impl_type(loader_impl: *mut c_void, name: *const c_char) -> *mut c_void;
 
     fn scope_define(scope: *mut c_void, key: *mut c_char, value: *mut c_void) -> c_int;
+}
+
+#[repr(C)]
+struct function_interface {
+    create: extern "C" fn(*mut c_void, *mut c_void) -> c_int,
+    invoke: extern "C" fn(*mut c_void, *mut c_void, *mut *mut c_void, usize) -> *mut c_void,
+    r#await: extern "C" fn(*mut c_void, *mut c_void, *mut *mut c_void, usize, extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void, extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void, *mut c_void) -> *mut c_void,
+    destroy: extern "C" fn(*mut c_void, *mut c_void),
+}
+
+#[no_mangle]
+extern "C" fn function_singleton_create(func: *mut c_void, func_impl: *mut c_void) -> c_int {
+    0
+}
+
+#[no_mangle]
+extern "C" fn function_singleton_invoke(func: *mut c_void, func_impl: *mut c_void, args: *mut *mut c_void, size: usize) -> *mut c_void {
+    // func is of type function found here: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/reflect/include/reflect/reflect_function.h#L65
+    // func_impl is of type: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
+    // args is an array of 'value' of size 'size', you can iterate over it and get the C value representation
+    // The task to do is very similar to this: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/c_loader/source/c_loader_impl.cpp#L378
+    // But implemented in Rust. We can forget about closures for now, because that's designed in order to implement callbacks
+
+    // In the example of C invoke, the func_impl is not just the address but a struct which contains this:
+    // https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/c_loader/source/c_loader_impl.cpp#L69
+
+    // Last element is the address, but the rest are for interfacing with the libffi API. I allocate them while discovering in order
+    // to precompute the call and waste less memory and allocations during the invoke.
+
+    0 as *mut c_void
+}
+
+#[no_mangle]
+extern "C" fn function_singleton_await(func: *mut c_void, func_impl: *mut c_void, args: *mut *mut c_void, size: usize, resolve: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void, reject: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void, data: *mut c_void) -> *mut c_void {
+    0 as *mut c_void
+}
+
+#[no_mangle]
+extern "C" fn function_singleton_destroy(func: *mut c_void, func_impl: *mut c_void) {
+    // Here we have to free the memory of this: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
+}
+
+#[no_mangle]
+extern "C" fn function_singleton() -> *const function_interface {
+    static SINGLETON: function_interface = function_interface {
+        create: function_singleton_create,
+        invoke: function_singleton_invoke,
+        r#await: function_singleton_await,
+        destroy: function_singleton_destroy,
+    };
+
+    &SINGLETON
 }
 
 pub fn get_loader_lifecycle_state(loader_impl: *mut c_void) -> *mut LoaderLifecycleState {

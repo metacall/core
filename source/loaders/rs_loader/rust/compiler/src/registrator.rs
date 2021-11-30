@@ -22,7 +22,7 @@ fn function_create(func: &Function, dlopen_library: &DlopenLibrary) -> FunctionC
         name,
         args_count,
         function_impl,
-        singleton: 0 as c_uint as *mut c_void, // TODO: Create the singleton for handling the calls
+        singleton: 0 as c_uint as *mut c_void, // TODO: This must be a function pointer to 'function_singleton' inside the API module
     };
 
     function_create
