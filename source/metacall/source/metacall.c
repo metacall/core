@@ -51,7 +51,7 @@ typedef value (*method_invoke_ptr)(void *, method, void *[], size_t);
 
 /* -- Global Variables -- */
 
-void *metacall_null_args[1];
+void *metacall_null_args[1] = { NULL };
 
 /* -- Private Variables -- */
 
@@ -114,8 +114,6 @@ int metacall_initialize()
 	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall <%p>", (void *)l);
-
-	metacall_null_args[0] = NULL;
 
 	/* Initialize backtrace for catching segmentation faults */
 	if (backtrace_initialize() != 0)
