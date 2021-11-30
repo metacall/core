@@ -2168,24 +2168,39 @@ int py_loader_impl_initialize_thread_background_module(loader_impl_py py_impl)
 		"		self.loop = loop\n"
 		"		self.t = t\n"
 		"def future_check(f):\n"
+#ifdef DEBUG_ENABLED
+		"	print('future_check', f)\n"
+#endif
 		"	return asyncio.isfuture(f)\n"
 		"def background_loop(loop):\n"
+#ifdef DEBUG_ENABLED
+		"	print('background_loop', loop)\n"
+#endif
 		"	asyncio.set_event_loop(loop)\n"
 		"	loop.run_forever()\n"
 		"	loop.run_until_complete(loop.shutdown_asyncgens())\n"
 		"	loop.stop()\n"
 		"	loop.close()\n"
 		"def start_background_loop():\n"
+#ifdef DEBUG_ENABLED
+		"	print('start_background_loop')\n"
+#endif
 		"	loop = asyncio.new_event_loop()\n"
 		"	t = Thread(target=background_loop, name='MetaCall asyncio event loop', args=(loop,), daemon=False)\n"
 		"	t.start()\n"
 		"	return ThreadLoop(loop, t)\n"
 		"def send_background_loop(tl, coro, callback, capsule):\n"
+#ifdef DEBUG_ENABLED
+		"	print('send_background_loop', tl, coro, callback, capsule)\n"
+#endif
 		"	task = asyncio.run_coroutine_threadsafe(coro, tl.loop)\n"
 		"	task.__metacall_capsule = capsule\n"
 		"	task.add_done_callback(callback)\n"
 		"	return asyncio.wrap_future(task, loop=tl.loop)\n"
 		"def stop_background_loop(tl):\n"
+#ifdef DEBUG_ENABLED
+		"	print('stop_background_loop', tl)\n"
+#endif
 		"	tl.loop.call_soon_threadsafe(tl.loop.stop)\n"
 		"	tl.t.join()\n";
 

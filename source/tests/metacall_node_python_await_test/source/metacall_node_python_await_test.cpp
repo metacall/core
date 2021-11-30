@@ -43,6 +43,7 @@ TEST_F(metacall_node_python_await_test, DefaultConstructor)
 		static const char buffer[] =
 			/* NodeJS */
 			"const { metacall_await, metacall_load_from_memory, metacall_inspect } = require('" METACALL_NODE_PORT_PATH "');\n"
+			"const util = require('util')\n"
 			"metacall_load_from_memory('py', `"
 			/* Python */
 			"import sys\n"
@@ -56,6 +57,10 @@ TEST_F(metacall_node_python_await_test, DefaultConstructor)
 			// "  await asyncio.sleep(1)\n"
 			// "  return n\n"
 			"`);\n"
+			/* Debug */
+			"console.log('--------------------------------------------------------------------')\n"
+			"console.log(util.inspect(metacall_inspect(), false, null, true))\n"
+			"console.log('--------------------------------------------------------------------')\n"
 			/* NodeJS Check */
 			"let buffer = new SharedArrayBuffer(4);\n"
 			"let int32 = new Int32Array(buffer);\n"
