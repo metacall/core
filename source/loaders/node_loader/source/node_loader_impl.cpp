@@ -2837,8 +2837,8 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 		/* Retrieve the function properties */
 		napi_value function_sig;
-		napi_value function_types;
-		napi_value function_ret;
+		napi_value function_types = nullptr;
+		napi_value function_ret = nullptr;
 		napi_value function_is_async;
 		uint32_t function_sig_length;
 
@@ -3176,8 +3176,8 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 				napi_value function_descriptor;
 				napi_value function_ptr;
 				napi_value function_sig;
-				napi_value function_types;
-				napi_value function_ret;
+				napi_value function_types = nullptr;
+				napi_value function_ret = nullptr;
 				napi_value function_is_async;
 				uint32_t function_sig_length;
 
@@ -4826,84 +4826,84 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	{
 		/* Safe initialize */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_initialize, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe execution path */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_execution_path, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_execution_path, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe load from file */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_file, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe load from memory */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_load_from_memory, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe clear */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_clear, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe discover */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_discover, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe function call */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_func_call, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_func_call, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe function await */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_func_await, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe function destroy */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe future await */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_future_await, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_future_await, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe future delete */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
 
 		/* Safe destroy */
 		{
-			napi_status status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_abort);
+			status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_abort);
 
 			node_loader_impl_exception(env, status);
 		}
