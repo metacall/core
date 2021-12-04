@@ -146,6 +146,7 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 | [D](https://dlang.org/)                                            | [DMD](https://wiki.dlang.org/DMD)                          |        **2.x**        |
 | [Rust](https://www.rust-lang.org/)                                 | **∅**                                                      |     **>= 1.47.0**     |
 | [Scala](https://www.scala-lang.org/)                               | [JVM](https://en.wikipedia.org/wiki/Java_virtual_machine)  |     **>= 2.13.x**     |
+| [Nim](https://nim-lang.org/)                                       | **∅**                                                      |     **>= 1.4.2**      |
 
 ## 3. Use Cases
 
