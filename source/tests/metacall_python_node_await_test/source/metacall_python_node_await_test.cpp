@@ -50,7 +50,7 @@ TEST_F(metacall_python_node_await_test, DefaultConstructor)
 			"}\n"
 			"module.exports = { yeet }\n"
 			"\"\"\"\n"
-			"result = 0"
+			"result = 0\n"
 			"lock = threading.Lock()\n"
 			"metacall_load_from_memory('node', script)\n"
 			"async def test():\n"
