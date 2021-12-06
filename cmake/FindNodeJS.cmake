@@ -461,11 +461,20 @@ if(NOT NodeJS_LIBRARY)
 				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip")
 			endif()
 
-			if("${CMAKE_BUILD_TYPE}" EQUAL "Debug")
-				execute_process(COMMAND sh -c "./configure --with-icu-source=${ICU_URL} --shared --debug" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+			if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+				set(ICU_DEBUG --debug)
 			else()
-				execute_process(COMMAND sh -c "./configure --with-icu-source=${ICU_URL} --shared" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+				set(ICU_DEBUG)
 			endif()
+
+			# Workaround for OpenSSL bug: https://github.com/metacall/core/issues/223
+			if(APPLE)
+				set(ICU_ENV_VAR ${CMAKE_COMMAND} -E env PYTHONHTTPSVERIFY=0)
+			else()
+				set(ICU_ENV_VAR)
+			endif()
+
+			execute_process(COMMAND ${ICU_ENV_VAR} sh -c "./configure --with-icu-source=${ICU_URL} --shared ${ICU_DEBUG}" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 
 			message(STATUS "Build NodeJS shared library")
 
