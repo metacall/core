@@ -111,29 +111,9 @@ add_subdirectory(configuration)
 add_subdirectory(loader)
 add_subdirectory(metacall)
 
-# Tests
-set(IDE_FOLDER "Tests")
-add_subdirectory(tests)
-
-# CLIs
-set(IDE_FOLDER "CLIs")
-add_subdirectory(cli)
-
-# Examples
-set(IDE_FOLDER "Examples")
-add_subdirectory(examples)
-
-# Benchmarks
-set(IDE_FOLDER "Benchmarks")
-add_subdirectory(benchmarks)
-
 # Loaders
 set(IDE_FOLDER "Loaders")
 add_subdirectory(loaders)
-
-# Scripts
-set(IDE_FOLDER "Scripts")
-add_subdirectory(scripts)
 
 # Serials
 set(IDE_FOLDER "Serials")
@@ -146,6 +126,26 @@ add_subdirectory(detours)
 # Ports
 set(IDE_FOLDER "Ports")
 add_subdirectory(ports)
+
+# Scripts
+set(IDE_FOLDER "Scripts")
+add_subdirectory(scripts)
+
+# Tests
+set(IDE_FOLDER "Tests")
+add_subdirectory(tests)
+
+# Benchmarks
+set(IDE_FOLDER "Benchmarks")
+add_subdirectory(benchmarks)
+
+# CLIs
+set(IDE_FOLDER "CLIs")
+add_subdirectory(cli)
+
+# Examples
+set(IDE_FOLDER "Examples")
+add_subdirectory(examples)
 
 #
 # Deployment

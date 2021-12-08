@@ -122,17 +122,11 @@ add_test(NAME ${target}
 # Define dependencies
 #
 
-include(GeneratorExpressions)
-
-cmake_expand_generator_expressions(DEPENDENCIES
-	$<$<BOOL:${OPTION_BUILD_LOADERS_NODE}>:node_loader>
-	$<$<BOOL:${OPTION_BUILD_LOADERS_PY}>:py_loader>
-	$<$<BOOL:${OPTION_BUILD_LOADERS_RB}>:rb_loader>
+add_loader_dependencies(${target}
+	node_loader
+	py_loader
+	rb_loader
 )
-
-if(DEPENDENCIES)
-	add_dependencies(${target} ${DEPENDENCIES})
-endif()
 
 #
 # Configure test data
