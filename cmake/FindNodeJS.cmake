@@ -385,7 +385,7 @@ if(NOT NodeJS_LIBRARY)
 
 	# Compile node as a shared library if needed
 	if(NOT EXISTS "${NodeJS_COMPILE_PATH}")
-		if(WIN32)
+		if(WIN32 AND MSVC)
 			if(NOT EXISTS "${NodeJS_COMPILE_PATH}/node.dll" AND NOT EXISTS "${NodeJS_COMPILE_PATH}/libnode.dll")
 				message(STATUS "Build NodeJS shared library")
 
