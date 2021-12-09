@@ -20,10 +20,12 @@
 
 #include <metacall/metacall_version.h>
 
+#include <version/version.h>
+
 const char *version_print_info()
 {
 	static const char version_info[] =
-		"Abstract Data Type Library " METACALL_VERSION "\n"
+		"Version Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
 #ifdef ADT_STATIC_DEFINE

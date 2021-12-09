@@ -1,6 +1,6 @@
 /*
- *	Thrading Library by Parra Studios
- *	A threading library providing utilities for lock-free data structures and more.
+ *	CMake Versioning Utility by Parra Studios
+ *	A template for generating versioning utilities.
  *
  *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,23 +18,19 @@
  *
  */
 
-#include <metacall/metacall_version.h>
+#ifndef VERSION_H
+#define VERSION_H 1
 
-#include <threading/threading.h>
+#include <version/version_api.h>
 
-const char *threading_print_info()
-{
-	static const char threading_info[] =
-		"Threading Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
-
-#ifdef ADT_STATIC_DEFINE
-		"Compiled as static library type"
-#else
-		"Compiled as shared library type"
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-		"\n";
+VERSION_API const char *version_print_info(void);
 
-	return threading_info;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* VERSION_H */
