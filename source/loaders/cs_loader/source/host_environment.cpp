@@ -19,7 +19,10 @@
 */
 
 #include <cs_loader/host_environment.h>
+
 #include <wchar.h>
+
+#include <log/log.h>
 
 host_environment::host_environment(char *dotnet_root) :
 	clr_runtime_host(nullptr)
