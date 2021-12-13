@@ -950,14 +950,13 @@ VALUE rb_loader_impl_module_eval_protect(VALUE args)
 
 int rb_loader_impl_module_eval(VALUE module, VALUE module_data, VALUE *result)
 {
-	const int argc = 1;
-	VALUE argv[argc];
+	VALUE argv[1];
 	struct loader_impl_rb_module_eval_protect_type protect;
 	int state;
 
 	argv[0] = module_data;
 
-	protect.argc = argc;
+	protect.argc = 1;
 	protect.argv = argv;
 	protect.module = module;
 
