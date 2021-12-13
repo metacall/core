@@ -19,6 +19,7 @@
 */
 
 #include <cs_loader/string_buffer.h>
+#include <wchar.h>
 
 string_buffer::string_buffer() :
 	capacity(0), buffer(nullptr), length(0)

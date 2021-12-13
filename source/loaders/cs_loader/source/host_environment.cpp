@@ -19,6 +19,7 @@
 */
 
 #include <cs_loader/host_environment.h>
+#include <wchar.h>
 
 host_environment::host_environment(char *dotnet_root) :
 	clr_runtime_host(nullptr)
@@ -37,7 +38,7 @@ host_environment::host_environment(char *dotnet_root) :
 	}
 
 	// Copy the directory path
-	::wcsncpy_s(this->host_directory_path, this->host_path, lastBackslashIndex + 1);
+	wcsncpy_s(this->host_directory_path, this->host_path, lastBackslashIndex + 1);
 
 	// Save the exe name
 	this->host_exe_name = this->host_path + lastBackslashIndex + 1;
