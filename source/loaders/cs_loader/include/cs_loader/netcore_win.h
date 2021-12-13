@@ -20,8 +20,9 @@
 
 #ifndef _NETCORE_WIN_H_
 #define _NETCORE_WIN_H_
-#include "defs.h"
-#include "netcore.h"
+
+#include <cs_loader/defs.h>
+#include <cs_loader/netcore.h>
 
 typedef class host_environment;
 typedef class ICLRRuntimeHost2;

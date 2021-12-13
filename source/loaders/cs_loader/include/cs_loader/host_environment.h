@@ -26,6 +26,8 @@
 #include <inc/palclr.h>
 #include <pal/prebuilt/inc/mscoree.h>
 
+#include <cs_loader/defs.h>
+
 #include <functional>
 #include <memory>
 
