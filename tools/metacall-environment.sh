@@ -270,8 +270,8 @@ sub_nodejs(){
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
 
-	# Install python 2.7 to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python g++ make nodejs curl
+	# Install python to build node (gyp)
+	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 g++ make nodejs curl
 
 	# Install and update npm and node-gyp
 	curl -L https://npmjs.org/install.sh | $SUDO_CMD sh
