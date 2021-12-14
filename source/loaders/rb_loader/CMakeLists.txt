@@ -74,7 +74,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Build library
-add_library(${target}
+add_library(${target} MODULE
 	${sources}
 	${headers}
 )

@@ -21,8 +21,6 @@
 #ifndef RB_LOADER_IMPL_PARSER_H
 #define RB_LOADER_IMPL_PARSER_H 1
 
-#include <rb_loader/rb_loader_api.h>
-
 #include <adt/adt_set.h>
 
 #ifdef __cplusplus
@@ -50,11 +48,11 @@ typedef struct rb_function_parser_type
 
 } * rb_function_parser;
 
-RB_LOADER_API int rb_loader_impl_key_parse(const char *source, set function_map);
+int rb_loader_impl_key_parse(const char *source, set function_map);
 
-RB_LOADER_API void rb_loader_impl_key_print(set function_map);
+void rb_loader_impl_key_print(set function_map);
 
-RB_LOADER_API int rb_loader_impl_key_clear(set function_map);
+int rb_loader_impl_key_clear(set function_map);
 
 #ifdef __cplusplus
 }

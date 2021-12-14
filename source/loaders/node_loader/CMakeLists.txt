@@ -87,7 +87,7 @@ source_group_by_path(${source_path}  "\\\\.cpp$|\\\\.c$|\\\\.h$|\\\\.hpp$"
 #
 
 # Build library
-add_library(${target} SHARED # Needed in order to be linked with TypeScript loader
+add_library(${target} MODULE
 	${sources}
 	${headers}
 )

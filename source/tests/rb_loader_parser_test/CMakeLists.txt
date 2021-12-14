@@ -33,6 +33,10 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(sources
 	${source_path}/main.cpp
 	${source_path}/rb_loader_parser_test.cpp
+
+	# Add directly the sources to be tested, Ruby Loader is a MODULE and it cannot be linked
+	${CMAKE_SOURCE_DIR}/source/loaders/rb_loader/include/rb_loader/rb_loader_impl_parser.h
+	${CMAKE_SOURCE_DIR}/source/loaders/rb_loader/source/rb_loader_impl_parser.c
 )
 
 # Group source files
@@ -73,6 +77,9 @@ target_include_directories(${target}
 	PRIVATE
 	${DEFAULT_INCLUDE_DIRECTORIES}
 	${PROJECT_BINARY_DIR}/source/include
+
+	# Ruby Loader headers
+	${CMAKE_SOURCE_DIR}/source/loaders/rb_loader/include
 )
 
 #
@@ -94,7 +101,6 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::memory
 	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::rb_loader
 )
 
 #
