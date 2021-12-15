@@ -2059,7 +2059,7 @@ int metacall_destroy()
 	return 0;
 }
 
-const struct metacall_version_type *metacall_version_data()
+const struct metacall_version_type *metacall_version()
 {
 	static const struct metacall_version_type version = {
 		METACALL_VERSION_MAJOR_ID,
