@@ -30,12 +30,6 @@ set(source_group "Source Files")
 source_group_by_path(${source_path}  "\\\\.js$"
 	${source_group} ${sources})
 
-if(MSVC)
-	set(NODE_PORT_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(NODE_PORT_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
-endif()
-
 if(NOT OPTION_BUILD_GUIX)
 	find_package(NPM)
 
@@ -46,17 +40,17 @@ if(NOT OPTION_BUILD_GUIX)
 
 	add_custom_target(${target} ALL
 		COMMAND ${NPM_EXECUTABLE} install --ignore-scripts
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/index.js
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package.json
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package-lock.json
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${PROJECT_OUTPUT_DIR}/node_modules/metacall/index.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package.json
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package-lock.json
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		SOURCES ${sources}
 	)
 else()
 	add_custom_target(${target} ALL
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/index.js
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package.json
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${NODE_PORT_OUTPUT_PATH}/node_modules/metacall/package-lock.json
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${PROJECT_OUTPUT_DIR}/node_modules/metacall/index.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package.json
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package-lock.json
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		SOURCES ${sources}
 	)

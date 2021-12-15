@@ -28,12 +28,6 @@ set(source_group "Source Files")
 source_group_by_path(${source_path}  "\\\\.ts$"
 	${source_group} ${sources})
 
-if(MSVC)
-	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
-endif()
-
 if(NOT OPTION_BUILD_GUIX)
 	find_package(NPM)
 
@@ -59,8 +53,8 @@ if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target}
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND ${NPM_EXECUTABLE} run build
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/typescript ${PROJECT_OUTPUT_DIR}/node_modules/typescript
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${PROJECT_OUTPUT_DIR}/bootstrap.ts
 		SOURCES ${sources}
 		DEPENDS ${sources}
 	)
@@ -103,7 +97,7 @@ else()
 	add_custom_target(${target} ALL
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND ${NodeJS_EXECUTABLE} compile.js
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/build/bootstrap.js ${PROJECT_OUTPUT_DIR}/bootstrap.ts
 		SOURCES ${sources}
 		DEPENDS ${sources}
 	)
@@ -116,7 +110,7 @@ else()
 
 	# Guix stores typescript dependency previously to the build in the output directory
 	install(DIRECTORY
-		${BOOTSTRAP_OUTPUT_PATH}/node_modules/typescript
+		${PROJECT_OUTPUT_DIR}/node_modules/typescript
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
@@ -124,7 +118,7 @@ endif()
 
 # Install Bootstrap (use ts extension even if it is transpiled js to avoid conflicts with node loader bootstrap)
 install(FILES
-	${BOOTSTRAP_OUTPUT_PATH}/bootstrap.ts
+	${PROJECT_OUTPUT_DIR}/bootstrap.ts
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

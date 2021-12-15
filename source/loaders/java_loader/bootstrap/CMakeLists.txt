@@ -39,16 +39,10 @@ set(source_group "Source Files")
 source_group_by_path(${source_path}  "\\\\.java$"
 	${source_group} ${sources})
 
-if(MSVC)
-	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}/${CMAKE_BUILD_TYPE}")
-else()
-	set(BOOTSTRAP_OUTPUT_PATH "${PROJECT_BINARY_DIR}")
-endif()
-
 add_custom_target(${target}
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND ${CMAKE_COMMAND} -E  make_directory ${BOOTSTRAP_OUTPUT_PATH}
-	COMMAND ${Java_JAVAC_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.java -d ${BOOTSTRAP_OUTPUT_PATH}
+	COMMAND ${CMAKE_COMMAND} -E  make_directory ${PROJECT_OUTPUT_DIR}
+	COMMAND ${Java_JAVAC_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/lib/bootstrap.java -d ${PROJECT_OUTPUT_DIR}
 	SOURCES ${sources}
 	DEPENDS ${sources}
 )
