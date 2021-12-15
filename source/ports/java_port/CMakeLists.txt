@@ -187,6 +187,7 @@ message(STATUS "Port ${target}")
 # 	${CMAKE_CURRENT_SOURCE_DIR}/include
 # 	${CMAKE_CURRENT_BINARY_DIR}/include
 
+# 	$<TARGET_PROPERTY:${META_PROJECT_NAME}::metacall,INCLUDE_DIRECTORIES> # MetaCall includes
 # 	${JAVA_INCLUDE_DIRS} # Java includes
 # 	${JNI_INCLUDE_DIRS} # JNI includes
 
