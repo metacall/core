@@ -60,7 +60,7 @@
 
 /* -- Methods -- */
 
-uint64_t thread_id_get_current()
+uint64_t thread_id_get_current(void)
 {
 #if defined(_WIN32)
 	return (uint64_t)GetCurrentThreadId();

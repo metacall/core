@@ -15,7 +15,7 @@
 
 /* -- Methods -- */
 
-serial_interface rapid_json_serial_impl_interface_singleton()
+serial_interface rapid_json_serial_impl_interface_singleton(void)
 {
 	static struct serial_interface_type interface_instance_rapid_json = {
 		&rapid_json_serial_impl_extension,
@@ -28,7 +28,7 @@ serial_interface rapid_json_serial_impl_interface_singleton()
 	return &interface_instance_rapid_json;
 }
 
-const char *rapid_json_serial_print_info()
+const char *rapid_json_serial_print_info(void)
 {
 	static const char rapid_json_serial_info[] =
 		"Rapid JSON Serial Plugin " METACALL_VERSION "\n"

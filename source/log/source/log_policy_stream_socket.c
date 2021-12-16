@@ -39,7 +39,7 @@ static int log_policy_stream_socket_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-log_policy_interface log_policy_stream_socket_interface()
+log_policy_interface log_policy_stream_socket_interface(void)
 {
 	static struct log_policy_stream_impl_type log_policy_stream_socket_impl_obj = {
 		&log_policy_stream_socket_write,

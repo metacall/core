@@ -43,7 +43,7 @@ static int log_policy_format_custom_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-log_policy_interface log_policy_format_custom_interface()
+log_policy_interface log_policy_format_custom_interface(void)
 {
 	static struct log_policy_format_impl_type log_policy_format_custom_impl_obj = {
 		&log_policy_format_custom_size,

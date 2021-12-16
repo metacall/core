@@ -40,7 +40,7 @@ static int log_policy_stream_custom_destroy(log_policy policy);
 
 /* -- Methods -- */
 
-log_policy_interface log_policy_stream_custom_interface()
+log_policy_interface log_policy_stream_custom_interface(void)
 {
 	static struct log_policy_stream_impl_type log_policy_stream_custom_impl_obj = {
 		&log_policy_stream_custom_write,

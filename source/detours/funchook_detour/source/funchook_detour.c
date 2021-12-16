@@ -15,7 +15,7 @@
 
 /* -- Methods -- */
 
-detour_interface funchook_detour_impl_interface_singleton()
+detour_interface funchook_detour_impl_interface_singleton(void)
 {
 	static struct detour_interface_type interface_instance_funchook = {
 		&funchook_detour_impl_initialize,
@@ -27,7 +27,7 @@ detour_interface funchook_detour_impl_interface_singleton()
 	return &interface_instance_funchook;
 }
 
-const char *funchook_detour_print_info()
+const char *funchook_detour_print_info(void)
 {
 	static const char funchook_detour_info[] =
 		"FuncHook Detour Plugin " METACALL_VERSION "\n"

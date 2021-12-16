@@ -202,7 +202,7 @@ int loader_impl_create_singleton(loader_impl impl, const char *path, const loade
 	return 1;
 }
 
-loader_impl loader_impl_create_proxy()
+loader_impl loader_impl_create_proxy(void)
 {
 	loader_impl impl = malloc(sizeof(struct loader_impl_type));
 

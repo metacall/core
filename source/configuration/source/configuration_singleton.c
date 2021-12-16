@@ -42,7 +42,7 @@ configuration_singleton configuration_singleton_ptr = &configuration_singleton_d
 
 /* -- Methods -- */
 
-configuration_singleton configuration_singleton_instance()
+configuration_singleton configuration_singleton_instance(void)
 {
 	return configuration_singleton_ptr;
 }

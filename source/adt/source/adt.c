@@ -22,7 +22,7 @@
 
 #include <adt/adt.h>
 
-const char *adt_print_info()
+const char *adt_print_info(void)
 {
 	static const char adt_info[] =
 		"Abstract Data Type Library " METACALL_VERSION "\n"

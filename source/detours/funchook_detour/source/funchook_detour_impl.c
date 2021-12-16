@@ -24,7 +24,7 @@ typedef struct detour_impl_funchook_type
 
 /* -- Methods -- */
 
-detour_impl_handle funchook_detour_impl_initialize()
+detour_impl_handle funchook_detour_impl_initialize(void)
 {
 	detour_impl_funchook detour_impl;
 

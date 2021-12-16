@@ -66,12 +66,12 @@ serial_singleton serial_singleton_ptr = &serial_singleton_default;
 
 /* -- Methods -- */
 
-serial_singleton serial_singleton_instance()
+serial_singleton serial_singleton_instance(void)
 {
 	return serial_singleton_ptr;
 }
 
-int serial_singleton_initialize()
+int serial_singleton_initialize(void)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
@@ -135,7 +135,7 @@ serial serial_singleton_get(const char *name)
 	return set_get(singleton->serials, (set_key)name);
 }
 
-const char *serial_singleton_path()
+const char *serial_singleton_path(void)
 {
 	serial_singleton singleton = serial_singleton_instance();
 
@@ -175,7 +175,7 @@ int serial_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_c
 	return 0;
 }
 
-void serial_singleton_destroy()
+void serial_singleton_destroy(void)
 {
 	serial_singleton singleton = serial_singleton_instance();
 

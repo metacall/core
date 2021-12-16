@@ -43,7 +43,7 @@ log_policy log_policy_stream_file(const char *file_name, const char *mode)
 	return log_policy_create(LOG_ASPECT_STREAM, log_policy_stream(LOG_POLICY_STREAM_FILE), &file_ctor);
 }
 
-log_policy log_policy_stream_nginx(ngx_log_t *ngx_log_ptr, void (*ngx_error_ptr)(), uint16_t ngx_log_level)
+log_policy log_policy_stream_nginx(ngx_log_t *ngx_log_ptr, void (*ngx_error_ptr)(void), uint16_t ngx_log_level)
 {
 	struct log_policy_stream_nginx_ctor_type nginx_ctor;
 

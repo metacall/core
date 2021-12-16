@@ -29,17 +29,17 @@
 	#error "The Python Loader Port must be defined"
 #endif
 
-static PyObject *py_loader_port_none()
+static PyObject *py_loader_port_none(void)
 {
 	Py_RETURN_NONE;
 }
 
-static PyObject *py_loader_port_false()
+static PyObject *py_loader_port_false(void)
 {
 	Py_RETURN_FALSE;
 }
 
-static PyObject *py_loader_port_true()
+static PyObject *py_loader_port_true(void)
 {
 	Py_RETURN_TRUE;
 }

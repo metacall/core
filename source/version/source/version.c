@@ -22,7 +22,7 @@
 
 #include <version/version.h>
 
-const char *version_print_info()
+const char *version_print_info(void)
 {
 	static const char version_info[] =
 		"Version Library " METACALL_VERSION "\n"

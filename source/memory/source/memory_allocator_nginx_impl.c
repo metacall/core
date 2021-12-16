@@ -56,7 +56,7 @@ static void memory_allocator_nginx_destroy(memory_allocator_impl impl);
 
 /* -- Methods -- */
 
-memory_allocator_iface memory_allocator_nginx_iface()
+memory_allocator_iface memory_allocator_nginx_iface(void)
 {
 	static struct memory_allocator_iface_type allocator_nginx_iface = {
 		&memory_allocator_nginx_create,

@@ -114,7 +114,7 @@ static loader loader_instance_ptr = &loader_instance_default;
 
 /* -- Methods -- */
 
-loader loader_singleton()
+loader loader_singleton(void)
 {
 	return loader_instance_ptr;
 }
@@ -135,7 +135,7 @@ void loader_initialization_register(loader_impl impl)
 	}
 }
 
-void loader_initialize_proxy()
+void loader_initialize_proxy(void)
 {
 	loader l = loader_singleton();
 
@@ -723,7 +723,7 @@ int loader_metadata_cb_iterate(set s, set_key key, set_value val, set_cb_iterate
 	return 0;
 }
 
-value loader_metadata()
+value loader_metadata(void)
 {
 	loader l = loader_singleton();
 
@@ -808,7 +808,7 @@ void loader_unload_children(loader_impl impl, int destroy_objects)
 	}
 }
 
-int loader_unload()
+int loader_unload(void)
 {
 	loader l = loader_singleton();
 
@@ -856,7 +856,7 @@ int loader_unload()
 	return 0;
 }
 
-void loader_destroy()
+void loader_destroy(void)
 {
 	loader l = loader_singleton();
 
@@ -879,7 +879,7 @@ void loader_destroy()
 	loader_env_destroy();
 }
 
-const char *loader_print_info()
+const char *loader_print_info(void)
 {
 	static const char loader_info[] =
 		"Loader Library " METACALL_VERSION "\n"

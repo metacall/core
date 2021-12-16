@@ -68,14 +68,14 @@ static type_id *metacall_type_ids(void *args[], size_t size);
 
 /* -- Methods -- */
 
-const char *metacall_serial()
+const char *metacall_serial(void)
 {
 	static const char metacall_serial_str[] = METACALL_SERIAL;
 
 	return metacall_serial_str;
 }
 
-void metacall_log_null()
+void metacall_log_null(void)
 {
 	metacall_log_null_flag = 0;
 }
@@ -85,7 +85,7 @@ void metacall_flags(int flags)
 	metacall_config_flags = flags;
 }
 
-int metacall_initialize()
+int metacall_initialize(void)
 {
 	loader l = loader_singleton();
 
@@ -216,12 +216,12 @@ void metacall_initialize_args(int argc, char *argv[])
 	metacall_initialize_argv = argv;
 }
 
-char **metacall_argv()
+char **metacall_argv(void)
 {
 	return metacall_initialize_argv;
 }
 
-int metacall_argc()
+int metacall_argc(void)
 {
 	return metacall_initialize_argc;
 }
@@ -231,7 +231,7 @@ int metacall_is_initialized(const char *tag)
 	return loader_is_initialized(tag);
 }
 
-size_t metacall_args_size()
+size_t metacall_args_size(void)
 {
 	const size_t args_size = METACALL_ARGS_SIZE;
 
@@ -2031,7 +2031,7 @@ int metacall_clear(void *handle)
 	return loader_clear(handle);
 }
 
-int metacall_destroy()
+int metacall_destroy(void)
 {
 	if (metacall_initialize_flag == 0)
 	{
@@ -2059,7 +2059,7 @@ int metacall_destroy()
 	return 0;
 }
 
-const struct metacall_version_type *metacall_version()
+const struct metacall_version_type *metacall_version(void)
 {
 	static const struct metacall_version_type version = {
 		METACALL_VERSION_MAJOR_ID,
@@ -2080,7 +2080,7 @@ uint32_t metacall_version_hex_make(unsigned int major, unsigned int minor, unsig
 	return version_hex;
 }
 
-uint32_t metacall_version_hex()
+uint32_t metacall_version_hex(void)
 {
 	static const uint32_t version_hex =
 		(METACALL_VERSION_MAJOR_ID << 0x18) +
@@ -2090,28 +2090,28 @@ uint32_t metacall_version_hex()
 	return version_hex;
 }
 
-const char *metacall_version_str()
+const char *metacall_version_str(void)
 {
 	static const char version_string[] = METACALL_VERSION;
 
 	return version_string;
 }
 
-const char *metacall_version_revision()
+const char *metacall_version_revision(void)
 {
 	static const char version_revision[] = METACALL_VERSION_REVISION;
 
 	return version_revision;
 }
 
-const char *metacall_version_name()
+const char *metacall_version_name(void)
 {
 	static const char version_name[] = METACALL_NAME_VERSION;
 
 	return version_name;
 }
 
-const char *metacall_print_info()
+const char *metacall_print_info(void)
 {
 	static const char metacall_info[] =
 		"MetaCall Library " METACALL_VERSION "\n"

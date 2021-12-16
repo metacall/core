@@ -23,7 +23,7 @@
 #include <mock_loader/mock_loader.h>
 #include <mock_loader/mock_loader_impl.h>
 
-loader_impl_interface mock_loader_impl_interface_singleton()
+loader_impl_interface mock_loader_impl_interface_singleton(void)
 {
 	static struct loader_impl_interface_type loader_impl_interface_mock = {
 		&mock_loader_impl_initialize,
@@ -39,7 +39,7 @@ loader_impl_interface mock_loader_impl_interface_singleton()
 	return &loader_impl_interface_mock;
 }
 
-const char *mock_loader_print_info()
+const char *mock_loader_print_info(void)
 {
 	static const char mock_loader_info[] =
 		"Mock Loader Plugin " METACALL_VERSION "\n"

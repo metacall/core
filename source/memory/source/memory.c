@@ -22,7 +22,7 @@
 
 #include <memory/memory.h>
 
-const char *memory_print_info()
+const char *memory_print_info(void)
 {
 	static const char memory_info[] =
 		"Memory Library " METACALL_VERSION "\n"

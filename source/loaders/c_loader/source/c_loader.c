@@ -39,7 +39,7 @@ loader_impl_interface c_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_c;
 }
 
-const char *c_loader_print_info()
+const char *c_loader_print_info(void)
 {
 	static const char c_loader_info[] =
 		"C Loader Plugin " METACALL_VERSION "\n"

@@ -22,7 +22,7 @@
 
 #include <threading/threading.h>
 
-const char *threading_print_info()
+const char *threading_print_info(void)
 {
 	static const char threading_info[] =
 		"Threading Library " METACALL_VERSION "\n"

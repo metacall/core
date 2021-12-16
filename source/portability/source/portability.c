@@ -22,7 +22,7 @@
 
 #include <portability/portability.h>
 
-const char *portability_print_info()
+const char *portability_print_info(void)
 {
 	static const char portability_info[] =
 		"Portability Library " METACALL_VERSION "\n"

@@ -10,7 +10,7 @@
 
 loader_descriptor mock_loader_impl_descriptor_instance(void);
 
-loader_impl_descriptor mock_loader_impl_descriptor_singleton()
+loader_impl_descriptor mock_loader_impl_descriptor_singleton(void)
 {
 	static struct loader_impl_descriptor_type loader_impl_descriptor_mock = {
 		&mock_loader_impl_descriptor_instance
@@ -19,7 +19,7 @@ loader_impl_descriptor mock_loader_impl_descriptor_singleton()
 	return &loader_impl_descriptor_mock;
 }
 
-loader_descriptor mock_loader_impl_descriptor_instance()
+loader_descriptor mock_loader_impl_descriptor_instance(void)
 {
 	/* Copyright */
 	static struct loader_descriptor_copyright_type loader_descriptor_copyright_mock = {

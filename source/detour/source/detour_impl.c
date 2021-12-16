@@ -90,7 +90,7 @@ int detour_impl_load_symbol(dynlink handle, const char *name, dynlink_symbol_add
 	return dynlink_symbol(handle, detour_dynlink_symbol, singleton_addr_ptr);
 }
 
-detour_impl detour_impl_create()
+detour_impl detour_impl_create(void)
 {
 	detour_impl impl = malloc(sizeof(struct detour_impl_type));
 

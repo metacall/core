@@ -69,7 +69,7 @@ static void backtrace_handler(int sig_num, siginfo_t *info, void *ucontext)
 	exit(EXIT_FAILURE);
 }
 
-int backtrace_initialize()
+int backtrace_initialize(void)
 {
 	struct sigaction sigact;
 
@@ -79,7 +79,7 @@ int backtrace_initialize()
 	return sigaction(SIGSEGV, &sigact, (struct sigaction *)NULL);
 }
 
-int backtrace_destroy()
+int backtrace_destroy(void)
 {
 	return sigaction(SIGSEGV, (const struct sigaction *)SIG_DFL, (struct sigaction *)NULL);
 }

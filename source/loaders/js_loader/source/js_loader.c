@@ -39,7 +39,7 @@ loader_impl_interface js_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_js;
 }
 
-const char *js_loader_print_info()
+const char *js_loader_print_info(void)
 {
 	static const char js_loader_info[] =
 		"Javascript Loader Plugin " METACALL_VERSION "\n"

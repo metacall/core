@@ -63,7 +63,7 @@ static int log_aspect_stream_destroy(log_aspect aspect);
 
 /* -- Methods -- */
 
-log_aspect_interface log_aspect_stream_interface()
+log_aspect_interface log_aspect_stream_interface(void)
 {
 	static struct log_aspect_stream_impl_type log_aspect_stream_impl_obj = {
 		&log_aspect_stream_impl_write,

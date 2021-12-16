@@ -23,7 +23,7 @@
 #include <dart_loader/dart_loader.h>
 #include <dart_loader/dart_loader_impl.h>
 
-loader_impl_interface dart_loader_impl_interface_singleton()
+loader_impl_interface dart_loader_impl_interface_singleton(void)
 {
 	static struct loader_impl_interface_type loader_impl_interface_dart = {
 		&dart_loader_impl_initialize,
@@ -39,7 +39,7 @@ loader_impl_interface dart_loader_impl_interface_singleton()
 	return &loader_impl_interface_dart;
 }
 
-const char *dart_loader_print_info()
+const char *dart_loader_print_info(void)
 {
 	static const char dart_loader_info[] =
 		"Dart Loader Plugin " METACALL_VERSION "\n"

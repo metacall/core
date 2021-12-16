@@ -39,7 +39,7 @@ loader_impl_interface llvm_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_llvm;
 }
 
-const char *llvm_loader_print_info()
+const char *llvm_loader_print_info(void)
 {
 	static const char llvm_loader_info[] =
 		"LLVM Loader Plugin " METACALL_VERSION "\n"

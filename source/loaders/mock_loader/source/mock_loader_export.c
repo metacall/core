@@ -12,7 +12,7 @@
 #include <mock_loader/mock_loader_interface.h>
 #include <mock_loader/mock_loader_print.h>
 
-loader_impl_export mock_loader_impl_export_singleton()
+loader_impl_export mock_loader_impl_export_singleton(void)
 {
 	static struct loader_impl_export_type mock_loader_impl_export = {
 		&mock_loader_impl_descriptor_singleton,

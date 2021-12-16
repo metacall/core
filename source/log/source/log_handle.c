@@ -41,7 +41,7 @@ struct log_handle_type
 
 /* -- Methods -- */
 
-log_handle log_handle_create()
+log_handle log_handle_create(void)
 {
 	log_handle handle = malloc(sizeof(struct log_handle_type));
 

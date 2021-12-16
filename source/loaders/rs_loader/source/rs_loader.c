@@ -39,7 +39,7 @@ loader_impl_interface rs_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_rs;
 }
 
-const char *rs_loader_print_info()
+const char *rs_loader_print_info(void)
 {
 	static const char rs_loader_info[] =
 		"Rust Loader Plugin " METACALL_VERSION "\n"

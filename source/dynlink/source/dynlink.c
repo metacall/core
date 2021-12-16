@@ -40,7 +40,7 @@ struct dynlink_type
 
 /* -- Methods -- */
 
-const char *dynlink_extension()
+const char *dynlink_extension(void)
 {
 	return dynlink_impl_extension();
 }
@@ -132,7 +132,7 @@ void dynlink_unload(dynlink handle)
 	}
 }
 
-const char *dynlink_print_info()
+const char *dynlink_print_info(void)
 {
 	static const char dynlink_info[] =
 		"Dynamic Link Library " METACALL_VERSION "\n"

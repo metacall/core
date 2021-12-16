@@ -34,7 +34,7 @@ static int log_aspect_storage_destroy(log_aspect aspect);
 
 /* -- Methods -- */
 
-log_aspect_interface log_aspect_storage_interface()
+log_aspect_interface log_aspect_storage_interface(void)
 {
 	static struct log_aspect_storage_impl_type log_aspect_storage_impl_obj = {
 		&log_aspect_storage_impl_append,

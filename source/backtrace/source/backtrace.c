@@ -26,7 +26,7 @@
 
 /* -- Methods -- */
 
-const char *backtrace_print_info()
+const char *backtrace_print_info(void)
 {
 	static const char backtrace_info[] =
 		"Backtrace Library " METACALL_VERSION "\n"

@@ -55,7 +55,7 @@ static void memory_allocator_std_destroy(memory_allocator_impl impl);
 
 /* -- Methods -- */
 
-memory_allocator_iface memory_allocator_std_iface()
+memory_allocator_iface memory_allocator_std_iface(void)
 {
 	static struct memory_allocator_iface_type allocator_std_iface = {
 		&memory_allocator_std_create,

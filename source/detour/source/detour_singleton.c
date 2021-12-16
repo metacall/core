@@ -66,12 +66,12 @@ detour_singleton detour_singleton_ptr = &detour_singleton_default;
 
 /* -- Methods -- */
 
-detour_singleton detour_singleton_instance()
+detour_singleton detour_singleton_instance(void)
 {
 	return detour_singleton_ptr;
 }
 
-int detour_singleton_initialize()
+int detour_singleton_initialize(void)
 {
 	detour_singleton singleton = detour_singleton_instance();
 
@@ -135,7 +135,7 @@ detour detour_singleton_get(const char *name)
 	return set_get(singleton->detours, (set_key)name);
 }
 
-const char *detour_singleton_path()
+const char *detour_singleton_path(void)
 {
 	detour_singleton singleton = detour_singleton_instance();
 
@@ -175,7 +175,7 @@ int detour_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_c
 	return 0;
 }
 
-void detour_singleton_destroy()
+void detour_singleton_destroy(void)
 {
 	detour_singleton singleton = detour_singleton_instance();
 

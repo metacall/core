@@ -41,7 +41,7 @@ static configuration_impl_singleton configuration_impl_singleton_instance(void);
 
 /* -- Methods -- */
 
-configuration_impl_singleton configuration_impl_singleton_instance()
+configuration_impl_singleton configuration_impl_singleton_instance(void)
 {
 	static struct configuration_impl_singleton_type instance = {
 		NULL,
@@ -50,7 +50,7 @@ configuration_impl_singleton configuration_impl_singleton_instance()
 	return &instance;
 }
 
-const char *configuration_impl_extension()
+const char *configuration_impl_extension(void)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 
@@ -197,7 +197,7 @@ int configuration_impl_load(configuration config, void *allocator)
 	return 0;
 }
 
-int configuration_impl_destroy()
+int configuration_impl_destroy(void)
 {
 	configuration_impl_singleton singleton = configuration_impl_singleton_instance();
 

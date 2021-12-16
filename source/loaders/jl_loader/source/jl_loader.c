@@ -39,7 +39,7 @@ loader_impl_interface jl_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_jl;
 }
 
-const char *jl_loader_print_info()
+const char *jl_loader_print_info(void)
 {
 	static const char jl_loader_info[] =
 		"Julia Loader Plugin " METACALL_VERSION "\n"

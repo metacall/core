@@ -11,7 +11,7 @@
 
 #include <loader/loader_impl_interface.h>
 
-loader_impl_interface mock_loader_impl_interface_singleton()
+loader_impl_interface mock_loader_impl_interface_singleton(void)
 {
 	static struct loader_impl_interface_type loader_impl_interface_mock = {
 		&mock_loader_impl_initialize,

@@ -36,12 +36,12 @@ void function_mock_interface_await(function func, function_impl impl, function_a
 
 void function_mock_interface_destroy(function func, function_impl impl);
 
-function_impl_interface_singleton mock_loader_impl_function_interface()
+function_impl_interface_singleton mock_loader_impl_function_interface(void)
 {
 	return &function_mock_singleton;
 }
 
-function_interface function_mock_singleton()
+function_interface function_mock_singleton(void)
 {
 	static struct function_interface_type mock_interface = {
 		&function_mock_interface_create,

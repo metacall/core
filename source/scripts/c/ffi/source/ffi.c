@@ -2,12 +2,12 @@
 
 typedef int yeet;
 
-void *call_fp_address()
+void *call_fp_address(void)
 {
 	return &ffi_call;
 }
 
-yeet int_type_renaming()
+yeet int_type_renaming(void)
 {
 	return 345;
 }

@@ -39,7 +39,7 @@ static void log_atexit_callback(void)
 	(void)result;
 }
 
-log_singleton log_singleton_create()
+log_singleton log_singleton_create(void)
 {
 	log_singleton s = malloc(sizeof(struct log_singleton_type));
 
@@ -85,7 +85,7 @@ int log_singleton_destroy()
 	return 0;
 }
 
-log_singleton log_singleton_instance_impl()
+log_singleton log_singleton_instance_impl(void)
 {
 	log_singleton *singleton_ptr = log_singleton_instance();
 
@@ -112,7 +112,7 @@ log_singleton log_singleton_instance_impl()
 	return *singleton_ptr;
 }
 
-log_singleton *log_singleton_instance()
+log_singleton *log_singleton_instance(void)
 {
 	static log_singleton s = NULL;
 
@@ -157,7 +157,7 @@ log_impl log_singleton_remove(const char *name)
 	return (log_impl)log_map_remove(s->map, name);
 }
 
-void log_singleton_clear()
+void log_singleton_clear(void)
 {
 	log_singleton s = log_singleton_instance_impl();
 

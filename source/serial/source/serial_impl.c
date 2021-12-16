@@ -88,7 +88,7 @@ int serial_impl_load_symbol(dynlink handle, const char *name, dynlink_symbol_add
 	return dynlink_symbol(handle, serial_dynlink_symbol, singleton_addr_ptr);
 }
 
-serial_impl serial_impl_create()
+serial_impl serial_impl_create(void)
 {
 	serial_impl impl = malloc(sizeof(struct serial_impl_type));
 

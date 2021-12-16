@@ -39,7 +39,7 @@ loader_impl_interface py_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_py;
 }
 
-const char *py_loader_print_info()
+const char *py_loader_print_info(void)
 {
 	static const char py_loader_info[] =
 		"Python Loader Plugin " METACALL_VERSION "\n"

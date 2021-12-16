@@ -26,7 +26,7 @@
 
 /* -- Methods -- */
 
-const char *format_print_info()
+const char *format_print_info(void)
 {
 	static const char format_info[] =
 		"Format Library " METACALL_VERSION "\n"

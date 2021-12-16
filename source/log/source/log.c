@@ -30,12 +30,12 @@
 
 /* -- Methods -- */
 
-void *log_instance()
+void *log_instance(void)
 {
 	return log_singleton_instance();
 }
 
-size_t log_size()
+size_t log_size(void)
 {
 	return log_singleton_size();
 }
@@ -244,7 +244,7 @@ int log_delete(const char *name)
 	return log_impl_destroy(impl);
 }
 
-const char *log_print_info()
+const char *log_print_info(void)
 {
 	static const char log_info[] =
 		"Logger Library " METACALL_VERSION "\n"

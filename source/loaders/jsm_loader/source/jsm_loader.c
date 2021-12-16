@@ -37,7 +37,7 @@ loader_impl_interface jsm_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_jsm;
 }
 
-const char *jsm_loader_print_info()
+const char *jsm_loader_print_info(void)
 {
 	static const char jsm_loader_info[] =
 		"Javascript Loader Plugin " METACALL_VERSION "\n"

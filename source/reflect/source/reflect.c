@@ -22,7 +22,7 @@
 
 #include <reflect/reflect.h>
 
-const char *reflect_print_info()
+const char *reflect_print_info(void)
 {
 	static const char reflect_info[] =
 		"Reflect Library " METACALL_VERSION "\n"

@@ -47,7 +47,7 @@ int mock_loader_impl_handle_discover(loader_impl impl, loader_handle handle, con
 
 int mock_loader_impl_handle_destroy(loader_impl impl, loader_handle handle);
 
-loader_impl_handle mock_loader_impl_handle_singleton()
+loader_impl_handle mock_loader_impl_handle_singleton(void)
 {
 	static struct loader_impl_handle_type loader_impl_handle_mock = {
 		&mock_loader_impl_handle_create,

@@ -24,12 +24,12 @@
 
 /* -- Methods -- */
 
-int backtrace_initialize()
+int backtrace_initialize(void)
 {
 	return 0;
 }
 
-int backtrace_destroy()
+int backtrace_destroy(void)
 {
 	return 0;
 }

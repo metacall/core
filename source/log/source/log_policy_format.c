@@ -27,12 +27,12 @@ log_policy_interface log_policy_format(const log_policy_id policy_format_id)
 	return policy_format_singleton[policy_format_id]();
 }
 
-log_policy log_policy_format_binary()
+log_policy log_policy_format_binary(void)
 {
 	return log_policy_create(LOG_ASPECT_FORMAT, log_policy_format(LOG_POLICY_FORMAT_BINARY), NULL);
 }
 
-log_policy log_policy_format_text()
+log_policy log_policy_format_text(void)
 {
 	struct log_policy_format_text_ctor_type text_ctor;
 

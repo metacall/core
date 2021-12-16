@@ -383,7 +383,7 @@ int object_delete(object obj)
 	return 1;
 }
 
-void object_stats_debug()
+void object_stats_debug(void)
 {
 #if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	if (object_stats.allocations != object_stats.deallocations || object_stats.increments != object_stats.decrements)

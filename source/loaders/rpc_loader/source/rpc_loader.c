@@ -39,7 +39,7 @@ loader_impl_interface rpc_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_rpc;
 }
 
-const char *rpc_loader_print_info()
+const char *rpc_loader_print_info(void)
 {
 	static const char rpc_loader_info[] =
 		"RPC Loader Plugin " METACALL_VERSION "\n"

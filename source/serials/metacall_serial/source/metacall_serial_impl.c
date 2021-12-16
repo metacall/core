@@ -22,7 +22,7 @@ static value metacall_serial_impl_deserialize_value(const char *buffer, size_t s
 
 /* -- Methods -- */
 
-const char *metacall_serial_impl_extension()
+const char *metacall_serial_impl_extension(void)
 {
 	static const char extension[] = "meta";
 

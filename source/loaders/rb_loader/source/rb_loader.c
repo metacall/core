@@ -39,7 +39,7 @@ loader_impl_interface rb_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_rb;
 }
 
-const char *rb_loader_print_info()
+const char *rb_loader_print_info(void)
 {
 	static const char rb_loader_info[] =
 		"Ruby Loader Plugin " METACALL_VERSION "\n"

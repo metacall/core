@@ -26,7 +26,7 @@
 
 /* -- Methods -- */
 
-const char *preprocessor_print_info()
+const char *preprocessor_print_info(void)
 {
 	static const char preprocessor_info[] =
 		"Preprocessor Library " METACALL_VERSION "\n"

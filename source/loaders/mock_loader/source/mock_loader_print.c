@@ -10,7 +10,7 @@
 
 #include <metacall/metacall_version.h>
 
-const char *mock_loader_print_info()
+const char *mock_loader_print_info(void)
 {
 	static const char mock_loader_info[] =
 		"Mock Loader Plugin " METACALL_VERSION "\n"

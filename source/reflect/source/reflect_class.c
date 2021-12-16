@@ -833,7 +833,7 @@ void class_constructors_destroy(klass cls)
 	}
 }
 
-void class_stats_debug()
+void class_stats_debug(void)
 {
 #if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	if (class_stats.allocations != class_stats.deallocations || class_stats.increments != class_stats.decrements)

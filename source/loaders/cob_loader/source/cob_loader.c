@@ -39,7 +39,7 @@ loader_impl_interface cob_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_cob;
 }
 
-const char *cob_loader_print_info()
+const char *cob_loader_print_info(void)
 {
 	static const char cob_loader_info[] =
 		"Cobol Loader Plugin " METACALL_VERSION "\n"

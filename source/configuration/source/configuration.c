@@ -215,7 +215,7 @@ int configuration_clear(configuration config)
 	return result;
 }
 
-void configuration_destroy()
+void configuration_destroy(void)
 {
 	configuration_singleton_destroy();
 
@@ -224,7 +224,7 @@ void configuration_destroy()
 	serial_destroy();
 }
 
-const char *configuration_print_info()
+const char *configuration_print_info(void)
 {
 	static const char configuration_info[] =
 		"Configuration Library " METACALL_VERSION "\n"

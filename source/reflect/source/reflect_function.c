@@ -629,7 +629,7 @@ function_return function_await(function func, function_args args, size_t size, f
 	return NULL;
 }
 
-void function_stats_debug()
+void function_stats_debug(void)
 {
 #if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	if (function_stats.allocations != function_stats.deallocations || function_stats.increments != function_stats.decrements)

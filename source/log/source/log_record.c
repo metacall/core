@@ -26,7 +26,7 @@ struct log_record_type
 /* -- Private Methods -- */
 
 #if defined(LOG_RECORD_FUNCTION_UNKNOWN_IMPL)
-const char *__log_record_unknown_function__()
+const char *__log_record_unknown_function__(void)
 {
 	static const char __log_record_unknown_function_impl__[] = "unknown_function";
 
@@ -36,7 +36,7 @@ const char *__log_record_unknown_function__()
 
 /* -- Protected Methods -- */
 
-size_t log_record_size()
+size_t log_record_size(void)
 {
 	return sizeof(struct log_record_type);
 }

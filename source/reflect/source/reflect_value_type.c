@@ -272,7 +272,7 @@ value value_create_function_closure(function f, void *c)
 	return v;
 }
 
-value value_create_null()
+value value_create_null(void)
 {
 	return value_type_create(NULL, 0, TYPE_NULL);
 }

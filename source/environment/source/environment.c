@@ -26,7 +26,7 @@
 
 /* -- Methods -- */
 
-const char *environment_print_info()
+const char *environment_print_info(void)
 {
 	static const char environment_info[] =
 		"Format Library " METACALL_VERSION "\n"

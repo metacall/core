@@ -23,7 +23,7 @@
 #include <cr_loader/cr_loader.h>
 #include <cr_loader/cr_loader_impl.h>
 
-loader_impl_interface cr_loader_impl_interface_singleton()
+loader_impl_interface cr_loader_impl_interface_singleton(void)
 {
 	static struct loader_impl_interface_type loader_impl_interface_cr = {
 		&cr_loader_impl_initialize,
@@ -39,7 +39,7 @@ loader_impl_interface cr_loader_impl_interface_singleton()
 	return &loader_impl_interface_cr;
 }
 
-const char *cr_loader_print_info()
+const char *cr_loader_print_info(void)
 {
 	static const char cr_loader_info[] =
 		"Crystal Loader Plugin " METACALL_VERSION "\n"

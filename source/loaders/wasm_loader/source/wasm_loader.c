@@ -39,7 +39,7 @@ loader_impl_interface wasm_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_wasm;
 }
 
-const char *wasm_loader_print_info()
+const char *wasm_loader_print_info(void)
 {
 	static const char wasm_loader_info[] =
 		"WebAssembly Loader Plugin " METACALL_VERSION "\n"

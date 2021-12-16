@@ -27,7 +27,7 @@ static char *library_path = NULL;
 
 /* -- Methods -- */
 
-void loader_env_initialize()
+void loader_env_initialize(void)
 {
 	if (library_path == NULL)
 	{
@@ -52,17 +52,17 @@ void loader_env_initialize()
 	}
 }
 
-const char *loader_env_script_path()
+const char *loader_env_script_path(void)
 {
 	return script_path;
 }
 
-const char *loader_env_library_path()
+const char *loader_env_library_path(void)
 {
 	return library_path;
 }
 
-void loader_env_destroy()
+void loader_env_destroy(void)
 {
 	if (library_path != NULL)
 	{

@@ -148,8 +148,6 @@ if(WIN32 AND MSVC)
 	# endif()
 
 	add_compile_options(/nologo) # Suppress Startup Banner
-	add_compile_options(/W4) # Set warning level to 4
-	add_compile_options(/WX-) # Do not treat warnings as errors
 	add_compile_options(/Gm-) # Disable minimal rebuild
 	add_compile_options(/MP) # Build with Multiple Processes (number of processes equal to the number of processors)
 	#add_compile_options(/wd4251 /wd4592)
