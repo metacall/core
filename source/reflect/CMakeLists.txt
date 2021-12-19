@@ -227,12 +227,3 @@ target_link_libraries(${target}
 
 	INTERFACE
 )
-
-#
-# Deployment
-#
-
-# Export
-install(TARGETS ${target}
-	EXPORT  "${target}-export" COMPONENT dev
-)

@@ -244,12 +244,3 @@ configurations_write(${CMAKE_INSTALL_PREFIX}/${INSTALL_DATA}/configurations ${CO
 
 # Install runtime configuration
 install(DIRECTORY ${CONFIGURATION_DIR}/install/configurations DESTINATION ${INSTALL_DATA} COMPONENT runtime)
-
-#
-# Deployment
-#
-
-# Export
-install(TARGETS ${target}
-	EXPORT  "${target}-export" COMPONENT dev
-)
