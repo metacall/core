@@ -143,12 +143,15 @@ const getMetacallExportTypes = (
 	const sourceFiles = files.map((name) =>
 		[name, p.getSourceFile(name)] as const
 	);
-	let fileCount = 0;
 	for (const [fileName, sourceFile] of sourceFiles) {
 		if (!sourceFile) {
 			// TODO: Implement better exception handling
-			console.log(`Error: Failed to load ${fileName}, file not found.`);
-			continue;
+			console.log(`Error: Failed to load ${fileName}`);
+
+			const emitResult = p.emit();
+			generateDiagnostics(p, emitResult.diagnostics, []);
+
+			return null;
 		}
 		const c = p.getTypeChecker();
 		const sym = c.getSymbolAtLocation(sourceFile);
@@ -175,9 +178,9 @@ const getMetacallExportTypes = (
 			}
 		}
 		cb(sourceFile, exportTypes);
-		fileCount++;
 	}
-	return fileCount === 0 ? null : exportTypes;
+
+	return exportTypes;
 };
 
 const fileResolve = (p: string): string => {
@@ -244,7 +247,7 @@ export const load_from_file = safe(function load_from_file(paths: string[], disc
 		generateDiagnostics(p, diagnostics, options.configFileParsingDiagnostics);
 	});
 
-	return Object.keys(result).length === 0 || exportTypes === null ? null : result;
+	return exportTypes === null ? null : result;
 }, null);
 
 /** Loads a TypeScript file from memory */
