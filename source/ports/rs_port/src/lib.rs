@@ -22,7 +22,7 @@ use std::ffi::CString;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 
 pub use abi::interface as abi_interface;
-pub use languages_macro;
+pub use inline;
 
 #[derive(Debug)]
 pub struct Error(String);

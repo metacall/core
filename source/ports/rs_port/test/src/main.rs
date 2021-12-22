@@ -1,4 +1,4 @@
-use metacall::languages_macro::py;
+use metacall::inline::py;
 
 fn main() {
     py! {

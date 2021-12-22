@@ -3,7 +3,7 @@ name = "metacall"
 version = "0.2.1"
 repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
 authors = ["Vicente Eduardo Ferrer Garcia <vic798@gmail.com>", "Swarnim Arun <swarnimarun11@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "Apache-2.0"
 readme = "README.md"
 description = "Call NodeJS, TypeScript, Python, C#, Ruby... functions from Rust (a Rust Port for MetaCall)."
@@ -12,8 +12,8 @@ description = "Call NodeJS, TypeScript, Python, C#, Ruby... functions from Rust 
 name = "metacall"
 crate-type = ["lib"] # TODO: Once this is unified with the loader, we should use cdylib type
 path = "src/lib.rs"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 abi = { path = "./abi" }
-languages_macro = { path = "./languages_macro" }
+inline = { path = "./inline" }
