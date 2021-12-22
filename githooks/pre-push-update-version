@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
 
-GIT_TAG_VERSION=$(git ls-remote --refs --tags https://github.com/metacall/core.git | cut --delimiter='/' --fields=3 | tr '-' '~' | sort --version-sort | tail --lines=1 | cut -c2-)
+# Fetch all tags first
+git fetch --tags $1
+
+# Get the latest tag version
+GIT_TAG_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c2-)
 FILE_VERSION=$(cat VERSION)
 
+# Checkout if the file version matches the last tag
 if [ "${GIT_TAG_VERSION}" != "${FILE_VERSION}" ]; then
     # Undo the last tag, update the version file and commit as the new tag
     git tag -d v${GIT_TAG_VERSION}
