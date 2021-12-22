@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-GIT_TAG_VERSION=$(git describe --tags `git rev-list --tags --max-count=1` | cut -c2-)
+GIT_TAG_VERSION=$(git ls-remote --refs --tags https://github.com/metacall/core.git | cut --delimiter='/' --fields=3 | tr '-' '~' | sort --version-sort | tail --lines=1 | cut -c2-)
 FILE_VERSION=$(cat VERSION)
 
 if [ "${GIT_TAG_VERSION}" != "${FILE_VERSION}" ]; then
