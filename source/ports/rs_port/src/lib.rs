@@ -125,15 +125,18 @@ pub fn load_from_file(
 ) -> Result<(), &'static str> {
     // allocate a safe C String
     let ctag = CString::new(tag).expect("Conversion to C String failed");
+
     let owned_scripts: Vec<_> = scripts
         .into_iter()
         .map(|x| CString::new(x.as_ref()).expect("Conversion to C String failed"))
         .collect();
+
     let mut ref_c_scripts: Vec<_> = owned_scripts
         .iter()
         .map(|s| s.as_ptr())
         .map(|p| p as *const u8)
         .collect();
+
     if unsafe {
         metacall_load_from_file(
             ctag.as_ptr(),
@@ -145,6 +148,7 @@ pub fn load_from_file(
     {
         return Err("MetaCall failed to load script");
     }
+
     Ok(())
 }
 
@@ -154,15 +158,18 @@ pub fn metacall<'a>(
     args: impl IntoIterator<Item = &'a Any>,
 ) -> Result<Any, &'static str> {
     let c_function = CString::new(func).expect("Conversion to C String failed");
-    unsafe {
-        // let c_func = metacall_function(c_function.as_ptr());
-        let c_func: *mut c_void = metacall_function(c_function.as_ptr());
-        if c_func.is_null() {
-            return Err("Function Not Found");
-        }
-        let mut c_args: Vec<*mut c_void> = args
-            .into_iter()
-            .map(|arg| match arg {
+
+    // let c_func = metacall_function(c_function.as_ptr());
+    let c_func: *mut c_void = unsafe { metacall_function(c_function.as_ptr()) };
+
+    if c_func.is_null() {
+        return Err("Function Not Found");
+    }
+
+    let mut c_args: Vec<*mut c_void> = args
+        .into_iter()
+        .map(|arg| unsafe {
+            match arg {
                 Any::Short(x) => metacall_value_create_short(*x),
                 Any::Int(x) => metacall_value_create_int(*x),
                 Any::Long(x) => metacall_value_create_long(*x),
@@ -175,12 +182,17 @@ pub fn metacall<'a>(
                     metacall_value_create_string(st.as_ptr(), x.len())
                 }
                 _ => todo!(),
-            })
-            .collect();
-        let ret: *mut c_void = metacallfv_s(c_func, c_args.as_mut_ptr(), c_args.len());
-        let mut rt = Any::Null;
-        if !ret.is_null() {
-            /* TODO: This should be done by an enum or something mimicking the enum in metacall.h */
+            }
+        })
+        .collect();
+
+    let ret: *mut c_void = unsafe { metacallfv_s(c_func, c_args.as_mut_ptr(), c_args.len()) };
+
+    let mut rt = Any::Null;
+
+    if !ret.is_null() {
+        /* TODO: This should be done by an enum or something mimicking the enum in metacall.h */
+        unsafe {
             match metacall_value_id(ret) {
                 0 => {
                     rt = Any::Bool(metacall_value_to_bool(ret) != 0);
@@ -205,6 +217,7 @@ pub fn metacall<'a>(
                 }
                 7 => {
                     let st = std::ffi::CStr::from_ptr(metacall_value_to_string(ret));
+
                     rt = Any::Str(String::from(
                         st.to_str().expect("couldn't convert CStr to &str"),
                     ));
@@ -234,11 +247,13 @@ pub fn metacall<'a>(
             }
             metacall_value_destroy(ret);
         }
-        for arg in c_args {
+    }
+    for arg in c_args {
+        unsafe {
             metacall_value_destroy(arg);
         }
-        Ok(rt)
     }
+    Ok(rt)
 }
 
 pub fn destroy() {
@@ -274,6 +289,7 @@ mod tests {
 
         {
             let _d = defer(|| *i.borrow_mut() += 1);
+
             assert_eq!(*i.borrow(), 0);
         }
 
@@ -303,16 +319,20 @@ mod tests {
             Ok(ret) => match ret {
                 crate::Any::Str(value) => {
                     assert_eq!("Hello World".to_string(), value);
+
                     println!("Result: {}", value);
                 }
                 _ => {
                     assert_eq!(0, 1);
+
                     panic!();
                 }
             },
             Err(e) => {
                 println!("{}", e);
+
                 assert_eq!(0, 1);
+
                 panic!();
             }
         }
