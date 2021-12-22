@@ -15,4 +15,5 @@ path = "src/lib.rs"
 edition = "2018"
 
 [dependencies]
-# TODO: Is it possible to add dependencies to C libraries?
+abi = { path = "./abi" }
+languages_macro = { path = "./languages_macro" }

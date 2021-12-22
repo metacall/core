@@ -21,37 +21,8 @@
 use std::ffi::CString;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 
-#[link(name = "metacall")] // requires libmetacall to be in $PATH
-extern "C" {
-    fn metacall_initialize() -> c_int;
-    fn metacall_load_from_file(
-        tag: *const c_char,
-        paths: *mut *const u8,
-        size: usize,
-        handle: *mut *mut c_void,
-    ) -> c_int;
-    fn metacall_function(cfn: *const c_char) -> *mut c_void;
-    fn metacall_destroy() -> c_int;
-    fn metacallfv_s(func: *mut c_void, args: *mut *mut c_void, size: usize) -> *mut c_void;
-    fn metacall_value_create_short(s: c_short) -> *mut c_void;
-    fn metacall_value_create_int(i: c_int) -> *mut c_void;
-    fn metacall_value_create_long(l: c_long) -> *mut c_void;
-    fn metacall_value_create_float(f: c_float) -> *mut c_void;
-    fn metacall_value_create_double(d: c_double) -> *mut c_void;
-    fn metacall_value_create_bool(b: c_int) -> *mut c_void;
-    fn metacall_value_create_string(st: *const c_char, ln: usize) -> *mut c_void;
-    fn metacall_value_create_char(st: c_char) -> *mut c_void;
-    fn metacall_value_destroy(v: *mut c_void);
-    fn metacall_value_id(v: *mut c_void) -> c_int;
-    fn metacall_value_to_string(v: *mut c_void) -> *mut c_char;
-    fn metacall_value_to_char(v: *mut c_void) -> c_char;
-    fn metacall_value_to_short(v: *mut c_void) -> c_short;
-    fn metacall_value_to_int(v: *mut c_void) -> c_int;
-    fn metacall_value_to_long(v: *mut c_void) -> c_long;
-    fn metacall_value_to_bool(v: *mut c_void) -> c_int;
-    fn metacall_value_to_float(v: *mut c_void) -> c_float;
-    fn metacall_value_to_double(v: *mut c_void) -> c_double;
-}
+pub use abi::interface as abi_interface;
+pub use languages_macro;
 
 #[derive(Debug)]
 pub struct Error(String);
@@ -112,7 +83,7 @@ impl From<c_double> for Any {
 }
 
 pub fn initialize() -> Result<(), &'static str> {
-    if unsafe { metacall_initialize() } != 0 {
+    if unsafe { abi_interface::metacall_initialize() } != 0 {
         Err("Metacall failed to initialize")
     } else {
         Ok(())
@@ -138,7 +109,7 @@ pub fn load_from_file(
         .collect();
 
     if unsafe {
-        metacall_load_from_file(
+        abi_interface::metacall_load_from_file(
             ctag.as_ptr(),
             ref_c_scripts.as_mut_ptr(),
             ref_c_scripts.len(),
@@ -160,7 +131,7 @@ pub fn metacall<'a>(
     let c_function = CString::new(func).expect("Conversion to C String failed");
 
     // let c_func = metacall_function(c_function.as_ptr());
-    let c_func: *mut c_void = unsafe { metacall_function(c_function.as_ptr()) };
+    let c_func: *mut c_void = unsafe { abi_interface::metacall_function(c_function.as_ptr()) };
 
     if c_func.is_null() {
         return Err("Function Not Found");
@@ -170,53 +141,55 @@ pub fn metacall<'a>(
         .into_iter()
         .map(|arg| unsafe {
             match arg {
-                Any::Short(x) => metacall_value_create_short(*x),
-                Any::Int(x) => metacall_value_create_int(*x),
-                Any::Long(x) => metacall_value_create_long(*x),
-                Any::Float(x) => metacall_value_create_float(*x),
-                Any::Double(x) => metacall_value_create_double(*x),
-                Any::Bool(x) => metacall_value_create_bool(*x as c_int),
-                Any::Char(x) => metacall_value_create_char(*x as c_char),
+                Any::Short(x) => abi_interface::metacall_value_create_short(*x),
+                Any::Int(x) => abi_interface::metacall_value_create_int(*x),
+                Any::Long(x) => abi_interface::metacall_value_create_long(*x),
+                Any::Float(x) => abi_interface::metacall_value_create_float(*x),
+                Any::Double(x) => abi_interface::metacall_value_create_double(*x),
+                Any::Bool(x) => abi_interface::metacall_value_create_bool(*x as c_int),
+                Any::Char(x) => abi_interface::metacall_value_create_char(*x as c_char),
                 Any::Str(x) => {
                     let st = CString::new(x.as_str()).expect("can't convert to c str");
-                    metacall_value_create_string(st.as_ptr(), x.len())
+
+                    abi_interface::metacall_value_create_string(st.as_ptr(), x.len())
                 }
                 _ => todo!(),
             }
         })
         .collect();
 
-    let ret: *mut c_void = unsafe { metacallfv_s(c_func, c_args.as_mut_ptr(), c_args.len()) };
+    let ret: *mut c_void =
+        unsafe { abi_interface::metacallfv_s(c_func, c_args.as_mut_ptr(), c_args.len()) };
 
     let mut rt = Any::Null;
 
     if !ret.is_null() {
         /* TODO: This should be done by an enum or something mimicking the enum in metacall.h */
         unsafe {
-            match metacall_value_id(ret) {
+            match abi_interface::metacall_value_id(ret) {
                 0 => {
-                    rt = Any::Bool(metacall_value_to_bool(ret) != 0);
+                    rt = Any::Bool(abi_interface::metacall_value_to_bool(ret) != 0);
                 }
                 1 => {
-                    rt = Any::Char(metacall_value_to_char(ret) as u8 as char);
+                    rt = Any::Char(abi_interface::metacall_value_to_char(ret) as u8 as char);
                 }
                 2 => {
-                    rt = Any::Short(metacall_value_to_short(ret));
+                    rt = Any::Short(abi_interface::metacall_value_to_short(ret));
                 }
                 3 => {
-                    rt = Any::Int(metacall_value_to_int(ret));
+                    rt = Any::Int(abi_interface::metacall_value_to_int(ret));
                 }
                 4 => {
-                    rt = Any::Long(metacall_value_to_long(ret));
+                    rt = Any::Long(abi_interface::metacall_value_to_long(ret));
                 }
                 5 => {
-                    rt = Any::Float(metacall_value_to_float(ret));
+                    rt = Any::Float(abi_interface::metacall_value_to_float(ret));
                 }
                 6 => {
-                    rt = Any::Double(metacall_value_to_double(ret));
+                    rt = Any::Double(abi_interface::metacall_value_to_double(ret));
                 }
                 7 => {
-                    let st = std::ffi::CStr::from_ptr(metacall_value_to_string(ret));
+                    let st = std::ffi::CStr::from_ptr(abi_interface::metacall_value_to_string(ret));
 
                     rt = Any::Str(String::from(
                         st.to_str().expect("couldn't convert CStr to &str"),
@@ -245,12 +218,12 @@ pub fn metacall<'a>(
                 }
                 _ => {}
             }
-            metacall_value_destroy(ret);
+            abi_interface::metacall_value_destroy(ret);
         }
     }
     for arg in c_args {
         unsafe {
-            metacall_value_destroy(arg);
+            abi_interface::metacall_value_destroy(arg);
         }
     }
     Ok(rt)
@@ -258,7 +231,7 @@ pub fn metacall<'a>(
 
 pub fn destroy() {
     unsafe {
-        metacall_destroy();
+        abi_interface::metacall_destroy();
     }
 }
 
