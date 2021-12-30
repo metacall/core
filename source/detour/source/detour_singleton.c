@@ -34,25 +34,25 @@ struct detour_singleton_type
 /* -- Private Methods -- */
 
 /**
-*  @brief
-*    Detour singleton destroy callback iterator
-*
-*  @param[in] s
-*    Pointer to detours set
-*
-*  @param[in] key
-*    Pointer to current detour key
-*
-*  @param[in] val
-*    Pointer to current detour instance
-*
-*  @param[in] args
-*    Pointer to user defined callback arguments
-*
-*  @return
-*    Returns zero to continue iteration, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Detour singleton destroy callback iterator
+ *
+ *  @param[in] s
+ *    Pointer to detours set
+ *
+ *  @param[in] key
+ *    Pointer to current detour key
+ *
+ *  @param[in] val
+ *    Pointer to current detour instance
+ *
+ *  @param[in] args
+ *    Pointer to user defined callback arguments
+ *
+ *  @return
+ *    Returns zero to continue iteration, distinct from zero otherwise
+ *
+ */
 static int detour_singleton_destroy_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 /* -- Member Data -- */

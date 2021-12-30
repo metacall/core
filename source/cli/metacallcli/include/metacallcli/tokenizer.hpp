@@ -28,56 +28,56 @@ class tokenizer;
 /* -- Class Definition -- */
 
 /**
-*  @brief
-*    String tokenizer utility
-*/
+ *  @brief
+ *    String tokenizer utility
+ */
 class tokenizer
 {
 public:
 	/* -- Public Methods -- */
 
 	/**
-	*  @brief
-	*    Tokenizer constructor with default delimiters
-	*
-	*  @param[in] str
-	*    String to be tokenized
-	*/
+	 *  @brief
+	 *    Tokenizer constructor with default delimiters
+	 *
+	 *  @param[in] str
+	 *    String to be tokenized
+	 */
 	tokenizer(const std::string &str);
 
 	/**
-	*  @brief
-	*    Tokenizer constructor with custom @delimiters
-	*
-	*  @param[in] str
-	*    String to be tokenized
-	*
-	*  @param[in] delimiters
-	*    Delimiters will be used to tokenize the string @str
-	*/
+	 *  @brief
+	 *    Tokenizer constructor with custom @delimiters
+	 *
+	 *  @param[in] str
+	 *    String to be tokenized
+	 *
+	 *  @param[in] delimiters
+	 *    Delimiters will be used to tokenize the string @str
+	 */
 	tokenizer(const std::string &str, const std::string &delimiters);
 
 	/**
-	*  @brief
-	*    Tokenizer class destructor
-	*/
+	 *  @brief
+	 *    Tokenizer class destructor
+	 */
 	~tokenizer(void);
 
 	/**
-	*  @brief
-	*    Set custom tokenizer delimiters
-	*
-	*  @param[in] del
-	*    Delimiters will be used to tokenize the string
-	*/
+	 *  @brief
+	 *    Set custom tokenizer delimiters
+	 *
+	 *  @param[in] del
+	 *    Delimiters will be used to tokenize the string
+	 */
 	void delimit(const std::string &del);
 
 	/* -- Public Class Definition -- */
 
 	/**
-	*  @brief
-	*    String tokenizer iterator
-	*/
+	 *  @brief
+	 *    String tokenizer iterator
+	 */
 	class iterator : public std::iterator<
 						 std::input_iterator_tag,
 						 size_t,
@@ -89,96 +89,96 @@ public:
 		/* -- Public Methods -- */
 
 		/**
-		*  @brief
-		*    Tokenizer iterator constructor
-		*
-		*  @param[in] t
-		*    Reference to tokenizer
-		*
-		*  @param[in] begin
-		*    Initial iterator position
-		*/
+		 *  @brief
+		 *    Tokenizer iterator constructor
+		 *
+		 *  @param[in] t
+		 *    Reference to tokenizer
+		 *
+		 *  @param[in] begin
+		 *    Initial iterator position
+		 */
 		explicit iterator(const tokenizer &t, size_t begin = 0);
 
 		/**
-		*  @brief
-		*    Tokenizer iterator increment operator
-		*
-		*  @return
-		*    Return a reference to itself
-		*/
+		 *  @brief
+		 *    Tokenizer iterator increment operator
+		 *
+		 *  @return
+		 *    Return a reference to itself
+		 */
 		iterator &operator++(void);
 
 		/**
-		*  @brief
-		*    Tokenizer iterator increment operator
-		*
-		*  @return
-		*    Return a copy of itself
-		*/
+		 *  @brief
+		 *    Tokenizer iterator increment operator
+		 *
+		 *  @return
+		 *    Return a copy of itself
+		 */
 		iterator operator++(int);
 
 		/**
-		*  @brief
-		*    Tokenizer iterator equality operator
-		*
-		*  @param[in] other
-		*    Reference to iterator to be compared against
-		*
-		*  @return
-		*    Return true if @other iterator points to the same @str and @offset
-		*/
+		 *  @brief
+		 *    Tokenizer iterator equality operator
+		 *
+		 *  @param[in] other
+		 *    Reference to iterator to be compared against
+		 *
+		 *  @return
+		 *    Return true if @other iterator points to the same @str and @offset
+		 */
 		bool operator==(iterator other) const;
 
 		/**
-		*  @brief
-		*    Tokenizer iterator inequality operator
-		*
-		*  @param[in] other
-		*    Reference to iterator to be compared against
-		*
-		*  @return
-		*    Return true if @other iterator points to different @str or @offset
-		*/
+		 *  @brief
+		 *    Tokenizer iterator inequality operator
+		 *
+		 *  @param[in] other
+		 *    Reference to iterator to be compared against
+		 *
+		 *  @return
+		 *    Return true if @other iterator points to different @str or @offset
+		 */
 		bool operator!=(iterator other) const;
 
 		/**
-		*  @brief
-		*    Tokenizer iterator dereferencing operator
-		*
-		*  @return
-		*    Return a constant string reference to the current token
-		*/
+		 *  @brief
+		 *    Tokenizer iterator dereferencing operator
+		 *
+		 *  @return
+		 *    Return a constant string reference to the current token
+		 */
 		reference operator*(void) const;
 
 		/**
-		*  @brief
-		*    Tokenizer iterator current position
-		*
-		*  @return
-		*    Return current value of @offset
-		*/
+		 *  @brief
+		 *    Tokenizer iterator current position
+		 *
+		 *  @return
+		 *    Return current value of @offset
+		 */
 		size_t position(void) const;
 
 		/**
-		*  @brief
-		*    Tokenizer iterator escape trailing characters
-		*
-		*  @param[in] characters
-		*    Reference to list of characters to be escaped
-		*
-		*  @return
-		*    Return a constant string reference to the current token
-		*/
+		 *  @brief
+		 *    Tokenizer iterator escape trailing characters
+		 *
+		 *  @param[in] characters
+		 *    Reference to list of characters to be escaped
+		 *
+		 *  @return
+		 *    Return a constant string reference to the current token
+		 */
 		reference escape(const std::string &characters);
 
 		/**
-		*  @brief
-		*    Assignment operator for tokenizer iterator
-		*
-		*  @return
-		*    Returns a reference to itself
-		*/
+		 *  @brief
+		 *    Assignment operator for tokenizer iterator
+		 *
+		 *  @return
+		 *    Returns a reference to itself
+		 */
 		iterator &operator=(const iterator &) = delete;
 
 	private:
@@ -192,30 +192,30 @@ public:
 	};
 
 	/**
-	*  @brief
-	*    Begin iterator operation
-	*
-	*  @return
-	*    Returns a iterator pointing to the beginning of @str
-	*/
+	 *  @brief
+	 *    Begin iterator operation
+	 *
+	 *  @return
+	 *    Returns a iterator pointing to the beginning of @str
+	 */
 	iterator begin(void) const;
 
 	/**
-	*  @brief
-	*    End iterator operation
-	*
-	*  @return
-	*    Returns a iterator pointing to the end of @str
-	*/
+	 *  @brief
+	 *    End iterator operation
+	 *
+	 *  @return
+	 *    Returns a iterator pointing to the end of @str
+	 */
 	iterator end(void) const;
 
 	/**
-	*  @brief
-	*    Assignement operator for tokenizer
-	*
-	*  @return
-	*    Returns a reference to itself
-	*/
+	 *  @brief
+	 *    Assignement operator for tokenizer
+	 *
+	 *  @return
+	 *    Returns a reference to itself
+	 */
 	tokenizer &operator=(const tokenizer &) = delete;
 
 protected:

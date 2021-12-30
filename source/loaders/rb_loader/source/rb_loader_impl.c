@@ -1354,23 +1354,23 @@ void rb_loader_impl_discover_methods(klass c, VALUE cls, const char *class_name_
 		log_write("metacall", LOG_LEVEL_DEBUG, "Method '%s' inside '%s' of type %s with %" PRIuS " parameters", method_name_str, class_name_str, method_type_str, args_count);
 
 		/*
-		* TODO:
-		* Another alternative (for supporting types), which is not used in the current implementation,
-		* but it can simplify the parser, it's the following:
-		*
-		*   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
-		*   - For plain functions: origin_file, definition_line = method(:foo).source_location
-		*
-		* Then:
-		* method_signature = IO.readlines(origin_file)[definition_line.pred]
-		*
-		* Now we have only the method signature, this is going to be less problematic than parsing
-		* the whole file as we are doing now (although for multi-line signatures it's going to be
-		* a little bit more complicated...)
-		*
-		* We can switch to completely duck typed approach (refactoring the tests) or we can use this
-		* simplified parsing approach and maintain types
-		*/
+		 * TODO:
+		 * Another alternative (for supporting types), which is not used in the current implementation,
+		 * but it can simplify the parser, it's the following:
+		 *
+		 *   - For classes: origin_file, definition_line = MyClass.instance_method(:foo).source_location
+		 *   - For plain functions: origin_file, definition_line = method(:foo).source_location
+		 *
+		 * Then:
+		 * method_signature = IO.readlines(origin_file)[definition_line.pred]
+		 *
+		 * Now we have only the method signature, this is going to be less problematic than parsing
+		 * the whole file as we are doing now (although for multi-line signatures it's going to be
+		 * a little bit more complicated...)
+		 *
+		 * We can switch to completely duck typed approach (refactoring the tests) or we can use this
+		 * simplified parsing approach and maintain types
+		 */
 
 		method m = method_create(c,
 			method_name_str,
@@ -1540,14 +1540,14 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				rb_loader_impl_discover_attributes(c, class_name_str, instance_attributes, &class_register_attribute);
 
 				/* Define default constructor. Ruby only supports one constructor, a
-				* method called 'initialize'. It can have arguments but when inspected via
-				* reflection, the signature is variadic arguments and cannot be inspected:
-				*
-				* MyClass.methods(:initialize).parameters = [[:rest]] # variadic args notation in Ruby
-				*
-				* Due to this, we will always register only one default constructor without arguments
-				* which will take all the arguments when invoking 'new' and apply them as variadic.
-				*/
+				 * method called 'initialize'. It can have arguments but when inspected via
+				 * reflection, the signature is variadic arguments and cannot be inspected:
+				 *
+				 * MyClass.methods(:initialize).parameters = [[:rest]] # variadic args notation in Ruby
+				 *
+				 * Due to this, we will always register only one default constructor without arguments
+				 * which will take all the arguments when invoking 'new' and apply them as variadic.
+				 */
 				constructor ctor = constructor_create(0, VISIBILITY_PUBLIC);
 
 				if (class_register_constructor(c, ctor) != 0)

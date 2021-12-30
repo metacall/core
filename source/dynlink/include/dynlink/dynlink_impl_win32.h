@@ -42,12 +42,12 @@ typedef struct dynlink_impl_interface_type *dynlink_impl_interface;
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Win32 dynamic link shared object implementation singleton
-*
-*  @return
-*    A pointer to the dynamically linked shared object implementation singleton
-*/
+ *  @brief
+ *    Win32 dynamic link shared object implementation singleton
+ *
+ *  @return
+ *    A pointer to the dynamically linked shared object implementation singleton
+ */
 DYNLINK_API dynlink_impl_interface dynlink_impl_interface_singleton_win32(void);
 
 #ifdef __cplusplus

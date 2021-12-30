@@ -45,18 +45,18 @@ struct vector_type
 /* -- Private Methods -- */
 
 /**
-*  @brief
-*    Vector access by offset bytes
-*
-*  @param[in] v
-*    Vector pointer
-*
-*  @param[in] bytes
-*    Offset memory in bytes
-*
-*  @return
-*    A pointer to data vector memory block with offset @bytes
-*/
+ *  @brief
+ *    Vector access by offset bytes
+ *
+ *  @param[in] v
+ *    Vector pointer
+ *
+ *  @param[in] bytes
+ *    Offset memory in bytes
+ *
+ *  @return
+ *    A pointer to data vector memory block with offset @bytes
+ */
 static void *vector_data_offset_bytes(vector v, size_t bytes);
 
 /* -- Methods -- */

@@ -42,12 +42,12 @@ typedef struct dynlink_impl_interface_type *dynlink_impl_interface;
 /* -- Methods -- */
 
 /**
-*  @brief
-*    BeOS/Haiku image add-on object implementation singleton
-*
-*  @return
-*    A pointer to the image add-on object implementation singleton
-*/
+ *  @brief
+ *    BeOS/Haiku image add-on object implementation singleton
+ *
+ *  @return
+ *    A pointer to the image add-on object implementation singleton
+ */
 DYNLINK_API dynlink_impl_interface dynlink_impl_interface_singleton_beos(void);
 
 #ifdef __cplusplus

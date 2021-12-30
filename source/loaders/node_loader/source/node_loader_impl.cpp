@@ -3737,7 +3737,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 #endif
 
 	/* Store the amount of async handles that we have for the node loader,
-	* so we can count the user defined async handles */
+	 * so we can count the user defined async handles */
 	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
 	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
