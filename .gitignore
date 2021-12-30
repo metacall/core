@@ -58,6 +58,7 @@ _start-cmd.bat
 
 # Visual Studio Code
 .vscode
+source/loaders/rs_loader/rust/.vscode
 
 # Linked dockerignore file in main context
 .dockerignore
