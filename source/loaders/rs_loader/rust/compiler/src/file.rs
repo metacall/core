@@ -8,7 +8,7 @@ use crate::registrator;
 
 #[derive(Debug)]
 pub struct DlopenLibrary {
-    instance: dlopen::raw::Library,
+    pub instance: dlopen::raw::Library,
 }
 impl DlopenLibrary {
     pub fn new(path_to_dll: &PathBuf) -> Result<DlopenLibrary, String> {
@@ -63,9 +63,9 @@ impl DlopenLibrary {
 
 #[derive(Debug)]
 pub struct FileRegistration {
-    path_to_file: PathBuf,
-    state: CompilerState,
-    dlopen: DlopenLibrary,
+    pub path_to_file: PathBuf,
+    pub state: CompilerState,
+    pub dlopen: DlopenLibrary,
 }
 impl FileRegistration {
     pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {

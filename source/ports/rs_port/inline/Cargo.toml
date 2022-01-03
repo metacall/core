@@ -7,6 +7,6 @@ edition = "2021"
 proc_macro = true
 
 [dependencies]
-proc-macro2 = { version = "1.0.34", features = ["span-locations"] }
+proc-macro2 = { version = "1.0.36", features = ["span-locations"] }
 abi = { path = "../abi" }
-quote = "1.0.10"
+quote = "1.0.14"

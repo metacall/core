@@ -9,5 +9,5 @@ rustc_private = true
 [dependencies]
 dlopen = "0.1.8"
 libffi = "2.0.0"
-cargo_toml = "0.10.1"
+cargo_toml = "0.10.3"
 api = { path = "../api" }
