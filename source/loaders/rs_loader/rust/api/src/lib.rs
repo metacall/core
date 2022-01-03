@@ -72,16 +72,16 @@ struct FunctionInterface {
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_create(func: *mut c_void, func_impl: *mut c_void) -> c_int {
+extern "C" fn function_singleton_create(_func: *mut c_void, _func_impl: *mut c_void) -> c_int {
     0
 }
 
 #[no_mangle]
 extern "C" fn function_singleton_invoke(
-    func: *mut c_void,
-    func_impl: *mut c_void,
-    args: *mut *mut c_void,
-    size: usize,
+    _func: *mut c_void,
+    _func_impl: *mut c_void,
+    _args: *mut *mut c_void,
+    _size: usize,
 ) -> *mut c_void {
     // func is of type function found here:
     // https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/reflect/include/reflect/reflect_function.h#L65
@@ -103,19 +103,19 @@ extern "C" fn function_singleton_invoke(
 
 #[no_mangle]
 extern "C" fn function_singleton_await(
-    func: *mut c_void,
-    func_impl: *mut c_void,
-    args: *mut *mut c_void,
-    size: usize,
-    resolve: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void,
-    reject: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void,
-    data: *mut c_void,
+    _func: *mut c_void,
+    _func_impl: *mut c_void,
+    _args: *mut *mut c_void,
+    _size: usize,
+    _resolve: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void,
+    _reject: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void,
+    _data: *mut c_void,
 ) -> *mut c_void {
     0 as *mut c_void
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_destroy(func: *mut c_void, func_impl: *mut c_void) {
+extern "C" fn function_singleton_destroy(_func: *mut c_void, _func_impl: *mut c_void) {
     // Here we have to free the memory of this:
     // https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
 }

@@ -1,3 +1,0 @@
-{
-    "rust-analyzer.rustcSource": "@Rust_RUSTC_SYSROOT@/lib/rustlib/rustc-src/rust/compiler/rustc_driver/Cargo.toml"
-}

@@ -16,4 +16,6 @@ Cargo.lock
 # VSCode (auto-generated)
 !.vscode
 .vscode/launch.json
+.vscode/launch.json.in
 .vscode/settings.json
+.vscode/settings.json.in
