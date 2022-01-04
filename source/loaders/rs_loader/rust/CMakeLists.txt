@@ -10,6 +10,7 @@ endif()
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/rust-toolchain TARGET_TOOLCHAIN)
 string(STRIP "${TARGET_TOOLCHAIN}" TARGET_TOOLCHAIN)
 
+# For checking availability of external tools like rls or miri (in the future), use: https://rust-lang-nursery.github.io/rust-toolstate/
 set(Rust_TOOLCHAIN_COMPONENT_LIST
 	cargo
 	clippy
