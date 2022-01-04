@@ -103,21 +103,6 @@ if(Rust_RUSTUP_EXECUTABLE AND Rust_FIND_COMPONENTS)
 			endif()
 		endif()
 
-		set(Rust_TOOLCHAIN_COMPONENT_LIST
-			cargo
-			clippy
-			llvm-tools-preview
-			rls
-			rust-analysis
-			rust-analyzer-preview
-			rust-docs
-			rust-std
-			rustc
-			rustc-dev
-			rustfmt
-			rust-src
-		)
-
 		foreach(Rust_TOOLCHAIN_COMPONENT ${Rust_TOOLCHAIN_COMPONENT_LIST})
 			execute_process(
 				COMMAND ${Rust_RUSTUP_EXECUTABLE} toolchain install ${Rust_TOOLCHAIN} --component ${Rust_TOOLCHAIN_COMPONENT}

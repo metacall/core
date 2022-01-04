@@ -10,6 +10,20 @@ endif()
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/rust-toolchain TARGET_TOOLCHAIN)
 string(STRIP "${TARGET_TOOLCHAIN}" TARGET_TOOLCHAIN)
 
+set(Rust_TOOLCHAIN_COMPONENT_LIST
+	cargo
+	clippy
+	llvm-tools-preview
+	rls
+	rust-analysis
+	rust-analyzer-preview
+	rust-std
+	rustc
+	rustc-dev
+	rustfmt
+	rust-src
+)
+
 find_package(Rust COMPONENTS ${TARGET_TOOLCHAIN})
 
 if(NOT Rust_FOUND)
