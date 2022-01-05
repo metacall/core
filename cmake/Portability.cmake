@@ -227,13 +227,12 @@ endif()
 macro(PROJECT_LIBRARY_PATH variable path)
 	set(LIBRARY_PATH_ENV_VAR "$ENV{${PROJECT_LIBRARY_PATH_NAME}}")
 	if("${LIBRARY_PATH_ENV_VAR}" STREQUAL "")
-		set(${variable}
-			"${path}"
-		)
+		set(${variable} "${path}")
 	else()
-		set(${variable}
-			"${path}"
-			"${LIBRARY_PATH_ENV_VAR}"
-		)
+		if(PROJECT_OS_WIN OR PROJECT_OS_MINGW)
+			set(${variable} "${path};${LIBRARY_PATH_ENV_VAR}")
+		else()
+			set(${variable} "${path}:${LIBRARY_PATH_ENV_VAR}")
+		endif()
 	endif()
 endmacro()
