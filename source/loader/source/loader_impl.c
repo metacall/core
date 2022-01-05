@@ -74,6 +74,7 @@ struct loader_impl_type
 
 struct loader_handle_impl_type
 {
+	uintptr_t magic;
 	loader_impl impl;
 	loader_naming_name name;
 	loader_handle module;
@@ -120,6 +121,11 @@ static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 static int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
 static int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
+
+/* -- Private Member Data -- */
+
+static const char loader_handle_impl_magic_alloc[] = "loader_handle_impl_magic_alloc";
+static const char loader_handle_impl_magic_free[] = "loader_handle_impl_magic_free";
 
 /* -- Methods -- */
 
@@ -517,19 +523,18 @@ loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle modul
 	if (handle_impl != NULL)
 	{
 		handle_impl->impl = impl;
-
 		strncpy(handle_impl->name, name, LOADER_NAMING_NAME_SIZE);
-
 		handle_impl->module = module;
-
 		handle_impl->ctx = context_create(handle_impl->name);
 
-		if (handle_impl->ctx != NULL)
+		if (handle_impl->ctx == NULL)
 		{
-			return handle_impl;
+			handle_impl->magic = (uintptr_t)loader_handle_impl_magic_free;
+			free(handle_impl);
 		}
 
-		free(handle_impl);
+		handle_impl->magic = (uintptr_t)loader_handle_impl_magic_alloc;
+		return handle_impl;
 	}
 
 	return NULL;
@@ -564,6 +569,7 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 		}
 
 		context_destroy(handle_impl->ctx);
+		handle_impl->magic = (uintptr_t)loader_handle_impl_magic_free;
 
 		free(handle_impl);
 	}
@@ -959,6 +965,13 @@ context loader_impl_handle_context(void *handle)
 	loader_handle_impl handle_impl = handle;
 
 	return handle_impl->ctx;
+}
+
+int loader_impl_handle_validate(void *handle)
+{
+	loader_handle_impl handle_impl = handle;
+
+	return !(handle_impl != NULL && handle_impl->magic == (uintptr_t)loader_handle_impl_magic_alloc);
 }
 
 value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)

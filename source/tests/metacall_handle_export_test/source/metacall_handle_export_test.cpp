@@ -104,6 +104,20 @@ TEST_F(metacall_handle_export_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
+	/* Test bad handle allocation */
+	{
+		struct
+		{
+			int random;
+			int broken;
+			int handle;
+			int yeet;
+			char padding[600];
+		} broken_handle = { 0, 0, 0, 0, { 0 } };
+
+		EXPECT_EQ((void *)NULL, (void *)metacall_handle_export((void *)&broken_handle));
+	}
+
 	/* Print inspect information */
 	{
 		size_t size = 0;

@@ -343,6 +343,13 @@ void *metacallv_s(const char *name, void *args[], size_t size)
 
 void *metacallhv(void *handle, const char *name, void *args[])
 {
+	if (loader_impl_handle_validate(handle) != 0)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallhv is not valid", handle);
+		return NULL;
+	}
+
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
 
@@ -356,6 +363,13 @@ void *metacallhv(void *handle, const char *name, void *args[])
 
 void *metacallhv_s(void *handle, const char *name, void *args[], size_t size)
 {
+	if (loader_impl_handle_validate(handle) != 0)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallhv_s is not valid", handle);
+		return NULL;
+	}
+
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
 
@@ -671,6 +685,13 @@ void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t s
 
 void *metacallht_s(void *handle, const char *name, const enum metacall_value_id ids[], size_t size, ...)
 {
+	if (loader_impl_handle_validate(handle) != 0)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacallht_s is not valid", handle);
+		return NULL;
+	}
+
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
 
@@ -782,6 +803,13 @@ void *metacall_function(const char *name)
 
 void *metacall_handle_function(void *handle, const char *name)
 {
+	if (loader_impl_handle_validate(handle) != 0)
+	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_function is not valid", handle);
+		return NULL;
+	}
+
 	value f_val = loader_handle_get(handle, name);
 	function f = NULL;
 
@@ -863,8 +891,10 @@ void *metacall_handle(const char *tag, const char *name)
 
 const char *metacall_handle_id(void *handle)
 {
-	if (handle == NULL)
+	if (loader_impl_handle_validate(handle) != 0)
 	{
+		// TODO: Implement error handling
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_id is not valid", handle);
 		return NULL;
 	}
 
@@ -873,8 +903,10 @@ const char *metacall_handle_id(void *handle)
 
 void *metacall_handle_export(void *handle)
 {
-	if (handle == NULL)
+	if (loader_impl_handle_validate(handle) != 0)
 	{
+		// TODO: Implement type error return a value
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_handle_export is not valid", handle);
 		return NULL;
 	}
 
@@ -2028,6 +2060,13 @@ void *metacall_deserialize(const char *name, const char *buffer, size_t size, vo
 
 int metacall_clear(void *handle)
 {
+	if (loader_impl_handle_validate(handle) != 0)
+	{
+		// TODO: Implement error handling
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_clear is not valid", handle);
+		return 1;
+	}
+
 	return loader_clear(handle);
 }
 
