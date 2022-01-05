@@ -176,9 +176,20 @@ else()
 	set(GREP_COMMAND grep)
 endif()
 
+include(TestEnvironmentVariables)
+
 add_test(NAME ${target}
 	COMMAND ${TEST_COMMAND} "echo 'load mock a.mock\ninspect\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"function three_str(a_str, b_str, c_str)\""
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
 )
 
 #
@@ -201,17 +212,6 @@ add_loader_dependencies(${target}
 #
 # Define tests
 #
-
-set_property(TEST ${target}
-	PROPERTY LABELS ${target}
-)
-
-include(TestEnvironmentVariables)
-
-test_environment_variables(${target}
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
-)
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_NODE)
 	add_test(NAME ${target}-node
