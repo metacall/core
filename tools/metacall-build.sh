@@ -81,7 +81,12 @@ sub_build() {
 
 	# Install
 	if [ $BUILD_INSTALL = 1 ]; then
-		$SUDO_CMD HOME="$HOME" make install
+		if [ "$SUDO_CMD" = "" ]; then
+			make install
+		else
+			# Needed for rustup in order to install rust loader properly
+			$SUDO_CMD HOME="$HOME" make install
+		fi
 	fi
 }
 
