@@ -615,9 +615,12 @@ In order to end this section, here's a list of ideas that are not completely imp
 Follow these steps to build and install **METACALL** manually.
 
 ``` sh
-git clone --recursive https://github.com/metacall/core.git
+git clone https://github.com/metacall/core.git
 mkdir core/build && cd core/build
 cmake ..
+# Unix (Linux and MacOs)
+sudo HOME="$HOME" cmake --build . --target install
+# Windows (or when installing to a path with permissions)
 cmake --build . --target install
 ```
 
