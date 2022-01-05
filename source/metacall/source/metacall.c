@@ -451,7 +451,8 @@ void *metacall(const char *name, ...)
 			}
 			else
 			{
-				args[iterator] = NULL;
+				log_write("metacall", LOG_LEVEL_ERROR, "Calling metacall with unsupported type '%s', using null type instead", type_id_name(id));
+				args[iterator] = metacall_value_create_null();
 			}
 		}
 
@@ -461,7 +462,7 @@ void *metacall(const char *name, ...)
 
 		for (iterator = 0; iterator < args_count; ++iterator)
 		{
-			value_destroy(args[iterator]);
+			value_type_destroy(args[iterator]);
 		}
 
 		if (ret != NULL)
@@ -566,7 +567,8 @@ void *metacallt(const char *name, const enum metacall_value_id ids[], ...)
 			}
 			else
 			{
-				args[iterator] = NULL;
+				log_write("metacall", LOG_LEVEL_ERROR, "Calling metacallt with unsupported type '%s', using null type instead", type_id_name(id));
+				args[iterator] = metacall_value_create_null();
 			}
 		}
 
@@ -576,7 +578,7 @@ void *metacallt(const char *name, const enum metacall_value_id ids[], ...)
 
 		for (iterator = 0; iterator < args_count; ++iterator)
 		{
-			value_destroy(args[iterator]);
+			value_type_destroy(args[iterator]);
 		}
 
 		return ret;
@@ -664,7 +666,8 @@ void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t s
 			}
 			else
 			{
-				args[iterator] = NULL;
+				log_write("metacall", LOG_LEVEL_ERROR, "Calling metacallt_s with unsupported type '%s', using null type instead", type_id_name(id));
+				args[iterator] = metacall_value_create_null();
 			}
 		}
 
@@ -674,7 +677,7 @@ void *metacallt_s(const char *name, const enum metacall_value_id ids[], size_t s
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			value_destroy(args[iterator]);
+			value_type_destroy(args[iterator]);
 		}
 
 		return ret;
@@ -769,7 +772,8 @@ void *metacallht_s(void *handle, const char *name, const enum metacall_value_id 
 			}
 			else
 			{
-				args[iterator] = NULL;
+				log_write("metacall", LOG_LEVEL_ERROR, "Calling metacallht_s with unsupported type '%s', using null type instead", type_id_name(id));
+				args[iterator] = metacall_value_create_null();
 			}
 		}
 
@@ -779,7 +783,7 @@ void *metacallht_s(void *handle, const char *name, const enum metacall_value_id 
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			value_destroy(args[iterator]);
+			value_type_destroy(args[iterator]);
 		}
 
 		return ret;
@@ -941,6 +945,13 @@ void *metacallfv_s(void *func, void *args[], size_t size)
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
+			if (value_validate(args[iterator]) != 0)
+			{
+				// TODO: Implement type error return a value
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallfv_s", iterator);
+				return NULL;
+			}
+
 			type t = signature_get_type(s, iterator);
 
 			if (t != NULL)
@@ -1048,7 +1059,8 @@ void *metacallf(void *func, ...)
 			}
 			else
 			{
-				args[iterator] = NULL;
+				log_write("metacall", LOG_LEVEL_ERROR, "Calling metacallf with unsupported type '%s', using null type instead", type_id_name(id));
+				args[iterator] = metacall_value_create_null();
 			}
 		}
 
@@ -1058,7 +1070,7 @@ void *metacallf(void *func, ...)
 
 		for (iterator = 0; iterator < args_count; ++iterator)
 		{
-			value_destroy(args[iterator]);
+			value_type_destroy(args[iterator]);
 		}
 
 		return ret;
@@ -1179,6 +1191,20 @@ void *metacallfmv(void *func, void *keys[], void *values[])
 
 		for (iterator = 0; iterator < args_count; ++iterator)
 		{
+			if (value_validate(keys[iterator]) != 0)
+			{
+				// TODO: Implement type error return a value
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid key at position %" PRIuS " when calling to metacallfmv", iterator);
+				return NULL;
+			}
+
+			if (value_validate(values[iterator]) != 0)
+			{
+				// TODO: Implement type error return a value
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value at position %" PRIuS " when calling to metacallfmv", iterator);
+				return NULL;
+			}
+
 			type_id key_id = value_type_id((value)keys[iterator]);
 
 			size_t index = METACALL_ARGS_SIZE;
@@ -1496,6 +1522,20 @@ void *metacallfmv_await_s(void *func, void *keys[], void *values[], size_t size,
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
+			if (value_validate(keys[iterator]) != 0)
+			{
+				// TODO: Implement type error return a value
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid key at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
+				return NULL;
+			}
+
+			if (value_validate(values[iterator]) != 0)
+			{
+				// TODO: Implement type error return a value
+				log_write("metacall", LOG_LEVEL_ERROR, "Invalid value at position %" PRIuS " when calling to metacallfmv_await_s", iterator);
+				return NULL;
+			}
+
 			type_id key_id = value_type_id((value)keys[iterator]);
 
 			size_t index = METACALL_ARGS_SIZE;
@@ -1886,6 +1926,14 @@ void *metacallv_method(void *target, const char *name, method_invoke_ptr call, v
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
+		if (value_validate(args[iterator]) != 0)
+		{
+			// TODO: Implement type error return a value
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid argument at position %" PRIuS " when calling to metacallv_method", iterator);
+			vector_destroy(v);
+			return NULL;
+		}
+
 		type t = signature_get_type(s, iterator);
 
 		if (t != NULL)

@@ -76,6 +76,18 @@ REFLECT_API value value_create(const void *data, size_t bytes);
 
 /**
 *  @brief
+*    Check if the value @v is valid or the memory is corrupted
+*
+*  @param[in] v
+*    Reference of value to be checked
+*
+*  @return
+*    Zero if the value is valid, null otherwhise
+*/
+REFLECT_API int value_validate(value v);
+
+/**
+*  @brief
 *    Copy a value from @v
 *
 *  @param[in] v

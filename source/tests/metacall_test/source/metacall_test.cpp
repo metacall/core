@@ -276,6 +276,22 @@ TEST_F(metacall_test, DefaultConstructor)
 		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), web_content));
 
 		metacall_value_destroy(ret);
+
+		/* Testing corrupted value input */
+		struct
+		{
+			int a;
+			int corrupted;
+			int value;
+			char padding[100];
+		} corrupted_value = { 0, 0, 0, { 0 } };
+
+		void *corrupted_args[] = {
+			(void *)&corrupted_value,
+			(void *)&corrupted_value
+		};
+
+		EXPECT_EQ((void *)NULL, (void *)metacallfv_s(metacall_function("multiply"), corrupted_args, 2));
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 

@@ -37,11 +37,17 @@ typedef struct value_impl_type *value_impl;
 
 struct value_impl_type
 {
+	uintptr_t magic;
 	size_t bytes;
 	size_t ref_count;
 	value_finalizer_cb finalizer;
 	void *finalizer_data;
 };
+
+/* -- Private Member Data -- */
+
+static const char value_impl_magic_alloc[] = "value_impl_magic_alloc";
+static const char value_impl_magic_free[] = "value_impl_magic_free";
 
 /* -- Private Methods -- */
 
@@ -78,6 +84,7 @@ value value_alloc(size_t bytes)
 		return NULL;
 	}
 
+	impl->magic = (uintptr_t)value_impl_magic_alloc;
 	impl->bytes = bytes;
 	impl->ref_count = 1;
 	impl->finalizer = NULL;
@@ -98,6 +105,13 @@ value value_create(const void *data, size_t bytes)
 	memcpy(v, data, bytes);
 
 	return v;
+}
+
+int value_validate(value v)
+{
+	value_impl impl = value_descriptor(v);
+
+	return !(impl != NULL && impl->magic == (uintptr_t)value_impl_magic_alloc);
 }
 
 value value_copy(value v)
@@ -228,6 +242,8 @@ void value_destroy(value v)
 		{
 			impl->finalizer(v, impl->finalizer_data);
 		}
+
+		impl->magic = (uintptr_t)value_impl_magic_free;
 
 		free(impl);
 	}
