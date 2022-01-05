@@ -81,7 +81,7 @@ sub_build() {
 
 	# Install
 	if [ $BUILD_INSTALL = 1 ]; then
-		$SUDO_CMD make install
+		$SUDO_CMD HOME="$HOME" make install
 	fi
 }
 
