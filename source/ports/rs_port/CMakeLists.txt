@@ -33,3 +33,38 @@ add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 )
+
+#
+# Dependecies
+#
+
+add_dependencies(${target}
+	${META_PROJECT_NAME}::metacall
+)
+
+#
+# Define test
+#
+
+add_test(NAME ${target}
+	COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS=-Zmacro-backtrace ${Rust_CARGO_EXECUTABLE} test
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+set_property(TEST ${target}
+	PROPERTY LABELS ${target}
+)
+
+include(TestEnvironmentVariables)
+include(Portability)
+
+project_library_path(TEST_LIB_PATH
+	${PROJECT_OUTPUT_DIR}
+)
+
+test_environment_variables(${target}
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+	"${PROJECT_LIBRARY_PATH_NAME}=${TEST_LIB_PATH}"
+	"RUST_BACKTRACE=1"
+)

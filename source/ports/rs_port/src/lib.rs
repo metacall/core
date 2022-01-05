@@ -95,7 +95,7 @@ pub fn load_from_file(
     scripts: impl IntoIterator<Item = impl AsRef<str>>,
 ) -> Result<(), &'static str> {
     // allocate a safe C String
-    let ctag = CString::new(tag).expect("Conversion to C String failed");
+    let c_tag = CString::new(tag).expect("Conversion to C String failed");
 
     let owned_scripts: Vec<_> = scripts
         .into_iter()
@@ -110,14 +110,37 @@ pub fn load_from_file(
 
     if unsafe {
         abi_interface::metacall_load_from_file(
-            ctag.as_ptr(),
+            c_tag.as_ptr(),
             ref_c_scripts.as_mut_ptr(),
             ref_c_scripts.len(),
             std::ptr::null_mut(),
         )
     } != 0
     {
-        return Err("MetaCall failed to load script");
+        return Err("MetaCall failed to load script from file");
+    }
+
+    Ok(())
+}
+
+pub fn load_from_memory(
+    tag: &str,
+    script: String,
+) -> Result<(), &'static str> {
+    let c_tag = CString::new(tag).expect("Conversion to C String failed");
+    let script_len = script.len();
+    let c_script = CString::new(script).expect("Conversion to C String failed");
+
+    if unsafe {
+        abi_interface::metacall_load_from_memory(
+            c_tag.as_ptr(),
+            c_script.as_ptr(),
+            script_len,
+            std::ptr::null_mut(),
+        )
+    } != 0
+    {
+        return Err("MetaCall failed to load script from memory");
     }
 
     Ok(())
@@ -129,8 +152,6 @@ pub fn metacall<'a>(
     args: impl IntoIterator<Item = &'a Any>,
 ) -> Result<Any, &'static str> {
     let c_function = CString::new(func).expect("Conversion to C String failed");
-
-    // let c_func = metacall_function(c_function.as_ptr());
     let c_func: *mut c_void = unsafe { abi_interface::metacall_function(c_function.as_ptr()) };
 
     if c_func.is_null() {
@@ -292,6 +313,33 @@ mod tests {
             Ok(ret) => match ret {
                 crate::Any::Str(value) => {
                     assert_eq!("Hello World".to_string(), value);
+
+                    println!("Result: {}", value);
+                }
+                _ => {
+                    assert_eq!(0, 1);
+
+                    panic!();
+                }
+            },
+            Err(e) => {
+                println!("{}", e);
+
+                assert_eq!(0, 1);
+
+                panic!();
+            }
+        }
+
+        if let Err(e) = crate::load_from_memory("py", "def pyfn():\n\treturn 23".to_string()) {
+            println!("{}", e);
+            panic!();
+        }
+
+        match crate::metacall("pyfn", &[]) {
+            Ok(ret) => match ret {
+                crate::Any::Long(value) => {
+                    assert_eq!(23, value);
 
                     println!("Result: {}", value);
                 }
