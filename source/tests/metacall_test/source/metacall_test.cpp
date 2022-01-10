@@ -156,6 +156,9 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
+		/* Test for asyncness Python introspection */
+		EXPECT_EQ((int)0, metacall_function_async(metacall_function("multiply")));
+
 		ret = metacall("multiply", 5, 15);
 
 		EXPECT_NE((void *)NULL, (void *)ret);

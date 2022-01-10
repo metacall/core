@@ -729,6 +729,27 @@ int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
 	return ret;
 }
 
+int py_loader_impl_check_async(loader_impl_py py_impl, PyObject *func)
+{
+	PyObject *result = PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL);
+
+	if (result == NULL)
+	{
+		if (PyErr_Occurred() != NULL)
+		{
+			py_loader_impl_error_print(py_impl);
+		}
+
+		return -1;
+	}
+
+	int ret = PyObject_IsTrue(result);
+
+	Py_DECREF(result);
+
+	return ret;
+}
+
 type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
@@ -3211,15 +3232,7 @@ int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f)
 
 		Py_XDECREF(parameters);
 
-		if (py_impl->asyncio_iscoroutinefunction &&
-			PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, func, NULL))
-		{
-			function_async(f, ASYNCHRONOUS);
-		}
-		else
-		{
-			function_async(f, SYNCHRONOUS);
-		}
+		function_async(f, py_loader_impl_check_async(py_impl, func) == 1 ? ASYNCHRONOUS : SYNCHRONOUS);
 
 		signature_set_return(s, py_loader_impl_discover_type(impl, return_annotation, func_name, NULL));
 
@@ -3556,8 +3569,7 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 					args_count = py_loader_impl_discover_callable_args_count(py_impl, tuple_val);
 				}
 
-				if (py_impl->asyncio_iscoroutinefunction &&
-					PyObject_CallFunctionObjArgs(py_impl->asyncio_iscoroutinefunction, tuple_val, NULL))
+				if (py_loader_impl_check_async(py_impl, tuple_val) == 1)
 				{
 					func_synchronicity = ASYNCHRONOUS;
 				}

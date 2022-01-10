@@ -64,6 +64,9 @@ TEST_F(metacall_python_async_test, DefaultConstructor)
 
 		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
+		/* Test for asyncness Python introspection */
+		EXPECT_EQ((int)1, metacall_function_async(metacall_function("my_async_fn")));
+
 		void *args[] = {
 			metacall_value_create_long(2L)
 		};
