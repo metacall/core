@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+#if (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#include <sys/ucontext.h>
 #else
 	#include <ucontext.h>
