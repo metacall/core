@@ -74,11 +74,14 @@ extern char **environ;
 #include <thread>
 
 /* Disable warnings from V8 and NodeJS */
-#if defined(_MSC_VER) || defined(__clang__)
+#if defined(_MSC_VER)
 	#pragma warning(push)
 	#pragma warning(disable : 4100)
 	#pragma warning(disable : 4275)
 	#pragma warning(disable : 4251)
+#elif defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wunused-parameter"
 #elif defined(__GNUC__)
 	#pragma GCC diagnostic push
 	#pragma GCC diagnostic ignored "-Wunused-parameter"
@@ -96,8 +99,10 @@ extern char **environ;
 #include <uv.h>
 
 /* Disable warnings from V8 and NodeJS */
-#if defined(_MSC_VER) || defined(__clang__)
+#if defined(_MSC_VER)
 	#pragma warning(pop)
+#elif defined(__clang__)
+	#pragma clang diagnostic pop
 #elif defined(__GNUC__)
 	#pragma GCC diagnostic pop
 #endif
