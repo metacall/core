@@ -43,7 +43,7 @@
 		#include <share.h>
 	#endif
 #elif defined(__linux__) || \
-	((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
+	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 	#define _GNU_SOURCE
 	#include <unistd.h>
 	#include <sys/syscall.h>
