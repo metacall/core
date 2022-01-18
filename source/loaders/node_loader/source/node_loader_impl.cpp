@@ -57,6 +57,8 @@ extern char **environ;
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
 
+#include <portability/portability_executable_path.h>
+
 /* TODO: Make logs thread safe */
 #include <log/log.h>
 
@@ -3766,26 +3768,17 @@ void node_loader_impl_thread(void *data)
 	uv_mutex_lock(&node_impl->mutex);
 
 	/* TODO: Reimplement from here to ... */
-
-	const size_t path_max_length = NODE_LOADER_IMPL_PATH_SIZE;
-	node_impl_path exe_path_str = { 0 };
+	portability_executable_path_str exe_path_str = { 0 };
+	portability_executable_path_length length = 0;
 	size_t exe_path_str_size = 0, exe_path_str_offset = 0;
 
-#if defined(WIN32) || defined(_WIN32)
-	unsigned int length = GetModuleFileName(NULL, exe_path_str, path_max_length);
-#else
-	ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
-#endif
-
-	size_t iterator;
-
-	if (length == -1 || length == path_max_length)
+	if (portability_executable_path(exe_path_str, &length) != 0)
 	{
 		/* Report error (TODO: Implement it with thread safe logs) */
-		node_impl->error_message = "Node loader register invalid working directory path";
+		node_impl->error_message = "Node loader failed to retrieve the executable path";
 
 		/* TODO: Make logs thread safe */
-		/* log_write("metacall", LOG_LEVEL_ERROR, "node loader register invalid working directory path (%s)", exe_path_str); */
+		/* log_write("metacall", LOG_LEVEL_ERROR, "Node loader failed to retrieve the executable path (%s)", exe_path_str); */
 
 		/* Signal start condition */
 		uv_cond_signal(&node_impl->cond);
@@ -3796,7 +3789,7 @@ void node_loader_impl_thread(void *data)
 		return;
 	}
 
-	for (iterator = 0; iterator <= (size_t)length; ++iterator)
+	for (size_t iterator = 0; iterator <= (size_t)length; ++iterator)
 	{
 #if defined(WIN32) || defined(_WIN32)
 		if (exe_path_str[iterator] == '\\')

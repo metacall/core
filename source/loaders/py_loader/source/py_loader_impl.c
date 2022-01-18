@@ -30,6 +30,8 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
 
+#include <portability/portability_executable_path.h>
+
 #include <log/log.h>
 
 #include <metacall/metacall.h>
@@ -46,35 +48,6 @@
 #else
 	#define DEBUG_ENABLED 0
 #endif
-
-// TODO: This code is duplicated among NodeJS, Python and C# Loaders (review py_loader_impl_initialize_sys_executable)
-#if defined(WIN32) || defined(_WIN32)
-	#ifndef NOMINMAX
-		#define NOMINMAX
-	#endif
-
-	#ifndef WIN32_LEAN_AND_MEAN
-		#define WIN32_LEAN_AND_MEAN
-	#endif
-
-	#include <windows.h>
-	#define PY_LOADER_IMPL_PATH_SIZE MAX_PATH
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
-	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-
-	#include <limits.h>
-	#include <unistd.h>
-
-	#define PY_LOADER_IMPL_PATH_SIZE PATH_MAX
-#else
-	#define PY_LOADER_IMPL_PATH_SIZE 4096
-#endif
-
-typedef char py_impl_path[PY_LOADER_IMPL_PATH_SIZE];
-// END-TODO
 
 typedef struct loader_impl_py_function_type
 {
@@ -2320,23 +2293,14 @@ error_thread_background_compile:
 
 int py_loader_impl_initialize_sys_executable(loader_impl_py py_impl)
 {
-	// TODO: This code is duplicated among NodeJS, Python and C# Loaders
-	const size_t path_max_length = PY_LOADER_IMPL_PATH_SIZE;
-	py_impl_path exe_path_str = { 0 };
+	portability_executable_path_str exe_path_str = { 0 };
+	portability_executable_path_length length = 0;
 
-#if defined(WIN32) || defined(_WIN32)
-	unsigned int length = GetModuleFileName(NULL, exe_path_str, (DWORD)path_max_length);
-#else
-	ssize_t length = readlink("/proc/self/exe", exe_path_str, path_max_length);
-#endif
-
-	if (length == -1 || length == path_max_length)
+	if (portability_executable_path(exe_path_str, &length) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid working directory path");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Python loader failed to retrieve the executable path");
 		return 1;
 	}
-	// END-TODO
 
 	PyObject *exe_path_obj = PyUnicode_DecodeFSDefaultAndSize(exe_path_str, (Py_ssize_t)length);
 

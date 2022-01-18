@@ -20,6 +20,8 @@
 
 #include <cs_loader/netcore_linux.h>
 
+#include <portability/portability_executable_path.h>
+
 #include <log/log.h>
 
 #include <limits.h>
@@ -170,37 +172,19 @@ bool netcore_linux::CreateHost()
 		appPath
 	};
 
-	int status = -1;
+	portability_executable_path_str exe_path_str = { 0 };
+	portability_executable_path_length length = 0;
 
-	/* TODO: Make this trick more portable... */
-	std::string exe_path_str;
-
-	const char *exe_path = getenv("_");
-
-	if (exe_path != NULL)
+	if (portability_executable_path(exe_path_str, &length) != 0)
 	{
-		exe_path_str = exe_path;
-	}
-	else
-	{
-		char exe_path_proc[PATH_MAX];
-
-		ssize_t length = ::readlink("/proc/self/exe", exe_path_proc, PATH_MAX);
-
-		if (length == -1 || length == PATH_MAX)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "coreclr_initialize invalid working directory path (%s)", exe_path_proc);
-			return false;
-		}
-
-		exe_path_str = std::string(exe_path_proc, length);
+		return false;
 	}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "coreclr_initialize working directory path (%s)", exe_path_str.c_str());
+	log_write("metacall", LOG_LEVEL_DEBUG, "coreclr_initialize working directory path (%s)", exe_path_str);
 
 	// Initialize CoreCLR
-	status = (*this->coreclr_initialize)(
-		exe_path_str.c_str(),
+	int status = (*this->coreclr_initialize)(
+		exe_path_str,
 		"metacall_cs_loader_container",
 		sizeof(propertyKeys) / sizeof(propertyKeys[0]),
 		propertyKeys,
