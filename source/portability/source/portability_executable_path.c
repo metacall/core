@@ -74,7 +74,7 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	strncpy(path, path_ptr, *length);
 #endif
 
-	if (*length == -1 || *length == 0 || *length == path_max_length)
+	if (*length <= 0 || *length == path_max_length)
 	{
 		return 1;
 	}
