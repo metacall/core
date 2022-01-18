@@ -54,6 +54,13 @@ if(PROJECT_OS_SOLARIS)
 	set(PROJECT_OS_FAMILY unix)
 endif()
 
+# Check Android
+if(ANDROID)
+	set(PROJECT_OS_ANDROID TRUE BOOL INTERNAL)
+	set(PROJECT_OS_NAME "Android")
+	set(PROJECT_OS_FAMILY unix)
+endif()
+
 # Check Haiku
 string(REGEX MATCH "Haiku" PROJECT_OS_HAIKU ${CMAKE_SYSTEM_NAME})
 
@@ -208,7 +215,7 @@ endif()
 # Define the library path environment variable name
 #
 
-if(PROJECT_OS_LINUX OR PROJECT_OS_BSD)
+if(PROJECT_OS_FAMILY STREQUAL "unix")
 	set(PROJECT_LIBRARY_PATH_NAME "LD_LIBRARY_PATH")
 elseif(PROJECT_OS_HAIKU)
 	set(PROJECT_LIBRARY_PATH_NAME "LIBRARY_PATH")
