@@ -96,6 +96,9 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	# Configuration path
+	METACALL_TEST_CONFIG_PATH="${PROJECT_OUTPUT_DIR}/scripts/duplicated-in-subfolder-config/metacall.json"
 )
 
 #

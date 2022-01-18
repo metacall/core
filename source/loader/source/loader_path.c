@@ -26,7 +26,7 @@
 	#define LOADER_PATH_SEPARATOR_C	   '/'
 
 #else
-	#error "Unknown loader path separator"
+	#error "Unknown path separator"
 #endif
 
 size_t loader_path_get_name(const loader_naming_path path, loader_naming_name name)
@@ -172,6 +172,19 @@ size_t loader_path_get_relative(const loader_naming_path base, const loader_nami
 	relative[length] = '\0';
 
 	return length + 1;
+}
+
+int loader_path_is_subpath(const loader_naming_path parent, const loader_naming_path child)
+{
+	size_t parent_size = strnlen(parent, LOADER_NAMING_PATH_SIZE);
+	size_t child_size = strnlen(child, LOADER_NAMING_PATH_SIZE);
+
+	if (parent_size < child_size)
+	{
+		return 1;
+	}
+
+	return !(strncmp(parent, child, parent_size) == 0);
 }
 
 int loader_path_is_absolute(const loader_naming_path path)

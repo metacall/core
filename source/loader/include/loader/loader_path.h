@@ -43,6 +43,8 @@ LOADER_API size_t loader_path_get_path(const loader_naming_path path, size_t siz
 
 LOADER_API size_t loader_path_get_relative(const loader_naming_path base, const loader_naming_path path, loader_naming_path relative);
 
+LOADER_API int loader_path_is_subpath(const loader_naming_path parent, const loader_naming_path child);
+
 LOADER_API int loader_path_is_absolute(const loader_naming_path path);
 
 LOADER_API size_t loader_path_join(const loader_naming_path left_path, size_t left_path_size, const loader_naming_path right_path, size_t right_path_size, loader_naming_path join_path);

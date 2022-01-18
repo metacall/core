@@ -41,9 +41,9 @@ TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
 			"example.py"
 		};
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 
-		EXPECT_NE((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
+		ASSERT_NE((int)0, (int)metacall_load_from_file("py", py_scripts, sizeof(py_scripts) / sizeof(py_scripts[0]), NULL));
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
@@ -62,11 +62,21 @@ TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
 			METACALL_DOUBLE
 		};
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts_0, sizeof(node_scripts_0) / sizeof(node_scripts_0[0]), NULL));
+		/* First script */
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts_0, sizeof(node_scripts_0) / sizeof(node_scripts_0[0]), NULL));
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts_1, sizeof(node_scripts_1) / sizeof(node_scripts_1[0]), NULL));
+		void *ret = metacallt("three_times", double_id, 3.0);
 
-		void *ret = metacallt("two_times", double_id, 3.0);
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)9.0);
+
+		metacall_value_destroy(ret);
+
+		/* Second script */
+		ASSERT_EQ((int)0, (int)metacall_load_from_file("node", node_scripts_1, sizeof(node_scripts_1) / sizeof(node_scripts_1[0]), NULL));
+
+		ret = metacallt("two_times", double_id, 3.0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -74,13 +84,24 @@ TEST_F(metacall_duplicated_handle_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-		ret = metacallt("three_times", double_id, 3.0);
+		/* Script with config */
+		struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+		void *config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+		ASSERT_NE((void *)NULL, (void *)config_allocator);
+
+		ASSERT_EQ((int)0, (int)metacall_load_from_configuration(METACALL_TEST_CONFIG_PATH, NULL, config_allocator));
+
+		ret = metacallt("one_time", double_id, 3.0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((double)metacall_value_to_double(ret), (double)9.0);
+		EXPECT_EQ((double)metacall_value_to_double(ret), (double)3.0);
 
 		metacall_value_destroy(ret);
+
+		metacall_allocator_destroy(config_allocator);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 

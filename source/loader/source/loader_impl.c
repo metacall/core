@@ -60,26 +60,26 @@ typedef struct loader_impl_metadata_cb_iterator_type *loader_impl_metadata_cb_it
 
 struct loader_impl_type
 {
-	int init;
-	loader_naming_tag tag;
-	dynlink handle;
-	loader_impl_interface_singleton singleton;
-	set handle_impl_map;
-	loader_impl_data data;
-	context ctx;
-	set type_info_map;
-	void *options;
-	set exec_path_map;
+	int init;								   /* Flag for checking if the loader is initialized */
+	loader_naming_tag tag;					   /* Reference the tag of the loader (prefix), usually: py, node, rb... */
+	dynlink handle;							   /* Reference to the loaded shared library */
+	loader_impl_interface_singleton singleton; /* Virtual table for the loader plugin */
+	set handle_impl_map;					   /* Indexes handles by path */
+	loader_impl_data data;					   /* Derived metadata provided by the loader, usually contains the data of the VM, Interpreter or JIT */
+	context ctx;							   /* Contains the objects, classes and functions loaded in the global scope of each loader */
+	set type_info_map;						   /* Stores a set indexed by type name of all of the types existing in the loader (global scope (TODO: may need refactor per handle)) */
+	void *options;							   /* Additional initialization options passed in the initialize phase */
+	set exec_path_map;						   /* Set of execution paths passed by the end user */
 };
 
 struct loader_handle_impl_type
 {
-	uintptr_t magic;
-	loader_impl impl;
-	loader_naming_name name;
-	loader_handle module;
-	context ctx;
-	int populated;
+	uintptr_t magic;		 /* Magic number for detecting corrupted input by the user */
+	loader_impl impl;		 /* Reference to the loader which handle belongs to */
+	loader_naming_path path; /* File name of the module (used to index the handle) */
+	loader_handle module;	 /* Pointer to the implementation handle, provided by the loader, it is its internal representation */
+	context ctx;			 /* Contains the objects, classes and functions loaded in the handle */
+	int populated;			 /* If it is populated (0), the handle context is also stored in loader context (global scope), otherwise it is private */
 };
 
 struct loader_impl_metadata_cb_iterator_type
@@ -100,11 +100,13 @@ static void loader_impl_dynlink_destroy(loader_impl impl);
 
 static int loader_impl_create_singleton(loader_impl impl, const char *path, const loader_naming_tag tag);
 
-static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name);
+static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_path path);
 
-static int loader_impl_handle_init(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr, int populated);
+static int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated);
 
-static int loader_impl_handle_register(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr);
+static int loader_impl_handle_register(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr);
+
+static size_t loader_impl_handle_name(const loader_naming_path path, loader_naming_path result);
 
 static int loader_impl_function_hook_call(context ctx, const char func_name[]);
 
@@ -346,6 +348,25 @@ int loader_impl_initialize(loader_impl impl)
 
 	script_path = loader_env_script_path();
 
+	/* Note: I think we should not allow multiple paths for LOADER_SCRIPT_PATH.
+	* This provides name collision with the handles because handle names are defined by its
+	* relative path if they are inside LOADER_SCRIPT_PATH or by its absolute path if they are outside.
+	* If there's multiple LOADER_SCRIPT_PATH there can be collisions with relative handle names.
+	* For now I am going to disable it and we will review it in the future.
+	* An alternative to support multiple execution paths is pretty straightforward, just call
+	* to the execution path API and register the paths you want for each loader, so you have
+	* total control for multiple search paths.
+	*/
+
+	if (script_path != NULL)
+	{
+		if (loader_impl_execution_path(impl, script_path) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", script_path);
+		}
+	}
+
+#if 0
 	/* Split multiple paths */
 	char path_copy[LOADER_NAMING_PATH_SIZE + 1];
 	strncpy(path_copy, script_path, LOADER_NAMING_PATH_SIZE);
@@ -369,6 +390,7 @@ int loader_impl_initialize(loader_impl impl)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Error when loading path %s", path_copy);
 	}
+#endif
 
 	paths = set_get(impl->exec_path_map, (const set_key)impl->tag);
 
@@ -516,16 +538,16 @@ int loader_impl_type_define(loader_impl impl, const char *name, type t)
 	return 1;
 }
 
-loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_name name)
+loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_handle module, const loader_naming_path path)
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
 	if (handle_impl != NULL)
 	{
 		handle_impl->impl = impl;
-		strncpy(handle_impl->name, name, LOADER_NAMING_NAME_SIZE);
+		strncpy(handle_impl->path, path, LOADER_NAMING_PATH_SIZE);
 		handle_impl->module = module;
-		handle_impl->ctx = context_create(handle_impl->name);
+		handle_impl->ctx = context_create(handle_impl->path);
 
 		if (handle_impl->ctx == NULL)
 		{
@@ -550,7 +572,7 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 
 		if (handle_impl->impl->init == 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroying handle %s", handle_impl->name);
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroying handle %s", handle_impl->path);
 
 			if (loader_impl_function_hook_call(handle_impl->ctx, func_fini_name) != 0)
 			{
@@ -652,7 +674,7 @@ int loader_impl_function_hook_call(context ctx, const char func_name[])
 	return 0;
 }
 
-int loader_impl_handle_init(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr, int populated)
+int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated)
 {
 	static const char func_init_name[] = LOADER_IMPL_FUNCTION_INIT;
 
@@ -662,7 +684,7 @@ int loader_impl_handle_init(loader_impl impl, char *name, loader_handle_impl han
 
 	if (result != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", name);
+		log_write("metacall", LOG_LEVEL_ERROR, "Error when calling to init hook function (" LOADER_IMPL_FUNCTION_INIT ") of handle: %s", path);
 	}
 
 	if (handle_ptr != NULL)
@@ -673,7 +695,7 @@ int loader_impl_handle_init(loader_impl impl, char *name, loader_handle_impl han
 	return result;
 }
 
-int loader_impl_handle_register(loader_impl impl, char *name, loader_handle_impl handle_impl, void **handle_ptr)
+int loader_impl_handle_register(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr)
 {
 	if (handle_ptr == NULL)
 	{
@@ -682,19 +704,35 @@ int loader_impl_handle_register(loader_impl impl, char *name, loader_handle_impl
 		if (context_contains(impl->ctx, handle_impl->ctx, &duplicated_key) == 0)
 		{
 			/* TODO: This still does not protect duplicated names between different loaders global scope */
-			log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, name);
+			log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, path);
 		}
 		else if (context_append(impl->ctx, handle_impl->ctx) == 0)
 		{
-			return loader_impl_handle_init(impl, name, handle_impl, handle_ptr, 0);
+			return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 0);
 		}
 	}
 	else
 	{
-		return loader_impl_handle_init(impl, name, handle_impl, handle_ptr, 1);
+		return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 1);
 	}
 
 	return 1;
+}
+
+size_t loader_impl_handle_name(const loader_naming_path path, loader_naming_path result)
+{
+	const char *script_path = loader_env_script_path();
+
+	if (loader_path_is_subpath(script_path, path))
+	{
+		return loader_path_get_relative(script_path, path, result) - 1;
+	}
+	else
+	{
+		strncpy(result, path, LOADER_NAMING_PATH_SIZE);
+
+		return strnlen(result, LOADER_NAMING_PATH_SIZE);
+	}
 }
 
 int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size, void **handle_ptr)
@@ -713,18 +751,16 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 		if (interface_impl != NULL)
 		{
 			loader_handle handle;
-
-			loader_naming_name module_name;
+			loader_naming_path path;
 
 			if (loader_impl_initialize(impl) != 0)
 			{
 				return 1;
 			}
 
-			/* TODO: Refactor loader_path_get_fullname from path 0 (for avoiding collisions of scripts): */
-			if (loader_path_get_fullname(paths[0], module_name) > 1 && loader_impl_get_handle(impl, module_name) != NULL)
+			if (loader_impl_handle_name(paths[0], path) > 1 && loader_impl_get_handle(impl, path) != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", module_name);
+				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", path);
 
 				return 1;
 			}
@@ -735,7 +771,7 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, module_name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, path);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl);
 
@@ -743,20 +779,20 @@ int loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[
 				{
 					handle_impl->populated = 1;
 
-					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					if (set_insert(impl->handle_impl_map, handle_impl->path, handle_impl) == 0)
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							if (loader_impl_handle_register(impl, module_name, handle_impl, handle_ptr) == 0)
+							if (loader_impl_handle_register(impl, path, handle_impl, handle_ptr) == 0)
 							{
 								return 0;
 							}
 						}
 
-						set_remove(impl->handle_impl_map, handle_impl->name);
+						set_remove(impl->handle_impl_map, handle_impl->path);
 					}
 
-					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", module_name);
+					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", path);
 
 					loader_impl_destroy_handle(handle_impl);
 				}
@@ -834,7 +870,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char *buffer, size_t si
 				{
 					handle_impl->populated = 1;
 
-					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					if (set_insert(impl->handle_impl_map, handle_impl->path, handle_impl) == 0)
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
@@ -844,7 +880,7 @@ int loader_impl_load_from_memory(loader_impl impl, const char *buffer, size_t si
 							}
 						}
 
-						set_remove(impl->handle_impl_map, handle_impl->name);
+						set_remove(impl->handle_impl_map, handle_impl->path);
 					}
 
 					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", name);
@@ -864,9 +900,9 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 	{
 		loader_impl_interface interface_impl = loader_impl_symbol(impl);
 
-		loader_naming_name package_name;
+		loader_naming_path subpath;
 
-		if (interface_impl != NULL && loader_path_get_fullname(path, package_name) > 1)
+		if (interface_impl != NULL && loader_impl_handle_name(path, subpath) > 1)
 		{
 			loader_handle handle;
 
@@ -875,9 +911,9 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 				return 1;
 			}
 
-			if (loader_impl_get_handle(impl, package_name) != NULL)
+			if (loader_impl_get_handle(impl, subpath) != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from package handle failed, handle with name %s already loaded", package_name);
+				log_write("metacall", LOG_LEVEL_ERROR, "Load from package handle failed, handle with name %s already loaded", subpath);
 
 				return 1;
 			}
@@ -888,26 +924,26 @@ int loader_impl_load_from_package(loader_impl impl, const loader_naming_path pat
 
 			if (handle != NULL)
 			{
-				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, package_name);
+				loader_handle_impl handle_impl = loader_impl_load_handle(impl, handle, subpath);
 
 				if (handle_impl != NULL)
 				{
 					handle_impl->populated = 1;
 
-					if (set_insert(impl->handle_impl_map, handle_impl->name, handle_impl) == 0)
+					if (set_insert(impl->handle_impl_map, handle_impl->path, handle_impl) == 0)
 					{
 						if (interface_impl->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							if (loader_impl_handle_register(impl, package_name, handle_impl, handle_ptr) == 0)
+							if (loader_impl_handle_register(impl, subpath, handle_impl, handle_ptr) == 0)
 							{
 								return 0;
 							}
 						}
 
-						set_remove(impl->handle_impl_map, handle_impl->name);
+						set_remove(impl->handle_impl_map, handle_impl->path);
 					}
 
-					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", (void *)package_name);
+					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", subpath);
 
 					loader_impl_destroy_handle(handle_impl);
 				}
@@ -950,7 +986,7 @@ const char *loader_impl_handle_id(void *handle)
 {
 	loader_handle_impl handle_impl = handle;
 
-	return handle_impl->name;
+	return handle_impl->path;
 }
 
 value loader_impl_handle_export(void *handle)
@@ -996,7 +1032,7 @@ value loader_impl_metadata_handle_name(loader_handle_impl handle_impl)
 		return NULL;
 	}
 
-	v_ptr[1] = value_create_string(handle_impl->name, strlen(handle_impl->name));
+	v_ptr[1] = value_create_string(handle_impl->path, strlen(handle_impl->path));
 
 	if (v_ptr[1] == NULL)
 	{
@@ -1118,7 +1154,7 @@ int loader_impl_clear(void *handle)
 
 		loader_impl impl = handle_impl->impl;
 
-		int result = !(set_remove(impl->handle_impl_map, (set_key)(handle_impl->name)) == handle_impl);
+		int result = !(set_remove(impl->handle_impl_map, (set_key)(handle_impl->path)) == handle_impl);
 
 		loader_impl_destroy_handle(handle_impl);
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
 
-module.exports = two_times = x => {
-	return x * 2.0;
+module.exports = one_time = x => {
+	return x * 1.0;
 };
