@@ -299,12 +299,12 @@ TEST_F(metacall_test, DefaultConstructor)
 		/* Testing freed value input */
 
 		/* TODO: The next snippet of code works but address sanitizer warns about access warning,
-		* because in order to check the magic number we need to access the pointer to the struct.
-		* A better solution would be, when using a custom memory pool allocator (aka object pool)
-		* detect if the pointer is allocated or not in the object pool, so we track it without
-		* need to access the pointer in order to read it. This can be a better improvement but
-		* for now, this would be sufficient to catch most of the errors.
-		*/
+		 * because in order to check the magic number we need to access the pointer to the struct.
+		 * A better solution would be, when using a custom memory pool allocator (aka object pool)
+		 * detect if the pointer is allocated or not in the object pool, so we track it without
+		 * need to access the pointer in order to read it. This can be a better improvement but
+		 * for now, this would be sufficient to catch most of the errors.
+		 */
 
 		/*
 		void *freed_args[] = {

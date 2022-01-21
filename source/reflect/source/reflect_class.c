@@ -2,7 +2,7 @@
  *	Reflect Library by Parra Studios
  *	A library for provide reflection and metadata representation.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -394,19 +394,19 @@ value class_metadata_static_attributes(klass cls)
 value class_metadata(klass cls)
 {
 	/* The structure of the metadata is:
-	* {
-	*	name: "ClassName",
-	*	constructors: [{}],
-	*	methods: [{}],
-	*	static_methods: [{}],
-	*	attributes: {
-	*		"attr1": {}
-	*	},
-	*	static_attributes: {
-	*		"static_attr1": {}
-	*	}
-	* }
-	*/
+	 * {
+	 *	name: "ClassName",
+	 *	constructors: [{}],
+	 *	methods: [{}],
+	 *	static_methods: [{}],
+	 *	attributes: {
+	 *		"attr1": {}
+	 *	},
+	 *	static_attributes: {
+	 *		"static_attr1": {}
+	 *	}
+	 * }
+	 */
 
 	/* Create class map (name + constructors + methods + static_methods + attributes + static_attributes) */
 	value *c_map, c = value_create_map(NULL, 6);
@@ -598,8 +598,8 @@ constructor class_default_constructor(klass cls)
 constructor class_constructor(klass cls, type_id args[], size_t size)
 {
 	/* This method tries to find a valid constructor with correct types,
-	* if this cannot be achieved, we return the default constructor and
-	* we let the loader handle the new invokation with variadic arguments */
+	 * if this cannot be achieved, we return the default constructor and
+	 * we let the loader handle the new invokation with variadic arguments */
 	if (cls == NULL)
 	{
 		return NULL;

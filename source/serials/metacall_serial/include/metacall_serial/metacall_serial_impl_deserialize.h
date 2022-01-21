@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef METACALL_SERIAL_IMPL_DESERIALIZE_H
 #define METACALL_SERIAL_IMPL_DESERIALIZE_H 1
@@ -38,15 +38,15 @@ typedef int (*metacall_deserialize_impl_ptr)(value *, const char *, size_t);
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Provides pointer to function for deserialize depending on type id @id
-*
-*  @param[in] id
-*    Type of wanted deserialize function pointer
-*
-*  @return
-*    Deserialize function pointer assigned to type id @id
-*/
+ *  @brief
+ *    Provides pointer to function for deserialize depending on type id @id
+ *
+ *  @param[in] id
+ *    Type of wanted deserialize function pointer
+ *
+ *  @return
+ *    Deserialize function pointer assigned to type id @id
+ */
 METACALL_SERIAL_API metacall_deserialize_impl_ptr metacall_serial_impl_deserialize_func(type_id id);
 
 #ifdef __cplusplus

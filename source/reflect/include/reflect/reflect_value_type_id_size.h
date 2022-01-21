@@ -38,15 +38,15 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Return size of a type by @id
-*
-*  @param[in] id
-*    Type id used to obtain the size
-*
-*  @return
-*    Size of type assigned to @id
-*/
+ *  @brief
+ *    Return size of a type by @id
+ *
+ *  @param[in] id
+ *    Type id used to obtain the size
+ *
+ *  @return
+ *    Size of type assigned to @id
+ */
 REFLECT_API size_t value_type_id_size(type_id id);
 
 #ifdef __cplusplus

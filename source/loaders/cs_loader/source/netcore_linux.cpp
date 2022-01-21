@@ -2,7 +2,7 @@
  *	Loader Library by Parra Studios
  *	A plugin for loading net code at run-time into a process.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #include <cs_loader/netcore_linux.h>
 
@@ -71,7 +71,7 @@ bool netcore_linux::ConfigAssemblyName()
 
 	std::string dotnet_loader_assembly_directory = std::string(this->dotnet_loader_assembly_path).substr(0, pos);
 
-	//strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
+	// strcpy(this->appPath,dotnet_loader_assembly_directory.c_str());
 
 	if (this->dotnet_loader_assembly_path == NULL)
 	{

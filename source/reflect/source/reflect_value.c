@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 /* -- Headers -- */
 
@@ -52,15 +52,15 @@ static const char value_impl_magic_free[] = "value_impl_magic_free";
 /* -- Private Methods -- */
 
 /**
-*  @brief
-*    Access to the descriptor of a value
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @return
-*    Pointer to the header of a value
-*/
+ *  @brief
+ *    Access to the descriptor of a value
+ *
+ *  @param[in] v
+ *    Reference to the value
+ *
+ *  @return
+ *    Pointer to the header of a value
+ */
 value_impl value_descriptor(value v);
 
 /* -- Methods -- */

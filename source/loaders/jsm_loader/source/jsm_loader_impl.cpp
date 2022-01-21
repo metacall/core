@@ -36,9 +36,9 @@
 /* Assume we can't use more than 5e5 bytes of C stack by default */
 #if (defined(DEBUG) && defined(__SUNPRO_CC)) || defined(JS_CPU_SPARC)
 /*
-	 * Sun compiler uses a larger stack space for js::Interpret() with
-	 * debug (use a bigger gMaxStackSize to make "make check" happy)
-	*/
+ * Sun compiler uses a larger stack space for js::Interpret() with
+ * debug (use a bigger gMaxStackSize to make "make check" happy)
+ */
 	#define JSM_STACK_MAX_SIZE size_t(5000000)
 #else
 	#define JSM_STACK_MAX_SIZE size_t(500000)

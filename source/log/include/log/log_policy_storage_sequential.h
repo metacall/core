@@ -1,10 +1,10 @@
 /*
-*	Logger Library by Parra Studios
-*	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A generic logger library providing application execution reports.
-*
-*/
+ *	Logger Library by Parra Studios
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A generic logger library providing application execution reports.
+ *
+ */
 
 #ifndef LOG_POLICY_STORAGE_SEQUENTIAL_H
 #define LOG_POLICY_STORAGE_SEQUENTIAL_H 1

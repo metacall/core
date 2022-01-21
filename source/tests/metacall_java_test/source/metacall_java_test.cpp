@@ -67,7 +67,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 
 			metacall_value_destroy(new_object_v);
 
-			{ //GET AND SET
+			{ // GET AND SET
 				void *param1 = metacall_class_static_get(myclass, "LONG_TEST");
 				ASSERT_EQ((long)20000007, (long)metacall_value_to_long(param1));
 				metacall_value_destroy(param1);
@@ -80,7 +80,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				metacall_value_destroy(param1);
 			}
 
-			{ //GET AND SET
+			{ // GET AND SET
 				void *param1 = metacall_class_static_get(myclass, "STRING_TEST");
 				ASSERT_EQ((std::string) "Test String", (std::string)metacall_value_to_string(param1));
 				metacall_value_destroy(param1);
@@ -93,13 +93,13 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				metacall_value_destroy(param1);
 			}
 
-			{ //GET CLASS
+			{ // GET CLASS
 				void *class_test = metacall_class_static_get(myclass, "CLASS_TEST");
 				ASSERT_EQ((void *)metacall_class("Test"), (void *)metacall_value_to_class(class_test));
 				metacall_value_destroy(class_test);
 			}
 
-			{ //GET ARRAYS
+			{ // GET ARRAYS
 				void *str_test = metacall_class_static_get(myclass, "STRING_TEST_Arr");
 				void **str_test_arr = metacall_value_to_array(str_test);
 				ASSERT_EQ((int)0, (int)strcmp(metacall_value_to_string(str_test_arr[0]), "Hello"));
@@ -112,7 +112,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				metacall_value_destroy(class_test);
 			}
 
-			{ //Invoke
+			{ // Invoke
 				void *args[] = {
 					metacall_value_create_string("Metacall", 8),
 					metacall_value_create_int(8)
@@ -174,7 +174,7 @@ TEST_F(metacall_java_test, DefaultConstructor)
 				metacall_value_destroy(param1);
 			}
 
-			{ //Non Static function Invoke
+			{ // Non Static function Invoke
 				void *args[] = {
 					metacall_value_create_int(8)
 				};

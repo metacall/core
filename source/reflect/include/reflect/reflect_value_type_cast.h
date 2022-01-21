@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef REFLECT_VALUE_TYPE_CAST_H
 #define REFLECT_VALUE_TYPE_CAST_H 1
@@ -35,18 +35,18 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Casts a value to a new type @id
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[in] id
-*    New type id of value to be casted
-*
-*  @return
-*    Casted value or reference to @v if casting is between equivalent types
-*/
+ *  @brief
+ *    Casts a value to a new type @id
+ *
+ *  @param[in] v
+ *    Reference to the value
+ *
+ *  @param[in] id
+ *    New type id of value to be casted
+ *
+ *  @return
+ *    Casted value or reference to @v if casting is between equivalent types
+ */
 REFLECT_API value value_type_cast(value v, type_id id);
 
 #ifdef __cplusplus

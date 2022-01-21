@@ -1,10 +1,10 @@
 /*
-*	Loader Library by Parra Studios
-*	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
-*
-*	A plugin for loading mock code at run-time into a process.
-*
-*/
+ *	Loader Library by Parra Studios
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *
+ *	A plugin for loading mock code at run-time into a process.
+ *
+ */
 
 #include <mock_loader/mock_loader_impl.h>
 #include <mock_loader/mock_loader_interface.h>

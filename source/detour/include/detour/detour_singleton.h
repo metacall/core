@@ -1,6 +1,6 @@
 /*
  *	Detour Library by Parra Studios
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A cross-platform library providing detours, function hooks and trampolines.
  *
@@ -30,79 +30,79 @@ typedef struct detour_singleton_type *detour_singleton;
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Initialize detour singleton
-*
-*  @return
-*    Returns zero on correct detour singleton initialization, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Initialize detour singleton
+ *
+ *  @return
+ *    Returns zero on correct detour singleton initialization, distinct from zero otherwise
+ *
+ */
 DETOUR_API int detour_singleton_initialize();
 
 /**
-*  @brief
-*    Wrapper of detour singleton instance
-*
-*  @return
-*    Pointer to detour singleton instance
-*
-*/
+ *  @brief
+ *    Wrapper of detour singleton instance
+ *
+ *  @return
+ *    Pointer to detour singleton instance
+ *
+ */
 DETOUR_API detour_singleton detour_singleton_instance(void);
 
 /**
-*  @brief
-*    Register detour into detours map
-*
-*  @param[in] d
-*    Pointer to detour
-*
-*  @return
-*    Returns zero on correct detour singleton insertion, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Register detour into detours map
+ *
+ *  @param[in] d
+ *    Pointer to detour
+ *
+ *  @return
+ *    Returns zero on correct detour singleton insertion, distinct from zero otherwise
+ *
+ */
 DETOUR_API int detour_singleton_register(detour d);
 
 /**
-*  @brief
-*    Retrieve detour from detours map by @name
-*
-*  @param[in] name
-*    Index which references the detour to be retrieved
-*
-*  @return
-*    Returns pointer to detour if exists, null otherwise
-*
-*/
+ *  @brief
+ *    Retrieve detour from detours map by @name
+ *
+ *  @param[in] name
+ *    Index which references the detour to be retrieved
+ *
+ *  @return
+ *    Returns pointer to detour if exists, null otherwise
+ *
+ */
 DETOUR_API detour detour_singleton_get(const char *name);
 
 /**
-*  @brief
-*    Retrieve detour library path where detours are located
-*
-*  @return
-*    Returns constant string representing detours library path
-*
-*/
+ *  @brief
+ *    Retrieve detour library path where detours are located
+ *
+ *  @return
+ *    Returns constant string representing detours library path
+ *
+ */
 DETOUR_API const char *detour_singleton_path(void);
 
 /**
-*  @brief
-*    Remove detour from detours map
-*
-*  @param[in] d
-*    Pointer to detour
-*
-*  @return
-*    Returns zero on correct detour singleton removing, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Remove detour from detours map
+ *
+ *  @param[in] d
+ *    Pointer to detour
+ *
+ *  @return
+ *    Returns zero on correct detour singleton removing, distinct from zero otherwise
+ *
+ */
 DETOUR_API int detour_singleton_clear(detour d);
 
 /**
-*  @brief
-*    Destroy detour singleton
-*
-*/
+ *  @brief
+ *    Destroy detour singleton
+ *
+ */
 DETOUR_API void detour_singleton_destroy(void);
 
 #ifdef __cplusplus

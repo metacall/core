@@ -36,25 +36,25 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Instance of interface implementation
-*
-*  @return
-*    Returns pointer to interface to be used by implementation
-*
-*/
+ *  @brief
+ *    Instance of interface implementation
+ *
+ *  @return
+ *    Returns pointer to interface to be used by implementation
+ *
+ */
 METACALL_SERIAL_API serial_interface metacall_serial_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(metacall_serial_impl_interface_singleton);
 
 /**
-*  @brief
-*    Provide the module information
-*
-*  @return
-*    Static string containing module information
-*
-*/
+ *  @brief
+ *    Provide the module information
+ *
+ *  @return
+ *    Static string containing module information
+ *
+ */
 METACALL_SERIAL_API const char *metacall_serial_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(metacall_serial_print_info);

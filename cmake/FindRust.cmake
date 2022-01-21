@@ -2,7 +2,7 @@
 #	CMake Find Rust by Parra Studios
 #	CMake script to find Rust compiler and tools.
 #
-#	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@
 
 # Example for fixing the toolchain
 #
-# find_package(Rust COMPONENTS nightly-2021-10-09)
+# find_package(Rust COMPONENTS nightly-2022-10-09)
 
 option(Rust_CMAKE_DEBUG "Show full output of the Rust related commands for debugging." OFF)
 

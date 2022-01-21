@@ -128,18 +128,18 @@ struct metacall_log_custom_type
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Create a log instance
-*
-*  @param[in] log_id
-*    Type of log to be created
-*
-*  @param[in] ctx
-*    Context of the log (a pointer to metacall_log_{stdio, file, socket, syslog, nginx, custom}_type)
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
+ *  @brief
+ *    Create a log instance
+ *
+ *  @param[in] log_id
+ *    Type of log to be created
+ *
+ *  @param[in] ctx
+ *    Context of the log (a pointer to metacall_log_{stdio, file, socket, syslog, nginx, custom}_type)
+ *
+ *  @return
+ *    Zero if success, different from zero otherwise
+ */
 METACALL_API int metacall_log(enum metacall_log_id log_id, void *ctx);
 
 #ifdef __cplusplus

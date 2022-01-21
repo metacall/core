@@ -2,7 +2,7 @@
  *	Dynamic Link Library by Parra Studios
  *	A library for dynamic loading and linking shared objects at run-time.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -42,18 +42,18 @@ typedef char dynlink_symbol_name_man[DYNLINK_SYMBOL_NAME_SIZE];
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Get convert a symbol to name mangled for cross-platform dynamic loading
-*
-*  @param[in] symbol_name
-*    Reference to name of the of dynamically linked shared object symbol
-*
-*  @param[out] symbol_mangled
-*    Reference to mangled name of the of dynamically linked shared object symbol
-*
-*  @return
-*    Returns zero if @symbol_name was correctly mangled
-*/
+ *  @brief
+ *    Get convert a symbol to name mangled for cross-platform dynamic loading
+ *
+ *  @param[in] symbol_name
+ *    Reference to name of the of dynamically linked shared object symbol
+ *
+ *  @param[out] symbol_mangled
+ *    Reference to mangled name of the of dynamically linked shared object symbol
+ *
+ *  @return
+ *    Returns zero if @symbol_name was correctly mangled
+ */
 DYNLINK_API int dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, dynlink_symbol_name_man symbol_mangled);
 
 #ifdef __cplusplus

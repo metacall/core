@@ -30,11 +30,11 @@ extern "C" {
 #endif
 
 /*
-* Depending on the class or object accessor type,
-* if it is static, there will be an error when accessing
-* an attribute that was not registered, otherwise
-* it will allow setting or getting the attribute dynamically
-*/
+ * Depending on the class or object accessor type,
+ * if it is static, there will be an error when accessing
+ * an attribute that was not registered, otherwise
+ * it will allow setting or getting the attribute dynamically
+ */
 enum accessor_type_id
 {
 	ACCESSOR_TYPE_STATIC = 0,
@@ -46,9 +46,9 @@ struct accessor_type
 	enum accessor_type_id id;
 
 	/*
-	* In addition to attribute, there is constructor and method
-	* also included for future uses
-	*/
+	 * In addition to attribute, there is constructor and method
+	 * also included for future uses
+	 */
 	union
 	{
 		const char *key;

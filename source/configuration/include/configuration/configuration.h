@@ -1,6 +1,6 @@
 /*
  *	Configuration Library by Parra Studios
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A cross-platform library for managing multiple configuration formats.
  *
@@ -28,141 +28,141 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Initialize configuration from root @path with reader @name
-*
-*  @param[in] reader
-*    Reader will be used to parse configurations
-*
-*  @param[in] path
-*    Path where is located the root configuration
-*
-*  @param[in] allocator
-*    Pointer to the allocator will be used to deserialize the configuration
-*
-*  @return
-*    Returns zero on correct configuration initialization, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Initialize configuration from root @path with reader @name
+ *
+ *  @param[in] reader
+ *    Reader will be used to parse configurations
+ *
+ *  @param[in] path
+ *    Path where is located the root configuration
+ *
+ *  @param[in] allocator
+ *    Pointer to the allocator will be used to deserialize the configuration
+ *
+ *  @return
+ *    Returns zero on correct configuration initialization, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_initialize(const char *reader, const char *path, void *allocator);
 
 /**
-*  @brief
-*    Create configuration from @path with name @name
-*
-*  @param[in] scope
-*    Scope of the configuration
-*
-*  @param[in] path
-*    Path where is located the child configuration
-*
-*  @param[in] parent
-*    Scope of the parent configuration if any
-*
-*  @param[in] allocator
-*    Pointer to the allocator will be used to deserialize the configuration
-*
-*  @return
-*    Returns object containing all configuration data
-*
-*/
+ *  @brief
+ *    Create configuration from @path with name @name
+ *
+ *  @param[in] scope
+ *    Scope of the configuration
+ *
+ *  @param[in] path
+ *    Path where is located the child configuration
+ *
+ *  @param[in] parent
+ *    Scope of the parent configuration if any
+ *
+ *  @param[in] allocator
+ *    Pointer to the allocator will be used to deserialize the configuration
+ *
+ *  @return
+ *    Returns object containing all configuration data
+ *
+ */
 CONFIGURATION_API configuration configuration_create(const char *scope, const char *path, const char *parent, void *allocator);
 
 /**
-*  @brief
-*    Get configuration from @scope
-*
-*  @param[in] scope
-*    Scope of the configuration
-*
-*  @return
-*    Returns object containing all configuration data
-*
-*/
+ *  @brief
+ *    Get configuration from @scope
+ *
+ *  @param[in] scope
+ *    Scope of the configuration
+ *
+ *  @return
+ *    Returns object containing all configuration data
+ *
+ */
 CONFIGURATION_API configuration configuration_scope(const char *scope);
 
 /**
-*  @brief
-*    Get value from @key inside a configuration @config
-*
-*  @param[in] config
-*    Configuration
-*
-*  @param[in] key
-*    Scope of the configuration
-*
-*  @return
-*    Returns value containing data related to @key or null if value or type @id are invalid
-*
-*/
+ *  @brief
+ *    Get value from @key inside a configuration @config
+ *
+ *  @param[in] config
+ *    Configuration
+ *
+ *  @param[in] key
+ *    Scope of the configuration
+ *
+ *  @return
+ *    Returns value containing data related to @key or null if value or type @id are invalid
+ *
+ */
 CONFIGURATION_API value configuration_value(configuration config, const char *key);
 
 /**
-*  @brief
-*    Set value @v by @key inside a configuration @config.
-*    This function will not include the value into the internal deserialized version of
-*    the configuration, so the value@v must be deleted manually after the configuration is used.
-*
-*  @param[in] config
-*    Configuration
-*
-*  @param[in] key
-*    Scope of the configuration
-*
-*  @param[in] v
-*    Returns value containing data related to @key
-*
-*  @return
-*    Returns zero on correct configuration define, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Set value @v by @key inside a configuration @config.
+ *    This function will not include the value into the internal deserialized version of
+ *    the configuration, so the value@v must be deleted manually after the configuration is used.
+ *
+ *  @param[in] config
+ *    Configuration
+ *
+ *  @param[in] key
+ *    Scope of the configuration
+ *
+ *  @param[in] v
+ *    Returns value containing data related to @key
+ *
+ *  @return
+ *    Returns zero on correct configuration define, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_define(configuration config, const char *key, value v);
 
 /**
-*  @brief
-*    Set value @v by @key inside a configuration @config.
-*    This function will not remove the value into the internal deserialized version of the configuration.
-*
-*  @param[in] config
-*    Configuration
-*
-*  @param[in] key
-*    Scope of the configuration
-*
-*  @return
-*    Returns zero on correct configuration undefine, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Set value @v by @key inside a configuration @config.
+ *    This function will not remove the value into the internal deserialized version of the configuration.
+ *
+ *  @param[in] config
+ *    Configuration
+ *
+ *  @param[in] key
+ *    Scope of the configuration
+ *
+ *  @return
+ *    Returns zero on correct configuration undefine, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_undefine(configuration config, const char *key);
 
 /**
-*  @brief
-*    Delete a configuration @config from the system
-*
-*  @param[in] config
-*    Configuration
-*
-*  @return
-*    Returns zero on correct configuration clearing, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Delete a configuration @config from the system
+ *
+ *  @param[in] config
+ *    Configuration
+ *
+ *  @return
+ *    Returns zero on correct configuration clearing, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_clear(configuration config);
 
 /**
-*  @brief
-*    Provide the module information
-*
-*/
+ *  @brief
+ *    Provide the module information
+ *
+ */
 CONFIGURATION_API void configuration_destroy(void);
 
 /**
-*  @brief
-*    Provide the module information
-*
-*  @return
-*    Static string containing module information
-*
-*/
+ *  @brief
+ *    Provide the module information
+ *
+ *  @return
+ *    Static string containing module information
+ *
+ */
 CONFIGURATION_API const char *configuration_print_info(void);
 
 #ifdef __cplusplus

@@ -332,8 +332,8 @@ bool command_cb_call(application &app, tokenizer &t)
 			args += "]";
 
 			/*
-         void * result = app.metacallv_adaptor(func_name, args);
-         */
+		 void * result = app.metacallv_adaptor(func_name, args);
+		 */
 
 			void *result = app.metacallfs_adaptor(func_name, args, allocator);
 

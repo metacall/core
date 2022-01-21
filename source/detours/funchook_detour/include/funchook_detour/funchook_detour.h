@@ -36,25 +36,25 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Instance of interface implementation
-*
-*  @return
-*    Returns pointer to interface to be used by implementation
-*
-*/
+ *  @brief
+ *    Instance of interface implementation
+ *
+ *  @return
+ *    Returns pointer to interface to be used by implementation
+ *
+ */
 FUNCHOOK_DETOUR_API detour_interface funchook_detour_impl_interface_singleton(void);
 
 DYNLINK_SYMBOL_EXPORT(funchook_detour_impl_interface_singleton);
 
 /**
-*  @brief
-*    Provide the module information
-*
-*  @return
-*    Static string containing module information
-*
-*/
+ *  @brief
+ *    Provide the module information
+ *
+ *  @return
+ *    Static string containing module information
+ *
+ */
 FUNCHOOK_DETOUR_API const char *funchook_detour_print_info(void);
 
 DYNLINK_SYMBOL_EXPORT(funchook_detour_print_info);

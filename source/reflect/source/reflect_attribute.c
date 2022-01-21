@@ -160,12 +160,12 @@ value attribute_metadata_visibility(attribute attr)
 value attribute_metadata(attribute attr)
 {
 	/* The structure of the attribute is:
-	* {
-	*	"name": "attr1",
-	*	"type": { "name": "", "id": 18 },
-	*	"visibility": "public"
-	* }
-	*/
+	 * {
+	 *	"name": "attr1",
+	 *	"type": { "name": "", "id": 18 },
+	 *	"visibility": "public"
+	 * }
+	 */
 	value *v_map, v = value_create_map(NULL, 3);
 
 	if (v == NULL)

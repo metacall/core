@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef REFLECT_VALUE_TYPE_DEMOTION_H
 #define REFLECT_VALUE_TYPE_DEMOTION_H 1
@@ -35,48 +35,48 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Demotes a boolean value @v to new type @id
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[in] id
-*    New type id of value to be demoted
-*
-*  @return
-*    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
-*/
+ *  @brief
+ *    Demotes a boolean value @v to new type @id
+ *
+ *  @param[in] v
+ *    Reference to the value
+ *
+ *  @param[in] id
+ *    New type id of value to be demoted
+ *
+ *  @return
+ *    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
+ */
 value value_type_demotion_boolean(value v, type_id id);
 
 /**
-*  @brief
-*    Demotes a integer value @v to new type @id
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[in] id
-*    New type id of value to be demoted
-*
-*  @return
-*    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
-*/
+ *  @brief
+ *    Demotes a integer value @v to new type @id
+ *
+ *  @param[in] v
+ *    Reference to the value
+ *
+ *  @param[in] id
+ *    New type id of value to be demoted
+ *
+ *  @return
+ *    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
+ */
 REFLECT_API value value_type_demotion_integer(value v, type_id id);
 
 /**
-*  @brief
-*    Demotes a decimal value @v to new type @id
-*
-*  @param[in] v
-*    Reference to the value
-*
-*  @param[in] id
-*    New type id of value to be demoted
-*
-*  @return
-*    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
-*/
+ *  @brief
+ *    Demotes a decimal value @v to new type @id
+ *
+ *  @param[in] v
+ *    Reference to the value
+ *
+ *  @param[in] id
+ *    New type id of value to be demoted
+ *
+ *  @return
+ *    Demoted value if a valid demotion, or @v if value is already demoted, null otherwhise
+ */
 REFLECT_API value value_type_demotion_decimal(value v, type_id id);
 
 #ifdef __cplusplus

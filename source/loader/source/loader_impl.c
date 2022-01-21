@@ -1,6 +1,6 @@
 /*
  *	Loader Library by Parra Studios
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A library for loading executable code at run-time into a process.
  *
@@ -349,14 +349,14 @@ int loader_impl_initialize(loader_impl impl)
 	script_path = loader_env_script_path();
 
 	/* Note: I think we should not allow multiple paths for LOADER_SCRIPT_PATH.
-	* This provides name collision with the handles because handle names are defined by its
-	* relative path if they are inside LOADER_SCRIPT_PATH or by its absolute path if they are outside.
-	* If there's multiple LOADER_SCRIPT_PATH there can be collisions with relative handle names.
-	* For now I am going to disable it and we will review it in the future.
-	* An alternative to support multiple execution paths is pretty straightforward, just call
-	* to the execution path API and register the paths you want for each loader, so you have
-	* total control for multiple search paths.
-	*/
+	 * This provides name collision with the handles because handle names are defined by its
+	 * relative path if they are inside LOADER_SCRIPT_PATH or by its absolute path if they are outside.
+	 * If there's multiple LOADER_SCRIPT_PATH there can be collisions with relative handle names.
+	 * For now I am going to disable it and we will review it in the future.
+	 * An alternative to support multiple execution paths is pretty straightforward, just call
+	 * to the execution path API and register the paths you want for each loader, so you have
+	 * total control for multiple search paths.
+	 */
 
 	if (script_path != NULL)
 	{
@@ -1219,12 +1219,12 @@ int loader_impl_destroy_exec_path_map_cb_iterate(set s, set_key key, set_value v
 void loader_impl_destroy_objects(loader_impl impl)
 {
 	/* This iterates through all functions, classes objects and types,
-	* it is necessary to be executed on demand because those can have
-	* implementations in the loader implementation which need to be GCed
-	* or freed properly before the runtime goes down but after the
-	* destroy has been issued, so while it is destroying, we can still
-	* retrieve the data for introspection or for whatever we need
-	*/
+	 * it is necessary to be executed on demand because those can have
+	 * implementations in the loader implementation which need to be GCed
+	 * or freed properly before the runtime goes down but after the
+	 * destroy has been issued, so while it is destroying, we can still
+	 * retrieve the data for introspection or for whatever we need
+	 */
 	if (impl != NULL)
 	{
 		set_iterate(impl->handle_impl_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);

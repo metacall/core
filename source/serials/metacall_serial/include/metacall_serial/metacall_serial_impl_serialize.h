@@ -16,7 +16,7 @@
  *	See the License for the specific language governing permissions and
  *	limitations under the License.
  *
-*/
+ */
 
 #ifndef METACALL_SERIAL_IMPL_SERIALIZE_H
 #define METACALL_SERIAL_IMPL_SERIALIZE_H 1
@@ -38,27 +38,27 @@ typedef void (*metacall_serialize_impl_ptr)(value, char *, size_t, const char *,
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Provides value format depending on type id @id
-*
-*  @param[in] id
-*    Type of wanted format
-*
-*  @return
-*    Print format assigned to type id @id
-*/
+ *  @brief
+ *    Provides value format depending on type id @id
+ *
+ *  @param[in] id
+ *    Type of wanted format
+ *
+ *  @return
+ *    Print format assigned to type id @id
+ */
 METACALL_SERIAL_API const char *metacall_serial_impl_serialize_format(type_id id);
 
 /**
-*  @brief
-*    Provides pointer to function for serialize depending on type id @id
-*
-*  @param[in] id
-*    Type of wanted serialize function pointer
-*
-*  @return
-*    Serialize function pointer assigned to type id @id
-*/
+ *  @brief
+ *    Provides pointer to function for serialize depending on type id @id
+ *
+ *  @param[in] id
+ *    Type of wanted serialize function pointer
+ *
+ *  @return
+ *    Serialize function pointer assigned to type id @id
+ */
 METACALL_SERIAL_API metacall_serialize_impl_ptr metacall_serial_impl_serialize_func(type_id id);
 
 #ifdef __cplusplus

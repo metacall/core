@@ -2,7 +2,7 @@
  *	Configuration Library by Parra Studios
  *	A cross-platform library for managing multiple configuration formats.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -34,52 +34,52 @@ extern "C" {
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Retrieve extension supported by the configuration implementation
-*
-*  @return
-*    Returns constant string representing configuration extension
-*
-*/
+ *  @brief
+ *    Retrieve extension supported by the configuration implementation
+ *
+ *  @return
+ *    Returns constant string representing configuration extension
+ *
+ */
 CONFIGURATION_API const char *configuration_impl_extension(void);
 
 /**
-*  @brief
-*    Initialize configuration object implementation
-*
-*  @param[in] name
-*    Dependency name to be injected
-*
-*  @return
-*    Returns zero on correct initialization, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Initialize configuration object implementation
+ *
+ *  @param[in] name
+ *    Dependency name to be injected
+ *
+ *  @return
+ *    Returns zero on correct initialization, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_impl_initialize(const char *name);
 
 /**
-*  @brief
-*    Load configuration object implementation @config
-*
-*  @param[in] config
-*    Pointer to the config object to be loaded
-*
-*  @param[in] allocator
-*    Pointer to the allocator will be used to deserialize the configuration
-*
-*  @return
-*    Returns zero on correct loading, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Load configuration object implementation @config
+ *
+ *  @param[in] config
+ *    Pointer to the config object to be loaded
+ *
+ *  @param[in] allocator
+ *    Pointer to the allocator will be used to deserialize the configuration
+ *
+ *  @return
+ *    Returns zero on correct loading, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_impl_load(configuration config, void *allocator);
 
 /**
-*  @brief
-*    Destroy configuration object implementation
-*
-*  @return
-*    Returns zero on correct destruction, distinct from zero otherwise
-*
-*/
+ *  @brief
+ *    Destroy configuration object implementation
+ *
+ *  @return
+ *    Returns zero on correct destruction, distinct from zero otherwise
+ *
+ */
 CONFIGURATION_API int configuration_impl_destroy(void);
 
 #ifdef __cplusplus

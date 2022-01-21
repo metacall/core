@@ -2,7 +2,7 @@
  *	Dynamic Link Library by Parra Studios
  *	A library for dynamic loading and linking shared objects at run-time.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -42,12 +42,12 @@ typedef struct dynlink_impl_interface_type *dynlink_impl_interface;
 /* -- Methods -- */
 
 /**
-*  @brief
-*    BeOS/Haiku image add-on object implementation singleton
-*
-*  @return
-*    A pointer to the image add-on object implementation singleton
-*/
+ *  @brief
+ *    BeOS/Haiku image add-on object implementation singleton
+ *
+ *  @return
+ *    A pointer to the image add-on object implementation singleton
+ */
 DYNLINK_API dynlink_impl_interface dynlink_impl_interface_singleton_beos(void);
 
 #ifdef __cplusplus

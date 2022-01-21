@@ -2,7 +2,7 @@
  *	File System Library by Parra Studios
  *	A cross-platform library for managing file system, paths and files.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -47,63 +47,63 @@ typedef struct file_descriptor_type *file_descriptor;
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Create a file descriptor from specified directory and name
-*
-*  @param[in] owner
-*    Directory which file belongs to
-*
-*  @param[in] name
-*    The name of the file
-*
-*  @return
-*    A pointer to the file descriptor if success, null pointer otherwhise
-*/
+ *  @brief
+ *    Create a file descriptor from specified directory and name
+ *
+ *  @param[in] owner
+ *    Directory which file belongs to
+ *
+ *  @param[in] name
+ *    The name of the file
+ *
+ *  @return
+ *    A pointer to the file descriptor if success, null pointer otherwhise
+ */
 FILESYSTEM_API file_descriptor file_descriptor_create(directory_descriptor owner, const char *name);
 
 /**
-*  @brief
-*    Get the owner directory where is the file
-*
-*  @param[in] f
-*    File descriptor pointer
-*
-*  @return
-*    A pointer to directory descriptor which owns the file
-*/
+ *  @brief
+ *    Get the owner directory where is the file
+ *
+ *  @param[in] f
+ *    File descriptor pointer
+ *
+ *  @return
+ *    A pointer to directory descriptor which owns the file
+ */
 FILESYSTEM_API directory_descriptor file_descriptor_owner(file_descriptor f);
 
 /**
-*  @brief
-*    Get the file name
-*
-*  @param[in] f
-*    File descriptor pointer
-*
-*  @return
-*    A constant string pointer to the name of @f
-*/
+ *  @brief
+ *    Get the file name
+ *
+ *  @param[in] f
+ *    File descriptor pointer
+ *
+ *  @return
+ *    A constant string pointer to the name of @f
+ */
 FILESYSTEM_API const char *file_descriptor_name(file_descriptor f);
 
 /**
-*  @brief
-*    Get the file extension
-*
-*  @param[in] f
-*    File descriptor pointer
-*
-*  @return
-*    A constant string pointer to the extension of @f
-*/
+ *  @brief
+ *    Get the file extension
+ *
+ *  @param[in] f
+ *    File descriptor pointer
+ *
+ *  @return
+ *    A constant string pointer to the extension of @f
+ */
 FILESYSTEM_API const char *file_descriptor_extension(file_descriptor f);
 
 /**
-*  @brief
-*    Destroy a file from memory
-*
-*  @param[in] f
-*    File descriptor pointer
-*/
+ *  @brief
+ *    Destroy a file from memory
+ *
+ *  @param[in] f
+ *    File descriptor pointer
+ */
 FILESYSTEM_API void file_descriptor_destroy(file_descriptor f);
 
 #ifdef __cplusplus

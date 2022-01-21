@@ -3621,7 +3621,7 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 			log_write("metacall", LOG_LEVEL_DEBUG, "Discover object member %s, type %s",
 					  PyUnicode_AsUTF8(dict_key),
 					  type_id_name(py_loader_impl_capi_to_value_type(dict_val)));
-			
+
 		}
 	}
 

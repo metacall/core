@@ -65,33 +65,33 @@ typedef int (*metacall_post_fork_callback_ptr)(metacall_pid, void *);
 /* -- Methods -- */
 
 /**
-*  @brief
-*    Initialize fork detours and allocate shared memory
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
+ *  @brief
+ *    Initialize fork detours and allocate shared memory
+ *
+ *  @return
+ *    Zero if success, different from zero otherwise
+ */
 METACALL_API int metacall_fork_initialize(void);
 
 /**
-*  @brief
-*    Set fork hook callback
-*
-*  @param[in] pre_callback
-*    Callback to be called before fork detour is executed
-*
-*  @param[in] post_callback
-*    Callback to be called after fork detour is executed
-*/
+ *  @brief
+ *    Set fork hook callback
+ *
+ *  @param[in] pre_callback
+ *    Callback to be called before fork detour is executed
+ *
+ *  @param[in] post_callback
+ *    Callback to be called after fork detour is executed
+ */
 METACALL_API void metacall_fork(metacall_pre_fork_callback_ptr pre_callback, metacall_post_fork_callback_ptr post_callback);
 
 /**
-*  @brief
-*    Unregister fork detours and destroy shared memory
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
+ *  @brief
+ *    Unregister fork detours and destroy shared memory
+ *
+ *  @return
+ *    Zero if success, different from zero otherwise
+ */
 METACALL_API int metacall_fork_destroy(void);
 
 #ifdef __cplusplus

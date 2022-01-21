@@ -40,12 +40,12 @@ extern "C" {
 /* -- Macros -- */
 
 /**
-*  @brief
-*    Return the current thread id depending on the platform
-*
-*  @return
-*    Curent thread id casted to an uint64_t
-*/
+ *  @brief
+ *    Return the current thread id depending on the platform
+ *
+ *  @return
+ *    Curent thread id casted to an uint64_t
+ */
 THREADING_API uint64_t thread_id_get_current(void);
 
 #ifdef __cplusplus

@@ -2,7 +2,7 @@
  *	Abstract Data Type Library by Parra Studios
  *	A abstract data type library providing generic containers.
  *
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	Licensed under the Apache License, Version 2.0 (the "License");
  *	you may not use this file except in compliance with the License.
@@ -45,18 +45,18 @@ struct vector_type
 /* -- Private Methods -- */
 
 /**
-*  @brief
-*    Vector access by offset bytes
-*
-*  @param[in] v
-*    Vector pointer
-*
-*  @param[in] bytes
-*    Offset memory in bytes
-*
-*  @return
-*    A pointer to data vector memory block with offset @bytes
-*/
+ *  @brief
+ *    Vector access by offset bytes
+ *
+ *  @param[in] v
+ *    Vector pointer
+ *
+ *  @param[in] bytes
+ *    Offset memory in bytes
+ *
+ *  @return
+ *    A pointer to data vector memory block with offset @bytes
+ */
 static void *vector_data_offset_bytes(vector v, size_t bytes);
 
 /* -- Methods -- */

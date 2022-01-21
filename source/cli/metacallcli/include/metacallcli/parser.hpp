@@ -30,60 +30,60 @@ class parser;
 /* -- Class Definition -- */
 
 /**
-*  @brief
-*    Simple parser utility
-*/
+ *  @brief
+ *    Simple parser utility
+ */
 class parser
 {
 public:
 	/* -- Public Methods -- */
 
 	/**
-	*  @brief
-	*    Parser class constructor
-	*
-	*  @param[in] it
-	*    Tokenizer iterator reference
-	*/
+	 *  @brief
+	 *    Parser class constructor
+	 *
+	 *  @param[in] it
+	 *    Tokenizer iterator reference
+	 */
 	parser(const tokenizer::iterator &it);
 
 	/**
-	*  @brief
-	*    Parser class destructor
-	*/
+	 *  @brief
+	 *    Parser class destructor
+	 */
 	~parser(void);
 
 	/**
-	*  @brief
-	*    Check if current token is a defined type @T
-	*
-	*  @param[template] T
-	*    Type of value to check against token
-	*
-	*  @return
-	*    True if type @T is equivalent to current token
-	*/
+	 *  @brief
+	 *    Check if current token is a defined type @T
+	 *
+	 *  @param[template] T
+	 *    Type of value to check against token
+	 *
+	 *  @return
+	 *    True if type @T is equivalent to current token
+	 */
 	template <typename T> bool is(void);
 
 	/**
-	*  @brief
-	*    Return current token transformed to type @T
-	*
-	*  @param[template] T
-	*    Type of value to check against token
-	*
-	*  @return
-	*    A copy of the value transformed to given type @T
-	*/
+	 *  @brief
+	 *    Return current token transformed to type @T
+	 *
+	 *  @param[template] T
+	 *    Type of value to check against token
+	 *
+	 *  @return
+	 *    A copy of the value transformed to given type @T
+	 */
 	template <typename T> T to(void);
 
 	/**
-	*  @brief
-	*    Assignement operator for parser
-	*
-	*  @return
-	*    Returns a reference to itself
-	*/
+	 *  @brief
+	 *    Assignement operator for parser
+	 *
+	 *  @return
+	 *    Returns a reference to itself
+	 */
 	parser &operator=(const parser &) = delete;
 
 protected:
@@ -93,133 +93,133 @@ protected:
 };
 
 /**
-*  @brief
-*    Custom parser utility for parameters
-*/
+ *  @brief
+ *    Custom parser utility for parameters
+ */
 class parser_parameter : public parser
 {
 public:
 	/* -- Public Methods -- */
 
 	/**
-	*  @brief
-	*    Parser class constructor
-	*
-	*  @param[in] it
-	*    Tokenizer iterator reference
-	*/
+	 *  @brief
+	 *    Parser class constructor
+	 *
+	 *  @param[in] it
+	 *    Tokenizer iterator reference
+	 */
 	parser_parameter(const tokenizer::iterator &it);
 
 	/**
-	*  @brief
-	*    Parser class destructor
-	*/
+	 *  @brief
+	 *    Parser class destructor
+	 */
 	~parser_parameter(void);
 
 	/**
-	*  @brief
-	*    Check if current token is a defined type @T
-	*
-	*  @param[template] T
-	*    Type of value to check against token
-	*
-	*  @return
-	*    True if type @T is equivalent to current token
-	*/
+	 *  @brief
+	 *    Check if current token is a defined type @T
+	 *
+	 *  @param[template] T
+	 *    Type of value to check against token
+	 *
+	 *  @return
+	 *    True if type @T is equivalent to current token
+	 */
 	template <typename T> bool is(void);
 
 	/**
-	*  @brief
-	*    Return current token transformed to type @T
-	*
-	*  @param[template] T
-	*    Type of value to check against token
-	*
-	*  @return
-	*    A copy of the value transformed to given type @T
-	*/
+	 *  @brief
+	 *    Return current token transformed to type @T
+	 *
+	 *  @param[template] T
+	 *    Type of value to check against token
+	 *
+	 *  @return
+	 *    A copy of the value transformed to given type @T
+	 */
 	template <typename T> T to(void);
 
 	/**
-	*  @brief
-	*    Assignement operator for parser
-	*
-	*  @return
-	*    Returns a reference to itself
-	*/
+	 *  @brief
+	 *    Assignement operator for parser
+	 *
+	 *  @return
+	 *    Returns a reference to itself
+	 */
 	parser_parameter &operator=(const parser_parameter &) = delete;
 };
 
 /**
-*  @brief
-*    Check if current token is a custom quoted char ('')
-*
-*  @return
-*    True if current token is a custom quoted char
-*/
+ *  @brief
+ *    Check if current token is a custom quoted char ('')
+ *
+ *  @return
+ *    True if current token is a custom quoted char
+ */
 template <> bool parser_parameter::is<char>(void);
 
 /**
-*  @brief
-*    Check if current token is a custom long ending with (L)
-*
-*  @return
-*    True if current token is a custom long
-*/
+ *  @brief
+ *    Check if current token is a custom long ending with (L)
+ *
+ *  @return
+ *    True if current token is a custom long
+ */
 template <> bool parser_parameter::is<long>(void);
 
 /**
-*  @brief
-*    Check if current token is a custom float ending with (f)
-*
-*  @return
-*    True if current token is a custom float
-*/
+ *  @brief
+ *    Check if current token is a custom float ending with (f)
+ *
+ *  @return
+ *    True if current token is a custom float
+ */
 template <> bool parser_parameter::is<float>(void);
 
 /**
-*  @brief
-*    Check if current token is a custom quoted string ("")
-*
-*  @return
-*    True if current token is a custom quoted string
-*/
+ *  @brief
+ *    Check if current token is a custom quoted string ("")
+ *
+ *  @return
+ *    True if current token is a custom quoted string
+ */
 template <> bool parser_parameter::is<std::string>(void);
 
 /**
-*  @brief
-*    Return current token transformed from custom quoted char ('')
-*
-*  @return
-*    A copy of the value transformed to char
-*/
+ *  @brief
+ *    Return current token transformed from custom quoted char ('')
+ *
+ *  @return
+ *    A copy of the value transformed to char
+ */
 template <> char parser_parameter::to<char>(void);
 
 /**
-*  @brief
-*    Return current token transformed from custom long ending with (L)
-*
-*  @return
-*    A copy of the value transformed to long
-*/
+ *  @brief
+ *    Return current token transformed from custom long ending with (L)
+ *
+ *  @return
+ *    A copy of the value transformed to long
+ */
 template <> long parser_parameter::to(void);
 
 /**
-*  @brief
-*    Return current token transformed from custom float ending with (f)
-*
-*  @return
-*    A copy of the value transformed to float
-*/
+ *  @brief
+ *    Return current token transformed from custom float ending with (f)
+ *
+ *  @return
+ *    A copy of the value transformed to float
+ */
 template <> float parser_parameter::to(void);
 
 /**
-*  @brief
-*    Return current token transformed from custom quoted string ('')
-*
-*  @return
-*    A copy of the value transformed to string
-*/
+ *  @brief
+ *    Return current token transformed from custom quoted string ('')
+ *
+ *  @return
+ *    A copy of the value transformed to string
+ */
 template <> std::string parser_parameter::to(void);
 
 } /* namespace metacallcli */
