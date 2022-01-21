@@ -281,7 +281,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         config.opts.optimize = config::OptLevel::Default;
         config.opts.unstable_features = rustc_feature::UnstableFeatures::Allow;
         config.opts.real_rust_source_base_dir = compiler_source();
-        config.opts.edition = rustc_span::edition::Edition::Edition2021;
+        config.opts.edition = rustc_span::edition::Edition::Edition2022;
     }
 
     fn after_analysis<'tcx>(

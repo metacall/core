@@ -4,7 +4,7 @@
 #	MetaCall License Bash Script by Parra Studios
 #	License bash script utility for MetaCall.
 #
-#	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
 #	Licensed under the Apache License, Version 2.0 (the "License");
 #	you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ find "$EXEC_PATH" -type f \
 	-exec sh -c ' \
 
 	# Copyright
-	COPYRIGHT="Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>$"
+	COPYRIGHT="Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>$"
 
 	# License
 	LICENSE=$(cat <<-END
