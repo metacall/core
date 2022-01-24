@@ -1,0 +1,23 @@
+tasks:
+
+- name: Build Metacall
+  init: |
+    mkdir build && cd ./build
+    cmake ..
+    cd ..
+  command:
+    sudo env PATH=$PATH cmake --build . --target install
+
+- name: Pulling metacall Docker Images
+  init: |
+    docker pull metacall/core
+    docker pull metacall/core:dev
+    mkdir -p $HOME/metacall
+  command:
+    docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:dev /bin/bash
+
+- name: Pulling metacall-cli Docker Image
+  init: |
+    docker pull metacall/core:cli
+  command:
+    docker run -e LOADER_SCRIPT_PATH=/metacall -v $HOME/metacall:/metacall -w /metacall -it metacall/core:cli

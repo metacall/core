@@ -612,6 +612,16 @@ In order to end this section, here's a list of ideas that are not completely imp
 
 ## 6. Build System
 
+---
+Instead of configuring a local setup, you can also use [Gitpod](https://www.gitpod.io/), an automated cloud dev environment.
+
+Click the button below. A workspace with all required environments will be created.
+
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/metacall/core)
+
+> To use it on your forked repo, edit the 'Open in Gitpod' button url to `https://gitpod.io/#https://github.com/<your-github-username>/core`
+---
+
 Follow these steps to build and install **METACALL** manually.
 
 ``` sh
