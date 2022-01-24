@@ -1,6 +1,6 @@
 /*
  *	MetaCall Command Line Interface by Parra Studios
- *	Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
+ *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
  *	A command line interface example as metacall wrapper.
  *
@@ -37,7 +37,7 @@ using namespace metacallcli;
 bool command_cb_help(application & /*app*/, tokenizer & /*t*/)
 {
 	std::cout << "MetaCall Command Line Interface by Parra Studios" << std::endl;
-	std::cout << "Copyright (C) 2016 - 2021 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl;
+	std::cout << "Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>" << std::endl;
 	std::cout << std::endl
 			  << "A command line interface for MetaCall Core" << std::endl;
 
