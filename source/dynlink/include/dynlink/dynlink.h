@@ -136,6 +136,15 @@ DYNLINK_API void dynlink_unload(dynlink handle);
 */
 DYNLINK_API const char *dynlink_print_info(void);
 
+/**
+*  @brief
+*    Finds and returns the path to the metacall shared library loaded by the executable
+*
+*  @return
+*    A const string reference to the metacall library path depending on the OS implementation
+ */
+DYNLINK_API const char *dynlink_get_metacall_lib_path(void);
+
 #ifdef __cplusplus
 }
 #endif

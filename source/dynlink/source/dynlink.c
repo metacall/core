@@ -148,3 +148,8 @@ const char *dynlink_print_info(void)
 
 	return dynlink_info;
 }
+
+const char *dynlink_get_metacall_lib_path(void)
+{
+	return dynlink_impl_get_metacall_lib_path();
+}

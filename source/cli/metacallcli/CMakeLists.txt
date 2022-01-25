@@ -51,6 +51,40 @@ set(sources
 	${source_path}/main.cpp
 )
 
+# Include here any library which metacall depends on
+set(metacallcli_build_depends
+       dynlink
+)
+
+set(metacallcli_build_source_list)
+set(metacallcli_build_definition_list)
+set(metacallcli_build_include_list)
+
+foreach(tgt ${metacallcli_build_depends})
+       # Get target source files
+       get_target_property(target_sources
+               ${META_PROJECT_NAME}::${tgt}
+               SOURCES
+       )
+
+       set(metacallcli_build_source_list
+               ${metacallcli_build_source_list}
+               ${target_sources}
+       )
+
+       # Set target definitions
+       set(metacallcli_build_definition_list
+               ${metacallcli_build_definition_list}
+               $<TARGET_PROPERTY:${META_PROJECT_NAME}::${tgt},COMPILE_DEFINITIONS>
+       )
+
+       # Set target include paths
+       set(metacallcli_build_include_list
+               ${metacallcli_build_include_list}
+               $<TARGET_PROPERTY:${META_PROJECT_NAME}::${tgt},INCLUDE_DIRECTORIES>
+       )
+endforeach()
+
 #
 # Create executable
 #
@@ -58,6 +92,7 @@ set(sources
 # Build executable
 add_executable(${target}
 	MACOSX_BUNDLE
+	${metacallcli_build_source_list}
 	${sources}
 )
 
@@ -101,6 +136,8 @@ set_target_properties(${target}
 
 target_include_directories(${target}
 	PRIVATE
+	# Dependencies Includes
+	${metacallcli_build_include_list}
 	${PROJECT_BINARY_DIR}/source/include
 	${CMAKE_CURRENT_SOURCE_DIR}/include
 	${CMAKE_CURRENT_BINARY_DIR}/include
@@ -133,6 +170,8 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	# Dependencies Export API
+	${metacallcli_build_definition_list}
 	${DEFAULT_COMPILE_DEFINITIONS}
 )
 

@@ -71,3 +71,10 @@ void dynlink_impl_unload(dynlink handle, dynlink_impl impl)
 		singleton()->unload(handle, impl);
 	}
 }
+
+const char *dynlink_impl_get_metacall_lib_path(void)
+{
+	dynlink_impl_interface_singleton singleton = dynlink_interface();
+
+	return singleton()->get_metacall_lib_path();
+}

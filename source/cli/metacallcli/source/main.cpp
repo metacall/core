@@ -20,6 +20,7 @@
 
 /* -- Headers -- */
 
+#include <dynlink/dynlink.h>
 #include <metacallcli/application.hpp>
 
 /* -- Namespace Declarations -- */
@@ -31,7 +32,7 @@ using namespace metacallcli;
 int main(int argc, char *argv[])
 {
 	application app(argc, argv);
-
+	printf("%s\n", dynlink_get_metacall_lib_path());
 	app.run();
 
 	return 0;

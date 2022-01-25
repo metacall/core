@@ -62,6 +62,7 @@ typedef void (*dynlink_impl_interface_get_name)(dynlink, dynlink_name_impl, size
 typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
 typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr_ptr);
 typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);
+typedef const char * (*dynlink_impl_interface_get_metacall_lib_path)(void);
 
 struct dynlink_impl_interface_type
 {
@@ -70,7 +71,7 @@ struct dynlink_impl_interface_type
 	dynlink_impl_interface_load load;
 	dynlink_impl_interface_symbol symbol;
 	dynlink_impl_interface_unload unload;
-
+    dynlink_impl_interface_get_metacall_lib_path get_metacall_lib_path;
 };
 
 typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);
