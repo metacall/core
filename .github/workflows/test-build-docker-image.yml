@@ -1,0 +1,9 @@
+name: Test, Build and Push Docker Image
+
+on:
+  # to enable manual triggering of this workflow.
+  workflow_dispatch:
+
+  # trigger for pushes to develop
+  push:
+    branches: [develop]
