@@ -103,6 +103,15 @@ int dynlink_impl_interface_unload_beos(dynlink handle, dynlink_impl impl)
 #endif
 }
 
+char *dynlink_impl_interface_lib_path_beos(dynlink_name name, int (*comparator)(dynlink_path, dynlink_name))
+{
+	/* TODO */
+	(void)name;
+	(void)comparator;
+
+	return NULL;
+}
+
 dynlink_impl_interface dynlink_impl_interface_singleton_beos(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_beos = {
@@ -110,7 +119,8 @@ dynlink_impl_interface dynlink_impl_interface_singleton_beos(void)
 		&dynlink_impl_interface_get_name_beos,
 		&dynlink_impl_interface_load_beos,
 		&dynlink_impl_interface_symbol_beos,
-		&dynlink_impl_interface_unload_beos
+		&dynlink_impl_interface_unload_beos,
+		&dynlink_impl_interface_lib_path_beos
 	};
 
 	return &impl_interface_beos;

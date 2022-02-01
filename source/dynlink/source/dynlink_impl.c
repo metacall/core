@@ -23,6 +23,7 @@
 #include <dynlink/dynlink_impl.h>
 
 #include <stdlib.h>
+#include <string.h>
 
 /* -- Methods -- */
 
@@ -70,4 +71,29 @@ void dynlink_impl_unload(dynlink handle, dynlink_impl impl)
 
 		singleton()->unload(handle, impl);
 	}
+}
+
+static int dynlink_impl_lib_path_ends_with(dynlink_path path, dynlink_name name)
+{
+	if (path == NULL || name == NULL)
+	{
+		return 1;
+	}
+
+	size_t path_length = strlen(path);
+	size_t name_length = strlen(name);
+
+	return !(name_length <= path_length && strncmp(path + path_length - name_length, name, name_length) == 0);
+}
+
+dynlink_path dynlink_impl_lib_path(dynlink_name name)
+{
+	if (name != NULL)
+	{
+		dynlink_impl_interface_singleton singleton = dynlink_interface();
+
+		return singleton()->lib_path(name, &dynlink_impl_lib_path_ends_with);
+	}
+
+	return NULL;
 }

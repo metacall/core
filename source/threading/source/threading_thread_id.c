@@ -44,7 +44,9 @@
 	#endif
 #elif defined(__linux__) || \
 	(((defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)) && (!defined(MAC_OS_X_VERSION_10_12) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_12))
-	#define _GNU_SOURCE
+	#ifndef _GNU_SOURCE
+		#define _GNU_SOURCE
+	#endif
 	#include <unistd.h>
 	#include <sys/syscall.h>
 	#include <sys/types.h>

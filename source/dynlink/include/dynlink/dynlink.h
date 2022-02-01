@@ -128,6 +128,18 @@ DYNLINK_API void dynlink_unload(dynlink handle);
 
 /**
 *  @brief
+*    Returns the path to a library loaded in the process itself
+*
+*  @param[in] name
+*    Name of the library that will be searched for the path
+*
+*  @return
+*    Returns a reference to a string that must be freed or NULL if no support or if the library could not be found
+*/
+DYNLINK_API char *dynlink_lib_path(dynlink_name name);
+
+/**
+*  @brief
 *    Provide the module information
 *
 *  @return

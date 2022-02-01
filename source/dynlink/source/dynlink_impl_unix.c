@@ -28,7 +28,23 @@
 
 #include <string.h>
 
+#ifndef _GNU_SOURCE
+	#define _GNU_SOURCE
+#endif
+#ifndef __USE_GNU
+	#define __USE_GNU
+#endif
 #include <dlfcn.h>
+#include <link.h>
+
+/* -- Private Member Data -- */
+
+struct dynlink_lib_path_type
+{
+	dynlink_name_impl name_impl;
+	int (*comparator)(dynlink_path, dynlink_name);
+	char *path;
+};
 
 /* -- Methods -- */
 
@@ -39,15 +55,20 @@ const char *dynlink_impl_interface_extension_unix(void)
 	return extension_unix;
 }
 
-void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t length)
+static void dynlink_impl_interface_get_name_str_unix(dynlink_name name, dynlink_name_impl name_impl, size_t length)
 {
 	strncpy(name_impl, "lib", length);
 
-	strncat(name_impl, dynlink_get_name(handle), length);
+	strncat(name_impl, name, length);
 
 	strncat(name_impl, ".", length);
 
 	strncat(name_impl, dynlink_impl_extension(), length);
+}
+
+void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t length)
+{
+	dynlink_impl_interface_get_name_str_unix(dynlink_get_name(handle), name_impl, length);
 }
 
 dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
@@ -116,6 +137,43 @@ int dynlink_impl_interface_unload_unix(dynlink handle, dynlink_impl impl)
 #endif
 }
 
+static int dynlink_impl_interface_phdr_callback_unix(struct dl_phdr_info *info, size_t size, void *data)
+{
+	struct dynlink_lib_path_type *lib_path = (struct dynlink_lib_path_type *)data;
+
+	(void)size;
+
+	if (lib_path->comparator(info->dlpi_name, lib_path->name_impl) == 0)
+	{
+		lib_path->path = strndup(info->dlpi_name, strlen(info->dlpi_name));
+		return 1;
+	}
+
+	return 0;
+}
+
+char *dynlink_impl_interface_lib_path_unix(dynlink_name name, int (*comparator)(dynlink_path, dynlink_name))
+{
+	struct dynlink_lib_path_type data = {
+		{ 0 },
+		comparator,
+		NULL
+	};
+
+	dynlink_impl_interface_get_name_str_unix(name, data.name_impl, DYNLINK_NAME_IMPL_SIZE - 1);
+
+	if (dl_iterate_phdr(&dynlink_impl_interface_phdr_callback_unix, (void *)&data) != 1)
+	{
+		if (data.path != NULL)
+		{
+			free(data.path);
+			return NULL;
+		}
+	}
+
+	return data.path;
+}
+
 dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_unix = {
@@ -123,7 +181,8 @@ dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
 		&dynlink_impl_interface_get_name_unix,
 		&dynlink_impl_interface_load_unix,
 		&dynlink_impl_interface_symbol_unix,
-		&dynlink_impl_interface_unload_unix
+		&dynlink_impl_interface_unload_unix,
+		&dynlink_impl_interface_lib_path_unix
 	};
 
 	return &impl_interface_unix;

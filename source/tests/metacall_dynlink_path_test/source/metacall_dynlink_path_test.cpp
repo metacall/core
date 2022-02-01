@@ -35,7 +35,15 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	// ASSERT_EQ((int)0, strcmp(METACALL_LIBRARY_PATH, dynlink_get_metacall_lib_path()));
+	char *path = dynlink_lib_path("metacall");
+
+	std::string library_path(METACALL_LIBRARY_PATH);
+
+	ASSERT_NE((char *)NULL, (char *)path);
+
+	ASSERT_EQ((int)0, (int)library_path.rfind(path, 0));
+
+	free(path);
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

@@ -132,6 +132,11 @@ void dynlink_unload(dynlink handle)
 	}
 }
 
+char *dynlink_lib_path(dynlink_name name)
+{
+	return dynlink_impl_lib_path(name);
+}
+
 const char *dynlink_print_info(void)
 {
 	static const char dynlink_info[] =
