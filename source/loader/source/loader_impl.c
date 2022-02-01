@@ -144,7 +144,7 @@ dynlink loader_impl_dynlink_load(const char *path, const loader_naming_tag tag)
 
 	char loader_dynlink_name[LOADER_DYNLINK_NAME_SIZE];
 
-	strncpy(loader_dynlink_name, tag, LOADER_DYNLINK_NAME_SIZE);
+	strncpy(loader_dynlink_name, tag, LOADER_DYNLINK_NAME_SIZE - 1);
 
 	strncat(loader_dynlink_name, loader_dynlink_suffix,
 		LOADER_DYNLINK_NAME_SIZE - strnlen(loader_dynlink_name, LOADER_DYNLINK_NAME_SIZE - 1) - 1);
@@ -273,7 +273,7 @@ void loader_impl_configuration(loader_impl impl, configuration config)
 					{
 						loader_naming_path execution_path;
 
-						strncpy(execution_path, str, LOADER_NAMING_PATH_SIZE);
+						strncpy(execution_path, str, LOADER_NAMING_PATH_SIZE - 1);
 
 						impl->singleton()->execution_path(impl, execution_path);
 					}
@@ -446,7 +446,7 @@ loader_impl loader_impl_create(const char *path, const loader_naming_tag tag)
 
 					if (impl->ctx != NULL)
 					{
-						strncpy(impl->tag, tag, LOADER_NAMING_TAG_SIZE);
+						strncpy(impl->tag, tag, LOADER_NAMING_TAG_SIZE - 1);
 
 						impl->exec_path_map = set_create(&hash_callback_str, &comparable_callback_str);
 
@@ -729,7 +729,7 @@ size_t loader_impl_handle_name(const loader_naming_path path, loader_naming_path
 	}
 	else
 	{
-		strncpy(result, path, LOADER_NAMING_PATH_SIZE);
+		strncpy(result, path, LOADER_NAMING_PATH_SIZE - 1);
 
 		return strnlen(result, LOADER_NAMING_PATH_SIZE);
 	}

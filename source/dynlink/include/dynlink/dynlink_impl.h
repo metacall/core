@@ -25,10 +25,11 @@
 
 #include <dynlink/dynlink_api.h>
 
+#include <dynlink/dynlink_type.h>
+
 #include <dynlink/dynlink_impl_name.h>
 #include <dynlink/dynlink_impl_type.h>
 #include <dynlink/dynlink_interface.h>
-#include <dynlink/dynlink_type.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -116,7 +117,7 @@ DYNLINK_API void dynlink_impl_unload(dynlink handle, dynlink_impl impl);
 *  @return
 *    Returns a reference to a string that must be freed or NULL if no support or if the library could not be found
 */
-DYNLINK_API dynlink_path dynlink_impl_lib_path(dynlink_name name);
+DYNLINK_API char *dynlink_impl_lib_path(dynlink_name name);
 
 #ifdef __cplusplus
 }

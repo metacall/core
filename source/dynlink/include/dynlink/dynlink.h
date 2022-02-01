@@ -25,10 +25,11 @@
 
 #include <dynlink/dynlink_api.h>
 
+#include <dynlink/dynlink_type.h>
+
 #include <dynlink/dynlink_flags.h>
 #include <dynlink/dynlink_interface.h>
 #include <dynlink/dynlink_symbol.h>
-#include <dynlink/dynlink_type.h>
 
 #ifdef __cplusplus
 extern "C" {
