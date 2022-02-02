@@ -37,7 +37,7 @@ typedef struct detour_singleton_type *detour_singleton;
 *    Returns zero on correct detour singleton initialization, distinct from zero otherwise
 *
 */
-DETOUR_API int detour_singleton_initialize();
+DETOUR_API int detour_singleton_initialize(void);
 
 /**
 *  @brief

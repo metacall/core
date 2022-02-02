@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target loader)
+set(target plugin)
 
 # Exit here if required dependencies are not met
 message(STATUS "Lib ${target}")
@@ -34,21 +34,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/loader.h
-	${include_path}/loader_handle.h
-	${include_path}/loader_impl_data.h
-	${include_path}/loader_impl_interface.h
-	${include_path}/loader_impl.h
-	${include_path}/loader_env.h
-	${include_path}/loader_naming.h
-	${include_path}/loader_path.h
+	${include_path}/plugin.h
 )
 
 set(sources
-	${source_path}/loader.c
-	${source_path}/loader_impl.c
-	${source_path}/loader_env.c
-	${source_path}/loader_path.c
+	${source_path}/plugin.c
 )
 
 # Group source files
@@ -149,9 +139,6 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::reflect
 	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::serial
-	${META_PROJECT_NAME}::detour
-	${META_PROJECT_NAME}::configuration
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
