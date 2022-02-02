@@ -22,4 +22,57 @@
 
 #include <plugin/plugin_loader.h>
 
+/* -- Declarations -- */
+
+struct plugin_loader_type
+{
+	char *library_suffix;
+	char *symbol_interface_suffix;
+};
+
 /* -- Methods -- */
+
+plugin_loader plugin_loader_create(const char *name)
+{
+	plugin_loader l = malloc(sizeof(struct plugin_loader_type));
+
+	if (l == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin loader allocation");
+		return NULL;
+	}
+
+	// TODO: Generate the suffixes
+
+	return l;
+}
+
+plugin plugin_loader_load(plugin_loader l, char *name, void *impl, void (*dtor)(plugin))
+{
+	// TODO: plugin_create(...)
+	// TODO: Implement dynlink load
+}
+
+void plugin_loader_unload(plugin_loader l, plugin p)
+{
+	// TODO: Implement dynlink unload
+	// TODO: plugin_destroy(...)
+}
+
+void plugin_loader_destroy(plugin_loader l)
+{
+	if (l != NULL)
+	{
+		if (l->library_suffix != NULL)
+		{
+			free(l->library_suffix);
+		}
+
+		if (l->symbol_interface_suffix != NULL)
+		{
+			free(l->symbol_interface_suffix);
+		}
+
+		free(l);
+	}
+}

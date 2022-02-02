@@ -24,9 +24,20 @@
 
 #include <log/log.h>
 
+/* -- Declarations -- */
+
+struct plugin_type
+{
+	char *name;
+	dynlink handle;
+	void *iface;
+	void *impl;
+	void (*dtor)(plugin);
+};
+
 /* -- Methods -- */
 
-plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl)
+plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl, void (*dtor)(plugin))
 {
 	if (name == NULL)
 	{
@@ -76,6 +87,7 @@ plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl)
 	p->handle = handle;
 	p->iface = iface;
 	p->impl = impl;
+	p->dtor = dtor;
 
 	return p;
 }
@@ -104,6 +116,11 @@ void plugin_destroy(plugin p)
 {
 	if (p != NULL)
 	{
+		if (p->dtor != NULL)
+		{
+			p->dtor(p);
+		}
+
 		if (p->name != NULL)
 		{
 			free(p->name);

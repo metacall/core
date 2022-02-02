@@ -49,7 +49,7 @@ typedef struct plugin_type *plugin;
 
 /* -- Methods  -- */
 
-PLUGIN_API plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl);
+PLUGIN_API plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl, void (*dtor)(plugin));
 
 PLUGIN_API char *plugin_name(plugin p);
 

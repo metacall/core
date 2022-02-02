@@ -22,6 +22,8 @@
 
 #include <plugin/plugin_manager.h>
 
+#include <plugin/plugin_loader.h>
+
 /* -- Declarations -- */
 
 struct plugin_manager_iterate_cb_type
@@ -33,6 +35,8 @@ struct plugin_manager_iterate_cb_type
 
 /* -- Private Methods -- */
 
+static int plugin_manager_register(plugin_manager manager, plugin p);
+static int plugin_manager_unregister(plugin_manager manager, plugin p);
 static int plugin_manager_iterate_cb(set s, set_key key, set_value val, set_cb_iterate_args args);
 static int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_args args);
 
@@ -40,7 +44,14 @@ static int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_i
 
 int plugin_manager_initialize(plugin_manager manager, const char *name, const char *environment_library_path, const char *default_library_path, plugin_manager_interface iface, void *impl)
 {
-	manager->name = name;
+	if (manager->name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager name");
+		return 1;
+	}
+
+	// TODO: Copy name
+
 	manager->iface = iface;
 	manager->impl = impl;
 
@@ -96,10 +107,31 @@ int plugin_manager_register(plugin_manager manager, plugin p)
 
 	if (set_get(manager->plugins, (set_key)name) != NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to register plugin %s into manager %s", name, manager->name);
+
 		return 1;
 	}
 
 	return set_insert(manager->plugins, (set_key)name, p);
+}
+
+plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin));
+{
+	plugin p = plugin_loader_load(manager->l, name, impl, dtor);
+
+	if (p == NULL)
+	{
+		return NULL;
+	}
+
+	if (plugin_manager_register(manager, p) != 0)
+	{
+		plugin_loader_unload(manager->l, p);
+
+		return NULL;
+	}
+
+	return p;
 }
 
 plugin plugin_manager_get(plugin_manager manager, const char *name)
@@ -137,7 +169,7 @@ void plugin_manager_iterate(plugin_manager manager, int (*iterator)(plugin_manag
 	set_iterate(manager->plugins, &plugin_manager_iterate_cb, (void *)&args);
 }
 
-int plugin_manager_clear(plugin_manager manager, plugin p)
+int plugin_manager_unregister(plugin_manager manager, plugin p)
 {
 	const char *name = plugin_name(p);
 
@@ -148,10 +180,21 @@ int plugin_manager_clear(plugin_manager manager, plugin p)
 
 	if (set_remove(manager->plugins, (const set_key)name) == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to unregister plugin %s from manager %s", name, manager->name);
+
 		return 1;
 	}
 
 	return 0;
+}
+
+int plugin_manager_clear(plugin_manager manager, plugin p)
+{
+	int result = plugin_manager_unregister(manager, p);
+
+	plugin_loader_unload(manager->l, p);
+
+	return result;
 }
 
 int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_args args)

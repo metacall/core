@@ -18,25 +18,39 @@
  *
  */
 
-#ifndef PLUGIN_H
-#define PLUGIN_H 1
+#ifndef PLUGIN_LOADER_H
+#define PLUGIN_LOADER_H 1
 
 /* -- Headers -- */
 
 #include <plugin/plugin_api.h>
 
-#include <plugin/plugin_manager.h>
+#include <plugin/plugin_impl.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+/* -- Forward Declarations  -- */
+
+struct plugin_loader_type;
+
+/* -- Type Declarations  -- */
+
+typedef struct plugin_loader_type *plugin_loader;
+
 /* -- Methods  -- */
 
-PLUGIN_API const char *plugin_print_info(void);
+PLUGIN_API plugin_loader plugin_loader_create(const char *name);
+
+PLUGIN_API plugin plugin_loader_load(plugin_loader l, char *name, void *impl, void (*dtor)(plugin));
+
+PLUGIN_API void plugin_loader_unload(plugin_loader l, plugin p);
+
+PLUGIN_API void plugin_loader_destroy(plugin_loader l);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PLUGIN_H */
+#endif /* PLUGIN_LOADER_H */
