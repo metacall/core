@@ -21,7 +21,7 @@ extern "C" {
 
 /* -- Macros -- */
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 	#define PREPROCESSOR_STRINGIFY_IMPL_II(...) #__VA_ARGS__
 	#define PREPROCESSOR_STRINGIFY_IMPL(...)                      \
 		PREPROCESSOR_IF(PREPROCESSOR_ARGS_NOT_EMPTY(__VA_ARGS__), \
@@ -34,7 +34,7 @@ extern "C" {
 #if defined(__MWERKS__)
 	#define PREPROCESSOR_STRINGIFY_IMPL_I(tuple) PREPROCESSOR_STRINGIFY_IMPL##tuple
 	#define PREPROCESSOR_STRINGIFY(expr)		 PREPROCESSOR_STRINGIFY_IMPL_I((expr))
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && !defined(__clang__)
 	#define PREPROCESSOR_STRINGIFY_IMPL_I(tuple) PREPROCESSOR_STRINGIFY_IMPL tuple
 	#define PREPROCESSOR_STRINGIFY(expr)		 PREPROCESSOR_STRINGIFY_IMPL_I((expr))
 #else
