@@ -27,7 +27,7 @@
 
 /* -- Methods -- */
 
-int dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, dynlink_symbol_name_man symbol_mangled)
+size_t dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, size_t symbol_name_length, dynlink_symbol_name_man symbol_mangled)
 {
 	const char symbol_prefix[] = DYNLINK_SYMBOL_PREFIX_STR();
 
@@ -38,7 +38,7 @@ int dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, dynlink_symbol_n
 		memcpy(symbol_mangled, symbol_prefix, symbol_prefix_length);
 	}
 
-	strcpy(&symbol_mangled[symbol_prefix_length], symbol_name);
+	strncpy(&symbol_mangled[symbol_prefix_length], symbol_name, symbol_name_length);
 
-	return 0;
+	return symbol_prefix_length + symbol_name_length;
 }

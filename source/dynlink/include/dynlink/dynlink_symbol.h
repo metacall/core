@@ -54,7 +54,7 @@ typedef char dynlink_symbol_name_man[DYNLINK_SYMBOL_NAME_SIZE];
 *  @return
 *    Returns zero if @symbol_name was correctly mangled
 */
-DYNLINK_API int dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, dynlink_symbol_name_man symbol_mangled);
+DYNLINK_API size_t dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, size_t symbol_name_length, dynlink_symbol_name_man symbol_mangled);
 
 #ifdef __cplusplus
 }

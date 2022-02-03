@@ -44,17 +44,41 @@ static int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_i
 
 int plugin_manager_initialize(plugin_manager manager, const char *name, const char *environment_library_path, const char *default_library_path, plugin_manager_interface iface, void *impl)
 {
+	/* Initialize the name */
 	if (manager->name == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager name");
-		return 1;
+		if (name == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager name");
+			return 1;
+		}
+
+		size_t name_length = strlen(name);
+
+		if (name_length == 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager name length");
+
+			return 1;
+		}
+
+		manager->name = malloc(sizeof(char) * (name_length + 1));
+
+		if (manager->name == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager name allocation");
+
+			return 1;
+		}
+
+		strncpy(p->name, name, name_length);
 	}
 
-	// TODO: Copy name
-
+	/* Copy manager interface and implementation */
 	manager->iface = iface;
 	manager->impl = impl;
 
+	/* Allocate the set which maps the plugins by their name */
 	if (manager->plugins == NULL)
 	{
 		manager->plugins = set_create(&hash_callback_str, &comparable_callback_str);
@@ -69,6 +93,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 		}
 	}
 
+	/* Initialize the library path */
 	if (manager->library_path == NULL)
 	{
 		manager->library_path = environment_variable_path_create(environment_library_path, default_library_path);
@@ -76,6 +101,21 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 		if (manager->library_path == NULL)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager library path initialization");
+
+			plugin_manager_destroy(manager);
+
+			return 1;
+		}
+	}
+
+	/* Initialize the plugin loader */
+	if (manager->l == NULL)
+	{
+		manager->l = plugin_loader_create(manager->name);
+
+		if (manager->l == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager loader initialization");
 
 			plugin_manager_destroy(manager);
 
@@ -117,6 +157,7 @@ int plugin_manager_register(plugin_manager manager, plugin p)
 
 plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin));
 {
+	/* Load the plugin (dynamic library) and initialize the interface */
 	plugin p = plugin_loader_load(manager->l, name, impl, dtor);
 
 	if (p == NULL)
@@ -124,6 +165,7 @@ plugin plugin_manager_create(plugin_manager manager, const char *name, void *imp
 		return NULL;
 	}
 
+	/* Register plugin into the plugin manager set */
 	if (plugin_manager_register(manager, p) != 0)
 	{
 		plugin_loader_unload(manager->l, p);
@@ -190,8 +232,10 @@ int plugin_manager_unregister(plugin_manager manager, plugin p)
 
 int plugin_manager_clear(plugin_manager manager, plugin p)
 {
+	/* Remove the plugin from the plugins set */
 	int result = plugin_manager_unregister(manager, p);
 
+	/* Unload the dynamic link library and destroy the plugin */
 	plugin_loader_unload(manager->l, p);
 
 	return result;
@@ -207,14 +251,18 @@ int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_
 		plugin p = (plugin)val;
 		plugin_manager manager = (plugin_manager)args;
 
+		int result = 0;
+
 		if (manager->iface != NULL && manager->iface->clear != NULL)
 		{
-			int result = manager->iface->clear(manager, p);
-
-			plugin_destroy(p)
-
-				return result;
+			/* Call to the clear method of the manager */
+			result = manager->iface->clear(manager, p);
 		}
+
+		/* Unload the dynamic link library and destroy the plugin */
+		plugin_loader_unload(manager->l, p);
+
+		return result;
 	}
 
 	return 0;
@@ -236,6 +284,13 @@ void plugin_manager_destroy(plugin_manager manager)
 		}
 	}
 
+	/* Clear the name */
+	if (manager->name != NULL)
+	{
+		free(manager->name);
+		manager->name = NULL;
+	}
+
 	/* Destroy the plugin set */
 	if (manager->plugins != NULL)
 	{
@@ -248,6 +303,13 @@ void plugin_manager_destroy(plugin_manager manager)
 	{
 		environment_variable_path_destroy(manager->library_path);
 		manager->library_path = NULL;
+	}
+
+	/* Clear the loader */
+	if (manager->l != NULL)
+	{
+		plugin_loader_destroy(manager->l);
+		manager->l = NULL;
 	}
 
 	/* Nullify the rest of parameters that do not need deallocation */
