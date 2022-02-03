@@ -24,7 +24,7 @@ extern "C" {
 #define PREPROCESSOR_IIF_IMPL_0(true_expr, false_expr) false_expr
 #define PREPROCESSOR_IIF_IMPL_1(true_expr, false_expr) true_expr
 
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) && !defined(__clang__)
 	#define PREPROCESSOR_IIF_IMPL_I(expr)						expr
 	#define PREPROCESSOR_IIF_IMPL(value, true_expr, false_expr) PREPROCESSOR_IIF_IMPL_I(PREPROCESSOR_IIF_IMPL_##value(true_expr, false_expr))
 #else
