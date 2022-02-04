@@ -100,6 +100,7 @@ set(unity_build_depends
 	adt
 	filesystem
 	dynlink
+	plugin
 	detour
 	reflect
 	serial

@@ -25,6 +25,8 @@
 
 #include <plugin/plugin_api.h>
 
+#include <adt/adt_set.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

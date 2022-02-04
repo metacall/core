@@ -196,7 +196,7 @@ plugin plugin_loader_load(plugin_loader l, const char *name, void *impl, void (*
 
 	if (library_name == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Plugin manager '%s' failed to allocate the library name for plugin: %s", l->manager->name, name);
+		log_write("metacall", LOG_LEVEL_ERROR, "Plugin loader from manager '%s' failed to allocate the library name for plugin: %s", l->manager->name, name);
 		return NULL;
 	}
 
@@ -204,7 +204,7 @@ plugin plugin_loader_load(plugin_loader l, const char *name, void *impl, void (*
 
 	if (symbol_iface_suffix == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Plugin manager '%s' failed to allocate the symbol interface name for plugin: %s", l->manager->name, name);
+		log_write("metacall", LOG_LEVEL_ERROR, "Plugin loader from manager '%s' failed to allocate the symbol interface name for plugin: %s", l->manager->name, name);
 		free(library_name);
 		return NULL;
 	}
@@ -213,7 +213,7 @@ plugin plugin_loader_load(plugin_loader l, const char *name, void *impl, void (*
 
 	if (descriptor == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Plugin manager '%s' failed to load plugin: %s", l->manager->name, name);
+		log_write("metacall", LOG_LEVEL_ERROR, "Plugin loader from manager '%s' failed to load plugin: %s", l->manager->name, name);
 		return NULL;
 	}
 
