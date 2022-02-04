@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef SERIAL_IMPL_HANDLE_H
-#define SERIAL_IMPL_HANDLE_H 1
+#ifndef SERIAL_HANDLE_H
+#define SERIAL_HANDLE_H 1
 
 /* -- Headers -- */
 
@@ -31,10 +31,10 @@ extern "C" {
 
 /* -- Type Definitions -- */
 
-typedef void *serial_impl_handle;
+typedef void *serial_handle;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* SERIAL_IMPL_HANDLE_H */
+#endif /* SERIAL_HANDLE_H */

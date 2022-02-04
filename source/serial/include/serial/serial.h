@@ -15,19 +15,17 @@
 
 #include <memory/memory.h>
 
+#include <plugin/plugin.h>
+
 #include <reflect/reflect.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Forward Declarations -- */
-
-struct serial_type;
-
 /* -- Type Definitions -- */
 
-typedef struct serial_type *serial;
+typedef plugin serial;
 
 /* -- Methods -- */
 

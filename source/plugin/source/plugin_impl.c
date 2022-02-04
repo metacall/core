@@ -24,6 +24,8 @@
 
 #include <log/log.h>
 
+#include <string.h>
+
 /* -- Declarations -- */
 
 struct plugin_type
@@ -45,9 +47,9 @@ plugin plugin_create(const char *name, plugin_descriptor descriptor, void *iface
 		return NULL;
 	}
 
-	size_t name_length = strlen(name);
+	size_t name_size = strlen(name) + 1;
 
-	if (name_length == 0)
+	if (name_size <= 1)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin name length");
 		return NULL;
@@ -71,7 +73,7 @@ plugin plugin_create(const char *name, plugin_descriptor descriptor, void *iface
 	p->iface = iface;
 	p->impl = impl;
 	p->dtor = dtor;
-	p->name = malloc(sizeof(char) * (name_length + 1));
+	p->name = malloc(sizeof(char) * name_size);
 
 	if (p->name == NULL)
 	{
@@ -80,7 +82,7 @@ plugin plugin_create(const char *name, plugin_descriptor descriptor, void *iface
 		return NULL;
 	}
 
-	strncpy(p->name, name, name_length);
+	memcpy(p->name, name, name_size);
 
 	return p;
 }

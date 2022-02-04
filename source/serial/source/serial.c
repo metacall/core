@@ -11,140 +11,53 @@
 #include <metacall/metacall_version.h>
 
 #include <serial/serial.h>
-#include <serial/serial_impl.h>
-#include <serial/serial_singleton.h>
+#include <serial/serial_interface.h>
+
+#include <plugin/plugin.h>
 
 #include <log/log.h>
 
-#include <string.h>
+/* -- Definitions -- */
+
+#define SERIAL_MANAGER_NAME			"serial"
+#define SERIAL_LIBRARY_PATH			"SERIAL_LIBRARY_PATH"
+#define SERIAL_LIBRARY_DEFAULT_PATH "serials"
+
+/* -- Macros -- */
+
+#define serial_iface(s) \
+	plugin_iface_type(s, serial_interface)
 
 /* -- Member Data -- */
 
-struct serial_type
-{
-	char *name;
-	serial_impl impl;
-};
+static plugin_manager_declare(serial_manager);
 
 /* -- Methods -- */
 
 int serial_initialize(void)
 {
-	if (serial_singleton_initialize() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton initialization");
-
-		return 1;
-	}
-
-	return 0;
+	return plugin_manager_initialize(
+		&serial_manager,
+		SERIAL_MANAGER_NAME,
+		SERIAL_LIBRARY_PATH,
+		SERIAL_LIBRARY_DEFAULT_PATH,
+		NULL,
+		NULL);
 }
 
 serial serial_create(const char *name)
 {
-	serial s;
-
-	size_t name_length;
-
-	if (name == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name");
-
-		return NULL;
-	}
-
-	s = serial_singleton_get(name);
-
-	if (s != NULL)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Serial <%p> already exists", (void *)s);
-
-		return s;
-	}
-
-	name_length = strlen(name);
-
-	if (name_length == 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name length");
-
-		return NULL;
-	}
-
-	s = malloc(sizeof(struct serial_type));
-
-	if (s == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial allocation");
-
-		return NULL;
-	}
-
-	s->name = malloc(sizeof(char) * (name_length + 1));
-
-	if (s->name == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial name allocation");
-
-		free(s);
-
-		return NULL;
-	}
-
-	strncpy(s->name, name, name_length);
-
-	s->name[name_length] = '\0';
-
-	s->impl = serial_impl_create();
-
-	if (s->impl == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation creation");
-
-		free(s->name);
-
-		free(s);
-
-		return NULL;
-	}
-
-	if (serial_impl_load(s->impl, serial_singleton_path(), s->name) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation loading");
-
-		serial_impl_destroy(s->impl);
-
-		free(s->name);
-
-		free(s);
-
-		return NULL;
-	}
-
-	if (serial_singleton_register(s) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton insert");
-
-		serial_impl_destroy(s->impl);
-
-		free(s->name);
-
-		free(s);
-
-		return NULL;
-	}
-
-	return s;
+	return plugin_manager_create(&serial_manager, name, NULL, NULL);
 }
 
 const char *serial_extension(serial s)
 {
-	return serial_impl_extension(s->impl);
+	return serial_iface(s)->extension();
 }
 
 const char *serial_name(serial s)
 {
-	return s->name;
+	return plugin_name(s);
 }
 
 char *serial_serialize(serial s, value v, size_t *size, memory_allocator allocator)
@@ -156,7 +69,28 @@ char *serial_serialize(serial s, value v, size_t *size, memory_allocator allocat
 		return NULL;
 	}
 
-	return serial_impl_serialize(s->impl, v, size, allocator);
+	serial_handle handle = serial_iface(s)->initialize(allocator);
+
+	if (handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle initialization");
+
+		return NULL;
+	}
+
+	char *buffer = serial_iface(s)->serialize(handle, v, size);
+
+	if (buffer == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle serialization");
+	}
+
+	if (serial_iface(s)->destroy(handle) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle destruction");
+	}
+
+	return buffer;
 }
 
 value serial_deserialize(serial s, const char *buffer, size_t size, memory_allocator allocator)
@@ -168,55 +102,38 @@ value serial_deserialize(serial s, const char *buffer, size_t size, memory_alloc
 		return NULL;
 	}
 
-	return serial_impl_deserialize(s->impl, buffer, size, allocator);
+	serial_handle handle = serial_iface(s)->initialize(allocator);
+
+	if (handle == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle initialization");
+
+		return NULL;
+	}
+
+	value v = serial_iface(s)->deserialize(handle, buffer, size);
+
+	if (v == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle deserialization");
+	}
+
+	if (serial_iface(s)->destroy(handle) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation handle destruction");
+	}
+
+	return v;
 }
 
 int serial_clear(serial s)
 {
-	if (s != NULL)
-	{
-		int result = 0;
-
-		if (serial_singleton_clear(s) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial singleton clear");
-
-			result = 1;
-		}
-
-		if (s->name != NULL)
-		{
-			free(s->name);
-		}
-
-		if (s->impl != NULL)
-		{
-			if (serial_impl_unload(s->impl) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation unloading");
-
-				result = 1;
-			}
-
-			if (serial_impl_destroy(s->impl) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid serial implementation destruction");
-
-				result = 1;
-			}
-		}
-
-		free(s);
-
-		return result;
-	}
-
-	return 0;
+	return plugin_manager_clear(&serial_manager, s);
 }
 
 void serial_destroy(void)
 {
-	serial_singleton_destroy();
+	plugin_manager_destroy(&serial_manager);
 }
 
 const char *serial_print_info(void)

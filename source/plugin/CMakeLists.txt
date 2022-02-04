@@ -35,10 +35,18 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/plugin.h
+	${include_path}/plugin_descriptor.h
+	${include_path}/plugin_impl.h
+	${include_path}/plugin_loader.h
+	${include_path}/plugin_manager.h
 )
 
 set(sources
 	${source_path}/plugin.c
+	${source_path}/plugin_descriptor.c
+	${source_path}/plugin_impl.c
+	${source_path}/plugin_loader.c
+	${source_path}/plugin_manager.c
 )
 
 # Group source files

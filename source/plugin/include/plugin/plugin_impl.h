@@ -34,10 +34,10 @@ extern "C" {
 /* -- Macros -- */
 
 #define plugin_iface_type(p, type_name) \
-	((type_name *)plugin_iface(p))
+	((type_name)plugin_iface(p))
 
 #define plugin_impl_type(p, type_name) \
-	((type_name *)plugin_impl(p))
+	((type_name)plugin_impl(p))
 
 /* -- Forward Declarations  -- */
 

@@ -50,7 +50,7 @@ const char *rapid_json_serial_impl_extension()
 	return extension;
 }
 
-serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
+serial_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 {
 	rapid_json_document document = new rapid_json_document_type();
 
@@ -61,7 +61,7 @@ serial_impl_handle rapid_json_serial_impl_initialize(memory_allocator allocator)
 
 	document->allocator = allocator;
 
-	return (serial_impl_handle)document;
+	return (serial_handle)document;
 }
 
 void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
@@ -295,7 +295,7 @@ char *rapid_json_serial_impl_document_stringify(rapid_json_document document, si
 	return buffer_str;
 }
 
-char *rapid_json_serial_impl_serialize(serial_impl_handle handle, value v, size_t *size)
+char *rapid_json_serial_impl_serialize(serial_handle handle, value v, size_t *size)
 {
 	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
@@ -465,7 +465,7 @@ value rapid_json_serial_impl_deserialize_value(const rapidjson::Value *v)
 	return NULL;
 }
 
-value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *buffer, size_t size)
+value rapid_json_serial_impl_deserialize(serial_handle handle, const char *buffer, size_t size)
 {
 	rapid_json_document document = static_cast<rapid_json_document>(handle);
 
@@ -491,7 +491,7 @@ value rapid_json_serial_impl_deserialize(serial_impl_handle handle, const char *
 	return rapid_json_serial_impl_deserialize_value(&document->impl);
 }
 
-int rapid_json_serial_impl_destroy(serial_impl_handle handle)
+int rapid_json_serial_impl_destroy(serial_handle handle)
 {
 	rapid_json_document document = static_cast<rapid_json_document>(handle);
 

@@ -22,11 +22,13 @@
 
 #include <plugin/plugin_descriptor.h>
 
+#include <log/log.h>
+
 /* -- Methods -- */
 
 plugin_descriptor plugin_descriptor_create(char *path, char *library_name, char *symbol_iface_name)
 {
-	plugin_descriptor descriptor = malloc(sizeof(struct plugin_descriptor));
+	plugin_descriptor descriptor = malloc(sizeof(struct plugin_descriptor_type));
 
 	if (descriptor == NULL)
 	{
@@ -37,7 +39,7 @@ plugin_descriptor plugin_descriptor_create(char *path, char *library_name, char 
 	descriptor->handle = NULL;
 	descriptor->library_name = library_name;
 	descriptor->symbol_iface_name = symbol_iface_name;
-	descriptor->symbol = NULL;
+	descriptor->iface_singleton = NULL;
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Loading plugin: %s", library_name);
 
@@ -75,7 +77,7 @@ plugin_descriptor plugin_descriptor_create(char *path, char *library_name, char 
 	return descriptor;
 }
 
-void plugin_descriptor_destroy(plugin_descriptor descriptor);
+void plugin_descriptor_destroy(plugin_descriptor descriptor)
 {
 	if (descriptor != NULL)
 	{

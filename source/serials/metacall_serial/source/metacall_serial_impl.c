@@ -29,7 +29,7 @@ const char *metacall_serial_impl_extension(void)
 	return extension;
 }
 
-serial_impl_handle metacall_serial_impl_initialize(memory_allocator allocator)
+serial_handle metacall_serial_impl_initialize(memory_allocator allocator)
 {
 	return allocator;
 }
@@ -45,7 +45,7 @@ void metacall_serial_impl_serialize_value(value v, char *dest, size_t size, size
 	serialize_ptr(v, dest, size, format, length);
 }
 
-char *metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t *size)
+char *metacall_serial_impl_serialize(serial_handle handle, value v, size_t *size)
 {
 	memory_allocator allocator;
 
@@ -125,7 +125,7 @@ value metacall_serial_impl_deserialize_value(const char *buffer, size_t size)
 	return NULL;
 }
 
-value metacall_serial_impl_deserialize(serial_impl_handle handle, const char *buffer, size_t size)
+value metacall_serial_impl_deserialize(serial_handle handle, const char *buffer, size_t size)
 {
 	if (handle == NULL || buffer == NULL || size == 0)
 	{
@@ -137,7 +137,7 @@ value metacall_serial_impl_deserialize(serial_impl_handle handle, const char *bu
 	return metacall_serial_impl_deserialize_value(buffer, size);
 }
 
-int metacall_serial_impl_destroy(serial_impl_handle handle)
+int metacall_serial_impl_destroy(serial_handle handle)
 {
 	(void)handle;
 

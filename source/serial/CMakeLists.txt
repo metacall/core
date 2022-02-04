@@ -35,16 +35,11 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/serial.h
-	${include_path}/serial_impl.h
-	${include_path}/serial_impl_handle.h
 	${include_path}/serial_interface.h
-	${include_path}/serial_singleton.h
 )
 
 set(sources
 	${source_path}/serial.c
-	${source_path}/serial_impl.c
-	${source_path}/serial_singleton.c
 )
 
 # Group source files
@@ -143,6 +138,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::plugin
 	${META_PROJECT_NAME}::reflect
 
 	PUBLIC

@@ -25,6 +25,9 @@
 
 #include <plugin/plugin_api.h>
 
+#include <plugin/plugin_impl.h>
+#include <plugin/plugin_loader.h>
+
 #include <adt/adt_set.h>
 
 #ifdef __cplusplus
@@ -33,21 +36,18 @@ extern "C" {
 
 /* -- Macros -- */
 
+#define plugin_manager_declare(name) \
+	struct plugin_manager_type name = { NULL, NULL, NULL, NULL, NULL, NULL }
+
 #define plugin_manager_impl_type(manager, type_name) \
-	((type_name *)plugin_manager_impl(manager))
+	((type_name)plugin_manager_impl(manager))
 
 /* -- Forward Declarations -- */
 
-struct plugin_type;
-struct plugin_loader_type;
-struct plugin_manager_type;
 struct plugin_manager_interface_type;
 
 /* -- Type Definitions -- */
 
-typedef struct plugin_type *plugin;
-typedef struct plugin_loader_type *plugin_loader;
-typedef struct plugin_manager_type *plugin_manager;
 typedef struct plugin_manager_interface_type *plugin_manager_interface;
 
 /* -- Declarations -- */
@@ -64,8 +64,8 @@ struct plugin_manager_type
 
 struct plugin_manager_interface_type
 {
-	int (*clear)(plugin_manager, plugin); /* Hook for clearing the plugin implementation */
-	void (*destroy)(plugin_manager);	  /* Hook for destroying the plugin manager implementation */
+	int (*clear)(plugin_manager, plugin);	 /* Hook for clearing the plugin implementation */
+	void (*destroy)(plugin_manager, void *); /* Hook for destroying the plugin manager implementation */
 };
 
 /* -- Methods  -- */

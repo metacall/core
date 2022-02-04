@@ -30,12 +30,12 @@
 size_t dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, size_t symbol_name_length, dynlink_symbol_name_man symbol_mangled)
 {
 	const char symbol_prefix[] = DYNLINK_SYMBOL_PREFIX_STR();
-
 	size_t symbol_prefix_length = sizeof(symbol_prefix) - 1;
+	size_t length = symbol_name_length + symbol_prefix_length;
 
 	if (symbol_mangled == NULL)
 	{
-		return symbol_name_length + symbol_prefix_length;
+		return length;
 	}
 
 	if (symbol_prefix_length > 0)
@@ -43,7 +43,9 @@ size_t dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, size_t symbol
 		memcpy(symbol_mangled, symbol_prefix, symbol_prefix_length);
 	}
 
-	strncpy(&symbol_mangled[symbol_prefix_length], symbol_name, symbol_name_length);
+	memcpy(&symbol_mangled[symbol_prefix_length], symbol_name, symbol_name_length);
 
-	return symbol_prefix_length + symbol_name_length;
+	symbol_mangled[length] = '\0';
+
+	return length;
 }

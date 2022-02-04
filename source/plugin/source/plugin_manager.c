@@ -24,6 +24,12 @@
 
 #include <plugin/plugin_loader.h>
 
+#include <environment/environment_variable_path.h>
+
+#include <log/log.h>
+
+#include <string.h>
+
 /* -- Declarations -- */
 
 struct plugin_manager_iterate_cb_type
@@ -53,16 +59,16 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 			return 1;
 		}
 
-		size_t name_length = strlen(name);
+		size_t name_size = strlen(name) + 1;
 
-		if (name_length == 0)
+		if (name_size <= 1)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin manager name length");
 
 			return 1;
 		}
 
-		manager->name = malloc(sizeof(char) * (name_length + 1));
+		manager->name = malloc(sizeof(char) * name_size);
 
 		if (manager->name == NULL)
 		{
@@ -71,7 +77,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 			return 1;
 		}
 
-		strncpy(p->name, name, name_length);
+		memcpy(manager->name, name, name_size);
 	}
 
 	/* Copy manager interface and implementation */
@@ -126,9 +132,9 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	return 0;
 }
 
-const char *plugin_manager_type(plugin_manager manager)
+const char *plugin_manager_name(plugin_manager manager)
 {
-	return manager->type;
+	return manager->name;
 }
 
 char *plugin_manager_library_path(plugin_manager manager)
@@ -147,7 +153,7 @@ int plugin_manager_register(plugin_manager manager, plugin p)
 
 	if (set_get(manager->plugins, (set_key)name) != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Failed to register plugin %s into manager %s", name, manager->name);
+		log_write("metacall", LOG_LEVEL_ERROR, "Failed to register plugin %s into manager %s, it already exists", name, manager->name);
 
 		return 1;
 	}
@@ -155,10 +161,18 @@ int plugin_manager_register(plugin_manager manager, plugin p)
 	return set_insert(manager->plugins, (set_key)name, p);
 }
 
-plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin));
+plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin))
 {
+	/* Check if plugin is already loaded and return it */
+	plugin p = plugin_manager_get(manager, name);
+
+	if (p != NULL)
+	{
+		return p;
+	}
+
 	/* Load the plugin (dynamic library) and initialize the interface */
-	plugin p = plugin_loader_load(manager->l, name, impl, dtor);
+	p = plugin_loader_load(manager->l, name, impl, dtor);
 
 	if (p == NULL)
 	{
@@ -314,7 +328,4 @@ void plugin_manager_destroy(plugin_manager manager)
 	/* Nullify the rest of parameters that do not need deallocation */
 	manager->iface = NULL;
 	manager->impl = NULL;
-	manager->type = NULL;
-	manager->environment_library_path = NULL;
-	manager->default_library_path = NULL;
 }

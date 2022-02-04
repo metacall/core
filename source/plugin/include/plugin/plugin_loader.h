@@ -38,7 +38,7 @@ struct plugin_loader_type;
 
 /* -- Type Declarations  -- */
 
-typedef struct plugin_manager_type *plugin_loader;
+typedef struct plugin_manager_type *plugin_manager;
 typedef struct plugin_loader_type *plugin_loader;
 
 /* -- Methods  -- */

@@ -39,7 +39,7 @@ METACALL_SERIAL_API const char *metacall_serial_impl_extension(void);
 *    Returns pointer to serial document implementation on success, null pointer otherwise
 *
 */
-METACALL_SERIAL_API serial_impl_handle metacall_serial_impl_initialize(memory_allocator allocator);
+METACALL_SERIAL_API serial_handle metacall_serial_impl_initialize(memory_allocator allocator);
 
 /**
 *  @brief
@@ -58,7 +58,7 @@ METACALL_SERIAL_API serial_impl_handle metacall_serial_impl_initialize(memory_al
 *    String with the value serialized on correct serialization, null otherwise
 *
 */
-METACALL_SERIAL_API char *metacall_serial_impl_serialize(serial_impl_handle handle, value v, size_t *size);
+METACALL_SERIAL_API char *metacall_serial_impl_serialize(serial_handle handle, value v, size_t *size);
 
 /**
 *  @brief
@@ -77,7 +77,7 @@ METACALL_SERIAL_API char *metacall_serial_impl_serialize(serial_impl_handle hand
 *    Pointer to value deserialized on correct serialization, null otherwise
 *
 */
-METACALL_SERIAL_API value metacall_serial_impl_deserialize(serial_impl_handle handle, const char *buffer, size_t size);
+METACALL_SERIAL_API value metacall_serial_impl_deserialize(serial_handle handle, const char *buffer, size_t size);
 
 /**
 *  @brief
@@ -87,7 +87,7 @@ METACALL_SERIAL_API value metacall_serial_impl_deserialize(serial_impl_handle ha
 *    Returns zero on correct destruction, distinct from zero otherwise
 *
 */
-METACALL_SERIAL_API int metacall_serial_impl_destroy(serial_impl_handle handle);
+METACALL_SERIAL_API int metacall_serial_impl_destroy(serial_handle handle);
 
 #ifdef __cplusplus
 }
