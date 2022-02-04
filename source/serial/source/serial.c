@@ -40,7 +40,11 @@ int serial_initialize(void)
 		&serial_manager,
 		SERIAL_MANAGER_NAME,
 		SERIAL_LIBRARY_PATH,
+#if defined(SERIAL_LIBRARY_INSTALL_PATH)
+		SERIAL_LIBRARY_INSTALL_PATH,
+#else
 		SERIAL_LIBRARY_DEFAULT_PATH,
+#endif /* SERIAL_LIBRARY_INSTALL_PATH */
 		NULL,
 		NULL);
 }

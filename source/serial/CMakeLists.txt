@@ -35,6 +35,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/serial.h
+	${include_path}/serial_handle.h
 	${include_path}/serial_interface.h
 )
 
