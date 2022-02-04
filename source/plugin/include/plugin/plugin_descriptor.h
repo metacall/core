@@ -18,39 +18,41 @@
  *
  */
 
-#ifndef PLUGIN_LOADER_H
-#define PLUGIN_LOADER_H 1
+#ifndef PLUGIN_DESCRIPTOR_H
+#define PLUGIN_DESCRIPTOR_H 1
 
 /* -- Headers -- */
 
 #include <plugin/plugin_api.h>
 
-#include <plugin/plugin_impl.h>
+#include <dynlink/dynlink.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Forward Declarations  -- */
+/* -- Declarations  -- */
 
-struct plugin_manager_type;
-struct plugin_loader_type;
+struct plugin_descriptor_type
+{
+	dynlink handle;
+	char *library_name;
+	char *symbol_iface_name;
+	void *(*iface_singleton)(void);
+};
 
 /* -- Type Declarations  -- */
 
-typedef struct plugin_manager_type *plugin_loader;
-typedef struct plugin_loader_type *plugin_loader;
+typedef struct plugin_descriptor_type *plugin_descriptor;
 
-/* -- Methods  -- */
+/* -- Methods -- */
 
-PLUGIN_API plugin_loader plugin_loader_create(plugin_manager manager);
+PLUGIN_API plugin_descriptor plugin_descriptor_create(char *path, char *library_name, char *symbol_iface_name);
 
-PLUGIN_API plugin plugin_loader_load(plugin_loader l, const char *name, void *impl, void (*dtor)(plugin));
-
-PLUGIN_API void plugin_loader_destroy(plugin_loader l);
+PLUGIN_API void plugin_descriptor_destroy(plugin_descriptor descriptor);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* PLUGIN_LOADER_H */
+#endif /* PLUGIN_DESCRIPTOR_H */

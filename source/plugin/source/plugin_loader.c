@@ -22,18 +22,28 @@
 
 #include <plugin/plugin_loader.h>
 
+#include <plugin/plugin_descriptor.h>
+#include <plugin/plugin_manager.h>
+
 /* -- Declarations -- */
 
 struct plugin_loader_type
 {
+	plugin_manager manager;
 	char *library_suffix;
 	char *symbol_iface_suffix;
 };
+
+/* -- Type Definitions -- */
+
+typedef void *(*plugin_interface_singleton)(void);
 
 /* -- Private Methods -- */
 
 static char *plugin_loader_library_suffix(plugin_loader l, const char *name, size_t name_length);
 static char *plugin_loader_symbol_iface_suffix(plugin_loader l, const char *name, size_t name_length);
+static char *plugin_loader_generate_library_name(char *name, char *suffix);
+static char *plugin_loader_generate_symbol_iface_name(char *name, char *suffix);
 
 /* -- Methods -- */
 
@@ -101,10 +111,11 @@ int plugin_loader_symbol_iface_suffix(plugin_loader l, const char *name, size_t 
 	return 0;
 }
 
-plugin_loader plugin_loader_create(const char *name)
+plugin_loader plugin_loader_create(plugin_manager manager)
 {
-	if (name == NULL)
+	if (manager == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin loader manager");
 		return NULL;
 	}
 
@@ -116,19 +127,20 @@ plugin_loader plugin_loader_create(const char *name)
 		return NULL;
 	}
 
+	l->manager = manager;
 	l->library_suffix = NULL;
 	l->symbol_iface_suffix = NULL;
 
 	/* Generate the suffixes */
-	size_t name_length = strlen(name);
+	size_t name_length = strlen(manager->name);
 
-	if (plugin_loader_library_suffix(l, name, name_length) != 0)
+	if (plugin_loader_library_suffix(l, manager->name, name_length) != 0)
 	{
 		plugin_loader_destroy(l);
 		return NULL;
 	}
 
-	if (plugin_loader_symbol_iface_suffix(l, name, name_length) != 0)
+	if (plugin_loader_symbol_iface_suffix(l, manager->name, name_length) != 0)
 	{
 		plugin_loader_destroy(l);
 		return NULL;
@@ -137,18 +149,75 @@ plugin_loader plugin_loader_create(const char *name)
 	return l;
 }
 
-plugin plugin_loader_load(plugin_loader l, char *name, void *impl, void (*dtor)(plugin))
+char *plugin_loader_generate_library_name(char *name, char *suffix)
 {
-	// TODO: plugin_create(...)
-	// TODO: Generate library name from suffix
-	// TODO: Implement dynlink load
-	// TODO: dynlink_symbol_name_mangle with suffix
+	size_t name_length = strlen(name);
+	size_t suffix_length = strlen(suffix);
+	char *library_name = malloc(sizeof(char) * (name_length + suffix_length + 1));
+
+	if (library_name == NULL)
+	{
+		return NULL;
+	}
+
+	strncpy(library_name, name, name_length);
+
+	strncpy(&library_name[name_length], suffix, suffix_length);
+
+	symbol_iface_name[name_length + suffix_length] = '\0';
+
+	return library_name;
 }
 
-void plugin_loader_unload(plugin_loader l, plugin p)
+char *plugin_loader_generate_symbol_iface_name(char *name, char *suffix)
 {
-	// TODO: Implement dynlink unload
-	// TODO: plugin_destroy(...)
+	size_t name_length = strlen(name);
+	size_t mangle_length = dynlink_symbol_name_mangle(name, name_length, NULL);
+	size_t suffix_length = strlen(suffix);
+	char *symbol_iface_name = malloc(sizeof(char) * (mangle_length + suffix_length + 1));
+
+	if (symbol_iface_name == NULL)
+	{
+		return NULL;
+	}
+
+	dynlink_symbol_name_mangle(name, name_length, symbol_iface_name);
+
+	strncpy(&symbol_iface_name[mangle_length], suffix, suffix_length);
+
+	symbol_iface_name[mangle_length + suffix_length] = '\0';
+
+	return symbol_iface_name;
+}
+
+plugin plugin_loader_load(plugin_loader l, const char *name, void *impl, void (*dtor)(plugin))
+{
+	char *library_name = plugin_loader_generate_library_name(name, l->library_suffix);
+
+	if (library_name == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Plugin manager '%s' failed to allocate the library name for plugin: %s", l->manager->name, name);
+		return NULL;
+	}
+
+	char *symbol_iface_name = plugin_loader_generate_symbol_iface_name(name, l->symbol_iface_suffix);
+
+	if (symbol_iface_suffix == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Plugin manager '%s' failed to allocate the symbol interface name for plugin: %s", l->manager->name, name);
+		free(library_name);
+		return NULL;
+	}
+
+	plugin_descriptor descriptor = plugin_descriptor_create(manager->library_path, library_name, library_name);
+
+	if (descriptor == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Plugin manager '%s' failed to load plugin: %s", l->manager->name, name);
+		return NULL;
+	}
+
+	return plugin_create(name, descriptor, descriptor->iface_singleton(), impl, dtor);
 }
 
 void plugin_loader_destroy(plugin_loader l)
@@ -160,9 +229,9 @@ void plugin_loader_destroy(plugin_loader l)
 			free(l->library_suffix);
 		}
 
-		if (l->symbol_interface_suffix != NULL)
+		if (l->symbol_iface_suffix != NULL)
 		{
-			free(l->symbol_interface_suffix);
+			free(l->symbol_iface_suffix);
 		}
 
 		free(l);

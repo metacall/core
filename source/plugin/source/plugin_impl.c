@@ -29,7 +29,7 @@
 struct plugin_type
 {
 	char *name;
-	dynlink handle;
+	plugin_descriptor descriptor;
 	void *iface;
 	void *impl;
 	void (*dtor)(plugin);
@@ -37,12 +37,11 @@ struct plugin_type
 
 /* -- Methods -- */
 
-plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl, void (*dtor)(plugin))
+plugin plugin_create(const char *name, plugin_descriptor descriptor, void *iface, void *impl, void (*dtor)(plugin))
 {
 	if (name == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin name");
-
 		return NULL;
 	}
 
@@ -51,14 +50,12 @@ plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl, 
 	if (name_length == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin name length");
-
 		return NULL;
 	}
 
-	if (handle == NULL)
+	if (descriptor == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin handle");
-
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin descriptor");
 		return NULL;
 	}
 
@@ -67,27 +64,23 @@ plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl, 
 	if (p == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin allocation");
-
 		return NULL;
 	}
 
+	p->descriptor = descriptor;
+	p->iface = iface;
+	p->impl = impl;
+	p->dtor = dtor;
 	p->name = malloc(sizeof(char) * (name_length + 1));
 
 	if (p->name == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin name allocation");
-
-		free(p);
-
+		plugin_destroy(p);
 		return NULL;
 	}
 
 	strncpy(p->name, name, name_length);
-
-	p->handle = handle;
-	p->iface = iface;
-	p->impl = impl;
-	p->dtor = dtor;
 
 	return p;
 }
@@ -97,9 +90,9 @@ char *plugin_name(plugin p)
 	return p->name;
 }
 
-dynlink *plugin_handle(plugin p)
+plugin_descriptor plugin_desc(plugin p)
 {
-	return p->handle;
+	return p->descriptor;
 }
 
 void *plugin_iface(plugin p)
@@ -120,6 +113,8 @@ void plugin_destroy(plugin p)
 		{
 			p->dtor(p);
 		}
+
+		plugin_descriptor_destroy(p->descriptor);
 
 		if (p->name != NULL)
 		{

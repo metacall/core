@@ -25,7 +25,7 @@
 
 #include <plugin/plugin_api.h>
 
-#include <dynlink/dynlink.h>
+#include <plugin/plugin_descriptor.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,11 +49,11 @@ typedef struct plugin_type *plugin;
 
 /* -- Methods  -- */
 
-PLUGIN_API plugin plugin_create(const char *name, dynlink handle, void *iface, void *impl, void (*dtor)(plugin));
+PLUGIN_API plugin plugin_create(const char *name, plugin_descriptor descriptor, void *iface, void *impl, void (*dtor)(plugin));
 
 PLUGIN_API char *plugin_name(plugin p);
 
-PLUGIN_API dynlink *plugin_handle(plugin p);
+PLUGIN_API plugin_descriptor plugin_desc(plugin p);
 
 PLUGIN_API void *plugin_iface(plugin p);
 

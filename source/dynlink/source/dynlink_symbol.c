@@ -33,6 +33,11 @@ size_t dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, size_t symbol
 
 	size_t symbol_prefix_length = sizeof(symbol_prefix) - 1;
 
+	if (symbol_mangled == NULL)
+	{
+		return symbol_name_length + symbol_prefix_length;
+	}
+
 	if (symbol_prefix_length > 0)
 	{
 		memcpy(symbol_mangled, symbol_prefix, symbol_prefix_length);

@@ -111,7 +111,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Initialize the plugin loader */
 	if (manager->l == NULL)
 	{
-		manager->l = plugin_loader_create(manager->name);
+		manager->l = plugin_loader_create(manager);
 
 		if (manager->l == NULL)
 		{
@@ -168,8 +168,7 @@ plugin plugin_manager_create(plugin_manager manager, const char *name, void *imp
 	/* Register plugin into the plugin manager set */
 	if (plugin_manager_register(manager, p) != 0)
 	{
-		plugin_loader_unload(manager->l, p);
-
+		plugin_destroy(p);
 		return NULL;
 	}
 
@@ -236,7 +235,7 @@ int plugin_manager_clear(plugin_manager manager, plugin p)
 	int result = plugin_manager_unregister(manager, p);
 
 	/* Unload the dynamic link library and destroy the plugin */
-	plugin_loader_unload(manager->l, p);
+	plugin_destroy(p);
 
 	return result;
 }
@@ -260,7 +259,7 @@ int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_
 		}
 
 		/* Unload the dynamic link library and destroy the plugin */
-		plugin_loader_unload(manager->l, p);
+		plugin_destroy(p);
 
 		return result;
 	}
