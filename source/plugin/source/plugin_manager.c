@@ -245,6 +245,11 @@ int plugin_manager_unregister(plugin_manager manager, plugin p)
 
 int plugin_manager_clear(plugin_manager manager, plugin p)
 {
+	if (p == NULL)
+	{
+		return 1;
+	}
+
 	/* Remove the plugin from the plugins set */
 	int result = plugin_manager_unregister(manager, p);
 
