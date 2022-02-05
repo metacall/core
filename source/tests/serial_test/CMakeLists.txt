@@ -1,4 +1,4 @@
-# Check if this loader is enabled
+# Check if this serial is enabled
 if(NOT OPTION_BUILD_SERIALS OR NOT OPTION_BUILD_SERIALS_METACALL OR NOT OPTION_BUILD_SERIALS_RAPID_JSON)
 	return()
 endif()

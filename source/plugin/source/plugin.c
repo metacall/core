@@ -28,11 +28,11 @@
 
 const char *plugin_print_info(void)
 {
-	static const char loader_info[] =
+	static const char plugin_info[] =
 		"Plugin Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-#ifdef LOADER_STATIC_DEFINE
+#ifdef PLUGIN_STATIC_DEFINE
 		"Compiled as static library type\n"
 #else
 		"Compiled as shared library type\n"
@@ -40,5 +40,5 @@ const char *plugin_print_info(void)
 
 		"\n";
 
-	return loader_info;
+	return plugin_info;
 }
