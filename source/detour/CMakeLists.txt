@@ -35,16 +35,12 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/detour.h
-	${include_path}/detour_impl.h
-	${include_path}/detour_impl_handle.h
+	${include_path}/detour_handle.h
 	${include_path}/detour_interface.h
-	${include_path}/detour_singleton.h
 )
 
 set(sources
 	${source_path}/detour.c
-	${source_path}/detour_impl.c
-	${source_path}/detour_singleton.c
 )
 
 # Group source files
@@ -143,6 +139,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::adt
 	${META_PROJECT_NAME}::dynlink
+	${META_PROJECT_NAME}::plugin
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}

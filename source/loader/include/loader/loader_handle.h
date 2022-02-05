@@ -35,4 +35,4 @@ typedef void *loader_handle;
 }
 #endif
 
-#endif /* LOADER_IMPL_HANDLE_H */
+#endif /* LOADER_HANDLE_H */

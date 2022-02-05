@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef DETOUR_IMPL_HANDLE_H
-#define DETOUR_IMPL_HANDLE_H 1
+#ifndef DETOUR_HANDLE_H
+#define DETOUR_HANDLE_H 1
 
 /* -- Headers -- */
 
@@ -29,12 +29,16 @@
 extern "C" {
 #endif
 
+/* -- Forward Declarations -- */
+
+struct detour_handle_type;
+
 /* -- Type Definitions -- */
 
-typedef void *detour_impl_handle;
+typedef struct detour_handle_type *detour_handle;
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* DETOUR_IMPL_HANDLE_H */
+#endif /* DETOUR_HANDLE_H */

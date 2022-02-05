@@ -13,23 +13,17 @@
 
 #include <detour/detour_api.h>
 
-#include <memory/memory.h>
+#include <detour/detour_handle.h>
+
+#include <plugin/plugin.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Forward Declarations -- */
-
-struct detour_type;
-
-struct detour_handle_type;
-
 /* -- Type Definitions -- */
 
-typedef struct detour_type *detour;
-
-typedef struct detour_handle_type *detour_handle;
+typedef plugin detour;
 
 /**
 *  @brief

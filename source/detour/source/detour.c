@@ -11,22 +11,26 @@
 #include <metacall/metacall_version.h>
 
 #include <detour/detour.h>
-#include <detour/detour_impl.h>
-#include <detour/detour_singleton.h>
+#include <detour/detour_interface.h>
 
 #include <log/log.h>
 
-#include <memory/memory.h>
+/* -- Definitions -- */
 
-#include <string.h>
+#define DETOUR_MANAGER_NAME			"detour"
+#define DETOUR_LIBRARY_PATH			"DETOUR_LIBRARY_PATH"
+#define DETOUR_LIBRARY_DEFAULT_PATH "detours"
+
+/* -- Macros -- */
+
+#define detour_iface(d) \
+	plugin_iface_type(d, detour_interface)
 
 /* -- Member Data -- */
 
-struct detour_type
-{
-	char *name;
-	detour_impl impl;
-};
+static plugin_manager_declare(detour_manager);
+
+/* -- Member Data -- */
 
 struct detour_handle_type
 {
@@ -38,116 +42,27 @@ struct detour_handle_type
 
 int detour_initialize(void)
 {
-	if (detour_singleton_initialize() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour singleton initialization");
-
-		return 1;
-	}
-
-	return 0;
+	return plugin_manager_initialize(
+		&detour_manager,
+		DETOUR_MANAGER_NAME,
+		DETOUR_LIBRARY_PATH,
+#if defined(DETOUR_LIBRARY_INSTALL_PATH)
+		DETOUR_LIBRARY_INSTALL_PATH,
+#else
+		DETOUR_LIBRARY_DEFAULT_PATH,
+#endif /* DETOUR_LIBRARY_INSTALL_PATH */
+		NULL,
+		NULL);
 }
 
 detour detour_create(const char *name)
 {
-	detour d;
-
-	size_t name_length;
-
-	if (name == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour name");
-
-		return NULL;
-	}
-
-	d = detour_singleton_get(name);
-
-	if (d != NULL)
-	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Detour <%p> already exists", (void *)d);
-
-		return d;
-	}
-
-	name_length = strlen(name);
-
-	if (name_length == 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour name length");
-
-		return NULL;
-	}
-
-	d = malloc(sizeof(struct detour_type));
-
-	if (d == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour allocation");
-
-		return NULL;
-	}
-
-	d->name = malloc(sizeof(char) * (name_length + 1));
-
-	if (d->name == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour name allocation");
-
-		free(d);
-
-		return NULL;
-	}
-
-	strncpy(d->name, name, name_length);
-
-	d->name[name_length] = '\0';
-
-	d->impl = detour_impl_create();
-
-	if (d->impl == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation creation");
-
-		free(d->name);
-
-		free(d);
-
-		return NULL;
-	}
-
-	if (detour_impl_load(d->impl, detour_singleton_path(), d->name) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation loading");
-
-		detour_impl_destroy(d->impl);
-
-		free(d->name);
-
-		free(d);
-
-		return NULL;
-	}
-
-	if (detour_singleton_register(d) != 0)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour singleton insert");
-
-		detour_impl_destroy(d->impl);
-
-		free(d->name);
-
-		free(d);
-
-		return NULL;
-	}
-
-	return d;
+	return plugin_manager_create(&detour_manager, name, NULL, NULL);
 }
 
 const char *detour_name(detour d)
 {
-	return d->name;
+	return plugin_name(d);
 }
 
 void (*detour_trampoline(detour_handle handle))(void)
@@ -157,33 +72,43 @@ void (*detour_trampoline(detour_handle handle))(void)
 
 detour_handle detour_install(detour d, void (*target)(void), void (*hook)(void))
 {
-	detour_handle handle;
-
-	void (**target_ptr)(void);
-
 	if (d == NULL || target == NULL || hook == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid install arguments");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour install arguments");
 
 		return NULL;
 	}
 
-	handle = malloc(sizeof(struct detour_handle_type));
+	detour_handle handle = malloc(sizeof(struct detour_handle_type));
 
 	if (handle == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid install handle allocation");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour install handle allocation");
 
 		return NULL;
 	}
 
-	target_ptr = &target;
-
-	handle->impl = detour_impl_install(d->impl, target_ptr, hook);
+	handle->impl = detour_iface(d)->initialize();
 
 	if (handle->impl == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid install implementation");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle initialization");
+
+		free(handle);
+
+		return NULL;
+	}
+
+	void (**target_ptr)(void) = &target;
+
+	if (detour_iface(d)->install(handle->impl, target_ptr, hook) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle installation");
+
+		if (detour_iface(d)->destroy(handle->impl) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle destruction");
+		}
 
 		free(handle);
 
@@ -197,6 +122,8 @@ detour_handle detour_install(detour d, void (*target)(void), void (*hook)(void))
 
 int detour_uninstall(detour d, detour_handle handle)
 {
+	int result = 0;
+
 	if (d == NULL || handle == NULL)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid uninstall arguments");
@@ -204,66 +131,33 @@ int detour_uninstall(detour d, detour_handle handle)
 		return 1;
 	}
 
-	if (detour_impl_uninstall(d->impl, handle->impl) != 0)
+	result |= detour_iface(d)->uninstall(handle->impl);
+
+	if (result != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour uninstall");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle uninstallation");
+	}
 
-		free(handle);
+	result |= detour_iface(d)->destroy(handle->impl);
 
-		return 1;
+	if (result != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation handle destruction");
 	}
 
 	free(handle);
 
-	return 0;
+	return result;
 }
 
 int detour_clear(detour d)
 {
-	if (d != NULL)
-	{
-		int result = 0;
-
-		if (detour_singleton_clear(d) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour singleton clear");
-
-			result = 1;
-		}
-
-		if (d->name != NULL)
-		{
-			free(d->name);
-		}
-
-		if (d->impl != NULL)
-		{
-			if (detour_impl_unload(d->impl) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation unloading");
-
-				result = 1;
-			}
-
-			if (detour_impl_destroy(d->impl) != 0)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid detour implementation destruction");
-
-				result = 1;
-			}
-		}
-
-		free(d);
-
-		return result;
-	}
-
-	return 0;
+	return plugin_manager_clear(&detour_manager, d);
 }
 
 void detour_destroy(void)
 {
-	detour_singleton_destroy();
+	plugin_manager_destroy(&detour_manager);
 }
 
 const char *detour_print_info(void)
