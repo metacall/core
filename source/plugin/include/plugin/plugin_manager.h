@@ -37,7 +37,7 @@ extern "C" {
 /* -- Macros -- */
 
 #define plugin_manager_declare(name) \
-	struct plugin_manager_type name = { NULL, NULL, NULL, NULL, NULL, NULL }
+	struct plugin_manager_type name = { 0 }
 
 #define plugin_manager_impl_type(manager, type_name) \
 	((type_name)plugin_manager_impl(manager))

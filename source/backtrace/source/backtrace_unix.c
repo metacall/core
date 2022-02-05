@@ -75,7 +75,7 @@ static void backtrace_handler(int sig_num, siginfo_t *info, void *ucontext)
 
 int backtrace_initialize(void)
 {
-	struct sigaction sigact;
+	struct sigaction sigact = { 0 };
 
 	sigact.sa_sigaction = backtrace_handler;
 	sigact.sa_flags = SA_RESTART | SA_SIGINFO;
