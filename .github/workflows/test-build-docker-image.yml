@@ -7,3 +7,21 @@ on:
   # trigger for pushes to develop
   push:
     branches: [develop]
+
+jobs:
+  build-metaCall:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the code
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # Run Docker Command - Pull
+      - run: sh ./docker-compose.sh pull
