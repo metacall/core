@@ -29,6 +29,9 @@
 #include <string.h>
 
 #define WIN32_LEAN_AND_MEAN
+#include <psapi.h>
+#include <stdio.h>
+#include <tchar.h>
 #include <windows.h>
 
 /* -- Methods -- */
@@ -38,6 +41,15 @@ const char *dynlink_impl_interface_extension_win32(void)
 	static const char extension_win32[0x04] = "dll";
 
 	return extension_win32;
+}
+
+static void dynlink_impl_interface_get_name_str_win32(dynlink_name name, dynlink_name_impl name_impl, size_t length)
+{
+	strncat(name_impl, name, length);
+
+	strncat(name_impl, ".", length);
+
+	strncat(name_impl, dynlink_impl_extension(), length);
 }
 
 void dynlink_impl_interface_get_name_win32(dynlink handle, dynlink_name_impl name_impl, size_t length)
@@ -89,13 +101,52 @@ int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 	return (FreeLibrary(impl) == FALSE);
 }
 
+static char *dynlink_impl_interface_strip_lib_path_win32(char *metacall_lib_path, char *metacall_lib_name)
+{
+	size_t lib_path_len = strlen(metacall_lib_path) - (strlen(metacall_lib_name) + 1);
+	char *custom_lib_path = malloc(sizeof(char) * (lib_path_len + 1));
+	custom_lib_path[lib_path_len] = 0;
+	strncpy(custom_lib_path, metacall_lib_path, lib_path_len);
+	return custom_lib_path;
+}
+
 char *dynlink_impl_interface_lib_path_win32(dynlink_name name, int (*comparator)(dynlink_path, dynlink_name))
 {
-	/* TODO */
-	(void)name;
-	(void)comparator;
+	dynlink_name_impl metacall_lib_name = { 0 };
+	dynlink_impl_interface_get_name_str_win32(name, metacall_lib_name, DYNLINK_NAME_IMPL_SIZE - 1);
+	HMODULE handle_modules[1024];
+	HANDLE handle_process;
+	DWORD cb_needed;
+	unsigned int i;
+	handle_process = GetCurrentProcess();
+	char *metacall_lib_path = NULL;
+	int found_lib_path = 0;
+	if (EnumProcessModules(handle_process, handle_modules, sizeof(handle_modules), &cb_needed))
+	{
+		for (i = 0; i < (cb_needed / sizeof(HMODULE)); i++)
+		{
+			TCHAR lib_path[MAX_PATH];
 
-	return NULL;
+			// Get the full path to the module's file.
+
+			if (GetModuleFileNameEx(handle_process, handle_modules[i], lib_path,
+					sizeof(lib_path) / sizeof(TCHAR)))
+			{
+				if (comparator(lib_path, metacall_lib_name) == 0)
+				{
+					found_lib_path = 1;
+					metacall_lib_path = dynlink_impl_interface_strip_lib_path_win32(lib_path, metacall_lib_name);
+					break;
+				}
+			}
+		}
+	}
+	if (!found_lib_path)
+	{
+		free(metacall_lib_path);
+		return NULL;
+	}
+	return metacall_lib_path;
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton_win32(void)
