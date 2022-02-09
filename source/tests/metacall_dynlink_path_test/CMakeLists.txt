@@ -89,11 +89,17 @@ target_link_libraries(${target}
 # Compile definitions
 #
 
+if(WIN32)
+	string(REPLACE "/" "\\\\" METACALL_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}")
+else()
+	set(METACALL_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}")
+endif()
+
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 	# For metacall library path test
-	METACALL_LIBRARY_PATH="${PROJECT_OUTPUT_DIR}"
+	METACALL_LIBRARY_PATH="${METACALL_LIBRARY_PATH}"
 )
 
 #
