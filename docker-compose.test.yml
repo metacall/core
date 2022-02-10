@@ -20,26 +20,8 @@
 version: "3.7"
 
 services:
-  deps:
-    image: metacall/core:deps
-    build:
-      cache_from:
-        - ${IMAGE_REGISTRY}/metacall/core:deps
-
   dev:
     image: metacall/core:dev
     build:
-      cache_from:
-        - ${IMAGE_REGISTRY}/metacall/core:dev
-
-  runtime:
-    image: metacall/core:runtime
-    build:
-      cache_from:
-        - ${IMAGE_REGISTRY}/metacall/core:runtime
-
-  cli:
-    image: metacall/core:cli
-    build:
-      cache_from:
-        - ${IMAGE_REGISTRY}/metacall/core:cli
+      args:
+        METACALL_BUILD_OPTIONS: root python ruby netcore5 nodejs typescript file rpc examples tests scripts ports dynamic install pack sanitizer # v8 coverage benchmarks

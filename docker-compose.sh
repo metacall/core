@@ -69,6 +69,15 @@ sub_rebuild() {
 	docker-compose -f docker-compose.yml build --force-rm --no-cache cli
 }
 
+# Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
+sub_test() {
+	ln -sf tools/deps/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build -f docker-compose.test.yml --force-rm deps
+
+	ln -sf tools/dev/.dockerignore .dockerignore
+	docker-compose -f docker-compose.yml build -f docker-compose.test.yml --force-rm dev
+}
+
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
 sub_cache() {
 	if [ -z "$IMAGE_REGISTRY" ]; then
@@ -153,6 +162,7 @@ sub_help() {
 	echo "	pull"
 	echo "	build"
 	echo "	rebuild"
+	echo "	test"
 	echo "	cache"
 	echo "	push"
 	echo "	pack"
@@ -168,6 +178,9 @@ case "$1" in
 		;;
 	rebuild)
 		sub_rebuild
+		;;
+	test)
+		sub_test
 		;;
 	cache)
 		sub_cache

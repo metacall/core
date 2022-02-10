@@ -38,6 +38,7 @@ BUILD_TESTS=0
 BUILD_BENCHMARKS=0
 BUILD_PORTS=0
 BUILD_COVERAGE=0
+BUILD_SANITIZER=0
 
 sub_options() {
 	for option in "$@"
@@ -123,6 +124,10 @@ sub_options() {
 			echo "Build all coverage reports"
 			BUILD_COVERAGE=1
 		fi
+		if [ "$option" = 'sanitizer' ]; then
+			echo "Build with sanitizers"
+			BUILD_SANITIZER=1
+		fi
 	done
 }
 
@@ -198,7 +203,7 @@ sub_configure() {
 	if [ $BUILD_NETCORE5 = 1 ]; then
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.13/"
+			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.14/"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -301,6 +306,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_COVERAGE=Off"
 	fi
 
+	# Sanitizer
+	if [ $BUILD_SANITIZER = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
+	fi
+
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 
@@ -332,6 +344,7 @@ sub_help() {
 	echo "	dynamic: build as dynamic libraries"
 	echo "	ports: build all ports"
 	echo "	coverage: build all coverage reports"
+	echo "	sanitizer: build with address, memory, thread... sanitizers"
 	echo ""
 }
 
