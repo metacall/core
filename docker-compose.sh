@@ -72,10 +72,10 @@ sub_rebuild() {
 # Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
 sub_test() {
 	ln -sf tools/deps/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build -f docker-compose.test.yml --force-rm deps
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml build -f docker-compose.test.yml --force-rm dev
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
