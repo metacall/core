@@ -71,6 +71,12 @@ sub_rebuild() {
 
 # Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
 sub_test() {
+
+	# In order to get rid of the log limit:
+	# [output clipped, log limit 1MiB reached]
+	# Use this command:
+	# docker buildx create --use --name larger_log --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
+
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
