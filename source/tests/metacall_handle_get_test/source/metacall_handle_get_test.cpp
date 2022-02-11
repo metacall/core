@@ -79,8 +79,6 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 		EXPECT_EQ((double)metacall_value_to_double(ret), (double)1275.0);
 
 		metacall_value_destroy(ret);
-		metacall_value_destroy(args[0]);
-		metacall_value_destroy(args[1]);
 
 		ret = metacallhv_s(handle, "call_test", args, sizeof(args) / sizeof(args[0]));
 

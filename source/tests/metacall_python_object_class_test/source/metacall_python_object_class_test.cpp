@@ -95,7 +95,9 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 
 			metacall_value_destroy(param2);
 
-			int retcode = metacall_object_set(new_object, "b", metacall_value_create_long(124124L));
+			void *long_value = metacall_value_create_long(124124L);
+			int retcode = metacall_object_set(new_object, "b", long_value);
+			metacall_value_destroy(long_value);
 			ASSERT_EQ((int)0, int(retcode));
 
 			param2 = metacall_object_get(new_object, "b");
@@ -105,6 +107,7 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 			metacall_value_destroy(param2);
 
 			metacall_value_destroy(new_object_v);
+			metacall_value_destroy(myclass_value);
 		}
 
 		{
@@ -118,7 +121,9 @@ TEST_F(metacall_python_class_test, DefaultConstructor)
 
 			metacall_value_destroy(param2);
 
-			int retcode = metacall_class_static_set(myclass, "b", metacall_value_create_long(44444L));
+			void *long_value = metacall_value_create_long(44444L);
+			int retcode = metacall_class_static_set(myclass, "b", long_value);
+			metacall_value_destroy(long_value);
 			ASSERT_EQ((int)0, int(retcode));
 
 			param2 = metacall_class_static_get(myclass, "b");

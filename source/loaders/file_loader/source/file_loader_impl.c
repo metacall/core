@@ -248,7 +248,6 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path
 
 		strncpy(descriptor->path, path, descriptor->length);
 
-
 		return 0;
 	}
 
@@ -396,7 +395,10 @@ loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_
 			return NULL;
 		}
 
-		file_loader_impl_load_execution_path(file_impl, handle, path);
+		if (file_loader_impl_load_execution_path(file_impl, handle, path) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "File %s not found", path);
+		}
 
 		if (vector_size(handle->paths) == 0)
 		{
@@ -465,12 +467,16 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 			{
 				loader_path path;
 
-				(void)portability_path_get_relative(script_path, strlen(script_path) + 1, descriptor->path, LOADER_PATH_SIZE, path, LOADER_PATH_SIZE);
+				(void)portability_path_get_relative(script_path, strlen(script_path) + 1, descriptor->path, descriptor->length, path, LOADER_PATH_SIZE);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "File registering function: %s", path);
 
 				f = function_create(path, 0, file_function, &function_file_singleton);
 			}
 			else
 			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "File registering function: %s", descriptor->path);
+
 				f = function_create(descriptor->path, 0, file_function, &function_file_singleton);
 			}
 

@@ -68,6 +68,8 @@ TEST_F(metacall_handle_export_test, DefaultConstructor)
 		std::cout << value_str << std::endl;
 
 		metacall_value_destroy(v);
+
+		metacall_allocator_free(allocator, value_str);
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
@@ -101,6 +103,8 @@ TEST_F(metacall_handle_export_test, DefaultConstructor)
 		std::cout << value_str << std::endl;
 
 		metacall_value_destroy(v);
+
+		metacall_allocator_free(allocator, value_str);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
