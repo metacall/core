@@ -47,7 +47,11 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 
 	ASSERT_NE((char *)NULL, (char *)path);
 
-	ASSERT_EQ((int)0, (int)strcmp(path, METACALL_LIBRARY_PATH));
+	size_t length = strlen(path);
+
+	ASSERT_EQ((size_t)length, (size_t)(sizeof(METACALL_LIBRARY_PATH) - 1));
+
+	ASSERT_EQ((int)0, (int)strncmp(path, METACALL_LIBRARY_PATH, length));
 
 	free(path);
 

@@ -23,6 +23,8 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <portability/portability_path.h>
+
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
@@ -328,7 +330,7 @@ static void c_loader_impl_handle_destroy(loader_impl_c_handle c_handle)
 	delete c_handle;
 }
 
-static bool c_loader_impl_file_exists(const loader_naming_path path)
+static bool c_loader_impl_file_exists(const loader_path path)
 {
 	if (FILE *file = fopen(path, "r"))
 	{
@@ -590,7 +592,7 @@ loader_impl_data c_loader_impl_initialize(loader_impl impl, configuration config
 	return static_cast<loader_impl_data>(c_impl);
 }
 
-int c_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int c_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 
@@ -820,7 +822,7 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_h
 	return 0;
 }
 
-static bool c_loader_impl_is_ld_script(const loader_naming_path path, size_t size)
+static bool c_loader_impl_is_ld_script(const loader_path path, size_t size)
 {
 	static const char extension[] = ".ld";
 
@@ -838,7 +840,7 @@ static bool c_loader_impl_is_ld_script(const loader_naming_path path, size_t siz
 	return true;
 }
 
-static void c_loader_impl_handle_add(loader_impl_c_handle c_handle, const loader_naming_path path, size_t size)
+static void c_loader_impl_handle_add(loader_impl_c_handle c_handle, const loader_path path, size_t size)
 {
 	if (c_loader_impl_is_ld_script(path, size) == false)
 	{
@@ -848,7 +850,7 @@ static void c_loader_impl_handle_add(loader_impl_c_handle c_handle, const loader
 	}
 }
 
-loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle c_handle = c_loader_impl_handle_create(c_impl);
@@ -860,8 +862,10 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 
 	for (size_t iterator = 0; iterator < size; ++iterator)
 	{
+		size_t path_size = strnlen(paths[iterator], LOADER_PATH_SIZE) + 1;
+
 		/* We assume it is a path so we load from path */
-		if (loader_path_is_absolute(paths[iterator]) == 0)
+		if (portability_path_is_absolute(paths[iterator], path_size) == 0)
 		{
 			if (tcc_add_file(c_handle->state, paths[iterator]) == -1)
 			{
@@ -870,7 +874,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 				return NULL;
 			}
 
-			c_loader_impl_handle_add(c_handle, paths[iterator], strnlen(paths[iterator], LOADER_NAMING_PATH_SIZE) + 1);
+			c_loader_impl_handle_add(c_handle, paths[iterator], path_size);
 		}
 		else
 		{
@@ -879,8 +883,8 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 			/* Otherwise, check the execution paths */
 			for (auto exec_path : c_impl->execution_paths)
 			{
-				loader_naming_path path;
-				size_t path_size = loader_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strlen(paths[iterator]) + 1, path);
+				loader_path path;
+				size_t path_size = portability_path_join(exec_path.c_str(), exec_path.length() + 1, paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1, path, LOADER_PATH_SIZE);
 
 				if (c_loader_impl_file_exists(path) == true && tcc_add_file(c_handle->state, path) != -1)
 				{
@@ -909,7 +913,7 @@ loader_handle c_loader_impl_load_from_file(loader_impl impl, const loader_naming
 	return c_handle;
 }
 
-loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_c c_impl = static_cast<loader_impl_c>(loader_impl_get(impl));
 	loader_impl_c_handle c_handle = c_loader_impl_handle_create(c_impl);
@@ -941,7 +945,7 @@ loader_handle c_loader_impl_load_from_memory(loader_impl impl, const loader_nami
 	return c_handle;
 }
 
-loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle c_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	/* TODO: Define what to do with this */
 	/*

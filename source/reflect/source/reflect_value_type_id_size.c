@@ -43,7 +43,7 @@ static const size_t type_id_size_list[] = {
 	sizeof(object),	  /* TYPE_OBJECT */
 };
 
-static_assert((int)sizeof(type_id_size_list) / sizeof(type_id_size_list[0]) == (int)TYPE_SIZE,
+portability_static_assert((int)sizeof(type_id_size_list) / sizeof(type_id_size_list[0]) == (int)TYPE_SIZE,
 	"Size of type_id size list does not match the type size.");
 
 size_t value_type_id_size(type_id id)

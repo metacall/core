@@ -23,14 +23,18 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
-#include <metacall/metacall.h>
+#include <portability/portability_path.h>
+
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
+
 #include <serial/serial.h>
 
 #include <log/log.h>
+
+#include <metacall/metacall.h>
 
 #include <curl/curl.h>
 
@@ -372,7 +376,7 @@ loader_impl_data rpc_loader_impl_initialize(loader_impl impl, configuration conf
 	return rpc_impl;
 }
 
-int rpc_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int rpc_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_rpc rpc_impl = static_cast<loader_impl_rpc>(loader_impl_get(impl));
 
@@ -411,7 +415,7 @@ int rpc_loader_impl_load_from_stream_handle(loader_impl_rpc_handle rpc_handle, s
 	return 0;
 }
 
-int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, const loader_path path)
 {
 	std::fstream file;
 
@@ -429,7 +433,7 @@ int rpc_loader_impl_load_from_file_handle(loader_impl_rpc_handle rpc_handle, con
 	return result;
 }
 
-int rpc_loader_impl_load_from_file_execution_paths(loader_impl_rpc rpc_impl, loader_impl_rpc_handle rpc_handle, const loader_naming_path path)
+int rpc_loader_impl_load_from_file_execution_paths(loader_impl_rpc rpc_impl, loader_impl_rpc_handle rpc_handle, const loader_path path)
 {
 	if (rpc_loader_impl_load_from_file_handle(rpc_handle, path) == 0)
 	{
@@ -440,9 +444,9 @@ int rpc_loader_impl_load_from_file_execution_paths(loader_impl_rpc rpc_impl, loa
 	{
 		for (auto it : rpc_impl->execution_paths)
 		{
-			loader_naming_path absolute_path;
+			loader_path absolute_path;
 
-			(void)loader_path_join(it.c_str(), it.size(), path, strlen(path) + 1, absolute_path);
+			(void)portability_path_join(it.c_str(), it.size(), path, strnlen(path, LOADER_PATH_SIZE) + 1, absolute_path, LOADER_PATH_SIZE);
 
 			if (rpc_loader_impl_load_from_file_handle(rpc_handle, absolute_path) == 0)
 			{
@@ -467,7 +471,7 @@ int rpc_loader_impl_load_from_memory_handle(loader_impl_rpc_handle rpc_handle, c
 	return rpc_loader_impl_load_from_stream_handle(rpc_handle, stream);
 }
 
-loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
@@ -493,7 +497,7 @@ loader_handle rpc_loader_impl_load_from_file(loader_impl impl, const loader_nami
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_rpc_handle rpc_handle = new loader_impl_rpc_handle_type();
 
@@ -517,7 +521,7 @@ loader_handle rpc_loader_impl_load_from_memory(loader_impl impl, const loader_na
 	return static_cast<loader_handle>(rpc_handle);
 }
 
-loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle rpc_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	/* TODO */
 

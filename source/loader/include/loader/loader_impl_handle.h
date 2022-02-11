@@ -28,7 +28,7 @@
 extern "C" {
 #endif
 
-typedef loader_handle (*loader_impl_handle_create)(loader_impl, const loader_naming_path, const loader_naming_name);
+typedef loader_handle (*loader_impl_handle_create)(loader_impl, const loader_path, const loader_name);
 
 typedef int (*loader_impl_handle_discover)(loader_impl, loader_handle, context);
 

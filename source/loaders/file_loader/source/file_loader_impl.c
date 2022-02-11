@@ -22,7 +22,8 @@
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
-#include <loader/loader_path.h>
+
+#include <portability/portability_path.h>
 
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
@@ -35,7 +36,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 
 #if defined(WIN32) || defined(_WIN32)
 	#ifndef NOMINMAX
@@ -48,8 +48,6 @@
 
 	#include <windows.h>
 
-	#define LOADER_IMPL_FILE_SIZE MAX_PATH
-
 typedef struct _stat file_stat_type;
 
 	#define file_stat _stat
@@ -60,10 +58,7 @@ typedef struct _stat file_stat_type;
 	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
 
-	#include <limits.h>
-	#include <unistd.h>
-
-	#define LOADER_IMPL_FILE_SIZE PATH_MAX
+	#include <sys/stat.h>
 
 typedef struct stat file_stat_type;
 
@@ -71,11 +66,9 @@ typedef struct stat file_stat_type;
 
 #endif
 
-typedef char loader_impl_file_path[LOADER_IMPL_FILE_SIZE];
-
 typedef struct loader_impl_file_descriptor_type
 {
-	loader_impl_file_path path;
+	loader_path path;
 	size_t length;
 
 } * loader_impl_file_descriptor;
@@ -98,8 +91,8 @@ typedef struct loader_impl_file_function_type
 
 } * loader_impl_file_function;
 
-static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_naming_name path);
-static void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_naming_name path);
+static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path);
+static void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path);
 
 int function_file_interface_create(function func, function_impl impl)
 {
@@ -210,7 +203,7 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 		return NULL;
 	}
 
-	file_impl->execution_paths = vector_create(sizeof(loader_naming_path));
+	file_impl->execution_paths = vector_create(sizeof(loader_path));
 
 	if (file_impl->execution_paths == NULL)
 	{
@@ -225,21 +218,21 @@ loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration con
 	return (loader_impl_data)file_impl;
 }
 
-int file_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int file_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_file file_impl = loader_impl_get(impl);
-	loader_naming_name *execution_path;
+	loader_path *execution_path;
 
 	vector_push_back_empty(file_impl->execution_paths);
 
 	execution_path = vector_back(file_impl->execution_paths);
 
-	strncpy(*execution_path, path, LOADER_NAMING_PATH_SIZE);
+	strncpy(*execution_path, path, strnlen(path, LOADER_PATH_SIZE));
 
 	return 0;
 }
 
-int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_naming_name path)
+int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path)
 {
 	file_stat_type fs;
 
@@ -251,9 +244,9 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_nami
 
 		descriptor = vector_back(handle->paths);
 
-		strncpy(descriptor->path, path, LOADER_IMPL_FILE_SIZE);
+		descriptor->length = strnlen(path, LOADER_PATH_SIZE);
 
-		descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+		strncpy(descriptor->path, path, descriptor->length);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "File %s loaded from file", path);
 
@@ -263,7 +256,7 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_nami
 	return 1;
 }
 
-void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_naming_name path)
+void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path)
 {
 	size_t size = vector_size(file_impl->execution_paths);
 
@@ -273,10 +266,10 @@ void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_imp
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			loader_naming_name *execution_path = vector_at(file_impl->execution_paths, iterator);
-			loader_naming_name absolute_path;
+			loader_path *execution_path = vector_at(file_impl->execution_paths, iterator);
+			loader_path absolute_path;
 
-			(void)loader_path_join(*execution_path, strlen(*execution_path) + 1, path, strlen(path) + 1, absolute_path);
+			(void)portability_path_join(*execution_path, strlen(*execution_path) + 1, path, strnlen(path, LOADER_PATH_SIZE) + 1, absolute_path, LOADER_PATH_SIZE);
 
 			if (file_loader_impl_load_path(handle, absolute_path) == 0)
 			{
@@ -287,7 +280,7 @@ void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_imp
 	}
 }
 
-loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_file file_impl = loader_impl_get(impl);
 
@@ -331,7 +324,7 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	(void)impl;
 	(void)name;
@@ -362,9 +355,9 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 		descriptor = vector_back(handle->paths);
 
-		strncpy(descriptor->path, name, LOADER_IMPL_FILE_SIZE);
+		descriptor->length = strnlen(name, LOADER_NAME_SIZE);
 
-		descriptor->length = strnlen(descriptor->path, LOADER_IMPL_FILE_SIZE);
+		strncpy(descriptor->path, name, descriptor->length);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from memory", name);
 
@@ -375,7 +368,7 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	return NULL;
 }
 
-loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	loader_impl_file file_impl = loader_impl_get(impl);
 
@@ -464,11 +457,11 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 			if (script_path != NULL)
 			{
-				loader_naming_name name;
+				loader_path path;
 
-				(void)loader_path_get_relative(script_path, descriptor->path, name);
+				(void)portability_path_get_relative(script_path, strlen(script_path) + 1, descriptor->path, LOADER_PATH_SIZE, path, LOADER_PATH_SIZE);
 
-				f = function_create(name, 0, file_function, &function_file_singleton);
+				f = function_create(path, 0, file_function, &function_file_singleton);
 			}
 			else
 			{

@@ -22,32 +22,10 @@
 #define NODE_LOADER_BOOTSTRAP_H 1
 
 #include <configuration/configuration.h>
+
 #include <reflect/reflect_value_type.h>
 
-#if defined(WIN32) || defined(_WIN32)
-	#ifndef NOMINMAX
-		#define NOMINMAX
-	#endif
-
-	#ifndef WIN32_LEAN_AND_MEAN
-		#define WIN32_LEAN_AND_MEAN
-	#endif
-
-	#include <windows.h>
-	#define NODE_LOADER_IMPL_PATH_SIZE MAX_PATH
-#elif defined(unix) || defined(__unix__) || defined(__unix) ||                          \
-	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
-	defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
-	defined(__MINGW32__) || defined(__MINGW64__) ||                                     \
-	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-
-	#include <limits.h>
-	#include <unistd.h>
-
-	#define NODE_LOADER_IMPL_PATH_SIZE PATH_MAX
-#else
-	#define NODE_LOADER_IMPL_PATH_SIZE 4096
-#endif
+#include <loader/loader_naming.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,9 +34,7 @@ extern "C" {
 #include <stdlib.h>
 #include <string.h>
 
-typedef char node_impl_path[NODE_LOADER_IMPL_PATH_SIZE];
-
-inline int node_loader_impl_bootstrap_path(const char file[], configuration config, node_impl_path path, size_t *size)
+inline int node_loader_impl_bootstrap_path(const char file[], size_t file_length, configuration config, loader_path path, size_t *size)
 {
 	size_t path_size = 0;
 	const char *load_library_path = value_to_string(configuration_value(config, "loader_library_path"));
@@ -70,7 +46,7 @@ inline int node_loader_impl_bootstrap_path(const char file[], configuration conf
 		return 1;
 	}
 
-	load_library_path_length = strlen(load_library_path);
+	load_library_path_length = strnlen(load_library_path, LOADER_PATH_SIZE);
 
 	strncpy(path, load_library_path, load_library_path_length);
 
@@ -92,7 +68,7 @@ inline int node_loader_impl_bootstrap_path(const char file[], configuration conf
 	{
 		/* Load bootstrap script defined in the configuration */
 		const char *bootstrap_script = value_to_string(bootstrap_value);
-		size_t bootstrap_script_length = strlen(bootstrap_script);
+		size_t bootstrap_script_length = strnlen(bootstrap_script, LOADER_PATH_SIZE);
 
 		strncpy(&path[load_library_path_length], bootstrap_script, bootstrap_script_length);
 
@@ -102,8 +78,6 @@ inline int node_loader_impl_bootstrap_path(const char file[], configuration conf
 	}
 	else
 	{
-		const size_t file_length = strlen(file);
-
 		/* Load default script name */
 		strncpy(&path[load_library_path_length], file, file_length);
 

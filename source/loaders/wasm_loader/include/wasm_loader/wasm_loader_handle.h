@@ -38,7 +38,7 @@ typedef struct loader_impl_wasm_module_type loader_impl_wasm_module;
 
 WASM_LOADER_API loader_impl_wasm_handle wasm_loader_handle_create(size_t num_modules);
 WASM_LOADER_API void wasm_loader_handle_destroy(loader_impl_wasm_handle handle);
-WASM_LOADER_API int wasm_loader_handle_add_module(loader_impl_wasm_handle handle, const loader_naming_name name, wasm_store_t *store, const wasm_byte_vec_t *binary);
+WASM_LOADER_API int wasm_loader_handle_add_module(loader_impl_wasm_handle handle, const loader_name name, wasm_store_t *store, const wasm_byte_vec_t *binary);
 WASM_LOADER_API int wasm_loader_handle_discover(loader_impl impl, loader_impl_wasm_handle handle, scope scp);
 
 #ifdef __cplusplus

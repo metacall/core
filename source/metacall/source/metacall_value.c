@@ -51,31 +51,31 @@ static const enum metacall_value_id value_id_map[] = {
 
 /* -- Static Assertions -- */
 
-static_assert((int)TYPE_SIZE == (int)METACALL_SIZE,
+portability_static_assert((int)TYPE_SIZE == (int)METACALL_SIZE,
 	"Type size does not match MetaCall type size");
 
-static_assert(((int)TYPE_BOOL == (int)METACALL_BOOL) &&
-				  ((int)TYPE_CHAR == (int)METACALL_CHAR) &&
-				  ((int)TYPE_SHORT == (int)METACALL_SHORT) &&
-				  ((int)TYPE_INT == (int)METACALL_INT) &&
-				  ((int)TYPE_LONG == (int)METACALL_LONG) &&
-				  ((int)TYPE_FLOAT == (int)METACALL_FLOAT) &&
-				  ((int)TYPE_DOUBLE == (int)METACALL_DOUBLE) &&
-				  ((int)TYPE_STRING == (int)METACALL_STRING) &&
-				  ((int)TYPE_BUFFER == (int)METACALL_BUFFER) &&
-				  ((int)TYPE_ARRAY == (int)METACALL_ARRAY) &&
-				  ((int)TYPE_MAP == (int)METACALL_MAP) &&
-				  ((int)TYPE_PTR == (int)METACALL_PTR) &&
-				  ((int)TYPE_FUTURE == (int)METACALL_FUTURE) &&
-				  ((int)TYPE_FUNCTION == (int)METACALL_FUNCTION) &&
-				  ((int)TYPE_NULL == (int)METACALL_NULL) &&
-				  ((int)TYPE_CLASS == (int)METACALL_CLASS) &&
-				  ((int)TYPE_OBJECT == (int)METACALL_OBJECT) &&
-				  ((int)TYPE_SIZE == (int)METACALL_SIZE) &&
-				  ((int)TYPE_INVALID == (int)METACALL_INVALID),
+portability_static_assert(((int)TYPE_BOOL == (int)METACALL_BOOL) &&
+							  ((int)TYPE_CHAR == (int)METACALL_CHAR) &&
+							  ((int)TYPE_SHORT == (int)METACALL_SHORT) &&
+							  ((int)TYPE_INT == (int)METACALL_INT) &&
+							  ((int)TYPE_LONG == (int)METACALL_LONG) &&
+							  ((int)TYPE_FLOAT == (int)METACALL_FLOAT) &&
+							  ((int)TYPE_DOUBLE == (int)METACALL_DOUBLE) &&
+							  ((int)TYPE_STRING == (int)METACALL_STRING) &&
+							  ((int)TYPE_BUFFER == (int)METACALL_BUFFER) &&
+							  ((int)TYPE_ARRAY == (int)METACALL_ARRAY) &&
+							  ((int)TYPE_MAP == (int)METACALL_MAP) &&
+							  ((int)TYPE_PTR == (int)METACALL_PTR) &&
+							  ((int)TYPE_FUTURE == (int)METACALL_FUTURE) &&
+							  ((int)TYPE_FUNCTION == (int)METACALL_FUNCTION) &&
+							  ((int)TYPE_NULL == (int)METACALL_NULL) &&
+							  ((int)TYPE_CLASS == (int)METACALL_CLASS) &&
+							  ((int)TYPE_OBJECT == (int)METACALL_OBJECT) &&
+							  ((int)TYPE_SIZE == (int)METACALL_SIZE) &&
+							  ((int)TYPE_INVALID == (int)METACALL_INVALID),
 	"Internal reflect value types does not match with public metacall API value types");
 
-static_assert((int)sizeof(value_id_map) / sizeof(value_id_map[0]) == (int)METACALL_SIZE,
+portability_static_assert((int)sizeof(value_id_map) / sizeof(value_id_map[0]) == (int)METACALL_SIZE,
 	"Size of value id map does not match the type size");
 
 /* -- Methods -- */

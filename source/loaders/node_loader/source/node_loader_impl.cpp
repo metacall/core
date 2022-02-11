@@ -304,7 +304,7 @@ struct loader_impl_async_execution_path_safe_type
 struct loader_impl_async_load_from_file_safe_type
 {
 	loader_impl_node node_impl;
-	const loader_naming_path *paths;
+	const loader_path *paths;
 	size_t size;
 	napi_ref handle_ref;
 };
@@ -2442,7 +2442,7 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 		{
 			napi_value path_str;
 
-			size_t length = strnlen(load_from_file_safe->paths[index], LOADER_NAMING_PATH_SIZE);
+			size_t length = strnlen(load_from_file_safe->paths[index], LOADER_PATH_SIZE);
 
 			status = napi_create_string_utf8(env, load_from_file_safe->paths[index], length, &path_str);
 
@@ -3805,10 +3805,10 @@ void node_loader_impl_thread(void *data)
 
 	/* Get the boostrap path */
 	static const char bootstrap_file_str[] = "bootstrap.js";
-	node_impl_path bootstrap_path_str = { 0 };
+	loader_path bootstrap_path_str = { 0 };
 	size_t bootstrap_path_str_size = 0;
 
-	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
+	if (node_loader_impl_bootstrap_path(bootstrap_file_str, sizeof(bootstrap_file_str) - 1, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
 		/* Report error (TODO: Implement it with thread safe logs) */
 		node_impl->error_message = "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.js cannot be found";
@@ -4261,7 +4261,7 @@ loader_impl_data node_loader_impl_initialize(loader_impl impl, configuration con
 	return node_impl;
 }
 
-int node_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int node_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 	napi_status status;
@@ -4326,7 +4326,7 @@ int node_loader_impl_execution_path(loader_impl impl, const loader_naming_path p
 	return 0;
 }
 
-loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 	napi_ref handle_ref = NULL;
@@ -4400,7 +4400,7 @@ loader_handle node_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return static_cast<loader_handle>(handle_ref);
 }
 
-loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(loader_impl_get(impl));
 	napi_ref handle_ref = NULL;
@@ -4475,7 +4475,7 @@ loader_handle node_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	return static_cast<loader_handle>(handle_ref);
 }
 
-loader_handle node_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle node_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	/* TODO */
 

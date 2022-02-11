@@ -36,11 +36,13 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/portability.h
 	${include_path}/portability_assert.h
+	${include_path}/portability_path.h
 	${include_path}/portability_executable_path.h
 )
 
 set(sources
 	${source_path}/portability.c
+	${source_path}/portability_path.c
 	${source_path}/portability_executable_path.c
 )
 

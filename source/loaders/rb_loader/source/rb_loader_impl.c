@@ -12,6 +12,8 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <portability/portability_path.h>
+
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
@@ -871,7 +873,7 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 	return (loader_impl_data)&rb_loader_impl_unused;
 }
 
-int rb_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int rb_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
 
@@ -904,7 +906,7 @@ VALUE rb_loader_impl_load_data_absolute(VALUE module_absolute_path)
 	return Qnil;
 }
 
-VALUE rb_loader_impl_load_data(loader_impl impl, const loader_naming_path path)
+VALUE rb_loader_impl_load_data(loader_impl impl, const loader_path path)
 {
 	VALUE load_path_array = rb_gv_get("$:");
 
@@ -991,7 +993,7 @@ int rb_loader_impl_module_eval(VALUE module, VALUE module_data, VALUE *result)
 	return state;
 }
 
-loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
+loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, const loader_path path, const loader_name name)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -1057,7 +1059,7 @@ loader_impl_rb_module rb_loader_impl_load_from_file_module(loader_impl impl, con
 	return NULL;
 }
 
-loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
 
@@ -1083,11 +1085,11 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
+		static const char extension[] = "rb";
 		loader_impl_rb_module rb_module;
+		loader_name module_name;
 
-		loader_naming_name module_name;
-
-		loader_path_get_module_name(paths[iterator], module_name, "rb");
+		(void)portability_path_get_module_name(paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1, extension, sizeof(extension), module_name, LOADER_NAME_SIZE);
 
 		rb_module = rb_loader_impl_load_from_file_module(impl, paths[iterator], module_name);
 
@@ -1116,7 +1118,7 @@ loader_handle rb_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return (loader_handle)handle;
 }
 
-loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	VALUE name_value = rb_str_new_cstr(name);
 
@@ -1185,7 +1187,7 @@ loader_impl_rb_module rb_loader_impl_load_from_memory_module(loader_impl impl, c
 	return NULL;
 }
 
-loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_rb_handle handle = malloc(sizeof(struct loader_impl_rb_handle_type));
 
@@ -1227,7 +1229,7 @@ loader_handle rb_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return (loader_handle)handle;
 }
 
-loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	/* TODO */
 

@@ -41,7 +41,7 @@ struct loader_impl_mock_handle_type
 	void *handle_mock_data;
 };
 
-loader_handle mock_loader_impl_handle_create(loader_impl impl, const loader_naming_path path, const loader_naming_name name);
+loader_handle mock_loader_impl_handle_create(loader_impl impl, const loader_path path, const loader_name name);
 
 int mock_loader_impl_handle_discover(loader_impl impl, loader_handle handle, context ctx);
 
@@ -58,7 +58,7 @@ loader_impl_handle mock_loader_impl_handle_singleton(void)
 	return &loader_impl_handle_mock;
 }
 
-loader_handle mock_loader_impl_handle_create(loader_impl impl, const loader_naming_path path, const loader_naming_name name)
+loader_handle mock_loader_impl_handle_create(loader_impl impl, const loader_path path, const loader_name name)
 {
 	loader_impl_mock_handle handle = malloc(sizeof(struct loader_impl_mock_handle_type));
 

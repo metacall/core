@@ -5,7 +5,7 @@
 
 struct loader_impl_wasm_module_type
 {
-	loader_naming_name name;
+	loader_name name;
 	wasm_module_t *module;
 	wasm_instance_t *instance;
 	wasm_extern_vec_t exports;
@@ -60,7 +60,7 @@ void wasm_loader_handle_destroy(loader_impl_wasm_handle handle)
 	free(handle);
 }
 
-int wasm_loader_handle_add_module(loader_impl_wasm_handle handle, const loader_naming_name name, wasm_store_t *store, const wasm_byte_vec_t *binary)
+int wasm_loader_handle_add_module(loader_impl_wasm_handle handle, const loader_name name, wasm_store_t *store, const wasm_byte_vec_t *binary)
 {
 	loader_impl_wasm_module module;
 	module.module = wasm_module_new(store, binary);

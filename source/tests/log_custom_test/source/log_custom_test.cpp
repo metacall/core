@@ -75,7 +75,7 @@ size_t format_serialize(void *context, void *buffer, const size_t size, const ch
 	}
 	else
 	{
-		length += snprintf(body, size - length, message);
+		length += snprintf(body, size - length, "%s", message);
 	}
 
 	return length + 1;

@@ -144,7 +144,7 @@ loader_impl_data cob_loader_impl_initialize(loader_impl impl, configuration conf
 	return &loader_impl_cob_ptr;
 }
 
-int cob_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int cob_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	(void)impl;
 	(void)path;
@@ -156,7 +156,7 @@ int cob_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 	return 0;
 }
 
-loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_cob_handle cob_handle = new loader_impl_cob_handle_type();
 
@@ -169,9 +169,9 @@ loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_nami
 
 	for (size_t path_count = 0; path_count < size; ++path_count)
 	{
-		loader_naming_name module_name;
+		loader_name module_name;
 
-		if (loader_path_get_name(paths[path_count], module_name) > 1)
+		if (portability_path_get_name(paths[path_count], strnlen(paths[path_count], LOADER_PATH_SIZE) + 1, module_name, LOADER_NAME_SIZE) > 1)
 		{
 			void *func = cob_resolve(module_name);
 
@@ -202,7 +202,7 @@ loader_handle cob_loader_impl_load_from_file(loader_impl impl, const loader_nami
 	return cob_handle;
 }
 
-loader_handle cob_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle cob_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	(void)impl;
 	(void)name;
@@ -214,7 +214,7 @@ loader_handle cob_loader_impl_load_from_memory(loader_impl impl, const loader_na
 	return NULL;
 }
 
-loader_handle cob_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle cob_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	(void)impl;
 	(void)path;

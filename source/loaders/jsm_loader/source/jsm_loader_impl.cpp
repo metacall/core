@@ -177,7 +177,7 @@ loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration conf
 	return NULL;
 }
 
-int jsm_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int jsm_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	(void)impl;
 	(void)path;
@@ -185,7 +185,7 @@ int jsm_loader_impl_execution_path(loader_impl impl, const loader_naming_path pa
 	return 0;
 }
 
-loader_handle jsm_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name)
+loader_handle jsm_loader_impl_load(loader_impl impl, const loader_path path, loader_name name)
 {
 	loader_impl_jsm_handle jsm_handle = static_cast<loader_impl_jsm_handle>(malloc(sizeof(struct loader_impl_jsm_handle_type)));
 

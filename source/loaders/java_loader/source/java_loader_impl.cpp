@@ -1640,7 +1640,7 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 	return NULL;
 }
 
-int java_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int java_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 	if (java_impl != NULL)
@@ -1660,7 +1660,7 @@ int java_loader_impl_execution_path(loader_impl impl, const loader_naming_path p
 	return 1;
 }
 
-loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_java_handle java_handle = new loader_impl_java_handle_type();
 
@@ -1704,7 +1704,7 @@ loader_handle java_loader_impl_load_from_file(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	(void)impl;
 
@@ -1733,7 +1733,7 @@ loader_handle java_loader_impl_load_from_memory(loader_impl impl, const loader_n
 	return NULL;
 }
 
-loader_handle java_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle java_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	(void)impl;
 	(void)path;

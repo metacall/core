@@ -42,7 +42,7 @@ static const char *type_id_name_map[] = {
 	"Object"
 };
 
-static_assert((int)sizeof(type_id_name_map) / sizeof(type_id_name_map[0]) == (int)TYPE_SIZE,
+portability_static_assert((int)sizeof(type_id_name_map) / sizeof(type_id_name_map[0]) == (int)TYPE_SIZE,
 	"Size of type id name map does not match the type size");
 
 const char *type_id_name(type_id id)

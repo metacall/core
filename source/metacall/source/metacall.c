@@ -240,24 +240,24 @@ size_t metacall_args_size(void)
 
 int metacall_execution_path(const char *tag, const char *path)
 {
-	loader_naming_path path_impl;
+	loader_path path_impl;
 
 	if (tag == NULL || path == NULL)
 	{
 		return 1;
 	}
 
-	strncpy(path_impl, path, LOADER_NAMING_PATH_SIZE - 1);
+	strncpy(path_impl, path, LOADER_PATH_SIZE - 1);
 
 	return loader_execution_path(tag, path_impl);
 }
 
 int metacall_execution_path_s(const char *tag, size_t tag_length, const char *path, size_t path_length)
 {
-	loader_naming_path path_impl;
-	loader_naming_tag tag_impl;
+	loader_path path_impl;
+	loader_tag tag_impl;
 
-	if (tag == NULL || tag_length == 0 || tag_length >= LOADER_NAMING_TAG_SIZE || path == NULL || path_length == 0 || path_length >= LOADER_NAMING_PATH_SIZE)
+	if (tag == NULL || tag_length == 0 || tag_length >= LOADER_TAG_SIZE || path == NULL || path_length == 0 || path_length >= LOADER_PATH_SIZE)
 	{
 		return 1;
 	}
@@ -273,7 +273,7 @@ int metacall_execution_path_s(const char *tag, size_t tag_length, const char *pa
 
 int metacall_load_from_file(const char *tag, const char *paths[], size_t size, void **handle)
 {
-	loader_naming_path *path_impl;
+	loader_path *path_impl;
 	size_t iterator;
 
 	if (size == 0)
@@ -281,7 +281,7 @@ int metacall_load_from_file(const char *tag, const char *paths[], size_t size, v
 		return 1;
 	}
 
-	path_impl = (loader_naming_path *)malloc(sizeof(loader_naming_path) * size);
+	path_impl = (loader_path *)malloc(sizeof(loader_path) * size);
 
 	if (path_impl == NULL)
 	{
@@ -290,10 +290,10 @@ int metacall_load_from_file(const char *tag, const char *paths[], size_t size, v
 
 	for (iterator = 0; iterator < size; ++iterator)
 	{
-		strncpy(path_impl[iterator], paths[iterator], LOADER_NAMING_PATH_SIZE);
+		strncpy(path_impl[iterator], paths[iterator], LOADER_PATH_SIZE);
 	}
 
-	int result = loader_load_from_file(tag, (const loader_naming_path *)path_impl, size, handle);
+	int result = loader_load_from_file(tag, (const loader_path *)path_impl, size, handle);
 
 	free(path_impl);
 

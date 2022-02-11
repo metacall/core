@@ -33,13 +33,13 @@ extern "C" {
 
 FILE_LOADER_API loader_impl_data file_loader_impl_initialize(loader_impl impl, configuration config);
 
-FILE_LOADER_API int file_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
+FILE_LOADER_API int file_loader_impl_execution_path(loader_impl impl, const loader_path path);
 
-FILE_LOADER_API loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size);
+FILE_LOADER_API loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size);
 
-FILE_LOADER_API loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size);
+FILE_LOADER_API loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size);
 
-FILE_LOADER_API loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path);
+FILE_LOADER_API loader_handle file_loader_impl_load_from_package(loader_impl impl, const loader_path path);
 
 FILE_LOADER_API int file_loader_impl_clear(loader_impl impl, loader_handle handle);
 

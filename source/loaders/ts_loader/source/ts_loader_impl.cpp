@@ -23,7 +23,8 @@
 
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
-#include <loader/loader_path.h>
+
+#include <portability/portability_path.h>
 
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
@@ -128,13 +129,13 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	static const char bootstrap_file_str[] = "bootstrap.ts";
-	node_impl_path bootstrap_path_str = { 0 };
+	loader_path bootstrap_path_str = { 0 };
 	size_t bootstrap_path_str_size = 0;
 	const char *paths[1];
 	void *ts_impl = NULL;
 
 	/* Get the boostrap path */
-	if (node_loader_impl_bootstrap_path(bootstrap_file_str, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
+	if (node_loader_impl_bootstrap_path(bootstrap_file_str, sizeof(bootstrap_file_str) - 1, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.ts cannot be found");
 
@@ -169,14 +170,14 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	return (loader_impl_data)ts_impl;
 }
 
-int ts_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int ts_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	(void)impl;
 
 	return metacall_execution_path("node", path);
 }
 
-loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	void *ts_impl = (void *)loader_impl_get(impl);
 	void *args[1] = { metacall_value_create_array(NULL, size) };
@@ -209,7 +210,7 @@ loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return (loader_handle)ret;
 }
 
-loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	void *ts_impl = (void *)loader_impl_get(impl);
 	void *args[2];
@@ -231,7 +232,7 @@ loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return (loader_handle)ret;
 }
 
-loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle ts_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	void *ts_impl = (void *)loader_impl_get(impl);
 

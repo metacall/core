@@ -3,7 +3,7 @@
 #
 
 # Target name
-set(target loader-path-test)
+set(target portability-path-test)
 message(STATUS "Test ${target}")
 
 #
@@ -27,7 +27,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/loader_path_test.cpp
+	${source_path}/portability_path_test.cpp
 )
 
 # Group source files
@@ -80,7 +80,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::loader
+	${META_PROJECT_NAME}::portability
 )
 
 #

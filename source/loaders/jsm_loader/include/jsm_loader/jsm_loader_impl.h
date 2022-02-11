@@ -31,9 +31,9 @@ extern "C" {
 
 JSM_LOADER_API loader_impl_data jsm_loader_impl_initialize(loader_impl impl, configuration config);
 
-JSM_LOADER_API int jsm_loader_impl_execution_path(loader_impl impl, const loader_naming_path path);
+JSM_LOADER_API int jsm_loader_impl_execution_path(loader_impl impl, const loader_path path);
 
-JSM_LOADER_API loader_handle jsm_loader_impl_load(loader_impl impl, const loader_naming_path path, loader_naming_name name);
+JSM_LOADER_API loader_handle jsm_loader_impl_load(loader_impl impl, const loader_path path, loader_name name);
 
 JSM_LOADER_API int jsm_loader_impl_clear(loader_impl impl, loader_handle handle);
 

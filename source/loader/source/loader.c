@@ -96,7 +96,7 @@ static function_return loader_register_await_proxy(function func, function_impl 
 
 static void loader_register_destroy_proxy(function func, function_impl func_impl);
 
-static loader_impl loader_create_impl(const loader_naming_tag tag);
+static loader_impl loader_create_impl(const loader_tag tag);
 
 static int loader_get_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
@@ -193,7 +193,7 @@ void loader_initialize()
 	loader_initialize_proxy();
 }
 
-int loader_is_initialized(const loader_naming_tag tag)
+int loader_is_initialized(const loader_tag tag)
 {
 	loader l = loader_singleton();
 
@@ -307,7 +307,7 @@ int loader_register(const char *name, loader_register_invoke invoke, function *f
 	return 0;
 }
 
-loader_impl loader_create_impl(const loader_naming_tag tag)
+loader_impl loader_create_impl(const loader_tag tag)
 {
 	loader l = loader_singleton();
 
@@ -330,7 +330,7 @@ loader_impl loader_create_impl(const loader_naming_tag tag)
 	return NULL;
 }
 
-loader_impl loader_get_impl(const loader_naming_tag tag)
+loader_impl loader_get_impl(const loader_tag tag)
 {
 	loader l = loader_singleton();
 
@@ -346,7 +346,7 @@ loader_impl loader_get_impl(const loader_naming_tag tag)
 	return impl;
 }
 
-int loader_load_path(const loader_naming_path path)
+int loader_load_path(const loader_path path)
 {
 	loader l = loader_singleton();
 
@@ -362,7 +362,7 @@ int loader_load_path(const loader_naming_path path)
 	return 1;
 }
 
-int loader_execution_path(const loader_naming_tag tag, const loader_naming_path path)
+int loader_execution_path(const loader_tag tag, const loader_path path)
 {
 	loader l = loader_singleton();
 
@@ -386,7 +386,7 @@ int loader_execution_path(const loader_naming_tag tag, const loader_naming_path 
 	return 1;
 }
 
-int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void **handle)
+int loader_load_from_file(const loader_tag tag, const loader_path paths[], size_t size, void **handle)
 {
 	loader l = loader_singleton();
 
@@ -410,7 +410,7 @@ int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path 
 	return 1;
 }
 
-int loader_load_from_memory(const loader_naming_tag tag, const char *buffer, size_t size, void **handle)
+int loader_load_from_memory(const loader_tag tag, const char *buffer, size_t size, void **handle)
 {
 	loader l = loader_singleton();
 
@@ -433,7 +433,7 @@ int loader_load_from_memory(const loader_naming_tag tag, const char *buffer, siz
 	return 1;
 }
 
-int loader_load_from_package(const loader_naming_tag extension, const loader_naming_path path, void **handle)
+int loader_load_from_package(const loader_tag extension, const loader_path path, void **handle)
 {
 	loader l = loader_singleton();
 
@@ -456,18 +456,18 @@ int loader_load_from_package(const loader_naming_tag extension, const loader_nam
 	return 1;
 }
 
-int loader_load_from_configuration(const loader_naming_path path, void **handle, void *allocator)
+int loader_load_from_configuration(const loader_path path, void **handle, void *allocator)
 {
-	loader_naming_name config_name;
+	loader_name config_name;
 	configuration config;
 	value tag, scripts, context_path;
 	value *scripts_array;
-	loader_naming_path *paths;
-	loader_naming_path context_path_str;
+	loader_path *paths;
+	loader_path context_path_str;
 	size_t context_path_size = 0;
 	size_t iterator, size;
 
-	if (loader_path_get_name(path, config_name) == 0)
+	if (portability_path_get_name(path, strnlen(path, LOADER_PATH_SIZE) + 1, config_name, LOADER_NAME_SIZE) == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid config name (%s)", path);
 
@@ -516,7 +516,7 @@ int loader_load_from_configuration(const loader_naming_path path, void **handle,
 		return 1;
 	}
 
-	paths = malloc(sizeof(loader_naming_path) * size);
+	paths = malloc(sizeof(loader_path) * size);
 
 	if (paths == NULL)
 	{
@@ -535,13 +535,13 @@ int loader_load_from_configuration(const loader_naming_path path, void **handle,
 
 		size_t str_size = value_type_size(context_path);
 
-		loader_naming_path path_base, join_path;
+		loader_path path_base, join_path;
 
-		size_t path_base_size = loader_path_get_path(path, strlen(path) + 1, path_base);
+		size_t path_base_size = portability_path_get_directory(path, strnlen(path, LOADER_PATH_SIZE) + 1, path_base, LOADER_PATH_SIZE);
 
-		size_t join_path_size = loader_path_join(path_base, path_base_size, str, str_size, join_path);
+		size_t join_path_size = portability_path_join(path_base, path_base_size, str, str_size, join_path, LOADER_PATH_SIZE);
 
-		context_path_size = loader_path_canonical(join_path, join_path_size, context_path_str);
+		context_path_size = portability_path_canonical(join_path, join_path_size, context_path_str, LOADER_PATH_SIZE);
 	}
 
 	scripts_array = value_to_array(scripts);
@@ -556,20 +556,20 @@ int loader_load_from_configuration(const loader_naming_path path, void **handle,
 
 			if (context_path == NULL)
 			{
-				(void)loader_path_canonical(str, str_size, paths[iterator]);
+				(void)portability_path_canonical(str, str_size, paths[iterator], LOADER_PATH_SIZE);
 			}
 			else
 			{
-				loader_naming_path join_path;
+				loader_path join_path;
 
-				size_t join_path_size = loader_path_join(context_path_str, context_path_size, str, str_size, join_path);
+				size_t join_path_size = portability_path_join(context_path_str, context_path_size, str, str_size, join_path, LOADER_PATH_SIZE);
 
-				(void)loader_path_canonical(join_path, join_path_size, paths[iterator]);
+				(void)portability_path_canonical(join_path, join_path_size, paths[iterator], LOADER_PATH_SIZE);
 			}
 		}
 	}
 
-	if (loader_load_from_file((const char *)value_to_string(tag), (const loader_naming_path *)paths, size, handle) != 0)
+	if (loader_load_from_file((const char *)value_to_string(tag), (const loader_path *)paths, size, handle) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid load from file");
 
@@ -633,17 +633,17 @@ loader_data loader_get(const char *name)
 	return NULL;
 }
 
-void *loader_get_handle(const loader_naming_tag tag, const char *name)
+void *loader_get_handle(const loader_tag tag, const char *name)
 {
 	return loader_impl_get_handle(loader_get_impl(tag), name);
 }
 
-void loader_set_options(const loader_naming_tag tag, void *options)
+void loader_set_options(const loader_tag tag, void *options)
 {
 	loader_impl_set_options(loader_get_impl(tag), options);
 }
 
-void *loader_get_options(const loader_naming_tag tag)
+void *loader_get_options(const loader_tag tag)
 {
 	return loader_impl_get_options(loader_get_impl(tag));
 }
@@ -674,7 +674,7 @@ loader_data loader_handle_get(void *handle, const char *name)
 
 value loader_metadata_impl(loader_impl impl)
 {
-	loader_naming_tag *tag_ptr = loader_impl_tag(impl);
+	loader_tag *tag_ptr = loader_impl_tag(impl);
 
 	value *v_ptr, v = value_create_array(NULL, 2);
 

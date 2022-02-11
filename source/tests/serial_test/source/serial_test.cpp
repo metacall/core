@@ -20,6 +20,8 @@
 
 #include <gtest/gtest.h>
 
+#include <portability/portability_assert.h>
+
 #include <serial/serial.h>
 
 #include <log/log.h>
@@ -323,7 +325,7 @@ TEST_F(serial_test, DefaultConstructor)
 			NULL  /* TODO: Object */
 		};
 
-		static_assert((int)sizeof(value_names) / sizeof(value_names[0]) == (int)TYPE_SIZE,
+		portability_static_assert((int)sizeof(value_names) / sizeof(value_names[0]) == (int)TYPE_SIZE,
 			"Value names size does not match type size.");
 
 		static const char char_array[] = {
@@ -401,7 +403,7 @@ TEST_F(serial_test, DefaultConstructor)
 			*/
 		};
 
-		static_assert((int)sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,
+		portability_static_assert((int)sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,
 			"Value array size does not match type size.");
 
 		const size_t value_names_size = sizeof(value_names) / sizeof(value_names[0]);

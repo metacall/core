@@ -25,6 +25,8 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <portability/portability_path.h>
+
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
@@ -48,13 +50,13 @@ typedef struct loader_impl_wasm_type
 
 static int initialize_types(loader_impl impl);
 
-static FILE *open_file_absolute(const char *path, size_t *file_size);
-static FILE *open_file_relative(loader_impl_wasm impl, const char *path, size_t *file_size);
-static char *read_buffer_from_file(loader_impl impl, const char *path, size_t *file_size);
+static FILE *open_file_absolute(const loader_path path, size_t *file_size);
+static FILE *open_file_relative(loader_impl_wasm impl, const loader_path path, size_t *file_size);
+static char *read_buffer_from_file(loader_impl impl, const loader_path path, size_t *file_size);
 
 static int try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec_t *binary);
-static int load_module_from_package(loader_impl impl, loader_impl_wasm_handle handle, const char *path);
-static int load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path);
+static int load_module_from_package(loader_impl impl, loader_impl_wasm_handle handle, const loader_path path);
+static int load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const loader_path path);
 
 loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration config)
 {
@@ -91,7 +93,7 @@ loader_impl_data wasm_loader_impl_initialize(loader_impl impl, configuration con
 		goto error_store_creation;
 	}
 
-	wasm_impl->paths = vector_create_type(loader_naming_path);
+	wasm_impl->paths = vector_create_type(loader_path);
 
 	if (wasm_impl->paths == NULL)
 	{
@@ -115,17 +117,17 @@ error_impl_alloc:
 	return NULL;
 }
 
-int wasm_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int wasm_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	vector_push_back_empty(wasm_impl->paths);
-	loader_naming_path *back_ptr = vector_back(wasm_impl->paths);
-	strncpy(*back_ptr, path, sizeof(loader_naming_path));
+	loader_path *back_ptr = vector_back(wasm_impl->paths);
+	strncpy(*back_ptr, path, sizeof(loader_path));
 
 	return 0;
 }
 
-loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle wasm_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_wasm_handle handle = wasm_loader_handle_create(size);
 
@@ -150,7 +152,7 @@ error_alloc_handle:
 	return NULL;
 }
 
-loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle wasm_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	loader_impl_wasm_handle handle = wasm_loader_handle_create(1);
@@ -192,7 +194,7 @@ error_alloc_handle:
 	return NULL;
 }
 
-loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle wasm_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	loader_impl_wasm_handle handle = wasm_loader_handle_create(1);
 
@@ -273,7 +275,7 @@ static int initialize_types(loader_impl impl)
 	return 0;
 }
 
-static FILE *open_file_absolute(const char *path, size_t *file_size)
+static FILE *open_file_absolute(const loader_path path, size_t *file_size)
 {
 	FILE *file = fopen(path, "rb");
 	if (file == NULL)
@@ -303,16 +305,14 @@ error_open_file:
 	return NULL;
 }
 
-static FILE *open_file_relative(loader_impl_wasm impl, const char *path, size_t *file_size)
+static FILE *open_file_relative(loader_impl_wasm impl, const loader_path path, size_t *file_size)
 {
 	for (size_t i = 0; i < vector_size(impl->paths); i++)
 	{
-		loader_naming_path *exec_path = vector_at(impl->paths, i);
+		loader_path *exec_path = vector_at(impl->paths, i);
 
-		// FIXME: This could fail if the resulting path is longer than sizeof(loader_naming_path).
-		//        This should probably be handled in `loader_path_join`.
-		loader_naming_path abs_path;
-		(void)loader_path_join(*exec_path, strlen(*exec_path) + 1, path, strlen(path) + 1, abs_path);
+		loader_path abs_path;
+		(void)portability_path_join(*exec_path, strlen(*exec_path) + 1, path, strnlen(path, LOADER_PATH_SIZE) + 1, abs_path, LOADER_PATH_SIZE);
 
 		FILE *file = open_file_absolute(abs_path, file_size);
 
@@ -329,7 +329,7 @@ static FILE *open_file_relative(loader_impl_wasm impl, const char *path, size_t 
 	return NULL;
 }
 
-static char *read_buffer_from_file(loader_impl impl, const char *path, size_t *file_size)
+static char *read_buffer_from_file(loader_impl impl, const loader_path path, size_t *file_size)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 
@@ -401,7 +401,7 @@ static int try_wat2wasm(const char *buffer, size_t size, wasm_byte_vec_t *binary
 #endif
 }
 
-static int load_module_from_package(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
+static int load_module_from_package(loader_impl impl, loader_impl_wasm_handle handle, const loader_path path)
 {
 	int ret = 1;
 
@@ -416,8 +416,8 @@ static int load_module_from_package(loader_impl impl, loader_impl_wasm_handle ha
 	wasm_byte_vec_t binary;
 	wasm_byte_vec_new(&binary, size, buffer);
 
-	loader_naming_name module_name;
-	loader_path_get_name(path, module_name);
+	loader_name module_name;
+	portability_path_get_name(path, strnlen(path, LOADER_PATH_SIZE) + 1, module_name, LOADER_NAME_SIZE);
 
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	if (wasm_loader_handle_add_module(handle, module_name, wasm_impl->store, &binary) != 0)
@@ -434,9 +434,9 @@ error_read_file:
 	return ret;
 }
 
-static int load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const char *path)
+static int load_module_from_file(loader_impl impl, loader_impl_wasm_handle handle, const loader_path path)
 {
-	static const loader_naming_tag TEXT_EXTENSION = "wat";
+	static const loader_tag TEXT_EXTENSION = "wat";
 
 	int ret = 1;
 
@@ -454,8 +454,8 @@ static int load_module_from_file(loader_impl impl, loader_impl_wasm_handle handl
 		goto error_convert_buffer;
 	}
 
-	loader_naming_name module_name;
-	loader_path_get_module_name(path, module_name, TEXT_EXTENSION);
+	loader_name module_name;
+	(void)portability_path_get_module_name(path, strnlen(path, LOADER_PATH_SIZE) + 1, TEXT_EXTENSION, sizeof(TEXT_EXTENSION), module_name, LOADER_NAME_SIZE);
 
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
 	if (wasm_loader_handle_add_module(handle, module_name, wasm_impl->store, &binary) != 0)

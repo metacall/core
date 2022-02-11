@@ -96,7 +96,7 @@ static const char *metacall_serialize_format[] = {
 	NULL  /* TODO: Object */
 };
 
-static_assert((size_t)TYPE_SIZE == (size_t)sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
+portability_static_assert((size_t)TYPE_SIZE == (size_t)sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
 	"MetaCall serializer format does not match MetaCall type size");
 
 static metacall_serialize_impl_ptr serialize_func[] = {
@@ -119,7 +119,7 @@ static metacall_serialize_impl_ptr serialize_func[] = {
 	&metacall_serial_impl_serialize_object
 };
 
-static_assert((size_t)TYPE_SIZE == (size_t)sizeof(serialize_func) / sizeof(serialize_func[0]),
+portability_static_assert((size_t)TYPE_SIZE == (size_t)sizeof(serialize_func) / sizeof(serialize_func[0]),
 	"MetaCall serializer function does not match MetaCall type size");
 
 /* -- Methods -- */

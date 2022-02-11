@@ -48,7 +48,7 @@
 
 using namespace v8;
 
-MaybeLocal<String> js_loader_impl_read_script(Isolate *isolate, const loader_naming_path path, std::map<std::string, js_function *> &functions);
+MaybeLocal<String> js_loader_impl_read_script(Isolate *isolate, const loader_path path, std::map<std::string, js_function *> &functions);
 
 MaybeLocal<String> js_loader_impl_read_script(Isolate *isolate, const char *buffer, size_t size, std::map<std::string, js_function *> &functions);
 
@@ -138,7 +138,7 @@ typedef class loader_impl_js_handle_type
 {
 public:
 	loader_impl_js_handle_type(loader_impl impl, loader_impl_js js_impl,
-		const loader_naming_path paths[], size_t size) :
+		const loader_path paths[], size_t size) :
 		impl(impl),
 		handle_scope(js_impl->isolate),
 		ctx_impl(Context::New(js_impl->isolate)),
@@ -565,7 +565,7 @@ function_interface function_js_singleton(void)
 	return &js_interface;
 }
 
-void js_loader_impl_read_file(const loader_naming_path path, std::string &source)
+void js_loader_impl_read_file(const loader_path path, std::string &source)
 {
 	std::ifstream file(path);
 
@@ -578,7 +578,7 @@ void js_loader_impl_read_file(const loader_naming_path path, std::string &source
 	source.assign(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
 }
 
-MaybeLocal<String> js_loader_impl_read_script(Isolate *isolate, const loader_naming_path path, std::map<std::string, js_function *> &functions)
+MaybeLocal<String> js_loader_impl_read_script(Isolate *isolate, const loader_path path, std::map<std::string, js_function *> &functions)
 {
 	MaybeLocal<String> result;
 
@@ -754,7 +754,7 @@ loader_impl_data js_loader_impl_initialize(loader_impl impl, configuration confi
 	return NULL;
 }
 
-int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int js_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	(void)impl;
 	(void)path;
@@ -762,7 +762,7 @@ int js_loader_impl_execution_path(loader_impl impl, const loader_naming_path pat
 	return 0;
 }
 
-loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
@@ -779,7 +779,7 @@ loader_handle js_loader_impl_load_from_file(loader_impl impl, const loader_namin
 	return NULL;
 }
 
-loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	loader_impl_js js_impl = static_cast<loader_impl_js>(loader_impl_get(impl));
 
@@ -798,7 +798,7 @@ loader_handle js_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	return NULL;
 }
 
-loader_handle js_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle js_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	/* TODO */
 

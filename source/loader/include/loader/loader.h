@@ -57,31 +57,31 @@ LOADER_API void loader_initialization_register(loader_impl impl);
 
 LOADER_API void loader_initialize(void);
 
-LOADER_API int loader_is_initialized(const loader_naming_tag tag);
+LOADER_API int loader_is_initialized(const loader_tag tag);
 
 LOADER_API int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[]);
 
-LOADER_API int loader_load_path(const loader_naming_path path);
+LOADER_API int loader_load_path(const loader_path path);
 
-LOADER_API int loader_execution_path(const loader_naming_tag tag, const loader_naming_path path);
+LOADER_API int loader_execution_path(const loader_tag tag, const loader_path path);
 
-LOADER_API int loader_load_from_file(const loader_naming_tag tag, const loader_naming_path paths[], size_t size, void **handle);
+LOADER_API int loader_load_from_file(const loader_tag tag, const loader_path paths[], size_t size, void **handle);
 
-LOADER_API int loader_load_from_memory(const loader_naming_tag tag, const char *buffer, size_t size, void **handle);
+LOADER_API int loader_load_from_memory(const loader_tag tag, const char *buffer, size_t size, void **handle);
 
-LOADER_API int loader_load_from_package(const loader_naming_tag tag, const loader_naming_path path, void **handle);
+LOADER_API int loader_load_from_package(const loader_tag tag, const loader_path path, void **handle);
 
-LOADER_API int loader_load_from_configuration(const loader_naming_path path, void **handle, void *allocator);
+LOADER_API int loader_load_from_configuration(const loader_path path, void **handle, void *allocator);
 
-LOADER_API loader_impl loader_get_impl(const loader_naming_tag tag);
+LOADER_API loader_impl loader_get_impl(const loader_tag tag);
 
 LOADER_API loader_data loader_get(const char *name);
 
-LOADER_API void *loader_get_handle(const loader_naming_tag tag, const char *name);
+LOADER_API void *loader_get_handle(const loader_tag tag, const char *name);
 
-LOADER_API void loader_set_options(const loader_naming_tag tag, void *options);
+LOADER_API void loader_set_options(const loader_tag tag, void *options);
 
-LOADER_API void *loader_get_options(const loader_naming_tag tag);
+LOADER_API void *loader_get_options(const loader_tag tag);
 
 LOADER_API const char *loader_handle_id(void *handle);
 

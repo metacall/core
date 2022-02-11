@@ -30,7 +30,7 @@
 
 int portability_executable_path(portability_executable_path_str path, portability_executable_path_length *length)
 {
-	const size_t path_max_length = PORTABILITY_EXECUTABLE_PATH_SIZE;
+	const size_t path_max_length = PORTABILITY_PATH_SIZE;
 
 	/* Reset the path */
 	memset(path, 0, path_max_length);
@@ -43,8 +43,8 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 	defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux)
 	*length = readlink("/proc/self/exe", path, path_max_length);
 #elif (defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__)
-	uint32_t size = (uint32_t)PORTABILITY_EXECUTABLE_PATH_SIZE;
-	char executable_path[PORTABILITY_EXECUTABLE_PATH_SIZE] = { 0 };
+	uint32_t size = (uint32_t)PORTABILITY_PATH_SIZE;
+	char executable_path[PORTABILITY_PATH_SIZE] = { 0 };
 
 	if (_NSGetExecutablePath(executable_path, &size) != 0)
 	{
@@ -56,7 +56,7 @@ int portability_executable_path(portability_executable_path_str path, portabilit
 		return 1;
 	}
 
-	*length = strnlen(path, PORTABILITY_EXECUTABLE_PATH_SIZE);
+	*length = strnlen(path, PORTABILITY_PATH_SIZE);
 #elif defined(__FreeBSD__)
 	int name[] = { CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1 };
 	*length = sizeof(char) * path_max_length;

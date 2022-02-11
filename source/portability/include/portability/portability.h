@@ -26,6 +26,8 @@
 #include <portability/portability_api.h>
 
 #include <portability/portability_assert.h>
+#include <portability/portability_executable_path.h>
+#include <portability/portability_path.h>
 
 #ifdef __cplusplus
 extern "C" {

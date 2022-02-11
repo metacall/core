@@ -24,13 +24,14 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <portability/portability_executable_path.h>
+#include <portability/portability_path.h>
+
 #include <reflect/reflect_class.h>
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
-
-#include <portability/portability_executable_path.h>
 
 #include <log/log.h>
 
@@ -183,7 +184,7 @@ static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
 static int py_loader_impl_finalize(loader_impl_py py_impl);
 
-static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_naming_name name, const char *buffer);
+static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer);
 
 static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
 	{ PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC,
@@ -2539,7 +2540,7 @@ error_alloc_py_impl:
 	return NULL;
 }
 
-int py_loader_impl_execution_path(loader_impl impl, const loader_naming_path path)
+int py_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 
@@ -2659,7 +2660,7 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	free(py_handle);
 }
 
-int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception, int run_main)
+int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
 {
 	if (run_main == 0)
 	{
@@ -2668,8 +2669,8 @@ int py_loader_impl_load_from_file_path(loader_impl_py py_impl, loader_impl_py_ha
 	}
 	else
 	{
-		loader_naming_name name;
-		size_t size = loader_path_get_fullname(path, name);
+		loader_name name;
+		size_t size = portability_path_get_fullname(path, strnlen(path, LOADER_PATH_SIZE) + 1, name, LOADER_NAME_SIZE);
 
 		*exception = NULL;
 
@@ -2734,7 +2735,7 @@ error_name_create:
 	return 1;
 }
 
-int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception)
+int py_loader_impl_load_from_module(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception)
 {
 	size_t length = strlen(path);
 
@@ -2794,7 +2795,7 @@ int py_loader_impl_import_exception(PyObject *exception)
 	return /*PyErr_GivenExceptionMatches(exception, PyExc_ImportError) ||*/ PyErr_GivenExceptionMatches(exception, PyExc_FileNotFoundError);
 }
 
-int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_naming_path path, PyObject **exception, int run_main)
+int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_py_handle_module module, const loader_path path, PyObject **exception, int run_main)
 {
 	PyObject *system_paths = PySys_GetObject("path");
 
@@ -2803,9 +2804,9 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 		PyObject *elem = PyList_GetItem(system_paths, index);
 		Py_ssize_t length = 0;
 		const char *system_path_str = PyUnicode_AsUTF8AndSize(elem, &length);
-		loader_naming_path join_path, canonical_path;
-		size_t join_path_size = loader_path_join(system_path_str, length + 1, path, strlen(path) + 1, join_path);
-		loader_path_canonical(join_path, join_path_size, canonical_path);
+		loader_path join_path, canonical_path;
+		size_t join_path_size = portability_path_join(system_path_str, length + 1, path, strnlen(path, LOADER_PATH_SIZE) + 1, join_path, LOADER_PATH_SIZE);
+		portability_path_canonical(join_path, join_path_size, canonical_path, LOADER_PATH_SIZE);
 
 		if (py_loader_impl_load_from_file_path(py_impl, module, canonical_path, exception, run_main) == 0)
 		{
@@ -2831,7 +2832,7 @@ int py_loader_impl_load_from_file_relative(loader_impl_py py_impl, loader_impl_p
 	return 1;
 }
 
-static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, const loader_naming_path path, PyObject *exception)
+static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, const loader_path path, PyObject *exception)
 {
 	log_write("metacall", LOG_LEVEL_ERROR, "Python Error: Exception raised while loading the module '%s'", path);
 
@@ -2854,7 +2855,7 @@ static void py_loader_impl_load_from_file_exception(loader_impl_py py_impl, cons
 	}
 }
 
-loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_naming_path paths[], size_t size)
+loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
 	loader_impl_py_handle py_handle = py_loader_impl_handle_create(size);
@@ -2889,7 +2890,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_namin
 		PyObject *exception = NULL;
 
 		/* We assume it is a path so we load from path */
-		if (loader_path_is_absolute(paths[iterator]) == 0)
+		if (portability_path_is_absolute(paths[iterator], strnlen(paths[iterator], LOADER_PATH_SIZE) + 1) == 0)
 		{
 			/* Load as absolute path */
 			result = py_loader_impl_load_from_file_path(py_impl, &py_handle->modules[iterator], paths[iterator], &exception, run_main);
@@ -2965,7 +2966,7 @@ error_create_handle:
 	return NULL;
 }
 
-PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_naming_name name, const char *buffer)
+PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer)
 {
 	PyObject *compiled = Py_CompileString(buffer, name, Py_file_input);
 
@@ -2982,7 +2983,7 @@ PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const 
 	return instance;
 }
 
-loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_naming_name name, const char *buffer, size_t size)
+loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	(void)size;
 
@@ -3033,7 +3034,7 @@ error_create_handle:
 	return NULL;
 }
 
-loader_handle py_loader_impl_load_from_package(loader_impl impl, const loader_naming_path path)
+loader_handle py_loader_impl_load_from_package(loader_impl impl, const loader_path path)
 {
 	/* TODO */
 
