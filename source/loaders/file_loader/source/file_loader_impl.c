@@ -91,8 +91,8 @@ typedef struct loader_impl_file_function_type
 
 } * loader_impl_file_function;
 
-static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path);
-static void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path);
+static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path, size_t path_size);
+static int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path);
 
 int function_file_interface_create(function func, function_impl impl)
 {
@@ -227,12 +227,12 @@ int file_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 	execution_path = vector_back(file_impl->execution_paths);
 
-	strncpy(*execution_path, path, strnlen(path, LOADER_PATH_SIZE));
+	strncpy(*execution_path, path, strnlen(path, LOADER_PATH_SIZE) + 1);
 
 	return 0;
 }
 
-int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path)
+int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path, size_t path_size)
 {
 	file_stat_type fs;
 
@@ -244,11 +244,10 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path
 
 		descriptor = vector_back(handle->paths);
 
-		descriptor->length = strnlen(path, LOADER_PATH_SIZE);
+		descriptor->length = path_size - 1;
 
 		strncpy(descriptor->path, path, descriptor->length);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "File %s loaded from file", path);
 
 		return 0;
 	}
@@ -256,28 +255,32 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path
 	return 1;
 }
 
-void file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path)
+int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path)
 {
-	size_t size = vector_size(file_impl->execution_paths);
+	size_t path_size = strnlen(path, LOADER_PATH_SIZE) + 1;
 
-	if (file_loader_impl_load_path(handle, path) != 0 && size > 0)
+	if (portability_path_is_absolute(path, path_size) == 0)
 	{
-		size_t iterator;
+		return file_loader_impl_load_path(handle, path, path_size);
+	}
+	else
+	{
+		size_t iterator, size = vector_size(file_impl->execution_paths);
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
 			loader_path *execution_path = vector_at(file_impl->execution_paths, iterator);
 			loader_path absolute_path;
+			size_t absolute_path_size = portability_path_join(*execution_path, strnlen(*execution_path, LOADER_PATH_SIZE) + 1, path, path_size, absolute_path, LOADER_PATH_SIZE);
 
-			(void)portability_path_join(*execution_path, strlen(*execution_path) + 1, path, strnlen(path, LOADER_PATH_SIZE) + 1, absolute_path, LOADER_PATH_SIZE);
-
-			if (file_loader_impl_load_path(handle, absolute_path) == 0)
+			if (file_loader_impl_load_path(handle, absolute_path, absolute_path_size) == 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "File %s not found", absolute_path);
-				return;
+				return 0;
 			}
 		}
 	}
+
+	return 1;
 }
 
 loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size)
@@ -306,7 +309,10 @@ loader_handle file_loader_impl_load_from_file(loader_impl impl, const loader_pat
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
-			file_loader_impl_load_execution_path(file_impl, handle, paths[iterator]);
+			if (file_loader_impl_load_execution_path(file_impl, handle, paths[iterator]) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "File %s not found", paths[iterator]);
+			}
 		}
 
 		if (vector_size(handle->paths) == 0)

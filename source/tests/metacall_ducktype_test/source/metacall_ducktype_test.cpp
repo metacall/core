@@ -183,6 +183,8 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		EXPECT_EQ((int)metacall_value_cast_int(&ret), (int)75);
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 
 		args[0] = metacall_value_create_double(15.0);
 		args[1] = metacall_value_create_double(5.0);
@@ -194,6 +196,8 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		EXPECT_EQ((int)metacall_value_cast_double(&ret), (int)3.0);
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 
 		static const char pepico_str[] = "Pepico";
 		static const char walas_str[] = "Walas";
@@ -208,6 +212,8 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		EXPECT_EQ((int)0, (int)strcmp(metacall_value_cast_string(&ret), "PepicoWalas"));
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
@@ -290,6 +296,8 @@ TEST_F(metacall_ducktype_test, DefaultConstructor)
 		EXPECT_EQ((int)metacall_value_cast_int(&ret), (int)12);
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 
