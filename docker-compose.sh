@@ -80,7 +80,13 @@ sub_test() {
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
 	ln -sf tools/dev/.dockerignore .dockerignore
-	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
+	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
+
+	SUMMARY=$(grep "SUMMARY:" /tmp/metacall-test-output)
+	echo "${SUMMARY}"
+	printf "Number of leaks detected: "
+	echo "${SUMMARY}" | awk '{print $7}' | awk '{s+=$1} END {print s}'
+	rm /tmp/metacall-test-output
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
