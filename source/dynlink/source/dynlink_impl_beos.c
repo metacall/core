@@ -33,7 +33,7 @@
 
 const char *dynlink_impl_interface_extension_beos(void)
 {
-	static const char extension_beos[0x03] = "so";
+	static const char extension_beos[] = "so";
 
 	return extension_beos;
 }

@@ -38,7 +38,7 @@
 
 const char *dynlink_impl_interface_extension_win32(void)
 {
-	static const char extension_win32[0x04] = "dll";
+	static const char extension_win32[] = "dll";
 
 	return extension_win32;
 }

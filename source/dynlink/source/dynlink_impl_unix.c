@@ -50,7 +50,7 @@ struct dynlink_lib_path_type
 
 const char *dynlink_impl_interface_extension_unix(void)
 {
-	static const char extension_unix[0x03] = "so";
+	static const char extension_unix[] = "so";
 
 	return extension_unix;
 }
