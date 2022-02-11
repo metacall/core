@@ -20,6 +20,7 @@
 #
 
 # Enable BuildKit whenever possible
+export COMPOSE_DOCKER_CLI_BUILD=1
 export DOCKER_BUILDKIT=1
 export BUILDKIT_PROGRESS=plain
 
@@ -72,16 +73,8 @@ sub_rebuild() {
 # Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
 sub_test() {
 
-	# In order to get rid of the log limit:
-	# [output clipped, log limit 1MiB reached]
-	# Use this command:
-	#     docker buildx create --use --name larger_log --driver-opt env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
-	#     export BUILDX_BUILDER=larger_log
-	# Or in GitHub Workflow:
-	#   - name: Set up Docker Buildx
-	#     uses: docker/setup-buildx-action@v1
-	#     with:
-	#       driver-opts: env.BUILDKIT_STEP_LOG_MAX_SIZE=50000000
+	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
+	export DOCKER_BUILDKIT=0
 
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
