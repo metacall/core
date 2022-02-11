@@ -227,7 +227,7 @@ int file_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 	execution_path = vector_back(file_impl->execution_paths);
 
-	strncpy(*execution_path, path, strnlen(path, LOADER_PATH_SIZE) + 1);
+	memcpy(*execution_path, path, strnlen(path, LOADER_PATH_SIZE) + 1);
 
 	return 0;
 }
@@ -246,7 +246,7 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path
 
 		descriptor->length = path_size - 1;
 
-		strncpy(descriptor->path, path, descriptor->length);
+		memcpy(descriptor->path, path, path_size);
 
 		return 0;
 	}
@@ -362,7 +362,7 @@ loader_handle file_loader_impl_load_from_memory(loader_impl impl, const loader_n
 
 		descriptor->length = strnlen(name, LOADER_NAME_SIZE);
 
-		strncpy(descriptor->path, name, descriptor->length);
+		memcpy(descriptor->path, name, descriptor->length + 1);
 
 		log_write("metacall", LOG_LEVEL_DEBUG, "File module %s loaded from memory", name);
 
@@ -467,7 +467,7 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 			{
 				loader_path path;
 
-				(void)portability_path_get_relative(script_path, strlen(script_path) + 1, descriptor->path, descriptor->length, path, LOADER_PATH_SIZE);
+				(void)portability_path_get_relative(script_path, strlen(script_path) + 1, descriptor->path, descriptor->length + 1, path, LOADER_PATH_SIZE);
 
 				log_write("metacall", LOG_LEVEL_DEBUG, "File registering function: %s", path);
 
