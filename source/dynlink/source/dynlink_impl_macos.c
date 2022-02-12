@@ -41,13 +41,13 @@ const char *dynlink_impl_interface_extension_macos(void)
 	return extension_macos;
 }
 
-void dynlink_impl_interface_get_name_macos(dynlink handle, dynlink_name_impl name_impl, size_t length)
+void dynlink_impl_interface_get_name_macos(dynlink handle, dynlink_name_impl name_impl, size_t size)
 {
-	strncpy(name_impl, dynlink_get_name(handle), length);
+	strncpy(name_impl, dynlink_get_name(handle), size);
 
-	strncat(name_impl, ".", length);
+	strncat(name_impl, ".", size);
 
-	strncat(name_impl, dynlink_impl_extension(), length);
+	strncat(name_impl, dynlink_impl_extension(), size);
 }
 
 dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)

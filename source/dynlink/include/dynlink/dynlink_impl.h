@@ -60,7 +60,7 @@ DYNLINK_API const char *dynlink_impl_extension(void);
 *  @param[out] name_impl
 *    Pointer to the dynamically linked shared object handle
 */
-DYNLINK_API void dynlink_impl_get_name(dynlink handle, dynlink_name_impl name_impl, size_t length);
+DYNLINK_API void dynlink_impl_get_name(dynlink handle, dynlink_name_impl name_impl, size_t size);
 
 /**
 *  @brief

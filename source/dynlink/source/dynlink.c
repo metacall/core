@@ -53,7 +53,7 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 
 		if (handle != NULL)
 		{
-			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE - 1);
+			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE);
 
 			dynlink_impl_get_name(handle, handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
 
@@ -61,7 +61,7 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 			{
 				size_t path_length = strlen(path);
 
-				memmove(handle->name_impl + path_length, handle->name_impl, strlen(handle->name_impl) + 1);
+				memmove(handle->name_impl + path_length, handle->name_impl, strnlen(handle->name_impl, DYNLINK_NAME_IMPL_SIZE) + 1);
 
 				memcpy(handle->name_impl, path, path_length);
 			}

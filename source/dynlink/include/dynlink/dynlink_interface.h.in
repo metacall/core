@@ -72,7 +72,6 @@ struct dynlink_impl_interface_type
 	dynlink_impl_interface_symbol symbol;
 	dynlink_impl_interface_unload unload;
 	dynlink_impl_interface_lib_path lib_path;
-
 };
 
 typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);

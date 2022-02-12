@@ -55,20 +55,20 @@ const char *dynlink_impl_interface_extension_unix(void)
 	return extension_unix;
 }
 
-static void dynlink_impl_interface_get_name_str_unix(dynlink_name name, dynlink_name_impl name_impl, size_t length)
+static void dynlink_impl_interface_get_name_str_unix(dynlink_name name, dynlink_name_impl name_impl, size_t size)
 {
-	strncpy(name_impl, "lib", length);
+	strncpy(name_impl, "lib", size);
 
-	strncat(name_impl, name, length);
+	strncat(name_impl, name, size);
 
-	strncat(name_impl, ".", length);
+	strncat(name_impl, ".", size);
 
-	strncat(name_impl, dynlink_impl_extension(), length);
+	strncat(name_impl, dynlink_impl_extension(), size);
 }
 
-void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t length)
+void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t size)
 {
-	dynlink_impl_interface_get_name_str_unix(dynlink_get_name(handle), name_impl, length);
+	dynlink_impl_interface_get_name_str_unix(dynlink_get_name(handle), name_impl, size);
 }
 
 dynlink_impl dynlink_impl_interface_load_unix(dynlink handle)
@@ -160,7 +160,7 @@ char *dynlink_impl_interface_lib_path_unix(dynlink_name name, int (*comparator)(
 		NULL
 	};
 
-	dynlink_impl_interface_get_name_str_unix(name, data.name_impl, DYNLINK_NAME_IMPL_SIZE - 1);
+	dynlink_impl_interface_get_name_str_unix(name, data.name_impl, DYNLINK_NAME_IMPL_SIZE);
 
 	if (dl_iterate_phdr(&dynlink_impl_interface_phdr_callback_unix, (void *)&data) != 1)
 	{
