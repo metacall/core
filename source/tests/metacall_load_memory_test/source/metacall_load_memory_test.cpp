@@ -36,6 +36,8 @@ TEST_F(metacall_load_memory_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_log(METACALL_LOG_STDIO, (void *)&log_stdio));
 
+	ASSERT_EQ((int)0, (int)metacall_initialize());
+
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{

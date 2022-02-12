@@ -236,7 +236,7 @@ int set_insert_array(set s, set_key keys[], set_value values[], size_t size)
 
 	if (s == NULL || keys == NULL || values == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set insertion parameters");
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid set array insertion parameters");
 		return 1;
 	}
 

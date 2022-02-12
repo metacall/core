@@ -265,6 +265,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	static const char configuration_key_suffix[] = "_loader";
 	#define CONFIGURATION_KEY_SIZE ((size_t)sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1)
 	char configuration_key[CONFIGURATION_KEY_SIZE];
+	size_t tag_size;
 	configuration config;
 	value loader_library_path_value = NULL;
 	char *library_path = NULL;
@@ -275,9 +276,11 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		return 0;
 	}
 
-	strncpy(configuration_key, plugin_name(p), LOADER_TAG_SIZE);
+	tag_size = strnlen(plugin_name(p), LOADER_TAG_SIZE) + 1;
 
-	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE);
+	strncpy(configuration_key, plugin_name(p), tag_size);
+
+	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE - tag_size);
 	#undef CONFIGURATION_KEY_SIZE
 
 	config = configuration_scope(configuration_key);

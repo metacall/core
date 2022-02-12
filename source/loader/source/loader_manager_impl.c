@@ -84,7 +84,7 @@ vector loader_manager_impl_script_paths_initialize(void)
 			script_path[iterator] = '\0';
 			vector_push_back_empty(script_paths);
 			char **script_path_ptr = vector_back(script_paths);
-			size_t size = iterator - last;
+			size_t size = iterator - last + 1;
 
 			*script_path_ptr = malloc(sizeof(char) * size);
 
@@ -94,7 +94,7 @@ vector loader_manager_impl_script_paths_initialize(void)
 			}
 			else
 			{
-				memcpy(*script_path_ptr, &script_path[last], size);
+				portability_path_canonical(&script_path[last], size, *script_path_ptr, size);
 			}
 
 			last = iterator + 1;
