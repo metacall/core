@@ -52,7 +52,7 @@ int rb_loader_impl_key_parse(const char *source, set function_map);
 
 void rb_loader_impl_key_print(set function_map);
 
-int rb_loader_impl_key_clear(set function_map);
+void rb_loader_impl_key_clear(set function_map);
 
 #ifdef __cplusplus
 }

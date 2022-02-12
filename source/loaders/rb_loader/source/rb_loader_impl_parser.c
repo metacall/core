@@ -437,9 +437,9 @@ int rb_loader_impl_key_clear_cb_iterate(set s, set_key key, set_value v, set_cb_
 	return 0;
 }
 
-int rb_loader_impl_key_clear(set function_map)
+void rb_loader_impl_key_clear(set function_map)
 {
 	set_iterate(function_map, &rb_loader_impl_key_clear_cb_iterate, NULL);
 
-	return set_clear(function_map);
+	set_destroy(function_map);
 }

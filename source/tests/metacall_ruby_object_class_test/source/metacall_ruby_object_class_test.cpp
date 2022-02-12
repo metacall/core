@@ -59,16 +59,20 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 			ASSERT_EQ((enum metacall_value_id)METACALL_OBJECT, (enum metacall_value_id)metacall_value_id(ret));
 			void *obj = metacall_value_to_object(ret);
 
-			int retcode = metacall_object_set(obj, "@intAttribute", metacall_value_create_int(1234));
+			void *v_int = metacall_value_create_int(1234);
+			int retcode = metacall_object_set(obj, "@intAttribute", v_int);
 			ASSERT_EQ((int)0, (int)retcode);
+			metacall_value_destroy(v_int);
 
 			void *intAttribute = metacall_object_get(obj, "@intAttribute");
 			ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(intAttribute));
 			ASSERT_EQ((int)1234, (int)metacall_value_to_int(intAttribute));
+			metacall_value_destroy(intAttribute);
 
 			void *param3 = metacall_object_get(obj, "@param3");
 			ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(param3));
 			ASSERT_EQ((int)777, (int)metacall_value_to_int(param3));
+			metacall_value_destroy(param3);
 
 			metacall_value_destroy(ret);
 		}
@@ -103,6 +107,7 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 			ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret));
 			metacall_value_destroy(ret);
 			metacall_value_destroy(obj_value);
+			metacall_value_destroy(return_bye_args[0]);
 		}
 
 		{
@@ -117,6 +122,8 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 				metacall_value_create_int(999999)					  // param2
 			};
 			void *new_object_v = metacall_class_new(myclass, "objectname", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
+			metacall_value_destroy(constructor_params[0]);
+			metacall_value_destroy(constructor_params[1]);
 			void *new_object = metacall_value_to_object(new_object_v);
 
 			void *param2 = metacall_object_get(new_object, "@param2");

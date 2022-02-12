@@ -165,7 +165,5 @@ TEST_F(rb_loader_parser_test, DefaultConstructor)
 		EXPECT_EQ((size_t)0, (size_t)function_parser->params_size);
 	}
 
-	EXPECT_EQ((int)0, (int)rb_loader_impl_key_clear(function_map));
-
-	set_destroy(function_map);
+	rb_loader_impl_key_clear(function_map);
 }
