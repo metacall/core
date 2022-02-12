@@ -171,8 +171,17 @@ loader_impl loader_impl_allocate(const loader_tag tag)
 		goto alloc_ctx_error;
 	}
 
+	impl->exec_path_map = set_create(&hash_callback_str, &comparable_callback_str);
+
+	if (impl->exec_path_map == NULL)
+	{
+		goto alloc_exec_path_map_error;
+	}
+
 	return impl;
 
+alloc_exec_path_map_error:
+	context_destroy(impl->ctx);
 alloc_ctx_error:
 	set_destroy(impl->type_info_map);
 alloc_type_info_map_error:
@@ -254,8 +263,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 {
 	static const char loader_library_path[] = "loader_library_path";
 	static const char configuration_key_suffix[] = "_loader";
-	static const size_t configuration_key_size = sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1;
-	char configuration_key[configuration_key_size];
+	#define CONFIGURATION_KEY_SIZE ((size_t)sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1)
+	char configuration_key[CONFIGURATION_KEY_SIZE];
 	configuration config;
 	value loader_library_path_value = NULL;
 	char *library_path = NULL;
@@ -268,7 +277,8 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 
 	strncpy(configuration_key, plugin_name(p), LOADER_TAG_SIZE);
 
-	strncat(configuration_key, configuration_key_suffix, configuration_key_size);
+	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE);
+	#undef CONFIGURATION_KEY_SIZE
 
 	config = configuration_scope(configuration_key);
 

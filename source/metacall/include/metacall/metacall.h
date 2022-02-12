@@ -156,7 +156,7 @@ METACALL_API void metacall_initialize_args(int argc, char *argv[]);
 *  @return
 *    An integer equal or greater than zero
 */
-METACALL_API int metacall_argc();
+METACALL_API int metacall_argc(void);
 
 /**
 *  @brief
