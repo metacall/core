@@ -626,7 +626,7 @@ void loader_unload_children(loader_impl impl, int destroy_objects)
 		/* Call recursively for deletion of children */
 		if (order->p != manager_impl->host)
 		{
-			loader_impl_destroy(order->p, plugin_impl_type(order->p, loader_impl));
+			plugin_destroy(order->p);
 		}
 
 		/* Clear current order */
