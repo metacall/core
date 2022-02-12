@@ -27,6 +27,7 @@
 
 /* -- Definitions -- */
 
+/* Path limits */
 #if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
@@ -71,6 +72,7 @@
 	#error "Unimplemented platform, please add support to it"
 #endif
 
+/* Path separator */
 #if defined(WIN32) || defined(_WIN32) ||            \
 	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
 	defined(__MINGW32__) || defined(__MINGW64__)
@@ -90,6 +92,17 @@
 	#error "Unknown path separator"
 #endif
 
+/* Path delimiter */
+#if defined(WIN32) || defined(_WIN32) ||            \
+	defined(__CYGWIN__) || defined(__CYGWIN32__) || \
+	defined(__MINGW32__) || defined(__MINGW64__)
+
+	#define PORTABILITY_PATH_DELIMITER ';'
+
+#else
+	#define PORTABILITY_PATH_DELIMITER ':'
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -105,6 +118,8 @@ PORTABILITY_API size_t portability_path_get_extension(const char *path, size_t p
 PORTABILITY_API size_t portability_path_get_module_name(const char *path, size_t path_size, const char *extension, size_t extension_size, char *name, size_t name_size);
 
 PORTABILITY_API size_t portability_path_get_directory(const char *path, size_t path_size, char *absolute, size_t absolute_size);
+
+PORTABILITY_API size_t portability_path_get_directory_inplace(char *path, size_t size);
 
 PORTABILITY_API size_t portability_path_get_relative(const char *base, size_t base_size, const char *path, size_t path_size, char *relative, size_t relative_size);
 

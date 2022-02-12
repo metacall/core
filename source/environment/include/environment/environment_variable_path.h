@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
+#include <stddef.h>
+
 /* -- Definitions -- */
 
 #if defined(WIN32) || defined(_WIN32) ||            \
@@ -49,7 +53,7 @@ extern "C" {
 
 /* -- Methods -- */
 
-ENVIRONMENT_API char *environment_variable_path_create(const char *name, const char *default_path);
+ENVIRONMENT_API char *environment_variable_path_create(const char *name, const char *default_path, size_t default_path_size, size_t *env_size);
 
 ENVIRONMENT_API void environment_variable_path_destroy(char *variable_path);
 

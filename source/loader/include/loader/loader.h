@@ -51,17 +51,13 @@ typedef struct loader_type *loader;
 
 /* -- Methods  -- */
 
-LOADER_API loader loader_singleton(void);
-
 LOADER_API void loader_initialization_register(loader_impl impl);
 
-LOADER_API void loader_initialize(void);
+LOADER_API int loader_initialize(void);
 
 LOADER_API int loader_is_initialized(const loader_tag tag);
 
 LOADER_API int loader_register(const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[]);
-
-LOADER_API int loader_load_path(const loader_path path);
 
 LOADER_API int loader_execution_path(const loader_tag tag, const loader_path path);
 
@@ -94,8 +90,6 @@ LOADER_API value loader_metadata(void);
 LOADER_API int loader_clear(void *handle);
 
 LOADER_API void loader_unload_children(loader_impl impl, int destroy_objects);
-
-LOADER_API int loader_unload(void);
 
 LOADER_API void loader_destroy(void);
 

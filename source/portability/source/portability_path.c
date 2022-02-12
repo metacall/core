@@ -167,6 +167,28 @@ size_t portability_path_get_directory(const char *path, size_t path_size, char *
 	return last + 1;
 }
 
+size_t portability_path_get_directory_inplace(char *path, size_t size)
+{
+	if (path == NULL)
+	{
+		return 0;
+	}
+
+	size_t i, last;
+
+	for (i = 0, last = 0; path[i] != '\0' && i < size; ++i)
+	{
+		if (PORTABILITY_PATH_SEPARATOR(path[i]))
+		{
+			last = i + 1;
+		}
+	}
+
+	path[last] = '\0';
+
+	return last + 1;
+}
+
 size_t portability_path_get_relative(const char *base, size_t base_size, const char *path, size_t path_size, char *relative, size_t relative_size)
 {
 	if (base == NULL || path == NULL || relative == NULL)

@@ -54,7 +54,7 @@ TEST_F(dynlink_test, DefaultConstructor)
 		const char library_name[] = "mock_loader";
 #endif
 
-		char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL);
+		char *path = environment_variable_path_create(DYNLINK_TEST_LIBRARY_PATH, NULL, 0, NULL);
 
 		dynlink handle = dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_NOW | DYNLINK_FLAGS_BIND_GLOBAL);
 

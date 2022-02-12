@@ -26,27 +26,28 @@
 #include <loader/loader_impl_interface.h>
 #include <loader/loader_naming.h>
 
+#include <plugin/plugin_impl.h>
+#include <plugin/plugin_manager.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* -- Definitions -- */
-
-#define LOADER_HOST_PROXY_NAME "__metacall_host__"
 
 /* -- Methods -- */
 
 LOADER_API int loader_impl_is_initialized(loader_impl impl);
 
-LOADER_API loader_impl loader_impl_create(const char *path, const loader_tag tag);
+LOADER_API loader_impl loader_impl_create(const loader_tag tag);
+
+LOADER_API loader_impl loader_impl_create_host(const loader_tag tag);
+
+LOADER_API void loader_impl_attach(loader_impl impl, plugin p);
+
+LOADER_API plugin loader_impl_plugin(loader_impl impl);
 
 LOADER_API loader_impl_data loader_impl_get(loader_impl impl);
 
 LOADER_API value loader_impl_get_value(loader_impl impl, const char *name);
-
-LOADER_API loader_impl_interface loader_impl_symbol(loader_impl impl);
-
-LOADER_API loader_tag *loader_impl_tag(loader_impl impl);
 
 LOADER_API context loader_impl_context(loader_impl impl);
 
@@ -54,13 +55,13 @@ LOADER_API type loader_impl_type(loader_impl impl, const char *name);
 
 LOADER_API int loader_impl_type_define(loader_impl impl, const char *name, type t);
 
-LOADER_API int loader_impl_execution_path(loader_impl impl, const loader_path path);
+LOADER_API int loader_impl_execution_path(plugin p, loader_impl impl, const loader_path path);
 
-LOADER_API int loader_impl_load_from_file(loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr);
+LOADER_API int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr);
 
-LOADER_API int loader_impl_load_from_memory(loader_impl impl, const char *buffer, size_t size, void **handle_ptr);
+LOADER_API int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl impl, const char *buffer, size_t size, void **handle_ptr);
 
-LOADER_API int loader_impl_load_from_package(loader_impl impl, const loader_path path, void **handle_ptr);
+LOADER_API int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl impl, const loader_path path, void **handle_ptr);
 
 LOADER_API void *loader_impl_get_handle(loader_impl impl, const char *name);
 
@@ -82,9 +83,11 @@ LOADER_API int loader_impl_clear(void *handle);
 
 LOADER_API void loader_impl_destroy_objects(loader_impl impl);
 
-LOADER_API void loader_impl_destroy(loader_impl impl);
+LOADER_API void loader_impl_destroy_deallocate(loader_impl impl);
 
-LOADER_API loader_impl loader_impl_create_proxy(void);
+LOADER_API void loader_impl_destroy_dtor(plugin p);
+
+LOADER_API void loader_impl_destroy(plugin p, loader_impl impl);
 
 #ifdef __cplusplus
 }

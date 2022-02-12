@@ -264,12 +264,17 @@ static int initialize_types(loader_impl impl)
 	for (size_t i = 0; i < size; i++)
 	{
 		type t = type_create(type_names[i].id, type_names[i].name, NULL, NULL);
+
 		if (t == NULL)
 		{
 			return 1;
 		}
 
-		loader_impl_type_define(impl, type_name(t), t);
+		if (loader_impl_type_define(impl, type_name(t), t) != 0)
+		{
+			type_destroy(t);
+			return 1;
+		}
 	}
 
 	return 0;

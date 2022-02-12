@@ -70,7 +70,7 @@ TEST_F(environment_test, variable_path)
 {
 	static const char variable_path_name[] = ENVIRONMENT_TEST_VARIABLE_PATH;
 
-	char *variable_path = environment_variable_path_create(variable_path_name, "default_path");
+	char *variable_path = environment_variable_path_create(variable_path_name, "default_path", sizeof("default_path"), NULL);
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_path);
 
@@ -83,7 +83,7 @@ TEST_F(environment_test, variable_path_default)
 {
 	static const char variable_path_name[] = "UNKNOWN";
 
-	char *variable_path = environment_variable_path_create(variable_path_name, "default_path");
+	char *variable_path = environment_variable_path_create(variable_path_name, "default_path", sizeof("default_path"), NULL);
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_path);
 
@@ -96,7 +96,7 @@ TEST_F(environment_test, variable_path_sanitized)
 {
 	static const char variable_path_name[] = ENVIRONMENT_TEST_VARIABLE_PATH_SANITIZED;
 
-	char *variable_path = environment_variable_path_create(variable_path_name, "default_path");
+	char *variable_path = environment_variable_path_create(variable_path_name, "default_path", sizeof("default_path"), NULL);
 
 	ASSERT_NE((const char *)NULL, (const char *)variable_path);
 

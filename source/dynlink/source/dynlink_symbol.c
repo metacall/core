@@ -29,8 +29,8 @@
 
 size_t dynlink_symbol_name_mangle(dynlink_symbol_name symbol_name, size_t symbol_name_length, dynlink_symbol_name_man symbol_mangled)
 {
-	const char symbol_prefix[] = DYNLINK_SYMBOL_PREFIX_STR();
-	size_t symbol_prefix_length = sizeof(symbol_prefix) - 1;
+	static const char symbol_prefix[] = DYNLINK_SYMBOL_PREFIX_STR();
+	static size_t symbol_prefix_length = sizeof(symbol_prefix) - 1;
 	size_t length = symbol_name_length + symbol_prefix_length;
 
 	if (symbol_mangled == NULL)

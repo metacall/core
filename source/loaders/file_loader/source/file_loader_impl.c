@@ -173,7 +173,6 @@ int file_loader_impl_initialize_types(loader_impl impl)
 			if (loader_impl_type_define(impl, type_name(t), t) != 0)
 			{
 				type_destroy(t);
-
 				return 1;
 			}
 		}

@@ -1625,9 +1625,10 @@ loader_impl_data java_loader_impl_initialize(loader_impl impl, configuration con
 		{
 			type t = type_create(type_id_name_sig[i].id, type_id_name_sig[i].name, (type_impl) new std::string(type_id_name_sig[i].jni_signature), &type_java_singleton);
 
-			if (!(t != NULL && loader_impl_type_define(impl, type_name(t), t) == 0))
+			if (t != NULL && loader_impl_type_define(impl, type_name(t), t) != 0)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Failed to define type '%s' in Java Loader", type_id_name_sig[i].name);
+				type_destroy(t);
 			}
 		}
 

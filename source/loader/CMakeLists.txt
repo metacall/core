@@ -36,17 +36,19 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 set(headers
 	${include_path}/loader.h
 	${include_path}/loader_handle.h
+	${include_path}/loader_naming.h
+	${include_path}/loader_impl.h
 	${include_path}/loader_impl_data.h
 	${include_path}/loader_impl_interface.h
-	${include_path}/loader_impl.h
-	${include_path}/loader_env.h
-	${include_path}/loader_naming.h
+	${include_path}/loader_host.h
+	${include_path}/loader_manager_impl.h
 )
 
 set(sources
 	${source_path}/loader.c
 	${source_path}/loader_impl.c
-	${source_path}/loader_env.c
+	${source_path}/loader_host.c
+	${source_path}/loader_manager_impl.c
 )
 
 # Group source files

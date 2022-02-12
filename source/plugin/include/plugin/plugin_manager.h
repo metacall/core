@@ -78,6 +78,10 @@ PLUGIN_API char *plugin_manager_library_path(plugin_manager manager);
 
 PLUGIN_API void *plugin_manager_impl(plugin_manager manager);
 
+PLUGIN_API size_t plugin_manager_size(plugin_manager manager);
+
+PLUGIN_API int plugin_manager_register(plugin_manager manager, plugin p);
+
 PLUGIN_API plugin plugin_manager_create(plugin_manager manager, const char *name, void *impl, void (*dtor)(plugin));
 
 PLUGIN_API plugin plugin_manager_get(plugin_manager manager, const char *name);

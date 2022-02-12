@@ -43,12 +43,10 @@
 
 /* -- Methods -- */
 
-char *environment_variable_path_create(const char *name, const char *default_path)
+char *environment_variable_path_create(const char *name, const char *default_path, size_t default_path_size, size_t *env_size)
 {
 	const char *path_ptr = getenv(name);
-
 	char *path;
-
 	size_t length, size, last, end;
 
 	if (path_ptr == NULL)
@@ -58,12 +56,16 @@ char *environment_variable_path_create(const char *name, const char *default_pat
 			static const char empty_path[] = "";
 
 			default_path = empty_path;
+			default_path_size = sizeof(empty_path);
 		}
 
 		path_ptr = default_path;
+		length = default_path_size - 1;
 	}
-
-	length = strlen(path_ptr);
+	else
+	{
+		length = strlen(path_ptr);
+	}
 
 	last = length - 1;
 
@@ -90,6 +92,11 @@ char *environment_variable_path_create(const char *name, const char *default_pat
 
 	path[last] = ENVIRONMENT_VARIABLE_PATH_SEPARATOR_C;
 	path[end] = '\0';
+
+	if (env_size != NULL)
+	{
+		*env_size = size;
+	}
 
 	return path;
 }

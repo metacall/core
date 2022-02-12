@@ -87,8 +87,6 @@ void metacall_flags(int flags)
 
 int metacall_initialize(void)
 {
-	loader l = loader_singleton();
-
 	memory_allocator allocator;
 
 	/* Initialize logs by default to stdout if none has been defined */
@@ -108,12 +106,12 @@ int metacall_initialize(void)
 
 	if (metacall_initialize_flag == 0)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized <%p>", (void *)l);
+		log_write("metacall", LOG_LEVEL_DEBUG, "MetaCall already initialized");
 
 		return 0;
 	}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall <%p>", (void *)l);
+	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall");
 
 	/* Initialize backtrace for catching segmentation faults */
 	if (backtrace_initialize() != 0)
@@ -177,7 +175,18 @@ int metacall_initialize(void)
 		}
 	}
 
-	loader_initialize();
+	if (loader_initialize() != 0)
+	{
+		configuration_destroy();
+
+		/* Unregister backtrace */
+		if (backtrace_destroy() != 0)
+		{
+			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
+		}
+
+		return 1;
+	}
 
 	metacall_initialize_flag = 0;
 
@@ -2110,7 +2119,7 @@ int metacall_clear(void *handle)
 {
 	if (loader_impl_handle_validate(handle) != 0)
 	{
-		// TODO: Implement error handling
+		/* TODO: Implement error handling */
 		log_write("metacall", LOG_LEVEL_ERROR, "Handle %p passed to metacall_clear is not valid", handle);
 		return 1;
 	}
@@ -2122,11 +2131,10 @@ int metacall_destroy(void)
 {
 	if (metacall_initialize_flag == 0)
 	{
-		if (loader_unload() != 0)
-		{
-			return 1;
-		}
+		/* Destroy loaders */
+		loader_destroy();
 
+		/* Destroy configurations */
 		configuration_destroy();
 
 		metacall_initialize_flag = 1;

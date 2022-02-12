@@ -186,6 +186,7 @@ int jl_loader_impl_register_types(loader_impl impl)
 		if (loader_impl_type_define(impl, type_name(builtin_type), builtin_type) != 0)
 		{
 			// TODO: Emit exception when exception handling is implemented
+			type_destroy(builtin_type);
 			return 1;
 		}
 	}

@@ -55,12 +55,6 @@ plugin plugin_create(const char *name, plugin_descriptor descriptor, void *iface
 		return NULL;
 	}
 
-	if (descriptor == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Invalid plugin descriptor");
-		return NULL;
-	}
-
 	plugin p = malloc(sizeof(struct plugin_type));
 
 	if (p == NULL)

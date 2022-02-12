@@ -41,7 +41,6 @@ struct plugin_manager_iterate_cb_type
 
 /* -- Private Methods -- */
 
-static int plugin_manager_register(plugin_manager manager, plugin p);
 static int plugin_manager_unregister(plugin_manager manager, plugin p);
 static int plugin_manager_iterate_cb(set s, set_key key, set_value val, set_cb_iterate_args args);
 static int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_args args);
@@ -102,7 +101,7 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Initialize the library path */
 	if (manager->library_path == NULL)
 	{
-		manager->library_path = environment_variable_path_create(environment_library_path, default_library_path);
+		manager->library_path = environment_variable_path_create(environment_library_path, default_library_path, strlen(default_library_path) + 1, NULL);
 
 		if (manager->library_path == NULL)
 		{
@@ -145,6 +144,11 @@ char *plugin_manager_library_path(plugin_manager manager)
 void *plugin_manager_impl(plugin_manager manager)
 {
 	return manager->impl;
+}
+
+size_t plugin_manager_size(plugin_manager manager)
+{
+	return set_size(manager->plugins);
 }
 
 int plugin_manager_register(plugin_manager manager, plugin p)
