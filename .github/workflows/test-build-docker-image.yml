@@ -1,23 +1,18 @@
 name: Test, Build and Push Docker Image
 
-# on:
-#   # to enable manual triggering of this workflow.
-#   workflow_dispatch:
+on:
+  # to enable manual triggering of this workflow.
+  workflow_dispatch:
 
-#   # trigger for pushes to master
-#   push:
-#     branches: [master]
-
-#   pull_request:
-#     branches: [develop, master]
-on: [push, pull_request]
+  # trigger for pushes to master
+  push:
+    branches: [master]
 
 env:
   IMAGE_NAME: registry.hub.docker.com/metacall/core
 
 jobs:
   build-metaCall:
-    name: Pull Metacall Images
     runs-on: ubuntu-latest
     steps:
       # Checkout the code
@@ -25,12 +20,24 @@ jobs:
         with:
           fetch-depth: 0
 
-      # - name: Login to DockerHub
-      #   uses: docker/login-action@v1
-      #   with:
-      #     username: ${{ secrets.DOCKER_HUB_USERNAME }}
-      #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+
+      # This Will Print the `IMAGE_NAME` configured in the environment variable
+      - name: Name of Image Configured in environment variable
+        run: echo ${IMAGE_NAME}
 
       # Run Docker Command - Pull
-      - run: echo ${IMAGE_NAME}
-      - run: sh ./docker-compose.sh pull
+      - name: Pull Metacall Docker Image
+        run: sh ./docker-compose.sh pull
+
+      # Run Docker Command - Build
+      - name: Build Metacall Docker Image
+        run: sh ./docker-compose.sh build
+
+      # Run Docker Command - Push
+      - name: Push Metacall Docker Image
+        run: sh ./docker-compose.sh push
