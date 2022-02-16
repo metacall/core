@@ -4,9 +4,12 @@ on:
   # to enable manual triggering of this workflow.
   workflow_dispatch:
 
-  # trigger for pushes to develop
+  # trigger for pushes to master
   push:
-    branches: [develop]
+    branches: [master]
+
+env:
+  IMAGE_NAME: registry.hub.docker.com/metacall/core
 
 jobs:
   build-metaCall:
@@ -24,4 +27,5 @@ jobs:
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
       # Run Docker Command - Pull
+      - run: echo ${IMAGE_NAME}
       - run: sh ./docker-compose.sh pull
