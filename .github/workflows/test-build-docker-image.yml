@@ -1,15 +1,16 @@
 name: Test, Build and Push Docker Image
 
-on:
-  # to enable manual triggering of this workflow.
-  workflow_dispatch:
+# on:
+#   # to enable manual triggering of this workflow.
+#   workflow_dispatch:
 
-  # trigger for pushes to master
-  push:
-    branches: [master]
+#   # trigger for pushes to master
+#   push:
+#     branches: [master]
 
-  pull_request:
-    branches: [develop, master]
+#   pull_request:
+#     branches: [develop, master]
+on: [push, pull_request]
 
 env:
   IMAGE_NAME: registry.hub.docker.com/metacall/core
