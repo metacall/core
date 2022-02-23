@@ -26,3 +26,8 @@ leak:libnode*
 # Ruby
 #
 leak:libruby*
+#
+# DotNet Core
+#
+leak:libcoreclr*
+leak:libicuuc*
