@@ -147,8 +147,11 @@ function_return function_cs_interface_await(function func, function_impl impl, f
 
 void function_cs_interface_destroy(function func, function_impl impl)
 {
+	cs_function *cs_f = (cs_function *)impl;
+
 	(void)func;
-	(void)impl;
+
+	free(cs_f);
 }
 
 function_interface function_cs_singleton(void)
