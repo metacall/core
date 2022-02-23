@@ -166,6 +166,9 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 
 	metacall_value_destroy(ret);
 
+	/* Register initialization */
+	loader_initialization_register(impl);
+
 	return (loader_impl_data)ts_impl;
 }
 

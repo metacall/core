@@ -40,5 +40,8 @@ pub extern "C" fn rs_loader_impl_initialize(
         0 as c_int as *mut c_void,
     );
 
+    // Register initialization
+    api::loader_lifecycle_register(loader_impl);
+
     Box::into_raw(boxed_loader_lifecycle_state) as *mut c_void
 }

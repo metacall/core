@@ -16,6 +16,8 @@ impl LoaderLifecycleState {
 extern "C" {
     fn loader_impl_get(loader_impl: *mut c_void) -> *mut c_void;
 
+    fn loader_initialization_register(loader_impl: *mut c_void);
+
     fn loader_impl_type_define(
         loader_impl: *mut c_void,
         name: *const c_char,
@@ -133,6 +135,10 @@ pub fn get_loader_lifecycle_state(loader_impl: *mut c_void) -> *mut LoaderLifecy
         unsafe { loader_impl_get(loader_impl) } as *mut LoaderLifecycleState;
 
     loader_lifecycle_state
+}
+
+pub fn loader_lifecycle_register(loader_impl: *mut c_void) {
+    unsafe { loader_initialization_register(loader_impl) };
 }
 
 pub enum PrimitiveMetacallProtocolTypes {

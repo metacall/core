@@ -116,6 +116,10 @@ struct loader_impl_metadata_cb_iterator_type
 
 static loader_impl loader_impl_allocate(const loader_tag tag);
 
+static configuration loader_impl_initialize_configuration(plugin p);
+
+static int loader_impl_initialize_registered(plugin_manager manager, plugin p);
+
 static int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl);
 
 static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interface iface, loader_handle module, const loader_path path);
@@ -271,13 +275,45 @@ void loader_impl_configuration(loader_impl_interface iface, loader_impl impl, co
 	}
 }
 
-int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
+configuration loader_impl_initialize_configuration(plugin p)
 {
-	static const char loader_library_path[] = "loader_library_path";
 	static const char configuration_key_suffix[] = "_loader";
 #define CONFIGURATION_KEY_SIZE ((size_t)sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1)
 	char configuration_key[CONFIGURATION_KEY_SIZE];
-	size_t tag_size;
+
+	/* Retrieve the configuration key: <tag>_loader */
+	size_t tag_size = strnlen(plugin_name(p), LOADER_TAG_SIZE) + 1;
+
+	strncpy(configuration_key, plugin_name(p), tag_size);
+
+	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE - tag_size);
+#undef CONFIGURATION_KEY_SIZE
+
+	return configuration_scope(configuration_key);
+}
+
+int loader_impl_initialize_registered(plugin_manager manager, plugin p)
+{
+	loader_manager_impl manager_impl = plugin_manager_impl_type(manager, loader_manager_impl);
+	size_t iterator, size = vector_size(manager_impl->initialization_order);
+
+	/* Check if the plugin has been properly registered into initialization order list */
+	for (iterator = 0; iterator < size; ++iterator)
+	{
+		loader_initialization_order order = vector_at(manager_impl->initialization_order, iterator);
+
+		if (order->p == p)
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
+{
+	static const char loader_library_path[] = "loader_library_path";
 	configuration config;
 	value loader_library_path_value = NULL;
 	char *library_path = NULL;
@@ -288,15 +324,10 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		return 0;
 	}
 
-	tag_size = strnlen(plugin_name(p), LOADER_TAG_SIZE) + 1;
+	/* Get the configuration of the loader */
+	config = loader_impl_initialize_configuration(p);
 
-	strncpy(configuration_key, plugin_name(p), tag_size);
-
-	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE - tag_size);
-#undef CONFIGURATION_KEY_SIZE
-
-	config = configuration_scope(configuration_key);
-
+	/* Retrieve the library path */
 	library_path = plugin_manager_library_path(manager);
 
 	/* The library path priority order is the following:
@@ -323,8 +354,20 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 		value_type_destroy(loader_library_path_value);
 	}
 
+	/* Verify that it the loader returned valid data on initialization */
 	if (impl->data == NULL)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader (%s) returned NULL value on the initialization", plugin_name(p));
+		return 1;
+	}
+
+	/* Verify that the loader has been registered into the initialization list */
+	if (loader_impl_initialize_registered(manager, p) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader (%s) was not registered in the initialization list, "
+											   "in order to solve this problem it must call to the function 'loader_initialization_register' "
+											   "at the end of the initialization (i.e %s_loader_impl_initialize)",
+			plugin_name(p), plugin_name(p));
 		return 1;
 	}
 
