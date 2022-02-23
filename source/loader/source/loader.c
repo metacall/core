@@ -621,7 +621,7 @@ void loader_unload_children(loader_impl impl, int destroy_objects)
 	{
 		loader_initialization_order order = vector_back_type(stack, loader_initialization_order);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s)", plugin_name(order->p));
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s) from thread #%" PRIuS, plugin_name(order->p), order->id);
 
 		/* Call recursively for deletion of children */
 		if (order->p != manager_impl->host)
