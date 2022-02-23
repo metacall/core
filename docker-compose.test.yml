@@ -25,4 +25,4 @@ services:
     build:
       args:
         METACALL_BUILD_TYPE: debug
-        METACALL_BUILD_OPTIONS: root python ruby netcore5 nodejs typescript file rpc examples tests scripts ports dynamic install pack sanitizer # v8 coverage benchmarks
+        METACALL_BUILD_OPTIONS: root python ruby netcore5 nodejs typescript file rpc c java examples tests scripts ports dynamic install pack sanitizer # v8 coverage benchmarks
