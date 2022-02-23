@@ -17,8 +17,6 @@
 
 #include <log/log.h>
 
-#include <string.h>
-
 /* -- Member Data -- */
 
 struct configuration_singleton_type

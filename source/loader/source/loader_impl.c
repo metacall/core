@@ -65,11 +65,15 @@ struct loader_handle_impl_type;
 
 struct loader_impl_metadata_cb_iterator_type;
 
+struct loader_impl_handle_register_cb_iterator_type;
+
 /* -- Type Definitions -- */
 
 typedef struct loader_handle_impl_type *loader_handle_impl;
 
 typedef struct loader_impl_metadata_cb_iterator_type *loader_impl_metadata_cb_iterator;
+
+typedef struct loader_impl_handle_register_cb_iterator_type *loader_impl_handle_register_cb_iterator;
 
 /* -- Member Data -- */
 
@@ -96,6 +100,12 @@ struct loader_handle_impl_type
 	int populated;				 /* If it is populated (0), the handle context is also stored in loader context (global scope), otherwise it is private */
 };
 
+struct loader_impl_handle_register_cb_iterator_type
+{
+	context handle_ctx;
+	char *duplicated_key;
+};
+
 struct loader_impl_metadata_cb_iterator_type
 {
 	size_t iterator;
@@ -112,9 +122,11 @@ static loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_
 
 static int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr, int populated);
 
-static int loader_impl_handle_register(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr);
+static int loader_impl_handle_register_cb_iterate(plugin_manager manager, plugin p, void *data);
 
-static size_t loader_impl_handle_name(const loader_path path, loader_path result);
+static int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr);
+
+static size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, loader_path result);
 
 static int loader_impl_function_hook_call(context ctx, const char func_name[]);
 
@@ -263,7 +275,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 {
 	static const char loader_library_path[] = "loader_library_path";
 	static const char configuration_key_suffix[] = "_loader";
-	#define CONFIGURATION_KEY_SIZE ((size_t)sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1)
+#define CONFIGURATION_KEY_SIZE ((size_t)sizeof(configuration_key_suffix) + LOADER_TAG_SIZE - 1)
 	char configuration_key[CONFIGURATION_KEY_SIZE];
 	size_t tag_size;
 	configuration config;
@@ -281,7 +293,7 @@ int loader_impl_initialize(plugin_manager manager, plugin p, loader_impl impl)
 	strncpy(configuration_key, plugin_name(p), tag_size);
 
 	strncat(configuration_key, configuration_key_suffix, CONFIGURATION_KEY_SIZE - tag_size);
-	#undef CONFIGURATION_KEY_SIZE
+#undef CONFIGURATION_KEY_SIZE
 
 	config = configuration_scope(configuration_key);
 
@@ -604,17 +616,31 @@ int loader_impl_handle_init(loader_impl impl, const char *path, loader_handle_im
 	return result;
 }
 
-int loader_impl_handle_register(loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr)
+int loader_impl_handle_register_cb_iterate(plugin_manager manager, plugin p, void *data)
+{
+	loader_impl impl = plugin_impl_type(p, loader_impl);
+	loader_impl_handle_register_cb_iterator iterator = (loader_impl_handle_register_cb_iterator)data;
+
+	(void)manager;
+
+	return (context_contains(impl->ctx, iterator->handle_ctx, &iterator->duplicated_key) == 0);
+}
+
+int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr)
 {
 	if (handle_ptr == NULL)
 	{
-		char *duplicated_key = NULL;
+		struct loader_impl_handle_register_cb_iterator_type iterator;
 
-		if (context_contains(impl->ctx, handle_impl->ctx, &duplicated_key) == 0)
+		iterator.handle_ctx = handle_impl->ctx;
+		iterator.duplicated_key = NULL;
+
+		plugin_manager_iterate(manager, &loader_impl_handle_register_cb_iterate, &iterator);
+
+		if (iterator.duplicated_key != NULL)
 		{
-			/* TODO: This still does not protect duplicated names between different loaders global scope */
-			/* TODO: Now we can use the manager to iterate all the plugins and check for duplicates */
-			log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", duplicated_key, path);
+			log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the global scope by handle: %s", iterator.duplicated_key, path);
+			return 1;
 		}
 		else if (context_append(impl->ctx, handle_impl->ctx) == 0)
 		{
@@ -629,30 +655,33 @@ int loader_impl_handle_register(loader_impl impl, const char *path, loader_handl
 	return 1;
 }
 
-size_t loader_impl_handle_name(const loader_path path, loader_path result)
+size_t loader_impl_handle_name(plugin_manager manager, const loader_path path, loader_path result)
 {
-	// TODO: Find a better way to implement this...
-	// For example, get the current execution directory of the program
-	// and check if it is a subpath (may not work for files outside of the subtree? Review!)
+	vector script_paths = plugin_manager_impl_type(manager, loader_manager_impl)->script_paths;
 
-	// TODO: Iterate all script_paths and check if it is a subpath
-	// TODO: There's a bug here, it does not take into account the delayed execution paths loaded, neither the ones loaded at runtime once the loader has been loaded
-	// const char *script_path = loader_env_script_path();
-	// size_t script_path_size = strlen(script_path) + 1;
-	// size_t path_size = strnlen(path, LOADER_PATH_SIZE) + 1;
+	if (script_paths != NULL)
+	{
+		size_t iterator, size = vector_size(script_paths);
 
-	// if (portability_path_is_subpath(script_path, script_path_size, path, path_size))
-	// {
-	// 	return portability_path_get_relative(script_path, script_path_size, path, path_size, result, LOADER_PATH_SIZE) - 1;
-	// }
-	// else
-	// {
+		/* TODO: Should scripts_path be sorted in order to prevent name collisions? */
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			char *script_path = vector_at_type(script_paths, iterator, char *);
+			size_t script_path_size = strnlen(script_path, LOADER_PATH_SIZE) + 1;
+			size_t path_size = strnlen(path, LOADER_PATH_SIZE) + 1;
+
+			if (portability_path_is_subpath(script_path, script_path_size, path, path_size))
+			{
+				return portability_path_get_relative(script_path, script_path_size, path, path_size, result, LOADER_PATH_SIZE) - 1;
+			}
+		}
+	}
+
 	size_t length = strnlen(path, LOADER_PATH_SIZE);
 
 	memcpy(result, path, length + 1);
 
 	return length;
-	// }
 }
 
 int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr)
@@ -678,7 +707,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 				return 1;
 			}
 
-			if (loader_impl_handle_name(paths[0], path) > 1 && loader_impl_get_handle(impl, path) != NULL)
+			if (loader_impl_handle_name(manager, paths[0], path) > 1 && loader_impl_get_handle(impl, path) != NULL)
 			{
 				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", path);
 
@@ -703,7 +732,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 					{
 						if (iface->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							if (loader_impl_handle_register(impl, path, handle_impl, handle_ptr) == 0)
+							if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
 							{
 								return 0;
 							}
@@ -794,7 +823,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 					{
 						if (iface->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							if (loader_impl_handle_register(impl, name, handle_impl, handle_ptr) == 0)
+							if (loader_impl_handle_register(manager, impl, name, handle_impl, handle_ptr) == 0)
 							{
 								return 0;
 							}
@@ -822,7 +851,7 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 		loader_path subpath;
 
-		if (iface != NULL && loader_impl_handle_name(path, subpath) > 1)
+		if (iface != NULL && loader_impl_handle_name(manager, path, subpath) > 1)
 		{
 			loader_handle handle;
 
@@ -854,7 +883,7 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 					{
 						if (iface->discover(impl, handle_impl->module, handle_impl->ctx) == 0)
 						{
-							if (loader_impl_handle_register(impl, subpath, handle_impl, handle_ptr) == 0)
+							if (loader_impl_handle_register(manager, impl, subpath, handle_impl, handle_ptr) == 0)
 							{
 								return 0;
 							}

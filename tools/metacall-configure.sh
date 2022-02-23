@@ -308,7 +308,9 @@ sub_configure() {
 
 	# Sanitizer
 	if [ $BUILD_SANITIZER = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
+		# Disable backtrace module when sanitizer is enabled
+		# in order to let the sanitizer catch the segmentation faults
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=On -DOPTION_BUILD_BACKTRACE=Off"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
 	fi

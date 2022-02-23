@@ -59,11 +59,11 @@ static void dynlink_impl_interface_get_name_str_unix(dynlink_name name, dynlink_
 {
 	strncpy(name_impl, "lib", size);
 
-	strncat(name_impl, name, size);
+	strncat(name_impl, name, size - 1);
 
-	strncat(name_impl, ".", size);
+	strncat(name_impl, ".", size - 1);
 
-	strncat(name_impl, dynlink_impl_extension(), size);
+	strncat(name_impl, dynlink_impl_extension(), size - 1);
 }
 
 void dynlink_impl_interface_get_name_unix(dynlink handle, dynlink_name_impl name_impl, size_t size)

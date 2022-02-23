@@ -45,18 +45,18 @@ static void dynlink_impl_interface_get_name_str_win32(dynlink_name name, dynlink
 {
 	strncat(name_impl, name, size);
 
-	strncat(name_impl, ".", size);
+	strncat(name_impl, ".", size - 1);
 
-	strncat(name_impl, dynlink_impl_extension(), size);
+	strncat(name_impl, dynlink_impl_extension(), size - 1);
 }
 
 void dynlink_impl_interface_get_name_win32(dynlink handle, dynlink_name_impl name_impl, size_t size)
 {
 	strncpy(name_impl, dynlink_get_name(handle), size);
 
-	strncat(name_impl, ".", size);
+	strncat(name_impl, ".", size - 1);
 
-	strncat(name_impl, dynlink_impl_extension(), size);
+	strncat(name_impl, dynlink_impl_extension(), size - 1);
 }
 
 dynlink_impl dynlink_impl_interface_load_win32(dynlink handle)

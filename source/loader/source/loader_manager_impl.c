@@ -31,8 +31,6 @@
 
 #include <log/log.h>
 
-#include <string.h>
-
 /* -- Definitions -- */
 
 #define LOADER_SCRIPT_PATH		   "LOADER_SCRIPT_PATH"
@@ -171,7 +169,7 @@ alloc_error:
 plugin_manager_interface loader_manager_impl_iface(void)
 {
 	static struct plugin_manager_interface_type iface = {
-		NULL, /* TODO? */
+		NULL,
 		&loader_manager_impl_iface_destroy
 	};
 

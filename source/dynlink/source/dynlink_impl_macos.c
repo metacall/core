@@ -45,9 +45,9 @@ void dynlink_impl_interface_get_name_macos(dynlink handle, dynlink_name_impl nam
 {
 	strncpy(name_impl, dynlink_get_name(handle), size);
 
-	strncat(name_impl, ".", size);
+	strncat(name_impl, ".", size - 1);
 
-	strncat(name_impl, dynlink_impl_extension(), size);
+	strncat(name_impl, dynlink_impl_extension(), size - 1);
 }
 
 dynlink_impl dynlink_impl_interface_load_macos(dynlink handle)

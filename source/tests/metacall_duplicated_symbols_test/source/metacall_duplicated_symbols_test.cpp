@@ -132,5 +132,28 @@ TEST_F(metacall_duplicated_symbols_test, DefaultConstructor)
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 
+/* Python + Ruby */
+#if defined(OPTION_BUILD_LOADERS_PY) && defined(OPTION_BUILD_LOADERS_RB)
+	{
+		/* Test duplicated symbols between languages */
+		static const char bufferA[] =
+			"#!/usr/bin/env python3\n"
+			"def betweenlangs(left: int, right: int) -> int:\n"
+			"\tresult = left * right;\n"
+			"\tprint(left, ' * ', right, ' = ', result);\n"
+			"\treturn result;";
+
+		static const char bufferB[] =
+			"def betweenlangs(first, second)\n"
+			"	puts('Second value is', second)\n"
+			"	return 6\n"
+			"end\n";
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", bufferA, sizeof(bufferA), NULL));
+
+		EXPECT_EQ((int)1, (int)metacall_load_from_memory("rb", bufferB, sizeof(bufferB), NULL));
+	}
+#endif /* OPTION_BUILD_LOADERS_PY + OPTION_BUILD_LOADERS_RB */
+
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

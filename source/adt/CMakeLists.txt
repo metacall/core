@@ -42,6 +42,7 @@ set(headers
 	${include_path}/adt_bucket.h
 	${include_path}/adt_trie.h
 	${include_path}/adt_vector.h
+	${include_path}/adt_string.h
 )
 
 set(sources
