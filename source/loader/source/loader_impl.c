@@ -1247,17 +1247,20 @@ void loader_impl_destroy_dtor(plugin p)
 
 void loader_impl_destroy(plugin p, loader_impl impl)
 {
-	if (p != NULL && impl != NULL)
+	if (impl != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", plugin_name(p));
-
 		if (impl->init == 0)
 		{
-			loader_impl_interface iface = loader_iface(p);
-
-			if (iface != NULL && iface->destroy(impl) != 0)
+			if (p != NULL)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", plugin_name(p), iface->destroy);
+				loader_impl_interface iface = loader_iface(p);
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", plugin_name(p));
+
+				if (iface != NULL && iface->destroy(impl) != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", plugin_name(p), iface->destroy);
+				}
 			}
 
 			impl->init = 1;
