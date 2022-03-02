@@ -1,0 +1,78 @@
+# SPDX-FileCopyrightText: 2022 Avinal Kumar <avinal.xlvii@gmail.com>
+# SPDX-License-Identifier: Apache-2.0
+
+name: Build and test metacall core
+
+concurrency:
+  group: build-${{ github.head_ref }}
+  cancel-in-progress: true
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Ubuntu 20.04 GCC
+            image: ubuntu-20.04
+            cc: gcc
+            cxx: g++
+            build-type: Debug
+            experimental: false
+          - name: Ubuntu 20.04 CLANG
+            image: ubuntu-20.04
+            cc: clang
+            cxx: clang++
+            build-type: Debug
+            experimental: false
+          - name: Ubuntu 18.04 GCC
+            image: ubuntu-18.04
+            cc: gcc
+            cxx: g++
+            build-type: Debug
+            experimental: false
+          - name: Windows Server 2019 MSVC
+            image: windows-2019
+            cc: cl
+            cxx: cl
+            build-type: Debug
+            experimental: true
+          - name: MacOS 11 CLANG
+            image: macos-11
+            cc: clang
+            cxx: clang++
+            build-type: Debug
+            experimental: true
+
+    name: ${{ matrix.name }} ${{ matrix.build-type }}
+    runs-on: ${{ matrix.image }}
+    continue-on-error: ${{ matrix.experimental == 'true' }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configure and Generate CMake project
+        run: cmake -DCMAKE_BUILD_TYPE=${{ matrix.build-type }} -B ${{ github.workspace }}/build
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+
+      - name: Build project
+        run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.build-type }} --parallel 8
+
+      # Exclude experimental tests
+      - name: Run tests
+        run: |
+          cd build
+          ctest -E "metacall-dynlink-path-test" --output-on-failure
