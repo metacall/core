@@ -52,6 +52,7 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 			void *static_var = metacall_class_static_get(cls, "@@class_hierarchy_var");
 			ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(static_var));
 			metacall_value_destroy(static_var);
+			metacall_value_destroy(ret);
 		}
 
 		{
@@ -87,6 +88,7 @@ TEST_F(metacall_ruby_object_class_test, DefaultConstructor)
 				metacall_value_create_string(works, sizeof(works) - 1)
 			};
 			void *ret_value = metacallv_class(myclass, "static_hello", static_method_args, sizeof(static_method_args) / sizeof(static_method_args[0]));
+			metacall_value_destroy(static_method_args[0]);
 
 			ASSERT_EQ((enum metacall_value_id)METACALL_STRING, (enum metacall_value_id)metacall_value_id(ret_value));
 			metacall_value_destroy(ret_value);

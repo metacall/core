@@ -67,7 +67,8 @@ typedef struct loader_impl_rb_handle_type
 
 typedef struct loader_impl_rb_function_type
 {
-	loader_impl_rb_module rb_module;
+	VALUE module;
+	VALUE module_instance;
 	ID method_id;
 	VALUE args_hash;
 	loader_impl impl;
@@ -86,6 +87,7 @@ typedef struct loader_impl_rb_object_type
 	VALUE object;
 	VALUE object_class;
 	loader_impl impl;
+	value obj_cls_val;
 
 } * loader_impl_rb_object;
 
@@ -211,6 +213,7 @@ const char *rb_type_deserialize(loader_impl impl, VALUE v, value *result)
 		rb_obj->object = v;
 		rb_obj->object_class = object_class;
 		rb_obj->impl = impl;
+		rb_obj->obj_cls_val = obj_cls_val;
 
 		*result = value_create_object(o);
 
@@ -373,7 +376,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 		if (invoke_type == FUNCTION_RB_TYPED)
 		{
-			result_value = rb_funcall(rb_function->rb_module->instance, rb_intern("send"), 2,
+			result_value = rb_funcall(rb_function->module_instance, rb_intern("send"), 2,
 				ID2SYM(rb_function->method_id), rb_function->args_hash);
 		}
 		else if (invoke_type == FUNCTION_RB_DUCKTYPED)
@@ -386,7 +389,7 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			args_value[0] = ID2SYM(rb_function->method_id);
 
-			result_value = rb_funcall2(rb_function->rb_module->instance, rb_intern("send"), 1 + args_size, args_value);
+			result_value = rb_funcall2(rb_function->module_instance, rb_intern("send"), 1 + args_size, args_value);
 		}
 		else if (invoke_type == FUNCTION_RB_MIXED)
 		{
@@ -400,12 +403,12 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			args_value[ducktype_args_count + 1] = rb_function->args_hash;
 
-			result_value = rb_funcall2(rb_function->rb_module->instance, rb_intern("send"), 1 + ducktype_args_count + 1, args_value);
+			result_value = rb_funcall2(rb_function->module_instance, rb_intern("send"), 1 + ducktype_args_count + 1, args_value);
 		}
 	}
 	else
 	{
-		result_value = rb_funcallv(rb_function->rb_module->instance, rb_function->method_id, 0, NULL);
+		result_value = rb_funcallv(rb_function->module_instance, rb_function->method_id, 0, NULL);
 	}
 
 	value v = NULL;
@@ -436,10 +439,14 @@ void function_rb_interface_destroy(function func, function_impl impl)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
 
-	(void)func;
-
 	if (rb_function != NULL)
 	{
+		VALUE name = rb_str_new_cstr(function_name(func));
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Unreferencing Ruby function '%s' from module", function_name(func));
+
+		rb_undef(rb_function->module, rb_to_id(name));
+
 		free(rb_function);
 	}
 }
@@ -464,6 +471,8 @@ int rb_object_interface_create(object obj, object_impl impl)
 
 	rb_obj->object = Qnil;
 	rb_obj->object_class = Qnil;
+	rb_obj->impl = NULL;
+	rb_obj->obj_cls_val = NULL;
 
 	return 0;
 }
@@ -579,8 +588,10 @@ void rb_object_interface_destroy(object obj, object_impl impl)
 	if (rb_object != NULL)
 	{
 		rb_object->object = Qnil;
-
 		rb_object->object_class = Qnil;
+		rb_object->impl = NULL;
+
+		value_type_destroy(rb_object->obj_cls_val);
 
 		free(rb_object);
 	}
@@ -635,6 +646,7 @@ object rb_class_interface_constructor(klass cls, class_impl impl, const char *na
 	rb_obj->object = rbval_object;
 	rb_obj->object_class = rb_cls->class;
 	rb_obj->impl = rb_cls->impl;
+	rb_obj->obj_cls_val = NULL;
 
 	return obj;
 }
@@ -1238,6 +1250,7 @@ loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_pa
 	return NULL;
 }
 
+#if 0
 int rb_loader_impl_clear_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
 	VALUE *module = (VALUE *)args;
@@ -1249,11 +1262,14 @@ int rb_loader_impl_clear_cb_iterate(set s, set_key key, set_value val, set_cb_it
 	(void)s;
 	(void)key;
 
-	/* TODO: This generates a segmentation fault in metacall-ruby-object-class-test */
-	/* rb_undef(*module, rb_to_id(name)); */
+	printf("----------------------- %s ---------------------------\n", function_parser->name);
+	fflush(stdout);
+
+	rb_undef(*module, rb_to_id(name));
 
 	return 0;
 }
+#endif
 
 int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
@@ -1276,9 +1292,6 @@ int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 		if ((*rb_module)->empty == 1)
 		{
-			/* Undef all methods */
-			set_iterate((*rb_module)->function_map, &rb_loader_impl_clear_cb_iterate, (set_cb_iterate_args) & ((*rb_module)->module));
-
 			/* Remove module */
 			if (rb_is_const_id((*rb_module)->id))
 			{
@@ -1328,7 +1341,8 @@ loader_impl_rb_function rb_function_create(loader_impl impl, loader_impl_rb_modu
 
 	if (rb_function != NULL)
 	{
-		rb_function->rb_module = rb_module;
+		rb_function->module = rb_module->module;
+		rb_function->module_instance = rb_module->instance;
 		rb_function->method_id = id;
 		rb_function->args_hash = rb_hash_new();
 		rb_function->impl = impl;

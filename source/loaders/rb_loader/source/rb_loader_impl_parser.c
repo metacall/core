@@ -277,6 +277,9 @@ int rb_loader_impl_key_parse(const char *source, set function_map)
 						memcpy(function->params, parameters, parameter_size * sizeof(struct rb_function_parameter_parser_type));
 						function->params_size = parameter_size;
 
+						/* TODO: This is not skipping class functions, that is a wrong behavior */
+						log_write("metacall", LOG_LEVEL_DEBUG, "Inserting parsed Ruby function '%s' into function map", function->name);
+
 						if (set_insert(function_map, function->name, function) != 0)
 						{
 							log_write("metacall", LOG_LEVEL_ERROR, "Invalid ruby parser function map insertion");
