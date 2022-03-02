@@ -1250,27 +1250,6 @@ loader_handle rb_loader_impl_load_from_package(loader_impl impl, const loader_pa
 	return NULL;
 }
 
-#if 0
-int rb_loader_impl_clear_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	VALUE *module = (VALUE *)args;
-
-	rb_function_parser function_parser = (rb_function_parser)val;
-
-	VALUE name = rb_str_new_cstr(function_parser->name);
-
-	(void)s;
-	(void)key;
-
-	printf("----------------------- %s ---------------------------\n", function_parser->name);
-	fflush(stdout);
-
-	rb_undef(*module, rb_to_id(name));
-
-	return 0;
-}
-#endif
-
 int rb_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
 	loader_impl_rb_handle rb_handle = (loader_impl_rb_handle)handle;
