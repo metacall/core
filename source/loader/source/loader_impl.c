@@ -1249,9 +1249,9 @@ void loader_impl_destroy(plugin p, loader_impl impl)
 {
 	if (impl != NULL)
 	{
-		if (impl->init == 0)
+		if (p != NULL)
 		{
-			if (p != NULL)
+			if (impl->init == 0)
 			{
 				loader_impl_interface iface = loader_iface(p);
 
@@ -1261,9 +1261,13 @@ void loader_impl_destroy(plugin p, loader_impl impl)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Invalid loader implementation (%s) interface destruction <%p>", plugin_name(p), iface->destroy);
 				}
-			}
 
-			impl->init = 1;
+				impl->init = 1;
+			}
+		}
+		else
+		{
+			loader_impl_destroy_objects(impl);
 		}
 
 		loader_impl_destroy_deallocate(impl);
