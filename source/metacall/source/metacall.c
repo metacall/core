@@ -1150,10 +1150,19 @@ void *metacallfs(void *func, const char *buffer, size_t size, void *allocator)
 
 			for (iterator = 0; iterator < args_count; ++iterator)
 			{
-				args[iterator] = v_array[iterator];
+				/* This step is necessary in order to handle type castings */
+				args[iterator] = metacall_value_copy(v_array[iterator]);
 			}
 
 			ret = metacallfv_s(f, args, args_count);
+
+			/* This step is necessary in order to handle type castings (otherwise it generates leaks) */
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				value_type_destroy(args[iterator]);
+			}
+
+			value_type_destroy(v);
 
 			if (ret != NULL)
 			{
@@ -1174,8 +1183,6 @@ void *metacallfs(void *func, const char *buffer, size_t size, void *allocator)
 					}
 				}
 			}
-
-			value_destroy(v);
 
 			return ret;
 		}
@@ -1351,7 +1358,6 @@ void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 			if (type_id_map(value_type_id(v)) != 0)
 			{
 				value_type_destroy(v);
-
 				return NULL;
 			}
 
@@ -1361,7 +1367,6 @@ void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 			if (args_count != value_type_count(v))
 			{
 				value_type_destroy(v);
-
 				return NULL;
 			}
 
@@ -1370,14 +1375,23 @@ void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 			for (iterator = 0; iterator < args_count; ++iterator)
 			{
 				value element = v_map[iterator];
-
 				value *v_element = value_to_array(element);
 
-				keys[iterator] = v_element[0];
-				values[iterator] = v_element[1];
+				/* This step is necessary in order to handle type castings */
+				keys[iterator] = value_type_copy(v_element[0]);
+				values[iterator] = value_type_copy(v_element[1]);
 			}
 
 			ret = metacallfmv(f, keys, values);
+
+			/* This step is necessary in order to handle type castings (otherwise it generates leaks) */
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				value_type_destroy(keys[iterator]);
+				value_type_destroy(values[iterator]);
+			}
+
+			value_type_destroy(v);
 
 			if (ret != NULL)
 			{
@@ -1398,16 +1412,6 @@ void *metacallfms(void *func, const char *buffer, size_t size, void *allocator)
 					}
 				}
 			}
-
-			for (iterator = 0; iterator < args_count; ++iterator)
-			{
-				/* Due to casting, destroy must be done to arrays instead of to the map */
-				value_destroy(keys[iterator]);
-				value_destroy(values[iterator]);
-				value_destroy(v_map[iterator]);
-			}
-
-			value_destroy(v);
 
 			return ret;
 		}
@@ -1691,10 +1695,19 @@ void *metacallfs_await(void *func, const char *buffer, size_t size, void *alloca
 
 			for (iterator = 0; iterator < args_count; ++iterator)
 			{
-				args[iterator] = v_array[iterator];
+				/* This step is necessary in order to handle type castings */
+				args[iterator] = value_type_copy(v_array[iterator]);
 			}
 
 			ret = metacallfv_await(f, args, resolve_callback, reject_callback, data);
+
+			/* This step is necessary in order to handle type castings (otherwise it generates leaks) */
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				value_type_destroy(args[iterator]);
+			}
+
+			value_type_destroy(v);
 
 			if (ret != NULL)
 			{
@@ -1715,8 +1728,6 @@ void *metacallfs_await(void *func, const char *buffer, size_t size, void *alloca
 					}
 				}
 			}
-
-			value_destroy(v);
 
 			return ret;
 		}
@@ -1798,14 +1809,23 @@ void *metacallfms_await(void *func, const char *buffer, size_t size, void *alloc
 			for (iterator = 0; iterator < args_count; ++iterator)
 			{
 				value element = v_map[iterator];
-
 				value *v_element = value_to_array(element);
 
-				keys[iterator] = v_element[0];
-				values[iterator] = v_element[1];
+				/* This step is necessary in order to handle type castings */
+				keys[iterator] = value_type_copy(v_element[0]);
+				values[iterator] = value_type_copy(v_element[1]);
 			}
 
 			ret = metacallfmv_await(f, keys, values, resolve_callback, reject_callback, data);
+
+			/* This step is necessary in order to handle type castings (otherwise it generates leaks) */
+			for (iterator = 0; iterator < args_count; ++iterator)
+			{
+				value_type_destroy(keys[iterator]);
+				value_type_destroy(values[iterator]);
+			}
+
+			value_type_destroy(v);
 
 			if (ret != NULL)
 			{
@@ -1826,16 +1846,6 @@ void *metacallfms_await(void *func, const char *buffer, size_t size, void *alloc
 					}
 				}
 			}
-
-			for (iterator = 0; iterator < args_count; ++iterator)
-			{
-				/* Due to casting, destroy must be done to arrays instead of to the map */
-				value_destroy(keys[iterator]);
-				value_destroy(values[iterator]);
-				value_destroy(v_map[iterator]);
-			}
-
-			value_destroy(v);
 
 			return ret;
 		}
