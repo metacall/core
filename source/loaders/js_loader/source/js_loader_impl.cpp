@@ -226,9 +226,11 @@ public:
 						if (discover_function_signature(f) == 0)
 						{
 							scope sp = context_scope(ctx);
+							value v = value_create_function(f);
 
-							if (scope_define(sp, function_name(f), value_create_function(f)) != 0)
+							if (scope_define(sp, function_name(f), v) != 0)
 							{
+								value_type_destroy(v);
 								return 1;
 							}
 						}

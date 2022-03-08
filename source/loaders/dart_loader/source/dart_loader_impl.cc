@@ -440,7 +440,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -457,7 +463,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 1, "second_parameter", loader_impl_type(impl, "Double"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -480,7 +492,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 4, "e_ptr", loader_impl_type(impl, "Ptr"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -495,7 +513,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 0, "a_str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -512,7 +536,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 1, "b_str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -531,7 +561,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set(s, 2, "c_str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -544,7 +580,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	dart_function = dart_function_create(dart_handle);
@@ -557,7 +599,13 @@ int dart_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	return 0;

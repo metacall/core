@@ -617,8 +617,13 @@ int rpc_loader_impl_discover_value(loader_impl_rpc rpc_impl, std::string &url, v
 				signature_set_return(s, rpc_impl->types[id]);
 
 				scope sp = context_scope(ctx);
+				value v = value_create_function(f);
 
-				scope_define(sp, function_name(f), value_create_function(f));
+				if (scope_define(sp, function_name(f), v) != 0)
+				{
+					metacall_value_destroy(v);
+					return 1;
+				}
 			}
 		}
 	}

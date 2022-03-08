@@ -1996,7 +1996,13 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 					}
 
 					scope sp = context_scope(ctx);
-					scope_define(sp, cls_name, value_create_class(c));
+					value v = value_create_class(c);
+
+					if (scope_define(sp, cls_name, v) != 0)
+					{
+						value_type_destroy(v);
+						return 1;
+					}
 				}
 
 				// java_impl->env->DeleteLocalRef(r); // Remove the jObjectArray element from memory

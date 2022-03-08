@@ -201,7 +201,13 @@ int loader_host_register(loader_impl host, const char *name, loader_register_inv
 	{
 		context ctx = loader_impl_context(host);
 		scope sp = context_scope(ctx);
-		scope_define(sp, name, value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, name, v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	if (func != NULL)

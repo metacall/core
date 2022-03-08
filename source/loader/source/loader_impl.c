@@ -673,11 +673,13 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const 
 {
 	if (handle_ptr == NULL)
 	{
+		/* This case handles the global scope (shared scope between all loaders, there is no out reference to a handle) */
 		struct loader_impl_handle_register_cb_iterator_type iterator;
 
 		iterator.handle_ctx = handle_impl->ctx;
 		iterator.duplicated_key = NULL;
 
+		/* This checks if there are duplicated keys between all loaders and the current handle context */
 		plugin_manager_iterate(manager, &loader_impl_handle_register_cb_iterate, &iterator);
 
 		if (iterator.duplicated_key != NULL)

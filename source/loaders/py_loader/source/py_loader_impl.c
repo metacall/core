@@ -3668,11 +3668,17 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			if (py_loader_impl_discover_class(impl, module_dict_val, c) == 0)
 			{
 				scope sp = context_scope(ctx);
-				scope_define(sp, cls_name, value_create_class(c));
+				value v = value_create_class(c);
+				if (scope_define(sp, cls_name, v) != 0)
+				{
+					value_type_destroy(v);
+					goto cleanup;
+				}
 			}
 			else
 			{
 				class_destroy(c);
+				goto cleanup;
 			}
 		}
 		else if (PyCallable_Check(module_dict_val))
@@ -3697,11 +3703,17 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 			if (py_loader_impl_discover_func(impl, module_dict_val, f) == 0)
 			{
 				scope sp = context_scope(ctx);
-				scope_define(sp, func_name, value_create_function(f));
+				value v = value_create_function(f);
+				if (scope_define(sp, func_name, v) != 0)
+				{
+					value_type_destroy(v);
+					goto cleanup;
+				}
 			}
 			else
 			{
 				function_destroy(f);
+				goto cleanup;
 			}
 		}
 	}

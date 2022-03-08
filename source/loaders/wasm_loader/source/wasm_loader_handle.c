@@ -201,7 +201,13 @@ static int discover_function(loader_impl impl, scope scp, const wasm_externtype_
 			valkind_to_type(impl, wasm_valtype_kind(params->data[param_idx])));
 	}
 
-	scope_define(scp, function_name(func), value_create_function(func));
+	value v = value_create_function(func);
+
+	if (scope_define(scp, function_name(func), v) != 0)
+	{
+		value_type_destroy(v);
+		return 1;
+	}
 
 	return 0;
 }

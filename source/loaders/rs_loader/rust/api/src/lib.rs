@@ -50,6 +50,8 @@ extern "C" {
 
     fn value_create_function(function: *mut c_void) -> *mut c_void;
 
+    fn value_type_destroy(v: *mut c_void);
+
     fn signature_set_return(signature: *mut c_void, t: *mut c_void);
 
     fn loader_impl_type(loader_impl: *mut c_void, name: *const c_char) -> *mut c_void;
@@ -237,5 +239,11 @@ pub fn register_function(function_registeration: FunctionRegisteration) {
         };
     }
 
-    unsafe { scope_define(sp, function_name(f), value_create_function(f)) };
+    unsafe {
+        let v = value_create_function(f);
+        if scope_define(sp, function_name(f), v) != 0 {
+            value_type_destroy(v);
+            // TODO: Should return error
+        }
+    };
 }

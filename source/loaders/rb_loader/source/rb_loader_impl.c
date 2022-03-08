@@ -1462,12 +1462,18 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				if (f != NULL && rb_loader_impl_discover_func(impl, f, function_parser) == 0)
 				{
 					scope sp = context_scope(ctx);
+					value v = value_create_function(f);
 
-					scope_define(sp, function_name(f), value_create_function(f));
-
-					rb_function->impl = impl;
-
-					log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, function_parser->params_size);
+					if (scope_define(sp, function_name(f), v) != 0)
+					{
+						value_type_destroy(v);
+						return 1;
+					}
+					else
+					{
+						rb_function->impl = impl;
+						log_write("metacall", LOG_LEVEL_DEBUG, "Function %s <%p> (%d)", method_name_str, (void *)f, function_parser->params_size);
+					}
 				}
 				else
 				{
@@ -1552,7 +1558,13 @@ int rb_loader_impl_discover_module(loader_impl impl, loader_impl_rb_module rb_mo
 				}
 
 				scope sp = context_scope(ctx);
-				scope_define(sp, class_name_str, value_create_class(c));
+				value v = value_create_class(c);
+
+				if (scope_define(sp, class_name_str, v) != 0)
+				{
+					value_type_destroy(v);
+					return 1;
+				}
 			}
 		}
 	}

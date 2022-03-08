@@ -335,6 +335,7 @@ struct loader_impl_async_discover_safe_type
 	loader_impl_node node_impl;
 	napi_ref handle_ref;
 	context ctx;
+	int result;
 };
 
 struct loader_impl_async_func_call_safe_type
@@ -3425,11 +3426,20 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 						}
 					}
 
-					scope_define(sp, function_name(f), value_create_function(f));
+					value v = value_create_function(f);
+
+					if (scope_define(sp, function_name(f), v) != 0)
+					{
+						value_type_destroy(v);
+						discover_safe->result = 1;
+						break;
+					}
 				}
 				else
 				{
 					free(node_func);
+					discover_safe->result = 1;
+					break;
 				}
 
 				free(func_name_str);
@@ -4566,6 +4576,7 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 	node_impl->discover_safe->node_impl = node_impl;
 	node_impl->discover_safe->handle_ref = handle_ref;
 	node_impl->discover_safe->ctx = ctx;
+	node_impl->discover_safe->result = 0;
 
 	/* Check if we are in the JavaScript thread */
 	if (node_impl->js_thread_id == std::this_thread::get_id())
@@ -4615,7 +4626,7 @@ int node_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_loader_impl_discover, the call has not been executed in order to avoid the deadlock");
 	}
 
-	return 0;
+	return node_impl->discover_safe->result;
 }
 
 #define container_of(ptr, type, member) \

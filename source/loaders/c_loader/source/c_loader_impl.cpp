@@ -83,6 +83,7 @@ typedef struct c_loader_impl_discover_visitor_data_type
 	loader_impl impl;
 	loader_impl_c_handle c_handle;
 	scope sp;
+	int result;
 
 } * c_loader_impl_discover_visitor_data;
 
@@ -221,6 +222,8 @@ std::string c_loader_impl_cxstring_to_str(const CXString &s)
 enum CXChildVisitResult c_loader_impl_visitor(CXCursor cursor, CXCursor parent, CXClientData client_data)
 {
 	c_loader_closure_visitor *closure_visitor = static_cast<c_loader_closure_visitor *>(client_data);
+
+	(void)parent;
 
 	CXCursorKind kind = clang_getCursorKind(cursor);
 	CXType arg_type = clang_getCursorType(cursor);
@@ -720,7 +723,7 @@ type c_loader_impl_discover_type(loader_impl impl, CXCursor &cursor, CXType &cx_
 	return t;
 }
 
-static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_handle c_handle, scope sp, CXCursor cursor)
+static int c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_handle c_handle, scope sp, CXCursor cursor)
 {
 	auto cursor_type = clang_getCursorType(cursor);
 	auto func_name = c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor));
@@ -728,7 +731,7 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	if (c_handle->symbols.count(func_name) == 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Symbol '%s' not found, skipping the function", func_name.c_str());
-		return;
+		return 1;
 	}
 
 	loader_impl_c_function c_function = new loader_impl_c_function_type();
@@ -765,10 +768,18 @@ static void c_loader_impl_discover_signature(loader_impl impl, loader_impl_c_han
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to create the FFI CIF in function '%s', skipping the function", func_name.c_str());
 		function_destroy(f);
-		return;
+		return 1;
 	}
 
-	scope_define(sp, function_name(f), value_create_function(f));
+	value v = value_create_function(f);
+
+	if (scope_define(sp, function_name(f), v) != 0)
+	{
+		value_type_destroy(v);
+		return 1;
+	}
+
+	return 0;
 }
 
 static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCursor, void *data)
@@ -784,7 +795,12 @@ static CXChildVisitResult c_loader_impl_discover_visitor(CXCursor cursor, CXCurs
 
 	if (kind == CXCursorKind::CXCursor_FunctionDecl)
 	{
-		c_loader_impl_discover_signature(visitor_data->impl, visitor_data->c_handle, visitor_data->sp, cursor);
+		if (c_loader_impl_discover_signature(visitor_data->impl, visitor_data->c_handle, visitor_data->sp, cursor) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to discover C function declaration '%s'", c_loader_impl_cxstring_to_str(clang_getCursorSpelling(cursor)).c_str());
+			visitor_data->result = 1;
+			return CXChildVisit_Break;
+		}
 	}
 
 	return CXChildVisit_Continue;
@@ -795,7 +811,8 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_h
 	c_loader_impl_discover_visitor_data_type data = {
 		impl,
 		c_handle,
-		context_scope(ctx)
+		context_scope(ctx),
+		0
 	};
 
 	for (std::string file : c_handle->files)
@@ -820,7 +837,7 @@ static int c_loader_impl_discover_ast(loader_impl impl, loader_impl_c_handle c_h
 		clang_disposeIndex(index);
 	}
 
-	return 0;
+	return data.result;
 }
 
 static bool c_loader_impl_is_ld_script(const loader_path path, size_t size)

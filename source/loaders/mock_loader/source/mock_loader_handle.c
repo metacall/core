@@ -94,7 +94,13 @@ int mock_loader_impl_handle_discover(loader_impl impl, loader_handle handle, con
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	mock_function = mock_function_singleton->create(impl, handle);
@@ -111,7 +117,13 @@ int mock_loader_impl_handle_discover(loader_impl impl, loader_handle handle, con
 
 		signature_set(s, 1, "second_parameter", loader_impl_type(impl, "Double"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	mock_function = mock_function_singleton->create(impl, handle);
@@ -134,7 +146,13 @@ int mock_loader_impl_handle_discover(loader_impl impl, loader_handle handle, con
 
 		signature_set(s, 4, "e_ptr", loader_impl_type(impl, "Ptr"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	mock_function = mock_function_singleton->create(impl, handle);
@@ -149,7 +167,13 @@ int mock_loader_impl_handle_discover(loader_impl impl, loader_handle handle, con
 
 		signature_set(s, 0, "str", loader_impl_type(impl, "String"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	return 0;

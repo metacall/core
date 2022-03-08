@@ -493,7 +493,13 @@ int lua_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 		signature_set_return(s, loader_impl_type(impl, "Integer"));
 
-		scope_define(sp, function_name(f), value_create_function(f));
+		value v = value_create_function(f);
+
+		if (scope_define(sp, function_name(f), v) != 0)
+		{
+			value_type_destroy(v);
+			return 1;
+		}
 	}
 
 	return 0;

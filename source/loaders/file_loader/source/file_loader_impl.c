@@ -454,11 +454,11 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 		if (file_function != NULL)
 		{
+			/* TODO: Refactor script path, it supports multiple paths right now, it should not be accessed like that */
 			const char *script_path = getenv("LOADER_SCRIPT_PATH");
-
 			function f;
-
 			signature s;
+			value v;
 
 			file_function->descriptor = descriptor;
 
@@ -483,7 +483,13 @@ int file_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 			signature_set_return(s, loader_impl_type(impl, "Path"));
 
-			scope_define(sp, function_name(f), value_create_function(f));
+			v = value_create_function(f);
+
+			if (scope_define(sp, function_name(f), v) != 0)
+			{
+				value_type_destroy(v);
+				return 1;
+			}
 		}
 	}
 
