@@ -38,7 +38,7 @@ TEST_F(metacall_python_builtins_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		const char *py_scripts_duplicated_main[] = {
-			"ast", // This module contains a main function
+			"ast",	 // This module contains a main function
 			"base64" // And this too, so it should fail when loading
 		};
 
