@@ -34,6 +34,17 @@ static PyObject *py_loader_port_none(void)
 	Py_RETURN_NONE;
 }
 
+#if defined(__clang__)
+	#pragma clang diagnostic push
+	#pragma clang diagnostic ignored "-Wstrict-aliasing"
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#elif defined(_MSC_VER)
+	#pragma warning(push)
+// TODO
+#endif
+
 static PyObject *py_loader_port_false(void)
 {
 	Py_RETURN_FALSE;
@@ -43,6 +54,14 @@ static PyObject *py_loader_port_true(void)
 {
 	Py_RETURN_TRUE;
 }
+
+#if defined(__clang__)
+	#pragma clang diagnostic pop
+#elif defined(__GNUC__)
+	#pragma GCC diagnostic pop
+#elif defined(_MSC_VER)
+	#pragma warning(pop)
+#endif
 
 static PyObject *py_loader_port_load_from_file(PyObject *self, PyObject *args)
 {
@@ -499,6 +518,8 @@ clear:
 	return result;
 }
 
+// TODO
+#if 0
 static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 {
 	PyObject *name, *result = NULL;
@@ -530,18 +551,18 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 
 	name = PyTuple_GetItem(var_args, 0);
 
-#if PY_MAJOR_VERSION == 2
+	#if PY_MAJOR_VERSION == 2
 	{
 		if (!(PyString_Check(name) && PyString_AsStringAndSize(name, &name_str, &name_length) != -1))
 		{
 			name_str = NULL;
 		}
 	}
-#elif PY_MAJOR_VERSION == 3
+	#elif PY_MAJOR_VERSION == 3
 	{
 		name_str = PyUnicode_Check(name) ? (char *)PyUnicode_AsUTF8AndSize(name, &name_length) : NULL;
 	}
-#endif
+	#endif
 
 	if (name_str == NULL)
 	{
@@ -622,6 +643,7 @@ clear:
 
 	return result;
 }
+#endif
 
 static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 {

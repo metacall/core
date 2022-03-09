@@ -101,6 +101,7 @@ struct loader_impl_py_type
 	PyObject *inspect_getattr_static;
 	PyObject *inspect_getfullargspec;
 	PyObject *inspect_ismethod;
+	PyObject *inspect_isclass;
 	PyObject *builtins_module;
 	PyObject *traceback_module;
 	PyObject *traceback_format_exception;
@@ -145,6 +146,8 @@ typedef struct loader_impl_py_await_invoke_callback_state_type
 	PyObject *coroutine;
 
 } * loader_impl_py_await_invoke_callback_state;
+
+static int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj);
 
 static void py_loader_impl_error_print(loader_impl_py py_impl);
 
@@ -724,6 +727,23 @@ int py_loader_impl_check_async(loader_impl_py py_impl, PyObject *func)
 	return ret;
 }
 
+int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj)
+{
+	PyObject *is_class = PyObject_CallFunction(py_impl->inspect_isclass, "O", obj);
+
+	if (is_class == NULL)
+	{
+		PyErr_Clear();
+		return -1;
+	}
+
+	int result = !(PyObject_IsTrue(is_class) == 1);
+
+	Py_DECREF(is_class);
+
+	return result;
+}
+
 type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 {
 	loader_impl_py py_impl = loader_impl_get(impl);
@@ -786,31 +806,21 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_FUTURE;
 	}
-	else if (PyObject_IsSubclass(obj, (PyObject *)&PyBaseObject_Type) != 0)
+
+	int result = py_loader_impl_check_class(py_impl, obj);
+
+	if (result == 0)
 	{
-		/* TODO: This is based on trial and error and is not correct, but hey, it works! (for now) */
-		/* TODO: Better to use inspect.isclass(obj) using py_impl->inspect_module */
-
-		/* PyObject_IsSubclass: if the class derived is identical to or derived from PyBaseObject_Type returns 1 */
-		/* in case of an error, returns -1 */
-		if (PyErr_Occurred() != NULL)
-		{
-			PyErr_Clear(); // issubclass() arg 1 must be a class
-
-			if (PyObject_TypeCheck(obj, &PyBaseObject_Type))
-			{
-				/* It's not a class, but it's an instance */
-				return TYPE_OBJECT;
-			}
-		}
-		else
-		{
-			/* Error didn't occur, it's a class! */
-			return TYPE_CLASS;
-		}
+		return TYPE_CLASS;
 	}
-
-	return TYPE_INVALID;
+	else if (result == 1)
+	{
+		return TYPE_OBJECT;
+	}
+	else
+	{
+		return TYPE_INVALID;
+	}
 }
 
 value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
@@ -1913,11 +1923,20 @@ int py_loader_impl_initialize_inspect(loader_impl impl, loader_impl_py py_impl)
 		goto error_inspect_ismethod;
 	}
 
+	py_impl->inspect_isclass = PyObject_GetAttrString(py_impl->inspect_module, "isclass");
+
+	if (py_impl->inspect_isclass == NULL)
+	{
+		goto error_inspect_isclass;
+	}
+
 	if (PyCallable_Check(py_impl->inspect_signature) && py_loader_impl_initialize_inspect_types(impl, py_impl) == 0)
 	{
 		return 0;
 	}
 
+	Py_DECREF(py_impl->inspect_isclass);
+error_inspect_isclass:
 	Py_DECREF(py_impl->inspect_ismethod);
 error_inspect_ismethod:
 	Py_DECREF(py_impl->inspect_getfullargspec);
@@ -3906,6 +3925,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_DECREF(py_impl->inspect_getattr_static);
 	Py_DECREF(py_impl->inspect_getfullargspec);
 	Py_DECREF(py_impl->inspect_ismethod);
+	Py_DECREF(py_impl->inspect_isclass);
 	Py_DECREF(py_impl->inspect_module);
 	Py_DECREF(py_impl->builtins_module);
 	Py_DECREF(py_impl->traceback_format_exception);
