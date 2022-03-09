@@ -152,6 +152,16 @@ static int dynlink_impl_interface_phdr_callback_unix(struct dl_phdr_info *info, 
 	return 0;
 }
 
+static char *dynlink_impl_interface_strip_lib_path_unix(char *metacall_lib_path, char *metacall_lib_name)
+{
+	/* TODO: Review this */
+	size_t lib_path_len = strlen(metacall_lib_path) - (strlen(metacall_lib_name) + 1);
+	char *custom_lib_path = malloc(sizeof(char) * (lib_path_len + 1));
+	custom_lib_path[lib_path_len] = 0;
+	strncpy(custom_lib_path, metacall_lib_path, lib_path_len);
+	return custom_lib_path;
+}
+
 char *dynlink_impl_interface_lib_path_unix(dynlink_name name, int (*comparator)(dynlink_path, dynlink_name))
 {
 	struct dynlink_lib_path_type data = {
@@ -170,8 +180,8 @@ char *dynlink_impl_interface_lib_path_unix(dynlink_name name, int (*comparator)(
 			return NULL;
 		}
 	}
-
-	return data.path;
+	char *metacall_lib_path = dynlink_impl_interface_strip_lib_path_unix(data.path, data.name_impl);
+	return metacall_lib_path;
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)
