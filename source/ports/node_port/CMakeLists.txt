@@ -129,25 +129,3 @@ test_environment_variables(${target}
 	${TESTS_ENVIRONMENT_VARIABLES_COB}
 	${TESTS_ENVIRONMENT_VARIABLES_C}
 )
-
-# TODO: Until we find a better way to do this, we should disable it
-return()
-
-# Detect exec with MetaCall CLI when this is being run with node
-set(NodeJS_EXECUTABLE_ONLY ON)
-
-find_package(NodeJS)
-
-if(NOT NodeJS_FOUND)
-	message(STATUS "NodeJS libraries not found")
-	return()
-endif()
-
-add_test(NAME ${target}_node_binary
-	COMMAND ${TEST_COMMAND} "${NodeJS_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/test/node_integration.js | ${GREP_COMMAND} \"NodeJS Integration Test Passed\""
-	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
-test_environment_variables(${target}_node_binary
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
-)
