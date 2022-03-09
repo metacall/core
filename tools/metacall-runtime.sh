@@ -114,7 +114,7 @@ sub_netcore5(){
 	rm packages-microsoft-prod.deb
 
 	$SUDO_CMD apt-get update
-	sub_apt_install_hold dotnet-runtime-5.0=5.0.14-1
+	sub_apt_install_hold dotnet-runtime-5.0=5.0.15-1
 }
 
 # V8
