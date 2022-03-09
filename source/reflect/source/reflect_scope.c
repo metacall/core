@@ -180,7 +180,7 @@ int scope_define(scope sp, const char *key, value val)
 {
 	if (sp != NULL && key != NULL && val != NULL)
 	{
-		if (set_contains(sp->objects, key) == 0)
+		if (set_contains(sp->objects, (set_key)key) == 0)
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Scope failed to define a object with key '%s', this key as already been defined", (char *)key);
 
