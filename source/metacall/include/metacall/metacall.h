@@ -695,7 +695,7 @@ METACALL_API void *metacallfms(void *func, const char *buffer, size_t size, void
 *    Register a function by name @name and arguments @va_args
 *
 *  @param[in] name
-*    Name of the function
+*    Name of the function (if it is NULL, function is not registered into host scope)
 *
 *  @param[in] invoke
 *    Pointer to function invoke interface (argc, argv, data)
@@ -722,7 +722,7 @@ METACALL_API int metacall_register(const char *name, void *(*invoke)(size_t, voi
 *    Register a function by name @name and arguments @types
 *
 *  @param[in] name
-*    Name of the function
+*    Name of the function (if it is NULL, function is not registered into host scope)
 *
 *  @param[in] invoke
 *    Pointer to function invoke interface (argc, argv, data)
