@@ -99,16 +99,6 @@ int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 	return (FreeLibrary(impl) == FALSE);
 }
 
-static char *dynlink_impl_interface_strip_lib_path_win32(char *metacall_lib_path, char *metacall_lib_name)
-{
-	/* TODO: Review this */
-	size_t lib_path_len = strlen(metacall_lib_path) - (strlen(metacall_lib_name) + 1);
-	char *custom_lib_path = malloc(sizeof(char) * (lib_path_len + 1));
-	custom_lib_path[lib_path_len] = 0;
-	strncpy(custom_lib_path, metacall_lib_path, lib_path_len);
-	return custom_lib_path;
-}
-
 char *dynlink_impl_interface_lib_path_win32(dynlink_name name, int (*comparator)(dynlink_path, dynlink_name))
 {
 	/* TODO: Review this */
@@ -135,7 +125,7 @@ char *dynlink_impl_interface_lib_path_win32(dynlink_name name, int (*comparator)
 				if (comparator(lib_path, metacall_lib_name) == 0)
 				{
 					found_lib_path = 1;
-					metacall_lib_path = dynlink_impl_interface_strip_lib_path_win32(lib_path, metacall_lib_name);
+					metacall_lib_path = dynlink_impl_lib_dir_path(lib_path);
 					break;
 				}
 			}
