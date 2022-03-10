@@ -22,9 +22,9 @@
 
 #include <dynlink/dynlink_impl.h>
 
+#include <portability/portability_path.h>
 #include <stdlib.h>
 #include <string.h>
-#include <portability/portability_path.h>
 
 /* -- Methods -- */
 
@@ -104,8 +104,7 @@ char *dynlink_impl_lib_dir_path(char *metacall_lib_path)
 	/* TODO: Review this */
 	size_t metacall_lib_path_size = strlen(metacall_lib_path);
 	char *metacall_lib_dir_path = malloc(sizeof(char) * (metacall_lib_path_size + 1));
-	size_t metacall_lib_dir_path_size = strlen(metacall_lib_dir_path);
-	metacall_lib_dir_path_size = portability_path_get_directory(metacall_lib_path, metacall_lib_path_size, metacall_lib_dir_path, metacall_lib_dir_path_size);
+	size_t metacall_lib_dir_path_size = portability_path_get_directory(metacall_lib_path, metacall_lib_path_size, metacall_lib_dir_path, metacall_lib_path_size);
 	metacall_lib_dir_path[metacall_lib_dir_path_size - 2] = '\0';
 	return metacall_lib_dir_path;
 }

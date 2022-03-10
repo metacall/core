@@ -180,7 +180,7 @@ char *dynlink_impl_interface_lib_path_unix(dynlink_name name, int (*comparator)(
 			return NULL;
 		}
 	}
-	char *metacall_lib_path = dynlink_impl_interface_strip_lib_path_unix(data.path, data.name_impl);
+	char *metacall_lib_path = dynlink_impl_lib_dir_path(data.path);
 	return metacall_lib_path;
 }
 
