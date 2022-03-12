@@ -47,6 +47,18 @@ metacall main.js
 
 The easiest way to install **MetaCall** is the following:
 
+Under ArchLinux (replace `aura` by your AUR helper):
+```
+sudo aura -Axc metacall-git
+```
+
+You should also set the following environment variables in order to build support for specific loaders :
+- 
+- 
+- 
+- 
+
+
 ``` sh
 curl -sL https://raw.githubusercontent.com/metacall/install/master/install.sh | sh
 ```
