@@ -1,4 +1,4 @@
-use metacall::inline::py;
+use metacall::inline::{py, node, rb, ts};
 
 #[test]
 fn test_inline() {
@@ -12,6 +12,18 @@ fn test_inline() {
 
     py! {
         print("hello world")
+    }
+
+    node! {
+        console.log("hello world");
+    }
+
+    rb! {
+        print "hello world\n"
+    }
+
+    ts! {
+        console.log("hello world");
     }
 
     metacall::destroy()
