@@ -26,10 +26,11 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
+      - name: Pull MetaCall Docker Images
+        run: sh ./docker-compose.sh pull
+
       - name: Build MetaCall Docker Images
-        run:
-          - sh ./docker-compose.sh pull
-          - sh ./docker-compose.sh build
+        run: sh ./docker-compose.sh build
 
       - name: Push MetaCall Docker Image to DockerHub
         run: sh ./docker-compose.sh push
