@@ -119,6 +119,18 @@ DYNLINK_API void dynlink_impl_unload(dynlink handle, dynlink_impl impl);
 */
 DYNLINK_API char *dynlink_impl_lib_path(dynlink_name name);
 
+/**
+*  @brief
+*    Returns the directory of the file from its absolute path
+*
+*  @param[in] metacall_lib_path
+*    Absolute path of the metacall dynamic library
+*
+*  @return
+*    Returns a reference to a string that holds the directory path of the library pointed by the path
+*/
+DYNLINK_API char *dynlink_impl_lib_dir_path(char *metacall_lib_path);
+
 #ifdef __cplusplus
 }
 #endif

@@ -170,8 +170,8 @@ char *dynlink_impl_interface_lib_path_unix(dynlink_name name, int (*comparator)(
 			return NULL;
 		}
 	}
-
-	return data.path;
+	char *metacall_lib_path = dynlink_impl_lib_dir_path(data.path);
+	return metacall_lib_path;
 }
 
 dynlink_impl_interface dynlink_impl_interface_singleton_unix(void)

@@ -132,7 +132,6 @@ set_target_properties(${target}
 #
 # Include directories
 #
-
 target_include_directories(${target}
 	PRIVATE
 	${PROJECT_BINARY_DIR}/source/include
@@ -140,7 +139,6 @@ target_include_directories(${target}
 	${CMAKE_CURRENT_BINARY_DIR}/include
 
 	${DYNAMIC_LOADING_INCLUDE_DIR} # Native dynamic load library
-
 	PUBLIC
 	${DEFAULT_INCLUDE_DIRECTORIES}
 
@@ -161,6 +159,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::threading
 	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::portability
 
 	PUBLIC
 	${DEFAULT_LIBRARIES}
