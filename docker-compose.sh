@@ -19,10 +19,9 @@
 #	limitations under the License.
 #
 
-# Enable BuildKit whenever possible
-export COMPOSE_DOCKER_CLI_BUILD=1
-export DOCKER_BUILDKIT=1
-export BUILDKIT_PROGRESS=plain
+# Disable BuildKit
+export COMPOSE_DOCKER_CLI_BUILD=0
+export DOCKER_BUILDKIT=0
 
 # Pull MetaCall Docker Compose
 sub_pull() {
@@ -72,10 +71,6 @@ sub_rebuild() {
 
 # Build MetaCall Docker Compose with Sanitizer for testing (link manually dockerignore files)
 sub_test() {
-
-	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
-	export DOCKER_BUILDKIT=0
-
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
