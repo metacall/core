@@ -52,11 +52,17 @@ Under ArchLinux (replace `aura` by your AUR helper):
 sudo aura -Axc metacall-git
 ```
 
-You should also set the following environment variables in order to build support for specific loaders :
-- 
-- 
-- 
-- 
+You should also set the following environment variables to `on` or `off` in order to build support for specific loaders :
+- METACALL_LOADER_C
+- METACALL_LOADER_CS
+- METACALL_LOADER_COB
+- METACALL_LOADER_JAVA
+- METACALL_LOADER_NODE
+- METACALL_LOADER_JS
+- METACALL_LOADER_PY
+- METACALL_LOADER_RB
+- METACALL_LOADER_TS
+
 
 
 ``` sh
