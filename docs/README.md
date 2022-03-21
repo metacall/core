@@ -183,6 +183,7 @@ Prior to trying any of the examples, you must have **METACALL** installed in you
 - [Pull it from DockerHub](https://hub.docker.com/r/metacall/core).
 - [Install via Guix package manager](https://github.com/metacall/distributable/blob/master/source/metacall.scm) (needs to fix the commit of [Guix channels](https://github.com/metacall/distributable/blob/master/channels/channels.scm)).
 - [Download precompiled tarball from Guix via Distributable Releases Assests](https://github.com/metacall/distributable/releases).
+- [ArchLinux AUR](https://github.com/metacall/aur).
 
 ### 4.2 Environment Variables
 
