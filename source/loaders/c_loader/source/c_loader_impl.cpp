@@ -1026,7 +1026,7 @@ int c_loader_impl_destroy(loader_impl impl)
 	if (c_impl != NULL)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl, 0);
+		loader_unload_children(impl);
 
 		delete c_impl;
 

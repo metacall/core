@@ -339,7 +339,7 @@ int jl_loader_impl_destroy(loader_impl impl)
 	loader_impl_jl jl_impl = static_cast<loader_impl_jl>(loader_impl_get(impl));
 
 	/* Destroy children loaders */
-	loader_unload_children(impl, 0);
+	loader_unload_children(impl);
 
 	/* TODO */
 	// Clear here the resources, it must free all memory related to jl_impl.

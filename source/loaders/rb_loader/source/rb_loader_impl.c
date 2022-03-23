@@ -441,11 +441,14 @@ void function_rb_interface_destroy(function func, function_impl impl)
 
 	if (rb_function != NULL)
 	{
-		VALUE name = rb_str_new_cstr(function_name(func));
+		if (loader_is_destroyed(rb_function->impl) != 0)
+		{
+			VALUE name = rb_str_new_cstr(function_name(func));
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Unreferencing Ruby function '%s' from module", function_name(func));
+			log_write("metacall", LOG_LEVEL_DEBUG, "Unreferencing Ruby function '%s' from module", function_name(func));
 
-		rb_undef(rb_function->module, rb_to_id(name));
+			rb_undef(rb_function->module, rb_to_id(name));
+		}
 
 		free(rb_function);
 	}
@@ -587,6 +590,11 @@ void rb_object_interface_destroy(object obj, object_impl impl)
 
 	if (rb_object != NULL)
 	{
+		if (loader_is_destroyed(rb_object->impl) != 0)
+		{
+			/* TODO: Unref the object and object_class? */
+		}
+
 		rb_object->object = Qnil;
 		rb_object->object_class = Qnil;
 		rb_object->impl = NULL;
@@ -765,6 +773,14 @@ void rb_class_interface_destroy(klass cls, class_impl impl)
 
 	if (rb_class != NULL)
 	{
+		/* TODO: Unref the class? */
+		/*
+		if (loader_is_destroyed(rb_class->impl) != 0)
+		{
+			// TODO: Unref
+		}
+		*/
+
 		rb_class->class = Qnil;
 
 		free(rb_class);
@@ -1598,7 +1614,7 @@ int rb_loader_impl_destroy(loader_impl impl)
 	(void)impl;
 
 	/* Destroy children loaders */
-	loader_unload_children(impl, 0);
+	loader_unload_children(impl);
 
 	return ruby_cleanup(0);
 }

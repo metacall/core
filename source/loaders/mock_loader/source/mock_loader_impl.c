@@ -618,7 +618,7 @@ int mock_loader_impl_destroy(loader_impl impl)
 	if (mock_impl != NULL)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl, 0);
+		loader_unload_children(impl);
 
 		/* Destroy Mock */
 		free(mock_impl);

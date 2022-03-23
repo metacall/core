@@ -123,10 +123,6 @@ add_dependencies(${target}
 	rpc_loader
 )
 
-# TODO: Launch server.js and the rpc-test
-# Check if NodeJS is available in order to run the test
-
-
 #
 # Define test
 #

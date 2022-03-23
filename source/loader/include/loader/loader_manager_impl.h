@@ -52,6 +52,7 @@ struct loader_manager_impl_type
 	vector initialization_order; /* Stores the loader implementations by order of initialization (used for destruction) */
 	uint64_t init_thread_id;	 /* Stores the thread id of the thread that initialized metacall */
 	vector script_paths;		 /* Vector of search path for the scripts */
+	set destroy_map;			 /* Tracks the list of destroyed runtimes during destruction of the manager (loader_impl -> NULL) */
 };
 
 /* -- Type Definitions -- */
@@ -65,6 +66,10 @@ typedef struct loader_manager_impl_type *loader_manager_impl;
 LOADER_API loader_manager_impl loader_manager_impl_initialize(void);
 
 LOADER_API plugin_manager_interface loader_manager_impl_iface(void);
+
+LOADER_API void loader_manager_impl_set_destroyed(loader_manager_impl manager_impl, loader_impl impl);
+
+LOADER_API int loader_manager_impl_is_destroyed(loader_manager_impl manager_impl, loader_impl impl);
 
 LOADER_API void loader_manager_impl_destroy(loader_manager_impl manager_impl);
 

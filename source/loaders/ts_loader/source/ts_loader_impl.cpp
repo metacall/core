@@ -125,6 +125,23 @@ int ts_loader_impl_initialize_types(loader_impl impl)
 	return 0;
 }
 
+static void *ts_loader_impl_initialize_register_cb(size_t size, void *args[], void *data)
+{
+	(void)data;
+
+	if (size != 1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader register callback invoked with wrong number of arguments");
+		return metacall_value_create_bool(0L);
+	}
+	else
+	{
+		loader_impl impl = static_cast<loader_impl>(metacall_value_to_ptr(args[0]));
+		loader_initialization_register(impl);
+		return metacall_value_create_bool(1L);
+	}
+}
+
 loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration config)
 {
 	static const char bootstrap_file_str[] = "bootstrap.ts";
@@ -137,7 +154,6 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	if (node_loader_impl_bootstrap_path(bootstrap_file_str, sizeof(bootstrap_file_str) - 1, config, bootstrap_path_str, &bootstrap_path_str_size) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "LOADER_LIBRARY_PATH environment variable or loader_library_path field in configuration is not defined, bootstrap.ts cannot be found");
-
 		return NULL;
 	}
 
@@ -145,7 +161,6 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	if (ts_loader_impl_initialize_types(impl) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to initialize the types");
-
 		return NULL;
 	}
 
@@ -155,19 +170,33 @@ loader_impl_data ts_loader_impl_initialize(loader_impl impl, configuration confi
 	if (metacall_load_from_file("node", paths, 1, &ts_impl) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript bootstrap.ts cannot be loaded");
+		return NULL;
+	}
 
+	/* Create an invokable function to initialization register */
+	void *func_register_cb = NULL;
+	enum metacall_value_id arg_types[] = { METACALL_PTR };
+
+	if (metacall_registerv(NULL, &ts_loader_impl_initialize_register_cb, &func_register_cb, METACALL_BOOL, 1, arg_types) != 0 || func_register_cb == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to create the register function");
 		return NULL;
 	}
 
 	/* Initialize bootstrap */
-	void *ret = metacallhv_s(ts_impl, "initialize", metacall_null_args, 0);
+	void *args[2] = {
+		metacall_value_create_function(func_register_cb),
+		metacall_value_create_ptr(impl)
+	};
+
+	void *ret = metacallhv_s(ts_impl, "initialize", args, 2);
+
+	metacall_value_destroy(args[0]);
+	metacall_value_destroy(args[1]);
 
 	// TODO: Do something with the value like error handling?
 
 	metacall_value_destroy(ret);
-
-	/* Register initialization */
-	loader_initialization_register(impl);
 
 	return (loader_impl_data)ts_impl;
 }
@@ -215,10 +244,10 @@ loader_handle ts_loader_impl_load_from_file(loader_impl impl, const loader_path 
 loader_handle ts_loader_impl_load_from_memory(loader_impl impl, const loader_name name, const char *buffer, size_t size)
 {
 	void *ts_impl = (void *)loader_impl_get(impl);
-	void *args[2];
-
-	args[0] = metacall_value_create_string(name, strlen(name));
-	args[1] = metacall_value_create_string(buffer, size - 1);
+	void *args[2] = {
+		metacall_value_create_string(name, strlen(name)),
+		metacall_value_create_string(buffer, size - 1)
+	};
 
 	void *ret = metacallhv_s(ts_impl, "load_from_memory", args, 2);
 
@@ -260,9 +289,7 @@ int ts_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
 	void *ts_impl = (void *)loader_impl_get(impl);
 
-	void *args[1];
-
-	args[0] = (void *)handle;
+	void *args[1] = { static_cast<void *>(handle) };
 
 	void *ret = metacallhv_s(ts_impl, "clear", args, 1);
 
@@ -363,17 +390,60 @@ int ts_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 	return result;
 }
 
+static void *ts_loader_impl_destroy_unload_children_cb(size_t size, void *args[], void *data)
+{
+	(void)data;
+
+	if (size != 1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader unload children callback invoked with wrong number of arguments");
+		return metacall_value_create_bool(0L);
+	}
+	else
+	{
+		loader_impl impl = static_cast<loader_impl>(metacall_value_to_ptr(args[0]));
+		void *ts_impl = static_cast<void *>(loader_impl_get(impl));
+
+		loader_unload_children(impl);
+
+		/* TODO: Should we let Node Loader destroy our handle? */
+		return metacall_value_create_bool(/*metacall_clear(ts_impl)*/ 1L);
+	}
+}
+
 int ts_loader_impl_destroy(loader_impl impl)
 {
-	void *ts_impl = (void *)loader_impl_get(impl);
+	void *ts_impl = static_cast<void *>(loader_impl_get(impl));
 
 	if (ts_impl == NULL)
 	{
 		return 1;
 	}
 
-	/* Destroy children loaders */
-	loader_unload_children(impl, 0);
+	/* Create an invokable function to destroy unload children */
+	void *func_unload_children_cb = NULL;
+	enum metacall_value_id arg_types[] = { METACALL_PTR };
 
-	return metacall_clear(ts_impl);
+	if (metacall_registerv(NULL, &ts_loader_impl_destroy_unload_children_cb, &func_unload_children_cb, METACALL_BOOL, 1, arg_types) != 0 || func_unload_children_cb == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "TypeScript Loader failed to create the unload children function");
+		return 1;
+	}
+
+	/* Destroy bootstrap */
+	void *args[2] = {
+		metacall_value_create_function(func_unload_children_cb),
+		metacall_value_create_ptr(impl)
+	};
+
+	void *ret = metacallhv_s(ts_impl, "destroy", args, 2);
+
+	metacall_value_destroy(args[0]);
+	metacall_value_destroy(args[1]);
+
+	// TODO: Do something with the value like error handling?
+
+	metacall_value_destroy(ret);
+
+	return 0;
 }

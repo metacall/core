@@ -29,7 +29,6 @@
 #include <reflect/reflect_context.h>
 #include <reflect/reflect_scope.h>
 
-#include <adt/adt_set.h>
 #include <adt/adt_vector.h>
 
 #include <serial/serial.h>
@@ -70,6 +69,8 @@ typedef struct loader_get_cb_iterator_type *loader_get_cb_iterator;
 typedef struct loader_metadata_cb_iterator_type *loader_metadata_cb_iterator;
 
 /* -- Private Methods -- */
+
+static void loader_initialization_debug(void);
 
 static void loader_initialization_register_plugin(plugin p);
 
@@ -140,6 +141,29 @@ int loader_initialize(void)
 	return 0;
 }
 
+void loader_initialization_debug(void)
+{
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+	if (manager_impl->initialization_order != NULL)
+	{
+		size_t iterator, size = vector_size(manager_impl->initialization_order);
+
+		log_write("metacall", LOG_LEVEL_DEBUG, "Loader initialization order:\n-----------------------------------");
+
+		for (iterator = 0; iterator < size; ++iterator)
+		{
+			loader_initialization_order order = vector_at(manager_impl->initialization_order, iterator);
+
+			printf("%" PRIuS ") %s #%" PRIuS "\n", iterator, plugin_name(order->p), order->id);
+		}
+
+		fflush(stdout);
+	}
+#endif
+}
+
 void loader_initialization_register(loader_impl impl)
 {
 	plugin p = loader_impl_plugin(impl);
@@ -147,6 +171,7 @@ void loader_initialization_register(loader_impl impl)
 	if (p != NULL)
 	{
 		loader_initialization_register_plugin(p);
+		loader_initialization_debug();
 	}
 }
 
@@ -597,7 +622,21 @@ int loader_clear(void *handle)
 	return loader_impl_clear(handle);
 }
 
-void loader_unload_children(loader_impl impl, int destroy_objects)
+int loader_is_destroyed(loader_impl impl)
+{
+	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+	return loader_manager_impl_is_destroyed(manager_impl, impl);
+}
+
+void loader_set_destroyed(loader_impl impl)
+{
+	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
+
+	loader_manager_impl_set_destroyed(manager_impl, impl);
+}
+
+void loader_unload_children(loader_impl impl)
 {
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 	uint64_t current = thread_id_get_current();
@@ -629,7 +668,12 @@ void loader_unload_children(loader_impl impl, int destroy_objects)
 		/* Call recursively for deletion of children */
 		if (order->p != manager_impl->host)
 		{
+			loader_impl destroyed_impl = plugin_impl_type(order->p, loader_impl);
+
 			plugin_destroy(order->p);
+
+			/* Mark loader as destroyed (prevents access to already freed memory and defines what loaders are destroyed) */
+			loader_manager_impl_set_destroyed(manager_impl, destroyed_impl);
 		}
 
 		/* Clear current order */
@@ -643,7 +687,7 @@ void loader_unload_children(loader_impl impl, int destroy_objects)
 	vector_destroy(stack);
 
 	/* Clear all objects and types related to the loader once all childs have been destroyed */
-	if (impl != NULL && destroy_objects == 0)
+	if (impl != NULL)
 	{
 		loader_impl_destroy_objects(impl);
 	}
@@ -653,7 +697,7 @@ void loader_destroy(void)
 {
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader begin unload");
+	log_write("metacall", LOG_LEVEL_DEBUG, "Begin to destroy all the loaders");
 
 	/* Delete loaders in inverse order */
 	if (manager_impl->initialization_order != NULL)
@@ -670,7 +714,9 @@ void loader_destroy(void)
 			/* TODO: How to deal with this? */
 		}
 
-		loader_unload_children(NULL, 1);
+		loader_initialization_debug();
+
+		loader_unload_children(NULL);
 
 		/* The host is the first loader, it must be destroyed at the end */
 		if (manager_impl->host != NULL)

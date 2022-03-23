@@ -44,6 +44,10 @@ static void loader_manager_impl_iface_destroy(plugin_manager manager, void *impl
 
 static void loader_manager_impl_script_paths_destroy(vector script_paths);
 
+/* -- Private Data -- */
+
+static void *loader_manager_impl_is_destroyed_ptr = NULL;
+
 /* -- Methods -- */
 
 vector loader_manager_impl_script_paths_initialize(void)
@@ -136,6 +140,14 @@ loader_manager_impl loader_manager_impl_initialize(void)
 		goto initialization_order_error;
 	}
 
+	manager_impl->destroy_map = set_create(&hash_callback_ptr, &comparable_callback_ptr);
+
+	if (manager_impl->destroy_map == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Loader failed to allocate the destroy map");
+		goto destroy_map_error;
+	}
+
 	manager_impl->script_paths = loader_manager_impl_script_paths_initialize();
 
 	if (manager_impl->script_paths == NULL)
@@ -159,6 +171,8 @@ loader_manager_impl loader_manager_impl_initialize(void)
 host_error:
 	loader_manager_impl_script_paths_destroy(manager_impl->script_paths);
 script_paths_error:
+	set_destroy(manager_impl->destroy_map);
+destroy_map_error:
 	vector_destroy(manager_impl->initialization_order);
 initialization_order_error:
 	free(manager_impl);
@@ -185,6 +199,27 @@ void loader_manager_impl_iface_destroy(plugin_manager manager, void *impl)
 	loader_manager_impl_destroy(manager_impl);
 }
 
+void loader_manager_impl_set_destroyed(loader_manager_impl manager_impl, loader_impl impl)
+{
+	if (manager_impl != NULL)
+	{
+		if (set_insert(manager_impl->destroy_map, impl, &loader_manager_impl_is_destroyed_ptr) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to insert loader %p into destroy map", (void *)impl);
+		}
+	}
+}
+
+int loader_manager_impl_is_destroyed(loader_manager_impl manager_impl, loader_impl impl)
+{
+	if (manager_impl == NULL)
+	{
+		return 1;
+	}
+
+	return set_get(manager_impl->destroy_map, impl) != &loader_manager_impl_is_destroyed_ptr;
+}
+
 void loader_manager_impl_destroy(loader_manager_impl manager_impl)
 {
 	if (manager_impl != NULL)
@@ -192,6 +227,11 @@ void loader_manager_impl_destroy(loader_manager_impl manager_impl)
 		if (manager_impl->initialization_order != NULL)
 		{
 			vector_destroy(manager_impl->initialization_order);
+		}
+
+		if (manager_impl->destroy_map != NULL)
+		{
+			set_destroy(manager_impl->destroy_map);
 		}
 
 		manager_impl->init_thread_id = THREAD_ID_INVALID;

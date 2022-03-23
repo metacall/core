@@ -503,7 +503,7 @@ int file_loader_impl_destroy(loader_impl impl)
 	if (file_impl != NULL)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl, 0);
+		loader_unload_children(impl);
 
 		if (file_impl->execution_paths != NULL)
 		{

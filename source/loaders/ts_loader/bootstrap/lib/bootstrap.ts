@@ -307,6 +307,11 @@ export const load_from_memory = safe(
 	null,
 );
 
+/** Registers the TypeScript loader in the correct thread, this loader must always be the child of NodeJS loader */
+export const initialize = safe(function initialize(register_cb: (impl: unknown) => boolean, impl: unknown): boolean {
+	return register_cb(impl);
+}, false);
+
 /** Unloads a TypeScript file using handle returned from load_from_file / load_from_memory */
 export const clear = safe(function clear(handle: Record<string, string>) {
 	const names = Object.getOwnPropertyNames(handle);
@@ -336,9 +341,10 @@ export const discover = safe(function discover(handle: Record<string, any>) {
 	return result;
 }, {});
 
+/** Destroy TypeScript loader children in the correct thread, this loader must always be the child of NodeJS loader */
+export const destroy = safe(function destroy(unload_children_cb: (impl: unknown) => boolean, impl: unknown): boolean {
+	return unload_children_cb(impl);
+}, false);
+
 /** Unimplemented */
 export const load_from_package = noop;
-/** Unimplemented */
-export const initialize = noop;
-/** Unimplemented */
-export const destroy = noop;

@@ -235,7 +235,7 @@ int jsm_loader_impl_destroy(loader_impl impl)
 	if (jsm_impl != NULL)
 	{
 		/* Destroy children loaders */
-		loader_unload_children(impl, 0);
+		loader_unload_children(impl);
 
 		/* Destroy Spider Monkey */
 		if (jsm_impl->cx != NULL)

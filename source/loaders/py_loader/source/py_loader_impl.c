@@ -53,13 +53,13 @@
 typedef struct loader_impl_py_function_type
 {
 	PyObject *func;
-	// Cache and re-use the values array
-	PyObject **values;
+	PyObject **values; // Cache and re-use the values array
 	loader_impl impl;
 } * loader_impl_py_function;
 
 typedef struct loader_impl_py_future_type
 {
+	loader_impl impl;
 	loader_impl_py py_impl;
 	PyObject *future;
 
@@ -167,8 +167,6 @@ static object_interface py_object_interface_singleton(void);
 
 static class_interface py_class_interface_singleton(void);
 
-static method_interface py_method_interface_singleton(void);
-
 static size_t py_loader_impl_discover_callable_args_count(loader_impl_py py_impl, PyObject *callable);
 
 static int py_loader_impl_discover_func(loader_impl impl, PyObject *func, function f);
@@ -212,9 +210,14 @@ void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 
 	(void)v;
 
-	free(invoke_state);
+	if (loader_is_destroyed(invoke_state->impl) != 0 && capsule != NULL)
+	{
+		PyGILState_STATE gstate = PyGILState_Ensure();
+		Py_DECREF(capsule);
+		PyGILState_Release(gstate);
+	}
 
-	Py_XDECREF(capsule);
+	free(invoke_state);
 }
 
 void py_loader_impl_value_ptr_finalize(value v, void *data)
@@ -225,8 +228,13 @@ void py_loader_impl_value_ptr_finalize(value v, void *data)
 	{
 		if (data != NULL)
 		{
-			PyObject *obj = (PyObject *)data;
-			Py_XDECREF(obj);
+			loader_impl impl = (loader_impl)data;
+
+			if (loader_is_destroyed(impl) != 0)
+			{
+				PyObject *obj = (PyObject *)value_to_ptr(v);
+				Py_XDECREF(obj);
+			}
 		}
 	}
 }
@@ -245,7 +253,12 @@ void type_py_interface_destroy(type t, type_impl impl)
 
 	(void)t;
 
-	Py_DECREF(builtin);
+	if (Py_IsInitialized() != 0)
+	{
+		PyGILState_STATE gstate = PyGILState_Ensure();
+		Py_DECREF(builtin);
+		PyGILState_Release(gstate);
+	}
 }
 
 type_interface type_py_singleton(void)
@@ -300,12 +313,16 @@ void future_py_interface_destroy(future f, future_impl impl)
 {
 	loader_impl_py_future py_future = (loader_impl_py_future)impl;
 
+	(void)f;
+
 	if (py_future != NULL)
 	{
-		Py_DECREF(py_future->future);
-
-		(void)f;
-		(void)impl;
+		if (loader_is_destroyed(py_future->impl) != 0)
+		{
+			PyGILState_STATE gstate = PyGILState_Ensure();
+			Py_DECREF(py_future->future);
+			PyGILState_Release(gstate);
+		}
 
 		free(py_future);
 	}
@@ -439,11 +456,16 @@ void py_object_interface_destroy(object obj, object_impl impl)
 
 	if (py_object != NULL)
 	{
-		Py_XDECREF(py_object->obj);
-
-		if (py_object->obj_class != NULL)
+		if (loader_is_destroyed(py_object->impl) != 0)
 		{
-			value_type_destroy(py_object->obj_class);
+			PyGILState_STATE gstate = PyGILState_Ensure();
+			Py_XDECREF(py_object->obj);
+
+			if (py_object->obj_class != NULL)
+			{
+				value_type_destroy(py_object->obj_class);
+			}
+			PyGILState_Release(gstate);
 		}
 
 		free(py_object);
@@ -634,13 +656,19 @@ value py_class_interface_static_await(klass cls, class_impl impl, method m, clas
 
 void py_class_interface_destroy(klass cls, class_impl impl)
 {
-	(void)cls;
-
 	loader_impl_py_class py_class = (loader_impl_py_class)impl;
+
+	(void)cls;
 
 	if (py_class != NULL)
 	{
-		Py_XDECREF(py_class->cls);
+		if (loader_is_destroyed(py_class->impl) != 0)
+		{
+			PyGILState_STATE gstate = PyGILState_Ensure();
+			Py_XDECREF(py_class->cls);
+			PyGILState_Release(gstate);
+		}
+
 		free(py_class);
 	}
 }
@@ -658,23 +686,6 @@ class_interface py_class_interface_singleton(void)
 	};
 
 	return &py_class_interface;
-}
-
-void py_method_interface_destroy(method m, method_impl impl)
-{
-	(void)m;
-
-	PyObject *m_impl = (PyObject *)impl;
-	Py_XDECREF(m_impl);
-}
-
-method_interface py_method_interface_singleton(void)
-{
-	static struct method_interface_type py_method_interface = {
-		&py_method_interface_destroy
-	};
-
-	return &py_method_interface;
 }
 
 int py_loader_impl_check_future(loader_impl_py py_impl, PyObject *obj)
@@ -1089,6 +1100,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		loader_impl_py py_impl = loader_impl_get(impl);
 
+		py_future->impl = impl;
 		py_future->py_impl = py_impl;
 		py_future->future = obj;
 
@@ -1159,7 +1171,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 		Py_INCREF(obj);
 
 		/* Set up finalizer in order to free the value */
-		value_finalizer(v, &py_loader_impl_value_ptr_finalize, obj);
+		value_finalizer(v, &py_loader_impl_value_ptr_finalize, impl);
 
 		log_write("metacall", LOG_LEVEL_WARNING, "Unrecognized Python Type: %s", Py_TYPE(obj)->tp_name);
 	}
@@ -1699,9 +1711,12 @@ void function_py_interface_destroy(function func, function_impl impl)
 			free(py_func->values);
 		}
 
-		PyGILState_STATE gstate = PyGILState_Ensure();
-		Py_DECREF(py_func->func);
-		PyGILState_Release(gstate);
+		if (loader_is_destroyed(py_func->impl) != 0)
+		{
+			PyGILState_STATE gstate = PyGILState_Ensure();
+			Py_DECREF(py_func->func);
+			PyGILState_Release(gstate);
+		}
 
 		free(py_func);
 	}
@@ -3577,10 +3592,11 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 				method m = method_create(c,
 					PyUnicode_AsUTF8(tuple_key),
 					args_count,
-					tuple_val,
-					VISIBILITY_PUBLIC, // check @property decorator for protected access?
+					NULL,			   /* There's no need to pass the method implementation (tuple_val) here,
+					* it is used only for introspection, not for invoking it, that's done by name */
+					VISIBILITY_PUBLIC, /* TODO: check @property decorator for protected access? */
 					func_synchronicity,
-					&py_method_interface_singleton);
+					NULL);
 
 				if (is_static_method)
 				{
@@ -3597,6 +3613,9 @@ int py_loader_impl_discover_class(loader_impl impl, PyObject *py_class, klass c)
 						PyUnicode_AsUTF8(tuple_key),
 						class_name(c));
 				}
+
+				/* Delete the reference of the method here instead of in py_method_interface_destroy */
+				Py_XDECREF(tuple_val);
 			}
 			else
 			{
@@ -3905,7 +3924,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	}
 
 	/* Destroy children loaders */
-	loader_unload_children(impl, 0);
+	loader_unload_children(impl);
 
 	PyGILState_STATE gstate = PyGILState_Ensure();
 

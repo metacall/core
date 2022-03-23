@@ -276,6 +276,7 @@ struct loader_impl_node_type
 typedef struct loader_impl_node_function_type
 {
 	loader_impl_node node_impl;
+	loader_impl impl;
 	napi_ref func_ref;
 	napi_value *argv;
 
@@ -1326,59 +1327,62 @@ void function_node_interface_destroy(function func, function_impl impl)
 
 	if (node_func != NULL)
 	{
-		loader_impl_node node_impl = node_func->node_impl;
-		napi_status status;
-
-		/* Set up function destroy safe arguments */
-		node_impl->func_destroy_safe->node_impl = node_impl;
-		node_impl->func_destroy_safe->node_func = node_func;
-
-		/* Check if we are in the JavaScript thread */
-		if (node_impl->js_thread_id == std::this_thread::get_id())
+		if (loader_is_destroyed(node_func->impl) != 0)
 		{
-			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_func_destroy_safe(node_impl->env, node_impl->func_destroy_safe);
-		}
-		/* Lock the mutex and set the parameters */
-		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-		{
-			node_impl->locked.store(true);
+			loader_impl_node node_impl = node_func->node_impl;
+			napi_status status;
 
-			/* Acquire the thread safe function in order to do the call */
-			status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_destroy);
+			/* Set up function destroy safe arguments */
+			node_impl->func_destroy_safe->node_impl = node_impl;
+			node_impl->func_destroy_safe->node_func = node_func;
 
-			if (status != napi_ok)
+			/* Check if we are in the JavaScript thread */
+			if (node_impl->js_thread_id == std::this_thread::get_id())
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function destroy function in NodeJS loader");
+				/* We are already in the V8 thread, we can call safely */
+				node_loader_impl_func_destroy_safe(node_impl->env, node_impl->func_destroy_safe);
 			}
-
-			/* Execute the thread safe call in a nonblocking manner */
-			status = napi_call_threadsafe_function(node_impl->threadsafe_func_destroy, nullptr, napi_tsfn_nonblocking);
-
-			if (status != napi_ok)
+			/* Lock the mutex and set the parameters */
+			else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function destroy function in NodeJS loader");
+				node_impl->locked.store(true);
+
+				/* Acquire the thread safe function in order to do the call */
+				status = napi_acquire_threadsafe_function(node_impl->threadsafe_func_destroy);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe function destroy function in NodeJS loader");
+				}
+
+				/* Execute the thread safe call in a nonblocking manner */
+				status = napi_call_threadsafe_function(node_impl->threadsafe_func_destroy, nullptr, napi_tsfn_nonblocking);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe function destroy function in NodeJS loader");
+				}
+
+				/* Release call safe function */
+				status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_release);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function destroy function in NodeJS loader");
+				}
+
+				/* Wait for the execution of the safe call */
+				uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+				node_impl->locked.store(false);
+
+				/* Unlock call safe mutex */
+				uv_mutex_unlock(&node_impl->mutex);
 			}
-
-			/* Release call safe function */
-			status = napi_release_threadsafe_function(node_impl->threadsafe_func_destroy, napi_tsfn_release);
-
-			if (status != napi_ok)
+			else
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe function destroy function in NodeJS loader");
+				log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
 			}
-
-			/* Wait for the execution of the safe call */
-			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-			node_impl->locked.store(false);
-
-			/* Unlock call safe mutex */
-			uv_mutex_unlock(&node_impl->mutex);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in function_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
 		}
 
 		/* Free node function arguments */
@@ -1495,60 +1499,63 @@ void future_node_interface_destroy(future f, future_impl impl)
 
 	if (node_future != NULL)
 	{
-		loader_impl_node node_impl = node_future->node_impl;
-		napi_status status;
-
-		/* Set up future delete safe arguments */
-		node_impl->future_delete_safe->node_impl = node_impl;
-		node_impl->future_delete_safe->node_future = node_future;
-		node_impl->future_delete_safe->f = f;
-
-		/* Check if we are in the JavaScript thread */
-		if (node_impl->js_thread_id == std::this_thread::get_id())
+		if (loader_is_destroyed(node_future->node_impl->impl) != 0)
 		{
-			/* We are already in the V8 thread, we can call safely */
-			node_loader_impl_future_delete_safe(node_impl->env, node_impl->future_delete_safe);
-		}
-		/* Lock the mutex and set the parameters */
-		else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
-		{
-			node_impl->locked.store(true);
+			loader_impl_node node_impl = node_future->node_impl;
+			napi_status status;
 
-			/* Acquire the thread safe function in order to do the call */
-			status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_delete);
+			/* Set up future delete safe arguments */
+			node_impl->future_delete_safe->node_impl = node_impl;
+			node_impl->future_delete_safe->node_future = node_future;
+			node_impl->future_delete_safe->f = f;
 
-			if (status != napi_ok)
+			/* Check if we are in the JavaScript thread */
+			if (node_impl->js_thread_id == std::this_thread::get_id())
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe future destroy function in NodeJS loader");
+				/* We are already in the V8 thread, we can call safely */
+				node_loader_impl_future_delete_safe(node_impl->env, node_impl->future_delete_safe);
 			}
-
-			/* Execute the thread safe call in a nonblocking manner */
-			status = napi_call_threadsafe_function(node_impl->threadsafe_future_delete, nullptr, napi_tsfn_nonblocking);
-
-			if (status != napi_ok)
+			/* Lock the mutex and set the parameters */
+			else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe future destroy function in NodeJS loader");
+				node_impl->locked.store(true);
+
+				/* Acquire the thread safe function in order to do the call */
+				status = napi_acquire_threadsafe_function(node_impl->threadsafe_future_delete);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to aquire thread safe future destroy function in NodeJS loader");
+				}
+
+				/* Execute the thread safe call in a nonblocking manner */
+				status = napi_call_threadsafe_function(node_impl->threadsafe_future_delete, nullptr, napi_tsfn_nonblocking);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to call to thread safe future destroy function in NodeJS loader");
+				}
+
+				/* Release call safe function */
+				status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_release);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe future destroy function in NodeJS loader");
+				}
+
+				/* Wait for the execution of the safe call */
+				uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+				node_impl->locked.store(false);
+
+				/* Unlock call safe mutex */
+				uv_mutex_unlock(&node_impl->mutex);
 			}
-
-			/* Release call safe function */
-			status = napi_release_threadsafe_function(node_impl->threadsafe_future_delete, napi_tsfn_release);
-
-			if (status != napi_ok)
+			else
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Invalid to release thread safe future destroy function in NodeJS loader");
+				log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in future_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
 			}
-
-			/* Wait for the execution of the safe call */
-			uv_cond_wait(&node_impl->cond, &node_impl->mutex);
-
-			node_impl->locked.store(false);
-
-			/* Unlock call safe mutex */
-			uv_mutex_unlock(&node_impl->mutex);
-		}
-		else
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in future_node_interface_destroy, the call has not been executed in order to avoid the deadlock");
 		}
 
 		/* Free node future */
@@ -2944,6 +2951,7 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 		node_loader_impl_exception(env, status);
 
 		node_func->node_impl = discover_function_safe->node_impl;
+		node_func->impl = discover_function_safe->node_impl->impl;
 
 		/* Create function */
 		function f = function_create(func_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
@@ -3308,6 +3316,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 				node_loader_impl_exception(env, status);
 
 				node_func->node_impl = discover_safe->node_impl;
+				node_func->impl = discover_safe->node_impl->impl;
 
 				/* Create function */
 				function f = function_create(func_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
@@ -3999,9 +4008,6 @@ void node_loader_impl_thread(void *data)
 
 	/* Start NodeJS runtime */
 	int result = node::Start(argc, reinterpret_cast<char **>(argv));
-
-	/* Destroy children loaders */
-	loader_unload_children(node_impl->impl, 1);
 
 	/* Lock node implementation mutex */
 	uv_mutex_lock(&node_impl->mutex);
@@ -4828,8 +4834,8 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	uint32_t ref_count = 0;
 	napi_status status;
 
-	/* Clear all the functions and classes loaded from node */
-	loader_impl_destroy_objects(node_impl->impl);
+	/* Destroy children loaders */
+	loader_unload_children(node_impl->impl);
 
 	/* Clear thread safe functions */
 	{
@@ -4978,6 +4984,13 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 		}
 #endif
 	}
+
+	/* NodeJS Loader needs to register that it is destroyed, because after this step
+	* some destructors can be still triggered, before the node_loader->destroy() has
+	* finished, so this destructors will try to execute the NodeJS unrefs while having
+	* the runtime (at least the NodeJS Loader related part) destroyed.
+	*/
+	loader_set_destroyed(node_impl->impl);
 }
 
 void node_loader_impl_try_destroy(loader_impl_node node_impl)

@@ -233,7 +233,7 @@ int wasm_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 int wasm_loader_impl_destroy(loader_impl impl)
 {
 	loader_impl_wasm wasm_impl = loader_impl_get(impl);
-	loader_unload_children(impl, 0);
+	loader_unload_children(impl);
 	vector_destroy(wasm_impl->paths);
 	wasm_store_delete(wasm_impl->store);
 	wasm_engine_delete(wasm_impl->engine);
