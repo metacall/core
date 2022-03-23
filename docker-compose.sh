@@ -206,4 +206,3 @@ case "$1" in
 		sub_help
 		;;
 esac
-
