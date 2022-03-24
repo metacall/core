@@ -265,29 +265,31 @@ int plugin_manager_clear(plugin_manager manager, plugin p)
 
 int plugin_manager_destroy_cb(set s, set_key key, set_value val, set_cb_iterate_args args)
 {
+	int result = 0;
+
 	(void)s;
 	(void)key;
 
-	if (val != NULL && args != NULL)
+	if (val != NULL)
 	{
 		plugin p = (plugin)val;
-		plugin_manager manager = (plugin_manager)args;
 
-		int result = 0;
-
-		if (manager->iface != NULL && manager->iface->clear != NULL)
+		if (args != NULL)
 		{
-			/* Call to the clear method of the manager */
-			result = manager->iface->clear(manager, p);
+			plugin_manager manager = (plugin_manager)args;
+
+			if (manager->iface != NULL && manager->iface->clear != NULL)
+			{
+				/* Call to the clear method of the manager */
+				result = manager->iface->clear(manager, p);
+			}
 		}
 
 		/* Unload the dynamic link library and destroy the plugin */
 		plugin_destroy(p);
-
-		return result;
 	}
 
-	return 0;
+	return result;
 }
 
 void plugin_manager_destroy(plugin_manager manager)
@@ -297,13 +299,12 @@ void plugin_manager_destroy(plugin_manager manager)
 	{
 		manager->iface->destroy(manager, manager->impl);
 	}
-	else
+
+	/* Unload and destroy each plugin. The destroy callback is executed before this so the user can clear the
+	* plugin set and this will do nothing if the set has been emptied before with plugin_manager_clear */
+	if (manager->plugins != NULL)
 	{
-		/* Otherwise destroy it in an unordered manner */
-		if (manager->plugins != NULL)
-		{
-			set_iterate(manager->plugins, &plugin_manager_destroy_cb, NULL);
-		}
+		set_iterate(manager->plugins, &plugin_manager_destroy_cb, NULL);
 	}
 
 	/* Clear the name */

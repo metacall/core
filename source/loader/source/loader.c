@@ -670,7 +670,13 @@ void loader_unload_children(loader_impl impl)
 		{
 			loader_impl destroyed_impl = plugin_impl_type(order->p, loader_impl);
 
-			plugin_destroy(order->p);
+			/* This will execute the desctructor but it will prevent to unload the plugins.
+			* This is necessary in order to protect the destruction of the memory, otherwhise
+			* it can happen that a node function wrapping a python function get destroyed after
+			* the loader has been unloaded, and the function interface will point to an unloaded
+			* plugin, generating a segmentation fault. All the plugins will be unloaded on plugin_manager_destroy.
+			*/
+			plugin_destroy_delayed(order->p);
 
 			/* Mark loader as destroyed (prevents access to already freed memory and defines what loaders are destroyed) */
 			loader_manager_impl_set_destroyed(manager_impl, destroyed_impl);
@@ -721,7 +727,11 @@ void loader_destroy(void)
 		/* The host is the first loader, it must be destroyed at the end */
 		if (manager_impl->host != NULL)
 		{
-			plugin_destroy(manager_impl->host);
+			if (plugin_manager_clear(&loader_manager, manager_impl->host) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Failed to clear host loader");
+			}
+
 			manager_impl->host = NULL;
 		}
 	}

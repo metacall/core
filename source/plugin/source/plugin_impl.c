@@ -101,6 +101,18 @@ void *plugin_impl(plugin p)
 	return p->impl;
 }
 
+void plugin_destroy_delayed(plugin p)
+{
+	if (p != NULL)
+	{
+		if (p->dtor != NULL)
+		{
+			p->dtor(p);
+			p->dtor = NULL;
+		}
+	}
+}
+
 void plugin_destroy(plugin p)
 {
 	if (p != NULL)

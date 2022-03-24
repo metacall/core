@@ -423,8 +423,6 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 } * loader_impl_napi_to_value_callback_closure;
 
 /* Type conversion */
-static void node_loader_impl_napi_to_value_callback_finalizer(value v, void *data);
-
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
 
 /* Function */
@@ -608,19 +606,10 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 	}
 }
 
-void node_loader_impl_finalizer(napi_env env, napi_value v, void *data)
+template <typename T>
+void node_loader_impl_finalizer_impl(napi_env env, napi_value v, void *data, T finalizer)
 {
 	napi_status status;
-
-	if (value_type_id(data) == TYPE_NULL)
-	{
-		value_type_destroy(data);
-		return;
-	}
-
-	auto finalizer = [](napi_env, void *finalize_data, void *) {
-		value_type_destroy(finalize_data);
-	};
 
 // Create a finalizer for the value
 #if (NAPI_VERSION < 5)
@@ -657,6 +646,21 @@ void node_loader_impl_finalizer(napi_env env, napi_value v, void *data)
 		node_loader_impl_exception(env, status);
 	}
 #endif
+}
+
+void node_loader_impl_finalizer(napi_env env, napi_value v, void *data)
+{
+	if (value_type_id(data) == TYPE_NULL)
+	{
+		value_type_destroy(data);
+		return;
+	}
+
+	auto finalizer = [](napi_env, void *finalize_data, void *) {
+		value_type_destroy(finalize_data);
+	};
+
+	node_loader_impl_finalizer_impl(env, v, data, finalizer);
 }
 
 value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v)
@@ -893,15 +897,6 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	return ret;
 }
 
-void node_loader_impl_napi_to_value_callback_finalizer(value v, void *data)
-{
-	loader_impl_napi_to_value_callback_closure closure = static_cast<loader_impl_napi_to_value_callback_closure>(data);
-
-	(void)v;
-
-	delete closure;
-}
-
 napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info)
 {
 	size_t iterator, argc = 0;
@@ -1102,9 +1097,13 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 
 		node_loader_impl_exception(env, status);
 
-		node_loader_impl_finalizer(env, v, closure->func);
+		auto finalizer = [](napi_env, void *finalize_data, void *) {
+			loader_impl_napi_to_value_callback_closure closure = static_cast<loader_impl_napi_to_value_callback_closure>(finalize_data);
+			value_type_destroy(closure->func);
+			delete closure;
+		};
 
-		value_finalizer(closure->func, &node_loader_impl_napi_to_value_callback_finalizer, closure);
+		node_loader_impl_finalizer_impl(env, v, closure, finalizer);
 	}
 	else if (id == TYPE_CLASS)
 	{

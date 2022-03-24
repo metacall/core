@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#if (defined(_WIN32) || defined(_WIN64)) && defined(boolean)
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(_MSC_VER) && defined(boolean)
 	#undef boolean
 #endif
 
