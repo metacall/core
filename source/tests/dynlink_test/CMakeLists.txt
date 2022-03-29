@@ -86,6 +86,7 @@ target_link_libraries(${target}
 	${META_PROJECT_NAME}::format
 	${META_PROJECT_NAME}::threading
 	${META_PROJECT_NAME}::log
+	${META_PROJECT_NAME}::portability
 	${META_PROJECT_NAME}::dynlink
 )
 

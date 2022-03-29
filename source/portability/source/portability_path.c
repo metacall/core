@@ -429,3 +429,36 @@ size_t portability_path_canonical(const char *path, size_t path_size, char *cano
 
 	return size;
 }
+
+int portability_path_compare(const char *left_path, const char *right_path)
+{
+	if (left_path == NULL || right_path == NULL)
+	{
+		return 1;
+	}
+
+	size_t left_length = strlen(left_path);
+	size_t right_length = strlen(right_path);
+
+	if (left_length == 0 || right_length == 0)
+	{
+		return 1;
+	}
+
+	if (PORTABILITY_PATH_SEPARATOR(left_path[left_length - 1]))
+	{
+		--left_length;
+	}
+
+	if (PORTABILITY_PATH_SEPARATOR(right_path[right_length - 1]))
+	{
+		--right_length;
+	}
+
+	if (left_length != right_length)
+	{
+		return 1;
+	}
+
+	return (strncmp(left_path, right_path, left_length) != 0);
+}

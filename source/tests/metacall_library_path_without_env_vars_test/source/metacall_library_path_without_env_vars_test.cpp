@@ -21,36 +21,29 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
+#include <metacall/metacall_loaders.h>
 
-#include <dynlink/dynlink.h>
-
-class metacall_dynlink_path_test : public testing::Test
+class metacall_library_path_without_env_vars_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_dynlink_path_test, DefaultConstructor)
+TEST_F(metacall_library_path_without_env_vars_test, DefaultConstructor)
 {
 	metacall_print_info();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	dynlink_library_path_str path;
+/* Mock */
+#if defined(OPTION_BUILD_LOADERS_MOCK)
+	{
+		const char *mock_scripts[] = {
+			"empty.mock"
+		};
 
-	const char name[] = "metacall"
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-						"d"
-#endif
-		;
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("mock", mock_scripts, sizeof(mock_scripts) / sizeof(mock_scripts[0]), NULL));
+	}
+#endif /* OPTION_BUILD_LOADERS_MOCK */
 
-	size_t length = 0;
-
-	ASSERT_EQ((int)0, (int)dynlink_library_path(name, path, &length));
-
-	printf("%s == %s\n", path, METACALL_LIBRARY_PATH);
-	fflush(stdout);
-
-	ASSERT_EQ((int)0, (int)portability_path_compare(path, METACALL_LIBRARY_PATH));
-
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	ASSERT_EQ((int)0, (int)metacall_destroy());
 }

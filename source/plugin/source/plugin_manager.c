@@ -101,7 +101,30 @@ int plugin_manager_initialize(plugin_manager manager, const char *name, const ch
 	/* Initialize the library path */
 	if (manager->library_path == NULL)
 	{
-		manager->library_path = environment_variable_path_create(environment_library_path, default_library_path, strlen(default_library_path) + 1, NULL);
+		const char name[] = "metacall"
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+							"d"
+#endif
+			;
+
+		dynlink_library_path_str path;
+		size_t length = 0;
+
+		/* The order of precedence is:
+		* 1) Environment variable
+		* 2) Dynamic link library path of the host library
+		* 3) Default compile time path
+		*/
+		if (dynlink_library_path(name, path, &length) == 0)
+		{
+			default_library_path = path;
+		}
+		else
+		{
+			length = strlen(default_library_path);
+		}
+
+		manager->library_path = environment_variable_path_create(environment_library_path, default_library_path, length + 1, NULL);
 
 		if (manager->library_path == NULL)
 		{

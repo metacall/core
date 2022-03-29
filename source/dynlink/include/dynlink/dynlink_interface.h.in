@@ -58,11 +58,10 @@ extern "C" {
 typedef dynlink_symbol_addr *dynlink_symbol_addr_ptr;
 
 typedef const char *(*dynlink_impl_interface_extension)(void);
-typedef void (*dynlink_impl_interface_get_name)(dynlink, dynlink_name_impl, size_t);
+typedef void (*dynlink_impl_interface_get_name)(dynlink_name, dynlink_name_impl, size_t);
 typedef dynlink_impl (*dynlink_impl_interface_load)(dynlink);
 typedef int (*dynlink_impl_interface_symbol)(dynlink, dynlink_impl, dynlink_symbol_name, dynlink_symbol_addr_ptr);
 typedef int (*dynlink_impl_interface_unload)(dynlink, dynlink_impl);
-typedef char *(*dynlink_impl_interface_lib_path)(dynlink_name, int (*)(dynlink_path, dynlink_name));
 
 struct dynlink_impl_interface_type
 {
@@ -71,7 +70,6 @@ struct dynlink_impl_interface_type
 	dynlink_impl_interface_load load;
 	dynlink_impl_interface_symbol symbol;
 	dynlink_impl_interface_unload unload;
-	dynlink_impl_interface_lib_path lib_path;
 };
 
 typedef dynlink_impl_interface (*dynlink_impl_interface_singleton)(void);

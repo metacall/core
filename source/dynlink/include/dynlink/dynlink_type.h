@@ -25,6 +25,8 @@
 
 #include <dynlink/dynlink_api.h>
 
+#include <portability/portability_library_path.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -35,10 +37,11 @@ struct dynlink_type;
 
 /* -- Type definitions -- */
 
-typedef struct dynlink_type *dynlink;	 /**< Dynamically linked shared object handle */
-typedef const char *dynlink_path;		 /**< Dynamically linked shared object path */
-typedef const char *dynlink_name;		 /**< Dynamically linked shared object name */
-typedef const char *dynlink_symbol_name; /**< Dynamically linked shared object symbol name */
+typedef struct dynlink_type *dynlink;						   /**< Dynamically linked shared object handle */
+typedef const char *dynlink_path;							   /**< Dynamically linked shared object path */
+typedef const char *dynlink_name;							   /**< Dynamically linked shared object name */
+typedef const char *dynlink_symbol_name;					   /**< Dynamically linked shared object symbol name */
+typedef portability_library_path_str dynlink_library_path_str; /**< Dynamically linked shared object symbol name */
 
 #ifdef __cplusplus
 }

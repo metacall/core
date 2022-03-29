@@ -1,5 +1,5 @@
-# Check if detours are enabled
-if(NOT OPTION_FORK_SAFE OR NOT OPTION_BUILD_DETOURS OR NOT OPTION_BUILD_DETOURS_FUNCHOOK)
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_MOCK)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target detour-test)
+set(target metacall-library-path-without-env-vars-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/detour_test.cpp
+	${source_path}/metacall_library_path_without_env_vars_test.cpp
 )
 
 # Group source files
@@ -85,18 +85,7 @@ target_link_libraries(${target}
 
 	GTest
 
-	${META_PROJECT_NAME}::version
-	${META_PROJECT_NAME}::preprocessor
-	${META_PROJECT_NAME}::environment
-	${META_PROJECT_NAME}::format
-	${META_PROJECT_NAME}::threading
-	${META_PROJECT_NAME}::log
-	${META_PROJECT_NAME}::memory
-	${META_PROJECT_NAME}::portability
-	${META_PROJECT_NAME}::adt
-	${META_PROJECT_NAME}::dynlink
-	${META_PROJECT_NAME}::plugin
-	${META_PROJECT_NAME}::detour
+	${META_PROJECT_NAME}::metacall
 )
 
 #
@@ -135,16 +124,17 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+add_dependencies(${target}
+	mock_loader
+)
+
+#
 # Define test properties
 #
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
-)
-
-include(TestEnvironmentVariables)
-
-test_environment_variables(${target}
-	""
-	${TESTS_ENVIRONMENT_VARIABLES}
 )

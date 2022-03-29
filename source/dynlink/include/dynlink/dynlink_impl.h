@@ -54,13 +54,16 @@ DYNLINK_API const char *dynlink_impl_extension(void);
 *  @brief
 *    Consturct the file name of dynamically linked shared object implementation
 *
-*  @param[in] handle
-*    Handle of dynamically linked shared object
+*  @param[in] name
+*    Name of dynamically linked shared object
 *
 *  @param[out] name_impl
 *    Pointer to the dynamically linked shared object handle
+*
+*  @param[in] size
+*    Size of string @name_impl
 */
-DYNLINK_API void dynlink_impl_get_name(dynlink handle, dynlink_name_impl name_impl, size_t size);
+DYNLINK_API void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_t size);
 
 /**
 *  @brief
@@ -106,30 +109,6 @@ DYNLINK_API int dynlink_impl_symbol(dynlink handle, dynlink_impl impl, dynlink_s
 *    Pointer to the dynamically linked shared object implementation
 */
 DYNLINK_API void dynlink_impl_unload(dynlink handle, dynlink_impl impl);
-
-/**
-*  @brief
-*    Returns the path to a library loaded in the process itself
-*
-*  @param[in] name
-*    Name of the library that will be searched for the path
-*
-*  @return
-*    Returns a reference to a string that must be freed or NULL if no support or if the library could not be found
-*/
-DYNLINK_API char *dynlink_impl_lib_path(dynlink_name name);
-
-/**
-*  @brief
-*    Returns the directory of the file from its absolute path
-*
-*  @param[in] metacall_lib_path
-*    Absolute path of the metacall dynamic library
-*
-*  @return
-*    Returns a reference to a string that holds the directory path of the library pointed by the path
-*/
-DYNLINK_API char *dynlink_impl_lib_dir_path(char *metacall_lib_path);
 
 #ifdef __cplusplus
 }

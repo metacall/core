@@ -20,37 +20,9 @@
 
 #include <gtest/gtest.h>
 
-#include <metacall/metacall.h>
-
-#include <dynlink/dynlink.h>
-
-class metacall_dynlink_path_test : public testing::Test
+int main(int argc, char *argv[])
 {
-public:
-};
+	::testing::InitGoogleTest(&argc, argv);
 
-TEST_F(metacall_dynlink_path_test, DefaultConstructor)
-{
-	metacall_print_info();
-
-	ASSERT_EQ((int)0, (int)metacall_initialize());
-
-	dynlink_library_path_str path;
-
-	const char name[] = "metacall"
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-						"d"
-#endif
-		;
-
-	size_t length = 0;
-
-	ASSERT_EQ((int)0, (int)dynlink_library_path(name, path, &length));
-
-	printf("%s == %s\n", path, METACALL_LIBRARY_PATH);
-	fflush(stdout);
-
-	ASSERT_EQ((int)0, (int)portability_path_compare(path, METACALL_LIBRARY_PATH));
-
-	EXPECT_EQ((int)0, (int)metacall_destroy());
+	return RUN_ALL_TESTS();
 }

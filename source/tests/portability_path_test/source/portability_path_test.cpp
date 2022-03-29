@@ -637,3 +637,51 @@ TEST_F(portability_path_test, portability_path_test_canonical_absolute_end_many_
 	EXPECT_EQ((size_t)size, (size_t)sizeof(result));
 	EXPECT_EQ((char)'\0', (char)result[size - 1]);
 }
+
+TEST_F(portability_path_test, portability_path_test_compare_root_equal)
+{
+	static const char left[] = "/";
+	static const char right[] = "/";
+
+	EXPECT_EQ((int)0, (int)portability_path_compare(left, right));
+}
+
+TEST_F(portability_path_test, portability_path_test_compare_equal)
+{
+	static const char left[] = "/a/b/c";
+	static const char right[] = "/a/b/c";
+
+	EXPECT_EQ((int)0, (int)portability_path_compare(left, right));
+}
+
+TEST_F(portability_path_test, portability_path_test_compare_equal_trailing_slash_inverted)
+{
+	static const char left[] = "/a/b/c/";
+	static const char right[] = "/a/b/c";
+
+	EXPECT_EQ((int)0, (int)portability_path_compare(left, right));
+}
+
+TEST_F(portability_path_test, portability_path_test_compare_equal_trailing_slash)
+{
+	static const char left[] = "/a/b/c";
+	static const char right[] = "/a/b/c/";
+
+	EXPECT_EQ((int)0, (int)portability_path_compare(left, right));
+}
+
+TEST_F(portability_path_test, portability_path_test_compare_root_empty)
+{
+	static const char left[] = "/";
+	static const char right[] = "";
+
+	EXPECT_EQ((int)1, (int)portability_path_compare(left, right));
+}
+
+TEST_F(portability_path_test, portability_path_test_compare_root_file)
+{
+	static const char left[] = "/a";
+	static const char right[] = "/";
+
+	EXPECT_EQ((int)1, (int)portability_path_compare(left, right));
+}

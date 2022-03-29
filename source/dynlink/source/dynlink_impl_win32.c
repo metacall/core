@@ -30,8 +30,6 @@
 
 #include <windows.h>
 
-#include <psapi.h>
-
 /* -- Methods -- */
 
 const char *dynlink_impl_interface_extension_win32(void)
@@ -41,18 +39,9 @@ const char *dynlink_impl_interface_extension_win32(void)
 	return extension_win32;
 }
 
-static void dynlink_impl_interface_get_name_str_win32(dynlink_name name, dynlink_name_impl name_impl, size_t size)
+void dynlink_impl_interface_get_name_win32(dynlink_name name, dynlink_name_impl name_impl, size_t size)
 {
-	strncat(name_impl, name, size);
-
-	strncat(name_impl, ".", size - 1);
-
-	strncat(name_impl, dynlink_impl_extension(), size - 1);
-}
-
-void dynlink_impl_interface_get_name_win32(dynlink handle, dynlink_name_impl name_impl, size_t size)
-{
-	strncpy(name_impl, dynlink_get_name(handle), size);
+	strncpy(name_impl, name, size);
 
 	strncat(name_impl, ".", size - 1);
 
@@ -99,46 +88,6 @@ int dynlink_impl_interface_unload_win32(dynlink handle, dynlink_impl impl)
 	return (FreeLibrary(impl) == FALSE);
 }
 
-char *dynlink_impl_interface_lib_path_win32(dynlink_name name, int (*comparator)(dynlink_path, dynlink_name))
-{
-	/* TODO: Review this */
-	dynlink_name_impl metacall_lib_name = { 0 };
-	dynlink_impl_interface_get_name_str_win32(name, metacall_lib_name, DYNLINK_NAME_IMPL_SIZE);
-	HMODULE handle_modules[1024];
-	HANDLE handle_process;
-	DWORD cb_needed;
-	unsigned int i;
-	handle_process = GetCurrentProcess();
-	char *metacall_lib_path = NULL;
-	int found_lib_path = 0;
-	if (EnumProcessModules(handle_process, handle_modules, sizeof(handle_modules), &cb_needed))
-	{
-		for (i = 0; i < (cb_needed / sizeof(HMODULE)); i++)
-		{
-			/* TODO: Review this */
-			TCHAR lib_path[MAX_PATH];
-
-			/* Get the full path to the module's file */
-			if (GetModuleFileNameEx(handle_process, handle_modules[i], lib_path,
-					sizeof(lib_path) / sizeof(TCHAR)))
-			{
-				if (comparator(lib_path, metacall_lib_name) == 0)
-				{
-					found_lib_path = 1;
-					metacall_lib_path = dynlink_impl_lib_dir_path(lib_path);
-					break;
-				}
-			}
-		}
-	}
-	if (!found_lib_path)
-	{
-		free(metacall_lib_path);
-		return NULL;
-	}
-	return metacall_lib_path;
-}
-
 dynlink_impl_interface dynlink_impl_interface_singleton_win32(void)
 {
 	static struct dynlink_impl_interface_type impl_interface_win32 = {
@@ -147,7 +96,6 @@ dynlink_impl_interface dynlink_impl_interface_singleton_win32(void)
 		&dynlink_impl_interface_load_win32,
 		&dynlink_impl_interface_symbol_win32,
 		&dynlink_impl_interface_unload_win32,
-		&dynlink_impl_interface_lib_path_win32
 	};
 
 	return &impl_interface_win32;

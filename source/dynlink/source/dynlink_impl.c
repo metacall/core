@@ -35,13 +35,13 @@ const char *dynlink_impl_extension(void)
 	return singleton()->extension();
 }
 
-void dynlink_impl_get_name(dynlink handle, dynlink_name_impl name_impl, size_t size)
+void dynlink_impl_get_name(dynlink_name name, dynlink_name_impl name_impl, size_t size)
 {
-	if (name_impl != NULL && size > 1)
+	if (name != NULL && name_impl != NULL && size > 1)
 	{
 		dynlink_impl_interface_singleton singleton = dynlink_interface();
 
-		singleton()->get_name(handle, name_impl, size);
+		singleton()->get_name(name, name_impl, size);
 	}
 }
 
@@ -72,39 +72,4 @@ void dynlink_impl_unload(dynlink handle, dynlink_impl impl)
 
 		singleton()->unload(handle, impl);
 	}
-}
-
-static int dynlink_impl_lib_path_ends_with(dynlink_path path, dynlink_name name)
-{
-	if (path == NULL || name == NULL)
-	{
-		return 1;
-	}
-
-	size_t path_length = strlen(path);
-	size_t name_length = strlen(name);
-
-	return !(name_length <= path_length && strncmp(path + path_length - name_length, name, name_length) == 0);
-}
-
-char *dynlink_impl_lib_path(dynlink_name name)
-{
-	if (name != NULL)
-	{
-		dynlink_impl_interface_singleton singleton = dynlink_interface();
-
-		return singleton()->lib_path(name, &dynlink_impl_lib_path_ends_with);
-	}
-
-	return NULL;
-}
-
-char *dynlink_impl_lib_dir_path(char *metacall_lib_path)
-{
-	/* TODO: Review this */
-	size_t metacall_lib_path_size = strlen(metacall_lib_path);
-	char *metacall_lib_dir_path = malloc(sizeof(char) * (metacall_lib_path_size + 1));
-	size_t metacall_lib_dir_path_size = portability_path_get_directory(metacall_lib_path, metacall_lib_path_size, metacall_lib_dir_path, metacall_lib_path_size);
-	metacall_lib_dir_path[metacall_lib_dir_path_size - 2] = '\0';
-	return metacall_lib_dir_path;
 }

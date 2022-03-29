@@ -55,7 +55,7 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 		{
 			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE - 1);
 
-			dynlink_impl_get_name(handle, handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
+			dynlink_impl_get_name(dynlink_get_name(handle), handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
 
 			if (path != NULL)
 			{
@@ -132,9 +132,27 @@ void dynlink_unload(dynlink handle)
 	}
 }
 
-char *dynlink_lib_path(dynlink_name name)
+int dynlink_library_path(dynlink_name name, dynlink_library_path_str path, size_t *length)
 {
-	return dynlink_impl_lib_path(name);
+	dynlink_name_impl name_impl;
+
+	dynlink_impl_get_name(name, name_impl, DYNLINK_NAME_IMPL_SIZE);
+
+	if (portability_library_path(name_impl, path, length) != 0)
+	{
+		return 1;
+	}
+
+	if (length != NULL)
+	{
+		*length = portability_path_get_directory_inplace(path, (*length) + 1) - 1;
+	}
+	else
+	{
+		(void)portability_path_get_directory_inplace(path, strnlen(path, sizeof(dynlink_library_path_str) / sizeof(char)) + 1);
+	}
+
+	return 0;
 }
 
 const char *dynlink_print_info(void)
