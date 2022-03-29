@@ -138,3 +138,10 @@ add_dependencies(${target}
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
+
+include(TestEnvironmentVariables)
+
+test_environment_variables(${target}
+	""
+	${TESTS_CONFIGURATION_ENVIRONMENT_VARIABLES}
+)

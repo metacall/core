@@ -125,7 +125,7 @@ int portability_library_path(const char name[], portability_library_path_str pat
 
 		for (iterator = 0; iterator < (cb_needed / sizeof(HMODULE)); ++iterator)
 		{
-			if (GetModuleFileNameEx(handle_process, handle_modules[i], path, PORTABILITY_LIBRARY_PATH_SIZE))
+			if (GetModuleFileNameEx(handle_process, handle_modules[iterator], path, PORTABILITY_LIBRARY_PATH_SIZE))
 			{
 				if (portability_library_path_ends_with(path, name) == 0)
 				{
