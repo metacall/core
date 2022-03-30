@@ -137,6 +137,32 @@ sub_push(){
 	docker push $IMAGE_NAME:latest
 }
 
+# Version MetaCall Docker Compose
+sub_version(){
+	if [ -z "$IMAGE_NAME" ]; then
+		echo "Error: IMAGE_NAME variable not defined"
+		exit 1
+	fi
+
+	VERSION=$(tail -n 1 VERSION | tr -d '\n')
+
+	# Push deps image
+	docker tag metacall/core:deps $IMAGE_NAME:deps-${VERSION}
+	docker push $IMAGE_NAME:deps-${VERSION}
+
+	# Push dev image
+	docker tag metacall/core:dev $IMAGE_NAME:dev-${VERSION}
+	docker push $IMAGE_NAME:dev-${VERSION}
+
+	# Push runtime image
+	docker tag metacall/core:runtime $IMAGE_NAME:runtime-${VERSION}
+	docker push $IMAGE_NAME:runtime-${VERSION}
+
+	# Push cli image
+	docker tag metacall/core:cli $IMAGE_NAME:cli-${VERSION}
+	docker push $IMAGE_NAME:cli-${VERSION}
+}
+
 # Pack MetaCall Docker Compose
 sub_pack(){
 	if [ -z "$ARTIFACTS_PATH" ]; then
@@ -198,6 +224,9 @@ case "$1" in
 		;;
 	push)
 		sub_push
+		;;
+	version)
+		sub_version
 		;;
 	pack)
 		sub_pack

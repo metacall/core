@@ -4,15 +4,18 @@ on:
   # To enable manual triggering of this workflow
   workflow_dispatch:
 
-  # Trigger for pushes to master
+  # Trigger for pushes to master and tags
   push:
-    branches: [master]
+    branches:
+      - master
+    tags:
+      - "v*"
 
 env:
   IMAGE_NAME: index.docker.io/metacall/core
 
 jobs:
-  build-metacall:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the code
@@ -30,4 +33,15 @@ jobs:
         run: sh ./docker-compose.sh build
 
       - name: Push MetaCall Docker Image to DockerHub
-        run: sh ./docker-compose.sh push
+        run: |
+          if [[ "${{ github.ref == 'refs/heads/master' }}" = true ]]; then
+            sh ./docker-compose.sh push
+          elif [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
+            sh ./docker-compose.sh version
+          else
+            echo "Failed to push the docker images"
+            exit 1
+          fi
+
+      - name: Logout from DockerHub
+        run: docker logout
