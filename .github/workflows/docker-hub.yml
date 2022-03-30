@@ -1,4 +1,4 @@
-name: Test, Build and Push Docker Image
+name: Build and Push Docker Image
 
 on:
   # To enable manual triggering of this workflow
@@ -15,16 +15,13 @@ jobs:
   build-metacall:
     runs-on: ubuntu-latest
     steps:
-      # Checkout the code
-      - uses: actions/checkout@v2
+      - name: Checkout the code
+        uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
       - name: Login to DockerHub
-        uses: docker/login-action@v1
-        with:
-          username: ${{ secrets.DOCKER_HUB_USERNAME }}
-          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        run: docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" -p "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}"
 
       - name: Pull MetaCall Docker Images
         run: sh ./docker-compose.sh pull
@@ -34,8 +31,3 @@ jobs:
 
       - name: Push MetaCall Docker Image to DockerHub
         run: sh ./docker-compose.sh push
-
-      - name: Test MetaCall (Sanitizer)
-        run: sh ./docker-compose.sh test
-
-      # TODO: Upload artifacts or tag versions? https://github.com/metacall/core/blob/a95bcafe1bb4084f7156d3f3d1dbb8ee2bea6db6/.travis.yml#L57
