@@ -147,20 +147,24 @@ sub_version(){
 	VERSION=$(tail -n 1 VERSION | tr -d '\n')
 
 	# Push deps image
-	docker tag metacall/core:deps $IMAGE_NAME:deps-${VERSION}
-	docker push $IMAGE_NAME:deps-${VERSION}
+	docker tag metacall/core:deps $IMAGE_NAME:${VERSION}-deps
+	docker push $IMAGE_NAME:${VERSION}-deps
 
 	# Push dev image
-	docker tag metacall/core:dev $IMAGE_NAME:dev-${VERSION}
-	docker push $IMAGE_NAME:dev-${VERSION}
+	docker tag metacall/core:dev $IMAGE_NAME:${VERSION}-dev
+	docker push $IMAGE_NAME:${VERSION}-dev
 
 	# Push runtime image
-	docker tag metacall/core:runtime $IMAGE_NAME:runtime-${VERSION}
-	docker push $IMAGE_NAME:runtime-${VERSION}
+	docker tag metacall/core:runtime $IMAGE_NAME:${VERSION}-runtime
+	docker push $IMAGE_NAME:${VERSION}-runtime
 
 	# Push cli image
-	docker tag metacall/core:cli $IMAGE_NAME:cli-${VERSION}
-	docker push $IMAGE_NAME:cli-${VERSION}
+	docker tag metacall/core:cli $IMAGE_NAME:${VERSION}-cli
+	docker push $IMAGE_NAME:${VERSION}-cli
+
+	# Push cli image as version
+	docker tag metacall/core:cli $IMAGE_NAME:${VERSION}
+	docker push $IMAGE_NAME:${VERSION}
 }
 
 # Pack MetaCall Docker Compose
