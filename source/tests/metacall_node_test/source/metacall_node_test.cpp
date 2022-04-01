@@ -68,6 +68,47 @@ TEST_F(metacall_node_test, DefaultConstructor)
 		EXPECT_EQ((int)0, (int)metacall_load_from_file("node", node_execution_path_scripts, sizeof(node_execution_path_scripts) / sizeof(node_execution_path_scripts[0]), NULL));
 
 		EXPECT_NE((void *)NULL, (void *)metacall_function("inline"));
+
+		// Test load from memory + map type
+		const char buffer[] = {
+			"module.exports = { test_map: (m) => m.a + m.b };"
+		};
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+
+		EXPECT_NE((void *)NULL, (void *)metacall_function("test_map"));
+
+		void *args[] = {
+			metacall_value_create_map(NULL, 2)
+		};
+
+		void **map_value = metacall_value_to_map(args[0]);
+
+		map_value[0] = metacall_value_create_array(NULL, 2);
+
+		void **tupla0 = metacall_value_to_array(map_value[0]);
+
+		static const char key0[] = "a";
+
+		tupla0[0] = metacall_value_create_string(key0, sizeof(key0) - 1);
+		tupla0[1] = metacall_value_create_double(5.0);
+
+		map_value[1] = metacall_value_create_array(NULL, 2);
+
+		void **tupla1 = metacall_value_to_array(map_value[1]);
+
+		static const char key1[] = "b";
+
+		tupla1[0] = metacall_value_create_string(key1, sizeof(key1) - 1);
+		tupla1[1] = metacall_value_create_double(7.0);
+
+		ret = metacallv_s("test_map", args, 1);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+		EXPECT_EQ((double)12.0, (double)metacall_value_to_double(ret));
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
