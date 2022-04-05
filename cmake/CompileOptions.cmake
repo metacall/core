@@ -3,10 +3,11 @@
 #
 
 option(OPTION_BUILD_SANITIZER			"Build with sanitizer compiler options."			OFF)
+option(OPTION_BUILD_MEMORY_SANITIZER	"Build with memory sanitizer compiler options."		OFF)
 option(OPTION_BUILD_THREAD_SANITIZER	"Build with thread sanitizer compiler options."		OFF)
 
-if(OPTION_BUILD_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER)
-	message(FATAL_ERROR "OPTION_BUILD_SANITIZER and OPTION_BUILD_THREAD_SANITIZER are mutually exclusive, choose one of them")
+if((OPTION_BUILD_SANITIZER AND OPTION_BUILD_MEMORY_SANITIZER) OR (OPTION_BUILD_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER) OR (OPTION_BUILD_MEMORY_SANITIZER AND OPTION_BUILD_THREAD_SANITIZER))
+	message(FATAL_ERROR "OPTION_BUILD_SANITIZER and OPTION_BUILD_MEMORY_SANITIZER and OPTION_BUILD_THREAD_SANITIZER are mutually exclusive, choose one of them")
 endif()
 
 #
@@ -225,11 +226,15 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 		add_compile_options(-fsanitize=address)
 		add_compile_options(-fsanitize=leak)
 		add_compile_options(-fsanitize-address-use-after-scope)
-
-		if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
-			add_compile_options(-fsanitize=memory)
-			add_compile_options(-fsanitize=memory-track-origins)
-		endif()
+	elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(-fuse-ld=gold)
+		add_compile_options(-fno-omit-frame-pointer)
+		add_compile_options(-fno-optimize-sibling-calls)
+		add_compile_options(-fsanitize=undefined)
+		add_compile_options(-fsanitize-address-use-after-scope)
+		add_compile_options(-fsanitize=memory)
+		add_compile_options(-fsanitize=memory-track-origins)
+		add_compile_options(-fsanitize-memory-use-after-dtor)
 	endif()
 endif()
 
