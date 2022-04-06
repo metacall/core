@@ -1,6 +1,6 @@
 [package]
 name = "metacall"
-version = "0.2.1"
+version = "0.3.0"
 repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
 authors = ["Vicente Eduardo Ferrer Garcia <vic798@gmail.com>", "Swarnim Arun <swarnimarun11@gmail.com>"]
 edition = "2021"
@@ -15,5 +15,4 @@ path = "src/lib.rs"
 edition = "2021"
 
 [dependencies]
-abi = { path = "./abi" }
-inline = { path = "./inline" }
+metacall-inline = { path = "./inline", version = "0.3.0" }
