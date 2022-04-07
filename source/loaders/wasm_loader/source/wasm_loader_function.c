@@ -165,29 +165,39 @@ static function_return function_wasm_interface_invoke(function func, function_im
 		return NULL;
 	}
 
-	wasm_val_t wasm_args[args_size];
-	for (size_t idx = 0; idx < args_size; idx++)
+	if (args_size == 0)
 	{
-		type param_type = signature_get_type(sig, idx);
-		type_id param_type_id = type_index(param_type);
-		type_id arg_type_id = value_type_id(args[idx]);
+		const wasm_val_vec_t args_vec = WASM_EMPTY_VEC;
 
-		if (param_type_id != arg_type_id)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid type for argument %d (expected %d, was %d)", idx, param_type_id, arg_type_id);
-			return NULL;
-		}
-
-		if (reflect_to_wasm_type(args[idx], &wasm_args[idx]) != 0)
-		{
-			log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Unsupported type for argument %d", idx);
-			return NULL;
-		}
+		return call_func(sig, wasm_func->func, args_vec);
 	}
+	else
+	{
+		wasm_val_t wasm_args[args_size];
 
-	const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+		for (size_t idx = 0; idx < args_size; idx++)
+		{
+			type param_type = signature_get_type(sig, idx);
+			type_id param_type_id = type_index(param_type);
+			type_id arg_type_id = value_type_id(args[idx]);
 
-	return call_func(sig, wasm_func->func, args_vec);
+			if (param_type_id != arg_type_id)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid type for argument %d (expected %d, was %d)", idx, param_type_id, arg_type_id);
+				return NULL;
+			}
+
+			if (reflect_to_wasm_type(args[idx], &wasm_args[idx]) != 0)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Unsupported type for argument %d", idx);
+				return NULL;
+			}
+		}
+
+		const wasm_val_vec_t args_vec = WASM_ARRAY_VEC(wasm_args);
+
+		return call_func(sig, wasm_func->func, args_vec);
+	}
 }
 
 static void function_wasm_interface_destroy(function func, function_impl impl)

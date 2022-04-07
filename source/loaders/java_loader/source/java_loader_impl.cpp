@@ -33,7 +33,6 @@
 
 #include <algorithm>
 #include <cstring>
-#include <iostream>
 #include <string>
 
 #include <jni.h>
@@ -245,38 +244,30 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 		if (id == TYPE_BOOL)
 		{
 			constructorArgs[i].z = value_to_bool(args[i]);
-			std::string ss = constructorArgs[i].z ? "1" : "0";
-			std::cout << "BOOL = " << ss.c_str() << std::endl;
 		}
 		else if (id == TYPE_CHAR)
 		{
 			constructorArgs[i].c = value_to_char(args[i]);
-			std::cout << "CHAR = " << constructorArgs[i].c << std::endl;
 		}
 		else if (id == TYPE_SHORT)
 		{
 			constructorArgs[i].s = value_to_short(args[i]);
-			std::cout << "SHORT = " << constructorArgs[i].s << std::endl;
 		}
 		else if (id == TYPE_INT)
 		{
 			constructorArgs[i].i = value_to_int(args[i]);
-			std::cout << "INT = " << constructorArgs[i].i << std::endl;
 		}
 		else if (id == TYPE_LONG)
 		{
 			constructorArgs[i].j = value_to_long(args[i]);
-			std::cout << "LONG = " << constructorArgs[i].j << std::endl;
 		}
 		else if (id == TYPE_FLOAT)
 		{
 			constructorArgs[i].f = value_to_float(args[i]);
-			std::cout << "FLOAT = " << constructorArgs[i].f << std::endl;
 		}
 		else if (id == TYPE_DOUBLE)
 		{
 			constructorArgs[i].d = value_to_double(args[i]);
-			std::cout << "DOUBLE = " << constructorArgs[i].d << std::endl;
 		}
 		else if (id == TYPE_STRING)
 		{
@@ -787,7 +778,6 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
 						// TODO: This should be more generic and include other types of objects, not only string
-						std::cout << "STRING ARR SET" << std::endl;
 						jobjectArray setArr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
 						for (size_t i = 0; i < array_size; i++)
@@ -813,7 +803,6 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 value java_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
 	(void)obj;
-	std::cout << "OBJ invoke" << std::endl;
 
 	loader_impl_java_object java_obj = static_cast<loader_impl_java_object>(impl);
 	loader_impl_java java_impl = java_obj->java_impl;
@@ -1418,7 +1407,6 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
 						// TODO: Implement this for any kind of object, make it recursive
-						std::cout << "STRING ARR SET" << std::endl;
 						jobjectArray arr = java_impl->env->NewObjectArray((jsize)array_size, java_impl->env->FindClass("java/lang/String"), java_impl->env->NewStringUTF(""));
 
 						for (size_t i = 0; i < array_size; i++)
@@ -1444,7 +1432,6 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 value java_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
 {
 	(void)cls;
-	std::cout << "invoke" << std::endl;
 
 	loader_impl_java_class java_cls = static_cast<loader_impl_java_class>(impl);
 	loader_impl_java java_impl = java_cls->java_impl;
@@ -2015,7 +2002,6 @@ int java_loader_impl_discover(loader_impl impl, loader_handle handle, context ct
 
 int java_loader_impl_destroy(loader_impl impl)
 {
-	std::cout << "Destroy" << std::endl;
 	loader_impl_java java_impl = static_cast<loader_impl_java>(loader_impl_get(impl));
 
 	if (java_impl != NULL)

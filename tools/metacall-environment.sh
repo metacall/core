@@ -45,6 +45,8 @@ INSTALL_TYPESCRIPT=0
 INSTALL_FILE=0
 INSTALL_RPC=0
 INSTALL_WASM=0
+INSTALL_JAVA=0
+INSTALL_C=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
@@ -58,14 +60,14 @@ sub_apt(){
 	echo "configure apt"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends build-essential git cmake libgtest-dev wget apt-utils apt-transport-https gnupg dirmngr ca-certificates
 }
 
 # Swig
 sub_swig(){
 	echo "configure swig"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install g++ libpcre3-dev tar
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends g++ libpcre3-dev tar
 
 	wget http://prdownloads.sourceforge.net/swig/swig-4.0.1.tar.gz
 
@@ -87,7 +89,7 @@ sub_swig(){
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 python3-dev python3-pip
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 python3-dev python3-pip
 	$SUDO_CMD pip3 install requests
 	$SUDO_CMD pip3 install setuptools
 	$SUDO_CMD pip3 install wheel
@@ -105,7 +107,7 @@ sub_ruby(){
 	cd $ROOT_DIR
 
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install ruby2.7 ruby2.7-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby2.7 ruby2.7-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
@@ -132,7 +134,7 @@ sub_rapidjson(){
 sub_funchook(){
 	echo "configure funchook"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install cmake
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends cmake
 }
 
 # NetCore
@@ -202,14 +204,14 @@ sub_netcore5(){
 sub_v8repo(){
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install software-properties-common
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends software-properties-common
 
 	# V8 5.1
 	if [ $INSTALL_V8REPO51 = 1 ]; then
 		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv851.list"
 		$SUDO_CMD sh -c "echo \"deb http://archive.ubuntu.com/ubuntu trusty main\" > /etc/apt/sources.list.d/libicu52.list"
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-unauthenticated install libicu52 libv8-5.1.117 libv8-5.1-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --allow-unauthenticated libicu52 libv8-5.1.117 libv8-5.1-dev
 	fi
 
 	# V8 5.4
@@ -218,7 +220,7 @@ sub_v8repo(){
 		wget http://launchpadlibrarian.net/234847357/libicu55_55.1-7_amd64.deb
 		$SUDO_CMD dpkg -i libicu55_55.1-7_amd64.deb
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --allow-unauthenticated install libicu55 libv8-5.4-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --allow-unauthenticated libicu55 libv8-5.4-dev
 		$SUDO_CMD rm libicu55_55.1-7_amd64.deb
 	fi
 
@@ -226,21 +228,21 @@ sub_v8repo(){
 	if [ $INSTALL_V8REPO52 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.2
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.2-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libicu55 libv8-5.2-dev
 	fi
 
 	# V8 5.7
 	if [ $INSTALL_V8REPO57 = 1 ]; then
 		$SUDO_CMD add-apt-repository -y ppa:pinepain/libv8-5.7
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu55 libv8-5.7-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libicu55 libv8-5.7-dev
 	fi
 
 	# V8 5.8
 	if [ $INSTALL_V8REPO58 = 1 ]; then
 		$SUDO_CMD sh -c "echo \"deb http://ppa.launchpad.net/pinepain/libv8-archived/ubuntu trusty main\" > /etc/apt/sources.list.d/libv8-archived.list"
 		$SUDO_CMD apt-get update
-		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libicu57 libv8-5.8.283 libv8-5.8-dev
+		$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends libicu57 libv8-5.8.283 libv8-5.8-dev
 	fi
 }
 
@@ -248,7 +250,7 @@ sub_v8repo(){
 sub_v8(){
 	echo "configure v8"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python
 	git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
 	export PATH=`pwd`/depot_tools:"$PATH"
 
@@ -271,7 +273,7 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install python3 g++ make nodejs curl
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs curl
 
 	# Install and update npm and node-gyp
 	curl -L https://npmjs.org/install.sh | $SUDO_CMD sh
@@ -299,7 +301,7 @@ sub_rpc(){
 	cd $ROOT_DIR
 
 	# Install development files and documentation for libcurl (OpenSSL flavour)
-	$SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends install libcurl4-openssl-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libcurl4-openssl-dev
 }
 
 # WebAssembly
@@ -309,7 +311,23 @@ sub_wasm(){
 	# TODO
 
 	# $SUDO_CMD apt-get update
-	# $SUDO_CMD apt-get $APT_CACHE_CMD -y --no-install-recommends --fix-broken install lib32gcc-6-dev g++-multilib
+	# $SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends --fix-broken lib32gcc-6-dev g++-multilib
+}
+
+# Java
+sub_java(){
+	echo "configure java"
+
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends default-jre default-jdk
+}
+
+# C
+sub_c(){
+	echo "configure c"
+
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libffi-dev libclang-dev
 }
 
 # MetaCall
@@ -421,6 +439,12 @@ sub_install(){
 	if [ $INSTALL_WASM = 1 ]; then
 		sub_wasm
 	fi
+	if [ $INSTALL_JAVA = 1 ]; then
+		sub_java
+	fi
+	if [ $INSTALL_C = 1 ]; then
+		sub_c
+	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
 	fi
@@ -528,6 +552,14 @@ sub_options(){
 			echo "wasm selected"
 			INSTALL_WASM=1
 		fi
+		if [ "$var" = 'java' ]; then
+			echo "java selected"
+			INSTALL_JAVA=1
+		fi
+		if [ "$var" = 'c' ]; then
+			echo "c selected"
+			INSTALL_C=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			INSTALL_SWIG=1
@@ -575,6 +607,8 @@ sub_help() {
 	echo "	file"
 	echo "	rpc"
 	echo "	wasm"
+	echo "	java"
+	echo "	c"
 	echo "	swig"
 	echo "	metacall"
 	echo "	pack"

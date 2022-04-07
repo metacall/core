@@ -34,6 +34,9 @@ INSTALL_NODEJS=0
 INSTALL_TYPESCRIPT=0
 INSTALL_FILE=0
 INSTALL_RPC=0
+INSTALL_WASM=0
+INSTALL_JAVA=0
+INSTALL_C=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
@@ -152,6 +155,27 @@ sub_rpc(){
 	sub_apt_install_hold libcurl4
 }
 
+# WebAssembly
+sub_rpc(){
+	echo "configure wasm"
+
+	# TODO
+}
+
+# Java
+sub_rpc(){
+	echo "configure java"
+
+	sub_apt_install_hold default-jre
+}
+
+# C
+sub_c(){
+	echo "configure c"
+
+	sub_apt_install_hold libffi libclang
+}
+
 # Ports
 sub_ports(){
 	echo "configure ports"
@@ -196,6 +220,15 @@ sub_install(){
 	fi
 	if [ $INSTALL_RPC = 1 ]; then
 		sub_rpc
+	fi
+	if [ $INSTALL_WASM = 1 ]; then
+		sub_wasm
+	fi
+	if [ $INSTALL_JAVA = 1 ]; then
+		sub_java
+	fi
+	if [ $INSTALL_C = 1 ]; then
+		sub_c
 	fi
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
@@ -267,6 +300,18 @@ sub_options(){
 			echo "rpc selected"
 			INSTALL_RPC=1
 		fi
+		if [ "$var" = 'wasm' ]; then
+			echo "wasm selected"
+			INSTALL_WASM=1
+		fi
+		if [ "$var" = 'java' ]; then
+			echo "java selected"
+			INSTALL_JAVA=1
+		fi
+		if [ "$var" = 'c' ]; then
+			echo "c selected"
+			INSTALL_C=1
+		fi
 		if [ "$var" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
@@ -293,6 +338,9 @@ sub_help() {
 	echo "	typescript"
 	echo "	file"
 	echo "	rpc"
+	echo "	wasm"
+	echo "	java"
+	echo "	c"
 	echo "	ports"
 	echo "	clean"
 	echo ""
