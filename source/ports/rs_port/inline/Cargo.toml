@@ -1,7 +1,10 @@
 [package]
 name = "metacall-inline"
-version = "0.3.0"
+version = "0.1.0"
+repository = "https://github.com/metacall/core/tree/develop/source/ports/rs_port"
 edition = "2021"
+license = "Apache-2.0"
+description = "Inline macros for metacall crate."
 
 [lib]
 proc_macro = true

@@ -15,4 +15,4 @@ path = "src/lib.rs"
 edition = "2021"
 
 [dependencies]
-metacall-inline = { path = "./inline", version = "0.3.0" }
+metacall-inline = { path = "./inline", version = "0.1.0" }

@@ -23,7 +23,7 @@
 
 # Publish
 cargo login $TOKEN
-cd inline 
-cargo publish 
+cd inline
+cargo publish
 cd ..
 cargo publish
