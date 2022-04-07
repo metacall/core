@@ -22,4 +22,8 @@
 # TODO: Automate for CD/CI
 
 # Publish
-cargo login $TOKEN && cargo publish
+cargo login $TOKEN
+cd inline 
+cargo publish 
+cd ..
+cargo publish

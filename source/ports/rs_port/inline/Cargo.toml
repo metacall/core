@@ -1,6 +1,6 @@
 [package]
-name = "inline"
-version = "0.1.0"
+name = "metacall-inline"
+version = "0.3.0"
 edition = "2021"
 
 [lib]
@@ -8,5 +8,4 @@ proc_macro = true
 
 [dependencies]
 proc-macro2 = { version = "1.0.36", features = ["span-locations"] }
-abi = { path = "../abi" }
 quote = "1.0.14"

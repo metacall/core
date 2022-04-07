@@ -1,4 +1,4 @@
-use metacall::inline::{py, node, rb, ts};
+use metacall::metacall_inline::{py, node, rb, ts};
 
 #[test]
 fn test_inline() {
