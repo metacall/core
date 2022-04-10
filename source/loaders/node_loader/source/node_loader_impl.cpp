@@ -2573,7 +2573,7 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 
 		node_loader_impl_exception(env, status);
 
-		status = napi_create_string_utf8(env, load_from_memory_safe->buffer, load_from_memory_safe->size - 1, &argv[1]);
+		status = napi_create_string_utf8(env, load_from_memory_safe->buffer, NAPI_AUTO_LENGTH /*load_from_memory_safe->size - 1*/, &argv[1]);
 
 		node_loader_impl_exception(env, status);
 
