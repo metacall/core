@@ -1624,7 +1624,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 
 	callback_state->resolve_callback = resolve_callback;
 	callback_state->reject_callback = reject_callback;
-	callback_state->impl = impl;
+	callback_state->impl = py_func->impl;
 	callback_state->context = context;
 	callback_state->coroutine = coroutine;
 
