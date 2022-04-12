@@ -658,7 +658,7 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 
 |    Build Option Prefix    | Build Option Suffix                                                   |
 | :-----------------------: | --------------------------------------------------------------------- |
-| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE`              |
+| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
 | **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
 | **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                               |
 | **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                            |
