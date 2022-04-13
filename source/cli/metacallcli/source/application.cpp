@@ -457,7 +457,7 @@ bool command_cb_load(application &app, tokenizer &t)
 	}
 
 	std::string loaders[] = {
-		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm"
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs"
 	};
 
 	// check if invalid loader tag
