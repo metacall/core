@@ -22,18 +22,16 @@
 
 #include <threading/threading_thread_id.h>
 
-#include <log/log.h>
-
 #include <stdlib.h>
 #include <string.h>
 
 struct exception_type
 {
-	char *message;
-	char *label;
-	int code;
-	char *stacktrace;
-	uint64_t id;
+	char *message;	  /* Description of the error */
+	char *label;	  /* Type of error */
+	int code;		  /* Numeric code of error */
+	char *stacktrace; /* Stack trace of the error */
+	uint64_t id;	  /* Thread id where the error was raised */
 };
 
 exception exception_create(const char *message, const char *label, int code, const char *stacktrace)
@@ -100,25 +98,17 @@ exception exception_create(const char *message, const char *label, int code, con
 	}
 
 	ex->code = code;
-
 	ex->id = thread_id_get_current();
 
 	return ex;
 
 stacktrace_bad_alloc:
-
 	free(ex->label);
-
 label_bad_alloc:
-
 	free(ex->message);
-
 message_bad_alloc:
-
 	free(ex);
-
 exception_bad_alloc:
-
 	return NULL;
 }
 
