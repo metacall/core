@@ -255,6 +255,28 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		json_v->SetString(str, length);
 	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		/* TODO: Improve exception serialization */
+		static const char str[] = "[Exception]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
+	else if (id == TYPE_THROWABLE)
+	{
+		/* TODO: Improve throwable serialization */
+		static const char str[] = "[Throwable]";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = size > 0 ? (rapidjson::SizeType)(size - 1) : 0;
+
+		json_v->SetString(str, length);
+	}
 	else if (id == TYPE_PTR)
 	{
 		std::ostringstream ostream;

@@ -18,39 +18,29 @@
  *
  */
 
-#ifndef REFLECT_EXCEPTION_H
-#define REFLECT_EXCEPTION_H 1
+#ifndef REFLECT_THROWABLE_H
+#define REFLECT_THROWABLE_H 1
 
 #include <reflect/reflect_api.h>
+
+#include <reflect/reflect_value.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-struct exception_type;
+struct throwable_type;
 
-typedef struct exception_type *exception;
+typedef struct throwable_type *throwable;
 
-REFLECT_API exception exception_create(const char *message, const char *label, int code, const char *stacktrace);
+REFLECT_API throwable throwable_create(value v);
 
-REFLECT_API int exception_increment_reference(exception ex);
+REFLECT_API value throwable_value(throwable th);
 
-REFLECT_API int exception_decrement_reference(exception ex);
-
-REFLECT_API const char *exception_message(exception ex);
-
-REFLECT_API const char *exception_label(exception ex);
-
-REFLECT_API int exception_code(exception ex);
-
-REFLECT_API const char *exception_stacktrace(exception ex);
-
-REFLECT_API void exception_stats_debug(void);
-
-REFLECT_API void exception_destroy(exception ex);
+REFLECT_API void throwable_destroy(throwable th);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* REFLECT_EXCEPTION_H */
+#endif /* REFLECT_THROWABLE_H */

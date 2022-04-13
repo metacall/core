@@ -121,6 +121,24 @@ value value_type_copy(value v)
 
 			return cpy;
 		}
+		else if (type_id_exception(id) == 0)
+		{
+			value cpy = value_copy(v);
+
+			if (cpy != NULL)
+			{
+				exception ex = value_to_exception(cpy);
+
+				exception_increment_reference(ex);
+			}
+
+			return cpy;
+		}
+		else if (type_id_throwable(id) == 0)
+		{
+			/* Just create a new throwable from the previous one, it will get flattened after creation */
+			return value_create_throwable(v);
+		}
 
 		if (type_id_invalid(id) != 0)
 		{
@@ -301,6 +319,23 @@ value value_create_object(object o)
 	return v;
 }
 
+value value_create_exception(exception ex)
+{
+	value v = value_type_create(&ex, sizeof(exception), TYPE_EXCEPTION);
+
+	if (v != NULL)
+	{
+		exception_increment_reference(ex);
+	}
+
+	return v;
+}
+
+value value_create_throwable(throwable th)
+{
+	return value_type_create(&th, sizeof(throwable), TYPE_THROWABLE);
+}
+
 boolean value_to_bool(value v)
 {
 	boolean b = 0;
@@ -426,6 +461,20 @@ object value_to_object(value v)
 	return (object)(*uint_object);
 }
 
+exception value_to_exception(value v)
+{
+	uintptr_t *uint_exception = value_data(v);
+
+	return (exception)(*uint_exception);
+}
+
+throwable value_to_throwable(value v)
+{
+	uintptr_t *uint_throwable = value_data(v);
+
+	return (throwable)(*uint_throwable);
+}
+
 value value_from_bool(value v, boolean b)
 {
 	return value_from(v, &b, sizeof(boolean));
@@ -549,6 +598,16 @@ value value_from_object(value v, object o)
 	return value_from(v, &o, sizeof(object));
 }
 
+value value_from_exception(value v, exception ex)
+{
+	return value_from(v, &ex, sizeof(exception));
+}
+
+value value_from_throwable(value v, throwable th)
+{
+	return value_from(v, &th, sizeof(throwable));
+}
+
 void value_type_destroy(value v)
 {
 	if (v != NULL)
@@ -644,6 +703,22 @@ void value_type_destroy(value v)
 			}
 
 			object_destroy(o);
+		}
+		else if (type_id_exception(id) == 0)
+		{
+			exception ex = value_to_exception(v);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy exception value <%p>", (void *)v);
+
+			exception_destroy(ex);
+		}
+		else if (type_id_throwable(id) == 0)
+		{
+			throwable th = value_to_throwable(v);
+
+			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy throwable value <%p> containing the value <%p>", (void *)v, (void *)throwable_value(th));
+
+			throwable_destroy(th);
 		}
 
 		if (type_id_invalid(id) != 0)

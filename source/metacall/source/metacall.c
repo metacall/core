@@ -2153,6 +2153,7 @@ int metacall_destroy(void)
 		function_stats_debug();
 		class_stats_debug();
 		object_stats_debug();
+		exception_stats_debug();
 
 		/* Unregister backtrace */
 		if (backtrace_destroy() != 0)

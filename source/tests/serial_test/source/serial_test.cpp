@@ -322,7 +322,9 @@ TEST_F(serial_test, DefaultConstructor)
 			NULL, /* TODO: Function */
 			"(null)",
 			NULL, /* TODO: Class */
-			NULL  /* TODO: Object */
+			NULL, /* TODO: Object */
+			NULL, /* TODO: Exception */
+			NULL  /* TODO: Throwable */
 		};
 
 		portability_static_assert((int)sizeof(value_names) / sizeof(value_names[0]) == (int)TYPE_SIZE,
@@ -399,8 +401,11 @@ TEST_F(serial_test, DefaultConstructor)
 			NULL,
 			/*
 			value_create_class(cls),
-			value_create_object(class_new(cls, NULL, NULL, 0))
+			value_create_object(class_new(cls, NULL, NULL, 0)),
 			*/
+			/* TODO: Implement exception properly */
+			NULL,
+			NULL
 		};
 
 		portability_static_assert((int)sizeof(value_array) / sizeof(value_array[0]) == (int)TYPE_SIZE,

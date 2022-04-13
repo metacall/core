@@ -46,7 +46,9 @@ static const enum metacall_value_id value_id_map[] = {
 	METACALL_FUNCTION,
 	METACALL_NULL,
 	METACALL_CLASS,
-	METACALL_OBJECT
+	METACALL_OBJECT,
+	METACALL_EXCEPTION,
+	METACALL_THROWABLE
 };
 
 /* -- Static Assertions -- */
@@ -71,6 +73,8 @@ portability_static_assert(((int)TYPE_BOOL == (int)METACALL_BOOL) &&
 							  ((int)TYPE_NULL == (int)METACALL_NULL) &&
 							  ((int)TYPE_CLASS == (int)METACALL_CLASS) &&
 							  ((int)TYPE_OBJECT == (int)METACALL_OBJECT) &&
+							  ((int)TYPE_EXCEPTION == (int)METACALL_EXCEPTION) &&
+							  ((int)TYPE_THROWABLE == (int)METACALL_THROWABLE) &&
 							  ((int)TYPE_SIZE == (int)METACALL_SIZE) &&
 							  ((int)TYPE_INVALID == (int)METACALL_INVALID),
 	"Internal reflect value types does not match with public metacall API value types");
@@ -168,6 +172,16 @@ void *metacall_value_create_class(void *c)
 void *metacall_value_create_object(void *o)
 {
 	return value_create_object(o);
+}
+
+void *metacall_value_create_exception(void *ex)
+{
+	return value_create_exception(ex);
+}
+
+void *metacall_value_create_throwable(void *th)
+{
+	return value_create_throwable(th);
 }
 
 size_t metacall_value_size(void *v)
@@ -321,6 +335,20 @@ void *metacall_value_to_object(void *v)
 	return value_to_object(v);
 }
 
+void *metacall_value_to_exception(void *v)
+{
+	assert(value_type_id(v) == TYPE_EXCEPTION);
+
+	return value_to_exception(v);
+}
+
+void *metacall_value_to_throwable(void *v)
+{
+	assert(value_type_id(v) == TYPE_THROWABLE);
+
+	return value_to_throwable(v);
+}
+
 void *metacall_value_from_bool(void *v, boolean b)
 {
 	return value_from_bool(v, b);
@@ -404,6 +432,16 @@ void *metacall_value_from_class(void *v, void *c)
 void *metacall_value_from_object(void *v, void *o)
 {
 	return value_from_object(v, o);
+}
+
+void *metacall_value_from_exception(void *v, void *ex)
+{
+	return value_from_exception(v, ex);
+}
+
+void *metacall_value_from_throwable(void *v, void *th)
+{
+	return value_from_throwable(v, th);
 }
 
 void *metacall_value_cast(void *v, enum metacall_value_id id)
@@ -664,6 +702,36 @@ void *metacall_value_cast_object(void **v)
 	}
 
 	return value_to_object(*v);
+}
+
+void *metacall_value_cast_exception(void **v)
+{
+	if (value_type_id(*v) != TYPE_EXCEPTION)
+	{
+		value v_cast = value_type_cast(*v, TYPE_EXCEPTION);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_exception(*v);
+}
+
+void *metacall_value_cast_throwable(void **v)
+{
+	if (value_type_id(*v) != TYPE_THROWABLE)
+	{
+		value v_cast = value_type_cast(*v, TYPE_THROWABLE);
+
+		if (v_cast != NULL)
+		{
+			*v = v_cast;
+		}
+	}
+
+	return value_to_throwable(*v);
 }
 
 void metacall_value_destroy(void *v)
