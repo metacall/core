@@ -663,6 +663,55 @@ void node_loader_impl_finalizer(napi_env env, napi_value v, void *data)
 	node_loader_impl_finalizer_impl(env, v, data, finalizer);
 }
 
+napi_value node_loader_impl_get_property_as_string(napi_env env, napi_value obj, const char *prop)
+{
+	napi_valuetype valuetype;
+	napi_value result;
+	napi_status status = napi_get_named_property(env, obj, prop, &result);
+
+	node_loader_impl_exception(env, status);
+
+	status = napi_typeof(env, result, &valuetype);
+
+	node_loader_impl_exception(env, status);
+
+	if (valuetype != napi_string)
+	{
+		napi_value result_as_string;
+
+		status = napi_coerce_to_string(env, result, &result_as_string);
+
+		node_loader_impl_exception(env, status);
+
+		return result_as_string;
+	}
+
+	return result;
+}
+
+char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const char *prop)
+{
+	napi_value prop_value = node_loader_impl_get_property_as_string(env, obj, prop);
+	size_t length;
+	napi_status status = napi_get_value_string_utf8(env, prop_value, NULL, 0, &length);
+
+	node_loader_impl_exception(env, status);
+
+	char *str = static_cast<char *>(malloc(sizeof(char) * (length + 1)));
+
+	if (str == NULL)
+	{
+		/* TODO: Notify MetaCall error handling system when it is implemented */
+		return NULL;
+	}
+
+	status = napi_get_value_string_utf8(env, prop_value, str, length + 1, &length);
+
+	node_loader_impl_exception(env, status);
+
+	return str;
+}
+
 value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v)
 {
 	value ret = NULL;
@@ -759,8 +808,13 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 		}
 		else if (napi_is_error(env, v, &result) == napi_ok && result == true)
 		{
-			/* TODO */
-			napi_throw_error(env, NULL, "NodeJS Loader error is not implemented");
+			exception ex = exception_create(
+				node_loader_impl_get_property_as_char(env, v, "message"),
+				node_loader_impl_get_property_as_char(env, v, "code"),
+				0, // TODO: Retrieve code number from code?
+				node_loader_impl_get_property_as_char(env, v, "stack"));
+
+			ret = value_create_exception(ex);
 		}
 		else if (napi_is_typedarray(env, v, &result) == napi_ok && result == true)
 		{

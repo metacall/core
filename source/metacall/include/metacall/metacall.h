@@ -27,6 +27,7 @@
 
 #include <metacall/metacall_allocator.h>
 #include <metacall/metacall_def.h>
+#include <metacall/metacall_error.h>
 #include <metacall/metacall_log.h>
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_version.h>

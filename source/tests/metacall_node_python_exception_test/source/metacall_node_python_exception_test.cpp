@@ -49,7 +49,11 @@ TEST_F(metacall_node_python_exception_test, DefaultConstructor)
 
 		void *ret = metacall("js_return_error");
 
-		// TODO
+		struct metacall_exception_type ex;
+
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("Yeet", ex.message));
 
 		metacall_value_destroy(ret);
 
@@ -73,11 +77,12 @@ TEST_F(metacall_node_python_exception_test, DefaultConstructor)
 		static const char buffer[] =
 			"def py_return_error():\n"
 			"	return Exception('yeet')\n"
+			"\n"
 			"def py_throw_error():\n"
 			"	raise Exception('yeet')\n"
 			"\n";
 
-		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
 		void *ret = metacall("py_return_error");
 

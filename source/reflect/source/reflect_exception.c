@@ -31,7 +31,7 @@ struct exception_type
 {
 	char *message;	  /* Description of the error */
 	char *label;	  /* Type of error */
-	int code;		  /* Numeric code of error */
+	int number;		  /* Numeric code of error */
 	char *stacktrace; /* Stack trace of the error */
 	uint64_t id;	  /* Thread id where the error was raised */
 	size_t ref_count;
@@ -45,7 +45,26 @@ static struct
 	uint64_t decrements;
 } exception_stats = { 0, 0, 0, 0 };
 
-exception exception_create(const char *message, const char *label, int code, const char *stacktrace)
+exception exception_create(char *message, char *label, int number, char *stacktrace)
+{
+	exception ex = malloc(sizeof(struct exception_type));
+
+	if (ex == NULL)
+	{
+		return NULL;
+	}
+
+	ex->message = message;
+	ex->label = label;
+	ex->number = number;
+	ex->stacktrace = stacktrace;
+	ex->id = thread_id_get_current();
+	ex->ref_count = 0;
+
+	return ex;
+}
+
+exception exception_create_const(const char *message, const char *label, int number, const char *stacktrace)
 {
 	exception ex = malloc(sizeof(struct exception_type));
 
@@ -108,7 +127,7 @@ exception exception_create(const char *message, const char *label, int code, con
 		ex->stacktrace = NULL;
 	}
 
-	ex->code = code;
+	ex->number = number;
 	ex->id = thread_id_get_current();
 
 	return ex;
@@ -181,14 +200,14 @@ const char *exception_label(exception ex)
 	return ex->label;
 }
 
-int exception_code(exception ex)
+int exception_number(exception ex)
 {
 	if (ex == NULL)
 	{
 		return 0;
 	}
 
-	return ex->code;
+	return ex->number;
 }
 
 const char *exception_stacktrace(exception ex)
