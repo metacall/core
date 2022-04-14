@@ -93,7 +93,7 @@ impl FileRegistration {
     }
 
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
-        registrator::register(&self.state, loader_impl, ctx);
+        registrator::register(&self.state, &self.dlopen, loader_impl, ctx);
 
         Ok(())
     }

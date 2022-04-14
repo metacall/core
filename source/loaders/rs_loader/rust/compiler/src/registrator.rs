@@ -1,9 +1,8 @@
 use std::{ffi::c_void, os::raw::c_uint};
 
-use api::{register_function, FunctionCreate, FunctionInputSignature, FunctionRegisteration};
+use api::{register_function, function_singleton, FunctionCreate, FunctionInputSignature, FunctionRegisteration};
 
-use dlopen::raw::Library as DlopenLibrary;
-
+use crate::file::DlopenLibrary;
 use libffi::low::CodePtr;
 
 use crate::{CompilerState, Function};
@@ -12,7 +11,7 @@ fn function_create(func: &Function, dlopen_library: &DlopenLibrary) -> FunctionC
     let name = func.name.clone();
     let args_count = func.args.len();
 
-    let function_ptr: unsafe fn() = unsafe { dlopen_library.symbol(&name[..]) }.unwrap();
+    let function_ptr: unsafe fn() = unsafe { dlopen_library.instance.symbol(&name[..]) }.unwrap();
 
     let libffi_func = Box::new(CodePtr::from_ptr(function_ptr as *const c_void));
 
@@ -22,15 +21,13 @@ fn function_create(func: &Function, dlopen_library: &DlopenLibrary) -> FunctionC
         name,
         args_count,
         function_impl,
-        singleton: 0 as c_uint as *mut c_void, // TODO: This must be a function pointer to 'function_singleton' inside the API module
+        singleton: function_singleton as *mut c_void// 0 as c_uint as *mut c_void, // TODO: This must be a function pointer to 'function_singleton' inside the API module
     };
 
     function_create
 }
 
-pub fn register(state: &CompilerState, loader_impl: *mut c_void, ctx: *mut c_void) {
-    let dlopen_library = DlopenLibrary::open(state.output.clone()).unwrap();
-
+pub fn register(state: &CompilerState, dlopen_library: &DlopenLibrary, loader_impl: *mut c_void, ctx: *mut c_void) {
     for func in state.functions.iter() {
         let function_registration = FunctionRegisteration {
             ctx,
