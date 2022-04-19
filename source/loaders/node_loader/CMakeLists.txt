@@ -236,3 +236,5 @@ install(FILES
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
+
+set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
