@@ -219,6 +219,14 @@ target_link_libraries(${target}
 )
 
 #
+# Standard options
+#
+
+if(NodeJS_VERSION VERSION_GREATER_EQUAL "16.0.0")
+	set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
+endif()
+
+#
 # Deployment
 #
 
@@ -236,5 +244,3 @@ install(FILES
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )
-
-set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
