@@ -27,6 +27,8 @@
 extern "C" {
 #endif
 
+#include <stdint.h>
+
 struct exception_type;
 
 typedef struct exception_type *exception;

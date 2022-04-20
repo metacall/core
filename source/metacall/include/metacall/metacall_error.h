@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+/* -- Headers -- */
+
+#include <stdint.h>
+
 /* -- Member Data -- */
 
 struct metacall_exception_type
