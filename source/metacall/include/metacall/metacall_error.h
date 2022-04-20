@@ -35,7 +35,7 @@ struct metacall_exception_type
 {
 	const char *message;
 	const char *label;
-	int code;
+	int64_t code;
 	const char *stacktrace;
 };
 

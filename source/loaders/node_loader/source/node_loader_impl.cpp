@@ -626,7 +626,7 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 
 			const char *message = (error_info != NULL && error_info->error_message != NULL) ? error_info->error_message : "Error message not available";
 
-			exception ex = exception_create_const(message, "ExceptionPending", (int)error_info != NULL ? error_info->error_code : (int)status, "");
+			exception ex = exception_create_const(message, "ExceptionPending", (int64_t)(error_info != NULL ? error_info->error_code : status), "");
 
 			throwable th = throwable_create(value_create_exception(ex));
 
@@ -639,11 +639,8 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 		}
 		else
 		{
-			napi_value error, message;
+			napi_value error;
 			bool result;
-			napi_valuetype valuetype;
-			size_t length;
-			char *str;
 
 			status = napi_get_and_clear_last_exception(env, &error);
 

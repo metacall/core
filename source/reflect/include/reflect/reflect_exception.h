@@ -31,9 +31,9 @@ struct exception_type;
 
 typedef struct exception_type *exception;
 
-REFLECT_API exception exception_create(char *message, char *label, int code, char *stacktrace);
+REFLECT_API exception exception_create(char *message, char *label, int64_t code, char *stacktrace);
 
-REFLECT_API exception exception_create_const(const char *message, const char *label, int number, const char *stacktrace);
+REFLECT_API exception exception_create_const(const char *message, const char *label, int64_t code, const char *stacktrace);
 
 REFLECT_API int exception_increment_reference(exception ex);
 
@@ -43,7 +43,7 @@ REFLECT_API const char *exception_message(exception ex);
 
 REFLECT_API const char *exception_label(exception ex);
 
-REFLECT_API int exception_number(exception ex);
+REFLECT_API int64_t exception_error_code(exception ex);
 
 REFLECT_API const char *exception_stacktrace(exception ex);
 

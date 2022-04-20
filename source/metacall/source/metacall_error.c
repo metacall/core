@@ -53,7 +53,7 @@ int metacall_error_from_value(void *v, metacall_exception ex)
 
 	ex->message = exception_message(ex_impl);
 	ex->label = exception_label(ex_impl);
-	ex->code = exception_number(ex_impl);
+	ex->code = exception_error_code(ex_impl);
 	ex->stacktrace = exception_stacktrace(ex_impl);
 
 	return 0;
