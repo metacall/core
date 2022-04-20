@@ -151,6 +151,8 @@ static int py_loader_impl_check_class(loader_impl_py py_impl, PyObject *obj);
 
 static void py_loader_impl_error_print(loader_impl_py py_impl);
 
+static value py_loader_impl_error_value(loader_impl_py py_impl);
+
 #if DEBUG_ENABLED
 static void py_loader_impl_gc_print(loader_impl_py py_impl);
 #endif
@@ -813,6 +815,10 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_NULL;
 	}
+	else if (PyExceptionInstance_Check(obj))
+	{
+		return TYPE_EXCEPTION;
+	}
 	else if (py_loader_impl_check_future(py_impl, obj) == 1)
 	{
 		return TYPE_FUTURE;
@@ -1162,6 +1168,18 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		v = value_create_object(o);
 	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		/* TODO */
+		/*
+		PyObject *tb = PyException_GetTraceback(obj);
+
+		if (tb != NULL && PyTraceBack_Check(tb))
+		{
+
+		}
+		*/
+	}
 	else
 	{
 		/* Return the value as opaque pointer */
@@ -1494,11 +1512,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	type ret_type = signature_get_return(s);
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
 	PyGILState_STATE gstate = PyGILState_Ensure();
+	value v = NULL;
 
 	/* Possibly a recursive call */
 	if (Py_EnterRecursiveCall(" while executing a function in Python Loader") != 0)
 	{
-		goto error;
+		goto finalize;
 	}
 
 	PyObject *tuple_args = PyTuple_New(args_size);
@@ -1526,7 +1545,12 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 
 	if (PyErr_Occurred() != NULL)
 	{
-		py_loader_impl_error_print(py_impl);
+		v = py_loader_impl_error_value(py_impl);
+
+		if (v == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Fatal error when trying to fetch an exeption");
+		}
 	}
 
 	Py_DECREF(tuple_args);
@@ -1536,22 +1560,18 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 		free(values);
 	}
 
-	if (result == NULL)
+	if (result == NULL || v != NULL)
 	{
-		goto error;
+		goto finalize;
 	}
 
 	type_id id = ret_type == NULL ? py_loader_impl_capi_to_value_type(py_func->impl, result) : type_index(ret_type);
-	value v = py_loader_impl_capi_to_value(py_func->impl, result, id);
+	v = py_loader_impl_capi_to_value(py_func->impl, result, id);
 
 	Py_DECREF(result);
+finalize:
 	PyGILState_Release(gstate);
-
 	return v;
-
-error:
-	PyGILState_Release(gstate);
-	return NULL;
 }
 
 function_return function_py_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
@@ -3827,6 +3847,52 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 	Py_XDECREF(traceback_str_obj);
 
 	PyErr_Restore(type, value, traceback);
+}
+
+value py_loader_impl_error_value(loader_impl_py py_impl)
+{
+	static const char separator_str[] = "";
+	static const char traceback_not_found[] = "Traceback not available";
+	PyObject *type_obj, *value_obj, *traceback_obj;
+	PyObject *value_str_obj, *traceback_str_obj;
+	PyObject *traceback_list, *separator;
+	const char *type_str, *value_str, *traceback_str;
+	value ret = NULL;
+
+	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
+
+	value_str_obj = PyObject_Str(value_obj);
+
+	traceback_list = PyObject_CallFunctionObjArgs(py_impl->traceback_format_exception, type_obj, value_obj, traceback_obj, NULL);
+
+#if PY_MAJOR_VERSION == 2
+	separator = PyString_FromString(separator_str);
+
+	traceback_str_obj = PyString_Join(separator, traceback_list);
+
+	value_str = PyString_AsString(value_str_obj);
+	traceback_str = traceback_str_obj ? PyString_AsString(traceback_str_obj) : NULL;
+#elif PY_MAJOR_VERSION == 3
+	separator = PyUnicode_FromString(separator_str);
+
+	traceback_str_obj = PyUnicode_Join(separator, traceback_list);
+
+	type_str = PyExceptionClass_Name(type_obj);
+	value_str = PyUnicode_AsUTF8(value_str_obj);
+	traceback_str = traceback_str_obj ? PyUnicode_AsUTF8(traceback_str_obj) : NULL;
+#endif
+
+	exception ex = exception_create_const(value_str, type_str, 0, traceback_str ? traceback_str : traceback_not_found);
+
+	throwable th = throwable_create(value_create_exception(ex));
+
+	ret = value_create_throwable(th);
+
+	Py_XDECREF(traceback_list);
+	Py_DECREF(separator);
+	Py_XDECREF(traceback_str_obj);
+
+	return ret;
 }
 
 #if DEBUG_ENABLED

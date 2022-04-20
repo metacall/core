@@ -79,26 +79,30 @@ TEST_F(metacall_node_python_exception_test, DefaultConstructor)
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
-			"def py_return_error():\n"
-			"	return Exception('yeet')\n"
-			"\n"
 			"def py_throw_error():\n"
 			"	raise Exception('yeet')\n"
+			"\n"
+			"def py_return_error():\n"
+			"	return BaseException('yeet')\n"
 			"\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
 
-		void *ret = metacall("py_return_error");
+		void *ret = metacall("py_throw_error");
+
+		struct metacall_exception_type ex;
+
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("yeet", ex.message));
+
+		metacall_value_destroy(ret);
+
+		//void *ret = metacall("py_return_error");
 
 		// TODO
 
-		metacall_value_destroy(ret);
-
-		ret = metacall("py_throw_error");
-
-		// TODO
-
-		metacall_value_destroy(ret);
+		//metacall_value_destroy(ret);
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 

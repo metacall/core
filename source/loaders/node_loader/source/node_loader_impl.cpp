@@ -663,7 +663,7 @@ value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env,
 				exception ex = exception_create(
 					node_loader_impl_get_property_as_char(env, error, "message"),
 					node_loader_impl_get_property_as_char(env, error, "code"),
-					(int)status,
+					(int64_t)status,
 					node_loader_impl_get_property_as_char(env, error, "stack"));
 
 				throwable th = throwable_create(value_create_exception(ex));
@@ -881,7 +881,7 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 			exception ex = exception_create(
 				node_loader_impl_get_property_as_char(env, v, "message"),
 				node_loader_impl_get_property_as_char(env, v, "code"),
-				0, // TODO: Retrieve code number from code?
+				0,
 				node_loader_impl_get_property_as_char(env, v, "stack"));
 
 			ret = value_create_exception(ex);
