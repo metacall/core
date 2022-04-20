@@ -129,6 +129,7 @@ exception exception_create_const(const char *message, const char *label, int num
 
 	ex->number = number;
 	ex->id = thread_id_get_current();
+	ex->ref_count = 0;
 
 	return ex;
 

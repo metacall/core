@@ -496,6 +496,8 @@ static void node_loader_impl_destroy_safe(napi_env env, loader_impl_async_destro
 
 static napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info);
 
+static char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const char *prop);
+
 /* Loader */
 static void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr);
 
@@ -604,6 +606,77 @@ void node_loader_impl_exception(napi_env env, napi_status status)
 			free(str);
 		}
 	}
+}
+
+value node_loader_impl_exception_value(loader_impl_node node_impl, napi_env env, napi_status status, napi_value recv)
+{
+	value ret = NULL;
+
+	if (status != napi_ok)
+	{
+		if (status != napi_pending_exception)
+		{
+			const napi_extended_error_info *error_info = NULL;
+
+			bool pending;
+
+			napi_get_last_error_info(env, &error_info);
+
+			napi_is_exception_pending(env, &pending);
+
+			const char *message = (error_info != NULL && error_info->error_message != NULL) ? error_info->error_message : "Error message not available";
+
+			exception ex = exception_create_const(message, "ExceptionPending", (int)error_info != NULL ? error_info->error_code : (int)status, "");
+
+			throwable th = throwable_create(value_create_exception(ex));
+
+			ret = value_create_throwable(th);
+
+			if (pending)
+			{
+				napi_throw_error(env, NULL, message);
+			}
+		}
+		else
+		{
+			napi_value error, message;
+			bool result;
+			napi_valuetype valuetype;
+			size_t length;
+			char *str;
+
+			status = napi_get_and_clear_last_exception(env, &error);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_is_error(env, error, &result);
+
+			node_loader_impl_exception(env, status);
+
+			if (result == false)
+			{
+				value thrown_value = node_loader_impl_napi_to_value(node_impl, env, recv, error);
+
+				throwable th = throwable_create(thrown_value);
+
+				ret = value_create_throwable(th);
+			}
+			else
+			{
+				exception ex = exception_create(
+					node_loader_impl_get_property_as_char(env, error, "message"),
+					node_loader_impl_get_property_as_char(env, error, "code"),
+					(int)status,
+					node_loader_impl_get_property_as_char(env, error, "stack"));
+
+				throwable th = throwable_create(value_create_exception(ex));
+
+				ret = value_create_throwable(th);
+			}
+		}
+	}
+
+	return ret;
 }
 
 template <typename T>
@@ -1875,10 +1948,13 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 
 	status = napi_call_function(env, global, function_ptr, args_size, argv, &func_return);
 
-	node_loader_impl_exception(env, status);
+	func_call_safe->ret = node_loader_impl_exception_value(func_call_safe->node_impl, env, status, func_call_safe->recv);
 
-	/* Convert function return to value */
-	func_call_safe->ret = node_loader_impl_napi_to_value(func_call_safe->node_impl, env, func_call_safe->recv, func_return);
+	if (func_call_safe->ret == NULL)
+	{
+		/* Convert function return to value */
+		func_call_safe->ret = node_loader_impl_napi_to_value(func_call_safe->node_impl, env, func_call_safe->recv, func_return);
+	}
 
 	/* Close scope */
 	status = napi_close_handle_scope(env, handle_scope);

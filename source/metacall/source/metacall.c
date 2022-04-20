@@ -2082,6 +2082,11 @@ int metacall_object_set(void *obj, const char *key, void *v)
 	return object_set(obj, key, v);
 }
 
+void *metacall_throwable_value(void *th)
+{
+	return throwable_value(th);
+}
+
 char *metacall_inspect(size_t *size, void *allocator)
 {
 	serial s;

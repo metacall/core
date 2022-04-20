@@ -41,7 +41,7 @@ TEST_F(metacall_node_python_exception_test, DefaultConstructor)
 		static const char buffer[] =
 			"module.exports = {\n"
 			"	js_return_error: () => new Error('Yeet'),\n"
-			"	js_throw_error: () => { throw Error('Yeet') },\n"
+			"	js_throw_error: () => { throw new Error('YeetThrown') },\n"
 			"	js_throw_value: () => { throw 56 },\n"
 			"};\n";
 
@@ -59,13 +59,17 @@ TEST_F(metacall_node_python_exception_test, DefaultConstructor)
 
 		ret = metacall("js_throw_error");
 
-		// TODO
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("YeetThrown", ex.message));
 
 		metacall_value_destroy(ret);
 
 		ret = metacall("js_throw_value");
 
-		// TODO
+		void *number = metacall_throwable_value(metacall_value_to_throwable(ret));
+
+		EXPECT_EQ((double)56.0, (double)metacall_value_to_double(number));
 
 		metacall_value_destroy(ret);
 	}

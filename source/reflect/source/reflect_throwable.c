@@ -53,13 +53,13 @@ throwable throwable_create(value v)
 	}
 	else
 	{
-		/* Otherwise just copy the value */
-		th->v = value_type_copy(v);
+		/* Otherwise just set the value (it is supposed to be copied or allocated from outside of this constructor) */
+		th->v = v;
 	}
 
 	if (th->v == NULL)
 	{
-		free(th->v);
+		free(th);
 		return NULL;
 	}
 

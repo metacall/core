@@ -1263,6 +1263,18 @@ METACALL_API int metacall_object_set(void *obj, const char *key, void *v);
 
 /**
 *  @brief
+*    Get the value contained by throwable object @th
+*
+*  @param[in] th
+*    Pointer to the throwable object
+*
+*  @return
+*    Pointer to the value inside of the throwable or NULL in case of error
+*/
+METACALL_API void *metacall_throwable_value(void *th);
+
+/**
+*  @brief
 *    Provide information about all loaded objects
 *
 *  @param[out] size
