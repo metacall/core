@@ -35,6 +35,7 @@ struct exception_type
 	char *stacktrace; /* Stack trace of the error */
 	uint64_t id;	  /* Thread id where the error was raised */
 	size_t ref_count;
+	/* TODO: value attributes; // This should implement a map for representing the extra attributes of an exception */
 };
 
 static struct
