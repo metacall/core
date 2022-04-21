@@ -153,6 +153,8 @@ static void py_loader_impl_error_print(loader_impl_py py_impl);
 
 static value py_loader_impl_error_value(loader_impl_py py_impl);
 
+static value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj);
+
 #if DEBUG_ENABLED
 static void py_loader_impl_gc_print(loader_impl_py py_impl);
 #endif
@@ -1170,15 +1172,11 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	}
 	else if (id == TYPE_EXCEPTION)
 	{
-		/* TODO */
-		/*
 		PyObject *tb = PyException_GetTraceback(obj);
 
-		if (tb != NULL && PyTraceBack_Check(tb))
-		{
+		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb);
 
-		}
-		*/
+		Py_XDECREF(tb);
 	}
 	else
 	{
@@ -3851,15 +3849,21 @@ void py_loader_impl_error_print(loader_impl_py py_impl)
 
 value py_loader_impl_error_value(loader_impl_py py_impl)
 {
+	PyObject *type_obj, *value_obj, *traceback_obj;
+
+	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
+
+	return py_loader_impl_error_value_from_exception(py_impl, type_obj, value_obj, traceback_obj);
+}
+
+value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj)
+{
 	static const char separator_str[] = "";
 	static const char traceback_not_found[] = "Traceback not available";
-	PyObject *type_obj, *value_obj, *traceback_obj;
 	PyObject *value_str_obj, *traceback_str_obj;
 	PyObject *traceback_list, *separator;
 	const char *type_str, *value_str, *traceback_str;
 	value ret = NULL;
-
-	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
 
 	value_str_obj = PyObject_Str(value_obj);
 
