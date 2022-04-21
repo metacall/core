@@ -3853,7 +3853,11 @@ value py_loader_impl_error_value(loader_impl_py py_impl)
 
 	PyErr_Fetch(&type_obj, &value_obj, &traceback_obj);
 
-	return py_loader_impl_error_value_from_exception(py_impl, type_obj, value_obj, traceback_obj);
+	value v = py_loader_impl_error_value_from_exception(py_impl, type_obj, value_obj, traceback_obj);
+
+	PyErr_Clear();
+
+	return v;
 }
 
 value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, PyObject *type_obj, PyObject *value_obj, PyObject *traceback_obj)
