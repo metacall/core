@@ -24,40 +24,56 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_node_python_exception_test : public testing::Test
+class metacall_node_exception_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_node_python_exception_test, DefaultConstructor)
+TEST_F(metacall_node_exception_test, DefaultConstructor)
 {
 	metacall_print_info();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-/* NodeJS & Python */
-#if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_PY)
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		static const char buffer[] =
-			"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_PORT_PATH "');\n"
-			"metacall_load_from_memory('py', `\n"
-			"def py_throw_error():\n"
-			"  raise TypeError('yeet')\n"
-			"`);\n"
-			"try {\n"
-			"	metacall('py_throw_error');\n"
-			"	process.exit(1);\n"
-			"} catch (e) {\n"
-			"	console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');\n"
-			"	console.log(e);\n"
-			"	console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');\n"
-			"	if (e.message !== 'yeet' || e.code !== 'TypeError') process.exit(1);\n"
-			"}\n"
-			"\n";
+			"module.exports = {\n"
+			"	js_return_error: () => new Error('Yeet'),\n"
+			"	js_throw_error: () => { throw new Error('YeetThrown') },\n"
+			"	js_throw_value: () => { throw 56 },\n"
+			"};\n";
 
 		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+
+		void *ret = metacall("js_return_error");
+
+		struct metacall_exception_type ex;
+
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("Yeet", ex.message));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("js_throw_error");
+
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("YeetThrown", ex.message));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("js_throw_value");
+
+		void *number = metacall_throwable_value(metacall_value_to_throwable(ret));
+
+		EXPECT_EQ((double)56.0, (double)metacall_value_to_double(number));
+
+		metacall_value_destroy(ret);
 	}
-#endif /* OPTION_BUILD_LOADERS_NODE && OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }

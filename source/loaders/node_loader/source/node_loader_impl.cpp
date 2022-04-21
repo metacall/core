@@ -1060,10 +1060,8 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	return result;
 }
 
-napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg)
+napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env env, value arg_value)
 {
-	value arg_value = static_cast<value>(arg);
-
 	type_id id = value_type_id(arg_value);
 
 	napi_status status;
@@ -1250,6 +1248,47 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 		status = napi_get_undefined(env, &v);
 
 		node_loader_impl_exception(env, status);
+	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		napi_value message_value, label_value, stack_value;
+
+		exception ex = value_to_exception(arg_value);
+
+		status = napi_create_string_utf8(env, exception_message(ex), strlen(exception_message(ex)), &message_value);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_create_string_utf8(env, exception_label(ex), strlen(exception_label(ex)), &label_value);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_create_error(env, label_value, message_value, &v);
+
+		node_loader_impl_exception(env, status);
+
+		/* Define the stack */
+		char *stack = node_loader_impl_get_property_as_char(env, v, "stack");
+
+		std::string str_stack(exception_stacktrace(ex));
+
+		str_stack += stack;
+
+		status = napi_create_string_utf8(env, str_stack.c_str(), str_stack.length(), &stack_value);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_set_named_property(env, v, "stack", stack_value);
+
+		node_loader_impl_exception(env, status);
+
+		free(stack);
+	}
+	else if (id == TYPE_THROWABLE)
+	{
+		throwable th = value_to_throwable(arg_value);
+
+		return node_loader_impl_value_to_napi(node_impl, env, throwable_value(th));
 	}
 	else
 	{

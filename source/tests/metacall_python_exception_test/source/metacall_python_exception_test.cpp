@@ -24,40 +24,53 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
-class metacall_node_python_exception_test : public testing::Test
+class metacall_python_exception_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_node_python_exception_test, DefaultConstructor)
+TEST_F(metacall_python_exception_test, DefaultConstructor)
 {
 	metacall_print_info();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-/* NodeJS & Python */
-#if defined(OPTION_BUILD_LOADERS_NODE) && defined(OPTION_BUILD_LOADERS_PY)
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		static const char buffer[] =
-			"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_PORT_PATH "');\n"
-			"metacall_load_from_memory('py', `\n"
 			"def py_throw_error():\n"
-			"  raise TypeError('yeet')\n"
-			"`);\n"
-			"try {\n"
-			"	metacall('py_throw_error');\n"
-			"	process.exit(1);\n"
-			"} catch (e) {\n"
-			"	console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');\n"
-			"	console.log(e);\n"
-			"	console.log('&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&');\n"
-			"	if (e.message !== 'yeet' || e.code !== 'TypeError') process.exit(1);\n"
-			"}\n"
+			"	raise TypeError('yeet')\n"
+			"\n"
+			"def py_return_error():\n"
+			"	return BaseException('asdf')\n"
 			"\n";
 
-		ASSERT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+		ASSERT_EQ((int)0, (int)metacall_load_from_memory("py", buffer, sizeof(buffer), NULL));
+
+		void *ret = metacall("py_throw_error");
+
+		struct metacall_exception_type ex;
+
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("yeet", ex.message));
+
+		EXPECT_EQ((int)0, (int)strcmp("TypeError", ex.label));
+
+		metacall_value_destroy(ret);
+
+		ret = metacall("py_return_error");
+
+		EXPECT_EQ((int)0, (int)metacall_error_from_value(ret, &ex));
+
+		EXPECT_EQ((int)0, (int)strcmp("asdf", ex.message));
+
+		EXPECT_EQ((int)0, (int)strcmp("BaseException", ex.label));
+
+		metacall_value_destroy(ret);
 	}
-#endif /* OPTION_BUILD_LOADERS_NODE && OPTION_BUILD_LOADERS_PY */
+#endif /* OPTION_BUILD_LOADERS_PY */
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 }
