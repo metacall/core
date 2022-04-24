@@ -27,6 +27,7 @@
 
 #include <metacall/metacall_allocator.h>
 #include <metacall/metacall_def.h>
+#include <metacall/metacall_error.h>
 #include <metacall/metacall_log.h>
 #include <metacall/metacall_value.h>
 #include <metacall/metacall_version.h>
@@ -1259,6 +1260,18 @@ METACALL_API void *metacall_object_get(void *obj, const char *key);
 *    Non-zero integer if an error ocurred
 */
 METACALL_API int metacall_object_set(void *obj, const char *key, void *v);
+
+/**
+*  @brief
+*    Get the value contained by throwable object @th
+*
+*  @param[in] th
+*    Pointer to the throwable object
+*
+*  @return
+*    Pointer to the value inside of the throwable or NULL in case of error
+*/
+METACALL_API void *metacall_throwable_value(void *th);
 
 /**
 *  @brief

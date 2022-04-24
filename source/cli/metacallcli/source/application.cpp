@@ -269,7 +269,7 @@ bool command_cb_eval(application &app, tokenizer &t)
 	}
 
 	std::string loaders[] = {
-		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm"
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs"
 	};
 
 	// check if invalid loader tag
@@ -330,10 +330,6 @@ bool command_cb_call(application &app, tokenizer &t)
 			}
 
 			args += "]";
-
-			/*
-         void * result = app.metacallv_adaptor(func_name, args);
-         */
 
 			void *result = app.metacallfs_adaptor(func_name, args, allocator);
 
@@ -457,7 +453,7 @@ bool command_cb_load(application &app, tokenizer &t)
 	}
 
 	std::string loaders[] = {
-		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm"
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs"
 	};
 
 	// check if invalid loader tag
@@ -545,7 +541,9 @@ void application::parameter_iterator::operator()(const char *parameter)
 		/* TypeScript Loader */
 		{ "ts", "ts" },
 		{ "jsx", "ts" },
-		{ "tsx", "ts" }
+		{ "tsx", "ts" },
+		/* Rust Loader */
+		{ "rs", "rs" }
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */

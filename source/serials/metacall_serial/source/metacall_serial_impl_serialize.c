@@ -74,6 +74,10 @@ static void metacall_serial_impl_serialize_class(value v, char *dest, size_t siz
 
 static void metacall_serial_impl_serialize_object(value v, char *dest, size_t size, const char *format, size_t *length);
 
+static void metacall_serial_impl_serialize_exception(value v, char *dest, size_t size, const char *format, size_t *length);
+
+static void metacall_serial_impl_serialize_throwable(value v, char *dest, size_t size, const char *format, size_t *length);
+
 /* -- Definitions -- */
 
 static const char *metacall_serialize_format[] = {
@@ -93,7 +97,9 @@ static const char *metacall_serialize_format[] = {
 	NULL, /* TODO: Function */
 	"%s",
 	NULL, /* TODO: Class */
-	NULL  /* TODO: Object */
+	NULL, /* TODO: Object */
+	NULL, /* TODO: Exception */
+	NULL  /* TODO: Throwable */
 };
 
 portability_static_assert((size_t)TYPE_SIZE == (size_t)sizeof(metacall_serialize_format) / sizeof(metacall_serialize_format[0]),
@@ -116,7 +122,9 @@ static metacall_serialize_impl_ptr serialize_func[] = {
 	&metacall_serial_impl_serialize_function,
 	&metacall_serial_impl_serialize_null,
 	&metacall_serial_impl_serialize_class,
-	&metacall_serial_impl_serialize_object
+	&metacall_serial_impl_serialize_object,
+	&metacall_serial_impl_serialize_exception,
+	&metacall_serial_impl_serialize_throwable
 };
 
 portability_static_assert((size_t)TYPE_SIZE == (size_t)sizeof(serialize_func) / sizeof(serialize_func[0]),
@@ -347,6 +355,28 @@ void metacall_serial_impl_serialize_class(value v, char *dest, size_t size, cons
 void metacall_serial_impl_serialize_object(value v, char *dest, size_t size, const char *format, size_t *length)
 {
 	/* TODO: Implement object serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
+}
+
+void metacall_serial_impl_serialize_exception(value v, char *dest, size_t size, const char *format, size_t *length)
+{
+	/* TODO: Implement exception serialization */
+	(void)v;
+	(void)dest;
+	(void)size;
+	(void)format;
+
+	*length = 0;
+}
+
+void metacall_serial_impl_serialize_throwable(value v, char *dest, size_t size, const char *format, size_t *length)
+{
+	/* TODO: Implement throwable serialization */
 	(void)v;
 	(void)dest;
 	(void)size;

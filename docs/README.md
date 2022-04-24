@@ -101,10 +101,10 @@ This section describes all programming languages that **METACALL** allows to loa
 | Language                                                           | Runtime                                                                                                                                               |                 Version                 | Tag  |
 | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------: | :--: |
 | [Python](https://www.python.org/)                                  | [Python C API](https://docs.python.org/3/c-api/intro.html)                                                                                            |            **>= 3.2 <= 3.9**            |  py  |
-| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                                                            |        **>= 10.22.0 <= 15.20.0**        | node |
+| [NodeJS](https://nodejs.org/)                                      | [N API](https://nodejs.org/api/n-api.html)                                                                                                            |        **>= 10.22.0 <= 17.x.x**        | node |
 | [TypeScript](https://www.typescriptlang.org/)                      | [TypeScript Language Service API](https://github.com/microsoft/TypeScript/wiki/Using-the-Language-Service-API)                                        |                **4.2.3**                |  ts  |
 | [JavaScript](https://developer.mozilla.org/bm/docs/Web/JavaScript) | [V8](https://v8.dev/)                                                                                                                                 |               **5.1.117**               |  js  |
-| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                                                          |     **>= 1.0.0-preview2 <= 5.0.15**     |  cs  |
+| [C#](https://dotnet.microsoft.com/)                                | [NetCore](https://github.com/dotnet/docs/blob/master/docs/core/tutorials/netcore-hosting.md)                                                          |     **>= 1.0.0-preview2 <= 5.0.16**     |  cs  |
 | [Ruby](https://ruby-lang.org/)                                     | [Ruby C API](https://silverhammermba.github.io/emberb/c/)                                                                                             |            **>= 2.1 <= 2.7**            |  rb  |
 | [Cobol](https://sourceforge.net/projects/open-cobol/)              | [GNU/Cobol](https://open-cobol.sourceforge.io/doxygen/gnucobol-2/libcob_8h.html)                                                                      |              **>= 1.1.0**               | cob  |
 | [File](/source/loaders/file_loader)                                | **∅**                                                                                                                                                 |                **0.1.0**                | file |
@@ -658,7 +658,7 @@ It is possible to enable or disable concrete loaders, script, ports, serials or 
 
 |    Build Option Prefix    | Build Option Suffix                                                   |
 | :-----------------------: | --------------------------------------------------------------------- |
-| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `JSM` `FILE`              |
+| **OPTION_BUILD_LOADERS_** | `C` `JS` `CS` `MOCK` `PY` `JSM` `NODE` `RB` `FILE`                    |
 | **OPTION_BUILD_SCRIPTS_** | `C` `CS` `JS` `NODE` `PY` `RB` `JAVA`                                 |
 | **OPTION_BUILD_SERIALS_** | `METACALL` `RAPID_JSON`                                               |
 | **OPTION_BUILD_DETOURS_** | `FUNCHOOK`                                                            |

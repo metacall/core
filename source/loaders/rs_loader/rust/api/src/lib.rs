@@ -60,7 +60,7 @@ extern "C" {
 }
 
 #[repr(C)]
-struct FunctionInterface {
+pub struct FunctionInterface {
     create: extern "C" fn(*mut c_void, *mut c_void) -> c_int,
     invoke: extern "C" fn(*mut c_void, *mut c_void, *mut *mut c_void, usize) -> *mut c_void,
     r#await: extern "C" fn(
@@ -77,6 +77,7 @@ struct FunctionInterface {
 
 #[no_mangle]
 extern "C" fn function_singleton_create(_func: *mut c_void, _func_impl: *mut c_void) -> c_int {
+    println!("rs_loader: create function");
     0
 }
 
@@ -87,6 +88,7 @@ extern "C" fn function_singleton_invoke(
     _args: *mut *mut c_void,
     _size: usize,
 ) -> *mut c_void {
+    println!("rs_loader: invoke function");
     // func is of type function found here: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/reflect/include/reflect/reflect_function.h#L65
     // func_impl is of type: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
     // args is an array of 'value' of size 'size', you can iterate over it and get the C value representation
@@ -112,16 +114,18 @@ extern "C" fn function_singleton_await(
     _reject: extern "C" fn(*mut c_void, *mut c_void) -> *mut c_void,
     _data: *mut c_void,
 ) -> *mut c_void {
+    println!("rs_loader: await function");
     0 as *mut c_void
 }
 
 #[no_mangle]
 extern "C" fn function_singleton_destroy(_func: *mut c_void, _func_impl: *mut c_void) {
+    println!("rs_loader: destroy function");
     // Here we have to free the memory of this: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
 }
 
 #[no_mangle]
-extern "C" fn function_singleton() -> *const FunctionInterface {
+pub extern "C" fn function_singleton() -> *const FunctionInterface {
     static SINGLETON: FunctionInterface = FunctionInterface {
         create: function_singleton_create,
         invoke: function_singleton_invoke,

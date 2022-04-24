@@ -60,6 +60,8 @@ enum metacall_value_id
 	METACALL_NULL = 14,
 	METACALL_CLASS = 15,
 	METACALL_OBJECT = 16,
+	METACALL_EXCEPTION = 17,
+	METACALL_THROWABLE = 18,
 
 	METACALL_SIZE,
 	METACALL_INVALID
@@ -294,6 +296,30 @@ METACALL_API void *metacall_value_create_class(void *c);
 *    Pointer to value if success, null otherwhise
 */
 METACALL_API void *metacall_value_create_object(void *o);
+
+/**
+*  @brief
+*    Create a value from exception @ex
+*
+*  @param[in] ex
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void *metacall_value_create_exception(void *ex);
+
+/**
+*  @brief
+*    Create a value from throwable @th
+*
+*  @param[in] th
+*    Pointer to constant data will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+METACALL_API void *metacall_value_create_throwable(void *th);
 
 /**
 *  @brief
@@ -563,6 +589,30 @@ METACALL_API void *metacall_value_to_object(void *v);
 
 /**
 *  @brief
+*    Convert value @v to exception
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to exception
+*/
+METACALL_API void *metacall_value_to_exception(void *v);
+
+/**
+*  @brief
+*    Convert value @v to throwable
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to throwable
+*/
+METACALL_API void *metacall_value_to_throwable(void *v);
+
+/**
+*  @brief
 *    Assign boolean @b to value @v
 *
 *  @param[in] v
@@ -822,9 +872,39 @@ METACALL_API void *metacall_value_from_class(void *v, void *c);
 *    Object to be assigned to value @v
 *
 *  @return
-*    Value with object @c assigned to it
+*    Value with object @o assigned to it
 */
 METACALL_API void *metacall_value_from_object(void *v, void *o);
+
+/**
+*  @brief
+*    Assign exception @ex to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] ex
+*    Exception to be assigned to value @v
+*
+*  @return
+*    Value with exception @ex assigned to it
+*/
+METACALL_API void *metacall_value_from_exception(void *v, void *ex);
+
+/**
+*  @brief
+*    Assign throwable @th to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] th
+*    Throwable to be assigned to value @v
+*
+*  @return
+*    Value with throwable @th assigned to it
+*/
+METACALL_API void *metacall_value_from_throwable(void *v, void *th);
 
 /**
 *  @brief
@@ -1044,6 +1124,30 @@ METACALL_API void *metacall_value_cast_class(void **v);
 *    Value converted to object
 */
 METACALL_API void *metacall_value_cast_object(void **v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to exception
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to exception
+*/
+METACALL_API void *metacall_value_cast_exception(void **v);
+
+/**
+*  @brief
+*    Convert value @v implicitly to throwable
+*
+*  @param[in] v
+*    Reference to the reference of the value
+*
+*  @return
+*    Value converted to throwable
+*/
+METACALL_API void *metacall_value_cast_throwable(void **v);
 
 /**
 *  @brief

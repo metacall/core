@@ -255,6 +255,60 @@ void rapid_json_serial_impl_serialize_value(value v, rapidjson::Value *json_v)
 
 		json_v->SetString(str, length);
 	}
+	else if (id == TYPE_EXCEPTION)
+	{
+		rapidjson::Value &json_map = json_v->SetObject();
+
+		exception ex = value_to_exception(v);
+
+		rapidjson::Value message_member, message_value;
+		static const char message_str[] = "message";
+
+		message_member.SetString(message_str, (rapidjson::SizeType)(sizeof(message_str) - 1));
+		message_value.SetString(exception_message(ex), strlen(exception_message(ex)));
+		json_map.AddMember(message_member, message_value, rapid_json_allocator);
+
+		rapidjson::Value label_member, label_value;
+		static const char label_str[] = "label";
+
+		label_member.SetString(label_str, (rapidjson::SizeType)(sizeof(label_str) - 1));
+		label_value.SetString(exception_label(ex), strlen(exception_label(ex)));
+		json_map.AddMember(label_member, label_value, rapid_json_allocator);
+
+		rapidjson::Value code_member, code_value;
+		static const char code_str[] = "code";
+
+		code_member.SetString(code_str, (rapidjson::SizeType)(sizeof(code_str) - 1));
+		code_value.SetInt64(exception_error_code(ex));
+		json_map.AddMember(code_member, code_value, rapid_json_allocator);
+
+		rapidjson::Value stacktrace_member, stacktrace_value;
+		static const char stacktrace_str[] = "stacktrace";
+
+		stacktrace_member.SetString(stacktrace_str, (rapidjson::SizeType)(sizeof(stacktrace_str) - 1));
+		stacktrace_value.SetString(exception_stacktrace(ex), strlen(exception_stacktrace(ex)));
+		json_map.AddMember(stacktrace_member, stacktrace_value, rapid_json_allocator);
+	}
+	else if (id == TYPE_THROWABLE)
+	{
+		rapidjson::Value &json_map = json_v->SetObject();
+
+		throwable th = value_to_throwable(v);
+
+		static const char str[] = "ExceptionThrown";
+
+		size_t size = sizeof(str);
+
+		rapidjson::SizeType length = (rapidjson::SizeType)(size - 1);
+
+		rapidjson::Value json_member, json_inner_value;
+
+		json_member.SetString(str, length);
+
+		rapid_json_serial_impl_serialize_value(throwable_value(th), &json_inner_value);
+
+		json_map.AddMember(json_member, json_inner_value, rapid_json_allocator);
+	}
 	else if (id == TYPE_PTR)
 	{
 		std::ostringstream ostream;

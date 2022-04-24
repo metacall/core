@@ -377,6 +377,17 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		""
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
+	add_test(NAME ${target}-py-exception # https://github.com/metacall/core/issues/261
+		COMMAND ${TEST_COMMAND} "echo 'load py ducktype.py\ninspect\ncall sum(1, \"a\")\ncall sum(33, 33)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"66\""
+		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	)
+	set_property(TEST ${target}-py-exception
+		PROPERTY LABELS ${target}-py-exception
+	)
+	test_environment_variables(${target}-py-exception
+		""
+		${TESTS_ENVIRONMENT_VARIABLES}
+	)
 endif()
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)

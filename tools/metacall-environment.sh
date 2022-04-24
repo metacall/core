@@ -343,7 +343,7 @@ sub_metacall(){
 	elif [ INSTALL_NETCORE2 = 1 ]; then
 		NETCORE_VERSION=2.2.8
 	elif [ INSTALL_NETCORE5 = 1 ]; then
-		NETCORE_VERSION=5.0.15
+		NETCORE_VERSION=5.0.16
 	else
 		NETCORE_VERSION=0
 	fi

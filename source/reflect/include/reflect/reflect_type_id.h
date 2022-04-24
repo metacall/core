@@ -46,6 +46,8 @@ enum type_primitive_id
 	TYPE_NULL = 14,
 	TYPE_CLASS = 15,
 	TYPE_OBJECT = 16,
+	TYPE_EXCEPTION = 17,
+	TYPE_THROWABLE = 18,
 
 	TYPE_SIZE,
 	TYPE_INVALID
@@ -232,6 +234,30 @@ REFLECT_API int type_id_class(type_id id);
 *    Returns zero if type is object, different from zero otherwhise
 */
 REFLECT_API int type_id_object(type_id id);
+
+/**
+*  @brief
+*    Check if type id is exception value (error type)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is exception, different from zero otherwhise
+*/
+REFLECT_API int type_id_exception(type_id id);
+
+/**
+*  @brief
+*    Check if type id is throwable value (thrown type)
+*
+*  @param[in] id
+*    Type id to be checked
+*
+*  @return
+*    Returns zero if type is throwable, different from zero otherwhise
+*/
+REFLECT_API int type_id_throwable(type_id id);
 
 /**
 *  @brief

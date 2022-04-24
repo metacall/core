@@ -26,9 +26,11 @@
 #include <reflect/reflect_api.h>
 
 #include <reflect/reflect_class.h>
+#include <reflect/reflect_exception.h>
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_future.h>
 #include <reflect/reflect_object.h>
+#include <reflect/reflect_throwable.h>
 #include <reflect/reflect_type_id.h>
 #include <reflect/reflect_value.h>
 #include <reflect/reflect_value_type_cast.h>
@@ -335,6 +337,30 @@ REFLECT_API value value_create_object(object o);
 
 /**
 *  @brief
+*    Create a value from exception @ex
+*
+*  @param[in] ex
+*    Pointer to exception will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_exception(exception ex);
+
+/**
+*  @brief
+*    Create a value from throwable @th
+*
+*  @param[in] th
+*    Pointer to throwable will be copied into value
+*
+*  @return
+*    Pointer to value if success, null otherwhise
+*/
+REFLECT_API value value_create_throwable(throwable th);
+
+/**
+*  @brief
 *    Convert value @v to boolean
 *
 *  @param[in] v
@@ -536,6 +562,30 @@ REFLECT_API klass value_to_class(value v);
 *    Value converted to object
 */
 REFLECT_API object value_to_object(value v);
+
+/**
+*  @brief
+*    Convert value @v to exception
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to exception
+*/
+REFLECT_API exception value_to_exception(value v);
+
+/**
+*  @brief
+*    Convert value @v to throwable
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Value converted to throwable
+*/
+REFLECT_API throwable value_to_throwable(value v);
 
 /**
 *  @brief
@@ -801,6 +851,36 @@ REFLECT_API value value_from_class(value v, klass c);
 *    Value with object @o assigned to it
 */
 REFLECT_API value value_from_object(value v, object o);
+
+/**
+*  @brief
+*    Assign exception reference @ex to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] ex
+*    Exception to be assigned to value @v
+*
+*  @return
+*    Value with exception @ex assigned to it
+*/
+REFLECT_API value value_from_exception(value v, exception ex);
+
+/**
+*  @brief
+*    Assign throwable reference @ex to value @v
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @param[in] th
+*    Throwable to be assigned to value @v
+*
+*  @return
+*    Value with throwable @th assigned to it
+*/
+REFLECT_API value value_from_throwable(value v, throwable th);
 
 /**
 *  @brief
