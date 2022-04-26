@@ -29,6 +29,8 @@
 	#error "The Python Loader Port must be defined"
 #endif
 
+static const loader_tag py_loader_tag = "py";
+
 static PyObject *py_loader_port_none(void)
 {
 	Py_RETURN_NONE;
@@ -398,7 +400,7 @@ static PyObject *py_loader_port_invoke(PyObject *self, PyObject *var_args)
 	(void)self;
 
 	/* Obtain Python loader implementation */
-	impl = loader_get_impl("py");
+	impl = loader_get_impl(py_loader_tag);
 
 	if (impl == NULL)
 	{
@@ -517,7 +519,7 @@ static PyObject *py_loader_port_await(PyObject *self, PyObject *var_args)
 	(void)self;
 
 	/* Obtain Python loader implementation */
-	impl = loader_get_impl("py");
+	impl = loader_get_impl(py_loader_tag);
 
 	if (impl == NULL)
 	{

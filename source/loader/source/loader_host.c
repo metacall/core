@@ -123,7 +123,8 @@ void loader_host_destroy(loader_impl host)
 
 plugin loader_host_initialize(void)
 {
-	loader_impl host = loader_impl_create_host(LOADER_HOST_NAME);
+	static const loader_tag tag = LOADER_HOST_NAME;
+	loader_impl host = loader_impl_create_host(tag);
 	type_id id;
 
 	if (host == NULL)
