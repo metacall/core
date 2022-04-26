@@ -100,7 +100,7 @@ sub_test() {
 	if [ -z "${BEGIN}" ] || [ -z "${END}" ]; then
 		echo "ERROR! CTest failed to print properly the output, run tests again:"
 		echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test"
-		echo "	Without recompiling (needs to be built successfully previously): docker run --rm -it metacall/core:dev sh -c \"cd build && ctest -j4 --output-on-failure\""
+		echo "	Without recompiling (needs to be built successfully previously): docker run --rm -it metacall/core:dev sh -c \"cd build && ctest -j$(getconf _NPROCESSORS_ONLN) --output-on-failure\""
 	else
 		BEGIN=$((BEGIN + 1))
 		END=$((END - 1))
