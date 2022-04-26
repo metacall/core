@@ -125,7 +125,6 @@ BENCHMARK_REGISTER_F(metacall_py_init_bench, load_warm)
 	->Iterations(1)
 	->Repetitions(1);
 
-
 BENCHMARK_DEFINE_F(metacall_py_init_bench, destroy)
 (benchmark::State &state)
 {

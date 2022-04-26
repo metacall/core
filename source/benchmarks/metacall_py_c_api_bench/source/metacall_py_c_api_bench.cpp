@@ -34,7 +34,6 @@ public:
 
 		static const char name[] = "int_mem_type";
 
-
 		if (Py_IsInitialized() == 0)
 		{
 			Py_InitializeEx(0);

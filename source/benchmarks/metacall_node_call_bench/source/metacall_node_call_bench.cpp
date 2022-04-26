@@ -164,19 +164,19 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 			for (int64_t it = 0; it < call_count; ++it)
 			{
 				void *ret = metacall_await(
-											 "int_mem_async_type", args, [](void *result, void *data) -> void * {
-												 benchmark::State *state = static_cast<benchmark::State *>(data);
+					"int_mem_async_type", args, [](void *result, void *data) -> void * {
+						benchmark::State *state = static_cast<benchmark::State *>(data);
 
-												 if (metacall_value_to_double(result) != 0.0)
-												 {
-													 state->SkipWithError("Invalid return value from int_mem_async_type");
-												 }
+						if (metacall_value_to_double(result) != 0.0)
+						{
+							state->SkipWithError("Invalid return value from int_mem_async_type");
+						}
 
-												 state->PauseTiming();
+						state->PauseTiming();
 
-												 return NULL;
-											 },
-											 NULL, static_cast<void *>(&state));
+						return NULL;
+					},
+					NULL, static_cast<void *>(&state));
 
 				if (ret == NULL)
 				{
