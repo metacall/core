@@ -45,8 +45,8 @@ TEST_F(metacall_node_python_deadlock_test, DefaultConstructor)
 		static const char buffer_node[] =
 			"const { metacall_load_from_memory, metacall } = require('" METACALL_NODE_PORT_PATH "');\n"
 			"metacall_load_from_memory('py', `\n"
-			"def py_throw_error():\n"
-			"  raise TypeError('yeet')\n"
+			"def something():\n"
+			"  pass\n"
 			"`);\n"
 			"\n";
 

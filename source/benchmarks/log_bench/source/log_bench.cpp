@@ -64,7 +64,7 @@ BENCHMARK_DEFINE_F(log_bench, call_macro)
 	{
 		for (int64_t it = 0; it < call_count; ++it)
 		{
-			benchmark::DoNotOptimize(log_write("metacall", LOG_LEVEL_ERROR, "Message"));
+			log_write("metacall", LOG_LEVEL_ERROR, "Message");
 		}
 	}
 
@@ -87,7 +87,7 @@ BENCHMARK_DEFINE_F(log_bench, call_va)
 	{
 		for (int64_t it = 0; it < call_count; ++it)
 		{
-			benchmark::DoNotOptimize(log_write_impl_va("metacall", LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, LOG_LEVEL_ERROR, "Message"));
+			log_write_impl_va("metacall", LOG_PREPROCESSOR_LINE, log_record_function(), __FILE__, LOG_LEVEL_ERROR, "Message");
 		}
 	}
 

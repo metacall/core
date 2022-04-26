@@ -42,11 +42,9 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 		{
-			void *ret;
-
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacallt("int_mem_type", int_mem_type_ids, 0.0, 0.0));
+				void *ret = metacallt("int_mem_type", int_mem_type_ids, 0.0, 0.0);
 
 				state.PauseTiming();
 
@@ -90,8 +88,6 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 		{
-			void *ret;
-
 			state.PauseTiming();
 
 			void *args[2] = {
@@ -103,7 +99,7 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacallv("int_mem_type", args));
+				void *ret = metacallv("int_mem_type", args);
 
 				state.PauseTiming();
 
@@ -156,8 +152,6 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 		{
-			void *ret;
-
 			state.PauseTiming();
 
 			void *args[2] = {
@@ -169,7 +163,7 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacall_await(
+				void *ret = metacall_await(
 											 "int_mem_async_type", args, [](void *result, void *data) -> void * {
 												 benchmark::State *state = static_cast<benchmark::State *>(data);
 
@@ -182,7 +176,7 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 
 												 return NULL;
 											 },
-											 NULL, static_cast<void *>(&state)));
+											 NULL, static_cast<void *>(&state));
 
 				if (ret == NULL)
 				{

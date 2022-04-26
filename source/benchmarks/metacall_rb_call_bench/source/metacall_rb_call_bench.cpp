@@ -76,11 +76,9 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_va_args)
 /* Ruby */
 #if defined(OPTION_BUILD_LOADERS_RB)
 		{
-			void *ret;
-
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacall("int_mem_type", 0, 0));
+				void *ret = metacall("int_mem_type", 0, 0);
 
 				state.PauseTiming();
 
@@ -124,8 +122,6 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_array_args)
 /* Ruby */
 #if defined(OPTION_BUILD_LOADERS_RB)
 		{
-			void *ret;
-
 			state.PauseTiming();
 
 			void *args[2] = {
@@ -137,7 +133,7 @@ BENCHMARK_DEFINE_F(metacall_rb_call_bench, call_array_args)
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacallv("int_mem_type", args));
+				void *ret = metacallv("int_mem_type", args);
 
 				state.PauseTiming();
 

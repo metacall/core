@@ -75,11 +75,9 @@ BENCHMARK_DEFINE_F(metacall_py_call_bench, call_va_args)
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 		{
-			void *ret;
-
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacall("int_mem_type", 0L, 0L));
+				void *ret = metacall("int_mem_type", 0L, 0L);
 
 				state.PauseTiming();
 
@@ -123,8 +121,6 @@ BENCHMARK_DEFINE_F(metacall_py_call_bench, call_array_args)
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 		{
-			void *ret;
-
 			state.PauseTiming();
 
 			void *args[2] = {
@@ -136,7 +132,7 @@ BENCHMARK_DEFINE_F(metacall_py_call_bench, call_array_args)
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacallv("int_mem_type", args));
+				void *ret = metacallv("int_mem_type", args);
 
 				state.PauseTiming();
 

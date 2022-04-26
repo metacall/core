@@ -26,20 +26,6 @@
 class metacall_py_init_bench : public benchmark::Fixture
 {
 public:
-	void SetUp(benchmark::State &)
-	{
-		metacall_print_info();
-
-		metacall_log_null();
-	}
-
-	void TearDown(benchmark::State &state)
-	{
-		if (metacall_destroy() != 0)
-		{
-			state.SkipWithError("Error destroying MetaCall");
-		}
-	}
 };
 
 BENCHMARK_DEFINE_F(metacall_py_init_bench, init)
@@ -50,6 +36,14 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, init)
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 		{
+			state.PauseTiming();
+
+			metacall_print_info();
+
+			metacall_log_null();
+
+			state.ResumeTiming();
+
 			if (metacall_initialize() != 0)
 			{
 				state.SkipWithError("Error initializing MetaCall");
@@ -82,15 +76,6 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load)
 				"def int_mem_type(left: int, right: int) -> int:\n"
 				"\treturn 0;";
 
-			state.PauseTiming();
-
-			if (metacall_initialize() != 0)
-			{
-				state.SkipWithError("Error initializing MetaCall");
-			}
-
-			state.ResumeTiming();
-
 			if (metacall_load_from_memory(tag, int_mem_type, sizeof(int_mem_type), NULL) != 0)
 			{
 				state.SkipWithError("Error loading int_mem_type function");
@@ -122,28 +107,10 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)
 				"#!/usr/bin/env python3\n"
 				"def int_a_type(left: int, right: int) -> int:\n"
 				"\treturn 0;";
-			static const char int_b_type[] =
-				"#!/usr/bin/env python3\n"
-				"def int_b_type(left: int, right: int) -> int:\n"
-				"\treturn 0;";
-
-			state.PauseTiming();
-
-			if (metacall_initialize() != 0)
-			{
-				state.SkipWithError("Error initializing MetaCall");
-			}
 
 			if (metacall_load_from_memory(tag, int_a_type, sizeof(int_a_type), NULL) != 0)
 			{
 				state.SkipWithError("Error loading int_a_type function");
-			}
-
-			state.ResumeTiming();
-
-			if (metacall_load_from_memory(tag, int_b_type, sizeof(int_b_type), NULL) != 0)
-			{
-				state.SkipWithError("Error loading int_b_type function");
 			}
 		}
 #endif /* OPTION_BUILD_LOADERS_PY */
@@ -155,6 +122,32 @@ BENCHMARK_DEFINE_F(metacall_py_init_bench, load_warm)
 BENCHMARK_REGISTER_F(metacall_py_init_bench, load_warm)
 	->Threads(1)
 	->Unit(benchmark::kMicrosecond)
+	->Iterations(1)
+	->Repetitions(1);
+
+
+BENCHMARK_DEFINE_F(metacall_py_init_bench, destroy)
+(benchmark::State &state)
+{
+	for (auto _ : state)
+	{
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
+		{
+			if (metacall_destroy() != 0)
+			{
+				state.SkipWithError("Error destroying MetaCall");
+			}
+		}
+#endif /* OPTION_BUILD_LOADERS_PY */
+	}
+
+	state.SetLabel("MetaCall Python Init Benchmark - Destroy");
+}
+
+BENCHMARK_REGISTER_F(metacall_py_init_bench, destroy)
+	->Threads(1)
+	->Unit(benchmark::kMillisecond)
 	->Iterations(1)
 	->Repetitions(1);
 

@@ -216,9 +216,11 @@ void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 
 	if (loader_is_destroyed(invoke_state->impl) != 0 && capsule != NULL)
 	{
+		PyThreadState *tstate = PyEval_SaveThread();
 		PyGILState_STATE gstate = PyGILState_Ensure();
 		Py_DECREF(capsule);
 		PyGILState_Release(gstate);
+		PyEval_RestoreThread(tstate);
 	}
 
 	free(invoke_state);
@@ -259,9 +261,11 @@ void type_py_interface_destroy(type t, type_impl impl)
 
 	if (Py_IsInitialized() != 0)
 	{
+		PyThreadState *tstate = PyEval_SaveThread();
 		PyGILState_STATE gstate = PyGILState_Ensure();
 		Py_DECREF(builtin);
 		PyGILState_Release(gstate);
+		PyEval_RestoreThread(tstate);
 	}
 }
 
@@ -323,9 +327,11 @@ void future_py_interface_destroy(future f, future_impl impl)
 	{
 		if (loader_is_destroyed(py_future->impl) != 0)
 		{
+			PyThreadState *tstate = PyEval_SaveThread();
 			PyGILState_STATE gstate = PyGILState_Ensure();
 			Py_DECREF(py_future->future);
 			PyGILState_Release(gstate);
+			PyEval_RestoreThread(tstate);
 		}
 
 		free(py_future);
@@ -462,6 +468,7 @@ void py_object_interface_destroy(object obj, object_impl impl)
 	{
 		if (loader_is_destroyed(py_object->impl) != 0)
 		{
+			PyThreadState *tstate = PyEval_SaveThread();
 			PyGILState_STATE gstate = PyGILState_Ensure();
 			Py_XDECREF(py_object->obj);
 
@@ -470,6 +477,7 @@ void py_object_interface_destroy(object obj, object_impl impl)
 				value_type_destroy(py_object->obj_class);
 			}
 			PyGILState_Release(gstate);
+			PyEval_RestoreThread(tstate);
 		}
 
 		free(py_object);
@@ -668,9 +676,11 @@ void py_class_interface_destroy(klass cls, class_impl impl)
 	{
 		if (loader_is_destroyed(py_class->impl) != 0)
 		{
+			PyThreadState *tstate = PyEval_SaveThread();
 			PyGILState_STATE gstate = PyGILState_Ensure();
 			Py_XDECREF(py_class->cls);
 			PyGILState_Release(gstate);
+			PyEval_RestoreThread(tstate);
 		}
 
 		free(py_class);
@@ -1406,7 +1416,7 @@ PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v)
 	return NULL;
 }
 
-PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject *pyfuture)
+PyObject *py_task_callback_handler_impl_unsafe(PyThreadState *tstate, PyGILState_STATE gstate, PyObject *pyfuture)
 {
 	PyObject *capsule = PyObject_GetAttrString(pyfuture, "__metacall_capsule");
 	if (capsule == NULL)
@@ -1435,7 +1445,9 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 		Py_DECREF(result);
 
 		PyGILState_Release(gstate);
+		PyEval_RestoreThread(tstate);
 		ret = callback_state->resolve_callback(v, callback_state->context);
+		tstate = PyEval_SaveThread();
 		gstate = PyGILState_Ensure();
 	}
 	else
@@ -1467,7 +1479,9 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 		}
 
 		PyGILState_Release(gstate);
+		PyEval_RestoreThread(tstate);
 		ret = callback_state->reject_callback(v, callback_state->context);
+		tstate = PyEval_SaveThread();
 		gstate = PyGILState_Ensure();
 	}
 
@@ -1490,14 +1504,16 @@ PyObject *py_task_callback_handler_impl_unsafe(PyGILState_STATE gstate, PyObject
 
 PyObject *py_task_callback_handler_impl(PyObject *self, PyObject *pyfuture)
 {
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	/* self will always be NULL */
 	(void)self;
 
-	PyObject *result = py_task_callback_handler_impl_unsafe(gstate, pyfuture);
+	PyObject *result = py_task_callback_handler_impl_unsafe(tstate, gstate, pyfuture);
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 
 	return result;
 }
@@ -1509,6 +1525,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	const size_t signature_args_size = signature_count(s);
 	type ret_type = signature_get_return(s);
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	value v = NULL;
 
@@ -1569,6 +1586,7 @@ function_return function_py_interface_invoke(function func, function_impl impl, 
 	Py_DECREF(result);
 finalize:
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	return v;
 }
 
@@ -1582,6 +1600,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 	PyObject *pyfuture = NULL;
 	size_t args_count;
 	loader_impl_py py_impl = loader_impl_get(py_func->impl);
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	PyObject *tuple_args;
 
@@ -1699,6 +1718,7 @@ function_return function_py_interface_await(function func, function_impl impl, f
 		Py_DECREF(tuple_args);
 
 		PyGILState_Release(gstate);
+		PyEval_RestoreThread(tstate);
 
 		return v;
 	}
@@ -1713,6 +1733,7 @@ error:
 	Py_DECREF(tuple_args);
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 
 	return NULL;
 }
@@ -1731,9 +1752,11 @@ void function_py_interface_destroy(function func, function_impl impl)
 
 		if (loader_is_destroyed(py_func->impl) != 0)
 		{
+			PyThreadState *tstate = PyEval_SaveThread();
 			PyGILState_STATE gstate = PyGILState_Ensure();
 			Py_DECREF(py_func->func);
 			PyGILState_Release(gstate);
+			PyEval_RestoreThread(tstate);
 		}
 
 		free(py_func);
@@ -2477,6 +2500,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 #endif
 
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
@@ -2547,6 +2571,7 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 	}
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 
 	/* Register initialization */
 	loader_initialization_register(impl);
@@ -2585,6 +2610,7 @@ error_after_traceback_and_gc:
 error_after_argv:
 error_after_sys_executable:
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	(void)py_loader_impl_finalize(py_impl);
 error_init_py:
 	free(py_impl);
@@ -2602,6 +2628,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	}
 
 	int result = 0;
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 	PyObject *system_paths = PySys_GetObject("path");
 	PyObject *current_path = PyUnicode_DecodeFSDefault(path);
@@ -2631,6 +2658,7 @@ int py_loader_impl_execution_path(loader_impl impl, const loader_path path)
 clear_current_path:
 	Py_DECREF(current_path);
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	return result;
 }
 
@@ -2700,6 +2728,7 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 
 void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 {
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	for (size_t iterator = 0; iterator < py_handle->size; ++iterator)
@@ -2708,6 +2737,7 @@ void py_loader_impl_handle_destroy(loader_impl_py_handle py_handle)
 	}
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	free(py_handle->modules);
 	free(py_handle);
 }
@@ -2919,6 +2949,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_path 
 		goto error_create_handle;
 	}
 
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	/* Possibly a recursive call */
@@ -3002,6 +3033,7 @@ loader_handle py_loader_impl_load_from_file(loader_impl impl, const loader_path 
 	Py_LeaveRecursiveCall();
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 
 	return (loader_handle)py_handle;
 
@@ -3013,6 +3045,7 @@ error_import_module:
 	}
 error_recursive_call:
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	py_loader_impl_handle_destroy(py_handle);
 error_create_handle:
 	return NULL;
@@ -3046,6 +3079,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 		goto error_create_handle;
 	}
 
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	/* Possibly a recursive call */
@@ -3070,6 +3104,7 @@ loader_handle py_loader_impl_load_from_memory(loader_impl impl, const loader_nam
 	Py_LeaveRecursiveCall();
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Python loader (%p) importing %s from memory module at (%p)", (void *)impl, name, (void *)py_handle->modules[0].instance);
 
@@ -3081,6 +3116,7 @@ error_import_module:
 		PyErr_Clear();
 	}
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	py_loader_impl_handle_destroy(py_handle);
 error_create_handle:
 	return NULL;
@@ -3689,6 +3725,7 @@ static int py_loader_impl_validate_object(loader_impl impl, PyObject *obj, objec
 int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context ctx)
 {
 	int ret = 1;
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	if (module == NULL || !PyModule_Check(module))
@@ -3778,6 +3815,7 @@ int py_loader_impl_discover_module(loader_impl impl, PyObject *module, context c
 
 cleanup:
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 	return ret;
 }
 
@@ -4000,6 +4038,7 @@ int py_loader_impl_destroy(loader_impl impl)
 	/* Destroy children loaders */
 	loader_unload_children(impl);
 
+	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
 
 	/* Stop event loop for async calls */
@@ -4047,8 +4086,12 @@ int py_loader_impl_destroy(loader_impl impl)
 #endif
 
 	PyGILState_Release(gstate);
+	PyEval_RestoreThread(tstate);
 
 	int result = py_loader_impl_finalize(py_impl);
+
+	/* Unhook the deallocation of PyCFunction */
+	PyCFunction_Type.tp_dealloc = py_loader_impl_pycfunction_dealloc;
 
 	free(py_impl);
 

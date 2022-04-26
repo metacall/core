@@ -39,11 +39,9 @@ BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_va_args)
 /* CSharp */
 #if defined(OPTION_BUILD_LOADERS_CS)
 		{
-			void *ret;
-
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacall("sum", 0, 0));
+				void *ret = metacall("sum", 0, 0);
 
 				state.PauseTiming();
 
@@ -87,8 +85,6 @@ BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_array_args)
 /* CSharp */
 #if defined(OPTION_BUILD_LOADERS_CS)
 		{
-			void *ret;
-
 			state.PauseTiming();
 
 			void *args[2] = {
@@ -100,7 +96,7 @@ BENCHMARK_DEFINE_F(metacall_cs_call_bench, call_array_args)
 
 			for (int64_t it = 0; it < call_count; ++it)
 			{
-				benchmark::DoNotOptimize(ret = metacallv("sum", args));
+				void *ret = metacallv("sum", args);
 
 				state.PauseTiming();
 
