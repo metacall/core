@@ -66,48 +66,33 @@ class py_port_test(unittest.TestCase):
 		self.assertEqual(subtract(5, 4), 1.0)
 
 		# TODO:
-		# The following tests deadlock because this:
+		# The current code does the following:
 		#	flip is a Python function which wraps a NodeJS function,
 		#	when calling to the function in NodeJS, the call gets enqueued
 		#	in order to make a thread safe call into the V8 thread. Once this
 		#	happens, flip calls back into a Python lambda (in the first case),
 		#	or function (wrapping subtract) in the second case. As the Python GIL is
 		#	already acquired by the first thread, the main thread which did the call,
-		#	different from the V8 thread, it deadlocks when trying to acquire it again in
-		#	the V8 thread.
+		#	different from the V8 thread, the GIL gets aquired in the new thread.
 		#
-		#		|          Python Thread          |           V8 Thread          |
-		#		|----------------------------------------------------------------|
-		#		| GIL lock                        |                              |
-		#		|    Call flip                    |                              |
-		#		|        Enqueue call in V8       |                              |
-		#		|        Wait for V8              |                              |
-		#		|                                 | Execute flip                 |
-		#		|                                 |    Call lambda               |
-		#		|                                 |        GIL lock (deadlock)   |
+		#		|          Python Thread          |        V8 Thread       |
+		#		|----------------------------------------------------------|
+		#		| GIL lock                        |                        |
+		#		|    Call flip                    |                        |
+		#		|        Enqueue call in V8       |                        |
+		#		|        Wait for V8              |                        |
+		#		|                                 | Execute flip           |
+		#		|                                 |    Call lambda         |
+		#		|                                 |        GIL lock        |
 		#
-		# There may be different solutions to this problem, one way to avoid this, which I
-		# already thought about it, and it may also improve performance, is to detect when
-		# we are passing a NodeJS function to flip, and "unwrap" the substract function in
-		# order to pass it directly to V8 thread, this will work for the second case, but not
-		# the first case. Another option which will work for all cases is to make all calls async,
-		# and always force the end user to develop with async calls. I think it is a very interesting
-		# option because it fits well in a FaaS model, but I am not sure what implications can have
-		# for other existing kind of applications or for the simplicity and easy of usage.
-		# Probably there is an alternative option, for example detecting deadlocks on the fly and
-		# try to solve them in some way, maybe having another interpreter instance, or some co-routine
-		# like mechanism, I don't know.
-		#
-		# For tracking deadlocks, this is the mechanism that we can use:
+		# For avoiding extra work when executing calls in the same thread, this is the mechanism that we can use:
 		#	1) Get the thread id of the thread where Python was launched, similarly to this:
 		#		https://github.com/metacall/core/blob/9ad4ed8964a53e30d8ab478a53122c396d705cdd/source/loaders/node_loader/source/node_loader_impl.cpp#L3158
 		#	2) Check if the current thread is the same as where Python interpreter was launched and check against this:
 		#		PyGILState_Check: https://python.readthedocs.io/en/latest/c-api/init.html#c.PyGILState_Check
-		# This methodology could be use to implement reentrant calls too, but the GIL already has an internal counter
-		# for tracking how many times the GIL has been acquired so there is no need for that.
 		#
-		# self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0)
-		# self.assertEqual(flip(subtract)(5, 4), -1.0)
+		self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0)
+		self.assertEqual(flip(subtract)(5, 4), -1.0)
 
 if __name__ == '__main__':
 	unittest.main()
