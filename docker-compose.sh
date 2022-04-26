@@ -82,10 +82,32 @@ sub_test() {
 	ln -sf tools/dev/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output
 
+	# Retrieve all the summaries
 	SUMMARY=$(grep "SUMMARY:" /tmp/metacall-test-output)
 	echo "${SUMMARY}"
 	printf "Number of leaks detected: "
 	echo "${SUMMARY}" | awk '{print $7}' | awk '{s+=$1} END {print s}'
+
+	# Count the number of tests that really failed and avoid the false positives
+	FAILED=$(grep "FAILED TEST" /tmp/metacall-test-output)
+	printf "Number of tests failed: "
+	echo "${FAILED}" | awk '{print $1}' | awk '{s+=$1} END {print s}'
+
+	# Get the potential tests that failed
+	BEGIN=$(grep -n "The following tests FAILED:" /tmp/metacall-test-output | cut -d : -f 1)
+	END=$(grep -n "Errors while running CTest" /tmp/metacall-test-output | cut -d : -f 1)
+
+	if [ -z "${BEGIN}" ] || [ -z "${END}" ]; then
+		echo "ERROR! CTest failed to print properly the output, run tests again:"
+		echo "	Recompiling everything: docker rmi metacall/core:dev && ./docker-compose.sh test"
+		echo "	Without recompiling (needs to be built successfully previously): docker run --rm -it metacall/core:dev sh -c \"cd build && ctest -j4 --output-on-failure\""
+	else
+		BEGIN=$((BEGIN + 1))
+		END=$((END - 1))
+		echo "List of potential failed tests:"
+		sed -n "${BEGIN},${END}p" /tmp/metacall-test-output
+	fi
+
 	rm /tmp/metacall-test-output
 }
 
