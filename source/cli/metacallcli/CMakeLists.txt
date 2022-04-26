@@ -1,10 +1,4 @@
 #
-# External dependencies
-#
-
-# find_package(THIRDPARTY REQUIRED)
-
-#
 # Executable name and options
 #
 
@@ -72,7 +66,7 @@ set(PROJECT_METACALL_PORTS_DIRECTORY "${CMAKE_SOURCE_DIR}/source/ports/py_port")
 
 add_custom_target(${target}-scripts-tests ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E  make_directory ${LOADER_SCRIPT_PATH}
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${LOADER_SCRIPT_PATH}
 	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/test/ ${LOADER_SCRIPT_PATH}/
 	COMMAND ${CMAKE_COMMAND} -DPROJECT_METACALL_PORTS_DIRECTORY=${PROJECT_METACALL_PORTS_DIRECTORY} -DLOADER_SCRIPT_PATH=${LOADER_SCRIPT_PATH} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/configure_tests.cmake
 )
