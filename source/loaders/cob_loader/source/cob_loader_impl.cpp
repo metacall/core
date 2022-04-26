@@ -30,7 +30,7 @@
 
 #include <log/log.h>
 
-#include <stdlib.h>
+#include <cstring>
 
 #include <libcob.h>
 
@@ -65,9 +65,9 @@ function_return function_cob_interface_invoke(function func, function_impl impl,
 	}
 	else
 	{
-		void **cob_args = static_cast<void **>(malloc(sizeof(void *) * size));
+		void **cob_args = new void *[size];
 
-		if (cob_args == NULL)
+		if (cob_args == nullptr)
 		{
 			return NULL;
 		}
@@ -79,7 +79,7 @@ function_return function_cob_interface_invoke(function func, function_impl impl,
 
 		int result = cobcall(name, size, cob_args);
 
-		free(cob_args);
+		delete[] cob_args;
 
 		return value_create_int(result);
 	}
