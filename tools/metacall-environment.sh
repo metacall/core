@@ -47,6 +47,7 @@ INSTALL_RPC=0
 INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
+INSTALL_COBOL=0
 INSTALL_SWIG=0
 INSTALL_METACALL=0
 INSTALL_PACK=0
@@ -330,6 +331,19 @@ sub_c(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libffi-dev libclang-dev
 }
 
+# Cobol
+sub_cobol(){
+	echo "configure cobol"
+
+	echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
+
+	# Remove unstable from sources.list
+	$SUDO_CMD head -n -2 /etc/apt/sources.list
+}
+
 # MetaCall
 sub_metacall(){
 	# TODO: Update this or deprecate it
@@ -444,6 +458,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_C = 1 ]; then
 		sub_c
+	fi
+	if [ $INSTALL_COBOL = 1 ]; then
+		sub_cobol
 	fi
 	if [ $INSTALL_SWIG = 1 ]; then
 		sub_swig
@@ -560,6 +577,10 @@ sub_options(){
 			echo "c selected"
 			INSTALL_C=1
 		fi
+		if [ "$var" = 'cobol' ]; then
+			echo "cobol selected"
+			INSTALL_COBOL=1
+		fi
 		if [ "$var" = 'swig' ]; then
 			echo "swig selected"
 			INSTALL_SWIG=1
@@ -609,6 +630,7 @@ sub_help() {
 	echo "	wasm"
 	echo "	java"
 	echo "	c"
+	echo "	cobol"
 	echo "	swig"
 	echo "	metacall"
 	echo "	pack"

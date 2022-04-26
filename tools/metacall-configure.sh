@@ -35,6 +35,7 @@ BUILD_RPC=0
 BUILD_WASM=0
 BUILD_JAVA=0
 BUILD_C=0
+BUILD_COBOL=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
 BUILD_TESTS=0
@@ -114,6 +115,10 @@ sub_options() {
 		if [ "$option" = 'c' ]; then
 			echo "Build with c support"
 			BUILD_C=1
+		fi
+		if [ "$option" = 'cobol' ]; then
+			echo "Build with cobol support"
+			BUILD_COBOL=1
 		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
@@ -313,6 +318,15 @@ sub_configure() {
 		fi
 	fi
 
+	# Cobol
+	if [ $BUILD_COBOL = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_COB=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_COB=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -382,6 +396,7 @@ sub_help() {
 	echo "	wasm: build with wasm support"
 	echo "	java: build with java support"
 	echo "	c: build with c support"
+	echo "	cobol: build with cobol support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	tests: build and run all tests"

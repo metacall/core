@@ -37,6 +37,7 @@ INSTALL_RPC=0
 INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
+INSTALL_COBOL=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
@@ -176,6 +177,13 @@ sub_c(){
 	sub_apt_install_hold libffi libclang
 }
 
+# Cobol
+sub_cobol(){
+	echo "configure cobol"
+
+	sub_apt_install_hold libcob4
+}
+
 # Ports
 sub_ports(){
 	echo "configure ports"
@@ -229,6 +237,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_C = 1 ]; then
 		sub_c
+	fi
+	if [ $INSTALL_COBOL = 1 ]; then
+		sub_cobol
 	fi
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
@@ -312,6 +323,10 @@ sub_options(){
 			echo "c selected"
 			INSTALL_C=1
 		fi
+		if [ "$var" = 'cobol' ]; then
+			echo "cobol selected"
+			INSTALL_COBOL=1
+		fi
 		if [ "$var" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
@@ -341,6 +356,7 @@ sub_help() {
 	echo "	wasm"
 	echo "	java"
 	echo "	c"
+	echo "	cobol"
 	echo "	ports"
 	echo "	clean"
 	echo ""
