@@ -19,18 +19,19 @@
  */
 
 /* -- Headers -- */
+#include <metacallcli/cli.hpp>
 
-#include <metacallcli/application.hpp>
+#include <iostream>
 
-/* -- Methods -- */
-
-int main(int argc, char *argv[])
+int main(int argc, char **argv)
 {
-	using namespace metacallcli;
-
-	application app(argc, argv);
-
-	app.run();
-
+	if (argc > 1)
+	{
+		cli_main(argc, argv);
+	}
+	else
+	{
+		std::cout << "'Repl' not yet Implemented" << '\n';
+	}
 	return 0;
 }
