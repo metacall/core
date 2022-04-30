@@ -4,3 +4,5 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libffi = "3.0.0"
+dlopen = "0.1.8"

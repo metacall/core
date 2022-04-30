@@ -1,19 +1,20 @@
 use crate::{compile, CompilerState, RegistrationError, Source};
 
-use std::{ffi::c_void, path::PathBuf};
+use std::{ffi::c_void, fs};
 
 use crate::{registrator, DlopenLibrary};
 
 #[derive(Debug)]
-pub struct FileRegistration {
-    pub path_to_file: PathBuf,
+pub struct MemoryRegistration {
+    pub name: String,
     pub state: CompilerState,
     pub dlopen: DlopenLibrary,
 }
-impl FileRegistration {
-    pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {
-        let state = match compile(Source::new(Source::File {
-            path: PathBuf::from(path_to_file.clone()),
+impl MemoryRegistration {
+    pub fn new(name: String, code: String) -> Result<MemoryRegistration, RegistrationError> {
+        let state = match compile(Source::new(Source::Memory {
+            name: name.clone(),
+            code,
         })) {
             Ok(state) => state,
             Err(error) => {
@@ -27,9 +28,11 @@ impl FileRegistration {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DlopenError(error)),
         };
+        // delete compiled library
+        fs::remove_file(&state.output).expect("unable to delete compiled library");
 
-        Ok(FileRegistration {
-            path_to_file,
+        Ok(MemoryRegistration {
+            name,
             state,
             dlopen,
         })

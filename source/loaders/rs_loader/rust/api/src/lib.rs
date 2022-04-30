@@ -77,31 +77,23 @@ pub struct FunctionInterface {
 
 #[no_mangle]
 extern "C" fn function_singleton_create(_func: *mut c_void, _func_impl: *mut c_void) -> c_int {
-    println!("rs_loader: create function");
     0
 }
 
 #[no_mangle]
 extern "C" fn function_singleton_invoke(
     _func: *mut c_void,
-    _func_impl: *mut c_void,
-    _args: *mut *mut c_void,
-    _size: usize,
+    func_impl: *mut c_void,
+    args_p: *mut *mut c_void,
+    size: usize,
 ) -> *mut c_void {
-    println!("rs_loader: invoke function");
-    // func is of type function found here: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/reflect/include/reflect/reflect_function.h#L65
-    // func_impl is of type: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
-    // args is an array of 'value' of size 'size', you can iterate over it and get the C value representation
-    // The task to do is very similar to this: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/c_loader/source/c_loader_impl.cpp#L378
-    // But implemented in Rust. We can forget about closures for now, because that's designed in order to implement callbacks
-
-    // In the example of C invoke, the func_impl is not just the address but a struct which contains this:
-    // https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/c_loader/source/c_loader_impl.cpp#L69
-
-    // Last element is the address, but the rest are for interfacing with the libffi API. I allocate them while discovering in order
-    // to precompute the call and waste less memory and allocations during the invoke.
-
-    0 as *mut c_void
+    unsafe {
+        let func_ptr = Box::from_raw(func_impl as *mut unsafe fn());
+        let func: fn(*mut *mut c_void, usize) -> *mut c_void = std::mem::transmute_copy(&*func_ptr);
+        let result = func(args_p, size);
+        std::mem::forget(func_ptr);
+        result
+    }
 }
 
 #[no_mangle]
@@ -119,9 +111,11 @@ extern "C" fn function_singleton_await(
 }
 
 #[no_mangle]
-extern "C" fn function_singleton_destroy(_func: *mut c_void, _func_impl: *mut c_void) {
-    println!("rs_loader: destroy function");
-    // Here we have to free the memory of this: https://github.com/metacall/core/blob/44564a0a183a121eec4a55bcb433d52a308e5e9d/source/loaders/rs_loader/rust/compiler/src/registrator.rs#L19
+extern "C" fn function_singleton_destroy(_func: *mut c_void, func_impl: *mut c_void) {
+    unsafe {
+        let func_ptr = Box::from_raw(func_impl as *mut *mut c_void);
+        drop(func_ptr);
+    }
 }
 
 #[no_mangle]
