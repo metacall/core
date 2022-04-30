@@ -3,6 +3,7 @@ use crate::{c_char, c_int, c_void, CStr, PathBuf};
 use api;
 
 use compiler::file::FileRegistration;
+use compiler::memory::MemoryRegistration;
 
 use std::fmt::Display;
 
@@ -10,6 +11,7 @@ use std::fmt::Display;
 pub enum LoadingMethod {
     File(FileRegistration),
     /*Package(PackageRegistration),*/
+    Memory(MemoryRegistration),
 }
 
 // Trait aliasing

@@ -14,18 +14,23 @@ extern crate rustc_interface;
 extern crate rustc_session;
 extern crate rustc_span;
 
-use rustc_ast::{visit, NodeId};
+use dlopen;
+use rustc_ast::{FloatTy, IntTy, UintTy};
+use rustc_hir::MutTy;
+use rustc_hir::{def::Res, FnRetTy, GenericArg, PrimTy, QPath, Ty, TyKind};
 use rustc_interface::{interface::Compiler, Config, Queries};
 use rustc_session::config;
 use rustc_session::config::CrateType;
 use rustc_span::source_map;
-use rustc_span::Span;
-
+use std::fmt;
 use std::{path::PathBuf, sync};
-
 pub mod file;
+pub mod memory;
 pub mod package;
 pub(crate) mod registrator;
+pub mod wrapper;
+
+use wrapper::generate_wrapper;
 
 pub enum RegistrationError {
     CompilationError(String),
@@ -172,31 +177,113 @@ fn compiler_source() -> Option<PathBuf> {
     }
 }
 
-#[derive(Clone, Debug)]
-pub struct FunctionType {
-    name: String,
-    // ty: rustc_ast::ptr::P<rustc_ast::ast::Ty>,
+#[derive(Debug)]
+pub struct DlopenLibrary {
+    pub instance: dlopen::raw::Library,
+}
+impl DlopenLibrary {
+    pub fn new(path_to_dll: &PathBuf) -> Result<DlopenLibrary, String> {
+        match match dlopen::raw::Library::open(path_to_dll.clone()) {
+            Ok(instance) => return Ok(DlopenLibrary { instance }),
+            Err(error) => match error {
+                dlopen::Error::NullCharacter(null_error) => {
+                    Err(format!(
+                        "Provided string could not be coverted into `{}` because it contained null character. IoError: {}",
+                        "std::ffi::CString",
+                        null_error
+                    ))
+                }
+                dlopen::Error::OpeningLibraryError(io_error) => {
+                    Err(format!(
+                        "The dll could not be opened. IoError: {}",
+                        io_error
+                    ))
+                }
+                dlopen::Error::SymbolGettingError(io_error) => {
+                    Err(format!(
+                        "The symbol could not be obtained. IoError: {}",
+                        io_error
+                    ))
+                }
+                dlopen::Error::NullSymbol => {
+                    Err(format!(
+                        "Value of the symbol was null.",
+                    ))
+                }
+                dlopen::Error::AddrNotMatchingDll(io_error) => {
+                    Err(format!(
+                        "Address could not be matched to a dynamic link library. IoError: {}",
+                        io_error
+                    ))
+                }
+            },
+        } {
+            Ok(dlopen_library_instance) => return Ok(dlopen_library_instance),
+            Err(error) => {
+                let dll_opening_error = format!(
+                    "{}\nrs_loader was unable to open the dll with the following path: `{}`", 
+                    error,
+                    path_to_dll.to_str().unwrap()
+                );
+
+                return Err(dll_opening_error)
+            }
+        }
+    }
 }
 
-impl FunctionType {
-    fn new(ty: &rustc_ast::ptr::P<rustc_ast::ast::Ty>) -> FunctionType {
-        FunctionType {
-            name: rustc_ast_pretty::pprust::ty_to_string(&ty),
-            // ty: ty.into_inner().clone(),
-        }
+#[derive(Clone, Debug)]
+pub enum Mutability {
+    Yes,
+    No,
+}
+#[derive(Clone, Debug)]
+pub enum Reference {
+    Yes,
+    No,
+}
+
+#[derive(Clone, Debug)]
+pub enum FunctionType {
+    I16,
+    I32,
+    I64,
+    U16,
+    U32,
+    U64,
+    F32,
+    F64,
+    Bool,
+    Char,
+    Array,
+    Map,
+    Slice,
+    Str,
+    Ptr,
+    Null,
+    Complex,
+}
+
+impl fmt::Display for FunctionType {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.write_str(format!("{:?}", self).as_str())?;
+        Ok(())
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct FunctionParameter {
     name: String,
-    t: FunctionType,
+    mutability: Mutability,
+    reference: Reference,
+    ty: FunctionType,
+    generic: Vec<FunctionParameter>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Function {
     name: String,
-    ret: Option<FunctionType>,
+    ret: Option<FunctionParameter>,
     args: Vec<FunctionParameter>,
 }
 
@@ -213,65 +300,100 @@ pub struct CompilerError {
     err: String,
 }
 
-struct FunctionVisitor {
-    functions: Vec<Function>,
-}
-
-impl FunctionVisitor {
-    fn new() -> FunctionVisitor {
-        FunctionVisitor { functions: vec![] }
-    }
-
-    fn register(&mut self, name: String, decl: &rustc_ast::ptr::P<rustc_ast::ast::FnDecl>) {
-        self.functions.push(Function {
-            name,
-            ret: match &decl.output {
-                rustc_ast::ast::FnRetTy::Default(_) => None,
-                rustc_ast::ast::FnRetTy::Ty(ty) => Some(FunctionType::new(&ty)),
-            },
-            args: decl
-                .inputs
-                .iter()
-                .map(|param| FunctionParameter {
-                    name: rustc_ast_pretty::pprust::pat_to_string(&param.pat.clone().into_inner()),
-                    t: FunctionType::new(&param.ty),
-                })
-                .collect(),
-        });
-    }
-}
-
-// visit::Visitor is the generic trait for walking an AST
-impl<'a> visit::Visitor<'a> for FunctionVisitor {
-    fn visit_fn(&mut self, fk: visit::FnKind, s: Span, _: NodeId) {
-        match fk {
-            visit::FnKind::Fn(_, indent, sig, visibility, ..) => {
-                // TODO: https://docs.rs/rustc-ap-rustc_ast/677.0.0/rustc_ap_rustc_ast/ast/struct.FnHeader.html
-                // Asyncness, constness, extern "C"
-                match visibility.kind {
-                    rustc_ast::ast::VisibilityKind::Public => {
-                        self.register(indent.name.to_string(), &sig.decl)
-                    }
-                    _ => (),
-                }
-            }
-            _ => (),
-        }
-
-        visit::walk_fn(self, fk, s)
-    }
-}
-
-struct CompilerCallbacks {
+pub struct CompilerCallbacks {
     source: SourceImpl,
     functions: Vec<Function>,
+}
+
+fn handle_prim_ty(typ: PrimTy) -> FunctionType {
+    match typ {
+        PrimTy::Int(ty) => match ty {
+            IntTy::I16 => return FunctionType::I16,
+            IntTy::I32 => return FunctionType::I32,
+            IntTy::I64 => return FunctionType::I64,
+            _ => return FunctionType::Null,
+        },
+        PrimTy::Uint(ty) => match ty {
+            UintTy::U16 => return FunctionType::U16,
+            UintTy::U32 => return FunctionType::U32,
+            UintTy::U64 => return FunctionType::U64,
+            _ => return FunctionType::Null,
+        },
+        PrimTy::Float(ty) => match ty {
+            FloatTy::F32 => return FunctionType::F32,
+            FloatTy::F64 => return FunctionType::F64,
+        },
+        PrimTy::Bool => return FunctionType::Bool,
+        PrimTy::Char => return FunctionType::Char,
+        PrimTy::Str => return FunctionType::Str,
+    }
+}
+
+fn handle_ty(ty: &Ty) -> FunctionParameter {
+    let mut result = FunctionParameter {
+        name: String::new(),
+        mutability: Mutability::No,
+        reference: Reference::No,
+        ty: FunctionType::Null,
+        generic: vec![],
+    };
+    match &ty.kind {
+        TyKind::Path(path) => {
+            if let QPath::Resolved(_, rpath) = path {
+                match rpath.res {
+                    Res::PrimTy(typ) => {
+                        let segment = &rpath.segments[0];
+                        result.name = segment.ident.name.to_string();
+                        result.ty = handle_prim_ty(typ);
+                    }
+                    Res::Def(_, _) => {
+                        let segment = &rpath.segments[0];
+                        result.name = segment.ident.name.to_string();
+                        if segment.ident.name.as_str() == "Vec" {
+                            result.ty = FunctionType::Array;
+                            // vec
+                            if let Some(ga) = segment.args {
+                                for arg in ga.args {
+                                    match arg {
+                                        GenericArg::Type(ty) => result.generic.push(handle_ty(ty)),
+                                        _ => todo!(),
+                                    }
+                                }
+                            }
+                        } else if segment.ident.name.as_str() == "HashMap" {
+                            result.ty = FunctionType::Map;
+                            if let Some(ga) = segment.args {
+                                for arg in ga.args {
+                                    match arg {
+                                        GenericArg::Type(ty) => result.generic.push(handle_ty(ty)),
+                                        _ => todo!(),
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => todo!(),
+                }
+            }
+        }
+        TyKind::Rptr(_, MutTy { ty, mutbl }) => {
+            let mut inner_ty = handle_ty(ty);
+            inner_ty.reference = Reference::Yes;
+            match mutbl {
+                rustc_hir::Mutability::Mut => inner_ty.mutability = Mutability::Yes,
+                rustc_hir::Mutability::Not => inner_ty.mutability = Mutability::No,
+            }
+            return inner_ty;
+        }
+        _ => {}
+    }
+    result
 }
 
 impl rustc_driver::Callbacks for CompilerCallbacks {
     fn config(&mut self, config: &mut Config) {
         // Set up output
         config.output_file = Some(self.source.output.clone());
-
         // Set up inputs
         config.input = self.source.input.clone().0;
         config.input_path = Some(self.source.input_path.clone());
@@ -289,24 +411,40 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         _compiler: &Compiler,
         queries: &'tcx Queries<'tcx>,
     ) -> rustc_driver::Compilation {
-        let krate = queries
-            .parse()
-            .expect("no Result<Query<Crate>> found")
-            .take();
+        // analysis
+        if self.functions.len() == 0 {
+            queries.global_ctxt().unwrap().peek_mut().enter(|tcx| {
+                for item in tcx.hir().items() {
+                    match &item.kind {
+                        rustc_hir::ItemKind::Fn(sig, _, _) => {
+                            let mut function = Function {
+                                name: item.ident.to_string(),
+                                ret: None,
+                                args: vec![],
+                            };
+                            // parse input and output
+                            for arg in sig.decl.inputs {
+                                function.args.push(handle_ty(arg));
+                            }
 
-        // let crate_name = match rustc_attr::find_crate_name(compiler.session(), &krate.attrs) {
-        //     Some(name) => name.to_string(),
-        //     None => String::from("unknown_crate"),
-        // };
-        // println!("In crate: {},\n", crate_name);
+                            match sig.decl.output {
+                                FnRetTy::DefaultReturn(_) => function.ret = None,
+                                FnRetTy::Return(ty) => {
+                                    function.ret = Some(handle_ty(ty));
+                                }
+                            }
+                            self.functions.push(function);
+                        }
+                        _ => continue,
+                    }
+                }
+            });
 
-        let mut fn_visitor = FunctionVisitor::new();
-
-        visit::walk_crate(&mut fn_visitor, &krate);
-
-        self.functions = fn_visitor.functions.clone();
-
-        rustc_driver::Compilation::Continue
+            return rustc_driver::Compilation::Stop;
+        } else {
+            // we have populated functions, continue
+            return rustc_driver::Compilation::Continue;
+        }
     }
 }
 
@@ -476,14 +614,46 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
     let errors_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
 
-    match rustc_driver::catch_fatal_errors(|| {
+    // parse and generate wrapper
+    let parsing_result: Result<(), CompilerError> = match rustc_driver::catch_fatal_errors(|| {
         run_compiler(&mut callbacks, &diagnostics_buffer, &errors_buffer)
     })
     .and_then(|result| result)
     {
+        Ok(()) => Ok(()),
+        Err(err) => {
+            // Read buffered diagnostics
+            let diagnostics =
+                String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
+            eprintln!("{}", diagnostics);
+
+            // Read buffered errors
+            let errors = String::from_utf8(errors_buffer.lock().unwrap().clone()).unwrap();
+            eprintln!("{}", errors);
+
+            return Err(CompilerError {
+                diagnostics,
+                errors,
+                err: format!("{:?}", err),
+            });
+        }
+    };
+    // parse fails, stop
+    if let Err(e) = parsing_result {
+        return Err(e);
+    }
+
+    let mut patched_callback = generate_wrapper(callbacks).unwrap();
+
+    // generate binary
+    match rustc_driver::catch_fatal_errors(|| {
+        run_compiler(&mut patched_callback, &diagnostics_buffer, &errors_buffer)
+    })
+    .and_then(|result| result)
+    {
         Ok(()) => Ok(CompilerState {
-            output: callbacks.source.output.clone(),
-            functions: callbacks.functions.clone(),
+            output: patched_callback.source.output.clone(),
+            functions: patched_callback.functions.clone(),
         }),
         Err(err) => {
             // Read buffered diagnostics
