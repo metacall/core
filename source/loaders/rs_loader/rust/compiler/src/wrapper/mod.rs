@@ -1,6 +1,7 @@
 mod array;
 mod map;
 mod number;
+mod string;
 
 use crate::Function;
 
@@ -28,6 +29,7 @@ fn value_to_type(ty: &FunctionType) -> String {
         FunctionType::I16 | FunctionType::U16 => "metacall_value_to_short".to_string(),
         FunctionType::I32 | FunctionType::U32 => "metacall_value_to_int".to_string(),
         FunctionType::I64 | FunctionType::U64 => "metacall_value_to_long".to_string(),
+        FunctionType::Usize => "metacall_value_to_long".to_string(),
         FunctionType::Bool => "metacall_value_to_bool".to_string(),
         FunctionType::Char => "metacall_value_to_char".to_string(),
         FunctionType::F32 => "metacall_value_to_float".to_string(),
@@ -44,6 +46,7 @@ fn value_to_rust_type(ty: &FunctionType) -> String {
         FunctionType::U16 => "u16".to_string(),
         FunctionType::U32 => "u32".to_string(),
         FunctionType::U64 => "u64".to_string(),
+        FunctionType::Usize => "usize".to_string(),
         FunctionType::Bool => "bool".to_string(),
         FunctionType::Char => "char".to_string(),
         FunctionType::F32 => "f32".to_string(),
@@ -57,6 +60,7 @@ fn value_create_type(ty: &FunctionType) -> String {
         FunctionType::I16 | FunctionType::U16 => "metacall_value_create_short".to_string(),
         FunctionType::I32 | FunctionType::U32 => "metacall_value_create_int".to_string(),
         FunctionType::I64 | FunctionType::U64 => "metacall_value_create_long".to_string(),
+        FunctionType::Usize => "metacall_value_create_long".to_string(),
         FunctionType::Bool => "metacall_value_create_bool".to_string(),
         FunctionType::Char => "metacall_value_create_char".to_string(),
         FunctionType::F32 => "metacall_value_create_float".to_string(),
@@ -80,7 +84,6 @@ struct WrapperFunction {
 }
 
 fn function_to_wrapper(idx: usize, typ: &FunctionParameter) -> Box<dyn Wrapper> {
-    // println!("{:?}", typ);
     match typ.ty {
         FunctionType::I16
         | FunctionType::I32
@@ -88,10 +91,12 @@ fn function_to_wrapper(idx: usize, typ: &FunctionParameter) -> Box<dyn Wrapper> 
         | FunctionType::U16
         | FunctionType::U32
         | FunctionType::U64
+        | FunctionType::Usize
         | FunctionType::F32
         | FunctionType::F64 => Box::new(number::Number::new(idx, typ.clone())),
         FunctionType::Array => Box::new(array::Vec::new(idx, typ.clone())),
         FunctionType::Map => Box::new(map::Map::new(idx, typ.clone())),
+        FunctionType::String => Box::new(string::MString::new(idx, typ.clone())),
         // FunctionType::Null => Box::new(null::Null{}),
         _ => todo!(),
     }
@@ -167,7 +172,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
     content.push_str(
         "
 use std::{
-    ffi::{c_void, CString},
+    ffi::{c_void, CString, CStr},
     os::raw::{c_char, c_double, c_float, c_int, c_long, c_short},
 };
 extern \"C\" {
@@ -183,6 +188,7 @@ extern \"C\" {
     fn metacall_value_to_array(v: *mut c_void) -> *mut *mut c_void;
     fn metacall_value_to_map(v: *mut c_void) -> *mut *mut c_void;
     fn metacall_value_to_ptr(v: *mut c_void) -> *mut c_void;
+    fn metacall_value_to_string(v: *mut c_void) -> *mut c_char;
     fn metacall_function(cfn: *const c_char) -> *mut c_void;
     fn metacall_value_create_int(i: c_int) -> *mut c_void;
     fn metacall_value_create_bool(b: c_int) -> *mut c_void;
@@ -190,9 +196,10 @@ extern \"C\" {
     fn metacall_value_create_char(st: c_char) -> *mut c_void;
     fn metacall_value_create_short(s: c_short) -> *mut c_void;
     fn metacall_value_create_float(f: c_float) -> *mut c_void;
-    fn metacall_value_to_string(v: *mut c_void) -> *mut c_char;
     fn metacall_value_create_double(d: c_double) -> *mut c_void;
     fn metacall_value_create_string(st: *const c_char, ln: usize) -> *mut c_void;
+    fn metacall_value_create_array(values: *const *mut c_void, size: usize) -> *mut c_void;
+    fn metacall_value_create_map(tuples: *const *mut c_void, size: usize) -> *mut c_void;
 }
     ",
     );

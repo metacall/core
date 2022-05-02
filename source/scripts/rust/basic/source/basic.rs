@@ -9,7 +9,6 @@ pub extern "C" fn add_float(num_1: f32, num_2: f32) -> f32 {
     num_1 + num_2
 }
 
-
 #[no_mangle]
 pub extern "C" fn run() {
     println!("Hello World")
@@ -28,4 +27,14 @@ pub fn add_vec2(vec: Vec<i32>) -> i32 {
 #[no_mangle]
 pub fn add_map(map: HashMap<i32, f32>) -> f32 {
     map.into_values().sum()
+}
+
+#[no_mangle]
+pub fn string_len(s: String) -> usize {
+    s.len()
+}
+
+#[no_mangle]
+pub fn new_string(idx: i32) -> String {
+    format!("get number {idx}")
 }

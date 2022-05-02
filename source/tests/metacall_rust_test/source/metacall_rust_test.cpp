@@ -68,7 +68,6 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 
 	ret = metacall("metacall_add_float", 5.0, 10.0);
 	EXPECT_EQ((float)15.0, (float)metacall_value_to_float(ret));
-	metacall_value_destroy(ret);
 
 	void *args[] = {
 		metacall_value_create_map(NULL, 2)
@@ -90,7 +89,13 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 
 	ret = metacallv_s("metacall_add_map", args, 1);
 	EXPECT_EQ((float)15.0, (float)metacall_value_to_float(ret));
+
+	ret = metacall("metacall_string_len", "Test String");
+	EXPECT_EQ((long)11, (long)metacall_value_to_long(ret));
+	ret = metacall("metacall_new_string", 123);
+	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "get number 123"));
 	metacall_value_destroy(args[0]);
+	metacall_value_destroy(ret);
 
 	/* Print inspect information */
 	{

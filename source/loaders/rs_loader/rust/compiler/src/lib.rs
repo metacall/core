@@ -251,6 +251,7 @@ pub enum FunctionType {
     U16,
     U32,
     U64,
+    Usize,
     F32,
     F64,
     Bool,
@@ -259,6 +260,7 @@ pub enum FunctionType {
     Map,
     Slice,
     Str,
+    String,
     Ptr,
     Null,
     Complex,
@@ -317,6 +319,7 @@ fn handle_prim_ty(typ: PrimTy) -> FunctionType {
             UintTy::U16 => return FunctionType::U16,
             UintTy::U32 => return FunctionType::U32,
             UintTy::U64 => return FunctionType::U64,
+            UintTy::Usize => return FunctionType::Usize,
             _ => return FunctionType::Null,
         },
         PrimTy::Float(ty) => match ty {
@@ -370,6 +373,9 @@ fn handle_ty(ty: &Ty) -> FunctionParameter {
                                     }
                                 }
                             }
+                        } else if segment.ident.name.as_str() == "String" {
+                            result.ty = FunctionType::String;
+                            dbg!(&result.ty);
                         }
                     }
                     _ => todo!(),
