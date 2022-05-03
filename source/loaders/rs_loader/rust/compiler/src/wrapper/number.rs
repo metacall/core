@@ -38,11 +38,7 @@ impl Wrapper for Number {
     }
 
     fn handle_ret(&self, ret_name: &str) -> String {
-        format!(
-            "{}({}.try_into().unwrap())",
-            value_create_type(&self.ty.ty),
-            ret_name
-        )
+        value_create_type(&self.ty, ret_name)
     }
     fn get_args_type(&self) -> FunctionParameter {
         FunctionParameter {

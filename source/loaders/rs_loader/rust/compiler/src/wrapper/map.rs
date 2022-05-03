@@ -1,6 +1,5 @@
-use super::{value_to_rust_type, value_to_type, Wrapper};
+use super::{value_create_type, value_to_rust_type, value_to_type, Wrapper};
 use crate::{FunctionParameter, FunctionType, Mutability, Reference};
-
 #[derive(Debug, Clone)]
 pub struct Map {
     idx: usize,
@@ -69,7 +68,7 @@ impl Wrapper for Map {
     }
 
     fn handle_ret(&self, ret_name: &str) -> String {
-        format!("metacall_value_create_int({})", ret_name)
+        value_create_type(&self.ty, ret_name)
     }
     fn get_args_type(&self) -> FunctionParameter {
         FunctionParameter {

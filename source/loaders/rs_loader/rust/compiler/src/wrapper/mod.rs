@@ -55,16 +55,52 @@ fn value_to_rust_type(ty: &FunctionType) -> String {
     }
 }
 
-fn value_create_type(ty: &FunctionType) -> String {
-    match ty {
-        FunctionType::I16 | FunctionType::U16 => "metacall_value_create_short".to_string(),
-        FunctionType::I32 | FunctionType::U32 => "metacall_value_create_int".to_string(),
-        FunctionType::I64 | FunctionType::U64 => "metacall_value_create_long".to_string(),
-        FunctionType::Usize => "metacall_value_create_long".to_string(),
-        FunctionType::Bool => "metacall_value_create_bool".to_string(),
-        FunctionType::Char => "metacall_value_create_char".to_string(),
-        FunctionType::F32 => "metacall_value_create_float".to_string(),
-        FunctionType::F64 => "metacall_value_create_double".to_string(),
+fn value_create_type(ty: &FunctionParameter, ret_name: &str) -> String {
+    match ty.ty {
+        FunctionType::I16 | FunctionType::U16 => {
+            format!("metacall_value_create_short({ret_name}.try_into().unwrap())")
+        }
+        FunctionType::I32 | FunctionType::U32 => {
+            format!("metacall_value_create_int({ret_name}.try_into().unwrap())")
+        }
+        FunctionType::I64 | FunctionType::U64 | FunctionType::Usize => {
+            format!("metacall_value_create_long({ret_name}.try_into().unwrap())")
+        }
+        FunctionType::Bool => format!("metacall_value_create_bool({ret_name}.try_into().unwrap())"),
+        FunctionType::Char => format!("metacall_value_create_char({ret_name}.try_into().unwrap())"),
+        FunctionType::F32 => format!("metacall_value_create_float({ret_name}.try_into().unwrap())"),
+        FunctionType::F64 => {
+            format!("metacall_value_create_double({ret_name}.try_into().unwrap())")
+        }
+        FunctionType::Array => {
+            let genreic_typ = &ty.generic[0];
+            format!(
+                "let ret_vec = {ret_name}.into_iter().map(|val| {{ {} }}).collect::<Vec<*mut c_void>>();
+            metacall_value_create_array(ret_vec.as_ptr(), ret_vec.len())",
+                value_create_type(genreic_typ, "val"),
+            )
+        }
+        FunctionType::Map => {
+            let key_typ = &ty.generic[0];
+            let val_typ = &ty.generic[1];
+            format!(
+                "let size = {ret_name}.len();
+                let ret_map = {ret_name}.into_iter()
+            .map(|(key, val)| {{
+                let pair = vec![{}, {}];
+                metacall_value_create_array(pair.as_ptr(), pair.len())
+            }})
+            .collect::<Vec<*mut c_void>>();
+            metacall_value_create_map(ret_map.as_ptr(), size)",
+                value_create_type(key_typ, "key"),
+                value_create_type(val_typ, "val")
+            )
+        }
+        FunctionType::String => {
+            format!(
+                "metacall_value_create_string({ret_name}.as_ptr() as *const i8, {ret_name}.len())",
+            )
+        }
         _ => todo!(),
     }
 }
