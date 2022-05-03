@@ -94,7 +94,25 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 	EXPECT_EQ((long)11, (long)metacall_value_to_long(ret));
 	ret = metacall("metacall_new_string", 123);
 	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "get number 123"));
-	metacall_value_destroy(args[0]);
+
+	// test if we can return vec
+	ret = metacall("metacall_return_vec");
+	void *array_args2[] = {
+		ret
+	};
+	ret = metacallv_s("metacall_add_vec", array_args2, 1);
+	EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
+
+	// test if we can return map
+	ret = metacall("metacall_return_map");
+	void **map_value2 = metacall_value_to_map(ret);
+	void **mtupla0 = metacall_value_to_array(map_value2[0]);
+	EXPECT_EQ((int)metacall_value_to_int(mtupla0[0]), (int)metacall_value_to_float(mtupla0[1]));
+	void **mtupla1 = metacall_value_to_array(map_value2[1]);
+	EXPECT_EQ((int)metacall_value_to_int(mtupla1[0]), (int)metacall_value_to_float(mtupla1[1]));
+	void **mtupla2 = metacall_value_to_array(map_value2[2]);
+	EXPECT_EQ((int)metacall_value_to_int(mtupla2[0]), (int)metacall_value_to_float(mtupla2[1]));
+
 	metacall_value_destroy(ret);
 
 	/* Print inspect information */

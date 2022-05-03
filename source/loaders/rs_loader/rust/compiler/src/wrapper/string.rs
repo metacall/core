@@ -61,8 +61,7 @@ impl Wrapper for MString {
     }
 
     fn handle_ret(&self, ret_name: &str) -> String {
-        // the data will be copied, use as_ptr instead of into_raw
-        format!("metacall_value_create_string({ret_name}.as_ptr() as *const i8, {ret_name}.len())",)
+        value_create_type(&self.ty, ret_name)
     }
     fn get_args_type(&self) -> FunctionParameter {
         FunctionParameter {
