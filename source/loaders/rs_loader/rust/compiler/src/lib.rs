@@ -1,5 +1,7 @@
 #![feature(rustc_private)]
 #![feature(once_cell)]
+// allow us to match on Box<T>s:
+#![feature(box_patterns)]
 
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
@@ -15,21 +17,18 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use dlopen;
-use rustc_ast::{FloatTy, IntTy, UintTy};
-use rustc_hir::MutTy;
-use rustc_hir::{def::Res, FnRetTy, GenericArg, PrimTy, QPath, Ty, TyKind};
+use rustc_ast::{visit, Impl, Item, ItemKind, VariantData};
 use rustc_interface::{interface::Compiler, Config, Queries};
 use rustc_session::config;
 use rustc_session::config::CrateType;
 use rustc_span::source_map;
-use std::fmt;
-use std::{path::PathBuf, sync};
+use std::{collections::HashMap, fmt, path::PathBuf, sync};
+mod ast;
 pub mod file;
 pub mod memory;
 pub mod package;
 pub(crate) mod registrator;
 pub mod wrapper;
-
 use wrapper::generate_wrapper;
 
 pub enum RegistrationError {
@@ -264,6 +263,7 @@ pub enum FunctionType {
     Ptr,
     Null,
     Complex,
+    This, // self in struct method
 }
 
 impl fmt::Display for FunctionType {
@@ -289,10 +289,21 @@ pub struct Function {
     args: Vec<FunctionParameter>,
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct Class {
+    name: String,
+    constructor: Option<Function>,
+    destructor: Option<Function>,
+    methods: Vec<Function>,
+    static_methods: Vec<Function>,
+    attributes: Vec<String>,
+    static_attributes: Vec<String>,
+}
 #[derive(Clone, Debug)]
 pub struct CompilerState {
     output: PathBuf,
     functions: Vec<Function>,
+    classes: Vec<Class>,
 }
 
 #[derive(Clone, Debug)]
@@ -304,96 +315,9 @@ pub struct CompilerError {
 
 pub struct CompilerCallbacks {
     source: SourceImpl,
+    is_parsing: bool,
     functions: Vec<Function>,
-}
-
-fn handle_prim_ty(typ: PrimTy) -> FunctionType {
-    match typ {
-        PrimTy::Int(ty) => match ty {
-            IntTy::I16 => return FunctionType::I16,
-            IntTy::I32 => return FunctionType::I32,
-            IntTy::I64 => return FunctionType::I64,
-            _ => return FunctionType::Null,
-        },
-        PrimTy::Uint(ty) => match ty {
-            UintTy::U16 => return FunctionType::U16,
-            UintTy::U32 => return FunctionType::U32,
-            UintTy::U64 => return FunctionType::U64,
-            UintTy::Usize => return FunctionType::Usize,
-            _ => return FunctionType::Null,
-        },
-        PrimTy::Float(ty) => match ty {
-            FloatTy::F32 => return FunctionType::F32,
-            FloatTy::F64 => return FunctionType::F64,
-        },
-        PrimTy::Bool => return FunctionType::Bool,
-        PrimTy::Char => return FunctionType::Char,
-        PrimTy::Str => return FunctionType::Str,
-    }
-}
-
-fn handle_ty(ty: &Ty) -> FunctionParameter {
-    let mut result = FunctionParameter {
-        name: String::new(),
-        mutability: Mutability::No,
-        reference: Reference::No,
-        ty: FunctionType::Null,
-        generic: vec![],
-    };
-    match &ty.kind {
-        TyKind::Path(path) => {
-            if let QPath::Resolved(_, rpath) = path {
-                match rpath.res {
-                    Res::PrimTy(typ) => {
-                        let segment = &rpath.segments[0];
-                        result.name = segment.ident.name.to_string();
-                        result.ty = handle_prim_ty(typ);
-                    }
-                    Res::Def(_, _) => {
-                        let segment = &rpath.segments[0];
-                        result.name = segment.ident.name.to_string();
-                        if segment.ident.name.as_str() == "Vec" {
-                            result.ty = FunctionType::Array;
-                            // vec
-                            if let Some(ga) = segment.args {
-                                for arg in ga.args {
-                                    match arg {
-                                        GenericArg::Type(ty) => result.generic.push(handle_ty(ty)),
-                                        _ => todo!(),
-                                    }
-                                }
-                            }
-                        } else if segment.ident.name.as_str() == "HashMap" {
-                            result.ty = FunctionType::Map;
-                            if let Some(ga) = segment.args {
-                                for arg in ga.args {
-                                    match arg {
-                                        GenericArg::Type(ty) => result.generic.push(handle_ty(ty)),
-                                        _ => todo!(),
-                                    }
-                                }
-                            }
-                        } else if segment.ident.name.as_str() == "String" {
-                            result.ty = FunctionType::String;
-                            dbg!(&result.ty);
-                        }
-                    }
-                    _ => todo!(),
-                }
-            }
-        }
-        TyKind::Rptr(_, MutTy { ty, mutbl }) => {
-            let mut inner_ty = handle_ty(ty);
-            inner_ty.reference = Reference::Yes;
-            match mutbl {
-                rustc_hir::Mutability::Mut => inner_ty.mutability = Mutability::Yes,
-                rustc_hir::Mutability::Not => inner_ty.mutability = Mutability::No,
-            }
-            return inner_ty;
-        }
-        _ => {}
-    }
-    result
+    classes: Vec<Class>,
 }
 
 impl rustc_driver::Callbacks for CompilerCallbacks {
@@ -418,38 +342,127 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         queries: &'tcx Queries<'tcx>,
     ) -> rustc_driver::Compilation {
         // analysis
-        if self.functions.len() == 0 {
-            queries.global_ctxt().unwrap().peek_mut().enter(|tcx| {
-                for item in tcx.hir().items() {
-                    match &item.kind {
-                        rustc_hir::ItemKind::Fn(sig, _, _) => {
-                            let mut function = Function {
-                                name: item.ident.to_string(),
-                                ret: None,
-                                args: vec![],
-                            };
-                            // parse input and output
-                            for arg in sig.decl.inputs {
-                                function.args.push(handle_ty(arg));
-                            }
-
-                            match sig.decl.output {
-                                FnRetTy::DefaultReturn(_) => function.ret = None,
-                                FnRetTy::Return(ty) => {
-                                    function.ret = Some(handle_ty(ty));
-                                }
-                            }
-                            self.functions.push(function);
-                        }
-                        _ => continue,
-                    }
-                }
-            });
-
+        // is_parsing will be set to false after generating wrappers.
+        if self.is_parsing {
+            let krate = queries
+                .parse()
+                .expect("no Result<Query<Crate>> found")
+                .take();
+            let mut item_visitor = ItemVisitor::new();
+            visit::walk_crate(&mut item_visitor, &krate);
+            self.classes = item_visitor.classes.into_values().collect();
+            self.functions = item_visitor.functions;
             return rustc_driver::Compilation::Stop;
         } else {
-            // we have populated functions, continue
+            // we have finished the parsing process.
             return rustc_driver::Compilation::Continue;
+        }
+    }
+}
+
+enum ImplKind {
+    Drop,
+    None,
+    Other,
+}
+
+struct ItemVisitor {
+    functions: Vec<Function>,
+    classes: HashMap<String, Class>,
+}
+
+impl ItemVisitor {
+    fn new() -> Self {
+        Self {
+            functions: vec![],
+            classes: HashMap::new(),
+        }
+    }
+}
+
+// visit::Visitor is the generic trait for walking an AST
+impl<'a> visit::Visitor<'a> for ItemVisitor {
+    fn visit_item(&mut self, i: &Item) {
+        match &i.kind {
+            ItemKind::Struct(VariantData::Struct(fields, _), _) => {
+                let class = self.classes.entry(i.ident.to_string()).or_default();
+                class.name = i.ident.to_string();
+                for field in fields {
+                    if let Some(ident) = field.ident {
+                        class.attributes.push(ident.to_string());
+                    }
+                }
+            }
+            ItemKind::Impl(box impl_kind) => {
+                let Impl {
+                    items,
+                    self_ty,
+                    of_trait,
+                    ..
+                } = impl_kind;
+                let impl_kind = match of_trait {
+                    None => ImplKind::None,
+                    Some(of_trait) => {
+                        let of_trait_name = of_trait.path.segments[0].ident.to_string();
+                        if of_trait_name == "Drop" {
+                            ImplKind::Drop
+                        } else {
+                            ImplKind::Other
+                        }
+                    }
+                };
+                let class_name = match &self_ty.kind {
+                    rustc_ast::TyKind::Path(_, path) => path.segments[0].ident.to_string(),
+                    _ => unreachable!(),
+                };
+                let class = self.classes.entry(class_name.clone()).or_default();
+                let class_name_str = class_name.as_str();
+
+                for item in items {
+                    let name = item.ident.to_string();
+                    match &item.kind {
+                        rustc_ast::AssocItemKind::Fn(box rustc_ast::Fn { sig, .. }) => {
+                            // function has self in parameters
+                            if sig.decl.has_self() {
+                                match impl_kind {
+                                    ImplKind::Drop => {
+                                        class.destructor = Some(ast::handle_fn(name, sig));
+                                    }
+                                    _ => {
+                                        class.methods.push(ast::handle_fn(name, sig));
+                                    }
+                                }
+                            } else {
+                                // static method
+                                match &sig.decl.output {
+                                    rustc_ast::FnRetTy::Ty(p) => match &**p {
+                                        rustc_ast::Ty { kind, .. } => match kind {
+                                            rustc_ast::TyKind::Path(_, p) => {
+                                                let ret_name = p.segments[0].ident.to_string();
+                                                if ret_name == "Self" || ret_name == class_name_str
+                                                {
+                                                    class.constructor =
+                                                        Some(ast::handle_fn(name, sig));
+                                                }
+                                            }
+                                            _ => {}
+                                        },
+                                    },
+                                    rustc_ast::FnRetTy::Default(_) => {
+                                        class.static_methods.push(ast::handle_fn(name, sig));
+                                    }
+                                }
+                            }
+                        }
+                        _ => {}
+                    };
+                }
+            }
+            ItemKind::Fn(box sig) => {
+                self.functions
+                    .push(ast::handle_fn(i.ident.to_string(), &sig.sig));
+            }
+            _ => {}
         }
     }
 }
@@ -614,7 +627,9 @@ fn run_compiler(
 pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let mut callbacks = CompilerCallbacks {
         source,
+        is_parsing: true,
         functions: vec![],
+        classes: vec![],
     };
 
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
@@ -660,6 +675,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
             functions: patched_callback.functions.clone(),
+            classes: patched_callback.classes.clone(),
         }),
         Err(err) => {
             // Read buffered diagnostics

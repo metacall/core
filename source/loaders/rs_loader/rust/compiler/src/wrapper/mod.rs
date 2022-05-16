@@ -277,7 +277,9 @@ extern \"C\" {
             // construct new callback
             Ok(CompilerCallbacks {
                 source: Source::new(Source::File { path: source_path }),
+                is_parsing: false,
                 functions: wrapped_functions,
+                ..callbacks
             })
         }
         Input::Str { name, input } => match name {
@@ -286,7 +288,9 @@ extern \"C\" {
                     name,
                     code: content + &input,
                 }),
+                is_parsing: false,
                 functions: wrapped_functions,
+                ..callbacks
             }),
             _ => {
                 unimplemented!()
