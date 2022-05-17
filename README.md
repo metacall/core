@@ -23,7 +23,8 @@
 
   <a href="https://twitter.com/metacallio" alt="Twitter">
     <img src="https://img.shields.io/twitter/follow/metacallio?label=MetaCall"/></a>
-
+</div>
+<div align="center">
   <a href="https://medium.com/@metacall/call-functions-methods-or-procedures-between-programming-languages-with-metacall-58cfece35d7" target="_blank">
     <img style="max-width:100%; margin: 0 auto;" width="350" height="auto"
       src="https://raw.githubusercontent.com/metacall/core/develop/deploy/images/overview.png" alt="M E T A C A L L"
