@@ -65,7 +65,7 @@ static PyObject *py_loader_port_true(void)
 	#pragma warning(pop)
 #endif
 
-static PyObject *py_loader_port_load_from_file(PyObject *self, PyObject *args)
+static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *args, void **handle)
 {
 	static const char format[] = "OO:metacall_load_from_file";
 	PyObject *tag, *paths, *result = NULL;
@@ -187,17 +187,37 @@ static PyObject *py_loader_port_load_from_file(PyObject *self, PyObject *args)
 	}
 
 	/* Execute the load from file call */
-	{
-		int ret = metacall_load_from_file(tag_str, (const char **)paths_str, paths_size, NULL);
+	int ret = metacall_load_from_file(tag_str, (const char **)paths_str, paths_size, handle);
 
-		if (ret != 0)
+	if (ret != 0)
+	{
+		result = handle == NULL ? py_loader_port_false() : py_loader_port_none();
+		goto clear;
+	}
+	else
+	{
+		if (handle != NULL)
 		{
-			result = py_loader_port_false();
-			goto clear;
+			loader_impl impl = loader_get_impl(py_loader_tag);
+
+			void *exports = metacall_handle_export(*handle);
+
+			result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
+
+			// TODO
+			/*
+			if (py_loader_impl_finalizer(impl, result, exports) != 0)
+			{
+				Py_XDECREF(result);
+				result = py_loader_port_none();
+			}
+			*/
+		}
+		else
+		{
+			result = py_loader_port_true();
 		}
 	}
-
-	result = py_loader_port_true();
 
 clear:
 	for (alloc_iterator = 0; alloc_iterator < iterator; ++alloc_iterator)
@@ -210,10 +230,21 @@ clear:
 	return result;
 }
 
-static PyObject *py_loader_port_load_from_package(PyObject *self, PyObject *args)
+static PyObject *py_loader_port_load_from_file(PyObject *self, PyObject *args)
+{
+	return py_loader_port_load_from_file_impl(self, args, NULL);
+}
+
+static PyObject *py_loader_port_load_from_file_export(PyObject *self, PyObject *args)
+{
+	void *handle = NULL;
+	return py_loader_port_load_from_file_impl(self, args, &handle);
+}
+
+static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject *args, void **handle)
 {
 	static const char format[] = "OO:metacall_load_from_package";
-	PyObject *tag, *path;
+	PyObject *tag, *path, *result = NULL;
 	char *tag_str, *path_str;
 	Py_ssize_t tag_length = 0;
 
@@ -222,7 +253,7 @@ static PyObject *py_loader_port_load_from_package(PyObject *self, PyObject *args
 	/* Parse arguments */
 	if (!PyArg_ParseTuple(args, (char *)format, &tag, &path))
 	{
-		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_file('node', ['script.js']);");
+		PyErr_SetString(PyExc_TypeError, "Invalid number of arguments, use it like: metacall_load_from_package('cs', ['file.dll']);");
 		return py_loader_port_false();
 	}
 
@@ -292,10 +323,50 @@ static PyObject *py_loader_port_load_from_package(PyObject *self, PyObject *args
 		return py_loader_port_false();
 	}
 
-	/* Execute the load from file call */
-	int ret = metacall_load_from_package(tag_str, path_str, NULL);
+	/* Execute the load from package call */
+	int ret = metacall_load_from_package(tag_str, path_str, handle);
 
-	return ret == 0 ? py_loader_port_true() : py_loader_port_false();
+	if (ret != 0)
+	{
+		result = handle == NULL ? py_loader_port_false() : py_loader_port_none();
+	}
+	else
+	{
+		if (handle != NULL)
+		{
+			loader_impl impl = loader_get_impl(py_loader_tag);
+
+			void *exports = metacall_handle_export(*handle);
+
+			result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
+
+			// TODO
+			/*
+			if (py_loader_impl_finalizer(impl, result, exports) != 0)
+			{
+				Py_XDECREF(result);
+				result = py_loader_port_none();
+			}
+			*/
+		}
+		else
+		{
+			result = py_loader_port_true();
+		}
+	}
+
+	return result;
+}
+
+static PyObject *py_loader_port_load_from_package(PyObject *self, PyObject *args)
+{
+	return py_loader_port_load_from_package_impl(self, args, NULL);
+}
+
+static PyObject *py_loader_port_load_from_package_export(PyObject *self, PyObject *args)
+{
+	void *handle = NULL;
+	return py_loader_port_load_from_package_impl(self, args, &handle);
 }
 
 static PyObject *py_loader_port_load_from_memory(PyObject *self, PyObject *args)
@@ -672,8 +743,12 @@ static PyObject *py_loader_port_inspect(PyObject *self, PyObject *args)
 static PyMethodDef metacall_methods[] = {
 	{ "metacall_load_from_file", py_loader_port_load_from_file, METH_VARARGS,
 		"Loads a script from file." },
+	{ "metacall_load_from_file_export", py_loader_port_load_from_file_export, METH_VARARGS,
+		"Loads a script from file (returns a local handle instead of loading it in the global namespace)." },
 	{ "metacall_load_from_package", py_loader_port_load_from_package, METH_VARARGS,
 		"Loads a script from a package." },
+	{ "metacall_load_from_package_export", py_loader_port_load_from_package_export, METH_VARARGS,
+		"Loads a script from package (returns a local handle instead of loading it in the global namespace)." },
 	{ "metacall_load_from_memory", py_loader_port_load_from_memory, METH_VARARGS,
 		"Loads a script from a string." },
 	{ "metacall_inspect", py_loader_port_inspect, METH_NOARGS,

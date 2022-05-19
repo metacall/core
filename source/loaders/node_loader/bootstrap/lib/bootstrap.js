@@ -68,28 +68,37 @@ function node_loader_trampoline_node_path() {
 	return (process.env['NODE_PATH'] || '').split(path.delimiter).filter((e) => e.length !== 0);
 }
 
+function node_loader_trampoline_execution_path_push_unique(paths, p) {
+	// Check if the path exists in its cannonical form (/a/b and /a/b/ are the same path)
+	if (!paths.some(cur => path.relative(cur, p) === '')) {
+		// Insert execution path
+		paths.push(p);
+
+		return true;
+	}
+
+	return false;
+}
+
 function node_loader_trampoline_execution_path(p) {
 	if (p) {
 		const paths = node_loader_trampoline_node_path();
 
-		// TODO: Should we use Module._nodeModulePaths(p) ?
-		// The current behavior does not look for node_modules inside p
-		// when you add a new execution path, by using this API we can
-		// generate all the node module paths and allow loading modules
-		// from the execution path folders. But this makes an asumption
-		// and it is less explicit, maybe you want to add an execution path
-		// but not the node_modules path which it contains, and doing this
-		// will affect those cases
+		// Insert first the execution path as it is
+		let moduleRefresh = node_loader_trampoline_execution_path_push_unique(paths, p);
 
-		// const modulePaths = Module._nodeModulePaths(p);
+		// Each added execution path will follow the NodeJS module style
+		const modulePaths = Module._nodeModulePaths(p);
 
-		// Check if the path exists in its cannonical form (/a/b and /a/b/ are the same path)
-		if (!paths.some(cur => path.relative(cur, p) === '')) {
-			// Insert execution path
-			paths.push(p);
+		for (const modulePath of modulePaths) {
+			moduleRefresh = moduleRefresh || node_loader_trampoline_execution_path_push_unique(paths, modulePath);
+		}
 
+		if (moduleRefresh) {
 			// Set the NODE_PATH environment variable again
 			process.env['NODE_PATH'] = paths.join(path.delimiter);
+
+			// Refresh the paths and make effective the changes
 			Module._initPaths();
 		}
 	}

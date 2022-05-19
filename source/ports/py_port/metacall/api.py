@@ -102,7 +102,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		for loader in metadata.keys():
 			for handle in metadata[loader]:
 				if handle['name'] == handle_name:
-					return handle
+					return dict(functools.reduce(lambda symbols, func: {**symbols, func['name']: lambda *args: metacall(func['name'], *args) }, handle['scope']['funcs'], {}))
 
 		return None
 
@@ -126,9 +126,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		mod.__package__ = handle_name
 
 		# Add the symbols to the module
-		symbol_dict = dict(functools.reduce(lambda symbols, func: {**symbols, func['name']: lambda *args: metacall(func['name'], *args) }, handle['scope']['funcs'], {}))
-
-		mod.__dict__.update(symbol_dict)
+		mod.__dict__.update(handle)
 
 		return mod
 
@@ -211,23 +209,20 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 				or call_frame[1][3] == 'metacall_load_from_package'
 				or call_frame[1][3] == 'metacall_load_from_memory'
 			):
-				return ImportException('MetaCall could not import:', name)
+				return ImportException(f'MetaCall could not import: {name}')
 
-		if (
-			extension in file_extensions_to_tag.keys()
-			and metacall_load_from_file(
+		if (extension in file_extensions_to_tag.keys()):
+			handle = module.metacall_load_from_file_export(
 				file_extensions_to_tag[extension], [name]
 			)
-		) or (
-			extension in package_extensions_to_tag.keys()
-			and metacall_load_from_package(
+		elif (extension in package_extensions_to_tag.keys()):
+			handle = module.metacall_load_from_package_export(
 				package_extensions_to_tag[extension], name
 			)
-		):
-			handle = find_handle(name)
-			if handle != None:
-				# Generate the module from cached handle
-				return generate_module(handle_name, handle)
+
+		if handle != None:
+			# Generate the module from cached handle
+			return generate_module(handle_name, handle)
 	else:
 		# Check if it is already loaded in MetaCall
 		handle = find_handle(name)
@@ -245,13 +240,12 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		tags.discard('py')
 
 		for tag in list(tags):
-			if metacall_load_from_file(tag, [name]):
-				handle = find_handle(name)
-				if handle != None:
-					# Generate the module from cached handle
-					return generate_module(name, handle)
+			handle = module.metacall_load_from_file_export(tag, [name])
+			if handle != None:
+				# Generate the module from cached handle
+				return generate_module(name, handle)
 
-	raise ImportException('MetaCall could not import:', name)
+	raise ImportException(f'MetaCall could not import: {name}')
 
 # Override Python import
 builtins.__import__ = __metacall_import__

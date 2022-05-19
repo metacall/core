@@ -43,6 +43,7 @@
 #include <Python.h>
 
 #define PY_LOADER_IMPL_FUNCTION_TYPE_INVOKE_FUNC "__py_loader_impl_function_type_invoke__"
+#define PY_LOADER_IMPL_FINALIZER_FUNC			 "__py_loader_impl_finalizer__"
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	#define DEBUG_ENABLED 1
@@ -163,6 +164,8 @@ static void py_loader_impl_sys_path_print(PyObject *sys_path_list);
 
 static PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args);
 
+static PyObject *py_loader_impl_finalizer_impl(PyObject *self, PyObject *args);
+
 static function_interface function_py_singleton(void);
 
 static type_interface type_py_singleton(void);
@@ -189,6 +192,8 @@ static void py_loader_impl_value_ptr_finalize(value v, void *data);
 
 static int py_loader_impl_finalize(loader_impl_py py_impl);
 
+static void py_loader_impl_dict_wrapper_del_dealloc(PyObject *self);
+
 static PyObject *py_loader_impl_load_from_memory_compile(loader_impl_py py_impl, const loader_name name, const char *buffer);
 
 static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
@@ -199,12 +204,109 @@ static PyMethodDef py_loader_impl_function_type_invoke_defs[] = {
 	{ NULL, NULL, 0, NULL }
 };
 
+static PyMethodDef py_loader_impl_finalizer_defs[] = {
+	{ PY_LOADER_IMPL_FINALIZER_FUNC,
+		py_loader_impl_finalizer_impl,
+		METH_NOARGS,
+		PyDoc_STR("Implements custom destructor for values.") },
+	{ NULL, NULL, 0, NULL }
+};
+
+struct py_dict_wrapper_del_obj
+{
+	PyObject_HEAD
+		value v;
+};
+
+static PyTypeObject py_dict_wrapper_del = {
+	PyVarObject_HEAD_INIT(NULL, 0)
+		.tp_name = "DictWrapperDel",
+	.tp_doc = PyDoc_STR("Wrapper for a dictionary in order to have a custom destructor"),
+	.tp_basicsize = sizeof(struct py_dict_wrapper_del_obj),
+	.tp_itemsize = 0,
+	.tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+	.tp_base = NULL,
+	.tp_dealloc = &py_loader_impl_dict_wrapper_del_dealloc
+};
+
 /* Implements: if __name__ == "__main__": */
 static int py_loader_impl_run_main = 1;
 static char *py_loader_impl_main_module = NULL;
 
 /* Holds reference to the original PyCFunction.tp_dealloc method */
 static void (*py_loader_impl_pycfunction_dealloc)(PyObject *) = NULL;
+
+PyObject *py_loader_impl_finalizer_impl(PyObject *self, PyObject *Py_UNUSED(args))
+{
+	value v = PyCapsule_GetPointer(self, NULL);
+
+	if (v == NULL)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Fatal error destroying a value, the metacall value attached to the python value is null");
+		Py_RETURN_NONE;
+	}
+
+	value_type_destroy(v);
+
+	Py_RETURN_NONE;
+}
+
+void py_loader_impl_dict_wrapper_del_dealloc(PyObject *self)
+{
+	struct py_dict_wrapper_del_obj *obj = (struct py_dict_wrapper_del_obj *)self;
+	value v = obj->v;
+
+	PyDict_Type.tp_dealloc(self);
+
+	value_type_destroy(v);
+}
+
+int py_loader_impl_finalizer(loader_impl impl, PyObject *obj, value v)
+{
+	type_id id = py_loader_impl_capi_to_value_type(impl, obj);
+
+	/* TODO: Only built-in dict implemented for now, do the rest (if any) */
+	if (id == TYPE_MAP)
+	{
+		// PyObject *args = PyTuple_New(1);
+
+		// PyTuple_SetItem(args, 0, obj);
+		// Py_INCREF(obj);
+		// PyObject *wrapper = PyObject_CallObject(&py_dict_wrapper_del, args);
+		// Py_DECREF(args);
+
+		/*return wrapper;*/ return 1;
+	}
+	else
+	{
+		PyObject *v_capsule = PyCapsule_New(v, NULL, NULL);
+		PyObject *destructor = PyCFunction_New(py_loader_impl_finalizer_defs, v_capsule);
+
+		if (PyObject_SetAttrString(obj, "__del__", destructor) != 0)
+		{
+			loader_impl_py py_impl = loader_impl_get(impl);
+			py_loader_impl_error_print(py_impl);
+			PyErr_Clear();
+
+			log_write("metacall", LOG_LEVEL_ERROR, "Trying to attach a destructor to (probably) a built-in type, "
+												   "implement this type for the py_loader_impl_finalizer in order to solve this error");
+
+			if (destructor != NULL)
+			{
+				/* This will destroy the capsule too */
+				Py_DECREF(destructor);
+			}
+			else
+			{
+				Py_XDECREF(v_capsule);
+			}
+
+			return 1;
+		}
+	}
+
+	return 0;
+}
 
 void py_loader_impl_value_invoke_state_finalize(value v, void *data)
 {
@@ -2570,6 +2672,14 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_after_thread_background_module;
 	}
 
+	/* py_dict_wrapper_del is derived from PyDict_Type */
+	py_dict_wrapper_del.tp_base = &PyDict_Type;
+
+	if (PyType_Ready(&py_dict_wrapper_del) < 0)
+	{
+		goto error_after_asyncio_module;
+	}
+
 	PyGILState_Release(gstate);
 	PyEval_RestoreThread(tstate);
 
@@ -2580,11 +2690,17 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	return py_impl;
 
+error_after_asyncio_module:
+	Py_DECREF(py_impl->asyncio_iscoroutinefunction);
+	Py_DECREF(py_impl->asyncio_loop);
+	Py_DECREF(py_impl->asyncio_module);
+	Py_XDECREF(py_impl->py_task_callback_handler);
 error_after_thread_background_module:
 	Py_DECREF(py_impl->thread_background_module);
 	Py_DECREF(py_impl->thread_background_start);
 	Py_DECREF(py_impl->thread_background_send);
 	Py_DECREF(py_impl->thread_background_stop);
+	Py_DECREF(py_impl->thread_background_future_check);
 error_after_import:
 	Py_DECREF(py_impl->import_module);
 	Py_DECREF(py_impl->import_function);
@@ -4068,12 +4184,12 @@ int py_loader_impl_destroy(loader_impl impl)
 	Py_XDECREF(py_impl->asyncio_iscoroutinefunction);
 	Py_XDECREF(py_impl->asyncio_loop);
 	Py_XDECREF(py_impl->asyncio_module);
+	Py_XDECREF(py_impl->py_task_callback_handler);
 	Py_XDECREF(py_impl->thread_background_future_check);
 	Py_XDECREF(py_impl->thread_background_module);
 	Py_XDECREF(py_impl->thread_background_start);
 	Py_XDECREF(py_impl->thread_background_send);
 	Py_XDECREF(py_impl->thread_background_stop);
-	Py_XDECREF(py_impl->py_task_callback_handler);
 
 #if DEBUG_ENABLED
 	{
