@@ -58,6 +58,10 @@ PY_LOADER_NO_EXPORT value py_loader_impl_capi_to_value(loader_impl impl, PyObjec
 
 PY_LOADER_NO_EXPORT PyObject *py_loader_impl_value_to_capi(loader_impl impl, type_id id, value v);
 
+PY_LOADER_NO_EXPORT PyObject *py_loader_impl_finalizer_wrap_map(PyObject *obj, value v);
+
+PY_LOADER_NO_EXPORT int py_loader_impl_finalizer_object(loader_impl impl, PyObject *obj, value v);
+
 #ifdef __cplusplus
 }
 #endif

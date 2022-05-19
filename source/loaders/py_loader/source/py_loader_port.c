@@ -204,14 +204,17 @@ static PyObject *py_loader_port_load_from_file_impl(PyObject *self, PyObject *ar
 
 			result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
 
-			// TODO
-			/*
-			if (py_loader_impl_finalizer(impl, result, exports) != 0)
+			PyObject *wrapper = py_loader_impl_finalizer_wrap_map(result, exports);
+
+			if (wrapper == NULL)
 			{
 				Py_XDECREF(result);
 				result = py_loader_port_none();
 			}
-			*/
+			else
+			{
+				result = wrapper;
+			}
 		}
 		else
 		{
@@ -340,14 +343,17 @@ static PyObject *py_loader_port_load_from_package_impl(PyObject *self, PyObject 
 
 			result = py_loader_impl_value_to_capi(impl, value_type_id(exports), exports);
 
-			// TODO
-			/*
-			if (py_loader_impl_finalizer(impl, result, exports) != 0)
+			PyObject *wrapper = py_loader_impl_finalizer_wrap_map(result, exports);
+
+			if (wrapper == NULL)
 			{
 				Py_XDECREF(result);
 				result = py_loader_port_none();
 			}
-			*/
+			else
+			{
+				result = wrapper;
+			}
 		}
 		else
 		{
