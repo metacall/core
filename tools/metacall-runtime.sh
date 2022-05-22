@@ -157,14 +157,14 @@ sub_rpc(){
 }
 
 # WebAssembly
-sub_rpc(){
+sub_wasm(){
 	echo "configure wasm"
 
 	# TODO
 }
 
 # Java
-sub_rpc(){
+sub_java(){
 	echo "configure java"
 
 	sub_apt_install_hold default-jre
