@@ -1,0 +1,1 @@
+INPUT(-L @PROJECT_LIBRARY_PATH@ -lloadtest)
