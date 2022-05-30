@@ -9,4 +9,4 @@
 
 EXPORT long call_cpp_func(void);
 
-#endif LIB_LOAD_TEST_H
+#endif
