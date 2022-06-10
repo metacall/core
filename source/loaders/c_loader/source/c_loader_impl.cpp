@@ -307,6 +307,13 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	/* Register runtime path for TCC (in order to find libtcc1.a and runtime objects) */
 	tcc_set_lib_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
 
+	/* Register execution paths */
+	for (auto exec_path : c_impl->execution_paths)
+	{
+		tcc_add_include_path(c_handle->state, exec_path.c_str());
+		tcc_add_library_path(c_handle->state, exec_path.c_str());
+	}
+
 	/* TODO */
 	/*
 	#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
