@@ -24,13 +24,13 @@
 
 if(NOT RAPIDJSON_FOUND OR USE_BUNDLED_RAPIDJSON)
 	if(NOT RAPIDJSON_VERSION OR USE_BUNDLED_RAPIDJSON)
-		set(RAPIDJSON_VERSION 1.1.0)
-		set(RAPIDJSON_URL_MD5 badd12c511e081fec6c89c43a7027bce)
+		set(RAPIDJSON_VERSION 232389d)
+		set(RAPIDJSON_URL_MD5 577d3495a07b66fcd4a2866c93831bc4)
 	endif()
 
 	ExternalProject_Add(rapid-json-depends
 		DOWNLOAD_NAME	RapidJSON-${RAPIDJSON_VERSION}.tar.gz
-		URL				https://github.com/miloyip/rapidjson/archive/v${RAPIDJSON_VERSION}.tar.gz
+		URL				https://github.com/Tencent/rapidjson/archive/${RAPIDJSON_VERSION}.tar.gz
 		URL_MD5			${RAPIDJSON_URL_MD5}
 		CMAKE_ARGS
 			-DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
