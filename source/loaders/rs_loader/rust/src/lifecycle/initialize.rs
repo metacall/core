@@ -1,4 +1,4 @@
-use api::{self, PrimitiveMetacallProtocolTypes};
+use compiler::api::{self, PrimitiveMetacallProtocolTypes};
 
 use std::os::raw::{c_int, c_void};
 
@@ -37,6 +37,41 @@ pub extern "C" fn rs_loader_impl_initialize(
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
     );
+    // api::define_type(
+    //     loader_impl,
+    //     "Usize",
+    //     PrimitiveMetacallProtocolTypes::Int,
+    //     0 as c_int as *mut c_void,
+    //     0 as c_int as *mut c_void,
+    // );
+    // api::define_type(
+    //     loader_impl,
+    //     "U8",
+    //     PrimitiveMetacallProtocolTypes::Char,
+    //     0 as c_int as *mut c_void,
+    //     0 as c_int as *mut c_void,
+    // );
+    // api::define_type(
+    //     loader_impl,
+    //     "U16",
+    //     PrimitiveMetacallProtocolTypes::Short,
+    //     0 as c_int as *mut c_void,
+    //     0 as c_int as *mut c_void,
+    // );
+    // api::define_type(
+    //     loader_impl,
+    //     "U32",
+    //     PrimitiveMetacallProtocolTypes::Int,
+    //     0 as c_int as *mut c_void,
+    //     0 as c_int as *mut c_void,
+    // );
+    // api::define_type(
+    //     loader_impl,
+    //     "U64",
+    //     PrimitiveMetacallProtocolTypes::Long,
+    //     0 as c_int as *mut c_void,
+    //     0 as c_int as *mut c_void,
+    // );
     api::define_type(
         loader_impl,
         "F32",

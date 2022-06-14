@@ -1,9 +1,10 @@
 use super::rustc_ast::{
-    AngleBracketedArg, AngleBracketedArgs, FnRetTy, FnSig, GenericArg, GenericArgs, MutTy, TyKind,
+    AngleBracketedArg, AngleBracketedArgs, FnRetTy, FnSig, GenericArg, GenericArgs, MutTy, Pat,
+    PatKind, TyKind,
 };
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
 
-fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
+pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
     let mut result = FunctionParameter {
         name: String::new(),
         mutability: Mutability::No,
@@ -86,6 +87,14 @@ fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
     result
 }
 
+fn handle_pat(pat: &Pat) -> Option<String> {
+    match pat.kind {
+        PatKind::Ident(_, ident, _) => return Some(ident.name.to_string()),
+        _ => {}
+    }
+    None
+}
+
 pub fn handle_fn(name: String, sig: &FnSig) -> Function {
     let mut function = Function {
         name,
@@ -94,7 +103,12 @@ pub fn handle_fn(name: String, sig: &FnSig) -> Function {
     };
     // parse input and output
     for arg in &sig.decl.inputs {
-        function.args.push(handle_ty(&arg.ty));
+        let mut param = handle_ty(&arg.ty);
+        // we need to extract the name from pat.
+        if let Some(name) = handle_pat(&arg.pat) {
+            param.name = name;
+        }
+        function.args.push(param);
     }
 
     match &sig.decl.output {

@@ -39,6 +39,11 @@ loader_impl_interface rs_loader_impl_interface_singleton(void)
 	return &loader_impl_interface_rs;
 }
 
+const char *get_attr_name(struct accessor_type *accessor)
+{
+	return attribute_name(accessor->data.attr);
+}
+
 const char *rs_loader_print_info(void)
 {
 	static const char rs_loader_info[] =

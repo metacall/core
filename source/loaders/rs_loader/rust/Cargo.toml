@@ -14,8 +14,8 @@ rustc_private = true
 opt-level = "z"
 
 [workspace]
-members = ["api", "compiler"]
+members = ["compiler"]
 
 [dependencies]
-api = { path = "./api" }
+# api = { path = "./api" }
 compiler = { path = "./compiler" }
