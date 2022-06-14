@@ -30,7 +30,7 @@ pub mod package;
 pub(crate) mod registrator;
 pub mod wrapper;
 use wrapper::generate_wrapper;
-
+pub mod api;
 pub enum RegistrationError {
     CompilationError(String),
     DlopenError(String),
@@ -289,15 +289,21 @@ pub struct Function {
     args: Vec<FunctionParameter>,
 }
 
+#[derive(Clone, Debug)]
+struct Attribute {
+    name: String,
+    ty: FunctionParameter,
+}
+
 #[derive(Clone, Debug, Default)]
 pub struct Class {
     name: String,
     constructor: Option<Function>,
-    destructor: Option<Function>,
+    destructor: Option<Function>, // maybe we don't need destructor. just drop the variable
     methods: Vec<Function>,
     static_methods: Vec<Function>,
-    attributes: Vec<String>,
-    static_attributes: Vec<String>,
+    attributes: Vec<Attribute>,
+    // static_attributes: Vec<Attribute>, // we don't handle static attrs in rust
 }
 #[derive(Clone, Debug)]
 pub struct CompilerState {
@@ -389,7 +395,11 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                 class.name = i.ident.to_string();
                 for field in fields {
                     if let Some(ident) = field.ident {
-                        class.attributes.push(ident.to_string());
+                        let attr = Attribute {
+                            name: ident.to_string(),
+                            ty: ast::handle_ty(&field.ty),
+                        };
+                        class.attributes.push(attr);
                     }
                 }
             }
@@ -443,9 +453,17 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
                                                 {
                                                     class.constructor =
                                                         Some(ast::handle_fn(name, sig));
+                                                } else {
+                                                    class
+                                                        .static_methods
+                                                        .push(ast::handle_fn(name, sig));
                                                 }
                                             }
-                                            _ => {}
+                                            _ => {
+                                                class
+                                                    .static_methods
+                                                    .push(ast::handle_fn(name, sig));
+                                            }
                                         },
                                     },
                                     rustc_ast::FnRetTy::Default(_) => {

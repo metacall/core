@@ -1,6 +1,6 @@
 use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
-use api;
+use compiler::api;
 
 use compiler::file::FileRegistration;
 use compiler::memory::MemoryRegistration;

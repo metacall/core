@@ -33,14 +33,19 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 
 	// Test: Load from memory
 	static const char buffer[] =
-		"#[no_mangle]\n"
-		"pub extern \"C\" fn add2(num_1: i32, num_2: i32) -> i32 {\n"
+		"fn add(num_1: i32, num_2: i32) -> i32 {\n"
+		"\tnum_1 + num_2\n"
+		"}"
+		"fn add2(num_1: f32, num_2: f32) -> f32 {\n"
 		"\tnum_1 + num_2\n"
 		"}";
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_memory("rs", buffer, sizeof(buffer), NULL));
-	void *ret = metacall("metacall_add2", 5, 10);
+	void *ret = metacall("add", 5, 10);
 	EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
+	metacall_value_destroy(ret);
+	ret = metacall("add2", 5.0, 10.0);
+	EXPECT_EQ((float)15.0, (float)metacall_value_to_float(ret));
 	metacall_value_destroy(ret);
 
 	/* Print inspect information */

@@ -28,7 +28,13 @@ impl MemoryRegistration {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DlopenError(error)),
         };
-        // delete compiled library
+        // delete temporary files
+        let tmp_dir = std::env::temp_dir();
+        fs::remove_file(tmp_dir.join("script.rs")).expect("unable to delete source script");
+        fs::remove_file(tmp_dir.join("wrapped_script.rs"))
+            .expect("unable to delete wrapped script");
+        fs::remove_file(tmp_dir.join("metacall_class.rs"))
+            .expect("unable to delete metacall class");
         fs::remove_file(&state.output).expect("unable to delete compiled library");
 
         Ok(MemoryRegistration {

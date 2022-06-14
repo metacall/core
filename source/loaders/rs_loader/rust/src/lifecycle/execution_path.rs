@@ -1,6 +1,6 @@
 use crate::{c_char, c_int, c_void, CStr, PathBuf};
 
-use api;
+use compiler::api;
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_execution_path(
