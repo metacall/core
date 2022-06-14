@@ -80,7 +80,7 @@ else()
 endif()
 
 set(LIBTCC_TARGET libtcc-depends)
-set(LIBTCC_COMMIT_SHA "da11cf651576f94486dbd043dbfcde469e497574")
+set(LIBTCC_COMMIT_SHA "afc1362")
 set(LIBTTC_LIBRARY_NAME "${CMAKE_SHARED_LIBRARY_PREFIX}tcc${CMAKE_SHARED_LIBRARY_SUFFIX}")
 set(LIBTTC_LIBRARY_PATH "${PROJECT_OUTPUT_DIR}/${LIBTTC_LIBRARY_NAME}")
 set(LIBTTC_RUNTIME_PATH "${LIBTCC_INSTALL_PREFIX}/lib/tcc")
@@ -95,8 +95,8 @@ set(LIBTTC_RUNTIME_FILES
 # LibTCC Proejct
 ExternalProject_Add(${LIBTCC_TARGET}
 	DOWNLOAD_NAME		tinycc.tar.gz
-	URL					https://repo.or.cz/tinycc.git/snapshot/${LIBTCC_COMMIT_SHA}.tar.gz
-	URL_MD5				cc0cde5f454fa3a8c068da95edaaea86
+	URL					https://github.com/metacall/tinycc/archive/${LIBTCC_COMMIT_SHA}.tar.gz
+	URL_MD5				5582b17ee5848aeec28bee13773843f7
 	CONFIGURE_COMMAND	${LIBTCC_CONFIGURE}
 	BUILD_COMMAND		${LIBTCC_BUILD}
 	BUILD_IN_SOURCE		true
