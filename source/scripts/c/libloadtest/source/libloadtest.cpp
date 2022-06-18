@@ -1,3 +1,4 @@
+#include "libloadtest.h"
 #include <vector>
 
 long call_cpp_func(void)

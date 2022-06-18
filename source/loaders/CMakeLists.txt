@@ -9,6 +9,7 @@ option(OPTION_BUILD_LOADERS_COB "Build GNU/COBOL 2.2 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CR "Build Crystal 0.33.0 loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_CS "Build C# CoreCLR 5.0.17 Runtime loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_DART "Build Dart VM 2.8.4 Runtime loader plugin." OFF)
+option(OPTION_BUILD_LOADERS_EXT "Build MetaCall Core Extension loader plugin." ON)
 option(OPTION_BUILD_LOADERS_FILE "Build File System loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JAVA "Build Java Virtual Machine loader plugin." OFF)
 option(OPTION_BUILD_LOADERS_JL "Build Julia 1.6 loader plugin." OFF)
@@ -29,8 +30,9 @@ option(OPTION_BUILD_LOADERS_WASM "Build WebAssembly Virtual Machine loader plugi
 add_subdirectory(c_loader) # Foreign Function Interface library
 add_subdirectory(cob_loader) # GNU/Cobol 2.2 Runtime
 add_subdirectory(cr_loader) # Crystal 0.33.0 Runtime
-add_subdirectory(dart_loader) # Dart VM 2.8.4 Runtime
 add_subdirectory(cs_loader) # CoreCLR 5.0.17 Runtime
+add_subdirectory(dart_loader) # Dart VM 2.8.4 Runtime
+add_subdirectory(ext_loader) # MetaCall Core Extensions
 add_subdirectory(file_loader) # File System
 add_subdirectory(java_loader) # Java Virtual Machine
 add_subdirectory(jl_loader) # Julia Runtime
@@ -52,8 +54,9 @@ macro(add_loader_dependencies target)
 	set(loaders_map_c_loader	OPTION_BUILD_LOADERS_C)
 	set(loaders_map_cob_loader	OPTION_BUILD_LOADERS_COB)
 	set(loaders_map_cr_loader	OPTION_BUILD_LOADERS_CR)
-	set(loaders_map_dart_loader	OPTION_BUILD_LOADERS_CS)
 	set(loaders_map_cs_loader	OPTION_BUILD_LOADERS_DART)
+	set(loaders_map_dart_loader	OPTION_BUILD_LOADERS_CS)
+	set(loaders_map_ext_loader	OPTION_BUILD_LOADERS_EXT)
 	set(loaders_map_file_loader	OPTION_BUILD_LOADERS_FILE)
 	set(loaders_map_java_loader	OPTION_BUILD_LOADERS_JAVA)
 	set(loaders_map_jl_loader	OPTION_BUILD_LOADERS_JL)
