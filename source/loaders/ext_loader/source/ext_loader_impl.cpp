@@ -309,10 +309,21 @@ int ext_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 int ext_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx)
 {
-	/* Here we should invoke the entry point function and retrieve the context data */
+	loader_impl_ext_handle ext_handle = static_cast<loader_impl_ext_handle>(handle);
+
 	(void)impl;
-	(void)handle;
 	(void)ctx;
+
+	for (auto ext : ext_handle->extensions)
+	{
+		void *(*entry_point)() = NULL;
+
+		reinterpret_cast<void *&>(entry_point) = ext.addr;
+
+		void *m = entry_point(/* TODO: Pass here the context? */);
+
+		// TODO: Do something with m?
+	}
 
 	return 0;
 }

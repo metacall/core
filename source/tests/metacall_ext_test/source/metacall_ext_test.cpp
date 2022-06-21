@@ -38,7 +38,7 @@ TEST_F(metacall_ext_test, DefaultConstructor)
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
 
-	void *ret = metacall("extension_sum", 3, 4);
+	void *ret = metacall("sum", 3, 4);
 
 	EXPECT_NE((void *)NULL, (void *)ret);
 
