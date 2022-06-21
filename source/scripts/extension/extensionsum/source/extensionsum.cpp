@@ -9,7 +9,7 @@ void *sum(size_t argc, void *args[], void *data)
 	(void)argc;
 	(void)data;
 
-	printf("%ld + %ld = %lf\n", left, right, result);
+	printf("%ld + %ld = %ld\n", left, right, result);
 
 	return metacall_value_create_long(result);
 }

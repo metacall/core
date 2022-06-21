@@ -34,22 +34,17 @@ portability_static_assert((size_t)sizeof(LOADER_HOST_NAME) <= (size_t)LOADER_TAG
 
 /* -- Member Data -- */
 
-struct loader_host_invoke_type
+union loader_host_invoke_cast
 {
-	loader_register_invoke invoke;
+	function_impl ptr;
+	loader_register_invoke fn;
 };
-
-/* -- Type Declarations -- */
-
-typedef struct loader_host_invoke_type *loader_host_invoke;
 
 /* -- Private Methods -- */
 
 static value function_host_interface_invoke(function func, function_impl func_impl, function_args args, size_t size);
 
 static function_return function_host_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context);
-
-static void function_host_interface_destroy(function func, function_impl func_impl);
 
 static function_interface function_host_singleton(void);
 
@@ -61,11 +56,12 @@ static void loader_host_destroy(loader_impl host);
 
 function_return function_host_interface_invoke(function func, function_impl func_impl, function_args args, size_t size)
 {
-	loader_host_invoke host_invoke = (loader_host_invoke)func_impl;
-
+	union loader_host_invoke_cast invoke_cast;
 	void *data = function_closure(func);
 
-	return host_invoke->invoke(size, args, data);
+	invoke_cast.ptr = func_impl;
+
+	return invoke_cast.fn(size, args, data);
 }
 
 function_return function_host_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
@@ -83,23 +79,13 @@ function_return function_host_interface_await(function func, function_impl impl,
 	return NULL;
 }
 
-void function_host_interface_destroy(function func, function_impl func_impl)
-{
-	(void)func;
-
-	if (func_impl != NULL)
-	{
-		free(func_impl);
-	}
-}
-
 function_interface function_host_singleton(void)
 {
 	static struct function_interface_type host_interface = {
 		NULL,
 		&function_host_interface_invoke,
 		&function_host_interface_await,
-		&function_host_interface_destroy
+		NULL
 	};
 
 	return &host_interface;
@@ -161,20 +147,12 @@ error:
 
 int loader_host_register(loader_impl host, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])
 {
-	loader_host_invoke host_invoke = malloc(sizeof(struct loader_host_invoke_type));
+	void **invoke_ptr = (void *)&invoke;
 
-	if (host_invoke == NULL)
-	{
-		return 1;
-	}
-
-	host_invoke->invoke = invoke;
-
-	function f = function_create(name, arg_size, host_invoke, &function_host_singleton);
+	function f = function_create(name, arg_size, *invoke_ptr, &function_host_singleton);
 
 	if (f == NULL)
 	{
-		free(host_invoke);
 		return 1;
 	}
 

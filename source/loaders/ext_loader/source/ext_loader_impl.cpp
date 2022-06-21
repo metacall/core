@@ -61,61 +61,6 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path);
 static void ext_loader_impl_destroy_handle(loader_impl_ext_handle ext_handle);
 
-int function_ext_interface_create(function func, function_impl impl)
-{
-	(void)func;
-	(void)impl;
-
-	return 0;
-}
-
-function_return function_ext_interface_invoke(function func, function_impl impl, function_args args, size_t size)
-{
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-
-	return NULL;
-}
-
-function_return function_ext_interface_await(function func, function_impl impl, function_args args, size_t size, function_resolve_callback resolve_callback, function_reject_callback reject_callback, void *context)
-{
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-	(void)args;
-	(void)size;
-	(void)resolve_callback;
-	(void)reject_callback;
-	(void)context;
-
-	return NULL;
-}
-
-void function_ext_interface_destroy(function func, function_impl impl)
-{
-	/* TODO */
-
-	(void)func;
-	(void)impl;
-}
-
-function_interface function_ext_singleton(void)
-{
-	static struct function_interface_type ext_interface = {
-		&function_ext_interface_create,
-		&function_ext_interface_invoke,
-		&function_ext_interface_await,
-		&function_ext_interface_destroy
-	};
-
-	return &ext_interface;
-}
-
 int ext_loader_impl_initialize_types(loader_impl impl)
 {
 	for (type_id index = 0; index < TYPE_SIZE; ++index)
