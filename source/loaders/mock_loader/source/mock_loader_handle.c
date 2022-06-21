@@ -23,10 +23,10 @@
 
 #include <loader/loader_impl.h>
 
-#include <reflect/context.h>
-#include <reflect/function.h>
-#include <reflect/scope.h>
-#include <reflect/type.h>
+#include <reflect/reflect_context.h>
+#include <reflect/reflect_function.h>
+#include <reflect/reflect_scope.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 

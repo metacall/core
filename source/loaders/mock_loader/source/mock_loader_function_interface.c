@@ -20,9 +20,9 @@
 
 #include <mock_loader/mock_loader_function_interface.h>
 
-#include <reflect/context.h>
-#include <reflect/scope.h>
-#include <reflect/type.h>
+#include <reflect/reflect_context.h>
+#include <reflect/reflect_scope.h>
+#include <reflect/reflect_type.h>
 
 #include <log/log.h>
 

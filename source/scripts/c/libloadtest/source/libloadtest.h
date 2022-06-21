@@ -1,7 +1,7 @@
 #ifndef LIB_LOAD_TEST_H
 #define LIB_LOAD_TEST_H 1
 
-#ifdef _WIN32
+#if defined(WIN32) || defined(_WIN32)
 	#define EXPORT __declspec(dllexport)
 #else
 	#define EXPORT __attribute__((visibility("default")))
