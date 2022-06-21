@@ -57,6 +57,12 @@ typedef struct loader_impl_ext_handle_type
 
 } * loader_impl_ext_handle;
 
+union loader_impl_function_cast
+{
+	void *ptr;
+	void (*fn)(void *, void *);
+};
+
 dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path);
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path);
 static void ext_loader_impl_destroy_handle(loader_impl_ext_handle ext_handle);
@@ -256,18 +262,13 @@ int ext_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 {
 	loader_impl_ext_handle ext_handle = static_cast<loader_impl_ext_handle>(handle);
 
-	(void)impl;
-	(void)ctx;
-
 	for (auto ext : ext_handle->extensions)
 	{
-		void *(*entry_point)() = NULL;
+		loader_impl_function_cast function_cast;
 
-		reinterpret_cast<void *&>(entry_point) = ext.addr;
+		function_cast.ptr = static_cast<void *>(ext.addr);
 
-		void *m = entry_point(/* TODO: Pass here the context? */);
-
-		// TODO: Do something with m?
+		function_cast.fn(impl, ctx);
 	}
 
 	return 0;

@@ -145,7 +145,7 @@ error:
 	return NULL;
 }
 
-int loader_host_register(loader_impl host, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])
+int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[])
 {
 	void **invoke_ptr = (void *)&invoke;
 
@@ -178,7 +178,11 @@ int loader_host_register(loader_impl host, const char *name, loader_register_inv
 
 	if (name != NULL)
 	{
-		context ctx = loader_impl_context(host);
+		if (ctx == NULL)
+		{
+			ctx = loader_impl_context(host);
+		}
+
 		scope sp = context_scope(ctx);
 		value v = value_create_function(f);
 

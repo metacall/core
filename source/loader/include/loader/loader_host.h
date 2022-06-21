@@ -28,6 +28,8 @@
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
+#include <reflect/reflect_context.h>
+
 #include <portability/portability_assert.h>
 
 #include <plugin/plugin_impl.h>
@@ -40,7 +42,7 @@ extern "C" {
 
 LOADER_API plugin loader_host_initialize(void);
 
-LOADER_API int loader_host_register(loader_impl host, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[]);
+LOADER_API int loader_host_register(loader_impl host, context ctx, const char *name, loader_register_invoke invoke, function *func, type_id return_type, size_t arg_size, type_id args_type_id[]);
 
 #ifdef __cplusplus
 }
