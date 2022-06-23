@@ -124,7 +124,13 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 {
 	for (auto exec_path : ext_impl->paths)
 	{
-		dynlink lib = dynlink_load(exec_path.string().c_str(), path, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+		std::string lib_name(path);
+
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
+		lib_name.append("d");
+#endif
+
+		dynlink lib = dynlink_load(exec_path.string().c_str(), lib_name.c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		if (lib != NULL)
 		{

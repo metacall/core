@@ -33,7 +33,7 @@ TEST_F(metacall_ext_test, DefaultConstructor)
 
 	/* Extension */
 	const char *ext_scripts[] = {
-		"extensionsum" /* The extension is crossplatform so we should not add it here */
+		"sum_extension" /* The library extension (dll, so, dylib) is crossplatform so we should not add it here */
 	};
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
