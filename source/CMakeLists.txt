@@ -111,6 +111,7 @@ add_subdirectory(serial)
 add_subdirectory(configuration)
 add_subdirectory(loader)
 add_subdirectory(metacall)
+add_subdirectory(extensions)
 
 # Loaders
 set(IDE_FOLDER "Loaders")
