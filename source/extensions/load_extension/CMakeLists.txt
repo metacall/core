@@ -1,8 +1,17 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_EXTENSIONS_LOAD)
+	return()
+endif()
+
+#
+# Plugin name and options
+#
+
 # Target name
-set(target load_extensions)
+set(target load_extension)
 
 # Exit here if required dependencies are not met
-message(STATUS "Script ${target}")
+message(STATUS "Plugin ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
@@ -30,11 +39,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/load_extensions.h
+	${include_path}/load_extension.h
 )
 
 set(sources
-	${source_path}/load_extensions.cpp
+	${source_path}/load_extension.cpp
 )
 
 # Group source files
@@ -162,6 +171,15 @@ target_compile_options(${target}
 )
 
 #
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17 # Required for filesystem
+)
+
+#
 # Linker options
 #
 
@@ -174,4 +192,14 @@ target_link_libraries(${target}
 	INTERFACE
 )
 
-set_property(TARGET ${target} PROPERTY CXX_STANDARD 17)
+#
+# Deployment
+#
+
+# Library
+install(TARGETS ${target}
+	EXPORT  "${target}-export"				COMPONENT dev
+	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
+	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
+	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
+)

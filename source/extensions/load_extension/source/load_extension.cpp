@@ -1,4 +1,4 @@
-#include <load_extensions/load_extensions.h>
+#include <load_extension/load_extension.h>
 
 #include <environment/environment_variable_path.h>
 #include <log/log.h>
@@ -44,7 +44,7 @@ std::string get_ext_path()
 	return tmp.string();
 }
 
-void load_extensions(void *loader, void *context)
+void load_extension(void *loader, void *context)
 {
 	std::regex metacall_json{ R"(metacall(-.+)?\.json$)" };
 	std::string ext_path = get_ext_path();
