@@ -7,7 +7,6 @@
 #include <assert.h>
 
 #include <filesystem>
-#include <regex>
 #include <string>
 
 #define METACALL_EXTENSIONS_PATH "METACALL_EXTENSIONS_PATH" /*ENV Variable for plugin path*/
@@ -46,13 +45,15 @@ std::string get_ext_path()
 
 void load_extension(void *loader, void *context)
 {
-	std::regex metacall_json{ R"(metacall(-.+)?\.json$)" };
 	std::string ext_path = get_ext_path();
 	if (ext_path.empty())
 	{
 		/*TODO: log*/
 		assert(!"Failed to get metacall lib path");
 	}
+
+	std::string m_begins = "metacall-";
+	std::string m_ends = ".json";
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 	void *config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
@@ -66,8 +67,13 @@ void load_extension(void *loader, void *context)
 		fs::directory_entry dir(*i);
 		if (dir.is_regular_file())
 		{
-			if (std::regex_match(dir.path().filename().c_str(), metacall_json))
+			std::string config = dir.path().filename().c_str();
+
+			if (config == "metacall.json" ||
+				(config.substr(0, 9) == m_begins &&
+					config.substr(config.size() - m_ends.size()) == m_ends))
 			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loading extension: %s", dir.path().filename().c_str());
 				metacall_load_from_configuration(dir.path().c_str(), NULL, config_allocator);
 				i.pop();
 				continue;
