@@ -25,7 +25,8 @@
 
 #include <atomic>
 
-std::atomic_bool result(false);
+std::atomic_bool callback_result(false);
+std::atomic_bool signal_result(false);
 
 class metacall_node_signal_handler_test : public testing::Test
 {
@@ -34,8 +35,40 @@ public:
 
 void *c_callback(size_t, void *[], void *)
 {
-	result = true;
-	return metacall_value_create_long(32L);
+	callback_result.store(true);
+	return metacall_value_create_long(raise(SIGUSR2)); /* Propagate signal */
+}
+
+static void handle_signals(int s)
+{
+	switch (s)
+	{
+		case SIGUSR1:
+			fprintf(stdout, "c++: received signal SIGUSR1\n");
+			break;
+		case SIGUSR2:
+			fprintf(stdout, "c++: received signal SIGUSR1\n");
+			signal_result.store(true);
+			break;
+		case SIGINT:
+			fprintf(stdout, "c++: received signal SIGINT\n");
+			break;
+		case SIGCONT:
+			fprintf(stdout, "c++: received signal SIGCONT\n");
+			break;
+		case SIGCHLD:
+			fprintf(stdout, "c++: received signal SIGCHLD\n");
+			break;
+		case SIGTSTP:
+			fprintf(stdout, "c++: received signal SIGTSTP\n");
+			break;
+		case SIGSTOP:
+			fprintf(stdout, "c++: received signal SIGSTOP\n");
+			break;
+		default:
+			fprintf(stdout, "c++: received signal number %d\n", s);
+			break;
+	}
 }
 
 TEST_F(metacall_node_signal_handler_test, DefaultConstructor)
@@ -44,30 +77,27 @@ TEST_F(metacall_node_signal_handler_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
+	/* Register signal */
+	signal(SIGUSR2, handle_signals);
+
 	ASSERT_EQ((int)0, (int)metacall_register("c_callback", c_callback, NULL, METACALL_LONG, 0));
 
-/* NodeJS */
-#if defined(OPTION_BUILD_LOADERS_NODE)
-	{
-		const char buffer[] =
-			"const { metacall } = require('" METACALL_NODE_PORT_PATH "');\n"
-			"const cp = require('child_process');\n"
-			"console.log('node: my_function');\n"
-			"let sp = cp.spawn('ps');\n"
-			"sp.stdout.on('data', data => {\n"
-			"	console.log('node: stdout: ' + data.toString());\n"
-			"});\n"
-			"sp.on('exit', (code, signal) => {\n"
-			"	console.log(`node: child process exited with code ${code}`);\n"
-			"});\n"
-			"process.on('SIGCHLD', () => {\n"
-			"	console.log(`node: Received SIGCHLD signal in process`);\n"
-			"	metacall('c_callback');\n"
-			"});\n";
+	const char buffer[] =
+		"const { metacall } = require('" METACALL_NODE_PORT_PATH "');\n"
+		"const cp = require('child_process');\n"
+		"let sp = cp.spawn('ps');\n"
+		"sp.stdout.on('data', data => {\n"
+		"	console.log('node: stdout: ' + data.toString());\n"
+		"});\n"
+		"sp.on('exit', (code, signal) => {\n"
+		"	console.log(`node: child process exited with code ${code}`);\n"
+		"});\n"
+		"process.on('SIGCHLD', () => {\n"
+		"	console.log(`node: Received SIGCHLD signal in process`);\n"
+		"	metacall('c_callback');\n"
+		"});\n";
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
-	}
-#endif /* OPTION_BUILD_LOADERS_NODE */
+	EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
 
 	/* Print inspect information */
 	{
@@ -92,5 +122,6 @@ TEST_F(metacall_node_signal_handler_test, DefaultConstructor)
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 
-	EXPECT_EQ((bool)result.load(), (bool)true);
+	EXPECT_EQ((bool)callback_result.load(), (bool)true);
+	EXPECT_EQ((bool)signal_result.load(), (bool)true);
 }
