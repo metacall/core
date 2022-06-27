@@ -2,5 +2,4 @@
 
 def extensionA():
 	print('Hello World from extensionA!!')
-	return
-
+	return 6

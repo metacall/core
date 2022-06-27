@@ -20,7 +20,6 @@
 
 #include <metacall/metacall.h>
 #include <sum_extension/sum_extension.h>
-#include <cassert>
 
 void *sum(size_t argc, void *args[], void *data)
 {
@@ -35,8 +34,8 @@ void *sum(size_t argc, void *args[], void *data)
 	return metacall_value_create_long(result);
 }
 
-void sum_extension(void *loader, void *context)
+int sum_extension(void *loader, void *context)
 {
 	enum metacall_value_id arg_types[] = { METACALL_LONG, METACALL_LONG };
-	assert(metacall_register_loaderv(loader, context, "sum", sum, METACALL_LONG, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) == 0);
+	return metacall_register_loaderv(loader, context, "sum", sum, METACALL_LONG, sizeof(arg_types) / sizeof(arg_types[0]), arg_types);
 }

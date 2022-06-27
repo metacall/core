@@ -39,15 +39,18 @@ TEST_F(metacall_load_extension_test, DefaultConstructor)
 		"load_extension"
 	};
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
+	ASSERT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
+
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
 	{
 		void *ret = metacall("extensionA");
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
+		EXPECT_EQ((long)6, (long)metacall_value_to_long(ret));
 	}
 
 	{
@@ -55,20 +58,24 @@ TEST_F(metacall_load_extension_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
+		EXPECT_EQ((long)7, (long)metacall_value_to_long(ret));
 	}
+#endif /* OPTION_BUILD_LOADERS_PY */
 
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
 		void *ret = metacall("extensionC");
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
-		EXPECT_EQ((enum metacall_value_id)METACALL_NULL, (enum metacall_value_id)metacall_value_id(ret));
+		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
 
-		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
+		EXPECT_EQ((double)8.0, (double)metacall_value_to_double(ret));
 	}
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{

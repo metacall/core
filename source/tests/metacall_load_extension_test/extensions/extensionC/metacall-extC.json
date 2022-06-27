@@ -1,6 +1,6 @@
 {
 	"language_id": "node",
-	"path": "",
+	"path": ".",
 	"scripts": [
 		"extensionC.js"
 	]

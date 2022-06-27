@@ -2,9 +2,8 @@
 
 function extensionC() {
 	console.log('Hello World, from extensionC');
-	return
+	return 8;
 }
-
 
 module.exports = {
 	extensionC

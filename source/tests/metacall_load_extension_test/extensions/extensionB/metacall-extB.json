@@ -1,6 +1,6 @@
 {
 	"language_id": "py",
-	"path": "",
+	"path": ".",
 	"scripts": [
 		"extensionB.py"
 	]

@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-LOAD_EXTENSION_API void load_extension(void *loader, void *context);
+LOAD_EXTENSION_API int load_extension(void *loader, void *context);
 
 DYNLINK_SYMBOL_EXPORT(load_extension);
 

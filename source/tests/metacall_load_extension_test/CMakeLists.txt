@@ -1,3 +1,8 @@
+# Check if this loader is enabled
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE)
+	return()
+endif()
+
 #
 # Executable name and options
 #
@@ -119,24 +124,24 @@ add_test(NAME ${target}
 )
 
 #
+# Copy test data
+#
+
+add_custom_target(${target}-copy-test-files ALL
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/extensions
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/extensions ${PROJECT_OUTPUT_DIR}/extensions
+)
+
+#
 # Define dependencies
 #
 
-add_loader_dependencies(${target}
+add_dependencies(${target}
+	ext_loader
 	node_loader
 	py_loader
-	rb_loader
+	${target}-copy-test-files
 )
-
-#
-# copy test data
-#
-add_custom_target(copy-test-files ALL
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/extensions
-  COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/extensions ${PROJECT_OUTPUT_DIR}/extensions 
-#  DEPENDS $target}
-)
-
 
 #
 # Define test properties
