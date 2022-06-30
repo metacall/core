@@ -58,7 +58,7 @@ add_custom_target(${target}_runtime
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env WRAPPER_DIR=${CMAKE_CURRENT_SOURCE_DIR}/compiler/src/wrapper ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	# TODO: $ORIGIN does not work, but even using absolute path, the library librustc_driver depends on libstd and libLLVM
 	# but they have the rpath hardcoded to the rustup folder, for mitigating this, we are using LD_LIBRARY_PATH in the test
 	# although it may cause problems in the future in the distributable or docker builds, this must be reviewed

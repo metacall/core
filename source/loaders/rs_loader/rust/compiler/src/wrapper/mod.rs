@@ -4,15 +4,6 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 
-#[cfg(test)]
-lazy_static::lazy_static! {
-    static ref WRAPPER_DIR: &'static str = "DUMMY";
-}
-#[cfg(not(test))]
-lazy_static::lazy_static! {
-    static ref WRAPPER_DIR: &'static str = env!("WRAPPER_DIR");
-}
-
 fn generate_function_wrapper(functions: &Vec<Function>) -> String {
     let mut ret = String::new();
     for func in functions {
@@ -93,13 +84,11 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                 .unwrap()
                 .to_owned();
             let _ = source_path.pop();
-            let wrapper_dir = PathBuf::from(WRAPPER_DIR.to_string());
-            // in order to solve the dependencies conflict,
-            // we use modules instead of putting them into a single file.
-            std::fs::copy(
-                wrapper_dir.join("class.rs"),
-                source_path.join("metacall_class.rs"),
-            )?;
+
+            // create metacall_class file
+            let mut class_file = File::create(source_path.join("metacall_class.rs"))?;
+            let bytes = include_bytes!("class.rs");
+            class_file.write_all(bytes)?;
 
             source_path.push("wrapped_".to_owned() + &source_file);
             let mut wrapper_file = File::create(&source_path)?;
@@ -122,14 +111,13 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                 // write code to script
                 let mut source_file = File::create(source_path.join("script.rs"))?;
                 source_file.write_all(input.as_bytes())?;
+                // create metacall_class file
+                let mut class_file = File::create(source_path.join("metacall_class.rs"))?;
+                let bytes = include_bytes!("class.rs");
+                class_file.write_all(bytes)?;
 
-                let wrapper_dir = PathBuf::from(WRAPPER_DIR.to_string());
                 // in order to solve the dependencies conflict,
                 // we use modules instead of putting them into a single file.
-                std::fs::copy(
-                    wrapper_dir.join("class.rs"),
-                    source_path.join("metacall_class.rs"),
-                )?;
                 let mut wrapper_file = File::create(source_path.join("wrapped_script.rs"))?;
                 // include class module
                 wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
@@ -145,14 +133,6 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                     is_parsing: false,
                     ..callbacks
                 })
-                // Ok(CompilerCallbacks {
-                //     source: Source::new(Source::Memory {
-                //         name,
-                //         code: content + &input,
-                //     }),
-                //     is_parsing: false,
-                //     ..callbacks
-                // })
             }
             _ => {
                 unimplemented!()
