@@ -94,5 +94,36 @@ class py_port_test(unittest.TestCase):
 		self.assertEqual(flip(lambda x, y: x - y)(5, 4), -1.0)
 		self.assertEqual(flip(subtract)(5, 4), -1.0)
 
+	# MetaCall (Rust)
+	def test_rust(self):
+		print("running rust test")
+		from basic.rs import add, add_float, string_len, new_string
+
+		self.assertEqual(add(34, 22), 56)
+
+		self.assertEqual(add_float(34.0, 22.0), 56.0)
+
+		# FIXME: python will get a string with random suffix
+		# s = new_string(3)
+		# self.assertEqual(s, 'get number 3')
+
+		self.assertEqual(string_len('world'), 5)
+
+		metacall_load_from_memory("rs", """
+fn return_string() -> String {
+	println!("return hello world");
+    String::from("hello world")
+}
+
+fn new_string2(idx: i32) -> String {
+    format!("get number {idx}")
+}
+
+		""")
+		self.assertEqual(metacall('new_string2', 5), 'get number 5')
+
+		# FIXME: println inside rust fails to log anything
+		self.assertEqual(metacall("return_string"), "hello world")
+
 if __name__ == '__main__':
 	unittest.main()

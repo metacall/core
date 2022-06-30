@@ -219,6 +219,7 @@ mod.prototype.require = function (name) {
 		ts: 'ts',
 		jsx: 'ts',
 		tsx: 'ts',
+		rs: 'rs'
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */

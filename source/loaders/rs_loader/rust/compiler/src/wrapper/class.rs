@@ -10,6 +10,7 @@ type Result<T, E = i32> = core::result::Result<T, E>;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 extern "C" {
     fn value_type_count(v: *mut c_void) -> c_int;
+    fn value_type_id(v: *mut c_void) -> c_int;
     // fn metacall_value_id(v: *mut c_void) -> c_int;
     fn metacall_value_to_int(v: *mut c_void) -> c_int;
     // fn metacall_value_to_bool(v: *mut c_void) -> c_int;
@@ -587,6 +588,26 @@ impl FromMeta for MetacallValue {
 //     }
 // }
 
+macro_rules! convert_to {
+    ($t:ty, $val:expr) => {
+        unsafe {
+            let id = value_type_id($val);
+
+            match id {
+                2 => Ok(metacall_value_to_short($val) as $t),
+                3 => Ok(metacall_value_to_int($val) as $t),
+                4 => Ok(metacall_value_to_long($val) as $t),
+                5 => Ok(metacall_value_to_float($val) as $t),
+                6 => Ok(metacall_value_to_double($val) as $t),
+                _ => {
+                    println!("receive id: {}, should be [2-6]", id);
+                    panic!("received mismatch type");
+                }
+            }
+        }
+    };
+}
+
 impl FromMeta for i8 {
     fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe { metacall_value_to_char(val) })
@@ -594,27 +615,27 @@ impl FromMeta for i8 {
 }
 impl FromMeta for i16 {
     fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe { metacall_value_to_short(val) })
+        convert_to!(i16, val)
     }
 }
 impl FromMeta for i32 {
     fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe { metacall_value_to_int(val) })
+        convert_to!(i32, val)
     }
 }
 impl FromMeta for i64 {
     fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe { metacall_value_to_long(val) })
+        convert_to!(i64, val)
     }
 }
 impl FromMeta for f32 {
     fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe { metacall_value_to_float(val) })
+        convert_to!(f32, val)
     }
 }
 impl FromMeta for f64 {
     fn from_meta(val: MetacallValue) -> Result<Self> {
-        Ok(unsafe { metacall_value_to_double(val) })
+        convert_to!(f64, val)
     }
 }
 
