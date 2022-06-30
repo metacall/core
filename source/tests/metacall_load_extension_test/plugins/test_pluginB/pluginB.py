@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
 
-def extensionB():
+def pluginB():
 	print('Hello World from extensionB!!')
 	return 7

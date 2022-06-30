@@ -128,8 +128,7 @@ add_test(NAME ${target}
 #
 
 add_custom_target(${target}-copy-test-files ALL
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/extensions
-	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/extensions ${PROJECT_OUTPUT_DIR}/extensions
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/plugins ${PROJECT_OUTPUT_DIR}/plugins
 )
 
 #
@@ -140,6 +139,7 @@ add_dependencies(${target}
 	ext_loader
 	node_loader
 	py_loader
+	load_extension
 	${target}-copy-test-files
 )
 

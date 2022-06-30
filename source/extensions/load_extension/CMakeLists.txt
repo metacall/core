@@ -196,6 +196,21 @@ target_link_libraries(${target}
 # Deployment
 #
 
+#create plugins directory
+add_custom_target(${target}-create-plugin-dir ALL
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/plugins
+)
+
+#remove test files
+if(OPTION_BUILD_TESTS)
+  install(CODE "execute_process(COMMAND bash \"-c\" \"rm -rf ${PROJECT_OUTPUT_DIR}/plugins/test_plugin*\"  COMMAND_ECHO STDOUT)")
+endif()
+
+
+
+#install plugins
+install(DIRECTORY ${PROJECT_OUTPUT_DIR}/plugins DESTINATION ${INSTALL_LIB})
+
 # Library
 install(TARGETS ${target}
 	EXPORT  "${target}-export"				COMPONENT dev

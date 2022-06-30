@@ -44,7 +44,7 @@ TEST_F(metacall_load_extension_test, DefaultConstructor)
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
-		void *ret = metacall("extensionA");
+		void *ret = metacall("pluginA");
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -54,7 +54,7 @@ TEST_F(metacall_load_extension_test, DefaultConstructor)
 	}
 
 	{
-		void *ret = metacall("extensionB");
+		void *ret = metacall("pluginB");
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -67,7 +67,7 @@ TEST_F(metacall_load_extension_test, DefaultConstructor)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		void *ret = metacall("extensionC");
+		void *ret = metacall("pluginC");
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 

@@ -2,6 +2,6 @@
 	"language_id": "py",
 	"path": ".",
 	"scripts": [
-		"extensionA.py"
+		"pluginB.py"
 	]
 }
