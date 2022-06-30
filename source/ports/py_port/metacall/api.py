@@ -154,6 +154,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'ts': 'ts',
 		'jsx': 'ts',
 		'tsx': 'ts',
+		'rs': 'rs',
 		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
 		# Probably in the future we can differenciate between them, but it is not trivial
 	}
