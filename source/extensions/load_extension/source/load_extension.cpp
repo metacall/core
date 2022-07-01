@@ -40,19 +40,19 @@ static int load_extension_get_path(std::string &ext_path)
 #endif
 		;
 
-	dynlink_library_path_str path;
+	dynlink_library_path_str tmp_path;
 	size_t length = 0;
 
 	/* The order of precedence is:
 	* 1) Environment variable
 	* 2) Dynamic link library path of the host library
 	*/
-	if (dynlink_library_path(name, path, &length) != 0)
+	if (dynlink_library_path(name, tmp_path, &length) != 0)
 	{
 		return 1;
 	}
 
-	char *lib_path = environment_variable_path_create(METACALL_EXTENSION_PATH, path, length + 1, NULL);
+	char *lib_path = environment_variable_path_create(METACALL_EXTENSION_PATH, tmp_path, length + 1, NULL);
 
 	if (lib_path == NULL)
 	{
@@ -61,7 +61,7 @@ static int load_extension_get_path(std::string &ext_path)
 
 	fs::path path(lib_path);
 	environment_variable_path_destroy(lib_path);
-	path /= "extensions";
+	path /= "plugins";
 	ext_path = path.string();
 
 	return 0;
