@@ -1,0 +1,6 @@
+{
+  "language_id": "ext",
+  "scripts": [
+    "core_plugin"
+  ]
+}
