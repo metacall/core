@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target load_extension)
+set(target plugin_extension)
 
 # Exit here if required dependencies are not met
 message(STATUS "Plugin ${target}")
@@ -39,11 +39,11 @@ set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/load_extension.h
+	${include_path}/plugin_extension.h
 )
 
 set(sources
-	${source_path}/load_extension.cpp
+	${source_path}/plugin_extension.cpp
 )
 
 # Group source files

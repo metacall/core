@@ -18,10 +18,10 @@
  *
  */
 
-#ifndef LOAD_EXTENSION_H
-#define LOAD_EXTENSION_H 1
+#ifndef PLUGIN_EXTENSION_H
+#define PLUGIN_EXTENSION_H 1
 
-#include <load_extension/load_extension_api.h>
+#include <plugin_extension/plugin_extension_api.h>
 
 #include <dynlink/dynlink.h>
 
@@ -29,12 +29,12 @@
 extern "C" {
 #endif
 
-LOAD_EXTENSION_API int load_extension(void *loader, void *context);
+PLUGIN_EXTENSION_API int plugin_extension(void *loader, void *context);
 
-DYNLINK_SYMBOL_EXPORT(load_extension);
+DYNLINK_SYMBOL_EXPORT(plugin_extension);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* LOAD_EXTENSION_H */
+#endif /* PLUGIN_EXTENSION_H */

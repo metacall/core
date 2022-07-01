@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_load_extension_test.cpp
+	${source_path}/metacall_plugin_extension_test.cpp
 )
 
 # Group source files
@@ -131,7 +131,7 @@ add_dependencies(${target}
 	ext_loader
 	node_loader
 	py_loader
-	load_extension
+	plugin_extension
 )
 
 #

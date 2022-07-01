@@ -23,12 +23,12 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-class metacall_load_extension_test : public testing::Test
+class metacall_plugin_extension_test : public testing::Test
 {
 public:
 };
 
-TEST_F(metacall_load_extension_test, DefaultConstructor)
+TEST_F(metacall_plugin_extension_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -36,7 +36,7 @@ TEST_F(metacall_load_extension_test, DefaultConstructor)
 
 	/* Extension */
 	const char *ext_scripts[] = {
-		"load_extension"
+		"plugin_extension"
 	};
 
 	ASSERT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));

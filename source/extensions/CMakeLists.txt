@@ -7,4 +7,4 @@ endif()
 option(OPTION_BUILD_EXTENSIONS_LOAD "Build Load Extension." ON)
 
 # Extension sub-projects
-add_subdirectory(load_extension)
+add_subdirectory(plugin_extension)

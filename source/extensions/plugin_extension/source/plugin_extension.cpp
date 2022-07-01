@@ -18,7 +18,7 @@
  *
  */
 
-#include <load_extension/load_extension.h>
+#include <plugin_extension/plugin_extension.h>
 
 #include <environment/environment_variable_path.h>
 #include <log/log.h>
@@ -31,7 +31,7 @@
 
 namespace fs = std::filesystem;
 
-static int load_extension_get_path(std::string &ext_path)
+static int plugin_extension_get_path(std::string &ext_path)
 {
 	/* Initialize the library path */
 	const char name[] = "metacall"
@@ -67,11 +67,11 @@ static int load_extension_get_path(std::string &ext_path)
 	return 0;
 }
 
-int load_extension(void *, void *)
+int plugin_extension(void *, void *)
 {
 	std::string ext_path;
 
-	if (load_extension_get_path(ext_path) != 0)
+	if (plugin_extension_get_path(ext_path) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Define the extension path with the environment variable " METACALL_PLUGIN_PATH);
 		return 1;
