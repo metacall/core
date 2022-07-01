@@ -27,7 +27,7 @@
 #include <filesystem>
 #include <string>
 
-#define METACALL_EXTENSION_PATH "METACALL_EXTENSION_PATH" /* Environment variable for plugin path */
+#define METACALL_PLUGIN_PATH "METACALL_PLUGIN_PATH" /* Environment variable for plugin path */
 
 namespace fs = std::filesystem;
 
@@ -40,29 +40,29 @@ static int load_extension_get_path(std::string &ext_path)
 #endif
 		;
 
-	dynlink_library_path_str tmp_path;
+	dynlink_library_path_str lib_path;
 	size_t length = 0;
 
 	/* The order of precedence is:
 	* 1) Environment variable
 	* 2) Dynamic link library path of the host library
 	*/
-	if (dynlink_library_path(name, tmp_path, &length) != 0)
+	if (dynlink_library_path(name, lib_path, &length) != 0)
 	{
 		return 1;
 	}
 
-	char *lib_path = environment_variable_path_create(METACALL_EXTENSION_PATH, tmp_path, length + 1, NULL);
+	char *env_path = environment_variable_path_create(METACALL_PLUGIN_PATH, lib_path, length + 1, NULL);
 
-	if (lib_path == NULL)
+	if (env_path == NULL)
 	{
 		return 1;
 	}
 
-	fs::path path(lib_path);
-	environment_variable_path_destroy(lib_path);
-	path /= "plugins";
-	ext_path = path.string();
+	fs::path plugin_path(env_path);
+	environment_variable_path_destroy(env_path);
+	plugin_path /= "plugins";
+	ext_path = plugin_path.string();
 
 	return 0;
 }
@@ -73,12 +73,12 @@ int load_extension(void *, void *)
 
 	if (load_extension_get_path(ext_path) != 0)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Define the extension path with the environment variable " METACALL_EXTENSION_PATH);
+		log_write("metacall", LOG_LEVEL_ERROR, "Define the extension path with the environment variable " METACALL_PLUGIN_PATH);
 		return 1;
 	}
 
-	std::string m_begins = "metacall-";
-	std::string m_ends = ".json";
+	static std::string m_begins = "metacall-";
+	static std::string m_ends = ".json";
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
 	void *config_allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
