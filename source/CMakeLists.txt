@@ -111,7 +111,6 @@ add_subdirectory(serial)
 add_subdirectory(configuration)
 add_subdirectory(loader)
 add_subdirectory(metacall)
-add_subdirectory(extensions)
 
 # Loaders
 set(IDE_FOLDER "Loaders")
@@ -121,9 +120,13 @@ add_subdirectory(loaders)
 set(IDE_FOLDER "Serials")
 add_subdirectory(serials)
 
-# Serials
+# Detours
 set(IDE_FOLDER "Detours")
 add_subdirectory(detours)
+
+# Extensions
+set(IDE_FOLDER "Extensions")
+add_subdirectory(extensions)
 
 # Ports
 set(IDE_FOLDER "Ports")

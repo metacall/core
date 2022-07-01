@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-plugin-extension-test)
+set(target metacall-plugin-extension-local-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_plugin_extension_test.cpp
+	${source_path}/metacall_plugin_extension_local_test.cpp
 )
 
 # Group source files

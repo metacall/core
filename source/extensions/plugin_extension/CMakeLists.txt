@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_EXTENSIONS_LOAD)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_EXTENSIONS_PLUGIN)
 	return()
 endif()
 
@@ -11,7 +11,7 @@ endif()
 set(target plugin_extension)
 
 # Exit here if required dependencies are not met
-message(STATUS "Plugin ${target}")
+message(STATUS "Extension ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target} target_upper)
