@@ -96,7 +96,8 @@ class py_port_test(unittest.TestCase):
 
 	# MetaCall (Rust)
 	def test_rust(self):
-		print("running rust test")
+		if os.environ.get('OPTION_BUILD_LOADERS_RS') == None: return
+
 		from basic.rs import add, add_float, string_len, new_string
 
 		self.assertEqual(add(34, 22), 56)
@@ -118,8 +119,7 @@ fn return_string() -> String {
 fn new_string2(idx: i32) -> String {
     format!("get number {idx}")
 }
-
-		""")
+""")
 		self.assertEqual(metacall('new_string2', 5), 'get number 5')
 
 		# FIXME: println inside rust fails to log anything

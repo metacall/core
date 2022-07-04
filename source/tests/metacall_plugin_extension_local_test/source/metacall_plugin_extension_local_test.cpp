@@ -53,6 +53,8 @@ TEST_F(metacall_plugin_extension_local_test, DefaultConstructor)
 		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 
 		EXPECT_EQ((long)6, (long)metacall_value_to_long(ret));
+
+		metacall_value_destroy(ret);
 	}
 
 	{
@@ -63,6 +65,8 @@ TEST_F(metacall_plugin_extension_local_test, DefaultConstructor)
 		EXPECT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(ret));
 
 		EXPECT_EQ((long)7, (long)metacall_value_to_long(ret));
+
+		metacall_value_destroy(ret);
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
@@ -76,6 +80,8 @@ TEST_F(metacall_plugin_extension_local_test, DefaultConstructor)
 		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
 
 		EXPECT_EQ((double)8.0, (double)metacall_value_to_double(ret));
+
+		metacall_value_destroy(ret);
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 

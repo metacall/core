@@ -60,7 +60,13 @@ set_property(TEST ${target}
 
 include(TestEnvironmentVariables)
 
+# Enable rust test if it is built
+if(OPTION_BUILD_LOADERS_C)
+	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
+endif()
+
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+	${TESTS_ENVIRONMENT_VARIABLES_RS}
 )

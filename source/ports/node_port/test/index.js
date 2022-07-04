@@ -83,13 +83,15 @@ describe('metacall', () => {
 			assert.notStrictEqual(script, undefined);
 			assert.strictEqual(script.name, 'ducktype.rb');
 		});
-		it('metacall_load_from_file (rs)', () => {
-			assert.strictEqual(metacall_load_from_file('rs', ['basic.rs']), undefined);
+		if (process.env['OPTION_BUILD_LOADERS_RS']) {
+			it('metacall_load_from_file (rs)', () => {
+				assert.strictEqual(metacall_load_from_file('rs', ['basic.rs']), undefined);
 
-			const script = metacall_handle('rs', 'basic.rs');
-			assert.notStrictEqual(script, undefined);
-			assert.strictEqual(script.name, 'basic.rs');
-		});
+				const script = metacall_handle('rs', 'basic.rs');
+				assert.notStrictEqual(script, undefined);
+				assert.strictEqual(script.name, 'basic.rs');
+			});
+		}
 		it('metacall_load_from_memory (py)', () => {
 			assert.strictEqual(metacall_load_from_memory('py', 'def py_memory():\n\treturn 4;\n'), undefined);
 			assert.strictEqual(metacall('py_memory'), 4.0);
@@ -201,13 +203,15 @@ describe('metacall', () => {
 			assert.strictEqual(cache.cache_set('asd', 'efg'), undefined);
 			assert.strictEqual(cache.cache_get('asd'), 'efg');
 		});
-		it('require (rs)', () => {
-			const { new_string, add_vec2, add_float, return_vec } = require('./basic.rs');
-			assert.strictEqual(new_string(123), 'get number 123');
-			assert.strictEqual(add_vec2([1, 2, 3, 4]), 10);
-			assert.strictEqual(add_float(12, 23), 35);
-			assert.strictEqual(return_vec().reduce((partialSum, a) => partialSum + a, 0), 15);
-		});
+		if (process.env['OPTION_BUILD_LOADERS_RS']) {
+			it('require (rs)', () => {
+				const { new_string, add_vec2, add_float, return_vec } = require('./basic.rs');
+				assert.strictEqual(new_string(123), 'get number 123');
+				assert.strictEqual(add_vec2([1, 2, 3, 4]), 10);
+				assert.strictEqual(add_float(12, 23), 35);
+				assert.strictEqual(return_vec().reduce((partialSum, a) => partialSum + a, 0), 15);
+			});
+		}
 	});
 
 	describe('inspect', () => {
@@ -225,9 +229,11 @@ describe('metacall', () => {
 		it('metacall (rb)', () => {
 			assert.strictEqual(metacall('get_second', 5, 12), 12);
 		});
-		it('metacall (rs)', () => {
-			assert.strictEqual(metacall('add', 5, 12), 17);
-		});
+		if (process.env['OPTION_BUILD_LOADERS_RS']) {
+			it('metacall (rs)', () => {
+				assert.strictEqual(metacall('add', 5, 12), 17);
+			});
+		}
 	});
 
 	describe('callback', () => {
