@@ -125,13 +125,15 @@ PORTABILITY_API size_t portability_path_get_relative(const char *base, size_t ba
 
 PORTABILITY_API int portability_path_is_subpath(const char *parent, size_t parent_size, const char *child, size_t child_size);
 
-PORTABILITY_API int portability_path_is_absolute(const char *path, size_t path_size);
+PORTABILITY_API int portability_path_is_absolute(const char *path, size_t size);
 
 PORTABILITY_API size_t portability_path_join(const char *left_path, size_t left_path_size, const char *right_path, size_t right_path_size, char *join_path, size_t join_size);
 
 PORTABILITY_API size_t portability_path_canonical(const char *path, size_t path_size, char *canonical, size_t canonical_size);
 
 PORTABILITY_API int portability_path_compare(const char *left_path, const char *right_path);
+
+PORTABILITY_API int portability_path_is_pattern(const char *path, size_t size);
 
 #ifdef __cplusplus
 }

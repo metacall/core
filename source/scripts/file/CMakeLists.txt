@@ -15,3 +15,4 @@ include(FileProject)
 
 add_subdirectory(static)
 add_subdirectory(favicon)
+add_subdirectory(glob)

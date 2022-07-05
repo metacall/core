@@ -66,6 +66,21 @@ typedef struct stat file_stat_type;
 
 #endif
 
+/* Support for glob, only in POSIX for now */
+#if !defined(_WIN32) &&                                                                     \
+	(defined(unix) || defined(__unix__) || defined(__unix) ||                               \
+		defined(linux) || defined(__linux__) || defined(__linux) || defined(__gnu_linux) || \
+		defined(__CYGWIN__) || defined(__CYGWIN32__) ||                                     \
+		(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__))
+
+	#include <unistd.h>
+
+	#if defined(_POSIX_VERSION)
+		#define FILE_LOADER_GLOB_SUPPORT 1
+		#include <glob.h>
+	#endif
+#endif
+
 typedef struct loader_impl_file_descriptor_type
 {
 	loader_path path;
@@ -92,6 +107,7 @@ typedef struct loader_impl_file_function_type
 } * loader_impl_file_function;
 
 static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path, size_t path_size);
+static int file_loader_impl_load_glob(loader_impl_file_handle handle, const loader_path path, size_t path_size);
 static int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path);
 
 int function_file_interface_create(function func, function_impl impl)
@@ -253,13 +269,61 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path
 	return 1;
 }
 
+int file_loader_impl_load_glob(loader_impl_file_handle handle, const loader_path path, size_t path_size)
+{
+	glob_t glob_result;
+
+	(void)path_size;
+
+	memset(&glob_result, 0, sizeof(glob_result));
+
+	if (glob(path, GLOB_TILDE, NULL, &glob_result) != 0)
+	{
+		globfree(&glob_result);
+		return 1;
+	}
+
+	size_t i, loaded_files = 0;
+
+	for (i = 0; i < glob_result.gl_pathc; ++i)
+	{
+		loader_path glob_path;
+		size_t length = strnlen(glob_result.gl_pathv[i], LOADER_PATH_SIZE);
+
+		strncpy(glob_path, glob_result.gl_pathv[i], length);
+
+		glob_path[length] = '\0';
+
+		if (file_loader_impl_load_path(handle, glob_path, length + 1) == 0)
+		{
+			++loaded_files;
+		}
+	}
+
+	globfree(&glob_result);
+
+	return (loaded_files == 0);
+}
+
 int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path)
 {
 	size_t path_size = strnlen(path, LOADER_PATH_SIZE) + 1;
+	int (*impl_load_path)(loader_impl_file_handle, const loader_path, size_t);
+
+#if defined(FILE_LOADER_GLOB_SUPPORT)
+	if (portability_path_is_pattern(path, path_size) == 0)
+	{
+		impl_load_path = &file_loader_impl_load_glob;
+	}
+	else
+#endif
+	{
+		impl_load_path = &file_loader_impl_load_path;
+	}
 
 	if (portability_path_is_absolute(path, path_size) == 0)
 	{
-		return file_loader_impl_load_path(handle, path, path_size);
+		return impl_load_path(handle, path, path_size);
 	}
 	else
 	{
@@ -271,7 +335,7 @@ int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl
 			loader_path absolute_path;
 			size_t absolute_path_size = portability_path_join(*execution_path, strnlen(*execution_path, LOADER_PATH_SIZE) + 1, path, path_size, absolute_path, LOADER_PATH_SIZE);
 
-			if (file_loader_impl_load_path(handle, absolute_path, absolute_path_size) == 0)
+			if (impl_load_path(handle, absolute_path, absolute_path_size) == 0)
 			{
 				return 0;
 			}

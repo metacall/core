@@ -426,13 +426,20 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 
 		size_t str_size = value_type_size(context_path);
 
-		loader_path path_base, join_path;
+		if (portability_path_is_absolute(str, str_size) == 0)
+		{
+			context_path_size = portability_path_canonical(str, str_size, context_path_str, LOADER_PATH_SIZE);
+		}
+		else
+		{
+			loader_path path_base, join_path;
 
-		size_t path_base_size = portability_path_get_directory(path, strnlen(path, LOADER_PATH_SIZE) + 1, path_base, LOADER_PATH_SIZE);
+			size_t path_base_size = portability_path_get_directory(path, strnlen(path, LOADER_PATH_SIZE) + 1, path_base, LOADER_PATH_SIZE);
 
-		size_t join_path_size = portability_path_join(path_base, path_base_size, str, str_size, join_path, LOADER_PATH_SIZE);
+			size_t join_path_size = portability_path_join(path_base, path_base_size, str, str_size, join_path, LOADER_PATH_SIZE);
 
-		context_path_size = portability_path_canonical(join_path, join_path_size, context_path_str, LOADER_PATH_SIZE);
+			context_path_size = portability_path_canonical(join_path, join_path_size, context_path_str, LOADER_PATH_SIZE);
+		}
 	}
 
 	scripts_array = value_to_array(scripts);

@@ -1,0 +1,7 @@
+{
+    "language_id": "file",
+    "path": ".",
+    "scripts": [
+        "./glob/*.txt"
+    ]
+}

@@ -231,7 +231,7 @@ int portability_path_is_subpath(const char *parent, size_t parent_size, const ch
 	return !(strncmp(parent, child, parent_size) == 0);
 }
 
-int portability_path_is_absolute(const char *path, size_t path_size)
+int portability_path_is_absolute(const char *path, size_t size)
 {
 	if (path == NULL)
 	{
@@ -239,7 +239,7 @@ int portability_path_is_absolute(const char *path, size_t path_size)
 	}
 
 #if defined(WIN32) || defined(_WIN32)
-	if (path_size < 3)
+	if (size < 3)
 	{
 		return 1;
 	}
@@ -253,7 +253,7 @@ int portability_path_is_absolute(const char *path, size_t path_size)
 	(defined(__APPLE__) && defined(__MACH__)) || defined(__MACOSX__) ||                 \
 	defined(__HAIKU__) || defined(__BEOS__)
 
-	if (path_size < 1)
+	if (size < 1)
 	{
 		return 1;
 	}
@@ -461,4 +461,24 @@ int portability_path_compare(const char *left_path, const char *right_path)
 	}
 
 	return (strncmp(left_path, right_path, left_length) != 0);
+}
+
+int portability_path_is_pattern(const char *path, size_t size)
+{
+	if (path == NULL || size == 0)
+	{
+		return 1;
+	}
+
+	size_t i;
+
+	for (i = 0; path[i] != '\0' && i < size; ++i)
+	{
+		if (path[i] == '*')
+		{
+			return 0;
+		}
+	}
+
+	return 1;
 }
