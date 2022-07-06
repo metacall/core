@@ -9,7 +9,7 @@ on:
     branches:
       - master
     tags:
-      - "v*"
+      - 'v*.*.*'
 
 env:
   IMAGE_NAME: index.docker.io/metacall/core
