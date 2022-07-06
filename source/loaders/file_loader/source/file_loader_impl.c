@@ -107,7 +107,9 @@ typedef struct loader_impl_file_function_type
 } * loader_impl_file_function;
 
 static int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path path, size_t path_size);
+#if defined(FILE_LOADER_GLOB_SUPPORT)
 static int file_loader_impl_load_glob(loader_impl_file_handle handle, const loader_path path, size_t path_size);
+#endif
 static int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path);
 
 int function_file_interface_create(function func, function_impl impl)
@@ -269,6 +271,7 @@ int file_loader_impl_load_path(loader_impl_file_handle handle, const loader_path
 	return 1;
 }
 
+#if defined(FILE_LOADER_GLOB_SUPPORT)
 int file_loader_impl_load_glob(loader_impl_file_handle handle, const loader_path path, size_t path_size)
 {
 	glob_t glob_result;
@@ -304,6 +307,7 @@ int file_loader_impl_load_glob(loader_impl_file_handle handle, const loader_path
 
 	return (loaded_files == 0);
 }
+#endif
 
 int file_loader_impl_load_execution_path(loader_impl_file file_impl, loader_impl_file_handle handle, const loader_path path)
 {
