@@ -121,7 +121,8 @@ sub_ruby(){
 sub_rust(){
 	echo "configure rust"
 	cd $ROOT_DIR
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+	# install curl and patchelf
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl patchelf
 	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 }
 
