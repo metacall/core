@@ -188,6 +188,17 @@ target_compile_options(${target}
 	INTERFACE
 )
 
+# Fix Ruby MacOSX LLVM bug 
+# '__declspec' attributes are not enabled; use '-fdeclspec' or '-fms-extensions' to enable support for __declspec attributes
+
+include(Portability)
+if("${PROJECT_OS_FAMILY}" STREQUAL "macos" )
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+		target_compile_options(${target} PRIVATE "-fdeclspec")
+	endif()
+endif()
+
+
 #
 # Linker options
 #
