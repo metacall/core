@@ -33,6 +33,7 @@
 #include <log/log.h>
 
 #include <filesystem>
+#include <map>
 #include <set>
 #include <string>
 #include <vector>
@@ -62,6 +63,8 @@ union loader_impl_function_cast
 	void *ptr;
 	int (*fn)(void *, void *);
 };
+
+static std::map<std::string, loader_impl_ext_handle_lib_type> destroy_list;
 
 dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path);
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path);
@@ -143,6 +146,14 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path)
 {
+	auto iterator = destroy_list.find(path);
+	if (iterator != destroy_list.end())
+	{
+		log_write("metacall", LOG_LEVEL_DEBUG, "Unloading handle: %s <%p>", iterator->second.name.c_str(), iterator->second.handle);
+		dynlink_unload(iterator->second.handle);
+		destroy_list.erase(path);
+	}
+
 	dynlink lib = ext_loader_impl_load_from_file_dynlink(ext_impl, path);
 
 	if (lib == NULL)
@@ -256,7 +267,14 @@ int ext_loader_impl_clear(loader_impl impl, loader_handle handle)
 
 	if (ext_handle != NULL)
 	{
-		ext_loader_impl_destroy_handle(ext_handle);
+		for (size_t i = 0; i < ext_handle->extensions.size(); i++)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Storing handle: %s <%p> in destroy list", ext_handle->extensions[i].name.c_str(), ext_handle->extensions[i].handle);
+			destroy_list[ext_handle->extensions[i].name] = ext_handle->extensions[i];
+			ext_handle->extensions.erase(ext_handle->extensions.begin() + i);
+		}
+
+		delete ext_handle;
 
 		return 0;
 	}
@@ -294,6 +312,15 @@ int ext_loader_impl_destroy(loader_impl impl)
 
 		delete ext_impl;
 
+		/* Destroy all handles */
+		if (!destroy_list.empty())
+		{
+			for (auto iterator : destroy_list)
+			{
+				log_write("metacall", LOG_LEVEL_DEBUG, "Unloading handle: %s <%p>", iterator.second.name.c_str(), iterator.second.handle);
+				dynlink_unload(iterator.second.handle);
+			}
+		}
 		return 0;
 	}
 
