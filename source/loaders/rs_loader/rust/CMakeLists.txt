@@ -33,9 +33,17 @@ if(NOT Rust_FOUND)
 endif()
 
 # Find Patchelf
+find_package(Patchelf)
 
-set(PATCHELF_PROGRAM "${CMAKE_BINARY_DIR}/PATCHELF/src/patchelf/src/patchelf")
-include(InstallPatchelf)
+if(NOT PATCHELF_FOUND)
+	set(PATCHELF_EXECUTABLE "${CMAKE_BINARY_DIR}/PATCHELF/src/patchelf/src/patchelf")
+	include(InstallPatchelf)
+
+	if(NOT PATCHELF_FOUND)
+		message(STATUS "patchelf not found")
+		return()
+	endif()
+endif()
 
 
 # Target name
@@ -68,7 +76,7 @@ foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
 	get_filename_component(rustc_lib_name ${rustc_lib} NAME )
 	list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
 	add_custom_command(TARGET ${target}_patchelf POST_BUILD
-		COMMAND ${PATCHELF_PROGRAM} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
+		COMMAND ${PATCHELF_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
 	)
 endforeach()
 

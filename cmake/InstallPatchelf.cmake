@@ -1,34 +1,32 @@
 #
-# Copyright (C) 2005-2022 Centre National d'Etudes Spatiales (CNES)
+#	CMake Find RapidJSON by Parra Studios
+#	CMake script to find RapidJSON library.
 #
-# This file is part of Orfeo Toolbox
+#	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
-#     https://www.orfeo-toolbox.org/
+#	Licensed under the Apache License, Version 2.0 (the "License");
+#	you may not use this file except in compliance with the License.
+#	You may obtain a copy of the License at
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
+#		http://www.apache.org/licenses/LICENSE-2.0
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#	Unless required by applicable law or agreed to in writing, software
+#	distributed under the License is distributed on an "AS IS" BASIS,
+#	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#	See the License for the specific language governing permissions and
+#	limitations under the License.
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-#
+
+if(PATCHELF_FOUND)
+	return()
+endif()
+
 set(PATCHELF_PREFIX_DIR "${CMAKE_BINARY_DIR}/PATCHELF")
 set(PATCHELF_SOURCE_DIR  "${PATCHELF_PREFIX_DIR}/src/patchelf")
 # PATCHELF_BINARY_DIR is same as PATCHELF_SOURCE_DIR
 set(PATCHELF_INSTALL_DIR "${PATCHELF_PREFIX_DIR}/install/patchelf")
 set(PATCHELF_STAMP_DIR   "${PATCHELF_PREFIX_DIR}/stamp/patchelf")
 set(PATCHELF_TMP_DIR     "${PATCHELF_PREFIX_DIR}/tmp/patchelf")
-
-if( __EXTERNAL_PATCHELF__)
-  return()
-else()
-  set(__EXTERNAL_PATCHELF__ 1)
-endif()
 
 if(WIN32 OR APPLE)
   add_custom_target(PATCHELF)
@@ -66,3 +64,5 @@ ExternalProject_Add(PATCHELF
   LOG_INSTALL 1
   )
 
+set(PATCHELF_FOUND TRUE)
+message(STATUS "Installing patchelf.")
