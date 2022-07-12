@@ -1650,7 +1650,7 @@ void *metacallfs_await(void *func, const char *buffer, size_t size, void *alloca
 		{
 			if (signature_count(s) == 0)
 			{
-				value ret = function_call(f, metacall_null_args, 0);
+				value ret = function_await(f, metacall_null_args, 0, resolve_callback, reject_callback, data);
 
 				if (ret != NULL)
 				{
@@ -1754,7 +1754,7 @@ void *metacallfms_await(void *func, const char *buffer, size_t size, void *alloc
 		{
 			if (signature_count(s) == 0)
 			{
-				value ret = function_call(f, metacall_null_args, 0);
+				value ret = function_await(f, metacall_null_args, 0, resolve_callback, reject_callback, data);
 
 				if (ret != NULL)
 				{
