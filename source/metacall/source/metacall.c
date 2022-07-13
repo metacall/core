@@ -321,7 +321,12 @@ int metacall_load_from_package(const char *tag, const char *path, void **handle)
 
 int metacall_load_from_configuration(const char *path, void **handle, void *allocator)
 {
-	return loader_load_from_configuration(path, handle, allocator);
+	return loader_load_from_configuration(path, handle, NULL, allocator);
+}
+
+int metacall_load_from_configuration_ctx(const char *path, void *ctx, void *allocator)
+{
+	return loader_load_from_configuration(path, NULL, ctx, allocator);
 }
 
 void *metacallv(const char *name, void *args[])

@@ -59,6 +59,8 @@ LOADER_API int loader_impl_execution_path(plugin p, loader_impl impl, const load
 
 LOADER_API int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void **handle_ptr);
 
+LOADER_API int loader_impl_load_from_file_ctx(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void *ctx);
+
 LOADER_API int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl impl, const char *buffer, size_t size, void **handle_ptr);
 
 LOADER_API int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl impl, const loader_path path, void **handle_ptr);
