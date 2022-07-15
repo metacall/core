@@ -135,9 +135,8 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper_for_package(&callbacks.functions);
             content.push_str(&function_wrapper);
-            let class_wrapper = generate_class_wrapper_for_package(
-                &callbacks.classes.values().collect::<Vec<&Class>>(),
-            );
+            let class_wrapper =
+                generate_class_wrapper_for_package(&callbacks.classes.iter().collect());
             content.push_str(&class_wrapper);
 
             let source_dir = path.parent().expect("input path has no parent");
@@ -166,8 +165,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper(&callbacks.functions);
             content.push_str(&function_wrapper);
-            let class_wrapper =
-                generate_class_wrapper(&callbacks.classes.values().collect::<Vec<&Class>>());
+            let class_wrapper = generate_class_wrapper(&callbacks.classes.iter().collect());
             content.push_str(&class_wrapper);
 
             match callbacks.source.input.0 {

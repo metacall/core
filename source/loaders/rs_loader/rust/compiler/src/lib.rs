@@ -21,6 +21,7 @@ extern crate rustc_span;
 use dlopen;
 use rustc_ast::{visit, Impl, Item, ItemKind, VariantData};
 use rustc_hir::def::{DefKind, Res};
+use rustc_hir::def_id::DefId;
 use rustc_interface::{interface::Compiler, Config, Queries};
 use rustc_middle::hir::exports::Export;
 use rustc_middle::ty::Visibility;
@@ -361,7 +362,7 @@ pub struct CompilerCallbacks {
     source: SourceImpl,
     is_parsing: bool,
     functions: Vec<Function>,
-    classes: HashMap<String, Class>,
+    classes: Vec<Class>,
 }
 
 impl CompilerCallbacks {
@@ -372,10 +373,11 @@ impl CompilerCallbacks {
             .take();
         let mut item_visitor = ItemVisitor::new();
         visit::walk_crate(&mut item_visitor, &krate);
-        self.classes = item_visitor.classes;
+        self.classes = item_visitor.classes.into_values().collect();
         self.functions = item_visitor.functions;
     }
     fn analyze_metadata<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
+        let mut class_map: HashMap<DefId, Class> = HashMap::new();
         let crate_num = queries
             .expansion()
             .expect("Unable to get Expansion")
@@ -402,7 +404,7 @@ impl CompilerCallbacks {
                     }
                     match res {
                         Res::Def(DefKind::Struct, def_id) => {
-                            let class = self.classes.entry(ident.to_string()).or_default();
+                            let class = class_map.entry(*def_id).or_default();
                             class.name = ident.to_string();
 
                             for field in ctxt.item_children(*def_id) {
@@ -445,12 +447,29 @@ impl CompilerCallbacks {
                     }
                 }
                 // after parsing all structs, parse tarit implementations.
-                // for trait_impl in ctxt.all_trait_implementations(crate_num) {
-                //     for t_item in ctxt.item_children(trait_impl.0) {
-                //         dbg!(t_item);
-                //     }
-                // }
+                for trait_impl in ctxt.all_trait_implementations(crate_num) {
+                    use rustc_middle::ty::fast_reject::SimplifiedTypeGen::AdtSimplifiedType;
+                    if let Some(AdtSimplifiedType(def_id)) = trait_impl.1 {
+                        if let Some(class) = class_map.get_mut(&def_id) {
+                            for func in ctxt.item_children(trait_impl.0) {
+                                if let Some(function) = middle::extract_fn_from_export(&ctxt, func)
+                                {
+                                    if function.name == "drop" {
+                                        class.destructor = Some(function);
+                                    } else {
+                                        if function.has_self() {
+                                            class.methods.push(function);
+                                        } else {
+                                            class.static_methods.push(function);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             });
+        self.classes = class_map.into_values().collect();
     }
 }
 
@@ -565,6 +584,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
     fn visit_item(&mut self, i: &Item) {
         match &i.kind {
             ItemKind::Struct(VariantData::Struct(fields, _), _) => {
+                // let def_id = i.
                 let class = self.classes.entry(i.ident.to_string()).or_default();
                 class.name = i.ident.to_string();
                 for field in fields {
@@ -867,7 +887,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
             functions: patched_callback.functions,
-            classes: patched_callback.classes.into_values().collect(),
+            classes: patched_callback.classes,
         }),
         Err(err) => {
             // Read buffered diagnostics
