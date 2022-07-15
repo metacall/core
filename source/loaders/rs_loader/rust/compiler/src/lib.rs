@@ -318,8 +318,17 @@ pub struct Function {
     args: Vec<FunctionParameter>,
 }
 
+impl Function {
+    pub fn has_self(&self) -> bool {
+        if self.args.len() == 0 {
+            return false;
+        }
+        self.args[0].name == "self"
+    }
+}
+
 #[derive(Clone, Debug)]
-struct Attribute {
+pub struct Attribute {
     name: String,
     ty: FunctionParameter,
 }
@@ -352,7 +361,7 @@ pub struct CompilerCallbacks {
     source: SourceImpl,
     is_parsing: bool,
     functions: Vec<Function>,
-    classes: Vec<Class>,
+    classes: HashMap<String, Class>,
 }
 
 impl CompilerCallbacks {
@@ -363,11 +372,11 @@ impl CompilerCallbacks {
             .take();
         let mut item_visitor = ItemVisitor::new();
         visit::walk_crate(&mut item_visitor, &krate);
-        self.classes = item_visitor.classes.into_values().collect();
+        self.classes = item_visitor.classes;
         self.functions = item_visitor.functions;
     }
     fn analyze_metadata<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
-        let (crate_num, c_store) = queries
+        let crate_num = queries
             .expansion()
             .expect("Unable to get Expansion")
             .peek_mut()
@@ -375,16 +384,15 @@ impl CompilerCallbacks {
             .borrow_mut()
             .access(|resolver| {
                 let c_store = resolver.cstore().clone();
-                let extern_crate = c_store.crates_untracked().last().cloned().unwrap();
-                (extern_crate, c_store)
+                c_store.crates_untracked().last().cloned().unwrap()
             });
         queries
             .global_ctxt()
             .expect("Unable to get global ctxt")
             .peek_mut()
             .enter(|ctxt| {
-                let children = c_store.item_children_untracked(crate_num.as_def_id(), ctxt.sess);
-                for child in children {
+                // parse public functions and structs
+                for child in ctxt.item_children(crate_num.as_def_id()) {
                     let Export {
                         ident, res, vis, ..
                     } = child;
@@ -394,14 +402,39 @@ impl CompilerCallbacks {
                     }
                     match res {
                         Res::Def(DefKind::Struct, def_id) => {
-                            let field_names =
-                                c_store.struct_field_names_untracked(def_id, ctxt.sess);
-                            dbg!(field_names);
+                            let class = self.classes.entry(ident.to_string()).or_default();
+                            class.name = ident.to_string();
+
+                            for field in ctxt.item_children(*def_id) {
+                                if let Some(field) =
+                                    middle::extract_attribute_from_export(&ctxt, field)
+                                {
+                                    class.attributes.push(field);
+                                }
+                            }
+
+                            for inherent_impl in ctxt.inherent_impls(*def_id) {
+                                for method in ctxt.item_children(*inherent_impl) {
+                                    if let Some(function) =
+                                        middle::extract_fn_from_export(&ctxt, method)
+                                    {
+                                        if function.name == "new" {
+                                            class.constructor = Some(function);
+                                        } else {
+                                            if function.has_self() {
+                                                class.methods.push(function);
+                                            } else {
+                                                class.static_methods.push(function);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                         Res::Def(DefKind::Fn, def_id) => {
                             // https://doc.rust-lang.org/stable/nightly-rustc/rustc_middle/ty/struct.Binder.html
-                            let fn_sig = ctxt.fn_sig(def_id);
-                            let names = ctxt.fn_arg_names(def_id);
+                            let fn_sig = ctxt.fn_sig(*def_id);
+                            let names = ctxt.fn_arg_names(*def_id);
                             self.functions.push(middle::handle_fn(
                                 ident.to_string(),
                                 &fn_sig,
@@ -411,6 +444,12 @@ impl CompilerCallbacks {
                         _ => {}
                     }
                 }
+                // after parsing all structs, parse tarit implementations.
+                // for trait_impl in ctxt.all_trait_implementations(crate_num) {
+                //     for t_item in ctxt.item_children(trait_impl.0) {
+                //         dbg!(t_item);
+                //     }
+                // }
             });
     }
 }
@@ -781,8 +820,8 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let mut callbacks = CompilerCallbacks {
         source,
         is_parsing: true,
-        functions: vec![],
-        classes: vec![],
+        functions: Default::default(),
+        classes: Default::default(),
     };
 
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
@@ -827,8 +866,8 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
-            functions: patched_callback.functions.clone(),
-            classes: patched_callback.classes.clone(),
+            functions: patched_callback.functions,
+            classes: patched_callback.classes.into_values().collect(),
         }),
         Err(err) => {
             // Read buffered diagnostics

@@ -1,8 +1,12 @@
+use crate::Attribute;
+
 use super::rustc_middle::ty::{
-    subst::GenericArgKind, Binder, FloatTy, FnSig, IntTy, TyKind, TyS, UintTy,
+    subst::GenericArgKind, Binder, FloatTy, FnSig, IntTy, TyCtxt, TyKind, TyS, UintTy, Visibility,
 };
 use super::rustc_span::symbol::Ident;
 use super::{Function, FunctionParameter, FunctionType, Mutability, Reference};
+use rustc_hir::def::{DefKind, Res};
+use rustc_middle::hir::exports::Export;
 use std::iter::zip;
 
 pub fn handle_ty(ty: &TyS) -> FunctionParameter {
@@ -99,4 +103,39 @@ pub fn handle_fn(name: String, sig: &Binder<FnSig>, names: &[Ident]) -> Function
         }
     }
     function
+}
+
+pub fn extract_attribute_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Attribute> {
+    let Export {
+        ident, res, vis, ..
+    } = export;
+    // skip non-public items
+    if !matches!(vis, Visibility::Public) {
+        return None;
+    }
+    match res {
+        Res::Def(DefKind::Field, def_id) => Some(Attribute {
+            name: ident.to_string(),
+            ty: handle_ty(ctxt.type_of(*def_id)),
+        }),
+        _ => None,
+    }
+}
+
+pub fn extract_fn_from_export(ctxt: &TyCtxt, export: &Export) -> Option<Function> {
+    let Export {
+        ident, res, vis, ..
+    } = export;
+    // skip non-public items
+    if !matches!(vis, Visibility::Public) {
+        return None;
+    }
+    match res {
+        Res::Def(DefKind::AssocFn, def_id) => {
+            let fn_sig = ctxt.fn_sig(*def_id);
+            let names = ctxt.fn_arg_names(*def_id);
+            Some(handle_fn(ident.to_string(), &fn_sig, names))
+        }
+        _ => None,
+    }
 }

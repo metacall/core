@@ -1,9 +1,9 @@
 pub mod class;
 use super::{config::Input, source_map::FileName::Custom, CompilerCallbacks, Function, Source};
+use crate::Class;
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
-
 fn generate_function_wrapper(functions: &Vec<Function>) -> String {
     let mut ret = String::new();
     for func in functions {
@@ -17,7 +17,7 @@ fn generate_function_wrapper(functions: &Vec<Function>) -> String {
     ret
 }
 
-fn generate_class_wrapper(classes: &Vec<crate::Class>) -> String {
+fn generate_class_wrapper(classes: &Vec<&crate::Class>) -> String {
     let mut ret = String::new();
     for class in classes {
         ret.push_str(&format!(
@@ -81,8 +81,53 @@ fn generate_function_wrapper_for_package(functions: &Vec<Function>) -> String {
     }
     ret
 }
-fn generate_class_wrapper_for_package(classes: &Vec<crate::Class>) -> String {
-    String::new()
+fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
+    let mut ret = String::new();
+    for class in classes {
+        ret.push_str(&format!(
+            "#[no_mangle]\nunsafe fn metacall_register_class_{}() -> *mut Class {{\n",
+            class.name
+        ));
+        ret.push_str(&format!(
+            "\tuse metacall_package::*;\nlet class = Class::builder::<{}>()\n",
+            class.name
+        ));
+        // set constructor
+        if let Some(_ctor) = &class.constructor {
+            ret.push_str(&format!("\t\t.set_constructor({}::new)\n", class.name));
+        } else {
+            println!("there's no constructor in class: {}", class.name);
+        }
+        // set attributes
+        for attr in &class.attributes {
+            ret.push_str(&format!(
+                "\t\t.add_attribute_getter(\"{}\", |f| f.{})\n",
+                attr.name, attr.name
+            ));
+            ret.push_str(&format!(
+                "\t\t.add_attribute_setter(\"{}\", |val, f| f.{} = val)\n",
+                attr.name, attr.name
+            ));
+        }
+        // set methods
+        for method in &class.methods {
+            ret.push_str(&format!(
+                "\t\t.add_method(\"{}\", {}::{})\n",
+                method.name, class.name, method.name
+            ));
+        }
+        // set static methods
+        for method in &class.static_methods {
+            ret.push_str(&format!(
+                "\t\t.add_class_method(\"{}\", {}::{})\n",
+                method.name, class.name, method.name
+            ));
+        }
+        // no need to set destructor
+        ret.push_str("\t\t.build();\n");
+        ret.push_str("\tBox::into_raw(Box::new(class))\n}\n");
+    }
+    ret
 }
 pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<CompilerCallbacks> {
     match callbacks.source.source {
@@ -90,7 +135,9 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper_for_package(&callbacks.functions);
             content.push_str(&function_wrapper);
-            let class_wrapper = generate_class_wrapper_for_package(&callbacks.classes);
+            let class_wrapper = generate_class_wrapper_for_package(
+                &callbacks.classes.values().collect::<Vec<&Class>>(),
+            );
             content.push_str(&class_wrapper);
 
             let source_dir = path.parent().expect("input path has no parent");
@@ -119,7 +166,8 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper(&callbacks.functions);
             content.push_str(&function_wrapper);
-            let class_wrapper = generate_class_wrapper(&callbacks.classes);
+            let class_wrapper =
+                generate_class_wrapper(&callbacks.classes.values().collect::<Vec<&Class>>());
             content.push_str(&class_wrapper);
 
             match callbacks.source.input.0 {
