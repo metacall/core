@@ -796,67 +796,6 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 	return 1;
 }
-int loader_impl_load_from_file_ctx(plugin_manager manager, plugin p, loader_impl impl, const loader_path paths[], size_t size, void *ctx)
-{
-	if (ctx == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Load from file failed, invalid context");
-
-		return 1;
-	}
-
-	if (impl != NULL)
-	{
-		loader_impl_interface iface = loader_iface(p);
-
-		size_t iterator;
-
-		for (iterator = 0; iterator < size; ++iterator)
-		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loading %s", paths[iterator]);
-		}
-
-		if (iface != NULL)
-		{
-			loader_handle handle;
-			loader_path path;
-
-			if (loader_impl_initialize(manager, p, impl) != 0)
-			{
-				return 1;
-			}
-
-			/* This isn't really necessary*/
-			if (loader_impl_handle_name(manager, paths[0], path) > 1 && loader_impl_get_handle(impl, path) != NULL)
-			{
-				log_write("metacall", LOG_LEVEL_ERROR, "Load from file handle failed, handle with name %s already loaded", path);
-
-				return 1;
-			}
-
-			handle = iface->load_from_file(impl, paths, size);
-
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle);
-
-			if (handle != NULL)
-			{
-				scope sp = context_scope(ctx);
-
-				if (sp != NULL)
-				{
-					/* Todo: check for duplicate symbols*/
-
-					if (iface->discover(impl, handle, ctx) == 0)
-					{
-						return 0;
-					}
-				}
-			}
-		}
-	}
-
-	return 1;
-}
 
 int loader_impl_load_from_memory_name(loader_impl impl, loader_name name, const char *buffer, size_t size)
 {

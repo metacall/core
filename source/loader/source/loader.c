@@ -302,26 +302,6 @@ int loader_load_from_file(const loader_tag tag, const loader_path paths[], size_
 	return loader_impl_load_from_file(&loader_manager, p, plugin_impl_type(p, loader_impl), paths, size, handle);
 }
 
-int loader_load_from_file_ctx(const loader_tag tag, const loader_path paths[], size_t size, void *ctx)
-{
-	if (loader_initialize() == 1)
-	{
-		return 1;
-	}
-
-	plugin p = loader_get_impl_plugin(tag);
-
-	if (p == NULL)
-	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Tried to load %" PRIuS " file(s) from non existent loader (%s): %s", size, tag, paths[0]);
-		return 1;
-	}
-
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loading %" PRIuS " file(s) (%s) from path(s): %s ...", size, tag, paths[0]);
-
-	return loader_impl_load_from_file_ctx(&loader_manager, p, plugin_impl_type(p, loader_impl), paths, size, ctx);
-}
-
 int loader_load_from_memory(const loader_tag tag, const char *buffer, size_t size, void **handle)
 {
 	if (loader_initialize() == 1)
@@ -362,7 +342,7 @@ int loader_load_from_package(const loader_tag tag, const loader_path path, void 
 	return loader_impl_load_from_package(&loader_manager, p, plugin_impl_type(p, loader_impl), path, handle);
 }
 
-int loader_load_from_configuration(const loader_path path, void **handle, void *ctx, void *allocator)
+int loader_load_from_configuration(const loader_path path, void **handle, void *allocator)
 {
 	loader_name config_name;
 	configuration config;
@@ -487,17 +467,7 @@ int loader_load_from_configuration(const loader_path path, void **handle, void *
 		}
 	}
 
-	int result = 0;
-	if (ctx != NULL)
-	{
-		result = loader_load_from_file_ctx((const char *)value_to_string(tag), (const loader_path *)paths, size, ctx);
-	}
-	else
-	{
-		result = loader_load_from_file((const char *)value_to_string(tag), (const loader_path *)paths, size, handle);
-	}
-
-	if (result != 0)
+	if (loader_load_from_file((const char *)value_to_string(tag), (const loader_path *)paths, size, handle) != 0)
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Loader load from configuration invalid load from file");
 

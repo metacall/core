@@ -311,30 +311,6 @@ METACALL_API int metacall_load_from_configuration(const char *path, void **handl
 
 /**
 *  @brief
-*    Loads a a list of scrips from configuration specified by @path into loader
-*    with the following format:
-*        {
-*            "language_id": "<tag>",
-*            "path": "<path>",
-*            "scripts": [ "<script0>", "<script1>", ..., "<scriptN>" ]
-*        }
-*
-*  @param[in] path
-*    Path of the configuration
-*
-*  @param[in] context
-*    Pointer to context
-*
-*  @param[in] allocator
-*    Pointer to allocator will allocate the configuration
-*
-*  @return
-*    Zero if success, different from zero otherwise
-*/
-METACALL_API int metacall_load_from_configuration_ctx(const char *path, void *ctx, void *allocator);
-
-/**
-*  @brief
 *    Call a function anonymously by value array @args
 *
 *  @param[in] name
