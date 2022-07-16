@@ -38,12 +38,6 @@
 #include <string>
 #include <vector>
 
-typedef struct loader_impl_ext_type
-{
-	std::set<std::filesystem::path> paths;
-
-} * loader_impl_ext;
-
 typedef struct loader_impl_ext_handle_lib_type
 {
 	std::string name;
@@ -51,6 +45,13 @@ typedef struct loader_impl_ext_handle_lib_type
 	dynlink_symbol_addr addr;
 
 } * loader_impl_ext_handle_lib;
+
+typedef struct loader_impl_ext_type
+{
+	std::set<std::filesystem::path> paths;
+	std::map<std::string, loader_impl_ext_handle_lib_type> destroy_list;
+
+} * loader_impl_ext;
 
 typedef struct loader_impl_ext_handle_type
 {
@@ -63,8 +64,6 @@ union loader_impl_function_cast
 	void *ptr;
 	int (*fn)(void *, void *);
 };
-
-static std::map<std::string, loader_impl_ext_handle_lib_type> destroy_list;
 
 dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path);
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path);
@@ -146,12 +145,12 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 
 int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path)
 {
-	auto iterator = destroy_list.find(path);
-	if (iterator != destroy_list.end())
+	auto iterator = ext_impl->destroy_list.find(path);
+	if (iterator != ext_impl->destroy_list.end())
 	{
 		log_write("metacall", LOG_LEVEL_DEBUG, "Unloading handle: %s <%p>", iterator->second.name.c_str(), iterator->second.handle);
 		dynlink_unload(iterator->second.handle);
-		destroy_list.erase(path);
+		ext_impl->destroy_list.erase(path);
 	}
 
 	dynlink lib = ext_loader_impl_load_from_file_dynlink(ext_impl, path);
@@ -261,16 +260,21 @@ void ext_loader_impl_destroy_handle(loader_impl_ext_handle ext_handle)
 
 int ext_loader_impl_clear(loader_impl impl, loader_handle handle)
 {
-	loader_impl_ext_handle ext_handle = static_cast<loader_impl_ext_handle>(handle);
+	loader_impl_ext ext_impl = static_cast<loader_impl_ext>(loader_impl_get(impl));
 
-	(void)impl;
+	if (ext_impl == NULL)
+	{
+		return 1;
+	}
+
+	loader_impl_ext_handle ext_handle = static_cast<loader_impl_ext_handle>(handle);
 
 	if (ext_handle != NULL)
 	{
 		for (size_t i = 0; i < ext_handle->extensions.size(); i++)
 		{
 			log_write("metacall", LOG_LEVEL_DEBUG, "Storing handle: %s <%p> in destroy list", ext_handle->extensions[i].name.c_str(), ext_handle->extensions[i].handle);
-			destroy_list[ext_handle->extensions[i].name] = ext_handle->extensions[i];
+			ext_impl->destroy_list[ext_handle->extensions[i].name] = ext_handle->extensions[i];
 			ext_handle->extensions.erase(ext_handle->extensions.begin() + i);
 		}
 
@@ -310,17 +314,18 @@ int ext_loader_impl_destroy(loader_impl impl)
 		/* Destroy children loaders */
 		loader_unload_children(impl);
 
-		delete ext_impl;
-
 		/* Destroy all handles */
-		if (!destroy_list.empty())
+		if (!ext_impl->destroy_list.empty())
 		{
-			for (auto iterator : destroy_list)
+			for (auto iterator : ext_impl->destroy_list)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Unloading handle: %s <%p>", iterator.second.name.c_str(), iterator.second.handle);
 				dynlink_unload(iterator.second.handle);
 			}
 		}
+
+		delete ext_impl;
+
 		return 0;
 	}
 

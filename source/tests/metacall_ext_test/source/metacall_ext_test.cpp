@@ -48,6 +48,7 @@ TEST_F(metacall_ext_test, DefaultConstructor)
 	EXPECT_EQ((long)metacall_value_to_long(ret), (long)7);
 
 	metacall_value_destroy(ret);
+
 	/* Print inspect information */
 	{
 		size_t size = 0;
