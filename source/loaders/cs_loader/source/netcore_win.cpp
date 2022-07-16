@@ -4,8 +4,6 @@
 #include <cs_loader/host_environment.h>
 #include <cs_loader/netcore_win.h>
 
-#include <portability/portability_executable_path.h>
-
 #include <inc/palclr.h>
 #include <pal/prebuilt/inc/mscoree.h>
 
@@ -88,9 +86,8 @@ bool netcore_win::start()
 
 bool netcore_win::config_assembly_name()
 {
-	portability_executable_path_length length = 0;
-
-	if (portability_executable_path(appPath, &length) != 0)
+	/* TODO: Replace by portability_executable_path */
+	if (!::GetModuleFileName(NULL, appPath, MAX_LONGPATH))
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Failed to get full path: % [ERRORCODE: %d]", this->loader_dll, GetLastError());
 		return false;
