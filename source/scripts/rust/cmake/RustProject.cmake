@@ -49,3 +49,68 @@ function(rust_project target version)
     script_project(${target} rust ${RUST_PROJECT_CONFIG_PATH}/RustProject.cmake.in)
 
 endfunction()
+
+function(rust_package target version script)
+	
+	# Configuration
+	set(PACKAGE_NAME		${target})
+	set(PACKAGE_VERSION		${version})
+	set(PACKAGE_OUTPUT		"${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
+
+	set(configuration ${RUST_PROJECT_CONFIG_PATH}/RustProject.cmake.in)
+	set(language "rust")
+	# Define upper and lower versions of the language
+	string(TOLOWER ${language} language_lower)
+
+	# Define project target name
+	set(custom_target "${language_lower}-${target}")
+
+	# Define target for the configuration
+	set(PACKAGE_TARGET "${custom_target}")
+
+	# Create project file
+	configure_file(${configuration} ${custom_target}-config.cmake @ONLY)
+
+	# Set custom target
+	add_custom_target(${custom_target} ALL)
+
+	#
+	# Deployment
+	#
+
+	# Install cmake script config
+	#install(FILES  "${CMAKE_CURRENT_BINARY_DIR}/${custom_target}/${custom_target}-config.cmake"
+	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
+	#	COMPONENT   runtime
+	#)
+
+	# CMake config
+	#install(EXPORT  ${custom_target}-export
+	#	NAMESPACE   ${META_PROJECT_NAME}::
+	#	DESTINATION ${INSTALL_CMAKE}/${custom_target}
+	#	COMPONENT   dev
+	#)
+
+	# Set project properties
+	set_target_properties(${custom_target}
+		PROPERTIES
+		${DEFAULT_PROJECT_OPTIONS}
+		FOLDER "${IDE_FOLDER}/${language}"
+	)
+
+	# Compile scripts
+	add_custom_command(TARGET ${custom_target} PRE_BUILD
+		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib 
+		${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs 
+		--out-dir ${LOADER_SCRIPT_PATH}
+		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=dylib -Cprefer-dynamic 
+		${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs 
+		--out-dir ${LOADER_SCRIPT_PATH}
+	)
+
+	# Include generated project file
+	include(${CMAKE_CURRENT_BINARY_DIR}/${custom_target}-config.cmake)
+
+
+endfunction()
+

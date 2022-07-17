@@ -29,8 +29,8 @@ set(PATCHELF_STAMP_DIR   "${PATCHELF_PREFIX_DIR}/stamp/patchelf")
 set(PATCHELF_TMP_DIR     "${PATCHELF_PREFIX_DIR}/tmp/patchelf")
 
 if(WIN32 OR APPLE)
-  add_custom_target(PATCHELF)
-  return()
+	add_custom_target(PATCHELF)
+	return()
 endif()
 
 include(ExternalProject)
@@ -38,31 +38,31 @@ include(ExternalProject)
 # Find patch and setup the patch command.
 find_program(PATCH_PROGRAM NAMES patch)
 if(NOT PATCH_PROGRAM)
-  message(FATAL_ERROR "patch program not found. PATCH_PROGRAM. search names :' patch'")
+	message(FATAL_ERROR "patch program not found. PATCH_PROGRAM. search names :' patch'")
 endif()
 
 set(PATCHELF_ENV_COMMAND env CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} CXXFLAGS=-static)
 
 ExternalProject_Add(PATCHELF
-  PREFIX "${PATCHELF_PREFIX_DIR}"
-  URL                 "http://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2"
-  URL_MD5             d02687629c7e1698a486a93a0d607947
-  PATCH_COMMAND       
-  DOWNLOAD_DIR        "${DOWNLOAD_LOCATION}"
-  SOURCE_DIR          "${PATCHELF_SOURCE_DIR}"
-  BINARY_DIR          "${PATCHELF_SOURCE_DIR}"
-  INSTALL_DIR         "${PATCHELF_INSTALL_DIR}"
-  STAMP_DIR           "${PATCHELF_STAMP_DIR}"
-  TMP_DIR             "${PATCHELF_TMP_DIR}"
-  CONFIGURE_COMMAND
-  ${PATCHELF_ENV_COMMAND}
-  ${PATCHELF_SOURCE_DIR}/configure
-  INSTALL_COMMAND ""
-  LOG_DOWNLOAD 1
-  LOG_CONFIGURE 1
-  LOG_BUILD 1
-  LOG_INSTALL 1
-  )
+	PREFIX "${PATCHELF_PREFIX_DIR}"
+	URL                 "http://nixos.org/releases/patchelf/patchelf-0.9/patchelf-0.9.tar.bz2"
+	URL_MD5             d02687629c7e1698a486a93a0d607947
+	PATCH_COMMAND       
+	DOWNLOAD_DIR        "${DOWNLOAD_LOCATION}"
+	SOURCE_DIR          "${PATCHELF_SOURCE_DIR}"
+	BINARY_DIR          "${PATCHELF_SOURCE_DIR}"
+	INSTALL_DIR         "${PATCHELF_INSTALL_DIR}"
+	STAMP_DIR           "${PATCHELF_STAMP_DIR}"
+	TMP_DIR             "${PATCHELF_TMP_DIR}"
+	CONFIGURE_COMMAND
+	${PATCHELF_ENV_COMMAND}
+	${PATCHELF_SOURCE_DIR}/configure
+	INSTALL_COMMAND ""
+	LOG_DOWNLOAD 1
+	LOG_CONFIGURE 1
+	LOG_BUILD 1
+	LOG_INSTALL 1
+	)
 
 set(PATCHELF_FOUND TRUE)
 message(STATUS "Installing patchelf.")

@@ -1,25 +1,25 @@
 #[repr(C)]
-struct Book {
-    price: i32,
+pub struct Book {
+    pub price: i32,
 }
 
 impl Book {
-    fn new(price: i32) -> Self {
+    pub fn new(price: i32) -> Self {
         Self { price }
     }
-    fn get_price(&self) -> i32 {
+    pub fn get_price(&self) -> i32 {
         self.price
     }
-    fn get_number() -> i32 {
+    pub fn get_number() -> i32 {
         123
     }
-    fn null() {}
+    pub fn null() {}
 }
 
 impl Drop for Book {
     fn drop(&mut self) {}
 }
-trait BookTrait {
+pub trait BookTrait {
     fn buy_book(&self, p: i32);
 }
 impl BookTrait for Book {

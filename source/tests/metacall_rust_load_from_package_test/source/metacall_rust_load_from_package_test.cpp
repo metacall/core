@@ -29,7 +29,7 @@ protected:
 
 TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 {
-	const char *rs_script = "libmeta.rlib";
+	const char *rs_script = "libbasic.rlib";
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
@@ -37,8 +37,113 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 	// Test: Load from package
 
 	{
-		void *ret = metacall("test_func", 10);
-		EXPECT_EQ((int)10, (int)metacall_value_to_int(ret));
+		void *array_args[] = {
+			metacall_value_create_array(NULL, 3)
+		};
+
+		void **array_value = metacall_value_to_array(array_args[0]);
+
+		array_value[0] = metacall_value_create_int(3);
+		array_value[1] = metacall_value_create_int(5);
+		array_value[2] = metacall_value_create_int(7);
+
+		void *ret = metacallv_s("add_vec2", array_args, 1);
+		EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
+		// void *ret = metacallv_s("add_vec", array_args, 1);
+		// EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
+		metacall_value_destroy(array_args[0]);
+		metacall_value_destroy(ret);
+	}
+	{
+		void *array_args[] = {
+			metacall_value_create_array(NULL, 3)
+		};
+
+		void **array_value = metacall_value_to_array(array_args[0]);
+
+		array_value[0] = metacall_value_create_float(3.0);
+		array_value[1] = metacall_value_create_float(5.0);
+		array_value[2] = metacall_value_create_float(7.0);
+
+		void *ret = metacallv_s("add_float_vec", array_args, 1);
+		EXPECT_EQ((float)15.0, (float)metacall_value_to_float(ret));
+		metacall_value_destroy(array_args[0]);
+		metacall_value_destroy(ret);
+	}
+
+	{
+		void *ret = metacall("add", 5, 10);
+		EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
+		metacall_value_destroy(ret);
+	}
+
+	{
+		void *ret = metacall("run");
+		EXPECT_EQ((int)0, (int)metacall_value_to_int(ret));
+		metacall_value_destroy(ret);
+	}
+
+	{
+		void *ret = metacall("add_float", 5.0, 10.0);
+		EXPECT_EQ((float)15.0, (float)metacall_value_to_float(ret));
+		metacall_value_destroy(ret);
+	}
+
+	// {
+	// 	void *ret = metacall("string_len", "Test String");
+	// 	EXPECT_EQ((long)11, (long)metacall_value_to_long(ret));
+	// 	ret = metacall("new_string", 123);
+	// 	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "get number 123"));
+	// 	metacall_value_destroy(ret);
+	// }
+
+	{
+		// test if we can return vec
+		void *ret_vec = metacall("return_vec");
+		void *array_args[] = {
+			ret_vec
+		};
+		void *ret = metacallv_s("add_vec2", array_args, 1);
+		EXPECT_EQ((int)15, (int)metacall_value_to_int(ret));
+		metacall_value_destroy(ret_vec);
+		metacall_value_destroy(ret);
+	}
+
+	{
+		void *args[] = {
+			metacall_value_create_map(NULL, 2)
+		};
+
+		void **map_value = metacall_value_to_map(args[0]);
+
+		map_value[0] = metacall_value_create_array(NULL, 2);
+		void **tuple0 = metacall_value_to_array(map_value[0]);
+		static const int key0 = 3;
+		tuple0[0] = metacall_value_create_int(key0);
+		tuple0[1] = metacall_value_create_float(5.0);
+
+		map_value[1] = metacall_value_create_array(NULL, 2);
+		void **tuple1 = metacall_value_to_array(map_value[1]);
+		static const int key1 = 5;
+		tuple1[0] = metacall_value_create_int(key1);
+		tuple1[1] = metacall_value_create_float(10.0);
+
+		void *ret = metacallv_s("add_map", args, 1);
+		EXPECT_EQ((float)15.0, (float)metacall_value_to_float(ret));
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(ret);
+	}
+
+	{
+		// test if we can return map
+		void *ret = metacall("return_map");
+		void **map_value2 = metacall_value_to_map(ret);
+		void **tuple0 = metacall_value_to_array(map_value2[0]);
+		EXPECT_EQ((int)metacall_value_to_int(tuple0[0]), (int)metacall_value_to_float(tuple0[1]));
+		void **tuple1 = metacall_value_to_array(map_value2[1]);
+		EXPECT_EQ((int)metacall_value_to_int(tuple1[0]), (int)metacall_value_to_float(tuple1[1]));
+		void **tuple2 = metacall_value_to_array(map_value2[2]);
+		EXPECT_EQ((int)metacall_value_to_int(tuple2[0]), (int)metacall_value_to_float(tuple2[1]));
 		metacall_value_destroy(ret);
 	}
 

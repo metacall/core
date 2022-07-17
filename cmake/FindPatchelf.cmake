@@ -25,9 +25,9 @@ endif()
 # Find patchelf .
 find_program(PATCHELF_EXECUTABLE NAMES patchelf)
 if(PATCHELF_EXECUTABLE)
-  set(PATCHELF_FOUND TRUE)
-  add_custom_target(PATCHELF)
+	set(PATCHELF_FOUND TRUE)
+	add_custom_target(PATCHELF)
 else()
-  set(PATCHELF_FOUND FALSE)
+	set(PATCHELF_FOUND FALSE)
 endif()
 
