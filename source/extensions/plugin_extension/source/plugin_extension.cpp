@@ -97,17 +97,19 @@ int plugin_extension(void *loader, void *handle, void *context)
 		fs::directory_entry dir(*i);
 		if (dir.is_regular_file())
 		{
-			std::string config = dir.path().filename().c_str();
+			std::string config = dir.path().filename().string();
 
 			if (config == "metacall.json" ||
 				(config.substr(0, m_begins.size()) == m_begins &&
 					config.substr(config.size() - m_ends.size()) == m_ends))
 			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loading extension: %s", dir.path().filename().c_str());
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loading extension: %s", config.c_str());
 
-				if (metacall_load_from_configuration(dir.path().c_str(), &handle, config_allocator) != 0)
+				const char *dir_path_str = dir.path().string().c_str();
+
+				if (metacall_load_from_configuration(dir_path_str, &handle, config_allocator) != 0)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir.path().c_str());
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir_path_str);
 					return 1;
 				}
 
