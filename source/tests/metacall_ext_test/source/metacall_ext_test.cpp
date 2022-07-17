@@ -35,10 +35,15 @@ TEST_F(metacall_ext_test, DefaultConstructor)
 	const char *ext_scripts[] = {
 		"sum_extension" /* The library extension (dll, so, dylib) is crossplatform so we should not add it here */
 	};
+
 	void *handle = NULL;
+
+	/* Test reload of the extension */
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), &handle));
+
 	EXPECT_EQ((int)0, (int)metacall_clear(handle));
 
+	/* Test extension load and call */
 	EXPECT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
 
 	void *ret = metacall("sum", 3, 4);

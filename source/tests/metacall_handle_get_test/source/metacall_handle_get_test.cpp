@@ -99,17 +99,17 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 			"s1.py"
 		};
 
-		void *handle = NULL;
+		void *handle1 = NULL;
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts_s1, sizeof(py_scripts_s1) / sizeof(py_scripts_s1[0]), &handle));
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts_s1, sizeof(py_scripts_s1) / sizeof(py_scripts_s1[0]), &handle1));
 
-		ASSERT_NE((void *)NULL, (void *)handle);
+		ASSERT_NE((void *)NULL, (void *)handle1);
 
-		void *func = metacall_handle_function(handle, "shared_in_s1_and_s2");
+		void *func = metacall_handle_function(handle1, "shared_in_s1_and_s2");
 
 		ASSERT_NE((void *)NULL, (void *)func);
 
-		void *ret = metacallhv_s(handle, "shared_in_s1_and_s2", metacall_null_args, 0);
+		void *ret = metacallhv_s(handle1, "shared_in_s1_and_s2", metacall_null_args, 0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
@@ -121,15 +121,17 @@ TEST_F(metacall_handle_get_test, DefaultConstructor)
 			"s2.py"
 		};
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts_s2, sizeof(py_scripts_s2) / sizeof(py_scripts_s2[0]), &handle));
+		void *handle2 = NULL;
 
-		ASSERT_NE((void *)NULL, (void *)handle);
+		EXPECT_EQ((int)0, (int)metacall_load_from_file("py", py_scripts_s2, sizeof(py_scripts_s2) / sizeof(py_scripts_s2[0]), &handle2));
 
-		func = metacall_handle_function(handle, "shared_in_s1_and_s2");
+		ASSERT_NE((void *)NULL, (void *)handle2);
+
+		func = metacall_handle_function(handle2, "shared_in_s1_and_s2");
 
 		ASSERT_NE((void *)NULL, (void *)func);
 
-		ret = metacallhv_s(handle, "shared_in_s1_and_s2", metacall_null_args, 0);
+		ret = metacallhv_s(handle2, "shared_in_s1_and_s2", metacall_null_args, 0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 

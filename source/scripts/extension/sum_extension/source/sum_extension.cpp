@@ -34,8 +34,9 @@ void *sum(size_t argc, void *args[], void *data)
 	return metacall_value_create_long(result);
 }
 
-int sum_extension(void *loader, void *context)
+int sum_extension(void *loader, void *handle, void *context)
 {
 	enum metacall_value_id arg_types[] = { METACALL_LONG, METACALL_LONG };
+	(void)handle;
 	return metacall_register_loaderv(loader, context, "sum", sum, METACALL_LONG, sizeof(arg_types) / sizeof(arg_types[0]), arg_types);
 }

@@ -519,6 +519,7 @@ loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interfa
 		{
 			handle_impl->magic = (uintptr_t)loader_handle_impl_magic_free;
 			free(handle_impl);
+			return NULL;
 		}
 
 		handle_impl->magic = (uintptr_t)loader_handle_impl_magic_alloc;
@@ -671,6 +672,7 @@ int loader_impl_handle_register_cb_iterate(plugin_manager manager, plugin p, voi
 
 int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const char *path, loader_handle_impl handle_impl, void **handle_ptr)
 {
+	/* If there's no handle input/output pointer passed as input parameter, then propagate the handle symbols to the loader context */
 	if (handle_ptr == NULL)
 	{
 		/* This case handles the global scope (shared scope between all loaders, there is no out reference to a handle) */
@@ -694,7 +696,27 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const 
 	}
 	else
 	{
-		return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 1);
+		/* Otherwise, if there's a handle pointer and it is different from NULL, it means we are passing a handle as input parameter, so propagate symbols to this handle */
+		if (*handle_ptr != NULL)
+		{
+			loader_handle_impl target_handle = (loader_handle_impl)*handle_ptr;
+			char *duplicated_key;
+
+			if (context_contains(handle_impl->ctx, target_handle->ctx, &duplicated_key) == 0 && duplicated_key != NULL)
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, path);
+				return 1;
+			}
+			else if (context_append(impl->ctx, handle_impl->ctx) == 0)
+			{
+				return loader_impl_handle_init(impl, path, handle_impl, NULL, 1);
+			}
+		}
+		else
+		{
+			/* Otherwise, initialize the handle and do not propagate the symbols, keep it private to the handle instance */
+			return loader_impl_handle_init(impl, path, handle_impl, handle_ptr, 1);
+		}
 	}
 
 	return 1;
@@ -995,6 +1017,16 @@ context loader_impl_handle_context(void *handle)
 	loader_handle_impl handle_impl = handle;
 
 	return handle_impl->ctx;
+}
+
+void *loader_impl_handle_container_of(void *impl)
+{
+	loader_handle handle = impl;
+
+#define container_of(ptr, type, member) \
+	(type *)((char *)(ptr) - (char *)&((type *)0)->member)
+
+	return container_of(handle, struct loader_handle_impl_type, module);
 }
 
 int loader_impl_handle_validate(void *handle)

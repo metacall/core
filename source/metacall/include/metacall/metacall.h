@@ -238,8 +238,14 @@ METACALL_API int metacall_execution_path_s(const char *tag, size_t tag_length, c
 *  @param[in] size
 *    Size of the array @paths
 *
-*  @param[out] handle
-*    Optional pointer to reference of loaded handle
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
 *
 *  @return
 *    Zero if success, different from zero otherwise
@@ -259,8 +265,14 @@ METACALL_API int metacall_load_from_file(const char *tag, const char *paths[], s
 *  @param[in] size
 *    Memory block representing the string of the script
 *
-*  @param[out] handle
-*    Optional pointer to reference of loaded handle
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
 *
 *  @return
 *    Zero if success, different from zero otherwise
@@ -277,8 +289,14 @@ METACALL_API int metacall_load_from_memory(const char *tag, const char *buffer, 
 *  @param[in] path
 *    Path of the package
 *
-*  @param[out] handle
-*    Optional pointer to reference of loaded handle
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
 *
 *  @return
 *    Zero if success, different from zero otherwise
@@ -298,8 +316,14 @@ METACALL_API int metacall_load_from_package(const char *tag, const char *path, v
 *  @param[in] path
 *    Path of the configuration
 *
-*  @param[out] handle
-*    Optional pointer to reference of loaded handle
+*  @param[inout] handle
+*    Optional pointer to reference of loaded handle. If the parameter is NULL, the symbols loaded are
+*    propagated to the loader scope (i.e they will share the scope between all previously loaded files and they can collide).
+*    Otherwise, if we pass a void* pointer set to NULL, it will behave as output parameter, obtaining the reference to the
+*    created handle, which can be later on used for calling to functions of that handle. The symbols will not be propagated
+*    to the loader scope and they will be private (this prevents collisions). The last case is if we pass an already allocated
+*    handle (i.e a void* pointer pointing to an previously loaded handle), then in this case, the symbols loaded will be propagated
+*    to the previously allocated handle, and it will behave as a in parameter.
 *
 *  @param[in] allocator
 *    Pointer to allocator will allocate the configuration

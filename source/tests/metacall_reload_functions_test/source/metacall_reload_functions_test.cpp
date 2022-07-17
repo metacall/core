@@ -41,31 +41,33 @@ TEST_F(metacall_reload_functions_test, DefaultConstructor)
 			"def f():\n"
 			"	return 5\n";
 
-		void *handle = NULL;
+		void *handle0 = NULL;
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer0, sizeof(buffer0), &handle));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer0, sizeof(buffer0), &handle0));
 
-		void *ret = metacallhv_s(handle, "f", metacall_null_args, 0);
+		void *ret = metacallhv_s(handle0, "f", metacall_null_args, 0);
 
 		EXPECT_EQ((long)5, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle0));
 
 		const char buffer1[] =
 			"def f():\n"
 			"	return 6\n";
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer1, sizeof(buffer1), &handle));
+		void *handle1 = NULL;
 
-		ret = metacallhv_s(handle, "f", metacall_null_args, 0);
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("py", buffer1, sizeof(buffer1), &handle1));
+
+		ret = metacallhv_s(handle1, "f", metacall_null_args, 0);
 
 		EXPECT_EQ((long)6, (long)metacall_value_to_long(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle1));
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
@@ -77,32 +79,34 @@ TEST_F(metacall_reload_functions_test, DefaultConstructor)
 			"	return 5\n"
 			"end\n";
 
-		void *handle = NULL;
+		void *handle0 = NULL;
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", buffer0, sizeof(buffer0), &handle));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", buffer0, sizeof(buffer0), &handle0));
 
-		void *ret = metacallhv_s(handle, "f", metacall_null_args, 0);
+		void *ret = metacallhv_s(handle0, "f", metacall_null_args, 0);
 
 		EXPECT_EQ((int)5, (int)metacall_value_to_int(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle0));
 
 		const char buffer1[] =
 			"def f()\n"
 			"	return 6\n"
 			"end\n";
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", buffer1, sizeof(buffer1), &handle));
+		void *handle1 = NULL;
 
-		ret = metacallhv_s(handle, "f", metacall_null_args, 0);
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("rb", buffer1, sizeof(buffer1), &handle1));
+
+		ret = metacallhv_s(handle1, "f", metacall_null_args, 0);
 
 		EXPECT_EQ((int)6, (int)metacall_value_to_int(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle1));
 	}
 #endif /* OPTION_BUILD_LOADERS_RB */
 
@@ -114,32 +118,34 @@ TEST_F(metacall_reload_functions_test, DefaultConstructor)
 			"	f: () => 5,\n"
 			"};\n";
 
-		void *handle = NULL;
+		void *handle0 = NULL;
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer0, sizeof(buffer0), &handle));
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer0, sizeof(buffer0), &handle0));
 
-		void *ret = metacallhv_s(handle, "f", metacall_null_args, 0);
+		void *ret = metacallhv_s(handle0, "f", metacall_null_args, 0);
 
 		EXPECT_EQ((double)5.0, (double)metacall_value_to_double(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle0));
 
 		const char buffer1[] =
 			"module.exports = {\n"
 			"	f: () => 6,\n"
 			"};\n";
 
-		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer1, sizeof(buffer1), &handle));
+		void *handle1 = NULL;
 
-		ret = metacallhv_s(handle, "f", metacall_null_args, 0);
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer1, sizeof(buffer1), &handle1));
+
+		ret = metacallhv_s(handle1, "f", metacall_null_args, 0);
 
 		EXPECT_EQ((double)6.0, (double)metacall_value_to_double(ret));
 
 		metacall_value_destroy(ret);
 
-		EXPECT_EQ((int)0, (int)metacall_clear(handle));
+		EXPECT_EQ((int)0, (int)metacall_clear(handle1));
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 

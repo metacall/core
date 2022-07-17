@@ -67,9 +67,12 @@ static int plugin_extension_get_path(std::string &ext_path)
 	return 0;
 }
 
-int plugin_extension(void *, void *)
+int plugin_extension(void *loader, void *handle, void *context)
 {
 	std::string ext_path;
+
+	(void)loader;
+	(void)context;
 
 	if (plugin_extension_get_path(ext_path) != 0)
 	{
@@ -102,7 +105,7 @@ int plugin_extension(void *, void *)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loading extension: %s", dir.path().filename().c_str());
 
-				if (metacall_load_from_configuration(dir.path().c_str(), NULL, config_allocator) != 0)
+				if (metacall_load_from_configuration(dir.path().c_str(), &handle, config_allocator) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir.path().c_str());
 					return 1;

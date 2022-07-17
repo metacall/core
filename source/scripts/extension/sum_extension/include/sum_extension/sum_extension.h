@@ -29,7 +29,7 @@
 extern "C" {
 #endif
 
-SUM_EXTENSION_API int sum_extension(void *loader, void *context);
+SUM_EXTENSION_API int sum_extension(void *loader, void *handle, void *context);
 
 DYNLINK_SYMBOL_EXPORT(sum_extension);
 

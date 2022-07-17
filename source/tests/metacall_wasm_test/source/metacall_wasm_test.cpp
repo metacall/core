@@ -113,7 +113,7 @@ TEST_F(metacall_wasm_test, LoadFromPackage)
 TEST_F(metacall_wasm_test, DiscoverFunctions)
 {
 	const char *functions_module_filename = "functions.wat";
-	void *handle;
+	void *handle = NULL;
 
 	ASSERT_EQ(0, metacall_load_from_file("wasm", &functions_module_filename, 1, &handle));
 
