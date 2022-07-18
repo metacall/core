@@ -503,6 +503,11 @@ if(NOT NodeJS_LIBRARY)
 		endif()
 	endif()
 
+	# Set up the compile path in case of prefix is specified
+	if(NOT WIN32 AND NOT MSVC AND NodeJS_INSTALL_PREFIX)
+		set(NodeJS_COMPILE_PATH "${NodeJS_INSTALL_PREFIX}/lib")
+	endif()
+
 	# Find compiled library
 	find_library(NodeJS_LIBRARY
 		NAMES ${NodeJS_LIBRARY_NAMES}
