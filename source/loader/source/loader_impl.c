@@ -587,7 +587,7 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 
 			if (populated_handle_impl->populated == 0)
 			{
-				context_remove(populated_handle_impl->impl->ctx, populated_handle_impl->ctx);
+				context_remove(populated_handle_impl->impl->ctx, handle_impl->ctx);
 			}
 
 			context_remove(populated_handle_impl->ctx, handle_impl->ctx);
