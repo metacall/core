@@ -29,6 +29,9 @@
 #
 # NodeJS_CMAKE_DEBUG - Print paths for debugging
 # NodeJS_EXECUTABLE_ONLY - Find only NodeJS executable (avoid library and include files)
+# NodeJS_SHARED_UV - If it is enabled, libuv won't be required by this script
+# NodeJS_BUILD_FROM_SOURCE - If it is enabled, NodeJS runtime library will be built from source
+# NodeJS_INSTALL_PREFIX - Define a custom install prefix for NodeJS (Linux / Darwin only)
 
 # Prevent vervosity if already included
 if(NodeJS_EXECUTABLE)
@@ -474,7 +477,13 @@ if(NOT NodeJS_LIBRARY)
 				set(ICU_ENV_VAR)
 			endif()
 
-			execute_process(COMMAND ${ICU_ENV_VAR} sh -c "./configure --with-icu-source=${ICU_URL} --shared ${ICU_DEBUG}" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+			if(NodeJS_INSTALL_PREFIX)
+				set(NodeJS_PREFIX "--prefix=${NodeJS_INSTALL_PREFIX}")
+			else()
+				set(NodeJS_PREFIX)
+			endif()
+
+			execute_process(COMMAND ${ICU_ENV_VAR} sh -c "./configure ${NodeJS_PREFIX} --with-icu-source=${ICU_URL} --shared ${ICU_DEBUG}" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 
 			message(STATUS "Build NodeJS shared library")
 
