@@ -99,6 +99,7 @@ struct loader_handle_impl_type
 	loader_handle module;		 /* Pointer to the implementation handle, provided by the loader, it is its internal representation */
 	context ctx;				 /* Contains the objects, classes and functions loaded in the handle */
 	int populated;				 /* If it is populated (0), the handle context is also stored in loader context (global scope), otherwise it is private */
+	vector populated_handles;	 /* Vector containing all the references to which this handle has been populated into, it is necessary for detach the symbols when destroying (used in load_from_* when passing an input parameter) */
 };
 
 struct loader_impl_handle_register_cb_iterator_type
@@ -517,25 +518,39 @@ loader_handle_impl loader_impl_load_handle(loader_impl impl, loader_impl_interfa
 {
 	loader_handle_impl handle_impl = malloc(sizeof(struct loader_handle_impl_type));
 
-	if (handle_impl != NULL)
+	if (handle_impl == NULL)
 	{
-		handle_impl->impl = impl;
-		handle_impl->iface = iface;
-		strncpy(handle_impl->path, path, LOADER_PATH_SIZE);
-		handle_impl->module = module;
-		handle_impl->ctx = context_create(handle_impl->path);
-
-		if (handle_impl->ctx == NULL)
-		{
-			handle_impl->magic = (uintptr_t)loader_handle_impl_magic_free;
-			free(handle_impl);
-			return NULL;
-		}
-
-		handle_impl->magic = (uintptr_t)loader_handle_impl_magic_alloc;
-		return handle_impl;
+		goto alloc_loader_handle_impl_error;
 	}
 
+	handle_impl->impl = impl;
+	handle_impl->iface = iface;
+	strncpy(handle_impl->path, path, LOADER_PATH_SIZE);
+	handle_impl->module = module;
+	handle_impl->ctx = context_create(handle_impl->path);
+
+	if (handle_impl->ctx == NULL)
+	{
+		goto alloc_context_error;
+	}
+
+	handle_impl->populated_handles = vector_create_type(loader_handle_impl);
+
+	if (handle_impl->populated_handles == NULL)
+	{
+		goto alloc_populated_handles_error;
+	}
+
+	handle_impl->magic = (uintptr_t)loader_handle_impl_magic_alloc;
+
+	return handle_impl;
+
+alloc_populated_handles_error:
+	context_destroy(handle_impl->ctx);
+alloc_context_error:
+	handle_impl->magic = (uintptr_t)loader_handle_impl_magic_free;
+	free(handle_impl);
+alloc_loader_handle_impl_error:
 	return NULL;
 }
 
@@ -544,6 +559,7 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 	if (handle_impl != NULL)
 	{
 		static const char func_fini_name[] = LOADER_IMPL_FUNCTION_FINI;
+		size_t iterator;
 
 		if (handle_impl->impl->init == 0)
 		{
@@ -565,7 +581,20 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 			context_remove(handle_impl->impl->ctx, handle_impl->ctx);
 		}
 
+		for (iterator = 0; iterator < vector_size(handle_impl->populated_handles); ++iterator)
+		{
+			loader_handle_impl populated_handle_impl = vector_at_type(handle_impl->populated_handles, iterator, loader_handle_impl);
+
+			if (populated_handle_impl->populated == 0)
+			{
+				context_remove(populated_handle_impl->impl->ctx, populated_handle_impl->ctx);
+			}
+
+			context_remove(populated_handle_impl->ctx, handle_impl->ctx);
+		}
+
 		context_destroy(handle_impl->ctx);
+		vector_destroy(handle_impl->populated_handles);
 		handle_impl->magic = (uintptr_t)loader_handle_impl_magic_free;
 
 		free(handle_impl);
@@ -717,8 +746,10 @@ int loader_impl_handle_register(plugin_manager manager, loader_impl impl, const 
 				log_write("metacall", LOG_LEVEL_ERROR, "Duplicated symbol found named '%s' already defined in the handle scope by handle: %s", duplicated_key, path);
 				return 1;
 			}
-			else if (context_append(impl->ctx, handle_impl->ctx) == 0)
+			else if (context_append(target_handle->ctx, handle_impl->ctx) == 0)
 			{
+				vector_push_back_var(handle_impl->populated_handles, target_handle);
+
 				return loader_impl_handle_init(impl, path, handle_impl, NULL, 1);
 			}
 		}
