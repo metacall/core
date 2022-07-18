@@ -296,7 +296,7 @@ int ext_loader_impl_discover(loader_impl impl, loader_handle handle, context ctx
 
 		function_cast.ptr = static_cast<void *>(ext.addr);
 
-		if (function_cast.fn(impl, loader_impl_handle_container_of(handle), ctx) != 0)
+		if (function_cast.fn(impl, loader_impl_handle_container_of(impl, handle), ctx) != 0)
 		{
 			return 1;
 		}

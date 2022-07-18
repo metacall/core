@@ -105,11 +105,11 @@ int plugin_extension(void *loader, void *handle, void *context)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Loading extension: %s", config.c_str());
 
-				const char *dir_path_str = dir.path().string().c_str();
+				std::string dir_path = dir.path().string();
 
-				if (metacall_load_from_configuration(dir_path_str, &handle, config_allocator) != 0)
+				if (metacall_load_from_configuration(dir_path.c_str(), &handle, config_allocator) != 0)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir_path_str);
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir_path.c_str());
 					return 1;
 				}
 
