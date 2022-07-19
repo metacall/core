@@ -1,9 +1,6 @@
 use crate::{compile, registrator, CompilerState, DlopenLibrary, RegistrationError, Source};
 
-use std::{
-    ffi::{c_void, OsStr},
-    path::PathBuf,
-};
+use std::{ffi::c_void, path::PathBuf};
 
 #[derive(Debug)]
 pub struct PackageRegistration {

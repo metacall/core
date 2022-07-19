@@ -23,5 +23,5 @@ pub trait BookTrait {
     fn buy_book(&self, p: i32);
 }
 impl BookTrait for Book {
-    fn buy_book(&self, p: i32) {}
+    fn buy_book(&self, _p: i32) {}
 }

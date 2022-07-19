@@ -1,9 +1,7 @@
 pub mod class;
 use super::{config::Input, source_map::FileName::Custom, CompilerCallbacks, Function, Source};
-use crate::Class;
 use std::fs::File;
 use std::io::Write;
-use std::path::PathBuf;
 fn generate_function_wrapper(functions: &Vec<Function>) -> String {
     let mut ret = String::new();
     for func in functions {

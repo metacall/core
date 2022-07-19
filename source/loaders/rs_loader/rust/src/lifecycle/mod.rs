@@ -16,4 +16,4 @@ pub use execution_path::rs_loader_impl_execution_path;
 pub use initialize::rs_loader_impl_initialize;
 pub use load_from_file::rs_loader_impl_load_from_file;
 pub use load_from_memory::rs_loader_impl_load_from_memory;
-// pub use load_from_package::rs_loader_impl_load_from_package;
+pub use load_from_package::rs_loader_impl_load_from_package;

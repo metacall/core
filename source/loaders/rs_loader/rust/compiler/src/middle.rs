@@ -19,25 +19,25 @@ pub fn handle_ty(ty: &TyS) -> FunctionParameter {
     };
     match &ty.kind() {
         TyKind::Int(i) => match i {
-            IntTy::I16 => result.ty = FunctionType::I16,
-            IntTy::I32 => result.ty = FunctionType::I32,
-            IntTy::I64 => result.ty = FunctionType::I64,
+            IntTy::I16 => result.ty = FunctionType::i16,
+            IntTy::I32 => result.ty = FunctionType::i32,
+            IntTy::I64 => result.ty = FunctionType::i64,
             _ => result.ty = FunctionType::Null,
         },
         TyKind::Uint(u) => match u {
-            UintTy::U16 => result.ty = FunctionType::U16,
-            UintTy::U32 => result.ty = FunctionType::U32,
-            UintTy::U64 => result.ty = FunctionType::U64,
-            UintTy::Usize => result.ty = FunctionType::Usize,
+            UintTy::U16 => result.ty = FunctionType::u16,
+            UintTy::U32 => result.ty = FunctionType::u32,
+            UintTy::U64 => result.ty = FunctionType::u64,
+            UintTy::Usize => result.ty = FunctionType::usize,
             _ => result.ty = FunctionType::Null,
         },
         TyKind::Float(f) => match f {
-            FloatTy::F32 => result.ty = FunctionType::F32,
-            FloatTy::F64 => result.ty = FunctionType::F64,
+            FloatTy::F32 => result.ty = FunctionType::f32,
+            FloatTy::F64 => result.ty = FunctionType::f64,
         },
-        TyKind::Bool => result.ty = FunctionType::Bool,
-        TyKind::Char => result.ty = FunctionType::Char,
-        TyKind::Str => result.ty = FunctionType::Str,
+        TyKind::Bool => result.ty = FunctionType::bool,
+        TyKind::Char => result.ty = FunctionType::char,
+        TyKind::Str => result.ty = FunctionType::str,
         TyKind::Adt(def, gen) => {
             let def_ident = format!("{:?}", def);
             match def_ident.as_str() {
