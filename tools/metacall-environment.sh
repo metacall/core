@@ -28,6 +28,7 @@ APT_CACHE_CMD=""
 INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
+INSTALL_RUST=0
 INSTALL_RAPIDJSON=0
 INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
@@ -114,6 +115,15 @@ sub_ruby(){
 	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
 	#$SUDO_CMD apt-get -y --no-install-recommends install nodejs
 	#$SUDO_CMD gem install rails
+}
+
+# Rust
+sub_rust(){
+	echo "configure rust"
+	cd $ROOT_DIR
+	# install curl
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends curl
+	curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly-2021-12-04 --profile default
 }
 
 # RapidJSON
@@ -417,6 +427,9 @@ sub_install(){
 	if [ $INSTALL_RUBY = 1 ]; then
 		sub_ruby
 	fi
+	if [ $INSTALL_RUST = 1 ]; then
+		sub_rust
+	fi
 	if [ $INSTALL_RAPIDJSON = 1 ]; then
 		sub_rapidjson
 	fi
@@ -503,6 +516,10 @@ sub_options(){
 		if [ "$var" = 'ruby' ]; then
 			echo "ruby selected"
 			INSTALL_RUBY=1
+		fi
+		if [ "$var" = 'rust' ]; then
+			echo "rust selected"
+			INSTALL_RUST=1
 		fi
 		if [ "$var" = 'netcore' ]; then
 			echo "netcore selected"

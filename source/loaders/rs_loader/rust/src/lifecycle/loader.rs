@@ -4,13 +4,14 @@ use compiler::api;
 
 use compiler::file::FileRegistration;
 use compiler::memory::MemoryRegistration;
+use compiler::package::PackageRegistration;
 
 use std::fmt::Display;
 
 #[derive(Debug)]
 pub enum LoadingMethod {
     File(FileRegistration),
-    /*Package(PackageRegistration),*/
+    Package(PackageRegistration),
     Memory(MemoryRegistration),
 }
 

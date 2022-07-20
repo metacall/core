@@ -588,18 +588,43 @@ impl FromMeta for MetacallValue {
 //     }
 // }
 
+enum PrimitiveMetacallProtocolTypes {
+    Short = 2,
+    Int = 3,
+    Long = 4,
+    Float = 5,
+    Double = 6,
+}
+
+use std::convert::TryFrom;
+
+impl TryFrom<i32> for PrimitiveMetacallProtocolTypes {
+    type Error = ();
+
+    fn try_from(v: i32) -> Result<Self, Self::Error> {
+        match v {
+            x if x == PrimitiveMetacallProtocolTypes::Short as i32 => Ok(PrimitiveMetacallProtocolTypes::Short),
+            x if x == PrimitiveMetacallProtocolTypes::Int as i32 => Ok(PrimitiveMetacallProtocolTypes::Int),
+            x if x == PrimitiveMetacallProtocolTypes::Long as i32 => Ok(PrimitiveMetacallProtocolTypes::Long),
+            x if x == PrimitiveMetacallProtocolTypes::Float as i32 => Ok(PrimitiveMetacallProtocolTypes::Float),
+            x if x == PrimitiveMetacallProtocolTypes::Double as i32 => Ok(PrimitiveMetacallProtocolTypes::Double),
+            _ => Err(()),
+        }
+    }
+}
+
 macro_rules! convert_to {
     ($t:ty, $val:expr) => {
         unsafe {
             let id = value_type_id($val);
 
-            match id {
-                2 => Ok(metacall_value_to_short($val) as $t),
-                3 => Ok(metacall_value_to_int($val) as $t),
-                4 => Ok(metacall_value_to_long($val) as $t),
-                5 => Ok(metacall_value_to_float($val) as $t),
-                6 => Ok(metacall_value_to_double($val) as $t),
-                _ => {
+            match id.try_into() {
+                Ok(PrimitiveMetacallProtocolTypes::Short) => Ok(metacall_value_to_short($val) as $t),
+                Ok(PrimitiveMetacallProtocolTypes::Int) => Ok(metacall_value_to_int($val) as $t),
+                Ok(PrimitiveMetacallProtocolTypes::Long) => Ok(metacall_value_to_long($val) as $t),
+                Ok(PrimitiveMetacallProtocolTypes::Float) => Ok(metacall_value_to_float($val) as $t),
+                Ok(PrimitiveMetacallProtocolTypes::Double) => Ok(metacall_value_to_double($val) as $t),
+                Err(_) => {
                     println!("receive id: {}, should be [2-6]", id);
                     panic!("received mismatch type");
                 }

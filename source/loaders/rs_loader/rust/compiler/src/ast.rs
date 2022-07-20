@@ -17,17 +17,17 @@ pub fn handle_ty(ty: &rustc_ast::Ty) -> FunctionParameter {
             let segment = &path.segments[0];
             let symbol_string = segment.ident.name.to_string();
             match symbol_string.as_str() {
-                "i16" => result.ty = FunctionType::I16,
-                "i32" => result.ty = FunctionType::I32,
-                "i64" => result.ty = FunctionType::I64,
-                "u16" => result.ty = FunctionType::U16,
-                "u32" => result.ty = FunctionType::U32,
-                "u64" => result.ty = FunctionType::U64,
-                "usize" => result.ty = FunctionType::Usize,
-                "f32" => result.ty = FunctionType::F32,
-                "f64" => result.ty = FunctionType::F64,
-                "bool" => result.ty = FunctionType::Bool,
-                "str" => result.ty = FunctionType::Str,
+                "i16" => result.ty = FunctionType::i16,
+                "i32" => result.ty = FunctionType::i32,
+                "i64" => result.ty = FunctionType::i64,
+                "u16" => result.ty = FunctionType::u16,
+                "u32" => result.ty = FunctionType::u32,
+                "u64" => result.ty = FunctionType::u64,
+                "usize" => result.ty = FunctionType::usize,
+                "f32" => result.ty = FunctionType::f32,
+                "f64" => result.ty = FunctionType::f64,
+                "bool" => result.ty = FunctionType::bool,
+                "str" => result.ty = FunctionType::str,
                 "Vec" => {
                     result.ty = FunctionType::Array;
                     if let Some(args) = &segment.args {

@@ -32,6 +32,20 @@ if(NOT Rust_FOUND)
 	return()
 endif()
 
+# Find Patchelf
+find_package(Patchelf)
+
+if(NOT PATCHELF_FOUND)
+	set(PATCHELF_EXECUTABLE "${CMAKE_BINARY_DIR}/PATCHELF/src/patchelf/src/patchelf")
+	include(InstallPatchelf)
+
+	if(NOT PATCHELF_FOUND)
+		message(STATUS "patchelf not found")
+		return()
+	endif()
+endif()
+
+
 # Target name
 set(target rs_loader_impl)
 
@@ -56,16 +70,21 @@ add_custom_target(${target}_runtime
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
+set(RUSTC_LIBS )
+add_custom_target(${target}_patchelf DEPENDS ${target}_runtime PATCHELF)
+foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})	
+	get_filename_component(rustc_lib_name ${rustc_lib} NAME )
+	list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
+	add_custom_command(TARGET ${target}_patchelf POST_BUILD
+		COMMAND ${PATCHELF_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
+	)
+endforeach()
+
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-	COMMAND ${CMAKE_COMMAND} -E env WRAPPER_DIR=${CMAKE_CURRENT_SOURCE_DIR}/compiler/src/wrapper ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
-	# TODO: $ORIGIN does not work, but even using absolute path, the library librustc_driver depends on libstd and libLLVM
-	# but they have the rpath hardcoded to the rustup folder, for mitigating this, we are using LD_LIBRARY_PATH in the test
-	# although it may cause problems in the future in the distributable or docker builds, this must be reviewed
-	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,${PROJECT_OUTPUT_DIR}' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
-	# COMMAND ${CMAKE_COMMAND} -E env RUSTFLAGS='-C link-arg=-Wl,-rpath,\$ORIGIN' ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
+	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
-	DEPENDS ${target}_runtime
+	DEPENDS ${target}_runtime ${target}_patchelf
 )
 
 set_property(TARGET ${target}
@@ -95,7 +114,7 @@ install(FILES
 
 # Rust Runtime (pack the runtime meanwhile Rust runtime is not distributed as a library)
 install(FILES
-	${Rust_RUSTC_LIBRARIES}
+	${RUSTC_LIBS}
 	DESTINATION ${INSTALL_LIB}
 	COMPONENT runtime
 )

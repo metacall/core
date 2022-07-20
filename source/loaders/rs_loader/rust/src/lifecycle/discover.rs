@@ -29,6 +29,11 @@ pub extern "C" fn rs_loader_impl_discover(
                     return discover_on_error(error);
                 }
             }
+            LoadingMethod::Package(package_registration) => {
+                if let Err(error) = package_registration.discover(loader_impl, ctx) {
+                    return discover_on_error(error);
+                }
+            }
         }
     }
     // avoid dropping handle_shared_objects

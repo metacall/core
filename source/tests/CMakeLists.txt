@@ -219,6 +219,8 @@ add_subdirectory(metacall_wasm_test)
 add_subdirectory(metacall_wasm_python_port_test)
 add_subdirectory(metacall_rust_test)
 add_subdirectory(metacall_rust_load_from_mem_test)
+add_subdirectory(metacall_rust_load_from_package_test)
+add_subdirectory(metacall_rust_load_from_package_class_test)
 add_subdirectory(metacall_rust_class_test)
 add_subdirectory(metacall_c_test)
 #add_subdirectory(metacall_c_lib_test) # TODO: TCC cannot list the symbols from the external libraries, neither static or shared

@@ -11,28 +11,28 @@ pub extern "C" fn rs_loader_impl_initialize(
     compiler::initialize();
     api::define_type(
         loader_impl,
-        "I8",
+        "i8",
         PrimitiveMetacallProtocolTypes::Char,
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
     );
     api::define_type(
         loader_impl,
-        "I16",
+        "i16",
         PrimitiveMetacallProtocolTypes::Short,
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
     );
     api::define_type(
         loader_impl,
-        "I32",
+        "i32",
         PrimitiveMetacallProtocolTypes::Int,
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
     );
     api::define_type(
         loader_impl,
-        "I64",
+        "i64",
         PrimitiveMetacallProtocolTypes::Long,
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
@@ -74,14 +74,14 @@ pub extern "C" fn rs_loader_impl_initialize(
     // );
     api::define_type(
         loader_impl,
-        "F32",
+        "f32",
         PrimitiveMetacallProtocolTypes::Float,
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
     );
     api::define_type(
         loader_impl,
-        "F64",
+        "f64",
         PrimitiveMetacallProtocolTypes::Double,
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,

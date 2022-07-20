@@ -2,7 +2,8 @@
 #![feature(once_cell)]
 // allow us to match on Box<T>s:
 #![feature(box_patterns)]
-
+#![feature(let_else)]
+#![feature(iter_zip)]
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_attr;
@@ -13,19 +14,32 @@ extern crate rustc_feature;
 extern crate rustc_hash;
 extern crate rustc_hir;
 extern crate rustc_interface;
+extern crate rustc_middle;
 extern crate rustc_session;
 extern crate rustc_span;
 
 use dlopen;
 use rustc_ast::{visit, Impl, Item, ItemKind, VariantData};
+use rustc_hir::def::{DefKind, Res};
+use rustc_hir::def_id::DefId;
 use rustc_interface::{interface::Compiler, Config, Queries};
-use rustc_session::config;
-use rustc_session::config::CrateType;
+use rustc_middle::hir::exports::Export;
+use rustc_middle::ty::Visibility;
+use rustc_session::config::{self, CrateType, ExternEntry, ExternLocation, Externs, Input};
+use rustc_session::utils::CanonicalizedPath;
 use rustc_span::source_map;
-use std::{collections::HashMap, fmt, path::PathBuf, sync};
+use std::io::Write;
+use std::iter::{self, FromIterator};
+use std::{
+    collections::{BTreeMap, BTreeSet, HashMap},
+    fmt,
+    path::PathBuf,
+    sync,
+};
 mod ast;
 pub mod file;
 pub mod memory;
+mod middle;
 pub mod package;
 pub(crate) mod registrator;
 pub mod wrapper;
@@ -54,11 +68,14 @@ pub struct SourceImpl {
     input: SourceInput,
     input_path: PathBuf,
     output: PathBuf,
+    source: Source,
 }
 
+#[derive(Clone)]
 pub enum Source {
     File { path: PathBuf },
     Memory { name: String, code: String },
+    Package { path: PathBuf },
 }
 
 impl Source {
@@ -86,7 +103,7 @@ impl Source {
         let output_path = |dir: &PathBuf, name: &PathBuf| input_path(dir, &library_name(name));
 
         match source {
-            Source::File { path } => {
+            Source::File { ref path } => {
                 let dir = PathBuf::from(path.clone().parent().unwrap());
                 let name = PathBuf::from(path.file_name().unwrap());
 
@@ -94,9 +111,10 @@ impl Source {
                     input: SourceInput(config::Input::File(path.clone())),
                     input_path: input_path(&dir, &name),
                     output: output_path(&dir, &name),
+                    source,
                 }
             }
-            Source::Memory { name, code } => {
+            Source::Memory { ref name, ref code } => {
                 let dir = PathBuf::from(std::env::temp_dir());
                 let name_path = PathBuf::from(name.clone());
 
@@ -107,6 +125,18 @@ impl Source {
                     }),
                     input_path: input_path(&dir, &name_path),
                     output: output_path(&dir, &name_path),
+                    source,
+                }
+            }
+            Source::Package { ref path } => {
+                let dir = PathBuf::from(path.clone().parent().unwrap());
+                let name = PathBuf::from(path.file_name().unwrap());
+
+                SourceImpl {
+                    input: SourceInput(config::Input::File(path.clone())),
+                    input_path: input_path(&dir, &name),
+                    output: output_path(&dir, &name),
+                    source,
                 }
             }
         }
@@ -242,23 +272,24 @@ pub enum Reference {
     No,
 }
 
+#[allow(non_camel_case_types)]
 #[derive(Clone, Debug)]
 pub enum FunctionType {
-    I16,
-    I32,
-    I64,
-    U16,
-    U32,
-    U64,
-    Usize,
-    F32,
-    F64,
-    Bool,
-    Char,
+    i16,
+    i32,
+    i64,
+    u16,
+    u32,
+    u64,
+    usize,
+    f32,
+    f64,
+    bool,
+    char,
     Array,
     Map,
     Slice,
-    Str,
+    str,
     String,
     Ptr,
     Null,
@@ -289,8 +320,17 @@ pub struct Function {
     args: Vec<FunctionParameter>,
 }
 
+impl Function {
+    pub fn has_self(&self) -> bool {
+        if self.args.len() == 0 {
+            return false;
+        }
+        self.args[0].name == "self"
+    }
+}
+
 #[derive(Clone, Debug)]
-struct Attribute {
+pub struct Attribute {
     name: String,
     ty: FunctionParameter,
 }
@@ -326,13 +366,166 @@ pub struct CompilerCallbacks {
     classes: Vec<Class>,
 }
 
+impl CompilerCallbacks {
+    fn analyze_source<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
+        let krate = queries
+            .parse()
+            .expect("no Result<Query<Crate>> found")
+            .take();
+        let mut item_visitor = ItemVisitor::new();
+        visit::walk_crate(&mut item_visitor, &krate);
+        self.classes = item_visitor.classes.into_values().collect();
+        self.functions = item_visitor.functions;
+    }
+    fn analyze_metadata<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
+        let mut class_map: HashMap<DefId, Class> = HashMap::new();
+        let crate_num = queries
+            .expansion()
+            .expect("Unable to get Expansion")
+            .peek_mut()
+            .1
+            .borrow_mut()
+            .access(|resolver| {
+                let c_store = resolver.cstore().clone();
+                c_store.crates_untracked().last().cloned().unwrap()
+            });
+        queries
+            .global_ctxt()
+            .expect("Unable to get global ctxt")
+            .peek_mut()
+            .enter(|ctxt| {
+                // parse public functions and structs
+                for child in ctxt.item_children(crate_num.as_def_id()) {
+                    let Export {
+                        ident, res, vis, ..
+                    } = child;
+                    // skip non-public items
+                    if !matches!(vis, Visibility::Public) {
+                        continue;
+                    }
+                    match res {
+                        Res::Def(DefKind::Struct, def_id) => {
+                            let class = class_map.entry(*def_id).or_default();
+                            class.name = ident.to_string();
+
+                            for field in ctxt.item_children(*def_id) {
+                                if let Some(field) =
+                                    middle::extract_attribute_from_export(&ctxt, field)
+                                {
+                                    class.attributes.push(field);
+                                }
+                            }
+
+                            for inherent_impl in ctxt.inherent_impls(*def_id) {
+                                for method in ctxt.item_children(*inherent_impl) {
+                                    if let Some(function) =
+                                        middle::extract_fn_from_export(&ctxt, method)
+                                    {
+                                        if function.name == "new" {
+                                            class.constructor = Some(function);
+                                        } else {
+                                            if function.has_self() {
+                                                class.methods.push(function);
+                                            } else {
+                                                class.static_methods.push(function);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        Res::Def(DefKind::Fn, def_id) => {
+                            // https://doc.rust-lang.org/stable/nightly-rustc/rustc_middle/ty/struct.Binder.html
+                            let fn_sig = ctxt.fn_sig(*def_id);
+                            let names = ctxt.fn_arg_names(*def_id);
+                            self.functions.push(middle::handle_fn(
+                                ident.to_string(),
+                                &fn_sig,
+                                names,
+                            ));
+                        }
+                        _ => {}
+                    }
+                }
+                // after parsing all structs, parse tarit implementations.
+                for trait_impl in ctxt.all_trait_implementations(crate_num) {
+                    use rustc_middle::ty::fast_reject::SimplifiedTypeGen::AdtSimplifiedType;
+                    if let Some(AdtSimplifiedType(def_id)) = trait_impl.1 {
+                        if let Some(class) = class_map.get_mut(&def_id) {
+                            for func in ctxt.item_children(trait_impl.0) {
+                                if let Some(function) = middle::extract_fn_from_export(&ctxt, func)
+                                {
+                                    if function.name == "drop" {
+                                        class.destructor = Some(function);
+                                    } else {
+                                        if function.has_self() {
+                                            class.methods.push(function);
+                                        } else {
+                                            class.static_methods.push(function);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        self.classes = class_map.into_values().collect();
+    }
+}
+
 impl rustc_driver::Callbacks for CompilerCallbacks {
     fn config(&mut self, config: &mut Config) {
+        if matches!(self.source.source, Source::Package { .. }) {
+            let mut externs: BTreeMap<String, ExternEntry> = BTreeMap::new();
+            let name = "metacall_package";
+            let path = self.source.input_path.clone();
+            let path = CanonicalizedPath::new(&path);
+
+            let entry = externs.entry(name.to_owned());
+
+            use std::collections::btree_map::Entry;
+
+            match entry {
+                Entry::Vacant(vacant) => {
+                    let files = BTreeSet::from_iter(iter::once(path));
+                    vacant.insert(ExternEntry {
+                        location: ExternLocation::ExactPaths(files),
+                        is_private_dep: false,
+                        add_prelude: true,
+                    });
+                }
+                _ => {
+                    unimplemented!();
+                }
+            }
+
+            config.opts.externs = Externs::new(externs);
+            // Set up inputs
+            let wrapped_script_path = self
+                .source
+                .input_path
+                .clone()
+                .parent()
+                .expect("input path has no parent")
+                .join("metacall_wrapped_package.rs");
+            if self.is_parsing {
+                let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
+                    .expect("unable to create wrapped script");
+                wrapped_script
+                    .write("extern crate metacall_package;\n".as_bytes())
+                    .expect("Unablt to write wrapped script");
+            }
+
+            config.input = Input::File(wrapped_script_path.clone()); // self.source.input.clone().0;
+            config.input_path = Some(wrapped_script_path);
+        } else {
+            // Set up inputs
+            config.input = self.source.input.clone().0;
+            config.input_path = Some(self.source.input_path.clone());
+        }
         // Set up output
         config.output_file = Some(self.source.output.clone());
-        // Set up inputs
-        config.input = self.source.input.clone().0;
-        config.input_path = Some(self.source.input_path.clone());
 
         // Setting up default compiler flags
         config.opts.output_types = config::OutputTypes::new(&[(config::OutputType::Exe, None)]);
@@ -342,7 +535,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         config.opts.edition = rustc_span::edition::Edition::Edition2021;
     }
 
-    fn after_analysis<'tcx>(
+    fn after_expansion<'tcx>(
         &mut self,
         _compiler: &Compiler,
         queries: &'tcx Queries<'tcx>,
@@ -350,18 +543,19 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         // analysis
         // is_parsing will be set to false after generating wrappers.
         if self.is_parsing {
-            let krate = queries
-                .parse()
-                .expect("no Result<Query<Crate>> found")
-                .take();
-            let mut item_visitor = ItemVisitor::new();
-            visit::walk_crate(&mut item_visitor, &krate);
-            self.classes = item_visitor.classes.into_values().collect();
-            self.functions = item_visitor.functions;
-            return rustc_driver::Compilation::Stop;
+            match self.source.source {
+                Source::File { .. } | Source::Memory { .. } => {
+                    self.analyze_source(queries);
+                    rustc_driver::Compilation::Stop
+                }
+                Source::Package { .. } => {
+                    self.analyze_metadata(queries);
+                    rustc_driver::Compilation::Stop
+                }
+            }
         } else {
             // we have finished the parsing process.
-            return rustc_driver::Compilation::Continue;
+            rustc_driver::Compilation::Continue
         }
     }
 }
@@ -391,6 +585,7 @@ impl<'a> visit::Visitor<'a> for ItemVisitor {
     fn visit_item(&mut self, i: &Item) {
         match &i.kind {
             ItemKind::Struct(VariantData::Struct(fields, _), _) => {
+                // let def_id = i.
                 let class = self.classes.entry(i.ident.to_string()).or_default();
                 class.name = i.ident.to_string();
                 for field in fields {
@@ -563,7 +758,7 @@ fn run_compiler(
         opts: config::Options {
             maybe_sysroot: compiler_sys_root(),
             crate_types: vec![CrateType::Cdylib],
-            ..config::Options::default()
+            ..Default::default()
         },
         // cfg! configuration in addition to the default ones
         crate_cfg: rustc_hash::FxHashSet::default(), // FxHashSet<(String, Option<String>)>
@@ -646,8 +841,8 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     let mut callbacks = CompilerCallbacks {
         source,
         is_parsing: true,
-        functions: vec![],
-        classes: vec![],
+        functions: Default::default(),
+        classes: Default::default(),
     };
 
     let diagnostics_buffer = sync::Arc::new(sync::Mutex::new(Vec::new()));
@@ -692,8 +887,8 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
     {
         Ok(()) => Ok(CompilerState {
             output: patched_callback.source.output.clone(),
-            functions: patched_callback.functions.clone(),
-            classes: patched_callback.classes.clone(),
+            functions: patched_callback.functions,
+            classes: patched_callback.classes,
         }),
         Err(err) => {
             // Read buffered diagnostics
