@@ -14,6 +14,14 @@
 
 #include <funchook.h>
 
+/* -- Member Data -- */
+
+union funchook_detour_impl_cast
+{
+	void (*hook)(void);
+	void *ptr;
+};
+
 /* -- Methods -- */
 
 detour_impl_handle funchook_detour_impl_initialize(void)
@@ -27,9 +35,9 @@ int funchook_detour_impl_install(detour_impl_handle handle, void (**target)(void
 
 	if (handle_impl != NULL && target != NULL && hook != NULL)
 	{
-		void **hook_ptr = (void **)&hook;
+		union funchook_detour_impl_cast hook_cast = { hook };
 
-		if (funchook_prepare(handle_impl, (void **)target, (void *)*hook_ptr) != FUNCHOOK_ERROR_SUCCESS)
+		if (funchook_prepare(handle_impl, (void **)target, hook_cast.ptr) != FUNCHOOK_ERROR_SUCCESS)
 		{
 			return 1;
 		}
