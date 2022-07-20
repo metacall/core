@@ -188,6 +188,20 @@ typedef struct loader_impl_async_future_delete_safe_type *loader_impl_async_futu
 struct loader_impl_async_destroy_safe_type;
 typedef struct loader_impl_async_destroy_safe_type *loader_impl_async_destroy_safe;
 
+template <typename T>
+union loader_impl_async_safe_cast
+{
+	T safe;
+	void *ptr;
+};
+
+template <typename T>
+union loader_impl_handle_safe_cast
+{
+	T *safe;
+	uv_handle_t *handle;
+};
+
 struct loader_impl_node_type
 {
 	/* TODO: The current implementation may not support multi-isolate environments. We should test it. */
@@ -1030,29 +1044,29 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 	napi_value *argv = new napi_value[argc];
 	void **args = new void *[argc];
 	napi_value recv;
-	loader_impl_napi_to_value_callback_closure closure = NULL;
+	loader_impl_async_safe_cast<loader_impl_napi_to_value_callback_closure> closure_cast = { NULL };
 
-	napi_get_cb_info(env, info, &argc, argv, &recv, (void **)(&closure));
+	napi_get_cb_info(env, info, &argc, argv, &recv, &closure_cast.ptr);
 
 	/* Set environment */
-	closure->node_impl->env = env;
+	closure_cast.safe->node_impl->env = env;
 
 	for (iterator = 0; iterator < argc; ++iterator)
 	{
-		args[iterator] = node_loader_impl_napi_to_value(closure->node_impl, env, recv, argv[iterator]);
+		args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, recv, argv[iterator]);
 
 		node_loader_impl_finalizer(env, argv[iterator], args[iterator]);
 	}
 
-	void *ret = metacallfv_s(value_to_function(closure->func), args, argc);
+	void *ret = metacallfv_s(value_to_function(closure_cast.safe->func), args, argc);
 
-	napi_value result = node_loader_impl_value_to_napi(closure->node_impl, env, ret);
+	napi_value result = node_loader_impl_value_to_napi(closure_cast.safe->node_impl, env, ret);
 
 	/* Set result finalizer */
 	node_loader_impl_finalizer(env, result, ret);
 
 	/* Reset environment */
-	// closure->node_impl->env = NULL;
+	// closure_cast.safe->node_impl->env = NULL;
 
 	delete[] argv;
 	delete[] args;
@@ -1809,28 +1823,28 @@ void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize
 
 napi_value node_loader_impl_async_initialize_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_initialize_safe initialize_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_initialize_safe> initialize_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&initialize_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &initialize_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&initialize_safe->node_impl->mutex);
+	uv_mutex_lock(&initialize_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	initialize_safe->node_impl->env = env;
+	initialize_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_initialize_safe(env, initialize_safe);
+	node_loader_impl_initialize_safe(env, initialize_cast.safe);
 
 	/* Clear environment */
-	// initialize_safe->node_impl->env = NULL;
+	// initialize_cast.safe->node_impl->env = NULL;
 
 	/* Signal start condition */
-	uv_cond_signal(&initialize_safe->node_impl->cond);
+	uv_cond_signal(&initialize_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&initialize_safe->node_impl->mutex);
+	uv_mutex_unlock(&initialize_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -1908,28 +1922,28 @@ void node_loader_impl_execution_path_safe(napi_env env, loader_impl_async_execut
 
 napi_value node_loader_impl_async_execution_path_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_execution_path_safe execution_path_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_execution_path_safe> execution_path_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&execution_path_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &execution_path_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&execution_path_safe->node_impl->mutex);
+	uv_mutex_lock(&execution_path_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	execution_path_safe->node_impl->env = env;
+	execution_path_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_execution_path_safe(env, execution_path_safe);
+	node_loader_impl_execution_path_safe(env, execution_path_cast.safe);
 
 	/* Clear environment */
-	// execution_path_safe->node_impl->env = NULL;
+	// execution_path_cast.safe->node_impl->env = NULL;
 
 	/* Signal start condition */
-	uv_cond_signal(&execution_path_safe->node_impl->cond);
+	uv_cond_signal(&execution_path_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&execution_path_safe->node_impl->mutex);
+	uv_mutex_unlock(&execution_path_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2005,33 +2019,33 @@ void node_loader_impl_func_call_safe(napi_env env, loader_impl_async_func_call_s
 
 napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_func_call_safe func_call_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_func_call_safe> func_call_cast = { NULL };
 	napi_status status;
 	napi_value recv;
 
-	status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void **)&func_call_safe);
+	status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, &func_call_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock the call safe mutex and get the parameters */
-	uv_mutex_lock(&func_call_safe->node_impl->mutex);
+	uv_mutex_lock(&func_call_cast.safe->node_impl->mutex);
 
 	/* Store function recv for reentrant calls */
-	func_call_safe->recv = recv;
+	func_call_cast.safe->recv = recv;
 
 	/* Store environment for reentrant calls */
-	func_call_safe->node_impl->env = env;
+	func_call_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_func_call_safe(env, func_call_safe);
+	node_loader_impl_func_call_safe(env, func_call_cast.safe);
 
 	/* Clear environment */
-	// func_call_safe->node_impl->env = NULL;
+	// func_call_cast.safe->node_impl->env = NULL;
 
 	/* Signal function call condition */
-	uv_cond_signal(&func_call_safe->node_impl->cond);
+	uv_cond_signal(&func_call_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&func_call_safe->node_impl->mutex);
+	uv_mutex_unlock(&func_call_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2278,31 +2292,31 @@ void node_loader_impl_func_await_safe(napi_env env, loader_impl_async_func_await
 napi_value node_loader_impl_async_func_await_safe(napi_env env, napi_callback_info info)
 {
 	napi_value recv;
-	loader_impl_async_func_await_safe func_await_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_func_await_safe> func_await_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void **)&func_await_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, &func_await_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&func_await_safe->node_impl->mutex);
+	uv_mutex_lock(&func_await_cast.safe->node_impl->mutex);
 
 	/* Store function recv for reentrant calls */
-	func_await_safe->recv = recv;
+	func_await_cast.safe->recv = recv;
 
 	/* Store environment for reentrant calls */
-	func_await_safe->node_impl->env = env;
+	func_await_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_func_await_safe(env, func_await_safe);
+	node_loader_impl_func_await_safe(env, func_await_cast.safe);
 
 	/* Clear environment */
-	// func_await_safe->node_impl->env = NULL;
+	// func_await_cast.safe->node_impl->env = NULL;
 
 	/* Signal function await condition */
-	uv_cond_signal(&func_await_safe->node_impl->cond);
+	uv_cond_signal(&func_await_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&func_await_safe->node_impl->mutex);
+	uv_mutex_unlock(&func_await_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2339,28 +2353,28 @@ void node_loader_impl_func_destroy_safe(napi_env env, loader_impl_async_func_des
 
 napi_value node_loader_impl_async_func_destroy_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_func_destroy_safe func_destroy_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_func_destroy_safe> func_destroy_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&func_destroy_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &func_destroy_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&func_destroy_safe->node_impl->mutex);
+	uv_mutex_lock(&func_destroy_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	func_destroy_safe->node_impl->env = env;
+	func_destroy_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_func_destroy_safe(env, func_destroy_safe);
+	node_loader_impl_func_destroy_safe(env, func_destroy_cast.safe);
 
 	/* Clear environment */
-	// func_destroy_safe->node_impl->env = NULL;
+	// func_destroy_cast.safe->node_impl->env = NULL;
 
 	/* Signal function destroy condition */
-	uv_cond_signal(&func_destroy_safe->node_impl->cond);
+	uv_cond_signal(&func_destroy_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&func_destroy_safe->node_impl->mutex);
+	uv_mutex_unlock(&func_destroy_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2472,31 +2486,31 @@ void node_loader_impl_future_await_safe(napi_env env, loader_impl_async_future_a
 napi_value node_loader_impl_async_future_await_safe(napi_env env, napi_callback_info info)
 {
 	napi_value recv;
-	loader_impl_async_future_await_safe future_await_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_future_await_safe> future_await_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, (void **)&future_await_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, &recv, &future_await_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&future_await_safe->node_impl->mutex);
+	uv_mutex_lock(&future_await_cast.safe->node_impl->mutex);
 
 	/* Store function recv for reentrant calls */
-	future_await_safe->recv = recv;
+	future_await_cast.safe->recv = recv;
 
 	/* Store environment for reentrant calls */
-	future_await_safe->node_impl->env = env;
+	future_await_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_future_await_safe(env, future_await_safe);
+	node_loader_impl_future_await_safe(env, future_await_cast.safe);
 
 	/* Clear environment */
-	// future_await_safe->node_impl->env = NULL;
+	// future_await_cast.safe->node_impl->env = NULL;
 
 	/* Signal function await condition */
-	uv_cond_signal(&future_await_safe->node_impl->cond);
+	uv_cond_signal(&future_await_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&future_await_safe->node_impl->mutex);
+	uv_mutex_unlock(&future_await_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2533,28 +2547,28 @@ void node_loader_impl_future_delete_safe(napi_env env, loader_impl_async_future_
 
 napi_value node_loader_impl_async_future_delete_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_future_delete_safe future_delete_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_future_delete_safe> future_delete_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&future_delete_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &future_delete_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&future_delete_safe->node_impl->mutex);
+	uv_mutex_lock(&future_delete_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	future_delete_safe->node_impl->env = env;
+	future_delete_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_future_delete_safe(env, future_delete_safe);
+	node_loader_impl_future_delete_safe(env, future_delete_cast.safe);
 
 	/* Clear environment */
-	// future_delete_safe->node_impl->env = NULL;
+	// future_delete_cast.safe->node_impl->env = NULL;
 
 	/* Signal future delete condition */
-	uv_cond_signal(&future_delete_safe->node_impl->cond);
+	uv_cond_signal(&future_delete_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&future_delete_safe->node_impl->mutex);
+	uv_mutex_unlock(&future_delete_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2661,28 +2675,28 @@ void node_loader_impl_load_from_file_safe(napi_env env, loader_impl_async_load_f
 
 napi_value node_loader_impl_async_load_from_file_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_load_from_file_safe load_from_file_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_load_from_file_safe> load_from_file_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&load_from_file_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &load_from_file_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&load_from_file_safe->node_impl->mutex);
+	uv_mutex_lock(&load_from_file_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	load_from_file_safe->node_impl->env = env;
+	load_from_file_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_load_from_file_safe(env, load_from_file_safe);
+	node_loader_impl_load_from_file_safe(env, load_from_file_cast.safe);
 
 	/* Clear environment */
-	// load_from_file_safe->node_impl->env = NULL;
+	// load_from_file_cast.safe->node_impl->env = NULL;
 
 	/* Signal load from file condition */
-	uv_cond_signal(&load_from_file_safe->node_impl->cond);
+	uv_cond_signal(&load_from_file_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&load_from_file_safe->node_impl->mutex);
+	uv_mutex_unlock(&load_from_file_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2782,28 +2796,28 @@ void node_loader_impl_load_from_memory_safe(napi_env env, loader_impl_async_load
 
 napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_load_from_memory_safe load_from_memory_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_load_from_memory_safe> load_from_memory_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&load_from_memory_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &load_from_memory_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&load_from_memory_safe->node_impl->mutex);
+	uv_mutex_lock(&load_from_memory_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	load_from_memory_safe->node_impl->env = env;
+	load_from_memory_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_load_from_memory_safe(env, load_from_memory_safe);
+	node_loader_impl_load_from_memory_safe(env, load_from_memory_cast.safe);
 
 	/* Clear environment */
-	// load_from_memory_safe->node_impl->env = NULL;
+	// load_from_memory_cast.safe->node_impl->env = NULL;
 
 	/* Signal load from memory condition */
-	uv_cond_signal(&load_from_memory_safe->node_impl->cond);
+	uv_cond_signal(&load_from_memory_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&load_from_memory_safe->node_impl->mutex);
+	uv_mutex_unlock(&load_from_memory_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -2894,28 +2908,28 @@ void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clea
 
 napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_clear_safe clear_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_clear_safe> clear_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&clear_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &clear_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&clear_safe->node_impl->mutex);
+	uv_mutex_lock(&clear_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	clear_safe->node_impl->env = env;
+	clear_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_clear_safe(env, clear_safe);
+	node_loader_impl_clear_safe(env, clear_cast.safe);
 
 	/* Clear environment */
-	// clear_safe->node_impl->env = NULL;
+	// clear_cast.safe->node_impl->env = NULL;
 
 	/* Signal clear condition */
-	uv_cond_signal(&clear_safe->node_impl->cond);
+	uv_cond_signal(&clear_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&clear_safe->node_impl->mutex);
+	uv_mutex_unlock(&clear_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -3629,28 +3643,28 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info)
 {
-	loader_impl_async_discover_safe discover_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_discover_safe> discover_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&discover_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &discover_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock node implementation mutex */
-	uv_mutex_lock(&discover_safe->node_impl->mutex);
+	uv_mutex_lock(&discover_cast.safe->node_impl->mutex);
 
 	/* Store environment for reentrant calls */
-	discover_safe->node_impl->env = env;
+	discover_cast.safe->node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_discover_safe(env, discover_safe);
+	node_loader_impl_discover_safe(env, discover_cast.safe);
 
 	/* Clear environment */
-	// discover_safe->node_impl->env = NULL;
+	// discover_cast.safe->node_impl->env = NULL;
 
 	/* Signal discover condition */
-	uv_cond_signal(&discover_safe->node_impl->cond);
+	uv_cond_signal(&discover_cast.safe->node_impl->cond);
 
-	uv_mutex_unlock(&discover_safe->node_impl->mutex);
+	uv_mutex_unlock(&discover_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -4833,11 +4847,18 @@ static void node_loader_impl_destroy_cb(loader_impl_node node_impl)
 
 	if (node_impl->event_loop_empty.load() == false && node_loader_impl_user_async_handles_count(node_impl) <= 0)
 	{
+		loader_impl_handle_safe_cast<uv_prepare_t> destroy_prepare_cast = { NULL };
+		loader_impl_handle_safe_cast<uv_check_t> destroy_check_cast = { NULL };
+
 		node_impl->event_loop_empty.store(true);
 		uv_prepare_stop(&node_impl->destroy_prepare);
 		uv_check_stop(&node_impl->destroy_check);
-		uv_close((uv_handle_t *)&node_impl->destroy_prepare, &node_loader_impl_destroy_prepare_close_cb);
-		uv_close((uv_handle_t *)&node_impl->destroy_check, &node_loader_impl_destroy_check_close_cb);
+
+		destroy_prepare_cast.safe = &node_impl->destroy_prepare;
+		destroy_check_cast.safe = &node_impl->destroy_check;
+
+		uv_close(destroy_prepare_cast.handle, &node_loader_impl_destroy_prepare_close_cb);
+		uv_close(destroy_check_cast.handle, &node_loader_impl_destroy_check_close_cb);
 	}
 }
 
@@ -4947,23 +4968,23 @@ void node_loader_impl_print_handles(loader_impl_node node_impl)
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
 {
 	loader_impl_node node_impl;
-	loader_impl_async_destroy_safe destroy_safe = NULL;
+	loader_impl_async_safe_cast<loader_impl_async_destroy_safe> destroy_cast = { NULL };
 
-	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, (void **)&destroy_safe);
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &destroy_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
 	/* Lock the call safe mutex and get the parameters */
-	uv_mutex_lock(&destroy_safe->node_impl->mutex);
+	uv_mutex_lock(&destroy_cast.safe->node_impl->mutex);
 
 	/* Store node impl reference because destroy_safe gets deteled after calling node_loader_impl_destroy_safe */
-	node_impl = destroy_safe->node_impl;
+	node_impl = destroy_cast.safe->node_impl;
 
 	/* Store environment for reentrant calls */
 	node_impl->env = env;
 
 	/* Call to the implementation function */
-	node_loader_impl_destroy_safe(env, destroy_safe);
+	node_loader_impl_destroy_safe(env, destroy_cast.safe);
 
 	/* Clear environment */
 	// node_impl->env = NULL;

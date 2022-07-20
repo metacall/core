@@ -79,7 +79,7 @@ inline int node_loader_impl_bootstrap_path(const char file[], size_t file_length
 	else
 	{
 		/* Load default script name */
-		strncpy(&path[load_library_path_length], file, file_length);
+		strncpy(&path[load_library_path_length], file, file_length + 1);
 
 		path_size = load_library_path_length + file_length + 1;
 
