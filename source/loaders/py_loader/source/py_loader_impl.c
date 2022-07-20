@@ -158,9 +158,9 @@ static value py_loader_impl_error_value_from_exception(loader_impl_py py_impl, P
 
 #if DEBUG_ENABLED
 static void py_loader_impl_gc_print(loader_impl_py py_impl);
-#endif
 
 static void py_loader_impl_sys_path_print(PyObject *sys_path_list);
+#endif
 
 static PyObject *py_loader_impl_function_type_invoke(PyObject *self, PyObject *args);
 
@@ -226,6 +226,12 @@ static int py_loader_impl_dict_init(struct py_loader_impl_dict_obj *self, PyObje
 static struct PyMethodDef py_loader_impl_dict_methods[] = {
 	{ "__sizeof__", (PyCFunction)py_loader_impl_dict_sizeof, METH_NOARGS, PyDoc_STR("Get size of dictionary.") },
 	{ NULL, NULL, 0, NULL }
+};
+
+union py_loader_impl_dict_cast
+{
+	PyTypeObject *type_object;
+	PyObject *object;
 };
 
 static PyTypeObject py_loader_impl_dict_type = {
@@ -329,10 +335,11 @@ void py_loader_impl_dict_dealloc(struct py_loader_impl_dict_obj *self)
 PyObject *py_loader_impl_finalizer_wrap_map(PyObject *obj, value v)
 {
 	PyObject *args = PyTuple_New(1);
+	union py_loader_impl_dict_cast dict_cast = { &py_loader_impl_dict_type };
 
 	PyTuple_SetItem(args, 0, obj);
 	Py_INCREF(obj);
-	PyObject *wrapper = PyObject_CallObject((PyObject *)&py_loader_impl_dict_type, args);
+	PyObject *wrapper = PyObject_CallObject(dict_cast.object, args);
 	Py_DECREF(args);
 
 	if (wrapper == NULL)
@@ -4156,7 +4163,6 @@ void py_loader_impl_gc_print(loader_impl_py py_impl)
 	Py_DECREF(separator);
 	Py_DECREF(garbage_str_obj);
 }
-#endif
 
 void py_loader_impl_sys_path_print(PyObject *sys_path_list)
 {
@@ -4167,24 +4173,25 @@ void py_loader_impl_sys_path_print(PyObject *sys_path_list)
 
 	const char *sys_path_str = NULL;
 
-#if PY_MAJOR_VERSION == 2
+	#if PY_MAJOR_VERSION == 2
 	separator = PyString_FromString(separator_str);
 
 	sys_path_str_obj = PyString_Join(separator, sys_path_list);
 
 	sys_path_str = PyString_AsString(sys_path_str_obj);
-#elif PY_MAJOR_VERSION == 3
+	#elif PY_MAJOR_VERSION == 3
 	separator = PyUnicode_FromString(separator_str);
 
 	sys_path_str_obj = PyUnicode_Join(separator, sys_path_list);
 
 	sys_path_str = PyUnicode_AsUTF8(sys_path_str_obj);
-#endif
+	#endif
 
 	log_write("metacall", LOG_LEVEL_DEBUG, sys_path_format_str, sys_path_str);
 
 	Py_XDECREF(separator);
 }
+#endif
 
 int py_loader_impl_finalize(loader_impl_py py_impl)
 {
