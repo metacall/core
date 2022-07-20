@@ -33,6 +33,13 @@ typedef struct loader_impl_async_future_await_trampoline_type
 
 } * loader_impl_async_future_await_trampoline;
 
+template <typename T>
+union loader_impl_trampoline_cast
+{
+	T data;
+	void *ptr;
+};
+
 /* TODO: This is a trick, probably with the current architecture we can
  * pass the pointer through the trampoline itself as a wrapped reference
  */
@@ -91,14 +98,14 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 		return nullptr;
 	}
 
-	loader_impl_node node_impl = NULL;
-	node_loader_trampoline_register_ptr register_ptr = NULL;
+	loader_impl_trampoline_cast<loader_impl_node> node_impl_cast = { NULL };
+	loader_impl_trampoline_cast<node_loader_trampoline_register_ptr> register_ptr_cast = { NULL };
 
 	/* Get node impl pointer */
-	node_loader_trampoline_parse_pointer(env, args[0], (void **)&node_impl);
+	node_loader_trampoline_parse_pointer(env, args[0], &node_impl_cast.ptr);
 
 	/* Get register function pointer */
-	node_loader_trampoline_parse_pointer(env, args[1], (void **)&register_ptr);
+	node_loader_trampoline_parse_pointer(env, args[1], &register_ptr_cast.ptr);
 
 	/* Get function table object */
 	napi_value function_table_object;
@@ -108,12 +115,12 @@ napi_value node_loader_trampoline_register(napi_env env, napi_callback_info info
 	node_loader_impl_exception(env, status);
 
 	/* Register function table object */
-	(void)register_ptr(node_impl, static_cast<void *>(env), static_cast<void *>(function_table_object));
+	(void)register_ptr_cast.data(node_impl_cast.data, static_cast<void *>(env), static_cast<void *>(function_table_object));
 
 	/* Store the node impl reference into a pointer so we can use it later on in the destroy mechanism */
 	napi_value return_external;
 
-	status = napi_create_external(env, node_impl, nullptr, nullptr, &return_external);
+	status = napi_create_external(env, node_impl_cast.data, nullptr, nullptr, &return_external);
 
 	node_loader_impl_exception(env, status);
 
@@ -269,20 +276,20 @@ napi_value node_loader_trampoline_destroy(napi_env env, napi_callback_info info)
 	}
 
 	/* Get the node impl pointer */
-	loader_impl_node node_impl;
+	loader_impl_trampoline_cast<loader_impl_node> node_impl_cast = { NULL };
 
-	status = napi_get_value_external(env, args[0], (void **)&node_impl);
+	status = napi_get_value_external(env, args[0], &node_impl_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
-	if (node_impl == nullptr)
+	if (node_impl_cast.ptr == nullptr)
 	{
 		napi_throw_type_error(env, nullptr, "Invalid node loader pointer");
 
 		return nullptr;
 	}
 
-	node_loader_impl_destroy_safe_impl(node_impl, env);
+	node_loader_impl_destroy_safe_impl(node_impl_cast.data, env);
 
 	return nullptr;
 }
@@ -322,20 +329,20 @@ napi_value node_loader_trampoline_print(napi_env env, napi_callback_info info)
 	}
 
 	/* Get the node impl pointer */
-	loader_impl_node node_impl;
+	loader_impl_trampoline_cast<loader_impl_node> node_impl_cast = { NULL };
 
-	status = napi_get_value_external(env, args[0], (void **)&node_impl);
+	status = napi_get_value_external(env, args[0], &node_impl_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
-	if (node_impl == nullptr)
+	if (node_impl_cast.ptr == nullptr)
 	{
 		napi_throw_type_error(env, nullptr, "Invalid node loader pointer");
 
 		return nullptr;
 	}
 
-	node_loader_impl_print_handles(node_impl);
+	node_loader_impl_print_handles(node_impl_cast.data);
 
 	return nullptr;
 }
@@ -375,20 +382,20 @@ napi_value node_loader_trampoline_active_handles(napi_env env, napi_callback_inf
 	}
 
 	/* Get the node impl pointer */
-	loader_impl_node node_impl;
+	loader_impl_trampoline_cast<loader_impl_node> node_impl_cast = { NULL };
 
-	status = napi_get_value_external(env, args[0], (void **)&node_impl);
+	status = napi_get_value_external(env, args[0], &node_impl_cast.ptr);
 
 	node_loader_impl_exception(env, status);
 
-	if (node_impl == nullptr)
+	if (node_impl_cast.ptr == nullptr)
 	{
 		napi_throw_type_error(env, nullptr, "Invalid node loader pointer");
 
 		return nullptr;
 	}
 
-	int64_t active_handles = node_loader_impl_user_async_handles_count(node_impl);
+	int64_t active_handles = node_loader_impl_user_async_handles_count(node_impl_cast.data);
 
 	/* Create the integer return value */
 	napi_value result;
