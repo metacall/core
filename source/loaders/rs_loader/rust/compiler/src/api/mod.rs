@@ -28,6 +28,8 @@ extern "C" {
 
     fn loader_initialization_register(loader_impl: OpaqueType);
 
+    fn loader_unload_children(loader_impl: OpaqueType);
+
     fn loader_impl_type_define(
         loader_impl: OpaqueType,
         name: *const c_char,
@@ -123,6 +125,10 @@ pub fn get_loader_lifecycle_state(loader_impl: OpaqueType) -> *mut LoaderLifecyc
 
 pub fn loader_lifecycle_register(loader_impl: OpaqueType) {
     unsafe { loader_initialization_register(loader_impl) };
+}
+
+pub fn loader_lifecycle_unload_children(loader_impl: OpaqueType) {
+    unsafe { loader_unload_children(loader_impl) };
 }
 
 pub enum PrimitiveMetacallProtocolTypes {

@@ -140,18 +140,10 @@ set_property(TEST ${target}
 )
 
 include(TestEnvironmentVariables)
-include(Portability)
-
-project_library_path(TEST_LIB_PATH
-	${PROJECT_OUTPUT_DIR}
-)
 
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
-	# TODO: This mitigates a bug in the Rust runtime libraries at runtime link time
-	# Delete this line when we solve it, review: source/loaders/rs_loader/rust/CMakeLists.txt
-	${PROJECT_LIBRARY_PATH_NAME}=${TEST_LIB_PATH}
 
 	# Enable Rust backtrace and logs for better debugging
 	RUST_BACKTRACE=1

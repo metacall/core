@@ -1,6 +1,6 @@
 #
-#	CMake Find RapidJSON by Parra Studios
-#	CMake script to find RapidJSON library.
+#	CMake Find Patchelf by Parra Studios
+#	CMake script to find Patchelf executable.
 #
 #	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
 #
@@ -18,16 +18,15 @@
 #
 
 # Prevent vervosity if already included
-if(PATCHELF_FOUND)
-	set(PATCHELF_FIND_QUIETLY TRUE)
+if(Patchelf_FOUND)
+	set(Patchelf_FIND_QUIETLY TRUE)
 endif()
 
-# Find patchelf .
-find_program(PATCHELF_EXECUTABLE NAMES patchelf)
-if(PATCHELF_EXECUTABLE)
-	set(PATCHELF_FOUND TRUE)
-	add_custom_target(PATCHELF)
+# Find patchelf
+find_program(Patchelf_EXECUTABLE NAMES patchelf)
+
+if(Patchelf_EXECUTABLE)
+	set(Patchelf_FOUND TRUE)
 else()
-	set(PATCHELF_FOUND FALSE)
+	set(Patchelf_FOUND FALSE)
 endif()
-

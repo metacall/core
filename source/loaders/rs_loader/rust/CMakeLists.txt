@@ -32,20 +32,6 @@ if(NOT Rust_FOUND)
 	return()
 endif()
 
-# Find Patchelf
-find_package(Patchelf)
-
-if(NOT PATCHELF_FOUND)
-	set(PATCHELF_EXECUTABLE "${CMAKE_BINARY_DIR}/PATCHELF/src/patchelf/src/patchelf")
-	include(InstallPatchelf)
-
-	if(NOT PATCHELF_FOUND)
-		message(STATUS "patchelf not found")
-		return()
-	endif()
-endif()
-
-
 # Target name
 set(target rs_loader_impl)
 
@@ -70,21 +56,38 @@ add_custom_target(${target}_runtime
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${Rust_RUSTC_LIBRARIES} ${PROJECT_OUTPUT_DIR}
 )
 
-set(RUSTC_LIBS )
-add_custom_target(${target}_patchelf DEPENDS ${target}_runtime PATCHELF)
-foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})	
-	get_filename_component(rustc_lib_name ${rustc_lib} NAME )
-	list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
-	add_custom_command(TARGET ${target}_patchelf POST_BUILD
-		COMMAND ${PATCHELF_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
-	)
-endforeach()
+# On Linux, execute patchelf in order to patch rpath in the dependencies (TODO: Implement this for Mac and Windows)
+if(NOT WIN32 AND NOT APPLE)
+	# Find Patchelf
+	find_package(Patchelf)
+
+	if(NOT Patchelf_FOUND)
+		include(InstallPatchelf)
+
+		if(NOT Patchelf_FOUND)
+			message(STATUS "Patchelf not found")
+			return()
+		endif()
+	endif()
+
+	set(RUSTC_LIBS)
+	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime Patchelf)
+	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
+		get_filename_component(rustc_lib_name ${rustc_lib} NAME )
+		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
+		add_custom_command(TARGET ${target}_patchelf POST_BUILD
+			COMMAND ${Patchelf_EXECUTABLE} --set-rpath [=["\$$ORIGIN"]=] ${PROJECT_OUTPUT_DIR}/${rustc_lib_name}
+		)
+	endforeach()
+
+	set(TARGET_DEPENDENCY ${target}_patchelf)
+endif()
 
 add_custom_target(${target} ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	COMMAND ${Rust_CARGO_EXECUTABLE} build ${TARGET_BUILD_TYPE}
 	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${TARGET_BUILD_PATH} ${TARGET_OUTPUT}
-	DEPENDS ${target}_runtime ${target}_patchelf
+	DEPENDS ${target}_runtime ${TARGET_DEPENDENCY}
 )
 
 set_property(TARGET ${target}
