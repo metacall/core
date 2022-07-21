@@ -68,10 +68,12 @@ if(NOT WIN32 AND NOT APPLE)
 			message(STATUS "Patchelf not found")
 			return()
 		endif()
+
+		set(TARGET_INSTALL_DEPENDENCY Patchelf)
 	endif()
 
 	set(RUSTC_LIBS)
-	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime Patchelf)
+	add_custom_target(${target}_patchelf DEPENDS ${target}_runtime ${TARGET_INSTALL_DEPENDENCY})
 	foreach(rustc_lib ${Rust_RUSTC_LIBRARIES})
 		get_filename_component(rustc_lib_name ${rustc_lib} NAME )
 		list(APPEND RUSTC_LIBS ${PROJECT_OUTPUT_DIR}/${rustc_lib_name})
@@ -81,6 +83,9 @@ if(NOT WIN32 AND NOT APPLE)
 	endforeach()
 
 	set(TARGET_DEPENDENCY ${target}_patchelf)
+else()
+	# TODO: Implement patchelf equivalent (if needed) for other platforms
+	set(RUSTC_LIBS ${Rust_RUSTC_LIBRARIES})
 endif()
 
 add_custom_target(${target} ALL
