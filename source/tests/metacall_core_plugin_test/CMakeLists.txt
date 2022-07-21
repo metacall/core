@@ -95,6 +95,8 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/core_plugin/metacall.json"
 )
 
 #
@@ -105,12 +107,6 @@ target_compile_options(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_OPTIONS}
 )
-
-#
-#Define Macros
-#
-
-add_compile_definitions(CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/core_plugin/metacall-core_plugin.json")
 
 #
 # Linker options

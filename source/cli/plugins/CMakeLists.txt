@@ -6,8 +6,8 @@ endif()
 # Extension sub-projects
 add_subdirectory(core_plugin)
 
-#Install plugin directory
+# Install plugin directory
 install(DIRECTORY ${PROJECT_OUTPUT_DIR}/plugins
-	DESTINATION ${INSTALL_LIB}
+	DESTINATION ${INSTALL_LIB}/plugins
 	PATTERN "test[-_]*" EXCLUDE
 )

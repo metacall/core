@@ -196,17 +196,17 @@ add_dependencies(${target}
 # Deployment
 #
 
-#Copy metacall-*.json
+# Copy metacall-*.json
 add_custom_target(${target}-create-plugin-dir ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/plugins/core_plugin
-	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall-core_plugin.json ${PROJECT_OUTPUT_DIR}/plugins/core_plugin
+	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PROJECT_OUTPUT_DIR}/plugins/core_plugin
 )
 
 # Library
 install(TARGETS ${target}
 	EXPORT  "${target}-export"				COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}	COMPONENT runtime
+	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
 	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}	COMPONENT dev
+	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
 )
