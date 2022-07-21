@@ -6,3 +6,4 @@ endif()
 
 # CLI applications
 add_subdirectory(metacallcli)
+add_subdirectory(plugins)
