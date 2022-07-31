@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_EXTENSIONS_LOAD)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS)
 	return()
 endif()
 
@@ -199,8 +199,8 @@ add_dependencies(${target}
 # Copy metacall-*.json
 add_custom_target(${target}-create-plugin-dir ALL
 	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/plugins/core_plugin
-	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PROJECT_OUTPUT_DIR}/plugins/core_plugin
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/plugins/cli/core_plugin
+	COMMAND ${CMAKE_COMMAND} -E copy ${source_path}/metacall.json ${PROJECT_OUTPUT_DIR}/plugins/cli/core_plugin
 )
 
 # Library

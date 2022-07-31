@@ -1,0 +1,7 @@
+{
+	"language_id": "py",
+	"path": ".",
+	"scripts": [
+		"pluginD.py"
+	]
+}

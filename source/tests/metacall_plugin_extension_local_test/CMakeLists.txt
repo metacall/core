@@ -149,3 +149,10 @@ test_environment_variables(${target}
 	${TESTS_ENVIRONMENT_VARIABLES}
 	"METACALL_PLUGIN_PATH=${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+# Copy test files
+add_custom_target(${target}-copy-plugins ALL
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+	COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/plugins/
+	COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/plugins ${PROJECT_OUTPUT_DIR}/plugins
+)

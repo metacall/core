@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-core-plugin-test)
+set(target metacall-cli-core-plugin-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_core_plugin_test.cpp
+	${source_path}/metacall_cli_core_plugin_test.cpp
 )
 
 # Group source files
@@ -96,7 +96,7 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/core_plugin/metacall.json"
+	CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/cli/core_plugin/metacall.json"
 )
 
 #

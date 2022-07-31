@@ -252,6 +252,16 @@ int core_plugin(void *loader, void *handle, void *context)
 	}
 
 	{
+		/* Register eval as metacallcli command */
+		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_STRING };
+		if (metacall_register_loaderv(loader, context, "metacallcli-eval", eval, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
+		{
+			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: metacallcli-eval");
+			ret = 1;
+		}
+	}
+
+	{
 		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_ARRAY };
 		if (metacall_register_loaderv(loader, context, "load", load, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{

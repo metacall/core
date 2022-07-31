@@ -8,6 +8,6 @@ add_subdirectory(core_plugin)
 
 # Install plugin directory
 install(DIRECTORY ${PROJECT_OUTPUT_DIR}/plugins
-	DESTINATION ${INSTALL_LIB}/plugins
+	DESTINATION ${INSTALL_LIB}/
 	PATTERN "test[-_]*" EXCLUDE
 )

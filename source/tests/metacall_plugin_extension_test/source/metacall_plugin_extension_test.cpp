@@ -41,6 +41,18 @@ TEST_F(metacall_plugin_extension_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
 
+	{
+		void *ret = metacall("plugin_extension_load", "test_plugin_ext_load");
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret));
+
+		EXPECT_EQ((int)0, (int)metacall_value_to_int(ret));
+
+		metacall_value_destroy(ret);
+	}
+
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)
 	{
@@ -66,6 +78,7 @@ TEST_F(metacall_plugin_extension_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 	}
+
 #endif /* OPTION_BUILD_LOADERS_PY */
 
 /* NodeJS */
