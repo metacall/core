@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_EXTENSIONS OR NOT OPTION_BUILD_CLI)
 	return()
 endif()
 
@@ -130,6 +130,7 @@ add_test(NAME ${target}
 add_dependencies(${target}
 	ext_loader
 	plugin_extension
+	core_plugin # Requires core_plugin (from CLI) for reproducing it
 )
 
 #
