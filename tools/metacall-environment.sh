@@ -364,6 +364,7 @@ sub_cobol(){
 		$SUDO_CMD head -n -2 /etc/apt/sources.list
 	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
 		# TODO: Add ubuntu commands
+		echo "TODO"
 	fi
 }
 
