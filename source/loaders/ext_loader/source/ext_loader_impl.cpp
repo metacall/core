@@ -124,19 +124,35 @@ int ext_loader_impl_execution_path(loader_impl impl, const loader_path path)
 
 dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path)
 {
-	for (auto exec_path : ext_impl->paths)
-	{
-		std::string lib_name(path);
+	std::string lib_path_str(path);
 
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-		lib_name.append("d");
+	lib_path_str.append("d");
 #endif
 
-		dynlink lib = dynlink_load(exec_path.string().c_str(), lib_name.c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+	std::filesystem::path lib_path(lib_path_str);
+	std::string lib_name = std::filesystem::path(lib_path).filename().string();
+
+	if (lib_path.is_absolute())
+	{
+		std::filesystem::path lib_dir = lib_path.parent_path();
+		dynlink lib = dynlink_load(lib_dir.string().c_str(), lib_name.c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
 		if (lib != NULL)
 		{
 			return lib;
+		}
+	}
+	else
+	{
+		for (auto exec_path : ext_impl->paths)
+		{
+			dynlink lib = dynlink_load(exec_path.string().c_str(), lib_name.c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+
+			if (lib != NULL)
+			{
+				return lib;
+			}
 		}
 	}
 
@@ -165,8 +181,9 @@ int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_
 	}
 
 	dynlink_symbol_addr symbol_address = NULL;
+	std::string symbol_name = std::filesystem::path(path).stem().string();
 
-	if (dynlink_symbol(lib, path, &symbol_address) != 0)
+	if (dynlink_symbol(lib, symbol_name.c_str(), &symbol_address) != 0)
 	{
 		ext_loader_impl_destroy_handle(ext_handle);
 

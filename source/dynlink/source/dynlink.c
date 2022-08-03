@@ -25,6 +25,8 @@
 #include <dynlink/dynlink.h>
 #include <dynlink/dynlink_impl.h>
 
+#include <portability/portability_path.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -53,17 +55,23 @@ dynlink dynlink_load(dynlink_path path, dynlink_name name, dynlink_flags flags)
 
 		if (handle != NULL)
 		{
-			strncpy(handle->name, name, DYNLINK_NAME_IMPL_SIZE - 1);
+			dynlink_name_impl name_impl;
 
-			dynlink_impl_get_name(dynlink_get_name(handle), handle->name_impl, DYNLINK_NAME_IMPL_SIZE);
+			strncpy(handle->name, name, PORTABILITY_PATH_SIZE - 1);
+
+			dynlink_impl_get_name(dynlink_get_name(handle), name_impl, PORTABILITY_PATH_SIZE);
 
 			if (path != NULL)
 			{
-				size_t path_length = strlen(path);
+				dynlink_name_impl join_path;
 
-				memmove(handle->name_impl + path_length, handle->name_impl, strnlen(handle->name_impl, DYNLINK_NAME_IMPL_SIZE) + 1);
+				size_t join_path_size = portability_path_join(path, strnlen(path, PORTABILITY_PATH_SIZE) + 1, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1, join_path, PORTABILITY_PATH_SIZE);
 
-				memcpy(handle->name_impl, path, path_length);
+				(void)portability_path_canonical(join_path, join_path_size, handle->name_impl, PORTABILITY_PATH_SIZE);
+			}
+			else
+			{
+				strncpy(handle->name_impl, name_impl, strnlen(name_impl, PORTABILITY_PATH_SIZE) + 1);
 			}
 
 			handle->flags = flags;
@@ -136,7 +144,7 @@ int dynlink_library_path(dynlink_name name, dynlink_library_path_str path, size_
 {
 	dynlink_name_impl name_impl;
 
-	dynlink_impl_get_name(name, name_impl, DYNLINK_NAME_IMPL_SIZE);
+	dynlink_impl_get_name(name, name_impl, PORTABILITY_PATH_SIZE);
 
 	if (portability_library_path(name_impl, path, length) != 0)
 	{

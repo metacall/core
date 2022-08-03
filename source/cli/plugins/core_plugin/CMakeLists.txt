@@ -225,15 +225,3 @@ add_dependencies(${target}
 	${target}-create-plugin-dir
 	plugin_extension
 )
-
-#
-# Deployment
-#
-
-# Library
-install(TARGETS ${target}
-	EXPORT  "${target}-export"				COMPONENT dev
-	RUNTIME DESTINATION ${INSTALL_BIN}		COMPONENT runtime
-	LIBRARY DESTINATION ${INSTALL_SHARED}	COMPONENT runtime
-	ARCHIVE DESTINATION ${INSTALL_LIB}		COMPONENT dev
-)
