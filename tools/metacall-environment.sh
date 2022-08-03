@@ -57,6 +57,15 @@ INSTALL_CLANGFORMAT=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
+# Linux Distro detection
+if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
+	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+else
+	# TODO: Implement more distros or better detection
+	LINUX_DISTRO=unknown
+fi
+
 # Base packages
 sub_apt(){
 	echo "configure apt"
@@ -345,13 +354,17 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+	if [ "${LINUX_DISTRO}" == "debian" ]; then
+		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
 
-	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
+		$SUDO_CMD apt-get update
+		$SUDO_CMD apt-get $APT_CACHE_CMD -t unstable install -y --no-install-recommends gnucobol
 
-	# Remove unstable from sources.list
-	$SUDO_CMD head -n -2 /etc/apt/sources.list
+		# Remove unstable from sources.list
+		$SUDO_CMD head -n -2 /etc/apt/sources.list
+	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
+		# TODO: Add ubuntu commands
+	fi
 }
 
 # MetaCall
