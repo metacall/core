@@ -817,6 +817,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 		{
 			loader_handle handle;
 			loader_path path;
+			size_t init_order;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
 			{
@@ -829,6 +830,10 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 				return 1;
 			}
+
+			init_order = vector_size(impl->handle_impl_init_order);
+
+			vector_push_back_empty(impl->handle_impl_init_order);
 
 			handle = iface->load_from_file(impl, paths, size);
 
@@ -852,7 +857,7 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 							{
 								if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
 								{
-									vector_push_back_var(impl->handle_impl_init_order, handle_impl);
+									vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
 
 									return 0;
 								}
@@ -864,10 +869,38 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 						set_remove(impl->handle_impl_path_map, handle_impl->path);
 					}
 
+					{
+						size_t iterator;
+
+						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+						{
+							loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+							loader_impl_destroy_handle(iterator_handle_impl);
+						}
+
+						vector_pop_back(impl->handle_impl_init_order);
+					}
+
 					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", path);
 
 					loader_impl_destroy_handle(handle_impl);
 				}
+
+				iface->clear(impl, handle);
+			}
+			else
+			{
+				size_t iterator;
+
+				for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+				{
+					loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+					loader_impl_destroy_handle(iterator_handle_impl);
+				}
+
+				vector_pop_back(impl->handle_impl_init_order);
 			}
 		}
 	}
@@ -908,8 +941,8 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 		if (iface != NULL)
 		{
 			loader_name name;
-
 			loader_handle handle = NULL;
+			size_t init_order;
 
 			if (loader_impl_initialize(manager, p, impl) != 0)
 			{
@@ -929,6 +962,10 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 				return 1;
 			}
+
+			init_order = vector_size(impl->handle_impl_init_order);
+
+			vector_push_back_empty(impl->handle_impl_init_order);
 
 			handle = iface->load_from_memory(impl, name, buffer, size);
 
@@ -950,7 +987,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 							{
 								if (loader_impl_handle_register(manager, impl, name, handle_impl, handle_ptr) == 0)
 								{
-									vector_push_back_var(impl->handle_impl_init_order, handle_impl);
+									vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
 
 									return 0;
 								}
@@ -962,10 +999,38 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 						set_remove(impl->handle_impl_path_map, handle_impl->path);
 					}
 
+					{
+						size_t iterator;
+
+						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+						{
+							loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+							loader_impl_destroy_handle(iterator_handle_impl);
+						}
+
+						vector_pop_back(impl->handle_impl_init_order);
+					}
+
 					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", name);
 
 					loader_impl_destroy_handle(handle_impl);
 				}
+
+				iface->clear(impl, handle);
+			}
+			else
+			{
+				size_t iterator;
+
+				for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+				{
+					loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+					loader_impl_destroy_handle(iterator_handle_impl);
+				}
+
+				vector_pop_back(impl->handle_impl_init_order);
 			}
 		}
 	}
@@ -978,8 +1043,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 	if (impl != NULL)
 	{
 		loader_impl_interface iface = loader_iface(p);
-
 		loader_path subpath;
+		size_t init_order;
 
 		if (iface != NULL && loader_impl_handle_name(manager, path, subpath) > 1)
 		{
@@ -996,6 +1061,10 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 				return 1;
 			}
+
+			init_order = vector_size(impl->handle_impl_init_order);
+
+			vector_push_back_empty(impl->handle_impl_init_order);
 
 			handle = iface->load_from_package(impl, path);
 
@@ -1017,7 +1086,7 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 							{
 								if (loader_impl_handle_register(manager, impl, subpath, handle_impl, handle_ptr) == 0)
 								{
-									vector_push_back_var(impl->handle_impl_init_order, handle_impl);
+									vector_set_var(impl->handle_impl_init_order, init_order, handle_impl);
 
 									return 0;
 								}
@@ -1029,10 +1098,38 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 						set_remove(impl->handle_impl_path_map, handle_impl->path);
 					}
 
+					{
+						size_t iterator;
+
+						for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+						{
+							loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+							loader_impl_destroy_handle(iterator_handle_impl);
+						}
+
+						vector_pop_back(impl->handle_impl_init_order);
+					}
+
 					log_write("metacall", LOG_LEVEL_ERROR, "Error when loading handle: %s", subpath);
 
 					loader_impl_destroy_handle(handle_impl);
 				}
+
+				iface->clear(impl, handle);
+			}
+			else
+			{
+				size_t iterator;
+
+				for (iterator = init_order + 1; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+				{
+					loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+					loader_impl_destroy_handle(iterator_handle_impl);
+				}
+
+				vector_pop_back(impl->handle_impl_init_order);
 			}
 		}
 	}
