@@ -30,4 +30,4 @@ services:
     build:
       args:
         METACALL_BUILD_TYPE: debug
-        METACALL_BUILD_OPTIONS: root python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack sanitizer benchmarks # v8 coverage
+        METACALL_BUILD_OPTIONS: root python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack ${METACALL_BUILD_SANITIZER} benchmarks # v8 coverage
