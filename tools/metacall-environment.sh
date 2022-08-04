@@ -363,8 +363,7 @@ sub_cobol(){
 		# Remove unstable from sources.list
 		$SUDO_CMD head -n -2 /etc/apt/sources.list
 	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
-		# TODO: Add ubuntu commands
-		echo "TODO"
+		$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends open-cobol
 	fi
 }
 
