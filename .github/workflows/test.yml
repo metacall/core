@@ -1,0 +1,45 @@
+name: Test
+
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+
+  test:
+  
+    name: Test out the core
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up the environment
+        run: sudo ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
+        env:
+          METACALL_PATH:               /usr/local/metacall
+          METACALL_BUILD_TYPE:         debug # relwithdebinfo
+          DEBIAN_FRONTEND:             noninteractive
+          LTTNG_UST_REGISTER_TIMEOUT:  0
+          NUGET_XMLDOC_MODE:           skip
+          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+          METACALL_INSTALL_OPTIONS: root base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rapidjson funchook swig pack # clangformat v8rep51 coverage
+      - name: Run the configuration script
+        run: |
+          export "METACALL_PATH=$(pwd)"
+          export "LOADER_LIBRARY_PATH=$METACALL_PATH/build"
+          export "LOADER_SCRIPT_PATH=$METACALL_PATH/build/scripts"
+          export "CONFIGURATION_PATH=$METACALL_PATH/build/configurations/global.json"
+          export "SERIAL_LIBRARY_PATH=$METACALL_PATH/build"
+          export "DETOUR_LIBRARY_PATH=$METACALL_PATH/build"
+          export "PORT_LIBRARY_PATH=$METACALL_PATH/build"
+          mkdir -p build
+          cd "$METACALL_PATH/build"
+          sudo "$METACALL_PATH/tools/metacall-configure.sh" $METACALL_BUILD_OPTIONS
+        env:
+          METACALL_BUILD_TYPE:         debug
+          METACALL_BUILD_OPTIONS:      root python ruby netcore5 nodejs typescript file rpc wasm java c cobol examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
+          DEBIAN_FRONTEND:             noninteractive
+          NODE_PATH:                   /usr/lib/node_modules
+          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
