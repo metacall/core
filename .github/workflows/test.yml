@@ -16,9 +16,7 @@ jobs:
 
       # Revert the NodeJS version in order to use the system one instead (needed due to libnode)
       - name: Delete latest version of NodeJS
-        run: |
-          n rm current
-          n uninstall
+        run: yes | n uninstall
 
       - name: Set up the environment
         run: sudo ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
