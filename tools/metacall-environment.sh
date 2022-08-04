@@ -293,12 +293,11 @@ sub_nodejs(){
 	$SUDO_CMD apt-get update
 
 	# Install python to build node (gyp)
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs curl
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
 
-	# Install and update npm and node-gyp
-	curl -L https://npmjs.org/install.sh | $SUDO_CMD sh
-	npm i npm@latest -g
-	npm i node-gyp@latest -g
+	# Update npm and node-gyp
+	$SUDO_CMD npm i npm@latest -g
+	$SUDO_CMD npm i node-gyp@latest -g
 }
 
 # TypeScript
@@ -306,8 +305,8 @@ sub_typescript(){
 	echo "configure typescript"
 
 	# Install React dependencies in order to run the tests
-	npm i react@latest -g
-	npm i react-dom@latest -g
+	$SUDO_CMD npm i react@latest -g
+	$SUDO_CMD npm i react-dom@latest -g
 }
 
 # File
