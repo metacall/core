@@ -79,15 +79,16 @@ typedef struct loader_impl_handle_register_cb_iterator_type *loader_impl_handle_
 
 struct loader_impl_type
 {
-	plugin p;				  /* Plugin instance to which loader belongs to */
-	int init;				  /* Flag for checking if the loader is initialized */
-	set handle_impl_path_map; /* Indexes handles by path */
-	set handle_impl_map;	  /* Indexes handles from loaders to handle impl (loader_handle -> loader_handle_impl) */
-	loader_impl_data data;	  /* Derived metadata provided by the loader, usually contains the data of the VM, Interpreter or JIT */
-	context ctx;			  /* Contains the objects, classes and functions loaded in the global scope of each loader */
-	set type_info_map;		  /* Stores a set indexed by type name of all of the types existing in the loader (global scope (TODO: may need refactor per handle)) */
-	void *options;			  /* Additional initialization options passed in the initialize phase */
-	set exec_path_map;		  /* Set of execution paths passed by the end user */
+	plugin p;					   /* Plugin instance to which loader belongs to */
+	int init;					   /* Flag for checking if the loader is initialized */
+	set handle_impl_path_map;	   /* Indexes handles by path */
+	set handle_impl_map;		   /* Indexes handles from loaders to handle impl (loader_handle -> loader_handle_impl) */
+	vector handle_impl_init_order; /* Stores the order of handle initialization, so it can be destroyed in LIFO manner, for avoiding memory bugs when destroying them */
+	loader_impl_data data;		   /* Derived metadata provided by the loader, usually contains the data of the VM, Interpreter or JIT */
+	context ctx;				   /* Contains the objects, classes and functions loaded in the global scope of each loader */
+	set type_info_map;			   /* Stores a set indexed by type name of all of the types existing in the loader (global scope (TODO: may need refactor per handle)) */
+	void *options;				   /* Additional initialization options passed in the initialize phase */
+	set exec_path_map;			   /* Set of execution paths passed by the end user */
 };
 
 struct loader_handle_impl_type
@@ -148,8 +149,6 @@ static void loader_impl_destroy_handle(loader_handle_impl handle_impl);
 
 static int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
 
-static int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args);
-
 /* -- Private Member Data -- */
 
 static const char loader_handle_impl_magic_alloc[] = "loader_handle_impl_magic_alloc";
@@ -182,6 +181,13 @@ loader_impl loader_impl_allocate(const loader_tag tag)
 		goto alloc_handle_impl_map_error;
 	}
 
+	impl->handle_impl_init_order = vector_create_type(loader_handle_impl);
+
+	if (impl->handle_impl_init_order == NULL)
+	{
+		goto alloc_handle_impl_init_order_error;
+	}
+
 	impl->type_info_map = set_create(&hash_callback_str, &comparable_callback_str);
 
 	if (impl->type_info_map == NULL)
@@ -210,6 +216,8 @@ alloc_exec_path_map_error:
 alloc_ctx_error:
 	set_destroy(impl->type_info_map);
 alloc_type_info_map_error:
+	vector_destroy(impl->handle_impl_init_order);
+alloc_handle_impl_init_order_error:
 	set_destroy(impl->handle_impl_map);
 alloc_handle_impl_map_error:
 	set_destroy(impl->handle_impl_path_map);
@@ -844,6 +852,8 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 							{
 								if (loader_impl_handle_register(manager, impl, path, handle_impl, handle_ptr) == 0)
 								{
+									vector_push_back_var(impl->handle_impl_init_order, handle_impl);
+
 									return 0;
 								}
 							}
@@ -940,6 +950,8 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 							{
 								if (loader_impl_handle_register(manager, impl, name, handle_impl, handle_ptr) == 0)
 								{
+									vector_push_back_var(impl->handle_impl_init_order, handle_impl);
+
 									return 0;
 								}
 							}
@@ -1005,6 +1017,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 							{
 								if (loader_impl_handle_register(manager, impl, subpath, handle_impl, handle_ptr) == 0)
 								{
+									vector_push_back_var(impl->handle_impl_init_order, handle_impl);
+
 									return 0;
 								}
 							}
@@ -1236,9 +1250,25 @@ int loader_impl_clear(void *handle)
 
 		loader_impl impl = handle_impl->impl;
 
+		size_t iterator;
+
+		/* Remove the handle from the path indexing set */
 		int result = !(set_remove(impl->handle_impl_path_map, (set_key)handle_impl->path) == handle_impl);
 
+		/* Remove the handle from the pointer indexing set */
 		result |= !(set_remove(impl->handle_impl_map, (set_key)handle_impl->module) == handle_impl);
+
+		/* Search for the handle in the initialization order list and remove it */
+		for (iterator = 0; iterator < vector_size(impl->handle_impl_init_order); ++iterator)
+		{
+			loader_handle_impl iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+			if (handle_impl == iterator_handle_impl)
+			{
+				vector_erase(impl->handle_impl_init_order, iterator);
+				break;
+			}
+		}
 
 		loader_impl_destroy_handle(handle_impl);
 
@@ -1259,24 +1289,6 @@ int loader_impl_destroy_type_map_cb_iterate(set s, set_key key, set_value val, s
 		type t = val;
 
 		type_destroy(t);
-
-		return 0;
-	}
-
-	return 1;
-}
-
-int loader_impl_destroy_handle_map_cb_iterate(set s, set_key key, set_value val, set_cb_iterate_args args)
-{
-	(void)s;
-	(void)key;
-	(void)args;
-
-	if (val != NULL)
-	{
-		loader_handle_impl handle_impl = val;
-
-		loader_impl_destroy_handle(handle_impl);
 
 		return 0;
 	}
@@ -1311,9 +1323,27 @@ void loader_impl_destroy_objects(loader_impl impl)
 	*/
 	if (impl != NULL)
 	{
-		/* Destroy all handles */
-		set_iterate(impl->handle_impl_path_map, &loader_impl_destroy_handle_map_cb_iterate, NULL);
+		/* Destroy all handles in inverse creation order */
+		size_t iterator = vector_size(impl->handle_impl_init_order);
 
+		if (iterator > 0)
+		{
+			loader_handle_impl iterator_handle_impl;
+
+			do
+			{
+				--iterator;
+
+				iterator_handle_impl = vector_at_type(impl->handle_impl_init_order, iterator, loader_handle_impl);
+
+				loader_impl_destroy_handle(iterator_handle_impl);
+
+			} while (iterator > 0);
+		}
+
+		vector_destroy(impl->handle_impl_init_order);
+
+		/* Destroy the path to handle implementation indexing */
 		set_destroy(impl->handle_impl_path_map);
 
 		/* Destroy the handle to handle implementation indexing */
