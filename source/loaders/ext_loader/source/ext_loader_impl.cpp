@@ -181,7 +181,7 @@ int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_
 	}
 
 	dynlink_symbol_addr symbol_address = NULL;
-	std::string symbol_name = std::filesystem::path(path).stem().string();
+	std::string symbol_name = std::filesystem::path(path).filename().string();
 
 	if (dynlink_symbol(lib, symbol_name.c_str(), &symbol_address) != 0)
 	{
