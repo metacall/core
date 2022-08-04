@@ -886,8 +886,6 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 					loader_impl_destroy_handle(handle_impl);
 				}
-
-				iface->clear(impl, handle);
 			}
 			else
 			{
@@ -1016,8 +1014,6 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 					loader_impl_destroy_handle(handle_impl);
 				}
-
-				iface->clear(impl, handle);
 			}
 			else
 			{
@@ -1115,8 +1111,6 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 					loader_impl_destroy_handle(handle_impl);
 				}
-
-				iface->clear(impl, handle);
 			}
 			else
 			{
