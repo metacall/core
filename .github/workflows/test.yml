@@ -74,7 +74,7 @@ jobs:
       - name: Build the CLI
         run: |
           export "METACALL_PATH=$(pwd)"
-          cd build && sudo make pack
+          cd build && make pack
         env:
           METACALL_BUILD_TYPE:         debug # relwithdebinfo
           LOADER_LIBRARY_PATH:         /usr/local/lib 
