@@ -174,7 +174,39 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 
-	sub_apt_install_hold libffi libclang
+	LLVM_VERSION_STRING=11
+	UBUNTU_CODENAME=""
+	CODENAME_FROM_ARGUMENTS=""
+	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+	source /etc/os-release
+	DISTRO=${DISTRO,,}
+	case ${DISTRO} in
+		debian)
+			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
+				CODENAME=unstable
+				LINKNAME=
+			else
+				# "stable" Debian release
+				CODENAME=${VERSION_CODENAME}
+				LINKNAME=-${CODENAME}
+			fi
+			;;
+		*)
+			# ubuntu and its derivatives
+			if [[ -n "${UBUNTU_CODENAME}" ]]; then
+				CODENAME=${UBUNTU_CODENAME}
+				if [[ -n "${CODENAME}" ]]; then
+					LINKNAME=-${CODENAME}
+				fi
+			fi
+			;;
+	esac
+
+	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+	$SUDO_CMD apt-get update
+	sub_apt_install_hold libffi libclang-${LLVM_VERSION_STRING}
 }
 
 # Cobol
