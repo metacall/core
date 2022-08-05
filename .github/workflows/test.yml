@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
   pull_request:
 
+env:
+  METACALL_BASE_IMAGE: debian:bullseye-slim
+
 jobs:
   linux-test:
     name: Linux (Ubuntu) GCC Test
@@ -51,10 +54,11 @@ jobs:
       - name: Set up the runtime
         run: |
           export "METACALL_PATH=$(pwd)"
-          mkdir -p /usr/local/scripts
-          sudo ./tools/metacall-configure.sh $METACALL_RUNTIME_OPTIONS
+          sudo mkdir -p /usr/local/scripts
+          sudo ./tools/metacall-runtime.sh $METACALL_RUNTIME_OPTIONS
         env:
           METACALL_RUNTIME_OPTIONS:     root base python ruby nodejs typescript file rpc ports clean # v8
+          METACALL_BUILD_TYPE:          debug # relwithdebinfo
           LOADER_LIBRARY_PATH:          /usr/local/lib
           LOADER_SCRIPT_PATH:           /usr/local/scripts
           CONFIGURATION_PATH:           /usr/local/share/metacall/configurations/global.json
@@ -66,3 +70,22 @@ jobs:
           LTTNG_UST_REGISTER_TIMEOUT:   0
           NUGET_XMLDOC_MODE:            skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+      - name: Build the CLI
+        run: |
+          export "METACALL_PATH=$(pwd)"
+          cd build && sudo make pack
+        env:
+          METACALL_BUILD_TYPE:         debug # relwithdebinfo
+          LOADER_LIBRARY_PATH:         /usr/local/lib 
+          LOADER_SCRIPT_PATH:          /usr/local/scripts 
+          CONFIGURATION_PATH:          /usr/local/share/metacall/configurations/global.json 
+          SERIAL_LIBRARY_PATH:         /usr/local/lib 
+          DETOUR_LIBRARY_PATH:         /usr/local/lib 
+          PORT_LIBRARY_PATH:           /usr/local/lib 
+          DEBIAN_FRONTEND:             noninteractive 
+          NODE_PATH:                   /usr/local/lib/node_modules 
+          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+          LTTNG_UST_REGISTER_TIMEOUT:  0
+          NUGET_XMLDOC_MODE:           skip
+          ARTIFACTS_PATH:              ./build-artifacts
