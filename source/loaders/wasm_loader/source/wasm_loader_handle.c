@@ -77,7 +77,7 @@ int wasm_loader_handle_add_module(loader_impl_wasm_handle handle, const loader_n
 		goto error_initialize_imports;
 	}
 
-	strncpy(module.name, name, sizeof(module.name));
+	strncpy(module.name, name, LOADER_NAME_SIZE - 1);
 
 	// There is no way to check whether `wasm_module_exports` or
 	// `wasm_instance_new` fail, so just hope for the best.

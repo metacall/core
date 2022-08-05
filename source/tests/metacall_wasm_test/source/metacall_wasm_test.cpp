@@ -120,7 +120,7 @@ TEST_F(metacall_wasm_test, DiscoverFunctions)
 	ASSERT_EQ(NULL, metacall_handle_function(handle, "does_not_exist"));
 
 	TestFunction(handle, "none_ret_none", {}, METACALL_INVALID);
-	TestFunction(handle, "i32_ret_none", { METACALL_INT }, METACALL_INVALID);
+	TestFunction(handle, "i64_ret_none", { METACALL_LONG }, METACALL_INVALID);
 	TestFunction(handle, "i32_f32_i64_f64_ret_none", { METACALL_INT, METACALL_FLOAT, METACALL_LONG, METACALL_DOUBLE }, METACALL_INVALID);
 	TestFunction(handle, "none_ret_i32", {}, METACALL_INT);
 
@@ -137,10 +137,10 @@ TEST_F(metacall_wasm_test, CallFunctions)
 	void *ret = metacall("none_ret_none");
 	ASSERT_EQ(NULL, ret);
 
-	ret = metacall("i32_ret_none", 0);
+	ret = metacall("i64_ret_none", 0L);
 	ASSERT_EQ(NULL, ret);
 
-	ret = metacall("i32_f32_i64_f64_ret_none", 0, 0, 0, 0);
+	ret = metacall("i32_f32_i64_f64_ret_none", 0, 0.0f, 0L, 0.0);
 	ASSERT_EQ(NULL, ret);
 
 	ret = metacall("none_ret_i32");

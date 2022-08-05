@@ -13,14 +13,14 @@ def test():
 
     # We can't import both functions.wasm and functions.wat here because their
     # definitions would collide.
-    from functions.wasm import none_ret_none, i32_ret_none, i32_f32_i64_f64_ret_none, none_ret_i32, none_ret_i32_f32_i64_f64, i32_f32_i64_f64_ret_i32_f32_i64_f64, trap
+    from functions.wasm import none_ret_none, i64_ret_none, i64_f64_i64_f64_ret_none, none_ret_i64, none_ret_i64_f64_i64_f64, i64_f64_i64_f64_ret_i64_f64_i64_f64, trap
 
     assert none_ret_none() is None
-    assert i32_ret_none(0) is None
-    assert i32_f32_i64_f64_ret_none(0) is None
-    assert none_ret_i32() == 1
-    assert none_ret_i32_f32_i64_f64() == [1, 2, 3, 4]
-    assert i32_f32_i64_f64_ret_i32_f32_i64_f64(0, 0, 0, 0) == [1, 2, 3, 4]
+    assert i64_ret_none(0) is None
+    assert i64_f64_i64_f64_ret_none(0) is None
+    assert none_ret_i64() == 1
+    assert none_ret_i64_f64_i64_f64() == [1, 2, 3, 4]
+    assert i64_f64_i64_f64_ret_i64_f64_i64_f64(0, 0.0, 0, 0.0) == [1, 2, 3, 4]
     assert trap() is None
 
     # We test an invalid load file attempt first to avoid polluting the global

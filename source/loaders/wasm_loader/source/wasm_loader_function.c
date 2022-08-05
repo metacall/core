@@ -161,7 +161,7 @@ static function_return function_wasm_interface_invoke(function func, function_im
 
 	if (args_size != signature_count(sig))
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid number of arguments (%d expected, %d given)", args_size, signature_count(sig));
+		log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid number of arguments (%d expected, %d given) in call to function %s", args_size, signature_count(sig), function_name(func));
 		return NULL;
 	}
 
@@ -183,13 +183,13 @@ static function_return function_wasm_interface_invoke(function func, function_im
 
 			if (param_type_id != arg_type_id)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid type for argument %d (expected %d, was %d)", idx, param_type_id, arg_type_id);
+				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Invalid type for argument %d (expected %s, was %s) in call to function %s", idx, type_id_name(param_type_id), type_id_name(arg_type_id), function_name(func));
 				return NULL;
 			}
 
 			if (reflect_to_wasm_type(args[idx], &wasm_args[idx]) != 0)
 			{
-				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Unsupported type for argument %d", idx);
+				log_write("metacall", LOG_LEVEL_ERROR, "WebAssembly loader: Unsupported type for argument %d in call to function %s", idx, function_name(func));
 				return NULL;
 			}
 		}
