@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_PY OR  NOT OPTION_BUILD_SCRIPTS_EXT OR NOT OPTION_BUILD_SCRIPTS_NODE  OR NOT OPTION_BUILD_SCRIPTS_PY)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_PY OR  NOT OPTION_BUILD_SCRIPTS_EXT OR NOT OPTION_BUILD_SCRIPTS_NODE OR NOT OPTION_BUILD_SCRIPTS_PY)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-core-plugin-test)
+set(target metacall-cli-core-plugin-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_core_plugin_test.cpp
+	${source_path}/metacall_cli_core_plugin_test.cpp
 )
 
 # Group source files
@@ -96,7 +96,7 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
-	CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/core_plugin/metacall.json"
+	CLI_CORE_PLUGIN_PATH="${PROJECT_OUTPUT_DIR}/plugins/cli/cli_core_plugin/metacall.json"
 )
 
 #
@@ -133,7 +133,7 @@ add_dependencies(${target}
 	ext_loader
 	node_loader
 	py_loader
-	core_plugin
+	cli_core_plugin
 )
 
 #

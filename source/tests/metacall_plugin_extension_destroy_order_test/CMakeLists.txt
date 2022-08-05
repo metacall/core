@@ -130,7 +130,7 @@ add_test(NAME ${target}
 add_dependencies(${target}
 	ext_loader
 	plugin_extension
-	core_plugin # Requires core_plugin (from CLI) for reproducing it
+	cli_core_plugin # Requires cli_core_plugin (from CLI) for reproducing it
 )
 
 #

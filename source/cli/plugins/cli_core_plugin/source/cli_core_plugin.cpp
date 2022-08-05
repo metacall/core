@@ -1,4 +1,4 @@
-#include <core_plugin/core_plugin.h>
+#include <cli_core_plugin/cli_core_plugin.h>
 
 #include <log/log.h>
 #include <metacall/metacall.h>
@@ -70,10 +70,12 @@ void *await(size_t argc, void *args[], void *data)
 	func_args += "]";
 
 	/* Check if function is loaded */
-	void *func = NULL;
-	if ((func = metacall_function(const_cast<char *>(func_name.c_str()))) == NULL)
+	const char *func_name_str = const_cast<const char *>(func_name.c_str());
+	void *func = metacall_function(func_name_str);
+	if (func == NULL)
 	{
-		return NULL;
+		log_write("metacall", LOG_LEVEL_ERROR, "Function %s does not exist", func_name_str);
+		return metacall_value_create_int(1);
 	}
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
@@ -140,10 +142,12 @@ void *call(size_t argc, void *args[], void *data)
 	func_args += "]";
 
 	/* Check if function is loaded */
-	void *func = NULL;
-	if ((func = metacall_function(const_cast<char *>(func_name.c_str()))) == NULL)
+	const char *func_name_str = const_cast<const char *>(func_name.c_str());
+	void *func = metacall_function(func_name_str);
+	if (func == NULL)
 	{
-		return NULL; //Todo: test this
+		log_write("metacall", LOG_LEVEL_ERROR, "Function %s does not exist", func_name_str);
+		return metacall_value_create_int(1);
 	}
 
 	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
@@ -172,7 +176,7 @@ void *clear(size_t argc, void *args[], void *data)
 
 	if (handle == NULL)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "handle %s not found in loader (%s)", script, tag);
+		log_write("metacall", LOG_LEVEL_ERROR, "Handle %s not found in loader (%s)", script, tag);
 		return metacall_value_create_int(1);
 	}
 
@@ -197,12 +201,16 @@ void *inspect(size_t argc, void *args[], void *data)
 
 	char *inspect_str = metacall_inspect(&size, allocator);
 
+	void *inspect_value_str = metacall_value_create_string(inspect_str, size > 0 ? size - 1 : 0);
+
+	metacall_allocator_free(allocator, inspect_str);
+
 	metacall_allocator_destroy(allocator);
 
-	return metacall_value_create_string(inspect_str, size);
+	return inspect_value_str;
 }
 
-int core_plugin(void *loader, void *handle, void *context)
+int cli_core_plugin(void *loader, void *handle, void *context)
 {
 	(void)handle;
 	int ret = 0;
@@ -210,7 +218,7 @@ int core_plugin(void *loader, void *handle, void *context)
 		enum metacall_value_id *arg_types = NULL;
 		if (metacall_register_loaderv(loader, context, "inspect", inspect, METACALL_STRING, 0, arg_types) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: inspect");
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: inspect");
 			ret = 1;
 		}
 	}
@@ -219,7 +227,7 @@ int core_plugin(void *loader, void *handle, void *context)
 		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_STRING };
 		if (metacall_register_loaderv(loader, context, "clear", clear, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: clear");
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: clear");
 			ret = 1;
 		}
 	}
@@ -228,7 +236,7 @@ int core_plugin(void *loader, void *handle, void *context)
 		enum metacall_value_id arg_types[] = { METACALL_STRING };
 		if (metacall_register_loaderv(loader, context, "call", call, METACALL_PTR, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: call");
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: call");
 			ret = 1;
 		}
 	}
@@ -237,7 +245,7 @@ int core_plugin(void *loader, void *handle, void *context)
 		enum metacall_value_id arg_types[] = { METACALL_STRING };
 		if (metacall_register_loaderv(loader, context, "await", await, METACALL_PTR, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: await");
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: await");
 			ret = 1;
 		}
 	}
@@ -246,7 +254,7 @@ int core_plugin(void *loader, void *handle, void *context)
 		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_STRING };
 		if (metacall_register_loaderv(loader, context, "eval", eval, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: eval");
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: eval");
 			ret = 1;
 		}
 	}
@@ -255,7 +263,7 @@ int core_plugin(void *loader, void *handle, void *context)
 		enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_ARRAY };
 		if (metacall_register_loaderv(loader, context, "load", load, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types) != 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Failed to register function: load");
+			log_write("metacall", LOG_LEVEL_ERROR, "Failed to register function: load");
 			ret = 1;
 		}
 	}

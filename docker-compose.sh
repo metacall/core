@@ -76,6 +76,9 @@ sub_test() {
 	# Disable BuildKit as workaround due to log limits (TODO: https://github.com/docker/buildx/issues/484)
 	export DOCKER_BUILDKIT=0
 
+	# Disable build with sanitizer
+	export METACALL_BUILD_SANITIZER=
+
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 

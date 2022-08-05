@@ -128,6 +128,10 @@ add_subdirectory(detours)
 set(IDE_FOLDER "Extensions")
 add_subdirectory(extensions)
 
+# Extensions
+set(IDE_FOLDER "Plugins")
+add_subdirectory(plugins)
+
 # Ports
 set(IDE_FOLDER "Ports")
 add_subdirectory(ports)

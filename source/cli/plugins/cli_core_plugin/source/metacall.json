@@ -2,6 +2,6 @@
   "language_id": "ext",
   "path": ".",
   "scripts": [
-    "core_plugin"
+    "cli_core_plugin"
   ]
 }

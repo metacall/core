@@ -26,12 +26,12 @@
 
 #include <iostream>
 
-class metacall_core_plugin_test : public testing::Test
+class metacall_cli_core_plugin_test : public testing::Test
 {
 protected:
 };
 
-TEST_F(metacall_core_plugin_test, DefaultConstructor)
+TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 {
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
@@ -40,7 +40,7 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
 
 	void *handle = NULL;
-	EXPECT_EQ((int)0, (int)metacall_load_from_configuration(CORE_PLUGIN_PATH, &handle, allocator));
+	EXPECT_EQ((int)0, (int)metacall_load_from_configuration(CLI_CORE_PLUGIN_PATH, &handle, allocator));
 
 	void *ret = NULL;
 	{
@@ -56,6 +56,10 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 
 	{
@@ -70,6 +74,10 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 
 	{
@@ -84,6 +92,10 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 
 	{
@@ -94,6 +106,8 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_long(ret), (long)21);
+
+		metacall_value_destroy(ret);
 	}
 
 	{
@@ -103,6 +117,8 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 		ret = metacallhv_s(handle, "call", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
+
+		metacall_value_destroy(ret);
 	}
 
 	{
@@ -113,6 +129,8 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_double(ret), (double)4);
+
+		metacall_value_destroy(ret);
 	}
 
 	{
@@ -123,6 +141,8 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		std::cout << metacall_value_to_string(ret) << '\n';
+
+		metacall_value_destroy(ret);
 	}
 
 	{
@@ -137,6 +157,10 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
+
+		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
 	}
 
 	{
@@ -144,9 +168,9 @@ TEST_F(metacall_core_plugin_test, DefaultConstructor)
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		std::cout << metacall_value_to_string(ret) << '\n';
-	}
 
-	metacall_value_destroy(ret);
+		metacall_value_destroy(ret);
+	}
 
 	/* Print inspect information */
 	{
