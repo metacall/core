@@ -345,8 +345,39 @@ sub_java(){
 sub_c(){
 	echo "configure c"
 
+	LLVM_VERSION_STRING=11
+	UBUNTU_CODENAME=""
+	CODENAME_FROM_ARGUMENTS=""
+	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+	source /etc/os-release
+	DISTRO=${DISTRO,,}
+	case ${DISTRO} in
+		debian)
+			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
+				CODENAME=unstable
+				LINKNAME=
+			else
+				# "stable" Debian release
+				CODENAME=${VERSION_CODENAME}
+				LINKNAME=-${CODENAME}
+			fi
+			;;
+		*)
+			# ubuntu and its derivatives
+			if [[ -n "${UBUNTU_CODENAME}" ]]; then
+				CODENAME=${UBUNTU_CODENAME}
+				if [[ -n "${CODENAME}" ]]; then
+					LINKNAME=-${CODENAME}
+				fi
+			fi
+			;;
+	esac
+
+	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends libffi-dev libclang-dev
+	$SUDO_CMD apt-get install -y --no-install-recommends libffi-dev libclang-${LLVM_VERSION_STRING}-dev
 }
 
 # Cobol
@@ -413,13 +444,39 @@ sub_clangformat(){
 	cd $ROOT_DIR
 
 	LLVM_VERSION_STRING=12
+	UBUNTU_CODENAME=""
+	CODENAME_FROM_ARGUMENTS=""
+	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
+	source /etc/os-release
+	DISTRO=${DISTRO,,}
+	case ${DISTRO} in
+		debian)
+			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
+				CODENAME=unstable
+				LINKNAME=
+			else
+				# "stable" Debian release
+				CODENAME=${VERSION_CODENAME}
+				LINKNAME=-${CODENAME}
+			fi
+			;;
+		*)
+			# ubuntu and its derivatives
+			if [[ -n "${UBUNTU_CODENAME}" ]]; then
+				CODENAME=${UBUNTU_CODENAME}
+				if [[ -n "${CODENAME}" ]]; then
+					LINKNAME=-${CODENAME}
+				fi
+			fi
+			;;
+	esac
 
-	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add -
-	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
-	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION_STRING main\" >> /etc/apt/sources.list"
+	wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | $SUDO_CMD apt-key add
+	$SUDO_CMD sh -c "echo \"deb http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
+	$SUDO_CMD sh -c "echo \"deb-src http://apt.llvm.org/${CODENAME}/ llvm-toolchain${LINKNAME}-${LLVM_VERSION_STRING} main\" >> /etc/apt/sources.list"
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get install -y --no-install-recommends clang-format-$LLVM_VERSION_STRING
-	$SUDO_CMD ln -s /usr/bin/clang-format-$LLVM_VERSION_STRING /usr/bin/clang-format
+	$SUDO_CMD apt-get install -y --no-install-recommends clang-format-${LLVM_VERSION_STRING}
+	$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
 }
 
 # Install
