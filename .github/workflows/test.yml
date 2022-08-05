@@ -47,3 +47,22 @@ jobs:
           DEBIAN_FRONTEND:             noninteractive
           NODE_PATH:                   /usr/lib/node_modules
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
+      - name: Set up the runtime
+        run: |
+          export "METACALL_PATH=$(pwd)"
+          mkdir -p /usr/local/scripts
+          sudo ./tools/metacall-configure.sh $METACALL_RUNTIME_OPTIONS
+        env:
+          METACALL_RUNTIME_OPTIONS:     root base python ruby nodejs typescript file rpc ports clean # v8
+          LOADER_LIBRARY_PATH:          /usr/local/lib
+          LOADER_SCRIPT_PATH:           /usr/local/scripts
+          CONFIGURATION_PATH:           /usr/local/share/metacall/configurations/global.json
+          SERIAL_LIBRARY_PATH:          /usr/local/lib
+          DETOUR_LIBRARY_PATH:          /usr/local/lib
+          PORT_LIBRARY_PATH:            /usr/local/lib
+          DEBIAN_FRONTEND:              noninteractive
+          NODE_PATH:                    /usr/local/lib/node_modules
+          LTTNG_UST_REGISTER_TIMEOUT:   0
+          NUGET_XMLDOC_MODE:            skip
+          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
