@@ -192,14 +192,10 @@ target_compile_options(${target}
 # '__declspec' attributes are not enabled; use '-fdeclspec' or '-fms-extensions' to enable support for __declspec attributes
 
 include(Portability)
-message("${PROJECT_OS_FAMILY}")
 if("${PROJECT_OS_FAMILY}" STREQUAL "macos" )
-	message("PROJECT FAMILY IS MACOS")
 	if("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang*" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
-		message("${CMAKE_C_COMPILER_ID} inside if clause")
 		target_compile_options(${target} PRIVATE "-fdeclspec")
 	endif()
-	message("After if for Ruby compiler bug fix on MacOSX")
 endif()
 
 
