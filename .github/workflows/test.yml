@@ -19,7 +19,22 @@ jobs:
 
       # Revert the NodeJS version in order to use the system one instead (needed due to libnode)
       - name: Delete latest version of NodeJS
-        run: yes | sudo n uninstall
+        run: |
+          yes | sudo n uninstall
+        # Source: https://github.com/tj/n/issues/540#issuecomment-443844202
+          sudo rm -f "/usr/local/bin/node"
+          sudo rm -f "/usr/local/bin/npm"
+          sudo rm -f "/usr/local/bin/npx"
+          sudo rm -rf "/usr/local/include/node"
+          sudo rm -rf  "/usr/local/lib/dtrace/node.d"
+          sudo rm -rf "/usr/local/lib/node_modules/npm"
+          sudo rm -rf "/usr/local/share/doc/node"
+          sudo rm -rf "/usr/local/share/man/man1/node.1"
+          sudo rm -rf "/usr/local/share/systemtap/tapset/node.stp"
+        # Creating a symbolic link to bypass path reference bug
+          sudo ln -s /usr/bin/node /usr/local/bin/node
+          sudo ln -s /usr/bin/npm /usr/local/bin/npm
+          sudo ln -s /usr/bin/npx /usr/local/bin/npx
 
       - name: Set up the environment
         run: sudo ./tools/metacall-environment.sh $METACALL_INSTALL_OPTIONS
