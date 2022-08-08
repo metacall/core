@@ -193,7 +193,7 @@ target_compile_options(${target}
 
 include(Portability)
 if("${PROJECT_OS_FAMILY}" STREQUAL "macos" )
-	if("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
+	if("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang*" OR "${CMAKE_C_COMPILER_ID}" STREQUAL "Clang")
 		target_compile_options(${target} PRIVATE "-fdeclspec")
 	endif()
 endif()
