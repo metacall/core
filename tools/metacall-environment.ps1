@@ -201,8 +201,8 @@ function sub-clangformat {
 
 # Install
 function sub-install {
-	if ( $INSTALL_APT -eq 1 ) {
-		sub-apt
+	if ( $INSTALL_CHOCO -eq 1 ) {
+		sub-choco
 	}
 	if ( $INSTALL_PYTHON -eq 1 ) {
 		sub-python
