@@ -32,10 +32,12 @@ $global:INSTALL_CLANGFORMAT = 0
 $global:SHOW_HELP = 0
 $global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 
+$global:Arguments = $args
+
 # Base packages
 function sub-choco {
 	echo "configure choco"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 	refreshenv
 }
@@ -43,21 +45,21 @@ function sub-choco {
 # Swig
 function sub-swig {
 	echo "configure swig"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # Python
 function sub-python {
 	echo "configure python"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # Ruby
 function sub-ruby {
 	echo "configure ruby"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 	# TODO (copied from metacall-environment.sh): Review conflict with NodeJS (currently rails test is disabled)
 
@@ -66,14 +68,14 @@ function sub-ruby {
 # Rust
 function sub-rust {
 	echo "configure rust"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # RapidJSON
 function sub-rapidjson {
 	echo "configure rapidjson"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
@@ -86,35 +88,35 @@ function sub-funchook {
 # NetCore
 function sub-netcore {
 	echo "configure netcore"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # NetCore 2
 function sub-netcore2 {
 	echo "configure netcore 2"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # NetCore 5
 function sub-netcore5 {
 	echo "configure netcore 5"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # V8 Repository
 function sub-v8repo {
 	echo "configure v8 from repository"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # V8
 function sub-v8 {
 	echo "configure v8"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
@@ -122,7 +124,7 @@ function sub-v8 {
 function sub-nodejs {
 	# TODO (copied from metacall-environment.sh): Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
@@ -140,7 +142,7 @@ function sub-file {
 # RPC
 function sub-rpc {
 	echo "cofingure rpc"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
@@ -172,231 +174,231 @@ function sub-cobol {
 function sub-metacall {
 	# TODO (copied from metacall-environment.sh): Update this or deprecate it
 	echo "configure metacall"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # Pack
 function sub-pack {
 	echo "configure pack"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # Coverage
 function sub-coverage {
 	echo "configure coverage"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 	
 }
 
 # Clang format
 function sub-clangformat {
 	echo "configure clangformat"
-	cd $global:ROOT_DIR
+	cd $ROOT_DIR
 
 }
 
 # Install
 function sub-install {
-	if ( $global:INSTALL_APT -eq 1 ) {
+	if ( $INSTALL_APT -eq 1 ) {
 		sub-apt
 	}
-	if ( $global:INSTALL_PYTHON -eq 1 ) {
+	if ( $INSTALL_PYTHON -eq 1 ) {
 		sub-python
 	}
-	if ( $global:INSTALL_RUBY -eq 1 ) {
+	if ( $INSTALL_RUBY -eq 1 ) {
 		sub-ruby
 	}
-	if ( $global:INSTALL_RUST -eq 1 ) {
+	if ( $INSTALL_RUST -eq 1 ) {
 		sub-rust
 	}
-	if ( $global:INSTALL_RAPIDJSON -eq 1 ) {
+	if ( $INSTALL_RAPIDJSON -eq 1 ) {
 		sub-rapidjson
 	}
-	if ( $global:INSTALL_FUNCHOOK -eq 1 ) {
+	if ( $INSTALL_FUNCHOOK -eq 1 ) {
 		sub-funchook
 	}
-	if ( $global:INSTALL_NETCORE -eq 1 ) {
+	if ( $INSTALL_NETCORE -eq 1 ) {
 		sub-netcore
 	}
-	if ( $global:INSTALL_NETCORE2 -eq 1 ) {
+	if ( $INSTALL_NETCORE2 -eq 1 ) {
 		sub-netcore2
 	}
-	if ( $global:INSTALL_NETCORE5 -eq 1 ) {
+	if ( $INSTALL_NETCORE5 -eq 1 ) {
 		sub-netcore5
 	}
-	if ( $global:INSTALL_V8 -eq 1 ) {
+	if ( $INSTALL_V8 -eq 1 ) {
 		sub-v8
 	}
-	if ( $global:INSTALL_V8REPO -eq 1 ) {
+	if ( $INSTALL_V8REPO -eq 1 ) {
 		sub-v8repo
 	}
-	if ( $global:INSTALL_NODEJS -eq 1 ) {
+	if ( $INSTALL_NODEJS -eq 1 ) {
 		sub-nodejs
 	}
-	if ( $global:INSTALL_TYPESCRIPT -eq 1 ) {
+	if ( $INSTALL_TYPESCRIPT -eq 1 ) {
 		sub-typescript
 	}
-	if ( $global:INSTALL_FILE -eq 1 ) {
+	if ( $INSTALL_FILE -eq 1 ) {
 		sub-file
 	}
-	if ( $global:INSTALL_RPC -eq 1 ) {
+	if ( $INSTALL_RPC -eq 1 ) {
 		sub-rpc
 	}
-	if ( $global:INSTALL_WASM -eq 1 ) {
+	if ( $INSTALL_WASM -eq 1 ) {
 		sub-wasm
 	}
-	if ( $global:INSTALL_JAVA -eq 1 ) {
+	if ( $INSTALL_JAVA -eq 1 ) {
 		sub-java
 	}
-	if ( $global:INSTALL_C -eq 1 ) {
+	if ( $INSTALL_C -eq 1 ) {
 		sub-c
 	}
-	if ( $global:INSTALL_COBOL -eq 1 ) {
+	if ( $INSTALL_COBOL -eq 1 ) {
 		sub-cobol
 	}
-	if ( $global:INSTALL_SWIG -eq 1 ) {
+	if ( $INSTALL_SWIG -eq 1 ) {
 		sub-swig
 	}
-	if ( $global:INSTALL_METACALL -eq 1 ) {
+	if ( $INSTALL_METACALL -eq 1 ) {
 		sub-metacall
 	}
-	if ( $global:INSTALL_PACK -eq 1 ) {
+	if ( $INSTALL_PACK -eq 1 ) {
 		sub-pack
 	}
-	if ( $global:INSTALL_COVERAGE -eq 1 ) {
+	if ( $INSTALL_COVERAGE -eq 1 ) {
 		sub-coverage
 	}
-	if ( $global:INSTALL_CLANGFORMAT -eq 1 ) {
+	if ( $INSTALL_CLANGFORMAT -eq 1 ) {
 		sub-clangformat
 	}
-	echo "install finished in workspace $global:ROOT_DIR"
+	echo "install finished in workspace $ROOT_DIR"
 }
 
 # Configuration
 function sub-options {
-	for ($i = 0; $i -lt $args.Length; $i++) {
-		$var = $args[$i]
+	for ($i = 0; $i -lt $Arguments.Length; $i++) {
+		$var = $Arguments[$i]
 		if ( "$var" -eq 'base' ) {
 			echo "choco selected"
-			$global:INSTALL_CHOCO = 1
+			$INSTALL_CHOCO = 1
 		}
 		if ( "$var" -eq 'python' ) {
 			echo "python selected"
-			$global:INSTALL_PYTHON = 1
+			$INSTALL_PYTHON = 1
 		}
 		if ( "$var" -eq 'ruby' ) {
 			echo "ruby selected"
-			$global:INSTALL_RUBY = 1
+			$INSTALL_RUBY = 1
 		}
 		if ( "$var" -eq 'rust' ) {
 			echo "rust selected"
-			$global:INSTALL_RUST = 1
+			$INSTALL_RUST = 1
 		}
 		if ( "$var" -eq 'netcore' ) {
 			echo "netcore selected"
-			$global:INSTALL_NETCORE = 1
+			$INSTALL_NETCORE = 1
 		}
 		if ( "$var" -eq 'netcore2' ) {
 			echo "netcore 2 selected"
-			$global:INSTALL_NETCORE2 = 1
+			$INSTALL_NETCORE2 = 1
 		}
 		if ( "$var" -eq 'netcore5' ) {
 			echo "netcore 5 selected"
-			$global:INSTALL_NETCORE5 = 1
+			$INSTALL_NETCORE5 = 1
 		}
 		if ( "$var" -eq 'rapidjson' ) {
 			echo "rapidjson selected"
-			$global:INSTALL_RAPIDJSON = 1
+			$INSTALL_RAPIDJSON = 1
 		}
 		if ( "$var" -eq 'funchook' ) {
 			echo "funchook selected"
-			$global:INSTALL_FUNCHOOK = 1
+			$INSTALL_FUNCHOOK = 1
 		}
 		if ( ("$var" -eq 'v8') -or ("$var" -eq 'v8rep54') ) {
 			echo "v8 selected"
-			$global:INSTALL_V8REPO = 1
-			$global:INSTALL_V8REPO54 = 1
+			$INSTALL_V8REPO = 1
+			$INSTALL_V8REPO54 = 1
 		}
 		if ( "$var" -eq 'v8rep57' ) {
 			echo "v8 selected"
-			$global:INSTALL_V8REPO = 1
-			$global:INSTALL_V8REPO57 = 1
+			$INSTALL_V8REPO = 1
+			$INSTALL_V8REPO57 = 1
 		}
 		if ( "$var" -eq 'v8rep58' ) {
 			echo "v8 selected"
-			$global:INSTALL_V8REPO = 1
-			$global:INSTALL_V8REPO58 = 1
+			$INSTALL_V8REPO = 1
+			$INSTALL_V8REPO58 = 1
 		}
 		if ( "$var" -eq 'v8rep52' ) {
 			echo "v8 selected"
-			$global:INSTALL_V8REPO = 1
-			$global:INSTALL_V8REPO52 = 1
+			$INSTALL_V8REPO = 1
+			$INSTALL_V8REPO52 = 1
 		}
 		if ( "$var" -eq 'v8rep51' ) {
 			echo "v8 selected"
-			$global:INSTALL_V8REPO = 1
-			$global:INSTALL_V8REPO51 = 1
+			$INSTALL_V8REPO = 1
+			$INSTALL_V8REPO51 = 1
 		}
 		if ( "$var" -eq 'nodejs' ) {
 			echo "nodejs selected"
-			$global:INSTALL_NODEJS = 1
+			$INSTALL_NODEJS = 1
 		}
 		if ( "$var" -eq 'typescript' ) {
 			echo "typescript selected"
-			$global:INSTALL_TYPESCRIPT = 1
+			$INSTALL_TYPESCRIPT = 1
 		}
 		if ( "$var" -eq 'file' ) {
 			echo "file selected"
-			$global:INSTALL_FILE = 1
+			$INSTALL_FILE = 1
 		}
 		if ( "$var" -eq 'rpc' ) {
 			echo "rpc selected"
-			$global:INSTALL_RPC = 1
+			$INSTALL_RPC = 1
 		}
 		if ( "$var" -eq 'wasm' ) {
 			echo "wasm selected"
-			$global:INSTALL_WASM = 1
+			$INSTALL_WASM = 1
 		}
 		if ( "$var" -eq 'java' ) {
 			echo "java selected"
-			$global:INSTALL_JAVA = 1
+			$INSTALL_JAVA = 1
 		}
 		if ( "$var" -eq 'c' ) {
 			echo "c selected"
-			$global:INSTALL_C = 1
+			$INSTALL_C = 1
 		}
 		if ( "$var" -eq 'cobol' ) {
 			echo "cobol selected"
-			$global:INSTALL_COBOL = 1
+			$INSTALL_COBOL = 1
 		}
 		if ( "$var" -eq 'swig' ) {
 			echo "swig selected"
-			$global:INSTALL_SWIG = 1
+			$INSTALL_SWIG = 1
 		}
 		if ( "$var" -eq 'metacall' ) {
 			echo "metacall selected"
-			$global:INSTALL_METACALL = 1
+			$INSTALL_METACALL = 1
 		}
 		if ( "$var" -eq 'pack' ) {
 			echo "pack selected"
-			$global:INSTALL_PACK = 1
+			$INSTALL_PACK = 1
 		}
 		if ( "$var" -eq 'coverage' ) {
 			echo "coverage selected"
-			$global:INSTALL_COVERAGE = 1
+			$INSTALL_COVERAGE = 1
 		}
 		if ( "$var" -eq 'clangformat' ) {
 			echo "clangformat selected"
-			$global:INSTALL_CLANGFORMAT = 1
+			$INSTALL_CLANGFORMAT = 1
 		}
 	}
 }
 
 # Help
 function sub-help {
-	echo "Usage: $global:PROGNAME list of component"
+	echo "Usage: $PROGNAME list of component"
 	echo "Components:"
 	echo "	base"
 	echo "	python"
