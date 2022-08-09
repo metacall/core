@@ -60,6 +60,7 @@ static int metacall_log_null_flag = 1;
 static int metacall_config_flags = 0;
 static int metacall_initialize_argc = 0;
 static char **metacall_initialize_argv = NULL;
+static void *plugin_extension_handle = NULL;
 
 /* -- Private Methods -- */
 
@@ -87,6 +88,10 @@ void metacall_flags(int flags)
 
 int metacall_initialize(void)
 {
+	static const char *ext_scripts[] = {
+		"plugin_extension"
+	};
+
 	memory_allocator allocator;
 
 	/* Initialize logs by default to stdout if none has been defined */
@@ -186,6 +191,17 @@ int metacall_initialize(void)
 		}
 
 		return 1;
+	}
+
+	/* Load plugin extension */
+	if (metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), &plugin_extension_handle) != 0)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall Plugin Extension could not be loaded");
+	}
+	else
+	{
+		/* TODO: Load core extensions */
+		/* ... */
 	}
 
 	metacall_initialize_flag = 0;
@@ -2147,6 +2163,11 @@ int metacall_clear(void *handle)
 	return loader_clear(handle);
 }
 
+void *metacall_plugin_extension(void)
+{
+	return plugin_extension_handle;
+}
+
 int metacall_destroy(void)
 {
 	if (metacall_initialize_flag == 0)
@@ -2170,6 +2191,9 @@ int metacall_destroy(void)
 		{
 			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
 		}
+
+		/* Set to null the plugin extension */
+		plugin_extension_handle = NULL;
 	}
 
 	return 0;

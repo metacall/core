@@ -95,6 +95,8 @@ target_link_libraries(${target}
 target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
+
+	METACALL_PLUGIN_PATH="${CMAKE_CURRENT_SOURCE_DIR}/plugins"
 )
 
 #
@@ -147,5 +149,4 @@ include(TestEnvironmentVariables)
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
-	"METACALL_PLUGIN_PATH=${CMAKE_CURRENT_SOURCE_DIR}"
 )

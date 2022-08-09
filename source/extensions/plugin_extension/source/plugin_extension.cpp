@@ -20,64 +20,46 @@
 
 #include <plugin_extension/plugin_extension.h>
 
-#include <environment/environment_variable_path.h>
 #include <log/log.h>
 #include <metacall/metacall.h>
 
 #include <filesystem>
 #include <string>
 
-#define METACALL_PLUGIN_PATH "METACALL_PLUGIN_PATH" /* Environment variable for plugin path */
-
 namespace fs = std::filesystem;
 
-static int plugin_extension_get_path(std::string &ext_path)
+void *plugin_load_from_path(size_t argc, void *args[], void *data)
 {
-	/* Initialize the library path */
-	const char name[] = "metacall"
-#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-						"d"
-#endif
-		;
+	/* TODO: Improve return values with throwable in the future */
+	(void)data;
 
-	dynlink_library_path_str lib_path;
-	size_t length = 0;
-
-	/* The order of precedence is:
-	* 1) Environment variable
-	* 2) Dynamic link library path of the host library
-	*/
-	if (dynlink_library_path(name, lib_path, &length) != 0)
+	if (argc != 1 && argc != 2)
 	{
-		return 1;
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid number of arguments passed to plugin_load_from_path: %" PRIuS, argc);
+		return metacall_value_create_int(1);
 	}
 
-	char *env_path = environment_variable_path_create(METACALL_PLUGIN_PATH, lib_path, length + 1, NULL);
-
-	if (env_path == NULL)
+	if (metacall_value_id(args[0]) != METACALL_STRING)
 	{
-		return 1;
+		log_write("metacall", LOG_LEVEL_ERROR, "Invalid first parameter passed to plugin_load_from_path, it requires string");
+		return metacall_value_create_int(2);
 	}
 
-	fs::path plugin_path(env_path);
-	environment_variable_path_destroy(env_path);
-	plugin_path /= "plugins";
-	ext_path = plugin_path.string();
-
-	return 0;
-}
-
-int plugin_extension(void *loader, void *handle, void *context)
-{
-	std::string ext_path;
-
-	(void)loader;
-	(void)context;
-
-	if (plugin_extension_get_path(ext_path) != 0)
+	if (argc == 2)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Define the extension path with the environment variable " METACALL_PLUGIN_PATH);
-		return 1;
+		if (metacall_value_id(args[1]) != METACALL_PTR)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Invalid second parameter passed to plugin_load_from_path, it requires pointer");
+			return metacall_value_create_int(3);
+		}
+	}
+
+	std::string ext_path(metacall_value_to_string(args[0]));
+	void **handle_ptr = NULL;
+
+	if (argc == 2)
+	{
+		handle_ptr = static_cast<void **>(metacall_value_to_ptr(args[1]));
 	}
 
 	static std::string m_begins = "metacall-";
@@ -107,10 +89,10 @@ int plugin_extension(void *loader, void *handle, void *context)
 
 				std::string dir_path = dir.path().string();
 
-				if (metacall_load_from_configuration(dir_path.c_str(), &handle, config_allocator) != 0)
+				if (metacall_load_from_configuration(dir_path.c_str(), handle_ptr, config_allocator) != 0)
 				{
 					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir_path.c_str());
-					return 1;
+					return metacall_value_create_int(4);
 				}
 
 				i.pop();
@@ -123,5 +105,12 @@ int plugin_extension(void *loader, void *handle, void *context)
 
 	metacall_allocator_destroy(config_allocator);
 
-	return 0;
+	return metacall_value_create_int(0);
+}
+
+int plugin_extension(void *loader, void *handle, void *context)
+{
+	enum metacall_value_id arg_types[] = { METACALL_STRING, METACALL_PTR };
+	(void)handle;
+	return metacall_register_loaderv(loader, context, "plugin_load_from_path", plugin_load_from_path, METACALL_INT, sizeof(arg_types) / sizeof(arg_types[0]), arg_types);
 }

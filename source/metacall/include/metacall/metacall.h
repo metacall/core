@@ -1398,6 +1398,15 @@ METACALL_API int metacall_clear(void *handle);
 
 /**
 *  @brief
+*    Get the plugin extension handle to be used for loading plugins
+*
+*  @return
+*    Pointer to the extension handle, or null if it failed to load
+*/
+METACALL_API void *metacall_plugin_extension(void);
+
+/**
+*  @brief
 *    Destroy MetaCall library
 *
 *  @return
