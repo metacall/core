@@ -85,13 +85,13 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 				(config.substr(0, m_begins.size()) == m_begins &&
 					config.substr(config.size() - m_ends.size()) == m_ends))
 			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loading extension: %s", config.c_str());
-
 				std::string dir_path = dir.path().string();
+
+				log_write("metacall", LOG_LEVEL_DEBUG, "Loading plugin: %s", dir_path.c_str());
 
 				if (metacall_load_from_configuration(dir_path.c_str(), handle_ptr, config_allocator) != 0)
 				{
-					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load extension: %s", dir_path.c_str());
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to load plugin: %s", dir_path.c_str());
 					return metacall_value_create_int(4);
 				}
 
