@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fmt;
 use std::sync::Arc;
+use std::convert::TryInto;
 type Result<T, E = i32> = core::result::Result<T, E>;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 extern "C" {

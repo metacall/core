@@ -61,10 +61,11 @@ extern "C" fn function_singleton_await(
 
 #[no_mangle]
 extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
-    unsafe {
-        let func_ptr = Box::from_raw(func_impl as *mut class::NormalFunction);
-        drop(func_ptr);
-    }
+    // comment out this due to the seg fault
+    // unsafe {
+    //     let func_ptr = Box::from_raw(func_impl as *mut class::NormalFunction);
+    //     drop(func_ptr);
+    // }
 }
 
 #[no_mangle]
