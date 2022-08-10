@@ -71,7 +71,7 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 	auto i = fs::recursive_directory_iterator(ext_path);
 	while (i != fs::recursive_directory_iterator())
 	{
-		if (i.depth() == 2)
+		if (i.depth() == 1)
 		{
 			i.disable_recursion_pending();
 		}
@@ -95,7 +95,11 @@ void *plugin_load_from_path(size_t argc, void *args[], void *data)
 					return metacall_value_create_int(4);
 				}
 
-				i.pop();
+				i++;
+				if (i != fs::end(i) && i.depth() == 1)
+				{
+					i.pop();
+				}
 				continue;
 			}
 		}
