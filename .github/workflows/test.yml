@@ -39,7 +39,6 @@ jobs:
       - name: Set up the environment
         run: sudo ./tools/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
         env:
-          METACALL_PATH:               /usr/local/metacall
           DEBIAN_FRONTEND:             noninteractive
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
@@ -48,6 +47,7 @@ jobs:
 
       - name: Configure
         run: |
+          export "METACALL_PATH=$(pwd)"
           export "LOADER_LIBRARY_PATH=${METACALL_PATH}/build"
           export "LOADER_SCRIPT_PATH=${METACALL_PATH}/build/scripts"
           export "CONFIGURATION_PATH=${METACALL_PATH}/build/configurations/global.json"
@@ -55,10 +55,9 @@ jobs:
           export "DETOUR_LIBRARY_PATH=${METACALL_PATH}/build"
           export "PORT_LIBRARY_PATH=${METACALL_PATH}/build"
           mkdir -p build
-          cd "${METACALL_PATH}/build"
+          cd build
           sudo "${METACALL_PATH}/tools/metacall-configure.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
         env:
-          METACALL_PATH:               /usr/local/metacall
           DEBIAN_FRONTEND:             noninteractive
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
@@ -69,16 +68,16 @@ jobs:
 
       - name: Build
         run: |
+          export "METACALL_PATH=$(pwd)"
           export "LOADER_LIBRARY_PATH=${METACALL_PATH}/build"
           export "LOADER_SCRIPT_PATH=${METACALL_PATH}/build/scripts"
           export "CONFIGURATION_PATH=${METACALL_PATH}/build/configurations/global.json"
           export "SERIAL_LIBRARY_PATH=${METACALL_PATH}/build"
           export "DETOUR_LIBRARY_PATH=${METACALL_PATH}/build"
           export "PORT_LIBRARY_PATH=${METACALL_PATH}/build"
-          cd "${METACALL_PATH}/build"
+          cd build
           sudo "${METACALL_PATH}/tools/metacall-build.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
         env:
-          METACALL_PATH:               /usr/local/metacall
           DEBIAN_FRONTEND:             noninteractive
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
