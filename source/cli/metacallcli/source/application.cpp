@@ -13,6 +13,7 @@
 #include <metacallcli/tokenizer.hpp>
 
 #include <algorithm>
+#include <filesystem>
 #include <functional>
 #include <iostream>
 
@@ -621,7 +622,7 @@ bool application::clear(const std::string &tag, const std::string &script)
 }
 
 application::application(int argc, char *argv[]) :
-	exit_condition(false)
+	exit_condition(false), plugin_cli_handle(NULL)
 {
 	/* Set locale */
 	setlocale(LC_CTYPE, "C");
@@ -666,6 +667,33 @@ application::application(int argc, char *argv[]) :
 		/* Parse program parameters */
 		std::for_each(&argv[1], argv + /*argc*/ 2, param_it);
 	}
+
+	/* Get core plugin path and handle in order to load cli plugins */
+	const char *plugin_path = metacall_plugin_path();
+	void *plugin_extension_handle = metacall_plugin_extension();
+
+	/* Define the cli plugin path as string (core plugin path plus cli) */
+	namespace fs = std::filesystem;
+	fs::path plugin_cli_path(plugin_path);
+	plugin_cli_path /= "cli";
+	std::string plugin_cli_path_str(plugin_cli_path.string());
+
+	/* Load cli plugins into plugin cli handle */
+	void *args[] = {
+		metacall_value_create_string(plugin_cli_path_str.c_str(), plugin_cli_path_str.length()),
+		metacall_value_create_ptr(&plugin_cli_handle)
+	};
+
+	void *ret = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
+
+	if (ret == NULL || (ret != NULL && metacall_value_to_int(ret) != 0))
+	{
+		std::cout << "Failed to load CLI plugins from folder: " << plugin_cli_path_str << std::endl;
+	}
+
+	metacall_value_destroy(args[0]);
+	metacall_value_destroy(args[1]);
+	metacall_value_destroy(ret);
 
 	/* Define available commands */
 	define("help", &command_cb_help);
@@ -833,8 +861,15 @@ void application::command_inspect(const char *str, size_t size, void *allocator)
 					value_array_for_each(v_args_array, [&iterator, &count](void *arg) {
 						void **v_arg_map = metacall_value_to_map(arg);
 						void **v_arg_name_tupla = metacall_value_to_array(v_arg_map[0]);
+						std::string parameter_name(metacall_value_to_string(v_arg_name_tupla[1]));
 
-						std::cout << metacall_value_to_string(v_arg_name_tupla[1]);
+						if (parameter_name.empty())
+						{
+							parameter_name += "arg";
+							parameter_name += std::to_string(iterator);
+						}
+
+						std::cout << parameter_name;
 
 						if (iterator + 1 < count)
 						{

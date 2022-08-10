@@ -26,7 +26,7 @@ include(SecurityFlags)
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/${target}")
-set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/tokenizer.hpp
@@ -137,6 +137,15 @@ target_compile_definitions(${target}
 target_compile_options(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_OPTIONS}
+)
+
+#
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17 # Required for filesystem
 )
 
 #

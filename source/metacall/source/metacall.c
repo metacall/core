@@ -61,6 +61,7 @@ static int metacall_config_flags = 0;
 static int metacall_initialize_argc = 0;
 static char **metacall_initialize_argv = NULL;
 static void *plugin_extension_handle = NULL;
+static loader_path plugin_path = { 0 };
 
 /* -- Private Methods -- */
 
@@ -94,7 +95,6 @@ int metacall_plugin_extension_load(void)
 	};
 	static const char plugin_suffix[] = "plugins";
 	const char *library_path = loader_library_path();
-	loader_path plugin_path;
 	size_t plugin_path_size;
 	void *args[2];
 	void *ret;
@@ -2207,6 +2207,16 @@ int metacall_clear(void *handle)
 void *metacall_plugin_extension(void)
 {
 	return plugin_extension_handle;
+}
+
+const char *metacall_plugin_path(void)
+{
+	if (plugin_extension_handle == NULL)
+	{
+		return NULL;
+	}
+
+	return plugin_path;
 }
 
 int metacall_destroy(void)

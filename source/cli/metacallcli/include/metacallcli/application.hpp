@@ -301,6 +301,7 @@ private:
 	/* -- Private Member Data -- */
 
 	bool exit_condition;				/**< Condition for main loop */
+	void *plugin_cli_handle;			/**< Handle containing all loaded plugins */
 	arg_list arguments;					/**< Vector containing a list of arguments */
 	script_list scripts;				/**< Vector containing a list of script names */
 	command_table commands;				/**< Hash table from command strings to command handlers */
