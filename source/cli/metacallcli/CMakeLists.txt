@@ -51,7 +51,7 @@ set(sources
 
 # Build executable
 add_executable(${target}
-	MACOSX_BUNDLE
+	#MACOSX_BUNDLE
 	${sources}
 )
 
@@ -162,7 +162,6 @@ target_link_libraries(${target}
 #
 
 # Executable
-message("${INSTALL_BIN}")
 install(TARGETS ${target}
 	RUNTIME DESTINATION ${INSTALL_BIN} COMPONENT cli
 	BUNDLE  DESTINATION ${INSTALL_BIN}/.. COMPONENT cli
