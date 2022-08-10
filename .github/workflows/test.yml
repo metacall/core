@@ -47,3 +47,6 @@ jobs:
           DEBIAN_FRONTEND:             noninteractive
           NODE_PATH:                   /usr/lib/node_modules
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        timeout-minutes: 30
