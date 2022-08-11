@@ -123,11 +123,11 @@ extern "C" fn object_singleton_method_await(
 }
 #[no_mangle]
 extern "C" fn object_singleton_destructor(_object: OpaqueType, object_impl: OpaqueType) -> c_int {
-    unsafe {
-        let object_impl_ptr = object_impl as *mut Object;
-        let object = Box::from_raw(object_impl_ptr);
-        drop(object);
-    }
+    // unsafe {
+    //     let object_impl_ptr = object_impl as *mut Object;
+    //     let object = Box::from_raw(object_impl_ptr);
+    //     drop(object);
+    // }
     println!("destruct object");
     0
 }
