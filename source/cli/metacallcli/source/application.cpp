@@ -888,6 +888,8 @@ void application::command_inspect(const char *str, size_t size, void *allocator)
 
 		std::cout << "}" << std::endl;
 	});
+
+	metacall_value_destroy(v);
 }
 
 void application::execute(tokenizer &t)

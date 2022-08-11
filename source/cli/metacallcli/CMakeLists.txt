@@ -216,6 +216,18 @@ add_loader_dependencies(${target}
 # Define tests
 #
 
+add_test(NAME ${target}-inspect-leak
+	COMMAND ${TEST_COMMAND} "echo 'inspect\nexit' | $<TARGET_FILE:${target}>"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+set_property(TEST ${target}-inspect-leak
+	PROPERTY LABELS ${target}-inspect-leak
+)
+test_environment_variables(${target}-inspect-leak
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
+
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_NODE)
 	add_test(NAME ${target}-node
 		COMMAND ${TEST_COMMAND} "echo 'load node nod.js\ninspect\ncall hello_boy(300, 400)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"700.0\""
