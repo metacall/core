@@ -40,6 +40,12 @@ function sub-choco {
 	cd $ROOT_DIR
 	Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 	refreshenv
+
+	if ( $null -eq $Env:ChocolateyInstall ) {
+		$Env:ChocolateyInstall = "$Env:SystemDrive\PraogramData\chocolatey"
+	}
+
+	$global:ChocolateyBinPath = "$Env:ChocolateyInstall\bin"
 }
 
 # Swig
@@ -53,7 +59,36 @@ function sub-swig {
 function sub-python {
 	echo "configure python"
 	cd $ROOT_DIR
-	
+
+	$PythonVersion = '3.10.6'
+	choco install python3 --version $PythonVersion -my
+
+	$PythonPath = "$Env:ChocolateyInstall\lib\python3.$PythonVersion\tools"
+	$PythonBin = "$PythonPath\python-$PythonVersion-amd64.exe"
+
+	cmd.exe /c "mklink ""$PythonPath\python.exe"" ""$PythonBin"""
+	cmd.exe /c "mklink ""$ChocolateyBinPath\python.exe"" ""$PythonBin"""
+
+	setx /M PATH "$ChocolateyBinPath;$Env:PATH"
+	$Env:PATH = "$ChocolateyBinPath;$Env:PATH"
+
+	refreshenv
+
+	python.exe -c "from sysconfig import get_paths as gp; print(gp()['include'])"
+
+	# Patch for FindPython.cmake
+	# $FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
+	# $EscapedLoc = $ROOT_DIR.Replace('\', '/')
+	# $PythonRuntimeDir = "$EscapedLoc/runtimes/python"
+
+	# echo set(Python_VERSION $PythonVersion) > $FindPython
+	# echo set(Python_ROOT_DIR "$PythonRuntimeDir") >> $FindPython
+	# echo set(Python_EXECUTABLE "%$PythonRuntimeDir/python.exe") >> $FindPython
+	# echo set(Python_INCLUDE_DIRS "%$PythonRuntimeDir/include") >> $FindPython
+	# echo set(Python_LIBRARIES "%$PythonRuntimeDir/libs/python39.lib") >> $FindPython
+	# echo include(FindPackageHandleStandardArgs)>> $FindPython
+	# echo FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION) >> $FindPython
+	# echo mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS) >> $FindPython
 }
 
 # Ruby
