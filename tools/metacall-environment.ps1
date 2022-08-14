@@ -60,7 +60,15 @@ function sub-python {
 	echo "configure python"
 	cd $ROOT_DIR
 
+	$PythonVersion = '3.9.7'
+	$RuntimeDir    = "$ROOT_DIR\runtimes\python"
+
+	<#
+	
+	# Avoiding; The Python installation provided by Chocolatey is statically compiled
+
 	$PythonVersion = '3.10.6'
+
 	choco install python3 --version $PythonVersion -my
 
 	$PythonPath = "$Env:ChocolateyInstall\lib\python3.$PythonVersion\tools"
@@ -74,10 +82,11 @@ function sub-python {
 
 	refreshenv
 
-	where.exe python
-	# python.exe -c "from sysconfig import get_paths as gp; print(gp()['include'])"
-	cmd.exe /c """$PythonBin"" -c ""from sysconfig import get_paths as gp; print(gp()['include'])"""
-
+	# DEBUG
+	# where.exe python
+	# # python.exe -c "from sysconfig import get_paths as gp; print(gp()['include'])"
+	# cmd.exe /c """$PythonBin"" -c ""from sysconfig import get_paths as gp; print(gp()['include'])"""
+	
 	# Patch for FindPython.cmake
 	# $FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
 	# $EscapedLoc = $ROOT_DIR.Replace('\', '/')
@@ -91,6 +100,25 @@ function sub-python {
 	# echo include(FindPackageHandleStandardArgs)>> $FindPython
 	# echo FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION) >> $FindPython
 	# echo mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS) >> $FindPython
+
+	#>
+
+	# Download installer
+	(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", './python_installer.exe')
+
+	# Install Python
+	where.exe /Q python
+	if ( $? -eq 0 ) {
+		./python_installer.exe /uninstall
+	}
+
+	python_installer.exe /quiet "TargetDir=$RuntimeDir" PrependPath=1 CompileAll=1
+	md "$RuntimeDir\Pip"
+
+	setx /M PATH "$Env:PATH;$RuntimeDir"
+	$Env:PATH = "$Env:PATH;$RuntimeDir"
+
+	refreshenv
 }
 
 # Ruby
