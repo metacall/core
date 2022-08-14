@@ -471,6 +471,7 @@ switch($args.length) {
 	}
 	Default {
 		sub-options
+		env
 		sub-install
 	}
 }
