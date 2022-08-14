@@ -109,10 +109,11 @@ function sub-python {
 	# Install Python
 	where.exe /Q python
 	if ( $? -eq 0 ) {
+		echo 'Replacing existing Python...'
 		./python_installer.exe /uninstall
 	}
 
-	python_installer.exe /quiet "TargetDir=$RuntimeDir" PrependPath=1 CompileAll=1
+	./python_installer.exe /quiet "TargetDir=$RuntimeDir" PrependPath=1 CompileAll=1
 	md "$RuntimeDir\Pip"
 
 	setx /M PATH "$Env:PATH;$RuntimeDir"
