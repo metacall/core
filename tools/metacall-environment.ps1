@@ -108,7 +108,7 @@ function sub-python {
 
 	# Install Python
 	where.exe /Q python
-	if ( $? -eq 0 ) {
+	if ( $? -eq $True ) {
 		echo 'Replacing existing Python...'
 		./python_installer.exe /uninstall
 	}
