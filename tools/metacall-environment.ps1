@@ -76,7 +76,7 @@ function sub-python {
 
 	where.exe python
 	# python.exe -c "from sysconfig import get_paths as gp; print(gp()['include'])"
-	cmd.exe /c """$ChocolateyBinPath\python.exe"" -c ""from sysconfig import get_paths as gp; print(gp()['include'])"""
+	cmd.exe /c """$PythonBin"" -c ""from sysconfig import get_paths as gp; print(gp()['include'])"""
 
 	# Patch for FindPython.cmake
 	# $FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
