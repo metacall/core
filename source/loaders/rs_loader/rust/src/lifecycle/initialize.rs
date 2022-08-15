@@ -114,6 +114,13 @@ pub extern "C" fn rs_loader_impl_initialize(
         0 as c_int as *mut c_void,
         0 as c_int as *mut c_void,
     );
+    api::define_type(
+        loader_impl,
+        "Null",
+        PrimitiveMetacallProtocolTypes::Null,
+        0 as c_int as *mut c_void,
+        0 as c_int as *mut c_void,
+    );
     // Register initialization
     api::loader_lifecycle_register(loader_impl);
 

@@ -118,6 +118,16 @@ pub fn register_function(function_registration: FunctionRegistration) {
                 loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
             );
         };
+    } 
+    else {
+        let ret = CString::new("Null").expect("Failed to convert return type to C string");
+
+        unsafe {
+            signature_set_return(
+                s,
+                loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
+            );
+        };
     }
 
     for (index, param) in function_registration.input.iter().enumerate() {
