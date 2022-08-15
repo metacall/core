@@ -31,11 +31,6 @@ extern "C" fn function_singleton_invoke(
     size: usize,
 ) -> OpaqueType {
     unsafe {
-        // let func_ptr = Box::from_raw(func_impl as *mut unsafe fn());
-        // let func: fn(OpaqueTypeList, usize) -> OpaqueType = std::mem::transmute_copy(&*func_ptr);
-        // let result = func(args_p, size);
-        // std::mem::forget(func_ptr);
-        // result
         let args = std::slice::from_raw_parts(args_p, size).to_vec();
         let nf = Box::from_raw(func_impl as *mut class::NormalFunction);
         let res = nf.invoke(args).unwrap();
@@ -62,10 +57,12 @@ extern "C" fn function_singleton_await(
 #[no_mangle]
 extern "C" fn function_singleton_destroy(_func: OpaqueType, func_impl: OpaqueType) {
     // comment out this due to the seg fault
-    // unsafe {
-    //     let func_ptr = Box::from_raw(func_impl as *mut class::NormalFunction);
-    //     drop(func_ptr);
-    // }
+    if !func_impl.is_null() {
+        unsafe {
+            let func_ptr = Box::from_raw(func_impl as *mut class::NormalFunction);
+            drop(func_ptr);
+        }
+    }
 }
 
 #[no_mangle]
@@ -114,6 +111,16 @@ pub fn register_function(function_registration: FunctionRegistration) {
 
     if let Some(ret) = function_registration.ret {
         let ret = CString::new(ret).expect("Failed to convert return type to C string");
+
+        unsafe {
+            signature_set_return(
+                s,
+                loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
+            );
+        };
+    } 
+    else {
+        let ret = CString::new("Null").expect("Failed to convert return type to C string");
 
         unsafe {
             signature_set_return(

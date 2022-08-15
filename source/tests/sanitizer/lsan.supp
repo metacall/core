@@ -34,3 +34,7 @@ leak:libruby*
 #
 leak:libcoreclr*
 leak:libicuuc*
+#
+# Rust
+#
+leak:libLLVM*

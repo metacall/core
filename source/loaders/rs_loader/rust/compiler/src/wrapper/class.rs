@@ -35,6 +35,7 @@ extern "C" {
     fn metacall_value_create_string(st: *const c_char, ln: usize) -> *mut c_void;
     fn metacall_value_create_array(values: *const *mut c_void, size: usize) -> *mut c_void;
     fn metacall_value_create_map(tuples: *const *mut c_void, size: usize) -> *mut c_void;
+    fn metacall_value_create_null() -> *mut c_void;
 }
 
 type Attributes = HashMap<&'static str, AttributeGetter>;
@@ -454,7 +455,7 @@ pub trait ToMetaResult {
 
 impl ToMetaResult for () {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_int(0) })
+        Ok(unsafe { metacall_value_create_null() })
     }
 }
 
