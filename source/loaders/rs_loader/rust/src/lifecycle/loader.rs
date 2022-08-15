@@ -23,21 +23,21 @@ impl LoadingMethod {
                     let dl = std::mem::replace(&mut dlopen, None);
                     Ok(dl.expect("Unexpected: dlopen is None"))
                 }
-                None => Err(String::from("DlopenLibrary is None")),
+                None => Err(String::from("consume_dlib was called more than once")),
             },
             Self::Package(PackageRegistration { mut dlopen, .. }) => match dlopen {
                 Some(_) => {
                     let dl = std::mem::replace(&mut dlopen, None);
                     Ok(dl.expect("Unexpected: dlopen is None"))
                 }
-                None => Err(String::from("DlopenLibrary is None")),
+                None => Err(String::from("consume_dlib was called more than once")),
             },
             Self::Memory(MemoryRegistration { mut dlopen, .. }) => match dlopen {
                 Some(_) => {
                     let dl = std::mem::replace(&mut dlopen, None);
                     Ok(dl.expect("Unexpected: dlopen is None"))
                 }
-                None => Err(String::from("DlopenLibrary is None")),
+                None => Err(String::from("consume_dlib was called more than once")),
             },
         }
     }

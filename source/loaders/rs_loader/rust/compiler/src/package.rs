@@ -40,7 +40,7 @@ impl PackageRegistration {
                 registrator::register(&self.state, &dl, loader_impl, ctx);
                 Ok(())
             }
-            None => Err(String::from("")),
+            None => Err(String::from("The dlopen_lib is None")),
         }
     }
 }
