@@ -79,11 +79,9 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 	}
 
 	{
-		// this causes a leak
-		// TODO: we don't support function that returns nothing yet
-		// void *ret = metacall("run");
-		// EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
-		// metacall_value_destroy(ret);
+		void *ret = metacall("run");
+		EXPECT_EQ((void *)NULL, (void *)metacall_value_to_null(ret));
+		metacall_value_destroy(ret);
 	}
 
 	{
