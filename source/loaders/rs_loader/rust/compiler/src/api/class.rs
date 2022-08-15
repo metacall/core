@@ -119,11 +119,12 @@ extern "C" fn class_singleton_static_await(
 
 #[no_mangle]
 extern "C" fn class_singleton_destroy(_klass: OpaqueType, class_impl: OpaqueType) {
-    // unsafe {
-    //     let class_impl_ptr = class_impl as *mut class::Class;
-    //     let class = Box::from_raw(class_impl_ptr);
-    //     drop(class);
-    // }
+    if !class_impl.is_null() {
+        unsafe {
+            let class = Box::from_raw(class_impl as *mut class::Class);
+            drop(class);
+        }
+    }
     println!("class destroy");
 }
 

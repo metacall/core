@@ -8,7 +8,7 @@ use crate::{registrator, DlopenLibrary};
 pub struct FileRegistration {
     pub path_to_file: PathBuf,
     pub state: CompilerState,
-    pub dlopen: DlopenLibrary,
+    pub dlopen: Option<DlopenLibrary>,
 }
 impl FileRegistration {
     pub fn new(path_to_file: PathBuf) -> Result<FileRegistration, RegistrationError> {
@@ -31,13 +31,17 @@ impl FileRegistration {
         Ok(FileRegistration {
             path_to_file,
             state,
-            dlopen,
+            dlopen: Some(dlopen),
         })
     }
 
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
-        registrator::register(&self.state, &self.dlopen, loader_impl, ctx);
-
-        Ok(())
+        match &self.dlopen {
+            Some(dl) => {
+                registrator::register(&self.state, &dl, loader_impl, ctx);
+                Ok(())
+            }
+            None => Err(String::from("")),
+        }
     }
 }
