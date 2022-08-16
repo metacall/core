@@ -2,6 +2,16 @@
 # Library name and options
 #
 
+find_package(Backward)
+
+if(NOT BACKWARD_FOUND)
+	include(InstallBackward)
+
+	if(NOT BACKWARD_FOUND)
+		message(STATUS "Backward libraries not found")
+		return()
+	endif()
+endif()
 # Target name
 set(target backtrace)
 
