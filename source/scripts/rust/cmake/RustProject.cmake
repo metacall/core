@@ -46,7 +46,7 @@ function(rust_project target version)
 	set(PACKAGE_OUTPUT		"${CMAKE_CURRENT_BINARY_DIR}/build/timestamp")
 
 	# Create project file
-    script_project(${target} rust ${RUST_PROJECT_CONFIG_PATH}/RustProject.cmake.in)
+	script_project(${target} rust ${RUST_PROJECT_CONFIG_PATH}/RustProject.cmake.in)
 
 endfunction()
 
@@ -100,6 +100,8 @@ function(rust_package target version script)
 
 	# Compile scripts
 	add_custom_command(TARGET ${custom_target} PRE_BUILD
+		# fix the version of rustc
+		COMMAND ${Rust_RUSTUP_EXECUTABLE} default nightly-2021-12-04
 		COMMAND ${Rust_RUSTC_EXECUTABLE} --crate-type=lib 
 		${CMAKE_CURRENT_SOURCE_DIR}/source/${script}.rs 
 		--out-dir ${LOADER_SCRIPT_PATH}

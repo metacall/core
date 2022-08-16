@@ -9,7 +9,9 @@ pub extern "C" fn rs_loader_impl_destroy(loader_impl: *mut c_void) -> c_int {
     api::loader_lifecycle_unload_children(loader_impl);
 
     unsafe {
-        loader_lifecycle_state.drop_in_place();
+        let state = Box::from_raw(loader_lifecycle_state);
+        // drop the state, including dlibs.
+        drop(state);
     }
 
     0 as c_int

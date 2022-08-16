@@ -672,28 +672,31 @@ application::application(int argc, char *argv[]) :
 	const char *plugin_path = metacall_plugin_path();
 	void *plugin_extension_handle = metacall_plugin_extension();
 
-	/* Define the cli plugin path as string (core plugin path plus cli) */
-	namespace fs = std::filesystem;
-	fs::path plugin_cli_path(plugin_path);
-	plugin_cli_path /= "cli";
-	std::string plugin_cli_path_str(plugin_cli_path.string());
-
-	/* Load cli plugins into plugin cli handle */
-	void *args[] = {
-		metacall_value_create_string(plugin_cli_path_str.c_str(), plugin_cli_path_str.length()),
-		metacall_value_create_ptr(&plugin_cli_handle)
-	};
-
-	void *ret = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
-
-	if (ret == NULL || (ret != NULL && metacall_value_to_int(ret) != 0))
+	if (plugin_path != NULL && plugin_extension_handle != NULL)
 	{
-		std::cout << "Failed to load CLI plugins from folder: " << plugin_cli_path_str << std::endl;
-	}
+		/* Define the cli plugin path as string (core plugin path plus cli) */
+		namespace fs = std::filesystem;
+		fs::path plugin_cli_path(plugin_path);
+		plugin_cli_path /= "cli";
+		std::string plugin_cli_path_str(plugin_cli_path.string());
 
-	metacall_value_destroy(args[0]);
-	metacall_value_destroy(args[1]);
-	metacall_value_destroy(ret);
+		/* Load cli plugins into plugin cli handle */
+		void *args[] = {
+			metacall_value_create_string(plugin_cli_path_str.c_str(), plugin_cli_path_str.length()),
+			metacall_value_create_ptr(&plugin_cli_handle)
+		};
+
+		void *ret = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
+
+		if (ret == NULL || (ret != NULL && metacall_value_to_int(ret) != 0))
+		{
+			std::cout << "Failed to load CLI plugins from folder: " << plugin_cli_path_str << std::endl;
+		}
+
+		metacall_value_destroy(args[0]);
+		metacall_value_destroy(args[1]);
+		metacall_value_destroy(ret);
+	}
 
 	/* Define available commands */
 	define("help", &command_cb_help);

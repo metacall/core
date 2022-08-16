@@ -2,7 +2,8 @@ pub mod interface {
     use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 
     // requires libmetacall to be in $PATH
-    #[link(name = "metacall")]
+    // we will set it in build.rs
+    // #[link(name = "metacall")]
     extern "C" {
         pub fn metacall_destroy() -> c_int;
         pub fn metacall_initialize() -> c_int;

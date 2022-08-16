@@ -15,6 +15,34 @@ pub enum LoadingMethod {
     Memory(MemoryRegistration),
 }
 
+impl LoadingMethod {
+    pub fn consume_dlib(self) -> Result<compiler::DlopenLibrary, String> {
+        match self {
+            Self::File(FileRegistration { mut dlopen, .. }) => match dlopen {
+                Some(_) => {
+                    let dl = std::mem::replace(&mut dlopen, None);
+                    Ok(dl.expect("Unexpected: dlopen is None"))
+                }
+                None => Err(String::from("consume_dlib was called more than once")),
+            },
+            Self::Package(PackageRegistration { mut dlopen, .. }) => match dlopen {
+                Some(_) => {
+                    let dl = std::mem::replace(&mut dlopen, None);
+                    Ok(dl.expect("Unexpected: dlopen is None"))
+                }
+                None => Err(String::from("consume_dlib was called more than once")),
+            },
+            Self::Memory(MemoryRegistration { mut dlopen, .. }) => match dlopen {
+                Some(_) => {
+                    let dl = std::mem::replace(&mut dlopen, None);
+                    Ok(dl.expect("Unexpected: dlopen is None"))
+                }
+                None => Err(String::from("consume_dlib was called more than once")),
+            },
+        }
+    }
+}
+
 // Trait aliasing
 pub trait OnPathBufClosure:
     Fn(PathBuf, fn(error: String) -> *mut c_void) -> Result<LoadingMethod, *mut c_void>

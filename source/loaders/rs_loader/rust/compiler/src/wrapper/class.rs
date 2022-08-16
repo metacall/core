@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::ffi::CStr;
 use std::fmt;
 use std::sync::Arc;
+use std::convert::TryInto;
 type Result<T, E = i32> = core::result::Result<T, E>;
 use std::os::raw::{c_char, c_double, c_float, c_int, c_long, c_short, c_void};
 extern "C" {
@@ -34,6 +35,7 @@ extern "C" {
     fn metacall_value_create_string(st: *const c_char, ln: usize) -> *mut c_void;
     fn metacall_value_create_array(values: *const *mut c_void, size: usize) -> *mut c_void;
     fn metacall_value_create_map(tuples: *const *mut c_void, size: usize) -> *mut c_void;
+    fn metacall_value_create_null() -> *mut c_void;
 }
 
 type Attributes = HashMap<&'static str, AttributeGetter>;
@@ -453,7 +455,7 @@ pub trait ToMetaResult {
 
 impl ToMetaResult for () {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_int(0) })
+        Ok(unsafe { metacall_value_create_null() })
     }
 }
 
