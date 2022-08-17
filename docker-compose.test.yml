@@ -24,7 +24,7 @@ services:
     image: metacall/core:deps
     build:
       args:
-        METACALL_INSTALL_OPTIONS: root base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: root base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust rapidjson funchook swig pack backtrace # clangformat v8rep51 coverage
   dev:
     image: metacall/core:dev
     build:

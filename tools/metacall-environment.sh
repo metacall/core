@@ -54,6 +54,7 @@ INSTALL_METACALL=0
 INSTALL_PACK=0
 INSTALL_COVERAGE=0
 INSTALL_CLANGFORMAT=0
+INSTALL_BACKTRACE=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
 
@@ -479,6 +480,14 @@ sub_clangformat(){
 	$SUDO_CMD ln -s /usr/bin/clang-format-${LLVM_VERSION_STRING} /usr/bin/clang-format
 }
 
+# Backtrace (this only improves stack traces verbosity but backtracing is enabled by default)
+sub_backtrace(){
+	echo "configure backtrace"
+	cd $ROOT_DIR
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get install -y --no-install-recommends libdw-dev
+}
+
 # Install
 sub_install(){
 	if [ $RUN_AS_ROOT = 1 ]; then
@@ -558,6 +567,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_CLANGFORMAT = 1 ]; then
 		sub_clangformat
+	fi
+	if [ $INSTALL_BACKTRACE = 1 ]; then
+		sub_backtrace
 	fi
 	echo "install finished in workspace $ROOT_DIR"
 }
@@ -687,6 +699,10 @@ sub_options(){
 			echo "clangformat selected"
 			INSTALL_CLANGFORMAT=1
 		fi
+		if [ "$var" = 'backtrace' ]; then
+			echo "backtrace selected"
+			INSTALL_BACKTRACE=1
+		fi
 	done
 }
 
@@ -722,6 +738,7 @@ sub_help() {
 	echo "	pack"
 	echo "	coverage"
 	echo "	clangformat"
+	echo "	backtrace"
 	echo ""
 }
 

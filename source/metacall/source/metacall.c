@@ -33,8 +33,6 @@
 
 #include <serial/serial.h>
 
-#include <backtrace/backtrace.h>
-
 #include <environment/environment_variable.h>
 
 #include <stdio.h>
@@ -164,12 +162,6 @@ int metacall_initialize(void)
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall");
 
-	/* Initialize backtrace for catching segmentation faults */
-	if (backtrace_initialize() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be initialized");
-	}
-
 	/* Initialize MetaCall version environment variable */
 	if (environment_variable_set_expand(METACALL_VERSION) != 0)
 	{
@@ -229,12 +221,6 @@ int metacall_initialize(void)
 	if (loader_initialize() != 0)
 	{
 		configuration_destroy();
-
-		/* Unregister backtrace */
-		if (backtrace_destroy() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
-		}
 
 		return 1;
 	}
@@ -2236,12 +2222,6 @@ int metacall_destroy(void)
 		class_stats_debug();
 		object_stats_debug();
 		exception_stats_debug();
-
-		/* Unregister backtrace */
-		if (backtrace_destroy() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
-		}
 
 		/* Set to null the plugin extension */
 		plugin_extension_handle = NULL;
