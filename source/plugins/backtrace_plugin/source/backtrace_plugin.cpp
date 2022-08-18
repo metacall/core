@@ -22,6 +22,8 @@
 
 #include <backward.hpp>
 
+#include <log/log.h>
+
 static backward::SignalHandling signal_handling;
 
 int backtrace_plugin(void *loader, void *handle, void *context)
@@ -30,5 +32,10 @@ int backtrace_plugin(void *loader, void *handle, void *context)
 	(void)handle;
 	(void)context;
 
-	return signal_handling.loaded() == true ? 0 : 1;
+	if (signal_handling.loaded() == false)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Backtrace plugin failed to load, you need unwind/libunwind for stacktracing and libbfd/libdw/libdwarf for the debug information. Install the required libraries and recompile to utilise the backtrace plugin. For more information visit https://github.com/bombela/backward-cpp");
+		return 1;
+	}
+	return 0;
 }

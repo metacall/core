@@ -239,7 +239,7 @@ sub_cobol(){
 
 # Backtrace (this only improves stack traces verbosity but backtracing is enabled by default)
 sub_backtrace(){
-	echo "configure cobol"
+	echo "configure backtrace"
 
 	sub_apt_install_hold libdw1
 }
