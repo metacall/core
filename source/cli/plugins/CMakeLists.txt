@@ -5,3 +5,4 @@ endif()
 
 # Extension sub-projects
 add_subdirectory(cli_core_plugin)
+add_subdirectory(repl)

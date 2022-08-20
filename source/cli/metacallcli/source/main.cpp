@@ -22,6 +22,8 @@
 
 #include <metacallcli/application.hpp>
 
+#include <metacall/metacall.h>
+
 /* -- Namespace Declarations -- */
 
 using namespace metacallcli;
