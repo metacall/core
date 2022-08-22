@@ -118,8 +118,8 @@ function sub-python {
 
 	setx /M PATH "$Env:PATH;$RuntimeDir"
 	$Env:PATH = "$Env:PATH;$RuntimeDir"
-	echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
-	# echo "{$Env:PATH}" >> $Env:GITHUB_PATH
+	# echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
+	echo "{$Env:PATH}" >> $Env:GITHUB_PATH
 
 	refreshenv
 }
