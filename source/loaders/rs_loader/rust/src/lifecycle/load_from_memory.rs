@@ -1,7 +1,7 @@
 use super::loader::{self, LoadingMethod};
-use crate::{c_char, c_void, CStr};
-
 use compiler::{memory::MemoryRegistration, RegistrationError};
+use std::ffi::CStr;
+use std::os::raw::{c_char, c_void};
 
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_load_from_memory(
@@ -10,10 +10,13 @@ pub extern "C" fn rs_loader_impl_load_from_memory(
     buffer: *const c_char,
     _size: usize,
 ) -> *mut c_void {
-    let name = unsafe { CStr::from_ptr(name) }.to_str().unwrap().to_owned();
+    let name = unsafe { CStr::from_ptr(name) }
+        .to_str()
+        .expect("Unable to cast CStr to str")
+        .to_owned();
     let code = unsafe { CStr::from_ptr(buffer) }
         .to_str()
-        .unwrap()
+        .expect("Unable to cast CStr to str")
         .to_owned();
     let instance = LoadingMethod::Memory(match MemoryRegistration::new(name, code) {
         Ok(instance) => instance,

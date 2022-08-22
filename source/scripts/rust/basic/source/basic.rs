@@ -1,7 +1,7 @@
 use std::collections::HashMap;
+use std::env;
 use std::fs::File;
 use std::io::Write;
-use std::env;
 
 pub fn add(num_1: i32, num_2: i32) -> i32 {
     num_1 + num_2
