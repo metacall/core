@@ -116,10 +116,10 @@ function sub-python {
 	./python_installer.exe /quiet "TargetDir=$RuntimeDir" PrependPath=1 CompileAll=1
 	md "$RuntimeDir\Pip"
 
-	setx /M PATH "$Env:PATH;$RuntimeDir"
-	$Env:PATH = "$Env:PATH;$RuntimeDir"
-	# echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
-	echo "{$Env:PATH}" >> $Env:GITHUB_PATH
+	setx /M PATH "$RuntimeDir;$Env:PATH"
+	$Env:PATH = "$RuntimeDir;$Env:PATH"
+	echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
+	# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
 
 	refreshenv
 }
