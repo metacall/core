@@ -1,3 +1,5 @@
+$Global:ROOT_DIR = "$(pwd)"
+
 $Global:BUILD_TYPE =       'Release'
 $Global:BUILD_PYTHON =     0
 $Global:BUILD_RUBY =       0
@@ -132,9 +134,13 @@ function sub-options {
 }
 
 function sub-configure {
-	$Global:BUILD_STRING = "-DOPTION_BUILD_LOG_PRETTY=Off \
-			-DOPTION_BUILD_LOADERS=On \
-			-DOPTION_BUILD_LOADERS_MOCK=On"
+	$Global:OutputDir = "$ROOT_DIR\build"
+	md $OutputDir
+	cd $OutputDir
+
+	$Global:BUILD_STRING = "-DOPTION_BUILD_LOG_PRETTY=Off " `
+			+ "-DOPTION_BUILD_LOADERS=On "                  `
+			+ "-DOPTION_BUILD_LOADERS_MOCK=On "
 
 	# Scripts
 	if ( $BUILD_SCRIPTS -eq 1 ) {
@@ -171,9 +177,9 @@ function sub-configure {
 
 	# NetCore
 	if ( $BUILD_NETCORE -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING \
-			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/"
+		$Global:BUILD_STRING = "$BUILD_STRING " `
+			"-DOPTION_BUILD_LOADERS_CS=On " `
+			"-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/"
 
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -368,7 +374,8 @@ function sub-configure {
 	$Global:BUILD_STRING = "$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
 	# Execute CMake
-	cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
+	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
+	cmd.exe /c "cmake $BUILD_STRING .."
 }
 
 function sub-help {
