@@ -372,6 +372,8 @@ function sub-configure {
 	# Execute CMake
 	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
 	cmd.exe /c "cmake $BUILD_STRING .."
+
+	echo "Errorlevel at end of compilation: $?"
 }
 
 function sub-help {
