@@ -134,10 +134,6 @@ function sub-options {
 }
 
 function sub-configure {
-	$Global:OutputDir = "$ROOT_DIR\build"
-	md $OutputDir
-	cd $OutputDir
-
 	$Global:BUILD_STRING = "-DOPTION_BUILD_LOG_PRETTY=Off " `
 			+ "-DOPTION_BUILD_LOADERS=On "                  `
 			+ "-DOPTION_BUILD_LOADERS_MOCK=On"
