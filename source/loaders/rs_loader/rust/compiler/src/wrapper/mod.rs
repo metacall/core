@@ -174,7 +174,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                         .file_name()
                         .expect("not a file")
                         .to_str()
-                        .unwrap()
+                        .expect("Unable to cast OsStr to str")
                         .to_owned();
                     let _ = source_path.pop();
 
