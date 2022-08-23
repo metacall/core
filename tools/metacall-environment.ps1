@@ -123,6 +123,19 @@ function sub-python {
 	# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
 
 	refreshenv
+
+	Patch for FindPython.cmake
+	$FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
+	$PythonRuntimeDir = $RuntimeDir.Replace('\', '/')
+
+	echo "set(Python_VERSION $PythonVersion)"                             > $FindPython
+	echo "set(Python_ROOT_DIR ""$PythonRuntimeDir"")"                    >> $FindPython
+	echo "set(Python_EXECUTABLE ""$PythonRuntimeDir/python.exe"")"       >> $FindPython
+	echo "set(Python_INCLUDE_DIRS ""$PythonRuntimeDir/include"")"        >> $FindPython
+	echo "set(Python_LIBRARIES ""$PythonRuntimeDir/libs/python39.lib"")" >> $FindPython
+	echo "include(FindPackageHandleStandardArgs)"                        >> $FindPython
+	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION)" >> $FindPython
+	echo" mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS)" >> $FindPython
 }
 
 # Ruby
