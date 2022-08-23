@@ -140,7 +140,7 @@ function sub-configure {
 
 	$Global:BUILD_STRING = "-DOPTION_BUILD_LOG_PRETTY=Off " `
 			+ "-DOPTION_BUILD_LOADERS=On "                  `
-			+ "-DOPTION_BUILD_LOADERS_MOCK=On "
+			+ "-DOPTION_BUILD_LOADERS_MOCK=On"
 
 	# Scripts
 	if ( $BUILD_SCRIPTS -eq 1 ) {
@@ -178,8 +178,8 @@ function sub-configure {
 	# NetCore
 	if ( $BUILD_NETCORE -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING " `
-			"-DOPTION_BUILD_LOADERS_CS=On " `
-			"-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/"
+			+ "-DOPTION_BUILD_LOADERS_CS=On " `
+			+ "-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/1.1.10/"
 
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -192,9 +192,9 @@ function sub-configure {
 
 	# NetCore 2
 	if ( $BUILD_NETCORE2 -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING \
-			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/"
+		$Global:BUILD_STRING = "$BUILD_STRING " `
+			+ "-DOPTION_BUILD_LOADERS_CS=On " `
+			+ "-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/2.2.8/"
 
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -207,9 +207,9 @@ function sub-configure {
 
 	# NetCore 5
 	if ( $BUILD_NETCORE5 -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING \
-			-DOPTION_BUILD_LOADERS_CS=On \
-			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.17/"
+		$Global:BUILD_STRING = "$BUILD_STRING " `
+			+ "-DOPTION_BUILD_LOADERS_CS=On " `
+			+ "-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.17/"
 
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
