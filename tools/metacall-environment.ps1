@@ -1,3 +1,5 @@
+$PSDefaultParameterValues['*:Encoding'] = 'utf8'
+
 $Global:ROOT_DIR = "$(pwd)"
 
 $Global:INSTALL_CHOCO = 1
