@@ -117,7 +117,7 @@ jobs:
 
       - name: Build the core
         working-directory: ./build
-        run: cmake --build . --target install
+        run: cmake --build . # --target install
         env:
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
