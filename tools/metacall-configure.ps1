@@ -131,7 +131,7 @@ function sub-options {
 	}
 }
 
-sub-configure() {
+function sub-configure {
 	$Global:BUILD_STRING = "-DOPTION_BUILD_LOG_PRETTY=Off \
 			-DOPTION_BUILD_LOADERS=On \
 			-DOPTION_BUILD_LOADERS_MOCK=On"
