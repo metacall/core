@@ -36,6 +36,20 @@ $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 
 $Global:Arguments = $args
 
+# Helper functions
+function Add-to-Path {
+	$GivenPath = $args[0]
+
+	$NewPath = "$GivenPath;$Env:PATH"
+	setx /M PATH $NewPath
+	$Env:PATH = $NewPath
+
+	if ( $Env:GITHUB_ENV -ne $Null ) {
+		echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
+		# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
+	}
+}
+
 # Base packages
 function sub-choco {
 	echo "configure choco"
@@ -118,11 +132,7 @@ function sub-python {
 	./python_installer.exe /quiet "TargetDir=$RuntimeDir" PrependPath=1 CompileAll=1
 	md "$RuntimeDir\Pip"
 
-	$NewPath = "$RuntimeDir;$Env:PATH"
-	setx /M PATH $NewPath
-	$Env:PATH = $NewPath
-	echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
-	# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
+	Add-to-Path $RuntimeDir
 
 	refreshenv
 
