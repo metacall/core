@@ -135,7 +135,7 @@ function sub-python {
 	echo "set(Python_LIBRARIES ""$PythonRuntimeDir/libs/python39.lib"")" >> $FindPython
 	echo "include(FindPackageHandleStandardArgs)"                        >> $FindPython
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION)" >> $FindPython
-	echo" mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS)" >> $FindPython
+	echo "mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS)" >> $FindPython
 
 	echo $FindPython
 	cat $FindPython
