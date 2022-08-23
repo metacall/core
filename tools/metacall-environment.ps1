@@ -124,7 +124,7 @@ function sub-python {
 
 	refreshenv
 
-	Patch for FindPython.cmake
+	# Patch for FindPython.cmake
 	$FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
 	$PythonRuntimeDir = $RuntimeDir.Replace('\', '/')
 
