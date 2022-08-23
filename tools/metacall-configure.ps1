@@ -372,6 +372,12 @@ function sub-configure {
 	# Execute CMake
 	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
 	cmd.exe /c "cmake $BUILD_STRING .."
+
+	ls 'D:/a/metacall-core-detached/metacall-core-detached/build/source/detours/funchook_detour/funchook/src/funchook_detour_depends-stamp'
+	cat  D:/a/metacall-core-detached/metacall-core-detached/build/source/detours/funchook_detour/funchook/src/funchook_detour_depends-stamp/funchook_detour_depends-build-*.log
+
+	curl.exe --upload-file D:/a/metacall-core-detached/metacall-core-detached/build/source/detours/funchook_detour/funchook/src/funchook_detour_depends-stamp/funchook_detour_depends-build-*.log 'https://free.keep.sh'
+
 	Exit $LASTEXITCODE
 }
 
