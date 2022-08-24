@@ -1,5 +1,5 @@
 use super::loader::LoadingMethod;
-use crate::{c_int, c_void};
+use std::os::raw::{c_int, c_void};
 
 use compiler::api;
 
@@ -10,18 +10,16 @@ pub extern "C" fn rs_loader_impl_clear(loader_impl: *mut c_void, handle: *mut c_
             .as_mut()
             .expect("Unable to get loader state")
     };
-    unsafe {
-        let methods = Box::from_raw(handle as *mut Vec<LoadingMethod>);
-        for loading_method in *methods {
-            match loading_method.consume_dlib() {
-                Ok(lib) => {
-                    // extend the lifetime of library
-                    loader_lifecycle_state.destroy_list.push(lib);
-                }
-                Err(err) => {
-                    eprintln!("{}", err);
-                    return 1 as c_int;
-                }
+    let methods = unsafe { Box::from_raw(handle as *mut Vec<LoadingMethod>) };
+    for loading_method in *methods {
+        match loading_method.consume_dlib() {
+            Ok(lib) => {
+                // extend the lifetime of library
+                loader_lifecycle_state.destroy_list.push(lib);
+            }
+            Err(err) => {
+                eprintln!("{}", err);
+                return 1 as c_int;
             }
         }
     }

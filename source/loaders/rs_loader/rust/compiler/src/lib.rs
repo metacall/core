@@ -104,8 +104,15 @@ impl Source {
 
         match source {
             Source::File { ref path } => {
-                let dir = PathBuf::from(path.clone().parent().unwrap());
-                let name = PathBuf::from(path.file_name().unwrap());
+                let dir = PathBuf::from(
+                    path.clone()
+                        .parent()
+                        .expect(format!("Unable to get the parent of {:?}", path).as_str()),
+                );
+                let name = PathBuf::from(
+                    path.file_name()
+                        .expect(format!("Unable to get the filename of {:?}", path).as_str()),
+                );
 
                 SourceImpl {
                     input: SourceInput(config::Input::File(path.clone())),
@@ -129,8 +136,15 @@ impl Source {
                 }
             }
             Source::Package { ref path } => {
-                let dir = PathBuf::from(path.clone().parent().unwrap());
-                let name = PathBuf::from(path.file_name().unwrap());
+                let dir = PathBuf::from(
+                    path.clone()
+                        .parent()
+                        .expect(format!("Unable to get the parent of {:?}", path).as_str()),
+                );
+                let name = PathBuf::from(
+                    path.file_name()
+                        .expect(format!("Unable to get the filename of {:?}", path).as_str()),
+                );
 
                 SourceImpl {
                     input: SourceInput(config::Input::File(path.clone())),
@@ -252,7 +266,7 @@ impl DlopenLibrary {
                 let dll_opening_error = format!(
                     "{}\nrs_loader was unable to open the dll with the following path: `{}`", 
                     error,
-                    path_to_dll.to_str().unwrap()
+                    path_to_dll.to_str().expect("Unable to cast pathbuf to str")
                 );
 
                 return Err(dll_opening_error)
@@ -387,7 +401,11 @@ impl CompilerCallbacks {
             .borrow_mut()
             .access(|resolver| {
                 let c_store = resolver.cstore().clone();
-                c_store.crates_untracked().last().cloned().unwrap()
+                c_store
+                    .crates_untracked()
+                    .last()
+                    .cloned()
+                    .expect("Unable to get last element of crates.")
             });
         queries
             .global_ctxt()
@@ -686,10 +704,10 @@ struct DiagnosticSink(sync::Arc<sync::Mutex<Vec<u8>>>);
 
 impl std::io::Write for DiagnosticSink {
     fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.0.lock().unwrap().write(buf)
+        self.0.lock().expect("Unable to acquire lock").write(buf)
     }
     fn flush(&mut self) -> std::io::Result<()> {
-        self.0.lock().unwrap().flush()
+        self.0.lock().expect("Unable to acquire lock").flush()
     }
 }
 
@@ -857,12 +875,23 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         Ok(()) => Ok(()),
         Err(err) => {
             // Read buffered diagnostics
-            let diagnostics =
-                String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
+            let diagnostics = String::from_utf8(
+                diagnostics_buffer
+                    .lock()
+                    .expect("Unable to acquire lock")
+                    .clone(),
+            )
+            .expect("Unable to get string from utf8");
             eprintln!("{}", diagnostics);
 
             // Read buffered errors
-            let errors = String::from_utf8(errors_buffer.lock().unwrap().clone()).unwrap();
+            let errors = String::from_utf8(
+                errors_buffer
+                    .lock()
+                    .expect("Unable to acquire lock")
+                    .clone(),
+            )
+            .expect("Unable to get string from utf8");
             eprintln!("{}", errors);
 
             return Err(CompilerError {
@@ -877,7 +906,7 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         return Err(e);
     }
 
-    let mut patched_callback = generate_wrapper(callbacks).unwrap();
+    let mut patched_callback = generate_wrapper(callbacks).expect("Unable to generate wrapper");
 
     // generate binary
     match rustc_driver::catch_fatal_errors(|| {
@@ -892,12 +921,23 @@ pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
         }),
         Err(err) => {
             // Read buffered diagnostics
-            let diagnostics =
-                String::from_utf8(diagnostics_buffer.lock().unwrap().clone()).unwrap();
+            let diagnostics = String::from_utf8(
+                diagnostics_buffer
+                    .lock()
+                    .expect("Unable to acquire lock")
+                    .clone(),
+            )
+            .expect("Unable to get string from utf8");
             eprintln!("{}", diagnostics);
 
             // Read buffered errors
-            let errors = String::from_utf8(errors_buffer.lock().unwrap().clone()).unwrap();
+            let errors = String::from_utf8(
+                errors_buffer
+                    .lock()
+                    .expect("Unable to acquire lock")
+                    .clone(),
+            )
+            .expect("Unable to get string from utf8");
             eprintln!("{}", errors);
 
             Err(CompilerError {

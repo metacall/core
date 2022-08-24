@@ -33,7 +33,7 @@ extern "C" fn function_singleton_invoke(
     unsafe {
         let args = std::slice::from_raw_parts(args_p, size).to_vec();
         let nf = Box::from_raw(func_impl as *mut class::NormalFunction);
-        let res = nf.invoke(args).unwrap();
+        let res = nf.invoke(args).expect("Function return error");
 
         std::mem::forget(nf);
         res
@@ -118,8 +118,7 @@ pub fn register_function(function_registration: FunctionRegistration) {
                 loader_impl_type(function_registration.loader_impl, ret.as_ptr()),
             );
         };
-    } 
-    else {
+    } else {
         let ret = CString::new("Null").expect("Failed to convert return type to C string");
 
         unsafe {

@@ -1,12 +1,12 @@
-use crate::{c_char, c_int, c_void, CStr, PathBuf};
-
 use compiler::api;
-
 use compiler::file::FileRegistration;
 use compiler::memory::MemoryRegistration;
 use compiler::package::PackageRegistration;
 
+use std::ffi::CStr;
 use std::fmt::Display;
+use std::os::raw::{c_char, c_int, c_void};
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub enum LoadingMethod {
@@ -71,8 +71,12 @@ pub fn load<T>(
 where
     T: OnPathBufClosure,
 {
-    let loader_lifecycle_state = api::get_loader_lifecycle_state(loader_impl);
-    let mut execution_paths_iterator = unsafe { (*loader_lifecycle_state).execution_paths.iter() };
+    let loader_lifecycle_state = unsafe {
+        api::get_loader_lifecycle_state(loader_impl)
+            .as_mut()
+            .expect("Unable to get lifecycle state.")
+    };
+    let mut execution_paths_iterator = loader_lifecycle_state.execution_paths.iter();
 
     let mut path: *const c_char;
 
@@ -85,7 +89,9 @@ where
             path = loadable_path as *const i8;
         }
 
-        let path_slice = unsafe { CStr::from_ptr(path) }.to_str().unwrap();
+        let path_slice = unsafe { CStr::from_ptr(path) }
+            .to_str()
+            .expect("Unable to cast CStr to str");
         let mut path_buf = PathBuf::from(path_slice);
 
         if !path_buf.is_absolute() {
@@ -96,20 +102,22 @@ where
                 match execution_path_current_iteration {
                     Some(original_execution_path) => {
                         let mut execution_path = original_execution_path.clone();
-                        let mut execution_path_as_str = execution_path.to_str().unwrap();
+                        let mut execution_path_as_str =
+                            execution_path.to_str().expect("Unable to cast CStr to str");
 
                         if !execution_path_as_str.ends_with("/") {
                             execution_path =
                                 PathBuf::from(format!("{}{}", execution_path_as_str, "/"));
 
                             // Reassign the execution_path_as_str since the execution_path got changed
-                            execution_path_as_str = execution_path.to_str().unwrap();
+                            execution_path_as_str =
+                                execution_path.to_str().expect("Unable to cast CStr to str");
                         }
 
                         path_buf = PathBuf::from(format!(
                             "{}{}",
                             execution_path_as_str,
-                            path_buf.to_str().unwrap()
+                            path_buf.to_str().expect("Unable to cast CStr to str")
                         ));
 
                         if !path_buf.exists() || !path_buf.is_file() {
@@ -121,7 +129,9 @@ where
                     None => {
                         return load_on_error(format!(
                             "Rs_loader was unable to find '{}' in the list of execution_paths.",
-                            original_path_buf.to_str().unwrap()
+                            original_path_buf
+                                .to_str()
+                                .expect("Unable to cast CStr to str")
                         ))
                     }
                 };
@@ -134,7 +144,7 @@ where
         if !path_buf.exists() || !path_buf.is_file() {
             return load_on_error(format!(
                 "The file or path '{}' does not exist.",
-                path_buf.to_str().unwrap()
+                path_buf.to_str().expect("Unable to cast CStr to str")
             ));
         }
 
