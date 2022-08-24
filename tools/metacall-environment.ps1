@@ -129,7 +129,8 @@ function sub-python {
 		./python_installer.exe /uninstall
 	}
 
-	./python_installer.exe /quiet "TargetDir=$RuntimeDir" PrependPath=1 CompileAll=1
+	./python_installer.exe /quiet "TargetDir=$RuntimeDir" `
+		Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
 	md "$RuntimeDir\Pip"
 
 	Add-to-Path $RuntimeDir
