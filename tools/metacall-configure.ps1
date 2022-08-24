@@ -371,6 +371,7 @@ function sub-configure {
 	
 	# Execute CMake
 	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
+	echo "BUILD COMMAND HSJHFGSJDFGKSDJF: cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
 	cmd.exe /c "cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
 
 	Exit $LASTEXITCODE
