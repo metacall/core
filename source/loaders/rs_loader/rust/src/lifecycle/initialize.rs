@@ -7,7 +7,9 @@ pub extern "C" fn rs_loader_impl_initialize(
     loader_impl: *mut c_void,
     _config: *mut c_void,
 ) -> *mut c_void {
-    let boxed_loader_lifecycle_state = Box::new(api::LoaderLifecycleState::new(Vec::new()));
+    // add current_dir to execution path to allow relative search path
+    let search_paths = vec![std::env::current_dir().expect("Unable to get current dir")];
+    let boxed_loader_lifecycle_state = Box::new(api::LoaderLifecycleState::new(search_paths));
     compiler::initialize();
 
     api::define_type(
