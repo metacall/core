@@ -54,6 +54,8 @@ func main() {
 	
 	// Calling async function in typescript
 	var sum int
+	var wg sync.WaitGroup
+	wg.Add(1)
 	_, err := metacall.Await("sum",
 		func(value interface{}, ctx interface{}) interface{} {
 			log.Println("from resolve callback ", value)
