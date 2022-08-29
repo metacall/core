@@ -555,7 +555,9 @@ impl ToMetaResult for String {
 
 impl ToMetaResult for &str {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_string(self.as_ptr() as *const i8, self.len()) })
+        let cstring = CString::new(self).expect("Unable to cast str to CString");
+        let ptr = cstring.as_ptr();
+        Ok(unsafe { metacall_value_create_string(ptr, self.len()) })
     }
 }
 

@@ -56,3 +56,12 @@ pub fn string_len(s: String) -> usize {
 pub fn new_string(idx: i32) -> String {
     format!("get number {idx}")
 }
+
+pub fn str_slice(s: &str) -> &str {
+    if s.len() < 4 {
+        return s;
+    } else {
+        println!("{:?}", &s[0..3]);
+        &s[0..3]
+    }
+}
