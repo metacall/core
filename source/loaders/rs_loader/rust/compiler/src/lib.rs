@@ -4,6 +4,8 @@
 #![feature(box_patterns)]
 #![feature(let_else)]
 #![feature(iter_zip)]
+// allow us to get file prefix
+#![feature(path_file_prefix)]
 extern crate rustc_ast;
 extern crate rustc_ast_pretty;
 extern crate rustc_attr;
@@ -19,13 +21,17 @@ extern crate rustc_session;
 extern crate rustc_span;
 
 use dlopen;
+use itertools::Itertools;
 use rustc_ast::{visit, Impl, Item, ItemKind, VariantData};
 use rustc_hir::def::{DefKind, Res};
 use rustc_hir::def_id::DefId;
 use rustc_interface::{interface::Compiler, Config, Queries};
 use rustc_middle::hir::exports::Export;
 use rustc_middle::ty::Visibility;
-use rustc_session::config::{self, CrateType, ExternEntry, ExternLocation, Externs, Input};
+use rustc_session::config::{
+    self, CrateType, ErrorOutputType, ExternEntry, ExternLocation, Externs, Input,
+};
+use rustc_session::search_paths::SearchPath;
 use rustc_session::utils::CanonicalizedPath;
 use rustc_span::source_map;
 use std::io::Write;
@@ -393,7 +399,7 @@ impl CompilerCallbacks {
     }
     fn analyze_metadata<'tcx>(&mut self, queries: &'tcx Queries<'tcx>) {
         let mut class_map: HashMap<DefId, Class> = HashMap::new();
-        let crate_num = queries
+        let krates = queries
             .expansion()
             .expect("Unable to get Expansion")
             .peek_mut()
@@ -401,17 +407,28 @@ impl CompilerCallbacks {
             .borrow_mut()
             .access(|resolver| {
                 let c_store = resolver.cstore().clone();
-                c_store
-                    .crates_untracked()
-                    .last()
-                    .cloned()
-                    .expect("Unable to get last element of crates.")
+                c_store.crates_untracked()
             });
         queries
             .global_ctxt()
             .expect("Unable to get global ctxt")
             .peek_mut()
             .enter(|ctxt| {
+                // since we are loading a package, input_path should be lib<crate_name>.rlib
+                let crate_name = &self
+                    .source
+                    .input_path
+                    .file_prefix()
+                    .expect("Unable to get file prefix.")
+                    .to_str()
+                    .expect("Unable to cast OsStr to str")[3..];
+                // find our krate
+                let crate_num = krates
+                    .iter()
+                    .find_or_first(|&&x| {
+                        ctxt.crate_name(x) == rustc_span::Symbol::intern(crate_name)
+                    })
+                    .expect("unable to find crate");
                 // parse public functions and structs
                 for child in ctxt.item_children(crate_num.as_def_id()) {
                     let Export {
@@ -466,7 +483,7 @@ impl CompilerCallbacks {
                     }
                 }
                 // after parsing all structs, parse tarit implementations.
-                for trait_impl in ctxt.all_trait_implementations(crate_num) {
+                for trait_impl in ctxt.all_trait_implementations(*crate_num) {
                     use rustc_middle::ty::fast_reject::SimplifiedTypeGen::AdtSimplifiedType;
                     if let Some(AdtSimplifiedType(def_id)) = trait_impl.1 {
                         if let Some(class) = class_map.get_mut(&def_id) {
@@ -519,6 +536,19 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             }
 
             config.opts.externs = Externs::new(externs);
+            // we hardcode the dependency path for now.
+            let dep_path = self
+                .source
+                .input_path
+                .clone()
+                .parent()
+                .expect("Unable to get parent dir")
+                .join("deps");
+            // println!("include dep: {}", dep_path.display());
+            config.opts.search_paths.push(SearchPath::from_cli_opt(
+                format!("dependency={}", dep_path.display()).as_str(),
+                ErrorOutputType::default(),
+            ));
             // Set up inputs
             let wrapped_script_path = self
                 .source

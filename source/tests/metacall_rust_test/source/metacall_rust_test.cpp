@@ -99,6 +99,12 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 	// }
 
 	{
+		void *ret = metacall("str_slice", "hellow");
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "hel"));
+		metacall_value_destroy(ret);
+	}
+
+	{
 		// test if we can return vec
 		void *ret_vec = metacall("return_vec");
 		void *array_args[] = {

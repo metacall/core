@@ -10,3 +10,4 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(RustProject)
 
 add_subdirectory(basic)
+add_subdirectory(melody)

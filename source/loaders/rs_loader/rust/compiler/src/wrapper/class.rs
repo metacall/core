@@ -4,7 +4,7 @@ use std::cell::RefCell;
 use std::cell::RefMut;
 use std::collections::HashMap;
 use std::convert::TryInto;
-use std::ffi::CStr;
+use std::ffi::{CStr, CString};
 use std::fmt;
 use std::sync::Arc;
 type Result<T, E = i32> = core::result::Result<T, E>;
@@ -546,7 +546,18 @@ impl ToMetaResult for f64 {
 
 impl ToMetaResult for String {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_string(self.as_ptr() as *const i8, self.len()) })
+        let length = self.len();
+        let cstring = CString::new(self).expect("Unable to cast String to CString");
+        let ptr = cstring.as_ptr();
+        Ok(unsafe { metacall_value_create_string(ptr, length) })
+    }
+}
+
+impl ToMetaResult for &str {
+    fn to_meta_result(self) -> Result<MetacallValue> {
+        let cstring = CString::new(self).expect("Unable to cast str to CString");
+        let ptr = cstring.as_ptr();
+        Ok(unsafe { metacall_value_create_string(ptr, self.len()) })
     }
 }
 
@@ -713,6 +724,17 @@ impl FromMeta for String {
                 .to_str()
                 .expect("Unable to cast Cstr to str")
                 .to_owned()
+        })
+    }
+}
+
+impl FromMeta for &str {
+    fn from_meta(val: MetacallValue) -> Result<Self> {
+        Ok(unsafe {
+            let s = metacall_value_to_string(val);
+            CStr::from_ptr(s)
+                .to_str()
+                .expect("Unable to cast Cstr to str")
         })
     }
 }
