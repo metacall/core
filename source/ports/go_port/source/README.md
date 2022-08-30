@@ -11,6 +11,9 @@ This project implements a wrapper of MetaCall API for Go.
 export function concat(left: string, right: string): string {
         return left + right;
 }
+export async function sum(a: number, b: number): Promise<number> {
+	return a + b;
+}
 ```
 
 `main.go`:
@@ -48,6 +51,31 @@ func main() {
 	if str, ok := ret.(string); ok {
 		fmt.Println(str)
 	}
+	
+	// Calling async function in typescript
+	var sum int
+	var wg sync.WaitGroup
+	wg.Add(1)
+	_, err := metacall.Await("sum",
+		func(value interface{}, ctx interface{}) interface{} {
+			log.Println("from resolve callback ", value)
+			sum = value
+			wg.Done()
+			return nil
+		},
+		func(value interface{}, ctx interface{}) interface{} {
+			log.Println("from reject callback ", value)
+			sum = value
+			wg.Done()
+			return nil
+		},
+		nil,
+		10, 20)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(sum)
 }
 ```
 
