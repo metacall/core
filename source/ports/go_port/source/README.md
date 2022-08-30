@@ -52,9 +52,10 @@ func main() {
 		fmt.Println(str)
 	}
 	
-	// Calling async function in typescript
+	// Calling async function in TypeScript
 	var sum int
 	var wg sync.WaitGroup
+	// WaitGroup is not necessary, the promise can be chained or pass value in ctx for executing res.Send(...)
 	wg.Add(1)
 	_, err := metacall.Await("sum",
 		func(value interface{}, ctx interface{}) interface{} {
