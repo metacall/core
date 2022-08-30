@@ -27,12 +27,12 @@
 
 namespace fs = std::filesystem;
 
-class await_test : public testing::Test
+class metacall_cli_core_plugin_await_test : public testing::Test
 {
 public:
 };
 
-TEST_F(await_test, DefaultConstructor)
+TEST_F(metacall_cli_core_plugin_await_test, DefaultConstructor)
 {
 	metacall_print_info();
 
@@ -60,56 +60,52 @@ TEST_F(await_test, DefaultConstructor)
 	metacall_value_destroy(args[1]);
 	metacall_value_destroy(result);
 
-/* NodeJS */
-#if defined(OPTION_BUILD_LOADERS_NODE)
-	{
-		/* Get core plugin path and handle in order to load cli plugins */
-		const char *plugin_path = metacall_plugin_path();
-		void *plugin_extension_handle = metacall_plugin_extension();
-		void *cli_plugin_handle = NULL;
+	/* Get core plugin path and handle in order to load cli plugins */
+	const char *plugin_path = metacall_plugin_path();
+	void *plugin_extension_handle = metacall_plugin_extension();
+	void *cli_plugin_handle = NULL;
 
-		if (plugin_path != NULL && plugin_extension_handle != NULL)
-		{
-			/* Define the cli plugin path as string (core plugin path plus cli) */
-			fs::path plugin_cli_path(plugin_path);
-			plugin_cli_path /= "cli";
-			std::string plugin_cli_path_str(plugin_cli_path.string());
+	ASSERT_NE((const char *)plugin_path, (const char *)NULL);
+	ASSERT_NE((void *)plugin_extension_handle, (void *)NULL);
 
-			/* Load cli plugins into plugin cli handle */
-			void *args[] = {
-				metacall_value_create_string(plugin_cli_path_str.c_str(), plugin_cli_path_str.length()),
-				metacall_value_create_ptr(&cli_plugin_handle)
-			};
+	/* Define the cli plugin path as string (core plugin path plus cli) */
+	fs::path plugin_cli_path(plugin_path);
+	plugin_cli_path /= "cli";
+	std::string plugin_cli_path_str(plugin_cli_path.string());
 
-			void *ret = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
+	/* Load cli plugins into plugin cli handle */
+	void *args_cli[] = {
+		metacall_value_create_string(plugin_cli_path_str.c_str(), plugin_cli_path_str.length()),
+		metacall_value_create_ptr(&cli_plugin_handle)
+	};
 
-			if (ret == NULL || (ret != NULL && metacall_value_to_int(ret) != 0))
-			{
-				std::cerr << "Failed to load CLI plugins from folder: " << plugin_cli_path_str << std::endl;
-			}
+	result = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args_cli, sizeof(args_cli) / sizeof(args_cli[0]));
 
-			metacall_value_destroy(args[0]);
-			metacall_value_destroy(args[1]);
-			metacall_value_destroy(ret);
-		}
+	ASSERT_NE((void *)result, (void *)NULL);
+	ASSERT_EQ((int)0, (int)metacall_value_to_int(result));
 
-		void *func = metacall_handle_function(cli_plugin_handle, "await");
-		if (func == NULL)
-			std::cerr << "function not in handle\n " << METACALL_PLUGIN_PATH << '\n';
-		void *args[] = {
-			metacall_value_create_function(func)
-		};
-		void *ret = metacallhv_s(handle, "await__test", args, 1);
+	metacall_value_destroy(args_cli[0]);
+	metacall_value_destroy(args_cli[1]);
+	metacall_value_destroy(result);
 
-		EXPECT_NE((void *)NULL, (void *)ret);
+	void *func = metacall_handle_function(cli_plugin_handle, "await");
 
-		EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(ret));
+	ASSERT_NE((void *)func, (void *)NULL);
 
-		EXPECT_EQ((double)22, (long)metacall_value_to_double(ret));
+	void *args_test[] = {
+		metacall_value_create_function(func)
+	};
 
-		metacall_value_destroy(ret);
-	}
-#endif /* OPTION_BUILD_LOADERS_NODE */
+	result = metacallhv_s(handle, "await__test", args_test, 1);
+
+	EXPECT_NE((void *)NULL, (void *)result);
+
+	EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(result));
+
+	EXPECT_EQ((double)22, (long)metacall_value_to_double(result));
+
+	metacall_value_destroy(args_test[0]);
+	metacall_value_destroy(result);
 
 	/* Print inspect information */
 	{
@@ -125,7 +121,7 @@ TEST_F(await_test, DefaultConstructor)
 
 		EXPECT_GT((size_t)size, (size_t)0);
 
-		//std::cout << inspect_str << std::endl;
+		std::cout << inspect_str << std::endl;
 
 		metacall_allocator_free(allocator, inspect_str);
 

@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_EXT OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target await_test)
+set(target metacall-cli-core-plugin-await-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/await_test.cpp
+	${source_path}/metacall_cli_core_plugin_await_test.cpp
 )
 
 # Group source files
@@ -96,6 +96,7 @@ target_compile_definitions(${target}
 	PRIVATE
 	${DEFAULT_COMPILE_DEFINITIONS}
 
+	# Plugin path
 	METACALL_PLUGIN_PATH="${CMAKE_CURRENT_SOURCE_DIR}/plugins"
 )
 
@@ -140,8 +141,9 @@ add_test(NAME ${target}
 add_dependencies(${target}
 	ext_loader
 	node_loader
-	py_loader
 	plugin_extension
+	node_port
+	cli_core_plugin
 )
 
 #
@@ -157,4 +159,7 @@ include(TestEnvironmentVariables)
 test_environment_variables(${target}
 	""
 	${TESTS_ENVIRONMENT_VARIABLES}
+
+	# NodeJS Port path
+	"METACALL_NODE_PORT_PATH=${CMAKE_SOURCE_DIR}/source/ports/node_port/index.js"
 )
