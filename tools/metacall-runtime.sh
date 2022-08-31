@@ -38,10 +38,20 @@ INSTALL_WASM=0
 INSTALL_JAVA=0
 INSTALL_C=0
 INSTALL_COBOL=0
+INSTALL_BACKTRACE=0
 INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
+
+# Linux Distro detection
+if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
+	# Cat file | Get the ID field | Remove 'ID=' | Remove leading and trailing spaces
+	LINUX_DISTRO=$(cat /etc/os-release | grep "^ID=" | cut -f2- -d= | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+else
+	# TODO: Implement more distros or better detection
+	LINUX_DISTRO=unknown
+fi
 
 # Install and mark packages to avoid autoremove
 sub_apt_install_hold(){
@@ -213,7 +223,25 @@ sub_c(){
 sub_cobol(){
 	echo "configure cobol"
 
-	sub_apt_install_hold libcob4
+	if [ "${LINUX_DISTRO}" == "debian" ]; then
+		echo "deb http://deb.debian.org/debian/ unstable main" | $SUDO_CMD tee -a /etc/apt/sources.list > /dev/null
+
+		$SUDO_CMD apt-get update
+		sub_apt_install_hold libcob4
+
+		# Remove unstable from sources.list
+		$SUDO_CMD head -n -2 /etc/apt/sources.list
+		$SUDO_CMD apt-get update
+	elif [ "${LINUX_DISTRO}" == "ubuntu" ]; then
+		sub_apt_install_hold libcob4
+	fi
+}
+
+# Backtrace (this only improves stack traces verbosity but backtracing is enabled by default)
+sub_backtrace(){
+	echo "configure backtrace"
+
+	sub_apt_install_hold libdw1
 }
 
 # Ports
@@ -272,6 +300,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_COBOL = 1 ]; then
 		sub_cobol
+	fi
+	if [ $INSTALL_BACKTRACE = 1 ]; then
+		sub_backtrace
 	fi
 	if [ $INSTALL_PORTS = 1 ]; then
 		sub_ports
@@ -359,6 +390,10 @@ sub_options(){
 			echo "cobol selected"
 			INSTALL_COBOL=1
 		fi
+		if [ "$var" = 'backtrace' ]; then
+			echo "backtrace selected"
+			INSTALL_BACKTRACE=1
+		fi
 		if [ "$var" = 'ports' ]; then
 			echo "ports selected"
 			INSTALL_PORTS=1
@@ -389,6 +424,7 @@ sub_help() {
 	echo "	java"
 	echo "	c"
 	echo "	cobol"
+	echo "	backtrace"
 	echo "	ports"
 	echo "	clean"
 	echo ""

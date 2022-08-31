@@ -94,7 +94,6 @@ set(unity_build_depends
 	preprocessor
 	environment
 	format
-	backtrace
 	threading
 	log
 	memory

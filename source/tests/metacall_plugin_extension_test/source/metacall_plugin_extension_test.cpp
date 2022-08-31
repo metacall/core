@@ -35,11 +35,24 @@ TEST_F(metacall_plugin_extension_test, DefaultConstructor)
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	/* Extension */
-	const char *ext_scripts[] = {
-		"plugin_extension"
+	void *handle = metacall_plugin_extension();
+
+	ASSERT_NE((void *)NULL, (void *)handle);
+
+	void *args[] = {
+		metacall_value_create_string(METACALL_PLUGIN_PATH, sizeof(METACALL_PLUGIN_PATH) - 1)
 	};
 
-	ASSERT_EQ((int)0, (int)metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), NULL));
+	void *result = metacallhv_s(handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
+
+	ASSERT_NE((void *)NULL, (void *)result);
+
+	EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(result));
+
+	EXPECT_EQ((int)0, (int)metacall_value_to_int(result));
+
+	metacall_value_destroy(args[0]);
+	metacall_value_destroy(result);
 
 /* Python */
 #if defined(OPTION_BUILD_LOADERS_PY)

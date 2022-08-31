@@ -1,6 +1,6 @@
 /*
- *	Backtrace Library by Parra Studios
- *	A cross-platform library for supporting SEGV catching and backtracing.
+ *	CLI Core Plugin by Parra Studios
+ *	A plugin implementing backtracing functionality for MetaCall Core.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,27 +18,23 @@
  *
  */
 
-#ifndef BACKTRACE_H
-#define BACKTRACE_H 1
+#ifndef BACKTRACE_PLUGIN_H
+#define BACKTRACE_PLUGIN_H 1
 
-/* -- Headers -- */
+#include <backtrace_plugin/backtrace_plugin_api.h>
 
-#include <backtrace/backtrace_api.h>
+#include <dynlink/dynlink.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* -- Methods -- */
+BACKTRACE_PLUGIN_API int backtrace_plugin(void *loader, void *handle, void *context);
 
-BACKTRACE_API int backtrace_initialize(void);
-
-BACKTRACE_API int backtrace_destroy(void);
-
-BACKTRACE_API const char *backtrace_print_info(void);
+DYNLINK_SYMBOL_EXPORT(backtrace_plugin);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* BACKTRACE_H */
+#endif /* BACKTRACE_PLUGIN_H */

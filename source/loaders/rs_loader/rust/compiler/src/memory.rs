@@ -8,7 +8,7 @@ use crate::{registrator, DlopenLibrary};
 pub struct MemoryRegistration {
     pub name: String,
     pub state: CompilerState,
-    pub dlopen: DlopenLibrary,
+    pub dlopen: Option<DlopenLibrary>,
 }
 impl MemoryRegistration {
     pub fn new(name: String, code: String) -> Result<MemoryRegistration, RegistrationError> {
@@ -40,13 +40,17 @@ impl MemoryRegistration {
         Ok(MemoryRegistration {
             name,
             state,
-            dlopen,
+            dlopen: Some(dlopen),
         })
     }
 
     pub fn discover(&self, loader_impl: *mut c_void, ctx: *mut c_void) -> Result<(), String> {
-        registrator::register(&self.state, &self.dlopen, loader_impl, ctx);
-
-        Ok(())
+        match &self.dlopen {
+            Some(dl) => {
+                registrator::register(&self.state, &dl, loader_impl, ctx);
+                Ok(())
+            }
+            None => Err(String::from("The dlopen_lib is None")),
+        }
     }
 }

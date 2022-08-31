@@ -262,6 +262,11 @@ loader_impl loader_get_impl(const loader_tag tag)
 	return plugin_impl_type(p, loader_impl);
 }
 
+const char *loader_library_path(void)
+{
+	return plugin_manager_library_path(&loader_manager);
+}
+
 int loader_execution_path(const loader_tag tag, const loader_path path)
 {
 	if (loader_initialize() == 1)

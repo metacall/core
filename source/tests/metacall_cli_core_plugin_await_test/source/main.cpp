@@ -1,6 +1,6 @@
 /*
- *	Backtrace Library by Parra Studios
- *	A cross-platform library for supporting SEGV catching and backtracing.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,16 +18,11 @@
  *
  */
 
-/* -- Headers -- */
+#include <gtest/gtest.h>
 
-#include <backtrace/backtrace.h>
-
-int backtrace_initialize(void)
+int main(int argc, char *argv[])
 {
-	return 0;
-}
+	::testing::InitGoogleTest(&argc, argv);
 
-int backtrace_destroy(void)
-{
-	return 0;
+	return RUN_ALL_TESTS();
 }

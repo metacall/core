@@ -171,6 +171,40 @@ TEST_F(metacall_map_test, DefaultConstructor)
 		ret = metacallfs(func, args_bad_array, sizeof(args_bad_array), allocator);
 
 		EXPECT_EQ((void *)NULL, (void *)ret);
+
+		/* TODO: Implement spread operator */
+		/*
+		static const char buffer[] =
+			"function spread_parameter(...args) {\n"
+			"  console.log(args);\n"
+			"  return 'ACK: OK!';\n"
+			"}\n"
+			"module.exports = {\n"
+			"  spread_parameter,\n"
+			"};\n";
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+
+		static const char args_map_spread[] =
+			"{\n"
+			"    \"id\": \"5555555-0000027\",\n"
+			"    \"loanType\": \"Retail\",\n"
+			"    \"lendingCategory\": \"Yeet\",\n"
+			"    \"comments\": {\n"
+			"        \"comment\": \"Rich-Test via Concert/Postman (Auto Approve - Attempt)\"\n"
+			"    }\n"
+			"}\n";
+
+		func = metacall_function("spread_parameter");
+
+		ret = metacallfms(func, args_map_spread, sizeof(args_map_spread), allocator);
+
+		ASSERT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "ACK: OK!"));
+
+		metacall_value_destroy(ret);
+		*/
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 

@@ -3,7 +3,8 @@ use std::cell::Ref;
 use std::cell::RefCell;
 use std::cell::RefMut;
 use std::collections::HashMap;
-use std::ffi::CStr;
+use std::convert::TryInto;
+use std::ffi::{CStr, CString};
 use std::fmt;
 use std::sync::Arc;
 type Result<T, E = i32> = core::result::Result<T, E>;
@@ -34,6 +35,7 @@ extern "C" {
     fn metacall_value_create_string(st: *const c_char, ln: usize) -> *mut c_void;
     fn metacall_value_create_array(values: *const *mut c_void, size: usize) -> *mut c_void;
     fn metacall_value_create_map(tuples: *const *mut c_void, size: usize) -> *mut c_void;
+    fn metacall_value_create_null() -> *mut c_void;
 }
 
 type Attributes = HashMap<&'static str, AttributeGetter>;
@@ -60,11 +62,18 @@ impl Class {
     }
 
     pub fn init(&self, fields: Vec<MetacallValue>) -> Instance {
-        self.constructor.as_ref().unwrap().invoke(fields).unwrap()
+        self.constructor
+            .as_ref()
+            .expect("Unable to get ref of constructor.")
+            .invoke(fields)
+            .expect("Invoke return error.")
     }
 
     pub fn call(&self, attr: &str, args: Vec<MetacallValue>) -> Result<MetacallValue> {
-        let attr = self.class_methods.get(attr).unwrap();
+        let attr = self
+            .class_methods
+            .get(attr)
+            .expect(format!("Unable to get {} from {}", attr, self.name).as_str());
 
         attr.clone().invoke(args)
     }
@@ -214,11 +223,19 @@ impl Instance {
 
     /// Lookup an attribute on the instance via the registered `Class`
     pub fn get_attr(&self, name: &str, class: &Class) -> Result<MetacallValue> {
-        let attr = class.attributes.get(name).unwrap().clone();
+        let attr = class
+            .attributes
+            .get(name)
+            .expect(format!("Unable to find attribute {} from {}", name, self.name()).as_str())
+            .clone();
         attr.invoke(self)
     }
     pub fn set_attr(&mut self, name: &str, value: MetacallValue, class: &Class) {
-        let attr = class.attr_setters.get(name).unwrap().clone();
+        let attr = class
+            .attr_setters
+            .get(name)
+            .expect(format!("Unable to find attribute {} from {}", name, self.name()).as_str())
+            .clone();
         attr.invoke(value, self)
     }
 
@@ -236,7 +253,9 @@ impl Instance {
         args: Vec<MetacallValue>,
         class: &Class,
     ) -> Result<MetacallValue> {
-        let method = class.get_method(name).unwrap();
+        let method = class
+            .get_method(name)
+            .expect(format!("Unable to find method {} from {}", name, self.name()).as_str());
         method.invoke(self, args)
     }
 }
@@ -341,7 +360,9 @@ impl AttributeGetter {
     {
         Self(Arc::new(move |receiver| {
             let borrowed_receiver = receiver.borrow();
-            let receiver = Ok(borrowed_receiver.downcast_ref::<T>().unwrap());
+            let receiver = Ok(borrowed_receiver
+                .downcast_ref::<T>()
+                .expect("Unable to downcast"));
             receiver.map(&f).and_then(|v| v.to_meta_result())
         }))
     }
@@ -362,7 +383,9 @@ impl AttributeSetter {
     {
         Self(Arc::new(move |value, receiver| {
             let mut borrowed_receiver = receiver.borrow_mut();
-            let receiver = borrowed_receiver.downcast_mut::<T>().unwrap();
+            let receiver = borrowed_receiver
+                .downcast_mut::<T>()
+                .expect("Unable to downcast");
             f(FromMeta::from_meta(value).unwrap(), receiver)
         }))
     }
@@ -386,7 +409,9 @@ impl InstanceMethod {
         Self(Arc::new(
             move |receiver: &Instance, args: Vec<MetacallValue>| {
                 let borrowed_receiver = receiver.borrow();
-                let receiver = Ok(borrowed_receiver.downcast_ref::<T>().unwrap());
+                let receiver = Ok(borrowed_receiver
+                    .downcast_ref::<T>()
+                    .expect("Unable to downcast"));
 
                 let args = Args::from_meta_list(&args);
 
@@ -453,7 +478,7 @@ pub trait ToMetaResult {
 
 impl ToMetaResult for () {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_int(0) })
+        Ok(unsafe { metacall_value_create_null() })
     }
 }
 
@@ -521,7 +546,18 @@ impl ToMetaResult for f64 {
 
 impl ToMetaResult for String {
     fn to_meta_result(self) -> Result<MetacallValue> {
-        Ok(unsafe { metacall_value_create_string(self.as_ptr() as *const i8, self.len()) })
+        let length = self.len();
+        let cstring = CString::new(self).expect("Unable to cast String to CString");
+        let ptr = cstring.as_ptr();
+        Ok(unsafe { metacall_value_create_string(ptr, length) })
+    }
+}
+
+impl ToMetaResult for &str {
+    fn to_meta_result(self) -> Result<MetacallValue> {
+        let cstring = CString::new(self).expect("Unable to cast str to CString");
+        let ptr = cstring.as_ptr();
+        Ok(unsafe { metacall_value_create_string(ptr, self.len()) })
     }
 }
 
@@ -603,11 +639,21 @@ impl TryFrom<i32> for PrimitiveMetacallProtocolTypes {
 
     fn try_from(v: i32) -> Result<Self, Self::Error> {
         match v {
-            x if x == PrimitiveMetacallProtocolTypes::Short as i32 => Ok(PrimitiveMetacallProtocolTypes::Short),
-            x if x == PrimitiveMetacallProtocolTypes::Int as i32 => Ok(PrimitiveMetacallProtocolTypes::Int),
-            x if x == PrimitiveMetacallProtocolTypes::Long as i32 => Ok(PrimitiveMetacallProtocolTypes::Long),
-            x if x == PrimitiveMetacallProtocolTypes::Float as i32 => Ok(PrimitiveMetacallProtocolTypes::Float),
-            x if x == PrimitiveMetacallProtocolTypes::Double as i32 => Ok(PrimitiveMetacallProtocolTypes::Double),
+            x if x == PrimitiveMetacallProtocolTypes::Short as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Short)
+            }
+            x if x == PrimitiveMetacallProtocolTypes::Int as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Int)
+            }
+            x if x == PrimitiveMetacallProtocolTypes::Long as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Long)
+            }
+            x if x == PrimitiveMetacallProtocolTypes::Float as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Float)
+            }
+            x if x == PrimitiveMetacallProtocolTypes::Double as i32 => {
+                Ok(PrimitiveMetacallProtocolTypes::Double)
+            }
             _ => Err(()),
         }
     }
@@ -619,11 +665,17 @@ macro_rules! convert_to {
             let id = value_type_id($val);
 
             match id.try_into() {
-                Ok(PrimitiveMetacallProtocolTypes::Short) => Ok(metacall_value_to_short($val) as $t),
+                Ok(PrimitiveMetacallProtocolTypes::Short) => {
+                    Ok(metacall_value_to_short($val) as $t)
+                }
                 Ok(PrimitiveMetacallProtocolTypes::Int) => Ok(metacall_value_to_int($val) as $t),
                 Ok(PrimitiveMetacallProtocolTypes::Long) => Ok(metacall_value_to_long($val) as $t),
-                Ok(PrimitiveMetacallProtocolTypes::Float) => Ok(metacall_value_to_float($val) as $t),
-                Ok(PrimitiveMetacallProtocolTypes::Double) => Ok(metacall_value_to_double($val) as $t),
+                Ok(PrimitiveMetacallProtocolTypes::Float) => {
+                    Ok(metacall_value_to_float($val) as $t)
+                }
+                Ok(PrimitiveMetacallProtocolTypes::Double) => {
+                    Ok(metacall_value_to_double($val) as $t)
+                }
                 Err(_) => {
                     println!("receive id: {}, should be [2-6]", id);
                     panic!("received mismatch type");
@@ -668,7 +720,21 @@ impl FromMeta for String {
     fn from_meta(val: MetacallValue) -> Result<Self> {
         Ok(unsafe {
             let s = metacall_value_to_string(val);
-            CStr::from_ptr(s).to_str().unwrap().to_owned()
+            CStr::from_ptr(s)
+                .to_str()
+                .expect("Unable to cast Cstr to str")
+                .to_owned()
+        })
+    }
+}
+
+impl FromMeta for &str {
+    fn from_meta(val: MetacallValue) -> Result<Self> {
+        Ok(unsafe {
+            let s = metacall_value_to_string(val);
+            CStr::from_ptr(s)
+                .to_str()
+                .expect("Unable to cast Cstr to str")
         })
     }
 }

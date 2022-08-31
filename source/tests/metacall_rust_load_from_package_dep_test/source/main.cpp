@@ -1,6 +1,6 @@
 /*
- *	Backtrace Library by Parra Studios
- *	A cross-platform library for supporting SEGV catching and backtracing.
+ *	Loader Library by Parra Studios
+ *	A plugin for loading ruby code at run-time into a process.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -18,27 +18,11 @@
  *
  */
 
-/* -- Headers -- */
+#include <gtest/gtest.h>
 
-#include <metacall/metacall_version.h>
-
-#include <backtrace/backtrace.h>
-
-/* -- Methods -- */
-
-const char *backtrace_print_info(void)
+int main(int argc, char *argv[])
 {
-	static const char backtrace_info[] =
-		"Backtrace Library " METACALL_VERSION "\n"
-		"Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
+	::testing::InitGoogleTest(&argc, argv);
 
-#ifdef LOG_STATIC_DEFINE
-		"Compiled as static library type\n"
-#else
-		"Compiled as shared library type\n"
-#endif
-
-		"\n";
-
-	return backtrace_info;
+	return RUN_ALL_TESTS();
 }

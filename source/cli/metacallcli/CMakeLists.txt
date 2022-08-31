@@ -26,7 +26,7 @@ include(SecurityFlags)
 
 set(include_path "${CMAKE_CURRENT_SOURCE_DIR}/include/${target}")
 set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/${target}")
-set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
+set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/tokenizer.hpp
@@ -51,7 +51,6 @@ set(sources
 
 # Build executable
 add_executable(${target}
-	MACOSX_BUNDLE
 	${sources}
 )
 
@@ -140,6 +139,15 @@ target_compile_options(${target}
 )
 
 #
+# Compile features
+#
+
+target_compile_features(${target}
+	PRIVATE
+	cxx_std_17 # Required for filesystem
+)
+
+#
 # Linker options
 #
 
@@ -206,6 +214,18 @@ add_loader_dependencies(${target}
 #
 # Define tests
 #
+
+add_test(NAME ${target}-inspect-leak
+	COMMAND ${TEST_COMMAND} "echo 'inspect\nexit' | $<TARGET_FILE:${target}>"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+set_property(TEST ${target}-inspect-leak
+	PROPERTY LABELS ${target}-inspect-leak
+)
+test_environment_variables(${target}-inspect-leak
+	""
+	${TESTS_ENVIRONMENT_VARIABLES}
+)
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_NODE)
 	add_test(NAME ${target}-node

@@ -17,10 +17,14 @@ pub use class::{class_singleton, register_class, ClassCreate, ClassRegistration}
 
 pub struct LoaderLifecycleState {
     pub execution_paths: Vec<PathBuf>,
+    pub destroy_list: Vec<super::DlopenLibrary>,
 }
 impl LoaderLifecycleState {
     pub fn new(execution_paths: Vec<PathBuf>) -> LoaderLifecycleState {
-        LoaderLifecycleState { execution_paths }
+        LoaderLifecycleState {
+            execution_paths,
+            destroy_list: vec![],
+        }
     }
 }
 extern "C" {

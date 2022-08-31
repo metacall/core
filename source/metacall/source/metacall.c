@@ -33,8 +33,6 @@
 
 #include <serial/serial.h>
 
-#include <backtrace/backtrace.h>
-
 #include <environment/environment_variable.h>
 
 #include <stdio.h>
@@ -60,9 +58,12 @@ static int metacall_log_null_flag = 1;
 static int metacall_config_flags = 0;
 static int metacall_initialize_argc = 0;
 static char **metacall_initialize_argv = NULL;
+static void *plugin_extension_handle = NULL;
+static loader_path plugin_path = { 0 };
 
 /* -- Private Methods -- */
 
+static int metacall_plugin_extension_load(void);
 static void *metacallv_method(void *target, const char *name, method_invoke_ptr call, vector v, void *args[], size_t size);
 static type_id *metacall_type_ids(void *args[], size_t size);
 
@@ -83,6 +84,54 @@ void metacall_log_null(void)
 void metacall_flags(int flags)
 {
 	metacall_config_flags = flags;
+}
+
+int metacall_plugin_extension_load(void)
+{
+	static const char *ext_scripts[] = {
+		"plugin_extension"
+	};
+	static const char plugin_suffix[] = "plugins";
+	const char *library_path = loader_library_path();
+	size_t plugin_path_size;
+	void *args[2];
+	void *ret;
+	int result = 1;
+
+	/* Load the plugin extension */
+	if (metacall_load_from_file("ext", ext_scripts, sizeof(ext_scripts) / sizeof(ext_scripts[0]), &plugin_extension_handle) != 0)
+	{
+		goto plugin_extension_error;
+	}
+
+	/* Get the plugin path */
+	plugin_path_size = portability_path_join(library_path, strnlen(library_path, PORTABILITY_PATH_SIZE) + 1, plugin_suffix, sizeof(plugin_suffix), plugin_path, PORTABILITY_PATH_SIZE);
+
+	/* Load core plugins into plugin extension handle */
+	args[0] = metacall_value_create_string(plugin_path, plugin_path_size - 1);
+	args[1] = metacall_value_create_ptr(&plugin_extension_handle);
+	ret = metacallhv_s(plugin_extension_handle, "plugin_load_from_path", args, sizeof(args) / sizeof(args[0]));
+
+	if (ret == NULL)
+	{
+		goto plugin_load_from_path_error;
+	}
+
+	if (metacall_value_id(ret) != METACALL_INT)
+	{
+		goto plugin_load_from_path_type_error;
+	}
+
+	/* Retrieve the result value */
+	result = metacall_value_to_int(ret);
+
+plugin_load_from_path_type_error:
+	metacall_value_destroy(ret);
+plugin_load_from_path_error:
+	metacall_value_destroy(args[0]);
+	metacall_value_destroy(args[1]);
+plugin_extension_error:
+	return result;
 }
 
 int metacall_initialize(void)
@@ -112,12 +161,6 @@ int metacall_initialize(void)
 	}
 
 	log_write("metacall", LOG_LEVEL_DEBUG, "Initializing MetaCall");
-
-	/* Initialize backtrace for catching segmentation faults */
-	if (backtrace_initialize() != 0)
-	{
-		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be initialized");
-	}
 
 	/* Initialize MetaCall version environment variable */
 	if (environment_variable_set_expand(METACALL_VERSION) != 0)
@@ -179,13 +222,13 @@ int metacall_initialize(void)
 	{
 		configuration_destroy();
 
-		/* Unregister backtrace */
-		if (backtrace_destroy() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
-		}
-
 		return 1;
+	}
+
+	/* Load core plugins */
+	if (metacall_plugin_extension_load() != 0)
+	{
+		log_write("metacall", LOG_LEVEL_WARNING, "MetaCall Plugin Extension could not be loaded");
 	}
 
 	metacall_initialize_flag = 0;
@@ -2147,6 +2190,21 @@ int metacall_clear(void *handle)
 	return loader_clear(handle);
 }
 
+void *metacall_plugin_extension(void)
+{
+	return plugin_extension_handle;
+}
+
+const char *metacall_plugin_path(void)
+{
+	if (plugin_extension_handle == NULL)
+	{
+		return NULL;
+	}
+
+	return plugin_path;
+}
+
 int metacall_destroy(void)
 {
 	if (metacall_initialize_flag == 0)
@@ -2165,11 +2223,8 @@ int metacall_destroy(void)
 		object_stats_debug();
 		exception_stats_debug();
 
-		/* Unregister backtrace */
-		if (backtrace_destroy() != 0)
-		{
-			log_write("metacall", LOG_LEVEL_WARNING, "MetaCall backtrace could not be destroyed");
-		}
+		/* Set to null the plugin extension */
+		plugin_extension_handle = NULL;
 	}
 
 	return 0;

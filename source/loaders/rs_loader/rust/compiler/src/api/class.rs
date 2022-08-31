@@ -119,10 +119,11 @@ extern "C" fn class_singleton_static_await(
 
 #[no_mangle]
 extern "C" fn class_singleton_destroy(_klass: OpaqueType, class_impl: OpaqueType) {
-    unsafe {
-        let class_impl_ptr = class_impl as *mut class::Class;
-        let class = Box::from_raw(class_impl_ptr);
-        drop(class);
+    if !class_impl.is_null() {
+        unsafe {
+            let class = Box::from_raw(class_impl as *mut class::Class);
+            drop(class);
+        }
     }
     println!("class destroy");
 }
@@ -239,6 +240,17 @@ pub fn register_class(class_registration: ClassRegistration) {
                 );
             };
         }
+        else {
+            let ret = CString::new("Null")
+            .expect("Failed to convert return type to C string");
+
+            unsafe {
+                signature_set_return(
+                    s,
+                    loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
+                );
+            };
+        }
         for (idx, param) in method.args.iter().enumerate() {
             let name = CString::new(param.name.clone())
                 .expect("Failed to convert function parameter name to C string");
@@ -275,6 +287,17 @@ pub fn register_class(class_registration: ClassRegistration) {
         if let Some(ret) = &method.ret {
             let ret = CString::new(ret.ty.to_string())
                 .expect("Failed to convert return type to C string");
+
+            unsafe {
+                signature_set_return(
+                    s,
+                    loader_impl_type(class_registration.loader_impl, ret.as_ptr()),
+                );
+            };
+        }
+        else {
+            let ret = CString::new("Null")
+            .expect("Failed to convert return type to C string");
 
             unsafe {
                 signature_set_return(

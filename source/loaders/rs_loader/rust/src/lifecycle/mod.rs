@@ -6,8 +6,7 @@ mod initialize;
 mod load_from_file;
 mod load_from_memory;
 mod load_from_package;
-
-pub mod loader;
+mod loader;
 
 pub use clear::rs_loader_impl_clear;
 pub use destroy::rs_loader_impl_destroy;

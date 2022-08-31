@@ -140,11 +140,11 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             let source_dir = path.parent().expect("input path has no parent");
 
             // create metacall_class file
-            println!("create: {:?}", source_dir.join("metacall_class.rs"));
+            // println!("create: {:?}", source_dir.join("metacall_class.rs"));
             let mut class_file = File::create(source_dir.join("metacall_class.rs"))?;
             let bytes = include_bytes!("class.rs");
             class_file.write_all(bytes)?;
-            println!("open: {:?}", source_dir.join("metacall_wrapped_package.rs"));
+            // println!("open: {:?}", source_dir.join("metacall_wrapped_package.rs"));
             let mut wrapper_file = std::fs::OpenOptions::new()
                 .append(true)
                 .open(source_dir.join("metacall_wrapped_package.rs"))?;
@@ -174,7 +174,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                         .file_name()
                         .expect("not a file")
                         .to_str()
-                        .unwrap()
+                        .expect("Unable to cast OsStr to str")
                         .to_owned();
                     let _ = source_path.pop();
 

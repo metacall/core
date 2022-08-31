@@ -1,4 +1,7 @@
 use std::collections::HashMap;
+use std::env;
+use std::fs::File;
+use std::io::Write;
 
 pub fn add(num_1: i32, num_2: i32) -> i32 {
     num_1 + num_2
@@ -13,7 +16,9 @@ pub fn add_float(num_1: f32, num_2: f32) -> f32 {
 }
 
 pub fn run() {
-    println!("Hello World")
+    let dir = env::temp_dir();
+    let mut f = File::create(dir.join("hello.txt")).unwrap();
+    f.write(b"Hello metacall");
 }
 
 // pub fn add_vec(vec: &mut Vec<i32>) -> i32 {
@@ -50,4 +55,13 @@ pub fn string_len(s: String) -> usize {
 
 pub fn new_string(idx: i32) -> String {
     format!("get number {idx}")
+}
+
+pub fn str_slice(s: &str) -> &str {
+    if s.len() < 4 {
+        return s;
+    } else {
+        println!("{:?}", &s[0..3]);
+        &s[0..3]
+    }
 }

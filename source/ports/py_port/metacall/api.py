@@ -164,6 +164,8 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'dll': 'cs',
 		# WebAssembly Loader
 		'wasm': 'wasm',
+		# Rust Loader
+		'rlib': 'rs'
 	}
 
 	# Try to load it as a Python module

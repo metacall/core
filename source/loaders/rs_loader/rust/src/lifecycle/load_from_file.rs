@@ -1,5 +1,6 @@
 use super::loader::{self, LoadingMethod};
-use crate::{c_char, c_void, PathBuf};
+use std::os::raw::{c_char, c_void};
+use std::path::PathBuf;
 
 use compiler::{file::FileRegistration, RegistrationError};
 

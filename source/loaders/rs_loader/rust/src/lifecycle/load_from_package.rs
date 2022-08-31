@@ -1,8 +1,7 @@
-use crate::{c_char, c_void};
-
 use super::loader::{self, LoadingMethod};
-use crate::PathBuf;
 use compiler::{package::PackageRegistration, RegistrationError};
+use std::os::raw::{c_char, c_void};
+use std::path::PathBuf;
 #[no_mangle]
 pub extern "C" fn rs_loader_impl_load_from_package(
     loader_impl: *mut c_void,

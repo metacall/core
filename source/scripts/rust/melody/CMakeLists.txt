@@ -1,0 +1,1 @@
+cargo_package(cargo_melody 0.1.0)
