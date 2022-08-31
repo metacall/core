@@ -359,6 +359,30 @@ METACALL_API enum metacall_value_id metacall_value_id(void *v);
 
 /**
 *  @brief
+*    Provide type id in a readable form (as string) of a type id
+*
+*  @param[in] id
+*    Value type identifier
+*
+*  @return
+*    Return string related to the type id
+*/
+METACALL_API const char *metacall_value_id_name(enum metacall_value_id id);
+
+/**
+*  @brief
+*    Provide type id in a readable form (as string) of value
+*
+*  @param[in] v
+*    Reference to the value
+*
+*  @return
+*    Return string related to the type id assigned to value
+*/
+METACALL_API const char *metacall_value_type_name(void *v);
+
+/**
+*  @brief
 *    Deep copies the value @v, the result copy resets
 *    the reference counter and ownership, including the finalizer
 *

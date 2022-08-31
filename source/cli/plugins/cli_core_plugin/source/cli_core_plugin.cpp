@@ -75,8 +75,8 @@ void *load(size_t argc, void *args[], void *data)
 		}
 		else
 		{
-			log_write("metacall", LOG_LEVEL_ERROR, "Calling load with wrong type of argument at argument position %" PRIuS ", expected metacall value id %" PRIuS " , got %" PRIuS,
-				i + 1, METACALL_STRING, metacall_value_id(script_val[i]));
+			log_write("metacall", LOG_LEVEL_ERROR, "Calling load with wrong type of argument at argument position %" PRIuS ", expected %s, got %s",
+				i + 1, metacall_value_id_name(METACALL_STRING), metacall_value_type_name(script_val[i]));
 			return metacall_value_create_int(1);
 		}
 	}
@@ -107,8 +107,8 @@ void *eval(size_t argc, void *args[], void *data)
 	}
 	else
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling eval with wrong type of arguments, expected metacall value id %" PRIuS " , got %" PRIuS "  and %" PRIuS,
-			METACALL_STRING, metacall_value_id(args[0]), metacall_value_id(args[1]));
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling eval with wrong type of arguments, expected two %s, got %s and %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]), metacall_value_type_name(args[1]));
 	}
 
 	return metacall_value_create_int(1);
@@ -127,7 +127,8 @@ void *await(size_t argc, void *args[], void *data)
 
 	if (metacall_value_id(args[0]) != METACALL_STRING)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling await with wrong type of arguments, expected metacall value id %" PRIuS " , got %" PRIuS, METACALL_STRING, metacall_value_id(args[0]));
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling await with wrong type of arguments, expected %s, got %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]));
 		return metacall_value_create_int(1);
 	}
 
@@ -217,7 +218,8 @@ void *call(size_t argc, void *args[], void *data)
 
 	if (metacall_value_id(args[0]) != METACALL_STRING)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong type of arguments, expected metacall value id %" PRIuS " , got %" PRIuS, METACALL_STRING, metacall_value_id(args[0]));
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong type of arguments, expected %s, got %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]));
 		return metacall_value_create_int(1);
 	}
 
@@ -268,8 +270,8 @@ void *clear(size_t argc, void *args[], void *data)
 
 	if (metacall_value_id(args[0]) != METACALL_STRING && metacall_value_id(args[1]) != METACALL_STRING)
 	{
-		log_write("metacall", LOG_LEVEL_ERROR, "Calling clear with wrong type of arguments, expected metacall value id %" PRIuS " , got %" PRIuS "  and %" PRIuS,
-			METACALL_STRING, metacall_value_id(args[0]), metacall_value_id(args[1]));
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling clear with wrong type of arguments, expected two %s, got %s and %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]), metacall_value_type_name(args[1]));
 		return metacall_value_create_int(1);
 	}
 
