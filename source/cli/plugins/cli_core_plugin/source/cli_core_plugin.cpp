@@ -64,12 +64,18 @@ void *load(size_t argc, void *args[], void *data)
 
 void *eval(size_t argc, void *args[], void *data)
 {
-	(void)argc;
 	(void)data;
+
+	if (argc != 2)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling eval with wrong number of arguments, expected 2 arguments, got %" PRIuS " arguments", argc);
+		return metacall_value_create_int(1);
+	}
+
 	char *tag = metacall_value_to_string(args[0]);
 	char *script = metacall_value_to_string(args[1]);
 
-	int ret = metacall_load_from_memory(tag, script, strlen(script), NULL);
+	int ret = metacall_load_from_memory(tag, script, strlen(script) + 1, NULL);
 	return metacall_value_create_int(ret);
 }
 

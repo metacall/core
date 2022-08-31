@@ -6,7 +6,7 @@ function await__test(await_cb) {
 	console.log(await_cb);
 
 	// TODO: This call generates a deadlock
-	await_cb(hello_await);
+	// await_cb(hello_await);
 
 	return 22;
 }

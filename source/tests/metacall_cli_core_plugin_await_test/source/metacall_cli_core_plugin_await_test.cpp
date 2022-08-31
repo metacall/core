@@ -88,7 +88,33 @@ TEST_F(metacall_cli_core_plugin_await_test, DefaultConstructor)
 	metacall_value_destroy(args_cli[1]);
 	metacall_value_destroy(result);
 
-	void *func = metacall_handle_function(cli_plugin_handle, "await");
+	/* Test eval */
+	void *func = metacall_handle_function(cli_plugin_handle, "eval");
+
+	ASSERT_NE((void *)func, (void *)NULL);
+
+	static const char eval_loader_str[] = "node";
+	static const char eval_str[] = "console.log('hello world')";
+
+	void *args_eval[] = {
+		metacall_value_create_string(eval_loader_str, sizeof(eval_loader_str) - 1),
+		metacall_value_create_string(eval_str, sizeof(eval_str) - 1)
+	};
+
+	result = metacallfv_s(func, args_eval, sizeof(args_eval) / sizeof(args_eval[0]));
+
+	EXPECT_NE((void *)NULL, (void *)result);
+
+	EXPECT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(result));
+
+	EXPECT_EQ((int)0, (int)metacall_value_to_int(result));
+
+	metacall_value_destroy(args_eval[0]);
+	metacall_value_destroy(args_eval[1]);
+	metacall_value_destroy(result);
+
+	/* Test await */
+	func = metacall_handle_function(cli_plugin_handle, "await");
 
 	ASSERT_NE((void *)func, (void *)NULL);
 
@@ -96,13 +122,13 @@ TEST_F(metacall_cli_core_plugin_await_test, DefaultConstructor)
 		metacall_value_create_function(func)
 	};
 
-	result = metacallhv_s(handle, "await__test", args_test, 1);
+	result = metacallhv_s(handle, "await__test", args_test, sizeof(args_test) / sizeof(args_test[0]));
 
 	EXPECT_NE((void *)NULL, (void *)result);
 
 	EXPECT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(result));
 
-	EXPECT_EQ((double)22, (long)metacall_value_to_double(result));
+	EXPECT_EQ((double)22.0, (double)metacall_value_to_double(result));
 
 	metacall_value_destroy(args_test[0]);
 	metacall_value_destroy(result);
