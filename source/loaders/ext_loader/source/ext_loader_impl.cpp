@@ -30,6 +30,8 @@
 #include <reflect/reflect_scope.h>
 #include <reflect/reflect_type.h>
 
+#include <dynlink/dynlink.h>
+
 #include <log/log.h>
 
 #include <filesystem>
@@ -65,8 +67,9 @@ union loader_impl_function_cast
 	int (*fn)(void *, void *, void *);
 };
 
-dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path);
-int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path);
+static dynlink ext_loader_impl_load_from_file_dynlink(const char *path, const char *library_name);
+static dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path);
+static int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_ext_handle ext_handle, const loader_path path);
 static void ext_loader_impl_destroy_handle(loader_impl_ext_handle ext_handle);
 
 int ext_loader_impl_initialize_types(loader_impl impl)
@@ -122,6 +125,26 @@ int ext_loader_impl_execution_path(loader_impl impl, const loader_path path)
 	return 0;
 }
 
+dynlink ext_loader_impl_load_from_file_dynlink(const char *path, const char *library_name)
+{
+	/* This function will try to check if the library exists before loading it,
+	so we avoid error messages from dynlink when guessing the file path for relative load from file */
+	dynlink_name_impl platform_name;
+
+	dynlink_platform_name(library_name, platform_name);
+
+	std::filesystem::path lib_path(path);
+
+	lib_path /= platform_name;
+
+	if (std::filesystem::exists(lib_path) == false)
+	{
+		return NULL;
+	}
+
+	return dynlink_load(path, library_name, DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+}
+
 dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const loader_path path)
 {
 	std::string lib_path_str(path);
@@ -136,18 +159,14 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 	if (lib_path.is_absolute())
 	{
 		std::filesystem::path lib_dir = lib_path.parent_path();
-		dynlink lib = dynlink_load(lib_dir.string().c_str(), lib_name.c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
 
-		if (lib != NULL)
-		{
-			return lib;
-		}
+		return ext_loader_impl_load_from_file_dynlink(lib_dir.string().c_str(), lib_name.c_str());
 	}
 	else
 	{
 		for (auto exec_path : ext_impl->paths)
 		{
-			dynlink lib = dynlink_load(exec_path.string().c_str(), lib_name.c_str(), DYNLINK_FLAGS_BIND_LAZY | DYNLINK_FLAGS_BIND_GLOBAL);
+			dynlink lib = ext_loader_impl_load_from_file_dynlink(exec_path.string().c_str(), lib_name.c_str());
 
 			if (lib != NULL)
 			{
