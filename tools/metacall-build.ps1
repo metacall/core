@@ -39,10 +39,12 @@ function sub-options {
 function sub-build {
 
 	# Build the project
+	echo "Building MetaCall..."
 	cmake --build . "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
 
 	# Tests (coverage needs to run the tests)
 	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
+		echo "Running the tests..."
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
 	}
 
@@ -50,6 +52,7 @@ function sub-build {
 	<# if ( $BUILD_COVERAGE = 1 ) {
 		# TODO (copied): Remove -k, solve coverage issues
 		# TODO: Migrate to Windows
+		echo "Reporting coverage..."
 		make -k gcov
 		make -k lcov
 		make -k lcov-genhtml
@@ -57,6 +60,7 @@ function sub-build {
 
 	# Install
 	if ( $BUILD_INSTALL -eq 1 ) {
+		echo "Building and installing MetaCall..."
 		cmake --build . --target install
 	}
 }
