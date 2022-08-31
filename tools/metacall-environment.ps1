@@ -48,6 +48,8 @@ function Add-to-Path {
 		echo "PATH=$Env:PATH" >> $Env:GITHUB_ENV
 		# echo "{$Env:PATH}" >> $Env:GITHUB_PATH # Doesn't work
 	}
+
+	refreshenv
 }
 
 # Base packages
@@ -134,8 +136,6 @@ function sub-python {
 	md "$RuntimeDir\Pip"
 
 	Add-to-Path $RuntimeDir
-
-	refreshenv
 
 	# Patch for FindPython.cmake
 	$FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
