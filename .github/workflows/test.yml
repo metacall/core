@@ -117,9 +117,10 @@ jobs:
 
       - name: Build the core
         working-directory: ./build
-        run: cmake --build . # --target install
+        run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_TYPE $Env:METACALL_BUILD_OPTIONS"
         env:
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
+          METACALL_BUILD_OPTIONS:      '' # tests coverage install
