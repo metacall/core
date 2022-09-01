@@ -102,7 +102,7 @@ jobs:
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
-          METACALL_INSTALL_OPTIONS:    base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS:    base python nodejs # ruby netcore5 typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Run the configuration script
         run: |
@@ -115,7 +115,7 @@ jobs:
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
-          METACALL_BUILD_OPTIONS:      python # root ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
+          METACALL_BUILD_OPTIONS:      python nodejs nasm # root ruby netcore5 typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
 
       - name: Build the core
         working-directory: ./build
