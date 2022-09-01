@@ -232,8 +232,9 @@ function sub-nodejs {
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(NodeJS REQUIRED_VARS NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE VERSION_VAR NodeJS_VERSION)" >> $FindNode
 	echo "mark_as_advanced(NodeJS_VERSION NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE)" >> $FindNode
 
-	# Move DLL to correct location
-	mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
+	# Move DLL to correct location (to be done AFTER build)
+	# mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
+	cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
 }
 
 # TypeScript
