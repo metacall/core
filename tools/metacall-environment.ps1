@@ -84,8 +84,9 @@ function sub-python {
 	$RuntimeDir    = "$ROOT_DIR\runtimes\python"
 	$DepsDir       = "$ROOT_DIR\dependencies"
 
-	cd $DepsDir
+	md -Force $DepsDir
 	md -Force $RuntimeDir
+	cd $DepsDir
 
 	<#
 	
@@ -232,9 +233,10 @@ function sub-nodejs {
 	$DLLReleaseVer = 'v0.0.1'
 	$RuntimeDir    = "$ROOT_DIR\runtimes\nodejs"
 
+	md -Force $DepsDir
 	md -Force $RuntimeDir
 	cd $DepsDir
-	
+
 	# Download
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", './node.zip')
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", './node_headers.tar.gz')
@@ -295,6 +297,7 @@ function sub-rpc {
 # NASM
 function sub-nasm {
 	echo "configure nasm"
+	cd $ROOT_DIR
 
 	$NASMVer    = '2.15.05'
 
