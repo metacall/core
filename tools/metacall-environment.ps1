@@ -84,13 +84,9 @@ function sub-python {
 	$RuntimeDir    = "$ROOT_DIR\runtimes\python"
 	$DepsDir       = "$ROOT_DIR\dependencies"
 
-	echo "Present: $(pwd)"
-
 	md -Force $DepsDir
 	md -Force $RuntimeDir
 	cd $DepsDir
-
-	echo "Present: $(pwd)"
 
 	# Download installer
 	(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", "$(pwd)\python_installer.exe")
@@ -211,8 +207,8 @@ function sub-nodejs {
 	cd $DepsDir
 
 	# Download
-	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", './node.zip')
-	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", './node_headers.tar.gz')
+	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", "$(pwd)\node.zip")
+	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", "$(pwd)\node_headers.tar.gz")
 	
 	# Install runtime
 	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
@@ -230,7 +226,7 @@ function sub-nodejs {
 	rd -Recurse -Force "$DepsDir\node-v$NodeVersion"
 
 	# Install custom Node DLL
-	(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/node.dll/releases/download/$DLLReleaseVer/node-shared-v$NodeVersion-x64.zip", './node_dll.zip')
+	(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/node.dll/releases/download/$DLLReleaseVer/node-shared-v$NodeVersion-x64.zip", "$(pwd)\node_dll.zip")
 	Expand-Archive -Path "node_dll.zip" -DestinationPath "$RuntimeDir\lib"
 
 	# Patch for FindNodeJS.cmake
@@ -274,7 +270,7 @@ function sub-nasm {
 
 	$NASMVer    = '2.15.05'
 
-	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", './nasm.zip')
+	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", "$(pwd)\nasm.zip")
 	Expand-Archive -Path 'nasm.zip' -DestinationPath .
 	
 	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
