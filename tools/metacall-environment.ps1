@@ -1,4 +1,5 @@
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
+$Global:ProgressPreference = 'SilentlyContinue'
 
 $Global:ROOT_DIR = "$(pwd)"
 
@@ -22,6 +23,7 @@ $Global:INSTALL_NODEJS = 0
 $Global:INSTALL_TYPESCRIPT = 0
 $Global:INSTALL_FILE = 0
 $Global:INSTALL_RPC = 0
+$Global:INSTALL_NASM = 0
 $Global:INSTALL_WASM = 0
 $Global:INSTALL_JAVA = 0
 $Global:INSTALL_C = 0
@@ -80,6 +82,10 @@ function sub-python {
 
 	$PythonVersion = '3.9.7'
 	$RuntimeDir    = "$ROOT_DIR\runtimes\python"
+	$DepsDir       = "$ROOT_DIR\dependencies"
+
+	cd $DepsDir
+	md -Force $RuntimeDir
 
 	<#
 	
@@ -220,7 +226,52 @@ function sub-nodejs {
 	# TODO (copied from metacall-environment.sh): Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
 	cd $ROOT_DIR
+
+	$DepsDir       = "$ROOT_DIR\dependencies"
+	$NodeVersion   = '14.18.2'
+	$DLLReleaseVer = 'v0.0.1'
+	$RuntimeDir    = "$ROOT_DIR\runtimes\nodejs"
+
+	md -Force $RuntimeDir
+	cd $DepsDir
 	
+	# Download
+	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", './node.zip')
+	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", './node_headers.tar.gz')
+	
+	# Install runtime
+	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
+	robocopy /move /e "$RuntimeDir\node-v$NodeVersion-win-x64" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
+	rd "$RuntimeDir\node-v$NodeVersion-win-x64"
+
+	Add-to-Path $RuntimeDir
+
+	# Install headers
+	cmake -E tar xzf node_headers.tar.gz
+	cd "$DepsDir\node-v$NodeVersion"
+	md "$RuntimeDir\include"
+	robocopy /move /e "$DepsDir\node-v$NodeVersion\include" "$RuntimeDir\include" /NFL /NDL /NJH /NJS /NC /NS /NP
+	cd $DepsDir
+	rd -Recurse -Force "$DepsDir\node-v$NodeVersion"
+
+	# Install custom Node DLL
+	(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/node.dll/releases/download/$DLLReleaseVer/node-shared-v$NodeVersion-x64.zip", './node_dll.zip')
+	Expand-Archive -Path "node_dll.zip" -DestinationPath "$RuntimeDir\lib"
+
+	# Patch for FindNodeJS.cmake
+	$FindNode = "$ROOT_DIR\cmake\FindNodeJS.cmake"
+	$NodeDir  = $RuntimeDir.Replace('\', '/')
+
+	echo "set(NodeJS_VERSION $NodeVersion)"                   >> $FindNode
+	echo "set(NodeJS_INCLUDE_DIRS ""$NodeDir/include/node"")" >> $FindNode
+	echo "set(NodeJS_LIBRARY ""$NodeDir/lib/libnode.lib"")"   >> $FindNode
+	echo "set(NodeJS_EXECUTABLE ""$NodeDir/node.exe"")"       >> $FindNode
+	echo "include(FindPackageHandleStandardArgs)"             >> $FindNode
+	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(NodeJS REQUIRED_VARS NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE VERSION_VAR NodeJS_VERSION)" >> $FindNode
+	echo "mark_as_advanced(NodeJS_VERSION NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE)" >> $FindNode
+
+	# Move DLL to correct location
+	mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
 }
 
 # TypeScript
@@ -239,6 +290,21 @@ function sub-rpc {
 	echo "cofingure rpc"
 	cd $ROOT_DIR
 	
+}
+
+# NASM
+function sub-nasm {
+	echo "configure nasm"
+
+	$NASMVer    = '2.15.05'
+
+	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", './nasm.zip')
+	Expand-Archive -Path 'nasm.zip' -DestinationPath .
+	
+	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
+	
+	Add-to-Path "$NASMDir\rdoff"
+	Add-to-Path $NASMDir
 }
 
 # WebAssembly
@@ -328,6 +394,9 @@ function sub-install {
 	}
 	if ( $INSTALL_V8REPO -eq 1 ) {
 		sub-v8repo
+	}
+	if ( $INSTALL_NASM -eq 1 ) {
+		sub-nasm
 	}
 	if ( $INSTALL_NODEJS -eq 1 ) {
 		sub-nodejs
@@ -455,6 +524,10 @@ function sub-options {
 		if ( "$var" -eq 'wasm' ) {
 			echo "wasm selected"
 			$Global:INSTALL_WASM = 1
+		}
+		if ( "$var" -eq 'nasm' ) {
+			echo "nasm selected"
+			$Global:INSTALL_NASM = 1
 		}
 		if ( "$var" -eq 'java' ) {
 			echo "java selected"
