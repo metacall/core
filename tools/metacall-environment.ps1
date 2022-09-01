@@ -134,9 +134,9 @@ function sub-python {
 	ls
 	echo 'Downloaded installer'
 	pwd
-	ls
+	ls python_installer.exe
 	pwd.exe
-	ls.exe
+	ls.exe python_installer.exe
 	echo 'LALAALAL'
 
 	# Install Python
