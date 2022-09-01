@@ -132,6 +132,10 @@ function sub-python {
 	(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", './python_installer.exe')
 	pwd
 	ls
+	echo 'Downloaded installer'
+	pwd
+	ls
+	echo 'LALAALAL'
 
 	# Install Python
 	where.exe /Q python
