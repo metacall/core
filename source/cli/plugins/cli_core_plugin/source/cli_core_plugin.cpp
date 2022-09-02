@@ -35,24 +35,50 @@ void *load(size_t argc, void *args[], void *data)
 	(void)argc;
 	(void)data;
 
+	if (argc < 2)
+	{
+		return metacall_value_create_int(1);
+	}
+
+	void **script_val = NULL;
+	char **scripts = NULL;
+
 	char *tag = metacall_value_to_string(args[0]);
 	if (tag == NULL)
 	{
 		return metacall_value_create_int(1);
 	}
 
-	size_t size = metacall_value_count(args[1]);
-
-	char **scripts = (char **)malloc(sizeof(char *) * size);
-	void **script_val = metacall_value_to_array(args[1]);
-	if (scripts == NULL || script_val == NULL)
+	size_t size = 0;
+	if (metacall_value_id(args[1]) == METACALL_ARRAY)
 	{
-		return metacall_value_create_int(1);
+		size = metacall_value_count(args[1]);
+		script_val = metacall_value_to_array(args[1]);
+		if (script_val == NULL)
+		{
+			return metacall_value_create_int(1);
+		}
 	}
+	else
+	{
+		script_val = (args + 1);
+		size = argc - 1;
+	}
+
+	scripts = (char **)malloc(sizeof(char *) * size);
 
 	for (size_t i = 0; i < size; ++i)
 	{
-		scripts[i] = metacall_value_to_string(script_val[i]);
+		if (metacall_value_id(script_val[i]) == METACALL_STRING)
+		{
+			scripts[i] = metacall_value_to_string(script_val[i]);
+		}
+		else
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Calling load with wrong type of argument at argument position %" PRIuS ", expected %s, got %s",
+				i + 1, metacall_value_id_name(METACALL_STRING), metacall_value_type_name(script_val[i]));
+			return metacall_value_create_int(1);
+		}
 	}
 
 	int ret = metacall_load_from_file(tag, const_cast<const char **>(scripts), size, NULL);
@@ -72,11 +98,20 @@ void *eval(size_t argc, void *args[], void *data)
 		return metacall_value_create_int(1);
 	}
 
-	char *tag = metacall_value_to_string(args[0]);
-	char *script = metacall_value_to_string(args[1]);
+	if (metacall_value_id(args[0]) == METACALL_STRING && metacall_value_id(args[1]) == METACALL_STRING)
+	{
+		char *tag = metacall_value_to_string(args[0]);
+		char *script = metacall_value_to_string(args[1]);
 
-	int ret = metacall_load_from_memory(tag, script, strlen(script) + 1, NULL);
-	return metacall_value_create_int(ret);
+		return metacall_value_create_int(metacall_load_from_memory(tag, script, strlen(script) + 1, NULL));
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling eval with wrong type of arguments, expected two %s, got %s and %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]), metacall_value_type_name(args[1]));
+	}
+
+	return metacall_value_create_int(1);
 }
 
 void *await(size_t argc, void *args[], void *data)
@@ -84,8 +119,26 @@ void *await(size_t argc, void *args[], void *data)
 	(void)argc;
 	(void)data;
 
+	if (argc != 1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling await with wrong number of arguments, expected 1 arguments, got %" PRIuS " arguments", argc);
+		return metacall_value_create_int(1);
+	}
+
+	if (metacall_value_id(args[0]) != METACALL_STRING)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling await with wrong type of arguments, expected %s, got %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]));
+		return metacall_value_create_int(1);
+	}
+
 	/* Parse function call */
 	std::string func_str = metacall_value_to_string(args[0]);
+	if (func_str.find('(') == std::string::npos || func_str.find(')') == std::string::npos)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "'await' called with mangled function call string: %s", func_str.c_str());
+		return metacall_value_create_int(1);
+	}
 
 	std::string::size_type idx = func_str.find_first_of('(');
 	std::string func_name = func_str.substr(0, idx);
@@ -144,11 +197,12 @@ void *await(size_t argc, void *args[], void *data)
 
 	await_cond.wait(lock);
 
-	return fdata.v;
 	/* Unused */
 	metacall_value_destroy(future);
 
 	metacall_allocator_destroy(allocator);
+
+	return fdata.v;
 }
 
 void *call(size_t argc, void *args[], void *data)
@@ -156,8 +210,26 @@ void *call(size_t argc, void *args[], void *data)
 	(void)argc;
 	(void)data;
 
+	if (argc != 1)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong number of arguments, expected 1 arguments, got %" PRIuS " arguments", argc);
+		return metacall_value_create_int(1);
+	}
+
+	if (metacall_value_id(args[0]) != METACALL_STRING)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong type of arguments, expected %s, got %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]));
+		return metacall_value_create_int(1);
+	}
+
 	/* Parse function call */
 	std::string func_str = metacall_value_to_string(args[0]);
+	if (func_str.find('(') == std::string::npos || func_str.find(')') == std::string::npos)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "'call' called with mangled function call string: %s", func_str.c_str());
+		return metacall_value_create_int(1);
+	}
 
 	std::string::size_type idx = func_str.find_first_of('(');
 	std::string func_name = func_str.substr(0, idx);
@@ -192,6 +264,14 @@ void *clear(size_t argc, void *args[], void *data)
 
 	if (argc != 2)
 	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling call with wrong number of arguments, expected 2 arguments, got %" PRIuS " arguments", argc);
+		return metacall_value_create_int(1);
+	}
+
+	if (metacall_value_id(args[0]) != METACALL_STRING && metacall_value_id(args[1]) != METACALL_STRING)
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Calling clear with wrong type of arguments, expected two %s, got %s and %s",
+			metacall_value_id_name(METACALL_STRING), metacall_value_type_name(args[0]), metacall_value_type_name(args[1]));
 		return metacall_value_create_int(1);
 	}
 

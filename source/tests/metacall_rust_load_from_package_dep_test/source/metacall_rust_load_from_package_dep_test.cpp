@@ -34,8 +34,8 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_package("rs", rs_script, NULL));
-	// Test: Load from package
 
+	/* Test: Load from package */
 	{
 		const char *text =
 			"option of \"v\";"

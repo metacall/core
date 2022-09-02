@@ -84,6 +84,9 @@ RUN mkdir -p /usr/local/scripts \
 # Copy libraries from builder
 COPY --from=builder /usr/local/lib/*.so /usr/local/lib/*.so* /usr/local/lib/*.dll /usr/local/lib/*.js /usr/local/lib/*.ts /usr/local/lib/*.node /usr/local/lib/
 
+# Copy plugins from builder
+COPY --from=builder /usr/local/lib/plugins /usr/local/lib/plugins
+
 # Copy node dependencies (and port) from builder
 COPY --from=builder /usr/local/lib/node_modules/ /usr/local/lib/node_modules/
 

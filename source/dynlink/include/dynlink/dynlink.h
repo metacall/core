@@ -147,6 +147,18 @@ DYNLINK_API int dynlink_library_path(dynlink_name name, dynlink_library_path_str
 
 /**
 *  @brief
+*    Retrieve the library platform standard name by using @name as a base for it
+*
+*  @param[in] name
+*    Name of the library that will be used for generating the platform dependant library name (i.e example)
+*
+*  @param[out] result
+*    The resulting library name that will be generated (i.e libexample.so in Linux, or example.dll in Windows)
+*/
+DYNLINK_API void dynlink_platform_name(dynlink_name name, dynlink_name_impl result);
+
+/**
+*  @brief
 *    Provide the module information
 *
 *  @return

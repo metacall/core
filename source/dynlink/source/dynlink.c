@@ -163,6 +163,11 @@ int dynlink_library_path(dynlink_name name, dynlink_library_path_str path, size_
 	return 0;
 }
 
+void dynlink_platform_name(dynlink_name name, dynlink_name_impl result)
+{
+	dynlink_impl_get_name(name, result, PORTABILITY_PATH_SIZE);
+}
+
 const char *dynlink_print_info(void)
 {
 	static const char dynlink_info[] =

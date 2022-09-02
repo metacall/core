@@ -206,6 +206,18 @@ enum metacall_value_id metacall_value_id(void *v)
 	return METACALL_INVALID;
 }
 
+const char *metacall_value_id_name(enum metacall_value_id id)
+{
+	return type_id_name(id);
+}
+
+const char *metacall_value_type_name(void *v)
+{
+	type_id id = value_type_id(v);
+
+	return type_id_name(id);
+}
+
 void *metacall_value_copy(void *v)
 {
 	return value_type_copy(v);
