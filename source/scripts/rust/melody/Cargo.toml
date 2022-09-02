@@ -3,5 +3,7 @@ name = "melody"
 version = "0.1.0"
 edition = "2021"
 
+crate-type=["lib"]
+
 [dependencies]
 melody_compiler = "0.18.1"

@@ -38,3 +38,4 @@ leak:libicuuc*
 # Rust
 #
 leak:libLLVM*
+leak:libmelody*

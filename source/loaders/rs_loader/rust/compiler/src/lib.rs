@@ -509,6 +509,19 @@ impl CompilerCallbacks {
     }
 }
 
+fn generate_random_string(length: usize) -> String {
+    let charset_str = "abcdefghijklmnopqrstuvwxyz";
+    let chars: Vec<char> = charset_str.chars().collect();
+    let mut result = String::with_capacity(length);
+
+    unsafe {
+        for _ in 0..length {
+            result.push(*chars.get_unchecked(fastrand::usize(0..chars.len())));
+        }
+    }
+    result
+}
+
 impl rustc_driver::Callbacks for CompilerCallbacks {
     fn config(&mut self, config: &mut Config) {
         if matches!(self.source.source, Source::Package { .. }) {
@@ -573,8 +586,26 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             config.input_path = Some(self.source.input_path.clone());
         }
         // Set up output
-        config.output_file = Some(self.source.output.clone());
-
+        if self.is_parsing {
+            let random_string = generate_random_string(5);
+            let mut output_path = self.source.output.clone();
+            let new_filename = format!(
+                "{}_{}",
+                output_path
+                    .file_prefix()
+                    .expect("Unable to get file prefix")
+                    .to_string_lossy(),
+                random_string
+            );
+            output_path.set_file_name(new_filename);
+            if let Some(ext) = self.source.output.extension() {
+                output_path.set_extension(ext);
+            }
+            config.output_file = Some(output_path.clone());
+            self.source.output = output_path;
+        } else {
+            config.output_file = Some(self.source.output.clone());
+        }
         // Setting up default compiler flags
         config.opts.output_types = config::OutputTypes::new(&[(config::OutputType::Exe, None)]);
         config.opts.optimize = config::OptLevel::Default;

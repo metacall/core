@@ -129,7 +129,7 @@ fn generate_class_wrapper_for_package(classes: &Vec<&crate::Class>) -> String {
 }
 pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<CompilerCallbacks> {
     match callbacks.source.source {
-        Source::Package { path } => {
+        Source::Package { ref path } => {
             let mut content = String::new();
             let function_wrapper = generate_function_wrapper_for_package(&callbacks.functions);
             content.push_str(&function_wrapper);
@@ -152,9 +152,13 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             wrapper_file.write_all(b"mod metacall_class;\nuse metacall_class::*;\n")?;
             wrapper_file.write_all(content.as_bytes())?;
 
+            let mut source = Source::new(Source::Package {
+                path: path.to_path_buf(),
+            });
+            source.output = callbacks.source.output;
             // construct new callback
             Ok(CompilerCallbacks {
-                source: Source::new(Source::Package { path: path }),
+                source,
                 is_parsing: false,
                 ..callbacks
             })
@@ -190,10 +194,11 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                     wrapper_file.write_all(content.as_bytes())?;
                     let dst = format!("include!({:?});", callbacks.source.input_path.clone());
                     wrapper_file.write_all(dst.as_bytes())?;
-
+                    let mut source = Source::new(Source::File { path: source_path });
+                    source.output = callbacks.source.output;
                     // construct new callback
                     Ok(CompilerCallbacks {
-                        source: Source::new(Source::File { path: source_path }),
+                        source,
                         is_parsing: false,
                         ..callbacks
                     })
@@ -217,12 +222,13 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                         wrapper_file.write_all(content.as_bytes())?;
                         let dst = format!("include!({:?});", source_path.join("script.rs"));
                         wrapper_file.write_all(dst.as_bytes())?;
-
+                        let mut source = Source::new(Source::File {
+                            path: source_path.join("wrapped_script.rs"),
+                        });
+                        source.output = callbacks.source.output;
                         // construct new callback
                         Ok(CompilerCallbacks {
-                            source: Source::new(Source::File {
-                                path: source_path.join("wrapped_script.rs"),
-                            }),
+                            source,
                             is_parsing: false,
                             ..callbacks
                         })

@@ -22,12 +22,12 @@
 
 #include <metacall/metacall.h>
 
-class metacall_rust_load_from_mem_test : public testing::Test
+class metacall_rust_load_from_package_dep_test : public testing::Test
 {
 protected:
 };
 
-TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
+TEST_F(metacall_rust_load_from_package_dep_test, DefaultConstructor)
 {
 	const char *rs_script = "debug/libmelody.rlib";
 
