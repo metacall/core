@@ -236,7 +236,7 @@ if(SYSTEM_DIR_INSTALL)
 else()
 	# Find libraries relative to binary
 	if(APPLE)
-		set(CMAKE_INSTALL_RPATH "@loader_path/../../../${INSTALL_LIB}")
+		set(CMAKE_INSTALL_RPATH "@loader_path/${INSTALL_LIB}")
 	else()
 		set(CMAKE_INSTALL_RPATH "$ORIGIN/${INSTALL_LIB}")
 	endif()
