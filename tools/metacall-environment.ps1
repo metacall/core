@@ -122,9 +122,41 @@ function sub-python {
 function sub-ruby {
 	echo "configure ruby"
 	cd $ROOT_DIR
-	
-	# TODO (copied from metacall-environment.sh): Review conflict with NodeJS (currently rails test is disabled)
 
+	$DepsDir               = "$ROOT_DIR\dependencies"
+	$RubyDownloadVersion   = '3.1.2'
+	$RubyVersion           = '3.1.0'
+	$RuntimeDir            = "$ROOT_DIR\runtimes\ruby"
+
+	md -Force $DepsDir
+	md -Force $RuntimeDir
+	cd $DepsDir
+
+	# Download
+	(New-Object Net.WebClient).DownloadFile("https://github.com/MSP-Greg/ruby-mswin/releases/download/ruby-mswin-builds/Ruby-$RubyDownloadVersion-ms.7z", "$(pwd)\ruby-mswin.7z")
+
+	# Install Ruby
+	7z x "$DepsDir\ruby-mswin.7z"
+	robocopy /move /e "$DepsDir\Ruby31-ms" $RuntimeDir /NFL /NDL /NJH /NJS /NC /NS /NP
+
+	Add-to-Path "$RuntimeDir\bin"
+	
+	# Patch for FindRuby.cmake
+	$FindRuby = "$ROOT_DIR\cmake\FindRuby.cmake"
+	$RubyRuntimeDir = $RuntimeDir.Replace('\', '/')
+
+	echo "set(Ruby_VERSION $RubyVersion)"                                          > $FindRuby
+	echo "set(Ruby_ROOT_DIR ""$RubyRuntimeDir"")"                                 >> $FindRuby
+	echo "set(Ruby_EXECUTABLE ""$RubyRuntimeDir/bin/ruby.exe"")"                  >> $FindRuby
+	echo "set(Ruby_INCLUDE_DIRS ""$RubyRuntimeDir/include/ruby-$RubyVersion;$RubyRuntimeDir/include/ruby-$RubyVersion/x64-mswin64_140"")" >> $FindRuby
+	echo "set(Ruby_LIBRARY ""$RubyRuntimeDir/lib/x64-vcruntime140-ruby310.lib"")" >> $FindRuby
+	echo "include(FindPackageHandleStandardArgs)"                                 >> $FindRuby
+	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(Ruby REQUIRED_VARS Ruby_EXECUTABLE Ruby_LIBRARY Ruby_INCLUDE_DIRS VERSION_VAR Ruby_VERSION)"  >> $FindRuby
+	echo "mark_as_advanced(Ruby_EXECUTABLE Ruby_LIBRARY Ruby_INCLUDE_DIRS)"       >> $FindRuby
+
+	# Move DLL to correct location (to be done AFTER build)
+	# mv -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
+	cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
 }
 
 # Rust
