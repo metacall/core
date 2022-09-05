@@ -70,6 +70,26 @@ function this_function_should_not_be_exported() {
 	return 5;
 }
 
+async function verify_jwt(url, token) {
+	console.log(url, token);
+	await sleep(1);
+	return true;
+}
+
+const verify_func = (url, f) => async (token, serial, range) => {
+	if (await verify_jwt(url, token)) {
+		return await f(serial, range);
+	} else {
+		return { error: 'Failed to verify token' };
+	}
+}
+
+async function get_random_data(serial, range) {
+	console.log(serial, range);
+	await sleep(1);
+	return 12.0;
+}
+
 module.exports = {
 	hello_boy,
 	hello_boy_await,
@@ -86,4 +106,5 @@ module.exports = {
 	default_values,
 	all_mixed,
 	/* this_function_should_not_be_exported, */
+	get_random_data: verify_func('https://some.random.serivce.to.verify.jwt.com', get_random_data),
 };

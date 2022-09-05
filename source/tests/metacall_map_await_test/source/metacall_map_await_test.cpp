@@ -174,6 +174,35 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+		/* Call by map using serial (segmentation fault on vaule destroy) */
+		static const char args_random_map[] = "{\"token\":\"abc\",\"serial\":[\"XYZ\",\"ABC\"],\"range\":\"eee\"}";
+
+		func = metacall_function("get_random_data");
+
+		ASSERT_NE((void *)NULL, (void *)func);
+
+		ret = metacallfms_await(
+			func, args_random_map, sizeof(args_random_map), allocator, [](void *result, void *) -> void * {
+				EXPECT_NE((void *)NULL, (void *)result);
+
+				EXPECT_EQ((enum metacall_value_id)metacall_value_id(result), (enum metacall_value_id)METACALL_DOUBLE);
+
+				EXPECT_EQ((double)metacall_value_to_double(result), (double)12.0);
+
+				printf("get_random_data future (from map serial) callback: %f\n", metacall_value_to_double(result));
+
+				fflush(stdout);
+
+				return NULL;
+			},
+			NULL, NULL);
+
+		EXPECT_NE((void *)NULL, (void *)ret);
+
+		EXPECT_EQ((enum metacall_value_id)metacall_value_id(ret), (enum metacall_value_id)METACALL_FUTURE);
+
+		metacall_value_destroy(ret);
+
 		/* Call by map using arrays (nested await) */
 		func = metacall_function("hello_boy_nested_await");
 
