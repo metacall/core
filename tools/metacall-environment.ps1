@@ -1,4 +1,5 @@
 $PSDefaultParameterValues['*:Encoding'] = 'utf8'
+$Global:ProgressPreference = 'SilentlyContinue'
 
 $Global:ROOT_DIR = "$(pwd)"
 
@@ -22,6 +23,7 @@ $Global:INSTALL_NODEJS = 0
 $Global:INSTALL_TYPESCRIPT = 0
 $Global:INSTALL_FILE = 0
 $Global:INSTALL_RPC = 0
+$Global:INSTALL_NASM = 0
 $Global:INSTALL_WASM = 0
 $Global:INSTALL_JAVA = 0
 $Global:INSTALL_C = 0
@@ -80,49 +82,14 @@ function sub-python {
 
 	$PythonVersion = '3.9.7'
 	$RuntimeDir    = "$ROOT_DIR\runtimes\python"
+	$DepsDir       = "$ROOT_DIR\dependencies"
 
-	<#
-	
-	# Avoiding; The Python installation provided by Chocolatey is statically compiled
-
-	$PythonVersion = '3.10.6'
-
-	choco install python3 --version $PythonVersion -my
-
-	$PythonPath = "$Env:ChocolateyInstall\lib\python3.$PythonVersion\tools"
-	$PythonBin = "$PythonPath\python-$PythonVersion-amd64.exe"
-
-	cmd.exe /c "mklink ""$PythonPath\python.exe"" ""$PythonBin"""
-	cmd.exe /c "mklink ""$ChocolateyBinPath\python.exe"" ""$PythonBin"""
-
-	setx /M PATH "$ChocolateyBinPath;$Env:PATH"
-	$Env:PATH = "$ChocolateyBinPath;$Env:PATH"
-
-	refreshenv
-
-	# DEBUG
-	# where.exe python
-	# # python.exe -c "from sysconfig import get_paths as gp; print(gp()['include'])"
-	# cmd.exe /c """$PythonBin"" -c ""from sysconfig import get_paths as gp; print(gp()['include'])"""
-	
-	# Patch for FindPython.cmake
-	# $FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
-	# $EscapedLoc = $ROOT_DIR.Replace('\', '/')
-	# $PythonRuntimeDir = "$EscapedLoc/runtimes/python"
-
-	# echo set(Python_VERSION $PythonVersion) > $FindPython
-	# echo set(Python_ROOT_DIR "$PythonRuntimeDir") >> $FindPython
-	# echo set(Python_EXECUTABLE "%$PythonRuntimeDir/python.exe") >> $FindPython
-	# echo set(Python_INCLUDE_DIRS "%$PythonRuntimeDir/include") >> $FindPython
-	# echo set(Python_LIBRARIES "%$PythonRuntimeDir/libs/python39.lib") >> $FindPython
-	# echo include(FindPackageHandleStandardArgs)>> $FindPython
-	# echo FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION) >> $FindPython
-	# echo mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS) >> $FindPython
-
-	#>
+	md -Force $DepsDir
+	md -Force $RuntimeDir
+	cd $DepsDir
 
 	# Download installer
-	(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", './python_installer.exe')
+	(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", "$(pwd)\python_installer.exe")
 
 	# Install Python
 	where.exe /Q python
@@ -220,7 +187,54 @@ function sub-nodejs {
 	# TODO (copied from metacall-environment.sh): Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
 	cd $ROOT_DIR
+
+	$DepsDir       = "$ROOT_DIR\dependencies"
+	$NodeVersion   = '14.18.2'
+	$DLLReleaseVer = 'v0.0.1'
+	$RuntimeDir    = "$ROOT_DIR\runtimes\nodejs"
+
+	md -Force $DepsDir
+	md -Force $RuntimeDir
+	cd $DepsDir
+
+	# Download
+	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", "$(pwd)\node.zip")
+	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", "$(pwd)\node_headers.tar.gz")
 	
+	# Install runtime
+	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
+	robocopy /move /e "$RuntimeDir\node-v$NodeVersion-win-x64" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
+	rd "$RuntimeDir\node-v$NodeVersion-win-x64"
+
+	Add-to-Path $RuntimeDir
+
+	# Install headers
+	cmake -E tar xzf node_headers.tar.gz
+	cd "$DepsDir\node-v$NodeVersion"
+	md "$RuntimeDir\include"
+	robocopy /move /e "$DepsDir\node-v$NodeVersion\include" "$RuntimeDir\include" /NFL /NDL /NJH /NJS /NC /NS /NP
+	cd $DepsDir
+	rd -Recurse -Force "$DepsDir\node-v$NodeVersion"
+
+	# Install custom Node DLL
+	(New-Object Net.WebClient).DownloadFile("https://github.com/metacall/node.dll/releases/download/$DLLReleaseVer/node-shared-v$NodeVersion-x64.zip", "$(pwd)\node_dll.zip")
+	Expand-Archive -Path "node_dll.zip" -DestinationPath "$RuntimeDir\lib"
+
+	# Patch for FindNodeJS.cmake
+	$FindNode = "$ROOT_DIR\cmake\FindNodeJS.cmake"
+	$NodeDir  = $RuntimeDir.Replace('\', '/')
+
+	echo "set(NodeJS_VERSION $NodeVersion)"                   >> $FindNode
+	echo "set(NodeJS_INCLUDE_DIRS ""$NodeDir/include/node"")" >> $FindNode
+	echo "set(NodeJS_LIBRARY ""$NodeDir/lib/libnode.lib"")"   >> $FindNode
+	echo "set(NodeJS_EXECUTABLE ""$NodeDir/node.exe"")"       >> $FindNode
+	echo "include(FindPackageHandleStandardArgs)"             >> $FindNode
+	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(NodeJS REQUIRED_VARS NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE VERSION_VAR NodeJS_VERSION)" >> $FindNode
+	echo "mark_as_advanced(NodeJS_VERSION NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE)" >> $FindNode
+
+	# Move DLL to correct location (to be done AFTER build)
+	# mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
+	cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
 }
 
 # TypeScript
@@ -239,6 +253,22 @@ function sub-rpc {
 	echo "cofingure rpc"
 	cd $ROOT_DIR
 	
+}
+
+# NASM
+function sub-nasm {
+	echo "configure nasm"
+	cd $ROOT_DIR
+
+	$NASMVer    = '2.15.05'
+
+	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", "$(pwd)\nasm.zip")
+	Expand-Archive -Path 'nasm.zip' -DestinationPath .
+	
+	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
+	
+	Add-to-Path "$NASMDir\rdoff"
+	Add-to-Path $NASMDir
 }
 
 # WebAssembly
@@ -328,6 +358,9 @@ function sub-install {
 	}
 	if ( $INSTALL_V8REPO -eq 1 ) {
 		sub-v8repo
+	}
+	if ( $INSTALL_NASM -eq 1 ) {
+		sub-nasm
 	}
 	if ( $INSTALL_NODEJS -eq 1 ) {
 		sub-nodejs
@@ -455,6 +488,10 @@ function sub-options {
 		if ( "$var" -eq 'wasm' ) {
 			echo "wasm selected"
 			$Global:INSTALL_WASM = 1
+		}
+		if ( "$var" -eq 'nasm' ) {
+			echo "nasm selected"
+			$Global:INSTALL_NASM = 1
 		}
 		if ( "$var" -eq 'java' ) {
 			echo "java selected"

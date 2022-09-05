@@ -95,14 +95,14 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
-      
+
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
           LTTNG_UST_REGISTER_TIMEOUT:  0
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
-          METACALL_INSTALL_OPTIONS:    base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS:    base python nodejs nasm # ruby netcore5 typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Run the configuration script
         run: |
@@ -115,7 +115,7 @@ jobs:
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
-          METACALL_BUILD_OPTIONS:      python # root ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
+          METACALL_BUILD_OPTIONS:      python nodejs # root ruby netcore5 typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
 
       - name: Build the core
         working-directory: ./build
