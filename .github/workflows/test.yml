@@ -115,7 +115,7 @@ jobs:
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
-          METACALL_BUILD_OPTIONS:      python nodejs ruby # root netcore5 typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
+          METACALL_BUILD_OPTIONS:      python nodejs ruby tests scripts # root netcore5 typescript file rpc wasm java c cobol rust examples ports dynamic install pack benchmarks # sanitizer v8 coverage
 
       - name: Build the core
         working-directory: ./build
