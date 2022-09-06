@@ -346,9 +346,7 @@ function sub-configure {
 
 	# Sanitizer
 	if ( $BUILD_SANITIZER -eq 1 ) {
-		# Disable backtrace module when sanitizer is enabled
-		# in order to let the sanitizer catch the segmentation faults
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On -DOPTION_BUILD_BACKTRACE=Off"
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
 	else
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
 	}
@@ -371,7 +369,7 @@ function sub-configure {
 	
 	# Execute CMake
 	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
-	echo "BUILD COMMAND HSJHFGSJDFGKSDJF: cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
+	echo "BUILD COMMAND: cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
 	cmd.exe /c "cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
 
 	Exit $LASTEXITCODE
