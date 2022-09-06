@@ -1,7 +1,9 @@
 [package]
-name = "melody"
+name = "json-wrapper"
 version = "0.1.0"
 edition = "2021"
 
+crate-type=["lib"]
+
 [dependencies]
-melody_compiler = "0.18.1"
+serde_json = "1.0"

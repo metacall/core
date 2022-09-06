@@ -18,7 +18,7 @@ pub fn add_float(num_1: f32, num_2: f32) -> f32 {
 pub fn run() {
     let dir = env::temp_dir();
     let mut f = File::create(dir.join("hello.txt")).unwrap();
-    f.write(b"Hello metacall");
+    let _ = f.write(b"Hello metacall");
 }
 
 // pub fn add_vec(vec: &mut Vec<i32>) -> i32 {
