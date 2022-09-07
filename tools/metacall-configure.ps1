@@ -136,8 +136,7 @@ function sub-options {
 function sub-configure {
 	$Global:BUILD_STRING = "-DOPTION_BUILD_LOG_PRETTY=Off " `
 			+ "-DOPTION_BUILD_LOADERS=On "                  `
-			+ "-DOPTION_BUILD_LOADERS_MOCK=On "             `
-			+ "-G ""NMake Makefiles"""
+			+ "-DOPTION_BUILD_LOADERS_MOCK=On"
 
 	# Scripts
 	if ( $BUILD_SCRIPTS -eq 1 ) {
