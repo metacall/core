@@ -29,18 +29,10 @@ set(inline_path "${CMAKE_CURRENT_SOURCE_DIR}/inline/${target}")
 set(source_path "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
-	${include_path}/tokenizer.hpp
-	${include_path}/parser.hpp
 	${include_path}/application.hpp
 )
 
-set(inline
-	${inline_path}/parser.inl
-)
-
 set(sources
-	${source_path}/tokenizer.cpp
-	${source_path}/parser.cpp
 	${source_path}/application.cpp
 	${source_path}/main.cpp
 )
@@ -229,7 +221,7 @@ test_environment_variables(${target}-inspect-leak
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_NODE)
 	add_test(NAME ${target}-node
-		COMMAND ${TEST_COMMAND} "echo 'load node nod.js\ninspect\ncall hello_boy(300, 400)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"700.0\""
+		COMMAND ${TEST_COMMAND} "echo 'load node nod.js\ninspect\ncall \"hello_boy(300, 400)\"\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"700\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
 	set_property(TEST ${target}-node
@@ -292,7 +284,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 	)
 
 	add_test(NAME ${target}-node-null-undefined
-	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall test_null_and_undefined(undefined)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"(null)\""
+	COMMAND ${TEST_COMMAND} "echo 'load node cli-test-null-undefined.js\ninspect\ncall \"test_null_and_undefined(undefined)\"\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"(null)\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
 	set_property(TEST ${target}-node-null-undefined
@@ -392,7 +384,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_PY)
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
 	add_test(NAME ${target}-py-exception # https://github.com/metacall/core/issues/261
-		COMMAND ${TEST_COMMAND} "echo 'load py ducktype.py\ninspect\ncall sum(1, \"a\")\ncall sum(33, 33)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"66\""
+		COMMAND ${TEST_COMMAND} "echo 'load py ducktype.py\ninspect\ncall sum(1,\"a\")\ncall \"sum(33, 33)\"\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"66\""
 		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 	)
 	set_property(TEST ${target}-py-exception
@@ -406,7 +398,7 @@ endif()
 
 if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_TS AND OPTION_BUILD_SCRIPTS AND OPTION_BUILD_SCRIPTS_TS)
 	add_test(NAME ${target}-ts
-		COMMAND ${TEST_COMMAND} "echo 'load ts typedfunc.ts\ninspect\ncall typed_sum(4, 5)\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"9.0\""
+		COMMAND ${TEST_COMMAND} "echo 'load ts typedfunc.ts\ninspect\ncall \"typed_sum(4, 5)\"\nexit' | $<TARGET_FILE:${target}> | ${GREP_COMMAND} \"9.0\""
 		WORKING_DIRECTORY ${LOADER_SCRIPT_PATH}/typedfunc
 	)
 	set_property(TEST ${target}-ts
