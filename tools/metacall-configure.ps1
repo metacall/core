@@ -141,7 +141,7 @@ function sub-configure {
 	# Scripts
 	if ( $BUILD_SCRIPTS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS=Off"
 	}
 
@@ -312,35 +312,35 @@ function sub-configure {
 	# Examples
 	if ( $BUILD_EXAMPLES -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_EXAMPLES=Off"
 	}
 
 	# Tests
 	if ( $BUILD_TESTS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_TESTS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_TESTS=Off"
 	}
 
 	# Benchmarks
 	if ( $BUILD_BENCHMARKS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_BENCHMARKS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_BENCHMARKS=Off"
 	}
 
 	# Ports
 	if ( $BUILD_PORTS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS=Off"
 	}
 
 	# Coverage
 	if ( $BUILD_COVERAGE -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=Off"
 	}
 
@@ -349,7 +349,7 @@ function sub-configure {
 		# Disable backtrace module when sanitizer is enabled
 		# in order to let the sanitizer catch the segmentation faults
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On -DOPTION_BUILD_BACKTRACE=Off"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
 	}
 
