@@ -125,4 +125,4 @@ jobs:
           NUGET_XMLDOC_MODE:           skip
           DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
-          METACALL_BUILD_OPTIONS:      # tests # coverage install
+          METACALL_BUILD_OPTIONS:      tests # coverage install
