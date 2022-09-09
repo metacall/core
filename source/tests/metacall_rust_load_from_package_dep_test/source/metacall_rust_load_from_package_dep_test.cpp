@@ -22,14 +22,14 @@
 
 #include <metacall/metacall.h>
 
-class metacall_rust_load_from_mem_test : public testing::Test
+class metacall_rust_load_from_package_dep_test : public testing::Test
 {
 protected:
 };
 
-TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
+TEST_F(metacall_rust_load_from_package_dep_test, DefaultConstructor)
 {
-	const char *rs_script = "debug/libmelody.rlib";
+	const char *rs_script = "debug/libjson_wrapper.rlib";
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
@@ -37,15 +37,9 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 
 	/* Test: Load from package */
 	{
-		const char *text =
-			"option of \"v\";"
-			"capture major { some of<digit>; }"
-			"\".\";"
-			"capture minor { some of<digit>; }"
-			"\".\";"
-			"capture patch { some of<digit>; }";
+		const char *text = "{\"name\": \"John Doe\"}";
 		void *ret = metacall("compile", text);
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), R"(v?(?<major>\d+)\.(?<minor>\d+)\.(?<patch>\d+))"));
+		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "\"John Doe\""));
 		metacall_value_destroy(ret);
 	}
 

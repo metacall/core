@@ -119,11 +119,11 @@ impl Source {
                     path.file_name()
                         .expect(format!("Unable to get the filename of {:?}", path).as_str()),
                 );
-
+                let temp_dir = std::env::temp_dir();
                 SourceImpl {
                     input: SourceInput(config::Input::File(path.clone())),
                     input_path: input_path(&dir, &name),
-                    output: output_path(&dir, &name),
+                    output: output_path(&temp_dir, &name),
                     source,
                 }
             }
@@ -151,11 +151,11 @@ impl Source {
                     path.file_name()
                         .expect(format!("Unable to get the filename of {:?}", path).as_str()),
                 );
-
+                let temp_dir = std::env::temp_dir();
                 SourceImpl {
                     input: SourceInput(config::Input::File(path.clone())),
                     input_path: input_path(&dir, &name),
-                    output: output_path(&dir, &name),
+                    output: output_path(&temp_dir, &name),
                     source,
                 }
             }
@@ -509,6 +509,19 @@ impl CompilerCallbacks {
     }
 }
 
+fn generate_random_string(length: usize) -> String {
+    let charset_str = "abcdefghijklmnopqrstuvwxyz";
+    let chars: Vec<char> = charset_str.chars().collect();
+    let mut result = String::with_capacity(length);
+
+    unsafe {
+        for _ in 0..length {
+            result.push(*chars.get_unchecked(fastrand::usize(0..chars.len())));
+        }
+    }
+    result
+}
+
 impl rustc_driver::Callbacks for CompilerCallbacks {
     fn config(&mut self, config: &mut Config) {
         if matches!(self.source.source, Source::Package { .. }) {
@@ -550,13 +563,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 ErrorOutputType::default(),
             ));
             // Set up inputs
-            let wrapped_script_path = self
-                .source
-                .input_path
-                .clone()
-                .parent()
-                .expect("input path has no parent")
-                .join("metacall_wrapped_package.rs");
+            let wrapped_script_path = std::env::temp_dir().join("metacall_wrapped_package.rs");
             if self.is_parsing {
                 let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
                     .expect("unable to create wrapped script");
@@ -573,8 +580,26 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
             config.input_path = Some(self.source.input_path.clone());
         }
         // Set up output
-        config.output_file = Some(self.source.output.clone());
-
+        if self.is_parsing {
+            let random_string = generate_random_string(5);
+            let mut output_path = self.source.output.clone();
+            let new_filename = format!(
+                "{}_{}",
+                output_path
+                    .file_prefix()
+                    .expect("Unable to get file prefix")
+                    .to_string_lossy(),
+                random_string
+            );
+            output_path.set_file_name(new_filename);
+            if let Some(ext) = self.source.output.extension() {
+                output_path.set_extension(ext);
+            }
+            config.output_file = Some(output_path.clone());
+            self.source.output = output_path;
+        } else {
+            config.output_file = Some(self.source.output.clone());
+        }
         // Setting up default compiler flags
         config.opts.output_types = config::OutputTypes::new(&[(config::OutputType::Exe, None)]);
         config.opts.optimize = config::OptLevel::Default;

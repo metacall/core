@@ -66,6 +66,8 @@ value value_type_copy(value v)
 			{
 				new_v_array[index] = value_type_copy(v_array[index]);
 			}
+
+			return new_v;
 		}
 		else if (type_id_map(id) == 0)
 		{
@@ -81,6 +83,8 @@ value value_type_copy(value v)
 			{
 				new_v_map[index] = value_type_copy(v_map[index]);
 			}
+
+			return new_v;
 		}
 		else if (type_id_function(id) == 0)
 		{

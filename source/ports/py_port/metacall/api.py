@@ -154,6 +154,7 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 		'ts': 'ts',
 		'jsx': 'ts',
 		'tsx': 'ts',
+		# Rust Loader
 		'rs': 'rs',
 		# Note: By default js extension uses NodeJS loader instead of JavaScript V8
 		# Probably in the future we can differenciate between them, but it is not trivial
@@ -211,6 +212,8 @@ def __metacall_import__(name, globals=None, locals=None, fromlist=(), level=0):
 				call_frame[1][3] == 'metacall_load_from_file'
 				or call_frame[1][3] == 'metacall_load_from_package'
 				or call_frame[1][3] == 'metacall_load_from_memory'
+				or call_frame[1][3] == 'metacall_load_from_file_export'
+				or call_frame[1][3] == 'metacall_load_from_package_export'
 			):
 				return ImportException(f'MetaCall could not import: {name}')
 
