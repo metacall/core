@@ -45,6 +45,10 @@ function sub-build {
 	# Tests (coverage needs to run the tests)
 	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
 		echo "Running the tests..."
+
+		# Prerequisites
+		
+
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure -C $BUILD_TYPE
 	}
 
