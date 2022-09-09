@@ -233,6 +233,11 @@ function sub-configure {
 	if ( $BUILD_NODEJS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_NODE=On"
 
+		& {
+			cd ..
+			$Global:BUILD_STRING = "$BUILD_STRING -DNPM_ROOT=""$($(pwd).Replace('\', '/'))/runtimes/nodejs"""
+		}
+
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_NODE=On"
 		}
@@ -371,8 +376,9 @@ function sub-configure {
 	
 	# Execute CMake
 	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
-	echo "BUILD COMMAND: cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
-	cmd.exe /c "cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
+	$CustomFlags = '-DOPTION_BUILD_SECURITY=OFF -DOPTION_FORK_SAFE=OFF'
+	echo "BUILD COMMAND: cmake $CustomFlags $BUILD_STRING .."
+	cmd.exe /c "cmake $CustomFlags $BUILD_STRING .."
 
 	Exit $LASTEXITCODE
 }
