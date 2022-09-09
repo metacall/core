@@ -235,7 +235,7 @@ function sub-configure {
 
 		& {
 			cd ..
-			$Global:BUILD_STRING = "$BUILD_STRING -DNPM_ROOT=""$($(pwd).Replace('\', '/'))/runtimes/nodejs"""
+			$Global:BUILD_STRING = "$BUILD_STRING -DNPM_ROOT=""$($(pwd).Path.Replace('\', '/'))/runtimes/nodejs"""
 		}
 
 		if ( $BUILD_SCRIPTS -eq 1 ) {
