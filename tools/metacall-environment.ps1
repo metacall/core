@@ -156,7 +156,7 @@ function sub-ruby {
 
 	# Move DLL to correct location (to be done AFTER build)
 	# mv -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
-	cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
+	# cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
 }
 
 # Rust
@@ -266,7 +266,7 @@ function sub-nodejs {
 
 	# Move DLL to correct location (to be done AFTER build)
 	# mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
-	cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
+	# cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
 }
 
 # TypeScript
