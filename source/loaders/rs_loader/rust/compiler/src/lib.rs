@@ -119,11 +119,11 @@ impl Source {
                     path.file_name()
                         .expect(format!("Unable to get the filename of {:?}", path).as_str()),
                 );
-
+                let temp_dir = std::env::temp_dir();
                 SourceImpl {
                     input: SourceInput(config::Input::File(path.clone())),
                     input_path: input_path(&dir, &name),
-                    output: output_path(&dir, &name),
+                    output: output_path(&temp_dir, &name),
                     source,
                 }
             }
@@ -151,11 +151,11 @@ impl Source {
                     path.file_name()
                         .expect(format!("Unable to get the filename of {:?}", path).as_str()),
                 );
-
+                let temp_dir = std::env::temp_dir();
                 SourceImpl {
                     input: SourceInput(config::Input::File(path.clone())),
                     input_path: input_path(&dir, &name),
-                    output: output_path(&dir, &name),
+                    output: output_path(&temp_dir, &name),
                     source,
                 }
             }
@@ -563,13 +563,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 ErrorOutputType::default(),
             ));
             // Set up inputs
-            let wrapped_script_path = self
-                .source
-                .input_path
-                .clone()
-                .parent()
-                .expect("input path has no parent")
-                .join("metacall_wrapped_package.rs");
+            let wrapped_script_path = std::env::temp_dir().join("metacall_wrapped_package.rs");
             if self.is_parsing {
                 let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
                     .expect("unable to create wrapped script");
