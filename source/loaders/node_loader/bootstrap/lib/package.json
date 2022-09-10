@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "cherow": "^1.6.9"
+    "espree": "^9.4.0"
   }
 }
