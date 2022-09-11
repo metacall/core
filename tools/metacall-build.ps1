@@ -45,6 +45,19 @@ function sub-build {
 	# Tests (coverage needs to run the tests)
 	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
 		echo "Running the tests..."
+
+		# Prerequisites
+		$files = @(
+			"..\runtimes\nodejs\lib\libnode.dll",
+			"..\runtimes\nodejs\lib\libnode.lib"
+		)
+
+		For ($i = 0; $i -lt $files.length; $i++) {
+			if ( (Test-Path $files[$i] -PathType Leaf) ) {
+				cp $files[$i] ".\$BUILD_TYPE\"
+			}
+		}
+
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure -C $BUILD_TYPE
 	}
 
