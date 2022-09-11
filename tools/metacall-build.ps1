@@ -52,9 +52,10 @@ function sub-build {
 			"..\runtimes\nodejs\lib\libnode.lib"
 		)
 
-		For ($i = 0; $i -lt $files.length; $i++) {
-			if ( (Test-Path $files[$i] -PathType Leaf) ) {
-				cp $files[$i] ".\$BUILD_TYPE\"
+		ForEach ($file in $files) {
+			if ( (Test-Path $file -PathType Leaf) ) {
+				echo "Copying ""$file"" to "".\$BUILD_TYPE\""..."
+				cp $file ".\$BUILD_TYPE\"
 			}
 		}
 
