@@ -8,6 +8,7 @@ jobs:
   linux-test:
     name: Linux (Ubuntu) GCC Test
     runs-on: ubuntu-latest
+    if: github.repository == 'metacall/core'
     strategy:
       matrix:
         buildtype: [debug, release]
