@@ -141,7 +141,7 @@ function sub-configure {
 	# Scripts
 	if ( $BUILD_SCRIPTS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS=Off"
 	}
 
@@ -233,6 +233,14 @@ function sub-configure {
 	if ( $BUILD_NODEJS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_NODE=On"
 
+		<# & {
+			cd ..
+			$NodePath = "$($(pwd).Path.Replace('\', '/'))/runtimes/nodejs"
+			echo "NODE PATH LALALALALALALALALALA: $NodePath"
+			ls $NodePath
+			$Global:BUILD_STRING = "$BUILD_STRING ""-DNPM_ROOT=$NodePath"""
+		} #>
+
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_NODE=On"
 		}
@@ -312,42 +320,44 @@ function sub-configure {
 	# Examples
 	if ( $BUILD_EXAMPLES -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_EXAMPLES=Off"
 	}
 
 	# Tests
 	if ( $BUILD_TESTS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_TESTS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_TESTS=Off"
 	}
 
 	# Benchmarks
 	if ( $BUILD_BENCHMARKS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_BENCHMARKS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_BENCHMARKS=Off"
 	}
 
 	# Ports
 	if ( $BUILD_PORTS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS=Off"
 	}
 
 	# Coverage
 	if ( $BUILD_COVERAGE -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=On"
-	else
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_COVERAGE=Off"
 	}
 
 	# Sanitizer
 	if ( $BUILD_SANITIZER -eq 1 ) {
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
-	else
+		# Disable backtrace module when sanitizer is enabled
+		# in order to let the sanitizer catch the segmentation faults
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On" # -DOPTION_BUILD_BACKTRACE=Off
+	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
 	}
 
@@ -369,8 +379,9 @@ function sub-configure {
 	
 	# Execute CMake
 	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
-	echo "BUILD COMMAND: cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
-	cmd.exe /c "cmake -DOPTION_FORK_SAFE=OFF $BUILD_STRING .."
+	$CustomFlags = '-DOPTION_BUILD_SECURITY=OFF -DOPTION_FORK_SAFE=OFF'
+	echo "BUILD COMMAND: cmake $CustomFlags $BUILD_STRING .."
+	cmd.exe /c "cmake $CustomFlags $BUILD_STRING .."
 
 	Exit $LASTEXITCODE
 }

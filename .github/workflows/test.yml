@@ -12,6 +12,13 @@ jobs:
     strategy:
       matrix:
         buildtype: [debug, release]
+
+    env:
+      DEBIAN_FRONTEND:             noninteractive
+      LTTNG_UST_REGISTER_TIMEOUT:  0
+      NUGET_XMLDOC_MODE:           skip
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v2
@@ -40,10 +47,6 @@ jobs:
       - name: Set up the environment
         run: sudo ./tools/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
         env:
-          DEBIAN_FRONTEND:             noninteractive
-          LTTNG_UST_REGISTER_TIMEOUT:  0
-          NUGET_XMLDOC_MODE:           skip
-          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_INSTALL_OPTIONS:    root base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust rapidjson funchook swig pack backtrace
 
       - name: Configure
@@ -59,10 +62,6 @@ jobs:
           cd build
           sudo "${METACALL_PATH}/tools/metacall-configure.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
         env:
-          DEBIAN_FRONTEND:             noninteractive
-          LTTNG_UST_REGISTER_TIMEOUT:  0
-          NUGET_XMLDOC_MODE:           skip
-          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           NODE_PATH:                   /usr/lib/node_modules
           METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
           METACALL_BUILD_OPTIONS:      root python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
@@ -79,10 +78,6 @@ jobs:
           cd build
           sudo "${METACALL_PATH}/tools/metacall-build.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
         env:
-          DEBIAN_FRONTEND:             noninteractive
-          LTTNG_UST_REGISTER_TIMEOUT:  0
-          NUGET_XMLDOC_MODE:           skip
-          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           NODE_PATH:                   /usr/lib/node_modules
           METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
           METACALL_BUILD_OPTIONS:      root python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
@@ -90,6 +85,12 @@ jobs:
   windows-test:
     name: Windows MSVC Test
     runs-on: windows-latest
+    
+    env:
+      LTTNG_UST_REGISTER_TIMEOUT:  0
+      NUGET_XMLDOC_MODE:           skip
+      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
+
     steps:
       - name: Check out the repository
         uses: actions/checkout@v2
@@ -99,10 +100,7 @@ jobs:
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
         env:
-          LTTNG_UST_REGISTER_TIMEOUT:  0
-          NUGET_XMLDOC_MODE:           skip
-          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
-          METACALL_INSTALL_OPTIONS:    base python nodejs nasm # ruby netcore5 typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
+          METACALL_INSTALL_OPTIONS:    base python nodejs nasm # ruby # netcore5 typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
 
       - name: Run the configuration script
         run: |
@@ -111,18 +109,12 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_TYPE $Env:METACALL_BUILD_OPTIONS"
         env:
-          LTTNG_UST_REGISTER_TIMEOUT:  0
-          NUGET_XMLDOC_MODE:           skip
-          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
-          METACALL_BUILD_OPTIONS:      python nodejs # root ruby netcore5 typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks # sanitizer v8 coverage
+          METACALL_BUILD_OPTIONS:      python nodejs tests scripts ports # ruby # root netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # sanitizer v8 coverage
 
       - name: Build the core
         working-directory: ./build
         run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_TYPE $Env:METACALL_BUILD_OPTIONS"
         env:
-          LTTNG_UST_REGISTER_TIMEOUT:  0
-          NUGET_XMLDOC_MODE:           skip
-          DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
           METACALL_BUILD_TYPE:         debug
           METACALL_BUILD_OPTIONS:      tests # coverage install
