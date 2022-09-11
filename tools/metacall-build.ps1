@@ -52,10 +52,7 @@ function sub-build {
 			"..\runtimes\nodejs\lib\libnode.lib"
 		)
 
-		ls ..\runtimes\nodejs\lib
-
 		ForEach ($file in $files) {
-			echo $file
 			if ( (Test-Path $file -PathType Leaf) ) {
 				echo "Copying ""$file"" to "".\$BUILD_TYPE\""..."
 				cp $file ".\$BUILD_TYPE\"
