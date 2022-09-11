@@ -53,6 +53,7 @@ function sub-build {
 		)
 
 		ForEach ($file in $files) {
+			echo $file
 			if ( (Test-Path $file -PathType Leaf) ) {
 				echo "Copying ""$file"" to "".\$BUILD_TYPE\""..."
 				cp $file ".\$BUILD_TYPE\"
