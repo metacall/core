@@ -84,8 +84,8 @@ jobs:
 
   windows-test:
     name: Windows MSVC Test
-    runs-on: windows-latest
-    
+    runs-on: windows-2019
+
     env:
       LTTNG_UST_REGISTER_TIMEOUT:  0
       NUGET_XMLDOC_MODE:           skip
@@ -96,6 +96,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: amd64
 
       - name: Set up the environment
         run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
