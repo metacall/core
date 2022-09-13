@@ -97,7 +97,8 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Activate the Visual Studio Developer Prompt
+        uses: ilammy/msvc-dev-cmd@v1
         with:
           arch: amd64
 
