@@ -545,7 +545,9 @@ void application::parameter_iterator::operator()(const char *parameter)
 		{ "tsx", "ts" },
 		/* Rust Loader */
 		{ "rs", "rs" },
-		{ "c", "c" }
+		/* C Loader */
+		{ "c", "c" },
+		{ "h", "c" }
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */

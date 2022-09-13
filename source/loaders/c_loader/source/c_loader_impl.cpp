@@ -35,7 +35,6 @@
 
 #include <metacall/metacall.h>
 
-#include <iostream>
 #include <iterator>
 #include <map>
 #include <new>
@@ -337,13 +336,11 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	size_t join_path_size = portability_path_join(loader_lib_path, strlen(loader_lib_path) + 1, include_dir, strlen(include_dir) + 1, join_path, PORTABILITY_PATH_SIZE);
 	(void)portability_path_canonical(join_path, join_path_size, metacall_incl_path, PORTABILITY_PATH_SIZE);
 
-	/*Add metacall include path*/
+	/* Add metacall include path */
 	tcc_add_include_path(c_handle->state, metacall_incl_path);
 
-	/*Add metacall library path (in other to find libmetacall.so)*/
+	/* Add metacall library path (in other to find metacall library) */
 	tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
-
-	(void)c_impl;
 
 	return c_handle;
 }

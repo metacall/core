@@ -264,14 +264,14 @@ function node_loader_trampoline_discover_arguments(node) {
 function node_loader_trampoline_discover_function(func) {
 	try {
 		if (node_loader_trampoline_is_callable(func)) {
-			// Cherow can't parse native code functions so we can do a workaround
+			// Espree can't parse native code functions so we can do a workaround
 			const str = func.toString().replace('{ [native code] }', '{}');
 			const ast = espree.parse(str, {
 				ecmaVersion: 13
 			});
-			
+
 			const node = (ast.body[0].type === 'ExpressionStatement') ?
-			 ast.body[0].expression : ast.body[0];
+				ast.body[0].expression : ast.body[0];
 
 			if (node_loader_trampoline_is_valid_symbol(node)) {
 				const args = node_loader_trampoline_discover_arguments(node);
@@ -284,7 +284,7 @@ function node_loader_trampoline_discover_function(func) {
 				if (node.id && node.id.name) {
 					discover['name'] = node.id.name;
 				}
-								
+
 				return discover;
 			}
 		}
