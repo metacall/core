@@ -454,7 +454,7 @@ bool command_cb_load(application &app, tokenizer &t)
 	}
 
 	std::string loaders[] = {
-		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs"
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs", "c"
 	};
 
 	// check if invalid loader tag
@@ -544,7 +544,8 @@ void application::parameter_iterator::operator()(const char *parameter)
 		{ "jsx", "ts" },
 		{ "tsx", "ts" },
 		/* Rust Loader */
-		{ "rs", "rs" }
+		{ "rs", "rs" },
+		{ "c", "c" }
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */
