@@ -67,6 +67,8 @@ def metacall_module_load():
 
 	for name in library_names:
 		runtime_module_handle = get_loaded_module(modules, os.path.join(os.path.sep, base_path, name + '.dll'))
+		if runtime_module_handle is None:
+			continue
 		runtime_module = ctypes.CDLL('', handle = runtime_module_handle) # cdecl calling convention
 
 		if runtime_module != None:
