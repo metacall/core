@@ -266,8 +266,8 @@ function node_loader_trampoline_discover_function(func) {
 		if (node_loader_trampoline_is_callable(func)) {
 			// Espree can't parse native code functions so we can do a workaround
 			const str = func.toString().replace('{ [native code] }', '{}');
-			const ast = espree.parse(str, {
-				ecmaVersion: 13
+			const ast = espree.parse(`(${str})`, {
+				ecmaVersion: 14
 			});
 
 			const node = (ast.body[0].type === 'ExpressionStatement') ?
