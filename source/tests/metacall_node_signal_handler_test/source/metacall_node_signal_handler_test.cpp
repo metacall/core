@@ -24,6 +24,8 @@
 #include <metacall/metacall_loaders.h>
 
 #include <atomic>
+#include <chrono>
+#include <thread>
 
 std::atomic_bool callback_result(false);
 std::atomic_bool signal_result(false);
@@ -119,6 +121,11 @@ TEST_F(metacall_node_signal_handler_test, DefaultConstructor)
 
 		metacall_allocator_destroy(allocator);
 	}
+
+	/* Apparently it seems to fail randomly due to a race condition between processes
+	and I do not want to implement a wait mechanism because this is just a PoC.
+	TODO: I am not sure but could this be related to the destroy mechanism of NodeJS? We should review it */
+	std::this_thread::sleep_for(std::chrono::seconds(10));
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
 
