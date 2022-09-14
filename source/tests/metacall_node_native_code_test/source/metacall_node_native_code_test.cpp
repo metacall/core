@@ -37,7 +37,6 @@ TEST_F(metacall_node_unsupported_features_test, DefaultConstructor)
 /* NodeJS */
 #if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		/* Native functions are not supported yet */
 		const char buffer[] =
 			"const { metacall_inspect } = process._linkedBinding('node_loader_port_module');\n"
 			"module.exports = { metacall_inspect }\n";
