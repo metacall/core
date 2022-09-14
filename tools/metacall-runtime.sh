@@ -19,10 +19,10 @@
 #	limitations under the License.
 #
 
+set -euxo pipefail
+
 ROOT_DIR=$(pwd)
 
-RUN_AS_ROOT=0
-SUDO_CMD=sudo
 INSTALL_APT=1
 INSTALL_PYTHON=0
 INSTALL_RUBY=0
@@ -43,6 +43,13 @@ INSTALL_PORTS=0
 INSTALL_CLEAN=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
+
+# Check out for sudo
+if [ "`id -u`" = '0' ]; then
+	SUDO_CMD=""
+else
+	SUDO_CMD=sudo
+fi
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
@@ -187,26 +194,27 @@ sub_c(){
 	LLVM_VERSION_STRING=11
 	UBUNTU_CODENAME=""
 	CODENAME_FROM_ARGUMENTS=""
+
 	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 	source /etc/os-release
-	DISTRO=${DISTRO,,}
-	case ${DISTRO} in
+
+	case ${LINUX_DISTRO} in
 		debian)
 			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
-				CODENAME=unstable
-				LINKNAME=
+				CODENAME="unstable"
+				LINKNAME=""
 			else
 				# "stable" Debian release
-				CODENAME=${VERSION_CODENAME}
-				LINKNAME=-${CODENAME}
+				CODENAME="${VERSION_CODENAME}"
+				LINKNAME="-${CODENAME}"
 			fi
 			;;
 		*)
 			# ubuntu and its derivatives
 			if [[ -n "${UBUNTU_CODENAME}" ]]; then
-				CODENAME=${UBUNTU_CODENAME}
+				CODENAME="${UBUNTU_CODENAME}"
 				if [[ -n "${CODENAME}" ]]; then
-					LINKNAME=-${CODENAME}
+					LINKNAME="-${CODENAME}"
 				fi
 			fi
 			;;
@@ -253,9 +261,6 @@ sub_ports(){
 
 # Install
 sub_install(){
-	if [ $RUN_AS_ROOT = 1 ]; then
-		SUDO_CMD=""
-	fi
 	if [ $INSTALL_APT = 1 ]; then
 		sub_apt
 	fi
@@ -326,10 +331,6 @@ sub_clean(){
 sub_options(){
 	for var in "$@"
 	do
-		if [ "$var" = 'root' ]; then
-			echo "running as root"
-			RUN_AS_ROOT=1
-		fi
 		if [ "$var" = 'base' ]; then
 			echo "apt selected"
 			INSTALL_APT=1
@@ -409,7 +410,6 @@ sub_options(){
 sub_help() {
 	echo "Usage: `basename "$0"` list of component"
 	echo "Components:"
-	echo "	root"
 	echo "	base"
 	echo "	python"
 	echo "	ruby"

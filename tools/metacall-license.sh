@@ -19,6 +19,8 @@
 #	limitations under the License.
 #
 
+set -euxo pipefail
+
 # Warning
 echo "WARNING: Do not run the script multiple times. Uncomment the 'exit 0' in the code to continue."
 exit 0

@@ -30,7 +30,7 @@ services:
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
         METACALL_PATH: $METACALL_PATH
         METACALL_TOOLS_PATH: $METACALL_PATH/tools
-        METACALL_INSTALL_OPTIONS: root base python ruby nodejs typescript file rpc rapidjson funchook swig pack backtrace # clangformat v8rep51 coverage
+        METACALL_INSTALL_OPTIONS: base python ruby nodejs typescript file rpc rapidjson funchook swig pack backtrace # clangformat v8rep51 coverage
     environment:
       DEBIAN_FRONTEND: noninteractive
       # Work around https://github.com/dotnet/cli/issues/1582 until Docker releases a
@@ -52,7 +52,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BUILD_TYPE: $METACALL_BUILD_TYPE
-        METACALL_BUILD_OPTIONS: root python ruby nodejs typescript file rpc examples tests scripts ports dynamic install pack # v8 coverage benchmarks
+        METACALL_BUILD_OPTIONS: python ruby nodejs typescript file rpc examples tests scripts ports dynamic install pack # v8 coverage benchmarks
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0
@@ -77,7 +77,7 @@ services:
       args:
         METACALL_PATH: $METACALL_PATH
         METACALL_BASE_IMAGE: $METACALL_BASE_IMAGE
-        METACALL_RUNTIME_OPTIONS: root base python ruby nodejs typescript file rpc backtrace ports clean # v8
+        METACALL_RUNTIME_OPTIONS: base python ruby nodejs typescript file rpc backtrace ports clean # v8
     environment:
       DEBIAN_FRONTEND: noninteractive
       LTTNG_UST_REGISTER_TIMEOUT: 0

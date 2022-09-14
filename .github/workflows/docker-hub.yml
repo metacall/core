@@ -28,17 +28,17 @@ jobs:
         run: docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" -p "${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}"
 
       - name: Pull MetaCall Docker Images
-        run: sh ./docker-compose.sh pull
+        run: bash ./docker-compose.sh pull
 
       - name: Build MetaCall Docker Images
-        run: sh ./docker-compose.sh build
+        run: bash ./docker-compose.sh build
 
       - name: Push MetaCall Docker Image to DockerHub
         run: |
           if [[ "${{ github.ref == 'refs/heads/master' }}" = true ]]; then
-            sh ./docker-compose.sh push
+            bash ./docker-compose.sh push
           elif [[ "${{ contains(github.ref, 'refs/tags/') }}" = true ]]; then
-            sh ./docker-compose.sh version
+            bash ./docker-compose.sh version
           else
             echo "Failed to push the docker images"
             exit 1

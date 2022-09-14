@@ -19,8 +19,8 @@
 #	limitations under the License.
 #
 
-RUN_AS_ROOT=0
-SUDO_CMD=sudo
+set -euxo pipefail
+
 BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
@@ -48,11 +48,6 @@ BUILD_SANITIZER=0
 sub_options() {
 	for option in "$@"
 	do
-		if [ "$option" = 'root' ]; then
-			echo "Running build script as root"
-			RUN_AS_ROOT=1
-			SUDO_CMD=""
-		fi
 		if [ "$option" = 'debug' ]; then
 			echo "Build all scripts in debug mode"
 			BUILD_TYPE=Debug
@@ -397,7 +392,6 @@ sub_configure() {
 sub_help() {
 	echo "Usage: `basename "$0"` list of options"
 	echo "Options:"
-	echo "	root: build being run by root"
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	python: build with python support"
 	echo "	ruby: build with ruby support"

@@ -25,11 +25,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Pull the Docker images
-        run: sh ./docker-compose.sh pull
+        run: bash ./docker-compose.sh pull
       - name: Build the Docker images
-        run: sh ./docker-compose.sh build
+        run: bash ./docker-compose.sh build
       - name: Extract built artifacts
-        run: sh ./docker-compose.sh pack
+        run: bash ./docker-compose.sh pack
       - name: Upload built artifacts
         uses: actions/upload-artifact@v3
         with:
