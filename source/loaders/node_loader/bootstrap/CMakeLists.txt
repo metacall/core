@@ -80,9 +80,6 @@ else()
 	# Guix stores espree dependency previously to the build in the output directory
 	install(DIRECTORY
 		${PROJECT_OUTPUT_DIR}/node_modules/espree
-		${PROJECT_OUTPUT_DIR}/node_modules/acorn
-		${PROJECT_OUTPUT_DIR}/node_modules/acorn-jsx
-		${PROJECT_OUTPUT_DIR}/node_modules/eslint-visitor-keys
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
