@@ -1,4 +1,4 @@
-name: Test With Sanitizers
+name: Sanitizer Test
 
 on:
   workflow_dispatch:
