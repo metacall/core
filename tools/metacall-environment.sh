@@ -302,10 +302,6 @@ sub_nodejs(){
 
 	# Install python to build node (gyp)
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
-
-	# Update npm and node-gyp
-	$SUDO_CMD npm i npm@latest -g
-	$SUDO_CMD npm i node-gyp@latest -g
 }
 
 # TypeScript
