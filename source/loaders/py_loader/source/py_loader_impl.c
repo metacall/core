@@ -2110,6 +2110,7 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 		{ TYPE_STRING, "str" },
 		{ TYPE_BUFFER, "bytes" },
 		{ TYPE_ARRAY, "list" },
+		{ TYPE_ARRAY, "tuple" },
 		{ TYPE_MAP, "dict" }
 	};
 
