@@ -11,7 +11,7 @@ on:
 
 jobs:
   linux-sanitizer:
-    name: Linux (Ubuntu) GCC Test
+    name: Linux (Ubuntu) GCC Sanitizer Test
     runs-on: ubuntu-latest
     if: github.repository == 'metacall/core'
 
