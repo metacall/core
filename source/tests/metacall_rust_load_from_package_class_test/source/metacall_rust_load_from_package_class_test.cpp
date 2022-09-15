@@ -34,8 +34,8 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_package("rs", rs_script, NULL));
-	// Test: Load from package
 
+	// Test: Load from package
 	{
 		void *book_class = metacall_class("Book");
 		ASSERT_NE((void *)NULL, (void *)book_class);
@@ -45,7 +45,6 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 		ASSERT_EQ((enum metacall_value_id)METACALL_INT, (enum metacall_value_id)metacall_value_id(ret_value));
 		ASSERT_EQ((int)123, (int)metacall_value_to_int(ret_value));
 		metacall_value_destroy(ret_value);
-		// metacall_value_destroy(book_class);
 	}
 	{
 		void *book_class = metacall_class("Book");
@@ -80,8 +79,6 @@ TEST_F(metacall_rust_load_from_mem_test, DefaultConstructor)
 
 		metacall_value_destroy(new_object_v);
 		metacall_value_destroy(ret);
-		// metacall_value_destroy(myclass_value);
-		// metacall_value_destroy(book_class);
 	}
 
 	/* Print inspect information */

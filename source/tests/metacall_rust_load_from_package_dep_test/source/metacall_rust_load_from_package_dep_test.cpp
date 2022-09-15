@@ -39,6 +39,7 @@ TEST_F(metacall_rust_load_from_package_dep_test, DefaultConstructor)
 	{
 		const char *text = "{\"name\": \"John Doe\"}";
 		void *ret = metacall("compile", text);
+		ASSERT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "\"John Doe\""));
 		metacall_value_destroy(ret);
 	}

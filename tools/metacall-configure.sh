@@ -30,12 +30,12 @@ BUILD_NETCORE5=0
 BUILD_V8=0
 BUILD_NODEJS=0
 BUILD_TYPESCRIPT=0
-BUILD_RUST=0
 BUILD_FILE=0
 BUILD_RPC=0
 BUILD_WASM=0
 BUILD_JAVA=0
 BUILD_C=0
+BUILD_RUST=0
 BUILD_COBOL=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
@@ -116,6 +116,10 @@ sub_options() {
 			echo "Build with cobol support"
 			BUILD_COBOL=1
 		fi
+		if [ "$option" = 'rust' ]; then
+			echo "Build with rust support"
+			BUILD_RUST=1
+		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
 			BUILD_SCRIPTS=1
@@ -143,10 +147,6 @@ sub_options() {
 		if [ "$option" = 'sanitizer' ]; then
 			echo "Build with sanitizers"
 			BUILD_SANITIZER=1
-		fi
-		if [ "$option" = 'rust' ]; then
-			echo "Build with rust support"
-			BUILD_RUST=1
 		fi
 	done
 }
@@ -327,6 +327,19 @@ sub_configure() {
 		fi
 	fi
 
+	# Rust
+	if [ $BUILD_RUST = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -369,19 +382,6 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
 	fi
 
-	# Rust
-	if [ $BUILD_RUST = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
-
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
-		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
-		fi
-	fi
-
 	# Build type
 	BUILD_STRING="$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
@@ -407,6 +407,7 @@ sub_help() {
 	echo "	java: build with java support"
 	echo "	c: build with c support"
 	echo "	cobol: build with cobol support"
+	echo "	rust: build with rust support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	tests: build and run all tests"
