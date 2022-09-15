@@ -5,7 +5,9 @@ on:
   pull_request:
   push:
     tags:
-    - 'v*.*.*'
+      - 'v*.*.*'
+    branches:
+      - master
 
 jobs:
   linux-test:
