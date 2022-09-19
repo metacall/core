@@ -1,28 +1,29 @@
 $Global:ROOT_DIR = "$(pwd)"
 
-$Global:BUILD_TYPE =       'Release'
-$Global:BUILD_PYTHON =     0
-$Global:BUILD_RUBY =       0
-$Global:BUILD_NETCORE =    0
-$Global:BUILD_NETCORE2 =   0
-$Global:BUILD_NETCORE5 =   0
-$Global:BUILD_V8 =         0
-$Global:BUILD_NODEJS =     0
-$Global:BUILD_TYPESCRIPT = 0
-$Global:BUILD_RUST =       0
-$Global:BUILD_FILE =       0
-$Global:BUILD_RPC =        0
-$Global:BUILD_WASM =       0
-$Global:BUILD_JAVA =       0
-$Global:BUILD_C =          0
-$Global:BUILD_COBOL =      0
-$Global:BUILD_SCRIPTS =    0
-$Global:BUILD_EXAMPLES =   0
-$Global:BUILD_TESTS =      0
-$Global:BUILD_BENCHMARKS = 0
-$Global:BUILD_PORTS =      0
-$Global:BUILD_COVERAGE =   0
-$Global:BUILD_SANITIZER =  0
+$Global:BUILD_TYPE =              'Release'
+$Global:BUILD_PYTHON =            0
+$Global:BUILD_RUBY =              0
+$Global:BUILD_NETCORE =           0
+$Global:BUILD_NETCORE2 =          0
+$Global:BUILD_NETCORE5 =          0
+$Global:BUILD_V8 =                0
+$Global:BUILD_NODEJS =            0
+$Global:BUILD_TYPESCRIPT =        0
+$Global:BUILD_RUST =              0
+$Global:BUILD_FILE =              0
+$Global:BUILD_RPC =               0
+$Global:BUILD_WASM =              0
+$Global:BUILD_JAVA =              0
+$Global:BUILD_C =                 0
+$Global:BUILD_COBOL =             0
+$Global:BUILD_SCRIPTS =           0
+$Global:BUILD_EXAMPLES =          0
+$Global:BUILD_TESTS =             0
+$Global:BUILD_BENCHMARKS =        0
+$Global:BUILD_PORTS =             0
+$Global:BUILD_COVERAGE =          0
+$Global:BUILD_SANITIZER =         0
+$Global:BUILD_THREAD_SANITIZER =  0
 $Global:PROGNAME = $(Get-Item $PSCommandPath).Basename
 
 $Global:Arguments = $args
@@ -125,6 +126,10 @@ function sub-options {
 		if ( "$option" -eq 'sanitizer' ) {
 			echo "Build with sanitizers"
 			$Global:BUILD_SANITIZER = 1
+		}
+		if ( "$option" -eq 'thread-sanitizer' ) {
+			echo "Build with sanitizers"
+			$Global:BUILD_THREAD_SANITIZER = 1
 		}
 		if ( "$option" -eq 'rust' ) {
 			echo "Build with rust support"
@@ -354,11 +359,16 @@ function sub-configure {
 
 	# Sanitizer
 	if ( $BUILD_SANITIZER -eq 1 ) {
-		# Disable backtrace module when sanitizer is enabled
-		# in order to let the sanitizer catch the segmentation faults
-		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On" # -DOPTION_BUILD_BACKTRACE=Off
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
 	} else {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
+	}
+
+	# Thread Sanitizer
+	if ( $BUILD_THREAD_SANITIZER -eq 1 ) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=On"
+	} else {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=Off"
 	}
 
 	# Rust

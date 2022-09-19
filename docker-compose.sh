@@ -94,7 +94,7 @@ sub_test_sanitizer() {
 	export DOCKER_BUILDKIT=0
 
 	# Enable build with sanitizer
-	export METACALL_BUILD_SANITIZER=sanitizer
+	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-sanitizer}
 
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
@@ -129,6 +129,15 @@ sub_test_sanitizer() {
 	fi
 
 	rm /tmp/metacall-test-output
+}
+
+# Build MetaCall Docker Compose with Thread Sanitizer for testing (link manually dockerignore files)
+sub_test_thread_sanitizer() {
+	# Enable build with thread sanitizer
+	export METACALL_BUILD_SANITIZER="thread-sanitizer"
+
+	# Run tests with thread sanitizer
+	sub_test_sanitizer
 }
 
 # Build MetaCall Docker Compose with caching (link manually dockerignore files)
@@ -247,6 +256,7 @@ sub_help() {
 	echo "	rebuild"
 	echo "	test"
 	echo "	test-sanitizer"
+	echo "	test-thread-sanitizer"
 	echo "	cache"
 	echo "	push"
 	echo "	pack"
@@ -268,6 +278,9 @@ case "$1" in
 		;;
 	test-sanitizer)
 		sub_test_sanitizer
+		;;
+	test-thread-sanitizer)
+		sub_test_thread_sanitizer
 		;;
 	cache)
 		sub_cache

@@ -44,6 +44,7 @@ BUILD_BENCHMARKS=0
 BUILD_PORTS=0
 BUILD_COVERAGE=0
 BUILD_SANITIZER=0
+BUILD_THREAD_SANITIZER=0
 
 sub_options() {
 	for option in "$@"
@@ -147,6 +148,10 @@ sub_options() {
 		if [ "$option" = 'sanitizer' ]; then
 			echo "Build with sanitizers"
 			BUILD_SANITIZER=1
+		fi
+		if [ "$option" = 'thread-sanitizer' ]; then
+			echo "Build with thread sanitizers"
+			BUILD_THREAD_SANITIZER=1
 		fi
 	done
 }
@@ -380,6 +385,13 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=On"
 	else
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
+	fi
+
+	# Thread Sanitizer
+	if [ $BUILD_THREAD_SANITIZER = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=Off"
 	fi
 
 	# Build type
