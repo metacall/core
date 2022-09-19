@@ -23,9 +23,19 @@
 #include <metacall/metacall.h>
 #include <metacall/metacall_loaders.h>
 
-#include <filesystem>
-
+#if defined __has_include
+	#if __has_include(<filesystem>)
+		#include <filesystem>
 namespace fs = std::filesystem;
+	#elif __has_include(<experimental/filesystem>)
+		#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+	#else
+		#error "Missing the <filesystem> header."
+	#endif
+#else
+	#error "C++ standard too old for compiling this file."
+#endif
 
 class metacall_cli_core_plugin_await_test : public testing::Test
 {

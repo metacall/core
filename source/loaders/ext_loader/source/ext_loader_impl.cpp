@@ -34,7 +34,20 @@
 
 #include <log/log.h>
 
-#include <filesystem>
+#if defined __has_include
+	#if __has_include(<filesystem>)
+		#include <filesystem>
+namespace fs = std::filesystem;
+	#elif __has_include(<experimental/filesystem>)
+		#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+	#else
+		#error "Missing the <filesystem> header."
+	#endif
+#else
+	#error "C++ standard too old for compiling this file."
+#endif
+
 #include <map>
 #include <set>
 #include <string>
@@ -50,7 +63,7 @@ typedef struct loader_impl_ext_handle_lib_type
 
 typedef struct loader_impl_ext_type
 {
-	std::set<std::filesystem::path> paths;
+	std::set<fs::path> paths;
 	std::map<std::string, loader_impl_ext_handle_lib_type> destroy_list;
 
 } * loader_impl_ext;
@@ -120,7 +133,7 @@ int ext_loader_impl_execution_path(loader_impl impl, const loader_path path)
 {
 	loader_impl_ext ext_impl = static_cast<loader_impl_ext>(loader_impl_get(impl));
 
-	ext_impl->paths.insert(std::filesystem::path(path));
+	ext_impl->paths.insert(fs::path(path));
 
 	return 0;
 }
@@ -133,11 +146,11 @@ dynlink ext_loader_impl_load_from_file_dynlink(const char *path, const char *lib
 
 	dynlink_platform_name(library_name, platform_name);
 
-	std::filesystem::path lib_path(path);
+	fs::path lib_path(path);
 
 	lib_path /= platform_name;
 
-	if (std::filesystem::exists(lib_path) == false)
+	if (fs::exists(lib_path) == false)
 	{
 		return NULL;
 	}
@@ -153,12 +166,12 @@ dynlink ext_loader_impl_load_from_file_dynlink(loader_impl_ext ext_impl, const l
 	lib_path_str.append("d");
 #endif
 
-	std::filesystem::path lib_path(lib_path_str);
-	std::string lib_name = std::filesystem::path(lib_path).filename().string();
+	fs::path lib_path(lib_path_str);
+	std::string lib_name = fs::path(lib_path).filename().string();
 
 	if (lib_path.is_absolute())
 	{
-		std::filesystem::path lib_dir = lib_path.parent_path();
+		fs::path lib_dir = lib_path.parent_path();
 
 		return ext_loader_impl_load_from_file_dynlink(lib_dir.string().c_str(), lib_name.c_str());
 	}
@@ -200,7 +213,7 @@ int ext_loader_impl_load_from_file_handle(loader_impl_ext ext_impl, loader_impl_
 	}
 
 	dynlink_symbol_addr symbol_address = NULL;
-	std::string symbol_name = std::filesystem::path(path).filename().string();
+	std::string symbol_name = fs::path(path).filename().string();
 
 	if (dynlink_symbol(lib, symbol_name.c_str(), &symbol_address) != 0)
 	{
