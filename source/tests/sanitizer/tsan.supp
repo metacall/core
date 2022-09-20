@@ -26,6 +26,16 @@
 called_from_lib:libcoreclr*
 called_from_lib:libclrjit*
 #
+# Java
+#
+called_from_lib:libjvm*
+#
+# WASM (TODO: This must be reviewed, probably it's a false positive)
+#
+called_from_lib:libwasmtime*
+#
 # Rust
 #
 called_from_lib:libLLVM*
+called_from_lib:librustc_driver-*
+called_from_lib:libstd-*

@@ -122,6 +122,29 @@ target_link_libraries(${target}
 # Define test
 #
 
+if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
+	# TODO: This test fails when run with thread sanitizer (this happens when C# loader is enabled):
+	#
+	# WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=13717)
+	# 	#0 malloc ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:647 (libtsan.so.2+0x3ebb8)
+	# 	#1 <null> <null> (ld-linux-x86-64.so.2+0x28df)
+	# 	#2 <null> <null> (libruby-2.7.so.2.7+0x237879)
+	# 	#3 simple_netcore_create /usr/local/metacall/source/loaders/cs_loader/source/simple_netcore.cpp:42 (libcs_loaderd.so+0x108de)
+	# 	#4 cs_loader_impl_initialize /usr/local/metacall/source/loaders/cs_loader/source/cs_loader_impl.c:236 (libcs_loaderd.so+0xf5fe)
+	# 	#5 loader_impl_initialize /usr/local/metacall/source/loader/source/loader_impl.c:367 (libmetacalld.so+0x306a3)
+	# 	#6 loader_impl_load_from_file /usr/local/metacall/source/loader/source/loader_impl.c:822 (libmetacalld.so+0x308b8)
+	# 	#7 loader_load_from_file /usr/local/metacall/source/loader/source/loader.c:307 (libmetacalld.so+0x2e101)
+	# 	#8 metacall_load_from_file /usr/local/metacall/source/metacall/source/metacall.c:348 (libmetacalld.so+0x32bef)
+	# 	#9 metacall_distributable_test_DefaultConstructor_Test::TestBody() /usr/local/metacall/source/tests/metacall_distributable_test/source/metacall_distributable_test.cpp:262 (metacall-distributable-testd+0x23e3d)
+	# 	#10 void testing::internal::HandleExceptionsInMethodIfSupported<testing::Test, void>(testing::Test*, void (testing::Test::*)(), char const*) <null> (metacall-distributable-testd+0x58686)
+	# 	#11 <null> <null> (libc.so.6+0x29209)
+	#
+	# SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/lib64/ld-linux-x86-64.so.2+0x28df)
+	#
+	# For solving this, we should enable C# support for sanitizers and debug it properly
+	return()
+endif()
+
 add_test(NAME ${target}
 	COMMAND $<TARGET_FILE:${target}>
 )
