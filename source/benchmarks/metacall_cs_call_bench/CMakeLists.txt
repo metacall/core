@@ -118,7 +118,7 @@ target_link_libraries(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER)
+if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	# Tracer caught signal 11: addr=0x5000002b0 pc=0x7f614774a0f0 sp=0x7f609fb40d10
 	# LeakSanitizer has encountered a fatal error.

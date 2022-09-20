@@ -46,10 +46,15 @@ add_dependencies(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER)
+if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
+	#
+	# Sanitizer:
 	# ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
 	# For solving the issue compile the test with sanitizers when enabled or preload asan
+	#
+	# Thread Sanitizer:
+	# process didn't exit successfully: `/usr/local/metacall/source/ports/rs_port/target/debug/deps/metacall-f8cdc0b6dd115278` (signal: 11, SIGSEGV: invalid memory reference)
 	return()
 endif()
 

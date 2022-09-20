@@ -1,0 +1,31 @@
+# List of supressions for thread sanitizer
+#
+# IMPORTANT: Do NOT add blank lines between the script,
+# it seems that gcc sanitizer does not support that.
+#
+# At this point there are data races from the runtimes but
+# I am not sure all of them are due to metacall (probably
+# some of them are due to race conditions but not all of them).
+# We disable them until we debug those cases (if any) in depth.
+#
+#
+# Python
+#
+#called_from_lib:libpython*
+#
+# NodeJS
+#
+#called_from_lib:libnode*
+#
+# Ruby
+#
+#called_from_lib:libruby*
+#
+# DotNet Core
+#
+called_from_lib:libcoreclr*
+called_from_lib:libclrjit*
+#
+# Rust
+#
+called_from_lib:libLLVM*

@@ -142,12 +142,30 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${target} MEMCHECK_IGNORE
 )
 
-if(OPTION_BUILD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
+if((OPTION_BUILD_SANITIZER OR OPTION_BUILD_SANITIZER) AND OPTION_BUILD_LOADERS_CS)
 	# TODO: This test fails when run with sanitizers (this happens when C# loader is enabled):
+	#
+	# Sanitizer:
 	# Tracer caught signal 11: addr=0x600000690 pc=0x7f3a7b6710f0 sp=0x7f3a75e32d10
 	# LeakSanitizer has encountered a fatal error.
 	# HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
 	# HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+	#
+	# Thread Sanitizer:
+	# WARNING: ThreadSanitizer: data race (pid=13427)
+	# Write of size 8 at 0x7b5c00010680 by thread T8:
+	# 	#0 free ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:706 (libtsan.so.2+0x47e82)
+	# 	#1 <null> <null> (libcoreclr.so+0x36ba88)
+	#
+	# Previous write of size 8 at 0x7b5c00010680 by main thread:
+	# 	[failed to restore the stack]
+	#
+	# Thread T8 '.NET ThreadPool' (tid=13563, running) created by thread T7 at:
+	# 	#0 pthread_create ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:1001 (libtsan.so.2+0x5e686)
+	# 	#1 <null> <null> (libcoreclr.so+0x4e90ce)
+	#
+	# SUMMARY: ThreadSanitizer: data race (/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.17/libcoreclr.so+0x36ba88)
+	#
 	#
 	# For solving this, we should enable C# support for sanitizers and debug it properly
 	set_tests_properties(${target} PROPERTIES

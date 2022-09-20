@@ -14,6 +14,9 @@ jobs:
     name: Linux (Ubuntu) GCC Sanitizer Test
     runs-on: ubuntu-latest
     if: github.repository == 'metacall/core'
+    strategy:
+      matrix:
+        sanitizertype: [sanitizer, thread-sanitizer]
 
     env:
       DEBIAN_FRONTEND:             noninteractive
@@ -66,7 +69,7 @@ jobs:
         env:
           NODE_PATH:                   /usr/lib/node_modules
           METACALL_BUILD_TYPE:         debug
-          METACALL_BUILD_OPTIONS:      sanitizer python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
+          METACALL_BUILD_OPTIONS:      ${{ matrix.buildtype }} python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
 
       - name: Build
         run: |
