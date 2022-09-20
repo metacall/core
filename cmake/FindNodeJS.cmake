@@ -376,14 +376,10 @@ if(NOT NodeJS_LIBRARY)
 		execute_process(COMMAND ${CMAKE_COMMAND} -E tar "xvf" "${NodeJS_DOWNLOAD_FILE}" WORKING_DIRECTORY "${NodeJS_BASE_PATH}" OUTPUT_QUIET)
 	endif()
 
-	if(WIN32)
-		if(NodeJS_VERSION_MAJOR LESS 14)
-			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
-		else()
-			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
-		endif()
+	if(NodeJS_VERSION_MAJOR LESS 14)
+		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/${CMAKE_BUILD_TYPE}")
 	else()
-		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out")
+		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
 	endif()
 
 	# Compile node as a shared library if needed
