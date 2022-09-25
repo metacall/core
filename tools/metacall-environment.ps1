@@ -232,7 +232,8 @@ function sub-nodejs {
 	# Download
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", "$(pwd)\node.zip")
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", "$(pwd)\node_headers.tar.gz")
-	
+	(New-Object Net.WebClient).DownloadFile("https://raw.githubusercontent.com/metacall/core/66fcaac300611d1c4210023e7b260296586a42e0/cmake/NodeJSGYPPatch.py", "$(pwd)\NodeJSGYPPatch.py") # "Not sure why." – Param.
+
 	# Install runtime
 	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
 	robocopy /move /e "$RuntimeDir\node-v$NodeVersion-win-x64" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
