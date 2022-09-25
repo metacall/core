@@ -52,7 +52,10 @@ if(NOT OPTION_BUILD_GUIX)
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${NPM_EXECUTABLE} --prefix ${CMAKE_CURRENT_BINARY_DIR} install ${CMAKE_CURRENT_BINARY_DIR}
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/cherow ${PROJECT_OUTPUT_DIR}/node_modules/cherow
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/espree ${PROJECT_OUTPUT_DIR}/node_modules/espree
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/acorn ${PROJECT_OUTPUT_DIR}/node_modules/acorn
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/acorn-jsx ${PROJECT_OUTPUT_DIR}/node_modules/acorn-jsx
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/eslint-visitor-keys ${PROJECT_OUTPUT_DIR}/node_modules/eslint-visitor-keys
 		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_BINARY_DIR}/node_modules to ${PROJECT_OUTPUT_DIR}/node_modules"
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
@@ -66,14 +69,17 @@ if(NOT OPTION_BUILD_GUIX)
 	add_dependencies(${target} ${target}_depends)
 
 	install(DIRECTORY
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules/cherow
+		${CMAKE_CURRENT_BINARY_DIR}/node_modules/espree
+		${CMAKE_CURRENT_BINARY_DIR}/node_modules/acorn
+		${CMAKE_CURRENT_BINARY_DIR}/node_modules/acorn-jsx
+		${CMAKE_CURRENT_BINARY_DIR}/node_modules/eslint-visitor-keys
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
 else()
-	# Guix stores cherow dependency previously to the build in the output directory
+	# Guix stores espree dependency previously to the build in the output directory
 	install(DIRECTORY
-		${PROJECT_OUTPUT_DIR}/node_modules/cherow
+		${PROJECT_OUTPUT_DIR}/node_modules/espree
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)

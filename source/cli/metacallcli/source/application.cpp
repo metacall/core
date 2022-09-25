@@ -12,8 +12,21 @@
 #include <metacallcli/parser.hpp>
 #include <metacallcli/tokenizer.hpp>
 
+#if defined __has_include
+	#if __has_include(<filesystem>)
+		#include <filesystem>
+namespace fs = std::filesystem;
+	#elif __has_include(<experimental/filesystem>)
+		#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+	#else
+		#error "Missing the <filesystem> header."
+	#endif
+#else
+	#error "C++ standard too old for compiling this file."
+#endif
+
 #include <algorithm>
-#include <filesystem>
 #include <functional>
 #include <iostream>
 
@@ -454,7 +467,7 @@ bool command_cb_load(application &app, tokenizer &t)
 	}
 
 	std::string loaders[] = {
-		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs"
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs", "c"
 	};
 
 	// check if invalid loader tag
@@ -544,7 +557,10 @@ void application::parameter_iterator::operator()(const char *parameter)
 		{ "jsx", "ts" },
 		{ "tsx", "ts" },
 		/* Rust Loader */
-		{ "rs", "rs" }
+		{ "rs", "rs" },
+		/* C Loader */
+		{ "c", "c" },
+		{ "h", "c" }
 
 		/* Note: By default js extension uses NodeJS loader instead of JavaScript V8 */
 		/* Probably in the future we can differenciate between them, but it is not trivial */
@@ -675,7 +691,6 @@ application::application(int argc, char *argv[]) :
 	if (plugin_path != NULL && plugin_extension_handle != NULL)
 	{
 		/* Define the cli plugin path as string (core plugin path plus cli) */
-		namespace fs = std::filesystem;
 		fs::path plugin_cli_path(plugin_path);
 		plugin_cli_path /= "cli";
 		std::string plugin_cli_path_str(plugin_cli_path.string());

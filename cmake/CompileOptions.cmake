@@ -62,7 +62,9 @@ set(DEFAULT_INCLUDE_DIRECTORIES)
 # ThreadSanitizer is incompatible with AddressSanitizer and LeakSanitizer
 if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	set(DEFAULT_LIBRARIES -ltsan)
-	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
+	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
+		"TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
+	)
 	set(SANITIZER_COMPILE_DEFINITIONS)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	# TODO: This requires much more effort than expected: https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo

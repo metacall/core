@@ -19,10 +19,10 @@
 #	limitations under the License.
 #
 
+set -euxo pipefail
+
 ROOT_DIR=$(pwd)
 
-RUN_AS_ROOT=0
-SUDO_CMD=sudo
 APT_CACHE=0
 APT_CACHE_CMD=""
 INSTALL_APT=1
@@ -57,6 +57,13 @@ INSTALL_CLANGFORMAT=0
 INSTALL_BACKTRACE=0
 SHOW_HELP=0
 PROGNAME=$(basename $0)
+
+# Check out for sudo
+if [ "`id -u`" = '0' ]; then
+	SUDO_CMD=""
+else
+	SUDO_CMD=sudo
+fi
 
 # Linux Distro detection
 if [ -f /etc/os-release ]; then # Either Debian or Ubuntu
@@ -295,10 +302,6 @@ sub_nodejs(){
 
 	# Install python to build node (gyp)
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends python3 g++ make nodejs npm curl
-
-	# Update npm and node-gyp
-	$SUDO_CMD npm i npm@latest -g
-	$SUDO_CMD npm i node-gyp@latest -g
 }
 
 # TypeScript
@@ -349,26 +352,27 @@ sub_c(){
 	LLVM_VERSION_STRING=11
 	UBUNTU_CODENAME=""
 	CODENAME_FROM_ARGUMENTS=""
+
 	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 	source /etc/os-release
-	DISTRO=${DISTRO,,}
-	case ${DISTRO} in
+
+	case ${LINUX_DISTRO} in
 		debian)
 			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
-				CODENAME=unstable
-				LINKNAME=
+				CODENAME="unstable"
+				LINKNAME=""
 			else
 				# "stable" Debian release
-				CODENAME=${VERSION_CODENAME}
-				LINKNAME=-${CODENAME}
+				CODENAME="${VERSION_CODENAME}"
+				LINKNAME="-${CODENAME}"
 			fi
 			;;
 		*)
 			# ubuntu and its derivatives
 			if [[ -n "${UBUNTU_CODENAME}" ]]; then
-				CODENAME=${UBUNTU_CODENAME}
+				CODENAME="${UBUNTU_CODENAME}"
 				if [[ -n "${CODENAME}" ]]; then
-					LINKNAME=-${CODENAME}
+					LINKNAME="-${CODENAME}"
 				fi
 			fi
 			;;
@@ -447,26 +451,27 @@ sub_clangformat(){
 	LLVM_VERSION_STRING=12
 	UBUNTU_CODENAME=""
 	CODENAME_FROM_ARGUMENTS=""
+
 	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 	source /etc/os-release
-	DISTRO=${DISTRO,,}
-	case ${DISTRO} in
+
+	case ${LINUX_DISTRO} in
 		debian)
 			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
-				CODENAME=unstable
-				LINKNAME=
+				CODENAME="unstable"
+				LINKNAME=""
 			else
 				# "stable" Debian release
-				CODENAME=${VERSION_CODENAME}
-				LINKNAME=-${CODENAME}
+				CODENAME="${VERSION_CODENAME}"
+				LINKNAME="-${CODENAME}"
 			fi
 			;;
 		*)
 			# ubuntu and its derivatives
 			if [[ -n "${UBUNTU_CODENAME}" ]]; then
-				CODENAME=${UBUNTU_CODENAME}
+				CODENAME="${UBUNTU_CODENAME}"
 				if [[ -n "${CODENAME}" ]]; then
-					LINKNAME=-${CODENAME}
+					LINKNAME="-${CODENAME}"
 				fi
 			fi
 			;;
@@ -490,9 +495,6 @@ sub_backtrace(){
 
 # Install
 sub_install(){
-	if [ $RUN_AS_ROOT = 1 ]; then
-		SUDO_CMD=""
-	fi
 	if [ $APT_CACHE = 1 ]; then
 		APT_CACHE_CMD=-o dir::cache::archives="$APT_CACHE_DIR"
 	fi
@@ -578,10 +580,6 @@ sub_install(){
 sub_options(){
 	for var in "$@"
 	do
-		if [ "$var" = 'root' ]; then
-			echo "running as root"
-			RUN_AS_ROOT=1
-		fi
 		if [ "$var" = 'cache' ]; then
 			echo "apt caching selected"
 			APT_CACHE=1
@@ -710,7 +708,6 @@ sub_options(){
 sub_help() {
 	echo "Usage: `basename "$0"` list of component"
 	echo "Components:"
-	echo "	root"
 	echo "	cache"
 	echo "	base"
 	echo "	python"

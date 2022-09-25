@@ -987,7 +987,7 @@ type_id py_loader_impl_capi_to_value_type(loader_impl impl, PyObject *obj)
 	{
 		return TYPE_BUFFER;
 	}
-	else if (PyList_Check(obj))
+	else if (PyList_Check(obj) || PyTuple_Check(obj))
 	{
 		return TYPE_ARRAY;
 	}
@@ -1116,8 +1116,22 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		Py_ssize_t iterator, length = 0;
 		value *array_value;
+		Py_ssize_t (*get_size)(PyObject *);
+		PyObject *(*get_item)(PyObject *, Py_ssize_t);
 
-		length = PyList_Size(obj);
+		/* Array can be either a tuple or a list, select between them */
+		if (PyList_Check(obj))
+		{
+			get_size = &PyList_Size;
+			get_item = &PyList_GetItem;
+		}
+		else
+		{
+			get_size = &PyTuple_Size;
+			get_item = &PyTuple_GetItem;
+		}
+
+		length = get_size(obj);
 
 		v = value_create_array(NULL, (size_t)length);
 
@@ -1125,7 +1139,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 
 		for (iterator = 0; iterator < length; ++iterator)
 		{
-			PyObject *element = PyList_GetItem(obj, iterator);
+			PyObject *element = get_item(obj, iterator);
 
 			/* TODO: Review recursion overflow */
 			array_value[iterator] = py_loader_impl_capi_to_value(impl, element, py_loader_impl_capi_to_value_type(impl, element));
@@ -2096,6 +2110,7 @@ int py_loader_impl_initialize_inspect_types(loader_impl impl, loader_impl_py py_
 		{ TYPE_STRING, "str" },
 		{ TYPE_BUFFER, "bytes" },
 		{ TYPE_ARRAY, "list" },
+		{ TYPE_ARRAY, "tuple" },
 		{ TYPE_MAP, "dict" }
 	};
 

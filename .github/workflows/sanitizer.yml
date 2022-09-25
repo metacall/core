@@ -1,4 +1,4 @@
-name: Cross-Platform Test
+name: Sanitizer Test
 
 on:
   workflow_dispatch:
@@ -10,13 +10,13 @@ on:
       - master
 
 jobs:
-  linux-test:
-    name: Linux (Ubuntu) GCC Test
+  linux-sanitizer:
+    name: Linux (Ubuntu) GCC Sanitizer Test
     runs-on: ubuntu-latest
     if: github.repository == 'metacall/core'
     strategy:
       matrix:
-        buildtype: [debug, release]
+        sanitizertype: [sanitizer, thread-sanitizer]
 
     env:
       DEBIAN_FRONTEND:             noninteractive
@@ -68,8 +68,8 @@ jobs:
           sudo "${METACALL_PATH}/tools/metacall-configure.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
         env:
           NODE_PATH:                   /usr/lib/node_modules
-          METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
-          METACALL_BUILD_OPTIONS:      python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
+          METACALL_BUILD_TYPE:         debug
+          METACALL_BUILD_OPTIONS:      ${{ matrix.buildtype }} python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
 
       - name: Build
         run: |
@@ -84,50 +84,5 @@ jobs:
           sudo "${METACALL_PATH}/tools/metacall-build.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
         env:
           NODE_PATH:                   /usr/lib/node_modules
-          METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
+          METACALL_BUILD_TYPE:         debug
           METACALL_BUILD_OPTIONS:      python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
-
-  windows-test:
-    name: Windows MSVC Test
-    runs-on: windows-2019
-    strategy:
-      matrix:
-        buildtype: [debug, release]
-
-    env:
-      LTTNG_UST_REGISTER_TIMEOUT:  0
-      NUGET_XMLDOC_MODE:           skip
-      DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
-
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-
-      - name: Activate the Visual Studio Developer Prompt
-        uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: amd64
-
-      - name: Set up the environment
-        run: cmd.exe /c "powershell .\tools\metacall-environment.ps1 $Env:METACALL_INSTALL_OPTIONS"
-        env:
-          METACALL_INSTALL_OPTIONS:    base python nodejs nasm ruby typescript # dotnet # netcore5 typescript file rpc wasm java c cobol rust rapidjson funchook swig pack # clangformat v8rep51 coverage
-
-      - name: Run the configuration script
-        run: |
-          $METACALL_PATH = $PWD
-          md -Force "$METACALL_PATH\build"
-          cd "$METACALL_PATH\build"
-          cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_TYPE $Env:METACALL_BUILD_OPTIONS"
-        env:
-          METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
-          METACALL_BUILD_OPTIONS:      python nodejs tests scripts ports ruby typescript # dotnet # thread-sanitizer root netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # sanitizer v8 coverage
-
-      - name: Build the core
-        working-directory: ./build
-        run: cmd.exe /c "powershell ..\tools\metacall-build.ps1 $Env:METACALL_BUILD_TYPE $Env:METACALL_BUILD_OPTIONS"
-        env:
-          METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
-          METACALL_BUILD_OPTIONS:      tests # coverage install

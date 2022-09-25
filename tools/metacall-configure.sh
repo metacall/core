@@ -19,8 +19,8 @@
 #	limitations under the License.
 #
 
-RUN_AS_ROOT=0
-SUDO_CMD=sudo
+set -euxo pipefail
+
 BUILD_TYPE=Release
 BUILD_PYTHON=0
 BUILD_RUBY=0
@@ -30,12 +30,12 @@ BUILD_NETCORE5=0
 BUILD_V8=0
 BUILD_NODEJS=0
 BUILD_TYPESCRIPT=0
-BUILD_RUST=0
 BUILD_FILE=0
 BUILD_RPC=0
 BUILD_WASM=0
 BUILD_JAVA=0
 BUILD_C=0
+BUILD_RUST=0
 BUILD_COBOL=0
 BUILD_SCRIPTS=0
 BUILD_EXAMPLES=0
@@ -44,15 +44,11 @@ BUILD_BENCHMARKS=0
 BUILD_PORTS=0
 BUILD_COVERAGE=0
 BUILD_SANITIZER=0
+BUILD_THREAD_SANITIZER=0
 
 sub_options() {
 	for option in "$@"
 	do
-		if [ "$option" = 'root' ]; then
-			echo "Running build script as root"
-			RUN_AS_ROOT=1
-			SUDO_CMD=""
-		fi
 		if [ "$option" = 'debug' ]; then
 			echo "Build all scripts in debug mode"
 			BUILD_TYPE=Debug
@@ -121,6 +117,10 @@ sub_options() {
 			echo "Build with cobol support"
 			BUILD_COBOL=1
 		fi
+		if [ "$option" = 'rust' ]; then
+			echo "Build with rust support"
+			BUILD_RUST=1
+		fi
 		if [ "$option" = 'scripts' ]; then
 			echo "Build all scripts"
 			BUILD_SCRIPTS=1
@@ -149,9 +149,9 @@ sub_options() {
 			echo "Build with sanitizers"
 			BUILD_SANITIZER=1
 		fi
-		if [ "$option" = 'rust' ]; then
-			echo "Build with rust support"
-			BUILD_RUST=1
+		if [ "$option" = 'thread-sanitizer' ]; then
+			echo "Build with thread sanitizers"
+			BUILD_THREAD_SANITIZER=1
 		fi
 	done
 }
@@ -332,6 +332,19 @@ sub_configure() {
 		fi
 	fi
 
+	# Rust
+	if [ $BUILD_RUST = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
+		fi
+	fi
+
 	# Examples
 	if [ $BUILD_EXAMPLES = 1 ]; then
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_EXAMPLES=On"
@@ -374,17 +387,11 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SANITIZER=Off"
 	fi
 
-	# Rust
-	if [ $BUILD_RUST = 1 ]; then
-		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_LOADERS_RS=On"
-
-		if [ $BUILD_SCRIPTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_RS=On"
-		fi
-
-		if [ $BUILD_PORTS = 1 ]; then
-			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_RS=On"
-		fi
+	# Thread Sanitizer
+	if [ $BUILD_THREAD_SANITIZER = 1 ]; then
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=On"
+	else
+		BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_THREAD_SANITIZER=Off"
 	fi
 
 	# Build type
@@ -397,7 +404,6 @@ sub_configure() {
 sub_help() {
 	echo "Usage: `basename "$0"` list of options"
 	echo "Options:"
-	echo "	root: build being run by root"
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	python: build with python support"
 	echo "	ruby: build with ruby support"
@@ -413,6 +419,7 @@ sub_help() {
 	echo "	java: build with java support"
 	echo "	c: build with c support"
 	echo "	cobol: build with cobol support"
+	echo "	rust: build with rust support"
 	echo "	scripts: build all scripts"
 	echo "	examples: build all examples"
 	echo "	tests: build and run all tests"

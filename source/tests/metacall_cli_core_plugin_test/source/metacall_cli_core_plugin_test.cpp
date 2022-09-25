@@ -42,7 +42,6 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 	void *handle = NULL;
 	EXPECT_EQ((int)0, (int)metacall_load_from_configuration(CLI_CORE_PLUGIN_PATH, &handle, allocator));
 
-	void *ret = NULL;
 	{
 		void *args[2];
 
@@ -52,7 +51,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		void *test_script_v = metacall_value_create_string(test_script, strlen(test_script));
 		args[1] = metacall_value_create_array((const void **)&test_script_v, 1);
 
-		ret = metacallhv_s(handle, "load", args, 2);
+		void *ret = metacallhv_s(handle, "load", args, 2);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
@@ -70,7 +69,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		void *test_script_v = metacall_value_create_string(test_script, strlen(test_script));
 		args[1] = metacall_value_create_array((const void **)&test_script_v, 1);
 
-		ret = metacallhv_s(handle, "load", args, 2);
+		void *ret = metacallhv_s(handle, "load", args, 2);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
@@ -88,7 +87,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		char func_call[] = "print('Testing core_plugin...')\n";
 		args[1] = (void **)metacall_value_create_string(func_call, strlen(func_call));
 
-		ret = metacallhv_s(handle, "eval", args, 2);
+		void *ret = metacallhv_s(handle, "eval", args, 2);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
@@ -102,47 +101,51 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		char func_call[] = "multiply(7, 3)";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
 
-		ret = metacallhv_s(handle, "call", args, 1);
+		void *ret = metacallhv_s(handle, "call", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_long(ret), (long)21);
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
 	}
 
 	{
 		char func_call[] = "hello()";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
 
-		ret = metacallhv_s(handle, "call", args, 1);
+		void *ret = metacallhv_s(handle, "call", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
 	}
 
 	{
 		char func_call[] = "hello_boy_await(2, 2)";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
 
-		ret = metacallhv_s(handle, "await", args, 1);
+		void *ret = metacallhv_s(handle, "await", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_double(ret), (double)4);
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
 	}
 
 	{
 		char func_call[] = "return_await()";
 		void *args[] = { metacall_value_create_string(func_call, strlen(func_call)) };
 
-		ret = metacallhv_s(handle, "await", args, 1);
+		void *ret = metacallhv_s(handle, "await", args, 1);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		std::cout << metacall_value_to_string(ret) << '\n';
 
 		metacall_value_destroy(ret);
+		metacall_value_destroy(args[0]);
 	}
 
 	{
@@ -153,7 +156,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		char test_script[] = "scripts/example.py";
 		args[1] = metacall_value_create_string(test_script, strlen(test_script));
 
-		ret = metacallhv_s(handle, "clear", args, 2);
+		void *ret = metacallhv_s(handle, "clear", args, 2);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		EXPECT_EQ((long)metacall_value_to_int(ret), (long)0);
@@ -164,7 +167,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 	}
 
 	{
-		ret = metacallhv_s(handle, "inspect", metacall_null_args, 0);
+		void *ret = metacallhv_s(handle, "inspect", metacall_null_args, 0);
 
 		EXPECT_NE((void *)NULL, (void *)ret);
 		std::cout << metacall_value_to_string(ret) << '\n';

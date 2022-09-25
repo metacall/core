@@ -24,7 +24,6 @@ $Global:INSTALL_NODEJS = 0
 $Global:INSTALL_TYPESCRIPT = 0
 $Global:INSTALL_FILE = 0
 $Global:INSTALL_RPC = 0
-$Global:INSTALL_NASM = 0
 $Global:INSTALL_WASM = 0
 $Global:INSTALL_JAVA = 0
 $Global:INSTALL_C = 0
@@ -256,10 +255,21 @@ function sub-v8 {
 
 # NodeJS
 function sub-nodejs {
-	# TODO (copied from metacall-environment.sh): Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
 	cd $ROOT_DIR
 
+	# Install NASM
+	$NASMVer    = '2.15.05'
+
+	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", "$(pwd)\nasm.zip")
+	Expand-Archive -Path 'nasm.zip' -DestinationPath .
+
+	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
+
+	Add-to-Path "$NASMDir\rdoff"
+	Add-to-Path $NASMDir
+
+	# Install NodeJS
 	$DepsDir       = "$ROOT_DIR\dependencies"
 	$NodeVersion   = '14.18.2'
 	$DLLReleaseVer = 'v0.0.1'
@@ -326,22 +336,6 @@ function sub-rpc {
 	echo "cofingure rpc"
 	cd $ROOT_DIR
 	
-}
-
-# NASM
-function sub-nasm {
-	echo "configure nasm"
-	cd $ROOT_DIR
-
-	$NASMVer    = '2.15.05'
-
-	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", "$(pwd)\nasm.zip")
-	Expand-Archive -Path 'nasm.zip' -DestinationPath .
-	
-	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
-	
-	Add-to-Path "$NASMDir\rdoff"
-	Add-to-Path $NASMDir
 }
 
 # WebAssembly
@@ -434,9 +428,6 @@ function sub-install {
 	}
 	if ( $INSTALL_V8REPO -eq 1 ) {
 		sub-v8repo
-	}
-	if ( $INSTALL_NASM -eq 1 ) {
-		sub-nasm
 	}
 	if ( $INSTALL_NODEJS -eq 1 ) {
 		sub-nodejs
@@ -568,10 +559,6 @@ function sub-options {
 		if ( "$var" -eq 'wasm' ) {
 			echo "wasm selected"
 			$Global:INSTALL_WASM = 1
-		}
-		if ( "$var" -eq 'nasm' ) {
-			echo "nasm selected"
-			$Global:INSTALL_NASM = 1
 		}
 		if ( "$var" -eq 'java' ) {
 			echo "java selected"

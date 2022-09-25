@@ -19,21 +19,23 @@
 #	limitations under the License.
 #
 
-RUN_AS_ROOT=0
-SUDO_CMD=sudo
+set -euxo pipefail
+
 BUILD_TYPE=Release
 BUILD_TESTS=0
 BUILD_COVERAGE=0
 BUILD_INSTALL=0
 
+# Check out for sudo
+if [ "`id -u`" = '0' ]; then
+	SUDO_CMD=""
+else
+	SUDO_CMD=sudo
+fi
+
 sub_options() {
 	for option in "$@"
 	do
-		if [ "$option" = 'root' ]; then
-			echo "Running build script as root"
-			RUN_AS_ROOT=1
-			SUDO_CMD=""
-		fi
 		if [ "$option" = 'debug' ]; then
 			echo "Build all scripts in debug mode"
 			BUILD_TYPE=Debug
@@ -93,7 +95,6 @@ sub_build() {
 sub_help() {
 	echo "Usage: `basename "$0"` list of options"
 	echo "Options:"
-	echo "	root: build being run by root"
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	tests: build and run all tests"
 	echo "	coverage: build coverage reports"

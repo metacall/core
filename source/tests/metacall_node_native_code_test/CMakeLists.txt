@@ -1,5 +1,5 @@
 # Check if this loader is enabled
-if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_PY OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_LOADERS_CS OR NOT OPTION_BUILD_SCRIPTS OR NOT OPTION_BUILD_SCRIPTS_PY OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_PY)
+if(NOT OPTION_BUILD_LOADERS OR NOT OPTION_BUILD_LOADERS_NODE OR NOT OPTION_BUILD_PORTS OR NOT OPTION_BUILD_PORTS_NODE)
 	return()
 endif()
 
@@ -8,7 +8,7 @@ endif()
 #
 
 # Target name
-set(target metacall-python-open-test)
+set(target metacall-node-native-code-test)
 message(STATUS "Test ${target}")
 
 #
@@ -32,7 +32,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(sources
 	${source_path}/main.cpp
-	${source_path}/metacall_python_open_test.cpp
+	${source_path}/metacall_node_native_code_test.cpp
 )
 
 # Group source files
@@ -54,27 +54,6 @@ add_executable(${target}
 
 # Create namespaced alias
 add_executable(${META_PROJECT_NAME}::${target} ALIAS ${target})
-
-#
-# Dependencies
-#
-
-if(NOT OPTION_BUILD_GUIX)
-	find_package(NPM)
-
-	if(NOT NPM_FOUND)
-		message(STATUS "NPM not found")
-		return()
-	endif()
-
-	add_custom_target(${target}-depends
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		COMMAND ${NPM_EXECUTABLE} --prefix ${CMAKE_CURRENT_BINARY_DIR} install jsonwebtoken
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules ${PROJECT_OUTPUT_DIR}/node_modules
-	)
-
-	add_dependencies(${target} ${target}-depends)
-endif()
 
 #
 # Project options
@@ -149,9 +128,8 @@ add_test(NAME ${target}
 #
 
 add_dependencies(${target}
-	py_loader
 	node_loader
-	cs_loader
+	node_port
 )
 
 #
@@ -161,19 +139,6 @@ add_dependencies(${target}
 set_property(TEST ${target}
 	PROPERTY LABELS ${target}
 )
-
-if(OPTION_BUILD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
-	# TODO: This test fails when run with sanitizers (this happens when C# loader is enabled):
-	# Tracer caught signal 11: addr=0x1500000aa8 pc=0x7f49da2cc0f0 sp=0x7f49d4ad2d10
-	# LeakSanitizer has encountered a fatal error.
-	# HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
-	# HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
-	#
-	# For solving this, we should enable C# support for sanitizers and debug it properly
-	set_tests_properties(${target} PROPERTIES
-		PASS_REGULAR_EXPRESSION "[  PASSED  ]"
-	)
-endif()
 
 include(TestEnvironmentVariables)
 

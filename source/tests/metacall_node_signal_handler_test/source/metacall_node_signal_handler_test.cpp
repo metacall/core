@@ -84,17 +84,24 @@ TEST_F(metacall_node_signal_handler_test, DefaultConstructor)
 
 	const char buffer[] =
 		"const { metacall } = require('" METACALL_NODE_PORT_PATH "');\n"
+		"let notified = false;\n"
+		"const notify = () => {\n"
+		"	if (notified === true) return;\n"
+		"	notified = true;\n"
+		"	metacall('c_callback');\n"
+		"};\n"
 		"const cp = require('child_process');\n"
 		"let sp = cp.spawn('ps');\n"
 		"sp.stdout.on('data', data => {\n"
 		"	console.log('node: stdout: ' + data.toString());\n"
 		"});\n"
-		"sp.on('exit', (code, signal) => {\n"
-		"	console.log(`node: child process exited with code ${code}`);\n"
-		"});\n"
 		"process.on('SIGCHLD', () => {\n"
 		"	console.log(`node: Received SIGCHLD signal in process`);\n"
-		"	metacall('c_callback');\n"
+		"	notify()\n"
+		"});\n"
+		"sp.on('exit', code => {\n"
+		"	console.log(`node: child process exited with code ${code}`);\n"
+		"	notify();\n" /* Sometimes exit event gets received before SIGCHLD, so we notify anyway to c_callback */
 		"});\n";
 
 	EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));

@@ -327,9 +327,20 @@ static loader_impl_c_handle c_loader_impl_handle_create(loader_impl_c c_impl)
 	/* TODO: Add some warnings? */
 	/* tcc_set_warning */
 
-	/* TODO: Take the c_loader and add the execution paths for include (and library?) folders */
 	/* tcc_add_include_path, tcc_add_library_path */
-	(void)c_impl;
+	const char *loader_lib_path = loader_library_path();
+	const char *include_dir = "../include";
+	char join_path[PORTABILITY_PATH_SIZE];
+	char metacall_incl_path[PORTABILITY_PATH_SIZE];
+
+	size_t join_path_size = portability_path_join(loader_lib_path, strlen(loader_lib_path) + 1, include_dir, strlen(include_dir) + 1, join_path, PORTABILITY_PATH_SIZE);
+	(void)portability_path_canonical(join_path, join_path_size, metacall_incl_path, PORTABILITY_PATH_SIZE);
+
+	/* Add metacall include path */
+	tcc_add_include_path(c_handle->state, metacall_incl_path);
+
+	/* Add metacall library path (in other to find metacall library) */
+	tcc_add_library_path(c_handle->state, c_impl->libtcc_runtime_path.c_str());
 
 	return c_handle;
 }

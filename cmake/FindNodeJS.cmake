@@ -307,26 +307,26 @@ endif()
 # Find NodeJS library from module version
 if(NodeJS_MODULE_VERSION)
 	# NodeJS library names
-	set(NodeJS_LIBRARY_NAMES
-		libnode.so.${NodeJS_MODULE_VERSION}
-		libnode.so
-		libnode.${NodeJS_MODULE_VERSION}.dylib
-		libnode.dylib
-	)
-
-	if(WIN32 AND NodeJS_VERSION_MAJOR GREATER_EQUAL 14)
-		set(NodeJS_LIBRARY_NAMES
-			${NodeJS_LIBRARY_NAMES}
-			libnode.${NodeJS_MODULE_VERSION}.dll
-			libnode.dll
-			libnode.lib
-		)
+	if(WIN32)
+		if(NodeJS_VERSION_MAJOR GREATER_EQUAL 14)
+			set(NodeJS_LIBRARY_NAMES
+				libnode.${NodeJS_MODULE_VERSION}.dll
+				libnode.dll
+				libnode.lib
+			)
+		else()
+			set(NodeJS_LIBRARY_NAMES
+				node.${NodeJS_MODULE_VERSION}.dll
+				node.dll
+				node.lib
+			)
+		endif()
 	else()
 		set(NodeJS_LIBRARY_NAMES
-			${NodeJS_LIBRARY_NAMES}
-			node.${NodeJS_MODULE_VERSION}.dll
-			node.dll
-			node.lib
+			libnode.so.${NodeJS_MODULE_VERSION}
+			libnode.so
+			libnode.${NodeJS_MODULE_VERSION}.dylib
+			libnode.dylib
 		)
 	endif()
 
@@ -383,7 +383,11 @@ if(NOT NodeJS_LIBRARY)
 			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
 		endif()
 	else()
-		set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out")
+		if(NodeJS_VERSION_MAJOR LESS 14)
+			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out")
+		else()
+			set(NodeJS_COMPILE_PATH "${NodeJS_OUTPUT_PATH}/out/${CMAKE_BUILD_TYPE}")
+		endif()
 	endif()
 
 	# Compile node as a shared library if needed

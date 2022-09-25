@@ -1,6 +1,6 @@
 /*
- *	Loader Library by Parra Studios
- *	A plugin for loading ruby code at run-time into a process.
+ *	MetaCall Library by Parra Studios
+ *	A library for providing a foreign function interface calls.
  *
  *	Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>
  *
@@ -21,28 +21,31 @@
 #include <gtest/gtest.h>
 
 #include <metacall/metacall.h>
+#include <metacall/metacall_loaders.h>
 
-class metacall_rust_load_from_package_dep_test : public testing::Test
+class metacall_node_unsupported_features_test : public testing::Test
 {
-protected:
+public:
 };
 
-TEST_F(metacall_rust_load_from_package_dep_test, DefaultConstructor)
+TEST_F(metacall_node_unsupported_features_test, DefaultConstructor)
 {
-	const char *rs_script = "debug/libjson_wrapper.rlib";
+	metacall_print_info();
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
-	EXPECT_EQ((int)0, (int)metacall_load_from_package("rs", rs_script, NULL));
-
-	/* Test: Load from package */
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
 	{
-		const char *text = "{\"name\": \"John Doe\"}";
-		void *ret = metacall("compile", text);
-		ASSERT_NE((void *)NULL, (void *)ret);
-		EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(ret), "\"John Doe\""));
-		metacall_value_destroy(ret);
+		const char buffer[] =
+			"const { metacall_inspect } = process._linkedBinding('node_loader_port_module');\n"
+			"module.exports = { metacall_inspect }\n";
+
+		EXPECT_EQ((int)0, (int)metacall_load_from_memory("node", buffer, sizeof(buffer), NULL));
+
+		EXPECT_NE((void *)NULL, (void *)metacall_function("metacall_inspect"));
 	}
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	/* Print inspect information */
 	{
