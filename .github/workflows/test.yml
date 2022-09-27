@@ -50,7 +50,7 @@ jobs:
           sudo ln -s /usr/bin/npx /usr/local/bin/npx
 
       - name: Set up the environment
-        run: sudo ./tools/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
+        run: ./tools/metacall-environment.sh ${METACALL_INSTALL_OPTIONS}
         env:
           METACALL_INSTALL_OPTIONS:    base python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust rapidjson funchook swig pack backtrace
 
@@ -65,11 +65,10 @@ jobs:
           export "PORT_LIBRARY_PATH=${METACALL_PATH}/build"
           mkdir -p build
           cd build
-          sudo "${METACALL_PATH}/tools/metacall-configure.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+          "${METACALL_PATH}/tools/metacall-configure.sh" ${METACALL_BUILD_OPTIONS}
         env:
           NODE_PATH:                   /usr/lib/node_modules
-          METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
-          METACALL_BUILD_OPTIONS:      python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
+          METACALL_BUILD_OPTIONS:      ${{ matrix.buildtype }} python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
 
       - name: Build
         run: |
@@ -81,11 +80,10 @@ jobs:
           export "DETOUR_LIBRARY_PATH=${METACALL_PATH}/build"
           export "PORT_LIBRARY_PATH=${METACALL_PATH}/build"
           cd build
-          sudo "${METACALL_PATH}/tools/metacall-build.sh" ${METACALL_BUILD_TYPE} ${METACALL_BUILD_OPTIONS}
+          "${METACALL_PATH}/tools/metacall-build.sh" ${METACALL_BUILD_OPTIONS}
         env:
           NODE_PATH:                   /usr/lib/node_modules
-          METACALL_BUILD_TYPE:         ${{ matrix.buildtype }}
-          METACALL_BUILD_OPTIONS:      python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
+          METACALL_BUILD_OPTIONS:      ${{ matrix.buildtype }} python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust examples tests scripts ports dynamic install pack benchmarks
 
   windows-test:
     name: Windows MSVC Test

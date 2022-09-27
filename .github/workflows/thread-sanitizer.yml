@@ -1,5 +1,5 @@
-# Note: This is duplicated from thread-sanitizer.yml in order to keep the ci running if one of both sanitizers fail
-name: Sanitizer Test
+# Note: This is duplicated from sanitizer.yml in order to keep the ci running if one of both sanitizers fail
+name: Thread Sanitizer Test
 
 on:
   workflow_dispatch:
@@ -12,7 +12,7 @@ on:
 
 jobs:
   linux-sanitizer:
-    name: Linux (Ubuntu) GCC Sanitizer Test
+    name: Linux (Ubuntu) GCC Thread Sanitizer Test
     runs-on: ubuntu-latest
     if: github.repository == 'metacall/core'
 
@@ -41,5 +41,5 @@ jobs:
           sudo ln -s /usr/bin/npm /usr/local/bin/npm
           sudo ln -s /usr/bin/npx /usr/local/bin/npx
 
-      - name: Install, build and run sanitizer tests
-        run: ./tools/metacall-sanitizer.sh sanitizer
+      - name: Install, build and run thread sanitizer tests
+        run: ./tools/metacall-sanitizer.sh thread-sanitizer
