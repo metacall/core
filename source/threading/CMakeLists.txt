@@ -35,6 +35,7 @@ set(source_path  "${CMAKE_CURRENT_SOURCE_DIR}/source")
 
 set(headers
 	${include_path}/threading.h
+	${include_path}/threading_atomic.h
 	${include_path}/threading_thread_id.h
 )
 

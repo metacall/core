@@ -23,6 +23,7 @@
 
 #include <threading/threading_api.h>
 
+#include <threading/threading_atomic.h>
 #include <threading/threading_thread_id.h>
 
 #ifdef __cplusplus

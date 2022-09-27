@@ -45,7 +45,7 @@ set(DEFAULT_PROJECT_OPTIONS
 if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
 	set(DEFAULT_PROJECT_OPTIONS
 		${DEFAULT_PROJECT_OPTIONS}
-		C_STANDARD				99 # TODO: Provide preprocessor support for older standards (GCC)
+		C_STANDARD				11 # TODO: Provide preprocessor support for older standards (GCC)
 	)
 endif()
 
@@ -65,7 +65,9 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
 	)
-	set(SANITIZER_COMPILE_DEFINITIONS)
+	set(SANITIZER_COMPILE_DEFINITIONS
+		"__THREAD_SANITIZER__=1"
+	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	# TODO: This requires much more effort than expected: https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo
 	set(DEFAULT_LIBRARIES)

@@ -323,7 +323,7 @@ void ModulesClear()
 		FreeLibrary(it->second);
 #elif defined(JS_PORT_TEST_UNIX)
 	/* Disable dlclose when running with address sanitizer in order to maintain stacktraces */
-	#if !defined(__ADDRESS_SANITIZER__)
+	#if !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__)
 		dlclose(it->second);
 	#endif
 #endif

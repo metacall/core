@@ -23,6 +23,8 @@
 
 #include <log/log.h>
 
+#include <threading/threading_atomic.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -39,10 +41,10 @@ struct function_type
 
 static struct
 {
-	uint64_t allocations;
-	uint64_t deallocations;
-	uint64_t increments;
-	uint64_t decrements;
+	threading_atomic size_t allocations;
+	threading_atomic size_t deallocations;
+	threading_atomic size_t increments;
+	threading_atomic size_t decrements;
 } function_stats = { 0, 0, 0, 0 };
 
 static value function_metadata_name(function func);

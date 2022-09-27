@@ -29,6 +29,8 @@
 
 #include <log/log.h>
 
+#include <threading/threading_atomic.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -56,10 +58,10 @@ typedef struct class_metadata_iterator_args_type *class_metadata_iterator_args;
 
 static struct
 {
-	uint64_t allocations;
-	uint64_t deallocations;
-	uint64_t increments;
-	uint64_t decrements;
+	threading_atomic size_t allocations;
+	threading_atomic size_t deallocations;
+	threading_atomic size_t increments;
+	threading_atomic size_t decrements;
 } class_stats = { 0, 0, 0, 0 };
 
 static value class_metadata_name(klass cls);

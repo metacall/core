@@ -49,7 +49,7 @@ add_dependencies(${target}
 if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
 	#
-	# Sanitizer:
+	# Address Sanitizer:
 	# ASan runtime does not come first in initial library list; you should either link runtime to your application or manually preload it with LD_PRELOAD.
 	# For solving the issue compile the test with sanitizers when enabled or preload asan
 	#

@@ -15,7 +15,7 @@
 #
 # NodeJS
 #
-#called_from_lib:libnode*
+race:v8::platform::tracing::TracingController::GetCategoryGroupEnabled
 #
 # Ruby
 #
@@ -33,6 +33,11 @@ called_from_lib:libjvm*
 # WASM (TODO: This must be reviewed, probably it's a false positive)
 #
 called_from_lib:libwasmtime*
+#
+# C
+#
+mutex:clang_install_aborting_llvm_fatal_error_handler
+mutex:libclang-11*
 #
 # Rust
 #

@@ -118,10 +118,27 @@ target_link_libraries(${target}
 # Define test
 #
 
-if(OPTION_BUILD_SANITIZER)
+if(OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREAD_SANITIZER)
 	# TODO: This test fails when run with sanitizers:
+	#
+	# Address Sanitizer:
 	# ERROR: AddressSanitizer: heap-use-after-free on address 0x629000003a50 at pc 0x7fb5059be061 bp 0x6290000032d0 sp 0x629000002a80
 	# WRITE of size 22 at 0x629000003a50 thread T0
+	#
+	# Thread Sanitizer:
+	# WARNING: ThreadSanitizer: signal-unsafe call inside of a signal (pid=14308)
+	# 	#0 malloc ../../../../src/libsanitizer/tsan/tsan_interceptors_posix.cpp:647 (libtsan.so.2+0x3ebb8)
+	# 	#1 <null> <null> (ld-linux-x86-64.so.2+0x28df)
+	# 	#2 <null> <null> (libruby-2.7.so.2.7+0x237879)
+	# 	#3 loader_impl_initialize /usr/local/metacall/source/loader/source/loader_impl.c:367 (libmetacalld.so+0x30673)
+	# 	#4 loader_impl_load_from_memory /usr/local/metacall/source/loader/source/loader_impl.c:945 (libmetacalld.so+0x30df1)
+	# 	#5 loader_load_from_memory /usr/local/metacall/source/loader/source/loader.c:327 (libmetacalld.so+0x2e1d1)
+	# 	#6 metacall_load_from_memory /usr/local/metacall/source/metacall/source/metacall.c:357 (libmetacalld.so+0x32c00)
+	# 	#7 metacall_rb_call_bench::SetUp(benchmark::State&) /usr/local/metacall/source/benchmarks/metacall_rb_call_bench/source/metacall_rb_call_bench.cpp:51 (metacall-rb-call-benchd+0x1a420)
+	# 	#8 benchmark::internal::BenchmarkInstance::Run(unsigned long, int, benchmark::internal::ThreadTimer*, benchmark::internal::ThreadManager*, benchmark::internal::PerfCountersMeasurement*) const <null> (metacall-rb-call-benchd+0x5f41f)
+	# 	#9 <null> <null> (libc.so.6+0x29209)
+	#
+	# SUMMARY: ThreadSanitizer: signal-unsafe call inside of a signal (/lib64/ld-linux-x86-64.so.2+0x28df)
 	#
 	# For solving this, we should enable Ruby support for sanitizers and debug it properly
 	return()
