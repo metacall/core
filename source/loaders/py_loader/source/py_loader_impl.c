@@ -2677,10 +2677,6 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 		goto error_alloc_py_impl;
 	}
 
-	/* Hook the deallocation of PyCFunction */
-	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
-	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
-
 	Py_InitializeEx(0);
 
 	if (Py_IsInitialized() == 0)
@@ -2697,6 +2693,11 @@ loader_impl_data py_loader_impl_initialize(loader_impl impl, configuration confi
 
 	PyThreadState *tstate = PyEval_SaveThread();
 	PyGILState_STATE gstate = PyGILState_Ensure();
+
+	/* Hook the deallocation of PyCFunction */
+	py_loader_impl_pycfunction_dealloc = PyCFunction_Type.tp_dealloc;
+	PyCFunction_Type.tp_dealloc = PyCFunction_dealloc;
+	PyType_Modified(&PyCFunction_Type);
 
 	if (py_loader_impl_initialize_sys_executable(py_impl) != 0)
 	{

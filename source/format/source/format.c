@@ -32,7 +32,7 @@ const char *format_print_info(void)
 		"Format Library " METACALL_VERSION "\n"
 		"Copyright (C) 2016 - 2022 Vicente Eduardo Ferrer Garcia <vic798@gmail.com>\n"
 
-#ifdef LOG_STATIC_DEFINE
+#ifdef FORMAT_STATIC_DEFINE
 		"Compiled as static library type\n"
 #else
 		"Compiled as shared library type\n"
