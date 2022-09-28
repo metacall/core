@@ -41,6 +41,6 @@ mutex:libclang-11*
 #
 # Rust
 #
-called_from_lib:libLLVM*
-called_from_lib:librustc_driver-*
-called_from_lib:libstd-*
+race:libLLVM*
+race:librustc_driver-*
+race:libstd-*
