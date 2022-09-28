@@ -47,7 +47,7 @@ extern "C" {
 #else
 	/* TODO */
 	#define threading_atomic
-	#error "Thread atomic support not implemented"
+	/* #error "Thread atomic support not implemented" */
 #endif
 
 #ifdef __cplusplus
