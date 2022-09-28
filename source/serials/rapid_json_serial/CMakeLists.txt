@@ -14,7 +14,8 @@ if(NOT RAPIDJSON_FOUND)
 	include(InstallRapidJSON)
 
 	if(NOT RAPIDJSON_FOUND)
-		message(STATUS "RapidJSON libraries not found")
+		message(SEND_ERROR "RapidJSON libraries not found")
+		set(OPTION_BUILD_SERIALS_RAPID_JSON OFF CACHE BOOL)
 		return()
 	endif()
 

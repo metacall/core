@@ -10,7 +10,8 @@ endif()
 find_package(NodeJS)
 
 if(NOT NodeJS_FOUND)
-	message(STATUS "NodeJS libraries not found")
+	message(SEND_ERROR "NodeJS libraries not found")
+	set(OPTION_BUILD_LOADERS_NODE OFF CACHE BOOL)
 	return()
 endif()
 

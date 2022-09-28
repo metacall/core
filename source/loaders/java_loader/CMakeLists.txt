@@ -10,7 +10,8 @@ endif()
 find_package(JNI)
 
 if(NOT JNI_FOUND)
-	message(STATUS "JNI libraries not found")
+	message(SEND_ERROR "JNI libraries not found")
+	set(OPTION_BUILD_LOADERS_JAVA OFF CACHE BOOL)
 	return()
 endif()
 

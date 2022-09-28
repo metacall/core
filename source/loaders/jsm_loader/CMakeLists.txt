@@ -10,7 +10,8 @@ endif()
 find_package(SpiderMonkey)
 
 if(NOT SPIDERMONKEY_FOUND)
-	message(STATUS "SpiderMonkey libraries not found")
+	message(SEND_ERROR "SpiderMonkey libraries not found")
+	set(OPTION_BUILD_LOADERS_JSM OFF CACHE BOOL)
 	return()
 endif()
 

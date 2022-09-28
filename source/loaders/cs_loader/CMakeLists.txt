@@ -13,7 +13,8 @@ set(DOTNET_CORE_PATH "" CACHE PATH "Dotnet runtime path")
 find_package(CoreCLR)
 
 if(NOT CORECLR_FOUND)
-	message(STATUS "CoreCLR libraries not found")
+	message(SEND_ERROR "CoreCLR libraries not found")
+	set(OPTION_BUILD_LOADERS_CS OFF CACHE BOOL)
 	return()
 endif()
 

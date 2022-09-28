@@ -10,7 +10,8 @@ endif()
 find_package(Ruby)
 
 if(NOT Ruby_FOUND)
-	message(STATUS "Ruby libraries not found")
+	message(SEND_ERROR "Ruby libraries not found")
+	set(OPTION_BUILD_LOADERS_RB OFF CACHE BOOL)
 	return()
 endif()
 

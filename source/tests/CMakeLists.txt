@@ -20,7 +20,8 @@ if(NOT GTEST_FOUND)
 	include(InstallGTest)
 
 	if(NOT GTEST_FOUND)
-		message(STATUS "GTest libraries not found")
+		message(SEND_ERROR "GTest libraries not found")
+		set(OPTION_BUILD_TESTS OFF CACHE BOOL)
 		return()
 	endif()
 

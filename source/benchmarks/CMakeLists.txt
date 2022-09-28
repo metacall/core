@@ -18,7 +18,8 @@ if(NOT GBENCH_FOUND)
 	include(InstallGBench)
 
 	if(NOT GBENCH_FOUND)
-		message(STATUS "GBench libraries not found")
+		message(SEND_ERROR "GBench libraries not found")
+		set(OPTION_BUILD_BENCHMARKS OFF CACHE BOOL)
 		return()
 	endif()
 

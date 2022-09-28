@@ -12,7 +12,8 @@ set(ICU_FIND_VERSION 52.1)
 find_package(V8 5.1.117) # 5.8.283
 
 if(NOT V8_FOUND)
-	message(STATUS "V8 libraries not found")
+	message(SEND_ERROR "V8 libraries not found")
+	set(OPTION_BUILD_LOADERS_JS OFF CACHE BOOL)
 	return()
 endif()
 
