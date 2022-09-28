@@ -32,7 +32,7 @@ find_library(GBENCH_LIBRARY NAMES benchmark)
 
 include(FindPackageHandleStandardArgs)
 
-find_package_handle_standard_args(google-benchmark
+find_package_handle_standard_args(GBench
 	REQUIRED_VARS GBENCH_INCLUDE_DIR GBENCH_LIBRARY
 )
 
