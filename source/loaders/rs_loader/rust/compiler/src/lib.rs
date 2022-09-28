@@ -382,6 +382,7 @@ pub struct CompilerError {
 pub struct CompilerCallbacks {
     source: SourceImpl,
     is_parsing: bool,
+    destination: PathBuf,
     functions: Vec<Function>,
     classes: Vec<Class>,
 }
@@ -512,11 +513,11 @@ impl CompilerCallbacks {
 fn generate_random_string(length: usize) -> String {
     let charset_str = "abcdefghijklmnopqrstuvwxyz";
     let chars: Vec<char> = charset_str.chars().collect();
-    let mut result = String::with_capacity(length);
-
+    let mut result = String::with_capacity(length + 8);
+    result.push_str("metacall");
     unsafe {
         for _ in 0..length {
-            result.push(*chars.get_unchecked(fastrand::usize(0..chars.len())));
+            result.push(*chars.get_unchecked(fastrand::usize(8..chars.len())));
         }
     }
     result
@@ -563,7 +564,7 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
                 ErrorOutputType::default(),
             ));
             // Set up inputs
-            let wrapped_script_path = std::env::temp_dir().join("metacall_wrapped_package.rs");
+            let wrapped_script_path = self.destination.join("metacall_wrapped_package.rs");
             if self.is_parsing {
                 let mut wrapped_script = std::fs::File::create(&wrapped_script_path)
                     .expect("unable to create wrapped script");
@@ -581,22 +582,10 @@ impl rustc_driver::Callbacks for CompilerCallbacks {
         }
         // Set up output
         if self.is_parsing {
-            let random_string = generate_random_string(5);
-            let mut output_path = self.source.output.clone();
-            let new_filename = format!(
-                "{}_{}",
-                output_path
-                    .file_prefix()
-                    .expect("Unable to get file prefix")
-                    .to_string_lossy(),
-                random_string
-            );
-            output_path.set_file_name(new_filename);
-            if let Some(ext) = self.source.output.extension() {
-                output_path.set_extension(ext);
-            }
-            config.output_file = Some(output_path.clone());
-            self.source.output = output_path;
+            let output_path = self.source.output.clone();
+            let file_name = output_path.file_name().expect("Unable to get the filename");
+            config.output_file = Some(self.destination.join(file_name));
+            self.source.output = self.destination.join(file_name);
         } else {
             config.output_file = Some(self.source.output.clone());
         }
@@ -911,9 +900,17 @@ fn run_compiler(
 }
 
 pub fn compile(source: SourceImpl) -> Result<CompilerState, CompilerError> {
+    let destination = std::env::temp_dir().join(generate_random_string(5));
+    let result = std::fs::create_dir(&destination);
+    if result.is_err() {
+        // handle the case that tempdir doesn't exist
+        let destination = source.input_path.join(generate_random_string(5));
+        std::fs::create_dir(&destination).expect("Unable to create temp folder");
+    }
     let mut callbacks = CompilerCallbacks {
         source,
         is_parsing: true,
+        destination,
         functions: Default::default(),
         classes: Default::default(),
     };
