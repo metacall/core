@@ -9,6 +9,7 @@ $Global:INSTALL_RUBY = 0
 $Global:INSTALL_RUST = 0
 $Global:INSTALL_RAPIDJSON = 0
 $Global:INSTALL_FUNCHOOK = 0
+$Global:INSTALL_DOTNET = 0
 $Global:INSTALL_NETCORE = 0
 $Global:INSTALL_NETCORE2 = 0
 $Global:INSTALL_NETCORE5 = 0
@@ -178,6 +179,45 @@ function sub-funchook {
 	
 }
 
+# .NET
+function sub-dotnet {
+	echo "configure dotnet"
+	cd $ROOT_DIR
+
+	$DotNetDownloadVersion = '5.0.403'
+	$DotNetVersion         = '5.0.12'
+	$RuntimeDir            = "$ROOT_DIR\runtimes\dotnet"
+	$DepsDir               = "$ROOT_DIR\dependencies"
+
+	md -Force $DepsDir
+	md -Force $RuntimeDir
+	cd $DepsDir
+
+	# Download SDK
+	(New-Object Net.WebClient).DownloadFile("https://download.visualstudio.microsoft.com/download/pr/d1ca6dbf-d054-46ba-86d1-36eb2e455ba2/e950d4503116142d9c2129ed65084a15/dotnet-sdk-$DotNetDownloadVersion-win-x64.zip", "$(pwd)\dotnet_sdk.zip")
+
+	# Install .NET
+	Expand-Archive -Path "dotnet_sdk.zip" -DestinationPath $RuntimeDir
+	git clone --branch v5.0.12 --depth 1 --single-branch https://github.com/dotnet/runtime.git "$RuntimeDir\runtime"
+	md -Force "$RuntimeDir\include"
+	robocopy /move /e "$RuntimeDir\runtime\src\coreclr\src\pal" "$RuntimeDir\include\pal" /NFL /NDL /NJH /NJS /NC /NS /NP
+	robocopy /move /e "$RuntimeDir\runtime\src\coreclr\src\inc" "$RuntimeDir\include\inc" /NFL /NDL /NJH /NJS /NC /NS /NP
+	rd -Recurse -Force "$RuntimeDir\runtime"
+
+	Add-to-Path $RuntimeDir
+
+	# Patch for FindDotNET.cmake
+	$FindDotNet = "$ROOT_DIR\cmake\FindDotNET.cmake"
+	$DotNetDir  = $RuntimeDir.Replace('\', '/')
+
+	echo "set(DOTNET_VERSION $DotNetVersion)"                             >  $FindDotNet
+	echo "set(DOTNET_MIGRATE 1)"                                          >> $FindDotNet
+	echo "set(DOTNET_COMMAND ""$DotNetDir/dotnet.exe"")"                  >> $FindDotNet
+	echo "include(FindPackageHandleStandardArgs)"                         >> $FindDotNet
+	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(DotNET REQUIRED_VARS DOTNET_COMMAND DOTNET_MIGRATE VERSION_VAR DOTNET_VERSION)" >> $FindDotNet
+	echo "mark_as_advanced(DOTNET_COMMAND DOTNET_MIGRATE DOTNET_VERSION)" >> $FindDotNet
+}
+
 # NetCore
 function sub-netcore {
 	echo "configure netcore"
@@ -242,7 +282,8 @@ function sub-nodejs {
 	# Download
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", "$(pwd)\node.zip")
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", "$(pwd)\node_headers.tar.gz")
-	
+	(New-Object Net.WebClient).DownloadFile("https://raw.githubusercontent.com/metacall/core/66fcaac300611d1c4210023e7b260296586a42e0/cmake/NodeJSGYPPatch.py", "$(pwd)\NodeJSGYPPatch.py") # "Not sure why." – Param.
+
 	# Install runtime
 	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
 	robocopy /move /e "$RuntimeDir\node-v$NodeVersion-win-x64" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
@@ -370,6 +411,9 @@ function sub-install {
 	if ( $INSTALL_FUNCHOOK -eq 1 ) {
 		sub-funchook
 	}
+	if ( $INSTALL_DOTNET -eq 1 ) {
+		sub-dotnet
+	}
 	if ( $INSTALL_NETCORE -eq 1 ) {
 		sub-netcore
 	}
@@ -446,6 +490,10 @@ function sub-options {
 		if ( "$var" -eq 'rust' ) {
 			echo "rust selected"
 			$Global:INSTALL_RUST = 1
+		}
+		if ( "$var" -eq 'dotnet' ) {
+			echo "dotnet selected"
+			$Global:INSTALL_DOTNET = 1
 		}
 		if ( "$var" -eq 'netcore' ) {
 			echo "netcore selected"
@@ -554,6 +602,7 @@ function sub-help {
 	echo "	base"
 	echo "	python"
 	echo "	ruby"
+	echo "	dotnet"
 	echo "	netcore"
 	echo "	netcore2"
 	echo "	netcore5"
@@ -565,6 +614,7 @@ function sub-help {
 	echo "	v8rep57"
 	echo "	v8rep58"
 	echo "	nodejs"
+	echo "	nasm"
 	echo "	typescript"
 	echo "	file"
 	echo "	rpc"

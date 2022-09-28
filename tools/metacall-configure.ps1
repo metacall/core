@@ -3,6 +3,7 @@ $Global:ROOT_DIR = "$(pwd)"
 $Global:BUILD_TYPE =              'Release'
 $Global:BUILD_PYTHON =            0
 $Global:BUILD_RUBY =              0
+$Global:BUILD_DOTNET =            0
 $Global:BUILD_NETCORE =           0
 $Global:BUILD_NETCORE2 =          0
 $Global:BUILD_NETCORE5 =          0
@@ -50,6 +51,10 @@ function sub-options {
 		if ( "$option" -eq 'ruby' ) {
 			echo "Build with ruby support"
 			$Global:BUILD_RUBY = 1
+		}
+		if ( "$option" -eq 'dotnet' ) {
+			echo "Build with dotnet support"
+			$Global:BUILD_DOTNET = 1
 		}
 		if ( "$option" -eq 'netcore' ) {
 			echo "Build with netcore support"
@@ -176,6 +181,19 @@ function sub-configure {
 		}
 	}
 
+	# .NET
+	if ( $BUILD_DOTNET -eq 1 ) {
+		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_CS=On "
+
+		if ( $BUILD_SCRIPTS -eq 1 ) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
+		}
+
+		if ( $BUILD_PORTS -eq 1 ) {
+			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+		}
+	}
+
 	# NetCore
 	if ( $BUILD_NETCORE -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING " `
@@ -238,6 +256,8 @@ function sub-configure {
 	if ( $BUILD_NODEJS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_NODE=On"
 
+		# Resulted in errors in the CMake command, so commented out.
+		# Marked not necessary by Vicente.
 		<# & {
 			cd ..
 			$NodePath = "$($(pwd).Path.Replace('\', '/'))/runtimes/nodejs"
@@ -402,6 +422,7 @@ function sub-help {
 	echo "	debug | release | relwithdebinfo: build type"
 	echo "	python: build with python support"
 	echo "	ruby: build with ruby support"
+	echo "	dotnet: build with dotnet support"
 	echo "	netcore: build with netcore support"
 	echo "	netcore2: build with netcore 2 support"
 	echo "	netcore5: build with netcore 5 support"
@@ -410,6 +431,7 @@ function sub-help {
 	echo "	typescript: build with typescript support"
 	echo "	file: build with file support"
 	echo "	rpc: build with rpc support"
+	echo "	nasm: build with nasm support"
 	echo "	wasm: build with wasm support"
 	echo "	java: build with java support"
 	echo "	c: build with c support"
@@ -424,6 +446,7 @@ function sub-help {
 	echo "	ports: build all ports"
 	echo "	coverage: build all coverage reports"
 	echo "	sanitizer: build with address, memory, thread... sanitizers"
+	echo "	thread-sanitizer: build with thread sanitizer"
 	echo ""
 }
 
