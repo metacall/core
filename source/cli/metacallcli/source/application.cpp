@@ -283,10 +283,10 @@ bool command_cb_eval(application &app, tokenizer &t)
 	}
 
 	std::string loaders[] = {
-		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs"
+		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs", "c"
 	};
 
-	// check if invalid loader tag
+	/* Check if invalid loader tag */
 	if (std::find(std::begin(loaders), std::end(loaders), loader_tag) == std::end(loaders))
 	{
 		return false;
@@ -470,7 +470,7 @@ bool command_cb_load(application &app, tokenizer &t)
 		"mock", "py", "node", "rb", "cs", "cob", "ts", "js", "file", "wasm", "rs", "c"
 	};
 
-	// check if invalid loader tag
+	/* Check if invalid loader tag */
 	if (std::find(std::begin(loaders), std::end(loaders), loader_tag) == std::end(loaders))
 	{
 		return false;
