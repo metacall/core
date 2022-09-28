@@ -28,14 +28,10 @@ impl MemoryRegistration {
             Ok(instance) => instance,
             Err(error) => return Err(RegistrationError::DlopenError(error)),
         };
-        // delete temporary files
-        let tmp_dir = std::env::temp_dir();
-        fs::remove_file(tmp_dir.join("script.rs")).expect("unable to delete source script");
-        fs::remove_file(tmp_dir.join("wrapped_script.rs"))
-            .expect("unable to delete wrapped script");
-        fs::remove_file(tmp_dir.join("metacall_class.rs"))
-            .expect("unable to delete metacall class");
-        fs::remove_file(&state.output).expect("unable to delete compiled library");
+        // cleanup temp dir
+        let mut destination = state.output.clone();
+        destination.pop();
+        std::fs::remove_dir_all(destination).expect("Unable to cleanup tempdir");
 
         Ok(MemoryRegistration {
             name,

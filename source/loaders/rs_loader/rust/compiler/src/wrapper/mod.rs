@@ -138,7 +138,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
             content.push_str(&class_wrapper);
 
             // use temp_dir instead.
-            let temp_dir = std::env::temp_dir();
+            let temp_dir = callbacks.destination.clone();
 
             // create metacall_class file
             // println!("create: {:?}", source_dir.join("metacall_class.rs"));
@@ -173,7 +173,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
 
             match callbacks.source.input.0 {
                 Input::File(input_path) => {
-                    let temp_dir = std::env::temp_dir();
+                    let temp_dir = callbacks.destination.clone();
                     // generate wrappers to a file source_wrapper.rs
                     let source_file = input_path
                         .file_name()
@@ -207,7 +207,7 @@ pub fn generate_wrapper(callbacks: CompilerCallbacks) -> std::io::Result<Compile
                 }
                 Input::Str { name, input } => match name {
                     Custom(_name) => {
-                        let source_path = std::env::temp_dir();
+                        let source_path = callbacks.destination.clone();
                         // write code to script
                         let mut source_file = File::create(source_path.join("script.rs"))?;
                         source_file.write_all(input.as_bytes())?;
