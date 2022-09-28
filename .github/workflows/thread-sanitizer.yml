@@ -14,7 +14,6 @@ jobs:
   linux-sanitizer:
     name: Linux (Ubuntu) GCC Thread Sanitizer Test
     runs-on: ubuntu-latest
-    if: github.repository == 'metacall/core'
 
     steps:
       - name: Check out the repository

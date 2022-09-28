@@ -9,7 +9,6 @@ $Global:INSTALL_RUBY = 0
 $Global:INSTALL_RUST = 0
 $Global:INSTALL_RAPIDJSON = 0
 $Global:INSTALL_FUNCHOOK = 0
-$Global:INSTALL_DOTNET = 0
 $Global:INSTALL_NETCORE = 0
 $Global:INSTALL_NETCORE2 = 0
 $Global:INSTALL_NETCORE5 = 0
@@ -72,7 +71,7 @@ function sub-choco {
 function sub-swig {
 	echo "configure swig"
 	cd $ROOT_DIR
-	
+
 }
 
 # Python
@@ -163,25 +162,39 @@ function sub-ruby {
 function sub-rust {
 	echo "configure rust"
 	cd $ROOT_DIR
-	
+
 }
 
 # RapidJSON
 function sub-rapidjson {
 	echo "configure rapidjson"
 	cd $ROOT_DIR
-	
+
 }
 
 # FuncHook
 function sub-funchook {
 	echo "configure funchook"
-	
+
 }
 
-# .NET
-function sub-dotnet {
-	echo "configure dotnet"
+# NetCore
+function sub-netcore {
+	echo "configure netcore"
+	cd $ROOT_DIR
+
+}
+
+# NetCore 2
+function sub-netcore2 {
+	echo "configure netcore 2"
+	cd $ROOT_DIR
+
+}
+
+# NetCore 5
+function sub-netcore5 {
+	echo "configure netcore 5"
 	cd $ROOT_DIR
 
 	$DotNetDownloadVersion = '5.0.403'
@@ -218,39 +231,18 @@ function sub-dotnet {
 	echo "mark_as_advanced(DOTNET_COMMAND DOTNET_MIGRATE DOTNET_VERSION)" >> $FindDotNet
 }
 
-# NetCore
-function sub-netcore {
-	echo "configure netcore"
-	cd $ROOT_DIR
-	
-}
-
-# NetCore 2
-function sub-netcore2 {
-	echo "configure netcore 2"
-	cd $ROOT_DIR
-	
-}
-
-# NetCore 5
-function sub-netcore5 {
-	echo "configure netcore 5"
-	cd $ROOT_DIR
-	
-}
-
 # V8 Repository
 function sub-v8repo {
 	echo "configure v8 from repository"
 	cd $ROOT_DIR
-	
+
 }
 
 # V8
 function sub-v8 {
 	echo "configure v8"
 	cd $ROOT_DIR
-	
+
 }
 
 # NodeJS
@@ -411,9 +403,6 @@ function sub-install {
 	if ( $INSTALL_FUNCHOOK -eq 1 ) {
 		sub-funchook
 	}
-	if ( $INSTALL_DOTNET -eq 1 ) {
-		sub-dotnet
-	}
 	if ( $INSTALL_NETCORE -eq 1 ) {
 		sub-netcore
 	}
@@ -490,10 +479,6 @@ function sub-options {
 		if ( "$var" -eq 'rust' ) {
 			echo "rust selected"
 			$Global:INSTALL_RUST = 1
-		}
-		if ( "$var" -eq 'dotnet' ) {
-			echo "dotnet selected"
-			$Global:INSTALL_DOTNET = 1
 		}
 		if ( "$var" -eq 'netcore' ) {
 			echo "netcore selected"
@@ -602,7 +587,6 @@ function sub-help {
 	echo "	base"
 	echo "	python"
 	echo "	ruby"
-	echo "	dotnet"
 	echo "	netcore"
 	echo "	netcore2"
 	echo "	netcore5"
@@ -614,7 +598,6 @@ function sub-help {
 	echo "	v8rep57"
 	echo "	v8rep58"
 	echo "	nodejs"
-	echo "	nasm"
 	echo "	typescript"
 	echo "	file"
 	echo "	rpc"
