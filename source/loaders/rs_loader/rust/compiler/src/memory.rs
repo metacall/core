@@ -1,6 +1,6 @@
 use crate::{compile, CompilerState, RegistrationError, Source};
 
-use std::{ffi::c_void, fs};
+use std::{ffi::c_void};
 
 use crate::{registrator, DlopenLibrary};
 
