@@ -1,0 +1,4 @@
+load py cli-test.py
+inspect
+call test()
+exit

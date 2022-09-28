@@ -1,0 +1,3 @@
+load py ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.py
+call main()
+exit

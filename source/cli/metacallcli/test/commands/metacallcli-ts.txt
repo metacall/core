@@ -1,0 +1,4 @@
+load ts typedfunc.ts
+inspect
+call typed_sum(4, 5)
+exit

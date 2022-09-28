@@ -1,0 +1,3 @@
+load mock a.mock
+inspect
+exit

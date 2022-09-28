@@ -1,0 +1,1 @@
+execute_process(COMMAND ${EXECUTABLE} INPUT_FILE ${INPUT})

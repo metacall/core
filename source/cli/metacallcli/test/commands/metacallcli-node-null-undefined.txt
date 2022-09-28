@@ -1,0 +1,4 @@
+load node cli-test-null-undefined.js
+inspect
+call test_null_and_undefined(undefined)
+exit

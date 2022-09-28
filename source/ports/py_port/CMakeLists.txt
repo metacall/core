@@ -37,17 +37,14 @@ set(py_port_test "${target}_test")
 # Define test
 #
 
-if(WIN32)
-	set(TEST_COMMAND cmd /c)
-	set(GREP_COMMAND findstr)
-else()
-	set(TEST_COMMAND sh -c)
-	set(GREP_COMMAND grep)
-endif()
+configure_file(
+	${CMAKE_CURRENT_SOURCE_DIR}/test/commands/py_port.txt.in
+	${CMAKE_CURRENT_BINARY_DIR}/py_port.txt
+)
 
 # Add test (must be run with MetaCall CLI)
 add_test(NAME ${target}
-	COMMAND ${TEST_COMMAND} "echo 'load py ${CMAKE_CURRENT_SOURCE_DIR}/run_tests.py\ncall main()\nexit' | $<TARGET_FILE:metacallcli> | ${GREP_COMMAND} \"Tests passed without errors\""
+	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:metacallcli>" -D "INPUT=${CMAKE_CURRENT_BINARY_DIR}/py_port.txt" -P "${CMAKE_SOURCE_DIR}/source/cli/metacallcli/test/commands/command_runner.cmake"
 )
 
 #
@@ -58,10 +55,14 @@ set_property(TEST ${target}
 	PROPERTY LABELS ${py_port_test}
 )
 
+set_tests_properties(${target} PROPERTIES
+	PASS_REGULAR_EXPRESSION "Tests passed without errors"
+)
+
 include(TestEnvironmentVariables)
 
 # Enable rust test if it is built
-if(OPTION_BUILD_LOADERS_C)
+if(OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
 endif()
 

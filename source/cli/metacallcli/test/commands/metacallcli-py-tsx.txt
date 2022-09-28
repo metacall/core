@@ -1,0 +1,2 @@
+load py cli-test-tsx.py
+exit

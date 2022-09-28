@@ -1,0 +1,3 @@
+load node cli-test.js
+inspect
+exit

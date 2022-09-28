@@ -113,16 +113,9 @@ if(OPTION_BUILD_THREAD_SANITIZER AND OPTION_BUILD_LOADERS_CS)
 	return()
 endif()
 
-if(WIN32)
-	set(TEST_COMMAND cmd /c)
-	set(GREP_COMMAND findstr)
-else()
-	set(TEST_COMMAND sh -c)
-	set(GREP_COMMAND grep)
-endif()
-
 add_test(NAME ${target}
-	COMMAND ${TEST_COMMAND} "echo 'load node ${CMAKE_CURRENT_SOURCE_DIR}/test.js\nawait main()\nexit' | $<TARGET_FILE:metacallcli> | ${GREP_COMMAND} \"Tests passed without errors\""
+	COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:metacallcli>" -D "INPUT=${CMAKE_CURRENT_SOURCE_DIR}/test/commands/node_port.txt" -P "${CMAKE_SOURCE_DIR}/source/cli/metacallcli/test/commands/command_runner.cmake"
+	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
 #
@@ -131,6 +124,10 @@ add_test(NAME ${target}
 
 set_property(TEST ${target}
 	PROPERTY LABELS ${node_port_test}
+)
+
+set_tests_properties(${target} PROPERTIES
+	PASS_REGULAR_EXPRESSION "Tests passed without errors"
 )
 
 include(TestEnvironmentVariables)
@@ -146,7 +143,7 @@ if(OPTION_BUILD_LOADERS_C)
 endif()
 
 # Enable rust test if it is built
-if(OPTION_BUILD_LOADERS_C)
+if(OPTION_BUILD_LOADERS_RS)
 	set(TESTS_ENVIRONMENT_VARIABLES_RS "OPTION_BUILD_LOADERS_RS=1")
 endif()
 

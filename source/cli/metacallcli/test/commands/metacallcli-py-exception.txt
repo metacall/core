@@ -1,0 +1,5 @@
+load py ducktype.py
+inspect
+call sum(1, "a")
+call sum(33, 33)
+exit
