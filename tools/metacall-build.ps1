@@ -44,7 +44,10 @@ function sub-build {
 	cmake --build . "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
 
 	if ( -not $? ) {
-		$Global:ExitCode = $LASTEXITCODE
+		$RecentExitCode = $LASTEXITCODE
+		echo "Failure in build with exit code: $RecentExitCode"
+
+		$Global:ExitCode = $RecentExitCode
 	}
 
 	# Tests (coverage needs to run the tests)
@@ -68,7 +71,10 @@ function sub-build {
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure -C $BUILD_TYPE
 
 		if ( -not $? ) {
-			$Global:ExitCode = $LASTEXITCODE
+			$RecentExitCode = $LASTEXITCODE
+			echo "Failure in tests with exit code: $RecentExitCode"
+
+			$Global:ExitCode = $RecentExitCode
 		}
 	}
 
@@ -82,7 +88,10 @@ function sub-build {
 		make -k lcov-genhtml
 
 		if ( -not $? ) {
-			$Global:ExitCode = $LASTEXITCODE
+			$RecentExitCode = $LASTEXITCODE
+			echo "Failure in coverage with exit code: $RecentExitCode"
+
+			$Global:ExitCode = $RecentExitCode
 		}
 	} #>
 
@@ -92,7 +101,10 @@ function sub-build {
 		cmake --build . --target install
 
 		if ( -not $? ) {
-			$Global:ExitCode = $LASTEXITCODE
+			$RecentExitCode = $LASTEXITCODE
+			echo "Failure in install with exit code: $RecentExitCode"
+
+			$Global:ExitCode = $RecentExitCode
 		}
 	}
 
