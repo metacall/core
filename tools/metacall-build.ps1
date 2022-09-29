@@ -37,10 +37,18 @@ function sub-options {
 }
 
 function sub-build {
+	$Global:ExitCode = 0
 
 	# Build the project
 	echo "Building MetaCall..."
 	cmake --build . "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)"
+
+	if ( -not $? ) {
+		$RecentExitCode = $LASTEXITCODE
+		echo "Failure in build with exit code: $RecentExitCode"
+
+		$Global:ExitCode = $RecentExitCode
+	}
 
 	# Tests (coverage needs to run the tests)
 	if ( ($BUILD_TESTS -eq 1) -or ($BUILD_COVERAGE -eq 1) ) {
@@ -61,6 +69,13 @@ function sub-build {
 		}
 
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure -C $BUILD_TYPE
+
+		if ( -not $? ) {
+			$RecentExitCode = $LASTEXITCODE
+			echo "Failure in tests with exit code: $RecentExitCode"
+
+			$Global:ExitCode = $RecentExitCode
+		}
 	}
 
 	# Coverage
@@ -71,13 +86,29 @@ function sub-build {
 		make -k gcov
 		make -k lcov
 		make -k lcov-genhtml
+
+		if ( -not $? ) {
+			$RecentExitCode = $LASTEXITCODE
+			echo "Failure in coverage with exit code: $RecentExitCode"
+
+			$Global:ExitCode = $RecentExitCode
+		}
 	} #>
 
 	# Install
 	if ( $BUILD_INSTALL -eq 1 ) {
 		echo "Building and installing MetaCall..."
 		cmake --build . --target install
+
+		if ( -not $? ) {
+			$RecentExitCode = $LASTEXITCODE
+			echo "Failure in install with exit code: $RecentExitCode"
+
+			$Global:ExitCode = $RecentExitCode
+		}
 	}
+
+	Exit $ExitCode
 }
 
 function sub-help {
