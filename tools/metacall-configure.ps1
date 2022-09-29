@@ -390,8 +390,7 @@ function sub-configure {
 	$Global:BUILD_STRING = "$BUILD_STRING -DCMAKE_BUILD_TYPE=$BUILD_TYPE"
 	
 	# Execute CMake
-	# cmd.exe /c "cmake -Wno-dev -DOPTION_GIT_HOOKS=Off $BUILD_STRING .."
-	$CustomFlags = '-DOPTION_BUILD_SECURITY=OFF -DOPTION_FORK_SAFE=OFF'
+	$CustomFlags = '-DOPTION_BUILD_SECURITY=OFF -DOPTION_FORK_SAFE=OFF -DWARNINGS_ENABLED=OFF' # TODO: Enable warnings when all tests pass
 	echo "BUILD COMMAND: cmake $CustomFlags $BUILD_STRING .."
 	cmd.exe /c "cmake $CustomFlags $BUILD_STRING .."
 
