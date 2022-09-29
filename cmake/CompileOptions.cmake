@@ -36,18 +36,12 @@ include(Portability)
 
 set(DEFAULT_PROJECT_OPTIONS
 	DEBUG_POSTFIX				"d"
-	CXX_STANDARD				11 # Not available before CMake 3.1; see below for manual command line argument addition
+	CXX_STANDARD				11
+	C_STANDARD					11 # TODO: Provide support for older standards
 	LINKER_LANGUAGE				"CXX"
 	POSITION_INDEPENDENT_CODE	ON
 	CXX_VISIBILITY_PRESET		"hidden"
 )
-
-if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-	set(DEFAULT_PROJECT_OPTIONS
-		${DEFAULT_PROJECT_OPTIONS}
-		C_STANDARD				11 # TODO: Provide preprocessor support for older standards (GCC)
-	)
-endif()
 
 #
 # Include directories
@@ -163,7 +157,6 @@ if(WIN32 AND MSVC)
 	#add_compile_options(/wd4251 /wd4592)
 	#add_compile_options(/ZH:SHA_256) # use SHA256 for generating hashes of compiler processed source files.
 
-	# Release
 	if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 		# Disable optimizations
 		add_compile_options(/Od)
