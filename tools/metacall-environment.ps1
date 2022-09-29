@@ -76,12 +76,6 @@ function sub-python {
 	(New-Object Net.WebClient).DownloadFile("https://www.python.org/ftp/python/$PythonVersion/python-$PythonVersion-amd64.exe", "$(pwd)\python_installer.exe")
 
 	# Install Python
-	where.exe /Q python
-	if ( $? -eq $True ) {
-		echo 'Replacing existing Python...'
-		./python_installer.exe /uninstall
-	}
-
 	./python_installer.exe /quiet "TargetDir=$RuntimeDir" `
 		Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
 	md "$RuntimeDir\Pip"
