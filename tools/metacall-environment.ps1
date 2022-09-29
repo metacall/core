@@ -3,7 +3,6 @@ $Global:ProgressPreference = 'SilentlyContinue'
 
 $Global:ROOT_DIR = "$(pwd)"
 
-$Global:INSTALL_CHOCO = 1
 $Global:INSTALL_PYTHON = 0
 $Global:INSTALL_RUBY = 0
 $Global:INSTALL_RUST = 0
@@ -51,20 +50,6 @@ function Add-to-Path {
 	}
 
 	refreshenv
-}
-
-# Base packages
-function sub-choco {
-	echo "configure choco"
-	cd $ROOT_DIR
-	Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072; iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
-	refreshenv
-
-	if ( $null -eq $Env:ChocolateyInstall ) {
-		$Env:ChocolateyInstall = "$Env:SystemDrive\PraogramData\chocolatey"
-	}
-
-	$Global:ChocolateyBinPath = "$Env:ChocolateyInstall\bin"
 }
 
 # Swig
@@ -385,9 +370,6 @@ function sub-clangformat {
 
 # Install
 function sub-install {
-	if ( $INSTALL_CHOCO -eq 1 ) {
-		sub-choco
-	}
 	if ( $INSTALL_PYTHON -eq 1 ) {
 		sub-python
 	}
@@ -464,10 +446,6 @@ function sub-install {
 function sub-options {
 	for ($i = 0; $i -lt $Arguments.Length; $i++) {
 		$var = $Arguments[$i]
-		if ( "$var" -eq 'base' ) {
-			echo "choco selected"
-			$Global:INSTALL_CHOCO = 1
-		}
 		if ( "$var" -eq 'python' ) {
 			echo "python selected"
 			$Global:INSTALL_PYTHON = 1
@@ -584,7 +562,6 @@ function sub-options {
 function sub-help {
 	echo "Usage: $PROGNAME list of component"
 	echo "Components:"
-	echo "	base"
 	echo "	python"
 	echo "	ruby"
 	echo "	netcore"
