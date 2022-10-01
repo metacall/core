@@ -65,7 +65,7 @@ function sub-python {
 	cd $ROOT_DIR
 
 	$PythonVersion = '3.9.7'
-	$RuntimeDir    = "$ROOT_DIR\runtimes\python"
+	$RuntimeDir    = "$ROOT_DIR\build\runtimes\python"
 	$DepsDir       = "$ROOT_DIR\dependencies"
 
 	md -Force $DepsDir
@@ -78,7 +78,7 @@ function sub-python {
 	# Install Python
 	./python_installer.exe /quiet "TargetDir=$RuntimeDir" `
 		Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
-	md "$RuntimeDir\Pip"
+	md -Force "$RuntimeDir\Pip"
 
 	Add-to-Path $RuntimeDir
 
@@ -104,7 +104,7 @@ function sub-ruby {
 	$DepsDir               = "$ROOT_DIR\dependencies"
 	$RubyDownloadVersion   = '3.1.2'
 	$RubyVersion           = '3.1.0'
-	$RuntimeDir            = "$ROOT_DIR\runtimes\ruby"
+	$RuntimeDir            = "$ROOT_DIR\build\runtimes\ruby"
 
 	md -Force $DepsDir
 	md -Force $RuntimeDir
@@ -134,7 +134,8 @@ function sub-ruby {
 
 	# Move DLL to correct location (to be done AFTER build)
 	# mv -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
-	cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
+	md -Force "$ROOT_DIR\lib"
+	cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib\"
 }
 
 # Rust
@@ -178,7 +179,7 @@ function sub-netcore5 {
 
 	$DotNetDownloadVersion = '5.0.403'
 	$DotNetVersion         = '5.0.12'
-	$RuntimeDir            = "$ROOT_DIR\runtimes\dotnet"
+	$RuntimeDir            = "$ROOT_DIR\build\runtimes\dotnet"
 	$DepsDir               = "$ROOT_DIR\dependencies"
 
 	md -Force $DepsDir
@@ -229,11 +230,17 @@ function sub-nodejs {
 	echo "configure nodejs"
 	cd $ROOT_DIR
 
-	# Install NASM
+	# Configuration
 	$NASMVer    = '2.15.05'
+	
+	$DepsDir       = "$ROOT_DIR\dependencies"
+	$NodeVersion   = '14.18.2'
+	$DLLReleaseVer = 'v0.0.1'
+	$RuntimeDir    = "$ROOT_DIR\build\runtimes\nodejs"
 
+	# Install NASM
 	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", "$(pwd)\nasm.zip")
-	Expand-Archive -Path 'nasm.zip' -DestinationPath .
+	Expand-Archive -Path 'nasm.zip' -DestinationPath $RuntimeDir
 
 	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
 
@@ -241,10 +248,6 @@ function sub-nodejs {
 	Add-to-Path $NASMDir
 
 	# Install NodeJS
-	$DepsDir       = "$ROOT_DIR\dependencies"
-	$NodeVersion   = '14.18.2'
-	$DLLReleaseVer = 'v0.0.1'
-	$RuntimeDir    = "$ROOT_DIR\runtimes\nodejs"
 
 	md -Force $DepsDir
 	md -Force $RuntimeDir
@@ -288,7 +291,8 @@ function sub-nodejs {
 
 	# Move DLL to correct location (to be done AFTER build)
 	# mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
-	cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
+	md -Force "$ROOT_DIR\lib"
+	cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib\"
 }
 
 # TypeScript
