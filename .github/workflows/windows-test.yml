@@ -8,6 +8,7 @@ on:
       - 'v*.*.*'
     branches:
       - master
+      - develop # TODO: Remove develop when all tests pass
 
 jobs:
   windows-test:
