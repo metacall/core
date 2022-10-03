@@ -177,23 +177,19 @@ if(WIN32 AND MSVC)
 		add_compile_options(/GR-)
 
 		# Enable optimizations
-		add_compile_options(/O2)
+		# add_compile_options(/O2) # TODO: Enable when runtime checks can be disabled properly
 		add_compile_options(/Oi)
 		add_compile_options(/Oy)
 
-		# Disable runtime checks (not compatible with O2)
-		foreach(FLAG_VAR
-			CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
-			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
-			CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE
-			CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
-			)
-			string(REGEX REPLACE "/RTC[^ ]*" "" ${FLAG_VAR} "${${FLAG_VAR}}")
-
-			message(STATUS "-------------------------------------------------------")
-			message(STATUS "${${FLAG_VAR}}")
-			message(STATUS "-------------------------------------------------------")
-		endforeach(FLAG_VAR)
+		# TODO: Disable runtime checks (not compatible with O2)
+		# foreach(FLAG_VAR
+		# 	CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
+		# 	CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+		# 	CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE
+		# 	CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+		# 	)
+		# 	string(REGEX REPLACE "/RTC[^ ]*" "" ${FLAG_VAR} "${${FLAG_VAR}}")
+		# endforeach(FLAG_VAR)
 
 		if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 			# Enable debug symbols
