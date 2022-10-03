@@ -132,10 +132,11 @@ function sub-ruby {
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(Ruby REQUIRED_VARS Ruby_EXECUTABLE Ruby_LIBRARY Ruby_INCLUDE_DIRS VERSION_VAR Ruby_VERSION)"  >> $FindRuby
 	echo "mark_as_advanced(Ruby_EXECUTABLE Ruby_LIBRARY Ruby_INCLUDE_DIRS)"       >> $FindRuby
 
-	# Move DLL to correct location (to be done AFTER build)
-	# mv -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
-	md -Force "$ROOT_DIR\lib"
-	cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib\"
+	# TODO: This should be done by CMake
+	# # Move DLL to correct location (to be done AFTER build)
+	# # mv -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib"
+	# md -Force "$ROOT_DIR\lib"
+	# cp -Force "$RuntimeDir\bin\x64-vcruntime140-ruby310.dll" "$ROOT_DIR\lib\"
 }
 
 # Rust
@@ -242,7 +243,7 @@ function sub-nodejs {
 	(New-Object Net.WebClient).DownloadFile("https://www.nasm.us/pub/nasm/releasebuilds/$NASMVer/win64/nasm-$NASMVer-win64.zip", "$(pwd)\nasm.zip")
 	Expand-Archive -Path 'nasm.zip' -DestinationPath $RuntimeDir
 
-	$NASMDir = "$ROOT_DIR\nasm-$NASMVer"
+	$NASMDir = "$RuntimeDir\nasm-$NASMVer"
 
 	Add-to-Path "$NASMDir\rdoff"
 	Add-to-Path $NASMDir
@@ -256,7 +257,6 @@ function sub-nodejs {
 	# Download
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-win-x64.zip", "$(pwd)\node.zip")
 	(New-Object Net.WebClient).DownloadFile("https://nodejs.org/download/release/v$NodeVersion/node-v$NodeVersion-headers.tar.gz", "$(pwd)\node_headers.tar.gz")
-	(New-Object Net.WebClient).DownloadFile("https://raw.githubusercontent.com/metacall/core/66fcaac300611d1c4210023e7b260296586a42e0/cmake/NodeJSGYPPatch.py", "$(pwd)\NodeJSGYPPatch.py") # "Not sure why." – Param.
 
 	# Install runtime
 	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
@@ -289,10 +289,11 @@ function sub-nodejs {
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(NodeJS REQUIRED_VARS NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE VERSION_VAR NodeJS_VERSION)" >> $FindNode
 	echo "mark_as_advanced(NodeJS_VERSION NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE)" >> $FindNode
 
-	# Move DLL to correct location (to be done AFTER build)
-	# mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
-	md -Force "$ROOT_DIR\lib"
-	cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib\"
+	# TODO: This should be done by CMake
+	# # Move DLL to correct location (to be done AFTER build)
+	# # mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
+	# md -Force "$ROOT_DIR\lib"
+	# cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib\"
 }
 
 # TypeScript
