@@ -32,7 +32,8 @@ if(NOT OPTION_BUILD_GUIX)
 	find_package(NPM)
 
 	if(NOT NPM_FOUND)
-		message(STATUS "NPM not found")
+		message(SEND_ERROR "NPM not found")
+		set(OPTION_BUILD_LOADERS_TS OFF CACHE BOOL)
 		return()
 	endif()
 

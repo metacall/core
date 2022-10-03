@@ -5,7 +5,7 @@
 find_package(NPM)
 
 if(NOT NPM_FOUND)
-	message(STATUS "NPM not found")
+	message(SEND_ERROR "NPM not found")
 	return()
 endif()
 
