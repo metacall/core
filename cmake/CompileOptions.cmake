@@ -181,6 +181,10 @@ if(WIN32 AND MSVC)
 		add_compile_options(/Oi)
 		add_compile_options(/Oy)
 
+		# Disable runtime checks (not compatible with O2)
+		string(REPLACE "/RTC1" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+		string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
 		if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 			# Enable debug symbols
 			add_compile_options(/Z7)
