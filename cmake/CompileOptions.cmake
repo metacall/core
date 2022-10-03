@@ -37,11 +37,17 @@ include(Portability)
 set(DEFAULT_PROJECT_OPTIONS
 	DEBUG_POSTFIX				"d"
 	CXX_STANDARD				11
-	C_STANDARD					11 # TODO: Provide support for older standards
 	LINKER_LANGUAGE				"CXX"
 	POSITION_INDEPENDENT_CODE	ON
 	CXX_VISIBILITY_PRESET		"hidden"
 )
+
+if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+	set(DEFAULT_PROJECT_OPTIONS
+		${DEFAULT_PROJECT_OPTIONS}
+		C_STANDARD				11 # TODO: Provide support for older standards
+	)
+endif()
 
 #
 # Include directories
