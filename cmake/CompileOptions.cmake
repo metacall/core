@@ -189,6 +189,10 @@ if(WIN32 AND MSVC)
 			CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
 			)
 			string(REGEX REPLACE "/RTC[^ ]*" "" ${FLAG_VAR} "${${FLAG_VAR}}")
+
+			message(STATUS "-------------------------------------------------------")
+			message(STATUS "${FLAG_VAR}")
+			message(STATUS "-------------------------------------------------------")
 		endforeach(FLAG_VAR)
 
 		if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")

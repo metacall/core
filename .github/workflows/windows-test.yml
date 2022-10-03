@@ -17,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        buildtype: [debug] # TODO: [debug, release]
+        buildtype: [debug, release]
 
     env:
       LTTNG_UST_REGISTER_TIMEOUT:  0
