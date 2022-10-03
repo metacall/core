@@ -191,7 +191,7 @@ if(WIN32 AND MSVC)
 			string(REGEX REPLACE "/RTC[^ ]*" "" ${FLAG_VAR} "${${FLAG_VAR}}")
 
 			message(STATUS "-------------------------------------------------------")
-			message(STATUS "${FLAG_VAR}")
+			message(STATUS "${${FLAG_VAR}}")
 			message(STATUS "-------------------------------------------------------")
 		endforeach(FLAG_VAR)
 
