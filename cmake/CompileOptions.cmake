@@ -182,8 +182,14 @@ if(WIN32 AND MSVC)
 		add_compile_options(/Oy)
 
 		# Disable runtime checks (not compatible with O2)
-		string(REPLACE "/RTC1" "" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
-		string(REPLACE "/RTC1" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+		foreach(FLAG_VAR
+			CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_RELEASE
+			CMAKE_CXX_FLAGS_MINSIZEREL CMAKE_CXX_FLAGS_RELWITHDEBINFO
+			CMAKE_C_FLAGS CMAKE_C_FLAGS_RELEASE
+			CMAKE_C_FLAGS_MINSIZEREL CMAKE_C_FLAGS_RELWITHDEBINFO
+			)
+			string(REGEX REPLACE "/RTC[^ ]*" "" ${FLAG_VAR} "${${FLAG_VAR}}")
+		endforeach(FLAG_VAR)
 
 		if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
 			# Enable debug symbols
