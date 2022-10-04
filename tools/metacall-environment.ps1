@@ -81,7 +81,6 @@ function sub-python {
 
 	# Set environment variables
 	Add-to-Path $RuntimeDir
-	[Environment]::SetEnvironmentVariable("PYTHONHOME", $RuntimeDir)
 	[Environment]::SetEnvironmentVariable("PIP_TARGET", "$RuntimeDir\Lib")
 
 	# Patch for FindPython.cmake
