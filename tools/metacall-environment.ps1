@@ -94,6 +94,17 @@ function sub-python {
 	echo "include(FindPackageHandleStandardArgs)"                        >> $FindPython
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(Python REQUIRED_VARS Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS VERSION_VAR Python_VERSION)" >> $FindPython
 	echo "mark_as_advanced(Python_EXECUTABLE Python_LIBRARIES Python_INCLUDE_DIRS)" >> $FindPython
+
+	# Install dependencies for tests
+	pip3 install requests
+	pip3 install setuptools
+	pip3 install wheel
+	pip3 install rsa
+	pip3 install fn
+	pip3 install scipy
+	pip3 install numpy
+	pip3 install scikit-learn
+	pip3 install joblib
 }
 
 # Ruby
