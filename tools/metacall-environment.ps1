@@ -78,9 +78,11 @@ function sub-python {
 	# Install Python
 	./python_installer.exe /quiet "TargetDir=$RuntimeDir" `
 		Include_debug=1 Include_symbols=1 PrependPath=1 CompileAll=1
-	md -Force "$RuntimeDir\Pip"
 
+	# Set environment variables
 	Add-to-Path $RuntimeDir
+	[Environment]::SetEnvironmentVariable("PYTHONHOME", $RuntimeDir)
+	[Environment]::SetEnvironmentVariable("PIP_TARGET", "$RuntimeDir\Lib")
 
 	# Patch for FindPython.cmake
 	$FindPython = "$ROOT_DIR\cmake\FindPython.cmake"
