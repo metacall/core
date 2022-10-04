@@ -1378,7 +1378,7 @@ value py_loader_impl_capi_to_value(loader_impl impl, PyObject *obj, type_id id)
 	{
 		PyObject *tb = PyException_GetTraceback(obj);
 
-		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb);
+		v = py_loader_impl_error_value_from_exception(loader_impl_get(impl), (PyObject *)Py_TYPE(obj), obj, tb ? tb : Py_None);
 
 		Py_XDECREF(tb);
 	}
@@ -2908,21 +2908,20 @@ void py_loader_impl_module_destroy(loader_impl_py_handle_module module)
 	if (module->name != NULL)
 	{
 		PyObject *system_modules = PySys_GetObject("modules");
-		PyObject *item = PyObject_GetItem(system_modules, module->name);
-
-		if (item != NULL)
-		{
-			Py_DECREF(item);
-			PyObject_DelItem(system_modules, module->name);
-		}
 
 		// TODO: Sometimes this fails, seems that sys.modules does not contain the item.
 		// Probably is because of the new import system which is using importlib, but
 		// it does not seem something problematic although it will be interesting
 		// to check it out so we are sure there's no leaked memory
-		if (PyErr_Occurred() != NULL)
+		if (PyObject_HasAttr(system_modules, module->name) == 1)
 		{
-			PyErr_Clear();
+			PyObject *item = PyObject_GetItem(system_modules, module->name);
+
+			if (item != NULL)
+			{
+				Py_DECREF(item);
+				PyObject_DelItem(system_modules, module->name);
+			}
 		}
 
 		Py_DECREF(module->name);
