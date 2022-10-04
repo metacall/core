@@ -54,7 +54,7 @@ def metacall_module_load():
 			cPath = ctypes.c_char_p(b'\0' * 1024)
 			kernel32.GetModuleFileNameA(module, cPath, ctypes.c_ulong(1024))
 			path = cPath.value
-			if path.endswith(bytes(module_name, 'ascii')):
+			if os.path.normpath(path.decode('utf-8')) == os.path.normpath(module_name):
 				return module
 		return None
 
