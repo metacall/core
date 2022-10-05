@@ -26,42 +26,6 @@
 class metacall_py_call_bench : public benchmark::Fixture
 {
 public:
-	void SetUp(benchmark::State &state)
-	{
-		metacall_print_info();
-
-		metacall_log_null();
-
-		if (metacall_initialize() != 0)
-		{
-			state.SkipWithError("Error initializing MetaCall");
-		}
-
-/* Python */
-#if defined(OPTION_BUILD_LOADERS_PY)
-		{
-			static const char tag[] = "py";
-
-			static const char int_mem_type[] =
-				"#!/usr/bin/env python3\n"
-				"def int_mem_type(left: int, right: int) -> int:\n"
-				"\treturn 0;";
-
-			if (metacall_load_from_memory(tag, int_mem_type, sizeof(int_mem_type), NULL) != 0)
-			{
-				state.SkipWithError("Error loading int_mem_type function");
-			}
-		}
-#endif /* OPTION_BUILD_LOADERS_PY */
-	}
-
-	void TearDown(benchmark::State &state)
-	{
-		if (metacall_destroy() != 0)
-		{
-			state.SkipWithError("Error destroying MetaCall");
-		}
-	}
 };
 
 BENCHMARK_DEFINE_F(metacall_py_call_bench, call_va_args)
@@ -174,4 +138,52 @@ BENCHMARK_REGISTER_F(metacall_py_call_bench, call_array_args)
 	->Iterations(1)
 	->Repetitions(5);
 
-BENCHMARK_MAIN();
+/* Use main for initializing MetaCall once. There's a bug in Python async which prevents reinitialization */
+/* https://github.com/python/cpython/issues/89425 */
+/* https://bugs.python.org/issue45262 */
+/* metacall-py-call-benchd: ./Modules/_asynciomodule.c:261: get_running_loop: Assertion `Py_IS_TYPE(rl, &PyRunningLoopHolder_Type)' failed. */
+int main(int argc, char *argv[])
+{
+	metacall_print_info();
+
+	metacall_log_null();
+
+	if (metacall_initialize() != 0)
+	{
+		return 1;
+	}
+
+/* Python */
+#if defined(OPTION_BUILD_LOADERS_PY)
+	{
+		static const char tag[] = "py";
+
+		static const char int_mem_type[] =
+			"#!/usr/bin/env python3\n"
+			"def int_mem_type(left: int, right: int) -> int:\n"
+			"\treturn 0;";
+
+		if (metacall_load_from_memory(tag, int_mem_type, sizeof(int_mem_type), NULL) != 0)
+		{
+			return 2;
+		}
+	}
+#endif /* OPTION_BUILD_LOADERS_PY */
+
+	::benchmark::Initialize(&argc, argv);
+
+	if (::benchmark::ReportUnrecognizedArguments(argc, argv))
+	{
+		return 3;
+	}
+
+	::benchmark::RunSpecifiedBenchmarks();
+	::benchmark::Shutdown();
+
+	if (metacall_destroy() != 0)
+	{
+		return 4;
+	}
+
+	return 0;
+}
