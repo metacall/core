@@ -273,7 +273,7 @@ function sub-nodejs {
 	# Install runtime
 	Expand-Archive -Path "node.zip" -DestinationPath $RuntimeDir
 	robocopy /move /e "$RuntimeDir\node-v$NodeVersion-win-x64" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
-	rd "$RuntimeDir\node-v$NodeVersion-win-x64"
+	rd -Recurse -Force "$RuntimeDir\node-v$NodeVersion-win-x64"
 
 	Add-to-Path $RuntimeDir
 
