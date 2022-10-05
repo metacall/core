@@ -41,6 +41,7 @@ option(OPTION_BUILD_PORTS_PY	"Build Python port."			ON)
 option(OPTION_BUILD_PORTS_R		"Build R port."					OFF)
 option(OPTION_BUILD_PORTS_RB	"Build Ruby port."				ON)
 option(OPTION_BUILD_PORTS_RS	"Build Rust port."				OFF)
+option(OPTION_BUILD_PORTS_TS	"Build TypeScript port."		OFF)
 
 #
 # Port languages (Standalone)
