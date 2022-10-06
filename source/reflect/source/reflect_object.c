@@ -25,9 +25,9 @@
 
 #include <reflect/reflect_accessor.h>
 
-#include <log/log.h>
+#include <reflect/reflect_memory_tracker.h>
 
-#include <threading/threading_atomic.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -42,13 +42,7 @@ struct object_type
 	klass cls;
 };
 
-static struct
-{
-	threading_atomic size_t allocations;
-	threading_atomic size_t deallocations;
-	threading_atomic size_t increments;
-	threading_atomic size_t decrements;
-} object_stats = { 0, 0, 0, 0 };
+reflect_memory_tracker(object_stats);
 
 static value object_metadata_name(object obj);
 
@@ -103,7 +97,7 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 		}
 	}
 
-	++object_stats.allocations;
+	reflect_memory_tracker_allocation(object_stats);
 
 	return obj;
 }
@@ -121,7 +115,7 @@ int object_increment_reference(object obj)
 	}
 
 	++obj->ref_count;
-	++object_stats.increments;
+	reflect_memory_tracker_increment(object_stats);
 
 	return 0;
 }
@@ -139,7 +133,7 @@ int object_decrement_reference(object obj)
 	}
 
 	--obj->ref_count;
-	++object_stats.decrements;
+	reflect_memory_tracker_decrement(object_stats);
 
 	return 0;
 }
@@ -387,17 +381,7 @@ int object_delete(object obj)
 
 void object_stats_debug(void)
 {
-#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	if (object_stats.allocations != object_stats.deallocations || object_stats.increments != object_stats.decrements)
-#endif
-	{
-		printf("----------------- OBJECTS -----------------\n");
-		printf("Allocations: %" PRIuS "\n", object_stats.allocations);
-		printf("Deallocations: %" PRIuS "\n", object_stats.deallocations);
-		printf("Increments: %" PRIuS "\n", object_stats.increments);
-		printf("Decrements: %" PRIuS "\n", object_stats.decrements);
-		fflush(stdout);
-	}
+	reflect_memory_tracker_print(object_stats, "OBJECTS");
 }
 
 void object_destroy(object obj)
@@ -432,7 +416,7 @@ void object_destroy(object obj)
 
 			free(obj);
 
-			++object_stats.deallocations;
+			reflect_memory_tracker_deallocation(object_stats);
 		}
 	}
 }

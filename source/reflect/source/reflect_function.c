@@ -21,9 +21,9 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_value_type.h>
 
-#include <log/log.h>
+#include <reflect/reflect_memory_tracker.h>
 
-#include <threading/threading_atomic.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -39,13 +39,7 @@ struct function_type
 	void *data;
 };
 
-static struct
-{
-	threading_atomic size_t allocations;
-	threading_atomic size_t deallocations;
-	threading_atomic size_t increments;
-	threading_atomic size_t decrements;
-} function_stats = { 0, 0, 0, 0 };
+reflect_memory_tracker(function_stats);
 
 static value function_metadata_name(function func);
 static value function_metadata_async(function func);
@@ -114,7 +108,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 		}
 	}
 
-	++function_stats.allocations;
+	reflect_memory_tracker_allocation(function_stats);
 
 	return func;
 }
@@ -132,7 +126,7 @@ int function_increment_reference(function func)
 	}
 
 	++func->ref_count;
-	++function_stats.increments;
+	reflect_memory_tracker_increment(function_stats);
 
 	return 0;
 }
@@ -150,7 +144,7 @@ int function_decrement_reference(function func)
 	}
 
 	--func->ref_count;
-	++function_stats.decrements;
+	reflect_memory_tracker_decrement(function_stats);
 
 	return 0;
 }
@@ -633,17 +627,7 @@ function_return function_await(function func, function_args args, size_t size, f
 
 void function_stats_debug(void)
 {
-#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	if (function_stats.allocations != function_stats.deallocations || function_stats.increments != function_stats.decrements)
-#endif
-	{
-		printf("----------------- FUNCTIONS -----------------\n");
-		printf("Allocations: %" PRIuS "\n", function_stats.allocations);
-		printf("Deallocations: %" PRIuS "\n", function_stats.deallocations);
-		printf("Increments: %" PRIuS "\n", function_stats.increments);
-		printf("Decrements: %" PRIuS "\n", function_stats.decrements);
-		fflush(stdout);
-	}
+	reflect_memory_tracker_print(function_stats, "FUNCTIONS");
 }
 
 void function_destroy(function func)
@@ -680,7 +664,7 @@ void function_destroy(function func)
 
 			free(func);
 
-			++function_stats.deallocations;
+			reflect_memory_tracker_deallocation(function_stats);
 		}
 	}
 }

@@ -22,9 +22,9 @@
 
 #include <threading/threading_thread_id.h>
 
-#include <log/log.h>
+#include <reflect/reflect_memory_tracker.h>
 
-#include <threading/threading_atomic.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -40,13 +40,7 @@ struct exception_type
 	/* TODO: value attributes; // This should implement a map for representing the extra attributes of an exception */
 };
 
-static struct
-{
-	threading_atomic size_t allocations;
-	threading_atomic size_t deallocations;
-	threading_atomic size_t increments;
-	threading_atomic size_t decrements;
-} exception_stats = { 0, 0, 0, 0 };
+reflect_memory_tracker(exception_stats);
 
 exception exception_create(char *message, char *label, int64_t code, char *stacktrace)
 {
@@ -63,6 +57,8 @@ exception exception_create(char *message, char *label, int64_t code, char *stack
 	ex->stacktrace = stacktrace;
 	ex->id = thread_id_get_current();
 	ex->ref_count = 0;
+
+	reflect_memory_tracker_allocation(exception_stats);
 
 	return ex;
 }
@@ -134,6 +130,8 @@ exception exception_create_const(const char *message, const char *label, int64_t
 	ex->id = thread_id_get_current();
 	ex->ref_count = 0;
 
+	reflect_memory_tracker_allocation(exception_stats);
+
 	return ex;
 
 stacktrace_bad_alloc:
@@ -159,9 +157,7 @@ int exception_increment_reference(exception ex)
 	}
 
 	++ex->ref_count;
-	++exception_stats.increments;
-
-	++exception_stats.allocations;
+	reflect_memory_tracker_increment(exception_stats);
 
 	return 0;
 }
@@ -179,7 +175,7 @@ int exception_decrement_reference(exception ex)
 	}
 
 	--ex->ref_count;
-	++exception_stats.decrements;
+	reflect_memory_tracker_decrement(exception_stats);
 
 	return 0;
 }
@@ -226,17 +222,7 @@ const char *exception_stacktrace(exception ex)
 
 void exception_stats_debug(void)
 {
-#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	if (exception_stats.allocations != exception_stats.deallocations || exception_stats.increments != exception_stats.decrements)
-#endif
-	{
-		printf("----------------- EXCEPTIONS -----------------\n");
-		printf("Allocations: %" PRIuS "\n", exception_stats.allocations);
-		printf("Deallocations: %" PRIuS "\n", exception_stats.deallocations);
-		printf("Increments: %" PRIuS "\n", exception_stats.increments);
-		printf("Decrements: %" PRIuS "\n", exception_stats.decrements);
-		fflush(stdout);
-	}
+	reflect_memory_tracker_print(exception_stats, "EXCEPTIONS");
 }
 
 void exception_destroy(exception ex)
@@ -267,7 +253,7 @@ void exception_destroy(exception ex)
 
 			free(ex);
 
-			++exception_stats.deallocations;
+			reflect_memory_tracker_deallocation(exception_stats);
 		}
 	}
 }

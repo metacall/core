@@ -44,6 +44,17 @@ set(sources
 	${source_path}/threading_thread_id.c
 )
 
+if(
+	(("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC") OR
+	(("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") AND ("${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC"))) AND
+	(MSVC_VERSION GREATER_EQUAL 1930)
+)
+	set(headers
+		${headers}
+		${include_path}/threading_atomic_win32.h
+	)
+endif()
+
 # Group source files
 set(header_group "Header Files (API)")
 set(source_group "Source Files")

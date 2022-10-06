@@ -2217,11 +2217,8 @@ int metacall_destroy(void)
 
 		metacall_initialize_flag = 1;
 
-		/* Print stats from functions, classes and objects */
-		function_stats_debug();
-		class_stats_debug();
-		object_stats_debug();
-		exception_stats_debug();
+		/* Print stats from functions, classes, objects and exceptions */
+		reflect_memory_tracker_debug();
 
 		/* Set to null the plugin extension */
 		plugin_extension_handle = NULL;

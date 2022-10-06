@@ -94,6 +94,7 @@ option(OPTION_GIT_HOOKS			"Disable git hooks when running in CI/CD."					ON)
 option(OPTION_FORK_SAFE			"Enable fork safety."										ON)
 option(OPTION_THREAD_SAFE		"Enable thread safety."										OFF)
 option(OPTION_COVERAGE			"Enable coverage."											OFF)
+option(OPTION_MEMORY_TRACKER	"Enable memory tracking for reflect data."					ON)
 
 # Build type
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)

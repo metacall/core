@@ -27,9 +27,9 @@
 
 #include <reflect/reflect_accessor.h>
 
-#include <log/log.h>
+#include <reflect/reflect_memory_tracker.h>
 
-#include <threading/threading_atomic.h>
+#include <log/log.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -56,13 +56,7 @@ struct class_metadata_iterator_args_type
 
 typedef struct class_metadata_iterator_args_type *class_metadata_iterator_args;
 
-static struct
-{
-	threading_atomic size_t allocations;
-	threading_atomic size_t deallocations;
-	threading_atomic size_t increments;
-	threading_atomic size_t decrements;
-} class_stats = { 0, 0, 0, 0 };
+reflect_memory_tracker(class_stats);
 
 static value class_metadata_name(klass cls);
 static value class_metadata_constructors(klass cls);
@@ -138,7 +132,7 @@ klass class_create(const char *name, enum accessor_type_id accessor, class_impl 
 		}
 	}
 
-	++class_stats.allocations;
+	reflect_memory_tracker_allocation(class_stats);
 
 	return cls;
 }
@@ -156,7 +150,7 @@ int class_increment_reference(klass cls)
 	}
 
 	++cls->ref_count;
-	++class_stats.increments;
+	reflect_memory_tracker_increment(class_stats);
 
 	return 0;
 }
@@ -174,7 +168,7 @@ int class_decrement_reference(klass cls)
 	}
 
 	--cls->ref_count;
-	++class_stats.decrements;
+	reflect_memory_tracker_decrement(class_stats);
 
 	return 0;
 }
@@ -837,17 +831,7 @@ void class_constructors_destroy(klass cls)
 
 void class_stats_debug(void)
 {
-#if !(!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	if (class_stats.allocations != class_stats.deallocations || class_stats.increments != class_stats.decrements)
-#endif
-	{
-		printf("----------------- CLASSES -----------------\n");
-		printf("Allocations: %" PRIuS "\n", class_stats.allocations);
-		printf("Deallocations: %" PRIuS "\n", class_stats.deallocations);
-		printf("Increments: %" PRIuS "\n", class_stats.increments);
-		printf("Decrements: %" PRIuS "\n", class_stats.decrements);
-		fflush(stdout);
-	}
+	reflect_memory_tracker_print(class_stats, "CLASSES");
 }
 
 void class_destroy(klass cls)
@@ -915,7 +899,7 @@ void class_destroy(klass cls)
 
 			free(cls);
 
-			++class_stats.deallocations;
+			reflect_memory_tracker_deallocation(class_stats);
 		}
 	}
 }
