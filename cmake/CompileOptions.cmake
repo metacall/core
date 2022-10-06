@@ -34,19 +34,19 @@ include(Portability)
 # Project options
 #
 
-# Test for GNU, Clang or ((Visual Studio C++ or Clang with MSVC backend) and Visual Studio 2022 or superior)
-if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU") OR
-	("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") OR
-	("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang") OR
+# Test for GNU 4.9+, Clang 3.6+ or ((Visual Studio C++ or Clang with MSVC backend) and Visual Studio 2022 or superior)
+if(("${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" AND ${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 4.9) OR
+	((("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") OR
+	("${CMAKE_C_COMPILER_ID}" STREQUAL "AppleClang")) AND AND ${CMAKE_C_COMPILER_VERSION} VERSION_GREATER 3.6) OR
 	(
 		(("${CMAKE_C_COMPILER_ID}" STREQUAL "MSVC") OR
 		(("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang") AND ("${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC"))) AND
 		(MSVC_VERSION GREATER_EQUAL 1930)
 	)
 )
-	set(C_STANDARD 11) # TODO: Implement support for older standards
+	set(C_STANDARD 11)
 else()
-	set(C_STANDARD 99)
+	set(C_STANDARD 99) # TODO: Implement support for older standards
 endif()
 
 set(DEFAULT_PROJECT_OPTIONS

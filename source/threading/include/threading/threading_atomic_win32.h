@@ -120,6 +120,8 @@ typedef LONG volatile atomic_flag;
 #define atomic_is_lock_free(obj) \
 	(sizeof(obj) <= 8 && __atomic_is_lock_free_power_of_2(sizeof(obj)))
 
+#undef __atomic_is_lock_free_power_of_2
+
 inline bool atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
@@ -334,6 +336,33 @@ inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expected, LO
 		(sizeof *(obj) == 4) ? _InterlockedAnd((LONG volatile *)obj, (LONG)(arg)) :       \
 		(sizeof *(obj) == 8) ? _InterlockedAnd64((LONG64 volatile *)obj, (LONG64)(arg)) : \
 								 (abort(), 0))
+
+#define __atomic_compiler_barrier(order)  \
+	do                                    \
+	{                                     \
+		if (order > memory_order_consume) \
+		{                                 \
+			_ReadWriteBarrier();          \
+		}                                 \
+	} while (0)
+
+inline void atomic_thread_fence(memory_order order)
+{
+	__atomic_compiler_barrier(order);
+
+	if (order == memory_order_seq_cst)
+	{
+		MemoryBarrier();
+		__atomic_compiler_barrier(order);
+	}
+}
+
+inline void atomic_signal_fence(memory_order order)
+{
+	__atomic_compiler_barrier(order);
+}
+
+#undef __atomic_compiler_barrier
 
 #ifdef __cplusplus
 }
