@@ -227,6 +227,16 @@ napi_value node_loader_port_await(napi_env env, napi_callback_info info)
 	/* Await to the function */
 	void *ret = metacall_await_s(name, args, argc - 1, resolve, reject, ctx);
 
+	/* TODO: Is this needed? */
+	/*
+	if (metacall_value_id(ret) == METACALL_THROWABLE)
+	{
+		napi_value result = node_loader_impl_value_to_napi(node_impl, env, ret);
+
+		napi_throw(env, result);
+	}
+	*/
+
 	/* Release current reference of the environment */
 	// node_loader_impl_env(node_impl, NULL);
 

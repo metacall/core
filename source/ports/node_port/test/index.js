@@ -103,6 +103,18 @@ describe('metacall', () => {
 
 			// TODO: Need a way to test the symbol is not globally defined.
 			//assert.strictEqual(metacall('py_memory_export'), undefined);
+
+
+			const handle_except = metacall_load_from_memory_export('py', 'def py_throw_error():\n\traise TypeError("yeet");\n');
+			assert.notStrictEqual(handle_except, undefined);
+			try {
+				handle_except.py_throw_error();
+				process.exit(1);
+			} catch (e) {
+				assert.strictEqual(e.message, 'yeet');
+				// TODO: For some reason, N-API fails to set the code properly, review it
+				// assert.strictEqual(e.code, 'TypeError');
+			}
 		});
 		// Cobol tests are conditional (in order to pass CI/CD)
 		if (process.env['OPTION_BUILD_LOADERS_COB']) {

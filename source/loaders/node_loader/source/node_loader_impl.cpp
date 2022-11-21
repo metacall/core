@@ -1062,6 +1062,11 @@ napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_i
 
 	napi_value result = node_loader_impl_value_to_napi(closure_cast.safe->node_impl, env, ret);
 
+	if (value_type_id(ret) == TYPE_THROWABLE)
+	{
+		napi_throw(env, result);
+	}
+
 	/* Set result finalizer */
 	node_loader_impl_finalizer(env, result, ret);
 
@@ -1277,6 +1282,7 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 
 		node_loader_impl_exception(env, status);
 
+		/* Passing code here seems not to work, instead set it once the error value has been created */
 		status = napi_create_error(env, label_value, message_value, &v);
 
 		node_loader_impl_exception(env, status);
