@@ -48,7 +48,47 @@ func TestMock(t *testing.T) {
 	}
 }
 
-func TestNodeJS(t *testing.T) {
+func TestNodeJSArray(t *testing.T) {
+	buffer := "module.exports = { g: () => [0, 1, 2] }"
+
+	if err := LoadFromMemory("node", buffer); err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	array, err := Call("g")
+
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
+	iArray := array.([]interface{})
+
+	if len(iArray) != 3 {
+		t.Fatal("Invalid size of array")
+		return
+	}
+
+	for i := 0; i < len(iArray); i++ {
+		switch iArray[i].(type) {
+		case float64:
+			{
+				if iArray[i] != float64(i) {
+					t.Fatalf("Invalid value of array at position %d: %f (current) != %f (expected)", i, iArray[i], float64(i))
+					return
+				}
+			}
+		default:
+			{
+				t.Fatalf("Invalid type of array at position %d", i)
+				return
+			}
+		}
+	}
+}
+
+func TestNodeJSAwait(t *testing.T) {
 	buffer := "module.exports = { f: async (ms) => await new Promise(resolve => setTimeout(resolve, ms)) }"
 
 	if err := LoadFromMemory("node", buffer); err != nil {

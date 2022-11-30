@@ -408,6 +408,19 @@ func valueToGo(value unsafe.Pointer) interface{} {
 		{
 			return C.GoString(C.metacall_value_to_string(value))
 		}
+	case C.METACALL_ARRAY:
+		{
+			arrayValue := C.metacall_value_to_array(value)
+			arraySize := C.metacall_value_count(value)
+			array := make([]interface{}, arraySize)
+
+			for iterator := C.size_t(0); iterator < arraySize; iterator++ {
+				currentValue := (*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(arrayValue))+uintptr(iterator*PtrSizeInBytes)))
+				array[iterator] = valueToGo(*currentValue)
+			}
+
+			return array
+		}
 
 		// TODO: Add more types
 	}
