@@ -22,4 +22,4 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run sanitizer tests
-        run: ./docker-compose.sh sanitizer
+        run: ./docker-compose.sh test-sanitizer
