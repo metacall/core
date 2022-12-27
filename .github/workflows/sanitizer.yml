@@ -22,4 +22,4 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run sanitizer tests
-        run: ./tools/metacall-sanitizer.sh sanitizer
+        run: ./docker-compose.sh sanitizer

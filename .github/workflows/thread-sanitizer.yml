@@ -22,4 +22,4 @@ jobs:
           fetch-depth: 0
 
       - name: Install, build and run thread sanitizer tests
-        run: ./tools/metacall-sanitizer.sh thread-sanitizer
+        run: ./docker-compose.sh thread-sanitizer
