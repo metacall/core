@@ -138,6 +138,22 @@ const metacall_load_from_memory_export = (tag, code) => {
 	return addon.metacall_load_from_memory_export(tag, code);
 };
 
+const metacall_load_from_configuration = (path) => {
+	if (Object.prototype.toString.call(path) !== '[object String]') {
+		throw Error('Path should be a string indicating the path where the metacall.json is located.');
+	}
+
+	return addon.metacall_load_from_configuration(path);
+};
+
+const metacall_load_from_configuration_export = (path) => {
+	if (Object.prototype.toString.call(path) !== '[object String]') {
+		throw Error('Path should be a string indicating the path where the metacall.json is located.');
+	}
+
+	return addon.metacall_load_from_configuration_export(path);
+};
+
 const metacall_inspect = () => {
 	const json_data = addon.metacall_inspect();
 
@@ -182,6 +198,8 @@ const module_exports = {
 	metacall_load_from_file_export,
 	metacall_load_from_memory,
 	metacall_load_from_memory_export,
+	metacall_load_from_configuration,
+	metacall_load_from_configuration_export,
 	metacall_handle,
 
 	/* TODO: Remove this from user or provide better ways of configuring logs */

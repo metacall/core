@@ -28,6 +28,9 @@
 
 #include <metacall/metacall.h>
 
+#include <preprocessor/preprocessor_concatenation.h>
+#include <preprocessor/preprocessor_stringify.h>
+
 #include <cstring>
 
 #include <node_api.h>
@@ -41,7 +44,7 @@ struct promise_context_type
 
 static const loader_tag node_loader_tag = "node";
 
-napi_value node_loader_port_call(napi_env env, napi_callback_info info)
+napi_value node_loader_port_metacall(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
 
@@ -118,7 +121,7 @@ napi_value node_loader_port_call(napi_env env, napi_callback_info info)
 	return result;
 }
 
-napi_value node_loader_port_await(napi_env env, napi_callback_info info)
+napi_value node_loader_port_metacall_await(napi_env env, napi_callback_info info)
 {
 	size_t argc = 0;
 
@@ -254,7 +257,7 @@ napi_value node_loader_port_await(napi_env env, napi_callback_info info)
 	return promise;
 }
 
-napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info)
+napi_value node_loader_port_metacall_load_from_file(napi_env env, napi_callback_info info)
 {
 	/* TODO: Detect if input argument types are valid */
 
@@ -339,7 +342,7 @@ napi_value node_loader_port_load_from_file(napi_env env, napi_callback_info info
 	return NULL;
 }
 
-napi_value node_loader_port_load_from_file_export(napi_env env, napi_callback_info info)
+napi_value node_loader_port_metacall_load_from_file_export(napi_env env, napi_callback_info info)
 {
 	/* TODO: Detect if input argument types are valid */
 
@@ -446,7 +449,7 @@ napi_value node_loader_port_load_from_file_export(napi_env env, napi_callback_in
 *  @return
 *    TODO: Not implemented yet
 */
-napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info info)
+napi_value node_loader_port_metacall_load_from_memory(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
 	size_t argc = args_size, tag_length, script_length, script_size;
@@ -523,7 +526,7 @@ napi_value node_loader_port_load_from_memory(napi_env env, napi_callback_info in
 	return NULL;
 }
 
-napi_value node_loader_port_load_from_memory_export(napi_env env, napi_callback_info info)
+napi_value node_loader_port_metacall_load_from_memory_export(napi_env env, napi_callback_info info)
 {
 	const size_t args_size = 2;
 	size_t argc = args_size, tag_length, script_length, script_size;
@@ -607,8 +610,145 @@ napi_value node_loader_port_load_from_memory_export(napi_env env, napi_callback_
 	return v_exports;
 }
 
+/**
+*  @brief
+*    Loads a script from configuration path
+*
+*  @param[in] env
+*    N-API reference to the enviroment
+*
+*  @param[in] info
+*    Reference to the call information
+*/
+napi_value node_loader_port_metacall_load_from_configuration(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 1;
+	size_t argc = args_size, path_length;
+	napi_value argv[args_size];
+	napi_status status;
+	char *path;
+
+	// Get arguments
+	status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	node_loader_impl_exception(env, status);
+
+	// Get tag length
+	status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &path_length);
+
+	node_loader_impl_exception(env, status);
+
+	// Allocate path
+	path = static_cast<char *>(malloc(sizeof(char) * (path_length + 1)));
+
+	if (path == NULL)
+	{
+		napi_throw_error(env, NULL, "MetaCall could not load from configuration, path allocation failed");
+		return NULL;
+	}
+
+	// Get path
+	status = napi_get_value_string_utf8(env, argv[0], path, path_length + 1, &path_length);
+
+	node_loader_impl_exception(env, status);
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	// Load script from configuration
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	if (metacall_load_from_configuration(path, NULL, allocator) != 0)
+	{
+		napi_throw_error(env, NULL, "MetaCall could not load from configuration");
+	}
+
+	metacall_allocator_destroy(allocator);
+
+	/* Release current reference of the environment */
+	// node_loader_impl_env(node_impl, NULL);
+
+	free(path);
+
+	/* TODO: Return value and logs */
+	return NULL;
+}
+
+napi_value node_loader_port_metacall_load_from_configuration_export(napi_env env, napi_callback_info info)
+{
+	const size_t args_size = 1;
+	size_t argc = args_size, path_length;
+	napi_value argv[args_size];
+	napi_status status;
+	char *path;
+
+	// Get arguments
+	status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	node_loader_impl_exception(env, status);
+
+	// Get tag length
+	status = napi_get_value_string_utf8(env, argv[0], NULL, 0, &path_length);
+
+	node_loader_impl_exception(env, status);
+
+	// Allocate path
+	path = static_cast<char *>(malloc(sizeof(char) * (path_length + 1)));
+
+	if (path == NULL)
+	{
+		napi_throw_error(env, NULL, "MetaCall could not load from configuration, path allocation failed");
+		return NULL;
+	}
+
+	// Get path
+	status = napi_get_value_string_utf8(env, argv[0], path, path_length + 1, &path_length);
+
+	node_loader_impl_exception(env, status);
+
+	/* Obtain NodeJS loader implementation */
+	loader_impl impl = loader_get_impl(node_loader_tag);
+	loader_impl_node node_impl = (loader_impl_node)loader_impl_get(impl);
+
+	/* Store current reference of the environment */
+	node_loader_impl_env(node_impl, env);
+
+	// Load script from configuration
+	void *handle = NULL;
+
+	struct metacall_allocator_std_type std_ctx = { &std::malloc, &std::realloc, &std::free };
+
+	void *allocator = metacall_allocator_create(METACALL_ALLOCATOR_STD, (void *)&std_ctx);
+
+	if (metacall_load_from_configuration(path, &handle, allocator) != 0)
+	{
+		napi_throw_error(env, NULL, "MetaCall could not load from configuration");
+	}
+
+	metacall_allocator_destroy(allocator);
+
+	/* Release current reference of the environment */
+	// node_loader_impl_env(node_impl, NULL);
+
+	free(path);
+
+	void *exports = metacall_handle_export(handle);
+
+	napi_value v_exports = node_loader_impl_value_to_napi(node_impl, env, exports);
+
+	node_loader_impl_finalizer(env, v_exports, exports);
+
+	return v_exports;
+}
+
 /* TODO: Add documentation */
-napi_value node_loader_port_inspect(napi_env env, napi_callback_info)
+napi_value node_loader_port_metacall_inspect(napi_env env, napi_callback_info)
 {
 	napi_value result;
 
@@ -639,7 +779,7 @@ napi_value node_loader_port_inspect(napi_env env, napi_callback_info)
 }
 
 /* TODO: Add documentation */
-napi_value node_loader_port_logs(napi_env env, napi_callback_info)
+napi_value node_loader_port_metacall_logs(napi_env env, napi_callback_info)
 {
 	struct metacall_log_stdio_type log_stdio = { stdout };
 
@@ -655,34 +795,33 @@ napi_value node_loader_port_logs(napi_env env, napi_callback_info)
 // This functions sets the necessary js functions that could be called in NodeJs
 void node_loader_port_exports(napi_env env, napi_value exports)
 {
-	const char function_metacall_str[] = "metacall";
-	const char function_metacall_await_str[] = "metacall_await";
-	const char function_load_from_file_str[] = "metacall_load_from_file";
-	const char function_load_from_file_export_str[] = "metacall_load_from_file_export";
-	const char function_load_from_memory_str[] = "metacall_load_from_memory";
-	const char function_load_from_memory_export_str[] = "metacall_load_from_memory_export";
-	const char function_inspect_str[] = "metacall_inspect";
-	const char function_logs_str[] = "metacall_logs";
+#define NODE_LOADER_PORT_DECL_FUNC(name)                                                                                                                                                                                      \
+	do                                                                                                                                                                                                                        \
+	{                                                                                                                                                                                                                         \
+		const char PREPROCESSOR_CONCAT(function_str_, name)[] = PREPROCESSOR_STRINGIFY(name);                                                                                                                                 \
+		napi_value PREPROCESSOR_CONCAT(function_, name);                                                                                                                                                                      \
+		napi_create_function(env, PREPROCESSOR_CONCAT(function_str_, name), sizeof(PREPROCESSOR_CONCAT(function_str_, name)) - 1, PREPROCESSOR_CONCAT(node_loader_port_, name), NULL, &PREPROCESSOR_CONCAT(function_, name)); \
+		napi_set_named_property(env, exports, PREPROCESSOR_CONCAT(function_str_, name), PREPROCESSOR_CONCAT(function_, name));                                                                                                \
+                                                                                                                                                                                                                              \
+	} while (0)
 
-	napi_value function_metacall, function_metacall_await, function_load_from_file, function_load_from_file_export, function_load_from_memory, function_load_from_memory_export, function_inspect, function_logs;
+#define NODE_LOADER_PORT_DECL_X_MACRO(x)        \
+	x(metacall);                                \
+	x(metacall_await);                          \
+	x(metacall_load_from_file);                 \
+	x(metacall_load_from_file_export);          \
+	x(metacall_load_from_memory);               \
+	x(metacall_load_from_memory_export);        \
+	x(metacall_load_from_configuration);        \
+	x(metacall_load_from_configuration_export); \
+	x(metacall_inspect);                        \
+	x(metacall_logs);
 
-	napi_create_function(env, function_metacall_str, sizeof(function_metacall_str) - 1, node_loader_port_call, NULL, &function_metacall);
-	napi_create_function(env, function_metacall_await_str, sizeof(function_metacall_await_str) - 1, node_loader_port_await, NULL, &function_metacall_await);
-	napi_create_function(env, function_load_from_file_str, sizeof(function_load_from_file_str) - 1, node_loader_port_load_from_file, NULL, &function_load_from_file);
-	napi_create_function(env, function_load_from_file_export_str, sizeof(function_load_from_file_export_str) - 1, node_loader_port_load_from_file_export, NULL, &function_load_from_file_export);
-	napi_create_function(env, function_load_from_memory_str, sizeof(function_load_from_memory_str) - 1, node_loader_port_load_from_memory, NULL, &function_load_from_memory);
-	napi_create_function(env, function_load_from_memory_export_str, sizeof(function_load_from_memory_export_str) - 1, node_loader_port_load_from_memory_export, NULL, &function_load_from_memory_export);
-	napi_create_function(env, function_inspect_str, sizeof(function_inspect_str) - 1, node_loader_port_inspect, NULL, &function_inspect);
-	napi_create_function(env, function_logs_str, sizeof(function_logs_str) - 1, node_loader_port_logs, NULL, &function_logs);
+	/* Declare all the functions */
+	NODE_LOADER_PORT_DECL_X_MACRO(NODE_LOADER_PORT_DECL_FUNC)
 
-	napi_set_named_property(env, exports, function_metacall_str, function_metacall);
-	napi_set_named_property(env, exports, function_metacall_await_str, function_metacall_await);
-	napi_set_named_property(env, exports, function_load_from_file_str, function_load_from_file);
-	napi_set_named_property(env, exports, function_load_from_file_export_str, function_load_from_file_export);
-	napi_set_named_property(env, exports, function_load_from_memory_str, function_load_from_memory);
-	napi_set_named_property(env, exports, function_load_from_memory_export_str, function_load_from_memory_export);
-	napi_set_named_property(env, exports, function_inspect_str, function_inspect);
-	napi_set_named_property(env, exports, function_logs_str, function_logs);
+#undef NODE_LOADER_PORT_DECL_FUNC
+#undef NODE_LOADER_PORT_DECL_X_MACRO
 }
 
 /* TODO: Review documentation */
