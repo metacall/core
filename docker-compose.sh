@@ -81,6 +81,9 @@ sub_test() {
 	# Disable build with sanitizer
 	export METACALL_BUILD_SANITIZER=
 
+	# Define build type
+	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
+
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
 
@@ -95,6 +98,9 @@ sub_test_sanitizer() {
 
 	# Enable build with sanitizer
 	export METACALL_BUILD_SANITIZER=${METACALL_BUILD_SANITIZER:-sanitizer}
+
+	# Define build type
+	export METACALL_BUILD_TYPE=${METACALL_BUILD_TYPE:-debug}
 
 	ln -sf tools/deps/.dockerignore .dockerignore
 	docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm deps
