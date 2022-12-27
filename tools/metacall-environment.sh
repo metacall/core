@@ -113,7 +113,6 @@ sub_python(){
 	$SUDO_CMD pip3 install setuptools
 	$SUDO_CMD pip3 install wheel
 	$SUDO_CMD pip3 install rsa
-	$SUDO_CMD pip3 install fn
 	$SUDO_CMD pip3 install scipy
 	$SUDO_CMD pip3 install numpy
 	$SUDO_CMD pip3 install scikit-learn

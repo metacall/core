@@ -101,7 +101,6 @@ function sub-python {
 	pip3 install setuptools
 	pip3 install wheel
 	pip3 install rsa
-	pip3 install fn
 	pip3 install scipy
 	pip3 install numpy
 	pip3 install scikit-learn

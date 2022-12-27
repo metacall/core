@@ -204,10 +204,10 @@ describe('metacall', () => {
 			assert.strictEqual(py_encode_basestring_ascii('asd'), '"asd"');
 		});
 		it('require (py submodule dependency)', () => {
-			// Require the 'op' submodule from 'fn' Python package
-			const { foldr, call } = require('fn.op');
+			// Require the 'core' submodule from 'rsa' Python package
+			const { encrypt_int } = require('rsa.core');
 
-			assert.strictEqual(foldr(call, 10)([s => s * s, k => k + 10]), 400);
+			assert.strictEqual(encrypt_int(3, 2, 5), 4);
 		});
 		it('require (rb)', () => {
 			const cache = require('./cache.rb');

@@ -34,6 +34,8 @@ TEST_F(metacall_load_configuration_node_python_test, DefaultConstructor)
 
 	ASSERT_EQ((int)0, (int)metacall_initialize());
 
+	ASSERT_EQ((int)0, (int)metacall_execution_path("py", METACALL_PYTHON_PORT_PATH));
+
 	static const char buffer[] =
 		"const { metacall_load_from_configuration_export } = require('" METACALL_NODE_PORT_PATH "');\n"
 		"const config = metacall_load_from_configuration_export('" METACALL_TEST_CONFIG_PATH "');\n"
