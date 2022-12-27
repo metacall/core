@@ -125,7 +125,7 @@ sub_ruby(){
 	cd $ROOT_DIR
 
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby2.7 ruby2.7-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -

@@ -86,7 +86,7 @@ sub_ruby(){
 	cd $ROOT_DIR
 
 	$SUDO_CMD apt-get update
-	sub_apt_install_hold ruby2.7 libruby2.7
+	sub_apt_install_hold ruby libruby
 }
 
 # NetCore
