@@ -31,7 +31,7 @@
 #include <preprocessor/preprocessor_concatenation.h>
 #include <preprocessor/preprocessor_stringify.h>
 
-#include <cstdlib.h>
+#include <cstdlib>
 #include <cstring>
 
 #include <node_api.h>
