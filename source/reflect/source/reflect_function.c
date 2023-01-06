@@ -21,6 +21,8 @@
 #include <reflect/reflect_function.h>
 #include <reflect/reflect_value_type.h>
 
+#include <threading/threading_atomic_ref_count.h>
+
 #include <reflect/reflect_memory_tracker.h>
 
 #include <log/log.h>
@@ -34,7 +36,7 @@ struct function_type
 	signature s;
 	function_impl impl;
 	function_interface interface;
-	size_t ref_count;
+	struct threading_atomic_ref_count_type ref;
 	enum async_id async;
 	void *data;
 };
@@ -77,7 +79,6 @@ function function_create(const char *name, size_t args_count, function_impl impl
 	}
 
 	func->impl = impl;
-	func->ref_count = 0;
 	func->async = SYNCHRONOUS;
 	func->data = NULL;
 
@@ -87,11 +88,10 @@ function function_create(const char *name, size_t args_count, function_impl impl
 	{
 		log_write("metacall", LOG_LEVEL_ERROR, "Invalid function signature allocation");
 
-		free(func->name);
-		free(func);
-
-		return NULL;
+		goto function_create_error;
 	}
+
+	threading_atomic_ref_count_store(&func->ref, 0);
 
 	func->interface = singleton ? singleton() : NULL;
 
@@ -101,16 +101,19 @@ function function_create(const char *name, size_t args_count, function_impl impl
 		{
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid function (%s) create callback <%p>", func->name, func->interface->create);
 
-			free(func->name);
-			free(func);
-
-			return NULL;
+			goto function_create_error;
 		}
 	}
 
 	reflect_memory_tracker_allocation(function_stats);
 
 	return func;
+
+function_create_error:
+	free(func->name);
+	free(func);
+
+	return NULL;
 }
 
 int function_increment_reference(function func)
@@ -120,12 +123,11 @@ int function_increment_reference(function func)
 		return 1;
 	}
 
-	if (func->ref_count == SIZE_MAX)
+	if (threading_atomic_ref_count_increment(&func->ref) == 1)
 	{
 		return 1;
 	}
 
-	++func->ref_count;
 	reflect_memory_tracker_increment(function_stats);
 
 	return 0;
@@ -138,12 +140,11 @@ int function_decrement_reference(function func)
 		return 1;
 	}
 
-	if (func->ref_count == 0)
+	if (threading_atomic_ref_count_decrement(&func->ref) == 1)
 	{
 		return 1;
 	}
 
-	--func->ref_count;
 	reflect_memory_tracker_decrement(function_stats);
 
 	return 0;
@@ -639,7 +640,7 @@ void function_destroy(function func)
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in function: %s", func->name ? func->name : "<anonymous>");
 		}
 
-		if (func->ref_count == 0)
+		if (threading_atomic_ref_count_load(&func->ref) == 0)
 		{
 			if (func->name == NULL)
 			{
