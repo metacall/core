@@ -37,7 +37,7 @@ extern "C" {
 
 #define THREAD_ID_INVALID UINT64_MAX
 
-/* -- Macros -- */
+/* -- Methods -- */
 
 /**
 *  @brief
