@@ -37,6 +37,7 @@ set(headers
 	${include_path}/threading.h
 	${include_path}/threading_atomic.h
 	${include_path}/threading_thread_id.h
+	${include_path}/threading_atomic_ref_count.h
 )
 
 set(sources

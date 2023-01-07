@@ -27,6 +27,8 @@
 
 #include <reflect/reflect_accessor.h>
 
+#include <threading/threading_atomic_ref_count.h>
+
 #include <reflect/reflect_memory_tracker.h>
 
 #include <log/log.h>
@@ -40,7 +42,7 @@ struct class_type
 	enum accessor_type_id accessor;
 	class_impl impl;
 	class_interface interface;
-	size_t ref_count;
+	struct threading_atomic_ref_count_type ref;
 	vector constructors;
 	map methods;
 	map static_methods;
@@ -106,7 +108,7 @@ klass class_create(const char *name, enum accessor_type_id accessor, class_impl 
 
 	cls->impl = impl;
 	cls->accessor = accessor;
-	cls->ref_count = 0;
+	threading_atomic_ref_count_store(&cls->ref, 0);
 	cls->interface = singleton ? singleton() : NULL;
 	cls->constructors = vector_create_type(constructor);
 	cls->methods = map_create(&hash_callback_str, &comparable_callback_str);
@@ -144,12 +146,11 @@ int class_increment_reference(klass cls)
 		return 1;
 	}
 
-	if (cls->ref_count == SIZE_MAX)
+	if (threading_atomic_ref_count_increment(&cls->ref) == 1)
 	{
 		return 1;
 	}
 
-	++cls->ref_count;
 	reflect_memory_tracker_increment(class_stats);
 
 	return 0;
@@ -162,12 +163,11 @@ int class_decrement_reference(klass cls)
 		return 1;
 	}
 
-	if (cls->ref_count == 0)
+	if (threading_atomic_ref_count_decrement(&cls->ref) == 1)
 	{
 		return 1;
 	}
 
-	--cls->ref_count;
 	reflect_memory_tracker_decrement(class_stats);
 
 	return 0;
@@ -843,7 +843,7 @@ void class_destroy(klass cls)
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in class: %s", cls->name ? cls->name : "<anonymous>");
 		}
 
-		if (cls->ref_count == 0)
+		if (threading_atomic_ref_count_load(&cls->ref) == 0)
 		{
 			if (cls->name == NULL)
 			{
