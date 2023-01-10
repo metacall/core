@@ -20,6 +20,7 @@
 
 #include <reflect/reflect_exception.h>
 
+#include <threading/threading_atomic_ref_count.h>
 #include <threading/threading_thread_id.h>
 
 #include <reflect/reflect_memory_tracker.h>
@@ -36,7 +37,7 @@ struct exception_type
 	int64_t code;	  /* Numeric code of error */
 	char *stacktrace; /* Stack trace of the error */
 	uint64_t id;	  /* Thread id where the error was raised */
-	size_t ref_count;
+	struct threading_atomic_ref_count_type ref;
 	/* TODO: value attributes; // This should implement a map for representing the extra attributes of an exception */
 };
 
@@ -56,7 +57,8 @@ exception exception_create(char *message, char *label, int64_t code, char *stack
 	ex->code = code;
 	ex->stacktrace = stacktrace;
 	ex->id = thread_id_get_current();
-	ex->ref_count = 0;
+
+	threading_atomic_ref_count_store(&ex->ref, 0);
 
 	reflect_memory_tracker_allocation(exception_stats);
 
@@ -128,7 +130,8 @@ exception exception_create_const(const char *message, const char *label, int64_t
 
 	ex->code = code;
 	ex->id = thread_id_get_current();
-	ex->ref_count = 0;
+
+	threading_atomic_ref_count_store(&ex->ref, 0);
 
 	reflect_memory_tracker_allocation(exception_stats);
 
@@ -151,12 +154,11 @@ int exception_increment_reference(exception ex)
 		return 1;
 	}
 
-	if (ex->ref_count == SIZE_MAX)
+	if (threading_atomic_ref_count_increment(&ex->ref) == 1)
 	{
 		return 1;
 	}
 
-	++ex->ref_count;
 	reflect_memory_tracker_increment(exception_stats);
 
 	return 0;
@@ -169,12 +171,11 @@ int exception_decrement_reference(exception ex)
 		return 1;
 	}
 
-	if (ex->ref_count == 0)
+	if (threading_atomic_ref_count_decrement(&ex->ref) == 1)
 	{
 		return 1;
 	}
 
-	--ex->ref_count;
 	reflect_memory_tracker_decrement(exception_stats);
 
 	return 0;
@@ -234,7 +235,7 @@ void exception_destroy(exception ex)
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in exception: %s", ex->label ? ex->label : "<anonymous>");
 		}
 
-		if (ex->ref_count == 0)
+		if (threading_atomic_ref_count_load(&ex->ref) == 0)
 		{
 			if (ex->message != NULL)
 			{

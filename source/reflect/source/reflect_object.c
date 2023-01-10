@@ -27,6 +27,8 @@
 
 #include <reflect/reflect_memory_tracker.h>
 
+#include <threading/threading_atomic_ref_count.h>
+
 #include <log/log.h>
 
 #include <stdlib.h>
@@ -38,7 +40,7 @@ struct object_type
 	enum accessor_type_id accessor;
 	object_impl impl;
 	object_interface interface;
-	size_t ref_count;
+	struct threading_atomic_ref_count_type ref;
 	klass cls;
 };
 
@@ -79,7 +81,8 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 
 	obj->impl = impl;
 	obj->accessor = accessor;
-	obj->ref_count = 0;
+	threading_atomic_ref_count_store(&obj->ref, 0);
+
 	obj->interface = singleton ? singleton() : NULL;
 
 	obj->cls = cls;
@@ -109,12 +112,11 @@ int object_increment_reference(object obj)
 		return 1;
 	}
 
-	if (obj->ref_count == SIZE_MAX)
+	if (threading_atomic_ref_count_increment(&obj->ref) == 1)
 	{
 		return 1;
 	}
 
-	++obj->ref_count;
 	reflect_memory_tracker_increment(object_stats);
 
 	return 0;
@@ -127,12 +129,11 @@ int object_decrement_reference(object obj)
 		return 1;
 	}
 
-	if (obj->ref_count == 0)
+	if (threading_atomic_ref_count_decrement(&obj->ref) == 1)
 	{
 		return 1;
 	}
 
-	--obj->ref_count;
 	reflect_memory_tracker_decrement(object_stats);
 
 	return 0;
@@ -393,7 +394,7 @@ void object_destroy(object obj)
 			log_write("metacall", LOG_LEVEL_ERROR, "Invalid reference counter in object: %s", obj->name ? obj->name : "<anonymous>");
 		}
 
-		if (obj->ref_count == 0)
+		if (threading_atomic_ref_count_load(&obj->ref) == 0)
 		{
 			if (obj->name == NULL)
 			{
