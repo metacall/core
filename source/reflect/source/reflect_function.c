@@ -642,6 +642,69 @@ void function_destroy(function func)
 
 		if (threading_atomic_ref_count_load(&func->ref) == 0)
 		{
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+
+			/*
+			==14944==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x60f000010fd4 at pc 0x7fb7a8fe880d bp 0x7fb79df33d10 sp 0x7fb79df334c0
+			[Thu Jan 12 23:37:38] #14944 [ 846 | loader_impl_load_from_file | /usr/local/metacall/source/loader/source/loader_impl.c ] @Debug : Loader handle impl: 0x62100003e900
+			WRITE of size 35 at 0x60f000010fd4 thread T2
+				#0 0x7fb7a8fe880c in __interceptor___vsnprintf_chk ../../../../src/libsanitizer/sanitizer_common/sanitizer_common_interceptors.inc:1670
+				#1 0x7fb7a880970d in vsnprintf /usr/include/x86_64-linux-gnu/bits/stdio2.h:68
+				#2 0x7fb7a880970d in log_policy_format_text_serialize_impl_va /usr/local/metacall/source/log/source/log_policy_format_text.c:300
+				#3 0x7fb7a8809aba in log_policy_format_text_serialize /usr/local/metacall/source/log/source/log_policy_format_text.c:334
+				#4 0x7fb7a880c7c0 in log_aspect_format_impl_serialize_cb /usr/local/metacall/source/log/source/log_aspect_format.c:122
+				#5 0x7fb7a88060c0 in log_aspect_notify_all /usr/local/metacall/source/log/source/log_aspect.c:219
+				#6 0x7fb7a880c2f8 in log_aspect_format_impl_serialize /usr/local/metacall/source/log/source/log_aspect_format.c:137
+				#7 0x7fb7a880d621 in log_aspect_stream_impl_write_cb /usr/local/metacall/source/log/source/log_aspect_stream.c:121
+				#8 0x7fb7a88060c0 in log_aspect_notify_all /usr/local/metacall/source/log/source/log_aspect.c:219
+				#9 0x7fb7a880d279 in log_aspect_stream_impl_write_execute_cb /usr/local/metacall/source/log/source/log_aspect_stream.c:173
+				#10 0x7fb7a880a0fb in log_policy_schedule_sync_execute /usr/local/metacall/source/log/source/log_policy_schedule_sync.c:65
+				#11 0x7fb7a880cc2a in log_aspect_schedule_impl_execute_cb /usr/local/metacall/source/log/source/log_aspect_schedule.c:74
+				#12 0x7fb7a8805e04 in log_aspect_notify_first /usr/local/metacall/source/log/source/log_aspect.c:199
+				#13 0x7fb7a880caf7 in log_aspect_schedule_impl_execute /usr/local/metacall/source/log/source/log_aspect_schedule.c:84
+				#14 0x7fb7a880cf1a in log_aspect_stream_impl_write /usr/local/metacall/source/log/source/log_aspect_stream.c:204
+				#15 0x7fb7a88070d3 in log_impl_write /usr/local/metacall/source/log/source/log_impl.c:123
+				#16 0x7fb7a87ffb9f in log_write_impl_va /usr/local/metacall/source/log/source/log.c:216
+				#17 0x7fb7a8832cf7 in function_destroy /usr/local/metacall/source/reflect/source/reflect_function.c:647
+				#18 0x7fb7a884950a in value_type_destroy /usr/local/metacall/source/reflect/source/reflect_value_type.c:669
+				#19 0x7fb7a23c402e in operator() /usr/local/metacall/source/loaders/node_loader/source/node_loader_impl.cpp:1243
+				#20 0x7fb7a23c406b in _FUN /usr/local/metacall/source/loaders/node_loader/source/node_loader_impl.cpp:1245
+				#21 0x7fb7a086d65f  (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x7d165f)
+				#22 0x7fb7a08378b7 in node::Environment::RunAndClearNativeImmediates(bool) (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x79b8b7)
+				#23 0x7fb7a0837c55 in node::Environment::CheckImmediate(uv_check_s*) (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x79bc55)
+				#24 0x7fb7a00822b0  (/usr/lib/x86_64-linux-gnu/libuv.so.1+0x162b0)
+				#25 0x7fb7a007b723 in uv_run (/usr/lib/x86_64-linux-gnu/libuv.so.1+0xf723)
+				#26 0x7fb7a08e8ec3 in node::NodeMainInstance::Run() (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x84cec3)
+				#27 0x7fb7a086b182 in node::Start(int, char**) (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x7cf182)
+				#28 0x7fb7a23c592d in node_loader_impl_thread /usr/local/metacall/source/loaders/node_loader/source/node_loader_impl.cpp:4195
+				#29 0x7fb7a83b9fd3  (/lib/x86_64-linux-gnu/libc.so.6+0x88fd3)
+				#30 0x7fb7a84398cf in __clone (/lib/x86_64-linux-gnu/libc.so.6+0x1088cf)
+
+			0x60f000010fd4 is located 0 bytes to the right of 164-byte region [0x60f000010f30,0x60f000010fd4)
+			allocated by thread T2 here:
+				#0 0x7fb7a902c9cf in __interceptor_malloc ../../../../src/libsanitizer/asan/asan_malloc_linux.cpp:69
+				#1 0x7fb7a880d5a7 in log_aspect_stream_impl_write_cb /usr/local/metacall/source/log/source/log_aspect_stream.c:112
+				#2 0x7fb7a88060c0 in log_aspect_notify_all /usr/local/metacall/source/log/source/log_aspect.c:219
+				#3 0x7fb7a880d279 in log_aspect_stream_impl_write_execute_cb /usr/local/metacall/source/log/source/log_aspect_stream.c:173
+				#4 0x7fb7a880a0fb in log_policy_schedule_sync_execute /usr/local/metacall/source/log/source/log_policy_schedule_sync.c:65
+				#5 0x7fb7a880cc2a in log_aspect_schedule_impl_execute_cb /usr/local/metacall/source/log/source/log_aspect_schedule.c:74
+				#6 0x7fb7a8805e04 in log_aspect_notify_first /usr/local/metacall/source/log/source/log_aspect.c:199
+				#7 0x7fb7a880caf7 in log_aspect_schedule_impl_execute /usr/local/metacall/source/log/source/log_aspect_schedule.c:84
+				#8 0x7fb7a880cf1a in log_aspect_stream_impl_write /usr/local/metacall/source/log/source/log_aspect_stream.c:204
+				#9 0x7fb7a88070d3 in log_impl_write /usr/local/metacall/source/log/source/log_impl.c:123
+				#10 0x7fb7a87ffb9f in log_write_impl_va /usr/local/metacall/source/log/source/log.c:216
+				#11 0x7fb7a8832cf7 in function_destroy /usr/local/metacall/source/reflect/source/reflect_function.c:647
+				#12 0x7fb7a884950a in value_type_destroy /usr/local/metacall/source/reflect/source/reflect_value_type.c:669
+				#13 0x7fb7a23c402e in operator() /usr/local/metacall/source/loaders/node_loader/source/node_loader_impl.cpp:1243
+				#14 0x7fb7a23c406b in _FUN /usr/local/metacall/source/loaders/node_loader/source/node_loader_impl.cpp:1245
+				#15 0x7fb7a086d65f  (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x7d165f)
+				#16 0x7fb7a08378b7 in node::Environment::RunAndClearNativeImmediates(bool) (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x79b8b7)
+				#17 0x7fb7a0837c55 in node::Environment::CheckImmediate(uv_check_s*) (/usr/lib/x86_64-linux-gnu/libnode.so.72+0x79bc55)
+				#18 0x7fb7a00822b0  (/usr/lib/x86_64-linux-gnu/libuv.so.1+0x162b0)
+				#19 0x7fb79df348ff  (<unknown module>)
+			*/
+
+			/*
 			if (func->name == NULL)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous function <%p>", (void *)func);
@@ -650,6 +713,7 @@ void function_destroy(function func)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy function %s <%p>", func->name, (void *)func);
 			}
+			*/
 
 			if (func->interface != NULL && func->interface->destroy != NULL)
 			{
