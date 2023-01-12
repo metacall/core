@@ -58,10 +58,11 @@ function sub-build {
 		$files = @(
 			".\runtimes\nodejs\lib\libnode.dll",
 			".\runtimes\nodejs\lib\libnode.lib",
-			".\runtimes\ruby\bin\x64-vcruntime140-ruby310.dll",
-			".\source\loaders\node_loader\bootstrap\acorn",
-			".\source\loaders\node_loader\bootstrap\acorn.cmd",
-			".\source\loaders\node_loader\bootstrap\acorn.ps1"
+			".\runtimes\ruby\bin\x64-vcruntime140-ruby310.dll"
+			# ,
+			# ".\source\loaders\node_loader\bootstrap\acorn",
+			# ".\source\loaders\node_loader\bootstrap\acorn.cmd",
+			# ".\source\loaders\node_loader\bootstrap\acorn.ps1"
 		)
 
 		ForEach ($file in $files) {
@@ -71,12 +72,12 @@ function sub-build {
 			}
 		}
 
-		# copy scripts and node_module for test
-		$nmPath = ".\source\loaders\node_loader\bootstrap\node_modules"
-		$scriptsPath = ".\scripts"
+		# # copy scripts and node_module for test
+		# $nmPath = ".\source\loaders\node_loader\bootstrap\node_modules"
+		# $scriptsPath = ".\scripts"
 
-		robocopy /e "$nmPath" ".\$BUILD_TYPE\node_modules" /NFL /NDL /NJH /NJS /NC /NS /NP
-		robocopy /e "$scriptsPath" ".\$BUILD_TYPE\scripts" /NFL /NDL /NJH /NJS /NC /NS /NP
+		# robocopy /e "$nmPath" ".\$BUILD_TYPE\node_modules" /NFL /NDL /NJH /NJS /NC /NS /NP
+		# robocopy /e "$scriptsPath" ".\$BUILD_TYPE\scripts" /NFL /NDL /NJH /NJS /NC /NS /NP
 		
 
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure -C $BUILD_TYPE
