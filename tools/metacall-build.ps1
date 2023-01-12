@@ -57,7 +57,6 @@ function sub-build {
 		# Prerequisites
 		$files = @(
 			".\runtimes\nodejs\lib\libnode.dll",
-			".\runtimes\nodejs\lib\libnode.lib",
 			".\runtimes\ruby\bin\x64-vcruntime140-ruby310.dll"
 		)
 
@@ -75,6 +74,7 @@ function sub-build {
 		robocopy /e "$nmPath" ".\$BUILD_TYPE\node_modules" /NFL /NDL /NJH /NJS /NC /NS /NP
 		# robocopy /e "$scriptsPath" ".\$BUILD_TYPE\scripts" /NFL /NDL /NJH /NJS /NC /NS /NP
 		
+
 		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --output-on-failure -C $BUILD_TYPE
 
 		if ( -not $? ) {
