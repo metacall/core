@@ -68,10 +68,10 @@ function sub-build {
 		}
 
 		# Copy scripts and node_module for test
-		$nmPath = ".\source\loaders\node_loader\bootstrap\node_modules"
+		# $nmPath = ".\source\loaders\node_loader\bootstrap\node_modules"
 		# $scriptsPath = ".\scripts"
 
-		robocopy /e "$nmPath" ".\$BUILD_TYPE\node_modules" /NFL /NDL /NJH /NJS /NC /NS /NP
+		# robocopy /e "$nmPath" ".\$BUILD_TYPE\node_modules" /NFL /NDL /NJH /NJS /NC /NS /NP
 		# robocopy /e "$scriptsPath" ".\$BUILD_TYPE\scripts" /NFL /NDL /NJH /NJS /NC /NS /NP
 		
 
