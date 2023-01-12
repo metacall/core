@@ -10,7 +10,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "espree": "^9.4.0",
-    "metacall": "*"
+    "espree": "^9.4.0"
   }
 }
