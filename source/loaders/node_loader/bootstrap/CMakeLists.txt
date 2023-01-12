@@ -48,15 +48,13 @@ add_custom_target(${target}
 
 if(NOT OPTION_BUILD_GUIX)
 	add_custom_target(${target}_depends
-		WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib
 		COMMAND ${CMAKE_COMMAND} -E echo "Installing ${target} dependencies"
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_BINARY_DIR}/package.json
-		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json ${CMAKE_CURRENT_BINARY_DIR}/package-lock.json
 		COMMAND ${NPM_EXECUTABLE} install
 		COMMAND ${CMAKE_COMMAND} -E echo "Copying ${target} dependencies"
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules
-		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_BINARY_DIR}/node_modules/ ${PROJECT_OUTPUT_DIR}/node_modules
-		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_BINARY_DIR}/node_modules to ${PROJECT_OUTPUT_DIR}/node_modules"
+		COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_SOURCE_DIR}/lib/node_modules/ ${PROJECT_OUTPUT_DIR}/node_modules
+		COMMAND ${CMAKE_COMMAND} -E echo "${target} dependencies copied from ${CMAKE_CURRENT_SOURCE_DIR}/node_modules to ${PROJECT_OUTPUT_DIR}/node_modules"
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lib/package.json ${CMAKE_CURRENT_SOURCE_DIR}/lib/package-lock.json
 	)
 
@@ -69,10 +67,10 @@ if(NOT OPTION_BUILD_GUIX)
 	add_dependencies(${target} ${target}_depends)
 
 	install(DIRECTORY
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules/espree
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules/acorn
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules/acorn-jsx
-		${CMAKE_CURRENT_BINARY_DIR}/node_modules/eslint-visitor-keys
+		${PROJECT_OUTPUT_DIR}/node_modules/espree
+		${PROJECT_OUTPUT_DIR}/node_modules/acorn
+		${PROJECT_OUTPUT_DIR}/node_modules/acorn-jsx
+		${PROJECT_OUTPUT_DIR}/node_modules/eslint-visitor-keys
 		DESTINATION ${INSTALL_LIB}/node_modules
 		COMPONENT runtime
 	)
