@@ -77,14 +77,14 @@ inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
 
 inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 {
-	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == 0)
+	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MIN)
 	{
 		return 1;
 	}
 
 	uintmax_t old_ref_count = atomic_fetch_sub_explicit(&ref->count, 1U, memory_order_release);
 
-	if (old_ref_count == 1)
+	if (old_ref_count == THREADING_ATOMIC_REF_COUNT_MIN + 1)
 	{
 		atomic_thread_fence(memory_order_acquire);
 	}
