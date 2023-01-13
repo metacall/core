@@ -14,6 +14,8 @@ jobs:
   linux-sanitizer:
     name: Linux (Ubuntu) GCC Sanitizer Test
     runs-on: ubuntu-latest
+    env:
+      SANITIZER_SKIP_SUMMARY: 1
 
     steps:
       - name: Check out the repository
