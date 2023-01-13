@@ -29,9 +29,10 @@ jobs:
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+
       - name: Setup Java
-        - uses: actions/setup-java@v3
-          with:
+        uses: actions/setup-java@v3
+        with:
           distribution: 'microsift'
           java-version: '11'
 
