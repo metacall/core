@@ -294,7 +294,6 @@ sub_v8(){
 
 # NodeJS
 sub_nodejs(){
-	# TODO: Review conflicts with Ruby Rails and NodeJS 4.x
 	echo "configure nodejs"
 	cd $ROOT_DIR
 	$SUDO_CMD apt-get update

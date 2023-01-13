@@ -40,16 +40,23 @@ if(NOT OPTION_BUILD_GUIX)
 	endif()
 
 	add_custom_target(${target} ALL
-		COMMAND ${NPM_EXECUTABLE} install --ignore-scripts
+		COMMAND ${CMAKE_COMMAND} -E echo "Installing ${target}"
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules/metacall
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${PROJECT_OUTPUT_DIR}/node_modules/metacall/index.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.d.ts ${PROJECT_OUTPUT_DIR}/node_modules/metacall/index.d.ts
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package.json
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package-lock.json
+		COMMAND ${NPM_EXECUTABLE} install
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		SOURCES ${sources}
 	)
 else()
 	add_custom_target(${target} ALL
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR}/node_modules/metacall
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.js ${PROJECT_OUTPUT_DIR}/node_modules/metacall/index.js
+		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/index.d.ts ${PROJECT_OUTPUT_DIR}/node_modules/metacall/index.d.ts
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package.json
 		COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json ${PROJECT_OUTPUT_DIR}/node_modules/metacall/package-lock.json
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
@@ -70,6 +77,7 @@ set_target_properties(${target}
 # Files
 install(FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/index.js
+	${CMAKE_CURRENT_SOURCE_DIR}/index.d.ts
 	${CMAKE_CURRENT_SOURCE_DIR}/package.json
 	${CMAKE_CURRENT_SOURCE_DIR}/package-lock.json
 	${CMAKE_CURRENT_SOURCE_DIR}/LICENSE

@@ -72,7 +72,11 @@ future_return future_await(future f, future_resolve_callback resolve_callback, f
 	{
 		if (f->interface != NULL && f->interface->await != NULL)
 		{
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+
+			/*
 			log_write("metacall", LOG_LEVEL_DEBUG, "Await future (%p)", (void *)f);
+			*/
 
 			return f->interface->await(f, f->impl, resolve_callback, reject_callback, context);
 		}
