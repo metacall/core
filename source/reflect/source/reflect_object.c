@@ -396,6 +396,9 @@ void object_destroy(object obj)
 
 		if (threading_atomic_ref_count_load(&obj->ref) == 0)
 		{
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+
+			/*
 			if (obj->name == NULL)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous object <%p>", (void *)obj);
@@ -404,6 +407,7 @@ void object_destroy(object obj)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy object %s <%p>", obj->name, (void *)obj);
 			}
+			*/
 
 			if (obj->interface != NULL && obj->interface->destroy != NULL)
 			{

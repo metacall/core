@@ -845,6 +845,9 @@ void class_destroy(klass cls)
 
 		if (threading_atomic_ref_count_load(&cls->ref) == 0)
 		{
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+
+			/*
 			if (cls->name == NULL)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy anonymous class <%p>", (void *)cls);
@@ -853,6 +856,7 @@ void class_destroy(klass cls)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p>", cls->name, (void *)cls);
 			}
+			*/
 
 			class_constructors_destroy(cls);
 

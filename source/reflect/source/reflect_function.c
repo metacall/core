@@ -610,6 +610,9 @@ function_return function_await(function func, function_args args, size_t size, f
 	{
 		if (func->interface != NULL && func->interface->await != NULL)
 		{
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+
+			/*
 			if (func->name == NULL)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Await annonymous function with args <%p>", (void *)args);
@@ -618,6 +621,7 @@ function_return function_await(function func, function_args args, size_t size, f
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Await function (%s) with args <%p>", func->name, (void *)args);
 			}
+			*/
 
 			return func->interface->await(func, func->impl, args, size, resolve_callback, reject_callback, context);
 		}

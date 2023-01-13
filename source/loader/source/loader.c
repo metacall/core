@@ -187,8 +187,11 @@ void loader_initialization_register_plugin(plugin p)
 		initialization_order.p = p;
 		initialization_order.being_deleted = 1;
 
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/*
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader %s registered at position (%" PRIuS ") in thread #%" PRIuS,
 			plugin_name(p), vector_size(manager_impl->initialization_order), initialization_order.id);
+		*/
 
 		vector_push_back(manager_impl->initialization_order, &initialization_order);
 	}

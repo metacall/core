@@ -614,6 +614,8 @@ value value_from_throwable(value v, throwable th)
 
 void value_type_destroy(value v)
 {
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+
 	if (v != NULL)
 	{
 		type_id id = value_type_id(v);
@@ -648,13 +650,15 @@ void value_type_destroy(value v)
 		{
 			future f = value_to_future(v);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy future value <%p>", (void *)v);
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy future value <%p>", (void *)v); */
 
 			future_destroy(f);
 		}
 		else if (type_id_function(id) == 0)
 		{
 			function f = value_to_function(v);
+
+			/*
 			const char *name = function_name(f);
 
 			if (name == NULL)
@@ -665,12 +669,15 @@ void value_type_destroy(value v)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy function %s <%p> value <%p>", name, (void *)f, (void *)v);
 			}
+			*/
 
 			function_destroy(f);
 		}
 		else if (type_id_class(id) == 0)
 		{
 			klass c = value_to_class(v);
+
+			/*
 			const char *name = class_name(c);
 
 			if (name == NULL)
@@ -681,14 +688,17 @@ void value_type_destroy(value v)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy class %s <%p> value <%p>", name, (void *)c, (void *)v);
 			}
+			*/
 
 			class_destroy(c);
 		}
 		else if (type_id_object(id) == 0)
 		{
 			object o = value_to_object(v);
-			const char *name = object_name(o);
 			int delete_return;
+
+			/*
+			const char *name = object_name(o);
 
 			if (name == NULL)
 			{
@@ -698,6 +708,7 @@ void value_type_destroy(value v)
 			{
 				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy object %s <%p> value <%p>", name, (void *)o, (void *)v);
 			}
+			*/
 
 			delete_return = object_delete(o);
 
@@ -712,7 +723,7 @@ void value_type_destroy(value v)
 		{
 			exception ex = value_to_exception(v);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy exception value <%p>", (void *)v);
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy exception value <%p>", (void *)v); */
 
 			exception_destroy(ex);
 		}
@@ -720,7 +731,7 @@ void value_type_destroy(value v)
 		{
 			throwable th = value_to_throwable(v);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroy throwable value <%p> containing the value <%p>", (void *)v, (void *)throwable_value(th));
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy throwable value <%p> containing the value <%p>", (void *)v, (void *)throwable_value(th)); */
 
 			throwable_destroy(th);
 		}
