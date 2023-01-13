@@ -33,7 +33,7 @@ jobs:
       - name: Setup Java
         uses: actions/setup-java@v3
         with:
-          distribution: 'microsift'
+          distribution: 'microsoft'
           java-version: '11'
 
       - name: Activate the Visual Studio Developer Prompt
