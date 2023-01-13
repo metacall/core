@@ -67,7 +67,7 @@ function sub-build {
 			}
 		}
 
-		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 3000 --output-on-failure -C $BUILD_TYPE
+		ctest "-j$((Get-CimInstance Win32_ComputerSystem).NumberOfLogicalProcessors)" --timeout 2000 --output-on-failure -C $BUILD_TYPE
 
 		if ( -not $? ) {
 			$RecentExitCode = $LASTEXITCODE
