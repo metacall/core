@@ -30,12 +30,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'microsoft'
-          java-version: '11'
-
       - name: Activate the Visual Studio Developer Prompt
         uses: ilammy/msvc-dev-cmd@v1
         with:
