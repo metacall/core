@@ -328,7 +328,24 @@ function sub-wasm {
 # Java
 function sub-java {
 	echo "configure java"
+	$JAVA_VERSION = "17.0.5"
+	$RuntimeDir = "$ROOT_DIR\build\runtimes\openjdk"
+
+	(New-Object Net.WebClient).DownloadFile("https://aka.ms/download-jdk/microsoft-jdk-$JAVA_VERSION-windows-x64.zip", "$(pwd)\openjdk.zip");
+	Expand-Archive -Path "openjdk.zip" -DestinationPath "$RuntimeDir"
+	robocopy /move /e "$RuntimeDir\jdk-$JAVA_VERSION+8" "$RuntimeDir" /NFL /NDL /NJH /NJS /NC /NS /NP
+
+	# Setting JAVA_HOME as a system level variable adding to doesn't work
+	# [Environment]::SetEnvironmentVariable('JAVA_HOME', $RuntimeDir, 'Machine') -> this need elevated permissions
+
+	"JAVA_HOME=$RuntimeDir" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+	"$RuntimeDir\bin" >> $env:GITHUB_PATH
 	
+	# Add jvm.dll to path else loader fails while loading, also copying this dll won't work
+	# since jvm.dll requires other dlls from the openjdk and then it fails to load its deps
+	# Add-to-Path "$RuntimeDir\bin\server"
+	"$RuntimeDir\bin\server" >> $env:GITHUB_PATH
+
 }
 
 # C
