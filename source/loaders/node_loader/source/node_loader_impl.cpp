@@ -4847,9 +4847,12 @@ static void node_loader_impl_destroy_check_close_cb(uv_handle_t *handle)
 
 static void node_loader_impl_destroy_cb(loader_impl_node node_impl)
 {
+	/* TODO: Remove async handle logging temporally */
+	/*
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	node_loader_impl_print_handles(node_impl);
 #endif
+	*/
 
 	if (node_impl->event_loop_empty.load() == false && node_loader_impl_user_async_handles_count(node_impl) <= 0)
 	{
@@ -4941,18 +4944,17 @@ int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl)
 int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
 	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
+	int64_t closing =
+#if defined(WIN32) || defined(_WIN32)
+		(node_impl->thread_loop->endgame_handles != NULL)
+#else
+		(node_impl->thread_loop->closing_handles != NULL)
+#endif
+		;
 
 	/* TODO: Remove async handle logging temporally */
 	/*
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
-	int64_t closing =
-	#if defined(WIN32) || defined(_WIN32)
-		(node_impl->thread_loop->endgame_handles != NULL)
-	#else
-		(node_impl->thread_loop->closing_handles != NULL)
-	#endif
-		;
-
 	printf("[active_handles] - [base_active_handles] - [extra_active_handles] + [active_reqs] + [closing]\n");
 	printf("       %" PRId64 "        -           %" PRId64 "          -            %" PRId64 "           +       %" PRId64 "       +     %" PRId64 "\n",
 		active_handles,
@@ -4963,9 +4965,11 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 #endif
 	*/
 
-	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) /*+ closing*/;
+	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) + closing;
 }
 
+/* TODO: Remove async handle logging temporally */
+/*
 void node_loader_impl_print_handles(loader_impl_node node_impl)
 {
 	printf("Number of active handles: %" PRId64 "\n", node_loader_impl_async_handles_count(node_impl));
@@ -4973,6 +4977,7 @@ void node_loader_impl_print_handles(loader_impl_node node_impl)
 	uv_print_active_handles(node_impl->thread_loop, stdout);
 	fflush(stdout);
 }
+*/
 
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
 {
