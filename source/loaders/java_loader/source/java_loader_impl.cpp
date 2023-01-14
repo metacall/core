@@ -42,14 +42,14 @@ typedef struct loader_impl_java_type
 	JavaVM *jvm; // Pointer to the JVM (Java Virtual Machine)
 	JNIEnv *env; // Pointer to native interface
 
-} *loader_impl_java;
+} * loader_impl_java;
 
 typedef struct loader_impl_java_handle_type
 {
 	jobjectArray handle; // Pointer to the handle JNI object
 	size_t size;		 // Size of the jobject array
 
-} *loader_impl_java_handle;
+} * loader_impl_java_handle;
 
 typedef struct loader_impl_java_class_type
 {
@@ -58,7 +58,7 @@ typedef struct loader_impl_java_class_type
 	jclass concls;
 	loader_impl impl;
 	loader_impl_java java_impl;
-} *loader_impl_java_class;
+} * loader_impl_java_class;
 
 typedef struct loader_impl_java_object_type
 {
@@ -66,19 +66,19 @@ typedef struct loader_impl_java_object_type
 	jobject conObj;
 	jclass concls;
 	loader_impl_java java_impl;
-} *loader_impl_java_object;
+} * loader_impl_java_object;
 
 typedef struct loader_impl_java_field_type
 {
 	const char *fieldName;
 	jobject fieldObj;
-} *loader_impl_java_field;
+} * loader_impl_java_field;
 
 typedef struct loader_impl_java_method_type
 {
 	jobject methodObj;
 	const char *methodSignature;
-} *loader_impl_java_method;
+} * loader_impl_java_method;
 
 static type_interface type_java_singleton(void);
 
