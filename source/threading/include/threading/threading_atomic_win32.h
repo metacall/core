@@ -122,7 +122,7 @@ typedef LONG volatile atomic_flag;
 
 #undef __atomic_is_lock_free_power_of_2
 
-inline bool atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_order order)
+inline void atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 	{
@@ -134,7 +134,7 @@ inline bool atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_orde
 	}
 }
 
-inline bool atomic_store_explicit16(SHORT volatile *obj, SHORT desired, memory_order order)
+inline void atomic_store_explicit16(SHORT volatile *obj, SHORT desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 	{
@@ -146,7 +146,7 @@ inline bool atomic_store_explicit16(SHORT volatile *obj, SHORT desired, memory_o
 	}
 }
 
-inline bool atomic_store_explicit32(LONG volatile *obj, LONG desired, memory_order order)
+inline void atomic_store_explicit32(LONG volatile *obj, LONG desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 	{
@@ -158,7 +158,7 @@ inline bool atomic_store_explicit32(LONG volatile *obj, LONG desired, memory_ord
 	}
 }
 
-inline bool atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired, memory_order order)
+inline void atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 #ifdef _M_IX86

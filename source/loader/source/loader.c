@@ -134,7 +134,8 @@ int loader_initialize(void)
 	/* Insert into destruction list */
 	loader_initialization_register_plugin(manager_impl->host);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loader host initialized");
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader host initialized"); */
 
 	loader_manager_initialized = 0;
 
@@ -143,6 +144,8 @@ int loader_initialize(void)
 
 void loader_initialization_debug(void)
 {
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/*
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 
@@ -162,6 +165,7 @@ void loader_initialization_debug(void)
 		fflush(stdout);
 	}
 #endif
+	*/
 }
 
 void loader_initialization_register(loader_impl impl)
@@ -187,8 +191,11 @@ void loader_initialization_register_plugin(plugin p)
 		initialization_order.p = p;
 		initialization_order.being_deleted = 1;
 
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/*
 		log_write("metacall", LOG_LEVEL_DEBUG, "Loader %s registered at position (%" PRIuS ") in thread #%" PRIuS,
 			plugin_name(p), vector_size(manager_impl->initialization_order), initialization_order.id);
+		*/
 
 		vector_push_back(manager_impl->initialization_order, &initialization_order);
 	}
@@ -244,7 +251,8 @@ plugin loader_get_impl_plugin(const loader_tag tag)
 	/* Store in the loader implementation the reference to the plugin which belongs to */
 	loader_impl_attach(impl, p);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", tag, (void *)impl);
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Created loader (%s) implementation <%p>", tag, (void *)impl); */
 
 	return p;
 
@@ -282,7 +290,8 @@ int loader_execution_path(const loader_tag tag, const loader_path path)
 		return 1;
 	}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Define execution path (%s): %s", tag, path);
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Define execution path (%s): %s", tag, path); */
 
 	return loader_impl_execution_path(p, plugin_impl_type(p, loader_impl), path);
 }
@@ -302,7 +311,8 @@ int loader_load_from_file(const loader_tag tag, const loader_path paths[], size_
 		return 1;
 	}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loading %" PRIuS " file(s) (%s) from path(s): %s ...", size, tag, paths[0]);
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading %" PRIuS " file(s) (%s) from path(s): %s ...", size, tag, paths[0]); */
 
 	return loader_impl_load_from_file(&loader_manager, p, plugin_impl_type(p, loader_impl), paths, size, handle);
 }
@@ -322,7 +332,8 @@ int loader_load_from_memory(const loader_tag tag, const char *buffer, size_t siz
 		return 1;
 	}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loading buffer from memory (%s):\n%s", tag, buffer);
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading buffer from memory (%s):\n%s", tag, buffer); */
 
 	return loader_impl_load_from_memory(&loader_manager, p, plugin_impl_type(p, loader_impl), buffer, size, handle);
 }
@@ -342,7 +353,8 @@ int loader_load_from_package(const loader_tag tag, const loader_path path, void 
 		return 1;
 	}
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Loading package (%s): %s", tag, path);
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading package (%s): %s", tag, path); */
 
 	return loader_impl_load_from_package(&loader_manager, p, plugin_impl_type(p, loader_impl), path, handle);
 }
@@ -501,7 +513,8 @@ int loader_get_cb_iterate(plugin_manager manager, plugin p, void *data)
 
 	if (get_iterator->obj != NULL)
 	{
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) get value: %s <%p>", plugin_name(p), get_iterator->name, (void *)get_iterator->obj);
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader (%s) get value: %s <%p>", plugin_name(p), get_iterator->name, (void *)get_iterator->obj); */
 		return 1;
 	}
 
@@ -680,7 +693,8 @@ void loader_unload_children(loader_impl impl)
 	{
 		loader_initialization_order order = vector_back_type(stack, loader_initialization_order);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s) from thread #%" PRIuS, plugin_name(order->p), order->id);
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader unloading (%s) from thread #%" PRIuS, plugin_name(order->p), order->id); */
 
 		/* Call recursively for deletion of children */
 		if (order->p != manager_impl->host)
@@ -720,7 +734,8 @@ void loader_destroy(void)
 {
 	loader_manager_impl manager_impl = plugin_manager_impl_type(&loader_manager, loader_manager_impl);
 
-	log_write("metacall", LOG_LEVEL_DEBUG, "Begin to destroy all the loaders");
+	/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+	/* log_write("metacall", LOG_LEVEL_DEBUG, "Begin to destroy all the loaders"); */
 
 	/* Delete loaders in inverse order */
 	if (manager_impl->initialization_order != NULL)

@@ -238,16 +238,6 @@ function sub-configure {
 	if ( $BUILD_NODEJS -eq 1 ) {
 		$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_LOADERS_NODE=On"
 
-		# Resulted in errors in the CMake command, so commented out.
-		# Marked not necessary by Vicente.
-		<# & {
-			cd ..
-			$NodePath = "$($(pwd).Path.Replace('\', '/'))/runtimes/nodejs"
-			echo "NODE PATH LALALALALALALALALALA: $NodePath"
-			ls $NodePath
-			$Global:BUILD_STRING = "$BUILD_STRING ""-DNPM_ROOT=$NodePath"""
-		} #>
-
 		if ( $BUILD_SCRIPTS -eq 1 ) {
 			$Global:BUILD_STRING = "$BUILD_STRING -DOPTION_BUILD_SCRIPTS_NODE=On"
 		}

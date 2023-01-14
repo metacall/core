@@ -98,7 +98,7 @@ target_compile_definitions(${target}
 	${DEFAULT_COMPILE_DEFINITIONS}
 
 	# Configuration path
-	METACALL_TEST_CONFIG_PATH="${PROJECT_OUTPUT_DIR}/scripts/duplicated-in-subfolder-config/metacall.json"
+	METACALL_TEST_CONFIG_PATH="${LOADER_SCRIPT_PATH}/duplicated-in-subfolder-config/metacall.json"
 )
 
 #

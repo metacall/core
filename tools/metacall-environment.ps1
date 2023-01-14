@@ -299,12 +299,6 @@ function sub-nodejs {
 	echo "include(FindPackageHandleStandardArgs)"             >> $FindNode
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(NodeJS REQUIRED_VARS NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE VERSION_VAR NodeJS_VERSION)" >> $FindNode
 	echo "mark_as_advanced(NodeJS_VERSION NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE)" >> $FindNode
-
-	# TODO: This should be done by CMake
-	# # Move DLL to correct location (to be done AFTER build)
-	# # mv -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib"
-	# md -Force "$ROOT_DIR\lib"
-	# cp -Force "$RuntimeDir\lib\libnode.dll" "$ROOT_DIR\lib\"
 }
 
 # TypeScript

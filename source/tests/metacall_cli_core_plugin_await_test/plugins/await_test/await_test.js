@@ -1,7 +1,7 @@
 const { metacall_load_from_file } = require(process.env['METACALL_NODE_PORT_PATH']);
 
 function await__test(await_cb) {
-	metacall_load_from_file("node", ["scripts/nod.js"]);
+	metacall_load_from_file("node", ["nod.js"]);
 	hello_await = 'hello_boy_await(1,2)';
 	console.log(await_cb);
 

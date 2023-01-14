@@ -571,7 +571,8 @@ void loader_impl_destroy_handle(loader_handle_impl handle_impl)
 
 		if (handle_impl->impl->init == 0)
 		{
-			log_write("metacall", LOG_LEVEL_DEBUG, "Destroying handle %s", handle_impl->path);
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroying handle %s", handle_impl->path); */
 
 			if (loader_impl_function_hook_call(handle_impl->ctx, func_fini_name) != 0)
 			{
@@ -806,12 +807,15 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 	{
 		loader_impl_interface iface = loader_iface(p);
 
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/*
 		size_t iterator;
 
 		for (iterator = 0; iterator < size; ++iterator)
 		{
 			log_write("metacall", LOG_LEVEL_DEBUG, "Loading %s", paths[iterator]);
 		}
+		*/
 
 		if (iface != NULL)
 		{
@@ -837,13 +841,15 @@ int loader_impl_load_from_file(plugin_manager manager, plugin p, loader_impl imp
 
 			handle = iface->load_from_file(impl, paths, size);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle);
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
 
 			if (handle != NULL)
 			{
 				loader_handle_impl handle_impl = loader_impl_load_handle(impl, iface, handle, path);
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl);
+				/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+				/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader handle impl: %p", (void *)handle_impl); */
 
 				if (handle_impl != NULL)
 				{
@@ -934,7 +940,8 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 	{
 		loader_impl_interface iface = loader_iface(p);
 
-		log_write("metacall", LOG_LEVEL_DEBUG, "Loading from memory %.10s...", buffer);
+		/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+		/* log_write("metacall", LOG_LEVEL_DEBUG, "Loading from memory %.10s...", buffer); */
 
 		if (iface != NULL)
 		{
@@ -949,7 +956,7 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 			if (loader_impl_load_from_memory_name(impl, name, buffer, size) != 0)
 			{
-				log_write("metacall", LOG_LEVEL_DEBUG, "Load from memory handle failed, name could not be generated correctly");
+				log_write("metacall", LOG_LEVEL_ERROR, "Load from memory handle failed, name could not be generated correctly");
 
 				return 1;
 			}
@@ -967,7 +974,8 @@ int loader_impl_load_from_memory(plugin_manager manager, plugin p, loader_impl i
 
 			handle = iface->load_from_memory(impl, name, buffer, size);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle);
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
 
 			if (handle != NULL)
 			{
@@ -1064,7 +1072,8 @@ int loader_impl_load_from_package(plugin_manager manager, plugin p, loader_impl 
 
 			handle = iface->load_from_package(impl, path);
 
-			log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle);
+			/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+			/* log_write("metacall", LOG_LEVEL_DEBUG, "Loader interface: %p - Loader handle: %p", (void *)iface, (void *)handle); */
 
 			if (handle != NULL)
 			{
@@ -1473,7 +1482,8 @@ void loader_impl_destroy(plugin p, loader_impl impl)
 			{
 				loader_impl_interface iface = loader_iface(p);
 
-				log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", plugin_name(p));
+				/* TODO: Disable logs here until log is completely thread safe and async signal safe */
+				/* log_write("metacall", LOG_LEVEL_DEBUG, "Destroy loader implementation %s", plugin_name(p)); */
 
 				if (iface != NULL && iface->destroy(impl) != 0)
 				{

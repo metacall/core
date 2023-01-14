@@ -100,7 +100,7 @@ target_compile_definitions(${target}
 	METACALL_PYTHON_PORT_PATH="${CMAKE_SOURCE_DIR}/source/ports/py_port"
 
 	# Configuration path
-	METACALL_TEST_CONFIG_PATH="${PROJECT_OUTPUT_DIR}/scripts/auth-function-mesh/metacall.json"
+	METACALL_TEST_CONFIG_PATH="${LOADER_SCRIPT_PATH}/auth-function-mesh/metacall.json"
 )
 
 #
