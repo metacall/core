@@ -4942,6 +4942,8 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 {
 	int64_t active_handles = node_loader_impl_async_handles_count(node_impl);
 
+	/* TODO: Remove async handle logging temporally */
+	/*
 #if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 	int64_t closing =
 	#if defined(WIN32) || defined(_WIN32)
@@ -4959,6 +4961,7 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 		(int64_t)node_impl->thread_loop->active_reqs.count,
 		closing);
 #endif
+	*/
 
 	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) /*+ closing*/;
 }
