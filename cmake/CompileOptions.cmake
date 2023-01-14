@@ -212,6 +212,15 @@ if(WIN32 AND MSVC)
 			add_compile_options(/Z7)
 		endif()
 	endif()
+
+	# Sanitizers
+	if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(/fsanitize=thread)
+	elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(/fsanitize=address)
+	elseif(OPTION_BUILD_MEMORY_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(/fsanitize=memory)
+	endif()
 endif()
 
 if (PROJECT_OS_FAMILY MATCHES "unix")
