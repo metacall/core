@@ -107,7 +107,7 @@ sub_test_sanitizer() {
 
 	ln -sf tools/dev/.dockerignore .dockerignore
 
-	if [ -z "${SANITIZER_SKIP_SUMMARY}" ]; then
+	if [ ! -z "${SANITIZER_SKIP_SUMMARY:-}" ]; then
 		docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev
 	else
 		docker-compose -f docker-compose.yml -f docker-compose.test.yml build --force-rm dev | tee /tmp/metacall-test-output

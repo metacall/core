@@ -47,7 +47,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 
 		args[0] = metacall_value_create_string("py", 2);
 
-		char test_script[] = "scripts/example.py";
+		char test_script[] = "example.py";
 		void *test_script_v = metacall_value_create_string(test_script, strlen(test_script));
 		args[1] = metacall_value_create_array((const void **)&test_script_v, 1);
 
@@ -65,7 +65,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 		void *args[2];
 		args[0] = metacall_value_create_string("node", 4);
 
-		char test_script[] = "scripts/nod.js";
+		char test_script[] = "nod.js";
 		void *test_script_v = metacall_value_create_string(test_script, strlen(test_script));
 		args[1] = metacall_value_create_array((const void **)&test_script_v, 1);
 
@@ -153,7 +153,7 @@ TEST_F(metacall_cli_core_plugin_test, DefaultConstructor)
 
 		args[0] = metacall_value_create_string("py", 2);
 
-		char test_script[] = "scripts/example.py";
+		char test_script[] = "example.py";
 		args[1] = metacall_value_create_string(test_script, strlen(test_script));
 
 		void *ret = metacallhv_s(handle, "clear", args, 2);
