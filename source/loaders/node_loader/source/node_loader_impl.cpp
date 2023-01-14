@@ -4968,8 +4968,6 @@ int64_t node_loader_impl_user_async_handles_count(loader_impl_node node_impl)
 	return active_handles - node_impl->base_active_handles - node_impl->extra_active_handles.load() + (int64_t)(node_impl->thread_loop->active_reqs.count) + closing;
 }
 
-/* TODO: Remove async handle logging temporally */
-/*
 void node_loader_impl_print_handles(loader_impl_node node_impl)
 {
 	printf("Number of active handles: %" PRId64 "\n", node_loader_impl_async_handles_count(node_impl));
@@ -4977,7 +4975,6 @@ void node_loader_impl_print_handles(loader_impl_node node_impl)
 	uv_print_active_handles(node_impl->thread_loop, stdout);
 	fflush(stdout);
 }
-*/
 
 napi_value node_loader_impl_async_destroy_safe(napi_env env, napi_callback_info info)
 {
