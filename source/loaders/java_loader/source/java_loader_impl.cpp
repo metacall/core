@@ -299,6 +299,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_CHAR: {
@@ -310,6 +311,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetCharArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_SHORT: {
@@ -321,6 +323,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetShortArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 
@@ -334,6 +337,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetIntArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_LONG: {
@@ -346,6 +350,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetLongArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_FLOAT: {
@@ -358,6 +363,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetFloatArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_DOUBLE: {
@@ -369,6 +375,7 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 
 					env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 
@@ -712,6 +719,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[C"))
 					{
@@ -723,6 +731,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[S"))
 					{
@@ -734,6 +743,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[I"))
 					{
@@ -745,6 +755,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[J"))
 					{
@@ -756,6 +767,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[F"))
 					{
@@ -767,6 +779,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[D"))
 					{
@@ -778,6 +791,7 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 
 						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
@@ -1341,6 +1355,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[C"))
 					{
@@ -1352,6 +1367,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[S"))
 					{
@@ -1363,6 +1379,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[I"))
 					{
@@ -1374,6 +1391,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[J"))
 					{
@@ -1385,6 +1403,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[F"))
 					{
@@ -1396,6 +1415,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[D"))
 					{
@@ -1407,6 +1427,7 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 
 						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
