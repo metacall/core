@@ -20,6 +20,7 @@ release_build
 /bin
 /lib
 /install
+/dependencies
 
 # CMake
 CMakeCache.txt
