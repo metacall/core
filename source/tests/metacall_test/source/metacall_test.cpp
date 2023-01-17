@@ -280,7 +280,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
-	#if !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__) && !defined(__MEMORY_SANITIZER__)
+	#if !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__) && !defined(__MEMORY_SANITIZER__) && !defined(__UB_SANITIZER__)
 		/* Testing corrupted value input */
 		struct
 		{

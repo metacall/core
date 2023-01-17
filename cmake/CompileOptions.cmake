@@ -70,7 +70,7 @@ set(DEFAULT_INCLUDE_DIRECTORIES)
 
 # ThreadSanitizer is incompatible with AddressSanitizer and LeakSanitizer
 if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(DEFAULT_LIBRARIES -ltsan)
+	set(SANITIZER_LIBRARIES -ltsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"TSAN_OPTIONS=suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/tsan.supp"
 	)
@@ -79,11 +79,20 @@ if(OPTION_BUILD_THREAD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE
 	)
 elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	# TODO: This requires much more effort than expected: https://github.com/google/sanitizers/wiki/MemorySanitizerLibcxxHowTo
-	set(DEFAULT_LIBRARIES)
+	set(SANITIZER_LIBRARIES)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
-	set(SANITIZER_COMPILE_DEFINITIONS)
+	set(SANITIZER_COMPILE_DEFINITIONS
+		"__MEMORY_SANITIZER__=1"
+	)
+elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+	# TODO
+	set(SANITIZER_LIBRARIES)
+	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
+	set(SANITIZER_COMPILE_DEFINITIONS
+		"__UB_SANITIZER__=1"
+	)
 elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(DEFAULT_LIBRARIES -lasan -lubsan)
+	set(SANITIZER_LIBRARIES -lasan -lubsan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
@@ -100,10 +109,20 @@ elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BU
 		"__ADDRESS_SANITIZER__=1"
 	)
 else()
-	set(DEFAULT_LIBRARIES)
+	set(SANITIZER_LIBRARIES)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
 	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
+
+if(WIN32 AND MSVC)
+	# MSVC does not require to link manually the sanitizer libraries
+	set(SANITIZER_LIBRARIES)
+endif()
+
+# Set default libraries
+set(DEFAULT_LIBRARIES
+	${SANITIZER_LIBRARIES}
+)
 
 #
 # Compile definitions
@@ -220,6 +239,9 @@ if(WIN32 AND MSVC)
 		add_compile_options(/fsanitize=address)
 	elseif(OPTION_BUILD_MEMORY_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 		add_compile_options(/fsanitize=memory)
+		add_compile_options(/fsanitize=leak)
+	elseif(OPTION_BUILD_UB_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		add_compile_options(/fsanitize=undefined)
 	endif()
 endif()
 
@@ -275,6 +297,8 @@ if (PROJECT_OS_FAMILY MATCHES "unix")
 		add_compile_options(-fsanitize=memory)
 		add_compile_options(-fsanitize-memory-track-origins)
 		add_compile_options(-fsanitize-memory-use-after-dtor)
+	elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
+		# TODO
 	endif()
 endif()
 
