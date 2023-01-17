@@ -280,6 +280,7 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		metacall_value_destroy(ret);
 
+	#if !defined(__ADDRESS_SANITIZER__) && !defined(__THREAD_SANITIZER__) && !defined(__MEMORY_SANITIZER__)
 		/* Testing corrupted value input */
 		struct
 		{
@@ -306,7 +307,6 @@ TEST_F(metacall_test, DefaultConstructor)
 		* for now, this would be sufficient to catch most of the errors.
 		*/
 
-		/*
 		void *freed_args[] = {
 			(void *)metacall_value_create_long(3L),
 			(void *)metacall_value_create_long(5L)
@@ -316,7 +316,7 @@ TEST_F(metacall_test, DefaultConstructor)
 		metacall_value_destroy(freed_args[1]);
 
 		EXPECT_EQ((void *)NULL, (void *)metacallfv_s(metacall_function("multiply"), freed_args, 2));
-		*/
+	#endif
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
 
