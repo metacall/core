@@ -293,79 +293,89 @@ void getJValArray(jvalue *constructorArgs, class_args args, size_t argc, JNIEnv 
 				case TYPE_BOOL: {
 					jbooleanArray setArr = env->NewBooleanArray((jsize)array_size);
 
-					jboolean fill[array_size];
+					jboolean *fill = (jboolean *)malloc(array_size * sizeof(jboolean));
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jboolean)value_to_bool(array_value[i]);
 
 					env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_CHAR: {
 					jcharArray setArr = env->NewCharArray((jsize)array_size);
 
-					jchar fill[array_size];
+					jchar *fill = (jchar *)malloc(array_size * sizeof(jchar));
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jchar)value_to_char(array_value[i]);
 
 					env->SetCharArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_SHORT: {
 					jshortArray setArr = env->NewShortArray((jsize)array_size);
 
-					jshort fill[array_size];
+					jshort *fill = (jshort *)malloc(array_size * sizeof(jshort));
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jshort)value_to_short(array_value[i]);
 
 					env->SetShortArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 
 				case TYPE_INT: {
 					jintArray setArr = env->NewIntArray((jsize)array_size);
 
-					jint fill[array_size];
+					jint *fill = (jint *)malloc(array_size * sizeof(jint));
+
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jint)value_to_int(array_value[i]);
 
 					env->SetIntArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_LONG: {
 					jlongArray setArr = env->NewLongArray((jsize)array_size);
 
-					jlong fill[array_size];
+					jlong *fill = (jlong *)malloc(array_size * sizeof(jlong));
+
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jlong)value_to_long(array_value[i]);
 
 					env->SetLongArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_FLOAT: {
 					jfloatArray setArr = env->NewFloatArray((jsize)array_size);
 
-					jfloat fill[array_size];
+					jfloat *fill = (jfloat *)malloc(array_size * sizeof(jfloat));
+
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jfloat)value_to_float(array_value[i]);
 
 					env->SetFloatArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 				case TYPE_DOUBLE: {
 					jdoubleArray setArr = env->NewDoubleArray((jsize)array_size);
 
-					jdouble fill[array_size];
+					jdouble *fill = (jdouble *)malloc(array_size * sizeof(jdouble));
 					for (size_t i = 0; i < array_size; i++)
 						fill[i] = (jdouble)value_to_double(array_value[i]);
 
 					env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
 					constructorArgs[i].l = setArr;
+					free(fill);
 					break;
 				}
 
@@ -702,78 +712,86 @@ int java_object_interface_set(object obj, object_impl impl, struct accessor_type
 					{
 						jbooleanArray setArr = java_impl->env->NewBooleanArray((jsize)array_size);
 
-						jboolean fill[array_size];
+						jboolean *fill = (jboolean *)malloc(array_size * sizeof(jboolean));
+
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jboolean)value_to_bool(array_value[i]);
 
 						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[C"))
 					{
 						jcharArray setArr = java_impl->env->NewCharArray((jsize)array_size);
 
-						jchar fill[array_size];
+						jchar *fill = (jchar *)malloc(array_size * sizeof(jchar));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jchar)value_to_char(array_value[i]);
 
 						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[S"))
 					{
 						jshortArray setArr = java_impl->env->NewShortArray((jsize)array_size);
 
-						jshort fill[array_size];
+						jshort *fill = (jshort *)malloc(array_size * sizeof(jshort));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jshort)value_to_short(array_value[i]);
 
 						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[I"))
 					{
 						jintArray setArr = java_impl->env->NewIntArray((jsize)array_size);
 
-						jint fill[array_size];
+						jint *fill = (jint *)malloc(array_size * sizeof(jint));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jint)value_to_int(array_value[i]);
 
 						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[J"))
 					{
 						jlongArray setArr = java_impl->env->NewLongArray((jsize)array_size);
 
-						jlong fill[array_size];
+						jlong *fill = (jlong *)malloc(array_size * sizeof(jlong));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jlong)value_to_long(array_value[i]);
 
 						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[F"))
 					{
 						jfloatArray setArr = java_impl->env->NewFloatArray((jsize)array_size);
 
-						jfloat fill[array_size];
+						jfloat *fill = (jfloat *)malloc(array_size * sizeof(jfloat));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jfloat)value_to_float(array_value[i]);
 
 						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[D"))
 					{
 						jdoubleArray setArr = java_impl->env->NewDoubleArray((jsize)array_size);
 
-						jdouble fill[array_size];
+						jdouble *fill = (jdouble *)malloc(array_size * sizeof(jdouble));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jdouble)value_to_double(array_value[i]);
 
 						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetObjectField(conObj, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
@@ -1331,78 +1349,85 @@ int java_class_interface_static_set(klass cls, class_impl impl, struct accessor_
 					{
 						jbooleanArray setArr = java_impl->env->NewBooleanArray((jsize)array_size);
 
-						jboolean fill[array_size];
+						jboolean *fill = (jboolean *)malloc(array_size * sizeof(jboolean));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jboolean)value_to_bool(array_value[i]);
 
 						java_impl->env->SetBooleanArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[C"))
 					{
 						jcharArray setArr = java_impl->env->NewCharArray((jsize)array_size);
 
-						jchar fill[array_size];
+						jchar *fill = (jchar *)malloc(array_size * sizeof(jchar));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jchar)value_to_char(array_value[i]);
 
 						java_impl->env->SetCharArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[S"))
 					{
 						jshortArray setArr = java_impl->env->NewShortArray((jsize)array_size);
 
-						jshort fill[array_size];
+						jshort *fill = (jshort *)malloc(array_size * sizeof(jshort));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jshort)value_to_short(array_value[i]);
 
 						java_impl->env->SetShortArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[I"))
 					{
 						jintArray setArr = java_impl->env->NewIntArray((jsize)array_size);
 
-						jint fill[array_size];
+						jint *fill = (jint *)malloc(array_size * sizeof(jint));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jint)value_to_int(array_value[i]);
 
 						java_impl->env->SetIntArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[J"))
 					{
 						jlongArray setArr = java_impl->env->NewLongArray((jsize)array_size);
 
-						jlong fill[array_size];
+						jlong *fill = (jlong *)malloc(array_size * sizeof(jlong));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jlong)value_to_long(array_value[i]);
 
 						java_impl->env->SetLongArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[F"))
 					{
 						jfloatArray setArr = java_impl->env->NewFloatArray((jsize)array_size);
 
-						jfloat fill[array_size];
+						jfloat *fill = (jfloat *)malloc(array_size * sizeof(jfloat));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jfloat)value_to_float(array_value[i]);
 
 						java_impl->env->SetFloatArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[D"))
 					{
 						jdoubleArray setArr = java_impl->env->NewDoubleArray((jsize)array_size);
 
-						jdouble fill[array_size];
+						jdouble *fill = (jdouble *)malloc(array_size * sizeof(jdouble));
 						for (size_t i = 0; i < array_size; i++)
 							fill[i] = (jdouble)value_to_double(array_value[i]);
 
 						java_impl->env->SetDoubleArrayRegion(setArr, 0, array_size, fill);
 						java_impl->env->SetStaticObjectField(clscls, fID, setArr);
+						free(fill);
 					}
 					else if (!strcmp(fType, "[Ljava/lang/String;"))
 					{
