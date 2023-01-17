@@ -297,9 +297,9 @@ TEST_F(metacall_test, DefaultConstructor)
 
 		EXPECT_EQ((void *)NULL, (void *)metacallfv_s(metacall_function("multiply"), corrupted_args, 2));
 
-		/* Testing freed value input */
+			/* Testing freed value input */
 
-		/* TODO: The next snippet of code works but address sanitizer warns about access warning,
+			/* TODO: The next snippet of code works but address sanitizer warns about access warning,
 		* because in order to check the magic number we need to access the pointer to the struct.
 		* A better solution would be, when using a custom memory pool allocator (aka object pool)
 		* detect if the pointer is allocated or not in the object pool, so we track it without
@@ -307,6 +307,7 @@ TEST_F(metacall_test, DefaultConstructor)
 		* for now, this would be sufficient to catch most of the errors.
 		*/
 
+			/*
 		void *freed_args[] = {
 			(void *)metacall_value_create_long(3L),
 			(void *)metacall_value_create_long(5L)
@@ -316,6 +317,7 @@ TEST_F(metacall_test, DefaultConstructor)
 		metacall_value_destroy(freed_args[1]);
 
 		EXPECT_EQ((void *)NULL, (void *)metacallfv_s(metacall_function("multiply"), freed_args, 2));
+		*/
 	#endif
 	}
 #endif /* OPTION_BUILD_LOADERS_PY */
