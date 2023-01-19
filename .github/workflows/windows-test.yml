@@ -47,7 +47,7 @@ jobs:
           cd "$METACALL_PATH\build"
           cmd.exe /c "powershell ..\tools\metacall-configure.ps1 $Env:METACALL_BUILD_OPTIONS"
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests python nodejs java thread-sanitizer # ruby # netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
+          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests python nodejs java sanitizer # ruby # netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build
