@@ -534,7 +534,7 @@ static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-static HMODULE (*load_library_w_ptr)(LPCWSTR) = NULL;
+static _Ret_maybenull_ HMODULE (*load_library_w_ptr)(_In_ LPCWSTR, _Reserved_ HANDLE, _In_ DWORD) = NULL;
 #endif
 
 /* -- Methods -- */
@@ -3719,15 +3719,15 @@ void node_loader_impl_thread_safe_function_initialize(napi_env env,
 }
 
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-static HMODULE load_library_w_hook(LPCWSTR lp_lib_file_name)
+_Ret_maybenull_ HMODULE WINAPI load_library_w_hook(_In_ LPCWSTR lpLibFileName, _Reserved_ HANDLE hFile, _In_ DWORD dwFlags)
 {
 	// TODO
 	char buffer[2000];
 
-	wcstombs(buffer, lp_lib_file_name, 2000);
+	wcstombs(buffer, lpLibFileName, 2000);
 	printf("----------------------------- %s\n", buffer);
 
-	return load_library_w_ptr(lp_lib_file_name);
+	return load_library_w_ptr(lpLibFileName, hFile, dwFlags);
 }
 #endif
 
@@ -3976,7 +3976,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 
 	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	load_library_w_ptr = (HMODULE(*)(LPCWSTR))node_loader_hook_import_address_table("kernel32.dll", "LoadLibraryW", &load_library_w_hook)(void) todo;
+	load_library_w_ptr = (_Ret_maybenull_ HMODULE(*)(_In_ LPCWSTR, _Reserved_ HANDLE, _In_ DWORD))node_loader_hook_import_address_table("libnode.dll", "LoadLibraryW", &load_library_w_hook);
 #endif
 
 	/* Signal start condition */

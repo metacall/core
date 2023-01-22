@@ -54,8 +54,8 @@ inline void *node_loader_hook_import_address_table(const char *module_name, cons
 
 	for (; import_descriptor->FirstThunk != NULL; ++import_descriptor)
 	{
-		PIMAGE_THUNK_DATA original_first_thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)image_base + import_descriptor->Original_first_thunk); // Image thunk data names
-		PIMAGE_THUNK_DATA first_thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)image_base + import_descriptor->FirstThunk);					   // Image thunk data address
+		PIMAGE_THUNK_DATA original_first_thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)image_base + import_descriptor->OriginalFirstThunk); // Image thunk data names
+		PIMAGE_THUNK_DATA first_thunk = (PIMAGE_THUNK_DATA)((DWORD_PTR)image_base + import_descriptor->FirstThunk);					 // Image thunk data address
 
 		for (; original_first_thunk->u1.AddressOfData != NULL; ++original_first_thunk, ++first_thunk)
 		{
@@ -65,14 +65,13 @@ inline void *node_loader_hook_import_address_table(const char *module_name, cons
 
 				if (strcmp(func->Name, function_name) == 0)
 				{
-					LPVOID import_func_load_address = (LPVOID)(&first_thunk->u1.Function)
-						DWORD old_page_protect,
-						   dummy_old_page_protect;
+					LPVOID import_func_load_address = (LPVOID)(&first_thunk->u1.Function);
+					DWORD old_page_protect, dummy_old_page_protect;
 					VirtualProtect(import_func_load_address, sizeof(void *), PAGE_EXECUTE_READWRITE, &old_page_protect);
 
 					memcpy(import_func_load_address, &hook, sizeof(hook));
 
-					VirtualProtect(import_func_load_address, sizeof(void *), old_page_protection, &dummy_old_page_protect);
+					VirtualProtect(import_func_load_address, sizeof(void *), old_page_protect, &dummy_old_page_protect);
 
 					return (void *)import_func_load_address;
 				}
