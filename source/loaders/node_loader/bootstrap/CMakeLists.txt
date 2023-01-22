@@ -12,7 +12,6 @@ if(NOT OPTION_BUILD_GUIX)
 
 	if(NOT NPM_FOUND)
 		message(SEND_ERROR "NPM not found")
-		set(OPTION_BUILD_LOADERS_NODE OFF CACHE BOOL "" FORCE)
 		return()
 	endif()
 endif()

@@ -11,7 +11,6 @@ find_package(NodeJS)
 
 if(NOT NodeJS_FOUND)
 	message(SEND_ERROR "NodeJS libraries not found")
-	set(OPTION_BUILD_LOADERS_NODE OFF CACHE BOOL "" FORCE)
 	return()
 endif()
 
