@@ -133,6 +133,7 @@ add_test(NAME ${target}
 
 add_dependencies(${target}
 	node_loader
+	node_extension_test
 )
 
 #

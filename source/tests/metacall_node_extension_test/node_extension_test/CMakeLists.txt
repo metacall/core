@@ -75,11 +75,6 @@ add_library(${target} MODULE
 	${headers}
 )
 
-# Add target dependencies
-add_dependencies(${target}
-	node_extension_test
-)
-
 # Create namespaced alias
 add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
@@ -120,12 +115,13 @@ generate_export_header(${target}
 set_target_properties(${target}
 	PROPERTIES
 	${DEFAULT_PROJECT_OPTIONS}
-	FOLDER "${IDE_FOLDER}"
+	FOLDER "Scripts" # Put it on scripts even if it is on tests folder
 	BUNDLE $<$<BOOL:${APPLE}>:$<$<VERSION_GREATER:${PROJECT_OS_VERSION},8>>>
 
 	# Set NodeJS extension properies
 	SUFFIX ".node"
 	PREFIX ""
+	DEBUG_POSTFIX ""
 )
 
 #
