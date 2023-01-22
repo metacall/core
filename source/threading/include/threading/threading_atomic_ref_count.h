@@ -70,7 +70,7 @@ inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
 		return 1;
 	}
 
-	atomic_fetch_add_explicit(&ref->count, 1U, memory_order_relaxed);
+	atomic_fetch_add_explicit(&ref->count, 1, memory_order_relaxed);
 
 	return 0;
 }
@@ -82,7 +82,7 @@ inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 		return 1;
 	}
 
-	uintmax_t old_ref_count = atomic_fetch_sub_explicit(&ref->count, 1U, memory_order_release);
+	uintmax_t old_ref_count = atomic_fetch_sub_explicit(&ref->count, 1, memory_order_release);
 
 	if (old_ref_count == THREADING_ATOMIC_REF_COUNT_MIN + 1)
 	{
