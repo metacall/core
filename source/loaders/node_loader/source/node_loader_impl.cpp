@@ -48,6 +48,10 @@ extern char **environ;
 #include <node_loader/node_loader_port.h>
 #include <node_loader/node_loader_trampoline.h>
 
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+	#include <node_loader/node_loader_win32_delay_load.h>
+#endif
+
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
@@ -528,6 +532,10 @@ static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void 
 static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
+
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+static HMODULE (*load_library_w_ptr)(LPCWSTR) = NULL;
+#endif
 
 /* -- Methods -- */
 
@@ -3710,6 +3718,19 @@ void node_loader_impl_thread_safe_function_initialize(napi_env env,
 	node_loader_impl_exception(env, status);
 }
 
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+static HMODULE load_library_w_hook(LPCWSTR lp_lib_file_name)
+{
+	// TODO
+	char buffer[2000];
+
+	wcstombs(buffer, lp_lib_file_name, 2000);
+	printf("----------------------------- %s\n", buffer);
+
+	return load_library_w_ptr(lp_lib_file_name);
+}
+#endif
+
 void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
@@ -3952,6 +3973,11 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
 	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
+
+	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+	load_library_w_ptr = (HMODULE(*)(LPCWSTR))node_loader_hook_import_address_table("kernel32.dll", "LoadLibraryW", &load_library_w_hook)(void) todo;
+#endif
 
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);

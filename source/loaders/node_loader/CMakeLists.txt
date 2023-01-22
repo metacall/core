@@ -68,9 +68,9 @@ set(sources
 )
 
 if(WIN32 AND MSVC_VERSION GREATER_EQUAL 1200)
-	set(sources
-		${sources}
-		${source_path}/node_loader_win32_delay_load.cpp
+	set(headers
+		${headers}
+		${include_path}/node_loader_win32_delay_load.h
 	)
 endif()
 
