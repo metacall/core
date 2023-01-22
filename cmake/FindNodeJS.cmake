@@ -159,58 +159,64 @@ if(NodeJS_EXECUTABLE)
 	endif()
 endif()
 
-# Find NodeJS includes
-find_path(NodeJS_INCLUDE_DIR
-	NAMES ${NodeJS_HEADERS}
-	PATHS ${NodeJS_INCLUDE_PATHS}
-	PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
-	DOC "NodeJS JavaScript Runtime Headers"
-)
+if(NOT NodeJS_INCLUDE_DIR)
+	# Find NodeJS includes
+	find_path(NodeJS_INCLUDE_DIR
+		NAMES ${NodeJS_HEADERS}
+		PATHS ${NodeJS_INCLUDE_PATHS}
+		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Runtime Headers"
+	)
+endif()
 
 # Check if the include directory contains all headers in the same folder
 if(NodeJS_INCLUDE_DIR)
 	foreach(HEADER IN ITEMS ${NodeJS_HEADERS})
 		if(NOT EXISTS ${NodeJS_INCLUDE_DIR}/${HEADER})
 			message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_INCLUDE_DIR}")
-			set(NodeJS_INCLUDE_DIR FALSE)
+			unset(NodeJS_INCLUDE_DIR CACHE)
 			break()
 		endif()
 	endforeach()
 endif()
 
 # Find NodeJS V8 includes
-find_path(NodeJS_V8_INCLUDE_DIR
-	NAMES ${NodeJS_V8_HEADERS}
-	PATHS ${NodeJS_INCLUDE_PATHS}
-	PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
-	DOC "NodeJS JavaScript Runtime V8 Headers"
-)
+if(NOT NodeJS_V8_INCLUDE_DIR)
+	find_path(NodeJS_V8_INCLUDE_DIR
+		NAMES ${NodeJS_V8_HEADERS}
+		PATHS ${NodeJS_INCLUDE_PATHS}
+		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Runtime V8 Headers"
+	)
+endif()
 
 # Check if the include directory contains all headers in the same folder
 if(NodeJS_V8_INCLUDE_DIR)
 	foreach(HEADER IN ITEMS ${NodeJS_V8_HEADERS})
 		if(NOT EXISTS ${NodeJS_V8_INCLUDE_DIR}/${HEADER})
 			message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_V8_INCLUDE_DIR}")
-			set(NodeJS_V8_INCLUDE_DIR FALSE)
+			unset(NodeJS_V8_INCLUDE_DIR CACHE)
 			break()
 		endif()
 	endforeach()
 endif()
 
 # Find NodeJS UV includes
-find_path(NodeJS_UV_INCLUDE_DIR
-	NAMES ${NodeJS_UV_HEADERS}
-	PATHS ${NodeJS_INCLUDE_PATHS}
-	PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
-	DOC "NodeJS JavaScript Runtime UV Headers"
-)
+if(NOT NodeJS_UV_INCLUDE_DIR)
+	find_path(NodeJS_UV_INCLUDE_DIR
+		NAMES ${NodeJS_UV_HEADERS}
+		PATHS ${NodeJS_INCLUDE_PATHS}
+		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Runtime UV Headers"
+	)
+endif()
 
 # Check if the include directory contains all headers in the same folder
 if(NodeJS_UV_INCLUDE_DIR)
 	foreach(HEADER IN ITEMS ${NodeJS_UV_HEADERS})
 		if(NOT EXISTS ${NodeJS_UV_INCLUDE_DIR}/${HEADER})
 			message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_UV_INCLUDE_DIR}")
-			set(NodeJS_UV_INCLUDE_DIR FALSE)
+			unset(NodeJS_UV_INCLUDE_DIR CACHE)
 			break()
 		endif()
 	endforeach()
@@ -248,6 +254,28 @@ if(NOT NodeJS_INCLUDE_DIR OR NOT NodeJS_V8_INCLUDE_DIR OR NOT NodeJS_UV_INCLUDE_
 		PATHS ${NodeJS_HEADERS_OUTPUT_PATH}
 		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
 		DOC "NodeJS JavaScript Runtime Headers"
+		NO_CMAKE_SYSTEM_PATH
+		NO_SYSTEM_ENVIRONMENT_PATH
+	)
+
+	# Find NodeJS V8 includes
+	find_path(NodeJS_V8_INCLUDE_DIR
+		NAMES ${NodeJS_V8_HEADERS}
+		PATHS ${NodeJS_HEADERS_OUTPUT_PATH}
+		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Runtime V8 Headers"
+		NO_CMAKE_SYSTEM_PATH
+		NO_SYSTEM_ENVIRONMENT_PATH
+	)
+
+	# Find NodeJS UV includes
+	find_path(NodeJS_UV_INCLUDE_DIR
+		NAMES ${NodeJS_UV_HEADERS}
+		PATHS ${NodeJS_HEADERS_OUTPUT_PATH}
+		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+		DOC "NodeJS JavaScript Runtime UV Headers"
+		NO_CMAKE_SYSTEM_PATH
+		NO_SYSTEM_ENVIRONMENT_PATH
 	)
 endif()
 
@@ -448,6 +476,7 @@ if(NOT NodeJS_LIBRARY)
 				endif()
 
 				# Copy library to MetaCall output path
+				execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_OUTPUT_DIR})
 				file(COPY ${NodeJS_COMPILE_PATH}/${NodeJS_LIBRARY_NAME} DESTINATION ${PROJECT_OUTPUT_DIR})
 
 				message(STATUS "Install NodeJS shared library")
@@ -519,6 +548,8 @@ if(NOT NodeJS_LIBRARY)
 		NAMES ${NodeJS_LIBRARY_NAMES}
 		PATHS ${NodeJS_COMPILE_PATH}
 		DOC "NodeJS JavaScript Runtime Library"
+		NO_CMAKE_SYSTEM_PATH
+		NO_SYSTEM_ENVIRONMENT_PATH
 	)
 
 	if(NOT NodeJS_LIBRARY)
