@@ -8,6 +8,7 @@ on:
       - 'v*.*.*'
     branches:
       - master
+      - develop
 
 jobs:
   linux-test:
