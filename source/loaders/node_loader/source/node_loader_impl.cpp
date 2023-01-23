@@ -5359,7 +5359,7 @@ int node_loader_impl_destroy(loader_impl impl)
 #endif
 
 	/* Print NodeJS execution result */
-	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
+	log_write("metacall", LOG_LEVEL_DEBUG, "NodeJS execution return status %d", node_impl->result);
 
 	/* Restore stdin, stdout, stderr */
 	dup2(node_impl->stdin_copy, STDIN_FILENO);
