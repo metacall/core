@@ -296,6 +296,7 @@ function sub-nodejs {
 	echo "set(NodeJS_INCLUDE_DIRS ""$NodeDir/include/node"")" >> $FindNode
 	echo "set(NodeJS_LIBRARY ""$NodeDir/lib/libnode.lib"")"   >> $FindNode
 	echo "set(NodeJS_EXECUTABLE ""$NodeDir/node.exe"")"       >> $FindNode
+	echo "set(NodeJS_LIBRARY_NAME ""libnode.dll"")"           >> $FindNode
 	echo "include(FindPackageHandleStandardArgs)"             >> $FindNode
 	echo "FIND_PACKAGE_HANDLE_STANDARD_ARGS(NodeJS REQUIRED_VARS NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE VERSION_VAR NodeJS_VERSION)" >> $FindNode
 	echo "mark_as_advanced(NodeJS_VERSION NodeJS_INCLUDE_DIRS NodeJS_LIBRARY NodeJS_EXECUTABLE)" >> $FindNode
