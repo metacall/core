@@ -26,9 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-inline void *node_loader_hook_import_address_table(const char *module_name, const char *function_name, void *hook)
+inline void *node_loader_hook_import_address_table(LPVOID image_base, const char *function_name, void *hook)
 {
-	LPVOID image_base = GetModuleHandleA(module_name);
 	PIMAGE_DOS_HEADER dos_headers = (PIMAGE_DOS_HEADER)image_base;
 
 	if (dos_headers->e_magic != IMAGE_DOS_SIGNATURE)
@@ -65,15 +64,17 @@ inline void *node_loader_hook_import_address_table(const char *module_name, cons
 
 				if (strcmp(func->Name, function_name) == 0)
 				{
+					LPVOID original_address = (LPVOID)(first_thunk->u1.Function);
 					LPVOID import_func_load_address = (LPVOID)(&first_thunk->u1.Function);
-					DWORD old_page_protect, dummy_old_page_protect;
+					DWORD old_page_protect, unused_old_page_protect;
+
 					VirtualProtect(import_func_load_address, sizeof(void *), PAGE_EXECUTE_READWRITE, &old_page_protect);
 
 					memcpy(import_func_load_address, &hook, sizeof(hook));
 
-					VirtualProtect(import_func_load_address, sizeof(void *), old_page_protect, &dummy_old_page_protect);
+					VirtualProtect(import_func_load_address, sizeof(void *), old_page_protect, &unused_old_page_protect);
 
-					return (void *)import_func_load_address;
+					return (void *)original_address;
 				}
 			}
 		}

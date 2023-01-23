@@ -184,6 +184,7 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
+	$<$<BOOL:${MSVC}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}">
 
 	PUBLIC
 	$<$<NOT:$<BOOL:${BUILD_SHARED_LIBS}>>:${target_upper}_STATIC_DEFINE>

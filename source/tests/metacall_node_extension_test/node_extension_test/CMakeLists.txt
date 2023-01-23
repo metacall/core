@@ -166,9 +166,9 @@ target_link_libraries(${target}
 
 target_compile_definitions(${target}
 	PRIVATE
-	$<$<BOOL:${MSVC}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}"> 
-	$<$<NOT:$<BOOL:${MSVC}>>:_LARGEFILE_SOURCE> 
-	$<$<NOT:$<BOOL:${MSVC}>>:_FILE_OFFSET_BITS=64> 
+	$<$<BOOL:${MSVC}>:NODEJS_LIBRARY_NAME="${NodeJS_LIBRARY_NAME}">
+	$<$<NOT:$<BOOL:${MSVC}>>:_LARGEFILE_SOURCE>
+	$<$<NOT:$<BOOL:${MSVC}>>:_FILE_OFFSET_BITS=64>
 	$<$<AND:$<BOOL:${APPLE}>,$<CXX_COMPILER_ID:AppleClang,Clang>>:_DARWIN_USE_64_BIT_INODE=1>
 
 	PUBLIC
