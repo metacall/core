@@ -4015,7 +4015,7 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
 #if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
 	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
-	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table(node_loader_node_dll_handle, "GetModuleHandleA", &get_module_handle_a_hook);
+	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
 #endif
 
 	/* Signal start condition */

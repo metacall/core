@@ -26,8 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-inline void *node_loader_hook_import_address_table(LPVOID image_base, const char *function_name, void *hook)
+inline void *node_loader_hook_import_address_table(const char *module_name, const char *function_name, void *hook)
 {
+	LPVOID image_base = GetModuleHandle(module_name);
 	PIMAGE_DOS_HEADER dos_headers = (PIMAGE_DOS_HEADER)image_base;
 
 	if (dos_headers->e_magic != IMAGE_DOS_SIGNATURE)
