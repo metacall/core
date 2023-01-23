@@ -568,7 +568,12 @@ if(NodeJS_UV_INCLUDE_DIR)
 endif()
 
 if(NOT NodeJS_LIBRARY_NAME)
-	get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY}" NAME)
+	if(WIN32 AND MSVC)
+		get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY}" NAME_WLE)
+		set(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY_NAME}.dll")
+	else()
+		get_filename_component(NodeJS_LIBRARY_NAME "${NodeJS_LIBRARY}" NAME)
+	endif()
 endif()
 
 find_package_handle_standard_args(NodeJS
