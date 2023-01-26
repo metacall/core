@@ -26,6 +26,10 @@
 
 #include <cstdio>
 
+#include <atomic>
+
+std::atomic<int> success_callbacks{};
+
 class metacall_map_await_test : public testing::Test
 {
 public:
@@ -48,6 +52,8 @@ static void *hello_boy_await_ok(void *result, void *data)
 	EXPECT_EQ((double)metacall_value_to_double(result), (double)(7.0 + *it));
 
 	delete it;
+
+	++success_callbacks;
 
 	return NULL;
 }
@@ -91,6 +97,8 @@ static void *hello_world_await_ok(void *result, void *data)
 	fflush(stdout);
 
 	EXPECT_EQ((int)0, (int)strcmp(metacall_value_to_string(result), "Hello World"));
+
+	++success_callbacks;
 
 	return NULL;
 }
@@ -164,6 +172,8 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 
 				fflush(stdout);
 
+				++success_callbacks;
+
 				return NULL;
 			},
 			NULL, NULL);
@@ -192,6 +202,8 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 				printf("get_random_data future (from map serial) callback: %f\n", metacall_value_to_double(result));
 
 				fflush(stdout);
+
+				++success_callbacks;
 
 				return NULL;
 			},
@@ -252,4 +264,12 @@ TEST_F(metacall_map_await_test, DefaultConstructor)
 	metacall_allocator_destroy(allocator);
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
+
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		/* Total amount of successful callbacks must be 26 */
+		EXPECT_EQ((int)success_callbacks, (int)26);
+	}
+#endif /* OPTION_BUILD_LOADERS_NODE */
 }

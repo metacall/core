@@ -24,6 +24,10 @@
 #include <metacall/metacall_loaders.h>
 #include <metacall/metacall_value.h>
 
+#include <atomic>
+
+std::atomic<int> success_callbacks{};
+
 class metacall_node_async_test : public testing::Test
 {
 public:
@@ -120,6 +124,8 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 			printf("Reject C Callback\n");
 
+			++success_callbacks;
+
 			return metacall_value_create_double(15.0); }, static_cast<void *>(&ctx));
 
 		EXPECT_NE((void *)NULL, (void *)future);
@@ -145,6 +151,8 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 			EXPECT_EQ((double) 34.0, (double) metacall_value_to_double(result));
 
+			++success_callbacks;
+
 			return metacall_value_create_double(155.0); }, [](void *, void *) -> void * {
 			int this_should_never_be_executed = 0;
 
@@ -166,6 +174,8 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 
 			EXPECT_EQ((double) 155.0, (double) metacall_value_to_double(result));
 
+			++success_callbacks;
+
 			return NULL; }, [](void *, void *) -> void * {
 			int this_should_never_be_executed = 0;
 
@@ -180,4 +190,12 @@ TEST_F(metacall_node_async_test, DefaultConstructor)
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
 	EXPECT_EQ((int)0, (int)metacall_destroy());
+
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		/* Total amount of successful callbacks must be 3 */
+		EXPECT_EQ((int)success_callbacks, (int)3);
+	}
+#endif /* OPTION_BUILD_LOADERS_NODE */
 }

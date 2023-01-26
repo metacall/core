@@ -25,6 +25,8 @@
 
 #include <log/log.h>
 
+#include <metacall/metacall.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -97,6 +99,14 @@ typedef struct loader_impl_rb_module_eval_protect_type
 	VALUE *argv;
 	VALUE module;
 } * loader_impl_rb_module_eval_protect;
+
+typedef struct loader_impl_rb_funcall_protect_type
+{
+	size_t argc;
+	VALUE *argv;
+	VALUE module_instance;
+	ID id;
+} * loader_impl_rb_funcall_protect;
 
 static class_interface rb_class_interface_singleton(void);
 static object_interface rb_object_interface_singleton(void);
@@ -304,6 +314,47 @@ VALUE rb_type_serialize(value v)
 	}
 }
 
+static VALUE rb_loader_impl_funcallv_protect(VALUE args)
+{
+	/* TODO: Do this properly */
+	loader_impl_rb_funcall_protect protect = (loader_impl_rb_funcall_protect)args;
+
+	return rb_funcallv(protect->module_instance, protect->id, protect->argc, protect->argv);
+}
+
+static VALUE rb_loader_impl_funcall2_protect(VALUE args)
+{
+	/* TODO: Do this properly */
+	loader_impl_rb_funcall_protect protect = (loader_impl_rb_funcall_protect)args;
+
+	return rb_funcall2(protect->module_instance, protect->id, protect->argc, protect->argv);
+}
+
+static VALUE rb_loader_impl_funcallv_kw_protect(VALUE args)
+{
+	/* TODO: Do this properly */
+	loader_impl_rb_funcall_protect protect = (loader_impl_rb_funcall_protect)args;
+
+	return rb_funcallv_kw(protect->module_instance, protect->id, protect->argc, protect->argv, RB_PASS_KEYWORDS);
+}
+
+/* TODO: Convert this into a return exception */
+#define rb_loader_impl_print_last_exception()                                                            \
+	do                                                                                                   \
+	{                                                                                                    \
+		VALUE e = rb_errinfo();                                                                          \
+		if (e != Qnil)                                                                                   \
+		{                                                                                                \
+			VALUE error;                                                                                 \
+			VALUE bt = rb_funcall(e, rb_intern("backtrace"), 0);                                         \
+			VALUE msg = rb_funcall(e, rb_intern("message"), 0);                                          \
+			bt = rb_ary_entry(bt, 0);                                                                    \
+			error = rb_sprintf("%" PRIsVALUE ": %" PRIsVALUE " (%s)\n", bt, msg, rb_obj_classname(e));   \
+			log_write("metacall", LOG_LEVEL_ERROR, "Exception raised in Ruby '%s'", RSTRING_PTR(error)); \
+			rb_backtrace();                                                                              \
+		}                                                                                                \
+	} while (0)
+
 function_return function_rb_interface_invoke(function func, function_impl impl, function_args args, size_t size)
 {
 	loader_impl_rb_function rb_function = (loader_impl_rb_function)impl;
@@ -376,11 +427,29 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 		if (invoke_type == FUNCTION_RB_TYPED)
 		{
-			result_value = rb_funcall(rb_function->module_instance, rb_intern("send"), 2,
-				ID2SYM(rb_function->method_id), rb_function->args_hash);
+			struct loader_impl_rb_funcall_protect_type protect;
+			int state;
+			VALUE argv[2] = { ID2SYM(rb_function->method_id), rb_function->args_hash };
+
+			protect.argc = 2;
+			protect.argv = argv;
+			protect.module_instance = rb_function->module_instance;
+			protect.id = rb_intern("send");
+
+			result_value = rb_protect(rb_loader_impl_funcallv_kw_protect, (VALUE)&protect, &state);
+
+			if (state != 0)
+			{
+				rb_loader_impl_print_last_exception();
+
+				// TODO: Throw exception?
+			}
 		}
 		else if (invoke_type == FUNCTION_RB_DUCKTYPED)
 		{
+			struct loader_impl_rb_funcall_protect_type protect;
+			int state;
+
 			/* TODO: Improve this horrible code in the future */
 			for (args_count = args_size; args_count > 0; --args_count)
 			{
@@ -389,10 +458,25 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			args_value[0] = ID2SYM(rb_function->method_id);
 
-			result_value = rb_funcall2(rb_function->module_instance, rb_intern("send"), 1 + args_size, args_value);
+			protect.argc = 1 + args_size;
+			protect.argv = args_value;
+			protect.module_instance = rb_function->module_instance;
+			protect.id = rb_intern("send");
+
+			result_value = rb_protect(rb_loader_impl_funcall2_protect, (VALUE)&protect, &state);
+
+			if (state != 0)
+			{
+				rb_loader_impl_print_last_exception();
+
+				// TODO: Throw exception ?
+			}
 		}
 		else if (invoke_type == FUNCTION_RB_MIXED)
 		{
+			struct loader_impl_rb_funcall_protect_type protect;
+			int state;
+
 			/* TODO: Improve this horrible code in the future */
 			for (args_count = ducktype_args_count; args_count > 0; --args_count)
 			{
@@ -403,12 +487,39 @@ function_return function_rb_interface_invoke(function func, function_impl impl, 
 
 			args_value[ducktype_args_count + 1] = rb_function->args_hash;
 
-			result_value = rb_funcall2(rb_function->module_instance, rb_intern("send"), 1 + ducktype_args_count + 1, args_value);
+			protect.argc = 1 + ducktype_args_count + 1;
+			protect.argv = args_value;
+			protect.module_instance = rb_function->module_instance;
+			protect.id = rb_intern("send");
+
+			result_value = rb_protect(rb_loader_impl_funcallv_kw_protect, (VALUE)&protect, &state);
+
+			if (state != 0)
+			{
+				rb_loader_impl_print_last_exception();
+
+				// TODO: Throw exception ?
+			}
 		}
 	}
 	else
 	{
-		result_value = rb_funcallv(rb_function->module_instance, rb_function->method_id, 0, NULL);
+		struct loader_impl_rb_funcall_protect_type protect;
+		int state;
+
+		protect.argc = 0;
+		protect.argv = NULL;
+		protect.module_instance = rb_function->module_instance;
+		protect.id = rb_function->method_id;
+
+		result_value = rb_protect(rb_loader_impl_funcallv_protect, (VALUE)&protect, &state);
+
+		if (state != 0)
+		{
+			rb_loader_impl_print_last_exception();
+
+			// TODO: Throw exception ?
+		}
 	}
 
 	value v = NULL;
@@ -851,10 +962,14 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 		NULL
 	};
 
+	/* Initialize Ruby */
+	char **argv = metacall_argv();
+	int argc = metacall_argc();
+
 	(void)impl;
 	(void)config;
 
-	/* Initialize Ruby */
+	ruby_sysinit(&argc, &argv);
 	{
 		RUBY_INIT_STACK;
 
@@ -869,12 +984,14 @@ loader_impl_data rb_loader_impl_initialize(loader_impl impl, configuration confi
 			return NULL;
 		}
 
+#if (!defined(NDEBUG) || defined(DEBUG) || defined(_DEBUG) || defined(__DEBUG) || defined(__DEBUG__))
 		if (rb_gv_set("$VERBOSE", Qtrue) != Qtrue)
 		{
 			ruby_cleanup(0);
 
 			return NULL;
 		}
+#endif
 
 		/* Gem add home folder if any */
 		/*

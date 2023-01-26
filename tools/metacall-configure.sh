@@ -27,6 +27,7 @@ BUILD_RUBY=0
 BUILD_NETCORE=0
 BUILD_NETCORE2=0
 BUILD_NETCORE5=0
+BUILD_NETCORE7=0
 BUILD_V8=0
 BUILD_NODEJS=0
 BUILD_TYPESCRIPT=0
@@ -80,6 +81,10 @@ sub_options() {
 		if [ "$option" = 'netcore5' ]; then
 			echo "Build with netcore 5 support"
 			BUILD_NETCORE5=1
+		fi
+		if [ "$option" = 'netcore7' ]; then
+			echo "Build with netcore 7 support"
+			BUILD_NETCORE7=1
 		fi
 		if [ "$option" = 'v8' ]; then
 			echo "Build with v8 support"
@@ -229,6 +234,21 @@ sub_configure() {
 		BUILD_STRING="$BUILD_STRING \
 			-DOPTION_BUILD_LOADERS_CS=On \
 			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/5.0.17/"
+
+		if [ $BUILD_SCRIPTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
+		fi
+
+		if [ $BUILD_PORTS = 1 ]; then
+			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_PORTS_CS=On"
+		fi
+	fi
+
+	# NetCore 7
+	if [ $BUILD_NETCORE7 = 1 ]; then
+		BUILD_STRING="$BUILD_STRING \
+			-DOPTION_BUILD_LOADERS_CS=On \
+			-DDOTNET_CORE_PATH=/usr/share/dotnet/shared/Microsoft.NETCore.App/7.0.2/"
 
 		if [ $BUILD_SCRIPTS = 1 ]; then
 			BUILD_STRING="$BUILD_STRING -DOPTION_BUILD_SCRIPTS_CS=On"
@@ -410,6 +430,7 @@ sub_help() {
 	echo "	netcore: build with netcore support"
 	echo "	netcore2: build with netcore 2 support"
 	echo "	netcore5: build with netcore 5 support"
+	echo "	netcore7: build with netcore 7 support"
 	echo "	v8: build with v8 support"
 	echo "	nodejs: build with nodejs support"
 	echo "	typescript: build with typescript support"
