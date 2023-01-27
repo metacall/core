@@ -27,6 +27,10 @@
 
 #include <threading/threading_atomic.h>
 
+#if defined(__THREAD_SANITIZER__)
+	#include <threading/threading_mutex.h>
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -44,7 +48,12 @@ extern "C" {
 
 struct threading_atomic_ref_count_type
 {
+#if defined(__THREAD_SANITIZER__)
+	uintmax_t count;
+	struct threading_mutex_type m;
+#else
 	atomic_uintmax_t count;
+#endif
 };
 
 /* -- Type Definitions -- */
@@ -55,28 +64,68 @@ typedef struct threading_atomic_ref_count_type *threading_atomic_ref_count;
 
 inline void threading_atomic_ref_count_store(threading_atomic_ref_count ref, uintmax_t v)
 {
+#if defined(__THREAD_SANITIZER__)
+	threading_mutex_store(&ref->m, &ref->count, &v, sizeof(uintmax_t));
+#else
 	atomic_store(&ref->count, v);
+#endif
+}
+
+inline void threading_atomic_ref_count_initialize(threading_atomic_ref_count ref)
+{
+#if defined(__THREAD_SANITIZER__)
+	uintmax_t init = THREADING_ATOMIC_REF_COUNT_MIN;
+
+	threading_mutex_initialize(&ref->m);
+
+	threading_mutex_store(&ref->m, &ref->count, &init, sizeof(uintmax_t));
+#else
+	threading_atomic_ref_count_store(ref, THREADING_ATOMIC_REF_COUNT_MIN);
+#endif
 }
 
 inline uintmax_t threading_atomic_ref_count_load(threading_atomic_ref_count ref)
 {
+#if defined(__THREAD_SANITIZER__)
+	uintmax_t result = 0;
+
+	threading_mutex_store(&ref->m, &result, &ref->count, sizeof(uintmax_t));
+
+	return result;
+#else
 	return atomic_load_explicit(&ref->count, memory_order_relaxed);
+#endif
 }
 
 inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
 {
+#if defined(__THREAD_SANITIZER__)
+	threading_mutex_lock(&ref->m);
+	{
+		++ref->count;
+	}
+	threading_mutex_unlock(&ref->m);
+#else
 	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MAX)
 	{
 		return 1;
 	}
 
 	atomic_fetch_add_explicit(&ref->count, 1, memory_order_relaxed);
+#endif
 
 	return 0;
 }
 
 inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 {
+#if defined(__THREAD_SANITIZER__)
+	threading_mutex_lock(&ref->m);
+	{
+		--ref->count;
+	}
+	threading_mutex_unlock(&ref->m);
+#else
 	if (atomic_load_explicit(&ref->count, memory_order_relaxed) == THREADING_ATOMIC_REF_COUNT_MIN)
 	{
 		return 1;
@@ -88,8 +137,18 @@ inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 	{
 		atomic_thread_fence(memory_order_acquire);
 	}
+#endif
 
 	return 0;
+}
+
+inline void threading_atomic_ref_count_destroy(threading_atomic_ref_count ref)
+{
+#if defined(__THREAD_SANITIZER__)
+	threading_mutex_destroy(&ref->m);
+#else
+	(void)ref;
+#endif
 }
 
 #ifdef __cplusplus

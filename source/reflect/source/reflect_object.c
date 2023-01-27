@@ -81,7 +81,7 @@ object object_create(const char *name, enum accessor_type_id accessor, object_im
 
 	obj->impl = impl;
 	obj->accessor = accessor;
-	threading_atomic_ref_count_store(&obj->ref, 0);
+	threading_atomic_ref_count_initialize(&obj->ref);
 
 	obj->interface = singleton ? singleton() : NULL;
 
@@ -418,6 +418,8 @@ void object_destroy(object obj)
 			{
 				free(obj->name);
 			}
+
+			threading_atomic_ref_count_destroy(&obj->ref);
 
 			free(obj);
 

@@ -58,7 +58,7 @@ exception exception_create(char *message, char *label, int64_t code, char *stack
 	ex->stacktrace = stacktrace;
 	ex->id = thread_id_get_current();
 
-	threading_atomic_ref_count_store(&ex->ref, 0);
+	threading_atomic_ref_count_initialize(&ex->ref);
 
 	reflect_memory_tracker_allocation(exception_stats);
 
@@ -131,7 +131,7 @@ exception exception_create_const(const char *message, const char *label, int64_t
 	ex->code = code;
 	ex->id = thread_id_get_current();
 
-	threading_atomic_ref_count_store(&ex->ref, 0);
+	threading_atomic_ref_count_initialize(&ex->ref);
 
 	reflect_memory_tracker_allocation(exception_stats);
 
@@ -251,6 +251,8 @@ void exception_destroy(exception ex)
 			{
 				free(ex->stacktrace);
 			}
+
+			threading_atomic_ref_count_destroy(&ex->ref);
 
 			free(ex);
 

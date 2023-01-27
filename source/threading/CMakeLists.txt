@@ -38,6 +38,7 @@ set(headers
 	${include_path}/threading_atomic.h
 	${include_path}/threading_thread_id.h
 	${include_path}/threading_atomic_ref_count.h
+	${include_path}/threading_mutex.h
 )
 
 set(sources
@@ -53,6 +54,23 @@ if(
 	set(headers
 		${headers}
 		${include_path}/threading_atomic_win32.h
+	)
+endif()
+
+if(WIN32)
+	set(sources
+		${sources}
+		${source_path}/threading_mutex_win32.c
+	)
+elseif(APPLE)
+	set(sources
+		${sources}
+		${source_path}/threading_mutex_macos.c
+	)
+else()
+	set(sources
+		${sources}
+		${source_path}/threading_mutex_pthread.c
 	)
 endif()
 
