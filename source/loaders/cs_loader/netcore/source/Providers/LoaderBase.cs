@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using Microsoft.CodeAnalysis.CSharp;
@@ -12,6 +13,27 @@ using System.Runtime.InteropServices;
 
 namespace CSLoader.Providers
 {
+    /* TODO: Review the leak of CSharpCompilation when it fails to compile */
+    /*
+    public class CollectibleAssemblyLoadContext : System.Runtime.Loader.AssemblyLoadContext, IDisposable
+    {
+        public CollectibleAssemblyLoadContext() : base(true)
+        {
+
+        }
+
+        protected override Assembly Load(AssemblyName assemblyName)
+        {
+            return null;
+        }
+
+        public void Dispose()
+        {
+            Unload();
+        }
+    }
+    */
+
     public abstract class LoaderBase : ILoader
     {
         protected readonly ILog log;
@@ -111,6 +133,18 @@ namespace CSLoader.Providers
             return LoadFromSourceFunctions(sources.ToArray());
         }
 
+        private void PrintDiagnostics(ImmutableArray<Diagnostic> diagnostics)
+        {
+            IEnumerable<Diagnostic> failures = diagnostics.Where(diagnostic =>
+                diagnostic.IsWarningAsError ||
+                diagnostic.Severity == DiagnosticSeverity.Error);
+
+            foreach (Diagnostic diagnostic in failures)
+            {
+                this.log.Error("CSLoader compilation error: " + diagnostic.GetMessage());
+            }
+        }
+
         public bool LoadFromSourceFunctions(string[] source)
         {
             Assembly assembly = null;
@@ -142,10 +176,32 @@ namespace CSLoader.Providers
                 references: references,
                 options: new CSharpCompilationOptions(
                     OutputKind.DynamicallyLinkedLibrary,
+                    #if DEBUG
+                    optimizationLevel: OptimizationLevel.Debug,
+                    #else
                     optimizationLevel: OptimizationLevel.Release,
+                    #endif
                     concurrentBuild: true
                 )
             );
+
+            ImmutableArray<Diagnostic> compilationErrors = compilation.GetDiagnostics();
+
+            if (compilationErrors.Count() > 0)
+            {
+                PrintDiagnostics(compilationErrors);
+
+                return false;
+            }
+
+            ImmutableArray<Diagnostic> declarationErrors = compilation.GetDeclarationDiagnostics();
+
+            if (compilationErrors.Count() > 0)
+            {
+                PrintDiagnostics(declarationErrors);
+
+                return false;
+            }
 
             using (var ms = new MemoryStream())
             {
@@ -153,13 +209,9 @@ namespace CSLoader.Providers
 
                 if (!result.Success)
                 {
-                    IEnumerable<Diagnostic> failures = result.Diagnostics.Where(diagnostic =>
-                        diagnostic.Severity == DiagnosticSeverity.Error);
+                    PrintDiagnostics(result.Diagnostics);
 
-                    foreach (Diagnostic diagnostic in failures)
-                    {
-                        this.log.Error("CSLoader compilation error: " + diagnostic.ToString());
-                    }
+                    ms.Dispose();
 
                     return false;
                 }
@@ -170,6 +222,8 @@ namespace CSLoader.Providers
                     assembly = this.MakeAssembly(ms);
 
                     this.LoadFunctions(assembly);
+
+                    ms.Dispose();
 
                     return true;
                 }

@@ -12,7 +12,7 @@ namespace CSLoader.Providers
     {
         public LoaderV2(ILog log) : base(log)
         {
-            //This handler is called only when the common language runtime tries to bind to the assembly and fails
+            // This handler is called only when the common language runtime tries to bind to the assembly and fails
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
         }

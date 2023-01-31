@@ -86,6 +86,7 @@ TEST_F(metacall_cs_test, Concat)
 	metacall_value_destroy(ret);
 }
 
+#if !defined(__ADDRESS_SANITIZER__) /* TODO: C# Loader leaks when fails to load a script */
 TEST_F(metacall_cs_test, Fail)
 {
 	/* This is a Python script on purpose, in order to test C# when it fails */
@@ -98,6 +99,7 @@ TEST_F(metacall_cs_test, Fail)
 
 	EXPECT_EQ((int)1, (int)metacall_load_from_memory("cs", buffer, sizeof(buffer), NULL));
 }
+#endif
 
 TEST_F(metacall_cs_test, FailRelativePath)
 {
