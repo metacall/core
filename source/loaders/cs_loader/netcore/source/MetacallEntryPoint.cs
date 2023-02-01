@@ -7,7 +7,6 @@ using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using System.IO;
 using Microsoft.CodeAnalysis.Emit;
-using System.Runtime.Loader;
 using System.Runtime.InteropServices;
 using static CSLoader.MetacallDef;
 using System.Collections.Immutable;

@@ -133,16 +133,24 @@ namespace CSLoader.Providers
             return LoadFromSourceFunctions(sources.ToArray());
         }
 
-        private void PrintDiagnostics(ImmutableArray<Diagnostic> diagnostics)
+        private int PrintDiagnostics(ImmutableArray<Diagnostic> diagnostics)
         {
-            IEnumerable<Diagnostic> failures = diagnostics.Where(diagnostic =>
-                diagnostic.IsWarningAsError ||
-                diagnostic.Severity == DiagnosticSeverity.Error);
+            int errorCount = 0;
 
-            foreach (Diagnostic diagnostic in failures)
+            foreach (Diagnostic diagnostic in diagnostics)
             {
-                this.log.Error("CSLoader compilation error: " + diagnostic.GetMessage());
+                if (diagnostic.IsWarningAsError || diagnostic.Severity == DiagnosticSeverity.Error)
+                {
+                    this.log.Error("CSLoader compilation error: " + diagnostic.ToString());
+                    ++errorCount;
+                }
+                else
+                {
+                    this.log.Error("CSLoader compilation warning: " + diagnostic.ToString());
+                }
             }
+
+            return errorCount;
         }
 
         public bool LoadFromSourceFunctions(string[] source)
@@ -185,21 +193,13 @@ namespace CSLoader.Providers
                 )
             );
 
-            ImmutableArray<Diagnostic> compilationErrors = compilation.GetDiagnostics();
-
-            if (compilationErrors.Count() > 0)
+            if (PrintDiagnostics(compilation.GetDiagnostics()) > 0)
             {
-                PrintDiagnostics(compilationErrors);
-
                 return false;
             }
 
-            ImmutableArray<Diagnostic> declarationErrors = compilation.GetDeclarationDiagnostics();
-
-            if (compilationErrors.Count() > 0)
+            if (PrintDiagnostics(compilation.GetDeclarationDiagnostics()) > 0)
             {
-                PrintDiagnostics(declarationErrors);
-
                 return false;
             }
 
