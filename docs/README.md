@@ -153,15 +153,16 @@ Ports are the frontends to the **METACALL C API** from other languages. They all
 
 **METACALL** can be used in the following cases:
 
-- Interconnect different technologies in the same project. It allows heterogeneous teams of developers to work on the same project in an isolated way and using different programming languages at the same time.
+- Interconnect different technologies in the same project. It allows heterogeneous teams of developers to work on the same project in an isolated way and use different programming languages simultaneously.
 
-- Embedding programming languages in existing software. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher level programming languages (aka scripting).
 
-- Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern and high performance function scalability thanks to this library.
+- Embedding programming languages in existing software. Game Engines, 3D Editors like [Blender](https://www.blender.org/), among others can take benefit of **METACALL** and extend the core functionality with higher-level programming languages (aka scripting).
+
+- Function as a Service. **METACALL** can be used to implement efficient FaaS architectures. We are using it to implement our own FaaS (Function as a Service) **[https://metacall.io](https://metacall.io/)** based on **[Function Mesh](https://medium.com/@metacall/function-mesh-architecture-c0304ba4bad0)** pattern and high-performance function scalability thanks to this library.
 
 - Source code migrations. **METACALL** can wrap large and legacy codebases, and provide an agnostic way to work with the codebase in a new programming language. Eventually the code can be migrated in parts, without needing to create a new project or stop the production environment. Incremental changes can be done, solving the migration easily and with less time and effort.
 
-- Porting low level libraries to high level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call low level libraries directly from your high level languages without making a wrapper in C or C++ for it.
+- Porting low-level libraries to high-level languages transparently. With **METACALL** you can get rid of extension APIs like Python C API or NodeJS N-API. You can call low-level libraries directly from your high-level languages without making a wrapper in C or C++ for it.
 
 As you can see, there are plenty of uses. **METACALL** introduces a new model of programming which allows a high interoperability between technologies. If you find any other use case just let us know about it with a Pull Request and we will add it to the list.
 
@@ -227,7 +228,7 @@ The environment variables are optional, in case you want to modify default paths
 
 - To provide an high level API with a simple UX and to be easy to understand.
 
-- To work in high performance environments.
+- To work in high-performance environments.
 
 - To be as cross-platform as possible.
 
@@ -309,7 +310,7 @@ The module that holds the representation of types, values and functions is calle
 |  Buffer  | Blob of memory representing a binary data                                      |
 |  Array   | Arrangement of values of any type                                              |
 |   Map    | List of elements formed by a key (String) value (Any) pair (Array)             |
-| Pointer  | Low level representation of a memory reference                                 |
+| Pointer  | Low-level representation of a memory reference                                 |
 |   Null   | Representation of NULL value type                                              |
 |  Future  | Promise in Node Loader, and any other type equivalent in other languages.      |
 | Function | Block of code that takes inputs (Arguments) and produces output (Return value) |
@@ -352,7 +353,7 @@ The value memory layout is described in the following form.
 
 This layout is used for the following reasons:
 
-- Data is located at the first position of the memory block, so it can be used as a normal low level value. This allows to treat **METACALL** values as normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
+- Data is located at the first position of the memory block, so it can be used as a normal low-level value. This allows to treat **METACALL** values as normal C values. Therefore you can use **METACALL** with normal pointers to existing variables, literal values as shown in the previous examples or **METACALL** values.
 
 - Data can be accessed faster as it is located at first position of the memory block. There is not extra calculation of an offset when trying to access the pointer.
 
@@ -398,7 +399,7 @@ def multiply_duck(a, b):
   return a * b
 ```
 
-At low level **METACALL** must always know the types to do the call. This types can be inferred statically or dynamically and this has implications over the call model.
+At Low-level **METACALL** must always know the types to do the call. This types can be inferred statically or dynamically and this has implications over the call model.
 
 In the first example, we can simply call the function without specifying the types.
 
@@ -438,7 +439,7 @@ metacallt("multiply_duck", multiply_types, 3.0, 4.0); // 12.0
 
 - Serials implement a layer of (de)serializers in order to transform input (arguments) or output (return value) of the calls into a generic format.
 
-- Detours is another layer of plugins focused on low level function interception (hooks).
+- Detours is another layer of plugins focused on low-level function interception (hooks).
 
 Each plugin is a piece of software that can be dynamically loaded into the **METACALL** core, used and unloaded when it is not needed anymore.
 
@@ -535,7 +536,7 @@ To achieve this, **METACALL** hooks fork primitives depending on the platform.
 
 If you use `clone` instead of `fork` to spawn a new process in a POSIX system, **METACALL** won't catch it.
 
-Whenever you call a to a cloning primitive **METACALL** intercepts it by means of [**`detour`**](/source/detour). Detours is a way to intercept functions at low level by editing the memory and introducing a jump over your own function preserving the address of the old one. **METACALL** uses this method instead of POSIX `pthread_atfork` for three main reasons.
+Whenever you call a to a cloning primitive **METACALL** intercepts it by means of [**`detour`**](/source/detour). Detours is a way to intercept functions at low-level by editing the memory and introducing a jump over your own function preserving the address of the old one. **METACALL** uses this method instead of POSIX `pthread_atfork` for three main reasons.
 
 - The first one is that `pthread_atfork` is only supported by POSIX systems. So it is not a good solution because of the philosophy of **METACALL** is to be as cross-platform as possible.
 
@@ -558,9 +559,9 @@ To overcome the blocking nature of `node::Start`, the event loop is launched in 
 
 This solution of waiting to the call with the condition, introduces new problems. For completely async calls, there is no problem at all, but for synchronous calls, it can deadlock. For example, when calling recursively to the same synchronous function via **METACALL**, in the second call it will try to block twice and deadlock the thread. So in order to solve this an atomic variable was added in addition to a variable storing the thread id of the V8 thread. With this, recursive calls can be detected, and instead of blocking and enqueueing them, it is possible to call directly and safely to the function because we are already in the V8 thread when the second iteration is done.
 
-This solves all (known) issues related to NodeJS threading model __if and only if__ you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
+This solves all (known) issues related to NodeJS threading model __if and only if__ you use **METACALL** from C/C++ or Rust as a library, and you don't mix languages. This means, you use directly the low-level API directly, and you do not use any `Port` or you mix this with other languages, doing calls in between. You can still have a chance to generate deadlocks if your software uses incorreclty the API. For example, you use one condition which gets released in an async callback (a lambda in the argument of the call to `metacall_await`) and your JS code never resolves properly that promise.
 
-If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low level API), and you want to load scripts from other languages, you have to use **METACALL** through `Ports`. Ports provide a high abstraction of the low level API and allow you to load and call functions of other languages. Here is where the fun begins.
+If you use the CLI instead, and your host language is Python or any other (which does not allow to use you the low-level API), and you want to load scripts from other languages, you have to use **METACALL** through `Ports`. Ports provide a high abstraction of the low-level API and allow you to load and call functions of other languages. Here is where the fun begins.
 
 There are few considerations we must take into account. In order to explain this we are going to use a simple example first, using Python and NodeJS. Depending on the runtime, there are different mechanisms to handle threads and thread safety:
 
