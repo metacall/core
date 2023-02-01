@@ -31,6 +31,7 @@
 # NodeJS_EXECUTABLE_ONLY - Find only NodeJS executable (avoid library and include files)
 # NodeJS_SHARED_UV - If it is enabled, libuv won't be required by this script
 # NodeJS_BUILD_FROM_SOURCE - If it is enabled, NodeJS runtime library will be built from source
+# NodeJS_BUILD_WITHOUT_ICU - If it is enabled, NodeJS runtime library will be built without internationalization support
 # NodeJS_INSTALL_PREFIX - Define a custom install prefix for NodeJS (Linux / Darwin only)
 
 # Prevent vervosity if already included
@@ -41,6 +42,7 @@ endif()
 option(NodeJS_CMAKE_DEBUG "Print paths for debugging NodeJS dependencies." OFF)
 option(NodeJS_SHARED_UV "If it is enabled, libuv won't be required by this script." OFF)
 option(NodeJS_BUILD_FROM_SOURCE "If it is enabled, NodeJS runtime library will be built from source." OFF)
+option(NodeJS_BUILD_WITHOUT_ICU "If it is enabled, NodeJS runtime library will be built without internationalization support." OFF)
 
 # Include package manager
 include(FindPackageHandleStandardArgs)
@@ -100,12 +102,14 @@ set(NodeJS_INCLUDE_PATHS
 )
 
 # Find NodeJS executable
-find_program(NodeJS_EXECUTABLE
-	NAMES node nodejs node.exe
-	HINTS ${NodeJS_PATHS}
-	PATH_SUFFIXES bin
-	DOC "NodeJS JavaScript Runtime Interpreter"
-)
+if(NOT NodeJS_EXECUTABLE)
+	find_program(NodeJS_EXECUTABLE
+		NAMES node nodejs node.exe
+		HINTS ${NodeJS_PATHS}
+		PATH_SUFFIXES bin
+		DOC "NodeJS JavaScript Runtime Interpreter"
+	)
+endif()
 
 if(NodeJS_EXECUTABLE)
 	# Detect NodeJS version
@@ -159,67 +163,69 @@ if(NodeJS_EXECUTABLE)
 	endif()
 endif()
 
-if(NOT NodeJS_INCLUDE_DIR)
-	# Find NodeJS includes
-	find_path(NodeJS_INCLUDE_DIR
-		NAMES ${NodeJS_HEADERS}
-		PATHS ${NodeJS_INCLUDE_PATHS}
-		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
-		DOC "NodeJS JavaScript Runtime Headers"
-	)
-endif()
+if(NOT NodeJS_BUILD_FROM_SOURCE)
+	if(NOT NodeJS_INCLUDE_DIR)
+		# Find NodeJS includes
+		find_path(NodeJS_INCLUDE_DIR
+			NAMES ${NodeJS_HEADERS}
+			PATHS ${NodeJS_INCLUDE_PATHS}
+			PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+			DOC "NodeJS JavaScript Runtime Headers"
+		)
+	endif()
 
-# Check if the include directory contains all headers in the same folder
-if(NodeJS_INCLUDE_DIR)
-	foreach(HEADER IN ITEMS ${NodeJS_HEADERS})
-		if(NOT EXISTS ${NodeJS_INCLUDE_DIR}/${HEADER})
-			message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_INCLUDE_DIR}")
-			unset(NodeJS_INCLUDE_DIR CACHE)
-			break()
-		endif()
-	endforeach()
-endif()
+	# Check if the include directory contains all headers in the same folder
+	if(NodeJS_INCLUDE_DIR)
+		foreach(HEADER IN ITEMS ${NodeJS_HEADERS})
+			if(NOT EXISTS ${NodeJS_INCLUDE_DIR}/${HEADER})
+				message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_INCLUDE_DIR}")
+				unset(NodeJS_INCLUDE_DIR CACHE)
+				break()
+			endif()
+		endforeach()
+	endif()
 
-# Find NodeJS V8 includes
-if(NOT NodeJS_V8_INCLUDE_DIR)
-	find_path(NodeJS_V8_INCLUDE_DIR
-		NAMES ${NodeJS_V8_HEADERS}
-		PATHS ${NodeJS_INCLUDE_PATHS}
-		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
-		DOC "NodeJS JavaScript Runtime V8 Headers"
-	)
-endif()
+	# Find NodeJS V8 includes
+	if(NOT NodeJS_V8_INCLUDE_DIR)
+		find_path(NodeJS_V8_INCLUDE_DIR
+			NAMES ${NodeJS_V8_HEADERS}
+			PATHS ${NodeJS_INCLUDE_PATHS}
+			PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+			DOC "NodeJS JavaScript Runtime V8 Headers"
+		)
+	endif()
 
-# Check if the include directory contains all headers in the same folder
-if(NodeJS_V8_INCLUDE_DIR)
-	foreach(HEADER IN ITEMS ${NodeJS_V8_HEADERS})
-		if(NOT EXISTS ${NodeJS_V8_INCLUDE_DIR}/${HEADER})
-			message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_V8_INCLUDE_DIR}")
-			unset(NodeJS_V8_INCLUDE_DIR CACHE)
-			break()
-		endif()
-	endforeach()
-endif()
+	# Check if the include directory contains all headers in the same folder
+	if(NodeJS_V8_INCLUDE_DIR)
+		foreach(HEADER IN ITEMS ${NodeJS_V8_HEADERS})
+			if(NOT EXISTS ${NodeJS_V8_INCLUDE_DIR}/${HEADER})
+				message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_V8_INCLUDE_DIR}")
+				unset(NodeJS_V8_INCLUDE_DIR CACHE)
+				break()
+			endif()
+		endforeach()
+	endif()
 
-# Find NodeJS UV includes
-if(NOT NodeJS_UV_INCLUDE_DIR)
-	find_path(NodeJS_UV_INCLUDE_DIR
-		NAMES ${NodeJS_UV_HEADERS}
-		PATHS ${NodeJS_INCLUDE_PATHS}
-		PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
-		DOC "NodeJS JavaScript Runtime UV Headers"
-	)
-endif()
+	# Find NodeJS UV includes
+	if(NOT NodeJS_UV_INCLUDE_DIR)
+		find_path(NodeJS_UV_INCLUDE_DIR
+			NAMES ${NodeJS_UV_HEADERS}
+			PATHS ${NodeJS_INCLUDE_PATHS}
+			PATH_SUFFIXES ${NodeJS_INCLUDE_SUFFIXES}
+			DOC "NodeJS JavaScript Runtime UV Headers"
+		)
+	endif()
 
-# Check if the include directory contains all headers in the same folder
-if(NodeJS_UV_INCLUDE_DIR)
-	foreach(HEADER IN ITEMS ${NodeJS_UV_HEADERS})
-		if(NOT EXISTS ${NodeJS_UV_INCLUDE_DIR}/${HEADER})
-			message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_UV_INCLUDE_DIR}")
-			unset(NodeJS_UV_INCLUDE_DIR CACHE)
-			break()
-		endif()
-	endforeach()
+	# Check if the include directory contains all headers in the same folder
+	if(NodeJS_UV_INCLUDE_DIR)
+		foreach(HEADER IN ITEMS ${NodeJS_UV_HEADERS})
+			if(NOT EXISTS ${NodeJS_UV_INCLUDE_DIR}/${HEADER})
+				message(WARNING "NodeJS header ${HEADER} not found in ${NodeJS_UV_INCLUDE_DIR}")
+				unset(NodeJS_UV_INCLUDE_DIR CACHE)
+				break()
+			endif()
+		endforeach()
+	endif()
 endif()
 
 # Download includes in case they are not distributed
@@ -447,6 +453,12 @@ if(NOT NodeJS_LIBRARY)
 					set(NodeJS_BUILD_TYPE release)
 				endif()
 
+				if(NodeJS_BUILD_WITHOUT_ICU)
+					set(BUILD_ICU_FLAGS without-intl)
+				else()
+					set(BUILD_ICU_FLAGS)
+				endif()
+
 				# Building NodeJS 14 as library in Windows is broken (so we need to patch it)
 				if(WIN32 AND NodeJS_VERSION_MAJOR GREATER_EQUAL 14)
 					find_package(Python COMPONENTS Interpreter REQUIRED)
@@ -463,7 +475,7 @@ if(NOT NodeJS_LIBRARY)
 				endif()
 
 				execute_process(
-					COMMAND vcbuild.bat dll ${NodeJS_BUILD_TYPE} ${NodeJS_COMPILE_ARCH} ${NodeJS_MSVC_VER}
+					COMMAND vcbuild.bat dll ${NodeJS_BUILD_TYPE} ${NodeJS_COMPILE_ARCH} ${NodeJS_MSVC_VER} ${BUILD_ICU_FLAGS}
 					WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}"
 				)
 
@@ -484,32 +496,32 @@ if(NOT NodeJS_LIBRARY)
 		else()
 			message(STATUS "Configure NodeJS shared library")
 
-			# Select the ICU library depending on the NodeJS version
-			if("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "18")
-				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-71-1/icu4c-71_1-src.zip")
-			elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "16")
-				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-69-1/icu4c-69_1-src.zip")
-			elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "15")
-				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-67-1/icu4c-67_1-src.zip")
-			elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "14")
-				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-66-1/icu4c-66_1-src.zip")
-			elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "12")
-				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-65-1/icu4c-65_1-src.zip")
-			elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "10")
-				set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip")
-			endif()
-
-			if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-				set(ICU_DEBUG --debug)
+			if(NodeJS_BUILD_WITHOUT_ICU)
+				set(BUILD_ICU_FLAGS "--without-intl")
 			else()
-				set(ICU_DEBUG)
-			endif()
+				# Select the ICU library depending on the NodeJS version
+				if("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "18")
+					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-72-1/icu4c-72_1-src.zip")
+				elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "16")
+					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-69-1/icu4c-69_1-src.zip")
+				elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "15")
+					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-67-1/icu4c-67_1-src.zip")
+				elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "14")
+					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-66-1/icu4c-66_1-src.zip")
+				elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "12")
+					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-65-1/icu4c-65_1-src.zip")
+				elseif("${NodeJS_VERSION_MAJOR}" GREATER_EQUAL "10")
+					set(ICU_URL "https://github.com/unicode-org/icu/releases/download/release-64-2/icu4c-64_2-src.zip")
+				endif()
 
-			# Workaround for OpenSSL bug: https://github.com/metacall/core/issues/223
-			if(APPLE)
-				set(ICU_ENV_VAR ${CMAKE_COMMAND} -E env PYTHONHTTPSVERIFY=0)
-			else()
-				set(ICU_ENV_VAR)
+				# Workaround for OpenSSL bug: https://github.com/metacall/core/issues/223
+				if(APPLE)
+					set(ICU_ENV_VAR ${CMAKE_COMMAND} -E env PYTHONHTTPSVERIFY=0)
+				else()
+					set(ICU_ENV_VAR)
+				endif()
+
+				set(BUILD_ICU_FLAGS "--with-icu-source=${ICU_URL}")
 			endif()
 
 			if(NodeJS_INSTALL_PREFIX)
@@ -518,7 +530,17 @@ if(NOT NodeJS_LIBRARY)
 				set(NodeJS_PREFIX)
 			endif()
 
-			execute_process(COMMAND ${ICU_ENV_VAR} sh -c "./configure ${NodeJS_PREFIX} --with-icu-source=${ICU_URL} --shared ${ICU_DEBUG}" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
+			if("${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+				set(BUILD_DEBUG "--debug")
+
+				if(OPTION_BUILD_SANITIZER)
+					set(BUILD_DEBUG "${BUILD_DEBUG} --enable-asan")
+				endif()
+			else()
+				set(BUILD_DEBUG)
+			endif()
+
+			execute_process(COMMAND ${ICU_ENV_VAR} sh -c "./configure ${NodeJS_PREFIX} ${BUILD_ICU_FLAGS} --shared ${BUILD_DEBUG}" WORKING_DIRECTORY "${NodeJS_OUTPUT_PATH}")
 
 			message(STATUS "Build NodeJS shared library")
 
