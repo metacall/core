@@ -37,6 +37,9 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_va_args)
 		METACALL_DOUBLE, METACALL_DOUBLE
 	};
 
+	// Print memory usage
+	metacall_value_destroy(metacall("mem_check"));
+
 	for (auto _ : state)
 	{
 /* NodeJS */
@@ -82,6 +85,9 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_array_args)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
+
+	// Print memory usage
+	metacall_value_destroy(metacall("mem_check"));
 
 	for (auto _ : state)
 	{
@@ -146,6 +152,9 @@ BENCHMARK_DEFINE_F(metacall_node_call_bench, call_async)
 {
 	const int64_t call_count = 100000;
 	const int64_t call_size = sizeof(double) * 3; // (double, double) -> double
+
+	// Print memory usage
+	metacall_value_destroy(metacall("mem_check"));
 
 	for (auto _ : state)
 	{
@@ -248,7 +257,19 @@ int main(int argc, char **argv)
 
 		static const char int_mem_type[] =
 			"#!/usr/bin/env node\n"
+			"function mem_check() {\n"
+			"	const formatMemoryUsage = (data) => `${Math.round(data / 1024 / 1024 * 100) / 100} MB`;\n"
+			"	const memoryData = process.memoryUsage();\n"
+			"	const memoryUsage = {\n"
+			"		rss: `${formatMemoryUsage(memoryData.rss)} -> Resident Set Size - total memory allocated for the process execution`,\n"
+			"		heapTotal: `${formatMemoryUsage(memoryData.heapTotal)} -> total size of the allocated heap`,\n"
+			"		heapUsed: `${formatMemoryUsage(memoryData.heapUsed)} -> actual memory used during the execution`,\n"
+			"		external: `${formatMemoryUsage(memoryData.external)} -> V8 external memory`,\n"
+			"	};\n"
+			"	console.log(memoryUsage);\n"
+			"}\n"
 			"module.exports = {\n"
+			"	mem_check,\n"
 			"	int_mem_type: (left, right) => 0,\n"
 			"	int_mem_async_type: async (left, right) => new Promise(resolve => 0),\n"
 			"};\n";
@@ -258,10 +279,21 @@ int main(int argc, char **argv)
 			metacall_destroy();
 			return 1;
 		}
+
+		// Print memory usage
+		metacall_value_destroy(metacall("mem_check"));
 	}
 #endif /* OPTION_BUILD_LOADERS_NODE */
 
 	::benchmark::RunSpecifiedBenchmarks();
+
+/* NodeJS */
+#if defined(OPTION_BUILD_LOADERS_NODE)
+	{
+		// Print memory usage
+		metacall_value_destroy(metacall("mem_check"));
+	}
+#endif /* OPTION_BUILD_LOADERS_NODE */
 
 	return metacall_destroy();
 }
