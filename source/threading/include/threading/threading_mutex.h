@@ -75,7 +75,7 @@ int threading_mutex_unlock(threading_mutex m);
 
 int threading_mutex_destroy(threading_mutex m);
 
-inline int threading_mutex_store(threading_mutex m, void *dest, void *src, size_t size)
+static inline int threading_mutex_store(threading_mutex m, void *dest, void *src, size_t size)
 {
 	if (threading_mutex_lock(m) != 0)
 	{

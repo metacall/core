@@ -62,7 +62,7 @@ typedef struct threading_atomic_ref_count_type *threading_atomic_ref_count;
 
 /* -- Methods -- */
 
-inline void threading_atomic_ref_count_store(threading_atomic_ref_count ref, uintmax_t v)
+static inline void threading_atomic_ref_count_store(threading_atomic_ref_count ref, uintmax_t v)
 {
 #if defined(__THREAD_SANITIZER__)
 	threading_mutex_store(&ref->m, &ref->count, &v, sizeof(uintmax_t));
@@ -71,7 +71,7 @@ inline void threading_atomic_ref_count_store(threading_atomic_ref_count ref, uin
 #endif
 }
 
-inline void threading_atomic_ref_count_initialize(threading_atomic_ref_count ref)
+static inline void threading_atomic_ref_count_initialize(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
 	uintmax_t init = THREADING_ATOMIC_REF_COUNT_MIN;
@@ -84,7 +84,7 @@ inline void threading_atomic_ref_count_initialize(threading_atomic_ref_count ref
 #endif
 }
 
-inline uintmax_t threading_atomic_ref_count_load(threading_atomic_ref_count ref)
+static inline uintmax_t threading_atomic_ref_count_load(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
 	uintmax_t result = 0;
@@ -97,7 +97,7 @@ inline uintmax_t threading_atomic_ref_count_load(threading_atomic_ref_count ref)
 #endif
 }
 
-inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
+static inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
 	threading_mutex_lock(&ref->m);
@@ -117,7 +117,7 @@ inline int threading_atomic_ref_count_increment(threading_atomic_ref_count ref)
 	return 0;
 }
 
-inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
+static inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
 	threading_mutex_lock(&ref->m);
@@ -142,7 +142,7 @@ inline int threading_atomic_ref_count_decrement(threading_atomic_ref_count ref)
 	return 0;
 }
 
-inline void threading_atomic_ref_count_destroy(threading_atomic_ref_count ref)
+static inline void threading_atomic_ref_count_destroy(threading_atomic_ref_count ref)
 {
 #if defined(__THREAD_SANITIZER__)
 	threading_mutex_destroy(&ref->m);

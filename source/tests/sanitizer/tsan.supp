@@ -16,8 +16,8 @@
 # NodeJS
 #
 race:v8::platform::tracing::TracingController::GetCategoryGroupEnabled
-# TODO: Review this race condition, it started to happen after NodeJS v12
 race:v8::platform::DefaultJobWorker::~DefaultJobWorker()
+race:v8::platform::DefaultJobState::~DefaultJobState
 #
 # Ruby
 #
