@@ -24,8 +24,9 @@ Fixes #(issue_no)
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests/screenshots (if any) that prove my fix is effective or that my feature works.
 - [ ] I have tested the tests implicated (if any) by my own code and they pass (`make test` or `ctest -VV -R <test-name>`).
-- [ ] If my change is significant or breaking, I have passed all tests with `./docker-compose.sh build &> output` and attached the output.
-- [ ] I have tested my code with `OPTION_BUILD_SANITIZER` or `./docker-compose.sh test &> output` and `OPTION_TEST_MEMORYCHECK`.
+- [ ] If my change is significant or breaking, I have passed all tests with `./docker-compose.sh test &> output` and attached the output.
+- [ ] I have tested my code with `OPTION_BUILD_SANITIZER` or `./docker-compose.sh test-sanitizer &> output` and `OPTION_TEST_MEMORYCHECK`.
+- [ ] I have tested my code with `OPTION_BUILD_THREAD_SANITIZER` or `./docker-compose.sh test-thread-sanitizer &> output`.
 - [ ] I have tested with `Helgrind` in case my code works with threading.
 - [ ] I have run `make clang-format` in order to format my code and my code follows the style guidelines.
 
