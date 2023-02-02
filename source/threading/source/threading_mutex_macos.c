@@ -24,7 +24,7 @@
 
 int threading_mutex_initialize(threading_mutex m)
 {
-	m->impl = 0;
+	memset(&m->impl, 0, sizeof(os_unfair_lock));
 
 	return 0;
 }
