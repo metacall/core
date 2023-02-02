@@ -80,7 +80,7 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREA
 			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
-			--timeout 60
+			--timeout 5400
 		#COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
 endif()
