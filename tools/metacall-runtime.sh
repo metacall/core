@@ -77,7 +77,7 @@ sub_apt(){
 sub_python(){
 	echo "configure python"
 	cd $ROOT_DIR
-	sub_apt_install_hold python3 libpython3.11
+	sub_apt_install_hold python3 libpython3.9 # libpython3.11
 }
 
 # Ruby
@@ -86,7 +86,7 @@ sub_ruby(){
 	cd $ROOT_DIR
 
 	$SUDO_CMD apt-get update
-	sub_apt_install_hold ruby3.1 libruby3.1
+	sub_apt_install_hold ruby2.7 libruby2.7 # ruby3.1 libruby3.1
 }
 
 # NetCore
@@ -163,7 +163,7 @@ sub_nodejs(){
 	echo "configure node"
 
 	# Install NodeJS library
-	sub_apt_install_hold libnode108
+	sub_apt_install_hold libnode72 # libnode108
 }
 
 # TypeScript
