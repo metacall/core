@@ -154,6 +154,18 @@ TEST_F(metacall_rust_test, DefaultConstructor)
 		metacall_value_destroy(ret);
 	}
 
+	/* TODO */
+	/*
+	{
+		// test if we can return result
+		void *ret = metacall("age_group", 21);
+
+		// TODO
+
+		metacall_value_destroy(ret);
+	}
+	*/
+
 	/* Print inspect information */
 	{
 		size_t size = 0;
