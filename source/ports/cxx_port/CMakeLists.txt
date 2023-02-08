@@ -18,7 +18,6 @@ message(STATUS "Port ${target}")
 
 # Set API export file and macro
 string(TOUPPER ${target_name} target_name_upper)
-set(feature_file "include/${target_name}/${target_name}_features.hpp")
 set(export_file  "include/${target_name}/${target_name}_api.hpp")
 set(export_macro "${target_name_upper}_API")
 
@@ -81,27 +80,6 @@ add_library(${META_PROJECT_NAME}::${target} ALIAS ${target})
 
 # Export library for downstream projects
 export(TARGETS ${target} NAMESPACE ${META_PROJECT_NAME}:: FILE ${PROJECT_BINARY_DIR}/cmake/${target_name}/${target_export}-export.cmake)
-
-# Create feature detection header
-# Compilers: https://cmake.org/cmake/help/v3.1/variable/CMAKE_LANG_COMPILER_ID.html#variable:CMAKE_%3CLANG%3E_COMPILER_ID
-# Feature: https://cmake.org/cmake/help/v3.1/prop_gbl/CMAKE_CXX_KNOWN_FEATURES.html
-
-# Check for availability of module; use pre-generated version if not found
-if (WriterCompilerDetectionHeaderFound)
-	write_compiler_detection_header(
-		FILE ${feature_file}
-		PREFIX ${target_name_upper}
-		COMPILERS AppleClang Clang GNU MSVC
-		FEATURES cxx_alignas cxx_alignof cxx_constexpr cxx_final cxx_noexcept cxx_nullptr cxx_sizeof_member cxx_thread_local
-		VERSION 3.2
-	)
-else()
-	file(
-		COPY ${PROJECT_SOURCE_DIR}/codegeneration/${target_name}_features.h
-		DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/include/${target_name}
-		USE_SOURCE_PERMISSIONS
-	)
-endif()
 
 # Create API export header
 generate_export_header(${target}
