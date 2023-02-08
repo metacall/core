@@ -129,6 +129,14 @@ add_test(NAME ${target}
 )
 
 #
+# Define dependencies
+#
+
+add_dependencies(${target}
+	${META_PROJECT_NAME}::metacall
+)
+
+#
 # Define test properties
 #
 
