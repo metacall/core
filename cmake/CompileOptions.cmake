@@ -92,7 +92,12 @@ elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" 
 		"__UB_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(SANITIZER_LIBRARIES -lasan -lubsan)
+	# check if compiler is clang 
+	if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+		set(SANITIZER_LIBRARIES -fsanitize=address)
+	else()
+		set(SANITIZER_LIBRARIES -lasan -lubsan)
+	endif()
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
