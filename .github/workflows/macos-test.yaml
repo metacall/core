@@ -52,11 +52,12 @@ jobs:
           chmod +x ../tools/metacall-build.sh
           sh ../tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer #python nodejs #java sanitizer # ruby # netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
+          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer python #nodejs #java sanitizer # ruby # netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build
         run: |
+          echo $BUILD_STRING
           cmake ..
           sudo HOME="$HOME" cmake --build . --target install
           ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
