@@ -174,6 +174,16 @@ const char *object_name(object obj)
 	return NULL;
 }
 
+klass object_get_class(object obj)
+{
+	if (obj != NULL)
+	{
+		return obj->cls;
+	}
+
+	return NULL;
+}
+
 value object_metadata_name(object obj)
 {
 	static const char object_str[] = "name";

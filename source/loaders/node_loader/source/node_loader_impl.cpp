@@ -48,14 +48,6 @@ extern char **environ;
 #include <node_loader/node_loader_port.h>
 #include <node_loader/node_loader_trampoline.h>
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	#include <node_loader/node_loader_win32_delay_load.h>
-
-	/* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll*/
-	#include <intrin.h>
-	#pragma intrinsic(_ReturnAddress)
-#endif
-
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
@@ -176,6 +168,12 @@ typedef struct loader_impl_async_clear_safe_type *loader_impl_async_clear_safe;
 
 struct loader_impl_async_discover_function_safe_type;
 typedef struct loader_impl_async_discover_function_safe_type *loader_impl_async_discover_function_safe;
+
+struct loader_impl_discover_klass_safe_type;
+typedef struct loader_impl_discover_klass_safe_type *loader_impl_discover_klass_safe;
+
+struct loader_impl_discover_object_safe_type;
+typedef struct loader_impl_discover_object_safe_type *loader_impl_discover_object_safe;
 
 struct loader_impl_async_discover_safe_type;
 typedef struct loader_impl_async_discover_safe_type *loader_impl_async_discover_safe;
@@ -313,6 +311,22 @@ typedef struct loader_impl_node_future_type
 
 } * loader_impl_node_future;
 
+typedef struct loader_impl_node_object_type
+{
+	loader_impl_node node_impl;
+	loader_impl impl;
+	napi_ref obj_ref;
+
+} * loader_impl_node_object;
+
+typedef struct loader_impl_node_class_type
+{
+	loader_impl_node node_impl;
+	loader_impl impl;
+	napi_ref klass_ref;
+
+} * loader_impl_node_class;
+
 struct loader_impl_async_initialize_safe_type
 {
 	loader_impl_node node_impl;
@@ -353,6 +367,18 @@ struct loader_impl_async_discover_function_safe_type
 {
 	loader_impl_node node_impl;
 	napi_value func;
+};
+
+struct loader_impl_discover_klass_safe_type
+{
+	loader_impl_node node_impl;
+	napi_value klass;
+};
+
+struct loader_impl_discover_object_safe_type
+{
+	loader_impl_node node_impl;
+	napi_value obj;
 };
 
 struct loader_impl_async_discover_safe_type
@@ -446,6 +472,19 @@ typedef struct loader_impl_napi_to_value_callback_closure_type
 
 } * loader_impl_napi_to_value_callback_closure;
 
+typedef struct loader_impl_class_constructor_callback_closure_type
+{
+	klass cls;
+	loader_impl_node node_impl;
+} * loader_impl_class_constructor_callback_closure;
+
+typedef struct loader_impl_class_property_callback_closure_type
+{
+	klass cls;
+	loader_impl_node node_impl;
+	char *prop_name;
+} * loader_impl_class_property_callback_closure;
+
 /* Type conversion */
 static napi_value node_loader_impl_napi_to_value_callback(napi_env env, napi_callback_info info);
 
@@ -468,6 +507,40 @@ static future_return future_node_interface_await(future f, future_impl impl, fut
 static void future_node_interface_destroy(future f, future_impl impl);
 
 static future_interface future_node_singleton(void);
+
+/* Object */
+static int node_object_interface_create(object obj, object_impl impl);
+
+static value node_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor);
+
+static int node_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v);
+
+static value node_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc);
+
+static value node_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx);
+
+static int node_object_interface_destructor(object obj, object_impl impl);
+
+static void node_object_interface_destroy(object obj, object_impl impl);
+
+static object_interface node_object_interface_singleton(void);
+
+/* Class */
+static int node_class_interface_create(klass cls, class_impl impl);
+
+static object node_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc);
+
+static value node_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor);
+
+static int node_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v);
+
+static value node_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc);
+
+static value node_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx);
+
+static void node_class_interface_destroy(klass cls, class_impl impl);
+
+static class_interface node_class_interface_singleton(void);
 
 /* JavaScript Thread Safe */
 static void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe);
@@ -512,6 +585,12 @@ static napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_
 
 static value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe discover_function_safe);
 
+static value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_klass_safe discover_klass_safe);
+
+/*
+static int node_loader_impl_discover_object_safe(napi_env env, loader_impl_discover_object_safe discover_object_safe);
+*/
+
 static void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe);
 
 static napi_value node_loader_impl_async_discover_safe(napi_env env, napi_callback_info info);
@@ -538,12 +617,6 @@ static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void 
 static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
-
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-/* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll */
-static HMODULE node_loader_node_dll_handle = NULL;
-static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Implement W version too? */
-#endif
 
 /* -- Methods -- */
 
@@ -812,6 +885,243 @@ char *node_loader_impl_get_property_as_char(napi_env env, napi_value obj, const 
 	return str;
 }
 
+static type_id *node_loader_impl_type_ids(void *args[], size_t size)
+{
+	type_id *ids = NULL;
+
+	if (size > 0)
+	{
+		ids = (type_id *)malloc(sizeof(type_id) * size);
+
+		for (size_t iterator = 0; iterator < size; ++iterator)
+		{
+			type_id id = value_type_id(args[iterator]);
+
+			if (id >= 0 && id < TYPE_SIZE)
+			{
+				ids[iterator] = id;
+			}
+			else
+			{
+				ids[iterator] = METACALL_INVALID;
+			}
+		}
+	}
+
+	return ids;
+}
+
+static int node_loader_impl_class_check_method_type(signature s, type_id arg_ids[], size_t argc)
+{
+	size_t s_count = signature_count(s);
+	if (s_count == argc)
+	{
+		for (size_t i = 0; i < s_count; i++)
+		{
+			type t = signature_get_type(s, i);
+			if (arg_ids[i] != type_index(t))
+			{
+				return 1;
+			}
+		}
+		return 0;
+	}
+	return 1;
+}
+
+static napi_value node_loader_impl_class_method_property_callback(napi_env env, napi_callback_info info)
+{
+	napi_status status;
+	loader_impl_async_safe_cast<loader_impl_class_property_callback_closure> closure_cast = { NULL };
+	size_t argc = 1;
+	napi_value *argv = nullptr;
+	napi_value this_obj;
+
+	napi_get_cb_info(env, info, &argc, NULL, &this_obj, &closure_cast.ptr);
+	closure_cast.safe->node_impl->env = env;
+
+	if (argc != 1)
+	{
+		argv = new napi_value[argc];
+	}
+
+	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	value v_obj;
+	status = napi_unwrap(env, this_obj, &v_obj);
+	node_loader_impl_exception(env, status);
+
+	object obj_impl = value_to_object(v_obj);
+
+	void **args = new void *[argc];
+
+	for (size_t iterator = 0; iterator < argc; ++iterator)
+	{
+		args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv[iterator]);
+	}
+
+	type_id *arg_ids = node_loader_impl_type_ids(args, argc);
+	vector methods = object_methods(obj_impl, closure_cast.safe->prop_name);
+	size_t n_methods = vector_size(methods);
+
+	method m;
+	signature s;
+	if (n_methods == 1)
+	{
+		m = vector_at_type(methods, 0, method);
+	}
+	else if (n_methods > 1)
+	{
+		for (size_t iterator = 0; iterator < n_methods; ++iterator)
+		{
+			m = vector_at_type(methods, iterator, method);
+			s = method_signature(m);
+			if (node_loader_impl_class_check_method_type(s, arg_ids, argc) == 0)
+			{
+				break;
+			}
+			else
+			{
+				m = NULL;
+			}
+		}
+	}
+
+	if (m == NULL)
+	{
+		napi_value undefined;
+		status = napi_get_undefined(env, &undefined);
+		node_loader_impl_exception(env, status);
+		return undefined;
+	}
+
+	value result = object_call(obj_impl, m, args, argc);
+	return node_loader_impl_value_to_napi(closure_cast.safe->node_impl, env, result);
+}
+
+static napi_value node_loader_impl_class_set_data_property_callback(napi_env env, napi_callback_info info)
+{
+	napi_status status;
+	loader_impl_async_safe_cast<loader_impl_class_property_callback_closure> closure_cast = { NULL };
+	size_t argc = 1;
+	napi_value *argv = new napi_value[argc];
+	napi_value this_obj;
+
+	napi_get_cb_info(env, info, &argc, argv, &this_obj, &closure_cast.ptr);
+	closure_cast.safe->node_impl->env = env;
+
+	value arg = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv[0]);
+
+	value obj;
+	napi_unwrap(env, this_obj, &obj);
+	object obj_impl = value_to_object(obj);
+
+	int res = object_set(obj_impl, closure_cast.safe->prop_name, arg);
+
+	if (res != 0)
+	{
+		std::string error_msg = "NodeJS Loader Failed to set property:";
+		error_msg += closure_cast.safe->prop_name;
+		error_msg += "in class: ";
+		error_msg += object_name(obj_impl);
+		napi_throw_error(env, NULL, error_msg.c_str());
+	}
+	napi_value ret;
+	status = napi_create_int32(env, res, &ret);
+	node_loader_impl_exception(env, status);
+
+	return ret;
+}
+
+static napi_value node_loader_impl_class_get_data_property_callback(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_class_property_callback_closure> closure_cast = { NULL };
+	napi_value this_obj;
+	napi_get_cb_info(env, info, NULL, NULL, &this_obj, &closure_cast.ptr);
+	closure_cast.safe->node_impl->env = env;
+
+	value obj;
+	napi_unwrap(env, this_obj, &obj);
+	object obj_impl = value_to_object(obj);
+	value v = object_get(obj_impl, closure_cast.safe->prop_name);
+
+	return node_loader_impl_value_to_napi(closure_cast.safe->node_impl, env, v);
+}
+
+static napi_value node_loader_impl_class_constructor_callback(napi_env env, napi_callback_info info)
+{
+	napi_status status;
+	loader_impl_async_safe_cast<loader_impl_class_constructor_callback_closure> closure_cast = { NULL };
+
+	napi_get_cb_info(env, info, NULL, NULL, NULL, &closure_cast.ptr);
+	/* Set environment */
+	closure_cast.safe->node_impl->env = env;
+	constructor ctor = class_default_constructor(closure_cast.safe->cls);
+
+	char *klass_name_str = const_cast<char *>(class_name(closure_cast.safe->cls));
+	std::string error_msg = "NodeJS Loader No default constructor in class: ";
+	error_msg += klass_name_str;
+	if (ctor == NULL)
+	{
+		napi_throw_error(env, NULL, error_msg.c_str());
+	}
+
+	size_t argc = constructor_count(ctor);
+	napi_value *argv = new napi_value[argc];
+
+	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+	void **args = new void *[argc];
+
+	for (size_t iterator = 0; iterator < argc; ++iterator)
+	{
+		args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv[iterator]);
+	}
+
+	type_id *ids = node_loader_impl_type_ids(args, argc);
+
+	ctor = class_constructor(closure_cast.safe->cls, ids, argc);
+
+	//convert class_name to lower case
+	while (*klass_name_str != '\0')
+	{
+		*klass_name_str = std::tolower(*klass_name_str);
+		klass_name_str++;
+	}
+
+	object o = class_new(closure_cast.safe->cls, klass_name_str, ctor, args, argc);
+
+	if (ids != NULL)
+	{
+		free(ids);
+	}
+
+	if (o == NULL)
+	{
+		return NULL;
+	}
+
+	value v = value_create_object(o);
+
+	if (v == NULL)
+	{
+		object_destroy(o);
+		error_msg = "NodeJS Loader Failed to create object for class: ";
+		error_msg += klass_name_str;
+		napi_throw_error(env, NULL, error_msg.c_str());
+	}
+
+	napi_value js_object;
+	status = napi_create_object(env, &js_object);
+	node_loader_impl_exception(env, status);
+
+	//Todo: Implement finalize callback
+	status = napi_wrap(env, js_object, v, NULL, NULL, NULL);
+	node_loader_impl_exception(env, status);
+
+	return js_object;
+}
+
 value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v)
 {
 	value ret = NULL;
@@ -959,7 +1269,10 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 			status = napi_create_reference(env, v, 1, &node_future->promise_ref);
 
 			node_loader_impl_exception(env, status);
-		}
+		} /*
+		else if (node_loader_impl_is_object(env, v))
+		{
+		}*/
 		else
 		{
 			/* TODO: Strict check if it is an object (map) */
@@ -1028,6 +1341,19 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	}
 	else if (valuetype == napi_function)
 	{
+		/* Check if function is an ES6 class */
+		struct loader_impl_discover_klass_safe_type discover_klass_safe = {
+			node_impl,
+			v
+		};
+
+		ret = node_loader_impl_discover_klass_safe(env, &discover_klass_safe);
+
+		if (ret != NULL)
+		{
+			return ret;
+		}
+
 		struct loader_impl_async_discover_function_safe_type discover_function_safe = {
 			node_impl,
 			v
@@ -1264,19 +1590,113 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	}
 	else if (id == TYPE_CLASS)
 	{
-		/* TODO */
-		/* napi_throw_error(env, NULL, "NodeJS Loader class is not implemented"); */
-
-		/*
 		klass cls = value_to_class(arg_value);
+		vector methods = class_method_names(cls);
+		vector static_methods = class_static_method_names(cls);
+		vector attributes = class_attribute_names(cls);
+		vector static_attributes = class_static_attribute_names(cls);
 
-		napi_define_class(env, cls->name, NAPI_AUTO_LENGTH, )
-		*/
+		size_t property_count = vector_size(methods) + vector_size(static_methods) + vector_size(attributes) + vector_size(static_attributes);
+		napi_property_descriptor *properties = new napi_property_descriptor[property_count];
+
+		size_t iterator = 0;
+		//Define method properties
+		for (size_t i = 0; i < vector_size(methods) && iterator < property_count; iterator++, i++)
+		{
+			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
+
+			closure->cls = cls;
+			closure->node_impl = node_impl;
+			closure->prop_name = vector_at_type(methods, i, char *);
+
+			properties[iterator].utf8name = vector_at_type(methods, i, char *);
+			properties[iterator].name = NULL;
+			properties[iterator].method = node_loader_impl_class_method_property_callback;
+			properties[iterator].getter = NULL;
+			properties[iterator].setter = NULL;
+			properties[iterator].value = NULL;
+			properties[iterator].attributes = napi_default_method;
+			properties[iterator].data = (void *)closure;
+		}
+
+		//Define static method properties
+		for (size_t i = 0; i < vector_size(static_methods) && iterator < property_count; iterator++, i++)
+		{
+			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
+
+			closure->cls = cls;
+			closure->node_impl = node_impl;
+			closure->prop_name = vector_at_type(static_methods, i, char *);
+
+			properties[iterator].utf8name = vector_at_type(static_methods, i, char *);
+			properties[iterator].name = NULL;
+			properties[iterator].method = node_loader_impl_class_method_property_callback;
+			properties[iterator].getter = NULL;
+			properties[iterator].setter = NULL;
+			properties[iterator].value = NULL;
+			properties[iterator].attributes = napi_static;
+			properties[iterator].data = (void *)closure;
+		}
+
+		//Define attribute properties
+		for (size_t i = 0; i < vector_size(attributes) && iterator < property_count; iterator++, i++)
+		{
+			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
+
+			closure->cls = cls;
+			closure->node_impl = node_impl;
+			closure->prop_name = vector_at_type(attributes, i, char *);
+
+			properties[iterator].utf8name = vector_at_type(attributes, i, char *);
+			properties[iterator].name = NULL;
+			properties[iterator].method = NULL;
+			properties[iterator].getter = node_loader_impl_class_get_data_property_callback;
+			properties[iterator].setter = node_loader_impl_class_set_data_property_callback;
+			properties[iterator].value = NULL;
+			properties[iterator].attributes = napi_default_jsproperty;
+			properties[iterator].data = (void *)closure;
+		}
+
+		//NodeJS doesn't support static attributes so we define them as normal attributes
+		for (size_t i = 0; i < vector_size(static_attributes) && iterator < property_count; iterator++, i++)
+		{
+			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
+
+			closure->cls = cls;
+			closure->node_impl = node_impl;
+			closure->prop_name = vector_at_type(static_attributes, i, char *);
+
+			properties[iterator].utf8name = vector_at_type(static_attributes, i, char *);
+			properties[iterator].name = NULL;
+			properties[iterator].method = NULL;
+			properties[iterator].getter = node_loader_impl_class_get_data_property_callback;
+			properties[iterator].setter = node_loader_impl_class_set_data_property_callback;
+			properties[iterator].value = NULL;
+			properties[iterator].attributes = napi_default_jsproperty;
+			properties[iterator].data = (void *)closure;
+		}
+
+		napi_value result;
+		loader_impl_class_constructor_callback_closure ctor_data = new struct loader_impl_class_constructor_callback_closure_type;
+
+		ctor_data->node_impl = node_impl;
+		ctor_data->cls = cls;
+
+		status = napi_define_class(env, class_name(cls), NAPI_AUTO_LENGTH, node_loader_impl_class_constructor_callback, (void *)ctor_data, property_count, properties, &result);
+		node_loader_impl_exception(env, status);
+		return result;
 	}
 	else if (id == TYPE_OBJECT)
 	{
 		/* TODO */
 		napi_throw_error(env, NULL, "NodeJS Loader object is not implemented");
+		/*
+		//Construct object dynamically
+		object obj = value_to_object(v);
+		klass cls = object_get_class(obj);
+		napi_value kl = node_loader_impl_value_to_napi(node_impl, env, value_create_class(cls));
+		status = napi_new_instance(env, kl, )
+		*/
 	}
 	else if (id == TYPE_NULL)
 	{
@@ -1770,6 +2190,307 @@ future_interface future_node_singleton()
 	};
 
 	return &node_future_interface;
+}
+
+int node_object_interface_create(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+
+	/*
+	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
+
+	node_obj->node_impl = NULL;
+	node_obj->impl = NULL;*/
+
+	return 0;
+}
+
+value node_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
+{
+	(void)obj;
+
+	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
+	napi_value obj_value = NULL;
+	napi_status status;
+
+	status = napi_get_reference_value(node_obj->node_impl->env, node_obj->obj_ref, &obj_value);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	attribute attr = accessor->data.attr;
+	const char *key = (const char *)attribute_name(attr);
+	//type fieldType = (type)attribute_type(attr);
+
+	napi_value prop_value = NULL;
+	status = napi_get_named_property(node_obj->node_impl->env, obj_value, key, &prop_value);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	value v = node_loader_impl_napi_to_value(node_obj->node_impl, node_obj->node_impl->env, nullptr, prop_value);
+
+	return v;
+}
+
+int node_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
+{
+	(void)obj;
+
+	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
+	napi_value obj_value = NULL;
+	napi_status status;
+
+	status = napi_get_reference_value(node_obj->node_impl->env, node_obj->obj_ref, &obj_value);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	attribute attr = accessor->data.attr;
+	const char *key = (const char *)attribute_name(attr);
+	//type fieldType = (type)attribute_type(attr);
+
+	napi_value prop_value = node_loader_impl_value_to_napi(node_obj->node_impl, node_obj->node_impl->env, v);
+
+	status = napi_set_named_property(node_obj->node_impl->env, obj_value, key, prop_value);
+
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	return 0;
+}
+
+value node_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
+{
+	(void)obj;
+	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
+	napi_value obj_value;
+	napi_value result;
+	napi_status status;
+
+	status = napi_get_reference_value(node_obj->node_impl->env, node_obj->obj_ref, &obj_value);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	const char *m_name = method_name(m);
+
+	napi_value m_value = NULL;
+	status = napi_get_named_property(node_obj->node_impl->env, obj_value, m_name, &m_value);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	napi_value *m_args = new napi_value[argc];
+
+	for (size_t i = 0; i < argc; i++)
+	{
+		m_args[i] = node_loader_impl_value_to_napi(node_obj->node_impl, node_obj->node_impl->env, args[i]);
+	}
+
+	napi_call_function(node_obj->node_impl->env, obj_value, m_value, argc, m_args, &result);
+
+	value v = node_loader_impl_napi_to_value(node_obj->node_impl, node_obj->node_impl->env, nullptr, result);
+
+	delete[] m_args;
+
+	return v;
+}
+
+value node_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
+{
+	// Class methods in JavaScript can't be async
+	(void)obj;
+	(void)impl;
+	(void)m;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+int node_object_interface_destructor(object obj, object_impl impl)
+{
+	(void)obj;
+	(void)impl;
+
+	/* Destructors are automatically called when ref count is zero and GC happens */
+
+	return 0;
+}
+
+void node_object_interface_destroy(object obj, object_impl impl)
+{
+	(void)obj;
+
+	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
+
+	if (node_obj != NULL)
+	{
+		if (loader_is_destroyed(node_obj->impl) != 0)
+		{
+			//Todo
+		}
+
+		free(node_obj);
+	}
+}
+
+object_interface node_object_interface_singleton(void)
+{
+	static struct object_interface_type node_object_interface = {
+		&node_object_interface_create,
+		&node_object_interface_get,
+		&node_object_interface_set,
+		&node_object_interface_method_invoke,
+		&node_object_interface_method_await,
+		&node_object_interface_destructor,
+		&node_object_interface_destroy
+	};
+
+	return &node_object_interface;
+}
+
+int node_class_interface_create(klass cls, class_impl impl)
+{
+	(void)cls;
+	(void)impl;
+
+	return 0;
+}
+
+object node_class_interface_constructor(klass cls, class_impl impl, const char *name, constructor ctor, class_args args, size_t argc)
+{
+	(void)ctor;
+
+	loader_impl_node_class node_klass = (loader_impl_node_class)impl;
+
+	loader_impl_node_object node_obj = new struct loader_impl_node_object_type;
+
+	object obj = object_create(name, ACCESSOR_TYPE_DYNAMIC, node_obj, &node_object_interface_singleton, cls);
+
+	if (obj == NULL)
+	{
+		return NULL;
+	}
+
+	napi_value *m_args = new napi_value[argc];
+
+	for (size_t i = 0; i < argc; i++)
+	{
+		m_args[i] = node_loader_impl_value_to_napi(node_obj->node_impl, node_obj->node_impl->env, args[i]);
+	}
+
+	napi_status status;
+	napi_value klass_cons;
+	status = napi_get_reference_value(node_obj->node_impl->env, node_klass->klass_ref, &klass_cons);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	napi_value result;
+	status = napi_new_instance(node_obj->node_impl->env, klass_cons, argc, m_args, &result);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	//Todo check that object is an instance of constructor
+
+	status = napi_create_reference(node_obj->node_impl->env, result, 1, &node_obj->obj_ref);
+	node_loader_impl_exception(node_obj->node_impl->env, status);
+
+	delete[] m_args;
+
+	return obj;
+}
+
+value node_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
+{
+	(void)cls;
+	(void)impl;
+	(void)accessor;
+
+	return NULL;
+}
+
+int node_class_interface_static_set(klass cls, class_impl impl, struct accessor_type *accessor, value v)
+{
+	(void)cls;
+	(void)impl;
+	(void)accessor;
+	(void)v;
+
+	return 0;
+}
+
+value node_class_interface_static_invoke(klass cls, class_impl impl, method m, class_args args, size_t argc)
+{
+	(void)cls;
+	loader_impl_node_class node_klass = (loader_impl_node_class)impl;
+	napi_value klass_cons;
+	napi_value result;
+	napi_status status;
+
+	status = napi_get_reference_value(node_klass->node_impl->env, node_klass->klass_ref, &klass_cons);
+	node_loader_impl_exception(node_klass->node_impl->env, status);
+
+	const char *m_name = method_name(m);
+
+	napi_value m_value = NULL;
+	status = napi_get_named_property(node_klass->node_impl->env, klass_cons, m_name, &m_value);
+	node_loader_impl_exception(node_klass->node_impl->env, status);
+
+	napi_value *m_args = new napi_value[argc];
+
+	for (size_t i = 0; i < argc; i++)
+	{
+		m_args[i] = node_loader_impl_value_to_napi(node_klass->node_impl, node_klass->node_impl->env, args[i]);
+	}
+
+	status = napi_call_function(node_klass->node_impl->env, klass_cons, m_value, argc, m_args, &result);
+	node_loader_impl_exception(node_klass->node_impl->env, status);
+
+	value v = node_loader_impl_napi_to_value(node_klass->node_impl, node_klass->node_impl->env, nullptr, result);
+
+	delete[] m_args;
+
+	return v;
+}
+
+value node_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
+{
+	// Class methods in JavaScript can't be async
+	(void)cls;
+	(void)impl;
+	(void)m;
+	(void)args;
+	(void)size;
+	(void)resolve;
+	(void)reject;
+	(void)ctx;
+
+	return NULL;
+}
+
+void node_class_interface_destroy(klass cls, class_impl impl)
+{
+	loader_impl_node_class node_class = (loader_impl_node_class)impl;
+
+	(void)cls;
+
+	if (node_class != NULL)
+	{
+		if (loader_is_destroyed(node_class->impl) != 0)
+		{
+			//TODO
+		}
+
+		free(node_class);
+	}
+}
+
+class_interface node_class_interface_singleton(void)
+{
+	static struct class_interface_type node_class_interface = {
+		&node_class_interface_create,
+		&node_class_interface_constructor,
+		&node_class_interface_static_get,
+		&node_class_interface_static_set,
+		&node_class_interface_static_invoke,
+		&node_class_interface_static_await,
+		&node_class_interface_destroy
+	};
+
+	return &node_class_interface;
 }
 
 void node_loader_impl_initialize_safe(napi_env env, loader_impl_async_initialize_safe initialize_safe)
@@ -3294,6 +4015,462 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 	return function_value;
 }
 
+value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_klass_safe discover_klass_safe)
+{
+	static const char discover_klass_str[] = "discover_klass";
+	napi_value discover_klass_str_value;
+	napi_value function_table_object;
+	bool result = false;
+	napi_handle_scope handle_scope;
+	klass c = NULL;
+	constructor ctor = NULL;
+	int ret = 1;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Get function table object from reference */
+	status = napi_get_reference_value(env, discover_klass_safe->node_impl->function_table_object_ref, &function_table_object);
+
+	node_loader_impl_exception(env, status);
+
+	/* Create function string */
+	status = napi_create_string_utf8(env, discover_klass_str, sizeof(discover_klass_str) - 1, &discover_klass_str_value);
+
+	node_loader_impl_exception(env, status);
+
+	/* Check if exists in the table */
+	status = napi_has_own_property(env, function_table_object, discover_klass_str_value, &result);
+
+	node_loader_impl_exception(env, status);
+
+	if (result == true)
+	{
+		napi_value klass_trampoline_discover;
+		napi_valuetype valuetype;
+		napi_value argv[1];
+
+		status = napi_get_named_property(env, function_table_object, discover_klass_str, &klass_trampoline_discover);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_typeof(env, klass_trampoline_discover, &valuetype);
+
+		node_loader_impl_exception(env, status);
+
+		if (valuetype != napi_function)
+		{
+			napi_throw_type_error(env, nullptr, "Invalid function discover in function table object");
+		}
+
+		/* Define parameters */
+		argv[0] = discover_klass_safe->klass;
+
+		/* Call to load from file function */
+		napi_value global, klass_descriptor;
+
+		status = napi_get_reference_value(env, discover_klass_safe->node_impl->global_ref, &global);
+
+		node_loader_impl_exception(env, status);
+
+		status = napi_call_function(env, global, klass_trampoline_discover, 1, argv, &klass_descriptor);
+
+		node_loader_impl_exception(env, status);
+
+		/* Convert return value (discover object) to context */
+		napi_value klass_name;
+		char *klass_name_str = NULL;
+		bool has_name = false;
+
+		status = napi_has_named_property(env, klass_descriptor, "name", &has_name);
+
+		node_loader_impl_exception(env, status);
+
+		/* Retrieve the class name if any */
+		if (has_name == true)
+		{
+			size_t klass_name_length = 0;
+
+			status = napi_get_named_property(env, klass_descriptor, "name", &klass_name);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_get_value_string_utf8(env, klass_name, NULL, 0, &klass_name_length);
+
+			node_loader_impl_exception(env, status);
+
+			if (klass_name_length > 0)
+			{
+				klass_name_str = static_cast<char *>(malloc(sizeof(char) * (klass_name_length + 1)));
+			}
+
+			/* Get class name */
+			status = napi_get_value_string_utf8(env, klass_name, klass_name_str, klass_name_length + 1, &klass_name_length);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		loader_impl_node_class node_klass = new loader_impl_node_class_type();
+
+		node_klass->node_impl = discover_klass_safe->node_impl;
+
+		status = napi_create_reference(env, discover_klass_safe->klass, 1, &node_klass->klass_ref);
+
+		c = class_create(klass_name_str, ACCESSOR_TYPE_DYNAMIC, node_klass, &node_class_interface_singleton);
+
+		napi_value methods;
+		bool has_methods = false;
+
+		status = napi_has_named_property(env, klass_descriptor, "methods", &has_methods);
+
+		node_loader_impl_exception(env, status);
+
+		if (has_methods == true)
+		{
+			status = napi_get_named_property(env, klass_descriptor, "methods", &methods);
+
+			node_loader_impl_exception(env, status);
+
+			/* Discover constructor */
+			napi_value klass_constructor;
+			bool has_constructor = false;
+
+			status = napi_has_named_property(env, methods, "klass_constructor", &has_constructor);
+
+			node_loader_impl_exception(env, status);
+
+			if (has_constructor == true)
+			{
+				status = napi_get_named_property(env, methods, "klass_constructor", &klass_constructor);
+
+				node_loader_impl_exception(env, status);
+
+				napi_value constructor_sig;
+				bool has_sig = false;
+
+				status = napi_has_named_property(env, klass_constructor, "signature", &has_sig);
+
+				node_loader_impl_exception(env, status);
+
+				if (has_sig == true)
+				{
+					status = napi_get_named_property(env, klass_constructor, "signature", &constructor_sig);
+
+					node_loader_impl_exception(env, status);
+
+					uint32_t constructor_sig_length = 0;
+					napi_valuetype valuetype;
+
+					/* Check signature type */
+					status = napi_typeof(env, constructor_sig, &valuetype);
+
+					node_loader_impl_exception(env, status);
+
+					if (valuetype != napi_object)
+					{
+						napi_throw_type_error(env, nullptr, "Invalid NodeJS signature");
+					}
+
+					/* Get signature length */
+					status = napi_get_array_length(env, constructor_sig, &constructor_sig_length);
+
+					node_loader_impl_exception(env, status);
+
+					ctor = constructor_create(constructor_sig_length, VISIBILITY_PUBLIC);
+
+					/* Set signature */
+					for (uint32_t arg_index = 0; arg_index < constructor_sig_length; ++arg_index)
+					{
+						napi_value parameter_name;
+						size_t parameter_name_length;
+						char *parameter_name_str = NULL;
+
+						/* Get signature parameter name */
+						status = napi_get_element(env, constructor_sig, arg_index, &parameter_name);
+
+						node_loader_impl_exception(env, status);
+
+						/* Get parameter name string length */
+						status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+
+						node_loader_impl_exception(env, status);
+
+						if (parameter_name_length > 0)
+						{
+							parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+						}
+
+						/* Get parameter name string */
+						status = napi_get_value_string_utf8(env, parameter_name, parameter_name_str, parameter_name_length + 1, &parameter_name_length);
+
+						node_loader_impl_exception(env, status);
+
+						/* Todo: Discover type info */
+
+						constructor_set(ctor, (size_t)arg_index, parameter_name_str, NULL);
+
+						if (parameter_name_str != NULL)
+						{
+							free(parameter_name_str);
+						}
+					}
+				}
+				ret = class_register_constructor(c, ctor);
+
+				if (ret != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register constructor in class %s", class_name(c));
+				}
+			}
+			else
+			{
+				ctor = constructor_create(0, VISIBILITY_PUBLIC);
+				ret = class_register_constructor(c, ctor);
+
+				if (ret != 0)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Failed to register constructor in class %s", class_name(c));
+				}
+			}
+
+			/* Discover methods */
+			napi_value method_names;
+			uint32_t method_names_length;
+
+			status = napi_get_property_names(env, methods, &method_names);
+
+			node_loader_impl_exception(env, status);
+
+			status = napi_get_array_length(env, method_names, &method_names_length);
+
+			node_loader_impl_exception(env, status);
+
+			for (uint32_t index = 0; index < method_names_length; ++index)
+			{
+				napi_value method_name;
+				napi_value method_descriptor;
+				size_t method_name_length;
+				char *method_name_str = NULL;
+
+				status = napi_get_element(env, method_names, index, &method_name);
+
+				node_loader_impl_exception(env, status);
+
+				status = napi_get_value_string_utf8(env, method_name, NULL, 0, &method_name_length);
+
+				node_loader_impl_exception(env, status);
+
+				if (method_name_length > 0)
+				{
+					method_name_str = static_cast<char *>(malloc(sizeof(char) * (method_name_length + 1)));
+				}
+
+				if (method_name_str == NULL)
+				{
+					return method_name_str;
+				}
+
+				/* Get function name */
+				status = napi_get_value_string_utf8(env, method_name, method_name_str, method_name_length + 1, &method_name_length);
+
+				if (strcmp(method_name_str, "klass_constructor") == 0)
+				{
+					continue;
+				}
+
+				node_loader_impl_exception(env, status);
+
+				/* Get method descriptor */
+				status = napi_get_named_property(env, methods, method_name_str, &method_descriptor);
+
+				node_loader_impl_exception(env, status);
+
+				bool has_static = false;
+				napi_value static_value;
+				bool is_static_method = false;
+				napi_value method_sig;
+				bool has_sig = false;
+
+				status = napi_has_named_property(env, method_descriptor, "signature", &has_sig);
+
+				node_loader_impl_exception(env, status);
+
+				if (has_sig == true)
+				{
+					status = napi_get_named_property(env, method_descriptor, "signature", &method_sig);
+
+					node_loader_impl_exception(env, status);
+
+					uint32_t method_sig_length = 0;
+					napi_valuetype valuetype;
+
+					/* Check signature type */
+					status = napi_typeof(env, method_sig, &valuetype);
+
+					node_loader_impl_exception(env, status);
+
+					if (valuetype != napi_object)
+					{
+						napi_throw_type_error(env, nullptr, "Invalid NodeJS signature");
+					}
+
+					/* Get signature length */
+					status = napi_get_array_length(env, method_sig, &method_sig_length);
+
+					node_loader_impl_exception(env, status);
+
+					method m = method_create(c, method_name_str, method_sig_length, NULL, VISIBILITY_PUBLIC, SYNCHRONOUS, NULL);
+
+					status = napi_has_named_property(env, method_descriptor, "static", &has_static);
+
+					node_loader_impl_exception(env, status);
+
+					if (has_static != false)
+					{
+						status = napi_get_named_property(env, method_descriptor, "static", &static_value);
+
+						node_loader_impl_exception(env, status);
+
+						status = napi_get_value_bool(env, static_value, &is_static_method);
+
+						node_loader_impl_exception(env, status);
+					}
+
+					if (is_static_method)
+					{
+						class_register_static_method(c, m);
+					}
+					else
+					{
+						class_register_method(c, m);
+					}
+
+					signature s = method_signature(m);
+					/* Set signature */
+					for (uint32_t arg_index = 0; arg_index < method_sig_length; ++arg_index)
+					{
+						napi_value parameter_name;
+						size_t parameter_name_length;
+						char *parameter_name_str = NULL;
+
+						/* Get signature parameter name */
+						status = napi_get_element(env, method_sig, arg_index, &parameter_name);
+
+						node_loader_impl_exception(env, status);
+
+						/* Get parameter name string length */
+						status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+
+						node_loader_impl_exception(env, status);
+
+						if (parameter_name_length > 0)
+						{
+							parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+						}
+
+						/* Get parameter name string */
+						status = napi_get_value_string_utf8(env, parameter_name, parameter_name_str, parameter_name_length + 1, &parameter_name_length);
+
+						node_loader_impl_exception(env, status);
+
+						/* Todo: Discover type info? */
+						signature_set(s, (size_t)arg_index, parameter_name_str, NULL);
+
+						if (parameter_name_str != NULL)
+						{
+							free(parameter_name_str);
+						}
+					}
+
+					/* Set return signature */
+					signature_set_return(s, NULL);
+				}
+			}
+
+			/* Discover attributes*/
+			bool has_attr = false;
+			napi_value attr_field;
+
+			status = napi_has_named_property(env, klass_descriptor, "attributes", &has_attr);
+
+			node_loader_impl_exception(env, status);
+
+			if (has_attr == true)
+			{
+				status = napi_get_named_property(env, klass_descriptor, "attributes", &attr_field);
+
+				node_loader_impl_exception(env, status);
+
+				uint32_t attr_field_length = 0;
+				napi_valuetype valuetype;
+
+				/* Check signature type */
+				status = napi_typeof(env, attr_field, &valuetype);
+
+				node_loader_impl_exception(env, status);
+
+				if (valuetype != napi_object)
+				{
+					napi_throw_type_error(env, nullptr, "Invalid attribute format: Expected an Array");
+				}
+
+				/* Get signature length */
+				status = napi_get_array_length(env, attr_field, &attr_field_length);
+
+				node_loader_impl_exception(env, status);
+
+				//attribute attr = attribute_create(c, name, t, NULL, VISIBILITY_PUBLIC, NULL);
+
+				for (uint32_t arg_index = 0; arg_index < attr_field_length; ++arg_index)
+				{
+					napi_value parameter_name;
+					size_t parameter_name_length;
+					char *parameter_name_str = NULL;
+
+					/* Get signature parameter name */
+					status = napi_get_element(env, attr_field, arg_index, &parameter_name);
+
+					node_loader_impl_exception(env, status);
+
+					/* Get parameter name string length */
+					status = napi_get_value_string_utf8(env, parameter_name, NULL, 0, &parameter_name_length);
+
+					node_loader_impl_exception(env, status);
+
+					if (parameter_name_length > 0)
+					{
+						parameter_name_str = static_cast<char *>(malloc(sizeof(char) * (parameter_name_length + 1)));
+					}
+
+					/* Get parameter name string */
+					status = napi_get_value_string_utf8(env, parameter_name, parameter_name_str, parameter_name_length + 1, &parameter_name_length);
+
+					node_loader_impl_exception(env, status);
+
+					attribute attr = attribute_create(c, parameter_name_str, NULL, NULL, VISIBILITY_PUBLIC, NULL);
+					class_register_attribute(c, attr);
+
+					if (parameter_name_str != NULL)
+					{
+						free(parameter_name_str);
+					}
+				}
+			}
+		}
+		return value_create_class(c);
+	}
+
+	return NULL;
+}
+
+/*
+static value node_loader_impl_discover_object_safe(napi_env env, loader_impl_discover_object_safe discover_object_safe)
+{
+}
+*/
+
 void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe)
 {
 	static const char discover_str[] = "discover";
@@ -3736,51 +4913,6 @@ void node_loader_impl_thread_safe_function_initialize(napi_env env,
 	node_loader_impl_exception(env, status);
 }
 
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-/* TODO: _Ret_maybenull_ HMODULE WINAPI GetModuleHandleW(_In_opt_ LPCWSTR lpModuleName); */
-_Ret_maybenull_ HMODULE WINAPI get_module_handle_a_hook(_In_opt_ LPCSTR lpModuleName)
-{
-	/* This hooks GetModuleHandle, which is called as DelayLoad hook inside NodeJS
-	* extensions in order to retrieve the executable handle, which is supposed
-	* to have all N-API symbols. This trick is used because the design of NodeJS forces
-	* to compile statically node.dll into the executable, but this does not happen on
-	* MetaCall as it is embedded. We cannot change this behavior because it depends on
-	* NodeJS extension build system, which relies on DelayLoad mechanism. So what we are
-	* doing here is intercepting the GetModuleHandle call inside the DelayLoad hook, then
-	* getting the address from where this Win32 API was called, and if it commes from a
-	* NodeJS extension, then we return the node.dll module, otherwise we call to the original
-	* GetModuleHandle funciton. This method successfully hooks into the NodeJS mechanism and
-	* redirects properly the linker resolver system to the node.dll where symbols are located.
-	*/
-	if (lpModuleName == NULL)
-	{
-		HMODULE mod = NULL;
-
-		if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
-								  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, /* Behave like GetModuleHandle */
-				(LPCTSTR)_ReturnAddress(), &mod) == TRUE)
-		{
-			static const char node_ext[] = ".node";
-			char mod_name[MAX_PATH];
-			size_t length = GetModuleFileName(mod, mod_name, MAX_PATH);
-
-			/* It must contain a letter a part from the .node extension */
-			if (length > sizeof(node_ext))
-			{
-				char *ext = &mod_name[length - sizeof(node_ext) + 1];
-
-				if (strncmp(ext, node_ext, sizeof(node_ext)) == 0)
-				{
-					return node_loader_node_dll_handle;
-				}
-			}
-		}
-	}
-
-	return get_module_handle_a_ptr(lpModuleName);
-}
-#endif
-
 void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
@@ -4019,16 +5151,10 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 #endif
 
 	/* Store the amount of async handles that we have for the node loader,
- * so we can count the user defined async handles */
+	* so we can count the user defined async handles */
 	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
 	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
-
-	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
-#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
-	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
-	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
-#endif
 
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);
@@ -5266,10 +6392,10 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 	}
 
 	/* NodeJS Loader needs to register that it is destroyed, because after this step
-	 * some destructors can be still triggered, before the node_loader->destroy() has
-	 * finished, so this destructors will try to execute the NodeJS unrefs while having
-	 * the runtime (at least the NodeJS Loader related part) destroyed.
-	 */
+	* some destructors can be still triggered, before the node_loader->destroy() has
+	* finished, so this destructors will try to execute the NodeJS unrefs while having
+	* the runtime (at least the NodeJS Loader related part) destroyed.
+	*/
 	loader_set_destroyed(node_impl->impl);
 }
 
@@ -5374,7 +6500,7 @@ int node_loader_impl_destroy(loader_impl impl)
 #endif
 
 	/* Print NodeJS execution result */
-	log_write("metacall", LOG_LEVEL_DEBUG, "NodeJS execution return status %d", node_impl->result);
+	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
 
 	/* Restore stdin, stdout, stderr */
 	dup2(node_impl->stdin_copy, STDIN_FILENO);

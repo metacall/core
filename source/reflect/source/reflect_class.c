@@ -680,6 +680,30 @@ method class_method(klass cls, const char *key, type_id ret, type_id args[], siz
 	return class_get_method_type_safe(class_methods(cls, key), ret, args, size);
 }
 
+vector class_method_names(klass cls)
+{
+	vector v = vector_create_type(char *);
+	map_iterator it = map_iterator_begin(cls->methods);
+	while (map_iterator_end(&it) != 0)
+	{
+		char *key = (char *)map_iterator_get_key(it);
+		vector_push_back(v, (void *)key);
+	}
+	return v;
+}
+
+vector class_static_method_names(klass cls)
+{
+	vector v = vector_create_type(char *);
+	map_iterator it = map_iterator_begin(cls->static_methods);
+	while (map_iterator_end(&it) != 0)
+	{
+		char *key = (char *)map_iterator_get_key(it);
+		vector_push_back(v, (void *)key);
+	}
+	return v;
+}
+
 attribute class_static_attribute(klass cls, const char *key)
 {
 	if (cls == NULL || key == NULL)
@@ -698,6 +722,30 @@ attribute class_attribute(klass cls, const char *key)
 	}
 
 	return set_get(cls->attributes, (set_key)key);
+}
+
+vector class_attribute_names(klass cls)
+{
+	vector v = vector_create_type(char *);
+	set_iterator it = set_iterator_begin(cls->attributes);
+	while (set_iterator_end(&it) != 0)
+	{
+		char *key = (char *)set_iterator_get_key(it);
+		vector_push_back(v, (void *)key);
+	}
+	return v;
+}
+
+vector class_static_attribute_names(klass cls)
+{
+	vector v = vector_create_type(char *);
+	set_iterator it = set_iterator_begin(cls->static_attributes);
+	while (set_iterator_end(&it) != 0)
+	{
+		char *key = (char *)set_iterator_get_key(it);
+		vector_push_back(v, (void *)key);
+	}
+	return v;
 }
 
 int class_register_constructor(klass cls, constructor ctor)
