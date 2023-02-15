@@ -87,12 +87,14 @@ elseif(OPTION_BUILD_MEMORY_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Cla
 elseif(OPTION_BUILD_UB_SANITIZER AND "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang" AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
 	# TODO
 	set(SANITIZER_LIBRARIES)
-	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES)
+	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
+		"UBSAN_OPTIONS=print_stacktrace=1"
+	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__UB_SANITIZER__=1"
 	)
 elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo"))
-	set(SANITIZER_LIBRARIES -lasan -lubsan)
+	set(SANITIZER_LIBRARIES -lasan)
 	set(TESTS_SANITIZER_ENVIRONMENT_VARIABLES
 		"LSAN_OPTIONS=verbosity=1:log_threads=1:print_suppressions=false:suppressions=${CMAKE_SOURCE_DIR}/source/tests/sanitizer/lsan.supp"
 
@@ -103,7 +105,6 @@ elseif(OPTION_BUILD_SANITIZER AND (CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BU
 		# "ASAN_OPTIONS=detect_leaks=0:handle_segv=0:symbolize=1:alloc_dealloc_mismatch=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
 
 		"ASAN_OPTIONS=use_sigaltstack=0:symbolize=1:alloc_dealloc_mismatch=0:strict_string_checks=1:detect_stack_use_after_return=1:check_initialization_order=1:strict_init_order=1"
-		"UBSAN_OPTIONS=print_stacktrace=1"
 	)
 	set(SANITIZER_COMPILE_DEFINITIONS
 		"__ADDRESS_SANITIZER__=1"
@@ -114,8 +115,8 @@ else()
 	set(SANITIZER_COMPILE_DEFINITIONS)
 endif()
 
-if(WIN32 AND MSVC)
-	# MSVC does not require to link manually the sanitizer libraries
+if((WIN32 AND MSVC) OR "${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+	# MSVC and Clang do not require to link manually the sanitizer libraries
 	set(SANITIZER_LIBRARIES)
 endif()
 
