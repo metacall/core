@@ -9,6 +9,7 @@ on:
     branches:
       - master
       - develop
+      - feat/macos-pipeline
 
 jobs:
   mac-test:
