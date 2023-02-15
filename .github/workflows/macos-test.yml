@@ -20,8 +20,8 @@ jobs:
         buildtype: [debug, release]
     
     env:
-      LTTNG_UST_REGISTER_TIMEOUT:  0
-      NUGET_XMLDOC_MODE:           skip
+      LTTNG_UST_REGISTER_TIMEOUT: 0
+      NUGET_XMLDOC_MODE: skip
       DOTNET_CLI_TELEMETRY_OPTOUT: 'true'
 
     steps:
@@ -42,18 +42,17 @@ jobs:
 
       - name: Configure
         run: |
-          METACALL_PATH=$PWD
-          mkdir -p "$METACALL_PATH/build"
-          cd "$METACALL_PATH/build"
-          sh ../tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
+          mkdir -p build
+          cd build
+          bash ../tools/metacall-configure.sh $METACALL_CONFIGURE_OPTIONS
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer # nodejs python java sanitizer ruby netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
+          METACALL_CONFIGURE_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer # nodejs python java sanitizer ruby netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build
+        # TODO: Remove the disable option for fork safe once funchook problem is solved
         run: |
-          make -j$(getconf _NPROCESSORS_ONLN)
-          ctest -j$(getconf _NPROCESSORS_ONLN) --timeout 5400 --output-on-failure --test-output-size-failed 3221000000 -C $BUILD_TYPE
+          cmake -DOPTION_FORK_SAFE=OFF ..
+          bash ../tools/metacall-build.sh $METACALL_BUILD_OPTIONS
         env:
           METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} tests
-          BUILD_TYPE: Debug # TODO: This must go in the build script for macos and it should be detected from buildtype passed in METACALL_BUILD_OPTIONS
