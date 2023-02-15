@@ -173,7 +173,7 @@ TEST_F(adt_set_test, DefaultConstructor)
 
 		static const size_t value_array_size = sizeof(value_array) / sizeof(value_array[0]);
 
-		static int key_array[value_array_size] = { { 0 } };
+		static int key_array[value_array_size] = { 0 };
 
 		static const size_t key_array_size = value_array_size;
 
