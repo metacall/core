@@ -196,6 +196,27 @@ typedef struct loader_impl_async_future_delete_safe_type *loader_impl_async_futu
 struct loader_impl_async_destroy_safe_type;
 typedef struct loader_impl_async_destroy_safe_type *loader_impl_async_destroy_safe;
 
+struct loader_impl_async_object_get_safe_type;
+typedef struct loader_impl_async_object_get_safe_type *loader_impl_async_object_get_safe;
+
+struct loader_impl_async_object_set_safe_type;
+typedef struct loader_impl_async_object_set_safe_type *loader_impl_async_object_set_safe;
+
+struct loader_impl_async_object_method_invoke_safe_type;
+typedef struct loader_impl_async_object_method_invoke_safe_type *loader_impl_async_object_method_invoke_safe;
+
+struct loader_impl_async_object_destroy_safe_type;
+typedef struct loader_impl_async_object_destroy_safe_type *loader_impl_async_object_destroy_safe;
+
+struct loader_impl_async_class_ctor_safe_type;
+typedef struct loader_impl_async_class_ctor_safe_type *loader_impl_async_class_ctor_safe;
+
+struct loader_impl_async_class_static_invoke_safe_type;
+typedef struct loader_impl_async_class_static_invoke_safe_type *loader_impl_async_class_static_invoke_safe;
+
+struct loader_impl_async_class_destroy_safe_type;
+typedef struct loader_impl_async_class_destroy_safe_type *loader_impl_async_class_destroy_safe;
+
 template <typename T>
 union loader_impl_async_safe_cast
 {
@@ -264,6 +285,34 @@ struct loader_impl_node_type
 	napi_value destroy_safe_ptr;
 	loader_impl_async_destroy_safe destroy_safe;
 	napi_threadsafe_function threadsafe_destroy;
+
+	napi_value object_get_safe_ptr;
+	loader_impl_async_object_get_safe object_get_safe;
+	napi_threadsafe_function threadsafe_object_get;
+
+	napi_value object_set_safe_ptr;
+	loader_impl_async_object_set_safe object_set_safe;
+	napi_threadsafe_function threadsafe_object_set;
+
+	napi_value object_method_invoke_safe_ptr;
+	loader_impl_async_object_method_invoke_safe object_method_invoke_safe;
+	napi_threadsafe_function threadsafe_object_method_invoke;
+
+	napi_value object_destroy_safe_ptr;
+	loader_impl_async_object_destroy_safe object_destroy_safe;
+	napi_threadsafe_function threadsafe_object_destroy;
+
+	napi_value class_ctor_safe_ptr;
+	loader_impl_async_class_ctor_safe class_ctor_safe;
+	napi_threadsafe_function threadsafe_class_ctor;
+
+	napi_value class_static_invoke_safe_ptr;
+	loader_impl_async_class_static_invoke_safe class_static_invoke_safe;
+	napi_threadsafe_function threadsafe_class_static_invoke;
+
+	napi_value class_destroy_safe_ptr;
+	loader_impl_async_class_destroy_safe class_destroy_safe;
+	napi_threadsafe_function threadsafe_class_destroy;
 
 	uv_thread_t thread;
 	uv_loop_t *thread_loop;
@@ -373,6 +422,7 @@ struct loader_impl_discover_klass_safe_type
 {
 	loader_impl_node node_impl;
 	napi_value klass;
+	napi_value klass_descriptor;
 };
 
 struct loader_impl_discover_object_safe_type
@@ -426,6 +476,71 @@ struct loader_impl_async_future_await_safe_type
 	future_return ret;
 };
 
+struct loader_impl_async_object_get_safe_type
+{
+	loader_impl_node node_impl;
+	object obj;
+	loader_impl_node_object node_obj;
+	struct accessor_type *accessor;
+	value ret_v;
+};
+
+struct loader_impl_async_object_set_safe_type
+{
+	loader_impl_node node_impl;
+	object obj;
+	loader_impl_node_object node_obj;
+	struct accessor_type *accessor;
+	value v;
+};
+
+struct loader_impl_async_object_method_invoke_safe_type
+{
+	loader_impl_node node_impl;
+	object obj;
+	loader_impl_node_object node_obj;
+	method m;
+	void **args;
+	size_t argc;
+	value ret_v;
+};
+
+struct loader_impl_async_object_destroy_safe_type
+{
+	loader_impl_node node_impl;
+	object obj;
+	loader_impl_node_object node_obj;
+};
+
+struct loader_impl_async_class_ctor_safe_type
+{
+	loader_impl_node node_impl;
+	klass cls;
+	loader_impl_node_class node_klass;
+	const char *name;
+	void **args;
+	size_t argc;
+	object ret_obj;
+};
+
+struct loader_impl_async_class_static_invoke_safe_type
+{
+	loader_impl_node node_impl;
+	klass cls;
+	loader_impl_node_class node_klass;
+	method m;
+	void **args;
+	size_t argc;
+	value ret_v;
+};
+
+struct loader_impl_async_class_destroy_safe_type
+{
+	loader_impl_node node_impl;
+	klass cls;
+	loader_impl_node_class node_klass;
+};
+
 typedef napi_value (*function_resolve_trampoline)(loader_impl_node, napi_env, function_resolve_callback, napi_value, napi_value, void *);
 typedef napi_value (*function_reject_trampoline)(loader_impl_node, napi_env, function_reject_callback, napi_value, napi_value, void *);
 
@@ -476,13 +591,14 @@ typedef struct loader_impl_class_constructor_callback_closure_type
 {
 	klass cls;
 	loader_impl_node node_impl;
+	napi_ref constructor_ref;
 } * loader_impl_class_constructor_callback_closure;
 
 typedef struct loader_impl_class_property_callback_closure_type
 {
 	klass cls;
 	loader_impl_node node_impl;
-	char *prop_name;
+	const char *prop_name;
 } * loader_impl_class_property_callback_closure;
 
 /* Type conversion */
@@ -582,6 +698,34 @@ static napi_value node_loader_impl_async_load_from_memory_safe(napi_env env, nap
 static void node_loader_impl_clear_safe(napi_env env, loader_impl_async_clear_safe clear_safe);
 
 static napi_value node_loader_impl_async_clear_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_object_get_safe(napi_env env, loader_impl_async_object_get_safe object_get_safe);
+
+static napi_value node_loader_impl_async_object_get_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_object_set_safe(napi_env env, loader_impl_async_object_set_safe object_set_safe);
+
+static napi_value node_loader_impl_async_object_set_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_object_method_invoke_safe(napi_env env, loader_impl_async_object_method_invoke_safe object_method_invoke_safe);
+
+static napi_value node_loader_impl_async_object_method_invoke_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_object_destroy_safe(napi_env env, loader_impl_async_object_destroy_safe object_destroy_safe);
+
+static napi_value node_loader_impl_async_object_destroy_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_class_ctor_safe(napi_env env, loader_impl_async_class_ctor_safe class_ctor_safe);
+
+static napi_value node_loader_impl_async_class_ctor_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_class_static_invoke_safe(napi_env env, loader_impl_async_class_static_invoke_safe class_static_invoke_safe);
+
+static napi_value node_loader_impl_async_class_static_invoke_safe(napi_env env, napi_callback_info info);
+
+static void node_loader_impl_class_destroy_safe(napi_env env, loader_impl_async_class_destroy_safe class_destroy_safe);
+
+static napi_value node_loader_impl_async_class_destroy_safe(napi_env env, napi_callback_info info);
 
 static value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_discover_function_safe discover_function_safe);
 
@@ -940,7 +1084,7 @@ static napi_value node_loader_impl_class_method_property_callback(napi_env env, 
 	napi_get_cb_info(env, info, &argc, NULL, &this_obj, &closure_cast.ptr);
 	closure_cast.safe->node_impl->env = env;
 
-	if (argc != 1)
+	if (argc > 0)
 	{
 		argv = new napi_value[argc];
 	}
@@ -972,6 +1116,7 @@ static napi_value node_loader_impl_class_method_property_callback(napi_env env, 
 	}
 	else if (n_methods > 1)
 	{
+		//TODO: this implementation is problematic
 		for (size_t iterator = 0; iterator < n_methods; ++iterator)
 		{
 			m = vector_at_type(methods, iterator, method);
@@ -996,6 +1141,8 @@ static napi_value node_loader_impl_class_method_property_callback(napi_env env, 
 	}
 
 	value result = object_call(obj_impl, m, args, argc);
+	delete[] args;
+
 	return node_loader_impl_value_to_napi(closure_cast.safe->node_impl, env, result);
 }
 
@@ -1004,13 +1151,13 @@ static napi_value node_loader_impl_class_set_data_property_callback(napi_env env
 	napi_status status;
 	loader_impl_async_safe_cast<loader_impl_class_property_callback_closure> closure_cast = { NULL };
 	size_t argc = 1;
-	napi_value *argv = new napi_value[argc];
+	napi_value argv;
 	napi_value this_obj;
 
-	napi_get_cb_info(env, info, &argc, argv, &this_obj, &closure_cast.ptr);
+	napi_get_cb_info(env, info, &argc, &argv, &this_obj, &closure_cast.ptr);
 	closure_cast.safe->node_impl->env = env;
 
-	value arg = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv[0]);
+	value arg = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv);
 
 	value obj;
 	napi_unwrap(env, this_obj, &obj);
@@ -1051,75 +1198,109 @@ static napi_value node_loader_impl_class_get_data_property_callback(napi_env env
 static napi_value node_loader_impl_class_constructor_callback(napi_env env, napi_callback_info info)
 {
 	napi_status status;
+	napi_value target;
+	status = napi_get_new_target(env, info, &target);
+	node_loader_impl_exception(env, status);
+
 	loader_impl_async_safe_cast<loader_impl_class_constructor_callback_closure> closure_cast = { NULL };
 
-	napi_get_cb_info(env, info, NULL, NULL, NULL, &closure_cast.ptr);
+	napi_value jsthis;
+	napi_get_cb_info(env, info, NULL, NULL, &jsthis, &closure_cast.ptr);
 
 	/* Set environment */
 	closure_cast.safe->node_impl->env = env;
 
-	char *klass_name_str = const_cast<char *>(class_name(closure_cast.safe->cls));
+	bool is_constructor = target != nullptr;
 
-	constructor ctor = class_default_constructor(closure_cast.safe->cls);
-	if (ctor == NULL)
+	if (is_constructor)
 	{
-		log_write("metacall", LOG_LEVEL_INFO, "NodeJS Loader No default constructor in class: ", klass_name_str);
+		const char *klass_name_str = class_name(closure_cast.safe->cls);
+
+		constructor ctor = class_default_constructor(closure_cast.safe->cls);
+		if (ctor == NULL)
+		{
+			log_write("metacall", LOG_LEVEL_INFO, "NodeJS Loader No default constructor in class: ", klass_name_str);
+		}
+
+		size_t argc = constructor_count(ctor);
+		napi_value *argv = new napi_value[argc];
+		if (argv == nullptr)
+		{
+			napi_throw_error(env, NULL, "NodeJS Loader memory allocation failed");
+		}
+
+		napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+		void **args = new void *[argc];
+		if (args == nullptr)
+		{
+			napi_throw_error(env, NULL, "NodeJS Loader memory allocation failed");
+		}
+
+		for (size_t iterator = 0; iterator < argc; ++iterator)
+		{
+			args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv[iterator]);
+		}
+
+		type_id *ids = node_loader_impl_type_ids(args, argc);
+
+		if (ids != NULL)
+		{
+			ctor = class_constructor(closure_cast.safe->cls, ids, argc);
+			free(ids);
+		}
+
+		//convert class_name to lower case
+		std::string obj_name(klass_name_str);
+		for (size_t i = 0; i < obj_name.size(); i++)
+		{
+			obj_name[i] = std::tolower(obj_name[i]);
+		}
+
+		object o = class_new(closure_cast.safe->cls, obj_name.c_str(), ctor, args, argc);
+
+		delete[] args;
+
+		if (o == NULL)
+		{
+			napi_throw_error(env, NULL, "NodeJS Loader Failed to create object");
+		}
+
+		value v = value_create_object(o);
+
+		if (v == NULL)
+		{
+			object_destroy(o);
+			std::string error_msg = "NodeJS Loader Failed to create object for class: ";
+			error_msg += klass_name_str;
+			napi_throw_error(env, NULL, error_msg.c_str());
+		}
+
+		//Todo: Implement finalize callback
+		status = napi_wrap(env, jsthis, v, NULL, NULL, NULL);
+		node_loader_impl_exception(env, status);
+
+		return jsthis;
 	}
-
-	size_t argc = constructor_count(ctor);
-	napi_value *argv = new napi_value[argc];
-
-	napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
-
-	void **args = new void *[argc];
-
-	for (size_t iterator = 0; iterator < argc; ++iterator)
+	else
 	{
-		args[iterator] = node_loader_impl_napi_to_value(closure_cast.safe->node_impl, env, NULL, argv[iterator]);
+		napi_value cons;
+		status = napi_get_reference_value(env, closure_cast.safe->constructor_ref, &cons);
+		node_loader_impl_exception(env, status);
+
+		size_t argc;
+		status = napi_get_cb_info(env, info, &argc, NULL, NULL, NULL);
+		node_loader_impl_exception(env, status);
+
+		napi_value *argv = new napi_value[argc];
+		status = napi_get_cb_info(env, info, &argc, argv, NULL, NULL);
+
+		napi_value instance;
+		status = napi_new_instance(env, cons, argc, argv, &instance);
+		node_loader_impl_exception(env, status);
+
+		return instance;
 	}
-
-	type_id *ids = node_loader_impl_type_ids(args, argc);
-
-	ctor = class_constructor(closure_cast.safe->cls, ids, argc);
-
-	//convert class_name to lower case
-	std::string obj_name(klass_name_str);
-	for (size_t i = 0; i < obj_name.size(); i++)
-	{
-		obj_name[i] = std::tolower(obj_name[i]);
-	}
-
-	object o = class_new(closure_cast.safe->cls, obj_name.c_str(), ctor, args, argc);
-
-	if (ids != NULL)
-	{
-		free(ids);
-	}
-
-	if (o == NULL)
-	{
-		return NULL;
-	}
-
-	value v = value_create_object(o);
-
-	if (v == NULL)
-	{
-		object_destroy(o);
-		std::string error_msg = "NodeJS Loader Failed to create object for class: ";
-		error_msg += klass_name_str;
-		napi_throw_error(env, NULL, error_msg.c_str());
-	}
-
-	napi_value js_object;
-	status = napi_create_object(env, &js_object);
-	node_loader_impl_exception(env, status);
-
-	//Todo: Implement finalize callback
-	status = napi_wrap(env, js_object, v, NULL, NULL, NULL);
-	node_loader_impl_exception(env, status);
-
-	return js_object;
 }
 
 value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, napi_value recv, napi_value v)
@@ -1341,19 +1522,6 @@ value node_loader_impl_napi_to_value(loader_impl_node node_impl, napi_env env, n
 	}
 	else if (valuetype == napi_function)
 	{
-		/* Check if function is an ES6 class */
-		struct loader_impl_discover_klass_safe_type discover_klass_safe = {
-			node_impl,
-			v
-		};
-
-		ret = node_loader_impl_discover_klass_safe(env, &discover_klass_safe);
-
-		if (ret != NULL)
-		{
-			return ret;
-		}
-
 		struct loader_impl_async_discover_function_safe_type discover_function_safe = {
 			node_impl,
 			v
@@ -1591,89 +1759,102 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 	else if (id == TYPE_CLASS)
 	{
 		klass cls = value_to_class(arg_value);
-		vector methods = class_method_names(cls);
-		vector static_methods = class_static_method_names(cls);
-		vector attributes = class_attribute_names(cls);
-		vector static_attributes = class_static_attribute_names(cls);
 
+		vector methods = class_get_methods(cls);
+		vector static_methods = class_get_static_methods(cls);
+		vector attributes = class_get_attributes(cls);
+		vector static_attributes = class_get_static_attributes(cls);
 		size_t property_count = vector_size(methods) + vector_size(static_methods) + vector_size(attributes) + vector_size(static_attributes);
+
 		napi_property_descriptor *properties = new napi_property_descriptor[property_count];
 
 		size_t iterator = 0;
 		//Define method properties
 		for (size_t i = 0; i < vector_size(methods) && iterator < property_count; iterator++, i++)
 		{
+			method m = vector_at_type(methods, i, method);
+			const char *m_name = method_name(m);
+
 			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
 
 			closure->cls = cls;
 			closure->node_impl = node_impl;
-			closure->prop_name = vector_at_type(methods, i, char *);
+			closure->prop_name = m_name;
 
-			properties[iterator].utf8name = vector_at_type(methods, i, char *);
+			properties[iterator].utf8name = m_name;
 			properties[iterator].name = NULL;
 			properties[iterator].method = node_loader_impl_class_method_property_callback;
 			properties[iterator].getter = NULL;
 			properties[iterator].setter = NULL;
 			properties[iterator].value = NULL;
 			properties[iterator].attributes = napi_default_method;
-			properties[iterator].data = (void *)closure;
+			properties[iterator].data = reinterpret_cast<void *>(closure);
 		}
 
 		//Define static method properties
 		for (size_t i = 0; i < vector_size(static_methods) && iterator < property_count; iterator++, i++)
 		{
+			method m = vector_at_type(static_methods, i, method);
+			const char *m_name = method_name(m);
+
 			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
 
 			closure->cls = cls;
 			closure->node_impl = node_impl;
-			closure->prop_name = vector_at_type(static_methods, i, char *);
+			closure->prop_name = m_name;
 
-			properties[iterator].utf8name = vector_at_type(static_methods, i, char *);
+			properties[iterator].utf8name = m_name;
 			properties[iterator].name = NULL;
 			properties[iterator].method = node_loader_impl_class_method_property_callback;
 			properties[iterator].getter = NULL;
 			properties[iterator].setter = NULL;
 			properties[iterator].value = NULL;
 			properties[iterator].attributes = napi_static;
-			properties[iterator].data = (void *)closure;
+			properties[iterator].data = reinterpret_cast<void *>(closure);
 		}
 
 		//Define attribute properties
 		for (size_t i = 0; i < vector_size(attributes) && iterator < property_count; iterator++, i++)
 		{
+			attribute attr = vector_at_type(attributes, i, attribute);
+			const char *attr_name = attribute_name(attr);
+
 			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
 
 			closure->cls = cls;
 			closure->node_impl = node_impl;
-			closure->prop_name = vector_at_type(attributes, i, char *);
+			closure->prop_name = attr_name;
 
-			properties[iterator].utf8name = vector_at_type(attributes, i, char *);
+			properties[iterator].utf8name = attr_name;
 			properties[iterator].name = NULL;
 			properties[iterator].method = NULL;
 			properties[iterator].getter = node_loader_impl_class_get_data_property_callback;
 			properties[iterator].setter = node_loader_impl_class_set_data_property_callback;
 			properties[iterator].value = NULL;
 			properties[iterator].attributes = napi_default_jsproperty;
-			properties[iterator].data = (void *)closure;
+			properties[iterator].data = reinterpret_cast<void *>(closure);
 		}
 
 		//NodeJS doesn't support static attributes so we define them as normal attributes
 		for (size_t i = 0; i < vector_size(static_attributes) && iterator < property_count; iterator++, i++)
 		{
+			attribute attr = vector_at_type(static_attributes, i, attribute);
+			const char *attr_name = attribute_name(attr);
+
 			loader_impl_class_property_callback_closure closure = new struct loader_impl_class_property_callback_closure_type;
 
 			closure->cls = cls;
 			closure->node_impl = node_impl;
-			closure->prop_name = vector_at_type(static_attributes, i, char *);
+			closure->prop_name = attr_name;
 
-			properties[iterator].utf8name = vector_at_type(static_attributes, i, char *);
+			properties[iterator].utf8name = attr_name;
 			properties[iterator].name = NULL;
 			properties[iterator].method = NULL;
 			properties[iterator].getter = node_loader_impl_class_get_data_property_callback;
 			properties[iterator].setter = node_loader_impl_class_set_data_property_callback;
 			properties[iterator].value = NULL;
 			properties[iterator].attributes = napi_default_jsproperty;
-			properties[iterator].data = (void *)closure;
+			properties[iterator].data = reinterpret_cast<void *>(closure);
 		}
 
 		napi_value result;
@@ -1684,6 +1865,10 @@ napi_value node_loader_impl_value_to_napi(loader_impl_node node_impl, napi_env e
 
 		status = napi_define_class(env, class_name(cls), NAPI_AUTO_LENGTH, node_loader_impl_class_constructor_callback, (void *)ctor_data, property_count, properties, &result);
 		node_loader_impl_exception(env, status);
+
+		status = napi_create_reference(env, result, 1, &ctor_data->constructor_ref);
+		node_loader_impl_exception(env, status);
+
 		return result;
 	}
 	else if (id == TYPE_OBJECT)
@@ -2208,83 +2393,207 @@ int node_object_interface_create(object obj, object_impl impl)
 
 value node_object_interface_get(object obj, object_impl impl, struct accessor_type *accessor)
 {
-	(void)obj;
-
 	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
-	napi_value obj_value = NULL;
+	value ret = NULL;
 	napi_status status;
 
-	status = napi_get_reference_value(node_obj->node_impl->env, node_obj->obj_ref, &obj_value);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+	/* Set up call safe arguments */
+	node_obj->node_impl->object_get_safe->node_impl = node_obj->node_impl;
+	node_obj->node_impl->object_get_safe->obj = obj;
+	node_obj->node_impl->object_get_safe->node_obj = node_obj;
+	node_obj->node_impl->object_get_safe->accessor = accessor;
+	node_obj->node_impl->object_get_safe->ret_v = NULL;
 
-	attribute attr = accessor->data.attr;
-	const char *key = (const char *)attribute_name(attr);
-	//type fieldType = (type)attribute_type(attr);
+	/* Check if we are in the JavaScript thread */
+	if (node_obj->node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_object_get_safe(node_obj->node_impl->env, node_obj->node_impl->object_get_safe);
 
-	napi_value prop_value = NULL;
-	status = napi_get_named_property(node_obj->node_impl->env, obj_value, key, &prop_value);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+		/* Set up return of the static method call */
+		ret = node_obj->node_impl->object_get_safe->ret_v;
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_obj->node_impl->locked.load() == false && uv_mutex_trylock(&node_obj->node_impl->mutex) == 0)
+	{
+		node_obj->node_impl->locked.store(true);
 
-	value v = node_loader_impl_napi_to_value(node_obj->node_impl, node_obj->node_impl->env, nullptr, prop_value);
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_obj->node_impl->threadsafe_object_get);
 
-	return v;
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function for object set in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_obj->node_impl->threadsafe_object_get, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "call to object set thread safe function failed in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_obj->node_impl->threadsafe_object_get, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to release object set thread safe function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_obj->node_impl->cond, &node_obj->node_impl->mutex);
+
+		/* Set up return of the function call */
+		ret = node_obj->node_impl->object_get_safe->ret_v;
+
+		node_obj->node_impl->locked.store(false);
+
+		/* Unlock the mutex */
+		uv_mutex_unlock(&node_obj->node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_object_interface_set, the call has not been executed in order to avoid the deadlock");
+	}
+
+	return ret;
 }
 
 int node_object_interface_set(object obj, object_impl impl, struct accessor_type *accessor, value v)
 {
-	(void)obj;
-
 	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
-	napi_value obj_value = NULL;
 	napi_status status;
 
-	status = napi_get_reference_value(node_obj->node_impl->env, node_obj->obj_ref, &obj_value);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+	/* Set up call safe arguments */
+	node_obj->node_impl->object_set_safe->node_impl = node_obj->node_impl;
+	node_obj->node_impl->object_set_safe->obj = obj;
+	node_obj->node_impl->object_set_safe->node_obj = node_obj;
+	node_obj->node_impl->object_set_safe->accessor = accessor;
+	node_obj->node_impl->object_set_safe->v = v;
 
-	attribute attr = accessor->data.attr;
-	const char *key = (const char *)attribute_name(attr);
-	//type fieldType = (type)attribute_type(attr);
+	/* Check if we are in the JavaScript thread */
+	if (node_obj->node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_object_set_safe(node_obj->node_impl->env, node_obj->node_impl->object_set_safe);
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_obj->node_impl->locked.load() == false && uv_mutex_trylock(&node_obj->node_impl->mutex) == 0)
+	{
+		node_obj->node_impl->locked.store(true);
 
-	napi_value prop_value = node_loader_impl_value_to_napi(node_obj->node_impl, node_obj->node_impl->env, v);
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_obj->node_impl->threadsafe_object_set);
 
-	status = napi_set_named_property(node_obj->node_impl->env, obj_value, key, prop_value);
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function for object set in NodeJS loader");
+		}
 
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_obj->node_impl->threadsafe_object_set, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "call to object set thread safe function failed in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_obj->node_impl->threadsafe_object_set, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to release object set thread safe function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_obj->node_impl->cond, &node_obj->node_impl->mutex);
+
+		node_obj->node_impl->locked.store(false);
+
+		/* Unlock the mutex */
+		uv_mutex_unlock(&node_obj->node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_object_interface_set, the call has not been executed in order to avoid the deadlock");
+	}
 
 	return 0;
 }
 
 value node_object_interface_method_invoke(object obj, object_impl impl, method m, object_args args, size_t argc)
 {
-	(void)obj;
 	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
-	napi_value obj_value;
-	napi_value result;
+	value ret = NULL;
 	napi_status status;
 
-	status = napi_get_reference_value(node_obj->node_impl->env, node_obj->obj_ref, &obj_value);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+	/* Set up call safe arguments */
+	node_obj->node_impl->object_method_invoke_safe->node_impl = node_obj->node_impl;
+	node_obj->node_impl->object_method_invoke_safe->obj = obj;
+	node_obj->node_impl->object_method_invoke_safe->node_obj = node_obj;
+	node_obj->node_impl->object_method_invoke_safe->m = m;
+	node_obj->node_impl->object_method_invoke_safe->args = args;
+	node_obj->node_impl->object_method_invoke_safe->argc = argc;
+	node_obj->node_impl->object_method_invoke_safe->ret_v = nullptr;
 
-	const char *m_name = method_name(m);
-
-	napi_value m_value = NULL;
-	status = napi_get_named_property(node_obj->node_impl->env, obj_value, m_name, &m_value);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
-
-	napi_value *m_args = new napi_value[argc];
-
-	for (size_t i = 0; i < argc; i++)
+	/* Check if we are in the JavaScript thread */
+	if (node_obj->node_impl->js_thread_id == std::this_thread::get_id())
 	{
-		m_args[i] = node_loader_impl_value_to_napi(node_obj->node_impl, node_obj->node_impl->env, args[i]);
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_object_method_invoke_safe(node_obj->node_impl->env, node_obj->node_impl->object_method_invoke_safe);
+
+		/* Set up return of the static method call */
+		ret = node_obj->node_impl->object_method_invoke_safe->ret_v;
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_obj->node_impl->locked.load() == false && uv_mutex_trylock(&node_obj->node_impl->mutex) == 0)
+	{
+		node_obj->node_impl->locked.store(true);
+
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_obj->node_impl->threadsafe_object_method_invoke);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function for object method invoke in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_obj->node_impl->threadsafe_object_method_invoke, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "call to object method invoke thread safe function failed in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_obj->node_impl->threadsafe_object_method_invoke, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to release object method invoke thread safe function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_obj->node_impl->cond, &node_obj->node_impl->mutex);
+
+		/* Set up return of the function call */
+		ret = node_obj->node_impl->object_method_invoke_safe->ret_v;
+
+		node_obj->node_impl->locked.store(false);
+
+		/* Unlock the mutex */
+		uv_mutex_unlock(&node_obj->node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_object_interface_method_invoke, the call has not been executed in order to avoid the deadlock");
 	}
 
-	napi_call_function(node_obj->node_impl->env, obj_value, m_value, argc, m_args, &result);
-
-	value v = node_loader_impl_napi_to_value(node_obj->node_impl, node_obj->node_impl->env, nullptr, result);
-
-	delete[] m_args;
-
-	return v;
+	return ret;
 }
 
 value node_object_interface_method_await(object obj, object_impl impl, method m, object_args args, size_t size, object_resolve_callback resolve, object_reject_callback reject, void *ctx)
@@ -2314,18 +2623,71 @@ int node_object_interface_destructor(object obj, object_impl impl)
 
 void node_object_interface_destroy(object obj, object_impl impl)
 {
-	(void)obj;
-
 	loader_impl_node_object node_obj = (loader_impl_node_object)impl;
 
 	if (node_obj != NULL)
 	{
 		if (loader_is_destroyed(node_obj->impl) != 0)
 		{
-			//Todo
+			loader_impl_node node_impl = node_obj->node_impl;
+			napi_status status;
+
+			/* Set up class destroy safe arguments */
+			node_obj->node_impl->object_destroy_safe->node_impl = node_impl;
+			node_obj->node_impl->object_destroy_safe->node_obj = node_obj;
+			node_obj->node_impl->object_destroy_safe->obj = obj;
+
+			/* Check if we are in the JavaScript thread */
+			if (node_impl->js_thread_id == std::this_thread::get_id())
+			{
+				/* We are already in the V8 thread, we can call safely */
+				node_loader_impl_object_destroy_safe(node_impl->env, node_impl->object_destroy_safe);
+			}
+			/* Lock the mutex and set the parameters */
+			else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+			{
+				node_impl->locked.store(true);
+
+				/* Acquire the thread safe function in order to do the call */
+				status = napi_acquire_threadsafe_function(node_impl->threadsafe_object_destroy);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function class_destroy in NodeJS loader");
+				}
+
+				/* Execute the thread safe call in a nonblocking manner */
+				status = napi_call_threadsafe_function(node_impl->threadsafe_object_destroy, nullptr, napi_tsfn_nonblocking);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "call to class_destroy_safe thread safe function failed in NodeJS loader");
+				}
+
+				/* Release call safe function */
+				status = napi_release_threadsafe_function(node_impl->threadsafe_object_destroy, napi_tsfn_release);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Unable to release class_destroy_safe thread safe function in NodeJS loader");
+				}
+
+				/* Wait for the execution of the safe call */
+				uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+				node_impl->locked.store(false);
+
+				/* Unlock call safe mutex */
+				uv_mutex_unlock(&node_impl->mutex);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_class_interface_destroy, the call has not been executed in order to avoid the deadlock");
+			}
 		}
 
-		free(node_obj);
+		/* Delete node class impl */
+		delete node_obj;
 	}
 }
 
@@ -2358,39 +2720,73 @@ object node_class_interface_constructor(klass cls, class_impl impl, const char *
 
 	loader_impl_node_class node_klass = (loader_impl_node_class)impl;
 
-	loader_impl_node_object node_obj = new struct loader_impl_node_object_type;
-
-	object obj = object_create(name, ACCESSOR_TYPE_DYNAMIC, node_obj, &node_object_interface_singleton, cls);
-
-	if (obj == NULL)
-	{
-		return NULL;
-	}
-
-	napi_value *m_args = new napi_value[argc];
-
-	for (size_t i = 0; i < argc; i++)
-	{
-		m_args[i] = node_loader_impl_value_to_napi(node_obj->node_impl, node_obj->node_impl->env, args[i]);
-	}
-
+	object ret = nullptr;
 	napi_status status;
-	napi_value klass_cons;
-	status = napi_get_reference_value(node_obj->node_impl->env, node_klass->klass_ref, &klass_cons);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
 
-	napi_value result;
-	status = napi_new_instance(node_obj->node_impl->env, klass_cons, argc, m_args, &result);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+	/* Set up call safe arguments */
+	node_klass->node_impl->class_ctor_safe->node_impl = node_klass->node_impl;
+	node_klass->node_impl->class_ctor_safe->cls = cls;
+	node_klass->node_impl->class_ctor_safe->node_klass = node_klass;
+	node_klass->node_impl->class_ctor_safe->name = name;
+	node_klass->node_impl->class_ctor_safe->args = args;
+	node_klass->node_impl->class_ctor_safe->argc = argc;
+	node_klass->node_impl->class_ctor_safe->ret_obj = nullptr;
 
-	//Todo check that object is an instance of constructor
+	/* Check if we are in the JavaScript thread */
+	if (node_klass->node_impl->js_thread_id == std::this_thread::get_id())
+	{
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_class_ctor_safe(node_klass->node_impl->env, node_klass->node_impl->class_ctor_safe);
 
-	status = napi_create_reference(node_obj->node_impl->env, result, 1, &node_obj->obj_ref);
-	node_loader_impl_exception(node_obj->node_impl->env, status);
+		/* Set up return of the constructor call */
+		ret = node_klass->node_impl->class_ctor_safe->ret_obj;
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_klass->node_impl->locked.load() == false && uv_mutex_trylock(&node_klass->node_impl->mutex) == 0)
+	{
+		node_klass->node_impl->locked.store(true);
 
-	delete[] m_args;
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_klass->node_impl->threadsafe_class_ctor);
 
-	return obj;
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function for class constructor call in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_klass->node_impl->threadsafe_class_ctor, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "call to class constructor thread safe function failed in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_klass->node_impl->threadsafe_class_ctor, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to release class constructor thread safe function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_klass->node_impl->cond, &node_klass->node_impl->mutex);
+
+		/* Set up return of the function call */
+		ret = node_klass->node_impl->class_ctor_safe->ret_obj;
+
+		node_klass->node_impl->locked.store(false);
+
+		/* Unlock the mutex */
+		uv_mutex_unlock(&node_klass->node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_class_interface_constructor, the call has not been executed in order to avoid the deadlock");
+	}
+
+	return ret;
 }
 
 value node_class_interface_static_get(klass cls, class_impl impl, struct accessor_type *accessor)
@@ -2416,34 +2812,73 @@ value node_class_interface_static_invoke(klass cls, class_impl impl, method m, c
 {
 	(void)cls;
 	loader_impl_node_class node_klass = (loader_impl_node_class)impl;
-	napi_value klass_cons;
-	napi_value result;
+	value ret = NULL;
 	napi_status status;
 
-	status = napi_get_reference_value(node_klass->node_impl->env, node_klass->klass_ref, &klass_cons);
-	node_loader_impl_exception(node_klass->node_impl->env, status);
+	/* Set up call safe arguments */
+	node_klass->node_impl->class_static_invoke_safe->node_impl = node_klass->node_impl;
+	node_klass->node_impl->class_static_invoke_safe->cls = cls;
+	node_klass->node_impl->class_static_invoke_safe->node_klass = node_klass;
+	node_klass->node_impl->class_static_invoke_safe->m = m;
+	node_klass->node_impl->class_static_invoke_safe->args = args;
+	node_klass->node_impl->class_static_invoke_safe->argc = argc;
+	node_klass->node_impl->class_static_invoke_safe->ret_v = nullptr;
 
-	const char *m_name = method_name(m);
-
-	napi_value m_value = NULL;
-	status = napi_get_named_property(node_klass->node_impl->env, klass_cons, m_name, &m_value);
-	node_loader_impl_exception(node_klass->node_impl->env, status);
-
-	napi_value *m_args = new napi_value[argc];
-
-	for (size_t i = 0; i < argc; i++)
+	/* Check if we are in the JavaScript thread */
+	if (node_klass->node_impl->js_thread_id == std::this_thread::get_id())
 	{
-		m_args[i] = node_loader_impl_value_to_napi(node_klass->node_impl, node_klass->node_impl->env, args[i]);
+		/* We are already in the V8 thread, we can call safely */
+		node_loader_impl_class_static_invoke_safe(node_klass->node_impl->env, node_klass->node_impl->class_static_invoke_safe);
+
+		/* Set up return of the static method call */
+		ret = node_klass->node_impl->class_static_invoke_safe->ret_v;
+	}
+	/* Lock the mutex and set the parameters */
+	else if (node_klass->node_impl->locked.load() == false && uv_mutex_trylock(&node_klass->node_impl->mutex) == 0)
+	{
+		node_klass->node_impl->locked.store(true);
+
+		/* Acquire the thread safe function in order to do the call */
+		status = napi_acquire_threadsafe_function(node_klass->node_impl->threadsafe_class_static_invoke);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function for static method invoke in NodeJS loader");
+		}
+
+		/* Execute the thread safe call in a nonblocking manner */
+		status = napi_call_threadsafe_function(node_klass->node_impl->threadsafe_class_static_invoke, nullptr, napi_tsfn_nonblocking);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "call to static method invoke thread safe function failed in NodeJS loader");
+		}
+
+		/* Release call safe function */
+		status = napi_release_threadsafe_function(node_klass->node_impl->threadsafe_class_static_invoke, napi_tsfn_release);
+
+		if (status != napi_ok)
+		{
+			log_write("metacall", LOG_LEVEL_ERROR, "Unable to release static method invoke thread safe function in NodeJS loader");
+		}
+
+		/* Wait for the execution of the safe call */
+		uv_cond_wait(&node_klass->node_impl->cond, &node_klass->node_impl->mutex);
+
+		/* Set up return of the function call */
+		ret = node_klass->node_impl->class_static_invoke_safe->ret_v;
+
+		node_klass->node_impl->locked.store(false);
+
+		/* Unlock the mutex */
+		uv_mutex_unlock(&node_klass->node_impl->mutex);
+	}
+	else
+	{
+		log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_class_interface_static_invoke, the call has not been executed in order to avoid the deadlock");
 	}
 
-	status = napi_call_function(node_klass->node_impl->env, klass_cons, m_value, argc, m_args, &result);
-	node_loader_impl_exception(node_klass->node_impl->env, status);
-
-	value v = node_loader_impl_napi_to_value(node_klass->node_impl, node_klass->node_impl->env, nullptr, result);
-
-	delete[] m_args;
-
-	return v;
+	return ret;
 }
 
 value node_class_interface_static_await(klass cls, class_impl impl, method m, class_args args, size_t size, class_resolve_callback resolve, class_reject_callback reject, void *ctx)
@@ -2463,18 +2898,71 @@ value node_class_interface_static_await(klass cls, class_impl impl, method m, cl
 
 void node_class_interface_destroy(klass cls, class_impl impl)
 {
-	loader_impl_node_class node_class = (loader_impl_node_class)impl;
+	loader_impl_node_class node_klass = (loader_impl_node_class)impl;
 
-	(void)cls;
-
-	if (node_class != NULL)
+	if (node_klass != NULL)
 	{
-		if (loader_is_destroyed(node_class->impl) != 0)
+		if (loader_is_destroyed(node_klass->impl) != 0)
 		{
-			//TODO
+			loader_impl_node node_impl = node_klass->node_impl;
+			napi_status status;
+
+			/* Set up class destroy safe arguments */
+			node_klass->node_impl->class_destroy_safe->node_impl = node_impl;
+			node_klass->node_impl->class_destroy_safe->node_klass = node_klass;
+			node_klass->node_impl->class_destroy_safe->cls = cls;
+
+			/* Check if we are in the JavaScript thread */
+			if (node_impl->js_thread_id == std::this_thread::get_id())
+			{
+				/* We are already in the V8 thread, we can call safely */
+				node_loader_impl_class_destroy_safe(node_impl->env, node_impl->class_destroy_safe);
+			}
+			/* Lock the mutex and set the parameters */
+			else if (node_impl->locked.load() == false && uv_mutex_trylock(&node_impl->mutex) == 0)
+			{
+				node_impl->locked.store(true);
+
+				/* Acquire the thread safe function in order to do the call */
+				status = napi_acquire_threadsafe_function(node_impl->threadsafe_class_destroy);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Unable to aquire thread safe function class_destroy in NodeJS loader");
+				}
+
+				/* Execute the thread safe call in a nonblocking manner */
+				status = napi_call_threadsafe_function(node_impl->threadsafe_class_destroy, nullptr, napi_tsfn_nonblocking);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "call to class_destroy_safe thread safe function failed in NodeJS loader");
+				}
+
+				/* Release call safe function */
+				status = napi_release_threadsafe_function(node_impl->threadsafe_class_destroy, napi_tsfn_release);
+
+				if (status != napi_ok)
+				{
+					log_write("metacall", LOG_LEVEL_ERROR, "Unable to release class_destroy_safe thread safe function in NodeJS loader");
+				}
+
+				/* Wait for the execution of the safe call */
+				uv_cond_wait(&node_impl->cond, &node_impl->mutex);
+
+				node_impl->locked.store(false);
+
+				/* Unlock call safe mutex */
+				uv_mutex_unlock(&node_impl->mutex);
+			}
+			else
+			{
+				log_write("metacall", LOG_LEVEL_ERROR, "Potential deadlock detected in node_class_interface_destroy, the call has not been executed in order to avoid the deadlock");
+			}
 		}
 
-		free(node_class);
+		/* Delete node class impl */
+		delete node_klass;
 	}
 }
 
@@ -2789,6 +3277,414 @@ napi_value node_loader_impl_async_func_call_safe(napi_env env, napi_callback_inf
 	uv_cond_signal(&func_call_cast.safe->node_impl->cond);
 
 	uv_mutex_unlock(&func_call_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_object_method_invoke_safe(napi_env env, loader_impl_async_object_method_invoke_safe object_method_invoke_safe)
+{
+	napi_value obj_value;
+	napi_value result;
+	napi_status status;
+
+	status = napi_get_reference_value(env, object_method_invoke_safe->node_obj->obj_ref, &obj_value);
+	node_loader_impl_exception(env, status);
+
+	const char *m_name = method_name(object_method_invoke_safe->m);
+
+	napi_value m_value = NULL;
+	status = napi_get_named_property(env, obj_value, m_name, &m_value);
+	node_loader_impl_exception(env, status);
+
+	napi_value *m_args = new napi_value[object_method_invoke_safe->argc];
+
+	for (size_t i = 0; i < object_method_invoke_safe->argc; i++)
+	{
+		m_args[i] = node_loader_impl_value_to_napi(object_method_invoke_safe->node_impl, env, object_method_invoke_safe->args[i]);
+	}
+
+	napi_call_function(env, obj_value, m_value, object_method_invoke_safe->argc, m_args, &result);
+
+	value v = node_loader_impl_napi_to_value(object_method_invoke_safe->node_impl, env, nullptr, result);
+
+	delete[] m_args;
+
+	object_method_invoke_safe->ret_v = v;
+}
+
+napi_value node_loader_impl_async_object_method_invoke_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_object_method_invoke_safe> object_method_invoke_cast = { NULL };
+	napi_status status;
+
+	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &object_method_invoke_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&object_method_invoke_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	object_method_invoke_cast.safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_object_method_invoke_safe(env, object_method_invoke_cast.safe);
+
+	/* Signal function call condition */
+	uv_cond_signal(&object_method_invoke_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&object_method_invoke_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_object_get_safe(napi_env env, loader_impl_async_object_get_safe object_get_safe)
+{
+	napi_value obj_value = NULL;
+	napi_status status;
+
+	status = napi_get_reference_value(env, object_get_safe->node_obj->obj_ref, &obj_value);
+	node_loader_impl_exception(env, status);
+
+	attribute attr = object_get_safe->accessor->data.attr;
+	const char *key = (const char *)attribute_name(attr);
+	//type fieldType = (type)attribute_type(attr);
+
+	napi_value prop_value = NULL;
+	status = napi_get_named_property(env, obj_value, key, &prop_value);
+	node_loader_impl_exception(env, status);
+
+	value v = node_loader_impl_napi_to_value(object_get_safe->node_impl, env, nullptr, prop_value);
+
+	object_get_safe->ret_v = v;
+}
+
+napi_value node_loader_impl_async_object_get_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_object_get_safe> object_get_cast = { NULL };
+	napi_status status;
+
+	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &object_get_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&object_get_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	object_get_cast.safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_object_get_safe(env, object_get_cast.safe);
+
+	/* Signal function call condition */
+	uv_cond_signal(&object_get_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&object_get_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_object_set_safe(napi_env env, loader_impl_async_object_set_safe object_set_safe)
+{
+	napi_value obj_value = NULL;
+	napi_status status;
+
+	status = napi_get_reference_value(env, object_set_safe->node_obj->obj_ref, &obj_value);
+	node_loader_impl_exception(env, status);
+
+	attribute attr = object_set_safe->accessor->data.attr;
+	const char *key = (const char *)attribute_name(attr);
+	//type fieldType = (type)attribute_type(attr);
+
+	napi_value prop_value = node_loader_impl_value_to_napi(object_set_safe->node_impl, env, object_set_safe->v);
+
+	status = napi_set_named_property(env, obj_value, key, prop_value);
+
+	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_object_set_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_object_set_safe> object_set_cast = { NULL };
+	napi_status status;
+
+	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &object_set_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&object_set_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	object_set_cast.safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_object_set_safe(env, object_set_cast.safe);
+
+	/* Signal function call condition */
+	uv_cond_signal(&object_set_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&object_set_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_object_destroy_safe(napi_env env, loader_impl_async_object_destroy_safe object_destroy_safe)
+{
+	uint32_t ref_count = 0;
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Clear class persistent reference */
+	status = napi_reference_unref(env, object_destroy_safe->node_obj->obj_ref, &ref_count);
+
+	node_loader_impl_exception(env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
+
+	status = napi_delete_reference(env, object_destroy_safe->node_obj->obj_ref);
+
+	node_loader_impl_exception(env, status);
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_object_destroy_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_object_destroy_safe> object_destroy_safe_cast = { NULL };
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &object_destroy_safe_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&object_destroy_safe_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	object_destroy_safe_cast.safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_object_destroy_safe(env, object_destroy_safe_cast.safe);
+
+	/* Signal function destroy condition */
+	uv_cond_signal(&object_destroy_safe_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&object_destroy_safe_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_class_static_invoke_safe(napi_env env, loader_impl_async_class_static_invoke_safe class_static_invoke_safe)
+{
+	napi_status status;
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	status = napi_open_handle_scope(env, &handle_scope);
+	;
+	napi_value klass_cons;
+	napi_value result;
+
+	status = napi_get_reference_value(env, class_static_invoke_safe->node_klass->klass_ref, &klass_cons);
+	node_loader_impl_exception(env, status);
+
+	const char *m_name = method_name(class_static_invoke_safe->m);
+
+	napi_value m_value = NULL;
+	status = napi_get_named_property(env, klass_cons, m_name, &m_value);
+	node_loader_impl_exception(env, status);
+
+	napi_value *m_args = new napi_value[class_static_invoke_safe->argc];
+
+	for (size_t i = 0; i < class_static_invoke_safe->argc; i++)
+	{
+		m_args[i] = node_loader_impl_value_to_napi(class_static_invoke_safe->node_impl, env, class_static_invoke_safe->args[i]);
+	}
+
+	//Not sure if we need to pass a recv value since this is a static method
+	status = napi_call_function(env, klass_cons, m_value, class_static_invoke_safe->argc, m_args, &result);
+	node_loader_impl_exception(env, status);
+
+	value v = node_loader_impl_napi_to_value(class_static_invoke_safe->node_impl, env, nullptr, result);
+
+	delete[] m_args;
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	class_static_invoke_safe->ret_v = v;
+}
+
+napi_value node_loader_impl_async_class_static_invoke_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_class_static_invoke_safe> class_static_invoke_cast = { NULL };
+	napi_status status;
+
+	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &class_static_invoke_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&class_static_invoke_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	class_static_invoke_cast.safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_class_static_invoke_safe(env, class_static_invoke_cast.safe);
+
+	/* Signal function call condition */
+	uv_cond_signal(&class_static_invoke_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&class_static_invoke_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_class_ctor_safe(napi_env env, loader_impl_async_class_ctor_safe class_ctor_safe)
+{
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	loader_impl_node_object node_obj = new struct loader_impl_node_object_type;
+
+	object obj = object_create(class_ctor_safe->name, ACCESSOR_TYPE_DYNAMIC, node_obj, &node_object_interface_singleton, class_ctor_safe->cls);
+
+	if (obj == NULL)
+	{
+		class_ctor_safe->ret_obj = NULL;
+		return;
+	}
+
+	/* Get loader implementation from class */
+	node_obj->node_impl = class_ctor_safe->node_impl;
+	//node_obj->impl = node_klass->impl;
+
+	napi_value *m_args = new napi_value[class_ctor_safe->argc];
+
+	for (size_t i = 0; i < class_ctor_safe->argc; i++)
+	{
+		m_args[i] = node_loader_impl_value_to_napi(class_ctor_safe->node_impl, env, class_ctor_safe->args[i]);
+	}
+
+	napi_value klass_cons;
+	status = napi_get_reference_value(env, class_ctor_safe->node_klass->klass_ref, &klass_cons);
+	node_loader_impl_exception(env, status);
+
+	napi_value result;
+	status = napi_new_instance(env, klass_cons, class_ctor_safe->argc, m_args, &result);
+	node_loader_impl_exception(env, status);
+
+	//Todo check that object is an instance of constructor
+
+	status = napi_create_reference(env, result, 1, &node_obj->obj_ref);
+	node_loader_impl_exception(env, status);
+
+	delete[] m_args;
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	class_ctor_safe->ret_obj = obj;
+}
+
+napi_value node_loader_impl_async_class_ctor_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_class_ctor_safe> class_ctor_safe_cast = { NULL };
+	napi_status status;
+
+	status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &class_ctor_safe_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock the call safe mutex and get the parameters */
+	uv_mutex_lock(&class_ctor_safe_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	class_ctor_safe_cast.safe->node_impl->env = env;
+
+	printf("calling class_ctor_safe async");
+	/* Call to the implementation function */
+	node_loader_impl_class_ctor_safe(env, class_ctor_safe_cast.safe);
+
+	/* Signal function call condition */
+	uv_cond_signal(&class_ctor_safe_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&class_ctor_safe_cast.safe->node_impl->mutex);
+
+	return nullptr;
+}
+
+void node_loader_impl_class_destroy_safe(napi_env env, loader_impl_async_class_destroy_safe class_destroy_safe)
+{
+	uint32_t ref_count = 0;
+	napi_handle_scope handle_scope;
+
+	/* Create scope */
+	napi_status status = napi_open_handle_scope(env, &handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	/* Clear class persistent reference */
+	status = napi_reference_unref(env, class_destroy_safe->node_klass->klass_ref, &ref_count);
+
+	node_loader_impl_exception(env, status);
+
+	if (ref_count != 0)
+	{
+		/* TODO: Error handling */
+	}
+
+	status = napi_delete_reference(env, class_destroy_safe->node_klass->klass_ref);
+
+	node_loader_impl_exception(env, status);
+
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+}
+
+napi_value node_loader_impl_async_class_destroy_safe(napi_env env, napi_callback_info info)
+{
+	loader_impl_async_safe_cast<loader_impl_async_class_destroy_safe> class_destroy_safe_cast = { NULL };
+
+	napi_status status = napi_get_cb_info(env, info, nullptr, nullptr, nullptr, &class_destroy_safe_cast.ptr);
+
+	node_loader_impl_exception(env, status);
+
+	/* Lock node implementation mutex */
+	uv_mutex_lock(&class_destroy_safe_cast.safe->node_impl->mutex);
+
+	/* Store environment for reentrant calls */
+	class_destroy_safe_cast.safe->node_impl->env = env;
+
+	/* Call to the implementation function */
+	node_loader_impl_class_destroy_safe(env, class_destroy_safe_cast.safe);
+
+	/* Signal function destroy condition */
+	uv_cond_signal(&class_destroy_safe_cast.safe->node_impl->cond);
+
+	uv_mutex_unlock(&class_destroy_safe_cast.safe->node_impl->mutex);
 
 	return nullptr;
 }
@@ -3739,6 +4635,28 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 		node_loader_impl_exception(env, status);
 
+		/* Check if function is an ES6 class */
+		bool is_klass = false;
+		status = napi_has_named_property(env, function_descriptor, "klass", &is_klass);
+
+		node_loader_impl_exception(env, status);
+
+		if (is_klass == true)
+		{
+			struct loader_impl_discover_klass_safe_type discover_klass_safe = {
+				discover_function_safe->node_impl,
+				discover_function_safe->func,
+				function_descriptor
+			};
+
+			value klass_value = node_loader_impl_discover_klass_safe(env, &discover_klass_safe);
+			/* Close scope */
+			status = napi_close_handle_scope(env, handle_scope);
+
+			node_loader_impl_exception(env, status);
+			return klass_value;
+		}
+
 		/* Convert return value (discover object) to context */
 		napi_value func_name;
 		char *func_name_str = NULL;
@@ -4017,13 +4935,10 @@ value node_loader_impl_discover_function_safe(napi_env env, loader_impl_async_di
 
 value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_klass_safe discover_klass_safe)
 {
-	static const char discover_klass_str[] = "discover_klass";
-	napi_value discover_klass_str_value;
-	napi_value function_table_object;
-	bool result = false;
 	napi_handle_scope handle_scope;
 	klass c = NULL;
 	constructor ctor = NULL;
+	value klass_value = NULL;
 	int ret = 1;
 
 	/* Create scope */
@@ -4031,60 +4946,19 @@ value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_kl
 
 	node_loader_impl_exception(env, status);
 
-	/* Get function table object from reference */
-	status = napi_get_reference_value(env, discover_klass_safe->node_impl->function_table_object_ref, &function_table_object);
+	/* Check if function is an ES6 class */
+	bool is_klass = false;
+	status = napi_has_named_property(env, discover_klass_safe->klass_descriptor, "klass", &is_klass);
 
 	node_loader_impl_exception(env, status);
 
-	/* Create function string */
-	status = napi_create_string_utf8(env, discover_klass_str, sizeof(discover_klass_str) - 1, &discover_klass_str_value);
-
-	node_loader_impl_exception(env, status);
-
-	/* Check if exists in the table */
-	status = napi_has_own_property(env, function_table_object, discover_klass_str_value, &result);
-
-	node_loader_impl_exception(env, status);
-
-	if (result == true)
+	if (is_klass == true)
 	{
-		napi_value klass_trampoline_discover;
-		napi_valuetype valuetype;
-		napi_value argv[1];
-
-		status = napi_get_named_property(env, function_table_object, discover_klass_str, &klass_trampoline_discover);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_typeof(env, klass_trampoline_discover, &valuetype);
-
-		node_loader_impl_exception(env, status);
-
-		if (valuetype != napi_function)
-		{
-			napi_throw_type_error(env, nullptr, "Invalid function discover in function table object");
-		}
-
-		/* Define parameters */
-		argv[0] = discover_klass_safe->klass;
-
-		/* Call to load from file function */
-		napi_value global, klass_descriptor;
-
-		status = napi_get_reference_value(env, discover_klass_safe->node_impl->global_ref, &global);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_call_function(env, global, klass_trampoline_discover, 1, argv, &klass_descriptor);
-
-		node_loader_impl_exception(env, status);
-
-		/* Convert return value (discover object) to context */
 		napi_value klass_name;
 		char *klass_name_str = NULL;
 		bool has_name = false;
 
-		status = napi_has_named_property(env, klass_descriptor, "name", &has_name);
+		status = napi_has_named_property(env, discover_klass_safe->klass_descriptor, "name", &has_name);
 
 		node_loader_impl_exception(env, status);
 
@@ -4093,7 +4967,7 @@ value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_kl
 		{
 			size_t klass_name_length = 0;
 
-			status = napi_get_named_property(env, klass_descriptor, "name", &klass_name);
+			status = napi_get_named_property(env, discover_klass_safe->klass_descriptor, "name", &klass_name);
 
 			node_loader_impl_exception(env, status);
 
@@ -4123,13 +4997,13 @@ value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_kl
 		napi_value methods;
 		bool has_methods = false;
 
-		status = napi_has_named_property(env, klass_descriptor, "methods", &has_methods);
+		status = napi_has_named_property(env, discover_klass_safe->klass_descriptor, "methods", &has_methods);
 
 		node_loader_impl_exception(env, status);
 
 		if (has_methods == true)
 		{
-			status = napi_get_named_property(env, klass_descriptor, "methods", &methods);
+			status = napi_get_named_property(env, discover_klass_safe->klass_descriptor, "methods", &methods);
 
 			node_loader_impl_exception(env, status);
 
@@ -4393,13 +5267,13 @@ value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_kl
 			bool has_attr = false;
 			napi_value attr_field;
 
-			status = napi_has_named_property(env, klass_descriptor, "attributes", &has_attr);
+			status = napi_has_named_property(env, discover_klass_safe->klass_descriptor, "attributes", &has_attr);
 
 			node_loader_impl_exception(env, status);
 
 			if (has_attr == true)
 			{
-				status = napi_get_named_property(env, klass_descriptor, "attributes", &attr_field);
+				status = napi_get_named_property(env, discover_klass_safe->klass_descriptor, "attributes", &attr_field);
 
 				node_loader_impl_exception(env, status);
 
@@ -4459,10 +5333,16 @@ value node_loader_impl_discover_klass_safe(napi_env env, loader_impl_discover_kl
 				}
 			}
 		}
-		return value_create_class(c);
+
+		klass_value = value_create_class(c);
 	}
 
-	return NULL;
+	/* Close scope */
+	status = napi_close_handle_scope(env, handle_scope);
+
+	node_loader_impl_exception(env, status);
+
+	return klass_value;
 }
 
 /*
@@ -4866,7 +5746,8 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 					struct loader_impl_discover_klass_safe_type discover_klass_safe = {
 						discover_safe->node_impl,
-						klass_ptr
+						klass_ptr,
+						property_descriptor
 					};
 
 					value v = node_loader_impl_discover_klass_safe(env, &discover_klass_safe);
@@ -5132,6 +6013,97 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 				(loader_impl_async_future_delete_safe_type **)(&node_impl->future_delete_safe),
 				&node_impl->future_delete_safe_ptr,
 				&node_impl->threadsafe_future_delete);
+		}
+
+		/* Safe object get */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_object_get_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_object_get_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_object_get_safe,
+				(loader_impl_async_object_get_safe_type **)(&node_impl->object_get_safe),
+				&node_impl->object_get_safe_ptr,
+				&node_impl->threadsafe_object_get);
+		}
+
+		/* Safe object set */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_object_set_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_object_set_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_object_set_safe,
+				(loader_impl_async_object_set_safe_type **)(&node_impl->object_set_safe),
+				&node_impl->object_set_safe_ptr,
+				&node_impl->threadsafe_object_set);
+		}
+
+		/* Safe object method invoke */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_object_method_invoke_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_object_method_invoke_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_object_method_invoke_safe,
+				(loader_impl_async_object_method_invoke_safe_type **)(&node_impl->object_method_invoke_safe),
+				&node_impl->object_method_invoke_safe_ptr,
+				&node_impl->threadsafe_object_method_invoke);
+		}
+
+		/* Safe object destroy */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_object_destroy_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_object_destroy_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_object_destroy_safe,
+				(loader_impl_async_object_destroy_safe_type **)(&node_impl->object_destroy_safe),
+				&node_impl->object_destroy_safe_ptr,
+				&node_impl->threadsafe_object_destroy);
+		}
+
+		/* Safe class constructor */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_class_ctor_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_class_ctor_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_class_ctor_safe,
+				(loader_impl_async_class_ctor_safe_type **)(&node_impl->class_ctor_safe),
+				&node_impl->class_ctor_safe_ptr,
+				&node_impl->threadsafe_class_ctor);
+		}
+
+		/* Safe class static invoke */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_class_static_invoke_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_class_static_invoke_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_class_static_invoke_safe,
+				(loader_impl_async_class_static_invoke_safe_type **)(&node_impl->class_static_invoke_safe),
+				&node_impl->class_static_invoke_safe_ptr,
+				&node_impl->threadsafe_class_static_invoke);
+		}
+
+		/* Safe class destroy */
+		{
+			static const char threadsafe_func_name_str[] = "node_loader_impl_async_class_destroy_safe";
+
+			node_loader_impl_thread_safe_function_initialize<loader_impl_async_class_destroy_safe_type>(
+				env,
+				threadsafe_func_name_str, sizeof(threadsafe_func_name_str),
+				&node_loader_impl_async_class_destroy_safe,
+				(loader_impl_async_class_destroy_safe_type **)(&node_impl->class_destroy_safe),
+				&node_impl->class_destroy_safe_ptr,
+				&node_impl->threadsafe_class_destroy);
 		}
 
 		/* Safe destroy */
@@ -6357,6 +7329,55 @@ void node_loader_impl_destroy_safe_impl(loader_impl_node node_impl, napi_env env
 			node_loader_impl_exception(env, status);
 		}
 
+		/* Safe object get */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_object_get, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Safe object set */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_object_set, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Safe object method invoke */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_object_method_invoke, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Safe object destroy */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_object_destroy, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Safe class constructor */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_class_ctor, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Safe class static invoke */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_class_static_invoke, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
+		/* Safe class destroy */
+		{
+			status = napi_release_threadsafe_function(node_impl->threadsafe_class_destroy, napi_tsfn_abort);
+
+			node_loader_impl_exception(env, status);
+		}
+
 		/* Safe destroy */
 		{
 			status = napi_release_threadsafe_function(node_impl->threadsafe_destroy, napi_tsfn_abort);
@@ -6533,6 +7554,13 @@ int node_loader_impl_destroy(loader_impl impl)
 	delete node_impl->future_await_safe;
 	delete node_impl->future_delete_safe;
 	delete node_impl->destroy_safe;
+	delete node_impl->object_get_safe;
+	delete node_impl->object_set_safe;
+	delete node_impl->object_method_invoke_safe;
+	delete node_impl->object_destroy_safe;
+	delete node_impl->class_ctor_safe;
+	delete node_impl->class_static_invoke_safe;
+	delete node_impl->class_destroy_safe;
 
 #ifdef __ANDROID__
 	/* Close file descriptors */

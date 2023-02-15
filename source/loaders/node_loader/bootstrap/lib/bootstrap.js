@@ -288,6 +288,10 @@ function node_loader_trampoline_discover_function(func) {
 
 				return discover;
 			}
+			else
+			{
+				return node_loader_trampoline_discover_klass(func);
+			}
 		}
 	} catch (ex) {
 		console.log(`Exception while parsing '${func}' in node_loader_trampoline_discover_function`, ex);

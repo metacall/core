@@ -52,7 +52,7 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 		void *new_object_v = NULL;
 		{ /* TEST LOAD FROM FILE */
 			const char *node_scripts[] = {
-				"scripts/test.js"
+				"scripts/node_test.js"
 			};
 
 			static const char tag[] = "node";
@@ -84,12 +84,10 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 			new_object_v = metacall_class_new(myclass, "test", constructor_params, sizeof(constructor_params) / sizeof(constructor_params[0]));
 			ASSERT_NE((void *)NULL, (void *)new_object_v);
 
-			metacall_value_destroy(new_object_v);
-
 			{ //Invoke static method
 
 				{
-					void *args[] = {
+					const void *args[] = {
 						metacall_value_create_int(1),
 						metacall_value_create_int(2),
 						metacall_value_create_int(3),
@@ -102,8 +100,10 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 						metacall_value_create_int(10)
 					};
 
-					void *ret = metacallt_class(myclass, "hello", METACALL_INT, args, sizeof(args) / sizeof(args[0]));
-					ASSERT_EQ((long)55, (long)metacall_value_to_long(ret));
+					void *argv = metacall_value_create_array(args, sizeof(args) / sizeof(args[0]));
+
+					void *ret = metacallv_class(myclass, "sumArray", &argv, 1);
+					ASSERT_EQ((double)55, (double)metacall_value_to_double(ret));
 
 					metacall_value_destroy(ret);
 				}
@@ -113,8 +113,8 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 						metacall_value_create_string("Metacall", 8)
 					};
 
-					void *ret = metacallt_class(myclass, "sumArray", METACALL_INT, args, 1);
-					ASSERT_EQ((long)10, (long)metacall_value_to_long(ret));
+					void *ret = metacallv_class(myclass, "hello", args, 1);
+					ASSERT_EQ((double)10, (double)metacall_value_to_double(ret));
 
 					metacall_value_destroy(ret);
 				}
@@ -127,7 +127,8 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 
 			{
 				void *param1 = metacall_object_get(new_object, "num");
-				ASSERT_EQ((long)10, (long)metacall_value_to_long(param1));
+				ASSERT_EQ((double)10, (double)metacall_value_to_double(param1));
+
 				metacall_value_destroy(param1);
 			}
 
@@ -144,8 +145,8 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 				ASSERT_EQ((int)0, int(retcode));
 
 				void *param2 = metacall_object_get(new_object, "b");
-				ASSERT_EQ((enum metacall_value_id)METACALL_LONG, (enum metacall_value_id)metacall_value_id(param2));
-				ASSERT_EQ((long)124124L, (long)metacall_value_to_long(param2));
+				ASSERT_EQ((enum metacall_value_id)METACALL_DOUBLE, (enum metacall_value_id)metacall_value_id(param2));
+				ASSERT_EQ((double)124124, (double)metacall_value_to_double(param2));
 
 				metacall_value_destroy(param2);
 			}
@@ -165,10 +166,47 @@ TEST_F(metacall_node_class_test, DefaultConstructor)
 				metacall_value_destroy(Fibonacci);
 			}
 
+			//Value to napi class test
 			{
-				void *param1 = metacallv_object(new_object, "return_bye", metacall_null_args, 0);
-				ASSERT_EQ((std::string) "bye LBryan", (std::string)metacall_value_to_string(param1));
-				metacall_value_destroy(param1);
+				{
+					void *args = metacall_value_create_string("b", 1);
+					void *param1 = metacallv_object(new_object, "test_value_to_napi_class_get", &args, 1);
+					ASSERT_EQ((double)999999, (double)metacall_value_to_double(param1));
+					metacall_value_destroy(param1);
+				}
+
+				{
+					char str[] = "test value class to napi.";
+					void *args[] = {
+						metacall_value_create_string("a", 1),
+						metacall_value_create_string(str, sizeof(str))
+					};
+
+					void *param1 = metacallv_object(new_object, "test_value_to_napi_class_set", args, sizeof(args) / sizeof(args[0]));
+					ASSERT_NE((void *)NULL, (void *)param1);
+					metacall_value_destroy(param1);
+
+					void *arg = metacall_value_create_string("a", 1);
+					void *param2 = metacallv_object(new_object, "test_value_to_napi_class_get", &arg, 1);
+					ASSERT_EQ((std::string)str, (std::string)metacall_value_to_string(param2));
+					metacall_value_destroy(param2);
+				}
+
+				{
+					const void *method_args[] = {
+						metacall_value_create_int(4),
+						metacall_value_create_int(7)
+					};
+
+					void *args[] = {
+						metacall_value_create_string("check_args", 10),
+						metacall_value_create_array(method_args, 2)
+					};
+
+					void *param1 = metacallv_object(new_object, "test_value_to_napi_class_method_invoke", args, sizeof(args) / sizeof(args[0]));
+					ASSERT_EQ((double)15, (double)metacall_value_to_double(param1));
+					metacall_value_destroy(param1);
+				}
 			}
 
 			metacall_value_destroy(new_object_v);

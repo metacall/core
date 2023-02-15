@@ -251,6 +251,48 @@ vector map_get(map m, map_key key)
 	return NULL;
 }
 
+vector map_get_keys(map m)
+{
+	vector v = vector_create(sizeof(void *));
+	bucket b;
+	pair p;
+	for (size_t iterator = 0; iterator < m->capacity; iterator++)
+	{
+		b = &m->buckets[iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (size_t index = 0; index < b->count; index++)
+			{
+				p = &b->pairs[index];
+				vector_push_back(v, &p->key);
+			}
+		}
+	}
+	return v;
+}
+
+vector map_get_values(map m)
+{
+	vector v = vector_create(sizeof(void *));
+	bucket b;
+	pair p;
+	for (size_t iterator = 0; iterator < m->capacity; iterator++)
+	{
+		b = &m->buckets[iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (size_t index = 0; index < b->count; index++)
+			{
+				p = &b->pairs[index];
+				vector_push_back(v, &p->value);
+			}
+		}
+	}
+	return v;
+}
+
 int map_contains(map m, map_key key)
 {
 	if (m != NULL && key != NULL)

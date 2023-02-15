@@ -15,6 +15,7 @@
 
 #include <adt/adt_comparable.h>
 #include <adt/adt_hash.h>
+#include <adt/adt_vector.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,6 +62,10 @@ ADT_API int set_insert(set s, set_key key, set_value value);
 ADT_API int set_insert_array(set s, set_key keys[], set_value values[], size_t size);
 
 ADT_API set_value set_get(set s, set_key key);
+
+ADT_API vector set_get_keys(set s);
+
+ADT_API vector set_get_values(set s);
 
 ADT_API int set_contains(set s, set_key key);
 

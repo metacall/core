@@ -588,7 +588,7 @@ constructor class_default_constructor(klass cls)
 		return NULL;
 	}
 
-	return (constructor)vector_at(cls->constructors, 0);
+	return vector_at_type(cls->constructors, 0, constructor);
 }
 
 constructor class_constructor(klass cls, type_id args[], size_t size)
@@ -680,28 +680,14 @@ method class_method(klass cls, const char *key, type_id ret, type_id args[], siz
 	return class_get_method_type_safe(class_methods(cls, key), ret, args, size);
 }
 
-vector class_method_names(klass cls)
+vector class_get_methods(klass cls)
 {
-	vector v = vector_create_type(char *);
-	map_iterator it = map_iterator_begin(cls->methods);
-	while (map_iterator_end(&it) != 0)
-	{
-		char *key = (char *)map_iterator_get_key(it);
-		vector_push_back(v, (void *)key);
-	}
-	return v;
+	return map_get_values(cls->methods);
 }
 
-vector class_static_method_names(klass cls)
+vector class_get_static_methods(klass cls)
 {
-	vector v = vector_create_type(char *);
-	map_iterator it = map_iterator_begin(cls->static_methods);
-	while (map_iterator_end(&it) != 0)
-	{
-		char *key = (char *)map_iterator_get_key(it);
-		vector_push_back(v, (void *)key);
-	}
-	return v;
+	return map_get_values(cls->static_methods);
 }
 
 attribute class_static_attribute(klass cls, const char *key)
@@ -724,28 +710,14 @@ attribute class_attribute(klass cls, const char *key)
 	return set_get(cls->attributes, (set_key)key);
 }
 
-vector class_attribute_names(klass cls)
+vector class_get_attributes(klass cls)
 {
-	vector v = vector_create_type(char *);
-	set_iterator it = set_iterator_begin(cls->attributes);
-	while (set_iterator_end(&it) != 0)
-	{
-		char *key = (char *)set_iterator_get_key(it);
-		vector_push_back(v, (void *)key);
-	}
-	return v;
+	return set_get_values(cls->attributes);
 }
 
-vector class_static_attribute_names(klass cls)
+vector class_get_static_attributes(klass cls)
 {
-	vector v = vector_create_type(char *);
-	set_iterator it = set_iterator_begin(cls->static_attributes);
-	while (set_iterator_end(&it) != 0)
-	{
-		char *key = (char *)set_iterator_get_key(it);
-		vector_push_back(v, (void *)key);
-	}
-	return v;
+	return set_get_values(cls->static_attributes);
 }
 
 int class_register_constructor(klass cls, constructor ctor)

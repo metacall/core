@@ -273,6 +273,48 @@ set_value set_get(set s, set_key key)
 	return NULL;
 }
 
+vector set_get_keys(set s)
+{
+	vector v = vector_create(sizeof(void *));
+	bucket b;
+	pair p;
+	for (size_t iterator = 0; iterator < s->capacity; iterator++)
+	{
+		b = &s->buckets[iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (size_t index = 0; index < b->count; index++)
+			{
+				p = &b->pairs[index];
+				vector_push_back(v, &p->key);
+			}
+		}
+	}
+	return v;
+}
+
+vector set_get_values(set s)
+{
+	vector v = vector_create(sizeof(void *));
+	bucket b;
+	pair p;
+	for (size_t iterator = 0; iterator < s->capacity; iterator++)
+	{
+		b = &s->buckets[iterator];
+
+		if (b->pairs != NULL && b->count > 0)
+		{
+			for (size_t index = 0; index < b->count; index++)
+			{
+				p = &b->pairs[index];
+				vector_push_back(v, &p->value);
+			}
+		}
+	}
+	return v;
+}
+
 int set_contains(set s, set_key key)
 {
 	if (s != NULL && key != NULL)
