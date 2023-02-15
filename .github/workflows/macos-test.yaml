@@ -9,7 +9,6 @@ on:
     branches:
       - master
       - develop
-      - feat/macos-pipeline
 
 jobs:
   mac-test:
@@ -53,7 +52,7 @@ jobs:
           chmod +x ../tools/metacall-build.sh
           sh ../tools/metacall-configure.sh $METACALL_BUILD_OPTIONS
         env:
-          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer nodejs #python  #java sanitizer # ruby # netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
+          METACALL_BUILD_OPTIONS: ${{ matrix.buildtype }} scripts ports tests sanitizer #nodejs #python  #java sanitizer # ruby # netcore5 typescript file rpc wasm java c cobol rust examples dynamic install pack benchmarks # v8 coverage
 
       - name: Build
         working-directory: ./build
