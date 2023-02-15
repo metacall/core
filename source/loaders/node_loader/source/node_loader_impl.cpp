@@ -1054,16 +1054,16 @@ static napi_value node_loader_impl_class_constructor_callback(napi_env env, napi
 	loader_impl_async_safe_cast<loader_impl_class_constructor_callback_closure> closure_cast = { NULL };
 
 	napi_get_cb_info(env, info, NULL, NULL, NULL, &closure_cast.ptr);
+
 	/* Set environment */
 	closure_cast.safe->node_impl->env = env;
-	constructor ctor = class_default_constructor(closure_cast.safe->cls);
 
 	char *klass_name_str = const_cast<char *>(class_name(closure_cast.safe->cls));
-	std::string error_msg = "NodeJS Loader No default constructor in class: ";
-	error_msg += klass_name_str;
+
+	constructor ctor = class_default_constructor(closure_cast.safe->cls);
 	if (ctor == NULL)
 	{
-		napi_throw_error(env, NULL, error_msg.c_str());
+		log_write("metacall", LOG_LEVEL_INFO, "NodeJS Loader No default constructor in class: ", klass_name_str);
 	}
 
 	size_t argc = constructor_count(ctor);
@@ -1083,13 +1083,13 @@ static napi_value node_loader_impl_class_constructor_callback(napi_env env, napi
 	ctor = class_constructor(closure_cast.safe->cls, ids, argc);
 
 	//convert class_name to lower case
-	while (*klass_name_str != '\0')
+	std::string obj_name(klass_name_str);
+	for (size_t i = 0; i < obj_name.size(); i++)
 	{
-		*klass_name_str = std::tolower(*klass_name_str);
-		klass_name_str++;
+		obj_name[i] = std::tolower(obj_name[i]);
 	}
 
-	object o = class_new(closure_cast.safe->cls, klass_name_str, ctor, args, argc);
+	object o = class_new(closure_cast.safe->cls, obj_name.c_str(), ctor, args, argc);
 
 	if (ids != NULL)
 	{
@@ -1106,7 +1106,7 @@ static napi_value node_loader_impl_class_constructor_callback(napi_env env, napi
 	if (v == NULL)
 	{
 		object_destroy(o);
-		error_msg = "NodeJS Loader Failed to create object for class: ";
+		std::string error_msg = "NodeJS Loader Failed to create object for class: ";
 		error_msg += klass_name_str;
 		napi_throw_error(env, NULL, error_msg.c_str());
 	}
@@ -4474,7 +4474,7 @@ static value node_loader_impl_discover_object_safe(napi_env env, loader_impl_dis
 void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_safe discover_safe)
 {
 	static const char discover_str[] = "discover";
-	napi_value function_table_object;
+	napi_value discover_table_object;
 	napi_value discover_str_value;
 	bool result = false;
 	napi_handle_scope handle_scope;
@@ -4485,7 +4485,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 	node_loader_impl_exception(env, status);
 
 	/* Get function table object from reference */
-	status = napi_get_reference_value(env, discover_safe->node_impl->function_table_object_ref, &function_table_object);
+	status = napi_get_reference_value(env, discover_safe->node_impl->function_table_object_ref, &discover_table_object);
 
 	node_loader_impl_exception(env, status);
 
@@ -4495,21 +4495,21 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 	node_loader_impl_exception(env, status);
 
 	/* Check if exists in the table */
-	status = napi_has_own_property(env, function_table_object, discover_str_value, &result);
+	status = napi_has_own_property(env, discover_table_object, discover_str_value, &result);
 
 	node_loader_impl_exception(env, status);
 
 	if (result == true)
 	{
-		napi_value function_trampoline_discover;
+		napi_value trampoline_discover;
 		napi_valuetype valuetype;
 		napi_value argv[1];
 
-		status = napi_get_named_property(env, function_table_object, discover_str, &function_trampoline_discover);
+		status = napi_get_named_property(env, discover_table_object, discover_str, &trampoline_discover);
 
 		node_loader_impl_exception(env, status);
 
-		status = napi_typeof(env, function_trampoline_discover, &valuetype);
+		status = napi_typeof(env, trampoline_discover, &valuetype);
 
 		node_loader_impl_exception(env, status);
 
@@ -4530,72 +4530,79 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 
 		node_loader_impl_exception(env, status);
 
-		status = napi_call_function(env, global, function_trampoline_discover, 1, argv, &discover_map);
+		status = napi_call_function(env, global, trampoline_discover, 1, argv, &discover_map);
 
 		node_loader_impl_exception(env, status);
 
 		/* Convert return value (discover object) to context */
-		napi_value func_names;
-		uint32_t func_names_length;
+		napi_value prop_names;
+		uint32_t prop_names_length;
 
-		status = napi_get_property_names(env, discover_map, &func_names);
-
-		node_loader_impl_exception(env, status);
-
-		status = napi_get_array_length(env, func_names, &func_names_length);
+		status = napi_get_property_names(env, discover_map, &prop_names);
 
 		node_loader_impl_exception(env, status);
 
-		for (uint32_t index = 0; index < func_names_length; ++index)
+		status = napi_get_array_length(env, prop_names, &prop_names_length);
+
+		node_loader_impl_exception(env, status);
+
+		for (uint32_t index = 0; index < prop_names_length; ++index)
 		{
-			napi_value func_name;
-			size_t func_name_length;
-			char *func_name_str = NULL;
+			napi_value prop_name;
+			size_t prop_name_length;
+			char *prop_name_str = NULL;
 
-			status = napi_get_element(env, func_names, index, &func_name);
-
-			node_loader_impl_exception(env, status);
-
-			status = napi_get_value_string_utf8(env, func_name, NULL, 0, &func_name_length);
+			status = napi_get_element(env, prop_names, index, &prop_name);
 
 			node_loader_impl_exception(env, status);
 
-			if (func_name_length > 0)
+			status = napi_get_value_string_utf8(env, prop_name, NULL, 0, &prop_name_length);
+
+			node_loader_impl_exception(env, status);
+
+			if (prop_name_length > 0)
 			{
-				func_name_str = static_cast<char *>(malloc(sizeof(char) * (func_name_length + 1)));
+				prop_name_str = static_cast<char *>(malloc(sizeof(char) * (prop_name_length + 1)));
 			}
 
-			if (func_name_str != NULL)
+			if (prop_name_str != NULL)
 			{
-				napi_value function_descriptor;
-				napi_value function_ptr;
-				napi_value function_sig;
-				napi_value function_types = nullptr;
-				napi_value function_ret = nullptr;
-				napi_value function_is_async;
-				uint32_t function_sig_length;
+				napi_value property_descriptor;
 
-				/* Get function name */
-				status = napi_get_value_string_utf8(env, func_name, func_name_str, func_name_length + 1, &func_name_length);
+				/* Get property name */
+				status = napi_get_value_string_utf8(env, prop_name, prop_name_str, prop_name_length + 1, &prop_name_length);
 
 				node_loader_impl_exception(env, status);
 
-				/* Get function descriptor */
-				status = napi_get_named_property(env, discover_map, func_name_str, &function_descriptor);
+				/* Get property descriptor */
+				status = napi_get_named_property(env, discover_map, prop_name_str, &property_descriptor);
 
 				node_loader_impl_exception(env, status);
 
-				/* Check if function pointer exists */
 				bool is_func = false;
 
-				status = napi_has_named_property(env, function_descriptor, "func", &is_func);
+				status = napi_has_named_property(env, property_descriptor, "func", &is_func);
 
 				node_loader_impl_exception(env, status);
 
+				bool is_klass = false;
+
+				status = napi_has_named_property(env, property_descriptor, "klass", &is_klass);
+
+				node_loader_impl_exception(env, status);
+
+				/* Check if a function pointer exists */
 				if (is_func == true)
 				{
+					napi_value function_ptr;
+					napi_value function_sig;
+					napi_value function_types = nullptr;
+					napi_value function_ret = nullptr;
+					napi_value function_is_async;
+					uint32_t function_sig_length;
+
 					/* Get function pointer */
-					status = napi_get_named_property(env, function_descriptor, "func", &function_ptr);
+					status = napi_get_named_property(env, property_descriptor, "func", &function_ptr);
 
 					node_loader_impl_exception(env, status);
 
@@ -4610,7 +4617,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					}
 
 					/* Get function signature */
-					status = napi_get_named_property(env, function_descriptor, "signature", &function_sig);
+					status = napi_get_named_property(env, property_descriptor, "signature", &function_sig);
 
 					node_loader_impl_exception(env, status);
 
@@ -4630,7 +4637,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					node_loader_impl_exception(env, status);
 
 					/* Get function async */
-					status = napi_get_named_property(env, function_descriptor, "async", &function_is_async);
+					status = napi_get_named_property(env, property_descriptor, "async", &function_is_async);
 
 					node_loader_impl_exception(env, status);
 
@@ -4648,13 +4655,13 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					static const char types_str[] = "types";
 					bool has_types = false;
 
-					status = napi_has_named_property(env, function_descriptor, types_str, &has_types);
+					status = napi_has_named_property(env, property_descriptor, types_str, &has_types);
 
 					node_loader_impl_exception(env, status);
 
 					if (has_types == true)
 					{
-						status = napi_get_named_property(env, function_descriptor, types_str, &function_types);
+						status = napi_get_named_property(env, property_descriptor, types_str, &function_types);
 
 						node_loader_impl_exception(env, status);
 
@@ -4673,13 +4680,13 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					static const char ret_str[] = "ret";
 					bool has_ret = false;
 
-					status = napi_has_named_property(env, function_descriptor, ret_str, &has_ret);
+					status = napi_has_named_property(env, property_descriptor, ret_str, &has_ret);
 
 					node_loader_impl_exception(env, status);
 
 					if (has_ret == true)
 					{
-						status = napi_get_named_property(env, function_descriptor, ret_str, &function_ret);
+						status = napi_get_named_property(env, property_descriptor, ret_str, &function_ret);
 
 						node_loader_impl_exception(env, status);
 
@@ -4706,7 +4713,7 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 					node_func->impl = discover_safe->node_impl->impl;
 
 					/* Create function */
-					function f = function_create(func_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
+					function f = function_create(prop_name_str, (size_t)function_sig_length, node_func, &function_node_singleton);
 
 					if (f != NULL)
 					{
@@ -4838,8 +4845,45 @@ void node_loader_impl_discover_safe(napi_env env, loader_impl_async_discover_saf
 						break;
 					}
 				}
+				else if (is_klass == true)
+				{
+					napi_value klass_ptr;
 
-				free(func_name_str);
+					/* Get klass pointer */
+					status = napi_get_named_property(env, property_descriptor, "klass", &klass_ptr);
+
+					node_loader_impl_exception(env, status);
+
+					/* Check klass pointer type */
+					status = napi_typeof(env, klass_ptr, &valuetype);
+
+					node_loader_impl_exception(env, status);
+
+					if (valuetype != napi_function)
+					{
+						napi_throw_type_error(env, nullptr, "Invalid NodeJS class");
+					}
+
+					struct loader_impl_discover_klass_safe_type discover_klass_safe = {
+						discover_safe->node_impl,
+						klass_ptr
+					};
+
+					value v = node_loader_impl_discover_klass_safe(env, &discover_klass_safe);
+
+					if (v != NULL)
+					{
+						scope sp = context_scope(discover_safe->ctx);
+						if (scope_define(sp, class_name((klass)metacall_value_to_class(v)), v) != 0)
+						{
+							value_type_destroy(v);
+							discover_safe->result = 1;
+							break;
+						}
+					}
+				}
+
+				free(prop_name_str);
 			}
 		}
 	}
