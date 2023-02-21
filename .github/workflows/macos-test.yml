@@ -30,6 +30,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Uninstall NodeJS and NPM 
+        run: |
+          npm uninstall npm -g
+          rm -rf /usr/local/lib/node_modules/npm
+
         # TODO: This must go in metacall-environment-macos.sh as base dependencies
       - name: Configure Clang 
         run: |
