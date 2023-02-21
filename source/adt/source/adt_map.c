@@ -262,7 +262,7 @@ vector map_get_keys(map m)
 			return NULL;
 		}
 
-		for (size_t iterator = 0; iterator < m->capacity; iterator++)
+		for (size_t iterator = 0; iterator < m->capacity; ++iterator)
 		{
 			bucket b = &m->buckets[iterator];
 
@@ -270,7 +270,7 @@ vector map_get_keys(map m)
 			{
 				size_t index;
 
-				for (index = 0; index < b->count; index++)
+				for (index = 0; index < b->count; ++index)
 				{
 					pair p = &b->pairs[index];
 					vector_push_back(v, &p->key);
@@ -295,7 +295,7 @@ vector map_get_values(map m)
 			return NULL;
 		}
 
-		for (size_t iterator = 0; iterator < m->capacity; iterator++)
+		for (size_t iterator = 0; iterator < m->capacity; ++iterator)
 		{
 			bucket b = &m->buckets[iterator];
 
@@ -303,7 +303,7 @@ vector map_get_values(map m)
 			{
 				size_t index;
 
-				for (index = 0; index < b->count; index++)
+				for (index = 0; index < b->count; ++index)
 				{
 					pair p = &b->pairs[index];
 					vector_push_back(v, &p->value);
