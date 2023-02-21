@@ -253,44 +253,68 @@ vector map_get(map m, map_key key)
 
 vector map_get_keys(map m)
 {
-	vector v = vector_create(sizeof(void *));
-	bucket b;
-	pair p;
-	for (size_t iterator = 0; iterator < m->capacity; iterator++)
+	if (m != NULL)
 	{
-		b = &m->buckets[iterator];
+		vector v = vector_create(sizeof(void *));
 
-		if (b->pairs != NULL && b->count > 0)
+		if (v == NULL)
 		{
-			for (size_t index = 0; index < b->count; index++)
+			return NULL;
+		}
+
+		for (size_t iterator = 0; iterator < m->capacity; iterator++)
+		{
+			bucket b = &m->buckets[iterator];
+
+			if (b->pairs != NULL && b->count > 0)
 			{
-				p = &b->pairs[index];
-				vector_push_back(v, &p->key);
+				size_t index;
+
+				for (index = 0; index < b->count; index++)
+				{
+					pair p = &b->pairs[index];
+					vector_push_back(v, &p->key);
+				}
 			}
 		}
+
+		return v;
 	}
-	return v;
+
+	return NULL;
 }
 
 vector map_get_values(map m)
 {
-	vector v = vector_create(sizeof(void *));
-	bucket b;
-	pair p;
-	for (size_t iterator = 0; iterator < m->capacity; iterator++)
+	if (m != NULL)
 	{
-		b = &m->buckets[iterator];
+		vector v = vector_create(sizeof(void *));
 
-		if (b->pairs != NULL && b->count > 0)
+		if (v == NULL)
 		{
-			for (size_t index = 0; index < b->count; index++)
+			return NULL;
+		}
+
+		for (size_t iterator = 0; iterator < m->capacity; iterator++)
+		{
+			bucket b = &m->buckets[iterator];
+
+			if (b->pairs != NULL && b->count > 0)
 			{
-				p = &b->pairs[index];
-				vector_push_back(v, &p->value);
+				size_t index;
+
+				for (index = 0; index < b->count; index++)
+				{
+					pair p = &b->pairs[index];
+					vector_push_back(v, &p->value);
+				}
 			}
 		}
+
+		return v;
 	}
-	return v;
+
+	return NULL;
 }
 
 int map_contains(map m, map_key key)
