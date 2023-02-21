@@ -44,24 +44,22 @@ sub_swig() {
 
 # Python
 sub_python() {
-    echo "configuring python"
-    brew install python3 python3-pip
-    pip3 install requests
-    pip3 install setuptools
-    pip3 install wheel
-    pip3 install rsa
-    pip3 install scipy
-    pip3 install numpy
-    pip3 install joblib
-    pip3 install scikit-learn
+	echo "configuring python"
+	brew install python3 python3-pip
+	pip3 install requests
+	pip3 install setuptools
+	pip3 install wheel
+	pip3 install rsa
+	pip3 install scipy
+	pip3 install numpy
+	pip3 install joblib
+	pip3 install scikit-learn
 }
 
 # NodeJS
 sub_nodejs(){
-    echo "configuring nodejs"
-	npm uninstall npm -g
-	rm -rf /usr/local/lib/node_modules/npm
-    brew install node make npm curl python3
+	echo "configuring nodejs"
+	brew install node make npm curl python3
 }
 
 
@@ -70,9 +68,9 @@ sub_install()
 	if [ $INSTALL_PYTHON = 1 ]; then
 		sub_python
 	fi
-    if [ $INSTALL_NODEJS = 1 ]; then
-        sub_nodejs
-    fi
+	if [ $INSTALL_NODEJS = 1 ]; then
+		sub_nodejs
+	fi
 }
 
 sub_options(){
