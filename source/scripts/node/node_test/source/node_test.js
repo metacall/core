@@ -33,10 +33,6 @@ class Test {
     console.log("NodeJs Loader: Test constructor Called!");
   }
 
-  newFibonacci() {
-    return new Fibonacci;
-  }
-
   return_class() {
     return Fibonacci;
   }
