@@ -48,6 +48,14 @@ extern char **environ;
 #include <node_loader/node_loader_port.h>
 #include <node_loader/node_loader_trampoline.h>
 
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+	#include <node_loader/node_loader_win32_delay_load.h>
+
+	/* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll*/
+	#include <intrin.h>
+	#pragma intrinsic(_ReturnAddress)
+#endif
+
 #include <loader/loader.h>
 #include <loader/loader_impl.h>
 
@@ -761,6 +769,12 @@ static void node_loader_impl_walk_async_handles_count(uv_handle_t *handle, void 
 static int64_t node_loader_impl_async_handles_count(loader_impl_node node_impl);
 
 static void node_loader_impl_try_destroy(loader_impl_node node_impl);
+
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+/* Required for the DelayLoad hook interposition, solves bug of NodeJS extensions requiring node.exe instead of node.dll */
+static HMODULE node_loader_node_dll_handle = NULL;
+static HMODULE (*get_module_handle_a_ptr)(_In_opt_ LPCSTR) = NULL; /* TODO: Implement W version too? */
+#endif
 
 /* -- Methods -- */
 
