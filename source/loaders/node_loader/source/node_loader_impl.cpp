@@ -5852,6 +5852,51 @@ void node_loader_impl_thread_safe_function_initialize(napi_env env,
 	node_loader_impl_exception(env, status);
 }
 
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+/* TODO: _Ret_maybenull_ HMODULE WINAPI GetModuleHandleW(_In_opt_ LPCWSTR lpModuleName); */
+_Ret_maybenull_ HMODULE WINAPI get_module_handle_a_hook(_In_opt_ LPCSTR lpModuleName)
+{
+	/* This hooks GetModuleHandle, which is called as DelayLoad hook inside NodeJS
+	* extensions in order to retrieve the executable handle, which is supposed
+	* to have all N-API symbols. This trick is used because the design of NodeJS forces
+	* to compile statically node.dll into the executable, but this does not happen on
+	* MetaCall as it is embedded. We cannot change this behavior because it depends on
+	* NodeJS extension build system, which relies on DelayLoad mechanism. So what we are
+	* doing here is intercepting the GetModuleHandle call inside the DelayLoad hook, then
+	* getting the address from where this Win32 API was called, and if it commes from a
+	* NodeJS extension, then we return the node.dll module, otherwise we call to the original
+	* GetModuleHandle funciton. This method successfully hooks into the NodeJS mechanism and
+	* redirects properly the linker resolver system to the node.dll where symbols are located.
+	*/
+	if (lpModuleName == NULL)
+	{
+		HMODULE mod = NULL;
+
+		if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+								  GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, /* Behave like GetModuleHandle */
+				(LPCTSTR)_ReturnAddress(), &mod) == TRUE)
+		{
+			static const char node_ext[] = ".node";
+			char mod_name[MAX_PATH];
+			size_t length = GetModuleFileName(mod, mod_name, MAX_PATH);
+
+			/* It must contain a letter a part from the .node extension */
+			if (length > sizeof(node_ext))
+			{
+				char *ext = &mod_name[length - sizeof(node_ext) + 1];
+
+				if (strncmp(ext, node_ext, sizeof(node_ext)) == 0)
+				{
+					return node_loader_node_dll_handle;
+				}
+			}
+		}
+	}
+
+	return get_module_handle_a_ptr(lpModuleName);
+}
+#endif
+
 void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *function_table_object_ptr)
 {
 	loader_impl_node node_impl = static_cast<loader_impl_node>(node_impl_ptr);
@@ -6185,6 +6230,12 @@ void *node_loader_impl_register(void *node_impl_ptr, void *env_ptr, void *functi
 	node_impl->base_active_handles = node_loader_impl_async_handles_count(node_impl);
 	node_impl->extra_active_handles.store(0);
 	node_impl->event_loop_empty.store(false);
+
+	/* On Windows, hook node extension loading mechanism in order to patch extensions linked to node.exe */
+#if defined(_WIN32) && defined(_MSC_VER) && (_MSC_VER >= 1200)
+	node_loader_node_dll_handle = GetModuleHandle(NODEJS_LIBRARY_NAME);
+	get_module_handle_a_ptr = (HMODULE(*)(_In_opt_ LPCSTR))node_loader_hook_import_address_table("kernel32.dll", "GetModuleHandleA", &get_module_handle_a_hook);
+#endif
 
 	/* Signal start condition */
 	uv_cond_signal(&node_impl->cond);
@@ -7586,7 +7637,7 @@ int node_loader_impl_destroy(loader_impl impl)
 #endif
 
 	/* Print NodeJS execution result */
-	log_write("metacall", LOG_LEVEL_INFO, "NodeJS execution return status %d", node_impl->result);
+	log_write("metacall", LOG_LEVEL_DEBUG, "NodeJS execution return status %d", node_impl->result);
 
 	/* Restore stdin, stdout, stderr */
 	dup2(node_impl->stdin_copy, STDIN_FILENO);
