@@ -33,7 +33,7 @@ jobs:
         # TODO: This must go in metacall-environment-macos.sh as base dependencies
       - name: Configure Clang 
         run: |
-          brew install clang cmake git wget gnupg ca-certificates
+          brew install llvm cmake git wget gnupg ca-certificates
 
       - name: Set up the environment
         run: sh ./tools/metacall-environment-macos.sh $METACALL_INSTALL_OPTIONS
