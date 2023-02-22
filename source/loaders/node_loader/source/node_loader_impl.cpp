@@ -3636,7 +3636,6 @@ napi_value node_loader_impl_async_class_ctor_safe(napi_env env, napi_callback_in
 	/* Store environment for reentrant calls */
 	class_ctor_safe_cast.safe->node_impl->env = env;
 
-	printf("calling class_ctor_safe async");
 	/* Call to the implementation function */
 	node_loader_impl_class_ctor_safe(env, class_ctor_safe_cast.safe);
 
