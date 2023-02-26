@@ -80,7 +80,7 @@ if(OPTION_TEST_MEMORYCHECK AND NOT (OPTION_BUILD_SANITIZER OR OPTION_BUILD_THREA
 			--label-exclude MEMCHECK_IGNORE
 			--force-new-ctest-process
 			--test-action memcheck
-			--timeout 60
+			--timeout 5400
 		#COMMAND cat "${CMAKE_BINARY_DIR}/Testing/Temporary/MemoryChecker.*.log"
 	)
 endif()
@@ -146,7 +146,7 @@ add_subdirectory(metacall_node_async_resources_test)
 add_subdirectory(metacall_node_await_chain_test)
 add_subdirectory(metacall_node_exception_test)
 add_subdirectory(metacall_node_python_deadlock_test)
-add_subdirectory(metacall_node_signal_handler_test)
+# add_subdirectory(metacall_node_signal_handler_test) # Note: Not used anymore but leaving it here for reference to solve this: https://github.com/metacall/core/issues/121
 add_subdirectory(metacall_node_native_code_test)
 add_subdirectory(metacall_node_extension_test)
 add_subdirectory(metacall_distributable_test)

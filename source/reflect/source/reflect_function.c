@@ -91,7 +91,7 @@ function function_create(const char *name, size_t args_count, function_impl impl
 		goto function_create_error;
 	}
 
-	threading_atomic_ref_count_store(&func->ref, 0);
+	threading_atomic_ref_count_initialize(&func->ref);
 
 	func->interface = singleton ? singleton() : NULL;
 
@@ -730,6 +730,8 @@ void function_destroy(function func)
 			{
 				free(func->name);
 			}
+
+			threading_atomic_ref_count_destroy(&func->ref);
 
 			free(func);
 

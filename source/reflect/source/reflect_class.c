@@ -108,7 +108,7 @@ klass class_create(const char *name, enum accessor_type_id accessor, class_impl 
 
 	cls->impl = impl;
 	cls->accessor = accessor;
-	threading_atomic_ref_count_store(&cls->ref, 0);
+	threading_atomic_ref_count_initialize(&cls->ref);
 	cls->interface = singleton ? singleton() : NULL;
 	cls->constructors = vector_create_type(constructor);
 	cls->methods = map_create(&hash_callback_str, &comparable_callback_str);
@@ -900,6 +900,8 @@ void class_destroy(klass cls)
 			{
 				set_destroy(cls->static_attributes);
 			}
+
+			threading_atomic_ref_count_destroy(&cls->ref);
 
 			free(cls);
 

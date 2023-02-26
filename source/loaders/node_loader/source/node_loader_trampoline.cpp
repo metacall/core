@@ -28,7 +28,7 @@ typedef struct loader_impl_async_future_await_trampoline_type
 	future_resolve_trampoline resolve_trampoline;
 	future_reject_trampoline reject_trampoline;
 	future_resolve_callback resolve_callback;
-	future_resolve_callback reject_callback;
+	future_reject_callback reject_callback;
 	void *context;
 
 } * loader_impl_async_future_await_trampoline;
@@ -175,7 +175,7 @@ napi_value node_loader_trampoline_resolve(napi_env env, napi_callback_info info)
 
 	if (result == NULL)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	/* Execute the callback */
@@ -232,7 +232,7 @@ napi_value node_loader_trampoline_reject(napi_env env, napi_callback_info info)
 
 	if (result == NULL)
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	/* Execute the callback */

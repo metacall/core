@@ -1,4 +1,4 @@
-#if NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2 || NET5_0
+#if NETCOREAPP2_0 || NETCOREAPP2_1 || NETCOREAPP2_2 || NET5_0 || NET7_0
 
 using System;
 using System.Collections.Generic;
@@ -12,7 +12,7 @@ namespace CSLoader.Providers
     {
         public LoaderV2(ILog log) : base(log)
         {
-            //This handler is called only when the common language runtime tries to bind to the assembly and fails
+            // This handler is called only when the common language runtime tries to bind to the assembly and fails
             AppDomain.CurrentDomain.AssemblyResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
             AppDomain.CurrentDomain.TypeResolve += new ResolveEventHandler(AssemblyResolveEventHandler);
         }

@@ -347,14 +347,18 @@ function node_loader_trampoline_await_function(trampoline) {
 			throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
 		}
 
-		return new Promise((resolve, reject) =>
-			func(...args).then(
-				x => resolve(trampoline.resolve(trampoline_ptr, x)),
-				x => reject(trampoline.reject(trampoline_ptr, x))
-			).catch(
-				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
-			)
-		);
+		try {
+			return Promise.resolve(func(...args)).then(
+				x => trampoline.resolve(trampoline_ptr, x),
+				x => trampoline.reject(trampoline_ptr, x),
+			);
+		} catch (err) {
+			try {
+				return trampoline.reject(trampoline_ptr, err);
+			} catch (fatal) {
+				return Promise.reject(fatal);
+			}
+		}
 	};
 }
 
@@ -374,14 +378,18 @@ function node_loader_trampoline_await_future(trampoline) {
 			throw new Error('Await trampoline_ptr must be an object, not ' + typeof trampoline_ptr);
 		}
 
-		return new Promise((resolve, reject) =>
-			future.then(
-				x => resolve(trampoline.resolve(trampoline_ptr, x)),
-				x => reject(trampoline.reject(trampoline_ptr, x))
-			).catch(
-				x => console.error(`NodeJS await error: ${x && x.message ? x.message : util.inspect(x, false, null, true)}`)
-			)
-		);
+		try {
+			return Promise.resolve(future).then(
+				x => trampoline.resolve(trampoline_ptr, x),
+				x => trampoline.reject(trampoline_ptr, x),
+			);
+		} catch (err) {
+			try {
+				return trampoline.reject(trampoline_ptr, err);
+			} catch (fatal) {
+				return Promise.reject(fatal);
+			}
+		}
 	};
 }
 

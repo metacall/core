@@ -27,7 +27,7 @@
 	"files": [{
 		"includePattern": "@DEPLOY_ARTIFACTS_PATH@/(.*\\.deb)", "uploadPattern": "$1",
 			"matrixParams": {
-				"deb_distribution": "bullseye",
+				"deb_distribution": "bookworm",
 				"deb_component": "main",
 				"deb_architecture": "amd64"
 			}

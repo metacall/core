@@ -34,6 +34,7 @@ INSTALL_FUNCHOOK=0
 INSTALL_NETCORE=0
 INSTALL_NETCORE2=0
 INSTALL_NETCORE5=0
+INSTALL_NETCORE7=0
 INSTALL_V8=0
 INSTALL_V8REPO=0
 INSTALL_V8REPO58=0
@@ -125,7 +126,7 @@ sub_ruby(){
 	cd $ROOT_DIR
 
 	$SUDO_CMD apt-get update
-	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby2.7 ruby2.7-dev
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends ruby ruby-dev
 
 	# TODO: Review conflict with NodeJS (currently rails test is disabled)
 	#wget https://deb.nodesource.com/setup_4.x | $SUDO_CMD bash -
@@ -225,6 +226,23 @@ sub_netcore5(){
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
 	$SUDO_CMD apt-get update
 	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-5.0
+}
+
+# NetCore 7
+sub_netcore7(){
+	echo "configure netcore 7"
+	cd $ROOT_DIR
+
+	# Set up repository
+	wget https://packages.microsoft.com/config/debian/11/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
+	$SUDO_CMD dpkg -i packages-microsoft-prod.deb
+	rm packages-microsoft-prod.deb
+
+	# Install .NET Core Sdk
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends apt-transport-https
+	$SUDO_CMD apt-get update
+	$SUDO_CMD apt-get $APT_CACHE_CMD install -y --no-install-recommends dotnet-sdk-7.0
 }
 
 # V8 Repository
@@ -354,22 +372,22 @@ sub_c(){
 	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 	source /etc/os-release
 
-	case ${LINUX_DISTRO} in
+	case ${LINUX_DISTRO:-} in
 		debian)
-			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
+			if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
 				CODENAME="unstable"
 				LINKNAME=""
 			else
 				# "stable" Debian release
-				CODENAME="${VERSION_CODENAME}"
-				LINKNAME="-${CODENAME}"
+				CODENAME="${VERSION_CODENAME:-}"
+				LINKNAME="-${CODENAME:-}"
 			fi
 			;;
 		*)
 			# ubuntu and its derivatives
-			if [[ -n "${UBUNTU_CODENAME}" ]]; then
+			if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
 				CODENAME="${UBUNTU_CODENAME}"
-				if [[ -n "${CODENAME}" ]]; then
+				if [[ -n "${CODENAME:-}" ]]; then
 					LINKNAME="-${CODENAME}"
 				fi
 			fi
@@ -414,6 +432,8 @@ sub_metacall(){
 		NETCORE_VERSION=2.2.8
 	elif [ INSTALL_NETCORE5 = 1 ]; then
 		NETCORE_VERSION=5.0.17
+	elif [ INSTALL_NETCORE7 = 1 ]; then
+		NETCORE_VERSION=7.0.3
 	else
 		NETCORE_VERSION=0
 	fi
@@ -453,22 +473,22 @@ sub_clangformat(){
 	# Obtain VERSION_CODENAME and UBUNTU_CODENAME (for Ubuntu and its derivatives)
 	source /etc/os-release
 
-	case ${LINUX_DISTRO} in
+	case ${LINUX_DISTRO:-} in
 		debian)
-			if [[ "${VERSION}" == "unstable" ]] || [[ "${VERSION}" == "testing" ]]; then
+			if [[ "${VERSION:-}" == "unstable" ]] || [[ "${VERSION:-}" == "testing" ]] || [[ "${PRETTY_NAME:-}" == */sid ]]; then
 				CODENAME="unstable"
 				LINKNAME=""
 			else
 				# "stable" Debian release
-				CODENAME="${VERSION_CODENAME}"
-				LINKNAME="-${CODENAME}"
+				CODENAME="${VERSION_CODENAME:-}"
+				LINKNAME="-${CODENAME:-}"
 			fi
 			;;
 		*)
 			# ubuntu and its derivatives
-			if [[ -n "${UBUNTU_CODENAME}" ]]; then
+			if [[ -n "${UBUNTU_CODENAME:-}" ]]; then
 				CODENAME="${UBUNTU_CODENAME}"
-				if [[ -n "${CODENAME}" ]]; then
+				if [[ -n "${CODENAME:-}" ]]; then
 					LINKNAME="-${CODENAME}"
 				fi
 			fi
@@ -522,6 +542,9 @@ sub_install(){
 	fi
 	if [ $INSTALL_NETCORE5 = 1 ]; then
 		sub_netcore5
+	fi
+	if [ $INSTALL_NETCORE7 = 1 ]; then
+		sub_netcore7
 	fi
 	if [ $INSTALL_V8 = 1 ]; then
 		sub_v8
@@ -609,6 +632,10 @@ sub_options(){
 		if [ "$var" = 'netcore5' ]; then
 			echo "netcore 5 selected"
 			INSTALL_NETCORE5=1
+		fi
+		if [ "$var" = 'netcore7' ]; then
+			echo "netcore 7 selected"
+			INSTALL_NETCORE7=1
 		fi
 		if [ "$var" = 'rapidjson' ]; then
 			echo "rapidjson selected"
@@ -713,6 +740,7 @@ sub_help() {
 	echo "	netcore"
 	echo "	netcore2"
 	echo "	netcore5"
+	echo "	netcore7"
 	echo "	rapidjson"
 	echo "	funchook"
 	echo "	v8"

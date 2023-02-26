@@ -112,7 +112,7 @@ def pre_install(components):
 def pre_install_prompt():
 
     answers = {'yes': True, 'y': True, 'no': False, 'n': False}
-    components = ['python', 'ruby', 'netcore5', 'v8', 'nodejs', 'ports']
+    components = ['python', 'ruby', 'netcore7', 'v8', 'nodejs', 'ports']
     args = []
 
     try:

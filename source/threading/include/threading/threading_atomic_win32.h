@@ -122,7 +122,7 @@ typedef LONG volatile atomic_flag;
 
 #undef __atomic_is_lock_free_power_of_2
 
-inline void atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_order order)
+static inline void atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 	{
@@ -134,7 +134,7 @@ inline void atomic_store_explicit8(CHAR volatile *obj, CHAR desired, memory_orde
 	}
 }
 
-inline void atomic_store_explicit16(SHORT volatile *obj, SHORT desired, memory_order order)
+static inline void atomic_store_explicit16(SHORT volatile *obj, SHORT desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 	{
@@ -146,7 +146,7 @@ inline void atomic_store_explicit16(SHORT volatile *obj, SHORT desired, memory_o
 	}
 }
 
-inline void atomic_store_explicit32(LONG volatile *obj, LONG desired, memory_order order)
+static inline void atomic_store_explicit32(LONG volatile *obj, LONG desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 	{
@@ -158,7 +158,7 @@ inline void atomic_store_explicit32(LONG volatile *obj, LONG desired, memory_ord
 	}
 }
 
-inline void atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired, memory_order order)
+static inline void atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired, memory_order order)
 {
 	if (order == memory_order_seq_cst)
 #ifdef _M_IX86
@@ -224,7 +224,7 @@ inline void atomic_store_explicit64(LONG64 volatile *obj, LONG64 desired, memory
 		(sizeof *(obj) == 8) ? _InterlockedExchange64((LONG64 volatile *)obj, (LONG64)desired) : \
 								 (abort(), 0))
 
-inline bool atomic_compare_exchange8(CHAR volatile *obj, CHAR *expected, CHAR desired)
+static inline bool atomic_compare_exchange8(CHAR volatile *obj, CHAR *expected, CHAR desired)
 {
 	CHAR previous = _InterlockedCompareExchange8(obj, desired, *expected);
 	bool result = (previous == *expected);
@@ -237,7 +237,7 @@ inline bool atomic_compare_exchange8(CHAR volatile *obj, CHAR *expected, CHAR de
 	return result;
 }
 
-inline bool atomic_compare_exchange16(SHORT volatile *obj, SHORT *expected, SHORT desired)
+static inline bool atomic_compare_exchange16(SHORT volatile *obj, SHORT *expected, SHORT desired)
 {
 	SHORT previous = _InterlockedCompareExchange16(obj, desired, *expected);
 	bool result = (previous == *expected);
@@ -250,7 +250,7 @@ inline bool atomic_compare_exchange16(SHORT volatile *obj, SHORT *expected, SHOR
 	return result;
 }
 
-inline bool atomic_compare_exchange32(LONG volatile *obj, LONG *expected, LONG desired)
+static inline bool atomic_compare_exchange32(LONG volatile *obj, LONG *expected, LONG desired)
 {
 	LONG previous = _InterlockedCompareExchange(obj, desired, *expected);
 	bool result = (previous == *expected);
@@ -263,7 +263,7 @@ inline bool atomic_compare_exchange32(LONG volatile *obj, LONG *expected, LONG d
 	return result;
 }
 
-inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expected, LONG64 desired)
+static inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expected, LONG64 desired)
 {
 	LONG64 previous = _InterlockedCompareExchange64(obj, desired, *expected);
 	bool result = (previous == *expected);
@@ -346,7 +346,7 @@ inline bool atomic_compare_exchange64(LONG64 volatile *obj, LONG64 *expected, LO
 		}                                 \
 	} while (0)
 
-inline void atomic_thread_fence(memory_order order)
+static inline void atomic_thread_fence(memory_order order)
 {
 	__atomic_compiler_barrier(order);
 
@@ -357,7 +357,7 @@ inline void atomic_thread_fence(memory_order order)
 	}
 }
 
-inline void atomic_signal_fence(memory_order order)
+static inline void atomic_signal_fence(memory_order order)
 {
 	__atomic_compiler_barrier(order);
 }

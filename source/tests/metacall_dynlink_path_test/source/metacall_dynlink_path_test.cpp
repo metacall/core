@@ -45,6 +45,9 @@ TEST_F(metacall_dynlink_path_test, DefaultConstructor)
 
 	size_t length = 0;
 
+	printf(METACALL_LIBRARY_PATH "\n");
+	fflush(stdout);
+
 	ASSERT_EQ((int)0, (int)dynlink_library_path(name, path, &length));
 
 	printf("%s == %s\n", path, METACALL_LIBRARY_PATH);

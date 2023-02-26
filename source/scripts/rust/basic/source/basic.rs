@@ -64,3 +64,22 @@ pub fn str_slice(s: &str) -> &str {
         &s[0..3]
     }
 }
+
+// TODO
+/*
+pub fn age_group(age: i32) -> Result<String, String> {
+    let valid_age = match age {
+        _ if age < 0 => return Err("not born yet".to_string()),
+        _ if age > 150 => return Err("seriously?!!".to_string()),
+        validated => validated,
+    };
+
+    let result = match valid_age {
+        _ if age < 10 => "child".to_string(),
+        _ if age >= 18 => "adult".to_string(),
+        a => format!("teenager of {} years old", a),
+    };
+
+    Ok(result)
+}
+*/

@@ -745,16 +745,16 @@ Click the button below. A workspace with all required environments will be creat
 
 The following platforms and architectures have been tested an work correctly with all plugins of **METACALL**.
 
-|      Operative System      |    Architecture     |    Compiler     |                                               Build Status                                                |
-| :------------------------: | :-----------------: | :-------------: | :-------------------------------------------------------------------------------------------------------: |
-|     **`ubuntu:focal`**     |     **`amd64`**     |    **`gcc`**    |                                                                                                           |
-| **`debian:bullseye-slim`** |     **`amd64`**     | **`gcc:6.3.0`** | [![build](https://gitlab.com/metacall/core/badges/master/pipeline.svg)](https://gitlab.com/metacall/core) |
-| **`debian:bullseye-slim`** |     **`amd64`**     | **`gcc:8.2.0`** |                                                                                                           |
-|       **`windows`**        | **`x86`** **`x64`** |   **`msvc`**    |                                                                                                           |
+|      Operative System      |    Architecture     |    Compiler     |
+| :------------------------: | :-----------------: | :-------------: |
+|       **`ubuntu`**         |     **`amd64`**     |    **`gcc`**    |
+|       **`debian`**         |     **`amd64`**     |    **`gcc`**    |
+|       **`debian`**         |     **`amd64`**     |   **`clang`**   |
+|       **`windows`**        | **`x86`** **`x64`** |   **`msvc`**    |
 
 ### 7.1 Docker Support
 
-To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bullseye-slim` for `amd64` architecture.
+To provide a reproducible environment **METACALL** is also distributed under Docker on [DockerHub](https://hub.docker.com/r/metacall/core). Current images are based on `debian:bookworm-slim` for `amd64` architecture.
 
 For pulling the **METACALL** `latest` image containing the runtime, use:
 

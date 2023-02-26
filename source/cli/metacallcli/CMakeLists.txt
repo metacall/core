@@ -318,7 +318,7 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 		${TESTS_ENVIRONMENT_VARIABLES}
 	)
 
-	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
+	if(OPTION_BUILD_LOADERS_PY AND OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY)
 		add_test(NAME ${target}-py-port
 			COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-port.txt" -P ${TEST_COMMAND_RUNNER}
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
@@ -333,23 +333,23 @@ if(OPTION_BUILD_LOADERS AND OPTION_BUILD_LOADERS_NODE AND OPTION_BUILD_SCRIPTS A
 			""
 			${TESTS_ENVIRONMENT_VARIABLES}
 		)
-	endif()
 
-	if(OPTION_BUILD_PORTS AND OPTION_BUILD_PORTS_PY AND OPTION_BUILD_LOADERS_RB)
-		add_test(NAME ${target}-py-port-rb
-			COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-port-rb.txt" -P ${TEST_COMMAND_RUNNER}
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-		)
-		set_property(TEST ${target}-py-port-rb
-			PROPERTY LABELS ${target}-py-port-rb
-		)
-		set_tests_properties(${target}-py-port-rb PROPERTIES
-			PASS_REGULAR_EXPRESSION "0123456789ABCDEFasd"
-		)
-		test_environment_variables(${target}-py-port-rb
-			""
-			${TESTS_ENVIRONMENT_VARIABLES}
-		)
+		if(OPTION_BUILD_LOADERS_RB)
+			add_test(NAME ${target}-py-port-rb
+				COMMAND ${CMAKE_COMMAND} -D "EXECUTABLE=$<TARGET_FILE:${target}>" -D "INPUT=${TEST_COMMAND_INPUT}-py-port-rb.txt" -P ${TEST_COMMAND_RUNNER}
+				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+			)
+			set_property(TEST ${target}-py-port-rb
+				PROPERTY LABELS ${target}-py-port-rb
+			)
+			set_tests_properties(${target}-py-port-rb PROPERTIES
+				PASS_REGULAR_EXPRESSION "0123456789ABCDEFasd"
+			)
+			test_environment_variables(${target}-py-port-rb
+				""
+				${TESTS_ENVIRONMENT_VARIABLES}
+			)
+		endif()
 	endif()
 endif()
 

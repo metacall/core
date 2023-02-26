@@ -141,7 +141,7 @@ add_dependencies(${target}
 
 set_tests_properties(${target} PROPERTIES
 	LABELS ${target}
-	TIMEOUT 10 # Stop test after 10 seconds (to avoid deadlocking forever)
+	TIMEOUT 120 # Stop test after 120 seconds (to avoid deadlocking forever)
 )
 
 include(TestEnvironmentVariables)

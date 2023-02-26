@@ -31,9 +31,6 @@ set(WriterCompilerDetectionHeaderFound NOTFOUND)
 
 include(ExternalProject)
 
-# This module is only available with CMake >=3.1, so check whether it could be found
-include(WriteCompilerDetectionHeader OPTIONAL RESULT_VARIABLE WriterCompilerDetectionHeaderFound)
-
 include(GetGitRevisionDescription)
 include(Custom)
 

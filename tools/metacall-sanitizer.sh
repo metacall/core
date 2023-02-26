@@ -23,7 +23,7 @@ set -euxo pipefail
 
 BUILD_SANITIZER=${1:-sanitizer}
 BUILD_LANGUAGES=(
-	python ruby netcore5 nodejs typescript file rpc wasm java c cobol rust
+	python ruby netcore7 nodejs typescript file rpc wasm java c cobol rust
 )
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
 ROOT_DIR=$(dirname "$SCRIPT_DIR")
